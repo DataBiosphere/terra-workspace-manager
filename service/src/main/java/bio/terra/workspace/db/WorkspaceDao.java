@@ -50,7 +50,7 @@ public class WorkspaceDao {
               .description(rs.getString("description"))
               .spendProfileId(
                   Optional.ofNullable(rs.getString("spend_profile"))
-                      .map(SpendProfileId::create)
+                      .map(SpendProfileId::new)
                       .orElse(null))
               .properties(
                   Optional.ofNullable(rs.getString("properties"))
@@ -87,7 +87,8 @@ public class WorkspaceDao {
             .addValue("display_name", workspace.getDisplayName().orElse(null))
             .addValue("description", workspace.getDescription().orElse(null))
             .addValue(
-                "spend_profile", workspace.getSpendProfileId().map(SpendProfileId::id).orElse(null))
+                "spend_profile",
+                workspace.getSpendProfileId().map(SpendProfileId::getId).orElse(null))
             .addValue("properties", DbSerDes.propertiesToJson(workspace.getProperties()))
             .addValue("workspace_stage", workspace.getWorkspaceStage().toString());
     try {

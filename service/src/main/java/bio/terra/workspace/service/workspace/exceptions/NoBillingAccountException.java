@@ -16,6 +16,6 @@ public class NoBillingAccountException extends BadRequestException {
     return new NoBillingAccountException(
         String.format(
             "Billing acocunt id required, but none found on spend profile %s",
-            spendProfileId.id()));
+            spendProfileId.getId()));
   }
 }

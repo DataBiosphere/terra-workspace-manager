@@ -31,7 +31,7 @@ import bio.terra.workspace.service.resource.referenced.exception.InvalidReferenc
 import bio.terra.workspace.service.resource.referenced.flight.create.CreateReferenceMetadataStep;
 import bio.terra.workspace.service.resource.referenced.flight.create.ValidateReferenceStep;
 import bio.terra.workspace.service.workspace.WorkspaceService;
-import bio.terra.workspace.service.workspace.model.WorkspaceRequest;
+import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.util.ArrayList;
@@ -218,10 +218,10 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
    * MC_WORKSPACE. Returns the generated workspace ID.
    */
   private UUID createMcTestWorkspace() {
-    WorkspaceRequest request =
-        WorkspaceRequest.builder()
+    Workspace request =
+        Workspace.builder()
             .workspaceId(UUID.randomUUID())
-            .spendProfileId(Optional.empty())
+            .spendProfileId(null)
             .workspaceStage(WorkspaceStage.MC_WORKSPACE)
             .build();
     return workspaceService.createWorkspace(request, USER_REQUEST);

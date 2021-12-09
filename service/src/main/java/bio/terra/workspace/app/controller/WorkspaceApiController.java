@@ -19,6 +19,7 @@ import bio.terra.workspace.generated.model.ApiGcpContext;
 import bio.terra.workspace.generated.model.ApiGrantRoleRequestBody;
 import bio.terra.workspace.generated.model.ApiIamRole;
 import bio.terra.workspace.generated.model.ApiJobReport.StatusEnum;
+import bio.terra.workspace.generated.model.ApiProperty;
 import bio.terra.workspace.generated.model.ApiReferenceTypeEnum;
 import bio.terra.workspace.generated.model.ApiRoleBinding;
 import bio.terra.workspace.generated.model.ApiRoleBindingList;
@@ -51,9 +52,10 @@ import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.WsmApplicationService;
 import bio.terra.workspace.service.workspace.model.GcpCloudContext;
 import bio.terra.workspace.service.workspace.model.Workspace;
-import bio.terra.workspace.service.workspace.model.WorkspaceRequest;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -121,17 +123,26 @@ public class WorkspaceApiController implements WorkspaceApi {
     requestStage = (requestStage == null ? ApiWorkspaceStageModel.RAWLS_WORKSPACE : requestStage);
     WorkspaceStage internalStage = WorkspaceStage.fromApiModel(requestStage);
     Optional<SpendProfileId> spendProfileId =
-        Optional.ofNullable(body.getSpendProfile()).map(SpendProfileId::create);
+        Optional.ofNullable(body.getSpendProfile()).map(SpendProfileId::new);
 
-    WorkspaceRequest internalRequest =
-        WorkspaceRequest.builder()
+    Map<String, String> propertyMap = new HashMap<>();
+    if (body.getProperties() != null) {
+      for (ApiProperty property : body.getProperties()) {
+        ControllerValidationUtils.validatePropertyKey(property.getKey());
+        propertyMap.put(property.getKey(), property.getValue());
+      }
+    }
+
+    Workspace workspace =
+        Workspace.builder()
             .workspaceId(body.getId())
-            .spendProfileId(spendProfileId)
+            .spendProfileId(spendProfileId.orElse(null))
             .workspaceStage(internalStage)
-            .displayName(Optional.ofNullable(body.getDisplayName()))
-            .description(Optional.ofNullable(body.getDescription()))
+            .displayName(body.getDisplayName())
+            .description(body.getDescription())
+            .properties(propertyMap)
             .build();
-    UUID createdId = workspaceService.createWorkspace(internalRequest, userRequest);
+    UUID createdId = workspaceService.createWorkspace(workspace, userRequest);
 
     ApiCreatedWorkspace responseWorkspace = new ApiCreatedWorkspace().id(createdId);
     logger.info("Created workspace {} for {}", responseWorkspace, userRequest.getEmail());
@@ -168,7 +179,7 @@ public class WorkspaceApiController implements WorkspaceApi {
 
     return new ApiWorkspaceDescription()
         .id(workspace.getWorkspaceId())
-        .spendProfile(workspace.getSpendProfileId().map(SpendProfileId::id).orElse(null))
+        .spendProfile(workspace.getSpendProfileId().map(SpendProfileId::getId).orElse(null))
         .stage(workspace.getWorkspaceStage().toApiModel())
         .gcpContext(gcpContext)
         .displayName(workspace.getDisplayName().orElse(null))

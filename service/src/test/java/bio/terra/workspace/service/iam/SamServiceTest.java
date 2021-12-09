@@ -34,7 +34,6 @@ import bio.terra.workspace.service.resource.referenced.ReferencedResourceService
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.exceptions.StageDisabledException;
 import bio.terra.workspace.service.workspace.model.Workspace;
-import bio.terra.workspace.service.workspace.model.WorkspaceRequest;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
 import java.util.Collections;
 import java.util.List;
@@ -150,12 +149,12 @@ class SamServiceTest extends BaseConnectedTest {
     // RAWLS_WORKSPACEs do not own their own Sam resources, so we need to manage them separately.
     samService.createWorkspaceWithDefaults(defaultUserRequest(), workspaceId);
 
-    WorkspaceRequest rawlsRequest =
-        WorkspaceRequest.builder()
+    Workspace rawlsWorkspace =
+        Workspace.builder()
             .workspaceId(workspaceId)
             .workspaceStage(WorkspaceStage.RAWLS_WORKSPACE)
             .build();
-    workspaceService.createWorkspace(rawlsRequest, defaultUserRequest());
+    workspaceService.createWorkspace(rawlsWorkspace, defaultUserRequest());
     assertThrows(
         StageDisabledException.class,
         () ->
@@ -347,8 +346,8 @@ class SamServiceTest extends BaseConnectedTest {
   }
 
   private UUID createWorkspaceForUser(AuthenticatedUserRequest userRequest) {
-    WorkspaceRequest request =
-        WorkspaceRequest.builder()
+    Workspace request =
+        Workspace.builder()
             .workspaceId(UUID.randomUUID())
             .workspaceStage(WorkspaceStage.MC_WORKSPACE)
             .build();

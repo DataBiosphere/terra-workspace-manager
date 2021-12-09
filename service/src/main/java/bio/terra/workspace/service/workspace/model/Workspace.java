@@ -156,6 +156,12 @@ public class Workspace {
       if (properties == null) {
         properties = new HashMap<>();
       }
+      if (displayName == null) {
+        displayName = "";
+      }
+      if (description == null) {
+        description = "";
+      }
       if (workspaceId == null || workspaceStage == null) {
         throw new MissingRequiredFieldsException("Workspace requires id and stage");
       }

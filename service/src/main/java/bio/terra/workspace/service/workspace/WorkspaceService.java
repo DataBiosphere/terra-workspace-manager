@@ -21,7 +21,6 @@ import bio.terra.workspace.service.workspace.flight.WorkspaceDeleteFlight;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import bio.terra.workspace.service.workspace.model.Workspace;
-import bio.terra.workspace.service.workspace.model.WorkspaceRequest;
 import io.opencensus.contrib.spring.aop.Traced;
 import java.util.List;
 import java.util.Optional;
@@ -71,32 +70,16 @@ public class WorkspaceService {
 
   /** Create a workspace with the specified parameters. Returns workspaceID of the new workspace. */
   @Traced
-  public UUID createWorkspace(
-      WorkspaceRequest workspaceRequest, AuthenticatedUserRequest userRequest) {
+  public UUID createWorkspace(Workspace workspace, AuthenticatedUserRequest userRequest) {
+    String description = "Create workspace " + workspace.getWorkspaceId().toString();
 
-    String description = "Create workspace " + workspaceRequest.workspaceId().toString();
     JobBuilder createJob =
-        jobService
-            .newJob(
-                description,
-                UUID.randomUUID().toString(),
-                WorkspaceCreateFlight.class,
-                null,
-                userRequest)
-            .addParameter(
-                WorkspaceFlightMapKeys.WORKSPACE_ID, workspaceRequest.workspaceId().toString());
-    if (workspaceRequest.spendProfileId().isPresent()) {
-      createJob.addParameter(
-          WorkspaceFlightMapKeys.SPEND_PROFILE_ID, workspaceRequest.spendProfileId().get().id());
-    }
-
-    createJob.addParameter(
-        WorkspaceFlightMapKeys.WORKSPACE_STAGE, workspaceRequest.workspaceStage().name());
-
-    createJob.addParameter(
-        WorkspaceFlightMapKeys.DISPLAY_NAME, workspaceRequest.displayName().orElse(""));
-    createJob.addParameter(
-        WorkspaceFlightMapKeys.DESCRIPTION, workspaceRequest.description().orElse(""));
+        jobService.newJob(
+            description,
+            UUID.randomUUID().toString(),
+            WorkspaceCreateFlight.class,
+            workspace,
+            userRequest);
     return createJob.submitAndWait(UUID.class);
   }
 
