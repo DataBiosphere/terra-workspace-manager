@@ -91,8 +91,8 @@ public class WorkspaceService {
    * <p>Throws WorkspaceNotFoundException from getWorkspace if the workspace does not exist,
    * regardless of the user's permission.
    *
-   * <p>Throws SamUnauthorizedException if the user is not permitted to perform the specified action
-   * on the workspace in question.
+   * <p>Throws ForbiddenException if the user is not permitted to perform the specified action on
+   * the workspace in question.
    *
    * <p>Returns the Workspace object if it exists and the user is permitted to perform the specified
    * action.
