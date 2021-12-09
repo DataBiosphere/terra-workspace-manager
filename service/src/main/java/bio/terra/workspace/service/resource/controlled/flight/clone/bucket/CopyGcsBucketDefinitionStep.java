@@ -78,7 +78,7 @@ public class CopyGcsBucketDefinitionStep implements Step {
     final PrivateResourceState privateResourceState =
         sourceBucket.getAccessScope() == AccessScopeType.ACCESS_SCOPE_PRIVATE
             ? PrivateResourceState.INITIALIZING
-            : null;
+            : PrivateResourceState.NOT_APPLICABLE;
     // Store effective bucket name for destination
     workingMap.put(ControlledResourceKeys.DESTINATION_BUCKET_NAME, bucketName);
     final UUID destinationWorkspaceId =
@@ -86,18 +86,18 @@ public class CopyGcsBucketDefinitionStep implements Step {
 
     // bucket resource for create flight
     ControlledGcsBucketResource destinationBucketResource =
-        new ControlledGcsBucketResource(
-            destinationWorkspaceId,
-            UUID.randomUUID(), // random ID for new resource
-            resourceName,
-            description,
-            sourceBucket.getCloningInstructions(),
-            sourceBucket.getAssignedUser().orElse(null),
-            privateResourceState,
-            sourceBucket.getAccessScope(),
-            sourceBucket.getManagedBy(),
-            sourceBucket.getApplicationId(),
-            bucketName);
+        ControlledGcsBucketResource.builder()
+            .workspaceId(destinationWorkspaceId)
+            .resourceId(UUID.randomUUID()) // random ID for new resource
+            .name(resourceName)
+            .description(description)
+            .cloningInstructions(sourceBucket.getCloningInstructions())
+            .assignedUser(sourceBucket.getAssignedUser().orElse(null))
+            .accessScope(sourceBucket.getAccessScope())
+            .managedBy(sourceBucket.getManagedBy())
+            .applicationId(sourceBucket.getApplicationId())
+            .bucketName(bucketName)
+            .build();
 
     final ApiGcpGcsBucketCreationParameters destinationCreationParameters =
         getDestinationCreationParameters(inputParameters, workingMap);

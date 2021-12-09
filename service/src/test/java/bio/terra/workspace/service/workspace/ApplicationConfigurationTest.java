@@ -55,17 +55,19 @@ public class ApplicationConfigurationTest extends BaseTest {
     assertEquals(leoApp.getState(), WsmApplicationState.OPERATING);
   }
 
-  private void checkCarmen(WsmApplication leoApp) {
-    assertEquals(leoApp.getDisplayName(), "Carmen");
-    assertEquals(leoApp.getDescription(), "musical performance framework");
-    assertEquals(leoApp.getServiceAccount(), "carmen@terra-dev.iam.gserviceaccount.com");
-    assertEquals(leoApp.getState(), WsmApplicationState.DEPRECATED);
+  private void checkCarmen(WsmApplication carmenApp) {
+    assertEquals(carmenApp.getDisplayName(), "Carmen");
+    assertEquals(carmenApp.getDescription(), "musical performance framework");
+    assertEquals(carmenApp.getServiceAccount(), "carmen@terra-dev.iam.gserviceaccount.com");
+    assertEquals(carmenApp.getState(), WsmApplicationState.DEPRECATED);
   }
 
-  private void checkTestWsmApp(WsmApplication leoApp) {
-    assertEquals(leoApp.getDisplayName(), "TestWsmApp");
-    assertEquals(leoApp.getDescription(), "WSM test application");
-    assertEquals(leoApp.getServiceAccount(), "Elizabeth.Shadowmoon@test.firecloud.org");
-    assertEquals(leoApp.getState(), WsmApplicationState.OPERATING);
+  private void checkTestWsmApp(WsmApplication testApp) {
+    assertEquals(testApp.getDisplayName(), "TestWsmApp");
+    assertEquals(testApp.getDescription(), "WSM test application");
+    // Note that SAs (and all other emails) are always stored as lowercase strings.
+    assertEquals(
+        testApp.getServiceAccount(), "Elizabeth.Shadowmoon@test.firecloud.org".toLowerCase());
+    assertEquals(testApp.getState(), WsmApplicationState.OPERATING);
   }
 }
