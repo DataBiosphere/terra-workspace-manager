@@ -1,6 +1,7 @@
 package bio.terra.workspace.service.resource.controlled;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import bio.terra.common.exception.BadRequestException;
@@ -21,9 +22,6 @@ public class ControlledAiNotebookInstanceResourceTest extends BaseUnitTest {
 
   @Test
   public void validateNoRequiredFieldThrows() {
-    assertThrows(
-        MissingRequiredFieldException.class,
-        () -> ControlledResourceFixtures.makeDefaultAiNotebookInstance().instanceId(null).build());
     assertThrows(
         MissingRequiredFieldException.class,
         () -> ControlledResourceFixtures.makeDefaultAiNotebookInstance().location(null).build());
@@ -47,6 +45,14 @@ public class ControlledAiNotebookInstanceResourceTest extends BaseUnitTest {
             ControlledResourceFixtures.makeDefaultAiNotebookInstance()
                 .instanceId("Invalid Instance Id %$^%$^")
                 .build());
+  }
+
+  @Test
+  public void instanceIdIsNull_generateAUniqueInstanceId() {
+    ControlledAiNotebookInstanceResource resource =
+        ControlledResourceFixtures.makeDefaultAiNotebookInstance().instanceId(null).build();
+
+    assertNotNull(resource.getInstanceId());
   }
 
   @Test
