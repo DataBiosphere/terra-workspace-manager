@@ -22,7 +22,7 @@ public class DeleteWorkspaceWithControlledResource extends WorkspaceAllocateTest
   private static final Logger logger =
       LoggerFactory.getLogger(DeleteGcpContextWithControlledResource.class);
 
-  private static final String DATASET_RESOURCE_NAME = "wsmtest_dataset";
+  private static final String DATASET_NAME = "wsmtest_dataset";
 
   @Override
   protected void doUserJourney(TestUserSpecification testUser, WorkspaceApi workspaceApi)
@@ -37,7 +37,7 @@ public class DeleteWorkspaceWithControlledResource extends WorkspaceAllocateTest
     // Create a shared BigQuery dataset
     GcpBigQueryDatasetResource createdDataset =
         ResourceMaker.makeControlledBigQueryDatasetUserShared(
-            resourceApi, getWorkspaceId(), DATASET_RESOURCE_NAME, null, null);
+            resourceApi, getWorkspaceId(), DATASET_NAME, null);
     UUID resourceId = createdDataset.getMetadata().getResourceId();
     logger.info("Created controlled dataset {}", resourceId);
 

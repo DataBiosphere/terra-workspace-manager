@@ -93,20 +93,16 @@ public class RemoveUser extends WorkspaceAllocateTestScriptBase {
     ResourceModifier.addFileToBucket(privateBucket, privateResourceUser, projectId);
 
     // Create a private BQ dataset for privateResourceUser and populate it.
-    String datasetResourceName = RandomStringUtils.randomAlphabetic(8).toLowerCase();
+    String datasetId = RandomStringUtils.randomAlphabetic(8).toLowerCase();
     privateDataset =
         ResourceMaker.makeControlledBigQueryDatasetUserPrivate(
-            privateUserResourceApi,
-            getWorkspaceId(),
-            datasetResourceName,
-            null,
-            CloningInstructionsEnum.NOTHING);
+            privateUserResourceApi, getWorkspaceId(), datasetId, CloningInstructionsEnum.NOTHING);
     ResourceModifier.populateBigQueryDataset(privateDataset, privateResourceUser, projectId);
     // Create a private notebook for privateResourceUser.
     String notebookInstanceId = RandomStringUtils.randomAlphabetic(8).toLowerCase();
     privateNotebook =
         ResourceMaker.makeControlledNotebookUserPrivate(
-            getWorkspaceId(), notebookInstanceId, privateUserResourceApi);
+            getWorkspaceId(), notebookInstanceId, privateResourceUser, privateUserResourceApi);
   }
 
   @Override

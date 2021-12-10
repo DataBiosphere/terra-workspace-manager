@@ -70,10 +70,10 @@ public class CloneBigQueryDataset extends WorkspaceAllocateTestScriptBase {
 
     // Construct the source dataset
     nameSuffix = UUID.randomUUID().toString();
-    final String datasetResourceName = (RESOURCE_PREFIX + nameSuffix).replace('-', '_');
+    final String sourceResourceName = (RESOURCE_PREFIX + nameSuffix).replace('-', '_');
     sourceDataset =
         makeControlledBigQueryDatasetUserShared(
-            sourceOwnerResourceApi, getWorkspaceId(), datasetResourceName, null, null);
+            sourceOwnerResourceApi, getWorkspaceId(), sourceResourceName, null);
 
     ResourceModifier.populateBigQueryDataset(sourceDataset, sourceOwnerUser, sourceProjectId);
 
@@ -185,8 +185,6 @@ public class CloneBigQueryDataset extends WorkspaceAllocateTestScriptBase {
     assertEquals(
         sourceDataset.getAttributes().getDatasetId(),
         clonedResource.getAttributes().getDatasetId());
-    assertEquals(
-        sourceDataset.getMetadata().getName(), sourceDataset.getAttributes().getDatasetId());
 
     // compare dataset contents
     final BigQuery bigQueryClient =

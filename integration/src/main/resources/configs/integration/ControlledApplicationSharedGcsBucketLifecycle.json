@@ -1,5 +1,5 @@
 {
-  "name": "ControlledApplicationSharedGcsBucketLifecycle",
+  "name": "ControlledApplicationLifecycle",
   "description": "Controlled application resource tests.",
   "serverSpecificationFile": "workspace-local.json",
   "kubernetes": {},

@@ -12,11 +12,8 @@ import bio.terra.workspace.service.resource.model.CloningInstructions;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.UUID;
-import javax.annotation.Nullable;
-import org.apache.commons.lang3.RandomStringUtils;
 
 public class ControlledGcsBucketResource extends ControlledResource {
-
   private final String bucketName;
 
   @JsonCreator
@@ -96,15 +93,9 @@ public class ControlledGcsBucketResource extends ControlledResource {
 
   @Override
   public boolean equals(Object o) {
-    if (this == o) {
-      return true;
-    }
-    if (o == null || getClass() != o.getClass()) {
-      return false;
-    }
-    if (!super.equals(o)) {
-      return false;
-    }
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    if (!super.equals(o)) return false;
 
     ControlledGcsBucketResource that = (ControlledGcsBucketResource) o;
 
@@ -118,13 +109,7 @@ public class ControlledGcsBucketResource extends ControlledResource {
     return result;
   }
 
-  private static String generateBucketName() {
-    return String.format("terra_%s_bucket",
-        UUID.randomUUID()).replace("-", "_");
-  }
-
   public static class Builder {
-
     private UUID workspaceId;
     private UUID resourceId;
     private String name;
@@ -162,8 +147,8 @@ public class ControlledGcsBucketResource extends ControlledResource {
       return this;
     }
 
-    public ControlledGcsBucketResource.Builder bucketName(@Nullable String bucketName) {
-      this.bucketName = bucketName == null? generateBucketName():bucketName;
+    public ControlledGcsBucketResource.Builder bucketName(String bucketName) {
+      this.bucketName = bucketName;
       return this;
     }
 

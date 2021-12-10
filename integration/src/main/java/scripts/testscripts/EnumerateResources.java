@@ -353,11 +353,7 @@ public class EnumerateResources extends DataRepoTestScriptBase {
           {
             GcpBigQueryDatasetResource resource =
                 ResourceMaker.makeControlledBigQueryDatasetUserShared(
-                    controlledGcpResourceApi,
-                    workspaceId,
-                    name,
-                    null,
-                    CloningInstructionsEnum.NOTHING);
+                    controlledGcpResourceApi, workspaceId, name, CloningInstructionsEnum.NOTHING);
             resourceList.add(resource.getMetadata());
             break;
           }

@@ -117,7 +117,6 @@ public class ControlledApplicationSharedGcsBucketLifecycle extends WorkspaceAllo
             bucketResourceName,
             CloningInstructionsEnum.NOTHING);
     bucketName = createdBucket.getGcpBucket().getAttributes().getBucketName();
-    assertNotNull(bucketName);
     logger.info("Created bucket {}", bucketName);
 
     // Try to disable; should error because you cannot disable an app if it owns resources

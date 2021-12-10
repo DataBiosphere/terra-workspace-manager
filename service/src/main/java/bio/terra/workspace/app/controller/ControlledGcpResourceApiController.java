@@ -345,7 +345,7 @@ public class ControlledGcpResourceApiController implements ControlledGcpResource
             .accessScope(AccessScopeType.fromApi(body.getCommon().getAccessScope()))
             .managedBy(managedBy)
             .applicationId(controlledResourceService.getAssociatedApp(managedBy, userRequest))
-            .datasetName(body.getDataset().getDatasetId() == null? body.getCommon().getName():body.getDataset().getDatasetId())
+            .datasetName(body.getDataset().getDatasetId())
             .build();
 
     final ControlledBigQueryDatasetResource createdDataset =
@@ -376,6 +376,7 @@ public class ControlledGcpResourceApiController implements ControlledGcpResource
       UUID workspaceId, @Valid ApiCreateControlledGcpAiNotebookInstanceRequestBody body) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
 
+    ValidationUtils.validate(body.getAiNotebookInstance());
     PrivateUserRole privateUserRole =
         computePrivateUserRole(workspaceId, body.getCommon(), userRequest);
 
