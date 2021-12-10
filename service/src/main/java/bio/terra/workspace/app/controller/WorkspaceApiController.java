@@ -19,6 +19,7 @@ import bio.terra.workspace.generated.model.ApiGcpContext;
 import bio.terra.workspace.generated.model.ApiGrantRoleRequestBody;
 import bio.terra.workspace.generated.model.ApiIamRole;
 import bio.terra.workspace.generated.model.ApiJobReport.StatusEnum;
+import bio.terra.workspace.generated.model.ApiProperties;
 import bio.terra.workspace.generated.model.ApiProperty;
 import bio.terra.workspace.generated.model.ApiReferenceTypeEnum;
 import bio.terra.workspace.generated.model.ApiRoleBinding;
@@ -125,14 +126,6 @@ public class WorkspaceApiController implements WorkspaceApi {
     Optional<SpendProfileId> spendProfileId =
         Optional.ofNullable(body.getSpendProfile()).map(SpendProfileId::new);
 
-    Map<String, String> propertyMap = new HashMap<>();
-    if (body.getProperties() != null) {
-      for (ApiProperty property : body.getProperties()) {
-        ControllerValidationUtils.validatePropertyKey(property.getKey());
-        propertyMap.put(property.getKey(), property.getValue());
-      }
-    }
-
     Workspace workspace =
         Workspace.builder()
             .workspaceId(body.getId())
@@ -140,7 +133,7 @@ public class WorkspaceApiController implements WorkspaceApi {
             .workspaceStage(internalStage)
             .displayName(body.getDisplayName())
             .description(body.getDescription())
-            .properties(propertyMap)
+            .properties(propertyMapFromApi(body.getProperties()))
             .build();
     UUID createdId = workspaceService.createWorkspace(workspace, userRequest);
 
@@ -175,15 +168,20 @@ public class WorkspaceApiController implements WorkspaceApi {
             .getGcpCloudContext(workspace.getWorkspaceId())
             .map(GcpCloudContext::toApi)
             .orElse(null);
-    // When we have another cloud context, we will need to do a similar retrieval for it.
 
+    // Convert the property map to API format
+    ApiProperties apiProperties = new ApiProperties();
+    workspace.getProperties().forEach((k,v) -> apiProperties.add(new ApiProperty().key(k).value(v)));
+
+    // When we have another cloud context, we will need to do a similar retrieval for it.
     return new ApiWorkspaceDescription()
         .id(workspace.getWorkspaceId())
         .spendProfile(workspace.getSpendProfileId().map(SpendProfileId::getId).orElse(null))
         .stage(workspace.getWorkspaceStage().toApiModel())
         .gcpContext(gcpContext)
         .displayName(workspace.getDisplayName().orElse(null))
-        .description(workspace.getDescription().orElse(null));
+        .description(workspace.getDescription().orElse(null))
+        .properties(apiProperties);
   }
 
   @Override
@@ -204,9 +202,15 @@ public class WorkspaceApiController implements WorkspaceApi {
       @RequestBody ApiUpdateWorkspaceRequestBody body) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     logger.info("Updating workspace {} for {}", workspaceId, userRequest.getEmail());
+
+    Map<String, String> propertyMap = null;
+    if (body.getProperties() != null) {
+      propertyMap = propertyMapFromApi(body.getProperties());
+    }
+
     Workspace workspace =
         workspaceService.updateWorkspace(
-            userRequest, workspaceId, body.getDisplayName(), body.getDescription());
+            userRequest, workspaceId, body.getDisplayName(), body.getDescription(), propertyMap);
 
     ApiWorkspaceDescription desc = buildWorkspaceDescription(workspace);
     logger.info("Updated workspace {} for {}", desc, userRequest.getEmail());
@@ -547,4 +551,17 @@ public class WorkspaceApiController implements WorkspaceApi {
         .errorReport(jobResult.getApiErrorReport())
         .workspace(jobResult.getResult());
   }
+
+  // Convert properties list into a map
+  private Map<String, String> propertyMapFromApi(ApiProperties properties) {
+    Map<String, String> propertyMap = new HashMap<>();
+    if (properties != null) {
+      for (ApiProperty property : properties) {
+        ControllerValidationUtils.validatePropertyKey(property.getKey());
+        propertyMap.put(property.getKey(), property.getValue());
+      }
+    }
+    return propertyMap;
+  }
+
 }

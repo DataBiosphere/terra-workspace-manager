@@ -210,50 +210,66 @@ class WorkspaceServiceTest extends BaseConnectedTest {
 
     Workspace createdWorkspace =
         workspaceService.getWorkspace(request.getWorkspaceId(), USER_REQUEST);
+
     assertEquals(
-        request.getDescription().orElse(null), createdWorkspace.getWorkspaceId().toString());
+        request.getDescription().orElse(null),
+        createdWorkspace.getDescription().orElse(null));
     assertEquals(name, createdWorkspace.getDisplayName().orElse(null));
     assertEquals(description, createdWorkspace.getDescription().orElse(null));
   }
 
   @Test
   void testUpdateWorkspace() {
-    Workspace request = defaultRequestBuilder(UUID.randomUUID()).build();
+    Map<String, String> propertyMap = new HashMap<>();
+    propertyMap.put("foo", "bar");
+    propertyMap.put("xyzzy", "plohg");
+    Workspace request = defaultRequestBuilder(UUID.randomUUID())
+        .properties(propertyMap)
+        .build();
+
     workspaceService.createWorkspace(request, USER_REQUEST);
     Workspace createdWorkspace =
         workspaceService.getWorkspace(request.getWorkspaceId(), USER_REQUEST);
     assertEquals(request.getWorkspaceId(), createdWorkspace.getWorkspaceId());
     assertEquals("", createdWorkspace.getDisplayName().orElse(null));
     assertEquals("", createdWorkspace.getDescription().orElse(null));
+    assertEquals(propertyMap, createdWorkspace.getProperties());
 
     UUID workspaceId = request.getWorkspaceId();
     String name = "My workspace";
     String description = "The greatest workspace";
+    Map<String, String> propertyMap2 = new HashMap<>();
+    propertyMap.put("ted", "lasso");
+    propertyMap.put("keeley", "jones");
 
     Workspace updatedWorkspace =
-        workspaceService.updateWorkspace(USER_REQUEST, workspaceId, name, description);
+        workspaceService.updateWorkspace(USER_REQUEST, workspaceId, name, description, propertyMap2);
 
     assertEquals(name, updatedWorkspace.getDisplayName().orElse(null));
     assertEquals(description, updatedWorkspace.getDescription().orElse(null));
+    assertEquals(propertyMap2, updatedWorkspace.getProperties());
 
     String otherDescription = "The deprecated workspace";
 
     Workspace secondUpdatedWorkspace =
-        workspaceService.updateWorkspace(USER_REQUEST, workspaceId, null, otherDescription);
+        workspaceService.updateWorkspace(USER_REQUEST, workspaceId, null, otherDescription, null);
 
-    // Since name is null, leave it alone. Description should be updated.
+    // Since name and properties are null, leave it alone. Description should be updated.
     assertEquals(name, secondUpdatedWorkspace.getDisplayName().orElse(null));
     assertEquals(otherDescription, secondUpdatedWorkspace.getDescription().orElse(null));
+    assertEquals(propertyMap2, secondUpdatedWorkspace.getProperties());
 
     // Sending through empty strings clears the values.
+    Map<String, String> propertyMap3 = new HashMap<>();
     Workspace thirdUpdatedWorkspace =
-        workspaceService.updateWorkspace(USER_REQUEST, workspaceId, "", "");
+        workspaceService.updateWorkspace(USER_REQUEST, workspaceId, "", "", propertyMap3);
     assertEquals("", thirdUpdatedWorkspace.getDisplayName().orElse(null));
     assertEquals("", thirdUpdatedWorkspace.getDescription().orElse(null));
+    assertEquals(propertyMap3, thirdUpdatedWorkspace.getProperties());
 
     assertThrows(
         MissingRequiredFieldException.class,
-        () -> workspaceService.updateWorkspace(USER_REQUEST, workspaceId, null, null));
+        () -> workspaceService.updateWorkspace(USER_REQUEST, workspaceId, null, null, null));
   }
 
   @Test
@@ -470,6 +486,7 @@ class WorkspaceServiceTest extends BaseConnectedTest {
             workspaceService.createGcpCloudContext(
                 request.getWorkspaceId(), jobId, USER_REQUEST, "/fake/value"));
   }
+
 
   /**
    * Convenience method for getting a WorkspaceRequest builder with some pre-filled default values.

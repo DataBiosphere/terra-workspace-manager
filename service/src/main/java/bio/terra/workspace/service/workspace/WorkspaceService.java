@@ -23,6 +23,7 @@ import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.Contr
 import bio.terra.workspace.service.workspace.model.Workspace;
 import io.opencensus.contrib.spring.aop.Traced;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -152,9 +153,10 @@ public class WorkspaceService {
       AuthenticatedUserRequest userRequest,
       UUID workspaceId,
       @Nullable String name,
-      @Nullable String description) {
+      @Nullable String description,
+      @Nullable Map<String, String> properties) {
     validateWorkspaceAndAction(userRequest, workspaceId, SamConstants.SamWorkspaceAction.WRITE);
-    workspaceDao.updateWorkspace(workspaceId, name, description);
+    workspaceDao.updateWorkspace(workspaceId, name, description, properties);
     return workspaceDao.getWorkspace(workspaceId);
   }
 

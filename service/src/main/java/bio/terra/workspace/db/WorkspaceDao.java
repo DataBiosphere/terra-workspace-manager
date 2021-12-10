@@ -11,8 +11,10 @@ import bio.terra.workspace.service.workspace.exceptions.DuplicateWorkspaceExcept
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -77,7 +79,7 @@ public class WorkspaceDao {
     final String sql =
         "INSERT INTO workspace (workspace_id, display_name, description, spend_profile, properties, workspace_stage) "
             + "values (:workspace_id, :display_name, :description, :spend_profile,"
-            + " cast(:properties AS json), :workspace_stage)";
+            + " cast(:properties AS jsonb), :workspace_stage)";
 
     final String workspaceId = workspace.getWorkspaceId().toString();
 
@@ -153,44 +155,39 @@ public class WorkspaceDao {
   }
 
   @WriteTransaction
-  public boolean updateWorkspace(UUID workspaceId, String name, String description) {
-    if (name == null && description == null) {
-      throw new MissingRequiredFieldException("Must specify name or description to update.");
+  public boolean updateWorkspace(UUID workspaceId,
+      String name,
+      String description,
+      Map<String, String> propertyMap) {
+    if (name == null && description == null && propertyMap == null) {
+      throw new MissingRequiredFieldException("Must specify name, description, or properties to update.");
     }
 
+    List<String> columnSet = new ArrayList<>();
     var params = new MapSqlParameterSource();
+    params.addValue("workspace_id", workspaceId.toString());
 
     if (name != null) {
       params.addValue("display_name", name);
+      columnSet.add(" display_name = :display_name");
     }
 
     if (description != null) {
       params.addValue("description", description);
+      columnSet.add(" description = :description");
     }
 
-    return updateWorkspaceColumns(workspaceId, params);
-  }
+    if (propertyMap != null) {
+      params.addValue("properties", DbSerDes.propertiesToJson(propertyMap));
+      columnSet.add(" properties = cast(:properties AS jsonb)");
+    }
 
-  /**
-   * This is an open ended method for constructing the SQL update statement. To use it, build the
-   * parameter list making the param name equal to the column name you want to update. The method
-   * generates the column_name = :column_name list. It is an error if the params map is empty.
-   *
-   * @param workspaceId workspace identifier - not strictly necessarily, but an extra validation
-   * @param columnParams sql parameters
-   */
-  private boolean updateWorkspaceColumns(UUID workspaceId, MapSqlParameterSource columnParams) {
-    StringBuilder sb = new StringBuilder("UPDATE workspace SET ");
+    String sql = String.format(
+        "UPDATE workspace SET %s WHERE workspace_id = :workspace_id",
+        String.join(",", columnSet));
 
-    sb.append(DbUtils.setColumnsClause(columnParams));
-    sb.append(" WHERE workspace_id = :workspace_id");
 
-    MapSqlParameterSource queryParams = new MapSqlParameterSource();
-    queryParams
-        .addValues(columnParams.getValues())
-        .addValue("workspace_id", workspaceId.toString());
-
-    int rowsAffected = jdbcTemplate.update(sb.toString(), queryParams);
+    int rowsAffected = jdbcTemplate.update(sql, params);
     boolean updated = rowsAffected > 0;
 
     logger.info(
