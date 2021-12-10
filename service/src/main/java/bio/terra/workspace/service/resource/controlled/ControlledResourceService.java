@@ -103,12 +103,11 @@ public class ControlledResourceService {
             resource.getBucketName(), resource.getResourceId(), resource.getName());
     final JobBuilder jobBuilder =
         jobService
-            .newJob(
-                jobDescription,
-                UUID.randomUUID().toString(), // no need to track ID
-                UpdateControlledGcsBucketResourceFlight.class,
-                resource,
-                userRequest)
+            .newJob()
+            .description(jobDescription)
+            .flightClass(UpdateControlledGcsBucketResourceFlight.class)
+            .request(resource)
+            .userRequest(userRequest)
             .addParameter(ControlledResourceKeys.UPDATE_PARAMETERS, updateParameters)
             .addParameter(ResourceKeys.RESOURCE_NAME, resourceName)
             .addParameter(ResourceKeys.RESOURCE_DESCRIPTION, resourceDescription);
@@ -163,12 +162,12 @@ public class ControlledResourceService {
 
     final JobBuilder jobBuilder =
         jobService
-            .newJob(
-                jobDescription,
-                jobControl.getId(),
-                CloneControlledGcsBucketResourceFlight.class,
-                sourceBucketResource,
-                userRequest)
+            .newJob()
+            .description(jobDescription)
+            .jobId(jobControl.getId())
+            .flightClass(CloneControlledGcsBucketResourceFlight.class)
+            .request(sourceBucketResource)
+            .userRequest(userRequest)
             .addParameter(ControlledResourceKeys.DESTINATION_WORKSPACE_ID, destinationWorkspaceId)
             .addParameter(ResourceKeys.RESOURCE_NAME, destinationResourceName)
             .addParameter(ResourceKeys.RESOURCE_DESCRIPTION, destinationDescription)
@@ -210,12 +209,11 @@ public class ControlledResourceService {
             resource.getDatasetName(), resource.getResourceId(), resource.getName());
     final JobBuilder jobBuilder =
         jobService
-            .newJob(
-                jobDescription,
-                UUID.randomUUID().toString(), // no need to track ID
-                UpdateControlledBigQueryDatasetResourceFlight.class,
-                resource,
-                userRequest)
+            .newJob()
+            .description(jobDescription)
+            .flightClass(UpdateControlledBigQueryDatasetResourceFlight.class)
+            .request(resource)
+            .userRequest(userRequest)
             .addParameter(ControlledResourceKeys.UPDATE_PARAMETERS, updateParameters)
             .addParameter(ResourceKeys.RESOURCE_NAME, resourceName)
             .addParameter(ResourceKeys.RESOURCE_DESCRIPTION, resourceDescription);
@@ -265,12 +263,12 @@ public class ControlledResourceService {
             sourceDatasetResource.getName());
     final JobBuilder jobBuilder =
         jobService
-            .newJob(
-                jobDescription,
-                jobControl.getId(),
-                CloneControlledGcpBigQueryDatasetResourceFlight.class,
-                sourceDatasetResource,
-                userRequest)
+            .newJob()
+            .description(jobDescription)
+            .jobId(jobControl.getId())
+            .flightClass(CloneControlledGcpBigQueryDatasetResourceFlight.class)
+            .request(sourceDatasetResource)
+            .userRequest(userRequest)
             .addParameter(ControlledResourceKeys.DESTINATION_WORKSPACE_ID, destinationWorkspaceId)
             .addParameter(ResourceKeys.RESOURCE_NAME, destinationResourceName)
             .addParameter(ResourceKeys.RESOURCE_DESCRIPTION, destinationDescription)
@@ -339,14 +337,13 @@ public class ControlledResourceService {
             "Create controlled resource %s; id %s; name %s",
             resource.getResourceType(), resource.getResourceId(), resource.getName());
 
-    // Get or create a job id for the flight
-    String jobId =
-        Optional.ofNullable(jobControl)
-            .map(ApiJobControl::getId)
-            .orElse(UUID.randomUUID().toString());
-
     return jobService
-        .newJob(jobDescription, jobId, CreateControlledResourceFlight.class, resource, userRequest)
+        .newJob()
+        .description(jobDescription)
+        .jobId(Optional.ofNullable(jobControl).map(ApiJobControl::getId).orElse(null))
+        .flightClass(CreateControlledResourceFlight.class)
+        .request(resource)
+        .userRequest(userRequest)
         .addParameter(ControlledResourceKeys.PRIVATE_RESOURCE_IAM_ROLE, privateResourceIamRole)
         .addParameter(JobMapKeys.RESULT_PATH.getKeyName(), resultPath);
   }
@@ -487,7 +484,11 @@ public class ControlledResourceService {
     final String jobDescription = "Delete controlled resource; id: " + resourceId.toString();
 
     return jobService
-        .newJob(jobDescription, jobId, DeleteControlledResourceFlight.class, null, userRequest)
+        .newJob()
+        .description(jobDescription)
+        .jobId(jobId)
+        .flightClass(DeleteControlledResourceFlight.class)
+        .userRequest(userRequest)
         .addParameter(WorkspaceFlightMapKeys.WORKSPACE_ID, workspaceId.toString())
         .addParameter(ResourceKeys.RESOURCE_ID, resourceId.toString())
         .addParameter(JobMapKeys.RESULT_PATH.getKeyName(), resultPath);

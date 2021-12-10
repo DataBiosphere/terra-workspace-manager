@@ -102,12 +102,10 @@ public class WsmApplicationService {
 
     JobBuilder job =
         jobService
-            .newJob(
-                description,
-                UUID.randomUUID().toString(),
-                ApplicationAbleFlight.class,
-                null,
-                userRequest)
+            .newJob()
+            .description(description)
+            .flightClass(ApplicationAbleFlight.class)
+            .userRequest(userRequest)
             .addParameter(WorkspaceFlightMapKeys.WORKSPACE_ID, workspaceId)
             .addParameter(WorkspaceFlightMapKeys.APPLICATION_ID, applicationId)
             .addParameter(WsmApplicationKeys.APPLICATION_ABLE_ENUM, ableEnum);

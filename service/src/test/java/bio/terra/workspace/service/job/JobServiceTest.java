@@ -64,8 +64,12 @@ class JobServiceTest extends BaseUnitTest {
     assertThrows(
         InvalidJobIdException.class,
         () ->
-            jobService.newJob(
-                "description", testJobId, JobServiceTestFlight.class, null, testUser));
+            jobService
+                .newJob()
+                .description("description")
+                .jobId(testJobId)
+                .flightClass(JobServiceTestFlight.class)
+                .userRequest(testUser));
   }
 
   @Test
@@ -74,8 +78,12 @@ class JobServiceTest extends BaseUnitTest {
     assertThrows(
         InvalidJobIdException.class,
         () ->
-            jobService.newJob(
-                "description", testJobId, JobServiceTestFlight.class, null, testUser));
+            jobService
+                .newJob()
+                .description("description")
+                .jobId(testJobId)
+                .flightClass(JobServiceTestFlight.class)
+                .userRequest(testUser));
   }
 
   @Test
@@ -174,7 +182,13 @@ class JobServiceTest extends BaseUnitTest {
   // Submit a flight; wait for it to finish; return the flight id
   private String runFlight(String description) {
     String jobId = UUID.randomUUID().toString();
-    jobService.newJob(description, jobId, JobServiceTestFlight.class, null, testUser).submit();
+    jobService
+        .newJob()
+        .description(description)
+        .jobId(jobId)
+        .flightClass(JobServiceTestFlight.class)
+        .userRequest(testUser)
+        .submit();
     jobService.waitForJob(jobId);
     return jobId;
   }
