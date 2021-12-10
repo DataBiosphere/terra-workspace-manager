@@ -1,5 +1,6 @@
 package scripts.utils;
 
+import bio.terra.common.sam.SamRetry;
 import bio.terra.testrunner.common.utils.AuthenticationUtils;
 import bio.terra.testrunner.runner.config.ServerSpecification;
 import bio.terra.testrunner.runner.config.TestUserSpecification;
@@ -17,7 +18,9 @@ import org.slf4j.LoggerFactory;
 
 /**
  * Utilities for making direct calls to Sam incidental to WSM tests. This cannot be merged with
- * similar methods in ClientTestUtils as they use different ApiClient objects.
+ * similar methods in ClientTestUtils as they use different ApiClient objects. Direct calls to
+ * Sam should usually be wrapped in SamRetry.retry() to ensure transient errors are retried, but
+ * legitimated failures aren't run repeatedly.
  */
 public class SamClientUtils {
 
@@ -72,7 +75,7 @@ public class SamClientUtils {
 
     ResourcesApi samApi = new ResourcesApi(getSamApiClient(testUser, server));
     List<AccessPolicyResponseEntryV2> policies =
-        ClientTestUtils.getWithRetryOnException(() -> samApi.listResourcePoliciesV2(resourceTypeName, resourceId));
+        SamRetry.retry(() -> samApi.listResourcePoliciesV2(resourceTypeName, resourceId));
     logger.info("SAM POLICY DUMP for {} id {}", resourceTypeName, resourceId);
     for (AccessPolicyResponseEntryV2 entry : policies) {
       logger.info("  policy: {}", entry);
