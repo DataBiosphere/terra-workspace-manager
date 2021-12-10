@@ -40,7 +40,6 @@ import bio.terra.workspace.service.iam.model.ControlledResourceIamRole;
 import bio.terra.workspace.service.iam.model.SamConstants;
 import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.job.JobService.AsyncJobResult;
-import bio.terra.workspace.service.resource.ValidationUtils;
 import bio.terra.workspace.service.resource.WsmResourceType;
 import bio.terra.workspace.service.resource.controlled.AccessScopeType;
 import bio.terra.workspace.service.resource.controlled.ControlledAiNotebookInstanceResource;
@@ -345,7 +344,10 @@ public class ControlledGcpResourceApiController implements ControlledGcpResource
             .accessScope(AccessScopeType.fromApi(body.getCommon().getAccessScope()))
             .managedBy(managedBy)
             .applicationId(controlledResourceService.getAssociatedApp(managedBy, userRequest))
-            .datasetName(body.getDataset().getDatasetId() == null? body.getCommon().getName():body.getDataset().getDatasetId())
+            .datasetName(
+                body.getDataset().getDatasetId() == null
+                    ? body.getCommon().getName()
+                    : body.getDataset().getDatasetId())
             .build();
 
     final ControlledBigQueryDatasetResource createdDataset =

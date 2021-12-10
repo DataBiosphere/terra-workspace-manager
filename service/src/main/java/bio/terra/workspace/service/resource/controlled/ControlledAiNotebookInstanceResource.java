@@ -15,7 +15,6 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.UUID;
 import javax.annotation.Nullable;
-import org.apache.commons.lang3.RandomStringUtils;
 
 /** A {@link ControlledResource} for a Google AI Platform Notebook instance. */
 public class ControlledAiNotebookInstanceResource extends ControlledResource {
@@ -148,8 +147,7 @@ public class ControlledAiNotebookInstanceResource extends ControlledResource {
   }
 
   public static String generateUniqueInstanceId() {
-    return String.format("terra-%s-notebook",
-        UUID.randomUUID());
+    return String.format("terra-%s-notebook", UUID.randomUUID());
   }
 
   /** Builder for {@link ControlledAiNotebookInstanceResource}. */
@@ -192,7 +190,7 @@ public class ControlledAiNotebookInstanceResource extends ControlledResource {
     }
 
     public Builder instanceId(@Nullable String instanceId) {
-      this.instanceId = instanceId == null? generateUniqueInstanceId():instanceId;
+      this.instanceId = instanceId == null ? generateUniqueInstanceId() : instanceId;
       return this;
     }
 

@@ -13,7 +13,6 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.UUID;
 import javax.annotation.Nullable;
-import org.apache.commons.lang3.RandomStringUtils;
 
 public class ControlledGcsBucketResource extends ControlledResource {
 
@@ -119,8 +118,7 @@ public class ControlledGcsBucketResource extends ControlledResource {
   }
 
   private static String generateBucketName() {
-    return String.format("terra_%s_bucket",
-        UUID.randomUUID()).replace("-", "_");
+    return String.format("terra_%s_bucket", UUID.randomUUID()).replace("-", "_");
   }
 
   public static class Builder {
@@ -163,7 +161,7 @@ public class ControlledGcsBucketResource extends ControlledResource {
     }
 
     public ControlledGcsBucketResource.Builder bucketName(@Nullable String bucketName) {
-      this.bucketName = bucketName == null? generateBucketName():bucketName;
+      this.bucketName = bucketName == null ? generateBucketName() : bucketName;
       return this;
     }
 
