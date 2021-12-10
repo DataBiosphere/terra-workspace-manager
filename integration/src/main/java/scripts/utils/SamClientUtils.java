@@ -72,7 +72,7 @@ public class SamClientUtils {
 
     ResourcesApi samApi = new ResourcesApi(getSamApiClient(testUser, server));
     List<AccessPolicyResponseEntryV2> policies =
-        samApi.listResourcePoliciesV2(resourceTypeName, resourceId);
+        ClientTestUtils.getWithRetryOnException(() -> samApi.listResourcePoliciesV2(resourceTypeName, resourceId));
     logger.info("SAM POLICY DUMP for {} id {}", resourceTypeName, resourceId);
     for (AccessPolicyResponseEntryV2 entry : policies) {
       logger.info("  policy: {}", entry);

@@ -43,7 +43,7 @@ public class EnablePet extends WorkspaceAllocateTestScriptBase {
       throws Exception {
     // Validate that the user cannot impersonate their pet before calling this endpoint.
     GoogleApi samGoogleApi = SamClientUtils.samGoogleApi(testUser, server);
-    String petSaEmail = samGoogleApi.getPetServiceAccount(projectId);
+    String petSaEmail = ClientTestUtils.getWithRetryOnException(() -> samGoogleApi.getPetServiceAccount(projectId));
     Iam userIamClient = ClientTestUtils.getGcpIamClient(testUser);
     assertFalse(canImpersonateSa(userIamClient, petSaEmail));
 
@@ -54,7 +54,7 @@ public class EnablePet extends WorkspaceAllocateTestScriptBase {
     // Validate that calling this endpoint as the pet does not grant the pet permission to
     // impersonate itself.
     String rawPetSaToken =
-        samGoogleApi.getPetServiceAccountToken(projectId, ClientTestUtils.TEST_USER_SCOPES);
+        ClientTestUtils.getWithRetryOnException(() -> samGoogleApi.getPetServiceAccountToken(projectId, ClientTestUtils.TEST_USER_SCOPES));
     AccessToken petSaToken = new AccessToken(rawPetSaToken, null);
     WorkspaceApi petSaWorkspaceApi =
         ClientTestUtils.getWorkspaceClientFromToken(petSaToken, server);
@@ -71,7 +71,7 @@ public class EnablePet extends WorkspaceAllocateTestScriptBase {
         IamRole.READER);
     // Validate the second user cannot impersonate either user's pet.
     GoogleApi secondUserSamGoogleApi = SamClientUtils.samGoogleApi(secondUser, server);
-    String secondUserPetSaEmail = secondUserSamGoogleApi.getPetServiceAccount(projectId);
+    String secondUserPetSaEmail = ClientTestUtils.getWithRetryOnException(() -> secondUserSamGoogleApi.getPetServiceAccount(projectId));
     Iam secondUserIamClient = ClientTestUtils.getGcpIamClient(secondUser);
     assertFalse(canImpersonateSa(secondUserIamClient, secondUserPetSaEmail));
     assertFalse(canImpersonateSa(secondUserIamClient, petSaEmail));
