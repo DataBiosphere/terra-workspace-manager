@@ -24,6 +24,7 @@ import java.io.IOException;
 import java.math.BigInteger;
 import java.util.Collections;
 import java.util.Optional;
+import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.http.HttpStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -51,6 +52,7 @@ public class CreateGcsBucketStep implements Step {
     ApiGcpGcsBucketCreationParameters creationParameters =
         inputMap.get(CREATION_PARAMETERS, ApiGcpGcsBucketCreationParameters.class);
     String projectId = gcpCloudContextService.getRequiredGcpProject(resource.getWorkspaceId());
+
     BucketInfo.Builder bucketInfoBuilder =
         BucketInfo.newBuilder(resource.getBucketName())
             .setLocation(creationParameters.getLocation());
