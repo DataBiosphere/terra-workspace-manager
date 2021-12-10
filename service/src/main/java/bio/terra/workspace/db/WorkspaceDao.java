@@ -155,12 +155,11 @@ public class WorkspaceDao {
   }
 
   @WriteTransaction
-  public boolean updateWorkspace(UUID workspaceId,
-      String name,
-      String description,
-      Map<String, String> propertyMap) {
+  public boolean updateWorkspace(
+      UUID workspaceId, String name, String description, Map<String, String> propertyMap) {
     if (name == null && description == null && propertyMap == null) {
-      throw new MissingRequiredFieldException("Must specify name, description, or properties to update.");
+      throw new MissingRequiredFieldException(
+          "Must specify name, description, or properties to update.");
     }
 
     List<String> columnSet = new ArrayList<>();
@@ -182,10 +181,10 @@ public class WorkspaceDao {
       columnSet.add(" properties = cast(:properties AS jsonb)");
     }
 
-    String sql = String.format(
-        "UPDATE workspace SET %s WHERE workspace_id = :workspace_id",
-        String.join(",", columnSet));
-
+    String sql =
+        String.format(
+            "UPDATE workspace SET %s WHERE workspace_id = :workspace_id",
+            String.join(",", columnSet));
 
     int rowsAffected = jdbcTemplate.update(sql, params);
     boolean updated = rowsAffected > 0;

@@ -2981,6 +2981,9 @@ components:
             GCP Location to use for cloud-based resources. If omitted, the location of the source
             resource will be used.
           type: string
+        properties:
+          $ref: '#/components/schemas/Properties'
+
     CloneWorkspaceResult:
       description: >-
         Response for workspace clone, including details on each controlled or referenced resource

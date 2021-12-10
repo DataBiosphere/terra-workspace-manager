@@ -225,10 +225,8 @@ public class WorkspaceService {
   public String cloneWorkspace(
       UUID sourceWorkspaceId,
       AuthenticatedUserRequest userRequest,
-      String spendProfile,
       @Nullable String location,
-      @Nullable String displayName,
-      @Nullable String description) {
+      Workspace destinationWorkspace) {
     final Workspace sourceWorkspace =
         validateWorkspaceAndAction(
             userRequest, sourceWorkspaceId, SamConstants.SamWorkspaceAction.READ);
@@ -239,12 +237,9 @@ public class WorkspaceService {
             "Clone GCP Workspace " + sourceWorkspaceId.toString(),
             UUID.randomUUID().toString(),
             CloneGcpWorkspaceFlight.class,
-            null,
+            destinationWorkspace,
             userRequest)
         .addParameter(WorkspaceFlightMapKeys.WORKSPACE_ID, sourceWorkspaceId)
-        .addParameter(WorkspaceFlightMapKeys.DISPLAY_NAME, displayName)
-        .addParameter(WorkspaceFlightMapKeys.DESCRIPTION, description)
-        .addParameter(WorkspaceFlightMapKeys.SPEND_PROFILE_ID, spendProfile)
         .addParameter(
             ControlledResourceKeys.SOURCE_WORKSPACE_ID,
             sourceWorkspaceId) // TODO: remove this duplication

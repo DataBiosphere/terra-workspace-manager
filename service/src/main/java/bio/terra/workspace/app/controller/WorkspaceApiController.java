@@ -171,7 +171,9 @@ public class WorkspaceApiController implements WorkspaceApi {
 
     // Convert the property map to API format
     ApiProperties apiProperties = new ApiProperties();
-    workspace.getProperties().forEach((k,v) -> apiProperties.add(new ApiProperty().key(k).value(v)));
+    workspace
+        .getProperties()
+        .forEach((k, v) -> apiProperties.add(new ApiProperty().key(k).value(v)));
 
     // When we have another cloud context, we will need to do a similar retrieval for it.
     return new ApiWorkspaceDescription()
@@ -513,14 +515,24 @@ public class WorkspaceApiController implements WorkspaceApi {
   @Override
   public ResponseEntity<ApiCloneWorkspaceResult> cloneWorkspace(
       UUID workspaceId, @Valid ApiCloneWorkspaceRequest body) {
+    Optional<SpendProfileId> spendProfileId =
+        Optional.ofNullable(body.getSpendProfile()).map(SpendProfileId::new);
+
+    // Construct the target workspace object from the inputs
+    Workspace destinationWorkspace =
+        Workspace.builder()
+            .workspaceId(UUID.randomUUID())
+            .spendProfileId(spendProfileId.orElse(null))
+            .workspaceStage(WorkspaceStage.MC_WORKSPACE)
+            .displayName(body.getDisplayName())
+            .description(body.getDescription())
+            .properties(propertyMapFromApi(body.getProperties()))
+            .build();
+
     final String jobId =
         workspaceService.cloneWorkspace(
-            workspaceId,
-            getAuthenticatedInfo(),
-            body.getSpendProfile(),
-            body.getLocation(),
-            body.getDisplayName(),
-            body.getDescription());
+            workspaceId, getAuthenticatedInfo(), body.getLocation(), destinationWorkspace);
+
     final ApiCloneWorkspaceResult result = fetchCloneWorkspaceResult(jobId, getAuthenticatedInfo());
     return new ResponseEntity<>(
         result, ControllerUtils.getAsyncResponseCode(result.getJobReport()));
@@ -563,5 +575,4 @@ public class WorkspaceApiController implements WorkspaceApi {
     }
     return propertyMap;
   }
-
 }

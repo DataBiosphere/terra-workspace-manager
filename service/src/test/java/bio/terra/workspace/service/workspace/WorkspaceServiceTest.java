@@ -212,8 +212,7 @@ class WorkspaceServiceTest extends BaseConnectedTest {
         workspaceService.getWorkspace(request.getWorkspaceId(), USER_REQUEST);
 
     assertEquals(
-        request.getDescription().orElse(null),
-        createdWorkspace.getDescription().orElse(null));
+        request.getDescription().orElse(null), createdWorkspace.getDescription().orElse(null));
     assertEquals(name, createdWorkspace.getDisplayName().orElse(null));
     assertEquals(description, createdWorkspace.getDescription().orElse(null));
   }
@@ -223,9 +222,7 @@ class WorkspaceServiceTest extends BaseConnectedTest {
     Map<String, String> propertyMap = new HashMap<>();
     propertyMap.put("foo", "bar");
     propertyMap.put("xyzzy", "plohg");
-    Workspace request = defaultRequestBuilder(UUID.randomUUID())
-        .properties(propertyMap)
-        .build();
+    Workspace request = defaultRequestBuilder(UUID.randomUUID()).properties(propertyMap).build();
 
     workspaceService.createWorkspace(request, USER_REQUEST);
     Workspace createdWorkspace =
@@ -243,7 +240,8 @@ class WorkspaceServiceTest extends BaseConnectedTest {
     propertyMap.put("keeley", "jones");
 
     Workspace updatedWorkspace =
-        workspaceService.updateWorkspace(USER_REQUEST, workspaceId, name, description, propertyMap2);
+        workspaceService.updateWorkspace(
+            USER_REQUEST, workspaceId, name, description, propertyMap2);
 
     assertEquals(name, updatedWorkspace.getDisplayName().orElse(null));
     assertEquals(description, updatedWorkspace.getDescription().orElse(null));
@@ -486,7 +484,6 @@ class WorkspaceServiceTest extends BaseConnectedTest {
             workspaceService.createGcpCloudContext(
                 request.getWorkspaceId(), jobId, USER_REQUEST, "/fake/value"));
   }
-
 
   /**
    * Convenience method for getting a WorkspaceRequest builder with some pre-filled default values.

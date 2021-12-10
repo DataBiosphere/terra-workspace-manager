@@ -10,14 +10,8 @@ import bio.terra.stairway.exception.DuplicateFlightIdException;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.stairway.exception.StairwayExecutionException;
 import bio.terra.workspace.common.utils.FlightUtils;
-import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
-import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceCreateFlight;
-import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
-import bio.terra.workspace.service.workspace.model.WorkspaceStage;
-import java.util.UUID;
-import javax.annotation.Nullable;
 
 public class LaunchWorkspaceCreateFlightStep implements Step {
 
@@ -26,49 +20,24 @@ public class LaunchWorkspaceCreateFlightStep implements Step {
   @Override
   public StepResult doStep(FlightContext context) throws InterruptedException, RetryException {
     final FlightMap workingMap = context.getWorkingMap();
-    FlightUtils.validateRequiredEntries(
-        context.getInputParameters(),
-        JobMapKeys.AUTH_USER_INFO.getKeyName(),
-        WorkspaceFlightMapKeys.SPEND_PROFILE_ID);
+    final FlightMap inputMap = context.getInputParameters();
 
+    FlightUtils.validateCommonEntries(inputMap);
     FlightUtils.validateRequiredEntries(
-        workingMap,
-        ControlledResourceKeys.DESTINATION_WORKSPACE_ID,
-        ControlledResourceKeys.WORKSPACE_CREATE_FLIGHT_ID);
+        workingMap, ControlledResourceKeys.WORKSPACE_CREATE_FLIGHT_ID);
 
-    final var userRequest =
-        context
-            .getInputParameters()
-            .get(JobMapKeys.AUTH_USER_INFO.getKeyName(), AuthenticatedUserRequest.class);
-    @Nullable
-    final var description =
-        context.getInputParameters().get(WorkspaceFlightMapKeys.DESCRIPTION, String.class);
-    @Nullable
-    final var displayName =
-        context.getInputParameters().get(WorkspaceFlightMapKeys.DISPLAY_NAME, String.class);
-    final var spendProfileId =
-        context.getInputParameters().get(WorkspaceFlightMapKeys.SPEND_PROFILE_ID, String.class);
     final var workspaceCreateJobId =
         workingMap.get(ControlledResourceKeys.WORKSPACE_CREATE_FLIGHT_ID, String.class);
 
-    final var destinationWorkspaceId =
-        context.getWorkingMap().get(ControlledResourceKeys.DESTINATION_WORKSPACE_ID, UUID.class);
-
     // build input parameter map for subflight. Some entries are directly copied from
     // this flight's input parameters.
-    final FlightMap subflightInputParameters = new FlightMap();
-    subflightInputParameters.put(JobMapKeys.AUTH_USER_INFO.getKeyName(), userRequest);
-    subflightInputParameters.put(WorkspaceFlightMapKeys.DESCRIPTION, description);
-    subflightInputParameters.put(WorkspaceFlightMapKeys.DISPLAY_NAME, displayName);
-    subflightInputParameters.put(WorkspaceFlightMapKeys.SPEND_PROFILE_ID, spendProfileId);
-    subflightInputParameters.put(WorkspaceFlightMapKeys.WORKSPACE_ID, destinationWorkspaceId);
-    subflightInputParameters.put(
-        WorkspaceFlightMapKeys.WORKSPACE_STAGE, WorkspaceStage.MC_WORKSPACE.toString());
+    final FlightMap subflightParameters = new FlightMap();
+    FlightUtils.copyCommonParams(inputMap, subflightParameters);
 
     try {
       context
           .getStairway()
-          .submit(workspaceCreateJobId, WorkspaceCreateFlight.class, subflightInputParameters);
+          .submit(workspaceCreateJobId, WorkspaceCreateFlight.class, subflightParameters);
     } catch (DuplicateFlightIdException ignored) {
       // this is a rerun, so it's benign
       return StepResult.getStepResultSuccess();

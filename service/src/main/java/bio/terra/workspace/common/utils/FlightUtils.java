@@ -1,11 +1,14 @@
 package bio.terra.workspace.common.utils;
 
+import bio.terra.common.stairway.TracingHook;
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.FlightState;
 import bio.terra.workspace.generated.model.ApiErrorReport;
+import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.workspace.exceptions.MissingRequiredFieldsException;
+import bio.terra.workspace.service.workspace.model.Workspace;
 import java.util.Optional;
 import javax.annotation.Nullable;
 import org.springframework.http.HttpStatus;
@@ -79,6 +82,21 @@ public final class FlightUtils {
     }
   }
 
+  /**
+   * Validate that all common entries are present in the flight map
+   *
+   * @param flightMap input parameters
+   */
+  public static void validateCommonEntries(FlightMap flightMap) {
+    validateRequiredEntries(
+        flightMap,
+        JobMapKeys.AUTH_USER_INFO.getKeyName(),
+        JobMapKeys.REQUEST.getKeyName(),
+        JobMapKeys.SUBJECT_ID.getKeyName(),
+        MdcHook.MDC_FLIGHT_MAP_KEY,
+        TracingHook.SUBMISSION_SPAN_CONTEXT_MAP_KEY);
+  }
+
   public static FlightMap getResultMapRequired(FlightState flightState) {
     return flightState
         .getResultMap()
@@ -110,5 +128,32 @@ public final class FlightUtils {
               .orElse(null);
     }
     return errorMessage;
+  }
+
+  /**
+   * Copy the parameters common to all WSM flights
+   *
+   * @param source source flight map
+   * @param dest destination flight map
+   */
+  public static void copyCommonParams(FlightMap source, FlightMap dest) {
+    copyParam(JobMapKeys.AUTH_USER_INFO.getKeyName(), source, dest, AuthenticatedUserRequest.class);
+    copyParam(JobMapKeys.REQUEST.getKeyName(), source, dest, Workspace.class);
+    copyParam(JobMapKeys.SUBJECT_ID.getKeyName(), source, dest, String.class);
+    copyParam(MdcHook.MDC_FLIGHT_MAP_KEY, source, dest, Object.class);
+    copyParam(TracingHook.SUBMISSION_SPAN_CONTEXT_MAP_KEY, source, dest, Object.class);
+  }
+
+  /**
+   * Copy a parameter from one flight map to another flight map
+   *
+   * @param key flight key to copy
+   * @param source source map
+   * @param dest destination map
+   * @param type class of the data
+   * @param <T> generic for variable types
+   */
+  public static <T> void copyParam(String key, FlightMap source, FlightMap dest, Class<T> type) {
+    dest.put(key, source.get(key, type));
   }
 }
