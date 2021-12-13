@@ -35,7 +35,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
 public class CreateControlledResourceFlightTest extends BaseAzureTest {
-  private static final Duration STAIRWAY_FLIGHT_TIMEOUT = Duration.ofMinutes(10);
+  private static final Duration STAIRWAY_FLIGHT_TIMEOUT = Duration.ofMinutes(15);
 
   @Autowired private WorkspaceService workspaceService;
   @Autowired private JobService jobService;
