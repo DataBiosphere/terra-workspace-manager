@@ -11,6 +11,7 @@ import bio.terra.workspace.service.resource.WsmResourceType;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import java.util.Optional;
 import java.util.UUID;
 import javax.annotation.Nullable;
 
@@ -161,7 +162,7 @@ public class ControlledGcsBucketResource extends ControlledResource {
     }
 
     public ControlledGcsBucketResource.Builder bucketName(@Nullable String bucketName) {
-      this.bucketName = bucketName == null ? generateBucketName() : bucketName;
+      this.bucketName = Optional.ofNullable(bucketName).orElse(generateBucketName());
       return this;
     }
 

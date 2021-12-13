@@ -53,6 +53,7 @@ import bio.terra.workspace.service.resource.controlled.exception.InvalidControll
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -345,9 +346,8 @@ public class ControlledGcpResourceApiController implements ControlledGcpResource
             .managedBy(managedBy)
             .applicationId(controlledResourceService.getAssociatedApp(managedBy, userRequest))
             .datasetName(
-                body.getDataset().getDatasetId() == null
-                    ? body.getCommon().getName()
-                    : body.getDataset().getDatasetId())
+                Optional.ofNullable(body.getDataset().getDatasetId())
+                    .orElse(body.getCommon().getName()))
             .build();
 
     final ControlledBigQueryDatasetResource createdDataset =
@@ -396,7 +396,9 @@ public class ControlledGcpResourceApiController implements ControlledGcpResource
             .managedBy(managedBy)
             .applicationId(controlledResourceService.getAssociatedApp(managedBy, userRequest))
             .location(body.getAiNotebookInstance().getLocation())
-            .instanceId(body.getAiNotebookInstance().getInstanceId())
+            .instanceId(
+                Optional.ofNullable(body.getAiNotebookInstance().getInstanceId())
+                    .orElse(body.getCommon().getName()))
             .build();
 
     String jobId =
