@@ -13,10 +13,10 @@ public class GcpCloudContext {
   private String gcpProjectId;
   // V2 additions:
   // - Sam policy groups for the workspace roles; nullable
-  private String samPolicyOwner;
-  private String samPolicyWriter;
-  private String samPolicyReader;
-  private String samPolicyApplication;
+  @Nullable private String samPolicyOwner;
+  @Nullable private String samPolicyWriter;
+  @Nullable private String samPolicyReader;
+  @Nullable private String samPolicyApplication;
 
   // Constructor for Jackson
   public GcpCloudContext() {}
@@ -33,10 +33,10 @@ public class GcpCloudContext {
   // Constructor for V2
   public GcpCloudContext(
       String gcpProjectId,
-      String samPolicyOwner,
-      String samPolicyWriter,
-      String samPolicyReader,
-      String samPolicyApplication) {
+      @Nullable String samPolicyOwner,
+      @Nullable String samPolicyWriter,
+      @Nullable String samPolicyReader,
+      @Nullable String samPolicyApplication) {
     this.gcpProjectId = gcpProjectId;
     this.samPolicyOwner = samPolicyOwner;
     this.samPolicyWriter = samPolicyWriter;

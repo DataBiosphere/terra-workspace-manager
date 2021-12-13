@@ -45,7 +45,8 @@ public class UpdateDbGcpCloudContextStep implements Step {
             workspaceRoleGroupsMap.get(WsmIamRole.READER),
             workspaceRoleGroupsMap.get(WsmIamRole.APPLICATION));
 
-    gcpCloudContextService.updateGcpCloudContext(workspaceId, context, flightContext.getFlightId());
+    gcpCloudContextService.createGcpCloudContextFinish(
+        workspaceId, context, flightContext.getFlightId());
 
     FlightUtils.setResponse(flightContext, context, HttpStatus.OK);
     return StepResult.getStepResultSuccess();

@@ -25,6 +25,7 @@ import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.Contr
 public class CreateControlledResourceFlight extends Flight {
 
   private final RetryRule gcpRetryRule = RetryRules.cloud();
+  private final RetryRule dbRetryRule = RetryRules.shortDatabase();
 
   public CreateControlledResourceFlight(FlightMap inputParameters, Object beanBag) {
     super(inputParameters, beanBag);
@@ -47,7 +48,7 @@ public class CreateControlledResourceFlight extends Flight {
 
     // Store the resource metadata in the WSM database. Doing this first means concurrent
     // conflicting resources with the same name or resource attributes can be prevented.
-    addStep(new StoreMetadataStep(flightBeanBag.getResourceDao()), RetryRules.shortDatabase());
+    addStep(new StoreMetadataStep(flightBeanBag.getResourceDao()), dbRetryRule);
 
     // create the Sam resource associated with the resource
     addStep(
@@ -63,8 +64,8 @@ public class CreateControlledResourceFlight extends Flight {
     // context V1 format into V2 format.
     addStep(
         new GetGcpCloudContextStep(
-            resource.getWorkspaceId(), flightBeanBag.getGcpCloudContextService()),
-        RetryRules.shortDatabase());
+            resource.getWorkspaceId(), flightBeanBag.getGcpCloudContextService(), userRequest),
+        dbRetryRule);
 
     // create the cloud resource and grant IAM roles via CRL
     switch (resource.getResourceType()) {

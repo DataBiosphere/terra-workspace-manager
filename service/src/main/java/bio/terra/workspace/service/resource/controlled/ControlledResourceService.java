@@ -440,7 +440,7 @@ public class ControlledResourceService {
 
     List<SyncMapping> syncMappings = resource.getCategory().getSyncMappings();
     for (SyncMapping syncMapping : syncMappings) {
-      String policyGroup;
+      String policyGroup = null;
       switch (syncMapping.getRoleSource()) {
         case RESOURCE:
           policyGroup =
@@ -462,12 +462,11 @@ public class ControlledResourceService {
             case APPLICATION:
               policyGroup = cloudContext.getSamPolicyApplication().orElseThrow(badState);
               break;
-            default:
-              throw new InternalLogicException("Unknown workspace role");
           }
           break;
-        default:
-          throw new InternalLogicException("Unknown role source");
+      }
+      if (policyGroup == null) {
+        throw new InternalLogicException("Policy group not set");
       }
 
       gcpPolicyBuilder.addResourceBinding(syncMapping.getTargetRole(), policyGroup);

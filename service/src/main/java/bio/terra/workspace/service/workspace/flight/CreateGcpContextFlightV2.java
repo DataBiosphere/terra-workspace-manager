@@ -59,7 +59,7 @@ public class CreateGcpContextFlightV2 extends Flight {
         shortRetry);
 
     // Allocate the GCP project from RBS by generating the id and then getting the project.
-    addStep(new GenerateProjectIdStep());
+    addStep(new GenerateRbsRequestIdStep());
     addStep(
         new PullProjectFromPoolStep(
             appContext.getBufferService(), crl.getCloudResourceManagerCow()),

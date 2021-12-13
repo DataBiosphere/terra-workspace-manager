@@ -7,6 +7,7 @@ import static org.mockito.ArgumentMatchers.any;
 
 import bio.terra.workspace.common.BaseUnitTest;
 import bio.terra.workspace.db.WorkspaceDao;
+import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.iam.model.SamConstants.SamSpendProfileAction;
 import bio.terra.workspace.service.iam.model.WsmIamRole;
@@ -17,6 +18,7 @@ import bio.terra.workspace.service.workspace.model.GcpCloudContext;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
 import java.util.Collections;
+import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -31,6 +33,11 @@ public class GcpCloudContextUnitTest extends BaseUnitTest {
   private static final String POLICY_APPLICATION = "policy-application";
   private static final String V1_JSON =
       String.format("{\"version\": 1, \"gcpProjectId\": \"%s\"}", GCP_PROJECT_ID);
+  private static final AuthenticatedUserRequest USER_REQUEST =
+      new AuthenticatedUserRequest()
+          .token(Optional.of("fake-token"))
+          .email("fake@email.com")
+          .subjectId("fakeID123");
 
   @MockBean private SamService mockSamService;
   @Autowired private WorkspaceDao workspaceDao;
@@ -106,13 +113,14 @@ public class GcpCloudContextUnitTest extends BaseUnitTest {
         .thenReturn(true);
 
     // Fake groups
-    Mockito.when(mockSamService.getWorkspacePolicyAsWsm(any(), Mockito.eq(WsmIamRole.READER)))
+    Mockito.when(mockSamService.getWorkspacePolicy(any(), Mockito.eq(WsmIamRole.READER), any()))
         .thenReturn(POLICY_READER);
-    Mockito.when(mockSamService.getWorkspacePolicyAsWsm(any(), Mockito.eq(WsmIamRole.WRITER)))
+    Mockito.when(mockSamService.getWorkspacePolicy(any(), Mockito.eq(WsmIamRole.WRITER), any()))
         .thenReturn(POLICY_WRITER);
-    Mockito.when(mockSamService.getWorkspacePolicyAsWsm(any(), Mockito.eq(WsmIamRole.OWNER)))
+    Mockito.when(mockSamService.getWorkspacePolicy(any(), Mockito.eq(WsmIamRole.OWNER), any()))
         .thenReturn(POLICY_OWNER);
-    Mockito.when(mockSamService.getWorkspacePolicyAsWsm(any(), Mockito.eq(WsmIamRole.APPLICATION)))
+    Mockito.when(
+            mockSamService.getWorkspacePolicy(any(), Mockito.eq(WsmIamRole.APPLICATION), any()))
         .thenReturn(POLICY_APPLICATION);
 
     // Create a workspace record
@@ -129,11 +137,12 @@ public class GcpCloudContextUnitTest extends BaseUnitTest {
 
     // Create a cloud context in the database with a V1 format
     final String flightId = UUID.randomUUID().toString();
-    workspaceDao.createCloudContext(workspaceId, CloudPlatform.GCP, flightId);
-    workspaceDao.updateCloudContext(workspaceId, CloudPlatform.GCP, V1_JSON, flightId);
+    workspaceDao.createCloudContextStart(workspaceId, CloudPlatform.GCP, flightId);
+    workspaceDao.createCloudContextFinish(workspaceId, CloudPlatform.GCP, V1_JSON, flightId);
 
     // Run the service call that should do the upgrade
-    GcpCloudContext updatedContext = gcpCloudContextService.getRequiredGcpCloudContext(workspaceId);
+    GcpCloudContext updatedContext =
+        gcpCloudContextService.getRequiredGcpCloudContext(workspaceId, USER_REQUEST);
     assertEquals(updatedContext.getSamPolicyOwner().orElse(null), POLICY_OWNER);
     assertEquals(updatedContext.getSamPolicyWriter().orElse(null), POLICY_WRITER);
     assertEquals(updatedContext.getSamPolicyReader().orElse(null), POLICY_READER);

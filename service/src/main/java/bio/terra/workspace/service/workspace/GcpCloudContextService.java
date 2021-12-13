@@ -1,13 +1,12 @@
 package bio.terra.workspace.service.workspace;
 
 import bio.terra.workspace.db.WorkspaceDao;
+import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.iam.model.WsmIamRole;
 import bio.terra.workspace.service.workspace.exceptions.CloudContextRequiredException;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import bio.terra.workspace.service.workspace.model.GcpCloudContext;
-import bio.terra.workspace.service.workspace.model.Workspace;
-import com.google.common.annotations.VisibleForTesting;
 import java.util.Optional;
 import java.util.UUID;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -50,8 +49,8 @@ public class GcpCloudContextService {
    * @param workspaceId workspace id where the context is being created
    * @param flightId flight doing the creating
    */
-  public void createGcpCloudContext(UUID workspaceId, String flightId) {
-    workspaceDao.createCloudContext(workspaceId, CloudPlatform.GCP, flightId);
+  public void createGcpCloudContextStart(UUID workspaceId, String flightId) {
+    workspaceDao.createCloudContextStart(workspaceId, CloudPlatform.GCP, flightId);
   }
 
   /**
@@ -61,9 +60,9 @@ public class GcpCloudContextService {
    * @param cloudContext cloud context data
    * @param flightId flight completing the creation
    */
-  public void updateGcpCloudContext(
+  public void createGcpCloudContextFinish(
       UUID workspaceId, GcpCloudContext cloudContext, String flightId) {
-    workspaceDao.updateCloudContext(
+    workspaceDao.createCloudContextFinish(
         workspaceId, CloudPlatform.GCP, cloudContext.serialize(), flightId);
   }
 
@@ -110,7 +109,8 @@ public class GcpCloudContextService {
    * @param workspaceId workspace identifier of the cloud context
    * @return GCP cloud context with all policies filled in.
    */
-  public GcpCloudContext getRequiredGcpCloudContext(UUID workspaceId) throws InterruptedException {
+  public GcpCloudContext getRequiredGcpCloudContext(
+      UUID workspaceId, AuthenticatedUserRequest userRequest) throws InterruptedException {
     GcpCloudContext context =
         getGcpCloudContext(workspaceId)
             .orElseThrow(
@@ -119,13 +119,14 @@ public class GcpCloudContextService {
     // policyOwner is a good sentinel for knowing we need to update the cloud context and
     // store the sync'd workspace policies.
     if (context.getSamPolicyOwner().isEmpty()) {
-      context.setSamPolicyOwner(samService.getWorkspacePolicyAsWsm(workspaceId, WsmIamRole.OWNER));
+      context.setSamPolicyOwner(
+          samService.getWorkspacePolicy(workspaceId, WsmIamRole.OWNER, userRequest));
       context.setSamPolicyWriter(
-          samService.getWorkspacePolicyAsWsm(workspaceId, WsmIamRole.WRITER));
+          samService.getWorkspacePolicy(workspaceId, WsmIamRole.WRITER, userRequest));
       context.setSamPolicyReader(
-          samService.getWorkspacePolicyAsWsm(workspaceId, WsmIamRole.READER));
+          samService.getWorkspacePolicy(workspaceId, WsmIamRole.READER, userRequest));
       context.setSamPolicyApplication(
-          samService.getWorkspacePolicyAsWsm(workspaceId, WsmIamRole.APPLICATION));
+          samService.getWorkspacePolicy(workspaceId, WsmIamRole.APPLICATION, userRequest));
     }
     workspaceDao.updateCloudContext(workspaceId, CloudPlatform.GCP, context.serialize());
     return context;
@@ -138,15 +139,6 @@ public class GcpCloudContextService {
   @Deprecated // TODO: PF-1238 remove
   public Optional<String> getGcpCloudContextFlightId(UUID workspaceId) {
     return workspaceDao.getCloudContextFlightId(workspaceId, CloudPlatform.GCP);
-  }
-
-  /**
-   * Retrieve the optional GCP cloud context, providing a workspace. This is a frequent usage, so we
-   * make a method for it to save coding the fetch of workspace id every time
-   */
-  @VisibleForTesting
-  public Optional<GcpCloudContext> getGcpCloudContext(Workspace workspace) {
-    return getGcpCloudContext(workspace.getWorkspaceId());
   }
 
   /**

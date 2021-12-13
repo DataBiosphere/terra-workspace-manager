@@ -266,7 +266,8 @@ public class WorkspaceDao {
    * row at the start of the create context operation.
    */
   @WriteTransaction
-  public void createCloudContext(UUID workspaceId, CloudPlatform cloudPlatform, String flightId) {
+  public void createCloudContextStart(
+      UUID workspaceId, CloudPlatform cloudPlatform, String flightId) {
     final String platform = cloudPlatform.toSql();
     final String sql =
         "INSERT INTO cloud_context (workspace_id, cloud_platform, creating_flight)"
@@ -305,25 +306,13 @@ public class WorkspaceDao {
    * @param flightId flight id
    */
   @WriteTransaction
-  public void updateCloudContext(
+  public void createCloudContextFinish(
       UUID workspaceId, CloudPlatform cloudPlatform, String context, String flightId) {
-    final String platform = cloudPlatform.toSql();
-    final String updateSql =
-        "UPDATE cloud_context "
-            + " SET context = :context::json"
-            + " WHERE workspace_id = :workspace_id"
-            + " AND cloud_platform = :cloud_platform";
-    MapSqlParameterSource params =
-        new MapSqlParameterSource()
-            .addValue("context", context)
-            .addValue("workspace_id", workspaceId.toString())
-            .addValue("cloud_platform", platform)
-            .addValue("creating_flight", flightId);
+    int updatedCount = updateCloudContextWorker(workspaceId, cloudPlatform, context, flightId);
 
-    int updatedCount = jdbcTemplate.update(updateSql, params);
     if (updatedCount == 1) {
       // Success path
-      logger.info("Updated {} cloud context for workspace {}", platform, workspaceId);
+      logger.info("Updated {} cloud context for workspace {}", cloudPlatform, workspaceId);
       return;
     }
 
@@ -333,33 +322,63 @@ public class WorkspaceDao {
       if (dbContext.isPresent()) {
         logger.info(
             "{} cloud context for workspace {} already updated and unlocked",
-            platform,
+            cloudPlatform,
             workspaceId);
         return;
       }
+      throw new InternalLogicException(
+          "Database corruption during cloud context creation: no row updated");
     }
     throw new InternalLogicException(
         "Database corruption during cloud context creation: multiple rows updated");
   }
 
+  /**
+   * This unconditional update is used to upgrade an existing V1 cloud context to a V2 context.
+   *
+   * @param workspaceId workspaceId part of PK for lookup
+   * @param cloudPlatform platform part of PK for lookup
+   * @param context serialized cloud context
+   */
   @WriteTransaction
   public void updateCloudContext(UUID workspaceId, CloudPlatform cloudPlatform, String context) {
-    final String platform = cloudPlatform.toSql();
-    final String updateSql =
+    int updatedCount = updateCloudContextWorker(workspaceId, cloudPlatform, context, null);
+    if (updatedCount != 1) {
+      throw new InternalLogicException("Cloud context not found");
+    }
+  }
+
+  /**
+   * Shared worker for updating cloud context
+   *
+   * @param workspaceId workspaceId part of PK for lookup
+   * @param cloudPlatform platform part of PK for lookup
+   * @param context serialized cloud context
+   * @param creatingFlightId flightId - if not null, the update filters on creating_flight
+   * @return number of rows updated
+   */
+  private int updateCloudContextWorker(
+      UUID workspaceId,
+      CloudPlatform cloudPlatform,
+      String context,
+      @Nullable String creatingFlightId) {
+    String sql =
         "UPDATE cloud_context "
             + " SET context = :context::json"
             + " WHERE workspace_id = :workspace_id"
             + " AND cloud_platform = :cloud_platform";
+
     MapSqlParameterSource params =
         new MapSqlParameterSource()
             .addValue("context", context)
             .addValue("workspace_id", workspaceId.toString())
-            .addValue("cloud_platform", platform);
+            .addValue("cloud_platform", cloudPlatform.toSql());
 
-    int updatedCount = jdbcTemplate.update(updateSql, params);
-    if (updatedCount != 1) {
-      throw new InternalLogicException("GCP cloud context not found");
+    if (StringUtils.isNotEmpty(creatingFlightId)) {
+      sql = sql + " AND creating_flight = :creating_flight";
+      params.addValue("creating_flight", creatingFlightId);
     }
+    return jdbcTemplate.update(sql, params);
   }
 
   /**
@@ -375,7 +394,6 @@ public class WorkspaceDao {
   @WriteTransaction
   public void deleteCloudContextWithCheck(
       UUID workspaceId, CloudPlatform cloudPlatform, String flightId) {
-    // lockingFlightId is null because the old create code did not use the column
     deleteCloudContextWorker(workspaceId, cloudPlatform, flightId);
   }
 

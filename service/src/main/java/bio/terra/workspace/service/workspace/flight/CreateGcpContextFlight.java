@@ -40,7 +40,7 @@ public class CreateGcpContextFlight extends Flight {
             appContext.getSpendProfileService(),
             workspaceId,
             userRequest));
-    addStep(new GenerateProjectIdStep());
+    addStep(new GenerateRbsRequestIdStep());
     addStep(
         new PullProjectFromPoolStep(
             appContext.getBufferService(), crl.getCloudResourceManagerCow()),

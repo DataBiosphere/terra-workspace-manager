@@ -23,7 +23,7 @@ public class CreateDbGcpCloudContextStep implements Step {
 
   @Override
   public StepResult doStep(FlightContext flightContext) throws InterruptedException {
-    gcpCloudContextService.createGcpCloudContext(workspaceId, flightContext.getFlightId());
+    gcpCloudContextService.createGcpCloudContextStart(workspaceId, flightContext.getFlightId());
     return StepResult.getStepResultSuccess();
   }
 

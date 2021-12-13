@@ -38,6 +38,11 @@ import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 
 class WorkspaceDaoTest extends BaseUnitTest {
+  private static final String PROJECT_ID = "my-project1";
+  private static final String POLICY_OWNER = "policy-owner";
+  private static final String POLICY_WRITER = "policy-writer";
+  private static final String POLICY_READER = "policy-reader";
+  private static final String POLICY_APPLICATION = "policy-application";
 
   @Autowired private WorkspaceDatabaseConfiguration workspaceDatabaseConfiguration;
   @Autowired private NamedParameterJdbcTemplate jdbcTemplate;
@@ -223,14 +228,15 @@ class WorkspaceDaoTest extends BaseUnitTest {
     @Test
     void createDeleteGcpCloudContext() {
       String flightId = "flight-createdeletegcpcloudcontext";
-      gcpCloudContextService.createGcpCloudContext(workspaceId, flightId);
+      gcpCloudContextService.createGcpCloudContextStart(workspaceId, flightId);
       gcpCloudContextService.deleteGcpCloudContextWithCheck(workspaceId, "mismatched-flight-id");
 
       GcpCloudContext gcpCloudContext = makeCloudContext();
-      gcpCloudContextService.updateGcpCloudContext(workspaceId, gcpCloudContext, flightId);
+      gcpCloudContextService.createGcpCloudContextFinish(workspaceId, gcpCloudContext, flightId);
 
       Workspace workspace = workspaceDao.getWorkspace(workspaceId);
-      Optional<GcpCloudContext> cloudContext = gcpCloudContextService.getGcpCloudContext(workspace);
+      Optional<GcpCloudContext> cloudContext =
+          gcpCloudContextService.getGcpCloudContext(workspace.getWorkspaceId());
       checkCloudContext(cloudContext);
 
       // Make sure service and dao get the same answer
@@ -258,9 +264,9 @@ class WorkspaceDaoTest extends BaseUnitTest {
     @Test
     void deleteWorkspaceWithCloudContext() {
       String flightId = "flight-deleteworkspacewithcloudcontext";
-      gcpCloudContextService.createGcpCloudContext(workspaceId, flightId);
+      gcpCloudContextService.createGcpCloudContextStart(workspaceId, flightId);
       GcpCloudContext gcpCloudContext = makeCloudContext();
-      gcpCloudContextService.updateGcpCloudContext(workspaceId, gcpCloudContext, flightId);
+      gcpCloudContextService.createGcpCloudContextFinish(workspaceId, gcpCloudContext, flightId);
 
       assertTrue(workspaceDao.deleteWorkspace(workspaceId));
       assertThrows(WorkspaceNotFoundException.class, () -> workspaceDao.getWorkspace(workspaceId));
@@ -281,12 +287,6 @@ class WorkspaceDaoTest extends BaseUnitTest {
         .workspaceStage(WorkspaceStage.RAWLS_WORKSPACE)
         .build();
   }
-
-  private static final String PROJECT_ID = "my-project1";
-  private static final String POLICY_OWNER = "policy-owner";
-  private static final String POLICY_WRITER = "policy-writer";
-  private static final String POLICY_READER = "policy-reader";
-  private static final String POLICY_APPLICATION = "policy-application";
 
   private GcpCloudContext makeCloudContext() {
     return new GcpCloudContext(

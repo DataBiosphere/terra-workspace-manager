@@ -20,7 +20,6 @@ import bio.terra.workspace.service.workspace.flight.WorkspaceCreateFlight;
 import bio.terra.workspace.service.workspace.flight.WorkspaceDeleteFlight;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
-import bio.terra.workspace.service.workspace.model.GcpCloudContext;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceRequest;
 import io.opencensus.contrib.spring.aop.Traced;
@@ -286,21 +285,6 @@ public class WorkspaceService {
             userRequest)
         .addParameter(WorkspaceFlightMapKeys.WORKSPACE_ID, workspaceId.toString())
         .submitAndWait(null);
-  }
-
-  /**
-   * We ensure that the workspace exists and the user has read access. If so, we lookup the GCP
-   * cloud context, if any.
-   *
-   * @param workspaceId id of the workspace whose cloud context we want to get
-   * @param userRequest auth of user to test for read access
-   * @return optional GCP cloud context
-   */
-  // TODO: !!!! THIS IS ONLY USED IN TESTING !!!! Make it a test utility
-  public Optional<GcpCloudContext> getAuthorizedGcpCloudContext(
-      UUID workspaceId, AuthenticatedUserRequest userRequest) {
-    validateWorkspaceAndAction(userRequest, workspaceId, SamConstants.SamWorkspaceAction.READ);
-    return gcpCloudContextService.getGcpCloudContext(workspaceId);
   }
 
   /**

@@ -3,9 +3,12 @@ package bio.terra.workspace.connected;
 import static org.junit.jupiter.api.Assertions.assertNull;
 
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
+import bio.terra.workspace.service.iam.model.SamConstants;
 import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.spendprofile.SpendConnectedTestUtils;
+import bio.terra.workspace.service.workspace.GcpCloudContextService;
 import bio.terra.workspace.service.workspace.WorkspaceService;
+import bio.terra.workspace.service.workspace.model.GcpCloudContext;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceRequest;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
@@ -20,6 +23,7 @@ public class WorkspaceConnectedTestUtils {
   private @Autowired WorkspaceService workspaceService;
   private @Autowired JobService jobService;
   private @Autowired SpendConnectedTestUtils spendUtils;
+  private @Autowired GcpCloudContextService gcpCloudContextService;
 
   /** Creates a workspace with a GCP cloud context. */
   public Workspace createWorkspaceWithGcpContext(AuthenticatedUserRequest userRequest) {
@@ -38,5 +42,12 @@ public class WorkspaceConnectedTestUtils {
     assertNull(
         jobService.retrieveJobResult(gcpContextJobId, Object.class, userRequest).getException());
     return workspaceService.getWorkspace(workspaceId, userRequest);
+  }
+
+  public Optional<GcpCloudContext> getAuthorizedGcpCloudContext(
+      UUID workspaceId, AuthenticatedUserRequest userRequest) {
+    workspaceService.validateWorkspaceAndAction(
+        userRequest, workspaceId, SamConstants.SamWorkspaceAction.READ);
+    return gcpCloudContextService.getGcpCloudContext(workspaceId);
   }
 }
