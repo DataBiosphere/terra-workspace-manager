@@ -43,10 +43,10 @@ public class GcpCloudContextService {
   }
 
   /**
-   * Create an empty GCP cloud context in the database for a workspace.
-   * Supports {@link bio.terra.workspace.service.workspace.flight.CreateGcpContextFlightV2}
-   * This is designed for use in the createGcpContext flight and assumes that a later step will
-   * call {@link #createGcpCloudContextFinish}.
+   * Create an empty GCP cloud context in the database for a workspace. Supports {@link
+   * bio.terra.workspace.service.workspace.flight.CreateGcpContextFlightV2} This is designed for use
+   * in the createGcpContext flight and assumes that a later step will call {@link
+   * #createGcpCloudContextFinish}.
    *
    * @param workspaceId workspace id where the context is being created
    * @param flightId flight doing the creating
@@ -56,9 +56,9 @@ public class GcpCloudContextService {
   }
 
   /**
-   * Complete creation of the GCP cloud context by filling in the context attributes.
-   * This is designed for use in createGcpContext flight and assumes that an earlier step has
-   * called {@link #createGcpCloudContextStart}.
+   * Complete creation of the GCP cloud context by filling in the context attributes. This is
+   * designed for use in createGcpContext flight and assumes that an earlier step has called {@link
+   * #createGcpCloudContextStart}.
    *
    * @param workspaceId workspace id of the context
    * @param cloudContext cloud context data
