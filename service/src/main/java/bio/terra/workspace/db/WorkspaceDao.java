@@ -392,7 +392,7 @@ public class WorkspaceDao {
    * @param flightId flight id making the delete request
    */
   @WriteTransaction
-  public void deleteCloudContextWithCheck(
+  public void deleteCloudContextWithFlightIdValidation(
       UUID workspaceId, CloudPlatform cloudPlatform, String flightId) {
     deleteCloudContextWorker(workspaceId, cloudPlatform, flightId);
   }

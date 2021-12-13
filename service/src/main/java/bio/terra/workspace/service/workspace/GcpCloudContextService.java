@@ -43,8 +43,10 @@ public class GcpCloudContextService {
   }
 
   /**
-   * Create the GCP cloud context for a workspace Supports {@link
-   * bio.terra.workspace.service.workspace.flight.CreateGcpContextFlightV2}
+   * Create an empty GCP cloud context in the database for a workspace.
+   * Supports {@link bio.terra.workspace.service.workspace.flight.CreateGcpContextFlightV2}
+   * This is designed for use in the createGcpContext flight and assumes that a later step will
+   * call {@link #createGcpCloudContextFinish}.
    *
    * @param workspaceId workspace id where the context is being created
    * @param flightId flight doing the creating
@@ -54,7 +56,9 @@ public class GcpCloudContextService {
   }
 
   /**
-   * Update and unlock the GCP cloud context for a workspace. Store the cloud context data
+   * Complete creation of the GCP cloud context by filling in the context attributes.
+   * This is designed for use in createGcpContext flight and assumes that an earlier step has
+   * called {@link #createGcpCloudContextStart}.
    *
    * @param workspaceId workspace id of the context
    * @param cloudContext cloud context data
@@ -78,13 +82,13 @@ public class GcpCloudContextService {
 
   /**
    * Delete a cloud context for the workspace validating the flight id. For details: {@link
-   * WorkspaceDao#deleteCloudContextWithCheck(UUID, CloudPlatform, String)}
+   * WorkspaceDao#deleteCloudContextWithFlightIdValidation(UUID, CloudPlatform, String)}
    *
    * @param workspaceId workspace of the cloud context
    * @param flightId flight id making the delete request
    */
   public void deleteGcpCloudContextWithCheck(UUID workspaceId, String flightId) {
-    workspaceDao.deleteCloudContextWithCheck(workspaceId, CloudPlatform.GCP, flightId);
+    workspaceDao.deleteCloudContextWithFlightIdValidation(workspaceId, CloudPlatform.GCP, flightId);
   }
 
   /**
