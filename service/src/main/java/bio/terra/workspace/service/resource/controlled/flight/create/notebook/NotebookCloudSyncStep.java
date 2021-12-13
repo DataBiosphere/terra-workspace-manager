@@ -8,11 +8,14 @@ import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.StepStatus;
 import bio.terra.stairway.exception.RetryException;
+import bio.terra.workspace.common.utils.FlightUtils;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.resource.controlled.ControlledAiNotebookInstanceResource;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceService;
 import bio.terra.workspace.service.workspace.GcpCloudContextService;
+import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
+import bio.terra.workspace.service.workspace.model.GcpCloudContext;
 import com.google.api.services.notebooks.v1.model.Binding;
 import com.google.api.services.notebooks.v1.model.Policy;
 import com.google.api.services.notebooks.v1.model.SetIamPolicyRequest;
@@ -49,11 +52,14 @@ public class NotebookCloudSyncStep implements Step {
   @Override
   public StepResult doStep(FlightContext flightContext)
       throws InterruptedException, RetryException {
-    String projectId = gcpCloudContextService.getRequiredGcpProject(resource.getWorkspaceId());
-    List<Binding> newBindings = createBindings(projectId, flightContext.getWorkingMap());
+    FlightMap workingMap = flightContext.getWorkingMap();
+    FlightUtils.validateRequiredEntries(workingMap, ControlledResourceKeys.GCP_CLOUD_CONTEXT);
+    GcpCloudContext cloudContext =
+        workingMap.get(ControlledResourceKeys.GCP_CLOUD_CONTEXT, GcpCloudContext.class);
+    List<Binding> newBindings = createBindings(cloudContext, flightContext.getWorkingMap());
 
     AIPlatformNotebooksCow notebooks = crlService.getAIPlatformNotebooksCow();
-    InstanceName instanceName = resource.toInstanceName(projectId);
+    InstanceName instanceName = resource.toInstanceName(cloudContext.getGcpProjectId());
     try {
       Policy policy = notebooks.instances().getIamPolicy(instanceName).execute();
       // Duplicating bindings is harmless (e.g. on retry). GCP de-duplicates.
@@ -77,12 +83,12 @@ public class NotebookCloudSyncStep implements Step {
    * works in com.google.cloud.Policy objects, but these are not used by the notebooks API.
    * Transform the com.google.cloud.Policy into a list of bindings to use for the GCP Notebooks API.
    */
-  private List<Binding> createBindings(String projectId, FlightMap workingMap)
+  private List<Binding> createBindings(GcpCloudContext cloudContext, FlightMap workingMap)
       throws InterruptedException {
     com.google.cloud.Policy currentPolicy = com.google.cloud.Policy.newBuilder().build();
     com.google.cloud.Policy newPolicy =
         controlledResourceService.configureGcpPolicyForResource(
-            resource, projectId, currentPolicy, userRequest);
+            resource, cloudContext, currentPolicy, userRequest);
 
     return newPolicy.getBindingsList().stream()
         .map(NotebookCloudSyncStep::convertBinding)

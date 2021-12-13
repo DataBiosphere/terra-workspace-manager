@@ -15,6 +15,7 @@ import bio.terra.stairway.StepStatus;
 import bio.terra.workspace.common.BaseConnectedTest;
 import bio.terra.workspace.common.StairwayTestUtils;
 import bio.terra.workspace.connected.UserAccessUtils;
+import bio.terra.workspace.connected.WorkspaceConnectedTestUtils;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamRethrow;
@@ -59,7 +60,8 @@ import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.MockBean;
 
-class CreateGoogleContextFlightTest extends BaseConnectedTest {
+@Deprecated // TODO: PF-1238 remove
+class CreateGcpContextFlightTest extends BaseConnectedTest {
 
   /** How long to wait for a Stairway flight to complete before timing out the test. */
   private static final Duration STAIRWAY_FLIGHT_TIMEOUT = Duration.ofMinutes(3);
@@ -70,6 +72,7 @@ class CreateGoogleContextFlightTest extends BaseConnectedTest {
   @Autowired private SpendConnectedTestUtils spendUtils;
   @MockBean private SamService mockSamService;
   @Autowired private UserAccessUtils userAccessUtils;
+  @Autowired private WorkspaceConnectedTestUtils testUtils;
 
   @BeforeEach
   void setUp() throws InterruptedException {
@@ -93,7 +96,7 @@ class CreateGoogleContextFlightTest extends BaseConnectedTest {
     UUID workspaceId = createWorkspace(spendUtils.defaultSpendId());
     AuthenticatedUserRequest userRequest = userAccessUtils.defaultUserAuthRequest();
 
-    assertTrue(workspaceService.getAuthorizedGcpCloudContext(workspaceId, userRequest).isEmpty());
+    assertTrue(testUtils.getAuthorizedGcpCloudContext(workspaceId, userRequest).isEmpty());
 
     // Retry steps once to validate idempotency.
     Map<String, StepStatus> retrySteps = getStepNameToStepStatusMap();
@@ -111,7 +114,7 @@ class CreateGoogleContextFlightTest extends BaseConnectedTest {
     String projectId =
         flightState.getResultMap().get().get(WorkspaceFlightMapKeys.GCP_PROJECT_ID, String.class);
 
-    assertTrue(workspaceService.getAuthorizedGcpCloudContext(workspaceId, userRequest).isPresent());
+    assertTrue(testUtils.getAuthorizedGcpCloudContext(workspaceId, userRequest).isPresent());
 
     String contextProjectId =
         workspaceService.getAuthorizedRequiredGcpProject(workspaceId, userRequest);
@@ -134,7 +137,7 @@ class CreateGoogleContextFlightTest extends BaseConnectedTest {
       throws Exception {
     UUID workspaceId = createWorkspace(spendUtils.noBillingAccount());
     AuthenticatedUserRequest userRequest = userAccessUtils.defaultUserAuthRequest();
-    assertTrue(workspaceService.getAuthorizedGcpCloudContext(workspaceId, userRequest).isEmpty());
+    assertTrue(testUtils.getAuthorizedGcpCloudContext(workspaceId, userRequest).isEmpty());
 
     FlightState flightState =
         StairwayTestUtils.blockUntilFlightCompletes(
@@ -146,7 +149,7 @@ class CreateGoogleContextFlightTest extends BaseConnectedTest {
 
     assertEquals(FlightStatus.ERROR, flightState.getFlightStatus());
     assertEquals(NoBillingAccountException.class, flightState.getException().get().getClass());
-    assertTrue(workspaceService.getAuthorizedGcpCloudContext(workspaceId, userRequest).isEmpty());
+    assertTrue(testUtils.getAuthorizedGcpCloudContext(workspaceId, userRequest).isEmpty());
     assertFalse(
         flightState.getResultMap().get().containsKey(WorkspaceFlightMapKeys.GCP_PROJECT_ID));
   }
@@ -157,7 +160,7 @@ class CreateGoogleContextFlightTest extends BaseConnectedTest {
       throws Exception {
     UUID workspaceId = createWorkspace(null);
     AuthenticatedUserRequest userRequest = userAccessUtils.defaultUserAuthRequest();
-    assertTrue(workspaceService.getAuthorizedGcpCloudContext(workspaceId, userRequest).isEmpty());
+    assertTrue(testUtils.getAuthorizedGcpCloudContext(workspaceId, userRequest).isEmpty());
 
     FlightState flightState =
         StairwayTestUtils.blockUntilFlightCompletes(
@@ -169,7 +172,7 @@ class CreateGoogleContextFlightTest extends BaseConnectedTest {
 
     assertEquals(FlightStatus.ERROR, flightState.getFlightStatus());
     assertEquals(MissingSpendProfileException.class, flightState.getException().get().getClass());
-    assertTrue(workspaceService.getAuthorizedGcpCloudContext(workspaceId, userRequest).isEmpty());
+    assertTrue(testUtils.getAuthorizedGcpCloudContext(workspaceId, userRequest).isEmpty());
     assertFalse(
         flightState.getResultMap().get().containsKey(WorkspaceFlightMapKeys.GCP_PROJECT_ID));
   }
@@ -207,7 +210,7 @@ class CreateGoogleContextFlightTest extends BaseConnectedTest {
   void errorRevertsChanges() throws Exception {
     UUID workspaceId = createWorkspace(spendUtils.defaultSpendId());
     AuthenticatedUserRequest userRequest = userAccessUtils.defaultUserAuthRequest();
-    assertTrue(workspaceService.getAuthorizedGcpCloudContext(workspaceId, userRequest).isEmpty());
+    assertTrue(testUtils.getAuthorizedGcpCloudContext(workspaceId, userRequest).isEmpty());
 
     // Submit a flight class that always errors.
     Map<String, StepStatus> retrySteps = getStepNameToStepStatusMap();
@@ -221,7 +224,7 @@ class CreateGoogleContextFlightTest extends BaseConnectedTest {
             STAIRWAY_FLIGHT_TIMEOUT,
             debugInfo);
     assertEquals(FlightStatus.ERROR, flightState.getFlightStatus());
-    assertTrue(workspaceService.getAuthorizedGcpCloudContext(workspaceId, userRequest).isEmpty());
+    assertTrue(testUtils.getAuthorizedGcpCloudContext(workspaceId, userRequest).isEmpty());
 
     String projectId =
         flightState.getResultMap().get().get(WorkspaceFlightMapKeys.GCP_PROJECT_ID, String.class);

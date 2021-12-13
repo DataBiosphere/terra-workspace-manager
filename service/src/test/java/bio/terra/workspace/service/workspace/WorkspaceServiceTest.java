@@ -16,6 +16,7 @@ import bio.terra.common.sam.exception.SamInternalServerErrorException;
 import bio.terra.stairway.FlightDebugInfo;
 import bio.terra.stairway.StepStatus;
 import bio.terra.workspace.common.BaseConnectedTest;
+import bio.terra.workspace.connected.WorkspaceConnectedTestUtils;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.db.exception.WorkspaceNotFoundException;
 import bio.terra.workspace.service.crl.CrlService;
@@ -70,6 +71,7 @@ class WorkspaceServiceTest extends BaseConnectedTest {
   @Autowired private SpendConnectedTestUtils spendUtils;
   @Autowired private ReferencedResourceService referenceResourceService;
   @Autowired private ResourceDao resourceDao;
+  @Autowired private WorkspaceConnectedTestUtils testUtils;
   @MockBean private DataRepoService dataRepoService;
   /** Mock SamService does nothing for all calls that would throw if unauthorized. */
   @MockBean private SamService mockSamService;
@@ -438,15 +440,11 @@ class WorkspaceServiceTest extends BaseConnectedTest {
     jobService.waitForJob(jobId);
     assertNull(jobService.retrieveJobResult(jobId, Object.class, USER_REQUEST).getException());
     assertTrue(
-        workspaceService
-            .getAuthorizedGcpCloudContext(request.workspaceId(), USER_REQUEST)
-            .isPresent());
+        testUtils.getAuthorizedGcpCloudContext(request.workspaceId(), USER_REQUEST).isPresent());
 
     workspaceService.deleteGcpCloudContext(request.workspaceId(), USER_REQUEST);
     assertTrue(
-        workspaceService
-            .getAuthorizedGcpCloudContext(request.workspaceId(), USER_REQUEST)
-            .isEmpty());
+        testUtils.getAuthorizedGcpCloudContext(request.workspaceId(), USER_REQUEST).isEmpty());
   }
 
   @Test

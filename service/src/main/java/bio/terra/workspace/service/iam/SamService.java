@@ -630,6 +630,31 @@ public class SamService {
   }
 
   /**
+   * Retrieve the email of a sync'd workspace policy. This is used during controlled resource
+   * create.
+   *
+   * @param workspaceId workspace to use
+   * @param role workspace role to lookup
+   * @param userRequest
+   * @return email of the sync'd policy group
+   * @throws InterruptedException on shutdown during retry wait
+   */
+  public String getWorkspacePolicy(
+      UUID workspaceId, WsmIamRole role, AuthenticatedUserRequest userRequest)
+      throws InterruptedException {
+    GoogleApi googleApi = samGoogleApi(userRequest.getRequiredToken());
+    try {
+      return SamRetry.retry(
+              () ->
+                  googleApi.syncStatus(
+                      SamConstants.SamResource.WORKSPACE, workspaceId.toString(), role.toSamRole()))
+          .getEmail();
+    } catch (ApiException apiException) {
+      throw SamExceptionFactory.create("Error getting sync policy in Sam", apiException);
+    }
+  }
+
+  /**
    * Wrapper around Sam client to sync a Sam policy on a controlled resource to a google group and
    * return the email of that group.
    *
