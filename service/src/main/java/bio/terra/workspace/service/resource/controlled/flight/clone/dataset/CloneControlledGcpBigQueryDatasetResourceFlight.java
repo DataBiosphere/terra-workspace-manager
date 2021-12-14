@@ -8,6 +8,7 @@ import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.resource.controlled.ControlledBigQueryDatasetResource;
 import bio.terra.workspace.service.resource.controlled.ControlledResource;
+import bio.terra.workspace.service.resource.controlled.flight.clone.CheckControlledResourceAuthStep;
 import bio.terra.workspace.service.resource.controlled.flight.update.RetrieveControlledResourceMetadataStep;
 
 public class CloneControlledGcpBigQueryDatasetResourceFlight extends Flight {
@@ -22,9 +23,14 @@ public class CloneControlledGcpBigQueryDatasetResourceFlight extends Flight {
         inputParameters.get(JobMapKeys.AUTH_USER_INFO.getKeyName(), AuthenticatedUserRequest.class);
 
     // Flight Plan
-    // 1. Gather controlled resource metadata for source object
-    // 2. Gather creation parameters from existing object
-    // 3. Launch sub-flight to create appropriate resource
+    // 1. Validate user has read access to the source object
+    // 2. Gather controlled resource metadata for source object
+    // 3. Gather creation parameters from existing object
+    // 4. Launch sub-flight to create appropriate resource
+    addStep(
+        new CheckControlledResourceAuthStep(
+            sourceResource, flightBeanBag.getControlledResourceMetadataManager(), userRequest),
+        RetryRules.shortExponential());
     addStep(
         new RetrieveControlledResourceMetadataStep(
             flightBeanBag.getResourceDao(),

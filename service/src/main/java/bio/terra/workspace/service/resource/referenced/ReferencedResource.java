@@ -54,9 +54,9 @@ public abstract class ReferencedResource extends WsmResource {
     return (ReferencedGcsBucketResource) this;
   }
 
-  public ReferencedGcsBucketFileResource castToGcsBucketFileResource() {
-    validateSubclass(WsmResourceType.GCS_BUCKET_FILE);
-    return (ReferencedGcsBucketFileResource) this;
+  public ReferencedGcsObjectResource castToGcsObjectResource() {
+    validateSubclass(WsmResourceType.GCS_OBJECT);
+    return (ReferencedGcsObjectResource) this;
   }
 
   /**

@@ -1,27 +1,32 @@
 package bio.terra.workspace.service.workspace;
 
 import bio.terra.workspace.db.WorkspaceDao;
+import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
+import bio.terra.workspace.service.iam.SamService;
+import bio.terra.workspace.service.iam.model.WsmIamRole;
 import bio.terra.workspace.service.workspace.exceptions.CloudContextRequiredException;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import bio.terra.workspace.service.workspace.model.GcpCloudContext;
-import bio.terra.workspace.service.workspace.model.Workspace;
 import java.util.Optional;
 import java.util.UUID;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 /**
- * This service provides methods for managing GCP cloud context. These methods do not perform any
- * access control and operate directly against the {@link bio.terra.workspace.db.WorkspaceDao}
+ * This service provides methods for managing GCP cloud context in the WSM database. These methods
+ * do not perform any access control and operate directly against the {@link
+ * bio.terra.workspace.db.WorkspaceDao}
  */
 @Component
 public class GcpCloudContextService {
 
   private final WorkspaceDao workspaceDao;
+  private final SamService samService;
 
   @Autowired
-  public GcpCloudContextService(WorkspaceDao workspaceDao) {
+  public GcpCloudContextService(WorkspaceDao workspaceDao, SamService samService) {
     this.workspaceDao = workspaceDao;
+    this.samService = samService;
   }
 
   /**
@@ -30,9 +35,38 @@ public class GcpCloudContextService {
    * @param workspaceId unique id of the workspace
    * @param cloudContext the GCP cloud context to create
    */
+  @Deprecated // TODO: PF-1238 remove
   public void createGcpCloudContext(
       UUID workspaceId, GcpCloudContext cloudContext, String flightId) {
     workspaceDao.createCloudContext(
+        workspaceId, CloudPlatform.GCP, cloudContext.serialize(), flightId);
+  }
+
+  /**
+   * Create an empty GCP cloud context in the database for a workspace. Supports {@link
+   * bio.terra.workspace.service.workspace.flight.CreateGcpContextFlightV2} This is designed for use
+   * in the createGcpContext flight and assumes that a later step will call {@link
+   * #createGcpCloudContextFinish}.
+   *
+   * @param workspaceId workspace id where the context is being created
+   * @param flightId flight doing the creating
+   */
+  public void createGcpCloudContextStart(UUID workspaceId, String flightId) {
+    workspaceDao.createCloudContextStart(workspaceId, CloudPlatform.GCP, flightId);
+  }
+
+  /**
+   * Complete creation of the GCP cloud context by filling in the context attributes. This is
+   * designed for use in createGcpContext flight and assumes that an earlier step has called {@link
+   * #createGcpCloudContextStart}.
+   *
+   * @param workspaceId workspace id of the context
+   * @param cloudContext cloud context data
+   * @param flightId flight completing the creation
+   */
+  public void createGcpCloudContextFinish(
+      UUID workspaceId, GcpCloudContext cloudContext, String flightId) {
+    workspaceDao.createCloudContextFinish(
         workspaceId, CloudPlatform.GCP, cloudContext.serialize(), flightId);
   }
 
@@ -48,13 +82,13 @@ public class GcpCloudContextService {
 
   /**
    * Delete a cloud context for the workspace validating the flight id. For details: {@link
-   * WorkspaceDao#deleteCloudContextWithCheck(UUID, CloudPlatform, String)}
+   * WorkspaceDao#deleteCloudContextWithFlightIdValidation(UUID, CloudPlatform, String)}
    *
    * @param workspaceId workspace of the cloud context
    * @param flightId flight id making the delete request
    */
   public void deleteGcpCloudContextWithCheck(UUID workspaceId, String flightId) {
-    workspaceDao.deleteCloudContextWithCheck(workspaceId, CloudPlatform.GCP, flightId);
+    workspaceDao.deleteCloudContextWithFlightIdValidation(workspaceId, CloudPlatform.GCP, flightId);
   }
 
   /**
@@ -70,19 +104,45 @@ public class GcpCloudContextService {
   }
 
   /**
-   * Retrieve the flight ID that created the GCP cloud context for a given workspace, if that cloud
-   * context exists.
+   * Retrieve the GCP cloud context. If it does not have the policies filled in, retrieve the
+   * policies from Sam, fill them in, and update the cloud context.
+   *
+   * <p>This is used during controlled resource create. Since the caller may not have permission to
+   * read the workspace policies, we use the WSM SA to query Sam.
+   *
+   * @param workspaceId workspace identifier of the cloud context
+   * @return GCP cloud context with all policies filled in.
    */
-  public Optional<String> getGcpCloudContextFlightId(UUID workspaceId) {
-    return workspaceDao.getCloudContextFlightId(workspaceId, CloudPlatform.GCP);
+  public GcpCloudContext getRequiredGcpCloudContext(
+      UUID workspaceId, AuthenticatedUserRequest userRequest) throws InterruptedException {
+    GcpCloudContext context =
+        getGcpCloudContext(workspaceId)
+            .orElseThrow(
+                () -> new CloudContextRequiredException("Operation requires GCP cloud context"));
+
+    // policyOwner is a good sentinel for knowing we need to update the cloud context and
+    // store the sync'd workspace policies.
+    if (context.getSamPolicyOwner().isEmpty()) {
+      context.setSamPolicyOwner(
+          samService.getWorkspacePolicy(workspaceId, WsmIamRole.OWNER, userRequest));
+      context.setSamPolicyWriter(
+          samService.getWorkspacePolicy(workspaceId, WsmIamRole.WRITER, userRequest));
+      context.setSamPolicyReader(
+          samService.getWorkspacePolicy(workspaceId, WsmIamRole.READER, userRequest));
+      context.setSamPolicyApplication(
+          samService.getWorkspacePolicy(workspaceId, WsmIamRole.APPLICATION, userRequest));
+    }
+    workspaceDao.updateCloudContext(workspaceId, CloudPlatform.GCP, context.serialize());
+    return context;
   }
 
   /**
-   * Retrieve the optional GCP cloud context, providing a workspace This is a frequent usage, so we
-   * make a method for it to save coding the fetch of workspace id every time
+   * Retrieve the flight ID that created the GCP cloud context for a given workspace, if that cloud
+   * context exists.
    */
-  public Optional<GcpCloudContext> getGcpCloudContext(Workspace workspace) {
-    return getGcpCloudContext(workspace.getWorkspaceId());
+  @Deprecated // TODO: PF-1238 remove
+  public Optional<String> getGcpCloudContextFlightId(UUID workspaceId) {
+    return workspaceDao.getCloudContextFlightId(workspaceId, CloudPlatform.GCP);
   }
 
   /**

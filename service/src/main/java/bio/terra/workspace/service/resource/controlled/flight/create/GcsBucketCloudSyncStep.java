@@ -2,15 +2,19 @@ package bio.terra.workspace.service.resource.controlled.flight.create;
 
 import bio.terra.cloudres.google.storage.StorageCow;
 import bio.terra.stairway.FlightContext;
+import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.StepStatus;
 import bio.terra.stairway.exception.RetryException;
+import bio.terra.workspace.common.utils.FlightUtils;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.resource.controlled.ControlledGcsBucketResource;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceService;
 import bio.terra.workspace.service.workspace.GcpCloudContextService;
+import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
+import bio.terra.workspace.service.workspace.model.GcpCloudContext;
 import com.google.cloud.Policy;
 import com.google.cloud.storage.StorageException;
 import org.slf4j.Logger;
@@ -43,15 +47,18 @@ public class GcsBucketCloudSyncStep implements Step {
   @Override
   public StepResult doStep(FlightContext flightContext)
       throws InterruptedException, RetryException {
-    String projectId = gcpCloudContextService.getRequiredGcpProject(resource.getWorkspaceId());
+    FlightMap workingMap = flightContext.getWorkingMap();
+    FlightUtils.validateRequiredEntries(workingMap, ControlledResourceKeys.GCP_CLOUD_CONTEXT);
+    GcpCloudContext cloudContext =
+        workingMap.get(ControlledResourceKeys.GCP_CLOUD_CONTEXT, GcpCloudContext.class);
 
     // Users do not have read or write access to IAM policies, so requests are executed via
     // WSM's service account.
-    StorageCow wsmSaStorageCow = crlService.createStorageCow(projectId);
+    StorageCow wsmSaStorageCow = crlService.createStorageCow(cloudContext.getGcpProjectId());
     Policy currentPolicy = wsmSaStorageCow.getIamPolicy(resource.getBucketName());
     Policy newPolicy =
         controlledResourceService.configureGcpPolicyForResource(
-            resource, projectId, currentPolicy, userRequest);
+            resource, cloudContext, currentPolicy, userRequest);
 
     logger.info(
         "Syncing workspace roles to GCP permissions on bucket {}", resource.getBucketName());

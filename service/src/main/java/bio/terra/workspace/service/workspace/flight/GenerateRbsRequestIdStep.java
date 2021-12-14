@@ -13,8 +13,8 @@ import java.util.UUID;
  * <p>This is important to do as a separate step from the request to RBS so that we can retry using
  * the same ID.
  */
-public class GenerateProjectIdStep implements Step {
-  public GenerateProjectIdStep() {}
+public class GenerateRbsRequestIdStep implements Step {
+  public GenerateRbsRequestIdStep() {}
 
   @Override
   public StepResult doStep(FlightContext flightContext) {

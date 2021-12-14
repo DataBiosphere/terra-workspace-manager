@@ -102,7 +102,67 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
   }
 
   @Test
-  void testUpdate() {
+  void updateDataRepoReferenceTarget_updateSnapshotIdOnly() {
+    referenceResource = ReferenceResourceFixtures.makeDataRepoSnapshotResource(workspaceId);
+    referenceResourceService.createReferenceResource(referenceResource, USER_REQUEST);
+
+    UUID resourceId = referenceResource.getResourceId();
+    ReferencedResource originalResource =
+        referenceResourceService.getReferenceResource(workspaceId, resourceId, USER_REQUEST);
+    String originalName = referenceResource.getName();
+    String originalDescription = referenceResource.getDescription();
+    String originalInstanceName =
+        referenceResource.castToDataRepoSnapshotResource().getInstanceName();
+
+    String newSnapshotId = "new_snapshot_id";
+    ReferencedResource updatedResource =
+        originalResource.castToDataRepoSnapshotResource().toBuilder()
+            .snapshotId(newSnapshotId)
+            .build();
+
+    referenceResourceService.updateReferenceResource(
+        workspaceId, referenceResource.getResourceId(), null, null, updatedResource, USER_REQUEST);
+
+    ReferencedResource result =
+        referenceResourceService.getReferenceResource(workspaceId, resourceId, USER_REQUEST);
+    assertEquals(originalName, result.getName());
+    assertEquals(originalDescription, result.getDescription());
+    assertEquals(originalInstanceName, result.castToDataRepoSnapshotResource().getInstanceName());
+    assertEquals(newSnapshotId, result.castToDataRepoSnapshotResource().getSnapshotId());
+  }
+
+  @Test
+  void updateDataRepoReferenceTarget_updateSnapshotIdAndInstanceName() {
+    referenceResource = ReferenceResourceFixtures.makeDataRepoSnapshotResource(workspaceId);
+    referenceResourceService.createReferenceResource(referenceResource, USER_REQUEST);
+
+    UUID resourceId = referenceResource.getResourceId();
+    ReferencedResource originalResource =
+        referenceResourceService.getReferenceResource(workspaceId, resourceId, USER_REQUEST);
+    String originalName = referenceResource.getName();
+    String originalDescription = referenceResource.getDescription();
+
+    String newSnapshotId = "new_snapshot_id";
+    String newInstanceName = "new_instance_name";
+    ReferencedResource updatedResource =
+        originalResource.castToDataRepoSnapshotResource().toBuilder()
+            .snapshotId(newSnapshotId)
+            .instanceName(newInstanceName)
+            .build();
+
+    referenceResourceService.updateReferenceResource(
+        workspaceId, referenceResource.getResourceId(), null, null, updatedResource, USER_REQUEST);
+
+    ReferencedResource result =
+        referenceResourceService.getReferenceResource(workspaceId, resourceId, USER_REQUEST);
+    assertEquals(originalName, result.getName());
+    assertEquals(originalDescription, result.getDescription());
+    assertEquals(newInstanceName, result.castToDataRepoSnapshotResource().getInstanceName());
+    assertEquals(newSnapshotId, result.castToDataRepoSnapshotResource().getSnapshotId());
+  }
+
+  @Test
+  void updateNameAndDescription() {
     referenceResource = ReferenceResourceFixtures.makeDataRepoSnapshotResource(workspaceId);
     referenceResourceService.createReferenceResource(referenceResource, USER_REQUEST);
 
@@ -404,34 +464,35 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
       void setup() throws Exception {
         // Make the Verify step always succeed
         doReturn(true).when(mockCrlService).canReadGcsBucket(any(), any());
+        doReturn(true).when(mockCrlService).canReadGcsObject(any(), any(), any());
       }
 
-      private ReferencedGcsBucketFileResource makeGcsBucketFileResource() {
+      private ReferencedGcsObjectResource makeGcsObjectReference() {
         UUID resourceId = UUID.randomUUID();
         String resourceName = "testgcs-" + resourceId.toString();
 
-        return new ReferencedGcsBucketFileResource(
+        return new ReferencedGcsObjectResource(
             workspaceId,
             resourceId,
             resourceName,
             "description of " + resourceName,
             CloningInstructions.COPY_DEFINITION,
             /*bucketName=*/ "theres-a-hole-in-the-bottom-of-the",
-            /*fileName=*/ "balloon");
+            /*objectName=*/ "balloon");
       }
 
       @Test
-      void gcsBucketFileReference() {
-        referenceResource = makeGcsBucketFileResource();
+      void gcsObjectReference() {
+        referenceResource = makeGcsObjectReference();
         assertEquals(referenceResource.getStewardshipType(), StewardshipType.REFERENCED);
 
-        ReferencedGcsBucketFileResource resource = referenceResource.castToGcsBucketFileResource();
-        assertEquals(resource.getResourceType(), WsmResourceType.GCS_BUCKET_FILE);
+        ReferencedGcsObjectResource resource = referenceResource.castToGcsObjectResource();
+        assertEquals(resource.getResourceType(), WsmResourceType.GCS_OBJECT);
 
         ReferencedResource resultReferenceResource =
             referenceResourceService.createReferenceResource(referenceResource, USER_REQUEST);
-        ReferencedGcsBucketFileResource resultResource =
-            resultReferenceResource.castToGcsBucketFileResource();
+        ReferencedGcsObjectResource resultResource =
+            resultReferenceResource.castToGcsObjectResource();
         assertEquals(resource, resultResource);
 
         assertTrue(
@@ -444,14 +505,14 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
         ReferencedResource byname =
             referenceResourceService.getReferenceResourceByName(
                 workspaceId, resource.getName(), USER_REQUEST);
-        assertNotNull(byid.castToGcsBucketFileResource());
-        assertEquals(byid.castToGcsBucketFileResource(), byname.castToGcsBucketFileResource());
+        assertNotNull(byid.castToGcsObjectResource());
+        assertEquals(byid.castToGcsObjectResource(), byname.castToGcsObjectResource());
 
         referenceResourceService.deleteReferenceResourceForResourceType(
             workspaceId,
             referenceResource.getResourceId(),
             USER_REQUEST,
-            WsmResourceType.GCS_BUCKET_FILE);
+            WsmResourceType.GCS_OBJECT);
       }
 
       private ReferencedGcsBucketResource makeGcsBucketResource() {
@@ -503,13 +564,13 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
       }
 
       @Test
-      void missingBucketFileName_throwsException() {
+      void missingObjectName_throwsException() {
         UUID resourceId = UUID.randomUUID();
         String resourceName = "testgcs-" + resourceId.toString();
         assertThrows(
             MissingRequiredFieldException.class,
             () ->
-                new ReferencedGcsBucketFileResource(
+                new ReferencedGcsObjectResource(
                     workspaceId,
                     resourceId,
                     resourceName,
@@ -683,8 +744,7 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
 
         ReferencedResource resultReferenceResource =
             referenceResourceService.createReferenceResource(referenceResource, USER_REQUEST);
-        ReferencedBigQueryDataTableResource resultResource =
-            resultReferenceResource.castToBigQueryDataTableResource();
+        resultReferenceResource.castToBigQueryDataTableResource();
 
         referenceResourceService.deleteReferenceResourceForResourceType(
             workspaceId,

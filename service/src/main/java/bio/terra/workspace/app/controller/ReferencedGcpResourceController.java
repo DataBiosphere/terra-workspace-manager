@@ -4,20 +4,30 @@ import bio.terra.workspace.generated.controller.ReferencedGcpResourceApi;
 import bio.terra.workspace.generated.model.ApiCloneReferencedGcpBigQueryDataTableResourceResult;
 import bio.terra.workspace.generated.model.ApiCloneReferencedGcpBigQueryDatasetResourceResult;
 import bio.terra.workspace.generated.model.ApiCloneReferencedGcpDataRepoSnapshotResourceResult;
-import bio.terra.workspace.generated.model.ApiCloneReferencedGcpGcsBucketFileResourceResult;
 import bio.terra.workspace.generated.model.ApiCloneReferencedGcpGcsBucketResourceResult;
+import bio.terra.workspace.generated.model.ApiCloneReferencedGcpGcsObjectResourceResult;
 import bio.terra.workspace.generated.model.ApiCloneReferencedResourceRequestBody;
 import bio.terra.workspace.generated.model.ApiCreateDataRepoSnapshotReferenceRequestBody;
 import bio.terra.workspace.generated.model.ApiCreateGcpBigQueryDataTableReferenceRequestBody;
 import bio.terra.workspace.generated.model.ApiCreateGcpBigQueryDatasetReferenceRequestBody;
-import bio.terra.workspace.generated.model.ApiCreateGcpGcsBucketFileReferenceRequestBody;
 import bio.terra.workspace.generated.model.ApiCreateGcpGcsBucketReferenceRequestBody;
+import bio.terra.workspace.generated.model.ApiCreateGcpGcsObjectReferenceRequestBody;
+import bio.terra.workspace.generated.model.ApiDataRepoSnapshotAttributes;
 import bio.terra.workspace.generated.model.ApiDataRepoSnapshotResource;
+import bio.terra.workspace.generated.model.ApiGcpBigQueryDataTableAttributes;
 import bio.terra.workspace.generated.model.ApiGcpBigQueryDataTableResource;
+import bio.terra.workspace.generated.model.ApiGcpBigQueryDatasetAttributes;
 import bio.terra.workspace.generated.model.ApiGcpBigQueryDatasetResource;
-import bio.terra.workspace.generated.model.ApiGcpGcsBucketFileResource;
+import bio.terra.workspace.generated.model.ApiGcpGcsBucketAttributes;
 import bio.terra.workspace.generated.model.ApiGcpGcsBucketResource;
+import bio.terra.workspace.generated.model.ApiGcpGcsObjectAttributes;
+import bio.terra.workspace.generated.model.ApiGcpGcsObjectResource;
+import bio.terra.workspace.generated.model.ApiUpdateBigQueryDataTableReferenceRequestBody;
+import bio.terra.workspace.generated.model.ApiUpdateBigQueryDatasetReferenceRequestBody;
 import bio.terra.workspace.generated.model.ApiUpdateDataReferenceRequestBody;
+import bio.terra.workspace.generated.model.ApiUpdateDataRepoSnapshotReferenceRequestBody;
+import bio.terra.workspace.generated.model.ApiUpdateGcsBucketObjectReferenceRequestBody;
+import bio.terra.workspace.generated.model.ApiUpdateGcsBucketReferenceRequestBody;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequestFactory;
 import bio.terra.workspace.service.resource.WsmResourceType;
@@ -25,8 +35,8 @@ import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.referenced.ReferencedBigQueryDataTableResource;
 import bio.terra.workspace.service.resource.referenced.ReferencedBigQueryDatasetResource;
 import bio.terra.workspace.service.resource.referenced.ReferencedDataRepoSnapshotResource;
-import bio.terra.workspace.service.resource.referenced.ReferencedGcsBucketFileResource;
 import bio.terra.workspace.service.resource.referenced.ReferencedGcsBucketResource;
+import bio.terra.workspace.service.resource.referenced.ReferencedGcsObjectResource;
 import bio.terra.workspace.service.resource.referenced.ReferencedResource;
 import bio.terra.workspace.service.resource.referenced.ReferencedResourceService;
 import bio.terra.workspace.service.workspace.WorkspaceService;
@@ -34,6 +44,7 @@ import java.util.Optional;
 import java.util.UUID;
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -71,14 +82,14 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
     return authenticatedUserRequestFactory.from(request);
   }
 
-  // -- GSC Bucket file -- //
+  // -- GSC Bucket object -- //
   @Override
-  public ResponseEntity<ApiGcpGcsBucketFileResource> createBucketFileReference(
-      UUID workspaceId, @Valid ApiCreateGcpGcsBucketFileReferenceRequestBody body) {
+  public ResponseEntity<ApiGcpGcsObjectResource> createGcsObjectReference(
+      UUID workspaceId, @Valid ApiCreateGcpGcsObjectReferenceRequestBody body) {
 
     // Construct a ReferenceGcsBucketResource object from the API input
     var resource =
-        ReferencedGcsBucketFileResource.builder()
+        ReferencedGcsObjectResource.builder()
             .workspaceId(workspaceId)
             .name(body.getMetadata().getName())
             .description(body.getMetadata().getDescription())
@@ -90,47 +101,73 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
 
     ReferencedResource referenceResource =
         referenceResourceService.createReferenceResource(resource, getAuthenticatedInfo());
-    ApiGcpGcsBucketFileResource response =
-        referenceResource.castToGcsBucketFileResource().toApiModel();
+    ApiGcpGcsObjectResource response = referenceResource.castToGcsObjectResource().toApiModel();
     return new ResponseEntity<>(response, HttpStatus.OK);
   }
 
   @Override
-  public ResponseEntity<ApiGcpGcsBucketFileResource> getBucketFileReference(
-      UUID id, UUID referenceId) {
+  public ResponseEntity<ApiGcpGcsObjectResource> getGcsObjectReference(UUID id, UUID referenceId) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     ReferencedResource referenceResource =
         referenceResourceService.getReferenceResource(id, referenceId, userRequest);
-    ApiGcpGcsBucketFileResource response =
-        referenceResource.castToGcsBucketFileResource().toApiModel();
+    ApiGcpGcsObjectResource response = referenceResource.castToGcsObjectResource().toApiModel();
     return new ResponseEntity<>(response, HttpStatus.OK);
   }
 
   @Override
-  public ResponseEntity<ApiGcpGcsBucketFileResource> getBucketFileReferenceByName(
-      UUID id, String name) {
+  public ResponseEntity<ApiGcpGcsObjectResource> getGcsObjectReferenceByName(UUID id, String name) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     ReferencedResource referenceResource =
         referenceResourceService.getReferenceResourceByName(id, name, userRequest);
-    ApiGcpGcsBucketFileResource response =
-        referenceResource.castToGcsBucketFileResource().toApiModel();
+    ApiGcpGcsObjectResource response = referenceResource.castToGcsObjectResource().toApiModel();
     return new ResponseEntity<>(response, HttpStatus.OK);
   }
 
   @Override
-  public ResponseEntity<Void> updateBucketFileReference(
-      UUID id, UUID referenceId, ApiUpdateDataReferenceRequestBody body) {
+  public ResponseEntity<Void> updateGcsObjectReference(
+      UUID workspaceId, UUID referenceId, ApiUpdateDataReferenceRequestBody body) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     referenceResourceService.updateReferenceResource(
-        id, referenceId, body.getName(), body.getDescription(), userRequest);
+        workspaceId, referenceId, body.getName(), body.getDescription(), userRequest);
     return new ResponseEntity<>(HttpStatus.NO_CONTENT);
   }
 
   @Override
-  public ResponseEntity<Void> deleteBucketFileReference(UUID workspaceId, UUID resourceId) {
+  public ResponseEntity<Void> updateBucketObjectReferenceResource(
+      UUID workspaceId, UUID referenceId, ApiUpdateGcsBucketObjectReferenceRequestBody body) {
+    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    ApiGcpGcsObjectAttributes bucketObjectAttributes = body.getResourceAttributes();
+    if (bucketObjectAttributes == null) {
+      referenceResourceService.updateReferenceResource(
+          workspaceId, referenceId, body.getName(), body.getDescription(), userRequest);
+    } else {
+      ReferencedGcsObjectResource.Builder updateBucketObjectResourceBuilder =
+          referenceResourceService
+              .getReferenceResource(workspaceId, referenceId, userRequest)
+              .castToGcsObjectResource()
+              .toBuilder();
+      if (!StringUtils.isEmpty(bucketObjectAttributes.getBucketName())) {
+        updateBucketObjectResourceBuilder.bucketName(bucketObjectAttributes.getBucketName());
+      }
+      if (!StringUtils.isEmpty(bucketObjectAttributes.getFileName())) {
+        updateBucketObjectResourceBuilder.fileName(bucketObjectAttributes.getFileName());
+      }
+      referenceResourceService.updateReferenceResource(
+          workspaceId,
+          referenceId,
+          body.getName(),
+          body.getDescription(),
+          updateBucketObjectResourceBuilder.build(),
+          userRequest);
+    }
+    return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+  }
+
+  @Override
+  public ResponseEntity<Void> deleteGcsObjectReference(UUID workspaceId, UUID resourceId) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     referenceResourceService.deleteReferenceResourceForResourceType(
-        workspaceId, resourceId, userRequest, WsmResourceType.GCS_BUCKET_FILE);
+        workspaceId, resourceId, userRequest, WsmResourceType.GCS_OBJECT);
     return new ResponseEntity<>(HttpStatus.NO_CONTENT);
   }
 
@@ -180,6 +217,34 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     referenceResourceService.updateReferenceResource(
         id, referenceId, body.getName(), body.getDescription(), userRequest);
+    return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+  }
+
+  @Override
+  public ResponseEntity<Void> updateBucketReferenceResource(
+      UUID id, UUID referenceId, ApiUpdateGcsBucketReferenceRequestBody body) {
+    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    ApiGcpGcsBucketAttributes bucketAttributes = body.getResourceAttributes();
+    if (bucketAttributes == null) {
+      referenceResourceService.updateReferenceResource(
+          id, referenceId, body.getName(), body.getDescription(), userRequest);
+    } else {
+      ReferencedGcsBucketResource.Builder updateBucketResourceBuilder =
+          referenceResourceService
+              .getReferenceResource(id, referenceId, userRequest)
+              .castToGcsBucketResource()
+              .toBuilder();
+      if (!StringUtils.isEmpty(bucketAttributes.getBucketName())) {
+        updateBucketResourceBuilder.bucketName(bucketAttributes.getBucketName());
+      }
+      referenceResourceService.updateReferenceResource(
+          id,
+          referenceId,
+          body.getName(),
+          body.getDescription(),
+          updateBucketResourceBuilder.build(),
+          userRequest);
+    }
     return new ResponseEntity<>(HttpStatus.NO_CONTENT);
   }
 
@@ -241,6 +306,41 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     referenceResourceService.updateReferenceResource(
         id, referenceId, body.getName(), body.getDescription(), userRequest);
+    return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+  }
+
+  @Override
+  public ResponseEntity<Void> updateBigQueryDataTableReferenceResource(
+      UUID workspaceId, UUID referenceId, ApiUpdateBigQueryDataTableReferenceRequestBody body) {
+    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    ApiGcpBigQueryDataTableAttributes bqTableAttributes = body.getResourceAttributes();
+    if (bqTableAttributes == null) {
+      referenceResourceService.updateReferenceResource(
+          workspaceId, referenceId, body.getName(), body.getDescription(), userRequest);
+    } else {
+      ReferencedBigQueryDataTableResource.Builder updateBqTableResource =
+          referenceResourceService
+              .getReferenceResource(workspaceId, referenceId, userRequest)
+              .castToBigQueryDataTableResource()
+              .toBuilder();
+      if (!StringUtils.isEmpty(bqTableAttributes.getProjectId())) {
+        updateBqTableResource.projectId(bqTableAttributes.getProjectId());
+      }
+      if (!StringUtils.isEmpty(bqTableAttributes.getDatasetId())) {
+        updateBqTableResource.datasetId(bqTableAttributes.getDatasetId());
+      }
+      if (!StringUtils.isEmpty(bqTableAttributes.getDataTableId())) {
+        updateBqTableResource.dataTableId(bqTableAttributes.getDataTableId());
+      }
+      referenceResourceService.updateReferenceResource(
+          workspaceId,
+          referenceId,
+          body.getName(),
+          body.getDescription(),
+          updateBqTableResource.build(),
+          userRequest);
+    }
+
     return new ResponseEntity<>(HttpStatus.NO_CONTENT);
   }
 
@@ -309,6 +409,39 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
   }
 
   @Override
+  public ResponseEntity<Void> updateBigQueryDatasetReferenceResource(
+      UUID workspaceId, UUID resourceId, ApiUpdateBigQueryDatasetReferenceRequestBody body) {
+    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    ApiGcpBigQueryDatasetAttributes datasetAttributes = body.getResourceAttributes();
+    if (datasetAttributes == null) {
+      referenceResourceService.updateReferenceResource(
+          workspaceId, resourceId, body.getName(), body.getDescription(), userRequest);
+    } else {
+      ReferencedResource referencedResource =
+          referenceResourceService.getReferenceResource(workspaceId, resourceId, userRequest);
+      ReferencedBigQueryDatasetResource bqDatasetResource =
+          referencedResource.castToBigQueryDatasetResource();
+
+      ReferencedBigQueryDatasetResource.Builder updatedBqDatasetResourceBuilder =
+          bqDatasetResource.toBuilder();
+      if (!StringUtils.isEmpty(datasetAttributes.getProjectId())) {
+        updatedBqDatasetResourceBuilder.projectId(datasetAttributes.getProjectId());
+      }
+      if (!StringUtils.isEmpty(datasetAttributes.getDatasetId())) {
+        updatedBqDatasetResourceBuilder.datasetName(datasetAttributes.getDatasetId());
+      }
+      referenceResourceService.updateReferenceResource(
+          workspaceId,
+          resourceId,
+          body.getName(),
+          body.getDescription(),
+          updatedBqDatasetResourceBuilder.build(),
+          userRequest);
+    }
+    return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+  }
+
+  @Override
   public ResponseEntity<Void> deleteBigQueryDatasetReference(UUID workspaceId, UUID resourceId) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     referenceResourceService.deleteReferenceResourceForResourceType(
@@ -364,10 +497,41 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
 
   @Override
   public ResponseEntity<Void> updateDataRepoSnapshotReference(
-      UUID id, UUID referenceId, ApiUpdateDataReferenceRequestBody body) {
+      UUID workspaceId, UUID referenceId, ApiUpdateDataReferenceRequestBody body) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     referenceResourceService.updateReferenceResource(
-        id, referenceId, body.getName(), body.getDescription(), userRequest);
+        workspaceId, referenceId, body.getName(), body.getDescription(), userRequest);
+    return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+  }
+
+  @Override
+  public ResponseEntity<Void> updateDataRepoSnapshotReferenceResource(
+      UUID workspaceId, UUID resouceId, ApiUpdateDataRepoSnapshotReferenceRequestBody body) {
+    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    ApiDataRepoSnapshotAttributes dataRepoSnapshotAttributes = body.getResourceAttributes();
+    if (dataRepoSnapshotAttributes == null) {
+      referenceResourceService.updateReferenceResource(
+          workspaceId, resouceId, body.getName(), body.getDescription(), userRequest);
+    } else {
+      ReferencedDataRepoSnapshotResource.Builder updatedResourceBuilder =
+          referenceResourceService
+              .getReferenceResource(workspaceId, resouceId, userRequest)
+              .castToDataRepoSnapshotResource()
+              .toBuilder();
+      if (!StringUtils.isEmpty(dataRepoSnapshotAttributes.getSnapshot())) {
+        updatedResourceBuilder.snapshotId(dataRepoSnapshotAttributes.getSnapshot());
+      }
+      if (!StringUtils.isEmpty(dataRepoSnapshotAttributes.getInstanceName())) {
+        updatedResourceBuilder.instanceName(dataRepoSnapshotAttributes.getInstanceName());
+      }
+      referenceResourceService.updateReferenceResource(
+          workspaceId,
+          resouceId,
+          body.getName(),
+          body.getDescription(),
+          updatedResourceBuilder.build(),
+          userRequest);
+    }
     return new ResponseEntity<>(HttpStatus.NO_CONTENT);
   }
 
@@ -380,9 +544,8 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
   }
 
   @Override
-  public ResponseEntity<ApiCloneReferencedGcpGcsBucketFileResourceResult>
-      cloneGcpGcsBucketFileReference(
-          UUID workspaceId, UUID resourceId, @Valid ApiCloneReferencedResourceRequestBody body) {
+  public ResponseEntity<ApiCloneReferencedGcpGcsObjectResourceResult> cloneGcpGcsObjectReference(
+      UUID workspaceId, UUID resourceId, @Valid ApiCloneReferencedResourceRequestBody body) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
 
     final ReferencedResource sourceReferencedResource =
@@ -395,7 +558,7 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
     if (CloningInstructions.COPY_REFERENCE != effectiveCloningInstructions) {
       // Nothing to clone here
       final var emptyResult =
-          new ApiCloneReferencedGcpGcsBucketFileResourceResult()
+          new ApiCloneReferencedGcpGcsObjectResourceResult()
               .effectiveCloningInstructions(effectiveCloningInstructions.toApiModel())
               .sourceResourceId(sourceReferencedResource.getResourceId())
               .sourceWorkspaceId(sourceReferencedResource.getWorkspaceId())
@@ -413,8 +576,8 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
 
     // Build the correct response type
     final var result =
-        new ApiCloneReferencedGcpGcsBucketFileResourceResult()
-            .resource(clonedReferencedResource.castToGcsBucketFileResource().toApiModel())
+        new ApiCloneReferencedGcpGcsObjectResourceResult()
+            .resource(clonedReferencedResource.castToGcsObjectResource().toApiModel())
             .sourceWorkspaceId(sourceReferencedResource.getWorkspaceId())
             .sourceResourceId(sourceReferencedResource.getResourceId())
             .effectiveCloningInstructions(effectiveCloningInstructions.toApiModel());

@@ -7,8 +7,8 @@ import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.referenced.ReferencedBigQueryDataTableResource;
 import bio.terra.workspace.service.resource.referenced.ReferencedBigQueryDatasetResource;
 import bio.terra.workspace.service.resource.referenced.ReferencedDataRepoSnapshotResource;
-import bio.terra.workspace.service.resource.referenced.ReferencedGcsBucketFileResource;
 import bio.terra.workspace.service.resource.referenced.ReferencedGcsBucketResource;
+import bio.terra.workspace.service.resource.referenced.ReferencedGcsObjectResource;
 import bio.terra.workspace.service.resource.referenced.ReferencedResource;
 import bio.terra.workspace.service.workspace.model.WsmCloneResourceResult;
 import java.util.Optional;
@@ -57,10 +57,10 @@ public class WorkspaceCloneUtils {
                 name,
                 description);
         break;
-      case GCS_BUCKET_FILE:
+      case GCS_OBJECT:
         destinationResource =
-            buildDestinationGcsBucketFileReference(
-                sourceReferencedResource.castToGcsBucketFileResource(),
+            buildDestinationGcsObjectReference(
+                sourceReferencedResource.castToGcsObjectResource(),
                 destinationWorkspaceId,
                 name,
                 description);
@@ -125,12 +125,12 @@ public class WorkspaceCloneUtils {
     return resultBuilder.build();
   }
 
-  private static ReferencedResource buildDestinationGcsBucketFileReference(
-      ReferencedGcsBucketFileResource sourceBucketFileResource,
+  private static ReferencedResource buildDestinationGcsObjectReference(
+      ReferencedGcsObjectResource sourceBucketFileResource,
       UUID destinationWorkspaceId,
       @Nullable String name,
       @Nullable String description) {
-    final ReferencedGcsBucketFileResource.Builder resultBuilder =
+    final ReferencedGcsObjectResource.Builder resultBuilder =
         sourceBucketFileResource.toBuilder()
             .workspaceId(destinationWorkspaceId)
             .resourceId(UUID.randomUUID());

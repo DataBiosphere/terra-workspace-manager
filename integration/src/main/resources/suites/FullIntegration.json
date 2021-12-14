@@ -8,6 +8,7 @@
     "integration/CloneBigQueryDataset.json",
     "integration/CloneGcsBucket.json",
     "integration/CloneReferencedResources.json",
+    "integration/CloneWorkspace.json",
     "integration/ControlledBigQueryDatasetLifecycle.json",
     "integration/ControlledGcsBucketLifecycle.json",
     "integration/DataReferenceLifecycle.json",
@@ -22,6 +23,7 @@
     "integration/PrivateControlledAiNotebookInstanceLifecycle.json",
     "integration/PrivateControlledGcsBucketLifecycle.json",
     "integration/RemoveUser.json",
+    "integration/UpdateReferenceResources.json",
     "integration/ValidateReferencedResources.json",
     "integration/WorkspaceLifecycle.json"
   ]

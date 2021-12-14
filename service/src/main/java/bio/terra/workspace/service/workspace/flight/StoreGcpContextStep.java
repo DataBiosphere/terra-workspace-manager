@@ -16,6 +16,7 @@ import java.util.UUID;
  * Stores the previously generated Google Project Id in the {@link WorkspaceDao} as the Google cloud
  * context for the workspace.
  */
+@Deprecated // TODO: PF-1238 remove
 public class StoreGcpContextStep implements Step {
   private final GcpCloudContextService gcpCloudContextService;
   private final UUID workspaceId;

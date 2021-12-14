@@ -33,11 +33,13 @@ import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ResourceKeys;
+import bio.terra.workspace.service.workspace.model.GcpCloudContext;
 import bio.terra.workspace.service.workspace.model.WsmApplication;
 import com.google.cloud.Policy;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.function.Supplier;
 import javax.annotation.Nullable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -108,8 +110,8 @@ public class ControlledResourceService {
                 resource,
                 userRequest)
             .addParameter(ControlledResourceKeys.UPDATE_PARAMETERS, updateParameters)
-            .addParameter(ControlledResourceKeys.RESOURCE_NAME, resourceName)
-            .addParameter(ControlledResourceKeys.RESOURCE_DESCRIPTION, resourceDescription);
+            .addParameter(ResourceKeys.RESOURCE_NAME, resourceName)
+            .addParameter(ResourceKeys.RESOURCE_DESCRIPTION, resourceDescription);
     return jobBuilder.submitAndWait(ControlledGcsBucketResource.class);
   }
 
@@ -145,16 +147,11 @@ public class ControlledResourceService {
       @Nullable String destinationLocation,
       @Nullable ApiCloningInstructionsEnum cloningInstructionsOverride) {
     stageService.assertMcWorkspace(destinationWorkspaceId, "cloneGcsBucket");
+    // Authorization check is handled as the first flight step rather than before the flight, as
+    // this flight is re-used for cloneWorkspace.
 
     final ControlledResource sourceBucketResource =
         getControlledResource(sourceWorkspaceId, sourceResourceId, userRequest);
-
-    // Verify user can read source resource in Sam
-    controlledResourceMetadataManager.validateControlledResourceAndAction(
-        userRequest,
-        sourceBucketResource.getWorkspaceId(),
-        sourceBucketResource.getResourceId(),
-        SamControlledResourceActions.READ_ACTION);
 
     // Write access to the target workspace will be established in the create flight
     final String jobDescription =
@@ -173,8 +170,8 @@ public class ControlledResourceService {
                 sourceBucketResource,
                 userRequest)
             .addParameter(ControlledResourceKeys.DESTINATION_WORKSPACE_ID, destinationWorkspaceId)
-            .addParameter(ControlledResourceKeys.RESOURCE_NAME, destinationResourceName)
-            .addParameter(ControlledResourceKeys.RESOURCE_DESCRIPTION, destinationDescription)
+            .addParameter(ResourceKeys.RESOURCE_NAME, destinationResourceName)
+            .addParameter(ResourceKeys.RESOURCE_DESCRIPTION, destinationDescription)
             .addParameter(ControlledResourceKeys.DESTINATION_BUCKET_NAME, destinationBucketName)
             .addParameter(ControlledResourceKeys.LOCATION, destinationLocation)
             .addParameter(
@@ -217,8 +214,8 @@ public class ControlledResourceService {
                 resource,
                 userRequest)
             .addParameter(ControlledResourceKeys.UPDATE_PARAMETERS, updateParameters)
-            .addParameter(ControlledResourceKeys.RESOURCE_NAME, resourceName)
-            .addParameter(ControlledResourceKeys.RESOURCE_DESCRIPTION, resourceDescription);
+            .addParameter(ResourceKeys.RESOURCE_NAME, resourceName)
+            .addParameter(ResourceKeys.RESOURCE_DESCRIPTION, resourceDescription);
     return jobBuilder.submitAndWait(ControlledBigQueryDatasetResource.class);
   }
 
@@ -253,13 +250,8 @@ public class ControlledResourceService {
     stageService.assertMcWorkspace(destinationWorkspaceId, "cloneGcpBigQueryDataset");
     final ControlledResource sourceDatasetResource =
         getControlledResource(sourceWorkspaceId, sourceResourceId, userRequest);
-
-    // Verify user can read source resource in Sam
-    controlledResourceMetadataManager.validateControlledResourceAndAction(
-        userRequest,
-        sourceDatasetResource.getWorkspaceId(),
-        sourceDatasetResource.getResourceId(),
-        SamControlledResourceActions.READ_ACTION);
+    // Authorization check is handled as the first flight step rather than before the flight, as
+    // this flight is re-used for cloneWorkspace.
 
     // Write access to the target workspace will be established in the create flight
     final String jobDescription =
@@ -277,8 +269,8 @@ public class ControlledResourceService {
                 sourceDatasetResource,
                 userRequest)
             .addParameter(ControlledResourceKeys.DESTINATION_WORKSPACE_ID, destinationWorkspaceId)
-            .addParameter(ControlledResourceKeys.RESOURCE_NAME, destinationResourceName)
-            .addParameter(ControlledResourceKeys.RESOURCE_DESCRIPTION, destinationDescription)
+            .addParameter(ResourceKeys.RESOURCE_NAME, destinationResourceName)
+            .addParameter(ResourceKeys.RESOURCE_DESCRIPTION, destinationDescription)
             .addParameter(ControlledResourceKeys.LOCATION, destinationLocation)
             .addParameter(ControlledResourceKeys.DESTINATION_DATASET_NAME, destinationDatasetName)
             .addParameter(
@@ -428,45 +420,53 @@ public class ControlledResourceService {
 
   public Policy configureGcpPolicyForResource(
       ControlledResource resource,
-      String projectId,
+      GcpCloudContext cloudContext,
       Policy currentPolicy,
       AuthenticatedUserRequest userRequest)
       throws InterruptedException {
 
-    GcpPolicyBuilder gcpPolicyBuilder = new GcpPolicyBuilder(resource, projectId, currentPolicy);
+    GcpPolicyBuilder gcpPolicyBuilder =
+        new GcpPolicyBuilder(resource, cloudContext.getGcpProjectId(), currentPolicy);
 
     List<SyncMapping> syncMappings = resource.getCategory().getSyncMappings();
     for (SyncMapping syncMapping : syncMappings) {
-      String policyGroup = syncPolicyGroup(resource, syncMapping, userRequest);
+      String policyGroup = null;
+      switch (syncMapping.getRoleSource()) {
+        case RESOURCE:
+          policyGroup =
+              samService.syncResourcePolicy(
+                  resource, syncMapping.getResourceRole().orElseThrow(badState), userRequest);
+          break;
+
+        case WORKSPACE:
+          switch (syncMapping.getWorkspaceRole().orElseThrow(badState)) {
+            case OWNER:
+              policyGroup = cloudContext.getSamPolicyOwner().orElseThrow(badState);
+              break;
+            case WRITER:
+              policyGroup = cloudContext.getSamPolicyWriter().orElseThrow(badState);
+              break;
+            case READER:
+              policyGroup = cloudContext.getSamPolicyReader().orElseThrow(badState);
+              break;
+            case APPLICATION:
+              policyGroup = cloudContext.getSamPolicyApplication().orElseThrow(badState);
+              break;
+          }
+          break;
+      }
+      if (policyGroup == null) {
+        throw new InternalLogicException("Policy group not set");
+      }
+
       gcpPolicyBuilder.addResourceBinding(syncMapping.getTargetRole(), policyGroup);
     }
 
     return gcpPolicyBuilder.build();
   }
 
-  private String syncPolicyGroup(
-      ControlledResource resource, SyncMapping syncMapping, AuthenticatedUserRequest userRequest)
-      throws InterruptedException {
-
-    switch (syncMapping.getRoleSource()) {
-      case RESOURCE:
-        return samService.syncResourcePolicy(
-            resource,
-            syncMapping
-                .getResourceRole()
-                .orElseThrow(() -> new InternalLogicException("Mismatched syncMapping")),
-            userRequest);
-
-      case WORKSPACE:
-        return samService.syncWorkspacePolicy(
-            resource.getWorkspaceId(),
-            syncMapping
-                .getWorkspaceRole()
-                .orElseThrow(() -> new InternalLogicException("Mismatched syncMapping")),
-            userRequest);
-    }
-    throw new InternalLogicException("Invalid role source");
-  }
+  private final Supplier<InternalLogicException> badState =
+      () -> new InternalLogicException("Invalid sync mapping or bad context");
 
   /**
    * Creates and returns a JobBuilder object for deleting a controlled resource. Depending on the

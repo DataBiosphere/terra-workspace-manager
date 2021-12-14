@@ -13,6 +13,7 @@ import bio.terra.stairway.StepStatus;
 import bio.terra.workspace.common.BaseConnectedTest;
 import bio.terra.workspace.common.StairwayTestUtils;
 import bio.terra.workspace.connected.UserAccessUtils;
+import bio.terra.workspace.connected.WorkspaceConnectedTestUtils;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.job.JobMapKeys;
@@ -35,7 +36,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.DisabledIfEnvironmentVariable;
 import org.springframework.beans.factory.annotation.Autowired;
 
-class DeleteGoogleContextFlightTest extends BaseConnectedTest {
+class DeleteGcpContextFlightTest extends BaseConnectedTest {
 
   /**
    * How long to wait for a delete context Stairway flight to complete before timing out the test.
@@ -52,6 +53,7 @@ class DeleteGoogleContextFlightTest extends BaseConnectedTest {
   @Autowired private JobService jobService;
   @Autowired private SpendConnectedTestUtils spendUtils;
   @Autowired private UserAccessUtils userAccessUtils;
+  @Autowired private WorkspaceConnectedTestUtils testUtils;
 
   private UUID workspaceId;
 
@@ -125,7 +127,7 @@ class DeleteGoogleContextFlightTest extends BaseConnectedTest {
             debugInfo);
     assertEquals(FlightStatus.SUCCESS, flightState.getFlightStatus());
 
-    assertTrue(workspaceService.getAuthorizedGcpCloudContext(workspaceId, userRequest).isEmpty());
+    assertTrue(testUtils.getAuthorizedGcpCloudContext(workspaceId, userRequest).isEmpty());
 
     // make sure required really requires
     assertThrows(
@@ -171,13 +173,13 @@ class DeleteGoogleContextFlightTest extends BaseConnectedTest {
     assertEquals(FlightStatus.FATAL, flightState.getFlightStatus());
 
     // Because this flight cannot be undone, the context should still be deleted even after undoing.
-    assertTrue(workspaceService.getAuthorizedGcpCloudContext(workspaceId, userRequest).isEmpty());
+    assertTrue(testUtils.getAuthorizedGcpCloudContext(workspaceId, userRequest).isEmpty());
   }
 
   @Test
   void deleteNonExistentContextIsOk() throws Exception {
     AuthenticatedUserRequest userRequest = userAccessUtils.defaultUserAuthRequest();
-    assertTrue(workspaceService.getAuthorizedGcpCloudContext(workspaceId, userRequest).isEmpty());
+    assertTrue(testUtils.getAuthorizedGcpCloudContext(workspaceId, userRequest).isEmpty());
 
     FlightMap inputParameters = new FlightMap();
     inputParameters.put(WorkspaceFlightMapKeys.WORKSPACE_ID, workspaceId.toString());
@@ -189,6 +191,6 @@ class DeleteGoogleContextFlightTest extends BaseConnectedTest {
             DELETION_FLIGHT_TIMEOUT,
             null);
     assertEquals(FlightStatus.SUCCESS, flightState.getFlightStatus());
-    assertTrue(workspaceService.getAuthorizedGcpCloudContext(workspaceId, userRequest).isEmpty());
+    assertTrue(testUtils.getAuthorizedGcpCloudContext(workspaceId, userRequest).isEmpty());
   }
 }
