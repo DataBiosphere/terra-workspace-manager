@@ -10,6 +10,7 @@ import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.job.exception.InvalidJobIdException;
 import bio.terra.workspace.service.job.exception.InvalidJobParameterException;
 import io.opencensus.contrib.spring.aop.Traced;
+import javax.annotation.Nullable;
 import org.apache.commons.lang3.StringUtils;
 
 public class JobBuilder {
@@ -17,11 +18,11 @@ public class JobBuilder {
   private final StairwayComponent stairwayComponent;
   private final MdcHook mdcHook;
   private final FlightMap jobParameterMap;
-  private Class<? extends Flight> flightClass;
-  private String jobId;
-  private String description;
-  private Object request;
-  private AuthenticatedUserRequest userRequest;
+  @Nullable private Class<? extends Flight> flightClass;
+  @Nullable private String jobId;
+  @Nullable private String description;
+  @Nullable private Object request;
+  @Nullable private AuthenticatedUserRequest userRequest;
 
   public JobBuilder(JobService jobService, StairwayComponent stairwayComponent, MdcHook mdcHook) {
     this.jobService = jobService;
@@ -35,35 +36,33 @@ public class JobBuilder {
     return this;
   }
 
-  public JobBuilder jobId(String jobId) {
-    if (jobId != null) {
-      // If clients provide a non-null job ID, it cannot be whitespace-only
-      if (StringUtils.isWhitespace(jobId)) {
-        throw new InvalidJobIdException("jobId cannot be whitespace-only.");
-      }
+  public JobBuilder jobId(@Nullable String jobId) {
+    // If clients provide a non-null job ID, it cannot be whitespace-only
+    if (StringUtils.isWhitespace(jobId)) {
+      throw new InvalidJobIdException("jobId cannot be whitespace-only.");
     }
     this.jobId = jobId;
     return this;
   }
 
-  public JobBuilder description(String description) {
+  public JobBuilder description(@Nullable String description) {
     this.description = description;
     return this;
   }
 
-  public JobBuilder request(Object request) {
+  public JobBuilder request(@Nullable Object request) {
     this.request = request;
     return this;
   }
 
-  public JobBuilder userRequest(AuthenticatedUserRequest userRequest) {
+  public JobBuilder userRequest(@Nullable AuthenticatedUserRequest userRequest) {
     this.userRequest = userRequest;
     return this;
   }
 
-  public JobBuilder addParameter(String keyName, Object val) {
-    if (keyName == null) {
-      throw new InvalidJobParameterException("Parameter name cannot be null.");
+  public JobBuilder addParameter(String keyName, @Nullable Object val) {
+    if (StringUtils.isBlank(keyName)) {
+      throw new InvalidJobParameterException("Parameter name cannot be null or blanks.");
     }
     // note that this call overwrites a parameter if it already exists
     jobParameterMap.put(keyName, val);
@@ -76,7 +75,7 @@ public class JobBuilder {
    * @return jobID of submitted flight
    */
   public String submit() {
-    validateAndDefault();
+    populateInputParams();
     return jobService.submit(flightClass, jobParameterMap, jobId);
   }
 
@@ -88,12 +87,12 @@ public class JobBuilder {
    */
   @Traced
   public <T> T submitAndWait(Class<T> resultClass) {
-    validateAndDefault();
+    populateInputParams();
     return jobService.submitAndWait(flightClass, jobParameterMap, resultClass, jobId);
   }
 
   // Check the inputs, supply defaults and finalize the input parameter map
-  private void validateAndDefault() {
+  private void populateInputParams() {
     if (flightClass == null) {
       throw new MissingRequiredFieldException("Missing flight class: flightClass");
     }
@@ -108,7 +107,7 @@ public class JobBuilder {
     addParameter(
         TracingHook.SUBMISSION_SPAN_CONTEXT_MAP_KEY, TracingHook.serializeCurrentTracingContext());
 
-    // Convert the any other members that were set into parameters. However, if they wer
+    // Convert the any other members that were set into parameters. However, if they were
     // explicitly added with addParameter during construction, we do not overwrite them.
     if (shouldInsert(JobMapKeys.DESCRIPTION, description)) {
       addParameter(JobMapKeys.DESCRIPTION.getKeyName(), description);

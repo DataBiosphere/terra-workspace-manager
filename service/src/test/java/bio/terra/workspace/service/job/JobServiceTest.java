@@ -19,7 +19,6 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -180,12 +179,11 @@ class JobServiceTest extends BaseUnitTest {
   }
 
   // Submit a flight; wait for it to finish; return the flight id
+  // Use the jobId defaulting in the JobBuilder
   private String runFlight(String description) {
-    String jobId = UUID.randomUUID().toString();
-    jobService
+    String jobId = jobService
         .newJob()
         .description(description)
-        .jobId(jobId)
         .flightClass(JobServiceTestFlight.class)
         .userRequest(testUser)
         .submit();
