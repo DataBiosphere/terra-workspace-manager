@@ -11,7 +11,6 @@ import bio.terra.workspace.service.workspace.exceptions.DuplicateWorkspaceExcept
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -165,29 +164,25 @@ public class WorkspaceDao {
           "Must specify name, description, or properties to update.");
     }
 
-    List<String> columnSet = new ArrayList<>();
     var params = new MapSqlParameterSource();
     params.addValue("workspace_id", workspaceId.toString());
 
     if (name != null) {
       params.addValue("display_name", name);
-      columnSet.add(" display_name = :display_name");
     }
 
     if (description != null) {
       params.addValue("description", description);
-      columnSet.add(" description = :description");
     }
 
     if (propertyMap != null) {
       params.addValue("properties", DbSerDes.propertiesToJson(propertyMap));
-      columnSet.add(" properties = cast(:properties AS jsonb)");
     }
 
     String sql =
         String.format(
             "UPDATE workspace SET %s WHERE workspace_id = :workspace_id",
-            String.join(",", columnSet));
+            DbUtils.setColumnsClause(params, "properties"));
 
     int rowsAffected = jdbcTemplate.update(sql, params);
     boolean updated = rowsAffected > 0;

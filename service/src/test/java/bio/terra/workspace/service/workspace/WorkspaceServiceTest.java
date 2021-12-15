@@ -210,7 +210,6 @@ class WorkspaceServiceTest extends BaseConnectedTest {
 
     Workspace createdWorkspace =
         workspaceService.getWorkspace(request.getWorkspaceId(), USER_REQUEST);
-
     assertEquals(
         request.getDescription().orElse(null), createdWorkspace.getDescription().orElse(null));
     assertEquals(name, createdWorkspace.getDisplayName().orElse(null));
@@ -223,14 +222,12 @@ class WorkspaceServiceTest extends BaseConnectedTest {
     propertyMap.put("foo", "bar");
     propertyMap.put("xyzzy", "plohg");
     Workspace request = defaultRequestBuilder(UUID.randomUUID()).properties(propertyMap).build();
-
     workspaceService.createWorkspace(request, USER_REQUEST);
     Workspace createdWorkspace =
         workspaceService.getWorkspace(request.getWorkspaceId(), USER_REQUEST);
     assertEquals(request.getWorkspaceId(), createdWorkspace.getWorkspaceId());
     assertEquals("", createdWorkspace.getDisplayName().orElse(null));
     assertEquals("", createdWorkspace.getDescription().orElse(null));
-    assertEquals(propertyMap, createdWorkspace.getProperties());
 
     UUID workspaceId = request.getWorkspaceId();
     String name = "My workspace";
@@ -252,18 +249,17 @@ class WorkspaceServiceTest extends BaseConnectedTest {
     Workspace secondUpdatedWorkspace =
         workspaceService.updateWorkspace(USER_REQUEST, workspaceId, null, otherDescription, null);
 
-    // Since name and properties are null, leave it alone. Description should be updated.
+    // Since name is null, leave it alone. Description should be updated.
     assertEquals(name, secondUpdatedWorkspace.getDisplayName().orElse(null));
     assertEquals(otherDescription, secondUpdatedWorkspace.getDescription().orElse(null));
-    assertEquals(propertyMap2, secondUpdatedWorkspace.getProperties());
+    assertEquals(propertyMap2, updatedWorkspace.getProperties());
 
-    // Sending through empty strings clears the values.
+    // Sending through empty strings and an empty map clears the values.
     Map<String, String> propertyMap3 = new HashMap<>();
     Workspace thirdUpdatedWorkspace =
         workspaceService.updateWorkspace(USER_REQUEST, workspaceId, "", "", propertyMap3);
     assertEquals("", thirdUpdatedWorkspace.getDisplayName().orElse(null));
     assertEquals("", thirdUpdatedWorkspace.getDescription().orElse(null));
-    assertEquals(propertyMap3, thirdUpdatedWorkspace.getProperties());
 
     assertThrows(
         MissingRequiredFieldException.class,
@@ -454,10 +450,10 @@ class WorkspaceServiceTest extends BaseConnectedTest {
     jobService.waitForJob(jobId);
     assertNull(jobService.retrieveJobResult(jobId, Object.class, USER_REQUEST).getException());
     assertTrue(
-        testUtils.getAuthorizedGcpCloudContext(request.workspaceId(), USER_REQUEST).isPresent());
+        testUtils.getAuthorizedGcpCloudContext(request.getWorkspaceId(), USER_REQUEST).isPresent());
     workspaceService.deleteGcpCloudContext(request.getWorkspaceId(), USER_REQUEST);
     assertTrue(
-        testUtils.getAuthorizedGcpCloudContext(request.workspaceId(), USER_REQUEST).isEmpty());
+        testUtils.getAuthorizedGcpCloudContext(request.getWorkspaceId(), USER_REQUEST).isEmpty());
   }
 
   @Test

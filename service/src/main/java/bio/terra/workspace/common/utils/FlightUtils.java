@@ -22,11 +22,16 @@ public final class FlightUtils {
 
   public static final Map<String, Class<?>> COMMON_FLIGHT_INPUTS =
       Map.of(
-          JobMapKeys.AUTH_USER_INFO.getKeyName(), AuthenticatedUserRequest.class,
-          JobMapKeys.REQUEST.getKeyName(), Workspace.class,
-          JobMapKeys.SUBJECT_ID.getKeyName(), String.class,
-          MdcHook.MDC_FLIGHT_MAP_KEY, Object.class,
-          TracingHook.SUBMISSION_SPAN_CONTEXT_MAP_KEY, Object.class);
+          JobMapKeys.AUTH_USER_INFO.getKeyName(),
+          AuthenticatedUserRequest.class,
+          JobMapKeys.REQUEST.getKeyName(),
+          Workspace.class,
+          JobMapKeys.SUBJECT_ID.getKeyName(),
+          String.class,
+          MdcHook.MDC_FLIGHT_MAP_KEY,
+          Object.class,
+          TracingHook.SUBMISSION_SPAN_CONTEXT_MAP_KEY,
+          Object.class);
 
   private FlightUtils() {}
 
@@ -140,7 +145,6 @@ public final class FlightUtils {
    * @param dest destination flight map
    */
   public static void copyCommonParams(FlightMap source, FlightMap dest) {
-    COMMON_FLIGHT_INPUTS.forEach((key, clazz) ->
-        dest.put(key, source.get(key, clazz)));
+    COMMON_FLIGHT_INPUTS.forEach((key, clazz) -> dest.put(key, source.get(key, clazz)));
   }
 }

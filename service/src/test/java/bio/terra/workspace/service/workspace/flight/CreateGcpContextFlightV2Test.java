@@ -35,7 +35,7 @@ import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.exceptions.MissingSpendProfileException;
 import bio.terra.workspace.service.workspace.exceptions.NoBillingAccountException;
 import bio.terra.workspace.service.workspace.model.GcpCloudContext;
-import bio.terra.workspace.service.workspace.model.WorkspaceRequest;
+import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
 import com.google.api.services.cloudresourcemanager.v3.model.Binding;
 import com.google.api.services.cloudresourcemanager.v3.model.GetIamPolicyRequest;
@@ -269,11 +269,11 @@ class CreateGcpContextFlightV2Test extends BaseConnectedTest {
    * not need to explicitly clean up the workspaces created here.
    */
   private UUID createWorkspace(@Nullable SpendProfileId spendProfileId) {
-    WorkspaceRequest request =
-        WorkspaceRequest.builder()
+    Workspace request =
+        Workspace.builder()
             .workspaceId(UUID.randomUUID())
             .workspaceStage(WorkspaceStage.MC_WORKSPACE)
-            .spendProfileId(Optional.ofNullable(spendProfileId))
+            .spendProfileId(spendProfileId)
             .build();
     return workspaceService.createWorkspace(request, userAccessUtils.defaultUserAuthRequest());
   }
