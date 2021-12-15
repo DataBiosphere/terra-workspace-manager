@@ -46,7 +46,7 @@ import scripts.utils.WorkspaceAllocateTestScriptBase;
 public class ControlledBigQueryDatasetLifecycle extends WorkspaceAllocateTestScriptBase {
   private static final Logger logger = LoggerFactory.getLogger(ControlledGcsBucketLifecycle.class);
 
-  private static final String DATASET_NAME = "wsmtest_dataset";
+  private static final String DATASET_RESOURCE_NAME = "wsmtest_dataset";
   private static final String TABLE_NAME = "wsmtest_table";
   private static final String COLUMN_NAME = "myColumn";
 
@@ -97,7 +97,12 @@ public class ControlledBigQueryDatasetLifecycle extends WorkspaceAllocateTestScr
     // Create a shared BigQuery dataset
     GcpBigQueryDatasetResource createdDataset =
         ResourceMaker.makeControlledBigQueryDatasetUserShared(
-            ownerResourceApi, getWorkspaceId(), DATASET_NAME, null);
+            ownerResourceApi,
+            getWorkspaceId(),
+            DATASET_RESOURCE_NAME,
+            /*datasetId=*/ null,
+            /*cloningInstructions=*/ null);
+    assertEquals(DATASET_RESOURCE_NAME, createdDataset.getAttributes().getDatasetId());
     UUID resourceId = createdDataset.getMetadata().getResourceId();
 
     // Retrieve the dataset resource
@@ -105,6 +110,9 @@ public class ControlledBigQueryDatasetLifecycle extends WorkspaceAllocateTestScr
     GcpBigQueryDatasetResource fetchedResource =
         ownerResourceApi.getBigQueryDataset(getWorkspaceId(), resourceId);
     assertEquals(createdDataset, fetchedResource);
+    assertEquals(DATASET_RESOURCE_NAME, fetchedResource.getAttributes().getDatasetId());
+
+    createControlledDatasetWithBothResourceNameAndDatasetIdSpecified(ownerResourceApi);
 
     BigQuery ownerBqClient = ClientTestUtils.getGcpBigQueryClient(testUser, projectId);
     BigQuery writerBqClient = ClientTestUtils.getGcpBigQueryClient(writer, projectId);
@@ -180,26 +188,55 @@ public class ControlledBigQueryDatasetLifecycle extends WorkspaceAllocateTestScr
     assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, invalidUpdateEx.getCode());
 
     // Cloud metadata matches the updated values
-    Dataset cloudDataset = ownerBqClient.getDataset(DatasetId.of(projectId, DATASET_NAME));
+    Dataset cloudDataset = ownerBqClient.getDataset(DatasetId.of(projectId, DATASET_RESOURCE_NAME));
     assertEquals(defaultTableLifetimeSec * 1000L, cloudDataset.getDefaultTableLifetime());
     assertNull(cloudDataset.getDefaultPartitionExpirationMs());
 
     // Workspace writer can delete the table we created earlier
-    logger.info("Deleting table {} from dataset {}", table.getTableId().getTable(), DATASET_NAME);
+    logger.info(
+        "Deleting table {} from dataset {}", table.getTableId().getTable(), DATASET_RESOURCE_NAME);
     assertTrue(
-        writerBqClient.delete(TableId.of(projectId, DATASET_NAME, table.getTableId().getTable())));
+        writerBqClient.delete(
+            TableId.of(projectId, DATASET_RESOURCE_NAME, table.getTableId().getTable())));
 
     // Workspace writer cannot delete the dataset directly
     var writerCannotDeleteException =
-        assertThrows(BigQueryException.class, () -> writerBqClient.delete(DATASET_NAME));
+        assertThrows(BigQueryException.class, () -> writerBqClient.delete(DATASET_RESOURCE_NAME));
     assertEquals(HttpStatusCodes.STATUS_CODE_FORBIDDEN, writerCannotDeleteException.getCode());
     // Workspace owner cannot delete the dataset directly
     var ownerCannotDeleteException =
-        assertThrows(BigQueryException.class, () -> ownerBqClient.delete(DATASET_NAME));
+        assertThrows(BigQueryException.class, () -> ownerBqClient.delete(DATASET_RESOURCE_NAME));
     assertEquals(HttpStatusCodes.STATUS_CODE_FORBIDDEN, ownerCannotDeleteException.getCode());
 
     // Workspace owner can delete the dataset through WSM
     ownerResourceApi.deleteBigQueryDataset(getWorkspaceId(), resourceId);
+  }
+
+  private void createControlledDatasetWithBothResourceNameAndDatasetIdSpecified(
+      ControlledGcpResourceApi ownerResourceApi) throws Exception {
+    // Create a shared BigQuery dataset with a different dataset id from the resource name
+    String datasetResourceName = "dataset_resource_2";
+    String datasetIdName = "dataset_id_different_from_resource_name";
+    GcpBigQueryDatasetResource createdDatasetWithDifferentDatasetId =
+        ResourceMaker.makeControlledBigQueryDatasetUserShared(
+            ownerResourceApi,
+            getWorkspaceId(),
+            datasetResourceName,
+            datasetIdName,
+            /*cloningInstructions=*/ null);
+    assertEquals(
+        datasetIdName, createdDatasetWithDifferentDatasetId.getAttributes().getDatasetId());
+
+    // Retrieve the dataset resource
+    GcpBigQueryDatasetResource fetchedResourceWithDifferentDatasetId =
+        ownerResourceApi.getBigQueryDataset(
+            getWorkspaceId(), createdDatasetWithDifferentDatasetId.getMetadata().getResourceId());
+    assertEquals(createdDatasetWithDifferentDatasetId, fetchedResourceWithDifferentDatasetId);
+    assertEquals(
+        datasetIdName, fetchedResourceWithDifferentDatasetId.getAttributes().getDatasetId());
+
+    ownerResourceApi.deleteBigQueryDataset(
+        getWorkspaceId(), createdDatasetWithDifferentDatasetId.getMetadata().getResourceId());
   }
 
   /**
@@ -207,20 +244,21 @@ public class ControlledBigQueryDatasetLifecycle extends WorkspaceAllocateTestScr
    * this talks directly to BigQuery and does not go through WSM.
    */
   private Table createTable(BigQuery bigQueryClient, String projectId) throws InterruptedException {
-    var tableId = TableId.of(projectId, DATASET_NAME, TABLE_NAME);
+    var tableId = TableId.of(projectId, DATASET_RESOURCE_NAME, TABLE_NAME);
     var tableField = Field.of(COLUMN_NAME, StandardSQLTypeName.STRING);
     var schema = Schema.of(tableField);
     var tableDefinition = StandardTableDefinition.of(schema);
     var tableInfo = TableInfo.of(tableId, tableDefinition);
 
-    logger.info("Creating table {} in dataset {}", TABLE_NAME, DATASET_NAME);
+    logger.info("Creating table {} in dataset {}", TABLE_NAME, DATASET_RESOURCE_NAME);
     return ClientTestUtils.getWithRetryOnException(() -> bigQueryClient.create(tableInfo));
   }
 
   /** Insert a single String value into the column/table/dataset specified by constant values. */
   private void insertValueIntoTable(BigQuery bigQueryClient, String value) throws Exception {
     String query =
-        String.format("INSERT %s.%s (%s) VALUES(@value)", DATASET_NAME, TABLE_NAME, COLUMN_NAME);
+        String.format(
+            "INSERT %s.%s (%s) VALUES(@value)", DATASET_RESOURCE_NAME, TABLE_NAME, COLUMN_NAME);
     QueryJobConfiguration queryConfig =
         QueryJobConfiguration.newBuilder(query)
             .addNamedParameter("value", QueryParameterValue.string(value))
@@ -230,7 +268,8 @@ public class ControlledBigQueryDatasetLifecycle extends WorkspaceAllocateTestScr
 
   /** Read a single String value from the column/table/dataset specified by constant values. */
   private String readValueFromTable(BigQuery bigQueryClient) throws Exception {
-    String query = String.format("SELECT %s FROM %s.%s", COLUMN_NAME, DATASET_NAME, TABLE_NAME);
+    String query =
+        String.format("SELECT %s FROM %s.%s", COLUMN_NAME, DATASET_RESOURCE_NAME, TABLE_NAME);
     QueryJobConfiguration queryConfig = QueryJobConfiguration.newBuilder(query).build();
     TableResult result = runBigQueryJob(bigQueryClient, queryConfig);
     assertEquals(1, result.getTotalRows());

@@ -2,6 +2,7 @@ package scripts.testscripts;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
@@ -155,10 +156,12 @@ public class PrivateControlledGcsBucketLifecycle extends WorkspaceAllocateTestSc
             privateUserResourceApi,
             getWorkspaceId(),
             RESOURCE_PREFIX + UUID.randomUUID().toString(),
+            /*bucketName=*/ null,
             AccessScope.PRIVATE_ACCESS,
             ManagedBy.USER,
             CloningInstructionsEnum.NOTHING,
             privateUserFull);
+    assertNotNull(userFullBucket.getGcpBucket().getAttributes().getBucketName());
     deleteBucket(workspaceOwnerResourceApi, userFullBucket.getResourceId());
 
     // Supply just the roles, but no email
@@ -170,12 +173,30 @@ public class PrivateControlledGcsBucketLifecycle extends WorkspaceAllocateTestSc
             privateUserResourceApi,
             getWorkspaceId(),
             RESOURCE_PREFIX + UUID.randomUUID().toString(),
+            /*bucketName=*/ null,
             AccessScope.PRIVATE_ACCESS,
             ManagedBy.USER,
             CloningInstructionsEnum.NOTHING,
             privateUserNoEmail);
-
+    assertNotNull(userNoEmailBucket.getGcpBucket().getAttributes().getBucketName());
     deleteBucket(workspaceOwnerResourceApi, userNoEmailBucket.getResourceId());
+
+    String uniqueBucketName =
+        String.format("terra_%s_bucket", UUID.randomUUID().toString().replace("-", "_"));
+    CreatedControlledGcpGcsBucket bucketWithBucketNameSpecified =
+        ResourceMaker.makeControlledGcsBucket(
+            privateUserResourceApi,
+            getWorkspaceId(),
+            RESOURCE_PREFIX + UUID.randomUUID().toString(),
+            /*bucketName=*/ uniqueBucketName,
+            AccessScope.PRIVATE_ACCESS,
+            ManagedBy.USER,
+            CloningInstructionsEnum.NOTHING,
+            privateUserFull);
+    assertEquals(
+        uniqueBucketName,
+        bucketWithBucketNameSpecified.getGcpBucket().getAttributes().getBucketName());
+    deleteBucket(workspaceOwnerResourceApi, bucketWithBucketNameSpecified.getResourceId());
   }
 
   private CreatedControlledGcpGcsBucket createPrivateBucket(ControlledGcpResourceApi resourceApi)

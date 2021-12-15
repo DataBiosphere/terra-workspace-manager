@@ -6,6 +6,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -81,7 +82,7 @@ public class PrivateControlledAiNotebookInstanceLifecycle extends WorkspaceAlloc
         ClientTestUtils.getControlledGcpResourceClient(resourceUser, server);
     CreatedControlledGcpAiNotebookInstanceResult creationResult =
         ResourceMaker.makeControlledNotebookUserPrivate(
-            getWorkspaceId(), instanceId, resourceUser, resourceUserApi);
+            getWorkspaceId(), instanceId, resourceUserApi);
 
     UUID resourceId = creationResult.getAiNotebookInstance().getMetadata().getResourceId();
 
@@ -103,6 +104,9 @@ public class PrivateControlledAiNotebookInstanceLifecycle extends WorkspaceAlloc
             .getPrivateResourceUser()
             .getUserName(),
         "User is the private user of the notebook");
+
+    createAControlledAiNotebookInstanceWithoutSpecifiedInstanceId_validInstanceIdIsGenerated(
+        resourceUserApi);
 
     String instanceName =
         String.format(
@@ -171,5 +175,26 @@ public class PrivateControlledAiNotebookInstanceLifecycle extends WorkspaceAlloc
         "Error from GCP is 403 or 404",
         notebookNotFound.getStatusCode(),
         anyOf(equalTo(HttpStatus.SC_NOT_FOUND), equalTo(HttpStatus.SC_FORBIDDEN)));
+  }
+
+  private void
+      createAControlledAiNotebookInstanceWithoutSpecifiedInstanceId_validInstanceIdIsGenerated(
+          ControlledGcpResourceApi resourceUserApi) throws ApiException, InterruptedException {
+    CreatedControlledGcpAiNotebookInstanceResult resourceWithNotebookInstanceIdNotSpecified =
+        ResourceMaker.makeControlledNotebookUserPrivate(
+            getWorkspaceId(), /*instanceId=*/ null, resourceUserApi);
+    assertNotNull(
+        resourceWithNotebookInstanceIdNotSpecified
+            .getAiNotebookInstance()
+            .getAttributes()
+            .getInstanceId());
+    resourceUserApi.deleteAiNotebookInstance(
+        new DeleteControlledGcpAiNotebookInstanceRequest()
+            .jobControl(new JobControl().id(UUID.randomUUID().toString())),
+        getWorkspaceId(),
+        resourceWithNotebookInstanceIdNotSpecified
+            .getAiNotebookInstance()
+            .getMetadata()
+            .getResourceId());
   }
 }

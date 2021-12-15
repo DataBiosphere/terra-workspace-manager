@@ -182,7 +182,10 @@ public class ControlledResourceService {
     return jobBuilder.submit();
   }
 
-  /** Starts a create controlled BigQuery dataset resource, blocking until its job is finished. */
+  /**
+   * Starts a job to create controlled BigQuery dataset resource, blocking until its job is
+   * finished.
+   */
   public ControlledBigQueryDatasetResource createBigQueryDataset(
       ControlledBigQueryDatasetResource resource,
       ApiGcpBigQueryDatasetCreationParameters creationParameters,

@@ -118,6 +118,7 @@ public class ControlledApplicationPrivateGcsBucketLifecycle
             CloningInstructionsEnum.NOTHING,
             null);
     bucketName = createdBucket.getGcpBucket().getAttributes().getBucketName();
+    assertNotNull(bucketName);
     logger.info("Created no-assigned-user bucket {}", bucketName);
 
     try (GcsBucketAccessTester tester = new GcsBucketAccessTester(wsmapp, bucketName, projectId)) {
@@ -144,6 +145,7 @@ public class ControlledApplicationPrivateGcsBucketLifecycle
             CloningInstructionsEnum.NOTHING,
             privateUser);
     bucketName = createdBucket.getGcpBucket().getAttributes().getBucketName();
+    assertNotNull(bucketName);
     logger.info("Created assigned-reader bucket {}", bucketName);
 
     try (GcsBucketAccessTester tester = new GcsBucketAccessTester(wsmapp, bucketName, projectId)) {
@@ -170,6 +172,7 @@ public class ControlledApplicationPrivateGcsBucketLifecycle
             CloningInstructionsEnum.NOTHING,
             privateUser);
     bucketName = createdBucket.getGcpBucket().getAttributes().getBucketName();
+    assertNotNull(bucketName);
     logger.info("Created assigned-writer bucket {}", bucketName);
 
     try (GcsBucketAccessTester tester = new GcsBucketAccessTester(wsmapp, bucketName, projectId)) {

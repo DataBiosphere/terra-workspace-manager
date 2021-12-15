@@ -78,7 +78,10 @@ public class CreateBigQueryDatasetStep implements Step {
 
     List<Access> accessConfiguration = buildDatasetAccessConfiguration(cloudContext);
     DatasetReference datasetId =
-        new DatasetReference().setProjectId(projectId).setDatasetId(resource.getDatasetName());
+        new DatasetReference()
+            .setProjectId(projectId)
+            .setDatasetId(
+                resource.getDatasetName() == null ? resource.getName() : resource.getDatasetName());
     Dataset datasetToCreate =
         new Dataset()
             .setDatasetReference(datasetId)

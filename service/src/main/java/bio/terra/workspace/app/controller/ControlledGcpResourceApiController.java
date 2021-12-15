@@ -40,7 +40,6 @@ import bio.terra.workspace.service.iam.model.ControlledResourceIamRole;
 import bio.terra.workspace.service.iam.model.SamConstants;
 import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.job.JobService.AsyncJobResult;
-import bio.terra.workspace.service.resource.ValidationUtils;
 import bio.terra.workspace.service.resource.WsmResourceType;
 import bio.terra.workspace.service.resource.controlled.AccessScopeType;
 import bio.terra.workspace.service.resource.controlled.ControlledAiNotebookInstanceResource;
@@ -54,6 +53,7 @@ import bio.terra.workspace.service.resource.controlled.exception.InvalidControll
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -345,7 +345,9 @@ public class ControlledGcpResourceApiController implements ControlledGcpResource
             .accessScope(AccessScopeType.fromApi(body.getCommon().getAccessScope()))
             .managedBy(managedBy)
             .applicationId(controlledResourceService.getAssociatedApp(managedBy, userRequest))
-            .datasetName(body.getDataset().getDatasetId())
+            .datasetName(
+                Optional.ofNullable(body.getDataset().getDatasetId())
+                    .orElse(body.getCommon().getName()))
             .build();
 
     final ControlledBigQueryDatasetResource createdDataset =
@@ -376,7 +378,6 @@ public class ControlledGcpResourceApiController implements ControlledGcpResource
       UUID workspaceId, @Valid ApiCreateControlledGcpAiNotebookInstanceRequestBody body) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
 
-    ValidationUtils.validate(body.getAiNotebookInstance());
     PrivateUserRole privateUserRole =
         computePrivateUserRole(workspaceId, body.getCommon(), userRequest);
 
@@ -395,7 +396,9 @@ public class ControlledGcpResourceApiController implements ControlledGcpResource
             .managedBy(managedBy)
             .applicationId(controlledResourceService.getAssociatedApp(managedBy, userRequest))
             .location(body.getAiNotebookInstance().getLocation())
-            .instanceId(body.getAiNotebookInstance().getInstanceId())
+            .instanceId(
+                Optional.ofNullable(body.getAiNotebookInstance().getInstanceId())
+                    .orElse(body.getCommon().getName()))
             .build();
 
     String jobId =
