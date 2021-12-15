@@ -41,6 +41,7 @@ public class RemoveUserFromWorkspaceFlight extends Flight {
     // 4. Remove the user from all roles on those private resources.
     // 5. Revoke the user's permission to use their pet SA in this workspace.
     RetryRule samRetry = RetryRules.shortExponential();
+    RetryRule dbRetry = RetryRules.shortDatabase();
     addStep(
         new RemoveUserFromSamStep(
             workspaceId,
@@ -54,7 +55,7 @@ public class RemoveUserFromWorkspaceFlight extends Flight {
             workspaceId, userToRemove, appContext.getSamService(), userRequest),
         samRetry);
     addStep(
-        new ReadUserPrivateResourcesStep(
+        new ClaimUserPrivateResourcesStep(
             workspaceId,
             userToRemove,
             appContext.getResourceDao(),
@@ -67,7 +68,7 @@ public class RemoveUserFromWorkspaceFlight extends Flight {
     addStep(
         new MarkPrivateResourcesAbandonedStep(
             workspaceId, userToRemove, appContext.getResourceDao()),
-        RetryRules.shortDatabase());
+        dbRetry);
     addStep(
         new RevokePetUsagePermissionStep(
             workspaceId,
@@ -76,5 +77,9 @@ public class RemoveUserFromWorkspaceFlight extends Flight {
             appContext.getGcpCloudContextService(),
             userRequest),
         RetryRules.cloud());
+    addStep(
+        new ReleasePrivateResourceCleanupClaimsStep(
+            workspaceId, userToRemove, appContext.getResourceDao()),
+        dbRetry);
   }
 }

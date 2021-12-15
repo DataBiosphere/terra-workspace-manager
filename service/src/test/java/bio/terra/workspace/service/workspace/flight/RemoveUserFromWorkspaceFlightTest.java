@@ -108,13 +108,16 @@ public class RemoveUserFromWorkspaceFlightTest extends BaseConnectedTest {
     retrySteps.put(
         CheckUserStillInWorkspaceStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
     retrySteps.put(
-        ReadUserPrivateResourcesStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
+        ClaimUserPrivateResourcesStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
     retrySteps.put(
         RemovePrivateResourceAccessStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
     retrySteps.put(
         MarkPrivateResourcesAbandonedStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
     retrySteps.put(
         RevokePetUsagePermissionStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
+    retrySteps.put(
+        ReleasePrivateResourceCleanupClaimsStep.class.getName(),
+        StepStatus.STEP_RESULT_FAILURE_RETRY);
     FlightDebugInfo failingDebugInfo =
         FlightDebugInfo.newBuilder().undoStepFailures(retrySteps).lastStepFailure(true).build();
 

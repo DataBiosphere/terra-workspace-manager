@@ -272,26 +272,60 @@ public class ResourceDao {
         .collect(Collectors.toList());
   }
 
-  /** Returns a list of all private controlled resources assigned to a user in a given workspace. */
-  @ReadTransaction
-  public List<ControlledResource> listPrivateResourcesByUser(UUID workspaceId, String userEmail) {
-    String sql =
-        RESOURCE_SELECT_SQL
-            + " AND stewardship_type = :controlled_resource"
+  /**
+   * Reads all private controlled resources assigned to a given user in a given workspace which are
+   * not being cleaned up by other flights and marks them as being cleaned up by the current flight.
+   *
+   * @return A list of all controlled resources assigned to the given user in the given workspace
+   *     which were not locked by another flight. Every item in this list will have
+   *     cleanup_flight_id set to the provided flight id.
+   */
+  @WriteTransaction
+  public List<ControlledResource> claimCleanupForWorkspacePrivateResources(
+      UUID workspaceId, String userEmail, String flightId) {
+    String filterClause =
+        " AND stewardship_type = :controlled_resource"
             + " AND access_scope = :access_scope"
-            + " AND assigned_user = :user_email";
+            + " AND assigned_user = :user_email"
+            + " AND (cleanup_flight_id IS NULL"
+            + " OR cleanup_flight_id = :flight_id)";
+    String readSql = RESOURCE_SELECT_SQL + filterClause;
+    String writeSql =
+        "UPDATE resource SET cleanup_flight_id = :flight_id WHERE workspace_id = :workspace_id"
+            + filterClause;
     MapSqlParameterSource params =
         new MapSqlParameterSource()
             .addValue("workspace_id", workspaceId.toString())
             .addValue("controlled_resource", CONTROLLED.toSql())
             .addValue("access_scope", AccessScopeType.ACCESS_SCOPE_PRIVATE.toSql())
-            .addValue("user_email", userEmail);
+            .addValue("user_email", userEmail)
+            .addValue("flight_id", flightId);
 
-    List<DbResource> dbResources = jdbcTemplate.query(sql, params, DB_RESOURCE_ROW_MAPPER);
+    List<DbResource> dbResources = jdbcTemplate.query(readSql, params, DB_RESOURCE_ROW_MAPPER);
+    jdbcTemplate.update(writeSql, params);
     return dbResources.stream()
         .map(this::constructResource)
         .map(WsmResource::castToControlledResource)
         .collect(Collectors.toList());
+  }
+
+  /**
+   * Release all claims to clean up a user's private resources (indicated by the cleanup_flight_id
+   * column of the resource table) in a workspace for the provided flight.
+   */
+  @WriteTransaction
+  public void releasePrivateResourceCleanupClaims(
+      UUID workspaceId, String userEmail, String flightId) {
+    String writeSql =
+        "UPDATE resource SET cleanup_flight_id = NULL WHERE workspace_id = :workspace_id AND stewardship_type = :controlled_resource AND access_scope = :access_scope AND assigned_user = :user_email AND cleanup_flight_id = :flight_id";
+    MapSqlParameterSource params =
+        new MapSqlParameterSource()
+            .addValue("workspace_id", workspaceId.toString())
+            .addValue("controlled_resource", CONTROLLED.toSql())
+            .addValue("access_scope", AccessScopeType.ACCESS_SCOPE_PRIVATE.toSql())
+            .addValue("user_email", userEmail)
+            .addValue("flight_id", flightId);
+    jdbcTemplate.update(writeSql, params);
   }
 
   /**
@@ -491,6 +525,11 @@ public class ResourceDao {
     storeResource(controlledResource);
   }
 
+  /**
+   * Set the private_resource_state of a single private controlled resource. To set the state for
+   * all a user's private resources in a workspace, use {@link
+   * #setPrivateResourcesStateForWorkspaceUser(UUID, String, PrivateResourceState)}
+   */
   @WriteTransaction
   public void setPrivateResourceState(
       ControlledResource resource, PrivateResourceState privateResourceState) {
@@ -505,7 +544,11 @@ public class ResourceDao {
     jdbcTemplate.update(sql, params);
   }
 
-  /** Sets the private_resource_state of all resources in a single workspace assigned to a user. */
+  /**
+   * Sets the private_resource_state of all resources in a single workspace assigned to a user. To
+   * set the private_resource_state of a single resource, use {@link
+   * #setPrivateResourceState(ControlledResource, PrivateResourceState)}
+   */
   @WriteTransaction
   public void setPrivateResourcesStateForWorkspaceUser(
       UUID workspaceId, String userEmail, PrivateResourceState state) {

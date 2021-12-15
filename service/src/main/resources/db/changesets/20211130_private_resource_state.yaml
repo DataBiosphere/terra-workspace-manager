@@ -12,3 +12,11 @@ databaseChangeLog:
             defaultValue: NOT_APPLICABLE
             remarks: |
               From PrivateResourceState: ABANDONED, ACTIVE, INITIALIZING, NOT_APPLICABLE
+    - addColumn:
+          tableName: resource
+          columns:
+          - column:
+                name: cleanup_flight_id
+                type: text
+                remarks: |
+                  Used to ensure multiple flights do not clean up resources simultaneously.
