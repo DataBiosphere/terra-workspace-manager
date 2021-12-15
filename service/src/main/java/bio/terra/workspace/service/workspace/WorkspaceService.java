@@ -75,12 +75,25 @@ public class WorkspaceService {
     String description = "Create workspace " + workspace.getWorkspaceId().toString();
 
     JobBuilder createJob =
-        jobService.newJob(
-            description,
-            UUID.randomUUID().toString(),
-            WorkspaceCreateFlight.class,
-            workspace,
-            userRequest);
+        jobService
+            .newJob()
+            .description(description)
+            .flightClass(WorkspaceCreateFlight.class)
+            .request(workspace)
+            .userRequest(userRequest)
+            .addParameter(
+                WorkspaceFlightMapKeys.WORKSPACE_ID, workspace.getWorkspaceId().toString())
+            .addParameter(
+                WorkspaceFlightMapKeys.WORKSPACE_STAGE, workspace.getWorkspaceStage().name())
+            .addParameter(
+                WorkspaceFlightMapKeys.DISPLAY_NAME, workspace.getDisplayName().orElse(""))
+            .addParameter(
+                WorkspaceFlightMapKeys.DESCRIPTION, workspace.getDescription().orElse(""));
+
+    if (workspace.getSpendProfileId().isPresent()) {
+      createJob.addParameter(
+          WorkspaceFlightMapKeys.SPEND_PROFILE_ID, workspace.getSpendProfileId().get().getId());
+    }
     return createJob.submitAndWait(UUID.class);
   }
 
@@ -171,12 +184,10 @@ public class WorkspaceService {
     String description = "Delete workspace " + id;
     JobBuilder deleteJob =
         jobService
-            .newJob(
-                description,
-                UUID.randomUUID().toString(),
-                WorkspaceDeleteFlight.class,
-                null, // Delete does not have a useful request body
-                userRequest)
+            .newJob()
+            .description(description)
+            .flightClass(WorkspaceDeleteFlight.class)
+            .userRequest(userRequest)
             .addParameter(WorkspaceFlightMapKeys.WORKSPACE_ID, id.toString())
             .addParameter(
                 WorkspaceFlightMapKeys.WORKSPACE_STAGE, workspace.getWorkspaceStage().name());
@@ -208,12 +219,11 @@ public class WorkspaceService {
     stageService.assertMcWorkspace(workspace, "createCloudContext");
 
     jobService
-        .newJob(
-            "Create GCP Cloud Context " + workspaceId,
-            jobId,
-            CreateGcpContextFlightV2.class,
-            /* request= */ null,
-            userRequest)
+        .newJob()
+        .description("Create GCP Cloud Context " + workspaceId)
+        .jobId(jobId)
+        .flightClass(CreateGcpContextFlightV2.class)
+        .userRequest(userRequest)
         .addParameter(WorkspaceFlightMapKeys.WORKSPACE_ID, workspaceId.toString())
         .addParameter(JobMapKeys.RESULT_PATH.getKeyName(), resultPath)
         .submit();
@@ -235,12 +245,11 @@ public class WorkspaceService {
     stageService.assertMcWorkspace(sourceWorkspace, "cloneGcpWorkspace");
 
     return jobService
-        .newJob(
-            "Clone GCP Workspace " + sourceWorkspaceId.toString(),
-            UUID.randomUUID().toString(),
-            CloneGcpWorkspaceFlight.class,
-            destinationWorkspace,
-            userRequest)
+        .newJob()
+        .description("Clone GCP Workspace " + sourceWorkspaceId.toString())
+        .flightClass(CloneGcpWorkspaceFlight.class)
+        .userRequest(userRequest)
+        .request(destinationWorkspace)
         .addParameter(WorkspaceFlightMapKeys.WORKSPACE_ID, sourceWorkspaceId)
         .addParameter(
             ControlledResourceKeys.SOURCE_WORKSPACE_ID,
@@ -259,12 +268,10 @@ public class WorkspaceService {
         validateWorkspaceAndAction(userRequest, workspaceId, SamConstants.SamWorkspaceAction.WRITE);
     stageService.assertMcWorkspace(workspace, "deleteGcpCloudContext");
     jobService
-        .newJob(
-            "Delete GCP Context " + workspaceId,
-            UUID.randomUUID().toString(),
-            DeleteGcpContextFlight.class,
-            /* request= */ null,
-            userRequest)
+        .newJob()
+        .description("Delete GCP Context " + workspaceId)
+        .flightClass(DeleteGcpContextFlight.class)
+        .userRequest(userRequest)
         .addParameter(WorkspaceFlightMapKeys.WORKSPACE_ID, workspaceId.toString())
         .submitAndWait(null);
   }
@@ -331,14 +338,13 @@ public class WorkspaceService {
       return;
     }
     jobService
-        .newJob(
+        .newJob()
+        .description(
             String.format(
                 "Remove role %s from user %s in workspace %s",
-                role.name(), targetUserEmail, workspaceId),
-            UUID.randomUUID().toString(),
-            RemoveUserFromWorkspaceFlight.class,
-            /* request= */ null,
-            executingUserRequest)
+                role.name(), targetUserEmail, workspaceId))
+        .flightClass(RemoveUserFromWorkspaceFlight.class)
+        .userRequest(executingUserRequest)
         .addParameter(WorkspaceFlightMapKeys.WORKSPACE_ID, workspaceId.toString())
         .addParameter(WorkspaceFlightMapKeys.USER_TO_REMOVE, targetUserEmail)
         .addParameter(WorkspaceFlightMapKeys.ROLE_TO_REMOVE, role)

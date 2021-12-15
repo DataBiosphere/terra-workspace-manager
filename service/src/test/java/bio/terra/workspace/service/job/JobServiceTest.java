@@ -19,7 +19,6 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -64,8 +63,12 @@ class JobServiceTest extends BaseUnitTest {
     assertThrows(
         InvalidJobIdException.class,
         () ->
-            jobService.newJob(
-                "description", testJobId, JobServiceTestFlight.class, null, testUser));
+            jobService
+                .newJob()
+                .description("description")
+                .jobId(testJobId)
+                .flightClass(JobServiceTestFlight.class)
+                .userRequest(testUser));
   }
 
   @Test
@@ -74,8 +77,12 @@ class JobServiceTest extends BaseUnitTest {
     assertThrows(
         InvalidJobIdException.class,
         () ->
-            jobService.newJob(
-                "description", testJobId, JobServiceTestFlight.class, null, testUser));
+            jobService
+                .newJob()
+                .description("description")
+                .jobId(testJobId)
+                .flightClass(JobServiceTestFlight.class)
+                .userRequest(testUser));
   }
 
   @Test
@@ -172,9 +179,15 @@ class JobServiceTest extends BaseUnitTest {
   }
 
   // Submit a flight; wait for it to finish; return the flight id
+  // Use the jobId defaulting in the JobBuilder
   private String runFlight(String description) {
-    String jobId = UUID.randomUUID().toString();
-    jobService.newJob(description, jobId, JobServiceTestFlight.class, null, testUser).submit();
+    String jobId =
+        jobService
+            .newJob()
+            .description(description)
+            .flightClass(JobServiceTestFlight.class)
+            .userRequest(testUser)
+            .submit();
     jobService.waitForJob(jobId);
     return jobId;
   }
