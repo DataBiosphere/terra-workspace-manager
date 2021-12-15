@@ -181,12 +181,13 @@ class JobServiceTest extends BaseUnitTest {
   // Submit a flight; wait for it to finish; return the flight id
   // Use the jobId defaulting in the JobBuilder
   private String runFlight(String description) {
-    String jobId = jobService
-        .newJob()
-        .description(description)
-        .flightClass(JobServiceTestFlight.class)
-        .userRequest(testUser)
-        .submit();
+    String jobId =
+        jobService
+            .newJob()
+            .description(description)
+            .flightClass(JobServiceTestFlight.class)
+            .userRequest(testUser)
+            .submit();
     jobService.waitForJob(jobId);
     return jobId;
   }

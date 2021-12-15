@@ -79,6 +79,7 @@ public class WorkspaceService {
             .newJob()
             .description(description)
             .flightClass(WorkspaceCreateFlight.class)
+            .request(workspace)
             .userRequest(userRequest)
             .addParameter(
                 WorkspaceFlightMapKeys.WORKSPACE_ID, workspace.getWorkspaceId().toString())
@@ -248,6 +249,7 @@ public class WorkspaceService {
         .description("Clone GCP Workspace " + sourceWorkspaceId.toString())
         .flightClass(CloneGcpWorkspaceFlight.class)
         .userRequest(userRequest)
+        .request(destinationWorkspace)
         .addParameter(WorkspaceFlightMapKeys.WORKSPACE_ID, sourceWorkspaceId)
         .addParameter(
             ControlledResourceKeys.SOURCE_WORKSPACE_ID,
