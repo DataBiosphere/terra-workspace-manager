@@ -145,8 +145,10 @@ public class WorkspaceService {
    * Update an existing workspace. Currently, can change the workspace's display name or
    * description.
    *
+   * @param userRequest authenticated user
    * @param workspaceId workspace of interest
    * @param name name to change - may be null
+   * @param properties optional map of key-value properties
    * @param description description to change - may be null
    */
   public Workspace updateWorkspace(

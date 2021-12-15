@@ -9,6 +9,7 @@ import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.workspace.exceptions.MissingRequiredFieldsException;
 import bio.terra.workspace.service.workspace.model.Workspace;
+import java.util.Map;
 import java.util.Optional;
 import javax.annotation.Nullable;
 import org.springframework.http.HttpStatus;
@@ -18,6 +19,14 @@ public final class FlightUtils {
 
   public static final int FLIGHT_POLL_SECONDS = 10;
   public static final int FLIGHT_POLL_CYCLES = 360;
+
+  public static final Map<String, Class<?>> COMMON_FLIGHT_INPUTS =
+      Map.of(
+          JobMapKeys.AUTH_USER_INFO.getKeyName(), AuthenticatedUserRequest.class,
+          JobMapKeys.REQUEST.getKeyName(), Workspace.class,
+          JobMapKeys.SUBJECT_ID.getKeyName(), String.class,
+          MdcHook.MDC_FLIGHT_MAP_KEY, Object.class,
+          TracingHook.SUBMISSION_SPAN_CONTEXT_MAP_KEY, Object.class);
 
   private FlightUtils() {}
 
@@ -88,13 +97,7 @@ public final class FlightUtils {
    * @param flightMap input parameters
    */
   public static void validateCommonEntries(FlightMap flightMap) {
-    validateRequiredEntries(
-        flightMap,
-        JobMapKeys.AUTH_USER_INFO.getKeyName(),
-        JobMapKeys.REQUEST.getKeyName(),
-        JobMapKeys.SUBJECT_ID.getKeyName(),
-        MdcHook.MDC_FLIGHT_MAP_KEY,
-        TracingHook.SUBMISSION_SPAN_CONTEXT_MAP_KEY);
+    validateRequiredEntries(flightMap, COMMON_FLIGHT_INPUTS.keySet().toArray(new String[0]));
   }
 
   public static FlightMap getResultMapRequired(FlightState flightState) {
@@ -137,23 +140,7 @@ public final class FlightUtils {
    * @param dest destination flight map
    */
   public static void copyCommonParams(FlightMap source, FlightMap dest) {
-    copyParam(JobMapKeys.AUTH_USER_INFO.getKeyName(), source, dest, AuthenticatedUserRequest.class);
-    copyParam(JobMapKeys.REQUEST.getKeyName(), source, dest, Workspace.class);
-    copyParam(JobMapKeys.SUBJECT_ID.getKeyName(), source, dest, String.class);
-    copyParam(MdcHook.MDC_FLIGHT_MAP_KEY, source, dest, Object.class);
-    copyParam(TracingHook.SUBMISSION_SPAN_CONTEXT_MAP_KEY, source, dest, Object.class);
-  }
-
-  /**
-   * Copy a parameter from one flight map to another flight map
-   *
-   * @param key flight key to copy
-   * @param source source map
-   * @param dest destination map
-   * @param type class of the data
-   * @param <T> generic for variable types
-   */
-  public static <T> void copyParam(String key, FlightMap source, FlightMap dest, Class<T> type) {
-    dest.put(key, source.get(key, type));
+    COMMON_FLIGHT_INPUTS.forEach((key, clazz) ->
+        dest.put(key, source.get(key, clazz)));
   }
 }

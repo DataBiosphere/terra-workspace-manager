@@ -156,7 +156,10 @@ public class WorkspaceDao {
 
   @WriteTransaction
   public boolean updateWorkspace(
-      UUID workspaceId, String name, String description, Map<String, String> propertyMap) {
+      UUID workspaceId,
+      @Nullable String name,
+      @Nullable String description,
+      @Nullable Map<String, String> propertyMap) {
     if (name == null && description == null && propertyMap == null) {
       throw new MissingRequiredFieldException(
           "Must specify name, description, or properties to update.");
