@@ -9,8 +9,8 @@ import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 
 import bio.terra.common.exception.ErrorReportException;
+import bio.terra.common.exception.ForbiddenException;
 import bio.terra.common.exception.MissingRequiredFieldException;
-import bio.terra.common.exception.UnauthorizedException;
 import bio.terra.common.sam.exception.SamExceptionFactory;
 import bio.terra.common.sam.exception.SamInternalServerErrorException;
 import bio.terra.stairway.FlightDebugInfo;
@@ -119,7 +119,7 @@ class WorkspaceServiceTest extends BaseConnectedTest {
 
   @Test
   void testGetForbiddenMissingWorkspace() throws Exception {
-    doThrow(new UnauthorizedException("forbid!"))
+    doThrow(new ForbiddenException("forbid!"))
         .when(mockSamService)
         .checkAuthz(any(), any(), any(), any());
     assertThrows(
@@ -132,11 +132,11 @@ class WorkspaceServiceTest extends BaseConnectedTest {
     Workspace request = defaultRequestBuilder(UUID.randomUUID()).build();
     workspaceService.createWorkspace(request, USER_REQUEST);
 
-    doThrow(new UnauthorizedException("forbid!"))
+    doThrow(new ForbiddenException("forbid!"))
         .when(mockSamService)
         .checkAuthz(any(), any(), any(), any());
     assertThrows(
-        UnauthorizedException.class,
+        ForbiddenException.class,
         () -> workspaceService.getWorkspace(request.getWorkspaceId(), USER_REQUEST));
   }
 
@@ -347,7 +347,7 @@ class WorkspaceServiceTest extends BaseConnectedTest {
 
   @Test
   void deleteForbiddenMissingWorkspace() throws Exception {
-    doThrow(new UnauthorizedException("forbid!"))
+    doThrow(new ForbiddenException("forbid!"))
         .when(mockSamService)
         .checkAuthz(any(), any(), any(), any());
 
@@ -361,12 +361,12 @@ class WorkspaceServiceTest extends BaseConnectedTest {
     Workspace request = defaultRequestBuilder(UUID.randomUUID()).build();
     workspaceService.createWorkspace(request, USER_REQUEST);
 
-    doThrow(new UnauthorizedException("forbid!"))
+    doThrow(new ForbiddenException("forbid!"))
         .when(mockSamService)
         .checkAuthz(any(), any(), any(), any());
 
     assertThrows(
-        UnauthorizedException.class,
+        ForbiddenException.class,
         () -> workspaceService.deleteWorkspace(request.getWorkspaceId(), USER_REQUEST));
   }
 

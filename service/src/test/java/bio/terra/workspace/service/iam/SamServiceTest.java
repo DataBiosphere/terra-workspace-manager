@@ -10,7 +10,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doReturn;
 
-import bio.terra.common.exception.UnauthorizedException;
+import bio.terra.common.exception.ForbiddenException;
 import bio.terra.common.sam.exception.SamBadRequestException;
 import bio.terra.workspace.common.BaseConnectedTest;
 import bio.terra.workspace.common.fixtures.ReferenceResourceFixtures;
@@ -79,7 +79,7 @@ class SamServiceTest extends BaseConnectedTest {
   void addedReaderCanRead() throws Exception {
     // Before being granted permission, secondary user should be rejected.
     assertThrows(
-        UnauthorizedException.class,
+        ForbiddenException.class,
         () -> workspaceService.getWorkspace(workspaceId, secondaryUserRequest()));
     // After being granted permission, secondary user can read the workspace.
     samService.grantWorkspaceRole(
@@ -95,7 +95,7 @@ class SamServiceTest extends BaseConnectedTest {
 
     // Before being granted permission, secondary user should be rejected.
     assertThrows(
-        UnauthorizedException.class,
+        ForbiddenException.class,
         () ->
             referenceResourceService.createReferenceResource(
                 referenceResource, secondaryUserRequest()));
@@ -114,7 +114,7 @@ class SamServiceTest extends BaseConnectedTest {
   void removedReaderCannotRead() throws Exception {
     // Before being granted permission, secondary user should be rejected.
     assertThrows(
-        UnauthorizedException.class,
+        ForbiddenException.class,
         () -> workspaceService.getWorkspace(workspaceId, secondaryUserRequest()));
     // After being granted permission, secondary user can read the workspace.
     samService.grantWorkspaceRole(
@@ -125,7 +125,7 @@ class SamServiceTest extends BaseConnectedTest {
     samService.removeWorkspaceRole(
         workspaceId, defaultUserRequest(), WsmIamRole.READER, userAccessUtils.getSecondUserEmail());
     assertThrows(
-        UnauthorizedException.class,
+        ForbiddenException.class,
         () -> workspaceService.getWorkspace(workspaceId, secondaryUserRequest()));
   }
 
@@ -134,7 +134,7 @@ class SamServiceTest extends BaseConnectedTest {
     // Note that this request uses the secondary user's authentication token, when only the first
     // user is an owner.
     assertThrows(
-        UnauthorizedException.class,
+        ForbiddenException.class,
         () ->
             samService.grantWorkspaceRole(
                 workspaceId,
@@ -213,7 +213,7 @@ class SamServiceTest extends BaseConnectedTest {
     samService.grantWorkspaceRole(
         workspaceId, defaultUserRequest(), WsmIamRole.WRITER, userAccessUtils.getSecondUserEmail());
     assertThrows(
-        UnauthorizedException.class,
+        ForbiddenException.class,
         () -> samService.listRoleBindings(workspaceId, secondaryUserRequest()));
   }
 
