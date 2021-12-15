@@ -1,13 +1,13 @@
 package bio.terra.workspace.service.workspace.flight;
 
 import bio.terra.stairway.FlightContext;
-import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.iam.model.SamConstants;
+import bio.terra.workspace.service.workspace.model.Workspace;
 import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,43 +20,41 @@ public class CreateWorkspaceAuthzStep implements Step {
 
   private final SamService samService;
   private final AuthenticatedUserRequest userRequest;
+  private final Workspace workspace;
 
   private final Logger logger = LoggerFactory.getLogger(CreateWorkspaceAuthzStep.class);
 
-  public CreateWorkspaceAuthzStep(SamService samService, AuthenticatedUserRequest userRequest) {
+  public CreateWorkspaceAuthzStep(
+      Workspace workspace, SamService samService, AuthenticatedUserRequest userRequest) {
     this.samService = samService;
     this.userRequest = userRequest;
+    this.workspace = workspace;
   }
 
   @Override
   public StepResult doStep(FlightContext flightContext)
       throws RetryException, InterruptedException {
-    FlightMap inputMap = flightContext.getInputParameters();
-    UUID workspaceID =
-        UUID.fromString(inputMap.get(WorkspaceFlightMapKeys.WORKSPACE_ID, String.class));
+
     // Even though WSM should own this resource, Stairway steps can run multiple times, so it's
     // possible this step already created the resource. If WSM can either read the existing Sam
     // resource or create a new one, this is considered successful.
-    if (!canReadExistingWorkspace(workspaceID)) {
-      samService.createWorkspaceWithDefaults(userRequest, workspaceID);
+    if (!canReadExistingWorkspace(workspace.getWorkspaceId())) {
+      samService.createWorkspaceWithDefaults(userRequest, workspace.getWorkspaceId());
     }
     return StepResult.getStepResultSuccess();
   }
 
   @Override
   public StepResult undoStep(FlightContext flightContext) throws InterruptedException {
-    FlightMap inputMap = flightContext.getInputParameters();
-    UUID workspaceID =
-        UUID.fromString(inputMap.get(WorkspaceFlightMapKeys.WORKSPACE_ID, String.class));
-    samService.deleteWorkspace(userRequest, workspaceID);
+    samService.deleteWorkspace(userRequest, workspace.getWorkspaceId());
     return StepResult.getStepResultSuccess();
   }
 
-  private boolean canReadExistingWorkspace(UUID workspaceID) throws InterruptedException {
+  private boolean canReadExistingWorkspace(UUID workspaceId) throws InterruptedException {
     return samService.isAuthorized(
         userRequest,
         SamConstants.SamResource.WORKSPACE,
-        workspaceID.toString(),
+        workspaceId.toString(),
         SamConstants.SamWorkspaceAction.READ);
   }
 }

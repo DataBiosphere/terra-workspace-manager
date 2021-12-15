@@ -22,13 +22,12 @@ import bio.terra.workspace.service.spendprofile.SpendConnectedTestUtils;
 import bio.terra.workspace.service.workspace.GcpCloudContextService;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.exceptions.CloudContextRequiredException;
-import bio.terra.workspace.service.workspace.model.WorkspaceRequest;
+import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
 import com.google.api.services.cloudresourcemanager.v3.model.Project;
 import java.time.Duration;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -60,11 +59,11 @@ class DeleteGcpContextFlightTest extends BaseConnectedTest {
   @BeforeEach
   public void setup() {
     // Create a new workspace at the start of each test.
-    WorkspaceRequest request =
-        WorkspaceRequest.builder()
+    Workspace request =
+        Workspace.builder()
             .workspaceId(UUID.randomUUID())
             .workspaceStage(WorkspaceStage.MC_WORKSPACE)
-            .spendProfileId(Optional.of(spendUtils.defaultSpendId()))
+            .spendProfileId(spendUtils.defaultSpendId())
             .build();
     workspaceId =
         workspaceService.createWorkspace(request, userAccessUtils.defaultUserAuthRequest());

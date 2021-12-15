@@ -14,9 +14,9 @@ import bio.terra.stairway.exception.StairwayException;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
+import bio.terra.workspace.service.workspace.model.Workspace;
 import com.fasterxml.jackson.core.type.TypeReference;
 import java.util.List;
-import java.util.UUID;
 import javax.annotation.Nullable;
 
 /**
@@ -27,12 +27,14 @@ public class LaunchCloneAllResourcesFlightStep implements Step {
 
   @Override
   public StepResult doStep(FlightContext context) throws InterruptedException, RetryException {
-    validateRequiredEntries(context.getInputParameters(), JobMapKeys.AUTH_USER_INFO.getKeyName());
+    validateRequiredEntries(
+        context.getInputParameters(),
+        JobMapKeys.AUTH_USER_INFO.getKeyName(),
+        JobMapKeys.REQUEST.getKeyName());
     validateRequiredEntries(
         context.getWorkingMap(),
         ControlledResourceKeys.RESOURCES_TO_CLONE,
-        ControlledResourceKeys.CLONE_ALL_RESOURCES_FLIGHT_ID,
-        ControlledResourceKeys.DESTINATION_WORKSPACE_ID);
+        ControlledResourceKeys.CLONE_ALL_RESOURCES_FLIGHT_ID);
     final var userRequest =
         context
             .getInputParameters()
@@ -50,15 +52,15 @@ public class LaunchCloneAllResourcesFlightStep implements Step {
             .getWorkingMap()
             .get(ControlledResourceKeys.RESOURCES_TO_CLONE, new TypeReference<>() {});
 
-    final var destinationWorkspaceId =
-        context.getWorkingMap().get(ControlledResourceKeys.DESTINATION_WORKSPACE_ID, UUID.class);
+    final var destinationWorkspace =
+        context.getInputParameters().get(JobMapKeys.REQUEST.getKeyName(), Workspace.class);
     final Stairway stairway = context.getStairway();
 
     final FlightMap subflightInputParameters = new FlightMap();
     subflightInputParameters.put(JobMapKeys.AUTH_USER_INFO.getKeyName(), userRequest);
     subflightInputParameters.put(ControlledResourceKeys.RESOURCES_TO_CLONE, resourcesAndFlightIds);
     subflightInputParameters.put(
-        ControlledResourceKeys.DESTINATION_WORKSPACE_ID, destinationWorkspaceId);
+        ControlledResourceKeys.DESTINATION_WORKSPACE_ID, destinationWorkspace.getWorkspaceId());
     subflightInputParameters.put(ControlledResourceKeys.LOCATION, location);
 
     // Build a CloneAllResourcesFlight

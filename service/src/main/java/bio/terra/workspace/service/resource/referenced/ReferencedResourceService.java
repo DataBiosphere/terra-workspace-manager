@@ -63,12 +63,11 @@ public class ReferencedResourceService {
     // we can supply the right target class.
     JobBuilder createJob =
         jobService
-            .newJob(
-                jobDescription,
-                UUID.randomUUID().toString(),
-                CreateReferenceResourceFlight.class,
-                resource,
-                userRequest)
+            .newJob()
+            .description(jobDescription)
+            .flightClass(CreateReferenceResourceFlight.class)
+            .request(resource)
+            .userRequest(userRequest)
             .addParameter(
                 WorkspaceFlightMapKeys.ResourceKeys.RESOURCE_TYPE,
                 resource.getResourceType().name());
@@ -128,12 +127,11 @@ public class ReferencedResourceService {
     if (resource != null) {
       JobBuilder createJob =
           jobService
-              .newJob(
-                  "Update reference target",
-                  UUID.randomUUID().toString(),
-                  UpdateReferenceResourceFlight.class,
-                  resource,
-                  userRequest)
+              .newJob()
+              .description("Update reference target")
+              .flightClass(UpdateReferenceResourceFlight.class)
+              .request(resource)
+              .userRequest(userRequest)
               .addParameter(
                   WorkspaceFlightMapKeys.ResourceKeys.RESOURCE_TYPE,
                   resource.getResourceType().name())

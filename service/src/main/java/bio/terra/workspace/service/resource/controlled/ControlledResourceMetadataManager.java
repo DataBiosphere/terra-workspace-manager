@@ -66,7 +66,7 @@ public class ControlledResourceMetadataManager {
    *
    * <p>Throws InvalidControlledResourceException if the given resource is not controlled.
    *
-   * <p>Throws UnauthorizedException if the user is not permitted to perform the specified action on
+   * <p>Throws ForbiddenException if the user is not permitted to perform the specified action on
    * the resource in question.
    *
    * @param userRequest the user's authenticated request

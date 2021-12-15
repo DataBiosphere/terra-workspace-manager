@@ -102,6 +102,7 @@ public class CloneGcsBucket extends WorkspaceAllocateTestScriptBase {
             sourceResourceName,
             CloningInstructionsEnum.NOTHING);
     sourceBucketName = sourceBucket.getGcpBucket().getAttributes().getBucketName();
+    assertNotNull(sourceBucketName);
 
     // Make the cloning user a reader on the existing workspace
     sourceOwnerWorkspaceApi.grantRole(

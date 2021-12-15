@@ -32,12 +32,11 @@ import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.spendprofile.SpendConnectedTestUtils;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.model.GcpCloudContext;
-import bio.terra.workspace.service.workspace.model.WorkspaceRequest;
+import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
 import java.time.Duration;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Optional;
 import java.util.UUID;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.jupiter.api.Test;
@@ -59,11 +58,11 @@ public class RemoveUserFromWorkspaceFlightTest extends BaseConnectedTest {
   @DisabledIfEnvironmentVariable(named = "TEST_ENV", matches = BUFFER_SERVICE_DISABLED_ENVS_REG_EX)
   void removeUserFromWorkspaceFlightDoUndo() throws Exception {
     // Create a workspace as the default test user
-    WorkspaceRequest request =
-        WorkspaceRequest.builder()
+    Workspace request =
+        Workspace.builder()
             .workspaceId(UUID.randomUUID())
             .workspaceStage(WorkspaceStage.MC_WORKSPACE)
-            .spendProfileId(Optional.of(spendUtils.defaultSpendId()))
+            .spendProfileId(spendUtils.defaultSpendId())
             .build();
     UUID workspaceId =
         workspaceService.createWorkspace(request, userAccessUtils.defaultUserAuthRequest());

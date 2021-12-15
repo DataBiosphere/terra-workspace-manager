@@ -5,10 +5,8 @@ import static scripts.utils.ClientTestUtils.TEST_BQ_DATASET_PROJECT;
 import static scripts.utils.ClientTestUtils.TEST_BQ_DATATABLE_NAME;
 import static scripts.utils.ClientTestUtils.TEST_BUCKET_NAME;
 import static scripts.utils.ClientTestUtils.TEST_BUCKET_NAME_WITH_FINE_GRAINED_ACCESS;
-import static scripts.utils.GcsBucketTestFixtures.BUCKET_PREFIX;
 import static scripts.utils.GcsBucketTestFixtures.LIFECYCLE_RULES;
 
-import bio.terra.testrunner.runner.config.TestUserSpecification;
 import bio.terra.workspace.api.ControlledGcpResourceApi;
 import bio.terra.workspace.api.ReferencedGcpResourceApi;
 import bio.terra.workspace.client.ApiException;
@@ -371,12 +369,12 @@ public class ResourceMaker {
       ControlledGcpResourceApi resourceApi,
       UUID workspaceId,
       String name,
+      @Nullable String bucketName,
       AccessScope accessScope,
       ManagedBy managedBy,
       CloningInstructionsEnum cloningInstructions,
       @Nullable PrivateResourceUser privateUser)
       throws Exception {
-    String bucketName = BUCKET_PREFIX + ClientTestUtils.generateCloudResourceName();
     var body =
         new CreateControlledGcpGcsBucketRequestBody()
             .common(
@@ -395,11 +393,7 @@ public class ResourceMaker {
                     .location(BUCKET_LOCATION));
 
     logger.info(
-        "Creating {} {} bucket {} workspace {}",
-        managedBy.name(),
-        accessScope.name(),
-        bucketName,
-        workspaceId);
+        "Creating {} {} bucket in workspace {}", managedBy.name(), accessScope.name(), workspaceId);
     return resourceApi.createBucket(body, workspaceId);
   }
 
@@ -413,6 +407,7 @@ public class ResourceMaker {
         resourceApi,
         workspaceId,
         name,
+        /*bucketName=*/ null,
         AccessScope.SHARED_ACCESS,
         ManagedBy.USER,
         cloningInstructions,
@@ -429,6 +424,7 @@ public class ResourceMaker {
         resourceApi,
         workspaceId,
         name,
+        /*bucketName=*/ null,
         AccessScope.PRIVATE_ACCESS,
         ManagedBy.USER,
         cloningInstructions,
@@ -445,6 +441,7 @@ public class ResourceMaker {
         resourceApi,
         workspaceId,
         name,
+        /*bucketName=*/ null,
         AccessScope.SHARED_ACCESS,
         ManagedBy.APPLICATION,
         cloningInstructions,
@@ -462,6 +459,7 @@ public class ResourceMaker {
         resourceApi,
         workspaceId,
         name,
+        /*bucketName=*/ null,
         AccessScope.PRIVATE_ACCESS,
         ManagedBy.APPLICATION,
         cloningInstructions,
@@ -490,10 +488,11 @@ public class ResourceMaker {
    * Create and return a BigQuery dataset controlled resource with constant values. This uses the
    * given datasetID as both the WSM resource name and the actual BigQuery dataset ID.
    */
-  public static GcpBigQueryDatasetResource makeControlledBigQueryDataset(
+  private static GcpBigQueryDatasetResource makeControlledBigQueryDataset(
       ControlledGcpResourceApi resourceApi,
       UUID workspaceId,
-      String datasetId,
+      String resourceName,
+      @Nullable String datasetId,
       AccessScope accessScope,
       ManagedBy managedBy,
       @Nullable CloningInstructionsEnum cloningInstructions,
@@ -509,8 +508,8 @@ public class ResourceMaker {
                     .cloningInstructions(
                         Optional.ofNullable(cloningInstructions)
                             .orElse(CloningInstructionsEnum.NOTHING))
-                    .description("Description of " + datasetId)
-                    .name(datasetId)
+                    .description("Description of " + resourceName)
+                    .name(resourceName)
                     .privateResourceUser(privateUser))
             .dataset(
                 new GcpBigQueryDatasetCreationParameters()
@@ -529,12 +528,14 @@ public class ResourceMaker {
   public static GcpBigQueryDatasetResource makeControlledBigQueryDatasetUserShared(
       ControlledGcpResourceApi resourceApi,
       UUID workspaceId,
-      String datasetId,
+      String resourceName,
+      @Nullable String datasetId,
       @Nullable CloningInstructionsEnum cloningInstructions)
       throws Exception {
     return makeControlledBigQueryDataset(
         resourceApi,
         workspaceId,
+        resourceName,
         datasetId,
         AccessScope.SHARED_ACCESS,
         ManagedBy.USER,
@@ -545,12 +546,14 @@ public class ResourceMaker {
   public static GcpBigQueryDatasetResource makeControlledBigQueryDatasetUserPrivate(
       ControlledGcpResourceApi resourceApi,
       UUID workspaceId,
-      String datasetId,
+      String resourceName,
+      @Nullable String datasetId,
       @Nullable CloningInstructionsEnum cloningInstructions)
       throws Exception {
     return makeControlledBigQueryDataset(
         resourceApi,
         workspaceId,
+        resourceName,
         datasetId,
         AccessScope.PRIVATE_ACCESS,
         ManagedBy.USER,
@@ -558,48 +561,12 @@ public class ResourceMaker {
         null);
   }
 
-  public static GcpBigQueryDatasetResource makeControlledBigQueryDatasetAppShared(
-      ControlledGcpResourceApi resourceApi,
-      UUID workspaceId,
-      String datasetId,
-      @Nullable CloningInstructionsEnum cloningInstructions)
-      throws Exception {
-    return makeControlledBigQueryDataset(
-        resourceApi,
-        workspaceId,
-        datasetId,
-        AccessScope.PRIVATE_ACCESS,
-        ManagedBy.APPLICATION,
-        cloningInstructions,
-        null);
-  }
-
-  public static GcpBigQueryDatasetResource makeControlledBigQueryDatasetAppPrivate(
-      ControlledGcpResourceApi resourceApi,
-      UUID workspaceId,
-      String datasetId,
-      @Nullable CloningInstructionsEnum cloningInstructions,
-      @Nullable PrivateResourceUser privateUser)
-      throws Exception {
-    return makeControlledBigQueryDataset(
-        resourceApi,
-        workspaceId,
-        datasetId,
-        AccessScope.PRIVATE_ACCESS,
-        ManagedBy.APPLICATION,
-        cloningInstructions,
-        privateUser);
-  }
-
   /**
    * Create and return a private AI Platform Notebook controlled resource with constant values. This
    * method calls the asynchronous creation endpoint and polls until the creation job completes.
    */
   public static CreatedControlledGcpAiNotebookInstanceResult makeControlledNotebookUserPrivate(
-      UUID workspaceId,
-      String instanceId,
-      TestUserSpecification user,
-      ControlledGcpResourceApi resourceApi)
+      UUID workspaceId, @Nullable String instanceId, ControlledGcpResourceApi resourceApi)
       throws ApiException, InterruptedException {
     // Fill out the minimum required fields to arbitrary values.
     var creationParameters =

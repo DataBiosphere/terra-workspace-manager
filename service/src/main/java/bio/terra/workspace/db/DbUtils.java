@@ -23,7 +23,7 @@ public class DbUtils {
     if (parameterNames.length == 0) {
       throw new MissingRequiredFieldException("Must specify some data to be updated.");
     }
-    Set<String> jsonColumnSet = new HashSet(Arrays.asList(jsonColumns));
+    Set<String> jsonColumnSet = new HashSet<>(Arrays.asList(jsonColumns));
     for (int i = 0; i < parameterNames.length; i++) {
       String columnName = parameterNames[i];
       if (i > 0) {

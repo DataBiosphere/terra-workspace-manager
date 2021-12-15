@@ -9,6 +9,7 @@ import bio.terra.workspace.generated.model.ApiGcpBigQueryDatasetResource;
 import bio.terra.workspace.service.resource.ValidationUtils;
 import bio.terra.workspace.service.resource.WsmResourceType;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
+import bio.terra.workspace.service.resource.referenced.exception.InvalidReferenceException;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.Objects;
@@ -128,6 +129,10 @@ public class ControlledBigQueryDatasetResource extends ControlledResource {
     return Objects.hash(super.hashCode(), datasetName);
   }
 
+  private static String generateUniqueDatasetId() {
+    return "terra_" + UUID.randomUUID() + "_dataset".replace("-", "_");
+  }
+
   public static class Builder {
     private UUID workspaceId;
     private UUID resourceId;
@@ -169,7 +174,15 @@ public class ControlledBigQueryDatasetResource extends ControlledResource {
     }
 
     public ControlledBigQueryDatasetResource.Builder datasetName(String datasetName) {
-      this.datasetName = datasetName;
+      try {
+        // If the user doesn't specify a dataset name, we will use the resource name by default.
+        // But if the resource name is not a valid dataset name, we will need to generate a unique
+        // dataset id.
+        ValidationUtils.validateBqDatasetName(datasetName);
+        this.datasetName = datasetName;
+      } catch (InvalidReferenceException e) {
+        this.datasetName = generateUniqueDatasetId();
+      }
       return this;
     }
 

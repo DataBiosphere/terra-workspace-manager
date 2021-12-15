@@ -11,6 +11,7 @@ import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceResource;
 import bio.terra.workspace.service.resource.ValidationUtils;
 import bio.terra.workspace.service.resource.WsmResourceType;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
+import bio.terra.workspace.service.resource.referenced.exception.InvalidReferenceException;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.Optional;
@@ -165,6 +166,10 @@ public class ControlledAiNotebookInstanceResource extends ControlledResource {
     return result;
   }
 
+  public static String generateUniqueInstanceId() {
+    return String.format("terra-%s-notebook", UUID.randomUUID());
+  }
+
   /** Builder for {@link ControlledAiNotebookInstanceResource}. */
   public static class Builder {
     private UUID workspaceId;
@@ -207,7 +212,15 @@ public class ControlledAiNotebookInstanceResource extends ControlledResource {
     }
 
     public Builder instanceId(String instanceId) {
-      this.instanceId = instanceId;
+      try {
+        // If the user doesn't specify a instance id, we will use the resource name by default.
+        // But if the resource name is not a valid instance id, we will need to generate a unique
+        // one.
+        ValidationUtils.validateAiNotebookInstanceId(instanceId);
+        this.instanceId = instanceId;
+      } catch (InvalidReferenceException e) {
+        this.instanceId = generateUniqueInstanceId();
+      }
       return this;
     }
 

@@ -18,7 +18,7 @@ import bio.terra.workspace.service.iam.model.SamConstants.SamResource;
 import bio.terra.workspace.service.iam.model.SamConstants.SamSpendProfileAction;
 import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.workspace.WsmApplicationService.WsmDbApplication;
-import bio.terra.workspace.service.workspace.model.WorkspaceRequest;
+import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
 import bio.terra.workspace.service.workspace.model.WsmApplication;
 import bio.terra.workspace.service.workspace.model.WsmApplicationState;
@@ -118,9 +118,9 @@ public class ApplicationServiceTest extends BaseUnitTest {
     // Create two workspaces
     workspaceId = UUID.randomUUID();
     var request =
-        WorkspaceRequest.builder()
+        Workspace.builder()
             .workspaceId(workspaceId)
-            .spendProfileId(Optional.empty())
+            .spendProfileId(null)
             .workspaceStage(WorkspaceStage.MC_WORKSPACE)
             .build();
 
@@ -128,9 +128,9 @@ public class ApplicationServiceTest extends BaseUnitTest {
 
     workspaceId2 = UUID.randomUUID();
     request =
-        WorkspaceRequest.builder()
+        Workspace.builder()
             .workspaceId(workspaceId2)
-            .spendProfileId(Optional.empty())
+            .spendProfileId(null)
             .workspaceStage(WorkspaceStage.MC_WORKSPACE)
             .build();
     workspaceService.createWorkspace(request, USER_REQUEST);

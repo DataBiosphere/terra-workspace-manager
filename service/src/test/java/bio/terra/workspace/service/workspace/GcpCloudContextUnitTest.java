@@ -130,7 +130,7 @@ public class GcpCloudContextUnitTest extends BaseUnitTest {
             workspaceId,
             "gcpCloudContextAutoUpgradeTest",
             "cloud context description",
-            SpendProfileId.create("spend-profile"),
+            new SpendProfileId("spend-profile"),
             Collections.emptyMap(),
             WorkspaceStage.MC_WORKSPACE);
     workspaceDao.createWorkspace(workspace);

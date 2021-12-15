@@ -21,9 +21,9 @@ import bio.terra.workspace.service.workspace.flight.WorkspaceDeleteFlight;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import bio.terra.workspace.service.workspace.model.Workspace;
-import bio.terra.workspace.service.workspace.model.WorkspaceRequest;
 import io.opencensus.contrib.spring.aop.Traced;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -71,32 +71,29 @@ public class WorkspaceService {
 
   /** Create a workspace with the specified parameters. Returns workspaceID of the new workspace. */
   @Traced
-  public UUID createWorkspace(
-      WorkspaceRequest workspaceRequest, AuthenticatedUserRequest userRequest) {
+  public UUID createWorkspace(Workspace workspace, AuthenticatedUserRequest userRequest) {
+    String description = "Create workspace " + workspace.getWorkspaceId().toString();
 
-    String description = "Create workspace " + workspaceRequest.workspaceId().toString();
     JobBuilder createJob =
         jobService
-            .newJob(
-                description,
-                UUID.randomUUID().toString(),
-                WorkspaceCreateFlight.class,
-                null,
-                userRequest)
+            .newJob()
+            .description(description)
+            .flightClass(WorkspaceCreateFlight.class)
+            .request(workspace)
+            .userRequest(userRequest)
             .addParameter(
-                WorkspaceFlightMapKeys.WORKSPACE_ID, workspaceRequest.workspaceId().toString());
-    if (workspaceRequest.spendProfileId().isPresent()) {
+                WorkspaceFlightMapKeys.WORKSPACE_ID, workspace.getWorkspaceId().toString())
+            .addParameter(
+                WorkspaceFlightMapKeys.WORKSPACE_STAGE, workspace.getWorkspaceStage().name())
+            .addParameter(
+                WorkspaceFlightMapKeys.DISPLAY_NAME, workspace.getDisplayName().orElse(""))
+            .addParameter(
+                WorkspaceFlightMapKeys.DESCRIPTION, workspace.getDescription().orElse(""));
+
+    if (workspace.getSpendProfileId().isPresent()) {
       createJob.addParameter(
-          WorkspaceFlightMapKeys.SPEND_PROFILE_ID, workspaceRequest.spendProfileId().get().id());
+          WorkspaceFlightMapKeys.SPEND_PROFILE_ID, workspace.getSpendProfileId().get().getId());
     }
-
-    createJob.addParameter(
-        WorkspaceFlightMapKeys.WORKSPACE_STAGE, workspaceRequest.workspaceStage().name());
-
-    createJob.addParameter(
-        WorkspaceFlightMapKeys.DISPLAY_NAME, workspaceRequest.displayName().orElse(""));
-    createJob.addParameter(
-        WorkspaceFlightMapKeys.DESCRIPTION, workspaceRequest.description().orElse(""));
     return createJob.submitAndWait(UUID.class);
   }
 
@@ -107,8 +104,8 @@ public class WorkspaceService {
    * <p>Throws WorkspaceNotFoundException from getWorkspace if the workspace does not exist,
    * regardless of the user's permission.
    *
-   * <p>Throws SamUnauthorizedException if the user is not permitted to perform the specified action
-   * on the workspace in question.
+   * <p>Throws ForbiddenException if the user is not permitted to perform the specified action on
+   * the workspace in question.
    *
    * <p>Returns the Workspace object if it exists and the user is permitted to perform the specified
    * action.
@@ -161,17 +158,20 @@ public class WorkspaceService {
    * Update an existing workspace. Currently, can change the workspace's display name or
    * description.
    *
+   * @param userRequest authenticated user
    * @param workspaceId workspace of interest
    * @param name name to change - may be null
+   * @param properties optional map of key-value properties
    * @param description description to change - may be null
    */
   public Workspace updateWorkspace(
       AuthenticatedUserRequest userRequest,
       UUID workspaceId,
       @Nullable String name,
-      @Nullable String description) {
+      @Nullable String description,
+      @Nullable Map<String, String> properties) {
     validateWorkspaceAndAction(userRequest, workspaceId, SamConstants.SamWorkspaceAction.WRITE);
-    workspaceDao.updateWorkspace(workspaceId, name, description);
+    workspaceDao.updateWorkspace(workspaceId, name, description, properties);
     return workspaceDao.getWorkspace(workspaceId);
   }
 
@@ -184,12 +184,10 @@ public class WorkspaceService {
     String description = "Delete workspace " + id;
     JobBuilder deleteJob =
         jobService
-            .newJob(
-                description,
-                UUID.randomUUID().toString(),
-                WorkspaceDeleteFlight.class,
-                null, // Delete does not have a useful request body
-                userRequest)
+            .newJob()
+            .description(description)
+            .flightClass(WorkspaceDeleteFlight.class)
+            .userRequest(userRequest)
             .addParameter(WorkspaceFlightMapKeys.WORKSPACE_ID, id.toString())
             .addParameter(
                 WorkspaceFlightMapKeys.WORKSPACE_STAGE, workspace.getWorkspaceStage().name());
@@ -221,12 +219,11 @@ public class WorkspaceService {
     stageService.assertMcWorkspace(workspace, "createCloudContext");
 
     jobService
-        .newJob(
-            "Create GCP Cloud Context " + workspaceId,
-            jobId,
-            CreateGcpContextFlightV2.class,
-            /* request= */ null,
-            userRequest)
+        .newJob()
+        .description("Create GCP Cloud Context " + workspaceId)
+        .jobId(jobId)
+        .flightClass(CreateGcpContextFlightV2.class)
+        .userRequest(userRequest)
         .addParameter(WorkspaceFlightMapKeys.WORKSPACE_ID, workspaceId.toString())
         .addParameter(JobMapKeys.RESULT_PATH.getKeyName(), resultPath)
         .submit();
@@ -240,26 +237,20 @@ public class WorkspaceService {
   public String cloneWorkspace(
       UUID sourceWorkspaceId,
       AuthenticatedUserRequest userRequest,
-      String spendProfile,
       @Nullable String location,
-      @Nullable String displayName,
-      @Nullable String description) {
+      Workspace destinationWorkspace) {
     final Workspace sourceWorkspace =
         validateWorkspaceAndAction(
             userRequest, sourceWorkspaceId, SamConstants.SamWorkspaceAction.READ);
     stageService.assertMcWorkspace(sourceWorkspace, "cloneGcpWorkspace");
 
     return jobService
-        .newJob(
-            "Clone GCP Workspace " + sourceWorkspaceId.toString(),
-            UUID.randomUUID().toString(),
-            CloneGcpWorkspaceFlight.class,
-            null,
-            userRequest)
+        .newJob()
+        .description("Clone GCP Workspace " + sourceWorkspaceId.toString())
+        .flightClass(CloneGcpWorkspaceFlight.class)
+        .userRequest(userRequest)
+        .request(destinationWorkspace)
         .addParameter(WorkspaceFlightMapKeys.WORKSPACE_ID, sourceWorkspaceId)
-        .addParameter(WorkspaceFlightMapKeys.DISPLAY_NAME, displayName)
-        .addParameter(WorkspaceFlightMapKeys.DESCRIPTION, description)
-        .addParameter(WorkspaceFlightMapKeys.SPEND_PROFILE_ID, spendProfile)
         .addParameter(
             ControlledResourceKeys.SOURCE_WORKSPACE_ID,
             sourceWorkspaceId) // TODO: remove this duplication
@@ -277,12 +268,10 @@ public class WorkspaceService {
         validateWorkspaceAndAction(userRequest, workspaceId, SamConstants.SamWorkspaceAction.WRITE);
     stageService.assertMcWorkspace(workspace, "deleteGcpCloudContext");
     jobService
-        .newJob(
-            "Delete GCP Context " + workspaceId,
-            UUID.randomUUID().toString(),
-            DeleteGcpContextFlight.class,
-            /* request= */ null,
-            userRequest)
+        .newJob()
+        .description("Delete GCP Context " + workspaceId)
+        .flightClass(DeleteGcpContextFlight.class)
+        .userRequest(userRequest)
         .addParameter(WorkspaceFlightMapKeys.WORKSPACE_ID, workspaceId.toString())
         .submitAndWait(null);
   }
@@ -349,14 +338,13 @@ public class WorkspaceService {
       return;
     }
     jobService
-        .newJob(
+        .newJob()
+        .description(
             String.format(
                 "Remove role %s from user %s in workspace %s",
-                role.name(), targetUserEmail, workspaceId),
-            UUID.randomUUID().toString(),
-            RemoveUserFromWorkspaceFlight.class,
-            /* request= */ null,
-            executingUserRequest)
+                role.name(), targetUserEmail, workspaceId))
+        .flightClass(RemoveUserFromWorkspaceFlight.class)
+        .userRequest(executingUserRequest)
         .addParameter(WorkspaceFlightMapKeys.WORKSPACE_ID, workspaceId.toString())
         .addParameter(WorkspaceFlightMapKeys.USER_TO_REMOVE, targetUserEmail)
         .addParameter(WorkspaceFlightMapKeys.ROLE_TO_REMOVE, role)
