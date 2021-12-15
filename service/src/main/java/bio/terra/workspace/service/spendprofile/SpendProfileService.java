@@ -50,7 +50,7 @@ public class SpendProfileService {
             samService.isAuthorized(
                 userRequest,
                 SamConstants.SamResource.SPEND_PROFILE,
-                spendProfileId.id(),
+                spendProfileId.getId(),
                 SamConstants.SamSpendProfileAction.LINK),
         "isAuthorized")) {
       throw SpendUnauthorizedException.linkUnauthorized(spendProfileId);
@@ -74,7 +74,7 @@ public class SpendProfileService {
         .map(
             spendModel ->
                 SpendProfile.builder()
-                    .id(SpendProfileId.create(spendModel.getId()))
+                    .id(new SpendProfileId(spendModel.getId()))
                     .billingAccountId(spendModel.getBillingAccountId())
                     .build())
         .collect(Collectors.toList());

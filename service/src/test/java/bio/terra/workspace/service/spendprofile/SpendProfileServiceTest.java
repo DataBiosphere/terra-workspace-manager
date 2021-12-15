@@ -45,7 +45,7 @@ class SpendProfileServiceTest extends BaseConnectedTest {
         SpendUnauthorizedException.class,
         () ->
             service.authorizeLinking(
-                SpendProfileId.create("bar"), userAccessUtils.defaultUserAuthRequest()));
+                new SpendProfileId("bar"), userAccessUtils.defaultUserAuthRequest()));
   }
 
   @Test

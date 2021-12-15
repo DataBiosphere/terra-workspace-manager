@@ -13,6 +13,7 @@ import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -50,7 +51,7 @@ public class WorkspaceDao {
               .description(rs.getString("description"))
               .spendProfileId(
                   Optional.ofNullable(rs.getString("spend_profile"))
-                      .map(SpendProfileId::create)
+                      .map(SpendProfileId::new)
                       .orElse(null))
               .properties(
                   Optional.ofNullable(rs.getString("properties"))
@@ -77,7 +78,7 @@ public class WorkspaceDao {
     final String sql =
         "INSERT INTO workspace (workspace_id, display_name, description, spend_profile, properties, workspace_stage) "
             + "values (:workspace_id, :display_name, :description, :spend_profile,"
-            + " cast(:properties AS json), :workspace_stage)";
+            + " cast(:properties AS jsonb), :workspace_stage)";
 
     final String workspaceId = workspace.getWorkspaceId().toString();
 
@@ -87,7 +88,8 @@ public class WorkspaceDao {
             .addValue("display_name", workspace.getDisplayName().orElse(null))
             .addValue("description", workspace.getDescription().orElse(null))
             .addValue(
-                "spend_profile", workspace.getSpendProfileId().map(SpendProfileId::id).orElse(null))
+                "spend_profile",
+                workspace.getSpendProfileId().map(SpendProfileId::getId).orElse(null))
             .addValue("properties", DbSerDes.propertiesToJson(workspace.getProperties()))
             .addValue("workspace_stage", workspace.getWorkspaceStage().toString());
     try {
@@ -152,12 +154,18 @@ public class WorkspaceDao {
   }
 
   @WriteTransaction
-  public boolean updateWorkspace(UUID workspaceId, String name, String description) {
-    if (name == null && description == null) {
-      throw new MissingRequiredFieldException("Must specify name or description to update.");
+  public boolean updateWorkspace(
+      UUID workspaceId,
+      @Nullable String name,
+      @Nullable String description,
+      @Nullable Map<String, String> propertyMap) {
+    if (name == null && description == null && propertyMap == null) {
+      throw new MissingRequiredFieldException(
+          "Must specify name, description, or properties to update.");
     }
 
     var params = new MapSqlParameterSource();
+    params.addValue("workspace_id", workspaceId.toString());
 
     if (name != null) {
       params.addValue("display_name", name);
@@ -167,29 +175,16 @@ public class WorkspaceDao {
       params.addValue("description", description);
     }
 
-    return updateWorkspaceColumns(workspaceId, params);
-  }
+    if (propertyMap != null) {
+      params.addValue("properties", DbSerDes.propertiesToJson(propertyMap));
+    }
 
-  /**
-   * This is an open ended method for constructing the SQL update statement. To use it, build the
-   * parameter list making the param name equal to the column name you want to update. The method
-   * generates the column_name = :column_name list. It is an error if the params map is empty.
-   *
-   * @param workspaceId workspace identifier - not strictly necessarily, but an extra validation
-   * @param columnParams sql parameters
-   */
-  private boolean updateWorkspaceColumns(UUID workspaceId, MapSqlParameterSource columnParams) {
-    StringBuilder sb = new StringBuilder("UPDATE workspace SET ");
+    String sql =
+        String.format(
+            "UPDATE workspace SET %s WHERE workspace_id = :workspace_id",
+            DbUtils.setColumnsClause(params, "properties"));
 
-    sb.append(DbUtils.setColumnsClause(columnParams));
-    sb.append(" WHERE workspace_id = :workspace_id");
-
-    MapSqlParameterSource queryParams = new MapSqlParameterSource();
-    queryParams
-        .addValues(columnParams.getValues())
-        .addValue("workspace_id", workspaceId.toString());
-
-    int rowsAffected = jdbcTemplate.update(sb.toString(), queryParams);
+    int rowsAffected = jdbcTemplate.update(sql, params);
     boolean updated = rowsAffected > 0;
 
     logger.info(

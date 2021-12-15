@@ -21,9 +21,9 @@ import bio.terra.workspace.service.workspace.flight.WorkspaceDeleteFlight;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import bio.terra.workspace.service.workspace.model.Workspace;
-import bio.terra.workspace.service.workspace.model.WorkspaceRequest;
 import io.opencensus.contrib.spring.aop.Traced;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -71,32 +71,16 @@ public class WorkspaceService {
 
   /** Create a workspace with the specified parameters. Returns workspaceID of the new workspace. */
   @Traced
-  public UUID createWorkspace(
-      WorkspaceRequest workspaceRequest, AuthenticatedUserRequest userRequest) {
+  public UUID createWorkspace(Workspace workspace, AuthenticatedUserRequest userRequest) {
+    String description = "Create workspace " + workspace.getWorkspaceId().toString();
 
-    String description = "Create workspace " + workspaceRequest.workspaceId().toString();
     JobBuilder createJob =
-        jobService
-            .newJob(
-                description,
-                UUID.randomUUID().toString(),
-                WorkspaceCreateFlight.class,
-                null,
-                userRequest)
-            .addParameter(
-                WorkspaceFlightMapKeys.WORKSPACE_ID, workspaceRequest.workspaceId().toString());
-    if (workspaceRequest.spendProfileId().isPresent()) {
-      createJob.addParameter(
-          WorkspaceFlightMapKeys.SPEND_PROFILE_ID, workspaceRequest.spendProfileId().get().id());
-    }
-
-    createJob.addParameter(
-        WorkspaceFlightMapKeys.WORKSPACE_STAGE, workspaceRequest.workspaceStage().name());
-
-    createJob.addParameter(
-        WorkspaceFlightMapKeys.DISPLAY_NAME, workspaceRequest.displayName().orElse(""));
-    createJob.addParameter(
-        WorkspaceFlightMapKeys.DESCRIPTION, workspaceRequest.description().orElse(""));
+        jobService.newJob(
+            description,
+            UUID.randomUUID().toString(),
+            WorkspaceCreateFlight.class,
+            workspace,
+            userRequest);
     return createJob.submitAndWait(UUID.class);
   }
 
@@ -161,17 +145,20 @@ public class WorkspaceService {
    * Update an existing workspace. Currently, can change the workspace's display name or
    * description.
    *
+   * @param userRequest authenticated user
    * @param workspaceId workspace of interest
    * @param name name to change - may be null
+   * @param properties optional map of key-value properties
    * @param description description to change - may be null
    */
   public Workspace updateWorkspace(
       AuthenticatedUserRequest userRequest,
       UUID workspaceId,
       @Nullable String name,
-      @Nullable String description) {
+      @Nullable String description,
+      @Nullable Map<String, String> properties) {
     validateWorkspaceAndAction(userRequest, workspaceId, SamConstants.SamWorkspaceAction.WRITE);
-    workspaceDao.updateWorkspace(workspaceId, name, description);
+    workspaceDao.updateWorkspace(workspaceId, name, description, properties);
     return workspaceDao.getWorkspace(workspaceId);
   }
 
@@ -240,10 +227,8 @@ public class WorkspaceService {
   public String cloneWorkspace(
       UUID sourceWorkspaceId,
       AuthenticatedUserRequest userRequest,
-      String spendProfile,
       @Nullable String location,
-      @Nullable String displayName,
-      @Nullable String description) {
+      Workspace destinationWorkspace) {
     final Workspace sourceWorkspace =
         validateWorkspaceAndAction(
             userRequest, sourceWorkspaceId, SamConstants.SamWorkspaceAction.READ);
@@ -254,12 +239,9 @@ public class WorkspaceService {
             "Clone GCP Workspace " + sourceWorkspaceId.toString(),
             UUID.randomUUID().toString(),
             CloneGcpWorkspaceFlight.class,
-            null,
+            destinationWorkspace,
             userRequest)
         .addParameter(WorkspaceFlightMapKeys.WORKSPACE_ID, sourceWorkspaceId)
-        .addParameter(WorkspaceFlightMapKeys.DISPLAY_NAME, displayName)
-        .addParameter(WorkspaceFlightMapKeys.DESCRIPTION, description)
-        .addParameter(WorkspaceFlightMapKeys.SPEND_PROFILE_ID, spendProfile)
         .addParameter(
             ControlledResourceKeys.SOURCE_WORKSPACE_ID,
             sourceWorkspaceId) // TODO: remove this duplication

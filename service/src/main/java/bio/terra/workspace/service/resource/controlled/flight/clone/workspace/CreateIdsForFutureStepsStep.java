@@ -8,7 +8,6 @@ import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
-import java.util.UUID;
 
 /**
  * Generate flight IDs and a workspace ID or two ahead of the steps that need them. The steps can
@@ -22,7 +21,6 @@ public class CreateIdsForFutureStepsStep implements Step {
     workingMap.put(
         ControlledResourceKeys.CREATE_CLOUD_CONTEXT_FLIGHT_ID,
         context.getStairway().createFlightId());
-    workingMap.put(ControlledResourceKeys.DESTINATION_WORKSPACE_ID, UUID.randomUUID());
     workingMap.put(
         ControlledResourceKeys.WORKSPACE_CREATE_FLIGHT_ID, context.getStairway().createFlightId());
     workingMap.put(
@@ -31,7 +29,6 @@ public class CreateIdsForFutureStepsStep implements Step {
     validateRequiredEntries(
         workingMap,
         ControlledResourceKeys.CREATE_CLOUD_CONTEXT_FLIGHT_ID,
-        ControlledResourceKeys.DESTINATION_WORKSPACE_ID,
         ControlledResourceKeys.WORKSPACE_CREATE_FLIGHT_ID,
         ControlledResourceKeys.CLONE_ALL_RESOURCES_FLIGHT_ID);
     return StepResult.getStepResultSuccess();

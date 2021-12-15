@@ -19,6 +19,8 @@ import bio.terra.workspace.generated.model.ApiGcpContext;
 import bio.terra.workspace.generated.model.ApiGrantRoleRequestBody;
 import bio.terra.workspace.generated.model.ApiIamRole;
 import bio.terra.workspace.generated.model.ApiJobReport.StatusEnum;
+import bio.terra.workspace.generated.model.ApiProperties;
+import bio.terra.workspace.generated.model.ApiProperty;
 import bio.terra.workspace.generated.model.ApiReferenceTypeEnum;
 import bio.terra.workspace.generated.model.ApiRoleBinding;
 import bio.terra.workspace.generated.model.ApiRoleBindingList;
@@ -51,9 +53,10 @@ import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.WsmApplicationService;
 import bio.terra.workspace.service.workspace.model.GcpCloudContext;
 import bio.terra.workspace.service.workspace.model.Workspace;
-import bio.terra.workspace.service.workspace.model.WorkspaceRequest;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -121,17 +124,18 @@ public class WorkspaceApiController implements WorkspaceApi {
     requestStage = (requestStage == null ? ApiWorkspaceStageModel.RAWLS_WORKSPACE : requestStage);
     WorkspaceStage internalStage = WorkspaceStage.fromApiModel(requestStage);
     Optional<SpendProfileId> spendProfileId =
-        Optional.ofNullable(body.getSpendProfile()).map(SpendProfileId::create);
+        Optional.ofNullable(body.getSpendProfile()).map(SpendProfileId::new);
 
-    WorkspaceRequest internalRequest =
-        WorkspaceRequest.builder()
+    Workspace workspace =
+        Workspace.builder()
             .workspaceId(body.getId())
-            .spendProfileId(spendProfileId)
+            .spendProfileId(spendProfileId.orElse(null))
             .workspaceStage(internalStage)
-            .displayName(Optional.ofNullable(body.getDisplayName()))
-            .description(Optional.ofNullable(body.getDescription()))
+            .displayName(body.getDisplayName())
+            .description(body.getDescription())
+            .properties(propertyMapFromApi(body.getProperties()))
             .build();
-    UUID createdId = workspaceService.createWorkspace(internalRequest, userRequest);
+    UUID createdId = workspaceService.createWorkspace(workspace, userRequest);
 
     ApiCreatedWorkspace responseWorkspace = new ApiCreatedWorkspace().id(createdId);
     logger.info("Created workspace {} for {}", responseWorkspace, userRequest.getEmail());
@@ -164,15 +168,22 @@ public class WorkspaceApiController implements WorkspaceApi {
             .getGcpCloudContext(workspace.getWorkspaceId())
             .map(GcpCloudContext::toApi)
             .orElse(null);
-    // When we have another cloud context, we will need to do a similar retrieval for it.
 
+    // Convert the property map to API format
+    ApiProperties apiProperties = new ApiProperties();
+    workspace
+        .getProperties()
+        .forEach((k, v) -> apiProperties.add(new ApiProperty().key(k).value(v)));
+
+    // When we have another cloud context, we will need to do a similar retrieval for it.
     return new ApiWorkspaceDescription()
         .id(workspace.getWorkspaceId())
-        .spendProfile(workspace.getSpendProfileId().map(SpendProfileId::id).orElse(null))
+        .spendProfile(workspace.getSpendProfileId().map(SpendProfileId::getId).orElse(null))
         .stage(workspace.getWorkspaceStage().toApiModel())
         .gcpContext(gcpContext)
         .displayName(workspace.getDisplayName().orElse(null))
-        .description(workspace.getDescription().orElse(null));
+        .description(workspace.getDescription().orElse(null))
+        .properties(apiProperties);
   }
 
   @Override
@@ -193,9 +204,15 @@ public class WorkspaceApiController implements WorkspaceApi {
       @RequestBody ApiUpdateWorkspaceRequestBody body) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     logger.info("Updating workspace {} for {}", workspaceId, userRequest.getEmail());
+
+    Map<String, String> propertyMap = null;
+    if (body.getProperties() != null) {
+      propertyMap = propertyMapFromApi(body.getProperties());
+    }
+
     Workspace workspace =
         workspaceService.updateWorkspace(
-            userRequest, workspaceId, body.getDisplayName(), body.getDescription());
+            userRequest, workspaceId, body.getDisplayName(), body.getDescription(), propertyMap);
 
     ApiWorkspaceDescription desc = buildWorkspaceDescription(workspace);
     logger.info("Updated workspace {} for {}", desc, userRequest.getEmail());
@@ -498,14 +515,24 @@ public class WorkspaceApiController implements WorkspaceApi {
   @Override
   public ResponseEntity<ApiCloneWorkspaceResult> cloneWorkspace(
       UUID workspaceId, @Valid ApiCloneWorkspaceRequest body) {
+    Optional<SpendProfileId> spendProfileId =
+        Optional.ofNullable(body.getSpendProfile()).map(SpendProfileId::new);
+
+    // Construct the target workspace object from the inputs
+    Workspace destinationWorkspace =
+        Workspace.builder()
+            .workspaceId(UUID.randomUUID())
+            .spendProfileId(spendProfileId.orElse(null))
+            .workspaceStage(WorkspaceStage.MC_WORKSPACE)
+            .displayName(body.getDisplayName())
+            .description(body.getDescription())
+            .properties(propertyMapFromApi(body.getProperties()))
+            .build();
+
     final String jobId =
         workspaceService.cloneWorkspace(
-            workspaceId,
-            getAuthenticatedInfo(),
-            body.getSpendProfile(),
-            body.getLocation(),
-            body.getDisplayName(),
-            body.getDescription());
+            workspaceId, getAuthenticatedInfo(), body.getLocation(), destinationWorkspace);
+
     final ApiCloneWorkspaceResult result = fetchCloneWorkspaceResult(jobId, getAuthenticatedInfo());
     return new ResponseEntity<>(
         result, ControllerUtils.getAsyncResponseCode(result.getJobReport()));
@@ -535,5 +562,17 @@ public class WorkspaceApiController implements WorkspaceApi {
         .jobReport(jobResult.getJobReport())
         .errorReport(jobResult.getApiErrorReport())
         .workspace(jobResult.getResult());
+  }
+
+  // Convert properties list into a map
+  private Map<String, String> propertyMapFromApi(ApiProperties properties) {
+    Map<String, String> propertyMap = new HashMap<>();
+    if (properties != null) {
+      for (ApiProperty property : properties) {
+        ControllerValidationUtils.validatePropertyKey(property.getKey());
+        propertyMap.put(property.getKey(), property.getValue());
+      }
+    }
+    return propertyMap;
   }
 }

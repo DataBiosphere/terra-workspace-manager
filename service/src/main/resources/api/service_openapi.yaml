@@ -2172,13 +2172,34 @@ components:
           description: ID of provided spend profile
           type: string
         policies:
-          description: Policies provided by the containing folder
+          description: Policies provided by the containing folder; NOT IMPLEMENTED
           type: array
           items:
             type: string
             format: uuid
         stage:
           $ref: '#/components/schemas/WorkspaceStageModel'
+        properties:
+          $ref: '#/components/schemas/Properties'
+
+    Properties:
+      description: Optional list of key-value pairs of strings
+      type: array
+      items:
+        $ref: '#/components/schemas/Property'
+
+    Property:
+      type: object
+      required: [key, value]
+      properties:
+        key:
+          description: |
+            String to identify the key. Keys must be 1-1024 characters, using letters,
+            numbers, dashes, and underscores and must not start with a dash or underscore.
+          type: string
+        value:
+          description: Arbitrary string value
+          type: string
 
     CreatedWorkspace:
       type: object
@@ -2261,6 +2282,8 @@ components:
           $ref: '#/components/schemas/GcpContext'
         # When we have an Azure context, we can put it right here.
         # No point making a complex structure when there will be only a few of these
+        properties:
+          $ref: '#/components/schemas/Properties'
 
     UpdateWorkspaceRequestBody:
       type: object
@@ -2271,6 +2294,9 @@ components:
         description:
           description: A description of the workspace
           type: string
+        properties:
+          description: If present, it will replace all properties with this list
+          $ref: '#/components/schemas/Properties'
 
     WorkspaceDescriptionList:
       type: object
@@ -2955,6 +2981,9 @@ components:
             GCP Location to use for cloud-based resources. If omitted, the location of the source
             resource will be used.
           type: string
+        properties:
+          $ref: '#/components/schemas/Properties'
+
     CloneWorkspaceResult:
       description: >-
         Response for workspace clone, including details on each controlled or referenced resource

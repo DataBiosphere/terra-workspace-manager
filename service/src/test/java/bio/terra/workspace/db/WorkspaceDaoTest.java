@@ -59,7 +59,7 @@ class WorkspaceDaoTest extends BaseUnitTest {
   @BeforeEach
   void setup() {
     workspaceId = UUID.randomUUID();
-    spendProfileId = SpendProfileId.create("foo");
+    spendProfileId = new SpendProfileId("foo");
   }
 
   @Test
@@ -77,7 +77,7 @@ class WorkspaceDaoTest extends BaseUnitTest {
     Map<String, Object> queryOutput = jdbcTemplate.queryForMap(READ_SQL, params);
 
     assertThat(queryOutput.get("workspace_id"), equalTo(workspaceId.toString()));
-    assertThat(queryOutput.get("spend_profile"), equalTo(spendProfileId.id()));
+    assertThat(queryOutput.get("spend_profile"), equalTo(spendProfileId.getId()));
 
     // This test doesn't clean up after itself - be sure it only runs on unit test DBs, which
     // are always re-created for tests.

@@ -22,6 +22,13 @@ public final class ControllerValidationUtils {
       Pattern.compile("(?i)^[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,}$");
 
   /**
+   * Property keys must be 1-1024 characters, using letters, numbers, dashes, and underscores and
+   * must not start with a dash or underscore.
+   */
+  public static final Pattern PROPERTY_KEY_VALIDATION_PATTERN =
+      Pattern.compile("^[a-zA-Z0-9][-_a-zA-Z0-9]{0,1023}$");
+
+  /**
    * Utility to validate limit/offset parameters used in pagination.
    *
    * <p>This throws ValidationExceptions if invalid offset or limit values are provided. This only
@@ -79,6 +86,16 @@ public final class ControllerValidationUtils {
     }
   }
 
+  public static void validatePropertyKey(String key) {
+    if (key == null) {
+      logger.warn("User provided null property key");
+      throw new ValidationException("Missing required property key");
+    }
+    if (!PROPERTY_KEY_VALIDATION_PATTERN.matcher(key).matches()) {
+      logger.warn("User provided invalid property key: " + key);
+      throw new ValidationException("Invalid property key provided");
+    }
+  }
   /** Validate that a user is requesting a valid cloud for adding workspace context. */
   public static void validateCloudPlatform(ApiCloudPlatform platform) {
     if (platform != ApiCloudPlatform.GCP) {

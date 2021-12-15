@@ -10,7 +10,6 @@ import bio.terra.workspace.service.workspace.GcpCloudContextService;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.model.GcpCloudContext;
 import bio.terra.workspace.service.workspace.model.Workspace;
-import bio.terra.workspace.service.workspace.model.WorkspaceRequest;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
 import java.util.Optional;
 import java.util.UUID;
@@ -29,9 +28,9 @@ public class WorkspaceConnectedTestUtils {
   public Workspace createWorkspaceWithGcpContext(AuthenticatedUserRequest userRequest) {
     UUID workspaceId =
         workspaceService.createWorkspace(
-            WorkspaceRequest.builder()
+            Workspace.builder()
                 .workspaceId(UUID.randomUUID())
-                .spendProfileId(Optional.of(spendUtils.defaultSpendId()))
+                .spendProfileId(spendUtils.defaultSpendId())
                 .workspaceStage(WorkspaceStage.MC_WORKSPACE)
                 .build(),
             userRequest);
