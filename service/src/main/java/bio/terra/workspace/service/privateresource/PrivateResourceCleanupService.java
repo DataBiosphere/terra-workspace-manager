@@ -19,7 +19,6 @@ import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import java.time.Duration;
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -146,12 +145,10 @@ public class PrivateResourceCleanupService {
         new AuthenticatedUserRequest().token(Optional.of(wsmSaToken));
     JobBuilder userCleanupJob =
         jobService
-            .newJob(
-                description,
-                UUID.randomUUID().toString(),
-                RemoveUserFromWorkspaceFlight.class,
-                null,
-                wsmSaRequest)
+            .newJob()
+            .description(description)
+            .flightClass(RemoveUserFromWorkspaceFlight.class)
+            .request(wsmSaRequest)
             .addParameter(
                 WorkspaceFlightMapKeys.WORKSPACE_ID, workspaceUserPair.getWorkspaceId().toString())
             .addParameter(WorkspaceFlightMapKeys.USER_TO_REMOVE, workspaceUserPair.getUserEmail())
