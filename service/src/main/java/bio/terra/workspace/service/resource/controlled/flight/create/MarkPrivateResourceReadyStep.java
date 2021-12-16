@@ -9,6 +9,10 @@ import bio.terra.workspace.service.resource.controlled.AccessScopeType;
 import bio.terra.workspace.service.resource.controlled.ControlledResource;
 import bio.terra.workspace.service.resource.controlled.PrivateResourceState;
 
+/**
+ * Mark a private resource as READY to indicate it can be polled by the private resource cleanup
+ * service. Other resource types do not need to be cleaned up this way, so they are not modified.
+ */
 public class MarkPrivateResourceReadyStep implements Step {
 
   private final ControlledResource resource;

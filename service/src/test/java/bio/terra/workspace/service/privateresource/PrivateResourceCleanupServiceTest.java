@@ -182,6 +182,7 @@ public class PrivateResourceCleanupServiceTest extends BaseConnectedTest {
   }
 
   @Test
+  @DisabledIfEnvironmentVariable(named = "TEST_ENV", matches = BUFFER_SERVICE_DISABLED_ENVS_REG_EX)
   void cleanupResourcesSuppressExceptions_cleansApplicationPrivateResource_succeeds() {
     // Default user owns the workspace and group. Secondary user has workspace membership via group.
     // Add second user to group
@@ -294,7 +295,7 @@ public class PrivateResourceCleanupServiceTest extends BaseConnectedTest {
    * Create a Sam managed group and return its email. This functionality is only used by tests, so
    * it lives here instead of in SamService.
    */
-  private String createGroup(String groupName, GroupApi groupApi) {
+  private static String createGroup(String groupName, GroupApi groupApi) {
     try {
       groupApi.postGroup(groupName);
       return groupApi.getGroup(groupName);
@@ -303,7 +304,7 @@ public class PrivateResourceCleanupServiceTest extends BaseConnectedTest {
     }
   }
 
-  private void deleteGroup(String groupName, GroupApi groupApi) {
+  private static void deleteGroup(String groupName, GroupApi groupApi) {
     try {
       groupApi.deleteGroup(groupName);
     } catch (ApiException e) {
@@ -311,7 +312,7 @@ public class PrivateResourceCleanupServiceTest extends BaseConnectedTest {
     }
   }
 
-  private void addUserToGroup(String groupName, String userEmail, GroupApi groupApi) {
+  private static void addUserToGroup(String groupName, String userEmail, GroupApi groupApi) {
     try {
       groupApi.addEmailToGroup(groupName, SAM_GROUP_MEMBER_POLICY, userEmail);
     } catch (ApiException e) {
@@ -319,7 +320,7 @@ public class PrivateResourceCleanupServiceTest extends BaseConnectedTest {
     }
   }
 
-  private void removeUserFromGroup(String groupName, String userEmail, GroupApi groupApi) {
+  private static void removeUserFromGroup(String groupName, String userEmail, GroupApi groupApi) {
     try {
       groupApi.removeEmailFromGroup(groupName, SAM_GROUP_MEMBER_POLICY, userEmail);
     } catch (ApiException e) {

@@ -49,25 +49,25 @@ public class ApplicationConfigurationTest extends BaseTest {
   }
 
   private void checkLeo(WsmApplication leoApp) {
-    assertEquals(leoApp.getDisplayName(), "Leo");
-    assertEquals(leoApp.getDescription(), "application execution framework");
-    assertEquals(leoApp.getServiceAccount(), "leo@terra-dev.iam.gserviceaccount.com");
-    assertEquals(leoApp.getState(), WsmApplicationState.OPERATING);
+    assertEquals("Leo", leoApp.getDisplayName());
+    assertEquals("application execution framework", leoApp.getDescription());
+    assertEquals("leo@terra-dev.iam.gserviceaccount.com", leoApp.getServiceAccount());
+    assertEquals(WsmApplicationState.OPERATING, leoApp.getState());
   }
 
   private void checkCarmen(WsmApplication carmenApp) {
-    assertEquals(carmenApp.getDisplayName(), "Carmen");
-    assertEquals(carmenApp.getDescription(), "musical performance framework");
-    assertEquals(carmenApp.getServiceAccount(), "carmen@terra-dev.iam.gserviceaccount.com");
-    assertEquals(carmenApp.getState(), WsmApplicationState.DEPRECATED);
+    assertEquals("Carmen", carmenApp.getDisplayName());
+    assertEquals("musical performance framework", carmenApp.getDescription());
+    assertEquals("carmen@terra-dev.iam.gserviceaccount.com", carmenApp.getServiceAccount());
+    assertEquals(WsmApplicationState.DEPRECATED, carmenApp.getState());
   }
 
   private void checkTestWsmApp(WsmApplication testApp) {
-    assertEquals(testApp.getDisplayName(), "TestWsmApp");
-    assertEquals(testApp.getDescription(), "WSM test application");
+    assertEquals("TestWsmApp", testApp.getDisplayName());
+    assertEquals("WSM test application", testApp.getDescription());
     // Note that SAs (and all other emails) are always stored as lowercase strings.
     assertEquals(
-        testApp.getServiceAccount(), "Elizabeth.Shadowmoon@test.firecloud.org".toLowerCase());
-    assertEquals(testApp.getState(), WsmApplicationState.OPERATING);
+        "Elizabeth.Shadowmoon@test.firecloud.org".toLowerCase(), testApp.getServiceAccount());
+    assertEquals(WsmApplicationState.OPERATING, testApp.getState());
   }
 }
