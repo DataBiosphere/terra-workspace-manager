@@ -24,8 +24,7 @@ public class AzureTestUtils {
   @Autowired private final UserAccessUtils userAccessUtils;
 
   public AzureTestUtils(
-      AzureTestConfiguration azureTestConfiguration,
-      UserAccessUtils userAccessUtils) {
+      AzureTestConfiguration azureTestConfiguration, UserAccessUtils userAccessUtils) {
     this.azureTestConfiguration = azureTestConfiguration;
     this.userAccessUtils = userAccessUtils;
   }
