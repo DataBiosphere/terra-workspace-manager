@@ -3,5 +3,5 @@
 workspace:
   azure:
     managed-app-client-id: daf315cb-d3ac-46e0-bf01-e4dccfd479e2
-    managed-app-client-secret: IOn7Q~jYb7cCzMTwH1_1_jyc~stncH9BY8Mvd
+    managed-app-client-secret: 
     managed-app-tenant-id: fad90753-2022-4456-9b0a-c7e5b934e408
