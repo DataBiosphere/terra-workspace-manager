@@ -4415,4 +4415,3 @@ components:
 security:
   - bearerAuth: []
   - authorization: [openid, email, profile]
-  - basicAuth: []

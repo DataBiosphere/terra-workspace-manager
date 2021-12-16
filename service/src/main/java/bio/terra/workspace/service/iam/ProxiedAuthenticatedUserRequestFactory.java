@@ -2,7 +2,6 @@ package bio.terra.workspace.service.iam;
 
 import bio.terra.workspace.app.configuration.external.AzureState;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest.AuthType;
-import java.util.Base64;
 import java.util.Optional;
 import javax.servlet.http.HttpServletRequest;
 import org.apache.commons.lang3.StringUtils;
@@ -24,11 +23,9 @@ public class ProxiedAuthenticatedUserRequestFactory implements AuthenticatedUser
         .orElse(
             fromBearer(servletRequest)
                 .orElse(
-                    fromBasic(servletRequest)
-                        .orElse(
-                            new AuthenticatedUserRequest()
-                                .token(Optional.empty())
-                                .authType(AuthType.NONE))));
+                    new AuthenticatedUserRequest()
+                        .token(Optional.empty())
+                        .authType(AuthType.NONE)));
   }
 
   private Optional<AuthenticatedUserRequest> fromOidc(HttpServletRequest servletRequest) {
@@ -56,26 +53,6 @@ public class ProxiedAuthenticatedUserRequestFactory implements AuthenticatedUser
               .subjectId(servletRequest.getHeader(AuthHeaderKeys.OIDC_CLAIM_USER_ID.getKeyName()))
               .token(Optional.of(StringUtils.substring(authHeader, BEARER.length())))
               .authType(AuthType.BEARER));
-    }
-
-    return Optional.empty();
-  }
-
-  private Optional<AuthenticatedUserRequest> fromBasic(HttpServletRequest servletRequest) {
-    // This is only used for the Azure PoC
-    if (azureState.isEnabled()) {
-      String authHeader = servletRequest.getHeader(AuthHeaderKeys.AUTHORIZATION.getKeyName());
-      if (StringUtils.startsWith(authHeader, BASIC)) {
-        String encodedInfo = StringUtils.substring(authHeader, BASIC.length());
-        String info = new String(Base64.getDecoder().decode(encodedInfo));
-        String[] values = StringUtils.split(info, ':');
-        return Optional.of(
-            new AuthenticatedUserRequest()
-                .email(values[0])
-                .subjectId(values[1])
-                .token(Optional.empty())
-                .authType(AuthType.BASIC));
-      }
     }
 
     return Optional.empty();

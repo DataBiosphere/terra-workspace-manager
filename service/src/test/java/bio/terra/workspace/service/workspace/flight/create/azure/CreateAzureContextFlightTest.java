@@ -9,6 +9,7 @@ import bio.terra.stairway.FlightStatus;
 import bio.terra.workspace.common.BaseAzureTest;
 import bio.terra.workspace.common.StairwayTestUtils;
 import bio.terra.workspace.common.utils.AzureTestUtils;
+import bio.terra.workspace.connected.UserAccessUtils;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.workspace.WorkspaceService;
@@ -25,11 +26,12 @@ class CreateAzureContextFlightTest extends BaseAzureTest {
   @Autowired private WorkspaceService workspaceService;
   @Autowired private JobService jobService;
   @Autowired private AzureTestUtils azureTestUtils;
+  @Autowired private UserAccessUtils userAccessUtils;
 
   @Test
   void successCreatesContext() throws Exception {
     UUID workspaceId = azureTestUtils.createWorkspace(workspaceService);
-    AuthenticatedUserRequest userRequest = azureTestUtils.defaultUserAuthRequest();
+    AuthenticatedUserRequest userRequest = userAccessUtils.defaultUserAuthRequest();
 
     // There should be no cloud context initially.
     assertTrue(workspaceService.getAuthorizedAzureCloudContext(workspaceId, userRequest).isEmpty());
@@ -55,7 +57,7 @@ class CreateAzureContextFlightTest extends BaseAzureTest {
   @Test
   void errorRevertsChanges() throws Exception {
     UUID workspaceId = azureTestUtils.createWorkspace(workspaceService);
-    AuthenticatedUserRequest userRequest = azureTestUtils.defaultUserAuthRequest();
+    AuthenticatedUserRequest userRequest = userAccessUtils.defaultUserAuthRequest();
 
     // There should be no cloud context initially.
     assertTrue(workspaceService.getAuthorizedAzureCloudContext(workspaceId, userRequest).isEmpty());
