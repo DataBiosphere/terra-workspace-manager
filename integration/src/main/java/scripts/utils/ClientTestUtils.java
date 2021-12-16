@@ -186,7 +186,7 @@ public class ClientTestUtils {
   }
 
   public static ControlledAzureResourceApi getControlledAzureResourceClient() {
-    //TODO: proper api client specification
+    // TODO: proper api client specification
     return new ControlledAzureResourceApi();
   }
 
