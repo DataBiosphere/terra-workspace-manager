@@ -17,7 +17,8 @@ public final class StartupInitializer {
         applicationContext.getBean(WorkspaceDatabaseConfiguration.class);
     JobService jobService = applicationContext.getBean(JobService.class);
     WsmApplicationService appService = applicationContext.getBean(WsmApplicationService.class);
-    FeatureConfiguration featureConfiguration = applicationContext.getBean(FeatureConfiguration.class);
+    FeatureConfiguration featureConfiguration =
+        applicationContext.getBean(FeatureConfiguration.class);
 
     // Log the state of the feature flags
     featureConfiguration.logFeatures();

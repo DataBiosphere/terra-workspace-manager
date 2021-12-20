@@ -24,10 +24,10 @@ public class FeatureConfiguration {
 
   /**
    * Write the feature settings into the log
-   * Add an entry here for each new feature
+   *
+   * <p>Add an entry here for each new feature
    */
   public void logFeatures() {
     logger.info("Feature: azure-enabled: {}", isAzureEnabled());
   }
-
 }
