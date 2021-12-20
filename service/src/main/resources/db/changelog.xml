@@ -3,4 +3,6 @@
     <include file="changesets/20210301_revised_initial_schema.yaml" relativeToChangelogFile="true"/>
     <include file="changesets/20210917_cloud_context.yaml" relativeToChangelogFile="true"/>
     <include file="changesets/20211006_application_columns.yaml" relativeToChangelogFile="true"/>
+    <include file="changesets/20211130_private_resource_state.yaml" relativeToChangelogFile="true"/>
+    <include file="changesets/20211201_cronjob_table.yaml" relativeToChangelogFile="true"/>
 </databaseChangeLog>

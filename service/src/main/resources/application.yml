@@ -59,6 +59,11 @@ workspace:
     resource-id: mc-terra-workspace-manager
     timeout-seconds: 1800
 
+  private-resource-cleanup:
+    enabled: true
+    polling-interval: "15m"
+    startup-wait: "5s"
+
   sam.base-path: ${env.urls.sam}
 
   stairway-database:

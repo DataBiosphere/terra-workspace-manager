@@ -7,6 +7,7 @@ import bio.terra.common.sam.SamRetry;
 import bio.terra.common.sam.exception.SamExceptionFactory;
 import bio.terra.workspace.app.configuration.external.SamConfiguration;
 import bio.terra.workspace.common.exception.InternalLogicException;
+import bio.terra.workspace.common.utils.GcpUtils;
 import bio.terra.workspace.service.iam.model.ControlledResourceIamRole;
 import bio.terra.workspace.service.iam.model.RoleBinding;
 import bio.terra.workspace.service.iam.model.SamConstants;
@@ -319,6 +320,20 @@ public class SamService {
   }
 
   /**
+   * Wrapper around {@code userIsAuthorized} which checks authorization using the WSM Service
+   * Account's credentials rather than an end user's credentials. This should only be used when user
+   * credentials are not available, as WSM's SA has permission to read all workspaces and resources.
+   */
+  public boolean checkAuthAsWsmSa(
+      String iamResourceType, String resourceId, String action, String userToCheck)
+      throws InterruptedException {
+    String wsmSaToken = getWsmServiceAccountToken();
+    AuthenticatedUserRequest wsmSaRequest =
+        new AuthenticatedUserRequest().token(Optional.of(wsmSaToken));
+    return userIsAuthorized(iamResourceType, resourceId, action, userToCheck, wsmSaRequest);
+  }
+
+  /**
    * Wrapper around isAuthorized which throws an appropriate exception if a user does not have
    * access to a resource. The wrapped call will perform a check for the appropriate permission in
    * Sam. This call answers the question "does user X have permission to do action Y on resource Z".
@@ -443,14 +458,15 @@ public class SamService {
       ControlledResourceIamRole role,
       String email)
       throws InterruptedException {
-    // Validate that the provided user credentials are an owner in the resource's workspace.
+    // Validate that the provided user credentials can modify the owners of the resource's
+    // workspace.
     // Although the Sam call to revoke a resource role must use WSM SA credentials instead, this
     // is a safeguard against accidentally invoking these credentials for unauthorized users.
     checkAuthz(
         userRequest,
         SamConstants.SamResource.WORKSPACE,
         resource.getWorkspaceId().toString(),
-        SamConstants.SamWorkspaceAction.OWN);
+        samActionToModifyRole(WsmIamRole.OWNER));
 
     try {
       ResourcesApi wsmSaResourceApi = samResourcesApi(getWsmServiceAccountToken());
@@ -493,14 +509,15 @@ public class SamService {
       ControlledResourceIamRole role,
       String email)
       throws InterruptedException {
-    // Validate that the provided user credentials are an owner in the resource's workspace.
+    // Validate that the provided user credentials can modify the owners of the resource's
+    // workspace.
     // Although the Sam call to revoke a resource role must use WSM SA credentials instead, this
     // is a safeguard against accidentally invoking these credentials for unauthorized users.
     checkAuthz(
         userRequest,
         SamConstants.SamResource.WORKSPACE,
         resource.getWorkspaceId().toString(),
-        SamConstants.SamWorkspaceAction.OWN);
+        samActionToModifyRole(WsmIamRole.OWNER));
 
     try {
       ResourcesApi wsmSaResourceApi = samResourcesApi(getWsmServiceAccountToken());
@@ -543,7 +560,10 @@ public class SamService {
               () ->
                   resourceApi.listResourcePolicies(
                       SamConstants.SamResource.WORKSPACE, workspaceId.toString()));
+      // Don't include WSM's SA as a manager. This is true for all workspaces and not useful to
+      // callers.
       return samResult.stream()
+          .filter(entry -> !entry.getPolicyName().equals(WsmIamRole.MANAGER.toSamRole()))
           .map(
               entry ->
                   RoleBinding.builder()
@@ -857,14 +877,15 @@ public class SamService {
   public List<ControlledResourceIamRole> getUserRolesOnPrivateResource(
       ControlledResource resource, String userEmail, AuthenticatedUserRequest userRequest)
       throws InterruptedException {
-    // Validate that the provided user credentials are an owner in the resource's workspace.
+    // Validate that the provided user credentials can modify the owners of the resource's
+    // workspace.
     // Although the Sam call to revoke a resource role must use WSM SA credentials instead, this
     // is a safeguard against accidentally invoking these credentials for unauthorized users.
     checkAuthz(
         userRequest,
         SamConstants.SamResource.WORKSPACE,
         resource.getWorkspaceId().toString(),
-        SamConstants.SamWorkspaceAction.OWN);
+        samActionToModifyRole(WsmIamRole.OWNER));
 
     try {
       ResourcesApi wsmSaResourceApi = samResourcesApi(getWsmServiceAccountToken());
@@ -912,14 +933,21 @@ public class SamService {
         new AccessPolicyMembershipV2()
             .addRolesItem(WsmIamRole.OWNER.toSamRole())
             .addMemberEmailsItem(ownerEmail));
-    // For all non-owner roles, we create empty policies which can be modified later.
+    // For all non-owner/manager roles, we create empty policies which can be modified later.
     for (WsmIamRole workspaceRole : WsmIamRole.values()) {
-      if (workspaceRole != WsmIamRole.OWNER) {
+      if (workspaceRole != WsmIamRole.OWNER && workspaceRole != WsmIamRole.MANAGER) {
         policyMap.put(
             workspaceRole.toSamRole(),
             new AccessPolicyMembershipV2().addRolesItem(workspaceRole.toSamRole()));
       }
     }
+    // We always give WSM's service account the 'manager' role for admin control of workspaces.
+    String wsmSa = GcpUtils.getWsmSaEmail();
+    policyMap.put(
+        WsmIamRole.MANAGER.toSamRole(),
+        new AccessPolicyMembershipV2()
+            .addRolesItem(WsmIamRole.MANAGER.toSamRole())
+            .addMemberEmailsItem(wsmSa));
     return policyMap;
   }
 

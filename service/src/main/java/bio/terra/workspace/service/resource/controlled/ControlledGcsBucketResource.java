@@ -27,6 +27,7 @@ public class ControlledGcsBucketResource extends ControlledResource {
       @JsonProperty("description") String description,
       @JsonProperty("cloningInstructions") CloningInstructions cloningInstructions,
       @JsonProperty("assignedUser") String assignedUser,
+      @JsonProperty("privateResourceState") PrivateResourceState privateResourceState,
       @JsonProperty("accessScope") AccessScopeType accessScope,
       @JsonProperty("managedBy") ManagedByType managedBy,
       @JsonProperty("applicationId") UUID applicationId,
@@ -41,7 +42,8 @@ public class ControlledGcsBucketResource extends ControlledResource {
         assignedUser,
         accessScope,
         managedBy,
-        applicationId);
+        applicationId,
+        privateResourceState);
     this.bucketName = bucketName;
     validate();
   }
@@ -56,6 +58,21 @@ public class ControlledGcsBucketResource extends ControlledResource {
 
   public static ControlledGcsBucketResource.Builder builder() {
     return new ControlledGcsBucketResource.Builder();
+  }
+
+  public Builder toBuilder() {
+    return new Builder()
+        .workspaceId(getWorkspaceId())
+        .resourceId(getResourceId())
+        .name(getName())
+        .description(getDescription())
+        .cloningInstructions(getCloningInstructions())
+        .assignedUser(getAssignedUser().orElse(null))
+        .privateResourceState(getPrivateResourceState().orElse(null))
+        .accessScope(getAccessScope())
+        .managedBy(getManagedBy())
+        .applicationId(getApplicationId())
+        .bucketName(getBucketName());
   }
 
   public String getBucketName() {
@@ -130,6 +147,8 @@ public class ControlledGcsBucketResource extends ControlledResource {
     private String description;
     private CloningInstructions cloningInstructions;
     private String assignedUser;
+    // Default value is NOT_APPLICABLE for shared resources and INITIALIZING for private resources.
+    @Nullable private PrivateResourceState privateResourceState;
     private AccessScopeType accessScope;
     private ManagedByType managedBy;
     private UUID applicationId;
@@ -171,6 +190,17 @@ public class ControlledGcsBucketResource extends ControlledResource {
       return this;
     }
 
+    public Builder privateResourceState(PrivateResourceState privateResourceState) {
+      this.privateResourceState = privateResourceState;
+      return this;
+    }
+
+    private PrivateResourceState defaultPrivateResourceState() {
+      return this.accessScope == AccessScopeType.ACCESS_SCOPE_PRIVATE
+          ? PrivateResourceState.INITIALIZING
+          : PrivateResourceState.NOT_APPLICABLE;
+    }
+
     public Builder accessScope(AccessScopeType accessScope) {
       this.accessScope = accessScope;
       return this;
@@ -194,6 +224,7 @@ public class ControlledGcsBucketResource extends ControlledResource {
           description,
           cloningInstructions,
           assignedUser,
+          Optional.ofNullable(privateResourceState).orElse(defaultPrivateResourceState()),
           accessScope,
           managedBy,
           applicationId,

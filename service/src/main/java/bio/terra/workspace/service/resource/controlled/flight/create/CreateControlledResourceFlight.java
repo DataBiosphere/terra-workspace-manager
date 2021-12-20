@@ -112,6 +112,10 @@ public class CreateControlledResourceFlight extends Flight {
         throw new IllegalStateException(
             String.format("Unrecognized resource type %s", resource.getResourceType()));
     }
+    // Update private_resource_state from INITIALIZING to ACTIVE, if this is a private resource.
+    addStep(
+        new MarkPrivateResourceReadyStep(resource, flightBeanBag.getResourceDao()),
+        RetryRules.shortDatabase());
     // Populate the return response
     addStep(new SetCreateResponseStep(resource));
   }

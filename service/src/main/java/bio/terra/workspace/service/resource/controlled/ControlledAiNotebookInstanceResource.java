@@ -14,6 +14,7 @@ import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.referenced.exception.InvalidReferenceException;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import java.util.Optional;
 import java.util.UUID;
 import javax.annotation.Nullable;
 
@@ -30,6 +31,7 @@ public class ControlledAiNotebookInstanceResource extends ControlledResource {
       @JsonProperty("description") String description,
       @JsonProperty("cloningInstructions") CloningInstructions cloningInstructions,
       @JsonProperty("assignedUser") String assignedUser,
+      @JsonProperty("privateResourceState") PrivateResourceState privateResourceState,
       @JsonProperty("accessScope") AccessScopeType accessScope,
       @JsonProperty("managedBy") ManagedByType managedBy,
       @JsonProperty("application") UUID applicationId,
@@ -44,7 +46,8 @@ public class ControlledAiNotebookInstanceResource extends ControlledResource {
         assignedUser,
         accessScope,
         managedBy,
-        applicationId);
+        applicationId,
+        privateResourceState);
     this.instanceId = instanceId;
     this.location = location;
     validate();
@@ -61,6 +64,22 @@ public class ControlledAiNotebookInstanceResource extends ControlledResource {
 
   public static Builder builder() {
     return new Builder();
+  }
+
+  public Builder toBuilder() {
+    return new Builder()
+        .workspaceId(getWorkspaceId())
+        .resourceId(getResourceId())
+        .name(getName())
+        .description(getDescription())
+        .cloningInstructions(getCloningInstructions())
+        .assignedUser(getAssignedUser().orElse(null))
+        .privateResourceState(getPrivateResourceState().orElse(null))
+        .accessScope(getAccessScope())
+        .managedBy(getManagedBy())
+        .applicationId(getApplicationId())
+        .instanceId(getInstanceId())
+        .location(getLocation());
   }
 
   /** The user specified id of the notebook instance. */
@@ -159,6 +178,8 @@ public class ControlledAiNotebookInstanceResource extends ControlledResource {
     private String description;
     private CloningInstructions cloningInstructions;
     private String assignedUser;
+    // Default value is NOT_APPLICABLE for shared resources and INITIALIZING for private resources.
+    @Nullable private PrivateResourceState privateResourceState;
     private AccessScopeType accessScope;
     private ManagedByType managedBy;
     private UUID applicationId;
@@ -213,6 +234,17 @@ public class ControlledAiNotebookInstanceResource extends ControlledResource {
       return this;
     }
 
+    public Builder privateResourceState(PrivateResourceState privateResourceState) {
+      this.privateResourceState = privateResourceState;
+      return this;
+    }
+
+    private PrivateResourceState defaultPrivateResourceState() {
+      return this.accessScope == AccessScopeType.ACCESS_SCOPE_PRIVATE
+          ? PrivateResourceState.INITIALIZING
+          : PrivateResourceState.NOT_APPLICABLE;
+    }
+
     public Builder accessScope(AccessScopeType accessScope) {
       this.accessScope = accessScope;
       return this;
@@ -236,6 +268,7 @@ public class ControlledAiNotebookInstanceResource extends ControlledResource {
           description,
           cloningInstructions,
           assignedUser,
+          Optional.ofNullable(privateResourceState).orElse(defaultPrivateResourceState()),
           accessScope,
           managedBy,
           applicationId,

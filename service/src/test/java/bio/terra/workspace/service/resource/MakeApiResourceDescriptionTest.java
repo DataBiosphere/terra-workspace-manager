@@ -22,6 +22,7 @@ import bio.terra.workspace.service.resource.controlled.ControlledAiNotebookInsta
 import bio.terra.workspace.service.resource.controlled.ControlledBigQueryDatasetResource;
 import bio.terra.workspace.service.resource.controlled.ControlledGcsBucketResource;
 import bio.terra.workspace.service.resource.controlled.ManagedByType;
+import bio.terra.workspace.service.resource.controlled.PrivateResourceState;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.referenced.ReferencedBigQueryDataTableResource;
 import bio.terra.workspace.service.resource.referenced.ReferencedBigQueryDatasetResource;
@@ -149,12 +150,14 @@ public class MakeApiResourceDescriptionTest extends BaseUnitTest {
     private String assignedUser;
     private AccessScopeType accessScopeType;
     private ManagedByType managedByType;
+    private PrivateResourceState privateResourceState;
 
     @BeforeEach
     public void controlledSetup() {
       assignedUser = RandomStringUtils.random(20, true, false);
       accessScopeType = AccessScopeType.ACCESS_SCOPE_PRIVATE;
       managedByType = ManagedByType.MANAGED_BY_USER;
+      privateResourceState = PrivateResourceState.ACTIVE;
     }
 
     @Test
@@ -169,6 +172,7 @@ public class MakeApiResourceDescriptionTest extends BaseUnitTest {
               description,
               cloning,
               assignedUser,
+              privateResourceState,
               accessScopeType,
               managedByType,
               null,
@@ -195,6 +199,7 @@ public class MakeApiResourceDescriptionTest extends BaseUnitTest {
               description,
               cloning,
               assignedUser,
+              privateResourceState,
               accessScopeType,
               managedByType,
               null,

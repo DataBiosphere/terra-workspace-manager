@@ -31,6 +31,6 @@ public enum CloudPlatform {
       }
     }
     throw new SerializationException(
-        "Deeserialization failed: no matching cloud platform for " + dbString);
+        "Deserialization failed: no matching cloud platform for " + dbString);
   }
 }

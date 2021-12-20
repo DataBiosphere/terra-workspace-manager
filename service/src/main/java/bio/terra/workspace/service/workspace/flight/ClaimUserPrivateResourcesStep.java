@@ -15,7 +15,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
-public class ReadUserPrivateResourcesStep implements Step {
+public class ClaimUserPrivateResourcesStep implements Step {
 
   private final UUID workspaceId;
   private final String userEmail;
@@ -23,7 +23,7 @@ public class ReadUserPrivateResourcesStep implements Step {
   private final SamService samService;
   private final AuthenticatedUserRequest userRequest;
 
-  public ReadUserPrivateResourcesStep(
+  public ClaimUserPrivateResourcesStep(
       UUID workspaceId,
       String userEmail,
       ResourceDao resourceDao,
@@ -47,9 +47,11 @@ public class ReadUserPrivateResourcesStep implements Step {
     if (userStillInWorkspace) {
       return StepResult.getStepResultSuccess();
     }
-    // Read the list of resources this user owns from WSM's DB
+    // Read the list of resources this user owns from WSM's DB which are not being cleaned up by
+    // other flights and indicate this flight is cleaning them up.
     List<ControlledResource> userResources =
-        resourceDao.listPrivateResourcesByUser(workspaceId, userEmail);
+        resourceDao.claimCleanupForWorkspacePrivateResources(
+            workspaceId, userEmail, context.getFlightId());
     // For each private resource, query Sam to find the roles the user has.
     List<ResourceRolePair> resourceRolesToRemove = new ArrayList<>();
     for (ControlledResource resource : userResources) {
@@ -65,7 +67,10 @@ public class ReadUserPrivateResourcesStep implements Step {
 
   @Override
   public StepResult undoStep(FlightContext context) throws InterruptedException {
-    // Do nothing, this step only populates the working map.
+    // This only releases resources claimed by the current flight, so it cannot overwrite claims
+    // from
+    // other flights.
+    resourceDao.releasePrivateResourceCleanupClaims(workspaceId, userEmail, context.getFlightId());
     return StepResult.getStepResultSuccess();
   }
 }

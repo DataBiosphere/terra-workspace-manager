@@ -8,6 +8,7 @@ import bio.terra.workspace.common.utils.RetryRules;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.model.WsmIamRole;
 import bio.terra.workspace.service.job.JobMapKeys;
+import java.util.Optional;
 import java.util.UUID;
 
 public class RemoveUserFromWorkspaceFlight extends Flight {
@@ -22,14 +23,16 @@ public class RemoveUserFromWorkspaceFlight extends Flight {
     AuthenticatedUserRequest userRequest =
         inputParameters.get(JobMapKeys.AUTH_USER_INFO.getKeyName(), AuthenticatedUserRequest.class);
     String userToRemove = inputParameters.get(WorkspaceFlightMapKeys.USER_TO_REMOVE, String.class);
-    WsmIamRole roleToRemove =
-        inputParameters.get(WorkspaceFlightMapKeys.ROLE_TO_REMOVE, WsmIamRole.class);
+    Optional<WsmIamRole> roleToRemove =
+        Optional.ofNullable(
+            inputParameters.get(WorkspaceFlightMapKeys.ROLE_TO_REMOVE, WsmIamRole.class));
 
     // Flight plan:
     // 0. (Pre-flight): Validate that the user is directly granted the specified workspace role.
     //  WSM does not manage groups, so users with indirect group-based access cannot be removed
     //  via this flight.
-    // 1. Remove user from the specified role.
+    // 1. Remove role from user, if one is specified. This flight also runs periodically to clean up
+    // abandoned private resources, in which case the user is already out of the workspace.
     // 2. Check with Sam whether the user is still in the workspace (i.e. can still read in the
     //  workspace) via other roles or groups. If so, we do not need to clean up their private
     //  resources, and can skip the rest of the flight.
@@ -38,16 +41,21 @@ public class RemoveUserFromWorkspaceFlight extends Flight {
     // 4. Remove the user from all roles on those private resources.
     // 5. Revoke the user's permission to use their pet SA in this workspace.
     RetryRule samRetry = RetryRules.shortExponential();
+    RetryRule dbRetry = RetryRules.shortDatabase();
     addStep(
         new RemoveUserFromSamStep(
-            workspaceId, roleToRemove, userToRemove, appContext.getSamService(), userRequest),
+            workspaceId,
+            roleToRemove.orElse(null),
+            userToRemove,
+            appContext.getSamService(),
+            userRequest),
         samRetry);
     addStep(
         new CheckUserStillInWorkspaceStep(
             workspaceId, userToRemove, appContext.getSamService(), userRequest),
         samRetry);
     addStep(
-        new ReadUserPrivateResourcesStep(
+        new ClaimUserPrivateResourcesStep(
             workspaceId,
             userToRemove,
             appContext.getResourceDao(),
@@ -58,6 +66,10 @@ public class RemoveUserFromWorkspaceFlight extends Flight {
         new RemovePrivateResourceAccessStep(userToRemove, appContext.getSamService(), userRequest),
         samRetry);
     addStep(
+        new MarkPrivateResourcesAbandonedStep(
+            workspaceId, userToRemove, appContext.getResourceDao()),
+        dbRetry);
+    addStep(
         new RevokePetUsagePermissionStep(
             workspaceId,
             userToRemove,
@@ -65,5 +77,9 @@ public class RemoveUserFromWorkspaceFlight extends Flight {
             appContext.getGcpCloudContextService(),
             userRequest),
         RetryRules.cloud());
+    addStep(
+        new ReleasePrivateResourceCleanupClaimsStep(
+            workspaceId, userToRemove, appContext.getResourceDao()),
+        dbRetry);
   }
 }

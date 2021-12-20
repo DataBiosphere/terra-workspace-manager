@@ -16,7 +16,7 @@ import org.springframework.stereotype.Component;
 @Profile("connected-test")
 public class UserAccessUtils {
   /** The OAuth scopes important for logging in a user and acting on their behalf in GCP. */
-  private static final ImmutableList<String> GCP_SCOPES =
+  public static final ImmutableList<String> GCP_SCOPES =
       ImmutableList.of(
           "openid", "email", "profile", "https://www.googleapis.com/auth/cloud-platform");
 
@@ -25,7 +25,7 @@ public class UserAccessUtils {
    * users. https://developers.google.com/admin-sdk/directory/v1/guides/delegation
    */
   @Value("${workspace.connected-test.user-delegated-service-account-path}")
-  private String userDelegatedServiceAccountPath;
+  public String userDelegatedServiceAccountPath;
 
   /** The email address of a default user to use for testing. */
   @Value("${workspace.connected-test.default-user-email}")

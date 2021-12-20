@@ -293,6 +293,8 @@ class CreateGcpContextFlightTest extends BaseConnectedTest {
   private void assertPolicyGroupsSynced(UUID workspaceId, Project project) throws Exception {
     Map<WsmIamRole, String> roleToSamGroup =
         Arrays.stream(WsmIamRole.values())
+            // Don't check MANAGER role as it isn't synced to GCP.
+            .filter(role -> !role.equals(WsmIamRole.MANAGER))
             .collect(
                 Collectors.toMap(
                     Function.identity(),
@@ -311,6 +313,10 @@ class CreateGcpContextFlightTest extends BaseConnectedTest {
             .getIamPolicy(project.getProjectId(), new GetIamPolicyRequest())
             .execute();
     for (WsmIamRole role : WsmIamRole.values()) {
+      // Don't check MANAGER role, which isn't synced to GCP.
+      if (role.equals(WsmIamRole.MANAGER)) {
+        continue;
+      }
       assertRoleBindingInPolicy(
           role, roleToSamGroup.get(role), currentPolicy, project.getProjectId());
     }

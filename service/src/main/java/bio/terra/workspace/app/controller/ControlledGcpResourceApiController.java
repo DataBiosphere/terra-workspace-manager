@@ -103,6 +103,7 @@ public class ControlledGcpResourceApiController implements ControlledGcpResource
         computePrivateUserRole(workspaceId, body.getCommon(), userRequest);
 
     ManagedByType managedBy = ManagedByType.fromApi(body.getCommon().getManagedBy());
+    AccessScopeType accessScopeType = AccessScopeType.fromApi(body.getCommon().getAccessScope());
 
     ControlledGcsBucketResource resource =
         ControlledGcsBucketResource.builder()
@@ -113,7 +114,7 @@ public class ControlledGcpResourceApiController implements ControlledGcpResource
             .cloningInstructions(
                 CloningInstructions.fromApiModel(body.getCommon().getCloningInstructions()))
             .assignedUser(privateUserRole.getUserEmail())
-            .accessScope(AccessScopeType.fromApi(body.getCommon().getAccessScope()))
+            .accessScope(accessScopeType)
             .managedBy(managedBy)
             .applicationId(controlledResourceService.getAssociatedApp(managedBy, userRequest))
             .bucketName(body.getGcsBucket().getName())
@@ -332,6 +333,7 @@ public class ControlledGcpResourceApiController implements ControlledGcpResource
         computePrivateUserRole(workspaceId, body.getCommon(), userRequest);
 
     ManagedByType managedBy = ManagedByType.fromApi(body.getCommon().getManagedBy());
+    AccessScopeType accessScopeType = AccessScopeType.fromApi(body.getCommon().getAccessScope());
 
     ControlledBigQueryDatasetResource resource =
         ControlledBigQueryDatasetResource.builder()
@@ -342,7 +344,7 @@ public class ControlledGcpResourceApiController implements ControlledGcpResource
             .cloningInstructions(
                 CloningInstructions.fromApiModel(body.getCommon().getCloningInstructions()))
             .assignedUser(privateUserRole.getUserEmail())
-            .accessScope(AccessScopeType.fromApi(body.getCommon().getAccessScope()))
+            .accessScope(accessScopeType)
             .managedBy(managedBy)
             .applicationId(controlledResourceService.getAssociatedApp(managedBy, userRequest))
             .datasetName(
@@ -382,6 +384,7 @@ public class ControlledGcpResourceApiController implements ControlledGcpResource
         computePrivateUserRole(workspaceId, body.getCommon(), userRequest);
 
     ManagedByType managedBy = ManagedByType.fromApi(body.getCommon().getManagedBy());
+    AccessScopeType accessScopeType = AccessScopeType.fromApi(body.getCommon().getAccessScope());
 
     ControlledAiNotebookInstanceResource resource =
         ControlledAiNotebookInstanceResource.builder()
@@ -392,7 +395,7 @@ public class ControlledGcpResourceApiController implements ControlledGcpResource
             .cloningInstructions(
                 CloningInstructions.fromApiModel(body.getCommon().getCloningInstructions()))
             .assignedUser(privateUserRole.getUserEmail())
-            .accessScope(AccessScopeType.fromApi(body.getCommon().getAccessScope()))
+            .accessScope(accessScopeType)
             .managedBy(managedBy)
             .applicationId(controlledResourceService.getAssociatedApp(managedBy, userRequest))
             .location(body.getAiNotebookInstance().getLocation())
