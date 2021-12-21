@@ -38,7 +38,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        gradleTask: [unitTest, connectedTest]
+        gradleTask: [unitTest, connectedTest, azureTest]
 
     services:
       postgres:
