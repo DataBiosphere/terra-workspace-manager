@@ -1,7 +1,7 @@
 package bio.terra.workspace.service.workspace;
 
-import bio.terra.workspace.app.configuration.external.AzureState;
 import bio.terra.workspace.app.configuration.external.BufferServiceConfiguration;
+import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
 import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamRethrow;
@@ -57,7 +57,7 @@ public class WorkspaceService {
   private final SamService samService;
   private final BufferServiceConfiguration bufferServiceConfiguration;
   private final StageService stageService;
-  private final AzureState azureState;
+  private final FeatureConfiguration features;
 
   @Autowired
   public WorkspaceService(
@@ -68,7 +68,7 @@ public class WorkspaceService {
       StageService stageService,
       AzureCloudContextService azureCloudContextService,
       GcpCloudContextService gcpCloudContextService,
-      AzureState azureState) {
+      FeatureConfiguration features) {
     this.jobService = jobService;
     this.workspaceDao = workspaceDao;
     this.samService = samService;
@@ -76,7 +76,7 @@ public class WorkspaceService {
     this.stageService = stageService;
     this.azureCloudContextService = azureCloudContextService;
     this.gcpCloudContextService = gcpCloudContextService;
-    this.azureState = azureState;
+    this.features = features;
   }
 
   /** Create a workspace with the specified parameters. Returns workspaceID of the new workspace. */
@@ -220,6 +220,7 @@ public class WorkspaceService {
       AuthenticatedUserRequest userRequest,
       @Nullable String resultPath,
       AzureCloudContext azureContext) {
+    features.azureEnabledCheck();
 
     Workspace workspace =
         validateWorkspaceAndAction(userRequest, workspaceId, SamWorkspaceAction.WRITE);
@@ -330,6 +331,7 @@ public class WorkspaceService {
   public Optional<AzureCloudContext> getAuthorizedAzureCloudContext(
       UUID workspaceId, AuthenticatedUserRequest userRequest) {
     validateWorkspaceAndAction(userRequest, workspaceId, SamWorkspaceAction.READ);
+    features.azureEnabledCheck();
     return azureCloudContextService.getAzureCloudContext(workspaceId);
   }
 

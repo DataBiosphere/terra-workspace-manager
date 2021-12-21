@@ -13,7 +13,6 @@ import bio.terra.cloudres.google.serviceusage.ServiceUsageCow;
 import bio.terra.cloudres.google.storage.StorageCow;
 import bio.terra.common.exception.BadRequestException;
 import bio.terra.workspace.app.configuration.external.AzureConfiguration;
-import bio.terra.workspace.app.configuration.external.AzureState;
 import bio.terra.workspace.app.configuration.external.CrlConfiguration;
 import bio.terra.workspace.service.crl.exception.CrlInternalException;
 import bio.terra.workspace.service.crl.exception.CrlNotInUseException;
@@ -62,8 +61,6 @@ public class CrlService {
   /** How long to keep the resource before Janitor does the cleanup. */
   private static final Duration TEST_RESOURCE_TIME_TO_LIVE = Duration.ofHours(1);
 
-  private final AzureConfiguration azureConfig;
-  private final AzureState azureState;
   private final ClientConfig clientConfig;
   private final CrlConfiguration crlConfig;
   private final AIPlatformNotebooksCow crlNotebooksCow;
@@ -74,11 +71,8 @@ public class CrlService {
   private final ServiceUsageCow crlServiceUsageCow;
 
   @Autowired
-  public CrlService(
-      CrlConfiguration crlConfig, AzureState azureState, AzureConfiguration azureConfig) {
+  public CrlService(CrlConfiguration crlConfig) {
     this.crlConfig = crlConfig;
-    this.azureConfig = azureConfig;
-    this.azureState = azureState;
 
     if (crlConfig.getUseCrl()) {
       GoogleCredentials creds = getApplicationCredentials();

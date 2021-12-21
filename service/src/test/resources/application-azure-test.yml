@@ -14,3 +14,7 @@ workspace:
 
     # MRG
     managed-resource-group-id: mrg-qi-20210930145737
+
+feature:
+  # Enable azure support when running azure tests
+  azure-enabled: true

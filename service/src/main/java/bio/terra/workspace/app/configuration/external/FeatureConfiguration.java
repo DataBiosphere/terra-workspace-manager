@@ -1,5 +1,6 @@
 package bio.terra.workspace.app.configuration.external;
 
+import bio.terra.workspace.common.exception.AzureNotImplementedException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.context.properties.ConfigurationProperties;
@@ -30,4 +31,14 @@ public class FeatureConfiguration {
   public void logFeatures() {
     logger.info("Feature: azure-enabled: {}", isAzureEnabled());
   }
+
+  /**
+   * Common test and throw for Azure enabled
+   */
+  public void azureEnabledCheck() {
+    if (!isAzureEnabled()) {
+      throw new AzureNotImplementedException("Azure features are not enabled");
+    }
+  }
+
 }

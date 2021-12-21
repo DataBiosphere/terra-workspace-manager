@@ -1,13 +1,14 @@
 package bio.terra.workspace.service.resource.controlled;
 
 import bio.terra.common.exception.BadRequestException;
+import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
 import bio.terra.workspace.common.exception.InternalLogicException;
 import bio.terra.workspace.db.ApplicationDao;
 import bio.terra.workspace.db.ResourceDao;
-import bio.terra.workspace.generated.model.*;
 import bio.terra.workspace.generated.model.ApiAzureDiskCreationParameters;
 import bio.terra.workspace.generated.model.ApiAzureIpCreationParameters;
 import bio.terra.workspace.generated.model.ApiAzureNetworkCreationParameters;
+import bio.terra.workspace.generated.model.ApiAzureStorageCreationParameters;
 import bio.terra.workspace.generated.model.ApiAzureVmCreationParameters;
 import bio.terra.workspace.generated.model.ApiCloningInstructionsEnum;
 import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceCreationParameters;
@@ -63,6 +64,7 @@ public class ControlledResourceService {
   private final SamService samService;
   private final GcpCloudContextService gcpCloudContextService;
   private final ControlledResourceMetadataManager controlledResourceMetadataManager;
+  private final FeatureConfiguration features;
 
   @Autowired
   public ControlledResourceService(
@@ -73,7 +75,8 @@ public class ControlledResourceService {
       StageService stageService,
       SamService samService,
       GcpCloudContextService gcpCloudContextService,
-      ControlledResourceMetadataManager controlledResourceMetadataManager) {
+      ControlledResourceMetadataManager controlledResourceMetadataManager,
+      FeatureConfiguration features) {
     this.jobService = jobService;
     this.workspaceService = workspaceService;
     this.resourceDao = resourceDao;
@@ -82,6 +85,7 @@ public class ControlledResourceService {
     this.samService = samService;
     this.gcpCloudContextService = gcpCloudContextService;
     this.controlledResourceMetadataManager = controlledResourceMetadataManager;
+    this.features = features;
   }
 
   public ControlledAzureIpResource createIp(
@@ -89,6 +93,7 @@ public class ControlledResourceService {
       ApiAzureIpCreationParameters creationParameters,
       ControlledResourceIamRole privateResourceIamRole,
       AuthenticatedUserRequest userRequest) {
+    features.azureEnabledCheck();
 
     JobBuilder jobBuilder =
         commonCreationJobBuilder(
@@ -106,6 +111,7 @@ public class ControlledResourceService {
       ApiAzureStorageCreationParameters creationParameters,
       ControlledResourceIamRole privateResourceIamRole,
       AuthenticatedUserRequest userRequest) {
+    features.azureEnabledCheck();
 
     JobBuilder jobBuilder =
         commonCreationJobBuilder(
@@ -123,6 +129,7 @@ public class ControlledResourceService {
       ApiAzureDiskCreationParameters creationParameters,
       ControlledResourceIamRole privateResourceIamRole,
       AuthenticatedUserRequest userRequest) {
+    features.azureEnabledCheck();
 
     JobBuilder jobBuilder =
         commonCreationJobBuilder(
@@ -140,6 +147,7 @@ public class ControlledResourceService {
       ApiAzureNetworkCreationParameters creationParameters,
       ControlledResourceIamRole privateResourceIamRole,
       AuthenticatedUserRequest userRequest) {
+    features.azureEnabledCheck();
 
     JobBuilder jobBuilder =
         commonCreationJobBuilder(
@@ -159,6 +167,7 @@ public class ControlledResourceService {
       ApiJobControl jobControl,
       String resultPath,
       AuthenticatedUserRequest userRequest) {
+    features.azureEnabledCheck();
 
     JobBuilder jobBuilder =
         commonCreationJobBuilder(

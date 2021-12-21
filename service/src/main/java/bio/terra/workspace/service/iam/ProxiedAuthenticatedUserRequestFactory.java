@@ -1,19 +1,14 @@
 package bio.terra.workspace.service.iam;
 
-import bio.terra.workspace.app.configuration.external.AzureState;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest.AuthType;
 import java.util.Optional;
 import javax.servlet.http.HttpServletRequest;
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 @Component
 public class ProxiedAuthenticatedUserRequestFactory implements AuthenticatedUserRequestFactory {
-
   private static final String BEARER = "Bearer ";
-  private static final String BASIC = "Basic ";
-  @Autowired AzureState azureState;
 
   // Method to build an AuthenticatedUserRequest.
   // We try three possible authentication methods. If none succeed, we return
