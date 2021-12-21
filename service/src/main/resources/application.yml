@@ -118,24 +118,3 @@ terra.common:
   tracing:
     stackdriverExportEnabled: ${env.tracing.exportEnabled}
     samplingRate: ${env.tracing.samplingRate}
-
-# Feature flags
-# The general rule is that feature flags should be set here in their production setting
-# and overridden in non-production environments.
-#
-# Feature flags can be overridden like any other Spring property. In particular, for local
-# execution, you can set an environment variable, such as:
-#
-#  FEATURE_AZURE_ENABLED=true
-#
-# The WSM helm chart will take all values under the "env" and make them environment variables
-# in the container, so you can get the equivalent setting by adding:
-#
-#  env:
-#    FEATURE_AZURE_ENABLED: true
-#
-# into the appropriate values file. That includes the values file in local_dev.
-feature:
-  # azure-enabled - Controls inclusion of Azure support in WSM
-  azure-enabled: false
-

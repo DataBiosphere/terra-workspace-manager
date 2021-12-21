@@ -207,6 +207,7 @@ public class ControlledResourceFixtures {
         CLONING_INSTRUCTIONS,
         OWNER_EMAIL,
         // TODO: these should be changed when we group the resources
+        PrivateResourceState.ACTIVE,
         AccessScopeType.ACCESS_SCOPE_PRIVATE,
         ManagedByType.MANAGED_BY_USER,
         null,
@@ -223,6 +224,7 @@ public class ControlledResourceFixtures {
         CLONING_INSTRUCTIONS,
         OWNER_EMAIL,
         // TODO: these should be changed when we group the resources
+        PrivateResourceState.ACTIVE,
         AccessScopeType.ACCESS_SCOPE_PRIVATE,
         ManagedByType.MANAGED_BY_USER,
         null,
@@ -241,6 +243,7 @@ public class ControlledResourceFixtures {
         CLONING_INSTRUCTIONS,
         OWNER_EMAIL,
         // TODO: these should be changed when we group the resources
+        PrivateResourceState.ACTIVE,
         AccessScopeType.ACCESS_SCOPE_PRIVATE,
         ManagedByType.MANAGED_BY_USER,
         null,
@@ -261,6 +264,7 @@ public class ControlledResourceFixtures {
         CLONING_INSTRUCTIONS,
         OWNER_EMAIL,
         // TODO: these should be changed when we group the resources
+        PrivateResourceState.ACTIVE,
         AccessScopeType.ACCESS_SCOPE_PRIVATE,
         ManagedByType.MANAGED_BY_USER,
         null,
@@ -278,6 +282,7 @@ public class ControlledResourceFixtures {
         CLONING_INSTRUCTIONS,
         OWNER_EMAIL,
         // TODO: these should be changed when we group the resources
+        PrivateResourceState.ACTIVE,
         AccessScopeType.ACCESS_SCOPE_PRIVATE,
         ManagedByType.MANAGED_BY_USER,
         null,

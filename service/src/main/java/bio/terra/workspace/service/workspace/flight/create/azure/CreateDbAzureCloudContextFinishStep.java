@@ -3,24 +3,22 @@ package bio.terra.workspace.service.workspace.flight.create.azure;
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
-import bio.terra.workspace.db.WorkspaceDao;
+import bio.terra.workspace.common.utils.FlightUtils;
 import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.workspace.AzureCloudContextService;
 import bio.terra.workspace.service.workspace.model.AzureCloudContext;
 import java.util.UUID;
+import org.springframework.http.HttpStatus;
 
-/**
- * Stores the previously generated Google Project Id in the {@link WorkspaceDao} as the Google cloud
- * context for the workspace.
- */
-public class StoreAzureContextStep implements Step {
-  private final AzureCloudContextService azureCloudContextService;
+/** Updates the previously stored cloud context row, filling in the context JSON. */
+public class CreateDbAzureCloudContextFinishStep implements Step {
   private final UUID workspaceId;
+  private final AzureCloudContextService azureCloudContextService;
 
-  public StoreAzureContextStep(
-      AzureCloudContextService azureCloudContextService, UUID workspaceId) {
-    this.azureCloudContextService = azureCloudContextService;
+  public CreateDbAzureCloudContextFinishStep(
+      UUID workspaceId, AzureCloudContextService azureCloudContextService) {
     this.workspaceId = workspaceId;
+    this.azureCloudContextService = azureCloudContextService;
   }
 
   @Override
@@ -31,16 +29,16 @@ public class StoreAzureContextStep implements Step {
             .get(JobMapKeys.REQUEST.getKeyName(), AzureCloudContext.class);
 
     // Create the cloud context; throws if the context already exists.
-    azureCloudContextService.createAzureCloudContext(
+    azureCloudContextService.createAzureCloudContextFinish(
         workspaceId, azureCloudContext, flightContext.getFlightId());
+
+    FlightUtils.setResponse(flightContext, azureCloudContext, HttpStatus.OK);
     return StepResult.getStepResultSuccess();
   }
 
   @Override
   public StepResult undoStep(FlightContext flightContext) throws InterruptedException {
-    // Delete the cloud context, but only if it is the one with our project id
-    azureCloudContextService.deleteAzureCloudContextWithCheck(
-        workspaceId, flightContext.getFlightId());
+    // We do not undo anything here. The create step will delete the row, if need be.
     return StepResult.getStepResultSuccess();
   }
 }

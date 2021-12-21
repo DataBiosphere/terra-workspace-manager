@@ -10,7 +10,7 @@ import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import bio.terra.workspace.service.workspace.flight.create.azure.CreateAzureContextFlight;
 import bio.terra.workspace.service.workspace.model.AzureCloudContext;
-import bio.terra.workspace.service.workspace.model.WorkspaceRequest;
+import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
 import java.util.UUID;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,8 +31,8 @@ public class AzureTestUtils {
 
   /** Creates a workspace, returning its workspaceId. */
   public UUID createWorkspace(WorkspaceService workspaceService) {
-    WorkspaceRequest request =
-        WorkspaceRequest.builder()
+    Workspace request =
+        Workspace.builder()
             .workspaceId(UUID.randomUUID())
             .workspaceStage(WorkspaceStage.MC_WORKSPACE)
             .build();
