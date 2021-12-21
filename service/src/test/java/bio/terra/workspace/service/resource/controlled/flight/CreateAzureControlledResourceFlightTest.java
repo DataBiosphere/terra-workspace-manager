@@ -1,4 +1,4 @@
-package bio.terra.workspace.service.workspace.flight.create.azure;
+package bio.terra.workspace.service.resource.controlled.flight;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -10,6 +10,7 @@ import bio.terra.workspace.common.BaseAzureTest;
 import bio.terra.workspace.common.StairwayTestUtils;
 import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
 import bio.terra.workspace.common.utils.AzureTestUtils;
+import bio.terra.workspace.connected.UserAccessUtils;
 import bio.terra.workspace.generated.model.ApiAccessScope;
 import bio.terra.workspace.generated.model.ApiAzureDiskCreationParameters;
 import bio.terra.workspace.generated.model.ApiAzureIpCreationParameters;
@@ -29,23 +30,25 @@ import bio.terra.workspace.service.resource.controlled.ManagedByType;
 import bio.terra.workspace.service.resource.controlled.flight.create.CreateControlledResourceFlight;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.workspace.WorkspaceService;
+import bio.terra.workspace.service.workspace.flight.create.azure.CreateAzureContextFlight;
 import java.time.Duration;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
-public class CreateControlledResourceFlightTest extends BaseAzureTest {
+public class CreateAzureControlledResourceFlightTest extends BaseAzureTest {
   private static final Duration STAIRWAY_FLIGHT_TIMEOUT = Duration.ofMinutes(15);
 
   @Autowired private WorkspaceService workspaceService;
   @Autowired private JobService jobService;
   @Autowired private AzureTestUtils azureTestUtils;
+  @Autowired private UserAccessUtils userAccessUtils;
   @Autowired private ControlledResourceService controlledResourceService;
 
   @Test
   public void createAzureIpControlledResource() throws InterruptedException {
     UUID workspaceId = azureTestUtils.createWorkspace(workspaceService);
-    AuthenticatedUserRequest userRequest = azureTestUtils.defaultUserAuthRequest();
+    AuthenticatedUserRequest userRequest = userAccessUtils.defaultUserAuthRequest();
 
     // Cloud context needs to be created first
     FlightState createAzureContextFlightState =
@@ -105,7 +108,7 @@ public class CreateControlledResourceFlightTest extends BaseAzureTest {
   @Test
   public void createAzureDiskControlledResource() throws InterruptedException {
     UUID workspaceId = azureTestUtils.createWorkspace(workspaceService);
-    AuthenticatedUserRequest userRequest = azureTestUtils.defaultUserAuthRequest();
+    AuthenticatedUserRequest userRequest = userAccessUtils.defaultUserAuthRequest();
 
     // Cloud context needs to be created first
     FlightState createAzureContextFlightState =
@@ -167,7 +170,7 @@ public class CreateControlledResourceFlightTest extends BaseAzureTest {
   public void createAzureVmControlledResource() throws InterruptedException {
     // Setup workspace and cloud context
     UUID workspaceId = azureTestUtils.createWorkspace(workspaceService);
-    AuthenticatedUserRequest userRequest = azureTestUtils.defaultUserAuthRequest();
+    AuthenticatedUserRequest userRequest = userAccessUtils.defaultUserAuthRequest();
 
     // Cloud context needs to be created first
     FlightState createAzureContextFlightState =
@@ -353,7 +356,7 @@ public class CreateControlledResourceFlightTest extends BaseAzureTest {
   @Test
   public void createAzureNetworkControlledResource() throws InterruptedException {
     UUID workspaceId = azureTestUtils.createWorkspace(workspaceService);
-    AuthenticatedUserRequest userRequest = azureTestUtils.defaultUserAuthRequest();
+    AuthenticatedUserRequest userRequest = userAccessUtils.defaultUserAuthRequest();
 
     // Cloud context needs to be created first
     FlightState createAzureContextFlightState =

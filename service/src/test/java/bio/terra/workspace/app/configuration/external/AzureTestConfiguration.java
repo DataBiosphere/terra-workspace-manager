@@ -12,49 +12,12 @@ import org.springframework.transaction.annotation.EnableTransactionManagement;
 @EnableTransactionManagement
 @ConfigurationProperties(prefix = "workspace.azure-test")
 public class AzureTestConfiguration {
-  // Test users
-  private String defaultUserEmail;
-  private String defaultUserObjectId;
-  private String secondUserEmail;
-  private String secondUserObjectId;
-
   // MRG coordinates
   private String tenantId;
   private String subscriptionId;
   private String managedResourceGroupId;
+
   // -- accessors --
-
-  public String getDefaultUserEmail() {
-    return defaultUserEmail;
-  }
-
-  public void setDefaultUserEmail(String defaultUserEmail) {
-    this.defaultUserEmail = defaultUserEmail;
-  }
-
-  public String getDefaultUserObjectId() {
-    return defaultUserObjectId;
-  }
-
-  public void setDefaultUserObjectId(String defaultUserObjectId) {
-    this.defaultUserObjectId = defaultUserObjectId;
-  }
-
-  public String getSecondUserEmail() {
-    return secondUserEmail;
-  }
-
-  public void setSecondUserEmail(String secondUserEmail) {
-    this.secondUserEmail = secondUserEmail;
-  }
-
-  public String getSecondUserObjectId() {
-    return secondUserObjectId;
-  }
-
-  public void setSecondUserObjectId(String secondUserObjectId) {
-    this.secondUserObjectId = secondUserObjectId;
-  }
 
   public String getTenantId() {
     return tenantId;
