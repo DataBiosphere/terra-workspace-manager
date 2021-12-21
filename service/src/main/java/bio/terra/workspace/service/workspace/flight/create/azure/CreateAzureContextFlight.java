@@ -26,14 +26,22 @@ public class CreateAzureContextFlight extends Flight {
     AuthenticatedUserRequest userRequest =
         inputParameters.get(JobMapKeys.AUTH_USER_INFO.getKeyName(), AuthenticatedUserRequest.class);
 
+    RetryRule dbRetry = RetryRules.shortDatabase();
+
+    // 0. Write the incomplete DB row to prevent concurrent creates
+    addStep(
+        new CreateDbAzureCloudContextStartStep(
+            workspaceId, appContext.getAzureCloudContextService()),
+        dbRetry);
+
     // 1. validate the MRG
     // TODO: retry?
     addStep(new ValidateMRGStep(appContext.getCrlService(), appContext.getAzureConfig()));
 
-    // 2. store the context
-    RetryRule retryRule = RetryRules.shortExponential();
+    // 2. Update the DB row filling in the cloud context
     addStep(
-        new StoreAzureContextStep(appContext.getAzureCloudContextService(), workspaceId),
-        retryRule);
+        new CreateDbAzureCloudContextFinishStep(
+            workspaceId, appContext.getAzureCloudContextService()),
+        dbRetry);
   }
 }

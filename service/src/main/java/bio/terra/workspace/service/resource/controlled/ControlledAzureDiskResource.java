@@ -11,7 +11,9 @@ import bio.terra.workspace.service.resource.WsmResourceType;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import java.util.Optional;
 import java.util.UUID;
+import javax.annotation.Nullable;
 
 public class ControlledAzureDiskResource extends ControlledResource {
   private final String diskName;
@@ -26,6 +28,7 @@ public class ControlledAzureDiskResource extends ControlledResource {
       @JsonProperty("description") String description,
       @JsonProperty("cloningInstructions") CloningInstructions cloningInstructions,
       @JsonProperty("assignedUser") String assignedUser,
+      @JsonProperty("privateResourceState") PrivateResourceState privateResourceState,
       @JsonProperty("accessScope") AccessScopeType accessScope,
       @JsonProperty("managedBy") ManagedByType managedBy,
       @JsonProperty("applicationId") UUID applicationId,
@@ -42,7 +45,8 @@ public class ControlledAzureDiskResource extends ControlledResource {
         assignedUser,
         accessScope,
         managedBy,
-        applicationId);
+        applicationId,
+        privateResourceState);
     this.diskName = diskName;
     this.region = region;
     this.size = size;
@@ -137,6 +141,8 @@ public class ControlledAzureDiskResource extends ControlledResource {
     private String description;
     private CloningInstructions cloningInstructions;
     private String assignedUser;
+    // Default value is NOT_APPLICABLE for shared resources and INITIALIZING for private resources.
+    @Nullable private PrivateResourceState privateResourceState;
     private AccessScopeType accessScope;
     private ManagedByType managedBy;
     private UUID applicationId;
@@ -190,6 +196,18 @@ public class ControlledAzureDiskResource extends ControlledResource {
       return this;
     }
 
+    public ControlledAzureDiskResource.Builder privateResourceState(
+        PrivateResourceState privateResourceState) {
+      this.privateResourceState = privateResourceState;
+      return this;
+    }
+
+    private PrivateResourceState defaultPrivateResourceState() {
+      return this.accessScope == AccessScopeType.ACCESS_SCOPE_PRIVATE
+          ? PrivateResourceState.INITIALIZING
+          : PrivateResourceState.NOT_APPLICABLE;
+    }
+
     public ControlledAzureDiskResource.Builder accessScope(AccessScopeType accessScope) {
       this.accessScope = accessScope;
       return this;
@@ -213,6 +231,7 @@ public class ControlledAzureDiskResource extends ControlledResource {
           description,
           cloningInstructions,
           assignedUser,
+          Optional.ofNullable(privateResourceState).orElse(defaultPrivateResourceState()),
           accessScope,
           managedBy,
           applicationId,

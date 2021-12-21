@@ -11,7 +11,9 @@ import bio.terra.workspace.service.resource.WsmResourceType;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import java.util.Optional;
 import java.util.UUID;
+import javax.annotation.Nullable;
 
 public class ControlledAzureIpResource extends ControlledResource {
   private final String ipName;
@@ -25,6 +27,7 @@ public class ControlledAzureIpResource extends ControlledResource {
       @JsonProperty("description") String description,
       @JsonProperty("cloningInstructions") CloningInstructions cloningInstructions,
       @JsonProperty("assignedUser") String assignedUser,
+      @JsonProperty("privateResourceState") PrivateResourceState privateResourceState,
       @JsonProperty("accessScope") AccessScopeType accessScope,
       @JsonProperty("managedBy") ManagedByType managedBy,
       @JsonProperty("applicationId") UUID applicationId,
@@ -40,7 +43,8 @@ public class ControlledAzureIpResource extends ControlledResource {
         assignedUser,
         accessScope,
         managedBy,
-        applicationId);
+        applicationId,
+        privateResourceState);
     this.ipName = ipName;
     this.region = region;
     validate();
@@ -127,6 +131,8 @@ public class ControlledAzureIpResource extends ControlledResource {
     private String name;
     private String description;
     private CloningInstructions cloningInstructions;
+    // Default value is NOT_APPLICABLE for shared resources and INITIALIZING for private resources.
+    @Nullable private PrivateResourceState privateResourceState;
     private String assignedUser;
     private AccessScopeType accessScope;
     private ManagedByType managedBy;
@@ -175,6 +181,18 @@ public class ControlledAzureIpResource extends ControlledResource {
       return this;
     }
 
+    public ControlledAzureIpResource.Builder privateResourceState(
+        PrivateResourceState privateResourceState) {
+      this.privateResourceState = privateResourceState;
+      return this;
+    }
+
+    private PrivateResourceState defaultPrivateResourceState() {
+      return this.accessScope == AccessScopeType.ACCESS_SCOPE_PRIVATE
+          ? PrivateResourceState.INITIALIZING
+          : PrivateResourceState.NOT_APPLICABLE;
+    }
+
     public ControlledAzureIpResource.Builder accessScope(AccessScopeType accessScope) {
       this.accessScope = accessScope;
       return this;
@@ -198,6 +216,7 @@ public class ControlledAzureIpResource extends ControlledResource {
           description,
           cloningInstructions,
           assignedUser,
+          Optional.ofNullable(privateResourceState).orElse(defaultPrivateResourceState()),
           accessScope,
           managedBy,
           applicationId,
