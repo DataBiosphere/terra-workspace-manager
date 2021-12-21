@@ -32,13 +32,10 @@ public class FeatureConfiguration {
     logger.info("Feature: azure-enabled: {}", isAzureEnabled());
   }
 
-  /**
-   * Common test and throw for Azure enabled
-   */
+  /** Common test and throw for Azure enabled */
   public void azureEnabledCheck() {
     if (!isAzureEnabled()) {
       throw new AzureNotImplementedException("Azure features are not enabled");
     }
   }
-
 }
