@@ -17,6 +17,7 @@ import bio.terra.workspace.service.resource.controlled.flight.create.notebook.Gr
 import bio.terra.workspace.service.resource.controlled.flight.create.notebook.NotebookCloudSyncStep;
 import bio.terra.workspace.service.resource.controlled.flight.create.notebook.RetrieveNetworkNameStep;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
+import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ResourceKeys;
 
 /**
  * Flight for creation of a controlled resource. Some steps are resource-type-agnostic, and others
@@ -32,10 +33,10 @@ public class CreateControlledResourceFlight extends Flight {
     final FlightBeanBag flightBeanBag = FlightBeanBag.getFromObject(beanBag);
 
     FlightUtils.validateRequiredEntries(
-        inputParameters, JobMapKeys.REQUEST.getKeyName(), JobMapKeys.AUTH_USER_INFO.getKeyName());
+        inputParameters, ResourceKeys.RESOURCE, JobMapKeys.AUTH_USER_INFO.getKeyName());
 
     final ControlledResource resource =
-        inputParameters.get(JobMapKeys.REQUEST.getKeyName(), ControlledResource.class);
+        inputParameters.get(ResourceKeys.RESOURCE, ControlledResource.class);
     final AuthenticatedUserRequest userRequest =
         inputParameters.get(JobMapKeys.AUTH_USER_INFO.getKeyName(), AuthenticatedUserRequest.class);
 

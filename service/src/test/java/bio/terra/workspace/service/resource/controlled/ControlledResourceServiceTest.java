@@ -183,6 +183,18 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
    */
   @AfterEach
   public void resetFlightDebugInfo() {
+    // Exercise enumeration by dumping after each
+    features.setAlpha1Enabled(true);
+    StairwayTestUtils.enumerateJobsDump(
+        alpha1Service,
+        workspace.getWorkspaceId(),
+        user.getAuthenticatedRequest(),
+        100,
+        "0",
+        null,
+        null,
+        null);
+
     jobService.setFlightDebugInfoForTest(null);
   }
 
@@ -589,14 +601,12 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
                 resource.getResourceId(),
                 user.getAuthenticatedRequest()));
 
-    if (!features.isAlpha1Enabled()) {
-      features.setAlpha1Enabled(true);
-    }
+    features.setAlpha1Enabled(true);
     StairwayTestUtils.enumerateJobsDump(
         alpha1Service,
         workspace.getWorkspaceId(),
         user.getAuthenticatedRequest(),
-        10,
+        20,
         "0",
         null,
         null,

@@ -73,9 +73,10 @@ public class ControlledResourceMetadataManager {
    * @param workspaceId if of the workspace this resource exists in
    * @param resourceId id of the resource in question
    * @param action the action to authorize against the resource
+   * @return validated resource
    */
   @Traced
-  public void validateControlledResourceAndAction(
+  public WsmResource validateControlledResourceAndAction(
       AuthenticatedUserRequest userRequest, UUID workspaceId, UUID resourceId, String action) {
     WsmResource resource = resourceDao.getResource(workspaceId, resourceId);
     ControlledResource controlledResource = resource.castToControlledResource();
@@ -87,5 +88,6 @@ public class ControlledResourceMetadataManager {
                 resourceId.toString(),
                 action),
         "checkAuthz");
+    return resource;
   }
 }

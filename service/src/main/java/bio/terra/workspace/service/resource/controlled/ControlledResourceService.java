@@ -25,6 +25,7 @@ import bio.terra.workspace.service.iam.model.SamConstants.SamControlledResourceA
 import bio.terra.workspace.service.job.JobBuilder;
 import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.job.JobService;
+import bio.terra.workspace.service.resource.WsmResource;
 import bio.terra.workspace.service.resource.controlled.flight.clone.bucket.CloneControlledGcsBucketResourceFlight;
 import bio.terra.workspace.service.resource.controlled.flight.clone.dataset.CloneControlledGcpBigQueryDatasetResourceFlight;
 import bio.terra.workspace.service.resource.controlled.flight.create.CreateControlledResourceFlight;
@@ -36,10 +37,10 @@ import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.stage.StageService;
 import bio.terra.workspace.service.workspace.GcpCloudContextService;
 import bio.terra.workspace.service.workspace.WorkspaceService;
-import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ResourceKeys;
 import bio.terra.workspace.service.workspace.model.GcpCloudContext;
+import bio.terra.workspace.service.workspace.model.OperationType;
 import bio.terra.workspace.service.workspace.model.WsmApplication;
 import com.google.cloud.Policy;
 import java.util.List;
@@ -194,6 +195,9 @@ public class ControlledResourceService {
       AuthenticatedUserRequest userRequest,
       @Nullable String resourceName,
       @Nullable String resourceDescription) {
+
+
+
     final String jobDescription =
         String.format(
             "Update controlled GCS Bucket resource %s; id %s; name %s",
@@ -203,8 +207,13 @@ public class ControlledResourceService {
             .newJob()
             .description(jobDescription)
             .flightClass(UpdateControlledGcsBucketResourceFlight.class)
-            .request(resource)
+            .resource(resource)
             .userRequest(userRequest)
+            .operationType(OperationType.UPDATE)
+            .workspaceId(resource.getWorkspaceId().toString())
+            // TODO: conflict with resource name
+            .resourceType(resource.getResourceType())
+            .stewardshipType(resource.getStewardshipType())
             .addParameter(ControlledResourceKeys.UPDATE_PARAMETERS, updateParameters)
             .addParameter(ResourceKeys.RESOURCE_NAME, resourceName)
             .addParameter(ResourceKeys.RESOURCE_DESCRIPTION, resourceDescription);
@@ -300,6 +309,12 @@ public class ControlledResourceService {
       AuthenticatedUserRequest userRequest,
       @Nullable String resourceName,
       @Nullable String resourceDescription) {
+    controlledResourceMetadataManager.validateControlledResourceAndAction(
+        userRequest,
+        resource.getWorkspaceId(),
+        resource.getResourceId(),
+        SamControlledResourceActions.EDIT_ACTION);
+
     final String jobDescription =
         String.format(
             "Update controlled BigQuery Dataset name %s ; resource id %s; resource name %s",
@@ -309,8 +324,13 @@ public class ControlledResourceService {
             .newJob()
             .description(jobDescription)
             .flightClass(UpdateControlledBigQueryDatasetResourceFlight.class)
-            .request(resource)
+            .resource(resource)
             .userRequest(userRequest)
+            .operationType(OperationType.UPDATE)
+            .resourceType(resource.getResourceType())
+            .resourceName(resource.getName())
+            .workspaceId(resource.getWorkspaceId().toString())
+            .stewardshipType(resource.getStewardshipType())
             .addParameter(ControlledResourceKeys.UPDATE_PARAMETERS, updateParameters)
             .addParameter(ResourceKeys.RESOURCE_NAME, resourceName)
             .addParameter(ResourceKeys.RESOURCE_DESCRIPTION, resourceDescription);
@@ -364,8 +384,13 @@ public class ControlledResourceService {
             .description(jobDescription)
             .jobId(jobControl.getId())
             .flightClass(CloneControlledGcpBigQueryDatasetResourceFlight.class)
-            .request(sourceDatasetResource)
+            .resource(sourceDatasetResource)
             .userRequest(userRequest)
+            .operationType(OperationType.CLONE)
+            // TODO: fix resource name key for this case
+            .resourceType(sourceDatasetResource.getResourceType())
+            .stewardshipType(sourceDatasetResource.getStewardshipType())
+            .workspaceId(sourceWorkspaceId.toString())
             .addParameter(ControlledResourceKeys.DESTINATION_WORKSPACE_ID, destinationWorkspaceId)
             .addParameter(ResourceKeys.RESOURCE_NAME, destinationResourceName)
             .addParameter(ResourceKeys.RESOURCE_DESCRIPTION, destinationDescription)
@@ -426,7 +451,7 @@ public class ControlledResourceService {
       @Nullable String resultPath,
       AuthenticatedUserRequest userRequest) {
 
-    // Pre-flight assertions
+    // Pre-flight assertions performs the access control
     validateCreateFlightPrerequisites(resource, userRequest);
 
     final String jobDescription =
@@ -439,8 +464,13 @@ public class ControlledResourceService {
         .description(jobDescription)
         .jobId(Optional.ofNullable(jobControl).map(ApiJobControl::getId).orElse(null))
         .flightClass(CreateControlledResourceFlight.class)
-        .request(resource)
+        .resource(resource)
         .userRequest(userRequest)
+        .operationType(OperationType.CREATE)
+        .workspaceId(resource.getWorkspaceId().toString())
+        .resourceName(resource.getName())
+        .resourceType(resource.getResourceType())
+        .stewardshipType(resource.getStewardshipType())
         .addParameter(ControlledResourceKeys.PRIVATE_RESOURCE_IAM_ROLE, privateResourceIamRole)
         .addParameter(JobMapKeys.RESULT_PATH.getKeyName(), resultPath);
   }
@@ -490,7 +520,6 @@ public class ControlledResourceService {
   /** Synchronously delete a controlled resource. */
   public void deleteControlledResourceSync(
       UUID workspaceId, UUID resourceId, AuthenticatedUserRequest userRequest) {
-
     JobBuilder deleteJob =
         commonDeletionJobBuilder(
             UUID.randomUUID().toString(), workspaceId, resourceId, null, userRequest);
@@ -578,7 +607,7 @@ public class ControlledResourceService {
       String resultPath,
       AuthenticatedUserRequest userRequest) {
     stageService.assertMcWorkspace(workspaceId, "deleteControlledResource");
-    controlledResourceMetadataManager.validateControlledResourceAndAction(
+    WsmResource resource = controlledResourceMetadataManager.validateControlledResourceAndAction(
         userRequest, workspaceId, resourceId, SamControlledResourceActions.DELETE_ACTION);
     final String jobDescription = "Delete controlled resource; id: " + resourceId.toString();
 
@@ -588,7 +617,12 @@ public class ControlledResourceService {
         .jobId(jobId)
         .flightClass(DeleteControlledResourceFlight.class)
         .userRequest(userRequest)
-        .addParameter(WorkspaceFlightMapKeys.WORKSPACE_ID, workspaceId.toString())
+        .workspaceId(workspaceId.toString())
+        .operationType(OperationType.DELETE)
+        .resource(resource)
+        .resourceType(resource.getResourceType())
+        .resourceName(resource.getName())
+        .stewardshipType(resource.getStewardshipType())
         .addParameter(ResourceKeys.RESOURCE_ID, resourceId.toString())
         .addParameter(JobMapKeys.RESULT_PATH.getKeyName(), resultPath);
   }
