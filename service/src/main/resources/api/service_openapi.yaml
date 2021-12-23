@@ -2044,6 +2044,40 @@ paths:
         '500':
           $ref: '#/components/responses/ServerError'
 
+  ## ALPHA1 paths
+  ## These endpoints are only supported if the alpha1 feature flag is enabled.
+  ## They are no compatibility guarantees. The endpoints and related components
+  ## may change without notice.
+
+  /api/workspaces/alpha1/{workspaceId}/jobs:
+    parameters:
+      - $ref: '#/components/parameters/WorkspaceId'
+      - $ref: '#/components/parameters/Limit'
+      - $ref: '#/components/parameters/PageToken'
+    get:
+      summary: |
+        Enumerate recent jobs run in a workspace. The enumeration includes both running
+        and completed jobs. It is ordered by start time of the job.
+      operationId: enumerateJobs
+      tags: [Alpha1]
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EnumerateJobsFilter'
+      responses:
+        '200':
+          $ref: '#/components/responses/EnumerateJobsResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
 components:
   parameters:
     ## DEPRECATED PARAMETERS ##
@@ -2169,6 +2203,16 @@ components:
       required: true
       schema:
         $ref: '#/components/schemas/CloudPlatform'
+
+    ## ALPHA1 Parameters
+    ## They are no compatibility guarantees. The parameters may change without notice.
+    PageToken:
+      name: pageToken
+      in: query
+      description: A previously returned page token describing where to resume an enumeration.
+      required: false
+      schema:
+        type: string
 
   schemas:
     CloneReferencedResourceRequestBody:
@@ -4267,6 +4311,79 @@ components:
       type: string
       enum: ['REFERENCED', 'CONTROLLED']
 
+    ## ALPHA1 Schemas
+    ## They are no compatibility guarantees. The schemas may change without notice.
+    EnumerateJobsFilter:
+      type: object
+      description: |
+        Filtering for job enumeration. All properties are optional. If specified (non-null),
+        they are applied to filter the jobs results.
+      properties:
+        resourceType:
+          $ref: '#/components/schemas/ResourceType'
+        stewardshipType:
+          $ref: '#/components/schemas/StewardshipType'
+        resourceName:
+          $ref: "#/components/schemas/Name"
+
+    ResourceUnion:
+      type: object
+      description: |
+        This object contains a reference to an object for each resource type.
+        Exactly one will be populated based on its ResourceType.
+      properties:
+        gcpBqDataset:
+          $ref: '#/components/schemas/GcpBigQueryDatasetResource'
+        gcpBqDataTable:
+          $ref: '#/components/schemas/GcpBigQueryDataTableResource'
+        gcpDataRepoSnapshot:
+          $ref: '#/components/schemas/DataRepoSnapshotResource'
+        gcpGcsBucket:
+          $ref: '#/components/schemas/GcpGcsBucketResource'
+        gcpGcsObject:
+          $ref: '#/components/schemas/GcpGcsObjectResource'
+        gcpAiNotebookInstance:
+          $ref: '#/components/schemas/GcpAiNotebookInstanceResource'
+
+    OperationType:
+      type: string
+      description: Types of job operations
+      enum: [ 'CLONE', 'CREATE', 'DELETE', 'UPDATE', 'UNKNOWN' ]
+
+    EnumeratedJob:
+      description: |
+        One job returned by the enumerate jobs request. The jobReport is always present.
+        If the job failed, the error report is present. Depending on the operation, the
+        resource information
+      type: object
+      properties:
+        jobReport:
+          $ref: '#/components/schemas/JobReport'
+        errorReport:
+          $ref: '#/components/schemas/ErrorReport'
+        jobDescription:
+          type: string
+        operationType:
+          $ref: '#/components/schemas/OperationType'
+        resourceType:
+          $ref: '#/components/schemas/ResourceType'
+        resource:
+          $ref: '#/components/schemas/ResourceUnion'
+
+    EnumerateJobsResult:
+      description: result of an enumerateJobs request
+      type: object
+      properties:
+        totalResults:
+          type: integer
+        pageToken:
+          type: string
+        results:
+          description: List of enumerated jobs
+          type: array
+          items:
+            $ref: '#/components/schemas/EnumeratedJob'
+
   responses:
     ### DEPRECATED RESPONSES ###
     # TODO(PF-404): remove this in favor of reference-type specific objects.
@@ -4594,6 +4711,15 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/ErrorReport'
+
+    ## ALPHA1 Responses
+    ## They are no compatibility guarantees. The responses may change without notice.
+    EnumerateJobsResponse:
+      description: Listing of recent jobs
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/EnumerateJobsResult'
 
   securitySchemes:
     bearerAuth:

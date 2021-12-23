@@ -1,11 +1,28 @@
 package bio.terra.workspace.common;
 
-import bio.terra.stairway.*;
+import bio.terra.stairway.Flight;
+import bio.terra.stairway.FlightContext;
+import bio.terra.stairway.FlightDebugInfo;
+import bio.terra.stairway.FlightMap;
+import bio.terra.stairway.FlightState;
+import bio.terra.stairway.Stairway;
+import bio.terra.stairway.Step;
+import bio.terra.stairway.StepResult;
+import bio.terra.stairway.StepStatus;
 import bio.terra.stairway.exception.DatabaseOperationException;
 import bio.terra.stairway.exception.DuplicateFlightIdException;
 import bio.terra.stairway.exception.StairwayExecutionException;
+import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
+import bio.terra.workspace.service.resource.WsmResource;
+import bio.terra.workspace.service.resource.WsmResourceType;
+import bio.terra.workspace.service.resource.model.StewardshipType;
+import bio.terra.workspace.service.workspace.Alpha1Service;
+import bio.terra.workspace.service.workspace.model.EnumeratedJob;
+import bio.terra.workspace.service.workspace.model.EnumeratedJobs;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.UUID;
+import javax.annotation.Nullable;
 
 /** Test utilities for working with Stairway. */
 public class StairwayTestUtils {
@@ -46,6 +63,52 @@ public class StairwayTestUtils {
     }
     throw new InterruptedException(
         String.format("Flight [%s] did not complete in the allowed wait time.", flightId));
+  }
+
+  public static void enumerateJobsDump(
+      Alpha1Service alpha1Service,
+      UUID workspaceId,
+      AuthenticatedUserRequest userRequest,
+      int limit,
+      String pageToken,
+      @Nullable WsmResourceType resourceType,
+      @Nullable StewardshipType stewardshipType,
+      @Nullable String resourceName) {
+    EnumeratedJobs jobs =
+        alpha1Service.enumerateJobs(
+            workspaceId,
+            userRequest,
+            limit,
+            pageToken,
+            resourceType,
+            stewardshipType,
+            resourceName);
+
+    System.out.printf(
+        "Enumerated Jobs: total=%d, pageToken=%s%n", jobs.getTotalResults(), jobs.getPageToken());
+
+    for (EnumeratedJob job : jobs.getResults()) {
+      FlightState flightState = job.getFlightState();
+      System.out.printf("  Job %s %s%n", flightState.getFlightId(), flightState.getFlightStatus());
+      System.out.printf("    description: %s%n", job.getJobDescription());
+      System.out.printf("    submitted  : %s%n", flightState.getSubmitted());
+      System.out.printf(
+          "    completed  : %s%n",
+          flightState.getCompleted().map(Instant::toString).orElse("<incomplete>"));
+      if (flightState.getException().isPresent()) {
+        System.out.printf("   error       : %s%n", flightState.getException().get().getMessage());
+      }
+      System.out.printf("    operation : %s%n", job.getOperationType());
+      if (job.getResource().isPresent()) {
+        WsmResource resource = job.getResource().get();
+        System.out.println("    resource:");
+        System.out.printf("      name: %s%n", resource.getName());
+        System.out.printf("      id  : %s%n", resource.getResourceId());
+        System.out.printf("      desc: %s%n", resource.getDescription());
+        System.out.printf("      stew: %s%n", resource.getStewardshipType());
+        System.out.printf("      type: %s%n", resource.getResourceType());
+      }
+    }
   }
 
   /**
