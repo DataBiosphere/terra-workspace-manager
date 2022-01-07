@@ -253,7 +253,6 @@ public class ControlledAiNotebookInstanceResource extends ControlledResource {
 
     public Builder instanceId(String instanceId) {
       this.instanceId = instanceId;
-      ;
       return this;
     }
 
