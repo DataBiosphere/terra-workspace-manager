@@ -51,8 +51,9 @@ public class ClientTestUtils {
   public static final String TEST_BUCKET_NAME = "terra_wsm_test_resource";
   public static final String TEST_BUCKET_NAME_WITH_FINE_GRAINED_ACCESS =
       "terra_wsm_fine_grained_test_bucket";
-  public static final String TEST_FILE_IN_FINE_GRAINED_BUCKET = "foo/monkey_sees_monkey_dos.txt";
-  public static final String TEST_FOLDER_IN_FINE_GRAINED_BUCKET = "foo/";
+  public static final String TEST_FILE_FOO_MONKEY_SEES_MONKEY_DOS =
+      "foo/monkey_sees_monkey_dos.txt";
+  public static final String TEST_FOLDER_FOO = "foo/";
   public static final String TEST_BQ_DATASET_NAME = "terra_wsm_test_dataset";
   public static final String TEST_BQ_DATASET_NAME_2 = "terra_wsm_test_dataset_2";
   public static final String TEST_BQ_DATATABLE_NAME = "terra wsm test data table";

@@ -11,8 +11,8 @@ import static scripts.utils.ClientTestUtils.TEST_BQ_DATATABLE_NAME;
 import static scripts.utils.ClientTestUtils.TEST_BQ_DATATABLE_NAME_2;
 import static scripts.utils.ClientTestUtils.TEST_BUCKET_NAME;
 import static scripts.utils.ClientTestUtils.TEST_BUCKET_NAME_WITH_FINE_GRAINED_ACCESS;
-import static scripts.utils.ClientTestUtils.TEST_FILE_IN_FINE_GRAINED_BUCKET;
-import static scripts.utils.ClientTestUtils.TEST_FOLDER_IN_FINE_GRAINED_BUCKET;
+import static scripts.utils.ClientTestUtils.TEST_FILE_FOO_MONKEY_SEES_MONKEY_DOS;
+import static scripts.utils.ClientTestUtils.TEST_FOLDER_FOO;
 
 import bio.terra.testrunner.runner.config.TestUserSpecification;
 import bio.terra.workspace.api.ReferencedGcpResourceApi;
@@ -22,13 +22,10 @@ import bio.terra.workspace.client.ApiException;
 import bio.terra.workspace.model.CloningInstructionsEnum;
 import bio.terra.workspace.model.DataRepoSnapshotAttributes;
 import bio.terra.workspace.model.DataRepoSnapshotResource;
-import bio.terra.workspace.model.GcpBigQueryDataTableAttributes;
 import bio.terra.workspace.model.GcpBigQueryDataTableResource;
 import bio.terra.workspace.model.GcpBigQueryDatasetAttributes;
 import bio.terra.workspace.model.GcpBigQueryDatasetResource;
-import bio.terra.workspace.model.GcpGcsBucketAttributes;
 import bio.terra.workspace.model.GcpGcsBucketResource;
-import bio.terra.workspace.model.GcpGcsObjectAttributes;
 import bio.terra.workspace.model.GcpGcsObjectResource;
 import bio.terra.workspace.model.GrantRoleRequestBody;
 import bio.terra.workspace.model.IamRole;
@@ -96,7 +93,7 @@ public class UpdateReferenceResources extends DataRepoTestScriptBase {
             "a_reference_to_foo_monkey_sees_monkey_dos",
             CloningInstructionsEnum.REFERENCE,
             TEST_BUCKET_NAME_WITH_FINE_GRAINED_ACCESS,
-            TEST_FILE_IN_FINE_GRAINED_BUCKET);
+            TEST_FILE_FOO_MONKEY_SEES_MONKEY_DOS);
     bucketObjectResourceId = blobResource.getMetadata().getResourceId();
   }
 
@@ -143,7 +140,8 @@ public class UpdateReferenceResources extends DataRepoTestScriptBase {
         dataRepoSnapshotResourceId,
         newSnapshotReferenceName,
         newSnapshotReferenceDescription,
-        /*instanceId=*/null, /*snapshot=*/null);
+        /*instanceId=*/ null,
+        /*snapshot=*/ null);
     DataRepoSnapshotResource snapshotResource =
         fullAccessApi.getDataRepoSnapshotReference(getWorkspaceId(), dataRepoSnapshotResourceId);
     assertEquals(newSnapshotReferenceName, snapshotResource.getMetadata().getName());
@@ -151,10 +149,7 @@ public class UpdateReferenceResources extends DataRepoTestScriptBase {
     assertFalse(
         partialAccessResourceApi.checkReferenceAccess(
             getWorkspaceId(), dataRepoSnapshotResourceId));
-
-    DataRepoSnapshotAttributes snapshotAttributes = new DataRepoSnapshotAttributes();
-    snapshotAttributes.setSnapshot(dataRepoSnapshotId2);
-    snapshotAttributes.setInstanceName(getDataRepoInstanceName());
+    
     assertThrows(
         ApiException.class,
         () ->
@@ -164,14 +159,16 @@ public class UpdateReferenceResources extends DataRepoTestScriptBase {
                 dataRepoSnapshotResourceId,
                 newSnapshotReferenceName,
                 newSnapshotReferenceDescription,
-                /*instanceId=*/null, dataRepoSnapshotId2));
+                /*instanceId=*/ null,
+                dataRepoSnapshotId2));
     ResourceMaker.updateDataRepoSnapshotReferenceResource(
         fullAccessApi,
         getWorkspaceId(),
         dataRepoSnapshotResourceId,
         newSnapshotReferenceName,
         newSnapshotReferenceDescription,
-        /*instanceId=*/null, dataRepoSnapshotId2);
+        /*instanceId=*/ null,
+        dataRepoSnapshotId2);
     DataRepoSnapshotResource snapshotResourceSecondUpdate =
         fullAccessApi.getDataRepoSnapshotReference(getWorkspaceId(), dataRepoSnapshotResourceId);
     assertEquals(newSnapshotReferenceName, snapshotResourceSecondUpdate.getMetadata().getName());
@@ -194,7 +191,8 @@ public class UpdateReferenceResources extends DataRepoTestScriptBase {
         bqDatasetResourceId,
         newDatasetName,
         newDatasetDescription,
-        /*projectId=*/null, /*datasetId=*/null);
+        /*projectId=*/ null,
+        /*datasetId=*/ null);
     GcpBigQueryDatasetResource datasetReferenceFirstUpdate =
         fullAccessApi.getBigQueryDatasetReference(getWorkspaceId(), bqDatasetResourceId);
     assertEquals(newDatasetName, datasetReferenceFirstUpdate.getMetadata().getName());
@@ -207,9 +205,7 @@ public class UpdateReferenceResources extends DataRepoTestScriptBase {
         partialAccessResourceApi.checkReferenceAccess(getWorkspaceId(), bqDatasetResourceId));
 
     // Update BQ dataset's referencing target
-    GcpBigQueryDatasetAttributes datasetAttributes = new GcpBigQueryDatasetAttributes();
-    datasetAttributes.setProjectId(TEST_BQ_DATASET_PROJECT);
-    datasetAttributes.setDatasetId(TEST_BQ_DATASET_NAME_2);
+
     // Attempt to update the referencing target but {@code userWithPartialAccess} does not have
     // access to the original dataset.
     assertThrows(
@@ -221,7 +217,7 @@ public class UpdateReferenceResources extends DataRepoTestScriptBase {
                 bqDatasetResourceId,
                 /*name=*/ null,
                 /*description=*/ null,
-                TEST_BQ_DATASET_PROJECT,
+                /*projectId=*/ null,
                 TEST_BQ_DATASET_NAME_2));
     ResourceMaker.updateBigQueryDatasetReference(
         fullAccessApi,
@@ -229,7 +225,7 @@ public class UpdateReferenceResources extends DataRepoTestScriptBase {
         bqDatasetResourceId,
         /*name=*/ null,
         /*description=*/ null,
-        /*projectId=*/null,
+        /*projectId=*/ null,
         TEST_BQ_DATASET_NAME_2);
     GcpBigQueryDatasetResource datasetReferenceSecondUpdate =
         fullAccessApi.getBigQueryDatasetReference(getWorkspaceId(), bqDatasetResourceId);
@@ -254,9 +250,9 @@ public class UpdateReferenceResources extends DataRepoTestScriptBase {
         bqTableResourceId,
         newDataTableName,
         newDataTableDescription,
-        /*projectId=*/null,
-        /*datasetId=*/null,
-        /*tableId=*/null);
+        /*projectId=*/ null,
+        /*datasetId=*/ null,
+        /*tableId=*/ null);
     GcpBigQueryDataTableResource dataTableReferenceFirstUpdate =
         fullAccessApi.getBigQueryDataTableReference(getWorkspaceId(), bqTableResourceId);
     assertEquals(newDataTableName, dataTableReferenceFirstUpdate.getMetadata().getName());
@@ -282,7 +278,7 @@ public class UpdateReferenceResources extends DataRepoTestScriptBase {
                 bqTableResourceId,
                 /*name=*/ null,
                 /*description=*/ null,
-                TEST_BQ_DATASET_PROJECT,
+                /*projectId=*/ null,
                 TEST_BQ_DATASET_NAME_2,
                 TEST_BQ_DATATABLE_NAME_2));
     // Successfully update the referencing target because the {@code userWithFullAccess} has
@@ -293,7 +289,7 @@ public class UpdateReferenceResources extends DataRepoTestScriptBase {
         bqTableResourceId,
         /*name=*/ null,
         /*description=*/ null,
-        TEST_BQ_DATASET_PROJECT,
+        /*projectId=*/ null,
         TEST_BQ_DATASET_NAME_2,
         TEST_BQ_DATATABLE_NAME_2);
 
@@ -308,6 +304,49 @@ public class UpdateReferenceResources extends DataRepoTestScriptBase {
         TEST_BQ_DATASET_NAME_2, dataTableReferenceSecondUpdate.getAttributes().getDatasetId());
     assertEquals(
         TEST_BQ_DATATABLE_NAME_2, dataTableReferenceSecondUpdate.getAttributes().getDataTableId());
+
+    ResourceMaker.updateBigQueryDataTableReference(
+        fullAccessApi,
+        getWorkspaceId(),
+        bqTableResourceId,
+        /*name=*/ null,
+        /*description=*/ null,
+        /*projectId=*/ null,
+        TEST_BQ_DATASET_NAME,
+        /*tableId=*/ null);
+
+    GcpBigQueryDataTableResource dataTableReferenceThirdUpdate =
+        fullAccessApi.getBigQueryDataTableReference(getWorkspaceId(), bqTableResourceId);
+    assertEquals(newDataTableName, dataTableReferenceThirdUpdate.getMetadata().getName());
+    assertEquals(
+        newDataTableDescription, dataTableReferenceThirdUpdate.getMetadata().getDescription());
+    assertEquals(
+        TEST_BQ_DATASET_PROJECT, dataTableReferenceThirdUpdate.getAttributes().getProjectId());
+    assertEquals(
+        TEST_BQ_DATASET_NAME, dataTableReferenceThirdUpdate.getAttributes().getDatasetId());
+    assertEquals(
+        TEST_BQ_DATATABLE_NAME_2, dataTableReferenceThirdUpdate.getAttributes().getDataTableId());
+
+    ResourceMaker.updateBigQueryDataTableReference(
+        fullAccessApi,
+        getWorkspaceId(),
+        bqTableResourceId,
+        /*name=*/ null,
+        /*description=*/ null,
+        /*projectId=*/ null,
+        /*datasetId=*/ null,
+        TEST_BQ_DATATABLE_NAME);
+    GcpBigQueryDataTableResource dataTableReferenceFourthUpdate =
+        fullAccessApi.getBigQueryDataTableReference(getWorkspaceId(), bqTableResourceId);
+    assertEquals(newDataTableName, dataTableReferenceFourthUpdate.getMetadata().getName());
+    assertEquals(
+        newDataTableDescription, dataTableReferenceFourthUpdate.getMetadata().getDescription());
+    assertEquals(
+        TEST_BQ_DATASET_PROJECT, dataTableReferenceFourthUpdate.getAttributes().getProjectId());
+    assertEquals(
+        TEST_BQ_DATASET_NAME, dataTableReferenceFourthUpdate.getAttributes().getDatasetId());
+    assertEquals(
+        TEST_BQ_DATATABLE_NAME, dataTableReferenceFourthUpdate.getAttributes().getDataTableId());
 
     // Update GCS bucket's name and description
     String newBucketName = "newGcsBucket";
@@ -367,21 +406,22 @@ public class UpdateReferenceResources extends DataRepoTestScriptBase {
         bucketObjectResourceId,
         newBlobName,
         newBlobDescription,
-        /*bucketName=*/null,
-        /*objectName=*/null);
+        /*bucketName=*/ null,
+        /*objectName=*/ null);
     GcpGcsObjectResource blobResource =
         fullAccessApi.getGcsObjectReference(getWorkspaceId(), bucketObjectResourceId);
     assertEquals(newBlobName, blobResource.getMetadata().getName());
     assertEquals(newBlobDescription, blobResource.getMetadata().getDescription());
     assertEquals(
         TEST_BUCKET_NAME_WITH_FINE_GRAINED_ACCESS, blobResource.getAttributes().getBucketName());
-    assertEquals(TEST_FILE_IN_FINE_GRAINED_BUCKET, blobResource.getAttributes().getFileName());
+    assertEquals(TEST_FILE_FOO_MONKEY_SEES_MONKEY_DOS, blobResource.getAttributes().getFileName());
 
     // Update GCS bucket object's referencing target from foo/monkey_sees_monkey_dos.txt to foo/.
 
     assertTrue(
         partialAccessResourceApi.checkReferenceAccess(getWorkspaceId(), bucketObjectResourceId));
 
+    // Update object path only.
     // Attempt to update to foo but {@code userWithPartialAccess} does not have access to foo/
     assertThrows(
         ApiException.class,
@@ -393,7 +433,7 @@ public class UpdateReferenceResources extends DataRepoTestScriptBase {
                 /*name=*/ null,
                 /*description=*/ null,
                 TEST_BUCKET_NAME_WITH_FINE_GRAINED_ACCESS,
-                TEST_FOLDER_IN_FINE_GRAINED_BUCKET));
+                TEST_FOLDER_FOO));
     // User with access to foo/ can successfully update the referencing target to foo/.
     ResourceMaker.updateGcsBucketObjectReference(
         fullAccessApi,
@@ -401,17 +441,51 @@ public class UpdateReferenceResources extends DataRepoTestScriptBase {
         bucketObjectResourceId,
         /*name=*/ null,
         /*description=*/ null,
-        /*bucketName=*/null,
-        TEST_FOLDER_IN_FINE_GRAINED_BUCKET);
+        /*bucketName=*/ null,
+        TEST_FOLDER_FOO);
     GcpGcsObjectResource blobReferenceSecondUpdate =
         fullAccessApi.getGcsObjectReference(getWorkspaceId(), bucketObjectResourceId);
     assertEquals(
         TEST_BUCKET_NAME_WITH_FINE_GRAINED_ACCESS,
         blobReferenceSecondUpdate.getAttributes().getBucketName());
-    assertEquals(
-        TEST_FOLDER_IN_FINE_GRAINED_BUCKET,
-        blobReferenceSecondUpdate.getAttributes().getFileName());
+    assertEquals(TEST_FOLDER_FOO, blobReferenceSecondUpdate.getAttributes().getFileName());
     assertEquals(newBlobName, blobReferenceSecondUpdate.getMetadata().getName());
     assertEquals(newBlobDescription, blobReferenceSecondUpdate.getMetadata().getDescription());
+
+    // update bucket only.
+    ResourceMaker.updateGcsBucketObjectReference(
+        fullAccessApi,
+        getWorkspaceId(),
+        bucketObjectResourceId,
+        /*name=*/ null,
+        /*description=*/ null,
+        /*bucketName=*/ TEST_BUCKET_NAME,
+        null);
+    GcpGcsObjectResource blobReferenceThirdUpdate =
+        fullAccessApi.getGcsObjectReference(getWorkspaceId(), bucketObjectResourceId);
+    assertEquals(TEST_BUCKET_NAME, blobReferenceThirdUpdate.getAttributes().getBucketName());
+    assertEquals(TEST_FOLDER_FOO, blobReferenceThirdUpdate.getAttributes().getFileName());
+    assertEquals(newBlobName, blobReferenceThirdUpdate.getMetadata().getName());
+    assertEquals(newBlobDescription, blobReferenceThirdUpdate.getMetadata().getDescription());
+
+    // Update both bucket and object path.
+    ResourceMaker.updateGcsBucketObjectReference(
+        fullAccessApi,
+        getWorkspaceId(),
+        bucketObjectResourceId,
+        /*name=*/ null,
+        /*description=*/ null,
+        /*bucketName=*/ TEST_BUCKET_NAME_WITH_FINE_GRAINED_ACCESS,
+        TEST_FILE_FOO_MONKEY_SEES_MONKEY_DOS);
+    GcpGcsObjectResource blobReferenceFourthUpdate =
+        fullAccessApi.getGcsObjectReference(getWorkspaceId(), bucketObjectResourceId);
+    assertEquals(
+        TEST_BUCKET_NAME_WITH_FINE_GRAINED_ACCESS,
+        blobReferenceFourthUpdate.getAttributes().getBucketName());
+    assertEquals(
+        TEST_FILE_FOO_MONKEY_SEES_MONKEY_DOS,
+        blobReferenceFourthUpdate.getAttributes().getFileName());
+    assertEquals(newBlobName, blobReferenceFourthUpdate.getMetadata().getName());
+    assertEquals(newBlobDescription, blobReferenceFourthUpdate.getMetadata().getDescription());
   }
 }
