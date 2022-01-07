@@ -1954,6 +1954,9 @@ components:
         bucketName:
           description: Name of created bucket (not the resource name).
           type: string
+        resourceAttributes:
+          description: [DEPRECATED] attributes specific to GCS bucket
+          $ref: '#/components/schemas/GcpGcsBucketAttributes'
 
     UpdateGcsBucketObjectReferenceRequestBody:
       type: object
@@ -1968,6 +1971,9 @@ components:
         objectName:
           description: Full path to the file in the gcs bucket.
           type: string
+        resourceAttributes:
+          description: [DEPRECATED] attributes specific to GCS bucket object
+          $ref: '#/components/schemas/GcpGcsObjectAttributes'
 
     UpdateBigQueryDatasetReferenceRequestBody:
       type: object
@@ -1980,6 +1986,9 @@ components:
           type: string
         datasetId:
           type: string
+        resourceAttributes:
+          description: [DEPRECATED] attributes specific to BigQuery dataset
+          $ref: '#/components/schemas/GcpBigQueryDatasetAttributes'
 
     UpdateBigQueryDataTableReferenceRequestBody:
       type: object
@@ -1994,6 +2003,9 @@ components:
           type: string
         dataTableId:
           type: string
+        resourceAttributes:
+          description: [DEPRECATED] attributes specific to BigQuery dataset
+          $ref: '#/components/schemas/GcpBigQueryDataTableAttributes'
 
     UpdateDataRepoSnapshotReferenceRequestBody:
       type: object
@@ -2008,6 +2020,9 @@ components:
         snapshot:
           description: The ID of the Data Repo snapshot
           type: string
+        resourceAttributes:
+          description: [DEPRECATED] attributes specific to data repo snapshot
+          $ref: '#/components/schemas/DataRepoSnapshotAttributes'
 
     # TODO(PF-404): remove this in favor of reference-type specific objects.
     DataReferenceMetadata:

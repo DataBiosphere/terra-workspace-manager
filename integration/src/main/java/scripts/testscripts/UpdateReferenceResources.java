@@ -149,7 +149,7 @@ public class UpdateReferenceResources extends DataRepoTestScriptBase {
     assertFalse(
         partialAccessResourceApi.checkReferenceAccess(
             getWorkspaceId(), dataRepoSnapshotResourceId));
-    
+
     assertThrows(
         ApiException.class,
         () ->
