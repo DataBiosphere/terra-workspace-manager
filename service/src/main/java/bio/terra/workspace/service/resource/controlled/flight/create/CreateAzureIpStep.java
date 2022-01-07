@@ -59,6 +59,8 @@ public class CreateAzureIpStep implements Step {
                       .setName(resource.getIpName())
                       .setRegion(Region.fromName(resource.getRegion()))
                       .setResourceGroupName(azureCloudContext.getAzureResourceGroupId())
+                      .setTenantId(azureCloudContext.getAzureTenantId())
+                      .setSubscriptionId(azureCloudContext.getAzureSubscriptionId())
                       .setIpAllocationMethod(IpAllocationMethod.DYNAMIC)
                       .build()));
     } catch (ManagementException e) {

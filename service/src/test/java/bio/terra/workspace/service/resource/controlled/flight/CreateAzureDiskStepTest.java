@@ -58,6 +58,8 @@ public class CreateAzureDiskStepTest extends BaseAzureTest {
   @BeforeEach
   public void setup() {
     // PublicIpAddresses mocks
+    when(mockAzureCloudContext.getAzureTenantId()).thenReturn(STUB_STRING_RETURN);
+    when(mockAzureCloudContext.getAzureSubscriptionId()).thenReturn(STUB_STRING_RETURN);
     when(mockAzureCloudContext.getAzureResourceGroupId()).thenReturn(STUB_STRING_RETURN);
     when(mockCrlService.getComputeManager(mockAzureCloudContext, mockAzureConfig))
         .thenReturn(mockComputeManager);
@@ -115,6 +117,8 @@ public class CreateAzureDiskStepTest extends BaseAzureTest {
             .setName(creationParameters.getName())
             .setRegion(Region.fromName(creationParameters.getRegion()))
             .setSize(50)
+            .setTenantId(mockAzureCloudContext.getAzureTenantId())
+            .setSubscriptionId(mockAzureCloudContext.getAzureSubscriptionId())
             .setResourceGroupName(mockAzureCloudContext.getAzureResourceGroupId())
             .build();
 

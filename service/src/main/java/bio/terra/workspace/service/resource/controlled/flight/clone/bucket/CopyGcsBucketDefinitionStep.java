@@ -98,6 +98,7 @@ public class CopyGcsBucketDefinitionStep implements Step {
             .managedBy(sourceBucket.getManagedBy())
             .applicationId(sourceBucket.getApplicationId())
             .bucketName(bucketName)
+            .privateResourceState(privateResourceState)
             .build();
 
     final ApiGcpGcsBucketCreationParameters destinationCreationParameters =

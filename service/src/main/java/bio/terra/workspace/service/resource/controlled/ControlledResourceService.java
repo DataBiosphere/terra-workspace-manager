@@ -549,6 +549,8 @@ public class ControlledResourceService {
             case APPLICATION:
               policyGroup = cloudContext.getSamPolicyApplication().orElseThrow(badState);
               break;
+            default:
+              break;
           }
           break;
       }

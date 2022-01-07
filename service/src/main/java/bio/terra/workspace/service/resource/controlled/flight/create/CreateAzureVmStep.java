@@ -113,6 +113,8 @@ public class CreateAzureVmStep implements Step {
                   CreateVirtualMachineRequestData.builder()
                       .setName(resource.getVmName())
                       .setRegion(Region.fromName(resource.getRegion()))
+                      .setTenantId(azureCloudContext.getAzureTenantId())
+                      .setSubscriptionId(azureCloudContext.getAzureSubscriptionId())
                       .setResourceGroupName(azureCloudContext.getAzureResourceGroupId())
                       .setNetwork(existingNetwork)
                       .setSubnetName(networkResource.getSubnetName())
@@ -136,7 +138,7 @@ public class CreateAzureVmStep implements Step {
         logger.info(
             "Either the disk, ip, or network passed into this createVm does not exist "
                 + String.format(
-                    "\nResource Group: %s\n\tIp Name: %s\n\tNetwork Name: %s\n\tDisk Name: %s",
+                    "%nResource Group: %s\n\tIp Name: %s\n\tNetwork Name: %s\n\tDisk Name: %s",
                     azureCloudContext.getAzureResourceGroupId(),
                     ipResource.getIpName(),
                     "TODO",

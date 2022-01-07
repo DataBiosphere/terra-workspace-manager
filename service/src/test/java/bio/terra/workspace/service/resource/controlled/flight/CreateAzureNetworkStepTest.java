@@ -107,6 +107,8 @@ public class CreateAzureNetworkStepTest extends BaseAzureTest {
   @BeforeEach
   public void setup() {
     when(mockAzureCloudContext.getAzureResourceGroupId()).thenReturn(STUB_STRING_RETURN);
+    when(mockAzureCloudContext.getAzureTenantId()).thenReturn(STUB_STRING_RETURN);
+    when(mockAzureCloudContext.getAzureSubscriptionId()).thenReturn(STUB_STRING_RETURN);
     when(mockCrlService.getComputeManager(
             any(AzureCloudContext.class), any(AzureConfiguration.class)))
         .thenReturn(mockComputeManager);
@@ -192,6 +194,8 @@ public class CreateAzureNetworkStepTest extends BaseAzureTest {
             .setAddressSpaceCidr(creationParameters.getAddressSpaceCidr())
             .setNetworkSecurityGroup(mockNsg)
             .setAddressPrefix(creationParameters.getSubnetAddressCidr())
+            .setTenantId(mockAzureCloudContext.getAzureTenantId())
+            .setSubscriptionId(mockAzureCloudContext.getAzureSubscriptionId())
             .setResourceGroupName(mockAzureCloudContext.getAzureResourceGroupId())
             .build();
 

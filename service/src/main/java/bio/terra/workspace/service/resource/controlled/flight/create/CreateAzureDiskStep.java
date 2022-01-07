@@ -58,6 +58,8 @@ public class CreateAzureDiskStep implements Step {
                       .setName(resource.getDiskName())
                       .setRegion(Region.fromName(resource.getRegion()))
                       .setResourceGroupName(azureCloudContext.getAzureResourceGroupId())
+                      .setTenantId(azureCloudContext.getAzureTenantId())
+                      .setSubscriptionId(azureCloudContext.getAzureSubscriptionId())
                       .setSize(resource.getSize())
                       .build()));
     } catch (ManagementException e) {

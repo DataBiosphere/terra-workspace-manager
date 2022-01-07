@@ -161,6 +161,8 @@ public class CreateAzureVmStepTest extends BaseAzureTest {
             any(AzureCloudContext.class), any(AzureConfiguration.class)))
         .thenReturn(mockComputeManager);
     when(mockAzureCloudContext.getAzureResourceGroupId()).thenReturn(STUB_STRING_RETURN);
+    when(mockAzureCloudContext.getAzureTenantId()).thenReturn(STUB_STRING_RETURN);
+    when(mockAzureCloudContext.getAzureSubscriptionId()).thenReturn(STUB_STRING_RETURN);
 
     when(mockComputeManager.virtualMachines()).thenReturn(mockVms);
 
@@ -279,6 +281,8 @@ public class CreateAzureVmStepTest extends BaseAzureTest {
         CreateVirtualMachineRequestData.builder()
             .setName(creationParameters.getName())
             .setRegion(Region.fromName(creationParameters.getRegion()))
+            .setTenantId(mockAzureCloudContext.getAzureTenantId())
+            .setSubscriptionId(mockAzureCloudContext.getAzureSubscriptionId())
             .setResourceGroupName(mockAzureCloudContext.getAzureResourceGroupId())
             .setDisk(mockDisk)
             .setNetwork(mockNetwork)

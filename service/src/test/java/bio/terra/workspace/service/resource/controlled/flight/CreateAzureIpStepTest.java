@@ -58,6 +58,8 @@ public class CreateAzureIpStepTest extends BaseAzureTest {
   public void setup() {
     // PublicIpAddresses mocks
     when(mockAzureCloudContext.getAzureResourceGroupId()).thenReturn(STUB_STRING_RETURN);
+    when(mockAzureCloudContext.getAzureTenantId()).thenReturn(STUB_STRING_RETURN);
+    when(mockAzureCloudContext.getAzureSubscriptionId()).thenReturn(STUB_STRING_RETURN);
     when(mockCrlService.getComputeManager(mockAzureCloudContext, mockAzureConfig))
         .thenReturn(mockComputeManager);
     when(mockComputeManager.networkManager()).thenReturn(mockNetworkManager);
@@ -112,6 +114,8 @@ public class CreateAzureIpStepTest extends BaseAzureTest {
             .setName(creationParameters.getName())
             .setRegion(Region.fromName(creationParameters.getRegion()))
             .setIpAllocationMethod(IpAllocationMethod.DYNAMIC)
+            .setTenantId(mockAzureCloudContext.getAzureTenantId())
+            .setSubscriptionId(mockAzureCloudContext.getAzureSubscriptionId())
             .setResourceGroupName(mockAzureCloudContext.getAzureResourceGroupId())
             .build();
 

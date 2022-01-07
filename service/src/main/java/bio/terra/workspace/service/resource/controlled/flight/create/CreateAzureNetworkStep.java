@@ -69,6 +69,8 @@ public class CreateAzureNetworkStep implements Step {
                       CreateNetworkSecurityGroupRequestData.builder()
                           .setName(resource.getSubnetName())
                           .setRegion(Region.fromName(resource.getRegion()))
+                          .setTenantId(azureCloudContext.getAzureTenantId())
+                          .setSubscriptionId(azureCloudContext.getAzureSubscriptionId())
                           .setResourceGroupName(azureCloudContext.getAzureResourceGroupId())
                           .setRules(Collections.emptyList())
                           .build()));
@@ -90,6 +92,8 @@ public class CreateAzureNetworkStep implements Step {
               Defaults.buildContext(
                   CreateNetworkRequestData.builder()
                       .setName(resource.getNetworkName())
+                      .setTenantId(azureCloudContext.getAzureTenantId())
+                      .setSubscriptionId(azureCloudContext.getAzureSubscriptionId())
                       .setResourceGroupName(azureCloudContext.getAzureResourceGroupId())
                       .setRegion(Region.fromName(resource.getRegion()))
                       .setSubnetName(resource.getSubnetName())
