@@ -157,8 +157,8 @@ public class ControlledAiNotebookInstanceResource extends ControlledResource {
   /**
    * Best effort mangle the user's name so that it meets the requirements for a valid instance name.
    *
-   * <p>Instance name id must match the regex '(?:[a-z](?:[-a-z0-9]{0,61}[a-z0-9])?)', i.e. starting
-   * with a lowercase alpha character, only alphanumerics and '-' of max length 61. I don't have a
+   * <p>Instance name id must match the regex '(?:[a-z](?:[-a-z0-9]{0,63}[a-z0-9])?)', i.e. starting
+   * with a lowercase alpha character, only alphanumerics and '-' of max length 63. I don't have a
    * documentation link, but gcloud will complain otherwise.
    */
   private static String mangleUsername(String username) {
