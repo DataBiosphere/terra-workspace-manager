@@ -12,15 +12,10 @@ import bio.terra.workspace.generated.model.ApiCreateGcpBigQueryDataTableReferenc
 import bio.terra.workspace.generated.model.ApiCreateGcpBigQueryDatasetReferenceRequestBody;
 import bio.terra.workspace.generated.model.ApiCreateGcpGcsBucketReferenceRequestBody;
 import bio.terra.workspace.generated.model.ApiCreateGcpGcsObjectReferenceRequestBody;
-import bio.terra.workspace.generated.model.ApiDataRepoSnapshotAttributes;
 import bio.terra.workspace.generated.model.ApiDataRepoSnapshotResource;
-import bio.terra.workspace.generated.model.ApiGcpBigQueryDataTableAttributes;
 import bio.terra.workspace.generated.model.ApiGcpBigQueryDataTableResource;
-import bio.terra.workspace.generated.model.ApiGcpBigQueryDatasetAttributes;
 import bio.terra.workspace.generated.model.ApiGcpBigQueryDatasetResource;
-import bio.terra.workspace.generated.model.ApiGcpGcsBucketAttributes;
 import bio.terra.workspace.generated.model.ApiGcpGcsBucketResource;
-import bio.terra.workspace.generated.model.ApiGcpGcsObjectAttributes;
 import bio.terra.workspace.generated.model.ApiGcpGcsObjectResource;
 import bio.terra.workspace.generated.model.ApiUpdateBigQueryDataTableReferenceRequestBody;
 import bio.terra.workspace.generated.model.ApiUpdateBigQueryDatasetReferenceRequestBody;
@@ -40,7 +35,6 @@ import bio.terra.workspace.service.resource.referenced.ReferencedGcsObjectResour
 import bio.terra.workspace.service.resource.referenced.ReferencedResource;
 import bio.terra.workspace.service.resource.referenced.ReferencedResourceService;
 import bio.terra.workspace.service.workspace.WorkspaceService;
-import com.google.api.client.util.Strings;
 import java.util.Optional;
 import java.util.UUID;
 import javax.servlet.http.HttpServletRequest;
@@ -316,7 +310,9 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
     String updatedProjectId = body.getProjectId();
     String updatedDatasetId = body.getDatasetId();
     String updatedDataTableId = body.getDataTableId();
-    if (StringUtils.isEmpty(updatedProjectId) && StringUtils.isEmpty(updatedDatasetId) && StringUtils.isEmpty(updatedDataTableId)) {
+    if (StringUtils.isEmpty(updatedProjectId)
+        && StringUtils.isEmpty(updatedDatasetId)
+        && StringUtils.isEmpty(updatedDataTableId)) {
       referenceResourceService.updateReferenceResource(
           workspaceId, referenceId, body.getName(), body.getDescription(), userRequest);
     } else {
