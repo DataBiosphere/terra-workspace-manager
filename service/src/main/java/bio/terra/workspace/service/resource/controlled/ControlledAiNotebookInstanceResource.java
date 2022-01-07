@@ -24,7 +24,7 @@ import org.apache.commons.lang3.StringUtils;
 /** A {@link ControlledResource} for a Google AI Platform Notebook instance. */
 public class ControlledAiNotebookInstanceResource extends ControlledResource {
 
-  protected static final int MAX_INSTANCE_NAME_LENGTH = 61;
+  protected static final int MAX_INSTANCE_NAME_LENGTH = 63;
   protected static final String AUTO_NAME_DATE_FORMAT = "-yyyyMMdd-HHmmss";
   private final String instanceId;
   private final String location;
@@ -146,8 +146,8 @@ public class ControlledAiNotebookInstanceResource extends ControlledResource {
   }
 
   /** Returns an auto generated instance name with the username and date time. */
-  public static String generateInstanceId(@Nullable String user) {
-    String mangledUsername = mangleUsername(extractUsername(user));
+  public static String generateInstanceId(@Nullable String email) {
+    String mangledUsername = mangleUsername(extractUsername(email));
     String localDateTimeSuffix =
         DateTimeFormatter.ofPattern(AUTO_NAME_DATE_FORMAT)
             .format(Instant.now().atZone(ZoneId.systemDefault()));
@@ -167,7 +167,6 @@ public class ControlledAiNotebookInstanceResource extends ControlledResource {
     if (mangledName.isEmpty()) {
       mangledName = "notebook";
     }
-    // Lower case everything, even though only the first character requires lowercase.
     mangledName = mangledName.toLowerCase();
     // Make sure the returned name isn't too long to not have the date time suffix.
     int maxNameLength = MAX_INSTANCE_NAME_LENGTH - AUTO_NAME_DATE_FORMAT.length();
