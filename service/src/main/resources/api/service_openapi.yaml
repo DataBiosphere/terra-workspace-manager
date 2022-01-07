@@ -1955,7 +1955,7 @@ components:
           description: Name of created bucket (not the resource name).
           type: string
         resourceAttributes:
-          description: [DEPRECATED] attributes specific to GCS bucket
+          description: (DEPRECATED) attributes specific to GCS bucket
           $ref: '#/components/schemas/GcpGcsBucketAttributes'
 
     UpdateGcsBucketObjectReferenceRequestBody:
@@ -1972,7 +1972,7 @@ components:
           description: Full path to the file in the gcs bucket.
           type: string
         resourceAttributes:
-          description: [DEPRECATED] attributes specific to GCS bucket object
+          description: (DEPRECATED) attributes specific to GCS bucket object
           $ref: '#/components/schemas/GcpGcsObjectAttributes'
 
     UpdateBigQueryDatasetReferenceRequestBody:
@@ -1987,7 +1987,7 @@ components:
         datasetId:
           type: string
         resourceAttributes:
-          description: [DEPRECATED] attributes specific to BigQuery dataset
+          description: (DEPRECATED) attributes specific to BigQuery dataset
           $ref: '#/components/schemas/GcpBigQueryDatasetAttributes'
 
     UpdateBigQueryDataTableReferenceRequestBody:
@@ -2004,7 +2004,7 @@ components:
         dataTableId:
           type: string
         resourceAttributes:
-          description: [DEPRECATED] attributes specific to BigQuery dataset
+          description: (DEPRECATED) attributes specific to BigQuery dataset
           $ref: '#/components/schemas/GcpBigQueryDataTableAttributes'
 
     UpdateDataRepoSnapshotReferenceRequestBody:
@@ -2021,7 +2021,7 @@ components:
           description: The ID of the Data Repo snapshot
           type: string
         resourceAttributes:
-          description: [DEPRECATED] attributes specific to data repo snapshot
+          description: (DEPRECATED) attributes specific to data repo snapshot
           $ref: '#/components/schemas/DataRepoSnapshotAttributes'
 
     # TODO(PF-404): remove this in favor of reference-type specific objects.
