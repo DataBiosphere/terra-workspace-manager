@@ -138,4 +138,3 @@ terra.common:
 feature:
   # azure-enabled - Controls inclusion of Azure support in WSM
   azure-enabled: false
-

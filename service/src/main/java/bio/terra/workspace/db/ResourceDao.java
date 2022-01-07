@@ -1,5 +1,8 @@
 package bio.terra.workspace.db;
 
+import static bio.terra.workspace.service.resource.WsmResourceType.AI_NOTEBOOK_INSTANCE;
+import static bio.terra.workspace.service.resource.WsmResourceType.BIG_QUERY_DATASET;
+import static bio.terra.workspace.service.resource.WsmResourceType.GCS_BUCKET;
 import static bio.terra.workspace.service.resource.model.StewardshipType.CONTROLLED;
 import static bio.terra.workspace.service.resource.model.StewardshipType.REFERENCED;
 import static bio.terra.workspace.service.resource.model.StewardshipType.fromSql;
@@ -13,6 +16,11 @@ import bio.terra.workspace.service.resource.WsmResource;
 import bio.terra.workspace.service.resource.WsmResourceType;
 import bio.terra.workspace.service.resource.controlled.AccessScopeType;
 import bio.terra.workspace.service.resource.controlled.ControlledAiNotebookInstanceResource;
+import bio.terra.workspace.service.resource.controlled.ControlledAzureDiskResource;
+import bio.terra.workspace.service.resource.controlled.ControlledAzureIpResource;
+import bio.terra.workspace.service.resource.controlled.ControlledAzureNetworkResource;
+import bio.terra.workspace.service.resource.controlled.ControlledAzureStorageResource;
+import bio.terra.workspace.service.resource.controlled.ControlledAzureVmResource;
 import bio.terra.workspace.service.resource.controlled.ControlledBigQueryDatasetResource;
 import bio.terra.workspace.service.resource.controlled.ControlledGcsBucketResource;
 import bio.terra.workspace.service.resource.controlled.ControlledResource;
@@ -515,6 +523,21 @@ public class ResourceDao {
       case BIG_QUERY_DATASET:
         validateUniqueBigQueryDataset(controlledResource.castToBigQueryDatasetResource());
         break;
+      case AZURE_DISK:
+        validateUniqueAzureDisk(controlledResource.castToAzureDiskResource());
+        break;
+      case AZURE_IP:
+        validateUniqueAzureIp(controlledResource.castToAzureIpResource());
+        break;
+      case AZURE_NETWORK:
+        validateUniqueAzureNetwork(controlledResource.castToAzureNetworkResource());
+        break;
+      case AZURE_STORAGE_ACCOUNT:
+        validateUniqueAzureStorage(controlledResource.castToAzureStorageResource());
+        break;
+      case AZURE_VM:
+        validateUniqueAzureVm(controlledResource.castToAzureVmResource());
+        break;
       case DATA_REPO_SNAPSHOT:
       default:
         throw new IllegalArgumentException(
@@ -571,7 +594,7 @@ public class ResourceDao {
     MapSqlParameterSource bucketParams =
         new MapSqlParameterSource()
             .addValue("bucket_name", bucketResource.getBucketName())
-            .addValue("resource_type", WsmResourceType.GCS_BUCKET.toSql());
+            .addValue("resource_type", GCS_BUCKET.toSql());
     Integer matchingBucketCount =
         jdbcTemplate.queryForObject(bucketSql, bucketParams, Integer.class);
     if (matchingBucketCount != null && matchingBucketCount > 0) {
@@ -594,7 +617,7 @@ public class ResourceDao {
             + " AND attributes->>'location' = :location";
     MapSqlParameterSource sqlParams =
         new MapSqlParameterSource()
-            .addValue("resource_type", WsmResourceType.AI_NOTEBOOK_INSTANCE.toSql())
+            .addValue("resource_type", AI_NOTEBOOK_INSTANCE.toSql())
             .addValue("workspace_id", notebookResource.getWorkspaceId().toString())
             .addValue("instance_id", notebookResource.getInstanceId())
             .addValue("location", notebookResource.getLocation());
@@ -618,7 +641,7 @@ public class ResourceDao {
             + " AND attributes->>'datasetName' = :dataset_name";
     MapSqlParameterSource sqlParams =
         new MapSqlParameterSource()
-            .addValue("resource_type", WsmResourceType.BIG_QUERY_DATASET.toSql())
+            .addValue("resource_type", BIG_QUERY_DATASET.toSql())
             .addValue("workspace_id", datasetResource.getWorkspaceId().toString())
             .addValue("dataset_name", datasetResource.getDatasetName());
     Integer matchingCount = jdbcTemplate.queryForObject(sql, sqlParams, Integer.class);
@@ -626,6 +649,101 @@ public class ResourceDao {
       throw new DuplicateResourceException(
           String.format(
               "A BigQuery dataset with ID %s already exists", datasetResource.getDatasetName()));
+    }
+  }
+
+  private void validateUniqueAzureIp(ControlledAzureIpResource ipResource) {
+    String sql =
+        "SELECT COUNT(1)"
+            + " FROM resource"
+            + " WHERE resource_type = :resource_type"
+            + " AND workspace_id = :workspace_id"
+            + " AND attributes->>'ipName' = :ip_name";
+    MapSqlParameterSource sqlParams =
+        new MapSqlParameterSource()
+            .addValue("resource_type", WsmResourceType.AZURE_IP.toSql())
+            .addValue("workspace_id", ipResource.getWorkspaceId().toString())
+            .addValue("ip_name", ipResource.getIpName());
+    Integer matchingCount = jdbcTemplate.queryForObject(sql, sqlParams, Integer.class);
+    if (matchingCount != null && matchingCount > 0) {
+      throw new DuplicateResourceException(
+          String.format("An Azure IP with ID %s already exists", ipResource.getIpName()));
+    }
+  }
+
+  private void validateUniqueAzureDisk(ControlledAzureDiskResource resource) {
+    String sql =
+        "SELECT COUNT(1)"
+            + " FROM resource"
+            + " WHERE resource_type = :resource_type"
+            + " AND workspace_id = :workspace_id"
+            + " AND attributes->>'diskName' = :disk_name";
+    MapSqlParameterSource sqlParams =
+        new MapSqlParameterSource()
+            .addValue("resource_type", WsmResourceType.AZURE_DISK.toSql())
+            .addValue("workspace_id", resource.getWorkspaceId().toString())
+            .addValue("disk_name", resource.getDiskName());
+    Integer matchingCount = jdbcTemplate.queryForObject(sql, sqlParams, Integer.class);
+    if (matchingCount != null && matchingCount > 0) {
+      throw new DuplicateResourceException(
+          String.format("An Azure Disk with ID %s already exists", resource.getDiskName()));
+    }
+  }
+
+  private void validateUniqueAzureVm(ControlledAzureVmResource resource) {
+    // This should take into account azure uniqueness param, namely the fields in `AzureContext`
+    String sql =
+        "SELECT COUNT(1)"
+            + " FROM resource"
+            + " WHERE resource_type = :resource_type"
+            + " AND attributes->>'vmName' = :vm_name";
+    MapSqlParameterSource sqlParams =
+        new MapSqlParameterSource()
+            .addValue("resource_type", WsmResourceType.AZURE_VM.toSql())
+            .addValue("vm_name", resource.getVmName());
+    Integer matchingCount = jdbcTemplate.queryForObject(sql, sqlParams, Integer.class);
+    if (matchingCount != null && matchingCount > 0) {
+      throw new DuplicateResourceException(
+          String.format("An Azure Vm with ID %s already exists", resource.getVmName()));
+    }
+  }
+
+  private void validateUniqueAzureNetwork(ControlledAzureNetworkResource resource) {
+    String sql =
+        "SELECT COUNT(1)"
+            + " FROM resource"
+            + " WHERE resource_type = :resource_type"
+            + " AND workspace_id = :workspace_id"
+            + " AND attributes->>'networkName' = :network_name";
+    MapSqlParameterSource sqlParams =
+        new MapSqlParameterSource()
+            .addValue("resource_type", WsmResourceType.AZURE_NETWORK.toSql())
+            .addValue("workspace_id", resource.getWorkspaceId().toString())
+            .addValue("network_name", resource.getNetworkName());
+    Integer matchingCount = jdbcTemplate.queryForObject(sql, sqlParams, Integer.class);
+    if (matchingCount != null && matchingCount > 0) {
+      throw new DuplicateResourceException(
+          String.format("An Azure Network with ID %s already exists", resource.getNetworkName()));
+    }
+  }
+
+  private void validateUniqueAzureStorage(ControlledAzureStorageResource resource) {
+    String sql =
+        "SELECT COUNT(1)"
+            + " FROM resource"
+            + " WHERE resource_type = :resource_type"
+            + " AND workspace_id = :workspace_id"
+            + " AND attributes->>'storageAccountName' = :name";
+    MapSqlParameterSource sqlParams =
+        new MapSqlParameterSource()
+            .addValue("resource_type", WsmResourceType.AZURE_NETWORK.toSql())
+            .addValue("workspace_id", resource.getWorkspaceId().toString())
+            .addValue("name", resource.getStorageAccountName());
+    Integer matchingCount = jdbcTemplate.queryForObject(sql, sqlParams, Integer.class);
+    if (matchingCount != null && matchingCount > 0) {
+      throw new DuplicateResourceException(
+          String.format(
+              "An Azure Storage with ID %s already exists", resource.getStorageAccountName()));
     }
   }
 
@@ -738,6 +856,16 @@ public class ResourceDao {
             return new ControlledAiNotebookInstanceResource(dbResource);
           case BIG_QUERY_DATASET:
             return new ControlledBigQueryDatasetResource(dbResource);
+          case AZURE_IP:
+            return new ControlledAzureIpResource(dbResource);
+          case AZURE_DISK:
+            return new ControlledAzureDiskResource(dbResource);
+          case AZURE_VM:
+            return new ControlledAzureVmResource(dbResource);
+          case AZURE_NETWORK:
+            return new ControlledAzureNetworkResource(dbResource);
+          case AZURE_STORAGE_ACCOUNT:
+            return new ControlledAzureStorageResource(dbResource);
           default:
             throw new InvalidMetadataException(
                 "Invalid controlled resource type" + dbResource.getResourceType().toString());

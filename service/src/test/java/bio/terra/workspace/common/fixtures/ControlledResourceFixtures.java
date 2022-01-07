@@ -1,5 +1,10 @@
 package bio.terra.workspace.common.fixtures;
 
+import bio.terra.workspace.generated.model.*;
+import bio.terra.workspace.generated.model.ApiAzureDiskCreationParameters;
+import bio.terra.workspace.generated.model.ApiAzureIpCreationParameters;
+import bio.terra.workspace.generated.model.ApiAzureNetworkCreationParameters;
+import bio.terra.workspace.generated.model.ApiAzureVmCreationParameters;
 import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceCreationParameters;
 import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceVmImage;
 import bio.terra.workspace.generated.model.ApiGcpBigQueryDatasetCreationParameters;
@@ -12,13 +17,19 @@ import bio.terra.workspace.generated.model.ApiGcpGcsBucketLifecycleRuleAction;
 import bio.terra.workspace.generated.model.ApiGcpGcsBucketLifecycleRuleActionType;
 import bio.terra.workspace.generated.model.ApiGcpGcsBucketLifecycleRuleCondition;
 import bio.terra.workspace.generated.model.ApiGcpGcsBucketUpdateParameters;
+import bio.terra.workspace.service.resource.controlled.*;
 import bio.terra.workspace.service.resource.controlled.AccessScopeType;
 import bio.terra.workspace.service.resource.controlled.ControlledAiNotebookInstanceResource;
+import bio.terra.workspace.service.resource.controlled.ControlledAzureDiskResource;
+import bio.terra.workspace.service.resource.controlled.ControlledAzureIpResource;
+import bio.terra.workspace.service.resource.controlled.ControlledAzureNetworkResource;
+import bio.terra.workspace.service.resource.controlled.ControlledAzureVmResource;
 import bio.terra.workspace.service.resource.controlled.ControlledBigQueryDatasetResource;
 import bio.terra.workspace.service.resource.controlled.ControlledGcsBucketResource;
 import bio.terra.workspace.service.resource.controlled.ManagedByType;
 import bio.terra.workspace.service.resource.controlled.PrivateResourceState;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
+import com.azure.resourcemanager.compute.models.VirtualMachineSizeTypes;
 import com.google.api.client.util.DateTime;
 import com.google.api.services.bigquery.model.Dataset;
 import com.google.cloud.storage.BucketInfo;
@@ -71,6 +82,12 @@ public class ControlledResourceFixtures {
       new ArrayList<>(List.of(LIFECYCLE_RULE_1, LIFECYCLE_RULE_2));
   public static final String BUCKET_NAME_PREFIX = "my-bucket";
   public static final String RESOURCE_LOCATION = "US-CENTRAL1";
+  public static final String AZURE_NAME_PREFIX = "azure";
+  public static final String AZURE_IP_NAME_PREFIX = "ip";
+  public static final String AZURE_DISK_NAME_PREFIX = "disk";
+  public static final String AZURE_NETWORK_NAME_PREFIX = "network";
+  public static final String AZURE_SUBNET_NAME_PREFIX = "subnet";
+  public static final String AZURE_VM_NAME_PREFIX = "vm";
 
   public static final ApiGcpGcsBucketCreationParameters GOOGLE_BUCKET_CREATION_PARAMETERS_MINIMAL =
       new ApiGcpGcsBucketCreationParameters()
@@ -86,8 +103,61 @@ public class ControlledResourceFixtures {
         .lifecycle(new ApiGcpGcsBucketLifecycle().rules(LIFECYCLE_RULES));
   }
 
+  /** Construct a parameter object with a unique ip name to avoid unintended clashes. */
+  public static ApiAzureIpCreationParameters getAzureIpCreationParameters() {
+    return new ApiAzureIpCreationParameters()
+        .name(uniqueAzureName(AZURE_IP_NAME_PREFIX))
+        .region("westcentralus");
+  }
+
+  /** Construct a parameter object with a unique disk name to avoid unintended clashes. */
+  public static ApiAzureDiskCreationParameters getAzureDiskCreationParameters() {
+    return new ApiAzureDiskCreationParameters()
+        .name(uniqueAzureName(AZURE_DISK_NAME_PREFIX))
+        .region("westcentralus")
+        .size(50);
+  }
+
+  /** Construct a parameter object with a unique name to avoid unintended clashes. */
+  public static ApiAzureStorageCreationParameters getAzureStorageCreationParameters() {
+    return new ApiAzureStorageCreationParameters()
+        .name(uniqueStorageAccountName())
+        .region("eastus");
+  }
+
+  /** Construct a parameter object with a unique bucket name to avoid unintended clashes. */
+  public static ApiAzureNetworkCreationParameters getAzureNetworkCreationParameters() {
+    return new ApiAzureNetworkCreationParameters()
+        .name(uniqueAzureName(AZURE_NETWORK_NAME_PREFIX))
+        .subnetName(uniqueAzureName(AZURE_SUBNET_NAME_PREFIX))
+        .addressSpaceCidr("192.168.0.0/16")
+        .subnetAddressCidr("192.168.1.0/24")
+        .region("westcentralus");
+  }
+
+  /** Construct a parameter object with a unique vm name to avoid unintended clashes. */
+  public static ApiAzureVmCreationParameters getAzureVmCreationParameters() {
+    return new ApiAzureVmCreationParameters()
+        .name(uniqueAzureName(AZURE_VM_NAME_PREFIX))
+        .region("westcentralus")
+        .vmSize(VirtualMachineSizeTypes.STANDARD_D2S_V3.toString())
+        .vmImageUri(
+            "/subscriptions/3efc5bdf-be0e-44e7-b1d7-c08931e3c16c/resourceGroups/mrg-qi-1-preview-20210517084351/providers/Microsoft.Compute/galleries/msdsvm/images/customized_ms_dsvm/versions/0.0.4")
+        .ipId(UUID.randomUUID())
+        .diskId(UUID.randomUUID())
+        .networkId(UUID.randomUUID());
+  }
+
   public static String uniqueBucketName() {
     return uniqueName(BUCKET_NAME_PREFIX);
+  }
+
+  public static String uniqueAzureName(String resourcePrefix) {
+    return uniqueName(AZURE_NAME_PREFIX + "-" + AZURE_NAME_PREFIX);
+  }
+
+  public static String uniqueStorageAccountName() {
+    return UUID.randomUUID().toString().toLowerCase().replace("-", "").substring(0, 23);
   }
 
   public static ApiGcpAiNotebookInstanceCreationParameters defaultNotebookCreationParameters() {
@@ -126,6 +196,103 @@ public class ControlledResourceFixtures {
         ManagedByType.MANAGED_BY_USER,
         null,
         bucketName);
+  }
+
+  public static ControlledAzureIpResource getAzureIp(String ipName, String region) {
+    return new ControlledAzureIpResource(
+        WORKSPACE_ID,
+        RESOURCE_ID,
+        RESOURCE_NAME,
+        RESOURCE_DESCRIPTION,
+        CLONING_INSTRUCTIONS,
+        OWNER_EMAIL,
+        // TODO: these should be changed when we group the resources
+        PrivateResourceState.ACTIVE,
+        AccessScopeType.ACCESS_SCOPE_PRIVATE,
+        ManagedByType.MANAGED_BY_USER,
+        null,
+        ipName,
+        region);
+  }
+
+  public static ControlledAzureDiskResource getAzureDisk(String diskName, String region, int size) {
+    return new ControlledAzureDiskResource(
+        WORKSPACE_ID,
+        RESOURCE_ID,
+        RESOURCE_NAME,
+        RESOURCE_DESCRIPTION,
+        CLONING_INSTRUCTIONS,
+        OWNER_EMAIL,
+        // TODO: these should be changed when we group the resources
+        PrivateResourceState.ACTIVE,
+        AccessScopeType.ACCESS_SCOPE_PRIVATE,
+        ManagedByType.MANAGED_BY_USER,
+        null,
+        diskName,
+        region,
+        size);
+  }
+
+  public static ControlledAzureNetworkResource getAzureNetwork(
+      ApiAzureNetworkCreationParameters creationParameters) {
+    return new ControlledAzureNetworkResource(
+        WORKSPACE_ID,
+        RESOURCE_ID,
+        RESOURCE_NAME,
+        RESOURCE_DESCRIPTION,
+        CLONING_INSTRUCTIONS,
+        OWNER_EMAIL,
+        // TODO: these should be changed when we group the resources
+        PrivateResourceState.ACTIVE,
+        AccessScopeType.ACCESS_SCOPE_PRIVATE,
+        ManagedByType.MANAGED_BY_USER,
+        null,
+        creationParameters.getName(),
+        creationParameters.getSubnetName(),
+        creationParameters.getAddressSpaceCidr(),
+        creationParameters.getSubnetAddressCidr(),
+        creationParameters.getRegion());
+  }
+
+  public static ControlledAzureStorageResource getAzureStorage(
+      String storageAccountName, String region) {
+    return new ControlledAzureStorageResource(
+        WORKSPACE_ID,
+        RESOURCE_ID,
+        RESOURCE_NAME,
+        RESOURCE_DESCRIPTION,
+        CLONING_INSTRUCTIONS,
+        OWNER_EMAIL,
+        // TODO: these should be changed when we group the resources
+        PrivateResourceState.ACTIVE,
+        AccessScopeType.ACCESS_SCOPE_PRIVATE,
+        ManagedByType.MANAGED_BY_USER,
+        null,
+        storageAccountName,
+        region);
+  }
+
+  public static ControlledAzureVmResource getAzureVm(
+      ApiAzureVmCreationParameters creationParameters) {
+    return new ControlledAzureVmResource(
+        WORKSPACE_ID,
+        RESOURCE_ID,
+        RESOURCE_NAME,
+        RESOURCE_DESCRIPTION,
+        CLONING_INSTRUCTIONS,
+        OWNER_EMAIL,
+        // TODO: these should be changed when we group the resources
+        PrivateResourceState.ACTIVE,
+        AccessScopeType.ACCESS_SCOPE_PRIVATE,
+        ManagedByType.MANAGED_BY_USER,
+        null,
+        creationParameters.getName(),
+        creationParameters.getRegion(),
+        creationParameters.getVmSize(),
+        creationParameters.getVmImageUri(),
+        creationParameters.getIpId(),
+        creationParameters.getNetworkId(),
+        creationParameters.getDiskId());
   }
 
   private ControlledResourceFixtures() {}

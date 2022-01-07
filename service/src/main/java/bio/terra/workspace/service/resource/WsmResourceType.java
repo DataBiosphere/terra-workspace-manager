@@ -2,7 +2,12 @@ package bio.terra.workspace.service.resource;
 
 import bio.terra.common.exception.ValidationException;
 import bio.terra.workspace.generated.model.ApiResourceType;
+import bio.terra.workspace.service.resource.controlled.*;
 import bio.terra.workspace.service.resource.controlled.ControlledAiNotebookInstanceResource;
+import bio.terra.workspace.service.resource.controlled.ControlledAzureDiskResource;
+import bio.terra.workspace.service.resource.controlled.ControlledAzureIpResource;
+import bio.terra.workspace.service.resource.controlled.ControlledAzureNetworkResource;
+import bio.terra.workspace.service.resource.controlled.ControlledAzureVmResource;
 import bio.terra.workspace.service.resource.controlled.ControlledBigQueryDatasetResource;
 import bio.terra.workspace.service.resource.controlled.ControlledGcsBucketResource;
 import bio.terra.workspace.service.resource.controlled.ControlledResource;
@@ -53,7 +58,37 @@ public enum WsmResourceType {
       "BIG_QUERY_DATA_TABLE",
       ApiResourceType.BIG_QUERY_DATA_TABLE,
       ReferencedBigQueryDataTableResource.class,
-      null);
+      null),
+  AZURE_IP(
+      CloudPlatform.AZURE,
+      "AZURE_IP",
+      ApiResourceType.AZURE_IP,
+      null,
+      ControlledAzureIpResource.class),
+  AZURE_DISK(
+      CloudPlatform.AZURE,
+      "AZURE_DISK",
+      ApiResourceType.AZURE_DISK,
+      null,
+      ControlledAzureDiskResource.class),
+  AZURE_NETWORK(
+      CloudPlatform.AZURE,
+      "AZURE_NETWORK",
+      ApiResourceType.AZURE_NETWORK,
+      null,
+      ControlledAzureNetworkResource.class),
+  AZURE_VM(
+      CloudPlatform.AZURE,
+      "AZURE_VM",
+      ApiResourceType.AZURE_VM,
+      null,
+      ControlledAzureVmResource.class),
+  AZURE_STORAGE_ACCOUNT(
+      CloudPlatform.AZURE,
+      "AZURE_STORAGE_ACCOUNT",
+      ApiResourceType.AZURE_STORAGE_ACCOUNT,
+      null,
+      ControlledAzureStorageResource.class);
 
   private final CloudPlatform cloudPlatform;
   private final String dbString; // serialized form of the resource type

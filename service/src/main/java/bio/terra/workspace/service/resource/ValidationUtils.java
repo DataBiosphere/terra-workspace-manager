@@ -5,9 +5,12 @@ import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceCreationParam
 import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceVmImage;
 import bio.terra.workspace.service.resource.exception.InvalidNameException;
 import bio.terra.workspace.service.resource.referenced.exception.InvalidReferenceException;
+import com.azure.core.management.Region;
+import com.azure.resourcemanager.compute.models.VirtualMachineSizeTypes;
 import com.google.common.collect.ImmutableList;
 import java.nio.charset.StandardCharsets;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
@@ -26,6 +29,13 @@ public class ValidationUtils {
    */
   public static final Pattern BUCKET_NAME_VALIDATION_PATTERN =
       Pattern.compile("^[a-z0-9][-_.a-z0-9]{1,220}[a-z0-9]$");
+
+  /**
+   * Azure Storage Account name validation valid. An storage account name must be between 3-24
+   * characters in length and may contain numbers and lowercase letters only.
+   */
+  public static final Pattern AZURE_STORAGE_ACCOUNT_NAME_VALIDATION_PATTERN =
+      Pattern.compile("^[a-z0-9]{3,24}$");
 
   /**
    * BigQuery datasets must be 1-1024 characters, using letters (upper or lowercase), numbers, and
@@ -129,6 +139,53 @@ public class ValidationUtils {
     }
   }
 
+  /**
+   * See
+   * https://docs.microsoft.com/en-us/azure/azure-resource-manager/management/resource-name-rules
+   * for azure resource rules
+   */
+  public static void validateAzureIPorSubnetName(String name) {
+    Pattern pattern = Pattern.compile("^[a-zA-Z0-9][a-zA-Z0-9-_.]{0,78}[a-zA-Z0-9_]$");
+
+    if (!pattern.matcher(name).matches()) {
+      logger.warn("Invalid Azure IP or Subnet name {}", name);
+      throw new InvalidReferenceException(
+          "Invalid Azure IP or Subnet name specified. See documentation for full specification https://docs.microsoft.com/en-us/azure/azure-resource-manager/management/resource-name-rules.");
+    }
+  }
+
+  public static void validateAzureNetworkName(String name) {
+    Pattern pattern = Pattern.compile("^[a-zA-Z0-9][a-zA-Z0-9-_.]{2,62}[a-zA-Z0-9_]$");
+
+    if (!pattern.matcher(name).matches()) {
+      logger.warn("Invalid Azure network name {}", name);
+      throw new InvalidReferenceException(
+          "Invalid Azure network name specified. See documentation for full specification https://docs.microsoft.com/en-us/azure/azure-resource-manager/management/resource-name-rules.");
+    }
+  }
+
+  public static void validateAzureDiskName(String name) {
+    Pattern pattern = Pattern.compile("^[a-zA-Z0-9-_]{0,80}$");
+
+    if (!pattern.matcher(name).matches()) {
+      logger.warn("Invalid Disk name {}", name);
+      throw new InvalidReferenceException(
+          "Invalid Azure Disk name specified. See documentation for full specification https://docs.microsoft.com/en-us/azure/azure-resource-manager/management/resource-name-rules.");
+    }
+  }
+
+  public static void validateAzureCidrBlock(String range) {
+    Pattern pattern =
+        Pattern.compile(
+            "^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\\/(\\d|[1-2]\\d|3[0-2]))$");
+
+    if (!pattern.matcher(range).matches()) {
+      logger.warn("Invalid CIDR block {}", range);
+      throw new InvalidReferenceException(
+          "Invalid Azure CIDR block specified. See documentation for full specification https://stackoverflow.com/questions/18608165/cidr-notation-and-ip-range-validator-pattern/18611259.");
+    }
+  }
+
   public static void validateBqDatasetName(String name) {
     if (StringUtils.isEmpty(name) || !BQ_DATASET_NAME_VALIDATION_PATTERN.matcher(name).matches()) {
       logger.warn("Invalid BQ name {}", name);
@@ -188,6 +245,36 @@ public class ValidationUtils {
     if (name != null && name.length() > MAX_RESOURCE_DESCRIPTION_NAME) {
       throw new InvalidNameException(
           "Invalid description specified. Description must be under 2048 characters.");
+    }
+  }
+
+  public static void validateStorageAccountName(String storageAccountName) {
+    if (!AZURE_STORAGE_ACCOUNT_NAME_VALIDATION_PATTERN.matcher(storageAccountName).matches()) {
+      logger.warn("Invalid Storage Account name: {}", storageAccountName);
+      throw new InvalidReferenceException(
+          "Invalid Azure Storage Account name. The name must be 3 to 24 alphanumeric lower case characters.");
+    }
+  }
+
+  public static void validateAzureVmSize(String vmSize) {
+    if (!VirtualMachineSizeTypes.values().stream()
+        .map(x -> x.toString())
+        .collect(Collectors.toList())
+        .contains(vmSize)) {
+      logger.warn("Invalid Azure vmSize {}", vmSize);
+      throw new InvalidReferenceException(
+          "Invalid Azure vm size specified. See the class `com.azure.resourcemanager.compute.models.VirtualMachineSizeTypes`");
+    }
+  }
+
+  public static void validateRegion(String region) {
+    if (!Region.values().stream()
+        .map(x -> x.toString())
+        .collect(Collectors.toList())
+        .contains(region)) {
+      logger.warn("Invalid Azure region {}", region);
+      throw new InvalidReferenceException(
+          "Invalid Azure Region specified. See the class `com.azure.core.management.Region`");
     }
   }
 }

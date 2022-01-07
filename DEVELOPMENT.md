@@ -25,7 +25,7 @@ We currently have these workflows:
 
 Workflow      | Triggers         | Work
 --------------|------------------|-------
-_test_ | on PR and merge to dev | runs the unit, connected and soon-to-be-removed integration tests
+_test_ | on PR and merge to dev | runs the unit, connected and azure tests
 _pr-integration_ | on PR and merge to dev | runs the TestRunner-based integration test suite from the GHA host VM
 _nightly-tests_ | nightly at 2am | runs the TestRunner-based integration, perf, and resiliency test suites on the wsmtest personal environment
 _tag-publish_ | on merge to dev | tags, version bumps, publishes client to artifactory, pushes image to GCR
@@ -84,11 +84,11 @@ the Postgres server
 ##### Running the Postgres Container
 To start a postgres container configured with the necessary databases:
 ```sh
-./local-dev/run_postgres.sh start
+./service/local-dev/run_postgres.sh start
 ```
 To stop the container:
 ```sh
-./local-dev/run_postgres.sh stop
+./service/local-dev/run_postgres.sh stop
 ```
 Note that the contents of the database is not saved between container runs.
 

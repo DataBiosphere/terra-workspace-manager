@@ -15,6 +15,11 @@ import bio.terra.workspace.service.resource.WsmResource;
 import bio.terra.workspace.service.resource.WsmResourceService;
 import bio.terra.workspace.service.resource.WsmResourceType;
 import bio.terra.workspace.service.resource.controlled.ControlledAiNotebookInstanceResource;
+import bio.terra.workspace.service.resource.controlled.ControlledAzureDiskResource;
+import bio.terra.workspace.service.resource.controlled.ControlledAzureIpResource;
+import bio.terra.workspace.service.resource.controlled.ControlledAzureNetworkResource;
+import bio.terra.workspace.service.resource.controlled.ControlledAzureStorageResource;
+import bio.terra.workspace.service.resource.controlled.ControlledAzureVmResource;
 import bio.terra.workspace.service.resource.controlled.ControlledBigQueryDatasetResource;
 import bio.terra.workspace.service.resource.controlled.ControlledGcsBucketResource;
 import bio.terra.workspace.service.resource.controlled.ControlledResource;
@@ -159,6 +164,15 @@ public class ResourceController implements ResourceApi {
               break;
             }
 
+          case AI_NOTEBOOK_INSTANCE:
+          case AZURE_IP:
+          case AZURE_VM:
+          case AZURE_DISK:
+          case AZURE_NETWORK:
+          case AZURE_STORAGE_ACCOUNT:
+            throw new InternalLogicException(
+                "Unimplemented referenced resource type: " + wsmResource.getResourceType());
+
           default:
             throw new InternalLogicException(
                 "Unknown referenced resource type: " + wsmResource.getResourceType());
@@ -189,6 +203,43 @@ public class ResourceController implements ResourceApi {
               union.gcpBqDataset(resource.toApiAttributes(gcpProjectId));
               break;
             }
+
+          case AZURE_DISK:
+            {
+              ControlledAzureDiskResource resource = controlledResource.castToAzureDiskResource();
+              union.azureDisk(resource.toApiAttributes());
+              break;
+            }
+
+          case AZURE_IP:
+            {
+              ControlledAzureIpResource resource = controlledResource.castToAzureIpResource();
+              union.azureIp(resource.toApiAttributes());
+              break;
+            }
+          case AZURE_NETWORK:
+            {
+              ControlledAzureNetworkResource resource =
+                  controlledResource.castToAzureNetworkResource();
+              union.azureNetwork(resource.toApiAttributes());
+              break;
+            }
+
+          case AZURE_STORAGE_ACCOUNT:
+            {
+              ControlledAzureStorageResource resource =
+                  controlledResource.castToAzureStorageResource();
+              union.azureStorage(resource.toApiAttributes());
+              break;
+            }
+
+          case AZURE_VM:
+            {
+              ControlledAzureVmResource resource = controlledResource.castToAzureVmResource();
+              union.azureVm(resource.toApiAttributes());
+              break;
+            }
+
           case DATA_REPO_SNAPSHOT: // there is a use case for this, but low priority
             throw new InternalLogicException(
                 "Unimplemented controlled resource type: " + wsmResource.getResourceType());

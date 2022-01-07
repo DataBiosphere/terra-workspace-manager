@@ -11,6 +11,7 @@ import bio.terra.workspace.common.utils.GcpUtils;
 import bio.terra.workspace.service.iam.model.ControlledResourceIamRole;
 import bio.terra.workspace.service.iam.model.RoleBinding;
 import bio.terra.workspace.service.iam.model.SamConstants;
+import bio.terra.workspace.service.iam.model.SamConstants.SamWorkspaceAction;
 import bio.terra.workspace.service.iam.model.WsmIamRole;
 import bio.terra.workspace.service.resource.controlled.ControlledResource;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceCategory;
@@ -60,7 +61,6 @@ import org.springframework.stereotype.Component;
  */
 @Component
 public class SamService {
-
   private final SamConfiguration samConfig;
   private final StageService stageService;
   private final OkHttpClient commonHttpClient;
@@ -419,6 +419,7 @@ public class SamService {
         SamConstants.SamResource.WORKSPACE,
         workspaceId.toString(),
         samActionToModifyRole(role));
+
     ResourcesApi resourceApi = samResourcesApi(userRequest.getRequiredToken());
     try {
       SamRetry.retry(
@@ -552,7 +553,8 @@ public class SamService {
         userRequest,
         SamConstants.SamResource.WORKSPACE,
         workspaceId.toString(),
-        SamConstants.SamWorkspaceAction.READ_IAM);
+        SamWorkspaceAction.READ_IAM);
+
     ResourcesApi resourceApi = samResourcesApi(userRequest.getRequiredToken());
     try {
       List<AccessPolicyResponseEntry> samResult =
@@ -760,9 +762,9 @@ public class SamService {
       @Nullable String assignedUserEmail,
       AuthenticatedUserRequest userRequest)
       throws InterruptedException {
+
     // We need the WSM SA for setting controlled resource policies
     initializeWsmServiceAccount();
-
     FullyQualifiedResourceId workspaceParentFqId =
         new FullyQualifiedResourceId()
             .resourceId(resource.getWorkspaceId().toString())
@@ -824,6 +826,7 @@ public class SamService {
   @Traced
   public void deleteControlledResource(ControlledResource resource, String token)
       throws InterruptedException {
+
     ResourcesApi resourceApi = samResourcesApi(token);
     try {
       SamRetry.retry(

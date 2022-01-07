@@ -12,12 +12,21 @@ import bio.terra.cloudres.google.notebooks.AIPlatformNotebooksCow;
 import bio.terra.cloudres.google.serviceusage.ServiceUsageCow;
 import bio.terra.cloudres.google.storage.StorageCow;
 import bio.terra.common.exception.BadRequestException;
+import bio.terra.workspace.app.configuration.external.AzureConfiguration;
 import bio.terra.workspace.app.configuration.external.CrlConfiguration;
 import bio.terra.workspace.service.crl.exception.CrlInternalException;
 import bio.terra.workspace.service.crl.exception.CrlNotInUseException;
 import bio.terra.workspace.service.crl.exception.CrlSecurityException;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.resource.referenced.exception.InvalidReferenceException;
+import bio.terra.workspace.service.workspace.model.AzureCloudContext;
+import com.azure.core.credential.TokenCredential;
+import com.azure.core.management.AzureEnvironment;
+import com.azure.core.management.profile.AzureProfile;
+import com.azure.identity.ClientSecretCredentialBuilder;
+import com.azure.resourcemanager.compute.ComputeManager;
+import com.azure.resourcemanager.resources.ResourceManager;
+import com.azure.resourcemanager.storage.StorageManager;
 import com.google.api.client.googleapis.json.GoogleJsonResponseException;
 import com.google.api.services.bigquery.Bigquery;
 import com.google.api.services.bigquery.BigqueryScopes;
@@ -89,6 +98,7 @@ public class CrlService {
       crlServiceUsageCow = null;
     }
   }
+
   /** @return CRL {@link AIPlatformNotebooksCow} which wraps Google AI Platform Notebooks API */
   public AIPlatformNotebooksCow getAIPlatformNotebooksCow() {
     assertCrlInUse();
@@ -134,6 +144,27 @@ public class CrlService {
   public ServiceUsageCow getServiceUsageCow() {
     assertCrlInUse();
     return crlServiceUsageCow;
+  }
+
+  /** Returns an Azure {@link ComputeManager} configured for use with CRL. */
+  public ComputeManager getComputeManager(
+      AzureCloudContext azureCloudContext, AzureConfiguration azureConfig) {
+    assertCrlInUse();
+    return buildComputeManager(azureCloudContext, azureConfig);
+  }
+
+  /** Returns an Azure {@link StorageManager} configured for use with CRL. */
+  public StorageManager getStorageManager(
+      AzureCloudContext azureCloudContext, AzureConfiguration azureConfig) {
+    assertCrlInUse();
+    return buildStorageManager(azureCloudContext, azureConfig);
+  }
+
+  /** Returns an Azure {@link ResourceManager} configured for use with CRL. */
+  public ResourceManager getResourceManager(
+      AzureCloudContext azureCloudContext, AzureConfiguration azureConfig) {
+    assertCrlInUse();
+    return buildResourceManager(azureCloudContext, azureConfig);
   }
 
   /** @return CRL {@link BigQueryCow} which wraps Google BigQuery API */
@@ -412,6 +443,80 @@ public class CrlService {
     return builder.build();
   }
 
+  //  Azure Support
+
+  public TokenCredential getManagedAppCredentials(AzureConfiguration azureConfig) {
+    return new ClientSecretCredentialBuilder()
+        .clientId(azureConfig.getManagedAppClientId())
+        .clientSecret(azureConfig.getManagedAppClientSecret())
+        .tenantId(azureConfig.getManagedAppTenantId())
+        .build();
+  }
+
+  /**
+   * Get a resource manager pointed at the MRG subscription
+   *
+   * @param azureCloudContext target cloud context
+   * @return azure resource manager
+   */
+  public ResourceManager buildResourceManager(
+      AzureCloudContext azureCloudContext, AzureConfiguration azureConfig) {
+    TokenCredential azureCreds = getManagedAppCredentials(azureConfig);
+
+    AzureProfile azureProfile =
+        new AzureProfile(
+            azureCloudContext.getAzureTenantId(),
+            azureCloudContext.getAzureSubscriptionId(),
+            AzureEnvironment.AZURE);
+
+    // We must use FQDN because there are two `Defaults` symbols imported otherwise.
+    ResourceManager manager =
+        bio.terra.cloudres.azure.resourcemanager.common.Defaults.crlConfigure(
+                clientConfig, ResourceManager.configure())
+            .authenticate(azureCreds, azureProfile)
+            .withSubscription(azureCloudContext.getAzureSubscriptionId());
+
+    return manager;
+  }
+
+  private ComputeManager buildComputeManager(
+      AzureCloudContext azureCloudContext, AzureConfiguration azureConfig) {
+    TokenCredential azureCreds = getManagedAppCredentials(azureConfig);
+
+    AzureProfile azureProfile =
+        new AzureProfile(
+            azureCloudContext.getAzureTenantId(),
+            azureCloudContext.getAzureSubscriptionId(),
+            AzureEnvironment.AZURE);
+
+    // We must use FQDN because there are two `Defaults` symbols imported otherwise.
+    ComputeManager manager =
+        bio.terra.cloudres.azure.resourcemanager.common.Defaults.crlConfigure(
+                clientConfig, ComputeManager.configure())
+            .authenticate(azureCreds, azureProfile);
+
+    return manager;
+  }
+
+  private StorageManager buildStorageManager(
+      AzureCloudContext azureCloudContext, AzureConfiguration azureConfig) {
+    TokenCredential azureCreds = getManagedAppCredentials(azureConfig);
+
+    AzureProfile azureProfile =
+        new AzureProfile(
+            azureCloudContext.getAzureTenantId(),
+            azureCloudContext.getAzureSubscriptionId(),
+            AzureEnvironment.AZURE);
+
+    // We must use FQDN because there are two `Defaults` symbols imported otherwise.
+    StorageManager manager =
+        bio.terra.cloudres.azure.resourcemanager.common.Defaults.crlConfigure(
+                clientConfig, StorageManager.configure())
+            .authenticate(azureCreds, azureProfile);
+
+    return manager;
+  }
+
   @VisibleForTesting
   public ClientConfig getClientConfig() {
     assertCrlInUse();
@@ -422,5 +527,9 @@ public class CrlService {
     if (!crlConfig.getUseCrl()) {
       throw new CrlNotInUseException("Attempt to use CRL when it is set not to be used");
     }
+  }
+
+  public boolean canCreateAzureIp(String ipName, AuthenticatedUserRequest userRequest) {
+    return true; // TODO: check azure acls?
   }
 }

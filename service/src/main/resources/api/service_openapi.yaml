@@ -25,6 +25,7 @@
 # for the metadata for each cloud resource type. It is a bit clumsy, but provides complete
 # description for a resource.
 #
+
 openapi: 3.0.3
 info:
   title: Workspace Manager API
@@ -83,8 +84,8 @@ paths:
           $ref: '#/components/responses/NotFound'
     get:
       parameters:
-      - $ref: '#/components/parameters/Offset'
-      - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/Offset'
+        - $ref: '#/components/parameters/Limit'
       summary: List all workspaces a user can read.
       operationId: listWorkspaces
       tags: [ Workspace ]
@@ -471,8 +472,8 @@ paths:
 
   /api/workspaces/v1/{workspaceId}/resources/referenced/{resourceId}/access:
     parameters:
-    - $ref: '#/components/parameters/WorkspaceId'
-    - $ref: '#/components/parameters/ResourceId'
+      - $ref: '#/components/parameters/WorkspaceId'
+      - $ref: '#/components/parameters/ResourceId'
     get:
       summary: Check a user's access to a referenced resource
       operationId: checkReferenceAccess
@@ -491,7 +492,7 @@ paths:
 
   /api/workspaces/v1/{workspaceId}/resources/referenced/datarepo/snapshots:
     parameters:
-    - $ref: '#/components/parameters/WorkspaceId'
+      - $ref: '#/components/parameters/WorkspaceId'
     post:
       summary: Create a new data repo snapshot reference in a workspace.
       operationId: createDataRepoSnapshotReference
@@ -516,8 +517,8 @@ paths:
 
   /api/workspaces/v1/{workspaceId}/resources/referenced/datarepo/snapshots/{resourceId}:
     parameters:
-    - $ref: '#/components/parameters/WorkspaceId'
-    - $ref: '#/components/parameters/ResourceId'
+      - $ref: '#/components/parameters/WorkspaceId'
+      - $ref: '#/components/parameters/ResourceId'
     get:
       summary: Gets a reference to a snapshot from a workspace.
       operationId: getDataRepoSnapshotReference
@@ -611,8 +612,8 @@ paths:
 
   /api/workspaces/v1/{workspaceId}/resources/referenced/datarepo/snapshots/name/{name}:
     parameters:
-    - $ref: '#/components/parameters/WorkspaceId'
-    - $ref: '#/components/parameters/Name'
+      - $ref: '#/components/parameters/WorkspaceId'
+      - $ref: '#/components/parameters/Name'
     get:
       summary: Gets a reference to a snapshot by name.
       operationId: getDataRepoSnapshotReferenceByName
@@ -766,7 +767,7 @@ paths:
 
   /api/workspaces/v1/{workspaceId}/resources/referenced/gcp/buckets:
     parameters:
-    - $ref: '#/components/parameters/WorkspaceId'
+      - $ref: '#/components/parameters/WorkspaceId'
     post:
       summary: Create a new GCS bucket reference in a workspace.
       operationId: createBucketReference
@@ -791,8 +792,8 @@ paths:
 
   /api/workspaces/v1/{workspaceId}/resources/referenced/gcp/buckets/{resourceId}:
     parameters:
-    - $ref: '#/components/parameters/WorkspaceId'
-    - $ref: '#/components/parameters/ResourceId'
+      - $ref: '#/components/parameters/WorkspaceId'
+      - $ref: '#/components/parameters/ResourceId'
     get:
       summary: Gets a reference to a bucket from a workspace.
       operationId: getBucketReference
@@ -885,8 +886,8 @@ paths:
           $ref: '#/components/responses/ServerError'
   /api/workspaces/v1/{workspaceId}/resources/referenced/gcp/buckets/name/{name}:
     parameters:
-    - $ref: '#/components/parameters/WorkspaceId'
-    - $ref: '#/components/parameters/Name'
+      - $ref: '#/components/parameters/WorkspaceId'
+      - $ref: '#/components/parameters/Name'
     get:
       summary: Gets a reference to a Gcp bucket by name.
       operationId: getBucketReferenceByName
@@ -1037,7 +1038,7 @@ paths:
           $ref: '#/components/responses/ServerError'
   /api/workspaces/v1/{workspaceId}/resources/referenced/gcp/bigquerydatasets:
     parameters:
-    - $ref: '#/components/parameters/WorkspaceId'
+      - $ref: '#/components/parameters/WorkspaceId'
     post:
       summary: Create a new BigQuery dataset reference in a workspace.
       operationId: createBigQueryDatasetReference
@@ -1062,8 +1063,8 @@ paths:
 
   /api/workspaces/v1/{workspaceId}/resources/referenced/gcp/bigquerydatasets/{resourceId}:
     parameters:
-    - $ref: '#/components/parameters/WorkspaceId'
-    - $ref: '#/components/parameters/ResourceId'
+      - $ref: '#/components/parameters/WorkspaceId'
+      - $ref: '#/components/parameters/ResourceId'
     get:
       summary: Gets a reference to a BigQuery dataset from a workspace.
       operationId: getBigQueryDatasetReference
@@ -1156,8 +1157,8 @@ paths:
           $ref: '#/components/responses/ServerError'
   /api/workspaces/v1/{workspaceId}/resources/referenced/gcp/bigquerydatasets/name/{name}:
     parameters:
-    - $ref: '#/components/parameters/WorkspaceId'
-    - $ref: '#/components/parameters/Name'
+      - $ref: '#/components/parameters/WorkspaceId'
+      - $ref: '#/components/parameters/Name'
     get:
       summary: Gets a reference to a BigQuery dataset by name.
       operationId: getBigQueryDatasetReferenceByName
@@ -1174,7 +1175,7 @@ paths:
 
   /api/workspaces/v1/{workspaceId}/cloudcontexts:
     parameters:
-    - $ref: '#/components/parameters/WorkspaceId'
+      - $ref: '#/components/parameters/WorkspaceId'
     post:
       summary: Create a cloud context for the workspace.
       operationId: createCloudContext
@@ -1201,8 +1202,8 @@ paths:
 
   /api/workspaces/v1/{workspaceId}/cloudcontexts/result/{jobId}:
     parameters:
-    - $ref: '#/components/parameters/WorkspaceId'
-    - $ref: '#/components/parameters/JobId'
+      - $ref: '#/components/parameters/WorkspaceId'
+      - $ref: '#/components/parameters/JobId'
     get:
       summary: Get the result of a async job to create a cloud context.
       operationId: getCreateCloudContextResult
@@ -1225,8 +1226,8 @@ paths:
 
   /api/workspaces/v1/{workspaceId}/cloudcontexts/{cloudContext}:
     parameters:
-    - $ref: '#/components/parameters/WorkspaceId'
-    - $ref: '#/components/parameters/CloudContext'
+      - $ref: '#/components/parameters/WorkspaceId'
+      - $ref: '#/components/parameters/CloudContext'
     delete:
       summary: Deletes a cloud context and all of its data from a workspace.
       operationId: deleteCloudContext
@@ -1243,7 +1244,7 @@ paths:
 
   /api/workspaces/v1/{workspaceId}/roles:
     parameters:
-    - $ref: '#/components/parameters/WorkspaceId'
+      - $ref: '#/components/parameters/WorkspaceId'
     get:
       summary: Read all IAM roles and their members in a workspace.
       operationId: getRoles
@@ -1260,8 +1261,8 @@ paths:
 
   /api/workspaces/v1/{workspaceId}/roles/{role}/members:
     parameters:
-    - $ref: '#/components/parameters/WorkspaceId'
-    - $ref: '#/components/parameters/Role'
+      - $ref: '#/components/parameters/WorkspaceId'
+      - $ref: '#/components/parameters/Role'
     post:
       summary: Grant an IAM role to a user or group.
       operationId: grantRole
@@ -1283,9 +1284,9 @@ paths:
           $ref: '#/components/responses/ServerError'
   /api/workspaces/v1/{workspaceId}/roles/{role}/members/{memberEmail}:
     parameters:
-    - $ref: '#/components/parameters/WorkspaceId'
-    - $ref: '#/components/parameters/Role'
-    - $ref: '#/components/parameters/MemberEmail'
+      - $ref: '#/components/parameters/WorkspaceId'
+      - $ref: '#/components/parameters/Role'
+      - $ref: '#/components/parameters/MemberEmail'
     delete:
       summary: Remove an IAM role from a user or group.
       operationId: removeRole
@@ -1303,10 +1304,10 @@ paths:
 
   /api/job/v1/jobs/{jobId}:
     parameters:
-    - $ref: '#/components/parameters/JobId'
+      - $ref: '#/components/parameters/JobId'
     get:
       tags:
-      - jobs
+        - jobs
       operationId: retrieveJob
       responses:
         200:
@@ -1459,6 +1460,27 @@ paths:
         '500':
           $ref: '#/components/responses/ServerError'
 
+  /api/workspaces/v1/{workspaceId}/resources/controlled/azure/storage:
+    parameters:
+      - $ref: '#/components/parameters/WorkspaceId'
+    post:
+      summary: Create a new controlled Azure Storage Account
+      operationId: createAzureStorage
+      tags: [ControlledAzureResource]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateControlledAzureStorageRequestBody'
+      responses:
+        '200':
+          $ref: '#/components/responses/CreateControlledAzureStorageResponse'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
   /api/workspaces/v1/{workspaceId}/resources/controlled/gcp/buckets/delete-result/{jobId}:
     parameters:
       - $ref: '#/components/parameters/WorkspaceId'
@@ -1476,9 +1498,337 @@ paths:
           $ref: '#/components/responses/PermissionDenied'
         '500':
           $ref: '#/components/responses/ServerError'
+
+  /api/workspaces/v1/{workspaceId}/resources/controlled/azure/ip:
+    parameters:
+      - $ref: '#/components/parameters/WorkspaceId'
+    post:
+      summary: Create a new controlled Azure IP
+      operationId: createAzureIp
+      tags: [ControlledAzureResource]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateControlledAzureIpRequestBody'
+      responses:
+        '200':
+          $ref: '#/components/responses/CreateControlledAzureIpResponse'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /api/workspaces/v1/{workspaceId}/resources/controlled/azure/ip/{resourceId}:
+    parameters:
+      - $ref: '#/components/parameters/WorkspaceId'
+      - $ref: '#/components/parameters/ResourceId'
+    get:
+      summary: Get a controlled Azure IP resource
+      operationId: getAzureIp
+      tags: [ControlledAzureResource]
+      responses:
+        '200':
+          $ref: '#/components/responses/GetControlledAzureIpResponse'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+    post:
+      summary: |
+        Delete an azure IP
+      operationId: deleteAzureIp
+      tags: [ControlledAzureResource]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeleteControlledAzureResourceRequest'
+      responses:
+        '200':
+          $ref: '#/components/responses/DeleteControlledAzureResourceResponse'
+        '202':
+          $ref: '#/components/responses/DeleteControlledAzureResourceResponse'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /api/workspaces/v1/{workspaceId}/resources/controlled/azure/ip/delete-result/{jobId}:
+    parameters:
+      - $ref: '#/components/parameters/WorkspaceId'
+      - $ref: '#/components/parameters/JobId'
+    get:
+      summary: Retrieve information about an azure ip deletion job.
+      operationId: getDeleteAzureIpResult
+      tags: [ControlledAzureResource]
+      responses:
+        '200':
+          $ref: '#/components/responses/DeleteControlledAzureResourceResponse'
+        '202':
+          $ref: '#/components/responses/DeleteControlledAzureResourceResponse'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /api/workspaces/v1/{workspaceId}/resources/controlled/azure/disks:
+    parameters:
+      - $ref: '#/components/parameters/WorkspaceId'
+    post:
+      summary: Create a new controlled Azure Disk
+      operationId: createAzureDisk
+      tags: [ ControlledAzureResource ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateControlledAzureDiskRequestBody'
+      responses:
+        '200':
+          $ref: '#/components/responses/CreateControlledAzureDiskResponse'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /api/workspaces/v1/{workspaceId}/resources/controlled/azure/disks/{resourceId}:
+    parameters:
+      - $ref: '#/components/parameters/WorkspaceId'
+      - $ref: '#/components/parameters/ResourceId'
+    get:
+      summary: Get a controlled Azure Disk resource
+      operationId: getAzureDisk
+      tags: [ControlledAzureResource]
+      responses:
+        '200':
+          $ref: '#/components/responses/GetControlledAzureDiskResponse'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+    post:
+      summary: |
+        Delete an azure Disk
+      operationId: deleteAzureDisk
+      tags: [ControlledAzureResource]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeleteControlledAzureResourceRequest'
+      responses:
+        '200':
+          $ref: '#/components/responses/DeleteControlledAzureResourceResponse'
+        '202':
+          $ref: '#/components/responses/DeleteControlledAzureResourceResponse'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+
+  /api/workspaces/v1/{workspaceId}/resources/controlled/azure/disks/delete-result/{jobId}:
+    parameters:
+      - $ref: '#/components/parameters/WorkspaceId'
+      - $ref: '#/components/parameters/JobId'
+    get:
+      summary: Retrieve information about an azure ip deletion job.
+      operationId: getDeleteAzureDiskResult
+      tags: [ControlledAzureResource]
+      responses:
+        '200':
+          $ref: '#/components/responses/DeleteControlledAzureResourceResponse'
+        '202':
+          $ref: '#/components/responses/DeleteControlledAzureResourceResponse'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /api/workspaces/v1/{workspaceId}/resources/controlled/azure/vm:
+    parameters:
+      - $ref: '#/components/parameters/WorkspaceId'
+    post:
+      summary: Create a new controlled Azure VM
+      operationId: createAzureVm
+      tags: [ControlledAzureResource]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateControlledAzureVmRequestBody'
+      responses:
+        '200':
+          $ref: '#/components/responses/CreateControlledAzureVmResponse'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /api/workspaces/v1/{workspaceId}/resources/controlled/azure/vm/create-result/{jobId}:
+    parameters:
+      - $ref: '#/components/parameters/WorkspaceId'
+      - $ref: '#/components/parameters/JobId'
+    get:
+      summary: Retrieve information about an Azure Vm create job.
+      operationId: getCreateAzureVmResult
+      tags: [ ControlledAzureResource ]
+      responses:
+        '200':
+          $ref: '#/components/responses/CreateControlledAzureVmResponse'
+        '202':
+          $ref: '#/components/responses/CreateControlledAzureVmResponse'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /api/workspaces/v1/{workspaceId}/resources/controlled/azure/network:
+    parameters:
+      - $ref: '#/components/parameters/WorkspaceId'
+    post:
+      summary: Create a new controlled Azure Network
+      operationId: createAzureNetwork
+      tags: [ ControlledAzureResource ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateControlledAzureNetworkRequestBody'
+      responses:
+        '200':
+          $ref: '#/components/responses/CreateControlledAzureNetworkResponse'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /api/workspaces/v1/{workspaceId}/resources/controlled/azure/vm/{resourceId}:
+    parameters:
+      - $ref: '#/components/parameters/WorkspaceId'
+      - $ref: '#/components/parameters/ResourceId'
+    get:
+      summary: Get a controlled Azure VM resource
+      operationId: getAzureVm
+      tags: [ ControlledAzureResource ]
+      responses:
+        '200':
+          $ref: '#/components/responses/GetControlledAzureVmResponse'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+    post:
+      summary: |
+        Delete an azure Vm
+      operationId: deleteAzureVm
+      tags: [ControlledAzureResource]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeleteControlledAzureResourceRequest'
+      responses:
+        '200':
+          $ref: '#/components/responses/DeleteControlledAzureResourceResponse'
+        '202':
+          $ref: '#/components/responses/DeleteControlledAzureResourceResponse'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /api/workspaces/v1/{workspaceId}/resources/controlled/azure/network/{resourceId}:
+    parameters:
+      - $ref: '#/components/parameters/WorkspaceId'
+      - $ref: '#/components/parameters/ResourceId'
+    get:
+      summary: Get a controlled Azure Network resource
+      operationId: getAzureNetwork
+      tags: [ ControlledAzureResource ]
+      responses:
+        '200':
+          $ref: '#/components/responses/GetControlledAzureNetworkResponse'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+    post:
+      summary: |
+        Delete an azure Network
+      operationId: deleteAzureNetwork
+      tags: [ ControlledAzureResource ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeleteControlledAzureResourceRequest'
+      responses:
+        '200':
+          $ref: '#/components/responses/DeleteControlledAzureResourceResponse'
+        '202':
+          $ref: '#/components/responses/DeleteControlledAzureResourceResponse'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /api/workspaces/v1/{workspaceId}/resources/controlled/azure/vm/delete-result/{jobId}:
+    parameters:
+      - $ref: '#/components/parameters/WorkspaceId'
+      - $ref: '#/components/parameters/JobId'
+    get:
+      summary: Retrieve information about an azure vm deletion job.
+      operationId: getDeleteAzureVmResult
+      tags: [ ControlledAzureResource ]
+      responses:
+        '200':
+          $ref: '#/components/responses/DeleteControlledAzureResourceResponse'
+        '202':
+          $ref: '#/components/responses/DeleteControlledAzureResourceResponse'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /api/workspaces/v1/{workspaceId}/resources/controlled/azure/network/delete-result/{jobId}:
+    parameters:
+      - $ref: '#/components/parameters/WorkspaceId'
+      - $ref: '#/components/parameters/JobId'
+    get:
+      summary: Retrieve information about an azure network deletion job.
+      operationId: getDeleteAzureNetworkResult
+      tags: [ ControlledAzureResource ]
+      responses:
+        '200':
+          $ref: '#/components/responses/DeleteControlledAzureResourceResponse'
+        '202':
+          $ref: '#/components/responses/DeleteControlledAzureResourceResponse'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
   /api/workspaces/v1/{workspaceId}/resources/controlled/gcp/bqdatasets:
     parameters:
-    - $ref: '#/components/parameters/WorkspaceId'
+      - $ref: '#/components/parameters/WorkspaceId'
     post:
       summary: Create a new controlled BigQuery dataset
       operationId: createBigQueryDataset
@@ -1499,8 +1849,8 @@ paths:
 
   /api/workspaces/v1/{workspaceId}/resources/controlled/gcp/bqdatasets/{resourceId}:
     parameters:
-    - $ref: '#/components/parameters/WorkspaceId'
-    - $ref: '#/components/parameters/ResourceId'
+      - $ref: '#/components/parameters/WorkspaceId'
+      - $ref: '#/components/parameters/ResourceId'
     get:
       summary: Get a controlled BigQuery dataset resource
       operationId: getBigQueryDataset
@@ -2280,8 +2630,9 @@ components:
         gcpContext:
           description: GCP context, if one exists
           $ref: '#/components/schemas/GcpContext'
-        # When we have an Azure context, we can put it right here.
-        # No point making a complex structure when there will be only a few of these
+        azureContext:
+          description: Azure context, if one exists
+          $ref: '#/components/schemas/AzureContext'
         properties:
           $ref: '#/components/schemas/Properties'
 
@@ -2314,11 +2665,31 @@ components:
       description: |
         Request body for asynchronously creating a cloud context for a workspace.
         Contains the CloudPlatform for the context and the JobControl object.
+        For GCP, a project is created to contain the cloud resources of the context.
+        For Azure, a managed resource group (MRG) is created outside of WSM within a tenant
+        and a subscription. The MRG may provide the cloud context for multiple workspaces.
+        Therefore, the location of the MRG is provided as input to the context creation.
       properties:
         cloudPlatform:
           $ref: '#/components/schemas/CloudPlatform'
         jobControl:
           $ref: '#/components/schemas/JobControl'
+        azureContext:
+          $ref: '#/components/schemas/AzureContext'
+
+    AzureContext:
+      type: object
+      description: The azure cloud context associated with a workspace.
+      properties:
+        tenantId:
+          description: The ID of Azure tenant associated with the workspace.
+          type: string
+        subscriptionId:
+          description: The ID of Azure subscription associated with the workspace.
+          type: string
+        resourceGroupId:
+          description: The ID of Azure resource group associated with the workspace.
+          type: string
 
     GcpContext:
       type: object
@@ -2435,6 +2806,54 @@ components:
       properties:
         memberEmail:
           type: string
+
+    CreateControlledAzureIpRequestBody:
+      description: Payload for requesting a new controlled Azure IP resource.
+      type: object
+      properties:
+        common:
+          $ref: '#/components/schemas/ControlledResourceCommonFields'
+        azureIp:
+          $ref: '#/components/schemas/AzureIpCreationParameters'
+
+    CreateControlledAzureStorageRequestBody:
+      description: Payload for requesting a new controlled Azure storage account resource.
+      type: object
+      properties:
+        common:
+          $ref: '#/components/schemas/ControlledResourceCommonFields'
+        azureStorage:
+          $ref: '#/components/schemas/AzureStorageCreationParameters'
+
+
+    CreateControlledAzureDiskRequestBody:
+      description: Payload for requesting a new controlled Azure Disk resource.
+      type: object
+      properties:
+        common:
+          $ref: '#/components/schemas/ControlledResourceCommonFields'
+        azureDisk:
+          $ref: '#/components/schemas/AzureDiskCreationParameters'
+
+    CreateControlledAzureNetworkRequestBody:
+      description: Payload for requesting a new controlled Azure Network resource.
+      type: object
+      properties:
+        common:
+          $ref: '#/components/schemas/ControlledResourceCommonFields'
+        azureNetwork:
+          $ref: '#/components/schemas/AzureNetworkCreationParameters'
+
+    CreateControlledAzureVmRequestBody:
+      description: Payload for requesting a new controlled Azure VM resource.
+      type: object
+      properties:
+        common:
+          $ref: '#/components/schemas/ControlledResourceCommonFields'
+        azureVm:
+          $ref: '#/components/schemas/AzureVmCreationParameters'
+        jobControl:
+          $ref: '#/components/schemas/JobControl'
 
     CreateControlledGcpGcsBucketRequestBody:
       description: Payload for requesting a new controlled GCS bucket resource.
@@ -2589,6 +3008,172 @@ components:
         bigQueryDataset:
           $ref: '#/components/schemas/GcpBigQueryDatasetResource'
 
+    AzureIpCreationParameters:
+      description: >-
+        IP-specific properties to be set on creation. These are a subset of the values
+        accepted by the azure resource API
+      type: object
+      required: [name, region]
+      properties:
+        name:
+          description: A valid ip name per https://docs.microsoft.com/en-us/azure/azure-resource-manager/management/resource-name-rules
+          type: string
+        region:
+          description: |
+            A valid region string representation per https://docs.microsoft.com/en-us/dotnet/api/microsoft.azure.management.resourcemanager.fluent.core.region.
+            It is best to look at the Region class definition for valid strings (e.g. 'eastus' == Region.US_EAST.toString())
+          type: string
+
+    AzureStorageCreationParameters:
+      description: >-
+        Storage-specific properties to be set on creation. These are a subset of the values
+        accepted by the azure resource API
+      type: object
+      required: [ name, region ]
+      properties:
+        name:
+          description: A valid storage account name per https://docs.microsoft.com/en-us/azure/azure-resource-manager/management/resource-name-rules
+          type: string
+        region:
+          description: |
+            A valid region string representation per https://docs.microsoft.com/en-us/dotnet/api/microsoft.azure.management.resourcemanager.fluent.core.region.
+            It is best to look at the Region class definition for valid strings (e.g. 'eastus' == Region.US_EAST.toString())
+          type: string
+
+    AzureDiskCreationParameters:
+      description: >-
+        Disk-specific properties to be set on creation. These are a subset of the values
+        accepted by the azure resource API
+      type: object
+      required: [ name, region, size ]
+      properties:
+        name:
+          description: A valid disk name per https://docs.microsoft.com/en-us/azure/azure-resource-manager/management/resource-name-rules
+          type: string
+        region:
+          description: |
+            A valid region string representation per https://docs.microsoft.com/en-us/dotnet/api/microsoft.azure.management.resourcemanager.fluent.core.region.
+            It is best to look at the Region class definition for valid strings (e.g. 'eastus' == Region.US_EAST.toString())
+          type: string
+        size:
+          description: |
+            A valid size in GB integer representation
+          type: integer
+
+    AzureNetworkCreationParameters:
+      description: >-
+        Network-specific properties to be set on creation. These are a subset of the values
+        accepted by the azure resource API
+      type: object
+      required: [ name, subnetName, addressSpaceCidr, subnetAddressCidr, region ]
+      properties:
+        name:
+          description: A valid Network name per https://docs.microsoft.com/en-us/azure/azure-resource-manager/management/resource-name-rules
+          type: string
+        subnetName:
+          description: A valid subnet name per https://docs.microsoft.com/en-us/azure/azure-resource-manager/management/resource-name-rules
+          type: string
+        addressSpaceCidr:
+          description: A valid range of IP addresses the network uses
+          type: string
+        subnetAddressCidr:
+          description: A valid range of IP address the subnet uses
+          type: string
+        region:
+          description: |
+            A valid region string representation per https://docs.microsoft.com/en-us/dotnet/api/microsoft.azure.management.resourcemanager.fluent.core.region.
+            It is best to look at the Region class definition for valid strings (e.g. 'eastus' == Region.US_EAST.toString())
+          type: string
+
+    AzureVmCreationParameters:
+      description: >-
+        Vm-specific properties to be set on creation. These are a subset of the values
+        accepted by the azure resource API
+      type: object
+      required: [name, region, ipId, diskId, networkId, vmSize, vmImageUri]
+      properties:
+        name:
+          description: A valid vm name per https://docs.microsoft.com/en-us/azure/azure-resource-manager/management/resource-name-rules
+          type: string
+        region:
+          description: |
+            A valid region string representation per https://docs.microsoft.com/en-us/dotnet/api/microsoft.azure.management.resourcemanager.fluent.core.region.
+            It is best to look at the Region class definition for valid strings (e.g. 'eastus' == Region.US_EAST.toString())
+          type: string
+        vmSize:
+          description: A valid image size as per com.azure.resourcemanager.compute.models.VirtualMachineSizeTypes
+          type: string
+        vmImageUri:
+          description: A valid image Uri. Must be in the same region specified. E.x. /subscriptions/3efc5bdf-be0e-44e7-b1d7-c08931e3c16c/resourceGroups/mrg-qi-1-preview-20210517084351/providers/Microsoft.Compute/galleries/msdsvm/images/customized_ms_dsvm/versions/0.1.0
+          type: string
+        ipId:
+          description: A valid WSM identifier for an Azure Ip that corresponds to a valid azure resource
+          type: string
+          format: uuid
+        diskId:
+          description: A valid WSM identifier for an Azure Disk that corresponds to a valid azure resource
+          type: string
+          format: uuid
+        networkId:
+          description: A valid WSM identifier for an Azure Network that corresponds to a valid azure resource
+          type: string
+          format: uuid
+
+    CreatedControlledAzureIp:
+      description: Response payload for requesting a new Azure IP
+      type: object
+      properties:
+        resourceId:
+          description: UUID of a newly-created resource.
+          type: string
+          format: uuid
+        azureIp:
+          $ref: '#/components/schemas/AzureIpResource'
+
+    CreatedControlledAzureStorage:
+      description: Response payload for requesting a new Azure storage account
+      type: object
+      properties:
+        resourceId:
+          description: UUID of a newly-created resource.
+          type: string
+          format: uuid
+        azureStorage:
+          $ref: '#/components/schemas/AzureStorageResource'
+
+    CreatedControlledAzureDisk:
+      description: Response payload for requesting a new Azure disk
+      type: object
+      properties:
+        resourceId:
+          description: UUID of a newly-created resource.
+          type: string
+          format: uuid
+        azureDisk:
+          $ref: '#/components/schemas/AzureDiskResource'
+
+    CreatedControlledAzureNetwork:
+      description: Response payload for requesting a new azure network
+      type: object
+      properties:
+        resourceId:
+          description: UUID of a newly-created resource.
+          type: string
+          format: uuid
+        azureNetwork:
+          $ref: '#/components/schemas/AzureNetworkResource'
+
+    CreatedControlledAzureVm:
+      description: Api result class for creating A new Azure VM
+      type: object
+      properties:
+        resourceId:
+          description: UUID of a newly-created resource.
+          type: string
+          format: uuid
+        azureVm:
+          $ref: '#/components/schemas/AzureVmResource'
+
     GcpGcsBucketCreationParameters:
       description: >-
         Bucket-specific properties to be set on creation. These are a subset of the
@@ -2703,7 +3288,7 @@ components:
           type: boolean
         matchesStorageClass:
           description: >-
-            Objects having any of the storage classes specified by this condition will be matched. 
+            Objects having any of the storage classes specified by this condition will be matched.
             Values include "STANDARD", "NEARLINE", "COLDLINE", "ARCHIVE", "MULTI_REGIONAL",
             "REGIONAL", and "DURABLE_REDUCED_AVAILABILITY".
           type: array
@@ -3066,6 +3651,21 @@ components:
         jobControl:
           $ref: '#/components/schemas/JobControl'
 
+    DeleteControlledAzureResourceRequest:
+      type: object
+      required: [ jobControl ]
+      properties:
+        jobControl:
+          $ref: '#/components/schemas/JobControl'
+
+    DeleteControlledAzureResourceResult:
+      type: object
+      properties:
+        jobReport:
+          $ref: '#/components/schemas/JobReport'
+        errorReport:
+          $ref: '#/components/schemas/ErrorReport'
+
     DeleteControlledGcpGcsBucketResult:
       type: object
       properties:
@@ -3083,6 +3683,17 @@ components:
           $ref: '#/components/schemas/ErrorReport'
         aiNotebookInstance:
           $ref: '#/components/schemas/GcpAiNotebookInstanceResource'
+
+    CreatedControlledAzureVmResult:
+      description: Api result class for creating an azure vm
+      type: object
+      properties:
+        azureVm:
+          $ref: '#/components/schemas/CreatedControlledAzureVm'
+        jobReport:
+          $ref: '#/components/schemas/JobReport'
+        errorReport:
+          $ref: '#/components/schemas/ErrorReport'
 
     GcpAiNotebookInstanceCreationParameters:
       description: >-
@@ -3341,6 +3952,93 @@ components:
         attributes:
           $ref: '#/components/schemas/GcpGcsObjectAttributes'
 
+    AzureIpAttributes:
+      description: >-
+        IP properties included in post-creation get. Others must be retrieved from Azure using the name.
+      type: object
+      properties:
+        ipName:
+          description: Name of created ip (not the resource name).
+          type: string
+        region:
+          description: Azure region of created ip
+          type: string
+
+    AzureStorageAttributes:
+      description: >-
+        Storage properties included in post-creation get.
+      type: object
+      properties:
+        storageAccountName:
+          description: Name of the storage account.
+          type: string
+        region:
+          description: Azure region of created storage account.
+          type: string
+
+    AzureDiskAttributes:
+      description: >-
+        Disk properties included in post-creation get and update. Others must be retrieved from Azure using the name.
+      type: object
+      properties:
+        diskName:
+          description: Name of created disk (not the resource name).
+          type: string
+        region:
+          description: Azure region of created disk
+          type: string
+
+    AzureNetworkAttributes:
+      description: >-
+        Network properties included in post-creation get and update. Others must be retrieved from Azure using the name.
+      type: object
+      properties:
+        networkName:
+          description: Name of created network (not the resource name).
+          type: string
+        subnetName:
+          description: Name of created subnetwork (not the resource name).
+          type: string
+        addressSpaceCidr:
+          description: Name of created addressSpaceCidr (not the resource name).
+          type: string
+        subnetAddressCidr:
+          description: Name of created subnetAddressCidr (not the resource name).
+          type: string
+        region:
+          description: Azure region of created Network
+          type: string
+
+    AzureVmAttributes:
+      description: >-
+        Vm properties included in post-creation get and update. Others must be retrieved from Azure using the name.
+      type: object
+      properties:
+        vmName:
+          description: Name of created vm (not the resource name).
+          type: string
+        region:
+          description: Azure region of created vm
+          type: string
+        vmSize:
+          description: A valid image size as per com.azure.resourcemanager.compute.models.VirtualMachineSizeTypes
+          type: string
+        vmImageUri:
+          description: A valid image Uri. Must be in the same region specified. E.x. /subscriptions/3efc5bdf-be0e-44e7-b1d7-c08931e3c16c/resourceGroups/mrg-qi-1-preview-20210517084351/providers/Microsoft.Compute/galleries/msdsvm/images/customized_ms_dsvm/versions/0.0.4
+          type: string
+        ipId:
+          description: A valid WSM identifier for an Azure Ip that corresponds to a valid azure resource
+          type: string
+          format: uuid
+        diskId:
+          description: A valid WSM identifier for an Azure Disk that corresponds to a valid azure resource
+          type: string
+          format: uuid
+        networkId:
+          description: A valid WSM identifier for an Azure Network that corresponds to a valid azure resource
+          type: string
+          format: uuid
+
     GcpGcsBucketAttributes:
       description: >-
         Bucket properties included in post-creation, get, and update. Others must be
@@ -3362,6 +4060,61 @@ components:
           $ref: '#/components/schemas/ResourceMetadata'
         attributes:
           $ref: '#/components/schemas/GcpGcsBucketAttributes'
+
+    AzureIpResource:
+      type: object
+      description: Description of an Azure Ip
+      required: [metadata, attributes]
+      properties:
+        metadata:
+          description: the resource metadata common to all resources
+          $ref: '#/components/schemas/ResourceMetadata'
+        attributes:
+          $ref: '#/components/schemas/AzureIpAttributes'
+
+    AzureStorageResource:
+      type: object
+      description: Description of an Azure storage account.
+      required: [ metadata, attributes ]
+      properties:
+        metadata:
+          description: the resource metadata common to all resources
+          $ref: '#/components/schemas/ResourceMetadata'
+        attributes:
+          $ref: '#/components/schemas/AzureStorageAttributes'
+
+    AzureDiskResource:
+      type: object
+      description: Description of an Azure disk
+      required: [metadata, attributes]
+      properties:
+        metadata:
+          description: the resource metadata common to all resources
+          $ref: '#/components/schemas/ResourceMetadata'
+        attributes:
+          $ref: '#/components/schemas/AzureDiskAttributes'
+
+    AzureNetworkResource:
+      type: object
+      description: Description of an Azure Network
+      required: [ metadata, attributes ]
+      properties:
+        metadata:
+          description: the resource metadata common to all resources
+          $ref: '#/components/schemas/ResourceMetadata'
+        attributes:
+          $ref: '#/components/schemas/AzureNetworkAttributes'
+
+    AzureVmResource:
+      type: object
+      description: Description of an Azure vm
+      required: [metadata, attributes]
+      properties:
+        metadata:
+          description: the resource metadata common to all resources
+          $ref: '#/components/schemas/ResourceMetadata'
+        attributes:
+          $ref: '#/components/schemas/AzureVmAttributes'
 
     GcpAiNotebookInstanceAttributes:
       description: >-
@@ -3410,6 +4163,16 @@ components:
           $ref: '#/components/schemas/GcpGcsObjectAttributes'
         gcpAiNotebookInstance:
           $ref: '#/components/schemas/GcpAiNotebookInstanceAttributes'
+        azureDisk:
+          $ref: '#/components/schemas/AzureDiskAttributes'
+        azureIp:
+          $ref: '#/components/schemas/AzureIpAttributes'
+        azureNetwork:
+          $ref: '#/components/schemas/AzureNetworkAttributes'
+        azureStorage:
+          $ref: '#/components/schemas/AzureStorageAttributes'
+        azureVm:
+          $ref: '#/components/schemas/AzureVmAttributes'
 
     ResourceDescription:
       type: object
@@ -3470,7 +4233,7 @@ components:
     CloudPlatform:
       type: string
       description: Enum representing a cloud platform type.
-      enum: ['GCP']
+      enum: ['AZURE', 'GCP']
 
     CloningInstructionsEnum:
       type: string
@@ -3493,6 +4256,11 @@ components:
         - DATA_REPO_SNAPSHOT
         - GCS_BUCKET
         - GCS_OBJECT
+        - AZURE_IP
+        - AZURE_DISK
+        - AZURE_NETWORK
+        - AZURE_VM
+        - AZURE_STORAGE_ACCOUNT
 
     StewardshipType:
       description: Enum containing valid stewardship types. Used for enumeration
@@ -3573,6 +4341,76 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/RoleBindingList'
+
+    CreateControlledAzureStorageResponse:
+      description: Response to create controlled azure storage
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/CreatedControlledAzureStorage'
+
+    CreateControlledAzureIpResponse:
+      description: Response to create controlled azure ip
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/CreatedControlledAzureIp'
+
+    CreateControlledAzureDiskResponse:
+      description: Response to create controlled Azure disk
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/CreatedControlledAzureDisk'
+
+    CreateControlledAzureNetworkResponse:
+      description: Response to create controlled azure network
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/CreatedControlledAzureNetwork'
+
+    CreateControlledAzureVmResponse:
+      description: Response to create controlled Azure Vm
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/CreatedControlledAzureVmResult'
+
+    DeleteControlledAzureResourceResponse:
+      description: Response Payload for deleting an azure ip
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/DeleteControlledAzureResourceResult'
+
+    GetControlledAzureIpResponse:
+      description: Response to get ip
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/AzureIpResource'
+
+    GetControlledAzureNetworkResponse:
+      description: Response to get network
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/AzureNetworkResource'
+
+    GetControlledAzureDiskResponse:
+      description: Response to get disk
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/AzureDiskResource'
+
+    GetControlledAzureVmResponse:
+      description: Response to get vm
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/AzureVmResource'
 
     CreatedControlledGcpGcsBucketResponse:
       description: Response to Create controlled Gcs bucket
@@ -3770,6 +4608,10 @@ components:
             openid: open id authorization
             email: email authorization
             profile: profile authorization
+    ## for AzurePoC - we do not do authn. Just accept the user email and objectId as user/pwd
+    basicAuth:
+      type: http
+      scheme: basic
 
 security:
   - bearerAuth: []

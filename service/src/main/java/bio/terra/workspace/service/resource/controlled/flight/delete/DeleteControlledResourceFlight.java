@@ -54,6 +54,58 @@ public class DeleteControlledResourceFlight extends Flight {
                 resourceId),
             gcpRetryRule);
         break;
+      case AZURE_DISK:
+        addStep(
+            new DeleteAzureDiskStep(
+                flightBeanBag.getAzureConfig(),
+                flightBeanBag
+                    .getAzureCloudContextService()
+                    .getAzureCloudContext(resource.getWorkspaceId())
+                    .get(),
+                flightBeanBag.getCrlService(),
+                flightBeanBag.getResourceDao(),
+                workspaceId,
+                resourceId));
+        break;
+      case AZURE_IP:
+        addStep(
+            new DeleteAzureIpStep(
+                flightBeanBag.getAzureConfig(),
+                flightBeanBag
+                    .getAzureCloudContextService()
+                    .getAzureCloudContext(resource.getWorkspaceId())
+                    .get(),
+                flightBeanBag.getCrlService(),
+                flightBeanBag.getResourceDao(),
+                workspaceId,
+                resourceId));
+        break;
+      case AZURE_NETWORK:
+        addStep(
+            new DeleteAzureNetworkStep(
+                flightBeanBag.getAzureConfig(),
+                flightBeanBag
+                    .getAzureCloudContextService()
+                    .getAzureCloudContext(resource.getWorkspaceId())
+                    .get(),
+                flightBeanBag.getCrlService(),
+                flightBeanBag.getResourceDao(),
+                workspaceId,
+                resourceId));
+        break;
+      case AZURE_VM:
+        addStep(
+            new DeleteAzureVmStep(
+                flightBeanBag.getAzureConfig(),
+                flightBeanBag
+                    .getAzureCloudContextService()
+                    .getAzureCloudContext(resource.getWorkspaceId())
+                    .get(),
+                flightBeanBag.getCrlService(),
+                flightBeanBag.getResourceDao(),
+                workspaceId,
+                resourceId));
+        break;
       case BIG_QUERY_DATASET:
         addStep(
             new DeleteBigQueryDatasetStep(

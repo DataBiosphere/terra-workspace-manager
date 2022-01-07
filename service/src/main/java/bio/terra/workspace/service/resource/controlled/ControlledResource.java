@@ -141,6 +141,31 @@ public abstract class ControlledResource extends WsmResource {
     return (ControlledGcsBucketResource) this;
   }
 
+  public ControlledAzureIpResource castToAzureIpResource() {
+    validateSubclass(WsmResourceType.AZURE_IP);
+    return (ControlledAzureIpResource) this;
+  }
+
+  public ControlledAzureStorageResource castToAzureStorageResource() {
+    validateSubclass(WsmResourceType.AZURE_STORAGE_ACCOUNT);
+    return (ControlledAzureStorageResource) this;
+  }
+
+  public ControlledAzureDiskResource castToAzureDiskResource() {
+    validateSubclass(WsmResourceType.AZURE_DISK);
+    return (ControlledAzureDiskResource) this;
+  }
+
+  public ControlledAzureNetworkResource castToAzureNetworkResource() {
+    validateSubclass(WsmResourceType.AZURE_NETWORK);
+    return (ControlledAzureNetworkResource) this;
+  }
+
+  public ControlledAzureVmResource castToAzureVmResource() {
+    validateSubclass(WsmResourceType.AZURE_VM);
+    return (ControlledAzureVmResource) this;
+  }
+
   public ControlledAiNotebookInstanceResource castToAiNotebookInstanceResource() {
     validateSubclass(WsmResourceType.AI_NOTEBOOK_INSTANCE);
     return (ControlledAiNotebookInstanceResource) this;

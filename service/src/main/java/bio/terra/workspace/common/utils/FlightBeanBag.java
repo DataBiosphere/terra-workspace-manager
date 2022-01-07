@@ -1,5 +1,6 @@
 package bio.terra.workspace.common.utils;
 
+import bio.terra.workspace.app.configuration.external.AzureConfiguration;
 import bio.terra.workspace.db.ApplicationDao;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.db.WorkspaceDao;
@@ -13,6 +14,7 @@ import bio.terra.workspace.service.resource.controlled.ControlledResourceService
 import bio.terra.workspace.service.resource.controlled.flight.clone.bucket.BucketCloneRolesComponent;
 import bio.terra.workspace.service.resource.referenced.ReferencedResourceService;
 import bio.terra.workspace.service.spendprofile.SpendProfileService;
+import bio.terra.workspace.service.workspace.AzureCloudContextService;
 import bio.terra.workspace.service.workspace.GcpCloudContextService;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,6 +31,7 @@ import org.springframework.stereotype.Component;
 @Component
 public class FlightBeanBag {
   private final ApplicationDao applicationDao;
+  private final AzureCloudContextService azureCloudContextService;
   private final BucketCloneRolesComponent bucketCloneRolesComponent;
   private final BufferService bufferService;
   private final ControlledResourceMetadataManager controlledResourceMetadataManager;
@@ -43,11 +46,13 @@ public class FlightBeanBag {
   private final WorkspaceDao workspaceDao;
   private final WorkspaceService workspaceService;
   private final SpendProfileService spendProfileService;
+  private final AzureConfiguration azureConfig;
 
   @Lazy
   @Autowired
   public FlightBeanBag(
       ApplicationDao applicationDao,
+      AzureCloudContextService azureCloudContextService,
       BucketCloneRolesComponent bucketCloneRolesComponent,
       BufferService bufferService,
       ControlledResourceMetadataManager controlledResourceMetadataManager,
@@ -59,10 +64,12 @@ public class FlightBeanBag {
       ReferencedResourceService referencedResourceService,
       ResourceDao resourceDao,
       SamService samService,
+      SpendProfileService spendProfileService,
       WorkspaceDao workspaceDao,
       WorkspaceService workspaceService,
-      SpendProfileService spendProfileService) {
+      AzureConfiguration azureConfig) {
     this.applicationDao = applicationDao;
+    this.azureCloudContextService = azureCloudContextService;
     this.bucketCloneRolesComponent = bucketCloneRolesComponent;
     this.bufferService = bufferService;
     this.controlledResourceMetadataManager = controlledResourceMetadataManager;
@@ -77,6 +84,7 @@ public class FlightBeanBag {
     this.workspaceDao = workspaceDao;
     this.workspaceService = workspaceService;
     this.spendProfileService = spendProfileService;
+    this.azureConfig = azureConfig;
   }
 
   public static FlightBeanBag getFromObject(Object object) {
@@ -85,6 +93,10 @@ public class FlightBeanBag {
 
   public ApplicationDao getApplicationDao() {
     return applicationDao;
+  }
+
+  public AzureCloudContextService getAzureCloudContextService() {
+    return azureCloudContextService;
   }
 
   public BucketCloneRolesComponent getBucketCloneRolesComponent() {
@@ -141,5 +153,9 @@ public class FlightBeanBag {
 
   public SpendProfileService getSpendProfileService() {
     return spendProfileService;
+  }
+
+  public AzureConfiguration getAzureConfig() {
+    return azureConfig;
   }
 }

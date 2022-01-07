@@ -254,6 +254,12 @@ vaultgetdb "secret/dsde/terra/kernel/${k8senv}/${namespace}/workspace/postgres/s
 
 # Write the test application configuration into the local-properties.yml file
 if [ "$target" == "local" ]; then
+  tmpfile=$(mktemp)
+  vaultget "secret/dsde/terra/azure/common/managed-app-publisher" "${tmpfile}"
+  clientid=$(jq -r '."client-id"' "${tmpfile}" )
+  clientsecret=$(jq -r '."client-secret"' "${tmpfile}" )
+  tenantid=$(jq -r '."tenant-id"' "${tmpfile}" )
+
   cat << EOF > "${outputdir}/local-properties.yml"
 workspace:
   application:
@@ -264,6 +270,10 @@ workspace:
         description: WSM test application
         service-account: Elizabeth.Shadowmoon@test.firecloud.org
         state: operating
+  azure:
+    managed-app-client-id: ${clientid}
+    managed-app-client-secret: ${clientsecret}
+    managed-app-tenant-id: ${tenantid}
 EOF
 else
   cat /dev/null > "${outputdir}/local-properties.yml"
