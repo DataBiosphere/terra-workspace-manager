@@ -94,14 +94,12 @@ public class JobBuilder {
     return this;
   }
 
-  public JobBuilder stewardshipType(
-      @Nullable StewardshipType stewardshipType) {
+  public JobBuilder stewardshipType(@Nullable StewardshipType stewardshipType) {
     this.stewardshipType = stewardshipType;
     return this;
   }
 
-  public JobBuilder operationType(
-      @Nullable OperationType operationType) {
+  public JobBuilder operationType(@Nullable OperationType operationType) {
     this.operationType = operationType;
     return this;
   }

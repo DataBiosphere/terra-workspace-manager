@@ -1,6 +1,7 @@
 package bio.terra.workspace.service.workspace;
 
 import bio.terra.common.stairway.StairwayComponent;
+import bio.terra.stairway.FlightEnumeration;
 import bio.terra.stairway.FlightFilter;
 import bio.terra.stairway.FlightFilterOp;
 import bio.terra.stairway.FlightMap;
@@ -18,8 +19,10 @@ import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ResourceKeys;
 import bio.terra.workspace.service.workspace.model.EnumeratedJob;
 import bio.terra.workspace.service.workspace.model.EnumeratedJobs;
+import bio.terra.workspace.service.workspace.model.JobStateFilter;
 import bio.terra.workspace.service.workspace.model.OperationType;
 import com.fasterxml.jackson.core.type.TypeReference;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -51,65 +54,66 @@ public class Alpha1Service {
       UUID workspaceId,
       AuthenticatedUserRequest userRequest,
       int limit,
-      String pageToken,
+      @Nullable String pageToken,
       @Nullable WsmResourceType resourceType,
       @Nullable StewardshipType stewardshipType,
-      @Nullable String resourceName) {
+      @Nullable String resourceName,
+      @Nullable JobStateFilter jobStateFilter) {
     features.alpha1EnabledCheck();
-
-    // TODO: For now the page token is just the offset.
-    // We count on the page token being validated by the controller
-    int offset = Integer.parseInt(pageToken);
 
     // Readers can see the workspace jobs list
     workspaceService.validateWorkspaceAndAction(
         userRequest, workspaceId, SamConstants.SamWorkspaceAction.READ);
 
-    List<FlightState> flightStateList;
+    FlightEnumeration flightEnumeration;
     try {
-      FlightFilter filter = buildFlightFilter(workspaceId, pageToken, resourceType, stewardshipType, resourceName);
-      flightStateList = stairwayComponent.get().getFlights(offset, limit, filter);
+      FlightFilter filter =
+          buildFlightFilter(
+              workspaceId, resourceType, stewardshipType, resourceName, jobStateFilter);
+      flightEnumeration = stairwayComponent.get().getFlights(pageToken, limit, filter);
     } catch (StairwayException | InterruptedException stairwayEx) {
       throw new InternalStairwayException(stairwayEx);
     }
 
     List<EnumeratedJob> jobList = new ArrayList<>();
-    for (FlightState state : flightStateList) {
+    for (FlightState state : flightEnumeration.getFlightStateList()) {
       FlightMap inputMap = state.getInputParameters();
       OperationType operationType =
-          (inputMap.containsKey(ResourceKeys.OPERATION_TYPE)) ?
-              inputMap.get(ResourceKeys.OPERATION_TYPE, OperationType.class) :
-              OperationType.UNKNOWN;
+          (inputMap.containsKey(ResourceKeys.OPERATION_TYPE))
+              ? inputMap.get(ResourceKeys.OPERATION_TYPE, OperationType.class)
+              : OperationType.UNKNOWN;
 
       WsmResource wsmResource =
-          (inputMap.containsKey(ResourceKeys.RESOURCE)) ?
-              inputMap.get(ResourceKeys.RESOURCE, new TypeReference<>() {}) : null;
+          (inputMap.containsKey(ResourceKeys.RESOURCE))
+              ? inputMap.get(ResourceKeys.RESOURCE, new TypeReference<>() {})
+              : null;
 
       String jobDescription =
-          (inputMap.containsKey(JobMapKeys.DESCRIPTION.getKeyName())) ?
-              inputMap.get(JobMapKeys.DESCRIPTION.getKeyName(), String.class) : StringUtils.EMPTY;
+          (inputMap.containsKey(JobMapKeys.DESCRIPTION.getKeyName()))
+              ? inputMap.get(JobMapKeys.DESCRIPTION.getKeyName(), String.class)
+              : StringUtils.EMPTY;
 
-      EnumeratedJob enumeratedJob = new EnumeratedJob()
-          .flightState(state)
-          .jobDescription(jobDescription)
-          .operationType(operationType)
-          .resource(wsmResource);
+      EnumeratedJob enumeratedJob =
+          new EnumeratedJob()
+              .flightState(state)
+              .jobDescription(jobDescription)
+              .operationType(operationType)
+              .resource(wsmResource);
       jobList.add(enumeratedJob);
     }
 
     return new EnumeratedJobs()
-        .pageToken(String.format("%d", offset + limit))
-        .totalResults(-1)
+        .pageToken(flightEnumeration.getNextPageToken())
+        .totalResults(flightEnumeration.getTotalFlights())
         .results(jobList);
-
   }
 
   private FlightFilter buildFlightFilter(
       UUID workspaceId,
-      String pageToken, // TODO: when this is implemented it will use filtering
       @Nullable WsmResourceType resourceType,
       @Nullable StewardshipType stewardshipType,
-      @Nullable String resourceName) {
+      @Nullable String resourceName,
+      @Nullable JobStateFilter jobStateFilter) {
 
     FlightFilter filter = new FlightFilter();
     // Always filter by workspace
@@ -131,7 +135,24 @@ public class Alpha1Service {
             t ->
                 filter.addFilterInputParameter(
                     ResourceKeys.RESOURCE_NAME, FlightFilterOp.EQUAL, t));
+    Optional.ofNullable(jobStateFilter).map(t -> addStateFilter(filter, t));
 
+    return filter;
+  }
+
+  private FlightFilter addStateFilter(FlightFilter filter, JobStateFilter jobStateFilter) {
+    switch (jobStateFilter) {
+      case ALL:
+        break;
+
+      case ACTIVE:
+        filter.addFilterCompletedTime(FlightFilterOp.EQUAL, null);
+        break;
+
+      case COMPLETED:
+        filter.addFilterCompletedTime(FlightFilterOp.GREATER_THAN, Instant.EPOCH);
+        break;
+    }
     return filter;
   }
 }

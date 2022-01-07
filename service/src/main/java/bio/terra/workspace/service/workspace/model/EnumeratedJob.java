@@ -32,8 +32,7 @@ public class EnumeratedJob {
     return operationType;
   }
 
-  public EnumeratedJob operationType(
-      OperationType operationType) {
+  public EnumeratedJob operationType(OperationType operationType) {
     this.operationType = operationType;
     return this;
   }

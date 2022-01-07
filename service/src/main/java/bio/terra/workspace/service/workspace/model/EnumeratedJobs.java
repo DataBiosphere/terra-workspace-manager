@@ -29,8 +29,7 @@ public class EnumeratedJobs {
     return results;
   }
 
-  public EnumeratedJobs results(
-      List<EnumeratedJob> results) {
+  public EnumeratedJobs results(List<EnumeratedJob> results) {
     this.results = results;
     return this;
   }

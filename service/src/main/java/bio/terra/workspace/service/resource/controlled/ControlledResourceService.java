@@ -196,8 +196,6 @@ public class ControlledResourceService {
       @Nullable String resourceName,
       @Nullable String resourceDescription) {
 
-
-
     final String jobDescription =
         String.format(
             "Update controlled GCS Bucket resource %s; id %s; name %s",
@@ -607,8 +605,9 @@ public class ControlledResourceService {
       String resultPath,
       AuthenticatedUserRequest userRequest) {
     stageService.assertMcWorkspace(workspaceId, "deleteControlledResource");
-    WsmResource resource = controlledResourceMetadataManager.validateControlledResourceAndAction(
-        userRequest, workspaceId, resourceId, SamControlledResourceActions.DELETE_ACTION);
+    WsmResource resource =
+        controlledResourceMetadataManager.validateControlledResourceAndAction(
+            userRequest, workspaceId, resourceId, SamControlledResourceActions.DELETE_ACTION);
     final String jobDescription = "Delete controlled resource; id: " + resourceId.toString();
 
     return jobService

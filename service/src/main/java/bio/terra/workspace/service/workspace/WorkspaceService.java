@@ -99,8 +99,7 @@ public class WorkspaceService {
             .operationType(OperationType.CREATE)
             .addParameter(
                 WorkspaceFlightMapKeys.WORKSPACE_STAGE, workspace.getWorkspaceStage().name())
-            .addParameter(
-                WorkspaceFlightMapKeys.DISPLAY_NAME, workspaceName)
+            .addParameter(WorkspaceFlightMapKeys.DISPLAY_NAME, workspaceName)
             .addParameter(
                 WorkspaceFlightMapKeys.DESCRIPTION, workspace.getDescription().orElse(""));
 
@@ -269,7 +268,9 @@ public class WorkspaceService {
 
     String workspaceName = workspace.getDisplayName().orElse("");
     String jobDescription =
-        String.format("Create GCP cloud context for workspace: name: '%s' id: '%s'  ", workspaceName, workspaceId);
+        String.format(
+            "Create GCP cloud context for workspace: name: '%s' id: '%s'  ",
+            workspaceName, workspaceId);
 
     jobService
         .newJob()
@@ -328,7 +329,9 @@ public class WorkspaceService {
     stageService.assertMcWorkspace(workspace, "deleteGcpCloudContext");
     String workspaceName = workspace.getDisplayName().orElse("");
     String jobDescription =
-        String.format("Delete GCP cloud context for workspace: name: '%s' id: '%s'  ", workspaceName, workspaceId);
+        String.format(
+            "Delete GCP cloud context for workspace: name: '%s' id: '%s'  ",
+            workspaceName, workspaceId);
 
     jobService
         .newJob()

@@ -2527,6 +2527,13 @@ components:
           type: string
         # TODO: In the future, notification configuration will also be part of JobControl.
 
+    JobStateFilter:
+      type: string
+      enum:
+        - ALL
+        - ACTIVE
+        - COMPLETED
+
     Name:
       type: string
       pattern: '^[a-zA-Z0-9][-_a-zA-Z0-9]{0,1023}$'
@@ -4325,6 +4332,8 @@ components:
           $ref: '#/components/schemas/StewardshipType'
         resourceName:
           $ref: "#/components/schemas/Name"
+        jobStateFilter:
+          $ref: '#/components/schemas/JobStateFilter'
 
     ResourceUnion:
       type: object

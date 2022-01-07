@@ -14,15 +14,12 @@ import bio.terra.stairway.exception.DuplicateFlightIdException;
 import bio.terra.stairway.exception.StairwayExecutionException;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.resource.WsmResource;
-import bio.terra.workspace.service.resource.WsmResourceType;
-import bio.terra.workspace.service.resource.model.StewardshipType;
 import bio.terra.workspace.service.workspace.Alpha1Service;
 import bio.terra.workspace.service.workspace.model.EnumeratedJob;
 import bio.terra.workspace.service.workspace.model.EnumeratedJobs;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.UUID;
-import javax.annotation.Nullable;
 
 /** Test utilities for working with Stairway. */
 public class StairwayTestUtils {
@@ -66,23 +63,9 @@ public class StairwayTestUtils {
   }
 
   public static void enumerateJobsDump(
-      Alpha1Service alpha1Service,
-      UUID workspaceId,
-      AuthenticatedUserRequest userRequest,
-      int limit,
-      String pageToken,
-      @Nullable WsmResourceType resourceType,
-      @Nullable StewardshipType stewardshipType,
-      @Nullable String resourceName) {
+      Alpha1Service alpha1Service, UUID workspaceId, AuthenticatedUserRequest userRequest) {
     EnumeratedJobs jobs =
-        alpha1Service.enumerateJobs(
-            workspaceId,
-            userRequest,
-            limit,
-            pageToken,
-            resourceType,
-            stewardshipType,
-            resourceName);
+        alpha1Service.enumerateJobs(workspaceId, userRequest, 1000, null, null, null, null, null);
 
     System.out.printf(
         "Enumerated Jobs: total=%d, pageToken=%s%n", jobs.getTotalResults(), jobs.getPageToken());
