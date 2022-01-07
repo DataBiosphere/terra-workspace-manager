@@ -19,6 +19,8 @@ import bio.terra.workspace.generated.model.ApiAzureVmCreationParameters;
 import bio.terra.workspace.generated.model.ApiManagedBy;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.job.JobService;
+import bio.terra.workspace.service.resource.WsmResource;
+import bio.terra.workspace.service.resource.WsmResourceService;
 import bio.terra.workspace.service.resource.controlled.AccessScopeType;
 import bio.terra.workspace.service.resource.controlled.ControlledAzureDiskResource;
 import bio.terra.workspace.service.resource.controlled.ControlledAzureIpResource;
@@ -32,6 +34,7 @@ import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.flight.create.azure.CreateAzureContextFlight;
 import java.time.Duration;
+import java.util.List;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -44,6 +47,7 @@ public class CreateAzureControlledResourceFlightTest extends BaseAzureTest {
   @Autowired private AzureTestUtils azureTestUtils;
   @Autowired private UserAccessUtils userAccessUtils;
   @Autowired private ControlledResourceService controlledResourceService;
+  @Autowired private WsmResourceService wsmResourceService;
 
   @Test
   public void createAzureIpControlledResource() throws InterruptedException {
@@ -239,6 +243,27 @@ public class CreateAzureControlledResourceFlightTest extends BaseAzureTest {
     } catch (Exception e) {
       fail("Failed to cast resource to ControlledAzureVmResource", e);
     }
+
+    // Exercise resource enumeration for the underlying resources.
+    // Verify that the resources we created are in the enumeration.
+    List<WsmResource> resourceList =
+        wsmResourceService.enumerateResources(workspaceId, null, null, 0, 100, userRequest);
+    checkForResource(resourceList, ipResource);
+    checkForResource(resourceList, diskResource);
+    checkForResource(resourceList, networkResource);
+    checkForResource(resourceList, resource);
+  }
+
+  private void checkForResource(List<WsmResource> resourceList, ControlledResource resource) {
+    for (WsmResource wsmResource : resourceList) {
+      if (wsmResource.getResourceId().equals(resource.getResourceId())) {
+        assertEquals(resource.getResourceType(), wsmResource.getResourceType());
+        assertEquals(resource.getWorkspaceId(), wsmResource.getWorkspaceId());
+        assertEquals(resource.getName(), wsmResource.getName());
+        return;
+      }
+    }
+    fail("Failed to find resource in resource list");
   }
 
   private ControlledAzureDiskResource createDisk(

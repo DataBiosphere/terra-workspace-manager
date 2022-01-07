@@ -47,7 +47,7 @@ dependencies {
     implementation group: "bio.terra", name: "terra-resource-buffer-client", version: "0.4.3-SNAPSHOT"
 
     // Cloud Resource Library
-    implementation platform('bio.terra.cloud-resource-lib:platform:0.3.0')
+    implementation platform('bio.terra.cloud-resource-lib:platform:0.5.0')
     implementation group: 'bio.terra.cloud-resource-lib', name: 'google-bigquery'
     implementation group: 'bio.terra.cloud-resource-lib', name: 'google-billing'
     implementation group: 'bio.terra.cloud-resource-lib', name: 'google-cloudresourcemanager'
@@ -89,10 +89,8 @@ dependencies {
     swaggerCodegen gradle.librarySwaggerCli
     runtimeOnly group: "org.webjars.npm", name: "swagger-ui-dist", version: "3.37.2"
 
-    // Azure PoC
-    // TODO: probably removed when all things azure go through CRL
-    implementation group: 'com.azure', name: 'azure-identity', version: '1.3.5'
-    implementation group: 'com.azure', name: 'azure-core', version: '1.19.0'
+    // Azure support
+    // TODO: move access and dependency to CRL
     implementation group: 'com.azure.resourcemanager', name: 'azure-resourcemanager', version: '2.8.0'
 
     // Test deps
@@ -166,14 +164,11 @@ swaggerSources {
 // Created by scripts/write_config.sh
 def googleCredentialsFile = "${rootDir}/config/wsm-sa.json"
 bootRun {
-    environment = [
-            'GOOGLE_APPLICATION_CREDENTIALS': "${googleCredentialsFile}"
-    ]
+    environment.put("GOOGLE_APPLICATION_CREDENTIALS", "${googleCredentialsFile}")
 }
+
 tasks.withType(Test) {
-    environment = [
-            'GOOGLE_APPLICATION_CREDENTIALS': "${googleCredentialsFile}"
-    ]
+    environment.put("GOOGLE_APPLICATION_CREDENTIALS", "${googleCredentialsFile}")
     testLogging {
         if (System.getenv('PRINT_STANDARD_STREAMS') == null) {
             events = ["passed", "failed", "skipped", "started"]

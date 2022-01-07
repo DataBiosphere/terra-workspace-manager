@@ -1,19 +1,13 @@
 workspace:
   azure-test:
-    # tenant: DSP Terra Test User 2
-    # tenant-id: 5571f741-d752-48d0-b191-1922a1f0c755
-
     # tenant: broadinstitute.org
     tenant-id: 0cb7a640-45a2-4ed6-be9f-63519f86e04b
-
-    # subscription: 8201533_TDR_testuser2
-    # subscription-id: 19a55c49-f0c9-4149-bb96-5c08781d0cdf
 
     # subscription: 8201533_Interactive Analysis Playground
     subscription-id: 3efc5bdf-be0e-44e7-b1d7-c08931e3c16c
 
     # MRG
-    managed-resource-group-id: mrg-qi-20210930145737
+    managed-resource-group-id: mrg-terra-integration-test-20211118
 
 feature:
   # Enable azure support when running azure tests

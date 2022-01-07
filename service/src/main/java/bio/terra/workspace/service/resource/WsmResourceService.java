@@ -2,7 +2,6 @@ package bio.terra.workspace.service.resource;
 
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
-import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.iam.model.SamConstants;
 import bio.terra.workspace.service.resource.model.StewardshipType;
 import bio.terra.workspace.service.workspace.WorkspaceService;
@@ -18,14 +17,11 @@ public class WsmResourceService {
 
   private final WorkspaceService workspaceService;
   private final ResourceDao resourceDao;
-  private final SamService samService;
 
   @Autowired
-  public WsmResourceService(
-      WorkspaceService workspaceService, ResourceDao resourceDao, SamService samService) {
+  public WsmResourceService(WorkspaceService workspaceService, ResourceDao resourceDao) {
     this.workspaceService = workspaceService;
     this.resourceDao = resourceDao;
-    this.samService = samService;
   }
 
   public List<WsmResource> enumerateResources(

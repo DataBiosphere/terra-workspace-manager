@@ -4163,12 +4163,16 @@ components:
           $ref: '#/components/schemas/GcpGcsObjectAttributes'
         gcpAiNotebookInstance:
           $ref: '#/components/schemas/GcpAiNotebookInstanceAttributes'
+        azureDisk:
+          $ref: '#/components/schemas/AzureDiskAttributes'
         azureIp:
           $ref: '#/components/schemas/AzureIpAttributes'
         azureNetwork:
           $ref: '#/components/schemas/AzureNetworkAttributes'
         azureStorage:
           $ref: '#/components/schemas/AzureStorageAttributes'
+        azureVm:
+          $ref: '#/components/schemas/AzureVmAttributes'
 
     ResourceDescription:
       type: object

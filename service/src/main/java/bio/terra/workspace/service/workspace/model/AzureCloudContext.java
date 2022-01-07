@@ -3,22 +3,22 @@ package bio.terra.workspace.service.workspace.model;
 import bio.terra.workspace.db.DbSerDes;
 import bio.terra.workspace.generated.model.ApiAzureContext;
 import bio.terra.workspace.service.workspace.exceptions.InvalidSerializedVersionException;
-import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.annotations.VisibleForTesting;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 
 public class AzureCloudContext {
-  private final String azureTenantId;
-  private final String azureSubscriptionId;
-  private final String azureResourceGroupId;
+  private String azureTenantId;
+  private String azureSubscriptionId;
+  private String azureResourceGroupId;
 
-  @JsonCreator
+  // Constructor for Jackson
+  public AzureCloudContext() {}
+
+  // Constructor for deserializer
   public AzureCloudContext(
-      @JsonProperty String azureTenantId,
-      @JsonProperty String azureSubscriptionId,
-      @JsonProperty String azureResourceGroupId) {
+      String azureTenantId, String azureSubscriptionId, String azureResourceGroupId) {
     this.azureTenantId = azureTenantId;
     this.azureSubscriptionId = azureSubscriptionId;
     this.azureResourceGroupId = azureResourceGroupId;
@@ -34,6 +34,18 @@ public class AzureCloudContext {
 
   public String getAzureResourceGroupId() {
     return azureResourceGroupId;
+  }
+
+  public void setAzureTenantId(String azureTenantId) {
+    this.azureTenantId = azureTenantId;
+  }
+
+  public void setAzureSubscriptionId(String azureSubscriptionId) {
+    this.azureSubscriptionId = azureSubscriptionId;
+  }
+
+  public void setAzureResourceGroupId(String azureResourceGroupId) {
+    this.azureResourceGroupId = azureResourceGroupId;
   }
 
   public ApiAzureContext toApi() {
