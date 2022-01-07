@@ -401,7 +401,9 @@ public class ControlledGcpResourceApiController implements ControlledGcpResource
             .location(body.getAiNotebookInstance().getLocation())
             .instanceId(
                 Optional.ofNullable(body.getAiNotebookInstance().getInstanceId())
-                    .orElse(body.getCommon().getName()))
+                    .orElse(
+                        ControlledAiNotebookInstanceResource.generateInstanceId(
+                            privateUserRole.getUserEmail())))
             .build();
 
     String jobId =
