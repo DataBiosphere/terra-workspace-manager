@@ -1,9 +1,10 @@
 package bio.terra.workspace.service.resource.controlled;
 
+import static bio.terra.workspace.service.resource.controlled.ControlledAiNotebookInstanceResource.AUTO_NAME_DATE_FORMAT;
+import static bio.terra.workspace.service.resource.controlled.ControlledAiNotebookInstanceResource.MAX_INSTANCE_NAME_LENGTH;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import bio.terra.common.exception.BadRequestException;
 import bio.terra.common.exception.MissingRequiredFieldException;
@@ -38,33 +39,6 @@ public class ControlledAiNotebookInstanceResourceTest extends BaseUnitTest {
   }
 
   @Test
-  public void
-      instanceIdIsNullAndUseResourceNameInstead_resourceNameIsInvalidInstanceId_generateAUniqueInstanceId() {
-    String resourceName = "Ai_notebook_1";
-    ControlledAiNotebookInstanceResource resource =
-        ControlledResourceFixtures.makeDefaultAiNotebookInstance()
-            .name(resourceName)
-            .instanceId(resourceName)
-            .build();
-
-    assertNotNull(resource.getInstanceId());
-    assertNotEquals(resourceName, resource.getInstanceId());
-  }
-
-  @Test
-  public void
-      instanceIdIsNullAndUseResourceNameInstead_resourceNameIsValidInstanceId_usesResourceName() {
-    String resourceName = "ai-notebook-1";
-    ControlledAiNotebookInstanceResource resource =
-        ControlledResourceFixtures.makeDefaultAiNotebookInstance()
-            .name(resourceName)
-            .instanceId(resourceName)
-            .build();
-
-    assertEquals(resourceName, resource.getInstanceId());
-  }
-
-  @Test
   public void testFlightMapSerialization() {
     ControlledAiNotebookInstanceResource resource =
         ControlledResourceFixtures.makeDefaultAiNotebookInstance().build();
@@ -76,6 +50,55 @@ public class ControlledAiNotebookInstanceResourceTest extends BaseUnitTest {
     FlightMap flightMap = new FlightMap();
     flightMap.put("resource", resource);
     assertEquals(resource, flightMap.get("resource", ControlledAiNotebookInstanceResource.class));
+  }
+
+  @Test
+  public void generateInstanceId() {
+    String userEmail = "yuhuyoyo@google.com";
+    String instanceId = ControlledAiNotebookInstanceResource.generateInstanceId(userEmail);
+
+    assertTrue(instanceId.startsWith("yuhuyoyo-"));
+  }
+
+  @Test
+  public void generateInstanceId_userIdHasDash_removeDashes() {
+    String userEmail = "yu_hu_yo_yo@google.com";
+    String instanceId = ControlledAiNotebookInstanceResource.generateInstanceId(userEmail);
+
+    assertTrue(instanceId.startsWith("yuhuyoyo-"));
+  }
+
+  @Test
+  public void generateInstanceId_userIdIsNull_prefixWithNotebook() {
+    String instanceId = ControlledAiNotebookInstanceResource.generateInstanceId(null);
+
+    assertTrue(instanceId.startsWith("notebook"));
+  }
+
+  @Test
+  public void generateInstanceId_userIdIsEmpty_prefixWithNotebook() {
+    String instanceId = ControlledAiNotebookInstanceResource.generateInstanceId("");
+
+    assertTrue(instanceId.startsWith("notebook"));
+  }
+
+  @Test
+  public void generateInstanceId_userIdHasUppercase_toLowerCase() {
+    String userEmail = "YUHUYOYO@google.com";
+    String instanceId = ControlledAiNotebookInstanceResource.generateInstanceId(userEmail);
+
+    assertTrue(instanceId.startsWith("yuhuyoyo-"));
+  }
+
+  @Test
+  public void generateInstanceId_userIdTooLong_trim() {
+    String userEmail =
+        "yuhuyoyoyoyoyoyoyoyoyoyoyoyoyoyoyoyoyoyoyoyoyoyoyoyoyoyoyoyoyoyoyoyoyoyoyoyo@google.com";
+    String instanceId = ControlledAiNotebookInstanceResource.generateInstanceId(userEmail);
+
+    int maxNameLength = MAX_INSTANCE_NAME_LENGTH - AUTO_NAME_DATE_FORMAT.length();
+
+    assertTrue(instanceId.startsWith(instanceId.substring(0, maxNameLength)));
   }
 
   @Test
