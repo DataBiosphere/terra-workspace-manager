@@ -2,8 +2,6 @@ package scripts.testscripts;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
-import static org.hamcrest.Matchers.greaterThan;
-import static org.hamcrest.Matchers.lessThan;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import bio.terra.testrunner.runner.config.TestUserSpecification;
@@ -15,7 +13,6 @@ import bio.terra.workspace.api.WorkspaceApi;
 import bio.terra.workspace.client.ApiClient;
 import bio.terra.workspace.client.ApiException;
 import bio.terra.workspace.model.ControlledResourceIamRole;
-import bio.terra.workspace.model.EnumerateJobsFilter;
 import bio.terra.workspace.model.EnumerateJobsResult;
 import bio.terra.workspace.model.EnumeratedJob;
 import bio.terra.workspace.model.ResourceMetadata;
@@ -40,7 +37,7 @@ public class EnumerateJobs extends DataRepoTestScriptBase {
   // Number of resources to create for enumeration
   private static final int RESOURCE_COUNT = 12;
   // Page size to use for enumeration paging
-  private static final int PAGE_SIZE = 5;
+  private static final int PAGE_SIZE = 4;
   // Roles to grant user on private resource
   private static final ImmutableList<ControlledResourceIamRole> PRIVATE_ROLES =
       ImmutableList.of(ControlledResourceIamRole.WRITER, ControlledResourceIamRole.EDITOR);
@@ -62,9 +59,6 @@ public class EnumerateJobs extends DataRepoTestScriptBase {
 
     TestUserSpecification workspaceOwner = testUsers.get(0);
 
-    // static assumptions
-    assertThat(PAGE_SIZE * 2, lessThan(RESOURCE_COUNT));
-    assertThat(PAGE_SIZE * 3, greaterThan(RESOURCE_COUNT));
     // TODO: if we like the alpha1 API for job enumeration, then we can maybe piggyback on
     //  the EnumerateResources test instead of creating our own set.
 
@@ -91,27 +85,25 @@ public class EnumerateJobs extends DataRepoTestScriptBase {
     logger.info("Created {} resources", resourceList.size());
     logger.info("Cleaning up {} resources", resourceList.size());
 
-    ResourceMaker.cleanupResources(
-        resourceList, ownerControlledGcpResourceApi, getWorkspaceId());
+    ResourceMaker.cleanupResources(resourceList, ownerControlledGcpResourceApi, getWorkspaceId());
     logger.info("Cleaned up {} resources", resourceList.size());
-
   }
 
   @Override
   public void doUserJourney(TestUserSpecification testUser, WorkspaceApi workspaceApi)
       throws Exception {
 
-
     // Case 1: fetch all
-    EnumerateJobsResult fetchall = alpha1Api.enumerateJobs(getWorkspaceId(), null, null, null);
+    EnumerateJobsResult fetchall =
+        alpha1Api.enumerateJobs(getWorkspaceId(), null, null, null, null, null, null);
     logResult("fetchall", fetchall);
 
     // Case 2: fetch by pages
     String pageToken = null;
-    int pageCount = 1;
-    while (true) {
-      EnumerateJobsResult page = alpha1Api.enumerateJobs(getWorkspaceId(), null, PAGE_SIZE, null);
-      logResult("page" + pageCount, page);
+    for (int pageCount = 1; true; pageCount++) {
+      EnumerateJobsResult page =
+          alpha1Api.enumerateJobs(getWorkspaceId(), PAGE_SIZE, pageToken, null, null, null, null);
+      logResult("page " + pageCount, page);
       pageToken = page.getPageToken();
       if (page.getResults().size() == 0) {
         break;
@@ -119,61 +111,55 @@ public class EnumerateJobs extends DataRepoTestScriptBase {
     }
 
     // Case 4: filter by resource type
-    EnumerateJobsFilter filter = new EnumerateJobsFilter()
-        .resourceType(ResourceType.DATA_REPO_SNAPSHOT);
-
     EnumerateJobsResult snapshots =
-        alpha1Api.enumerateJobs(getWorkspaceId(), filter, null, null);
+        alpha1Api.enumerateJobs(
+            getWorkspaceId(), null, null, ResourceType.DATA_REPO_SNAPSHOT, null, null, null);
     logResult("snapshots", snapshots);
 
     // Case 5: filter by stewardship type
-    filter.resourceType(null).stewardshipType(StewardshipType.CONTROLLED);
     EnumerateJobsResult controlled =
-        alpha1Api.enumerateJobs(getWorkspaceId(), filter, null, null);
+        alpha1Api.enumerateJobs(
+            getWorkspaceId(), null, null, null, StewardshipType.CONTROLLED, null, null);
     logResult("controlled", controlled);
 
     // Case 6: filter by resource and stewardship
-    filter.resourceType(ResourceType.GCS_BUCKET).stewardshipType(StewardshipType.CONTROLLED);
     EnumerateJobsResult controlledBuckets =
-        alpha1Api.enumerateJobs(getWorkspaceId(), filter, null, null);
+        alpha1Api.enumerateJobs(
+            getWorkspaceId(),
+            null,
+            null,
+            ResourceType.GCS_BUCKET,
+            StewardshipType.CONTROLLED,
+            null,
+            null);
     logResult("controlledBuckets", controlledBuckets);
 
     // Case 7: validate error on invalid pagination params
     ApiException invalidPaginationException =
         assertThrows(
             ApiException.class,
-            () ->
-                alpha1Api.enumerateJobs(
-                    getWorkspaceId(), null, -5, null));
+            () -> alpha1Api.enumerateJobs(getWorkspaceId(), -5, null, null, null, null, null));
     assertThat(invalidPaginationException.getMessage(), containsString("Invalid pagination"));
 
     invalidPaginationException =
         assertThrows(
             ApiException.class,
             () ->
-                alpha1Api.enumerateJobs(
-                    getWorkspaceId(), null, -5, "junktoken"));
-  }
-
-  @Override
-  protected void doCleanup(List<TestUserSpecification> testUsers, WorkspaceApi workspaceApi)
-      throws Exception {
-    // Delete the controlled resources
-    ResourceMaker.cleanupResources(
-        resourceList,
-        ownerControlledGcpResourceApi,
-        getWorkspaceId());
-
-    // Cleanup the workspace after we cleanup the the resources!
-    super.doCleanup(testUsers, workspaceApi);
+                alpha1Api.enumerateJobs(getWorkspaceId(), 22, "junktoken", null, null, null, null));
+    assertThat(invalidPaginationException.getMessage(), containsString("Invalid page token"));
   }
 
   private void logResult(String tag, EnumerateJobsResult result) {
-    logger.info("EnumerateJobs results for {} - {} of {} next {}",
-        tag, result.getResults().size(), result.getTotalResults(), result.getPageToken());
+    logger.info(
+        "EnumerateJobs results for {} - {} of {} next {}",
+        tag,
+        result.getResults().size(),
+        result.getTotalResults(),
+        result.getPageToken());
 
     for (EnumeratedJob job : result.getResults()) {
-      logger.info(" jobid={} status={} submitted={} completed={} code={} operation={} {}",
+      logger.info(
+          " jobid={} status={} submitted={} completed={} code={} operation={} {}",
           job.getJobReport().getId(),
           job.getJobReport().getStatus(),
           job.getJobReport().getSubmitted(),
@@ -205,10 +191,8 @@ public class EnumerateJobs extends DataRepoTestScriptBase {
     if (metadata == null) {
       return "<>";
     }
-    return String.format(" resource: type=%s name=%s id=%s",
-        job.getResourceType().toString(),
-        metadata.getName(),
-        metadata.getResourceId());
+    return String.format(
+        " resource: type=%s name=%s id=%s",
+        job.getResourceType().toString(), metadata.getName(), metadata.getResourceId());
   }
-
 }

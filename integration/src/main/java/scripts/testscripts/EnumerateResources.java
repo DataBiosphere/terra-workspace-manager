@@ -221,10 +221,7 @@ public class EnumerateResources extends DataRepoTestScriptBase {
   protected void doCleanup(List<TestUserSpecification> testUsers, WorkspaceApi workspaceApi)
       throws Exception {
     // Delete the controlled resources
-    ResourceMaker.cleanupResources(
-        resourceList,
-        ownerControlledGcpResourceApi,
-        getWorkspaceId());
+    ResourceMaker.cleanupResources(resourceList, ownerControlledGcpResourceApi, getWorkspaceId());
 
     // Cleanup the workspace after we cleanup the the resources!
     super.doCleanup(testUsers, workspaceApi);
@@ -269,5 +266,4 @@ public class EnumerateResources extends DataRepoTestScriptBase {
     assertThat(resourceListIds.size(), equalTo(RESOURCE_COUNT));
     logger.info("Successfully matched all resources");
   }
-
 }

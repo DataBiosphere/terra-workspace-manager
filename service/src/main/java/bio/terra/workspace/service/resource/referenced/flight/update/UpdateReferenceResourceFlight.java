@@ -5,9 +5,9 @@ import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.RetryRule;
 import bio.terra.workspace.common.utils.FlightBeanBag;
 import bio.terra.workspace.common.utils.RetryRules;
-import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.resource.referenced.ReferencedResource;
 import bio.terra.workspace.service.resource.referenced.flight.create.ValidateReferenceStep;
+import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ResourceKeys;
 
 /** A flight to update the reference resource's name, description, and/or attributes. */
 public class UpdateReferenceResourceFlight extends Flight {
@@ -23,7 +23,7 @@ public class UpdateReferenceResourceFlight extends Flight {
 
     FlightBeanBag appContext = FlightBeanBag.getFromObject(beanBag);
     final ReferencedResource resource =
-        inputParameters.get(JobMapKeys.REQUEST.getKeyName(), ReferencedResource.class);
+        inputParameters.get(ResourceKeys.RESOURCE, ReferencedResource.class);
 
     // Perform access verification
     addStep(new ValidateReferenceStep(appContext), RetryRules.cloud());

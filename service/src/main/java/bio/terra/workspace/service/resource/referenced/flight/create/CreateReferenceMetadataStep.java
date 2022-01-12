@@ -7,10 +7,10 @@ import bio.terra.stairway.StepResult;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.common.utils.FlightUtils;
 import bio.terra.workspace.db.ResourceDao;
-import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.resource.WsmResourceType;
 import bio.terra.workspace.service.resource.referenced.ReferencedResource;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
+import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ResourceKeys;
 import org.springframework.http.HttpStatus;
 
 /** Stairway step to persist a data reference in WSM's database. */
@@ -49,6 +49,6 @@ public class CreateReferenceMetadataStep implements Step {
             inputMap.get(WorkspaceFlightMapKeys.ResourceKeys.RESOURCE_TYPE, String.class));
 
     // Use the resource type to deserialize the right class
-    return inputMap.get(JobMapKeys.REQUEST.getKeyName(), resourceType.getReferenceClass());
+    return inputMap.get(ResourceKeys.RESOURCE, resourceType.getReferenceClass());
   }
 }

@@ -2054,18 +2054,16 @@ paths:
       - $ref: '#/components/parameters/WorkspaceId'
       - $ref: '#/components/parameters/Limit'
       - $ref: '#/components/parameters/PageToken'
+      - $ref: '#/components/parameters/ResourceType'
+      - $ref: '#/components/parameters/StewardshipType'
+      - $ref: "#/components/parameters/ResourceName"
+      - $ref: '#/components/parameters/JobStateFilter'
     get:
       summary: |
         Enumerate recent jobs run in a workspace. The enumeration includes both running
         and completed jobs. It is ordered by start time of the job.
       operationId: enumerateJobs
       tags: [Alpha1]
-      requestBody:
-        required: false
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/EnumerateJobsFilter'
       responses:
         '200':
           $ref: '#/components/responses/EnumerateJobsResponse'
@@ -2213,6 +2211,22 @@ components:
       required: false
       schema:
         type: string
+
+    JobStateFilter:
+      name: jobState
+      in: query
+      description: The state of jobs to return (ALL, ACTIVE, COMPLETED)
+      required: false
+      schema:
+        $ref: '#/components/schemas/JobStateFilter'
+
+    ResourceName:
+      name: name
+      in: query
+      description: A name used to identify an object in the workspace manager
+      required: false
+      schema:
+        $ref: '#/components/schemas/Name'
 
   schemas:
     CloneReferencedResourceRequestBody:
@@ -2527,6 +2541,7 @@ components:
           type: string
         # TODO: In the future, notification configuration will also be part of JobControl.
 
+    # ALPHA1:
     JobStateFilter:
       type: string
       enum:
@@ -4317,23 +4332,6 @@ components:
       description: Enum containing valid stewardship types. Used for enumeration
       type: string
       enum: ['REFERENCED', 'CONTROLLED']
-
-    ## ALPHA1 Schemas
-    ## They are no compatibility guarantees. The schemas may change without notice.
-    EnumerateJobsFilter:
-      type: object
-      description: |
-        Filtering for job enumeration. All properties are optional. If specified (non-null),
-        they are applied to filter the jobs results.
-      properties:
-        resourceType:
-          $ref: '#/components/schemas/ResourceType'
-        stewardshipType:
-          $ref: '#/components/schemas/StewardshipType'
-        resourceName:
-          $ref: "#/components/schemas/Name"
-        jobStateFilter:
-          $ref: '#/components/schemas/JobStateFilter'
 
     ResourceUnion:
       type: object

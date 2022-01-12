@@ -3,7 +3,7 @@ package bio.terra.workspace.service.resource.controlled;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import bio.terra.workspace.common.BaseConnectedTest;
-import bio.terra.workspace.common.exception.AzureNotImplementedException;
+import bio.terra.workspace.common.exception.FeatureNotSupportedException;
 import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
 import bio.terra.workspace.connected.UserAccessUtils;
 import bio.terra.workspace.generated.model.ApiAccessScope;
@@ -48,13 +48,13 @@ public class AzureDisabledTest extends BaseConnectedTest {
     final UUID uuid = UUID.randomUUID();
 
     assertThrows(
-        AzureNotImplementedException.class,
+        FeatureNotSupportedException.class,
         () ->
             workspaceService.createAzureCloudContext(
                 workspaceId, uuid.toString(), userRequest, null, null));
 
     assertThrows(
-        AzureNotImplementedException.class,
+        FeatureNotSupportedException.class,
         () -> workspaceService.getAuthorizedAzureCloudContext(workspaceId, userRequest));
 
     final ApiAzureIpCreationParameters ipCreationParameters =
@@ -74,7 +74,7 @@ public class AzureDisabledTest extends BaseConnectedTest {
             .build();
 
     assertThrows(
-        AzureNotImplementedException.class,
+        FeatureNotSupportedException.class,
         () ->
             controlledResourceService.createIp(
                 ipResource, ipCreationParameters, null, userRequest));
@@ -97,7 +97,7 @@ public class AzureDisabledTest extends BaseConnectedTest {
             .build();
 
     assertThrows(
-        AzureNotImplementedException.class,
+        FeatureNotSupportedException.class,
         () ->
             controlledResourceService.createDisk(
                 diskResource, diskCreationParameters, null, userRequest));
@@ -122,7 +122,7 @@ public class AzureDisabledTest extends BaseConnectedTest {
             .build();
 
     assertThrows(
-        AzureNotImplementedException.class,
+        FeatureNotSupportedException.class,
         () ->
             controlledResourceService.createNetwork(
                 networkResource, networkCreationParameters, null, userRequest));
@@ -149,7 +149,7 @@ public class AzureDisabledTest extends BaseConnectedTest {
             .build();
 
     assertThrows(
-        AzureNotImplementedException.class,
+        FeatureNotSupportedException.class,
         () ->
             controlledResourceService.createVm(
                 vmResource, vmCreationParameters, null, null, null, userRequest));

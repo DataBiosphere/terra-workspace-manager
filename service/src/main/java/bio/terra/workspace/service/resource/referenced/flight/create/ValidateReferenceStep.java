@@ -10,6 +10,7 @@ import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.resource.referenced.ReferencedResource;
 import bio.terra.workspace.service.resource.referenced.exception.InvalidReferenceException;
+import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ResourceKeys;
 
 public class ValidateReferenceStep implements Step {
 
@@ -24,7 +25,7 @@ public class ValidateReferenceStep implements Step {
       throws InterruptedException, RetryException {
     FlightMap inputMap = flightContext.getInputParameters();
     ReferencedResource referencedResource =
-        inputMap.get(JobMapKeys.REQUEST.getKeyName(), ReferencedResource.class);
+        inputMap.get(ResourceKeys.RESOURCE, ReferencedResource.class);
     AuthenticatedUserRequest userRequest =
         inputMap.get(JobMapKeys.AUTH_USER_INFO.getKeyName(), AuthenticatedUserRequest.class);
 

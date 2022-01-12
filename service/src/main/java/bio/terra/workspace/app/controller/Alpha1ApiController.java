@@ -5,11 +5,13 @@ import bio.terra.workspace.common.exception.InternalLogicException;
 import bio.terra.workspace.common.utils.ControllerValidationUtils;
 import bio.terra.workspace.common.utils.ErrorReportUtils;
 import bio.terra.workspace.generated.controller.Alpha1Api;
-import bio.terra.workspace.generated.model.ApiEnumerateJobsFilter;
 import bio.terra.workspace.generated.model.ApiEnumerateJobsResult;
 import bio.terra.workspace.generated.model.ApiEnumeratedJob;
 import bio.terra.workspace.generated.model.ApiJobReport;
+import bio.terra.workspace.generated.model.ApiJobStateFilter;
+import bio.terra.workspace.generated.model.ApiResourceType;
 import bio.terra.workspace.generated.model.ApiResourceUnion;
+import bio.terra.workspace.generated.model.ApiStewardshipType;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequestFactory;
 import bio.terra.workspace.service.job.JobService;
@@ -33,6 +35,8 @@ import bio.terra.workspace.service.workspace.model.EnumeratedJob;
 import bio.terra.workspace.service.workspace.model.EnumeratedJobs;
 import bio.terra.workspace.service.workspace.model.JobStateFilter;
 import com.google.common.annotations.VisibleForTesting;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import javax.servlet.http.HttpServletRequest;
@@ -72,27 +76,20 @@ public class Alpha1ApiController implements Alpha1Api {
 
   @Override
   public ResponseEntity<ApiEnumerateJobsResult> enumerateJobs(
-      UUID workspaceId, Integer limit, String pageToken, ApiEnumerateJobsFilter body) {
+      UUID workspaceId,
+      Integer limit,
+      String pageToken,
+      ApiResourceType resource,
+      ApiStewardshipType stewardship,
+      String name,
+      ApiJobStateFilter jobState) {
     // Make sure Alpha1 is enabled
     features.alpha1EnabledCheck();
 
     // Prepare the inputs
     final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     ControllerValidationUtils.validatePaginationParams(0, limit);
-
-    final WsmResourceType resourceType =
-        WsmResourceType.fromApiOptional(
-            Optional.ofNullable(body).map(ApiEnumerateJobsFilter::getResourceType).orElse(null));
-    final StewardshipType stewardshipType =
-        StewardshipType.fromApiOptional(
-            Optional.ofNullable(body).map(ApiEnumerateJobsFilter::getStewardshipType).orElse(null));
-    final String resourceName =
-        Optional.ofNullable(body).map(ApiEnumerateJobsFilter::getResourceName).orElse(null);
-    final JobStateFilter jobStateFilter =
-        Optional.ofNullable(body)
-            .map(apitype -> JobStateFilter.fromApi(apitype.getJobStateFilter()))
-            .orElse(null);
-    ValidationUtils.validateOptionalResourceName(resourceName);
+    ValidationUtils.validateOptionalResourceName(name);
 
     // Do the enumeration
     EnumeratedJobs enumeratedJobs =
@@ -101,21 +98,17 @@ public class Alpha1ApiController implements Alpha1Api {
             userRequest,
             limit,
             pageToken,
-            resourceType,
-            stewardshipType,
-            resourceName,
-            jobStateFilter);
+            WsmResourceType.fromApiOptional(resource),
+            StewardshipType.fromApiOptional(stewardship),
+            name,
+            JobStateFilter.fromApi(jobState));
 
     // projectId
     String gcpProjectId =
         workspaceService.getAuthorizedGcpProject(workspaceId, userRequest).orElse(null);
 
     // Convert the result to API-speak
-    ApiEnumerateJobsResult result =
-        new ApiEnumerateJobsResult()
-            .pageToken(enumeratedJobs.getPageToken())
-            .totalResults(enumeratedJobs.getTotalResults());
-
+    List<ApiEnumeratedJob> apiJobList = new ArrayList<>();
     for (EnumeratedJob enumeratedJob : enumeratedJobs.getResults()) {
       ApiJobReport jobReport =
           jobService.mapFlightStateToApiJobReport(enumeratedJob.getFlightState());
@@ -135,8 +128,14 @@ public class Alpha1ApiController implements Alpha1Api {
               .resourceType(optResource.map(r -> r.getResourceType().toApiModel()).orElse(null))
               .resource(
                   optResource.map(r -> apiResourceFromWsmResource(r, gcpProjectId)).orElse(null));
-      result.addResultsItem(apiJob);
+      apiJobList.add(apiJob);
     }
+
+    ApiEnumerateJobsResult result =
+        new ApiEnumerateJobsResult()
+            .pageToken(enumeratedJobs.getPageToken())
+            .totalResults(enumeratedJobs.getTotalResults())
+            .results(apiJobList);
 
     return new ResponseEntity<>(result, HttpStatus.OK);
   }

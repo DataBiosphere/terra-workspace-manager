@@ -640,73 +640,73 @@ public class ResourceMaker {
       throws Exception {
 
     // Array of resource allocators
-    List<SupplierException<ResourceMetadata>> makers = List.of(
-        // BQ dataset reference
-        () -> {
-            GcpBigQueryDatasetResource resource =
-                makeBigQueryDatasetReference(
-                    referencedGcpResourceApi, workspaceId, makeName());
-            return resource.getMetadata();
-          },
+    List<SupplierException<ResourceMetadata>> makers =
+        List.of(
+            // BQ dataset reference
+            () -> {
+              GcpBigQueryDatasetResource resource =
+                  makeBigQueryDatasetReference(referencedGcpResourceApi, workspaceId, makeName());
+              return resource.getMetadata();
+            },
 
-        // TDR snapshot reference
-        () -> {
-            DataRepoSnapshotResource resource =
-            ResourceMaker.makeDataRepoSnapshotReference(
-                referencedGcpResourceApi,
-                workspaceId,
-                makeName(),
-                dataRepoSnapshotId,
-                dataRepoInstanceName);
-          return resource.getMetadata();
-        },
+            // TDR snapshot reference
+            () -> {
+              DataRepoSnapshotResource resource =
+                  ResourceMaker.makeDataRepoSnapshotReference(
+                      referencedGcpResourceApi,
+                      workspaceId,
+                      makeName(),
+                      dataRepoSnapshotId,
+                      dataRepoInstanceName);
+              return resource.getMetadata();
+            },
 
-        // GCS bucket reference
-        () -> {
-          GcpGcsBucketResource resource =
-            makeGcsBucketReference(referencedGcpResourceApi, workspaceId, makeName());
-          return resource.getMetadata();
-        },
+            // GCS bucket reference
+            () -> {
+              GcpGcsBucketResource resource =
+                  makeGcsBucketReference(referencedGcpResourceApi, workspaceId, makeName());
+              return resource.getMetadata();
+            },
 
-        // GCS bucket controlled shared
-        () -> {
-          GcpGcsBucketResource resource =
-              ResourceMaker.makeGcsBucketReference(referencedGcpResourceApi, workspaceId, makeName());
-          return resource.getMetadata();
-        },
+            // GCS bucket controlled shared
+            () -> {
+              GcpGcsBucketResource resource =
+                  ResourceMaker.makeGcsBucketReference(
+                      referencedGcpResourceApi, workspaceId, makeName());
+              return resource.getMetadata();
+            },
 
-        // GCS bucket controlled private
-        () -> {
-          GcpGcsBucketResource resource =
-              ResourceMaker.makeControlledGcsBucketUserPrivate(
+            // GCS bucket controlled private
+            () -> {
+              GcpGcsBucketResource resource =
+                  ResourceMaker.makeControlledGcsBucketUserPrivate(
+                          controlledGcpResourceApi,
+                          workspaceId,
+                          makeName(),
+                          CloningInstructionsEnum.NOTHING)
+                      .getGcpBucket();
+              return resource.getMetadata();
+            },
+
+            // BQ dataset controlled shared
+            () -> {
+              GcpBigQueryDatasetResource resource =
+                  ResourceMaker.makeControlledBigQueryDatasetUserShared(
                       controlledGcpResourceApi,
                       workspaceId,
                       makeName(),
-                      CloningInstructionsEnum.NOTHING)
-                  .getGcpBucket();
-          return resource.getMetadata();
-        },
+                      null,
+                      CloningInstructionsEnum.NOTHING);
+              return resource.getMetadata();
+            },
 
-        // BQ dataset controlled shared
-        () -> {
-          GcpBigQueryDatasetResource resource =
-              ResourceMaker.makeControlledBigQueryDatasetUserShared(
-                  controlledGcpResourceApi,
-                  workspaceId,
-                  makeName(),
-                  null,
-                  CloningInstructionsEnum.NOTHING);
-          return resource.getMetadata();
-          },
-
-        // BQ data table reference
-        () -> {
-          GcpBigQueryDataTableResource resource =
-              ResourceMaker.makeBigQueryDataTableReference(
-                  referencedGcpResourceApi, workspaceId, makeName());
-          return resource.getMetadata();
-        }
-    );
+            // BQ data table reference
+            () -> {
+              GcpBigQueryDataTableResource resource =
+                  ResourceMaker.makeBigQueryDataTableReference(
+                      referencedGcpResourceApi, workspaceId, makeName());
+              return resource.getMetadata();
+            });
 
     // Build the resources
     List<ResourceMetadata> resources = new ArrayList<>();
@@ -719,12 +719,14 @@ public class ResourceMaker {
 
   /**
    * Designed to cleanup the result of allocations from {@link #makeResources}
+   *
    * @param resources list of resources to cleanup
    */
   public static void cleanupResources(
       List<ResourceMetadata> resources,
       ControlledGcpResourceApi controlledGcpResourceApi,
-      UUID workspaceId) throws Exception {
+      UUID workspaceId)
+      throws Exception {
     for (ResourceMetadata metadata : resources) {
       if (metadata.getStewardshipType() == StewardshipType.CONTROLLED) {
         switch (metadata.getResourceType()) {
@@ -733,8 +735,7 @@ public class ResourceMaker {
                 metadata.getResourceId(), workspaceId, controlledGcpResourceApi);
             break;
           case BIG_QUERY_DATASET:
-            controlledGcpResourceApi.deleteBigQueryDataset(
-                workspaceId, metadata.getResourceId());
+            controlledGcpResourceApi.deleteBigQueryDataset(workspaceId, metadata.getResourceId());
             break;
           default:
             throw new IllegalStateException(
@@ -745,6 +746,4 @@ public class ResourceMaker {
       }
     }
   }
-
-
 }

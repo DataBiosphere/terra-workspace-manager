@@ -11,11 +11,12 @@ import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.resource.ValidationUtils;
 import bio.terra.workspace.service.resource.WsmResourceType;
 import bio.terra.workspace.service.resource.controlled.flight.clone.workspace.WorkspaceCloneUtils;
+import bio.terra.workspace.service.resource.model.StewardshipType;
 import bio.terra.workspace.service.resource.referenced.flight.create.CreateReferenceResourceFlight;
 import bio.terra.workspace.service.resource.referenced.flight.update.UpdateReferenceResourceFlight;
 import bio.terra.workspace.service.workspace.WorkspaceService;
-import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ResourceKeys;
+import bio.terra.workspace.service.workspace.model.OperationType;
 import io.opencensus.contrib.spring.aop.Traced;
 import java.util.List;
 import java.util.UUID;
@@ -66,11 +67,12 @@ public class ReferencedResourceService {
             .newJob()
             .description(jobDescription)
             .flightClass(CreateReferenceResourceFlight.class)
-            .request(resource)
+            .resource(resource)
             .userRequest(userRequest)
-            .addParameter(
-                WorkspaceFlightMapKeys.ResourceKeys.RESOURCE_TYPE,
-                resource.getResourceType().name());
+            .operationType(OperationType.CREATE)
+            .workspaceId(resource.getWorkspaceId().toString())
+            .resourceType(resource.getResourceType())
+            .stewardshipType(StewardshipType.REFERENCED);
 
     UUID resourceIdResult = createJob.submitAndWait(UUID.class);
     if (!resourceIdResult.equals(resource.getResourceId())) {
@@ -125,20 +127,20 @@ public class ReferencedResourceService {
     ValidationUtils.validateResourceDescriptionName(description);
     boolean updated;
     if (resource != null) {
-      JobBuilder createJob =
+      JobBuilder updateJob =
           jobService
               .newJob()
               .description("Update reference target")
               .flightClass(UpdateReferenceResourceFlight.class)
-              .request(resource)
+              .resource(resource)
               .userRequest(userRequest)
-              .addParameter(
-                  WorkspaceFlightMapKeys.ResourceKeys.RESOURCE_TYPE,
-                  resource.getResourceType().name())
-              .addParameter(ResourceKeys.RESOURCE_NAME, name)
+              .operationType(OperationType.UPDATE)
+              .workspaceId(workspaceId.toString())
+              .resourceType(resource.getResourceType())
+              .resourceName(name)
               .addParameter(ResourceKeys.RESOURCE_DESCRIPTION, description);
 
-      updated = createJob.submitAndWait(Boolean.class);
+      updated = updateJob.submitAndWait(Boolean.class);
     } else {
       updated = resourceDao.updateResource(workspaceId, resourceId, name, description);
     }
