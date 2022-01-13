@@ -141,8 +141,10 @@ public class ControlledResourceFixtures {
         .name(uniqueAzureName(AZURE_VM_NAME_PREFIX))
         .region("westcentralus")
         .vmSize(VirtualMachineSizeTypes.STANDARD_D2S_V3.toString())
+            // TODO: it'd be nice to support standard Linux images instead of only custom image URIs.
+            // The below image is a Jupyter image and should be stable.
         .vmImageUri(
-            "/subscriptions/3efc5bdf-be0e-44e7-b1d7-c08931e3c16c/resourceGroups/mrg-qi-1-preview-20210517084351/providers/Microsoft.Compute/galleries/msdsvm/images/customized_ms_dsvm/versions/0.0.4")
+            "/subscriptions/3efc5bdf-be0e-44e7-b1d7-c08931e3c16c/resourceGroups/mrg-qi-1-preview-20210517084351/providers/Microsoft.Compute/galleries/msdsvm/images/customized_ms_dsvm/versions/0.1.0")
         .ipId(UUID.randomUUID())
         .diskId(UUID.randomUUID())
         .networkId(UUID.randomUUID());
