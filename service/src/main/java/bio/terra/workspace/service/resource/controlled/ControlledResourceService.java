@@ -270,7 +270,7 @@ public class ControlledResourceService {
             .description(jobDescription)
             .jobId(jobControl.getId())
             .flightClass(CloneControlledGcsBucketResourceFlight.class)
-            .request(sourceBucketResource)
+            .resource(sourceBucketResource)
             .userRequest(userRequest)
             .addParameter(ControlledResourceKeys.DESTINATION_WORKSPACE_ID, destinationWorkspaceId)
             .addParameter(ResourceKeys.RESOURCE_NAME, destinationResourceName)
