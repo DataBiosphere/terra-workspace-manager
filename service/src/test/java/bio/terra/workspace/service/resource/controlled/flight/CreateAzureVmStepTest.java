@@ -288,8 +288,7 @@ public class CreateAzureVmStepTest extends BaseAzureTest {
             .setNetwork(mockNetwork)
             .setSubnetName(STUB_SUBNET_NAME)
             .setPublicIpAddress(mockPublicIpAddress)
-            .setImage(
-                "/subscriptions/3efc5bdf-be0e-44e7-b1d7-c08931e3c16c/resourceGroups/mrg-qi-1-preview-20210517084351/providers/Microsoft.Compute/galleries/msdsvm/images/customized_ms_dsvm/versions/0.0.4")
+            .setImage(ControlledResourceFixtures.getAzureVmCreationParameters().getVmImageUri())
             .build();
 
     assertThat(requestDataOpt, equalTo(Optional.of(expected)));
