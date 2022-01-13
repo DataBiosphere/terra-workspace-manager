@@ -18,6 +18,7 @@ import bio.terra.workspace.service.resource.referenced.ReferencedResourceService
 import bio.terra.workspace.service.resource.referenced.flight.create.CreateReferenceResourceFlight;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
+import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ResourceKeys;
 import java.util.UUID;
 
 public class LaunchCreateReferenceResourceFlightStep implements Step {
@@ -66,7 +67,7 @@ public class LaunchCreateReferenceResourceFlightStep implements Step {
         .put(ControlledResourceKeys.DESTINATION_REFERENCED_RESOURCE, destinationResource);
 
     final FlightMap subflightInputParameters = new FlightMap();
-    subflightInputParameters.put(JobMapKeys.REQUEST.getKeyName(), destinationResource);
+    subflightInputParameters.put(ResourceKeys.RESOURCE, destinationResource);
     subflightInputParameters.put(JobMapKeys.AUTH_USER_INFO.getKeyName(), userRequest);
     subflightInputParameters.put(
         WorkspaceFlightMapKeys.ResourceKeys.RESOURCE_TYPE, resource.getResourceType().name());

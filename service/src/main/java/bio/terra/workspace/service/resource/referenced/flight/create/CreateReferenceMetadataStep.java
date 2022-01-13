@@ -9,7 +9,6 @@ import bio.terra.workspace.common.utils.FlightUtils;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.service.resource.WsmResourceType;
 import bio.terra.workspace.service.resource.referenced.ReferencedResource;
-import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ResourceKeys;
 import org.springframework.http.HttpStatus;
 
@@ -45,8 +44,7 @@ public class CreateReferenceMetadataStep implements Step {
   private ReferencedResource getReferenceResource(FlightContext flightContext) {
     FlightMap inputMap = flightContext.getInputParameters();
     WsmResourceType resourceType =
-        WsmResourceType.valueOf(
-            inputMap.get(WorkspaceFlightMapKeys.ResourceKeys.RESOURCE_TYPE, String.class));
+        WsmResourceType.valueOf(inputMap.get(ResourceKeys.RESOURCE_TYPE, String.class));
 
     // Use the resource type to deserialize the right class
     return inputMap.get(ResourceKeys.RESOURCE, resourceType.getReferenceClass());
