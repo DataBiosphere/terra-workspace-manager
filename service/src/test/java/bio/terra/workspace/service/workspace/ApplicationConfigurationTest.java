@@ -41,7 +41,10 @@ public class ApplicationConfigurationTest extends BaseTest {
       } else if (wsmApp.getApplicationId().equals(CARMEN_UUID)) {
         checkCarmen(wsmApp);
       } else if (wsmApp.getApplicationId().equals(TEST_WSM_APP_UUID)) {
-        checkTestWsmApp(wsmApp);
+        // Do not enforce that the WSM test app (used in connected tests, rather than just unit
+        // tests) matches a hardcoded specification. Other deployments need to override this app
+        // as they cannot impersonate terra-dev service accounts.
+        continue;
       } else {
         fail();
       }
@@ -60,14 +63,5 @@ public class ApplicationConfigurationTest extends BaseTest {
     assertEquals("musical performance framework", carmenApp.getDescription());
     assertEquals("carmen@terra-dev.iam.gserviceaccount.com", carmenApp.getServiceAccount());
     assertEquals(WsmApplicationState.DEPRECATED, carmenApp.getState());
-  }
-
-  private void checkTestWsmApp(WsmApplication testApp) {
-    assertEquals("TestWsmApp", testApp.getDisplayName());
-    assertEquals("WSM test application", testApp.getDescription());
-    // Note that SAs (and all other emails) are always stored as lowercase strings.
-    assertEquals(
-        "Elizabeth.Shadowmoon@test.firecloud.org".toLowerCase(), testApp.getServiceAccount());
-    assertEquals(WsmApplicationState.OPERATING, testApp.getState());
   }
 }
