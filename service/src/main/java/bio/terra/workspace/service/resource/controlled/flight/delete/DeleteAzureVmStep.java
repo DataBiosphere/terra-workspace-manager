@@ -10,6 +10,8 @@ import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.workspace.model.AzureCloudContext;
 import com.azure.resourcemanager.compute.ComputeManager;
 import java.util.UUID;
+
+import com.azure.resourcemanager.compute.models.VirtualMachine;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -53,7 +55,20 @@ public class DeleteAzureVmStep implements Step {
     try {
       logger.info("Attempting to delete vm " + azureResourceId);
 
+      VirtualMachine resolvedVm =
+              computeManager
+                      .virtualMachines()
+                      .getByResourceGroup(azureCloudContext.getAzureResourceGroupId(), vm.getVmName());
+
       computeManager.virtualMachines().deleteById(azureResourceId);
+
+      resolvedVm
+              .networkInterfaceIds()
+              .forEach(nic -> computeManager.networkManager().networkInterfaces().deleteById(nic));
+
+      // Delete the OS disk
+      computeManager.disks().deleteById(resolvedVm.osDiskId());
+
       return StepResult.getStepResultSuccess();
     } catch (Exception ex) {
       logger.info("Attempt to delete Azure vm failed on this try: " + azureResourceId, ex);
