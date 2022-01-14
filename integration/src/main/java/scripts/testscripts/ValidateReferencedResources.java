@@ -4,8 +4,8 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static scripts.utils.ClientTestUtils.TEST_BUCKET_NAME_WITH_FINE_GRAINED_ACCESS;
-import static scripts.utils.ClientTestUtils.TEST_FILE_IN_FINE_GRAINED_BUCKET;
-import static scripts.utils.ClientTestUtils.TEST_FOLDER_IN_FINE_GRAINED_BUCKET;
+import static scripts.utils.ClientTestUtils.TEST_FILE_FOO_MONKEY_SEES_MONKEY_DOS;
+import static scripts.utils.ClientTestUtils.TEST_FOLDER_FOO;
 
 import bio.terra.testrunner.runner.config.TestUserSpecification;
 import bio.terra.workspace.api.ReferencedGcpResourceApi;
@@ -100,7 +100,7 @@ public class ValidateReferencedResources extends DataRepoTestScriptBase {
             "reference_to_foo_monkey_sees_monkey_dos",
             null,
             TEST_BUCKET_NAME_WITH_FINE_GRAINED_ACCESS,
-            TEST_FILE_IN_FINE_GRAINED_BUCKET);
+            TEST_FILE_FOO_MONKEY_SEES_MONKEY_DOS);
     bucketTxtFileResourceId = bucketFileReference.getMetadata().getResourceId();
 
     // Reference to gs://terra_wsm_fine_grained_test_bucket. Bella and Elijah has READER access.
@@ -121,7 +121,7 @@ public class ValidateReferencedResources extends DataRepoTestScriptBase {
             "foo_folder",
             null,
             TEST_BUCKET_NAME_WITH_FINE_GRAINED_ACCESS,
-            TEST_FOLDER_IN_FINE_GRAINED_BUCKET);
+            TEST_FOLDER_FOO);
     fooFolderResourceId = bucketFolderReference.getMetadata().getResourceId();
 
     GcpGcsObjectResource fooTxtFileReference =

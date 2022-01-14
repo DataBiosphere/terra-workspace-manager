@@ -8,7 +8,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static scripts.utils.ClientTestUtils.TEST_BUCKET_NAME_WITH_FINE_GRAINED_ACCESS;
-import static scripts.utils.ClientTestUtils.TEST_FILE_IN_FINE_GRAINED_BUCKET;
+import static scripts.utils.ClientTestUtils.TEST_FILE_FOO_MONKEY_SEES_MONKEY_DOS;
 import static scripts.utils.ClientTestUtils.getOrFail;
 import static scripts.utils.GcsBucketTestFixtures.GCS_BLOB_NAME;
 import static scripts.utils.GcsBucketTestFixtures.RESOURCE_PREFIX;
@@ -208,7 +208,7 @@ public class CloneWorkspace extends WorkspaceAllocateTestScriptBase {
             "a_reference_to_foo_monkey_sees_monkey_dos",
             CloningInstructionsEnum.REFERENCE,
             TEST_BUCKET_NAME_WITH_FINE_GRAINED_ACCESS,
-            TEST_FILE_IN_FINE_GRAINED_BUCKET);
+            TEST_FILE_FOO_MONKEY_SEES_MONKEY_DOS);
 
     // create reference to BQ dataset with COPY_NOTHING
     sourceDatasetReference =

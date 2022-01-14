@@ -3,8 +3,8 @@ package scripts.testscripts;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static scripts.utils.ClientTestUtils.TEST_BUCKET_NAME;
 import static scripts.utils.ClientTestUtils.TEST_BUCKET_NAME_WITH_FINE_GRAINED_ACCESS;
-import static scripts.utils.ClientTestUtils.TEST_FILE_IN_FINE_GRAINED_BUCKET;
-import static scripts.utils.ClientTestUtils.TEST_FOLDER_IN_FINE_GRAINED_BUCKET;
+import static scripts.utils.ClientTestUtils.TEST_FILE_FOO_MONKEY_SEES_MONKEY_DOS;
+import static scripts.utils.ClientTestUtils.TEST_FOLDER_FOO;
 
 import bio.terra.testrunner.runner.config.TestUserSpecification;
 import bio.terra.workspace.api.ReferencedGcpResourceApi;
@@ -77,7 +77,7 @@ public class CloneReferencedResources extends DataRepoTestScriptBase {
             "reference_to_foo_monkey_sees_monkey_dos",
             null,
             TEST_BUCKET_NAME_WITH_FINE_GRAINED_ACCESS,
-            TEST_FILE_IN_FINE_GRAINED_BUCKET);
+            TEST_FILE_FOO_MONKEY_SEES_MONKEY_DOS);
     sourceBucketFolderReference =
         ResourceMaker.makeGcsObjectReference(
             referencedGcpResourceApi,
@@ -85,7 +85,7 @@ public class CloneReferencedResources extends DataRepoTestScriptBase {
             "reference_to_foo_folder",
             null,
             TEST_BUCKET_NAME_WITH_FINE_GRAINED_ACCESS,
-            TEST_FOLDER_IN_FINE_GRAINED_BUCKET);
+            TEST_FOLDER_FOO);
 
     sourceBigQueryDatasetReference =
         ResourceMaker.makeBigQueryDatasetReference(
@@ -185,7 +185,7 @@ public class CloneReferencedResources extends DataRepoTestScriptBase {
         TEST_BUCKET_NAME_WITH_FINE_GRAINED_ACCESS,
         cloneBucketFileReferenceResult.getResource().getAttributes().getBucketName());
     assertEquals(
-        TEST_FILE_IN_FINE_GRAINED_BUCKET,
+        TEST_FILE_FOO_MONKEY_SEES_MONKEY_DOS,
         cloneBucketFileReferenceResult.getResource().getAttributes().getFileName());
 
     // clone source reference to destination
@@ -224,8 +224,7 @@ public class CloneReferencedResources extends DataRepoTestScriptBase {
         TEST_BUCKET_NAME_WITH_FINE_GRAINED_ACCESS,
         cloneFooFolderReferenceResult.getResource().getAttributes().getBucketName());
     assertEquals(
-        TEST_FOLDER_IN_FINE_GRAINED_BUCKET,
-        cloneFooFolderReferenceResult.getResource().getAttributes().getFileName());
+        TEST_FOLDER_FOO, cloneFooFolderReferenceResult.getResource().getAttributes().getFileName());
 
     final var cloneBigQueryDatasetRequestBody =
         new CloneReferencedResourceRequestBody()

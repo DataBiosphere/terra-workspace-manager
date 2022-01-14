@@ -12,15 +12,10 @@ import bio.terra.workspace.generated.model.ApiCreateGcpBigQueryDataTableReferenc
 import bio.terra.workspace.generated.model.ApiCreateGcpBigQueryDatasetReferenceRequestBody;
 import bio.terra.workspace.generated.model.ApiCreateGcpGcsBucketReferenceRequestBody;
 import bio.terra.workspace.generated.model.ApiCreateGcpGcsObjectReferenceRequestBody;
-import bio.terra.workspace.generated.model.ApiDataRepoSnapshotAttributes;
 import bio.terra.workspace.generated.model.ApiDataRepoSnapshotResource;
-import bio.terra.workspace.generated.model.ApiGcpBigQueryDataTableAttributes;
 import bio.terra.workspace.generated.model.ApiGcpBigQueryDataTableResource;
-import bio.terra.workspace.generated.model.ApiGcpBigQueryDatasetAttributes;
 import bio.terra.workspace.generated.model.ApiGcpBigQueryDatasetResource;
-import bio.terra.workspace.generated.model.ApiGcpGcsBucketAttributes;
 import bio.terra.workspace.generated.model.ApiGcpGcsBucketResource;
-import bio.terra.workspace.generated.model.ApiGcpGcsObjectAttributes;
 import bio.terra.workspace.generated.model.ApiGcpGcsObjectResource;
 import bio.terra.workspace.generated.model.ApiUpdateBigQueryDataTableReferenceRequestBody;
 import bio.terra.workspace.generated.model.ApiUpdateBigQueryDatasetReferenceRequestBody;
@@ -136,8 +131,9 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
   public ResponseEntity<Void> updateBucketObjectReferenceResource(
       UUID workspaceId, UUID referenceId, ApiUpdateGcsBucketObjectReferenceRequestBody body) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
-    ApiGcpGcsObjectAttributes bucketObjectAttributes = body.getResourceAttributes();
-    if (bucketObjectAttributes == null) {
+    String bucketName = body.getBucketName();
+    String objectName = body.getObjectName();
+    if (StringUtils.isEmpty(bucketName) && StringUtils.isEmpty(objectName)) {
       referenceResourceService.updateReferenceResource(
           workspaceId, referenceId, body.getName(), body.getDescription(), userRequest);
     } else {
@@ -146,11 +142,11 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
               .getReferenceResource(workspaceId, referenceId, userRequest)
               .castToGcsObjectResource()
               .toBuilder();
-      if (!StringUtils.isEmpty(bucketObjectAttributes.getBucketName())) {
-        updateBucketObjectResourceBuilder.bucketName(bucketObjectAttributes.getBucketName());
+      if (!StringUtils.isEmpty(bucketName)) {
+        updateBucketObjectResourceBuilder.bucketName(bucketName);
       }
-      if (!StringUtils.isEmpty(bucketObjectAttributes.getFileName())) {
-        updateBucketObjectResourceBuilder.fileName(bucketObjectAttributes.getFileName());
+      if (!StringUtils.isEmpty(objectName)) {
+        updateBucketObjectResourceBuilder.fileName(objectName);
       }
       referenceResourceService.updateReferenceResource(
           workspaceId,
@@ -224,8 +220,8 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
   public ResponseEntity<Void> updateBucketReferenceResource(
       UUID id, UUID referenceId, ApiUpdateGcsBucketReferenceRequestBody body) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
-    ApiGcpGcsBucketAttributes bucketAttributes = body.getResourceAttributes();
-    if (bucketAttributes == null) {
+    String bucketName = body.getBucketName();
+    if (StringUtils.isEmpty(bucketName)) {
       referenceResourceService.updateReferenceResource(
           id, referenceId, body.getName(), body.getDescription(), userRequest);
     } else {
@@ -233,10 +229,8 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
           referenceResourceService
               .getReferenceResource(id, referenceId, userRequest)
               .castToGcsBucketResource()
-              .toBuilder();
-      if (!StringUtils.isEmpty(bucketAttributes.getBucketName())) {
-        updateBucketResourceBuilder.bucketName(bucketAttributes.getBucketName());
-      }
+              .toBuilder()
+              .bucketName(bucketName);
       referenceResourceService.updateReferenceResource(
           id,
           referenceId,
@@ -313,8 +307,12 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
   public ResponseEntity<Void> updateBigQueryDataTableReferenceResource(
       UUID workspaceId, UUID referenceId, ApiUpdateBigQueryDataTableReferenceRequestBody body) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
-    ApiGcpBigQueryDataTableAttributes bqTableAttributes = body.getResourceAttributes();
-    if (bqTableAttributes == null) {
+    String updatedProjectId = body.getProjectId();
+    String updatedDatasetId = body.getDatasetId();
+    String updatedDataTableId = body.getDataTableId();
+    if (StringUtils.isEmpty(updatedProjectId)
+        && StringUtils.isEmpty(updatedDatasetId)
+        && StringUtils.isEmpty(updatedDataTableId)) {
       referenceResourceService.updateReferenceResource(
           workspaceId, referenceId, body.getName(), body.getDescription(), userRequest);
     } else {
@@ -323,14 +321,14 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
               .getReferenceResource(workspaceId, referenceId, userRequest)
               .castToBigQueryDataTableResource()
               .toBuilder();
-      if (!StringUtils.isEmpty(bqTableAttributes.getProjectId())) {
-        updateBqTableResource.projectId(bqTableAttributes.getProjectId());
+      if (!StringUtils.isEmpty(updatedProjectId)) {
+        updateBqTableResource.projectId(updatedProjectId);
       }
-      if (!StringUtils.isEmpty(bqTableAttributes.getDatasetId())) {
-        updateBqTableResource.datasetId(bqTableAttributes.getDatasetId());
+      if (!StringUtils.isEmpty(updatedDatasetId)) {
+        updateBqTableResource.datasetId(updatedDatasetId);
       }
-      if (!StringUtils.isEmpty(bqTableAttributes.getDataTableId())) {
-        updateBqTableResource.dataTableId(bqTableAttributes.getDataTableId());
+      if (!StringUtils.isEmpty(updatedDataTableId)) {
+        updateBqTableResource.dataTableId(updatedDataTableId);
       }
       referenceResourceService.updateReferenceResource(
           workspaceId,
@@ -412,8 +410,9 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
   public ResponseEntity<Void> updateBigQueryDatasetReferenceResource(
       UUID workspaceId, UUID resourceId, ApiUpdateBigQueryDatasetReferenceRequestBody body) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
-    ApiGcpBigQueryDatasetAttributes datasetAttributes = body.getResourceAttributes();
-    if (datasetAttributes == null) {
+    String updatedDatasetId = body.getDatasetId();
+    String updatedProjectId = body.getProjectId();
+    if (StringUtils.isEmpty(updatedDatasetId) && StringUtils.isEmpty(updatedProjectId)) {
       referenceResourceService.updateReferenceResource(
           workspaceId, resourceId, body.getName(), body.getDescription(), userRequest);
     } else {
@@ -424,11 +423,11 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
 
       ReferencedBigQueryDatasetResource.Builder updatedBqDatasetResourceBuilder =
           bqDatasetResource.toBuilder();
-      if (!StringUtils.isEmpty(datasetAttributes.getProjectId())) {
-        updatedBqDatasetResourceBuilder.projectId(datasetAttributes.getProjectId());
+      if (!StringUtils.isEmpty(updatedProjectId)) {
+        updatedBqDatasetResourceBuilder.projectId(updatedProjectId);
       }
-      if (!StringUtils.isEmpty(datasetAttributes.getDatasetId())) {
-        updatedBqDatasetResourceBuilder.datasetName(datasetAttributes.getDatasetId());
+      if (!StringUtils.isEmpty(updatedDatasetId)) {
+        updatedBqDatasetResourceBuilder.datasetName(updatedDatasetId);
       }
       referenceResourceService.updateReferenceResource(
           workspaceId,
@@ -508,8 +507,9 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
   public ResponseEntity<Void> updateDataRepoSnapshotReferenceResource(
       UUID workspaceId, UUID resouceId, ApiUpdateDataRepoSnapshotReferenceRequestBody body) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
-    ApiDataRepoSnapshotAttributes dataRepoSnapshotAttributes = body.getResourceAttributes();
-    if (dataRepoSnapshotAttributes == null) {
+    String updatedSnapshot = body.getSnapshot();
+    String updatedInstanceName = body.getInstanceName();
+    if (StringUtils.isEmpty(updatedSnapshot) && StringUtils.isEmpty(updatedInstanceName)) {
       referenceResourceService.updateReferenceResource(
           workspaceId, resouceId, body.getName(), body.getDescription(), userRequest);
     } else {
@@ -518,11 +518,11 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
               .getReferenceResource(workspaceId, resouceId, userRequest)
               .castToDataRepoSnapshotResource()
               .toBuilder();
-      if (!StringUtils.isEmpty(dataRepoSnapshotAttributes.getSnapshot())) {
-        updatedResourceBuilder.snapshotId(dataRepoSnapshotAttributes.getSnapshot());
+      if (!StringUtils.isEmpty(updatedSnapshot)) {
+        updatedResourceBuilder.snapshotId(updatedSnapshot);
       }
-      if (!StringUtils.isEmpty(dataRepoSnapshotAttributes.getInstanceName())) {
-        updatedResourceBuilder.instanceName(dataRepoSnapshotAttributes.getInstanceName());
+      if (!StringUtils.isEmpty(updatedInstanceName)) {
+        updatedResourceBuilder.instanceName(updatedInstanceName);
       }
       referenceResourceService.updateReferenceResource(
           workspaceId,

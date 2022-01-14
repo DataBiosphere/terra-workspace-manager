@@ -100,7 +100,8 @@ public class ResourceMaker {
       UUID resourceId,
       @Nullable String name,
       @Nullable String description,
-      @Nullable GcpBigQueryDatasetAttributes attributes)
+      @Nullable String projectId,
+      @Nullable String datasetId)
       throws ApiException {
     UpdateBigQueryDatasetReferenceRequestBody body =
         new UpdateBigQueryDatasetReferenceRequestBody();
@@ -110,8 +111,11 @@ public class ResourceMaker {
     if (description != null) {
       body.setDescription(description);
     }
-    if (attributes != null) {
-      body.setResourceAttributes(attributes);
+    if (projectId != null) {
+      body.setProjectId(projectId);
+    }
+    if (datasetId != null) {
+      body.setDatasetId(datasetId);
     }
     resourceApi.updateBigQueryDatasetReferenceResource(body, workspace, resourceId);
   }
@@ -150,7 +154,9 @@ public class ResourceMaker {
       UUID resourceId,
       @Nullable String name,
       @Nullable String description,
-      @Nullable GcpBigQueryDataTableAttributes attributes)
+      @Nullable String projectId,
+      @Nullable String datasetId,
+      @Nullable String tableId)
       throws ApiException {
     UpdateBigQueryDataTableReferenceRequestBody body =
         new UpdateBigQueryDataTableReferenceRequestBody();
@@ -160,8 +166,14 @@ public class ResourceMaker {
     if (description != null) {
       body.setDescription(description);
     }
-    if (attributes != null) {
-      body.setResourceAttributes(attributes);
+    if (projectId != null) {
+      body.setProjectId(projectId);
+    }
+    if (datasetId != null) {
+      body.setDatasetId(datasetId);
+    }
+    if (tableId != null) {
+      body.setDataTableId(tableId);
     }
     resourceApi.updateBigQueryDataTableReferenceResource(body, workspaceId, resourceId);
   }
@@ -197,7 +209,8 @@ public class ResourceMaker {
       UUID resourceId,
       @Nullable String name,
       @Nullable String description,
-      @Nullable DataRepoSnapshotAttributes attributes)
+      @Nullable String instanceId,
+      @Nullable String snapshot)
       throws ApiException {
     UpdateDataRepoSnapshotReferenceRequestBody body =
         new UpdateDataRepoSnapshotReferenceRequestBody();
@@ -207,10 +220,12 @@ public class ResourceMaker {
     if (description != null) {
       body.setDescription(description);
     }
-    if (attributes != null) {
-      body.setResourceAttributes(attributes);
+    if (instanceId != null) {
+      body.setInstanceName(instanceId);
     }
-
+    if (snapshot != null) {
+      body.setSnapshot(snapshot);
+    }
     resourceApi.updateDataRepoSnapshotReferenceResource(body, workspaceId, resourceId);
   }
 
@@ -290,7 +305,7 @@ public class ResourceMaker {
       UUID resourceId,
       @Nullable String name,
       @Nullable String description,
-      @Nullable GcpGcsBucketAttributes attributes)
+      @Nullable String bucketName)
       throws ApiException {
     UpdateGcsBucketReferenceRequestBody body = new UpdateGcsBucketReferenceRequestBody();
     if (name != null) {
@@ -299,8 +314,8 @@ public class ResourceMaker {
     if (description != null) {
       body.setDescription(description);
     }
-    if (attributes != null) {
-      body.setResourceAttributes(attributes);
+    if (bucketName != null) {
+      body.setBucketName(bucketName);
     }
     resourceApi.updateBucketReferenceResource(body, workspaceId, resourceId);
   }
@@ -342,7 +357,8 @@ public class ResourceMaker {
       UUID resourceId,
       @Nullable String name,
       @Nullable String description,
-      @Nullable GcpGcsObjectAttributes attributes)
+      @Nullable String bucketName,
+      @Nullable String objectName)
       throws ApiException {
     UpdateGcsBucketObjectReferenceRequestBody body =
         new UpdateGcsBucketObjectReferenceRequestBody();
@@ -352,8 +368,11 @@ public class ResourceMaker {
     if (description != null) {
       body.setDescription(description);
     }
-    if (attributes != null) {
-      body.setResourceAttributes(attributes);
+    if (bucketName != null) {
+      body.setBucketName(bucketName);
+    }
+    if (objectName != null) {
+      body.setObjectName(objectName);
     }
     resourceApi.updateBucketObjectReferenceResource(body, workspaceId, resourceId);
   }

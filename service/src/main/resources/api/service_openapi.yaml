@@ -2301,9 +2301,9 @@ components:
           $ref: "#/components/schemas/Name"
         description:
           type: string
-        resourceAttributes:
-          description: attributes specific to GCS bucket
-          $ref: '#/components/schemas/GcpGcsBucketAttributes'
+        bucketName:
+          description: Name of created bucket (not the resource name).
+          type: string
 
     UpdateGcsBucketObjectReferenceRequestBody:
       type: object
@@ -2312,9 +2312,12 @@ components:
           $ref: "#/components/schemas/Name"
         description:
           type: string
-        resourceAttributes:
-          description: attributes specific to GCS bucket object
-          $ref: '#/components/schemas/GcpGcsObjectAttributes'
+        bucketName:
+          description: Name of created bucket (not the resource name).
+          type: string
+        objectName:
+          description: Full path to the file in the gcs bucket.
+          type: string
 
     UpdateBigQueryDatasetReferenceRequestBody:
       type: object
@@ -2323,9 +2326,10 @@ components:
           $ref: "#/components/schemas/Name"
         description:
           type: string
-        resourceAttributes:
-          description: attributes specific to BigQuery dataset
-          $ref: '#/components/schemas/GcpBigQueryDatasetAttributes'
+        projectId:
+          type: string
+        datasetId:
+          type: string
 
     UpdateBigQueryDataTableReferenceRequestBody:
       type: object
@@ -2334,9 +2338,12 @@ components:
           $ref: "#/components/schemas/Name"
         description:
           type: string
-        resourceAttributes:
-          description: attributes specific to BigQuery data table
-          $ref: '#/components/schemas/GcpBigQueryDataTableAttributes'
+        projectId:
+          type: string
+        datasetId:
+          type: string
+        dataTableId:
+          type: string
 
     UpdateDataRepoSnapshotReferenceRequestBody:
       type: object
@@ -2345,9 +2352,12 @@ components:
           $ref: "#/components/schemas/Name"
         description:
           type: string
-        resourceAttributes:
-          description: attributes specific to data repo snapshot
-          $ref: '#/components/schemas/DataRepoSnapshotAttributes'
+        instanceName:
+          description: The name of the Data Repo instance
+          type: string
+        snapshot:
+          description: The ID of the Data Repo snapshot
+          type: string
 
     # TODO(PF-404): remove this in favor of reference-type specific objects.
     DataReferenceMetadata:
