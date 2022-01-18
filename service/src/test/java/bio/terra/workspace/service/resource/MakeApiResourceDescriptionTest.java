@@ -176,7 +176,8 @@ public class MakeApiResourceDescriptionTest extends BaseUnitTest {
               accessScopeType,
               managedByType,
               null,
-              bucketName);
+              bucketName,
+              "US-CENTRAL1");
 
       ApiResourceDescription resourceDescription =
           resourceController.makeApiResourceDescription(resource, null);
@@ -203,7 +204,8 @@ public class MakeApiResourceDescriptionTest extends BaseUnitTest {
               accessScopeType,
               managedByType,
               null,
-              datasetName);
+              datasetName,
+              "us-central1");
 
       String projectId = "my-project-id";
       ApiResourceDescription resourceDescription =
