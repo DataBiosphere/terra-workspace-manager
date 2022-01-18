@@ -19,7 +19,7 @@ import javax.annotation.Nullable;
 import liquibase.pro.packaged.J;
 
 public class ControlledBigQueryDatasetResource extends ControlledResource {
-  private static final String DEFAULT_LOCATION = "us-central1";
+  private static final String DEFAULT_LOCATION = "US-CENTRAL1";
   private final String datasetName;
   private final String datasetLocation;
 

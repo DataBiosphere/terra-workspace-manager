@@ -114,7 +114,7 @@ public class PrivateControlledAiNotebookInstanceLifecycle extends WorkspaceAlloc
         resourceUserApi);
 
     createAControlledAiNotebookInstanceWithLocationSpecified(resourceUserApi);
-    
+
     String instanceName =
         String.format(
             "projects/%s/locations/%s/instances/%s",
@@ -208,7 +208,7 @@ public class PrivateControlledAiNotebookInstanceLifecycle extends WorkspaceAlloc
   private void
   createAControlledAiNotebookInstanceWithLocationSpecified(
       ControlledGcpResourceApi resourceUserApi) throws ApiException, InterruptedException {
-    String location = "us-east1-a";
+    String location = "us-east1-b";
     CreatedControlledGcpAiNotebookInstanceResult resourceWithSpecifiedLocation =
         ResourceMaker.makeControlledNotebookUserPrivate(
             getWorkspaceId(), /*instanceId=*/ null, location, resourceUserApi);
