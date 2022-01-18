@@ -4333,6 +4333,8 @@ components:
       type: string
       enum: ['REFERENCED', 'CONTROLLED']
 
+    ## ALPHA1 schemas
+    ## These schemas are only by alpha1 paths
     ResourceUnion:
       type: object
       description: |
@@ -4351,6 +4353,16 @@ components:
           $ref: '#/components/schemas/GcpGcsObjectResource'
         gcpAiNotebookInstance:
           $ref: '#/components/schemas/GcpAiNotebookInstanceResource'
+        azureIp:
+          $ref: '#/components/schemas/AzureIpResource'
+        azureDisk:
+          $ref: '#/components/schemas/AzureDiskResource'
+        azureNetwork:
+          $ref: '#/components/schemas/AzureDiskResource'
+        azureVm:
+          $ref: '#/components/schemas/AzureVmResource'
+        azureStorageAccount:
+          $ref: '#/components/schemas/AzureStorageResource'
 
     OperationType:
       type: string

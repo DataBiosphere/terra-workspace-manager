@@ -3,12 +3,13 @@ package bio.terra.workspace.service.workspace.model;
 import bio.terra.stairway.FlightState;
 import bio.terra.workspace.service.resource.WsmResource;
 import java.util.Optional;
+import javax.annotation.Nullable;
 
 public class EnumeratedJob {
   private FlightState flightState;
   private String jobDescription;
   private OperationType operationType;
-  private WsmResource resource;
+  private @Nullable WsmResource resource;
 
   public FlightState getFlightState() {
     return flightState;
@@ -41,7 +42,7 @@ public class EnumeratedJob {
     return Optional.ofNullable(resource);
   }
 
-  public EnumeratedJob resource(WsmResource resource) {
+  public EnumeratedJob resource(@Nullable WsmResource resource) {
     this.resource = resource;
     return this;
   }

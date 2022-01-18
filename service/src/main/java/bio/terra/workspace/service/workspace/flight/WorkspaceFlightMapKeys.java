@@ -13,6 +13,7 @@ public final class WorkspaceFlightMapKeys {
   public static final String USER_TO_REMOVE = "userToRemove";
   public static final String ROLE_TO_REMOVE = "roleToRemove";
   public static final String APPLICATION_ID = "applicationId";
+  public static final String OPERATION_TYPE = "operationType";
 
   private WorkspaceFlightMapKeys() {}
 
@@ -24,7 +25,6 @@ public final class WorkspaceFlightMapKeys {
     public static final String CREATION_PARAMETERS = "creationParameters";
     public static final String PRIVATE_RESOURCE_IAM_ROLE = "privateResourceIamRole";
     public static final String GCP_CLOUD_CONTEXT = "gcpCloudContext";
-
     public static final String UPDATE_PARAMETERS = "updateParameters";
     public static final String PREVIOUS_UPDATE_PARAMETERS = "previousUpdateParameters";
 
@@ -73,8 +73,6 @@ public final class WorkspaceFlightMapKeys {
     // additional keys for job filtering
     public static final String STEWARDSHIP_TYPE = "stewardshipType";
     public static final String RESOURCE = "resource";
-    // this applies outside of resources. Where should it go?
-    public static final String OPERATION_TYPE = "operationType";
 
     private ResourceKeys() {}
   }

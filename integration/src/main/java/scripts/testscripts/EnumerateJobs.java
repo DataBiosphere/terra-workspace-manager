@@ -2,7 +2,11 @@ package scripts.testscripts;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.lessThanOrEqualTo;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import bio.terra.testrunner.runner.config.TestUserSpecification;
 import bio.terra.workspace.api.Alpha1Api;
@@ -59,8 +63,8 @@ public class EnumerateJobs extends DataRepoTestScriptBase {
 
     TestUserSpecification workspaceOwner = testUsers.get(0);
 
-    // TODO: if we like the alpha1 API for job enumeration, then we can maybe piggyback on
-    //  the EnumerateResources test instead of creating our own set.
+    // If we like the alpha1 API for job enumeration, then we can maybe piggyback on
+    // the EnumerateResources test instead of creating our own set.
 
     ApiClient ownerApiClient = ClientTestUtils.getClientForTestUser(workspaceOwner, server);
     ownerControlledGcpResourceApi = new ControlledGcpResourceApi(ownerApiClient);
@@ -97,6 +101,8 @@ public class EnumerateJobs extends DataRepoTestScriptBase {
     EnumerateJobsResult fetchall =
         alpha1Api.enumerateJobs(getWorkspaceId(), null, null, null, null, null, null);
     logResult("fetchall", fetchall);
+    // TODO: [PF-1281] we need another type of filtering to be able to do better validation of the
+    // result return.
 
     // Case 2: fetch by pages
     String pageToken = null;
@@ -104,6 +110,11 @@ public class EnumerateJobs extends DataRepoTestScriptBase {
       EnumerateJobsResult page =
           alpha1Api.enumerateJobs(getWorkspaceId(), PAGE_SIZE, pageToken, null, null, null, null);
       logResult("page " + pageCount, page);
+      assertThat(
+          "Not more than page size items returned",
+          page.getResults().size(),
+          lessThanOrEqualTo(PAGE_SIZE));
+
       pageToken = page.getPageToken();
       if (page.getResults().size() == 0) {
         break;
@@ -115,12 +126,29 @@ public class EnumerateJobs extends DataRepoTestScriptBase {
         alpha1Api.enumerateJobs(
             getWorkspaceId(), null, null, ResourceType.DATA_REPO_SNAPSHOT, null, null, null);
     logResult("snapshots", snapshots);
+    for (EnumeratedJob job : snapshots.getResults()) {
+      assertThat(
+          "Job is a snapshot", job.getResourceType(), equalTo(ResourceType.DATA_REPO_SNAPSHOT));
+      assertNotNull(job.getResource().getGcpDataRepoSnapshot(), "Snapshot resource present");
+      assertThat(
+          "Resource is a snapshot",
+          job.getResource().getGcpDataRepoSnapshot().getMetadata().getResourceType(),
+          equalTo(ResourceType.DATA_REPO_SNAPSHOT));
+    }
 
     // Case 5: filter by stewardship type
     EnumerateJobsResult controlled =
         alpha1Api.enumerateJobs(
             getWorkspaceId(), null, null, null, StewardshipType.CONTROLLED, null, null);
     logResult("controlled", controlled);
+    for (EnumeratedJob job : controlled.getResults()) {
+      ResourceMetadata metadata = getResourceMetadata(job);
+      assertNotNull(metadata, "Resource has metadata");
+      assertThat(
+          "Resource is controlled",
+          metadata.getStewardshipType(),
+          equalTo(StewardshipType.CONTROLLED));
+    }
 
     // Case 6: filter by resource and stewardship
     EnumerateJobsResult controlledBuckets =
@@ -133,6 +161,16 @@ public class EnumerateJobs extends DataRepoTestScriptBase {
             null,
             null);
     logResult("controlledBuckets", controlledBuckets);
+    for (EnumeratedJob job : controlledBuckets.getResults()) {
+      ResourceMetadata metadata = getResourceMetadata(job);
+      assertNotNull(metadata, "Resource has metadata");
+      assertThat(
+          "Resource is controlled",
+          metadata.getStewardshipType(),
+          equalTo(StewardshipType.CONTROLLED));
+      assertThat(
+          "Resource is a bucket", metadata.getResourceType(), equalTo(ResourceType.GCS_BUCKET));
+    }
 
     // Case 7: validate error on invalid pagination params
     ApiException invalidPaginationException =
@@ -170,24 +208,53 @@ public class EnumerateJobs extends DataRepoTestScriptBase {
     }
   }
 
-  private String resourceString(EnumeratedJob job) {
-    ResourceMetadata metadata = null;
+  private ResourceMetadata getResourceMetadata(EnumeratedJob job) {
+    if (job.getResourceType() == null || job.getResource() == null) {
+      return null;
+    }
+    ResourceUnion union = job.getResource();
+    switch (job.getResourceType()) {
+      case AI_NOTEBOOK:
+        return union.getGcpAiNotebookInstance().getMetadata();
 
-    if (job.getResourceType() != null && job.getResource() != null) {
-      ResourceUnion union = job.getResource();
-      if (union.getGcpBqDataset() != null) {
-        metadata = union.getGcpBqDataset().getMetadata();
-      } else if (union.getGcpBqDataTable() != null) {
-        metadata = union.getGcpBqDataTable().getMetadata();
-      } else if (union.getGcpDataRepoSnapshot() != null) {
-        metadata = union.getGcpDataRepoSnapshot().getMetadata();
-      } else if (union.getGcpGcsBucket() != null) {
-        metadata = union.getGcpGcsBucket().getMetadata();
-      } else if (union.getGcpGcsObject() != null) {
-        metadata = union.getGcpGcsObject().getMetadata();
-      }
+      case DATA_REPO_SNAPSHOT:
+        return union.getGcpDataRepoSnapshot().getMetadata();
+
+      case GCS_BUCKET:
+        return union.getGcpGcsBucket().getMetadata();
+
+      case GCS_OBJECT:
+        return union.getGcpGcsObject().getMetadata();
+
+      case BIG_QUERY_DATASET:
+        return union.getGcpBqDataset().getMetadata();
+
+      case BIG_QUERY_DATA_TABLE:
+        return union.getGcpBqDataTable().getMetadata();
+
+      case AZURE_IP:
+        return union.getAzureIp().getMetadata();
+
+      case AZURE_DISK:
+        return union.getAzureDisk().getMetadata();
+
+      case AZURE_NETWORK:
+        return union.getAzureNetwork().getMetadata();
+      case AZURE_VM:
+        return union.getAzureVm().getMetadata();
+
+      case AZURE_STORAGE_ACCOUNT:
+        return union.getAzureStorageAccount().getMetadata();
+
+      default:
+        fail("Unknown resource type: " + job.getResourceType());
     }
 
+    return null;
+  }
+
+  private String resourceString(EnumeratedJob job) {
+    ResourceMetadata metadata = getResourceMetadata(job);
     if (metadata == null) {
       return "<>";
     }

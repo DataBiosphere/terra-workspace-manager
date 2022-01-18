@@ -39,6 +39,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import javax.annotation.Nullable;
 import javax.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -142,7 +143,8 @@ public class Alpha1ApiController implements Alpha1Api {
 
   // Convert a WsmResource into the API format for enumeration
   @VisibleForTesting
-  public ApiResourceUnion apiResourceFromWsmResource(WsmResource wsmResource, String gcpProjectId) {
+  public ApiResourceUnion apiResourceFromWsmResource(
+      WsmResource wsmResource, @Nullable String gcpProjectId) {
 
     var union = new ApiResourceUnion();
     switch (wsmResource.getStewardshipType()) {
@@ -156,7 +158,7 @@ public class Alpha1ApiController implements Alpha1Api {
               union.gcpBqDataset(resource.toApiResource());
               break;
             }
-          case BIQ_QUERY_DATA_TABLE:
+          case BIG_QUERY_DATA_TABLE:
             {
               ReferencedBigQueryDataTableResource resource =
                   referencedResource.castToBigQueryDataTableResource();
@@ -226,7 +228,8 @@ public class Alpha1ApiController implements Alpha1Api {
         break; // controlled
 
       default:
-        throw new InternalLogicException("Unknown stewardship type");
+        throw new InternalLogicException(
+            "Unknown stewardship type: " + wsmResource.getStewardshipType());
     }
 
     return union;

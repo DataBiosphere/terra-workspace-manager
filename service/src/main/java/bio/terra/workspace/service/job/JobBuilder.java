@@ -178,16 +178,16 @@ public class JobBuilder {
     if (shouldInsert(ResourceKeys.STEWARDSHIP_TYPE, stewardshipType)) {
       addParameter(ResourceKeys.STEWARDSHIP_TYPE, stewardshipType);
     }
-    if (shouldInsert(ResourceKeys.OPERATION_TYPE, operationType)) {
-      addParameter(ResourceKeys.OPERATION_TYPE, operationType);
+    if (shouldInsert(WorkspaceFlightMapKeys.OPERATION_TYPE, operationType)) {
+      addParameter(WorkspaceFlightMapKeys.OPERATION_TYPE, operationType);
     }
   }
 
-  private boolean shouldInsert(String mapKey, Object value) {
+  private boolean shouldInsert(String mapKey, @Nullable Object value) {
     return (value != null && !jobParameterMap.containsKey(mapKey));
   }
 
-  private boolean shouldInsert(JobMapKeys mapKey, Object value) {
+  private boolean shouldInsert(JobMapKeys mapKey, @Nullable Object value) {
     return (value != null && !jobParameterMap.containsKey(mapKey.getKeyName()));
   }
 }

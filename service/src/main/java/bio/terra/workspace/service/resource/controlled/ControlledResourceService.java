@@ -195,6 +195,11 @@ public class ControlledResourceService {
       AuthenticatedUserRequest userRequest,
       @Nullable String resourceName,
       @Nullable String resourceDescription) {
+    controlledResourceMetadataManager.validateControlledResourceAndAction(
+        userRequest,
+        resource.getWorkspaceId(),
+        resource.getResourceId(),
+        SamControlledResourceActions.EDIT_ACTION);
 
     final String jobDescription =
         String.format(
@@ -209,7 +214,7 @@ public class ControlledResourceService {
             .userRequest(userRequest)
             .operationType(OperationType.UPDATE)
             .workspaceId(resource.getWorkspaceId().toString())
-            // TODO: conflict with resource name
+            // TODO: [PF-1282] need to disambiguate the RESOURCE and RESOURCE_NAME usage
             .resourceType(resource.getResourceType())
             .stewardshipType(resource.getStewardshipType())
             .addParameter(ControlledResourceKeys.UPDATE_PARAMETERS, updateParameters)

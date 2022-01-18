@@ -50,6 +50,21 @@ public class Alpha1Service {
     this.stairwayComponent = stairwayComponent;
   }
 
+  /**
+   * List Stairway flights related to a workspace. These inputs are translated into inputs to
+   * Stairway's getFlights calls. The resulting flights are translated into enumerated jobs. The
+   * jobs are ordered by submit time.
+   *
+   * @param workspaceId workspace we are listing in
+   * @param userRequest authenticated user
+   * @param limit max number of jobs to return
+   * @param pageToken optional starting place in the result set; start at beginning if missing
+   * @param resourceType optional filter by resource type
+   * @param stewardshipType optional filter by stewardship type
+   * @param resourceName optional filter by resource name
+   * @param jobStateFilter optional filter by job state
+   * @return POJO containing the results
+   */
   public EnumeratedJobs enumerateJobs(
       UUID workspaceId,
       AuthenticatedUserRequest userRequest,
@@ -79,8 +94,8 @@ public class Alpha1Service {
     for (FlightState state : flightEnumeration.getFlightStateList()) {
       FlightMap inputMap = state.getInputParameters();
       OperationType operationType =
-          (inputMap.containsKey(ResourceKeys.OPERATION_TYPE))
-              ? inputMap.get(ResourceKeys.OPERATION_TYPE, OperationType.class)
+          (inputMap.containsKey(WorkspaceFlightMapKeys.OPERATION_TYPE))
+              ? inputMap.get(WorkspaceFlightMapKeys.OPERATION_TYPE, OperationType.class)
               : OperationType.UNKNOWN;
 
       WsmResource wsmResource =

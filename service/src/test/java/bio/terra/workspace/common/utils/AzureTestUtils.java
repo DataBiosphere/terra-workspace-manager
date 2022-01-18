@@ -60,7 +60,7 @@ public class AzureTestUtils {
     inputs.put(ResourceKeys.RESOURCE_NAME, resource.getName());
     inputs.put(ResourceKeys.RESOURCE_TYPE, resource.getResourceType());
     inputs.put(ResourceKeys.RESOURCE_ID, resource.getResourceId().toString());
-    inputs.put(ResourceKeys.OPERATION_TYPE, OperationType.CREATE);
+    inputs.put(WorkspaceFlightMapKeys.OPERATION_TYPE, OperationType.CREATE);
     inputs.put(ResourceKeys.STEWARDSHIP_TYPE, StewardshipType.CONTROLLED);
     inputs.put(WorkspaceFlightMapKeys.WORKSPACE_ID, workspaceId.toString());
     inputs.put(JobMapKeys.AUTH_USER_INFO.getKeyName(), userRequest);

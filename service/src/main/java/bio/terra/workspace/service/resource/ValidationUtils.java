@@ -241,7 +241,7 @@ public class ValidationUtils {
     }
   }
 
-  public static void validateOptionalResourceName(String name) {
+  public static void validateOptionalResourceName(@Nullable String name) {
     if (name != null && !RESOURCE_NAME_VALIDATION_PATTERN.matcher(name).matches()) {
       logger.warn("Invalid resource name {}", name);
       throw new InvalidNameException(
