@@ -106,7 +106,8 @@ public class ControlledBigQueryDatasetResource extends ControlledResource {
 
   @Override
   public String attributesToJson() {
-    return DbSerDes.toJson(new ControlledBigQueryDatasetAttributes(getDatasetName(), getDatasetLocation()));
+    return DbSerDes.toJson(
+        new ControlledBigQueryDatasetAttributes(getDatasetName(), getDatasetLocation()));
   }
 
   @Override

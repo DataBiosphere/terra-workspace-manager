@@ -528,8 +528,7 @@ public class ResourceMaker {
                     .description("Description of " + resourceName)
                     .name(resourceName)
                     .privateResourceUser(privateUser))
-            .dataset(
-                new GcpBigQueryDatasetCreationParameters().datasetId(datasetId));
+            .dataset(new GcpBigQueryDatasetCreationParameters().datasetId(datasetId));
 
     logger.info(
         "Creating {} {} dataset {} workspace {}",
@@ -581,7 +580,10 @@ public class ResourceMaker {
    * method calls the asynchronous creation endpoint and polls until the creation job completes.
    */
   public static CreatedControlledGcpAiNotebookInstanceResult makeControlledNotebookUserPrivate(
-      UUID workspaceId, @Nullable String instanceId, @Nullable String location, ControlledGcpResourceApi resourceApi)
+      UUID workspaceId,
+      @Nullable String instanceId,
+      @Nullable String location,
+      ControlledGcpResourceApi resourceApi)
       throws ApiException, InterruptedException {
     // Fill out the minimum required fields to arbitrary values.
     var creationParameters =

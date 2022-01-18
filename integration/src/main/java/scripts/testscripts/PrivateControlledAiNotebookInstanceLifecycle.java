@@ -82,7 +82,7 @@ public class PrivateControlledAiNotebookInstanceLifecycle extends WorkspaceAlloc
         ClientTestUtils.getControlledGcpResourceClient(resourceUser, server);
     CreatedControlledGcpAiNotebookInstanceResult creationResult =
         ResourceMaker.makeControlledNotebookUserPrivate(
-            getWorkspaceId(), instanceId, /*location=*/null, resourceUserApi);
+            getWorkspaceId(), instanceId, /*location=*/ null, resourceUserApi);
 
     UUID resourceId = creationResult.getAiNotebookInstance().getMetadata().getResourceId();
 
@@ -107,8 +107,7 @@ public class PrivateControlledAiNotebookInstanceLifecycle extends WorkspaceAlloc
     assertEquals(
         "us-central1-a",
         resource.getAttributes().getLocation(),
-        "When location is not set, use the default location"
-    );
+        "When location is not set, use the default location");
 
     createAControlledAiNotebookInstanceWithoutSpecifiedInstanceId_validInstanceIdIsGenerated(
         resourceUserApi);
@@ -189,7 +188,7 @@ public class PrivateControlledAiNotebookInstanceLifecycle extends WorkspaceAlloc
           ControlledGcpResourceApi resourceUserApi) throws ApiException, InterruptedException {
     CreatedControlledGcpAiNotebookInstanceResult resourceWithNotebookInstanceIdNotSpecified =
         ResourceMaker.makeControlledNotebookUserPrivate(
-            getWorkspaceId(), /*instanceId=*/ null, /*location=*/null, resourceUserApi);
+            getWorkspaceId(), /*instanceId=*/ null, /*location=*/ null, resourceUserApi);
     assertNotNull(
         resourceWithNotebookInstanceIdNotSpecified
             .getAiNotebookInstance()
@@ -205,22 +204,19 @@ public class PrivateControlledAiNotebookInstanceLifecycle extends WorkspaceAlloc
             .getResourceId());
   }
 
-  private void
-  createAControlledAiNotebookInstanceWithLocationSpecified(
+  private void createAControlledAiNotebookInstanceWithLocationSpecified(
       ControlledGcpResourceApi resourceUserApi) throws ApiException, InterruptedException {
     String location = "us-east1-b";
     CreatedControlledGcpAiNotebookInstanceResult resourceWithSpecifiedLocation =
         ResourceMaker.makeControlledNotebookUserPrivate(
             getWorkspaceId(), /*instanceId=*/ null, location, resourceUserApi);
-    assertEquals(location,
+    assertEquals(
+        location,
         resourceWithSpecifiedLocation.getAiNotebookInstance().getAttributes().getLocation());
     resourceUserApi.deleteAiNotebookInstance(
         new DeleteControlledGcpAiNotebookInstanceRequest()
             .jobControl(new JobControl().id(UUID.randomUUID().toString())),
         getWorkspaceId(),
-        resourceWithSpecifiedLocation
-            .getAiNotebookInstance()
-            .getMetadata()
-            .getResourceId());
+        resourceWithSpecifiedLocation.getAiNotebookInstance().getMetadata().getResourceId());
   }
 }

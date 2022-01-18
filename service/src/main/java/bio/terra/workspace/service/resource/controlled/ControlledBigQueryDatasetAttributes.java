@@ -8,7 +8,8 @@ public class ControlledBigQueryDatasetAttributes {
   private final String datasetLocation;
 
   @JsonCreator
-  public ControlledBigQueryDatasetAttributes(@JsonProperty("datasetName") String datasetName,
+  public ControlledBigQueryDatasetAttributes(
+      @JsonProperty("datasetName") String datasetName,
       @JsonProperty("datasetLocation") String datasetLocation) {
     this.datasetName = datasetName;
     this.datasetLocation = datasetLocation;

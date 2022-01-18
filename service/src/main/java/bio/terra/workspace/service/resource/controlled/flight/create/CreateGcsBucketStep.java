@@ -53,9 +53,8 @@ public class CreateGcsBucketStep implements Step {
     String projectId = gcpCloudContextService.getRequiredGcpProject(resource.getWorkspaceId());
 
     BucketInfo.Builder bucketInfoBuilder =
-        BucketInfo.newBuilder(resource.getBucketName())
-            .setLocation(resource.getBucketLocation());
-    
+        BucketInfo.newBuilder(resource.getBucketName()).setLocation(resource.getBucketLocation());
+
     // Remaining creation parameters are optional
     Optional.ofNullable(creationParameters.getDefaultStorageClass())
         .map(GcsApiConversions::toGcsApi)
