@@ -16,9 +16,12 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 import javax.annotation.Nullable;
+import liquibase.pro.packaged.J;
 
 public class ControlledBigQueryDatasetResource extends ControlledResource {
+  private static final String DEFAULT_LOCATION = "us-central1";
   private final String datasetName;
+  private final String datasetLocation;
 
   @JsonCreator
   public ControlledBigQueryDatasetResource(
@@ -32,7 +35,8 @@ public class ControlledBigQueryDatasetResource extends ControlledResource {
       @JsonProperty("accessScope") AccessScopeType accessScope,
       @JsonProperty("managedBy") ManagedByType managedBy,
       @JsonProperty("applicationId") UUID applicationId,
-      @JsonProperty("datasetName") String datasetName) {
+      @JsonProperty("datasetName") String datasetName,
+      @JsonProperty("datasetLocation") String datasetLocation) {
 
     super(
         workspaceId,
@@ -46,6 +50,7 @@ public class ControlledBigQueryDatasetResource extends ControlledResource {
         applicationId,
         privateResourceState);
     this.datasetName = datasetName;
+    this.datasetLocation = datasetLocation;
     validate();
   }
 
@@ -54,6 +59,7 @@ public class ControlledBigQueryDatasetResource extends ControlledResource {
     ControlledBigQueryDatasetAttributes attributes =
         DbSerDes.fromJson(dbResource.getAttributes(), ControlledBigQueryDatasetAttributes.class);
     this.datasetName = attributes.getDatasetName();
+    this.datasetLocation = attributes.getDatasetLocation();
     validate();
   }
 
@@ -80,6 +86,10 @@ public class ControlledBigQueryDatasetResource extends ControlledResource {
     return datasetName;
   }
 
+  public String getDatasetLocation() {
+    return datasetLocation;
+  }
+
   public ApiGcpBigQueryDatasetAttributes toApiAttributes(String projectId) {
     return new ApiGcpBigQueryDatasetAttributes().projectId(projectId).datasetId(getDatasetName());
   }
@@ -97,7 +107,7 @@ public class ControlledBigQueryDatasetResource extends ControlledResource {
 
   @Override
   public String attributesToJson() {
-    return DbSerDes.toJson(new ControlledBigQueryDatasetAttributes(getDatasetName()));
+    return DbSerDes.toJson(new ControlledBigQueryDatasetAttributes(getDatasetName(), getDatasetLocation()));
   }
 
   @Override
@@ -146,6 +156,7 @@ public class ControlledBigQueryDatasetResource extends ControlledResource {
     private ManagedByType managedBy;
     private UUID applicationId;
     private String datasetName;
+    private String datasetLocation;
 
     public ControlledBigQueryDatasetResource.Builder workspaceId(UUID workspaceId) {
       this.workspaceId = workspaceId;
@@ -217,6 +228,11 @@ public class ControlledBigQueryDatasetResource extends ControlledResource {
       return this;
     }
 
+    public Builder datasetLocation(@Nullable String location) {
+      this.datasetLocation = Optional.ofNullable(location).orElse(DEFAULT_LOCATION);
+      return this;
+    }
+
     public ControlledBigQueryDatasetResource build() {
       return new ControlledBigQueryDatasetResource(
           workspaceId,
@@ -229,7 +245,8 @@ public class ControlledBigQueryDatasetResource extends ControlledResource {
           accessScope,
           managedBy,
           applicationId,
-          datasetName);
+          datasetName,
+          datasetLocation);
     }
   }
 }

@@ -82,7 +82,7 @@ public class PrivateControlledAiNotebookInstanceLifecycle extends WorkspaceAlloc
         ClientTestUtils.getControlledGcpResourceClient(resourceUser, server);
     CreatedControlledGcpAiNotebookInstanceResult creationResult =
         ResourceMaker.makeControlledNotebookUserPrivate(
-            getWorkspaceId(), instanceId, resourceUserApi);
+            getWorkspaceId(), instanceId, /*location=*/null, resourceUserApi);
 
     UUID resourceId = creationResult.getAiNotebookInstance().getMetadata().getResourceId();
 
@@ -104,10 +104,17 @@ public class PrivateControlledAiNotebookInstanceLifecycle extends WorkspaceAlloc
             .getPrivateResourceUser()
             .getUserName(),
         "User is the private user of the notebook");
+    assertEquals(
+        "us-central1-a",
+        resource.getAttributes().getLocation(),
+        "When location is not set, use the default location"
+    );
 
     createAControlledAiNotebookInstanceWithoutSpecifiedInstanceId_validInstanceIdIsGenerated(
         resourceUserApi);
 
+    createAControlledAiNotebookInstanceWithLocationSpecified(resourceUserApi);
+    
     String instanceName =
         String.format(
             "projects/%s/locations/%s/instances/%s",
@@ -182,7 +189,7 @@ public class PrivateControlledAiNotebookInstanceLifecycle extends WorkspaceAlloc
           ControlledGcpResourceApi resourceUserApi) throws ApiException, InterruptedException {
     CreatedControlledGcpAiNotebookInstanceResult resourceWithNotebookInstanceIdNotSpecified =
         ResourceMaker.makeControlledNotebookUserPrivate(
-            getWorkspaceId(), /*instanceId=*/ null, resourceUserApi);
+            getWorkspaceId(), /*instanceId=*/ null, /*location=*/null, resourceUserApi);
     assertNotNull(
         resourceWithNotebookInstanceIdNotSpecified
             .getAiNotebookInstance()
@@ -193,6 +200,25 @@ public class PrivateControlledAiNotebookInstanceLifecycle extends WorkspaceAlloc
             .jobControl(new JobControl().id(UUID.randomUUID().toString())),
         getWorkspaceId(),
         resourceWithNotebookInstanceIdNotSpecified
+            .getAiNotebookInstance()
+            .getMetadata()
+            .getResourceId());
+  }
+
+  private void
+  createAControlledAiNotebookInstanceWithLocationSpecified(
+      ControlledGcpResourceApi resourceUserApi) throws ApiException, InterruptedException {
+    String location = "us-east1-a";
+    CreatedControlledGcpAiNotebookInstanceResult resourceWithSpecifiedLocation =
+        ResourceMaker.makeControlledNotebookUserPrivate(
+            getWorkspaceId(), /*instanceId=*/ null, location, resourceUserApi);
+    assertEquals(location,
+        resourceWithSpecifiedLocation.getAiNotebookInstance().getAttributes().getLocation());
+    resourceUserApi.deleteAiNotebookInstance(
+        new DeleteControlledGcpAiNotebookInstanceRequest()
+            .jobControl(new JobControl().id(UUID.randomUUID().toString())),
+        getWorkspaceId(),
+        resourceWithSpecifiedLocation
             .getAiNotebookInstance()
             .getMetadata()
             .getResourceId());

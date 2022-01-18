@@ -26,6 +26,7 @@ public class ControlledAiNotebookInstanceResource extends ControlledResource {
 
   protected static final int MAX_INSTANCE_NAME_LENGTH = 63;
   protected static final String AUTO_NAME_DATE_FORMAT = "-yyyyMMdd-HHmmss";
+  private static final String DEFAULT_LOCATION = "us-central1-a";
   private final String instanceId;
   private final String location;
 
@@ -255,8 +256,8 @@ public class ControlledAiNotebookInstanceResource extends ControlledResource {
       return this;
     }
 
-    public Builder location(String location) {
-      this.location = location;
+    public Builder location(@Nullable String location) {
+      this.location = Optional.ofNullable(location).orElse(DEFAULT_LOCATION);
       return this;
     }
 

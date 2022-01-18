@@ -17,7 +17,10 @@ import javax.annotation.Nullable;
 
 public class ControlledGcsBucketResource extends ControlledResource {
 
+  private static final String DEFAULT_LOCATION = "US-CENTRAL1";
+
   private final String bucketName;
+  private final String bucketLocation;
 
   @JsonCreator
   public ControlledGcsBucketResource(
@@ -31,7 +34,8 @@ public class ControlledGcsBucketResource extends ControlledResource {
       @JsonProperty("accessScope") AccessScopeType accessScope,
       @JsonProperty("managedBy") ManagedByType managedBy,
       @JsonProperty("applicationId") UUID applicationId,
-      @JsonProperty("bucketName") String bucketName) {
+      @JsonProperty("bucketName") String bucketName,
+      @JsonProperty("bucketLocation") String bucketLocation) {
 
     super(
         workspaceId,
@@ -45,6 +49,7 @@ public class ControlledGcsBucketResource extends ControlledResource {
         applicationId,
         privateResourceState);
     this.bucketName = bucketName;
+    this.bucketLocation = bucketLocation;
     validate();
   }
 
@@ -53,6 +58,7 @@ public class ControlledGcsBucketResource extends ControlledResource {
     ControlledGcsBucketAttributes attributes =
         DbSerDes.fromJson(dbResource.getAttributes(), ControlledGcsBucketAttributes.class);
     this.bucketName = attributes.getBucketName();
+    this.bucketLocation = attributes.getBucketLocation();
     validate();
   }
 
@@ -79,6 +85,10 @@ public class ControlledGcsBucketResource extends ControlledResource {
     return bucketName;
   }
 
+  public String getBucketLocation() {
+    return bucketLocation;
+  }
+
   public ApiGcpGcsBucketAttributes toApiAttributes() {
     return new ApiGcpGcsBucketAttributes().bucketName(getBucketName());
   }
@@ -96,7 +106,7 @@ public class ControlledGcsBucketResource extends ControlledResource {
 
   @Override
   public String attributesToJson() {
-    return DbSerDes.toJson(new ControlledGcsBucketAttributes(getBucketName()));
+    return DbSerDes.toJson(new ControlledGcsBucketAttributes(getBucketName(), getBucketLocation()));
   }
 
   @Override
@@ -153,6 +163,7 @@ public class ControlledGcsBucketResource extends ControlledResource {
     private ManagedByType managedBy;
     private UUID applicationId;
     private String bucketName;
+    private String bucketLocation;
 
     public ControlledGcsBucketResource.Builder workspaceId(UUID workspaceId) {
       this.workspaceId = workspaceId;
@@ -216,6 +227,11 @@ public class ControlledGcsBucketResource extends ControlledResource {
       return this;
     }
 
+    public Builder bucketLocation(@Nullable String bucketLocation) {
+      this.bucketLocation = Optional.ofNullable(bucketLocation).orElse(DEFAULT_LOCATION);
+      return this;
+    }
+
     public ControlledGcsBucketResource build() {
       return new ControlledGcsBucketResource(
           workspaceId,
@@ -228,7 +244,8 @@ public class ControlledGcsBucketResource extends ControlledResource {
           accessScope,
           managedBy,
           applicationId,
-          bucketName);
+          bucketName,
+          bucketLocation);
     }
   }
 }

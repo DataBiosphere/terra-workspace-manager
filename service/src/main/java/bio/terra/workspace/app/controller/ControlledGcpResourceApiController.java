@@ -107,6 +107,7 @@ public class ControlledGcpResourceApiController implements ControlledGcpResource
             .managedBy(managedBy)
             .applicationId(controlledResourceService.getAssociatedApp(managedBy, userRequest))
             .bucketName(body.getGcsBucket().getName())
+            .bucketLocation(body.getGcsBucket().getLocation())
             .build();
 
     final ControlledGcsBucketResource createdBucket =
@@ -340,6 +341,7 @@ public class ControlledGcpResourceApiController implements ControlledGcpResource
             .datasetName(
                 Optional.ofNullable(body.getDataset().getDatasetId())
                     .orElse(body.getCommon().getName()))
+            .datasetLocation(body.getDataset().getLocation())
             .build();
 
     final ControlledBigQueryDatasetResource createdDataset =

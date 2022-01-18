@@ -65,7 +65,6 @@ public class ResourceMaker {
 
   private static final Logger logger = LoggerFactory.getLogger(ResourceMaker.class);
   private static final long DELETE_BUCKET_POLL_SECONDS = 15;
-  private static final String BUCKET_LOCATION = "US-CENTRAL1";
 
   /**
    * Calls WSM to create a referenced BigQuery dataset in the specified workspace.
@@ -408,8 +407,7 @@ public class ResourceMaker {
                 new GcpGcsBucketCreationParameters()
                     .name(bucketName)
                     .defaultStorageClass(GcpGcsBucketDefaultStorageClass.STANDARD)
-                    .lifecycle(new GcpGcsBucketLifecycle().rules(LIFECYCLE_RULES))
-                    .location(BUCKET_LOCATION));
+                    .lifecycle(new GcpGcsBucketLifecycle().rules(LIFECYCLE_RULES)));
 
     logger.info(
         "Creating {} {} bucket in workspace {}", managedBy.name(), accessScope.name(), workspaceId);
@@ -531,9 +529,7 @@ public class ResourceMaker {
                     .name(resourceName)
                     .privateResourceUser(privateUser))
             .dataset(
-                new GcpBigQueryDatasetCreationParameters()
-                    .datasetId(datasetId)
-                    .location("US-CENTRAL1"));
+                new GcpBigQueryDatasetCreationParameters().datasetId(datasetId));
 
     logger.info(
         "Creating {} {} dataset {} workspace {}",
@@ -585,19 +581,20 @@ public class ResourceMaker {
    * method calls the asynchronous creation endpoint and polls until the creation job completes.
    */
   public static CreatedControlledGcpAiNotebookInstanceResult makeControlledNotebookUserPrivate(
-      UUID workspaceId, @Nullable String instanceId, ControlledGcpResourceApi resourceApi)
+      UUID workspaceId, @Nullable String instanceId, @Nullable String location, ControlledGcpResourceApi resourceApi)
       throws ApiException, InterruptedException {
     // Fill out the minimum required fields to arbitrary values.
     var creationParameters =
         new GcpAiNotebookInstanceCreationParameters()
             .instanceId(instanceId)
-            .location("us-east1-b")
             .machineType("e2-standard-2")
             .vmImage(
                 new GcpAiNotebookInstanceVmImage()
                     .projectId("deeplearning-platform-release")
                     .imageFamily("r-latest-cpu-experimental"));
-
+    if (location != null) {
+      creationParameters.location(location);
+    }
     var commonParameters =
         new ControlledResourceCommonFields()
             .name(RandomStringUtils.randomAlphabetic(6))

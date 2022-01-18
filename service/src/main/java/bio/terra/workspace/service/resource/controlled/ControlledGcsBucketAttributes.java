@@ -5,14 +5,21 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import javax.annotation.Nullable;
 
 public class ControlledGcsBucketAttributes {
-  private final @Nullable String bucketName;
+  private final String bucketName;
+  private final String bucketLocation;
 
   @JsonCreator
-  public ControlledGcsBucketAttributes(@JsonProperty("bucketName") @Nullable String bucketName) {
+  public ControlledGcsBucketAttributes(@JsonProperty("bucketName") String bucketName,
+      @JsonProperty("bucketLocation") String bucketLocation) {
     this.bucketName = bucketName;
+    this.bucketLocation = bucketLocation;
   }
 
-  public @Nullable String getBucketName() {
+  public String getBucketName() {
     return bucketName;
+  }
+
+  public String getBucketLocation() {
+    return bucketLocation;
   }
 }
