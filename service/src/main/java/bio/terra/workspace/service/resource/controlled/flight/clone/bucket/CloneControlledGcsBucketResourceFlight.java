@@ -3,6 +3,7 @@ package bio.terra.workspace.service.resource.controlled.flight.clone.bucket;
 import bio.terra.stairway.Flight;
 import bio.terra.stairway.FlightMap;
 import bio.terra.workspace.common.utils.FlightBeanBag;
+import bio.terra.workspace.common.utils.FlightUtils;
 import bio.terra.workspace.common.utils.RetryRules;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.job.JobMapKeys;
@@ -12,15 +13,19 @@ import bio.terra.workspace.service.resource.controlled.flight.clone.CheckControl
 import bio.terra.workspace.service.resource.controlled.flight.update.RetrieveControlledResourceMetadataStep;
 import bio.terra.workspace.service.resource.controlled.flight.update.RetrieveGcsBucketCloudAttributesStep;
 import bio.terra.workspace.service.resource.controlled.flight.update.RetrieveGcsBucketCloudAttributesStep.RetrievalMode;
+import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ResourceKeys;
 
 public class CloneControlledGcsBucketResourceFlight extends Flight {
 
   public CloneControlledGcsBucketResourceFlight(
       FlightMap inputParameters, Object applicationContext) {
     super(inputParameters, applicationContext);
+    FlightUtils.validateRequiredEntries(
+        inputParameters, ResourceKeys.RESOURCE, JobMapKeys.AUTH_USER_INFO.getKeyName());
+
     final FlightBeanBag flightBeanBag = FlightBeanBag.getFromObject(applicationContext);
     final ControlledResource sourceResource =
-        inputParameters.get(JobMapKeys.REQUEST.getKeyName(), ControlledResource.class);
+        inputParameters.get(ResourceKeys.RESOURCE, ControlledResource.class);
     final AuthenticatedUserRequest userRequest =
         inputParameters.get(JobMapKeys.AUTH_USER_INFO.getKeyName(), AuthenticatedUserRequest.class);
 

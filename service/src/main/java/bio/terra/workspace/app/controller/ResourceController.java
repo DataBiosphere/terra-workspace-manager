@@ -135,7 +135,7 @@ public class ResourceController implements ResourceApi {
               union.gcpBqDataset(resource.toApiAttributes());
               break;
             }
-          case BIQ_QUERY_DATA_TABLE:
+          case BIG_QUERY_DATA_TABLE:
             {
               ReferencedBigQueryDataTableResource resource =
                   referencedResource.castToBigQueryDataTableResource();

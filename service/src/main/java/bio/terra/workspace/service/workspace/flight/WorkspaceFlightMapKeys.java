@@ -13,6 +13,7 @@ public final class WorkspaceFlightMapKeys {
   public static final String USER_TO_REMOVE = "userToRemove";
   public static final String ROLE_TO_REMOVE = "roleToRemove";
   public static final String APPLICATION_ID = "applicationId";
+  public static final String OPERATION_TYPE = "operationType";
 
   private WorkspaceFlightMapKeys() {}
 
@@ -23,10 +24,7 @@ public final class WorkspaceFlightMapKeys {
 
     public static final String CREATION_PARAMETERS = "creationParameters";
     public static final String PRIVATE_RESOURCE_IAM_ROLE = "privateResourceIamRole";
-    public static final String PRIVATE_RESOURCE_USER_EMAIL = "privateResourceUserEmail";
-    public static final String IAM_RESOURCE_GROUP_EMAIL_MAP = "iamResourceGroupEmailMap";
     public static final String GCP_CLOUD_CONTEXT = "gcpCloudContext";
-
     public static final String UPDATE_PARAMETERS = "updateParameters";
     public static final String PREVIOUS_UPDATE_PARAMETERS = "previousUpdateParameters";
 
@@ -72,6 +70,9 @@ public final class WorkspaceFlightMapKeys {
     public static final String RESOURCE_DESCRIPTION = "resourceDescription";
     public static final String PREVIOUS_RESOURCE_DESCRIPTION = "previousResourceDescription";
     public static final String PREVIOUS_ATTRIBUTES = "previousAttributes";
+    // additional keys for job filtering
+    public static final String STEWARDSHIP_TYPE = "stewardshipType";
+    public static final String RESOURCE = "resource";
 
     private ResourceKeys() {}
   }

@@ -14,13 +14,8 @@ import bio.terra.workspace.api.ResourceApi;
 import bio.terra.workspace.api.WorkspaceApi;
 import bio.terra.workspace.client.ApiClient;
 import bio.terra.workspace.client.ApiException;
-import bio.terra.workspace.model.CloningInstructionsEnum;
 import bio.terra.workspace.model.ControlledResourceIamRole;
 import bio.terra.workspace.model.ControlledResourceMetadata;
-import bio.terra.workspace.model.DataRepoSnapshotResource;
-import bio.terra.workspace.model.GcpBigQueryDataTableResource;
-import bio.terra.workspace.model.GcpBigQueryDatasetResource;
-import bio.terra.workspace.model.GcpGcsBucketResource;
 import bio.terra.workspace.model.GrantRoleRequestBody;
 import bio.terra.workspace.model.IamRole;
 import bio.terra.workspace.model.ResourceDescription;
@@ -33,7 +28,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
-import org.apache.commons.lang3.RandomStringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import scripts.utils.ClientTestUtils;
@@ -51,7 +45,6 @@ public class EnumerateResources extends DataRepoTestScriptBase {
   private static final int RESOURCE_COUNT = 12;
   // Page size to use for enumeration paging
   private static final int PAGE_SIZE = 5;
-  private static final int NUM_RESOURCE_TYPE = 6;
   // Roles to grant user on private resource
   private static final ImmutableList<ControlledResourceIamRole> PRIVATE_ROLES =
       ImmutableList.of(ControlledResourceIamRole.WRITER, ControlledResourceIamRole.EDITOR);
@@ -94,11 +87,14 @@ public class EnumerateResources extends DataRepoTestScriptBase {
     // create the resources for the test
     logger.info("Creating {} resources", RESOURCE_COUNT);
     resourceList =
-        makeResources(
+        ResourceMaker.makeResources(
             ownerReferencedGcpResourceApi,
             ownerControlledGcpResourceApi,
             getWorkspaceId(),
-            workspaceOwner.userEmail);
+            getDataRepoSnapshotId(),
+            getDataRepoInstanceName(),
+            RESOURCE_COUNT);
+
     logger.info("Created {} resources", resourceList.size());
   }
 
@@ -225,27 +221,8 @@ public class EnumerateResources extends DataRepoTestScriptBase {
   protected void doCleanup(List<TestUserSpecification> testUsers, WorkspaceApi workspaceApi)
       throws Exception {
     // Delete the controlled resources
-    for (ResourceMetadata metadata : resourceList) {
-      if (metadata.getStewardshipType() == StewardshipType.CONTROLLED) {
-        switch (metadata.getResourceType()) {
-          case GCS_BUCKET:
-            ResourceMaker.deleteControlledGcsBucket(
-                metadata.getResourceId(), getWorkspaceId(), ownerControlledGcpResourceApi);
-            break;
-          case BIG_QUERY_DATASET:
-            ownerControlledGcpResourceApi.deleteBigQueryDataset(
-                getWorkspaceId(), metadata.getResourceId());
-            break;
-          case AI_NOTEBOOK:
-          case DATA_REPO_SNAPSHOT:
-          default:
-            throw new IllegalStateException(
-                String.format(
-                    "No cleanup method specified for resource type %s in test EnumerateResources.",
-                    metadata.getResourceType()));
-        }
-      }
-    }
+    ResourceMaker.cleanupResources(resourceList, ownerControlledGcpResourceApi, getWorkspaceId());
+
     // Cleanup the workspace after we cleanup the the resources!
     super.doCleanup(testUsers, workspaceApi);
   }
@@ -288,90 +265,5 @@ public class EnumerateResources extends DataRepoTestScriptBase {
     resourceListIds.retainAll(enumListIds);
     assertThat(resourceListIds.size(), equalTo(RESOURCE_COUNT));
     logger.info("Successfully matched all resources");
-  }
-
-  private List<ResourceMetadata> makeResources(
-      ReferencedGcpResourceApi referencedGcpResourceApi,
-      ControlledGcpResourceApi controlledGcpResourceApi,
-      UUID workspaceId,
-      String testUserEmail)
-      throws Exception {
-
-    List<ResourceMetadata> resourceList = new ArrayList<>();
-
-    // We have five kinds of resources right now, so we switch on the modulus
-    // of the counter to choose which kind to make. We make a random name so that
-    // different runs will have different alphabetical order.
-    for (int i = 0; i < RESOURCE_COUNT; i++) {
-      String name = RandomStringUtils.random(6, true, false) + i;
-
-      switch (i % NUM_RESOURCE_TYPE) {
-        case 0:
-          {
-            GcpBigQueryDatasetResource resource =
-                ResourceMaker.makeBigQueryDatasetReference(
-                    referencedGcpResourceApi, workspaceId, name);
-            resourceList.add(resource.getMetadata());
-            break;
-          }
-
-        case 1:
-          {
-            DataRepoSnapshotResource resource =
-                ResourceMaker.makeDataRepoSnapshotReference(
-                    referencedGcpResourceApi,
-                    workspaceId,
-                    name,
-                    getDataRepoSnapshotId(),
-                    getDataRepoInstanceName());
-            resourceList.add(resource.getMetadata());
-            break;
-          }
-
-        case 2:
-          {
-            GcpGcsBucketResource resource =
-                ResourceMaker.makeGcsBucketReference(referencedGcpResourceApi, workspaceId, name);
-            resourceList.add(resource.getMetadata());
-            break;
-          }
-
-        case 3:
-          {
-            GcpGcsBucketResource resource =
-                ResourceMaker.makeControlledGcsBucketUserPrivate(
-                        controlledGcpResourceApi,
-                        workspaceId,
-                        name,
-                        CloningInstructionsEnum.NOTHING)
-                    .getGcpBucket();
-            resourceList.add(resource.getMetadata());
-            break;
-          }
-
-        case 4:
-          {
-            GcpBigQueryDatasetResource resource =
-                ResourceMaker.makeControlledBigQueryDatasetUserShared(
-                    controlledGcpResourceApi,
-                    workspaceId,
-                    name,
-                    null,
-                    CloningInstructionsEnum.NOTHING);
-            resourceList.add(resource.getMetadata());
-            break;
-          }
-        case 5:
-          {
-            GcpBigQueryDataTableResource resource =
-                ResourceMaker.makeBigQueryDataTableReference(
-                    referencedGcpResourceApi, workspaceId, name);
-            resourceList.add(resource.getMetadata());
-            break;
-          }
-      }
-    }
-
-    return resourceList;
   }
 }

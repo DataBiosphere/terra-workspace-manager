@@ -19,8 +19,10 @@ import bio.terra.common.stairway.StairwayComponent;
 import bio.terra.stairway.FlightDebugInfo;
 import bio.terra.stairway.FlightStatus;
 import bio.terra.stairway.StepStatus;
+import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
 import bio.terra.workspace.common.BaseConnectedTest;
 import bio.terra.workspace.common.CloudUtils;
+import bio.terra.workspace.common.StairwayTestUtils;
 import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
 import bio.terra.workspace.connected.UserAccessUtils;
 import bio.terra.workspace.connected.WorkspaceConnectedTestUtils;
@@ -57,6 +59,7 @@ import bio.terra.workspace.service.resource.exception.DuplicateResourceException
 import bio.terra.workspace.service.resource.exception.ResourceNotFoundException;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.spendprofile.SpendConnectedTestUtils;
+import bio.terra.workspace.service.workspace.Alpha1Service;
 import bio.terra.workspace.service.workspace.GcpCloudContextService;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.model.Workspace;
@@ -97,6 +100,8 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
   private Workspace workspace;
   private UserAccessUtils.TestUser user;
   private String projectId;
+  @Autowired private Alpha1Service alpha1Service;
+  @Autowired private FeatureConfiguration features;
   @Autowired private ControlledResourceService controlledResourceService;
   @Autowired private ControlledResourceMetadataManager controlledResourceMetadataManager;
   @Autowired private CrlService crlService;
@@ -178,6 +183,11 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
    */
   @AfterEach
   public void resetFlightDebugInfo() {
+    // Exercise enumeration by dumping after each
+    features.setAlpha1Enabled(true);
+    StairwayTestUtils.enumerateJobsDump(
+        alpha1Service, workspace.getWorkspaceId(), user.getAuthenticatedRequest());
+
     jobService.setFlightDebugInfoForTest(null);
   }
 
@@ -583,6 +593,10 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
                 workspace.getWorkspaceId(),
                 resource.getResourceId(),
                 user.getAuthenticatedRequest()));
+
+    features.setAlpha1Enabled(true);
+    StairwayTestUtils.enumerateJobsDump(
+        alpha1Service, workspace.getWorkspaceId(), user.getAuthenticatedRequest());
   }
 
   @Test

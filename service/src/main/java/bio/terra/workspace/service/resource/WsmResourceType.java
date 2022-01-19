@@ -53,7 +53,7 @@ public enum WsmResourceType {
       ApiResourceType.BIG_QUERY_DATASET,
       ReferencedBigQueryDatasetResource.class,
       ControlledBigQueryDatasetResource.class),
-  BIQ_QUERY_DATA_TABLE(
+  BIG_QUERY_DATA_TABLE(
       CloudPlatform.GCP,
       "BIG_QUERY_DATA_TABLE",
       ApiResourceType.BIG_QUERY_DATA_TABLE,

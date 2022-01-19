@@ -3,6 +3,7 @@ package bio.terra.workspace.service.resource.controlled.flight.clone.dataset;
 import bio.terra.stairway.Flight;
 import bio.terra.stairway.FlightMap;
 import bio.terra.workspace.common.utils.FlightBeanBag;
+import bio.terra.workspace.common.utils.FlightUtils;
 import bio.terra.workspace.common.utils.RetryRules;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.job.JobMapKeys;
@@ -10,15 +11,24 @@ import bio.terra.workspace.service.resource.controlled.ControlledBigQueryDataset
 import bio.terra.workspace.service.resource.controlled.ControlledResource;
 import bio.terra.workspace.service.resource.controlled.flight.clone.CheckControlledResourceAuthStep;
 import bio.terra.workspace.service.resource.controlled.flight.update.RetrieveControlledResourceMetadataStep;
+import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
+import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ResourceKeys;
 
 public class CloneControlledGcpBigQueryDatasetResourceFlight extends Flight {
 
   public CloneControlledGcpBigQueryDatasetResourceFlight(
       FlightMap inputParameters, Object applicationContext) {
     super(inputParameters, applicationContext);
+
+    FlightUtils.validateRequiredEntries(
+        inputParameters,
+        ResourceKeys.RESOURCE,
+        JobMapKeys.AUTH_USER_INFO.getKeyName(),
+        ControlledResourceKeys.CLONING_INSTRUCTIONS);
+
     final FlightBeanBag flightBeanBag = FlightBeanBag.getFromObject(applicationContext);
     final ControlledResource sourceResource =
-        inputParameters.get(JobMapKeys.REQUEST.getKeyName(), ControlledResource.class);
+        inputParameters.get(ResourceKeys.RESOURCE, ControlledResource.class);
     final AuthenticatedUserRequest userRequest =
         inputParameters.get(JobMapKeys.AUTH_USER_INFO.getKeyName(), AuthenticatedUserRequest.class);
 

@@ -5,8 +5,8 @@ import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.RetryRule;
 import bio.terra.workspace.common.utils.FlightBeanBag;
 import bio.terra.workspace.common.utils.RetryRules;
-import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.resource.controlled.ControlledResource;
+import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ResourceKeys;
 
 public class UpdateControlledBigQueryDatasetResourceFlight extends Flight {
 
@@ -17,7 +17,7 @@ public class UpdateControlledBigQueryDatasetResourceFlight extends Flight {
 
     final FlightBeanBag flightBeanBag = FlightBeanBag.getFromObject(beanBag);
     final ControlledResource resource =
-        inputParameters.get(JobMapKeys.REQUEST.getKeyName(), ControlledResource.class);
+        inputParameters.get(ResourceKeys.RESOURCE, ControlledResource.class);
 
     // get copy of existing metadata
     addStep(
