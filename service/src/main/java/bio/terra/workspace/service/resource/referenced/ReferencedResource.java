@@ -40,7 +40,7 @@ public abstract class ReferencedResource extends WsmResource {
   }
 
   public ReferencedBigQueryDataTableResource castToBigQueryDataTableResource() {
-    validateSubclass(WsmResourceType.BIQ_QUERY_DATA_TABLE);
+    validateSubclass(WsmResourceType.BIG_QUERY_DATA_TABLE);
     return (ReferencedBigQueryDataTableResource) this;
   }
 

@@ -9,6 +9,12 @@ import bio.terra.workspace.common.utils.MdcHook;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.job.exception.InvalidJobIdException;
 import bio.terra.workspace.service.job.exception.InvalidJobParameterException;
+import bio.terra.workspace.service.resource.WsmResource;
+import bio.terra.workspace.service.resource.WsmResourceType;
+import bio.terra.workspace.service.resource.model.StewardshipType;
+import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
+import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ResourceKeys;
+import bio.terra.workspace.service.workspace.model.OperationType;
 import io.opencensus.contrib.spring.aop.Traced;
 import javax.annotation.Nullable;
 import org.apache.commons.lang3.StringUtils;
@@ -23,6 +29,14 @@ public class JobBuilder {
   @Nullable private String description;
   @Nullable private Object request;
   @Nullable private AuthenticatedUserRequest userRequest;
+  // Well-known keys used for filtering workspace jobs
+  // All applicable ones of these should be supplied on every flight
+  @Nullable private String workspaceId;
+  @Nullable private WsmResource resource;
+  @Nullable private WsmResourceType resourceType;
+  @Nullable private String resourceName;
+  @Nullable private StewardshipType stewardshipType;
+  @Nullable private OperationType operationType;
 
   public JobBuilder(JobService jobService, StairwayComponent stairwayComponent, MdcHook mdcHook) {
     this.jobService = jobService;
@@ -57,6 +71,36 @@ public class JobBuilder {
 
   public JobBuilder userRequest(@Nullable AuthenticatedUserRequest userRequest) {
     this.userRequest = userRequest;
+    return this;
+  }
+
+  public JobBuilder workspaceId(@Nullable String workspaceId) {
+    this.workspaceId = workspaceId;
+    return this;
+  }
+
+  public JobBuilder resource(@Nullable WsmResource resource) {
+    this.resource = resource;
+    return this;
+  }
+
+  public JobBuilder resourceType(@Nullable WsmResourceType resourceType) {
+    this.resourceType = resourceType;
+    return this;
+  }
+
+  public JobBuilder resourceName(@Nullable String resourceName) {
+    this.resourceName = resourceName;
+    return this;
+  }
+
+  public JobBuilder stewardshipType(@Nullable StewardshipType stewardshipType) {
+    this.stewardshipType = stewardshipType;
+    return this;
+  }
+
+  public JobBuilder operationType(@Nullable OperationType operationType) {
+    this.operationType = operationType;
     return this;
   }
 
@@ -119,9 +163,31 @@ public class JobBuilder {
       addParameter(JobMapKeys.AUTH_USER_INFO.getKeyName(), userRequest);
       addParameter(JobMapKeys.SUBJECT_ID.getKeyName(), userRequest.getSubjectId());
     }
+    if (shouldInsert(WorkspaceFlightMapKeys.WORKSPACE_ID, workspaceId)) {
+      addParameter(WorkspaceFlightMapKeys.WORKSPACE_ID, workspaceId);
+    }
+    if (shouldInsert(ResourceKeys.RESOURCE, resource)) {
+      addParameter(ResourceKeys.RESOURCE, resource);
+    }
+    if (shouldInsert(ResourceKeys.RESOURCE_TYPE, resourceType)) {
+      addParameter(ResourceKeys.RESOURCE_TYPE, resourceType);
+    }
+    if (shouldInsert(ResourceKeys.RESOURCE_NAME, resourceName)) {
+      addParameter(ResourceKeys.RESOURCE_NAME, resourceName);
+    }
+    if (shouldInsert(ResourceKeys.STEWARDSHIP_TYPE, stewardshipType)) {
+      addParameter(ResourceKeys.STEWARDSHIP_TYPE, stewardshipType);
+    }
+    if (shouldInsert(WorkspaceFlightMapKeys.OPERATION_TYPE, operationType)) {
+      addParameter(WorkspaceFlightMapKeys.OPERATION_TYPE, operationType);
+    }
   }
 
-  private boolean shouldInsert(JobMapKeys mapKey, Object value) {
+  private boolean shouldInsert(String mapKey, @Nullable Object value) {
+    return (value != null && !jobParameterMap.containsKey(mapKey));
+  }
+
+  private boolean shouldInsert(JobMapKeys mapKey, @Nullable Object value) {
     return (value != null && !jobParameterMap.containsKey(mapKey.getKeyName()));
   }
 }

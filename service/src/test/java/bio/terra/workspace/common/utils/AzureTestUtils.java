@@ -6,10 +6,13 @@ import bio.terra.workspace.connected.UserAccessUtils;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.resource.controlled.ControlledResource;
+import bio.terra.workspace.service.resource.model.StewardshipType;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
+import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ResourceKeys;
 import bio.terra.workspace.service.workspace.flight.create.azure.CreateAzureContextFlight;
 import bio.terra.workspace.service.workspace.model.AzureCloudContext;
+import bio.terra.workspace.service.workspace.model.OperationType;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
 import java.util.UUID;
@@ -53,7 +56,12 @@ public class AzureTestUtils {
   public FlightMap createControlledResourceInputParameters(
       UUID workspaceId, AuthenticatedUserRequest userRequest, ControlledResource resource) {
     FlightMap inputs = new FlightMap();
-    inputs.put(JobMapKeys.REQUEST.getKeyName(), resource);
+    inputs.put(ResourceKeys.RESOURCE, resource);
+    inputs.put(ResourceKeys.RESOURCE_NAME, resource.getName());
+    inputs.put(ResourceKeys.RESOURCE_TYPE, resource.getResourceType());
+    inputs.put(ResourceKeys.RESOURCE_ID, resource.getResourceId().toString());
+    inputs.put(WorkspaceFlightMapKeys.OPERATION_TYPE, OperationType.CREATE);
+    inputs.put(ResourceKeys.STEWARDSHIP_TYPE, StewardshipType.CONTROLLED);
     inputs.put(WorkspaceFlightMapKeys.WORKSPACE_ID, workspaceId.toString());
     inputs.put(JobMapKeys.AUTH_USER_INFO.getKeyName(), userRequest);
     return inputs;
