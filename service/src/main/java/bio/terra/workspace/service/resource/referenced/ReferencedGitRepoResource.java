@@ -9,7 +9,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.UUID;
 import javax.annotation.Nullable;
 
-public class ReferencedGitRepoResource extends ReferencedResource{
+public class ReferencedGitRepoResource extends ReferencedResource {
 
   @JsonCreator
   public ReferencedGitRepoResource(

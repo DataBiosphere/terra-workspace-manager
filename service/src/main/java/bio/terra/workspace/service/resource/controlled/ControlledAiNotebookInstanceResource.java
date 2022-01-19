@@ -1,6 +1,6 @@
 package bio.terra.workspace.service.resource.controlled;
 
-import static bio.terra.workspace.service.resource.controlled.ResourceConstant.DEFAULT_LOCATION;
+import static bio.terra.workspace.service.resource.controlled.ResourceConstant.DEFAULT_ZONE;
 
 import bio.terra.cloudres.google.notebooks.InstanceName;
 import bio.terra.common.exception.BadRequestException;
@@ -258,7 +258,7 @@ public class ControlledAiNotebookInstanceResource extends ControlledResource {
     }
 
     public Builder location(@Nullable String location) {
-      this.location = Optional.ofNullable(location).orElse(DEFAULT_LOCATION);
+      this.location = Optional.ofNullable(location).orElse(DEFAULT_ZONE);
       return this;
     }
 

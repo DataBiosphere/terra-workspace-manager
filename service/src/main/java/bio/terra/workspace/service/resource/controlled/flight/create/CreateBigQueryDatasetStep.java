@@ -1,6 +1,6 @@
 package bio.terra.workspace.service.resource.controlled.flight.create;
 
-import static bio.terra.workspace.service.resource.controlled.ResourceConstant.DEFAULT_LOCATION;
+import static bio.terra.workspace.service.resource.controlled.ResourceConstant.DEFAULT_REGION;
 import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.CREATION_PARAMETERS;
 
 import bio.terra.cloudres.google.bigquery.BigQueryCow;
@@ -88,7 +88,7 @@ public class CreateBigQueryDatasetStep implements Step {
         new Dataset()
             .setDatasetReference(datasetId)
             .setLocation(
-                Optional.ofNullable(creationParameters.getLocation()).orElse(DEFAULT_LOCATION))
+                Optional.ofNullable(creationParameters.getLocation()).orElse(DEFAULT_REGION))
             .setDefaultTableExpirationMs(
                 BigQueryApiConversions.toBqExpirationTime(
                     creationParameters.getDefaultTableLifetime()))

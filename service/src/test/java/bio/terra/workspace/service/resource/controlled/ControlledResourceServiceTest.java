@@ -1,6 +1,6 @@
 package bio.terra.workspace.service.resource.controlled;
 
-import static bio.terra.workspace.service.resource.controlled.ResourceConstant.DEFAULT_LOCATION;
+import static bio.terra.workspace.service.resource.controlled.ResourceConstant.DEFAULT_REGION;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -1089,7 +1089,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
 
     StorageCow storageCow = crlService.createStorageCow(projectId);
     BucketInfo cloudBucket = storageCow.get(resource.getBucketName()).getBucketInfo();
-    assertEquals(DEFAULT_LOCATION, cloudBucket.getLocation());
+    assertEquals(DEFAULT_REGION, cloudBucket.getLocation());
     assertEquals(
         resource,
         controlledResourceService.getControlledResource(

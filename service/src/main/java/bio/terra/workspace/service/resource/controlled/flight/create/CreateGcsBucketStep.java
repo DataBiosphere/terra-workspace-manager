@@ -1,6 +1,6 @@
 package bio.terra.workspace.service.resource.controlled.flight.create;
 
-import static bio.terra.workspace.service.resource.controlled.ResourceConstant.DEFAULT_LOCATION;
+import static bio.terra.workspace.service.resource.controlled.ResourceConstant.DEFAULT_REGION;
 import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.CREATION_PARAMETERS;
 
 import bio.terra.cloudres.google.storage.StorageCow;
@@ -56,7 +56,7 @@ public class CreateGcsBucketStep implements Step {
     BucketInfo.Builder bucketInfoBuilder =
         BucketInfo.newBuilder(resource.getBucketName())
             .setLocation(
-                Optional.ofNullable(creationParameters.getLocation()).orElse(DEFAULT_LOCATION));
+                Optional.ofNullable(creationParameters.getLocation()).orElse(DEFAULT_REGION));
 
     // Remaining creation parameters are optional
     Optional.ofNullable(creationParameters.getDefaultStorageClass())

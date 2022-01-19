@@ -3,7 +3,7 @@ package bio.terra.workspace.service.resource.controlled.flight;
 import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.getGoogleBucketCreationParameters;
 import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.uniqueName;
 import static bio.terra.workspace.service.resource.controlled.GcsApiConversions.toGoogleDateTime;
-import static bio.terra.workspace.service.resource.controlled.ResourceConstant.DEFAULT_LOCATION;
+import static bio.terra.workspace.service.resource.controlled.ResourceConstant.DEFAULT_REGION;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.equalTo;
@@ -106,7 +106,7 @@ public class CreateGcsBucketStepTest extends BaseUnitTest {
 
     final BucketInfo info = bucketInfoCaptor.getValue();
     assertThat(info.getName(), equalTo(creationParameters.getName()));
-    assertThat(info.getLocation(), equalTo(DEFAULT_LOCATION));
+    assertThat(info.getLocation(), equalTo(DEFAULT_REGION));
     assertThat(info.getStorageClass(), equalTo(StorageClass.STANDARD));
     assertThat(info.getLifecycleRules(), hasSize(equalTo(2)));
 
@@ -160,7 +160,7 @@ public class CreateGcsBucketStepTest extends BaseUnitTest {
 
     final BucketInfo info = bucketInfoCaptor.getValue();
     assertThat(info.getName(), equalTo(bucketName));
-    assertThat(info.getLocation(), equalTo(DEFAULT_LOCATION));
+    assertThat(info.getLocation(), equalTo(DEFAULT_REGION));
     assertThat(info.getStorageClass(), is(nullValue()));
     assertThat(info.getLifecycleRules(), empty());
   }

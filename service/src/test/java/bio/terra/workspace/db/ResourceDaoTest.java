@@ -1,5 +1,6 @@
 package bio.terra.workspace.db;
 
+import static bio.terra.workspace.service.resource.controlled.ResourceConstant.DEFAULT_ZONE;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -219,8 +220,7 @@ public class ResourceDaoTest extends BaseUnitTest {
             resourceWithDefaultLocation.getWorkspaceId(),
             resourceWithDefaultLocation.getResourceId()));
     assertEquals(
-        "us-central1-a",
-        resourceWithDefaultLocation.castToAiNotebookInstanceResource().getLocation());
+        DEFAULT_ZONE, resourceWithDefaultLocation.castToAiNotebookInstanceResource().getLocation());
     // clean up
     resourceDao.deleteResource(initialResource.getWorkspaceId(), initialResource.getResourceId());
     // resource2 never got created
