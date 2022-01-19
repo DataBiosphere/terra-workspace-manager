@@ -14,9 +14,8 @@ import bio.terra.workspace.service.workspace.flight.create.azure.CreateAzureCont
 import bio.terra.workspace.service.workspace.model.AzureCloudContext;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
-import java.util.UUID;
-
 import com.azure.resourcemanager.compute.ComputeManager;
+import java.util.UUID;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
@@ -70,7 +69,10 @@ public class AzureTestUtils {
   }
 
   public FlightMap deleteControlledResourceInputParameters(
-      UUID workspaceId, UUID resourceId, AuthenticatedUserRequest userRequest, ControlledResource resource) {
+      UUID workspaceId,
+      UUID resourceId,
+      AuthenticatedUserRequest userRequest,
+      ControlledResource resource) {
     FlightMap inputs = new FlightMap();
     inputs.put(JobMapKeys.REQUEST.getKeyName(), resource);
     inputs.put(WorkspaceFlightMapKeys.WORKSPACE_ID, workspaceId.toString());

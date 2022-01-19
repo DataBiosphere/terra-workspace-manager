@@ -35,12 +35,11 @@ import bio.terra.workspace.service.resource.controlled.flight.delete.DeleteContr
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.flight.create.azure.CreateAzureContextFlight;
+import com.azure.resourcemanager.compute.ComputeManager;
+import com.azure.resourcemanager.compute.models.VirtualMachine;
 import java.time.Duration;
 import java.util.List;
 import java.util.UUID;
-
-import com.azure.resourcemanager.compute.ComputeManager;
-import com.azure.resourcemanager.compute.models.VirtualMachine;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -258,19 +257,19 @@ public class CreateAndDeleteAzureControlledResourceFlightTest extends BaseAzureT
     checkForResource(resourceList, networkResource);
     checkForResource(resourceList, resource);
 
-
     ComputeManager computeManager = azureTestUtils.getComputeManager();
 
     VirtualMachine vmTemp = null;
     while (vmTemp == null) {
       try {
         vmTemp =
-                computeManager
-                        .virtualMachines()
-                        .getByResourceGroup(azureTestUtils.getAzureCloudContext().getAzureResourceGroupId(), creationParameters.getName());
-      } catch (com.azure.core.exception.HttpResponseException ex){
-        if(ex.getResponse().getStatusCode() == 404)
-          Thread.sleep(10000);
+            computeManager
+                .virtualMachines()
+                .getByResourceGroup(
+                    azureTestUtils.getAzureCloudContext().getAzureResourceGroupId(),
+                    creationParameters.getName());
+      } catch (com.azure.core.exception.HttpResponseException ex) {
+        if (ex.getResponse().getStatusCode() == 404) Thread.sleep(10000);
         else throw ex;
       }
     }
@@ -278,18 +277,26 @@ public class CreateAndDeleteAzureControlledResourceFlightTest extends BaseAzureT
 
     // Submit a VM deletion flight.
     FlightState deleteFlightState =
-            StairwayTestUtils.blockUntilFlightCompletes(
-                    jobService.getStairway(),
-                    DeleteControlledResourceFlight.class,
-                    azureTestUtils.deleteControlledResourceInputParameters(
-                            workspaceId, resourceId, userRequest, resource),
-                    STAIRWAY_FLIGHT_TIMEOUT,
-                    null);
+        StairwayTestUtils.blockUntilFlightCompletes(
+            jobService.getStairway(),
+            DeleteControlledResourceFlight.class,
+            azureTestUtils.deleteControlledResourceInputParameters(
+                workspaceId, resourceId, userRequest, resource),
+            STAIRWAY_FLIGHT_TIMEOUT,
+            null);
     assertEquals(FlightStatus.SUCCESS, deleteFlightState.getFlightStatus());
 
     Thread.sleep(10000);
-    resolvedVm.networkInterfaceIds().forEach(nic -> assertThrows(com.azure.core.exception.HttpResponseException.class,() -> computeManager.networkManager().networks().getById(nic)));
-    assertThrows(com.azure.core.exception.HttpResponseException.class, () -> computeManager.disks().getById(resolvedVm.osDiskId()));
+    resolvedVm
+        .networkInterfaceIds()
+        .forEach(
+            nic ->
+                assertThrows(
+                    com.azure.core.exception.HttpResponseException.class,
+                    () -> computeManager.networkManager().networks().getById(nic)));
+    assertThrows(
+        com.azure.core.exception.HttpResponseException.class,
+        () -> computeManager.disks().getById(resolvedVm.osDiskId()));
   }
 
   private void checkForResource(List<WsmResource> resourceList, ControlledResource resource) {
