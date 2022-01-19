@@ -26,25 +26,18 @@ public class ApplicationConfigurationTest extends BaseTest {
 
   private static final UUID LEO_UUID = UUID.fromString("4BD1D59D-5827-4375-A41D-BBC65919F269");
   private static final UUID CARMEN_UUID = UUID.fromString("EB9D37F5-BAD7-4951-AE9A-86B3F03F4DD7");
-  private static final UUID TEST_WSM_APP_UUID =
-      UUID.fromString("E4C0924A-3D7D-4D3D-8DE4-3D2CF50C3818");
 
   @Test
   public void configurationTest() {
     // This test has to be in sync with the contents of application-configuration-test.yml
     List<WsmApplication> wsmApps = appDao.listApplications();
-    assertEquals(wsmApps.size(), 3);
+    assertEquals(2, wsmApps.size());
 
     for (WsmApplication wsmApp : wsmApps) {
       if (wsmApp.getApplicationId().equals(LEO_UUID)) {
         checkLeo(wsmApp);
       } else if (wsmApp.getApplicationId().equals(CARMEN_UUID)) {
         checkCarmen(wsmApp);
-      } else if (wsmApp.getApplicationId().equals(TEST_WSM_APP_UUID)) {
-        // Do not enforce that the WSM test app (used in connected tests, rather than just unit
-        // tests) matches a hardcoded specification. Other deployments need to override this app
-        // as they cannot impersonate terra-dev service accounts.
-        continue;
       } else {
         fail();
       }

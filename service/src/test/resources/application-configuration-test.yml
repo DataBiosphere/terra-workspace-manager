@@ -1,13 +1,9 @@
+# This configuration is specifically used to test WSM reading application configuration files.
+# These are not real applications. If you need a real application for connected tests, use
+# the app-test profile instead (see application-app-test.yml).
 workspace:
   application:
-    test-app-sa: Elizabeth.Shadowmoon@test.firecloud.org
     configurations:
-      - # This app uses a test user as the SA, so we can actually impersonate credentials.
-        identifier: E4C0924A-3D7D-4D3D-8DE4-3D2CF50C3818
-        name: TestWsmApp
-        description: WSM test application
-        service-account: Elizabeth.Shadowmoon@test.firecloud.org
-        state: operating
       -
         identifier: 4BD1D59D-5827-4375-A41D-BBC65919F269
         name: Leo
