@@ -1,5 +1,6 @@
 package bio.terra.workspace.service.resource.controlled.flight.create;
 
+import static bio.terra.workspace.service.resource.controlled.ResourceConstant.DEFAULT_LOCATION;
 import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.CREATION_PARAMETERS;
 
 import bio.terra.cloudres.google.storage.StorageCow;
@@ -31,7 +32,6 @@ import org.slf4j.LoggerFactory;
 public class CreateGcsBucketStep implements Step {
 
   private static final Logger logger = LoggerFactory.getLogger(CreateGcsBucketStep.class);
-  private static final String LOCATION = "US-CENTRAL1";
   private final CrlService crlService;
   private final ControlledGcsBucketResource resource;
   private final GcpCloudContextService gcpCloudContextService;
@@ -55,7 +55,7 @@ public class CreateGcsBucketStep implements Step {
 
     BucketInfo.Builder bucketInfoBuilder =
         BucketInfo.newBuilder(resource.getBucketName())
-            .setLocation(Optional.ofNullable(creationParameters.getLocation()).orElse(LOCATION));
+            .setLocation(Optional.ofNullable(creationParameters.getLocation()).orElse(DEFAULT_LOCATION));
 
     // Remaining creation parameters are optional
     Optional.ofNullable(creationParameters.getDefaultStorageClass())

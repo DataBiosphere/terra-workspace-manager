@@ -1,5 +1,6 @@
 package bio.terra.workspace.service.resource.controlled.flight.create;
 
+import static bio.terra.workspace.service.resource.controlled.ResourceConstant.DEFAULT_LOCATION;
 import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.CREATION_PARAMETERS;
 
 import bio.terra.cloudres.google.bigquery.BigQueryCow;
@@ -44,8 +45,6 @@ import org.slf4j.LoggerFactory;
  */
 public class CreateBigQueryDatasetStep implements Step {
 
-  private static final String LOCATION = "us-central1";
-
   private final ControlledResourceService controlledResourceService;
   private final CrlService crlService;
   private final ControlledBigQueryDatasetResource resource;
@@ -88,7 +87,7 @@ public class CreateBigQueryDatasetStep implements Step {
     Dataset datasetToCreate =
         new Dataset()
             .setDatasetReference(datasetId)
-            .setLocation(Optional.ofNullable(creationParameters.getLocation()).orElse(LOCATION))
+            .setLocation(Optional.ofNullable(creationParameters.getLocation()).orElse(DEFAULT_LOCATION))
             .setDefaultTableExpirationMs(
                 BigQueryApiConversions.toBqExpirationTime(
                     creationParameters.getDefaultTableLifetime()))

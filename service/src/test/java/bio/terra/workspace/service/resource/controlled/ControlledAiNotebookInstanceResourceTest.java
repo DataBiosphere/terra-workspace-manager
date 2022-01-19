@@ -22,10 +22,12 @@ public class ControlledAiNotebookInstanceResourceTest extends BaseUnitTest {
   }
 
   @Test
-  public void validateNoRequiredFieldThrows() {
-    assertThrows(
-        MissingRequiredFieldException.class,
-        () -> ControlledResourceFixtures.makeDefaultAiNotebookInstance().location(null).build());
+  public void resourceWithNullLocation_validatesOkAndSetsDefaultLocation() {
+    ControlledAiNotebookInstanceResource resource =
+    ControlledResourceFixtures.makeDefaultAiNotebookInstance().location(null).build();
+
+    resource.validate();
+    assertEquals("us-central1-a", resource.getLocation());
   }
 
   @Test
