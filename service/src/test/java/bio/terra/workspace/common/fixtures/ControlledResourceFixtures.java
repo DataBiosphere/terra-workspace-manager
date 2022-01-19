@@ -81,7 +81,6 @@ public class ControlledResourceFixtures {
   static final List<ApiGcpGcsBucketLifecycleRule> LIFECYCLE_RULES =
       new ArrayList<>(List.of(LIFECYCLE_RULE_1, LIFECYCLE_RULE_2));
   public static final String BUCKET_NAME_PREFIX = "my-bucket";
-  public static final String RESOURCE_LOCATION = "US-CENTRAL1";
   public static final String AZURE_NAME_PREFIX = "azure";
   public static final String AZURE_IP_NAME_PREFIX = "ip";
   public static final String AZURE_DISK_NAME_PREFIX = "disk";
@@ -96,7 +95,6 @@ public class ControlledResourceFixtures {
   public static ApiGcpGcsBucketCreationParameters getGoogleBucketCreationParameters() {
     return new ApiGcpGcsBucketCreationParameters()
         .name(uniqueBucketName())
-        .location(RESOURCE_LOCATION)
         .defaultStorageClass(ApiGcpGcsBucketDefaultStorageClass.STANDARD)
         .lifecycle(new ApiGcpGcsBucketLifecycle().rules(LIFECYCLE_RULES));
   }
@@ -173,7 +171,6 @@ public class ControlledResourceFixtures {
 
   public static ApiGcpBigQueryDatasetCreationParameters defaultBigQueryDatasetCreationParameters() {
     return new ApiGcpBigQueryDatasetCreationParameters()
-        .location(RESOURCE_LOCATION)
         .datasetId("test_dataset");
   }
 
