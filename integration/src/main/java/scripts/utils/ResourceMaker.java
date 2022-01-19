@@ -46,12 +46,16 @@ import bio.terra.workspace.model.JobReport;
 import bio.terra.workspace.model.ManagedBy;
 import bio.terra.workspace.model.PrivateResourceUser;
 import bio.terra.workspace.model.ReferenceResourceCommonFields;
+import bio.terra.workspace.model.ResourceMetadata;
+import bio.terra.workspace.model.StewardshipType;
 import bio.terra.workspace.model.UpdateBigQueryDataTableReferenceRequestBody;
 import bio.terra.workspace.model.UpdateBigQueryDatasetReferenceRequestBody;
 import bio.terra.workspace.model.UpdateDataRepoSnapshotReferenceRequestBody;
 import bio.terra.workspace.model.UpdateGcsBucketObjectReferenceRequestBody;
 import bio.terra.workspace.model.UpdateGcsBucketReferenceRequestBody;
 import java.time.Duration;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
@@ -621,5 +625,142 @@ public class ResourceMaker {
     ClientTestUtils.assertJobSuccess(
         "create ai notebook", creationResult.getJobReport(), creationResult.getErrorReport());
     return creationResult;
+  }
+
+  // Support for makeResources
+  private static String makeName() {
+    return RandomStringUtils.random(10, true, false);
+  }
+
+  @FunctionalInterface
+  public interface SupplierException<T> {
+    T get() throws Exception;
+  }
+
+  /**
+   * Make a bunch of resources
+   *
+   * @param referencedGcpResourceApi api for referenced resources
+   * @param controlledGcpResourceApi api for controlled resources
+   * @param workspaceId workspace where we allocate
+   * @param resourceCount number of resources to allocate
+   * @return list of resources
+   * @throws Exception whatever might come up
+   */
+  public static List<ResourceMetadata> makeResources(
+      ReferencedGcpResourceApi referencedGcpResourceApi,
+      ControlledGcpResourceApi controlledGcpResourceApi,
+      UUID workspaceId,
+      String dataRepoSnapshotId,
+      String dataRepoInstanceName,
+      int resourceCount)
+      throws Exception {
+
+    // Array of resource allocators
+    List<SupplierException<ResourceMetadata>> makers =
+        List.of(
+            // BQ dataset reference
+            () -> {
+              GcpBigQueryDatasetResource resource =
+                  makeBigQueryDatasetReference(referencedGcpResourceApi, workspaceId, makeName());
+              return resource.getMetadata();
+            },
+
+            // TDR snapshot reference
+            () -> {
+              DataRepoSnapshotResource resource =
+                  ResourceMaker.makeDataRepoSnapshotReference(
+                      referencedGcpResourceApi,
+                      workspaceId,
+                      makeName(),
+                      dataRepoSnapshotId,
+                      dataRepoInstanceName);
+              return resource.getMetadata();
+            },
+
+            // GCS bucket reference
+            () -> {
+              GcpGcsBucketResource resource =
+                  makeGcsBucketReference(referencedGcpResourceApi, workspaceId, makeName());
+              return resource.getMetadata();
+            },
+
+            // GCS bucket controlled shared
+            () -> {
+              GcpGcsBucketResource resource =
+                  ResourceMaker.makeGcsBucketReference(
+                      referencedGcpResourceApi, workspaceId, makeName());
+              return resource.getMetadata();
+            },
+
+            // GCS bucket controlled private
+            () -> {
+              GcpGcsBucketResource resource =
+                  ResourceMaker.makeControlledGcsBucketUserPrivate(
+                          controlledGcpResourceApi,
+                          workspaceId,
+                          makeName(),
+                          CloningInstructionsEnum.NOTHING)
+                      .getGcpBucket();
+              return resource.getMetadata();
+            },
+
+            // BQ dataset controlled shared
+            () -> {
+              GcpBigQueryDatasetResource resource =
+                  ResourceMaker.makeControlledBigQueryDatasetUserShared(
+                      controlledGcpResourceApi,
+                      workspaceId,
+                      makeName(),
+                      null,
+                      CloningInstructionsEnum.NOTHING);
+              return resource.getMetadata();
+            },
+
+            // BQ data table reference
+            () -> {
+              GcpBigQueryDataTableResource resource =
+                  ResourceMaker.makeBigQueryDataTableReference(
+                      referencedGcpResourceApi, workspaceId, makeName());
+              return resource.getMetadata();
+            });
+
+    // Build the resources
+    List<ResourceMetadata> resources = new ArrayList<>();
+    for (int i = 0; i < resourceCount; i++) {
+      int index = i % makers.size();
+      resources.add(makers.get(index).get());
+    }
+    return resources;
+  }
+
+  /**
+   * Designed to cleanup the result of allocations from {@link #makeResources}
+   *
+   * @param resources list of resources to cleanup
+   */
+  public static void cleanupResources(
+      List<ResourceMetadata> resources,
+      ControlledGcpResourceApi controlledGcpResourceApi,
+      UUID workspaceId)
+      throws Exception {
+    for (ResourceMetadata metadata : resources) {
+      if (metadata.getStewardshipType() == StewardshipType.CONTROLLED) {
+        switch (metadata.getResourceType()) {
+          case GCS_BUCKET:
+            ResourceMaker.deleteControlledGcsBucket(
+                metadata.getResourceId(), workspaceId, controlledGcpResourceApi);
+            break;
+          case BIG_QUERY_DATASET:
+            controlledGcpResourceApi.deleteBigQueryDataset(workspaceId, metadata.getResourceId());
+            break;
+          default:
+            throw new IllegalStateException(
+                String.format(
+                    "No cleanup method specified for resource type %s.",
+                    metadata.getResourceType()));
+        }
+      }
+    }
   }
 }

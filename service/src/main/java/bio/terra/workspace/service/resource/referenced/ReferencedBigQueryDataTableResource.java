@@ -62,7 +62,7 @@ public class ReferencedBigQueryDataTableResource extends ReferencedResource {
    */
   public ReferencedBigQueryDataTableResource(DbResource dbResource) {
     super(dbResource);
-    if (dbResource.getResourceType() != WsmResourceType.BIQ_QUERY_DATA_TABLE) {
+    if (dbResource.getResourceType() != WsmResourceType.BIG_QUERY_DATA_TABLE) {
       throw new InvalidMetadataException("Expected BIG_QUERY_DATA_TABLE");
     }
 
@@ -105,7 +105,7 @@ public class ReferencedBigQueryDataTableResource extends ReferencedResource {
 
   @Override
   public WsmResourceType getResourceType() {
-    return WsmResourceType.BIQ_QUERY_DATA_TABLE;
+    return WsmResourceType.BIG_QUERY_DATA_TABLE;
   }
 
   @Override

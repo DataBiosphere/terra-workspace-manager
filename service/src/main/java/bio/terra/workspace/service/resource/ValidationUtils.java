@@ -241,6 +241,14 @@ public class ValidationUtils {
     }
   }
 
+  public static void validateOptionalResourceName(@Nullable String name) {
+    if (name != null && !RESOURCE_NAME_VALIDATION_PATTERN.matcher(name).matches()) {
+      logger.warn("Invalid resource name {}", name);
+      throw new InvalidNameException(
+          "Invalid resource name specified. Name must be 1 to 1024 alphanumeric characters, underscores, and dashes and must not start with a dash or underscore.");
+    }
+  }
+
   public static void validateResourceDescriptionName(@Nullable String name) {
     if (name != null && name.length() > MAX_RESOURCE_DESCRIPTION_NAME) {
       throw new InvalidNameException(

@@ -709,7 +709,7 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
 
         ReferencedBigQueryDataTableResource resource =
             referenceResource.castToBigQueryDataTableResource();
-        assertEquals(resource.getResourceType(), WsmResourceType.BIQ_QUERY_DATA_TABLE);
+        assertEquals(resource.getResourceType(), WsmResourceType.BIG_QUERY_DATA_TABLE);
         assertEquals(resource.getDataTableId(), DATA_TABLE_NAME);
         assertEquals(resource.getDatasetId(), DATASET_NAME);
 
@@ -735,7 +735,7 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
             workspaceId,
             referenceResource.getResourceId(),
             USER_REQUEST,
-            WsmResourceType.BIQ_QUERY_DATA_TABLE);
+            WsmResourceType.BIG_QUERY_DATA_TABLE);
       }
 
       @Test
@@ -764,7 +764,7 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
             workspaceId,
             referenceResource.getResourceId(),
             USER_REQUEST,
-            WsmResourceType.BIQ_QUERY_DATA_TABLE);
+            WsmResourceType.BIG_QUERY_DATA_TABLE);
         // BQ data table is successfully deleted.
         assertThrows(
             ResourceNotFoundException.class,
