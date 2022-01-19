@@ -31,6 +31,7 @@ import org.slf4j.LoggerFactory;
 public class CreateGcsBucketStep implements Step {
 
   private static final Logger logger = LoggerFactory.getLogger(CreateGcsBucketStep.class);
+  private static final String LOCATION = "US-CENTRAL1";
   private final CrlService crlService;
   private final ControlledGcsBucketResource resource;
   private final GcpCloudContextService gcpCloudContextService;
@@ -54,7 +55,7 @@ public class CreateGcsBucketStep implements Step {
 
     BucketInfo.Builder bucketInfoBuilder =
         BucketInfo.newBuilder(resource.getBucketName())
-            .setLocation(creationParameters.getLocation());
+            .setLocation(Optional.ofNullable(creationParameters.getLocation()).orElse(LOCATION));
 
     // Remaining creation parameters are optional
     Optional.ofNullable(creationParameters.getDefaultStorageClass())

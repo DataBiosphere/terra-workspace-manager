@@ -206,6 +206,21 @@ public class ResourceDaoTest extends BaseUnitTest {
             resourceWithDifferentLocation.getWorkspaceId(),
             resourceWithDifferentLocation.getResourceId()));
 
+    final ControlledResource resourceWithDefaultLocation =
+        ControlledResourceFixtures.makeDefaultAiNotebookInstance()
+            .workspaceId(workspaceId1)
+            .name("resource-5")
+            .location(null)
+            .build();
+    resourceDao.createControlledResource(resourceWithDefaultLocation);
+    assertEquals(
+        resourceWithDefaultLocation,
+        resourceDao.getResource(
+            resourceWithDefaultLocation.getWorkspaceId(),
+            resourceWithDefaultLocation.getResourceId()));
+    assertEquals(
+        "us-central1-a",
+        resourceWithDefaultLocation.castToAiNotebookInstanceResource().getLocation());
     // clean up
     resourceDao.deleteResource(initialResource.getWorkspaceId(), initialResource.getResourceId());
     // resource2 never got created
@@ -215,6 +230,8 @@ public class ResourceDaoTest extends BaseUnitTest {
     resourceDao.deleteResource(
         resourceWithDifferentLocation.getWorkspaceId(),
         resourceWithDifferentLocation.getResourceId());
+    resourceDao.deleteResource(
+        resourceWithDefaultLocation.getWorkspaceId(), resourceWithDefaultLocation.getResourceId());
   }
 
   @Test

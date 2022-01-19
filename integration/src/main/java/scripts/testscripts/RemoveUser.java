@@ -106,7 +106,7 @@ public class RemoveUser extends WorkspaceAllocateTestScriptBase {
     String notebookInstanceId = RandomStringUtils.randomAlphabetic(8).toLowerCase();
     privateNotebook =
         ResourceMaker.makeControlledNotebookUserPrivate(
-            getWorkspaceId(), notebookInstanceId, privateUserResourceApi);
+            getWorkspaceId(), notebookInstanceId, /*location=*/ null, privateUserResourceApi);
   }
 
   @Override

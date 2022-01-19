@@ -28,6 +28,7 @@ import com.google.cloud.Policy;
 import com.google.common.base.Preconditions;
 import java.io.IOException;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import org.apache.http.HttpStatus;
 import org.slf4j.Logger;
@@ -42,6 +43,8 @@ import org.slf4j.LoggerFactory;
  * see https://cloud.google.com/bigquery/docs/access-control-basic-roles
  */
 public class CreateBigQueryDatasetStep implements Step {
+
+  private static final String LOCATION = "us-central1";
 
   private final ControlledResourceService controlledResourceService;
   private final CrlService crlService;
@@ -85,7 +88,7 @@ public class CreateBigQueryDatasetStep implements Step {
     Dataset datasetToCreate =
         new Dataset()
             .setDatasetReference(datasetId)
-            .setLocation(creationParameters.getLocation())
+            .setLocation(Optional.ofNullable(creationParameters.getLocation()).orElse(LOCATION))
             .setDefaultTableExpirationMs(
                 BigQueryApiConversions.toBqExpirationTime(
                     creationParameters.getDefaultTableLifetime()))

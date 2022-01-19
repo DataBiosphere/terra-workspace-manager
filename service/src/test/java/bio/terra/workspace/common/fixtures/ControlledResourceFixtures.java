@@ -90,9 +90,7 @@ public class ControlledResourceFixtures {
   public static final String AZURE_VM_NAME_PREFIX = "vm";
 
   public static final ApiGcpGcsBucketCreationParameters GOOGLE_BUCKET_CREATION_PARAMETERS_MINIMAL =
-      new ApiGcpGcsBucketCreationParameters()
-          .name(uniqueName(BUCKET_NAME_PREFIX))
-          .location(RESOURCE_LOCATION);
+      new ApiGcpGcsBucketCreationParameters().name(uniqueName(BUCKET_NAME_PREFIX));
 
   /** Construct a parameter object with a unique bucket name to avoid unintended clashes. */
   public static ApiGcpGcsBucketCreationParameters getGoogleBucketCreationParameters() {
