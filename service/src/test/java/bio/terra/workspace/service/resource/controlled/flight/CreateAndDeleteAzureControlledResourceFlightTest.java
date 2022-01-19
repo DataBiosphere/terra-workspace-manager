@@ -265,14 +265,16 @@ public class CreateAndDeleteAzureControlledResourceFlightTest extends BaseAzureT
       try {
         retries = retries - 1;
 
-        if(retries >= 0) {
+        if (retries >= 0) {
           vmTemp =
-                  computeManager
-                          .virtualMachines()
-                          .getByResourceGroup(
-                                  azureTestUtils.getAzureCloudContext().getAzureResourceGroupId(),
-                                  creationParameters.getName());
-        } else throw new RuntimeException(String.format("%s is not created in time in Azure", creationParameters.getName()));
+              computeManager
+                  .virtualMachines()
+                  .getByResourceGroup(
+                      azureTestUtils.getAzureCloudContext().getAzureResourceGroupId(),
+                      creationParameters.getName());
+        } else
+          throw new RuntimeException(
+              String.format("%s is not created in time in Azure", creationParameters.getName()));
       } catch (com.azure.core.exception.HttpResponseException ex) {
         if (ex.getResponse().getStatusCode() == 404) Thread.sleep(10000);
         else throw ex;
