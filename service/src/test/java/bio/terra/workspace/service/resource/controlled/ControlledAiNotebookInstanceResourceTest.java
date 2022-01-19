@@ -7,7 +7,6 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import bio.terra.common.exception.BadRequestException;
-import bio.terra.common.exception.MissingRequiredFieldException;
 import bio.terra.stairway.FlightMap;
 import bio.terra.workspace.common.BaseUnitTest;
 import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
@@ -24,7 +23,7 @@ public class ControlledAiNotebookInstanceResourceTest extends BaseUnitTest {
   @Test
   public void resourceWithNullLocation_validatesOkAndSetsDefaultLocation() {
     ControlledAiNotebookInstanceResource resource =
-    ControlledResourceFixtures.makeDefaultAiNotebookInstance().location(null).build();
+        ControlledResourceFixtures.makeDefaultAiNotebookInstance().location(null).build();
 
     resource.validate();
     assertEquals("us-central1-a", resource.getLocation());

@@ -25,7 +25,7 @@ import org.apache.commons.lang3.StringUtils;
 
 /** A {@link ControlledResource} for a Google AI Platform Notebook instance. */
 public class ControlledAiNotebookInstanceResource extends ControlledResource {
-  
+
   protected static final int MAX_INSTANCE_NAME_LENGTH = 63;
   protected static final String AUTO_NAME_DATE_FORMAT = "-yyyyMMdd-HHmmss";
   private final String instanceId;

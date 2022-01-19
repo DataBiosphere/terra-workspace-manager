@@ -87,7 +87,8 @@ public class CreateBigQueryDatasetStep implements Step {
     Dataset datasetToCreate =
         new Dataset()
             .setDatasetReference(datasetId)
-            .setLocation(Optional.ofNullable(creationParameters.getLocation()).orElse(DEFAULT_LOCATION))
+            .setLocation(
+                Optional.ofNullable(creationParameters.getLocation()).orElse(DEFAULT_LOCATION))
             .setDefaultTableExpirationMs(
                 BigQueryApiConversions.toBqExpirationTime(
                     creationParameters.getDefaultTableLifetime()))

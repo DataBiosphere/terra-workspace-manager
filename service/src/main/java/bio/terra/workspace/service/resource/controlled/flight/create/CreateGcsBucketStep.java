@@ -55,7 +55,8 @@ public class CreateGcsBucketStep implements Step {
 
     BucketInfo.Builder bucketInfoBuilder =
         BucketInfo.newBuilder(resource.getBucketName())
-            .setLocation(Optional.ofNullable(creationParameters.getLocation()).orElse(DEFAULT_LOCATION));
+            .setLocation(
+                Optional.ofNullable(creationParameters.getLocation()).orElse(DEFAULT_LOCATION));
 
     // Remaining creation parameters are optional
     Optional.ofNullable(creationParameters.getDefaultStorageClass())
