@@ -1,6 +1,7 @@
 package bio.terra.workspace.service.resource.controlled.flight;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
@@ -30,16 +31,20 @@ import bio.terra.workspace.service.resource.controlled.ControlledResource;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceService;
 import bio.terra.workspace.service.resource.controlled.ManagedByType;
 import bio.terra.workspace.service.resource.controlled.flight.create.CreateControlledResourceFlight;
+import bio.terra.workspace.service.resource.controlled.flight.delete.DeleteControlledResourceFlight;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.flight.create.azure.CreateAzureContextFlight;
 import java.time.Duration;
 import java.util.List;
 import java.util.UUID;
+
+import com.azure.resourcemanager.compute.ComputeManager;
+import com.azure.resourcemanager.compute.models.VirtualMachine;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
-public class CreateAzureControlledResourceFlightTest extends BaseAzureTest {
+public class CreateAndDeleteAzureControlledResourceFlightTest extends BaseAzureTest {
   private static final Duration STAIRWAY_FLIGHT_TIMEOUT = Duration.ofMinutes(15);
 
   @Autowired private WorkspaceService workspaceService;
@@ -171,7 +176,7 @@ public class CreateAzureControlledResourceFlightTest extends BaseAzureTest {
   }
 
   @Test
-  public void createAzureVmControlledResource() throws InterruptedException {
+  public void createAndDeleteAzureVmControlledResource() throws InterruptedException {
     // Setup workspace and cloud context
     UUID workspaceId = azureTestUtils.createWorkspace(workspaceService);
     AuthenticatedUserRequest userRequest = userAccessUtils.defaultUserAuthRequest();
@@ -252,6 +257,39 @@ public class CreateAzureControlledResourceFlightTest extends BaseAzureTest {
     checkForResource(resourceList, diskResource);
     checkForResource(resourceList, networkResource);
     checkForResource(resourceList, resource);
+
+
+    ComputeManager computeManager = azureTestUtils.getComputeManager();
+
+    VirtualMachine vmTemp = null;
+    while (vmTemp == null) {
+      try {
+        vmTemp =
+                computeManager
+                        .virtualMachines()
+                        .getByResourceGroup(azureTestUtils.getAzureCloudContext().getAzureResourceGroupId(), creationParameters.getName());
+      } catch (com.azure.core.exception.HttpResponseException ex){
+        if(ex.getResponse().getStatusCode() == 404)
+          Thread.sleep(10000);
+        else throw ex;
+      }
+    }
+    final VirtualMachine resolvedVm = vmTemp;
+
+    // Submit a VM deletion flight.
+    FlightState deleteFlightState =
+            StairwayTestUtils.blockUntilFlightCompletes(
+                    jobService.getStairway(),
+                    DeleteControlledResourceFlight.class,
+                    azureTestUtils.deleteControlledResourceInputParameters(
+                            workspaceId, resourceId, userRequest, resource),
+                    STAIRWAY_FLIGHT_TIMEOUT,
+                    null);
+    assertEquals(FlightStatus.SUCCESS, deleteFlightState.getFlightStatus());
+
+    Thread.sleep(10000);
+    resolvedVm.networkInterfaceIds().forEach(nic -> assertThrows(com.azure.core.exception.HttpResponseException.class,() -> computeManager.networkManager().networks().getById(nic)));
+    assertThrows(com.azure.core.exception.HttpResponseException.class, () -> computeManager.disks().getById(resolvedVm.osDiskId()));
   }
 
   private void checkForResource(List<WsmResource> resourceList, ControlledResource resource) {
