@@ -12,17 +12,20 @@ import bio.terra.workspace.generated.model.ApiCreateGcpBigQueryDataTableReferenc
 import bio.terra.workspace.generated.model.ApiCreateGcpBigQueryDatasetReferenceRequestBody;
 import bio.terra.workspace.generated.model.ApiCreateGcpGcsBucketReferenceRequestBody;
 import bio.terra.workspace.generated.model.ApiCreateGcpGcsObjectReferenceRequestBody;
+import bio.terra.workspace.generated.model.ApiCreateGitHubRepoReferenceRequestBody;
 import bio.terra.workspace.generated.model.ApiDataRepoSnapshotResource;
 import bio.terra.workspace.generated.model.ApiGcpBigQueryDataTableResource;
 import bio.terra.workspace.generated.model.ApiGcpBigQueryDatasetResource;
 import bio.terra.workspace.generated.model.ApiGcpGcsBucketResource;
 import bio.terra.workspace.generated.model.ApiGcpGcsObjectResource;
+import bio.terra.workspace.generated.model.ApiGitHubRepoResource;
 import bio.terra.workspace.generated.model.ApiUpdateBigQueryDataTableReferenceRequestBody;
 import bio.terra.workspace.generated.model.ApiUpdateBigQueryDatasetReferenceRequestBody;
 import bio.terra.workspace.generated.model.ApiUpdateDataReferenceRequestBody;
 import bio.terra.workspace.generated.model.ApiUpdateDataRepoSnapshotReferenceRequestBody;
 import bio.terra.workspace.generated.model.ApiUpdateGcsBucketObjectReferenceRequestBody;
 import bio.terra.workspace.generated.model.ApiUpdateGcsBucketReferenceRequestBody;
+import bio.terra.workspace.generated.model.ApiUpdateGitHubRepoReferenceRequestBody;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequestFactory;
 import bio.terra.workspace.service.resource.WsmResourceType;
@@ -32,6 +35,7 @@ import bio.terra.workspace.service.resource.referenced.ReferencedBigQueryDataset
 import bio.terra.workspace.service.resource.referenced.ReferencedDataRepoSnapshotResource;
 import bio.terra.workspace.service.resource.referenced.ReferencedGcsBucketResource;
 import bio.terra.workspace.service.resource.referenced.ReferencedGcsObjectResource;
+import bio.terra.workspace.service.resource.referenced.ReferencedGitHubRepoResource;
 import bio.terra.workspace.service.resource.referenced.ReferencedResource;
 import bio.terra.workspace.service.resource.referenced.ReferencedResourceService;
 import bio.terra.workspace.service.workspace.WorkspaceService;
@@ -752,5 +756,84 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
             .sourceResourceId(sourceReferencedResource.getResourceId())
             .effectiveCloningInstructions(effectiveCloningInstructions.toApiModel());
     return new ResponseEntity<>(result, HttpStatus.OK);
+  }
+
+  // - GitHub Repo referenced resource - //
+  @Override
+  public ResponseEntity<ApiGitHubRepoResource> createGitHubRepoReference(
+      UUID workspaceId, @Valid ApiCreateGitHubRepoReferenceRequestBody body) {
+    // Construct a ReferenceGcsBucketResource object from the API input
+    ReferencedGitHubRepoResource resource =
+        ReferencedGitHubRepoResource.builder()
+            .workspaceId(workspaceId)
+            .name(body.getMetadata().getName())
+            .description(body.getMetadata().getDescription())
+            .cloningInstructions(
+                CloningInstructions.fromApiModel(body.getMetadata().getCloningInstructions()))
+            .sshUrl(body.getGithubrepo().getSshUrl())
+            .httpsUrl(body.getGithubrepo().getHttpsUrl())
+            .build();
+
+    ReferencedResource referenceResource =
+        referenceResourceService.createReferenceResource(resource, getAuthenticatedInfo());
+    ApiGitHubRepoResource response = referenceResource.castToGitHubRepoResource().toApiModel();
+    return new ResponseEntity<>(response, HttpStatus.OK);
+  }
+
+  @Override
+  public ResponseEntity<ApiGitHubRepoResource> getGitHubRepoReference(
+      UUID workspaceId, UUID resourceId) {
+    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    ReferencedResource referenceResource =
+        referenceResourceService.getReferenceResource(workspaceId, resourceId, userRequest);
+    ApiGitHubRepoResource response = referenceResource.castToGitHubRepoResource().toApiModel();
+    return new ResponseEntity<>(response, HttpStatus.OK);
+  }
+
+  @Override
+  public ResponseEntity<ApiGitHubRepoResource> getGitHubRepoReferenceByName(
+      UUID workspaceId, String resourceName) {
+    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    ReferencedResource referenceResource =
+        referenceResourceService.getReferenceResourceByName(workspaceId, resourceName, userRequest);
+    ApiGitHubRepoResource response = referenceResource.castToGitHubRepoResource().toApiModel();
+    return new ResponseEntity<>(response, HttpStatus.OK);
+  }
+
+  @Override
+  public ResponseEntity<Void> updateGitHubRepoReference(
+      UUID workspaceId, UUID referenceId, ApiUpdateGitHubRepoReferenceRequestBody body) {
+    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    String sshUrl = body.getSshUrl();
+    if (StringUtils.isEmpty(sshUrl)) {
+      referenceResourceService.updateReferenceResource(
+          workspaceId, referenceId, body.getName(), body.getDescription(), userRequest);
+    } else {
+      ReferencedGitHubRepoResource.Builder updateGitHubRepoResource =
+          referenceResourceService
+              .getReferenceResource(workspaceId, referenceId, userRequest)
+              .castToGitHubRepoResource()
+              .toBuilder();
+      if (!StringUtils.isEmpty(sshUrl)) {
+        updateGitHubRepoResource.sshUrl(sshUrl);
+      }
+      referenceResourceService.updateReferenceResource(
+          workspaceId,
+          referenceId,
+          body.getName(),
+          body.getDescription(),
+          updateGitHubRepoResource.build(),
+          userRequest);
+    }
+    return new ResponseEntity<>(HttpStatus.OK);
+  }
+
+  @Override
+  public ResponseEntity<Void> deleteGitHubRepoReference(
+      UUID workspaceId, UUID resourceId) {
+    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    referenceResourceService.deleteReferenceResourceForResourceType(
+        workspaceId, resourceId, userRequest, WsmResourceType.GITHUB_REPO);
+    return new ResponseEntity<>(HttpStatus.OK);
   }
 }

@@ -8,6 +8,7 @@ import bio.terra.workspace.service.resource.referenced.exception.InvalidReferenc
 import com.azure.core.management.Region;
 import com.azure.resourcemanager.compute.models.VirtualMachineSizeTypes;
 import com.google.common.collect.ImmutableList;
+import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -113,6 +114,41 @@ public class ValidationUtils {
         throw new InvalidNameException(
             "Invalid GCS bucket name specified. Bucket names cannot contains google or mis-spelled google. See Google documentation https://cloud.google.com/storage/docs/naming-buckets#requirements for the full specification.");
       }
+    }
+  }
+
+  /**
+   * Validate whether the input URL is a valid GitHub Repo https url.
+   */
+  public static void validateGitRepoHttpsUrl(String httpsUrl) {
+    URI uri = URI.create(httpsUrl);
+    if (uri.isOpaque()) {
+      throw new InvalidNameException("Input url is opaque, it is an invalid Git Repo Https url");
+    }
+    String scheme = uri.getScheme();
+    String authority = uri.getAuthority();
+    String path = uri.getPath();
+    if (!StringUtils.equals(scheme, "https") || !StringUtils.equals(authority, "github.com") || !path.endsWith(".git")) {
+      throw new InvalidNameException("Invalid Git Repo https url");
+    }
+  }
+
+  /**
+   * Validate whether the input URL is a valid GitHub Repo SSH url.
+   * @param sshUrl
+   */
+  public static void validateGitRepoOptionalSshUrl(@Nullable String sshUrl) {
+    if (sshUrl == null) {
+      return;
+    }
+    URI uri = URI.create(sshUrl);
+    if (uri.isOpaque()) {
+      throw new InvalidNameException("Input url is opaque, it is an invalid Git Repo ssh url");
+    }
+    String authority = uri.getAuthority();
+    String path = uri.getPath();
+    if (uri.getScheme() != null || authority.startsWith("git@github.com") || !path.endsWith(".git")) {
+      throw new InvalidNameException("Invalid Git Repo ssh url");
     }
   }
 

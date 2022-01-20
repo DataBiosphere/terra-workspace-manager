@@ -59,6 +59,11 @@ public abstract class ReferencedResource extends WsmResource {
     return (ReferencedGcsObjectResource) this;
   }
 
+  public ReferencedGitHubRepoResource castToGitHubRepoResource() {
+    validateSubclass(WsmResourceType.GITHUB_REPO);
+    return (ReferencedGitHubRepoResource) this;
+  }
+
   /**
    * Check for a user's access to the resource being referenced. This call should talk to an
    * external service (a cloud platform, Terra Data Repo, etc) specific to the referenced resource
