@@ -2,6 +2,7 @@ package bio.terra.workspace.service.resource.controlled;
 
 import static bio.terra.workspace.service.resource.controlled.ControlledAiNotebookInstanceResource.AUTO_NAME_DATE_FORMAT;
 import static bio.terra.workspace.service.resource.controlled.ControlledAiNotebookInstanceResource.MAX_INSTANCE_NAME_LENGTH;
+import static bio.terra.workspace.service.resource.controlled.ResourceConstant.DEFAULT_ZONE;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -26,7 +27,7 @@ public class ControlledAiNotebookInstanceResourceTest extends BaseUnitTest {
         ControlledResourceFixtures.makeDefaultAiNotebookInstance().location(null).build();
 
     resource.validate();
-    assertEquals("us-central1-a", resource.getLocation());
+    assertEquals(DEFAULT_ZONE, resource.getLocation());
   }
 
   @Test
