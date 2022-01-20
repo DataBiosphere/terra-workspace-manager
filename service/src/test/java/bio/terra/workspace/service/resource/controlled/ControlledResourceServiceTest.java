@@ -1089,7 +1089,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
 
     StorageCow storageCow = crlService.createStorageCow(projectId);
     BucketInfo cloudBucket = storageCow.get(resource.getBucketName()).getBucketInfo();
-    assertEquals(DEFAULT_REGION, cloudBucket.getLocation());
+    assertEquals(DEFAULT_REGION, cloudBucket.getLocation().toLowerCase());
     assertEquals(
         resource,
         controlledResourceService.getControlledResource(
