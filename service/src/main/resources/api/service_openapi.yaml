@@ -1245,6 +1245,31 @@ paths:
           $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/ServerError'
+  /api/workspaces/v1/{workspaceId}/resources/referenced/githubrepos/{resourceId}/clone:
+    parameters:
+    - $ref: '#/components/parameters/WorkspaceId'
+    - $ref: '#/components/parameters/ResourceId'
+    post:
+      summary: Clone a GitHub repository
+      operationId: cloneGitHubRepoReference
+      tags: [ ReferencedGcpResource ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CloneReferencedResourceRequestBody'
+      responses:
+        '200':
+          $ref: '#/components/responses/CloneReferencedGitHubRepoResourceResponse'
+        '202':
+          $ref: '#/components/responses/CloneReferencedGitHubRepoResourceResponse'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
   /api/workspaces/v1/{workspaceId}/resources/referenced/githubrepos/name/{name}:
     parameters:
     - $ref: '#/components/parameters/WorkspaceId'
@@ -3654,6 +3679,25 @@ components:
           format: uuid
         resource:
           $ref: '#/components/schemas/DataRepoSnapshotResource'
+    CloneReferencedGitHubRepoResourceResult:
+      description: >-
+        API result class for cloning a referenced GitHub repo resource. Includes source workspace
+        and resource IDs for provenance. If the effective cloning instructions are not
+        COPY_REFERENCE, then no clone is created and the resource is null.
+      type: object
+      properties:
+        effectiveCloningInstructions:
+          $ref: '#/components/schemas/CloningInstructionsEnum'
+        sourceWorkspaceId:
+          description: ID of the workspace of the source resource for this clone
+          type: string
+          format: uuid
+        sourceResourceId:
+          description: ID of the source resource
+          type: string
+          format: uuid
+        resource:
+          $ref: '#/components/schemas/GitHubRepoResource'
     GcpBigQueryDatasetCreationParameters:
       description: >-
         Dataset-specific properties to be set on creation. These are a subset of the
@@ -4805,7 +4849,12 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/CloneReferencedGcpDataRepoSnapshotResourceResult'
-
+    CloneReferencedGitHubRepoResourceResponse:
+      description: Response for successful Data Repo Snapshot reference clone
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/CloneReferencedGitHubRepoResourceResult'
     DisableApplicationResultResponse:
       description: Response holding the disable application result
       content:

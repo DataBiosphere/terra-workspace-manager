@@ -9,6 +9,7 @@ import bio.terra.workspace.service.resource.referenced.ReferencedBigQueryDataset
 import bio.terra.workspace.service.resource.referenced.ReferencedDataRepoSnapshotResource;
 import bio.terra.workspace.service.resource.referenced.ReferencedGcsBucketResource;
 import bio.terra.workspace.service.resource.referenced.ReferencedGcsObjectResource;
+import bio.terra.workspace.service.resource.referenced.ReferencedGitHubRepoResource;
 import bio.terra.workspace.service.resource.referenced.ReferencedResource;
 import bio.terra.workspace.service.workspace.model.WsmCloneResourceResult;
 import java.util.Optional;
@@ -89,6 +90,8 @@ public class WorkspaceCloneUtils {
                 name,
                 description);
         break;
+      case GITHUB_REPO:
+
       case AI_NOTEBOOK_INSTANCE:
       default:
         throw new BadRequestException(
@@ -183,4 +186,19 @@ public class WorkspaceCloneUtils {
     Optional.ofNullable(description).ifPresent(resultBuilder::description);
     return resultBuilder.build();
   }
+
+  private static ReferencedResource buildDestinationGitHubRepoReference(
+      ReferencedGitHubRepoResource gitHubRepoResource,
+      UUID destinationWorkspaceId,
+      @Nullable String name,
+      @Nullable String description) {
+    ReferencedGitHubRepoResource.Builder resultBuilder =
+        gitHubRepoResource.toBuilder()
+            .workspaceId(destinationWorkspaceId)
+            .resourceId(UUID.randomUUID());
+    Optional.ofNullable(name).ifPresent(resultBuilder::name);
+    Optional.ofNullable(description).ifPresent(resultBuilder::description);
+    return resultBuilder.build();
+  }
+  )
 }
