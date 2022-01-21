@@ -1,5 +1,7 @@
 package bio.terra.workspace.service.resource.controlled;
 
+import static bio.terra.workspace.service.resource.controlled.ResourceConstant.DEFAULT_ZONE;
+
 import bio.terra.cloudres.google.notebooks.InstanceName;
 import bio.terra.common.exception.BadRequestException;
 import bio.terra.common.exception.InconsistentFieldsException;
@@ -255,8 +257,8 @@ public class ControlledAiNotebookInstanceResource extends ControlledResource {
       return this;
     }
 
-    public Builder location(String location) {
-      this.location = location;
+    public Builder location(@Nullable String location) {
+      this.location = Optional.ofNullable(location).orElse(DEFAULT_ZONE);
       return this;
     }
 

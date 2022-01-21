@@ -2,12 +2,12 @@ package bio.terra.workspace.service.resource.controlled;
 
 import static bio.terra.workspace.service.resource.controlled.ControlledAiNotebookInstanceResource.AUTO_NAME_DATE_FORMAT;
 import static bio.terra.workspace.service.resource.controlled.ControlledAiNotebookInstanceResource.MAX_INSTANCE_NAME_LENGTH;
+import static bio.terra.workspace.service.resource.controlled.ResourceConstant.DEFAULT_ZONE;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import bio.terra.common.exception.BadRequestException;
-import bio.terra.common.exception.MissingRequiredFieldException;
 import bio.terra.stairway.FlightMap;
 import bio.terra.workspace.common.BaseUnitTest;
 import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
@@ -22,10 +22,12 @@ public class ControlledAiNotebookInstanceResourceTest extends BaseUnitTest {
   }
 
   @Test
-  public void validateNoRequiredFieldThrows() {
-    assertThrows(
-        MissingRequiredFieldException.class,
-        () -> ControlledResourceFixtures.makeDefaultAiNotebookInstance().location(null).build());
+  public void resourceWithNullLocation_validatesOkAndSetsDefaultLocation() {
+    ControlledAiNotebookInstanceResource resource =
+        ControlledResourceFixtures.makeDefaultAiNotebookInstance().location(null).build();
+
+    resource.validate();
+    assertEquals(DEFAULT_ZONE, resource.getLocation());
   }
 
   @Test
