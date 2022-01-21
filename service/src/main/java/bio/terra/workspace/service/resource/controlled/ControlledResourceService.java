@@ -1,6 +1,8 @@
 package bio.terra.workspace.service.resource.controlled;
 
 import bio.terra.common.exception.BadRequestException;
+import bio.terra.common.exception.ServiceUnavailableException;
+import bio.terra.stairway.FlightState;
 import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
 import bio.terra.workspace.common.exception.InternalLogicException;
 import bio.terra.workspace.db.ApplicationDao;
@@ -46,6 +48,7 @@ import com.google.cloud.Policy;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 import javax.annotation.Nullable;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -55,7 +58,10 @@ import org.springframework.stereotype.Component;
 @Component
 public class ControlledResourceService {
 
-  private static final int MAX_ASSIGNED_USER_LENGTH = 254;
+  // These are chosen to retry a maximum length so we return under a 30 second
+  // network timeout.
+  private static final int RESOURCE_ROW_WAIT_SECONDS = 1;
+  private static final int RESOURCE_ROW_MAX_RETRIES = 20;
 
   private final JobService jobService;
   private final WorkspaceService workspaceService;
@@ -174,7 +180,10 @@ public class ControlledResourceService {
         commonCreationJobBuilder(
                 resource, privateResourceIamRole, jobControl, resultPath, userRequest)
             .addParameter(ControlledResourceKeys.CREATION_PARAMETERS, creationParameters);
-    return jobBuilder.submit();
+
+    String jobId = jobBuilder.submit();
+    waitForResourceOrJob(resource.getWorkspaceId(), resource.getResourceId(), jobId);
+    return jobId;
   }
 
   /** Starts a create controlled bucket resource, blocking until its job is finished. */
@@ -435,7 +444,9 @@ public class ControlledResourceService {
             "enablePet");
     jobBuilder.addParameter(ControlledResourceKeys.CREATE_NOTEBOOK_PARAMETERS, creationParameters);
     jobBuilder.addParameter(ControlledResourceKeys.NOTEBOOK_PET_SERVICE_ACCOUNT, petSaEmail);
-    return jobBuilder.submit();
+    String jobId = jobBuilder.submit();
+    waitForResourceOrJob(resource.getWorkspaceId(), resource.getResourceId(), jobId);
+    return jobId;
   }
 
   /** Simpler interface for synchronous controlled resource creation */
@@ -629,5 +640,36 @@ public class ControlledResourceService {
         .stewardshipType(resource.getStewardshipType())
         .addParameter(ResourceKeys.RESOURCE_ID, resourceId.toString())
         .addParameter(JobMapKeys.RESULT_PATH.getKeyName(), resultPath);
+  }
+
+  /**
+   * For async resource creation, we do not want to return to the caller until the resource row is
+   * in the database and, thus, visible to enumeration. This method waits for either the row to show
+   * up (the expected success case) or the job to complete (the expected error case). If one of
+   * those doesn't happen in the retry window, we throw SERVICE_UNAVAILABLE. The theory is for it
+   * not to complete, either WSM is so busy that it cannot schedule the flight or something bad has
+   * happened. Either way, SERVICE_UNAVAILABLE seems like a reasonable response.
+   *
+   * @param workspaceId workspace of the resource create
+   * @param resourceId id of resource being created
+   * @param jobId id of the create flight.
+   */
+  private void waitForResourceOrJob(UUID workspaceId, UUID resourceId, String jobId) {
+    try {
+      for (int i = 0; i < RESOURCE_ROW_MAX_RETRIES; i++) {
+        if (resourceDao.checkForResourceRow(workspaceId, resourceId)) {
+          return;
+        }
+        FlightState flightState = jobService.getStairway().getFlightState(jobId);
+        if (flightState.getCompleted().isPresent()) {
+          return;
+        }
+        TimeUnit.SECONDS.sleep(RESOURCE_ROW_WAIT_SECONDS);
+      }
+    } catch (InterruptedException e) {
+      // fall through to throw
+    }
+
+    throw new ServiceUnavailableException("Failed to make prompt progress on resource");
   }
 }
