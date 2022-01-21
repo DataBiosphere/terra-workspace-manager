@@ -6,7 +6,8 @@ import org.apache.commons.lang3.StringUtils;
 
 public enum CloudPlatform {
   GCP("GCP", ApiCloudPlatform.GCP),
-  AZURE("AZURE", null);
+  AZURE("AZURE", null),
+  MULTI("MULTI", null);
 
   private final String dbString;
   private final ApiCloudPlatform apiCloudPlatform;

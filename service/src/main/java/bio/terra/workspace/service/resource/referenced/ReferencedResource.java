@@ -59,9 +59,9 @@ public abstract class ReferencedResource extends WsmResource {
     return (ReferencedGcsObjectResource) this;
   }
 
-  public ReferencedGitHubRepoResource castToGitHubRepoResource() {
-    validateSubclass(WsmResourceType.GITHUB_REPO);
-    return (ReferencedGitHubRepoResource) this;
+  public ReferencedGitRepoResource castToGitRepoResource() {
+    validateSubclass(WsmResourceType.GIT_REPO);
+    return (ReferencedGitRepoResource) this;
   }
 
   /**

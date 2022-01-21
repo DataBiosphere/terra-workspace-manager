@@ -67,7 +67,8 @@ public class ValidationUtils {
       Pattern.compile("^[a-zA-Z0-9][-_a-zA-Z0-9]{0,1023}$");
 
   public static final Pattern GIT_URL_PATTERN =
-      Pattern.compile("(?:git|ssh|https?|git@[-\\w.]+):(\\/\\/)?(.*?)(\\.git)(\\/?|\\#[-\\d\\w._]+?)$");
+      Pattern.compile("(?:https|git@github.com):(\\/\\/)?(.*?)(\\.git)$");
+
 
   // An object named "." or ".." is nearly impossible for a user to delete.
   private static final ImmutableList<String> DISALLOWED_OBJECT_NAMES = ImmutableList.of(".", "..");
@@ -123,35 +124,13 @@ public class ValidationUtils {
   /**
    * Validate whether the input URL is a valid GitHub Repo https url.
    */
-  public static void validateGitRepoUrl(String httpsUrl) {
-    URI uri = URI.create(httpsUrl);
-    if (uri.isOpaque()) {
-      throw new InvalidReferenceException("Input url is opaque, it is an invalid Git Repo Https url");
-    }
-    String scheme = uri.getScheme();
-    String authority = uri.getAuthority();
-    String path = uri.getPath();
-    if (!StringUtils.equals(scheme, "https") || !StringUtils.equals(authority, "github.com") || !path.endsWith(".git")) {
-      throw new InvalidReferenceException("Invalid Git Repo https url");
-    }
-  }
-
-  /**
-   * Validate whether the input URL is a valid GitHub Repo SSH url.
-   * @param sshUrl
-   */
-  public static void validateGitRepoOptionalSshUrl(@Nullable String sshUrl) {
-    if (sshUrl == null) {
+  public static void validateGitRepoUrl(@Nullable String gitUrl) {
+    if (gitUrl == null) {
       return;
     }
-    URI uri = URI.create(sshUrl);
-    if (uri.isOpaque()) {
-      throw new InvalidReferenceException("Input url is opaque, it is an invalid Git Repo ssh url");
-    }
-    String authority = uri.getAuthority();
-    String path = uri.getPath();
-    if (uri.getScheme() != null || authority.startsWith("git@github.com") || !path.endsWith(".git")) {
-      throw new InvalidReferenceException("Invalid Git Repo ssh url");
+    if (!GIT_URL_PATTERN.matcher(gitUrl).matches()) {
+      logger.warn("Invalid git url {}", gitUrl);
+      throw new InvalidReferenceException("Invalid git url");
     }
   }
 

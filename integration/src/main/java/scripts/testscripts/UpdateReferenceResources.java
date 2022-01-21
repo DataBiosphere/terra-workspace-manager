@@ -25,7 +25,7 @@ import bio.terra.workspace.model.GcpBigQueryDataTableResource;
 import bio.terra.workspace.model.GcpBigQueryDatasetResource;
 import bio.terra.workspace.model.GcpGcsBucketResource;
 import bio.terra.workspace.model.GcpGcsObjectResource;
-import bio.terra.workspace.model.GitHubRepoResource;
+import bio.terra.workspace.model.GitRepoResource;
 import bio.terra.workspace.model.GrantRoleRequestBody;
 import bio.terra.workspace.model.IamRole;
 import java.util.List;
@@ -50,7 +50,7 @@ public class UpdateReferenceResources extends DataRepoTestScriptBase {
   @MonotonicNonNull private UUID dataRepoSnapshotResourceId;
   @MonotonicNonNull private UUID bucketResourceId;
   @MonotonicNonNull private UUID bucketObjectResourceId;
-  @MonotonicNonNull private UUID gitHubReferencedResourceId;
+  @MonotonicNonNull private UUID gitReferencedResourceId;
 
   @Override
   protected void doSetup(
@@ -96,12 +96,10 @@ public class UpdateReferenceResources extends DataRepoTestScriptBase {
             TEST_FILE_FOO_MONKEY_SEES_MONKEY_DOS);
     bucketObjectResourceId = blobResource.getMetadata().getResourceId();
 
-    GitHubRepoResource gitHubRepoResource =
-        ResourceMaker.makeGitHubRepoReference(
-            fullAccessApi,
-            getWorkspaceId(),
-            "a_reference_to_wsm_github_repo");
-    gitHubReferencedResourceId = gitHubRepoResource.getMetadata().getResourceId();
+    GitRepoResource gitRepoReference =
+        ResourceMaker.makeGitRepoReference(
+            fullAccessApi, getWorkspaceId(), "a_reference_to_wsm_git_repo");
+    gitReferencedResourceId = gitRepoReference.getMetadata().getResourceId();
   }
 
   @Override
@@ -138,16 +136,15 @@ public class UpdateReferenceResources extends DataRepoTestScriptBase {
     ResourceApi partialAccessResourceApi =
         new ResourceApi(ClientTestUtils.getClientForTestUser(userWithPartialAccess, server));
 
-    String newGitHubRepoReferenceName = "newGitHubRepoReferenceName";
-    String newGitHubRepoReferenceDescription = "a new description for github repo reference";
+    String newGitRepoReferenceName = "newGitRepoReferenceName";
+    String newGitRepoReferenceDescription = "a new description for git repo reference";
     ResourceMaker.updateGitRepoReferenceResource(
         fullAccessApi,
         getWorkspaceId(),
-        gitHubReferencedResourceId,
-        newGitHubRepoReferenceName,
-        newGitHubRepoReferenceDescription,
-        /*httpsUrl=*/null,
-        /*sshUrl=*/null);
+        gitReferencedResourceId,
+        newGitRepoReferenceName,
+        newGitRepoReferenceDescription,
+        /*gitUrl=*/ null);
     // Update snapshot's name and description
     String newSnapshotReferenceName = "newSnapshotReferenceName";
     String newSnapshotReferenceDescription = "a new description of another snapshot reference";

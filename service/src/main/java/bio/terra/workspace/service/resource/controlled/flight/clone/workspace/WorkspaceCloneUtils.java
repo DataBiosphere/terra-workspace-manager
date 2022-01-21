@@ -9,7 +9,7 @@ import bio.terra.workspace.service.resource.referenced.ReferencedBigQueryDataset
 import bio.terra.workspace.service.resource.referenced.ReferencedDataRepoSnapshotResource;
 import bio.terra.workspace.service.resource.referenced.ReferencedGcsBucketResource;
 import bio.terra.workspace.service.resource.referenced.ReferencedGcsObjectResource;
-import bio.terra.workspace.service.resource.referenced.ReferencedGitHubRepoResource;
+import bio.terra.workspace.service.resource.referenced.ReferencedGitRepoResource;
 import bio.terra.workspace.service.resource.referenced.ReferencedResource;
 import bio.terra.workspace.service.workspace.model.WsmCloneResourceResult;
 import java.util.Optional;
@@ -90,10 +90,10 @@ public class WorkspaceCloneUtils {
                 name,
                 description);
         break;
-      case GITHUB_REPO:
+      case GIT_REPO:
         destinationResource =
             buildDestinationGitHubRepoReference(
-                sourceReferencedResource.castToGitHubRepoResource(),
+                sourceReferencedResource.castToGitRepoResource(),
                 destinationWorkspaceId,
                 name,
                 description);
@@ -194,11 +194,11 @@ public class WorkspaceCloneUtils {
   }
 
   private static ReferencedResource buildDestinationGitHubRepoReference(
-      ReferencedGitHubRepoResource gitHubRepoResource,
+      ReferencedGitRepoResource gitHubRepoResource,
       UUID destinationWorkspaceId,
       @Nullable String name,
       @Nullable String description) {
-    ReferencedGitHubRepoResource.Builder resultBuilder =
+    ReferencedGitRepoResource.Builder resultBuilder =
         gitHubRepoResource.toBuilder()
             .workspaceId(destinationWorkspaceId)
             .resourceId(UUID.randomUUID());

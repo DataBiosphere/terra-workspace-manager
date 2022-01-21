@@ -5,7 +5,6 @@ import static scripts.utils.ClientTestUtils.TEST_BUCKET_NAME;
 import static scripts.utils.ClientTestUtils.TEST_BUCKET_NAME_WITH_FINE_GRAINED_ACCESS;
 import static scripts.utils.ClientTestUtils.TEST_FILE_FOO_MONKEY_SEES_MONKEY_DOS;
 import static scripts.utils.ClientTestUtils.TEST_FOLDER_FOO;
-import static scripts.utils.ClientTestUtils.TEST_GITHUB_REPO_PUBLIC_HTTPS;
 import static scripts.utils.ClientTestUtils.TEST_GITHUB_REPO_PUBLIC_SSH;
 
 import bio.terra.testrunner.runner.config.TestUserSpecification;
@@ -16,7 +15,7 @@ import bio.terra.workspace.client.ApiException;
 import bio.terra.workspace.model.CloneReferencedGcpDataRepoSnapshotResourceResult;
 import bio.terra.workspace.model.CloneReferencedGcpGcsBucketResourceResult;
 import bio.terra.workspace.model.CloneReferencedGcpGcsObjectResourceResult;
-import bio.terra.workspace.model.CloneReferencedGitHubRepoResourceResult;
+import bio.terra.workspace.model.CloneReferencedGitRepoResourceResult;
 import bio.terra.workspace.model.CloneReferencedResourceRequestBody;
 import bio.terra.workspace.model.CloningInstructionsEnum;
 import bio.terra.workspace.model.DataRepoSnapshotResource;
@@ -24,7 +23,7 @@ import bio.terra.workspace.model.GcpBigQueryDataTableResource;
 import bio.terra.workspace.model.GcpBigQueryDatasetResource;
 import bio.terra.workspace.model.GcpGcsBucketResource;
 import bio.terra.workspace.model.GcpGcsObjectResource;
-import bio.terra.workspace.model.GitHubRepoResource;
+import bio.terra.workspace.model.GitRepoResource;
 import bio.terra.workspace.model.ResourceMetadata;
 import bio.terra.workspace.model.ResourceType;
 import bio.terra.workspace.model.StewardshipType;
@@ -50,7 +49,8 @@ public class CloneReferencedResources extends DataRepoTestScriptBase {
   private static final String CLONED_DATA_TABLE_REFERENCE = "a_cloned_data_table_reference";
   private static final String CLONED_DATA_TABLE_DESCRIPTION = "a cloned data table reference";
   private static final String CLONED_GITHUB_REPO_RESOURCE_NAME = "a_new_name_for_the_github_repo";
-  private static final String CLONED_GITHUB_REPO_DESCRIPTION = "a cloned reference to the wsm github repo";
+  private static final String CLONED_GITHUB_REPO_DESCRIPTION =
+      "a cloned reference to the wsm github repo";
 
   private DataRepoSnapshotResource sourceDataRepoSnapshotReference;
   private GcpGcsBucketResource sourceBucketReference;
@@ -60,7 +60,7 @@ public class CloneReferencedResources extends DataRepoTestScriptBase {
   private GcpGcsObjectResource sourceBucketFolderReference;
   private GcpBigQueryDatasetResource sourceBigQueryDatasetReference;
   private GcpBigQueryDataTableResource sourceBigQueryDataTableReference;
-  private GitHubRepoResource sourceGitHubRepoReference;
+  private GitRepoResource sourceGitRepoReference;
   private UUID destinationWorkspaceId;
   private ReferencedGcpResourceApi referencedGcpResourceApi;
 
@@ -113,10 +113,9 @@ public class CloneReferencedResources extends DataRepoTestScriptBase {
             getDataRepoSnapshotId(),
             getDataRepoInstanceName());
 
-    sourceGitHubRepoReference= ResourceMaker.makeGitHubRepoReference(
-        referencedGcpResourceApi,
-        getWorkspaceId(),
-        "wsm_github_repo_reference_resource");
+    sourceGitRepoReference =
+        ResourceMaker.makeGitRepoReference(
+            referencedGcpResourceApi, getWorkspaceId(), "git_repo_reference_resource");
 
     // create a new workspace with cloud context
     destinationWorkspaceId = UUID.randomUUID();
@@ -341,45 +340,42 @@ public class CloneReferencedResources extends DataRepoTestScriptBase {
         sourceDataRepoSnapshotReference.getAttributes().getInstanceName(),
         cloneDataRepoSnapshotResult.getResource().getAttributes().getInstanceName());
 
-    // clone source reference GitHub repo to destination
-    CloneReferencedResourceRequestBody cloneGitHubReferenceRequestBody =
+    // clone source reference Git repo to destination
+    CloneReferencedResourceRequestBody cloneGitReferenceRequestBody =
         new CloneReferencedResourceRequestBody()
             .cloningInstructions(CloningInstructionsEnum.REFERENCE)
-            .name(CLONED_BUCKET_RESOURCE_NAME)
+            .name(CLONED_GITHUB_REPO_RESOURCE_NAME)
             .description(CLONED_GITHUB_REPO_DESCRIPTION)
             .destinationWorkspaceId(destinationWorkspaceId);
     logger.info(
-        "Cloning GitHub Reference\n\tworkspaceId: {}\n\tresourceId: {}\ninto\n\tworkspaceId: {}",
-        sourceGitHubRepoReference.getMetadata().getWorkspaceId(),
-        sourceGitHubRepoReference.getMetadata().getResourceId(),
+        "Cloning Git repo Reference\n\tworkspaceId: {}\n\tresourceId: {}\ninto\n\tworkspaceId: {}",
+        sourceGitRepoReference.getMetadata().getWorkspaceId(),
+        sourceGitRepoReference.getMetadata().getResourceId(),
         destinationWorkspaceId);
-    final CloneReferencedGitHubRepoResourceResult gitHubRepoReferenceCloneResult =
-        referencedGcpResourceApi.cloneGitHubRepoReference(
-            cloneGitHubReferenceRequestBody,
+    final CloneReferencedGitRepoResourceResult gitHubRepoReferenceCloneResult =
+        referencedGcpResourceApi.cloneGitRepoReference(
+            cloneGitReferenceRequestBody,
             getWorkspaceId(),
-            sourceGitHubRepoReference.getMetadata().getResourceId());
+            sourceGitRepoReference.getMetadata().getResourceId());
     assertEquals(getWorkspaceId(), gitHubRepoReferenceCloneResult.getSourceWorkspaceId());
     assertEquals(
         StewardshipType.REFERENCED,
         gitHubRepoReferenceCloneResult.getResource().getMetadata().getStewardshipType());
     assertEquals(
-        ResourceType.GITHUB_REPO,
+        ResourceType.GIT_REPO,
         gitHubRepoReferenceCloneResult.getResource().getMetadata().getResourceType());
     assertEquals(
-        sourceGitHubRepoReference.getMetadata().getResourceId(),
+        sourceGitRepoReference.getMetadata().getResourceId(),
         gitHubRepoReferenceCloneResult.getSourceResourceId());
-    assertEquals(
-        sourceGitHubRepoReference.getMetadata().getDescription(),
-        gitHubRepoReferenceCloneResult.getResource().getMetadata().getDescription());
     assertEquals(
         CLONED_GITHUB_REPO_RESOURCE_NAME,
         gitHubRepoReferenceCloneResult.getResource().getMetadata().getName());
     assertEquals(
-        TEST_GITHUB_REPO_PUBLIC_HTTPS, gitHubRepoReferenceCloneResult.getResource().getAttributes().getHttpsUrl());
+        TEST_GITHUB_REPO_PUBLIC_SSH,
+        gitHubRepoReferenceCloneResult.getResource().getAttributes().getGitUrl());
     assertEquals(
-        TEST_GITHUB_REPO_PUBLIC_SSH, gitHubRepoReferenceCloneResult.getResource().getAttributes().getSshUrl());
-    assertEquals(
-        CLONED_GITHUB_REPO_DESCRIPTION, gitHubRepoReferenceCloneResult.getResource().getMetadata().getDescription());
+        CLONED_GITHUB_REPO_DESCRIPTION,
+        gitHubRepoReferenceCloneResult.getResource().getMetadata().getDescription());
   }
 
   @Override

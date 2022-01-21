@@ -29,6 +29,7 @@ import bio.terra.workspace.service.resource.referenced.ReferencedBigQueryDataset
 import bio.terra.workspace.service.resource.referenced.ReferencedDataRepoSnapshotResource;
 import bio.terra.workspace.service.resource.referenced.ReferencedGcsBucketResource;
 import bio.terra.workspace.service.resource.referenced.ReferencedGcsObjectResource;
+import bio.terra.workspace.service.resource.referenced.ReferencedGitRepoResource;
 import bio.terra.workspace.service.resource.referenced.ReferencedResource;
 import bio.terra.workspace.service.resource.referenced.ReferencedResourceService;
 import bio.terra.workspace.service.workspace.WorkspaceService;
@@ -163,6 +164,13 @@ public class ResourceController implements ResourceApi {
               union.gcpGcsObject(resource.toApiAttributes());
               break;
             }
+
+          case GIT_REPO:
+          {
+            ReferencedGitRepoResource resource = referencedResource.castToGitRepoResource();
+            union.gitRepo(resource.toApiAttributes());
+            break;
+          }
 
           case AI_NOTEBOOK_INSTANCE:
           case AZURE_IP:

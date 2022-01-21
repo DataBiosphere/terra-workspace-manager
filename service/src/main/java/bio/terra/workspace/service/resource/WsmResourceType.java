@@ -16,7 +16,7 @@ import bio.terra.workspace.service.resource.referenced.ReferencedBigQueryDataset
 import bio.terra.workspace.service.resource.referenced.ReferencedDataRepoSnapshotResource;
 import bio.terra.workspace.service.resource.referenced.ReferencedGcsBucketResource;
 import bio.terra.workspace.service.resource.referenced.ReferencedGcsObjectResource;
-import bio.terra.workspace.service.resource.referenced.ReferencedGitHubRepoResource;
+import bio.terra.workspace.service.resource.referenced.ReferencedGitRepoResource;
 import bio.terra.workspace.service.resource.referenced.ReferencedResource;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import javax.annotation.Nullable;
@@ -90,11 +90,11 @@ public enum WsmResourceType {
       ApiResourceType.AZURE_STORAGE_ACCOUNT,
       null,
       ControlledAzureStorageResource.class),
-  GITHUB_REPO(
-      null,
+  GIT_REPO(
+     CloudPlatform.MULTI,
       "GITHUB_REPO",
-      ApiResourceType.GITHUB_REPO,
-      ReferencedGitHubRepoResource.class,
+      ApiResourceType.GIT_REPO,
+      ReferencedGitRepoResource.class,
       null);
 
   private final CloudPlatform cloudPlatform;

@@ -5,8 +5,8 @@ import bio.terra.common.exception.MissingRequiredFieldException;
 import bio.terra.workspace.common.utils.FlightBeanBag;
 import bio.terra.workspace.db.DbSerDes;
 import bio.terra.workspace.db.model.DbResource;
-import bio.terra.workspace.generated.model.ApiGitHubRepoAttributes;
-import bio.terra.workspace.generated.model.ApiGitHubRepoResource;
+import bio.terra.workspace.generated.model.ApiGitRepoAttributes;
+import bio.terra.workspace.generated.model.ApiGitRepoResource;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.resource.ValidationUtils;
 import bio.terra.workspace.service.resource.WsmResourceType;
@@ -18,12 +18,12 @@ import java.util.Optional;
 import java.util.UUID;
 import javax.annotation.Nullable;
 
-public class ReferencedGitHubRepoResource extends ReferencedResource{
+public class ReferencedGitRepoResource extends ReferencedResource{
 
   private final String gitUrl;
 
   @JsonCreator
-  public ReferencedGitHubRepoResource(
+  public ReferencedGitRepoResource(
       @JsonProperty("workspaceId") UUID workspaceId,
       @JsonProperty("resourceId") UUID resourceId,
       @JsonProperty("name") String name,
@@ -41,22 +41,22 @@ public class ReferencedGitHubRepoResource extends ReferencedResource{
    *
    * @param dbResource database form of resources
    */
-  public ReferencedGitHubRepoResource(DbResource dbResource) {
+  public ReferencedGitRepoResource(DbResource dbResource) {
     super(dbResource);
-    ReferencedGitHubRepoAttributes attributes =
-        DbSerDes.fromJson(dbResource.getAttributes(), ReferencedGitHubRepoAttributes.class);
+    ReferencedGitRepoAttributes attributes =
+        DbSerDes.fromJson(dbResource.getAttributes(), ReferencedGitRepoAttributes.class);
     this.gitUrl = attributes.getGitUrl();
     validate();
   }
 
   @Override
   public WsmResourceType getResourceType() {
-    return WsmResourceType.GITHUB_REPO;
+    return WsmResourceType.GIT_REPO;
   }
 
   @Override
   public String attributesToJson() {
-    return DbSerDes.toJson(new ReferencedGitHubRepoAttributes(gitUrl));
+    return DbSerDes.toJson(new ReferencedGitRepoAttributes(gitUrl));
   }
 
   @Override
@@ -64,12 +64,12 @@ public class ReferencedGitHubRepoResource extends ReferencedResource{
     return true;
   }
 
-  public ApiGitHubRepoAttributes toApiAttributes() {
-    return new ApiGitHubRepoAttributes().gitUrl(gitUrl);
+  public ApiGitRepoAttributes toApiAttributes() {
+    return new ApiGitRepoAttributes().gitUrl(gitUrl);
   }
 
-  public ApiGitHubRepoResource toApiModel() {
-    return new ApiGitHubRepoResource()
+  public ApiGitRepoResource toApiModel() {
+    return new ApiGitRepoResource()
         .metadata(super.toApiMetadata())
         .attributes(toApiAttributes());
   }
@@ -81,8 +81,8 @@ public class ReferencedGitHubRepoResource extends ReferencedResource{
   @Override
   public void validate() {
     super.validate();
-    if (getResourceType() != WsmResourceType.GITHUB_REPO) {
-      throw new InconsistentFieldsException("Expected GITHUB_REPO");
+    if (getResourceType() != WsmResourceType.GIT_REPO) {
+      throw new InconsistentFieldsException("Expected GIT_REPO");
     }
     if (Strings.isNullOrEmpty(gitUrl)) {
       throw new MissingRequiredFieldException(
@@ -97,7 +97,7 @@ public class ReferencedGitHubRepoResource extends ReferencedResource{
    *
    * @return builder object ready for new values to replace existing ones
    */
-  public ReferencedGitHubRepoResource.Builder toBuilder() {
+  public ReferencedGitRepoResource.Builder toBuilder() {
     return builder()
         .gitUrl(getGitUrl())
         .cloningInstructions(getCloningInstructions())
@@ -107,8 +107,8 @@ public class ReferencedGitHubRepoResource extends ReferencedResource{
         .workspaceId(getWorkspaceId());
   }
 
-  public static ReferencedGitHubRepoResource.Builder builder() {
-    return new ReferencedGitHubRepoResource.Builder();
+  public static ReferencedGitRepoResource.Builder builder() {
+    return new ReferencedGitRepoResource.Builder();
   }
 
   public static class Builder {
@@ -120,40 +120,40 @@ public class ReferencedGitHubRepoResource extends ReferencedResource{
     private UUID resourceId;
     private UUID workspaceId;
 
-    public ReferencedGitHubRepoResource.Builder workspaceId(UUID workspaceId) {
+    public ReferencedGitRepoResource.Builder workspaceId(UUID workspaceId) {
       this.workspaceId = workspaceId;
       return this;
     }
 
-    public ReferencedGitHubRepoResource.Builder resourceId(UUID resourceId) {
+    public ReferencedGitRepoResource.Builder resourceId(UUID resourceId) {
       this.resourceId = resourceId;
       return this;
     }
 
-    public ReferencedGitHubRepoResource.Builder name(String name) {
+    public ReferencedGitRepoResource.Builder name(String name) {
       this.name = name;
       return this;
     }
 
-    public ReferencedGitHubRepoResource.Builder description(String description) {
+    public ReferencedGitRepoResource.Builder description(String description) {
       this.description = description;
       return this;
     }
 
-    public ReferencedGitHubRepoResource.Builder cloningInstructions(
+    public ReferencedGitRepoResource.Builder cloningInstructions(
         CloningInstructions cloningInstructions) {
       this.cloningInstructions = cloningInstructions;
       return this;
     }
 
-    public ReferencedGitHubRepoResource.Builder gitUrl(String gitUrl) {
+    public ReferencedGitRepoResource.Builder gitUrl(String gitUrl) {
       this.gitUrl = gitUrl;
       return this;
     }
 
-    public ReferencedGitHubRepoResource build() {
+    public ReferencedGitRepoResource build() {
       // On the create path, we can omit the resourceId and have it filled in by the builder.
-      return new ReferencedGitHubRepoResource(
+      return new ReferencedGitRepoResource(
           workspaceId,
           Optional.ofNullable(resourceId).orElse(UUID.randomUUID()),
           name,

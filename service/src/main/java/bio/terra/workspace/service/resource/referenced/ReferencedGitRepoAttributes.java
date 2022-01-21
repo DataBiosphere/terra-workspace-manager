@@ -4,12 +4,12 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import javax.annotation.Nullable;
 
-public class ReferencedGitHubRepoAttributes {
+public class ReferencedGitRepoAttributes {
 
   private final String gitUrl;
 
   @JsonCreator
-  public ReferencedGitHubRepoAttributes(
+  public ReferencedGitRepoAttributes(
       @JsonProperty("gitUrl") String gitUrl) {
     this.gitUrl = gitUrl;
   }

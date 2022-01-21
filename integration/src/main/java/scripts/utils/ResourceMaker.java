@@ -5,7 +5,6 @@ import static scripts.utils.ClientTestUtils.TEST_BQ_DATASET_PROJECT;
 import static scripts.utils.ClientTestUtils.TEST_BQ_DATATABLE_NAME;
 import static scripts.utils.ClientTestUtils.TEST_BUCKET_NAME;
 import static scripts.utils.ClientTestUtils.TEST_BUCKET_NAME_WITH_FINE_GRAINED_ACCESS;
-import static scripts.utils.ClientTestUtils.TEST_GITHUB_REPO_PUBLIC_HTTPS;
 import static scripts.utils.ClientTestUtils.TEST_GITHUB_REPO_PUBLIC_SSH;
 import static scripts.utils.GcsBucketTestFixtures.LIFECYCLE_RULES;
 
@@ -23,7 +22,7 @@ import bio.terra.workspace.model.CreateGcpBigQueryDataTableReferenceRequestBody;
 import bio.terra.workspace.model.CreateGcpBigQueryDatasetReferenceRequestBody;
 import bio.terra.workspace.model.CreateGcpGcsBucketReferenceRequestBody;
 import bio.terra.workspace.model.CreateGcpGcsObjectReferenceRequestBody;
-import bio.terra.workspace.model.CreateGitHubRepoReferenceRequestBody;
+import bio.terra.workspace.model.CreateGitRepoReferenceRequestBody;
 import bio.terra.workspace.model.CreatedControlledGcpAiNotebookInstanceResult;
 import bio.terra.workspace.model.CreatedControlledGcpGcsBucket;
 import bio.terra.workspace.model.DataRepoSnapshotAttributes;
@@ -44,8 +43,8 @@ import bio.terra.workspace.model.GcpGcsBucketLifecycle;
 import bio.terra.workspace.model.GcpGcsBucketResource;
 import bio.terra.workspace.model.GcpGcsObjectAttributes;
 import bio.terra.workspace.model.GcpGcsObjectResource;
-import bio.terra.workspace.model.GitHubRepoAttributes;
-import bio.terra.workspace.model.GitHubRepoResource;
+import bio.terra.workspace.model.GitRepoAttributes;
+import bio.terra.workspace.model.GitRepoResource;
 import bio.terra.workspace.model.JobControl;
 import bio.terra.workspace.model.JobReport;
 import bio.terra.workspace.model.ManagedBy;
@@ -58,7 +57,7 @@ import bio.terra.workspace.model.UpdateBigQueryDatasetReferenceRequestBody;
 import bio.terra.workspace.model.UpdateDataRepoSnapshotReferenceRequestBody;
 import bio.terra.workspace.model.UpdateGcsBucketObjectReferenceRequestBody;
 import bio.terra.workspace.model.UpdateGcsBucketReferenceRequestBody;
-import bio.terra.workspace.model.UpdateGitHubRepoReferenceRequestBody;
+import bio.terra.workspace.model.UpdateGitRepoReferenceRequestBody;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
@@ -394,28 +393,26 @@ public class ResourceMaker {
   }
 
   /**
-   * Calls WSM to create a referenced GitHub repository in the specified workspace.
+   * Calls WSM to create a referenced Git repository in the specified workspace.
    *
    * <p>This method retries on all WSM exceptions, do not use it for the negative case (where you do
    * not expect a user to be able to create a reference).
    */
-  public static GitHubRepoResource makeGitHubRepoReference(
+  public static GitRepoResource makeGitRepoReference(
       ReferencedGcpResourceApi resourceApi, UUID workspaceId, String name)
-      throws ApiException, InterruptedException {
+      throws InterruptedException {
 
-    CreateGitHubRepoReferenceRequestBody body =
-        new CreateGitHubRepoReferenceRequestBody()
+    CreateGitRepoReferenceRequestBody body =
+        new CreateGitRepoReferenceRequestBody()
             .metadata(
                 new ReferenceResourceCommonFields()
                     .cloningInstructions(CloningInstructionsEnum.REFERENCE)
                     .description("Description of " + name)
                     .name(name))
-            .githubrepo(
-                new GitHubRepoAttributes()
-                    .gitUrl(TEST_GITHUB_REPO_PUBLIC_SSH));
-
+            .gitrepo(new GitRepoAttributes().gitUrl(TEST_GITHUB_REPO_PUBLIC_SSH));
+    logger.info("Making git repo reference with name {}", name);
     return ClientTestUtils.getWithRetryOnException(
-        () -> resourceApi.createGitHubRepoReference(body, workspaceId));
+        () -> resourceApi.createGitRepoReference(body, workspaceId));
   }
 
   public static void updateGitRepoReferenceResource(
@@ -426,8 +423,7 @@ public class ResourceMaker {
       @Nullable String description,
       @Nullable String gitUrl)
       throws ApiException {
-    UpdateGitHubRepoReferenceRequestBody body =
-        new UpdateGitHubRepoReferenceRequestBody();
+    UpdateGitRepoReferenceRequestBody body = new UpdateGitRepoReferenceRequestBody();
     if (name != null) {
       body.setName(name);
     }
@@ -437,7 +433,7 @@ public class ResourceMaker {
     if (gitUrl != null) {
       body.setGitUrl(gitUrl);
     }
-    resourceApi.updateGitHubRepoReference(body, workspaceId, resourceId);
+    resourceApi.updateGitRepoReference(body, workspaceId, resourceId);
   }
 
   // Fully parameters version; category-specific versions below
@@ -782,8 +778,8 @@ public class ResourceMaker {
 
             // GitHub repository reference
             () -> {
-              GitHubRepoResource resource =
-                  ResourceMaker.makeGitHubRepoReference(
+              GitRepoResource resource =
+                  ResourceMaker.makeGitRepoReference(
                       referencedGcpResourceApi, workspaceId, makeName());
               return resource.getMetadata();
             });

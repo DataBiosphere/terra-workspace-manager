@@ -61,13 +61,12 @@ public class CreateControlledResourceFlight extends Flight {
             userRequest));
 
     // Get the cloud context and store it in the working map
-    if (resource.getResourceType().getCloudPlatform() != null) {
-      switch (resource.getResourceType().getCloudPlatform()) {
-        case AZURE:
+    switch (resource.getResourceType().getCloudPlatform()) {
+      case AZURE:
+      case MULTI:
           // TODO: pull cloud context from flight into step parallel to GCP
           break;
-
-        case GCP:
+      case GCP:
           // This step may need to update the cloud context row in the database to convert
           // context V1 format into V2 format.
           addStep(
@@ -76,7 +75,6 @@ public class CreateControlledResourceFlight extends Flight {
                   userRequest),
               dbRetryRule);
           break;
-      }
     }
 
     // create the cloud resource and grant IAM roles via CRL
