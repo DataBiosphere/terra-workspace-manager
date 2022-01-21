@@ -585,6 +585,28 @@ public class ResourceDao {
     jdbcTemplate.update(sql, params);
   }
 
+  /**
+   * Wait for a resource row to appear in the database. This is used so async resource creation
+   * calls return after the database row has been inserted. That allows clients to see the resource
+   * with a resource enumeration.
+   *
+   * @param workspaceId workspace where the resource is being created
+   * @param resourceId resource being created
+   */
+  @ReadTransaction
+  public boolean resourceExists(UUID workspaceId, UUID resourceId) {
+    final String sql =
+        "SELECT COUNT(1) FROM resource"
+            + " WHERE workspace_id = :workspace_id AND resource_id = :resource_id";
+    MapSqlParameterSource params =
+        new MapSqlParameterSource()
+            .addValue("workspace_id", workspaceId.toString())
+            .addValue("resource_id", resourceId.toString());
+
+    Integer count = jdbcTemplate.queryForObject(sql, params, Integer.class);
+    return (count != null && count > 0);
+  }
+
   private void validateUniqueGcsBucket(ControlledGcsBucketResource bucketResource) {
     String bucketSql =
         "SELECT COUNT(1)"
@@ -754,10 +776,8 @@ public class ResourceDao {
     //  get run more than once. The safe solution is to "lock" the resource by writing the flight id
     //  into the row at creation. Then it is possible on a re-insert to know whether the error is
     //  because this flight step is re-running or because some other flight used the same resource
-    // id.
-    //  The small risk we have here is that a duplicate resource id of will appear to be
-    // successfully
-    //  created, but in fact will be silently rejected.
+    //  id. The small risk we have here is that a duplicate resource id of will appear to be
+    //  successfully created, but in fact will be silently rejected.
 
     final String countSql = "SELECT COUNT(*) FROM resource WHERE resource_id = :resource_id";
     MapSqlParameterSource countParams =
