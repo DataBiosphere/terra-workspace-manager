@@ -91,7 +91,13 @@ public class WorkspaceCloneUtils {
                 description);
         break;
       case GITHUB_REPO:
-
+        destinationResource =
+            buildDestinationGitHubRepoReference(
+                sourceReferencedResource.castToGitHubRepoResource(),
+                destinationWorkspaceId,
+                name,
+                description);
+        break;
       case AI_NOTEBOOK_INSTANCE:
       default:
         throw new BadRequestException(
@@ -200,5 +206,4 @@ public class WorkspaceCloneUtils {
     Optional.ofNullable(description).ifPresent(resultBuilder::description);
     return resultBuilder.build();
   }
-  )
 }

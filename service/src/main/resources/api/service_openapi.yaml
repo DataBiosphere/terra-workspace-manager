@@ -2538,12 +2538,8 @@ components:
           $ref: "#/components/schemas/Name"
         description:
           type: string
-        sshUrl:
+        gitUrl:
           description: the ssh url of the git repository
-          type: string
-        httpsUrl:
-          type: string
-        branch:
           type: string
 
     # TODO(PF-404): remove this in favor of reference-type specific objects.
@@ -4189,11 +4185,9 @@ components:
     GitHubRepoAttributes:
       description: Attributes of a Git repository
       type: object
-      required: [ httpsUrl ]
+      required: [ gitUrl ]
       properties:
-        httpsUrl:
-          type: string
-        sshUrl:
+        gitUrl:
           type: string
 
     GitHubRepoResource:

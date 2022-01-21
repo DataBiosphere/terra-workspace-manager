@@ -66,6 +66,9 @@ public class ValidationUtils {
   public static final Pattern RESOURCE_NAME_VALIDATION_PATTERN =
       Pattern.compile("^[a-zA-Z0-9][-_a-zA-Z0-9]{0,1023}$");
 
+  public static final Pattern GIT_URL_PATTERN =
+      Pattern.compile("(?:git|ssh|https?|git@[-\\w.]+):(\\/\\/)?(.*?)(\\.git)(\\/?|\\#[-\\d\\w._]+?)$");
+
   // An object named "." or ".." is nearly impossible for a user to delete.
   private static final ImmutableList<String> DISALLOWED_OBJECT_NAMES = ImmutableList.of(".", "..");
 
@@ -120,16 +123,16 @@ public class ValidationUtils {
   /**
    * Validate whether the input URL is a valid GitHub Repo https url.
    */
-  public static void validateGitRepoHttpsUrl(String httpsUrl) {
+  public static void validateGitRepoUrl(String httpsUrl) {
     URI uri = URI.create(httpsUrl);
     if (uri.isOpaque()) {
-      throw new InvalidNameException("Input url is opaque, it is an invalid Git Repo Https url");
+      throw new InvalidReferenceException("Input url is opaque, it is an invalid Git Repo Https url");
     }
     String scheme = uri.getScheme();
     String authority = uri.getAuthority();
     String path = uri.getPath();
     if (!StringUtils.equals(scheme, "https") || !StringUtils.equals(authority, "github.com") || !path.endsWith(".git")) {
-      throw new InvalidNameException("Invalid Git Repo https url");
+      throw new InvalidReferenceException("Invalid Git Repo https url");
     }
   }
 
@@ -143,12 +146,12 @@ public class ValidationUtils {
     }
     URI uri = URI.create(sshUrl);
     if (uri.isOpaque()) {
-      throw new InvalidNameException("Input url is opaque, it is an invalid Git Repo ssh url");
+      throw new InvalidReferenceException("Input url is opaque, it is an invalid Git Repo ssh url");
     }
     String authority = uri.getAuthority();
     String path = uri.getPath();
     if (uri.getScheme() != null || authority.startsWith("git@github.com") || !path.endsWith(".git")) {
-      throw new InvalidNameException("Invalid Git Repo ssh url");
+      throw new InvalidReferenceException("Invalid Git Repo ssh url");
     }
   }
 

@@ -6,22 +6,15 @@ import javax.annotation.Nullable;
 
 public class ReferencedGitHubRepoAttributes {
 
-  private final String sshUrl;
-  private final String httpsUrl;
+  private final String gitUrl;
 
   @JsonCreator
   public ReferencedGitHubRepoAttributes(
-      @JsonProperty("httpsUrl") String httpsUrl,
-      @JsonProperty("sshUrl") @Nullable String sshUrl) {
-    this.httpsUrl = httpsUrl;
-    this.sshUrl = sshUrl;
+      @JsonProperty("gitUrl") String gitUrl) {
+    this.gitUrl = gitUrl;
   }
 
-  public @Nullable String getSshUrl() {
-    return sshUrl;
-  }
-
-  public String getHttpsUrl() {
-    return httpsUrl;
+  public String getGitUrl() {
+    return gitUrl;
   }
 }

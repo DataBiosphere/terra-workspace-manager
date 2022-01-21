@@ -771,8 +771,7 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
             .description(body.getMetadata().getDescription())
             .cloningInstructions(
                 CloningInstructions.fromApiModel(body.getMetadata().getCloningInstructions()))
-            .sshUrl(body.getGithubrepo().getSshUrl())
-            .httpsUrl(body.getGithubrepo().getHttpsUrl())
+            .gitUrl(body.getGithubrepo().getGitUrl())
             .build();
 
     ReferencedResource referenceResource =
@@ -805,8 +804,8 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
   public ResponseEntity<Void> updateGitHubRepoReference(
       UUID workspaceId, UUID referenceId, ApiUpdateGitHubRepoReferenceRequestBody body) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
-    String sshUrl = body.getSshUrl();
-    if (StringUtils.isEmpty(sshUrl)) {
+    String gitUrl = body.getGitUrl();
+    if (StringUtils.isEmpty(gitUrl)) {
       referenceResourceService.updateReferenceResource(
           workspaceId, referenceId, body.getName(), body.getDescription(), userRequest);
     } else {
@@ -815,8 +814,8 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
               .getReferenceResource(workspaceId, referenceId, userRequest)
               .castToGitHubRepoResource()
               .toBuilder();
-      if (!StringUtils.isEmpty(sshUrl)) {
-        updateGitHubRepoResource.sshUrl(sshUrl);
+      if (!StringUtils.isEmpty(gitUrl)) {
+        updateGitHubRepoResource.gitUrl(gitUrl);
       }
       referenceResourceService.updateReferenceResource(
           workspaceId,

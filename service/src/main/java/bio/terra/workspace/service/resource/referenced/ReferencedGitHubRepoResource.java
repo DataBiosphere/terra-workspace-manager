@@ -5,8 +5,6 @@ import bio.terra.common.exception.MissingRequiredFieldException;
 import bio.terra.workspace.common.utils.FlightBeanBag;
 import bio.terra.workspace.db.DbSerDes;
 import bio.terra.workspace.db.model.DbResource;
-import bio.terra.workspace.generated.model.ApiGcpGcsObjectAttributes;
-import bio.terra.workspace.generated.model.ApiGcpGcsObjectResource;
 import bio.terra.workspace.generated.model.ApiGitHubRepoAttributes;
 import bio.terra.workspace.generated.model.ApiGitHubRepoResource;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
@@ -22,8 +20,7 @@ import javax.annotation.Nullable;
 
 public class ReferencedGitHubRepoResource extends ReferencedResource{
 
-  private final @Nullable String sshUrl;
-  private final String httpsUrl;
+  private final String gitUrl;
 
   @JsonCreator
   public ReferencedGitHubRepoResource(
@@ -32,12 +29,10 @@ public class ReferencedGitHubRepoResource extends ReferencedResource{
       @JsonProperty("name") String name,
       @JsonProperty("description") @Nullable String description,
       @JsonProperty("cloningInstructions") CloningInstructions cloningInstructions,
-      @JsonProperty("httpsUrl") String httpsUrl,
-      @JsonProperty("sshUrl") @Nullable String sshUrl
+      @JsonProperty("gitUrl") String gitUrl
   ) {
     super(workspaceId, resourceId, name, description, cloningInstructions);
-    this.httpsUrl = httpsUrl;
-    this.sshUrl = sshUrl;
+    this.gitUrl = gitUrl;
     validate();
   }
 
@@ -50,8 +45,7 @@ public class ReferencedGitHubRepoResource extends ReferencedResource{
     super(dbResource);
     ReferencedGitHubRepoAttributes attributes =
         DbSerDes.fromJson(dbResource.getAttributes(), ReferencedGitHubRepoAttributes.class);
-    this.httpsUrl = attributes.getHttpsUrl();
-    this.sshUrl = attributes.getSshUrl();
+    this.gitUrl = attributes.getGitUrl();
     validate();
   }
 
@@ -62,7 +56,7 @@ public class ReferencedGitHubRepoResource extends ReferencedResource{
 
   @Override
   public String attributesToJson() {
-    return DbSerDes.toJson(new ReferencedGitHubRepoAttributes(sshUrl, httpsUrl));
+    return DbSerDes.toJson(new ReferencedGitHubRepoAttributes(gitUrl));
   }
 
   @Override
@@ -71,7 +65,7 @@ public class ReferencedGitHubRepoResource extends ReferencedResource{
   }
 
   public ApiGitHubRepoAttributes toApiAttributes() {
-    return new ApiGitHubRepoAttributes().sshUrl(sshUrl);
+    return new ApiGitHubRepoAttributes().gitUrl(gitUrl);
   }
 
   public ApiGitHubRepoResource toApiModel() {
@@ -80,8 +74,8 @@ public class ReferencedGitHubRepoResource extends ReferencedResource{
         .attributes(toApiAttributes());
   }
 
-  public String getSshUrl() {
-    return sshUrl;
+  public String getGitUrl() {
+    return gitUrl;
   }
 
   @Override
@@ -90,12 +84,11 @@ public class ReferencedGitHubRepoResource extends ReferencedResource{
     if (getResourceType() != WsmResourceType.GITHUB_REPO) {
       throw new InconsistentFieldsException("Expected GITHUB_REPO");
     }
-    if (Strings.isNullOrEmpty(httpsUrl)) {
+    if (Strings.isNullOrEmpty(gitUrl)) {
       throw new MissingRequiredFieldException(
           "Missing required field for ReferenceGcsObjectResource.");
     }
-    ValidationUtils.validateGitRepoHttpsUrl(httpsUrl);
-    ValidationUtils.validateGitRepoOptionalSshUrl(sshUrl);
+    ValidationUtils.validateGitRepoUrl(gitUrl);
   }
 
   /**
@@ -106,7 +99,7 @@ public class ReferencedGitHubRepoResource extends ReferencedResource{
    */
   public ReferencedGitHubRepoResource.Builder toBuilder() {
     return builder()
-        .sshUrl(getSshUrl())
+        .gitUrl(getGitUrl())
         .cloningInstructions(getCloningInstructions())
         .description(getDescription())
         .name(getName())
@@ -121,8 +114,7 @@ public class ReferencedGitHubRepoResource extends ReferencedResource{
   public static class Builder {
 
     private CloningInstructions cloningInstructions;
-    private @Nullable String sshUrl;
-    private String httpsUrl;
+    private String gitUrl;
     private String description;
     private String name;
     private UUID resourceId;
@@ -154,13 +146,8 @@ public class ReferencedGitHubRepoResource extends ReferencedResource{
       return this;
     }
 
-    public ReferencedGitHubRepoResource.Builder sshUrl(@Nullable String sshUrl) {
-      this.sshUrl = sshUrl;
-      return this;
-    }
-
-    public ReferencedGitHubRepoResource.Builder httpsUrl(String httpsUrl) {
-      this.httpsUrl = httpsUrl;
+    public ReferencedGitHubRepoResource.Builder gitUrl(String gitUrl) {
+      this.gitUrl = gitUrl;
       return this;
     }
 
@@ -172,8 +159,7 @@ public class ReferencedGitHubRepoResource extends ReferencedResource{
           name,
           description,
           cloningInstructions,
-          httpsUrl,
-          sshUrl);
+          gitUrl);
     }
   }
 }
