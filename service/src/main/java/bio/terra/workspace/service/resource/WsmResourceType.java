@@ -91,7 +91,7 @@ public enum WsmResourceType {
       null,
       ControlledAzureStorageResource.class),
   GIT_REPO(
-     CloudPlatform.MULTI,
+      CloudPlatform.MULTI,
       "GITHUB_REPO",
       ApiResourceType.GIT_REPO,
       ReferencedGitRepoResource.class,

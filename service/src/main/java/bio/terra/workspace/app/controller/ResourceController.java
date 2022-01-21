@@ -166,11 +166,11 @@ public class ResourceController implements ResourceApi {
             }
 
           case GIT_REPO:
-          {
-            ReferencedGitRepoResource resource = referencedResource.castToGitRepoResource();
-            union.gitRepo(resource.toApiAttributes());
-            break;
-          }
+            {
+              ReferencedGitRepoResource resource = referencedResource.castToGitRepoResource();
+              union.gitRepo(resource.toApiAttributes());
+              break;
+            }
 
           case AI_NOTEBOOK_INSTANCE:
           case AZURE_IP:

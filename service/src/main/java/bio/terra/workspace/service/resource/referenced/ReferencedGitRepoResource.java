@@ -18,7 +18,7 @@ import java.util.Optional;
 import java.util.UUID;
 import javax.annotation.Nullable;
 
-public class ReferencedGitRepoResource extends ReferencedResource{
+public class ReferencedGitRepoResource extends ReferencedResource {
 
   private final String gitUrl;
 
@@ -29,8 +29,7 @@ public class ReferencedGitRepoResource extends ReferencedResource{
       @JsonProperty("name") String name,
       @JsonProperty("description") @Nullable String description,
       @JsonProperty("cloningInstructions") CloningInstructions cloningInstructions,
-      @JsonProperty("gitUrl") String gitUrl
-  ) {
+      @JsonProperty("gitUrl") String gitUrl) {
     super(workspaceId, resourceId, name, description, cloningInstructions);
     this.gitUrl = gitUrl;
     validate();
@@ -69,9 +68,7 @@ public class ReferencedGitRepoResource extends ReferencedResource{
   }
 
   public ApiGitRepoResource toApiModel() {
-    return new ApiGitRepoResource()
-        .metadata(super.toApiMetadata())
-        .attributes(toApiAttributes());
+    return new ApiGitRepoResource().metadata(super.toApiMetadata()).attributes(toApiAttributes());
   }
 
   public String getGitUrl() {

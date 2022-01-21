@@ -781,8 +781,7 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
   }
 
   @Override
-  public ResponseEntity<ApiGitRepoResource> getGitRepoReference(
-      UUID workspaceId, UUID resourceId) {
+  public ResponseEntity<ApiGitRepoResource> getGitRepoReference(UUID workspaceId, UUID resourceId) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     ReferencedResource referenceResource =
         referenceResourceService.getReferenceResource(workspaceId, resourceId, userRequest);
@@ -829,8 +828,7 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
   }
 
   @Override
-  public ResponseEntity<Void> deleteGitRepoReference(
-      UUID workspaceId, UUID resourceId) {
+  public ResponseEntity<Void> deleteGitRepoReference(UUID workspaceId, UUID resourceId) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     referenceResourceService.deleteReferenceResourceForResourceType(
         workspaceId, resourceId, userRequest, WsmResourceType.GIT_REPO);

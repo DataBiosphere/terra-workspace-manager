@@ -8,7 +8,6 @@ import bio.terra.workspace.service.resource.referenced.exception.InvalidReferenc
 import com.azure.core.management.Region;
 import com.azure.resourcemanager.compute.models.VirtualMachineSizeTypes;
 import com.google.common.collect.ImmutableList;
-import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -69,7 +68,6 @@ public class ValidationUtils {
   public static final Pattern GIT_URL_PATTERN =
       Pattern.compile("(?:https|git@github.com):(\\/\\/)?(.*?)(\\.git)$");
 
-
   // An object named "." or ".." is nearly impossible for a user to delete.
   private static final ImmutableList<String> DISALLOWED_OBJECT_NAMES = ImmutableList.of(".", "..");
 
@@ -121,9 +119,7 @@ public class ValidationUtils {
     }
   }
 
-  /**
-   * Validate whether the input URL is a valid GitHub Repo https url.
-   */
+  /** Validate whether the input URL is a valid GitHub Repo https url. */
   public static void validateGitRepoUrl(@Nullable String gitUrl) {
     if (gitUrl == null) {
       return;
