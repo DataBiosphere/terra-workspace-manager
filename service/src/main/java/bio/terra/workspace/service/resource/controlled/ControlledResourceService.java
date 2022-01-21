@@ -45,6 +45,8 @@ import bio.terra.workspace.service.workspace.model.GcpCloudContext;
 import bio.terra.workspace.service.workspace.model.OperationType;
 import bio.terra.workspace.service.workspace.model.WsmApplication;
 import com.google.cloud.Policy;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -58,10 +60,10 @@ import org.springframework.stereotype.Component;
 @Component
 public class ControlledResourceService {
 
-  // These are chosen to retry a maximum length so we return under a 30 second
+  // These are chosen to retry a maximum wait time so we return under a 30 second
   // network timeout.
   private static final int RESOURCE_ROW_WAIT_SECONDS = 1;
-  private static final int RESOURCE_ROW_MAX_RETRIES = 20;
+  private static final Duration RESOURCE_ROW_MAX_WAIT_TIME = Duration.ofSeconds(28);
 
   private final JobService jobService;
   private final WorkspaceService workspaceService;
@@ -650,14 +652,19 @@ public class ControlledResourceService {
    * not to complete, either WSM is so busy that it cannot schedule the flight or something bad has
    * happened. Either way, SERVICE_UNAVAILABLE seems like a reasonable response.
    *
+   * <p>There is no race condition between the two checks. For either termination test, we will make
+   * the async return to the client. That path returns the current job state. If the job is
+   * complete, the client calls the result endpoint and gets the full result.
+   *
    * @param workspaceId workspace of the resource create
    * @param resourceId id of resource being created
    * @param jobId id of the create flight.
    */
   private void waitForResourceOrJob(UUID workspaceId, UUID resourceId, String jobId) {
+    Instant exitTime = Instant.now().plus(RESOURCE_ROW_MAX_WAIT_TIME);
     try {
-      for (int i = 0; i < RESOURCE_ROW_MAX_RETRIES; i++) {
-        if (resourceDao.checkForResourceRow(workspaceId, resourceId)) {
+      while (Instant.now().isBefore(exitTime)) {
+        if (resourceDao.resourceExists(workspaceId, resourceId)) {
           return;
         }
         FlightState flightState = jobService.getStairway().getFlightState(jobId);

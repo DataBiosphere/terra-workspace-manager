@@ -594,7 +594,7 @@ public class ResourceDao {
    * @param resourceId resource being created
    */
   @ReadTransaction
-  public boolean checkForResourceRow(UUID workspaceId, UUID resourceId) {
+  public boolean resourceExists(UUID workspaceId, UUID resourceId) {
     final String sql =
         "SELECT COUNT(1) FROM resource"
             + " WHERE workspace_id = :workspace_id AND resource_id = :resource_id";
