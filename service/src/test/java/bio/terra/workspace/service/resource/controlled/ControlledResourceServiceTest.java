@@ -33,6 +33,7 @@ import bio.terra.workspace.generated.model.ApiGcpBigQueryDatasetUpdateParameters
 import bio.terra.workspace.generated.model.ApiGcpGcsBucketUpdateParameters;
 import bio.terra.workspace.generated.model.ApiJobControl;
 import bio.terra.workspace.service.crl.CrlService;
+import bio.terra.workspace.service.iam.SamRethrow;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.iam.model.ControlledResourceIamRole;
 import bio.terra.workspace.service.job.JobService;
@@ -377,7 +378,8 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
     String serviceAccountEmail =
         samService.getOrCreatePetSaEmail(projectId, user.getAuthenticatedRequest());
     UserWithPetSa userAndPet = new UserWithPetSa(user.getEmail(), serviceAccountEmail);
-    petSaService.disablePetServiceAccountImpersonation(workspace.getWorkspaceId(), userAndPet);
+    String proxyGroupEmail = samService.getProxyGroupEmail(user.getAuthenticatedRequest());
+    petSaService.disablePetServiceAccountImpersonation(workspace.getWorkspaceId(), userAndPet, proxyGroupEmail);
     IamCow userIamCow = crlService.getIamCow(user.getAuthenticatedRequest());
     // Assert the user does not have access to their pet SA before the flight
     // Note this uses user credentials for the IAM cow to validate the user's access.
