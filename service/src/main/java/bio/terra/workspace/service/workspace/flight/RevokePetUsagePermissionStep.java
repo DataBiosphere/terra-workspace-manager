@@ -34,18 +34,20 @@ public class RevokePetUsagePermissionStep implements Step {
 
   private final UUID workspaceId;
   private final String userEmailToRemove;
+  private final String proxyGroupEmail;
   private final PetSaService petSaService;
   private final GcpCloudContextService gcpCloudContextService;
   private final AuthenticatedUserRequest userRequest;
 
   public RevokePetUsagePermissionStep(
       UUID workspaceId,
-      String userEmailToRemove,
+      String userEmailToRemove,String proxyGroupEmail,
       PetSaService petSaService,
       GcpCloudContextService gcpCloudContextService,
       AuthenticatedUserRequest userRequest) {
     this.workspaceId = workspaceId;
     this.userEmailToRemove = userEmailToRemove;
+    this.proxyGroupEmail = proxyGroupEmail;
     this.petSaService = petSaService;
     this.gcpCloudContextService = gcpCloudContextService;
     this.userRequest = userRequest;
@@ -63,7 +65,7 @@ public class RevokePetUsagePermissionStep implements Step {
     UserWithPetSa userAndPet = new UserWithPetSa(userEmailToRemove, validatedPetEmail.get());
     String updatedPolicyEtag =
         petSaService
-            .disablePetServiceAccountImpersonation(workspaceId, userAndPet)
+            .disablePetServiceAccountImpersonation(workspaceId, userAndPet, proxyGroupEmail)
             .map(Policy::getEtag)
             .orElse(null);
     workingMap.put(PetSaKeys.MODIFIED_PET_SA_POLICY_ETAG, updatedPolicyEtag);
@@ -90,7 +92,7 @@ public class RevokePetUsagePermissionStep implements Step {
       return StepResult.getStepResultSuccess();
     }
     petSaService.enablePetServiceAccountImpersonationWithEtag(
-        workspaceId, userAndPet, expectedEtag);
+        workspaceId, userAndPet, proxyGroupEmail, expectedEtag);
     return StepResult.getStepResultSuccess();
   }
 

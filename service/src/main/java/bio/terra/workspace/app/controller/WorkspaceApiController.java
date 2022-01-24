@@ -525,7 +525,12 @@ public class WorkspaceApiController implements WorkspaceApi {
                     gcpCloudContextService.getRequiredGcpProject(workspaceId), userRequest),
             "enablePet");
     UserWithPetSa userAndPet = new UserWithPetSa(userEmail, petSaEmail);
-    petSaService.enablePetServiceAccountImpersonation(workspaceId, userAndPet);
+    String proxyGroupEmail =
+            SamRethrow.onInterrupted(
+                    () ->
+                            samService.getProxyGroupEmail(userRequest),
+                    "enablePet");
+    petSaService.enablePetServiceAccountImpersonation(workspaceId, userAndPet, proxyGroupEmail);
     return new ResponseEntity<>(petSaEmail, HttpStatus.OK);
   }
 

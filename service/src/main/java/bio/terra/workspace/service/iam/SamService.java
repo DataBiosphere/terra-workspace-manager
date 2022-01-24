@@ -130,6 +130,20 @@ public class SamService {
     }
   }
 
+
+  public String getProxyGroupEmail(AuthenticatedUserRequest userRequest)
+          throws InterruptedException {
+    String userEmail = getUserEmailFromSam(userRequest);
+    GoogleApi googleApi = samGoogleApi(userRequest.getRequiredToken());
+    try {
+      return SamRetry.retry(
+                      () ->
+                              googleApi.getProxyGroup(userEmail));
+    } catch (ApiException apiException) {
+      throw SamExceptionFactory.create("Error getting proxy group from Sam", apiException);
+    }
+  }
+
   /**
    * Register WSM's service account as a user in Sam if it isn't already. This should only need to
    * register with Sam once per environment, so it is implemented lazily.

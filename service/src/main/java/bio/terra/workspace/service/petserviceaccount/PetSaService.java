@@ -54,15 +54,15 @@ public class PetSaService {
    * Wrapper around {@code enablePetServiceAccountImpersonationWithEtag} without requiring a
    * particular GCP eTag value.
    */
-  public Policy enablePetServiceAccountImpersonation(UUID workspaceId, UserWithPetSa userAndPet) {
+  public Policy enablePetServiceAccountImpersonation(UUID workspaceId, UserWithPetSa userAndPet, String proxyGroupEmail) {
     // enablePetServiceAccountImpersonationWithEtag will only return an empty optional if the
     // provided eTag does not match current policy. Because we do not use eTag checking here, this
     // is always nonempty.
-    return enablePetServiceAccountImpersonationWithEtag(workspaceId, userAndPet, null).get();
+    return enablePetServiceAccountImpersonationWithEtag(workspaceId, userAndPet, proxyGroupEmail, null).get();
   }
 
   /**
-   * Grant a user permission to impersonate their pet service account in a given workspace. Unlike
+   * Grant a user's proxy group permission to impersonate their pet service account in a given workspace. Unlike
    * other operations, this does not run as a flight because it only requires one write operation.
    * This operation is idempotent.
    *
@@ -74,12 +74,13 @@ public class PetSaService {
    *
    * @param workspaceId ID of the workspace to enable pet SA in
    * @param userAndPet The user and the pet SA the user is being granted permission to
+   * @param proxyGroupEmail User's proxy group
    * @param eTag GCP eTag which must match the pet SA's current policy. If null, this is ignored.
    * @return The new IAM policy on the user's pet service account, or empty if the eTag value
    *     provided is non-null and does not match current IAM policy on the pet SA.
    */
   public Optional<Policy> enablePetServiceAccountImpersonationWithEtag(
-      UUID workspaceId, UserWithPetSa userAndPet, @Nullable String eTag) {
+      UUID workspaceId, UserWithPetSa userAndPet, String proxyGroupEmail, @Nullable String eTag) {
     String projectId = gcpCloudContextService.getRequiredGcpProject(workspaceId);
     ServiceAccountName petSaName =
         ServiceAccountName.builder().email(userAndPet.getPetEmail()).projectId(projectId).build();
@@ -104,8 +105,7 @@ public class PetSaService {
               .setRole(SERVICE_ACCOUNT_USER_ROLE)
               .setMembers(
                   ImmutableList.of(
-                      "user:" + userAndPet.getUserEmail(),
-                      "serviceAccount:" + userAndPet.getPetEmail()));
+                      "group:" + proxyGroupEmail));
       // If no bindings exist, getBindings() returns null instead of an empty list.
       List<Binding> bindingList =
           Optional.ofNullable(saPolicy.getBindings()).orElse(new ArrayList<>());
@@ -122,7 +122,7 @@ public class PetSaService {
               .setIamPolicy(petSaName, request)
               .execute());
     } catch (IOException e) {
-      throw new InternalServerErrorException("Error enabling user's pet SA", e);
+      throw new InternalServerErrorException("Error enabling user's proxy group", e);
     }
   }
 
@@ -131,8 +131,8 @@ public class PetSaService {
    * particular GCP eTag value.
    */
   public Optional<Policy> disablePetServiceAccountImpersonation(
-      UUID workspaceId, UserWithPetSa userAndPet) {
-    return disablePetServiceAccountImpersonationWithEtag(workspaceId, userAndPet, null);
+      UUID workspaceId, UserWithPetSa userAndPet, String proxyGroupEmail) {
+    return disablePetServiceAccountImpersonationWithEtag(workspaceId, userAndPet, proxyGroupEmail,null);
   }
 
   /**
@@ -148,10 +148,11 @@ public class PetSaService {
    *
    * @param workspaceId ID of the workspace to disable pet SA in
    * @param userAndPet The user and pet pair losing access to the pet SA
+   * @param proxyGroupEmail User's proxy group
    * @param eTag GCP eTag which must match the pet SA's current policy. If null, this is ignored.
    */
   public Optional<Policy> disablePetServiceAccountImpersonationWithEtag(
-      UUID workspaceId, UserWithPetSa userAndPet, @Nullable String eTag) {
+      UUID workspaceId, UserWithPetSa userAndPet, String proxyGroupEmail, @Nullable String eTag) {
 
     String projectId = gcpCloudContextService.getRequiredGcpProject(workspaceId);
     ServiceAccountName petServiceAccount =
@@ -181,8 +182,7 @@ public class PetSaService {
               .setRole(SERVICE_ACCOUNT_USER_ROLE)
               .setMembers(
                   ImmutableList.of(
-                      "user:" + userAndPet.getUserEmail(),
-                      "serviceAccount:" + petServiceAccount.email()));
+                      "group:" + proxyGroupEmail));
       // If no bindings exist, getBindings() returns null instead of an empty list. If there are
       // no policies, there is nothing to revoke, so this method is finished.
       List<Binding> oldBindingList = saPolicy.getBindings();

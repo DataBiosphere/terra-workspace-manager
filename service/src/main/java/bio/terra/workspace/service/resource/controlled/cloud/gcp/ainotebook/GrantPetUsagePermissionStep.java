@@ -30,19 +30,21 @@ public class GrantPetUsagePermissionStep implements Step {
 
   private final UUID workspaceId;
   private final UserWithPetSa userAndPet;
+  private final String proxyGroupEmail;
   private final PetSaService petSaService;
 
   public GrantPetUsagePermissionStep(
-      UUID workspaceId, UserWithPetSa userAndPet, PetSaService petSaService) {
+      UUID workspaceId, UserWithPetSa userAndPet, String proxyGroupEmail, PetSaService petSaService) {
     this.workspaceId = workspaceId;
     this.userAndPet = userAndPet;
+    this.proxyGroupEmail = proxyGroupEmail;
     this.petSaService = petSaService;
   }
 
   @Override
   public StepResult doStep(FlightContext context) throws InterruptedException, RetryException {
     Policy modifiedPolicy =
-        petSaService.enablePetServiceAccountImpersonation(workspaceId, userAndPet);
+        petSaService.enablePetServiceAccountImpersonation(workspaceId, userAndPet, proxyGroupEmail);
     // Store the eTag value of the modified policy in case this step needs to be undone.
     FlightMap workingMap = context.getWorkingMap();
     workingMap.put(PetSaKeys.MODIFIED_PET_SA_POLICY_ETAG, modifiedPolicy.getEtag());
@@ -62,7 +64,7 @@ public class GrantPetUsagePermissionStep implements Step {
       return StepResult.getStepResultSuccess();
     }
     petSaService.disablePetServiceAccountImpersonationWithEtag(
-        workspaceId, userAndPet, expectedEtag);
+        workspaceId, userAndPet, proxyGroupEmail, expectedEtag);
     return StepResult.getStepResultSuccess();
   }
 }
