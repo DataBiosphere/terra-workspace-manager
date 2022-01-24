@@ -60,6 +60,9 @@ public class ReferencedGitRepoResource extends ReferencedResource {
 
   @Override
   public boolean checkAccess(FlightBeanBag context, AuthenticatedUserRequest userRequest) {
+    // WSM doesn't yet store user credential, in this case private auth token or private SSH key.
+    // Given it is useful to clone a git repo reference when cloning a workspace even though the
+    // credential shouldn't be cloned, we simply skip the access check for now.
     return true;
   }
 
