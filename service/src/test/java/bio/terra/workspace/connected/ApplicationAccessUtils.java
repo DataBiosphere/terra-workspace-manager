@@ -9,7 +9,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
 @Component
-@Profile("connected-test & configuration-test")
+@Profile("connected-test & app-test")
 public class ApplicationAccessUtils {
 
   @Autowired UserAccessUtils userAccessUtils;

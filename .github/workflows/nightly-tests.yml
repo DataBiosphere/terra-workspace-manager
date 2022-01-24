@@ -137,8 +137,15 @@ jobs:
           L4="Res: ${{ steps.resiliency-test.outcome }}"
           text="Link to <https://github.com/DataBiosphere/terra-workspace-manager/actions/runs/$GITHUB_RUN_ID|test run>"
           bold="$L2 | $L3 | $L4"
+          if [ "${{ job.status }}" == "success" ]; then
+            emoji=":white_check_mark:"
+          else
+            emoji=":no_entry:"
+            text="@channel $text"
+          fi
           echo ::set-output name=status-text::$text
           echo ::set-output name=status-bold::$bold
+          echo ::set-output name=status-emoji::$emoji
 
       - name: Notify WSM Slack
         if: always()
@@ -149,8 +156,8 @@ jobs:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
         with:
           status: ${{ job.status }}
-          channel: "#terra-workspace-manager"
+          channel: "#terra-wsm-alerts"
           username: "WSM nightly test"
           author_name: ${{ steps.status-message.outputs.status-bold }}
-          icon_emoji: ':vertical_traffic_light:'
+          icon_emoji: ${{ steps.status-message.outputs.status-emoji }}
           text: ${{ steps.status-message.outputs.status-text }}

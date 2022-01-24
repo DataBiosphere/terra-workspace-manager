@@ -3390,7 +3390,6 @@ components:
         Bucket-specific properties to be set on creation. These are a subset of the
         values accepted by the Gcp Storage API.
       type: object
-      required: [location]
       properties:
         name:
           description: A valid bucket name per https://cloud.google.com/storage/docs/naming-buckets.
@@ -3699,7 +3698,6 @@ components:
         Dataset-specific properties to be set on creation. These are a subset of the
         values accepted by the BigQuery API.
       type: object
-      required: [location]
       properties:
         datasetId:
           description: A valid dataset name per https://cloud.google.com/bigquery/docs/datasets#dataset-naming
@@ -3930,7 +3928,7 @@ components:
         AI Platform Notebook instance specific properties to be set on creation. These are a subset of the
         values accepted by the GCP AI Platforms API. See https://cloud.google.com/ai-platform/notebooks/docs/reference/rest/v1/projects.locations.instances/create
       type: object
-      required: [location, machineType]
+      required: [machineType]
       properties:
         instanceId:
           description: >-
