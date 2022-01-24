@@ -91,11 +91,11 @@ public enum WsmResourceType {
       null,
       ControlledAzureStorageResource.class),
   GIT_REPO(
-      CloudPlatform.MULTI,
-      "GITHUB_REPO",
+      CloudPlatform.ANY,
+      "GIT_REPO",
       ApiResourceType.GIT_REPO,
       ReferencedGitRepoResource.class,
-      null);
+      /*controlledClass=*/ null);
 
   private final CloudPlatform cloudPlatform;
   private final String dbString; // serialized form of the resource type
@@ -104,6 +104,7 @@ public enum WsmResourceType {
   private final Class<? extends ControlledResource> controlledClass;
 
   WsmResourceType(
+      // TODO(PF-1290): move cloudPlatform to controlled resource.
       CloudPlatform cloudPlatform,
       String dbString,
       ApiResourceType apiResourceType,

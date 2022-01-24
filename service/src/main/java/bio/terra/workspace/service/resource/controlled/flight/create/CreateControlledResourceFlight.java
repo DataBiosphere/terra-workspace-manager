@@ -63,7 +63,7 @@ public class CreateControlledResourceFlight extends Flight {
     // Get the cloud context and store it in the working map
     switch (resource.getResourceType().getCloudPlatform()) {
       case AZURE:
-      case MULTI:
+      case ANY:
         // TODO: pull cloud context from flight into step parallel to GCP
         break;
       case GCP:

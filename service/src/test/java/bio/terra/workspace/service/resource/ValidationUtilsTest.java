@@ -241,52 +241,53 @@ public class ValidationUtilsTest extends BaseUnitTest {
   }
 
   @Test
-  public void validateGitHubRepoHttpsUrl() {
-    ValidationUtils.validateGitRepoUrl(
+  public void validateGitRepoUrl() {
+    ValidationUtils.validateGitRepoCloneUrl(
         "https://github.com/DataBiosphere/terra-workspace-manager.git");
-    ValidationUtils.validateGitRepoUrl("https://github.com/yuhuyoyo/testrepo.git");
-    ValidationUtils.validateGitRepoUrl("git@github.com:DataBiosphere/terra-workspace-manager.git");
-    ValidationUtils.validateGitRepoUrl("git@github.com:yuhuyoyo/testrepo.git");
-    ValidationUtils.validateGitRepoUrl(
+    ValidationUtils.validateGitRepoCloneUrl("https://github.com/yuhuyoyo/testrepo.git");
+    ValidationUtils.validateGitRepoCloneUrl(
+        "git@github.com:DataBiosphere/terra-workspace-manager.git");
+    ValidationUtils.validateGitRepoCloneUrl("git@github.com:yuhuyoyo/testrepo.git");
+    ValidationUtils.validateGitRepoCloneUrl(
         "https://username:password@github.com/username/repository.git");
   }
 
   @Test
-  public void validateGitHubRepoHttpsUrl_httpUrl_throwsException() {
+  public void validateGitRepoUrl_httpUrl_throwsException() {
     assertThrows(
         InvalidReferenceException.class,
         () ->
-            ValidationUtils.validateGitRepoUrl(
+            ValidationUtils.validateGitRepoCloneUrl(
                 "http://github.com/DataBiosphere/terra-workspace-manager.git"));
   }
 
   @Test
-  public void validateGitHubRepoHttpsUrl_opaqueUrl_throwsException() {
+  public void validateGitRepoUrl_opaqueUrl_throwsException() {
     assertThrows(
         InvalidReferenceException.class,
-        () -> ValidationUtils.validateGitRepoUrl("mailto:java-net@java.sun.com"));
+        () -> ValidationUtils.validateGitRepoCloneUrl("mailto:java-net@java.sun.com"));
   }
 
   @Test
-  public void validateGitHubRepoHttpsUrl_invalidPath_throwsException() {
+  public void validateGitRepoUrl_missingDotGit_throwsException() {
     assertThrows(
         InvalidReferenceException.class,
         () ->
-            ValidationUtils.validateGitRepoUrl(
+            ValidationUtils.validateGitRepoCloneUrl(
                 "https://github.com/DataBiosphere/terra-workspace-manager"));
   }
 
   @Test
-  public void validateGitHubRepoSshUrl_invalidPath_throwsException() {
+  public void validateGitRepoUrl_sshUrlsWithHttpsSchema_throwsException() {
     assertThrows(
         InvalidReferenceException.class,
         () ->
-            ValidationUtils.validateGitRepoUrl(
+            ValidationUtils.validateGitRepoCloneUrl(
                 "https://git@github.com:DataBiosphere/terra-workspace-manager.gits"));
     assertThrows(
         InvalidReferenceException.class,
         () ->
-            ValidationUtils.validateGitRepoUrl(
+            ValidationUtils.validateGitRepoCloneUrl(
                 "https://git@github.com:DataBiosphere/terra-workspace-manager"));
   }
 }

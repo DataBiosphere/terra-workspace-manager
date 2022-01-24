@@ -144,7 +144,7 @@ public class UpdateReferenceResources extends DataRepoTestScriptBase {
         gitReferencedResourceId,
         newGitRepoReferenceName,
         newGitRepoReferenceDescription,
-        /*gitUrl=*/ null);
+        /*gitCloneUrl=*/ null);
     // Update snapshot's name and description
     String newSnapshotReferenceName = "newSnapshotReferenceName";
     String newSnapshotReferenceDescription = "a new description of another snapshot reference";

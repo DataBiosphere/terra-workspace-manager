@@ -409,8 +409,8 @@ public class ResourceMaker {
                     .cloningInstructions(CloningInstructionsEnum.REFERENCE)
                     .description("Description of " + name)
                     .name(name))
-            .gitrepo(new GitRepoAttributes().gitUrl(TEST_GITHUB_REPO_PUBLIC_SSH));
-    logger.info("Making git repo reference with name {}", name);
+            .gitrepo(new GitRepoAttributes().gitCloneUrl(TEST_GITHUB_REPO_PUBLIC_SSH));
+    logger.info("Making git repo reference of {} with name {}", TEST_GITHUB_REPO_PUBLIC_SSH, name);
     return ClientTestUtils.getWithRetryOnException(
         () -> resourceApi.createGitRepoReference(body, workspaceId));
   }
@@ -421,7 +421,7 @@ public class ResourceMaker {
       UUID resourceId,
       @Nullable String name,
       @Nullable String description,
-      @Nullable String gitUrl)
+      @Nullable String gitCloneUrl)
       throws ApiException {
     UpdateGitRepoReferenceRequestBody body = new UpdateGitRepoReferenceRequestBody();
     if (name != null) {
@@ -430,8 +430,8 @@ public class ResourceMaker {
     if (description != null) {
       body.setDescription(description);
     }
-    if (gitUrl != null) {
-      body.setGitUrl(gitUrl);
+    if (gitCloneUrl != null) {
+      body.setGitCloneUrl(gitCloneUrl);
     }
     resourceApi.updateGitRepoReference(body, workspaceId, resourceId);
   }

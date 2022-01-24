@@ -65,7 +65,7 @@ public class ValidationUtils {
   public static final Pattern RESOURCE_NAME_VALIDATION_PATTERN =
       Pattern.compile("^[a-zA-Z0-9][-_a-zA-Z0-9]{0,1023}$");
 
-  public static final Pattern GIT_URL_PATTERN =
+  public static final Pattern GIT_CLONE_URL_PATTERN =
       Pattern.compile("(?:https|git@github.com):(\\/\\/)?(.*?)(\\.git)$");
 
   // An object named "." or ".." is nearly impossible for a user to delete.
@@ -120,13 +120,13 @@ public class ValidationUtils {
   }
 
   /** Validate whether the input URL is a valid GitHub Repo https url. */
-  public static void validateGitRepoUrl(@Nullable String gitUrl) {
+  public static void validateGitRepoCloneUrl(@Nullable String gitUrl) {
     if (gitUrl == null) {
       return;
     }
-    if (!GIT_URL_PATTERN.matcher(gitUrl).matches()) {
-      logger.warn("Invalid git url {}", gitUrl);
-      throw new InvalidReferenceException("Invalid git url");
+    if (!GIT_CLONE_URL_PATTERN.matcher(gitUrl).matches()) {
+      logger.warn("Invalid git repo clone url {}", gitUrl);
+      throw new InvalidReferenceException("Invalid git repo clone url");
     }
   }
 

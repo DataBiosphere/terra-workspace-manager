@@ -771,7 +771,7 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
             .description(body.getMetadata().getDescription())
             .cloningInstructions(
                 CloningInstructions.fromApiModel(body.getMetadata().getCloningInstructions()))
-            .gitUrl(body.getGitrepo().getGitUrl())
+            .gitCloneUrl(body.getGitrepo().getGitCloneUrl())
             .build();
 
     ReferencedResource referenceResource =
@@ -803,7 +803,7 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
   public ResponseEntity<Void> updateGitRepoReference(
       UUID workspaceId, UUID referenceId, ApiUpdateGitRepoReferenceRequestBody body) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
-    String gitUrl = body.getGitUrl();
+    String gitUrl = body.getGitCloneUrl();
     if (StringUtils.isEmpty(gitUrl)) {
       referenceResourceService.updateReferenceResource(
           workspaceId, referenceId, body.getName(), body.getDescription(), userRequest);
@@ -814,7 +814,7 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
               .castToGitRepoResource()
               .toBuilder();
       if (!StringUtils.isEmpty(gitUrl)) {
-        updateGitRepoResource.gitUrl(gitUrl);
+        updateGitRepoResource.gitCloneUrl(gitUrl);
       }
       referenceResourceService.updateReferenceResource(
           workspaceId,

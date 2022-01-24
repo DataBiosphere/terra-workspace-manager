@@ -2538,8 +2538,8 @@ components:
           $ref: "#/components/schemas/Name"
         description:
           type: string
-        gitUrl:
-          description: the ssh url of the git repository
+        gitCloneUrl:
+          description: the url for cloning the corresponding git repository
           type: string
 
     # TODO(PF-404): remove this in favor of reference-type specific objects.
@@ -2690,7 +2690,7 @@ components:
 
     SystemVersion:
       type: object
-      required: [gitTag, gitHash, GitHub, build]
+      required: [gitTag, gitHash, gitHub, build]
       properties:
         gitTag:
           type: string
@@ -4185,9 +4185,10 @@ components:
     GitRepoAttributes:
       description: Attributes of a Git repository
       type: object
-      required: [ gitUrl ]
+      required: [ gitCloneUrl ]
       properties:
-        gitUrl:
+        gitCloneUrl:
+          description: URL for cloning the git repository, could be an HTTPs or SSH url.
           type: string
 
     GitRepoResource:
@@ -4512,7 +4513,7 @@ components:
         - AZURE_NETWORK
         - AZURE_VM
         - AZURE_STORAGE_ACCOUNT
-        - Git_REPO
+        - GIT_REPO
 
     StewardshipType:
       description: Enum containing valid stewardship types. Used for enumeration
@@ -4846,7 +4847,7 @@ components:
           schema:
             $ref: '#/components/schemas/CloneReferencedGcpDataRepoSnapshotResourceResult'
     CloneReferencedGitRepoResourceResponse:
-      description: Response for successful Data Repo Snapshot reference clone
+      description: Response for successful Git Repo resource reference clone
       content:
         application/json:
           schema:
