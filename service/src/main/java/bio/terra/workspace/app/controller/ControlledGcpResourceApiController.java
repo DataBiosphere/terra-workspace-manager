@@ -43,6 +43,7 @@ import bio.terra.workspace.service.resource.controlled.ManagedByType;
 import bio.terra.workspace.service.resource.controlled.PrivateUserRole;
 import bio.terra.workspace.service.resource.controlled.exception.InvalidControlledResourceException;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
+import bio.terra.workspace.service.workspace.GcpCloudContextService;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import java.util.Optional;
 import java.util.UUID;
@@ -66,6 +67,7 @@ public class ControlledGcpResourceApiController implements ControlledGcpResource
   private final WorkspaceService workspaceService;
   private final HttpServletRequest request;
   private final JobService jobService;
+  private final GcpCloudContextService gcpCloudContextService;
 
   @Autowired
   public ControlledGcpResourceApiController(
@@ -74,13 +76,15 @@ public class ControlledGcpResourceApiController implements ControlledGcpResource
       SamService samService,
       WorkspaceService workspaceService,
       JobService jobService,
-      HttpServletRequest request) {
+      HttpServletRequest request,
+      GcpCloudContextService gcpCloudContextService) {
     this.authenticatedUserRequestFactory = authenticatedUserRequestFactory;
     this.controlledResourceService = controlledResourceService;
     this.samService = samService;
     this.workspaceService = workspaceService;
     this.request = request;
     this.jobService = jobService;
+    this.gcpCloudContextService = gcpCloudContextService;
   }
 
   @Override
@@ -202,8 +206,9 @@ public class ControlledGcpResourceApiController implements ControlledGcpResource
     logger.info("Cloning GCS bucket resourceId {} workspaceId {}", resourceId, workspaceId);
 
     final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
-    final AuthenticatedUserRequest petRequest = samService.getAuthenticatedPetRequest(
-        workspaceService.getRequiredGcpProject(workspaceId), userRequest);
+    final AuthenticatedUserRequest petRequest =
+        samService.getAuthenticatedPetRequest(
+            gcpCloudContextService.getRequiredGcpProject(workspaceId), userRequest);
     final String jobId =
         controlledResourceService.cloneGcsBucket(
             workspaceId,
@@ -511,8 +516,9 @@ public class ControlledGcpResourceApiController implements ControlledGcpResource
   @Override
   public ResponseEntity<ApiCloneControlledGcpBigQueryDatasetResult> cloneBigQueryDataset(
       UUID workspaceId, UUID resourceId, @Valid ApiCloneControlledGcpBigQueryDatasetRequest body) {
-    final AuthenticatedUserRequest petRequest = samService.getAuthenticatedPetRequest(
-        workspaceService.getRequiredGcpProject(workspaceId), getAuthenticatedInfo());
+    final AuthenticatedUserRequest petRequest =
+        samService.getAuthenticatedPetRequest(
+            gcpCloudContextService.getRequiredGcpProject(workspaceId), getAuthenticatedInfo());
     final String jobId =
         controlledResourceService.cloneBigQueryDataset(
             workspaceId,

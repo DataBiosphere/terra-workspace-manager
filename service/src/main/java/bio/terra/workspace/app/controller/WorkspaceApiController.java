@@ -540,9 +540,11 @@ public class WorkspaceApiController implements WorkspaceApi {
   @Override
   public ResponseEntity<ApiCloneWorkspaceResult> cloneWorkspace(
       UUID workspaceId, @Valid ApiCloneWorkspaceRequest body) {
-    final AuthenticatedUserRequest petRequest = samService.getAuthenticatedPetRequest(
-        workspaceService.getRequiredGcpProject(workspaceId), userRequest);
-		
+    final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    final AuthenticatedUserRequest petRequest =
+        samService.getAuthenticatedPetRequest(
+            gcpCloudContextService.getRequiredGcpProject(workspaceId), userRequest);
+
     Optional<SpendProfileId> spendProfileId =
         Optional.ofNullable(body.getSpendProfile()).map(SpendProfileId::new);
 

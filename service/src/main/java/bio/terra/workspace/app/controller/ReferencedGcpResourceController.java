@@ -35,14 +35,13 @@ import bio.terra.workspace.service.resource.referenced.ReferencedGcsBucketResour
 import bio.terra.workspace.service.resource.referenced.ReferencedGcsObjectResource;
 import bio.terra.workspace.service.resource.referenced.ReferencedResource;
 import bio.terra.workspace.service.resource.referenced.ReferencedResourceService;
+import bio.terra.workspace.service.workspace.GcpCloudContextService;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import java.util.Optional;
 import java.util.UUID;
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
 import org.apache.commons.lang3.StringUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -55,26 +54,25 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
 
   private final ReferencedResourceService referenceResourceService;
   private final AuthenticatedUserRequestFactory authenticatedUserRequestFactory;
-  private final ResourceController resourceController;
   private final WorkspaceService workspaceService;
   private final SamService samService;
   private final HttpServletRequest request;
-  private final Logger logger = LoggerFactory.getLogger(ReferencedGcpResourceController.class);
+  private final GcpCloudContextService gcpCloudContextService;
 
   @Autowired
   public ReferencedGcpResourceController(
       ReferencedResourceService referenceResourceService,
       AuthenticatedUserRequestFactory authenticatedUserRequestFactory,
-      ResourceController resourceController,
       WorkspaceService workspaceService,
       SamService samService,
-      HttpServletRequest request) {
+      HttpServletRequest request,
+      GcpCloudContextService gcpCloudContextService) {
     this.referenceResourceService = referenceResourceService;
     this.authenticatedUserRequestFactory = authenticatedUserRequestFactory;
-    this.resourceController = resourceController;
     this.workspaceService = workspaceService;
     this.samService = samService;
     this.request = request;
+    this.gcpCloudContextService = gcpCloudContextService;
   }
 
   private AuthenticatedUserRequest getAuthenticatedInfo() {
@@ -591,8 +589,9 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
   @Override
   public ResponseEntity<ApiCloneReferencedGcpGcsBucketResourceResult> cloneGcpGcsBucketReference(
       UUID workspaceId, UUID resourceId, @Valid ApiCloneReferencedResourceRequestBody body) {
-    final AuthenticatedUserRequest petRequest = samService.getAuthenticatedPetRequest(
-        workspaceService.getRequiredGcpProject(workspaceId), getAuthenticatedInfo());
+    final AuthenticatedUserRequest petRequest =
+        samService.getAuthenticatedPetRequest(
+            gcpCloudContextService.getRequiredGcpProject(workspaceId), getAuthenticatedInfo());
 
     final ReferencedResource sourceReferencedResource =
         referenceResourceService.getReferenceResource(workspaceId, resourceId, petRequest);
@@ -677,8 +676,9 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
   public ResponseEntity<ApiCloneReferencedGcpBigQueryDatasetResourceResult>
       cloneGcpBigQueryDatasetReference(
           UUID workspaceId, UUID resourceId, @Valid ApiCloneReferencedResourceRequestBody body) {
-    final AuthenticatedUserRequest petRequest = samService.getAuthenticatedPetRequest(
-        workspaceService.getRequiredGcpProject(workspaceId), getAuthenticatedInfo());
+    final AuthenticatedUserRequest petRequest =
+        samService.getAuthenticatedPetRequest(
+            gcpCloudContextService.getRequiredGcpProject(workspaceId), getAuthenticatedInfo());
 
     final ReferencedResource sourceReferencedResource =
         referenceResourceService.getReferenceResource(workspaceId, resourceId, petRequest);
@@ -721,8 +721,9 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
   public ResponseEntity<ApiCloneReferencedGcpDataRepoSnapshotResourceResult>
       cloneGcpDataRepoSnapshotReference(
           UUID workspaceId, UUID resourceId, @Valid ApiCloneReferencedResourceRequestBody body) {
-    final AuthenticatedUserRequest petRequest = samService.getAuthenticatedPetRequest(
-        workspaceService.getRequiredGcpProject(workspaceId), getAuthenticatedInfo());
+    final AuthenticatedUserRequest petRequest =
+        samService.getAuthenticatedPetRequest(
+            gcpCloudContextService.getRequiredGcpProject(workspaceId), getAuthenticatedInfo());
 
     final ReferencedResource sourceReferencedResource =
         referenceResourceService.getReferenceResource(workspaceId, resourceId, petRequest);

@@ -1057,12 +1057,14 @@ public class SamService {
 
   /**
    * Get an AuthenticatedUserRequest object for the pet SA of this user.
+   *
    * @param projectId - GCP project ID
-   * @param userRequest - User's own AuthenticatedUserRequest. May contain null email and/or subjectID
+   * @param userRequest - User's own AuthenticatedUserRequest. May contain null email and/or
+   *     subjectID
    * @return AuthenticatedUserRequest with the token replaced by the pet token
    */
-  public AuthenticatedUserRequest getAuthenticatedPetRequest(String projectId,
-      AuthenticatedUserRequest userRequest) {
+  public AuthenticatedUserRequest getAuthenticatedPetRequest(
+      String projectId, AuthenticatedUserRequest userRequest) {
     final String petToken = getOrCreatePetSaToken(projectId, userRequest);
     return new AuthenticatedUserRequest(
         userRequest.getEmail(), userRequest.getSubjectId(), Optional.of(petToken));
