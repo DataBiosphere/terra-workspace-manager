@@ -64,6 +64,7 @@ public class DataReferenceLifecycle extends DataRepoTestScriptBase {
     assertThat(
         dataReferenceDescription.getReference().getSnapshot(), equalTo(getDataRepoSnapshotId()));
     assertThat(
-        dataReferenceDescription.getReference().getInstanceName(), equalTo(getDataRepoInstanceName()));
+        dataReferenceDescription.getReference().getInstanceName(),
+        equalTo(getDataRepoInstanceName()));
   }
 }

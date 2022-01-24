@@ -1,15 +1,21 @@
 package bio.terra.workspace.common.utils;
 
+import bio.terra.workspace.app.configuration.external.AzureConfiguration;
+import bio.terra.workspace.db.ApplicationDao;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.service.buffer.BufferService;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.datarepo.DataRepoService;
 import bio.terra.workspace.service.iam.SamService;
+import bio.terra.workspace.service.petserviceaccount.PetSaService;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceMetadataManager;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceService;
 import bio.terra.workspace.service.resource.controlled.flight.clone.bucket.BucketCloneRolesComponent;
 import bio.terra.workspace.service.resource.referenced.ReferencedResourceService;
+import bio.terra.workspace.service.spendprofile.SpendProfileService;
+import bio.terra.workspace.service.workspace.AzureCloudContextService;
+import bio.terra.workspace.service.workspace.GcpCloudContextService;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
@@ -24,48 +30,73 @@ import org.springframework.stereotype.Component;
  */
 @Component
 public class FlightBeanBag {
-
+  private final ApplicationDao applicationDao;
+  private final AzureCloudContextService azureCloudContextService;
   private final BucketCloneRolesComponent bucketCloneRolesComponent;
   private final BufferService bufferService;
   private final ControlledResourceMetadataManager controlledResourceMetadataManager;
   private final ControlledResourceService controlledResourceService;
   private final CrlService crlService;
   private final DataRepoService dataRepoService;
+  private final GcpCloudContextService gcpCloudContextService;
+  private final PetSaService petSaService;
   private final ReferencedResourceService referencedResourceService;
   private final ResourceDao resourceDao;
   private final SamService samService;
   private final WorkspaceDao workspaceDao;
   private final WorkspaceService workspaceService;
+  private final SpendProfileService spendProfileService;
+  private final AzureConfiguration azureConfig;
 
   @Lazy
   @Autowired
   public FlightBeanBag(
+      ApplicationDao applicationDao,
+      AzureCloudContextService azureCloudContextService,
       BucketCloneRolesComponent bucketCloneRolesComponent,
       BufferService bufferService,
       ControlledResourceMetadataManager controlledResourceMetadataManager,
       ControlledResourceService controlledResourceService,
       CrlService crlService,
       DataRepoService dataRepoService,
+      GcpCloudContextService gcpCloudContextService,
+      PetSaService petSaService,
       ReferencedResourceService referencedResourceService,
       ResourceDao resourceDao,
       SamService samService,
+      SpendProfileService spendProfileService,
       WorkspaceDao workspaceDao,
-      WorkspaceService workspaceService) {
+      WorkspaceService workspaceService,
+      AzureConfiguration azureConfig) {
+    this.applicationDao = applicationDao;
+    this.azureCloudContextService = azureCloudContextService;
     this.bucketCloneRolesComponent = bucketCloneRolesComponent;
     this.bufferService = bufferService;
     this.controlledResourceMetadataManager = controlledResourceMetadataManager;
     this.controlledResourceService = controlledResourceService;
     this.crlService = crlService;
     this.dataRepoService = dataRepoService;
+    this.gcpCloudContextService = gcpCloudContextService;
+    this.petSaService = petSaService;
     this.referencedResourceService = referencedResourceService;
     this.resourceDao = resourceDao;
     this.samService = samService;
     this.workspaceDao = workspaceDao;
     this.workspaceService = workspaceService;
+    this.spendProfileService = spendProfileService;
+    this.azureConfig = azureConfig;
   }
 
   public static FlightBeanBag getFromObject(Object object) {
     return (FlightBeanBag) object;
+  }
+
+  public ApplicationDao getApplicationDao() {
+    return applicationDao;
+  }
+
+  public AzureCloudContextService getAzureCloudContextService() {
+    return azureCloudContextService;
   }
 
   public BucketCloneRolesComponent getBucketCloneRolesComponent() {
@@ -92,6 +123,14 @@ public class FlightBeanBag {
     return dataRepoService;
   }
 
+  public GcpCloudContextService getGcpCloudContextService() {
+    return gcpCloudContextService;
+  }
+
+  public PetSaService getPetSaService() {
+    return petSaService;
+  }
+
   public ReferencedResourceService getReferencedResourceService() {
     return referencedResourceService;
   }
@@ -110,5 +149,13 @@ public class FlightBeanBag {
 
   public WorkspaceService getWorkspaceService() {
     return workspaceService;
+  }
+
+  public SpendProfileService getSpendProfileService() {
+    return spendProfileService;
+  }
+
+  public AzureConfiguration getAzureConfig() {
+    return azureConfig;
   }
 }

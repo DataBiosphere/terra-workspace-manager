@@ -34,9 +34,9 @@ public class JobsApiController implements JobsApi {
   }
 
   @Override
-  public ResponseEntity<ApiJobReport> retrieveJob(@PathVariable("id") String id) {
+  public ResponseEntity<ApiJobReport> retrieveJob(@PathVariable("jobId") String jobId) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
-    ApiJobReport jobReport = jobService.retrieveJob(id, userRequest);
+    ApiJobReport jobReport = jobService.retrieveJob(jobId, userRequest);
     return new ResponseEntity<>(jobReport, HttpStatus.valueOf(jobReport.getStatusCode()));
   }
 }

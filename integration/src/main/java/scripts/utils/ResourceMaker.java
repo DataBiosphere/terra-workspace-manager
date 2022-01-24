@@ -2,23 +2,25 @@ package scripts.utils;
 
 import static scripts.utils.ClientTestUtils.TEST_BQ_DATASET_NAME;
 import static scripts.utils.ClientTestUtils.TEST_BQ_DATASET_PROJECT;
+import static scripts.utils.ClientTestUtils.TEST_BQ_DATATABLE_NAME;
 import static scripts.utils.ClientTestUtils.TEST_BUCKET_NAME;
+import static scripts.utils.ClientTestUtils.TEST_BUCKET_NAME_WITH_FINE_GRAINED_ACCESS;
 import static scripts.utils.GcsBucketTestFixtures.LIFECYCLE_RULES;
 
-import bio.terra.testrunner.runner.config.TestUserSpecification;
 import bio.terra.workspace.api.ControlledGcpResourceApi;
 import bio.terra.workspace.api.ReferencedGcpResourceApi;
 import bio.terra.workspace.client.ApiException;
 import bio.terra.workspace.model.AccessScope;
 import bio.terra.workspace.model.CloningInstructionsEnum;
 import bio.terra.workspace.model.ControlledResourceCommonFields;
-import bio.terra.workspace.model.ControlledResourceIamRole;
 import bio.terra.workspace.model.CreateControlledGcpAiNotebookInstanceRequestBody;
 import bio.terra.workspace.model.CreateControlledGcpBigQueryDatasetRequestBody;
 import bio.terra.workspace.model.CreateControlledGcpGcsBucketRequestBody;
 import bio.terra.workspace.model.CreateDataRepoSnapshotReferenceRequestBody;
+import bio.terra.workspace.model.CreateGcpBigQueryDataTableReferenceRequestBody;
 import bio.terra.workspace.model.CreateGcpBigQueryDatasetReferenceRequestBody;
 import bio.terra.workspace.model.CreateGcpGcsBucketReferenceRequestBody;
+import bio.terra.workspace.model.CreateGcpGcsObjectReferenceRequestBody;
 import bio.terra.workspace.model.CreatedControlledGcpAiNotebookInstanceResult;
 import bio.terra.workspace.model.CreatedControlledGcpGcsBucket;
 import bio.terra.workspace.model.DataRepoSnapshotAttributes;
@@ -27,6 +29,8 @@ import bio.terra.workspace.model.DeleteControlledGcpGcsBucketRequest;
 import bio.terra.workspace.model.DeleteControlledGcpGcsBucketResult;
 import bio.terra.workspace.model.GcpAiNotebookInstanceCreationParameters;
 import bio.terra.workspace.model.GcpAiNotebookInstanceVmImage;
+import bio.terra.workspace.model.GcpBigQueryDataTableAttributes;
+import bio.terra.workspace.model.GcpBigQueryDataTableResource;
 import bio.terra.workspace.model.GcpBigQueryDatasetAttributes;
 import bio.terra.workspace.model.GcpBigQueryDatasetCreationParameters;
 import bio.terra.workspace.model.GcpBigQueryDatasetResource;
@@ -35,14 +39,23 @@ import bio.terra.workspace.model.GcpGcsBucketCreationParameters;
 import bio.terra.workspace.model.GcpGcsBucketDefaultStorageClass;
 import bio.terra.workspace.model.GcpGcsBucketLifecycle;
 import bio.terra.workspace.model.GcpGcsBucketResource;
+import bio.terra.workspace.model.GcpGcsObjectAttributes;
+import bio.terra.workspace.model.GcpGcsObjectResource;
 import bio.terra.workspace.model.JobControl;
 import bio.terra.workspace.model.JobReport;
 import bio.terra.workspace.model.ManagedBy;
-import bio.terra.workspace.model.PrivateResourceIamRoles;
 import bio.terra.workspace.model.PrivateResourceUser;
 import bio.terra.workspace.model.ReferenceResourceCommonFields;
-
+import bio.terra.workspace.model.ResourceMetadata;
+import bio.terra.workspace.model.StewardshipType;
+import bio.terra.workspace.model.UpdateBigQueryDataTableReferenceRequestBody;
+import bio.terra.workspace.model.UpdateBigQueryDatasetReferenceRequestBody;
+import bio.terra.workspace.model.UpdateDataRepoSnapshotReferenceRequestBody;
+import bio.terra.workspace.model.UpdateGcsBucketObjectReferenceRequestBody;
+import bio.terra.workspace.model.UpdateGcsBucketReferenceRequestBody;
 import java.time.Duration;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
@@ -53,11 +66,19 @@ import org.slf4j.LoggerFactory;
 
 // Static methods to create resources
 public class ResourceMaker {
+
   private static final Logger logger = LoggerFactory.getLogger(ResourceMaker.class);
   private static final long DELETE_BUCKET_POLL_SECONDS = 15;
 
-  public static GcpBigQueryDatasetResource makeBigQueryReference(
-      ReferencedGcpResourceApi resourceApi, UUID workspaceId, String name) throws ApiException {
+  /**
+   * Calls WSM to create a referenced BigQuery dataset in the specified workspace.
+   *
+   * <p>This method retries on all WSM exceptions, do not use it for the negative case (where you do
+   * not expect a user to be able to create a reference).
+   */
+  public static GcpBigQueryDatasetResource makeBigQueryDatasetReference(
+      ReferencedGcpResourceApi resourceApi, UUID workspaceId, String name)
+      throws ApiException, InterruptedException {
 
     var body =
         new CreateGcpBigQueryDatasetReferenceRequestBody()
@@ -71,9 +92,96 @@ public class ResourceMaker {
                     .datasetId(TEST_BQ_DATASET_NAME)
                     .projectId(TEST_BQ_DATASET_PROJECT));
 
-    return resourceApi.createBigQueryDatasetReference(body, workspaceId);
+    return ClientTestUtils.getWithRetryOnException(
+        () -> resourceApi.createBigQueryDatasetReference(body, workspaceId));
   }
 
+  /** Updates the name, description or referencing target of a BQ dataset reference. */
+  public static void updateBigQueryDatasetReference(
+      ReferencedGcpResourceApi resourceApi,
+      UUID workspace,
+      UUID resourceId,
+      @Nullable String name,
+      @Nullable String description,
+      @Nullable String projectId,
+      @Nullable String datasetId)
+      throws ApiException {
+    UpdateBigQueryDatasetReferenceRequestBody body =
+        new UpdateBigQueryDatasetReferenceRequestBody();
+    if (name != null) {
+      body.setName(name);
+    }
+    if (description != null) {
+      body.setDescription(description);
+    }
+    if (projectId != null) {
+      body.setProjectId(projectId);
+    }
+    if (datasetId != null) {
+      body.setDatasetId(datasetId);
+    }
+    resourceApi.updateBigQueryDatasetReferenceResource(body, workspace, resourceId);
+  }
+
+  /**
+   * Calls WSM to create a referenced BigQuery table in the specified workspace.
+   *
+   * <p>This method retries on all WSM exceptions, do not use it for the negative case (where you do
+   * not expect a user to be able to create a reference).
+   */
+  public static GcpBigQueryDataTableResource makeBigQueryDataTableReference(
+      ReferencedGcpResourceApi resourceApi, UUID workspaceId, String name)
+      throws ApiException, InterruptedException {
+
+    var body =
+        new CreateGcpBigQueryDataTableReferenceRequestBody()
+            .metadata(
+                new ReferenceResourceCommonFields()
+                    .cloningInstructions(CloningInstructionsEnum.NOTHING)
+                    .description("Description of " + name)
+                    .name(name))
+            .dataTable(
+                new GcpBigQueryDataTableAttributes()
+                    .datasetId(TEST_BQ_DATASET_NAME)
+                    .projectId(TEST_BQ_DATASET_PROJECT)
+                    .dataTableId(TEST_BQ_DATATABLE_NAME));
+
+    return ClientTestUtils.getWithRetryOnException(
+        () -> resourceApi.createBigQueryDataTableReference(body, workspaceId));
+  }
+
+  /** Updates name, description and/or referencing target of BigQuery data table reference. */
+  public static void updateBigQueryDataTableReference(
+      ReferencedGcpResourceApi resourceApi,
+      UUID workspaceId,
+      UUID resourceId,
+      @Nullable String name,
+      @Nullable String description,
+      @Nullable String projectId,
+      @Nullable String datasetId,
+      @Nullable String tableId)
+      throws ApiException {
+    UpdateBigQueryDataTableReferenceRequestBody body =
+        new UpdateBigQueryDataTableReferenceRequestBody();
+    if (name != null) {
+      body.setName(name);
+    }
+    if (description != null) {
+      body.setDescription(description);
+    }
+    if (projectId != null) {
+      body.setProjectId(projectId);
+    }
+    if (datasetId != null) {
+      body.setDatasetId(datasetId);
+    }
+    if (tableId != null) {
+      body.setDataTableId(tableId);
+    }
+    resourceApi.updateBigQueryDataTableReferenceResource(body, workspaceId, resourceId);
+  }
+
+  /** Calls WSM to create a referenced TDR snapshot in the specified workspace. */
   public static DataRepoSnapshotResource makeDataRepoSnapshotReference(
       ReferencedGcpResourceApi resourceApi,
       UUID workspaceId,
@@ -97,85 +205,286 @@ public class ResourceMaker {
     return resourceApi.createDataRepoSnapshotReference(body, workspaceId);
   }
 
+  /** Updates name, description, and/or referencing target of a data repo snapshot reference. */
+  public static void updateDataRepoSnapshotReferenceResource(
+      ReferencedGcpResourceApi resourceApi,
+      UUID workspaceId,
+      UUID resourceId,
+      @Nullable String name,
+      @Nullable String description,
+      @Nullable String instanceId,
+      @Nullable String snapshot)
+      throws ApiException {
+    UpdateDataRepoSnapshotReferenceRequestBody body =
+        new UpdateDataRepoSnapshotReferenceRequestBody();
+    if (name != null) {
+      body.setName(name);
+    }
+    if (description != null) {
+      body.setDescription(description);
+    }
+    if (instanceId != null) {
+      body.setInstanceName(instanceId);
+    }
+    if (snapshot != null) {
+      body.setSnapshot(snapshot);
+    }
+    resourceApi.updateDataRepoSnapshotReferenceResource(body, workspaceId, resourceId);
+  }
+
+  /**
+   * Calls WSM to create a referenced GCS bucket in the specified workspace.
+   *
+   * <p>This method retries on all WSM exceptions, do not use it for the negative case (where you do
+   * not expect a user to be able to create a reference).
+   */
   public static GcpGcsBucketResource makeGcsBucketReference(
-      ReferencedGcpResourceApi resourceApi, UUID workspaceId, String name,
-      @Nullable CloningInstructionsEnum cloningInstructions) throws ApiException {
+      ReferencedGcpResourceApi resourceApi,
+      UUID workspaceId,
+      String name,
+      @Nullable CloningInstructionsEnum cloningInstructions)
+      throws ApiException, InterruptedException {
+    return makeGcsBucketReference(
+        resourceApi,
+        workspaceId,
+        name,
+        cloningInstructions,
+        /*isBucketWithFineGrainedAccess=*/ false);
+  }
+
+  public static GcpGcsBucketResource makeGcsBucketWithFineGrainedAccessReference(
+      ReferencedGcpResourceApi resourceApi,
+      UUID workspaceId,
+      String name,
+      @Nullable CloningInstructionsEnum cloningInstructions)
+      throws InterruptedException, ApiException {
+    return makeGcsBucketReference(
+        resourceApi,
+        workspaceId,
+        name,
+        cloningInstructions,
+        /*isBucketWithFineGrainedAccess=*/ true);
+  }
+
+  /**
+   * Calls WSM to create a referenced GCS bucket in the specified workspace.
+   *
+   * <p>This method retries on all WSM exceptions, do not use it for the negative case (where you do
+   * not expect a user to be able to create a reference).
+   */
+  public static GcpGcsBucketResource makeGcsBucketReference(
+      ReferencedGcpResourceApi resourceApi,
+      UUID workspaceId,
+      String name,
+      @Nullable CloningInstructionsEnum cloningInstructions,
+      boolean isBucketWithFineGrainedAccess)
+      throws ApiException, InterruptedException {
 
     var body =
         new CreateGcpGcsBucketReferenceRequestBody()
             .metadata(
                 new ReferenceResourceCommonFields()
-                    .cloningInstructions(Optional.ofNullable(cloningInstructions).orElse(CloningInstructionsEnum.NOTHING))
+                    .cloningInstructions(
+                        Optional.ofNullable(cloningInstructions)
+                            .orElse(CloningInstructionsEnum.NOTHING))
                     .description("Description of " + name)
                     .name(name))
-            .bucket(new GcpGcsBucketAttributes().bucketName(TEST_BUCKET_NAME));
+            .bucket(
+                new GcpGcsBucketAttributes()
+                    .bucketName(
+                        isBucketWithFineGrainedAccess
+                            ? TEST_BUCKET_NAME_WITH_FINE_GRAINED_ACCESS
+                            : TEST_BUCKET_NAME));
 
-    return resourceApi.createBucketReference(body, workspaceId);
+    logger.info("Making reference to a gcs bucket");
+    return ClientTestUtils.getWithRetryOnException(
+        () -> resourceApi.createBucketReference(body, workspaceId));
+  }
+
+  /** Updates name, description, and/or referencing target for GCS bucket reference. */
+  public static void updateGcsBucketReference(
+      ReferencedGcpResourceApi resourceApi,
+      UUID workspaceId,
+      UUID resourceId,
+      @Nullable String name,
+      @Nullable String description,
+      @Nullable String bucketName)
+      throws ApiException {
+    UpdateGcsBucketReferenceRequestBody body = new UpdateGcsBucketReferenceRequestBody();
+    if (name != null) {
+      body.setName(name);
+    }
+    if (description != null) {
+      body.setDescription(description);
+    }
+    if (bucketName != null) {
+      body.setBucketName(bucketName);
+    }
+    resourceApi.updateBucketReferenceResource(body, workspaceId, resourceId);
+  }
+
+  /**
+   * Calls WSM to create a referenced GCS bucket object in the specified workspace.
+   *
+   * <p>This method retries on all WSM exceptions, do not use it for the negative case (where you do
+   * not expect a user to be able to create a reference).
+   */
+  public static GcpGcsObjectResource makeGcsObjectReference(
+      ReferencedGcpResourceApi resourceApi,
+      UUID workspaceId,
+      String name,
+      @Nullable CloningInstructionsEnum cloningInstructionsEnum,
+      String bucketName,
+      String objectName)
+      throws ApiException, InterruptedException {
+    var body =
+        new CreateGcpGcsObjectReferenceRequestBody()
+            .metadata(
+                new ReferenceResourceCommonFields()
+                    .cloningInstructions(
+                        Optional.ofNullable(cloningInstructionsEnum)
+                            .orElse(CloningInstructionsEnum.NOTHING))
+                    .description("Description of " + name)
+                    .name(name))
+            .file(new GcpGcsObjectAttributes().bucketName(bucketName).fileName(objectName));
+
+    logger.info("Making reference to a gcs bucket file");
+    return ClientTestUtils.getWithRetryOnException(
+        () -> resourceApi.createGcsObjectReference(body, workspaceId));
+  }
+
+  /** Updates name, description, and/or referencing target for GCS bucket object reference. */
+  public static void updateGcsBucketObjectReference(
+      ReferencedGcpResourceApi resourceApi,
+      UUID workspaceId,
+      UUID resourceId,
+      @Nullable String name,
+      @Nullable String description,
+      @Nullable String bucketName,
+      @Nullable String objectName)
+      throws ApiException {
+    UpdateGcsBucketObjectReferenceRequestBody body =
+        new UpdateGcsBucketObjectReferenceRequestBody();
+    if (name != null) {
+      body.setName(name);
+    }
+    if (description != null) {
+      body.setDescription(description);
+    }
+    if (bucketName != null) {
+      body.setBucketName(bucketName);
+    }
+    if (objectName != null) {
+      body.setObjectName(objectName);
+    }
+    resourceApi.updateBucketObjectReferenceResource(body, workspaceId, resourceId);
   }
 
   public static GcpGcsBucketResource makeGcsBucketReference(
-      ReferencedGcpResourceApi resourceApi, UUID workspaceId, String name) throws ApiException {
+      ReferencedGcpResourceApi resourceApi, UUID workspaceId, String name)
+      throws ApiException, InterruptedException {
     return makeGcsBucketReference(resourceApi, workspaceId, name, null);
   }
 
+  // Fully parameters version; category-specific versions below
+  public static CreatedControlledGcpGcsBucket makeControlledGcsBucket(
+      ControlledGcpResourceApi resourceApi,
+      UUID workspaceId,
+      String name,
+      @Nullable String bucketName,
+      AccessScope accessScope,
+      ManagedBy managedBy,
+      CloningInstructionsEnum cloningInstructions,
+      @Nullable PrivateResourceUser privateUser)
+      throws Exception {
+    var body =
+        new CreateControlledGcpGcsBucketRequestBody()
+            .common(
+                new ControlledResourceCommonFields()
+                    .accessScope(accessScope)
+                    .managedBy(managedBy)
+                    .cloningInstructions(cloningInstructions)
+                    .description("Description of " + name)
+                    .name(name)
+                    .privateResourceUser(privateUser))
+            .gcsBucket(
+                new GcpGcsBucketCreationParameters()
+                    .name(bucketName)
+                    .defaultStorageClass(GcpGcsBucketDefaultStorageClass.STANDARD)
+                    .lifecycle(new GcpGcsBucketLifecycle().rules(LIFECYCLE_RULES)));
+
+    logger.info(
+        "Creating {} {} bucket in workspace {}", managedBy.name(), accessScope.name(), workspaceId);
+    return resourceApi.createBucket(body, workspaceId);
+  }
+
   public static CreatedControlledGcpGcsBucket makeControlledGcsBucketUserShared(
-      ControlledGcpResourceApi resourceApi, UUID workspaceId, String name,
-      CloningInstructionsEnum cloningInstructions) throws Exception {
-
-    String bucketName = ClientTestUtils.generateCloudResourceName();
-    var body =
-        new CreateControlledGcpGcsBucketRequestBody()
-            .common(
-                new ControlledResourceCommonFields()
-                    .accessScope(AccessScope.SHARED_ACCESS)
-                    .managedBy(ManagedBy.USER)
-                    .cloningInstructions(cloningInstructions)
-                    .description("Description of " + name)
-                    .name(name))
-            .gcsBucket(
-                new GcpGcsBucketCreationParameters()
-                    .name(bucketName)
-                    .defaultStorageClass(GcpGcsBucketDefaultStorageClass.STANDARD)
-                    .lifecycle(new GcpGcsBucketLifecycle().rules(LIFECYCLE_RULES))
-                    .location("US-CENTRAL1"));
-
-    logger.info("Creating bucket {} workspace {}", bucketName, workspaceId);
-    return resourceApi.createBucket(body, workspaceId);
+      ControlledGcpResourceApi resourceApi,
+      UUID workspaceId,
+      String name,
+      CloningInstructionsEnum cloningInstructions)
+      throws Exception {
+    return makeControlledGcsBucket(
+        resourceApi,
+        workspaceId,
+        name,
+        /*bucketName=*/ null,
+        AccessScope.SHARED_ACCESS,
+        ManagedBy.USER,
+        cloningInstructions,
+        null);
   }
 
   public static CreatedControlledGcpGcsBucket makeControlledGcsBucketUserPrivate(
-      ControlledGcpResourceApi resourceApi, UUID workspaceId, String name,
-      String privateResourceUserEmail, PrivateResourceIamRoles privateResourceRoles,
-      CloningInstructionsEnum cloningInstructions) throws Exception {
-    String bucketName = ClientTestUtils.generateCloudResourceName();
-    var body =
-        new CreateControlledGcpGcsBucketRequestBody()
-            .common(
-                new ControlledResourceCommonFields()
-                    .accessScope(AccessScope.PRIVATE_ACCESS)
-                    .privateResourceUser(new PrivateResourceUser()
-                      .userName(privateResourceUserEmail)
-                      .privateResourceIamRoles(privateResourceRoles))
-                    .managedBy(ManagedBy.USER)
-                    .cloningInstructions(cloningInstructions)
-                    .description("Description of " + name)
-                    .name(name))
-            .gcsBucket(
-                new GcpGcsBucketCreationParameters()
-                    .name(bucketName)
-                    .defaultStorageClass(GcpGcsBucketDefaultStorageClass.STANDARD)
-                    .lifecycle(new GcpGcsBucketLifecycle().rules(LIFECYCLE_RULES))
-                    .location("US-CENTRAL1"));
-
-    logger.info("Creating bucket {} workspace {}", bucketName, workspaceId);
-    return resourceApi.createBucket(body, workspaceId);
+      ControlledGcpResourceApi resourceApi,
+      UUID workspaceId,
+      String name,
+      CloningInstructionsEnum cloningInstructions)
+      throws Exception {
+    return makeControlledGcsBucket(
+        resourceApi,
+        workspaceId,
+        name,
+        /*bucketName=*/ null,
+        AccessScope.PRIVATE_ACCESS,
+        ManagedBy.USER,
+        cloningInstructions,
+        null);
   }
 
-  public static CreatedControlledGcpGcsBucket makeControlledGcsBucketUserPrivate(
-      ControlledGcpResourceApi resourceApi, UUID workspaceId, String name,
-      String privateResourceUserEmail, PrivateResourceIamRoles privateResourceRoles) throws Exception {
-    return  makeControlledGcsBucketUserPrivate(
-         resourceApi,  workspaceId, name, privateResourceUserEmail, privateResourceRoles, CloningInstructionsEnum.NOTHING);
+  public static CreatedControlledGcpGcsBucket makeControlledGcsBucketAppShared(
+      ControlledGcpResourceApi resourceApi,
+      UUID workspaceId,
+      String name,
+      @Nullable CloningInstructionsEnum cloningInstructions)
+      throws Exception {
+    return makeControlledGcsBucket(
+        resourceApi,
+        workspaceId,
+        name,
+        /*bucketName=*/ null,
+        AccessScope.SHARED_ACCESS,
+        ManagedBy.APPLICATION,
+        cloningInstructions,
+        null);
+  }
+
+  public static CreatedControlledGcpGcsBucket makeControlledGcsBucketAppPrivate(
+      ControlledGcpResourceApi resourceApi,
+      UUID workspaceId,
+      String name,
+      CloningInstructionsEnum cloningInstructions,
+      @Nullable PrivateResourceUser privateUser)
+      throws Exception {
+    return makeControlledGcsBucket(
+        resourceApi,
+        workspaceId,
+        name,
+        /*bucketName=*/ null,
+        AccessScope.PRIVATE_ACCESS,
+        ManagedBy.APPLICATION,
+        cloningInstructions,
+        privateUser);
   }
 
   public static void deleteControlledGcsBucket(
@@ -200,57 +509,74 @@ public class ResourceMaker {
    * Create and return a BigQuery dataset controlled resource with constant values. This uses the
    * given datasetID as both the WSM resource name and the actual BigQuery dataset ID.
    */
-  public static GcpBigQueryDatasetResource makeControlledBigQueryDatasetUserShared(
-      ControlledGcpResourceApi resourceApi, UUID workspaceId, String datasetId,
-      @Nullable CloningInstructionsEnum cloningInstructions) throws Exception {
+  private static GcpBigQueryDatasetResource makeControlledBigQueryDataset(
+      ControlledGcpResourceApi resourceApi,
+      UUID workspaceId,
+      String resourceName,
+      @Nullable String datasetId,
+      AccessScope accessScope,
+      ManagedBy managedBy,
+      @Nullable CloningInstructionsEnum cloningInstructions,
+      @Nullable PrivateResourceUser privateUser)
+      throws Exception {
 
     var body =
         new CreateControlledGcpBigQueryDatasetRequestBody()
             .common(
                 new ControlledResourceCommonFields()
-                    .accessScope(AccessScope.SHARED_ACCESS)
-                    .managedBy(ManagedBy.USER)
-                    .cloningInstructions(Optional.ofNullable(cloningInstructions).orElse(CloningInstructionsEnum.NOTHING))
-                    .description("Description of " + datasetId)
-                    .name(datasetId))
-            .dataset(
-                new GcpBigQueryDatasetCreationParameters()
-                    .datasetId(datasetId)
-                    .location("US-CENTRAL1"));
+                    .accessScope(accessScope)
+                    .managedBy(managedBy)
+                    .cloningInstructions(
+                        Optional.ofNullable(cloningInstructions)
+                            .orElse(CloningInstructionsEnum.NOTHING))
+                    .description("Description of " + resourceName)
+                    .name(resourceName)
+                    .privateResourceUser(privateUser))
+            .dataset(new GcpBigQueryDatasetCreationParameters().datasetId(datasetId));
 
-    logger.info("Creating dataset {} workspace {}", datasetId, workspaceId);
+    logger.info(
+        "Creating {} {} dataset {} workspace {}",
+        managedBy.name(),
+        accessScope.name(),
+        datasetId,
+        workspaceId);
     return resourceApi.createBigQueryDataset(body, workspaceId).getBigQueryDataset();
   }
 
   public static GcpBigQueryDatasetResource makeControlledBigQueryDatasetUserShared(
-      ControlledGcpResourceApi resourceApi, UUID workspaceId, String datasetId) throws Exception {
-    return makeControlledBigQueryDatasetUserShared(resourceApi, workspaceId, datasetId, null);
+      ControlledGcpResourceApi resourceApi,
+      UUID workspaceId,
+      String resourceName,
+      @Nullable String datasetId,
+      @Nullable CloningInstructionsEnum cloningInstructions)
+      throws Exception {
+    return makeControlledBigQueryDataset(
+        resourceApi,
+        workspaceId,
+        resourceName,
+        datasetId,
+        AccessScope.SHARED_ACCESS,
+        ManagedBy.USER,
+        cloningInstructions,
+        null);
   }
 
   public static GcpBigQueryDatasetResource makeControlledBigQueryDatasetUserPrivate(
-      ControlledGcpResourceApi resourceApi, UUID workspaceId, String datasetId,
-      String privateResourceUserEmail, PrivateResourceIamRoles iamRoles,
-      @Nullable CloningInstructionsEnum cloningInstructions) throws Exception {
-
-    var body =
-        new CreateControlledGcpBigQueryDatasetRequestBody()
-            .common(
-                new ControlledResourceCommonFields()
-                    .accessScope(AccessScope.PRIVATE_ACCESS)
-                    .managedBy(ManagedBy.USER)
-                    .privateResourceUser(new PrivateResourceUser()
-                        .userName(privateResourceUserEmail)
-                        .privateResourceIamRoles(iamRoles))
-                    .cloningInstructions(Optional.ofNullable(cloningInstructions).orElse(CloningInstructionsEnum.NOTHING))
-                    .description("Description of " + datasetId)
-                    .name(datasetId))
-            .dataset(
-                new GcpBigQueryDatasetCreationParameters()
-                    .datasetId(datasetId)
-                    .location("US-CENTRAL1"));
-
-    logger.info("Creating dataset {} workspace {}", datasetId, workspaceId);
-    return resourceApi.createBigQueryDataset(body, workspaceId).getBigQueryDataset();
+      ControlledGcpResourceApi resourceApi,
+      UUID workspaceId,
+      String resourceName,
+      @Nullable String datasetId,
+      @Nullable CloningInstructionsEnum cloningInstructions)
+      throws Exception {
+    return makeControlledBigQueryDataset(
+        resourceApi,
+        workspaceId,
+        resourceName,
+        datasetId,
+        AccessScope.PRIVATE_ACCESS,
+        ManagedBy.USER,
+        cloningInstructions,
+        null);
   }
 
   /**
@@ -258,32 +584,29 @@ public class ResourceMaker {
    * method calls the asynchronous creation endpoint and polls until the creation job completes.
    */
   public static CreatedControlledGcpAiNotebookInstanceResult makeControlledNotebookUserPrivate(
-      UUID workspaceId, String instanceId, TestUserSpecification user, ControlledGcpResourceApi resourceApi)
+      UUID workspaceId,
+      @Nullable String instanceId,
+      @Nullable String location,
+      ControlledGcpResourceApi resourceApi)
       throws ApiException, InterruptedException {
     // Fill out the minimum required fields to arbitrary values.
     var creationParameters =
         new GcpAiNotebookInstanceCreationParameters()
             .instanceId(instanceId)
-            .location("us-east1-b")
+            .location(location)
             .machineType("e2-standard-2")
             .vmImage(
                 new GcpAiNotebookInstanceVmImage()
                     .projectId("deeplearning-platform-release")
                     .imageFamily("r-latest-cpu-experimental"));
 
-    PrivateResourceIamRoles privateIamRoles = new PrivateResourceIamRoles();
-    privateIamRoles.add(ControlledResourceIamRole.EDITOR);
-    privateIamRoles.add(ControlledResourceIamRole.WRITER);
     var commonParameters =
         new ControlledResourceCommonFields()
             .name(RandomStringUtils.randomAlphabetic(6))
             .cloningInstructions(CloningInstructionsEnum.NOTHING)
             .accessScope(AccessScope.PRIVATE_ACCESS)
             .managedBy(ManagedBy.USER)
-            .privateResourceUser(
-                new PrivateResourceUser()
-                    .userName(user.userEmail)
-                    .privateResourceIamRoles(privateIamRoles));
+            .privateResourceUser(null);
 
     var body =
         new CreateControlledGcpAiNotebookInstanceRequestBody()
@@ -293,13 +616,151 @@ public class ResourceMaker {
 
     var creationResult = resourceApi.createAiNotebookInstance(body, workspaceId);
     String creationJobId = creationResult.getJobReport().getId();
-    creationResult = ClientTestUtils.pollWhileRunning(
-        creationResult,
-        () -> resourceApi.getCreateAiNotebookInstanceResult(workspaceId, creationJobId),
-        CreatedControlledGcpAiNotebookInstanceResult::getJobReport,
-        Duration.ofSeconds(10));
-    ClientTestUtils.assertJobSuccess("create ai notebook",
-        creationResult.getJobReport(), creationResult.getErrorReport());
+    creationResult =
+        ClientTestUtils.pollWhileRunning(
+            creationResult,
+            () -> resourceApi.getCreateAiNotebookInstanceResult(workspaceId, creationJobId),
+            CreatedControlledGcpAiNotebookInstanceResult::getJobReport,
+            Duration.ofSeconds(10));
+    ClientTestUtils.assertJobSuccess(
+        "create ai notebook", creationResult.getJobReport(), creationResult.getErrorReport());
     return creationResult;
+  }
+
+  // Support for makeResources
+  private static String makeName() {
+    return RandomStringUtils.random(10, true, false);
+  }
+
+  @FunctionalInterface
+  public interface SupplierException<T> {
+    T get() throws Exception;
+  }
+
+  /**
+   * Make a bunch of resources
+   *
+   * @param referencedGcpResourceApi api for referenced resources
+   * @param controlledGcpResourceApi api for controlled resources
+   * @param workspaceId workspace where we allocate
+   * @param resourceCount number of resources to allocate
+   * @return list of resources
+   * @throws Exception whatever might come up
+   */
+  public static List<ResourceMetadata> makeResources(
+      ReferencedGcpResourceApi referencedGcpResourceApi,
+      ControlledGcpResourceApi controlledGcpResourceApi,
+      UUID workspaceId,
+      String dataRepoSnapshotId,
+      String dataRepoInstanceName,
+      int resourceCount)
+      throws Exception {
+
+    // Array of resource allocators
+    List<SupplierException<ResourceMetadata>> makers =
+        List.of(
+            // BQ dataset reference
+            () -> {
+              GcpBigQueryDatasetResource resource =
+                  makeBigQueryDatasetReference(referencedGcpResourceApi, workspaceId, makeName());
+              return resource.getMetadata();
+            },
+
+            // TDR snapshot reference
+            () -> {
+              DataRepoSnapshotResource resource =
+                  ResourceMaker.makeDataRepoSnapshotReference(
+                      referencedGcpResourceApi,
+                      workspaceId,
+                      makeName(),
+                      dataRepoSnapshotId,
+                      dataRepoInstanceName);
+              return resource.getMetadata();
+            },
+
+            // GCS bucket reference
+            () -> {
+              GcpGcsBucketResource resource =
+                  makeGcsBucketReference(referencedGcpResourceApi, workspaceId, makeName());
+              return resource.getMetadata();
+            },
+
+            // GCS bucket controlled shared
+            () -> {
+              GcpGcsBucketResource resource =
+                  ResourceMaker.makeGcsBucketReference(
+                      referencedGcpResourceApi, workspaceId, makeName());
+              return resource.getMetadata();
+            },
+
+            // GCS bucket controlled private
+            () -> {
+              GcpGcsBucketResource resource =
+                  ResourceMaker.makeControlledGcsBucketUserPrivate(
+                          controlledGcpResourceApi,
+                          workspaceId,
+                          makeName(),
+                          CloningInstructionsEnum.NOTHING)
+                      .getGcpBucket();
+              return resource.getMetadata();
+            },
+
+            // BQ dataset controlled shared
+            () -> {
+              GcpBigQueryDatasetResource resource =
+                  ResourceMaker.makeControlledBigQueryDatasetUserShared(
+                      controlledGcpResourceApi,
+                      workspaceId,
+                      makeName(),
+                      null,
+                      CloningInstructionsEnum.NOTHING);
+              return resource.getMetadata();
+            },
+
+            // BQ data table reference
+            () -> {
+              GcpBigQueryDataTableResource resource =
+                  ResourceMaker.makeBigQueryDataTableReference(
+                      referencedGcpResourceApi, workspaceId, makeName());
+              return resource.getMetadata();
+            });
+
+    // Build the resources
+    List<ResourceMetadata> resources = new ArrayList<>();
+    for (int i = 0; i < resourceCount; i++) {
+      int index = i % makers.size();
+      resources.add(makers.get(index).get());
+    }
+    return resources;
+  }
+
+  /**
+   * Designed to cleanup the result of allocations from {@link #makeResources}
+   *
+   * @param resources list of resources to cleanup
+   */
+  public static void cleanupResources(
+      List<ResourceMetadata> resources,
+      ControlledGcpResourceApi controlledGcpResourceApi,
+      UUID workspaceId)
+      throws Exception {
+    for (ResourceMetadata metadata : resources) {
+      if (metadata.getStewardshipType() == StewardshipType.CONTROLLED) {
+        switch (metadata.getResourceType()) {
+          case GCS_BUCKET:
+            ResourceMaker.deleteControlledGcsBucket(
+                metadata.getResourceId(), workspaceId, controlledGcpResourceApi);
+            break;
+          case BIG_QUERY_DATASET:
+            controlledGcpResourceApi.deleteBigQueryDataset(workspaceId, metadata.getResourceId());
+            break;
+          default:
+            throw new IllegalStateException(
+                String.format(
+                    "No cleanup method specified for resource type %s.",
+                    metadata.getResourceType()));
+        }
+      }
+    }
   }
 }

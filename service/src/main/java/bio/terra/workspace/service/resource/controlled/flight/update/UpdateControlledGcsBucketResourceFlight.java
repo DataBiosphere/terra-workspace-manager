@@ -2,10 +2,12 @@ package bio.terra.workspace.service.resource.controlled.flight.update;
 
 import bio.terra.stairway.Flight;
 import bio.terra.stairway.FlightMap;
+import bio.terra.stairway.RetryRule;
 import bio.terra.workspace.common.utils.FlightBeanBag;
-import bio.terra.workspace.service.job.JobMapKeys;
+import bio.terra.workspace.common.utils.RetryRules;
 import bio.terra.workspace.service.resource.controlled.ControlledResource;
 import bio.terra.workspace.service.resource.controlled.flight.update.RetrieveGcsBucketCloudAttributesStep.RetrievalMode;
+import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ResourceKeys;
 
 public class UpdateControlledGcsBucketResourceFlight extends Flight {
 
@@ -14,12 +16,14 @@ public class UpdateControlledGcsBucketResourceFlight extends Flight {
 
     final FlightBeanBag flightBeanBag = FlightBeanBag.getFromObject(beanBag);
     final ControlledResource resource =
-        inputParameters.get(JobMapKeys.REQUEST.getKeyName(), ControlledResource.class);
+        inputParameters.get(ResourceKeys.RESOURCE, ControlledResource.class);
 
     // get copy of existing metadata
+    RetryRule dbRetry = RetryRules.shortDatabase();
     addStep(
         new RetrieveControlledResourceMetadataStep(
-            flightBeanBag.getResourceDao(), resource.getWorkspaceId(), resource.getResourceId()));
+            flightBeanBag.getResourceDao(), resource.getWorkspaceId(), resource.getResourceId()),
+        dbRetry);
 
     // update the metadata (name & description of resource)
     addStep(
@@ -27,21 +31,25 @@ public class UpdateControlledGcsBucketResourceFlight extends Flight {
             flightBeanBag.getControlledResourceMetadataManager(),
             flightBeanBag.getResourceDao(),
             resource.getWorkspaceId(),
-            resource.getResourceId()));
+            resource.getResourceId()),
+        dbRetry);
 
     // retrieve existing attributes in case of undo later
+    RetryRule gcpRetry = RetryRules.cloud();
     addStep(
         new RetrieveGcsBucketCloudAttributesStep(
             resource.castToGcsBucketResource(),
             flightBeanBag.getCrlService(),
-            flightBeanBag.getWorkspaceService(),
-            RetrievalMode.UPDATE_PARAMETERS));
+            flightBeanBag.getGcpCloudContextService(),
+            RetrievalMode.UPDATE_PARAMETERS),
+        gcpRetry);
 
     // Update the bucket's cloud attributes
     addStep(
         new UpdateGcsBucketStep(
             resource.castToGcsBucketResource(),
             flightBeanBag.getCrlService(),
-            flightBeanBag.getWorkspaceService()));
+            flightBeanBag.getGcpCloudContextService()),
+        gcpRetry);
   }
 }

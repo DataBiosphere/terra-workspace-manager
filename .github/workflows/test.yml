@@ -7,7 +7,6 @@ on:
   push:
     branches:
       - main
-      - dev
     paths-ignore:
       - '*.md'
       - '.github/**'
@@ -39,7 +38,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        gradleTask: [unitTest, connectedTest]
+        gradleTask: [unitTest, connectedTest, azureTest]
 
     services:
       postgres:
@@ -181,7 +180,8 @@ jobs:
         MATRIX_CONTEXT: ${{ toJson(matrix) }}
       with:
         status: ${{ job.status }}
-        channel: "#terra-workspace-manager"
+        channel: "#terra-wsm-alerts"
         username: "WSM push to main branch"
         author_name: "${{ matrix.gradleTask }}"
+        icon_emoji: ":triangular_ruler:"
         fields: job, commit

@@ -8,8 +8,12 @@ import java.util.UUID;
  * profile associated with it.
  */
 public class MissingSpendProfileException extends BadRequestException {
-  public MissingSpendProfileException(UUID workspaceId) {
-    super(
+  public MissingSpendProfileException(String message) {
+    super(message);
+  }
+
+  public static MissingSpendProfileException forWorkspace(UUID workspaceId) {
+    return new MissingSpendProfileException(
         String.format(
             "Spend profile id required, but none found on workspace %s", workspaceId.toString()));
   }

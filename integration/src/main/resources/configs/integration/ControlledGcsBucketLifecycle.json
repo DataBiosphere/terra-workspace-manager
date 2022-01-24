@@ -8,7 +8,7 @@
     {
       "name": "ControlledGcsBucketLifecycle",
       "numberOfUserJourneyThreadsToRun": 1,
-      "userJourneyThreadPoolSize": 2,
+      "userJourneyThreadPoolSize": 1,
       "expectedTimeForEach": 10,
       "expectedTimeForEachUnit": "MINUTES",
       "parameters": ["wm-default-spend-profile"]

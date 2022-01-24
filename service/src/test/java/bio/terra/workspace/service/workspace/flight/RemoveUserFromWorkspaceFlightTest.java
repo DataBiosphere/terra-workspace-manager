@@ -9,6 +9,7 @@ import bio.terra.stairway.FlightDebugInfo;
 import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.FlightState;
 import bio.terra.stairway.FlightStatus;
+import bio.terra.stairway.StepStatus;
 import bio.terra.workspace.common.BaseConnectedTest;
 import bio.terra.workspace.common.StairwayTestUtils;
 import bio.terra.workspace.connected.UserAccessUtils;
@@ -16,8 +17,9 @@ import bio.terra.workspace.generated.model.ApiGcpBigQueryDatasetCreationParamete
 import bio.terra.workspace.generated.model.ApiJobReport.StatusEnum;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.iam.model.ControlledResourceIamRole;
-import bio.terra.workspace.service.iam.model.SamConstants;
 import bio.terra.workspace.service.iam.model.SamConstants.SamControlledResourceActions;
+import bio.terra.workspace.service.iam.model.SamConstants.SamResource;
+import bio.terra.workspace.service.iam.model.SamConstants.SamWorkspaceAction;
 import bio.terra.workspace.service.iam.model.WsmIamRole;
 import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.job.JobService;
@@ -30,12 +32,11 @@ import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.spendprofile.SpendConnectedTestUtils;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.model.GcpCloudContext;
-import bio.terra.workspace.service.workspace.model.WorkspaceRequest;
+import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
-import com.google.common.collect.ImmutableList;
 import java.time.Duration;
-import java.util.List;
-import java.util.Optional;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.UUID;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.jupiter.api.Test;
@@ -51,17 +52,17 @@ public class RemoveUserFromWorkspaceFlightTest extends BaseConnectedTest {
   @Autowired private SpendConnectedTestUtils spendUtils;
   @Autowired private UserAccessUtils userAccessUtils;
 
-  private static final Duration STAIRWAY_FLIGHT_TIMEOUT = Duration.ofMinutes(3);
+  private static final Duration STAIRWAY_FLIGHT_TIMEOUT = Duration.ofMinutes(5);
 
   @Test
   @DisabledIfEnvironmentVariable(named = "TEST_ENV", matches = BUFFER_SERVICE_DISABLED_ENVS_REG_EX)
   void removeUserFromWorkspaceFlightDoUndo() throws Exception {
     // Create a workspace as the default test user
-    WorkspaceRequest request =
-        WorkspaceRequest.builder()
+    Workspace request =
+        Workspace.builder()
             .workspaceId(UUID.randomUUID())
             .workspaceStage(WorkspaceStage.MC_WORKSPACE)
-            .spendProfileId(Optional.of(spendUtils.defaultSpendId()))
+            .spendProfileId(spendUtils.defaultSpendId())
             .build();
     UUID workspaceId =
         workspaceService.createWorkspace(request, userAccessUtils.defaultUserAuthRequest());
@@ -72,8 +73,13 @@ public class RemoveUserFromWorkspaceFlightTest extends BaseConnectedTest {
         WsmIamRole.WRITER,
         userAccessUtils.getSecondUserEmail());
 
+    samService.dumpRoleBindings(
+        SamResource.WORKSPACE,
+        workspaceId.toString(),
+        userAccessUtils.defaultUserAuthRequest().getRequiredToken());
+
     // Create a GCP context as default user
-    String makeContextJobId = RandomStringUtils.randomAlphabetic(8);
+    String makeContextJobId = UUID.randomUUID().toString();
     workspaceService.createGcpCloudContext(
         workspaceId, makeContextJobId, userAccessUtils.defaultUserAuthRequest());
     jobService.waitForJob(makeContextJobId);
@@ -81,7 +87,6 @@ public class RemoveUserFromWorkspaceFlightTest extends BaseConnectedTest {
         jobService.retrieveAsyncJobResult(
             makeContextJobId, GcpCloudContext.class, userAccessUtils.defaultUserAuthRequest());
     assertEquals(StatusEnum.SUCCEEDED, createContextJobResult.getJobReport().getStatus());
-    GcpCloudContext gcpContext = createContextJobResult.getResult();
 
     // Create a private dataset for secondary user
     String datasetId = RandomStringUtils.randomAlphabetic(8);
@@ -96,8 +101,25 @@ public class RemoveUserFromWorkspaceFlightTest extends BaseConnectedTest {
             privateDataset.getResourceId().toString(),
             SamControlledResourceActions.WRITE_ACTION));
 
-    // Run the "removeUser" flight to the very end, then undo it
-    FlightDebugInfo failingDebugInfo = FlightDebugInfo.newBuilder().lastStepFailure(true).build();
+    // Run the "removeUser" flight to the very end, then undo it, retrying steps along the way.
+    Map<String, StepStatus> retrySteps = new HashMap<>();
+    retrySteps.put(RemoveUserFromSamStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
+    retrySteps.put(
+        CheckUserStillInWorkspaceStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
+    retrySteps.put(
+        ClaimUserPrivateResourcesStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
+    retrySteps.put(
+        RemovePrivateResourceAccessStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
+    retrySteps.put(
+        MarkPrivateResourcesAbandonedStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
+    retrySteps.put(
+        RevokePetUsagePermissionStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
+    retrySteps.put(
+        ReleasePrivateResourceCleanupClaimsStep.class.getName(),
+        StepStatus.STEP_RESULT_FAILURE_RETRY);
+    FlightDebugInfo failingDebugInfo =
+        FlightDebugInfo.newBuilder().undoStepFailures(retrySteps).lastStepFailure(true).build();
+
     FlightMap inputParameters = new FlightMap();
     inputParameters.put(WorkspaceFlightMapKeys.WORKSPACE_ID, workspaceId.toString());
     inputParameters.put(
@@ -121,9 +143,9 @@ public class RemoveUserFromWorkspaceFlightTest extends BaseConnectedTest {
     assertTrue(
         samService.isAuthorized(
             userAccessUtils.secondUserAuthRequest(),
-            SamConstants.SAM_WORKSPACE_RESOURCE,
+            SamResource.WORKSPACE,
             workspaceId.toString(),
-            SamConstants.SAM_WORKSPACE_WRITE_ACTION));
+            SamWorkspaceAction.WRITE));
     assertTrue(
         samService.isAuthorized(
             userAccessUtils.secondUserAuthRequest(),
@@ -131,8 +153,9 @@ public class RemoveUserFromWorkspaceFlightTest extends BaseConnectedTest {
             privateDataset.getResourceId().toString(),
             SamControlledResourceActions.WRITE_ACTION));
 
-    // Run the flight again, this time to success.
-    FlightDebugInfo passingDebugInfo = FlightDebugInfo.newBuilder().build();
+    // Run the flight again, this time to success. Retry each do step once.
+    FlightDebugInfo passingDebugInfo =
+        FlightDebugInfo.newBuilder().doStepFailures(retrySteps).build();
     FlightState passingFlightState =
         StairwayTestUtils.blockUntilFlightCompletes(
             jobService.getStairway(),
@@ -146,9 +169,9 @@ public class RemoveUserFromWorkspaceFlightTest extends BaseConnectedTest {
     assertFalse(
         samService.isAuthorized(
             userAccessUtils.secondUserAuthRequest(),
-            SamConstants.SAM_WORKSPACE_RESOURCE,
+            SamResource.WORKSPACE,
             workspaceId.toString(),
-            SamConstants.SAM_WORKSPACE_WRITE_ACTION));
+            SamWorkspaceAction.WRITE));
     assertFalse(
         samService.isAuthorized(
             userAccessUtils.secondUserAuthRequest(),
@@ -177,12 +200,11 @@ public class RemoveUserFromWorkspaceFlightTest extends BaseConnectedTest {
         new ApiGcpBigQueryDatasetCreationParameters()
             .datasetId(datasetName)
             .location("us-central1");
-    List<ControlledResourceIamRole> privateRoles =
-        ImmutableList.of(ControlledResourceIamRole.WRITER, ControlledResourceIamRole.EDITOR);
+
     return controlledResourceService.createBigQueryDataset(
         datasetToCreate,
         datasetCreationParameters,
-        privateRoles,
+        ControlledResourceIamRole.EDITOR,
         userAccessUtils.secondUserAuthRequest());
   }
 }

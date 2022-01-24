@@ -1,5 +1,6 @@
 package bio.terra.workspace.db;
 
+import static bio.terra.workspace.service.resource.controlled.ResourceConstant.DEFAULT_ZONE;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -14,6 +15,7 @@ import bio.terra.workspace.service.resource.controlled.ControlledBigQueryDataset
 import bio.terra.workspace.service.resource.controlled.ControlledGcsBucketResource;
 import bio.terra.workspace.service.resource.controlled.ControlledResource;
 import bio.terra.workspace.service.resource.exception.DuplicateResourceException;
+import bio.terra.workspace.service.workspace.GcpCloudContextService;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import bio.terra.workspace.service.workspace.model.GcpCloudContext;
 import bio.terra.workspace.service.workspace.model.Workspace;
@@ -26,6 +28,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 public class ResourceDaoTest extends BaseUnitTest {
   @Autowired ResourceDao resourceDao;
   @Autowired WorkspaceDao workspaceDao;
+  @Autowired GcpCloudContextService gcpCloudContextService;
 
   /**
    * Creates a workspaces with a GCP cloud context and stores it in the database. Returns the
@@ -41,8 +44,10 @@ public class ResourceDaoTest extends BaseUnitTest {
             .workspaceStage(WorkspaceStage.MC_WORKSPACE)
             .build();
     workspaceDao.createWorkspace(workspace);
-    workspaceDao.createGcpCloudContext(
-        workspace.getWorkspaceId(), new GcpCloudContext("my-project-id"));
+    gcpCloudContextService.createGcpCloudContext(
+        workspace.getWorkspaceId(),
+        new GcpCloudContext("my-project-id"),
+        "flight-creategcpworkspace");
     return workspace.getWorkspaceId();
   }
 
@@ -202,6 +207,20 @@ public class ResourceDaoTest extends BaseUnitTest {
             resourceWithDifferentLocation.getWorkspaceId(),
             resourceWithDifferentLocation.getResourceId()));
 
+    final ControlledResource resourceWithDefaultLocation =
+        ControlledResourceFixtures.makeDefaultAiNotebookInstance()
+            .workspaceId(workspaceId1)
+            .name("resource-5")
+            .location(null)
+            .build();
+    resourceDao.createControlledResource(resourceWithDefaultLocation);
+    assertEquals(
+        resourceWithDefaultLocation,
+        resourceDao.getResource(
+            resourceWithDefaultLocation.getWorkspaceId(),
+            resourceWithDefaultLocation.getResourceId()));
+    assertEquals(
+        DEFAULT_ZONE, resourceWithDefaultLocation.castToAiNotebookInstanceResource().getLocation());
     // clean up
     resourceDao.deleteResource(initialResource.getWorkspaceId(), initialResource.getResourceId());
     // resource2 never got created
@@ -211,6 +230,8 @@ public class ResourceDaoTest extends BaseUnitTest {
     resourceDao.deleteResource(
         resourceWithDifferentLocation.getWorkspaceId(),
         resourceWithDifferentLocation.getResourceId());
+    resourceDao.deleteResource(
+        resourceWithDefaultLocation.getWorkspaceId(), resourceWithDefaultLocation.getResourceId());
   }
 
   @Test

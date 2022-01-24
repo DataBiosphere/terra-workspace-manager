@@ -8,11 +8,9 @@ import bio.terra.stairway.StepResult;
 import bio.terra.stairway.StepStatus;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.service.crl.CrlService;
-import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
-import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.resource.controlled.ControlledBigQueryDatasetResource;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
-import bio.terra.workspace.service.workspace.WorkspaceService;
+import bio.terra.workspace.service.workspace.GcpCloudContextService;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.api.services.bigquery.Bigquery;
@@ -39,15 +37,15 @@ public class CreateTableCopyJobsStep implements Step {
   private static final Logger logger = LoggerFactory.getLogger(CreateTableCopyJobsStep.class);
   public static final Duration COPY_JOB_TIMEOUT = Duration.ofHours(12);
   private final CrlService crlService;
-  private final WorkspaceService workspaceService;
+  private final GcpCloudContextService gcpCloudContextService;
   private final ControlledBigQueryDatasetResource sourceDataset;
 
   public CreateTableCopyJobsStep(
       CrlService crlService,
-      WorkspaceService workspaceService,
+      GcpCloudContextService gcpCloudContextService,
       ControlledBigQueryDatasetResource sourceDataset) {
     this.crlService = crlService;
-    this.workspaceService = workspaceService;
+    this.gcpCloudContextService = gcpCloudContextService;
     this.sourceDataset = sourceDataset;
   }
 
@@ -79,13 +77,9 @@ public class CreateTableCopyJobsStep implements Step {
     final DatasetCloneInputs destinationInputs = getDestinationInputs(flightContext);
     workingMap.put(ControlledResourceKeys.DESTINATION_CLONE_INPUTS, destinationInputs);
 
-    final AuthenticatedUserRequest userRequest =
-        flightContext
-            .getInputParameters()
-            .get(JobMapKeys.AUTH_USER_INFO.getKeyName(), AuthenticatedUserRequest.class);
-    final BigQueryCow bigQueryCow = crlService.createBigQueryCow(userRequest);
+    final BigQueryCow bigQueryCow = crlService.createWsmSaBigQueryCow();
     // TODO(jaycarlton):  remove usage of this client when it's all in CRL PF-942
-    final Bigquery bigQueryClient = crlService.createNakedBigQueryClient(userRequest);
+    final Bigquery bigQueryClient = crlService.createWsmSaNakedBigQueryClient();
     try {
       // Get a list of all tables in the source dataset
       final TableList sourceTables =
@@ -207,7 +201,7 @@ public class CreateTableCopyJobsStep implements Step {
 
   private DatasetCloneInputs getSourceInputs() {
     final String sourceProjectId =
-        workspaceService.getRequiredGcpProject(sourceDataset.getWorkspaceId());
+        gcpCloudContextService.getRequiredGcpProject(sourceDataset.getWorkspaceId());
     final String sourceDatasetName = sourceDataset.getDatasetName();
     return new DatasetCloneInputs(
         sourceDataset.getWorkspaceId(), sourceProjectId, sourceDatasetName);
@@ -219,7 +213,7 @@ public class CreateTableCopyJobsStep implements Step {
             .getInputParameters()
             .get(ControlledResourceKeys.DESTINATION_WORKSPACE_ID, UUID.class);
     final String destinationProjectId =
-        workspaceService.getRequiredGcpProject(destinationWorkspaceId);
+        gcpCloudContextService.getRequiredGcpProject(destinationWorkspaceId);
     final String destinationDatasetName =
         flightContext
             .getWorkingMap()

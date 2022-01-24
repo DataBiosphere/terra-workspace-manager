@@ -5,7 +5,7 @@ import bio.terra.workspace.generated.model.ApiCloudPlatform;
 import bio.terra.workspace.generated.model.ApiCreateDataReferenceRequestBody;
 import bio.terra.workspace.service.resource.controlled.exception.ControlledResourceNotImplementedException;
 import bio.terra.workspace.service.resource.referenced.exception.InvalidReferenceException;
-import bio.terra.workspace.service.workspace.exceptions.AzureNotImplementedException;
+import bio.terra.workspace.service.workspace.exceptions.CloudPlatformNotImplementedException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Pattern;
@@ -20,6 +20,13 @@ public final class ControllerValidationUtils {
   // Pattern shared with Sam, originally from https://www.regular-expressions.info/email.html.
   public static final Pattern EMAIL_VALIDATION_PATTERN =
       Pattern.compile("(?i)^[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,}$");
+
+  /**
+   * Property keys must be 1-1024 characters, using letters, numbers, dashes, and underscores and
+   * must not start with a dash or underscore.
+   */
+  public static final Pattern PROPERTY_KEY_VALIDATION_PATTERN =
+      Pattern.compile("^[a-zA-Z0-9][-_a-zA-Z0-9]{0,1023}$");
 
   /**
    * Utility to validate limit/offset parameters used in pagination.
@@ -68,17 +75,36 @@ public final class ControllerValidationUtils {
    * from, etc.
    */
   public static void validateEmail(String email) {
+    // matcher does not support null, so explicitly defend against that case
+    if (email == null) {
+      logger.warn("User provided null email");
+      throw new ValidationException("Missing required email");
+    }
     if (!EMAIL_VALIDATION_PATTERN.matcher(email).matches()) {
       logger.warn("User provided invalid email for group or user: " + email);
-      throw new ValidationException("Invalid user or group email provided, see logs for details");
+      throw new ValidationException("Invalid email provided");
     }
   }
 
+  public static void validatePropertyKey(String key) {
+    if (key == null) {
+      logger.warn("User provided null property key");
+      throw new ValidationException("Missing required property key");
+    }
+    if (!PROPERTY_KEY_VALIDATION_PATTERN.matcher(key).matches()) {
+      logger.warn("User provided invalid property key: " + key);
+      throw new ValidationException("Invalid property key provided");
+    }
+  }
   /** Validate that a user is requesting a valid cloud for adding workspace context. */
   public static void validateCloudPlatform(ApiCloudPlatform platform) {
-    if (platform != ApiCloudPlatform.GCP) {
-      throw new AzureNotImplementedException(
-          "Invalid cloud platform. Currently, only GCP is supported.");
+    switch (platform) {
+      case GCP:
+      case AZURE:
+        break;
+      default:
+        throw new CloudPlatformNotImplementedException(
+            "Invalid cloud platform. Currently, only AZURE and GCP are supported.");
     }
   }
 }

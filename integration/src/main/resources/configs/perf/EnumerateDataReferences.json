@@ -1,7 +1,7 @@
 {
   "name": "EnumerateDataReferences",
   "description": "Test the offset and limit logic for enumerating data references on a workspace.",
-  "serverSpecificationFile": "workspace-dev.json",
+  "serverSpecificationFile": "workspace-local.json",
   "kubernetes": {},
   "application": {},
   "testScripts": [

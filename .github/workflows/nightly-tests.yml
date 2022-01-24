@@ -16,6 +16,14 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
+      # Sparse check out terra-helmfile repo version directories
+      - uses: ./.github/actions/checkout-helm-versions
+        with:
+          repository: broadinstitute/terra-helmfile
+          ref: master
+          token: ${{ secrets.BROADBOT_TOKEN }}
+          path: integration/terra-helmfile
+
       # Install postgres:
       # - Create the file repository configuration.
       # - Import the repository signing key.
@@ -23,10 +31,10 @@ jobs:
       # - Install the latest version of PostgreSQL. If you want a specific version, use 'postgresql-12' or similar instead of 'postgresql':
       - name: Install the latest postgres
         run: |
-            sh -c 'echo "deb http://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" > /etc/apt/sources.list.d/pgdg.list'
-            curl https://www.postgresql.org/media/keys/ACCC4CF8.asc | apt-key add -
-            apt-get update
-            apt-get -y install postgresql
+            sudo sh -c 'echo "deb http://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" > /etc/apt/sources.list.d/pgdg.list'
+            sudo sh -c 'curl https://www.postgresql.org/media/keys/ACCC4CF8.asc | apt-key add - '
+            sudo apt-get update
+            sudo apt-get -y install postgresql
 
       - name: Set up AdoptOpenJDK 11
         uses: joschi/setup-jdk@v2
@@ -129,8 +137,15 @@ jobs:
           L4="Res: ${{ steps.resiliency-test.outcome }}"
           text="Link to <https://github.com/DataBiosphere/terra-workspace-manager/actions/runs/$GITHUB_RUN_ID|test run>"
           bold="$L2 | $L3 | $L4"
+          if [ "${{ job.status }}" == "success" ]; then
+            emoji=":white_check_mark:"
+          else
+            emoji=":no_entry:"
+            text="@channel $text"
+          fi
           echo ::set-output name=status-text::$text
           echo ::set-output name=status-bold::$bold
+          echo ::set-output name=status-emoji::$emoji
 
       - name: Notify WSM Slack
         if: always()
@@ -141,8 +156,8 @@ jobs:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
         with:
           status: ${{ job.status }}
-          channel: "#terra-workspace-manager"
+          channel: "#terra-wsm-alerts"
           username: "WSM nightly test"
           author_name: ${{ steps.status-message.outputs.status-bold }}
-          icon_emoji: ':vertical_traffic_light:'
+          icon_emoji: ${{ steps.status-message.outputs.status-emoji }}
           text: ${{ steps.status-message.outputs.status-text }}

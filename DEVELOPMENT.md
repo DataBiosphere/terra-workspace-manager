@@ -25,7 +25,7 @@ We currently have these workflows:
 
 Workflow      | Triggers         | Work
 --------------|------------------|-------
-_test_ | on PR and merge to dev | runs the unit, connected and soon-to-be-removed integration tests
+_test_ | on PR and merge to dev | runs the unit, connected and azure tests
 _pr-integration_ | on PR and merge to dev | runs the TestRunner-based integration test suite from the GHA host VM
 _nightly-tests_ | nightly at 2am | runs the TestRunner-based integration, perf, and resiliency test suites on the wsmtest personal environment
 _tag-publish_ | on merge to dev | tags, version bumps, publishes client to artifactory, pushes image to GCR
@@ -48,6 +48,9 @@ integration environments), update the
 ### Prerequisites:
 
 - Install Postgres 13.1: https://www.postgresql.org/download/
+  ```sh
+  brew install postgresql@13
+  ```
   - [The app](https://postgresapp.com/downloads.html) may be easier, just make sure to download the right version. It'll manage things for you and has a useful menulet where the server can be turned on and off. Don't forget to create a server if you go this route.
 - Install AdoptOpenJDK Java 11 (Hotspot). Here's an easy way on Mac, using [jEnv](https://www.jenv.be/) to manage the active version:
 
@@ -62,7 +65,7 @@ integration environments), update the
 
     # follow instructions from https://github.com/AdoptOpenJDK/homebrew-openjdk to install adoptopenjdk11:
     brew tap AdoptOpenJDK/openjdk
-    brew cask install adoptopenjdk11
+    brew install --cask adoptopenjdk11
 
     jenv add /Library/Java/JavaVirtualMachines/adoptopenjdk-11.jdk/Contents/Home
     ```
@@ -81,11 +84,11 @@ the Postgres server
 ##### Running the Postgres Container
 To start a postgres container configured with the necessary databases:
 ```sh
-./local-dev/run_postgres.sh start
+./service/local-dev/run_postgres.sh start
 ```
 To stop the container:
 ```sh
-./local-dev/run_postgres.sh stop
+./service/local-dev/run_postgres.sh stop
 ```
 Note that the contents of the database is not saved between container runs.
 
@@ -129,7 +132,8 @@ code to directly depend on Vault. For example, Verily's Terra deployment will no
 Vault. So the code depends on files that hold the information.
 
 The `scripts/write-config.sh` script is used to collect all of the needed data from vault and
-store it in files in the gradle `${rootDir}` in the directory `config/`.
+store it in files in the gradle `${rootDir}` in the directory `config/`. Having a Broad Institute
+account is the pre-requisite for fetching data from vault.
 
 One advantage of having the config written in gradle `${rootDir}` is that it is visible to
 github actions that run our CI/CD process.

@@ -9,7 +9,9 @@ import static org.junit.jupiter.api.Assertions.fail;
 import bio.terra.testrunner.common.utils.AuthenticationUtils;
 import bio.terra.testrunner.runner.config.ServerSpecification;
 import bio.terra.testrunner.runner.config.TestUserSpecification;
+import bio.terra.workspace.api.ControlledAzureResourceApi;
 import bio.terra.workspace.api.ControlledGcpResourceApi;
+import bio.terra.workspace.api.JobsApi;
 import bio.terra.workspace.api.ReferencedGcpResourceApi;
 import bio.terra.workspace.api.ResourceApi;
 import bio.terra.workspace.api.WorkspaceApi;
@@ -48,9 +50,19 @@ import org.slf4j.LoggerFactory;
 public class ClientTestUtils {
 
   public static final String TEST_BUCKET_NAME = "terra_wsm_test_resource";
+  public static final String TEST_BUCKET_NAME_WITH_FINE_GRAINED_ACCESS =
+      "terra_wsm_fine_grained_test_bucket";
+  public static final String TEST_FILE_FOO_MONKEY_SEES_MONKEY_DOS =
+      "foo/monkey_sees_monkey_dos.txt";
+  public static final String TEST_FOLDER_FOO = "foo/";
   public static final String TEST_BQ_DATASET_NAME = "terra_wsm_test_dataset";
+  public static final String TEST_BQ_DATASET_NAME_2 = "terra_wsm_test_dataset_2";
+  public static final String TEST_BQ_DATATABLE_NAME = "terra wsm test data table";
+  public static final String TEST_BQ_DATATABLE_NAME_2 = "terra wsm test data table 2";
   public static final String TEST_BQ_DATASET_PROJECT = "terra-kernel-k8s";
   public static final String RESOURCE_NAME_PREFIX = "terratest";
+  // We may want this to be a test parameter. It has to match what is in the config or in the helm
+  public static final UUID TEST_WSM_APP = UUID.fromString("E4C0924A-3D7D-4D3D-8DE4-3D2CF50C3818");
   private static final Logger logger = LoggerFactory.getLogger(ClientTestUtils.class);
 
   // Required scopes for client tests include the usual login scopes and GCP scope.
@@ -176,6 +188,11 @@ public class ClientTestUtils {
     return new ControlledGcpResourceApi(apiClient);
   }
 
+  public static ControlledAzureResourceApi getControlledAzureResourceClient() {
+    // TODO: proper api client specification
+    return new ControlledAzureResourceApi();
+  }
+
   public static ReferencedGcpResourceApi getReferencedGpcResourceClient(
       TestUserSpecification testUser, ServerSpecification server) throws IOException {
     final ApiClient apiClient = getClientForTestUser(testUser, server);
@@ -186,6 +203,12 @@ public class ClientTestUtils {
       TestUserSpecification testUser, ServerSpecification server) throws IOException {
     final ApiClient apiClient = getClientForTestUser(testUser, server);
     return new ResourceApi(apiClient);
+  }
+
+  public static JobsApi getJobsClient(TestUserSpecification testUser, ServerSpecification server)
+      throws IOException {
+    final ApiClient apiClient = getClientForTestUser(testUser, server);
+    return new JobsApi(apiClient);
   }
 
   /**
@@ -247,17 +270,18 @@ public class ClientTestUtils {
   }
 
   /**
-   * Get a result from a call that might throw an exception. Treat the exception as retryable,
-   * sleep for 15 seconds, and retry up to 40 times. This structure is useful for situations where
-   * we are waiting on a cloud IAM permission change to take effect.
+   * Get a result from a call that might throw an exception. Treat the exception as retryable, sleep
+   * for 15 seconds, and retry up to 40 times. This structure is useful for situations where we are
+   * waiting on a cloud IAM permission change to take effect.
+   *
    * @param supplier - code returning the result or throwing an exception
    * @param <T> - type of result
    * @return - result from supplier, the first time it doesn't throw, or null if all tries have been
    *     exhausted
-   * @throws InterruptedException
+   * @throws InterruptedException if the sleep is interrupted
    */
-  public static @Nullable <T> T getWithRetryOnException(
-      SupplierWithException<T> supplier) throws InterruptedException {
+  public static @Nullable <T> T getWithRetryOnException(SupplierWithException<T> supplier)
+      throws InterruptedException {
     T result = null;
     int numTries = 40;
     Duration sleepDuration = Duration.ofSeconds(15);
@@ -279,15 +303,14 @@ public class ClientTestUtils {
   }
 
   public static void runWithRetryOnException(Runnable fn) throws InterruptedException {
-    getWithRetryOnException(() -> {
-      fn.run();
-      return null;
-    });
+    getWithRetryOnException(
+        () -> {
+          fn.run();
+          return null;
+        });
   }
 
-  /**
-   * An interface for an arbitrary workspace operation that throws an {@link ApiException}.
-   */
+  /** An interface for an arbitrary workspace operation that throws an {@link ApiException}. */
   @FunctionalInterface
   public interface WorkspaceOperation<T> {
 
@@ -297,17 +320,18 @@ public class ClientTestUtils {
   /**
    * Polls a workspace API operation as long as the job is running.
    *
-   * @param <T>                the result type of the async operation.
-   * @param initialValue       the first result to use to poll
-   * @param operation          a function for the workspace async operation to execute
+   * @param <T> the result type of the async operation.
+   * @param initialValue the first result to use to poll
+   * @param operation a function for the workspace async operation to execute
    * @param jobReportExtractor a function for getting the {@link JobReport} from the result
-   * @param pollInterval       how long to sleep between polls.
+   * @param pollInterval how long to sleep between polls.
    */
   public static <T> T pollWhileRunning(
       T initialValue,
       WorkspaceOperation<T> operation,
       Function<T, JobReport> jobReportExtractor,
-      Duration pollInterval) throws InterruptedException, ApiException {
+      Duration pollInterval)
+      throws InterruptedException, ApiException {
     T result = initialValue;
     while (jobIsRunning(jobReportExtractor.apply(result))) {
       Thread.sleep(pollInterval.toMillis());
@@ -331,7 +355,8 @@ public class ClientTestUtils {
    * @param jobReport jobReport from the operation result
    * @param errorReport errorReport from the operation result - may be null if no error
    */
-  public static void assertJobSuccess(String operation, JobReport jobReport, @Nullable ErrorReport errorReport) {
+  public static void assertJobSuccess(
+      String operation, JobReport jobReport, @Nullable ErrorReport errorReport) {
     if (jobReport.getStatus() == StatusEnum.SUCCEEDED) {
       assertNull(errorReport);
       logger.info("Operation {} succeeded", operation);
@@ -347,6 +372,7 @@ public class ClientTestUtils {
 
   /**
    * Check Optional's value is present and return it, or else fail an assertion.
+   *
    * @param optional - Optional expression
    * @param <T> - value type of optional
    * @return - value of optional, if present

@@ -3,6 +3,7 @@ package bio.terra.workspace.db.model;
 import bio.terra.workspace.service.resource.WsmResourceType;
 import bio.terra.workspace.service.resource.controlled.AccessScopeType;
 import bio.terra.workspace.service.resource.controlled.ManagedByType;
+import bio.terra.workspace.service.resource.controlled.PrivateResourceState;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.model.StewardshipType;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
@@ -28,8 +29,9 @@ public class DbResource {
   // controlled resource fields
   @Nullable private AccessScopeType accessScope;
   @Nullable private ManagedByType managedBy;
-  @Nullable private UUID associatedApp;
+  @Nullable private UUID applicationId;
   @Nullable private String assignedUser;
+  @Nullable private PrivateResourceState privateResourceState;
 
   public UUID getWorkspaceId() {
     return workspaceId;
@@ -130,12 +132,12 @@ public class DbResource {
     return this;
   }
 
-  public Optional<UUID> getAssociatedApp() {
-    return Optional.ofNullable(associatedApp);
+  public Optional<UUID> getApplicationId() {
+    return Optional.ofNullable(applicationId);
   }
 
-  public DbResource associatedApp(UUID associatedApp) {
-    this.associatedApp = associatedApp;
+  public DbResource applicationId(@Nullable UUID applicationId) {
+    this.applicationId = applicationId;
     return this;
   }
 
@@ -145,6 +147,15 @@ public class DbResource {
 
   public DbResource assignedUser(String assignedUser) {
     this.assignedUser = assignedUser;
+    return this;
+  }
+
+  public Optional<PrivateResourceState> getPrivateResourceState() {
+    return Optional.ofNullable(privateResourceState);
+  }
+
+  public DbResource privateResourceState(PrivateResourceState privateResourceState) {
+    this.privateResourceState = privateResourceState;
     return this;
   }
 }

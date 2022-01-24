@@ -13,6 +13,7 @@ import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
+import bio.terra.workspace.service.workspace.model.Workspace;
 import java.util.UUID;
 
 public class LaunchCreateGcpContextFlightStep implements Step {
@@ -28,20 +29,17 @@ public class LaunchCreateGcpContextFlightStep implements Step {
     validateRequiredEntries(
         context.getInputParameters(),
         ControlledResourceKeys.SOURCE_WORKSPACE_ID,
-        JobMapKeys.AUTH_USER_INFO.getKeyName());
+        JobMapKeys.AUTH_USER_INFO.getKeyName(),
+        JobMapKeys.REQUEST.getKeyName());
     validateRequiredEntries(
-        context.getWorkingMap(),
-        ControlledResourceKeys.DESTINATION_WORKSPACE_ID,
-        ControlledResourceKeys.CREATE_CLOUD_CONTEXT_FLIGHT_ID);
+        context.getWorkingMap(), ControlledResourceKeys.CREATE_CLOUD_CONTEXT_FLIGHT_ID);
 
-    final var sourceWorkspaceId =
-        context.getInputParameters().get(ControlledResourceKeys.SOURCE_WORKSPACE_ID, UUID.class);
     final var userRequest =
         context
             .getInputParameters()
             .get(JobMapKeys.AUTH_USER_INFO.getKeyName(), AuthenticatedUserRequest.class);
-    final var destinationWorkspaceId =
-        context.getWorkingMap().get(ControlledResourceKeys.DESTINATION_WORKSPACE_ID, UUID.class);
+    final var destinationWorkspace =
+        context.getInputParameters().get(JobMapKeys.REQUEST.getKeyName(), Workspace.class);
 
     final var cloudContextJobId =
         context
@@ -57,10 +55,10 @@ public class LaunchCreateGcpContextFlightStep implements Step {
     } catch (DatabaseOperationException e) {
       return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, e);
     }
-    // we already have a flight, so don't launch another one
+    // if we already have a flight, don't launch another one
     if (!flightAlreadyExists) {
       workspaceService.createGcpCloudContext(
-          destinationWorkspaceId, cloudContextJobId, userRequest);
+          destinationWorkspace.getWorkspaceId(), cloudContextJobId, userRequest);
     }
     return StepResult.getStepResultSuccess();
   }

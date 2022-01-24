@@ -1,5 +1,8 @@
 package bio.terra.workspace.db;
 
+import static bio.terra.workspace.service.resource.WsmResourceType.AI_NOTEBOOK_INSTANCE;
+import static bio.terra.workspace.service.resource.WsmResourceType.BIG_QUERY_DATASET;
+import static bio.terra.workspace.service.resource.WsmResourceType.GCS_BUCKET;
 import static bio.terra.workspace.service.resource.model.StewardshipType.CONTROLLED;
 import static bio.terra.workspace.service.resource.model.StewardshipType.REFERENCED;
 import static bio.terra.workspace.service.resource.model.StewardshipType.fromSql;
@@ -7,25 +10,33 @@ import static java.util.stream.Collectors.toList;
 
 import bio.terra.common.db.ReadTransaction;
 import bio.terra.common.db.WriteTransaction;
-import bio.terra.workspace.db.exception.CloudContextRequiredException;
 import bio.terra.workspace.db.exception.InvalidMetadataException;
 import bio.terra.workspace.db.model.DbResource;
 import bio.terra.workspace.service.resource.WsmResource;
 import bio.terra.workspace.service.resource.WsmResourceType;
 import bio.terra.workspace.service.resource.controlled.AccessScopeType;
 import bio.terra.workspace.service.resource.controlled.ControlledAiNotebookInstanceResource;
+import bio.terra.workspace.service.resource.controlled.ControlledAzureDiskResource;
+import bio.terra.workspace.service.resource.controlled.ControlledAzureIpResource;
+import bio.terra.workspace.service.resource.controlled.ControlledAzureNetworkResource;
+import bio.terra.workspace.service.resource.controlled.ControlledAzureStorageResource;
+import bio.terra.workspace.service.resource.controlled.ControlledAzureVmResource;
 import bio.terra.workspace.service.resource.controlled.ControlledBigQueryDatasetResource;
 import bio.terra.workspace.service.resource.controlled.ControlledGcsBucketResource;
 import bio.terra.workspace.service.resource.controlled.ControlledResource;
 import bio.terra.workspace.service.resource.controlled.ManagedByType;
+import bio.terra.workspace.service.resource.controlled.PrivateResourceState;
 import bio.terra.workspace.service.resource.exception.DuplicateResourceException;
 import bio.terra.workspace.service.resource.exception.ResourceNotFoundException;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.model.StewardshipType;
+import bio.terra.workspace.service.resource.referenced.ReferencedBigQueryDataTableResource;
 import bio.terra.workspace.service.resource.referenced.ReferencedBigQueryDatasetResource;
 import bio.terra.workspace.service.resource.referenced.ReferencedDataRepoSnapshotResource;
 import bio.terra.workspace.service.resource.referenced.ReferencedGcsBucketResource;
+import bio.terra.workspace.service.resource.referenced.ReferencedGcsObjectResource;
 import bio.terra.workspace.service.resource.referenced.ReferencedResource;
+import bio.terra.workspace.service.workspace.exceptions.CloudContextRequiredException;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import java.util.Collections;
 import java.util.List;
@@ -33,6 +44,7 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -52,7 +64,7 @@ public class ResourceDao {
   private static final String RESOURCE_SELECT_SQL =
       "SELECT workspace_id, cloud_platform, resource_id, name, description, "
           + "stewardship_type, resource_type, cloning_instructions, attributes,"
-          + " access_scope, managed_by, associated_app, assigned_user"
+          + " access_scope, managed_by, associated_app, assigned_user, private_resource_state"
           + " FROM resource WHERE workspace_id = :workspace_id ";
 
   private static final RowMapper<DbResource> DB_RESOURCE_ROW_MAPPER =
@@ -75,11 +87,15 @@ public class ResourceDao {
                 Optional.ofNullable(rs.getString("managed_by"))
                     .map(ManagedByType::fromSql)
                     .orElse(null))
-            .associatedApp(
+            .applicationId(
                 Optional.ofNullable(rs.getString("associated_app"))
                     .map(UUID::fromString)
                     .orElse(null))
-            .assignedUser(rs.getString("assigned_user"));
+            .assignedUser(rs.getString("assigned_user"))
+            .privateResourceState(
+                Optional.ofNullable(rs.getString("private_resource_state"))
+                    .map(PrivateResourceState::fromSql)
+                    .orElse(null));
       };
 
   private final NamedParameterJdbcTemplate jdbcTemplate;
@@ -106,6 +122,29 @@ public class ResourceDao {
         "{} record for resource {} in workspace {}",
         (deleted ? "Deleted" : "No Delete - did not find"),
         resourceId,
+        workspaceId);
+
+    return deleted;
+  }
+
+  @WriteTransaction
+  public boolean deleteResourceForResourceType(
+      UUID workspaceId, UUID resourceId, WsmResourceType resourceType) {
+    final String sql =
+        "DELETE FROM resource WHERE workspace_id = :workspace_id AND resource_id = :resource_id AND resource_type = :resource_type";
+    MapSqlParameterSource params =
+        new MapSqlParameterSource()
+            .addValue("workspace_id", workspaceId.toString())
+            .addValue("resource_id", resourceId.toString())
+            .addValue("resource_type", resourceType.toSql());
+    int rowsAffected = jdbcTemplate.update(sql, params);
+    boolean deleted = rowsAffected > 0;
+
+    logger.info(
+        "{} record for resource {} of resource type {} in workspace {}",
+        (deleted ? "Deleted" : "No Delete - did not find"),
+        resourceId,
+        resourceType,
         workspaceId);
 
     return deleted;
@@ -241,26 +280,60 @@ public class ResourceDao {
         .collect(Collectors.toList());
   }
 
-  /** Returns a list of all private controlled resources assigned to a user in a given workspace. */
-  @ReadTransaction
-  public List<ControlledResource> listPrivateResourcesByUser(UUID workspaceId, String userEmail) {
-    String sql =
-        RESOURCE_SELECT_SQL
-            + " AND stewardship_type = :controlled_resource"
+  /**
+   * Reads all private controlled resources assigned to a given user in a given workspace which are
+   * not being cleaned up by other flights and marks them as being cleaned up by the current flight.
+   *
+   * @return A list of all controlled resources assigned to the given user in the given workspace
+   *     which were not locked by another flight. Every item in this list will have
+   *     cleanup_flight_id set to the provided flight id.
+   */
+  @WriteTransaction
+  public List<ControlledResource> claimCleanupForWorkspacePrivateResources(
+      UUID workspaceId, String userEmail, String flightId) {
+    String filterClause =
+        " AND stewardship_type = :controlled_resource"
             + " AND access_scope = :access_scope"
-            + " AND assigned_user = :user_email";
+            + " AND assigned_user = :user_email"
+            + " AND (cleanup_flight_id IS NULL"
+            + " OR cleanup_flight_id = :flight_id)";
+    String readSql = RESOURCE_SELECT_SQL + filterClause;
+    String writeSql =
+        "UPDATE resource SET cleanup_flight_id = :flight_id WHERE workspace_id = :workspace_id"
+            + filterClause;
     MapSqlParameterSource params =
         new MapSqlParameterSource()
             .addValue("workspace_id", workspaceId.toString())
             .addValue("controlled_resource", CONTROLLED.toSql())
             .addValue("access_scope", AccessScopeType.ACCESS_SCOPE_PRIVATE.toSql())
-            .addValue("user_email", userEmail);
+            .addValue("user_email", userEmail)
+            .addValue("flight_id", flightId);
 
-    List<DbResource> dbResources = jdbcTemplate.query(sql, params, DB_RESOURCE_ROW_MAPPER);
+    List<DbResource> dbResources = jdbcTemplate.query(readSql, params, DB_RESOURCE_ROW_MAPPER);
+    jdbcTemplate.update(writeSql, params);
     return dbResources.stream()
         .map(this::constructResource)
         .map(WsmResource::castToControlledResource)
         .collect(Collectors.toList());
+  }
+
+  /**
+   * Release all claims to clean up a user's private resources (indicated by the cleanup_flight_id
+   * column of the resource table) in a workspace for the provided flight.
+   */
+  @WriteTransaction
+  public void releasePrivateResourceCleanupClaims(
+      UUID workspaceId, String userEmail, String flightId) {
+    String writeSql =
+        "UPDATE resource SET cleanup_flight_id = NULL WHERE workspace_id = :workspace_id AND stewardship_type = :controlled_resource AND access_scope = :access_scope AND assigned_user = :user_email AND cleanup_flight_id = :flight_id";
+    MapSqlParameterSource params =
+        new MapSqlParameterSource()
+            .addValue("workspace_id", workspaceId.toString())
+            .addValue("controlled_resource", CONTROLLED.toSql())
+            .addValue("access_scope", AccessScopeType.ACCESS_SCOPE_PRIVATE.toSql())
+            .addValue("user_email", userEmail)
+            .addValue("flight_id", flightId);
+    jdbcTemplate.update(writeSql, params);
   }
 
   /**
@@ -337,49 +410,39 @@ public class ResourceDao {
     storeResource(resource);
   }
 
-  @WriteTransaction
-  public boolean updateResource(
-      UUID workspaceId, UUID resourceId, String name, String description) {
-    if (name == null && description == null) {
+  private boolean updateResourceWorker(
+      UUID workspaceId,
+      UUID resourceId,
+      @Nullable String name,
+      @Nullable String description,
+      @Nullable String attributes) {
+    if (name == null && description == null && attributes == null) {
       return false;
     }
 
     var params = new MapSqlParameterSource();
 
-    if (name != null) {
+    if (!StringUtils.isEmpty(name)) {
       params.addValue("name", name);
     }
-
-    if (description != null) {
+    if (!StringUtils.isEmpty(description)) {
       params.addValue("description", description);
     }
+    if (!StringUtils.isEmpty(attributes)) {
+      params.addValue("attributes", attributes);
+    }
 
-    return updateResourceColumns(workspaceId, resourceId, params);
-  }
-
-  /**
-   * This is an open ended method for constructing the SQL update statement. To use it, build the
-   * parameter list making the param name equal to the column name you want to update. The method
-   * generates the column_name = :column_name list. It is an error if the params map is empty.
-   *
-   * @param columnParams sql parameters
-   * @param workspaceId workspace identifier - not strictly necessarily, but an extra validation
-   * @param resourceId resource identifier
-   */
-  private boolean updateResourceColumns(
-      UUID workspaceId, UUID resourceId, MapSqlParameterSource columnParams) {
     StringBuilder sb = new StringBuilder("UPDATE resource SET ");
 
-    sb.append(DbUtils.setColumnsClause(columnParams));
+    sb.append(DbUtils.setColumnsClause(params, "attributes"));
+
     sb.append(" WHERE workspace_id = :workspace_id AND resource_id = :resource_id");
 
-    MapSqlParameterSource queryParams = new MapSqlParameterSource();
-    queryParams
-        .addValues(columnParams.getValues())
+    params
         .addValue("workspace_id", workspaceId.toString())
         .addValue("resource_id", resourceId.toString());
 
-    int rowsAffected = jdbcTemplate.update(sb.toString(), queryParams);
+    int rowsAffected = jdbcTemplate.update(sb.toString(), params);
     boolean updated = rowsAffected > 0;
 
     logger.info(
@@ -389,6 +452,36 @@ public class ResourceDao {
         workspaceId);
 
     return updated;
+  }
+
+  /**
+   * Update name, description, and/or attributes of the resource.
+   *
+   * @param name name of the resource, may be null if it does not need to be updated
+   * @param description description of the resource, may be null if it does not need to be updated
+   * @param attributes resource-type specific attributes, may be null if it does not need to be
+   *     updated .
+   */
+  @WriteTransaction
+  public boolean updateResource(
+      UUID workspaceId,
+      UUID resourceId,
+      @Nullable String name,
+      @Nullable String description,
+      @Nullable String attributes) {
+    return updateResourceWorker(workspaceId, resourceId, name, description, attributes);
+  }
+
+  /**
+   * Update name and/or description of the resource.
+   *
+   * @param name name of the resource, may be null if it does not need to be updated
+   * @param description description of the resource, may be null if it does not need to be updated
+   */
+  @WriteTransaction
+  public boolean updateResource(
+      UUID workspaceId, UUID resourceId, @Nullable String name, @Nullable String description) {
+    return updateResourceWorker(workspaceId, resourceId, name, description, /*attributes=*/ null);
   }
 
   /**
@@ -430,6 +523,21 @@ public class ResourceDao {
       case BIG_QUERY_DATASET:
         validateUniqueBigQueryDataset(controlledResource.castToBigQueryDatasetResource());
         break;
+      case AZURE_DISK:
+        validateUniqueAzureDisk(controlledResource.castToAzureDiskResource());
+        break;
+      case AZURE_IP:
+        validateUniqueAzureIp(controlledResource.castToAzureIpResource());
+        break;
+      case AZURE_NETWORK:
+        validateUniqueAzureNetwork(controlledResource.castToAzureNetworkResource());
+        break;
+      case AZURE_STORAGE_ACCOUNT:
+        validateUniqueAzureStorage(controlledResource.castToAzureStorageResource());
+        break;
+      case AZURE_VM:
+        validateUniqueAzureVm(controlledResource.castToAzureVmResource());
+        break;
       case DATA_REPO_SNAPSHOT:
       default:
         throw new IllegalArgumentException(
@@ -438,6 +546,65 @@ public class ResourceDao {
     }
 
     storeResource(controlledResource);
+  }
+
+  /**
+   * Set the private_resource_state of a single private controlled resource. To set the state for
+   * all a user's private resources in a workspace, use {@link
+   * #setPrivateResourcesStateForWorkspaceUser(UUID, String, PrivateResourceState)}
+   */
+  @WriteTransaction
+  public void setPrivateResourceState(
+      ControlledResource resource, PrivateResourceState privateResourceState) {
+    final String sql =
+        "UPDATE resource SET private_resource_state = :private_resource_state WHERE workspace_id = :workspace_id AND resource_id = :resource_id AND access_scope = :private_access_scope";
+    MapSqlParameterSource params =
+        new MapSqlParameterSource()
+            .addValue("private_resource_state", privateResourceState.toSql())
+            .addValue("workspace_id", resource.getWorkspaceId().toString())
+            .addValue("resource_id", resource.getResourceId().toString())
+            .addValue("private_access_scope", AccessScopeType.ACCESS_SCOPE_PRIVATE.toSql());
+    jdbcTemplate.update(sql, params);
+  }
+
+  /**
+   * Sets the private_resource_state of all resources in a single workspace assigned to a user. To
+   * set the private_resource_state of a single resource, use {@link
+   * #setPrivateResourceState(ControlledResource, PrivateResourceState)}
+   */
+  @WriteTransaction
+  public void setPrivateResourcesStateForWorkspaceUser(
+      UUID workspaceId, String userEmail, PrivateResourceState state) {
+    final String sql =
+        "UPDATE resource SET private_resource_state = :private_resource_state WHERE workspace_id = :workspace_id AND assigned_user = :user_email";
+    MapSqlParameterSource params =
+        new MapSqlParameterSource()
+            .addValue("private_resource_state", state.toSql())
+            .addValue("workspace_id", workspaceId.toString())
+            .addValue("user_email", userEmail);
+    jdbcTemplate.update(sql, params);
+  }
+
+  /**
+   * Wait for a resource row to appear in the database. This is used so async resource creation
+   * calls return after the database row has been inserted. That allows clients to see the resource
+   * with a resource enumeration.
+   *
+   * @param workspaceId workspace where the resource is being created
+   * @param resourceId resource being created
+   */
+  @ReadTransaction
+  public boolean resourceExists(UUID workspaceId, UUID resourceId) {
+    final String sql =
+        "SELECT COUNT(1) FROM resource"
+            + " WHERE workspace_id = :workspace_id AND resource_id = :resource_id";
+    MapSqlParameterSource params =
+        new MapSqlParameterSource()
+            .addValue("workspace_id", workspaceId.toString())
+            .addValue("resource_id", resourceId.toString());
+
+    Integer count = jdbcTemplate.queryForObject(sql, params, Integer.class);
+    return (count != null && count > 0);
   }
 
   private void validateUniqueGcsBucket(ControlledGcsBucketResource bucketResource) {
@@ -449,7 +616,7 @@ public class ResourceDao {
     MapSqlParameterSource bucketParams =
         new MapSqlParameterSource()
             .addValue("bucket_name", bucketResource.getBucketName())
-            .addValue("resource_type", WsmResourceType.GCS_BUCKET.toSql());
+            .addValue("resource_type", GCS_BUCKET.toSql());
     Integer matchingBucketCount =
         jdbcTemplate.queryForObject(bucketSql, bucketParams, Integer.class);
     if (matchingBucketCount != null && matchingBucketCount > 0) {
@@ -472,7 +639,7 @@ public class ResourceDao {
             + " AND attributes->>'location' = :location";
     MapSqlParameterSource sqlParams =
         new MapSqlParameterSource()
-            .addValue("resource_type", WsmResourceType.AI_NOTEBOOK_INSTANCE.toSql())
+            .addValue("resource_type", AI_NOTEBOOK_INSTANCE.toSql())
             .addValue("workspace_id", notebookResource.getWorkspaceId().toString())
             .addValue("instance_id", notebookResource.getInstanceId())
             .addValue("location", notebookResource.getLocation());
@@ -496,7 +663,7 @@ public class ResourceDao {
             + " AND attributes->>'datasetName' = :dataset_name";
     MapSqlParameterSource sqlParams =
         new MapSqlParameterSource()
-            .addValue("resource_type", WsmResourceType.BIG_QUERY_DATASET.toSql())
+            .addValue("resource_type", BIG_QUERY_DATASET.toSql())
             .addValue("workspace_id", datasetResource.getWorkspaceId().toString())
             .addValue("dataset_name", datasetResource.getDatasetName());
     Integer matchingCount = jdbcTemplate.queryForObject(sql, sqlParams, Integer.class);
@@ -507,6 +674,101 @@ public class ResourceDao {
     }
   }
 
+  private void validateUniqueAzureIp(ControlledAzureIpResource ipResource) {
+    String sql =
+        "SELECT COUNT(1)"
+            + " FROM resource"
+            + " WHERE resource_type = :resource_type"
+            + " AND workspace_id = :workspace_id"
+            + " AND attributes->>'ipName' = :ip_name";
+    MapSqlParameterSource sqlParams =
+        new MapSqlParameterSource()
+            .addValue("resource_type", WsmResourceType.AZURE_IP.toSql())
+            .addValue("workspace_id", ipResource.getWorkspaceId().toString())
+            .addValue("ip_name", ipResource.getIpName());
+    Integer matchingCount = jdbcTemplate.queryForObject(sql, sqlParams, Integer.class);
+    if (matchingCount != null && matchingCount > 0) {
+      throw new DuplicateResourceException(
+          String.format("An Azure IP with ID %s already exists", ipResource.getIpName()));
+    }
+  }
+
+  private void validateUniqueAzureDisk(ControlledAzureDiskResource resource) {
+    String sql =
+        "SELECT COUNT(1)"
+            + " FROM resource"
+            + " WHERE resource_type = :resource_type"
+            + " AND workspace_id = :workspace_id"
+            + " AND attributes->>'diskName' = :disk_name";
+    MapSqlParameterSource sqlParams =
+        new MapSqlParameterSource()
+            .addValue("resource_type", WsmResourceType.AZURE_DISK.toSql())
+            .addValue("workspace_id", resource.getWorkspaceId().toString())
+            .addValue("disk_name", resource.getDiskName());
+    Integer matchingCount = jdbcTemplate.queryForObject(sql, sqlParams, Integer.class);
+    if (matchingCount != null && matchingCount > 0) {
+      throw new DuplicateResourceException(
+          String.format("An Azure Disk with ID %s already exists", resource.getDiskName()));
+    }
+  }
+
+  private void validateUniqueAzureVm(ControlledAzureVmResource resource) {
+    // This should take into account azure uniqueness param, namely the fields in `AzureContext`
+    String sql =
+        "SELECT COUNT(1)"
+            + " FROM resource"
+            + " WHERE resource_type = :resource_type"
+            + " AND attributes->>'vmName' = :vm_name";
+    MapSqlParameterSource sqlParams =
+        new MapSqlParameterSource()
+            .addValue("resource_type", WsmResourceType.AZURE_VM.toSql())
+            .addValue("vm_name", resource.getVmName());
+    Integer matchingCount = jdbcTemplate.queryForObject(sql, sqlParams, Integer.class);
+    if (matchingCount != null && matchingCount > 0) {
+      throw new DuplicateResourceException(
+          String.format("An Azure Vm with ID %s already exists", resource.getVmName()));
+    }
+  }
+
+  private void validateUniqueAzureNetwork(ControlledAzureNetworkResource resource) {
+    String sql =
+        "SELECT COUNT(1)"
+            + " FROM resource"
+            + " WHERE resource_type = :resource_type"
+            + " AND workspace_id = :workspace_id"
+            + " AND attributes->>'networkName' = :network_name";
+    MapSqlParameterSource sqlParams =
+        new MapSqlParameterSource()
+            .addValue("resource_type", WsmResourceType.AZURE_NETWORK.toSql())
+            .addValue("workspace_id", resource.getWorkspaceId().toString())
+            .addValue("network_name", resource.getNetworkName());
+    Integer matchingCount = jdbcTemplate.queryForObject(sql, sqlParams, Integer.class);
+    if (matchingCount != null && matchingCount > 0) {
+      throw new DuplicateResourceException(
+          String.format("An Azure Network with ID %s already exists", resource.getNetworkName()));
+    }
+  }
+
+  private void validateUniqueAzureStorage(ControlledAzureStorageResource resource) {
+    String sql =
+        "SELECT COUNT(1)"
+            + " FROM resource"
+            + " WHERE resource_type = :resource_type"
+            + " AND workspace_id = :workspace_id"
+            + " AND attributes->>'storageAccountName' = :name";
+    MapSqlParameterSource sqlParams =
+        new MapSqlParameterSource()
+            .addValue("resource_type", WsmResourceType.AZURE_NETWORK.toSql())
+            .addValue("workspace_id", resource.getWorkspaceId().toString())
+            .addValue("name", resource.getStorageAccountName());
+    Integer matchingCount = jdbcTemplate.queryForObject(sql, sqlParams, Integer.class);
+    if (matchingCount != null && matchingCount > 0) {
+      throw new DuplicateResourceException(
+          String.format(
+              "An Azure Storage with ID %s already exists", resource.getStorageAccountName()));
+    }
+  }
+
   private void storeResource(WsmResource resource) {
 
     // TODO: add resource locking to fix this
@@ -514,10 +776,8 @@ public class ResourceDao {
     //  get run more than once. The safe solution is to "lock" the resource by writing the flight id
     //  into the row at creation. Then it is possible on a re-insert to know whether the error is
     //  because this flight step is re-running or because some other flight used the same resource
-    // id.
-    //  The small risk we have here is that a duplicate resource id of will appear to be
-    // successfully
-    //  created, but in fact will be silently rejected.
+    //  id. The small risk we have here is that a duplicate resource id of will appear to be
+    //  successfully created, but in fact will be silently rejected.
 
     final String countSql = "SELECT COUNT(*) FROM resource WHERE resource_id = :resource_id";
     MapSqlParameterSource countParams =
@@ -530,10 +790,10 @@ public class ResourceDao {
     final String sql =
         "INSERT INTO resource (workspace_id, cloud_platform, resource_id, name, description, stewardship_type,"
             + " resource_type, cloning_instructions, attributes,"
-            + " access_scope, managed_by, associated_app, assigned_user)"
+            + " access_scope, managed_by, associated_app, assigned_user, private_resource_state)"
             + " VALUES (:workspace_id, :cloud_platform, :resource_id, :name, :description, :stewardship_type,"
             + " :resource_type, :cloning_instructions, cast(:attributes AS jsonb),"
-            + " :access_scope, :managed_by, :associated_app, :assigned_user)";
+            + " :access_scope, :managed_by, :associated_app, :assigned_user, :private_resource_state)";
 
     final var params =
         new MapSqlParameterSource()
@@ -552,15 +812,21 @@ public class ResourceDao {
       params
           .addValue("access_scope", controlledResource.getAccessScope().toSql())
           .addValue("managed_by", controlledResource.getManagedBy().toSql())
-          // TODO: add associatedApp to ControlledResource
-          .addValue("associated_app", null)
-          .addValue("assigned_user", controlledResource.getAssignedUser().orElse(null));
+          .addValue("associated_app", controlledResource.getApplicationId())
+          .addValue("assigned_user", controlledResource.getAssignedUser().orElse(null))
+          .addValue(
+              "private_resource_state",
+              controlledResource
+                  .getPrivateResourceState()
+                  .map(PrivateResourceState::toSql)
+                  .orElse(null));
     } else {
       params
           .addValue("access_scope", null)
           .addValue("managed_by", null)
           .addValue("associated_app", null)
-          .addValue("assigned_user", null);
+          .addValue("assigned_user", null)
+          .addValue("private_resource_state", null);
     }
 
     try {
@@ -574,33 +840,6 @@ public class ResourceDao {
           String.format(
               "A resource already exists in the workspace that has the same name (%s) or the same id (%s)",
               resource.getName(), resource.getResourceId().toString()));
-    } catch (Exception e) {
-      // TODO: This logging is intended to help diagnose Postgres crashes occurring on resource
-      // creation.
-      //  Once this issue is resolved, this should be removed.
-      logger.info(
-          "Failed to create resource workspace_id: {}, cloud_platform: {}, resource_id: {}, name: {}, description: {}, stewardship_type: {}, resource_type: {}, cloning_instructions: {}, attributes: {}",
-          resource.getWorkspaceId().toString(),
-          resource.getResourceType().getCloudPlatform().toString(),
-          resource.getResourceId().toString(),
-          resource.getName(),
-          resource.getDescription(),
-          resource.getStewardshipType().toSql(),
-          resource.getResourceType().toSql(),
-          resource.getCloningInstructions().toSql(),
-          resource.attributesToJson());
-      if (resource.getStewardshipType().equals(CONTROLLED)) {
-        ControlledResource controlledResource = resource.castToControlledResource();
-        logger.info(
-            "Resource also has controlled-resource specific parameters access_scope: {}, managed_by: {}, associated_app: {}, assigned_user: {}",
-            controlledResource.getAccessScope().toSql(),
-            controlledResource.getManagedBy().toSql(),
-            null,
-            controlledResource.getAssignedUser().orElse(null));
-      }
-      // After logging, rethrow the exception
-      logger.info("Resource creation failure is:", e);
-      throw e;
     }
   }
 
@@ -616,13 +855,14 @@ public class ResourceDao {
         switch (dbResource.getResourceType()) {
           case GCS_BUCKET:
             return new ReferencedGcsBucketResource(dbResource);
-
+          case GCS_OBJECT:
+            return new ReferencedGcsObjectResource(dbResource);
           case BIG_QUERY_DATASET:
             return new ReferencedBigQueryDatasetResource(dbResource);
-
+          case BIG_QUERY_DATA_TABLE:
+            return new ReferencedBigQueryDataTableResource(dbResource);
           case DATA_REPO_SNAPSHOT:
             return new ReferencedDataRepoSnapshotResource(dbResource);
-
           default:
             throw new InvalidMetadataException(
                 "Invalid reference resource type" + dbResource.getResourceType().toString());
@@ -636,6 +876,16 @@ public class ResourceDao {
             return new ControlledAiNotebookInstanceResource(dbResource);
           case BIG_QUERY_DATASET:
             return new ControlledBigQueryDatasetResource(dbResource);
+          case AZURE_IP:
+            return new ControlledAzureIpResource(dbResource);
+          case AZURE_DISK:
+            return new ControlledAzureDiskResource(dbResource);
+          case AZURE_VM:
+            return new ControlledAzureVmResource(dbResource);
+          case AZURE_NETWORK:
+            return new ControlledAzureNetworkResource(dbResource);
+          case AZURE_STORAGE_ACCOUNT:
+            return new ControlledAzureStorageResource(dbResource);
           default:
             throw new InvalidMetadataException(
                 "Invalid controlled resource type" + dbResource.getResourceType().toString());

@@ -9,6 +9,7 @@ import bio.terra.workspace.generated.model.ApiGcpBigQueryDatasetAttributes;
 import bio.terra.workspace.generated.model.ApiGcpBigQueryDatasetResource;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
+import bio.terra.workspace.service.petserviceaccount.PetSaService;
 import bio.terra.workspace.service.resource.ValidationUtils;
 import bio.terra.workspace.service.resource.WsmResourceType;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
@@ -45,6 +46,7 @@ public class ReferencedBigQueryDatasetResource extends ReferencedResource {
     super(workspaceId, resourceId, name, description, cloningInstructions);
     this.projectId = projectId;
     this.datasetName = datasetName;
+    validate();
   }
 
   /**
@@ -62,6 +64,7 @@ public class ReferencedBigQueryDatasetResource extends ReferencedResource {
         DbSerDes.fromJson(dbResource.getAttributes(), ReferencedBigQueryDatasetAttributes.class);
     this.projectId = attributes.getProjectId();
     this.datasetName = attributes.getDatasetName();
+    validate();
   }
 
   public static ReferencedBigQueryDatasetResource.Builder builder() {
@@ -111,8 +114,15 @@ public class ReferencedBigQueryDatasetResource extends ReferencedResource {
 
   @Override
   public boolean checkAccess(FlightBeanBag context, AuthenticatedUserRequest userRequest) {
+    // If the resource's workspace has a GCP cloud context, use the SA from that context. Otherwise,
+    // use the provided credentials. This cannot use arbitrary pet SA credentials, as they may not
+    // have the BigQuery APIs enabled.
     CrlService crlService = context.getCrlService();
-    return crlService.canReadBigQueryDataset(projectId, datasetName, userRequest);
+    PetSaService petSaService = context.getPetSaService();
+    Optional<AuthenticatedUserRequest> maybePetCreds =
+        petSaService.getWorkspacePetCredentials(getWorkspaceId(), userRequest);
+    return crlService.canReadBigQueryDataset(
+        projectId, datasetName, maybePetCreds.orElse(userRequest));
   }
 
   /**

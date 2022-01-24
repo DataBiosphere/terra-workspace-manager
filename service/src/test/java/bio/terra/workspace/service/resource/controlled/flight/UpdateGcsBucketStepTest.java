@@ -25,7 +25,7 @@ import bio.terra.workspace.common.BaseUnitTest;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.resource.controlled.ControlledGcsBucketResource;
 import bio.terra.workspace.service.resource.controlled.flight.update.UpdateGcsBucketStep;
-import bio.terra.workspace.service.workspace.WorkspaceService;
+import bio.terra.workspace.service.workspace.GcpCloudContextService;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import com.google.cloud.storage.BucketInfo.LifecycleRule;
 import com.google.cloud.storage.BucketInfo.LifecycleRule.DeleteLifecycleAction;
@@ -33,6 +33,7 @@ import com.google.cloud.storage.BucketInfo.LifecycleRule.LifecycleAction;
 import com.google.cloud.storage.BucketInfo.LifecycleRule.LifecycleCondition;
 import com.google.cloud.storage.BucketInfo.LifecycleRule.SetStorageClassLifecycleAction;
 import com.google.cloud.storage.StorageClass;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -40,6 +41,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
 
+@SuppressFBWarnings(value = "RV_RETURN_VALUE_IGNORED", justification = "storageCow is mocked.")
 public class UpdateGcsBucketStepTest extends BaseUnitTest {
   private static final String PROJECT_ID = "my-gcp-project";
 
@@ -51,7 +53,7 @@ public class UpdateGcsBucketStepTest extends BaseUnitTest {
   @Mock private CrlService mockCrlService;
   @Mock private FlightContext mockFlightContext;
   @Mock private StorageCow mockStorageCow;
-  @Mock private WorkspaceService mockWorkspaceService;
+  @Mock private GcpCloudContextService mockGcpCloudContextService;
 
   @Captor private ArgumentCaptor<List<LifecycleRule>> lifecycleRulesCaptor;
   @Captor private ArgumentCaptor<StorageClass> storageClassCaptor;
@@ -83,11 +85,11 @@ public class UpdateGcsBucketStepTest extends BaseUnitTest {
     final ControlledGcsBucketResource bucketResource =
         makeDefaultControlledGcsBucketResource().build();
     doReturn(PROJECT_ID)
-        .when(mockWorkspaceService)
+        .when(mockGcpCloudContextService)
         .getRequiredGcpProject(bucketResource.getWorkspaceId());
 
     updateGcsBucketStep =
-        new UpdateGcsBucketStep(bucketResource, mockCrlService, mockWorkspaceService);
+        new UpdateGcsBucketStep(bucketResource, mockCrlService, mockGcpCloudContextService);
   }
 
   @Test

@@ -4,9 +4,11 @@ import bio.terra.common.exception.BadRequestException;
 import bio.terra.stairway.FlightStatus;
 import bio.terra.workspace.service.resource.WsmResource;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
+import bio.terra.workspace.service.resource.referenced.ReferencedBigQueryDataTableResource;
 import bio.terra.workspace.service.resource.referenced.ReferencedBigQueryDatasetResource;
 import bio.terra.workspace.service.resource.referenced.ReferencedDataRepoSnapshotResource;
 import bio.terra.workspace.service.resource.referenced.ReferencedGcsBucketResource;
+import bio.terra.workspace.service.resource.referenced.ReferencedGcsObjectResource;
 import bio.terra.workspace.service.resource.referenced.ReferencedResource;
 import bio.terra.workspace.service.workspace.model.WsmCloneResourceResult;
 import java.util.Optional;
@@ -55,6 +57,14 @@ public class WorkspaceCloneUtils {
                 name,
                 description);
         break;
+      case GCS_OBJECT:
+        destinationResource =
+            buildDestinationGcsObjectReference(
+                sourceReferencedResource.castToGcsObjectResource(),
+                destinationWorkspaceId,
+                name,
+                description);
+        break;
       case DATA_REPO_SNAPSHOT:
         destinationResource =
             buildDestinationDataRepoSnapshotReference(
@@ -67,6 +77,14 @@ public class WorkspaceCloneUtils {
         destinationResource =
             buildDestinationBigQueryDatasetReference(
                 sourceReferencedResource.castToBigQueryDatasetResource(),
+                destinationWorkspaceId,
+                name,
+                description);
+        break;
+      case BIG_QUERY_DATA_TABLE:
+        destinationResource =
+            buildDestinationBigQueryDataTableReference(
+                sourceReferencedResource.castToBigQueryDataTableResource(),
                 destinationWorkspaceId,
                 name,
                 description);
@@ -107,6 +125,21 @@ public class WorkspaceCloneUtils {
     return resultBuilder.build();
   }
 
+  private static ReferencedResource buildDestinationGcsObjectReference(
+      ReferencedGcsObjectResource sourceBucketFileResource,
+      UUID destinationWorkspaceId,
+      @Nullable String name,
+      @Nullable String description) {
+    final ReferencedGcsObjectResource.Builder resultBuilder =
+        sourceBucketFileResource.toBuilder()
+            .workspaceId(destinationWorkspaceId)
+            .resourceId(UUID.randomUUID());
+    // apply optional override variables
+    Optional.ofNullable(name).ifPresent(resultBuilder::name);
+    Optional.ofNullable(description).ifPresent(resultBuilder::description);
+    return resultBuilder.build();
+  }
+
   private static ReferencedResource buildDestinationBigQueryDatasetReference(
       ReferencedBigQueryDatasetResource sourceBigQueryResource,
       UUID destinationWorkspaceId,
@@ -114,6 +147,21 @@ public class WorkspaceCloneUtils {
       @Nullable String description) {
     // keep projectId and dataset name the same since they are for the referent
     final ReferencedBigQueryDatasetResource.Builder resultBuilder =
+        sourceBigQueryResource.toBuilder()
+            .workspaceId(destinationWorkspaceId)
+            .resourceId(UUID.randomUUID());
+    Optional.ofNullable(name).ifPresent(resultBuilder::name);
+    Optional.ofNullable(description).ifPresent(resultBuilder::description);
+    return resultBuilder.build();
+  }
+
+  private static ReferencedResource buildDestinationBigQueryDataTableReference(
+      ReferencedBigQueryDataTableResource sourceBigQueryResource,
+      UUID destinationWorkspaceId,
+      @Nullable String name,
+      @Nullable String description) {
+    // keep projectId, dataset name and data table name the same since they are for the referent
+    final ReferencedBigQueryDataTableResource.Builder resultBuilder =
         sourceBigQueryResource.toBuilder()
             .workspaceId(destinationWorkspaceId)
             .resourceId(UUID.randomUUID());

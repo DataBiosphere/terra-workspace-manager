@@ -1,15 +1,15 @@
 {
   "name": "ControlledBigQueryDatasetLifecycle",
   "description": "CRUD controlled BQ dataset tests.",
-  "serverSpecificationFile": "workspace-dev.json",
+  "serverSpecificationFile": "workspace-local.json",
   "kubernetes": {},
   "application": {},
   "testScripts": [
     {
       "name": "ControlledBigQueryDatasetLifecycle",
       "numberOfUserJourneyThreadsToRun": 1,
-      "userJourneyThreadPoolSize": 2,
-      "expectedTimeForEach": 5,
+      "userJourneyThreadPoolSize": 1,
+      "expectedTimeForEach": 30,
       "expectedTimeForEachUnit": "MINUTES",
       "parameters": ["wm-default-spend-profile"]
     }

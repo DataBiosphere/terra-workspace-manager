@@ -1,14 +1,14 @@
 {
   "name": "PrivateControlledGcsBucketLifecycle",
   "description": "CRUD user-private GCS bucket tests.",
-  "serverSpecificationFile": "workspace-dev.json",
+  "serverSpecificationFile": "workspace-local.json",
   "kubernetes": {},
   "application": {},
   "testScripts": [
     {
       "name": "PrivateControlledGcsBucketLifecycle",
       "numberOfUserJourneyThreadsToRun": 1,
-      "userJourneyThreadPoolSize": 2,
+      "userJourneyThreadPoolSize": 1,
       "expectedTimeForEach": 5,
       "expectedTimeForEachUnit": "MINUTES",
       "parameters": ["wm-default-spend-profile"]

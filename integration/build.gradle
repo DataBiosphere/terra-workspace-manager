@@ -1,16 +1,10 @@
-buildscript {
-    apply from: "../common.gradle"
-}
-
 plugins {
-    id 'java'
+    id 'terra-workspace-manager.java-conventions'
+
     // Apply the application plugin to add support for building a CLI application in Java.
     id 'application'
-    // TODO: for some reason the spotless plugin does not work in the integration project, but it works
-    //  fine in the service project.
-    // id "com.diffplug.spotless" version "5.12.4"
     // Terra Test Runner Plugin
-    id 'bio.terra.test-runner-plugin' version '0.0.8-SNAPSHOT'
+    id 'bio.terra.test-runner-plugin' version '0.0.10-SNAPSHOT'
 }
 
 dependencies {
@@ -19,7 +13,7 @@ dependencies {
         findbugsAnnotations = "3.0.1"
         guava = "29.0-jre"
         jackson = "2.10.2"
-        jersey = "2.30.1"
+        jersey = "2.32"
         kubernetesClient = "10.0.0"
         logback = "1.2.3"
         slf4j = "1.7.25"
@@ -34,8 +28,9 @@ dependencies {
         googleNotebook = "v1-rev20201110-1.30.10"
 
         datarepoClient = "1.0.155-SNAPSHOT"
-        testRunnerVersion = "0.0.7-SNAPSHOT"
+        testRunnerVersion = "0.0.10-SNAPSHOT"
         samClient = "0.1-61135c7"
+        tclClient = "0.0.51-SNAPSHOT"
     }
     implementation group: 'org.apache.commons', name: 'commons-math3', version: "${apacheMath}"
     implementation group: 'org.junit.jupiter', name: 'junit-jupiter-api', version: "${jUnit}"
@@ -74,18 +69,19 @@ dependencies {
     // Terra Test Runner Library
     implementation "bio.terra:terra-test-runner:${testRunnerVersion}"
 
-}
+    // Use Terra Common Library on client side to retry direct Sam calls
+    implementation group: "bio.terra", name: "terra-common-lib", version: "${tclClient}"
 
-version = gradle.wsmVersion
-sourceCompatibility = JavaVersion.VERSION_11
-
-/*
-spotless {
-    java {
-        googleJavaFormat()
-        targetExclude "${buildDir}/**"
+    // Force log4j version to at least 2.17.0 for security concerns.
+    implementation('org.apache.logging.log4j:log4j-api') {
+        version {
+            require "2.17.0"
+        }
     }
-}
+    implementation('org.apache.logging.log4j:log4j-to-slf4j') {
+        version {
+            require "2.17.0"
+        }
+    }
 
-compileJava.dependsOn spotlessApply
-*/
+}

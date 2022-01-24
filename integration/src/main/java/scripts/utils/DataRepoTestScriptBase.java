@@ -48,7 +48,8 @@ public abstract class DataRepoTestScriptBase extends WorkspaceAllocateTestScript
   /**
    * Generate and return a CreateDataReferenceRequestBody. The returned object consists of a unique
    * name for the data reference, standard cloning instructions, standard reference type, and a
-   * reference using the Data Repo Snapshot ID and Instance Name arguments defined in the test config.
+   * reference using the Data Repo Snapshot ID and Instance Name arguments defined in the test
+   * config.
    *
    * @return Request body for creating a data reference
    */

@@ -5,8 +5,11 @@ import bio.terra.cloudres.google.api.services.common.OperationUtils;
 import bio.terra.cloudres.google.cloudresourcemanager.CloudResourceManagerCow;
 import bio.terra.stairway.Step;
 import bio.terra.stairway.exception.RetryException;
+import bio.terra.workspace.service.workspace.exceptions.SaCredentialsMissingException;
 import com.google.api.client.googleapis.json.GoogleJsonResponseException;
 import com.google.api.services.cloudresourcemanager.v3.model.Project;
+import com.google.auth.ServiceAccountSigner;
+import com.google.auth.oauth2.GoogleCredentials;
 import com.google.cloud.ServiceOptions;
 import java.io.IOException;
 import java.time.Duration;
@@ -80,5 +83,29 @@ public class GcpUtils {
             () ->
                 new IllegalStateException(
                     "Could not determine default GCP control plane project ID."));
+  }
+
+  /**
+   * Returns the email of the application default credentials, which should represent a service
+   * account in all WSM deployments.
+   */
+  public static String getWsmSaEmail(GoogleCredentials wsmCredentials) {
+    // WSM always runs as a service account, but credentials for that SA may come from different
+    // sources depending on whether it is running in GCP or locally.
+    if (wsmCredentials instanceof ServiceAccountSigner) {
+      return ((ServiceAccountSigner) wsmCredentials).getAccount();
+    } else {
+      throw new SaCredentialsMissingException(
+          "Unable to find WSM service account credentials. Ensure WSM is actually running as a service account");
+    }
+  }
+
+  public static String getWsmSaEmail() {
+    try {
+      return getWsmSaEmail(GoogleCredentials.getApplicationDefault());
+    } catch (IOException e) {
+      throw new SaCredentialsMissingException(
+          "Unable to find WSM service account credentials. Ensure WSM is actually running as a service account");
+    }
   }
 }

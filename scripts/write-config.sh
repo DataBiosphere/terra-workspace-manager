@@ -30,6 +30,10 @@
 #   janitor-client-sa.json     | Creds to access Janitor service. These are only available in the
 #                              | integration environment and are not retrieved in other environments.
 #   ---------------------------+-------------------------------------------------------------------------
+#   local-properties.yml       | Additional property file optionally loaded by application.yml. It is
+#                              | populated with the test application configuration when the target is
+#                              | "local". Otherwise, it is empty.
+#   ---------------------------+-------------------------------------------------------------------------
 #   sqlproxy-sa.json           | SA of the CloudSQL proxy
 #   ---------------------------+-------------------------------------------------------------------------
 #   stairway-db-name.txt       | Stairway database name
@@ -248,6 +252,32 @@ echo "${instanceproject}:${instanceregion}:${instancename}" > "${outputdir}/db-c
 vaultgetdb "secret/dsde/terra/kernel/${k8senv}/${namespace}/workspace/postgres/db-creds" "db"
 vaultgetdb "secret/dsde/terra/kernel/${k8senv}/${namespace}/workspace/postgres/stairway-db-creds" "stairway-db"
 
+# Write the test application configuration into the local-properties.yml file
+if [ "$target" == "local" ]; then
+  tmpfile=$(mktemp)
+  vaultget "secret/dsde/terra/azure/common/managed-app-publisher" "${tmpfile}"
+  clientid=$(jq -r '."client-id"' "${tmpfile}" )
+  clientsecret=$(jq -r '."client-secret"' "${tmpfile}" )
+  tenantid=$(jq -r '."tenant-id"' "${tmpfile}" )
+
+  cat << EOF > "${outputdir}/local-properties.yml"
+workspace:
+  application:
+    configurations:
+      -
+        identifier: E4C0924A-3D7D-4D3D-8DE4-3D2CF50C3818
+        name: TestWsmApp
+        description: WSM test application
+        service-account: Elizabeth.Shadowmoon@test.firecloud.org
+        state: operating
+  azure:
+    managed-app-client-id: ${clientid}
+    managed-app-client-secret: ${clientsecret}
+    managed-app-tenant-id: ${tenantid}
+EOF
+else
+  cat /dev/null > "${outputdir}/local-properties.yml"
+fi
+
 # We made it to the end, so record the target and avoid redos
 echo "$target" > "${outputdir}/target.txt"
-

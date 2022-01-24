@@ -11,9 +11,12 @@ import bio.terra.workspace.service.resource.WsmResourceType;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import java.util.Optional;
 import java.util.UUID;
+import javax.annotation.Nullable;
 
 public class ControlledGcsBucketResource extends ControlledResource {
+
   private final String bucketName;
 
   @JsonCreator
@@ -24,8 +27,10 @@ public class ControlledGcsBucketResource extends ControlledResource {
       @JsonProperty("description") String description,
       @JsonProperty("cloningInstructions") CloningInstructions cloningInstructions,
       @JsonProperty("assignedUser") String assignedUser,
+      @JsonProperty("privateResourceState") PrivateResourceState privateResourceState,
       @JsonProperty("accessScope") AccessScopeType accessScope,
       @JsonProperty("managedBy") ManagedByType managedBy,
+      @JsonProperty("applicationId") UUID applicationId,
       @JsonProperty("bucketName") String bucketName) {
 
     super(
@@ -36,7 +41,9 @@ public class ControlledGcsBucketResource extends ControlledResource {
         cloningInstructions,
         assignedUser,
         accessScope,
-        managedBy);
+        managedBy,
+        applicationId,
+        privateResourceState);
     this.bucketName = bucketName;
     validate();
   }
@@ -51,6 +58,21 @@ public class ControlledGcsBucketResource extends ControlledResource {
 
   public static ControlledGcsBucketResource.Builder builder() {
     return new ControlledGcsBucketResource.Builder();
+  }
+
+  public Builder toBuilder() {
+    return new Builder()
+        .workspaceId(getWorkspaceId())
+        .resourceId(getResourceId())
+        .name(getName())
+        .description(getDescription())
+        .cloningInstructions(getCloningInstructions())
+        .assignedUser(getAssignedUser().orElse(null))
+        .privateResourceState(getPrivateResourceState().orElse(null))
+        .accessScope(getAccessScope())
+        .managedBy(getManagedBy())
+        .applicationId(getApplicationId())
+        .bucketName(getBucketName());
   }
 
   public String getBucketName() {
@@ -91,9 +113,15 @@ public class ControlledGcsBucketResource extends ControlledResource {
 
   @Override
   public boolean equals(Object o) {
-    if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
-    if (!super.equals(o)) return false;
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+    if (!super.equals(o)) {
+      return false;
+    }
 
     ControlledGcsBucketResource that = (ControlledGcsBucketResource) o;
 
@@ -107,15 +135,23 @@ public class ControlledGcsBucketResource extends ControlledResource {
     return result;
   }
 
+  private static String generateBucketName() {
+    return String.format("terra_%s_bucket", UUID.randomUUID()).replace("-", "_");
+  }
+
   public static class Builder {
+
     private UUID workspaceId;
     private UUID resourceId;
     private String name;
     private String description;
     private CloningInstructions cloningInstructions;
     private String assignedUser;
+    // Default value is NOT_APPLICABLE for shared resources and INITIALIZING for private resources.
+    @Nullable private PrivateResourceState privateResourceState;
     private AccessScopeType accessScope;
     private ManagedByType managedBy;
+    private UUID applicationId;
     private String bucketName;
 
     public ControlledGcsBucketResource.Builder workspaceId(UUID workspaceId) {
@@ -144,14 +180,25 @@ public class ControlledGcsBucketResource extends ControlledResource {
       return this;
     }
 
-    public ControlledGcsBucketResource.Builder bucketName(String bucketName) {
-      this.bucketName = bucketName;
+    public ControlledGcsBucketResource.Builder bucketName(@Nullable String bucketName) {
+      this.bucketName = Optional.ofNullable(bucketName).orElse(generateBucketName());
       return this;
     }
 
     public Builder assignedUser(String assignedUser) {
       this.assignedUser = assignedUser;
       return this;
+    }
+
+    public Builder privateResourceState(PrivateResourceState privateResourceState) {
+      this.privateResourceState = privateResourceState;
+      return this;
+    }
+
+    private PrivateResourceState defaultPrivateResourceState() {
+      return this.accessScope == AccessScopeType.ACCESS_SCOPE_PRIVATE
+          ? PrivateResourceState.INITIALIZING
+          : PrivateResourceState.NOT_APPLICABLE;
     }
 
     public Builder accessScope(AccessScopeType accessScope) {
@@ -164,6 +211,11 @@ public class ControlledGcsBucketResource extends ControlledResource {
       return this;
     }
 
+    public Builder applicationId(UUID applicationId) {
+      this.applicationId = applicationId;
+      return this;
+    }
+
     public ControlledGcsBucketResource build() {
       return new ControlledGcsBucketResource(
           workspaceId,
@@ -172,8 +224,10 @@ public class ControlledGcsBucketResource extends ControlledResource {
           description,
           cloningInstructions,
           assignedUser,
+          Optional.ofNullable(privateResourceState).orElse(defaultPrivateResourceState()),
           accessScope,
           managedBy,
+          applicationId,
           bucketName);
     }
   }

@@ -19,9 +19,7 @@ public class SetProjectBillingStep implements Step {
     String projectId =
         flightContext.getWorkingMap().get(WorkspaceFlightMapKeys.GCP_PROJECT_ID, String.class);
     String billingAccountId =
-        flightContext
-            .getInputParameters()
-            .get(WorkspaceFlightMapKeys.BILLING_ACCOUNT_ID, String.class);
+        flightContext.getWorkingMap().get(WorkspaceFlightMapKeys.BILLING_ACCOUNT_ID, String.class);
     ProjectBillingInfo setBilling =
         ProjectBillingInfo.newBuilder()
             .setBillingAccountName("billingAccounts/" + billingAccountId)

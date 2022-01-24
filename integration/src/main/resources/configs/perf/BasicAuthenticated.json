@@ -1,7 +1,7 @@
 {
   "name": "BasicAuthenticated",
   "description": "Get workspace repeatedly, concurrently. Authentication required.",
-  "serverSpecificationFile": "workspace-dev.json",
+  "serverSpecificationFile": "workspace-local.json",
   "kubernetes": {},
   "application": {},
   "testScripts": [

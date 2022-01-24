@@ -11,6 +11,6 @@ public class SpendUnauthorizedException extends ForbiddenException {
   /** Factory method for when linking a spend profile is unauthorized. */
   public static SpendUnauthorizedException linkUnauthorized(SpendProfileId spendProfileId) {
     return new SpendUnauthorizedException(
-        String.format("User is unauthorized to link spend profile [%s]", spendProfileId.id()));
+        String.format("User is unauthorized to link spend profile [%s]", spendProfileId.getId()));
   }
 }

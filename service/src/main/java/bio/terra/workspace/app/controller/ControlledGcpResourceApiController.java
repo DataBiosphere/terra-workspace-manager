@@ -1,18 +1,15 @@
 package bio.terra.workspace.app.controller;
 
 import bio.terra.common.exception.BadRequestException;
-import bio.terra.common.exception.ValidationException;
 import bio.terra.workspace.common.utils.ControllerUtils;
 import bio.terra.workspace.db.exception.InvalidMetadataException;
 import bio.terra.workspace.generated.controller.ControlledGcpResourceApi;
-import bio.terra.workspace.generated.model.ApiAccessScope;
 import bio.terra.workspace.generated.model.ApiCloneControlledGcpBigQueryDatasetRequest;
 import bio.terra.workspace.generated.model.ApiCloneControlledGcpBigQueryDatasetResult;
 import bio.terra.workspace.generated.model.ApiCloneControlledGcpGcsBucketRequest;
 import bio.terra.workspace.generated.model.ApiCloneControlledGcpGcsBucketResult;
 import bio.terra.workspace.generated.model.ApiClonedControlledGcpBigQueryDataset;
 import bio.terra.workspace.generated.model.ApiClonedControlledGcpGcsBucket;
-import bio.terra.workspace.generated.model.ApiControlledResourceCommonFields;
 import bio.terra.workspace.generated.model.ApiCreateControlledGcpAiNotebookInstanceRequestBody;
 import bio.terra.workspace.generated.model.ApiCreateControlledGcpBigQueryDatasetRequestBody;
 import bio.terra.workspace.generated.model.ApiCreateControlledGcpGcsBucketRequestBody;
@@ -28,17 +25,13 @@ import bio.terra.workspace.generated.model.ApiGcpBigQueryDatasetResource;
 import bio.terra.workspace.generated.model.ApiGcpGcsBucketResource;
 import bio.terra.workspace.generated.model.ApiJobControl;
 import bio.terra.workspace.generated.model.ApiJobReport;
-import bio.terra.workspace.generated.model.ApiPrivateResourceUser;
 import bio.terra.workspace.generated.model.ApiUpdateControlledGcpBigQueryDatasetRequestBody;
 import bio.terra.workspace.generated.model.ApiUpdateControlledGcpGcsBucketRequestBody;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequestFactory;
-import bio.terra.workspace.service.iam.SamRethrow;
 import bio.terra.workspace.service.iam.SamService;
-import bio.terra.workspace.service.iam.model.ControlledResourceIamRole;
 import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.job.JobService.AsyncJobResult;
-import bio.terra.workspace.service.resource.ValidationUtils;
 import bio.terra.workspace.service.resource.WsmResourceType;
 import bio.terra.workspace.service.resource.controlled.AccessScopeType;
 import bio.terra.workspace.service.resource.controlled.ControlledAiNotebookInstanceResource;
@@ -47,15 +40,13 @@ import bio.terra.workspace.service.resource.controlled.ControlledGcsBucketResour
 import bio.terra.workspace.service.resource.controlled.ControlledResource;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceService;
 import bio.terra.workspace.service.resource.controlled.ManagedByType;
+import bio.terra.workspace.service.resource.controlled.PrivateUserRole;
 import bio.terra.workspace.service.resource.controlled.exception.InvalidControlledResourceException;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.workspace.WorkspaceService;
-import java.util.Collections;
-import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
 import org.slf4j.Logger;
@@ -96,6 +87,12 @@ public class ControlledGcpResourceApiController implements ControlledGcpResource
   public ResponseEntity<ApiCreatedControlledGcpGcsBucket> createBucket(
       UUID workspaceId, @Valid ApiCreateControlledGcpGcsBucketRequestBody body) {
     final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    PrivateUserRole privateUserRole =
+        ControllerUtils.computePrivateUserRole(
+            workspaceId, body.getCommon(), userRequest, samService);
+
+    ManagedByType managedBy = ManagedByType.fromApi(body.getCommon().getManagedBy());
+    AccessScopeType accessScopeType = AccessScopeType.fromApi(body.getCommon().getAccessScope());
 
     ControlledGcsBucketResource resource =
         ControlledGcsBucketResource.builder()
@@ -105,17 +102,16 @@ public class ControlledGcpResourceApiController implements ControlledGcpResource
             .description(body.getCommon().getDescription())
             .cloningInstructions(
                 CloningInstructions.fromApiModel(body.getCommon().getCloningInstructions()))
-            .assignedUser(assignedUserFromBodyOrToken(body.getCommon(), userRequest))
-            .accessScope(AccessScopeType.fromApi(body.getCommon().getAccessScope()))
-            .managedBy(ManagedByType.fromApi(body.getCommon().getManagedBy()))
+            .assignedUser(privateUserRole.getUserEmail())
+            .accessScope(accessScopeType)
+            .managedBy(managedBy)
+            .applicationId(controlledResourceService.getAssociatedApp(managedBy, userRequest))
             .bucketName(body.getGcsBucket().getName())
             .build();
 
-    List<ControlledResourceIamRole> privateRoles = privateRolesFromBody(body.getCommon());
-
     final ControlledGcsBucketResource createdBucket =
         controlledResourceService.createBucket(
-            resource, body.getGcsBucket(), privateRoles, userRequest);
+            resource, body.getGcsBucket(), privateUserRole.getRole(), userRequest);
     var response =
         new ApiCreatedControlledGcpGcsBucket()
             .resourceId(createdBucket.getResourceId())
@@ -251,7 +247,7 @@ public class ControlledGcpResourceApiController implements ControlledGcpResource
   public ResponseEntity<ApiGcpBigQueryDatasetResource> getBigQueryDataset(
       UUID workspaceId, UUID resourceId) {
     final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
-    String projectId = workspaceService.getRequiredGcpProject(workspaceId);
+    String projectId = workspaceService.getAuthorizedRequiredGcpProject(workspaceId, userRequest);
     return getControlledResourceAsResponseEntity(
         workspaceId,
         resourceId,
@@ -280,7 +276,7 @@ public class ControlledGcpResourceApiController implements ControlledGcpResource
         body.getDescription());
 
     // Retrieve and cast response to UpdateControlledGcpBigQueryDatasetResponse
-    String projectId = workspaceService.getRequiredGcpProject(workspaceId);
+    String projectId = workspaceService.getAuthorizedRequiredGcpProject(workspaceId, userRequest);
     return getControlledResourceAsResponseEntity(
         workspaceId,
         resourceId,
@@ -322,7 +318,14 @@ public class ControlledGcpResourceApiController implements ControlledGcpResource
       UUID workspaceId, ApiCreateControlledGcpBigQueryDatasetRequestBody body) {
     final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
 
-    String projectId = workspaceService.getRequiredGcpProject(workspaceId);
+    String projectId = workspaceService.getAuthorizedRequiredGcpProject(workspaceId, userRequest);
+
+    PrivateUserRole privateUserRole =
+        ControllerUtils.computePrivateUserRole(
+            workspaceId, body.getCommon(), userRequest, samService);
+
+    ManagedByType managedBy = ManagedByType.fromApi(body.getCommon().getManagedBy());
+    AccessScopeType accessScopeType = AccessScopeType.fromApi(body.getCommon().getAccessScope());
 
     ControlledBigQueryDatasetResource resource =
         ControlledBigQueryDatasetResource.builder()
@@ -332,17 +335,19 @@ public class ControlledGcpResourceApiController implements ControlledGcpResource
             .description(body.getCommon().getDescription())
             .cloningInstructions(
                 CloningInstructions.fromApiModel(body.getCommon().getCloningInstructions()))
-            .assignedUser(assignedUserFromBodyOrToken(body.getCommon(), userRequest))
-            .accessScope(AccessScopeType.fromApi(body.getCommon().getAccessScope()))
-            .managedBy(ManagedByType.fromApi(body.getCommon().getManagedBy()))
-            .datasetName(body.getDataset().getDatasetId())
+            .assignedUser(privateUserRole.getUserEmail())
+            .accessScope(accessScopeType)
+            .managedBy(managedBy)
+            .applicationId(controlledResourceService.getAssociatedApp(managedBy, userRequest))
+            .datasetName(
+                Optional.ofNullable(body.getDataset().getDatasetId())
+                    .orElse(body.getCommon().getName()))
             .build();
-
-    List<ControlledResourceIamRole> privateRoles = privateRolesFromBody(body.getCommon());
 
     final ControlledBigQueryDatasetResource createdDataset =
         controlledResourceService
-            .createBigQueryDataset(resource, body.getDataset(), privateRoles, userRequest)
+            .createBigQueryDataset(
+                resource, body.getDataset(), privateUserRole.getRole(), userRequest)
             .castToBigQueryDatasetResource();
     var response =
         new ApiCreatedControlledGcpBigQueryDataset()
@@ -367,7 +372,12 @@ public class ControlledGcpResourceApiController implements ControlledGcpResource
       UUID workspaceId, @Valid ApiCreateControlledGcpAiNotebookInstanceRequestBody body) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
 
-    ValidationUtils.validate(body.getAiNotebookInstance());
+    PrivateUserRole privateUserRole =
+        ControllerUtils.computePrivateUserRole(
+            workspaceId, body.getCommon(), userRequest, samService);
+
+    ManagedByType managedBy = ManagedByType.fromApi(body.getCommon().getManagedBy());
+    AccessScopeType accessScopeType = AccessScopeType.fromApi(body.getCommon().getAccessScope());
 
     ControlledAiNotebookInstanceResource resource =
         ControlledAiNotebookInstanceResource.builder()
@@ -377,20 +387,23 @@ public class ControlledGcpResourceApiController implements ControlledGcpResource
             .description(body.getCommon().getDescription())
             .cloningInstructions(
                 CloningInstructions.fromApiModel(body.getCommon().getCloningInstructions()))
-            .assignedUser(assignedUserFromBodyOrToken(body.getCommon(), userRequest))
-            .accessScope(AccessScopeType.fromApi(body.getCommon().getAccessScope()))
-            .managedBy(ManagedByType.fromApi(body.getCommon().getManagedBy()))
+            .assignedUser(privateUserRole.getUserEmail())
+            .accessScope(accessScopeType)
+            .managedBy(managedBy)
+            .applicationId(controlledResourceService.getAssociatedApp(managedBy, userRequest))
             .location(body.getAiNotebookInstance().getLocation())
-            .instanceId(body.getAiNotebookInstance().getInstanceId())
+            .instanceId(
+                Optional.ofNullable(body.getAiNotebookInstance().getInstanceId())
+                    .orElse(
+                        ControlledAiNotebookInstanceResource.generateInstanceId(
+                            privateUserRole.getUserEmail())))
             .build();
-
-    List<ControlledResourceIamRole> privateRoles = privateRolesFromBody(body.getCommon());
 
     String jobId =
         controlledResourceService.createAiNotebookInstance(
             resource,
             body.getAiNotebookInstance(),
-            privateRoles,
+            privateUserRole.getRole(),
             body.getJobControl(),
             ControllerUtils.getAsyncResultEndpoint(
                 request, body.getJobControl().getId(), "create-result"),
@@ -421,7 +434,8 @@ public class ControlledGcpResourceApiController implements ControlledGcpResource
     ApiGcpAiNotebookInstanceResource apiResource = null;
     if (jobResult.getJobReport().getStatus().equals(ApiJobReport.StatusEnum.SUCCEEDED)) {
       ControlledAiNotebookInstanceResource resource = jobResult.getResult();
-      String workspaceProjectId = workspaceService.getRequiredGcpProject(resource.getWorkspaceId());
+      String workspaceProjectId =
+          workspaceService.getAuthorizedRequiredGcpProject(resource.getWorkspaceId(), userRequest);
       apiResource = resource.toApiResource(workspaceProjectId);
     }
     return new ApiCreatedControlledGcpAiNotebookInstanceResult()
@@ -483,7 +497,8 @@ public class ControlledGcpResourceApiController implements ControlledGcpResource
       ApiGcpAiNotebookInstanceResource response =
           controlledResource
               .castToAiNotebookInstanceResource()
-              .toApiResource(workspaceService.getRequiredGcpProject(workspaceId));
+              .toApiResource(
+                  workspaceService.getAuthorizedRequiredGcpProject(workspaceId, userRequest));
       return new ResponseEntity<>(response, HttpStatus.OK);
     } catch (InvalidMetadataException ex) {
       throw new BadRequestException(
@@ -535,54 +550,6 @@ public class ControlledGcpResourceApiController implements ControlledGcpResource
         fetchCloneBigQueryDatasetResult(jobId, userRequest);
     return new ResponseEntity<>(
         result, ControllerUtils.getAsyncResponseCode(result.getJobReport()));
-  }
-
-  /**
-   * Extract the assigned user from a request to create a controlled resource. This field is only
-   * populated for private resources, but if a resource is private then a "null" value means "assign
-   * this resource to the requesting user" and should be populated here.
-   */
-  private String assignedUserFromBodyOrToken(
-      ApiControlledResourceCommonFields commonFields, AuthenticatedUserRequest userRequest) {
-    if (commonFields.getAccessScope() != ApiAccessScope.PRIVATE_ACCESS) {
-      return null;
-    }
-    return Optional.ofNullable(commonFields.getPrivateResourceUser())
-        .map(ApiPrivateResourceUser::getUserName)
-        .orElseGet(
-            () ->
-                SamRethrow.onInterrupted(
-                    () -> samService.getRequestUserEmail(userRequest), "getRequestUserEmail"));
-  }
-
-  /**
-   * Extract a list of ControlledResourceIamRoles from the common fields of a controlled resource
-   * request body, and validate that it's shaped appropriately for the specified AccessScopeType.
-   *
-   * <p>Shared access resources must not specify private resource roles. Private access resources
-   * must specify at least one private resource role.
-   */
-  private List<ControlledResourceIamRole> privateRolesFromBody(
-      ApiControlledResourceCommonFields commonFields) {
-    List<ControlledResourceIamRole> privateRoles =
-        Optional.ofNullable(commonFields.getPrivateResourceUser())
-            .map(
-                user ->
-                    user.getPrivateResourceIamRoles().stream()
-                        .map(ControlledResourceIamRole::fromApiModel)
-                        .collect(Collectors.toList()))
-            .orElse(Collections.emptyList());
-    // Validate that we get the private role when the resource is private and do not get it
-    // when the resource is public
-    AccessScopeType accessScope = AccessScopeType.fromApi(commonFields.getAccessScope());
-    if (accessScope == AccessScopeType.ACCESS_SCOPE_PRIVATE && privateRoles.isEmpty()) {
-      throw new ValidationException("At least one IAM role is required for private resources");
-    }
-    if (accessScope == AccessScopeType.ACCESS_SCOPE_SHARED && !privateRoles.isEmpty()) {
-      throw new ValidationException(
-          "Private resource IAM roles are not allowed for shared resources");
-    }
-    return privateRoles;
   }
 
   private AuthenticatedUserRequest getAuthenticatedInfo() {

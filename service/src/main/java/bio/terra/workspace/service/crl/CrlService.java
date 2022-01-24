@@ -12,20 +12,32 @@ import bio.terra.cloudres.google.notebooks.AIPlatformNotebooksCow;
 import bio.terra.cloudres.google.serviceusage.ServiceUsageCow;
 import bio.terra.cloudres.google.storage.StorageCow;
 import bio.terra.common.exception.BadRequestException;
+import bio.terra.workspace.app.configuration.external.AzureConfiguration;
 import bio.terra.workspace.app.configuration.external.CrlConfiguration;
 import bio.terra.workspace.service.crl.exception.CrlInternalException;
 import bio.terra.workspace.service.crl.exception.CrlNotInUseException;
 import bio.terra.workspace.service.crl.exception.CrlSecurityException;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.resource.referenced.exception.InvalidReferenceException;
+import bio.terra.workspace.service.workspace.model.AzureCloudContext;
+import com.azure.core.credential.TokenCredential;
+import com.azure.core.management.AzureEnvironment;
+import com.azure.core.management.profile.AzureProfile;
+import com.azure.identity.ClientSecretCredentialBuilder;
+import com.azure.resourcemanager.compute.ComputeManager;
+import com.azure.resourcemanager.resources.ResourceManager;
+import com.azure.resourcemanager.storage.StorageManager;
 import com.google.api.client.googleapis.json.GoogleJsonResponseException;
 import com.google.api.services.bigquery.Bigquery;
 import com.google.api.services.bigquery.BigqueryScopes;
 import com.google.api.services.bigquery.model.Dataset;
+import com.google.api.services.storage.Storage;
+import com.google.api.services.storage.StorageScopes;
 import com.google.auth.http.HttpCredentialsAdapter;
 import com.google.auth.oauth2.AccessToken;
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.auth.oauth2.ServiceAccountCredentials;
+import com.google.cloud.storage.BlobId;
 import com.google.cloud.storage.StorageException;
 import com.google.cloud.storage.StorageOptions;
 import com.google.common.annotations.VisibleForTesting;
@@ -86,6 +98,7 @@ public class CrlService {
       crlServiceUsageCow = null;
     }
   }
+
   /** @return CRL {@link AIPlatformNotebooksCow} which wraps Google AI Platform Notebooks API */
   public AIPlatformNotebooksCow getAIPlatformNotebooksCow() {
     assertCrlInUse();
@@ -110,16 +123,48 @@ public class CrlService {
     return crlComputeCow;
   }
 
-  /** Returns the CRL {@link IamCow} which wraps Google IAM API. */
+  /** Returns the CRL {@link IamCow} which wraps Google IAM API using WSM SA credentials */
   public IamCow getIamCow() {
     assertCrlInUse();
     return crlIamCow;
+  }
+
+  /** @return CRL {@link IamCow} which wraps Google IAM API using user credentials. */
+  @VisibleForTesting
+  public IamCow getIamCow(AuthenticatedUserRequest userRequest) {
+    assertCrlInUse();
+    try {
+      return IamCow.create(clientConfig, googleCredentialsFromUserReq(userRequest));
+    } catch (GeneralSecurityException | IOException e) {
+      throw new CrlInternalException("Error creating IAM API wrapper", e);
+    }
   }
 
   /** Returns the CRL {@link ServiceUsageCow} which wraps Google Cloud ServiceUsage API. */
   public ServiceUsageCow getServiceUsageCow() {
     assertCrlInUse();
     return crlServiceUsageCow;
+  }
+
+  /** Returns an Azure {@link ComputeManager} configured for use with CRL. */
+  public ComputeManager getComputeManager(
+      AzureCloudContext azureCloudContext, AzureConfiguration azureConfig) {
+    assertCrlInUse();
+    return buildComputeManager(azureCloudContext, azureConfig);
+  }
+
+  /** Returns an Azure {@link StorageManager} configured for use with CRL. */
+  public StorageManager getStorageManager(
+      AzureCloudContext azureCloudContext, AzureConfiguration azureConfig) {
+    assertCrlInUse();
+    return buildStorageManager(azureCloudContext, azureConfig);
+  }
+
+  /** Returns an Azure {@link ResourceManager} configured for use with CRL. */
+  public ResourceManager getResourceManager(
+      AzureCloudContext azureCloudContext, AzureConfiguration azureConfig) {
+    assertCrlInUse();
+    return buildResourceManager(azureCloudContext, azureConfig);
   }
 
   /** @return CRL {@link BigQueryCow} which wraps Google BigQuery API */
@@ -136,17 +181,18 @@ public class CrlService {
    * Create a vanilla Bigquery client object, for testing things that aren't in CRL yet.
    * TODO(jaycarlton): PF-942 implement needed endpoints in CRL and use them here
    *
-   * @param userRequest
    * @return
    */
-  public Bigquery createNakedBigQueryClient(AuthenticatedUserRequest userRequest) {
+  public Bigquery createWsmSaNakedBigQueryClient() {
     assertCrlInUse();
     try {
-      return new Bigquery(
-          Defaults.httpTransport(),
-          Defaults.jsonFactory(),
-          new HttpCredentialsAdapter(
-              GoogleCredentials.getApplicationDefault().createScoped(BigqueryScopes.all())));
+      return new Bigquery.Builder(
+              Defaults.httpTransport(),
+              Defaults.jsonFactory(),
+              new HttpCredentialsAdapter(
+                  GoogleCredentials.getApplicationDefault().createScoped(BigqueryScopes.all())))
+          .setApplicationName(clientConfig.getClientName())
+          .build();
     } catch (IOException | GeneralSecurityException e) {
       throw new CrlInternalException("Error creating naked BigQuery client.");
     }
@@ -180,6 +226,35 @@ public class CrlService {
       String projectId, String datasetName, AuthenticatedUserRequest userRequest) {
     try {
       createBigQueryCow(userRequest).tables().list(projectId, datasetName).execute();
+      return true;
+    } catch (GoogleJsonResponseException ex) {
+      if (ex.getStatusCode() == HttpStatus.SC_NOT_FOUND
+          || ex.getStatusCode() == HttpStatus.SC_FORBIDDEN) {
+        return false;
+      }
+      throw new InvalidReferenceException("Error while trying to access BigQuery dataset", ex);
+    } catch (IOException ex) {
+      throw new InvalidReferenceException("Error while trying to access BigQuery dataset", ex);
+    }
+  }
+
+  /**
+   * Wrap the BigQuery read access check in its own method. That allows unit tests to mock this
+   * service and generate an answer without actually touching BigQuery.
+   *
+   * @param projectId Google project id where the dataset is
+   * @param datasetName name of the dataset
+   * @param dataTableName name of the datatable
+   * @param userRequest auth info
+   * @return true if the user has permission to the specified table of the given dataset
+   */
+  public boolean canReadBigQueryDataTable(
+      String projectId,
+      String datasetName,
+      String dataTableName,
+      AuthenticatedUserRequest userRequest) {
+    try {
+      createBigQueryCow(userRequest).tables().get(projectId, datasetName, dataTableName).execute();
       return true;
     } catch (GoogleJsonResponseException ex) {
       if (ex.getStatusCode() == HttpStatus.SC_NOT_FOUND
@@ -241,6 +316,25 @@ public class CrlService {
   }
 
   /**
+   * Return a Storage client object from GCS's auto-generated client library, for functionality not
+   * present in GCS's preferred client library. Whenever possible, use {@code createStorageCow}
+   * instead of this method.
+   */
+  public Storage createWsmSaNakedStorageClient() {
+    try {
+      return new Storage.Builder(
+              Defaults.httpTransport(),
+              Defaults.jsonFactory(),
+              new HttpCredentialsAdapter(
+                  GoogleCredentials.getApplicationDefault().createScoped(StorageScopes.all())))
+          .setApplicationName(clientConfig.getClientName())
+          .build();
+    } catch (IOException | GeneralSecurityException e) {
+      throw new CrlInternalException("Error creating naked Storage client.");
+    }
+  }
+
+  /**
    * This creates a storage COW that will operate with the user's credentials.
    *
    * @param projectId optional GCP project
@@ -293,6 +387,24 @@ public class CrlService {
     }
   }
 
+  public boolean canReadGcsObject(
+      String bucketName, String objectName, AuthenticatedUserRequest userRequest) {
+    try {
+      StorageCow storage = createStorageCow(null, userRequest);
+      // If successfully get the blob, the user have at least READER access.
+      storage.get(BlobId.of(bucketName, objectName));
+      return true;
+    } catch (StorageException e) {
+      if (e.getCode() == HttpStatus.SC_FORBIDDEN) {
+        return false;
+      }
+      throw new InvalidReferenceException(
+          String.format(
+              "Error while trying to access GCS blob %s in bucket %s", objectName, bucketName),
+          e);
+    }
+  }
+
   private ServiceAccountCredentials getJanitorCredentials(String serviceAccountPath) {
     try {
       return ServiceAccountCredentials.fromStream(new FileInputStream(serviceAccountPath));
@@ -302,7 +414,7 @@ public class CrlService {
     }
   }
 
-  private GoogleCredentials getApplicationCredentials() {
+  public GoogleCredentials getApplicationCredentials() {
     try {
       return GoogleCredentials.getApplicationDefault();
     } catch (IOException e) {
@@ -331,6 +443,80 @@ public class CrlService {
     return builder.build();
   }
 
+  //  Azure Support
+
+  public TokenCredential getManagedAppCredentials(AzureConfiguration azureConfig) {
+    return new ClientSecretCredentialBuilder()
+        .clientId(azureConfig.getManagedAppClientId())
+        .clientSecret(azureConfig.getManagedAppClientSecret())
+        .tenantId(azureConfig.getManagedAppTenantId())
+        .build();
+  }
+
+  /**
+   * Get a resource manager pointed at the MRG subscription
+   *
+   * @param azureCloudContext target cloud context
+   * @return azure resource manager
+   */
+  public ResourceManager buildResourceManager(
+      AzureCloudContext azureCloudContext, AzureConfiguration azureConfig) {
+    TokenCredential azureCreds = getManagedAppCredentials(azureConfig);
+
+    AzureProfile azureProfile =
+        new AzureProfile(
+            azureCloudContext.getAzureTenantId(),
+            azureCloudContext.getAzureSubscriptionId(),
+            AzureEnvironment.AZURE);
+
+    // We must use FQDN because there are two `Defaults` symbols imported otherwise.
+    ResourceManager manager =
+        bio.terra.cloudres.azure.resourcemanager.common.Defaults.crlConfigure(
+                clientConfig, ResourceManager.configure())
+            .authenticate(azureCreds, azureProfile)
+            .withSubscription(azureCloudContext.getAzureSubscriptionId());
+
+    return manager;
+  }
+
+  private ComputeManager buildComputeManager(
+      AzureCloudContext azureCloudContext, AzureConfiguration azureConfig) {
+    TokenCredential azureCreds = getManagedAppCredentials(azureConfig);
+
+    AzureProfile azureProfile =
+        new AzureProfile(
+            azureCloudContext.getAzureTenantId(),
+            azureCloudContext.getAzureSubscriptionId(),
+            AzureEnvironment.AZURE);
+
+    // We must use FQDN because there are two `Defaults` symbols imported otherwise.
+    ComputeManager manager =
+        bio.terra.cloudres.azure.resourcemanager.common.Defaults.crlConfigure(
+                clientConfig, ComputeManager.configure())
+            .authenticate(azureCreds, azureProfile);
+
+    return manager;
+  }
+
+  private StorageManager buildStorageManager(
+      AzureCloudContext azureCloudContext, AzureConfiguration azureConfig) {
+    TokenCredential azureCreds = getManagedAppCredentials(azureConfig);
+
+    AzureProfile azureProfile =
+        new AzureProfile(
+            azureCloudContext.getAzureTenantId(),
+            azureCloudContext.getAzureSubscriptionId(),
+            AzureEnvironment.AZURE);
+
+    // We must use FQDN because there are two `Defaults` symbols imported otherwise.
+    StorageManager manager =
+        bio.terra.cloudres.azure.resourcemanager.common.Defaults.crlConfigure(
+                clientConfig, StorageManager.configure())
+            .authenticate(azureCreds, azureProfile);
+
+    return manager;
+  }
+
   @VisibleForTesting
   public ClientConfig getClientConfig() {
     assertCrlInUse();
@@ -341,5 +527,9 @@ public class CrlService {
     if (!crlConfig.getUseCrl()) {
       throw new CrlNotInUseException("Attempt to use CRL when it is set not to be used");
     }
+  }
+
+  public boolean canCreateAzureIp(String ipName, AuthenticatedUserRequest userRequest) {
+    return true; // TODO: check azure acls?
   }
 }

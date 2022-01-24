@@ -3,21 +3,22 @@ package bio.terra.workspace.db;
 import bio.terra.common.db.ReadTransaction;
 import bio.terra.common.db.WriteTransaction;
 import bio.terra.common.exception.MissingRequiredFieldException;
+import bio.terra.workspace.common.exception.InternalLogicException;
 import bio.terra.workspace.db.exception.WorkspaceNotFoundException;
+import bio.terra.workspace.service.resource.controlled.PrivateResourceState;
 import bio.terra.workspace.service.spendprofile.SpendProfileId;
 import bio.terra.workspace.service.workspace.exceptions.DuplicateCloudContextException;
 import bio.terra.workspace.service.workspace.exceptions.DuplicateWorkspaceException;
-import bio.terra.workspace.service.workspace.exceptions.InvalidSerializedVersionException;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
-import bio.terra.workspace.service.workspace.model.GcpCloudContext;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.google.common.annotations.VisibleForTesting;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import javax.annotation.Nullable;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -38,18 +39,29 @@ import org.springframework.stereotype.Component;
  */
 @Component
 public class WorkspaceDao {
-  /** Serializing format of the GCP cloud context */
-  @VisibleForTesting static final long GCP_CLOUD_CONTEXT_DB_VERSION = 1;
-
-  /** SQL query for reading a workspace, including its cloud context. */
+  /** SQL query for reading a workspace */
   private static final String WORKSPACE_SELECT_SQL =
-      "SELECT W.workspace_id, W.display_name, W.description, W.spend_profile,"
-          + " W.properties, W.workspace_stage, C.context"
-          + " FROM workspace W LEFT JOIN cloud_context C"
-          + " ON W.workspace_id = C.workspace_id ";
+      "SELECT workspace_id, display_name, description, spend_profile, properties, workspace_stage"
+          + " FROM workspace";
 
-  private final NamedParameterJdbcTemplate jdbcTemplate;
+  private static final RowMapper<Workspace> WORKSPACE_ROW_MAPPER =
+      (rs, rowNum) ->
+          Workspace.builder()
+              .workspaceId(UUID.fromString(rs.getString("workspace_id")))
+              .displayName(rs.getString("display_name"))
+              .description(rs.getString("description"))
+              .spendProfileId(
+                  Optional.ofNullable(rs.getString("spend_profile"))
+                      .map(SpendProfileId::new)
+                      .orElse(null))
+              .properties(
+                  Optional.ofNullable(rs.getString("properties"))
+                      .map(DbSerDes::jsonToProperties)
+                      .orElse(null))
+              .workspaceStage(WorkspaceStage.valueOf(rs.getString("workspace_stage")))
+              .build();
   private final Logger logger = LoggerFactory.getLogger(WorkspaceDao.class);
+  private final NamedParameterJdbcTemplate jdbcTemplate;
 
   @Autowired
   public WorkspaceDao(NamedParameterJdbcTemplate jdbcTemplate) {
@@ -67,7 +79,7 @@ public class WorkspaceDao {
     final String sql =
         "INSERT INTO workspace (workspace_id, display_name, description, spend_profile, properties, workspace_stage) "
             + "values (:workspace_id, :display_name, :description, :spend_profile,"
-            + " cast(:properties AS json), :workspace_stage)";
+            + " cast(:properties AS jsonb), :workspace_stage)";
 
     final String workspaceId = workspace.getWorkspaceId().toString();
 
@@ -77,7 +89,8 @@ public class WorkspaceDao {
             .addValue("display_name", workspace.getDisplayName().orElse(null))
             .addValue("description", workspace.getDescription().orElse(null))
             .addValue(
-                "spend_profile", workspace.getSpendProfileId().map(SpendProfileId::id).orElse(null))
+                "spend_profile",
+                workspace.getSpendProfileId().map(SpendProfileId::getId).orElse(null))
             .addValue("properties", DbSerDes.propertiesToJson(workspace.getProperties()))
             .addValue("workspace_stage", workspace.getWorkspaceStage().toString());
     try {
@@ -128,9 +141,7 @@ public class WorkspaceDao {
     if (id == null) {
       throw new MissingRequiredFieldException("Valid workspace id is required");
     }
-    String sql =
-        WORKSPACE_SELECT_SQL
-            + " WHERE W.workspace_id = :id AND (C.cloud_platform = 'GCP' OR C.cloud_platform IS NULL)";
+    String sql = WORKSPACE_SELECT_SQL + " WHERE workspace_id = :id";
     MapSqlParameterSource params = new MapSqlParameterSource().addValue("id", id.toString());
     try {
       Workspace result =
@@ -144,12 +155,18 @@ public class WorkspaceDao {
   }
 
   @WriteTransaction
-  public boolean updateWorkspace(UUID workspaceId, String name, String description) {
-    if (name == null && description == null) {
-      throw new MissingRequiredFieldException("Must specify name or description to update.");
+  public boolean updateWorkspace(
+      UUID workspaceId,
+      @Nullable String name,
+      @Nullable String description,
+      @Nullable Map<String, String> propertyMap) {
+    if (name == null && description == null && propertyMap == null) {
+      throw new MissingRequiredFieldException(
+          "Must specify name, description, or properties to update.");
     }
 
     var params = new MapSqlParameterSource();
+    params.addValue("workspace_id", workspaceId.toString());
 
     if (name != null) {
       params.addValue("display_name", name);
@@ -159,29 +176,16 @@ public class WorkspaceDao {
       params.addValue("description", description);
     }
 
-    return updateWorkspaceColumns(workspaceId, params);
-  }
+    if (propertyMap != null) {
+      params.addValue("properties", DbSerDes.propertiesToJson(propertyMap));
+    }
 
-  /**
-   * This is an open ended method for constructing the SQL update statement. To use it, build the
-   * parameter list making the param name equal to the column name you want to update. The method
-   * generates the column_name = :column_name list. It is an error if the params map is empty.
-   *
-   * @param workspaceId workspace identifier - not strictly necessarily, but an extra validation
-   * @param columnParams sql parameters
-   */
-  private boolean updateWorkspaceColumns(UUID workspaceId, MapSqlParameterSource columnParams) {
-    StringBuilder sb = new StringBuilder("UPDATE workspace SET ");
+    String sql =
+        String.format(
+            "UPDATE workspace SET %s WHERE workspace_id = :workspace_id",
+            DbUtils.setColumnsClause(params, "properties"));
 
-    sb.append(DbUtils.setColumnsClause(columnParams));
-    sb.append(" WHERE workspace_id = :workspace_id");
-
-    MapSqlParameterSource queryParams = new MapSqlParameterSource();
-    queryParams
-        .addValues(columnParams.getValues())
-        .addValue("workspace_id", workspaceId.toString());
-
-    int rowsAffected = jdbcTemplate.update(sb.toString(), queryParams);
+    int rowsAffected = jdbcTemplate.update(sql, params);
     boolean updated = rowsAffected > 0;
 
     logger.info(
@@ -202,9 +206,14 @@ public class WorkspaceDao {
    */
   @ReadTransaction
   public List<Workspace> getWorkspacesMatchingList(List<UUID> idList, int offset, int limit) {
+    // If the incoming list is empty, the caller does not have permission to see any
+    // workspaces, so we return an empty list.
+    if (idList.isEmpty()) {
+      return Collections.emptyList();
+    }
     String sql =
         WORKSPACE_SELECT_SQL
-            + " WHERE W.workspace_id IN (:workspace_ids) ORDER BY W.workspace_id OFFSET :offset LIMIT :limit";
+            + " WHERE workspace_id IN (:workspace_ids) ORDER BY workspace_id OFFSET :offset LIMIT :limit";
     var params =
         new MapSqlParameterSource()
             .addValue(
@@ -215,152 +224,311 @@ public class WorkspaceDao {
   }
 
   /**
-   * Retrieves the GCP cloud context of the workspace.
-   *
-   * @param workspaceId unique id of workspace
-   * @return optional GCP cloud context
-   */
-  @ReadTransaction
-  public Optional<GcpCloudContext> getGcpCloudContext(UUID workspaceId) {
-    String sql =
-        "SELECT context FROM cloud_context "
-            + "WHERE workspace_id = :workspace_id AND cloud_platform = :cloud_platform";
-    MapSqlParameterSource params =
-        new MapSqlParameterSource()
-            .addValue("workspace_id", workspaceId.toString())
-            .addValue("cloud_platform", CloudPlatform.GCP.toString());
-    try {
-      return Optional.ofNullable(
-          DataAccessUtils.singleResult(
-              jdbcTemplate.query(
-                  sql,
-                  params,
-                  (rs, rowNum) -> deserializeGcpCloudContext(rs.getString("context")))));
-    } catch (EmptyResultDataAccessException e) {
-      return Optional.empty();
-    }
-  }
-
-  /**
-   * Create the cloud context of the workspace
+   * Create cloud context
    *
    * @param workspaceId unique id of the workspace
-   * @param cloudContext the GCP cloud context to create
+   * @param cloudPlatform cloud platform enum
+   * @param context serialized cloud context attributes
+   * @param flightId calling flight id. Used to ensure that we do not delete a good context while
+   *     undoing from trying to create a conflicting context.
    */
+  @Deprecated // TODO: PF-1238 remove
   @WriteTransaction
-  public void createGcpCloudContext(UUID workspaceId, GcpCloudContext cloudContext) {
+  public void createCloudContext(
+      UUID workspaceId, CloudPlatform cloudPlatform, String context, String flightId) {
+    final String platform = cloudPlatform.toSql();
     final String sql =
-        "INSERT INTO cloud_context (workspace_id, cloud_platform, context)"
-            + " VALUES (:workspace_id, :cloud_platform, :context::json)";
+        "INSERT INTO cloud_context (workspace_id, cloud_platform, context, creating_flight)"
+            + " VALUES (:workspace_id, :cloud_platform, :context::json, :creating_flight)";
     MapSqlParameterSource params =
         new MapSqlParameterSource()
             .addValue("workspace_id", workspaceId.toString())
-            .addValue("cloud_platform", CloudPlatform.GCP.toString())
-            .addValue("context", serializeGcpCloudContext(cloudContext));
+            .addValue("cloud_platform", platform)
+            .addValue("context", context)
+            .addValue("creating_flight", flightId);
     try {
       jdbcTemplate.update(sql, params);
-      logger.info("Inserted record for GCP cloud context for workspace {}", workspaceId);
+      logger.info("Inserted record for {} cloud context for workspace {}", platform, workspaceId);
     } catch (DuplicateKeyException e) {
       throw new DuplicateCloudContextException(
-          String.format("Workspace with id %s already has context for GCP cloud type", workspaceId),
+          String.format(
+              "Workspace with id %s already has context for %s cloud type", workspaceId, platform),
           e);
     }
   }
 
   /**
-   * Delete the GCP cloud context for a workspace
-   *
-   * @param workspaceId workspace of the cloud context
+   * Create cloud context - this is used as part of CreateGcpContextFlightV2 to insert the context
+   * row at the start of the create context operation.
    */
   @WriteTransaction
-  public void deleteGcpCloudContext(UUID workspaceId) {
-    deleteGcpCloudContextWorker(workspaceId);
-  }
-
-  /**
-   * Delete a cloud context for the workspace validating the projectId
-   *
-   * @param workspaceId workspace of the cloud context
-   * @param projectId the GCP project id to validate
-   */
-  @WriteTransaction
-  public void deleteGcpCloudContextWithIdCheck(UUID workspaceId, String projectId) {
-    // Only perform the delete, if the project id matches the input project id
-    Optional<GcpCloudContext> gcpCloudContext = getGcpCloudContext(workspaceId);
-    if (gcpCloudContext.isPresent()) {
-      if (StringUtils.equals(projectId, gcpCloudContext.get().getGcpProjectId())) {
-        deleteGcpCloudContextWorker(workspaceId);
-      }
+  public void createCloudContextStart(
+      UUID workspaceId, CloudPlatform cloudPlatform, String flightId) {
+    final String platform = cloudPlatform.toSql();
+    final String sql =
+        "INSERT INTO cloud_context (workspace_id, cloud_platform, creating_flight)"
+            + " VALUES (:workspace_id, :cloud_platform, :creating_flight)";
+    MapSqlParameterSource params =
+        new MapSqlParameterSource()
+            .addValue("workspace_id", workspaceId.toString())
+            .addValue("cloud_platform", platform)
+            .addValue("creating_flight", flightId);
+    try {
+      jdbcTemplate.update(sql, params);
+      logger.info("Inserted record for {} cloud context for workspace {}", platform, workspaceId);
+    } catch (DuplicateKeyException e) {
+      throw new DuplicateCloudContextException(
+          String.format(
+              "Workspace with id %s already has context for %s cloud type", workspaceId, platform),
+          e);
     }
   }
 
-  private void deleteGcpCloudContextWorker(UUID workspaceId) {
-    final String sql =
+  /**
+   * Second part of the create cloud context - write the context. This transaction is run from a
+   * flight step, so we want it to be idempotent. The algorithm is this:
+   *
+   * <ol>
+   *   <li>try the update, searching explicitly for our created flight
+   *   <li>if nothing gets updated, then maybe this is a step restart. We query the row to make sure
+   *       that it exists and has a non-null context.
+   * </ol>
+   *
+   * Since the typical case will be a successful update, we won't do the get frequently.
+   *
+   * @param workspaceId workspaceId part of PK for lookup
+   * @param cloudPlatform platform part of PK for lookup
+   * @param context serialized cloud context
+   * @param flightId flight id
+   */
+  @WriteTransaction
+  public void createCloudContextFinish(
+      UUID workspaceId, CloudPlatform cloudPlatform, String context, String flightId) {
+    int updatedCount = updateCloudContextWorker(workspaceId, cloudPlatform, context, flightId);
+
+    if (updatedCount == 1) {
+      // Success path
+      logger.info("Updated {} cloud context for workspace {}", cloudPlatform, workspaceId);
+      return;
+    }
+
+    if (updatedCount == 0) {
+      // We didn't change anything. Make sure the context is there
+      Optional<String> dbContext = getCloudContextWorker(workspaceId, cloudPlatform);
+      if (dbContext.isPresent()) {
+        logger.info(
+            "{} cloud context for workspace {} already updated and unlocked",
+            cloudPlatform,
+            workspaceId);
+        return;
+      }
+      throw new InternalLogicException(
+          "Database corruption during cloud context creation: no row updated");
+    }
+    throw new InternalLogicException(
+        "Database corruption during cloud context creation: multiple rows updated");
+  }
+
+  /**
+   * This unconditional update is used to upgrade an existing V1 cloud context to a V2 context.
+   *
+   * @param workspaceId workspaceId part of PK for lookup
+   * @param cloudPlatform platform part of PK for lookup
+   * @param context serialized cloud context
+   */
+  @WriteTransaction
+  public void updateCloudContext(UUID workspaceId, CloudPlatform cloudPlatform, String context) {
+    int updatedCount = updateCloudContextWorker(workspaceId, cloudPlatform, context, null);
+    if (updatedCount != 1) {
+      throw new InternalLogicException("Cloud context not found");
+    }
+  }
+
+  /**
+   * Shared worker for updating cloud context
+   *
+   * @param workspaceId workspaceId part of PK for lookup
+   * @param cloudPlatform platform part of PK for lookup
+   * @param context serialized cloud context
+   * @param creatingFlightId flightId - if not null, the update filters on creating_flight
+   * @return number of rows updated
+   */
+  private int updateCloudContextWorker(
+      UUID workspaceId,
+      CloudPlatform cloudPlatform,
+      String context,
+      @Nullable String creatingFlightId) {
+    String sql =
+        "UPDATE cloud_context "
+            + " SET context = :context::json"
+            + " WHERE workspace_id = :workspace_id"
+            + " AND cloud_platform = :cloud_platform";
+
+    MapSqlParameterSource params =
+        new MapSqlParameterSource()
+            .addValue("context", context)
+            .addValue("workspace_id", workspaceId.toString())
+            .addValue("cloud_platform", cloudPlatform.toSql());
+
+    if (StringUtils.isNotEmpty(creatingFlightId)) {
+      sql = sql + " AND creating_flight = :creating_flight";
+      params.addValue("creating_flight", creatingFlightId);
+    }
+    return jdbcTemplate.update(sql, params);
+  }
+
+  /**
+   * Delete a cloud context for the workspace validating the flight id. This is for use by the
+   * original cloud context create flight. We compare the incoming flight id with the
+   * creating_flight of the cloud context. We will only delete if they match. That makes sure that
+   * undoing a create does not delete a valid cloud context.
+   *
+   * @param workspaceId workspace of the cloud context
+   * @param cloudPlatform cloud platform of the cloud context
+   * @param flightId flight id making the delete request
+   */
+  @WriteTransaction
+  public void deleteCloudContextWithFlightIdValidation(
+      UUID workspaceId, CloudPlatform cloudPlatform, String flightId) {
+    deleteCloudContextWorker(workspaceId, cloudPlatform, flightId);
+  }
+
+  /**
+   * Delete the GCP cloud context for a workspace. This is intended for the cloud context delete
+   * flight, where we do not have idempotency issues on undo.
+   *
+   * @param workspaceId workspace of the cloud context
+   * @param cloudPlatform cloud platform of the cloud context
+   */
+  @WriteTransaction
+  public void deleteCloudContext(UUID workspaceId, CloudPlatform cloudPlatform) {
+    deleteCloudContextWorker(workspaceId, cloudPlatform, null);
+  }
+
+  /**
+   * Common worker for deleting cloud context
+   *
+   * @param workspaceId workspace holding the context
+   * @param cloudPlatform platform of the context
+   * @param creatingFlightId if non-null, then it is compared to the creating_flight to make sure a
+   *     conflicting create does not delete a valid cloud context. This behavior can be removed when
+   *     we are able to do PF-1238.
+   */
+  private void deleteCloudContextWorker(
+      UUID workspaceId, CloudPlatform cloudPlatform, @Nullable String creatingFlightId) {
+    final String platform = cloudPlatform.toSql();
+    String sql =
         "DELETE FROM cloud_context "
-            + "WHERE workspace_id = :workspace_id AND cloud_platform = :cloud_platform";
+            + "WHERE workspace_id = :workspace_id"
+            + " AND cloud_platform = :cloud_platform";
 
     MapSqlParameterSource params =
         new MapSqlParameterSource()
             .addValue("workspace_id", workspaceId.toString())
-            .addValue("cloud_platform", CloudPlatform.GCP.toString());
+            .addValue("cloud_platform", platform);
+
+    if (StringUtils.isNotEmpty(creatingFlightId)) {
+      sql = sql + " AND creating_flight = :creating_flight";
+      params.addValue("creating_flight", creatingFlightId);
+    }
 
     int rowsAffected = jdbcTemplate.update(sql, params);
     boolean deleted = rowsAffected > 0;
 
     if (deleted) {
-      logger.info("Deleted GCP cloud context for workspace {}", workspaceId);
+      logger.info("Deleted {} cloud context for workspace {}", platform, workspaceId);
     } else {
-      logger.info("No record to delete for GCP cloud context for workspace {}", workspaceId);
+      logger.info(
+          "No record to delete for {} cloud context for workspace {}", platform, workspaceId);
     }
   }
 
-  private static final RowMapper<Workspace> WORKSPACE_ROW_MAPPER =
+  /**
+   * Retrieve the serialized cloud context
+   *
+   * @param workspaceId workspace of the context
+   * @param cloudPlatform platform context to retrieve
+   * @return empty or the serialized cloud context info
+   */
+  @ReadTransaction
+  public Optional<String> getCloudContext(UUID workspaceId, CloudPlatform cloudPlatform) {
+    return getCloudContextWorker(workspaceId, cloudPlatform);
+  }
+
+  /** Retrieve the flight ID which created the cloud context for a workspace, if one exists. */
+  @Deprecated // TODO: PF-1238 remove
+  @ReadTransaction
+  public Optional<String> getCloudContextFlightId(UUID workspaceId, CloudPlatform cloudPlatform) {
+    String sql =
+        "SELECT creating_flight FROM cloud_context WHERE workspace_id = :workspace_id AND cloud_platform = :cloud_platform";
+    MapSqlParameterSource params =
+        new MapSqlParameterSource()
+            .addValue("workspace_id", workspaceId.toString())
+            .addValue("cloud_platform", cloudPlatform.toSql());
+    return Optional.ofNullable(
+        DataAccessUtils.singleResult(
+            jdbcTemplate.query(sql, params, (rs, rowNum) -> rs.getString("creating_flight"))));
+  }
+
+  /**
+   * Retrieve the serialized cloud context of an unlocked cloud context. That is, a cloud context
+   * that is done being created.
+   *
+   * @param workspaceId workspace of the context
+   * @param cloudPlatform platform context to retrieve
+   * @return empty or the serialized cloud context info
+   */
+  private Optional<String> getCloudContextWorker(UUID workspaceId, CloudPlatform cloudPlatform) {
+    String sql =
+        "SELECT context FROM cloud_context"
+            + " WHERE workspace_id = :workspace_id"
+            + " AND cloud_platform = :cloud_platform";
+    MapSqlParameterSource params =
+        new MapSqlParameterSource()
+            .addValue("workspace_id", workspaceId.toString())
+            .addValue("cloud_platform", cloudPlatform.toSql());
+
+    return Optional.ofNullable(
+        DataAccessUtils.singleResult(
+            jdbcTemplate.query(sql, params, (rs, rowNum) -> rs.getString("context"))));
+  }
+
+  public static class WorkspaceUserPair {
+    private final UUID workspaceId;
+    private final String userEmail;
+
+    public WorkspaceUserPair(UUID workspaceId, String userEmail) {
+      this.workspaceId = workspaceId;
+      this.userEmail = userEmail;
+    }
+
+    public UUID getWorkspaceId() {
+      return workspaceId;
+    }
+
+    public String getUserEmail() {
+      return userEmail;
+    }
+  }
+
+  private static final RowMapper<WorkspaceUserPair> WORKSPACE_USER_PAIR_ROW_MAPPER =
       (rs, rowNum) ->
-          Workspace.builder()
-              .workspaceId(UUID.fromString(rs.getString("workspace_id")))
-              .displayName(rs.getString("display_name"))
-              .description(rs.getString("description"))
-              .spendProfileId(
-                  Optional.ofNullable(rs.getString("spend_profile"))
-                      .map(SpendProfileId::create)
-                      .orElse(null))
-              .properties(
-                  Optional.ofNullable(rs.getString("properties"))
-                      .map(DbSerDes::jsonToProperties)
-                      .orElse(null))
-              .workspaceStage(WorkspaceStage.valueOf(rs.getString("workspace_stage")))
-              .gcpCloudContext(
-                  Optional.ofNullable(rs.getString("context"))
-                      .map(WorkspaceDao::deserializeGcpCloudContext)
-                      .orElse(null))
-              .build();
-  // -- serdes for GcpCloudContext --
+          new WorkspaceUserPair(
+              UUID.fromString(rs.getString("workspace_id")), rs.getString("assigned_user"));
 
-  @VisibleForTesting
-  String serializeGcpCloudContext(GcpCloudContext gcpCloudContext) {
-    GcpCloudContextV1 dbContext = GcpCloudContextV1.from(gcpCloudContext.getGcpProjectId());
-    return DbSerDes.toJson(dbContext);
-  }
+  /**
+   * A method for finding all users of private resources and the workspaces they have resources in.
+   * The returned set will only have one entry for each {workspace, user} pair, even if a user has
+   * multiple private resources in the same workspace.
+   */
+  @ReadTransaction
+  public List<WorkspaceUserPair> getPrivateResourceUsers() {
+    String sql =
+        "SELECT DISTINCT workspace_id, assigned_user FROM resource WHERE assigned_user IS NOT NULL AND private_resource_state = :active_resource_state";
+    MapSqlParameterSource params =
+        new MapSqlParameterSource()
+            .addValue("active_resource_state", PrivateResourceState.ACTIVE.toSql());
 
-  @VisibleForTesting
-  static GcpCloudContext deserializeGcpCloudContext(String json) {
-    GcpCloudContextV1 result = DbSerDes.fromJson(json, GcpCloudContextV1.class);
-    if (result.version != GCP_CLOUD_CONTEXT_DB_VERSION) {
-      throw new InvalidSerializedVersionException("Invalid serialized version");
-    }
-    return new GcpCloudContext(result.gcpProjectId);
-  }
-
-  static class GcpCloudContextV1 {
-    /** Version marker to store in the db so that we can update the format later if we need to. */
-    @JsonProperty final long version = GCP_CLOUD_CONTEXT_DB_VERSION;
-
-    @JsonProperty String gcpProjectId;
-
-    public static GcpCloudContextV1 from(String googleProjectId) {
-      GcpCloudContextV1 result = new GcpCloudContextV1();
-      result.gcpProjectId = googleProjectId;
-      return result;
-    }
+    return jdbcTemplate.query(sql, params, WORKSPACE_USER_PAIR_ROW_MAPPER);
   }
 }

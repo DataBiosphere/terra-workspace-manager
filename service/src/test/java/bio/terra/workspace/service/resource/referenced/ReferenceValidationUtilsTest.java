@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import bio.terra.workspace.common.BaseUnitTest;
 import bio.terra.workspace.service.resource.ValidationUtils;
+import bio.terra.workspace.service.resource.exception.InvalidNameException;
 import bio.terra.workspace.service.resource.referenced.exception.InvalidReferenceException;
 import org.junit.jupiter.api.Test;
 
@@ -12,8 +13,7 @@ public class ReferenceValidationUtilsTest extends BaseUnitTest {
   @Test
   public void testInvalidCharInBucketName() {
     assertThrows(
-        InvalidReferenceException.class,
-        () -> ValidationUtils.validateBucketName("INVALIDBUCKETNAME"));
+        InvalidNameException.class, () -> ValidationUtils.validateBucketName("INVALIDBUCKETNAME"));
   }
 
   @Test

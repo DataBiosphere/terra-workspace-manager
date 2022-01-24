@@ -14,6 +14,7 @@ import java.util.UUID;
  * A {@link Flight} for creating a Google cloud context for a workspace using Buffer Service to
  * create the project.
  */
+@Deprecated // TODO: PF-1238 remove
 public class CreateGcpContextFlight extends Flight {
   // Buffer Retry rule settings. For Buffer Service, allow for long wait times.
   // If the pool is empty, Buffer Service may need time to actually create a new project.
@@ -24,26 +25,34 @@ public class CreateGcpContextFlight extends Flight {
     FlightBeanBag appContext = FlightBeanBag.getFromObject(applicationContext);
     CrlService crl = appContext.getCrlService();
 
-    RetryRule bufferRetryRule = RetryRules.buffer();
-
     UUID workspaceId =
         UUID.fromString(inputParameters.get(WorkspaceFlightMapKeys.WORKSPACE_ID, String.class));
     AuthenticatedUserRequest userRequest =
         inputParameters.get(JobMapKeys.AUTH_USER_INFO.getKeyName(), AuthenticatedUserRequest.class);
 
-    addStep(new GenerateProjectIdStep());
+    RetryRule dbRetry = RetryRules.shortDatabase();
+    RetryRule shortRetry = RetryRules.shortExponential();
+    RetryRule cloudRetry = RetryRules.cloud();
+
+    addStep(
+        new CheckSpendProfileStep(
+            appContext.getWorkspaceDao(),
+            appContext.getSpendProfileService(),
+            workspaceId,
+            userRequest));
+    addStep(new GenerateRbsRequestIdStep());
     addStep(
         new PullProjectFromPoolStep(
             appContext.getBufferService(), crl.getCloudResourceManagerCow()),
-        bufferRetryRule);
+        RetryRules.buffer());
 
-    RetryRule retryRule = RetryRules.shortExponential();
-
-    addStep(new SetProjectBillingStep(crl.getCloudBillingClientCow()));
-    addStep(new CreateCustomGcpRolesStep(crl.getIamCow()), retryRule);
-    addStep(new StoreGcpContextStep(appContext.getWorkspaceDao(), workspaceId), retryRule);
-    addStep(new SyncSamGroupsStep(appContext.getSamService(), workspaceId, userRequest), retryRule);
-    addStep(new GcpCloudSyncStep(crl.getCloudResourceManagerCow()), retryRule);
+    addStep(new SetProjectBillingStep(crl.getCloudBillingClientCow()), cloudRetry);
+    addStep(new GrantWsmRoleAdminStep(crl), shortRetry);
+    addStep(new CreateCustomGcpRolesStep(crl.getIamCow()), shortRetry);
+    addStep(
+        new SyncSamGroupsStep(appContext.getSamService(), workspaceId, userRequest), shortRetry);
+    addStep(new GcpCloudSyncStep(crl.getCloudResourceManagerCow()), cloudRetry);
+    addStep(new StoreGcpContextStep(appContext.getGcpCloudContextService(), workspaceId), dbRetry);
     addStep(new SetGcpContextOutputStep());
   }
 }

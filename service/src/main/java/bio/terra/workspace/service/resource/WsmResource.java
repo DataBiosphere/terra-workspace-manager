@@ -10,6 +10,7 @@ import bio.terra.workspace.service.resource.model.StewardshipType;
 import bio.terra.workspace.service.resource.referenced.ReferencedResource;
 import com.google.common.base.Strings;
 import java.util.UUID;
+import javax.annotation.Nullable;
 
 /**
  * Top-level class for a Resource. Children of this class can be controlled resources, references,
@@ -19,7 +20,7 @@ public abstract class WsmResource {
   private final UUID workspaceId;
   private final UUID resourceId;
   private final String name;
-  private final String description;
+  private @Nullable final String description;
   private final CloningInstructions cloningInstructions;
 
   /**
@@ -36,7 +37,7 @@ public abstract class WsmResource {
       UUID workspaceId,
       UUID resourceId,
       String name,
-      String description,
+      @Nullable String description,
       CloningInstructions cloningInstructions) {
     this.workspaceId = workspaceId;
     this.resourceId = resourceId;
@@ -129,6 +130,10 @@ public abstract class WsmResource {
         || getStewardshipType() == null
         || getResourceId() == null) {
       throw new MissingRequiredFieldException("Missing required field for WsmResource.");
+    }
+    ValidationUtils.validateResourceName(getName());
+    if (getDescription() != null) {
+      ValidationUtils.validateResourceDescriptionName(getDescription());
     }
   }
 

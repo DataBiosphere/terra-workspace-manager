@@ -9,13 +9,14 @@ import bio.terra.workspace.service.resource.WsmResourceType;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.model.StewardshipType;
 import java.util.UUID;
+import javax.annotation.Nullable;
 
 public abstract class ReferencedResource extends WsmResource {
   public ReferencedResource(
       UUID workspaceId,
       UUID resourceId,
       String name,
-      String description,
+      @Nullable String description,
       CloningInstructions cloningInstructions) {
     super(workspaceId, resourceId, name, description, cloningInstructions);
   }
@@ -38,6 +39,11 @@ public abstract class ReferencedResource extends WsmResource {
     return (ReferencedBigQueryDatasetResource) this;
   }
 
+  public ReferencedBigQueryDataTableResource castToBigQueryDataTableResource() {
+    validateSubclass(WsmResourceType.BIG_QUERY_DATA_TABLE);
+    return (ReferencedBigQueryDataTableResource) this;
+  }
+
   public ReferencedDataRepoSnapshotResource castToDataRepoSnapshotResource() {
     validateSubclass(WsmResourceType.DATA_REPO_SNAPSHOT);
     return (ReferencedDataRepoSnapshotResource) this;
@@ -46,6 +52,11 @@ public abstract class ReferencedResource extends WsmResource {
   public ReferencedGcsBucketResource castToGcsBucketResource() {
     validateSubclass(WsmResourceType.GCS_BUCKET);
     return (ReferencedGcsBucketResource) this;
+  }
+
+  public ReferencedGcsObjectResource castToGcsObjectResource() {
+    validateSubclass(WsmResourceType.GCS_OBJECT);
+    return (ReferencedGcsObjectResource) this;
   }
 
   /**

@@ -10,7 +10,7 @@ import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.resource.WsmResource;
 import bio.terra.workspace.service.resource.controlled.ControlledGcsBucketResource;
 import bio.terra.workspace.service.resource.controlled.exception.BucketDeleteTimeoutException;
-import bio.terra.workspace.service.workspace.WorkspaceService;
+import bio.terra.workspace.service.workspace.GcpCloudContextService;
 import com.google.cloud.storage.BucketInfo;
 import com.google.cloud.storage.StorageException;
 import com.google.common.collect.ImmutableList;
@@ -34,7 +34,7 @@ public class DeleteGcsBucketStep implements Step {
   private static final int MAX_DELETE_TRIES = 72; // 3 days
   private final CrlService crlService;
   private final ResourceDao resourceDao;
-  private final WorkspaceService workspaceService;
+  private final GcpCloudContextService gcpCloudContextService;
   private final UUID workspaceId;
   private final UUID resourceId;
 
@@ -43,12 +43,12 @@ public class DeleteGcsBucketStep implements Step {
   public DeleteGcsBucketStep(
       CrlService crlService,
       ResourceDao resourceDao,
-      WorkspaceService workspaceService,
+      GcpCloudContextService gcpCloudContextService,
       UUID workspaceId,
       UUID resourceId) {
     this.crlService = crlService;
     this.resourceDao = resourceDao;
-    this.workspaceService = workspaceService;
+    this.gcpCloudContextService = gcpCloudContextService;
     this.workspaceId = workspaceId;
     this.resourceId = resourceId;
   }
@@ -56,14 +56,15 @@ public class DeleteGcsBucketStep implements Step {
   @Override
   public StepResult doStep(FlightContext flightContext) throws InterruptedException {
     int deleteTries = 0;
-    String projectId = workspaceService.getRequiredGcpProject(workspaceId);
+    String projectId = gcpCloudContextService.getRequiredGcpProject(workspaceId);
     WsmResource wsmResource = resourceDao.getResource(workspaceId, resourceId);
     ControlledGcsBucketResource resource =
         wsmResource.castToControlledResource().castToGcsBucketResource();
     final StorageCow storageCow = crlService.createStorageCow(projectId);
+    // If the bucket is already deleted (e.g. this step is being retried), storageCow.get() will
+    // return null.
     BucketCow bucket = storageCow.get(resource.getBucketName());
-
-    boolean bucketExists = true;
+    boolean bucketExists = bucket != null;
     while (bucketExists) {
       // We always replace the lifecycle rules. This covers the case where the step is rerun
       // and covers the case where the rules are changed out of band of this operation.

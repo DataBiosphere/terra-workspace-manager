@@ -13,7 +13,7 @@ import bio.terra.workspace.generated.model.ApiGcpGcsBucketUpdateParameters;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.resource.controlled.ControlledGcsBucketResource;
 import bio.terra.workspace.service.resource.controlled.GcsApiConversions;
-import bio.terra.workspace.service.workspace.WorkspaceService;
+import bio.terra.workspace.service.workspace.GcpCloudContextService;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import com.google.cloud.storage.BucketInfo;
 import javax.ws.rs.BadRequestException;
@@ -25,7 +25,7 @@ public class RetrieveGcsBucketCloudAttributesStep implements Step {
       LoggerFactory.getLogger(RetrieveGcsBucketCloudAttributesStep.class);
   private final ControlledGcsBucketResource bucketResource;
   private final CrlService crlService;
-  private final WorkspaceService workspaceService;
+  private final GcpCloudContextService gcpCloudContextService;
   private final RetrievalMode retrievalMode;
 
   // TODO: PF-850 - just use creation parameters and remove retrieval mode.
@@ -37,11 +37,11 @@ public class RetrieveGcsBucketCloudAttributesStep implements Step {
   public RetrieveGcsBucketCloudAttributesStep(
       ControlledGcsBucketResource bucketResource,
       CrlService crlService,
-      WorkspaceService workspaceService,
+      GcpCloudContextService gcpCloudContextService,
       RetrievalMode retrievalMode) {
     this.bucketResource = bucketResource;
     this.crlService = crlService;
-    this.workspaceService = workspaceService;
+    this.gcpCloudContextService = gcpCloudContextService;
     this.retrievalMode = retrievalMode;
   }
 
@@ -50,7 +50,7 @@ public class RetrieveGcsBucketCloudAttributesStep implements Step {
       throws InterruptedException, RetryException {
     final FlightMap workingMap = flightContext.getWorkingMap();
     final String projectId =
-        workspaceService.getRequiredGcpProject(bucketResource.getWorkspaceId());
+        gcpCloudContextService.getRequiredGcpProject(bucketResource.getWorkspaceId());
     // get the storage cow
     final StorageCow storageCow = crlService.createStorageCow(projectId);
 

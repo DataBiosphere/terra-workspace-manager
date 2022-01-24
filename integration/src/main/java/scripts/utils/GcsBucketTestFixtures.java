@@ -7,18 +7,16 @@ import bio.terra.workspace.model.GcpGcsBucketLifecycleRuleAction;
 import bio.terra.workspace.model.GcpGcsBucketLifecycleRuleActionType;
 import bio.terra.workspace.model.GcpGcsBucketLifecycleRuleCondition;
 import bio.terra.workspace.model.GcpGcsBucketUpdateParameters;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Bucket parameters for integration testing. This class has no methods.
- */
+/** Bucket parameters for integration testing. This class has no methods. */
 public class GcsBucketTestFixtures {
 
-  private GcsBucketTestFixtures() {
-  }
+  private GcsBucketTestFixtures() {}
 
   public static final int LIFECYCLE_RULE_1_CONDITION_AGE = 64;
   public static final boolean LIFECYCLE_RULE_1_CONDITION_LIVE = true;
@@ -46,9 +44,13 @@ public class GcsBucketTestFixtures {
               new GcpGcsBucketLifecycleRuleCondition()
                   .createdBefore(OffsetDateTime.parse("2007-01-03T00:00:00.00Z"))
                   .addMatchesStorageClassItem(GcpGcsBucketDefaultStorageClass.STANDARD));
-  // list must not be immutable if deserialization is to work
+
+  @SuppressFBWarnings(
+      value = "MS_MUTABLE_COLLECTION",
+      justification = "list must not be immutable if deserialization is to work")
   public static final List<GcpGcsBucketLifecycleRule> LIFECYCLE_RULES =
       new ArrayList<>(List.of(LIFECYCLE_RULE_1, LIFECYCLE_RULE_2));
+
   public static final String RESOURCE_DESCRIPTION = "A huge bucket";
   public static final String UPDATED_RESOURCE_NAME = "new_resource_name";
   public static final String UPDATED_RESOURCE_NAME_2 = "another_resource_name";
@@ -61,18 +63,25 @@ public class GcsBucketTestFixtures {
   public static final GcpGcsBucketUpdateParameters UPDATE_PARAMETERS_1 =
       new GcpGcsBucketUpdateParameters()
           .defaultStorageClass(GcpGcsBucketDefaultStorageClass.NEARLINE)
-          .lifecycle(new GcpGcsBucketLifecycle()
-              .addRulesItem(new GcpGcsBucketLifecycleRule()
-                  .action(new GcpGcsBucketLifecycleRuleAction()
-                      .type(GcpGcsBucketLifecycleRuleActionType.SET_STORAGE_CLASS)
-                      .storageClass(GcpGcsBucketDefaultStorageClass.ARCHIVE))
-                  .condition(new GcpGcsBucketLifecycleRuleCondition()
-                      .age(30)
-                      .createdBefore(OffsetDateTime
-                          .parse("1981-04-20T21:15:30-05:00", DateTimeFormatter.ISO_OFFSET_DATE_TIME))
-                      .live(true)
-                      .numNewerVersions(3)
-                      .addMatchesStorageClassItem(GcpGcsBucketDefaultStorageClass.ARCHIVE))));
+          .lifecycle(
+              new GcpGcsBucketLifecycle()
+                  .addRulesItem(
+                      new GcpGcsBucketLifecycleRule()
+                          .action(
+                              new GcpGcsBucketLifecycleRuleAction()
+                                  .type(GcpGcsBucketLifecycleRuleActionType.SET_STORAGE_CLASS)
+                                  .storageClass(GcpGcsBucketDefaultStorageClass.ARCHIVE))
+                          .condition(
+                              new GcpGcsBucketLifecycleRuleCondition()
+                                  .age(30)
+                                  .createdBefore(
+                                      OffsetDateTime.parse(
+                                          "1981-04-20T21:15:30-05:00",
+                                          DateTimeFormatter.ISO_OFFSET_DATE_TIME))
+                                  .live(true)
+                                  .numNewerVersions(3)
+                                  .addMatchesStorageClassItem(
+                                      GcpGcsBucketDefaultStorageClass.ARCHIVE))));
   public static final GcpGcsBucketUpdateParameters UPDATE_PARAMETERS_2 =
       new GcpGcsBucketUpdateParameters()
           .defaultStorageClass(GcpGcsBucketDefaultStorageClass.COLDLINE);

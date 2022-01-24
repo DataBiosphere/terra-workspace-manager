@@ -12,7 +12,7 @@ public class SpendConnectedTestUtils {
 
   /** Returns a {@link SpendProfileId} that can be used to link to spend on workspaces. */
   public SpendProfileId defaultSpendId() {
-    return SpendProfileId.create(spendConfig.getSpendProfiles().get(0).getId());
+    return new SpendProfileId(spendConfig.getSpendProfiles().get(0).getId());
   }
 
   /** Returns a billing account id that can be used for billing projects on workspaces. */
@@ -22,6 +22,6 @@ public class SpendConnectedTestUtils {
 
   /** Returns a SpendProfileId in the spend profile service with no billing account associated. */
   public SpendProfileId noBillingAccount() {
-    return SpendProfileId.create("no-billing-account");
+    return new SpendProfileId("no-billing-account");
   }
 }

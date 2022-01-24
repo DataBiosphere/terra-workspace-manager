@@ -9,21 +9,23 @@ import bio.terra.workspace.generated.model.ApiPrivateResourceUser;
 import bio.terra.workspace.generated.model.ApiResourceMetadata;
 import bio.terra.workspace.service.resource.WsmResource;
 import bio.terra.workspace.service.resource.WsmResourceType;
-import bio.terra.workspace.service.resource.controlled.exception.ControlledResourceNotImplementedException;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.model.StewardshipType;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
+import javax.annotation.Nullable;
 
 /**
  * Class for all controlled resource fields that are not common to all resource stewardship types
  * and are not specific to any particular resource type.
  */
 public abstract class ControlledResource extends WsmResource {
-  private final String assignedUser;
+  @Nullable private final String assignedUser;
   private final AccessScopeType accessScope;
+  @Nullable private final PrivateResourceState privateResourceState;
   private final ManagedByType managedBy;
+  private final UUID applicationId;
 
   public ControlledResource(
       UUID workspaceId,
@@ -33,11 +35,15 @@ public abstract class ControlledResource extends WsmResource {
       CloningInstructions cloningInstructions,
       String assignedUser,
       AccessScopeType accessScope,
-      ManagedByType managedBy) {
+      ManagedByType managedBy,
+      UUID applicationId,
+      PrivateResourceState privateResourceState) {
     super(workspaceId, resourceId, name, description, cloningInstructions);
     this.assignedUser = assignedUser;
     this.accessScope = accessScope;
     this.managedBy = managedBy;
+    this.applicationId = applicationId;
+    this.privateResourceState = privateResourceState;
   }
 
   public ControlledResource(DbResource dbResource) {
@@ -48,6 +54,8 @@ public abstract class ControlledResource extends WsmResource {
     this.assignedUser = dbResource.getAssignedUser().orElse(null);
     this.accessScope = dbResource.getAccessScope().orElse(null);
     this.managedBy = dbResource.getManagedBy().orElse(null);
+    this.applicationId = dbResource.getApplicationId().orElse(null);
+    this.privateResourceState = dbResource.getPrivateResourceState().orElse(null);
   }
 
   @Override
@@ -72,6 +80,14 @@ public abstract class ControlledResource extends WsmResource {
     return managedBy;
   }
 
+  public UUID getApplicationId() {
+    return applicationId;
+  }
+
+  public Optional<PrivateResourceState> getPrivateResourceState() {
+    return Optional.ofNullable(privateResourceState);
+  }
+
   public ControlledResourceCategory getCategory() {
     return ControlledResourceCategory.get(accessScope, managedBy);
   }
@@ -85,7 +101,9 @@ public abstract class ControlledResource extends WsmResource {
             .managedBy(managedBy.toApiModel())
             .privateResourceUser(
                 // TODO: PF-616 figure out how to supply the assigned user's role
-                new ApiPrivateResourceUser().userName(assignedUser));
+                new ApiPrivateResourceUser().userName(assignedUser))
+            .privateResourceState(
+                getPrivateResourceState().map(PrivateResourceState::toApiModel).orElse(null));
     metadata.controlledResourceMetadata(controlled);
     return metadata;
   }
@@ -102,9 +120,18 @@ public abstract class ControlledResource extends WsmResource {
     if (getAssignedUser().isPresent() && getAccessScope() == AccessScopeType.ACCESS_SCOPE_SHARED) {
       throw new InconsistentFieldsException("Assigned user on SHARED resource");
     }
-    if (getManagedBy() == ManagedByType.MANAGED_BY_APPLICATION) {
-      throw new ControlledResourceNotImplementedException(
-          "WSM does not support application managed resources yet");
+
+    if (getApplicationId() != null && getManagedBy() != ManagedByType.MANAGED_BY_APPLICATION) {
+      throw new InconsistentFieldsException(
+          "Application managed resource without an application id");
+    }
+
+    // Non-private resources must have NOT_APPLICABLE private resource state. Private resources can
+    // have any of the private resource states, including NOT_APPLICABLE.
+    if (getAccessScope() != AccessScopeType.ACCESS_SCOPE_PRIVATE
+        && privateResourceState != PrivateResourceState.NOT_APPLICABLE) {
+      throw new InconsistentFieldsException(
+          "Private resource state must be NOT_APPLICABLE for all non-private resources.");
     }
   }
 
@@ -112,6 +139,31 @@ public abstract class ControlledResource extends WsmResource {
   public ControlledGcsBucketResource castToGcsBucketResource() {
     validateSubclass(WsmResourceType.GCS_BUCKET);
     return (ControlledGcsBucketResource) this;
+  }
+
+  public ControlledAzureIpResource castToAzureIpResource() {
+    validateSubclass(WsmResourceType.AZURE_IP);
+    return (ControlledAzureIpResource) this;
+  }
+
+  public ControlledAzureStorageResource castToAzureStorageResource() {
+    validateSubclass(WsmResourceType.AZURE_STORAGE_ACCOUNT);
+    return (ControlledAzureStorageResource) this;
+  }
+
+  public ControlledAzureDiskResource castToAzureDiskResource() {
+    validateSubclass(WsmResourceType.AZURE_DISK);
+    return (ControlledAzureDiskResource) this;
+  }
+
+  public ControlledAzureNetworkResource castToAzureNetworkResource() {
+    validateSubclass(WsmResourceType.AZURE_NETWORK);
+    return (ControlledAzureNetworkResource) this;
+  }
+
+  public ControlledAzureVmResource castToAzureVmResource() {
+    validateSubclass(WsmResourceType.AZURE_VM);
+    return (ControlledAzureVmResource) this;
   }
 
   public ControlledAiNotebookInstanceResource castToAiNotebookInstanceResource() {

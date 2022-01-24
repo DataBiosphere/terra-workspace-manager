@@ -5,13 +5,12 @@ import bio.terra.workspace.service.resource.WsmResourceType;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableTable;
 import com.google.common.collect.Table;
-import java.util.Collections;
 
 /**
  * This class specifies all of the GCP custom IAM roles that will be created in Workspace contexts.
- * To modify a role's permission, edit the appropriate list here. Unlike workspace roles, resource
- * roles are not strictly hierarchical; the EDITOR role has a distinct set of permissions from
- * WRITER, it is not a superset.
+ * To modify a role's permission, edit the appropriate list here. Most resource are hierarchical:
+ * EDITOR contains WRITER contains READER. The DELETER role is an exception as it only provides the
+ * delete action for private resources, with no other access.
  *
  * <p>We expect this mapping to change over time, and new entries should be added as we add new
  * controlled resource types. There is currently no migration infrastructure for these roles in
@@ -19,20 +18,18 @@ import java.util.Collections;
  * not retroactively apply changes to existing projects.
  */
 public class CustomGcpIamRoleMapping {
-  private CustomGcpIamRoleMapping() {}
-
   static final ImmutableList<String> GCS_BUCKET_READER_PERMISSIONS =
       ImmutableList.of("storage.objects.list", "storage.objects.get");
-
   static final ImmutableList<String> GCS_BUCKET_WRITER_PERMISSIONS =
       new ImmutableList.Builder<String>()
           .addAll(GCS_BUCKET_READER_PERMISSIONS)
-          .add("storage.objects.create", "storage.objects.delete")
+          .add("storage.objects.create", "storage.objects.delete", "storage.objects.update")
           .build();
-
   static final ImmutableList<String> GCS_BUCKET_EDITOR_PERMISSIONS =
-      ImmutableList.of("storage.buckets.get");
-
+      new ImmutableList.Builder<String>()
+          .addAll(GCS_BUCKET_WRITER_PERMISSIONS)
+          .add("storage.buckets.get")
+          .build();
   static final ImmutableList<String> BIG_QUERY_DATASET_READER_PERMISSIONS =
       ImmutableList.of(
           "bigquery.datasets.get",
@@ -46,7 +43,6 @@ public class CustomGcpIamRoleMapping {
           "bigquery.tables.getData",
           "bigquery.tables.list",
           "bigquery.tables.get");
-
   static final ImmutableList<String> BIG_QUERY_DATASET_WRITER_PERMISSIONS =
       new ImmutableList.Builder<String>()
           .addAll(BIG_QUERY_DATASET_READER_PERMISSIONS)
@@ -60,14 +56,14 @@ public class CustomGcpIamRoleMapping {
               "bigquery.routines.update",
               "bigquery.tables.updateData")
           .build();
-
   static final ImmutableList<String> BIG_QUERY_DATASET_EDITOR_PERMISSIONS =
-      ImmutableList.of(
-          "bigquery.datasets.getIamPolicy",
-          "bigquery.tables.create",
-          "bigquery.tables.delete",
-          "bigquery.tables.update");
-
+      new ImmutableList.Builder<String>()
+          .addAll(BIG_QUERY_DATASET_WRITER_PERMISSIONS)
+          .add("bigquery.datasets.getIamPolicy")
+          .add("bigquery.tables.create")
+          .add("bigquery.tables.delete")
+          .add("bigquery.tables.update")
+          .build();
   static final ImmutableList<String> AI_NOTEBOOK_INSTANCE_READER_PERMISSIONS =
       ImmutableList.of(
           "notebooks.instances.get",
@@ -88,23 +84,15 @@ public class CustomGcpIamRoleMapping {
               "notebooks.instances.use")
           .build();
   static final ImmutableList<String> AI_NOTEBOOK_INSTANCE_EDITOR_PERMISSIONS =
-      ImmutableList.of(
-          "notebooks.instances.getIamPolicy",
-          "notebooks.instances.get",
-          "notebooks.instances.list",
-          "notebooks.instances.setAccelerator",
-          "notebooks.instances.setMachineType",
-          "notebooks.instances.start",
-          "notebooks.instances.stop",
-          "notebooks.locations.get",
-          "notebooks.locations.list",
-          "notebooks.operations.cancel",
-          "notebooks.operations.delete",
-          "notebooks.operations.get",
-          "notebooks.operations.list");
-
-  // The ASSIGNER role does not grant GCP permissions, only Sam permissions. It's included in
-  // this map for completeness.
+      new ImmutableList.Builder<String>()
+          .addAll(AI_NOTEBOOK_INSTANCE_WRITER_PERMISSIONS)
+          .add(
+              "notebooks.instances.getIamPolicy",
+              "notebooks.operations.cancel",
+              "notebooks.operations.delete",
+              "notebooks.operations.get",
+              "notebooks.operations.list")
+          .build();
   public static final Table<WsmResourceType, ControlledResourceIamRole, CustomGcpIamRole>
       CUSTOM_GCP_RESOURCE_IAM_ROLES =
           new ImmutableTable.Builder<WsmResourceType, ControlledResourceIamRole, CustomGcpIamRole>()
@@ -130,13 +118,6 @@ public class CustomGcpIamRoleMapping {
                       WsmResourceType.GCS_BUCKET,
                       ControlledResourceIamRole.EDITOR,
                       GCS_BUCKET_EDITOR_PERMISSIONS))
-              .put(
-                  WsmResourceType.GCS_BUCKET,
-                  ControlledResourceIamRole.ASSIGNER,
-                  CustomGcpIamRole.ofResource(
-                      WsmResourceType.GCS_BUCKET,
-                      ControlledResourceIamRole.ASSIGNER,
-                      Collections.emptyList()))
               // BigQuery dataset
               .put(
                   WsmResourceType.BIG_QUERY_DATASET,
@@ -159,13 +140,6 @@ public class CustomGcpIamRoleMapping {
                       WsmResourceType.BIG_QUERY_DATASET,
                       ControlledResourceIamRole.EDITOR,
                       BIG_QUERY_DATASET_EDITOR_PERMISSIONS))
-              .put(
-                  WsmResourceType.BIG_QUERY_DATASET,
-                  ControlledResourceIamRole.ASSIGNER,
-                  CustomGcpIamRole.ofResource(
-                      WsmResourceType.BIG_QUERY_DATASET,
-                      ControlledResourceIamRole.ASSIGNER,
-                      Collections.emptyList()))
               // AI Notebook instance
               .put(
                   WsmResourceType.AI_NOTEBOOK_INSTANCE,
@@ -188,12 +162,7 @@ public class CustomGcpIamRoleMapping {
                       WsmResourceType.AI_NOTEBOOK_INSTANCE,
                       ControlledResourceIamRole.EDITOR,
                       AI_NOTEBOOK_INSTANCE_EDITOR_PERMISSIONS))
-              .put(
-                  WsmResourceType.AI_NOTEBOOK_INSTANCE,
-                  ControlledResourceIamRole.ASSIGNER,
-                  CustomGcpIamRole.ofResource(
-                      WsmResourceType.AI_NOTEBOOK_INSTANCE,
-                      ControlledResourceIamRole.ASSIGNER,
-                      Collections.emptyList()))
               .build();
+
+  private CustomGcpIamRoleMapping() {}
 }

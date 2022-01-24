@@ -2,11 +2,12 @@ package bio.terra.workspace.service.workspace.flight;
 
 import bio.terra.stairway.Flight;
 import bio.terra.stairway.FlightMap;
+import bio.terra.workspace.common.exception.InternalLogicException;
 import bio.terra.workspace.common.utils.FlightBeanBag;
+import bio.terra.workspace.common.utils.RetryRules;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.job.JobMapKeys;
-import bio.terra.workspace.service.workspace.exceptions.InternalLogicException;
-import bio.terra.workspace.service.workspace.model.WorkspaceStage;
+import bio.terra.workspace.service.workspace.model.Workspace;
 
 public class WorkspaceCreateFlight extends Flight {
 
@@ -18,23 +19,27 @@ public class WorkspaceCreateFlight extends Flight {
     // get data from inputs that steps need
     AuthenticatedUserRequest userRequest =
         inputParameters.get(JobMapKeys.AUTH_USER_INFO.getKeyName(), AuthenticatedUserRequest.class);
-    WorkspaceStage workspaceStage =
-        WorkspaceStage.valueOf(
-            inputParameters.get(WorkspaceFlightMapKeys.WORKSPACE_STAGE, String.class));
+    Workspace workspace = inputParameters.get(JobMapKeys.REQUEST.getKeyName(), Workspace.class);
 
     // Workspace authz is handled differently depending on whether WSM owns the underlying Sam
     // resource or not, as indicated by the workspace stage enum.
-    switch (workspaceStage) {
+    switch (workspace.getWorkspaceStage()) {
       case MC_WORKSPACE:
-        addStep(new CreateWorkspaceAuthzStep(appContext.getSamService(), userRequest));
+        addStep(
+            new CreateWorkspaceAuthzStep(workspace, appContext.getSamService(), userRequest),
+            RetryRules.shortExponential());
         break;
       case RAWLS_WORKSPACE:
-        addStep(new CheckSamWorkspaceAuthzStep(appContext.getSamService(), userRequest));
+        addStep(
+            new CheckSamWorkspaceAuthzStep(workspace, appContext.getSamService(), userRequest),
+            RetryRules.shortExponential());
         break;
       default:
         throw new InternalLogicException(
-            "Unknown workspace stage during creation: " + workspaceStage.name());
+            "Unknown workspace stage during creation: " + workspace.getWorkspaceStage().name());
     }
-    addStep(new CreateWorkspaceStep(appContext.getWorkspaceDao()));
+    addStep(
+        new CreateWorkspaceStep(workspace, appContext.getWorkspaceDao()),
+        RetryRules.shortDatabase());
   }
 }

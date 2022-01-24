@@ -2,15 +2,11 @@ buildscript {
     ext {
         springBootVersion = '2.4.0'
     }
-    apply from: "../common.gradle"
 }
 
 plugins {
-    id "idea"
-    id "java"
-    id 'jacoco'
+    id 'terra-workspace-manager.java-conventions'
 
-    id "com.diffplug.spotless" version "5.12.4"
     id "com.github.ben-manes.versions" version "0.36.0"
     id "com.google.cloud.tools.jib" version "3.0.0"
     id "de.undercouch.download" version "4.1.1"
@@ -19,10 +15,6 @@ plugins {
     id "io.spring.dependency-management" version "1.0.10.RELEASE"
     id 'ru.vyarus.quality' version '4.5.0'
 }
-
-group = 'bio.terra'
-version = gradle.wsmVersion
-sourceCompatibility = JavaVersion.VERSION_11
 
 def artifactGroup = "${group}.workspace"
 def openapiOutputDir = "${buildDir}/openapi"
@@ -33,10 +25,6 @@ idea {
         generatedSourceDirs = [file("${openapiOutputDir}/src/main/java")]
         downloadJavadoc = true
     }
-}
-
-jacoco {
-    toolVersion = '0.8.2'
 }
 
 dependencies {
@@ -54,12 +42,12 @@ dependencies {
     implementation group: "org.glassfish.jersey.inject", name: "jersey-hk2", version: "2.32"
 
     // Get stairway via TCL
-    implementation group: "bio.terra", name: "terra-common-lib", version: "0.0.50-SNAPSHOT"
+    implementation group: "bio.terra", name: "terra-common-lib", version: "0.0.53-SNAPSHOT"
     implementation group: "org.broadinstitute.dsde.workbench", name: "sam-client_2.12", version: "0.1-61135c7"
     implementation group: "bio.terra", name: "terra-resource-buffer-client", version: "0.4.3-SNAPSHOT"
 
     // Cloud Resource Library
-    implementation platform('bio.terra.cloud-resource-lib:platform:0.2.0')
+    implementation platform('bio.terra.cloud-resource-lib:platform:0.6.0')
     implementation group: 'bio.terra.cloud-resource-lib', name: 'google-bigquery'
     implementation group: 'bio.terra.cloud-resource-lib', name: 'google-billing'
     implementation group: 'bio.terra.cloud-resource-lib', name: 'google-cloudresourcemanager'
@@ -68,6 +56,8 @@ dependencies {
     implementation group: 'bio.terra.cloud-resource-lib', name: 'google-notebooks'
     implementation group: 'bio.terra.cloud-resource-lib', name: 'google-serviceusage'
     implementation group: 'bio.terra.cloud-resource-lib', name: 'google-storage'
+    implementation group: 'bio.terra.cloud-resource-lib', name: 'azure-resourcemanager-compute'
+    implementation group: 'bio.terra.cloud-resource-lib', name: 'azure-resourcemanager-common'
 
     // Storage transfer service
     implementation group: 'com.google.apis', name: 'google-api-services-storagetransfer', version: 'v1-rev20210602-1.31.5'
@@ -88,8 +78,10 @@ dependencies {
     implementation group: "org.apache.commons", name: "commons-dbcp2"
     implementation group: "org.apache.commons", name: "commons-lang3"
     implementation group: "org.apache.commons", name: "commons-pool2"
+    implementation group: "commons-validator", name: "commons-validator", version: "1.7"
     implementation group: "org.springframework.boot", name: "spring-boot-starter-data-jdbc"
     implementation group: "org.springframework.boot", name: "spring-boot-starter-web"
+    implementation group: "org.springframework.boot", name: "spring-boot-starter-validation"
     implementation group: "org.springframework.retry", name: "spring-retry"
 
     // OpenAPI (swagger) deps
@@ -103,16 +95,22 @@ dependencies {
     testImplementation('org.springframework.boot:spring-boot-starter-test') {
         exclude group: 'com.vaadin.external.google', module: 'android-json'
     }
+    // Allows us to mock final classes
+    testImplementation 'org.mockito:mockito-inline:2.13.0'
 
     annotationProcessor group: "com.google.auto.value", name: "auto-value", version: "1.7.4"
     annotationProcessor group: "org.springframework.boot", name: "spring-boot-configuration-processor", version: "2.4.0"
-}
 
-// for scans
-if (hasProperty("buildScan")) {
-    buildScan {
-        termsOfServiceUrl = "https://gradle.com/terms-of-service"
-        termsOfServiceAgree = "yes"
+    // Force log4j version to at least 2.17.0 for security concerns.
+    implementation('org.apache.logging.log4j:log4j-api') {
+        version {
+            require "2.17.0"
+        }
+    }
+    implementation('org.apache.logging.log4j:log4j-to-slf4j') {
+        version {
+            require "2.17.0"
+        }
     }
 }
 
@@ -147,6 +145,7 @@ swaggerSources {
                 "--api-package", "${artifactGroup}.generated.controller",
                 "--model-package", "${artifactGroup}.generated.model",
                 "--model-name-prefix", "Api",
+                "--additional-properties", "errorOnUnknownEnum=true",
                 "-D", "interfaceOnly=true," +
                       "useTags=true," +
                       "dateLibrary=java8"
@@ -161,14 +160,11 @@ swaggerSources {
 // Created by scripts/write_config.sh
 def googleCredentialsFile = "${rootDir}/config/wsm-sa.json"
 bootRun {
-    environment = [
-            'GOOGLE_APPLICATION_CREDENTIALS': "${googleCredentialsFile}"
-    ]
+    environment.put("GOOGLE_APPLICATION_CREDENTIALS", "${googleCredentialsFile}")
 }
+
 tasks.withType(Test) {
-    environment = [
-            'GOOGLE_APPLICATION_CREDENTIALS': "${googleCredentialsFile}"
-    ]
+    environment.put("GOOGLE_APPLICATION_CREDENTIALS", "${googleCredentialsFile}")
     testLogging {
         if (System.getenv('PRINT_STANDARD_STREAMS') == null) {
             events = ["passed", "failed", "skipped", "started"]
@@ -178,15 +174,6 @@ tasks.withType(Test) {
     }
 }
 
-jacocoTestReport {
-    reports {
-        xml.enabled = true
-        xml.destination = file("$buildDir/reports/jacoco/test/jacoco.xml")
-    }
-    dependsOn test
-}
-
- // default test to unit tests so the build target succeeds
 test {
     useJUnitPlatform {
         includeTags "unit"
@@ -210,11 +197,11 @@ task connectedTest(type: Test) {
     outputs.upToDateWhen { false }
 }
 
-spotless {
-    java {
-        googleJavaFormat()
-        target 'src/*/java/**/*.java'
+task azureTest(type: Test) {
+    useJUnitPlatform {
+        includeTags "azure"
     }
+    outputs.upToDateWhen { false }
 }
 
 // Generate/clean the version properties file
@@ -256,7 +243,7 @@ jib {
 
 sourceSets.main.java.srcDir "${openapiOutputDir}/src/main/java"
 
-compileJava.dependsOn swaggerSources.server.code, spotlessApply, generateVersionProperties
+compileJava.dependsOn swaggerSources.server.code, generateVersionProperties
 tasks.jib.dependsOn extractProfilerAgent
 tasks.jibDockerBuild.dependsOn extractProfilerAgent
 tasks.jibBuildTar.dependsOn extractProfilerAgent

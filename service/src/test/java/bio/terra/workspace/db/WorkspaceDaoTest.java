@@ -5,12 +5,17 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasItem;
 import static org.hamcrest.Matchers.in;
 import static org.hamcrest.core.IsNot.not;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import bio.terra.workspace.app.configuration.external.WorkspaceDatabaseConfiguration;
 import bio.terra.workspace.common.BaseUnitTest;
 import bio.terra.workspace.db.exception.WorkspaceNotFoundException;
 import bio.terra.workspace.service.spendprofile.SpendProfileId;
+import bio.terra.workspace.service.workspace.GcpCloudContextService;
+import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.exceptions.DuplicateWorkspaceException;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import bio.terra.workspace.service.workspace.model.GcpCloudContext;
@@ -33,21 +38,28 @@ import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 
 class WorkspaceDaoTest extends BaseUnitTest {
+  private static final String PROJECT_ID = "my-project1";
+  private static final String POLICY_OWNER = "policy-owner";
+  private static final String POLICY_WRITER = "policy-writer";
+  private static final String POLICY_READER = "policy-reader";
+  private static final String POLICY_APPLICATION = "policy-application";
 
   @Autowired private WorkspaceDatabaseConfiguration workspaceDatabaseConfiguration;
   @Autowired private NamedParameterJdbcTemplate jdbcTemplate;
   @Autowired private WorkspaceDao workspaceDao;
+  @Autowired private GcpCloudContextService gcpCloudContextService;
+  @Autowired private WorkspaceService workspaceService;
   @Autowired private ObjectMapper persistenceObjectMapper;
 
   private UUID workspaceId;
   @Nullable private SpendProfileId spendProfileId;
-  private final String READ_SQL =
+  private static final String READ_SQL =
       "SELECT workspace_id, spend_profile FROM workspace WHERE workspace_id = :id";
 
   @BeforeEach
   void setup() {
     workspaceId = UUID.randomUUID();
-    spendProfileId = SpendProfileId.create("foo");
+    spendProfileId = new SpendProfileId("foo");
   }
 
   @Test
@@ -65,7 +77,7 @@ class WorkspaceDaoTest extends BaseUnitTest {
     Map<String, Object> queryOutput = jdbcTemplate.queryForMap(READ_SQL, params);
 
     assertThat(queryOutput.get("workspace_id"), equalTo(workspaceId.toString()));
-    assertThat(queryOutput.get("spend_profile"), equalTo(spendProfileId.id()));
+    assertThat(queryOutput.get("spend_profile"), equalTo(spendProfileId.getId()));
 
     // This test doesn't clean up after itself - be sure it only runs on unit test DBs, which
     // are always re-created for tests.
@@ -215,58 +227,51 @@ class WorkspaceDaoTest extends BaseUnitTest {
 
     @Test
     void createDeleteGcpCloudContext() {
-      String projectId = "my-project1";
-      GcpCloudContext gcpCloudContext = new GcpCloudContext(projectId);
-      workspaceDao.createGcpCloudContext(workspaceId, gcpCloudContext);
+      String flightId = "flight-createdeletegcpcloudcontext";
+      gcpCloudContextService.createGcpCloudContextStart(workspaceId, flightId);
+      gcpCloudContextService.deleteGcpCloudContextWithCheck(workspaceId, "mismatched-flight-id");
+
+      GcpCloudContext gcpCloudContext = makeCloudContext();
+      gcpCloudContextService.createGcpCloudContextFinish(workspaceId, gcpCloudContext, flightId);
 
       Workspace workspace = workspaceDao.getWorkspace(workspaceId);
-      assertTrue(workspace.getGcpCloudContext().isPresent());
-      assertEquals(projectId, workspace.getGcpCloudContext().get().getGcpProjectId());
+      Optional<GcpCloudContext> cloudContext =
+          gcpCloudContextService.getGcpCloudContext(workspace.getWorkspaceId());
+      checkCloudContext(cloudContext);
 
-      Optional<GcpCloudContext> dbGcpCloudContext = workspaceDao.getGcpCloudContext(workspaceId);
-      assertTrue(dbGcpCloudContext.isPresent());
-      assertEquals(projectId, dbGcpCloudContext.get().getGcpProjectId());
+      // Make sure service and dao get the same answer
+      cloudContext = gcpCloudContextService.getGcpCloudContext(workspaceId);
+      checkCloudContext(cloudContext);
 
-      workspaceDao.deleteGcpCloudContext(workspaceId);
-      workspace = workspaceDao.getWorkspace(workspaceId);
-      assertTrue(workspace.getGcpCloudContext().isEmpty());
+      // delete with mismatched flight id - it should not delete
+      gcpCloudContextService.deleteGcpCloudContextWithCheck(workspaceId, "mismatched-flight-id");
 
-      dbGcpCloudContext = workspaceDao.getGcpCloudContext(workspaceId);
-      assertTrue(dbGcpCloudContext.isEmpty());
+      // Make sure the context is still there
+      cloudContext = gcpCloudContextService.getGcpCloudContext(workspaceId);
+      checkCloudContext(cloudContext);
+
+      // delete with no check - should delete
+      gcpCloudContextService.deleteGcpCloudContext(workspaceId);
+      cloudContext = gcpCloudContextService.getGcpCloudContext(workspaceId);
+      assertTrue(cloudContext.isEmpty());
     }
 
     @Test
     void noSetCloudContextIsNone() {
-      Workspace workspace = workspaceDao.getWorkspace(workspaceId);
-      assertTrue(workspace.getGcpCloudContext().isEmpty());
+      assertTrue(gcpCloudContextService.getGcpCloudContext(workspaceId).isEmpty());
     }
 
     @Test
     void deleteWorkspaceWithCloudContext() {
-      String projectId = "my-project1";
-      GcpCloudContext gcpCloudContext = new GcpCloudContext(projectId);
-      workspaceDao.createGcpCloudContext(workspaceId, gcpCloudContext);
+      String flightId = "flight-deleteworkspacewithcloudcontext";
+      gcpCloudContextService.createGcpCloudContextStart(workspaceId, flightId);
+      GcpCloudContext gcpCloudContext = makeCloudContext();
+      gcpCloudContextService.createGcpCloudContextFinish(workspaceId, gcpCloudContext, flightId);
 
       assertTrue(workspaceDao.deleteWorkspace(workspaceId));
       assertThrows(WorkspaceNotFoundException.class, () -> workspaceDao.getWorkspace(workspaceId));
 
-      assertTrue(workspaceDao.getGcpCloudContext(workspaceId).isEmpty());
-    }
-
-    /**
-     * Hard code serialized values to check that code changes do not break backwards compatibility
-     * of stored JSON values. If this test fails, your change may not work with existing databases.
-     */
-    @Test
-    void gcpCloudContextBackwardsCompatibility() throws Exception {
-      final String json = "{\"version\":1,\"gcpProjectId\":\"foo\"}";
-      WorkspaceDao.GcpCloudContextV1 gcpCloudContextV1 =
-          persistenceObjectMapper.readValue(json, WorkspaceDao.GcpCloudContextV1.class);
-      assertEquals(WorkspaceDao.GCP_CLOUD_CONTEXT_DB_VERSION, gcpCloudContextV1.version);
-      assertEquals("foo", gcpCloudContextV1.gcpProjectId);
-
-      GcpCloudContext gcpCloudContext = workspaceDao.deserializeGcpCloudContext(json);
-      assertEquals("foo", gcpCloudContext.getGcpProjectId());
+      assertTrue(gcpCloudContextService.getGcpCloudContext(workspaceId).isEmpty());
     }
   }
 
@@ -281,5 +286,24 @@ class WorkspaceDaoTest extends BaseUnitTest {
         .workspaceId(workspaceId)
         .workspaceStage(WorkspaceStage.RAWLS_WORKSPACE)
         .build();
+  }
+
+  private GcpCloudContext makeCloudContext() {
+    return new GcpCloudContext(
+        PROJECT_ID, POLICY_OWNER, POLICY_WRITER, POLICY_READER, POLICY_APPLICATION);
+  }
+
+  private void checkCloudContext(Optional<GcpCloudContext> optionalContext) {
+    assertTrue(optionalContext.isPresent());
+    GcpCloudContext context = optionalContext.get();
+    assertEquals(context.getGcpProjectId(), PROJECT_ID);
+    assertTrue(context.getSamPolicyOwner().isPresent());
+    assertEquals(context.getSamPolicyOwner().get(), POLICY_OWNER);
+    assertTrue(context.getSamPolicyWriter().isPresent());
+    assertEquals(context.getSamPolicyWriter().get(), POLICY_WRITER);
+    assertTrue(context.getSamPolicyReader().isPresent());
+    assertEquals(context.getSamPolicyReader().get(), POLICY_READER);
+    assertTrue(context.getSamPolicyApplication().isPresent());
+    assertEquals(context.getSamPolicyApplication().get(), POLICY_APPLICATION);
   }
 }

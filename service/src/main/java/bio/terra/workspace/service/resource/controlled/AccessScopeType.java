@@ -2,8 +2,8 @@ package bio.terra.workspace.service.resource.controlled;
 
 import bio.terra.common.exception.MissingRequiredFieldException;
 import bio.terra.common.exception.SerializationException;
+import bio.terra.workspace.common.exception.InternalLogicException;
 import bio.terra.workspace.generated.model.ApiAccessScope;
-import bio.terra.workspace.service.workspace.exceptions.InternalLogicException;
 import org.apache.commons.lang3.StringUtils;
 
 /** Controlled resources can be shared by all users in a workspace or be private to a single user */
@@ -41,7 +41,7 @@ public enum AccessScopeType {
       }
     }
     throw new SerializationException(
-        "Deeserialization failed: no matching access scope type for " + dbString);
+        "Deserialization failed: no matching access scope type for " + dbString);
   }
 
   public String toSql() {

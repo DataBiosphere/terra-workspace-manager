@@ -7,7 +7,6 @@ on:
   push:
     branches:
       - main
-      - dev
     paths-ignore:
       - 'README.md'
       - '.github/**'
@@ -42,6 +41,14 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
+
+    # Sparse check out terra-helmfile repo version directories
+    - uses: ./.github/actions/checkout-helm-versions
+      with:
+        repository: broadinstitute/terra-helmfile
+        ref: master
+        token: ${{ secrets.BROADBOT_TOKEN }}
+        path: integration/terra-helmfile
 
     - name: Initialize Postgres DB for local server test run
       env:
@@ -112,7 +119,8 @@ jobs:
         MATRIX_CONTEXT: ${{ toJson(matrix) }}
       with:
         status: ${{ job.status }}
-        channel: "#terra-workspace-manager"
+        channel: "#terra-wsm-alerts"
         username: "WSM push to main branch"
         author_name: "integrationTest"
+        icon_emoji: ":triangular_ruler:"
         fields: job, commit

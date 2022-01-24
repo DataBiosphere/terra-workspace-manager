@@ -1,5 +1,6 @@
 package bio.terra.workspace.service.resource.controlled.flight.create;
 
+import static bio.terra.workspace.service.resource.controlled.ResourceConstant.DEFAULT_REGION;
 import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.CREATION_PARAMETERS;
 
 import bio.terra.cloudres.google.bigquery.BigQueryCow;
@@ -9,17 +10,16 @@ import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.StepStatus;
 import bio.terra.stairway.exception.RetryException;
+import bio.terra.workspace.common.utils.FlightUtils;
 import bio.terra.workspace.generated.model.ApiGcpBigQueryDatasetCreationParameters;
 import bio.terra.workspace.service.crl.CrlService;
-import bio.terra.workspace.service.iam.model.ControlledResourceIamRole;
-import bio.terra.workspace.service.iam.model.WsmIamRole;
-import bio.terra.workspace.service.resource.controlled.AccessScopeType;
+import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.resource.controlled.BigQueryApiConversions;
 import bio.terra.workspace.service.resource.controlled.ControlledBigQueryDatasetResource;
-import bio.terra.workspace.service.workspace.WorkspaceService;
-import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
+import bio.terra.workspace.service.resource.controlled.ControlledResourceService;
+import bio.terra.workspace.service.workspace.GcpCloudContextService;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
-import com.fasterxml.jackson.core.type.TypeReference;
+import bio.terra.workspace.service.workspace.model.GcpCloudContext;
 import com.google.api.client.googleapis.json.GoogleJsonResponseException;
 import com.google.api.services.bigquery.model.Dataset;
 import com.google.api.services.bigquery.model.Dataset.Access;
@@ -29,7 +29,7 @@ import com.google.cloud.Policy;
 import com.google.common.base.Preconditions;
 import java.io.IOException;
 import java.util.List;
-import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import org.apache.http.HttpStatus;
 import org.slf4j.Logger;
@@ -45,37 +45,50 @@ import org.slf4j.LoggerFactory;
  */
 public class CreateBigQueryDatasetStep implements Step {
 
+  private final ControlledResourceService controlledResourceService;
   private final CrlService crlService;
   private final ControlledBigQueryDatasetResource resource;
-  private final WorkspaceService workspaceService;
+  private final GcpCloudContextService gcpCloudContextService;
+  private final AuthenticatedUserRequest userRequest;
 
   private final Logger logger = LoggerFactory.getLogger(CreateBigQueryDatasetStep.class);
 
   public CreateBigQueryDatasetStep(
+      ControlledResourceService controlledResourceService,
       CrlService crlService,
       ControlledBigQueryDatasetResource resource,
-      WorkspaceService workspaceService) {
+      GcpCloudContextService gcpCloudContextService,
+      AuthenticatedUserRequest userRequest) {
+    this.controlledResourceService = controlledResourceService;
     this.crlService = crlService;
     this.resource = resource;
-    this.workspaceService = workspaceService;
+    this.gcpCloudContextService = gcpCloudContextService;
+    this.userRequest = userRequest;
   }
 
   @Override
   public StepResult doStep(FlightContext flightContext)
       throws InterruptedException, RetryException {
     FlightMap inputMap = flightContext.getInputParameters();
-    FlightMap workingMap = flightContext.getWorkingMap();
     ApiGcpBigQueryDatasetCreationParameters creationParameters =
         inputMap.get(CREATION_PARAMETERS, ApiGcpBigQueryDatasetCreationParameters.class);
-    String projectId = workspaceService.getRequiredGcpProject(resource.getWorkspaceId());
+    FlightMap workingMap = flightContext.getWorkingMap();
+    FlightUtils.validateRequiredEntries(workingMap, ControlledResourceKeys.GCP_CLOUD_CONTEXT);
+    GcpCloudContext cloudContext =
+        workingMap.get(ControlledResourceKeys.GCP_CLOUD_CONTEXT, GcpCloudContext.class);
+    String projectId = cloudContext.getGcpProjectId();
 
-    List<Access> accessConfiguration = buildDatasetAccessConfiguration(workingMap, projectId);
+    List<Access> accessConfiguration = buildDatasetAccessConfiguration(cloudContext);
     DatasetReference datasetId =
-        new DatasetReference().setProjectId(projectId).setDatasetId(resource.getDatasetName());
+        new DatasetReference()
+            .setProjectId(projectId)
+            .setDatasetId(
+                resource.getDatasetName() == null ? resource.getName() : resource.getDatasetName());
     Dataset datasetToCreate =
         new Dataset()
             .setDatasetReference(datasetId)
-            .setLocation(creationParameters.getLocation())
+            .setLocation(
+                Optional.ofNullable(creationParameters.getLocation()).orElse(DEFAULT_REGION))
             .setDefaultTableExpirationMs(
                 BigQueryApiConversions.toBqExpirationTime(
                     creationParameters.getDefaultTableLifetime()))
@@ -109,31 +122,17 @@ public class CreateBigQueryDatasetStep implements Step {
    * <p>Unlike other cloud objects, BQ datasets do not use GCP's common IAM objects. Instead, they
    * use Access objects, which are roughly equivalent to the Bindings used elsewhere. With some
    * translation, that means this can still use the resource-type-agnostic policy-building code from
-   * {@link GcpPolicyBuilder}.
+   * {@link ControlledResourceService}.
    */
-  private List<Access> buildDatasetAccessConfiguration(FlightMap workingMap, String projectId) {
+  private List<Access> buildDatasetAccessConfiguration(GcpCloudContext cloudContext)
+      throws InterruptedException {
     // As this is a new dataset, we pass an empty Policy object as the initial state to
-    // GcpPolicyBuilder.
-    GcpPolicyBuilder policyBuilder =
-        new GcpPolicyBuilder(resource, projectId, Policy.newBuilder().build());
-
-    // Read Sam groups for each workspace role.
-    Map<WsmIamRole, String> workspaceRoleGroupMap =
-        workingMap.get(WorkspaceFlightMapKeys.IAM_GROUP_EMAIL_MAP, new TypeReference<>() {});
-    workspaceRoleGroupMap.forEach(policyBuilder::addWorkspaceBinding);
-
-    // Resources with permissions given to individual users (private or application managed) use
-    // the resource's Sam policies to manage those individuals, so they must be synced here.
-    // This section should also run for application managed resources, once those are supported.
-    if (resource.getAccessScope() == AccessScopeType.ACCESS_SCOPE_PRIVATE) {
-      Map<ControlledResourceIamRole, String> resourceRoleGroupMap =
-          workingMap.get(
-              ControlledResourceKeys.IAM_RESOURCE_GROUP_EMAIL_MAP, new TypeReference<>() {});
-      resourceRoleGroupMap.forEach(policyBuilder::addResourceBinding);
-    }
-
-    Policy updatedPolicy = policyBuilder.build();
-    List<Binding> bindingList = updatedPolicy.getBindingsList();
+    // configure the GCP policy
+    Policy currentPolicy = Policy.newBuilder().build();
+    Policy newPolicy =
+        controlledResourceService.configureGcpPolicyForResource(
+            resource, cloudContext, currentPolicy, userRequest);
+    List<Binding> bindingList = newPolicy.getBindingsList();
     return bindingList.stream().map(this::toAccess).collect(Collectors.toList());
   }
 
@@ -159,7 +158,7 @@ public class CreateBigQueryDatasetStep implements Step {
 
   @Override
   public StepResult undoStep(FlightContext flightContext) throws InterruptedException {
-    String projectId = workspaceService.getRequiredGcpProject(resource.getWorkspaceId());
+    String projectId = gcpCloudContextService.getRequiredGcpProject(resource.getWorkspaceId());
     BigQueryCow bqCow = crlService.createWsmSaBigQueryCow();
 
     try {

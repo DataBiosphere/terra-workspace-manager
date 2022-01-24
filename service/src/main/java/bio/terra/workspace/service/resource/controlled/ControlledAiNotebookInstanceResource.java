@@ -1,5 +1,7 @@
 package bio.terra.workspace.service.resource.controlled;
 
+import static bio.terra.workspace.service.resource.controlled.ResourceConstant.DEFAULT_ZONE;
+
 import bio.terra.cloudres.google.notebooks.InstanceName;
 import bio.terra.common.exception.BadRequestException;
 import bio.terra.common.exception.InconsistentFieldsException;
@@ -13,11 +15,19 @@ import bio.terra.workspace.service.resource.WsmResourceType;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import java.time.Instant;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
+import java.util.Optional;
 import java.util.UUID;
 import javax.annotation.Nullable;
+import org.apache.commons.lang3.StringUtils;
 
 /** A {@link ControlledResource} for a Google AI Platform Notebook instance. */
 public class ControlledAiNotebookInstanceResource extends ControlledResource {
+
+  protected static final int MAX_INSTANCE_NAME_LENGTH = 63;
+  protected static final String AUTO_NAME_DATE_FORMAT = "-yyyyMMdd-HHmmss";
   private final String instanceId;
   private final String location;
 
@@ -29,8 +39,10 @@ public class ControlledAiNotebookInstanceResource extends ControlledResource {
       @JsonProperty("description") String description,
       @JsonProperty("cloningInstructions") CloningInstructions cloningInstructions,
       @JsonProperty("assignedUser") String assignedUser,
+      @JsonProperty("privateResourceState") PrivateResourceState privateResourceState,
       @JsonProperty("accessScope") AccessScopeType accessScope,
       @JsonProperty("managedBy") ManagedByType managedBy,
+      @JsonProperty("application") UUID applicationId,
       @JsonProperty("instanceId") String instanceId,
       @JsonProperty("location") String location) {
     super(
@@ -41,7 +53,9 @@ public class ControlledAiNotebookInstanceResource extends ControlledResource {
         cloningInstructions,
         assignedUser,
         accessScope,
-        managedBy);
+        managedBy,
+        applicationId,
+        privateResourceState);
     this.instanceId = instanceId;
     this.location = location;
     validate();
@@ -60,6 +74,22 @@ public class ControlledAiNotebookInstanceResource extends ControlledResource {
     return new Builder();
   }
 
+  public Builder toBuilder() {
+    return new Builder()
+        .workspaceId(getWorkspaceId())
+        .resourceId(getResourceId())
+        .name(getName())
+        .description(getDescription())
+        .cloningInstructions(getCloningInstructions())
+        .assignedUser(getAssignedUser().orElse(null))
+        .privateResourceState(getPrivateResourceState().orElse(null))
+        .accessScope(getAccessScope())
+        .managedBy(getManagedBy())
+        .applicationId(getApplicationId())
+        .instanceId(getInstanceId())
+        .location(getLocation());
+  }
+
   /** The user specified id of the notebook instance. */
   public String getInstanceId() {
     return instanceId;
@@ -74,7 +104,7 @@ public class ControlledAiNotebookInstanceResource extends ControlledResource {
     return InstanceName.builder()
         .projectId(workspaceProjectId)
         .location(getLocation())
-        .instanceId(getInstanceId())
+        .instanceId(instanceId)
         .build();
   }
 
@@ -112,10 +142,47 @@ public class ControlledAiNotebookInstanceResource extends ControlledResource {
       throw new BadRequestException(
           "Access scope must be private. Shared AI Notebook instances are not yet implemented.");
     }
-
     checkFieldNonNull(getInstanceId(), "instanceId");
     checkFieldNonNull(getLocation(), "location");
     ValidationUtils.validateAiNotebookInstanceId(getInstanceId());
+  }
+
+  /** Returns an auto generated instance name with the username and date time. */
+  public static String generateInstanceId(@Nullable String email) {
+    String mangledUsername = mangleUsername(extractUsername(email));
+    String localDateTimeSuffix =
+        DateTimeFormatter.ofPattern(AUTO_NAME_DATE_FORMAT)
+            .format(Instant.now().atZone(ZoneId.systemDefault()));
+    return mangledUsername + localDateTimeSuffix;
+  }
+
+  /**
+   * Best effort mangle the user's name so that it meets the requirements for a valid instance name.
+   *
+   * <p>Instance name id must match the regex '(?:[a-z](?:[-a-z0-9]{0,63}[a-z0-9])?)', i.e. starting
+   * with a lowercase alpha character, only alphanumerics and '-' of max length 63. I don't have a
+   * documentation link, but gcloud will complain otherwise.
+   */
+  private static String mangleUsername(String username) {
+    // Strip non alpha-numeric or '-' characters.
+    String mangledName = username.replaceAll("[^a-zA-Z0-9-]", "");
+    if (mangledName.isEmpty()) {
+      mangledName = "notebook";
+    }
+    mangledName = mangledName.toLowerCase();
+    // Make sure the returned name isn't too long to not have the date time suffix.
+    int maxNameLength = MAX_INSTANCE_NAME_LENGTH - AUTO_NAME_DATE_FORMAT.length();
+    if (mangledName.length() > maxNameLength) {
+      mangledName = mangledName.substring(0, maxNameLength);
+    }
+    return mangledName;
+  }
+
+  private static String extractUsername(@Nullable String validEmail) {
+    if (StringUtils.isEmpty(validEmail)) {
+      return "";
+    }
+    return validEmail.substring(0, validEmail.indexOf('@'));
   }
 
   private static <T> void checkFieldNonNull(@Nullable T fieldValue, String fieldName) {
@@ -152,8 +219,11 @@ public class ControlledAiNotebookInstanceResource extends ControlledResource {
     private String description;
     private CloningInstructions cloningInstructions;
     private String assignedUser;
+    // Default value is NOT_APPLICABLE for shared resources and INITIALIZING for private resources.
+    @Nullable private PrivateResourceState privateResourceState;
     private AccessScopeType accessScope;
     private ManagedByType managedBy;
+    private UUID applicationId;
     private String instanceId;
     private String location;
 
@@ -187,14 +257,25 @@ public class ControlledAiNotebookInstanceResource extends ControlledResource {
       return this;
     }
 
-    public Builder location(String location) {
-      this.location = location;
+    public Builder location(@Nullable String location) {
+      this.location = Optional.ofNullable(location).orElse(DEFAULT_ZONE);
       return this;
     }
 
     public Builder assignedUser(String assignedUser) {
       this.assignedUser = assignedUser;
       return this;
+    }
+
+    public Builder privateResourceState(PrivateResourceState privateResourceState) {
+      this.privateResourceState = privateResourceState;
+      return this;
+    }
+
+    private PrivateResourceState defaultPrivateResourceState() {
+      return this.accessScope == AccessScopeType.ACCESS_SCOPE_PRIVATE
+          ? PrivateResourceState.INITIALIZING
+          : PrivateResourceState.NOT_APPLICABLE;
     }
 
     public Builder accessScope(AccessScopeType accessScope) {
@@ -207,6 +288,11 @@ public class ControlledAiNotebookInstanceResource extends ControlledResource {
       return this;
     }
 
+    public Builder applicationId(UUID applicationId) {
+      this.applicationId = applicationId;
+      return this;
+    }
+
     public ControlledAiNotebookInstanceResource build() {
       return new ControlledAiNotebookInstanceResource(
           workspaceId,
@@ -215,8 +301,10 @@ public class ControlledAiNotebookInstanceResource extends ControlledResource {
           description,
           cloningInstructions,
           assignedUser,
+          Optional.ofNullable(privateResourceState).orElse(defaultPrivateResourceState()),
           accessScope,
           managedBy,
+          applicationId,
           instanceId,
           location);
     }

@@ -1,14 +1,14 @@
 {
   "name": "DeleteWorkspaceWithControlledResource",
   "description": "Delete a workspace which contains a controlled resource.",
-  "serverSpecificationFile": "workspace-dev.json",
+  "serverSpecificationFile": "workspace-local.json",
   "kubernetes": {},
   "application": {},
   "testScripts": [
     {
       "name": "DeleteWorkspaceWithControlledResource",
       "numberOfUserJourneyThreadsToRun": 1,
-      "userJourneyThreadPoolSize": 2,
+      "userJourneyThreadPoolSize": 1,
       "expectedTimeForEach": 5,
       "expectedTimeForEachUnit": "MINUTES",
       "parameters": ["wm-default-spend-profile"]

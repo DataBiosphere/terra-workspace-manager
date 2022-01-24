@@ -1,0 +1,18 @@
+# This configuration is specifically used to test WSM reading application configuration files.
+# These are not real applications. If you need a real application for connected tests, use
+# the app-test profile instead (see application-app-test.yml).
+workspace:
+  application:
+    configurations:
+      -
+        identifier: 4BD1D59D-5827-4375-A41D-BBC65919F269
+        name: Leo
+        description: application execution framework
+        service-account: leo@terra-dev.iam.gserviceaccount.com
+        state: operating
+      -
+        identifier: EB9D37F5-BAD7-4951-AE9A-86B3F03F4DD7
+        name: Carmen
+        description: musical performance framework
+        service-account: carmen@terra-dev.iam.gserviceaccount.com
+        state: deprecated

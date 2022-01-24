@@ -23,7 +23,6 @@ import bio.terra.workspace.service.resource.controlled.ControlledResourceService
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import java.time.Duration;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import org.junit.jupiter.api.Test;
@@ -56,8 +55,7 @@ public class WorkspaceDeleteFlightTest extends BaseConnectedTest {
     var creationParameters =
         ControlledResourceFixtures.defaultBigQueryDatasetCreationParameters()
             .datasetId(dataset.getDatasetName());
-    controlledResourceService.createBigQueryDataset(
-        dataset, creationParameters, Collections.emptyList(), userRequest);
+    controlledResourceService.createBigQueryDataset(dataset, creationParameters, null, userRequest);
 
     ControlledResource gotResource =
         controlledResourceService.getControlledResource(
@@ -75,7 +73,7 @@ public class WorkspaceDeleteFlightTest extends BaseConnectedTest {
     Map<String, StepStatus> doFailures = new HashMap<>();
     doFailures.put(
         DeleteControlledSamResourcesStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
-    doFailures.put(DeleteProjectStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
+    doFailures.put(DeleteGcpProjectStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
     doFailures.put(DeleteWorkspaceAuthzStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
     doFailures.put(DeleteWorkspaceStateStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
     FlightDebugInfo debugInfo = FlightDebugInfo.newBuilder().doStepFailures(doFailures).build();
@@ -113,8 +111,7 @@ public class WorkspaceDeleteFlightTest extends BaseConnectedTest {
     var creationParameters =
         ControlledResourceFixtures.defaultBigQueryDatasetCreationParameters()
             .datasetId(dataset.getDatasetName());
-    controlledResourceService.createBigQueryDataset(
-        dataset, creationParameters, Collections.emptyList(), userRequest);
+    controlledResourceService.createBigQueryDataset(dataset, creationParameters, null, userRequest);
 
     ControlledResource gotResource =
         controlledResourceService.getControlledResource(

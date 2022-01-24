@@ -3,6 +3,7 @@ package bio.terra.workspace.app.controller;
 import bio.terra.workspace.common.utils.ControllerUtils;
 import bio.terra.workspace.common.utils.ControllerValidationUtils;
 import bio.terra.workspace.generated.controller.WorkspaceApi;
+import bio.terra.workspace.generated.model.ApiAzureContext;
 import bio.terra.workspace.generated.model.ApiCloneWorkspaceRequest;
 import bio.terra.workspace.generated.model.ApiCloneWorkspaceResult;
 import bio.terra.workspace.generated.model.ApiClonedWorkspace;
@@ -19,6 +20,8 @@ import bio.terra.workspace.generated.model.ApiGcpContext;
 import bio.terra.workspace.generated.model.ApiGrantRoleRequestBody;
 import bio.terra.workspace.generated.model.ApiIamRole;
 import bio.terra.workspace.generated.model.ApiJobReport.StatusEnum;
+import bio.terra.workspace.generated.model.ApiProperties;
+import bio.terra.workspace.generated.model.ApiProperty;
 import bio.terra.workspace.generated.model.ApiReferenceTypeEnum;
 import bio.terra.workspace.generated.model.ApiRoleBinding;
 import bio.terra.workspace.generated.model.ApiRoleBindingList;
@@ -32,9 +35,12 @@ import bio.terra.workspace.service.iam.AuthenticatedUserRequestFactory;
 import bio.terra.workspace.service.iam.SamRethrow;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.iam.exception.InvalidRoleException;
+import bio.terra.workspace.service.iam.model.SamConstants;
 import bio.terra.workspace.service.iam.model.WsmIamRole;
 import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.job.JobService.AsyncJobResult;
+import bio.terra.workspace.service.petserviceaccount.PetSaService;
+import bio.terra.workspace.service.petserviceaccount.model.UserWithPetSa;
 import bio.terra.workspace.service.resource.ValidationUtils;
 import bio.terra.workspace.service.resource.WsmResourceType;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
@@ -43,12 +49,18 @@ import bio.terra.workspace.service.resource.referenced.ReferencedResource;
 import bio.terra.workspace.service.resource.referenced.ReferencedResourceService;
 import bio.terra.workspace.service.resource.referenced.exception.InvalidReferenceException;
 import bio.terra.workspace.service.spendprofile.SpendProfileId;
+import bio.terra.workspace.service.workspace.AzureCloudContextService;
+import bio.terra.workspace.service.workspace.GcpCloudContextService;
 import bio.terra.workspace.service.workspace.WorkspaceService;
+import bio.terra.workspace.service.workspace.WsmApplicationService;
+import bio.terra.workspace.service.workspace.exceptions.CloudContextRequiredException;
+import bio.terra.workspace.service.workspace.model.AzureCloudContext;
 import bio.terra.workspace.service.workspace.model.GcpCloudContext;
 import bio.terra.workspace.service.workspace.model.Workspace;
-import bio.terra.workspace.service.workspace.model.WorkspaceRequest;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -66,12 +78,17 @@ import org.springframework.web.bind.annotation.RequestParam;
 
 @Controller
 public class WorkspaceApiController implements WorkspaceApi {
+  private static final Logger logger = LoggerFactory.getLogger(WorkspaceApiController.class);
   private final WorkspaceService workspaceService;
   private final JobService jobService;
   private final SamService samService;
   private final AuthenticatedUserRequestFactory authenticatedUserRequestFactory;
   private final HttpServletRequest request;
   private final ReferencedResourceService referenceResourceService;
+  private final AzureCloudContextService azureCloudContextService;
+  private final GcpCloudContextService gcpCloudContextService;
+  private final PetSaService petSaService;
+  private final WsmApplicationService appService;
 
   @Autowired
   public WorkspaceApiController(
@@ -80,16 +97,22 @@ public class WorkspaceApiController implements WorkspaceApi {
       SamService samService,
       AuthenticatedUserRequestFactory authenticatedUserRequestFactory,
       HttpServletRequest request,
-      ReferencedResourceService referenceResourceService) {
+      ReferencedResourceService referenceResourceService,
+      GcpCloudContextService gcpCloudContextService,
+      PetSaService petSaService,
+      WsmApplicationService appService,
+      AzureCloudContextService azureCloudContextService) {
     this.workspaceService = workspaceService;
     this.jobService = jobService;
     this.samService = samService;
     this.authenticatedUserRequestFactory = authenticatedUserRequestFactory;
     this.request = request;
     this.referenceResourceService = referenceResourceService;
+    this.azureCloudContextService = azureCloudContextService;
+    this.gcpCloudContextService = gcpCloudContextService;
+    this.petSaService = petSaService;
+    this.appService = appService;
   }
-
-  private final Logger logger = LoggerFactory.getLogger(WorkspaceApiController.class);
 
   private AuthenticatedUserRequest getAuthenticatedInfo() {
     return authenticatedUserRequestFactory.from(request);
@@ -99,7 +122,11 @@ public class WorkspaceApiController implements WorkspaceApi {
   public ResponseEntity<ApiCreatedWorkspace> createWorkspace(
       @RequestBody ApiCreateWorkspaceRequestBody body) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
-    logger.info("Creating workspace {} for {}", body.getId(), userRequest.getEmail());
+    logger.info(
+        "Creating workspace {} for {} subject {}",
+        body.getId(),
+        userRequest.getEmail(),
+        userRequest.getSubjectId());
 
     // Existing client libraries should not need to know about the stage, as they won't use any of
     // the features it gates. If stage isn't specified in a create request, we default to
@@ -108,17 +135,18 @@ public class WorkspaceApiController implements WorkspaceApi {
     requestStage = (requestStage == null ? ApiWorkspaceStageModel.RAWLS_WORKSPACE : requestStage);
     WorkspaceStage internalStage = WorkspaceStage.fromApiModel(requestStage);
     Optional<SpendProfileId> spendProfileId =
-        Optional.ofNullable(body.getSpendProfile()).map(SpendProfileId::create);
+        Optional.ofNullable(body.getSpendProfile()).map(SpendProfileId::new);
 
-    WorkspaceRequest internalRequest =
-        WorkspaceRequest.builder()
+    Workspace workspace =
+        Workspace.builder()
             .workspaceId(body.getId())
-            .spendProfileId(spendProfileId)
+            .spendProfileId(spendProfileId.orElse(null))
             .workspaceStage(internalStage)
-            .displayName(Optional.ofNullable(body.getDisplayName()))
-            .description(Optional.ofNullable(body.getDescription()))
+            .displayName(body.getDisplayName())
+            .description(body.getDescription())
+            .properties(propertyMapFromApi(body.getProperties()))
             .build();
-    UUID createdId = workspaceService.createWorkspace(internalRequest, userRequest);
+    UUID createdId = workspaceService.createWorkspace(workspace, userRequest);
 
     ApiCreatedWorkspace responseWorkspace = new ApiCreatedWorkspace().id(createdId);
     logger.info("Created workspace {} for {}", responseWorkspace, userRequest.getEmail());
@@ -130,6 +158,7 @@ public class WorkspaceApiController implements WorkspaceApi {
   public ResponseEntity<ApiWorkspaceDescriptionList> listWorkspaces(Integer offset, Integer limit) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     logger.info("Listing workspaces for {}", userRequest.getEmail());
+    ControllerValidationUtils.validatePaginationParams(offset, limit);
     List<Workspace> workspaces = workspaceService.listWorkspaces(userRequest, offset, limit);
     var response =
         new ApiWorkspaceDescriptionList()
@@ -142,16 +171,33 @@ public class WorkspaceApiController implements WorkspaceApi {
 
   private ApiWorkspaceDescription buildWorkspaceDescription(Workspace workspace) {
     ApiGcpContext gcpContext =
-        workspace.getGcpCloudContext().map(GcpCloudContext::toApi).orElse(null);
-    // Note projectId will be null here if no GCP cloud context exists.
+        gcpCloudContextService
+            .getGcpCloudContext(workspace.getWorkspaceId())
+            .map(GcpCloudContext::toApi)
+            .orElse(null);
+
+    ApiAzureContext azureContext =
+        azureCloudContextService
+            .getAzureCloudContext(workspace.getWorkspaceId())
+            .map(AzureCloudContext::toApi)
+            .orElse(null);
+
+    // Convert the property map to API format
+    ApiProperties apiProperties = new ApiProperties();
+    workspace
+        .getProperties()
+        .forEach((k, v) -> apiProperties.add(new ApiProperty().key(k).value(v)));
+
     // When we have another cloud context, we will need to do a similar retrieval for it.
     return new ApiWorkspaceDescription()
         .id(workspace.getWorkspaceId())
-        .spendProfile(workspace.getSpendProfileId().map(SpendProfileId::id).orElse(null))
+        .spendProfile(workspace.getSpendProfileId().map(SpendProfileId::getId).orElse(null))
         .stage(workspace.getWorkspaceStage().toApiModel())
         .gcpContext(gcpContext)
+        .azureContext(azureContext)
         .displayName(workspace.getDisplayName().orElse(null))
-        .description(workspace.getDescription().orElse(null));
+        .description(workspace.getDescription().orElse(null))
+        .properties(apiProperties);
   }
 
   @Override
@@ -172,9 +218,15 @@ public class WorkspaceApiController implements WorkspaceApi {
       @RequestBody ApiUpdateWorkspaceRequestBody body) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     logger.info("Updating workspace {} for {}", workspaceId, userRequest.getEmail());
+
+    Map<String, String> propertyMap = null;
+    if (body.getProperties() != null) {
+      propertyMap = propertyMapFromApi(body.getProperties());
+    }
+
     Workspace workspace =
         workspaceService.updateWorkspace(
-            userRequest, workspaceId, body.getDisplayName(), body.getDescription());
+            userRequest, workspaceId, body.getDisplayName(), body.getDescription(), propertyMap);
 
     ApiWorkspaceDescription desc = buildWorkspaceDescription(workspace);
     logger.info("Updated workspace {} for {}", desc, userRequest.getEmail());
@@ -404,8 +456,19 @@ public class WorkspaceApiController implements WorkspaceApi {
     String jobId = body.getJobControl().getId();
     String resultPath = ControllerUtils.getAsyncResultEndpoint(request, jobId);
 
-    // For now, the cloud type is always GCP and that is guaranteed in the validate.
-    workspaceService.createGcpCloudContext(id, jobId, userRequest, resultPath);
+    if (body.getCloudPlatform() == ApiCloudPlatform.AZURE) {
+      ApiAzureContext azureContext =
+          Optional.ofNullable(body.getAzureContext())
+              .orElseThrow(
+                  () ->
+                      new CloudContextRequiredException(
+                          "AzureContext is required when creating an azure cloud context for a workspace"));
+      workspaceService.createAzureCloudContext(
+          id, jobId, userRequest, resultPath, AzureCloudContext.fromApi(azureContext));
+    } else {
+      workspaceService.createGcpCloudContext(id, jobId, userRequest, resultPath);
+    }
+
     ApiCreateCloudContextResult response = fetchCreateCloudContextResult(jobId, userRequest);
     return new ResponseEntity<>(
         response, ControllerUtils.getAsyncResponseCode(response.getJobReport()));
@@ -448,8 +511,21 @@ public class WorkspaceApiController implements WorkspaceApi {
   @Override
   public ResponseEntity<String> enablePet(UUID workspaceId) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    // TODO(PF-1007): This would be a nice use for an authorized workspace ID.
+    // Validate that the user is a workspace member, as enablePetServiceAccountImpersonation does
+    // not authenticate.
+    workspaceService.validateWorkspaceAndAction(
+        userRequest, workspaceId, SamConstants.SamWorkspaceAction.READ);
+    String userEmail =
+        SamRethrow.onInterrupted(() -> samService.getUserEmailFromSam(userRequest), "enablePet");
     String petSaEmail =
-        workspaceService.enablePetServiceAccountImpersonation(workspaceId, userRequest);
+        SamRethrow.onInterrupted(
+            () ->
+                samService.getOrCreatePetSaEmail(
+                    gcpCloudContextService.getRequiredGcpProject(workspaceId), userRequest),
+            "enablePet");
+    UserWithPetSa userAndPet = new UserWithPetSa(userEmail, petSaEmail);
+    petSaService.enablePetServiceAccountImpersonation(workspaceId, userAndPet);
     return new ResponseEntity<>(petSaEmail, HttpStatus.OK);
   }
 
@@ -464,18 +540,28 @@ public class WorkspaceApiController implements WorkspaceApi {
   @Override
   public ResponseEntity<ApiCloneWorkspaceResult> cloneWorkspace(
       UUID workspaceId, @Valid ApiCloneWorkspaceRequest body) {
-    final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     final AuthenticatedUserRequest petRequest = samService.getAuthenticatedPetRequest(
         workspaceService.getRequiredGcpProject(workspaceId), userRequest);
+		
+    Optional<SpendProfileId> spendProfileId =
+        Optional.ofNullable(body.getSpendProfile()).map(SpendProfileId::new);
+
+    // Construct the target workspace object from the inputs
+    Workspace destinationWorkspace =
+        Workspace.builder()
+            .workspaceId(UUID.randomUUID())
+            .spendProfileId(spendProfileId.orElse(null))
+            .workspaceStage(WorkspaceStage.MC_WORKSPACE)
+            .displayName(body.getDisplayName())
+            .description(body.getDescription())
+            .properties(propertyMapFromApi(body.getProperties()))
+            .build();
+
     final String jobId =
         workspaceService.cloneWorkspace(
-            workspaceId,
-            petRequest,
-            body.getSpendProfile(),
-            body.getLocation(),
-            body.getDisplayName(),
-            body.getDescription());
-    final ApiCloneWorkspaceResult result = fetchCloneWorkspaceResult(jobId, petRequest);
+            workspaceId, petRequest, body.getLocation(), destinationWorkspace);
+
+    final ApiCloneWorkspaceResult result = fetchCloneWorkspaceResult(jobId, getAuthenticatedInfo());
     return new ResponseEntity<>(
         result, ControllerUtils.getAsyncResponseCode(result.getJobReport()));
   }
@@ -505,5 +591,17 @@ public class WorkspaceApiController implements WorkspaceApi {
         .jobReport(jobResult.getJobReport())
         .errorReport(jobResult.getApiErrorReport())
         .workspace(jobResult.getResult());
+  }
+
+  // Convert properties list into a map
+  private Map<String, String> propertyMapFromApi(ApiProperties properties) {
+    Map<String, String> propertyMap = new HashMap<>();
+    if (properties != null) {
+      for (ApiProperty property : properties) {
+        ControllerValidationUtils.validatePropertyKey(property.getKey());
+        propertyMap.put(property.getKey(), property.getValue());
+      }
+    }
+    return propertyMap;
   }
 }

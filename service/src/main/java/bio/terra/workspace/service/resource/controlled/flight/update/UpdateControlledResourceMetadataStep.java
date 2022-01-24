@@ -9,7 +9,7 @@ import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceMetadataManager;
-import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
+import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ResourceKeys;
 import java.util.UUID;
 
 public class UpdateControlledResourceMetadataStep implements Step {
@@ -34,10 +34,9 @@ public class UpdateControlledResourceMetadataStep implements Step {
   public StepResult doStep(FlightContext flightContext)
       throws InterruptedException, RetryException {
     final FlightMap inputParameters = flightContext.getInputParameters();
-    final String resourceName =
-        inputParameters.get(ControlledResourceKeys.RESOURCE_NAME, String.class);
+    final String resourceName = inputParameters.get(ResourceKeys.RESOURCE_NAME, String.class);
     final String resourceDescription =
-        inputParameters.get(ControlledResourceKeys.RESOURCE_DESCRIPTION, String.class);
+        inputParameters.get(ResourceKeys.RESOURCE_DESCRIPTION, String.class);
     final AuthenticatedUserRequest userRequest =
         inputParameters.get(JobMapKeys.AUTH_USER_INFO.getKeyName(), AuthenticatedUserRequest.class);
     controlledResourceMetadataManager.updateControlledResourceMetadata(
@@ -53,10 +52,9 @@ public class UpdateControlledResourceMetadataStep implements Step {
   @Override
   public StepResult undoStep(FlightContext flightContext) throws InterruptedException {
     final FlightMap workingMap = flightContext.getWorkingMap();
-    final String previousName =
-        workingMap.get(ControlledResourceKeys.PREVIOUS_RESOURCE_NAME, String.class);
+    final String previousName = workingMap.get(ResourceKeys.PREVIOUS_RESOURCE_NAME, String.class);
     final String previousDescription =
-        workingMap.get(ControlledResourceKeys.PREVIOUS_RESOURCE_DESCRIPTION, String.class);
+        workingMap.get(ResourceKeys.PREVIOUS_RESOURCE_DESCRIPTION, String.class);
     resourceDao.updateResource(workspaceId, resourceId, previousName, previousDescription);
     return StepResult.getStepResultSuccess();
   }

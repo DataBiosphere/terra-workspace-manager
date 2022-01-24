@@ -12,11 +12,13 @@ import bio.terra.workspace.generated.model.ApiCreatedControlledGcpGcsBucket;
 import bio.terra.workspace.generated.model.ApiGcpGcsBucketCreationParameters;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.model.ControlledResourceIamRole;
+import bio.terra.workspace.service.resource.controlled.AccessScopeType;
 import bio.terra.workspace.service.resource.controlled.ControlledGcsBucketResource;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceService;
+import bio.terra.workspace.service.resource.controlled.PrivateResourceState;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
-import java.util.List;
+import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ResourceKeys;
 import java.util.Optional;
 import java.util.UUID;
 import org.springframework.http.HttpStatus;
@@ -61,19 +63,23 @@ public class CopyGcsBucketDefinitionStep implements Step {
     final String resourceName =
         FlightUtils.getInputParameterOrWorkingValue(
             flightContext,
-            ControlledResourceKeys.RESOURCE_NAME,
-            ControlledResourceKeys.PREVIOUS_RESOURCE_NAME,
+            ResourceKeys.RESOURCE_NAME,
+            ResourceKeys.PREVIOUS_RESOURCE_NAME,
             String.class);
     final String description =
         FlightUtils.getInputParameterOrWorkingValue(
             flightContext,
-            ControlledResourceKeys.RESOURCE_DESCRIPTION,
-            ControlledResourceKeys.PREVIOUS_RESOURCE_DESCRIPTION,
+            ResourceKeys.RESOURCE_DESCRIPTION,
+            ResourceKeys.PREVIOUS_RESOURCE_DESCRIPTION,
             String.class);
     final String bucketName =
         Optional.ofNullable(
                 inputParameters.get(ControlledResourceKeys.DESTINATION_BUCKET_NAME, String.class))
             .orElseGet(this::randomBucketName);
+    final PrivateResourceState privateResourceState =
+        sourceBucket.getAccessScope() == AccessScopeType.ACCESS_SCOPE_PRIVATE
+            ? PrivateResourceState.INITIALIZING
+            : PrivateResourceState.NOT_APPLICABLE;
     // Store effective bucket name for destination
     workingMap.put(ControlledResourceKeys.DESTINATION_BUCKET_NAME, bucketName);
     final UUID destinationWorkspaceId =
@@ -81,27 +87,30 @@ public class CopyGcsBucketDefinitionStep implements Step {
 
     // bucket resource for create flight
     ControlledGcsBucketResource destinationBucketResource =
-        new ControlledGcsBucketResource(
-            destinationWorkspaceId,
-            UUID.randomUUID(), // random ID for new resource
-            resourceName,
-            description,
-            sourceBucket.getCloningInstructions(),
-            sourceBucket.getAssignedUser().orElse(null),
-            sourceBucket.getAccessScope(),
-            sourceBucket.getManagedBy(),
-            bucketName);
+        ControlledGcsBucketResource.builder()
+            .workspaceId(destinationWorkspaceId)
+            .resourceId(UUID.randomUUID()) // random ID for new resource
+            .name(resourceName)
+            .description(description)
+            .cloningInstructions(sourceBucket.getCloningInstructions())
+            .assignedUser(sourceBucket.getAssignedUser().orElse(null))
+            .accessScope(sourceBucket.getAccessScope())
+            .managedBy(sourceBucket.getManagedBy())
+            .applicationId(sourceBucket.getApplicationId())
+            .bucketName(bucketName)
+            .privateResourceState(privateResourceState)
+            .build();
 
     final ApiGcpGcsBucketCreationParameters destinationCreationParameters =
         getDestinationCreationParameters(inputParameters, workingMap);
 
-    final List<ControlledResourceIamRole> iamRoles =
-        IamRoleUtils.getIamRolesForAccessScope(sourceBucket.getAccessScope());
+    final ControlledResourceIamRole iamRole =
+        IamRoleUtils.getIamRoleForAccessScope(sourceBucket.getAccessScope());
 
     // Launch a CreateControlledResourcesFlight to make the destination bucket
     final ControlledGcsBucketResource clonedBucket =
         controlledResourceService.createBucket(
-            destinationBucketResource, destinationCreationParameters, iamRoles, userRequest);
+            destinationBucketResource, destinationCreationParameters, iamRole, userRequest);
     workingMap.put(ControlledResourceKeys.CLONED_RESOURCE_DEFINITION, clonedBucket);
     // TODO: create new type & use it here
     final ApiCreatedControlledGcpGcsBucket apiCreatedBucket =

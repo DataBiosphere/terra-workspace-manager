@@ -8,7 +8,7 @@ import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.iam.model.ControlledResourceIamRole;
 import bio.terra.workspace.service.resource.controlled.ControlledResource;
-import java.util.List;
+import javax.annotation.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -16,7 +16,8 @@ public class CreateSamResourceStep implements Step {
 
   private final SamService samService;
   private final ControlledResource resource;
-  private final List<ControlledResourceIamRole> privateResourceIamRole;
+  private final ControlledResourceIamRole privateResourceIamRole;
+  private final String assignedUserEmail;
   private final AuthenticatedUserRequest userRequest;
 
   private final Logger logger = LoggerFactory.getLogger(CreateSamResourceStep.class);
@@ -24,18 +25,21 @@ public class CreateSamResourceStep implements Step {
   public CreateSamResourceStep(
       SamService samService,
       ControlledResource resource,
-      List<ControlledResourceIamRole> privateResourceIamRoles,
+      @Nullable ControlledResourceIamRole privateResourceIamRole,
+      @Nullable String assignedUserEmail,
       AuthenticatedUserRequest userRequest) {
     this.samService = samService;
     this.resource = resource;
-    this.privateResourceIamRole = privateResourceIamRoles;
+    this.privateResourceIamRole = privateResourceIamRole;
+    this.assignedUserEmail = assignedUserEmail;
     this.userRequest = userRequest;
   }
 
   @Override
   public StepResult doStep(FlightContext flightContext)
       throws InterruptedException, RetryException {
-    samService.createControlledResource(resource, privateResourceIamRole, userRequest);
+    samService.createControlledResource(
+        resource, privateResourceIamRole, assignedUserEmail, userRequest);
     return StepResult.getStepResultSuccess();
   }
 

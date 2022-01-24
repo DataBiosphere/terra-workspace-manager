@@ -52,6 +52,8 @@ public class ControlledResourceMetadataManager {
     if (name != null) {
       ValidationUtils.validateResourceName(name);
     }
+    // Description may also be null, but this validator accepts null descriptions.
+    ValidationUtils.validateResourceDescriptionName(description);
     resourceDao.updateResource(workspaceId, resourceId, name, description);
   }
 
@@ -64,19 +66,17 @@ public class ControlledResourceMetadataManager {
    *
    * <p>Throws InvalidControlledResourceException if the given resource is not controlled.
    *
-   * <p>Throws UnauthorizedException if the user is not permitted to perform the specified action on
+   * <p>Throws ForbiddenException if the user is not permitted to perform the specified action on
    * the resource in question.
-   *
-   * <p>Returns the controlled resource object if it exists and the user is permitted to perform the
-   * specified action.
    *
    * @param userRequest the user's authenticated request
    * @param workspaceId if of the workspace this resource exists in
    * @param resourceId id of the resource in question
    * @param action the action to authorize against the resource
+   * @return validated resource
    */
   @Traced
-  public void validateControlledResourceAndAction(
+  public WsmResource validateControlledResourceAndAction(
       AuthenticatedUserRequest userRequest, UUID workspaceId, UUID resourceId, String action) {
     WsmResource resource = resourceDao.getResource(workspaceId, resourceId);
     ControlledResource controlledResource = resource.castToControlledResource();
@@ -88,5 +88,6 @@ public class ControlledResourceMetadataManager {
                 resourceId.toString(),
                 action),
         "checkAuthz");
+    return resource;
   }
 }

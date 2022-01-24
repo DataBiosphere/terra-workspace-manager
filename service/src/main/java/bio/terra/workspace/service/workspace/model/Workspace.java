@@ -26,7 +26,6 @@ public class Workspace {
   private final SpendProfileId spendProfileId;
   private final Map<String, String> properties;
   private final WorkspaceStage workspaceStage;
-  private final GcpCloudContext gcpCloudContext;
 
   public Workspace(
       UUID workspaceId,
@@ -34,15 +33,13 @@ public class Workspace {
       String description,
       SpendProfileId spendProfileId,
       Map<String, String> properties,
-      WorkspaceStage workspaceStage,
-      GcpCloudContext gcpCloudContext) {
+      WorkspaceStage workspaceStage) {
     this.workspaceId = workspaceId;
     this.displayName = displayName;
     this.description = description;
     this.spendProfileId = spendProfileId;
     this.properties = properties;
     this.workspaceStage = workspaceStage;
-    this.gcpCloudContext = gcpCloudContext;
   }
 
   /** The globally unique identifier of this workspace */
@@ -81,11 +78,6 @@ public class Workspace {
     return workspaceStage;
   }
 
-  /** Optional GCP cloud context */
-  public Optional<GcpCloudContext> getGcpCloudContext() {
-    return Optional.ofNullable(gcpCloudContext);
-  }
-
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
@@ -101,7 +93,6 @@ public class Workspace {
         .append(spendProfileId, workspace.spendProfileId)
         .append(properties, workspace.properties)
         .append(workspaceStage, workspace.workspaceStage)
-        .append(gcpCloudContext, workspace.gcpCloudContext)
         .isEquals();
   }
 
@@ -114,7 +105,6 @@ public class Workspace {
         .append(spendProfileId)
         .append(properties)
         .append(workspaceStage)
-        .append(gcpCloudContext)
         .toHashCode();
   }
 
@@ -130,7 +120,6 @@ public class Workspace {
     private SpendProfileId spendProfileId;
     private Map<String, String> properties;
     private WorkspaceStage workspaceStage;
-    private GcpCloudContext gcpCloudContext;
 
     public Builder workspaceId(UUID workspaceId) {
       this.workspaceId = workspaceId;
@@ -162,27 +151,22 @@ public class Workspace {
       return this;
     }
 
-    public Builder gcpCloudContext(GcpCloudContext gcpCloudContext) {
-      this.gcpCloudContext = gcpCloudContext;
-      return this;
-    }
-
     public Workspace build() {
       // Always have a map, even if it is empty
       if (properties == null) {
         properties = new HashMap<>();
       }
+      if (displayName == null) {
+        displayName = "";
+      }
+      if (description == null) {
+        description = "";
+      }
       if (workspaceId == null || workspaceStage == null) {
         throw new MissingRequiredFieldsException("Workspace requires id and stage");
       }
       return new Workspace(
-          workspaceId,
-          displayName,
-          description,
-          spendProfileId,
-          properties,
-          workspaceStage,
-          gcpCloudContext);
+          workspaceId, displayName, description, spendProfileId, properties, workspaceStage);
     }
   }
 }

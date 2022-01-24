@@ -1,7 +1,6 @@
 package bio.terra.workspace.service.workspace;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -10,20 +9,23 @@ import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 
 import bio.terra.common.exception.ErrorReportException;
+import bio.terra.common.exception.ForbiddenException;
 import bio.terra.common.exception.MissingRequiredFieldException;
-import bio.terra.common.exception.UnauthorizedException;
 import bio.terra.common.sam.exception.SamExceptionFactory;
 import bio.terra.common.sam.exception.SamInternalServerErrorException;
 import bio.terra.stairway.FlightDebugInfo;
 import bio.terra.stairway.StepStatus;
 import bio.terra.workspace.common.BaseConnectedTest;
+import bio.terra.workspace.connected.WorkspaceConnectedTestUtils;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.db.exception.WorkspaceNotFoundException;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.datarepo.DataRepoService;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
-import bio.terra.workspace.service.iam.model.SamConstants;
+import bio.terra.workspace.service.iam.model.SamConstants.SamResource;
+import bio.terra.workspace.service.iam.model.SamConstants.SamSpendProfileAction;
+import bio.terra.workspace.service.iam.model.SamConstants.SamWorkspaceAction;
 import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.job.exception.InvalidResultStateException;
 import bio.terra.workspace.service.resource.exception.ResourceNotFoundException;
@@ -32,17 +34,12 @@ import bio.terra.workspace.service.resource.referenced.ReferencedDataRepoSnapsho
 import bio.terra.workspace.service.resource.referenced.ReferencedResourceService;
 import bio.terra.workspace.service.spendprofile.SpendConnectedTestUtils;
 import bio.terra.workspace.service.spendprofile.SpendProfileId;
-import bio.terra.workspace.service.spendprofile.exceptions.SpendUnauthorizedException;
 import bio.terra.workspace.service.workspace.exceptions.DuplicateWorkspaceException;
-import bio.terra.workspace.service.workspace.exceptions.MissingSpendProfileException;
-import bio.terra.workspace.service.workspace.exceptions.NoBillingAccountException;
 import bio.terra.workspace.service.workspace.exceptions.StageDisabledException;
-import bio.terra.workspace.service.workspace.flight.DeleteProjectStep;
-import bio.terra.workspace.service.workspace.flight.DeleteWorkspaceAuthzStep;
-import bio.terra.workspace.service.workspace.flight.DeleteWorkspaceStateStep;
-import bio.terra.workspace.service.workspace.model.GcpCloudContext;
+import bio.terra.workspace.service.workspace.flight.CheckSamWorkspaceAuthzStep;
+import bio.terra.workspace.service.workspace.flight.CreateWorkspaceAuthzStep;
+import bio.terra.workspace.service.workspace.flight.CreateWorkspaceStep;
 import bio.terra.workspace.service.workspace.model.Workspace;
-import bio.terra.workspace.service.workspace.model.WorkspaceRequest;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
 import com.google.api.services.cloudresourcemanager.v3.model.Project;
 import java.util.HashMap;
@@ -59,6 +56,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.MockBean;
 
 class WorkspaceServiceTest extends BaseConnectedTest {
+
   /** A fake authenticated user request. */
   private static final AuthenticatedUserRequest USER_REQUEST =
       new AuthenticatedUserRequest()
@@ -72,6 +70,7 @@ class WorkspaceServiceTest extends BaseConnectedTest {
   @Autowired private SpendConnectedTestUtils spendUtils;
   @Autowired private ReferencedResourceService referenceResourceService;
   @Autowired private ResourceDao resourceDao;
+  @Autowired private WorkspaceConnectedTestUtils testUtils;
   @MockBean private DataRepoService dataRepoService;
   /** Mock SamService does nothing for all calls that would throw if unauthorized. */
   @MockBean private SamService mockSamService;
@@ -84,9 +83,9 @@ class WorkspaceServiceTest extends BaseConnectedTest {
     Mockito.when(
             mockSamService.isAuthorized(
                 Mockito.any(),
-                Mockito.eq(SamConstants.SPEND_PROFILE_RESOURCE),
+                Mockito.eq(SamResource.SPEND_PROFILE),
                 Mockito.any(),
-                Mockito.eq(SamConstants.SPEND_PROFILE_LINK_ACTION)))
+                Mockito.eq(SamSpendProfileAction.LINK)))
         .thenReturn(true);
     // Return a valid google group for cloud sync, as Google validates groups added to GCP projects.
     Mockito.when(mockSamService.syncWorkspacePolicy(any(), any(), any()))
@@ -110,17 +109,17 @@ class WorkspaceServiceTest extends BaseConnectedTest {
 
   @Test
   void testGetExistingWorkspace() {
-    WorkspaceRequest request = defaultRequestBuilder(UUID.randomUUID()).build();
+    Workspace request = defaultRequestBuilder(UUID.randomUUID()).build();
     workspaceService.createWorkspace(request, USER_REQUEST);
 
     assertEquals(
-        request.workspaceId(),
-        workspaceService.getWorkspace(request.workspaceId(), USER_REQUEST).getWorkspaceId());
+        request.getWorkspaceId(),
+        workspaceService.getWorkspace(request.getWorkspaceId(), USER_REQUEST).getWorkspaceId());
   }
 
   @Test
   void testGetForbiddenMissingWorkspace() throws Exception {
-    doThrow(new UnauthorizedException("forbid!"))
+    doThrow(new ForbiddenException("forbid!"))
         .when(mockSamService)
         .checkAuthz(any(), any(), any(), any());
     assertThrows(
@@ -130,35 +129,38 @@ class WorkspaceServiceTest extends BaseConnectedTest {
 
   @Test
   void testGetForbiddenExistingWorkspace() throws Exception {
-    WorkspaceRequest request = defaultRequestBuilder(UUID.randomUUID()).build();
+    Workspace request = defaultRequestBuilder(UUID.randomUUID()).build();
     workspaceService.createWorkspace(request, USER_REQUEST);
 
-    doThrow(new UnauthorizedException("forbid!"))
+    doThrow(new ForbiddenException("forbid!"))
         .when(mockSamService)
         .checkAuthz(any(), any(), any(), any());
     assertThrows(
-        UnauthorizedException.class,
-        () -> workspaceService.getWorkspace(request.workspaceId(), USER_REQUEST));
+        ForbiddenException.class,
+        () -> workspaceService.getWorkspace(request.getWorkspaceId(), USER_REQUEST));
   }
 
   @Test
   void testWorkspaceStagePersists() {
-    WorkspaceRequest mcWorkspaceRequest =
+    Workspace mcWorkspaceRequest =
         defaultRequestBuilder(UUID.randomUUID())
             .workspaceStage(WorkspaceStage.MC_WORKSPACE)
             .build();
     workspaceService.createWorkspace(mcWorkspaceRequest, USER_REQUEST);
     Workspace createdWorkspace =
-        workspaceService.getWorkspace(mcWorkspaceRequest.workspaceId(), USER_REQUEST);
-    assertEquals(mcWorkspaceRequest.workspaceId(), createdWorkspace.getWorkspaceId());
+        workspaceService.getWorkspace(mcWorkspaceRequest.getWorkspaceId(), USER_REQUEST);
+    assertEquals(mcWorkspaceRequest.getWorkspaceId(), createdWorkspace.getWorkspaceId());
     assertEquals(WorkspaceStage.MC_WORKSPACE, createdWorkspace.getWorkspaceStage());
   }
 
   @Test
   void duplicateWorkspaceIdRequestsRejected() {
-    WorkspaceRequest request = defaultRequestBuilder(UUID.randomUUID()).build();
+    Workspace request = defaultRequestBuilder(UUID.randomUUID()).build();
     workspaceService.createWorkspace(request, USER_REQUEST);
-    WorkspaceRequest duplicateWorkspace = defaultRequestBuilder(request.workspaceId()).build();
+    Workspace duplicateWorkspace =
+        defaultRequestBuilder(request.getWorkspaceId())
+            .description("slightly different workspace")
+            .build();
     assertThrows(
         DuplicateWorkspaceException.class,
         () -> workspaceService.createWorkspace(duplicateWorkspace, USER_REQUEST));
@@ -187,70 +189,81 @@ class WorkspaceServiceTest extends BaseConnectedTest {
 
   @Test
   void testWithSpendProfile() {
-    Optional<SpendProfileId> spendProfileId = Optional.of(SpendProfileId.create("foo"));
-    WorkspaceRequest request =
+    SpendProfileId spendProfileId = new SpendProfileId("foo");
+    Workspace request =
         defaultRequestBuilder(UUID.randomUUID()).spendProfileId(spendProfileId).build();
     workspaceService.createWorkspace(request, USER_REQUEST);
 
-    Workspace createdWorkspace = workspaceService.getWorkspace(request.workspaceId(), USER_REQUEST);
-    assertEquals(request.workspaceId(), createdWorkspace.getWorkspaceId());
-    assertEquals(spendProfileId, createdWorkspace.getSpendProfileId());
+    Workspace createdWorkspace =
+        workspaceService.getWorkspace(request.getWorkspaceId(), USER_REQUEST);
+    assertEquals(request.getWorkspaceId(), createdWorkspace.getWorkspaceId());
+    assertEquals(spendProfileId, createdWorkspace.getSpendProfileId().orElse(null));
   }
 
   @Test
   void testWithDisplayNameAndDescription() {
     String name = "My workspace";
     String description = "The greatest workspace";
-    WorkspaceRequest request =
-        defaultRequestBuilder(UUID.randomUUID())
-            .displayName(Optional.of(name))
-            .description(Optional.of(description))
-            .build();
+    Workspace request =
+        defaultRequestBuilder(UUID.randomUUID()).displayName(name).description(description).build();
     workspaceService.createWorkspace(request, USER_REQUEST);
 
-    Workspace createdWorkspace = workspaceService.getWorkspace(request.workspaceId(), USER_REQUEST);
-    assertEquals(request.workspaceId(), createdWorkspace.getWorkspaceId());
-    assertEquals(name, createdWorkspace.getDisplayName().get());
-    assertEquals(description, createdWorkspace.getDescription().get());
+    Workspace createdWorkspace =
+        workspaceService.getWorkspace(request.getWorkspaceId(), USER_REQUEST);
+    assertEquals(
+        request.getDescription().orElse(null), createdWorkspace.getDescription().orElse(null));
+    assertEquals(name, createdWorkspace.getDisplayName().orElse(null));
+    assertEquals(description, createdWorkspace.getDescription().orElse(null));
   }
 
   @Test
   void testUpdateWorkspace() {
-    WorkspaceRequest request = defaultRequestBuilder(UUID.randomUUID()).build();
+    Map<String, String> propertyMap = new HashMap<>();
+    propertyMap.put("foo", "bar");
+    propertyMap.put("xyzzy", "plohg");
+    Workspace request = defaultRequestBuilder(UUID.randomUUID()).properties(propertyMap).build();
     workspaceService.createWorkspace(request, USER_REQUEST);
-    Workspace createdWorkspace = workspaceService.getWorkspace(request.workspaceId(), USER_REQUEST);
-    assertEquals(request.workspaceId(), createdWorkspace.getWorkspaceId());
-    assertEquals("", createdWorkspace.getDisplayName().get());
-    assertEquals("", createdWorkspace.getDescription().get());
+    Workspace createdWorkspace =
+        workspaceService.getWorkspace(request.getWorkspaceId(), USER_REQUEST);
+    assertEquals(request.getWorkspaceId(), createdWorkspace.getWorkspaceId());
+    assertEquals("", createdWorkspace.getDisplayName().orElse(null));
+    assertEquals("", createdWorkspace.getDescription().orElse(null));
 
-    UUID workspaceId = request.workspaceId();
+    UUID workspaceId = request.getWorkspaceId();
     String name = "My workspace";
     String description = "The greatest workspace";
+    Map<String, String> propertyMap2 = new HashMap<>();
+    propertyMap.put("ted", "lasso");
+    propertyMap.put("keeley", "jones");
 
     Workspace updatedWorkspace =
-        workspaceService.updateWorkspace(USER_REQUEST, workspaceId, name, description);
+        workspaceService.updateWorkspace(
+            USER_REQUEST, workspaceId, name, description, propertyMap2);
 
-    assertEquals(name, updatedWorkspace.getDisplayName().get());
-    assertEquals(description, updatedWorkspace.getDescription().get());
+    assertEquals(name, updatedWorkspace.getDisplayName().orElse(null));
+    assertEquals(description, updatedWorkspace.getDescription().orElse(null));
+    assertEquals(propertyMap2, updatedWorkspace.getProperties());
 
     String otherDescription = "The deprecated workspace";
 
     Workspace secondUpdatedWorkspace =
-        workspaceService.updateWorkspace(USER_REQUEST, workspaceId, null, otherDescription);
+        workspaceService.updateWorkspace(USER_REQUEST, workspaceId, null, otherDescription, null);
 
     // Since name is null, leave it alone. Description should be updated.
-    assertEquals(name, secondUpdatedWorkspace.getDisplayName().get());
-    assertEquals(otherDescription, secondUpdatedWorkspace.getDescription().get());
+    assertEquals(name, secondUpdatedWorkspace.getDisplayName().orElse(null));
+    assertEquals(otherDescription, secondUpdatedWorkspace.getDescription().orElse(null));
+    assertEquals(propertyMap2, updatedWorkspace.getProperties());
 
-    // Sending through empty strings clears the values.
+    // Sending through empty strings and an empty map clears the values.
+    Map<String, String> propertyMap3 = new HashMap<>();
     Workspace thirdUpdatedWorkspace =
-        workspaceService.updateWorkspace(USER_REQUEST, workspaceId, "", "");
-    assertEquals("", thirdUpdatedWorkspace.getDisplayName().get());
-    assertEquals("", thirdUpdatedWorkspace.getDescription().get());
+        workspaceService.updateWorkspace(USER_REQUEST, workspaceId, "", "", propertyMap3);
+    assertEquals("", thirdUpdatedWorkspace.getDisplayName().orElse(null));
+    assertEquals("", thirdUpdatedWorkspace.getDescription().orElse(null));
 
     assertThrows(
         MissingRequiredFieldException.class,
-        () -> workspaceService.updateWorkspace(USER_REQUEST, workspaceId, null, null));
+        () -> workspaceService.updateWorkspace(USER_REQUEST, workspaceId, null, null, null));
   }
 
   @Test
@@ -269,64 +282,72 @@ class WorkspaceServiceTest extends BaseConnectedTest {
 
   @Test
   void createAndDeleteWorkspace() {
-    WorkspaceRequest request = defaultRequestBuilder(UUID.randomUUID()).build();
+    Workspace request = defaultRequestBuilder(UUID.randomUUID()).build();
     workspaceService.createWorkspace(request, USER_REQUEST);
 
-    workspaceService.deleteWorkspace(request.workspaceId(), USER_REQUEST);
+    workspaceService.deleteWorkspace(request.getWorkspaceId(), USER_REQUEST);
     assertThrows(
         WorkspaceNotFoundException.class,
-        () -> workspaceService.getWorkspace(request.workspaceId(), USER_REQUEST));
+        () -> workspaceService.getWorkspace(request.getWorkspaceId(), USER_REQUEST));
   }
 
   @Test
-  void deleteMcWorkspaceDoSteps() {
-    WorkspaceRequest request =
-        defaultRequestBuilder(UUID.randomUUID())
-            .workspaceStage(WorkspaceStage.MC_WORKSPACE)
-            .build();
-    workspaceService.createWorkspace(request, USER_REQUEST);
-
-    Map<String, StepStatus> doFailures = new HashMap<>();
-    doFailures.put(DeleteProjectStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
-    doFailures.put(DeleteWorkspaceAuthzStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
-    doFailures.put(DeleteWorkspaceStateStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
-    FlightDebugInfo debugInfo = FlightDebugInfo.newBuilder().doStepFailures(doFailures).build();
+  void createMcWorkspaceDoSteps() {
+    Workspace request = defaultRequestBuilder(UUID.randomUUID()).build();
+    Map<String, StepStatus> retrySteps = new HashMap<>();
+    retrySteps.put(CreateWorkspaceAuthzStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
+    retrySteps.put(CreateWorkspaceStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
+    FlightDebugInfo debugInfo = FlightDebugInfo.newBuilder().doStepFailures(retrySteps).build();
     jobService.setFlightDebugInfoForTest(debugInfo);
 
-    workspaceService.deleteWorkspace(request.workspaceId(), USER_REQUEST);
-    assertThrows(
-        WorkspaceNotFoundException.class,
-        () -> workspaceService.getWorkspace(request.workspaceId(), USER_REQUEST));
+    UUID createdId = workspaceService.createWorkspace(request, USER_REQUEST);
+    assertEquals(createdId, request.getWorkspaceId());
   }
 
   @Test
-  void deleteWorkspaceUndoFailure() {
-    WorkspaceRequest request =
+  void createRawlsWorkspaceDoSteps() throws InterruptedException {
+    Workspace request =
         defaultRequestBuilder(UUID.randomUUID())
-            .workspaceStage(WorkspaceStage.MC_WORKSPACE)
+            .workspaceStage(WorkspaceStage.RAWLS_WORKSPACE)
             .build();
-    workspaceService.createWorkspace(request, USER_REQUEST);
-
-    // Test "undo" flight with lastStepFailure. Because deletion cannot be undone, this workspace
-    // will still be deleted after "undoing" the flight.
-    FlightDebugInfo debugInfo = FlightDebugInfo.newBuilder().lastStepFailure(true).build();
+    // Ensure the auth check in CheckSamWorkspaceAuthzStep always succeeds.
+    doReturn(true).when(mockSamService).isAuthorized(any(), any(), any(), any());
+    Map<String, StepStatus> retrySteps = new HashMap<>();
+    retrySteps.put(
+        CheckSamWorkspaceAuthzStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
+    retrySteps.put(CreateWorkspaceStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
+    FlightDebugInfo debugInfo = FlightDebugInfo.newBuilder().doStepFailures(retrySteps).build();
     jobService.setFlightDebugInfoForTest(debugInfo);
 
-    // When a flight fails with no error message (e.g. because of debugInfo), Stairway will return
-    // an InvalidResultStateException.
+    UUID createdId = workspaceService.createWorkspace(request, USER_REQUEST);
+    assertEquals(createdId, request.getWorkspaceId());
+  }
+
+  @Test
+  void createMcWorkspaceUndoSteps() {
+    Workspace request = defaultRequestBuilder(UUID.randomUUID()).build();
+    // Retry undo steps once and fail at the end of the flight.
+    Map<String, StepStatus> retrySteps = new HashMap<>();
+    retrySteps.put(CreateWorkspaceAuthzStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
+    retrySteps.put(CreateWorkspaceStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
+    FlightDebugInfo debugInfo =
+        FlightDebugInfo.newBuilder().undoStepFailures(retrySteps).lastStepFailure(true).build();
+    jobService.setFlightDebugInfoForTest(debugInfo);
+
+    // Service methods which wait for a flight to complete will throw an
+    // InvalidResultStateException when that flight fails without a cause, which occurs when a
+    // flight fails via debugInfo.
     assertThrows(
         InvalidResultStateException.class,
-        () -> workspaceService.deleteWorkspace(request.workspaceId(), USER_REQUEST));
-
-    // Even though the "undo" ran for this flight, the workspace should still be deleted.
+        () -> workspaceService.createWorkspace(request, USER_REQUEST));
     assertThrows(
         WorkspaceNotFoundException.class,
-        () -> workspaceService.getWorkspace(request.workspaceId(), USER_REQUEST));
+        () -> workspaceService.getWorkspace(request.getWorkspaceId(), USER_REQUEST));
   }
 
   @Test
   void deleteForbiddenMissingWorkspace() throws Exception {
-    doThrow(new UnauthorizedException("forbid!"))
+    doThrow(new ForbiddenException("forbid!"))
         .when(mockSamService)
         .checkAuthz(any(), any(), any(), any());
 
@@ -337,23 +358,23 @@ class WorkspaceServiceTest extends BaseConnectedTest {
 
   @Test
   void deleteForbiddenExistingWorkspace() throws Exception {
-    WorkspaceRequest request = defaultRequestBuilder(UUID.randomUUID()).build();
+    Workspace request = defaultRequestBuilder(UUID.randomUUID()).build();
     workspaceService.createWorkspace(request, USER_REQUEST);
 
-    doThrow(new UnauthorizedException("forbid!"))
+    doThrow(new ForbiddenException("forbid!"))
         .when(mockSamService)
         .checkAuthz(any(), any(), any(), any());
 
     assertThrows(
-        UnauthorizedException.class,
-        () -> workspaceService.deleteWorkspace(request.workspaceId(), USER_REQUEST));
+        ForbiddenException.class,
+        () -> workspaceService.deleteWorkspace(request.getWorkspaceId(), USER_REQUEST));
   }
 
   @Test
   void deleteWorkspaceWithDataReference() {
     // First, create a workspace.
     UUID workspaceId = UUID.randomUUID();
-    WorkspaceRequest request = defaultRequestBuilder(workspaceId).build();
+    Workspace request = defaultRequestBuilder(workspaceId).build();
     workspaceService.createWorkspace(request, USER_REQUEST);
 
     // Next, add a data reference to that workspace.
@@ -373,7 +394,7 @@ class WorkspaceServiceTest extends BaseConnectedTest {
     referenceResourceService.getReferenceResource(workspaceId, resourceId, USER_REQUEST);
 
     // Delete the workspace.
-    workspaceService.deleteWorkspace(request.workspaceId(), USER_REQUEST);
+    workspaceService.deleteWorkspace(request.getWorkspaceId(), USER_REQUEST);
 
     // Verify that the workspace was successfully deleted, even though it contained references
     assertThrows(
@@ -388,26 +409,25 @@ class WorkspaceServiceTest extends BaseConnectedTest {
   @Test
   @DisabledIfEnvironmentVariable(named = "TEST_ENV", matches = BUFFER_SERVICE_DISABLED_ENVS_REG_EX)
   void deleteWorkspaceWithGoogleContext() throws Exception {
-    WorkspaceRequest request =
+    Workspace request =
         defaultRequestBuilder(UUID.randomUUID())
-            .spendProfileId(Optional.of(spendUtils.defaultSpendId()))
+            .spendProfileId(spendUtils.defaultSpendId())
             .workspaceStage(WorkspaceStage.MC_WORKSPACE)
             .build();
     workspaceService.createWorkspace(request, USER_REQUEST);
     String jobId = UUID.randomUUID().toString();
     workspaceService.createGcpCloudContext(
-        request.workspaceId(), jobId, USER_REQUEST, "/fake/value");
+        request.getWorkspaceId(), jobId, USER_REQUEST, "/fake/value");
     jobService.waitForJob(jobId);
     assertNull(jobService.retrieveJobResult(jobId, Object.class, USER_REQUEST).getException());
-    Workspace workspace = workspaceService.getWorkspace(request.workspaceId(), USER_REQUEST);
+    Workspace workspace = workspaceService.getWorkspace(request.getWorkspaceId(), USER_REQUEST);
     String projectId =
-        workspace.getGcpCloudContext().map(GcpCloudContext::getGcpProjectId).orElse(null);
-    assertNotNull(projectId);
+        workspaceService.getAuthorizedRequiredGcpProject(workspace.getWorkspaceId(), USER_REQUEST);
 
     // Verify project exists by retrieving it.
     crl.getCloudResourceManagerCow().projects().get(projectId).execute();
 
-    workspaceService.deleteWorkspace(request.workspaceId(), USER_REQUEST);
+    workspaceService.deleteWorkspace(request.getWorkspaceId(), USER_REQUEST);
 
     // Check that project is now being deleted.
     Project project = crl.getCloudResourceManagerCow().projects().get(projectId).execute();
@@ -417,24 +437,23 @@ class WorkspaceServiceTest extends BaseConnectedTest {
   @Test
   @DisabledIfEnvironmentVariable(named = "TEST_ENV", matches = BUFFER_SERVICE_DISABLED_ENVS_REG_EX)
   void createGetDeleteGoogleContext() {
-    WorkspaceRequest request =
+    Workspace request =
         defaultRequestBuilder(UUID.randomUUID())
-            .spendProfileId(Optional.of(spendUtils.defaultSpendId()))
+            .spendProfileId(spendUtils.defaultSpendId())
             .workspaceStage(WorkspaceStage.MC_WORKSPACE)
             .build();
     workspaceService.createWorkspace(request, USER_REQUEST);
 
     String jobId = UUID.randomUUID().toString();
     workspaceService.createGcpCloudContext(
-        request.workspaceId(), jobId, USER_REQUEST, "/fake/value");
+        request.getWorkspaceId(), jobId, USER_REQUEST, "/fake/value");
     jobService.waitForJob(jobId);
     assertNull(jobService.retrieveJobResult(jobId, Object.class, USER_REQUEST).getException());
-    Workspace workspace = workspaceService.getWorkspace(request.workspaceId(), USER_REQUEST);
-    assertTrue(workspace.getGcpCloudContext().isPresent());
-
-    workspaceService.deleteGcpCloudContext(request.workspaceId(), USER_REQUEST);
-    workspace = workspaceService.getWorkspace(request.workspaceId(), USER_REQUEST);
-    assertTrue(workspace.getGcpCloudContext().isEmpty());
+    assertTrue(
+        testUtils.getAuthorizedGcpCloudContext(request.getWorkspaceId(), USER_REQUEST).isPresent());
+    workspaceService.deleteGcpCloudContext(request.getWorkspaceId(), USER_REQUEST);
+    assertTrue(
+        testUtils.getAuthorizedGcpCloudContext(request.getWorkspaceId(), USER_REQUEST).isEmpty());
   }
 
   @Test
@@ -444,11 +463,11 @@ class WorkspaceServiceTest extends BaseConnectedTest {
     Mockito.when(
             mockSamService.isAuthorized(
                 Mockito.any(),
-                Mockito.eq(SamConstants.SAM_WORKSPACE_RESOURCE),
+                Mockito.eq(SamResource.WORKSPACE),
                 Mockito.any(),
-                Mockito.eq(SamConstants.SAM_WORKSPACE_READ_ACTION)))
+                Mockito.eq(SamWorkspaceAction.READ)))
         .thenReturn(true);
-    WorkspaceRequest request =
+    Workspace request =
         defaultRequestBuilder(UUID.randomUUID())
             .workspaceStage(WorkspaceStage.RAWLS_WORKSPACE)
             .build();
@@ -459,65 +478,7 @@ class WorkspaceServiceTest extends BaseConnectedTest {
         StageDisabledException.class,
         () ->
             workspaceService.createGcpCloudContext(
-                request.workspaceId(), jobId, USER_REQUEST, "/fake/value"));
-  }
-
-  @Test
-  void createGoogleContextNoSpendProfileIdThrows() {
-    WorkspaceRequest request =
-        defaultRequestBuilder(UUID.randomUUID())
-            .workspaceStage(WorkspaceStage.MC_WORKSPACE)
-            .build();
-    workspaceService.createWorkspace(request, USER_REQUEST);
-    String jobId = UUID.randomUUID().toString();
-
-    assertThrows(
-        MissingSpendProfileException.class,
-        () ->
-            workspaceService.createGcpCloudContext(
-                request.workspaceId(), jobId, USER_REQUEST, "/fake/value"));
-  }
-
-  @Test
-  void createGoogleContextSpendLinkingUnauthorizedThrows() throws Exception {
-    WorkspaceRequest request =
-        defaultRequestBuilder(UUID.randomUUID())
-            .spendProfileId(Optional.of(spendUtils.defaultSpendId()))
-            .workspaceStage(WorkspaceStage.MC_WORKSPACE)
-            .build();
-    workspaceService.createWorkspace(request, USER_REQUEST);
-    String jobId = UUID.randomUUID().toString();
-
-    Mockito.when(
-            mockSamService.isAuthorized(
-                Mockito.eq(USER_REQUEST),
-                Mockito.eq(SamConstants.SPEND_PROFILE_RESOURCE),
-                Mockito.any(),
-                Mockito.eq(SamConstants.SPEND_PROFILE_LINK_ACTION)))
-        .thenReturn(false);
-
-    assertThrows(
-        SpendUnauthorizedException.class,
-        () ->
-            workspaceService.createGcpCloudContext(
-                request.workspaceId(), jobId, USER_REQUEST, "/fake/value"));
-  }
-
-  @Test
-  void createGoogleContextSpendWithoutBillingAccountThrows() {
-    WorkspaceRequest request =
-        defaultRequestBuilder(UUID.randomUUID())
-            .spendProfileId(Optional.of(spendUtils.noBillingAccount()))
-            .workspaceStage(WorkspaceStage.MC_WORKSPACE)
-            .build();
-    workspaceService.createWorkspace(request, USER_REQUEST);
-    String jobId = UUID.randomUUID().toString();
-
-    assertThrows(
-        NoBillingAccountException.class,
-        () ->
-            workspaceService.createGcpCloudContext(
-                request.workspaceId(), jobId, USER_REQUEST, "/fake/value"));
+                request.getWorkspaceId(), jobId, USER_REQUEST, "/fake/value"));
   }
 
   /**
@@ -525,11 +486,14 @@ class WorkspaceServiceTest extends BaseConnectedTest {
    *
    * <p>This provides default values for jobId (random UUID), spend profile (Optional.empty()), and
    * workspace stage (MC_WORKSPACE).
+   *
+   * <p>Because the tests in this class mock Sam, we do not need to explicitly clean up workspaces
+   * created here.
    */
-  private WorkspaceRequest.Builder defaultRequestBuilder(UUID workspaceId) {
-    return WorkspaceRequest.builder()
+  private Workspace.Builder defaultRequestBuilder(UUID workspaceId) {
+    return Workspace.builder()
         .workspaceId(workspaceId)
-        .spendProfileId(Optional.empty())
+        .spendProfileId(null)
         .workspaceStage(WorkspaceStage.MC_WORKSPACE);
   }
 }

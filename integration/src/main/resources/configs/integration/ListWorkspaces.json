@@ -1,0 +1,18 @@
+{
+  "name": "ListWorkspaces",
+  "description": "List workspaces",
+  "serverSpecificationFile": "workspace-local.json",
+  "kubernetes": {},
+  "application": {},
+  "testScripts": [
+    {
+      "name": "ListWorkspaces",
+      "numberOfUserJourneyThreadsToRun": 1,
+      "userJourneyThreadPoolSize": 1,
+      "expectedTimeForEach": 5,
+      "expectedTimeForEachUnit": "SECONDS",
+      "parameters": ["wm-default-spend-profile"]
+    }
+  ],
+  "testUserFiles": ["bella.json", "liam.json"]
+}

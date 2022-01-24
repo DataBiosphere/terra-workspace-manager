@@ -1,11 +1,15 @@
 package bio.terra.workspace.common.utils;
 
+import bio.terra.common.stairway.TracingHook;
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.FlightState;
 import bio.terra.workspace.generated.model.ApiErrorReport;
+import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.workspace.exceptions.MissingRequiredFieldsException;
+import bio.terra.workspace.service.workspace.model.Workspace;
+import java.util.Map;
 import java.util.Optional;
 import javax.annotation.Nullable;
 import org.springframework.http.HttpStatus;
@@ -16,14 +20,27 @@ public final class FlightUtils {
   public static final int FLIGHT_POLL_SECONDS = 10;
   public static final int FLIGHT_POLL_CYCLES = 360;
 
+  public static final Map<String, Class<?>> COMMON_FLIGHT_INPUTS =
+      Map.of(
+          JobMapKeys.AUTH_USER_INFO.getKeyName(),
+          AuthenticatedUserRequest.class,
+          JobMapKeys.REQUEST.getKeyName(),
+          Workspace.class,
+          JobMapKeys.SUBJECT_ID.getKeyName(),
+          String.class,
+          MdcHook.MDC_FLIGHT_MAP_KEY,
+          Object.class,
+          TracingHook.SUBMISSION_SPAN_CONTEXT_MAP_KEY,
+          Object.class);
+
   private FlightUtils() {}
 
   /**
    * Build an error model and set it as the response
    *
-   * @param context
-   * @param message
-   * @param responseStatus
+   * @param context flight context
+   * @param message error message
+   * @param responseStatus status
    */
   public static void setErrorResponse(
       FlightContext context, String message, HttpStatus responseStatus) {
@@ -74,9 +91,18 @@ public final class FlightUtils {
     for (String key : keys) {
       if (null == flightMap.getRaw(key)) {
         throw new MissingRequiredFieldsException(
-            String.format("Required entry with key %s missing from flight map.", key));
+            String.format("Required entry with key '%s' missing from flight map.", key));
       }
     }
+  }
+
+  /**
+   * Validate that all common entries are present in the flight map
+   *
+   * @param flightMap input parameters
+   */
+  public static void validateCommonEntries(FlightMap flightMap) {
+    validateRequiredEntries(flightMap, COMMON_FLIGHT_INPUTS.keySet().toArray(new String[0]));
   }
 
   public static FlightMap getResultMapRequired(FlightState flightState) {
@@ -110,5 +136,15 @@ public final class FlightUtils {
               .orElse(null);
     }
     return errorMessage;
+  }
+
+  /**
+   * Copy the parameters common to all WSM flights
+   *
+   * @param source source flight map
+   * @param dest destination flight map
+   */
+  public static void copyCommonParams(FlightMap source, FlightMap dest) {
+    COMMON_FLIGHT_INPUTS.forEach((key, clazz) -> dest.put(key, source.get(key, clazz)));
   }
 }

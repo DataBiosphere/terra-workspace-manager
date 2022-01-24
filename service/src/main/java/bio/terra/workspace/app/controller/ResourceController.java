@@ -1,5 +1,7 @@
 package bio.terra.workspace.app.controller;
 
+import bio.terra.workspace.common.exception.InternalLogicException;
+import bio.terra.workspace.common.utils.ControllerValidationUtils;
 import bio.terra.workspace.generated.controller.ResourceApi;
 import bio.terra.workspace.generated.model.ApiResourceAttributesUnion;
 import bio.terra.workspace.generated.model.ApiResourceDescription;
@@ -13,17 +15,23 @@ import bio.terra.workspace.service.resource.WsmResource;
 import bio.terra.workspace.service.resource.WsmResourceService;
 import bio.terra.workspace.service.resource.WsmResourceType;
 import bio.terra.workspace.service.resource.controlled.ControlledAiNotebookInstanceResource;
+import bio.terra.workspace.service.resource.controlled.ControlledAzureDiskResource;
+import bio.terra.workspace.service.resource.controlled.ControlledAzureIpResource;
+import bio.terra.workspace.service.resource.controlled.ControlledAzureNetworkResource;
+import bio.terra.workspace.service.resource.controlled.ControlledAzureStorageResource;
+import bio.terra.workspace.service.resource.controlled.ControlledAzureVmResource;
 import bio.terra.workspace.service.resource.controlled.ControlledBigQueryDatasetResource;
 import bio.terra.workspace.service.resource.controlled.ControlledGcsBucketResource;
 import bio.terra.workspace.service.resource.controlled.ControlledResource;
 import bio.terra.workspace.service.resource.model.StewardshipType;
+import bio.terra.workspace.service.resource.referenced.ReferencedBigQueryDataTableResource;
 import bio.terra.workspace.service.resource.referenced.ReferencedBigQueryDatasetResource;
 import bio.terra.workspace.service.resource.referenced.ReferencedDataRepoSnapshotResource;
 import bio.terra.workspace.service.resource.referenced.ReferencedGcsBucketResource;
+import bio.terra.workspace.service.resource.referenced.ReferencedGcsObjectResource;
 import bio.terra.workspace.service.resource.referenced.ReferencedResource;
 import bio.terra.workspace.service.resource.referenced.ReferencedResourceService;
 import bio.terra.workspace.service.workspace.WorkspaceService;
-import bio.terra.workspace.service.workspace.exceptions.InternalLogicException;
 import com.google.common.annotations.VisibleForTesting;
 import java.util.List;
 import java.util.UUID;
@@ -31,13 +39,13 @@ import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
-import javax.validation.constraints.Min;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.RequestParam;
 
 // TODO: GENERAL - add request validation
 
@@ -73,11 +81,12 @@ public class ResourceController implements ResourceApi {
   @Override
   public ResponseEntity<ApiResourceList> enumerateResources(
       UUID workspaceId,
-      @Min(0) @Valid Integer offset,
-      @Min(1) @Valid Integer limit,
+      @Valid @RequestParam(value = "offset", required = false, defaultValue = "0") Integer offset,
+      @Valid @RequestParam(value = "limit", required = false, defaultValue = "10") Integer limit,
       @Valid ApiResourceType resource,
       @Valid ApiStewardshipType stewardship) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    ControllerValidationUtils.validatePaginationParams(offset, limit);
 
     List<WsmResource> wsmResources =
         resourceService.enumerateResources(
@@ -87,8 +96,10 @@ public class ResourceController implements ResourceApi {
             offset,
             limit,
             userRequest);
+
     // projectId
-    String gcpProjectId = workspaceService.getGcpProject(workspaceId).orElse(null);
+    String gcpProjectId =
+        workspaceService.getAuthorizedGcpProject(workspaceId, userRequest).orElse(null);
 
     List<ApiResourceDescription> apiResourceDescriptionList =
         wsmResources.stream()
@@ -124,7 +135,13 @@ public class ResourceController implements ResourceApi {
               union.gcpBqDataset(resource.toApiAttributes());
               break;
             }
-
+          case BIG_QUERY_DATA_TABLE:
+            {
+              ReferencedBigQueryDataTableResource resource =
+                  referencedResource.castToBigQueryDataTableResource();
+              union.gcpBqDataTable(resource.toApiAttributes());
+              break;
+            }
           case DATA_REPO_SNAPSHOT:
             {
               ReferencedDataRepoSnapshotResource resource =
@@ -139,6 +156,22 @@ public class ResourceController implements ResourceApi {
               union.gcpGcsBucket(resource.toApiAttributes());
               break;
             }
+
+          case GCS_OBJECT:
+            {
+              ReferencedGcsObjectResource resource = referencedResource.castToGcsObjectResource();
+              union.gcpGcsObject(resource.toApiAttributes());
+              break;
+            }
+
+          case AI_NOTEBOOK_INSTANCE:
+          case AZURE_IP:
+          case AZURE_VM:
+          case AZURE_DISK:
+          case AZURE_NETWORK:
+          case AZURE_STORAGE_ACCOUNT:
+            throw new InternalLogicException(
+                "Unimplemented referenced resource type: " + wsmResource.getResourceType());
 
           default:
             throw new InternalLogicException(
@@ -170,6 +203,43 @@ public class ResourceController implements ResourceApi {
               union.gcpBqDataset(resource.toApiAttributes(gcpProjectId));
               break;
             }
+
+          case AZURE_DISK:
+            {
+              ControlledAzureDiskResource resource = controlledResource.castToAzureDiskResource();
+              union.azureDisk(resource.toApiAttributes());
+              break;
+            }
+
+          case AZURE_IP:
+            {
+              ControlledAzureIpResource resource = controlledResource.castToAzureIpResource();
+              union.azureIp(resource.toApiAttributes());
+              break;
+            }
+          case AZURE_NETWORK:
+            {
+              ControlledAzureNetworkResource resource =
+                  controlledResource.castToAzureNetworkResource();
+              union.azureNetwork(resource.toApiAttributes());
+              break;
+            }
+
+          case AZURE_STORAGE_ACCOUNT:
+            {
+              ControlledAzureStorageResource resource =
+                  controlledResource.castToAzureStorageResource();
+              union.azureStorage(resource.toApiAttributes());
+              break;
+            }
+
+          case AZURE_VM:
+            {
+              ControlledAzureVmResource resource = controlledResource.castToAzureVmResource();
+              union.azureVm(resource.toApiAttributes());
+              break;
+            }
+
           case DATA_REPO_SNAPSHOT: // there is a use case for this, but low priority
             throw new InternalLogicException(
                 "Unimplemented controlled resource type: " + wsmResource.getResourceType());

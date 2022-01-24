@@ -14,9 +14,9 @@ import bio.terra.workspace.service.iam.model.ControlledResourceIamRole;
 import bio.terra.workspace.service.resource.controlled.ControlledBigQueryDatasetResource;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceService;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
-import bio.terra.workspace.service.workspace.WorkspaceService;
+import bio.terra.workspace.service.workspace.GcpCloudContextService;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
-import java.util.List;
+import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ResourceKeys;
 import java.util.Optional;
 import java.util.UUID;
 import org.springframework.http.HttpStatus;
@@ -26,17 +26,17 @@ public class CopyBigQueryDatasetDefinitionStep implements Step {
   private final ControlledBigQueryDatasetResource sourceDataset;
   private final ControlledResourceService controlledResourceService;
   private final AuthenticatedUserRequest userRequest;
-  private final WorkspaceService workspaceService;
+  private final GcpCloudContextService gcpCloudContextService;
 
   public CopyBigQueryDatasetDefinitionStep(
       ControlledBigQueryDatasetResource sourceDataset,
       ControlledResourceService controlledResourceService,
       AuthenticatedUserRequest userRequest,
-      WorkspaceService workspaceService) {
+      GcpCloudContextService gcpCloudContextService) {
     this.sourceDataset = sourceDataset;
     this.controlledResourceService = controlledResourceService;
     this.userRequest = userRequest;
-    this.workspaceService = workspaceService;
+    this.gcpCloudContextService = gcpCloudContextService;
   }
 
   @Override
@@ -63,14 +63,14 @@ public class CopyBigQueryDatasetDefinitionStep implements Step {
     final String resourceName =
         FlightUtils.getInputParameterOrWorkingValue(
             flightContext,
-            ControlledResourceKeys.RESOURCE_NAME,
-            ControlledResourceKeys.PREVIOUS_RESOURCE_NAME,
+            ResourceKeys.RESOURCE_NAME,
+            ResourceKeys.PREVIOUS_RESOURCE_NAME,
             String.class);
     final String description =
         FlightUtils.getInputParameterOrWorkingValue(
             flightContext,
-            ControlledResourceKeys.RESOURCE_DESCRIPTION,
-            ControlledResourceKeys.PREVIOUS_RESOURCE_DESCRIPTION,
+            ResourceKeys.RESOURCE_DESCRIPTION,
+            ResourceKeys.PREVIOUS_RESOURCE_DESCRIPTION,
             String.class);
     final String datasetName =
         Optional.ofNullable(
@@ -100,16 +100,16 @@ public class CopyBigQueryDatasetDefinitionStep implements Step {
 
     final ApiGcpBigQueryDatasetCreationParameters creationParameters =
         new ApiGcpBigQueryDatasetCreationParameters().datasetId(datasetName).location(location);
-    final List<ControlledResourceIamRole> iamRoles =
-        IamRoleUtils.getIamRolesForAccessScope(destinationResource.getAccessScope());
+    final ControlledResourceIamRole iamRole =
+        IamRoleUtils.getIamRoleForAccessScope(destinationResource.getAccessScope());
 
     final ControlledBigQueryDatasetResource clonedResource =
         controlledResourceService.createBigQueryDataset(
-            destinationResource, creationParameters, iamRoles, userRequest);
+            destinationResource, creationParameters, iamRole, userRequest);
 
     workingMap.put(ControlledResourceKeys.CLONED_RESOURCE_DEFINITION, clonedResource);
     final String destinationProjectId =
-        workspaceService.getRequiredGcpProject(destinationWorkspaceId);
+        gcpCloudContextService.getRequiredGcpProject(destinationWorkspaceId);
     final ApiClonedControlledGcpBigQueryDataset apiResult =
         new ApiClonedControlledGcpBigQueryDataset()
             .dataset(clonedResource.toApiResource(destinationProjectId))

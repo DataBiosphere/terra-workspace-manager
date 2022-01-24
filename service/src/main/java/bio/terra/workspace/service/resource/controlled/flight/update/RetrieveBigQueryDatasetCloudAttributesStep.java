@@ -11,7 +11,7 @@ import bio.terra.workspace.generated.model.ApiGcpBigQueryDatasetUpdateParameters
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.resource.controlled.BigQueryApiConversions;
 import bio.terra.workspace.service.resource.controlled.ControlledBigQueryDatasetResource;
-import bio.terra.workspace.service.workspace.WorkspaceService;
+import bio.terra.workspace.service.workspace.GcpCloudContextService;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import com.google.api.services.bigquery.model.Dataset;
 import java.io.IOException;
@@ -23,15 +23,15 @@ public class RetrieveBigQueryDatasetCloudAttributesStep implements Step {
       LoggerFactory.getLogger(RetrieveBigQueryDatasetCloudAttributesStep.class);
   private final ControlledBigQueryDatasetResource datasetResource;
   private final CrlService crlService;
-  private final WorkspaceService workspaceService;
+  private final GcpCloudContextService gcpCloudContextService;
 
   public RetrieveBigQueryDatasetCloudAttributesStep(
       ControlledBigQueryDatasetResource datasetResource,
       CrlService crlService,
-      WorkspaceService workspaceService) {
+      GcpCloudContextService gcpCloudContextService) {
     this.datasetResource = datasetResource;
     this.crlService = crlService;
-    this.workspaceService = workspaceService;
+    this.gcpCloudContextService = gcpCloudContextService;
   }
 
   @Override
@@ -39,7 +39,7 @@ public class RetrieveBigQueryDatasetCloudAttributesStep implements Step {
       throws InterruptedException, RetryException {
     final FlightMap workingMap = flightContext.getWorkingMap();
     final String projectId =
-        workspaceService.getRequiredGcpProject(datasetResource.getWorkspaceId());
+        gcpCloudContextService.getRequiredGcpProject(datasetResource.getWorkspaceId());
     final String datasetId = datasetResource.getDatasetName();
     final BigQueryCow bigQueryCow = crlService.createWsmSaBigQueryCow();
 

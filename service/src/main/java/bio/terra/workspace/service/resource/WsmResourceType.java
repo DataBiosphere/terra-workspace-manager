@@ -2,13 +2,20 @@ package bio.terra.workspace.service.resource;
 
 import bio.terra.common.exception.ValidationException;
 import bio.terra.workspace.generated.model.ApiResourceType;
+import bio.terra.workspace.service.resource.controlled.*;
 import bio.terra.workspace.service.resource.controlled.ControlledAiNotebookInstanceResource;
+import bio.terra.workspace.service.resource.controlled.ControlledAzureDiskResource;
+import bio.terra.workspace.service.resource.controlled.ControlledAzureIpResource;
+import bio.terra.workspace.service.resource.controlled.ControlledAzureNetworkResource;
+import bio.terra.workspace.service.resource.controlled.ControlledAzureVmResource;
 import bio.terra.workspace.service.resource.controlled.ControlledBigQueryDatasetResource;
 import bio.terra.workspace.service.resource.controlled.ControlledGcsBucketResource;
 import bio.terra.workspace.service.resource.controlled.ControlledResource;
+import bio.terra.workspace.service.resource.referenced.ReferencedBigQueryDataTableResource;
 import bio.terra.workspace.service.resource.referenced.ReferencedBigQueryDatasetResource;
 import bio.terra.workspace.service.resource.referenced.ReferencedDataRepoSnapshotResource;
 import bio.terra.workspace.service.resource.referenced.ReferencedGcsBucketResource;
+import bio.terra.workspace.service.resource.referenced.ReferencedGcsObjectResource;
 import bio.terra.workspace.service.resource.referenced.ReferencedResource;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import javax.annotation.Nullable;
@@ -20,26 +27,68 @@ public enum WsmResourceType {
       CloudPlatform.GCP,
       "AI_NOTEBOOK_INSTANCE",
       ApiResourceType.AI_NOTEBOOK,
-      null,
+      /*referenceClass=*/ null,
       ControlledAiNotebookInstanceResource.class),
   DATA_REPO_SNAPSHOT(
       CloudPlatform.GCP,
       "DATA_REPO_SNAPSHOT",
       ApiResourceType.DATA_REPO_SNAPSHOT,
       ReferencedDataRepoSnapshotResource.class,
-      null),
+      /*controlledClass=*/ null),
   GCS_BUCKET(
       CloudPlatform.GCP,
       "GCS_BUCKET",
       ApiResourceType.GCS_BUCKET,
       ReferencedGcsBucketResource.class,
       ControlledGcsBucketResource.class),
+  GCS_OBJECT(
+      CloudPlatform.GCP,
+      "GCS_OBJECT",
+      ApiResourceType.GCS_OBJECT,
+      ReferencedGcsObjectResource.class,
+      /*controlledClass=*/ null),
   BIG_QUERY_DATASET(
       CloudPlatform.GCP,
       "BIG_QUERY_DATASET",
       ApiResourceType.BIG_QUERY_DATASET,
       ReferencedBigQueryDatasetResource.class,
-      ControlledBigQueryDatasetResource.class);
+      ControlledBigQueryDatasetResource.class),
+  BIG_QUERY_DATA_TABLE(
+      CloudPlatform.GCP,
+      "BIG_QUERY_DATA_TABLE",
+      ApiResourceType.BIG_QUERY_DATA_TABLE,
+      ReferencedBigQueryDataTableResource.class,
+      null),
+  AZURE_IP(
+      CloudPlatform.AZURE,
+      "AZURE_IP",
+      ApiResourceType.AZURE_IP,
+      null,
+      ControlledAzureIpResource.class),
+  AZURE_DISK(
+      CloudPlatform.AZURE,
+      "AZURE_DISK",
+      ApiResourceType.AZURE_DISK,
+      null,
+      ControlledAzureDiskResource.class),
+  AZURE_NETWORK(
+      CloudPlatform.AZURE,
+      "AZURE_NETWORK",
+      ApiResourceType.AZURE_NETWORK,
+      null,
+      ControlledAzureNetworkResource.class),
+  AZURE_VM(
+      CloudPlatform.AZURE,
+      "AZURE_VM",
+      ApiResourceType.AZURE_VM,
+      null,
+      ControlledAzureVmResource.class),
+  AZURE_STORAGE_ACCOUNT(
+      CloudPlatform.AZURE,
+      "AZURE_STORAGE_ACCOUNT",
+      ApiResourceType.AZURE_STORAGE_ACCOUNT,
+      null,
+      ControlledAzureStorageResource.class);
 
   private final CloudPlatform cloudPlatform;
   private final String dbString; // serialized form of the resource type
@@ -67,7 +116,7 @@ public enum WsmResourceType {
       }
     }
     throw new SerializationException(
-        "Deeserialization failed: no matching resource type for " + dbString);
+        "Deserialization failed: no matching resource type for " + dbString);
   }
 
   /**
