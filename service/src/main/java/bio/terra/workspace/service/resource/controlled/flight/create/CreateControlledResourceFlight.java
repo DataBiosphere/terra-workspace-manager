@@ -281,7 +281,7 @@ public class CreateControlledResourceFlight extends Flight {
     addStep(
         new CreateAiNotebookInstanceStep(
             resource,
-            userAndPet,
+            userAndPet.getPetEmail(),
             flightBeanBag.getCrlService(),
             flightBeanBag.getGcpCloudContextService()),
         gcpRetryRule);
