@@ -10,6 +10,7 @@ import bio.terra.workspace.model.CreateWorkspaceRequestBody;
 import bio.terra.workspace.model.CreatedWorkspace;
 import bio.terra.workspace.model.WorkspaceStageModel;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 /**
@@ -46,14 +47,14 @@ public abstract class WorkspaceAllocateTestScriptBase extends WorkspaceApiTestSc
   }
 
   @Override
-  public void setParameters(List<String> parameters) throws Exception {
+  public void setParameters(Map<String, String> parameters) throws Exception {
     super.setParameters(parameters);
 
-    if (parameters == null || parameters.size() == 0) {
+    if (parameters == null || !parameters.containsKey(ParameterKeys.SPEND_PROFILE_PARAMETER)) {
       throw new IllegalArgumentException(
-          "Must provide the spend profile id as the first element in the parameters list");
+          "Must provide the spend profile id as parameter " + ParameterKeys.SPEND_PROFILE_PARAMETER);
     } else {
-      spendProfileId = parameters.get(0);
+      spendProfileId = parameters.get(ParameterKeys.SPEND_PROFILE_PARAMETER);
     }
   }
 

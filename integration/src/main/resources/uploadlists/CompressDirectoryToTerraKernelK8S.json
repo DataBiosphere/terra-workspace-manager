@@ -6,7 +6,9 @@
     {
       "name": "CompressDirectoryToBucket",
       "description": "Save the compressed results directory to a bucket.",
-      "parameters": ["gs://terra-kernel-k8s-testrunner-results"]
+      "parameters": {
+        "bucket-path": "gs://broad-dsde-dev-testrunner-results"
+      }
     }
   ]
 }

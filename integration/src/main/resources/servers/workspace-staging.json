@@ -17,12 +17,18 @@
     {
       "name": "ReadFromTerraHelmfileRepo",
       "description": "Version from https://github.com/broadinstitute/terra-helmfile",
-      "parameters": ["workspacemanager","terra-helmfile/versions/app/staging.yaml", "terra-helmfile/environments/live/staging.yaml"]
+      "parameters": {
+        "app-name": "workspacemanager",
+        "base-file-path": "terra-helmfile/versions/app/staging.yaml",
+        "override-file-path": "terra-helmfile/environments/live/staging.yaml"
+      }
     },
     {
       "name": "ReadFromGitCommitLog",
       "description": "Hash of git branch from Git Commit Log",
-      "parameters": ["../.git"]
+      "parameters": {
+        "git-dir": "../.git"
+      }
     }
   ]
 }

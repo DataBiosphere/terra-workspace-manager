@@ -11,7 +11,11 @@
       "userJourneyThreadPoolSize": 2,
       "expectedTimeForEach": 5,
       "expectedTimeForEachUnit": "SECONDS",
-      "parameters": ["wm-default-spend-profile", "97b5559a-2f8f-4df3-89ae-5a249173ee0c", "terra"]
+      "parameters": {
+        "spend-profile-id": "wm-default-spend-profile",
+        "data-repo-instance": "terra",
+        "snapshot-id": "97b5559a-2f8f-4df3-89ae-5a249173ee0c"
+      }
     }
   ],
   "testUserFiles": ["bella.json"]
