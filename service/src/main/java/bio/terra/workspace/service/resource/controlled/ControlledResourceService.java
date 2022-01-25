@@ -452,7 +452,7 @@ public class ControlledResourceService {
         commonCreationJobBuilder(
             resource, privateResourceIamRole, jobControl, resultPath, userRequest);
     String userEmail =
-            SamRethrow.onInterrupted(() -> samService.getUserEmailFromSam(userRequest), "enablePet");
+        SamRethrow.onInterrupted(() -> samService.getUserEmailFromSam(userRequest), "enablePet");
     String petSaEmail =
         SamRethrow.onInterrupted(
             () ->
@@ -461,10 +461,7 @@ public class ControlledResourceService {
                     userRequest),
             "enablePet");
     String proxyGroupEmail =
-            SamRethrow.onInterrupted(
-                    () ->
-                            samService.getProxyGroupEmail(userEmail),
-                    "enablePet");
+        SamRethrow.onInterrupted(() -> samService.getProxyGroupEmail(userEmail), "enablePet");
     jobBuilder.addParameter(ControlledResourceKeys.CREATE_NOTEBOOK_PARAMETERS, creationParameters);
     jobBuilder.addParameter(ControlledResourceKeys.NOTEBOOK_PET_SERVICE_ACCOUNT, petSaEmail);
     jobBuilder.addParameter(ControlledResourceKeys.NOTEBOOK_PROXY_GROUP, proxyGroupEmail);

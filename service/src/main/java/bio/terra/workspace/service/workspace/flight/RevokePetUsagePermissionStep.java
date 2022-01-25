@@ -41,7 +41,8 @@ public class RevokePetUsagePermissionStep implements Step {
 
   public RevokePetUsagePermissionStep(
       UUID workspaceId,
-      String userEmailToRemove,String proxyGroupEmail,
+      String userEmailToRemove,
+      String proxyGroupEmail,
       PetSaService petSaService,
       GcpCloudContextService gcpCloudContextService,
       AuthenticatedUserRequest userRequest) {

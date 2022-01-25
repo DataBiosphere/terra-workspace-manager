@@ -526,10 +526,7 @@ public class WorkspaceApiController implements WorkspaceApi {
             "enablePet");
     UserWithPetSa userAndPet = new UserWithPetSa(userEmail, petSaEmail);
     String proxyGroupEmail =
-            SamRethrow.onInterrupted(
-                    () ->
-                            samService.getProxyGroupEmail(userEmail),
-                    "enablePet");
+        SamRethrow.onInterrupted(() -> samService.getProxyGroupEmail(userEmail), "enablePet");
     petSaService.enablePetServiceAccountImpersonation(workspaceId, userAndPet, proxyGroupEmail);
     return new ResponseEntity<>(petSaEmail, HttpStatus.OK);
   }

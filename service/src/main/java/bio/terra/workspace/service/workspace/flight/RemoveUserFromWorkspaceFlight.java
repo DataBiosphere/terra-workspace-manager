@@ -73,7 +73,8 @@ public class RemoveUserFromWorkspaceFlight extends Flight {
     addStep(
         new RevokePetUsagePermissionStep(
             workspaceId,
-            userToRemove,proxyGroupEmail,
+            userToRemove,
+            proxyGroupEmail,
             appContext.getPetSaService(),
             appContext.getGcpCloudContextService(),
             userRequest),

@@ -60,8 +60,8 @@ public class CreateControlledResourceFlight extends Flight {
 
     final String assignedUserEmail = resource.getAssignedUser().orElse(null);
 
-    final String proxyGroupEmail = inputParameters.get(
-            ControlledResourceKeys.NOTEBOOK_PROXY_GROUP, String.class);
+    final String proxyGroupEmail =
+        inputParameters.get(ControlledResourceKeys.NOTEBOOK_PROXY_GROUP, String.class);
 
     // Store the resource metadata in the WSM database. Doing this first means concurrent
     // conflicting resources with the same name or resource attributes can be prevented.
@@ -118,7 +118,11 @@ public class CreateControlledResourceFlight extends Flight {
                   inputParameters.get(
                       ControlledResourceKeys.NOTEBOOK_PET_SERVICE_ACCOUNT, String.class));
           addNotebookSteps(
-              userAndPet, proxyGroupEmail, flightBeanBag, resource.castToAiNotebookInstanceResource(), userRequest);
+              userAndPet,
+              proxyGroupEmail,
+              flightBeanBag,
+              resource.castToAiNotebookInstanceResource(),
+              userRequest);
           break;
         }
       case BIG_QUERY_DATASET:
@@ -258,7 +262,8 @@ public class CreateControlledResourceFlight extends Flight {
   }
 
   private void addNotebookSteps(
-      UserWithPetSa userAndPet, String proxyGroupEmail,
+      UserWithPetSa userAndPet,
+      String proxyGroupEmail,
       FlightBeanBag flightBeanBag,
       ControlledAiNotebookInstanceResource resource,
       AuthenticatedUserRequest userRequest) {
@@ -268,7 +273,10 @@ public class CreateControlledResourceFlight extends Flight {
         gcpRetryRule);
     addStep(
         new GrantPetUsagePermissionStep(
-            resource.getWorkspaceId(), userAndPet, proxyGroupEmail, flightBeanBag.getPetSaService()),
+            resource.getWorkspaceId(),
+            userAndPet,
+            proxyGroupEmail,
+            flightBeanBag.getPetSaService()),
         gcpRetryRule);
     addStep(
         new CreateAiNotebookInstanceStep(

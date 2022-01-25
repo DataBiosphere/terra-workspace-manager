@@ -54,17 +54,20 @@ public class PetSaService {
    * Wrapper around {@code enablePetServiceAccountImpersonationWithEtag} without requiring a
    * particular GCP eTag value.
    */
-  public Policy enablePetServiceAccountImpersonation(UUID workspaceId, UserWithPetSa userAndPet, String proxyGroupEmail) {
+  public Policy enablePetServiceAccountImpersonation(
+      UUID workspaceId, UserWithPetSa userAndPet, String proxyGroupEmail) {
     // enablePetServiceAccountImpersonationWithEtag will only return an empty optional if the
     // provided eTag does not match current policy. Because we do not use eTag checking here, this
     // is always nonempty.
-    return enablePetServiceAccountImpersonationWithEtag(workspaceId, userAndPet, proxyGroupEmail, null).get();
+    return enablePetServiceAccountImpersonationWithEtag(
+            workspaceId, userAndPet, proxyGroupEmail, null)
+        .get();
   }
 
   /**
-   * Grant a user's proxy group permission to impersonate their pet service account in a given workspace. Unlike
-   * other operations, this does not run as a flight because it only requires one write operation.
-   * This operation is idempotent.
+   * Grant a user's proxy group permission to impersonate their pet service account in a given
+   * workspace. Unlike other operations, this does not run as a flight because it only requires one
+   * write operation. This operation is idempotent.
    *
    * <p>This method requires a user's pet service account email as input. As a transitive
    * dependency, this also means the provided workspace must have a GCP context.
@@ -103,9 +106,7 @@ public class PetSaService {
       Binding saUserBinding =
           new Binding()
               .setRole(SERVICE_ACCOUNT_USER_ROLE)
-              .setMembers(
-                  ImmutableList.of(
-                      "group:" + proxyGroupEmail));
+              .setMembers(ImmutableList.of("group:" + proxyGroupEmail));
       // If no bindings exist, getBindings() returns null instead of an empty list.
       List<Binding> bindingList =
           Optional.ofNullable(saPolicy.getBindings()).orElse(new ArrayList<>());
@@ -122,7 +123,8 @@ public class PetSaService {
               .setIamPolicy(petSaName, request)
               .execute());
     } catch (IOException e) {
-      throw new InternalServerErrorException("Error enabling user's proxy group to impersonate pet SA", e);
+      throw new InternalServerErrorException(
+          "Error enabling user's proxy group to impersonate pet SA", e);
     }
   }
 
@@ -132,7 +134,8 @@ public class PetSaService {
    */
   public Optional<Policy> disablePetServiceAccountImpersonation(
       UUID workspaceId, UserWithPetSa userAndPet, String proxyGroupEmail) {
-    return disablePetServiceAccountImpersonationWithEtag(workspaceId, userAndPet, proxyGroupEmail,null);
+    return disablePetServiceAccountImpersonationWithEtag(
+        workspaceId, userAndPet, proxyGroupEmail, null);
   }
 
   /**
@@ -180,9 +183,7 @@ public class PetSaService {
       Binding bindingToRemove =
           new Binding()
               .setRole(SERVICE_ACCOUNT_USER_ROLE)
-              .setMembers(
-                  ImmutableList.of(
-                      "group:" + proxyGroupEmail));
+              .setMembers(ImmutableList.of("group:" + proxyGroupEmail));
       // If no bindings exist, getBindings() returns null instead of an empty list. If there are
       // no policies, there is nothing to revoke, so this method is finished.
       List<Binding> oldBindingList = saPolicy.getBindings();
@@ -200,7 +201,8 @@ public class PetSaService {
               .setIamPolicy(petServiceAccount, request)
               .execute());
     } catch (IOException e) {
-      throw new InternalServerErrorException("Error disabling user's proxy group to impersonate pet SA", e);
+      throw new InternalServerErrorException(
+          "Error disabling user's proxy group to impersonate pet SA", e);
     }
   }
 

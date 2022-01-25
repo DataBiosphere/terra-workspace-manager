@@ -34,7 +34,10 @@ public class GrantPetUsagePermissionStep implements Step {
   private final PetSaService petSaService;
 
   public GrantPetUsagePermissionStep(
-      UUID workspaceId, UserWithPetSa userAndPet, String proxyGroupEmail, PetSaService petSaService) {
+      UUID workspaceId,
+      UserWithPetSa userAndPet,
+      String proxyGroupEmail,
+      PetSaService petSaService) {
     this.workspaceId = workspaceId;
     this.userAndPet = userAndPet;
     this.proxyGroupEmail = proxyGroupEmail;
