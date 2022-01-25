@@ -1,5 +1,6 @@
 package bio.terra.workspace.app.controller;
 
+import bio.terra.common.exception.BadRequestException;
 import bio.terra.workspace.generated.controller.ReferencedGcpResourceApi;
 import bio.terra.workspace.generated.model.ApiCloneReferencedGcpBigQueryDataTableResourceResult;
 import bio.terra.workspace.generated.model.ApiCloneReferencedGcpBigQueryDatasetResourceResult;
@@ -26,6 +27,7 @@ import bio.terra.workspace.generated.model.ApiUpdateGcsBucketReferenceRequestBod
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequestFactory;
 import bio.terra.workspace.service.iam.SamService;
+import bio.terra.workspace.service.petserviceaccount.PetSaService;
 import bio.terra.workspace.service.resource.WsmResourceType;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.referenced.ReferencedBigQueryDataTableResource;
@@ -35,7 +37,6 @@ import bio.terra.workspace.service.resource.referenced.ReferencedGcsBucketResour
 import bio.terra.workspace.service.resource.referenced.ReferencedGcsObjectResource;
 import bio.terra.workspace.service.resource.referenced.ReferencedResource;
 import bio.terra.workspace.service.resource.referenced.ReferencedResourceService;
-import bio.terra.workspace.service.workspace.GcpCloudContextService;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import java.util.Optional;
 import java.util.UUID;
@@ -57,7 +58,7 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
   private final WorkspaceService workspaceService;
   private final SamService samService;
   private final HttpServletRequest request;
-  private final GcpCloudContextService gcpCloudContextService;
+  private final PetSaService petSaService;
 
   @Autowired
   public ReferencedGcpResourceController(
@@ -66,13 +67,13 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
       WorkspaceService workspaceService,
       SamService samService,
       HttpServletRequest request,
-      GcpCloudContextService gcpCloudContextService) {
+      PetSaService petSaService) {
     this.referenceResourceService = referenceResourceService;
     this.authenticatedUserRequestFactory = authenticatedUserRequestFactory;
     this.workspaceService = workspaceService;
     this.samService = samService;
     this.request = request;
-    this.gcpCloudContextService = gcpCloudContextService;
+    this.petSaService = petSaService;
   }
 
   private AuthenticatedUserRequest getAuthenticatedInfo() {
@@ -589,9 +590,10 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
   @Override
   public ResponseEntity<ApiCloneReferencedGcpGcsBucketResourceResult> cloneGcpGcsBucketReference(
       UUID workspaceId, UUID resourceId, @Valid ApiCloneReferencedResourceRequestBody body) {
-    final AuthenticatedUserRequest petRequest =
-        samService.getAuthenticatedPetRequest(
-            gcpCloudContextService.getRequiredGcpProject(workspaceId), getAuthenticatedInfo());
+    final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    final AuthenticatedUserRequest petRequest = petSaService.getWorkspacePetCredentials(workspaceId, userRequest)
+        .orElseThrow(() -> new BadRequestException(String.format(
+            "Pet SA credentials not found for user %s on workspace %s", userRequest.getEmail(), workspaceId)));
 
     final ReferencedResource sourceReferencedResource =
         referenceResourceService.getReferenceResource(workspaceId, resourceId, petRequest);
@@ -676,9 +678,10 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
   public ResponseEntity<ApiCloneReferencedGcpBigQueryDatasetResourceResult>
       cloneGcpBigQueryDatasetReference(
           UUID workspaceId, UUID resourceId, @Valid ApiCloneReferencedResourceRequestBody body) {
-    final AuthenticatedUserRequest petRequest =
-        samService.getAuthenticatedPetRequest(
-            gcpCloudContextService.getRequiredGcpProject(workspaceId), getAuthenticatedInfo());
+    final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    final AuthenticatedUserRequest petRequest = petSaService.getWorkspacePetCredentials(workspaceId, userRequest)
+        .orElseThrow(() -> new BadRequestException(String.format(
+            "Pet SA credentials not found for user %s on workspace %s", userRequest.getEmail(), workspaceId)));
 
     final ReferencedResource sourceReferencedResource =
         referenceResourceService.getReferenceResource(workspaceId, resourceId, petRequest);
@@ -721,9 +724,10 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
   public ResponseEntity<ApiCloneReferencedGcpDataRepoSnapshotResourceResult>
       cloneGcpDataRepoSnapshotReference(
           UUID workspaceId, UUID resourceId, @Valid ApiCloneReferencedResourceRequestBody body) {
-    final AuthenticatedUserRequest petRequest =
-        samService.getAuthenticatedPetRequest(
-            gcpCloudContextService.getRequiredGcpProject(workspaceId), getAuthenticatedInfo());
+    final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    final AuthenticatedUserRequest petRequest = petSaService.getWorkspacePetCredentials(workspaceId, userRequest)
+        .orElseThrow(() -> new BadRequestException(String.format(
+            "Pet SA credentials not found for user %s on workspace %s", userRequest.getEmail(), workspaceId)));
 
     final ReferencedResource sourceReferencedResource =
         referenceResourceService.getReferenceResource(workspaceId, resourceId, petRequest);

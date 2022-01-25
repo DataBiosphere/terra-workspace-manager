@@ -1,5 +1,6 @@
 package bio.terra.workspace.app.controller;
 
+import bio.terra.common.exception.BadRequestException;
 import bio.terra.workspace.common.utils.ControllerUtils;
 import bio.terra.workspace.common.utils.ControllerValidationUtils;
 import bio.terra.workspace.generated.controller.WorkspaceApi;
@@ -541,9 +542,9 @@ public class WorkspaceApiController implements WorkspaceApi {
   public ResponseEntity<ApiCloneWorkspaceResult> cloneWorkspace(
       UUID workspaceId, @Valid ApiCloneWorkspaceRequest body) {
     final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
-    final AuthenticatedUserRequest petRequest =
-        samService.getAuthenticatedPetRequest(
-            gcpCloudContextService.getRequiredGcpProject(workspaceId), userRequest);
+    final AuthenticatedUserRequest petRequest = petSaService.getWorkspacePetCredentials(workspaceId, userRequest)
+        .orElseThrow(() -> new BadRequestException(String.format(
+            "Pet SA credentials not found for user %s on workspace %s", userRequest.getEmail(), workspaceId)));
 
     Optional<SpendProfileId> spendProfileId =
         Optional.ofNullable(body.getSpendProfile()).map(SpendProfileId::new);

@@ -32,6 +32,7 @@ import bio.terra.workspace.service.iam.AuthenticatedUserRequestFactory;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.job.JobService.AsyncJobResult;
+import bio.terra.workspace.service.petserviceaccount.PetSaService;
 import bio.terra.workspace.service.resource.WsmResourceType;
 import bio.terra.workspace.service.resource.controlled.AccessScopeType;
 import bio.terra.workspace.service.resource.controlled.ControlledAiNotebookInstanceResource;
@@ -67,7 +68,7 @@ public class ControlledGcpResourceApiController implements ControlledGcpResource
   private final WorkspaceService workspaceService;
   private final HttpServletRequest request;
   private final JobService jobService;
-  private final GcpCloudContextService gcpCloudContextService;
+  private final PetSaService petSaService;
 
   @Autowired
   public ControlledGcpResourceApiController(
@@ -77,14 +78,14 @@ public class ControlledGcpResourceApiController implements ControlledGcpResource
       WorkspaceService workspaceService,
       JobService jobService,
       HttpServletRequest request,
-      GcpCloudContextService gcpCloudContextService) {
+      PetSaService petSaService) {
     this.authenticatedUserRequestFactory = authenticatedUserRequestFactory;
     this.controlledResourceService = controlledResourceService;
     this.samService = samService;
     this.workspaceService = workspaceService;
     this.request = request;
     this.jobService = jobService;
-    this.gcpCloudContextService = gcpCloudContextService;
+    this.petSaService = petSaService;
   }
 
   @Override
@@ -206,9 +207,9 @@ public class ControlledGcpResourceApiController implements ControlledGcpResource
     logger.info("Cloning GCS bucket resourceId {} workspaceId {}", resourceId, workspaceId);
 
     final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
-    final AuthenticatedUserRequest petRequest =
-        samService.getAuthenticatedPetRequest(
-            gcpCloudContextService.getRequiredGcpProject(workspaceId), userRequest);
+    final AuthenticatedUserRequest petRequest = petSaService.getWorkspacePetCredentials(workspaceId, userRequest)
+        .orElseThrow(() -> new BadRequestException(String.format(
+            "Pet SA credentials not found for user %s on workspace %s", userRequest.getEmail(), workspaceId)));
     final String jobId =
         controlledResourceService.cloneGcsBucket(
             workspaceId,
