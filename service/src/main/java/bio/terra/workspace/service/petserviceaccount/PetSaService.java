@@ -122,7 +122,7 @@ public class PetSaService {
               .setIamPolicy(petSaName, request)
               .execute());
     } catch (IOException e) {
-      throw new InternalServerErrorException("Error enabling user's proxy group", e);
+      throw new InternalServerErrorException("Error enabling user's proxy group to impersonate pet SA", e);
     }
   }
 
@@ -200,7 +200,7 @@ public class PetSaService {
               .setIamPolicy(petServiceAccount, request)
               .execute());
     } catch (IOException e) {
-      throw new InternalServerErrorException("Error disabling user's pet SA", e);
+      throw new InternalServerErrorException("Error disabling user's proxy group to impersonate pet SA", e);
     }
   }
 

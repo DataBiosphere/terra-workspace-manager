@@ -130,11 +130,9 @@ public class SamService {
     }
   }
 
-
-  public String getProxyGroupEmail(AuthenticatedUserRequest userRequest)
+  public String getProxyGroupEmail(String userEmail)
           throws InterruptedException {
-    String userEmail = getUserEmailFromSam(userRequest);
-    GoogleApi googleApi = samGoogleApi(userRequest.getRequiredToken());
+    GoogleApi googleApi = samGoogleApi(getWsmServiceAccountToken());
     try {
       return SamRetry.retry(
                       () ->

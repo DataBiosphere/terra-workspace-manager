@@ -378,7 +378,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
     String serviceAccountEmail =
         samService.getOrCreatePetSaEmail(projectId, user.getAuthenticatedRequest());
     UserWithPetSa userAndPet = new UserWithPetSa(user.getEmail(), serviceAccountEmail);
-    String proxyGroupEmail = samService.getProxyGroupEmail(user.getAuthenticatedRequest());
+    String proxyGroupEmail = samService.getProxyGroupEmail(user.getEmail());
     petSaService.disablePetServiceAccountImpersonation(workspace.getWorkspaceId(), userAndPet, proxyGroupEmail);
     IamCow userIamCow = crlService.getIamCow(user.getAuthenticatedRequest());
     // Assert the user does not have access to their pet SA before the flight
