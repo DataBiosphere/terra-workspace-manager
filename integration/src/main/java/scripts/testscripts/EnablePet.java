@@ -63,7 +63,7 @@ public class EnablePet extends WorkspaceAllocateTestScriptBase {
     WorkspaceApi petSaWorkspaceApi =
         ClientTestUtils.getWorkspaceClientFromToken(petSaToken, server);
     // FIX BEFORE MERGING
-    /*String petEnableResult = */petSaWorkspaceApi.enablePet(getWorkspaceId());
+    /*String petEnableResult = */ petSaWorkspaceApi.enablePet(getWorkspaceId());
     // assertEquals(petSaEmail, petEnableResult);
 
     // Add second user to the workspace as a reader.
