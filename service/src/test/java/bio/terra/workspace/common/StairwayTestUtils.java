@@ -13,7 +13,7 @@ import bio.terra.stairway.exception.DatabaseOperationException;
 import bio.terra.stairway.exception.DuplicateFlightIdException;
 import bio.terra.stairway.exception.StairwayExecutionException;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
-import bio.terra.workspace.service.resource.WsmResource;
+import bio.terra.workspace.service.resource.model.WsmResource;
 import bio.terra.workspace.service.workspace.Alpha1Service;
 import bio.terra.workspace.service.workspace.model.EnumeratedJob;
 import bio.terra.workspace.service.workspace.model.EnumeratedJobs;

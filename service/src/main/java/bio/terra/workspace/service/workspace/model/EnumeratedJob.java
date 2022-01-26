@@ -1,7 +1,7 @@
 package bio.terra.workspace.service.workspace.model;
 
 import bio.terra.stairway.FlightState;
-import bio.terra.workspace.service.resource.WsmResource;
+import bio.terra.workspace.service.resource.model.WsmResource;
 import java.util.Optional;
 import javax.annotation.Nullable;
 
