@@ -508,17 +508,17 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
 
   @Override
   public ResponseEntity<Void> updateDataRepoSnapshotReferenceResource(
-      UUID workspaceId, UUID resouceId, ApiUpdateDataRepoSnapshotReferenceRequestBody body) {
+      UUID workspaceId, UUID resourceId, ApiUpdateDataRepoSnapshotReferenceRequestBody body) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     String updatedSnapshot = body.getSnapshot();
     String updatedInstanceName = body.getInstanceName();
     if (StringUtils.isEmpty(updatedSnapshot) && StringUtils.isEmpty(updatedInstanceName)) {
       referenceResourceService.updateReferenceResource(
-          workspaceId, resouceId, body.getName(), body.getDescription(), userRequest);
+          workspaceId, resourceId, body.getName(), body.getDescription(), userRequest);
     } else {
       ReferencedDataRepoSnapshotResource.Builder updatedResourceBuilder =
           referenceResourceService
-              .getReferenceResource(workspaceId, resouceId, userRequest)
+              .getReferenceResource(workspaceId, resourceId, userRequest)
               .castToDataRepoSnapshotResource()
               .toBuilder();
       if (!StringUtils.isEmpty(updatedSnapshot)) {
@@ -529,7 +529,7 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
       }
       referenceResourceService.updateReferenceResource(
           workspaceId,
-          resouceId,
+          resourceId,
           body.getName(),
           body.getDescription(),
           updatedResourceBuilder.build(),
@@ -590,16 +590,7 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
   @Override
   public ResponseEntity<ApiCloneReferencedGcpGcsBucketResourceResult> cloneGcpGcsBucketReference(
       UUID workspaceId, UUID resourceId, @Valid ApiCloneReferencedResourceRequestBody body) {
-    final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
-    final AuthenticatedUserRequest petRequest =
-        petSaService
-            .getWorkspacePetCredentials(workspaceId, userRequest)
-            .orElseThrow(
-                () ->
-                    new BadRequestException(
-                        String.format(
-                            "Pet SA credentials not found for user %s on workspace %s",
-                            userRequest.getEmail(), workspaceId)));
+    final AuthenticatedUserRequest petRequest = getPetRequest(workspaceId);
 
     final ReferencedResource sourceReferencedResource =
         referenceResourceService.getReferenceResource(workspaceId, resourceId, petRequest);
@@ -684,16 +675,7 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
   public ResponseEntity<ApiCloneReferencedGcpBigQueryDatasetResourceResult>
       cloneGcpBigQueryDatasetReference(
           UUID workspaceId, UUID resourceId, @Valid ApiCloneReferencedResourceRequestBody body) {
-    final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
-    final AuthenticatedUserRequest petRequest =
-        petSaService
-            .getWorkspacePetCredentials(workspaceId, userRequest)
-            .orElseThrow(
-                () ->
-                    new BadRequestException(
-                        String.format(
-                            "Pet SA credentials not found for user %s on workspace %s",
-                            userRequest.getEmail(), workspaceId)));
+    final AuthenticatedUserRequest petRequest = getPetRequest(workspaceId);
 
     final ReferencedResource sourceReferencedResource =
         referenceResourceService.getReferenceResource(workspaceId, resourceId, petRequest);
@@ -736,16 +718,7 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
   public ResponseEntity<ApiCloneReferencedGcpDataRepoSnapshotResourceResult>
       cloneGcpDataRepoSnapshotReference(
           UUID workspaceId, UUID resourceId, @Valid ApiCloneReferencedResourceRequestBody body) {
-    final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
-    final AuthenticatedUserRequest petRequest =
-        petSaService
-            .getWorkspacePetCredentials(workspaceId, userRequest)
-            .orElseThrow(
-                () ->
-                    new BadRequestException(
-                        String.format(
-                            "Pet SA credentials not found for user %s on workspace %s",
-                            userRequest.getEmail(), workspaceId)));
+    final AuthenticatedUserRequest petRequest = getPetRequest(workspaceId);
 
     final ReferencedResource sourceReferencedResource =
         referenceResourceService.getReferenceResource(workspaceId, resourceId, petRequest);
@@ -782,5 +755,17 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
             .sourceResourceId(sourceReferencedResource.getResourceId())
             .effectiveCloningInstructions(effectiveCloningInstructions.toApiModel());
     return new ResponseEntity<>(result, HttpStatus.OK);
+  }
+
+  private AuthenticatedUserRequest getPetRequest(UUID workspaceId) {
+    final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    return petSaService
+        .getWorkspacePetCredentials(workspaceId, userRequest)
+        .orElseThrow(
+            () ->
+                new BadRequestException(
+                    String.format(
+                        "Pet SA credentials not found for user %s on workspace %s",
+                        userRequest.getEmail(), workspaceId)));
   }
 }

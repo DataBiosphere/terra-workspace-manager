@@ -1038,38 +1038,6 @@ public class SamService {
     }
   }
 
-  /**
-   * Get a pet service account token for a given project and user request
-   *
-   * @param projectId - GCP project ID
-   * @param userRequest - original user request
-   * @return - pet service account token
-   */
-  public String getOrCreatePetSaToken(String projectId, AuthenticatedUserRequest userRequest) {
-    GoogleApi googleApi = samGoogleApi(userRequest.getRequiredToken());
-    try {
-      return googleApi.getPetServiceAccountToken(projectId, new ArrayList<>(SAM_OAUTH_SCOPES));
-    } catch (ApiException apiException) {
-      throw SamExceptionFactory.create(
-          "Error getting pet service account token from Sam", apiException);
-    }
-  }
-
-  /**
-   * Get an AuthenticatedUserRequest object for the pet SA of this user.
-   *
-   * @param projectId - GCP project ID
-   * @param userRequest - User's own AuthenticatedUserRequest. May contain null email and/or
-   *     subjectID
-   * @return AuthenticatedUserRequest with the token replaced by the pet token
-   */
-  public AuthenticatedUserRequest getAuthenticatedPetRequest(
-      String projectId, AuthenticatedUserRequest userRequest) {
-    final String petToken = getOrCreatePetSaToken(projectId, userRequest);
-    return new AuthenticatedUserRequest(
-        userRequest.getEmail(), userRequest.getSubjectId(), Optional.of(petToken));
-  }
-
   /** Returns the Sam action for modifying a given IAM role. */
   private String samActionToModifyRole(WsmIamRole role) {
     return String.format("share_policy::%s", role.toSamRole());

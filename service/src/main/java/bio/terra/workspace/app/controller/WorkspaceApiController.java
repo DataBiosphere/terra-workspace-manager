@@ -541,16 +541,7 @@ public class WorkspaceApiController implements WorkspaceApi {
   @Override
   public ResponseEntity<ApiCloneWorkspaceResult> cloneWorkspace(
       UUID workspaceId, @Valid ApiCloneWorkspaceRequest body) {
-    final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
-    final AuthenticatedUserRequest petRequest =
-        petSaService
-            .getWorkspacePetCredentials(workspaceId, userRequest)
-            .orElseThrow(
-                () ->
-                    new BadRequestException(
-                        String.format(
-                            "Pet SA credentials not found for user %s on workspace %s",
-                            userRequest.getEmail(), workspaceId)));
+    final AuthenticatedUserRequest petRequest = getPetRequest(workspaceId);
 
     Optional<SpendProfileId> spendProfileId =
         Optional.ofNullable(body.getSpendProfile()).map(SpendProfileId::new);
@@ -612,5 +603,17 @@ public class WorkspaceApiController implements WorkspaceApi {
       }
     }
     return propertyMap;
+  }
+
+  private AuthenticatedUserRequest getPetRequest(UUID workspaceId) {
+    final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    return petSaService
+        .getWorkspacePetCredentials(workspaceId, userRequest)
+        .orElseThrow(
+            () ->
+                new BadRequestException(
+                    String.format(
+                        "Pet SA credentials not found for user %s on workspace %s",
+                        userRequest.getEmail(), workspaceId)));
   }
 }

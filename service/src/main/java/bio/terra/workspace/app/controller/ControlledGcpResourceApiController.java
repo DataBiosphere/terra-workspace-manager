@@ -205,16 +205,8 @@ public class ControlledGcpResourceApiController implements ControlledGcpResource
       UUID workspaceId, UUID resourceId, @Valid ApiCloneControlledGcpGcsBucketRequest body) {
     logger.info("Cloning GCS bucket resourceId {} workspaceId {}", resourceId, workspaceId);
 
-    final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
-    final AuthenticatedUserRequest petRequest =
-        petSaService
-            .getWorkspacePetCredentials(workspaceId, userRequest)
-            .orElseThrow(
-                () ->
-                    new BadRequestException(
-                        String.format(
-                            "Pet SA credentials not found for user %s on workspace %s",
-                            userRequest.getEmail(), workspaceId)));
+    final AuthenticatedUserRequest petRequest = getPetRequest(workspaceId);
+
     final String jobId =
         controlledResourceService.cloneGcsBucket(
             workspaceId,
@@ -522,16 +514,7 @@ public class ControlledGcpResourceApiController implements ControlledGcpResource
   @Override
   public ResponseEntity<ApiCloneControlledGcpBigQueryDatasetResult> cloneBigQueryDataset(
       UUID workspaceId, UUID resourceId, @Valid ApiCloneControlledGcpBigQueryDatasetRequest body) {
-    final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
-    final AuthenticatedUserRequest petRequest =
-        petSaService
-            .getWorkspacePetCredentials(workspaceId, userRequest)
-            .orElseThrow(
-                () ->
-                    new BadRequestException(
-                        String.format(
-                            "Pet SA credentials not found for user %s on workspace %s",
-                            userRequest.getEmail(), workspaceId)));
+    final AuthenticatedUserRequest petRequest = getPetRequest(workspaceId);
 
     final String jobId =
         controlledResourceService.cloneBigQueryDataset(
@@ -574,5 +557,17 @@ public class ControlledGcpResourceApiController implements ControlledGcpResource
 
   private AuthenticatedUserRequest getAuthenticatedInfo() {
     return authenticatedUserRequestFactory.from(request);
+  }
+
+  private AuthenticatedUserRequest getPetRequest(UUID workspaceId) {
+    final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    return petSaService
+        .getWorkspacePetCredentials(workspaceId, userRequest)
+        .orElseThrow(
+            () ->
+                new BadRequestException(
+                    String.format(
+                        "Pet SA credentials not found for user %s on workspace %s",
+                        userRequest.getEmail(), workspaceId)));
   }
 }
