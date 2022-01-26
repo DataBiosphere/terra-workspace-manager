@@ -2,7 +2,7 @@ package bio.terra.workspace.common.utils;
 
 import bio.terra.workspace.common.exception.EnumNotRecognizedException;
 import bio.terra.workspace.service.iam.model.ControlledResourceIamRole;
-import bio.terra.workspace.service.resource.controlled.AccessScopeType;
+import bio.terra.workspace.service.resource.controlled.model.AccessScopeType;
 
 public final class IamRoleUtils {
 

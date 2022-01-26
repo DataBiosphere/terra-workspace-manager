@@ -1,7 +1,7 @@
 package bio.terra.workspace.common.fixtures;
 
 import bio.terra.workspace.service.resource.model.CloningInstructions;
-import bio.terra.workspace.service.resource.referenced.ReferencedDataRepoSnapshotResource;
+import bio.terra.workspace.service.resource.referenced.gcp.datareposnapshot.ReferencedDataRepoSnapshotResource;
 import java.util.UUID;
 
 public class ReferenceResourceFixtures {

@@ -6,8 +6,8 @@ import bio.terra.stairway.StepResult;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.model.SamConstants.SamControlledResourceActions;
-import bio.terra.workspace.service.resource.controlled.ControlledResource;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceMetadataManager;
+import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 
 /**
  * This step validates that the provided user has access to read the provided resource. Unlike other

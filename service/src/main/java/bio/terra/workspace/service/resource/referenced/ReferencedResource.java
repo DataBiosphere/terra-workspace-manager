@@ -4,10 +4,15 @@ import bio.terra.workspace.common.utils.FlightBeanBag;
 import bio.terra.workspace.db.exception.InvalidMetadataException;
 import bio.terra.workspace.db.model.DbResource;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
-import bio.terra.workspace.service.resource.WsmResource;
-import bio.terra.workspace.service.resource.WsmResourceType;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.model.StewardshipType;
+import bio.terra.workspace.service.resource.model.WsmResource;
+import bio.terra.workspace.service.resource.model.WsmResourceType;
+import bio.terra.workspace.service.resource.referenced.gcp.bqdataset.ReferencedBigQueryDatasetResource;
+import bio.terra.workspace.service.resource.referenced.gcp.bqdatatable.ReferencedBigQueryDataTableResource;
+import bio.terra.workspace.service.resource.referenced.gcp.datareposnapshot.ReferencedDataRepoSnapshotResource;
+import bio.terra.workspace.service.resource.referenced.gcp.gcsbucket.ReferencedGcsBucketResource;
+import bio.terra.workspace.service.resource.referenced.gcp.gcsobject.ReferencedGcsObjectResource;
 import java.util.UUID;
 import javax.annotation.Nullable;
 

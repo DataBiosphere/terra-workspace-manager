@@ -9,7 +9,7 @@ import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.service.iam.model.WsmIamRole;
-import bio.terra.workspace.service.resource.controlled.mappings.CustomGcpIamRole;
+import bio.terra.workspace.service.resource.controlled.gcp.CustomGcpIamRole;
 import bio.terra.workspace.service.workspace.CloudSyncRoleMapping;
 import bio.terra.workspace.service.workspace.exceptions.RetryableCrlException;
 import com.fasterxml.jackson.core.type.TypeReference;

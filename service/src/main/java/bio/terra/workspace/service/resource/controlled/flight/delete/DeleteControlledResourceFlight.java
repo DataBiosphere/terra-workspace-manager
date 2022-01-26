@@ -7,8 +7,15 @@ import bio.terra.workspace.common.utils.FlightBeanBag;
 import bio.terra.workspace.common.utils.RetryRules;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.job.JobMapKeys;
-import bio.terra.workspace.service.resource.controlled.ControlledResource;
+import bio.terra.workspace.service.resource.controlled.azure.disk.DeleteAzureDiskStep;
+import bio.terra.workspace.service.resource.controlled.azure.ip.DeleteAzureIpStep;
+import bio.terra.workspace.service.resource.controlled.azure.network.DeleteAzureNetworkStep;
+import bio.terra.workspace.service.resource.controlled.azure.vm.DeleteAzureVmStep;
 import bio.terra.workspace.service.resource.controlled.exception.ControlledResourceNotImplementedException;
+import bio.terra.workspace.service.resource.controlled.gcp.ainotebook.DeleteAiNotebookInstanceStep;
+import bio.terra.workspace.service.resource.controlled.gcp.bqdataset.DeleteBigQueryDatasetStep;
+import bio.terra.workspace.service.resource.controlled.gcp.gcsbucket.DeleteGcsBucketStep;
+import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import java.util.UUID;
 
