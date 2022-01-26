@@ -4,13 +4,19 @@ import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.def
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import bio.terra.common.exception.InconsistentFieldsException;
+import bio.terra.workspace.app.configuration.external.GitRepoReferencedResourceConfiguration;
 import bio.terra.workspace.common.BaseUnitTest;
 import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceContainerImage;
 import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceVmImage;
 import bio.terra.workspace.service.resource.exception.InvalidNameException;
 import bio.terra.workspace.service.resource.referenced.exception.InvalidReferenceException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.util.List;
 import org.apache.commons.lang3.RandomStringUtils;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
 
 public class ValidationUtilsTest extends BaseUnitTest {
 
@@ -25,6 +31,16 @@ public class ValidationUtilsTest extends BaseUnitTest {
           + MAX_VALID_STRING
           + "."
           + "012345678901234567890123456789";
+
+  ValidationUtils validationUtils;
+  @Autowired GitRepoReferencedResourceConfiguration gitRepoReferencedResourceConfiguration;
+
+  @BeforeEach
+  public void setup() {
+    gitRepoReferencedResourceConfiguration.setAllowListedGitRepoHostNames(
+        List.of("github.com", "gitlab.com"));
+    validationUtils = new ValidationUtils(gitRepoReferencedResourceConfiguration);
+  }
 
   @Test
   public void aiNotebookInstanceName() {
@@ -242,14 +258,22 @@ public class ValidationUtilsTest extends BaseUnitTest {
 
   @Test
   public void validateGitRepoUrl() {
-    ValidationUtils.validateGitRepoCloneUrl(
-        "https://github.com/DataBiosphere/terra-workspace-manager.git");
-    ValidationUtils.validateGitRepoCloneUrl("https://github.com/yuhuyoyo/testrepo.git");
-    ValidationUtils.validateGitRepoCloneUrl(
+    validationUtils.validateGitRepoCloneUri("https://github.com/path/to/project.git");
+    validationUtils.validateGitRepoCloneUri("https://github.com/yuhuyoyo/testrepo.git");
+    validationUtils.validateGitRepoCloneUri(
         "git@github.com:DataBiosphere/terra-workspace-manager.git");
-    ValidationUtils.validateGitRepoCloneUrl("git@github.com:yuhuyoyo/testrepo.git");
-    ValidationUtils.validateGitRepoCloneUrl(
+    validationUtils.validateGitRepoCloneUri("ssh://git@github.com/path/to/project.git");
+    validationUtils.validateGitRepoCloneUri(
         "https://username:password@github.com/username/repository.git");
+  }
+
+  @Test
+  public void validateGitRepoUrl_hostNameNotInAllowList_throwsException() {
+    assertThrows(
+        InvalidReferenceException.class,
+        () ->
+            validationUtils.validateGitRepoCloneUri(
+                "ssh://git@github.com:DataBiosphere/terra-workspace-manager.git"));
   }
 
   @Test
@@ -257,24 +281,22 @@ public class ValidationUtilsTest extends BaseUnitTest {
     assertThrows(
         InvalidReferenceException.class,
         () ->
-            ValidationUtils.validateGitRepoCloneUrl(
+            validationUtils.validateGitRepoCloneUri(
                 "http://github.com/DataBiosphere/terra-workspace-manager.git"));
+  }
+
+  @Test
+  public void test() throws URISyntaxException {
+    URI uri = new URI("ssh://github.com/project.git");
+
+    uri.getHost();
   }
 
   @Test
   public void validateGitRepoUrl_opaqueUrl_throwsException() {
     assertThrows(
         InvalidReferenceException.class,
-        () -> ValidationUtils.validateGitRepoCloneUrl("mailto:java-net@java.sun.com"));
-  }
-
-  @Test
-  public void validateGitRepoUrl_missingDotGit_throwsException() {
-    assertThrows(
-        InvalidReferenceException.class,
-        () ->
-            ValidationUtils.validateGitRepoCloneUrl(
-                "https://github.com/DataBiosphere/terra-workspace-manager"));
+        () -> validationUtils.validateGitRepoCloneUri("mailto:java-net@java.sun.com"));
   }
 
   @Test
@@ -282,12 +304,12 @@ public class ValidationUtilsTest extends BaseUnitTest {
     assertThrows(
         InvalidReferenceException.class,
         () ->
-            ValidationUtils.validateGitRepoCloneUrl(
+            validationUtils.validateGitRepoCloneUri(
                 "https://git@github.com:DataBiosphere/terra-workspace-manager.gits"));
     assertThrows(
         InvalidReferenceException.class,
         () ->
-            ValidationUtils.validateGitRepoCloneUrl(
+            validationUtils.validateGitRepoCloneUri(
                 "https://git@github.com:DataBiosphere/terra-workspace-manager"));
   }
 }

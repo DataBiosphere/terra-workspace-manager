@@ -8,7 +8,6 @@ import bio.terra.workspace.db.model.DbResource;
 import bio.terra.workspace.generated.model.ApiGitRepoAttributes;
 import bio.terra.workspace.generated.model.ApiGitRepoResource;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
-import bio.terra.workspace.service.resource.ValidationUtils;
 import bio.terra.workspace.service.resource.WsmResourceType;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -29,7 +28,7 @@ public class ReferencedGitRepoResource extends ReferencedResource {
       @JsonProperty("name") String name,
       @JsonProperty("description") @Nullable String description,
       @JsonProperty("cloningInstructions") CloningInstructions cloningInstructions,
-      @JsonProperty("gitUrl") String gitCloneUrl) {
+      @JsonProperty("gitCloneUrl") String gitCloneUrl) {
     super(workspaceId, resourceId, name, description, cloningInstructions);
     this.gitCloneUrl = gitCloneUrl;
     validate();
@@ -88,7 +87,6 @@ public class ReferencedGitRepoResource extends ReferencedResource {
       throw new MissingRequiredFieldException(
           "Missing required field for ReferenceGcsObjectResource.");
     }
-    ValidationUtils.validateGitRepoCloneUrl(gitCloneUrl);
   }
 
   /**

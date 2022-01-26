@@ -2690,7 +2690,7 @@ components:
 
     SystemVersion:
       type: object
-      required: [gitTag, gitHash, gitHub, build]
+      required: [gitTag, gitHash, github, build]
       properties:
         gitTag:
           type: string
