@@ -4,7 +4,7 @@ import bio.terra.common.exception.InternalServerErrorException;
 import bio.terra.workspace.common.exception.InternalLogicException;
 import bio.terra.workspace.common.utils.GcpUtils;
 import bio.terra.workspace.service.iam.model.ControlledResourceIamRole;
-import bio.terra.workspace.service.resource.controlled.ControlledResourceCategory;
+import bio.terra.workspace.service.resource.controlled.model.ControlledResourceCategory;
 import java.util.HashMap;
 import java.util.Map;
 import javax.annotation.Nullable;

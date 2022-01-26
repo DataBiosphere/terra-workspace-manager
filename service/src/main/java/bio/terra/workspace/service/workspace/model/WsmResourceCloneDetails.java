@@ -1,9 +1,9 @@
 package bio.terra.workspace.service.workspace.model;
 
 import bio.terra.workspace.generated.model.ApiResourceCloneDetails;
-import bio.terra.workspace.service.resource.WsmResourceType;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.model.StewardshipType;
+import bio.terra.workspace.service.resource.model.WsmResourceType;
 import java.util.UUID;
 
 /** Internal wrapper type for {@link ApiResourceCloneDetails} */
