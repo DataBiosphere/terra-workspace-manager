@@ -408,7 +408,10 @@ public class WorkspaceService {
     String targetUserEmail = rawUserEmail.toLowerCase();
     String proxyGroupEmail =
         SamRethrow.onInterrupted(
-            () -> samService.getProxyGroupEmail(targetUserEmail), "removeWorkspaceRoleFromUser");
+            () ->
+                samService.getProxyGroupEmail(
+                    targetUserEmail, executingUserRequest.getRequiredToken()),
+            "removeWorkspaceRoleFromUser");
     // Before launching the flight, validate that the user being removed is a direct member of the
     // specified role. Users may also be added to a workspace via managed groups, but WSM does not
     // control membership of those groups, and so cannot remove them here.

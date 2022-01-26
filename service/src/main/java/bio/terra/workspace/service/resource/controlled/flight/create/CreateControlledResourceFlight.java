@@ -273,9 +273,7 @@ public class CreateControlledResourceFlight extends Flight {
         gcpRetryRule);
     addStep(
         new GrantPetUsagePermissionStep(
-            resource.getWorkspaceId(),
-            userRequest,
-            flightBeanBag.getPetSaService()),
+            resource.getWorkspaceId(), userRequest, flightBeanBag.getPetSaService()),
         gcpRetryRule);
     addStep(
         new CreateAiNotebookInstanceStep(

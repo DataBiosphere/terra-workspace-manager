@@ -130,8 +130,15 @@ public class SamService {
     }
   }
 
-  public String getProxyGroupEmail(String userEmail) throws InterruptedException {
-    GoogleApi googleApi = samGoogleApi(getWsmServiceAccountToken());
+  /**
+   * Gets proxy group email.
+   *
+   * <p>This takes in userEmail instead of AuthenticatedUserRequest because of
+   * WorkspaceService.removeWorkspaceRoleFromUser(). When User A removes User B from workspace, we
+   * want to get B's proxy group, not A's.
+   */
+  public String getProxyGroupEmail(String userEmail, String token) throws InterruptedException {
+    GoogleApi googleApi = samGoogleApi(token);
     try {
       return SamRetry.retry(() -> googleApi.getProxyGroup(userEmail));
     } catch (ApiException apiException) {
@@ -1026,9 +1033,6 @@ public class SamService {
     }
   }
 
-  // TODO(PF-991): This is a temporary workaround to support disabling pet service account
-  //  self-impersonation without having user credentials available. When we stop granting this
-  //  permission directly to users and their pets, this method should be deleted.
   /**
    * Construct the email of an arbitrary user's pet service account in a given project. Unlike
    * {@code getOrCreatePetSaEmail}, this will not create the underlying service account. It may

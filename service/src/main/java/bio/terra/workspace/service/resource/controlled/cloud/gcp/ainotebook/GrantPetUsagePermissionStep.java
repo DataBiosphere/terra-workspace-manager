@@ -7,7 +7,6 @@ import bio.terra.stairway.StepResult;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.petserviceaccount.PetSaService;
-import bio.terra.workspace.service.petserviceaccount.model.UserWithPetSa;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.PetSaKeys;
 import com.google.api.services.iam.v1.model.Policy;
 import java.util.UUID;
@@ -34,9 +33,7 @@ public class GrantPetUsagePermissionStep implements Step {
   private final PetSaService petSaService;
 
   public GrantPetUsagePermissionStep(
-      UUID workspaceId,
-      AuthenticatedUserRequest userRequest,
-      PetSaService petSaService) {
+      UUID workspaceId, AuthenticatedUserRequest userRequest, PetSaService petSaService) {
     this.workspaceId = workspaceId;
     this.userRequest = userRequest;
     this.petSaService = petSaService;

@@ -377,7 +377,8 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
     String serviceAccountEmail =
         samService.getOrCreatePetSaEmail(projectId, user.getAuthenticatedRequest());
     UserWithPetSa userAndPet = new UserWithPetSa(user.getEmail(), serviceAccountEmail);
-    String proxyGroupEmail = samService.getProxyGroupEmail(user.getEmail());
+    String proxyGroupEmail =
+        samService.getProxyGroupEmail(user.getEmail(), user.getAccessToken().getTokenValue());
     petSaService.disablePetServiceAccountImpersonation(
         workspace.getWorkspaceId(), user.getEmail(), user.getAuthenticatedRequest());
     IamCow userIamCow = crlService.getIamCow(user.getAuthenticatedRequest());

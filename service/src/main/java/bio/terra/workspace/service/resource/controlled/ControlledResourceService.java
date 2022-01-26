@@ -461,7 +461,9 @@ public class ControlledResourceService {
                     userRequest),
             "enablePet");
     String proxyGroupEmail =
-        SamRethrow.onInterrupted(() -> samService.getProxyGroupEmail(userEmail), "enablePet");
+        SamRethrow.onInterrupted(
+            () -> samService.getProxyGroupEmail(userEmail, userRequest.getRequiredToken()),
+            "enablePet");
     jobBuilder.addParameter(ControlledResourceKeys.CREATE_NOTEBOOK_PARAMETERS, creationParameters);
     jobBuilder.addParameter(ControlledResourceKeys.NOTEBOOK_PET_SERVICE_ACCOUNT, petSaEmail);
     jobBuilder.addParameter(ControlledResourceKeys.NOTEBOOK_PROXY_GROUP, proxyGroupEmail);

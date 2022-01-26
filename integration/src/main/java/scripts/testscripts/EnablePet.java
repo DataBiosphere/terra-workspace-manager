@@ -1,7 +1,6 @@
 package scripts.testscripts;
 
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -50,7 +49,7 @@ public class EnablePet extends WorkspaceAllocateTestScriptBase {
 
     String returnedPetSaEmail = userWorkspaceApi.enablePet(getWorkspaceId());
     // FIX BEFORE MERGING
-    //assertEquals(petSaEmail, returnedPetSaEmail);
+    // assertEquals(petSaEmail, returnedPetSaEmail);
     assertTrue(canImpersonateSa(userIamClient, petSaEmail));
 
     // Validate that calling this endpoint as the pet does not grant the pet permission to
@@ -65,10 +64,7 @@ public class EnablePet extends WorkspaceAllocateTestScriptBase {
         ClientTestUtils.getWorkspaceClientFromToken(petSaToken, server);
     String petEnableResult = petSaWorkspaceApi.enablePet(getWorkspaceId());
     // FIX BEFORE MERGING
-    //assertEquals(petSaEmail, petEnableResult);
-    // TODO(PF-991): This will fail until pet SA self-impersonation is fixed.
-    // Iam petIamClient = ClientTestUtils.getGcpIamClientFromToken(petSaToken);
-    // assertFalse(canImpersonateSa(petIamClient, petSaEmail));
+    // assertEquals(petSaEmail, petEnableResult);
 
     // Add second user to the workspace as a reader.
     userWorkspaceApi.grantRole(
@@ -87,7 +83,7 @@ public class EnablePet extends WorkspaceAllocateTestScriptBase {
     WorkspaceApi secondUserWorkspaceApi = ClientTestUtils.getWorkspaceClient(secondUser, server);
     String returnedSecondUserPetEmail = secondUserWorkspaceApi.enablePet(getWorkspaceId());
     // FIX BEFORE MERGING
-    //assertEquals(secondUserPetSaEmail, returnedSecondUserPetEmail);
+    // assertEquals(secondUserPetSaEmail, returnedSecondUserPetEmail);
     assertTrue(canImpersonateSa(secondUserIamClient, secondUserPetSaEmail));
     // Second user still cannot impersonate first user's pet
     assertFalse(canImpersonateSa(secondUserIamClient, petSaEmail));
