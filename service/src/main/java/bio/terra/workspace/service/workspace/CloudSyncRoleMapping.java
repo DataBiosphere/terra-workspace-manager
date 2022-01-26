@@ -1,7 +1,7 @@
 package bio.terra.workspace.service.workspace;
 
 import bio.terra.workspace.service.iam.model.WsmIamRole;
-import bio.terra.workspace.service.resource.controlled.mappings.CustomGcpIamRole;
+import bio.terra.workspace.service.resource.controlled.cloud.gcp.CustomGcpIamRole;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import java.util.List;
