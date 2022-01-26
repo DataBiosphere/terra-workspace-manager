@@ -40,7 +40,6 @@ import bio.terra.workspace.service.iam.model.WsmIamRole;
 import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.job.JobService.AsyncJobResult;
 import bio.terra.workspace.service.petserviceaccount.PetSaService;
-import bio.terra.workspace.service.petserviceaccount.model.UserWithPetSa;
 import bio.terra.workspace.service.resource.ValidationUtils;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
@@ -516,19 +515,8 @@ public class WorkspaceApiController implements WorkspaceApi {
     // not authenticate.
     workspaceService.validateWorkspaceAndAction(
         userRequest, workspaceId, SamConstants.SamWorkspaceAction.READ);
-    String userEmail =
-        SamRethrow.onInterrupted(() -> samService.getUserEmailFromSam(userRequest), "enablePet");
-    String petSaEmail =
-        SamRethrow.onInterrupted(
-            () ->
-                samService.getOrCreatePetSaEmail(
-                    gcpCloudContextService.getRequiredGcpProject(workspaceId), userRequest),
-            "enablePet");
-    UserWithPetSa userAndPet = new UserWithPetSa(userEmail, petSaEmail);
-    String proxyGroupEmail =
-        SamRethrow.onInterrupted(() -> samService.getProxyGroupEmail(userEmail), "enablePet");
-    petSaService.enablePetServiceAccountImpersonation(workspaceId, userAndPet, proxyGroupEmail);
-    return new ResponseEntity<>(petSaEmail, HttpStatus.OK);
+    petSaService.enablePetServiceAccountImpersonation(workspaceId, userRequest);
+    return new ResponseEntity<>("// FIX BEFORE MERGING", HttpStatus.OK);
   }
 
   /**

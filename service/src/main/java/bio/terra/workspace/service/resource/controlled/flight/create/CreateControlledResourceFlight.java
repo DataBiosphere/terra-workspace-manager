@@ -274,8 +274,7 @@ public class CreateControlledResourceFlight extends Flight {
     addStep(
         new GrantPetUsagePermissionStep(
             resource.getWorkspaceId(),
-            userAndPet,
-            proxyGroupEmail,
+            userRequest,
             flightBeanBag.getPetSaService()),
         gcpRetryRule);
     addStep(

@@ -66,7 +66,7 @@ public class RevokePetUsagePermissionStep implements Step {
     UserWithPetSa userAndPet = new UserWithPetSa(userEmailToRemove, validatedPetEmail.get());
     String updatedPolicyEtag =
         petSaService
-            .disablePetServiceAccountImpersonation(workspaceId, userAndPet, proxyGroupEmail)
+            .disablePetServiceAccountImpersonation(workspaceId, userEmailToRemove, userRequest)
             .map(Policy::getEtag)
             .orElse(null);
     workingMap.put(PetSaKeys.MODIFIED_PET_SA_POLICY_ETAG, updatedPolicyEtag);
@@ -93,7 +93,7 @@ public class RevokePetUsagePermissionStep implements Step {
       return StepResult.getStepResultSuccess();
     }
     petSaService.enablePetServiceAccountImpersonationWithEtag(
-        workspaceId, userAndPet, proxyGroupEmail, expectedEtag);
+        workspaceId, userRequest, expectedEtag);
     return StepResult.getStepResultSuccess();
   }
 
