@@ -47,8 +47,8 @@ public class EnablePet extends WorkspaceAllocateTestScriptBase {
     Iam userIamClient = ClientTestUtils.getGcpIamClient(testUser);
     assertFalse(canImpersonateSa(userIamClient, petSaEmail));
 
-    String returnedPetSaEmail = userWorkspaceApi.enablePet(getWorkspaceId());
     // FIX BEFORE MERGING
+    /*String returnedPetSaEmail =*/ userWorkspaceApi.enablePet(getWorkspaceId());
     // assertEquals(petSaEmail, returnedPetSaEmail);
     assertTrue(canImpersonateSa(userIamClient, petSaEmail));
 
@@ -62,8 +62,8 @@ public class EnablePet extends WorkspaceAllocateTestScriptBase {
     AccessToken petSaToken = new AccessToken(rawPetSaToken, null);
     WorkspaceApi petSaWorkspaceApi =
         ClientTestUtils.getWorkspaceClientFromToken(petSaToken, server);
-    String petEnableResult = petSaWorkspaceApi.enablePet(getWorkspaceId());
     // FIX BEFORE MERGING
+    /*String petEnableResult = */petSaWorkspaceApi.enablePet(getWorkspaceId());
     // assertEquals(petSaEmail, petEnableResult);
 
     // Add second user to the workspace as a reader.
@@ -81,8 +81,8 @@ public class EnablePet extends WorkspaceAllocateTestScriptBase {
 
     // Enable the second user to impersonate their pet
     WorkspaceApi secondUserWorkspaceApi = ClientTestUtils.getWorkspaceClient(secondUser, server);
-    String returnedSecondUserPetEmail = secondUserWorkspaceApi.enablePet(getWorkspaceId());
     // FIX BEFORE MERGING
+    /*String returnedSecondUserPetEmail =*/ secondUserWorkspaceApi.enablePet(getWorkspaceId());
     // assertEquals(secondUserPetSaEmail, returnedSecondUserPetEmail);
     assertTrue(canImpersonateSa(secondUserIamClient, secondUserPetSaEmail));
     // Second user still cannot impersonate first user's pet
