@@ -6,7 +6,7 @@ import bio.terra.workspace.db.model.DbResource;
 import bio.terra.workspace.generated.model.ApiResourceMetadata;
 import bio.terra.workspace.service.resource.ValidationUtils;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
-import bio.terra.workspace.service.resource.referenced.ReferencedResource;
+import bio.terra.workspace.service.resource.referenced.cloud.gcp.ReferencedResource;
 import com.google.common.base.Strings;
 import java.util.UUID;
 import javax.annotation.Nullable;
