@@ -44,7 +44,6 @@ import bio.terra.workspace.service.resource.controlled.ManagedByType;
 import bio.terra.workspace.service.resource.controlled.PrivateUserRole;
 import bio.terra.workspace.service.resource.controlled.exception.InvalidControlledResourceException;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
-import bio.terra.workspace.service.workspace.GcpCloudContextService;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import java.util.Optional;
 import java.util.UUID;
@@ -207,9 +206,15 @@ public class ControlledGcpResourceApiController implements ControlledGcpResource
     logger.info("Cloning GCS bucket resourceId {} workspaceId {}", resourceId, workspaceId);
 
     final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
-    final AuthenticatedUserRequest petRequest = petSaService.getWorkspacePetCredentials(workspaceId, userRequest)
-        .orElseThrow(() -> new BadRequestException(String.format(
-            "Pet SA credentials not found for user %s on workspace %s", userRequest.getEmail(), workspaceId)));
+    final AuthenticatedUserRequest petRequest =
+        petSaService
+            .getWorkspacePetCredentials(workspaceId, userRequest)
+            .orElseThrow(
+                () ->
+                    new BadRequestException(
+                        String.format(
+                            "Pet SA credentials not found for user %s on workspace %s",
+                            userRequest.getEmail(), workspaceId)));
     final String jobId =
         controlledResourceService.cloneGcsBucket(
             workspaceId,
@@ -517,9 +522,17 @@ public class ControlledGcpResourceApiController implements ControlledGcpResource
   @Override
   public ResponseEntity<ApiCloneControlledGcpBigQueryDatasetResult> cloneBigQueryDataset(
       UUID workspaceId, UUID resourceId, @Valid ApiCloneControlledGcpBigQueryDatasetRequest body) {
+    final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     final AuthenticatedUserRequest petRequest =
-        samService.getAuthenticatedPetRequest(
-            gcpCloudContextService.getRequiredGcpProject(workspaceId), getAuthenticatedInfo());
+        petSaService
+            .getWorkspacePetCredentials(workspaceId, userRequest)
+            .orElseThrow(
+                () ->
+                    new BadRequestException(
+                        String.format(
+                            "Pet SA credentials not found for user %s on workspace %s",
+                            userRequest.getEmail(), workspaceId)));
+
     final String jobId =
         controlledResourceService.cloneBigQueryDataset(
             workspaceId,
