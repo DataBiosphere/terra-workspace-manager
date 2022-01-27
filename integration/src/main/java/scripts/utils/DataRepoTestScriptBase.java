@@ -34,17 +34,9 @@ public abstract class DataRepoTestScriptBase extends WorkspaceAllocateTestScript
   @Override
   public void setParameters(Map<String, String> parameters) throws Exception {
     super.setParameters(parameters);
-    if (parameters == null
-        || !parameters.containsKey(ParameterKeys.DATA_REPO_SNAPSHOT_PARAMETER)
-        || !parameters.containsKey(ParameterKeys.DATA_REPO_INSTANCE_PARAMETER)) {
-      throw new IllegalArgumentException(
-          "Must provide Spend Profile ID, Data Repo snapshot ID, and Data Repo Instance Name as parameters");
-    } else {
-      // "spendProfileId = parameters.get(ParameterKeys.SPEND_PROFILE_PARAMETER);" fetches Spend
-      // Profile ID and is already implemented in the super class
-      dataRepoSnapshotId = parameters.get(ParameterKeys.DATA_REPO_SNAPSHOT_PARAMETER);
-      dataRepoInstanceName = parameters.get(ParameterKeys.DATA_REPO_INSTANCE_PARAMETER);
-    }
+    // Spend Profile ID is already read from the super class
+    dataRepoSnapshotId = ParameterUtils.getDataRepoSnapshot(parameters);
+    dataRepoInstanceName = ParameterUtils.getDataRepoInstance(parameters);
   }
 
   /**

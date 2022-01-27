@@ -34,6 +34,7 @@ import org.checkerframework.checker.nullness.qual.MonotonicNonNull;
 import scripts.utils.ClientTestUtils;
 import scripts.utils.DataRepoTestScriptBase;
 import scripts.utils.ParameterKeys;
+import scripts.utils.ParameterUtils;
 import scripts.utils.ResourceMaker;
 
 public class UpdateReferenceResources extends DataRepoTestScriptBase {
@@ -106,14 +107,10 @@ public class UpdateReferenceResources extends DataRepoTestScriptBase {
   @Override
   public void setParameters(Map<String, String> parameters) throws Exception {
     super.setParameters(parameters);
-    if (parameters == null
-        || !parameters.containsKey(ParameterKeys.DATA_REPO_ALTERNATE_SNAPSHOT_PARAMETER)) {
-      throw new IllegalArgumentException(
-          "Must provide Spend Profile ID, 2 Data Repo snapshot IDs, and a Data Repo Instance Name as parameters");
-    } else {
-      // Spend profile ID, TDR instance, and snapshot ID are all read in superclasses.
-      dataRepoSnapshotId2 = parameters.get(ParameterKeys.DATA_REPO_ALTERNATE_SNAPSHOT_PARAMETER);
-    }
+    // Spend profile ID, TDR instance, and snapshot ID are all read in superclasses.
+    dataRepoSnapshotId2 =
+        ParameterUtils.getParamOrThrow(
+            parameters, ParameterKeys.DATA_REPO_ALTERNATE_SNAPSHOT_PARAMETER);
   }
 
   @Override
