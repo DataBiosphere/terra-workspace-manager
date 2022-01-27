@@ -540,6 +540,8 @@ public class WorkspaceApiController implements WorkspaceApi {
   @Override
   public ResponseEntity<ApiCloneWorkspaceResult> cloneWorkspace(
       UUID workspaceId, @Valid ApiCloneWorkspaceRequest body) {
+    final AuthenticatedUserRequest petRequest = getCloningCredentials(workspaceId);
+
     Optional<SpendProfileId> spendProfileId =
         Optional.ofNullable(body.getSpendProfile()).map(SpendProfileId::new);
 
@@ -556,12 +558,13 @@ public class WorkspaceApiController implements WorkspaceApi {
 
     final String jobId =
         workspaceService.cloneWorkspace(
-            workspaceId, getAuthenticatedInfo(), body.getLocation(), destinationWorkspace);
+            workspaceId, petRequest, body.getLocation(), destinationWorkspace);
 
     final ApiCloneWorkspaceResult result = fetchCloneWorkspaceResult(jobId, getAuthenticatedInfo());
     return new ResponseEntity<>(
         result, ControllerUtils.getAsyncResponseCode(result.getJobReport()));
   }
+
   /**
    * Return the workspace clone result, including job result and error result.
    *
@@ -599,5 +602,18 @@ public class WorkspaceApiController implements WorkspaceApi {
       }
     }
     return propertyMap;
+  }
+
+  /**
+   * Return Pet SA credentials if available, otherwise the user credentials associated with this
+   * request. It's possible to clone a workspace that has no cloud context, and thus no (GCP) pet
+   * account.
+   *
+   * @param workspaceId - ID of workspace to be cloned
+   * @return user or pet request
+   */
+  private AuthenticatedUserRequest getCloningCredentials(UUID workspaceId) {
+    final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    return petSaService.getWorkspacePetCredentials(workspaceId, userRequest).orElse(userRequest);
   }
 }
