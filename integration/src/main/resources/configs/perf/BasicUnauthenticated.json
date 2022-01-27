@@ -10,7 +10,10 @@
       "numberOfUserJourneyThreadsToRun": 10,
       "userJourneyThreadPoolSize": 2,
       "expectedTimeForEach": 5,
-      "expectedTimeForEachUnit": "SECONDS"
+      "expectedTimeForEachUnit": "SECONDS",
+      "parameters": {
+        "status-check-delay": 0
+      }
     }
   ],
   "testUserFiles": []
