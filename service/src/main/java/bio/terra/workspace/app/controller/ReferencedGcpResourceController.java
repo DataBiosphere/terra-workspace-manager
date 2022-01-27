@@ -25,6 +25,7 @@ import bio.terra.workspace.generated.model.ApiUpdateGcsBucketObjectReferenceRequ
 import bio.terra.workspace.generated.model.ApiUpdateGcsBucketReferenceRequestBody;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequestFactory;
+import bio.terra.workspace.service.petserviceaccount.PetSaService;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.resource.referenced.cloud.gcp.ReferencedResource;
@@ -34,14 +35,11 @@ import bio.terra.workspace.service.resource.referenced.cloud.gcp.bqdatatable.Ref
 import bio.terra.workspace.service.resource.referenced.cloud.gcp.datareposnapshot.ReferencedDataRepoSnapshotResource;
 import bio.terra.workspace.service.resource.referenced.cloud.gcp.gcsbucket.ReferencedGcsBucketResource;
 import bio.terra.workspace.service.resource.referenced.cloud.gcp.gcsobject.ReferencedGcsObjectResource;
-import bio.terra.workspace.service.workspace.WorkspaceService;
 import java.util.Optional;
 import java.util.UUID;
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
 import org.apache.commons.lang3.StringUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -54,30 +52,26 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
 
   private final ReferencedResourceService referenceResourceService;
   private final AuthenticatedUserRequestFactory authenticatedUserRequestFactory;
-  private final ResourceController resourceController;
-  private final WorkspaceService workspaceService;
   private final HttpServletRequest request;
-  private final Logger logger = LoggerFactory.getLogger(ReferencedGcpResourceController.class);
+  private final PetSaService petSaService;
 
   @Autowired
   public ReferencedGcpResourceController(
       ReferencedResourceService referenceResourceService,
       AuthenticatedUserRequestFactory authenticatedUserRequestFactory,
-      ResourceController resourceController,
-      WorkspaceService workspaceService,
-      HttpServletRequest request) {
+      HttpServletRequest request,
+      PetSaService petSaService) {
     this.referenceResourceService = referenceResourceService;
     this.authenticatedUserRequestFactory = authenticatedUserRequestFactory;
-    this.resourceController = resourceController;
-    this.workspaceService = workspaceService;
     this.request = request;
+    this.petSaService = petSaService;
   }
 
   private AuthenticatedUserRequest getAuthenticatedInfo() {
     return authenticatedUserRequestFactory.from(request);
   }
 
-  // -- GSC Bucket object -- //
+  // -- GCS Bucket object -- //
   @Override
   public ResponseEntity<ApiGcpGcsObjectResource> createGcsObjectReference(
       UUID workspaceId, @Valid ApiCreateGcpGcsObjectReferenceRequestBody body) {
@@ -505,17 +499,17 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
 
   @Override
   public ResponseEntity<Void> updateDataRepoSnapshotReferenceResource(
-      UUID workspaceId, UUID resouceId, ApiUpdateDataRepoSnapshotReferenceRequestBody body) {
+      UUID workspaceId, UUID resourceId, ApiUpdateDataRepoSnapshotReferenceRequestBody body) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     String updatedSnapshot = body.getSnapshot();
     String updatedInstanceName = body.getInstanceName();
     if (StringUtils.isEmpty(updatedSnapshot) && StringUtils.isEmpty(updatedInstanceName)) {
       referenceResourceService.updateReferenceResource(
-          workspaceId, resouceId, body.getName(), body.getDescription(), userRequest);
+          workspaceId, resourceId, body.getName(), body.getDescription(), userRequest);
     } else {
       ReferencedDataRepoSnapshotResource.Builder updatedResourceBuilder =
           referenceResourceService
-              .getReferenceResource(workspaceId, resouceId, userRequest)
+              .getReferenceResource(workspaceId, resourceId, userRequest)
               .castToDataRepoSnapshotResource()
               .toBuilder();
       if (!StringUtils.isEmpty(updatedSnapshot)) {
@@ -526,7 +520,7 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
       }
       referenceResourceService.updateReferenceResource(
           workspaceId,
-          resouceId,
+          resourceId,
           body.getName(),
           body.getDescription(),
           updatedResourceBuilder.build(),
@@ -587,10 +581,10 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
   @Override
   public ResponseEntity<ApiCloneReferencedGcpGcsBucketResourceResult> cloneGcpGcsBucketReference(
       UUID workspaceId, UUID resourceId, @Valid ApiCloneReferencedResourceRequestBody body) {
-    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    final AuthenticatedUserRequest petRequest = getCloningCredentials(workspaceId);
 
     final ReferencedResource sourceReferencedResource =
-        referenceResourceService.getReferenceResource(workspaceId, resourceId, userRequest);
+        referenceResourceService.getReferenceResource(workspaceId, resourceId, petRequest);
 
     final CloningInstructions effectiveCloningInstructions =
         Optional.ofNullable(body.getCloningInstructions())
@@ -614,7 +608,7 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
             body.getDestinationWorkspaceId(),
             body.getName(),
             body.getDescription(),
-            userRequest);
+            petRequest);
 
     // Build the correct response type
     final var result =
@@ -672,10 +666,10 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
   public ResponseEntity<ApiCloneReferencedGcpBigQueryDatasetResourceResult>
       cloneGcpBigQueryDatasetReference(
           UUID workspaceId, UUID resourceId, @Valid ApiCloneReferencedResourceRequestBody body) {
-    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    final AuthenticatedUserRequest petRequest = getCloningCredentials(workspaceId);
 
     final ReferencedResource sourceReferencedResource =
-        referenceResourceService.getReferenceResource(workspaceId, resourceId, userRequest);
+        referenceResourceService.getReferenceResource(workspaceId, resourceId, petRequest);
 
     final CloningInstructions effectiveCloningInstructions =
         Optional.ofNullable(body.getCloningInstructions())
@@ -699,7 +693,7 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
             body.getDestinationWorkspaceId(),
             body.getName(),
             body.getDescription(),
-            userRequest);
+            petRequest);
 
     // Build the correct response type
     final var result =
@@ -715,8 +709,7 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
   public ResponseEntity<ApiCloneReferencedGcpDataRepoSnapshotResourceResult>
       cloneGcpDataRepoSnapshotReference(
           UUID workspaceId, UUID resourceId, @Valid ApiCloneReferencedResourceRequestBody body) {
-    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
-
+    final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     final ReferencedResource sourceReferencedResource =
         referenceResourceService.getReferenceResource(workspaceId, resourceId, userRequest);
 
@@ -752,5 +745,14 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
             .sourceResourceId(sourceReferencedResource.getResourceId())
             .effectiveCloningInstructions(effectiveCloningInstructions.toApiModel());
     return new ResponseEntity<>(result, HttpStatus.OK);
+  }
+
+  /**
+   * Get the Pet SA if available. Otherwise, we likely don't have a cloud context, so there isn't
+   * one. In that case, return the original user request.
+   */
+  private AuthenticatedUserRequest getCloningCredentials(UUID workspaceId) {
+    final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    return petSaService.getWorkspacePetCredentials(workspaceId, userRequest).orElse(userRequest);
   }
 }
