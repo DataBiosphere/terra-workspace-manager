@@ -1,6 +1,5 @@
 package bio.terra.workspace.app.controller;
 
-import bio.terra.common.exception.BadRequestException;
 import bio.terra.workspace.common.utils.ControllerUtils;
 import bio.terra.workspace.common.utils.ControllerValidationUtils;
 import bio.terra.workspace.generated.controller.WorkspaceApi;
@@ -541,7 +540,7 @@ public class WorkspaceApiController implements WorkspaceApi {
   @Override
   public ResponseEntity<ApiCloneWorkspaceResult> cloneWorkspace(
       UUID workspaceId, @Valid ApiCloneWorkspaceRequest body) {
-    final AuthenticatedUserRequest petRequest = getPetRequest(workspaceId);
+    final AuthenticatedUserRequest petRequest = getCloningCredentials(workspaceId);
 
     Optional<SpendProfileId> spendProfileId =
         Optional.ofNullable(body.getSpendProfile()).map(SpendProfileId::new);
@@ -605,15 +604,17 @@ public class WorkspaceApiController implements WorkspaceApi {
     return propertyMap;
   }
 
-  private AuthenticatedUserRequest getPetRequest(UUID workspaceId) {
+  /**
+   * Return Pet SA credentials if available, otherwise the user credentials associated with
+   * this request. It's possible to clone a workspace that has no cloud context, and thus no
+   * (GCP) pet account.
+   * @param workspaceId - ID of workspace to be cloned
+   * @return user or pet request
+   */
+  private AuthenticatedUserRequest getCloningCredentials(UUID workspaceId) {
     final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     return petSaService
         .getWorkspacePetCredentials(workspaceId, userRequest)
-        .orElseThrow(
-            () ->
-                new BadRequestException(
-                    String.format(
-                        "Pet SA credentials not found for user %s on workspace %s",
-                        userRequest.getEmail(), workspaceId)));
+        .orElse(userRequest);
   }
 }
