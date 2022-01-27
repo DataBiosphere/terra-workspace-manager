@@ -20,7 +20,7 @@ import javax.annotation.Nullable;
 
 public class ReferencedGitRepoResource extends ReferencedResource {
 
-  private final String gitCloneUrl;
+  private final String gitRepoUrl;
 
   @JsonCreator
   public ReferencedGitRepoResource(
@@ -29,9 +29,9 @@ public class ReferencedGitRepoResource extends ReferencedResource {
       @JsonProperty("name") String name,
       @JsonProperty("description") @Nullable String description,
       @JsonProperty("cloningInstructions") CloningInstructions cloningInstructions,
-      @JsonProperty("gitCloneUrl") String gitCloneUrl) {
+      @JsonProperty("gitRepoUrl") String gitRepoUrl) {
     super(workspaceId, resourceId, name, description, cloningInstructions);
-    this.gitCloneUrl = gitCloneUrl;
+    this.gitRepoUrl = gitRepoUrl;
     validate();
   }
 
@@ -44,7 +44,7 @@ public class ReferencedGitRepoResource extends ReferencedResource {
     super(dbResource);
     ReferencedGitRepoAttributes attributes =
         DbSerDes.fromJson(dbResource.getAttributes(), ReferencedGitRepoAttributes.class);
-    this.gitCloneUrl = attributes.getGitCloneUrl();
+    this.gitRepoUrl = attributes.getGitRepoUrl();
     validate();
   }
 
@@ -55,7 +55,7 @@ public class ReferencedGitRepoResource extends ReferencedResource {
 
   @Override
   public String attributesToJson() {
-    return DbSerDes.toJson(new ReferencedGitRepoAttributes(gitCloneUrl));
+    return DbSerDes.toJson(new ReferencedGitRepoAttributes(gitRepoUrl));
   }
 
   @Override
@@ -67,15 +67,15 @@ public class ReferencedGitRepoResource extends ReferencedResource {
   }
 
   public ApiGitRepoAttributes toApiAttributes() {
-    return new ApiGitRepoAttributes().gitCloneUrl(gitCloneUrl);
+    return new ApiGitRepoAttributes().gitRepoUrl(gitRepoUrl);
   }
 
   public ApiGitRepoResource toApiModel() {
     return new ApiGitRepoResource().metadata(super.toApiMetadata()).attributes(toApiAttributes());
   }
 
-  public String getGitCloneUrl() {
-    return gitCloneUrl;
+  public String getGitRepoUrl() {
+    return gitRepoUrl;
   }
 
   @Override
@@ -84,7 +84,7 @@ public class ReferencedGitRepoResource extends ReferencedResource {
     if (getResourceType() != WsmResourceType.GIT_REPO) {
       throw new InconsistentFieldsException("Expected GIT_REPO");
     }
-    if (Strings.isNullOrEmpty(gitCloneUrl)) {
+    if (Strings.isNullOrEmpty(gitRepoUrl)) {
       throw new MissingRequiredFieldException(
           "Missing required field for ReferenceGcsObjectResource.");
     }
@@ -98,7 +98,7 @@ public class ReferencedGitRepoResource extends ReferencedResource {
    */
   public ReferencedGitRepoResource.Builder toBuilder() {
     return builder()
-        .gitCloneUrl(getGitCloneUrl())
+        .gitRepoUrl(getGitRepoUrl())
         .cloningInstructions(getCloningInstructions())
         .description(getDescription())
         .name(getName())
@@ -113,7 +113,7 @@ public class ReferencedGitRepoResource extends ReferencedResource {
   public static class Builder {
 
     private CloningInstructions cloningInstructions;
-    private String gitCloneUrl;
+    private String gitRepoUrl;
     private String description;
     private String name;
     private UUID resourceId;
@@ -145,8 +145,8 @@ public class ReferencedGitRepoResource extends ReferencedResource {
       return this;
     }
 
-    public ReferencedGitRepoResource.Builder gitCloneUrl(String gitCloneUrl) {
-      this.gitCloneUrl = gitCloneUrl;
+    public ReferencedGitRepoResource.Builder gitRepoUrl(String gitRepoUrl) {
+      this.gitRepoUrl = gitRepoUrl;
       return this;
     }
 
@@ -158,7 +158,7 @@ public class ReferencedGitRepoResource extends ReferencedResource {
           name,
           description,
           cloningInstructions,
-          gitCloneUrl);
+          gitRepoUrl);
     }
   }
 }

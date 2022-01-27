@@ -372,7 +372,7 @@ public class CloneReferencedResources extends DataRepoTestScriptBase {
         gitHubRepoReferenceCloneResult.getResource().getMetadata().getName());
     assertEquals(
         TEST_GITHUB_REPO_PUBLIC_SSH,
-        gitHubRepoReferenceCloneResult.getResource().getAttributes().getGitCloneUrl());
+        gitHubRepoReferenceCloneResult.getResource().getAttributes().getGitRepoUrl());
     assertEquals(
         CLONED_GITHUB_REPO_DESCRIPTION,
         gitHubRepoReferenceCloneResult.getResource().getMetadata().getDescription());

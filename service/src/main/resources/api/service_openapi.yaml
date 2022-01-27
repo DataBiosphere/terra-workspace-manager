@@ -2538,7 +2538,7 @@ components:
           $ref: "#/components/schemas/Name"
         description:
           type: string
-        gitCloneUrl:
+        gitRepoUrl:
           description: the url for cloning the corresponding git repository
           type: string
 
@@ -4183,9 +4183,9 @@ components:
     GitRepoAttributes:
       description: Attributes of a Git repository
       type: object
-      required: [ gitCloneUrl ]
+      required: [ gitRepoUrl ]
       properties:
-        gitCloneUrl:
+        gitRepoUrl:
           description: URL for cloning the git repository, could be an HTTPs or SSH url.
           type: string
 

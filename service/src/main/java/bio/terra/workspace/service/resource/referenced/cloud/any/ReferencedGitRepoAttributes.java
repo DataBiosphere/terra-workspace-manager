@@ -5,14 +5,14 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class ReferencedGitRepoAttributes {
 
-  private final String gitCloneUrl;
+  private final String gitRepoUrl;
 
   @JsonCreator
-  public ReferencedGitRepoAttributes(@JsonProperty("gitCloneUrl") String gitCloneUrl) {
-    this.gitCloneUrl = gitCloneUrl;
+  public ReferencedGitRepoAttributes(@JsonProperty("gitRepoUrl") String gitRepoUrl) {
+    this.gitRepoUrl = gitRepoUrl;
   }
 
-  public String getGitCloneUrl() {
-    return gitCloneUrl;
+  public String getGitRepoUrl() {
+    return gitRepoUrl;
   }
 }

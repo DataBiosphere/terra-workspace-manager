@@ -29,6 +29,7 @@ import bio.terra.workspace.generated.model.ApiUpdateGcsBucketReferenceRequestBod
 import bio.terra.workspace.generated.model.ApiUpdateGitRepoReferenceRequestBody;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequestFactory;
+import bio.terra.workspace.service.resource.ValidationUtils;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.resource.referenced.cloud.any.ReferencedGitRepoResource;
@@ -60,6 +61,7 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
   private final ReferencedResourceService referenceResourceService;
   private final AuthenticatedUserRequestFactory authenticatedUserRequestFactory;
   private final ResourceController resourceController;
+  private final ValidationUtils validationUtils;
   private final WorkspaceService workspaceService;
   private final HttpServletRequest request;
   private final Logger logger = LoggerFactory.getLogger(ReferencedGcpResourceController.class);
@@ -69,11 +71,13 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
       ReferencedResourceService referenceResourceService,
       AuthenticatedUserRequestFactory authenticatedUserRequestFactory,
       ResourceController resourceController,
+      ValidationUtils validationUtils,
       WorkspaceService workspaceService,
       HttpServletRequest request) {
     this.referenceResourceService = referenceResourceService;
     this.authenticatedUserRequestFactory = authenticatedUserRequestFactory;
     this.resourceController = resourceController;
+    this.validationUtils = validationUtils;
     this.workspaceService = workspaceService;
     this.request = request;
   }
@@ -764,6 +768,7 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
   public ResponseEntity<ApiGitRepoResource> createGitRepoReference(
       UUID workspaceId, @Valid ApiCreateGitRepoReferenceRequestBody body) {
     // Construct a ReferenceGcsBucketResource object from the API input
+    validationUtils.validateGitRepoCloneUri(body.getGitrepo().getGitRepoUrl());
     ReferencedGitRepoResource resource =
         ReferencedGitRepoResource.builder()
             .workspaceId(workspaceId)
@@ -771,7 +776,7 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
             .description(body.getMetadata().getDescription())
             .cloningInstructions(
                 CloningInstructions.fromApiModel(body.getMetadata().getCloningInstructions()))
-            .gitCloneUrl(body.getGitrepo().getGitCloneUrl())
+            .gitRepoUrl(body.getGitrepo().getGitRepoUrl())
             .build();
 
     ReferencedResource referenceResource =
@@ -803,8 +808,8 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
   public ResponseEntity<Void> updateGitRepoReference(
       UUID workspaceId, UUID referenceId, ApiUpdateGitRepoReferenceRequestBody body) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
-    String gitCloneUrl = body.getGitCloneUrl();
-    if (StringUtils.isEmpty(gitCloneUrl)) {
+    String gitRepoUrl = body.getGitRepoUrl();
+    if (StringUtils.isEmpty(gitRepoUrl)) {
       referenceResourceService.updateReferenceResource(
           workspaceId, referenceId, body.getName(), body.getDescription(), userRequest);
     } else {
@@ -813,9 +818,9 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
               .getReferenceResource(workspaceId, referenceId, userRequest)
               .castToGitRepoResource()
               .toBuilder();
-      if (!StringUtils.isEmpty(gitCloneUrl)) {
-        updateGitRepoResource.gitCloneUrl(gitCloneUrl);
-      }
+      validationUtils.validateGitRepoCloneUri(gitRepoUrl);
+      updateGitRepoResource.gitRepoUrl(gitRepoUrl);
+
       referenceResourceService.updateReferenceResource(
           workspaceId,
           referenceId,
