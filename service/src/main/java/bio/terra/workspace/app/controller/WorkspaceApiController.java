@@ -605,16 +605,15 @@ public class WorkspaceApiController implements WorkspaceApi {
   }
 
   /**
-   * Return Pet SA credentials if available, otherwise the user credentials associated with
-   * this request. It's possible to clone a workspace that has no cloud context, and thus no
-   * (GCP) pet account.
+   * Return Pet SA credentials if available, otherwise the user credentials associated with this
+   * request. It's possible to clone a workspace that has no cloud context, and thus no (GCP) pet
+   * account.
+   *
    * @param workspaceId - ID of workspace to be cloned
    * @return user or pet request
    */
   private AuthenticatedUserRequest getCloningCredentials(UUID workspaceId) {
     final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
-    return petSaService
-        .getWorkspacePetCredentials(workspaceId, userRequest)
-        .orElse(userRequest);
+    return petSaService.getWorkspacePetCredentials(workspaceId, userRequest).orElse(userRequest);
   }
 }
