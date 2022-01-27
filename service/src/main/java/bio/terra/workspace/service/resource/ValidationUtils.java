@@ -132,9 +132,9 @@ public class ValidationUtils {
   }
 
   /** Validate whether the input URI is a valid GitHub Repo https uri. */
-  public void validateGitRepoCloneUri(String gitUri) {
+  public void validateGitRepoUri(String gitUri) {
     if (gitUri == null) {
-      throw new InvalidReferenceException("Git clone uri is null but it is required.");
+      throw new InvalidReferenceException("Git repo uri is null but it is required.");
     }
     try {
       URI uri = new URI(gitUri);
@@ -148,10 +148,10 @@ public class ValidationUtils {
       if (validateSshUri(gitUri)) {
         return;
       }
-      logger.warn("Git repo clone uri {} has syntax error", gitUri);
-      throw new InvalidReferenceException("Invalid git repo clone uri", e);
+      logger.warn("Git repo repo uri {} has syntax error", gitUri);
+      throw new InvalidReferenceException("Invalid git repo uri", e);
     }
-    throw new InvalidReferenceException("Invalid git repo clone uri");
+    throw new InvalidReferenceException("Invalid git repo uri");
   }
 
   private boolean validateSshUri(String gitUri) {

@@ -768,7 +768,7 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
   public ResponseEntity<ApiGitRepoResource> createGitRepoReference(
       UUID workspaceId, @Valid ApiCreateGitRepoReferenceRequestBody body) {
     // Construct a ReferenceGcsBucketResource object from the API input
-    validationUtils.validateGitRepoCloneUri(body.getGitrepo().getGitRepoUrl());
+    validationUtils.validateGitRepoUri(body.getGitrepo().getGitRepoUrl());
     ReferencedGitRepoResource resource =
         ReferencedGitRepoResource.builder()
             .workspaceId(workspaceId)
@@ -818,7 +818,7 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
               .getReferenceResource(workspaceId, referenceId, userRequest)
               .castToGitRepoResource()
               .toBuilder();
-      validationUtils.validateGitRepoCloneUri(gitRepoUrl);
+      validationUtils.validateGitRepoUri(gitRepoUrl);
       updateGitRepoResource.gitRepoUrl(gitRepoUrl);
 
       referenceResourceService.updateReferenceResource(
