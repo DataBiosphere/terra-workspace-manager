@@ -1,6 +1,5 @@
 package bio.terra.workspace.app.controller;
 
-import bio.terra.common.exception.BadRequestException;
 import bio.terra.workspace.generated.controller.ReferencedGcpResourceApi;
 import bio.terra.workspace.generated.model.ApiCloneReferencedGcpBigQueryDataTableResourceResult;
 import bio.terra.workspace.generated.model.ApiCloneReferencedGcpBigQueryDatasetResourceResult;
@@ -26,7 +25,6 @@ import bio.terra.workspace.generated.model.ApiUpdateGcsBucketObjectReferenceRequ
 import bio.terra.workspace.generated.model.ApiUpdateGcsBucketReferenceRequestBody;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequestFactory;
-import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.petserviceaccount.PetSaService;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
@@ -37,7 +35,6 @@ import bio.terra.workspace.service.resource.referenced.cloud.gcp.bqdatatable.Ref
 import bio.terra.workspace.service.resource.referenced.cloud.gcp.datareposnapshot.ReferencedDataRepoSnapshotResource;
 import bio.terra.workspace.service.resource.referenced.cloud.gcp.gcsbucket.ReferencedGcsBucketResource;
 import bio.terra.workspace.service.resource.referenced.cloud.gcp.gcsobject.ReferencedGcsObjectResource;
-import bio.terra.workspace.service.workspace.WorkspaceService;
 import java.util.Optional;
 import java.util.UUID;
 import javax.servlet.http.HttpServletRequest;
@@ -55,8 +52,6 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
 
   private final ReferencedResourceService referenceResourceService;
   private final AuthenticatedUserRequestFactory authenticatedUserRequestFactory;
-  private final WorkspaceService workspaceService;
-  private final SamService samService;
   private final HttpServletRequest request;
   private final PetSaService petSaService;
 
@@ -64,14 +59,10 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
   public ReferencedGcpResourceController(
       ReferencedResourceService referenceResourceService,
       AuthenticatedUserRequestFactory authenticatedUserRequestFactory,
-      WorkspaceService workspaceService,
-      SamService samService,
       HttpServletRequest request,
       PetSaService petSaService) {
     this.referenceResourceService = referenceResourceService;
     this.authenticatedUserRequestFactory = authenticatedUserRequestFactory;
-    this.workspaceService = workspaceService;
-    this.samService = samService;
     this.request = request;
     this.petSaService = petSaService;
   }
@@ -757,15 +748,12 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
     return new ResponseEntity<>(result, HttpStatus.OK);
   }
 
+  /**
+   * Get the Pet SA if available. Otherwise, we likely don't have a cloud context, so there isn't
+   * one. In that case, return the original user request.
+   */
   private AuthenticatedUserRequest getPetRequest(UUID workspaceId) {
     final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
-    return petSaService
-        .getWorkspacePetCredentials(workspaceId, userRequest)
-        .orElseThrow(
-            () ->
-                new BadRequestException(
-                    String.format(
-                        "Pet SA credentials not found for user %s on workspace %s",
-                        userRequest.getEmail(), workspaceId)));
+    return petSaService.getWorkspacePetCredentials(workspaceId, userRequest).orElse(userRequest);
   }
 }
