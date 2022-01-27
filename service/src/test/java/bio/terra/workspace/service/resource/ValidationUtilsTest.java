@@ -10,8 +10,6 @@ import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceContainerImag
 import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceVmImage;
 import bio.terra.workspace.service.resource.exception.InvalidNameException;
 import bio.terra.workspace.service.resource.referenced.exception.InvalidReferenceException;
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.util.List;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.jupiter.api.BeforeEach;
@@ -260,8 +258,7 @@ public class ValidationUtilsTest extends BaseUnitTest {
   public void validateGitRepoUrl() {
     validationUtils.validateGitRepoUri("https://github.com/path/to/project.git");
     validationUtils.validateGitRepoUri("https://github.com/yuhuyoyo/testrepo.git");
-    validationUtils.validateGitRepoUri(
-        "git@github.com:DataBiosphere/terra-workspace-manager.git");
+    validationUtils.validateGitRepoUri("git@github.com:DataBiosphere/terra-workspace-manager.git");
     validationUtils.validateGitRepoUri("ssh://git@github.com/path/to/project.git");
     validationUtils.validateGitRepoUri(
         "https://username:password@github.com/username/repository.git");
