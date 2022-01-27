@@ -286,13 +286,6 @@ public class ValidationUtilsTest extends BaseUnitTest {
   }
 
   @Test
-  public void test() throws URISyntaxException {
-    URI uri = new URI("ssh://github.com/project.git");
-
-    uri.getHost();
-  }
-
-  @Test
   public void validateGitRepoUrl_opaqueUrl_throwsException() {
     assertThrows(
         InvalidReferenceException.class,
