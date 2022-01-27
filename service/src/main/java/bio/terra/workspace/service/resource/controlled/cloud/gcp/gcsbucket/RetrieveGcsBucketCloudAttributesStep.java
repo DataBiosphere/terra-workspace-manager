@@ -75,7 +75,7 @@ public class RetrieveGcsBucketCloudAttributesStep implements Step {
         break;
       default:
         throw new BadRequestException(
-            String.format("Unsupported Retrieval mode %s", retrievalMode.toString()));
+            String.format("Unsupported Retrieval mode %s", retrievalMode));
     }
 
     return StepResult.getStepResultSuccess();
