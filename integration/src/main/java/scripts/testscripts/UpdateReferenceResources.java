@@ -106,9 +106,10 @@ public class UpdateReferenceResources extends DataRepoTestScriptBase {
   @Override
   public void setParameters(Map<String, String> parameters) throws Exception {
     super.setParameters(parameters);
-    if (parameters == null || !parameters.containsKey(ParameterKeys.DATA_REPO_ALTERNATE_SNAPSHOT_PARAMETER)) {
+    if (parameters == null
+        || !parameters.containsKey(ParameterKeys.DATA_REPO_ALTERNATE_SNAPSHOT_PARAMETER)) {
       throw new IllegalArgumentException(
-          "Must provide Spend Profile ID, 2 Data Repo snapshot IDs, and a Data Repo Instance Name in the parameters list");
+          "Must provide Spend Profile ID, 2 Data Repo snapshot IDs, and a Data Repo Instance Name as parameters");
     } else {
       // Spend profile ID, TDR instance, and snapshot ID are all read in superclasses.
       dataRepoSnapshotId2 = parameters.get(ParameterKeys.DATA_REPO_ALTERNATE_SNAPSHOT_PARAMETER);

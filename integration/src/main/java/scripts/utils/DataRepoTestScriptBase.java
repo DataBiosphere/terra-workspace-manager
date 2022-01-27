@@ -34,7 +34,9 @@ public abstract class DataRepoTestScriptBase extends WorkspaceAllocateTestScript
   @Override
   public void setParameters(Map<String, String> parameters) throws Exception {
     super.setParameters(parameters);
-    if (parameters == null || !parameters.containsKey(ParameterKeys.DATA_REPO_SNAPSHOT_PARAMETER) || !parameters.containsKey(ParameterKeys.DATA_REPO_INSTANCE_PARAMETER)) {
+    if (parameters == null
+        || !parameters.containsKey(ParameterKeys.DATA_REPO_SNAPSHOT_PARAMETER)
+        || !parameters.containsKey(ParameterKeys.DATA_REPO_INSTANCE_PARAMETER)) {
       throw new IllegalArgumentException(
           "Must provide Spend Profile ID, Data Repo snapshot ID, and Data Repo Instance Name as parameters");
     } else {
