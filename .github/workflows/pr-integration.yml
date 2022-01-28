@@ -62,7 +62,6 @@ jobs:
 
     - name: Cache Gradle packages
       uses: actions/cache@v2
-      if: always()
       with:
         path: |
           ~/.gradle/caches
