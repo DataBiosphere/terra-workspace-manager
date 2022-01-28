@@ -90,7 +90,7 @@ public class ControlledBigQueryDatasetResource extends ControlledResource {
         .datasetId(getDatasetName());
   }
 
-  public ApiGcpBigQueryDatasetResource toApiResource(String projectId) {
+  public ApiGcpBigQueryDatasetResource toApiResource() {
     return new ApiGcpBigQueryDatasetResource()
         .metadata(super.toApiMetadata())
         .attributes(toApiAttributes());

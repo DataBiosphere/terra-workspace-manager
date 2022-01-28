@@ -14,6 +14,7 @@ import bio.terra.workspace.generated.model.ApiResourceUnion;
 import bio.terra.workspace.generated.model.ApiStewardshipType;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequestFactory;
+import bio.terra.workspace.service.iam.model.SamConstants.SamWorkspaceAction;
 import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.resource.ValidationUtils;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook.ControlledAiNotebookInstanceResource;
@@ -39,7 +40,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-import javax.annotation.Nullable;
 import javax.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -87,8 +87,9 @@ public class Alpha1ApiController implements Alpha1Api {
     // Make sure Alpha1 is enabled
     features.alpha1EnabledCheck();
 
-    // Prepare the inputs
     final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    workspaceService.validateWorkspaceAndAction(userRequest, workspaceId, SamWorkspaceAction.READ);
+
     ControllerValidationUtils.validatePaginationParams(0, limit);
     ValidationUtils.validateOptionalResourceName(name);
 
@@ -103,10 +104,6 @@ public class Alpha1ApiController implements Alpha1Api {
             StewardshipType.fromApiOptional(stewardship),
             name,
             JobStateFilter.fromApi(jobState));
-
-    // projectId
-    String gcpProjectId =
-        workspaceService.getAuthorizedGcpProject(workspaceId, userRequest).orElse(null);
 
     // Convert the result to API-speak
     List<ApiEnumeratedJob> apiJobList = new ArrayList<>();
@@ -127,8 +124,7 @@ public class Alpha1ApiController implements Alpha1Api {
               .jobDescription(enumeratedJob.getJobDescription())
               .operationType(enumeratedJob.getOperationType().toApiModel())
               .resourceType(optResource.map(r -> r.getResourceType().toApiModel()).orElse(null))
-              .resource(
-                  optResource.map(r -> apiResourceFromWsmResource(r, gcpProjectId)).orElse(null));
+              .resource(optResource.map(this::apiResourceFromWsmResource).orElse(null));
       apiJobList.add(apiJob);
     }
 
@@ -143,8 +139,7 @@ public class Alpha1ApiController implements Alpha1Api {
 
   // Convert a WsmResource into the API format for enumeration
   @VisibleForTesting
-  public ApiResourceUnion apiResourceFromWsmResource(
-      WsmResource wsmResource, @Nullable String gcpProjectId) {
+  public ApiResourceUnion apiResourceFromWsmResource(WsmResource wsmResource) {
 
     var union = new ApiResourceUnion();
     switch (wsmResource.getStewardshipType()) {
@@ -214,7 +209,7 @@ public class Alpha1ApiController implements Alpha1Api {
             {
               ControlledBigQueryDatasetResource resource =
                   controlledResource.castToBigQueryDatasetResource();
-              union.gcpBqDataset(resource.toApiResource(gcpProjectId));
+              union.gcpBqDataset(resource.toApiResource());
               break;
             }
           case DATA_REPO_SNAPSHOT: // there is a use case for this, but low priority
