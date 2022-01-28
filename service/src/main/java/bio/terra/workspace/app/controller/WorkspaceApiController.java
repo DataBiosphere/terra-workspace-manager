@@ -516,7 +516,7 @@ public class WorkspaceApiController implements WorkspaceApi {
     workspaceService.validateWorkspaceAndAction(
         userRequest, workspaceId, SamConstants.SamWorkspaceAction.READ);
     petSaService.enablePetServiceAccountImpersonation(workspaceId, userRequest);
-    return new ResponseEntity<>("// FIX BEFORE MERGING", HttpStatus.OK);
+    return new ResponseEntity<>(HttpStatus.NO_CONTENT);
   }
 
   /**
