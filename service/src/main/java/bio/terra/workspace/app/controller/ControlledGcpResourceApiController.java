@@ -250,12 +250,11 @@ public class ControlledGcpResourceApiController implements ControlledGcpResource
   public ResponseEntity<ApiGcpBigQueryDatasetResource> getBigQueryDataset(
       UUID workspaceId, UUID resourceId) {
     final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
-    String projectId = workspaceService.getAuthorizedRequiredGcpProject(workspaceId, userRequest);
     return getControlledResourceAsResponseEntity(
         workspaceId,
         resourceId,
         userRequest,
-        r -> r.castToBigQueryDatasetResource().toApiResource(projectId));
+        r -> r.castToBigQueryDatasetResource().toApiResource());
   }
 
   @Override
@@ -263,6 +262,7 @@ public class ControlledGcpResourceApiController implements ControlledGcpResource
       UUID workspaceId, UUID resourceId, ApiUpdateControlledGcpBigQueryDatasetRequestBody body) {
     logger.info("Updating dataset resourceId {} workspaceId {}", resourceId, workspaceId);
     final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+
     final ControlledResource resource =
         controlledResourceService.getControlledResource(workspaceId, resourceId, userRequest);
     if (resource.getResourceType() != WsmResourceType.BIG_QUERY_DATASET) {
@@ -279,12 +279,11 @@ public class ControlledGcpResourceApiController implements ControlledGcpResource
         body.getDescription());
 
     // Retrieve and cast response to UpdateControlledGcpBigQueryDatasetResponse
-    String projectId = workspaceService.getAuthorizedRequiredGcpProject(workspaceId, userRequest);
     return getControlledResourceAsResponseEntity(
         workspaceId,
         resourceId,
         userRequest,
-        r -> r.castToBigQueryDatasetResource().toApiResource(projectId));
+        r -> r.castToBigQueryDatasetResource().toApiResource());
   }
 
   /**
@@ -321,8 +320,6 @@ public class ControlledGcpResourceApiController implements ControlledGcpResource
       UUID workspaceId, ApiCreateControlledGcpBigQueryDatasetRequestBody body) {
     final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
 
-    String projectId = workspaceService.getAuthorizedRequiredGcpProject(workspaceId, userRequest);
-
     PrivateUserRole privateUserRole =
         ControllerUtils.computePrivateUserRole(
             workspaceId, body.getCommon(), userRequest, samService);
@@ -355,7 +352,7 @@ public class ControlledGcpResourceApiController implements ControlledGcpResource
     var response =
         new ApiCreatedControlledGcpBigQueryDataset()
             .resourceId(createdDataset.getResourceId())
-            .bigQueryDataset(createdDataset.toApiResource(projectId));
+            .bigQueryDataset(createdDataset.toApiResource());
     return new ResponseEntity<>(response, HttpStatus.OK);
   }
 

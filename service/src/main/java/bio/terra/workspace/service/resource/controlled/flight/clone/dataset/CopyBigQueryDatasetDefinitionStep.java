@@ -85,6 +85,8 @@ public class CopyBigQueryDatasetDefinitionStep implements Step {
             ControlledResourceKeys.LOCATION,
             ControlledResourceKeys.LOCATION,
             String.class);
+    final String destinationProjectId =
+        gcpCloudContextService.getRequiredGcpProject(destinationWorkspaceId);
     final ControlledBigQueryDatasetResource destinationResource =
         ControlledBigQueryDatasetResource.builder()
             .accessScope(sourceDataset.getAccessScope())
@@ -96,6 +98,7 @@ public class CopyBigQueryDatasetDefinitionStep implements Step {
             .name(resourceName)
             .resourceId(UUID.randomUUID())
             .workspaceId(destinationWorkspaceId)
+            .projectId(destinationProjectId)
             .build();
 
     final ApiGcpBigQueryDatasetCreationParameters creationParameters =
@@ -108,11 +111,9 @@ public class CopyBigQueryDatasetDefinitionStep implements Step {
             destinationResource, creationParameters, iamRole, userRequest);
 
     workingMap.put(ControlledResourceKeys.CLONED_RESOURCE_DEFINITION, clonedResource);
-    final String destinationProjectId =
-        gcpCloudContextService.getRequiredGcpProject(destinationWorkspaceId);
     final ApiClonedControlledGcpBigQueryDataset apiResult =
         new ApiClonedControlledGcpBigQueryDataset()
-            .dataset(clonedResource.toApiResource(destinationProjectId))
+            .dataset(clonedResource.toApiResource())
             .effectiveCloningInstructions(effectiveCloningInstructions.toApiModel())
             .sourceWorkspaceId(sourceDataset.getWorkspaceId())
             .sourceResourceId(sourceDataset.getResourceId());
