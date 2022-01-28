@@ -26,7 +26,6 @@ public class RemoveUserFromWorkspaceFlight extends Flight {
     Optional<WsmIamRole> roleToRemove =
         Optional.ofNullable(
             inputParameters.get(WorkspaceFlightMapKeys.ROLE_TO_REMOVE, WsmIamRole.class));
-    String proxyGroupEmail = inputParameters.get(WorkspaceFlightMapKeys.PROXY_GROUP, String.class);
 
     // Flight plan:
     // 0. (Pre-flight): Validate that the user is directly granted the specified workspace role.
@@ -74,7 +73,6 @@ public class RemoveUserFromWorkspaceFlight extends Flight {
         new RevokePetUsagePermissionStep(
             workspaceId,
             userToRemove,
-            proxyGroupEmail,
             appContext.getPetSaService(),
             appContext.getGcpCloudContextService(),
             userRequest),

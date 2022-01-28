@@ -406,12 +406,6 @@ public class WorkspaceService {
     stageService.assertMcWorkspace(workspace, "removeWorkspaceRoleFromUser");
     // GCP always uses lowercase email identifiers, so we do the same here.
     String targetUserEmail = rawUserEmail.toLowerCase();
-    String proxyGroupEmail =
-        SamRethrow.onInterrupted(
-            () ->
-                samService.getProxyGroupEmail(
-                    targetUserEmail, executingUserRequest.getRequiredToken()),
-            "removeWorkspaceRoleFromUser");
     // Before launching the flight, validate that the user being removed is a direct member of the
     // specified role. Users may also be added to a workspace via managed groups, but WSM does not
     // control membership of those groups, and so cannot remove them here.
@@ -436,7 +430,6 @@ public class WorkspaceService {
         .workspaceId(workspaceId.toString())
         .addParameter(WorkspaceFlightMapKeys.USER_TO_REMOVE, targetUserEmail)
         .addParameter(WorkspaceFlightMapKeys.ROLE_TO_REMOVE, role)
-        .addParameter(WorkspaceFlightMapKeys.PROXY_GROUP, proxyGroupEmail)
         .submitAndWait(null);
   }
 }

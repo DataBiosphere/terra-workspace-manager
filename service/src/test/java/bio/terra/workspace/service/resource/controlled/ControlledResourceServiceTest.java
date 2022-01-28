@@ -38,7 +38,6 @@ import bio.terra.workspace.service.iam.model.ControlledResourceIamRole;
 import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.job.exception.InvalidResultStateException;
 import bio.terra.workspace.service.petserviceaccount.PetSaService;
-import bio.terra.workspace.service.petserviceaccount.model.UserWithPetSa;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook.ControlledAiNotebookInstanceResource;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook.CreateAiNotebookInstanceStep;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook.DeleteAiNotebookInstanceStep;
@@ -376,9 +375,6 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
     // the user may have pet SA access enabled prior to this test.
     String serviceAccountEmail =
         samService.getOrCreatePetSaEmail(projectId, user.getAuthenticatedRequest());
-    UserWithPetSa userAndPet = new UserWithPetSa(user.getEmail(), serviceAccountEmail);
-    String proxyGroupEmail =
-        samService.getProxyGroupEmail(user.getEmail(), user.getAccessToken().getTokenValue());
     petSaService.disablePetServiceAccountImpersonation(
         workspace.getWorkspaceId(), user.getEmail(), user.getAuthenticatedRequest());
     IamCow userIamCow = crlService.getIamCow(user.getAuthenticatedRequest());

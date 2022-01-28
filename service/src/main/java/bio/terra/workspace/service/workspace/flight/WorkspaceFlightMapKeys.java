@@ -12,7 +12,6 @@ public final class WorkspaceFlightMapKeys {
   public static final String DESCRIPTION = "descriptionId";
   public static final String USER_TO_REMOVE = "userToRemove";
   public static final String ROLE_TO_REMOVE = "roleToRemove";
-  public static final String PROXY_GROUP = "proxyGroup";
   public static final String APPLICATION_ID = "applicationId";
   public static final String OPERATION_TYPE = "operationType";
 
@@ -38,7 +37,6 @@ public final class WorkspaceFlightMapKeys {
     public static final String CREATE_NOTEBOOK_REGION = "createNotebookRegion";
     public static final String CREATE_NOTEBOOK_SUBNETWORK_NAME = "createNotebookSubnetworkName";
     public static final String NOTEBOOK_PET_SERVICE_ACCOUNT = "notebookPetServiceAccount";
-    public static final String NOTEBOOK_PROXY_GROUP = "notebookProxyGroup";
 
     // Cloning Keys
     public static final String CLONE_ALL_RESOURCES_FLIGHT_ID = "cloneAllResourcesFlightId";

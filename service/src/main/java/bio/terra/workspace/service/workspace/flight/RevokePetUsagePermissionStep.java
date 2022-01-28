@@ -8,7 +8,6 @@ import bio.terra.stairway.StepResult;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.petserviceaccount.PetSaService;
-import bio.terra.workspace.service.petserviceaccount.model.UserWithPetSa;
 import bio.terra.workspace.service.workspace.GcpCloudContextService;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.PetSaKeys;
@@ -34,7 +33,6 @@ public class RevokePetUsagePermissionStep implements Step {
 
   private final UUID workspaceId;
   private final String userEmailToRemove;
-  private final String proxyGroupEmail;
   private final PetSaService petSaService;
   private final GcpCloudContextService gcpCloudContextService;
   private final AuthenticatedUserRequest userRequest;
@@ -42,13 +40,11 @@ public class RevokePetUsagePermissionStep implements Step {
   public RevokePetUsagePermissionStep(
       UUID workspaceId,
       String userEmailToRemove,
-      String proxyGroupEmail,
       PetSaService petSaService,
       GcpCloudContextService gcpCloudContextService,
       AuthenticatedUserRequest userRequest) {
     this.workspaceId = workspaceId;
     this.userEmailToRemove = userEmailToRemove;
-    this.proxyGroupEmail = proxyGroupEmail;
     this.petSaService = petSaService;
     this.gcpCloudContextService = gcpCloudContextService;
     this.userRequest = userRequest;
@@ -63,7 +59,6 @@ public class RevokePetUsagePermissionStep implements Step {
     if (validatedPetEmail.isEmpty()) {
       return StepResult.getStepResultSuccess();
     }
-    UserWithPetSa userAndPet = new UserWithPetSa(userEmailToRemove, validatedPetEmail.get());
     String updatedPolicyEtag =
         petSaService
             .disablePetServiceAccountImpersonation(workspaceId, userEmailToRemove, userRequest)
@@ -82,7 +77,6 @@ public class RevokePetUsagePermissionStep implements Step {
     if (validatedPetEmail.isEmpty()) {
       return StepResult.getStepResultSuccess();
     }
-    UserWithPetSa userAndPet = new UserWithPetSa(userEmailToRemove, validatedPetEmail.get());
     String expectedEtag = workingMap.get(PetSaKeys.MODIFIED_PET_SA_POLICY_ETAG, String.class);
     if (expectedEtag == null) {
       // If the do step did not finish, we cannot guarantee we aren't undoing something we didn't do

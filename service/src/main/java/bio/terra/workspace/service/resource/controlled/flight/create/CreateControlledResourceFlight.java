@@ -9,7 +9,6 @@ import bio.terra.workspace.common.utils.RetryRules;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.model.ControlledResourceIamRole;
 import bio.terra.workspace.service.job.JobMapKeys;
-import bio.terra.workspace.service.petserviceaccount.model.UserWithPetSa;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.disk.CreateAzureDiskStep;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.disk.GetAzureDiskStep;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.ip.CreateAzureIpStep;
@@ -60,8 +59,8 @@ public class CreateControlledResourceFlight extends Flight {
 
     final String assignedUserEmail = resource.getAssignedUser().orElse(null);
 
-    final String proxyGroupEmail =
-        inputParameters.get(ControlledResourceKeys.NOTEBOOK_PROXY_GROUP, String.class);
+    final String petSaEmail =
+        inputParameters.get(ControlledResourceKeys.NOTEBOOK_PET_SERVICE_ACCOUNT, String.class);
 
     // Store the resource metadata in the WSM database. Doing this first means concurrent
     // conflicting resources with the same name or resource attributes can be prevented.
@@ -112,17 +111,8 @@ public class CreateControlledResourceFlight extends Flight {
         break;
       case AI_NOTEBOOK_INSTANCE:
         {
-          UserWithPetSa userAndPet =
-              new UserWithPetSa(
-                  assignedUserEmail,
-                  inputParameters.get(
-                      ControlledResourceKeys.NOTEBOOK_PET_SERVICE_ACCOUNT, String.class));
           addNotebookSteps(
-              userAndPet,
-              proxyGroupEmail,
-              flightBeanBag,
-              resource.castToAiNotebookInstanceResource(),
-              userRequest);
+              petSaEmail, flightBeanBag, resource.castToAiNotebookInstanceResource(), userRequest);
           break;
         }
       case BIG_QUERY_DATASET:
@@ -262,8 +252,7 @@ public class CreateControlledResourceFlight extends Flight {
   }
 
   private void addNotebookSteps(
-      UserWithPetSa userAndPet,
-      String proxyGroupEmail,
+      String petSaEmail,
       FlightBeanBag flightBeanBag,
       ControlledAiNotebookInstanceResource resource,
       AuthenticatedUserRequest userRequest) {
@@ -278,7 +267,7 @@ public class CreateControlledResourceFlight extends Flight {
     addStep(
         new CreateAiNotebookInstanceStep(
             resource,
-            userAndPet.getPetEmail(),
+            petSaEmail,
             flightBeanBag.getCrlService(),
             flightBeanBag.getGcpCloudContextService()),
         gcpRetryRule);

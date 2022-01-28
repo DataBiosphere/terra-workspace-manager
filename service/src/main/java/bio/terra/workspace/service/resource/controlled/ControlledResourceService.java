@@ -451,8 +451,6 @@ public class ControlledResourceService {
     JobBuilder jobBuilder =
         commonCreationJobBuilder(
             resource, privateResourceIamRole, jobControl, resultPath, userRequest);
-    String userEmail =
-        SamRethrow.onInterrupted(() -> samService.getUserEmailFromSam(userRequest), "enablePet");
     String petSaEmail =
         SamRethrow.onInterrupted(
             () ->
@@ -460,13 +458,8 @@ public class ControlledResourceService {
                     gcpCloudContextService.getRequiredGcpProject(resource.getWorkspaceId()),
                     userRequest),
             "enablePet");
-    String proxyGroupEmail =
-        SamRethrow.onInterrupted(
-            () -> samService.getProxyGroupEmail(userEmail, userRequest.getRequiredToken()),
-            "enablePet");
     jobBuilder.addParameter(ControlledResourceKeys.CREATE_NOTEBOOK_PARAMETERS, creationParameters);
     jobBuilder.addParameter(ControlledResourceKeys.NOTEBOOK_PET_SERVICE_ACCOUNT, petSaEmail);
-    jobBuilder.addParameter(ControlledResourceKeys.NOTEBOOK_PROXY_GROUP, proxyGroupEmail);
     String jobId = jobBuilder.submit();
     waitForResourceOrJob(resource.getWorkspaceId(), resource.getResourceId(), jobId);
     return jobId;
