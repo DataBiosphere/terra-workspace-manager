@@ -29,10 +29,13 @@ import bio.terra.workspace.model.GitRepoResource;
 import bio.terra.workspace.model.GrantRoleRequestBody;
 import bio.terra.workspace.model.IamRole;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import org.checkerframework.checker.nullness.qual.MonotonicNonNull;
 import scripts.utils.ClientTestUtils;
 import scripts.utils.DataRepoTestScriptBase;
+import scripts.utils.ParameterKeys;
+import scripts.utils.ParameterUtils;
 import scripts.utils.ResourceMaker;
 
 public class UpdateReferenceResources extends DataRepoTestScriptBase {
@@ -109,19 +112,12 @@ public class UpdateReferenceResources extends DataRepoTestScriptBase {
   }
 
   @Override
-  public void setParameters(List<String> parameters) throws Exception {
-    // TODO: Refactor this function when TestRunner starts supporting parameterMap
+  public void setParameters(Map<String, String> parameters) throws Exception {
     super.setParameters(parameters);
-    if (parameters == null || parameters.size() < 4) {
-      throw new IllegalArgumentException(
-          "Must provide Spend Profile ID, 2 Data Repo snapshot IDs, and 1 Data Repo Instance Names in the parameters list");
-    } else {
-      // "spendProfileId = parameters.get(0);" fetches Spend Profile ID and is already implemented
-      // in the super class.
-      // dataRepoSnapshotId and dataRepoInstanceName are the second and third value in the params
-      // list and are implemented in the super class DataRepoTestScriptBase.
-      dataRepoSnapshotId2 = parameters.get(3);
-    }
+    // Spend profile ID, TDR instance, and snapshot ID are all read in superclasses.
+    dataRepoSnapshotId2 =
+        ParameterUtils.getParamOrThrow(
+            parameters, ParameterKeys.DATA_REPO_ALTERNATE_SNAPSHOT_PARAMETER);
   }
 
   @Override

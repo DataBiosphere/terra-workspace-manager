@@ -11,7 +11,9 @@
       "userJourneyThreadPoolSize": 1,
       "expectedTimeForEach": 10,
       "expectedTimeForEachUnit": "MINUTES",
-      "parameters": ["wm-default-spend-profile"]
+      "parameters": {
+        "spend-profile-id": "wm-default-spend-profile"
+      }
     }
   ],
   "testUserFiles": ["bella.json", "elijah.json", "liam.json"]

@@ -5,23 +5,25 @@ import bio.terra.testrunner.runner.config.TestUserSpecification;
 import bio.terra.workspace.api.UnauthenticatedApi;
 import bio.terra.workspace.client.ApiClient;
 import java.time.Duration;
-import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import scripts.utils.ClientTestUtils;
+import scripts.utils.ParameterKeys;
+import scripts.utils.ParameterUtils;
 
 public class ServiceStatus extends TestScript {
   private static final Logger logger = LoggerFactory.getLogger(ServiceStatus.class);
   private Duration delay = Duration.ZERO;
 
   @Override
-  public void setParameters(List<String> parameters) {
-
-    if (parameters == null || parameters.size() == 0) {
-      return;
-    }
-    delay = Duration.ofSeconds(Long.parseLong(parameters.get(0)));
+  public void setParameters(Map<String, String> parameters) {
+    delay =
+        Duration.ofSeconds(
+            Long.parseLong(
+                ParameterUtils.getParamOrThrow(
+                    parameters, ParameterKeys.STATUS_CHECK_DELAY_PARAMETER)));
   }
 
   @Override

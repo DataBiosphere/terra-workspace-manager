@@ -4,6 +4,7 @@ import bio.terra.workspace.api.WorkspaceApi;
 import bio.terra.workspace.client.ApiException;
 import bio.terra.workspace.model.*;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 public abstract class DataRepoTestScriptBase extends WorkspaceAllocateTestScriptBase {
@@ -31,18 +32,11 @@ public abstract class DataRepoTestScriptBase extends WorkspaceAllocateTestScript
   }
 
   @Override
-  public void setParameters(List<String> parameters) throws Exception {
-    // TODO: Refactor this function when TestRunner starts supporting parameterMap
+  public void setParameters(Map<String, String> parameters) throws Exception {
     super.setParameters(parameters);
-    if (parameters == null || parameters.size() < 3) {
-      throw new IllegalArgumentException(
-          "Must provide Spend Profile ID, Data Repo snapshot ID, and Data Repo Instance Name in the parameters list");
-    } else {
-      // "spendProfileId = parameters.get(0);" fetches Spend Profile ID and is already implemented
-      // in the super class
-      dataRepoSnapshotId = parameters.get(1);
-      dataRepoInstanceName = parameters.get(2);
-    }
+    // Spend Profile ID is already read from the super class
+    dataRepoSnapshotId = ParameterUtils.getDataRepoSnapshot(parameters);
+    dataRepoInstanceName = ParameterUtils.getDataRepoInstance(parameters);
   }
 
   /**
