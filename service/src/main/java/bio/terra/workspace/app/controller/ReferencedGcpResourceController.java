@@ -66,12 +66,12 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
   public ReferencedGcpResourceController(
       ReferencedResourceService referenceResourceService,
       AuthenticatedUserRequestFactory authenticatedUserRequestFactory,
-      ResourceController resourceController,
+      ValidationUtils validationUtils,
       HttpServletRequest request,
       PetSaService petSaService) {
     this.referenceResourceService = referenceResourceService;
     this.authenticatedUserRequestFactory = authenticatedUserRequestFactory;
-    this.resourceController = resourceController;
+    this.validationUtils = validationUtils;
     this.request = request;
     this.petSaService = petSaService;
   }

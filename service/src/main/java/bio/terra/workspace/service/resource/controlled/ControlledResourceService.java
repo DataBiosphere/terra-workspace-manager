@@ -239,6 +239,7 @@ public class ControlledResourceService {
             // TODO: [PF-1282] need to disambiguate the RESOURCE and RESOURCE_NAME usage
             .resourceType(resource.getResourceType())
             .stewardshipType(resource.getStewardshipType())
+            .workspaceId(resource.getWorkspaceId().toString())
             .addParameter(ControlledResourceKeys.UPDATE_PARAMETERS, updateParameters)
             .addParameter(ResourceKeys.RESOURCE_NAME, resourceName)
             .addParameter(ResourceKeys.RESOURCE_DESCRIPTION, resourceDescription);
@@ -299,6 +300,7 @@ public class ControlledResourceService {
             .flightClass(CloneControlledGcsBucketResourceFlight.class)
             .resource(sourceBucketResource)
             .userRequest(userRequest)
+            .workspaceId(sourceWorkspaceId.toString())
             .addParameter(ControlledResourceKeys.DESTINATION_WORKSPACE_ID, destinationWorkspaceId)
             .addParameter(ResourceKeys.RESOURCE_NAME, destinationResourceName)
             .addParameter(ResourceKeys.RESOURCE_DESCRIPTION, destinationDescription)
@@ -651,6 +653,7 @@ public class ControlledResourceService {
         .resourceType(resource.getResourceType())
         .resourceName(resource.getName())
         .stewardshipType(resource.getStewardshipType())
+        .workspaceId(workspaceId.toString())
         .addParameter(ResourceKeys.RESOURCE_ID, resourceId.toString())
         .addParameter(JobMapKeys.RESULT_PATH.getKeyName(), resultPath);
   }
