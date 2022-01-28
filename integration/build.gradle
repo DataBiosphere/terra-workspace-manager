@@ -3,7 +3,7 @@ plugins {
 
     // Apply the application plugin to add support for building a CLI application in Java
     id 'application'
-    // Terra TestRunner plugin.
+    // Terra Test Runner plugin.
     id 'bio.terra.test-runner-plugin' version '0.1.0-SNAPSHOT'
 }
 
