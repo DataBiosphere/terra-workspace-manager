@@ -200,7 +200,7 @@ public class Alpha1ApiController implements Alpha1Api {
             {
               ControlledAiNotebookInstanceResource resource =
                   controlledResource.castToAiNotebookInstanceResource();
-              union.gcpAiNotebookInstance(resource.toApiResource(gcpProjectId));
+              union.gcpAiNotebookInstance(resource.toApiResource());
               break;
             }
           case GCS_BUCKET:

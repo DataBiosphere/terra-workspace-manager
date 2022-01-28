@@ -439,7 +439,7 @@ public class ControlledGcpResourceApiController implements ControlledGcpResource
       ControlledAiNotebookInstanceResource resource = jobResult.getResult();
       String workspaceProjectId =
           workspaceService.getAuthorizedRequiredGcpProject(resource.getWorkspaceId(), userRequest);
-      apiResource = resource.toApiResource(workspaceProjectId);
+      apiResource = resource.toApiResource();
     }
     return new ApiCreatedControlledGcpAiNotebookInstanceResult()
         .jobReport(jobResult.getJobReport())
@@ -498,10 +498,9 @@ public class ControlledGcpResourceApiController implements ControlledGcpResource
         controlledResourceService.getControlledResource(workspaceId, resourceId, userRequest);
     try {
       ApiGcpAiNotebookInstanceResource response =
-          controlledResource
-              .castToAiNotebookInstanceResource()
-              .toApiResource(
-                  workspaceService.getAuthorizedRequiredGcpProject(workspaceId, userRequest));
+          controlledResource.castToAiNotebookInstanceResource().toApiResource();
+      // TODO: security check for: workspaceService.getAuthorizedRequiredGcpProject(workspaceId,
+      // userRequest));
       return new ResponseEntity<>(response, HttpStatus.OK);
     } catch (InvalidMetadataException ex) {
       throw new BadRequestException(

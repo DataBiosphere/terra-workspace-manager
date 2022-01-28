@@ -17,7 +17,9 @@ import bio.terra.workspace.service.resource.controlled.cloud.azure.ip.Controlled
 import bio.terra.workspace.service.resource.controlled.cloud.azure.network.ControlledAzureNetworkResource;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.storage.ControlledAzureStorageResource;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.vm.ControlledAzureVmResource;
+import bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook.ControlledAiNotebookHandler;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook.ControlledAiNotebookInstanceResource;
+import bio.terra.workspace.service.resource.controlled.cloud.gcp.bqdataset.ControlledBigQueryDatasetHandler;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.bqdataset.ControlledBigQueryDatasetResource;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.ControlledGcsBucketResource;
 import bio.terra.workspace.service.resource.controlled.model.AccessScopeType;
@@ -873,9 +875,18 @@ public class ResourceDao {
           case GCS_BUCKET:
             return new ControlledGcsBucketResource(dbResource);
           case AI_NOTEBOOK_INSTANCE:
-            return new ControlledAiNotebookInstanceResource(dbResource);
+            {
+              // TODO: (PF-1296) handler dispatch instead of this switch statement
+              ControlledAiNotebookHandler handler = ControlledAiNotebookHandler.getHandler();
+              return handler.makeResourceFromDb(dbResource);
+            }
           case BIG_QUERY_DATASET:
-            return new ControlledBigQueryDatasetResource(dbResource);
+            {
+              // TODO: (PF-1296) handler dispatch instead of this switch statement
+              ControlledBigQueryDatasetHandler handler =
+                  ControlledBigQueryDatasetHandler.getHandler();
+              return handler.makeResourceFromDb(dbResource);
+            }
           case AZURE_IP:
             return new ControlledAzureIpResource(dbResource);
           case AZURE_DISK:

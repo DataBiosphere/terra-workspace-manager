@@ -3,7 +3,6 @@ package bio.terra.workspace.service.resource.controlled.cloud.gcp.bqdataset;
 import bio.terra.common.exception.InconsistentFieldsException;
 import bio.terra.common.exception.MissingRequiredFieldException;
 import bio.terra.workspace.db.DbSerDes;
-import bio.terra.workspace.db.model.DbResource;
 import bio.terra.workspace.generated.model.ApiGcpBigQueryDatasetAttributes;
 import bio.terra.workspace.generated.model.ApiGcpBigQueryDatasetResource;
 import bio.terra.workspace.service.resource.ValidationUtils;
@@ -16,13 +15,15 @@ import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.resource.referenced.exception.InvalidReferenceException;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 import javax.annotation.Nullable;
+import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
 
 public class ControlledBigQueryDatasetResource extends ControlledResource {
   private final String datasetName;
+  private final String projectId;
 
   @JsonCreator
   public ControlledBigQueryDatasetResource(
@@ -36,7 +37,8 @@ public class ControlledBigQueryDatasetResource extends ControlledResource {
       @JsonProperty("accessScope") AccessScopeType accessScope,
       @JsonProperty("managedBy") ManagedByType managedBy,
       @JsonProperty("applicationId") UUID applicationId,
-      @JsonProperty("datasetName") String datasetName) {
+      @JsonProperty("datasetName") String datasetName,
+      @JsonProperty("projectId") String projectId) {
 
     super(
         workspaceId,
@@ -50,14 +52,7 @@ public class ControlledBigQueryDatasetResource extends ControlledResource {
         applicationId,
         privateResourceState);
     this.datasetName = datasetName;
-    validate();
-  }
-
-  public ControlledBigQueryDatasetResource(DbResource dbResource) {
-    super(dbResource);
-    ControlledBigQueryDatasetAttributes attributes =
-        DbSerDes.fromJson(dbResource.getAttributes(), ControlledBigQueryDatasetAttributes.class);
-    this.datasetName = attributes.getDatasetName();
+    this.projectId = projectId;
     validate();
   }
 
@@ -77,21 +72,28 @@ public class ControlledBigQueryDatasetResource extends ControlledResource {
         .accessScope(getAccessScope())
         .managedBy(getManagedBy())
         .applicationId(getApplicationId())
-        .datasetName(getDatasetName());
+        .datasetName(getDatasetName())
+        .projectId(projectId);
   }
 
   public String getDatasetName() {
     return datasetName;
   }
 
-  public ApiGcpBigQueryDatasetAttributes toApiAttributes(String projectId) {
-    return new ApiGcpBigQueryDatasetAttributes().projectId(projectId).datasetId(getDatasetName());
+  public String getProjectId() {
+    return projectId;
+  }
+
+  public ApiGcpBigQueryDatasetAttributes toApiAttributes() {
+    return new ApiGcpBigQueryDatasetAttributes()
+        .projectId(getProjectId())
+        .datasetId(getDatasetName());
   }
 
   public ApiGcpBigQueryDatasetResource toApiResource(String projectId) {
     return new ApiGcpBigQueryDatasetResource()
         .metadata(super.toApiMetadata())
-        .attributes(toApiAttributes(projectId));
+        .attributes(toApiAttributes());
   }
 
   @Override
@@ -101,7 +103,8 @@ public class ControlledBigQueryDatasetResource extends ControlledResource {
 
   @Override
   public String attributesToJson() {
-    return DbSerDes.toJson(new ControlledBigQueryDatasetAttributes(getDatasetName()));
+    return DbSerDes.toJson(
+        new ControlledBigQueryDatasetAttributes(getDatasetName(), getProjectId()));
   }
 
   @Override
@@ -114,23 +117,39 @@ public class ControlledBigQueryDatasetResource extends ControlledResource {
       throw new MissingRequiredFieldException(
           "Missing required field datasetName for BigQuery dataset");
     }
+    if (getProjectId() == null) {
+      throw new MissingRequiredFieldException(
+          "Missing required field projectId for BigQuery dataset");
+    }
     ValidationUtils.validateBqDatasetName(getDatasetName());
   }
 
   @Override
   public boolean equals(Object o) {
-    if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
-    if (!super.equals(o)) return false;
+    if (this == o) {
+      return true;
+    }
+
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
 
     ControlledBigQueryDatasetResource that = (ControlledBigQueryDatasetResource) o;
 
-    return (datasetName.equals(that.datasetName));
+    return new EqualsBuilder()
+        .appendSuper(super.equals(o))
+        .append(datasetName, that.datasetName)
+        .append(projectId, that.projectId)
+        .isEquals();
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(super.hashCode(), datasetName);
+    return new HashCodeBuilder(17, 37)
+        .appendSuper(super.hashCode())
+        .append(datasetName)
+        .append(projectId)
+        .toHashCode();
   }
 
   private static String generateUniqueDatasetId() {
@@ -150,6 +169,7 @@ public class ControlledBigQueryDatasetResource extends ControlledResource {
     private ManagedByType managedBy;
     private UUID applicationId;
     private String datasetName;
+    private String projectId;
 
     public ControlledBigQueryDatasetResource.Builder workspaceId(UUID workspaceId) {
       this.workspaceId = workspaceId;
@@ -187,6 +207,11 @@ public class ControlledBigQueryDatasetResource extends ControlledResource {
       } catch (InvalidReferenceException e) {
         this.datasetName = generateUniqueDatasetId();
       }
+      return this;
+    }
+
+    public ControlledBigQueryDatasetResource.Builder projectId(String projectId) {
+      this.projectId = projectId;
       return this;
     }
 
@@ -233,7 +258,8 @@ public class ControlledBigQueryDatasetResource extends ControlledResource {
           accessScope,
           managedBy,
           applicationId,
-          datasetName);
+          datasetName,
+          projectId);
     }
   }
 }
