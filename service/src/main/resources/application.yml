@@ -140,3 +140,8 @@ feature:
   azure-enabled: false
   # alpha1-enabled - Controls support of the Alpha1 experimental API and service
   alpha1-enabled: false
+
+reference:
+  gitrepos:
+    allow-listed-git-repo-host-names:
+      - github.com

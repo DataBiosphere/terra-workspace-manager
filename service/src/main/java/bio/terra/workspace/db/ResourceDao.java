@@ -30,6 +30,7 @@ import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.model.StewardshipType;
 import bio.terra.workspace.service.resource.model.WsmResource;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
+import bio.terra.workspace.service.resource.referenced.cloud.any.ReferencedGitRepoResource;
 import bio.terra.workspace.service.resource.referenced.cloud.gcp.ReferencedResource;
 import bio.terra.workspace.service.resource.referenced.cloud.gcp.bqdataset.ReferencedBigQueryDatasetResource;
 import bio.terra.workspace.service.resource.referenced.cloud.gcp.bqdatatable.ReferencedBigQueryDataTableResource;
@@ -863,9 +864,11 @@ public class ResourceDao {
             return new ReferencedBigQueryDataTableResource(dbResource);
           case DATA_REPO_SNAPSHOT:
             return new ReferencedDataRepoSnapshotResource(dbResource);
+          case GIT_REPO:
+            return new ReferencedGitRepoResource(dbResource);
           default:
             throw new InvalidMetadataException(
-                "Invalid reference resource type" + dbResource.getResourceType().toString());
+                "Invalid reference resource type " + dbResource.getResourceType().toString());
         }
 
       case CONTROLLED:

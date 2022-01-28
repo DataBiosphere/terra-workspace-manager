@@ -24,6 +24,7 @@ import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import bio.terra.workspace.service.resource.model.StewardshipType;
 import bio.terra.workspace.service.resource.model.WsmResource;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
+import bio.terra.workspace.service.resource.referenced.cloud.any.ReferencedGitRepoResource;
 import bio.terra.workspace.service.resource.referenced.cloud.gcp.ReferencedResource;
 import bio.terra.workspace.service.resource.referenced.cloud.gcp.ReferencedResourceService;
 import bio.terra.workspace.service.resource.referenced.cloud.gcp.bqdataset.ReferencedBigQueryDatasetResource;
@@ -161,6 +162,13 @@ public class ResourceController implements ResourceApi {
             {
               ReferencedGcsObjectResource resource = referencedResource.castToGcsObjectResource();
               union.gcpGcsObject(resource.toApiAttributes());
+              break;
+            }
+
+          case GIT_REPO:
+            {
+              ReferencedGitRepoResource resource = referencedResource.castToGitRepoResource();
+              union.gitRepo(resource.toApiAttributes());
               break;
             }
 

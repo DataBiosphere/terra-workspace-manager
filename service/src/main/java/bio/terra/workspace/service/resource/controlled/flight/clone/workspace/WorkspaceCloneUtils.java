@@ -4,6 +4,7 @@ import bio.terra.common.exception.BadRequestException;
 import bio.terra.stairway.FlightStatus;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.model.WsmResource;
+import bio.terra.workspace.service.resource.referenced.cloud.any.ReferencedGitRepoResource;
 import bio.terra.workspace.service.resource.referenced.cloud.gcp.ReferencedResource;
 import bio.terra.workspace.service.resource.referenced.cloud.gcp.bqdataset.ReferencedBigQueryDatasetResource;
 import bio.terra.workspace.service.resource.referenced.cloud.gcp.bqdatatable.ReferencedBigQueryDataTableResource;
@@ -85,6 +86,14 @@ public class WorkspaceCloneUtils {
         destinationResource =
             buildDestinationBigQueryDataTableReference(
                 sourceReferencedResource.castToBigQueryDataTableResource(),
+                destinationWorkspaceId,
+                name,
+                description);
+        break;
+      case GIT_REPO:
+        destinationResource =
+            buildDestinationGitHubRepoReference(
+                sourceReferencedResource.castToGitRepoResource(),
                 destinationWorkspaceId,
                 name,
                 description);
@@ -177,6 +186,20 @@ public class WorkspaceCloneUtils {
       @Nullable String description) {
     final ReferencedDataRepoSnapshotResource.Builder resultBuilder =
         sourceReferencedDataRepoSnapshotResource.toBuilder()
+            .workspaceId(destinationWorkspaceId)
+            .resourceId(UUID.randomUUID());
+    Optional.ofNullable(name).ifPresent(resultBuilder::name);
+    Optional.ofNullable(description).ifPresent(resultBuilder::description);
+    return resultBuilder.build();
+  }
+
+  private static ReferencedResource buildDestinationGitHubRepoReference(
+      ReferencedGitRepoResource gitHubRepoResource,
+      UUID destinationWorkspaceId,
+      @Nullable String name,
+      @Nullable String description) {
+    ReferencedGitRepoResource.Builder resultBuilder =
+        gitHubRepoResource.toBuilder()
             .workspaceId(destinationWorkspaceId)
             .resourceId(UUID.randomUUID());
     Optional.ofNullable(name).ifPresent(resultBuilder::name);
