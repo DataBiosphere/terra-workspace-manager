@@ -97,7 +97,8 @@ jobs:
           ~/.gradle/caches
           ~/.gradle/wrapper
         key: v1-${{ runner.os }}-gradle-${{ hashfiles('**/gradle-wrapper.properties') }}-${{ hashFiles('**/*.gradle') }}
-        restore-keys: v1-${{ runner.os }}-gradle-${{ hashfiles('**/gradle-wrapper.properties') }}
+#        TODO(zloery): temporarily disabling the restore key to fix a broken cache. Once the right value is cached, I'll put this back.
+#        restore-keys: v1-${{ runner.os }}-gradle-${{ hashfiles('**/gradle-wrapper.properties') }}
 
     - name: Grant execute permission for gradlew
       if: steps.skiptest.outputs.is-bump == 'no'
