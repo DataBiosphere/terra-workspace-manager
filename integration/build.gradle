@@ -1,7 +1,7 @@
 plugins {
     id 'terra-workspace-manager.java-conventions'
 
-    // Apply the application plugin to add support for building a CLI application in Java.
+    // Apply the application plugin to add support for building a CLI application in Java
     id 'application'
     // Terra TestRunner plugin.
     id 'bio.terra.test-runner-plugin' version '0.1.0-SNAPSHOT'
