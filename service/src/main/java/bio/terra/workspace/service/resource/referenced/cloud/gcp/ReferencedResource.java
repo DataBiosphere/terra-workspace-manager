@@ -8,6 +8,7 @@ import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.model.StewardshipType;
 import bio.terra.workspace.service.resource.model.WsmResource;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
+import bio.terra.workspace.service.resource.referenced.cloud.any.ReferencedGitRepoResource;
 import bio.terra.workspace.service.resource.referenced.cloud.gcp.bqdataset.ReferencedBigQueryDatasetResource;
 import bio.terra.workspace.service.resource.referenced.cloud.gcp.bqdatatable.ReferencedBigQueryDataTableResource;
 import bio.terra.workspace.service.resource.referenced.cloud.gcp.datareposnapshot.ReferencedDataRepoSnapshotResource;
@@ -62,6 +63,11 @@ public abstract class ReferencedResource extends WsmResource {
   public ReferencedGcsObjectResource castToGcsObjectResource() {
     validateSubclass(WsmResourceType.GCS_OBJECT);
     return (ReferencedGcsObjectResource) this;
+  }
+
+  public ReferencedGitRepoResource castToGitRepoResource() {
+    validateSubclass(WsmResourceType.GIT_REPO);
+    return (ReferencedGitRepoResource) this;
   }
 
   /**

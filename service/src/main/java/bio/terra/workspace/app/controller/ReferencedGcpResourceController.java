@@ -6,28 +6,34 @@ import bio.terra.workspace.generated.model.ApiCloneReferencedGcpBigQueryDatasetR
 import bio.terra.workspace.generated.model.ApiCloneReferencedGcpDataRepoSnapshotResourceResult;
 import bio.terra.workspace.generated.model.ApiCloneReferencedGcpGcsBucketResourceResult;
 import bio.terra.workspace.generated.model.ApiCloneReferencedGcpGcsObjectResourceResult;
+import bio.terra.workspace.generated.model.ApiCloneReferencedGitRepoResourceResult;
 import bio.terra.workspace.generated.model.ApiCloneReferencedResourceRequestBody;
 import bio.terra.workspace.generated.model.ApiCreateDataRepoSnapshotReferenceRequestBody;
 import bio.terra.workspace.generated.model.ApiCreateGcpBigQueryDataTableReferenceRequestBody;
 import bio.terra.workspace.generated.model.ApiCreateGcpBigQueryDatasetReferenceRequestBody;
 import bio.terra.workspace.generated.model.ApiCreateGcpGcsBucketReferenceRequestBody;
 import bio.terra.workspace.generated.model.ApiCreateGcpGcsObjectReferenceRequestBody;
+import bio.terra.workspace.generated.model.ApiCreateGitRepoReferenceRequestBody;
 import bio.terra.workspace.generated.model.ApiDataRepoSnapshotResource;
 import bio.terra.workspace.generated.model.ApiGcpBigQueryDataTableResource;
 import bio.terra.workspace.generated.model.ApiGcpBigQueryDatasetResource;
 import bio.terra.workspace.generated.model.ApiGcpGcsBucketResource;
 import bio.terra.workspace.generated.model.ApiGcpGcsObjectResource;
+import bio.terra.workspace.generated.model.ApiGitRepoResource;
 import bio.terra.workspace.generated.model.ApiUpdateBigQueryDataTableReferenceRequestBody;
 import bio.terra.workspace.generated.model.ApiUpdateBigQueryDatasetReferenceRequestBody;
 import bio.terra.workspace.generated.model.ApiUpdateDataReferenceRequestBody;
 import bio.terra.workspace.generated.model.ApiUpdateDataRepoSnapshotReferenceRequestBody;
 import bio.terra.workspace.generated.model.ApiUpdateGcsBucketObjectReferenceRequestBody;
 import bio.terra.workspace.generated.model.ApiUpdateGcsBucketReferenceRequestBody;
+import bio.terra.workspace.generated.model.ApiUpdateGitRepoReferenceRequestBody;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequestFactory;
 import bio.terra.workspace.service.petserviceaccount.PetSaService;
+import bio.terra.workspace.service.resource.ValidationUtils;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
+import bio.terra.workspace.service.resource.referenced.cloud.any.ReferencedGitRepoResource;
 import bio.terra.workspace.service.resource.referenced.cloud.gcp.ReferencedResource;
 import bio.terra.workspace.service.resource.referenced.cloud.gcp.ReferencedResourceService;
 import bio.terra.workspace.service.resource.referenced.cloud.gcp.bqdataset.ReferencedBigQueryDatasetResource;
@@ -52,6 +58,7 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
 
   private final ReferencedResourceService referenceResourceService;
   private final AuthenticatedUserRequestFactory authenticatedUserRequestFactory;
+  private final ValidationUtils validationUtils;
   private final HttpServletRequest request;
   private final PetSaService petSaService;
 
@@ -59,10 +66,12 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
   public ReferencedGcpResourceController(
       ReferencedResourceService referenceResourceService,
       AuthenticatedUserRequestFactory authenticatedUserRequestFactory,
+      ValidationUtils validationUtils,
       HttpServletRequest request,
       PetSaService petSaService) {
     this.referenceResourceService = referenceResourceService;
     this.authenticatedUserRequestFactory = authenticatedUserRequestFactory;
+    this.validationUtils = validationUtils;
     this.request = request;
     this.petSaService = petSaService;
   }
@@ -741,6 +750,123 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
     final var result =
         new ApiCloneReferencedGcpDataRepoSnapshotResourceResult()
             .resource(clonedReferencedResource.castToDataRepoSnapshotResource().toApiResource())
+            .sourceWorkspaceId(sourceReferencedResource.getWorkspaceId())
+            .sourceResourceId(sourceReferencedResource.getResourceId())
+            .effectiveCloningInstructions(effectiveCloningInstructions.toApiModel());
+    return new ResponseEntity<>(result, HttpStatus.OK);
+  }
+
+  // - Git Repo referenced resource - //
+  @Override
+  public ResponseEntity<ApiGitRepoResource> createGitRepoReference(
+      UUID workspaceId, @Valid ApiCreateGitRepoReferenceRequestBody body) {
+    // Construct a ReferenceGcsBucketResource object from the API input
+    validationUtils.validateGitRepoUri(body.getGitrepo().getGitRepoUrl());
+    ReferencedGitRepoResource resource =
+        ReferencedGitRepoResource.builder()
+            .workspaceId(workspaceId)
+            .name(body.getMetadata().getName())
+            .description(body.getMetadata().getDescription())
+            .cloningInstructions(
+                CloningInstructions.fromApiModel(body.getMetadata().getCloningInstructions()))
+            .gitRepoUrl(body.getGitrepo().getGitRepoUrl())
+            .build();
+
+    ReferencedResource referenceResource =
+        referenceResourceService.createReferenceResource(resource, getAuthenticatedInfo());
+    ApiGitRepoResource response = referenceResource.castToGitRepoResource().toApiModel();
+    return new ResponseEntity<>(response, HttpStatus.OK);
+  }
+
+  @Override
+  public ResponseEntity<ApiGitRepoResource> getGitRepoReference(UUID workspaceId, UUID resourceId) {
+    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    ReferencedResource referenceResource =
+        referenceResourceService.getReferenceResource(workspaceId, resourceId, userRequest);
+    ApiGitRepoResource response = referenceResource.castToGitRepoResource().toApiModel();
+    return new ResponseEntity<>(response, HttpStatus.OK);
+  }
+
+  @Override
+  public ResponseEntity<ApiGitRepoResource> getGitRepoReferenceByName(
+      UUID workspaceId, String resourceName) {
+    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    ReferencedResource referenceResource =
+        referenceResourceService.getReferenceResourceByName(workspaceId, resourceName, userRequest);
+    ApiGitRepoResource response = referenceResource.castToGitRepoResource().toApiModel();
+    return new ResponseEntity<>(response, HttpStatus.OK);
+  }
+
+  @Override
+  public ResponseEntity<Void> updateGitRepoReference(
+      UUID workspaceId, UUID referenceId, ApiUpdateGitRepoReferenceRequestBody body) {
+    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    String gitRepoUrl = body.getGitRepoUrl();
+    if (StringUtils.isEmpty(gitRepoUrl)) {
+      referenceResourceService.updateReferenceResource(
+          workspaceId, referenceId, body.getName(), body.getDescription(), userRequest);
+    } else {
+      ReferencedGitRepoResource.Builder updateGitRepoResource =
+          referenceResourceService
+              .getReferenceResource(workspaceId, referenceId, userRequest)
+              .castToGitRepoResource()
+              .toBuilder();
+      validationUtils.validateGitRepoUri(gitRepoUrl);
+      updateGitRepoResource.gitRepoUrl(gitRepoUrl);
+
+      referenceResourceService.updateReferenceResource(
+          workspaceId,
+          referenceId,
+          body.getName(),
+          body.getDescription(),
+          updateGitRepoResource.build(),
+          userRequest);
+    }
+    return new ResponseEntity<>(HttpStatus.OK);
+  }
+
+  @Override
+  public ResponseEntity<Void> deleteGitRepoReference(UUID workspaceId, UUID resourceId) {
+    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    referenceResourceService.deleteReferenceResourceForResourceType(
+        workspaceId, resourceId, userRequest, WsmResourceType.GIT_REPO);
+    return new ResponseEntity<>(HttpStatus.OK);
+  }
+
+  public ResponseEntity<ApiCloneReferencedGitRepoResourceResult> cloneGitRepoReference(
+      UUID workspaceId, UUID resourceId, @Valid ApiCloneReferencedResourceRequestBody body) {
+    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+
+    final ReferencedResource sourceReferencedResource =
+        referenceResourceService.getReferenceResource(workspaceId, resourceId, userRequest);
+
+    final CloningInstructions effectiveCloningInstructions =
+        Optional.ofNullable(body.getCloningInstructions())
+            .map(CloningInstructions::fromApiModel)
+            .orElse(sourceReferencedResource.getCloningInstructions());
+    if (CloningInstructions.COPY_REFERENCE != effectiveCloningInstructions) {
+      // Nothing to clone here
+      final var emptyResult =
+          new ApiCloneReferencedGitRepoResourceResult()
+              .effectiveCloningInstructions(effectiveCloningInstructions.toApiModel())
+              .sourceResourceId(sourceReferencedResource.getResourceId())
+              .sourceWorkspaceId(sourceReferencedResource.getWorkspaceId())
+              .resource(null);
+      return new ResponseEntity<>(emptyResult, HttpStatus.OK);
+    }
+    // Clone the reference
+    final ReferencedResource clonedReferencedResource =
+        referenceResourceService.cloneReferencedResource(
+            sourceReferencedResource,
+            body.getDestinationWorkspaceId(),
+            body.getName(),
+            body.getDescription(),
+            userRequest);
+
+    // Build the correct response type
+    ApiCloneReferencedGitRepoResourceResult result =
+        new ApiCloneReferencedGitRepoResourceResult()
+            .resource(clonedReferencedResource.castToGitRepoResource().toApiModel())
             .sourceWorkspaceId(sourceReferencedResource.getWorkspaceId())
             .sourceResourceId(sourceReferencedResource.getResourceId())
             .effectiveCloningInstructions(effectiveCloningInstructions.toApiModel());

@@ -11,6 +11,7 @@ import bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook.Cont
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.bqdataset.ControlledBigQueryDatasetResource;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.ControlledGcsBucketResource;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
+import bio.terra.workspace.service.resource.referenced.cloud.any.ReferencedGitRepoResource;
 import bio.terra.workspace.service.resource.referenced.cloud.gcp.ReferencedResource;
 import bio.terra.workspace.service.resource.referenced.cloud.gcp.bqdataset.ReferencedBigQueryDatasetResource;
 import bio.terra.workspace.service.resource.referenced.cloud.gcp.bqdatatable.ReferencedBigQueryDataTableResource;
@@ -88,7 +89,13 @@ public enum WsmResourceType {
       "AZURE_STORAGE_ACCOUNT",
       ApiResourceType.AZURE_STORAGE_ACCOUNT,
       null,
-      ControlledAzureStorageResource.class);
+      ControlledAzureStorageResource.class),
+  GIT_REPO(
+      CloudPlatform.ANY,
+      "GIT_REPO",
+      ApiResourceType.GIT_REPO,
+      ReferencedGitRepoResource.class,
+      /*controlledClass=*/ null);
 
   private final CloudPlatform cloudPlatform;
   private final String dbString; // serialized form of the resource type
@@ -97,6 +104,7 @@ public enum WsmResourceType {
   private final Class<? extends ControlledResource> controlledClass;
 
   WsmResourceType(
+      // TODO(PF-1290): move cloudPlatform to controlled resource.
       CloudPlatform cloudPlatform,
       String dbString,
       ApiResourceType apiResourceType,

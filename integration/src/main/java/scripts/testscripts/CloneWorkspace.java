@@ -26,12 +26,12 @@ import bio.terra.workspace.model.CloneResourceResult;
 import bio.terra.workspace.model.CloneWorkspaceRequest;
 import bio.terra.workspace.model.CloneWorkspaceResult;
 import bio.terra.workspace.model.CloningInstructionsEnum;
-import bio.terra.workspace.model.ControlledResourceIamRole;
 import bio.terra.workspace.model.CreatedControlledGcpGcsBucket;
 import bio.terra.workspace.model.GcpBigQueryDataTableResource;
 import bio.terra.workspace.model.GcpBigQueryDatasetResource;
 import bio.terra.workspace.model.GcpGcsBucketResource;
 import bio.terra.workspace.model.GcpGcsObjectResource;
+import bio.terra.workspace.model.GitRepoResource;
 import bio.terra.workspace.model.GrantRoleRequestBody;
 import bio.terra.workspace.model.IamRole;
 import bio.terra.workspace.model.ResourceCloneDetails;
@@ -43,7 +43,6 @@ import com.google.cloud.bigquery.QueryJobConfiguration;
 import com.google.cloud.bigquery.TableResult;
 import com.google.cloud.storage.BlobId;
 import com.google.cloud.storage.Storage;
-import com.google.common.collect.ImmutableList;
 import java.io.IOException;
 import java.time.Duration;
 import java.util.List;
@@ -67,6 +66,7 @@ public class CloneWorkspace extends WorkspaceAllocateTestScriptBase {
   private CreatedControlledGcpGcsBucket sharedSourceBucket;
   private GcpBigQueryDatasetResource sourceDatasetReference;
   private GcpBigQueryDataTableResource sourceDataTableReference;
+  private GitRepoResource sourceGitRepoReference;
   private GcpBigQueryDatasetResource copyDefinitionDataset;
   private GcpBigQueryDatasetResource copyResourceDataset;
   private GcpBigQueryDatasetResource privateDataset;
@@ -82,11 +82,7 @@ public class CloneWorkspace extends WorkspaceAllocateTestScriptBase {
   private UUID destinationWorkspaceId;
   private WorkspaceApi cloningUserWorkspaceApi;
 
-  // Roles to grant user on private resource
-  private static final ImmutableList<ControlledResourceIamRole> PRIVATE_ROLES =
-      ImmutableList.of(ControlledResourceIamRole.WRITER, ControlledResourceIamRole.EDITOR);
-
-  private static final int EXPECTED_NUM_CLONED_RESOURCES = 11;
+  private static final int EXPECTED_NUM_CLONED_RESOURCES = 12;
 
   @Override
   protected void doSetup(
@@ -217,6 +213,10 @@ public class CloneWorkspace extends WorkspaceAllocateTestScriptBase {
     sourceDataTableReference =
         ResourceMaker.makeBigQueryDataTableReference(
             referencedGcpResourceApi, getWorkspaceId(), "datatable_resource_1");
+
+    sourceGitRepoReference =
+        ResourceMaker.makeGitRepoReference(
+            referencedGcpResourceApi, getWorkspaceId(), "wsm_git_repo_referenced_resource");
   }
 
   @Override
@@ -508,6 +508,24 @@ public class CloneWorkspace extends WorkspaceAllocateTestScriptBase {
     assertEquals(StewardshipType.REFERENCED, dataTableReferenceDetails.getStewardshipType());
     assertNull(dataTableReferenceDetails.getDestinationResourceId());
     assertNull(dataTableReferenceDetails.getErrorMessage());
+
+    ResourceCloneDetails gitReferenceCloneDetails =
+        getOrFail(
+            cloneResult.getWorkspace().getResources().stream()
+                .filter(
+                    r ->
+                        sourceGitRepoReference
+                            .getMetadata()
+                            .getResourceId()
+                            .equals(r.getSourceResourceId()))
+                .findFirst());
+    assertEquals(CloneResourceResult.SUCCEEDED, gitReferenceCloneDetails.getResult());
+    assertEquals(
+        CloningInstructionsEnum.REFERENCE, gitReferenceCloneDetails.getCloningInstructions());
+    assertEquals(ResourceType.GIT_REPO, gitReferenceCloneDetails.getResourceType());
+    assertEquals(StewardshipType.REFERENCED, gitReferenceCloneDetails.getStewardshipType());
+    assertNotNull(gitReferenceCloneDetails.getDestinationResourceId());
+    assertNull(gitReferenceCloneDetails.getErrorMessage());
   }
 
   @Override

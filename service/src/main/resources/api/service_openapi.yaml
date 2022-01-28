@@ -1172,7 +1172,121 @@ paths:
           $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/ServerError'
-
+  /api/workspaces/v1/{workspaceId}/resources/referenced/gitrepos:
+    parameters:
+      - $ref: '#/components/parameters/WorkspaceId'
+    post:
+      summary: Create a new Git repository reference in a workspace.
+      operationId: createGitRepoReference
+      tags: [ ReferencedGcpResource ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateGitRepoReferenceRequestBody'
+      responses:
+        '200':
+          $ref: '#/components/responses/GitRepoReferenceResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+  /api/workspaces/v1/{workspaceId}/resources/referenced/gitrepos/{resourceId}:
+    parameters:
+    - $ref: '#/components/parameters/WorkspaceId'
+    - $ref: '#/components/parameters/ResourceId'
+    get:
+      summary: Gets a reference to a Git repository from a workspace.
+      operationId: getGitRepoReference
+      tags: [ ReferencedGcpResource ]
+      responses:
+        '200':
+          $ref: '#/components/responses/GitRepoReferenceResponse'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+    patch:
+      summary: Update name, description or referencing target of a Git repository reference in a workspace.
+      operationId: updateGitRepoReference
+      tags: [ ReferencedGcpResource ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateGitRepoReferenceRequestBody'
+      responses:
+        '204':
+          description: OK
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+    delete:
+      summary: Delete Git repository reference
+      operationId: deleteGitRepoReference
+      tags: [ ReferencedGcpResource ]
+      responses:
+        '204':
+          description: OK
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+  /api/workspaces/v1/{workspaceId}/resources/referenced/gitrepos/{resourceId}/clone:
+    parameters:
+    - $ref: '#/components/parameters/WorkspaceId'
+    - $ref: '#/components/parameters/ResourceId'
+    post:
+      summary: Clone a Git repository
+      operationId: cloneGitRepoReference
+      tags: [ ReferencedGcpResource ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CloneReferencedResourceRequestBody'
+      responses:
+        '200':
+          $ref: '#/components/responses/CloneReferencedGitRepoResourceResponse'
+        '202':
+          $ref: '#/components/responses/CloneReferencedGitRepoResourceResponse'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+  /api/workspaces/v1/{workspaceId}/resources/referenced/gitrepos/name/{name}:
+    parameters:
+    - $ref: '#/components/parameters/WorkspaceId'
+    - $ref: '#/components/parameters/Name'
+    get:
+      summary: Gets a reference to a Git repo referenced resource by name
+      operationId: getGitRepoReferenceByName
+      tags: [ ReferencedGcpResource ]
+      responses:
+        '200':
+          $ref: '#/components/responses/GitRepoReferenceResponse'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
   /api/workspaces/v1/{workspaceId}/cloudcontexts:
     parameters:
       - $ref: '#/components/parameters/WorkspaceId'
@@ -2417,6 +2531,17 @@ components:
           description: The ID of the Data Repo snapshot
           type: string
 
+    UpdateGitRepoReferenceRequestBody:
+      type: object
+      properties:
+        name:
+          $ref: "#/components/schemas/Name"
+        description:
+          type: string
+        gitRepoUrl:
+          description: the url for cloning the corresponding git repository
+          type: string
+
     # TODO(PF-404): remove this in favor of reference-type specific objects.
     DataReferenceMetadata:
       deprecated: true
@@ -2840,6 +2965,16 @@ components:
           $ref: '#/components/schemas/ReferenceResourceCommonFields'
         dataset:
           $ref: '#/components/schemas/GcpBigQueryDatasetAttributes'
+
+    CreateGitRepoReferenceRequestBody:
+      type: object
+      description: A request to create a reference to a Git repo.
+      required: [metadata, gitrepo]
+      properties:
+        metadata:
+          $ref: '#/components/schemas/ReferenceResourceCommonFields'
+        gitrepo:
+          $ref: '#/components/schemas/GitRepoAttributes'
 
     WorkspaceStageModel:
       description: Enum for possible stages of a workspace along the Rawls migration path
@@ -3539,6 +3674,25 @@ components:
           format: uuid
         resource:
           $ref: '#/components/schemas/DataRepoSnapshotResource'
+    CloneReferencedGitRepoResourceResult:
+      description: >-
+        API result class for cloning a referenced Git repo resource. Includes source workspace
+        and resource IDs for provenance. If the effective cloning instructions are not
+        COPY_REFERENCE, then no clone is created and the resource is null.
+      type: object
+      properties:
+        effectiveCloningInstructions:
+          $ref: '#/components/schemas/CloningInstructionsEnum'
+        sourceWorkspaceId:
+          description: ID of the workspace of the source resource for this clone
+          type: string
+          format: uuid
+        sourceResourceId:
+          description: ID of the source resource
+          type: string
+          format: uuid
+        resource:
+          $ref: '#/components/schemas/GitRepoResource'
     GcpBigQueryDatasetCreationParameters:
       description: >-
         Dataset-specific properties to be set on creation. These are a subset of the
@@ -4026,6 +4180,26 @@ components:
         attributes:
           $ref: '#/components/schemas/GcpGcsObjectAttributes'
 
+    GitRepoAttributes:
+      description: Attributes of a Git repository
+      type: object
+      required: [ gitRepoUrl ]
+      properties:
+        gitRepoUrl:
+          description: URL for cloning the git repository, could be an HTTPs or SSH url.
+          type: string
+
+    GitRepoResource:
+      type: object
+      description: A git repository resource
+      required: [ metadata, attributes ]
+      properties:
+        metadata:
+          description:  the resource metadata common to all resources
+          $ref: '#/components/schemas/ResourceMetadata'
+        attributes:
+          $ref: '#/components/schemas/GitRepoAttributes'
+
     AzureIpAttributes:
       description: >-
         IP properties included in post-creation get. Others must be retrieved from Azure using the name.
@@ -4247,6 +4421,8 @@ components:
           $ref: '#/components/schemas/AzureStorageAttributes'
         azureVm:
           $ref: '#/components/schemas/AzureVmAttributes'
+        gitRepo:
+          $ref: '#/components/schemas/GitRepoAttributes'
 
     ResourceDescription:
       type: object
@@ -4335,6 +4511,7 @@ components:
         - AZURE_NETWORK
         - AZURE_VM
         - AZURE_STORAGE_ACCOUNT
+        - GIT_REPO
 
     StewardshipType:
       description: Enum containing valid stewardship types. Used for enumeration
@@ -4478,6 +4655,13 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/GcpBigQueryDatasetResource'
+
+    GitRepoReferenceResponse:
+      description: Response containing a reference to a git repository.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/GitRepoResource'
 
     RoleBindingListResponse:
       description: Response to list permissions calls
@@ -4660,7 +4844,12 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/CloneReferencedGcpDataRepoSnapshotResourceResult'
-
+    CloneReferencedGitRepoResourceResponse:
+      description: Response for successful Git Repo resource reference clone
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/CloneReferencedGitRepoResourceResult'
     DisableApplicationResultResponse:
       description: Response holding the disable application result
       content:

@@ -106,15 +106,17 @@ public abstract class WsmResource {
    * @return partially constructed Api Model common resource description
    */
   public ApiResourceMetadata toApiMetadata() {
-    return new ApiResourceMetadata()
-        .workspaceId(workspaceId)
-        .resourceId(resourceId)
-        .name(name)
-        .description(description)
-        .resourceType(getResourceType().toApiModel())
-        .stewardshipType(getStewardshipType().toApiModel())
-        .cloudPlatform(getResourceType().getCloudPlatform().toApiModel())
-        .cloningInstructions(cloningInstructions.toApiModel());
+    ApiResourceMetadata metadata =
+        new ApiResourceMetadata()
+            .workspaceId(workspaceId)
+            .resourceId(resourceId)
+            .name(name)
+            .description(description)
+            .resourceType(getResourceType().toApiModel())
+            .stewardshipType(getStewardshipType().toApiModel())
+            .cloudPlatform(getResourceType().getCloudPlatform().toApiModel())
+            .cloningInstructions(cloningInstructions.toApiModel());
+    return metadata;
   }
 
   /**
