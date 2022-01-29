@@ -321,6 +321,7 @@ public class ControlledResourceService {
       ApiGcpBigQueryDatasetCreationParameters creationParameters,
       ControlledResourceIamRole privateResourceIamRole,
       AuthenticatedUserRequest userRequest) {
+
     JobBuilder jobBuilder =
         commonCreationJobBuilder(resource, privateResourceIamRole, userRequest)
             .addParameter(ControlledResourceKeys.CREATION_PARAMETERS, creationParameters);

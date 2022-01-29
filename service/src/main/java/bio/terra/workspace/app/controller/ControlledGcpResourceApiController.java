@@ -327,6 +327,10 @@ public class ControlledGcpResourceApiController implements ControlledGcpResource
     ManagedByType managedBy = ManagedByType.fromApi(body.getCommon().getManagedBy());
     AccessScopeType accessScopeType = AccessScopeType.fromApi(body.getCommon().getAccessScope());
 
+    // We need to retrieve the project id so it can be used in the BQ dataset attributes.
+    String projectId =
+        workspaceService.getAuthorizedRequiredGcpProject(workspaceId, userRequest);
+
     ControlledBigQueryDatasetResource resource =
         ControlledBigQueryDatasetResource.builder()
             .workspaceId(workspaceId)
@@ -342,6 +346,7 @@ public class ControlledGcpResourceApiController implements ControlledGcpResource
             .datasetName(
                 Optional.ofNullable(body.getDataset().getDatasetId())
                     .orElse(body.getCommon().getName()))
+            .projectId(projectId)
             .build();
 
     final ControlledBigQueryDatasetResource createdDataset =
@@ -371,6 +376,8 @@ public class ControlledGcpResourceApiController implements ControlledGcpResource
   public ResponseEntity<ApiCreatedControlledGcpAiNotebookInstanceResult> createAiNotebookInstance(
       UUID workspaceId, @Valid ApiCreateControlledGcpAiNotebookInstanceRequestBody body) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    String projectId =
+        workspaceService.getAuthorizedRequiredGcpProject(workspaceId, userRequest);
 
     PrivateUserRole privateUserRole =
         ControllerUtils.computePrivateUserRole(
@@ -397,6 +404,7 @@ public class ControlledGcpResourceApiController implements ControlledGcpResource
                     .orElse(
                         ControlledAiNotebookInstanceResource.generateInstanceId(
                             privateUserRole.getUserEmail())))
+            .projectId(projectId)
             .build();
 
     String jobId =
@@ -434,8 +442,6 @@ public class ControlledGcpResourceApiController implements ControlledGcpResource
     ApiGcpAiNotebookInstanceResource apiResource = null;
     if (jobResult.getJobReport().getStatus().equals(ApiJobReport.StatusEnum.SUCCEEDED)) {
       ControlledAiNotebookInstanceResource resource = jobResult.getResult();
-      String workspaceProjectId =
-          workspaceService.getAuthorizedRequiredGcpProject(resource.getWorkspaceId(), userRequest);
       apiResource = resource.toApiResource();
     }
     return new ApiCreatedControlledGcpAiNotebookInstanceResult()
