@@ -328,8 +328,7 @@ public class ControlledGcpResourceApiController implements ControlledGcpResource
     AccessScopeType accessScopeType = AccessScopeType.fromApi(body.getCommon().getAccessScope());
 
     // We need to retrieve the project id so it can be used in the BQ dataset attributes.
-    String projectId =
-        workspaceService.getAuthorizedRequiredGcpProject(workspaceId, userRequest);
+    String projectId = workspaceService.getAuthorizedRequiredGcpProject(workspaceId, userRequest);
 
     ControlledBigQueryDatasetResource resource =
         ControlledBigQueryDatasetResource.builder()
@@ -376,8 +375,7 @@ public class ControlledGcpResourceApiController implements ControlledGcpResource
   public ResponseEntity<ApiCreatedControlledGcpAiNotebookInstanceResult> createAiNotebookInstance(
       UUID workspaceId, @Valid ApiCreateControlledGcpAiNotebookInstanceRequestBody body) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
-    String projectId =
-        workspaceService.getAuthorizedRequiredGcpProject(workspaceId, userRequest);
+    String projectId = workspaceService.getAuthorizedRequiredGcpProject(workspaceId, userRequest);
 
     PrivateUserRole privateUserRole =
         ControllerUtils.computePrivateUserRole(
