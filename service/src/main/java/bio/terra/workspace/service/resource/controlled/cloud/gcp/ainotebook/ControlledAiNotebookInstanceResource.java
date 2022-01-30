@@ -10,6 +10,8 @@ import bio.terra.workspace.db.DbSerDes;
 import bio.terra.workspace.db.model.DbResource;
 import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceAttributes;
 import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceResource;
+import bio.terra.workspace.generated.model.ApiResourceAttributesUnion;
+import bio.terra.workspace.generated.model.ApiResourceUnion;
 import bio.terra.workspace.service.resource.ValidationUtils;
 import bio.terra.workspace.service.resource.controlled.model.AccessScopeType;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
@@ -127,7 +129,7 @@ public class ControlledAiNotebookInstanceResource extends ControlledResource {
 
   @Override
   public WsmResourceType getResourceType() {
-    return WsmResourceType.AI_NOTEBOOK_INSTANCE;
+    return WsmResourceType.CONTROLLED_GCP_AI_NOTEBOOK_INSTANCE;
   }
 
   @Override
@@ -137,10 +139,25 @@ public class ControlledAiNotebookInstanceResource extends ControlledResource {
   }
 
   @Override
+  public ApiResourceAttributesUnion toApiAttributesUnion() {
+    ApiResourceAttributesUnion union = new ApiResourceAttributesUnion();
+    union.gcpAiNotebookInstance(toApiAttributes());
+    return union;
+  }
+
+  @Override
+  public ApiResourceUnion toApiResourceUnion() {
+    ApiResourceUnion union = new ApiResourceUnion();
+    union.azureDisk(toApiResource());
+    return union;
+  }
+
+
+  @Override
   public void validate() {
     super.validate();
-    if (getResourceType() != WsmResourceType.AI_NOTEBOOK_INSTANCE) {
-      throw new InconsistentFieldsException("Expected AI_NOTEBOOK_INSTANCE");
+    if (getResourceType() != WsmResourceType.CONTROLLED_GCP_AI_NOTEBOOK_INSTANCE) {
+      throw new InconsistentFieldsException("Expected CONTROLLED_GCP_AI_NOTEBOOK_INSTANCE");
     }
     if (!getAccessScope().equals(AccessScopeType.ACCESS_SCOPE_PRIVATE)) {
       throw new BadRequestException(

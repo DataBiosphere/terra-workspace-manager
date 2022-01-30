@@ -6,6 +6,8 @@ import bio.terra.workspace.db.DbSerDes;
 import bio.terra.workspace.db.model.DbResource;
 import bio.terra.workspace.generated.model.ApiAzureNetworkAttributes;
 import bio.terra.workspace.generated.model.ApiAzureNetworkResource;
+import bio.terra.workspace.generated.model.ApiResourceAttributesUnion;
+import bio.terra.workspace.generated.model.ApiResourceUnion;
 import bio.terra.workspace.service.resource.ValidationUtils;
 import bio.terra.workspace.service.resource.controlled.model.AccessScopeType;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
@@ -112,7 +114,7 @@ public class ControlledAzureNetworkResource extends ControlledResource {
 
   @Override
   public WsmResourceType getResourceType() {
-    return WsmResourceType.AZURE_NETWORK;
+    return WsmResourceType.CONTROLLED_AZURE_NETWORK;
   }
 
   @Override
@@ -127,10 +129,24 @@ public class ControlledAzureNetworkResource extends ControlledResource {
   }
 
   @Override
+  public ApiResourceAttributesUnion toApiAttributesUnion() {
+    ApiResourceAttributesUnion union = new ApiResourceAttributesUnion();
+    union.azureNetwork(toApiAttributes());
+    return union;
+  }
+
+  @Override
+  public ApiResourceUnion toApiResourceUnion() {
+    ApiResourceUnion union = new ApiResourceUnion();
+    union.azureNetwork(toApiResource());
+    return union;
+  }
+
+  @Override
   public void validate() {
     super.validate();
-    if (getResourceType() != WsmResourceType.AZURE_NETWORK) {
-      throw new InconsistentFieldsException("Expected AZURE_NETWORK");
+    if (getResourceType() != WsmResourceType.CONTROLLED_AZURE_NETWORK) {
+      throw new InconsistentFieldsException("Expected CONTROLLED_AZURE_NETWORK");
     }
     if (getNetworkName() == null) {
       throw new MissingRequiredFieldException(

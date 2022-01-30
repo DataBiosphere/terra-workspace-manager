@@ -14,6 +14,7 @@ import bio.terra.workspace.generated.model.ApiResourceUnion;
 import bio.terra.workspace.generated.model.ApiStewardshipType;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequestFactory;
+import bio.terra.workspace.service.iam.model.SamConstants.SamWorkspaceAction;
 import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.resource.ValidationUtils;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook.ControlledAiNotebookInstanceResource;
@@ -21,8 +22,8 @@ import bio.terra.workspace.service.resource.controlled.cloud.gcp.bqdataset.Contr
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.ControlledGcsBucketResource;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import bio.terra.workspace.service.resource.model.StewardshipType;
+import bio.terra.workspace.service.resource.model.WsmCloudResourceType;
 import bio.terra.workspace.service.resource.model.WsmResource;
-import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.resource.referenced.cloud.gcp.ReferencedResource;
 import bio.terra.workspace.service.resource.referenced.cloud.gcp.bqdataset.ReferencedBigQueryDatasetResource;
 import bio.terra.workspace.service.resource.referenced.cloud.gcp.bqdatatable.ReferencedBigQueryDataTableResource;
@@ -92,6 +93,9 @@ public class Alpha1ApiController implements Alpha1Api {
     ControllerValidationUtils.validatePaginationParams(0, limit);
     ValidationUtils.validateOptionalResourceName(name);
 
+    // Make sure the caller has read access to the workspace
+    workspaceService.validateWorkspaceAndAction(userRequest, workspaceId, SamWorkspaceAction.READ);
+
     // Do the enumeration
     EnumeratedJobs enumeratedJobs =
         alpha1Service.enumerateJobs(
@@ -99,14 +103,10 @@ public class Alpha1ApiController implements Alpha1Api {
             userRequest,
             limit,
             pageToken,
-            WsmResourceType.fromApiOptional(resource),
+            WsmCloudResourceType.fromApiOptional(resource),
             StewardshipType.fromApiOptional(stewardship),
             name,
             JobStateFilter.fromApi(jobState));
-
-    // projectId
-    String gcpProjectId =
-        workspaceService.getAuthorizedGcpProject(workspaceId, userRequest).orElse(null);
 
     // Convert the result to API-speak
     List<ApiEnumeratedJob> apiJobList = new ArrayList<>();
@@ -145,8 +145,7 @@ public class Alpha1ApiController implements Alpha1Api {
   @VisibleForTesting
   public ApiResourceUnion apiResourceFromWsmResource(
       WsmResource wsmResource, @Nullable String gcpProjectId) {
-
-    var union = new ApiResourceUnion();
+    ApiResourceUnion union = wsmResource.toApiResourceUnion();
     switch (wsmResource.getStewardshipType()) {
       case REFERENCED:
         ReferencedResource referencedResource = wsmResource.castToReferencedResource();

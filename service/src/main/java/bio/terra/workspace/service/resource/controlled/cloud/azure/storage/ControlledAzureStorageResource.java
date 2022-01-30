@@ -6,6 +6,8 @@ import bio.terra.workspace.db.DbSerDes;
 import bio.terra.workspace.db.model.DbResource;
 import bio.terra.workspace.generated.model.ApiAzureStorageAttributes;
 import bio.terra.workspace.generated.model.ApiAzureStorageResource;
+import bio.terra.workspace.generated.model.ApiResourceAttributesUnion;
+import bio.terra.workspace.generated.model.ApiResourceUnion;
 import bio.terra.workspace.service.resource.ValidationUtils;
 import bio.terra.workspace.service.resource.controlled.model.AccessScopeType;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
@@ -85,7 +87,7 @@ public class ControlledAzureStorageResource extends ControlledResource {
 
   @Override
   public WsmResourceType getResourceType() {
-    return WsmResourceType.AZURE_STORAGE_ACCOUNT;
+    return WsmResourceType.CONTROLLED_AZURE_STORAGE_ACCOUNT;
   }
 
   @Override
@@ -93,12 +95,25 @@ public class ControlledAzureStorageResource extends ControlledResource {
     return DbSerDes.toJson(
         new ControlledAzureStorageAttributes(getStorageAccountName(), getRegion()));
   }
+  @Override
+  public ApiResourceAttributesUnion toApiAttributesUnion() {
+    ApiResourceAttributesUnion union = new ApiResourceAttributesUnion();
+    union.azureStorage(toApiAttributes());
+    return union;
+  }
+
+  @Override
+  public ApiResourceUnion toApiResourceUnion() {
+    ApiResourceUnion union = new ApiResourceUnion();
+    union.azureStorageAccount(toApiResource());
+    return union;
+  }
 
   @Override
   public void validate() {
     super.validate();
-    if (getResourceType() != WsmResourceType.AZURE_STORAGE_ACCOUNT) {
-      throw new InconsistentFieldsException("Expected AZURE_STORAGE_ACCOUNT");
+    if (getResourceType() != WsmResourceType.CONTROLLED_AZURE_STORAGE_ACCOUNT) {
+      throw new InconsistentFieldsException("Expected CONTROLLED_AZURE_STORAGE_ACCOUNT");
     }
     if (getStorageAccountName() == null) {
       throw new MissingRequiredFieldException(

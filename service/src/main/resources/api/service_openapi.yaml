@@ -4366,7 +4366,7 @@ components:
         azureDisk:
           $ref: '#/components/schemas/AzureDiskResource'
         azureNetwork:
-          $ref: '#/components/schemas/AzureDiskResource'
+          $ref: '#/components/schemas/AzureNetworkResource'
         azureVm:
           $ref: '#/components/schemas/AzureVmResource'
         azureStorageAccount:

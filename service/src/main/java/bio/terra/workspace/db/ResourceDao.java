@@ -28,6 +28,7 @@ import bio.terra.workspace.service.resource.exception.DuplicateResourceException
 import bio.terra.workspace.service.resource.exception.ResourceNotFoundException;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.model.StewardshipType;
+import bio.terra.workspace.service.resource.model.WsmCloudResourceType;
 import bio.terra.workspace.service.resource.model.WsmResource;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.resource.referenced.cloud.gcp.ReferencedResource;
@@ -191,7 +192,7 @@ public class ResourceDao {
    * type.
    *
    * @param workspaceId identifier for work space to enumerate
-   * @param resourceType filter by this resource type - optional
+   * @param cloudResourceType filter by this cloud resource type - optional
    * @param stewardshipType filtered by this stewardship type - optional
    * @param offset starting row for result
    * @param limit maximum number of rows to return
@@ -200,7 +201,7 @@ public class ResourceDao {
   @ReadTransaction
   public List<WsmResource> enumerateResources(
       UUID workspaceId,
-      @Nullable WsmResourceType resourceType,
+      @Nullable WsmCloudResourceType cloudResourceType,
       @Nullable StewardshipType stewardshipType,
       int offset,
       int limit) {
@@ -217,9 +218,9 @@ public class ResourceDao {
             .addValue("controlled_resource", CONTROLLED.toSql());
 
     StringBuilder sb = new StringBuilder(RESOURCE_SELECT_SQL);
-    if (resourceType != null) {
+    if (cloudResourceType != null) {
       sb.append(" AND resource_type = :resource_type");
-      params.addValue("resource_type", resourceType.toSql());
+      params.addValue("resource_type", cloudResourceType.toSql());
     }
 
     // There are three cases for the stewardship type filter

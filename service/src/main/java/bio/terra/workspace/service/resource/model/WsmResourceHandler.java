@@ -19,4 +19,5 @@ public interface WsmResourceHandler {
    */
   WsmResource makeResourceFromDb(DbResource dbResource);
 
+
 }
