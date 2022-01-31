@@ -130,14 +130,8 @@ public class WorkspaceDao {
     return deleted;
   }
 
-  /**
-   * Retrieves a workspace from database by ID.
-   *
-   * @param id unique identifier of the workspace
-   * @return workspace value object
-   */
   @ReadTransaction
-  public Workspace getWorkspace(UUID id) {
+  public Optional<Workspace> getWorkspaceIfExists(UUID id) {
     if (id == null) {
       throw new MissingRequiredFieldException("Valid workspace id is required");
     }
@@ -148,10 +142,23 @@ public class WorkspaceDao {
           DataAccessUtils.requiredSingleResult(
               jdbcTemplate.query(sql, params, WORKSPACE_ROW_MAPPER));
       logger.info("Retrieved workspace record {}", result);
-      return result;
+      return Optional.of(result);
     } catch (EmptyResultDataAccessException e) {
-      throw new WorkspaceNotFoundException(String.format("Workspace %s not found.", id.toString()));
+      return Optional.empty();
     }
+  }
+  /**
+   * Retrieves a workspace from database by ID.
+   *
+   * @param id unique identifier of the workspace
+   * @return workspace value object
+   */
+  @ReadTransaction
+  public Workspace getWorkspace(UUID id) {
+    return getWorkspaceIfExists(id).orElseThrow(
+        () ->
+          new WorkspaceNotFoundException(String.format(
+              "Workspace %s not found.", id.toString())));
   }
 
   @WriteTransaction

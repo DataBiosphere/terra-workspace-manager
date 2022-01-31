@@ -20,6 +20,7 @@ import bio.terra.workspace.app.configuration.external.StairwayDatabaseConfigurat
 import bio.terra.workspace.common.utils.ErrorReportUtils;
 import bio.terra.workspace.common.utils.FlightBeanBag;
 import bio.terra.workspace.common.utils.MdcHook;
+import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.generated.model.ApiErrorReport;
 import bio.terra.workspace.generated.model.ApiJobReport;
 import bio.terra.workspace.generated.model.ApiJobReport.StatusEnum;
@@ -31,6 +32,7 @@ import bio.terra.workspace.service.job.exception.InvalidResultStateException;
 import bio.terra.workspace.service.job.exception.JobNotCompleteException;
 import bio.terra.workspace.service.job.exception.JobNotFoundException;
 import bio.terra.workspace.service.job.exception.JobResponseException;
+import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.annotations.VisibleForTesting;
@@ -397,7 +399,8 @@ public class JobService {
 
   /**
    * Ensure the user in the user request has permission to read the workspace associated with the
-   * Job ID. Throws ForbiddenException if not.
+   * Job ID. Throws ForbiddenException if not. If the workspace does not exist, treat this as
+   * the user having access (i.e. skip validateWorkspaceAndAction check).
    *
    * @param jobId - ID of running job
    * @param userRequest - original user request
@@ -408,9 +411,13 @@ public class JobService {
       FlightMap inputParameters = flightState.getInputParameters();
       UUID workspaceId = inputParameters.get(WorkspaceFlightMapKeys.WORKSPACE_ID, UUID.class);
 
-      flightBeanBag
-          .getWorkspaceService()
-          .validateWorkspaceAndAction(userRequest, workspaceId, SamWorkspaceAction.READ);
+      // If the workspace doesn't exist, don't try to validate it
+      final WorkspaceService workspaceService = flightBeanBag.getWorkspaceService();
+      final WorkspaceDao workspaceDao = flightBeanBag.getWorkspaceDao();
+
+      workspaceDao.getWorkspaceIfExists(workspaceId).ifPresent(w ->
+        workspaceService.validateWorkspaceAndAction(
+            userRequest, workspaceId, SamWorkspaceAction.READ));
     } catch (DatabaseOperationException | InterruptedException ex) {
       throw new InternalStairwayException("Stairway exception looking up the job", ex);
     } catch (FlightNotFoundException ex) {
