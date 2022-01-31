@@ -310,7 +310,7 @@ public class WorkspaceService {
         .userRequest(userRequest)
         .request(destinationWorkspace)
         .operationType(OperationType.CLONE)
-        .addParameter(WorkspaceFlightMapKeys.WORKSPACE_ID, sourceWorkspaceId)
+        .workspaceId(sourceWorkspaceId.toString())
         .addParameter(
             ControlledResourceKeys.SOURCE_WORKSPACE_ID,
             sourceWorkspaceId) // TODO: remove this duplication
