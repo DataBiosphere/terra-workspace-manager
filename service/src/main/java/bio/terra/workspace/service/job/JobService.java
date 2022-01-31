@@ -20,7 +20,6 @@ import bio.terra.workspace.app.configuration.external.StairwayDatabaseConfigurat
 import bio.terra.workspace.common.utils.ErrorReportUtils;
 import bio.terra.workspace.common.utils.FlightBeanBag;
 import bio.terra.workspace.common.utils.MdcHook;
-import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.generated.model.ApiErrorReport;
 import bio.terra.workspace.generated.model.ApiJobReport;
 import bio.terra.workspace.generated.model.ApiJobReport.StatusEnum;
@@ -413,14 +412,9 @@ public class JobService {
 
       // If the workspace doesn't exist, don't try to validate it
       final WorkspaceService workspaceService = flightBeanBag.getWorkspaceService();
-      final WorkspaceDao workspaceDao = flightBeanBag.getWorkspaceDao();
 
-      workspaceDao
-          .getWorkspaceIfExists(workspaceId)
-          .ifPresent(
-              w ->
-                  workspaceService.validateWorkspaceAndAction(
-                      userRequest, workspaceId, SamWorkspaceAction.READ));
+      workspaceService.validateWorkspaceAndAction(
+          userRequest, workspaceId, SamWorkspaceAction.READ);
     } catch (DatabaseOperationException | InterruptedException ex) {
       throw new InternalStairwayException("Stairway exception looking up the job", ex);
     } catch (FlightNotFoundException ex) {

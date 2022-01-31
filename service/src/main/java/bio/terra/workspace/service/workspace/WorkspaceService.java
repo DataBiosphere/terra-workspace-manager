@@ -191,8 +191,10 @@ public class WorkspaceService {
   /** Delete an existing workspace by ID. */
   @Traced
   public void deleteWorkspace(UUID id, AuthenticatedUserRequest userRequest) {
-    Workspace workspace =
-        validateWorkspaceAndAction(userRequest, id, SamConstants.SamWorkspaceAction.DELETE);
+    Optional<Workspace> maybeWorkspace = workspaceDao.getWorkspaceIfExists(id);
+    if (maybeWorkspace.isPresent()) {
+      validateWorkspaceAndAction(userRequest, id, SamWorkspaceAction.DELETE);
+    }
 
     String description = "Delete workspace " + id;
     JobBuilder deleteJob =
@@ -204,7 +206,8 @@ public class WorkspaceService {
             .workspaceId(id.toString())
             .userRequest(userRequest)
             .addParameter(
-                WorkspaceFlightMapKeys.WORKSPACE_STAGE, workspace.getWorkspaceStage().name());
+                WorkspaceFlightMapKeys.WORKSPACE_STAGE,
+                maybeWorkspace.map(w -> w.getWorkspaceStage().name()).orElse(null));
     deleteJob.submitAndWait(null);
   }
 
