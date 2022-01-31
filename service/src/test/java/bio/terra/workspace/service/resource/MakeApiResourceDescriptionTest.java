@@ -24,7 +24,6 @@ import bio.terra.workspace.service.resource.controlled.model.AccessScopeType;
 import bio.terra.workspace.service.resource.controlled.model.ManagedByType;
 import bio.terra.workspace.service.resource.controlled.model.PrivateResourceState;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
-import bio.terra.workspace.service.resource.model.WsmResource;
 import bio.terra.workspace.service.resource.referenced.cloud.gcp.bqdataset.ReferencedBigQueryDatasetResource;
 import bio.terra.workspace.service.resource.referenced.cloud.gcp.bqdatatable.ReferencedBigQueryDataTableResource;
 import bio.terra.workspace.service.resource.referenced.cloud.gcp.datareposnapshot.ReferencedDataRepoSnapshotResource;
@@ -64,7 +63,7 @@ public class MakeApiResourceDescriptionTest extends BaseUnitTest {
             workspaceId, resourceId, resourceName, description, cloning, projectId, datasetName);
 
     ApiResourceDescription resourceDescription =
-        resourceController.makeApiResourceDescription((WsmResource) resource, null);
+        resourceController.makeApiResourceDescription(resource);
     validateWsmResource(resourceDescription);
     ApiResourceAttributesUnion union = resourceDescription.getResourceAttributes();
     ApiGcpBigQueryDatasetAttributes attributes = union.getGcpBqDataset();
@@ -91,7 +90,7 @@ public class MakeApiResourceDescriptionTest extends BaseUnitTest {
             datatableName);
 
     ApiResourceDescription resourceDescription =
-        resourceController.makeApiResourceDescription((WsmResource) resource, null);
+        resourceController.makeApiResourceDescription(resource);
     validateWsmResource(resourceDescription);
     ApiResourceAttributesUnion union = resourceDescription.getResourceAttributes();
     ApiGcpBigQueryDataTableAttributes attributes = union.getGcpBqDataTable();
@@ -111,7 +110,7 @@ public class MakeApiResourceDescriptionTest extends BaseUnitTest {
             workspaceId, resourceId, resourceName, description, cloning, instanceName, snapshotId);
 
     ApiResourceDescription resourceDescription =
-        resourceController.makeApiResourceDescription((WsmResource) resource, null);
+        resourceController.makeApiResourceDescription(resource);
     validateWsmResource(resourceDescription);
     ApiResourceAttributesUnion union = resourceDescription.getResourceAttributes();
     ApiDataRepoSnapshotAttributes attributes = union.getGcpDataRepoSnapshot();
@@ -129,7 +128,7 @@ public class MakeApiResourceDescriptionTest extends BaseUnitTest {
             workspaceId, resourceId, resourceName, description, cloning, bucketName);
 
     ApiResourceDescription resourceDescription =
-        resourceController.makeApiResourceDescription((WsmResource) resource, null);
+        resourceController.makeApiResourceDescription(resource);
     validateWsmResource(resourceDescription);
     ApiResourceAttributesUnion union = resourceDescription.getResourceAttributes();
     ApiGcpGcsBucketAttributes attributes = union.getGcpGcsBucket();
@@ -180,7 +179,7 @@ public class MakeApiResourceDescriptionTest extends BaseUnitTest {
               bucketName);
 
       ApiResourceDescription resourceDescription =
-          resourceController.makeApiResourceDescription(resource, null);
+          resourceController.makeApiResourceDescription(resource);
       validateControlledResource(resourceDescription);
       ApiResourceAttributesUnion union = resourceDescription.getResourceAttributes();
       ApiGcpGcsBucketAttributes attributes = union.getGcpGcsBucket();
@@ -191,6 +190,7 @@ public class MakeApiResourceDescriptionTest extends BaseUnitTest {
     @Test
     public void mapControlledBigQueryDatasetTest() throws Exception {
       String datasetName = RandomStringUtils.randomAlphabetic(5).toLowerCase();
+      String projectId = "my-project-id";
 
       var resource =
           new ControlledBigQueryDatasetResource(
@@ -204,11 +204,11 @@ public class MakeApiResourceDescriptionTest extends BaseUnitTest {
               accessScopeType,
               managedByType,
               null,
-              datasetName);
+              datasetName,
+              projectId);
 
-      String projectId = "my-project-id";
       ApiResourceDescription resourceDescription =
-          resourceController.makeApiResourceDescription(resource, projectId);
+          resourceController.makeApiResourceDescription(resource);
       validateControlledResource(resourceDescription);
       ApiResourceAttributesUnion union = resourceDescription.getResourceAttributes();
       ApiGcpBigQueryDatasetAttributes attributes = union.getGcpBqDataset();
@@ -233,11 +233,12 @@ public class MakeApiResourceDescriptionTest extends BaseUnitTest {
               .managedBy(managedByType)
               .location("us-east1-b")
               .instanceId(instanceId)
+              .projectId("my-project-id")
               .build();
 
       String projectId = "my-project-id";
       ApiResourceDescription resourceDescription =
-          resourceController.makeApiResourceDescription(resource, projectId);
+          resourceController.makeApiResourceDescription(resource);
       validateControlledResource(resourceDescription);
       ApiResourceAttributesUnion union = resourceDescription.getResourceAttributes();
       ApiGcpAiNotebookInstanceAttributes attributes = union.getGcpAiNotebookInstance();

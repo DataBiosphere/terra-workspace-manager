@@ -111,9 +111,10 @@ public class ControlledAiNotebookInstanceResourceTest extends BaseUnitTest {
             .name("my-notebook")
             .instanceId("my-instance-id")
             .location("us-east1-b")
+            .projectId("my-project-id")
             .build();
 
-    ApiGcpAiNotebookInstanceResource apiResource = resource.toApiResource("my-project-id");
+    ApiGcpAiNotebookInstanceResource apiResource = resource.toApiResource();
     assertEquals("my-notebook", apiResource.getMetadata().getName());
     assertEquals("my-project-id", apiResource.getAttributes().getProjectId());
     assertEquals("us-east1-b", apiResource.getAttributes().getLocation());

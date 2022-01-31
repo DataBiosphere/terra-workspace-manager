@@ -79,13 +79,12 @@ public class DeleteGcpContextWithControlledResource extends WorkspaceAllocateTes
     // Delete the context, which should delete the controlled resource but not the reference.
     CloudContextMaker.deleteGcpCloudContext(getWorkspaceId(), workspaceApi);
 
-    // Confirm the controlled resource was deleted. This fails with a 400, because WSM won't check
-    // for the existence of a GCP resource without a GCP context.
+    // Confirm the controlled resource was deleted.
     var noGcpContextException =
         assertThrows(
             ApiException.class,
             () -> controlledResourceApi.getBigQueryDataset(getWorkspaceId(), controlledResourceId));
-    assertEquals(HttpStatus.SC_BAD_REQUEST, noGcpContextException.getCode());
+    assertEquals(HttpStatus.SC_NOT_FOUND, noGcpContextException.getCode());
 
     // Confirm the referenced resource was not deleted.
     GcpBigQueryDatasetResource datasetReferenceAfterDelete =

@@ -7,11 +7,8 @@ import bio.terra.common.exception.BadRequestException;
 import bio.terra.common.exception.InconsistentFieldsException;
 import bio.terra.common.exception.MissingRequiredFieldException;
 import bio.terra.workspace.db.DbSerDes;
-import bio.terra.workspace.db.model.DbResource;
 import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceAttributes;
 import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceResource;
-import bio.terra.workspace.generated.model.ApiResourceAttributesUnion;
-import bio.terra.workspace.generated.model.ApiResourceUnion;
 import bio.terra.workspace.service.resource.ValidationUtils;
 import bio.terra.workspace.service.resource.controlled.model.AccessScopeType;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
@@ -36,6 +33,7 @@ public class ControlledAiNotebookInstanceResource extends ControlledResource {
   protected static final String AUTO_NAME_DATE_FORMAT = "-yyyyMMdd-HHmmss";
   private final String instanceId;
   private final String location;
+  private final String projectId;
 
   @JsonCreator
   public ControlledAiNotebookInstanceResource(
@@ -50,7 +48,8 @@ public class ControlledAiNotebookInstanceResource extends ControlledResource {
       @JsonProperty("managedBy") ManagedByType managedBy,
       @JsonProperty("application") UUID applicationId,
       @JsonProperty("instanceId") String instanceId,
-      @JsonProperty("location") String location) {
+      @JsonProperty("location") String location,
+      @JsonProperty("projectId") String projectId) {
     super(
         workspaceId,
         resourceId,
@@ -64,15 +63,7 @@ public class ControlledAiNotebookInstanceResource extends ControlledResource {
         privateResourceState);
     this.instanceId = instanceId;
     this.location = location;
-    validate();
-  }
-
-  public ControlledAiNotebookInstanceResource(DbResource dbResource) {
-    super(dbResource);
-    ControlledAiNotebookInstanceAttributes attributes =
-        DbSerDes.fromJson(dbResource.getAttributes(), ControlledAiNotebookInstanceAttributes.class);
-    this.instanceId = attributes.getInstanceId();
-    this.location = attributes.getLocation();
+    this.projectId = projectId;
     validate();
   }
 
@@ -93,7 +84,8 @@ public class ControlledAiNotebookInstanceResource extends ControlledResource {
         .managedBy(getManagedBy())
         .applicationId(getApplicationId())
         .instanceId(getInstanceId())
-        .location(getLocation());
+        .location(getLocation())
+        .projectId(getProjectId());
   }
 
   /** The user specified id of the notebook instance. */
@@ -106,6 +98,11 @@ public class ControlledAiNotebookInstanceResource extends ControlledResource {
     return location;
   }
 
+  /** The GCP project id where the notebook is created */
+  public String getProjectId() {
+    return projectId;
+  }
+
   public InstanceName toInstanceName(String workspaceProjectId) {
     return InstanceName.builder()
         .projectId(workspaceProjectId)
@@ -114,50 +111,35 @@ public class ControlledAiNotebookInstanceResource extends ControlledResource {
         .build();
   }
 
-  public ApiGcpAiNotebookInstanceResource toApiResource(String workspaceProjectId) {
+  public ApiGcpAiNotebookInstanceResource toApiResource() {
     return new ApiGcpAiNotebookInstanceResource()
         .metadata(toApiMetadata())
-        .attributes(toApiAttributes(workspaceProjectId));
+        .attributes(toApiAttributes());
   }
 
-  public ApiGcpAiNotebookInstanceAttributes toApiAttributes(String workspaceProjectId) {
+  public ApiGcpAiNotebookInstanceAttributes toApiAttributes() {
     return new ApiGcpAiNotebookInstanceAttributes()
-        .projectId(workspaceProjectId)
+        .projectId(projectId)
         .location(getLocation())
         .instanceId(getInstanceId());
   }
 
   @Override
   public WsmResourceType getResourceType() {
-    return WsmResourceType.CONTROLLED_GCP_AI_NOTEBOOK_INSTANCE;
+    return WsmResourceType.AI_NOTEBOOK_INSTANCE;
   }
 
   @Override
   public String attributesToJson() {
     return DbSerDes.toJson(
-        new ControlledAiNotebookInstanceAttributes(getInstanceId(), getLocation()));
+        new ControlledAiNotebookInstanceAttributes(getInstanceId(), getLocation(), getProjectId()));
   }
-
-  @Override
-  public ApiResourceAttributesUnion toApiAttributesUnion() {
-    ApiResourceAttributesUnion union = new ApiResourceAttributesUnion();
-    union.gcpAiNotebookInstance(toApiAttributes());
-    return union;
-  }
-
-  @Override
-  public ApiResourceUnion toApiResourceUnion() {
-    ApiResourceUnion union = new ApiResourceUnion();
-    union.azureDisk(toApiResource());
-    return union;
-  }
-
 
   @Override
   public void validate() {
     super.validate();
-    if (getResourceType() != WsmResourceType.CONTROLLED_GCP_AI_NOTEBOOK_INSTANCE) {
-      throw new InconsistentFieldsException("Expected CONTROLLED_GCP_AI_NOTEBOOK_INSTANCE");
+    if (getResourceType() != WsmResourceType.AI_NOTEBOOK_INSTANCE) {
+      throw new InconsistentFieldsException("Expected AI_NOTEBOOK_INSTANCE");
     }
     if (!getAccessScope().equals(AccessScopeType.ACCESS_SCOPE_PRIVATE)) {
       throw new BadRequestException(
@@ -165,6 +147,7 @@ public class ControlledAiNotebookInstanceResource extends ControlledResource {
     }
     checkFieldNonNull(getInstanceId(), "instanceId");
     checkFieldNonNull(getLocation(), "location");
+    checkFieldNonNull(getProjectId(), "projectId");
     ValidationUtils.validateAiNotebookInstanceId(getInstanceId());
   }
 
@@ -247,6 +230,7 @@ public class ControlledAiNotebookInstanceResource extends ControlledResource {
     private UUID applicationId;
     private String instanceId;
     private String location;
+    private String projectId;
 
     public Builder workspaceId(UUID workspaceId) {
       this.workspaceId = workspaceId;
@@ -280,6 +264,11 @@ public class ControlledAiNotebookInstanceResource extends ControlledResource {
 
     public Builder location(@Nullable String location) {
       this.location = Optional.ofNullable(location).orElse(DEFAULT_ZONE);
+      return this;
+    }
+
+    public Builder projectId(String projectId) {
+      this.projectId = projectId;
       return this;
     }
 
@@ -327,7 +316,8 @@ public class ControlledAiNotebookInstanceResource extends ControlledResource {
           managedBy,
           applicationId,
           instanceId,
-          location);
+          location,
+          projectId);
     }
   }
 }

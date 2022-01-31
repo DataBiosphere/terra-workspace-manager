@@ -3,9 +3,14 @@ package bio.terra.workspace.db;
 import static bio.terra.workspace.service.resource.model.StewardshipType.CONTROLLED;
 import static bio.terra.workspace.service.resource.model.StewardshipType.REFERENCED;
 import static bio.terra.workspace.service.resource.model.StewardshipType.fromSql;
-import static bio.terra.workspace.service.resource.model.WsmResourceType.AI_NOTEBOOK_INSTANCE;
-import static bio.terra.workspace.service.resource.model.WsmResourceType.BIG_QUERY_DATASET;
-import static bio.terra.workspace.service.resource.model.WsmResourceType.GCS_BUCKET;
+import static bio.terra.workspace.service.resource.model.WsmCloudResourceType.AI_NOTEBOOK_INSTANCE;
+import static bio.terra.workspace.service.resource.model.WsmCloudResourceType.AZURE_DISK;
+import static bio.terra.workspace.service.resource.model.WsmCloudResourceType.AZURE_IP;
+import static bio.terra.workspace.service.resource.model.WsmCloudResourceType.AZURE_NETWORK;
+import static bio.terra.workspace.service.resource.model.WsmCloudResourceType.AZURE_STORAGE_ACCOUNT;
+import static bio.terra.workspace.service.resource.model.WsmCloudResourceType.AZURE_VM;
+import static bio.terra.workspace.service.resource.model.WsmCloudResourceType.BIG_QUERY_DATASET;
+import static bio.terra.workspace.service.resource.model.WsmCloudResourceType.GCS_BUCKET;
 import static java.util.stream.Collectors.toList;
 
 import bio.terra.common.db.ReadTransaction;
@@ -17,7 +22,9 @@ import bio.terra.workspace.service.resource.controlled.cloud.azure.ip.Controlled
 import bio.terra.workspace.service.resource.controlled.cloud.azure.network.ControlledAzureNetworkResource;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.storage.ControlledAzureStorageResource;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.vm.ControlledAzureVmResource;
+import bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook.ControlledAiNotebookHandler;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook.ControlledAiNotebookInstanceResource;
+import bio.terra.workspace.service.resource.controlled.cloud.gcp.bqdataset.ControlledBigQueryDatasetHandler;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.bqdataset.ControlledBigQueryDatasetResource;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.ControlledGcsBucketResource;
 import bio.terra.workspace.service.resource.controlled.model.AccessScopeType;
@@ -77,7 +84,7 @@ public class ResourceDao {
             .name(rs.getString("name"))
             .description(rs.getString("description"))
             .stewardshipType(fromSql(rs.getString("stewardship_type")))
-            .resourceType(WsmResourceType.fromSql(rs.getString("resource_type")))
+            .resourceType(WsmCloudResourceType.fromSql(rs.getString("resource_type")))
             .cloningInstructions(CloningInstructions.fromSql(rs.getString("cloning_instructions")))
             .attributes(rs.getString("attributes"))
             .accessScope(
@@ -515,31 +522,31 @@ public class ResourceDao {
     // uniqueness rules. This prevents a race condition allowing a new resource to point to the same
     // cloud artifact as another, even if it has a different resource name and ID.
     switch (controlledResource.getResourceType()) {
-      case GCS_BUCKET:
+      case CONTROLLED_GCP_GCS_BUCKET:
         validateUniqueGcsBucket(controlledResource.castToGcsBucketResource());
         break;
-      case AI_NOTEBOOK_INSTANCE:
+      case CONTROLLED_GCP_AI_NOTEBOOK_INSTANCE:
         validateUniqueAiNotebookInstance(controlledResource.castToAiNotebookInstanceResource());
         break;
-      case BIG_QUERY_DATASET:
+      case CONTROLLED_GCP_BIG_QUERY_DATASET:
         validateUniqueBigQueryDataset(controlledResource.castToBigQueryDatasetResource());
         break;
-      case AZURE_DISK:
+      case CONTROLLED_AZURE_DISK:
         validateUniqueAzureDisk(controlledResource.castToAzureDiskResource());
         break;
-      case AZURE_IP:
+      case CONTROLLED_AZURE_IP:
         validateUniqueAzureIp(controlledResource.castToAzureIpResource());
         break;
-      case AZURE_NETWORK:
+      case CONTROLLED_AZURE_NETWORK:
         validateUniqueAzureNetwork(controlledResource.castToAzureNetworkResource());
         break;
-      case AZURE_STORAGE_ACCOUNT:
+      case CONTROLLED_AZURE_STORAGE_ACCOUNT:
         validateUniqueAzureStorage(controlledResource.castToAzureStorageResource());
         break;
-      case AZURE_VM:
+      case CONTROLLED_AZURE_VM:
         validateUniqueAzureVm(controlledResource.castToAzureVmResource());
         break;
-      case DATA_REPO_SNAPSHOT:
+      case REFERENCED_DATA_REPO_SNAPSHOT:
       default:
         throw new IllegalArgumentException(
             String.format(
@@ -684,7 +691,7 @@ public class ResourceDao {
             + " AND attributes->>'ipName' = :ip_name";
     MapSqlParameterSource sqlParams =
         new MapSqlParameterSource()
-            .addValue("resource_type", WsmResourceType.AZURE_IP.toSql())
+            .addValue("resource_type", AZURE_IP.toSql())
             .addValue("workspace_id", ipResource.getWorkspaceId().toString())
             .addValue("ip_name", ipResource.getIpName());
     Integer matchingCount = jdbcTemplate.queryForObject(sql, sqlParams, Integer.class);
@@ -703,7 +710,7 @@ public class ResourceDao {
             + " AND attributes->>'diskName' = :disk_name";
     MapSqlParameterSource sqlParams =
         new MapSqlParameterSource()
-            .addValue("resource_type", WsmResourceType.AZURE_DISK.toSql())
+            .addValue("resource_type", AZURE_DISK.toSql())
             .addValue("workspace_id", resource.getWorkspaceId().toString())
             .addValue("disk_name", resource.getDiskName());
     Integer matchingCount = jdbcTemplate.queryForObject(sql, sqlParams, Integer.class);
@@ -722,7 +729,7 @@ public class ResourceDao {
             + " AND attributes->>'vmName' = :vm_name";
     MapSqlParameterSource sqlParams =
         new MapSqlParameterSource()
-            .addValue("resource_type", WsmResourceType.AZURE_VM.toSql())
+            .addValue("resource_type", AZURE_VM.toSql())
             .addValue("vm_name", resource.getVmName());
     Integer matchingCount = jdbcTemplate.queryForObject(sql, sqlParams, Integer.class);
     if (matchingCount != null && matchingCount > 0) {
@@ -740,7 +747,7 @@ public class ResourceDao {
             + " AND attributes->>'networkName' = :network_name";
     MapSqlParameterSource sqlParams =
         new MapSqlParameterSource()
-            .addValue("resource_type", WsmResourceType.AZURE_NETWORK.toSql())
+            .addValue("resource_type", AZURE_NETWORK.toSql())
             .addValue("workspace_id", resource.getWorkspaceId().toString())
             .addValue("network_name", resource.getNetworkName());
     Integer matchingCount = jdbcTemplate.queryForObject(sql, sqlParams, Integer.class);
@@ -759,7 +766,7 @@ public class ResourceDao {
             + " AND attributes->>'storageAccountName' = :name";
     MapSqlParameterSource sqlParams =
         new MapSqlParameterSource()
-            .addValue("resource_type", WsmResourceType.AZURE_NETWORK.toSql())
+            .addValue("resource_type", AZURE_STORAGE_ACCOUNT.toSql())
             .addValue("workspace_id", resource.getWorkspaceId().toString())
             .addValue("name", resource.getStorageAccountName());
     Integer matchingCount = jdbcTemplate.queryForObject(sql, sqlParams, Integer.class);
@@ -874,9 +881,18 @@ public class ResourceDao {
           case GCS_BUCKET:
             return new ControlledGcsBucketResource(dbResource);
           case AI_NOTEBOOK_INSTANCE:
-            return new ControlledAiNotebookInstanceResource(dbResource);
+          {
+            // TODO: (PF-1296) handler dispatch instead of this switch statement
+            ControlledAiNotebookHandler handler = ControlledAiNotebookHandler.getHandler();
+            return handler.makeResourceFromDb(dbResource);
+          }
           case BIG_QUERY_DATASET:
-            return new ControlledBigQueryDatasetResource(dbResource);
+          {
+            // TODO: (PF-1296) handler dispatch instead of this switch statement
+            ControlledBigQueryDatasetHandler handler =
+                ControlledBigQueryDatasetHandler.getHandler();
+            return handler.makeResourceFromDb(dbResource);
+          }
           case AZURE_IP:
             return new ControlledAzureIpResource(dbResource);
           case AZURE_DISK:

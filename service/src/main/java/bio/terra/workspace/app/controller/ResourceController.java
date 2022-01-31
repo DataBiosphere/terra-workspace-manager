@@ -20,7 +20,6 @@ import com.google.common.annotations.VisibleForTesting;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
-import javax.annotation.Nullable;
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
 import org.slf4j.Logger;
@@ -86,9 +85,7 @@ public class ResourceController implements ResourceApi {
         workspaceService.getAuthorizedGcpProject(workspaceId, userRequest).orElse(null);
 
     List<ApiResourceDescription> apiResourceDescriptionList =
-        wsmResources.stream()
-            .map(r -> makeApiResourceDescription(r, gcpProjectId))
-            .collect(Collectors.toList());
+        wsmResources.stream().map(r -> makeApiResourceDescription(r)).collect(Collectors.toList());
 
     var apiResourceList = new ApiResourceList().resources(apiResourceDescriptionList);
     return new ResponseEntity<>(apiResourceList, HttpStatus.OK);
@@ -103,8 +100,7 @@ public class ResourceController implements ResourceApi {
 
   // Convert a WsmResource into the API format for enumeration
   @VisibleForTesting
-  public ApiResourceDescription makeApiResourceDescription(
-      WsmResource wsmResource, @Nullable String gcpProjectId) {
+  public ApiResourceDescription makeApiResourceDescription(WsmResource wsmResource) {
     ApiResourceMetadata common = wsmResource.toApiMetadata();
     ApiResourceAttributesUnion union = wsmResource.toApiAttributesUnion();
     return new ApiResourceDescription().metadata(common).resourceAttributes(union);
