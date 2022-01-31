@@ -155,10 +155,11 @@ public class WorkspaceDao {
    */
   @ReadTransaction
   public Workspace getWorkspace(UUID id) {
-    return getWorkspaceIfExists(id).orElseThrow(
-        () ->
-          new WorkspaceNotFoundException(String.format(
-              "Workspace %s not found.", id.toString())));
+    return getWorkspaceIfExists(id)
+        .orElseThrow(
+            () ->
+                new WorkspaceNotFoundException(
+                    String.format("Workspace %s not found.", id.toString())));
   }
 
   @WriteTransaction

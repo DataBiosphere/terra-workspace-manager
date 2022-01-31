@@ -399,8 +399,8 @@ public class JobService {
 
   /**
    * Ensure the user in the user request has permission to read the workspace associated with the
-   * Job ID. Throws ForbiddenException if not. If the workspace does not exist, treat this as
-   * the user having access (i.e. skip validateWorkspaceAndAction check).
+   * Job ID. Throws ForbiddenException if not. If the workspace does not exist, treat this as the
+   * user having access (i.e. skip validateWorkspaceAndAction check).
    *
    * @param jobId - ID of running job
    * @param userRequest - original user request
@@ -415,9 +415,12 @@ public class JobService {
       final WorkspaceService workspaceService = flightBeanBag.getWorkspaceService();
       final WorkspaceDao workspaceDao = flightBeanBag.getWorkspaceDao();
 
-      workspaceDao.getWorkspaceIfExists(workspaceId).ifPresent(w ->
-        workspaceService.validateWorkspaceAndAction(
-            userRequest, workspaceId, SamWorkspaceAction.READ));
+      workspaceDao
+          .getWorkspaceIfExists(workspaceId)
+          .ifPresent(
+              w ->
+                  workspaceService.validateWorkspaceAndAction(
+                      userRequest, workspaceId, SamWorkspaceAction.READ));
     } catch (DatabaseOperationException | InterruptedException ex) {
       throw new InternalStairwayException("Stairway exception looking up the job", ex);
     } catch (FlightNotFoundException ex) {
