@@ -255,7 +255,7 @@ vaultgetdb "secret/dsde/terra/kernel/${k8senv}/${namespace}/workspace/postgres/s
 # Write the test application configuration into the local-properties.yml file
 if [ "$target" == "local" ]; then
   tmpfile=$(mktemp)
-  vaultget "secret/dsde/terra/azure/common/managed-app-publisher" "${tmpfile}"
+  vaultget "secret/dsde/terra/azure/dev/workspacemanager/managed-app-publisher" "${tmpfile}"
   clientid=$(jq -r '."client-id"' "${tmpfile}" )
   clientsecret=$(jq -r '."client-secret"' "${tmpfile}" )
   tenantid=$(jq -r '."tenant-id"' "${tmpfile}" )
