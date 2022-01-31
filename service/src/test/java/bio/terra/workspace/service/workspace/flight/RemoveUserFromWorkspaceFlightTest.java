@@ -87,10 +87,12 @@ public class RemoveUserFromWorkspaceFlightTest extends BaseConnectedTest {
         jobService.retrieveAsyncJobResult(
             makeContextJobId, GcpCloudContext.class, userAccessUtils.defaultUserAuthRequest());
     assertEquals(StatusEnum.SUCCEEDED, createContextJobResult.getJobReport().getStatus());
+    GcpCloudContext cloudContext = createContextJobResult.getResult();
 
     // Create a private dataset for secondary user
     String datasetId = RandomStringUtils.randomAlphabetic(8);
-    ControlledBigQueryDatasetResource privateDataset = buildPrivateDataset(workspaceId, datasetId);
+    ControlledBigQueryDatasetResource privateDataset =
+        buildPrivateDataset(workspaceId, datasetId, cloudContext.getGcpProjectId());
     assertNotNull(privateDataset);
 
     // Validate with Sam that secondary user can read their private resource
@@ -184,7 +186,7 @@ public class RemoveUserFromWorkspaceFlightTest extends BaseConnectedTest {
   }
 
   private ControlledBigQueryDatasetResource buildPrivateDataset(
-      UUID workspaceId, String datasetName) {
+      UUID workspaceId, String datasetName, String projectId) {
     ControlledBigQueryDatasetResource datasetToCreate =
         ControlledBigQueryDatasetResource.builder()
             .workspaceId(workspaceId)
@@ -195,6 +197,7 @@ public class RemoveUserFromWorkspaceFlightTest extends BaseConnectedTest {
             .accessScope(AccessScopeType.ACCESS_SCOPE_PRIVATE)
             .managedBy(ManagedByType.MANAGED_BY_USER)
             .datasetName(datasetName)
+            .projectId(projectId)
             .build();
     ApiGcpBigQueryDatasetCreationParameters datasetCreationParameters =
         new ApiGcpBigQueryDatasetCreationParameters()

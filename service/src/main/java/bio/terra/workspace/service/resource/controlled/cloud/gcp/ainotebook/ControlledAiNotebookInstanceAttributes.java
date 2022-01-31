@@ -7,12 +7,16 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 public class ControlledAiNotebookInstanceAttributes {
   private final String instanceId;
   private final String location;
+  private final String projectId;
 
   @JsonCreator
   public ControlledAiNotebookInstanceAttributes(
-      @JsonProperty("instanceId") String instanceName, @JsonProperty("location") String location) {
+      @JsonProperty("instanceId") String instanceName,
+      @JsonProperty("location") String location,
+      @JsonProperty("projectId") String projectId) {
     this.instanceId = instanceName;
     this.location = location;
+    this.projectId = projectId;
   }
 
   public String getInstanceId() {
@@ -21,5 +25,9 @@ public class ControlledAiNotebookInstanceAttributes {
 
   public String getLocation() {
     return location;
+  }
+
+  public String getProjectId() {
+    return projectId;
   }
 }

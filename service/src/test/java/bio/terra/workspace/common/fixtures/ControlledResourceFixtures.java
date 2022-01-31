@@ -331,7 +331,8 @@ public class ControlledResourceFixtures {
         .assignedUser(null)
         .accessScope(AccessScopeType.ACCESS_SCOPE_SHARED)
         .managedBy(ManagedByType.MANAGED_BY_USER)
-        .datasetName("test_dataset");
+        .datasetName("test_dataset")
+        .projectId("my-project-id");
   }
 
   public static final ApiGcpBigQueryDatasetUpdateParameters BQ_DATASET_UPDATE_PARAMETERS_NEW =
@@ -369,7 +370,8 @@ public class ControlledResourceFixtures {
         .accessScope(AccessScopeType.ACCESS_SCOPE_PRIVATE)
         .managedBy(ManagedByType.MANAGED_BY_USER)
         .instanceId("my-instance-id")
-        .location("us-east1-b");
+        .location("us-east1-b")
+        .projectId("my-project-id");
   }
 
   public static final OffsetDateTime OFFSET_DATE_TIME_1 =

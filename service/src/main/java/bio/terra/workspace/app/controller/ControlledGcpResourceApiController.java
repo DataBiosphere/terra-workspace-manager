@@ -250,12 +250,11 @@ public class ControlledGcpResourceApiController implements ControlledGcpResource
   public ResponseEntity<ApiGcpBigQueryDatasetResource> getBigQueryDataset(
       UUID workspaceId, UUID resourceId) {
     final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
-    String projectId = workspaceService.getAuthorizedRequiredGcpProject(workspaceId, userRequest);
     return getControlledResourceAsResponseEntity(
         workspaceId,
         resourceId,
         userRequest,
-        r -> r.castToBigQueryDatasetResource().toApiResource(projectId));
+        r -> r.castToBigQueryDatasetResource().toApiResource());
   }
 
   @Override
@@ -263,6 +262,7 @@ public class ControlledGcpResourceApiController implements ControlledGcpResource
       UUID workspaceId, UUID resourceId, ApiUpdateControlledGcpBigQueryDatasetRequestBody body) {
     logger.info("Updating dataset resourceId {} workspaceId {}", resourceId, workspaceId);
     final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+
     final ControlledResource resource =
         controlledResourceService.getControlledResource(workspaceId, resourceId, userRequest);
     if (resource.getResourceType() != WsmResourceType.BIG_QUERY_DATASET) {
@@ -279,12 +279,11 @@ public class ControlledGcpResourceApiController implements ControlledGcpResource
         body.getDescription());
 
     // Retrieve and cast response to UpdateControlledGcpBigQueryDatasetResponse
-    String projectId = workspaceService.getAuthorizedRequiredGcpProject(workspaceId, userRequest);
     return getControlledResourceAsResponseEntity(
         workspaceId,
         resourceId,
         userRequest,
-        r -> r.castToBigQueryDatasetResource().toApiResource(projectId));
+        r -> r.castToBigQueryDatasetResource().toApiResource());
   }
 
   /**
@@ -321,14 +320,15 @@ public class ControlledGcpResourceApiController implements ControlledGcpResource
       UUID workspaceId, ApiCreateControlledGcpBigQueryDatasetRequestBody body) {
     final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
 
-    String projectId = workspaceService.getAuthorizedRequiredGcpProject(workspaceId, userRequest);
-
     PrivateUserRole privateUserRole =
         ControllerUtils.computePrivateUserRole(
             workspaceId, body.getCommon(), userRequest, samService);
 
     ManagedByType managedBy = ManagedByType.fromApi(body.getCommon().getManagedBy());
     AccessScopeType accessScopeType = AccessScopeType.fromApi(body.getCommon().getAccessScope());
+
+    // We need to retrieve the project id so it can be used in the BQ dataset attributes.
+    String projectId = workspaceService.getAuthorizedRequiredGcpProject(workspaceId, userRequest);
 
     ControlledBigQueryDatasetResource resource =
         ControlledBigQueryDatasetResource.builder()
@@ -345,6 +345,7 @@ public class ControlledGcpResourceApiController implements ControlledGcpResource
             .datasetName(
                 Optional.ofNullable(body.getDataset().getDatasetId())
                     .orElse(body.getCommon().getName()))
+            .projectId(projectId)
             .build();
 
     final ControlledBigQueryDatasetResource createdDataset =
@@ -355,7 +356,7 @@ public class ControlledGcpResourceApiController implements ControlledGcpResource
     var response =
         new ApiCreatedControlledGcpBigQueryDataset()
             .resourceId(createdDataset.getResourceId())
-            .bigQueryDataset(createdDataset.toApiResource(projectId));
+            .bigQueryDataset(createdDataset.toApiResource());
     return new ResponseEntity<>(response, HttpStatus.OK);
   }
 
@@ -374,6 +375,7 @@ public class ControlledGcpResourceApiController implements ControlledGcpResource
   public ResponseEntity<ApiCreatedControlledGcpAiNotebookInstanceResult> createAiNotebookInstance(
       UUID workspaceId, @Valid ApiCreateControlledGcpAiNotebookInstanceRequestBody body) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    String projectId = workspaceService.getAuthorizedRequiredGcpProject(workspaceId, userRequest);
 
     PrivateUserRole privateUserRole =
         ControllerUtils.computePrivateUserRole(
@@ -400,6 +402,7 @@ public class ControlledGcpResourceApiController implements ControlledGcpResource
                     .orElse(
                         ControlledAiNotebookInstanceResource.generateInstanceId(
                             privateUserRole.getUserEmail())))
+            .projectId(projectId)
             .build();
 
     String jobId =
@@ -437,9 +440,7 @@ public class ControlledGcpResourceApiController implements ControlledGcpResource
     ApiGcpAiNotebookInstanceResource apiResource = null;
     if (jobResult.getJobReport().getStatus().equals(ApiJobReport.StatusEnum.SUCCEEDED)) {
       ControlledAiNotebookInstanceResource resource = jobResult.getResult();
-      String workspaceProjectId =
-          workspaceService.getAuthorizedRequiredGcpProject(resource.getWorkspaceId(), userRequest);
-      apiResource = resource.toApiResource(workspaceProjectId);
+      apiResource = resource.toApiResource();
     }
     return new ApiCreatedControlledGcpAiNotebookInstanceResult()
         .jobReport(jobResult.getJobReport())
@@ -498,10 +499,9 @@ public class ControlledGcpResourceApiController implements ControlledGcpResource
         controlledResourceService.getControlledResource(workspaceId, resourceId, userRequest);
     try {
       ApiGcpAiNotebookInstanceResource response =
-          controlledResource
-              .castToAiNotebookInstanceResource()
-              .toApiResource(
-                  workspaceService.getAuthorizedRequiredGcpProject(workspaceId, userRequest));
+          controlledResource.castToAiNotebookInstanceResource().toApiResource();
+      // TODO: security check for: workspaceService.getAuthorizedRequiredGcpProject(workspaceId,
+      // userRequest));
       return new ResponseEntity<>(response, HttpStatus.OK);
     } catch (InvalidMetadataException ex) {
       throw new BadRequestException(
