@@ -130,9 +130,15 @@ public class JobBuilder {
    * @return Result of the finished job.
    */
   @Traced
-  public <T> T submitAndWait(Class<T> resultClass) {
+  public <T> T submitAndWait(Class<T> resultClass, boolean doAccessCheck) {
     populateInputParams();
-    return jobService.submitAndWait(flightClass, jobParameterMap, resultClass, jobId);
+    return jobService.submitAndWait(
+        flightClass, jobParameterMap, resultClass, jobId, doAccessCheck);
+  }
+
+  @Traced
+  public <T> T submitAndWait(Class<T> resultClass) {
+    return submitAndWait(resultClass, true);
   }
 
   // Check the inputs, supply defaults and finalize the input parameter map

@@ -31,7 +31,6 @@ import bio.terra.workspace.service.job.exception.InvalidResultStateException;
 import bio.terra.workspace.service.job.exception.JobNotCompleteException;
 import bio.terra.workspace.service.job.exception.JobNotFoundException;
 import bio.terra.workspace.service.job.exception.JobResponseException;
-import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.annotations.VisibleForTesting;
@@ -119,17 +118,27 @@ public class JobService {
       Class<? extends Flight> flightClass,
       FlightMap parameterMap,
       Class<T> resultClass,
-      String jobId) {
+      String jobId,
+      boolean doAccessCheck) {
     submit(flightClass, parameterMap, jobId);
     waitForJob(jobId);
     AuthenticatedUserRequest userRequest =
         parameterMap.get(JobMapKeys.AUTH_USER_INFO.getKeyName(), AuthenticatedUserRequest.class);
 
-    JobResultOrException<T> resultOrException = retrieveJobResult(jobId, resultClass, userRequest);
+    JobResultOrException<T> resultOrException =
+        retrieveJobResult(jobId, resultClass, userRequest, doAccessCheck);
     if (resultOrException.getException() != null) {
       throw resultOrException.getException();
     }
     return resultOrException.getResult();
+  }
+
+  protected <T> T submitAndWait(
+      Class<? extends Flight> flightClass,
+      FlightMap parameterMap,
+      Class<T> resultClass,
+      String jobId) {
+    return submitAndWait(flightClass, parameterMap, resultClass, jobId, true);
   }
 
   public void waitForJob(String jobId) {
@@ -306,14 +315,24 @@ public class JobService {
    */
   @Traced
   public <T> JobResultOrException<T> retrieveJobResult(
-      String jobId, Class<T> resultClass, AuthenticatedUserRequest userRequest) {
+      String jobId,
+      Class<T> resultClass,
+      AuthenticatedUserRequest userRequest,
+      boolean doAccessCheck) {
 
     try {
-      verifyUserAccess(jobId, userRequest); // jobId=flightId
+      if (doAccessCheck) {
+        verifyUserAccess(jobId, userRequest); // jobId=flightId
+      }
       return retrieveJobResultWorker(jobId, resultClass);
     } catch (StairwayException | InterruptedException stairwayEx) {
       throw new InternalStairwayException(stairwayEx);
     }
+  }
+
+  public <T> JobResultOrException<T> retrieveJobResult(
+      String jobId, Class<T> resultClass, AuthenticatedUserRequest userRequest) {
+    return retrieveJobResult(jobId, resultClass, userRequest, true);
   }
 
   /**
@@ -410,11 +429,9 @@ public class JobService {
       FlightMap inputParameters = flightState.getInputParameters();
       UUID workspaceId = inputParameters.get(WorkspaceFlightMapKeys.WORKSPACE_ID, UUID.class);
 
-      // If the workspace doesn't exist, don't try to validate it
-      final WorkspaceService workspaceService = flightBeanBag.getWorkspaceService();
-
-      workspaceService.validateWorkspaceAndAction(
-          userRequest, workspaceId, SamWorkspaceAction.READ);
+      flightBeanBag
+          .getWorkspaceService()
+          .validateWorkspaceAndAction(userRequest, workspaceId, SamWorkspaceAction.READ);
     } catch (DatabaseOperationException | InterruptedException ex) {
       throw new InternalStairwayException("Stairway exception looking up the job", ex);
     } catch (FlightNotFoundException ex) {

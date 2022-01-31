@@ -107,7 +107,7 @@ public class WorkspaceService {
       createJob.addParameter(
           WorkspaceFlightMapKeys.SPEND_PROFILE_ID, workspace.getSpendProfileId().get().getId());
     }
-    return createJob.submitAndWait(UUID.class);
+    return createJob.submitAndWait(UUID.class, false);
   }
 
   /**
@@ -191,11 +191,7 @@ public class WorkspaceService {
   /** Delete an existing workspace by ID. */
   @Traced
   public void deleteWorkspace(UUID id, AuthenticatedUserRequest userRequest) {
-    Optional<Workspace> maybeWorkspace = workspaceDao.getWorkspaceIfExists(id);
-    if (maybeWorkspace.isPresent()) {
-      validateWorkspaceAndAction(userRequest, id, SamWorkspaceAction.DELETE);
-    }
-
+    Workspace workspace = validateWorkspaceAndAction(userRequest, id, SamWorkspaceAction.DELETE);
     String description = "Delete workspace " + id;
     JobBuilder deleteJob =
         jobService
@@ -206,9 +202,9 @@ public class WorkspaceService {
             .workspaceId(id.toString())
             .userRequest(userRequest)
             .addParameter(
-                WorkspaceFlightMapKeys.WORKSPACE_STAGE,
-                maybeWorkspace.map(w -> w.getWorkspaceStage().name()).orElse(null));
-    deleteJob.submitAndWait(null);
+                WorkspaceFlightMapKeys.WORKSPACE_STAGE, workspace.getWorkspaceStage().name());
+    // Skip access check, which can't succeed after the workspace is deleted
+    deleteJob.submitAndWait(null, false);
   }
 
   /**
