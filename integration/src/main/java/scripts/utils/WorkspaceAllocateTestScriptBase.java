@@ -52,7 +52,8 @@ public abstract class WorkspaceAllocateTestScriptBase extends WorkspaceApiTestSc
 
     if (parameters == null || !parameters.containsKey(ParameterKeys.SPEND_PROFILE_PARAMETER)) {
       throw new IllegalArgumentException(
-          "Must provide the spend profile id as parameter " + ParameterKeys.SPEND_PROFILE_PARAMETER);
+          "Must provide the spend profile id as parameter "
+              + ParameterKeys.SPEND_PROFILE_PARAMETER);
     } else {
       spendProfileId = parameters.get(ParameterKeys.SPEND_PROFILE_PARAMETER);
     }

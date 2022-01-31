@@ -19,19 +19,24 @@ import bio.terra.workspace.client.ApiException;
 import bio.terra.workspace.model.ControlledResourceIamRole;
 import bio.terra.workspace.model.EnumerateJobsResult;
 import bio.terra.workspace.model.EnumeratedJob;
+import bio.terra.workspace.model.GcpBigQueryDataTableAttributes;
+import bio.terra.workspace.model.GcpGcsBucketAttributes;
 import bio.terra.workspace.model.ResourceMetadata;
 import bio.terra.workspace.model.ResourceType;
 import bio.terra.workspace.model.ResourceUnion;
 import bio.terra.workspace.model.StewardshipType;
 import com.google.common.collect.ImmutableList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import scripts.utils.ClientTestUtils;
 import scripts.utils.CloudContextMaker;
 import scripts.utils.DataRepoTestScriptBase;
+import scripts.utils.ParameterKeys;
 import scripts.utils.ResourceMaker;
+import scripts.utils.ResourceNameUtils;
 
 public class EnumerateJobs extends DataRepoTestScriptBase {
   private static final Logger logger = LoggerFactory.getLogger(EnumerateJobs.class);
@@ -48,11 +53,21 @@ public class EnumerateJobs extends DataRepoTestScriptBase {
 
   private ControlledGcpResourceApi ownerControlledGcpResourceApi;
   private ReferencedGcpResourceApi ownerReferencedGcpResourceApi;
+  private GcpGcsBucketAttributes referenceBucketAttributes;
+  private GcpBigQueryDataTableAttributes referenceBqTableAttributes;
   private ResourceApi ownerResourceApi;
   private ResourceApi readerResourceApi;
   private Alpha1Api alpha1Api;
   private List<ResourceMetadata> resourceList;
   private TestUserSpecification workspaceReader;
+
+  public void setParameters(Map<String, String> parameters) throws Exception {
+    super.setParameters(parameters);
+    referenceBucketAttributes =
+        ResourceNameUtils.parseGcsBucket(parameters.get(ParameterKeys.REFERENCED_GCS_BUCKET));
+    referenceBqTableAttributes =
+        ResourceNameUtils.parseBqTable(parameters.get(ParameterKeys.REFERENCED_BQ_TABLE));
+  }
 
   @Override
   public void doSetup(List<TestUserSpecification> testUsers, WorkspaceApi workspaceApi)
@@ -84,6 +99,8 @@ public class EnumerateJobs extends DataRepoTestScriptBase {
             getWorkspaceId(),
             getDataRepoSnapshotId(),
             getDataRepoInstanceName(),
+            referenceBucketAttributes,
+            referenceBqTableAttributes,
             RESOURCE_COUNT);
 
     logger.info("Created {} resources", resourceList.size());

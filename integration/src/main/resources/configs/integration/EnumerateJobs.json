@@ -14,7 +14,9 @@
       "parameters": {
         "spend-profile-id": "wm-default-spend-profile",
         "data-repo-instance": "terra",
-        "snapshot-id": "97b5559a-2f8f-4df3-89ae-5a249173ee0c"
+        "snapshot-id": "97b5559a-2f8f-4df3-89ae-5a249173ee0c",
+        "gcs-bucket": "gs://terra_wsm_fine_grained_test_bucket",
+        "bq-table": "projects/terra-kernel-k8s/datasets/terra_wsm_test_dataset/tables/terra wsm test data table"
       }
     }
   ],

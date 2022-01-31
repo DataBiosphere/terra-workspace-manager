@@ -5,7 +5,6 @@ import bio.terra.testrunner.runner.config.TestUserSpecification;
 import bio.terra.workspace.api.UnauthenticatedApi;
 import bio.terra.workspace.client.ApiClient;
 import java.time.Duration;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
@@ -23,7 +22,9 @@ public class ServiceStatus extends TestScript {
     if (parameters == null || !parameters.containsKey(ParameterKeys.STATUS_CHECK_DELAY_PARAMETER)) {
       return;
     }
-    delay = Duration.ofSeconds(Long.parseLong(parameters.get(ParameterKeys.STATUS_CHECK_DELAY_PARAMETER)));
+    delay =
+        Duration.ofSeconds(
+            Long.parseLong(parameters.get(ParameterKeys.STATUS_CHECK_DELAY_PARAMETER)));
   }
 
   @Override

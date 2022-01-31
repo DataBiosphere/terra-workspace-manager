@@ -17,21 +17,28 @@ import bio.terra.workspace.model.CloneReferencedGcpGcsObjectResourceResult;
 import bio.terra.workspace.model.CloneReferencedResourceRequestBody;
 import bio.terra.workspace.model.CloningInstructionsEnum;
 import bio.terra.workspace.model.DataRepoSnapshotResource;
+import bio.terra.workspace.model.GcpBigQueryDataTableAttributes;
 import bio.terra.workspace.model.GcpBigQueryDataTableResource;
+import bio.terra.workspace.model.GcpBigQueryDatasetAttributes;
 import bio.terra.workspace.model.GcpBigQueryDatasetResource;
+import bio.terra.workspace.model.GcpGcsBucketAttributes;
 import bio.terra.workspace.model.GcpGcsBucketResource;
+import bio.terra.workspace.model.GcpGcsObjectAttributes;
 import bio.terra.workspace.model.GcpGcsObjectResource;
 import bio.terra.workspace.model.ResourceMetadata;
 import bio.terra.workspace.model.ResourceType;
 import bio.terra.workspace.model.StewardshipType;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import scripts.utils.ClientTestUtils;
 import scripts.utils.DataRepoTestScriptBase;
+import scripts.utils.ParameterKeys;
 import scripts.utils.ResourceMaker;
+import scripts.utils.ResourceNameUtils;
 
 public class CloneReferencedResources extends DataRepoTestScriptBase {
   private static final Logger logger = LoggerFactory.getLogger(CloneReferencedResources.class);
@@ -47,15 +54,31 @@ public class CloneReferencedResources extends DataRepoTestScriptBase {
   private static final String CLONED_DATA_TABLE_DESCRIPTION = "a cloned data table reference";
 
   private DataRepoSnapshotResource sourceDataRepoSnapshotReference;
+  private GcpGcsBucketAttributes sourceUniformAccessBucketAttributes;
   private GcpGcsBucketResource sourceBucketReference;
   // Reference to gs://terra_wsm_fine_grained_test_bucket/foo/monkey_sees_monkey_dos.txt
+  private GcpGcsObjectAttributes sourceGcsObjectAttributes;
   private GcpGcsObjectResource sourceGcsObjectReference;
   // Reference to gs://terra_wsm_fine_grained_test_bucket/foo/
+  private GcpGcsObjectAttributes sourceFolderObjectAttributes;
   private GcpGcsObjectResource sourceBucketFolderReference;
   private GcpBigQueryDatasetResource sourceBigQueryDatasetReference;
+  private GcpBigQueryDataTableAttributes sourceBigQueryDataTableAttributes;
   private GcpBigQueryDataTableResource sourceBigQueryDataTableReference;
   private UUID destinationWorkspaceId;
   private ReferencedGcpResourceApi referencedGcpResourceApi;
+
+  @Override
+  public void setParameters(Map<String, String> parameters) throws Exception {
+    super.setParameters(parameters);
+    sourceUniformAccessBucketAttributes = ResourceNameUtils.parseGcsBucket(parameters.get(ParameterKeys.REFERENCED_GCS_UNIFORM_BUCKET));
+    sourceGcsObjectAttributes =
+        ResourceNameUtils.parseGcsObject(parameters.get(ParameterKeys.REFERENCED_GCS_OBJECT));
+    sourceFolderObjectAttributes =
+        ResourceNameUtils.parseGcsObject(parameters.get(ParameterKeys.REFERENCED_GCS_FOLDER));
+    sourceBigQueryDataTableAttributes =
+        ResourceNameUtils.parseBqTable(parameters.get(ParameterKeys.REFERENCED_BQ_TABLE));
+  }
 
   @Override
   protected void doSetup(List<TestUserSpecification> testUsers, WorkspaceApi workspaceApi)
@@ -68,32 +91,45 @@ public class CloneReferencedResources extends DataRepoTestScriptBase {
     // create reference to existing test bucket
     sourceBucketReference =
         ResourceMaker.makeGcsBucketReference(
-            referencedGcpResourceApi, getWorkspaceId(), bucketReferenceName);
+            sourceUniformAccessBucketAttributes,
+            referencedGcpResourceApi,
+            getWorkspaceId(),
+            bucketReferenceName,
+            CloningInstructionsEnum.NOTHING);
 
     sourceGcsObjectReference =
         ResourceMaker.makeGcsObjectReference(
+            sourceGcsObjectAttributes,
             referencedGcpResourceApi,
             getWorkspaceId(),
             "reference_to_foo_monkey_sees_monkey_dos",
-            null,
-            TEST_BUCKET_NAME_WITH_FINE_GRAINED_ACCESS,
-            TEST_FILE_FOO_MONKEY_SEES_MONKEY_DOS);
+            null);
     sourceBucketFolderReference =
         ResourceMaker.makeGcsObjectReference(
+            sourceFolderObjectAttributes,
             referencedGcpResourceApi,
             getWorkspaceId(),
             "reference_to_foo_folder",
-            null,
-            TEST_BUCKET_NAME_WITH_FINE_GRAINED_ACCESS,
-            TEST_FOLDER_FOO);
+            null);
 
+    // Take BQ dataset attributes from the BQ table reference parameter
+    GcpBigQueryDatasetAttributes sourceBigQueryDatasetAttributes =
+        new GcpBigQueryDatasetAttributes()
+            .projectId(sourceBigQueryDataTableAttributes.getProjectId())
+            .datasetId(sourceBigQueryDataTableAttributes.getDatasetId());
     sourceBigQueryDatasetReference =
         ResourceMaker.makeBigQueryDatasetReference(
-            referencedGcpResourceApi, getWorkspaceId(), DATASET_RESOURCE_NAME);
+            sourceBigQueryDatasetAttributes,
+            referencedGcpResourceApi,
+            getWorkspaceId(),
+            DATASET_RESOURCE_NAME);
 
     sourceBigQueryDataTableReference =
         ResourceMaker.makeBigQueryDataTableReference(
-            referencedGcpResourceApi, getWorkspaceId(), DATA_TABLE_RESOURCE_NAME);
+            sourceBigQueryDataTableAttributes,
+            referencedGcpResourceApi,
+            getWorkspaceId(),
+            DATA_TABLE_RESOURCE_NAME);
 
     final String snapshotReferenceName = RandomStringUtils.random(6, true, false);
 

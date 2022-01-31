@@ -21,9 +21,13 @@ import bio.terra.workspace.api.WorkspaceApi;
 import bio.terra.workspace.client.ApiException;
 import bio.terra.workspace.model.CloningInstructionsEnum;
 import bio.terra.workspace.model.DataRepoSnapshotResource;
+import bio.terra.workspace.model.GcpBigQueryDataTableAttributes;
 import bio.terra.workspace.model.GcpBigQueryDataTableResource;
+import bio.terra.workspace.model.GcpBigQueryDatasetAttributes;
 import bio.terra.workspace.model.GcpBigQueryDatasetResource;
+import bio.terra.workspace.model.GcpGcsBucketAttributes;
 import bio.terra.workspace.model.GcpGcsBucketResource;
+import bio.terra.workspace.model.GcpGcsObjectAttributes;
 import bio.terra.workspace.model.GcpGcsObjectResource;
 import bio.terra.workspace.model.GrantRoleRequestBody;
 import bio.terra.workspace.model.IamRole;
@@ -35,6 +39,7 @@ import scripts.utils.ClientTestUtils;
 import scripts.utils.DataRepoTestScriptBase;
 import scripts.utils.ParameterKeys;
 import scripts.utils.ResourceMaker;
+import scripts.utils.ResourceNameUtils;
 
 public class UpdateReferenceResources extends DataRepoTestScriptBase {
 
@@ -44,6 +49,10 @@ public class UpdateReferenceResources extends DataRepoTestScriptBase {
   private ReferencedGcpResourceApi fullAccessApi;
   private ReferencedGcpResourceApi partialAccessApi;
 
+  private GcpGcsBucketAttributes gcsUniformAccessBucketAttributes;
+  private GcpGcsObjectAttributes gcsFileAttributes;
+  private GcpBigQueryDataTableAttributes bqTableAttributes;
+
   private String dataRepoSnapshotId2;
 
   @MonotonicNonNull private UUID bqDatasetResourceId;
@@ -51,6 +60,17 @@ public class UpdateReferenceResources extends DataRepoTestScriptBase {
   @MonotonicNonNull private UUID dataRepoSnapshotResourceId;
   @MonotonicNonNull private UUID bucketResourceId;
   @MonotonicNonNull private UUID bucketObjectResourceId;
+
+  @Override
+  public void setParameters(Map<String, String> parameters) throws Exception {
+    super.setParameters(parameters);
+    gcsUniformAccessBucketAttributes = ResourceNameUtils.parseGcsBucket(parameters.get(ParameterKeys.REFERENCED_GCS_UNIFORM_BUCKET));
+    gcsFileAttributes =
+        ResourceNameUtils.parseGcsObject(parameters.get(ParameterKeys.REFERENCED_GCS_OBJECT));
+    bqTableAttributes =
+        ResourceNameUtils.parseBqTable(parameters.get(ParameterKeys.REFERENCED_BQ_TABLE));
+    dataRepoSnapshotId2 = parameters.get(ParameterKeys.DATA_REPO_ALTERNATE_SNAPSHOT_PARAMETER);
+  }
 
   @Override
   protected void doSetup(
@@ -67,13 +87,18 @@ public class UpdateReferenceResources extends DataRepoTestScriptBase {
         new ReferencedGcpResourceApi(
             ClientTestUtils.getClientForTestUser(userWithPartialAccess, server));
 
+    // Use the same dataset that the BQ table parameter references
+    GcpBigQueryDatasetAttributes datasetAttributes =
+        new GcpBigQueryDatasetAttributes()
+            .projectId(bqTableAttributes.getProjectId())
+            .datasetId(bqTableAttributes.getDatasetId());
     GcpBigQueryDatasetResource bqDatasetReference =
         ResourceMaker.makeBigQueryDatasetReference(
-            fullAccessApi, getWorkspaceId(), "bqDatasetReference");
+            datasetAttributes, fullAccessApi, getWorkspaceId(), "bqDatasetReference");
     bqDatasetResourceId = bqDatasetReference.getMetadata().getResourceId();
     GcpBigQueryDataTableResource bqDataTableReference =
         ResourceMaker.makeBigQueryDataTableReference(
-            fullAccessApi, getWorkspaceId(), "bqTableReference");
+            bqTableAttributes, fullAccessApi, getWorkspaceId(), "bqTableReference");
     bqTableResourceId = bqDataTableReference.getMetadata().getResourceId();
     DataRepoSnapshotResource snapshotResource =
         ResourceMaker.makeDataRepoSnapshotReference(
@@ -84,16 +109,20 @@ public class UpdateReferenceResources extends DataRepoTestScriptBase {
             getDataRepoInstanceName());
     dataRepoSnapshotResourceId = snapshotResource.getMetadata().getResourceId();
     GcpGcsBucketResource bucketResource =
-        ResourceMaker.makeGcsBucketReference(fullAccessApi, getWorkspaceId(), "bucketReference");
+        ResourceMaker.makeGcsBucketReference(
+            gcsUniformAccessBucketAttributes,
+            fullAccessApi,
+            getWorkspaceId(),
+            "bucketReference",
+            CloningInstructionsEnum.NOTHING);
     bucketResourceId = bucketResource.getMetadata().getResourceId();
     GcpGcsObjectResource blobResource =
         ResourceMaker.makeGcsObjectReference(
+            gcsFileAttributes,
             fullAccessApi,
             getWorkspaceId(),
             "a_reference_to_foo_monkey_sees_monkey_dos",
-            CloningInstructionsEnum.REFERENCE,
-            TEST_BUCKET_NAME_WITH_FINE_GRAINED_ACCESS,
-            TEST_FILE_FOO_MONKEY_SEES_MONKEY_DOS);
+            CloningInstructionsEnum.REFERENCE);
     bucketObjectResourceId = blobResource.getMetadata().getResourceId();
   }
 
@@ -101,18 +130,6 @@ public class UpdateReferenceResources extends DataRepoTestScriptBase {
   protected void doCleanup(List<TestUserSpecification> testUsers, WorkspaceApi workspaceApi)
       throws Exception {
     super.doCleanup(testUsers, workspaceApi);
-  }
-
-  @Override
-  public void setParameters(Map<String, String> parameters) throws Exception {
-    super.setParameters(parameters);
-    if (parameters == null || !parameters.containsKey(ParameterKeys.DATA_REPO_ALTERNATE_SNAPSHOT_PARAMETER)) {
-      throw new IllegalArgumentException(
-          "Must provide Spend Profile ID, 2 Data Repo snapshot IDs, and a Data Repo Instance Name in the parameters list");
-    } else {
-      // Spend profile ID, TDR instance, and snapshot ID are all read in superclasses.
-      dataRepoSnapshotId2 = parameters.get(ParameterKeys.DATA_REPO_ALTERNATE_SNAPSHOT_PARAMETER);
-    }
   }
 
   @Override
