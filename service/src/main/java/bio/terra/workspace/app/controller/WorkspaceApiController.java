@@ -40,7 +40,6 @@ import bio.terra.workspace.service.iam.model.WsmIamRole;
 import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.job.JobService.AsyncJobResult;
 import bio.terra.workspace.service.petserviceaccount.PetSaService;
-import bio.terra.workspace.service.petserviceaccount.model.UserWithPetSa;
 import bio.terra.workspace.service.resource.ValidationUtils;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
@@ -509,7 +508,7 @@ public class WorkspaceApiController implements WorkspaceApi {
   }
 
   @Override
-  public ResponseEntity<String> enablePet(UUID workspaceId) {
+  public ResponseEntity<Void> enablePet(UUID workspaceId) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     // TODO(PF-1007): This would be a nice use for an authorized workspace ID.
     // Validate that the user is a workspace member, as enablePetServiceAccountImpersonation does
@@ -518,15 +517,9 @@ public class WorkspaceApiController implements WorkspaceApi {
         userRequest, workspaceId, SamConstants.SamWorkspaceAction.READ);
     String userEmail =
         SamRethrow.onInterrupted(() -> samService.getUserEmailFromSam(userRequest), "enablePet");
-    String petSaEmail =
-        SamRethrow.onInterrupted(
-            () ->
-                samService.getOrCreatePetSaEmail(
-                    gcpCloudContextService.getRequiredGcpProject(workspaceId), userRequest),
-            "enablePet");
-    UserWithPetSa userAndPet = new UserWithPetSa(userEmail, petSaEmail);
-    petSaService.enablePetServiceAccountImpersonation(workspaceId, userAndPet);
-    return new ResponseEntity<>(petSaEmail, HttpStatus.OK);
+    petSaService.enablePetServiceAccountImpersonation(
+        workspaceId, userEmail, userRequest.getRequiredToken());
+    return new ResponseEntity<>(HttpStatus.NO_CONTENT);
   }
 
   /**

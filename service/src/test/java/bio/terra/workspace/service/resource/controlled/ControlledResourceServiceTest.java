@@ -38,7 +38,6 @@ import bio.terra.workspace.service.iam.model.ControlledResourceIamRole;
 import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.job.exception.InvalidResultStateException;
 import bio.terra.workspace.service.petserviceaccount.PetSaService;
-import bio.terra.workspace.service.petserviceaccount.model.UserWithPetSa;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook.ControlledAiNotebookInstanceResource;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook.CreateAiNotebookInstanceStep;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook.DeleteAiNotebookInstanceStep;
@@ -375,9 +374,10 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
     // Revoke user's Pet SA access, if they have it. Because these tests re-use a common workspace,
     // the user may have pet SA access enabled prior to this test.
     String serviceAccountEmail =
-        samService.getOrCreatePetSaEmail(projectId, user.getAuthenticatedRequest());
-    UserWithPetSa userAndPet = new UserWithPetSa(user.getEmail(), serviceAccountEmail);
-    petSaService.disablePetServiceAccountImpersonation(workspace.getWorkspaceId(), userAndPet);
+        samService.getOrCreatePetSaEmail(
+            projectId, user.getAuthenticatedRequest().getRequiredToken());
+    petSaService.disablePetServiceAccountImpersonation(
+        workspace.getWorkspaceId(), user.getEmail(), user.getAuthenticatedRequest());
     IamCow userIamCow = crlService.getIamCow(user.getAuthenticatedRequest());
     // Assert the user does not have access to their pet SA before the flight
     // Note this uses user credentials for the IAM cow to validate the user's access.

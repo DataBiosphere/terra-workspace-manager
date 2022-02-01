@@ -131,6 +131,22 @@ public class SamService {
   }
 
   /**
+   * Gets proxy group email.
+   *
+   * <p>This takes in userEmail instead of AuthenticatedUserRequest because of
+   * WorkspaceService.removeWorkspaceRoleFromUser(). When User A removes User B from workspace, we
+   * want to get B's proxy group, not A's.
+   */
+  public String getProxyGroupEmail(String userEmail, String token) throws InterruptedException {
+    GoogleApi googleApi = samGoogleApi(token);
+    try {
+      return SamRetry.retry(() -> googleApi.getProxyGroup(userEmail));
+    } catch (ApiException apiException) {
+      throw SamExceptionFactory.create("Error getting proxy group from Sam", apiException);
+    }
+  }
+
+  /**
    * Register WSM's service account as a user in Sam if it isn't already. This should only need to
    * register with Sam once per environment, so it is implemented lazily.
    */
@@ -984,9 +1000,8 @@ public class SamService {
    * Fetch the email of a user's pet service account in a given project. This request to Sam will
    * create the pet SA if it doesn't already exist.
    */
-  public String getOrCreatePetSaEmail(String projectId, AuthenticatedUserRequest userRequest)
-      throws InterruptedException {
-    GoogleApi googleApi = samGoogleApi(userRequest.getRequiredToken());
+  public String getOrCreatePetSaEmail(String projectId, String token) throws InterruptedException {
+    GoogleApi googleApi = samGoogleApi(token);
     try {
       return SamRetry.retry(() -> googleApi.getPetServiceAccount(projectId));
     } catch (ApiException apiException) {
@@ -1002,7 +1017,7 @@ public class SamService {
       String projectId, AuthenticatedUserRequest userRequest) throws InterruptedException {
     GoogleApi samGoogleApi = samGoogleApi(userRequest.getRequiredToken());
     try {
-      String petEmail = getOrCreatePetSaEmail(projectId, userRequest);
+      String petEmail = getOrCreatePetSaEmail(projectId, userRequest.getRequiredToken());
       String petToken =
           SamRetry.retry(
               () -> samGoogleApi.getPetServiceAccountToken(projectId, PET_SA_OAUTH_SCOPES));
@@ -1017,9 +1032,6 @@ public class SamService {
     }
   }
 
-  // TODO(PF-991): This is a temporary workaround to support disabling pet service account
-  //  self-impersonation without having user credentials available. When we stop granting this
-  //  permission directly to users and their pets, this method should be deleted.
   /**
    * Construct the email of an arbitrary user's pet service account in a given project. Unlike
    * {@code getOrCreatePetSaEmail}, this will not create the underlying service account. It may

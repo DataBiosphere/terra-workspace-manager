@@ -433,8 +433,8 @@ paths:
       operationId: enablePet
       tags: [ Workspace ]
       responses:
-        '200':
-          $ref: '#/components/responses/EnablePetSaResponse'
+        '204':
+          description: OK
         '400':
           $ref: '#/components/responses/BadRequest'
         '403':

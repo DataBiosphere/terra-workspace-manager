@@ -8,7 +8,6 @@ import bio.terra.stairway.StepResult;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.petserviceaccount.PetSaService;
-import bio.terra.workspace.service.petserviceaccount.model.UserWithPetSa;
 import bio.terra.workspace.service.workspace.GcpCloudContextService;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.PetSaKeys;
@@ -60,10 +59,9 @@ public class RevokePetUsagePermissionStep implements Step {
     if (validatedPetEmail.isEmpty()) {
       return StepResult.getStepResultSuccess();
     }
-    UserWithPetSa userAndPet = new UserWithPetSa(userEmailToRemove, validatedPetEmail.get());
     String updatedPolicyEtag =
         petSaService
-            .disablePetServiceAccountImpersonation(workspaceId, userAndPet)
+            .disablePetServiceAccountImpersonation(workspaceId, userEmailToRemove, userRequest)
             .map(Policy::getEtag)
             .orElse(null);
     workingMap.put(PetSaKeys.MODIFIED_PET_SA_POLICY_ETAG, updatedPolicyEtag);
@@ -79,7 +77,6 @@ public class RevokePetUsagePermissionStep implements Step {
     if (validatedPetEmail.isEmpty()) {
       return StepResult.getStepResultSuccess();
     }
-    UserWithPetSa userAndPet = new UserWithPetSa(userEmailToRemove, validatedPetEmail.get());
     String expectedEtag = workingMap.get(PetSaKeys.MODIFIED_PET_SA_POLICY_ETAG, String.class);
     if (expectedEtag == null) {
       // If the do step did not finish, we cannot guarantee we aren't undoing something we didn't do
@@ -90,7 +87,7 @@ public class RevokePetUsagePermissionStep implements Step {
       return StepResult.getStepResultSuccess();
     }
     petSaService.enablePetServiceAccountImpersonationWithEtag(
-        workspaceId, userAndPet, expectedEtag);
+        workspaceId, userEmailToRemove, userRequest.getRequiredToken(), expectedEtag);
     return StepResult.getStepResultSuccess();
   }
 
