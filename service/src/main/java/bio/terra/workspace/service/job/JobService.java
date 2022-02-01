@@ -24,13 +24,14 @@ import bio.terra.workspace.generated.model.ApiErrorReport;
 import bio.terra.workspace.generated.model.ApiJobReport;
 import bio.terra.workspace.generated.model.ApiJobReport.StatusEnum;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
+import bio.terra.workspace.service.iam.model.SamConstants.SamWorkspaceAction;
 import bio.terra.workspace.service.job.exception.DuplicateJobIdException;
 import bio.terra.workspace.service.job.exception.InternalStairwayException;
 import bio.terra.workspace.service.job.exception.InvalidResultStateException;
 import bio.terra.workspace.service.job.exception.JobNotCompleteException;
 import bio.terra.workspace.service.job.exception.JobNotFoundException;
 import bio.terra.workspace.service.job.exception.JobResponseException;
-import bio.terra.workspace.service.job.exception.JobUnauthorizedException;
+import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.annotations.VisibleForTesting;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
@@ -38,13 +39,13 @@ import io.opencensus.contrib.spring.aop.Traced;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
-import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -117,17 +118,27 @@ public class JobService {
       Class<? extends Flight> flightClass,
       FlightMap parameterMap,
       Class<T> resultClass,
-      String jobId) {
+      String jobId,
+      boolean doAccessCheck) {
     submit(flightClass, parameterMap, jobId);
     waitForJob(jobId);
     AuthenticatedUserRequest userRequest =
         parameterMap.get(JobMapKeys.AUTH_USER_INFO.getKeyName(), AuthenticatedUserRequest.class);
 
-    JobResultOrException<T> resultOrException = retrieveJobResult(jobId, resultClass, userRequest);
+    JobResultOrException<T> resultOrException =
+        retrieveJobResult(jobId, resultClass, userRequest, doAccessCheck);
     if (resultOrException.getException() != null) {
       throw resultOrException.getException();
     }
     return resultOrException.getResult();
+  }
+
+  protected <T> T submitAndWait(
+      Class<? extends Flight> flightClass,
+      FlightMap parameterMap,
+      Class<T> resultClass,
+      String jobId) {
+    return submitAndWait(flightClass, parameterMap, resultClass, jobId, true);
   }
 
   public void waitForJob(String jobId) {
@@ -304,14 +315,24 @@ public class JobService {
    */
   @Traced
   public <T> JobResultOrException<T> retrieveJobResult(
-      String jobId, Class<T> resultClass, AuthenticatedUserRequest userRequest) {
+      String jobId,
+      Class<T> resultClass,
+      AuthenticatedUserRequest userRequest,
+      boolean doAccessCheck) {
 
     try {
-      verifyUserAccess(jobId, userRequest); // jobId=flightId
+      if (doAccessCheck) {
+        verifyUserAccess(jobId, userRequest); // jobId=flightId
+      }
       return retrieveJobResultWorker(jobId, resultClass);
     } catch (StairwayException | InterruptedException stairwayEx) {
       throw new InternalStairwayException(stairwayEx);
     }
+  }
+
+  public <T> JobResultOrException<T> retrieveJobResult(
+      String jobId, Class<T> resultClass, AuthenticatedUserRequest userRequest) {
+    return retrieveJobResult(jobId, resultClass, userRequest, true);
   }
 
   /**
@@ -394,15 +415,23 @@ public class JobService {
     return resultMap;
   }
 
+  /**
+   * Ensure the user in the user request has permission to read the workspace associated with the
+   * Job ID. Throws ForbiddenException if not. If the workspace does not exist, treat this as the
+   * user having access (i.e. skip validateWorkspaceAndAction check).
+   *
+   * @param jobId - ID of running job
+   * @param userRequest - original user request
+   */
   private void verifyUserAccess(String jobId, AuthenticatedUserRequest userRequest) {
     try {
       FlightState flightState = stairwayComponent.get().getFlightState(jobId);
       FlightMap inputParameters = flightState.getInputParameters();
-      String flightSubjectId =
-          inputParameters.get(JobMapKeys.SUBJECT_ID.getKeyName(), String.class);
-      if (!StringUtils.equals(flightSubjectId, userRequest.getSubjectId())) {
-        throw new JobUnauthorizedException("Unauthorized");
-      }
+      UUID workspaceId = inputParameters.get(WorkspaceFlightMapKeys.WORKSPACE_ID, UUID.class);
+
+      flightBeanBag
+          .getWorkspaceService()
+          .validateWorkspaceAndAction(userRequest, workspaceId, SamWorkspaceAction.READ);
     } catch (DatabaseOperationException | InterruptedException ex) {
       throw new InternalStairwayException("Stairway exception looking up the job", ex);
     } catch (FlightNotFoundException ex) {

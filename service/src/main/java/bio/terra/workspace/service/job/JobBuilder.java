@@ -24,14 +24,14 @@ public class JobBuilder {
   private final StairwayComponent stairwayComponent;
   private final MdcHook mdcHook;
   private final FlightMap jobParameterMap;
-  @Nullable private Class<? extends Flight> flightClass;
+  private Class<? extends Flight> flightClass;
   @Nullable private String jobId;
   @Nullable private String description;
   @Nullable private Object request;
   @Nullable private AuthenticatedUserRequest userRequest;
   // Well-known keys used for filtering workspace jobs
   // All applicable ones of these should be supplied on every flight
-  @Nullable private String workspaceId;
+  private String workspaceId;
   @Nullable private WsmResource resource;
   @Nullable private WsmResourceType resourceType;
   @Nullable private String resourceName;
@@ -130,15 +130,25 @@ public class JobBuilder {
    * @return Result of the finished job.
    */
   @Traced
-  public <T> T submitAndWait(Class<T> resultClass) {
+  public <T> T submitAndWait(Class<T> resultClass, boolean doAccessCheck) {
     populateInputParams();
-    return jobService.submitAndWait(flightClass, jobParameterMap, resultClass, jobId);
+    return jobService.submitAndWait(
+        flightClass, jobParameterMap, resultClass, jobId, doAccessCheck);
+  }
+
+  @Traced
+  public <T> T submitAndWait(Class<T> resultClass) {
+    return submitAndWait(resultClass, true);
   }
 
   // Check the inputs, supply defaults and finalize the input parameter map
   private void populateInputParams() {
     if (flightClass == null) {
       throw new MissingRequiredFieldException("Missing flight class: flightClass");
+    }
+
+    if (workspaceId == null) {
+      throw new MissingRequiredFieldException("Missing workspace ID");
     }
 
     // Default to a generated job id

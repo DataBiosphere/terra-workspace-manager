@@ -106,7 +106,7 @@ public class WsmApplicationService {
             .description(description)
             .flightClass(ApplicationAbleFlight.class)
             .userRequest(userRequest)
-            .addParameter(WorkspaceFlightMapKeys.WORKSPACE_ID, workspaceId)
+            .workspaceId(workspaceId.toString())
             .addParameter(WorkspaceFlightMapKeys.APPLICATION_ID, applicationId)
             .addParameter(WsmApplicationKeys.APPLICATION_ABLE_ENUM, ableEnum);
     return job.submitAndWait(WsmWorkspaceApplication.class);
