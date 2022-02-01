@@ -91,7 +91,7 @@ public class CreateControlledResourceFlight extends Flight {
 
     // create the cloud resource and grant IAM roles via CRL
     switch (resource.getResourceType()) {
-      case GCS_BUCKET:
+      case CONTROLLED_GCP_GCS_BUCKET:
         addStep(
             new CreateGcsBucketStep(
                 flightBeanBag.getCrlService(),
@@ -107,7 +107,7 @@ public class CreateControlledResourceFlight extends Flight {
                 userRequest),
             gcpRetryRule);
         break;
-      case AI_NOTEBOOK_INSTANCE:
+      case CONTROLLED_GCP_AI_NOTEBOOK_INSTANCE:
         {
           UserWithPetSa userAndPet =
               new UserWithPetSa(
@@ -118,7 +118,7 @@ public class CreateControlledResourceFlight extends Flight {
               userAndPet, flightBeanBag, resource.castToAiNotebookInstanceResource(), userRequest);
           break;
         }
-      case BIG_QUERY_DATASET:
+      case CONTROLLED_GCP_BIG_QUERY_DATASET:
         // Unlike other resources, BigQuery datasets set IAM permissions at creation time to avoid
         // unwanted defaults from GCP.
         addStep(
@@ -131,7 +131,7 @@ public class CreateControlledResourceFlight extends Flight {
             gcpRetryRule);
         break;
 
-      case AZURE_DISK:
+      case CONTROLLED_AZURE_DISK:
         addStep(
             new GetAzureDiskStep(
                 flightBeanBag.getAzureConfig(),
@@ -153,7 +153,7 @@ public class CreateControlledResourceFlight extends Flight {
                 resource.castToAzureDiskResource()),
             RetryRules.cloud());
         break;
-      case AZURE_IP:
+      case CONTROLLED_AZURE_IP:
         addStep(
             new GetAzureIpStep(
                 flightBeanBag.getAzureConfig(),
@@ -175,7 +175,7 @@ public class CreateControlledResourceFlight extends Flight {
                 resource.castToAzureIpResource()),
             RetryRules.cloud());
         break;
-      case AZURE_NETWORK:
+      case CONTROLLED_AZURE_NETWORK:
         addStep(
             new GetAzureNetworkStep(
                 flightBeanBag.getAzureConfig(),
@@ -197,7 +197,7 @@ public class CreateControlledResourceFlight extends Flight {
                 resource.castToAzureNetworkResource()),
             RetryRules.cloud());
         break;
-      case AZURE_VM:
+      case CONTROLLED_AZURE_VM:
         addStep(
             new GetAzureVmStep(
                 flightBeanBag.getAzureConfig(),
@@ -220,7 +220,7 @@ public class CreateControlledResourceFlight extends Flight {
                 flightBeanBag.getResourceDao()),
             RetryRules.cloud());
         break;
-      case AZURE_STORAGE_ACCOUNT:
+      case CONTROLLED_AZURE_STORAGE_ACCOUNT:
         addStep(
             new GetAzureStorageStep(
                 flightBeanBag.getAzureConfig(),

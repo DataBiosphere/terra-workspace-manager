@@ -291,7 +291,7 @@ public class WorkspaceApiController implements WorkspaceApi {
 
     // TODO(PF-404): this endpoint's return type does not support reference types beyond snapshots.
     // Clients should migrate to type-specific endpoints, and this endpoint should be removed.
-    if (referenceResource.getResourceType() != WsmResourceType.DATA_REPO_SNAPSHOT) {
+    if (referenceResource.getResourceType() != WsmResourceType.REFERENCED_DATA_REPO_SNAPSHOT) {
       throw new InvalidReferenceException(
           "This endpoint does not support non-snapshot references. Use the newer type-specific endpoints instead.");
     }
@@ -376,7 +376,7 @@ public class WorkspaceApiController implements WorkspaceApi {
     // TODO(PF-404): this is a workaround until clients migrate off this endpoint.
     ApiDataReferenceList responseList = new ApiDataReferenceList();
     for (ReferencedResource resource : enumerateResult) {
-      if (resource.getResourceType() == WsmResourceType.DATA_REPO_SNAPSHOT) {
+      if (resource.getResourceType() == WsmResourceType.REFERENCED_DATA_REPO_SNAPSHOT) {
         responseList.addResourcesItem(makeApiDataReferenceDescription(resource));
       }
     }

@@ -5,7 +5,7 @@ import bio.terra.workspace.service.resource.model.WsmResource;
 import bio.terra.workspace.service.resource.model.WsmResourceHandler;
 import java.util.Optional;
 
-public class ReferencedDataRepoSnapshotHandler implements WsmResourceHandler  {
+public class ReferencedDataRepoSnapshotHandler implements WsmResourceHandler {
   private static ReferencedDataRepoSnapshotHandler theHandler;
 
   public static ReferencedDataRepoSnapshotHandler getHandler() {

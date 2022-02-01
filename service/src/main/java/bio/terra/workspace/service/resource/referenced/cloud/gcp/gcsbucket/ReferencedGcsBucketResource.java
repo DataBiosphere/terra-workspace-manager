@@ -7,11 +7,14 @@ import bio.terra.workspace.db.DbSerDes;
 import bio.terra.workspace.db.model.DbResource;
 import bio.terra.workspace.generated.model.ApiGcpGcsBucketAttributes;
 import bio.terra.workspace.generated.model.ApiGcpGcsBucketResource;
+import bio.terra.workspace.generated.model.ApiResourceAttributesUnion;
+import bio.terra.workspace.generated.model.ApiResourceUnion;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.petserviceaccount.PetSaService;
 import bio.terra.workspace.service.resource.ValidationUtils;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
+import bio.terra.workspace.service.resource.model.WsmCloudResourceType;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.resource.referenced.cloud.gcp.ReferencedResource;
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -67,7 +70,7 @@ public class ReferencedGcsBucketResource extends ReferencedResource {
     return new ApiGcpGcsBucketAttributes().bucketName(getBucketName());
   }
 
-  public ApiGcpGcsBucketResource toApiModel() {
+  public ApiGcpGcsBucketResource toApiResource() {
     return new ApiGcpGcsBucketResource()
         .metadata(super.toApiMetadata())
         .attributes(toApiAttributes());
@@ -75,7 +78,12 @@ public class ReferencedGcsBucketResource extends ReferencedResource {
 
   @Override
   public WsmResourceType getResourceType() {
-    return WsmResourceType.GCS_BUCKET;
+    return WsmResourceType.REFERENCED_GCP_GCS_BUCKET;
+  }
+
+  @Override
+  public WsmCloudResourceType getCloudResourceType() {
+    return WsmCloudResourceType.GCS_BUCKET;
   }
 
   @Override
@@ -84,10 +92,20 @@ public class ReferencedGcsBucketResource extends ReferencedResource {
   }
 
   @Override
+  public ApiResourceAttributesUnion toApiAttributesUnion() {
+    return new ApiResourceAttributesUnion().gcpGcsBucket(toApiAttributes());
+  }
+
+  @Override
+  public ApiResourceUnion toApiResourceUnion() {
+    return new ApiResourceUnion().gcpGcsBucket(toApiResource());
+  }
+
+  @Override
   public void validate() {
     super.validate();
-    if (getResourceType() != WsmResourceType.GCS_BUCKET) {
-      throw new InconsistentFieldsException("Expected GCS_BUCKET");
+    if (getResourceType() != WsmResourceType.REFERENCED_GCP_GCS_BUCKET) {
+      throw new InconsistentFieldsException("Expected referenced GCP GCS_BUCKET");
     }
     if (Strings.isNullOrEmpty(getBucketName())) {
       throw new MissingRequiredFieldException("Missing required field for ReferenceGcsBucket.");

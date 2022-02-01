@@ -37,26 +37,14 @@ public enum WsmCloudResourceType {
       ApiResourceType.BIG_QUERY_DATA_TABLE,
       WsmResourceType.REFERENCED_GCP_BIG_QUERY_DATA_TABLE,
       null), // no controlled type for BQ data table
-  AZURE_IP(
-      "AZURE_IP",
-      ApiResourceType.AZURE_IP,
-      null,
-      WsmResourceType.CONTROLLED_AZURE_IP),
-  AZURE_DISK(
-      "AZURE_DISK",
-      ApiResourceType.AZURE_DISK,
-      null,
-      WsmResourceType.CONTROLLED_AZURE_DISK),
+  AZURE_IP("AZURE_IP", ApiResourceType.AZURE_IP, null, WsmResourceType.CONTROLLED_AZURE_IP),
+  AZURE_DISK("AZURE_DISK", ApiResourceType.AZURE_DISK, null, WsmResourceType.CONTROLLED_AZURE_DISK),
   AZURE_NETWORK(
       "AZURE_NETWORK",
       ApiResourceType.AZURE_NETWORK,
       null,
       WsmResourceType.CONTROLLED_AZURE_NETWORK),
-  AZURE_VM(
-      "AZURE_VM",
-      ApiResourceType.AZURE_VM,
-      null,
-      WsmResourceType.CONTROLLED_AZURE_VM),
+  AZURE_VM("AZURE_VM", ApiResourceType.AZURE_VM, null, WsmResourceType.CONTROLLED_AZURE_VM),
   AZURE_STORAGE_ACCOUNT(
       "AZURE_STORAGE_ACCOUNT",
       ApiResourceType.AZURE_STORAGE_ACCOUNT,
@@ -68,7 +56,7 @@ public enum WsmCloudResourceType {
   private final WsmResourceType referenceType;
   private final WsmResourceType controlledType;
 
-  WsmResourceType(
+  WsmCloudResourceType(
       String dbString,
       ApiResourceType apiResourceType,
       WsmResourceType referenceType,
@@ -110,11 +98,11 @@ public enum WsmCloudResourceType {
     throw new ValidationException("Invalid resource type " + apiResourceType);
   }
 
-  public WsmCloudResourceType getReferenceType() {
+  public WsmResourceType getReferenceType() {
     return referenceType;
   }
 
-  public WsmCloudResourceType getControlledType() {
+  public WsmResourceType getControlledType() {
     return controlledType;
   }
 

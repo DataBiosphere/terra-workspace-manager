@@ -365,7 +365,7 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
 
       ReferencedDataRepoSnapshotResource resource =
           referenceResource.castToDataRepoSnapshotResource();
-      assertEquals(resource.getResourceType(), WsmResourceType.DATA_REPO_SNAPSHOT);
+      assertEquals(resource.getResourceType(), WsmResourceType.REFERENCED_DATA_REPO_SNAPSHOT);
 
       ReferencedResource resultReferenceResource =
           referenceResourceService.createReferenceResource(referenceResource, USER_REQUEST);
@@ -389,7 +389,7 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
           workspaceId,
           referenceResource.getResourceId(),
           USER_REQUEST,
-          WsmResourceType.DATA_REPO_SNAPSHOT);
+          WsmResourceType.REFERENCED_DATA_REPO_SNAPSHOT);
     }
 
     @Test
@@ -494,7 +494,7 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
         assertEquals(referenceResource.getStewardshipType(), StewardshipType.REFERENCED);
 
         ReferencedGcsObjectResource resource = referenceResource.castToGcsObjectResource();
-        assertEquals(resource.getResourceType(), WsmResourceType.GCS_OBJECT);
+        assertEquals(resource.getResourceType(), WsmResourceType.REFERENCED_GCP_GCS_OBJECT);
 
         ReferencedResource resultReferenceResource =
             referenceResourceService.createReferenceResource(referenceResource, USER_REQUEST);
@@ -519,7 +519,7 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
             workspaceId,
             referenceResource.getResourceId(),
             USER_REQUEST,
-            WsmResourceType.GCS_OBJECT);
+            WsmResourceType.REFERENCED_GCP_GCS_OBJECT);
       }
 
       private ReferencedGcsBucketResource makeGcsBucketResource() {
@@ -541,7 +541,7 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
         assertEquals(referenceResource.getStewardshipType(), StewardshipType.REFERENCED);
 
         ReferencedGcsBucketResource resource = referenceResource.castToGcsBucketResource();
-        assertEquals(resource.getResourceType(), WsmResourceType.GCS_BUCKET);
+        assertEquals(resource.getResourceType(), WsmResourceType.REFERENCED_GCP_GCS_BUCKET);
 
         ReferencedResource resultReferenceResource =
             referenceResourceService.createReferenceResource(referenceResource, USER_REQUEST);
@@ -567,7 +567,7 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
             workspaceId,
             referenceResource.getResourceId(),
             USER_REQUEST,
-            WsmResourceType.GCS_BUCKET);
+            WsmResourceType.REFERENCED_GCP_GCS_BUCKET);
       }
 
       @Test
@@ -680,7 +680,7 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
 
         ReferencedBigQueryDatasetResource resource =
             referenceResource.castToBigQueryDatasetResource();
-        assertEquals(resource.getResourceType(), WsmResourceType.BIG_QUERY_DATASET);
+        assertEquals(resource.getResourceType(), WsmResourceType.REFERENCED_GCP_BIG_QUERY_DATASET);
 
         ReferencedResource resultReferenceResource =
             referenceResourceService.createReferenceResource(referenceResource, USER_REQUEST);
@@ -706,7 +706,7 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
             workspaceId,
             referenceResource.getResourceId(),
             USER_REQUEST,
-            WsmResourceType.BIG_QUERY_DATASET);
+            WsmResourceType.REFERENCED_GCP_BIG_QUERY_DATASET);
       }
 
       @Test
@@ -716,7 +716,8 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
 
         ReferencedBigQueryDataTableResource resource =
             referenceResource.castToBigQueryDataTableResource();
-        assertEquals(resource.getResourceType(), WsmResourceType.BIG_QUERY_DATA_TABLE);
+        assertEquals(
+            resource.getResourceType(), WsmResourceType.REFERENCED_GCP_BIG_QUERY_DATA_TABLE);
         assertEquals(resource.getDataTableId(), DATA_TABLE_NAME);
         assertEquals(resource.getDatasetId(), DATASET_NAME);
 
@@ -742,7 +743,7 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
             workspaceId,
             referenceResource.getResourceId(),
             USER_REQUEST,
-            WsmResourceType.BIG_QUERY_DATA_TABLE);
+            WsmResourceType.REFERENCED_GCP_BIG_QUERY_DATA_TABLE);
       }
 
       @Test
@@ -757,7 +758,7 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
             workspaceId,
             referenceResource.getResourceId(),
             USER_REQUEST,
-            WsmResourceType.BIG_QUERY_DATASET);
+            WsmResourceType.REFERENCED_GCP_BIG_QUERY_DATASET);
 
         // Fail to delete the resource the first time with the wrong resource type.
         ReferencedResource resource =
@@ -771,7 +772,7 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
             workspaceId,
             referenceResource.getResourceId(),
             USER_REQUEST,
-            WsmResourceType.BIG_QUERY_DATA_TABLE);
+            WsmResourceType.REFERENCED_GCP_BIG_QUERY_DATA_TABLE);
         // BQ data table is successfully deleted.
         assertThrows(
             ResourceNotFoundException.class,
@@ -917,7 +918,7 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
 
         ReferencedDataRepoSnapshotResource resource =
             referenceResource.castToDataRepoSnapshotResource();
-        assertEquals(resource.getResourceType(), WsmResourceType.DATA_REPO_SNAPSHOT);
+        assertEquals(resource.getResourceType(), WsmResourceType.REFERENCED_DATA_REPO_SNAPSHOT);
         referenceResourceService.createReferenceResource(referenceResource, USER_REQUEST);
 
         UUID resourceId = UUID.randomUUID();

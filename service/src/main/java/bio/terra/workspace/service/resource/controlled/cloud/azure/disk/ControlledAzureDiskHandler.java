@@ -5,7 +5,7 @@ import bio.terra.workspace.service.resource.model.WsmResource;
 import bio.terra.workspace.service.resource.model.WsmResourceHandler;
 import java.util.Optional;
 
-public class ControlledAzureDiskHandler implements WsmResourceHandler  {
+public class ControlledAzureDiskHandler implements WsmResourceHandler {
   private static ControlledAzureDiskHandler theHandler;
 
   public static ControlledAzureDiskHandler getHandler() {

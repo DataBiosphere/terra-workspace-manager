@@ -14,6 +14,8 @@ import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import bio.terra.workspace.service.resource.controlled.model.ManagedByType;
 import bio.terra.workspace.service.resource.controlled.model.PrivateResourceState;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
+import bio.terra.workspace.service.resource.model.StewardshipType;
+import bio.terra.workspace.service.resource.model.WsmCloudResourceType;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -95,6 +97,11 @@ public class ControlledAzureDiskResource extends ControlledResource {
   }
 
   @Override
+  public WsmCloudResourceType getCloudResourceType() {
+    return WsmCloudResourceType.AZURE_DISK;
+  }
+
+  @Override
   public String attributesToJson() {
     return DbSerDes.toJson(
         new ControlledAzureDiskAttributes(getDiskName(), getRegion(), getSize()));
@@ -117,8 +124,10 @@ public class ControlledAzureDiskResource extends ControlledResource {
   @Override
   public void validate() {
     super.validate();
-    if (getResourceType() != WsmResourceType.CONTROLLED_AZURE_DISK) {
-      throw new InconsistentFieldsException("Expected CONTROLLED_AZURE_DISK");
+    if (getResourceType() != WsmResourceType.CONTROLLED_AZURE_DISK
+        || getCloudResourceType() != WsmCloudResourceType.AZURE_DISK
+        || getStewardshipType() != StewardshipType.CONTROLLED) {
+      throw new InconsistentFieldsException("Expected controlled AZURE_DISK");
     }
     if (getDiskName() == null) {
       throw new MissingRequiredFieldException(

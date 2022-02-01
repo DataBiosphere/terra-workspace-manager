@@ -7,9 +7,12 @@ import bio.terra.workspace.db.exception.InvalidMetadataException;
 import bio.terra.workspace.db.model.DbResource;
 import bio.terra.workspace.generated.model.ApiDataRepoSnapshotAttributes;
 import bio.terra.workspace.generated.model.ApiDataRepoSnapshotResource;
+import bio.terra.workspace.generated.model.ApiResourceAttributesUnion;
+import bio.terra.workspace.generated.model.ApiResourceUnion;
 import bio.terra.workspace.service.datarepo.DataRepoService;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
+import bio.terra.workspace.service.resource.model.WsmCloudResourceType;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.resource.referenced.cloud.gcp.ReferencedResource;
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -55,8 +58,8 @@ public class ReferencedDataRepoSnapshotResource extends ReferencedResource {
    */
   public ReferencedDataRepoSnapshotResource(DbResource dbResource) {
     super(dbResource);
-    if (dbResource.getResourceType() != WsmResourceType.DATA_REPO_SNAPSHOT) {
-      throw new InvalidMetadataException("Expected DATA_REPO_SNAPSHOT");
+    if (dbResource.getResourceType() != WsmResourceType.REFERENCED_DATA_REPO_SNAPSHOT) {
+      throw new InvalidMetadataException("Expected referenced DATA_REPO_SNAPSHOT");
     }
     ReferencedDataRepoSnapshotAttributes attributes =
         DbSerDes.fromJson(dbResource.getAttributes(), ReferencedDataRepoSnapshotAttributes.class);
@@ -91,13 +94,28 @@ public class ReferencedDataRepoSnapshotResource extends ReferencedResource {
 
   @Override
   public WsmResourceType getResourceType() {
-    return WsmResourceType.DATA_REPO_SNAPSHOT;
+    return WsmResourceType.REFERENCED_DATA_REPO_SNAPSHOT;
+  }
+
+  @Override
+  public WsmCloudResourceType getCloudResourceType() {
+    return WsmCloudResourceType.DATA_REPO_SNAPSHOT;
   }
 
   @Override
   public String attributesToJson() {
     return DbSerDes.toJson(
         new ReferencedDataRepoSnapshotAttributes(getInstanceName(), getSnapshotId()));
+  }
+
+  @Override
+  public ApiResourceAttributesUnion toApiAttributesUnion() {
+    return new ApiResourceAttributesUnion().gcpDataRepoSnapshot(toApiAttributes());
+  }
+
+  @Override
+  public ApiResourceUnion toApiResourceUnion() {
+    return new ApiResourceUnion().gcpDataRepoSnapshot(toApiResource());
   }
 
   @Override

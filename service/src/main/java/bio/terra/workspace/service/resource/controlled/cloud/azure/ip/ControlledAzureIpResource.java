@@ -14,6 +14,8 @@ import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import bio.terra.workspace.service.resource.controlled.model.ManagedByType;
 import bio.terra.workspace.service.resource.controlled.model.PrivateResourceState;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
+import bio.terra.workspace.service.resource.model.StewardshipType;
+import bio.terra.workspace.service.resource.model.WsmCloudResourceType;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -87,9 +89,15 @@ public class ControlledAzureIpResource extends ControlledResource {
   }
 
   @Override
+  public WsmCloudResourceType getCloudResourceType() {
+    return WsmCloudResourceType.AZURE_IP;
+  }
+
+  @Override
   public String attributesToJson() {
     return DbSerDes.toJson(new ControlledAzureIpAttributes(getIpName(), getRegion()));
   }
+
   @Override
   public ApiResourceAttributesUnion toApiAttributesUnion() {
     ApiResourceAttributesUnion union = new ApiResourceAttributesUnion();
@@ -107,8 +115,10 @@ public class ControlledAzureIpResource extends ControlledResource {
   @Override
   public void validate() {
     super.validate();
-    if (getResourceType() != WsmResourceType.CONTROLLED_AZURE_IP) {
-      throw new InconsistentFieldsException("Expected CONTROLLED_AZURE_IP");
+    if (getResourceType() != WsmResourceType.CONTROLLED_AZURE_IP
+        || getCloudResourceType() != WsmCloudResourceType.AZURE_IP
+        || getStewardshipType() != StewardshipType.CONTROLLED) {
+      throw new InconsistentFieldsException("Expected controlled AZURE_IP");
     }
     if (getIpName() == null) {
       throw new MissingRequiredFieldException(

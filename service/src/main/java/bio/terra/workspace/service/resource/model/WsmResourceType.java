@@ -1,5 +1,6 @@
 package bio.terra.workspace.service.resource.model;
 
+import bio.terra.workspace.db.exception.InvalidMetadataException;
 import bio.terra.workspace.generated.model.ApiResourceType;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.disk.ControlledAzureDiskHandler;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.disk.ControlledAzureDiskResource;
@@ -33,8 +34,8 @@ import org.apache.commons.lang3.SerializationException;
 import org.apache.commons.lang3.StringUtils;
 
 /**
- * Each resource implementation gets a specific type. This enumeration describes the
- * attributes of the resource type.
+ * Each resource implementation gets a specific type. This enumeration describes the attributes of
+ * the resource type.
  */
 public enum WsmResourceType {
   CONTROLLED_GCP_AI_NOTEBOOK_INSTANCE(
@@ -173,6 +174,20 @@ public enum WsmResourceType {
     }
     throw new SerializationException(
         "Deserialization failed: no matching resource type for " + dbString);
+  }
+
+  public static WsmResourceType fromSqlParts(
+      WsmCloudResourceType cloudResourceType, StewardshipType stewardshipType) {
+    switch (stewardshipType) {
+      case CONTROLLED:
+        return cloudResourceType.getControlledType();
+      case REFERENCED:
+        return cloudResourceType.getReferenceType();
+    }
+    throw new InvalidMetadataException(
+        String.format(
+            "Invalid combination: cloud resource type %s and stewardship type %s",
+            cloudResourceType, stewardshipType));
   }
 
   public CloudPlatform getCloudPlatform() {

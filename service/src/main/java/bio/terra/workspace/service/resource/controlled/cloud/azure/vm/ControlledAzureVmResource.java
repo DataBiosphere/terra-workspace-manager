@@ -14,6 +14,8 @@ import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import bio.terra.workspace.service.resource.controlled.model.ManagedByType;
 import bio.terra.workspace.service.resource.controlled.model.PrivateResourceState;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
+import bio.terra.workspace.service.resource.model.StewardshipType;
+import bio.terra.workspace.service.resource.model.WsmCloudResourceType;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -128,6 +130,7 @@ public class ControlledAzureVmResource extends ControlledResource {
   public ApiAzureVmResource toApiResource() {
     return new ApiAzureVmResource().metadata(super.toApiMetadata()).attributes(toApiAttributes());
   }
+
   @Override
   public ApiResourceAttributesUnion toApiAttributesUnion() {
     ApiResourceAttributesUnion union = new ApiResourceAttributesUnion();
@@ -148,6 +151,11 @@ public class ControlledAzureVmResource extends ControlledResource {
   }
 
   @Override
+  public WsmCloudResourceType getCloudResourceType() {
+    return WsmCloudResourceType.AZURE_VM;
+  }
+
+  @Override
   public String attributesToJson() {
     return DbSerDes.toJson(
         new ControlledAzureVmAttributes(
@@ -163,7 +171,9 @@ public class ControlledAzureVmResource extends ControlledResource {
   @Override
   public void validate() {
     super.validate();
-    if (getResourceType() != WsmResourceType.CONTROLLED_AZURE_VM) {
+    if (getResourceType() != WsmResourceType.CONTROLLED_AZURE_VM
+        || getCloudResourceType() != WsmCloudResourceType.AZURE_VM
+        || getStewardshipType() != StewardshipType.CONTROLLED) {
       throw new InconsistentFieldsException("Expected CONTROLLED_AZURE_VM");
     }
     if (getVmName() == null) {

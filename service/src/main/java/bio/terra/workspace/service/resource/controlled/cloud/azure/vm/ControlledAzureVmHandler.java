@@ -5,7 +5,7 @@ import bio.terra.workspace.service.resource.model.WsmResource;
 import bio.terra.workspace.service.resource.model.WsmResourceHandler;
 import java.util.Optional;
 
-public class ControlledAzureVmHandler implements WsmResourceHandler  {
+public class ControlledAzureVmHandler implements WsmResourceHandler {
   private static ControlledAzureVmHandler theHandler;
 
   public static ControlledAzureVmHandler getHandler() {

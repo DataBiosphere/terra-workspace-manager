@@ -5,7 +5,7 @@ import bio.terra.workspace.service.resource.model.WsmResource;
 import bio.terra.workspace.service.resource.model.WsmResourceHandler;
 import java.util.Optional;
 
-public class ReferencedBigQueryDatasetHandler implements WsmResourceHandler  {
+public class ReferencedBigQueryDatasetHandler implements WsmResourceHandler {
   private static ReferencedBigQueryDatasetHandler theHandler;
 
   public static ReferencedBigQueryDatasetHandler getHandler() {

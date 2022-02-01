@@ -10,6 +10,7 @@ import bio.terra.workspace.generated.model.ApiResourceType;
 import bio.terra.workspace.generated.model.ApiStewardshipType;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequestFactory;
+import bio.terra.workspace.service.iam.model.SamConstants;
 import bio.terra.workspace.service.resource.WsmResourceService;
 import bio.terra.workspace.service.resource.model.StewardshipType;
 import bio.terra.workspace.service.resource.model.WsmCloudResourceType;
@@ -70,6 +71,8 @@ public class ResourceController implements ResourceApi {
       @Valid ApiStewardshipType stewardship) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     ControllerValidationUtils.validatePaginationParams(offset, limit);
+    workspaceService.validateWorkspaceAndAction(
+        userRequest, workspaceId, SamConstants.SamWorkspaceAction.READ);
 
     List<WsmResource> wsmResources =
         resourceService.enumerateResources(
@@ -79,10 +82,6 @@ public class ResourceController implements ResourceApi {
             offset,
             limit,
             userRequest);
-
-    // projectId
-    String gcpProjectId =
-        workspaceService.getAuthorizedGcpProject(workspaceId, userRequest).orElse(null);
 
     List<ApiResourceDescription> apiResourceDescriptionList =
         wsmResources.stream().map(r -> makeApiResourceDescription(r)).collect(Collectors.toList());

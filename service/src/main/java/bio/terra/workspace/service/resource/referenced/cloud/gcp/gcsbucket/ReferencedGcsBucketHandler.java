@@ -5,7 +5,7 @@ import bio.terra.workspace.service.resource.model.WsmResource;
 import bio.terra.workspace.service.resource.model.WsmResourceHandler;
 import java.util.Optional;
 
-public class ReferencedGcsBucketHandler implements WsmResourceHandler  {
+public class ReferencedGcsBucketHandler implements WsmResourceHandler {
   private static ReferencedGcsBucketHandler theHandler;
 
   public static ReferencedGcsBucketHandler getHandler() {

@@ -49,7 +49,7 @@ public class CloneAllResourcesFlight extends Flight {
         break;
       case CONTROLLED:
         switch (resourceWithFlightId.getResource().getResourceType()) {
-          case GCS_BUCKET:
+          case CONTROLLED_GCP_GCS_BUCKET:
             addStep(
                 new LaunchCloneGcsBucketResourceFlightStep(
                     resourceWithFlightId
@@ -66,7 +66,7 @@ public class CloneAllResourcesFlight extends Flight {
                     resourceWithFlightId.getFlightId()),
                 RetryRules.cloudLongRunning());
             break;
-          case BIG_QUERY_DATASET:
+          case CONTROLLED_GCP_BIG_QUERY_DATASET:
             addStep(
                 new LaunchCloneControlledGcpBigQueryDatasetResourceFlightStep(
                     resourceWithFlightId
@@ -83,8 +83,7 @@ public class CloneAllResourcesFlight extends Flight {
                     resourceWithFlightId.getFlightId()),
                 RetryRules.cloudLongRunning());
             break;
-          case DATA_REPO_SNAPSHOT:
-          case AI_NOTEBOOK_INSTANCE:
+          case CONTROLLED_GCP_AI_NOTEBOOK_INSTANCE:
           default:
             // Can't throw in a flight constructor
             logger.error(

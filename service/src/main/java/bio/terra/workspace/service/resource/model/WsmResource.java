@@ -92,6 +92,13 @@ public abstract class WsmResource {
   public abstract WsmResourceType getResourceType();
 
   /**
+   * Sub-classes must identify their cloud resource type
+   *
+   * @return cloud resource type
+   */
+  public abstract WsmCloudResourceType getCloudResourceType();
+
+  /**
    * Attributes string, serialized as JSON. Includes only those attributes of the cloud resource
    * that are necessary for identification. The structure of the cloud resource attributes can be
    * whatever is useful for the resource. It need not be a flat POJO.
@@ -102,12 +109,14 @@ public abstract class WsmResource {
 
   /**
    * Each resource is able to create the API union object to return resource attributes
+   *
    * @return attributes union with the proper attribute filled in
    */
   public abstract ApiResourceAttributesUnion toApiAttributesUnion();
 
   /**
    * Each resource is able to create the API union object to return resources
+   *
    * @return resource union with the proper resource filled in
    */
   public abstract ApiResourceUnion toApiResourceUnion();
@@ -130,7 +139,6 @@ public abstract class WsmResource {
         .cloudPlatform(getResourceType().getCloudPlatform().toApiModel())
         .cloningInstructions(cloningInstructions.toApiModel());
   }
-
 
   /**
    * Validate the state of to this object. Subclasses should override this method, calling super()

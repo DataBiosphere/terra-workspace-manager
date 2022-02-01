@@ -5,7 +5,7 @@ import bio.terra.workspace.service.resource.model.WsmResource;
 import bio.terra.workspace.service.resource.model.WsmResourceHandler;
 import java.util.Optional;
 
-public class ControlledAzureIpHandler implements WsmResourceHandler  {
+public class ControlledAzureIpHandler implements WsmResourceHandler {
   private static ControlledAzureIpHandler theHandler;
 
   public static ControlledAzureIpHandler getHandler() {
