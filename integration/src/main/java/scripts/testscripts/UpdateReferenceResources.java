@@ -65,7 +65,8 @@ public class UpdateReferenceResources extends DataRepoTestScriptBase {
     gcsFileAttributes = ParameterUtils.getGcsFileReference(parameters);
     gcsFolderAttributes = ParameterUtils.getGcsFolderReference(parameters);
     bqTableAttributes = ParameterUtils.getBigQueryDataTableReference(parameters);
-    bqTableFromAlternateDatasetAttributes = ParameterUtils.getBigQueryDataTableFromAlternateDatasetReference(parameters);
+    bqTableFromAlternateDatasetAttributes =
+        ParameterUtils.getBigQueryDataTableFromAlternateDatasetReference(parameters);
     dataRepoSnapshotId2 =
         ParameterUtils.getParamOrThrow(
             parameters, ParameterKeys.DATA_REPO_ALTERNATE_SNAPSHOT_PARAMETER);
@@ -224,9 +225,12 @@ public class UpdateReferenceResources extends DataRepoTestScriptBase {
         fullAccessApi.getBigQueryDatasetReference(getWorkspaceId(), bqDatasetResourceId);
     assertEquals(newDatasetName, datasetReferenceFirstUpdate.getMetadata().getName());
     assertEquals(newDatasetDescription, datasetReferenceFirstUpdate.getMetadata().getDescription());
-    assertEquals(bqTableAttributes.getDatasetId(), datasetReferenceFirstUpdate.getAttributes().getDatasetId());
     assertEquals(
-        bqTableAttributes.getProjectId(), datasetReferenceFirstUpdate.getAttributes().getProjectId());
+        bqTableAttributes.getDatasetId(),
+        datasetReferenceFirstUpdate.getAttributes().getDatasetId());
+    assertEquals(
+        bqTableAttributes.getProjectId(),
+        datasetReferenceFirstUpdate.getAttributes().getProjectId());
     // {@code userWithPartialAccess} does not have access to the original dataset.
     assertFalse(
         partialAccessResourceApi.checkReferenceAccess(getWorkspaceId(), bqDatasetResourceId));
@@ -260,9 +264,11 @@ public class UpdateReferenceResources extends DataRepoTestScriptBase {
     assertEquals(
         newDatasetDescription, datasetReferenceSecondUpdate.getMetadata().getDescription());
     assertEquals(
-        bqTableAttributes.getProjectId(), datasetReferenceSecondUpdate.getAttributes().getProjectId());
+        bqTableAttributes.getProjectId(),
+        datasetReferenceSecondUpdate.getAttributes().getProjectId());
     assertEquals(
-        bqTableFromAlternateDatasetAttributes.getDatasetId(), datasetReferenceSecondUpdate.getAttributes().getDatasetId());
+        bqTableFromAlternateDatasetAttributes.getDatasetId(),
+        datasetReferenceSecondUpdate.getAttributes().getDatasetId());
     // {@code userWithPartialAccess} have access to dataset 2. Now since the reference is pointing
     // to dataset 2, the user have access to this reference now.
     assertTrue(
@@ -286,11 +292,14 @@ public class UpdateReferenceResources extends DataRepoTestScriptBase {
     assertEquals(
         newDataTableDescription, dataTableReferenceFirstUpdate.getMetadata().getDescription());
     assertEquals(
-        bqTableAttributes.getProjectId(), dataTableReferenceFirstUpdate.getAttributes().getProjectId());
+        bqTableAttributes.getProjectId(),
+        dataTableReferenceFirstUpdate.getAttributes().getProjectId());
     assertEquals(
-        bqTableAttributes.getDatasetId(), dataTableReferenceFirstUpdate.getAttributes().getDatasetId());
+        bqTableAttributes.getDatasetId(),
+        dataTableReferenceFirstUpdate.getAttributes().getDatasetId());
     assertEquals(
-        bqTableAttributes.getDataTableId(), dataTableReferenceFirstUpdate.getAttributes().getDataTableId());
+        bqTableAttributes.getDataTableId(),
+        dataTableReferenceFirstUpdate.getAttributes().getDataTableId());
 
     // Update bq data table target
 
@@ -326,11 +335,14 @@ public class UpdateReferenceResources extends DataRepoTestScriptBase {
     assertEquals(
         newDataTableDescription, dataTableReferenceSecondUpdate.getMetadata().getDescription());
     assertEquals(
-        bqTableAttributes.getProjectId(), dataTableReferenceSecondUpdate.getAttributes().getProjectId());
+        bqTableAttributes.getProjectId(),
+        dataTableReferenceSecondUpdate.getAttributes().getProjectId());
     assertEquals(
-        bqTableFromAlternateDatasetAttributes.getDatasetId(), dataTableReferenceSecondUpdate.getAttributes().getDatasetId());
+        bqTableFromAlternateDatasetAttributes.getDatasetId(),
+        dataTableReferenceSecondUpdate.getAttributes().getDatasetId());
     assertEquals(
-        bqTableFromAlternateDatasetAttributes.getDataTableId(), dataTableReferenceSecondUpdate.getAttributes().getDataTableId());
+        bqTableFromAlternateDatasetAttributes.getDataTableId(),
+        dataTableReferenceSecondUpdate.getAttributes().getDataTableId());
 
     ResourceMaker.updateBigQueryDataTableReference(
         fullAccessApi,
@@ -348,11 +360,14 @@ public class UpdateReferenceResources extends DataRepoTestScriptBase {
     assertEquals(
         newDataTableDescription, dataTableReferenceThirdUpdate.getMetadata().getDescription());
     assertEquals(
-        bqTableAttributes.getProjectId(), dataTableReferenceThirdUpdate.getAttributes().getProjectId());
+        bqTableAttributes.getProjectId(),
+        dataTableReferenceThirdUpdate.getAttributes().getProjectId());
     assertEquals(
-        bqTableAttributes.getDatasetId(), dataTableReferenceThirdUpdate.getAttributes().getDatasetId());
+        bqTableAttributes.getDatasetId(),
+        dataTableReferenceThirdUpdate.getAttributes().getDatasetId());
     assertEquals(
-        bqTableFromAlternateDatasetAttributes.getDataTableId(), dataTableReferenceThirdUpdate.getAttributes().getDataTableId());
+        bqTableFromAlternateDatasetAttributes.getDataTableId(),
+        dataTableReferenceThirdUpdate.getAttributes().getDataTableId());
 
     ResourceMaker.updateBigQueryDataTableReference(
         fullAccessApi,
@@ -369,11 +384,14 @@ public class UpdateReferenceResources extends DataRepoTestScriptBase {
     assertEquals(
         newDataTableDescription, dataTableReferenceFourthUpdate.getMetadata().getDescription());
     assertEquals(
-        bqTableAttributes.getProjectId(), dataTableReferenceFourthUpdate.getAttributes().getProjectId());
+        bqTableAttributes.getProjectId(),
+        dataTableReferenceFourthUpdate.getAttributes().getProjectId());
     assertEquals(
-        bqTableAttributes.getDatasetId(), dataTableReferenceFourthUpdate.getAttributes().getDatasetId());
+        bqTableAttributes.getDatasetId(),
+        dataTableReferenceFourthUpdate.getAttributes().getDatasetId());
     assertEquals(
-        bqTableAttributes.getDataTableId(), dataTableReferenceFourthUpdate.getAttributes().getDataTableId());
+        bqTableAttributes.getDataTableId(),
+        dataTableReferenceFourthUpdate.getAttributes().getDataTableId());
 
     // Update GCS bucket's name and description
     String newBucketName = "newGcsBucket";
@@ -389,7 +407,9 @@ public class UpdateReferenceResources extends DataRepoTestScriptBase {
         fullAccessApi.getBucketReference(getWorkspaceId(), bucketResourceId);
     assertEquals(newBucketName, bucketReferenceFirstUpdate.getMetadata().getName());
     assertEquals(newBucketDescription, bucketReferenceFirstUpdate.getMetadata().getDescription());
-    assertEquals(gcsUniformAccessBucketAttributes.getBucketName(), bucketReferenceFirstUpdate.getAttributes().getBucketName());
+    assertEquals(
+        gcsUniformAccessBucketAttributes.getBucketName(),
+        bucketReferenceFirstUpdate.getAttributes().getBucketName());
     assertTrue(partialAccessResourceApi.checkReferenceAccess(getWorkspaceId(), bucketResourceId));
 
     // Update GCS bucket referencing target from the uniform access bucket to the fine-grained
@@ -423,8 +443,7 @@ public class UpdateReferenceResources extends DataRepoTestScriptBase {
     assertEquals(newBucketName, bucketReferenceSecondUpdate.getMetadata().getName());
     assertEquals(newBucketDescription, bucketReferenceSecondUpdate.getMetadata().getDescription());
     assertEquals(
-        fineGrainedGcsBucketName,
-        bucketReferenceSecondUpdate.getAttributes().getBucketName());
+        fineGrainedGcsBucketName, bucketReferenceSecondUpdate.getAttributes().getBucketName());
 
     // Update GCS bucket object's name and description
     String newBlobName = "newBlobName";
@@ -476,7 +495,8 @@ public class UpdateReferenceResources extends DataRepoTestScriptBase {
     assertEquals(
         gcsFileAttributes.getBucketName(),
         blobReferenceSecondUpdate.getAttributes().getBucketName());
-    assertEquals(gcsFolderAttributes.getFileName(), blobReferenceSecondUpdate.getAttributes().getFileName());
+    assertEquals(
+        gcsFolderAttributes.getFileName(), blobReferenceSecondUpdate.getAttributes().getFileName());
     assertEquals(newBlobName, blobReferenceSecondUpdate.getMetadata().getName());
     assertEquals(newBlobDescription, blobReferenceSecondUpdate.getMetadata().getDescription());
 
@@ -491,8 +511,11 @@ public class UpdateReferenceResources extends DataRepoTestScriptBase {
         null);
     GcpGcsObjectResource blobReferenceThirdUpdate =
         fullAccessApi.getGcsObjectReference(getWorkspaceId(), bucketObjectResourceId);
-    assertEquals(gcsUniformAccessBucketAttributes.getBucketName(), blobReferenceThirdUpdate.getAttributes().getBucketName());
-    assertEquals(gcsFolderAttributes.getFileName(), blobReferenceThirdUpdate.getAttributes().getFileName());
+    assertEquals(
+        gcsUniformAccessBucketAttributes.getBucketName(),
+        blobReferenceThirdUpdate.getAttributes().getBucketName());
+    assertEquals(
+        gcsFolderAttributes.getFileName(), blobReferenceThirdUpdate.getAttributes().getFileName());
     assertEquals(newBlobName, blobReferenceThirdUpdate.getMetadata().getName());
     assertEquals(newBlobDescription, blobReferenceThirdUpdate.getMetadata().getDescription());
 
@@ -511,8 +534,7 @@ public class UpdateReferenceResources extends DataRepoTestScriptBase {
         gcsFileAttributes.getBucketName(),
         blobReferenceFourthUpdate.getAttributes().getBucketName());
     assertEquals(
-        gcsFileAttributes.getFileName(),
-        blobReferenceFourthUpdate.getAttributes().getFileName());
+        gcsFileAttributes.getFileName(), blobReferenceFourthUpdate.getAttributes().getFileName());
     assertEquals(newBlobName, blobReferenceFourthUpdate.getMetadata().getName());
     assertEquals(newBlobDescription, blobReferenceFourthUpdate.getMetadata().getDescription());
   }

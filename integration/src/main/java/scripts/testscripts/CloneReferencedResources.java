@@ -190,7 +190,9 @@ public class CloneReferencedResources extends DataRepoTestScriptBase {
     assertEquals(
         CLONED_BUCKET_RESOURCE_NAME,
         cloneBucketReferenceResult.getResource().getMetadata().getName());
-    assertEquals(sourceUniformAccessBucketAttributes.getBucketName(), cloneBucketReferenceResult.getResource().getAttributes().getBucketName());
+    assertEquals(
+        sourceUniformAccessBucketAttributes.getBucketName(),
+        cloneBucketReferenceResult.getResource().getAttributes().getBucketName());
 
     // clone source reference to destination
     final var cloneBucketFileReferenceRequestBody =
@@ -267,7 +269,8 @@ public class CloneReferencedResources extends DataRepoTestScriptBase {
         sourceFolderObjectAttributes.getBucketName(),
         cloneFooFolderReferenceResult.getResource().getAttributes().getBucketName());
     assertEquals(
-        sourceFolderObjectAttributes.getFileName(), cloneFooFolderReferenceResult.getResource().getAttributes().getFileName());
+        sourceFolderObjectAttributes.getFileName(),
+        cloneFooFolderReferenceResult.getResource().getAttributes().getFileName());
 
     final var cloneBigQueryDatasetRequestBody =
         new CloneReferencedResourceRequestBody()
