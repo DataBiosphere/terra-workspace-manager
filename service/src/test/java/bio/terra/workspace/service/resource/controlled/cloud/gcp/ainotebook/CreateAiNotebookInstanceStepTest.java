@@ -1,5 +1,6 @@
 package bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook;
 
+import static bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook.CreateAiNotebookInstanceStep.DEFAULT_POST_STARTUP_SCRIPT;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -72,6 +73,7 @@ public class CreateAiNotebookInstanceStepTest extends BaseUnitTest {
     assertThat(instance.getMetadata(), Matchers.aMapWithSize(1));
     assertThat(instance.getMetadata(), Matchers.hasEntry("proxy-mode", "service_" + "account"));
     assertEquals("foo@bar.com", instance.getServiceAccount());
+    assertEquals(DEFAULT_POST_STARTUP_SCRIPT, instance.getPostStartupScript());
   }
 
   @Test

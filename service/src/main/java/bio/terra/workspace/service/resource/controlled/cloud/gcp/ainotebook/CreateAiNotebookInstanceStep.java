@@ -45,6 +45,10 @@ import org.springframework.http.HttpStatus;
  * <p>Undo deletes the created notebook instance.
  */
 public class CreateAiNotebookInstanceStep implements Step {
+
+  /** Default post-startup-script when starting a notebook instance. */
+  protected static final String DEFAULT_POST_STARTUP_SCRIPT =
+      "https://raw.githubusercontent.com/DataBiosphere/terra-workspace-manager/main/service/src/main/java/bio/terra/workspace/service/resource/controlled/cloud/gcp/ainotebook/post-startup.sh";
   /** The Notebook instance metadata key used to control proxy mode. */
   private static final String PROXY_MODE_METADATA_KEY = "proxy-mode";
   /** The Notebook instance metadata value used to set the service account proxy mode. */
@@ -121,7 +125,9 @@ public class CreateAiNotebookInstanceStep implements Step {
       String serviceAccountEmail,
       Instance instance) {
     instance
-        .setPostStartupScript(creationParameters.getPostStartupScript())
+        .setPostStartupScript(
+            Optional.ofNullable(creationParameters.getPostStartupScript())
+                .orElse(DEFAULT_POST_STARTUP_SCRIPT))
         .setMachineType(creationParameters.getMachineType())
         .setInstallGpuDriver(creationParameters.isInstallGpuDriver())
         .setCustomGpuDriverPath(creationParameters.getCustomGpuDriverPath())
