@@ -58,7 +58,7 @@ public class PetSaService {
     // enablePetServiceAccountImpersonationWithEtag will only return an empty optional if the
     // provided eTag does not match current policy. Because we do not use eTag checking here, this
     // is always nonempty.
-    return enablePetServiceAccountImpersonationWithEtag(workspaceId, userToEnableEmail, token)
+    return enablePetServiceAccountImpersonationWithEtag(workspaceId, userToEnableEmail, token, null)
         .orElseThrow(
             () -> new RuntimeException("Error enabling user's proxy group to impersonate pet SA"));
   }

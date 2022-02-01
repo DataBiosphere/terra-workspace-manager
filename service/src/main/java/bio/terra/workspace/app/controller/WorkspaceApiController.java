@@ -515,8 +515,10 @@ public class WorkspaceApiController implements WorkspaceApi {
     // not authenticate.
     workspaceService.validateWorkspaceAndAction(
         userRequest, workspaceId, SamConstants.SamWorkspaceAction.READ);
+    String userEmail =
+        SamRethrow.onInterrupted(() -> samService.getUserEmailFromSam(userRequest), "enablePet");
     petSaService.enablePetServiceAccountImpersonation(
-        workspaceId, userRequest.getEmail(), userRequest.getRequiredToken());
+        workspaceId, userEmail, userRequest.getRequiredToken());
     return new ResponseEntity<>(HttpStatus.NO_CONTENT);
   }
 
