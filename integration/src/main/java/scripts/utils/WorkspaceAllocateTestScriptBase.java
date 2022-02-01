@@ -49,14 +49,7 @@ public abstract class WorkspaceAllocateTestScriptBase extends WorkspaceApiTestSc
   @Override
   public void setParameters(Map<String, String> parameters) throws Exception {
     super.setParameters(parameters);
-
-    if (parameters == null || !parameters.containsKey(ParameterKeys.SPEND_PROFILE_PARAMETER)) {
-      throw new IllegalArgumentException(
-          "Must provide the spend profile id as parameter "
-              + ParameterKeys.SPEND_PROFILE_PARAMETER);
-    } else {
-      spendProfileId = parameters.get(ParameterKeys.SPEND_PROFILE_PARAMETER);
-    }
+    spendProfileId = ParameterUtils.getSpendProfile(parameters);
   }
 
   /**

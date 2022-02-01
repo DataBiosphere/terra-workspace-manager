@@ -29,6 +29,8 @@ import bio.terra.workspace.model.GcpGcsBucketAttributes;
 import bio.terra.workspace.model.GcpGcsBucketResource;
 import bio.terra.workspace.model.GcpGcsObjectAttributes;
 import bio.terra.workspace.model.GcpGcsObjectResource;
+import bio.terra.workspace.model.GitRepoAttributes;
+import bio.terra.workspace.model.GitRepoResource;
 import bio.terra.workspace.model.GrantRoleRequestBody;
 import bio.terra.workspace.model.IamRole;
 import java.util.List;
@@ -38,8 +40,8 @@ import org.checkerframework.checker.nullness.qual.MonotonicNonNull;
 import scripts.utils.ClientTestUtils;
 import scripts.utils.DataRepoTestScriptBase;
 import scripts.utils.ParameterKeys;
+import scripts.utils.ParameterUtils;
 import scripts.utils.ResourceMaker;
-import scripts.utils.ResourceNameUtils;
 
 public class UpdateReferenceResources extends DataRepoTestScriptBase {
 
@@ -52,6 +54,7 @@ public class UpdateReferenceResources extends DataRepoTestScriptBase {
   private GcpGcsBucketAttributes gcsUniformAccessBucketAttributes;
   private GcpGcsObjectAttributes gcsFileAttributes;
   private GcpBigQueryDataTableAttributes bqTableAttributes;
+  private GitRepoAttributes gitRepoAttributes;
 
   private String dataRepoSnapshotId2;
 
@@ -60,16 +63,18 @@ public class UpdateReferenceResources extends DataRepoTestScriptBase {
   @MonotonicNonNull private UUID dataRepoSnapshotResourceId;
   @MonotonicNonNull private UUID bucketResourceId;
   @MonotonicNonNull private UUID bucketObjectResourceId;
+  @MonotonicNonNull private UUID gitReferencedResourceId;
 
   @Override
   public void setParameters(Map<String, String> parameters) throws Exception {
     super.setParameters(parameters);
-    gcsUniformAccessBucketAttributes = ResourceNameUtils.parseGcsBucket(parameters.get(ParameterKeys.REFERENCED_GCS_UNIFORM_BUCKET));
-    gcsFileAttributes =
-        ResourceNameUtils.parseGcsObject(parameters.get(ParameterKeys.REFERENCED_GCS_OBJECT));
-    bqTableAttributes =
-        ResourceNameUtils.parseBqTable(parameters.get(ParameterKeys.REFERENCED_BQ_TABLE));
-    dataRepoSnapshotId2 = parameters.get(ParameterKeys.DATA_REPO_ALTERNATE_SNAPSHOT_PARAMETER);
+    gcsUniformAccessBucketAttributes = ParameterUtils.getUniformBucketReference(parameters);
+    gcsFileAttributes = ParameterUtils.getGcsFileReference(parameters);
+    bqTableAttributes = ParameterUtils.getBigQueryDataTableReference(parameters);
+    dataRepoSnapshotId2 =
+        ParameterUtils.getParamOrThrow(
+            parameters, ParameterKeys.DATA_REPO_ALTERNATE_SNAPSHOT_PARAMETER);
+    gitRepoAttributes = ParameterUtils.getSshGitRepoReference(parameters);
   }
 
   @Override
@@ -124,6 +129,11 @@ public class UpdateReferenceResources extends DataRepoTestScriptBase {
             "a_reference_to_foo_monkey_sees_monkey_dos",
             CloningInstructionsEnum.REFERENCE);
     bucketObjectResourceId = blobResource.getMetadata().getResourceId();
+
+    GitRepoResource gitRepoReference =
+        ResourceMaker.makeGitRepoReference(
+            gitRepoAttributes, fullAccessApi, getWorkspaceId(), "a_reference_to_wsm_git_repo");
+    gitReferencedResourceId = gitRepoReference.getMetadata().getResourceId();
   }
 
   @Override
@@ -144,6 +154,15 @@ public class UpdateReferenceResources extends DataRepoTestScriptBase {
     ResourceApi partialAccessResourceApi =
         new ResourceApi(ClientTestUtils.getClientForTestUser(userWithPartialAccess, server));
 
+    String newGitRepoReferenceName = "newGitRepoReferenceName";
+    String newGitRepoReferenceDescription = "a new description for git repo reference";
+    ResourceMaker.updateGitRepoReferenceResource(
+        fullAccessApi,
+        getWorkspaceId(),
+        gitReferencedResourceId,
+        newGitRepoReferenceName,
+        newGitRepoReferenceDescription,
+        /*gitCloneUrl=*/ null);
     // Update snapshot's name and description
     String newSnapshotReferenceName = "newSnapshotReferenceName";
     String newSnapshotReferenceDescription = "a new description of another snapshot reference";

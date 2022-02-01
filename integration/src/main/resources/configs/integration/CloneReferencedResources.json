@@ -18,7 +18,8 @@
         "gcs-uniform-bucket": "gs://terra_wsm_test_resource",
         "gcs-object": "gs://terra_wsm_fine_grained_test_bucket/foo/monkey_sees_monkey_dos.txt",
         "gcs-folder": "gs://terra_wsm_fine_grained_test_bucket/foo/",
-        "bq-table": "projects/terra-kernel-k8s/datasets/terra_wsm_test_dataset/tables/terra wsm test data table"
+        "bq-table": "projects/terra-kernel-k8s/datasets/terra_wsm_test_dataset/tables/terra wsm test data table",
+        "git-repo": "git@github.com:DataBiosphere/terra-workspace-manager.git"
       }
     }
   ],

@@ -19,9 +19,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import scripts.utils.ClientTestUtils;
 import scripts.utils.CloudContextMaker;
-import scripts.utils.ParameterKeys;
+import scripts.utils.ParameterUtils;
 import scripts.utils.ResourceMaker;
-import scripts.utils.ResourceNameUtils;
 import scripts.utils.WorkspaceAllocateTestScriptBase;
 
 public class DeleteGcpContextWithControlledResource extends WorkspaceAllocateTestScriptBase {
@@ -34,8 +33,7 @@ public class DeleteGcpContextWithControlledResource extends WorkspaceAllocateTes
 
   public void setParameters(Map<String, String> parameters) throws Exception {
     super.setParameters(parameters);
-    dataTableAttributes =
-        ResourceNameUtils.parseBqTable(parameters.get(ParameterKeys.REFERENCED_BQ_TABLE));
+    dataTableAttributes = ParameterUtils.getBigQueryDataTableReference(parameters);
   }
 
   @Override

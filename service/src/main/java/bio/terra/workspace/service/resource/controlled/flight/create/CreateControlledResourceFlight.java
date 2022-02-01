@@ -10,12 +10,25 @@ import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.model.ControlledResourceIamRole;
 import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.petserviceaccount.model.UserWithPetSa;
-import bio.terra.workspace.service.resource.controlled.ControlledAiNotebookInstanceResource;
-import bio.terra.workspace.service.resource.controlled.ControlledResource;
-import bio.terra.workspace.service.resource.controlled.flight.create.notebook.CreateAiNotebookInstanceStep;
-import bio.terra.workspace.service.resource.controlled.flight.create.notebook.GrantPetUsagePermissionStep;
-import bio.terra.workspace.service.resource.controlled.flight.create.notebook.NotebookCloudSyncStep;
-import bio.terra.workspace.service.resource.controlled.flight.create.notebook.RetrieveNetworkNameStep;
+import bio.terra.workspace.service.resource.controlled.cloud.azure.disk.CreateAzureDiskStep;
+import bio.terra.workspace.service.resource.controlled.cloud.azure.disk.GetAzureDiskStep;
+import bio.terra.workspace.service.resource.controlled.cloud.azure.ip.CreateAzureIpStep;
+import bio.terra.workspace.service.resource.controlled.cloud.azure.ip.GetAzureIpStep;
+import bio.terra.workspace.service.resource.controlled.cloud.azure.network.CreateAzureNetworkStep;
+import bio.terra.workspace.service.resource.controlled.cloud.azure.network.GetAzureNetworkStep;
+import bio.terra.workspace.service.resource.controlled.cloud.azure.storage.CreateAzureStorageStep;
+import bio.terra.workspace.service.resource.controlled.cloud.azure.storage.GetAzureStorageStep;
+import bio.terra.workspace.service.resource.controlled.cloud.azure.vm.CreateAzureVmStep;
+import bio.terra.workspace.service.resource.controlled.cloud.azure.vm.GetAzureVmStep;
+import bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook.ControlledAiNotebookInstanceResource;
+import bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook.CreateAiNotebookInstanceStep;
+import bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook.GrantPetUsagePermissionStep;
+import bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook.NotebookCloudSyncStep;
+import bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook.RetrieveNetworkNameStep;
+import bio.terra.workspace.service.resource.controlled.cloud.gcp.bqdataset.CreateBigQueryDatasetStep;
+import bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.CreateGcsBucketStep;
+import bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.GcsBucketCloudSyncStep;
+import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ResourceKeys;
 
@@ -63,9 +76,9 @@ public class CreateControlledResourceFlight extends Flight {
     // Get the cloud context and store it in the working map
     switch (resource.getResourceType().getCloudPlatform()) {
       case AZURE:
+      case ANY:
         // TODO: pull cloud context from flight into step parallel to GCP
         break;
-
       case GCP:
         // This step may need to update the cloud context row in the database to convert
         // context V1 format into V2 format.

@@ -5,7 +5,7 @@ import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.RetryRule;
 import bio.terra.workspace.common.utils.FlightBeanBag;
 import bio.terra.workspace.common.utils.RetryRules;
-import bio.terra.workspace.service.resource.referenced.ReferencedResource;
+import bio.terra.workspace.service.resource.referenced.cloud.gcp.ReferencedResource;
 import bio.terra.workspace.service.resource.referenced.flight.create.ValidateReferenceStep;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ResourceKeys;
 

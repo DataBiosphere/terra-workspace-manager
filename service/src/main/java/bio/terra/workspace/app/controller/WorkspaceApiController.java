@@ -42,11 +42,11 @@ import bio.terra.workspace.service.job.JobService.AsyncJobResult;
 import bio.terra.workspace.service.petserviceaccount.PetSaService;
 import bio.terra.workspace.service.petserviceaccount.model.UserWithPetSa;
 import bio.terra.workspace.service.resource.ValidationUtils;
-import bio.terra.workspace.service.resource.WsmResourceType;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
-import bio.terra.workspace.service.resource.referenced.ReferencedDataRepoSnapshotResource;
-import bio.terra.workspace.service.resource.referenced.ReferencedResource;
-import bio.terra.workspace.service.resource.referenced.ReferencedResourceService;
+import bio.terra.workspace.service.resource.model.WsmResourceType;
+import bio.terra.workspace.service.resource.referenced.cloud.gcp.ReferencedResource;
+import bio.terra.workspace.service.resource.referenced.cloud.gcp.ReferencedResourceService;
+import bio.terra.workspace.service.resource.referenced.cloud.gcp.datareposnapshot.ReferencedDataRepoSnapshotResource;
 import bio.terra.workspace.service.resource.referenced.exception.InvalidReferenceException;
 import bio.terra.workspace.service.spendprofile.SpendProfileId;
 import bio.terra.workspace.service.workspace.AzureCloudContextService;
@@ -540,6 +540,8 @@ public class WorkspaceApiController implements WorkspaceApi {
   @Override
   public ResponseEntity<ApiCloneWorkspaceResult> cloneWorkspace(
       UUID workspaceId, @Valid ApiCloneWorkspaceRequest body) {
+    final AuthenticatedUserRequest petRequest = getCloningCredentials(workspaceId);
+
     Optional<SpendProfileId> spendProfileId =
         Optional.ofNullable(body.getSpendProfile()).map(SpendProfileId::new);
 
@@ -556,12 +558,13 @@ public class WorkspaceApiController implements WorkspaceApi {
 
     final String jobId =
         workspaceService.cloneWorkspace(
-            workspaceId, getAuthenticatedInfo(), body.getLocation(), destinationWorkspace);
+            workspaceId, petRequest, body.getLocation(), destinationWorkspace);
 
     final ApiCloneWorkspaceResult result = fetchCloneWorkspaceResult(jobId, getAuthenticatedInfo());
     return new ResponseEntity<>(
         result, ControllerUtils.getAsyncResponseCode(result.getJobReport()));
   }
+
   /**
    * Return the workspace clone result, including job result and error result.
    *
@@ -599,5 +602,18 @@ public class WorkspaceApiController implements WorkspaceApi {
       }
     }
     return propertyMap;
+  }
+
+  /**
+   * Return Pet SA credentials if available, otherwise the user credentials associated with this
+   * request. It's possible to clone a workspace that has no cloud context, and thus no (GCP) pet
+   * account.
+   *
+   * @param workspaceId - ID of workspace to be cloned
+   * @return user or pet request
+   */
+  private AuthenticatedUserRequest getCloningCredentials(UUID workspaceId) {
+    final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    return petSaService.getWorkspacePetCredentials(workspaceId, userRequest).orElse(userRequest);
   }
 }

@@ -1,6 +1,7 @@
 package bio.terra.workspace.service.resource;
 
 import bio.terra.common.exception.InconsistentFieldsException;
+import bio.terra.workspace.app.configuration.external.GitRepoReferencedResourceConfiguration;
 import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceCreationParameters;
 import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceVmImage;
 import bio.terra.workspace.service.resource.exception.InvalidNameException;
@@ -8,15 +9,21 @@ import bio.terra.workspace.service.resource.referenced.exception.InvalidReferenc
 import com.azure.core.management.Region;
 import com.azure.resourcemanager.compute.models.VirtualMachineSizeTypes;
 import com.google.common.collect.ImmutableList;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
 /** A collection of static validation functions */
+@Component
 public class ValidationUtils {
 
   private static final Logger logger = LoggerFactory.getLogger(ValidationUtils.class);
@@ -68,6 +75,7 @@ public class ValidationUtils {
   // An object named "." or ".." is nearly impossible for a user to delete.
   private static final ImmutableList<String> DISALLOWED_OBJECT_NAMES = ImmutableList.of(".", "..");
 
+  private static final Pattern GIT_SSH_URI_PATTERN = Pattern.compile("git@(.*?)\\:(.*\\.git)$");
   /**
    * Magic prefix for ACME HTTP challenge.
    *
@@ -79,6 +87,13 @@ public class ValidationUtils {
   private static final ImmutableList<String> GOOGLE_NAMES = ImmutableList.of("google", "g00gle");
   private static final int MAX_RESOURCE_DESCRIPTION_NAME = 2048;
 
+  private final GitRepoReferencedResourceConfiguration gitRepoReferencedResourceConfiguration;
+
+  @Autowired
+  public ValidationUtils(
+      GitRepoReferencedResourceConfiguration gitRepoReferencedResourceConfiguration) {
+    this.gitRepoReferencedResourceConfiguration = gitRepoReferencedResourceConfiguration;
+  }
   /**
    * Validates gcs-bucket name following Google documentation
    * https://cloud.google.com/storage/docs/naming-buckets#requirements on a best-effort base.
@@ -116,6 +131,48 @@ public class ValidationUtils {
     }
   }
 
+  /** Validate whether the input URI is a valid GitHub Repo https uri. */
+  public void validateGitRepoUri(String gitUri) {
+    if (gitUri == null) {
+      throw new InvalidReferenceException("Git repo uri is null but it is required.");
+    }
+    try {
+      URI uri = new URI(gitUri);
+      if (("https".equals(uri.getScheme()) || "ssh".equals(uri.getScheme()))
+          && hasValidHostName(uri.getHost())) {
+        return;
+      }
+    } catch (URISyntaxException e) {
+      // The SSH url that does not have a scheme cannot be parsed into a URI object. So we use
+      // regex to extract the host name and validate if it is a valid host name.
+      if (validateSshUri(gitUri)) {
+        return;
+      }
+      logger.warn("Git repo repo uri {} has syntax error", gitUri);
+      throw new InvalidReferenceException("Invalid git repo uri", e);
+    }
+    throw new InvalidReferenceException("Invalid git repo uri");
+  }
+
+  private boolean validateSshUri(String gitUri) {
+    Matcher matcher = GIT_SSH_URI_PATTERN.matcher(gitUri);
+    if (matcher.find()) {
+      String hostName = matcher.group(1);
+      return hasValidHostName(hostName);
+    }
+    logger.warn("the uri has invalid host name {}", gitUri);
+    return false;
+  }
+
+  private boolean hasValidHostName(String hostName) {
+    for (String allowedHost :
+        gitRepoReferencedResourceConfiguration.getAllowListedGitRepoHostName()) {
+      if (StringUtils.equals(hostName, allowedHost)) {
+        return true;
+      }
+    }
+    return false;
+  }
   /**
    * Validate GCS object name.
    *

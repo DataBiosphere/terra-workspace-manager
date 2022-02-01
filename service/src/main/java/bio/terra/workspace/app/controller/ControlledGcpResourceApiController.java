@@ -32,17 +32,18 @@ import bio.terra.workspace.service.iam.AuthenticatedUserRequestFactory;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.job.JobService.AsyncJobResult;
-import bio.terra.workspace.service.resource.WsmResourceType;
-import bio.terra.workspace.service.resource.controlled.AccessScopeType;
-import bio.terra.workspace.service.resource.controlled.ControlledAiNotebookInstanceResource;
-import bio.terra.workspace.service.resource.controlled.ControlledBigQueryDatasetResource;
-import bio.terra.workspace.service.resource.controlled.ControlledGcsBucketResource;
-import bio.terra.workspace.service.resource.controlled.ControlledResource;
+import bio.terra.workspace.service.petserviceaccount.PetSaService;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceService;
-import bio.terra.workspace.service.resource.controlled.ManagedByType;
-import bio.terra.workspace.service.resource.controlled.PrivateUserRole;
+import bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook.ControlledAiNotebookInstanceResource;
+import bio.terra.workspace.service.resource.controlled.cloud.gcp.bqdataset.ControlledBigQueryDatasetResource;
+import bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.ControlledGcsBucketResource;
 import bio.terra.workspace.service.resource.controlled.exception.InvalidControlledResourceException;
+import bio.terra.workspace.service.resource.controlled.model.AccessScopeType;
+import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
+import bio.terra.workspace.service.resource.controlled.model.ManagedByType;
+import bio.terra.workspace.service.resource.controlled.model.PrivateUserRole;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
+import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import java.util.Optional;
 import java.util.UUID;
@@ -66,6 +67,7 @@ public class ControlledGcpResourceApiController implements ControlledGcpResource
   private final WorkspaceService workspaceService;
   private final HttpServletRequest request;
   private final JobService jobService;
+  private final PetSaService petSaService;
 
   @Autowired
   public ControlledGcpResourceApiController(
@@ -74,13 +76,15 @@ public class ControlledGcpResourceApiController implements ControlledGcpResource
       SamService samService,
       WorkspaceService workspaceService,
       JobService jobService,
-      HttpServletRequest request) {
+      HttpServletRequest request,
+      PetSaService petSaService) {
     this.authenticatedUserRequestFactory = authenticatedUserRequestFactory;
     this.controlledResourceService = controlledResourceService;
     this.samService = samService;
     this.workspaceService = workspaceService;
     this.request = request;
     this.jobService = jobService;
+    this.petSaService = petSaService;
   }
 
   @Override
@@ -201,21 +205,22 @@ public class ControlledGcpResourceApiController implements ControlledGcpResource
       UUID workspaceId, UUID resourceId, @Valid ApiCloneControlledGcpGcsBucketRequest body) {
     logger.info("Cloning GCS bucket resourceId {} workspaceId {}", resourceId, workspaceId);
 
-    final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    final AuthenticatedUserRequest petRequest = getPetRequest(workspaceId);
+
     final String jobId =
         controlledResourceService.cloneGcsBucket(
             workspaceId,
             resourceId,
             body.getDestinationWorkspaceId(),
             body.getJobControl(),
-            userRequest,
+            petRequest,
             body.getName(),
             body.getDescription(),
             body.getBucketName(),
             body.getLocation(),
             body.getCloningInstructions());
     final ApiCloneControlledGcpGcsBucketResult result =
-        fetchCloneGcsBucketResult(jobId, userRequest);
+        fetchCloneGcsBucketResult(jobId, petRequest);
     return new ResponseEntity<>(
         result, ControllerUtils.getAsyncResponseCode(result.getJobReport()));
   }
@@ -509,21 +514,22 @@ public class ControlledGcpResourceApiController implements ControlledGcpResource
   @Override
   public ResponseEntity<ApiCloneControlledGcpBigQueryDatasetResult> cloneBigQueryDataset(
       UUID workspaceId, UUID resourceId, @Valid ApiCloneControlledGcpBigQueryDatasetRequest body) {
-    final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    final AuthenticatedUserRequest petRequest = getPetRequest(workspaceId);
+
     final String jobId =
         controlledResourceService.cloneBigQueryDataset(
             workspaceId,
             resourceId,
             body.getDestinationWorkspaceId(),
             body.getJobControl(),
-            userRequest,
+            petRequest,
             body.getName(),
             body.getDescription(),
             body.getDestinationDatasetName(),
             body.getLocation(),
             body.getCloningInstructions());
     final ApiCloneControlledGcpBigQueryDatasetResult result =
-        fetchCloneBigQueryDatasetResult(jobId, userRequest);
+        fetchCloneBigQueryDatasetResult(jobId, petRequest);
     return new ResponseEntity<>(result, HttpStatus.OK);
   }
 
@@ -551,5 +557,17 @@ public class ControlledGcpResourceApiController implements ControlledGcpResource
 
   private AuthenticatedUserRequest getAuthenticatedInfo() {
     return authenticatedUserRequestFactory.from(request);
+  }
+
+  private AuthenticatedUserRequest getPetRequest(UUID workspaceId) {
+    final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    return petSaService
+        .getWorkspacePetCredentials(workspaceId, userRequest)
+        .orElseThrow(
+            () ->
+                new BadRequestException(
+                    String.format(
+                        "Pet SA credentials not found for user %s on workspace %s",
+                        userRequest.getEmail(), workspaceId)));
   }
 }

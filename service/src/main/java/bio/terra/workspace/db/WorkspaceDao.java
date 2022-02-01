@@ -5,7 +5,7 @@ import bio.terra.common.db.WriteTransaction;
 import bio.terra.common.exception.MissingRequiredFieldException;
 import bio.terra.workspace.common.exception.InternalLogicException;
 import bio.terra.workspace.db.exception.WorkspaceNotFoundException;
-import bio.terra.workspace.service.resource.controlled.PrivateResourceState;
+import bio.terra.workspace.service.resource.controlled.model.PrivateResourceState;
 import bio.terra.workspace.service.spendprofile.SpendProfileId;
 import bio.terra.workspace.service.workspace.exceptions.DuplicateCloudContextException;
 import bio.terra.workspace.service.workspace.exceptions.DuplicateWorkspaceException;

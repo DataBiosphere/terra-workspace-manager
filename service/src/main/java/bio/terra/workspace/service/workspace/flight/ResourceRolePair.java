@@ -1,7 +1,7 @@
 package bio.terra.workspace.service.workspace.flight;
 
 import bio.terra.workspace.service.iam.model.ControlledResourceIamRole;
-import bio.terra.workspace.service.resource.controlled.ControlledResource;
+import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 
 /**
  * A pair of ControlledResource and ControlledResourceIamRole objects. This represents a single role

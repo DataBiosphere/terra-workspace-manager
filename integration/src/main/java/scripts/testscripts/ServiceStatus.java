@@ -11,6 +11,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import scripts.utils.ClientTestUtils;
 import scripts.utils.ParameterKeys;
+import scripts.utils.ParameterUtils;
 
 public class ServiceStatus extends TestScript {
   private static final Logger logger = LoggerFactory.getLogger(ServiceStatus.class);
@@ -18,13 +19,11 @@ public class ServiceStatus extends TestScript {
 
   @Override
   public void setParameters(Map<String, String> parameters) {
-
-    if (parameters == null || !parameters.containsKey(ParameterKeys.STATUS_CHECK_DELAY_PARAMETER)) {
-      return;
-    }
     delay =
         Duration.ofSeconds(
-            Long.parseLong(parameters.get(ParameterKeys.STATUS_CHECK_DELAY_PARAMETER)));
+            Long.parseLong(
+                ParameterUtils.getParamOrThrow(
+                    parameters, ParameterKeys.STATUS_CHECK_DELAY_PARAMETER)));
   }
 
   @Override

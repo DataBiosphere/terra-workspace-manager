@@ -1172,10 +1172,124 @@ paths:
           $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/ServerError'
-
-  /api/workspaces/v1/{workspaceId}/cloudcontexts:
+  /api/workspaces/v1/{workspaceId}/resources/referenced/gitrepos:
     parameters:
       - $ref: '#/components/parameters/WorkspaceId'
+    post:
+      summary: Create a new Git repository reference in a workspace.
+      operationId: createGitRepoReference
+      tags: [ ReferencedGcpResource ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateGitRepoReferenceRequestBody'
+      responses:
+        '200':
+          $ref: '#/components/responses/GitRepoReferenceResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+  /api/workspaces/v1/{workspaceId}/resources/referenced/gitrepos/{resourceId}:
+    parameters:
+    - $ref: '#/components/parameters/WorkspaceId'
+    - $ref: '#/components/parameters/ResourceId'
+    get:
+      summary: Gets a reference to a Git repository from a workspace.
+      operationId: getGitRepoReference
+      tags: [ ReferencedGcpResource ]
+      responses:
+        '200':
+          $ref: '#/components/responses/GitRepoReferenceResponse'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+    patch:
+      summary: Update name, description or referencing target of a Git repository reference in a workspace.
+      operationId: updateGitRepoReference
+      tags: [ ReferencedGcpResource ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateGitRepoReferenceRequestBody'
+      responses:
+        '204':
+          description: OK
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+    delete:
+      summary: Delete Git repository reference
+      operationId: deleteGitRepoReference
+      tags: [ ReferencedGcpResource ]
+      responses:
+        '204':
+          description: OK
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+  /api/workspaces/v1/{workspaceId}/resources/referenced/gitrepos/{resourceId}/clone:
+    parameters:
+    - $ref: '#/components/parameters/WorkspaceId'
+    - $ref: '#/components/parameters/ResourceId'
+    post:
+      summary: Clone a Git repository
+      operationId: cloneGitRepoReference
+      tags: [ ReferencedGcpResource ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CloneReferencedResourceRequestBody'
+      responses:
+        '200':
+          $ref: '#/components/responses/CloneReferencedGitRepoResourceResponse'
+        '202':
+          $ref: '#/components/responses/CloneReferencedGitRepoResourceResponse'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+  /api/workspaces/v1/{workspaceId}/resources/referenced/gitrepos/name/{name}:
+    parameters:
+    - $ref: '#/components/parameters/WorkspaceId'
+    - $ref: '#/components/parameters/Name'
+    get:
+      summary: Gets a reference to a Git repo referenced resource by name
+      operationId: getGitRepoReferenceByName
+      tags: [ ReferencedGcpResource ]
+      responses:
+        '200':
+          $ref: '#/components/responses/GitRepoReferenceResponse'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+  /api/workspaces/v1/{workspaceId}/cloudcontexts:
+    parameters:
+    - $ref: '#/components/parameters/WorkspaceId'
     post:
       summary: Create a cloud context for the workspace.
       operationId: createCloudContext
@@ -1202,8 +1316,8 @@ paths:
 
   /api/workspaces/v1/{workspaceId}/cloudcontexts/result/{jobId}:
     parameters:
-      - $ref: '#/components/parameters/WorkspaceId'
-      - $ref: '#/components/parameters/JobId'
+    - $ref: '#/components/parameters/WorkspaceId'
+    - $ref: '#/components/parameters/JobId'
     get:
       summary: Get the result of a async job to create a cloud context.
       operationId: getCreateCloudContextResult
@@ -1226,8 +1340,8 @@ paths:
 
   /api/workspaces/v1/{workspaceId}/cloudcontexts/{cloudContext}:
     parameters:
-      - $ref: '#/components/parameters/WorkspaceId'
-      - $ref: '#/components/parameters/CloudContext'
+    - $ref: '#/components/parameters/WorkspaceId'
+    - $ref: '#/components/parameters/CloudContext'
     delete:
       summary: Deletes a cloud context and all of its data from a workspace.
       operationId: deleteCloudContext
@@ -1244,7 +1358,7 @@ paths:
 
   /api/workspaces/v1/{workspaceId}/roles:
     parameters:
-      - $ref: '#/components/parameters/WorkspaceId'
+    - $ref: '#/components/parameters/WorkspaceId'
     get:
       summary: Read all IAM roles and their members in a workspace.
       operationId: getRoles
@@ -1261,8 +1375,8 @@ paths:
 
   /api/workspaces/v1/{workspaceId}/roles/{role}/members:
     parameters:
-      - $ref: '#/components/parameters/WorkspaceId'
-      - $ref: '#/components/parameters/Role'
+    - $ref: '#/components/parameters/WorkspaceId'
+    - $ref: '#/components/parameters/Role'
     post:
       summary: Grant an IAM role to a user or group.
       operationId: grantRole
@@ -1284,9 +1398,9 @@ paths:
           $ref: '#/components/responses/ServerError'
   /api/workspaces/v1/{workspaceId}/roles/{role}/members/{memberEmail}:
     parameters:
-      - $ref: '#/components/parameters/WorkspaceId'
-      - $ref: '#/components/parameters/Role'
-      - $ref: '#/components/parameters/MemberEmail'
+    - $ref: '#/components/parameters/WorkspaceId'
+    - $ref: '#/components/parameters/Role'
+    - $ref: '#/components/parameters/MemberEmail'
     delete:
       summary: Remove an IAM role from a user or group.
       operationId: removeRole
@@ -1304,10 +1418,10 @@ paths:
 
   /api/job/v1/jobs/{jobId}:
     parameters:
-      - $ref: '#/components/parameters/JobId'
+    - $ref: '#/components/parameters/JobId'
     get:
       tags:
-        - jobs
+      - jobs
       operationId: retrieveJob
       responses:
         200:
@@ -1338,7 +1452,7 @@ paths:
 
   /api/workspaces/v1/{workspaceId}/resources/controlled/gcp/buckets:
     parameters:
-      - $ref: '#/components/parameters/WorkspaceId'
+    - $ref: '#/components/parameters/WorkspaceId'
     post:
       summary: Create a new controlled Gcp bucket
       operationId: createBucket
@@ -1359,8 +1473,8 @@ paths:
 
   /api/workspaces/v1/{workspaceId}/resources/controlled/gcp/buckets/{resourceId}:
     parameters:
-      - $ref: '#/components/parameters/WorkspaceId'
-      - $ref: '#/components/parameters/ResourceId'
+    - $ref: '#/components/parameters/WorkspaceId'
+    - $ref: '#/components/parameters/ResourceId'
     get:
       summary: Get a controlled GCS bucket resource
       operationId: getBucket
@@ -1418,8 +1532,8 @@ paths:
           $ref: '#/components/responses/ServerError'
   /api/workspaces/v1/{workspaceId}/resources/controlled/gcp/buckets/{resourceId}/clone:
     parameters:
-      - $ref: '#/components/parameters/WorkspaceId'
-      - $ref: '#/components/parameters/ResourceId'
+    - $ref: '#/components/parameters/WorkspaceId'
+    - $ref: '#/components/parameters/ResourceId'
     post:
       summary: Clone a GCS Bucket
       operationId: cloneGcsBucket
@@ -1444,8 +1558,8 @@ paths:
 
   /api/workspaces/v1/{workspaceId}/resources/controlled/gcp/buckets/clone-result/{jobId}:
     parameters:
-      - $ref: '#/components/parameters/WorkspaceId'
-      - $ref: '#/components/parameters/JobId'
+    - $ref: '#/components/parameters/WorkspaceId'
+    - $ref: '#/components/parameters/JobId'
     get:
       summary: Retrieve information about a gcp bucket clone job.
       operationId: getCloneGcsBucketResult
@@ -1462,7 +1576,7 @@ paths:
 
   /api/workspaces/v1/{workspaceId}/resources/controlled/azure/storage:
     parameters:
-      - $ref: '#/components/parameters/WorkspaceId'
+    - $ref: '#/components/parameters/WorkspaceId'
     post:
       summary: Create a new controlled Azure Storage Account
       operationId: createAzureStorage
@@ -1483,8 +1597,8 @@ paths:
 
   /api/workspaces/v1/{workspaceId}/resources/controlled/gcp/buckets/delete-result/{jobId}:
     parameters:
-      - $ref: '#/components/parameters/WorkspaceId'
-      - $ref: '#/components/parameters/JobId'
+    - $ref: '#/components/parameters/WorkspaceId'
+    - $ref: '#/components/parameters/JobId'
     get:
       summary: Retrieve information about a gcp bucket deletion job.
       operationId: getDeleteBucketResult
@@ -1501,7 +1615,7 @@ paths:
 
   /api/workspaces/v1/{workspaceId}/resources/controlled/azure/ip:
     parameters:
-      - $ref: '#/components/parameters/WorkspaceId'
+    - $ref: '#/components/parameters/WorkspaceId'
     post:
       summary: Create a new controlled Azure IP
       operationId: createAzureIp
@@ -1522,8 +1636,8 @@ paths:
 
   /api/workspaces/v1/{workspaceId}/resources/controlled/azure/ip/{resourceId}:
     parameters:
-      - $ref: '#/components/parameters/WorkspaceId'
-      - $ref: '#/components/parameters/ResourceId'
+    - $ref: '#/components/parameters/WorkspaceId'
+    - $ref: '#/components/parameters/ResourceId'
     get:
       summary: Get a controlled Azure IP resource
       operationId: getAzureIp
@@ -1560,8 +1674,8 @@ paths:
 
   /api/workspaces/v1/{workspaceId}/resources/controlled/azure/ip/delete-result/{jobId}:
     parameters:
-      - $ref: '#/components/parameters/WorkspaceId'
-      - $ref: '#/components/parameters/JobId'
+    - $ref: '#/components/parameters/WorkspaceId'
+    - $ref: '#/components/parameters/JobId'
     get:
       summary: Retrieve information about an azure ip deletion job.
       operationId: getDeleteAzureIpResult
@@ -1578,7 +1692,7 @@ paths:
 
   /api/workspaces/v1/{workspaceId}/resources/controlled/azure/disks:
     parameters:
-      - $ref: '#/components/parameters/WorkspaceId'
+    - $ref: '#/components/parameters/WorkspaceId'
     post:
       summary: Create a new controlled Azure Disk
       operationId: createAzureDisk
@@ -1599,8 +1713,8 @@ paths:
 
   /api/workspaces/v1/{workspaceId}/resources/controlled/azure/disks/{resourceId}:
     parameters:
-      - $ref: '#/components/parameters/WorkspaceId'
-      - $ref: '#/components/parameters/ResourceId'
+    - $ref: '#/components/parameters/WorkspaceId'
+    - $ref: '#/components/parameters/ResourceId'
     get:
       summary: Get a controlled Azure Disk resource
       operationId: getAzureDisk
@@ -1638,8 +1752,8 @@ paths:
 
   /api/workspaces/v1/{workspaceId}/resources/controlled/azure/disks/delete-result/{jobId}:
     parameters:
-      - $ref: '#/components/parameters/WorkspaceId'
-      - $ref: '#/components/parameters/JobId'
+    - $ref: '#/components/parameters/WorkspaceId'
+    - $ref: '#/components/parameters/JobId'
     get:
       summary: Retrieve information about an azure ip deletion job.
       operationId: getDeleteAzureDiskResult
@@ -1656,7 +1770,7 @@ paths:
 
   /api/workspaces/v1/{workspaceId}/resources/controlled/azure/vm:
     parameters:
-      - $ref: '#/components/parameters/WorkspaceId'
+    - $ref: '#/components/parameters/WorkspaceId'
     post:
       summary: Create a new controlled Azure VM
       operationId: createAzureVm
@@ -1677,8 +1791,8 @@ paths:
 
   /api/workspaces/v1/{workspaceId}/resources/controlled/azure/vm/create-result/{jobId}:
     parameters:
-      - $ref: '#/components/parameters/WorkspaceId'
-      - $ref: '#/components/parameters/JobId'
+    - $ref: '#/components/parameters/WorkspaceId'
+    - $ref: '#/components/parameters/JobId'
     get:
       summary: Retrieve information about an Azure Vm create job.
       operationId: getCreateAzureVmResult
@@ -1695,7 +1809,7 @@ paths:
 
   /api/workspaces/v1/{workspaceId}/resources/controlled/azure/network:
     parameters:
-      - $ref: '#/components/parameters/WorkspaceId'
+    - $ref: '#/components/parameters/WorkspaceId'
     post:
       summary: Create a new controlled Azure Network
       operationId: createAzureNetwork
@@ -1716,8 +1830,8 @@ paths:
 
   /api/workspaces/v1/{workspaceId}/resources/controlled/azure/vm/{resourceId}:
     parameters:
-      - $ref: '#/components/parameters/WorkspaceId'
-      - $ref: '#/components/parameters/ResourceId'
+    - $ref: '#/components/parameters/WorkspaceId'
+    - $ref: '#/components/parameters/ResourceId'
     get:
       summary: Get a controlled Azure VM resource
       operationId: getAzureVm
@@ -1754,8 +1868,8 @@ paths:
 
   /api/workspaces/v1/{workspaceId}/resources/controlled/azure/network/{resourceId}:
     parameters:
-      - $ref: '#/components/parameters/WorkspaceId'
-      - $ref: '#/components/parameters/ResourceId'
+    - $ref: '#/components/parameters/WorkspaceId'
+    - $ref: '#/components/parameters/ResourceId'
     get:
       summary: Get a controlled Azure Network resource
       operationId: getAzureNetwork
@@ -1792,8 +1906,8 @@ paths:
 
   /api/workspaces/v1/{workspaceId}/resources/controlled/azure/vm/delete-result/{jobId}:
     parameters:
-      - $ref: '#/components/parameters/WorkspaceId'
-      - $ref: '#/components/parameters/JobId'
+    - $ref: '#/components/parameters/WorkspaceId'
+    - $ref: '#/components/parameters/JobId'
     get:
       summary: Retrieve information about an azure vm deletion job.
       operationId: getDeleteAzureVmResult
@@ -1810,8 +1924,8 @@ paths:
 
   /api/workspaces/v1/{workspaceId}/resources/controlled/azure/network/delete-result/{jobId}:
     parameters:
-      - $ref: '#/components/parameters/WorkspaceId'
-      - $ref: '#/components/parameters/JobId'
+    - $ref: '#/components/parameters/WorkspaceId'
+    - $ref: '#/components/parameters/JobId'
     get:
       summary: Retrieve information about an azure network deletion job.
       operationId: getDeleteAzureNetworkResult
@@ -1828,7 +1942,7 @@ paths:
 
   /api/workspaces/v1/{workspaceId}/resources/controlled/gcp/bqdatasets:
     parameters:
-      - $ref: '#/components/parameters/WorkspaceId'
+    - $ref: '#/components/parameters/WorkspaceId'
     post:
       summary: Create a new controlled BigQuery dataset
       operationId: createBigQueryDataset
@@ -1849,8 +1963,8 @@ paths:
 
   /api/workspaces/v1/{workspaceId}/resources/controlled/gcp/bqdatasets/{resourceId}:
     parameters:
-      - $ref: '#/components/parameters/WorkspaceId'
-      - $ref: '#/components/parameters/ResourceId'
+    - $ref: '#/components/parameters/WorkspaceId'
+    - $ref: '#/components/parameters/ResourceId'
     get:
       summary: Get a controlled BigQuery dataset resource
       operationId: getBigQueryDataset
@@ -1898,8 +2012,8 @@ paths:
           $ref: '#/components/responses/ServerError'
   /api/workspaces/v1/{workspaceId}/resources/controlled/gcp/bqdatasets/{resourceId}/clone:
     parameters:
-      - $ref: '#/components/parameters/WorkspaceId'
-      - $ref: '#/components/parameters/ResourceId'
+    - $ref: '#/components/parameters/WorkspaceId'
+    - $ref: '#/components/parameters/ResourceId'
     post:
       summary: Clone a BigQuery dataset
       operationId: cloneBigQueryDataset
@@ -1924,8 +2038,8 @@ paths:
 
   /api/workspaces/v1/{workspaceId}/resources/controlled/gcp/bqdatasets/clone-result/{jobId}:
     parameters:
-      - $ref: '#/components/parameters/WorkspaceId'
-      - $ref: '#/components/parameters/JobId'
+    - $ref: '#/components/parameters/WorkspaceId'
+    - $ref: '#/components/parameters/JobId'
     get:
       summary: Retrieve information about a gcp BigQuery dataset clone job.
       operationId: getCloneBigQueryDatasetResult
@@ -1942,7 +2056,7 @@ paths:
 
   /api/workspaces/v1/{workspaceId}/resources/controlled/gcp/ai-notebook-instances:
     parameters:
-      - $ref: '#/components/parameters/WorkspaceId'
+    - $ref: '#/components/parameters/WorkspaceId'
     post:
       summary: Create a new controlled Gcp AI Platform Notebook Instance
       operationId: createAiNotebookInstance
@@ -1965,8 +2079,8 @@ paths:
 
   /api/workspaces/v1/{workspaceId}/resources/controlled/gcp/ai-notebook-instances/create-result/{jobId}:
     parameters:
-      - $ref: '#/components/parameters/WorkspaceId'
-      - $ref: '#/components/parameters/JobId'
+    - $ref: '#/components/parameters/WorkspaceId'
+    - $ref: '#/components/parameters/JobId'
     get:
       summary: Retrieve information about a GCP AI Platform Notebook create instance job.
       operationId: getCreateAiNotebookInstanceResult
@@ -1983,8 +2097,8 @@ paths:
 
   /api/workspaces/v1/{workspaceId}/resources/controlled/gcp/ai-notebook-instances/{resourceId}:
     parameters:
-      - $ref: '#/components/parameters/WorkspaceId'
-      - $ref: '#/components/parameters/ResourceId'
+    - $ref: '#/components/parameters/WorkspaceId'
+    - $ref: '#/components/parameters/ResourceId'
     get:
       summary: Get a controlled AI Notebook instance resource
       operationId: getAiNotebookInstance
@@ -2026,8 +2140,8 @@ paths:
 
   /api/workspaces/v1/{workspaceId}/resources/controlled/gcp/ai-notebook-instances/delete-result/{jobId}:
     parameters:
-      - $ref: '#/components/parameters/WorkspaceId'
-      - $ref: '#/components/parameters/JobId'
+    - $ref: '#/components/parameters/WorkspaceId'
+    - $ref: '#/components/parameters/JobId'
     get:
       summary: Retrieve information about a GCP AI Platform Notebook delete instance job.
       operationId: getDeleteAiNotebookInstanceResult
@@ -2051,13 +2165,13 @@ paths:
 
   /api/workspaces/alpha1/{workspaceId}/jobs:
     parameters:
-      - $ref: '#/components/parameters/WorkspaceId'
-      - $ref: '#/components/parameters/Limit'
-      - $ref: '#/components/parameters/PageToken'
-      - $ref: '#/components/parameters/ResourceType'
-      - $ref: '#/components/parameters/StewardshipType'
-      - $ref: "#/components/parameters/ResourceName"
-      - $ref: '#/components/parameters/JobStateFilter'
+    - $ref: '#/components/parameters/WorkspaceId'
+    - $ref: '#/components/parameters/Limit'
+    - $ref: '#/components/parameters/PageToken'
+    - $ref: '#/components/parameters/ResourceType'
+    - $ref: '#/components/parameters/StewardshipType'
+    - $ref: "#/components/parameters/ResourceName"
+    - $ref: '#/components/parameters/JobStateFilter'
     get:
       summary: |
         Enumerate recent jobs run in a workspace. The enumeration includes both running
@@ -2417,6 +2531,17 @@ components:
           description: The ID of the Data Repo snapshot
           type: string
 
+    UpdateGitRepoReferenceRequestBody:
+      type: object
+      properties:
+        name:
+          $ref: "#/components/schemas/Name"
+        description:
+          type: string
+        gitRepoUrl:
+          description: the url for cloning the corresponding git repository
+          type: string
+
     # TODO(PF-404): remove this in favor of reference-type specific objects.
     DataReferenceMetadata:
       deprecated: true
@@ -2555,9 +2680,9 @@ components:
     JobStateFilter:
       type: string
       enum:
-        - ALL
-        - ACTIVE
-        - COMPLETED
+      - ALL
+      - ACTIVE
+      - COMPLETED
 
     Name:
       type: string
@@ -2640,16 +2765,16 @@ components:
       description: State of an application
       type: string
       enum:
-        - OPERATING
-        - DEPRECATED
-        - DECOMMISSIONED
+      - OPERATING
+      - DEPRECATED
+      - DECOMMISSIONED
 
     WorkspaceApplicationState:
       description: State of the application in the workspace.
       type: string
       enum:
-        - ENABLED
-        - DISABLED
+      - ENABLED
+      - DISABLED
 
     WorkspaceApplicationDescription:
       type: object
@@ -2841,6 +2966,16 @@ components:
         dataset:
           $ref: '#/components/schemas/GcpBigQueryDatasetAttributes'
 
+    CreateGitRepoReferenceRequestBody:
+      type: object
+      description: A request to create a reference to a Git repo.
+      required: [metadata, gitrepo]
+      properties:
+        metadata:
+          $ref: '#/components/schemas/ReferenceResourceCommonFields'
+        gitrepo:
+          $ref: '#/components/schemas/GitRepoAttributes'
+
     WorkspaceStageModel:
       description: Enum for possible stages of a workspace along the Rawls migration path
       type: string
@@ -2988,9 +3123,9 @@ components:
         users will have no direct access to the associated cloud resource. If this element
         is specified both fields are required.
       type: object
-# TODO: PF-1218 - when CLI and UI are no longer passing this, disallow it for user-private
-#  resources, make the role List into a single role, and require both fields to be present.
-#      required: [ userName, privateResourceIamRoles ]
+      # TODO: PF-1218 - when CLI and UI are no longer passing this, disallow it for user-private
+      #  resources, make the role List into a single role, and require both fields to be present.
+      #      required: [ userName, privateResourceIamRoles ]
       properties:
         userName:
           description: email of the workspace user to grant access
@@ -3283,10 +3418,10 @@ components:
         This list does not include legacy types that apply to some existing buckets.
       type: string
       enum:
-        - STANDARD
-        - NEARLINE
-        - COLDLINE
-        - ARCHIVE
+      - STANDARD
+      - NEARLINE
+      - COLDLINE
+      - ARCHIVE
     GcpGcsBucketLifecycle:
       description: >-
         Options to control automatic deletion or storage class change for a bucket.
@@ -3325,8 +3460,8 @@ components:
         Type of action to perform. Formatted like our Java enums, but spelled in Camel case in Gcp API.
       type: string
       enum:
-        - DELETE
-        - SET_STORAGE_CLASS
+      - DELETE
+      - SET_STORAGE_CLASS
 
     GcpGcsBucketLifecycleRuleCondition:
       description: The condition(s) under which the action will be taken.
@@ -3539,6 +3674,25 @@ components:
           format: uuid
         resource:
           $ref: '#/components/schemas/DataRepoSnapshotResource'
+    CloneReferencedGitRepoResourceResult:
+      description: >-
+        API result class for cloning a referenced Git repo resource. Includes source workspace
+        and resource IDs for provenance. If the effective cloning instructions are not
+        COPY_REFERENCE, then no clone is created and the resource is null.
+      type: object
+      properties:
+        effectiveCloningInstructions:
+          $ref: '#/components/schemas/CloningInstructionsEnum'
+        sourceWorkspaceId:
+          description: ID of the workspace of the source resource for this clone
+          type: string
+          format: uuid
+        sourceResourceId:
+          description: ID of the source resource
+          type: string
+          format: uuid
+        resource:
+          $ref: '#/components/schemas/GitRepoResource'
     GcpBigQueryDatasetCreationParameters:
       description: >-
         Dataset-specific properties to be set on creation. These are a subset of the
@@ -3635,7 +3789,7 @@ components:
         are taken from individual resources.
       type: object
       required:
-        - spendProfile
+      - spendProfile
       properties:
         displayName:
           description: The human readable name of the workspace
@@ -3715,9 +3869,9 @@ components:
     CloneResourceResult:
       type: string
       enum:
-        - SUCCEEDED
-        - FAILED
-        - SKIPPED
+      - SUCCEEDED
+      - FAILED
+      - SKIPPED
     DeleteControlledGcpGcsBucketRequest:
       type: object
       required: [ jobControl ]
@@ -4026,6 +4180,26 @@ components:
         attributes:
           $ref: '#/components/schemas/GcpGcsObjectAttributes'
 
+    GitRepoAttributes:
+      description: Attributes of a Git repository
+      type: object
+      required: [ gitRepoUrl ]
+      properties:
+        gitRepoUrl:
+          description: URL for cloning the git repository, could be an HTTPs or SSH url.
+          type: string
+
+    GitRepoResource:
+      type: object
+      description: A git repository resource
+      required: [ metadata, attributes ]
+      properties:
+        metadata:
+          description:  the resource metadata common to all resources
+          $ref: '#/components/schemas/ResourceMetadata'
+        attributes:
+          $ref: '#/components/schemas/GitRepoAttributes'
+
     AzureIpAttributes:
       description: >-
         IP properties included in post-creation get. Others must be retrieved from Azure using the name.
@@ -4247,6 +4421,8 @@ components:
           $ref: '#/components/schemas/AzureStorageAttributes'
         azureVm:
           $ref: '#/components/schemas/AzureVmAttributes'
+        gitRepo:
+          $ref: '#/components/schemas/GitRepoAttributes'
 
     ResourceDescription:
       type: object
@@ -4324,17 +4500,18 @@ components:
       description: Enum containing valid resource types. Used for enumeration
       type: string
       enum:
-        - AI_NOTEBOOK
-        - BIG_QUERY_DATASET
-        - BIG_QUERY_DATA_TABLE
-        - DATA_REPO_SNAPSHOT
-        - GCS_BUCKET
-        - GCS_OBJECT
-        - AZURE_IP
-        - AZURE_DISK
-        - AZURE_NETWORK
-        - AZURE_VM
-        - AZURE_STORAGE_ACCOUNT
+      - AI_NOTEBOOK
+      - BIG_QUERY_DATASET
+      - BIG_QUERY_DATA_TABLE
+      - DATA_REPO_SNAPSHOT
+      - GCS_BUCKET
+      - GCS_OBJECT
+      - AZURE_IP
+      - AZURE_DISK
+      - AZURE_NETWORK
+      - AZURE_VM
+      - AZURE_STORAGE_ACCOUNT
+      - GIT_REPO
 
     StewardshipType:
       description: Enum containing valid stewardship types. Used for enumeration
@@ -4478,6 +4655,13 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/GcpBigQueryDatasetResource'
+
+    GitRepoReferenceResponse:
+      description: Response containing a reference to a git repository.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/GitRepoResource'
 
     RoleBindingListResponse:
       description: Response to list permissions calls
@@ -4660,7 +4844,12 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/CloneReferencedGcpDataRepoSnapshotResourceResult'
-
+    CloneReferencedGitRepoResourceResponse:
+      description: Response for successful Git Repo resource reference clone
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/CloneReferencedGitRepoResourceResult'
     DisableApplicationResultResponse:
       description: Response holding the disable application result
       content:

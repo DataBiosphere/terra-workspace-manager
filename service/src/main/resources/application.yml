@@ -132,7 +132,7 @@ terra.common:
 # in the container, so you can get the equivalent setting by adding:
 #
 #  env:
-#    FEATURE_AZURE_ENABLED: true
+#    FEATURE_AZUREENABLED: true
 #
 # into the appropriate values file. That includes the values file in local_dev.
 feature:
@@ -140,3 +140,8 @@ feature:
   azure-enabled: false
   # alpha1-enabled - Controls support of the Alpha1 experimental API and service
   alpha1-enabled: false
+
+reference:
+  gitrepos:
+    allow-listed-git-repo-host-names:
+      - github.com

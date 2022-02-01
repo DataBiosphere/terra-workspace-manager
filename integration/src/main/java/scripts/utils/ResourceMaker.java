@@ -16,6 +16,7 @@ import bio.terra.workspace.model.CreateGcpBigQueryDataTableReferenceRequestBody;
 import bio.terra.workspace.model.CreateGcpBigQueryDatasetReferenceRequestBody;
 import bio.terra.workspace.model.CreateGcpGcsBucketReferenceRequestBody;
 import bio.terra.workspace.model.CreateGcpGcsObjectReferenceRequestBody;
+import bio.terra.workspace.model.CreateGitRepoReferenceRequestBody;
 import bio.terra.workspace.model.CreatedControlledGcpAiNotebookInstanceResult;
 import bio.terra.workspace.model.CreatedControlledGcpGcsBucket;
 import bio.terra.workspace.model.DataRepoSnapshotAttributes;
@@ -36,6 +37,8 @@ import bio.terra.workspace.model.GcpGcsBucketLifecycle;
 import bio.terra.workspace.model.GcpGcsBucketResource;
 import bio.terra.workspace.model.GcpGcsObjectAttributes;
 import bio.terra.workspace.model.GcpGcsObjectResource;
+import bio.terra.workspace.model.GitRepoAttributes;
+import bio.terra.workspace.model.GitRepoResource;
 import bio.terra.workspace.model.JobControl;
 import bio.terra.workspace.model.JobReport;
 import bio.terra.workspace.model.ManagedBy;
@@ -48,6 +51,7 @@ import bio.terra.workspace.model.UpdateBigQueryDatasetReferenceRequestBody;
 import bio.terra.workspace.model.UpdateDataRepoSnapshotReferenceRequestBody;
 import bio.terra.workspace.model.UpdateGcsBucketObjectReferenceRequestBody;
 import bio.terra.workspace.model.UpdateGcsBucketReferenceRequestBody;
+import bio.terra.workspace.model.UpdateGitRepoReferenceRequestBody;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
@@ -333,6 +337,53 @@ public class ResourceMaker {
     resourceApi.updateBucketObjectReferenceResource(body, workspaceId, resourceId);
   }
 
+  /**
+   * Calls WSM to create a referenced Git repository in the specified workspace.
+   *
+   * <p>This method retries on all WSM exceptions, do not use it for the negative case (where you do
+   * not expect a user to be able to create a reference).
+   */
+  public static GitRepoResource makeGitRepoReference(
+      GitRepoAttributes attributes,
+      ReferencedGcpResourceApi resourceApi,
+      UUID workspaceId,
+      String name)
+      throws InterruptedException {
+
+    CreateGitRepoReferenceRequestBody body =
+        new CreateGitRepoReferenceRequestBody()
+            .metadata(
+                new ReferenceResourceCommonFields()
+                    .cloningInstructions(CloningInstructionsEnum.REFERENCE)
+                    .description("Description of " + name)
+                    .name(name))
+            .gitrepo(new GitRepoAttributes().gitRepoUrl(attributes.getGitRepoUrl()));
+    logger.info("Making git repo reference of {} with name {}", attributes.getGitRepoUrl(), name);
+    return ClientTestUtils.getWithRetryOnException(
+        () -> resourceApi.createGitRepoReference(body, workspaceId));
+  }
+
+  public static void updateGitRepoReferenceResource(
+      ReferencedGcpResourceApi resourceApi,
+      UUID workspaceId,
+      UUID resourceId,
+      @Nullable String name,
+      @Nullable String description,
+      @Nullable String gitRepoUrl)
+      throws ApiException {
+    UpdateGitRepoReferenceRequestBody body = new UpdateGitRepoReferenceRequestBody();
+    if (name != null) {
+      body.setName(name);
+    }
+    if (description != null) {
+      body.setDescription(description);
+    }
+    if (gitRepoUrl != null) {
+      body.setGitRepoUrl(gitRepoUrl);
+    }
+    resourceApi.updateGitRepoReference(body, workspaceId, resourceId);
+  }
+
   // Fully parameterized version; category-specific versions below
   public static CreatedControlledGcpGcsBucket makeControlledGcsBucket(
       ControlledGcpResourceApi resourceApi,
@@ -594,6 +645,7 @@ public class ResourceMaker {
    * @param dataRepoInstanceName Instance ID to use for snapshot references
    * @param bucket GCS Bucket to use for bucket references
    * @param bqTable BigQuery table to use for BQ dataset and table references.
+   * @param gitRepo Git repository to use for git references
    * @param resourceCount number of resources to allocate
    * @return list of resources
    * @throws Exception whatever might come up
@@ -606,6 +658,7 @@ public class ResourceMaker {
       String dataRepoInstanceName,
       GcpGcsBucketAttributes bucket,
       GcpBigQueryDataTableAttributes bqTable,
+      GitRepoAttributes gitRepo,
       int resourceCount)
       throws Exception {
 
@@ -690,6 +743,14 @@ public class ResourceMaker {
               GcpBigQueryDataTableResource resource =
                   ResourceMaker.makeBigQueryDataTableReference(
                       bqTable, referencedGcpResourceApi, workspaceId, makeName());
+              return resource.getMetadata();
+            },
+
+            // GitHub repository reference
+            () -> {
+              GitRepoResource resource =
+                  ResourceMaker.makeGitRepoReference(
+                      gitRepo, referencedGcpResourceApi, workspaceId, makeName());
               return resource.getMetadata();
             });
 

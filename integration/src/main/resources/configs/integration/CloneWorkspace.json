@@ -17,7 +17,8 @@
         "snapshot-id": "97b5559a-2f8f-4df3-89ae-5a249173ee0c",
         "gcs-uniform-bucket": "gs://terra_wsm_test_resource",
         "gcs-object": "gs://terra_wsm_fine_grained_test_bucket/foo/monkey_sees_monkey_dos.txt",
-        "bq-table": "projects/terra-kernel-k8s/datasets/terra_wsm_test_dataset/tables/terra wsm test data table"
+        "bq-table": "projects/terra-kernel-k8s/datasets/terra_wsm_test_dataset/tables/terra wsm test data table",
+        "git-repo": "git@github.com:DataBiosphere/terra-workspace-manager.git"
       }
     }
   ],

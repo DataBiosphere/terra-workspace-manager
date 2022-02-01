@@ -1,6 +1,6 @@
 package bio.terra.workspace.service.resource.controlled.flight.clone.workspace;
 
-import bio.terra.workspace.service.resource.WsmResource;
+import bio.terra.workspace.service.resource.model.WsmResource;
 
 public class ResourceWithFlightId {
 

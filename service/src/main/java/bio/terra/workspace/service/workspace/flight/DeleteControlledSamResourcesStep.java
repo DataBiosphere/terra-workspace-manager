@@ -6,7 +6,7 @@ import bio.terra.stairway.StepResult;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.service.iam.SamService;
-import bio.terra.workspace.service.resource.controlled.ControlledResource;
+import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import java.util.List;
 import java.util.UUID;

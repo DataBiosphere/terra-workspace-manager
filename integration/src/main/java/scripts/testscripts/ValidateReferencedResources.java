@@ -27,9 +27,8 @@ import java.util.UUID;
 import org.apache.commons.lang3.RandomStringUtils;
 import scripts.utils.ClientTestUtils;
 import scripts.utils.DataRepoTestScriptBase;
-import scripts.utils.ParameterKeys;
+import scripts.utils.ParameterUtils;
 import scripts.utils.ResourceMaker;
-import scripts.utils.ResourceNameUtils;
 
 public class ValidateReferencedResources extends DataRepoTestScriptBase {
 
@@ -61,17 +60,11 @@ public class ValidateReferencedResources extends DataRepoTestScriptBase {
   @Override
   public void setParameters(Map<String, String> parameters) throws Exception {
     super.setParameters(parameters);
-    bqTableAttributes =
-        ResourceNameUtils.parseBqTable(parameters.get(ParameterKeys.REFERENCED_BQ_TABLE));
-    gcsFineGrainedBucketAttributes =
-        ResourceNameUtils.parseGcsBucket(parameters.get(ParameterKeys.REFERENCED_GCS_BUCKET));
-    gcsUniformBucketAttributes =
-        ResourceNameUtils.parseGcsBucket(
-            parameters.get(ParameterKeys.REFERENCED_GCS_UNIFORM_BUCKET));
-    gcsFileAttributes =
-        ResourceNameUtils.parseGcsObject(parameters.get(ParameterKeys.REFERENCED_GCS_OBJECT));
-    gcsFolderAttributes =
-        ResourceNameUtils.parseGcsObject(parameters.get(ParameterKeys.REFERENCED_GCS_FOLDER));
+    bqTableAttributes = ParameterUtils.getBigQueryDataTableReference(parameters);
+    gcsFineGrainedBucketAttributes = ParameterUtils.getFineGrainedBucketReference(parameters);
+    gcsUniformBucketAttributes = ParameterUtils.getUniformBucketReference(parameters);
+    gcsFileAttributes = ParameterUtils.getGcsFileReference(parameters);
+    gcsFolderAttributes = ParameterUtils.getGcsFolderReference(parameters);
   }
 
   @Override

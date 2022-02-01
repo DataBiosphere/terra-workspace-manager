@@ -13,7 +13,7 @@ import bio.terra.workspace.service.iam.model.SamConstants.SamResource;
 import bio.terra.workspace.service.iam.model.SamConstants.SamWorkspaceAction;
 import bio.terra.workspace.service.job.JobBuilder;
 import bio.terra.workspace.service.job.JobService;
-import bio.terra.workspace.service.resource.controlled.PrivateResourceState;
+import bio.terra.workspace.service.resource.controlled.model.PrivateResourceState;
 import bio.terra.workspace.service.workspace.flight.RemoveUserFromWorkspaceFlight;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import java.time.Duration;
