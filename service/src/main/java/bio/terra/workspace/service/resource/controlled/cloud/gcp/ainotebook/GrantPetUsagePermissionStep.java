@@ -6,6 +6,8 @@ import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
+import bio.terra.workspace.service.iam.SamRethrow;
+import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.petserviceaccount.PetSaService;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.PetSaKeys;
 import com.google.api.services.iam.v1.model.Policy;
@@ -31,19 +33,26 @@ public class GrantPetUsagePermissionStep implements Step {
   private final UUID workspaceId;
   private final AuthenticatedUserRequest userRequest;
   private final PetSaService petSaService;
+  private final SamService samService;
 
   public GrantPetUsagePermissionStep(
-      UUID workspaceId, AuthenticatedUserRequest userRequest, PetSaService petSaService) {
+      UUID workspaceId,
+      AuthenticatedUserRequest userRequest,
+      PetSaService petSaService,
+      SamService samService) {
     this.workspaceId = workspaceId;
     this.userRequest = userRequest;
     this.petSaService = petSaService;
+    this.samService = samService;
   }
 
   @Override
   public StepResult doStep(FlightContext context) throws InterruptedException, RetryException {
+    String userEmail =
+        SamRethrow.onInterrupted(() -> samService.getUserEmailFromSam(userRequest), "enablePet");
     Policy modifiedPolicy =
         petSaService.enablePetServiceAccountImpersonation(
-            workspaceId, userRequest.getEmail(), userRequest.getRequiredToken());
+            workspaceId, userEmail, userRequest.getRequiredToken());
     // Store the eTag value of the modified policy in case this step needs to be undone.
     FlightMap workingMap = context.getWorkingMap();
     workingMap.put(PetSaKeys.MODIFIED_PET_SA_POLICY_ETAG, modifiedPolicy.getEtag());
