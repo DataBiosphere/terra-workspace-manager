@@ -1000,8 +1000,7 @@ public class SamService {
    * Fetch the email of a user's pet service account in a given project. This request to Sam will
    * create the pet SA if it doesn't already exist.
    */
-  public String getOrCreatePetSaEmail(String projectId, String token)
-      throws InterruptedException {
+  public String getOrCreatePetSaEmail(String projectId, String token) throws InterruptedException {
     GoogleApi googleApi = samGoogleApi(token);
     try {
       return SamRetry.retry(() -> googleApi.getPetServiceAccount(projectId));

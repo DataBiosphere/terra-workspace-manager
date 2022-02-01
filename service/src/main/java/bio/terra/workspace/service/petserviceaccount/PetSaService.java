@@ -58,9 +58,9 @@ public class PetSaService {
     // enablePetServiceAccountImpersonationWithEtag will only return an empty optional if the
     // provided eTag does not match current policy. Because we do not use eTag checking here, this
     // is always nonempty.
-    return enablePetServiceAccountImpersonationWithEtag(workspaceId, userToEnableEmail, token).orElseThrow(  () ->
-            new RuntimeException(
-                    "Error enabling user's proxy group to impersonate pet SA"));
+    return enablePetServiceAccountImpersonationWithEtag(workspaceId, userToEnableEmail, token)
+        .orElseThrow(
+            () -> new RuntimeException("Error enabling user's proxy group to impersonate pet SA"));
   }
 
   /**
@@ -73,8 +73,8 @@ public class PetSaService {
    * <p>This method does not authenticate that the user should have access to impersonate their pet
    * SA, callers should validate this first.
    *
-   * <p>userToEnableEmail is separate from token because of RevokePetUsagePermissionStep.undoStep(). If User A
-   * removes B from workspace, userToEnableEmail is B and token is from A's userRequest.
+   * <p>userToEnableEmail is separate from token because of RevokePetUsagePermissionStep.undoStep().
+   * If User A removes B from workspace, userToEnableEmail is B and token is from A's userRequest.
    *
    * @param workspaceId ID of the workspace to enable pet SA in
    * @param userToEnableEmail The user whose proxy group will be granted permission.
@@ -93,8 +93,7 @@ public class PetSaService {
             "enablePet");
     String proxyGroupEmail =
         SamRethrow.onInterrupted(
-            () -> samService.getProxyGroupEmail(userToEnableEmail, token),
-            "enablePet");
+            () -> samService.getProxyGroupEmail(userToEnableEmail, token), "enablePet");
 
     String projectId = gcpCloudContextService.getRequiredGcpProject(workspaceId);
     ServiceAccountName petSaName =
