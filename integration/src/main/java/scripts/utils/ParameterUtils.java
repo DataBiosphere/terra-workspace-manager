@@ -63,6 +63,12 @@ public class ParameterUtils {
         getParamOrThrow(params, ParameterKeys.REFERENCED_BQ_TABLE));
   }
 
+  public static GcpBigQueryDataTableAttributes getBigQueryDataTableFromAlternateDatasetReference(
+      Map<String, String> params) {
+    return ResourceNameUtils.parseBqTable(
+        getParamOrThrow(params, ParameterKeys.REFERENCED_BQ_TABLE_FROM_ALTERNATE_DATASET));
+  }
+
   public static GitRepoAttributes getSshGitRepoReference(Map<String, String> params) {
     return new GitRepoAttributes()
         .gitRepoUrl(getParamOrThrow(params, ParameterKeys.REFERENCED_SSH_GIT_REPO));

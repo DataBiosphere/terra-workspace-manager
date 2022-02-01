@@ -1,11 +1,6 @@
 package scripts.testscripts;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static scripts.utils.ClientTestUtils.TEST_BUCKET_NAME;
-import static scripts.utils.ClientTestUtils.TEST_BUCKET_NAME_WITH_FINE_GRAINED_ACCESS;
-import static scripts.utils.ClientTestUtils.TEST_FILE_FOO_MONKEY_SEES_MONKEY_DOS;
-import static scripts.utils.ClientTestUtils.TEST_FOLDER_FOO;
-import static scripts.utils.ClientTestUtils.TEST_GITHUB_REPO_PUBLIC_SSH;
 
 import bio.terra.testrunner.runner.config.TestUserSpecification;
 import bio.terra.workspace.api.ReferencedGcpResourceApi;
@@ -195,8 +190,7 @@ public class CloneReferencedResources extends DataRepoTestScriptBase {
     assertEquals(
         CLONED_BUCKET_RESOURCE_NAME,
         cloneBucketReferenceResult.getResource().getMetadata().getName());
-    assertEquals(
-        TEST_BUCKET_NAME, cloneBucketReferenceResult.getResource().getAttributes().getBucketName());
+    assertEquals(sourceUniformAccessBucketAttributes.getBucketName(), cloneBucketReferenceResult.getResource().getAttributes().getBucketName());
 
     // clone source reference to destination
     final var cloneBucketFileReferenceRequestBody =
@@ -231,10 +225,10 @@ public class CloneReferencedResources extends DataRepoTestScriptBase {
         CLONED_BUCKET_FILE_RESOURCE_NAME,
         cloneBucketFileReferenceResult.getResource().getMetadata().getName());
     assertEquals(
-        TEST_BUCKET_NAME_WITH_FINE_GRAINED_ACCESS,
+        sourceGcsObjectAttributes.getBucketName(),
         cloneBucketFileReferenceResult.getResource().getAttributes().getBucketName());
     assertEquals(
-        TEST_FILE_FOO_MONKEY_SEES_MONKEY_DOS,
+        sourceGcsObjectAttributes.getFileName(),
         cloneBucketFileReferenceResult.getResource().getAttributes().getFileName());
 
     // clone source reference to destination
@@ -270,10 +264,10 @@ public class CloneReferencedResources extends DataRepoTestScriptBase {
         CLONED_FOO_FOLDER_RESOURCE_NAME,
         cloneFooFolderReferenceResult.getResource().getMetadata().getName());
     assertEquals(
-        TEST_BUCKET_NAME_WITH_FINE_GRAINED_ACCESS,
+        sourceFolderObjectAttributes.getBucketName(),
         cloneFooFolderReferenceResult.getResource().getAttributes().getBucketName());
     assertEquals(
-        TEST_FOLDER_FOO, cloneFooFolderReferenceResult.getResource().getAttributes().getFileName());
+        sourceFolderObjectAttributes.getFileName(), cloneFooFolderReferenceResult.getResource().getAttributes().getFileName());
 
     final var cloneBigQueryDatasetRequestBody =
         new CloneReferencedResourceRequestBody()
@@ -409,7 +403,7 @@ public class CloneReferencedResources extends DataRepoTestScriptBase {
         CLONED_GITHUB_REPO_RESOURCE_NAME,
         gitHubRepoReferenceCloneResult.getResource().getMetadata().getName());
     assertEquals(
-        TEST_GITHUB_REPO_PUBLIC_SSH,
+        sourceGitRepoAttributes.getGitRepoUrl(),
         gitHubRepoReferenceCloneResult.getResource().getAttributes().getGitRepoUrl());
     assertEquals(
         CLONED_GITHUB_REPO_DESCRIPTION,

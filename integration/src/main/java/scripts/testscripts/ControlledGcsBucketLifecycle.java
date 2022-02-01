@@ -27,6 +27,7 @@ import bio.terra.workspace.model.ControlledResourceCommonFields;
 import bio.terra.workspace.model.ControlledResourceIamRole;
 import bio.terra.workspace.model.CreateControlledGcpGcsBucketRequestBody;
 import bio.terra.workspace.model.CreatedControlledGcpGcsBucket;
+import bio.terra.workspace.model.GcpGcsBucketAttributes;
 import bio.terra.workspace.model.GcpGcsBucketCreationParameters;
 import bio.terra.workspace.model.GcpGcsBucketDefaultStorageClass;
 import bio.terra.workspace.model.GcpGcsBucketLifecycle;
@@ -47,6 +48,7 @@ import com.google.cloud.storage.Storage.BucketField;
 import com.google.cloud.storage.Storage.BucketGetOption;
 import com.google.cloud.storage.StorageClass;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import javax.annotation.Nullable;
 import org.apache.http.HttpStatus;
@@ -55,6 +57,7 @@ import org.slf4j.LoggerFactory;
 import scripts.utils.ClientTestUtils;
 import scripts.utils.CloudContextMaker;
 import scripts.utils.GcsBucketAccessTester;
+import scripts.utils.ParameterUtils;
 import scripts.utils.ResourceMaker;
 import scripts.utils.WorkspaceAllocateTestScriptBase;
 
@@ -67,6 +70,15 @@ public class ControlledGcsBucketLifecycle extends WorkspaceAllocateTestScriptBas
   private TestUserSpecification reader;
   private String bucketName;
   private String resourceName;
+  // An existing GCS bucket. Used to validate behavior around bucket name conflicts. Access to this
+  // bucket is not required.
+  private GcpGcsBucketAttributes existingBucket;
+
+  @Override
+  public void setParameters(Map<String, String> parameters) throws Exception {
+    super.setParameters(parameters);
+    existingBucket = ParameterUtils.getUniformBucketReference(parameters);
+  }
 
   @Override
   protected void doSetup(List<TestUserSpecification> testUsers, WorkspaceApi workspaceApi)
@@ -99,12 +111,12 @@ public class ControlledGcsBucketLifecycle extends WorkspaceAllocateTestScriptBas
     assertNotNull(projectId);
     logger.info("Created project {}", projectId);
 
-    // Create a bucket with a name that's already taken in another project and not accessible to the
-    // WSM SA. This should fail, as bucket names are globally unique in GCP.
+    // Create a bucket with a name that's already taken in another project. This should fail, as
+    // bucket names are globally unique in GCP.
     ApiException duplicateNameFails =
         assertThrows(
             ApiException.class,
-            () -> createBucketAttempt(resourceApi, ClientTestUtils.TEST_BUCKET_NAME));
+            () -> createBucketAttempt(resourceApi, existingBucket.getBucketName()));
     assertEquals(HttpStatus.SC_CONFLICT, duplicateNameFails.getCode());
     logger.info("Failed to create bucket with duplicate name, as expected");
 

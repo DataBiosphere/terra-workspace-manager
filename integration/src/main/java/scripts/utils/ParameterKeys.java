@@ -17,5 +17,6 @@ public class ParameterKeys {
   public static final String REFERENCED_GCS_FOLDER = "gcs-folder";
   public static final String REFERENCED_BQ_DATASET = "bq-dataset";
   public static final String REFERENCED_BQ_TABLE = "bq-table";
+  public static final String REFERENCED_BQ_TABLE_FROM_ALTERNATE_DATASET = "bq-table-2";
   public static final String REFERENCED_SSH_GIT_REPO = "git-repo";
 }

@@ -49,20 +49,7 @@ import org.slf4j.LoggerFactory;
 
 public class ClientTestUtils {
 
-  public static final String TEST_BUCKET_NAME = "terra_wsm_test_resource";
-  public static final String TEST_BUCKET_NAME_WITH_FINE_GRAINED_ACCESS =
-      "terra_wsm_fine_grained_test_bucket";
-  public static final String TEST_FILE_FOO_MONKEY_SEES_MONKEY_DOS =
-      "foo/monkey_sees_monkey_dos.txt";
-  public static final String TEST_FOLDER_FOO = "foo/";
-  public static final String TEST_BQ_DATASET_NAME = "terra_wsm_test_dataset";
-  public static final String TEST_BQ_DATASET_NAME_2 = "terra_wsm_test_dataset_2";
-  public static final String TEST_BQ_DATATABLE_NAME = "terra wsm test data table";
-  public static final String TEST_BQ_DATATABLE_NAME_2 = "terra wsm test data table 2";
-  public static final String TEST_BQ_DATASET_PROJECT = "terra-kernel-k8s";
   public static final String RESOURCE_NAME_PREFIX = "terratest";
-  public static final String TEST_GITHUB_REPO_PUBLIC_SSH =
-      "git@github.com:DataBiosphere/terra-workspace-manager.git";
   // We may want this to be a test parameter. It has to match what is in the config or in the helm
   public static final UUID TEST_WSM_APP = UUID.fromString("E4C0924A-3D7D-4D3D-8DE4-3D2CF50C3818");
   private static final Logger logger = LoggerFactory.getLogger(ClientTestUtils.class);
