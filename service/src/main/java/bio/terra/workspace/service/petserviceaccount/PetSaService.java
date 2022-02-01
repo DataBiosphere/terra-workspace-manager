@@ -54,11 +54,11 @@ public class PetSaService {
    * particular GCP eTag value.
    */
   public Policy enablePetServiceAccountImpersonation(
-      UUID workspaceId, AuthenticatedUserRequest userRequest) {
+      UUID workspaceId, String userToEnableEmail, String token) {
     // enablePetServiceAccountImpersonationWithEtag will only return an empty optional if the
     // provided eTag does not match current policy. Because we do not use eTag checking here, this
     // is always nonempty.
-    return enablePetServiceAccountImpersonationWithEtag(workspaceId, userRequest, null).orElseThrow(  () ->
+    return enablePetServiceAccountImpersonationWithEtag(workspaceId, userToEnableEmail, token).orElseThrow(  () ->
             new RuntimeException(
                     "Error enabling user's proxy group to impersonate pet SA"));
   }
@@ -73,26 +73,27 @@ public class PetSaService {
    * <p>This method does not authenticate that the user should have access to impersonate their pet
    * SA, callers should validate this first.
    *
+   * <p>userToEnableEmail is separate from token because of RevokePetUsagePermissionStep.undoStep(). If User A
+   * removes B from workspace, userToEnableEmail is B and token is from A's userRequest.
+   *
    * @param workspaceId ID of the workspace to enable pet SA in
-   * @param userRequest The user whose proxy group will be granted permission.
+   * @param userToEnableEmail The user whose proxy group will be granted permission.
+   * @param token Token for calling SAM.
    * @param eTag GCP eTag which must match the pet SA's current policy. If null, this is ignored.
    * @return The new IAM policy on the user's pet service account, or empty if the eTag value
    *     provided is non-null and does not match current IAM policy on the pet SA.
    */
   public Optional<Policy> enablePetServiceAccountImpersonationWithEtag(
-      UUID workspaceId, AuthenticatedUserRequest userRequest, @Nullable String eTag) {
-    // userRequest might not have user email, so fetch user email explicitly.
-    String userEmail =
-        SamRethrow.onInterrupted(() -> samService.getUserEmailFromSam(userRequest), "enablePet");
+      UUID workspaceId, String userToEnableEmail, String token, @Nullable String eTag) {
     String petSaEmail =
         SamRethrow.onInterrupted(
             () ->
                 samService.getOrCreatePetSaEmail(
-                    gcpCloudContextService.getRequiredGcpProject(workspaceId), userRequest),
+                    gcpCloudContextService.getRequiredGcpProject(workspaceId), token),
             "enablePet");
     String proxyGroupEmail =
         SamRethrow.onInterrupted(
-            () -> samService.getProxyGroupEmail(userEmail, userRequest.getRequiredToken()),
+            () -> samService.getProxyGroupEmail(userToEnableEmail, token),
             "enablePet");
 
     String projectId = gcpCloudContextService.getRequiredGcpProject(workspaceId);
@@ -107,7 +108,7 @@ public class PetSaService {
       if (eTag != null && !saPolicy.getEtag().equals(eTag)) {
         logger.warn(
             "GCP IAM policy eTag did not match expected value when granting pet SA access for user {} in workspace {}. This is normal for Step retries.",
-            userEmail,
+            userToEnableEmail,
             workspaceId);
         return Optional.empty();
       }

@@ -42,7 +42,8 @@ public class GrantPetUsagePermissionStep implements Step {
   @Override
   public StepResult doStep(FlightContext context) throws InterruptedException, RetryException {
     Policy modifiedPolicy =
-        petSaService.enablePetServiceAccountImpersonation(workspaceId, userRequest);
+        petSaService.enablePetServiceAccountImpersonation(
+            workspaceId, userRequest.getEmail(), userRequest.getRequiredToken());
     // Store the eTag value of the modified policy in case this step needs to be undone.
     FlightMap workingMap = context.getWorkingMap();
     workingMap.put(PetSaKeys.MODIFIED_PET_SA_POLICY_ETAG, modifiedPolicy.getEtag());
