@@ -434,7 +434,7 @@ paths:
       tags: [ Workspace ]
       responses:
         '204':
-          description: Success (No Content)
+          description: OK
         '400':
           $ref: '#/components/responses/BadRequest'
         '403':

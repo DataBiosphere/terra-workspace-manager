@@ -508,7 +508,7 @@ public class WorkspaceApiController implements WorkspaceApi {
   }
 
   @Override
-  public ResponseEntity<String> enablePet(UUID workspaceId) {
+  public ResponseEntity<Void> enablePet(UUID workspaceId) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     // TODO(PF-1007): This would be a nice use for an authorized workspace ID.
     // Validate that the user is a workspace member, as enablePetServiceAccountImpersonation does
