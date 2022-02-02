@@ -8,14 +8,18 @@ import bio.terra.workspace.api.ControlledGcpResourceApi;
 import bio.terra.workspace.api.ReferencedGcpResourceApi;
 import bio.terra.workspace.api.WorkspaceApi;
 import bio.terra.workspace.client.ApiException;
+import bio.terra.workspace.model.GcpBigQueryDataTableAttributes;
 import bio.terra.workspace.model.GcpBigQueryDataTableResource;
+import bio.terra.workspace.model.GcpBigQueryDatasetAttributes;
 import bio.terra.workspace.model.GcpBigQueryDatasetResource;
+import java.util.Map;
 import java.util.UUID;
 import org.apache.http.HttpStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import scripts.utils.ClientTestUtils;
 import scripts.utils.CloudContextMaker;
+import scripts.utils.ParameterUtils;
 import scripts.utils.ResourceMaker;
 import scripts.utils.WorkspaceAllocateTestScriptBase;
 
@@ -24,6 +28,13 @@ public class DeleteGcpContextWithControlledResource extends WorkspaceAllocateTes
       LoggerFactory.getLogger(DeleteGcpContextWithControlledResource.class);
 
   private static final String DATASET_RESOURCE_NAME = "wsmtest_dataset";
+
+  private GcpBigQueryDataTableAttributes dataTableAttributes;
+
+  public void setParameters(Map<String, String> parameters) throws Exception {
+    super.setParameters(parameters);
+    dataTableAttributes = ParameterUtils.getBigQueryDataTableReference(parameters);
+  }
 
   @Override
   protected void doUserJourney(TestUserSpecification testUser, WorkspaceApi workspaceApi)
@@ -50,10 +61,15 @@ public class DeleteGcpContextWithControlledResource extends WorkspaceAllocateTes
     assertEquals(controlledDataset, fetchedControlledDataset);
 
     // Create a referenced BigQuery dataset
+    // Reference the same table as the BigQuery table parameter
+    GcpBigQueryDatasetAttributes datasetAttributes =
+        new GcpBigQueryDatasetAttributes()
+            .projectId(dataTableAttributes.getProjectId())
+            .datasetId(dataTableAttributes.getDatasetId());
     String resourceName = "my-resource-name-" + UUID.randomUUID().toString();
     GcpBigQueryDatasetResource referencedDataset =
         ResourceMaker.makeBigQueryDatasetReference(
-            referencedResourceApi, getWorkspaceId(), resourceName);
+            datasetAttributes, referencedResourceApi, getWorkspaceId(), resourceName);
     UUID referencedResourceId = referencedDataset.getMetadata().getResourceId();
     logger.info("Created referenced dataset {}", referencedResourceId);
 
@@ -66,7 +82,10 @@ public class DeleteGcpContextWithControlledResource extends WorkspaceAllocateTes
     String bqDataReferenceResourceName = "my-resource-name-" + UUID.randomUUID().toString();
     GcpBigQueryDataTableResource referencedDataTable =
         ResourceMaker.makeBigQueryDataTableReference(
-            referencedResourceApi, getWorkspaceId(), bqDataReferenceResourceName);
+            dataTableAttributes,
+            referencedResourceApi,
+            getWorkspaceId(),
+            bqDataReferenceResourceName);
     UUID bqDataTableReferencedResourceId = referencedDataTable.getMetadata().getResourceId();
     logger.info("Created referenced dataset {}", bqDataTableReferencedResourceId);
 

@@ -1,11 +1,5 @@
 package scripts.utils;
 
-import static scripts.utils.ClientTestUtils.TEST_BQ_DATASET_NAME;
-import static scripts.utils.ClientTestUtils.TEST_BQ_DATASET_PROJECT;
-import static scripts.utils.ClientTestUtils.TEST_BQ_DATATABLE_NAME;
-import static scripts.utils.ClientTestUtils.TEST_BUCKET_NAME;
-import static scripts.utils.ClientTestUtils.TEST_BUCKET_NAME_WITH_FINE_GRAINED_ACCESS;
-import static scripts.utils.ClientTestUtils.TEST_GITHUB_REPO_PUBLIC_SSH;
 import static scripts.utils.GcsBucketTestFixtures.LIFECYCLE_RULES;
 
 import bio.terra.workspace.api.ControlledGcpResourceApi;
@@ -82,7 +76,10 @@ public class ResourceMaker {
    * not expect a user to be able to create a reference).
    */
   public static GcpBigQueryDatasetResource makeBigQueryDatasetReference(
-      ReferencedGcpResourceApi resourceApi, UUID workspaceId, String name)
+      GcpBigQueryDatasetAttributes dataset,
+      ReferencedGcpResourceApi resourceApi,
+      UUID workspaceId,
+      String name)
       throws ApiException, InterruptedException {
 
     var body =
@@ -92,10 +89,7 @@ public class ResourceMaker {
                     .cloningInstructions(CloningInstructionsEnum.NOTHING)
                     .description("Description of " + name)
                     .name(name))
-            .dataset(
-                new GcpBigQueryDatasetAttributes()
-                    .datasetId(TEST_BQ_DATASET_NAME)
-                    .projectId(TEST_BQ_DATASET_PROJECT));
+            .dataset(dataset);
 
     return ClientTestUtils.getWithRetryOnException(
         () -> resourceApi.createBigQueryDatasetReference(body, workspaceId));
@@ -135,7 +129,10 @@ public class ResourceMaker {
    * not expect a user to be able to create a reference).
    */
   public static GcpBigQueryDataTableResource makeBigQueryDataTableReference(
-      ReferencedGcpResourceApi resourceApi, UUID workspaceId, String name)
+      GcpBigQueryDataTableAttributes dataTable,
+      ReferencedGcpResourceApi resourceApi,
+      UUID workspaceId,
+      String name)
       throws ApiException, InterruptedException {
 
     var body =
@@ -145,11 +142,7 @@ public class ResourceMaker {
                     .cloningInstructions(CloningInstructionsEnum.NOTHING)
                     .description("Description of " + name)
                     .name(name))
-            .dataTable(
-                new GcpBigQueryDataTableAttributes()
-                    .datasetId(TEST_BQ_DATASET_NAME)
-                    .projectId(TEST_BQ_DATASET_PROJECT)
-                    .dataTableId(TEST_BQ_DATATABLE_NAME));
+            .dataTable(dataTable);
 
     return ClientTestUtils.getWithRetryOnException(
         () -> resourceApi.createBigQueryDataTableReference(body, workspaceId));
@@ -244,47 +237,12 @@ public class ResourceMaker {
    * not expect a user to be able to create a reference).
    */
   public static GcpGcsBucketResource makeGcsBucketReference(
+      GcpGcsBucketAttributes bucket,
       ReferencedGcpResourceApi resourceApi,
       UUID workspaceId,
       String name,
       @Nullable CloningInstructionsEnum cloningInstructions)
       throws ApiException, InterruptedException {
-    return makeGcsBucketReference(
-        resourceApi,
-        workspaceId,
-        name,
-        cloningInstructions,
-        /*isBucketWithFineGrainedAccess=*/ false);
-  }
-
-  public static GcpGcsBucketResource makeGcsBucketWithFineGrainedAccessReference(
-      ReferencedGcpResourceApi resourceApi,
-      UUID workspaceId,
-      String name,
-      @Nullable CloningInstructionsEnum cloningInstructions)
-      throws InterruptedException, ApiException {
-    return makeGcsBucketReference(
-        resourceApi,
-        workspaceId,
-        name,
-        cloningInstructions,
-        /*isBucketWithFineGrainedAccess=*/ true);
-  }
-
-  /**
-   * Calls WSM to create a referenced GCS bucket in the specified workspace.
-   *
-   * <p>This method retries on all WSM exceptions, do not use it for the negative case (where you do
-   * not expect a user to be able to create a reference).
-   */
-  public static GcpGcsBucketResource makeGcsBucketReference(
-      ReferencedGcpResourceApi resourceApi,
-      UUID workspaceId,
-      String name,
-      @Nullable CloningInstructionsEnum cloningInstructions,
-      boolean isBucketWithFineGrainedAccess)
-      throws ApiException, InterruptedException {
-
     var body =
         new CreateGcpGcsBucketReferenceRequestBody()
             .metadata(
@@ -294,12 +252,7 @@ public class ResourceMaker {
                             .orElse(CloningInstructionsEnum.NOTHING))
                     .description("Description of " + name)
                     .name(name))
-            .bucket(
-                new GcpGcsBucketAttributes()
-                    .bucketName(
-                        isBucketWithFineGrainedAccess
-                            ? TEST_BUCKET_NAME_WITH_FINE_GRAINED_ACCESS
-                            : TEST_BUCKET_NAME));
+            .bucket(bucket);
 
     logger.info("Making reference to a gcs bucket");
     return ClientTestUtils.getWithRetryOnException(
@@ -335,13 +288,12 @@ public class ResourceMaker {
    * not expect a user to be able to create a reference).
    */
   public static GcpGcsObjectResource makeGcsObjectReference(
+      GcpGcsObjectAttributes file,
       ReferencedGcpResourceApi resourceApi,
       UUID workspaceId,
       String name,
-      @Nullable CloningInstructionsEnum cloningInstructionsEnum,
-      String bucketName,
-      String objectName)
-      throws ApiException, InterruptedException {
+      @Nullable CloningInstructionsEnum cloningInstructionsEnum)
+      throws InterruptedException {
     var body =
         new CreateGcpGcsObjectReferenceRequestBody()
             .metadata(
@@ -351,7 +303,7 @@ public class ResourceMaker {
                             .orElse(CloningInstructionsEnum.NOTHING))
                     .description("Description of " + name)
                     .name(name))
-            .file(new GcpGcsObjectAttributes().bucketName(bucketName).fileName(objectName));
+            .file(file);
 
     logger.info("Making reference to a gcs bucket file");
     return ClientTestUtils.getWithRetryOnException(
@@ -385,12 +337,6 @@ public class ResourceMaker {
     resourceApi.updateBucketObjectReferenceResource(body, workspaceId, resourceId);
   }
 
-  public static GcpGcsBucketResource makeGcsBucketReference(
-      ReferencedGcpResourceApi resourceApi, UUID workspaceId, String name)
-      throws ApiException, InterruptedException {
-    return makeGcsBucketReference(resourceApi, workspaceId, name, null);
-  }
-
   /**
    * Calls WSM to create a referenced Git repository in the specified workspace.
    *
@@ -398,7 +344,10 @@ public class ResourceMaker {
    * not expect a user to be able to create a reference).
    */
   public static GitRepoResource makeGitRepoReference(
-      ReferencedGcpResourceApi resourceApi, UUID workspaceId, String name)
+      GitRepoAttributes attributes,
+      ReferencedGcpResourceApi resourceApi,
+      UUID workspaceId,
+      String name)
       throws InterruptedException {
 
     CreateGitRepoReferenceRequestBody body =
@@ -408,8 +357,8 @@ public class ResourceMaker {
                     .cloningInstructions(CloningInstructionsEnum.REFERENCE)
                     .description("Description of " + name)
                     .name(name))
-            .gitrepo(new GitRepoAttributes().gitRepoUrl(TEST_GITHUB_REPO_PUBLIC_SSH));
-    logger.info("Making git repo reference of {} with name {}", TEST_GITHUB_REPO_PUBLIC_SSH, name);
+            .gitrepo(new GitRepoAttributes().gitRepoUrl(attributes.getGitRepoUrl()));
+    logger.info("Making git repo reference of {} with name {}", attributes.getGitRepoUrl(), name);
     return ClientTestUtils.getWithRetryOnException(
         () -> resourceApi.createGitRepoReference(body, workspaceId));
   }
@@ -435,7 +384,7 @@ public class ResourceMaker {
     resourceApi.updateGitRepoReference(body, workspaceId, resourceId);
   }
 
-  // Fully parameters version; category-specific versions below
+  // Fully parameterized version; category-specific versions below
   public static CreatedControlledGcpGcsBucket makeControlledGcsBucket(
       ControlledGcpResourceApi resourceApi,
       UUID workspaceId,
@@ -692,6 +641,11 @@ public class ResourceMaker {
    * @param referencedGcpResourceApi api for referenced resources
    * @param controlledGcpResourceApi api for controlled resources
    * @param workspaceId workspace where we allocate
+   * @param dataRepoSnapshotId ID of the TDR snapshot to use for snapshot references
+   * @param dataRepoInstanceName Instance ID to use for snapshot references
+   * @param bucket GCS Bucket to use for bucket references
+   * @param bqTable BigQuery table to use for BQ dataset and table references.
+   * @param gitRepo Git repository to use for git references
    * @param resourceCount number of resources to allocate
    * @return list of resources
    * @throws Exception whatever might come up
@@ -702,6 +656,9 @@ public class ResourceMaker {
       UUID workspaceId,
       String dataRepoSnapshotId,
       String dataRepoInstanceName,
+      GcpGcsBucketAttributes bucket,
+      GcpBigQueryDataTableAttributes bqTable,
+      GitRepoAttributes gitRepo,
       int resourceCount)
       throws Exception {
 
@@ -710,8 +667,14 @@ public class ResourceMaker {
         List.of(
             // BQ dataset reference
             () -> {
+              // Use the same BQ dataset specified for table references
+              GcpBigQueryDatasetAttributes dataset =
+                  new GcpBigQueryDatasetAttributes()
+                      .projectId(bqTable.getProjectId())
+                      .datasetId(bqTable.getDatasetId());
               GcpBigQueryDatasetResource resource =
-                  makeBigQueryDatasetReference(referencedGcpResourceApi, workspaceId, makeName());
+                  makeBigQueryDatasetReference(
+                      dataset, referencedGcpResourceApi, workspaceId, makeName());
               return resource.getMetadata();
             },
 
@@ -730,15 +693,24 @@ public class ResourceMaker {
             // GCS bucket reference
             () -> {
               GcpGcsBucketResource resource =
-                  makeGcsBucketReference(referencedGcpResourceApi, workspaceId, makeName());
+                  makeGcsBucketReference(
+                      bucket,
+                      referencedGcpResourceApi,
+                      workspaceId,
+                      makeName(),
+                      CloningInstructionsEnum.NOTHING);
               return resource.getMetadata();
             },
 
             // GCS bucket controlled shared
             () -> {
               GcpGcsBucketResource resource =
-                  ResourceMaker.makeGcsBucketReference(
-                      referencedGcpResourceApi, workspaceId, makeName());
+                  ResourceMaker.makeControlledGcsBucketUserShared(
+                          controlledGcpResourceApi,
+                          workspaceId,
+                          makeName(),
+                          CloningInstructionsEnum.NOTHING)
+                      .getGcpBucket();
               return resource.getMetadata();
             },
 
@@ -770,7 +742,7 @@ public class ResourceMaker {
             () -> {
               GcpBigQueryDataTableResource resource =
                   ResourceMaker.makeBigQueryDataTableReference(
-                      referencedGcpResourceApi, workspaceId, makeName());
+                      bqTable, referencedGcpResourceApi, workspaceId, makeName());
               return resource.getMetadata();
             },
 
@@ -778,7 +750,7 @@ public class ResourceMaker {
             () -> {
               GitRepoResource resource =
                   ResourceMaker.makeGitRepoReference(
-                      referencedGcpResourceApi, workspaceId, makeName());
+                      gitRepo, referencedGcpResourceApi, workspaceId, makeName());
               return resource.getMetadata();
             });
 

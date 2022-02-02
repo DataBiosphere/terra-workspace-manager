@@ -7,8 +7,6 @@ import static org.hamcrest.Matchers.is;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
-import static scripts.utils.ClientTestUtils.TEST_BUCKET_NAME_WITH_FINE_GRAINED_ACCESS;
-import static scripts.utils.ClientTestUtils.TEST_FILE_FOO_MONKEY_SEES_MONKEY_DOS;
 import static scripts.utils.ClientTestUtils.getOrFail;
 import static scripts.utils.GcsBucketTestFixtures.GCS_BLOB_NAME;
 import static scripts.utils.GcsBucketTestFixtures.RESOURCE_PREFIX;
@@ -27,10 +25,15 @@ import bio.terra.workspace.model.CloneWorkspaceRequest;
 import bio.terra.workspace.model.CloneWorkspaceResult;
 import bio.terra.workspace.model.CloningInstructionsEnum;
 import bio.terra.workspace.model.CreatedControlledGcpGcsBucket;
+import bio.terra.workspace.model.GcpBigQueryDataTableAttributes;
 import bio.terra.workspace.model.GcpBigQueryDataTableResource;
+import bio.terra.workspace.model.GcpBigQueryDatasetAttributes;
 import bio.terra.workspace.model.GcpBigQueryDatasetResource;
+import bio.terra.workspace.model.GcpGcsBucketAttributes;
 import bio.terra.workspace.model.GcpGcsBucketResource;
+import bio.terra.workspace.model.GcpGcsObjectAttributes;
 import bio.terra.workspace.model.GcpGcsObjectResource;
+import bio.terra.workspace.model.GitRepoAttributes;
 import bio.terra.workspace.model.GitRepoResource;
 import bio.terra.workspace.model.GrantRoleRequestBody;
 import bio.terra.workspace.model.IamRole;
@@ -46,6 +49,7 @@ import com.google.cloud.storage.Storage;
 import java.io.IOException;
 import java.time.Duration;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.stream.StreamSupport;
 import org.apache.commons.lang3.RandomStringUtils;
@@ -53,6 +57,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import scripts.utils.ClientTestUtils;
 import scripts.utils.CloudContextMaker;
+import scripts.utils.ParameterUtils;
 import scripts.utils.ResourceMaker;
 import scripts.utils.ResourceModifier;
 import scripts.utils.WorkspaceAllocateTestScriptBase;
@@ -65,12 +70,16 @@ public class CloneWorkspace extends WorkspaceAllocateTestScriptBase {
   private CreatedControlledGcpGcsBucket sharedCopyNothingSourceBucket;
   private CreatedControlledGcpGcsBucket sharedSourceBucket;
   private GcpBigQueryDatasetResource sourceDatasetReference;
+  private GcpBigQueryDataTableAttributes sourceDataTableAttributes;
   private GcpBigQueryDataTableResource sourceDataTableReference;
+  private GitRepoAttributes sourceGitRepoAttributes;
   private GitRepoResource sourceGitRepoReference;
   private GcpBigQueryDatasetResource copyDefinitionDataset;
   private GcpBigQueryDatasetResource copyResourceDataset;
   private GcpBigQueryDatasetResource privateDataset;
+  private GcpGcsBucketAttributes sourceUniformAccessBucketAttributes;
   private GcpGcsBucketResource sourceBucketReference;
+  private GcpGcsObjectAttributes sourceBucketFileAttributes;
   private GcpGcsObjectResource sourceBucketFileReference;
   private String copyDefinitionDatasetResourceName;
   private String copyResourceDatasetResourceName;
@@ -83,6 +92,15 @@ public class CloneWorkspace extends WorkspaceAllocateTestScriptBase {
   private WorkspaceApi cloningUserWorkspaceApi;
 
   private static final int EXPECTED_NUM_CLONED_RESOURCES = 12;
+
+  @Override
+  public void setParameters(Map<String, String> parameters) throws Exception {
+    super.setParameters(parameters);
+    sourceUniformAccessBucketAttributes = ParameterUtils.getUniformBucketReference(parameters);
+    sourceBucketFileAttributes = ParameterUtils.getGcsFileReference(parameters);
+    sourceDataTableAttributes = ParameterUtils.getBigQueryDataTableReference(parameters);
+    sourceGitRepoAttributes = ParameterUtils.getSshGitRepoReference(parameters);
+  }
 
   @Override
   protected void doSetup(
@@ -192,6 +210,7 @@ public class CloneWorkspace extends WorkspaceAllocateTestScriptBase {
 
     sourceBucketReference =
         ResourceMaker.makeGcsBucketReference(
+            sourceUniformAccessBucketAttributes,
             referencedGcpResourceApi,
             getWorkspaceId(),
             bucketReferenceName,
@@ -199,24 +218,37 @@ public class CloneWorkspace extends WorkspaceAllocateTestScriptBase {
 
     sourceBucketFileReference =
         ResourceMaker.makeGcsObjectReference(
+            sourceBucketFileAttributes,
             referencedGcpResourceApi,
             getWorkspaceId(),
             "a_reference_to_foo_monkey_sees_monkey_dos",
-            CloningInstructionsEnum.REFERENCE,
-            TEST_BUCKET_NAME_WITH_FINE_GRAINED_ACCESS,
-            TEST_FILE_FOO_MONKEY_SEES_MONKEY_DOS);
+            CloningInstructionsEnum.REFERENCE);
 
     // create reference to BQ dataset with COPY_NOTHING
+    // Use the BQ dataset referenced by the BQ data table parameter
+    GcpBigQueryDatasetAttributes sourceDatasetAttributes =
+        new GcpBigQueryDatasetAttributes()
+            .projectId(sourceDataTableAttributes.getProjectId())
+            .datasetId(sourceDataTableAttributes.getDatasetId());
     sourceDatasetReference =
         ResourceMaker.makeBigQueryDatasetReference(
-            referencedGcpResourceApi, getWorkspaceId(), "dataset_resource_1");
+            sourceDatasetAttributes,
+            referencedGcpResourceApi,
+            getWorkspaceId(),
+            "dataset_resource_1");
     sourceDataTableReference =
         ResourceMaker.makeBigQueryDataTableReference(
-            referencedGcpResourceApi, getWorkspaceId(), "datatable_resource_1");
+            sourceDataTableAttributes,
+            referencedGcpResourceApi,
+            getWorkspaceId(),
+            "datatable_resource_1");
 
     sourceGitRepoReference =
         ResourceMaker.makeGitRepoReference(
-            referencedGcpResourceApi, getWorkspaceId(), "wsm_git_repo_referenced_resource");
+            sourceGitRepoAttributes,
+            referencedGcpResourceApi,
+            getWorkspaceId(),
+            "wsm_git_repo_referenced_resource");
   }
 
   @Override

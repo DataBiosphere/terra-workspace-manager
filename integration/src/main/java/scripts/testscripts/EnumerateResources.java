@@ -16,6 +16,9 @@ import bio.terra.workspace.client.ApiClient;
 import bio.terra.workspace.client.ApiException;
 import bio.terra.workspace.model.ControlledResourceIamRole;
 import bio.terra.workspace.model.ControlledResourceMetadata;
+import bio.terra.workspace.model.GcpBigQueryDataTableAttributes;
+import bio.terra.workspace.model.GcpGcsBucketAttributes;
+import bio.terra.workspace.model.GitRepoAttributes;
 import bio.terra.workspace.model.GrantRoleRequestBody;
 import bio.terra.workspace.model.IamRole;
 import bio.terra.workspace.model.ResourceDescription;
@@ -26,6 +29,7 @@ import bio.terra.workspace.model.StewardshipType;
 import com.google.common.collect.ImmutableList;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import org.slf4j.Logger;
@@ -33,6 +37,7 @@ import org.slf4j.LoggerFactory;
 import scripts.utils.ClientTestUtils;
 import scripts.utils.CloudContextMaker;
 import scripts.utils.DataRepoTestScriptBase;
+import scripts.utils.ParameterUtils;
 import scripts.utils.ResourceMaker;
 
 public class EnumerateResources extends DataRepoTestScriptBase {
@@ -51,10 +56,20 @@ public class EnumerateResources extends DataRepoTestScriptBase {
 
   private ControlledGcpResourceApi ownerControlledGcpResourceApi;
   private ReferencedGcpResourceApi ownerReferencedGcpResourceApi;
+  private GcpGcsBucketAttributes referenceBucketAttributes;
+  private GcpBigQueryDataTableAttributes referenceBqTableAttributes;
+  private GitRepoAttributes referenceGitAttributes;
   private ResourceApi ownerResourceApi;
   private ResourceApi readerResourceApi;
   private List<ResourceMetadata> resourceList;
   private TestUserSpecification workspaceReader;
+
+  public void setParameters(Map<String, String> parameters) throws Exception {
+    super.setParameters(parameters);
+    referenceBucketAttributes = ParameterUtils.getFineGrainedBucketReference(parameters);
+    referenceBqTableAttributes = ParameterUtils.getBigQueryDataTableReference(parameters);
+    referenceGitAttributes = ParameterUtils.getSshGitRepoReference(parameters);
+  }
 
   @Override
   public void doSetup(List<TestUserSpecification> testUsers, WorkspaceApi workspaceApi)
@@ -93,6 +108,9 @@ public class EnumerateResources extends DataRepoTestScriptBase {
             getWorkspaceId(),
             getDataRepoSnapshotId(),
             getDataRepoInstanceName(),
+            referenceBucketAttributes,
+            referenceBqTableAttributes,
+            referenceGitAttributes,
             RESOURCE_COUNT);
 
     logger.info("Created {} resources", resourceList.size());

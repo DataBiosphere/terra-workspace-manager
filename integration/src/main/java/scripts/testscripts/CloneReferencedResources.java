@@ -1,11 +1,6 @@
 package scripts.testscripts;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static scripts.utils.ClientTestUtils.TEST_BUCKET_NAME;
-import static scripts.utils.ClientTestUtils.TEST_BUCKET_NAME_WITH_FINE_GRAINED_ACCESS;
-import static scripts.utils.ClientTestUtils.TEST_FILE_FOO_MONKEY_SEES_MONKEY_DOS;
-import static scripts.utils.ClientTestUtils.TEST_FOLDER_FOO;
-import static scripts.utils.ClientTestUtils.TEST_GITHUB_REPO_PUBLIC_SSH;
 
 import bio.terra.testrunner.runner.config.TestUserSpecification;
 import bio.terra.workspace.api.ReferencedGcpResourceApi;
@@ -19,21 +14,28 @@ import bio.terra.workspace.model.CloneReferencedGitRepoResourceResult;
 import bio.terra.workspace.model.CloneReferencedResourceRequestBody;
 import bio.terra.workspace.model.CloningInstructionsEnum;
 import bio.terra.workspace.model.DataRepoSnapshotResource;
+import bio.terra.workspace.model.GcpBigQueryDataTableAttributes;
 import bio.terra.workspace.model.GcpBigQueryDataTableResource;
+import bio.terra.workspace.model.GcpBigQueryDatasetAttributes;
 import bio.terra.workspace.model.GcpBigQueryDatasetResource;
+import bio.terra.workspace.model.GcpGcsBucketAttributes;
 import bio.terra.workspace.model.GcpGcsBucketResource;
+import bio.terra.workspace.model.GcpGcsObjectAttributes;
 import bio.terra.workspace.model.GcpGcsObjectResource;
+import bio.terra.workspace.model.GitRepoAttributes;
 import bio.terra.workspace.model.GitRepoResource;
 import bio.terra.workspace.model.ResourceMetadata;
 import bio.terra.workspace.model.ResourceType;
 import bio.terra.workspace.model.StewardshipType;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import scripts.utils.ClientTestUtils;
 import scripts.utils.DataRepoTestScriptBase;
+import scripts.utils.ParameterUtils;
 import scripts.utils.ResourceMaker;
 
 public class CloneReferencedResources extends DataRepoTestScriptBase {
@@ -53,16 +55,31 @@ public class CloneReferencedResources extends DataRepoTestScriptBase {
       "a cloned reference to the wsm github repo";
 
   private DataRepoSnapshotResource sourceDataRepoSnapshotReference;
+  private GcpGcsBucketAttributes sourceUniformAccessBucketAttributes;
   private GcpGcsBucketResource sourceBucketReference;
   // Reference to gs://terra_wsm_fine_grained_test_bucket/foo/monkey_sees_monkey_dos.txt
+  private GcpGcsObjectAttributes sourceGcsObjectAttributes;
   private GcpGcsObjectResource sourceGcsObjectReference;
   // Reference to gs://terra_wsm_fine_grained_test_bucket/foo/
+  private GcpGcsObjectAttributes sourceFolderObjectAttributes;
   private GcpGcsObjectResource sourceBucketFolderReference;
   private GcpBigQueryDatasetResource sourceBigQueryDatasetReference;
+  private GcpBigQueryDataTableAttributes sourceBigQueryDataTableAttributes;
   private GcpBigQueryDataTableResource sourceBigQueryDataTableReference;
+  private GitRepoAttributes sourceGitRepoAttributes;
   private GitRepoResource sourceGitRepoReference;
   private UUID destinationWorkspaceId;
   private ReferencedGcpResourceApi referencedGcpResourceApi;
+
+  @Override
+  public void setParameters(Map<String, String> parameters) throws Exception {
+    super.setParameters(parameters);
+    sourceUniformAccessBucketAttributes = ParameterUtils.getUniformBucketReference(parameters);
+    sourceGcsObjectAttributes = ParameterUtils.getGcsFileReference(parameters);
+    sourceFolderObjectAttributes = ParameterUtils.getGcsFolderReference(parameters);
+    sourceBigQueryDataTableAttributes = ParameterUtils.getBigQueryDataTableReference(parameters);
+    sourceGitRepoAttributes = ParameterUtils.getSshGitRepoReference(parameters);
+  }
 
   @Override
   protected void doSetup(List<TestUserSpecification> testUsers, WorkspaceApi workspaceApi)
@@ -75,32 +92,45 @@ public class CloneReferencedResources extends DataRepoTestScriptBase {
     // create reference to existing test bucket
     sourceBucketReference =
         ResourceMaker.makeGcsBucketReference(
-            referencedGcpResourceApi, getWorkspaceId(), bucketReferenceName);
+            sourceUniformAccessBucketAttributes,
+            referencedGcpResourceApi,
+            getWorkspaceId(),
+            bucketReferenceName,
+            CloningInstructionsEnum.NOTHING);
 
     sourceGcsObjectReference =
         ResourceMaker.makeGcsObjectReference(
+            sourceGcsObjectAttributes,
             referencedGcpResourceApi,
             getWorkspaceId(),
             "reference_to_foo_monkey_sees_monkey_dos",
-            null,
-            TEST_BUCKET_NAME_WITH_FINE_GRAINED_ACCESS,
-            TEST_FILE_FOO_MONKEY_SEES_MONKEY_DOS);
+            null);
     sourceBucketFolderReference =
         ResourceMaker.makeGcsObjectReference(
+            sourceFolderObjectAttributes,
             referencedGcpResourceApi,
             getWorkspaceId(),
             "reference_to_foo_folder",
-            null,
-            TEST_BUCKET_NAME_WITH_FINE_GRAINED_ACCESS,
-            TEST_FOLDER_FOO);
+            null);
 
+    // Take BQ dataset attributes from the BQ table reference parameter
+    GcpBigQueryDatasetAttributes sourceBigQueryDatasetAttributes =
+        new GcpBigQueryDatasetAttributes()
+            .projectId(sourceBigQueryDataTableAttributes.getProjectId())
+            .datasetId(sourceBigQueryDataTableAttributes.getDatasetId());
     sourceBigQueryDatasetReference =
         ResourceMaker.makeBigQueryDatasetReference(
-            referencedGcpResourceApi, getWorkspaceId(), DATASET_RESOURCE_NAME);
+            sourceBigQueryDatasetAttributes,
+            referencedGcpResourceApi,
+            getWorkspaceId(),
+            DATASET_RESOURCE_NAME);
 
     sourceBigQueryDataTableReference =
         ResourceMaker.makeBigQueryDataTableReference(
-            referencedGcpResourceApi, getWorkspaceId(), DATA_TABLE_RESOURCE_NAME);
+            sourceBigQueryDataTableAttributes,
+            referencedGcpResourceApi,
+            getWorkspaceId(),
+            DATA_TABLE_RESOURCE_NAME);
 
     final String snapshotReferenceName = RandomStringUtils.random(6, true, false);
 
@@ -115,7 +145,10 @@ public class CloneReferencedResources extends DataRepoTestScriptBase {
 
     sourceGitRepoReference =
         ResourceMaker.makeGitRepoReference(
-            referencedGcpResourceApi, getWorkspaceId(), "git_repo_reference_resource");
+            sourceGitRepoAttributes,
+            referencedGcpResourceApi,
+            getWorkspaceId(),
+            "git_repo_reference_resource");
 
     // create a new workspace with cloud context
     destinationWorkspaceId = UUID.randomUUID();
@@ -158,7 +191,8 @@ public class CloneReferencedResources extends DataRepoTestScriptBase {
         CLONED_BUCKET_RESOURCE_NAME,
         cloneBucketReferenceResult.getResource().getMetadata().getName());
     assertEquals(
-        TEST_BUCKET_NAME, cloneBucketReferenceResult.getResource().getAttributes().getBucketName());
+        sourceUniformAccessBucketAttributes.getBucketName(),
+        cloneBucketReferenceResult.getResource().getAttributes().getBucketName());
 
     // clone source reference to destination
     final var cloneBucketFileReferenceRequestBody =
@@ -193,10 +227,10 @@ public class CloneReferencedResources extends DataRepoTestScriptBase {
         CLONED_BUCKET_FILE_RESOURCE_NAME,
         cloneBucketFileReferenceResult.getResource().getMetadata().getName());
     assertEquals(
-        TEST_BUCKET_NAME_WITH_FINE_GRAINED_ACCESS,
+        sourceGcsObjectAttributes.getBucketName(),
         cloneBucketFileReferenceResult.getResource().getAttributes().getBucketName());
     assertEquals(
-        TEST_FILE_FOO_MONKEY_SEES_MONKEY_DOS,
+        sourceGcsObjectAttributes.getFileName(),
         cloneBucketFileReferenceResult.getResource().getAttributes().getFileName());
 
     // clone source reference to destination
@@ -232,10 +266,11 @@ public class CloneReferencedResources extends DataRepoTestScriptBase {
         CLONED_FOO_FOLDER_RESOURCE_NAME,
         cloneFooFolderReferenceResult.getResource().getMetadata().getName());
     assertEquals(
-        TEST_BUCKET_NAME_WITH_FINE_GRAINED_ACCESS,
+        sourceFolderObjectAttributes.getBucketName(),
         cloneFooFolderReferenceResult.getResource().getAttributes().getBucketName());
     assertEquals(
-        TEST_FOLDER_FOO, cloneFooFolderReferenceResult.getResource().getAttributes().getFileName());
+        sourceFolderObjectAttributes.getFileName(),
+        cloneFooFolderReferenceResult.getResource().getAttributes().getFileName());
 
     final var cloneBigQueryDatasetRequestBody =
         new CloneReferencedResourceRequestBody()
@@ -371,7 +406,7 @@ public class CloneReferencedResources extends DataRepoTestScriptBase {
         CLONED_GITHUB_REPO_RESOURCE_NAME,
         gitHubRepoReferenceCloneResult.getResource().getMetadata().getName());
     assertEquals(
-        TEST_GITHUB_REPO_PUBLIC_SSH,
+        sourceGitRepoAttributes.getGitRepoUrl(),
         gitHubRepoReferenceCloneResult.getResource().getAttributes().getGitRepoUrl());
     assertEquals(
         CLONED_GITHUB_REPO_DESCRIPTION,
