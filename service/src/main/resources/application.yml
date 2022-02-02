@@ -106,7 +106,7 @@ workspace:
       identifier: 6397C5FF-F83C-4837-95DB-059198FD89BF
       name: Leonardo
       description: Leonardo application SA
-      service-account: leonardo-dev@broad-dsde-dev.iam.gserviceaccount.com
+      service-account: leonardo-prod@broad-dsde-prod.iam.gserviceaccount.com
       state: operating
 
 terra.common:
