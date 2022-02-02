@@ -7,11 +7,14 @@ import bio.terra.workspace.db.exception.InvalidMetadataException;
 import bio.terra.workspace.db.model.DbResource;
 import bio.terra.workspace.generated.model.ApiGcpBigQueryDatasetAttributes;
 import bio.terra.workspace.generated.model.ApiGcpBigQueryDatasetResource;
+import bio.terra.workspace.generated.model.ApiResourceAttributesUnion;
+import bio.terra.workspace.generated.model.ApiResourceUnion;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.petserviceaccount.PetSaService;
 import bio.terra.workspace.service.resource.ValidationUtils;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
+import bio.terra.workspace.service.resource.model.WsmCloudResourceType;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.resource.referenced.cloud.gcp.ReferencedResource;
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -57,7 +60,7 @@ public class ReferencedBigQueryDatasetResource extends ReferencedResource {
    */
   public ReferencedBigQueryDatasetResource(DbResource dbResource) {
     super(dbResource);
-    if (dbResource.getResourceType() != WsmResourceType.BIG_QUERY_DATASET) {
+    if (dbResource.getResourceType() != WsmResourceType.REFERENCED_GCP_BIG_QUERY_DATASET) {
       throw new InvalidMetadataException("Expected BIG_QUERY_DATASET");
     }
 
@@ -94,13 +97,28 @@ public class ReferencedBigQueryDatasetResource extends ReferencedResource {
 
   @Override
   public WsmResourceType getResourceType() {
-    return WsmResourceType.BIG_QUERY_DATASET;
+    return WsmResourceType.REFERENCED_GCP_BIG_QUERY_DATASET;
+  }
+
+  @Override
+  public WsmCloudResourceType getCloudResourceType() {
+    return WsmCloudResourceType.BIG_QUERY_DATASET;
   }
 
   @Override
   public String attributesToJson() {
     return DbSerDes.toJson(
         new ReferencedBigQueryDatasetAttributes(getProjectId(), getDatasetName()));
+  }
+
+  @Override
+  public ApiResourceAttributesUnion toApiAttributesUnion() {
+    return new ApiResourceAttributesUnion().gcpBqDataset(toApiAttributes());
+  }
+
+  @Override
+  public ApiResourceUnion toApiResourceUnion() {
+    return new ApiResourceUnion().gcpBqDataset(toApiResource());
   }
 
   @Override

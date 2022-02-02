@@ -4543,11 +4543,13 @@ components:
         azureDisk:
           $ref: '#/components/schemas/AzureDiskResource'
         azureNetwork:
-          $ref: '#/components/schemas/AzureDiskResource'
+          $ref: '#/components/schemas/AzureNetworkResource'
         azureVm:
           $ref: '#/components/schemas/AzureVmResource'
         azureStorageAccount:
           $ref: '#/components/schemas/AzureStorageResource'
+        gitRepo:
+          $ref: '#/components/schemas/GitRepoResource'
 
     OperationType:
       type: string

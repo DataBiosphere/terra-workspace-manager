@@ -8,7 +8,7 @@ import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.model.StewardshipType;
 import bio.terra.workspace.service.resource.model.WsmResource;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
-import bio.terra.workspace.service.resource.referenced.cloud.any.ReferencedGitRepoResource;
+import bio.terra.workspace.service.resource.referenced.cloud.any.gitrepo.ReferencedGitRepoResource;
 import bio.terra.workspace.service.resource.referenced.cloud.gcp.bqdataset.ReferencedBigQueryDatasetResource;
 import bio.terra.workspace.service.resource.referenced.cloud.gcp.bqdatatable.ReferencedBigQueryDataTableResource;
 import bio.terra.workspace.service.resource.referenced.cloud.gcp.datareposnapshot.ReferencedDataRepoSnapshotResource;
@@ -41,32 +41,32 @@ public abstract class ReferencedResource extends WsmResource {
 
   // Double-checked down casts when we need to re-specialize from a ReferenceResource
   public ReferencedBigQueryDatasetResource castToBigQueryDatasetResource() {
-    validateSubclass(WsmResourceType.BIG_QUERY_DATASET);
+    validateSubclass(WsmResourceType.REFERENCED_GCP_BIG_QUERY_DATASET);
     return (ReferencedBigQueryDatasetResource) this;
   }
 
   public ReferencedBigQueryDataTableResource castToBigQueryDataTableResource() {
-    validateSubclass(WsmResourceType.BIG_QUERY_DATA_TABLE);
+    validateSubclass(WsmResourceType.REFERENCED_GCP_BIG_QUERY_DATA_TABLE);
     return (ReferencedBigQueryDataTableResource) this;
   }
 
   public ReferencedDataRepoSnapshotResource castToDataRepoSnapshotResource() {
-    validateSubclass(WsmResourceType.DATA_REPO_SNAPSHOT);
+    validateSubclass(WsmResourceType.REFERENCED_DATA_REPO_SNAPSHOT);
     return (ReferencedDataRepoSnapshotResource) this;
   }
 
   public ReferencedGcsBucketResource castToGcsBucketResource() {
-    validateSubclass(WsmResourceType.GCS_BUCKET);
+    validateSubclass(WsmResourceType.REFERENCED_GCP_GCS_BUCKET);
     return (ReferencedGcsBucketResource) this;
   }
 
   public ReferencedGcsObjectResource castToGcsObjectResource() {
-    validateSubclass(WsmResourceType.GCS_OBJECT);
+    validateSubclass(WsmResourceType.REFERENCED_GCP_GCS_OBJECT);
     return (ReferencedGcsObjectResource) this;
   }
 
   public ReferencedGitRepoResource castToGitRepoResource() {
-    validateSubclass(WsmResourceType.GIT_REPO);
+    validateSubclass(WsmResourceType.REFERENCED_GIT_REPO);
     return (ReferencedGitRepoResource) this;
   }
 

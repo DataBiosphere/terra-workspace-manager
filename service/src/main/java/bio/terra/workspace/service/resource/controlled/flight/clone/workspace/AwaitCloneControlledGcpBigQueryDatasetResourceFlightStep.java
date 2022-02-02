@@ -60,7 +60,7 @@ public class AwaitCloneControlledGcpBigQueryDatasetResourceFlightStep implements
           resultMap.get(
               JobMapKeys.RESPONSE.getKeyName(), ApiClonedControlledGcpBigQueryDataset.class);
       cloneDetails.setStewardshipType(StewardshipType.CONTROLLED);
-      cloneDetails.setResourceType(WsmResourceType.BIG_QUERY_DATASET);
+      cloneDetails.setResourceType(WsmResourceType.CONTROLLED_GCP_BIG_QUERY_DATASET);
       cloneDetails.setCloningInstructions(resource.getCloningInstructions());
       cloneDetails.setSourceResourceId(resource.getResourceId());
       cloneDetails.setDestinationResourceId(

@@ -1,0 +1,22 @@
+databaseChangeLog:
+- changeSet:
+    id: resource type fixup
+    author: ddietterich
+    changes:
+    - renameColumn:
+        tableName: resource
+        newColumnName: cloud_resource_type
+        oldColumnName: resource_type
+        remarks: The type of cloud resource, for example, GCS_BUCKET.
+    - addColumn:
+        tableName: resource
+        columns:
+        - column:
+            name: resource_type
+            type: text
+            defaultValue: "notset"
+            constraints:
+              nullable: false
+            remarks: |
+              The specific resource type in the form {stewardship}_{cloud}_{cloud_resource_type}
+

@@ -51,7 +51,7 @@ public class DeleteControlledResourceFlight extends Flight {
 
     final RetryRule gcpRetryRule = RetryRules.cloud();
     switch (resource.getResourceType()) {
-      case GCS_BUCKET:
+      case CONTROLLED_GCP_GCS_BUCKET:
         addStep(
             new DeleteGcsBucketStep(
                 flightBeanBag.getCrlService(),
@@ -61,7 +61,7 @@ public class DeleteControlledResourceFlight extends Flight {
                 resourceId),
             gcpRetryRule);
         break;
-      case AZURE_DISK:
+      case CONTROLLED_AZURE_DISK:
         addStep(
             new DeleteAzureDiskStep(
                 flightBeanBag.getAzureConfig(),
@@ -74,7 +74,7 @@ public class DeleteControlledResourceFlight extends Flight {
                 workspaceId,
                 resourceId));
         break;
-      case AZURE_IP:
+      case CONTROLLED_AZURE_IP:
         addStep(
             new DeleteAzureIpStep(
                 flightBeanBag.getAzureConfig(),
@@ -87,7 +87,7 @@ public class DeleteControlledResourceFlight extends Flight {
                 workspaceId,
                 resourceId));
         break;
-      case AZURE_NETWORK:
+      case CONTROLLED_AZURE_NETWORK:
         addStep(
             new DeleteAzureNetworkStep(
                 flightBeanBag.getAzureConfig(),
@@ -100,7 +100,7 @@ public class DeleteControlledResourceFlight extends Flight {
                 workspaceId,
                 resourceId));
         break;
-      case AZURE_VM:
+      case CONTROLLED_AZURE_VM:
         addStep(
             new DeleteAzureVmStep(
                 flightBeanBag.getAzureConfig(),
@@ -113,7 +113,7 @@ public class DeleteControlledResourceFlight extends Flight {
                 workspaceId,
                 resourceId));
         break;
-      case BIG_QUERY_DATASET:
+      case CONTROLLED_GCP_BIG_QUERY_DATASET:
         addStep(
             new DeleteBigQueryDatasetStep(
                 resource.castToBigQueryDatasetResource(),
@@ -121,7 +121,7 @@ public class DeleteControlledResourceFlight extends Flight {
                 flightBeanBag.getGcpCloudContextService()),
             gcpRetryRule);
         break;
-      case AI_NOTEBOOK_INSTANCE:
+      case CONTROLLED_GCP_AI_NOTEBOOK_INSTANCE:
         addStep(
             new DeleteAiNotebookInstanceStep(
                 resource.castToAiNotebookInstanceResource(),

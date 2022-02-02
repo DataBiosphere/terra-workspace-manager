@@ -19,32 +19,32 @@ public class CustomGcpIamRoleTest extends BaseUnitTest {
     assertEquals(
         "GCS_BUCKET_READER",
         CustomGcpIamRoleMapping.CUSTOM_GCP_RESOURCE_IAM_ROLES
-            .get(WsmResourceType.GCS_BUCKET, ControlledResourceIamRole.READER)
+            .get(WsmResourceType.CONTROLLED_GCP_GCS_BUCKET, ControlledResourceIamRole.READER)
             .getRoleName());
     assertEquals(
         "GCS_BUCKET_WRITER",
         CustomGcpIamRoleMapping.CUSTOM_GCP_RESOURCE_IAM_ROLES
-            .get(WsmResourceType.GCS_BUCKET, ControlledResourceIamRole.WRITER)
+            .get(WsmResourceType.CONTROLLED_GCP_GCS_BUCKET, ControlledResourceIamRole.WRITER)
             .getRoleName());
     assertEquals(
         "GCS_BUCKET_EDITOR",
         CustomGcpIamRoleMapping.CUSTOM_GCP_RESOURCE_IAM_ROLES
-            .get(WsmResourceType.GCS_BUCKET, ControlledResourceIamRole.EDITOR)
+            .get(WsmResourceType.CONTROLLED_GCP_GCS_BUCKET, ControlledResourceIamRole.EDITOR)
             .getRoleName());
     assertEquals(
         "BIG_QUERY_DATASET_READER",
         CustomGcpIamRoleMapping.CUSTOM_GCP_RESOURCE_IAM_ROLES
-            .get(WsmResourceType.BIG_QUERY_DATASET, ControlledResourceIamRole.READER)
+            .get(WsmResourceType.CONTROLLED_GCP_BIG_QUERY_DATASET, ControlledResourceIamRole.READER)
             .getRoleName());
     assertEquals(
         "BIG_QUERY_DATASET_WRITER",
         CustomGcpIamRoleMapping.CUSTOM_GCP_RESOURCE_IAM_ROLES
-            .get(WsmResourceType.BIG_QUERY_DATASET, ControlledResourceIamRole.WRITER)
+            .get(WsmResourceType.CONTROLLED_GCP_BIG_QUERY_DATASET, ControlledResourceIamRole.WRITER)
             .getRoleName());
     assertEquals(
         "BIG_QUERY_DATASET_EDITOR",
         CustomGcpIamRoleMapping.CUSTOM_GCP_RESOURCE_IAM_ROLES
-            .get(WsmResourceType.BIG_QUERY_DATASET, ControlledResourceIamRole.EDITOR)
+            .get(WsmResourceType.CONTROLLED_GCP_BIG_QUERY_DATASET, ControlledResourceIamRole.EDITOR)
             .getRoleName());
   }
 }

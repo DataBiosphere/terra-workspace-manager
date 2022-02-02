@@ -6,12 +6,16 @@ import bio.terra.workspace.db.DbSerDes;
 import bio.terra.workspace.db.model.DbResource;
 import bio.terra.workspace.generated.model.ApiGcpGcsBucketAttributes;
 import bio.terra.workspace.generated.model.ApiGcpGcsBucketResource;
+import bio.terra.workspace.generated.model.ApiResourceAttributesUnion;
+import bio.terra.workspace.generated.model.ApiResourceUnion;
 import bio.terra.workspace.service.resource.ValidationUtils;
 import bio.terra.workspace.service.resource.controlled.model.AccessScopeType;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import bio.terra.workspace.service.resource.controlled.model.ManagedByType;
 import bio.terra.workspace.service.resource.controlled.model.PrivateResourceState;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
+import bio.terra.workspace.service.resource.model.StewardshipType;
+import bio.terra.workspace.service.resource.model.WsmCloudResourceType;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -64,6 +68,10 @@ public class ControlledGcsBucketResource extends ControlledResource {
     return new ControlledGcsBucketResource.Builder();
   }
 
+  private static String generateBucketName() {
+    return String.format("terra_%s_bucket", UUID.randomUUID()).replace("-", "_");
+  }
+
   public Builder toBuilder() {
     return new Builder()
         .workspaceId(getWorkspaceId())
@@ -95,7 +103,12 @@ public class ControlledGcsBucketResource extends ControlledResource {
 
   @Override
   public WsmResourceType getResourceType() {
-    return WsmResourceType.GCS_BUCKET;
+    return WsmResourceType.CONTROLLED_GCP_GCS_BUCKET;
+  }
+
+  @Override
+  public WsmCloudResourceType getCloudResourceType() {
+    return WsmCloudResourceType.GCS_BUCKET;
   }
 
   @Override
@@ -104,10 +117,22 @@ public class ControlledGcsBucketResource extends ControlledResource {
   }
 
   @Override
+  public ApiResourceAttributesUnion toApiAttributesUnion() {
+    return new ApiResourceAttributesUnion().gcpGcsBucket(toApiAttributes());
+  }
+
+  @Override
+  public ApiResourceUnion toApiResourceUnion() {
+    return new ApiResourceUnion().gcpGcsBucket(toApiResource());
+  }
+
+  @Override
   public void validate() {
     super.validate();
-    if (getResourceType() != WsmResourceType.GCS_BUCKET) {
-      throw new InconsistentFieldsException("Expected GCS_BUCKET");
+    if (getResourceType() != WsmResourceType.CONTROLLED_GCP_GCS_BUCKET
+        || getCloudResourceType() != WsmCloudResourceType.GCS_BUCKET
+        || getStewardshipType() != StewardshipType.CONTROLLED) {
+      throw new InconsistentFieldsException("Expected controlled GCP GCS_BUCKET");
     }
     if (getBucketName() == null) {
       throw new MissingRequiredFieldException("Missing required field for ControlledGcsBucket.");
@@ -137,10 +162,6 @@ public class ControlledGcsBucketResource extends ControlledResource {
     int result = super.hashCode();
     result = 31 * result + bucketName.hashCode();
     return result;
-  }
-
-  private static String generateBucketName() {
-    return String.format("terra_%s_bucket", UUID.randomUUID()).replace("-", "_");
   }
 
   public static class Builder {

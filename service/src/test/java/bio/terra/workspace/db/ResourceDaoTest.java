@@ -15,6 +15,8 @@ import bio.terra.workspace.service.resource.controlled.cloud.gcp.bqdataset.Contr
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.ControlledGcsBucketResource;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import bio.terra.workspace.service.resource.exception.DuplicateResourceException;
+import bio.terra.workspace.service.resource.model.WsmResource;
+import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.workspace.GcpCloudContextService;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import bio.terra.workspace.service.workspace.model.GcpCloudContext;
@@ -29,6 +31,7 @@ public class ResourceDaoTest extends BaseUnitTest {
   @Autowired ResourceDao resourceDao;
   @Autowired WorkspaceDao workspaceDao;
   @Autowired GcpCloudContextService gcpCloudContextService;
+  @Autowired TestDao testDao;
 
   /**
    * Creates a workspaces with a GCP cloud context and stores it in the database. Returns the
@@ -274,5 +277,32 @@ public class ResourceDaoTest extends BaseUnitTest {
     resourceDao.deleteResource(uniqueResource.getWorkspaceId(), uniqueResource.getResourceId());
     resourceDao.deleteResource(
         duplicatingResource.getWorkspaceId(), duplicatingResource.getResourceId());
+  }
+
+  @Test
+  public void testResourceTypeCompatibility() {
+    UUID workspaceId = createGcpWorkspace();
+    UUID resourceId = UUID.randomUUID();
+    // Store a resource in the upgraded form
+    testDao.storeResource(
+        workspaceId.toString(),
+        "GCP",
+        resourceId.toString(),
+        "testgcs-fc5ab877-e14d-44b6-a6ba-34b29fd3fd11",
+        "A bucket that had beer in it, briefly. 🍻",
+        "CONTROLLED",
+        "notset", // the state after the liquibase upgrade
+        "GCS_BUCKET",
+        "COPY_REFERENCE",
+        "{\"bucketName\": \"my-bucket-611975c8-c54c-4f1f-8a11-268f003b904c\"}",
+        "ACCESS_SHARED",
+        "USER",
+        null,
+        null,
+        "NOT_APPLICABLE");
+
+    // Retrieve using the resourceDao and make sure the resource type gets filled in right
+    WsmResource resource = resourceDao.getResource(workspaceId, resourceId);
+    assertEquals(resource.getResourceType(), WsmResourceType.CONTROLLED_GCP_GCS_BUCKET);
   }
 }

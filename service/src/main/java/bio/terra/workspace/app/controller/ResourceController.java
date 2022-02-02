@@ -1,6 +1,5 @@
 package bio.terra.workspace.app.controller;
 
-import bio.terra.workspace.common.exception.InternalLogicException;
 import bio.terra.workspace.common.utils.ControllerValidationUtils;
 import bio.terra.workspace.generated.controller.ResourceApi;
 import bio.terra.workspace.generated.model.ApiResourceAttributesUnion;
@@ -11,27 +10,12 @@ import bio.terra.workspace.generated.model.ApiResourceType;
 import bio.terra.workspace.generated.model.ApiStewardshipType;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequestFactory;
+import bio.terra.workspace.service.iam.model.SamConstants;
 import bio.terra.workspace.service.resource.WsmResourceService;
-import bio.terra.workspace.service.resource.controlled.cloud.azure.disk.ControlledAzureDiskResource;
-import bio.terra.workspace.service.resource.controlled.cloud.azure.ip.ControlledAzureIpResource;
-import bio.terra.workspace.service.resource.controlled.cloud.azure.network.ControlledAzureNetworkResource;
-import bio.terra.workspace.service.resource.controlled.cloud.azure.storage.ControlledAzureStorageResource;
-import bio.terra.workspace.service.resource.controlled.cloud.azure.vm.ControlledAzureVmResource;
-import bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook.ControlledAiNotebookInstanceResource;
-import bio.terra.workspace.service.resource.controlled.cloud.gcp.bqdataset.ControlledBigQueryDatasetResource;
-import bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.ControlledGcsBucketResource;
-import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import bio.terra.workspace.service.resource.model.StewardshipType;
+import bio.terra.workspace.service.resource.model.WsmCloudResourceType;
 import bio.terra.workspace.service.resource.model.WsmResource;
-import bio.terra.workspace.service.resource.model.WsmResourceType;
-import bio.terra.workspace.service.resource.referenced.cloud.any.ReferencedGitRepoResource;
-import bio.terra.workspace.service.resource.referenced.cloud.gcp.ReferencedResource;
 import bio.terra.workspace.service.resource.referenced.cloud.gcp.ReferencedResourceService;
-import bio.terra.workspace.service.resource.referenced.cloud.gcp.bqdataset.ReferencedBigQueryDatasetResource;
-import bio.terra.workspace.service.resource.referenced.cloud.gcp.bqdatatable.ReferencedBigQueryDataTableResource;
-import bio.terra.workspace.service.resource.referenced.cloud.gcp.datareposnapshot.ReferencedDataRepoSnapshotResource;
-import bio.terra.workspace.service.resource.referenced.cloud.gcp.gcsbucket.ReferencedGcsBucketResource;
-import bio.terra.workspace.service.resource.referenced.cloud.gcp.gcsobject.ReferencedGcsObjectResource;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import com.google.common.annotations.VisibleForTesting;
 import java.util.List;
@@ -87,19 +71,17 @@ public class ResourceController implements ResourceApi {
       @Valid ApiStewardshipType stewardship) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     ControllerValidationUtils.validatePaginationParams(offset, limit);
+    workspaceService.validateWorkspaceAndAction(
+        userRequest, workspaceId, SamConstants.SamWorkspaceAction.READ);
 
     List<WsmResource> wsmResources =
         resourceService.enumerateResources(
             workspaceId,
-            WsmResourceType.fromApiOptional(resource),
+            WsmCloudResourceType.fromApiOptional(resource),
             StewardshipType.fromApiOptional(stewardship),
             offset,
             limit,
             userRequest);
-
-    // projectId
-    String gcpProjectId =
-        workspaceService.getAuthorizedGcpProject(workspaceId, userRequest).orElse(null);
 
     List<ApiResourceDescription> apiResourceDescriptionList =
         wsmResources.stream().map(r -> makeApiResourceDescription(r)).collect(Collectors.toList());
@@ -118,146 +100,8 @@ public class ResourceController implements ResourceApi {
   // Convert a WsmResource into the API format for enumeration
   @VisibleForTesting
   public ApiResourceDescription makeApiResourceDescription(WsmResource wsmResource) {
-
     ApiResourceMetadata common = wsmResource.toApiMetadata();
-    var union = new ApiResourceAttributesUnion();
-    switch (wsmResource.getStewardshipType()) {
-      case REFERENCED:
-        ReferencedResource referencedResource = wsmResource.castToReferencedResource();
-        switch (wsmResource.getResourceType()) {
-          case BIG_QUERY_DATASET:
-            {
-              ReferencedBigQueryDatasetResource resource =
-                  referencedResource.castToBigQueryDatasetResource();
-              union.gcpBqDataset(resource.toApiAttributes());
-              break;
-            }
-          case BIG_QUERY_DATA_TABLE:
-            {
-              ReferencedBigQueryDataTableResource resource =
-                  referencedResource.castToBigQueryDataTableResource();
-              union.gcpBqDataTable(resource.toApiAttributes());
-              break;
-            }
-          case DATA_REPO_SNAPSHOT:
-            {
-              ReferencedDataRepoSnapshotResource resource =
-                  referencedResource.castToDataRepoSnapshotResource();
-              union.gcpDataRepoSnapshot(resource.toApiAttributes());
-              break;
-            }
-
-          case GCS_BUCKET:
-            {
-              ReferencedGcsBucketResource resource = referencedResource.castToGcsBucketResource();
-              union.gcpGcsBucket(resource.toApiAttributes());
-              break;
-            }
-
-          case GCS_OBJECT:
-            {
-              ReferencedGcsObjectResource resource = referencedResource.castToGcsObjectResource();
-              union.gcpGcsObject(resource.toApiAttributes());
-              break;
-            }
-
-          case GIT_REPO:
-            {
-              ReferencedGitRepoResource resource = referencedResource.castToGitRepoResource();
-              union.gitRepo(resource.toApiAttributes());
-              break;
-            }
-
-          case AI_NOTEBOOK_INSTANCE:
-          case AZURE_IP:
-          case AZURE_VM:
-          case AZURE_DISK:
-          case AZURE_NETWORK:
-          case AZURE_STORAGE_ACCOUNT:
-            throw new InternalLogicException(
-                "Unimplemented referenced resource type: " + wsmResource.getResourceType());
-
-          default:
-            throw new InternalLogicException(
-                "Unknown referenced resource type: " + wsmResource.getResourceType());
-        }
-        break; // referenced
-
-      case CONTROLLED:
-        ControlledResource controlledResource = wsmResource.castToControlledResource();
-        switch (wsmResource.getResourceType()) {
-          case AI_NOTEBOOK_INSTANCE:
-            {
-              ControlledAiNotebookInstanceResource resource =
-                  controlledResource.castToAiNotebookInstanceResource();
-              union.gcpAiNotebookInstance(resource.toApiResource().getAttributes());
-              break;
-            }
-          case GCS_BUCKET:
-            {
-              ControlledGcsBucketResource resource = controlledResource.castToGcsBucketResource();
-              union.gcpGcsBucket(resource.toApiAttributes());
-              break;
-            }
-
-          case BIG_QUERY_DATASET:
-            {
-              ControlledBigQueryDatasetResource resource =
-                  controlledResource.castToBigQueryDatasetResource();
-              union.gcpBqDataset(resource.toApiAttributes());
-              break;
-            }
-
-          case AZURE_DISK:
-            {
-              ControlledAzureDiskResource resource = controlledResource.castToAzureDiskResource();
-              union.azureDisk(resource.toApiAttributes());
-              break;
-            }
-
-          case AZURE_IP:
-            {
-              ControlledAzureIpResource resource = controlledResource.castToAzureIpResource();
-              union.azureIp(resource.toApiAttributes());
-              break;
-            }
-          case AZURE_NETWORK:
-            {
-              ControlledAzureNetworkResource resource =
-                  controlledResource.castToAzureNetworkResource();
-              union.azureNetwork(resource.toApiAttributes());
-              break;
-            }
-
-          case AZURE_STORAGE_ACCOUNT:
-            {
-              ControlledAzureStorageResource resource =
-                  controlledResource.castToAzureStorageResource();
-              union.azureStorage(resource.toApiAttributes());
-              break;
-            }
-
-          case AZURE_VM:
-            {
-              ControlledAzureVmResource resource = controlledResource.castToAzureVmResource();
-              union.azureVm(resource.toApiAttributes());
-              break;
-            }
-
-          case DATA_REPO_SNAPSHOT: // there is a use case for this, but low priority
-            throw new InternalLogicException(
-                "Unimplemented controlled resource type: " + wsmResource.getResourceType());
-
-          default:
-            throw new InternalLogicException(
-                "Unknown controlled resource type: " + wsmResource.getResourceType());
-        }
-        break; // controlled
-
-      default:
-        throw new InternalLogicException("Unknown stewardship type");
-    }
-
+    ApiResourceAttributesUnion union = wsmResource.toApiAttributesUnion();
     return new ApiResourceDescription().metadata(common).resourceAttributes(union);
   }
 }

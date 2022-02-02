@@ -5,6 +5,7 @@ import bio.terra.workspace.service.resource.controlled.model.ManagedByType;
 import bio.terra.workspace.service.resource.controlled.model.PrivateResourceState;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.model.StewardshipType;
+import bio.terra.workspace.service.resource.model.WsmCloudResourceType;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import java.util.Optional;
@@ -23,6 +24,7 @@ public class DbResource {
   private String name;
   private String description;
   private StewardshipType stewardshipType;
+  private WsmCloudResourceType cloudResourceType;
   private WsmResourceType resourceType;
   private CloningInstructions cloningInstructions;
   private String attributes;
@@ -85,6 +87,15 @@ public class DbResource {
   public DbResource stewardshipType(StewardshipType stewardshipType) {
     this.stewardshipType = stewardshipType;
     return this;
+  }
+
+  public DbResource cloudResourceType(WsmCloudResourceType cloudResourceType) {
+    this.cloudResourceType = cloudResourceType;
+    return this;
+  }
+
+  public WsmCloudResourceType getCloudResourceType() {
+    return cloudResourceType;
   }
 
   public WsmResourceType getResourceType() {

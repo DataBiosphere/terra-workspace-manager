@@ -183,7 +183,7 @@ public class ControlledGcpResourceApiController implements ControlledGcpResource
     final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     final ControlledResource resource =
         controlledResourceService.getControlledResource(workspaceId, resourceId, userRequest);
-    if (resource.getResourceType() != WsmResourceType.GCS_BUCKET) {
+    if (resource.getResourceType() != WsmResourceType.CONTROLLED_GCP_GCS_BUCKET) {
       throw new InvalidControlledResourceException(
           String.format("Resource %s is not a GCS Bucket", resourceId));
     }
@@ -265,7 +265,7 @@ public class ControlledGcpResourceApiController implements ControlledGcpResource
 
     final ControlledResource resource =
         controlledResourceService.getControlledResource(workspaceId, resourceId, userRequest);
-    if (resource.getResourceType() != WsmResourceType.BIG_QUERY_DATASET) {
+    if (resource.getResourceType() != WsmResourceType.CONTROLLED_GCP_BIG_QUERY_DATASET) {
       throw new InvalidControlledResourceException(
           String.format("Resource %s is not a BigQuery Dataset", resourceId));
     }

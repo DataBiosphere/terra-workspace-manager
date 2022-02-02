@@ -4,7 +4,7 @@ import bio.terra.common.exception.BadRequestException;
 import bio.terra.stairway.FlightStatus;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.model.WsmResource;
-import bio.terra.workspace.service.resource.referenced.cloud.any.ReferencedGitRepoResource;
+import bio.terra.workspace.service.resource.referenced.cloud.any.gitrepo.ReferencedGitRepoResource;
 import bio.terra.workspace.service.resource.referenced.cloud.gcp.ReferencedResource;
 import bio.terra.workspace.service.resource.referenced.cloud.gcp.bqdataset.ReferencedBigQueryDatasetResource;
 import bio.terra.workspace.service.resource.referenced.cloud.gcp.bqdatatable.ReferencedBigQueryDataTableResource;
@@ -50,7 +50,7 @@ public class WorkspaceCloneUtils {
       String description) {
     final ReferencedResource destinationResource;
     switch (sourceReferencedResource.getResourceType()) {
-      case GCS_BUCKET:
+      case REFERENCED_GCP_GCS_BUCKET:
         destinationResource =
             buildDestinationGcsBucketReference(
                 sourceReferencedResource.castToGcsBucketResource(),
@@ -58,7 +58,7 @@ public class WorkspaceCloneUtils {
                 name,
                 description);
         break;
-      case GCS_OBJECT:
+      case REFERENCED_GCP_GCS_OBJECT:
         destinationResource =
             buildDestinationGcsObjectReference(
                 sourceReferencedResource.castToGcsObjectResource(),
@@ -66,7 +66,7 @@ public class WorkspaceCloneUtils {
                 name,
                 description);
         break;
-      case DATA_REPO_SNAPSHOT:
+      case REFERENCED_DATA_REPO_SNAPSHOT:
         destinationResource =
             buildDestinationDataRepoSnapshotReference(
                 sourceReferencedResource.castToDataRepoSnapshotResource(),
@@ -74,7 +74,7 @@ public class WorkspaceCloneUtils {
                 name,
                 description);
         break;
-      case BIG_QUERY_DATASET:
+      case REFERENCED_GCP_BIG_QUERY_DATASET:
         destinationResource =
             buildDestinationBigQueryDatasetReference(
                 sourceReferencedResource.castToBigQueryDatasetResource(),
@@ -82,7 +82,7 @@ public class WorkspaceCloneUtils {
                 name,
                 description);
         break;
-      case BIG_QUERY_DATA_TABLE:
+      case REFERENCED_GCP_BIG_QUERY_DATA_TABLE:
         destinationResource =
             buildDestinationBigQueryDataTableReference(
                 sourceReferencedResource.castToBigQueryDataTableResource(),
@@ -90,7 +90,7 @@ public class WorkspaceCloneUtils {
                 name,
                 description);
         break;
-      case GIT_REPO:
+      case REFERENCED_GIT_REPO:
         destinationResource =
             buildDestinationGitHubRepoReference(
                 sourceReferencedResource.castToGitRepoResource(),
@@ -98,11 +98,10 @@ public class WorkspaceCloneUtils {
                 name,
                 description);
         break;
-      case AI_NOTEBOOK_INSTANCE:
       default:
         throw new BadRequestException(
             String.format(
-                "Resource type %s not supported",
+                "Resource type %s not supported as a referenced resource",
                 sourceReferencedResource.getResourceType().toString()));
     }
     return destinationResource;
@@ -116,7 +115,7 @@ public class WorkspaceCloneUtils {
    * @param destinationWorkspaceId - workspace ID for new reference
    * @param name - resource name for cloned reference. Will use original name if this is null.
    * @param description - resource description for cloned reference. Uses original if left null.
-   * @return
+   * @return referenced resource
    */
   private static ReferencedResource buildDestinationGcsBucketReference(
       ReferencedGcsBucketResource sourceBucketResource,
