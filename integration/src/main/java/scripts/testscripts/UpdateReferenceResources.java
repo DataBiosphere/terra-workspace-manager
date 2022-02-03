@@ -4,6 +4,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static scripts.utils.DataRepoUtils.updateDataRepoSnapshotReferenceResource;
+import static scripts.utils.GcsBucketObjectUtils.makeGcsObjectReference;
 
 import bio.terra.testrunner.runner.config.TestUserSpecification;
 import bio.terra.workspace.api.ReferencedGcpResourceApi;
@@ -28,11 +30,15 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import org.checkerframework.checker.nullness.qual.MonotonicNonNull;
+import scripts.utils.BqDataTableUtils;
+import scripts.utils.BqDatasetUtils;
 import scripts.utils.ClientTestUtils;
 import scripts.utils.DataRepoTestScriptBase;
+import scripts.utils.DataRepoUtils;
+import scripts.utils.GcsBucketUtils;
+import scripts.utils.GitRepoUtils;
 import scripts.utils.ParameterKeys;
 import scripts.utils.ParameterUtils;
-import scripts.utils.ResourceMaker;
 
 public class UpdateReferenceResources extends DataRepoTestScriptBase {
 
@@ -94,15 +100,15 @@ public class UpdateReferenceResources extends DataRepoTestScriptBase {
             .projectId(bqTableAttributes.getProjectId())
             .datasetId(bqTableAttributes.getDatasetId());
     GcpBigQueryDatasetResource bqDatasetReference =
-        ResourceMaker.makeBigQueryDatasetReference(
+        BqDatasetUtils.makeBigQueryDatasetReference(
             datasetAttributes, fullAccessApi, getWorkspaceId(), "bqDatasetReference");
     bqDatasetResourceId = bqDatasetReference.getMetadata().getResourceId();
     GcpBigQueryDataTableResource bqDataTableReference =
-        ResourceMaker.makeBigQueryDataTableReference(
+        BqDatasetUtils.makeBigQueryDataTableReference(
             bqTableAttributes, fullAccessApi, getWorkspaceId(), "bqTableReference");
     bqTableResourceId = bqDataTableReference.getMetadata().getResourceId();
     DataRepoSnapshotResource snapshotResource =
-        ResourceMaker.makeDataRepoSnapshotReference(
+        DataRepoUtils.makeDataRepoSnapshotReference(
             fullAccessApi,
             getWorkspaceId(),
             "dataRepoReference",
@@ -110,7 +116,7 @@ public class UpdateReferenceResources extends DataRepoTestScriptBase {
             getDataRepoInstanceName());
     dataRepoSnapshotResourceId = snapshotResource.getMetadata().getResourceId();
     GcpGcsBucketResource bucketResource =
-        ResourceMaker.makeGcsBucketReference(
+        GcsBucketUtils.makeGcsBucketReference(
             gcsUniformAccessBucketAttributes,
             fullAccessApi,
             getWorkspaceId(),
@@ -118,7 +124,7 @@ public class UpdateReferenceResources extends DataRepoTestScriptBase {
             CloningInstructionsEnum.NOTHING);
     bucketResourceId = bucketResource.getMetadata().getResourceId();
     GcpGcsObjectResource blobResource =
-        ResourceMaker.makeGcsObjectReference(
+        makeGcsObjectReference(
             gcsFileAttributes,
             fullAccessApi,
             getWorkspaceId(),
@@ -127,7 +133,7 @@ public class UpdateReferenceResources extends DataRepoTestScriptBase {
     bucketObjectResourceId = blobResource.getMetadata().getResourceId();
 
     GitRepoResource gitRepoReference =
-        ResourceMaker.makeGitRepoReference(
+        GitRepoUtils.makeGitRepoReference(
             gitRepoAttributes, fullAccessApi, getWorkspaceId(), "a_reference_to_wsm_git_repo");
     gitReferencedResourceId = gitRepoReference.getMetadata().getResourceId();
   }
@@ -152,7 +158,7 @@ public class UpdateReferenceResources extends DataRepoTestScriptBase {
 
     String newGitRepoReferenceName = "newGitRepoReferenceName";
     String newGitRepoReferenceDescription = "a new description for git repo reference";
-    ResourceMaker.updateGitRepoReferenceResource(
+    GitRepoUtils.updateGitRepoReferenceResource(
         fullAccessApi,
         getWorkspaceId(),
         gitReferencedResourceId,
@@ -162,7 +168,7 @@ public class UpdateReferenceResources extends DataRepoTestScriptBase {
     // Update snapshot's name and description
     String newSnapshotReferenceName = "newSnapshotReferenceName";
     String newSnapshotReferenceDescription = "a new description of another snapshot reference";
-    ResourceMaker.updateDataRepoSnapshotReferenceResource(
+    updateDataRepoSnapshotReferenceResource(
         fullAccessApi,
         getWorkspaceId(),
         dataRepoSnapshotResourceId,
@@ -181,7 +187,7 @@ public class UpdateReferenceResources extends DataRepoTestScriptBase {
     assertThrows(
         ApiException.class,
         () ->
-            ResourceMaker.updateDataRepoSnapshotReferenceResource(
+            updateDataRepoSnapshotReferenceResource(
                 partialAccessApi,
                 getWorkspaceId(),
                 dataRepoSnapshotResourceId,
@@ -189,7 +195,7 @@ public class UpdateReferenceResources extends DataRepoTestScriptBase {
                 newSnapshotReferenceDescription,
                 /*instanceId=*/ null,
                 dataRepoSnapshotId2));
-    ResourceMaker.updateDataRepoSnapshotReferenceResource(
+    updateDataRepoSnapshotReferenceResource(
         fullAccessApi,
         getWorkspaceId(),
         dataRepoSnapshotResourceId,
@@ -213,7 +219,7 @@ public class UpdateReferenceResources extends DataRepoTestScriptBase {
     // Update BQ dataset's name and description
     String newDatasetName = "newDatasetName";
     String newDatasetDescription = "newDescription";
-    ResourceMaker.updateBigQueryDatasetReference(
+    BqDatasetUtils.updateBigQueryDatasetReference(
         fullAccessApi,
         getWorkspaceId(),
         bqDatasetResourceId,
@@ -242,7 +248,7 @@ public class UpdateReferenceResources extends DataRepoTestScriptBase {
     assertThrows(
         ApiException.class,
         () ->
-            ResourceMaker.updateBigQueryDatasetReference(
+            BqDatasetUtils.updateBigQueryDatasetReference(
                 partialAccessApi,
                 getWorkspaceId(),
                 bqDatasetResourceId,
@@ -250,7 +256,7 @@ public class UpdateReferenceResources extends DataRepoTestScriptBase {
                 /*description=*/ null,
                 /*projectId=*/ null,
                 bqTableFromAlternateDatasetAttributes.getDatasetId()));
-    ResourceMaker.updateBigQueryDatasetReference(
+    BqDatasetUtils.updateBigQueryDatasetReference(
         fullAccessApi,
         getWorkspaceId(),
         bqDatasetResourceId,
@@ -277,7 +283,7 @@ public class UpdateReferenceResources extends DataRepoTestScriptBase {
     // Update BQ data table's name and description.
     String newDataTableName = "newDataTableName";
     String newDataTableDescription = "a new description to the new data table reference";
-    ResourceMaker.updateBigQueryDataTableReference(
+    BqDataTableUtils.updateBigQueryDataTableReference(
         fullAccessApi,
         getWorkspaceId(),
         bqTableResourceId,
@@ -308,7 +314,7 @@ public class UpdateReferenceResources extends DataRepoTestScriptBase {
     assertThrows(
         ApiException.class,
         () ->
-            ResourceMaker.updateBigQueryDataTableReference(
+            BqDataTableUtils.updateBigQueryDataTableReference(
                 partialAccessApi,
                 getWorkspaceId(),
                 bqTableResourceId,
@@ -319,7 +325,7 @@ public class UpdateReferenceResources extends DataRepoTestScriptBase {
                 bqTableFromAlternateDatasetAttributes.getDataTableId()));
     // Successfully update the referencing target because the {@code userWithFullAccess} has
     // access to the bq table 2.
-    ResourceMaker.updateBigQueryDataTableReference(
+    BqDataTableUtils.updateBigQueryDataTableReference(
         fullAccessApi,
         getWorkspaceId(),
         bqTableResourceId,
@@ -344,7 +350,7 @@ public class UpdateReferenceResources extends DataRepoTestScriptBase {
         bqTableFromAlternateDatasetAttributes.getDataTableId(),
         dataTableReferenceSecondUpdate.getAttributes().getDataTableId());
 
-    ResourceMaker.updateBigQueryDataTableReference(
+    BqDataTableUtils.updateBigQueryDataTableReference(
         fullAccessApi,
         getWorkspaceId(),
         bqTableResourceId,
@@ -369,7 +375,7 @@ public class UpdateReferenceResources extends DataRepoTestScriptBase {
         bqTableFromAlternateDatasetAttributes.getDataTableId(),
         dataTableReferenceThirdUpdate.getAttributes().getDataTableId());
 
-    ResourceMaker.updateBigQueryDataTableReference(
+    BqDataTableUtils.updateBigQueryDataTableReference(
         fullAccessApi,
         getWorkspaceId(),
         bqTableResourceId,
@@ -396,7 +402,7 @@ public class UpdateReferenceResources extends DataRepoTestScriptBase {
     // Update GCS bucket's name and description
     String newBucketName = "newGcsBucket";
     String newBucketDescription = "a new description to the new bucket reference";
-    ResourceMaker.updateGcsBucketReference(
+    GcsBucketUtils.updateGcsBucketReference(
         fullAccessApi,
         getWorkspaceId(),
         bucketResourceId,
@@ -422,7 +428,7 @@ public class UpdateReferenceResources extends DataRepoTestScriptBase {
     assertThrows(
         ApiException.class,
         () ->
-            ResourceMaker.updateGcsBucketReference(
+            GcsBucketUtils.updateGcsBucketReference(
                 partialAccessApi,
                 getWorkspaceId(),
                 bucketResourceId,
@@ -431,7 +437,7 @@ public class UpdateReferenceResources extends DataRepoTestScriptBase {
                 fineGrainedGcsBucketName));
     // Successfully update the referencing target because the {@code userWithFullAccess} has
     // access to the bucket with fine-grained access.
-    ResourceMaker.updateGcsBucketReference(
+    GcsBucketUtils.updateGcsBucketReference(
         fullAccessApi,
         getWorkspaceId(),
         bucketResourceId,
@@ -448,7 +454,7 @@ public class UpdateReferenceResources extends DataRepoTestScriptBase {
     // Update GCS bucket object's name and description
     String newBlobName = "newBlobName";
     String newBlobDescription = "a new description to the new bucket blob reference";
-    ResourceMaker.updateGcsBucketObjectReference(
+    GcsBucketUtils.updateGcsBucketObjectReference(
         fullAccessApi,
         getWorkspaceId(),
         bucketObjectResourceId,
@@ -473,7 +479,7 @@ public class UpdateReferenceResources extends DataRepoTestScriptBase {
     assertThrows(
         ApiException.class,
         () ->
-            ResourceMaker.updateGcsBucketObjectReference(
+            GcsBucketUtils.updateGcsBucketObjectReference(
                 partialAccessApi,
                 getWorkspaceId(),
                 bucketObjectResourceId,
@@ -482,7 +488,7 @@ public class UpdateReferenceResources extends DataRepoTestScriptBase {
                 gcsFileAttributes.getBucketName(),
                 gcsFolderAttributes.getFileName()));
     // User with access to foo/ can successfully update the referencing target to foo/.
-    ResourceMaker.updateGcsBucketObjectReference(
+    GcsBucketUtils.updateGcsBucketObjectReference(
         fullAccessApi,
         getWorkspaceId(),
         bucketObjectResourceId,
@@ -501,7 +507,7 @@ public class UpdateReferenceResources extends DataRepoTestScriptBase {
     assertEquals(newBlobDescription, blobReferenceSecondUpdate.getMetadata().getDescription());
 
     // update bucket only.
-    ResourceMaker.updateGcsBucketObjectReference(
+    GcsBucketUtils.updateGcsBucketObjectReference(
         fullAccessApi,
         getWorkspaceId(),
         bucketObjectResourceId,
@@ -520,7 +526,7 @@ public class UpdateReferenceResources extends DataRepoTestScriptBase {
     assertEquals(newBlobDescription, blobReferenceThirdUpdate.getMetadata().getDescription());
 
     // Update both bucket and object path.
-    ResourceMaker.updateGcsBucketObjectReference(
+    GcsBucketUtils.updateGcsBucketObjectReference(
         fullAccessApi,
         getWorkspaceId(),
         bucketObjectResourceId,

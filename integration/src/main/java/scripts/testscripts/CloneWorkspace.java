@@ -7,13 +7,14 @@ import static org.hamcrest.Matchers.is;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static scripts.utils.BqDatasetUtils.makeControlledBigQueryDatasetUserPrivate;
+import static scripts.utils.BqDatasetUtils.makeControlledBigQueryDatasetUserShared;
 import static scripts.utils.ClientTestUtils.getOrFail;
-import static scripts.utils.GcsBucketTestFixtures.GCS_BLOB_NAME;
-import static scripts.utils.GcsBucketTestFixtures.RESOURCE_PREFIX;
-import static scripts.utils.ResourceMaker.makeControlledBigQueryDatasetUserPrivate;
-import static scripts.utils.ResourceMaker.makeControlledBigQueryDatasetUserShared;
-import static scripts.utils.ResourceMaker.makeControlledGcsBucketUserPrivate;
-import static scripts.utils.ResourceMaker.makeControlledGcsBucketUserShared;
+import static scripts.utils.GcsBucketObjectUtils.makeGcsObjectReference;
+import static scripts.utils.GcsBucketUtils.BUCKET_RESOURCE_PREFIX;
+import static scripts.utils.GcsBucketUtils.GCS_BLOB_NAME;
+import static scripts.utils.GcsBucketUtils.makeControlledGcsBucketUserPrivate;
+import static scripts.utils.GcsBucketUtils.makeControlledGcsBucketUserShared;
 
 import bio.terra.testrunner.runner.config.TestUserSpecification;
 import bio.terra.workspace.api.ControlledGcpResourceApi;
@@ -55,11 +56,13 @@ import java.util.stream.StreamSupport;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import scripts.utils.BqDatasetUtils;
 import scripts.utils.ClientTestUtils;
 import scripts.utils.CloudContextMaker;
+import scripts.utils.GcsBucketObjectUtils;
+import scripts.utils.GcsBucketUtils;
+import scripts.utils.GitRepoUtils;
 import scripts.utils.ParameterUtils;
-import scripts.utils.ResourceMaker;
-import scripts.utils.ResourceModifier;
 import scripts.utils.WorkspaceAllocateTestScriptBase;
 
 public class CloneWorkspace extends WorkspaceAllocateTestScriptBase {
@@ -133,14 +136,14 @@ public class CloneWorkspace extends WorkspaceAllocateTestScriptBase {
     // Create a GCS bucket with data
     // create source bucket with COPY_RESOURCE - should clone fine
     nameSuffix = UUID.randomUUID().toString();
-    sharedBucketSourceResourceName = RESOURCE_PREFIX + nameSuffix;
+    sharedBucketSourceResourceName = BUCKET_RESOURCE_PREFIX + nameSuffix;
     sharedSourceBucket =
         makeControlledGcsBucketUserShared(
             sourceOwnerResourceApi,
             getWorkspaceId(),
             sharedBucketSourceResourceName,
             CloningInstructionsEnum.RESOURCE);
-    ResourceModifier.addFileToBucket(sharedSourceBucket, sourceOwnerUser, sourceProjectId);
+    GcsBucketUtils.addFileToBucket(sharedSourceBucket, sourceOwnerUser, sourceProjectId);
 
     // create a private GCS bucket, which the non-creating user can't clone
     privateSourceBucket =
@@ -149,7 +152,7 @@ public class CloneWorkspace extends WorkspaceAllocateTestScriptBase {
             getWorkspaceId(),
             UUID.randomUUID().toString(),
             CloningInstructionsEnum.RESOURCE);
-    ResourceModifier.addFileToBucket(privateSourceBucket, sourceOwnerUser, sourceProjectId);
+    GcsBucketUtils.addFileToBucket(privateSourceBucket, sourceOwnerUser, sourceProjectId);
 
     // create a GCS bucket with data and COPY_NOTHING instruction
     sharedCopyNothingSourceBucket =
@@ -158,8 +161,7 @@ public class CloneWorkspace extends WorkspaceAllocateTestScriptBase {
             getWorkspaceId(),
             UUID.randomUUID().toString(),
             CloningInstructionsEnum.NOTHING);
-    ResourceModifier.addFileToBucket(
-        sharedCopyNothingSourceBucket, sourceOwnerUser, sourceProjectId);
+    GcsBucketUtils.addFileToBucket(sharedCopyNothingSourceBucket, sourceOwnerUser, sourceProjectId);
 
     // create a GCS bucket with data and COPY_DEFINITION
     copyDefinitionSourceBucket =
@@ -168,7 +170,7 @@ public class CloneWorkspace extends WorkspaceAllocateTestScriptBase {
             getWorkspaceId(),
             UUID.randomUUID().toString(),
             CloningInstructionsEnum.DEFINITION);
-    ResourceModifier.addFileToBucket(copyDefinitionSourceBucket, sourceOwnerUser, sourceProjectId);
+    GcsBucketUtils.addFileToBucket(copyDefinitionSourceBucket, sourceOwnerUser, sourceProjectId);
 
     // Create a BigQuery Dataset with tables and COPY_DEFINITION
     copyDefinitionDatasetResourceName = "copy_definition_" + nameSuffix.replace('-', '_');
@@ -179,8 +181,7 @@ public class CloneWorkspace extends WorkspaceAllocateTestScriptBase {
             copyDefinitionDatasetResourceName,
             null,
             CloningInstructionsEnum.DEFINITION);
-    ResourceModifier.populateBigQueryDataset(
-        copyDefinitionDataset, sourceOwnerUser, sourceProjectId);
+    BqDatasetUtils.populateBigQueryDataset(copyDefinitionDataset, sourceOwnerUser, sourceProjectId);
 
     // Create a BigQuery dataset with tables and COPY_RESOURCE
     copyResourceDatasetResourceName = "copy_resource_dataset";
@@ -191,7 +192,7 @@ public class CloneWorkspace extends WorkspaceAllocateTestScriptBase {
             copyResourceDatasetResourceName,
             null,
             CloningInstructionsEnum.RESOURCE);
-    ResourceModifier.populateBigQueryDataset(copyResourceDataset, sourceOwnerUser, sourceProjectId);
+    BqDatasetUtils.populateBigQueryDataset(copyResourceDataset, sourceOwnerUser, sourceProjectId);
 
     // Create a private BQ dataset
     privateDatasetResourceName = "private_dataset";
@@ -209,7 +210,7 @@ public class CloneWorkspace extends WorkspaceAllocateTestScriptBase {
     final String bucketReferenceName = RandomStringUtils.random(16, true, false);
 
     sourceBucketReference =
-        ResourceMaker.makeGcsBucketReference(
+        GcsBucketUtils.makeGcsBucketReference(
             sourceUniformAccessBucketAttributes,
             referencedGcpResourceApi,
             getWorkspaceId(),
@@ -217,7 +218,7 @@ public class CloneWorkspace extends WorkspaceAllocateTestScriptBase {
             CloningInstructionsEnum.REFERENCE);
 
     sourceBucketFileReference =
-        ResourceMaker.makeGcsObjectReference(
+        makeGcsObjectReference(
             sourceBucketFileAttributes,
             referencedGcpResourceApi,
             getWorkspaceId(),
@@ -231,20 +232,20 @@ public class CloneWorkspace extends WorkspaceAllocateTestScriptBase {
             .projectId(sourceDataTableAttributes.getProjectId())
             .datasetId(sourceDataTableAttributes.getDatasetId());
     sourceDatasetReference =
-        ResourceMaker.makeBigQueryDatasetReference(
+        BqDatasetUtils.makeBigQueryDatasetReference(
             sourceDatasetAttributes,
             referencedGcpResourceApi,
             getWorkspaceId(),
             "dataset_resource_1");
     sourceDataTableReference =
-        ResourceMaker.makeBigQueryDataTableReference(
+        BqDatasetUtils.makeBigQueryDataTableReference(
             sourceDataTableAttributes,
             referencedGcpResourceApi,
             getWorkspaceId(),
             "datatable_resource_1");
 
     sourceGitRepoReference =
-        ResourceMaker.makeGitRepoReference(
+        GitRepoUtils.makeGitRepoReference(
             sourceGitRepoAttributes,
             referencedGcpResourceApi,
             getWorkspaceId(),
@@ -312,7 +313,7 @@ public class CloneWorkspace extends WorkspaceAllocateTestScriptBase {
     final var clonedSharedBucket =
         cloningUserResourceApi.getBucket(
             destinationWorkspaceId, sharedBucketCloneDetails.getDestinationResourceId());
-    ResourceModifier.retrieveBucketFile(
+    GcsBucketObjectUtils.retrieveBucketFile(
         clonedSharedBucket.getAttributes().getBucketName(), destinationProjectId, cloningUser);
 
     // Verify clone of private bucket fails

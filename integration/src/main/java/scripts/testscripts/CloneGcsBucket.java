@@ -5,14 +5,14 @@ import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.hasSize;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static scripts.utils.GcsBucketTestFixtures.GCS_BLOB_CONTENT;
-import static scripts.utils.GcsBucketTestFixtures.GCS_BLOB_NAME;
-import static scripts.utils.GcsBucketTestFixtures.LIFECYCLE_RULES;
-import static scripts.utils.GcsBucketTestFixtures.LIFECYCLE_RULE_1_CONDITION_AGE;
-import static scripts.utils.GcsBucketTestFixtures.LIFECYCLE_RULE_1_CONDITION_LIVE;
-import static scripts.utils.GcsBucketTestFixtures.LIFECYCLE_RULE_1_CONDITION_NUM_NEWER_VERSIONS;
-import static scripts.utils.GcsBucketTestFixtures.RESOURCE_PREFIX;
-import static scripts.utils.ResourceMaker.makeControlledGcsBucketUserShared;
+import static scripts.utils.GcsBucketUtils.BUCKET_LIFECYCLE_RULES;
+import static scripts.utils.GcsBucketUtils.BUCKET_LIFECYCLE_RULE_1_CONDITION_AGE;
+import static scripts.utils.GcsBucketUtils.BUCKET_LIFECYCLE_RULE_1_CONDITION_LIVE;
+import static scripts.utils.GcsBucketUtils.BUCKET_LIFECYCLE_RULE_1_CONDITION_NUM_NEWER_VERSIONS;
+import static scripts.utils.GcsBucketUtils.BUCKET_RESOURCE_PREFIX;
+import static scripts.utils.GcsBucketUtils.GCS_BLOB_CONTENT;
+import static scripts.utils.GcsBucketUtils.GCS_BLOB_NAME;
+import static scripts.utils.GcsBucketUtils.makeControlledGcsBucketUserShared;
 
 import bio.terra.testrunner.runner.config.TestUserSpecification;
 import bio.terra.workspace.api.ControlledGcpResourceApi;
@@ -94,7 +94,7 @@ public class CloneGcsBucket extends WorkspaceAllocateTestScriptBase {
 
     // create source bucket
     nameSuffix = UUID.randomUUID().toString();
-    sourceResourceName = RESOURCE_PREFIX + nameSuffix;
+    sourceResourceName = BUCKET_RESOURCE_PREFIX + nameSuffix;
     sourceBucket =
         makeControlledGcsBucketUserShared(
             sourceOwnerResourceApi,
@@ -216,19 +216,20 @@ public class CloneGcsBucket extends WorkspaceAllocateTestScriptBase {
     assertEquals(
         sourceGcsBucket.getLocation(),
         destinationGcsBucket.getLocation()); // default since not specified
-    assertEquals(LIFECYCLE_RULES.size(), destinationGcsBucket.getLifecycleRules().size());
+    assertEquals(BUCKET_LIFECYCLE_RULES.size(), destinationGcsBucket.getLifecycleRules().size());
     // We can't rely on the order of the lifecycle rules being maintained
     final LifecycleRule clonedDeleteRule =
         destinationGcsBucket.getLifecycleRules().stream()
             .filter(r -> DeleteLifecycleAction.TYPE.equals(r.getAction().getActionType()))
             .findFirst()
             .orElseThrow(() -> new RuntimeException("Can't find Delete lifecycle rule."));
-    assertEquals(LIFECYCLE_RULE_1_CONDITION_AGE, clonedDeleteRule.getCondition().getAge());
-    assertEquals(LIFECYCLE_RULE_1_CONDITION_LIVE, clonedDeleteRule.getCondition().getIsLive());
+    assertEquals(BUCKET_LIFECYCLE_RULE_1_CONDITION_AGE, clonedDeleteRule.getCondition().getAge());
+    assertEquals(
+        BUCKET_LIFECYCLE_RULE_1_CONDITION_LIVE, clonedDeleteRule.getCondition().getIsLive());
     assertEquals(
         StorageClass.ARCHIVE, clonedDeleteRule.getCondition().getMatchesStorageClass().get(0));
     assertEquals(
-        LIFECYCLE_RULE_1_CONDITION_NUM_NEWER_VERSIONS,
+        BUCKET_LIFECYCLE_RULE_1_CONDITION_NUM_NEWER_VERSIONS,
         clonedDeleteRule.getCondition().getNumberOfNewerVersions());
 
     final LifecycleRule setStorageClassRule =

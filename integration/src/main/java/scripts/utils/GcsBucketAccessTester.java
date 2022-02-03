@@ -3,7 +3,7 @@ package scripts.utils;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static scripts.utils.GcsBucketTestFixtures.GCS_BLOB_CONTENT;
+import static scripts.utils.GcsBucketUtils.GCS_BLOB_CONTENT;
 
 import bio.terra.testrunner.runner.config.TestUserSpecification;
 import bio.terra.workspace.model.ControlledResourceIamRole;

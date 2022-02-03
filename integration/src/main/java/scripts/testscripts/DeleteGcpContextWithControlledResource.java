@@ -17,10 +17,10 @@ import java.util.UUID;
 import org.apache.http.HttpStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import scripts.utils.BqDatasetUtils;
 import scripts.utils.ClientTestUtils;
 import scripts.utils.CloudContextMaker;
 import scripts.utils.ParameterUtils;
-import scripts.utils.ResourceMaker;
 import scripts.utils.WorkspaceAllocateTestScriptBase;
 
 public class DeleteGcpContextWithControlledResource extends WorkspaceAllocateTestScriptBase {
@@ -50,7 +50,7 @@ public class DeleteGcpContextWithControlledResource extends WorkspaceAllocateTes
 
     // Create a controlled BigQuery dataset
     GcpBigQueryDatasetResource controlledDataset =
-        ResourceMaker.makeControlledBigQueryDatasetUserShared(
+        BqDatasetUtils.makeControlledBigQueryDatasetUserShared(
             controlledResourceApi, getWorkspaceId(), DATASET_RESOURCE_NAME, null, null);
     UUID controlledResourceId = controlledDataset.getMetadata().getResourceId();
     logger.info("Created controlled dataset {}", controlledResourceId);
@@ -68,7 +68,7 @@ public class DeleteGcpContextWithControlledResource extends WorkspaceAllocateTes
             .datasetId(dataTableAttributes.getDatasetId());
     String resourceName = "my-resource-name-" + UUID.randomUUID().toString();
     GcpBigQueryDatasetResource referencedDataset =
-        ResourceMaker.makeBigQueryDatasetReference(
+        BqDatasetUtils.makeBigQueryDatasetReference(
             datasetAttributes, referencedResourceApi, getWorkspaceId(), resourceName);
     UUID referencedResourceId = referencedDataset.getMetadata().getResourceId();
     logger.info("Created referenced dataset {}", referencedResourceId);
@@ -81,7 +81,7 @@ public class DeleteGcpContextWithControlledResource extends WorkspaceAllocateTes
     // Create a referenced BigQuery data table
     String bqDataReferenceResourceName = "my-resource-name-" + UUID.randomUUID().toString();
     GcpBigQueryDataTableResource referencedDataTable =
-        ResourceMaker.makeBigQueryDataTableReference(
+        BqDatasetUtils.makeBigQueryDataTableReference(
             dataTableAttributes,
             referencedResourceApi,
             getWorkspaceId(),

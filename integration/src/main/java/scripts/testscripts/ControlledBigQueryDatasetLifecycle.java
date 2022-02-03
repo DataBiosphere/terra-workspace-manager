@@ -37,9 +37,9 @@ import java.util.List;
 import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import scripts.utils.BqDatasetUtils;
 import scripts.utils.ClientTestUtils;
 import scripts.utils.CloudContextMaker;
-import scripts.utils.ResourceMaker;
 import scripts.utils.SamClientUtils;
 import scripts.utils.WorkspaceAllocateTestScriptBase;
 
@@ -96,7 +96,7 @@ public class ControlledBigQueryDatasetLifecycle extends WorkspaceAllocateTestScr
 
     // Create a shared BigQuery dataset
     GcpBigQueryDatasetResource createdDataset =
-        ResourceMaker.makeControlledBigQueryDatasetUserShared(
+        BqDatasetUtils.makeControlledBigQueryDatasetUserShared(
             ownerResourceApi,
             getWorkspaceId(),
             DATASET_RESOURCE_NAME,
@@ -218,7 +218,7 @@ public class ControlledBigQueryDatasetLifecycle extends WorkspaceAllocateTestScr
     String datasetResourceName = "dataset_resource_2";
     String datasetIdName = "dataset_id_different_from_resource_name";
     GcpBigQueryDatasetResource createdDatasetWithDifferentDatasetId =
-        ResourceMaker.makeControlledBigQueryDatasetUserShared(
+        BqDatasetUtils.makeControlledBigQueryDatasetUserShared(
             ownerResourceApi,
             getWorkspaceId(),
             datasetResourceName,

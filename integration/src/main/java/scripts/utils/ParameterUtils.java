@@ -1,5 +1,7 @@
 package scripts.utils;
 
+import static scripts.utils.GcsBucketUtils.parseGcsBucket;
+
 import bio.terra.workspace.model.GcpBigQueryDataTableAttributes;
 import bio.terra.workspace.model.GcpBigQueryDatasetAttributes;
 import bio.terra.workspace.model.GcpGcsBucketAttributes;
@@ -32,40 +34,38 @@ public class ParameterUtils {
   }
 
   public static GcpGcsBucketAttributes getUniformBucketReference(Map<String, String> params) {
-    return ResourceNameUtils.parseGcsBucket(
-        getParamOrThrow(params, ParameterKeys.REFERENCED_GCS_UNIFORM_BUCKET));
+    return parseGcsBucket(getParamOrThrow(params, ParameterKeys.REFERENCED_GCS_UNIFORM_BUCKET));
   }
 
   public static GcpGcsBucketAttributes getFineGrainedBucketReference(Map<String, String> params) {
-    return ResourceNameUtils.parseGcsBucket(
-        getParamOrThrow(params, ParameterKeys.REFERENCED_GCS_BUCKET));
+    return parseGcsBucket(getParamOrThrow(params, ParameterKeys.REFERENCED_GCS_BUCKET));
   }
 
   public static GcpGcsObjectAttributes getGcsFileReference(Map<String, String> params) {
-    return ResourceNameUtils.parseGcsObject(
+    return GcsBucketObjectUtils.parseGcsObject(
         getParamOrThrow(params, ParameterKeys.REFERENCED_GCS_OBJECT));
   }
 
   public static GcpGcsObjectAttributes getGcsFolderReference(Map<String, String> params) {
-    return ResourceNameUtils.parseGcsObject(
+    return GcsBucketObjectUtils.parseGcsObject(
         getParamOrThrow(params, ParameterKeys.REFERENCED_GCS_FOLDER));
   }
 
   public static GcpBigQueryDatasetAttributes getBigQueryDatasetReference(
       Map<String, String> params) {
-    return ResourceNameUtils.parseBqDataset(
+    return BqDatasetUtils.parseBqDataset(
         getParamOrThrow(params, ParameterKeys.REFERENCED_BQ_DATASET));
   }
 
   public static GcpBigQueryDataTableAttributes getBigQueryDataTableReference(
       Map<String, String> params) {
-    return ResourceNameUtils.parseBqTable(
+    return BqDataTableUtils.parseBqTable(
         getParamOrThrow(params, ParameterKeys.REFERENCED_BQ_TABLE));
   }
 
   public static GcpBigQueryDataTableAttributes getBigQueryDataTableFromAlternateDatasetReference(
       Map<String, String> params) {
-    return ResourceNameUtils.parseBqTable(
+    return BqDataTableUtils.parseBqTable(
         getParamOrThrow(params, ParameterKeys.REFERENCED_BQ_TABLE_FROM_ALTERNATE_DATASET));
   }
 

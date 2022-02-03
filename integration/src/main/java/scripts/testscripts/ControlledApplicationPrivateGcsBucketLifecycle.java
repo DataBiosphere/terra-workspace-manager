@@ -26,7 +26,7 @@ import org.slf4j.LoggerFactory;
 import scripts.utils.ClientTestUtils;
 import scripts.utils.CloudContextMaker;
 import scripts.utils.GcsBucketAccessTester;
-import scripts.utils.ResourceMaker;
+import scripts.utils.GcsBucketUtils;
 import scripts.utils.WorkspaceAllocateTestScriptBase;
 
 /**
@@ -111,7 +111,7 @@ public class ControlledApplicationPrivateGcsBucketLifecycle
       throws Exception {
     String bucketResourceName = RandomStringUtils.random(6, true, false);
     CreatedControlledGcpGcsBucket createdBucket =
-        ResourceMaker.makeControlledGcsBucketAppPrivate(
+        GcsBucketUtils.makeControlledGcsBucketAppPrivate(
             resourceApi,
             getWorkspaceId(),
             bucketResourceName,
@@ -138,7 +138,7 @@ public class ControlledApplicationPrivateGcsBucketLifecycle
 
     String bucketResourceName = RandomStringUtils.random(6, true, false);
     CreatedControlledGcpGcsBucket createdBucket =
-        ResourceMaker.makeControlledGcsBucketAppPrivate(
+        GcsBucketUtils.makeControlledGcsBucketAppPrivate(
             resourceApi,
             getWorkspaceId(),
             bucketResourceName,
@@ -165,7 +165,7 @@ public class ControlledApplicationPrivateGcsBucketLifecycle
 
     String bucketResourceName = RandomStringUtils.random(6, true, false);
     CreatedControlledGcpGcsBucket createdBucket =
-        ResourceMaker.makeControlledGcsBucketAppPrivate(
+        GcsBucketUtils.makeControlledGcsBucketAppPrivate(
             resourceApi,
             getWorkspaceId(),
             bucketResourceName,
@@ -186,7 +186,7 @@ public class ControlledApplicationPrivateGcsBucketLifecycle
   private void deleteBucket(
       ControlledGcpResourceApi resourceApi, CreatedControlledGcpGcsBucket createdBucket)
       throws Exception {
-    ResourceMaker.deleteControlledGcsBucket(
+    GcsBucketUtils.deleteControlledGcsBucket(
         createdBucket.getResourceId(), getWorkspaceId(), resourceApi);
     logger.info("Application deleted bucket {}", bucketName);
     bucketName = null;

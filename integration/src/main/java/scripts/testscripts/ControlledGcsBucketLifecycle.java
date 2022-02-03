@@ -7,15 +7,15 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static scripts.utils.GcsBucketTestFixtures.BUCKET_LOCATION;
-import static scripts.utils.GcsBucketTestFixtures.BUCKET_PREFIX;
-import static scripts.utils.GcsBucketTestFixtures.LIFECYCLE_RULES;
-import static scripts.utils.GcsBucketTestFixtures.RESOURCE_PREFIX;
-import static scripts.utils.GcsBucketTestFixtures.UPDATED_DESCRIPTION;
-import static scripts.utils.GcsBucketTestFixtures.UPDATED_RESOURCE_NAME;
-import static scripts.utils.GcsBucketTestFixtures.UPDATED_RESOURCE_NAME_2;
-import static scripts.utils.GcsBucketTestFixtures.UPDATE_PARAMETERS_1;
-import static scripts.utils.GcsBucketTestFixtures.UPDATE_PARAMETERS_2;
+import static scripts.utils.GcsBucketUtils.BUCKET_LIFECYCLE_RULES;
+import static scripts.utils.GcsBucketUtils.BUCKET_LOCATION;
+import static scripts.utils.GcsBucketUtils.BUCKET_PREFIX;
+import static scripts.utils.GcsBucketUtils.BUCKET_RESOURCE_PREFIX;
+import static scripts.utils.GcsBucketUtils.BUCKET_UPDATE_PARAMETERS_2;
+import static scripts.utils.GcsBucketUtils.BUCKET_UPDATE_PARAMETER_1;
+import static scripts.utils.GcsBucketUtils.UPDATED_BUCKET_RESOURCE_DESCRIPTION;
+import static scripts.utils.GcsBucketUtils.UPDATED_BUCKET_RESOURCE_NAME;
+import static scripts.utils.GcsBucketUtils.UPDATED_BUCKET_RESOURCE_NAME_2;
 
 import bio.terra.testrunner.runner.config.TestUserSpecification;
 import bio.terra.workspace.api.ControlledGcpResourceApi;
@@ -57,8 +57,8 @@ import org.slf4j.LoggerFactory;
 import scripts.utils.ClientTestUtils;
 import scripts.utils.CloudContextMaker;
 import scripts.utils.GcsBucketAccessTester;
+import scripts.utils.GcsBucketUtils;
 import scripts.utils.ParameterUtils;
-import scripts.utils.ResourceMaker;
 import scripts.utils.WorkspaceAllocateTestScriptBase;
 
 public class ControlledGcsBucketLifecycle extends WorkspaceAllocateTestScriptBase {
@@ -91,7 +91,7 @@ public class ControlledGcsBucketLifecycle extends WorkspaceAllocateTestScriptBas
     this.reader = testUsers.get(1);
     String nameSuffix = UUID.randomUUID().toString();
     this.bucketName = BUCKET_PREFIX + nameSuffix;
-    this.resourceName = RESOURCE_PREFIX + nameSuffix;
+    this.resourceName = BUCKET_RESOURCE_PREFIX + nameSuffix;
   }
 
   @Override
@@ -169,15 +169,15 @@ public class ControlledGcsBucketLifecycle extends WorkspaceAllocateTestScriptBas
         updateBucketAttempt(
             resourceApi,
             resourceId,
-            UPDATED_RESOURCE_NAME,
-            UPDATED_DESCRIPTION,
-            UPDATE_PARAMETERS_1);
+            UPDATED_BUCKET_RESOURCE_NAME,
+            UPDATED_BUCKET_RESOURCE_DESCRIPTION,
+            BUCKET_UPDATE_PARAMETER_1);
     logger.info(
         "Updated resource name to {} and description to {}",
         resource.getMetadata().getName(),
         resource.getMetadata().getDescription());
-    assertEquals(UPDATED_RESOURCE_NAME, resource.getMetadata().getName());
-    assertEquals(UPDATED_DESCRIPTION, resource.getMetadata().getDescription());
+    assertEquals(UPDATED_BUCKET_RESOURCE_NAME, resource.getMetadata().getName());
+    assertEquals(UPDATED_BUCKET_RESOURCE_DESCRIPTION, resource.getMetadata().getDescription());
     // However, invalid updates are rejected.
     String invalidName = "!!!invalid_name!!!";
     ApiException invalidUpdateEx =
@@ -205,29 +205,31 @@ public class ControlledGcsBucketLifecycle extends WorkspaceAllocateTestScriptBas
     verifyLifecycleRules(lifecycleRules);
 
     final GcpGcsBucketResource resource2 =
-        updateBucketAttempt(resourceApi, resourceId, null, null, UPDATE_PARAMETERS_2);
+        updateBucketAttempt(resourceApi, resourceId, null, null, BUCKET_UPDATE_PARAMETERS_2);
 
     final Bucket retrievedUpdatedBucket2 =
         ownerStorageClient.get(
             bucketName, BucketGetOption.fields(BucketField.LIFECYCLE, BucketField.STORAGE_CLASS));
     assertEquals(StorageClass.COLDLINE, retrievedUpdatedBucket2.getStorageClass());
-    assertEquals(UPDATED_RESOURCE_NAME, resource2.getMetadata().getName()); // no change
-    assertEquals(UPDATED_DESCRIPTION, resource2.getMetadata().getDescription()); // no change
+    assertEquals(UPDATED_BUCKET_RESOURCE_NAME, resource2.getMetadata().getName()); // no change
+    assertEquals(
+        UPDATED_BUCKET_RESOURCE_DESCRIPTION, resource2.getMetadata().getDescription()); // no change
     verifyLifecycleRules(retrievedUpdatedBucket2.getLifecycleRules()); // no change
 
     // test without UpdateParameters
     final GcpGcsBucketResource resource3 =
-        updateBucketAttempt(resourceApi, resourceId, UPDATED_RESOURCE_NAME_2, null, null);
+        updateBucketAttempt(resourceApi, resourceId, UPDATED_BUCKET_RESOURCE_NAME_2, null, null);
     final Bucket retrievedUpdatedBucket3 =
         ownerStorageClient.get(
             bucketName, BucketGetOption.fields(BucketField.LIFECYCLE, BucketField.STORAGE_CLASS));
-    assertEquals(UPDATED_RESOURCE_NAME_2, resource3.getMetadata().getName());
-    assertEquals(UPDATED_DESCRIPTION, resource3.getMetadata().getDescription()); // no change
+    assertEquals(UPDATED_BUCKET_RESOURCE_NAME_2, resource3.getMetadata().getName());
+    assertEquals(
+        UPDATED_BUCKET_RESOURCE_DESCRIPTION, resource3.getMetadata().getDescription()); // no change
     assertEquals(StorageClass.COLDLINE, retrievedUpdatedBucket3.getStorageClass()); // no change
     verifyLifecycleRules(retrievedUpdatedBucket3.getLifecycleRules()); // no change
 
     // Owner can delete the bucket through WSM
-    ResourceMaker.deleteControlledGcsBucket(resourceId, getWorkspaceId(), resourceApi);
+    GcsBucketUtils.deleteControlledGcsBucket(resourceId, getWorkspaceId(), resourceApi);
 
     // verify the bucket was deleted from WSM metadata
     ApiException bucketNotFound =
@@ -272,7 +274,7 @@ public class ControlledGcsBucketLifecycle extends WorkspaceAllocateTestScriptBas
             .name(bucketName)
             .location(BUCKET_LOCATION)
             .defaultStorageClass(GcpGcsBucketDefaultStorageClass.STANDARD)
-            .lifecycle(new GcpGcsBucketLifecycle().rules(LIFECYCLE_RULES));
+            .lifecycle(new GcpGcsBucketLifecycle().rules(BUCKET_LIFECYCLE_RULES));
 
     var commonParameters =
         new ControlledResourceCommonFields()
