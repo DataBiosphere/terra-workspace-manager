@@ -107,6 +107,7 @@ public class WorkspaceService {
       createJob.addParameter(
           WorkspaceFlightMapKeys.SPEND_PROFILE_ID, workspace.getSpendProfileId().get().getId());
     }
+    // Skip the access check, which would fail since this workspace doesn't exist yet.
     return createJob.submitAndWait(UUID.class, false);
   }
 
