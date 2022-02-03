@@ -16,8 +16,8 @@ import bio.terra.workspace.service.iam.model.SamConstants.SamWorkspaceAction;
 import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.resource.ValidationUtils;
 import bio.terra.workspace.service.resource.model.StewardshipType;
-import bio.terra.workspace.service.resource.model.WsmCloudResourceType;
 import bio.terra.workspace.service.resource.model.WsmResource;
+import bio.terra.workspace.service.resource.model.WsmResourceFamily;
 import bio.terra.workspace.service.workspace.Alpha1Service;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.model.EnumeratedJob;
@@ -89,7 +89,7 @@ public class Alpha1ApiController implements Alpha1Api {
             userRequest,
             limit,
             pageToken,
-            WsmCloudResourceType.fromApiOptional(resource),
+            WsmResourceFamily.fromApiOptional(resource),
             StewardshipType.fromApiOptional(stewardship),
             name,
             JobStateFilter.fromApi(jobState));

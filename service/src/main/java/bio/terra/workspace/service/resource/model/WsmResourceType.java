@@ -185,12 +185,23 @@ public enum WsmResourceType {
   }
 
   public static WsmResourceType fromSqlParts(
-      WsmCloudResourceType cloudResourceType, StewardshipType stewardshipType) {
+      WsmResourceFamily cloudResourceType, StewardshipType stewardshipType) {
     switch (stewardshipType) {
       case CONTROLLED:
-        return cloudResourceType.getControlledType();
+        return cloudResourceType
+            .getControlledType()
+            .orElseThrow(
+                () ->
+                    new InvalidMetadataException(
+                        "Unsupported controlled resource type for " + cloudResourceType));
+
       case REFERENCED:
-        return cloudResourceType.getReferenceType();
+        return cloudResourceType
+            .getReferenceType()
+            .orElseThrow(
+                () ->
+                    new InvalidMetadataException(
+                        "Unsupported referenced resource type for " + cloudResourceType));
     }
     throw new InvalidMetadataException(
         String.format(

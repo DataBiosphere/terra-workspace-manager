@@ -5,18 +5,19 @@ databaseChangeLog:
     changes:
     - renameColumn:
         tableName: resource
-        newColumnName: cloud_resource_type
+        newColumnName: resource_family
         oldColumnName: resource_type
-        remarks: The type of cloud resource, for example, GCS_BUCKET.
+        remarks: The general type of resource, for example, GCS_BUCKET/
     - addColumn:
         tableName: resource
         columns:
         - column:
-            name: resource_type
+            name: exact_resource_type
             type: text
             defaultValue: "notset"
             constraints:
               nullable: false
             remarks: |
               The specific resource type in the form {stewardship}_{cloud}_{cloud_resource_type}
+              For example, CONTROLLED_GCP_GCS_BUCKET and REFERENCED_ANY_GIT_REPO.
 

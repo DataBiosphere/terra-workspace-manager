@@ -14,7 +14,7 @@ import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.petserviceaccount.PetSaService;
 import bio.terra.workspace.service.resource.ValidationUtils;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
-import bio.terra.workspace.service.resource.model.WsmCloudResourceType;
+import bio.terra.workspace.service.resource.model.WsmResourceFamily;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.resource.referenced.cloud.gcp.ReferencedResource;
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -67,7 +67,7 @@ public class ReferencedBigQueryDataTableResource extends ReferencedResource {
   public ReferencedBigQueryDataTableResource(DbResource dbResource) {
     super(dbResource);
     if (dbResource.getResourceType() != WsmResourceType.REFERENCED_GCP_BIG_QUERY_DATA_TABLE) {
-      throw new InvalidMetadataException("Expected referenced GCP BIG_QUERY_DATA_TABLE");
+      throw new InvalidMetadataException("Expected REFERENCED_GCP BIG_QUERY_DATA_TABLE");
     }
 
     ReferencedBigQueryDataTableAttributes attributes =
@@ -113,8 +113,8 @@ public class ReferencedBigQueryDataTableResource extends ReferencedResource {
   }
 
   @Override
-  public WsmCloudResourceType getCloudResourceType() {
-    return WsmCloudResourceType.BIG_QUERY_DATA_TABLE;
+  public WsmResourceFamily getResourceFamily() {
+    return WsmResourceFamily.BIG_QUERY_DATA_TABLE;
   }
 
   @Override

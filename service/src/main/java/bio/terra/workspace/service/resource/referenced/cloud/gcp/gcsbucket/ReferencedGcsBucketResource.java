@@ -14,7 +14,7 @@ import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.petserviceaccount.PetSaService;
 import bio.terra.workspace.service.resource.ValidationUtils;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
-import bio.terra.workspace.service.resource.model.WsmCloudResourceType;
+import bio.terra.workspace.service.resource.model.WsmResourceFamily;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.resource.referenced.cloud.gcp.ReferencedResource;
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -82,8 +82,8 @@ public class ReferencedGcsBucketResource extends ReferencedResource {
   }
 
   @Override
-  public WsmCloudResourceType getCloudResourceType() {
-    return WsmCloudResourceType.GCS_BUCKET;
+  public WsmResourceFamily getResourceFamily() {
+    return WsmResourceFamily.GCS_BUCKET;
   }
 
   @Override

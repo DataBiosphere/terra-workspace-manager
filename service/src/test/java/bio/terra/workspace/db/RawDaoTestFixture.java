@@ -12,12 +12,12 @@ import org.springframework.stereotype.Component;
 
 /** DAO in the test to contain direct access to the database */
 @Component
-public class TestDao {
-  private static final Logger logger = LoggerFactory.getLogger(TestDao.class);
+public class RawDaoTestFixture {
+  private static final Logger logger = LoggerFactory.getLogger(RawDaoTestFixture.class);
   private final NamedParameterJdbcTemplate jdbcTemplate;
 
   @Autowired
-  public TestDao(NamedParameterJdbcTemplate jdbcTemplate) {
+  public RawDaoTestFixture(NamedParameterJdbcTemplate jdbcTemplate) {
     this.jdbcTemplate = jdbcTemplate;
   }
 
@@ -31,7 +31,7 @@ public class TestDao {
       String description,
       String stewardshipType,
       String resourceType,
-      String cloudResourceType,
+      String resourceFamily,
       String cloningInstructions,
       String attributes,
       String accessScope,
@@ -41,10 +41,10 @@ public class TestDao {
       String privateResourceState) {
     final String sql =
         "INSERT INTO resource (workspace_id, cloud_platform, resource_id, name, description, stewardship_type,"
-            + " resource_type, cloud_resource_type, cloning_instructions, attributes,"
+            + " exact_resource_type, resource_family, cloning_instructions, attributes,"
             + " access_scope, managed_by, associated_app, assigned_user, private_resource_state)"
             + " VALUES (:workspace_id, :cloud_platform, :resource_id, :name, :description, :stewardship_type,"
-            + " :resource_type, :cloud_resource_type, :cloning_instructions, cast(:attributes AS jsonb),"
+            + " :exact_resource_type, :resource_family, :cloning_instructions, cast(:attributes AS jsonb),"
             + " :access_scope, :managed_by, :associated_app, :assigned_user, :private_resource_state)";
 
     final var params =
@@ -55,8 +55,8 @@ public class TestDao {
             .addValue("name", name)
             .addValue("description", description)
             .addValue("stewardship_type", stewardshipType)
-            .addValue("resource_type", resourceType)
-            .addValue("cloud_resource_type", cloudResourceType)
+            .addValue("exact_resource_type", resourceType)
+            .addValue("resource_family", resourceFamily)
             .addValue("cloning_instructions", cloningInstructions)
             .addValue("attributes", attributes)
             .addValue("access_scope", accessScope)

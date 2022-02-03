@@ -1,7 +1,7 @@
 package bio.terra.workspace.service.resource.controlled.cloud.gcp;
 
 import bio.terra.workspace.service.iam.model.ControlledResourceIamRole;
-import bio.terra.workspace.service.resource.model.WsmCloudResourceType;
+import bio.terra.workspace.service.resource.model.WsmResourceFamily;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
 import java.util.List;
 
@@ -39,7 +39,7 @@ public class CustomGcpIamRole {
    * @param includedPermissions The list of GCP permissions this role should grant.
    */
   public static CustomGcpIamRole ofResource(
-      WsmCloudResourceType cloudResourceType,
+      WsmResourceFamily cloudResourceType,
       ControlledResourceIamRole iamRole,
       List<String> includedPermissions) {
     String roleName = cloudResourceType.name().toUpperCase() + "_" + iamRole.name().toUpperCase();

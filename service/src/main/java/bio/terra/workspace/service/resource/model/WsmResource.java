@@ -92,11 +92,11 @@ public abstract class WsmResource {
   public abstract WsmResourceType getResourceType();
 
   /**
-   * Sub-classes must identify their cloud resource type
+   * Sub-classes must identify their resource family
    *
-   * @return cloud resource type
+   * @return resource family
    */
-  public abstract WsmCloudResourceType getCloudResourceType();
+  public abstract WsmResourceFamily getResourceFamily();
 
   /**
    * Attributes string, serialized as JSON. Includes only those attributes of the cloud resource

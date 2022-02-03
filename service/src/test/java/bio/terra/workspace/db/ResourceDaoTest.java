@@ -31,7 +31,7 @@ public class ResourceDaoTest extends BaseUnitTest {
   @Autowired ResourceDao resourceDao;
   @Autowired WorkspaceDao workspaceDao;
   @Autowired GcpCloudContextService gcpCloudContextService;
-  @Autowired TestDao testDao;
+  @Autowired RawDaoTestFixture testDao;
 
   /**
    * Creates a workspaces with a GCP cloud context and stores it in the database. Returns the

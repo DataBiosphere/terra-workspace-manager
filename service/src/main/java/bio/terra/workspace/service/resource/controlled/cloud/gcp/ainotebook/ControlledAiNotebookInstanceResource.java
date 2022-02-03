@@ -18,7 +18,7 @@ import bio.terra.workspace.service.resource.controlled.model.ManagedByType;
 import bio.terra.workspace.service.resource.controlled.model.PrivateResourceState;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.model.StewardshipType;
-import bio.terra.workspace.service.resource.model.WsmCloudResourceType;
+import bio.terra.workspace.service.resource.model.WsmResourceFamily;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -134,8 +134,8 @@ public class ControlledAiNotebookInstanceResource extends ControlledResource {
   }
 
   @Override
-  public WsmCloudResourceType getCloudResourceType() {
-    return WsmCloudResourceType.AI_NOTEBOOK_INSTANCE;
+  public WsmResourceFamily getResourceFamily() {
+    return WsmResourceFamily.AI_NOTEBOOK_INSTANCE;
   }
 
   @Override
@@ -162,7 +162,7 @@ public class ControlledAiNotebookInstanceResource extends ControlledResource {
   public void validate() {
     super.validate();
     if (getResourceType() != WsmResourceType.CONTROLLED_GCP_AI_NOTEBOOK_INSTANCE
-        || getCloudResourceType() != WsmCloudResourceType.AI_NOTEBOOK_INSTANCE
+        || getResourceFamily() != WsmResourceFamily.AI_NOTEBOOK_INSTANCE
         || getStewardshipType() != StewardshipType.CONTROLLED) {
       throw new InconsistentFieldsException("Expected controlled GCP AI_NOTEBOOK_INSTANCE");
     }

@@ -15,7 +15,7 @@ import bio.terra.workspace.service.resource.controlled.model.ManagedByType;
 import bio.terra.workspace.service.resource.controlled.model.PrivateResourceState;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.model.StewardshipType;
-import bio.terra.workspace.service.resource.model.WsmCloudResourceType;
+import bio.terra.workspace.service.resource.model.WsmResourceFamily;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -93,8 +93,8 @@ public class ControlledAzureStorageResource extends ControlledResource {
   }
 
   @Override
-  public WsmCloudResourceType getCloudResourceType() {
-    return WsmCloudResourceType.AZURE_STORAGE_ACCOUNT;
+  public WsmResourceFamily getResourceFamily() {
+    return WsmResourceFamily.AZURE_STORAGE_ACCOUNT;
   }
 
   @Override
@@ -121,7 +121,7 @@ public class ControlledAzureStorageResource extends ControlledResource {
   public void validate() {
     super.validate();
     if (getResourceType() != WsmResourceType.CONTROLLED_AZURE_STORAGE_ACCOUNT
-        || getCloudResourceType() != WsmCloudResourceType.AZURE_STORAGE_ACCOUNT
+        || getResourceFamily() != WsmResourceFamily.AZURE_STORAGE_ACCOUNT
         || getStewardshipType() != StewardshipType.CONTROLLED) {
       throw new InconsistentFieldsException("Expected CONTROLLED_AZURE_STORAGE_ACCOUNT");
     }

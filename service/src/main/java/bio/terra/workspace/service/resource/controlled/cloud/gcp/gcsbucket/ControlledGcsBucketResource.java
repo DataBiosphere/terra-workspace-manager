@@ -15,7 +15,7 @@ import bio.terra.workspace.service.resource.controlled.model.ManagedByType;
 import bio.terra.workspace.service.resource.controlled.model.PrivateResourceState;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.model.StewardshipType;
-import bio.terra.workspace.service.resource.model.WsmCloudResourceType;
+import bio.terra.workspace.service.resource.model.WsmResourceFamily;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -107,8 +107,8 @@ public class ControlledGcsBucketResource extends ControlledResource {
   }
 
   @Override
-  public WsmCloudResourceType getCloudResourceType() {
-    return WsmCloudResourceType.GCS_BUCKET;
+  public WsmResourceFamily getResourceFamily() {
+    return WsmResourceFamily.GCS_BUCKET;
   }
 
   @Override
@@ -130,7 +130,7 @@ public class ControlledGcsBucketResource extends ControlledResource {
   public void validate() {
     super.validate();
     if (getResourceType() != WsmResourceType.CONTROLLED_GCP_GCS_BUCKET
-        || getCloudResourceType() != WsmCloudResourceType.GCS_BUCKET
+        || getResourceFamily() != WsmResourceFamily.GCS_BUCKET
         || getStewardshipType() != StewardshipType.CONTROLLED) {
       throw new InconsistentFieldsException("Expected controlled GCP GCS_BUCKET");
     }

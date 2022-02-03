@@ -13,8 +13,8 @@ import bio.terra.workspace.service.iam.model.SamConstants;
 import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.job.exception.InternalStairwayException;
 import bio.terra.workspace.service.resource.model.StewardshipType;
-import bio.terra.workspace.service.resource.model.WsmCloudResourceType;
 import bio.terra.workspace.service.resource.model.WsmResource;
+import bio.terra.workspace.service.resource.model.WsmResourceFamily;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ResourceKeys;
 import bio.terra.workspace.service.workspace.model.EnumeratedJob;
@@ -70,7 +70,7 @@ public class Alpha1Service {
       AuthenticatedUserRequest userRequest,
       int limit,
       @Nullable String pageToken,
-      @Nullable WsmCloudResourceType cloudResourceType,
+      @Nullable WsmResourceFamily cloudResourceType,
       @Nullable StewardshipType stewardshipType,
       @Nullable String resourceName,
       @Nullable JobStateFilter jobStateFilter) {
@@ -125,7 +125,7 @@ public class Alpha1Service {
 
   private FlightFilter buildFlightFilter(
       UUID workspaceId,
-      @Nullable WsmCloudResourceType cloudResourceType,
+      @Nullable WsmResourceFamily cloudResourceType,
       @Nullable StewardshipType stewardshipType,
       @Nullable String resourceName,
       @Nullable JobStateFilter jobStateFilter) {

@@ -9,7 +9,7 @@ public class ReferencedGitRepoHandler implements WsmResourceHandler {
   private static ReferencedGitRepoHandler theHandler;
 
   public static ReferencedGitRepoHandler getHandler() {
-    return Optional.ofNullable(theHandler).orElse(new ReferencedGitRepoHandler());
+    return Optional.ofNullable(theHandler).orElseGet(ReferencedGitRepoHandler::new);
   }
 
   @Override

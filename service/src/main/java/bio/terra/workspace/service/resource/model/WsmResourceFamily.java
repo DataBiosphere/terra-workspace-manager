@@ -2,11 +2,12 @@ package bio.terra.workspace.service.resource.model;
 
 import bio.terra.common.exception.ValidationException;
 import bio.terra.workspace.generated.model.ApiResourceType;
+import java.util.Optional;
 import javax.annotation.Nullable;
 import org.apache.commons.lang3.SerializationException;
 import org.apache.commons.lang3.StringUtils;
 
-public enum WsmCloudResourceType {
+public enum WsmResourceFamily {
   AI_NOTEBOOK_INSTANCE(
       "AI_NOTEBOOK_INSTANCE",
       ApiResourceType.AI_NOTEBOOK,
@@ -57,19 +58,19 @@ public enum WsmCloudResourceType {
   private final WsmResourceType referenceType;
   private final WsmResourceType controlledType;
 
-  WsmCloudResourceType(
+  WsmResourceFamily(
       String dbString,
       ApiResourceType apiResourceType,
-      WsmResourceType referenceType,
-      WsmResourceType controlledType) {
+      @Nullable WsmResourceType referenceType,
+      @Nullable WsmResourceType controlledType) {
     this.dbString = dbString;
     this.apiResourceType = apiResourceType;
     this.referenceType = referenceType;
     this.controlledType = controlledType;
   }
 
-  public static WsmCloudResourceType fromSql(String dbString) {
-    for (WsmCloudResourceType value : values()) {
+  public static WsmResourceFamily fromSql(String dbString) {
+    for (WsmResourceFamily value : values()) {
       if (StringUtils.equals(value.dbString, dbString)) {
         return value;
       }
@@ -86,12 +87,12 @@ public enum WsmCloudResourceType {
    * @param apiResourceType incoming resource type or null
    * @return valid resource type; null if input is null
    */
-  public static @Nullable WsmCloudResourceType fromApiOptional(
+  public static @Nullable WsmResourceFamily fromApiOptional(
       @Nullable ApiResourceType apiResourceType) {
     if (apiResourceType == null) {
       return null;
     }
-    for (WsmCloudResourceType value : values()) {
+    for (WsmResourceFamily value : values()) {
       if (value.apiResourceType == apiResourceType) {
         return value;
       }
@@ -99,12 +100,12 @@ public enum WsmCloudResourceType {
     throw new ValidationException("Invalid resource type " + apiResourceType);
   }
 
-  public WsmResourceType getReferenceType() {
-    return referenceType;
+  public Optional<WsmResourceType> getReferenceType() {
+    return Optional.ofNullable(referenceType);
   }
 
-  public WsmResourceType getControlledType() {
-    return controlledType;
+  public Optional<WsmResourceType> getControlledType() {
+    return Optional.ofNullable(controlledType);
   }
 
   public String toSql() {

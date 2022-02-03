@@ -14,7 +14,7 @@ import bio.terra.workspace.service.resource.controlled.model.ManagedByType;
 import bio.terra.workspace.service.resource.controlled.model.PrivateResourceState;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.model.StewardshipType;
-import bio.terra.workspace.service.resource.model.WsmCloudResourceType;
+import bio.terra.workspace.service.resource.model.WsmResourceFamily;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.resource.referenced.exception.InvalidReferenceException;
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -106,8 +106,8 @@ public class ControlledBigQueryDatasetResource extends ControlledResource {
   }
 
   @Override
-  public WsmCloudResourceType getCloudResourceType() {
-    return WsmCloudResourceType.BIG_QUERY_DATASET;
+  public WsmResourceFamily getResourceFamily() {
+    return WsmResourceFamily.BIG_QUERY_DATASET;
   }
 
   @Override
@@ -130,7 +130,7 @@ public class ControlledBigQueryDatasetResource extends ControlledResource {
   public void validate() {
     super.validate();
     if (getResourceType() != WsmResourceType.CONTROLLED_GCP_BIG_QUERY_DATASET
-        || getCloudResourceType() != WsmCloudResourceType.BIG_QUERY_DATASET
+        || getResourceFamily() != WsmResourceFamily.BIG_QUERY_DATASET
         || getStewardshipType() != StewardshipType.CONTROLLED) {
       throw new InconsistentFieldsException("Expected controlled GCP BIG_QUERY_DATASET");
     }
