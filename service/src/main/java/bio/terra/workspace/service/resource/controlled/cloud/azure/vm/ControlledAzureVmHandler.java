@@ -12,6 +12,7 @@ public class ControlledAzureVmHandler implements WsmResourceHandler {
     return Optional.ofNullable(theHandler).orElse(new ControlledAzureVmHandler());
   }
 
+  /** {@inheritDoc} */
   @Override
   public WsmResource makeResourceFromDb(DbResource dbResource) {
     return new ControlledAzureVmResource(dbResource);

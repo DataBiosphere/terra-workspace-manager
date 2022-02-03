@@ -12,6 +12,7 @@ public class ReferencedBigQueryDataTableHandler implements WsmResourceHandler {
     return Optional.ofNullable(theHandler).orElse(new ReferencedBigQueryDataTableHandler());
   }
 
+  /** {@inheritDoc} */
   @Override
   public WsmResource makeResourceFromDb(DbResource dbResource) {
     return new ReferencedBigQueryDataTableResource(dbResource);

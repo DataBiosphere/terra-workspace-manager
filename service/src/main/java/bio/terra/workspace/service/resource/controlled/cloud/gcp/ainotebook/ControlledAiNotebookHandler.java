@@ -33,6 +33,7 @@ public class ControlledAiNotebookHandler implements WsmResourceHandler {
     theHandler = this;
   }
 
+  /** {@inheritDoc} */
   @Override
   public WsmResource makeResourceFromDb(DbResource dbResource) {
     // Old version of attributes do not have project id, so in that case we look it up

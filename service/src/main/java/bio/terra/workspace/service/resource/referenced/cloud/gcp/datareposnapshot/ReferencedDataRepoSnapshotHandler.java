@@ -12,6 +12,7 @@ public class ReferencedDataRepoSnapshotHandler implements WsmResourceHandler {
     return Optional.ofNullable(theHandler).orElse(new ReferencedDataRepoSnapshotHandler());
   }
 
+  /** {@inheritDoc} */
   @Override
   public WsmResource makeResourceFromDb(DbResource dbResource) {
     return new ReferencedDataRepoSnapshotResource(dbResource);

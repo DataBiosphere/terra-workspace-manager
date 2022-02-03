@@ -12,6 +12,7 @@ public class ReferencedBigQueryDatasetHandler implements WsmResourceHandler {
     return Optional.ofNullable(theHandler).orElse(new ReferencedBigQueryDatasetHandler());
   }
 
+  /** {@inheritDoc} */
   @Override
   public WsmResource makeResourceFromDb(DbResource dbResource) {
     return new ReferencedBigQueryDatasetResource(dbResource);

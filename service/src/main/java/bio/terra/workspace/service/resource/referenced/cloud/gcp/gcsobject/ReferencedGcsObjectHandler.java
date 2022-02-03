@@ -12,6 +12,7 @@ public class ReferencedGcsObjectHandler implements WsmResourceHandler {
     return Optional.ofNullable(theHandler).orElse(new ReferencedGcsObjectHandler());
   }
 
+  /** {@inheritDoc} */
   @Override
   public WsmResource makeResourceFromDb(DbResource dbResource) {
     return new ReferencedGcsObjectResource(dbResource);

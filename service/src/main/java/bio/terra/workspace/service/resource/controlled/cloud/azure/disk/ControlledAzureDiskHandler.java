@@ -12,6 +12,7 @@ public class ControlledAzureDiskHandler implements WsmResourceHandler {
     return Optional.ofNullable(theHandler).orElse(new ControlledAzureDiskHandler());
   }
 
+  /** {@inheritDoc} */
   @Override
   public WsmResource makeResourceFromDb(DbResource dbResource) {
     return new ControlledAzureDiskResource(dbResource);

@@ -12,6 +12,7 @@ public class ControlledGcsBucketHandler implements WsmResourceHandler {
     return Optional.ofNullable(theHandler).orElse(new ControlledGcsBucketHandler());
   }
 
+  /** {@inheritDoc} */
   @Override
   public WsmResource makeResourceFromDb(DbResource dbResource) {
     return new ControlledGcsBucketResource(dbResource);

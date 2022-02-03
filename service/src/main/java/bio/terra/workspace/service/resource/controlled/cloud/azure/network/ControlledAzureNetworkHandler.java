@@ -12,6 +12,7 @@ public class ControlledAzureNetworkHandler implements WsmResourceHandler {
     return Optional.ofNullable(theHandler).orElse(new ControlledAzureNetworkHandler());
   }
 
+  /** {@inheritDoc} */
   @Override
   public WsmResource makeResourceFromDb(DbResource dbResource) {
     return new ControlledAzureNetworkResource(dbResource);

@@ -12,6 +12,7 @@ public class ReferencedGitRepoHandler implements WsmResourceHandler {
     return Optional.ofNullable(theHandler).orElseGet(ReferencedGitRepoHandler::new);
   }
 
+  /** {@inheritDoc} */
   @Override
   public WsmResource makeResourceFromDb(DbResource dbResource) {
     return new ReferencedGitRepoResource(dbResource);

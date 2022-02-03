@@ -12,6 +12,7 @@ public class ControlledAzureIpHandler implements WsmResourceHandler {
     return Optional.ofNullable(theHandler).orElse(new ControlledAzureIpHandler());
   }
 
+  /** {@inheritDoc} */
   @Override
   public WsmResource makeResourceFromDb(DbResource dbResource) {
     return new ControlledAzureIpResource(dbResource);
