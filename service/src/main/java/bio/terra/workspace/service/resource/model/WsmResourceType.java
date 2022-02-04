@@ -43,15 +43,15 @@ public enum WsmResourceType {
   CONTROLLED_GCP_AI_NOTEBOOK_INSTANCE(
       CloudPlatform.GCP,
       StewardshipType.CONTROLLED,
-      "GCP_CONTROLLED_AI_NOTEBOOK_INSTANCE",
+      "CONTROLLED_GCP_AI_NOTEBOOK_INSTANCE",
       ApiResourceType.AI_NOTEBOOK,
       ControlledAiNotebookInstanceResource.class,
       ControlledAiNotebookHandler::getHandler),
 
-  REFERENCED_DATA_REPO_SNAPSHOT(
-      CloudPlatform.GCP, // TODO: switch to ANY when Yu's work goes in
+  REFERENCED_ANY_DATA_REPO_SNAPSHOT(
+      CloudPlatform.ANY,
       StewardshipType.REFERENCED,
-      "REFERENCED_DATA_REPO_SNAPSHOT",
+      "REFERENCED_ANY_DATA_REPO_SNAPSHOT",
       ApiResourceType.DATA_REPO_SNAPSHOT,
       ReferencedDataRepoSnapshotResource.class,
       ReferencedDataRepoSnapshotHandler::getHandler),
@@ -59,7 +59,7 @@ public enum WsmResourceType {
   REFERENCED_GCP_GCS_BUCKET(
       CloudPlatform.GCP,
       StewardshipType.REFERENCED,
-      "REFERENCED_GCS_BUCKET",
+      "REFERENCED_GCP_GCS_BUCKET",
       ApiResourceType.GCS_BUCKET,
       ReferencedGcsBucketResource.class,
       ReferencedGcsBucketHandler::getHandler),
@@ -67,7 +67,7 @@ public enum WsmResourceType {
   CONTROLLED_GCP_GCS_BUCKET(
       CloudPlatform.GCP,
       StewardshipType.CONTROLLED,
-      "CONTROLLED_GCS_BUCKET",
+      "CONTROLLED_GCP_GCS_BUCKET",
       ApiResourceType.GCS_BUCKET,
       ControlledGcsBucketResource.class,
       ControlledGcsBucketHandler::getHandler),
@@ -75,7 +75,7 @@ public enum WsmResourceType {
   REFERENCED_GCP_GCS_OBJECT(
       CloudPlatform.GCP,
       StewardshipType.REFERENCED,
-      "REFERENCED_GCS_OBJECT",
+      "REFERENCED_GCP_GCS_OBJECT",
       ApiResourceType.GCS_OBJECT,
       ReferencedGcsObjectResource.class,
       ReferencedGcsObjectHandler::getHandler),
@@ -83,7 +83,7 @@ public enum WsmResourceType {
   REFERENCED_GCP_BIG_QUERY_DATASET(
       CloudPlatform.GCP,
       StewardshipType.REFERENCED,
-      "REFERENCED_BIG_QUERY_DATASET",
+      "REFERENCED_GCP_BIG_QUERY_DATASET",
       ApiResourceType.BIG_QUERY_DATASET,
       ReferencedBigQueryDatasetResource.class,
       ReferencedBigQueryDatasetHandler::getHandler),
@@ -91,7 +91,7 @@ public enum WsmResourceType {
   CONTROLLED_GCP_BIG_QUERY_DATASET(
       CloudPlatform.GCP,
       StewardshipType.CONTROLLED,
-      "CONTROLLED_BIG_QUERY_DATASET",
+      "CONTROLLED_GCP_BIG_QUERY_DATASET",
       ApiResourceType.BIG_QUERY_DATASET,
       ControlledBigQueryDatasetResource.class,
       ControlledBigQueryDatasetHandler::getHandler),
@@ -99,14 +99,14 @@ public enum WsmResourceType {
   REFERENCED_GCP_BIG_QUERY_DATA_TABLE(
       CloudPlatform.GCP,
       StewardshipType.REFERENCED,
-      "REFERENCED_BIG_QUERY_DATA_TABLE",
+      "REFERENCED_GCP_BIG_QUERY_DATA_TABLE",
       ApiResourceType.BIG_QUERY_DATA_TABLE,
       ReferencedBigQueryDataTableResource.class,
       ReferencedBigQueryDataTableHandler::getHandler),
-  REFERENCED_GIT_REPO(
+  REFERENCED_ANY_GIT_REPO(
       CloudPlatform.ANY,
       StewardshipType.REFERENCED,
-      "REFERENCED_GIT_REPO",
+      "REFERENCED_ANY_GIT_REPO",
       ApiResourceType.GIT_REPO,
       ReferencedGitRepoResource.class,
       ReferencedGitRepoHandler::getHandler),

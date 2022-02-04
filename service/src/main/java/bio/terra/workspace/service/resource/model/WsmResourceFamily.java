@@ -16,7 +16,7 @@ public enum WsmResourceFamily {
   DATA_REPO_SNAPSHOT(
       "DATA_REPO_SNAPSHOT",
       ApiResourceType.DATA_REPO_SNAPSHOT,
-      WsmResourceType.REFERENCED_DATA_REPO_SNAPSHOT,
+      WsmResourceType.REFERENCED_ANY_DATA_REPO_SNAPSHOT,
       null), // no controlled type for snapshots
   GCS_BUCKET(
       "GCS_BUCKET",
@@ -51,7 +51,7 @@ public enum WsmResourceFamily {
       ApiResourceType.AZURE_STORAGE_ACCOUNT,
       null,
       WsmResourceType.CONTROLLED_AZURE_STORAGE_ACCOUNT),
-  GIT_REPO("GIT_REPO", ApiResourceType.GIT_REPO, WsmResourceType.REFERENCED_GIT_REPO, null);
+  GIT_REPO("GIT_REPO", ApiResourceType.GIT_REPO, WsmResourceType.REFERENCED_ANY_GIT_REPO, null);
 
   private final String dbString; // serialized form of the resource type
   private final ApiResourceType apiResourceType;

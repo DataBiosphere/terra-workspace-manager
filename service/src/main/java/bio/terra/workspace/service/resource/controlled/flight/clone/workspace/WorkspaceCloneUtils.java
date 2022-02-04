@@ -66,7 +66,7 @@ public class WorkspaceCloneUtils {
                 name,
                 description);
         break;
-      case REFERENCED_DATA_REPO_SNAPSHOT:
+      case REFERENCED_ANY_DATA_REPO_SNAPSHOT:
         destinationResource =
             buildDestinationDataRepoSnapshotReference(
                 sourceReferencedResource.castToDataRepoSnapshotResource(),
@@ -90,7 +90,7 @@ public class WorkspaceCloneUtils {
                 name,
                 description);
         break;
-      case REFERENCED_GIT_REPO:
+      case REFERENCED_ANY_GIT_REPO:
         destinationResource =
             buildDestinationGitHubRepoReference(
                 sourceReferencedResource.castToGitRepoResource(),

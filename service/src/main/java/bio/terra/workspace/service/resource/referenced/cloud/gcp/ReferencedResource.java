@@ -51,7 +51,7 @@ public abstract class ReferencedResource extends WsmResource {
   }
 
   public ReferencedDataRepoSnapshotResource castToDataRepoSnapshotResource() {
-    validateSubclass(WsmResourceType.REFERENCED_DATA_REPO_SNAPSHOT);
+    validateSubclass(WsmResourceType.REFERENCED_ANY_DATA_REPO_SNAPSHOT);
     return (ReferencedDataRepoSnapshotResource) this;
   }
 
@@ -66,7 +66,7 @@ public abstract class ReferencedResource extends WsmResource {
   }
 
   public ReferencedGitRepoResource castToGitRepoResource() {
-    validateSubclass(WsmResourceType.REFERENCED_GIT_REPO);
+    validateSubclass(WsmResourceType.REFERENCED_ANY_GIT_REPO);
     return (ReferencedGitRepoResource) this;
   }
 

@@ -58,7 +58,7 @@ public class ReferencedDataRepoSnapshotResource extends ReferencedResource {
    */
   public ReferencedDataRepoSnapshotResource(DbResource dbResource) {
     super(dbResource);
-    if (dbResource.getResourceType() != WsmResourceType.REFERENCED_DATA_REPO_SNAPSHOT) {
+    if (dbResource.getResourceType() != WsmResourceType.REFERENCED_ANY_DATA_REPO_SNAPSHOT) {
       throw new InvalidMetadataException("Expected referenced DATA_REPO_SNAPSHOT");
     }
     ReferencedDataRepoSnapshotAttributes attributes =
@@ -94,7 +94,7 @@ public class ReferencedDataRepoSnapshotResource extends ReferencedResource {
 
   @Override
   public WsmResourceType getResourceType() {
-    return WsmResourceType.REFERENCED_DATA_REPO_SNAPSHOT;
+    return WsmResourceType.REFERENCED_ANY_DATA_REPO_SNAPSHOT;
   }
 
   @Override

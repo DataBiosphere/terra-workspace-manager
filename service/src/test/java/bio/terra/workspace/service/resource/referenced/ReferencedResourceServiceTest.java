@@ -365,7 +365,7 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
 
       ReferencedDataRepoSnapshotResource resource =
           referenceResource.castToDataRepoSnapshotResource();
-      assertEquals(resource.getResourceType(), WsmResourceType.REFERENCED_DATA_REPO_SNAPSHOT);
+      assertEquals(resource.getResourceType(), WsmResourceType.REFERENCED_ANY_DATA_REPO_SNAPSHOT);
 
       ReferencedResource resultReferenceResource =
           referenceResourceService.createReferenceResource(referenceResource, USER_REQUEST);
@@ -389,7 +389,7 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
           workspaceId,
           referenceResource.getResourceId(),
           USER_REQUEST,
-          WsmResourceType.REFERENCED_DATA_REPO_SNAPSHOT);
+          WsmResourceType.REFERENCED_ANY_DATA_REPO_SNAPSHOT);
     }
 
     @Test
@@ -918,7 +918,7 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
 
         ReferencedDataRepoSnapshotResource resource =
             referenceResource.castToDataRepoSnapshotResource();
-        assertEquals(resource.getResourceType(), WsmResourceType.REFERENCED_DATA_REPO_SNAPSHOT);
+        assertEquals(resource.getResourceType(), WsmResourceType.REFERENCED_ANY_DATA_REPO_SNAPSHOT);
         referenceResourceService.createReferenceResource(referenceResource, USER_REQUEST);
 
         UUID resourceId = UUID.randomUUID();

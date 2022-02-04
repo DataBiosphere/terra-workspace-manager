@@ -53,7 +53,7 @@ public class ReferencedGitRepoResource extends ReferencedResource {
 
   @Override
   public WsmResourceType getResourceType() {
-    return WsmResourceType.REFERENCED_GIT_REPO;
+    return WsmResourceType.REFERENCED_ANY_GIT_REPO;
   }
 
   @Override
@@ -99,7 +99,7 @@ public class ReferencedGitRepoResource extends ReferencedResource {
   @Override
   public void validate() {
     super.validate();
-    if (getResourceType() != WsmResourceType.REFERENCED_GIT_REPO) {
+    if (getResourceType() != WsmResourceType.REFERENCED_ANY_GIT_REPO) {
       throw new InconsistentFieldsException("Expected REFERENCED_GIT_REPO");
     }
     if (Strings.isNullOrEmpty(gitRepoUrl)) {

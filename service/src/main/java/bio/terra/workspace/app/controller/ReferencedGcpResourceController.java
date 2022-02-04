@@ -546,7 +546,7 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
   public ResponseEntity<Void> deleteDataRepoSnapshotReference(UUID workspaceId, UUID resourceId) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     referenceResourceService.deleteReferenceResourceForResourceType(
-        workspaceId, resourceId, userRequest, WsmResourceType.REFERENCED_DATA_REPO_SNAPSHOT);
+        workspaceId, resourceId, userRequest, WsmResourceType.REFERENCED_ANY_DATA_REPO_SNAPSHOT);
     return new ResponseEntity<>(HttpStatus.NO_CONTENT);
   }
 
@@ -832,7 +832,7 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
   public ResponseEntity<Void> deleteGitRepoReference(UUID workspaceId, UUID resourceId) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     referenceResourceService.deleteReferenceResourceForResourceType(
-        workspaceId, resourceId, userRequest, WsmResourceType.REFERENCED_GIT_REPO);
+        workspaceId, resourceId, userRequest, WsmResourceType.REFERENCED_ANY_GIT_REPO);
     return new ResponseEntity<>(HttpStatus.OK);
   }
 

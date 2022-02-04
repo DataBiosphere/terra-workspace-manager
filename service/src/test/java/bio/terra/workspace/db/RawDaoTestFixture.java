@@ -41,10 +41,10 @@ public class RawDaoTestFixture {
       String privateResourceState) {
     final String sql =
         "INSERT INTO resource (workspace_id, cloud_platform, resource_id, name, description, stewardship_type,"
-            + " exact_resource_type, resource_family, cloning_instructions, attributes,"
+            + " exact_resource_type, resource_type, cloning_instructions, attributes,"
             + " access_scope, managed_by, associated_app, assigned_user, private_resource_state)"
             + " VALUES (:workspace_id, :cloud_platform, :resource_id, :name, :description, :stewardship_type,"
-            + " :exact_resource_type, :resource_family, :cloning_instructions, cast(:attributes AS jsonb),"
+            + " :exact_resource_type, :resource_type, :cloning_instructions, cast(:attributes AS jsonb),"
             + " :access_scope, :managed_by, :associated_app, :assigned_user, :private_resource_state)";
 
     final var params =
@@ -56,7 +56,7 @@ public class RawDaoTestFixture {
             .addValue("description", description)
             .addValue("stewardship_type", stewardshipType)
             .addValue("exact_resource_type", resourceType)
-            .addValue("resource_family", resourceFamily)
+            .addValue("resource_type", resourceFamily)
             .addValue("cloning_instructions", cloningInstructions)
             .addValue("attributes", attributes)
             .addValue("access_scope", accessScope)
