@@ -1,4 +1,4 @@
-package bio.terra.workspace.service.resource.referenced.cloud.any;
+package bio.terra.workspace.service.resource.referenced.cloud.any.gitrepo;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;

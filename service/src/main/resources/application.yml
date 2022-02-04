@@ -134,7 +134,7 @@ terra.common:
 # Feature flags can be overridden like any other Spring property. In particular, for local
 # execution, you can set an environment variable, such as:
 #
-#  FEATURE_AZURE_ENABLED=true
+#  FEATURE_AZUREENABLED=true
 #
 # The WSM helm chart will take all values under the "env" and make them environment variables
 # in the container, so you can get the equivalent setting by adding:

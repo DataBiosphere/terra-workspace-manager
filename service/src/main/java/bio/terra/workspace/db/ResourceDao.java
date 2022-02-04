@@ -3,23 +3,26 @@ package bio.terra.workspace.db;
 import static bio.terra.workspace.service.resource.model.StewardshipType.CONTROLLED;
 import static bio.terra.workspace.service.resource.model.StewardshipType.REFERENCED;
 import static bio.terra.workspace.service.resource.model.StewardshipType.fromSql;
-import static bio.terra.workspace.service.resource.model.WsmResourceType.AI_NOTEBOOK_INSTANCE;
-import static bio.terra.workspace.service.resource.model.WsmResourceType.BIG_QUERY_DATASET;
-import static bio.terra.workspace.service.resource.model.WsmResourceType.GCS_BUCKET;
+import static bio.terra.workspace.service.resource.model.WsmResourceFamily.AI_NOTEBOOK_INSTANCE;
+import static bio.terra.workspace.service.resource.model.WsmResourceFamily.AZURE_DISK;
+import static bio.terra.workspace.service.resource.model.WsmResourceFamily.AZURE_IP;
+import static bio.terra.workspace.service.resource.model.WsmResourceFamily.AZURE_NETWORK;
+import static bio.terra.workspace.service.resource.model.WsmResourceFamily.AZURE_STORAGE_ACCOUNT;
+import static bio.terra.workspace.service.resource.model.WsmResourceFamily.AZURE_VM;
+import static bio.terra.workspace.service.resource.model.WsmResourceFamily.BIG_QUERY_DATASET;
+import static bio.terra.workspace.service.resource.model.WsmResourceFamily.GCS_BUCKET;
 import static java.util.stream.Collectors.toList;
 
 import bio.terra.common.db.ReadTransaction;
 import bio.terra.common.db.WriteTransaction;
-import bio.terra.workspace.db.exception.InvalidMetadataException;
+import bio.terra.workspace.common.exception.InternalLogicException;
 import bio.terra.workspace.db.model.DbResource;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.disk.ControlledAzureDiskResource;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.ip.ControlledAzureIpResource;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.network.ControlledAzureNetworkResource;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.storage.ControlledAzureStorageResource;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.vm.ControlledAzureVmResource;
-import bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook.ControlledAiNotebookHandler;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook.ControlledAiNotebookInstanceResource;
-import bio.terra.workspace.service.resource.controlled.cloud.gcp.bqdataset.ControlledBigQueryDatasetHandler;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.bqdataset.ControlledBigQueryDatasetResource;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.ControlledGcsBucketResource;
 import bio.terra.workspace.service.resource.controlled.model.AccessScopeType;
@@ -31,14 +34,10 @@ import bio.terra.workspace.service.resource.exception.ResourceNotFoundException;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.model.StewardshipType;
 import bio.terra.workspace.service.resource.model.WsmResource;
+import bio.terra.workspace.service.resource.model.WsmResourceFamily;
+import bio.terra.workspace.service.resource.model.WsmResourceHandler;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
-import bio.terra.workspace.service.resource.referenced.cloud.any.ReferencedGitRepoResource;
 import bio.terra.workspace.service.resource.referenced.cloud.gcp.ReferencedResource;
-import bio.terra.workspace.service.resource.referenced.cloud.gcp.bqdataset.ReferencedBigQueryDatasetResource;
-import bio.terra.workspace.service.resource.referenced.cloud.gcp.bqdatatable.ReferencedBigQueryDataTableResource;
-import bio.terra.workspace.service.resource.referenced.cloud.gcp.datareposnapshot.ReferencedDataRepoSnapshotResource;
-import bio.terra.workspace.service.resource.referenced.cloud.gcp.gcsbucket.ReferencedGcsBucketResource;
-import bio.terra.workspace.service.resource.referenced.cloud.gcp.gcsobject.ReferencedGcsObjectResource;
 import bio.terra.workspace.service.workspace.exceptions.CloudContextRequiredException;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import java.util.Collections;
@@ -66,7 +65,7 @@ public class ResourceDao {
   /** SQL query for reading all columns from the resource table */
   private static final String RESOURCE_SELECT_SQL =
       "SELECT workspace_id, cloud_platform, resource_id, name, description, "
-          + "stewardship_type, resource_type, cloning_instructions, attributes,"
+          + "stewardship_type, resource_type, exact_resource_type, cloning_instructions, attributes,"
           + " access_scope, managed_by, associated_app, assigned_user, private_resource_state"
           + " FROM resource WHERE workspace_id = :workspace_id ";
 
@@ -79,7 +78,8 @@ public class ResourceDao {
             .name(rs.getString("name"))
             .description(rs.getString("description"))
             .stewardshipType(fromSql(rs.getString("stewardship_type")))
-            .resourceType(WsmResourceType.fromSql(rs.getString("resource_type")))
+            .cloudResourceType(WsmResourceFamily.fromSql(rs.getString("resource_type")))
+            .resourceType(WsmResourceType.fromSql(rs.getString("exact_resource_type")))
             .cloningInstructions(CloningInstructions.fromSql(rs.getString("cloning_instructions")))
             .attributes(rs.getString("attributes"))
             .accessScope(
@@ -134,12 +134,13 @@ public class ResourceDao {
   public boolean deleteResourceForResourceType(
       UUID workspaceId, UUID resourceId, WsmResourceType resourceType) {
     final String sql =
-        "DELETE FROM resource WHERE workspace_id = :workspace_id AND resource_id = :resource_id AND resource_type = :resource_type";
+        "DELETE FROM resource WHERE workspace_id = :workspace_id AND resource_id = :resource_id"
+            + " AND exact_resource_type = :exact_resource_type";
     MapSqlParameterSource params =
         new MapSqlParameterSource()
             .addValue("workspace_id", workspaceId.toString())
             .addValue("resource_id", resourceId.toString())
-            .addValue("resource_type", resourceType.toSql());
+            .addValue("exact_resource_type", resourceType.toSql());
     int rowsAffected = jdbcTemplate.update(sql, params);
     boolean deleted = rowsAffected > 0;
 
@@ -194,7 +195,7 @@ public class ResourceDao {
    * type.
    *
    * @param workspaceId identifier for work space to enumerate
-   * @param resourceType filter by this resource type - optional
+   * @param cloudResourceType filter by this cloud resource type - optional
    * @param stewardshipType filtered by this stewardship type - optional
    * @param offset starting row for result
    * @param limit maximum number of rows to return
@@ -203,7 +204,7 @@ public class ResourceDao {
   @ReadTransaction
   public List<WsmResource> enumerateResources(
       UUID workspaceId,
-      @Nullable WsmResourceType resourceType,
+      @Nullable WsmResourceFamily cloudResourceType,
       @Nullable StewardshipType stewardshipType,
       int offset,
       int limit) {
@@ -220,9 +221,9 @@ public class ResourceDao {
             .addValue("controlled_resource", CONTROLLED.toSql());
 
     StringBuilder sb = new StringBuilder(RESOURCE_SELECT_SQL);
-    if (resourceType != null) {
+    if (cloudResourceType != null) {
       sb.append(" AND resource_type = :resource_type");
-      params.addValue("resource_type", resourceType.toSql());
+      params.addValue("resource_type", cloudResourceType.toSql());
     }
 
     // There are three cases for the stewardship type filter
@@ -401,15 +402,17 @@ public class ResourceDao {
   // -- Reference Methods -- //
 
   /**
-   * Create a reference in the database We do creates in flights where the same create is issues
-   * more than once.
+   * Create a referenced resource row in the database We do creates in flights where the same create
+   * is issued more than once.
    *
-   * @param resource a filled in reference resource
+   * @param resource a filled in referenced resource
    * @throws DuplicateResourceException on a duplicate resource_id or (workspace_id, name)
    */
   @WriteTransaction
-  public void createReferenceResource(ReferencedResource resource)
-      throws DuplicateResourceException {
+  public void createReferencedResource(WsmResource resource) throws DuplicateResourceException {
+    if (resource.getStewardshipType() != REFERENCED) {
+      throw new InternalLogicException("Expected a referenced resource");
+    }
     storeResource(resource);
   }
 
@@ -517,31 +520,31 @@ public class ResourceDao {
     // uniqueness rules. This prevents a race condition allowing a new resource to point to the same
     // cloud artifact as another, even if it has a different resource name and ID.
     switch (controlledResource.getResourceType()) {
-      case GCS_BUCKET:
+      case CONTROLLED_GCP_GCS_BUCKET:
         validateUniqueGcsBucket(controlledResource.castToGcsBucketResource());
         break;
-      case AI_NOTEBOOK_INSTANCE:
+      case CONTROLLED_GCP_AI_NOTEBOOK_INSTANCE:
         validateUniqueAiNotebookInstance(controlledResource.castToAiNotebookInstanceResource());
         break;
-      case BIG_QUERY_DATASET:
+      case CONTROLLED_GCP_BIG_QUERY_DATASET:
         validateUniqueBigQueryDataset(controlledResource.castToBigQueryDatasetResource());
         break;
-      case AZURE_DISK:
+      case CONTROLLED_AZURE_DISK:
         validateUniqueAzureDisk(controlledResource.castToAzureDiskResource());
         break;
-      case AZURE_IP:
+      case CONTROLLED_AZURE_IP:
         validateUniqueAzureIp(controlledResource.castToAzureIpResource());
         break;
-      case AZURE_NETWORK:
+      case CONTROLLED_AZURE_NETWORK:
         validateUniqueAzureNetwork(controlledResource.castToAzureNetworkResource());
         break;
-      case AZURE_STORAGE_ACCOUNT:
+      case CONTROLLED_AZURE_STORAGE_ACCOUNT:
         validateUniqueAzureStorage(controlledResource.castToAzureStorageResource());
         break;
-      case AZURE_VM:
+      case CONTROLLED_AZURE_VM:
         validateUniqueAzureVm(controlledResource.castToAzureVmResource());
         break;
-      case DATA_REPO_SNAPSHOT:
+      case REFERENCED_ANY_DATA_REPO_SNAPSHOT:
       default:
         throw new IllegalArgumentException(
             String.format(
@@ -615,11 +618,13 @@ public class ResourceDao {
         "SELECT COUNT(1)"
             + " FROM resource"
             + " WHERE resource_type = :resource_type"
+            + " AND stewardship_type = :stewardship_type"
             + " AND attributes->>'bucketName' = :bucket_name";
     MapSqlParameterSource bucketParams =
         new MapSqlParameterSource()
             .addValue("bucket_name", bucketResource.getBucketName())
-            .addValue("resource_type", GCS_BUCKET.toSql());
+            .addValue("resource_type", GCS_BUCKET.toSql())
+            .addValue("stewardship_type", CONTROLLED.toSql());
     Integer matchingBucketCount =
         jdbcTemplate.queryForObject(bucketSql, bucketParams, Integer.class);
     if (matchingBucketCount != null && matchingBucketCount > 0) {
@@ -633,16 +638,20 @@ public class ResourceDao {
       ControlledAiNotebookInstanceResource notebookResource) {
     // Workspace ID is a proxy for project ID, which works because there is a permanent, 1:1
     // correspondence between workspaces and GCP projects.
+    // Note: since exact_resource_type column is not guaranteed to be filled in, we scan by
+    // cloud type and stewardship type.
     String sql =
         "SELECT COUNT(1)"
             + " FROM resource"
             + " WHERE resource_type = :resource_type"
+            + " AND stewardship_type = :stewardship_type"
             + " AND workspace_id = :workspace_id"
             + " AND attributes->>'instanceId' = :instance_id"
             + " AND attributes->>'location' = :location";
     MapSqlParameterSource sqlParams =
         new MapSqlParameterSource()
             .addValue("resource_type", AI_NOTEBOOK_INSTANCE.toSql())
+            .addValue("stewardship_type", CONTROLLED.toSql())
             .addValue("workspace_id", notebookResource.getWorkspaceId().toString())
             .addValue("instance_id", notebookResource.getInstanceId())
             .addValue("location", notebookResource.getLocation());
@@ -662,11 +671,13 @@ public class ResourceDao {
         "SELECT COUNT(1)"
             + " FROM resource"
             + " WHERE resource_type = :resource_type"
+            + " AND stewardship_type = :stewardship_type"
             + " AND workspace_id = :workspace_id"
             + " AND attributes->>'datasetName' = :dataset_name";
     MapSqlParameterSource sqlParams =
         new MapSqlParameterSource()
             .addValue("resource_type", BIG_QUERY_DATASET.toSql())
+            .addValue("stewardship_type", CONTROLLED.toSql())
             .addValue("workspace_id", datasetResource.getWorkspaceId().toString())
             .addValue("dataset_name", datasetResource.getDatasetName());
     Integer matchingCount = jdbcTemplate.queryForObject(sql, sqlParams, Integer.class);
@@ -682,11 +693,13 @@ public class ResourceDao {
         "SELECT COUNT(1)"
             + " FROM resource"
             + " WHERE resource_type = :resource_type"
+            + " AND stewardship_type = :stewardship_type"
             + " AND workspace_id = :workspace_id"
             + " AND attributes->>'ipName' = :ip_name";
     MapSqlParameterSource sqlParams =
         new MapSqlParameterSource()
-            .addValue("resource_type", WsmResourceType.AZURE_IP.toSql())
+            .addValue("resource_type", AZURE_IP.toSql())
+            .addValue("stewardship_type", CONTROLLED.toSql())
             .addValue("workspace_id", ipResource.getWorkspaceId().toString())
             .addValue("ip_name", ipResource.getIpName());
     Integer matchingCount = jdbcTemplate.queryForObject(sql, sqlParams, Integer.class);
@@ -701,11 +714,13 @@ public class ResourceDao {
         "SELECT COUNT(1)"
             + " FROM resource"
             + " WHERE resource_type = :resource_type"
+            + " AND stewardship_type = :stewardship_type"
             + " AND workspace_id = :workspace_id"
             + " AND attributes->>'diskName' = :disk_name";
     MapSqlParameterSource sqlParams =
         new MapSqlParameterSource()
-            .addValue("resource_type", WsmResourceType.AZURE_DISK.toSql())
+            .addValue("resource_type", AZURE_DISK.toSql())
+            .addValue("stewardship_type", CONTROLLED.toSql())
             .addValue("workspace_id", resource.getWorkspaceId().toString())
             .addValue("disk_name", resource.getDiskName());
     Integer matchingCount = jdbcTemplate.queryForObject(sql, sqlParams, Integer.class);
@@ -721,10 +736,12 @@ public class ResourceDao {
         "SELECT COUNT(1)"
             + " FROM resource"
             + " WHERE resource_type = :resource_type"
+            + " AND stewardship_type = :stewardship_type"
             + " AND attributes->>'vmName' = :vm_name";
     MapSqlParameterSource sqlParams =
         new MapSqlParameterSource()
-            .addValue("resource_type", WsmResourceType.AZURE_VM.toSql())
+            .addValue("resource_type", AZURE_VM.toSql())
+            .addValue("stewardship_type", CONTROLLED.toSql())
             .addValue("vm_name", resource.getVmName());
     Integer matchingCount = jdbcTemplate.queryForObject(sql, sqlParams, Integer.class);
     if (matchingCount != null && matchingCount > 0) {
@@ -738,11 +755,13 @@ public class ResourceDao {
         "SELECT COUNT(1)"
             + " FROM resource"
             + " WHERE resource_type = :resource_type"
+            + " AND stewardship_type = :stewardship_type"
             + " AND workspace_id = :workspace_id"
             + " AND attributes->>'networkName' = :network_name";
     MapSqlParameterSource sqlParams =
         new MapSqlParameterSource()
-            .addValue("resource_type", WsmResourceType.AZURE_NETWORK.toSql())
+            .addValue("resource_type", AZURE_NETWORK.toSql())
+            .addValue("stewardship_type", CONTROLLED.toSql())
             .addValue("workspace_id", resource.getWorkspaceId().toString())
             .addValue("network_name", resource.getNetworkName());
     Integer matchingCount = jdbcTemplate.queryForObject(sql, sqlParams, Integer.class);
@@ -757,11 +776,13 @@ public class ResourceDao {
         "SELECT COUNT(1)"
             + " FROM resource"
             + " WHERE resource_type = :resource_type"
+            + " AND stewardship_type = :stewardship_type"
             + " AND workspace_id = :workspace_id"
             + " AND attributes->>'storageAccountName' = :name";
     MapSqlParameterSource sqlParams =
         new MapSqlParameterSource()
-            .addValue("resource_type", WsmResourceType.AZURE_NETWORK.toSql())
+            .addValue("resource_type", AZURE_STORAGE_ACCOUNT.toSql())
+            .addValue("stewardship_type", CONTROLLED.toSql())
             .addValue("workspace_id", resource.getWorkspaceId().toString())
             .addValue("name", resource.getStorageAccountName());
     Integer matchingCount = jdbcTemplate.queryForObject(sql, sqlParams, Integer.class);
@@ -792,10 +813,10 @@ public class ResourceDao {
 
     final String sql =
         "INSERT INTO resource (workspace_id, cloud_platform, resource_id, name, description, stewardship_type,"
-            + " resource_type, cloning_instructions, attributes,"
+            + " exact_resource_type, resource_type, cloning_instructions, attributes,"
             + " access_scope, managed_by, associated_app, assigned_user, private_resource_state)"
             + " VALUES (:workspace_id, :cloud_platform, :resource_id, :name, :description, :stewardship_type,"
-            + " :resource_type, :cloning_instructions, cast(:attributes AS jsonb),"
+            + " :exact_resource_type, :resource_type, :cloning_instructions, cast(:attributes AS jsonb),"
             + " :access_scope, :managed_by, :associated_app, :assigned_user, :private_resource_state)";
 
     final var params =
@@ -806,7 +827,8 @@ public class ResourceDao {
             .addValue("name", resource.getName())
             .addValue("description", resource.getDescription())
             .addValue("stewardship_type", resource.getStewardshipType().toSql())
-            .addValue("resource_type", resource.getResourceType().toSql())
+            .addValue("exact_resource_type", resource.getResourceType().toSql())
+            .addValue("resource_type", resource.getResourceFamily().toSql())
             .addValue("cloning_instructions", resource.getCloningInstructions().toSql())
             .addValue("attributes", resource.attributesToJson());
     if (resource.getStewardshipType().equals(CONTROLLED)) {
@@ -853,62 +875,8 @@ public class ResourceDao {
    * @return WsmResource
    */
   private WsmResource constructResource(DbResource dbResource) {
-    switch (dbResource.getStewardshipType()) {
-      case REFERENCED:
-        switch (dbResource.getResourceType()) {
-          case GCS_BUCKET:
-            return new ReferencedGcsBucketResource(dbResource);
-          case GCS_OBJECT:
-            return new ReferencedGcsObjectResource(dbResource);
-          case BIG_QUERY_DATASET:
-            return new ReferencedBigQueryDatasetResource(dbResource);
-          case BIG_QUERY_DATA_TABLE:
-            return new ReferencedBigQueryDataTableResource(dbResource);
-          case DATA_REPO_SNAPSHOT:
-            return new ReferencedDataRepoSnapshotResource(dbResource);
-          case GIT_REPO:
-            return new ReferencedGitRepoResource(dbResource);
-          default:
-            throw new InvalidMetadataException(
-                "Invalid reference resource type " + dbResource.getResourceType().toString());
-        }
-
-      case CONTROLLED:
-        switch (dbResource.getResourceType()) {
-          case GCS_BUCKET:
-            return new ControlledGcsBucketResource(dbResource);
-          case AI_NOTEBOOK_INSTANCE:
-            {
-              // TODO: (PF-1296) handler dispatch instead of this switch statement
-              ControlledAiNotebookHandler handler = ControlledAiNotebookHandler.getHandler();
-              return handler.makeResourceFromDb(dbResource);
-            }
-          case BIG_QUERY_DATASET:
-            {
-              // TODO: (PF-1296) handler dispatch instead of this switch statement
-              ControlledBigQueryDatasetHandler handler =
-                  ControlledBigQueryDatasetHandler.getHandler();
-              return handler.makeResourceFromDb(dbResource);
-            }
-          case AZURE_IP:
-            return new ControlledAzureIpResource(dbResource);
-          case AZURE_DISK:
-            return new ControlledAzureDiskResource(dbResource);
-          case AZURE_VM:
-            return new ControlledAzureVmResource(dbResource);
-          case AZURE_NETWORK:
-            return new ControlledAzureNetworkResource(dbResource);
-          case AZURE_STORAGE_ACCOUNT:
-            return new ControlledAzureStorageResource(dbResource);
-          default:
-            throw new InvalidMetadataException(
-                "Invalid controlled resource type" + dbResource.getResourceType().toString());
-        }
-
-      default:
-        throw new InvalidMetadataException(
-            "Invalid stewardship type" + dbResource.getStewardshipType().toString());
-    }
+    WsmResourceHandler handler = dbResource.getResourceType().getResourceHandler();
+    return handler.makeResourceFromDb(dbResource);
   }
 
   private DbResource getDbResource(String sql, MapSqlParameterSource params) {

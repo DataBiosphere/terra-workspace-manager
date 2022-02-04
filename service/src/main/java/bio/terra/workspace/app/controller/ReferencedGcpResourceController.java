@@ -33,7 +33,7 @@ import bio.terra.workspace.service.petserviceaccount.PetSaService;
 import bio.terra.workspace.service.resource.ValidationUtils;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
-import bio.terra.workspace.service.resource.referenced.cloud.any.ReferencedGitRepoResource;
+import bio.terra.workspace.service.resource.referenced.cloud.any.gitrepo.ReferencedGitRepoResource;
 import bio.terra.workspace.service.resource.referenced.cloud.gcp.ReferencedResource;
 import bio.terra.workspace.service.resource.referenced.cloud.gcp.ReferencedResourceService;
 import bio.terra.workspace.service.resource.referenced.cloud.gcp.bqdataset.ReferencedBigQueryDatasetResource;
@@ -46,6 +46,8 @@ import java.util.UUID;
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
 import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -61,6 +63,7 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
   private final ValidationUtils validationUtils;
   private final HttpServletRequest request;
   private final PetSaService petSaService;
+  private final Logger logger = LoggerFactory.getLogger(ReferencedGcpResourceController.class);
 
   @Autowired
   public ReferencedGcpResourceController(
@@ -81,6 +84,7 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
   }
 
   // -- GCS Bucket object -- //
+
   @Override
   public ResponseEntity<ApiGcpGcsObjectResource> createGcsObjectReference(
       UUID workspaceId, @Valid ApiCreateGcpGcsObjectReferenceRequestBody body) {
@@ -99,7 +103,7 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
 
     ReferencedResource referenceResource =
         referenceResourceService.createReferenceResource(resource, getAuthenticatedInfo());
-    ApiGcpGcsObjectResource response = referenceResource.castToGcsObjectResource().toApiModel();
+    ApiGcpGcsObjectResource response = referenceResource.castToGcsObjectResource().toApiResource();
     return new ResponseEntity<>(response, HttpStatus.OK);
   }
 
@@ -108,7 +112,7 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     ReferencedResource referenceResource =
         referenceResourceService.getReferenceResource(id, referenceId, userRequest);
-    ApiGcpGcsObjectResource response = referenceResource.castToGcsObjectResource().toApiModel();
+    ApiGcpGcsObjectResource response = referenceResource.castToGcsObjectResource().toApiResource();
     return new ResponseEntity<>(response, HttpStatus.OK);
   }
 
@@ -117,7 +121,7 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     ReferencedResource referenceResource =
         referenceResourceService.getReferenceResourceByName(id, name, userRequest);
-    ApiGcpGcsObjectResource response = referenceResource.castToGcsObjectResource().toApiModel();
+    ApiGcpGcsObjectResource response = referenceResource.castToGcsObjectResource().toApiResource();
     return new ResponseEntity<>(response, HttpStatus.OK);
   }
 
@@ -166,7 +170,7 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
   public ResponseEntity<Void> deleteGcsObjectReference(UUID workspaceId, UUID resourceId) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     referenceResourceService.deleteReferenceResourceForResourceType(
-        workspaceId, resourceId, userRequest, WsmResourceType.GCS_OBJECT);
+        workspaceId, resourceId, userRequest, WsmResourceType.REFERENCED_GCP_GCS_OBJECT);
     return new ResponseEntity<>(HttpStatus.NO_CONTENT);
   }
 
@@ -188,7 +192,7 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
 
     ReferencedResource referenceResource =
         referenceResourceService.createReferenceResource(resource, getAuthenticatedInfo());
-    ApiGcpGcsBucketResource response = referenceResource.castToGcsBucketResource().toApiModel();
+    ApiGcpGcsBucketResource response = referenceResource.castToGcsBucketResource().toApiResource();
     return new ResponseEntity<>(response, HttpStatus.OK);
   }
 
@@ -197,7 +201,7 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     ReferencedResource referenceResource =
         referenceResourceService.getReferenceResource(id, referenceId, userRequest);
-    ApiGcpGcsBucketResource response = referenceResource.castToGcsBucketResource().toApiModel();
+    ApiGcpGcsBucketResource response = referenceResource.castToGcsBucketResource().toApiResource();
     return new ResponseEntity<>(response, HttpStatus.OK);
   }
 
@@ -206,7 +210,7 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     ReferencedResource referenceResource =
         referenceResourceService.getReferenceResourceByName(id, name, userRequest);
-    ApiGcpGcsBucketResource response = referenceResource.castToGcsBucketResource().toApiModel();
+    ApiGcpGcsBucketResource response = referenceResource.castToGcsBucketResource().toApiResource();
     return new ResponseEntity<>(response, HttpStatus.OK);
   }
 
@@ -249,7 +253,7 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
   public ResponseEntity<Void> deleteBucketReference(UUID workspaceId, UUID resourceId) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     referenceResourceService.deleteReferenceResourceForResourceType(
-        workspaceId, resourceId, userRequest, WsmResourceType.GCS_BUCKET);
+        workspaceId, resourceId, userRequest, WsmResourceType.REFERENCED_GCP_GCS_BUCKET);
     return new ResponseEntity<>(HttpStatus.NO_CONTENT);
   }
 
@@ -349,7 +353,7 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
   public ResponseEntity<Void> deleteBigQueryDataTableReference(UUID workspaceId, UUID resourceId) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     referenceResourceService.deleteReferenceResourceForResourceType(
-        workspaceId, resourceId, userRequest, WsmResourceType.BIG_QUERY_DATA_TABLE);
+        workspaceId, resourceId, userRequest, WsmResourceType.REFERENCED_GCP_BIG_QUERY_DATA_TABLE);
     return new ResponseEntity<>(HttpStatus.NO_CONTENT);
   }
 
@@ -447,7 +451,7 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
   public ResponseEntity<Void> deleteBigQueryDatasetReference(UUID workspaceId, UUID resourceId) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     referenceResourceService.deleteReferenceResourceForResourceType(
-        workspaceId, resourceId, userRequest, WsmResourceType.BIG_QUERY_DATASET);
+        workspaceId, resourceId, userRequest, WsmResourceType.REFERENCED_GCP_BIG_QUERY_DATASET);
     return new ResponseEntity<>(HttpStatus.NO_CONTENT);
   }
 
@@ -542,7 +546,7 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
   public ResponseEntity<Void> deleteDataRepoSnapshotReference(UUID workspaceId, UUID resourceId) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     referenceResourceService.deleteReferenceResourceForResourceType(
-        workspaceId, resourceId, userRequest, WsmResourceType.DATA_REPO_SNAPSHOT);
+        workspaceId, resourceId, userRequest, WsmResourceType.REFERENCED_ANY_DATA_REPO_SNAPSHOT);
     return new ResponseEntity<>(HttpStatus.NO_CONTENT);
   }
 
@@ -580,7 +584,7 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
     // Build the correct response type
     final var result =
         new ApiCloneReferencedGcpGcsObjectResourceResult()
-            .resource(clonedReferencedResource.castToGcsObjectResource().toApiModel())
+            .resource(clonedReferencedResource.castToGcsObjectResource().toApiResource())
             .sourceWorkspaceId(sourceReferencedResource.getWorkspaceId())
             .sourceResourceId(sourceReferencedResource.getResourceId())
             .effectiveCloningInstructions(effectiveCloningInstructions.toApiModel());
@@ -591,7 +595,6 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
   public ResponseEntity<ApiCloneReferencedGcpGcsBucketResourceResult> cloneGcpGcsBucketReference(
       UUID workspaceId, UUID resourceId, @Valid ApiCloneReferencedResourceRequestBody body) {
     final AuthenticatedUserRequest petRequest = getCloningCredentials(workspaceId);
-
     final ReferencedResource sourceReferencedResource =
         referenceResourceService.getReferenceResource(workspaceId, resourceId, petRequest);
 
@@ -622,7 +625,7 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
     // Build the correct response type
     final var result =
         new ApiCloneReferencedGcpGcsBucketResourceResult()
-            .resource(clonedReferencedResource.castToGcsBucketResource().toApiModel())
+            .resource(clonedReferencedResource.castToGcsBucketResource().toApiResource())
             .sourceWorkspaceId(sourceReferencedResource.getWorkspaceId())
             .sourceResourceId(sourceReferencedResource.getResourceId())
             .effectiveCloningInstructions(effectiveCloningInstructions.toApiModel());
@@ -676,7 +679,6 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
       cloneGcpBigQueryDatasetReference(
           UUID workspaceId, UUID resourceId, @Valid ApiCloneReferencedResourceRequestBody body) {
     final AuthenticatedUserRequest petRequest = getCloningCredentials(workspaceId);
-
     final ReferencedResource sourceReferencedResource =
         referenceResourceService.getReferenceResource(workspaceId, resourceId, petRequest);
 
@@ -719,6 +721,7 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
       cloneGcpDataRepoSnapshotReference(
           UUID workspaceId, UUID resourceId, @Valid ApiCloneReferencedResourceRequestBody body) {
     final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+
     final ReferencedResource sourceReferencedResource =
         referenceResourceService.getReferenceResource(workspaceId, resourceId, userRequest);
 
@@ -774,7 +777,7 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
 
     ReferencedResource referenceResource =
         referenceResourceService.createReferenceResource(resource, getAuthenticatedInfo());
-    ApiGitRepoResource response = referenceResource.castToGitRepoResource().toApiModel();
+    ApiGitRepoResource response = referenceResource.castToGitRepoResource().toApiResource();
     return new ResponseEntity<>(response, HttpStatus.OK);
   }
 
@@ -783,7 +786,7 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     ReferencedResource referenceResource =
         referenceResourceService.getReferenceResource(workspaceId, resourceId, userRequest);
-    ApiGitRepoResource response = referenceResource.castToGitRepoResource().toApiModel();
+    ApiGitRepoResource response = referenceResource.castToGitRepoResource().toApiResource();
     return new ResponseEntity<>(response, HttpStatus.OK);
   }
 
@@ -793,7 +796,7 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     ReferencedResource referenceResource =
         referenceResourceService.getReferenceResourceByName(workspaceId, resourceName, userRequest);
-    ApiGitRepoResource response = referenceResource.castToGitRepoResource().toApiModel();
+    ApiGitRepoResource response = referenceResource.castToGitRepoResource().toApiResource();
     return new ResponseEntity<>(response, HttpStatus.OK);
   }
 
@@ -829,7 +832,7 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
   public ResponseEntity<Void> deleteGitRepoReference(UUID workspaceId, UUID resourceId) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     referenceResourceService.deleteReferenceResourceForResourceType(
-        workspaceId, resourceId, userRequest, WsmResourceType.GIT_REPO);
+        workspaceId, resourceId, userRequest, WsmResourceType.REFERENCED_ANY_GIT_REPO);
     return new ResponseEntity<>(HttpStatus.OK);
   }
 
@@ -866,7 +869,7 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
     // Build the correct response type
     ApiCloneReferencedGitRepoResourceResult result =
         new ApiCloneReferencedGitRepoResourceResult()
-            .resource(clonedReferencedResource.castToGitRepoResource().toApiModel())
+            .resource(clonedReferencedResource.castToGitRepoResource().toApiResource())
             .sourceWorkspaceId(sourceReferencedResource.getWorkspaceId())
             .sourceResourceId(sourceReferencedResource.getResourceId())
             .effectiveCloningInstructions(effectiveCloningInstructions.toApiModel());

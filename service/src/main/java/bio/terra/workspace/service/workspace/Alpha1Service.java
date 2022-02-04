@@ -14,7 +14,7 @@ import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.job.exception.InternalStairwayException;
 import bio.terra.workspace.service.resource.model.StewardshipType;
 import bio.terra.workspace.service.resource.model.WsmResource;
-import bio.terra.workspace.service.resource.model.WsmResourceType;
+import bio.terra.workspace.service.resource.model.WsmResourceFamily;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ResourceKeys;
 import bio.terra.workspace.service.workspace.model.EnumeratedJob;
@@ -59,7 +59,7 @@ public class Alpha1Service {
    * @param userRequest authenticated user
    * @param limit max number of jobs to return
    * @param pageToken optional starting place in the result set; start at beginning if missing
-   * @param resourceType optional filter by resource type
+   * @param cloudResourceType optional filter by cloud resource type
    * @param stewardshipType optional filter by stewardship type
    * @param resourceName optional filter by resource name
    * @param jobStateFilter optional filter by job state
@@ -70,7 +70,7 @@ public class Alpha1Service {
       AuthenticatedUserRequest userRequest,
       int limit,
       @Nullable String pageToken,
-      @Nullable WsmResourceType resourceType,
+      @Nullable WsmResourceFamily cloudResourceType,
       @Nullable StewardshipType stewardshipType,
       @Nullable String resourceName,
       @Nullable JobStateFilter jobStateFilter) {
@@ -84,7 +84,7 @@ public class Alpha1Service {
     try {
       FlightFilter filter =
           buildFlightFilter(
-              workspaceId, resourceType, stewardshipType, resourceName, jobStateFilter);
+              workspaceId, cloudResourceType, stewardshipType, resourceName, jobStateFilter);
       flightEnumeration = stairwayComponent.get().getFlights(pageToken, limit, filter);
     } catch (StairwayException | InterruptedException stairwayEx) {
       throw new InternalStairwayException(stairwayEx);
@@ -125,7 +125,7 @@ public class Alpha1Service {
 
   private FlightFilter buildFlightFilter(
       UUID workspaceId,
-      @Nullable WsmResourceType resourceType,
+      @Nullable WsmResourceFamily cloudResourceType,
       @Nullable StewardshipType stewardshipType,
       @Nullable String resourceName,
       @Nullable JobStateFilter jobStateFilter) {
@@ -135,7 +135,7 @@ public class Alpha1Service {
     filter.addFilterInputParameter(
         WorkspaceFlightMapKeys.WORKSPACE_ID, FlightFilterOp.EQUAL, workspaceId.toString());
     // Add optional filters
-    Optional.ofNullable(resourceType)
+    Optional.ofNullable(cloudResourceType)
         .map(
             t ->
                 filter.addFilterInputParameter(

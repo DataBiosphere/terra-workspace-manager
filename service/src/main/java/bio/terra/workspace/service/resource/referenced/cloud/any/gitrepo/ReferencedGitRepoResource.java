@@ -1,4 +1,4 @@
-package bio.terra.workspace.service.resource.referenced.cloud.any;
+package bio.terra.workspace.service.resource.referenced.cloud.any.gitrepo;
 
 import bio.terra.common.exception.InconsistentFieldsException;
 import bio.terra.common.exception.MissingRequiredFieldException;
@@ -7,8 +7,11 @@ import bio.terra.workspace.db.DbSerDes;
 import bio.terra.workspace.db.model.DbResource;
 import bio.terra.workspace.generated.model.ApiGitRepoAttributes;
 import bio.terra.workspace.generated.model.ApiGitRepoResource;
+import bio.terra.workspace.generated.model.ApiResourceAttributesUnion;
+import bio.terra.workspace.generated.model.ApiResourceUnion;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
+import bio.terra.workspace.service.resource.model.WsmResourceFamily;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.resource.referenced.cloud.gcp.ReferencedResource;
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -50,12 +53,27 @@ public class ReferencedGitRepoResource extends ReferencedResource {
 
   @Override
   public WsmResourceType getResourceType() {
-    return WsmResourceType.GIT_REPO;
+    return WsmResourceType.REFERENCED_ANY_GIT_REPO;
+  }
+
+  @Override
+  public WsmResourceFamily getResourceFamily() {
+    return WsmResourceFamily.GIT_REPO;
   }
 
   @Override
   public String attributesToJson() {
     return DbSerDes.toJson(new ReferencedGitRepoAttributes(gitRepoUrl));
+  }
+
+  @Override
+  public ApiResourceAttributesUnion toApiAttributesUnion() {
+    return new ApiResourceAttributesUnion().gitRepo(toApiAttributes());
+  }
+
+  @Override
+  public ApiResourceUnion toApiResourceUnion() {
+    return new ApiResourceUnion().gitRepo(toApiResource());
   }
 
   @Override
@@ -70,7 +88,7 @@ public class ReferencedGitRepoResource extends ReferencedResource {
     return new ApiGitRepoAttributes().gitRepoUrl(gitRepoUrl);
   }
 
-  public ApiGitRepoResource toApiModel() {
+  public ApiGitRepoResource toApiResource() {
     return new ApiGitRepoResource().metadata(super.toApiMetadata()).attributes(toApiAttributes());
   }
 
@@ -81,8 +99,8 @@ public class ReferencedGitRepoResource extends ReferencedResource {
   @Override
   public void validate() {
     super.validate();
-    if (getResourceType() != WsmResourceType.GIT_REPO) {
-      throw new InconsistentFieldsException("Expected GIT_REPO");
+    if (getResourceType() != WsmResourceType.REFERENCED_ANY_GIT_REPO) {
+      throw new InconsistentFieldsException("Expected REFERENCED_GIT_REPO");
     }
     if (Strings.isNullOrEmpty(gitRepoUrl)) {
       throw new MissingRequiredFieldException(

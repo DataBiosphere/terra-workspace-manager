@@ -29,19 +29,19 @@ public class SetCreateResponseStep implements Step {
     ControlledResource responseResource;
     if (resource.getAccessScope() == AccessScopeType.ACCESS_SCOPE_PRIVATE) {
       switch (resource.getResourceType()) {
-        case GCS_BUCKET:
+        case CONTROLLED_GCP_GCS_BUCKET:
           responseResource =
               resource.castToGcsBucketResource().toBuilder()
                   .privateResourceState(PrivateResourceState.ACTIVE)
                   .build();
           break;
-        case BIG_QUERY_DATASET:
+        case CONTROLLED_GCP_BIG_QUERY_DATASET:
           responseResource =
               resource.castToBigQueryDatasetResource().toBuilder()
                   .privateResourceState(PrivateResourceState.ACTIVE)
                   .build();
           break;
-        case AI_NOTEBOOK_INSTANCE:
+        case CONTROLLED_GCP_AI_NOTEBOOK_INSTANCE:
           responseResource =
               resource.castToAiNotebookInstanceResource().toBuilder()
                   .privateResourceState(PrivateResourceState.ACTIVE)

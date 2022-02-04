@@ -5,7 +5,7 @@ import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.model.SamConstants;
 import bio.terra.workspace.service.resource.model.StewardshipType;
 import bio.terra.workspace.service.resource.model.WsmResource;
-import bio.terra.workspace.service.resource.model.WsmResourceType;
+import bio.terra.workspace.service.resource.model.WsmResourceFamily;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import java.util.List;
 import java.util.UUID;
@@ -28,7 +28,7 @@ public class WsmResourceService {
 
   public List<WsmResource> enumerateResources(
       UUID workspaceId,
-      @Nullable WsmResourceType resourceType,
+      @Nullable WsmResourceFamily cloudResourceType,
       @Nullable StewardshipType stewardshipType,
       int offset,
       int limit,
@@ -40,6 +40,6 @@ public class WsmResourceService {
         userRequest, workspaceId, SamConstants.SamWorkspaceAction.READ);
 
     return resourceDao.enumerateResources(
-        workspaceId, resourceType, stewardshipType, offset, limit);
+        workspaceId, cloudResourceType, stewardshipType, offset, limit);
   }
 }

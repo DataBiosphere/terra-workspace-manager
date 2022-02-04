@@ -1,6 +1,7 @@
 package bio.terra.workspace.service.resource.controlled.cloud.gcp;
 
 import bio.terra.workspace.service.iam.model.ControlledResourceIamRole;
+import bio.terra.workspace.service.resource.model.WsmResourceFamily;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
 import java.util.List;
 
@@ -32,15 +33,16 @@ public class CustomGcpIamRole {
    * Create a custom GCP role named by a combination of a resource type and resource-level IAM role.
    * Custom roles applied at the resource level should use this to generate the correct role name.
    *
-   * @param resourceType The type of resource this role is intended for. Used for name generation
+   * @param cloudResourceType The type of cloud resource this role is intended for. Used for name
+   *     generation
    * @param iamRole The IAM role this GCP role is intended for. Used for name generation.
    * @param includedPermissions The list of GCP permissions this role should grant.
    */
   public static CustomGcpIamRole ofResource(
-      WsmResourceType resourceType,
+      WsmResourceFamily cloudResourceType,
       ControlledResourceIamRole iamRole,
       List<String> includedPermissions) {
-    String roleName = resourceType.name().toUpperCase() + "_" + iamRole.name().toUpperCase();
+    String roleName = cloudResourceType.name().toUpperCase() + "_" + iamRole.name().toUpperCase();
     return new CustomGcpIamRole(roleName, includedPermissions);
   }
 

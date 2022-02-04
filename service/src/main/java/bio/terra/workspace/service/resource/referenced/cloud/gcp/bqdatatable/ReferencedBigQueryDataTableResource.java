@@ -7,11 +7,14 @@ import bio.terra.workspace.db.exception.InvalidMetadataException;
 import bio.terra.workspace.db.model.DbResource;
 import bio.terra.workspace.generated.model.ApiGcpBigQueryDataTableAttributes;
 import bio.terra.workspace.generated.model.ApiGcpBigQueryDataTableResource;
+import bio.terra.workspace.generated.model.ApiResourceAttributesUnion;
+import bio.terra.workspace.generated.model.ApiResourceUnion;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.petserviceaccount.PetSaService;
 import bio.terra.workspace.service.resource.ValidationUtils;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
+import bio.terra.workspace.service.resource.model.WsmResourceFamily;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.resource.referenced.cloud.gcp.ReferencedResource;
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -63,8 +66,8 @@ public class ReferencedBigQueryDataTableResource extends ReferencedResource {
    */
   public ReferencedBigQueryDataTableResource(DbResource dbResource) {
     super(dbResource);
-    if (dbResource.getResourceType() != WsmResourceType.BIG_QUERY_DATA_TABLE) {
-      throw new InvalidMetadataException("Expected BIG_QUERY_DATA_TABLE");
+    if (dbResource.getResourceType() != WsmResourceType.REFERENCED_GCP_BIG_QUERY_DATA_TABLE) {
+      throw new InvalidMetadataException("Expected REFERENCED_GCP BIG_QUERY_DATA_TABLE");
     }
 
     ReferencedBigQueryDataTableAttributes attributes =
@@ -106,7 +109,12 @@ public class ReferencedBigQueryDataTableResource extends ReferencedResource {
 
   @Override
   public WsmResourceType getResourceType() {
-    return WsmResourceType.BIG_QUERY_DATA_TABLE;
+    return WsmResourceType.REFERENCED_GCP_BIG_QUERY_DATA_TABLE;
+  }
+
+  @Override
+  public WsmResourceFamily getResourceFamily() {
+    return WsmResourceFamily.BIG_QUERY_DATA_TABLE;
   }
 
   @Override
@@ -114,6 +122,16 @@ public class ReferencedBigQueryDataTableResource extends ReferencedResource {
     return DbSerDes.toJson(
         new ReferencedBigQueryDataTableAttributes(
             getProjectId(), getDatasetId(), getDataTableId()));
+  }
+
+  @Override
+  public ApiResourceAttributesUnion toApiAttributesUnion() {
+    return new ApiResourceAttributesUnion().gcpBqDataTable(toApiAttributes());
+  }
+
+  @Override
+  public ApiResourceUnion toApiResourceUnion() {
+    return new ApiResourceUnion().gcpBqDataTable(toApiResource());
   }
 
   @Override

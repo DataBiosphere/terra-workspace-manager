@@ -1,6 +1,7 @@
 package bio.terra.workspace.service.resource.controlled.cloud.gcp;
 
 import bio.terra.workspace.service.iam.model.ControlledResourceIamRole;
+import bio.terra.workspace.service.resource.model.WsmResourceFamily;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableTable;
@@ -98,68 +99,68 @@ public class CustomGcpIamRoleMapping {
           new ImmutableTable.Builder<WsmResourceType, ControlledResourceIamRole, CustomGcpIamRole>()
               // GCS bucket
               .put(
-                  WsmResourceType.GCS_BUCKET,
+                  WsmResourceType.CONTROLLED_GCP_GCS_BUCKET,
                   ControlledResourceIamRole.READER,
                   CustomGcpIamRole.ofResource(
-                      WsmResourceType.GCS_BUCKET,
+                      WsmResourceFamily.GCS_BUCKET,
                       ControlledResourceIamRole.READER,
                       GCS_BUCKET_READER_PERMISSIONS))
               .put(
-                  WsmResourceType.GCS_BUCKET,
+                  WsmResourceType.CONTROLLED_GCP_GCS_BUCKET,
                   ControlledResourceIamRole.WRITER,
                   CustomGcpIamRole.ofResource(
-                      WsmResourceType.GCS_BUCKET,
+                      WsmResourceFamily.GCS_BUCKET,
                       ControlledResourceIamRole.WRITER,
                       GCS_BUCKET_WRITER_PERMISSIONS))
               .put(
-                  WsmResourceType.GCS_BUCKET,
+                  WsmResourceType.CONTROLLED_GCP_GCS_BUCKET,
                   ControlledResourceIamRole.EDITOR,
                   CustomGcpIamRole.ofResource(
-                      WsmResourceType.GCS_BUCKET,
+                      WsmResourceFamily.GCS_BUCKET,
                       ControlledResourceIamRole.EDITOR,
                       GCS_BUCKET_EDITOR_PERMISSIONS))
               // BigQuery dataset
               .put(
-                  WsmResourceType.BIG_QUERY_DATASET,
+                  WsmResourceType.CONTROLLED_GCP_BIG_QUERY_DATASET,
                   ControlledResourceIamRole.READER,
                   CustomGcpIamRole.ofResource(
-                      WsmResourceType.BIG_QUERY_DATASET,
+                      WsmResourceFamily.BIG_QUERY_DATASET,
                       ControlledResourceIamRole.READER,
                       BIG_QUERY_DATASET_READER_PERMISSIONS))
               .put(
-                  WsmResourceType.BIG_QUERY_DATASET,
+                  WsmResourceType.CONTROLLED_GCP_BIG_QUERY_DATASET,
                   ControlledResourceIamRole.WRITER,
                   CustomGcpIamRole.ofResource(
-                      WsmResourceType.BIG_QUERY_DATASET,
+                      WsmResourceFamily.BIG_QUERY_DATASET,
                       ControlledResourceIamRole.WRITER,
                       BIG_QUERY_DATASET_WRITER_PERMISSIONS))
               .put(
-                  WsmResourceType.BIG_QUERY_DATASET,
+                  WsmResourceType.CONTROLLED_GCP_BIG_QUERY_DATASET,
                   ControlledResourceIamRole.EDITOR,
                   CustomGcpIamRole.ofResource(
-                      WsmResourceType.BIG_QUERY_DATASET,
+                      WsmResourceFamily.BIG_QUERY_DATASET,
                       ControlledResourceIamRole.EDITOR,
                       BIG_QUERY_DATASET_EDITOR_PERMISSIONS))
               // AI Notebook instance
               .put(
-                  WsmResourceType.AI_NOTEBOOK_INSTANCE,
+                  WsmResourceType.CONTROLLED_GCP_AI_NOTEBOOK_INSTANCE,
                   ControlledResourceIamRole.READER,
                   CustomGcpIamRole.ofResource(
-                      WsmResourceType.AI_NOTEBOOK_INSTANCE,
+                      WsmResourceFamily.AI_NOTEBOOK_INSTANCE,
                       ControlledResourceIamRole.READER,
                       AI_NOTEBOOK_INSTANCE_READER_PERMISSIONS))
               .put(
-                  WsmResourceType.AI_NOTEBOOK_INSTANCE,
+                  WsmResourceType.CONTROLLED_GCP_AI_NOTEBOOK_INSTANCE,
                   ControlledResourceIamRole.WRITER,
                   CustomGcpIamRole.ofResource(
-                      WsmResourceType.AI_NOTEBOOK_INSTANCE,
+                      WsmResourceFamily.AI_NOTEBOOK_INSTANCE,
                       ControlledResourceIamRole.WRITER,
                       AI_NOTEBOOK_INSTANCE_WRITER_PERMISSIONS))
               .put(
-                  WsmResourceType.AI_NOTEBOOK_INSTANCE,
+                  WsmResourceType.CONTROLLED_GCP_AI_NOTEBOOK_INSTANCE,
                   ControlledResourceIamRole.EDITOR,
                   CustomGcpIamRole.ofResource(
-                      WsmResourceType.AI_NOTEBOOK_INSTANCE,
+                      WsmResourceFamily.AI_NOTEBOOK_INSTANCE,
                       ControlledResourceIamRole.EDITOR,
                       AI_NOTEBOOK_INSTANCE_EDITOR_PERMISSIONS))
               .build();

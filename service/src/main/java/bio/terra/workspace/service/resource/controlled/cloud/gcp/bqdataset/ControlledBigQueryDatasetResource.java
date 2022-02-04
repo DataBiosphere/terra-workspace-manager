@@ -5,12 +5,16 @@ import bio.terra.common.exception.MissingRequiredFieldException;
 import bio.terra.workspace.db.DbSerDes;
 import bio.terra.workspace.generated.model.ApiGcpBigQueryDatasetAttributes;
 import bio.terra.workspace.generated.model.ApiGcpBigQueryDatasetResource;
+import bio.terra.workspace.generated.model.ApiResourceAttributesUnion;
+import bio.terra.workspace.generated.model.ApiResourceUnion;
 import bio.terra.workspace.service.resource.ValidationUtils;
 import bio.terra.workspace.service.resource.controlled.model.AccessScopeType;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import bio.terra.workspace.service.resource.controlled.model.ManagedByType;
 import bio.terra.workspace.service.resource.controlled.model.PrivateResourceState;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
+import bio.terra.workspace.service.resource.model.StewardshipType;
+import bio.terra.workspace.service.resource.model.WsmResourceFamily;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.resource.referenced.exception.InvalidReferenceException;
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -98,7 +102,12 @@ public class ControlledBigQueryDatasetResource extends ControlledResource {
 
   @Override
   public WsmResourceType getResourceType() {
-    return WsmResourceType.BIG_QUERY_DATASET;
+    return WsmResourceType.CONTROLLED_GCP_BIG_QUERY_DATASET;
+  }
+
+  @Override
+  public WsmResourceFamily getResourceFamily() {
+    return WsmResourceFamily.BIG_QUERY_DATASET;
   }
 
   @Override
@@ -108,10 +117,22 @@ public class ControlledBigQueryDatasetResource extends ControlledResource {
   }
 
   @Override
+  public ApiResourceAttributesUnion toApiAttributesUnion() {
+    return new ApiResourceAttributesUnion().gcpBqDataset(toApiAttributes());
+  }
+
+  @Override
+  public ApiResourceUnion toApiResourceUnion() {
+    return new ApiResourceUnion().gcpBqDataset(toApiResource());
+  }
+
+  @Override
   public void validate() {
     super.validate();
-    if (getResourceType() != WsmResourceType.BIG_QUERY_DATASET) {
-      throw new InconsistentFieldsException("Expected BIG_QUERY_DATASET");
+    if (getResourceType() != WsmResourceType.CONTROLLED_GCP_BIG_QUERY_DATASET
+        || getResourceFamily() != WsmResourceFamily.BIG_QUERY_DATASET
+        || getStewardshipType() != StewardshipType.CONTROLLED) {
+      throw new InconsistentFieldsException("Expected controlled GCP BIG_QUERY_DATASET");
     }
     if (getDatasetName() == null) {
       throw new MissingRequiredFieldException(

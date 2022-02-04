@@ -6,12 +6,16 @@ import bio.terra.workspace.db.DbSerDes;
 import bio.terra.workspace.db.model.DbResource;
 import bio.terra.workspace.generated.model.ApiAzureIpAttributes;
 import bio.terra.workspace.generated.model.ApiAzureIpResource;
+import bio.terra.workspace.generated.model.ApiResourceAttributesUnion;
+import bio.terra.workspace.generated.model.ApiResourceUnion;
 import bio.terra.workspace.service.resource.ValidationUtils;
 import bio.terra.workspace.service.resource.controlled.model.AccessScopeType;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import bio.terra.workspace.service.resource.controlled.model.ManagedByType;
 import bio.terra.workspace.service.resource.controlled.model.PrivateResourceState;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
+import bio.terra.workspace.service.resource.model.StewardshipType;
+import bio.terra.workspace.service.resource.model.WsmResourceFamily;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -81,7 +85,12 @@ public class ControlledAzureIpResource extends ControlledResource {
 
   @Override
   public WsmResourceType getResourceType() {
-    return WsmResourceType.AZURE_IP;
+    return WsmResourceType.CONTROLLED_AZURE_IP;
+  }
+
+  @Override
+  public WsmResourceFamily getResourceFamily() {
+    return WsmResourceFamily.AZURE_IP;
   }
 
   @Override
@@ -90,10 +99,26 @@ public class ControlledAzureIpResource extends ControlledResource {
   }
 
   @Override
+  public ApiResourceAttributesUnion toApiAttributesUnion() {
+    ApiResourceAttributesUnion union = new ApiResourceAttributesUnion();
+    union.azureIp(toApiAttributes());
+    return union;
+  }
+
+  @Override
+  public ApiResourceUnion toApiResourceUnion() {
+    ApiResourceUnion union = new ApiResourceUnion();
+    union.azureIp(toApiResource());
+    return union;
+  }
+
+  @Override
   public void validate() {
     super.validate();
-    if (getResourceType() != WsmResourceType.AZURE_IP) {
-      throw new InconsistentFieldsException("Expected AZURE_IP");
+    if (getResourceType() != WsmResourceType.CONTROLLED_AZURE_IP
+        || getResourceFamily() != WsmResourceFamily.AZURE_IP
+        || getStewardshipType() != StewardshipType.CONTROLLED) {
+      throw new InconsistentFieldsException("Expected controlled AZURE_IP");
     }
     if (getIpName() == null) {
       throw new MissingRequiredFieldException(

@@ -5,11 +5,15 @@ import bio.terra.workspace.db.model.DbResource;
 import bio.terra.workspace.service.resource.model.WsmResource;
 import bio.terra.workspace.service.resource.model.WsmResourceHandler;
 import bio.terra.workspace.service.workspace.GcpCloudContextService;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.util.Optional;
 import javax.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+@SuppressFBWarnings(
+    value = "ST_WRITE_TO_STATIC_FROM_INSTANCE_METHOD",
+    justification = "Enable both injection and static lookup")
 @Component
 public class ControlledAiNotebookHandler implements WsmResourceHandler {
   private static ControlledAiNotebookHandler theHandler;
@@ -29,6 +33,7 @@ public class ControlledAiNotebookHandler implements WsmResourceHandler {
     theHandler = this;
   }
 
+  /** {@inheritDoc} */
   @Override
   public WsmResource makeResourceFromDb(DbResource dbResource) {
     // Old version of attributes do not have project id, so in that case we look it up
