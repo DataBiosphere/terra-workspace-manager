@@ -3,13 +3,15 @@ package bio.terra.workspace.service.resource.referenced.cloud.gcp.datareposnapsh
 import bio.terra.workspace.db.model.DbResource;
 import bio.terra.workspace.service.resource.model.WsmResource;
 import bio.terra.workspace.service.resource.model.WsmResourceHandler;
-import java.util.Optional;
 
 public class ReferencedDataRepoSnapshotHandler implements WsmResourceHandler {
   private static ReferencedDataRepoSnapshotHandler theHandler;
 
   public static ReferencedDataRepoSnapshotHandler getHandler() {
-    return Optional.ofNullable(theHandler).orElse(new ReferencedDataRepoSnapshotHandler());
+    if (theHandler == null) {
+      theHandler = new ReferencedDataRepoSnapshotHandler();
+    }
+    return theHandler;
   }
 
   /** {@inheritDoc} */
