@@ -417,8 +417,7 @@ public class JobService {
 
   /**
    * Ensure the user in the user request has permission to read the workspace associated with the
-   * Job ID. Throws ForbiddenException if not. If the workspace does not exist, treat this as the
-   * user having access (i.e. skip validateWorkspaceAndAction check).
+   * Job ID. Throws ForbiddenException if not.
    *
    * @param jobId - ID of running job
    * @param userRequest - original user request
