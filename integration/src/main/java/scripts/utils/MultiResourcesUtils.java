@@ -19,8 +19,8 @@ import java.util.List;
 import java.util.UUID;
 import org.apache.commons.lang3.RandomStringUtils;
 
-// Static methods to create resources
-public class ResourceMaker {
+/** Utils for creating and deleting mix kinds of controlled and referenced resources. */
+public class MultiResourcesUtils {
 
   // Support for makeResources
   private static String makeName() {

@@ -35,8 +35,8 @@ import org.slf4j.LoggerFactory;
 import scripts.utils.ClientTestUtils;
 import scripts.utils.CloudContextMaker;
 import scripts.utils.DataRepoTestScriptBase;
+import scripts.utils.MultiResourcesUtils;
 import scripts.utils.ParameterUtils;
-import scripts.utils.ResourceMaker;
 
 public class EnumerateJobs extends DataRepoTestScriptBase {
   private static final Logger logger = LoggerFactory.getLogger(EnumerateJobs.class);
@@ -93,7 +93,7 @@ public class EnumerateJobs extends DataRepoTestScriptBase {
     // create the resources for the test
     logger.info("Creating {} resources", RESOURCE_COUNT);
     resourceList =
-        ResourceMaker.makeResources(
+        MultiResourcesUtils.makeResources(
             ownerReferencedGcpResourceApi,
             ownerControlledGcpResourceApi,
             getWorkspaceId(),
@@ -107,7 +107,8 @@ public class EnumerateJobs extends DataRepoTestScriptBase {
     logger.info("Created {} resources", resourceList.size());
     logger.info("Cleaning up {} resources", resourceList.size());
 
-    ResourceMaker.cleanupResources(resourceList, ownerControlledGcpResourceApi, getWorkspaceId());
+    MultiResourcesUtils.cleanupResources(
+        resourceList, ownerControlledGcpResourceApi, getWorkspaceId());
     logger.info("Cleaned up {} resources", resourceList.size());
   }
 
