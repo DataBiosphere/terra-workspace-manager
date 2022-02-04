@@ -29,7 +29,7 @@ import org.slf4j.LoggerFactory;
 import scripts.utils.ClientTestUtils;
 import scripts.utils.CloudContextMaker;
 import scripts.utils.GcsBucketAccessTester;
-import scripts.utils.ResourceMaker;
+import scripts.utils.GcsBucketUtils;
 import scripts.utils.WorkspaceAllocateTestScriptBase;
 
 public class ControlledApplicationSharedGcsBucketLifecycle extends WorkspaceAllocateTestScriptBase {
@@ -86,7 +86,7 @@ public class ControlledApplicationSharedGcsBucketLifecycle extends WorkspaceAllo
         assertThrows(
             ApiException.class,
             () ->
-                ResourceMaker.makeControlledGcsBucketAppShared(
+                GcsBucketUtils.makeControlledGcsBucketAppShared(
                     wsmappResourceApi,
                     getWorkspaceId(),
                     bucketResourceName,
@@ -111,7 +111,7 @@ public class ControlledApplicationSharedGcsBucketLifecycle extends WorkspaceAllo
 
     // Create the bucket - should work this time
     CreatedControlledGcpGcsBucket createdBucket =
-        ResourceMaker.makeControlledGcsBucketAppShared(
+        GcsBucketUtils.makeControlledGcsBucketAppShared(
             wsmappResourceApi,
             getWorkspaceId(),
             bucketResourceName,
@@ -142,14 +142,14 @@ public class ControlledApplicationSharedGcsBucketLifecycle extends WorkspaceAllo
         assertThrows(
             ApiException.class,
             () ->
-                ResourceMaker.deleteControlledGcsBucket(
+                GcsBucketUtils.deleteControlledGcsBucket(
                     createdBucket.getResourceId(), getWorkspaceId(), ownerResourceApi));
     // TODO: [PF-1208] this should be FORBIDDEN (403), but we are throwing the wrong thing
     assertEquals(HttpStatusCodes.STATUS_CODE_UNAUTHORIZED, cannotDelete.getCode());
     logger.info("Owner delete failed as expected");
 
     // Application can delete the bucket through WSM
-    ResourceMaker.deleteControlledGcsBucket(
+    GcsBucketUtils.deleteControlledGcsBucket(
         createdBucket.getResourceId(), getWorkspaceId(), wsmappResourceApi);
     logger.info("Application delete succeeded");
   }

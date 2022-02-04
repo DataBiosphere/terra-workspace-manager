@@ -34,8 +34,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import scripts.utils.ClientTestUtils;
 import scripts.utils.CloudContextMaker;
-import scripts.utils.ResourceMaker;
-import scripts.utils.ResourceModifier;
+import scripts.utils.NotebookUtils;
 import scripts.utils.WorkspaceAllocateTestScriptBase;
 
 public class PrivateControlledAiNotebookInstanceLifecycle extends WorkspaceAllocateTestScriptBase {
@@ -81,7 +80,7 @@ public class PrivateControlledAiNotebookInstanceLifecycle extends WorkspaceAlloc
     ControlledGcpResourceApi resourceUserApi =
         ClientTestUtils.getControlledGcpResourceClient(resourceUser, server);
     CreatedControlledGcpAiNotebookInstanceResult creationResult =
-        ResourceMaker.makeControlledNotebookUserPrivate(
+        NotebookUtils.makeControlledNotebookUserPrivate(
             getWorkspaceId(), instanceId, /*location=*/ null, resourceUserApi);
 
     UUID resourceId = creationResult.getAiNotebookInstance().getMetadata().getResourceId();
@@ -123,11 +122,11 @@ public class PrivateControlledAiNotebookInstanceLifecycle extends WorkspaceAlloc
     AIPlatformNotebooks userNotebooks = ClientTestUtils.getAIPlatformNotebooksClient(resourceUser);
 
     assertTrue(
-        ResourceModifier.userHasProxyAccess(
+        NotebookUtils.userHasProxyAccess(
             creationResult, resourceUser, resource.getAttributes().getProjectId()),
         "Private resource user has access to their notebook");
     assertFalse(
-        ResourceModifier.userHasProxyAccess(
+        NotebookUtils.userHasProxyAccess(
             creationResult, otherWorkspaceUser, resource.getAttributes().getProjectId()),
         "Other workspace user does not have access to a private notebook");
 
@@ -187,7 +186,7 @@ public class PrivateControlledAiNotebookInstanceLifecycle extends WorkspaceAlloc
       createAControlledAiNotebookInstanceWithoutSpecifiedInstanceId_validInstanceIdIsGenerated(
           ControlledGcpResourceApi resourceUserApi) throws ApiException, InterruptedException {
     CreatedControlledGcpAiNotebookInstanceResult resourceWithNotebookInstanceIdNotSpecified =
-        ResourceMaker.makeControlledNotebookUserPrivate(
+        NotebookUtils.makeControlledNotebookUserPrivate(
             getWorkspaceId(), /*instanceId=*/ null, /*location=*/ null, resourceUserApi);
     assertNotNull(
         resourceWithNotebookInstanceIdNotSpecified
@@ -208,7 +207,7 @@ public class PrivateControlledAiNotebookInstanceLifecycle extends WorkspaceAlloc
       ControlledGcpResourceApi resourceUserApi) throws ApiException, InterruptedException {
     String location = "us-east1-b";
     CreatedControlledGcpAiNotebookInstanceResult resourceWithNotebookInstanceIdNotSpecified =
-        ResourceMaker.makeControlledNotebookUserPrivate(
+        NotebookUtils.makeControlledNotebookUserPrivate(
             getWorkspaceId(), /*instanceId=*/ null, /*location=*/ location, resourceUserApi);
     assertEquals(
         location,

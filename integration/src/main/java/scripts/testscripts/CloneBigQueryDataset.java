@@ -6,8 +6,8 @@ import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
-import static scripts.utils.GcsBucketTestFixtures.RESOURCE_PREFIX;
-import static scripts.utils.ResourceMaker.makeControlledBigQueryDatasetUserShared;
+import static scripts.utils.BqDatasetUtils.makeControlledBigQueryDatasetUserShared;
+import static scripts.utils.GcsBucketUtils.BUCKET_RESOURCE_PREFIX;
 
 import bio.terra.testrunner.runner.config.TestUserSpecification;
 import bio.terra.workspace.api.ControlledGcpResourceApi;
@@ -32,9 +32,9 @@ import java.util.UUID;
 import java.util.stream.StreamSupport;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import scripts.utils.BqDatasetUtils;
 import scripts.utils.ClientTestUtils;
 import scripts.utils.CloudContextMaker;
-import scripts.utils.ResourceModifier;
 import scripts.utils.WorkspaceAllocateTestScriptBase;
 
 public class CloneBigQueryDataset extends WorkspaceAllocateTestScriptBase {
@@ -70,12 +70,12 @@ public class CloneBigQueryDataset extends WorkspaceAllocateTestScriptBase {
 
     // Construct the source dataset
     nameSuffix = UUID.randomUUID().toString();
-    final String datasetResourceName = (RESOURCE_PREFIX + nameSuffix).replace('-', '_');
+    final String datasetResourceName = (BUCKET_RESOURCE_PREFIX + nameSuffix).replace('-', '_');
     sourceDataset =
         makeControlledBigQueryDatasetUserShared(
             sourceOwnerResourceApi, getWorkspaceId(), datasetResourceName, null, null);
 
-    ResourceModifier.populateBigQueryDataset(sourceDataset, sourceOwnerUser, sourceProjectId);
+    BqDatasetUtils.populateBigQueryDataset(sourceDataset, sourceOwnerUser, sourceProjectId);
 
     // Make the cloning user a reader on the existing workspace
     sourceOwnerWorkspaceApi.grantRole(

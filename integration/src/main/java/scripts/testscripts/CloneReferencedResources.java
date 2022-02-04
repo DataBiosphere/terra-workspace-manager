@@ -1,6 +1,7 @@
 package scripts.testscripts;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static scripts.utils.GcsBucketObjectUtils.makeGcsObjectReference;
 
 import bio.terra.testrunner.runner.config.TestUserSpecification;
 import bio.terra.workspace.api.ReferencedGcpResourceApi;
@@ -33,10 +34,13 @@ import java.util.UUID;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import scripts.utils.BqDatasetUtils;
 import scripts.utils.ClientTestUtils;
 import scripts.utils.DataRepoTestScriptBase;
+import scripts.utils.DataRepoUtils;
+import scripts.utils.GcsBucketUtils;
+import scripts.utils.GitRepoUtils;
 import scripts.utils.ParameterUtils;
-import scripts.utils.ResourceMaker;
 
 public class CloneReferencedResources extends DataRepoTestScriptBase {
   private static final Logger logger = LoggerFactory.getLogger(CloneReferencedResources.class);
@@ -91,7 +95,7 @@ public class CloneReferencedResources extends DataRepoTestScriptBase {
 
     // create reference to existing test bucket
     sourceBucketReference =
-        ResourceMaker.makeGcsBucketReference(
+        GcsBucketUtils.makeGcsBucketReference(
             sourceUniformAccessBucketAttributes,
             referencedGcpResourceApi,
             getWorkspaceId(),
@@ -99,14 +103,14 @@ public class CloneReferencedResources extends DataRepoTestScriptBase {
             CloningInstructionsEnum.NOTHING);
 
     sourceGcsObjectReference =
-        ResourceMaker.makeGcsObjectReference(
+        makeGcsObjectReference(
             sourceGcsObjectAttributes,
             referencedGcpResourceApi,
             getWorkspaceId(),
             "reference_to_foo_monkey_sees_monkey_dos",
             null);
     sourceBucketFolderReference =
-        ResourceMaker.makeGcsObjectReference(
+        makeGcsObjectReference(
             sourceFolderObjectAttributes,
             referencedGcpResourceApi,
             getWorkspaceId(),
@@ -119,14 +123,14 @@ public class CloneReferencedResources extends DataRepoTestScriptBase {
             .projectId(sourceBigQueryDataTableAttributes.getProjectId())
             .datasetId(sourceBigQueryDataTableAttributes.getDatasetId());
     sourceBigQueryDatasetReference =
-        ResourceMaker.makeBigQueryDatasetReference(
+        BqDatasetUtils.makeBigQueryDatasetReference(
             sourceBigQueryDatasetAttributes,
             referencedGcpResourceApi,
             getWorkspaceId(),
             DATASET_RESOURCE_NAME);
 
     sourceBigQueryDataTableReference =
-        ResourceMaker.makeBigQueryDataTableReference(
+        BqDatasetUtils.makeBigQueryDataTableReference(
             sourceBigQueryDataTableAttributes,
             referencedGcpResourceApi,
             getWorkspaceId(),
@@ -136,7 +140,7 @@ public class CloneReferencedResources extends DataRepoTestScriptBase {
 
     // Create a data repo snapshot reference
     sourceDataRepoSnapshotReference =
-        ResourceMaker.makeDataRepoSnapshotReference(
+        DataRepoUtils.makeDataRepoSnapshotReference(
             referencedGcpResourceApi,
             getWorkspaceId(),
             snapshotReferenceName,
@@ -144,7 +148,7 @@ public class CloneReferencedResources extends DataRepoTestScriptBase {
             getDataRepoInstanceName());
 
     sourceGitRepoReference =
-        ResourceMaker.makeGitRepoReference(
+        GitRepoUtils.makeGitRepoReference(
             sourceGitRepoAttributes,
             referencedGcpResourceApi,
             getWorkspaceId(),

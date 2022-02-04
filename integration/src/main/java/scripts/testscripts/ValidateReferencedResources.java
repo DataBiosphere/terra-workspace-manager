@@ -3,6 +3,7 @@ package scripts.testscripts;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static scripts.utils.GcsBucketObjectUtils.makeGcsObjectReference;
 
 import bio.terra.testrunner.runner.config.TestUserSpecification;
 import bio.terra.workspace.api.ReferencedGcpResourceApi;
@@ -25,10 +26,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import org.apache.commons.lang3.RandomStringUtils;
+import scripts.utils.BqDatasetUtils;
 import scripts.utils.ClientTestUtils;
 import scripts.utils.DataRepoTestScriptBase;
+import scripts.utils.DataRepoUtils;
+import scripts.utils.GcsBucketUtils;
 import scripts.utils.ParameterUtils;
-import scripts.utils.ResourceMaker;
 
 public class ValidateReferencedResources extends DataRepoTestScriptBase {
 
@@ -87,14 +90,14 @@ public class ValidateReferencedResources extends DataRepoTestScriptBase {
             .projectId(bqTableAttributes.getProjectId())
             .datasetId(bqTableAttributes.getDatasetId());
     GcpBigQueryDatasetResource bqReference =
-        ResourceMaker.makeBigQueryDatasetReference(
+        BqDatasetUtils.makeBigQueryDatasetReference(
             bqDatasetAttributes, referencedGcpResourceApi, getWorkspaceId(), bqReferenceName);
     bqResourceId = bqReference.getMetadata().getResourceId();
 
     String bqDataTableReferenceName =
         RandomStringUtils.random(/*count=*/ 1024, /*letters=*/ true, /*numbers=*/ true);
     GcpBigQueryDataTableResource bqDataTableReference =
-        ResourceMaker.makeBigQueryDataTableReference(
+        BqDatasetUtils.makeBigQueryDataTableReference(
             bqTableAttributes,
             referencedGcpResourceApi,
             getWorkspaceId(),
@@ -103,7 +106,7 @@ public class ValidateReferencedResources extends DataRepoTestScriptBase {
 
     String bucketReferenceName = RandomStringUtils.random(6, true, false);
     GcpGcsBucketResource bucketReference =
-        ResourceMaker.makeGcsBucketReference(
+        GcsBucketUtils.makeGcsBucketReference(
             gcsUniformBucketAttributes,
             referencedGcpResourceApi,
             getWorkspaceId(),
@@ -112,7 +115,7 @@ public class ValidateReferencedResources extends DataRepoTestScriptBase {
     bucketResourceId = bucketReference.getMetadata().getResourceId();
     String snapshotReferenceName = RandomStringUtils.random(6, true, false);
     DataRepoSnapshotResource snapshotReference =
-        ResourceMaker.makeDataRepoSnapshotReference(
+        DataRepoUtils.makeDataRepoSnapshotReference(
             referencedGcpResourceApi,
             getWorkspaceId(),
             snapshotReferenceName,
@@ -125,7 +128,7 @@ public class ValidateReferencedResources extends DataRepoTestScriptBase {
     // Reference to gs://terra_wsm_fine_grained_test_bucket/foo/monkey_sees_monkey_dos.txt. Bella
     // and Elijah has READER access to this file.
     GcpGcsObjectResource bucketFileReference =
-        ResourceMaker.makeGcsObjectReference(
+        makeGcsObjectReference(
             gcsFileAttributes,
             referencedGcpResourceApi,
             getWorkspaceId(),
@@ -135,7 +138,7 @@ public class ValidateReferencedResources extends DataRepoTestScriptBase {
 
     // Reference to gs://terra_wsm_fine_grained_test_bucket. Bella and Elijah has READER access.
     fineGrainedBucketResourceId =
-        ResourceMaker.makeGcsBucketReference(
+        GcsBucketUtils.makeGcsBucketReference(
                 gcsFineGrainedBucketAttributes,
                 referencedGcpResourceApi,
                 getWorkspaceId(),
@@ -146,7 +149,7 @@ public class ValidateReferencedResources extends DataRepoTestScriptBase {
 
     // Reference to gs://terra_wsm_fine_grained_test_bucket/foo/. Only Bella has READER access.
     GcpGcsObjectResource bucketFolderReference =
-        ResourceMaker.makeGcsObjectReference(
+        makeGcsObjectReference(
             gcsFolderAttributes, referencedGcpResourceApi, getWorkspaceId(), "foo_folder", null);
     fooFolderResourceId = bucketFolderReference.getMetadata().getResourceId();
 
@@ -155,7 +158,7 @@ public class ValidateReferencedResources extends DataRepoTestScriptBase {
             .bucketName(gcsFolderAttributes.getBucketName())
             .fileName(gcsFolderAttributes.getFileName() + "**.txt");
     GcpGcsObjectResource fooTxtFileReference =
-        ResourceMaker.makeGcsObjectReference(
+        makeGcsObjectReference(
             allTxtAttributes, referencedGcpResourceApi, getWorkspaceId(), "foo_txt_files", null);
     fooTxtFilesResourceId = fooTxtFileReference.getMetadata().getResourceId();
 
@@ -164,7 +167,7 @@ public class ValidateReferencedResources extends DataRepoTestScriptBase {
             .bucketName(gcsFolderAttributes.getBucketName())
             .fileName(gcsFolderAttributes.getFileName() + "*");
     GcpGcsObjectResource fooAllFilesReference =
-        ResourceMaker.makeGcsObjectReference(
+        makeGcsObjectReference(
             allFilesAttributes, referencedGcpResourceApi, getWorkspaceId(), "foo_all_files", null);
     fooAllFilesResourceId = fooAllFilesReference.getMetadata().getResourceId();
   }

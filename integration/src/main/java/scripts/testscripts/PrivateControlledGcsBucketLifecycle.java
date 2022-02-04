@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static scripts.utils.GcsBucketUtils.makeControlledGcsBucketUserPrivate;
 
 import bio.terra.testrunner.runner.config.TestUserSpecification;
 import bio.terra.workspace.api.ControlledGcpResourceApi;
@@ -34,7 +35,7 @@ import org.slf4j.LoggerFactory;
 import scripts.utils.ClientTestUtils;
 import scripts.utils.CloudContextMaker;
 import scripts.utils.GcsBucketAccessTester;
-import scripts.utils.ResourceMaker;
+import scripts.utils.GcsBucketUtils;
 import scripts.utils.WorkspaceAllocateTestScriptBase;
 
 public class PrivateControlledGcsBucketLifecycle extends WorkspaceAllocateTestScriptBase {
@@ -152,7 +153,7 @@ public class PrivateControlledGcsBucketLifecycle extends WorkspaceAllocateTestSc
             .privateResourceIamRoles(roles);
 
     CreatedControlledGcpGcsBucket userFullBucket =
-        ResourceMaker.makeControlledGcsBucket(
+        GcsBucketUtils.makeControlledGcsBucket(
             privateUserResourceApi,
             getWorkspaceId(),
             RESOURCE_PREFIX + UUID.randomUUID().toString(),
@@ -169,7 +170,7 @@ public class PrivateControlledGcsBucketLifecycle extends WorkspaceAllocateTestSc
         new PrivateResourceUser().userName(null).privateResourceIamRoles(roles);
 
     CreatedControlledGcpGcsBucket userNoEmailBucket =
-        ResourceMaker.makeControlledGcsBucket(
+        GcsBucketUtils.makeControlledGcsBucket(
             privateUserResourceApi,
             getWorkspaceId(),
             RESOURCE_PREFIX + UUID.randomUUID().toString(),
@@ -184,7 +185,7 @@ public class PrivateControlledGcsBucketLifecycle extends WorkspaceAllocateTestSc
     String uniqueBucketName =
         String.format("terra_%s_bucket", UUID.randomUUID().toString().replace("-", "_"));
     CreatedControlledGcpGcsBucket bucketWithBucketNameSpecified =
-        ResourceMaker.makeControlledGcsBucket(
+        GcsBucketUtils.makeControlledGcsBucket(
             privateUserResourceApi,
             getWorkspaceId(),
             RESOURCE_PREFIX + UUID.randomUUID().toString(),
@@ -201,7 +202,7 @@ public class PrivateControlledGcsBucketLifecycle extends WorkspaceAllocateTestSc
 
   private CreatedControlledGcpGcsBucket createPrivateBucket(ControlledGcpResourceApi resourceApi)
       throws Exception {
-    return ResourceMaker.makeControlledGcsBucketUserPrivate(
+    return makeControlledGcsBucketUserPrivate(
         resourceApi, getWorkspaceId(), resourceName, CloningInstructionsEnum.NOTHING);
   }
 

@@ -13,9 +13,9 @@ import java.util.UUID;
 import org.apache.http.HttpStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import scripts.utils.BqDatasetUtils;
 import scripts.utils.ClientTestUtils;
 import scripts.utils.CloudContextMaker;
-import scripts.utils.ResourceMaker;
 import scripts.utils.WorkspaceAllocateTestScriptBase;
 
 public class DeleteWorkspaceWithControlledResource extends WorkspaceAllocateTestScriptBase {
@@ -36,7 +36,7 @@ public class DeleteWorkspaceWithControlledResource extends WorkspaceAllocateTest
 
     // Create a shared BigQuery dataset
     GcpBigQueryDatasetResource createdDataset =
-        ResourceMaker.makeControlledBigQueryDatasetUserShared(
+        BqDatasetUtils.makeControlledBigQueryDatasetUserShared(
             resourceApi, getWorkspaceId(), DATASET_RESOURCE_NAME, null, null);
     UUID resourceId = createdDataset.getMetadata().getResourceId();
     logger.info("Created controlled dataset {}", resourceId);
