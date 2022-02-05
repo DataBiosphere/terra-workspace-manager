@@ -17,6 +17,8 @@ import bio.terra.common.db.ReadTransaction;
 import bio.terra.common.db.WriteTransaction;
 import bio.terra.workspace.common.exception.InternalLogicException;
 import bio.terra.workspace.db.model.DbResource;
+import bio.terra.workspace.db.model.UniquenessCheckParameters;
+import bio.terra.workspace.db.model.UniquenessCheckParameters.UniquenessScope;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.disk.ControlledAzureDiskResource;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.ip.ControlledAzureIpResource;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.network.ControlledAzureNetworkResource;
@@ -47,6 +49,7 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -500,58 +503,63 @@ public class ResourceDao {
   public void createControlledResource(ControlledResource controlledResource)
       throws DuplicateResourceException {
 
-    // Make sure there is a valid cloud context before we create the controlled resource
+    if (!cloudContextExists(
+        controlledResource.getWorkspaceId(),
+        controlledResource.getResourceType().getCloudPlatform())) {
+      throw new CloudContextRequiredException(
+          "No cloud context found in which to create a controlled resource");
+    }
+
+    verifyUniqueness(controlledResource);
+    storeResource(controlledResource);
+  }
+
+  private boolean cloudContextExists(UUID workspaceId, CloudPlatform cloudPlatform) {
+    // Check existence of the cloud context for this workspace
     final String sql =
         "SELECT COUNT(*) FROM cloud_context"
             + " WHERE workspace_id = :workspace_id AND cloud_platform = :cloud_platform";
 
     MapSqlParameterSource params =
         new MapSqlParameterSource()
-            .addValue("workspace_id", controlledResource.getWorkspaceId().toString())
-            .addValue(
-                "cloud_platform", controlledResource.getResourceType().getCloudPlatform().toSql());
+            .addValue("workspace_id", workspaceId.toString())
+            .addValue("cloud_platform", cloudPlatform.toSql());
     Integer count = jdbcTemplate.queryForObject(sql, params, Integer.class);
-    if (count == null || count == 0) {
-      throw new CloudContextRequiredException(
-          "No cloud context found in which to create a controlled resource");
-    }
+    return (count != null && count > 0);
+  }
 
-    // Validate that the resource to be created doesn't already exist according to per-resource type
-    // uniqueness rules. This prevents a race condition allowing a new resource to point to the same
-    // cloud artifact as another, even if it has a different resource name and ID.
-    switch (controlledResource.getResourceType()) {
-      case CONTROLLED_GCP_GCS_BUCKET:
-        validateUniqueGcsBucket(controlledResource.castToGcsBucketResource());
-        break;
-      case CONTROLLED_GCP_AI_NOTEBOOK_INSTANCE:
-        validateUniqueAiNotebookInstance(controlledResource.castToAiNotebookInstanceResource());
-        break;
-      case CONTROLLED_GCP_BIG_QUERY_DATASET:
-        validateUniqueBigQueryDataset(controlledResource.castToBigQueryDatasetResource());
-        break;
-      case CONTROLLED_AZURE_DISK:
-        validateUniqueAzureDisk(controlledResource.castToAzureDiskResource());
-        break;
-      case CONTROLLED_AZURE_IP:
-        validateUniqueAzureIp(controlledResource.castToAzureIpResource());
-        break;
-      case CONTROLLED_AZURE_NETWORK:
-        validateUniqueAzureNetwork(controlledResource.castToAzureNetworkResource());
-        break;
-      case CONTROLLED_AZURE_STORAGE_ACCOUNT:
-        validateUniqueAzureStorage(controlledResource.castToAzureStorageResource());
-        break;
-      case CONTROLLED_AZURE_VM:
-        validateUniqueAzureVm(controlledResource.castToAzureVmResource());
-        break;
-      case REFERENCED_ANY_DATA_REPO_SNAPSHOT:
-      default:
-        throw new IllegalArgumentException(
-            String.format(
-                "Resource type %s not supported", controlledResource.getResourceType().toString()));
-    }
+  // Verify that the resource to be created doesn't already exist according to per-resource type
+  // uniqueness rules. This prevents a race condition allowing a new resource to point to the same
+  // cloud artifact as another, even if it has a different resource name and ID.
+  private void verifyUniqueness(ControlledResource controlledResource) {
+    Optional<UniquenessCheckParameters> optionalUniquenessCheck =
+        controlledResource.getUniquenessCheckParameters();
 
-    storeResource(controlledResource);
+    if (optionalUniquenessCheck.isPresent()) {
+      UniquenessCheckParameters uniquenessCheck = optionalUniquenessCheck.get();
+      StringBuilder sb =
+          new StringBuilder()
+              .append("SELECT COUNT(1) FROM resource WHERE exact_resource_type = :resource_type");
+      MapSqlParameterSource params =
+          new MapSqlParameterSource()
+              .addValue("resource_type", controlledResource.getResourceType().toSql());
+
+      if (uniquenessCheck.getUniquenessScope() == UniquenessScope.WORKSPACE) {
+        sb.append(" AND workspace_id = :workspace_id");
+        params.addValue("workspace_id", controlledResource.getWorkspaceId().toString());
+      }
+
+      for (Pair<String, String> pair : uniquenessCheck.getParameters()) {
+        String name = pair.getKey();
+        sb.append(String.format(" AND attributes->>'%s' = :%s", name, name));
+        params.addValue(name, pair.getValue());
+      }
+
+      Integer matchingCount = jdbcTemplate.queryForObject(sb.toString(), params, Integer.class);
+      if (matchingCount != null && matchingCount > 0) {
+        throw new DuplicateResourceException("A resource with matching attributes already exists");
+      }
+    }
   }
 
   /**
@@ -638,8 +646,6 @@ public class ResourceDao {
       ControlledAiNotebookInstanceResource notebookResource) {
     // Workspace ID is a proxy for project ID, which works because there is a permanent, 1:1
     // correspondence between workspaces and GCP projects.
-    // Note: since exact_resource_type column is not guaranteed to be filled in, we scan by
-    // cloud type and stewardship type.
     String sql =
         "SELECT COUNT(1)"
             + " FROM resource"

@@ -7,6 +7,8 @@ import bio.terra.common.exception.BadRequestException;
 import bio.terra.common.exception.InconsistentFieldsException;
 import bio.terra.common.exception.MissingRequiredFieldException;
 import bio.terra.workspace.db.DbSerDes;
+import bio.terra.workspace.db.model.UniquenessCheckParameters;
+import bio.terra.workspace.db.model.UniquenessCheckParameters.UniquenessScope;
 import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceAttributes;
 import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceResource;
 import bio.terra.workspace.generated.model.ApiResourceAttributesUnion;
@@ -90,6 +92,15 @@ public class ControlledAiNotebookInstanceResource extends ControlledResource {
         .instanceId(getInstanceId())
         .location(getLocation())
         .projectId(getProjectId());
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public Optional<UniquenessCheckParameters> getUniquenessCheckParameters() {
+    return Optional.of(new UniquenessCheckParameters(
+        UniquenessScope.WORKSPACE)
+        .addParameter("instanceId", getInstanceId())
+        .addParameter("location", getLocation()));
   }
 
   /** The user specified id of the notebook instance. */

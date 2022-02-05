@@ -3,6 +3,8 @@ package bio.terra.workspace.service.resource.controlled.cloud.gcp.bqdataset;
 import bio.terra.common.exception.InconsistentFieldsException;
 import bio.terra.common.exception.MissingRequiredFieldException;
 import bio.terra.workspace.db.DbSerDes;
+import bio.terra.workspace.db.model.UniquenessCheckParameters;
+import bio.terra.workspace.db.model.UniquenessCheckParameters.UniquenessScope;
 import bio.terra.workspace.generated.model.ApiGcpBigQueryDatasetAttributes;
 import bio.terra.workspace.generated.model.ApiGcpBigQueryDatasetResource;
 import bio.terra.workspace.generated.model.ApiResourceAttributesUnion;
@@ -78,6 +80,14 @@ public class ControlledBigQueryDatasetResource extends ControlledResource {
         .applicationId(getApplicationId())
         .datasetName(getDatasetName())
         .projectId(projectId);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public Optional<UniquenessCheckParameters> getUniquenessCheckParameters() {
+    return Optional.of(new UniquenessCheckParameters(
+        UniquenessScope.WORKSPACE)
+        .addParameter("datasetName", getDatasetName()));
   }
 
   public String getDatasetName() {

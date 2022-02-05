@@ -4,6 +4,8 @@ import bio.terra.common.exception.InconsistentFieldsException;
 import bio.terra.common.exception.MissingRequiredFieldException;
 import bio.terra.workspace.db.DbSerDes;
 import bio.terra.workspace.db.model.DbResource;
+import bio.terra.workspace.db.model.UniquenessCheckParameters;
+import bio.terra.workspace.db.model.UniquenessCheckParameters.UniquenessScope;
 import bio.terra.workspace.generated.model.ApiGcpGcsBucketAttributes;
 import bio.terra.workspace.generated.model.ApiGcpGcsBucketResource;
 import bio.terra.workspace.generated.model.ApiResourceAttributesUnion;
@@ -62,6 +64,14 @@ public class ControlledGcsBucketResource extends ControlledResource {
         DbSerDes.fromJson(dbResource.getAttributes(), ControlledGcsBucketAttributes.class);
     this.bucketName = attributes.getBucketName();
     validate();
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public Optional<UniquenessCheckParameters> getUniquenessCheckParameters() {
+    return Optional.of(new UniquenessCheckParameters(
+        UniquenessScope.WSM)
+        .addParameter("bucketName", getBucketName()));
   }
 
   public static ControlledGcsBucketResource.Builder builder() {

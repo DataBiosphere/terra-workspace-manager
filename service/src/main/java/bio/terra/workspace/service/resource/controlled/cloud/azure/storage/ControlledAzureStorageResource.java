@@ -4,6 +4,8 @@ import bio.terra.common.exception.InconsistentFieldsException;
 import bio.terra.common.exception.MissingRequiredFieldException;
 import bio.terra.workspace.db.DbSerDes;
 import bio.terra.workspace.db.model.DbResource;
+import bio.terra.workspace.db.model.UniquenessCheckParameters;
+import bio.terra.workspace.db.model.UniquenessCheckParameters.UniquenessScope;
 import bio.terra.workspace.generated.model.ApiAzureStorageAttributes;
 import bio.terra.workspace.generated.model.ApiAzureStorageResource;
 import bio.terra.workspace.generated.model.ApiResourceAttributesUnion;
@@ -65,6 +67,14 @@ public class ControlledAzureStorageResource extends ControlledResource {
     this.storageAccountName = attributes.getStorageAccountName();
     this.region = attributes.getRegion();
     validate();
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public Optional<UniquenessCheckParameters> getUniquenessCheckParameters() {
+    return Optional.of(new UniquenessCheckParameters(
+        UniquenessScope.WORKSPACE)
+        .addParameter("storageAccountName", getStorageAccountName()));
   }
 
   public String getStorageAccountName() {
