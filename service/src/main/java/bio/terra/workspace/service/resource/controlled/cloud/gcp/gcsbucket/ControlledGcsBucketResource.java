@@ -69,9 +69,9 @@ public class ControlledGcsBucketResource extends ControlledResource {
   /** {@inheritDoc} */
   @Override
   public Optional<UniquenessCheckParameters> getUniquenessCheckParameters() {
-    return Optional.of(new UniquenessCheckParameters(
-        UniquenessScope.WSM)
-        .addParameter("bucketName", getBucketName()));
+    return Optional.of(
+        new UniquenessCheckParameters(UniquenessScope.WSM)
+            .addParameter("bucketName", getBucketName()));
   }
 
   public static ControlledGcsBucketResource.Builder builder() {

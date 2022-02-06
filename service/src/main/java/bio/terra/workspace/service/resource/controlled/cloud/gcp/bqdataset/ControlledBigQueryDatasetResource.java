@@ -85,9 +85,9 @@ public class ControlledBigQueryDatasetResource extends ControlledResource {
   /** {@inheritDoc} */
   @Override
   public Optional<UniquenessCheckParameters> getUniquenessCheckParameters() {
-    return Optional.of(new UniquenessCheckParameters(
-        UniquenessScope.WORKSPACE)
-        .addParameter("datasetName", getDatasetName()));
+    return Optional.of(
+        new UniquenessCheckParameters(UniquenessScope.WORKSPACE)
+            .addParameter("datasetName", getDatasetName()));
   }
 
   public String getDatasetName() {

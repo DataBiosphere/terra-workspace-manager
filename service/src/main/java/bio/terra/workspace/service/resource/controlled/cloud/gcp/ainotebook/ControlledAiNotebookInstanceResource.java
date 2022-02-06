@@ -97,10 +97,10 @@ public class ControlledAiNotebookInstanceResource extends ControlledResource {
   /** {@inheritDoc} */
   @Override
   public Optional<UniquenessCheckParameters> getUniquenessCheckParameters() {
-    return Optional.of(new UniquenessCheckParameters(
-        UniquenessScope.WORKSPACE)
-        .addParameter("instanceId", getInstanceId())
-        .addParameter("location", getLocation()));
+    return Optional.of(
+        new UniquenessCheckParameters(UniquenessScope.WORKSPACE)
+            .addParameter("instanceId", getInstanceId())
+            .addParameter("location", getLocation()));
   }
 
   /** The user specified id of the notebook instance. */

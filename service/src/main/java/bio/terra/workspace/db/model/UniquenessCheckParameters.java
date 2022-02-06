@@ -5,10 +5,9 @@ import java.util.List;
 import org.apache.commons.lang3.tuple.Pair;
 
 /**
- * This class is returned from resource handlers to the ResourceDao. It describes
- * the uniqueness check that the ResourceDao should do. At this time, only
- * string compares are supported, since those are all that are in use. We can
- * make this more complex if we need other datatypes.
+ * This class is returned from resource handlers to the ResourceDao. It describes the uniqueness
+ * check that the ResourceDao should do. At this time, only string compares are supported, since
+ * those are all that are in use. We can make this more complex if we need other datatypes.
  */
 public class UniquenessCheckParameters {
   /** The scope of the uniqueness check */
@@ -36,8 +35,8 @@ public class UniquenessCheckParameters {
   }
 
   /**
-   * Add a parameter to be filtered. The filters are JSONB references of the
-   * form:  attributes->>'name' = value
+   * Add a parameter to be filtered. The filters are JSONB references of the form:
+   * attributes->>'name' = value
    *
    * @param name name of the attribute to check
    * @param value value of the attribute to check

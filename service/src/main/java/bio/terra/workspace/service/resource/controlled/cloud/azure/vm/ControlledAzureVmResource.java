@@ -93,9 +93,9 @@ public class ControlledAzureVmResource extends ControlledResource {
   /** {@inheritDoc} */
   @Override
   public Optional<UniquenessCheckParameters> getUniquenessCheckParameters() {
-    return Optional.of(new UniquenessCheckParameters(
-        UniquenessScope.WORKSPACE)
-        .addParameter("vmName", getVmName()));
+    return Optional.of(
+        new UniquenessCheckParameters(UniquenessScope.WORKSPACE)
+            .addParameter("vmName", getVmName()));
   }
 
   public String getVmName() {

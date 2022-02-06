@@ -68,9 +68,9 @@ public abstract class ControlledResource extends WsmResource {
   }
 
   /**
-   * The ResourceDao calls this method for controlled parameters. The return value
-   * describes filtering the DAO should do to verify the uniqueness of the resource.
-   * If the return is not present, then no validation check will be performed.
+   * The ResourceDao calls this method for controlled parameters. The return value describes
+   * filtering the DAO should do to verify the uniqueness of the resource. If the return is not
+   * present, then no validation check will be performed.
    *
    * @return optional uniqueness description
    */

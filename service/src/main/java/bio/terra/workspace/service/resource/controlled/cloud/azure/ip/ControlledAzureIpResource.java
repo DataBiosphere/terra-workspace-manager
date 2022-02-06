@@ -72,9 +72,9 @@ public class ControlledAzureIpResource extends ControlledResource {
   /** {@inheritDoc} */
   @Override
   public Optional<UniquenessCheckParameters> getUniquenessCheckParameters() {
-    return Optional.of(new UniquenessCheckParameters(
-        UniquenessScope.WORKSPACE)
-        .addParameter("ipName", getIpName()));
+    return Optional.of(
+        new UniquenessCheckParameters(UniquenessScope.WORKSPACE)
+            .addParameter("ipName", getIpName()));
   }
 
   public String getIpName() {

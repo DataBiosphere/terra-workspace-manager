@@ -72,9 +72,9 @@ public class ControlledAzureStorageResource extends ControlledResource {
   /** {@inheritDoc} */
   @Override
   public Optional<UniquenessCheckParameters> getUniquenessCheckParameters() {
-    return Optional.of(new UniquenessCheckParameters(
-        UniquenessScope.WORKSPACE)
-        .addParameter("storageAccountName", getStorageAccountName()));
+    return Optional.of(
+        new UniquenessCheckParameters(UniquenessScope.WORKSPACE)
+            .addParameter("storageAccountName", getStorageAccountName()));
   }
 
   public String getStorageAccountName() {
