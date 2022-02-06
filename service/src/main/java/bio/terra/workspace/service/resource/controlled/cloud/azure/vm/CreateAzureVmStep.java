@@ -55,22 +55,16 @@ public class CreateAzureVmStep implements Step {
     ComputeManager computeManager = crlService.getComputeManager(azureCloudContext, azureConfig);
 
     final ControlledAzureIpResource ipResource =
-        resourceDao
-            .getResource(resource.getWorkspaceId(), resource.getIpId())
-            .castToControlledResource()
-            .castToAzureIpResource();
+        ControlledAzureIpResource.castFromResource(
+            resourceDao.getResource(resource.getWorkspaceId(), resource.getIpId()));
 
     final ControlledAzureDiskResource diskResource =
-        resourceDao
-            .getResource(resource.getWorkspaceId(), resource.getDiskId())
-            .castToControlledResource()
-            .castToAzureDiskResource();
+        ControlledAzureDiskResource.castFromResource(
+            resourceDao.getResource(resource.getWorkspaceId(), resource.getDiskId()));
 
     final ControlledAzureNetworkResource networkResource =
-        resourceDao
-            .getResource(resource.getWorkspaceId(), resource.getNetworkId())
-            .castToControlledResource()
-            .castToAzureNetworkResource();
+        ControlledAzureNetworkResource.castFromResource(
+            resourceDao.getResource(resource.getWorkspaceId(), resource.getNetworkId()));
 
     try {
       Disk existingAzureDisk =

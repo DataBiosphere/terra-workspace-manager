@@ -31,7 +31,8 @@ public class DeleteControlledResourceFlight extends Flight {
     final FlightBeanBag flightBeanBag = FlightBeanBag.getFromObject(beanBag);
 
     final UUID workspaceId =
-        UUID.fromString(inputParameters.get(WorkspaceFlightMapKeys.WORKSPACE_ID, String.class));
+        UUID.fromString(
+            inputParameters.get(WorkspaceFlightMapKeys.WORKSPACE_ID, String.class));
     final UUID resourceId =
         UUID.fromString(
             inputParameters.get(WorkspaceFlightMapKeys.ResourceKeys.RESOURCE_ID, String.class));
@@ -116,7 +117,7 @@ public class DeleteControlledResourceFlight extends Flight {
       case CONTROLLED_GCP_BIG_QUERY_DATASET:
         addStep(
             new DeleteBigQueryDatasetStep(
-                resource.castToBigQueryDatasetResource(),
+                resource.castByEnum(resource.getResourceType()),
                 flightBeanBag.getCrlService(),
                 flightBeanBag.getGcpCloudContextService()),
             gcpRetryRule);
@@ -124,7 +125,7 @@ public class DeleteControlledResourceFlight extends Flight {
       case CONTROLLED_GCP_AI_NOTEBOOK_INSTANCE:
         addStep(
             new DeleteAiNotebookInstanceStep(
-                resource.castToAiNotebookInstanceResource(),
+                resource.castByEnum(resource.getResourceType()),
                 flightBeanBag.getCrlService(),
                 flightBeanBag.getGcpCloudContextService()),
             gcpRetryRule);

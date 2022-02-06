@@ -7,6 +7,9 @@ import bio.terra.stairway.StepResult;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.db.exception.InvalidMetadataException;
 import bio.terra.workspace.service.job.JobMapKeys;
+import bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook.ControlledAiNotebookInstanceResource;
+import bio.terra.workspace.service.resource.controlled.cloud.gcp.bqdataset.ControlledBigQueryDatasetResource;
+import bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.ControlledGcsBucketResource;
 import bio.terra.workspace.service.resource.controlled.model.AccessScopeType;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import bio.terra.workspace.service.resource.controlled.model.PrivateResourceState;
@@ -31,19 +34,19 @@ public class SetCreateResponseStep implements Step {
       switch (resource.getResourceType()) {
         case CONTROLLED_GCP_GCS_BUCKET:
           responseResource =
-              resource.castToGcsBucketResource().toBuilder()
+              ControlledGcsBucketResource.castFromResource(resource).toBuilder()
                   .privateResourceState(PrivateResourceState.ACTIVE)
                   .build();
           break;
         case CONTROLLED_GCP_BIG_QUERY_DATASET:
           responseResource =
-              resource.castToBigQueryDatasetResource().toBuilder()
+              ControlledBigQueryDatasetResource.castFromResource(resource).toBuilder()
                   .privateResourceState(PrivateResourceState.ACTIVE)
                   .build();
           break;
         case CONTROLLED_GCP_AI_NOTEBOOK_INSTANCE:
           responseResource =
-              resource.castToAiNotebookInstanceResource().toBuilder()
+              ControlledAiNotebookInstanceResource.castFromResource(resource).toBuilder()
                   .privateResourceState(PrivateResourceState.ACTIVE)
                   .build();
           break;

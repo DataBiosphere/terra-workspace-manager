@@ -45,7 +45,7 @@ public class DeleteAzureIpStep implements Step {
   @Override
   public StepResult doStep(FlightContext context) throws InterruptedException {
     var wsmResource = resourceDao.getResource(workspaceId, resourceId);
-    var ip = wsmResource.castToControlledResource().castToAzureIpResource();
+    var ip = ControlledAzureIpResource.castFromResource(wsmResource);
 
     ComputeManager computeManager = crlService.getComputeManager(azureCloudContext, azureConfig);
     var azureResourceId =

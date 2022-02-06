@@ -235,10 +235,6 @@ public class CreateAzureVmStepTest extends BaseAzureTest {
 
     // Resource dao mocks
     when(mockResourceDao.getResource(any(UUID.class), any(UUID.class))).thenReturn(mockWsmResource);
-    when(mockWsmResource.castToControlledResource()).thenReturn(mockControlledResource);
-    when(mockControlledResource.castToAzureDiskResource()).thenReturn(mockAzureDiskResource);
-    when(mockControlledResource.castToAzureIpResource()).thenReturn(mockAzureIpResource);
-    when(mockControlledResource.castToAzureNetworkResource()).thenReturn(mockAzureNetworkResource);
 
     // Resource mocks
     when(mockAzureDiskResource.getDiskName()).thenReturn(STUB_DISK_NAME);

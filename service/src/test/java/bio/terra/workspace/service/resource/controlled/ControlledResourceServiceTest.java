@@ -1229,12 +1229,13 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
 
     // check the properties stored in WSM were updated
     ControlledGcsBucketResource fetchedResource =
-        controlledResourceService
-            .getControlledResource(
-                workspace.getWorkspaceId(),
-                createdBucket.getResourceId(),
-                user.getAuthenticatedRequest())
-            .castToGcsBucketResource();
+        ControlledGcsBucketResource.castFromResource(
+            controlledResourceService
+                .getControlledResource(
+                    workspace.getWorkspaceId(),
+                    createdBucket.getResourceId(),
+                    user.getAuthenticatedRequest()));
+
     assertEquals(newName, fetchedResource.getName());
     assertEquals(newDescription, fetchedResource.getDescription());
   }
@@ -1281,12 +1282,12 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
 
     // check the properties stored in WSM were not updated
     ControlledGcsBucketResource fetchedResource =
-        controlledResourceService
-            .getControlledResource(
-                workspace.getWorkspaceId(),
-                createdBucket.getResourceId(),
-                user.getAuthenticatedRequest())
-            .castToGcsBucketResource();
+        ControlledGcsBucketResource.castFromResource(
+            controlledResourceService
+                .getControlledResource(
+                    workspace.getWorkspaceId(),
+                    createdBucket.getResourceId(),
+                    user.getAuthenticatedRequest()));
     assertEquals(createdBucket.getName(), fetchedResource.getName());
     assertEquals(createdBucket.getDescription(), fetchedResource.getDescription());
   }

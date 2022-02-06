@@ -533,7 +533,7 @@ public class ResourceDao {
   // cloud artifact as another, even if it has a different resource name and ID.
   private void verifyUniqueness(ControlledResource controlledResource) {
     Optional<UniquenessCheckAttributes> optionalUniquenessCheck =
-        controlledResource.getUniquenessCheckParameters();
+        controlledResource.getUniquenessCheckAttributes();
 
     if (optionalUniquenessCheck.isPresent()) {
       UniquenessCheckAttributes uniquenessCheck = optionalUniquenessCheck.get();

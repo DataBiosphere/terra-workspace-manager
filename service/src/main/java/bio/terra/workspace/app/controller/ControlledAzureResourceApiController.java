@@ -1,10 +1,8 @@
 package bio.terra.workspace.app.controller;
 
 import bio.terra.common.exception.ApiException;
-import bio.terra.common.exception.BadRequestException;
 import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
 import bio.terra.workspace.common.utils.ControllerUtils;
-import bio.terra.workspace.db.exception.InvalidMetadataException;
 import bio.terra.workspace.generated.controller.ControlledAzureResourceApi;
 import bio.terra.workspace.generated.model.ApiAzureDiskResource;
 import bio.terra.workspace.generated.model.ApiAzureIpResource;
@@ -35,10 +33,10 @@ import bio.terra.workspace.service.resource.controlled.cloud.azure.network.Contr
 import bio.terra.workspace.service.resource.controlled.cloud.azure.storage.ControlledAzureStorageResource;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.vm.ControlledAzureVmResource;
 import bio.terra.workspace.service.resource.controlled.model.AccessScopeType;
-import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import bio.terra.workspace.service.resource.controlled.model.ManagedByType;
 import bio.terra.workspace.service.resource.controlled.model.PrivateUserRole;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
+import bio.terra.workspace.service.resource.model.WsmResourceType;
 import java.util.UUID;
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
@@ -368,73 +366,41 @@ public class ControlledAzureResourceApiController implements ControlledAzureReso
   public ResponseEntity<ApiAzureIpResource> getAzureIp(UUID workspaceId, UUID resourceId) {
     final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     features.azureEnabledCheck();
-
-    ControlledResource controlledResource =
-        controlledResourceService.getControlledResource(workspaceId, resourceId, userRequest);
-    try {
-      ApiAzureIpResource response = controlledResource.castToAzureIpResource().toApiResource();
-      return new ResponseEntity<>(response, HttpStatus.OK);
-    } catch (InvalidMetadataException ex) {
-      throw new BadRequestException(
-          String.format(
-              "Resource %s in workspace %s is not a controlled Azure Ip.",
-              resourceId, workspaceId));
-    }
+    final ControlledAzureIpResource resource =
+        controlledResourceService.getControlledResource(workspaceId, resourceId, userRequest)
+                .castByEnum(WsmResourceType.CONTROLLED_AZURE_IP);
+      return new ResponseEntity<>(resource.toApiResource(), HttpStatus.OK);
   }
 
   @Override
   public ResponseEntity<ApiAzureDiskResource> getAzureDisk(UUID workspaceId, UUID resourceId) {
-    features.azureEnabledCheck();
-
     final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
-    ControlledResource controlledResource =
-        controlledResourceService.getControlledResource(workspaceId, resourceId, userRequest);
-    try {
-      var response = controlledResource.castToAzureDiskResource().toApiResource();
-      return new ResponseEntity<>(response, HttpStatus.OK);
-    } catch (InvalidMetadataException ex) {
-      throw new BadRequestException(
-          String.format(
-              "Resource %s in workspace %s is not a controlled Azure Disk.",
-              resourceId, workspaceId));
-    }
+    features.azureEnabledCheck();
+    final ControlledAzureDiskResource resource =
+        controlledResourceService.getControlledResource(workspaceId, resourceId, userRequest)
+            .castByEnum(WsmResourceType.CONTROLLED_AZURE_DISK);
+    return new ResponseEntity<>(resource.toApiResource(), HttpStatus.OK);
   }
 
   @Override
   public ResponseEntity<ApiAzureVmResource> getAzureVm(UUID workspaceId, UUID resourceId) {
-    features.azureEnabledCheck();
-
     final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
-    ControlledResource controlledResource =
-        controlledResourceService.getControlledResource(workspaceId, resourceId, userRequest);
-    try {
-      var response = controlledResource.castToAzureVmResource().toApiResource();
-      return new ResponseEntity<>(response, HttpStatus.OK);
-    } catch (InvalidMetadataException ex) {
-      throw new BadRequestException(
-          String.format(
-              "Resource %s in workspace %s is not a controlled Azure Vm.",
-              resourceId, workspaceId));
-    }
+    features.azureEnabledCheck();
+    final ControlledAzureVmResource resource =
+        controlledResourceService.getControlledResource(workspaceId, resourceId, userRequest)
+            .castByEnum(WsmResourceType.CONTROLLED_AZURE_VM);
+    return new ResponseEntity<>(resource.toApiResource(), HttpStatus.OK);
   }
 
   @Override
   public ResponseEntity<ApiAzureNetworkResource> getAzureNetwork(
       UUID workspaceId, UUID resourceId) {
-    features.azureEnabledCheck();
-
     final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
-    ControlledResource controlledResource =
-        controlledResourceService.getControlledResource(workspaceId, resourceId, userRequest);
-    try {
-      var response = controlledResource.castToAzureNetworkResource().toApiResource();
-      return new ResponseEntity<>(response, HttpStatus.OK);
-    } catch (InvalidMetadataException ex) {
-      throw new BadRequestException(
-          String.format(
-              "Resource %s in workspace %s is not a controlled Azure Network.",
-              resourceId, workspaceId));
-    }
+    features.azureEnabledCheck();
+    final ControlledAzureNetworkResource resource =
+        controlledResourceService.getControlledResource(workspaceId, resourceId, userRequest)
+            .castByEnum(WsmResourceType.CONTROLLED_AZURE_NETWORK);
+    return new ResponseEntity<>(resource.toApiResource(), HttpStatus.OK);
   }
 
   @Override

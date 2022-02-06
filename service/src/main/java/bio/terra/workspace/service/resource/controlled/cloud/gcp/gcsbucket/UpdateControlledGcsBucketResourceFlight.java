@@ -40,7 +40,7 @@ public class UpdateControlledGcsBucketResourceFlight extends Flight {
     RetryRule gcpRetry = RetryRules.cloud();
     addStep(
         new RetrieveGcsBucketCloudAttributesStep(
-            resource.castToGcsBucketResource(),
+            ControlledGcsBucketResource.castFromResource(resource),
             flightBeanBag.getCrlService(),
             flightBeanBag.getGcpCloudContextService(),
             RetrievalMode.UPDATE_PARAMETERS),
@@ -49,7 +49,7 @@ public class UpdateControlledGcsBucketResourceFlight extends Flight {
     // Update the bucket's cloud attributes
     addStep(
         new UpdateGcsBucketStep(
-            resource.castToGcsBucketResource(),
+            ControlledGcsBucketResource.castFromResource(resource),
             flightBeanBag.getCrlService(),
             flightBeanBag.getGcpCloudContextService()),
         gcpRetry);

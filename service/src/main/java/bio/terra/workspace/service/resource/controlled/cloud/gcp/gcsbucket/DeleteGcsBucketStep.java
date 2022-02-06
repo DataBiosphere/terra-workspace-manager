@@ -57,8 +57,8 @@ public class DeleteGcsBucketStep implements Step {
     int deleteTries = 0;
     String projectId = gcpCloudContextService.getRequiredGcpProject(workspaceId);
     WsmResource wsmResource = resourceDao.getResource(workspaceId, resourceId);
-    ControlledGcsBucketResource resource =
-        wsmResource.castToControlledResource().castToGcsBucketResource();
+    ControlledGcsBucketResource resource = ControlledGcsBucketResource.castFromResource(wsmResource);
+
     final StorageCow storageCow = crlService.createStorageCow(projectId);
     // If the bucket is already deleted (e.g. this step is being retried), storageCow.get() will
     // return null.

@@ -106,7 +106,7 @@ public class CreateAndDeleteAzureControlledResourceFlightTest extends BaseAzureT
         controlledResourceService.getControlledResource(workspaceId, resourceId, userRequest);
 
     try {
-      ControlledAzureIpResource azureIpResource = res.castToAzureIpResource();
+      var azureIpResource = ControlledAzureIpResource.castFromResource(res);
       assertEquals(resource, azureIpResource);
     } catch (Exception e) {
       fail("Failed to cast resource to ControlledAzureIpResource", e);
