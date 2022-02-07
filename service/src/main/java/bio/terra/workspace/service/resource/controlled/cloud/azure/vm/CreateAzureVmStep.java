@@ -14,6 +14,7 @@ import bio.terra.workspace.service.resource.controlled.cloud.azure.disk.Controll
 import bio.terra.workspace.service.resource.controlled.cloud.azure.ip.ControlledAzureIpResource;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.ip.CreateAzureIpStep;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.network.ControlledAzureNetworkResource;
+import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import bio.terra.workspace.service.workspace.model.AzureCloudContext;
 import com.azure.core.management.Region;
 import com.azure.core.management.exception.ManagementException;
@@ -32,17 +33,14 @@ public class CreateAzureVmStep implements Step {
   private final AzureConfiguration azureConfig;
   private final CrlService crlService;
   private final ControlledAzureVmResource resource;
-  private final AzureCloudContext azureCloudContext;
   private final ResourceDao resourceDao;
 
   public CreateAzureVmStep(
       AzureConfiguration azureConfig,
-      AzureCloudContext azureCloudContext,
       CrlService crlService,
       ControlledAzureVmResource resource,
       ResourceDao resourceDao) {
     this.azureConfig = azureConfig;
-    this.azureCloudContext = azureCloudContext;
     this.crlService = crlService;
     this.resource = resource;
     this.resourceDao = resourceDao;
@@ -50,6 +48,10 @@ public class CreateAzureVmStep implements Step {
 
   @Override
   public StepResult doStep(FlightContext context) throws InterruptedException, RetryException {
+    final AzureCloudContext azureCloudContext =
+        context
+            .getWorkingMap()
+            .get(ControlledResourceKeys.AZURE_CLOUD_CONTEXT, AzureCloudContext.class);
     ComputeManager computeManager = crlService.getComputeManager(azureCloudContext, azureConfig);
 
     final ControlledAzureIpResource ipResource =
@@ -153,6 +155,10 @@ public class CreateAzureVmStep implements Step {
 
   @Override
   public StepResult undoStep(FlightContext context) throws InterruptedException {
+    final AzureCloudContext azureCloudContext =
+        context
+            .getWorkingMap()
+            .get(ControlledResourceKeys.AZURE_CLOUD_CONTEXT, AzureCloudContext.class);
     ComputeManager computeManager = crlService.getComputeManager(azureCloudContext, azureConfig);
 
     try {

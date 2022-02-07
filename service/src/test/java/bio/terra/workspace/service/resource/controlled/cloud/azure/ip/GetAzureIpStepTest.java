@@ -6,6 +6,7 @@ import static org.hamcrest.Matchers.instanceOf;
 import static org.mockito.Mockito.when;
 
 import bio.terra.stairway.FlightContext;
+import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.StepStatus;
 import bio.terra.workspace.app.configuration.external.AzureConfiguration;
@@ -14,6 +15,7 @@ import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
 import bio.terra.workspace.generated.model.ApiAzureIpCreationParameters;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.resource.exception.DuplicateResourceException;
+import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import bio.terra.workspace.service.workspace.model.AzureCloudContext;
 import com.azure.core.management.exception.ManagementError;
 import com.azure.core.management.exception.ManagementException;
@@ -40,6 +42,7 @@ public class GetAzureIpStepTest extends BaseAzureTest {
   @Mock private PublicIpAddresses mockPublicIpAddresses;
   @Mock private PublicIpAddress mockPublicIpAddress;
   @Mock private ManagementException mockException;
+  @Mock private FlightMap mockWorkingMap;
 
   @BeforeEach
   public void setup() {
@@ -51,6 +54,10 @@ public class GetAzureIpStepTest extends BaseAzureTest {
     when(mockNetworkManager.publicIpAddresses()).thenReturn(mockPublicIpAddresses);
     when(mockException.getValue())
         .thenReturn(new ManagementError("ResourceNotFound", "Resource was not found."));
+
+    when(mockFlightContext.getWorkingMap()).thenReturn(mockWorkingMap);
+    when(mockWorkingMap.get(ControlledResourceKeys.AZURE_CLOUD_CONTEXT, AzureCloudContext.class))
+        .thenReturn(mockAzureCloudContext);
   }
 
   @Test
@@ -61,7 +68,6 @@ public class GetAzureIpStepTest extends BaseAzureTest {
     GetAzureIpStep getAzureIpStep =
         new GetAzureIpStep(
             mockAzureConfig,
-            mockAzureCloudContext,
             mockCrlService,
             ControlledResourceFixtures.getAzureIp(
                 creationParameters.getName(), creationParameters.getRegion()));
@@ -84,7 +90,6 @@ public class GetAzureIpStepTest extends BaseAzureTest {
     GetAzureIpStep getAzureIpStep =
         new GetAzureIpStep(
             mockAzureConfig,
-            mockAzureCloudContext,
             mockCrlService,
             ControlledResourceFixtures.getAzureIp(
                 creationParameters.getName(), creationParameters.getRegion()));

@@ -76,21 +76,14 @@ public class CreateControlledResourceFlight extends Flight {
             userRequest));
 
     // Get the cloud context and store it in the working map
-    switch (resource.getResourceType().getCloudPlatform()) {
-      case AZURE:
-      case ANY:
-        // TODO: pull cloud context from flight into step parallel to GCP
-        break;
-
-      case GCP:
-        // This step may need to update the cloud context row in the database to convert
-        // context V1 format into V2 format.
-        addStep(
-            new GetGcpCloudContextStep(
-                resource.getWorkspaceId(), flightBeanBag.getGcpCloudContextService(), userRequest),
-            dbRetryRule);
-        break;
-    }
+    addStep(
+        new GetCloudContextStep(
+            resource.getWorkspaceId(),
+            resource.getResourceType().getCloudPlatform(),
+            flightBeanBag.getGcpCloudContextService(),
+            flightBeanBag.getAzureCloudContextService(),
+            userRequest),
+        dbRetryRule);
 
     // create the cloud resource and grant IAM roles via CRL
     switch (resource.getResourceType()) {
@@ -133,20 +126,12 @@ public class CreateControlledResourceFlight extends Flight {
         addStep(
             new GetAzureDiskStep(
                 flightBeanBag.getAzureConfig(),
-                flightBeanBag
-                    .getAzureCloudContextService()
-                    .getAzureCloudContext(resource.getWorkspaceId())
-                    .get(),
                 flightBeanBag.getCrlService(),
                 resource.castToAzureDiskResource()),
             RetryRules.cloud());
         addStep(
             new CreateAzureDiskStep(
                 flightBeanBag.getAzureConfig(),
-                flightBeanBag
-                    .getAzureCloudContextService()
-                    .getAzureCloudContext(resource.getWorkspaceId())
-                    .get(),
                 flightBeanBag.getCrlService(),
                 resource.castToAzureDiskResource()),
             RetryRules.cloud());
@@ -155,20 +140,12 @@ public class CreateControlledResourceFlight extends Flight {
         addStep(
             new GetAzureIpStep(
                 flightBeanBag.getAzureConfig(),
-                flightBeanBag
-                    .getAzureCloudContextService()
-                    .getAzureCloudContext(resource.getWorkspaceId())
-                    .get(),
                 flightBeanBag.getCrlService(),
                 resource.castToAzureIpResource()),
             RetryRules.cloud());
         addStep(
             new CreateAzureIpStep(
                 flightBeanBag.getAzureConfig(),
-                flightBeanBag
-                    .getAzureCloudContextService()
-                    .getAzureCloudContext(resource.getWorkspaceId())
-                    .get(),
                 flightBeanBag.getCrlService(),
                 resource.castToAzureIpResource()),
             RetryRules.cloud());
@@ -177,20 +154,12 @@ public class CreateControlledResourceFlight extends Flight {
         addStep(
             new GetAzureNetworkStep(
                 flightBeanBag.getAzureConfig(),
-                flightBeanBag
-                    .getAzureCloudContextService()
-                    .getAzureCloudContext(resource.getWorkspaceId())
-                    .get(),
                 flightBeanBag.getCrlService(),
                 resource.castToAzureNetworkResource()),
             RetryRules.cloud());
         addStep(
             new CreateAzureNetworkStep(
                 flightBeanBag.getAzureConfig(),
-                flightBeanBag
-                    .getAzureCloudContextService()
-                    .getAzureCloudContext(resource.getWorkspaceId())
-                    .get(),
                 flightBeanBag.getCrlService(),
                 resource.castToAzureNetworkResource()),
             RetryRules.cloud());
@@ -199,20 +168,12 @@ public class CreateControlledResourceFlight extends Flight {
         addStep(
             new GetAzureVmStep(
                 flightBeanBag.getAzureConfig(),
-                flightBeanBag
-                    .getAzureCloudContextService()
-                    .getAzureCloudContext(resource.getWorkspaceId())
-                    .get(),
                 flightBeanBag.getCrlService(),
                 resource.castToAzureVmResource()),
             RetryRules.cloud());
         addStep(
             new CreateAzureVmStep(
                 flightBeanBag.getAzureConfig(),
-                flightBeanBag
-                    .getAzureCloudContextService()
-                    .getAzureCloudContext(resource.getWorkspaceId())
-                    .get(),
                 flightBeanBag.getCrlService(),
                 resource.castToAzureVmResource(),
                 flightBeanBag.getResourceDao()),
@@ -222,20 +183,12 @@ public class CreateControlledResourceFlight extends Flight {
         addStep(
             new GetAzureStorageStep(
                 flightBeanBag.getAzureConfig(),
-                flightBeanBag
-                    .getAzureCloudContextService()
-                    .getAzureCloudContext(resource.getWorkspaceId())
-                    .get(),
                 flightBeanBag.getCrlService(),
                 resource.castToAzureStorageResource()),
             RetryRules.cloud());
         addStep(
             new CreateAzureStorageStep(
                 flightBeanBag.getAzureConfig(),
-                flightBeanBag
-                    .getAzureCloudContextService()
-                    .getAzureCloudContext(resource.getWorkspaceId())
-                    .get(),
                 flightBeanBag.getCrlService(),
                 resource.castToAzureStorageResource()),
             RetryRules.cloud());

@@ -10,12 +10,14 @@ import static org.mockito.Mockito.when;
 
 import bio.terra.cloudres.azure.resourcemanager.compute.data.CreateNetworkRequestData;
 import bio.terra.stairway.FlightContext;
+import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.StepResult;
 import bio.terra.workspace.app.configuration.external.AzureConfiguration;
 import bio.terra.workspace.common.BaseAzureTest;
 import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
 import bio.terra.workspace.generated.model.ApiAzureNetworkCreationParameters;
 import bio.terra.workspace.service.crl.CrlService;
+import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import bio.terra.workspace.service.workspace.model.AzureCloudContext;
 import com.azure.core.management.Region;
 import com.azure.core.management.exception.ManagementError;
@@ -106,6 +108,7 @@ public class CreateAzureNetworkStepTest extends BaseAzureTest {
       mockNetworkStage15;
 
   @Mock private ManagementException mockException;
+  @Mock private FlightMap mockWorkingMap;
 
   private ArgumentCaptor<Context> contextCaptor = ArgumentCaptor.forClass(Context.class);
 
@@ -162,6 +165,10 @@ public class CreateAzureNetworkStepTest extends BaseAzureTest {
     // Exception mock
     when(mockException.getValue())
         .thenReturn(new ManagementError("Conflict", "Resource already exists."));
+
+    when(mockFlightContext.getWorkingMap()).thenReturn(mockWorkingMap);
+    when(mockWorkingMap.get(ControlledResourceKeys.AZURE_CLOUD_CONTEXT, AzureCloudContext.class))
+        .thenReturn(mockAzureCloudContext);
   }
 
   @Test
@@ -172,7 +179,6 @@ public class CreateAzureNetworkStepTest extends BaseAzureTest {
     var createAzureNetworkStep =
         new CreateAzureNetworkStep(
             mockAzureConfig,
-            mockAzureCloudContext,
             mockCrlService,
             ControlledResourceFixtures.getAzureNetwork(creationParameters));
 
@@ -215,7 +221,6 @@ public class CreateAzureNetworkStepTest extends BaseAzureTest {
     CreateAzureNetworkStep createAzureNetworkStep =
         new CreateAzureNetworkStep(
             mockAzureConfig,
-            mockAzureCloudContext,
             mockCrlService,
             ControlledResourceFixtures.getAzureNetwork(creationParameters));
 
@@ -236,7 +241,6 @@ public class CreateAzureNetworkStepTest extends BaseAzureTest {
     CreateAzureNetworkStep createAzureNetworkStep =
         new CreateAzureNetworkStep(
             mockAzureConfig,
-            mockAzureCloudContext,
             mockCrlService,
             ControlledResourceFixtures.getAzureNetwork(creationParameters));
 

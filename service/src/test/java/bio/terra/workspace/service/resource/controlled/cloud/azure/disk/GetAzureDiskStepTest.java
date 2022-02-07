@@ -6,6 +6,7 @@ import static org.hamcrest.Matchers.instanceOf;
 import static org.mockito.Mockito.when;
 
 import bio.terra.stairway.FlightContext;
+import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.StepStatus;
 import bio.terra.workspace.app.configuration.external.AzureConfiguration;
@@ -14,6 +15,7 @@ import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
 import bio.terra.workspace.generated.model.ApiAzureDiskCreationParameters;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.resource.exception.DuplicateResourceException;
+import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import bio.terra.workspace.service.workspace.model.AzureCloudContext;
 import com.azure.core.management.exception.ManagementError;
 import com.azure.core.management.exception.ManagementException;
@@ -38,6 +40,7 @@ public class GetAzureDiskStepTest extends BaseAzureTest {
   @Mock private Disks mockDisks;
   @Mock private Disk mockDisk;
   @Mock private ManagementException mockException;
+  @Mock private FlightMap mockWorkingMap;
 
   @BeforeEach
   public void setup() {
@@ -48,6 +51,10 @@ public class GetAzureDiskStepTest extends BaseAzureTest {
     when(mockComputeManager.disks()).thenReturn(mockDisks);
     when(mockException.getValue())
         .thenReturn(new ManagementError("ResourceNotFound", "Resource was not found."));
+
+    when(mockFlightContext.getWorkingMap()).thenReturn(mockWorkingMap);
+    when(mockWorkingMap.get(ControlledResourceKeys.AZURE_CLOUD_CONTEXT, AzureCloudContext.class))
+        .thenReturn(mockAzureCloudContext);
   }
 
   @Test
@@ -58,7 +65,6 @@ public class GetAzureDiskStepTest extends BaseAzureTest {
     GetAzureDiskStep step =
         new GetAzureDiskStep(
             mockAzureConfig,
-            mockAzureCloudContext,
             mockCrlService,
             ControlledResourceFixtures.getAzureDisk(
                 creationParameters.getName(),
@@ -83,7 +89,6 @@ public class GetAzureDiskStepTest extends BaseAzureTest {
     GetAzureDiskStep step =
         new GetAzureDiskStep(
             mockAzureConfig,
-            mockAzureCloudContext,
             mockCrlService,
             ControlledResourceFixtures.getAzureDisk(
                 creationParameters.getName(),
