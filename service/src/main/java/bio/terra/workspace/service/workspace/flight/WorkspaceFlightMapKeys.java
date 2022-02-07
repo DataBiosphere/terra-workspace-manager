@@ -25,6 +25,7 @@ public final class WorkspaceFlightMapKeys {
     public static final String CREATION_PARAMETERS = "creationParameters";
     public static final String PRIVATE_RESOURCE_IAM_ROLE = "privateResourceIamRole";
     public static final String GCP_CLOUD_CONTEXT = "gcpCloudContext";
+    public static final String AZURE_CLOUD_CONTEXT = "azureCloudContext";
     public static final String UPDATE_PARAMETERS = "updateParameters";
     public static final String PREVIOUS_UPDATE_PARAMETERS = "previousUpdateParameters";
 

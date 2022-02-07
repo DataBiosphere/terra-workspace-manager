@@ -10,6 +10,7 @@ import static org.mockito.Mockito.when;
 
 import bio.terra.cloudres.azure.resourcemanager.compute.data.CreateVirtualMachineRequestData;
 import bio.terra.stairway.FlightContext;
+import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.StepResult;
 import bio.terra.workspace.app.configuration.external.AzureConfiguration;
 import bio.terra.workspace.common.BaseAzureTest;
@@ -22,6 +23,7 @@ import bio.terra.workspace.service.resource.controlled.cloud.azure.ip.Controlled
 import bio.terra.workspace.service.resource.controlled.cloud.azure.network.ControlledAzureNetworkResource;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import bio.terra.workspace.service.resource.model.WsmResource;
+import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import bio.terra.workspace.service.workspace.model.AzureCloudContext;
 import com.azure.core.management.Region;
 import com.azure.core.management.exception.ManagementError;
@@ -151,6 +153,7 @@ public class CreateAzureVmStepTest extends BaseAzureTest {
   @Mock private ControlledAzureIpResource mockAzureIpResource;
   @Mock private ControlledAzureDiskResource mockAzureDiskResource;
   @Mock private ControlledAzureNetworkResource mockAzureNetworkResource;
+  @Mock private FlightMap mockWorkingMap;
 
   private ArgumentCaptor<Context> contextCaptor = ArgumentCaptor.forClass(Context.class);
 
@@ -246,6 +249,10 @@ public class CreateAzureVmStepTest extends BaseAzureTest {
     // Exception mock
     when(mockException.getValue())
         .thenReturn(new ManagementError("Conflict", "Resource already exists."));
+
+    when(mockFlightContext.getWorkingMap()).thenReturn(mockWorkingMap);
+    when(mockWorkingMap.get(ControlledResourceKeys.AZURE_CLOUD_CONTEXT, AzureCloudContext.class))
+        .thenReturn(mockAzureCloudContext);
   }
 
   @Test
@@ -256,7 +263,6 @@ public class CreateAzureVmStepTest extends BaseAzureTest {
     var createAzureVmStep =
         new CreateAzureVmStep(
             mockAzureConfig,
-            mockAzureCloudContext,
             mockCrlService,
             ControlledResourceFixtures.getAzureVm(creationParameters),
             mockResourceDao);
@@ -301,7 +307,6 @@ public class CreateAzureVmStepTest extends BaseAzureTest {
     var createAzureVmStep =
         new CreateAzureVmStep(
             mockAzureConfig,
-            mockAzureCloudContext,
             mockCrlService,
             ControlledResourceFixtures.getAzureVm(creationParameters),
             mockResourceDao);
@@ -323,7 +328,6 @@ public class CreateAzureVmStepTest extends BaseAzureTest {
     var createAzureVmStep =
         new CreateAzureVmStep(
             mockAzureConfig,
-            mockAzureCloudContext,
             mockCrlService,
             ControlledResourceFixtures.getAzureVm(creationParameters),
             mockResourceDao);

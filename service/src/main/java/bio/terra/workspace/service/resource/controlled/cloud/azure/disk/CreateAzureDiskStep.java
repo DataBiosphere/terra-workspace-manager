@@ -9,6 +9,7 @@ import bio.terra.stairway.StepStatus;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.app.configuration.external.AzureConfiguration;
 import bio.terra.workspace.service.crl.CrlService;
+import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import bio.terra.workspace.service.workspace.model.AzureCloudContext;
 import com.azure.core.management.Region;
 import com.azure.core.management.exception.ManagementException;
@@ -24,21 +25,20 @@ public class CreateAzureDiskStep implements Step {
   private final AzureConfiguration azureConfig;
   private final CrlService crlService;
   private final ControlledAzureDiskResource resource;
-  private final AzureCloudContext azureCloudContext;
 
   public CreateAzureDiskStep(
-      AzureConfiguration azureConfig,
-      AzureCloudContext azureCloudContext,
-      CrlService crlService,
-      ControlledAzureDiskResource resource) {
+      AzureConfiguration azureConfig, CrlService crlService, ControlledAzureDiskResource resource) {
     this.azureConfig = azureConfig;
-    this.azureCloudContext = azureCloudContext;
     this.crlService = crlService;
     this.resource = resource;
   }
 
   @Override
   public StepResult doStep(FlightContext context) throws InterruptedException, RetryException {
+    final AzureCloudContext azureCloudContext =
+        context
+            .getWorkingMap()
+            .get(ControlledResourceKeys.AZURE_CLOUD_CONTEXT, AzureCloudContext.class);
     ComputeManager computeManager = crlService.getComputeManager(azureCloudContext, azureConfig);
 
     try {
@@ -81,6 +81,10 @@ public class CreateAzureDiskStep implements Step {
 
   @Override
   public StepResult undoStep(FlightContext context) throws InterruptedException {
+    final AzureCloudContext azureCloudContext =
+        context
+            .getWorkingMap()
+            .get(ControlledResourceKeys.AZURE_CLOUD_CONTEXT, AzureCloudContext.class);
     ComputeManager computeManager = crlService.getComputeManager(azureCloudContext, azureConfig);
 
     try {
