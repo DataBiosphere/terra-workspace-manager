@@ -8,6 +8,7 @@ import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.app.configuration.external.AzureConfiguration;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.resource.exception.DuplicateResourceException;
+import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import bio.terra.workspace.service.workspace.model.AzureCloudContext;
 import com.azure.resourcemanager.storage.StorageManager;
 import org.slf4j.Logger;
@@ -23,21 +24,22 @@ public class GetAzureStorageStep implements Step {
   private final AzureConfiguration azureConfig;
   private final CrlService crlService;
   private final ControlledAzureStorageResource resource;
-  private final AzureCloudContext azureCloudContext;
 
   public GetAzureStorageStep(
       AzureConfiguration azureConfig,
-      AzureCloudContext azureCloudContext,
       CrlService crlService,
       ControlledAzureStorageResource resource) {
     this.azureConfig = azureConfig;
-    this.azureCloudContext = azureCloudContext;
     this.crlService = crlService;
     this.resource = resource;
   }
 
   @Override
   public StepResult doStep(FlightContext context) throws InterruptedException, RetryException {
+    final AzureCloudContext azureCloudContext =
+        context
+            .getWorkingMap()
+            .get(ControlledResourceKeys.AZURE_CLOUD_CONTEXT, AzureCloudContext.class);
     StorageManager storageManager = crlService.getStorageManager(azureCloudContext, azureConfig);
 
     if (storageManager

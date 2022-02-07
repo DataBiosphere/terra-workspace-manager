@@ -1,6 +1,7 @@
 package bio.terra.workspace.service.workspace;
 
 import bio.terra.workspace.db.WorkspaceDao;
+import bio.terra.workspace.service.workspace.exceptions.CloudContextRequiredException;
 import bio.terra.workspace.service.workspace.model.AzureCloudContext;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import java.util.Optional;
@@ -82,5 +83,11 @@ public class AzureCloudContextService {
     return workspaceDao
         .getCloudContext(workspaceId, CloudPlatform.AZURE)
         .map(AzureCloudContext::deserialize);
+  }
+
+  public AzureCloudContext getRequiredAzureCloudContext(UUID workspaceId) {
+    return getAzureCloudContext(workspaceId)
+        .orElseThrow(
+            () -> new CloudContextRequiredException("Operation requires Azure cloud context"));
   }
 }

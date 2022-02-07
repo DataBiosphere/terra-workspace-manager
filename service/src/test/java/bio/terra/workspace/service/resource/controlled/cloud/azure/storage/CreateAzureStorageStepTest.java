@@ -4,7 +4,6 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -18,6 +17,7 @@ import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
 import bio.terra.workspace.generated.model.ApiAzureStorageCreationParameters;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.storage.resourcemanager.data.CreateStorageAccountRequestData;
+import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import bio.terra.workspace.service.workspace.model.AzureCloudContext;
 import com.azure.core.management.Region;
 import com.azure.core.management.exception.ManagementError;
@@ -50,6 +50,8 @@ public class CreateAzureStorageStepTest extends BaseAzureTest {
   @Mock private StorageAccount.DefinitionStages.WithCreate mockStorageCreateStage;
   @Mock private StorageAccount mockStorageAccount;
   @Mock private CheckNameAvailabilityResult mockNameAvailabilityResult;
+  @Mock private FlightContext mockFlightContext;
+  @Mock private FlightMap mockWorkingMap;
 
   private ArgumentCaptor<Context> contextCaptor = ArgumentCaptor.forClass(Context.class);
 
@@ -80,14 +82,15 @@ public class CreateAzureStorageStepTest extends BaseAzureTest {
     // Exception mock
     when(mockException.getValue())
         .thenReturn(new ManagementError("Conflict", "Invalid resource state."));
+    when(mockFlightContext.getWorkingMap()).thenReturn(mockWorkingMap);
+    when(mockWorkingMap.get(ControlledResourceKeys.AZURE_CLOUD_CONTEXT, AzureCloudContext.class)).thenReturn(mockAzureCloudContext);
   }
 
   @Test
   void createStorageAccount() throws InterruptedException {
 
     CreateAzureStorageStep createAzureStorageStep = createCreateAzureStorageStep();
-    FlightContext flightContext = createMockFlightContext();
-    StepResult stepResult = createAzureStorageStep.doStep(flightContext);
+    StepResult stepResult = createAzureStorageStep.doStep(mockFlightContext);
 
     // Verify step returns success
     assertThat(stepResult, equalTo(StepResult.getStepResultSuccess()));
@@ -114,11 +117,10 @@ public class CreateAzureStorageStepTest extends BaseAzureTest {
 
   @Test
   public void createStorage_failsToCreate() throws InterruptedException {
-    FlightContext flightContext = createMockFlightContext();
     CreateAzureStorageStep createAzureStorageStep = createCreateAzureStorageStep();
     when(mockStorageCreateStage.create(any(Context.class))).thenThrow(mockException);
 
-    StepResult stepResult = createAzureStorageStep.doStep(flightContext);
+    StepResult stepResult = createAzureStorageStep.doStep(mockFlightContext);
 
     // Verify step fails...
     assertThat(stepResult.isSuccess(), equalTo(false));
@@ -129,31 +131,23 @@ public class CreateAzureStorageStepTest extends BaseAzureTest {
     CreateAzureStorageStep createAzureStorageStep =
         new CreateAzureStorageStep(
             mockAzureConfig,
-            mockAzureCloudContext,
             mockCrlService,
             ControlledResourceFixtures.getAzureStorage(
                 creationParameters.getName(), creationParameters.getRegion()));
     return createAzureStorageStep;
   }
 
-  private FlightContext createMockFlightContext() {
-    FlightContext mockFlightContext = mock(FlightContext.class);
-    when(mockFlightContext.getWorkingMap()).thenReturn(new FlightMap());
-    return mockFlightContext;
-  }
-
   @Test
   public void undoStep_deletesStorageIfStorageAccountDoesNotExist() throws InterruptedException {
 
     CreateAzureStorageStep createAzureStorageStep = createCreateAzureStorageStep();
-    FlightContext flightContext = createMockFlightContext();
 
     // Storage account does not exist
     when(mockNameAvailabilityResult.isAvailable()).thenReturn(true);
     when(mockStorageAccounts.checkNameAvailability(creationParameters.getName()))
         .thenReturn(mockNameAvailabilityResult);
 
-    StepResult stepResult = createAzureStorageStep.undoStep(flightContext);
+    StepResult stepResult = createAzureStorageStep.undoStep(mockFlightContext);
 
     // Verify step returns success
     assertThat(stepResult, equalTo(StepResult.getStepResultSuccess()));
@@ -168,14 +162,13 @@ public class CreateAzureStorageStepTest extends BaseAzureTest {
   public void undoStep_deletesStorageIfStorageAccountExists() throws InterruptedException {
 
     CreateAzureStorageStep createAzureStorageStep = createCreateAzureStorageStep();
-    FlightContext flightContext = createMockFlightContext();
 
     // Storage account exists
     when(mockNameAvailabilityResult.isAvailable()).thenReturn(false);
     when(mockStorageAccounts.checkNameAvailability(creationParameters.getName()))
         .thenReturn(mockNameAvailabilityResult);
 
-    StepResult stepResult = createAzureStorageStep.undoStep(flightContext);
+    StepResult stepResult = createAzureStorageStep.undoStep(mockFlightContext);
 
     // Verify step returns success
     assertThat(stepResult, equalTo(StepResult.getStepResultSuccess()));

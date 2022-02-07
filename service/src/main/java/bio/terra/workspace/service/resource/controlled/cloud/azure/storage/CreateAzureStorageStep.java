@@ -9,6 +9,7 @@ import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.app.configuration.external.AzureConfiguration;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.storage.resourcemanager.data.CreateStorageAccountRequestData;
+import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import bio.terra.workspace.service.workspace.model.AzureCloudContext;
 import com.azure.core.management.Region;
 import com.azure.core.management.exception.ManagementException;
@@ -21,21 +22,22 @@ public class CreateAzureStorageStep implements Step {
   private final AzureConfiguration azureConfig;
   private final CrlService crlService;
   private final ControlledAzureStorageResource resource;
-  private final AzureCloudContext azureCloudContext;
 
   public CreateAzureStorageStep(
       AzureConfiguration azureConfig,
-      AzureCloudContext azureCloudContext,
       CrlService crlService,
       ControlledAzureStorageResource resource) {
     this.azureConfig = azureConfig;
-    this.azureCloudContext = azureCloudContext;
     this.crlService = crlService;
     this.resource = resource;
   }
 
   @Override
   public StepResult doStep(FlightContext context) throws InterruptedException, RetryException {
+    final AzureCloudContext azureCloudContext =
+        context
+            .getWorkingMap()
+            .get(ControlledResourceKeys.AZURE_CLOUD_CONTEXT, AzureCloudContext.class);
     StorageManager storageManager = crlService.getStorageManager(azureCloudContext, azureConfig);
 
     try {
@@ -78,6 +80,10 @@ public class CreateAzureStorageStep implements Step {
    */
   @Override
   public StepResult undoStep(FlightContext context) throws InterruptedException {
+    final AzureCloudContext azureCloudContext =
+        context
+            .getWorkingMap()
+            .get(ControlledResourceKeys.AZURE_CLOUD_CONTEXT, AzureCloudContext.class);
     StorageManager storageManager = crlService.getStorageManager(azureCloudContext, azureConfig);
 
     // If the storage account does not exist (isAvailable == true)
