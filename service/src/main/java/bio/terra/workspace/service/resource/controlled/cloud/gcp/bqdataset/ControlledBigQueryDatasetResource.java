@@ -3,6 +3,9 @@ package bio.terra.workspace.service.resource.controlled.cloud.gcp.bqdataset;
 import bio.terra.common.exception.BadRequestException;
 import bio.terra.common.exception.InconsistentFieldsException;
 import bio.terra.common.exception.MissingRequiredFieldException;
+import bio.terra.stairway.RetryRule;
+import bio.terra.workspace.common.utils.FlightBeanBag;
+import bio.terra.workspace.common.utils.RetryRules;
 import bio.terra.workspace.db.DbSerDes;
 import bio.terra.workspace.db.model.UniquenessCheckAttributes;
 import bio.terra.workspace.db.model.UniquenessCheckAttributes.UniquenessScope;
@@ -10,7 +13,9 @@ import bio.terra.workspace.generated.model.ApiGcpBigQueryDatasetAttributes;
 import bio.terra.workspace.generated.model.ApiGcpBigQueryDatasetResource;
 import bio.terra.workspace.generated.model.ApiResourceAttributesUnion;
 import bio.terra.workspace.generated.model.ApiResourceUnion;
+import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.resource.ValidationUtils;
+import bio.terra.workspace.service.resource.controlled.flight.create.CreateControlledResourceFlight;
 import bio.terra.workspace.service.resource.controlled.model.AccessScopeType;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import bio.terra.workspace.service.resource.controlled.model.ManagedByType;
@@ -100,6 +105,26 @@ public class ControlledBigQueryDatasetResource extends ControlledResource {
         new UniquenessCheckAttributes()
             .uniquenessScope(UniquenessScope.WORKSPACE)
             .addParameter("datasetName", getDatasetName()));
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void addCreateSteps(
+      CreateControlledResourceFlight flight,
+      String petSaEmail,
+      AuthenticatedUserRequest userRequest,
+      FlightBeanBag flightBeanBag) {
+    RetryRule cloudRetry = RetryRules.cloud();
+    // Unlike other resources, BigQuery datasets set IAM permissions at creation time to avoid
+    // unwanted defaults from GCP.
+    flight.addStep(
+        new CreateBigQueryDatasetStep(
+            flightBeanBag.getControlledResourceService(),
+            flightBeanBag.getCrlService(),
+            this,
+            flightBeanBag.getGcpCloudContextService(),
+            userRequest),
+        cloudRetry);
   }
 
   public String getDatasetName() {

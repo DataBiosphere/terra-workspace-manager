@@ -2,12 +2,15 @@ package bio.terra.workspace.service.resource.controlled.model;
 
 import bio.terra.common.exception.InconsistentFieldsException;
 import bio.terra.common.exception.MissingRequiredFieldException;
+import bio.terra.workspace.common.utils.FlightBeanBag;
 import bio.terra.workspace.db.exception.InvalidMetadataException;
 import bio.terra.workspace.db.model.DbResource;
 import bio.terra.workspace.db.model.UniquenessCheckAttributes;
 import bio.terra.workspace.generated.model.ApiControlledResourceMetadata;
 import bio.terra.workspace.generated.model.ApiPrivateResourceUser;
 import bio.terra.workspace.generated.model.ApiResourceMetadata;
+import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
+import bio.terra.workspace.service.resource.controlled.flight.create.CreateControlledResourceFlight;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.model.StewardshipType;
 import bio.terra.workspace.service.resource.model.WsmResource;
@@ -66,6 +69,21 @@ public abstract class ControlledResource extends WsmResource {
    * @return optional uniqueness description
    */
   public abstract Optional<UniquenessCheckAttributes> getUniquenessCheckAttributes();
+
+  /**
+   * The CreateControlledResourceFlight calls this method to populate the resource-specific steps to
+   * create the specific cloud resource.
+   *
+   * @param flight the create flight
+   * @param petSaEmail the pet SA to use for creation
+   * @param userRequest authenticated user
+   * @param flightBeanBag bean bag for finding Spring singletons
+   */
+  public abstract void addCreateSteps(
+      CreateControlledResourceFlight flight,
+      String petSaEmail,
+      AuthenticatedUserRequest userRequest,
+      FlightBeanBag flightBeanBag);
 
   /**
    * If specified, the assigned user must be equal to the user making the request.

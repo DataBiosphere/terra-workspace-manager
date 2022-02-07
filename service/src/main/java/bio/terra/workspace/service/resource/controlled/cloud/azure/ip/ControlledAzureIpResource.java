@@ -3,6 +3,9 @@ package bio.terra.workspace.service.resource.controlled.cloud.azure.ip;
 import bio.terra.common.exception.BadRequestException;
 import bio.terra.common.exception.InconsistentFieldsException;
 import bio.terra.common.exception.MissingRequiredFieldException;
+import bio.terra.stairway.RetryRule;
+import bio.terra.workspace.common.utils.FlightBeanBag;
+import bio.terra.workspace.common.utils.RetryRules;
 import bio.terra.workspace.db.DbSerDes;
 import bio.terra.workspace.db.model.DbResource;
 import bio.terra.workspace.db.model.UniquenessCheckAttributes;
@@ -11,7 +14,9 @@ import bio.terra.workspace.generated.model.ApiAzureIpAttributes;
 import bio.terra.workspace.generated.model.ApiAzureIpResource;
 import bio.terra.workspace.generated.model.ApiResourceAttributesUnion;
 import bio.terra.workspace.generated.model.ApiResourceUnion;
+import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.resource.ValidationUtils;
+import bio.terra.workspace.service.resource.controlled.flight.create.CreateControlledResourceFlight;
 import bio.terra.workspace.service.resource.controlled.model.AccessScopeType;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import bio.terra.workspace.service.resource.controlled.model.ManagedByType;
@@ -91,6 +96,22 @@ public class ControlledAzureIpResource extends ControlledResource {
         new UniquenessCheckAttributes()
             .uniquenessScope(UniquenessScope.WORKSPACE)
             .addParameter("ipName", getIpName()));
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void addCreateSteps(
+      CreateControlledResourceFlight flight,
+      String petSaEmail,
+      AuthenticatedUserRequest userRequest,
+      FlightBeanBag flightBeanBag) {
+    RetryRule cloudRetry = RetryRules.cloud();
+    flight.addStep(
+        new GetAzureIpStep(flightBeanBag.getAzureConfig(), flightBeanBag.getCrlService(), this),
+        cloudRetry);
+    flight.addStep(
+        new CreateAzureIpStep(flightBeanBag.getAzureConfig(), flightBeanBag.getCrlService(), this),
+        cloudRetry);
   }
 
   public String getIpName() {
