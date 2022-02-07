@@ -56,7 +56,8 @@ public class GetAzureIpStepTest extends BaseAzureTest {
         .thenReturn(new ManagementError("ResourceNotFound", "Resource was not found."));
 
     when(mockFlightContext.getWorkingMap()).thenReturn(mockWorkingMap);
-    when(mockWorkingMap.get(ControlledResourceKeys.AZURE_CLOUD_CONTEXT, AzureCloudContext.class)).thenReturn(mockAzureCloudContext);
+    when(mockWorkingMap.get(ControlledResourceKeys.AZURE_CLOUD_CONTEXT, AzureCloudContext.class))
+        .thenReturn(mockAzureCloudContext);
   }
 
   @Test

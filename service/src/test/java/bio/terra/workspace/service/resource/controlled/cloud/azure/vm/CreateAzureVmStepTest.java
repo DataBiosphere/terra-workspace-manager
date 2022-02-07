@@ -251,7 +251,8 @@ public class CreateAzureVmStepTest extends BaseAzureTest {
         .thenReturn(new ManagementError("Conflict", "Resource already exists."));
 
     when(mockFlightContext.getWorkingMap()).thenReturn(mockWorkingMap);
-    when(mockWorkingMap.get(ControlledResourceKeys.AZURE_CLOUD_CONTEXT, AzureCloudContext.class)).thenReturn(mockAzureCloudContext);
+    when(mockWorkingMap.get(ControlledResourceKeys.AZURE_CLOUD_CONTEXT, AzureCloudContext.class))
+        .thenReturn(mockAzureCloudContext);
   }
 
   @Test

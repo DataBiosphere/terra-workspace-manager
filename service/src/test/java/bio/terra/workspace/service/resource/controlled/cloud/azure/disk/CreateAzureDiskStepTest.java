@@ -57,7 +57,6 @@ public class CreateAzureDiskStepTest extends BaseAzureTest {
 
   private ArgumentCaptor<Context> contextCaptor = ArgumentCaptor.forClass(Context.class);
 
-
   @BeforeEach
   public void setup() {
     // PublicIpAddresses mocks
@@ -85,7 +84,8 @@ public class CreateAzureDiskStepTest extends BaseAzureTest {
         .thenReturn(new ManagementError("Conflict", "Resource already exists."));
 
     when(mockFlightContext.getWorkingMap()).thenReturn(mockWorkingMap);
-    when(mockWorkingMap.get(ControlledResourceKeys.AZURE_CLOUD_CONTEXT, AzureCloudContext.class)).thenReturn(mockAzureCloudContext);
+    when(mockWorkingMap.get(ControlledResourceKeys.AZURE_CLOUD_CONTEXT, AzureCloudContext.class))
+        .thenReturn(mockAzureCloudContext);
   }
 
   @Test

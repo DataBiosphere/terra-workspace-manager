@@ -83,7 +83,8 @@ public class CreateAzureStorageStepTest extends BaseAzureTest {
     when(mockException.getValue())
         .thenReturn(new ManagementError("Conflict", "Invalid resource state."));
     when(mockFlightContext.getWorkingMap()).thenReturn(mockWorkingMap);
-    when(mockWorkingMap.get(ControlledResourceKeys.AZURE_CLOUD_CONTEXT, AzureCloudContext.class)).thenReturn(mockAzureCloudContext);
+    when(mockWorkingMap.get(ControlledResourceKeys.AZURE_CLOUD_CONTEXT, AzureCloudContext.class))
+        .thenReturn(mockAzureCloudContext);
   }
 
   @Test
