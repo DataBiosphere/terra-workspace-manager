@@ -4,6 +4,8 @@ import bio.terra.common.exception.InconsistentFieldsException;
 import bio.terra.common.exception.MissingRequiredFieldException;
 import bio.terra.workspace.db.DbSerDes;
 import bio.terra.workspace.db.model.DbResource;
+import bio.terra.workspace.db.model.UniquenessCheckAttributes;
+import bio.terra.workspace.db.model.UniquenessCheckAttributes.UniquenessScope;
 import bio.terra.workspace.generated.model.ApiAzureVmAttributes;
 import bio.terra.workspace.generated.model.ApiAzureVmResource;
 import bio.terra.workspace.generated.model.ApiResourceAttributesUnion;
@@ -86,6 +88,15 @@ public class ControlledAzureVmResource extends ControlledResource {
     this.networkId = attributes.getNetworkId();
     this.diskId = attributes.getDiskId();
     validate();
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public Optional<UniquenessCheckAttributes> getUniquenessCheckParameters() {
+    return Optional.of(
+        new UniquenessCheckAttributes()
+            .uniquenessScope(UniquenessScope.WORKSPACE)
+            .addParameter("vmName", getVmName()));
   }
 
   public String getVmName() {

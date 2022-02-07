@@ -1,6 +1,5 @@
 package bio.terra.workspace.service.resource.model;
 
-import bio.terra.workspace.db.exception.InvalidMetadataException;
 import bio.terra.workspace.generated.model.ApiResourceType;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.disk.ControlledAzureDiskHandler;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.disk.ControlledAzureDiskResource;
@@ -182,31 +181,6 @@ public enum WsmResourceType {
     }
     throw new SerializationException(
         "Deserialization failed: no matching resource type for " + dbString);
-  }
-
-  public static WsmResourceType fromSqlParts(
-      WsmResourceFamily cloudResourceType, StewardshipType stewardshipType) {
-    switch (stewardshipType) {
-      case CONTROLLED:
-        return cloudResourceType
-            .getControlledType()
-            .orElseThrow(
-                () ->
-                    new InvalidMetadataException(
-                        "Unsupported controlled resource type for " + cloudResourceType));
-
-      case REFERENCED:
-        return cloudResourceType
-            .getReferenceType()
-            .orElseThrow(
-                () ->
-                    new InvalidMetadataException(
-                        "Unsupported referenced resource type for " + cloudResourceType));
-    }
-    throw new InvalidMetadataException(
-        String.format(
-            "Invalid combination: cloud resource type %s and stewardship type %s",
-            cloudResourceType, stewardshipType));
   }
 
   public CloudPlatform getCloudPlatform() {

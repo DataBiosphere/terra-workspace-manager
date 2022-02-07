@@ -4,6 +4,8 @@ import bio.terra.common.exception.InconsistentFieldsException;
 import bio.terra.common.exception.MissingRequiredFieldException;
 import bio.terra.workspace.db.DbSerDes;
 import bio.terra.workspace.db.model.DbResource;
+import bio.terra.workspace.db.model.UniquenessCheckAttributes;
+import bio.terra.workspace.db.model.UniquenessCheckAttributes.UniquenessScope;
 import bio.terra.workspace.generated.model.ApiAzureNetworkAttributes;
 import bio.terra.workspace.generated.model.ApiAzureNetworkResource;
 import bio.terra.workspace.generated.model.ApiResourceAttributesUnion;
@@ -77,6 +79,15 @@ public class ControlledAzureNetworkResource extends ControlledResource {
     this.subnetAddressCidr = attributes.getSubnetAddressCidr();
     this.region = attributes.getRegion();
     validate();
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public Optional<UniquenessCheckAttributes> getUniquenessCheckParameters() {
+    return Optional.of(
+        new UniquenessCheckAttributes()
+            .uniquenessScope(UniquenessScope.WORKSPACE)
+            .addParameter("networkName", getNetworkName()));
   }
 
   public String getNetworkName() {

@@ -4,6 +4,8 @@ import bio.terra.common.exception.InconsistentFieldsException;
 import bio.terra.common.exception.MissingRequiredFieldException;
 import bio.terra.workspace.db.DbSerDes;
 import bio.terra.workspace.db.model.DbResource;
+import bio.terra.workspace.db.model.UniquenessCheckAttributes;
+import bio.terra.workspace.db.model.UniquenessCheckAttributes.UniquenessScope;
 import bio.terra.workspace.generated.model.ApiAzureDiskAttributes;
 import bio.terra.workspace.generated.model.ApiAzureDiskResource;
 import bio.terra.workspace.generated.model.ApiResourceAttributesUnion;
@@ -71,6 +73,15 @@ public class ControlledAzureDiskResource extends ControlledResource {
     validate();
   }
 
+  /** {@inheritDoc} */
+  @Override
+  public Optional<UniquenessCheckAttributes> getUniquenessCheckParameters() {
+    return Optional.of(
+        new UniquenessCheckAttributes()
+            .uniquenessScope(UniquenessScope.WORKSPACE)
+            .addParameter("diskName", getDiskName()));
+  }
+
   public String getDiskName() {
     return diskName;
   }
@@ -83,12 +94,12 @@ public class ControlledAzureDiskResource extends ControlledResource {
     return size;
   }
 
-  public ApiAzureDiskAttributes toApiAttributes() {
-    return new ApiAzureDiskAttributes().diskName(getDiskName()).region(region.toString());
-  }
-
   public ApiAzureDiskResource toApiResource() {
     return new ApiAzureDiskResource().metadata(super.toApiMetadata()).attributes(toApiAttributes());
+  }
+
+  private ApiAzureDiskAttributes toApiAttributes() {
+    return new ApiAzureDiskAttributes().diskName(getDiskName()).region(region);
   }
 
   @Override

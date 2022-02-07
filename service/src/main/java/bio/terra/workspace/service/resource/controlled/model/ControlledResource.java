@@ -4,6 +4,7 @@ import bio.terra.common.exception.InconsistentFieldsException;
 import bio.terra.common.exception.MissingRequiredFieldException;
 import bio.terra.workspace.db.exception.InvalidMetadataException;
 import bio.terra.workspace.db.model.DbResource;
+import bio.terra.workspace.db.model.UniquenessCheckAttributes;
 import bio.terra.workspace.generated.model.ApiControlledResourceMetadata;
 import bio.terra.workspace.generated.model.ApiPrivateResourceUser;
 import bio.terra.workspace.generated.model.ApiResourceMetadata;
@@ -66,10 +67,14 @@ public abstract class ControlledResource extends WsmResource {
     this.privateResourceState = dbResource.getPrivateResourceState().orElse(null);
   }
 
-  @Override
-  public StewardshipType getStewardshipType() {
-    return StewardshipType.CONTROLLED;
-  }
+  /**
+   * The ResourceDao calls this method for controlled parameters. The return value describes
+   * filtering the DAO should do to verify the uniqueness of the resource. If the return is not
+   * present, then no validation check will be performed.
+   *
+   * @return optional uniqueness description
+   */
+  public abstract Optional<UniquenessCheckAttributes> getUniquenessCheckParameters();
 
   /**
    * If specified, the assigned user must be equal to the user making the request.
@@ -98,6 +103,11 @@ public abstract class ControlledResource extends WsmResource {
 
   public ControlledResourceCategory getCategory() {
     return ControlledResourceCategory.get(accessScope, managedBy);
+  }
+
+  @Override
+  public StewardshipType getStewardshipType() {
+    return StewardshipType.CONTROLLED;
   }
 
   @Override
