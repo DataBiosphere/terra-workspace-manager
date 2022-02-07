@@ -124,15 +124,16 @@ public abstract class WsmResource {
   /**
    * Every subclass mst implement this cast to its own type. This implementation should be made in
    * each subclass:
+   *
    * <pre>{@code
-   *   @Override
-   *   @SuppressWarnings("unchecked")
-   *   public <T> T castByEnum(WsmResourceType expectedType) {
-   *     if (getResourceType() != expectedType) {
-   *       throw new BadRequestException(String.format("Resource is not a %s", expectedType));
-   *     }
-   *     return (T) this;
+   * @Override
+   * @SuppressWarnings("unchecked")
+   * public <T> T castByEnum(WsmResourceType expectedType) {
+   *   if (getResourceType() != expectedType) {
+   *     throw new BadRequestException(String.format("Resource is not a %s", expectedType));
    *   }
+   *   return (T) this;
+   * }
    * }</pre>
    *
    * @param expectedType resource type enum

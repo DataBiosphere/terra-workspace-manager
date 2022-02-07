@@ -367,9 +367,10 @@ public class ControlledAzureResourceApiController implements ControlledAzureReso
     final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     features.azureEnabledCheck();
     final ControlledAzureIpResource resource =
-        controlledResourceService.getControlledResource(workspaceId, resourceId, userRequest)
-                .castByEnum(WsmResourceType.CONTROLLED_AZURE_IP);
-      return new ResponseEntity<>(resource.toApiResource(), HttpStatus.OK);
+        controlledResourceService
+            .getControlledResource(workspaceId, resourceId, userRequest)
+            .castByEnum(WsmResourceType.CONTROLLED_AZURE_IP);
+    return new ResponseEntity<>(resource.toApiResource(), HttpStatus.OK);
   }
 
   @Override
@@ -377,7 +378,8 @@ public class ControlledAzureResourceApiController implements ControlledAzureReso
     final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     features.azureEnabledCheck();
     final ControlledAzureDiskResource resource =
-        controlledResourceService.getControlledResource(workspaceId, resourceId, userRequest)
+        controlledResourceService
+            .getControlledResource(workspaceId, resourceId, userRequest)
             .castByEnum(WsmResourceType.CONTROLLED_AZURE_DISK);
     return new ResponseEntity<>(resource.toApiResource(), HttpStatus.OK);
   }
@@ -387,7 +389,8 @@ public class ControlledAzureResourceApiController implements ControlledAzureReso
     final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     features.azureEnabledCheck();
     final ControlledAzureVmResource resource =
-        controlledResourceService.getControlledResource(workspaceId, resourceId, userRequest)
+        controlledResourceService
+            .getControlledResource(workspaceId, resourceId, userRequest)
             .castByEnum(WsmResourceType.CONTROLLED_AZURE_VM);
     return new ResponseEntity<>(resource.toApiResource(), HttpStatus.OK);
   }
@@ -398,7 +401,8 @@ public class ControlledAzureResourceApiController implements ControlledAzureReso
     final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     features.azureEnabledCheck();
     final ControlledAzureNetworkResource resource =
-        controlledResourceService.getControlledResource(workspaceId, resourceId, userRequest)
+        controlledResourceService
+            .getControlledResource(workspaceId, resourceId, userRequest)
             .castByEnum(WsmResourceType.CONTROLLED_AZURE_NETWORK);
     return new ResponseEntity<>(resource.toApiResource(), HttpStatus.OK);
   }

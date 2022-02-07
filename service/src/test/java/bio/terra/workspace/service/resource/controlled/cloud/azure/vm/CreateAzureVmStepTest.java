@@ -21,8 +21,8 @@ import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.disk.ControlledAzureDiskResource;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.ip.ControlledAzureIpResource;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.network.ControlledAzureNetworkResource;
-import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import bio.terra.workspace.service.resource.model.WsmResource;
+import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import bio.terra.workspace.service.workspace.model.AzureCloudContext;
 import com.azure.core.management.Region;
@@ -149,7 +149,6 @@ public class CreateAzureVmStepTest extends BaseAzureTest {
       mockNetworkStage15;
 
   @Mock private WsmResource mockWsmResource;
-  @Mock private ControlledResource mockControlledResource;
   @Mock private ControlledAzureIpResource mockAzureIpResource;
   @Mock private ControlledAzureDiskResource mockAzureDiskResource;
   @Mock private ControlledAzureNetworkResource mockAzureNetworkResource;
@@ -235,6 +234,9 @@ public class CreateAzureVmStepTest extends BaseAzureTest {
 
     // Resource dao mocks
     when(mockResourceDao.getResource(any(UUID.class), any(UUID.class))).thenReturn(mockWsmResource);
+    when(mockWsmResource.castByEnum(WsmResourceType.CONTROLLED_AZURE_DISK)).thenReturn(mockAzureDiskResource);
+    when(mockWsmResource.castByEnum(WsmResourceType.CONTROLLED_AZURE_IP)).thenReturn(mockAzureIpResource);
+    when(mockWsmResource.castByEnum(WsmResourceType.CONTROLLED_AZURE_NETWORK)).thenReturn(mockAzureNetworkResource);
 
     // Resource mocks
     when(mockAzureDiskResource.getDiskName()).thenReturn(STUB_DISK_NAME);

@@ -9,6 +9,7 @@ import bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.Retri
 import bio.terra.workspace.service.resource.controlled.flight.update.RetrieveControlledResourceMetadataStep;
 import bio.terra.workspace.service.resource.controlled.flight.update.UpdateControlledResourceMetadataStep;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
+import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ResourceKeys;
 
 public class UpdateControlledGcsBucketResourceFlight extends Flight {
@@ -40,7 +41,7 @@ public class UpdateControlledGcsBucketResourceFlight extends Flight {
     RetryRule gcpRetry = RetryRules.cloud();
     addStep(
         new RetrieveGcsBucketCloudAttributesStep(
-            ControlledGcsBucketResource.castFromResource(resource),
+            resource.castByEnum(WsmResourceType.CONTROLLED_GCP_GCS_BUCKET),
             flightBeanBag.getCrlService(),
             flightBeanBag.getGcpCloudContextService(),
             RetrievalMode.UPDATE_PARAMETERS),
@@ -49,7 +50,7 @@ public class UpdateControlledGcsBucketResourceFlight extends Flight {
     // Update the bucket's cloud attributes
     addStep(
         new UpdateGcsBucketStep(
-            ControlledGcsBucketResource.castFromResource(resource),
+            resource.castByEnum(WsmResourceType.CONTROLLED_GCP_GCS_BUCKET),
             flightBeanBag.getCrlService(),
             flightBeanBag.getGcpCloudContextService()),
         gcpRetry);

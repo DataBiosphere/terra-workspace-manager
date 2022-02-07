@@ -161,7 +161,8 @@ public class ControlledGcpResourceApiController implements ControlledGcpResource
   public ResponseEntity<ApiGcpGcsBucketResource> getBucket(UUID workspaceId, UUID resourceId) {
     final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     ControlledGcsBucketResource resource =
-        controlledResourceService.getControlledResource(workspaceId, resourceId, userRequest)
+        controlledResourceService
+            .getControlledResource(workspaceId, resourceId, userRequest)
             .castByEnum(WsmResourceType.CONTROLLED_GCP_GCS_BUCKET);
     return new ResponseEntity<>(resource.toApiResource(), HttpStatus.OK);
   }
@@ -188,7 +189,8 @@ public class ControlledGcpResourceApiController implements ControlledGcpResource
 
     // Retrieve and cast response to ApiGcpGcsBucketResource
     final ControlledGcsBucketResource updatedResource =
-        controlledResourceService.getControlledResource(workspaceId, resourceId, userRequest)
+        controlledResourceService
+            .getControlledResource(workspaceId, resourceId, userRequest)
             .castByEnum(WsmResourceType.CONTROLLED_GCP_GCS_BUCKET);
     return new ResponseEntity<>(updatedResource.toApiResource(), HttpStatus.OK);
   }
@@ -256,13 +258,15 @@ public class ControlledGcpResourceApiController implements ControlledGcpResource
     logger.info("Updating dataset resourceId {} workspaceId {}", resourceId, workspaceId);
     final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     final ControlledBigQueryDatasetResource resource =
-        controlledResourceService.getControlledResource(workspaceId, resourceId, userRequest)
+        controlledResourceService
+            .getControlledResource(workspaceId, resourceId, userRequest)
             .castByEnum(WsmResourceType.CONTROLLED_GCP_BIG_QUERY_DATASET);
     controlledResourceService.updateBqDataset(
         resource, body.getUpdateParameters(), userRequest, body.getName(), body.getDescription());
 
     final ControlledBigQueryDatasetResource updatedResource =
-        controlledResourceService.getControlledResource(workspaceId, resourceId, userRequest)
+        controlledResourceService
+            .getControlledResource(workspaceId, resourceId, userRequest)
             .castByEnum(WsmResourceType.CONTROLLED_GCP_BIG_QUERY_DATASET);
     return new ResponseEntity<>(updatedResource.toApiResource(), HttpStatus.OK);
   }
@@ -448,11 +452,12 @@ public class ControlledGcpResourceApiController implements ControlledGcpResource
       UUID workspaceId, UUID resourceId) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     ControlledAiNotebookInstanceResource resource =
-        controlledResourceService.getControlledResource(workspaceId, resourceId, userRequest)
-                .castByEnum(WsmResourceType.CONTROLLED_GCP_AI_NOTEBOOK_INSTANCE);
-      // TODO: security check for: workspaceService.getAuthorizedRequiredGcpProject(workspaceId,
-      //  userRequest));
-      return new ResponseEntity<>(resource.toApiResource(), HttpStatus.OK);
+        controlledResourceService
+            .getControlledResource(workspaceId, resourceId, userRequest)
+            .castByEnum(WsmResourceType.CONTROLLED_GCP_AI_NOTEBOOK_INSTANCE);
+    // TODO: security check for: workspaceService.getAuthorizedRequiredGcpProject(workspaceId,
+    //  userRequest));
+    return new ResponseEntity<>(resource.toApiResource(), HttpStatus.OK);
   }
 
   @Override

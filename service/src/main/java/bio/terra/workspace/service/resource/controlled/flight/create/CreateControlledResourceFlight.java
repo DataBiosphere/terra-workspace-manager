@@ -9,19 +9,14 @@ import bio.terra.workspace.common.utils.RetryRules;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.model.ControlledResourceIamRole;
 import bio.terra.workspace.service.job.JobMapKeys;
-import bio.terra.workspace.service.resource.controlled.cloud.azure.disk.ControlledAzureDiskResource;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.disk.CreateAzureDiskStep;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.disk.GetAzureDiskStep;
-import bio.terra.workspace.service.resource.controlled.cloud.azure.ip.ControlledAzureIpResource;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.ip.CreateAzureIpStep;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.ip.GetAzureIpStep;
-import bio.terra.workspace.service.resource.controlled.cloud.azure.network.ControlledAzureNetworkResource;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.network.CreateAzureNetworkStep;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.network.GetAzureNetworkStep;
-import bio.terra.workspace.service.resource.controlled.cloud.azure.storage.ControlledAzureStorageResource;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.storage.CreateAzureStorageStep;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.storage.GetAzureStorageStep;
-import bio.terra.workspace.service.resource.controlled.cloud.azure.vm.ControlledAzureVmResource;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.vm.CreateAzureVmStep;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.vm.GetAzureVmStep;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook.ControlledAiNotebookInstanceResource;
@@ -29,12 +24,11 @@ import bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook.Crea
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook.GrantPetUsagePermissionStep;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook.NotebookCloudSyncStep;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook.RetrieveNetworkNameStep;
-import bio.terra.workspace.service.resource.controlled.cloud.gcp.bqdataset.ControlledBigQueryDatasetResource;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.bqdataset.CreateBigQueryDatasetStep;
-import bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.ControlledGcsBucketResource;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.CreateGcsBucketStep;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.GcsBucketCloudSyncStep;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
+import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ResourceKeys;
 
@@ -98,14 +92,14 @@ public class CreateControlledResourceFlight extends Flight {
         addStep(
             new CreateGcsBucketStep(
                 flightBeanBag.getCrlService(),
-                ControlledGcsBucketResource.castFromResource(resource),
+                resource.castByEnum(WsmResourceType.CONTROLLED_GCP_GCS_BUCKET),
                 flightBeanBag.getGcpCloudContextService()),
             gcpRetryRule);
         addStep(
             new GcsBucketCloudSyncStep(
                 flightBeanBag.getControlledResourceService(),
                 flightBeanBag.getCrlService(),
-                ControlledGcsBucketResource.castFromResource(resource),
+                resource.castByEnum(WsmResourceType.CONTROLLED_GCP_GCS_BUCKET),
                 flightBeanBag.getGcpCloudContextService(),
                 userRequest),
             gcpRetryRule);
@@ -113,7 +107,10 @@ public class CreateControlledResourceFlight extends Flight {
       case CONTROLLED_GCP_AI_NOTEBOOK_INSTANCE:
         {
           addNotebookSteps(
-              petSaEmail, flightBeanBag, resource.castToAiNotebookInstanceResource(), userRequest);
+              petSaEmail,
+              flightBeanBag,
+              resource.castByEnum(WsmResourceType.CONTROLLED_GCP_AI_NOTEBOOK_INSTANCE),
+              userRequest);
           break;
         }
       case CONTROLLED_GCP_BIG_QUERY_DATASET:
@@ -123,7 +120,7 @@ public class CreateControlledResourceFlight extends Flight {
             new CreateBigQueryDatasetStep(
                 flightBeanBag.getControlledResourceService(),
                 flightBeanBag.getCrlService(),
-                ControlledBigQueryDatasetResource.castFromResource(resource),
+                resource.castByEnum(WsmResourceType.CONTROLLED_GCP_BIG_QUERY_DATASET),
                 flightBeanBag.getGcpCloudContextService(),
                 userRequest),
             gcpRetryRule);
@@ -134,13 +131,13 @@ public class CreateControlledResourceFlight extends Flight {
             new GetAzureDiskStep(
                 flightBeanBag.getAzureConfig(),
                 flightBeanBag.getCrlService(),
-                ControlledAzureDiskResource.castFromResource(resource)),
+                resource.castByEnum(WsmResourceType.CONTROLLED_AZURE_DISK)),
             RetryRules.cloud());
         addStep(
             new CreateAzureDiskStep(
                 flightBeanBag.getAzureConfig(),
                 flightBeanBag.getCrlService(),
-                ControlledAzureDiskResource.castFromResource(resource)),
+                resource.castByEnum(WsmResourceType.CONTROLLED_AZURE_DISK)),
             RetryRules.cloud());
         break;
       case CONTROLLED_AZURE_IP:
@@ -148,13 +145,13 @@ public class CreateControlledResourceFlight extends Flight {
             new GetAzureIpStep(
                 flightBeanBag.getAzureConfig(),
                 flightBeanBag.getCrlService(),
-                ControlledAzureIpResource.castFromResource(resource)),
+                resource.castByEnum(WsmResourceType.CONTROLLED_AZURE_IP)),
             RetryRules.cloud());
         addStep(
             new CreateAzureIpStep(
                 flightBeanBag.getAzureConfig(),
                 flightBeanBag.getCrlService(),
-                ControlledAzureIpResource.castFromResource(resource)),
+                resource.castByEnum(WsmResourceType.CONTROLLED_AZURE_IP)),
             RetryRules.cloud());
         break;
       case CONTROLLED_AZURE_NETWORK:
@@ -162,13 +159,13 @@ public class CreateControlledResourceFlight extends Flight {
             new GetAzureNetworkStep(
                 flightBeanBag.getAzureConfig(),
                 flightBeanBag.getCrlService(),
-                ControlledAzureNetworkResource.castFromResource(resource)),
+                resource.castByEnum(WsmResourceType.CONTROLLED_AZURE_NETWORK)),
             RetryRules.cloud());
         addStep(
             new CreateAzureNetworkStep(
                 flightBeanBag.getAzureConfig(),
                 flightBeanBag.getCrlService(),
-                ControlledAzureNetworkResource.castFromResource(resource)),
+                resource.castByEnum(WsmResourceType.CONTROLLED_AZURE_NETWORK)),
             RetryRules.cloud());
         break;
       case CONTROLLED_AZURE_VM:
@@ -176,13 +173,13 @@ public class CreateControlledResourceFlight extends Flight {
             new GetAzureVmStep(
                 flightBeanBag.getAzureConfig(),
                 flightBeanBag.getCrlService(),
-                ControlledAzureVmResource.castFromResource(resource)),
+                resource.castByEnum(WsmResourceType.CONTROLLED_AZURE_VM)),
             RetryRules.cloud());
         addStep(
             new CreateAzureVmStep(
                 flightBeanBag.getAzureConfig(),
                 flightBeanBag.getCrlService(),
-                ControlledAzureVmResource.castFromResource(resource),
+                resource.castByEnum(WsmResourceType.CONTROLLED_AZURE_VM),
                 flightBeanBag.getResourceDao()),
             RetryRules.cloud());
         break;
@@ -191,13 +188,13 @@ public class CreateControlledResourceFlight extends Flight {
             new GetAzureStorageStep(
                 flightBeanBag.getAzureConfig(),
                 flightBeanBag.getCrlService(),
-                ControlledAzureStorageResource.castFromResource(resource)),
+                resource.castByEnum(WsmResourceType.CONTROLLED_AZURE_STORAGE_ACCOUNT)),
             RetryRules.cloud());
         addStep(
             new CreateAzureStorageStep(
                 flightBeanBag.getAzureConfig(),
                 flightBeanBag.getCrlService(),
-                ControlledAzureStorageResource.castFromResource(resource)),
+                resource.castByEnum(WsmResourceType.CONTROLLED_AZURE_STORAGE_ACCOUNT)),
             RetryRules.cloud());
         break;
       default:

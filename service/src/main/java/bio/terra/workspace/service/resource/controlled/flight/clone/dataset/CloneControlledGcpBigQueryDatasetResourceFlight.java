@@ -11,6 +11,7 @@ import bio.terra.workspace.service.resource.controlled.cloud.gcp.bqdataset.Contr
 import bio.terra.workspace.service.resource.controlled.flight.clone.CheckControlledResourceAuthStep;
 import bio.terra.workspace.service.resource.controlled.flight.update.RetrieveControlledResourceMetadataStep;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
+import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ResourceKeys;
 
@@ -47,7 +48,7 @@ public class CloneControlledGcpBigQueryDatasetResourceFlight extends Flight {
             sourceResource.getWorkspaceId(),
             sourceResource.getResourceId()));
     final ControlledBigQueryDatasetResource sourceDataset =
-        sourceResource.castToBigQueryDatasetResource();
+        sourceResource.castByEnum(WsmResourceType.CONTROLLED_GCP_BIG_QUERY_DATASET);
 
     addStep(
         new RetrieveBigQueryDatasetCloudAttributesStep(

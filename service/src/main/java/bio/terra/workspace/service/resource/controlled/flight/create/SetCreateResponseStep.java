@@ -13,6 +13,7 @@ import bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.Contr
 import bio.terra.workspace.service.resource.controlled.model.AccessScopeType;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import bio.terra.workspace.service.resource.controlled.model.PrivateResourceState;
+import bio.terra.workspace.service.resource.model.WsmResourceType;
 
 public class SetCreateResponseStep implements Step {
   private final ControlledResource resource;
@@ -33,23 +34,35 @@ public class SetCreateResponseStep implements Step {
     if (resource.getAccessScope() == AccessScopeType.ACCESS_SCOPE_PRIVATE) {
       switch (resource.getResourceType()) {
         case CONTROLLED_GCP_GCS_BUCKET:
-          responseResource =
-              ControlledGcsBucketResource.castFromResource(resource).toBuilder()
-                  .privateResourceState(PrivateResourceState.ACTIVE)
-                  .build();
-          break;
+          {
+            ControlledGcsBucketResource controlledResource =
+                resource.castByEnum(WsmResourceType.CONTROLLED_GCP_GCS_BUCKET);
+            responseResource =
+                controlledResource.toBuilder()
+                    .privateResourceState(PrivateResourceState.ACTIVE)
+                    .build();
+            break;
+          }
         case CONTROLLED_GCP_BIG_QUERY_DATASET:
-          responseResource =
-              ControlledBigQueryDatasetResource.castFromResource(resource).toBuilder()
-                  .privateResourceState(PrivateResourceState.ACTIVE)
-                  .build();
-          break;
+          {
+            ControlledBigQueryDatasetResource controlledResource =
+                resource.castByEnum(WsmResourceType.CONTROLLED_GCP_BIG_QUERY_DATASET);
+            responseResource =
+                controlledResource.toBuilder()
+                    .privateResourceState(PrivateResourceState.ACTIVE)
+                    .build();
+            break;
+          }
         case CONTROLLED_GCP_AI_NOTEBOOK_INSTANCE:
-          responseResource =
-              ControlledAiNotebookInstanceResource.castFromResource(resource).toBuilder()
-                  .privateResourceState(PrivateResourceState.ACTIVE)
-                  .build();
-          break;
+          {
+            ControlledAiNotebookInstanceResource controlledResource =
+                resource.castByEnum(WsmResourceType.CONTROLLED_GCP_AI_NOTEBOOK_INSTANCE);
+            responseResource =
+                controlledResource.toBuilder()
+                    .privateResourceState(PrivateResourceState.ACTIVE)
+                    .build();
+            break;
+          }
         default:
           throw new InvalidMetadataException(
               "Unknown controlled resource type " + resource.getResourceType());

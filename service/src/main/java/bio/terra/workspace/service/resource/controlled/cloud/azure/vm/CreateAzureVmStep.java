@@ -14,6 +14,7 @@ import bio.terra.workspace.service.resource.controlled.cloud.azure.disk.Controll
 import bio.terra.workspace.service.resource.controlled.cloud.azure.ip.ControlledAzureIpResource;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.ip.CreateAzureIpStep;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.network.ControlledAzureNetworkResource;
+import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import bio.terra.workspace.service.workspace.model.AzureCloudContext;
 import com.azure.core.management.Region;
@@ -55,16 +56,19 @@ public class CreateAzureVmStep implements Step {
     ComputeManager computeManager = crlService.getComputeManager(azureCloudContext, azureConfig);
 
     final ControlledAzureIpResource ipResource =
-        ControlledAzureIpResource.castFromResource(
-            resourceDao.getResource(resource.getWorkspaceId(), resource.getIpId()));
+        resourceDao
+            .getResource(resource.getWorkspaceId(), resource.getIpId())
+            .castByEnum(WsmResourceType.CONTROLLED_AZURE_IP);
 
     final ControlledAzureDiskResource diskResource =
-        ControlledAzureDiskResource.castFromResource(
-            resourceDao.getResource(resource.getWorkspaceId(), resource.getDiskId()));
+        resourceDao
+            .getResource(resource.getWorkspaceId(), resource.getDiskId())
+            .castByEnum(WsmResourceType.CONTROLLED_AZURE_DISK);
 
     final ControlledAzureNetworkResource networkResource =
-        ControlledAzureNetworkResource.castFromResource(
-            resourceDao.getResource(resource.getWorkspaceId(), resource.getNetworkId()));
+        resourceDao
+            .getResource(resource.getWorkspaceId(), resource.getNetworkId())
+            .castByEnum(WsmResourceType.CONTROLLED_AZURE_NETWORK);
 
     try {
       Disk existingAzureDisk =

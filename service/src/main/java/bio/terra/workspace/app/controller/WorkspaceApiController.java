@@ -385,7 +385,7 @@ public class WorkspaceApiController implements WorkspaceApi {
   private ApiDataReferenceDescription makeApiDataReferenceDescription(
       ReferencedResource referenceResource) {
     ReferencedDataRepoSnapshotResource snapshotResource =
-        referenceResource.castToDataRepoSnapshotResource();
+        referenceResource.castByEnum(WsmResourceType.REFERENCED_ANY_DATA_REPO_SNAPSHOT);
     var reference =
         new ApiDataRepoSnapshot()
             .instanceName(snapshotResource.getInstanceName())

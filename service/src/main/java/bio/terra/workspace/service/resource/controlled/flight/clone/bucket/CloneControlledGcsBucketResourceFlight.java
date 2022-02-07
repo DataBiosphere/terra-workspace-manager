@@ -13,6 +13,7 @@ import bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.Retri
 import bio.terra.workspace.service.resource.controlled.flight.clone.CheckControlledResourceAuthStep;
 import bio.terra.workspace.service.resource.controlled.flight.update.RetrieveControlledResourceMetadataStep;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
+import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ResourceKeys;
 
 public class CloneControlledGcsBucketResourceFlight extends Flight {
@@ -50,7 +51,7 @@ public class CloneControlledGcsBucketResourceFlight extends Flight {
             sourceResource.getWorkspaceId(),
             sourceResource.getResourceId()));
     final ControlledGcsBucketResource sourceBucket =
-        ControlledGcsBucketResource.castFromResource(sourceResource);
+        sourceResource.castByEnum(WsmResourceType.CONTROLLED_GCP_GCS_BUCKET);
     addStep(
         new RetrieveGcsBucketCloudAttributesStep(
             sourceBucket,

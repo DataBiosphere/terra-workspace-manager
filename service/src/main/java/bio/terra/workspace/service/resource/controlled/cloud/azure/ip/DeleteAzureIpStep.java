@@ -7,6 +7,7 @@ import bio.terra.stairway.StepStatus;
 import bio.terra.workspace.app.configuration.external.AzureConfiguration;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.service.crl.CrlService;
+import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.workspace.model.AzureCloudContext;
 import com.azure.resourcemanager.compute.ComputeManager;
 import java.util.UUID;
@@ -45,7 +46,7 @@ public class DeleteAzureIpStep implements Step {
   @Override
   public StepResult doStep(FlightContext context) throws InterruptedException {
     var wsmResource = resourceDao.getResource(workspaceId, resourceId);
-    var ip = ControlledAzureIpResource.castFromResource(wsmResource);
+    ControlledAzureIpResource ip = wsmResource.castByEnum(WsmResourceType.CONTROLLED_AZURE_IP);
 
     ComputeManager computeManager = crlService.getComputeManager(azureCloudContext, azureConfig);
     var azureResourceId =
