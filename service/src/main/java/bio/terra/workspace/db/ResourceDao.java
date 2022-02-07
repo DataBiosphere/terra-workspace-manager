@@ -17,8 +17,8 @@ import bio.terra.common.db.ReadTransaction;
 import bio.terra.common.db.WriteTransaction;
 import bio.terra.workspace.common.exception.InternalLogicException;
 import bio.terra.workspace.db.model.DbResource;
-import bio.terra.workspace.db.model.UniquenessCheckParameters;
-import bio.terra.workspace.db.model.UniquenessCheckParameters.UniquenessScope;
+import bio.terra.workspace.db.model.UniquenessCheckAttributes;
+import bio.terra.workspace.db.model.UniquenessCheckAttributes.UniquenessScope;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.disk.ControlledAzureDiskResource;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.ip.ControlledAzureIpResource;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.network.ControlledAzureNetworkResource;
@@ -532,30 +532,32 @@ public class ResourceDao {
   // uniqueness rules. This prevents a race condition allowing a new resource to point to the same
   // cloud artifact as another, even if it has a different resource name and ID.
   private void verifyUniqueness(ControlledResource controlledResource) {
-    Optional<UniquenessCheckParameters> optionalUniquenessCheck =
+    Optional<UniquenessCheckAttributes> optionalUniquenessCheck =
         controlledResource.getUniquenessCheckParameters();
 
     if (optionalUniquenessCheck.isPresent()) {
-      UniquenessCheckParameters uniquenessCheck = optionalUniquenessCheck.get();
-      StringBuilder sb =
+      UniquenessCheckAttributes uniquenessCheck = optionalUniquenessCheck.get();
+      StringBuilder queryBuilder =
           new StringBuilder()
-              .append("SELECT COUNT(1) FROM resource WHERE exact_resource_type = :resource_type");
+              .append(
+                  "SELECT COUNT(1) FROM resource WHERE exact_resource_type = :exact_resource_type");
       MapSqlParameterSource params =
           new MapSqlParameterSource()
-              .addValue("resource_type", controlledResource.getResourceType().toSql());
+              .addValue("exact_resource_type", controlledResource.getResourceType().toSql());
 
       if (uniquenessCheck.getUniquenessScope() == UniquenessScope.WORKSPACE) {
-        sb.append(" AND workspace_id = :workspace_id");
+        queryBuilder.append(" AND workspace_id = :workspace_id");
         params.addValue("workspace_id", controlledResource.getWorkspaceId().toString());
       }
 
       for (Pair<String, String> pair : uniquenessCheck.getParameters()) {
         String name = pair.getKey();
-        sb.append(String.format(" AND attributes->>'%s' = :%s", name, name));
+        queryBuilder.append(String.format(" AND attributes->>'%s' = :%s", name, name));
         params.addValue(name, pair.getValue());
       }
 
-      Integer matchingCount = jdbcTemplate.queryForObject(sb.toString(), params, Integer.class);
+      Integer matchingCount =
+          jdbcTemplate.queryForObject(queryBuilder.toString(), params, Integer.class);
       if (matchingCount != null && matchingCount > 0) {
         throw new DuplicateResourceException("A resource with matching attributes already exists");
       }
