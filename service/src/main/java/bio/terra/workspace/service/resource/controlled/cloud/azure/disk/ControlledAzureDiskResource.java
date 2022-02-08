@@ -3,6 +3,9 @@ package bio.terra.workspace.service.resource.controlled.cloud.azure.disk;
 import bio.terra.common.exception.BadRequestException;
 import bio.terra.common.exception.InconsistentFieldsException;
 import bio.terra.common.exception.MissingRequiredFieldException;
+import bio.terra.stairway.RetryRule;
+import bio.terra.workspace.common.utils.FlightBeanBag;
+import bio.terra.workspace.common.utils.RetryRules;
 import bio.terra.workspace.db.DbSerDes;
 import bio.terra.workspace.db.model.DbResource;
 import bio.terra.workspace.db.model.UniquenessCheckAttributes;
@@ -11,7 +14,10 @@ import bio.terra.workspace.generated.model.ApiAzureDiskAttributes;
 import bio.terra.workspace.generated.model.ApiAzureDiskResource;
 import bio.terra.workspace.generated.model.ApiResourceAttributesUnion;
 import bio.terra.workspace.generated.model.ApiResourceUnion;
+import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.resource.ValidationUtils;
+import bio.terra.workspace.service.resource.controlled.flight.create.CreateControlledResourceFlight;
+import bio.terra.workspace.service.resource.controlled.flight.delete.DeleteControlledResourceFlight;
 import bio.terra.workspace.service.resource.controlled.model.AccessScopeType;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import bio.terra.workspace.service.resource.controlled.model.ManagedByType;
@@ -95,6 +101,32 @@ public class ControlledAzureDiskResource extends ControlledResource {
         new UniquenessCheckAttributes()
             .uniquenessScope(UniquenessScope.WORKSPACE)
             .addParameter("diskName", getDiskName()));
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void addCreateSteps(
+      CreateControlledResourceFlight flight,
+      String petSaEmail,
+      AuthenticatedUserRequest userRequest,
+      FlightBeanBag flightBeanBag) {
+    RetryRule cloudRetry = RetryRules.cloud();
+    flight.addStep(
+        new GetAzureDiskStep(flightBeanBag.getAzureConfig(), flightBeanBag.getCrlService(), this),
+        cloudRetry);
+    flight.addStep(
+        new CreateAzureDiskStep(
+            flightBeanBag.getAzureConfig(), flightBeanBag.getCrlService(), this),
+        cloudRetry);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void addDeleteSteps(DeleteControlledResourceFlight flight, FlightBeanBag flightBeanBag) {
+    flight.addStep(
+        new DeleteAzureDiskStep(
+            flightBeanBag.getAzureConfig(), flightBeanBag.getCrlService(), this),
+        RetryRules.cloud());
   }
 
   public String getDiskName() {

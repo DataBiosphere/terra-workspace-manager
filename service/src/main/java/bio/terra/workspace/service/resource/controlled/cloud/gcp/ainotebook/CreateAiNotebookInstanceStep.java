@@ -21,7 +21,8 @@ import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceContainerImag
 import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceCreationParameters;
 import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceVmImage;
 import bio.terra.workspace.service.crl.CrlService;
-import bio.terra.workspace.service.workspace.GcpCloudContextService;
+import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
+import bio.terra.workspace.service.workspace.model.GcpCloudContext;
 import com.google.api.client.googleapis.json.GoogleJsonResponseException;
 import com.google.api.services.notebooks.v1.model.AcceleratorConfig;
 import com.google.api.services.notebooks.v1.model.ContainerImage;
@@ -58,23 +59,22 @@ public class CreateAiNotebookInstanceStep implements Step {
   private final ControlledAiNotebookInstanceResource resource;
   private final String petEmail;
   private final CrlService crlService;
-  private final GcpCloudContextService gcpCloudContextService;
 
   public CreateAiNotebookInstanceStep(
-      ControlledAiNotebookInstanceResource resource,
-      String petEmail,
-      CrlService crlService,
-      GcpCloudContextService gcpCloudContextService) {
+      ControlledAiNotebookInstanceResource resource, String petEmail, CrlService crlService) {
     this.petEmail = petEmail;
     this.resource = resource;
     this.crlService = crlService;
-    this.gcpCloudContextService = gcpCloudContextService;
   }
 
   @Override
   public StepResult doStep(FlightContext flightContext)
       throws InterruptedException, RetryException {
-    String projectId = gcpCloudContextService.getRequiredGcpProject(resource.getWorkspaceId());
+    final GcpCloudContext gcpCloudContext =
+        flightContext
+            .getWorkingMap()
+            .get(ControlledResourceKeys.GCP_CLOUD_CONTEXT, GcpCloudContext.class);
+    String projectId = gcpCloudContext.getGcpProjectId();
     InstanceName instanceName = resource.toInstanceName(projectId);
     Instance instance = createInstanceModel(flightContext, projectId, petEmail);
 
@@ -184,8 +184,11 @@ public class CreateAiNotebookInstanceStep implements Step {
 
   @Override
   public StepResult undoStep(FlightContext flightContext) throws InterruptedException {
-    String projectId = gcpCloudContextService.getRequiredGcpProject(resource.getWorkspaceId());
-    InstanceName instanceName = resource.toInstanceName(projectId);
+    final GcpCloudContext gcpCloudContext =
+        flightContext
+            .getWorkingMap()
+            .get(ControlledResourceKeys.GCP_CLOUD_CONTEXT, GcpCloudContext.class);
+    InstanceName instanceName = resource.toInstanceName(gcpCloudContext.getGcpProjectId());
 
     AIPlatformNotebooksCow notebooks = crlService.getAIPlatformNotebooksCow();
     try {

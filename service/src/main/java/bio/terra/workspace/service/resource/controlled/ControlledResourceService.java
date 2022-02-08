@@ -655,7 +655,6 @@ public class ControlledResourceService {
         .resourceName(resource.getName())
         .stewardshipType(resource.getStewardshipType())
         .workspaceId(workspaceId.toString())
-        .addParameter(ResourceKeys.RESOURCE_ID, resourceId.toString())
         .addParameter(JobMapKeys.RESULT_PATH.getKeyName(), resultPath);
   }
 

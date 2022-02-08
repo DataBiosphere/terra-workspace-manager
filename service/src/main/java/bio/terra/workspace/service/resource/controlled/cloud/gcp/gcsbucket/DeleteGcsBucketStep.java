@@ -5,16 +5,14 @@ import bio.terra.cloudres.google.storage.StorageCow;
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
-import bio.terra.workspace.db.ResourceDao;
+import bio.terra.workspace.common.utils.FlightUtils;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.resource.controlled.exception.BucketDeleteTimeoutException;
-import bio.terra.workspace.service.resource.model.WsmResource;
-import bio.terra.workspace.service.resource.model.WsmResourceType;
-import bio.terra.workspace.service.workspace.GcpCloudContextService;
+import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
+import bio.terra.workspace.service.workspace.model.GcpCloudContext;
 import com.google.cloud.storage.BucketInfo;
 import com.google.cloud.storage.StorageException;
 import com.google.common.collect.ImmutableList;
-import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -33,35 +31,25 @@ import org.slf4j.LoggerFactory;
 public class DeleteGcsBucketStep implements Step {
   private static final int MAX_DELETE_TRIES = 72; // 3 days
   private final CrlService crlService;
-  private final ResourceDao resourceDao;
-  private final GcpCloudContextService gcpCloudContextService;
-  private final UUID workspaceId;
-  private final UUID resourceId;
+  private final ControlledGcsBucketResource resource;
 
   private final Logger logger = LoggerFactory.getLogger(DeleteGcsBucketStep.class);
 
-  public DeleteGcsBucketStep(
-      CrlService crlService,
-      ResourceDao resourceDao,
-      GcpCloudContextService gcpCloudContextService,
-      UUID workspaceId,
-      UUID resourceId) {
+  public DeleteGcsBucketStep(ControlledGcsBucketResource resource, CrlService crlService) {
     this.crlService = crlService;
-    this.resourceDao = resourceDao;
-    this.gcpCloudContextService = gcpCloudContextService;
-    this.workspaceId = workspaceId;
-    this.resourceId = resourceId;
+    this.resource = resource;
   }
 
   @Override
   public StepResult doStep(FlightContext flightContext) throws InterruptedException {
     int deleteTries = 0;
-    String projectId = gcpCloudContextService.getRequiredGcpProject(workspaceId);
-    WsmResource wsmResource = resourceDao.getResource(workspaceId, resourceId);
-    ControlledGcsBucketResource resource =
-        wsmResource.castByEnum(WsmResourceType.CONTROLLED_GCP_GCS_BUCKET);
+    final GcpCloudContext gcpCloudContext =
+        FlightUtils.getRequired(
+            flightContext.getWorkingMap(),
+            ControlledResourceKeys.GCP_CLOUD_CONTEXT,
+            GcpCloudContext.class);
+    final StorageCow storageCow = crlService.createStorageCow(gcpCloudContext.getGcpProjectId());
 
-    final StorageCow storageCow = crlService.createStorageCow(projectId);
     // If the bucket is already deleted (e.g. this step is being retried), storageCow.get() will
     // return null.
     BucketCow bucket = storageCow.get(resource.getBucketName());
@@ -115,7 +103,9 @@ public class DeleteGcsBucketStep implements Step {
   @Override
   public StepResult undoStep(FlightContext flightContext) throws InterruptedException {
     logger.error(
-        "Cannot undo delete of GCS bucket resource {} in workspace {}.", resourceId, workspaceId);
+        "Cannot undo delete of GCS bucket resource {} in workspace {}.",
+        resource.getResourceId(),
+        resource.getWorkspaceId());
     // Surface whatever error caused Stairway to begin undoing.
     return flightContext.getResult();
   }

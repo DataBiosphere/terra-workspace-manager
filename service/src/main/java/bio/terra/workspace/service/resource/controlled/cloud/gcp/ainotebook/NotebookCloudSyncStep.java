@@ -12,7 +12,6 @@ import bio.terra.workspace.common.utils.FlightUtils;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceService;
-import bio.terra.workspace.service.workspace.GcpCloudContextService;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import bio.terra.workspace.service.workspace.model.GcpCloudContext;
 import com.google.api.services.notebooks.v1.model.Binding;
@@ -32,19 +31,16 @@ public class NotebookCloudSyncStep implements Step {
   private final ControlledResourceService controlledResourceService;
   private final CrlService crlService;
   private final ControlledAiNotebookInstanceResource resource;
-  private final GcpCloudContextService gcpCloudContextService;
   private final AuthenticatedUserRequest userRequest;
 
   public NotebookCloudSyncStep(
       ControlledResourceService controlledResourceService,
       CrlService crlService,
       ControlledAiNotebookInstanceResource resource,
-      GcpCloudContextService gcpCloudContextService,
       AuthenticatedUserRequest userRequest) {
     this.controlledResourceService = controlledResourceService;
     this.crlService = crlService;
     this.resource = resource;
-    this.gcpCloudContextService = gcpCloudContextService;
     this.userRequest = userRequest;
   }
 
