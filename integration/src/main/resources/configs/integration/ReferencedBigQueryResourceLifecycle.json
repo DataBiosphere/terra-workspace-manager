@@ -1,0 +1,23 @@
+{
+  "name": "ReferencedBigQueryResourceLifecycle",
+  "description": "CRUD BQ dataset and table operations",
+  "serverSpecificationFile": "workspace-local.json",
+  "kubernetes": {},
+  "application": {},
+  "testScripts": [
+    {
+      "name": "ReferencedBigQueryResourceLifecycle",
+      "numberOfUserJourneyThreadsToRun": 1,
+      "userJourneyThreadPoolSize": 1,
+      "expectedTimeForEach": 5,
+      "expectedTimeForEachUnit": "MINUTES",
+      "parameters": {
+        "spend-profile-id": "wm-default-spend-profile",
+        "bq-dataset": "projects/terra-kernel-k8s/datasets/terra_wsm_test_dataset",
+        "bq-table": "projects/terra-kernel-k8s/datasets/terra_wsm_test_dataset/tables/terra wsm test data table",
+        "bq-table-2": "projects/terra-kernel-k8s/datasets/terra_wsm_test_dataset_2/tables/terra wsm test data table 2"
+      }
+    }
+  ],
+  "testUserFiles": ["bella.json", "liam.json", "elijah.json"]
+}

@@ -5,9 +5,6 @@
   "testConfigurationFiles": [
     "integration/BasicAuthenticated.json",
     "integration/BasicUnauthenticated.json",
-    "integration/CloneBigQueryDataset.json",
-    "integration/CloneGcsBucket.json",
-    "integration/CloneReferencedResources.json",
     "integration/CloneWorkspace.json",
     "integration/ControlledBigQueryDatasetLifecycle.json",
     "integration/ControlledGcsBucketLifecycle.json",
@@ -22,9 +19,11 @@
     "integration/ListWorkspaces.json",
     "integration/PrivateControlledAiNotebookInstanceLifecycle.json",
     "integration/PrivateControlledGcsBucketLifecycle.json",
+    "integration/ReferencedBigQueryResourceLifecycle.json",
+    "integration/ReferencedGcsResourceLifecycle.json",
+    "integration/ReferencedGitRepoLifecycle.json",
+    "integration/ReferencedTdrSnapshotLifecycle.json",
     "integration/RemoveUser.json",
-    "integration/UpdateReferenceResources.json",
-    "integration/ValidateReferencedResources.json",
     "integration/WorkspaceLifecycle.json"
   ]
 }

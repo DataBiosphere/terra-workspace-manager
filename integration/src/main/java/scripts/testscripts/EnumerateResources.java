@@ -39,37 +39,24 @@ import scripts.utils.CloudContextMaker;
 import scripts.utils.DataRepoTestScriptBase;
 import scripts.utils.MultiResourcesUtils;
 import scripts.utils.ParameterUtils;
+import scripts.utils.WorkspaceAllocateTestScriptBase;
 
-public class EnumerateResources extends DataRepoTestScriptBase {
+public class EnumerateResources extends WorkspaceAllocateTestScriptBase {
   private static final Logger logger = LoggerFactory.getLogger(EnumerateResources.class);
 
-  // TODO: make these parameters in the test description?
   // The test is written so that these can be modified here. The invariant is that the
   // resulting set of resources can be read in 3 pages where the third page is not full.
   // Number of resources to create for enumeration
-  private static final int RESOURCE_COUNT = 12;
+  private static final int RESOURCE_COUNT = 7;
   // Page size to use for enumeration paging
-  private static final int PAGE_SIZE = 5;
-  // Roles to grant user on private resource
-  private static final ImmutableList<ControlledResourceIamRole> PRIVATE_ROLES =
-      ImmutableList.of(ControlledResourceIamRole.WRITER, ControlledResourceIamRole.EDITOR);
+  private static final int PAGE_SIZE = 3;
 
   private ControlledGcpResourceApi ownerControlledGcpResourceApi;
   private ReferencedGcpResourceApi ownerReferencedGcpResourceApi;
-  private GcpGcsBucketAttributes referenceBucketAttributes;
-  private GcpBigQueryDataTableAttributes referenceBqTableAttributes;
-  private GitRepoAttributes referenceGitAttributes;
   private ResourceApi ownerResourceApi;
   private ResourceApi readerResourceApi;
   private List<ResourceMetadata> resourceList;
   private TestUserSpecification workspaceReader;
-
-  public void setParameters(Map<String, String> parameters) throws Exception {
-    super.setParameters(parameters);
-    referenceBucketAttributes = ParameterUtils.getFineGrainedBucketReference(parameters);
-    referenceBqTableAttributes = ParameterUtils.getBigQueryDataTableReference(parameters);
-    referenceGitAttributes = ParameterUtils.getSshGitRepoReference(parameters);
-  }
 
   @Override
   public void doSetup(List<TestUserSpecification> testUsers, WorkspaceApi workspaceApi)
@@ -105,13 +92,7 @@ public class EnumerateResources extends DataRepoTestScriptBase {
         MultiResourcesUtils.makeResources(
             ownerReferencedGcpResourceApi,
             ownerControlledGcpResourceApi,
-            getWorkspaceId(),
-            getDataRepoSnapshotId(),
-            getDataRepoInstanceName(),
-            referenceBucketAttributes,
-            referenceBqTableAttributes,
-            referenceGitAttributes,
-            RESOURCE_COUNT);
+            getWorkspaceId());
 
     logger.info("Created {} resources", resourceList.size());
   }
@@ -171,18 +152,18 @@ public class EnumerateResources extends DataRepoTestScriptBase {
     assertThat(enumEmptyList.getResources().size(), equalTo(0));
 
     // Case 4: filter by resource type
-    ResourceList snapshots =
+    ResourceList buckets =
         ownerResourceApi.enumerateResources(
-            getWorkspaceId(), 0, RESOURCE_COUNT, ResourceType.DATA_REPO_SNAPSHOT, null);
-    logResult("snapshots", snapshots);
-    long expectedSnapshots =
+            getWorkspaceId(), 0, RESOURCE_COUNT, ResourceType.GCS_BUCKET, null);
+    logResult("buckets", buckets);
+    long expectedBuckets =
         resourceList.stream()
-            .filter(m -> m.getResourceType() == ResourceType.DATA_REPO_SNAPSHOT)
+            .filter(m -> m.getResourceType() == ResourceType.GCS_BUCKET)
             .count();
-    logger.info("Counted {} snapshots created", expectedSnapshots);
+    logger.info("Counted {} buckets created", expectedBuckets);
     // Note - assertThat exits out on an int -> long compare, so just don't do that.
-    long actualSnapshots = snapshots.getResources().size();
-    assertThat(actualSnapshots, equalTo(expectedSnapshots));
+    long actualBuckets = buckets.getResources().size();
+    assertThat(actualBuckets, equalTo(expectedBuckets));
 
     // Case 5: filter by stewardship type
     ResourceList referencedList =
@@ -233,17 +214,6 @@ public class EnumerateResources extends DataRepoTestScriptBase {
                 ownerResourceApi.enumerateResources(
                     getWorkspaceId(), 0, 0, ResourceType.GCS_BUCKET, StewardshipType.CONTROLLED));
     assertThat(invalidPaginationException.getMessage(), containsString("Invalid pagination"));
-  }
-
-  @Override
-  protected void doCleanup(List<TestUserSpecification> testUsers, WorkspaceApi workspaceApi)
-      throws Exception {
-    // Delete the controlled resources
-    MultiResourcesUtils.cleanupResources(
-        resourceList, ownerControlledGcpResourceApi, getWorkspaceId());
-
-    // Cleanup the workspace after we cleanup the the resources!
-    super.doCleanup(testUsers, workspaceApi);
   }
 
   private void logResult(String tag, ResourceList resourceList) {

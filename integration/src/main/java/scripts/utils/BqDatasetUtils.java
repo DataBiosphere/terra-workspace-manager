@@ -50,6 +50,8 @@ public class BqDatasetUtils {
   private static final Pattern BQ_DATASET_PATTERN =
       Pattern.compile("^projects/([^/]+)/datasets/([^/]+)$");
   private static final Logger logger = LoggerFactory.getLogger(BqDatasetUtils.class);
+
+  public static final String BQ_EMPLOYEE_TABLE_NAME = "employee";
   /**
    * Calls WSM to create a referenced BigQuery dataset in the specified workspace.
    *
@@ -62,12 +64,21 @@ public class BqDatasetUtils {
       UUID workspaceId,
       String name)
       throws ApiException, InterruptedException {
+    return makeBigQueryDatasetReference(dataset, resourceApi, workspaceId, name, CloningInstructionsEnum.NOTHING);
+  }
+
+  public static GcpBigQueryDatasetResource makeBigQueryDatasetReference(
+      GcpBigQueryDatasetAttributes dataset,
+      ReferencedGcpResourceApi resourceApi,
+      UUID workspaceId,
+      String name,
+      CloningInstructionsEnum cloningInstructions) throws ApiException, InterruptedException{
 
     var body =
         new CreateGcpBigQueryDatasetReferenceRequestBody()
             .metadata(
                 new ReferenceResourceCommonFields()
-                    .cloningInstructions(CloningInstructionsEnum.NOTHING)
+                    .cloningInstructions(cloningInstructions)
                     .description("Description of " + name)
                     .name(name))
             .dataset(dataset);
@@ -115,12 +126,20 @@ public class BqDatasetUtils {
       UUID workspaceId,
       String name)
       throws ApiException, InterruptedException {
+    return makeBigQueryDataTableReference(dataTable, resourceApi, workspaceId, name, CloningInstructionsEnum.NOTHING);
+  }
 
+  public static GcpBigQueryDataTableResource makeBigQueryDataTableReference(
+      GcpBigQueryDataTableAttributes dataTable,
+      ReferencedGcpResourceApi resourceApi,
+      UUID workspaceId,
+      String name,
+      CloningInstructionsEnum cloningInstructions) throws ApiException, InterruptedException {
     var body =
         new CreateGcpBigQueryDataTableReferenceRequestBody()
             .metadata(
                 new ReferenceResourceCommonFields()
-                    .cloningInstructions(CloningInstructionsEnum.NOTHING)
+                    .cloningInstructions(cloningInstructions)
                     .description("Description of " + name)
                     .name(name))
             .dataTable(dataTable);
@@ -227,7 +246,7 @@ public class BqDatasetUtils {
             Field.of("employee_id", LegacySQLTypeName.INTEGER),
             Field.of("name", LegacySQLTypeName.STRING));
     final TableId employeeTableId =
-        TableId.of(projectId, dataset.getAttributes().getDatasetId(), "employee");
+        TableId.of(projectId, dataset.getAttributes().getDatasetId(), BQ_EMPLOYEE_TABLE_NAME);
 
     final TableInfo employeeTableInfo =
         TableInfo.newBuilder(employeeTableId, StandardTableDefinition.of(employeeSchema))
@@ -269,7 +288,9 @@ public class BqDatasetUtils {
                     + projectId
                     + "."
                     + dataset.getAttributes().getDatasetId()
-                    + ".employee` (employee_id, name) VALUES("
+                    + "."
+                    + BQ_EMPLOYEE_TABLE_NAME
+                    + "` (employee_id, name) VALUES("
                     + "101, 'Aquaman'), (102, 'Superman');")
             .build());
 
@@ -291,7 +312,9 @@ public class BqDatasetUtils {
                         + projectId
                         + "."
                         + dataset.getAttributes().getDatasetId()
-                        + ".employee`;")
+                        + "."
+                        + BQ_EMPLOYEE_TABLE_NAME
+                        + "`;")
                 .build());
     final long numRows =
         StreamSupport.stream(employeeTableResult.getValues().spliterator(), false).count();

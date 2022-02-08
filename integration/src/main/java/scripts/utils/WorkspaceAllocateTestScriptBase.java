@@ -19,7 +19,7 @@ import java.util.UUID;
  * doCleanup() can still be overridden, provided the caller calls super().
  *
  * <p>This fixture always creates a stage MC_WORKSPACE. You must specify the spend profile to use as
- * the first parameter in the test configuration.
+ * the "spend-profile-id" parameter in the test configuration.
  *
  * <p>No doUserJourney() implementation is provided, and this must be overridden by inheriting
  * classes.

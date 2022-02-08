@@ -67,7 +67,7 @@ public class GcsBucketUtils {
                   .live(GcsBucketUtils.BUCKET_LIFECYCLE_RULE_1_CONDITION_LIVE)
                   .addMatchesStorageClassItem(GcpGcsBucketDefaultStorageClass.ARCHIVE)
                   .numNewerVersions(BUCKET_LIFECYCLE_RULE_1_CONDITION_NUM_NEWER_VERSIONS));
-  private static final GcpGcsBucketLifecycleRule LIFECYCLE_RULE_2 =
+  public static final GcpGcsBucketLifecycleRule BUCKET_LIFECYCLE_RULE_2 =
       new GcpGcsBucketLifecycleRule()
           .action(
               new GcpGcsBucketLifecycleRuleAction()
@@ -82,7 +82,7 @@ public class GcsBucketUtils {
       value = "MS_MUTABLE_COLLECTION",
       justification = "list must not be immutable if deserialization is to work")
   public static final List<GcpGcsBucketLifecycleRule> BUCKET_LIFECYCLE_RULES =
-      new ArrayList<>(List.of(BUCKET_LIFECYCLE_RULE_1, LIFECYCLE_RULE_2));
+      new ArrayList<>(List.of(BUCKET_LIFECYCLE_RULE_1, BUCKET_LIFECYCLE_RULE_2));
 
   public static final String UPDATED_BUCKET_RESOURCE_NAME = "new_resource_name";
   public static final String UPDATED_BUCKET_RESOURCE_NAME_2 = "another_resource_name";

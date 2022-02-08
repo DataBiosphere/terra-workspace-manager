@@ -29,13 +29,6 @@ public class DeleteGcpContextWithControlledResource extends WorkspaceAllocateTes
 
   private static final String DATASET_RESOURCE_NAME = "wsmtest_dataset";
 
-  private GcpBigQueryDataTableAttributes dataTableAttributes;
-
-  public void setParameters(Map<String, String> parameters) throws Exception {
-    super.setParameters(parameters);
-    dataTableAttributes = ParameterUtils.getBigQueryDataTableReference(parameters);
-  }
-
   @Override
   protected void doUserJourney(TestUserSpecification testUser, WorkspaceApi workspaceApi)
       throws Exception {
@@ -60,40 +53,16 @@ public class DeleteGcpContextWithControlledResource extends WorkspaceAllocateTes
         controlledResourceApi.getBigQueryDataset(getWorkspaceId(), controlledResourceId);
     assertEquals(controlledDataset, fetchedControlledDataset);
 
-    // Create a referenced BigQuery dataset
-    // Reference the same table as the BigQuery table parameter
-    GcpBigQueryDatasetAttributes datasetAttributes =
-        new GcpBigQueryDatasetAttributes()
-            .projectId(dataTableAttributes.getProjectId())
-            .datasetId(dataTableAttributes.getDatasetId());
-    String resourceName = "my-resource-name-" + UUID.randomUUID().toString();
+    // Create a reference to the controlled resource we just created
+    String referenceName = "my-resource-name-" + UUID.randomUUID().toString();
     GcpBigQueryDatasetResource referencedDataset =
         BqDatasetUtils.makeBigQueryDatasetReference(
-            datasetAttributes, referencedResourceApi, getWorkspaceId(), resourceName);
-    UUID referencedResourceId = referencedDataset.getMetadata().getResourceId();
-    logger.info("Created referenced dataset {}", referencedResourceId);
+            controlledDataset.getAttributes(), referencedResourceApi, getWorkspaceId(), referenceName);
 
     // Confirm the reference was created in WSM
     GcpBigQueryDatasetResource fetchedDatasetReference =
-        referencedResourceApi.getBigQueryDatasetReference(getWorkspaceId(), referencedResourceId);
+        referencedResourceApi.getBigQueryDatasetReference(getWorkspaceId(), referencedDataset.getMetadata().getResourceId());
     assertEquals(referencedDataset, fetchedDatasetReference);
-
-    // Create a referenced BigQuery data table
-    String bqDataReferenceResourceName = "my-resource-name-" + UUID.randomUUID().toString();
-    GcpBigQueryDataTableResource referencedDataTable =
-        BqDatasetUtils.makeBigQueryDataTableReference(
-            dataTableAttributes,
-            referencedResourceApi,
-            getWorkspaceId(),
-            bqDataReferenceResourceName);
-    UUID bqDataTableReferencedResourceId = referencedDataTable.getMetadata().getResourceId();
-    logger.info("Created referenced dataset {}", bqDataTableReferencedResourceId);
-
-    // Confirm the reference was created in WSM
-    GcpBigQueryDataTableResource fetchedDataTableReference =
-        referencedResourceApi.getBigQueryDataTableReference(
-            getWorkspaceId(), bqDataTableReferencedResourceId);
-    assertEquals(referencedDataTable, fetchedDataTableReference);
 
     // Delete the context, which should delete the controlled resource but not the reference.
     CloudContextMaker.deleteGcpCloudContext(getWorkspaceId(), workspaceApi);
@@ -105,13 +74,10 @@ public class DeleteGcpContextWithControlledResource extends WorkspaceAllocateTes
             () -> controlledResourceApi.getBigQueryDataset(getWorkspaceId(), controlledResourceId));
     assertEquals(HttpStatus.SC_NOT_FOUND, noGcpContextException.getCode());
 
-    // Confirm the referenced resource was not deleted.
+    // Confirm the referenced resource was not deleted (even though the underlying cloud resource was).
     GcpBigQueryDatasetResource datasetReferenceAfterDelete =
-        referencedResourceApi.getBigQueryDatasetReference(getWorkspaceId(), referencedResourceId);
+        referencedResourceApi.getBigQueryDatasetReference(getWorkspaceId(), referencedDataset.getMetadata()
+            .getResourceId());
     assertEquals(referencedDataset, datasetReferenceAfterDelete);
-    GcpBigQueryDataTableResource dataTableReferenceAfterDelete =
-        referencedResourceApi.getBigQueryDataTableReference(
-            getWorkspaceId(), bqDataTableReferencedResourceId);
-    assertEquals(referencedDataTable, dataTableReferenceAfterDelete);
   }
 }

@@ -10,6 +10,8 @@ import bio.terra.workspace.model.CloningInstructionsEnum;
 import bio.terra.workspace.model.ControlledResourceCommonFields;
 import bio.terra.workspace.model.CreateControlledGcpAiNotebookInstanceRequestBody;
 import bio.terra.workspace.model.CreatedControlledGcpAiNotebookInstanceResult;
+import bio.terra.workspace.model.DeleteControlledGcpAiNotebookInstanceRequest;
+import bio.terra.workspace.model.DeleteControlledGcpAiNotebookInstanceResult;
 import bio.terra.workspace.model.GcpAiNotebookInstanceCreationParameters;
 import bio.terra.workspace.model.GcpAiNotebookInstanceVmImage;
 import bio.terra.workspace.model.JobControl;
@@ -77,6 +79,26 @@ public class NotebookUtils {
     ClientTestUtils.assertJobSuccess(
         "create ai notebook", creationResult.getJobReport(), creationResult.getErrorReport());
     return creationResult;
+  }
+
+  /**
+   * Delete an AI Platform notebook. This endpoint calls the asynchronous endpoint and polls until
+   * the delete job completes.
+   */
+  public static void deleteControlledNotebookUserPrivate(
+      UUID workspaceId,
+      UUID resourceId,
+      ControlledGcpResourceApi resourceApi) throws ApiException, InterruptedException {
+    var body = new DeleteControlledGcpAiNotebookInstanceRequest().jobControl(new JobControl().id(UUID.randomUUID().toString()));
+
+    var deletionResult = resourceApi.deleteAiNotebookInstance(body, workspaceId, resourceId);
+    String deletionJobId = deletionResult.getJobReport().getId();
+    deletionResult = ClientTestUtils.pollWhileRunning(deletionResult,
+        () -> resourceApi.getDeleteAiNotebookInstanceResult(workspaceId, deletionJobId),
+        DeleteControlledGcpAiNotebookInstanceResult::getJobReport,
+        Duration.ofSeconds(10));
+    ClientTestUtils.assertJobSuccess(
+        "delete ai notebook", deletionResult.getJobReport(), deletionResult.getErrorReport());
   }
 
   /**
