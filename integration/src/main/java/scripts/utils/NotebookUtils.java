@@ -86,17 +86,20 @@ public class NotebookUtils {
    * the delete job completes.
    */
   public static void deleteControlledNotebookUserPrivate(
-      UUID workspaceId,
-      UUID resourceId,
-      ControlledGcpResourceApi resourceApi) throws ApiException, InterruptedException {
-    var body = new DeleteControlledGcpAiNotebookInstanceRequest().jobControl(new JobControl().id(UUID.randomUUID().toString()));
+      UUID workspaceId, UUID resourceId, ControlledGcpResourceApi resourceApi)
+      throws ApiException, InterruptedException {
+    var body =
+        new DeleteControlledGcpAiNotebookInstanceRequest()
+            .jobControl(new JobControl().id(UUID.randomUUID().toString()));
 
     var deletionResult = resourceApi.deleteAiNotebookInstance(body, workspaceId, resourceId);
     String deletionJobId = deletionResult.getJobReport().getId();
-    deletionResult = ClientTestUtils.pollWhileRunning(deletionResult,
-        () -> resourceApi.getDeleteAiNotebookInstanceResult(workspaceId, deletionJobId),
-        DeleteControlledGcpAiNotebookInstanceResult::getJobReport,
-        Duration.ofSeconds(10));
+    deletionResult =
+        ClientTestUtils.pollWhileRunning(
+            deletionResult,
+            () -> resourceApi.getDeleteAiNotebookInstanceResult(workspaceId, deletionJobId),
+            DeleteControlledGcpAiNotebookInstanceResult::getJobReport,
+            Duration.ofSeconds(10));
     ClientTestUtils.assertJobSuccess(
         "delete ai notebook", deletionResult.getJobReport(), deletionResult.getErrorReport());
   }

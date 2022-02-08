@@ -12,31 +12,22 @@ import bio.terra.testrunner.runner.config.TestUserSpecification;
 import bio.terra.workspace.api.Alpha1Api;
 import bio.terra.workspace.api.ControlledGcpResourceApi;
 import bio.terra.workspace.api.ReferencedGcpResourceApi;
-import bio.terra.workspace.api.ResourceApi;
 import bio.terra.workspace.api.WorkspaceApi;
 import bio.terra.workspace.client.ApiClient;
 import bio.terra.workspace.client.ApiException;
-import bio.terra.workspace.model.ControlledResourceIamRole;
 import bio.terra.workspace.model.EnumerateJobsResult;
 import bio.terra.workspace.model.EnumeratedJob;
-import bio.terra.workspace.model.GcpBigQueryDataTableAttributes;
-import bio.terra.workspace.model.GcpGcsBucketAttributes;
-import bio.terra.workspace.model.GitRepoAttributes;
 import bio.terra.workspace.model.ResourceMetadata;
 import bio.terra.workspace.model.ResourceType;
 import bio.terra.workspace.model.ResourceUnion;
 import bio.terra.workspace.model.StewardshipType;
-import com.google.common.collect.ImmutableList;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import scripts.utils.ClientTestUtils;
 import scripts.utils.CloudContextMaker;
-import scripts.utils.DataRepoTestScriptBase;
 import scripts.utils.MultiResourcesUtils;
-import scripts.utils.ParameterUtils;
 import scripts.utils.WorkspaceAllocateTestScriptBase;
 
 public class EnumerateJobs extends WorkspaceAllocateTestScriptBase {
@@ -78,9 +69,7 @@ public class EnumerateJobs extends WorkspaceAllocateTestScriptBase {
     logger.info("Creating {} resources", RESOURCE_COUNT);
     resourceList =
         MultiResourcesUtils.makeResources(
-            ownerReferencedGcpResourceApi,
-            ownerControlledGcpResourceApi,
-            getWorkspaceId());
+            ownerReferencedGcpResourceApi, ownerControlledGcpResourceApi, getWorkspaceId());
 
     logger.info("Created {} resources", resourceList.size());
     logger.info("Cleaning up {} resources", resourceList.size());
@@ -124,8 +113,7 @@ public class EnumerateJobs extends WorkspaceAllocateTestScriptBase {
             getWorkspaceId(), null, null, ResourceType.GCS_BUCKET, null, null, null);
     logResult("buckets", buckets);
     for (EnumeratedJob job : buckets.getResults()) {
-      assertThat(
-          "Job is a bucket", job.getResourceType(), equalTo(ResourceType.GCS_BUCKET));
+      assertThat("Job is a bucket", job.getResourceType(), equalTo(ResourceType.GCS_BUCKET));
       assertNotNull(job.getResource().getGcpGcsBucket(), "Bucket resource present");
       assertThat(
           "Resource is a bucket",

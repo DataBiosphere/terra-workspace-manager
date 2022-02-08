@@ -14,11 +14,7 @@ import bio.terra.workspace.api.ResourceApi;
 import bio.terra.workspace.api.WorkspaceApi;
 import bio.terra.workspace.client.ApiClient;
 import bio.terra.workspace.client.ApiException;
-import bio.terra.workspace.model.ControlledResourceIamRole;
 import bio.terra.workspace.model.ControlledResourceMetadata;
-import bio.terra.workspace.model.GcpBigQueryDataTableAttributes;
-import bio.terra.workspace.model.GcpGcsBucketAttributes;
-import bio.terra.workspace.model.GitRepoAttributes;
 import bio.terra.workspace.model.GrantRoleRequestBody;
 import bio.terra.workspace.model.IamRole;
 import bio.terra.workspace.model.ResourceDescription;
@@ -26,19 +22,15 @@ import bio.terra.workspace.model.ResourceList;
 import bio.terra.workspace.model.ResourceMetadata;
 import bio.terra.workspace.model.ResourceType;
 import bio.terra.workspace.model.StewardshipType;
-import com.google.common.collect.ImmutableList;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import scripts.utils.ClientTestUtils;
 import scripts.utils.CloudContextMaker;
-import scripts.utils.DataRepoTestScriptBase;
 import scripts.utils.MultiResourcesUtils;
-import scripts.utils.ParameterUtils;
 import scripts.utils.WorkspaceAllocateTestScriptBase;
 
 public class EnumerateResources extends WorkspaceAllocateTestScriptBase {
@@ -90,9 +82,7 @@ public class EnumerateResources extends WorkspaceAllocateTestScriptBase {
     logger.info("Creating {} resources", RESOURCE_COUNT);
     resourceList =
         MultiResourcesUtils.makeResources(
-            ownerReferencedGcpResourceApi,
-            ownerControlledGcpResourceApi,
-            getWorkspaceId());
+            ownerReferencedGcpResourceApi, ownerControlledGcpResourceApi, getWorkspaceId());
 
     logger.info("Created {} resources", resourceList.size());
   }
@@ -157,9 +147,7 @@ public class EnumerateResources extends WorkspaceAllocateTestScriptBase {
             getWorkspaceId(), 0, RESOURCE_COUNT, ResourceType.GCS_BUCKET, null);
     logResult("buckets", buckets);
     long expectedBuckets =
-        resourceList.stream()
-            .filter(m -> m.getResourceType() == ResourceType.GCS_BUCKET)
-            .count();
+        resourceList.stream().filter(m -> m.getResourceType() == ResourceType.GCS_BUCKET).count();
     logger.info("Counted {} buckets created", expectedBuckets);
     // Note - assertThat exits out on an int -> long compare, so just don't do that.
     long actualBuckets = buckets.getResources().size();

@@ -8,11 +8,7 @@ import bio.terra.workspace.api.ControlledGcpResourceApi;
 import bio.terra.workspace.api.ReferencedGcpResourceApi;
 import bio.terra.workspace.api.WorkspaceApi;
 import bio.terra.workspace.client.ApiException;
-import bio.terra.workspace.model.GcpBigQueryDataTableAttributes;
-import bio.terra.workspace.model.GcpBigQueryDataTableResource;
-import bio.terra.workspace.model.GcpBigQueryDatasetAttributes;
 import bio.terra.workspace.model.GcpBigQueryDatasetResource;
-import java.util.Map;
 import java.util.UUID;
 import org.apache.http.HttpStatus;
 import org.slf4j.Logger;
@@ -20,7 +16,6 @@ import org.slf4j.LoggerFactory;
 import scripts.utils.BqDatasetUtils;
 import scripts.utils.ClientTestUtils;
 import scripts.utils.CloudContextMaker;
-import scripts.utils.ParameterUtils;
 import scripts.utils.WorkspaceAllocateTestScriptBase;
 
 public class DeleteGcpContextWithControlledResource extends WorkspaceAllocateTestScriptBase {
@@ -57,11 +52,15 @@ public class DeleteGcpContextWithControlledResource extends WorkspaceAllocateTes
     String referenceName = "my-resource-name-" + UUID.randomUUID().toString();
     GcpBigQueryDatasetResource referencedDataset =
         BqDatasetUtils.makeBigQueryDatasetReference(
-            controlledDataset.getAttributes(), referencedResourceApi, getWorkspaceId(), referenceName);
+            controlledDataset.getAttributes(),
+            referencedResourceApi,
+            getWorkspaceId(),
+            referenceName);
 
     // Confirm the reference was created in WSM
     GcpBigQueryDatasetResource fetchedDatasetReference =
-        referencedResourceApi.getBigQueryDatasetReference(getWorkspaceId(), referencedDataset.getMetadata().getResourceId());
+        referencedResourceApi.getBigQueryDatasetReference(
+            getWorkspaceId(), referencedDataset.getMetadata().getResourceId());
     assertEquals(referencedDataset, fetchedDatasetReference);
 
     // Delete the context, which should delete the controlled resource but not the reference.
@@ -74,10 +73,11 @@ public class DeleteGcpContextWithControlledResource extends WorkspaceAllocateTes
             () -> controlledResourceApi.getBigQueryDataset(getWorkspaceId(), controlledResourceId));
     assertEquals(HttpStatus.SC_NOT_FOUND, noGcpContextException.getCode());
 
-    // Confirm the referenced resource was not deleted (even though the underlying cloud resource was).
+    // Confirm the referenced resource was not deleted (even though the underlying cloud resource
+    // was).
     GcpBigQueryDatasetResource datasetReferenceAfterDelete =
-        referencedResourceApi.getBigQueryDatasetReference(getWorkspaceId(), referencedDataset.getMetadata()
-            .getResourceId());
+        referencedResourceApi.getBigQueryDatasetReference(
+            getWorkspaceId(), referencedDataset.getMetadata().getResourceId());
     assertEquals(referencedDataset, datasetReferenceAfterDelete);
   }
 }

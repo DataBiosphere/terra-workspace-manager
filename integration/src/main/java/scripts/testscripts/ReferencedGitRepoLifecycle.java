@@ -26,7 +26,6 @@ public class ReferencedGitRepoLifecycle extends WorkspaceAllocateTestScriptBase 
   private GitRepoAttributes gitRepoAttributes;
   private UUID destinationWorkspaceId;
 
-
   public void setParameters(Map<String, String> parameters) throws Exception {
     super.setParameters(parameters);
     gitRepoAttributes = ParameterUtils.getSshGitRepoReference(parameters);
@@ -35,21 +34,31 @@ public class ReferencedGitRepoLifecycle extends WorkspaceAllocateTestScriptBase 
   @Override
   protected void doUserJourney(TestUserSpecification testUser, WorkspaceApi workspaceApi)
       throws Exception {
-    ReferencedGcpResourceApi referencedGcpResourceApi = ClientTestUtils.getReferencedGpcResourceClient(testUser, server);
+    ReferencedGcpResourceApi referencedGcpResourceApi =
+        ClientTestUtils.getReferencedGpcResourceClient(testUser, server);
     // Create the reference
-    GitRepoResource gitResource = GitRepoUtils.makeGitRepoReference(gitRepoAttributes, referencedGcpResourceApi, getWorkspaceId(),
-        MultiResourcesUtils.makeName());
+    GitRepoResource gitResource =
+        GitRepoUtils.makeGitRepoReference(
+            gitRepoAttributes,
+            referencedGcpResourceApi,
+            getWorkspaceId(),
+            MultiResourcesUtils.makeName());
     UUID gitResourceId = gitResource.getMetadata().getResourceId();
 
     // Read the reference
-    GitRepoResource fetchedGitResource = referencedGcpResourceApi.getGitRepoReference(getWorkspaceId(), gitResourceId);
+    GitRepoResource fetchedGitResource =
+        referencedGcpResourceApi.getGitRepoReference(getWorkspaceId(), gitResourceId);
     assertEquals(gitResource, fetchedGitResource);
 
     // Create a second workspace to clone the reference into, owned by the same user
     destinationWorkspaceId = UUID.randomUUID();
     createWorkspace(destinationWorkspaceId, getSpendProfileId(), workspaceApi);
     // Clone references
-    CloneReferencedGitRepoResourceResult gitCloneResult = referencedGcpResourceApi.cloneGitRepoReference(new CloneReferencedResourceRequestBody().destinationWorkspaceId(destinationWorkspaceId), getWorkspaceId(), gitResourceId);
+    CloneReferencedGitRepoResourceResult gitCloneResult =
+        referencedGcpResourceApi.cloneGitRepoReference(
+            new CloneReferencedResourceRequestBody().destinationWorkspaceId(destinationWorkspaceId),
+            getWorkspaceId(),
+            gitResourceId);
     assertEquals(getWorkspaceId(), gitCloneResult.getSourceWorkspaceId());
     assertEquals(gitResource.getAttributes(), gitCloneResult.getResource().getAttributes());
 
@@ -65,7 +74,8 @@ public class ReferencedGitRepoLifecycle extends WorkspaceAllocateTestScriptBase 
         newGitRepoReferenceName,
         newGitRepoReferenceDescription,
         /*gitCloneUrl=*/ null);
-    GitRepoResource updatedResource = referencedGcpResourceApi.getGitRepoReference(getWorkspaceId(), gitResourceId);
+    GitRepoResource updatedResource =
+        referencedGcpResourceApi.getGitRepoReference(getWorkspaceId(), gitResourceId);
     assertEquals(newGitRepoReferenceName, updatedResource.getMetadata().getName());
     assertEquals(newGitRepoReferenceDescription, updatedResource.getMetadata().getDescription());
 
@@ -74,12 +84,14 @@ public class ReferencedGitRepoLifecycle extends WorkspaceAllocateTestScriptBase 
 
     // Enumerating all resources with no filters should be empty
     ResourceApi resourceApi = ClientTestUtils.getResourceClient(testUser, server);
-    ResourceList enumerateResult = resourceApi.enumerateResources(getWorkspaceId(), 0, 100, null, null);
+    ResourceList enumerateResult =
+        resourceApi.enumerateResources(getWorkspaceId(), 0, 100, null, null);
     assertTrue(enumerateResult.getResources().isEmpty());
   }
 
   @Override
-  public void doCleanup(List<TestUserSpecification> testUsers, WorkspaceApi workspaceApi) throws Exception {
+  public void doCleanup(List<TestUserSpecification> testUsers, WorkspaceApi workspaceApi)
+      throws Exception {
     super.doCleanup(testUsers, workspaceApi);
     if (destinationWorkspaceId != null) {
       workspaceApi.deleteWorkspace(destinationWorkspaceId);

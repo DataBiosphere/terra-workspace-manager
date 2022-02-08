@@ -63,7 +63,8 @@ public class ReferencedBigQueryResourceLifecycle extends WorkspaceAllocateTestSc
   @Override
   protected void doUserJourney(TestUserSpecification testUser, WorkspaceApi workspaceApi)
       throws Exception {
-    ReferencedGcpResourceApi referencedGcpResourceApi = ClientTestUtils.getReferencedGpcResourceClient(testUser, server);
+    ReferencedGcpResourceApi referencedGcpResourceApi =
+        ClientTestUtils.getReferencedGpcResourceClient(testUser, server);
     // Grant secondary users READER permission in the workspace.
     workspaceApi.grantRole(
         new GrantRoleRequestBody().memberEmail(partialAccessUser.userEmail),
@@ -75,30 +76,53 @@ public class ReferencedBigQueryResourceLifecycle extends WorkspaceAllocateTestSc
         IamRole.READER);
 
     // Create the references
-    GcpBigQueryDatasetResource referencedDataset = BqDatasetUtils.makeBigQueryDatasetReference(
-        referencedBqDatasetAttributes, referencedGcpResourceApi, getWorkspaceId(),
-        MultiResourcesUtils.makeName(), CloningInstructionsEnum.REFERENCE);
+    GcpBigQueryDatasetResource referencedDataset =
+        BqDatasetUtils.makeBigQueryDatasetReference(
+            referencedBqDatasetAttributes,
+            referencedGcpResourceApi,
+            getWorkspaceId(),
+            MultiResourcesUtils.makeName(),
+            CloningInstructionsEnum.REFERENCE);
     UUID bqDatasetResourceId = referencedDataset.getMetadata().getResourceId();
-    GcpBigQueryDataTableResource referencedDataTable = BqDatasetUtils.makeBigQueryDataTableReference(referencedBqTableAttributes, referencedGcpResourceApi, getWorkspaceId(), MultiResourcesUtils.makeName(), CloningInstructionsEnum.REFERENCE);
+    GcpBigQueryDataTableResource referencedDataTable =
+        BqDatasetUtils.makeBigQueryDataTableReference(
+            referencedBqTableAttributes,
+            referencedGcpResourceApi,
+            getWorkspaceId(),
+            MultiResourcesUtils.makeName(),
+            CloningInstructionsEnum.REFERENCE);
     UUID bqDataTableResourceId = referencedDataTable.getMetadata().getResourceId();
 
     // Get the references
-    GcpBigQueryDatasetResource fetchedDataset = referencedGcpResourceApi.getBigQueryDatasetReference(getWorkspaceId(), bqDatasetResourceId);
+    GcpBigQueryDatasetResource fetchedDataset =
+        referencedGcpResourceApi.getBigQueryDatasetReference(getWorkspaceId(), bqDatasetResourceId);
     assertEquals(referencedDataset, fetchedDataset);
-    GcpBigQueryDataTableResource fetchedDataTable = referencedGcpResourceApi.getBigQueryDataTableReference(getWorkspaceId(), bqDataTableResourceId);
+    GcpBigQueryDataTableResource fetchedDataTable =
+        referencedGcpResourceApi.getBigQueryDataTableReference(
+            getWorkspaceId(), bqDataTableResourceId);
     assertEquals(referencedDataTable, fetchedDataTable);
 
     // Create a second workspace to clone references into, owned by the same user
     destinationWorkspaceId = UUID.randomUUID();
     createWorkspace(destinationWorkspaceId, getSpendProfileId(), workspaceApi);
     // Clone references
-    CloneReferencedGcpBigQueryDatasetResourceResult datasetCloneResult = referencedGcpResourceApi.cloneGcpBigQueryDatasetReference(new CloneReferencedResourceRequestBody().destinationWorkspaceId(destinationWorkspaceId), getWorkspaceId(), bqDatasetResourceId);
+    CloneReferencedGcpBigQueryDatasetResourceResult datasetCloneResult =
+        referencedGcpResourceApi.cloneGcpBigQueryDatasetReference(
+            new CloneReferencedResourceRequestBody().destinationWorkspaceId(destinationWorkspaceId),
+            getWorkspaceId(),
+            bqDatasetResourceId);
     assertEquals(getWorkspaceId(), datasetCloneResult.getSourceWorkspaceId());
-    assertEquals(referencedDataset.getAttributes(), datasetCloneResult.getResource().getAttributes());
+    assertEquals(
+        referencedDataset.getAttributes(), datasetCloneResult.getResource().getAttributes());
 
-    CloneReferencedGcpBigQueryDataTableResourceResult dataTableCloneResult = referencedGcpResourceApi.cloneGcpBigQueryDataTableReference(new CloneReferencedResourceRequestBody().destinationWorkspaceId(destinationWorkspaceId), getWorkspaceId(), bqDataTableResourceId);
+    CloneReferencedGcpBigQueryDataTableResourceResult dataTableCloneResult =
+        referencedGcpResourceApi.cloneGcpBigQueryDataTableReference(
+            new CloneReferencedResourceRequestBody().destinationWorkspaceId(destinationWorkspaceId),
+            getWorkspaceId(),
+            bqDataTableResourceId);
     assertEquals(getWorkspaceId(), dataTableCloneResult.getSourceWorkspaceId());
-    assertEquals(referencedDataTable.getAttributes(), dataTableCloneResult.getResource().getAttributes());
+    assertEquals(
+        referencedDataTable.getAttributes(), dataTableCloneResult.getResource().getAttributes());
 
     // Validate reference access
     ResourceApi ownerApi = new ResourceApi(ClientTestUtils.getClientForTestUser(testUser, server));
@@ -114,17 +138,25 @@ public class ReferencedBigQueryResourceLifecycle extends WorkspaceAllocateTestSc
 
     // Delete the references
     referencedGcpResourceApi.deleteBigQueryDatasetReference(getWorkspaceId(), bqDatasetResourceId);
-    referencedGcpResourceApi.deleteBigQueryDataTableReference(getWorkspaceId(), bqDataTableResourceId);
+    referencedGcpResourceApi.deleteBigQueryDataTableReference(
+        getWorkspaceId(), bqDataTableResourceId);
 
     // Enumerating all resources with no filters should be empty
     ResourceApi resourceApi = ClientTestUtils.getResourceClient(testUser, server);
-    ResourceList enumerateResult = resourceApi.enumerateResources(getWorkspaceId(), 0, 100, null, null);
+    ResourceList enumerateResult =
+        resourceApi.enumerateResources(getWorkspaceId(), 0, 100, null, null);
     assertTrue(enumerateResult.getResources().isEmpty());
   }
 
-  private void testUpdateReferences(GcpBigQueryDatasetResource dataset, GcpBigQueryDataTableResource table, ReferencedGcpResourceApi fullAccessApi) throws Exception {
-    ReferencedGcpResourceApi partialAccessApi = ClientTestUtils.getReferencedGpcResourceClient(partialAccessUser, server);
-    ResourceApi partialAccessResourceApi = ClientTestUtils.getResourceClient(partialAccessUser, server);
+  private void testUpdateReferences(
+      GcpBigQueryDatasetResource dataset,
+      GcpBigQueryDataTableResource table,
+      ReferencedGcpResourceApi fullAccessApi)
+      throws Exception {
+    ReferencedGcpResourceApi partialAccessApi =
+        ClientTestUtils.getReferencedGpcResourceClient(partialAccessUser, server);
+    ResourceApi partialAccessResourceApi =
+        ClientTestUtils.getResourceClient(partialAccessUser, server);
     UUID bqDatasetResourceId = dataset.getMetadata().getResourceId();
     UUID bqTableResourceId = table.getMetadata().getResourceId();
     // Update BQ dataset's name and description
@@ -312,7 +344,8 @@ public class ReferencedBigQueryResourceLifecycle extends WorkspaceAllocateTestSc
   }
 
   @Override
-  public void doCleanup(List<TestUserSpecification> testUsers, WorkspaceApi workspaceApi) throws Exception {
+  public void doCleanup(List<TestUserSpecification> testUsers, WorkspaceApi workspaceApi)
+      throws Exception {
     super.doCleanup(testUsers, workspaceApi);
     if (destinationWorkspaceId != null) {
       workspaceApi.deleteWorkspace(destinationWorkspaceId);

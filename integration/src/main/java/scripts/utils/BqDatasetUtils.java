@@ -64,7 +64,8 @@ public class BqDatasetUtils {
       UUID workspaceId,
       String name)
       throws ApiException, InterruptedException {
-    return makeBigQueryDatasetReference(dataset, resourceApi, workspaceId, name, CloningInstructionsEnum.NOTHING);
+    return makeBigQueryDatasetReference(
+        dataset, resourceApi, workspaceId, name, CloningInstructionsEnum.NOTHING);
   }
 
   public static GcpBigQueryDatasetResource makeBigQueryDatasetReference(
@@ -72,7 +73,8 @@ public class BqDatasetUtils {
       ReferencedGcpResourceApi resourceApi,
       UUID workspaceId,
       String name,
-      CloningInstructionsEnum cloningInstructions) throws ApiException, InterruptedException{
+      CloningInstructionsEnum cloningInstructions)
+      throws ApiException, InterruptedException {
 
     var body =
         new CreateGcpBigQueryDatasetReferenceRequestBody()
@@ -126,7 +128,8 @@ public class BqDatasetUtils {
       UUID workspaceId,
       String name)
       throws ApiException, InterruptedException {
-    return makeBigQueryDataTableReference(dataTable, resourceApi, workspaceId, name, CloningInstructionsEnum.NOTHING);
+    return makeBigQueryDataTableReference(
+        dataTable, resourceApi, workspaceId, name, CloningInstructionsEnum.NOTHING);
   }
 
   public static GcpBigQueryDataTableResource makeBigQueryDataTableReference(
@@ -134,7 +137,8 @@ public class BqDatasetUtils {
       ReferencedGcpResourceApi resourceApi,
       UUID workspaceId,
       String name,
-      CloningInstructionsEnum cloningInstructions) throws ApiException, InterruptedException {
+      CloningInstructionsEnum cloningInstructions)
+      throws ApiException, InterruptedException {
     var body =
         new CreateGcpBigQueryDataTableReferenceRequestBody()
             .metadata(

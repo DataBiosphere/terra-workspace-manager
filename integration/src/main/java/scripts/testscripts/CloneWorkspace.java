@@ -20,7 +20,6 @@ import bio.terra.testrunner.runner.config.TestUserSpecification;
 import bio.terra.workspace.api.ControlledGcpResourceApi;
 import bio.terra.workspace.api.ReferencedGcpResourceApi;
 import bio.terra.workspace.api.WorkspaceApi;
-import bio.terra.workspace.client.ApiClient;
 import bio.terra.workspace.model.CloneResourceResult;
 import bio.terra.workspace.model.CloneWorkspaceRequest;
 import bio.terra.workspace.model.CloneWorkspaceResult;
@@ -28,14 +27,10 @@ import bio.terra.workspace.model.CloningInstructionsEnum;
 import bio.terra.workspace.model.CreatedControlledGcpGcsBucket;
 import bio.terra.workspace.model.GcpBigQueryDataTableAttributes;
 import bio.terra.workspace.model.GcpBigQueryDataTableResource;
-import bio.terra.workspace.model.GcpBigQueryDatasetAttributes;
 import bio.terra.workspace.model.GcpBigQueryDatasetResource;
-import bio.terra.workspace.model.GcpGcsBucketAttributes;
 import bio.terra.workspace.model.GcpGcsBucketResource;
 import bio.terra.workspace.model.GcpGcsObjectAttributes;
 import bio.terra.workspace.model.GcpGcsObjectResource;
-import bio.terra.workspace.model.GitRepoAttributes;
-import bio.terra.workspace.model.GitRepoResource;
 import bio.terra.workspace.model.GrantRoleRequestBody;
 import bio.terra.workspace.model.IamRole;
 import bio.terra.workspace.model.ResourceCloneDetails;
@@ -50,7 +45,6 @@ import com.google.cloud.storage.Storage;
 import java.io.IOException;
 import java.time.Duration;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 import java.util.stream.StreamSupport;
 import org.apache.commons.lang3.RandomStringUtils;
@@ -61,8 +55,6 @@ import scripts.utils.ClientTestUtils;
 import scripts.utils.CloudContextMaker;
 import scripts.utils.GcsBucketObjectUtils;
 import scripts.utils.GcsBucketUtils;
-import scripts.utils.GitRepoUtils;
-import scripts.utils.ParameterUtils;
 import scripts.utils.WorkspaceAllocateTestScriptBase;
 
 public class CloneWorkspace extends WorkspaceAllocateTestScriptBase {
@@ -191,7 +183,8 @@ public class CloneWorkspace extends WorkspaceAllocateTestScriptBase {
             CloningInstructionsEnum.RESOURCE);
 
     // Create reference to the shared GCS bucket in this workspace with COPY_REFERENCE
-    ReferencedGcpResourceApi referencedGcpResourceApi = ClientTestUtils.getReferencedGpcResourceClient(sourceOwnerUser, server);
+    ReferencedGcpResourceApi referencedGcpResourceApi =
+        ClientTestUtils.getReferencedGpcResourceClient(sourceOwnerUser, server);
     final String bucketReferenceName = RandomStringUtils.random(16, true, false);
 
     sourceBucketReference =
@@ -202,8 +195,10 @@ public class CloneWorkspace extends WorkspaceAllocateTestScriptBase {
             bucketReferenceName,
             CloningInstructionsEnum.REFERENCE);
 
-    GcpGcsObjectAttributes referencedFileAttributes = new GcpGcsObjectAttributes().bucketName(sharedSourceBucket.getGcpBucket().getAttributes().getBucketName()).fileName(
-        GCS_BLOB_NAME);
+    GcpGcsObjectAttributes referencedFileAttributes =
+        new GcpGcsObjectAttributes()
+            .bucketName(sharedSourceBucket.getGcpBucket().getAttributes().getBucketName())
+            .fileName(GCS_BLOB_NAME);
     sourceBucketFileReference =
         makeGcsObjectReference(
             referencedFileAttributes,
@@ -219,7 +214,11 @@ public class CloneWorkspace extends WorkspaceAllocateTestScriptBase {
             referencedGcpResourceApi,
             getWorkspaceId(),
             "dataset_resource_1");
-    GcpBigQueryDataTableAttributes bqTableReferenceAttributes = new GcpBigQueryDataTableAttributes().projectId(copyDefinitionDataset.getAttributes().getProjectId()).datasetId(copyDefinitionDataset.getAttributes().getDatasetId()).dataTableId(BqDatasetUtils.BQ_EMPLOYEE_TABLE_NAME);
+    GcpBigQueryDataTableAttributes bqTableReferenceAttributes =
+        new GcpBigQueryDataTableAttributes()
+            .projectId(copyDefinitionDataset.getAttributes().getProjectId())
+            .datasetId(copyDefinitionDataset.getAttributes().getDatasetId())
+            .dataTableId(BqDatasetUtils.BQ_EMPLOYEE_TABLE_NAME);
     sourceDataTableReference =
         BqDatasetUtils.makeBigQueryDataTableReference(
             bqTableReferenceAttributes,

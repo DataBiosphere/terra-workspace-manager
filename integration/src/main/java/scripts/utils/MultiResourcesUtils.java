@@ -3,19 +3,11 @@ package scripts.utils;
 import bio.terra.workspace.api.ControlledGcpResourceApi;
 import bio.terra.workspace.api.ReferencedGcpResourceApi;
 import bio.terra.workspace.model.CloningInstructionsEnum;
-import bio.terra.workspace.model.DataRepoSnapshotResource;
 import bio.terra.workspace.model.GcpAiNotebookInstanceResource;
-import bio.terra.workspace.model.GcpBigQueryDataTableAttributes;
-import bio.terra.workspace.model.GcpBigQueryDataTableResource;
-import bio.terra.workspace.model.GcpBigQueryDatasetAttributes;
 import bio.terra.workspace.model.GcpBigQueryDatasetResource;
-import bio.terra.workspace.model.GcpGcsBucketAttributes;
 import bio.terra.workspace.model.GcpGcsBucketResource;
-import bio.terra.workspace.model.GitRepoAttributes;
-import bio.terra.workspace.model.GitRepoResource;
 import bio.terra.workspace.model.ResourceMetadata;
 import bio.terra.workspace.model.StewardshipType;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import org.apache.commons.lang3.RandomStringUtils;
@@ -38,7 +30,7 @@ public class MultiResourcesUtils {
    * shared GCS bucket, private GCS bucket, shared BQ dataset, and private AI notebook, as well as
    * references to each of those buckets and datasets.
    *
-   * This method intentionally does not create one of every WSM resource type, as that leads to
+   * <p>This method intentionally does not create one of every WSM resource type, as that leads to
    * several bloated tests. Each resource type should be tested individually in a relevant
    * standalone test.
    *
@@ -56,19 +48,13 @@ public class MultiResourcesUtils {
 
     // Create a shared GCS bucket, a private GCS bucket, and a shared BQ dataset
     GcpGcsBucketResource sharedBucket =
-          GcsBucketUtils.makeControlledGcsBucketUserShared(
-                  controlledGcpResourceApi,
-                  workspaceId,
-                  makeName(),
-                  CloningInstructionsEnum.NOTHING)
-              .getGcpBucket();
+        GcsBucketUtils.makeControlledGcsBucketUserShared(
+                controlledGcpResourceApi, workspaceId, makeName(), CloningInstructionsEnum.NOTHING)
+            .getGcpBucket();
     GcpGcsBucketResource privateBucket =
-          GcsBucketUtils.makeControlledGcsBucketUserPrivate(
-                  controlledGcpResourceApi,
-                  workspaceId,
-                  makeName(),
-                  CloningInstructionsEnum.NOTHING)
-              .getGcpBucket();
+        GcsBucketUtils.makeControlledGcsBucketUserPrivate(
+                controlledGcpResourceApi, workspaceId, makeName(), CloningInstructionsEnum.NOTHING)
+            .getGcpBucket();
     GcpBigQueryDatasetResource sharedDataset =
         BqDatasetUtils.makeControlledBigQueryDatasetUserShared(
             controlledGcpResourceApi,
@@ -76,16 +62,36 @@ public class MultiResourcesUtils {
             makeName(),
             null,
             CloningInstructionsEnum.NOTHING);
-    GcpAiNotebookInstanceResource notebook = NotebookUtils.makeControlledNotebookUserPrivate(workspaceId, /*instanceId=*/null, /*location=*/null, controlledGcpResourceApi).getAiNotebookInstance();
+    GcpAiNotebookInstanceResource notebook =
+        NotebookUtils.makeControlledNotebookUserPrivate(
+                workspaceId, /*instanceId=*/ null, /*location=*/ null, controlledGcpResourceApi)
+            .getAiNotebookInstance();
     // Create references to the above buckets and datasets
-    GcpGcsBucketResource sharedBucketReference = GcsBucketUtils.makeGcsBucketReference(sharedBucket.getAttributes(), referencedGcpResourceApi, workspaceId, makeName(), CloningInstructionsEnum.NOTHING);
-    GcpGcsBucketResource privateBucketReference = GcsBucketUtils.makeGcsBucketReference(privateBucket.getAttributes(), referencedGcpResourceApi, workspaceId, makeName(), CloningInstructionsEnum.NOTHING);
+    GcpGcsBucketResource sharedBucketReference =
+        GcsBucketUtils.makeGcsBucketReference(
+            sharedBucket.getAttributes(),
+            referencedGcpResourceApi,
+            workspaceId,
+            makeName(),
+            CloningInstructionsEnum.NOTHING);
+    GcpGcsBucketResource privateBucketReference =
+        GcsBucketUtils.makeGcsBucketReference(
+            privateBucket.getAttributes(),
+            referencedGcpResourceApi,
+            workspaceId,
+            makeName(),
+            CloningInstructionsEnum.NOTHING);
     GcpBigQueryDatasetResource datasetReference =
         BqDatasetUtils.makeBigQueryDatasetReference(
             sharedDataset.getAttributes(), referencedGcpResourceApi, workspaceId, makeName());
-    return List.of(sharedBucket.getMetadata(), privateBucket.getMetadata(),
-        sharedDataset.getMetadata(), notebook.getMetadata(), sharedBucketReference.getMetadata(),
-        privateBucketReference.getMetadata(), datasetReference.getMetadata());
+    return List.of(
+        sharedBucket.getMetadata(),
+        privateBucket.getMetadata(),
+        sharedDataset.getMetadata(),
+        notebook.getMetadata(),
+        sharedBucketReference.getMetadata(),
+        privateBucketReference.getMetadata(),
+        datasetReference.getMetadata());
   }
 
   /**
@@ -109,7 +115,8 @@ public class MultiResourcesUtils {
             controlledGcpResourceApi.deleteBigQueryDataset(workspaceId, metadata.getResourceId());
             break;
           case AI_NOTEBOOK:
-            NotebookUtils.deleteControlledNotebookUserPrivate(workspaceId, metadata.getResourceId(), controlledGcpResourceApi);
+            NotebookUtils.deleteControlledNotebookUserPrivate(
+                workspaceId, metadata.getResourceId(), controlledGcpResourceApi);
             break;
           default:
             throw new IllegalStateException(

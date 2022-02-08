@@ -1,9 +1,6 @@
 package scripts.testscripts;
 
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.contains;
-import static org.hamcrest.Matchers.containsInAnyOrder;
-import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasSize;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -11,8 +8,6 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static scripts.utils.GcsBucketUtils.BUCKET_LIFECYCLE_RULES;
-import static scripts.utils.GcsBucketUtils.BUCKET_LIFECYCLE_RULE_1;
-import static scripts.utils.GcsBucketUtils.BUCKET_LIFECYCLE_RULE_2;
 import static scripts.utils.GcsBucketUtils.BUCKET_LOCATION;
 import static scripts.utils.GcsBucketUtils.BUCKET_PREFIX;
 import static scripts.utils.GcsBucketUtils.BUCKET_RESOURCE_PREFIX;
@@ -70,7 +65,6 @@ import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import org.apache.http.HttpStatus;
 import org.slf4j.Logger;
@@ -216,7 +210,8 @@ public class ControlledGcsBucketLifecycle extends GcpWorkspaceCloneTestScriptBas
                     /*updateParameters=*/ null));
     assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, invalidUpdateEx.getCode());
 
-    Storage ownerStorageClient = ClientTestUtils.getGcpStorageClient(testUser, getSourceProjectId());
+    Storage ownerStorageClient =
+        ClientTestUtils.getGcpStorageClient(testUser, getSourceProjectId());
     final Bucket retrievedUpdatedBucket =
         ownerStorageClient.get(
             bucketName, BucketGetOption.fields(BucketField.LIFECYCLE, BucketField.STORAGE_CLASS));
@@ -336,7 +331,11 @@ public class ControlledGcsBucketLifecycle extends GcpWorkspaceCloneTestScriptBas
     return resourceApi.updateGcsBucket(body, getWorkspaceId(), resourceId);
   }
 
-  private void testCloneBucket(GcpGcsBucketResource sourceBucket, TestUserSpecification cloningUser, ControlledGcpResourceApi resourceApi) throws Exception {
+  private void testCloneBucket(
+      GcpGcsBucketResource sourceBucket,
+      TestUserSpecification cloningUser,
+      ControlledGcpResourceApi resourceApi)
+      throws Exception {
     final String destinationBucketName = "clone-" + UUID.randomUUID().toString();
     // clone the bucket
     final String clonedBucketDescription = "A cloned bucket";
@@ -411,8 +410,7 @@ public class ControlledGcsBucketLifecycle extends GcpWorkspaceCloneTestScriptBas
     // Location, storage class, and lifecycle rules should match values from createBucketAttempt
     assertEquals(StorageClass.STANDARD, destinationGcsBucket.getStorageClass());
     assertEquals(
-        BUCKET_LOCATION,
-        destinationGcsBucket.getLocation()); // default since not specified
+        BUCKET_LOCATION, destinationGcsBucket.getLocation()); // default since not specified
     assertEquals(2, destinationGcsBucket.getLifecycleRules().size());
     assertEquals(CloningInstructionsEnum.RESOURCE, clonedBucket.getEffectiveCloningInstructions());
 
