@@ -4,6 +4,7 @@ import bio.terra.stairway.Flight;
 import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.RetryRule;
 import bio.terra.workspace.common.utils.FlightBeanBag;
+import bio.terra.workspace.common.utils.FlightUtils;
 import bio.terra.workspace.common.utils.RetryRules;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.job.JobMapKeys;
@@ -17,6 +18,7 @@ import bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.Delet
 import bio.terra.workspace.service.resource.controlled.exception.ControlledResourceNotImplementedException;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
+import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ResourceKeys;
 import java.util.UUID;
 
 /**
@@ -31,10 +33,12 @@ public class DeleteControlledResourceFlight extends Flight {
     final FlightBeanBag flightBeanBag = FlightBeanBag.getFromObject(beanBag);
 
     final UUID workspaceId =
-        UUID.fromString(inputParameters.get(WorkspaceFlightMapKeys.WORKSPACE_ID, String.class));
+        UUID.fromString(
+            FlightUtils.getRequired(
+                inputParameters, WorkspaceFlightMapKeys.WORKSPACE_ID, String.class));
     final UUID resourceId =
         UUID.fromString(
-            inputParameters.get(WorkspaceFlightMapKeys.ResourceKeys.RESOURCE_ID, String.class));
+            FlightUtils.getRequired(inputParameters, ResourceKeys.RESOURCE_ID, String.class));
     final AuthenticatedUserRequest userRequest =
         inputParameters.get(JobMapKeys.AUTH_USER_INFO.getKeyName(), AuthenticatedUserRequest.class);
     ControlledResource resource =
@@ -116,7 +120,7 @@ public class DeleteControlledResourceFlight extends Flight {
       case CONTROLLED_GCP_BIG_QUERY_DATASET:
         addStep(
             new DeleteBigQueryDatasetStep(
-                resource.castToBigQueryDatasetResource(),
+                resource.castByEnum(resource.getResourceType()),
                 flightBeanBag.getCrlService(),
                 flightBeanBag.getGcpCloudContextService()),
             gcpRetryRule);
@@ -124,7 +128,7 @@ public class DeleteControlledResourceFlight extends Flight {
       case CONTROLLED_GCP_AI_NOTEBOOK_INSTANCE:
         addStep(
             new DeleteAiNotebookInstanceStep(
-                resource.castToAiNotebookInstanceResource(),
+                resource.castByEnum(resource.getResourceType()),
                 flightBeanBag.getCrlService(),
                 flightBeanBag.getGcpCloudContextService()),
             gcpRetryRule);

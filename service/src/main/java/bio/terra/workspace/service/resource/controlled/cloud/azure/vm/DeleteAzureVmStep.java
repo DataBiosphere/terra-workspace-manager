@@ -7,6 +7,7 @@ import bio.terra.stairway.StepStatus;
 import bio.terra.workspace.app.configuration.external.AzureConfiguration;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.service.crl.CrlService;
+import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.workspace.model.AzureCloudContext;
 import com.azure.resourcemanager.compute.ComputeManager;
 import com.azure.resourcemanager.compute.models.VirtualMachine;
@@ -42,7 +43,7 @@ public class DeleteAzureVmStep implements Step {
   @Override
   public StepResult doStep(FlightContext context) throws InterruptedException {
     var wsmResource = resourceDao.getResource(workspaceId, resourceId);
-    var vm = wsmResource.castToControlledResource().castToAzureVmResource();
+    ControlledAzureVmResource vm = wsmResource.castByEnum(WsmResourceType.CONTROLLED_AZURE_VM);
 
     ComputeManager computeManager = crlService.getComputeManager(azureCloudContext, azureConfig);
     var azureResourceId =

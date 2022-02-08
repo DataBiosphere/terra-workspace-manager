@@ -4,6 +4,7 @@ import bio.terra.common.exception.BadRequestException;
 import bio.terra.stairway.FlightStatus;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.model.WsmResource;
+import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.resource.referenced.cloud.any.gitrepo.ReferencedGitRepoResource;
 import bio.terra.workspace.service.resource.referenced.cloud.gcp.ReferencedResource;
 import bio.terra.workspace.service.resource.referenced.cloud.gcp.bqdataset.ReferencedBigQueryDatasetResource;
@@ -53,7 +54,7 @@ public class WorkspaceCloneUtils {
       case REFERENCED_GCP_GCS_BUCKET:
         destinationResource =
             buildDestinationGcsBucketReference(
-                sourceReferencedResource.castToGcsBucketResource(),
+                sourceReferencedResource.castByEnum(WsmResourceType.REFERENCED_GCP_GCS_BUCKET),
                 destinationWorkspaceId,
                 name,
                 description);
@@ -61,7 +62,7 @@ public class WorkspaceCloneUtils {
       case REFERENCED_GCP_GCS_OBJECT:
         destinationResource =
             buildDestinationGcsObjectReference(
-                sourceReferencedResource.castToGcsObjectResource(),
+                sourceReferencedResource.castByEnum(WsmResourceType.REFERENCED_GCP_GCS_OBJECT),
                 destinationWorkspaceId,
                 name,
                 description);
@@ -69,7 +70,8 @@ public class WorkspaceCloneUtils {
       case REFERENCED_ANY_DATA_REPO_SNAPSHOT:
         destinationResource =
             buildDestinationDataRepoSnapshotReference(
-                sourceReferencedResource.castToDataRepoSnapshotResource(),
+                sourceReferencedResource.castByEnum(
+                    WsmResourceType.REFERENCED_ANY_DATA_REPO_SNAPSHOT),
                 destinationWorkspaceId,
                 name,
                 description);
@@ -77,7 +79,8 @@ public class WorkspaceCloneUtils {
       case REFERENCED_GCP_BIG_QUERY_DATASET:
         destinationResource =
             buildDestinationBigQueryDatasetReference(
-                sourceReferencedResource.castToBigQueryDatasetResource(),
+                sourceReferencedResource.castByEnum(
+                    WsmResourceType.REFERENCED_GCP_BIG_QUERY_DATASET),
                 destinationWorkspaceId,
                 name,
                 description);
@@ -85,7 +88,8 @@ public class WorkspaceCloneUtils {
       case REFERENCED_GCP_BIG_QUERY_DATA_TABLE:
         destinationResource =
             buildDestinationBigQueryDataTableReference(
-                sourceReferencedResource.castToBigQueryDataTableResource(),
+                sourceReferencedResource.castByEnum(
+                    WsmResourceType.REFERENCED_GCP_BIG_QUERY_DATA_TABLE),
                 destinationWorkspaceId,
                 name,
                 description);
@@ -93,7 +97,7 @@ public class WorkspaceCloneUtils {
       case REFERENCED_ANY_GIT_REPO:
         destinationResource =
             buildDestinationGitHubRepoReference(
-                sourceReferencedResource.castToGitRepoResource(),
+                sourceReferencedResource.castByEnum(WsmResourceType.REFERENCED_ANY_GIT_REPO),
                 destinationWorkspaceId,
                 name,
                 description);

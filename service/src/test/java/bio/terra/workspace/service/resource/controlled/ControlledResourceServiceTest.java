@@ -64,6 +64,7 @@ import bio.terra.workspace.service.resource.controlled.model.ManagedByType;
 import bio.terra.workspace.service.resource.exception.DuplicateResourceException;
 import bio.terra.workspace.service.resource.exception.ResourceNotFoundException;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
+import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.spendprofile.SpendConnectedTestUtils;
 import bio.terra.workspace.service.workspace.Alpha1Service;
 import bio.terra.workspace.service.workspace.GcpCloudContextService;
@@ -558,7 +559,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
                 workspace.getWorkspaceId(),
                 resource.getResourceId(),
                 user.getAuthenticatedRequest())
-            .castToBigQueryDatasetResource();
+            .castByEnum(WsmResourceType.CONTROLLED_GCP_BIG_QUERY_DATASET);
     assertEquals(resource, fetchedDataset);
 
     String newName = "NEW_createGetUpdateDeleteBqDataset";
@@ -578,7 +579,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
                 workspace.getWorkspaceId(),
                 resource.getResourceId(),
                 user.getAuthenticatedRequest())
-            .castToBigQueryDatasetResource();
+            .castByEnum(WsmResourceType.CONTROLLED_GCP_BIG_QUERY_DATASET);
     assertEquals(newName, updatedResource.getName());
     assertEquals(newDescription, updatedResource.getDescription());
 
@@ -861,7 +862,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
                 workspace.getWorkspaceId(),
                 resource.getResourceId(),
                 user.getAuthenticatedRequest())
-            .castToBigQueryDatasetResource();
+            .castByEnum(WsmResourceType.CONTROLLED_GCP_BIG_QUERY_DATASET);
     assertEquals(newName, fetchedResource.getName());
     assertEquals(newDescription, fetchedResource.getDescription());
   }
@@ -939,7 +940,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
                 workspace.getWorkspaceId(),
                 resource.getResourceId(),
                 user.getAuthenticatedRequest())
-            .castToBigQueryDatasetResource();
+            .castByEnum(WsmResourceType.CONTROLLED_GCP_BIG_QUERY_DATASET);
     assertEquals(resource.getName(), fetchedResource.getName());
     assertEquals(resource.getDescription(), fetchedResource.getDescription());
   }
@@ -1234,7 +1235,8 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
                 workspace.getWorkspaceId(),
                 createdBucket.getResourceId(),
                 user.getAuthenticatedRequest())
-            .castToGcsBucketResource();
+            .castByEnum(WsmResourceType.CONTROLLED_GCP_GCS_BUCKET);
+
     assertEquals(newName, fetchedResource.getName());
     assertEquals(newDescription, fetchedResource.getDescription());
   }
@@ -1286,7 +1288,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
                 workspace.getWorkspaceId(),
                 createdBucket.getResourceId(),
                 user.getAuthenticatedRequest())
-            .castToGcsBucketResource();
+            .castByEnum(WsmResourceType.CONTROLLED_GCP_GCS_BUCKET);
     assertEquals(createdBucket.getName(), fetchedResource.getName());
     assertEquals(createdBucket.getDescription(), fetchedResource.getDescription());
   }

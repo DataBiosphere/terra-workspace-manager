@@ -1,5 +1,6 @@
 package bio.terra.workspace.service.resource.controlled.cloud.azure.disk;
 
+import bio.terra.common.exception.BadRequestException;
 import bio.terra.common.exception.InconsistentFieldsException;
 import bio.terra.common.exception.MissingRequiredFieldException;
 import bio.terra.workspace.db.DbSerDes;
@@ -73,9 +74,23 @@ public class ControlledAzureDiskResource extends ControlledResource {
     validate();
   }
 
+  public static ControlledAzureDiskResource.Builder builder() {
+    return new ControlledAzureDiskResource.Builder();
+  }
+
   /** {@inheritDoc} */
   @Override
-  public Optional<UniquenessCheckAttributes> getUniquenessCheckParameters() {
+  @SuppressWarnings("unchecked")
+  public <T> T castByEnum(WsmResourceType expectedType) {
+    if (getResourceType() != expectedType) {
+      throw new BadRequestException(String.format("Resource is not a %s", expectedType));
+    }
+    return (T) this;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public Optional<UniquenessCheckAttributes> getUniquenessCheckAttributes() {
     return Optional.of(
         new UniquenessCheckAttributes()
             .uniquenessScope(UniquenessScope.WORKSPACE)
@@ -168,10 +183,6 @@ public class ControlledAzureDiskResource extends ControlledResource {
     int result = super.hashCode();
     result = 31 * result + diskName.hashCode();
     return result;
-  }
-
-  public static ControlledAzureDiskResource.Builder builder() {
-    return new ControlledAzureDiskResource.Builder();
   }
 
   public static class Builder {

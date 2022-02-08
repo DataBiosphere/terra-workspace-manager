@@ -29,6 +29,7 @@ import bio.terra.workspace.service.resource.controlled.model.ControlledResourceC
 import bio.terra.workspace.service.resource.controlled.model.ManagedByType;
 import bio.terra.workspace.service.resource.controlled.model.PrivateResourceState;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
+import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.resource.referenced.cloud.gcp.ReferencedResource;
 import bio.terra.workspace.service.resource.referenced.cloud.gcp.ReferencedResourceService;
 import bio.terra.workspace.service.resource.referenced.cloud.gcp.datareposnapshot.ReferencedDataRepoSnapshotResource;
@@ -107,7 +108,8 @@ class SamServiceTest extends BaseConnectedTest {
 
     ReferencedResource ref =
         referenceResourceService.createReferenceResource(referenceResource, secondaryUserRequest());
-    ReferencedDataRepoSnapshotResource resultResource = ref.castToDataRepoSnapshotResource();
+    ReferencedDataRepoSnapshotResource resultResource =
+        ref.castByEnum(WsmResourceType.REFERENCED_ANY_DATA_REPO_SNAPSHOT);
     assertEquals(referenceResource, resultResource);
   }
 

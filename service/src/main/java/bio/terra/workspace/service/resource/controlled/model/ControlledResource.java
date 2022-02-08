@@ -8,18 +8,9 @@ import bio.terra.workspace.db.model.UniquenessCheckAttributes;
 import bio.terra.workspace.generated.model.ApiControlledResourceMetadata;
 import bio.terra.workspace.generated.model.ApiPrivateResourceUser;
 import bio.terra.workspace.generated.model.ApiResourceMetadata;
-import bio.terra.workspace.service.resource.controlled.cloud.azure.disk.ControlledAzureDiskResource;
-import bio.terra.workspace.service.resource.controlled.cloud.azure.ip.ControlledAzureIpResource;
-import bio.terra.workspace.service.resource.controlled.cloud.azure.network.ControlledAzureNetworkResource;
-import bio.terra.workspace.service.resource.controlled.cloud.azure.storage.ControlledAzureStorageResource;
-import bio.terra.workspace.service.resource.controlled.cloud.azure.vm.ControlledAzureVmResource;
-import bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook.ControlledAiNotebookInstanceResource;
-import bio.terra.workspace.service.resource.controlled.cloud.gcp.bqdataset.ControlledBigQueryDatasetResource;
-import bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.ControlledGcsBucketResource;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.model.StewardshipType;
 import bio.terra.workspace.service.resource.model.WsmResource;
-import bio.terra.workspace.service.resource.model.WsmResourceType;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
@@ -74,7 +65,7 @@ public abstract class ControlledResource extends WsmResource {
    *
    * @return optional uniqueness description
    */
-  public abstract Optional<UniquenessCheckAttributes> getUniquenessCheckParameters();
+  public abstract Optional<UniquenessCheckAttributes> getUniquenessCheckAttributes();
 
   /**
    * If specified, the assigned user must be equal to the user making the request.
@@ -150,54 +141,6 @@ public abstract class ControlledResource extends WsmResource {
         && privateResourceState != PrivateResourceState.NOT_APPLICABLE) {
       throw new InconsistentFieldsException(
           "Private resource state must be NOT_APPLICABLE for all non-private resources.");
-    }
-  }
-
-  // Double-checked down casts when we need to re-specialize from a ControlledResource
-  public ControlledGcsBucketResource castToGcsBucketResource() {
-    validateSubclass(WsmResourceType.CONTROLLED_GCP_GCS_BUCKET);
-    return (ControlledGcsBucketResource) this;
-  }
-
-  public ControlledAzureIpResource castToAzureIpResource() {
-    validateSubclass(WsmResourceType.CONTROLLED_AZURE_IP);
-    return (ControlledAzureIpResource) this;
-  }
-
-  public ControlledAzureStorageResource castToAzureStorageResource() {
-    validateSubclass(WsmResourceType.CONTROLLED_AZURE_STORAGE_ACCOUNT);
-    return (ControlledAzureStorageResource) this;
-  }
-
-  public ControlledAzureDiskResource castToAzureDiskResource() {
-    validateSubclass(WsmResourceType.CONTROLLED_AZURE_DISK);
-    return (ControlledAzureDiskResource) this;
-  }
-
-  public ControlledAzureNetworkResource castToAzureNetworkResource() {
-    validateSubclass(WsmResourceType.CONTROLLED_AZURE_NETWORK);
-    return (ControlledAzureNetworkResource) this;
-  }
-
-  public ControlledAzureVmResource castToAzureVmResource() {
-    validateSubclass(WsmResourceType.CONTROLLED_AZURE_VM);
-    return (ControlledAzureVmResource) this;
-  }
-
-  public ControlledAiNotebookInstanceResource castToAiNotebookInstanceResource() {
-    validateSubclass(WsmResourceType.CONTROLLED_GCP_AI_NOTEBOOK_INSTANCE);
-    return (ControlledAiNotebookInstanceResource) this;
-  }
-
-  public ControlledBigQueryDatasetResource castToBigQueryDatasetResource() {
-    validateSubclass(WsmResourceType.CONTROLLED_GCP_BIG_QUERY_DATASET);
-    return (ControlledBigQueryDatasetResource) this;
-  }
-
-  private void validateSubclass(WsmResourceType expectedType) {
-    if (getResourceType() != expectedType) {
-      throw new InvalidMetadataException(
-          String.format("Expected %s, found %s", expectedType, getResourceType()));
     }
   }
 

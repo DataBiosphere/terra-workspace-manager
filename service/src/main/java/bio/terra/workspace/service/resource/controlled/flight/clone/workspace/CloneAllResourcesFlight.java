@@ -4,6 +4,8 @@ import bio.terra.stairway.Flight;
 import bio.terra.stairway.FlightMap;
 import bio.terra.workspace.common.utils.FlightBeanBag;
 import bio.terra.workspace.common.utils.RetryRules;
+import bio.terra.workspace.service.resource.model.WsmResource;
+import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import com.fasterxml.jackson.core.type.TypeReference;
 import java.util.List;
@@ -33,7 +35,9 @@ public class CloneAllResourcesFlight extends Flight {
 
   private void addFlightLaunchStepsForResource(
       ResourceWithFlightId resourceWithFlightId, FlightBeanBag flightBeanBag) {
-    switch (resourceWithFlightId.getResource().getStewardshipType()) {
+    final WsmResource resource = resourceWithFlightId.getResource();
+
+    switch (resource.getStewardshipType()) {
       case REFERENCED:
         addStep(
             new LaunchCreateReferenceResourceFlightStep(
@@ -52,34 +56,22 @@ public class CloneAllResourcesFlight extends Flight {
           case CONTROLLED_GCP_GCS_BUCKET:
             addStep(
                 new LaunchCloneGcsBucketResourceFlightStep(
-                    resourceWithFlightId
-                        .getResource()
-                        .castToControlledResource()
-                        .castToGcsBucketResource(),
+                    resource.castByEnum(WsmResourceType.CONTROLLED_GCP_GCS_BUCKET),
                     resourceWithFlightId.getFlightId()));
             addStep(
                 new AwaitCloneGcsBucketResourceFlightStep(
-                    resourceWithFlightId
-                        .getResource()
-                        .castToControlledResource()
-                        .castToGcsBucketResource(),
+                    resource.castByEnum(WsmResourceType.CONTROLLED_GCP_GCS_BUCKET),
                     resourceWithFlightId.getFlightId()),
                 RetryRules.cloudLongRunning());
             break;
           case CONTROLLED_GCP_BIG_QUERY_DATASET:
             addStep(
                 new LaunchCloneControlledGcpBigQueryDatasetResourceFlightStep(
-                    resourceWithFlightId
-                        .getResource()
-                        .castToControlledResource()
-                        .castToBigQueryDatasetResource(),
+                    resource.castByEnum(WsmResourceType.CONTROLLED_GCP_BIG_QUERY_DATASET),
                     resourceWithFlightId.getFlightId()));
             addStep(
                 new AwaitCloneControlledGcpBigQueryDatasetResourceFlightStep(
-                    resourceWithFlightId
-                        .getResource()
-                        .castToControlledResource()
-                        .castToBigQueryDatasetResource(),
+                    resource.castByEnum(WsmResourceType.CONTROLLED_GCP_BIG_QUERY_DATASET),
                     resourceWithFlightId.getFlightId()),
                 RetryRules.cloudLongRunning());
             break;
