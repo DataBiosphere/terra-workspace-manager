@@ -36,16 +36,13 @@ public class DeleteControlledResourceFlight extends Flight {
         UUID.fromString(
             FlightUtils.getRequired(
                 inputParameters, WorkspaceFlightMapKeys.WORKSPACE_ID, String.class));
-    final UUID resourceId =
-        UUID.fromString(
-            FlightUtils.getRequired(
-                inputParameters, ResourceKeys.RESOURCE_ID, String.class));
     final ControlledResource resource =
-        FlightUtils.getRequired(
-            inputParameters, ResourceKeys.RESOURCE, ControlledResource.class);
+        FlightUtils.getRequired(inputParameters, ResourceKeys.RESOURCE, ControlledResource.class);
     final AuthenticatedUserRequest userRequest =
         FlightUtils.getRequired(
-            inputParameters, JobMapKeys.AUTH_USER_INFO.getKeyName(), AuthenticatedUserRequest.class);
+            inputParameters,
+            JobMapKeys.AUTH_USER_INFO.getKeyName(),
+            AuthenticatedUserRequest.class);
     final RetryRule cloudRetry = RetryRules.cloud();
 
     // Get the cloud context for the resource we are deleting
