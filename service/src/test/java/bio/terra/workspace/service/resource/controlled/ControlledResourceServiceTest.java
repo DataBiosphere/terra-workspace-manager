@@ -219,6 +219,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
     ControlledAiNotebookInstanceResource.Builder resourceBuilder =
         ControlledResourceFixtures.makeDefaultAiNotebookInstance()
             .workspaceId(workspaceId)
+            .resourceId(UUID.randomUUID())
             .name(instanceId)
             .cloningInstructions(CloningInstructions.COPY_NOTHING)
             .accessScope(AccessScopeType.ACCESS_SCOPE_PRIVATE)

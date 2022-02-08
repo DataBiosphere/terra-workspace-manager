@@ -3,6 +3,9 @@ package bio.terra.workspace.service.resource.controlled.cloud.azure.vm;
 import bio.terra.common.exception.BadRequestException;
 import bio.terra.common.exception.InconsistentFieldsException;
 import bio.terra.common.exception.MissingRequiredFieldException;
+import bio.terra.stairway.RetryRule;
+import bio.terra.workspace.common.utils.FlightBeanBag;
+import bio.terra.workspace.common.utils.RetryRules;
 import bio.terra.workspace.db.DbSerDes;
 import bio.terra.workspace.db.model.DbResource;
 import bio.terra.workspace.db.model.UniquenessCheckAttributes;
@@ -11,7 +14,10 @@ import bio.terra.workspace.generated.model.ApiAzureVmAttributes;
 import bio.terra.workspace.generated.model.ApiAzureVmResource;
 import bio.terra.workspace.generated.model.ApiResourceAttributesUnion;
 import bio.terra.workspace.generated.model.ApiResourceUnion;
+import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.resource.ValidationUtils;
+import bio.terra.workspace.service.resource.controlled.flight.create.CreateControlledResourceFlight;
+import bio.terra.workspace.service.resource.controlled.flight.delete.DeleteControlledResourceFlight;
 import bio.terra.workspace.service.resource.controlled.model.AccessScopeType;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import bio.terra.workspace.service.resource.controlled.model.ManagedByType;
@@ -108,6 +114,34 @@ public class ControlledAzureVmResource extends ControlledResource {
         new UniquenessCheckAttributes()
             .uniquenessScope(UniquenessScope.WORKSPACE)
             .addParameter("vmName", getVmName()));
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void addCreateSteps(
+      CreateControlledResourceFlight flight,
+      String petSaEmail,
+      AuthenticatedUserRequest userRequest,
+      FlightBeanBag flightBeanBag) {
+    RetryRule cloudRetry = RetryRules.cloud();
+    flight.addStep(
+        new GetAzureVmStep(flightBeanBag.getAzureConfig(), flightBeanBag.getCrlService(), this),
+        cloudRetry);
+    flight.addStep(
+        new CreateAzureVmStep(
+            flightBeanBag.getAzureConfig(),
+            flightBeanBag.getCrlService(),
+            this,
+            flightBeanBag.getResourceDao()),
+        cloudRetry);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void addDeleteSteps(DeleteControlledResourceFlight flight, FlightBeanBag flightBeanBag) {
+    flight.addStep(
+        new DeleteAzureVmStep(flightBeanBag.getAzureConfig(), flightBeanBag.getCrlService(), this),
+        RetryRules.cloud());
   }
 
   public String getVmName() {
