@@ -1,5 +1,6 @@
 package bio.terra.workspace.service.resource.controlled.cloud.azure.storage;
 
+import bio.terra.common.exception.BadRequestException;
 import bio.terra.common.exception.InconsistentFieldsException;
 import bio.terra.common.exception.MissingRequiredFieldException;
 import bio.terra.workspace.db.DbSerDes;
@@ -69,9 +70,23 @@ public class ControlledAzureStorageResource extends ControlledResource {
     validate();
   }
 
+  public static ControlledAzureStorageResource.Builder builder() {
+    return new ControlledAzureStorageResource.Builder();
+  }
+
   /** {@inheritDoc} */
   @Override
-  public Optional<UniquenessCheckAttributes> getUniquenessCheckParameters() {
+  @SuppressWarnings("unchecked")
+  public <T> T castByEnum(WsmResourceType expectedType) {
+    if (getResourceType() != expectedType) {
+      throw new BadRequestException(String.format("Resource is not a %s", expectedType));
+    }
+    return (T) this;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public Optional<UniquenessCheckAttributes> getUniquenessCheckAttributes() {
     return Optional.of(
         new UniquenessCheckAttributes()
             .uniquenessScope(UniquenessScope.WORKSPACE)
@@ -163,10 +178,6 @@ public class ControlledAzureStorageResource extends ControlledResource {
     int result = super.hashCode();
     result = 42 * result + storageAccountName.hashCode();
     return result;
-  }
-
-  public static ControlledAzureStorageResource.Builder builder() {
-    return new ControlledAzureStorageResource.Builder();
   }
 
   public static class Builder {

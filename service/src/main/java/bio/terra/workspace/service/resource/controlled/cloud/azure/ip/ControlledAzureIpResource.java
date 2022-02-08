@@ -1,5 +1,6 @@
 package bio.terra.workspace.service.resource.controlled.cloud.azure.ip;
 
+import bio.terra.common.exception.BadRequestException;
 import bio.terra.common.exception.InconsistentFieldsException;
 import bio.terra.common.exception.MissingRequiredFieldException;
 import bio.terra.workspace.db.DbSerDes;
@@ -69,9 +70,23 @@ public class ControlledAzureIpResource extends ControlledResource {
     validate();
   }
 
+  public static ControlledAzureIpResource.Builder builder() {
+    return new ControlledAzureIpResource.Builder();
+  }
+
   /** {@inheritDoc} */
   @Override
-  public Optional<UniquenessCheckAttributes> getUniquenessCheckParameters() {
+  @SuppressWarnings("unchecked")
+  public <T> T castByEnum(WsmResourceType expectedType) {
+    if (getResourceType() != expectedType) {
+      throw new BadRequestException(String.format("Resource is not a %s", expectedType));
+    }
+    return (T) this;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public Optional<UniquenessCheckAttributes> getUniquenessCheckAttributes() {
     return Optional.of(
         new UniquenessCheckAttributes()
             .uniquenessScope(UniquenessScope.WORKSPACE)
@@ -159,10 +174,6 @@ public class ControlledAzureIpResource extends ControlledResource {
     int result = super.hashCode();
     result = 31 * result + ipName.hashCode();
     return result;
-  }
-
-  public static ControlledAzureIpResource.Builder builder() {
-    return new ControlledAzureIpResource.Builder();
   }
 
   public static class Builder {

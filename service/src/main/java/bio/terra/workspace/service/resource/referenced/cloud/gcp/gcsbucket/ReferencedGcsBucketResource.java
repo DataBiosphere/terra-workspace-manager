@@ -1,5 +1,6 @@
 package bio.terra.workspace.service.resource.referenced.cloud.gcp.gcsbucket;
 
+import bio.terra.common.exception.BadRequestException;
 import bio.terra.common.exception.InconsistentFieldsException;
 import bio.terra.common.exception.MissingRequiredFieldException;
 import bio.terra.workspace.common.utils.FlightBeanBag;
@@ -74,6 +75,16 @@ public class ReferencedGcsBucketResource extends ReferencedResource {
     return new ApiGcpGcsBucketResource()
         .metadata(super.toApiMetadata())
         .attributes(toApiAttributes());
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  @SuppressWarnings("unchecked")
+  public <T> T castByEnum(WsmResourceType expectedType) {
+    if (getResourceType() != expectedType) {
+      throw new BadRequestException(String.format("Resource is not a %s", expectedType));
+    }
+    return (T) this;
   }
 
   @Override

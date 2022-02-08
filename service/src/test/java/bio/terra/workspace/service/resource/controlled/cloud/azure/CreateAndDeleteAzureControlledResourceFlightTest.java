@@ -33,6 +33,7 @@ import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import bio.terra.workspace.service.resource.controlled.model.ManagedByType;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.model.WsmResource;
+import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.flight.create.azure.CreateAzureContextFlight;
 import com.azure.resourcemanager.compute.ComputeManager;
@@ -106,7 +107,7 @@ public class CreateAndDeleteAzureControlledResourceFlightTest extends BaseAzureT
         controlledResourceService.getControlledResource(workspaceId, resourceId, userRequest);
 
     try {
-      ControlledAzureIpResource azureIpResource = res.castToAzureIpResource();
+      var azureIpResource = res.castByEnum(WsmResourceType.CONTROLLED_AZURE_IP);
       assertEquals(resource, azureIpResource);
     } catch (Exception e) {
       fail("Failed to cast resource to ControlledAzureIpResource", e);
@@ -167,7 +168,8 @@ public class CreateAndDeleteAzureControlledResourceFlightTest extends BaseAzureT
         controlledResourceService.getControlledResource(workspaceId, resourceId, userRequest);
 
     try {
-      ControlledAzureDiskResource azureDiskResource = res.castToAzureDiskResource();
+      ControlledAzureDiskResource azureDiskResource =
+          res.castByEnum(WsmResourceType.CONTROLLED_AZURE_DISK);
       assertEquals(resource, azureDiskResource);
     } catch (Exception e) {
       fail("Failed to cast resource to ControlledAzureDiskResource", e);
@@ -242,7 +244,8 @@ public class CreateAndDeleteAzureControlledResourceFlightTest extends BaseAzureT
         controlledResourceService.getControlledResource(workspaceId, resourceId, userRequest);
 
     try {
-      ControlledAzureVmResource azureVmResource = res.castToAzureVmResource();
+      ControlledAzureVmResource azureVmResource =
+          res.castByEnum(WsmResourceType.CONTROLLED_AZURE_VM);
       assertEquals(resource, azureVmResource);
     } catch (Exception e) {
       fail("Failed to cast resource to ControlledAzureVmResource", e);
@@ -486,7 +489,8 @@ public class CreateAndDeleteAzureControlledResourceFlightTest extends BaseAzureT
         controlledResourceService.getControlledResource(workspaceId, resourceId, userRequest);
 
     try {
-      ControlledAzureNetworkResource azureNetworkResource = res.castToAzureNetworkResource();
+      ControlledAzureNetworkResource azureNetworkResource =
+          res.castByEnum(WsmResourceType.CONTROLLED_AZURE_NETWORK);
       assertEquals(resource, azureNetworkResource);
     } catch (Exception e) {
       fail("Failed to cast resource to ControlledAzureNetworkResource", e);

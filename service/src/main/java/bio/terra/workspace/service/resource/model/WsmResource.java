@@ -122,6 +122,27 @@ public abstract class WsmResource {
   public abstract ApiResourceUnion toApiResourceUnion();
 
   /**
+   * Every subclass mst implement this cast to its own type. This implementation should be made in
+   * each subclass:
+   *
+   * <pre>{@code
+   * @Override
+   * @SuppressWarnings("unchecked")
+   * public <T> T castByEnum(WsmResourceType expectedType) {
+   *   if (getResourceType() != expectedType) {
+   *     throw new BadRequestException(String.format("Resource is not a %s", expectedType));
+   *   }
+   *   return (T) this;
+   * }
+   * }</pre>
+   *
+   * @param expectedType resource type enum
+   * @param <T> implicit
+   * @return cast to subtype
+   */
+  public abstract <T> T castByEnum(WsmResourceType expectedType);
+
+  /**
    * The API metadata object contains the data for both referenced and controlled resources. This
    * class fills in the common part. Referenced resources have no additional data to fill in.
    * Controlled resources overrides this method to fill in the controlled resource specifics.

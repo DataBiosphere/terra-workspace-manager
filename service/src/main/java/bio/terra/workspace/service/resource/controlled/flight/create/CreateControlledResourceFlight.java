@@ -28,6 +28,7 @@ import bio.terra.workspace.service.resource.controlled.cloud.gcp.bqdataset.Creat
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.CreateGcsBucketStep;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.GcsBucketCloudSyncStep;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
+import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ResourceKeys;
 
@@ -91,14 +92,14 @@ public class CreateControlledResourceFlight extends Flight {
         addStep(
             new CreateGcsBucketStep(
                 flightBeanBag.getCrlService(),
-                resource.castToGcsBucketResource(),
+                resource.castByEnum(WsmResourceType.CONTROLLED_GCP_GCS_BUCKET),
                 flightBeanBag.getGcpCloudContextService()),
             gcpRetryRule);
         addStep(
             new GcsBucketCloudSyncStep(
                 flightBeanBag.getControlledResourceService(),
                 flightBeanBag.getCrlService(),
-                resource.castToGcsBucketResource(),
+                resource.castByEnum(WsmResourceType.CONTROLLED_GCP_GCS_BUCKET),
                 flightBeanBag.getGcpCloudContextService(),
                 userRequest),
             gcpRetryRule);
@@ -106,7 +107,10 @@ public class CreateControlledResourceFlight extends Flight {
       case CONTROLLED_GCP_AI_NOTEBOOK_INSTANCE:
         {
           addNotebookSteps(
-              petSaEmail, flightBeanBag, resource.castToAiNotebookInstanceResource(), userRequest);
+              petSaEmail,
+              flightBeanBag,
+              resource.castByEnum(WsmResourceType.CONTROLLED_GCP_AI_NOTEBOOK_INSTANCE),
+              userRequest);
           break;
         }
       case CONTROLLED_GCP_BIG_QUERY_DATASET:
@@ -116,7 +120,7 @@ public class CreateControlledResourceFlight extends Flight {
             new CreateBigQueryDatasetStep(
                 flightBeanBag.getControlledResourceService(),
                 flightBeanBag.getCrlService(),
-                resource.castToBigQueryDatasetResource(),
+                resource.castByEnum(WsmResourceType.CONTROLLED_GCP_BIG_QUERY_DATASET),
                 flightBeanBag.getGcpCloudContextService(),
                 userRequest),
             gcpRetryRule);
@@ -127,13 +131,13 @@ public class CreateControlledResourceFlight extends Flight {
             new GetAzureDiskStep(
                 flightBeanBag.getAzureConfig(),
                 flightBeanBag.getCrlService(),
-                resource.castToAzureDiskResource()),
+                resource.castByEnum(WsmResourceType.CONTROLLED_AZURE_DISK)),
             RetryRules.cloud());
         addStep(
             new CreateAzureDiskStep(
                 flightBeanBag.getAzureConfig(),
                 flightBeanBag.getCrlService(),
-                resource.castToAzureDiskResource()),
+                resource.castByEnum(WsmResourceType.CONTROLLED_AZURE_DISK)),
             RetryRules.cloud());
         break;
       case CONTROLLED_AZURE_IP:
@@ -141,13 +145,13 @@ public class CreateControlledResourceFlight extends Flight {
             new GetAzureIpStep(
                 flightBeanBag.getAzureConfig(),
                 flightBeanBag.getCrlService(),
-                resource.castToAzureIpResource()),
+                resource.castByEnum(WsmResourceType.CONTROLLED_AZURE_IP)),
             RetryRules.cloud());
         addStep(
             new CreateAzureIpStep(
                 flightBeanBag.getAzureConfig(),
                 flightBeanBag.getCrlService(),
-                resource.castToAzureIpResource()),
+                resource.castByEnum(WsmResourceType.CONTROLLED_AZURE_IP)),
             RetryRules.cloud());
         break;
       case CONTROLLED_AZURE_NETWORK:
@@ -155,13 +159,13 @@ public class CreateControlledResourceFlight extends Flight {
             new GetAzureNetworkStep(
                 flightBeanBag.getAzureConfig(),
                 flightBeanBag.getCrlService(),
-                resource.castToAzureNetworkResource()),
+                resource.castByEnum(WsmResourceType.CONTROLLED_AZURE_NETWORK)),
             RetryRules.cloud());
         addStep(
             new CreateAzureNetworkStep(
                 flightBeanBag.getAzureConfig(),
                 flightBeanBag.getCrlService(),
-                resource.castToAzureNetworkResource()),
+                resource.castByEnum(WsmResourceType.CONTROLLED_AZURE_NETWORK)),
             RetryRules.cloud());
         break;
       case CONTROLLED_AZURE_VM:
@@ -169,13 +173,13 @@ public class CreateControlledResourceFlight extends Flight {
             new GetAzureVmStep(
                 flightBeanBag.getAzureConfig(),
                 flightBeanBag.getCrlService(),
-                resource.castToAzureVmResource()),
+                resource.castByEnum(WsmResourceType.CONTROLLED_AZURE_VM)),
             RetryRules.cloud());
         addStep(
             new CreateAzureVmStep(
                 flightBeanBag.getAzureConfig(),
                 flightBeanBag.getCrlService(),
-                resource.castToAzureVmResource(),
+                resource.castByEnum(WsmResourceType.CONTROLLED_AZURE_VM),
                 flightBeanBag.getResourceDao()),
             RetryRules.cloud());
         break;
@@ -184,13 +188,13 @@ public class CreateControlledResourceFlight extends Flight {
             new GetAzureStorageStep(
                 flightBeanBag.getAzureConfig(),
                 flightBeanBag.getCrlService(),
-                resource.castToAzureStorageResource()),
+                resource.castByEnum(WsmResourceType.CONTROLLED_AZURE_STORAGE_ACCOUNT)),
             RetryRules.cloud());
         addStep(
             new CreateAzureStorageStep(
                 flightBeanBag.getAzureConfig(),
                 flightBeanBag.getCrlService(),
-                resource.castToAzureStorageResource()),
+                resource.castByEnum(WsmResourceType.CONTROLLED_AZURE_STORAGE_ACCOUNT)),
             RetryRules.cloud());
         break;
       default:

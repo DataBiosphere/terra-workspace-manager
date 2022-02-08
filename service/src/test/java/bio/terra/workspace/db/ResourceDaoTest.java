@@ -207,7 +207,7 @@ public class ResourceDaoTest extends BaseUnitTest {
             resourceWithDifferentLocation.getWorkspaceId(),
             resourceWithDifferentLocation.getResourceId()));
 
-    final ControlledResource resourceWithDefaultLocation =
+    final ControlledAiNotebookInstanceResource resourceWithDefaultLocation =
         ControlledResourceFixtures.makeDefaultAiNotebookInstance()
             .workspaceId(workspaceId1)
             .name("resource-5")
@@ -219,8 +219,9 @@ public class ResourceDaoTest extends BaseUnitTest {
         resourceDao.getResource(
             resourceWithDefaultLocation.getWorkspaceId(),
             resourceWithDefaultLocation.getResourceId()));
-    assertEquals(
-        DEFAULT_ZONE, resourceWithDefaultLocation.castToAiNotebookInstanceResource().getLocation());
+
+    assertEquals(DEFAULT_ZONE, resourceWithDefaultLocation.getLocation());
+
     // clean up
     resourceDao.deleteResource(initialResource.getWorkspaceId(), initialResource.getResourceId());
     // resource2 never got created

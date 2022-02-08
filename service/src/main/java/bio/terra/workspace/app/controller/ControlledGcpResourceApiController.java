@@ -2,7 +2,6 @@ package bio.terra.workspace.app.controller;
 
 import bio.terra.common.exception.BadRequestException;
 import bio.terra.workspace.common.utils.ControllerUtils;
-import bio.terra.workspace.db.exception.InvalidMetadataException;
 import bio.terra.workspace.generated.controller.ControlledGcpResourceApi;
 import bio.terra.workspace.generated.model.ApiCloneControlledGcpBigQueryDatasetRequest;
 import bio.terra.workspace.generated.model.ApiCloneControlledGcpBigQueryDatasetResult;
@@ -47,7 +46,6 @@ import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.function.Function;
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
 import org.slf4j.Logger;
@@ -162,18 +160,11 @@ public class ControlledGcpResourceApiController implements ControlledGcpResource
   @Override
   public ResponseEntity<ApiGcpGcsBucketResource> getBucket(UUID workspaceId, UUID resourceId) {
     final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
-    ControlledResource controlledResource =
-        controlledResourceService.getControlledResource(workspaceId, resourceId, userRequest);
-    try {
-      ApiGcpGcsBucketResource response =
-          controlledResource.castToGcsBucketResource().toApiResource();
-      return new ResponseEntity<>(response, HttpStatus.OK);
-    } catch (InvalidMetadataException ex) {
-      throw new BadRequestException(
-          String.format(
-              "Resource %s in workspace %s is not a controlled GCS bucket.",
-              resourceId, workspaceId));
-    }
+    ControlledGcsBucketResource resource =
+        controlledResourceService
+            .getControlledResource(workspaceId, resourceId, userRequest)
+            .castByEnum(WsmResourceType.CONTROLLED_GCP_GCS_BUCKET);
+    return new ResponseEntity<>(resource.toApiResource(), HttpStatus.OK);
   }
 
   @Override
@@ -187,7 +178,8 @@ public class ControlledGcpResourceApiController implements ControlledGcpResource
       throw new InvalidControlledResourceException(
           String.format("Resource %s is not a GCS Bucket", resourceId));
     }
-    final ControlledGcsBucketResource bucketResource = resource.castToGcsBucketResource();
+    final ControlledGcsBucketResource bucketResource =
+        resource.castByEnum(WsmResourceType.CONTROLLED_GCP_GCS_BUCKET);
     controlledResourceService.updateGcsBucket(
         bucketResource,
         body.getUpdateParameters(),
@@ -196,8 +188,11 @@ public class ControlledGcpResourceApiController implements ControlledGcpResource
         body.getDescription());
 
     // Retrieve and cast response to ApiGcpGcsBucketResource
-    return getControlledResourceAsResponseEntity(
-        workspaceId, resourceId, userRequest, r -> r.castToGcsBucketResource().toApiResource());
+    final ControlledGcsBucketResource updatedResource =
+        controlledResourceService
+            .getControlledResource(workspaceId, resourceId, userRequest)
+            .castByEnum(WsmResourceType.CONTROLLED_GCP_GCS_BUCKET);
+    return new ResponseEntity<>(updatedResource.toApiResource(), HttpStatus.OK);
   }
 
   @Override
@@ -250,11 +245,11 @@ public class ControlledGcpResourceApiController implements ControlledGcpResource
   public ResponseEntity<ApiGcpBigQueryDatasetResource> getBigQueryDataset(
       UUID workspaceId, UUID resourceId) {
     final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
-    return getControlledResourceAsResponseEntity(
-        workspaceId,
-        resourceId,
-        userRequest,
-        r -> r.castToBigQueryDatasetResource().toApiResource());
+    ControlledResource controlledResource =
+        controlledResourceService.getControlledResource(workspaceId, resourceId, userRequest);
+    ControlledBigQueryDatasetResource resource =
+        controlledResource.castByEnum(WsmResourceType.CONTROLLED_GCP_BIG_QUERY_DATASET);
+    return new ResponseEntity<>(resource.toApiResource(), HttpStatus.OK);
   }
 
   @Override
@@ -262,57 +257,18 @@ public class ControlledGcpResourceApiController implements ControlledGcpResource
       UUID workspaceId, UUID resourceId, ApiUpdateControlledGcpBigQueryDatasetRequestBody body) {
     logger.info("Updating dataset resourceId {} workspaceId {}", resourceId, workspaceId);
     final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
-
-    final ControlledResource resource =
-        controlledResourceService.getControlledResource(workspaceId, resourceId, userRequest);
-    if (resource.getResourceType() != WsmResourceType.CONTROLLED_GCP_BIG_QUERY_DATASET) {
-      throw new InvalidControlledResourceException(
-          String.format("Resource %s is not a BigQuery Dataset", resourceId));
-    }
-    final ControlledBigQueryDatasetResource datasetResource =
-        resource.castToBigQueryDatasetResource();
+    final ControlledBigQueryDatasetResource resource =
+        controlledResourceService
+            .getControlledResource(workspaceId, resourceId, userRequest)
+            .castByEnum(WsmResourceType.CONTROLLED_GCP_BIG_QUERY_DATASET);
     controlledResourceService.updateBqDataset(
-        datasetResource,
-        body.getUpdateParameters(),
-        userRequest,
-        body.getName(),
-        body.getDescription());
+        resource, body.getUpdateParameters(), userRequest, body.getName(), body.getDescription());
 
-    // Retrieve and cast response to UpdateControlledGcpBigQueryDatasetResponse
-    return getControlledResourceAsResponseEntity(
-        workspaceId,
-        resourceId,
-        userRequest,
-        r -> r.castToBigQueryDatasetResource().toApiResource());
-  }
-
-  /**
-   * Utility function for retrieving and down-casting a controlled resource object
-   *
-   * @param workspaceId - ID of resource's workspace
-   * @param resourceId - UUID for this controlled resource
-   * @param userRequest - request object
-   * @param converter - Function/lambda to convert from generic ControlledResource to appropriate
-   *     Api resource type
-   * @param <T> - Class to be converted to and type for the ResponseEntity
-   * @return - response entity associated with this response object
-   */
-  private <T> ResponseEntity<T> getControlledResourceAsResponseEntity(
-      UUID workspaceId,
-      UUID resourceId,
-      AuthenticatedUserRequest userRequest,
-      Function<ControlledResource, T> converter) {
-    ControlledResource controlledResource =
-        controlledResourceService.getControlledResource(workspaceId, resourceId, userRequest);
-    try {
-      T response = converter.apply(controlledResource);
-      return new ResponseEntity<>(response, HttpStatus.OK);
-    } catch (InvalidMetadataException ex) {
-      throw new BadRequestException(
-          String.format(
-              "Resource %s in workspace %s is not a controlled BigQuery dataset.",
-              resourceId, workspaceId));
-    }
+    final ControlledBigQueryDatasetResource updatedResource =
+        controlledResourceService
+            .getControlledResource(workspaceId, resourceId, userRequest)
+            .castByEnum(WsmResourceType.CONTROLLED_GCP_BIG_QUERY_DATASET);
+    return new ResponseEntity<>(updatedResource.toApiResource(), HttpStatus.OK);
   }
 
   @Override
@@ -352,7 +308,7 @@ public class ControlledGcpResourceApiController implements ControlledGcpResource
         controlledResourceService
             .createBigQueryDataset(
                 resource, body.getDataset(), privateUserRole.getRole(), userRequest)
-            .castToBigQueryDatasetResource();
+            .castByEnum(WsmResourceType.CONTROLLED_GCP_BIG_QUERY_DATASET);
     var response =
         new ApiCreatedControlledGcpBigQueryDataset()
             .resourceId(createdDataset.getResourceId())
@@ -495,20 +451,13 @@ public class ControlledGcpResourceApiController implements ControlledGcpResource
   public ResponseEntity<ApiGcpAiNotebookInstanceResource> getAiNotebookInstance(
       UUID workspaceId, UUID resourceId) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
-    ControlledResource controlledResource =
-        controlledResourceService.getControlledResource(workspaceId, resourceId, userRequest);
-    try {
-      ApiGcpAiNotebookInstanceResource response =
-          controlledResource.castToAiNotebookInstanceResource().toApiResource();
-      // TODO: security check for: workspaceService.getAuthorizedRequiredGcpProject(workspaceId,
-      // userRequest));
-      return new ResponseEntity<>(response, HttpStatus.OK);
-    } catch (InvalidMetadataException ex) {
-      throw new BadRequestException(
-          String.format(
-              "Resource %s in workspace %s is not a controlled AI Notebook Instance.",
-              resourceId, workspaceId));
-    }
+    ControlledAiNotebookInstanceResource resource =
+        controlledResourceService
+            .getControlledResource(workspaceId, resourceId, userRequest)
+            .castByEnum(WsmResourceType.CONTROLLED_GCP_AI_NOTEBOOK_INSTANCE);
+    // TODO: security check for: workspaceService.getAuthorizedRequiredGcpProject(workspaceId,
+    //  userRequest));
+    return new ResponseEntity<>(resource.toApiResource(), HttpStatus.OK);
   }
 
   @Override

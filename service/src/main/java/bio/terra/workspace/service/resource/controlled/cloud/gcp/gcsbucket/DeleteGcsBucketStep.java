@@ -9,6 +9,7 @@ import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.resource.controlled.exception.BucketDeleteTimeoutException;
 import bio.terra.workspace.service.resource.model.WsmResource;
+import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.workspace.GcpCloudContextService;
 import com.google.cloud.storage.BucketInfo;
 import com.google.cloud.storage.StorageException;
@@ -58,7 +59,8 @@ public class DeleteGcsBucketStep implements Step {
     String projectId = gcpCloudContextService.getRequiredGcpProject(workspaceId);
     WsmResource wsmResource = resourceDao.getResource(workspaceId, resourceId);
     ControlledGcsBucketResource resource =
-        wsmResource.castToControlledResource().castToGcsBucketResource();
+        wsmResource.castByEnum(WsmResourceType.CONTROLLED_GCP_GCS_BUCKET);
+
     final StorageCow storageCow = crlService.createStorageCow(projectId);
     // If the bucket is already deleted (e.g. this step is being retried), storageCow.get() will
     // return null.

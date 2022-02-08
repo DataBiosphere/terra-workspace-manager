@@ -96,7 +96,17 @@ public class ControlledAiNotebookInstanceResource extends ControlledResource {
 
   /** {@inheritDoc} */
   @Override
-  public Optional<UniquenessCheckAttributes> getUniquenessCheckParameters() {
+  @SuppressWarnings("unchecked")
+  public <T> T castByEnum(WsmResourceType expectedType) {
+    if (getResourceType() != expectedType) {
+      throw new BadRequestException(String.format("Resource is not a %s", expectedType));
+    }
+    return (T) this;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public Optional<UniquenessCheckAttributes> getUniquenessCheckAttributes() {
     return Optional.of(
         new UniquenessCheckAttributes()
             .uniquenessScope(UniquenessScope.WORKSPACE)
