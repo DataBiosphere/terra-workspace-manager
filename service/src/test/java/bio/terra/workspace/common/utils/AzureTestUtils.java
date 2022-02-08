@@ -82,7 +82,7 @@ public class AzureTestUtils {
       AuthenticatedUserRequest userRequest,
       ControlledResource resource) {
     FlightMap inputs = new FlightMap();
-    inputs.put(JobMapKeys.REQUEST.getKeyName(), resource);
+    inputs.put(ResourceKeys.RESOURCE, resource);
     inputs.put(WorkspaceFlightMapKeys.WORKSPACE_ID, workspaceId.toString());
     inputs.put(WorkspaceFlightMapKeys.ResourceKeys.RESOURCE_ID, resourceId.toString());
     inputs.put(JobMapKeys.AUTH_USER_INFO.getKeyName(), userRequest);
