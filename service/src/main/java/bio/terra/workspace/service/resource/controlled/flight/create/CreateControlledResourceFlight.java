@@ -11,7 +11,6 @@ import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.model.ControlledResourceIamRole;
 import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
-import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ResourceKeys;
 
@@ -79,7 +78,8 @@ public class CreateControlledResourceFlight extends Flight {
     addStep(
         new MarkPrivateResourceReadyStep(resource, flightBeanBag.getResourceDao()),
         RetryRules.shortDatabase());
+
     // Populate the return response
-    addStep(new SetCreateResponseStep(resource));
+    addStep(new SetCreateResponseStep(resource, flightBeanBag.getResourceDao()));
   }
 }

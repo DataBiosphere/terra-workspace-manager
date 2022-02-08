@@ -5,12 +5,10 @@ import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.StepStatus;
 import bio.terra.workspace.app.configuration.external.AzureConfiguration;
-import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.service.crl.CrlService;
-import bio.terra.workspace.service.resource.model.WsmResourceType;
+import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import bio.terra.workspace.service.workspace.model.AzureCloudContext;
 import com.azure.resourcemanager.compute.ComputeManager;
-import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -21,33 +19,24 @@ import org.slf4j.LoggerFactory;
 public class DeleteAzureNetworkStep implements Step {
   private static final Logger logger = LoggerFactory.getLogger(CreateAzureNetworkStep.class);
   private final AzureConfiguration azureConfig;
-  private final ResourceDao resourceDao;
   private final CrlService crlService;
-  private final AzureCloudContext azureCloudContext;
-
-  private final UUID workspaceId;
-  private final UUID resourceId;
+  private final ControlledAzureNetworkResource resource;
 
   public DeleteAzureNetworkStep(
       AzureConfiguration azureConfig,
-      AzureCloudContext azureCloudContext,
       CrlService crlService,
-      ResourceDao resourceDao,
-      UUID workspaceId,
-      UUID resourceId) {
+      ControlledAzureNetworkResource resource) {
     this.crlService = crlService;
-    this.resourceDao = resourceDao;
-    this.azureCloudContext = azureCloudContext;
     this.azureConfig = azureConfig;
-    this.workspaceId = workspaceId;
-    this.resourceId = resourceId;
+    this.resource = resource;
   }
 
   @Override
   public StepResult doStep(FlightContext context) throws InterruptedException {
-    var wsmResource = resourceDao.getResource(workspaceId, resourceId);
-    ControlledAzureNetworkResource network =
-        wsmResource.castByEnum(WsmResourceType.CONTROLLED_AZURE_NETWORK);
+    final AzureCloudContext azureCloudContext =
+        context
+            .getWorkingMap()
+            .get(ControlledResourceKeys.AZURE_CLOUD_CONTEXT, AzureCloudContext.class);
 
     ComputeManager computeManager = crlService.getComputeManager(azureCloudContext, azureConfig);
     var azureNetworkResourceId =
@@ -55,14 +44,14 @@ public class DeleteAzureNetworkStep implements Step {
             "/subscriptions/%s/resourceGroups/%s/providers/Microsoft.Compute/network/%s",
             azureCloudContext.getAzureSubscriptionId(),
             azureCloudContext.getAzureResourceGroupId(),
-            network.getNetworkName());
+            resource.getNetworkName());
     var azureSubnetResourceId =
         String.format(
             "/subscriptions/%s/resourceGroups/%s/providers/Microsoft.Network/virtualNetworks/%s/subnets/%s",
             azureCloudContext.getAzureSubscriptionId(),
             azureCloudContext.getAzureResourceGroupId(),
-            network.getNetworkName(),
-            network.getSubnetName());
+            resource.getNetworkName(),
+            resource.getSubnetName());
     try {
       logger.info("Attempting to delete network " + azureNetworkResourceId);
 
@@ -81,8 +70,8 @@ public class DeleteAzureNetworkStep implements Step {
   public StepResult undoStep(FlightContext flightContext) throws InterruptedException {
     logger.error(
         "Cannot undo delete of Azure network resource {} in workspace {}.",
-        resourceId,
-        workspaceId);
+        resource.getResourceId(),
+        resource.getWorkspaceId());
     // Surface whatever error caused Stairway to begin undoing.
     return flightContext.getResult();
   }

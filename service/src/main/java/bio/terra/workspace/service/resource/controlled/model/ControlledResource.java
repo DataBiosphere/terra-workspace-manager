@@ -11,6 +11,7 @@ import bio.terra.workspace.generated.model.ApiPrivateResourceUser;
 import bio.terra.workspace.generated.model.ApiResourceMetadata;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.resource.controlled.flight.create.CreateControlledResourceFlight;
+import bio.terra.workspace.service.resource.controlled.flight.delete.DeleteControlledResourceFlight;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.model.StewardshipType;
 import bio.terra.workspace.service.resource.model.WsmResource;
@@ -84,6 +85,16 @@ public abstract class ControlledResource extends WsmResource {
       String petSaEmail,
       AuthenticatedUserRequest userRequest,
       FlightBeanBag flightBeanBag);
+
+  /**
+   * The DeleteControlledResourceFlight calls this method to populate the resource-specific step(s)
+   * to delete the specific cloud resource.
+   *
+   * @param flight the delete flight
+   * @param flightBeanBag bean bag for finding Spring singletons
+   */
+  public abstract void addDeleteSteps(
+      DeleteControlledResourceFlight flight, FlightBeanBag flightBeanBag);
 
   /**
    * If specified, the assigned user must be equal to the user making the request.

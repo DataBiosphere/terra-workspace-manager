@@ -19,6 +19,7 @@ import bio.terra.workspace.generated.model.ApiResourceUnion;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.resource.ValidationUtils;
 import bio.terra.workspace.service.resource.controlled.flight.create.CreateControlledResourceFlight;
+import bio.terra.workspace.service.resource.controlled.flight.delete.DeleteControlledResourceFlight;
 import bio.terra.workspace.service.resource.controlled.model.AccessScopeType;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import bio.terra.workspace.service.resource.controlled.model.ManagedByType;
@@ -140,22 +141,23 @@ public class ControlledAiNotebookInstanceResource extends ControlledResource {
             flightBeanBag.getSamService()),
         gcpRetryRule);
     flight.addStep(
-        new CreateAiNotebookInstanceStep(
-            this,
-            petSaEmail,
-            flightBeanBag.getCrlService(),
-            flightBeanBag.getGcpCloudContextService()),
+        new CreateAiNotebookInstanceStep(this, petSaEmail, flightBeanBag.getCrlService()),
         gcpRetryRule);
     flight.addStep(
         new NotebookCloudSyncStep(
             flightBeanBag.getControlledResourceService(),
             flightBeanBag.getCrlService(),
             this,
-            flightBeanBag.getGcpCloudContextService(),
             userRequest),
         gcpRetryRule);
   }
 
+  /** {@inheritDoc} */
+  @Override
+  public void addDeleteSteps(DeleteControlledResourceFlight flight, FlightBeanBag flightBeanBag) {
+    flight.addStep(
+        new DeleteAiNotebookInstanceStep(this, flightBeanBag.getCrlService()), RetryRules.cloud());
+  }
   /** The user specified id of the notebook instance. */
   public String getInstanceId() {
     return instanceId;

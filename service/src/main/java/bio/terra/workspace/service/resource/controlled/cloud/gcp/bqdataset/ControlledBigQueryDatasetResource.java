@@ -16,6 +16,7 @@ import bio.terra.workspace.generated.model.ApiResourceUnion;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.resource.ValidationUtils;
 import bio.terra.workspace.service.resource.controlled.flight.create.CreateControlledResourceFlight;
+import bio.terra.workspace.service.resource.controlled.flight.delete.DeleteControlledResourceFlight;
 import bio.terra.workspace.service.resource.controlled.model.AccessScopeType;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import bio.terra.workspace.service.resource.controlled.model.ManagedByType;
@@ -125,6 +126,13 @@ public class ControlledBigQueryDatasetResource extends ControlledResource {
             flightBeanBag.getGcpCloudContextService(),
             userRequest),
         cloudRetry);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void addDeleteSteps(DeleteControlledResourceFlight flight, FlightBeanBag flightBeanBag) {
+    flight.addStep(
+        new DeleteBigQueryDatasetStep(this, flightBeanBag.getCrlService()), RetryRules.cloud());
   }
 
   public String getDatasetName() {
