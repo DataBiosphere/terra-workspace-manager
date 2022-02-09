@@ -1318,6 +1318,7 @@ paths:
     parameters:
       - $ref: '#/components/parameters/WorkspaceId'
       - $ref: '#/components/parameters/JobId'
+      - $ref: '#/components/parameters/CloudPlatform'
     get:
       summary: Get the result of a async job to create a cloud context.
       operationId: getCreateCloudContextResult
@@ -2231,6 +2232,14 @@ components:
         type: string
         format: uuid
 
+    CloudPlatform:
+      name: cloudPlatform
+      in: query
+      description: Cloud platform
+      required: true
+      schema:
+        $ref: '#/components/schemas/CloudPlatform'
+
     JobId:
       name: jobId
       in: path
@@ -2913,6 +2922,8 @@ components:
           $ref: '#/components/schemas/JobReport'
         gcpContext:
           $ref: '#/components/schemas/GcpContext'
+        azureContext:
+          $ref: '#/components/schemas/AzureContext'
         errorReport:
           $ref: '#/components/schemas/ErrorReport'
 

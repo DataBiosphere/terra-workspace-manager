@@ -464,25 +464,35 @@ public class WorkspaceApiController implements WorkspaceApi {
                           "AzureContext is required when creating an azure cloud context for a workspace"));
       workspaceService.createAzureCloudContext(
           id, jobId, userRequest, resultPath, AzureCloudContext.fromApi(azureContext));
+      ApiCreateCloudContextResult response = fetchCreateAzureCloudContextResult(jobId, userRequest);
+      return new ResponseEntity<>(
+              response, ControllerUtils.getAsyncResponseCode(response.getJobReport()));
     } else {
       workspaceService.createGcpCloudContext(id, jobId, userRequest, resultPath);
+      ApiCreateCloudContextResult response = fetchCreateGcpCloudContextResult(jobId, userRequest);
+      return new ResponseEntity<>(
+              response, ControllerUtils.getAsyncResponseCode(response.getJobReport()));
     }
 
-    ApiCreateCloudContextResult response = fetchCreateCloudContextResult(jobId, userRequest);
-    return new ResponseEntity<>(
-        response, ControllerUtils.getAsyncResponseCode(response.getJobReport()));
+
   }
 
   @Override
   public ResponseEntity<ApiCreateCloudContextResult> getCreateCloudContextResult(
-      UUID id, String jobId) {
+      UUID id, String jobId, ApiCloudPlatform cloudPlatform) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
-    ApiCreateCloudContextResult response = fetchCreateCloudContextResult(jobId, userRequest);
+
+    final ApiCreateCloudContextResult response;
+    if (cloudPlatform.equals(ApiCloudPlatform.GCP)) {
+      response = fetchCreateGcpCloudContextResult(jobId, userRequest);
+    } else {
+      response = fetchCreateAzureCloudContextResult(jobId, userRequest);
+    }
     return new ResponseEntity<>(
         response, ControllerUtils.getAsyncResponseCode(response.getJobReport()));
   }
 
-  private ApiCreateCloudContextResult fetchCreateCloudContextResult(
+  private ApiCreateCloudContextResult fetchCreateGcpCloudContextResult(
       String jobId, AuthenticatedUserRequest userRequest) {
     final AsyncJobResult<GcpCloudContext> jobResult =
         jobService.retrieveAsyncJobResult(jobId, GcpCloudContext.class, userRequest);
@@ -497,6 +507,27 @@ public class WorkspaceApiController implements WorkspaceApi {
         .jobReport(jobResult.getJobReport())
         .errorReport(jobResult.getApiErrorReport())
         .gcpContext(gcpContext);
+  }
+
+
+  private ApiCreateCloudContextResult fetchCreateAzureCloudContextResult(
+          String jobId, AuthenticatedUserRequest userRequest) {
+    final AsyncJobResult<AzureCloudContext> jobResult =
+            jobService.retrieveAsyncJobResult(jobId, AzureCloudContext.class, userRequest);
+
+    final ApiAzureContext azureContext;
+    if (jobResult.getJobReport().getStatus().equals(StatusEnum.SUCCEEDED)) {
+      azureContext = new ApiAzureContext()
+              .tenantId(jobResult.getResult().getAzureTenantId())
+              .resourceGroupId(jobResult.getResult().getAzureResourceGroupId())
+              .subscriptionId(jobResult.getResult().getAzureSubscriptionId());
+    } else {
+      azureContext = null;
+    }
+    return new ApiCreateCloudContextResult()
+            .jobReport(jobResult.getJobReport())
+            .errorReport(jobResult.getApiErrorReport())
+            .azureContext(azureContext);
   }
 
   @Override
