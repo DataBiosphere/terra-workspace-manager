@@ -234,6 +234,7 @@ public class WorkspaceService {
         .newJob()
         .description("Create Azure Cloud Context " + workspaceId)
         .jobId(jobId)
+        .workspaceId(workspaceId.toString())
         .flightClass(CreateAzureContextFlight.class)
         .request(azureContext)
         .userRequest(userRequest)
