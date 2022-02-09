@@ -96,8 +96,6 @@ public class ReferencedTdrSnapshotLifecycle extends WorkspaceAllocateTestScriptB
             getWorkspaceId(),
             snapshotResourceId);
     assertEquals(getWorkspaceId(), snapshotCloneResult.getSourceWorkspaceId());
-    logger.info("Snapshot resource: " + snapshotResource.toString());
-    logger.info("Clone result: " + snapshotCloneResult.toString());
     assertEquals(
         snapshotResource.getAttributes(), snapshotCloneResult.getResource().getAttributes());
 
