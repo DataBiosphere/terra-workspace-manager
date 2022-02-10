@@ -7,7 +7,6 @@ import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.workspace.GcpCloudContextService;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
-import bio.terra.workspace.service.workspace.model.CloudContextHolder;
 import bio.terra.workspace.service.workspace.model.GcpCloudContext;
 import java.util.UUID;
 import org.slf4j.Logger;
@@ -37,10 +36,7 @@ public class GetGcpCloudContextStep implements Step {
     // will work, or it won't. So re-doing this step is fine.
     GcpCloudContext context =
         gcpCloudContextService.getRequiredGcpCloudContext(workspaceId, userRequest);
-
-    CloudContextHolder cch = new CloudContextHolder();
-    cch.setGcpCloudContext(context);
-    flightContext.getWorkingMap().put(ControlledResourceKeys.GCP_CLOUD_CONTEXT, cch);
+    flightContext.getWorkingMap().put(ControlledResourceKeys.GCP_CLOUD_CONTEXT, context);
     return StepResult.getStepResultSuccess();
   }
 
