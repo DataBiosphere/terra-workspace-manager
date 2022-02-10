@@ -53,10 +53,7 @@ import bio.terra.workspace.service.workspace.GcpCloudContextService;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.WsmApplicationService;
 import bio.terra.workspace.service.workspace.exceptions.CloudContextRequiredException;
-import bio.terra.workspace.service.workspace.model.AzureCloudContext;
-import bio.terra.workspace.service.workspace.model.GcpCloudContext;
-import bio.terra.workspace.service.workspace.model.Workspace;
-import bio.terra.workspace.service.workspace.model.WorkspaceStage;
+import bio.terra.workspace.service.workspace.model.*;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -464,70 +461,58 @@ public class WorkspaceApiController implements WorkspaceApi {
                           "AzureContext is required when creating an azure cloud context for a workspace"));
       workspaceService.createAzureCloudContext(
           id, jobId, userRequest, resultPath, AzureCloudContext.fromApi(azureContext));
-      ApiCreateCloudContextResult response = fetchCreateAzureCloudContextResult(jobId, userRequest);
-      return new ResponseEntity<>(
-              response, ControllerUtils.getAsyncResponseCode(response.getJobReport()));
     } else {
       workspaceService.createGcpCloudContext(id, jobId, userRequest, resultPath);
-      ApiCreateCloudContextResult response = fetchCreateGcpCloudContextResult(jobId, userRequest);
-      return new ResponseEntity<>(
-              response, ControllerUtils.getAsyncResponseCode(response.getJobReport()));
     }
 
-
-  }
-
-  @Override
-  public ResponseEntity<ApiCreateCloudContextResult> getCreateCloudContextResult(
-      UUID id, String jobId, ApiCloudPlatform cloudPlatform) {
-    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
-
-    final ApiCreateCloudContextResult response;
-    if (cloudPlatform.equals(ApiCloudPlatform.GCP)) {
-      response = fetchCreateGcpCloudContextResult(jobId, userRequest);
-    } else {
-      response = fetchCreateAzureCloudContextResult(jobId, userRequest);
-    }
+    ApiCreateCloudContextResult response = fetchCreateCloudContextResult(jobId, userRequest);
     return new ResponseEntity<>(
         response, ControllerUtils.getAsyncResponseCode(response.getJobReport()));
   }
 
-  private ApiCreateCloudContextResult fetchCreateGcpCloudContextResult(
+  @Override
+  public ResponseEntity<ApiCreateCloudContextResult> getCreateCloudContextResult(
+      UUID id, String jobId) {
+    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+
+    final ApiCreateCloudContextResult response = fetchCreateCloudContextResult(jobId, userRequest);
+    return new ResponseEntity<>(
+        response, ControllerUtils.getAsyncResponseCode(response.getJobReport()));
+  }
+
+  private ApiCreateCloudContextResult fetchCreateCloudContextResult(
       String jobId, AuthenticatedUserRequest userRequest) {
-    final AsyncJobResult<GcpCloudContext> jobResult =
-        jobService.retrieveAsyncJobResult(jobId, GcpCloudContext.class, userRequest);
+    final AsyncJobResult<CloudContextHolder> jobResult =
+        jobService.retrieveAsyncJobResult(jobId, CloudContextHolder.class, userRequest);
 
     final ApiGcpContext gcpContext;
-    if (jobResult.getJobReport().getStatus().equals(StatusEnum.SUCCEEDED)) {
-      gcpContext = new ApiGcpContext().projectId(jobResult.getResult().getGcpProjectId());
+    if (jobResult.getJobReport().getStatus().equals(StatusEnum.SUCCEEDED)
+        && jobResult.getResult().getGcpCloudContext() != null) {
+      gcpContext =
+          new ApiGcpContext()
+              .projectId(jobResult.getResult().getGcpCloudContext().getGcpProjectId());
     } else {
       gcpContext = null;
     }
-    return new ApiCreateCloudContextResult()
-        .jobReport(jobResult.getJobReport())
-        .errorReport(jobResult.getApiErrorReport())
-        .gcpContext(gcpContext);
-  }
-
-
-  private ApiCreateCloudContextResult fetchCreateAzureCloudContextResult(
-          String jobId, AuthenticatedUserRequest userRequest) {
-    final AsyncJobResult<AzureCloudContext> jobResult =
-            jobService.retrieveAsyncJobResult(jobId, AzureCloudContext.class, userRequest);
 
     final ApiAzureContext azureContext;
-    if (jobResult.getJobReport().getStatus().equals(StatusEnum.SUCCEEDED)) {
-      azureContext = new ApiAzureContext()
-              .tenantId(jobResult.getResult().getAzureTenantId())
-              .resourceGroupId(jobResult.getResult().getAzureResourceGroupId())
-              .subscriptionId(jobResult.getResult().getAzureSubscriptionId());
+    if (jobResult.getJobReport().getStatus().equals(StatusEnum.SUCCEEDED)
+        && jobResult.getResult().getAzureCloudContext() != null) {
+      final AzureCloudContext azureResult = jobResult.getResult().getAzureCloudContext();
+      azureContext =
+          new ApiAzureContext()
+              .tenantId(azureResult.getAzureTenantId())
+              .subscriptionId(azureResult.getAzureSubscriptionId())
+              .resourceGroupId(azureResult.getAzureResourceGroupId());
     } else {
       azureContext = null;
     }
+
     return new ApiCreateCloudContextResult()
-            .jobReport(jobResult.getJobReport())
-            .errorReport(jobResult.getApiErrorReport())
-            .azureContext(azureContext);
+        .jobReport(jobResult.getJobReport())
+        .errorReport(jobResult.getApiErrorReport())
+        .gcpContext(gcpContext)
+        .azureContext(azureContext);
   }
 
   @Override

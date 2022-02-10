@@ -30,10 +30,10 @@ public class CloudContextMaker {
 
     logger.info("Creating GCP cloud context");
     CreateCloudContextResult contextResult =
-        workspaceApi.createCloudContext(createContext, workspaceId, CloudPlatform.GCP);
+        workspaceApi.createCloudContext(createContext, workspaceId);
     while (ClientTestUtils.jobIsRunning(contextResult.getJobReport())) {
       Thread.sleep(CREATE_CONTEXT_POLL_INTERVAL.toMillis());
-      contextResult = workspaceApi.getCreateCloudContextResult(workspaceId, contextJobId, CloudPlatform.GCP);
+      contextResult = workspaceApi.getCreateCloudContextResult(workspaceId, contextJobId);
     }
     logger.info(
         "Create GCP context status is {}", contextResult.getJobReport().getStatus().toString());
