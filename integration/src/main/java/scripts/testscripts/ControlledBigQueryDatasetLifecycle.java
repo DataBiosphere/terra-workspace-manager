@@ -72,7 +72,7 @@ public class ControlledBigQueryDatasetLifecycle extends GcpWorkspaceCloneTestScr
   // will be the workspace owner (handled in base class), user 1 will be the reader of the test
   // workspace and owner of the cloned workspace (both handled in the base class), and user 2 will
   // be the writer.
-  private static final int WRITER_USER_INDEX = 1;
+  private static final int WRITER_USER_INDEX = 2;
 
   @Override
   protected void doSetup(List<TestUserSpecification> testUsers, WorkspaceApi workspaceApi)
