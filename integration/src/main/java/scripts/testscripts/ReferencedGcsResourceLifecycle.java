@@ -22,6 +22,7 @@ import bio.terra.workspace.model.GcpGcsObjectResource;
 import bio.terra.workspace.model.GrantRoleRequestBody;
 import bio.terra.workspace.model.IamRole;
 import bio.terra.workspace.model.ResourceList;
+import bio.terra.workspace.model.ResourceType;
 import bio.terra.workspace.model.StewardshipType;
 import java.util.List;
 import java.util.Map;
@@ -179,6 +180,14 @@ public class ReferencedGcsResourceLifecycle extends WorkspaceAllocateTestScriptB
         noAccessApi.enumerateResources(
             getWorkspaceId(), 0, 5, /*referenceType=*/ null, StewardshipType.REFERENCED);
     assertEquals(4, referenceList.getResources().size());
+    ResourceList bucketList = noAccessApi.enumerateResources(
+        getWorkspaceId(), 0, 5, /*referenceType=*/ ResourceType.GCS_BUCKET, StewardshipType.REFERENCED);
+    assertEquals(2, bucketList.getResources().size());
+    MultiResourcesUtils.assertResourceType(ResourceType.GCS_BUCKET, bucketList);
+    ResourceList fileList = noAccessApi.enumerateResources(
+        getWorkspaceId(), 0, 5, /*referenceType=*/ ResourceType.GCS_OBJECT, StewardshipType.REFERENCED);
+    assertEquals(2, fileList.getResources().size());
+    MultiResourcesUtils.assertResourceType(ResourceType.GCS_OBJECT, fileList);
   }
 
   private void testCloneReference(

@@ -22,6 +22,7 @@ import bio.terra.workspace.model.GcpBigQueryDatasetResource;
 import bio.terra.workspace.model.GrantRoleRequestBody;
 import bio.terra.workspace.model.IamRole;
 import bio.terra.workspace.model.ResourceList;
+import bio.terra.workspace.model.ResourceType;
 import bio.terra.workspace.model.StewardshipType;
 import java.util.List;
 import java.util.Map;
@@ -142,6 +143,14 @@ public class ReferencedBigQueryResourceLifecycle extends WorkspaceAllocateTestSc
         noAccessApi.enumerateResources(
             getWorkspaceId(), 0, 5, /*referenceType=*/ null, StewardshipType.REFERENCED);
     assertEquals(2, referenceList.getResources().size());
+    ResourceList datasetList = noAccessApi.enumerateResources(
+        getWorkspaceId(), 0, 5, /*referenceType=*/ ResourceType.BIG_QUERY_DATASET, StewardshipType.REFERENCED);
+    assertEquals(1, datasetList.getResources().size());
+    MultiResourcesUtils.assertResourceType(ResourceType.BIG_QUERY_DATASET, datasetList);
+    ResourceList tableList = noAccessApi.enumerateResources(
+        getWorkspaceId(), 0, 5, /*referenceType=*/ ResourceType.BIG_QUERY_DATA_TABLE, StewardshipType.REFERENCED);
+    assertEquals(1, tableList.getResources().size());
+    MultiResourcesUtils.assertResourceType(ResourceType.BIG_QUERY_DATA_TABLE, tableList);
   }
 
   private void testValidateReferences(TestUserSpecification owner) throws Exception {
