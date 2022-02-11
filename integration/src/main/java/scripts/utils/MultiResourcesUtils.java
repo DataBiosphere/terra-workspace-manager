@@ -1,20 +1,17 @@
 package scripts.utils;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
 import bio.terra.workspace.api.ControlledGcpResourceApi;
 import bio.terra.workspace.api.ReferencedGcpResourceApi;
 import bio.terra.workspace.model.CloningInstructionsEnum;
-import bio.terra.workspace.model.DataRepoSnapshotResource;
-import bio.terra.workspace.model.GcpBigQueryDataTableAttributes;
-import bio.terra.workspace.model.GcpBigQueryDataTableResource;
-import bio.terra.workspace.model.GcpBigQueryDatasetAttributes;
+import bio.terra.workspace.model.GcpAiNotebookInstanceResource;
 import bio.terra.workspace.model.GcpBigQueryDatasetResource;
-import bio.terra.workspace.model.GcpGcsBucketAttributes;
 import bio.terra.workspace.model.GcpGcsBucketResource;
-import bio.terra.workspace.model.GitRepoAttributes;
-import bio.terra.workspace.model.GitRepoResource;
+import bio.terra.workspace.model.ResourceList;
 import bio.terra.workspace.model.ResourceMetadata;
+import bio.terra.workspace.model.ResourceType;
 import bio.terra.workspace.model.StewardshipType;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import org.apache.commons.lang3.RandomStringUtils;
@@ -23,7 +20,7 @@ import org.apache.commons.lang3.RandomStringUtils;
 public class MultiResourcesUtils {
 
   // Support for makeResources
-  private static String makeName() {
+  public static String makeName() {
     return RandomStringUtils.random(10, true, false);
   }
 
@@ -33,131 +30,72 @@ public class MultiResourcesUtils {
   }
 
   /**
-   * Make a bunch of resources
+   * Make 7 resources as a representative sample of WSM resource types. This creates a controlled
+   * shared GCS bucket, private GCS bucket, shared BQ dataset, and private AI notebook, as well as
+   * references to each of those buckets and datasets.
+   *
+   * <p>This method intentionally does not create one of every WSM resource type, as that leads to
+   * several bloated tests. Each resource type should be tested individually in a relevant
+   * standalone test.
    *
    * @param referencedGcpResourceApi api for referenced resources
    * @param controlledGcpResourceApi api for controlled resources
    * @param workspaceId workspace where we allocate
-   * @param dataRepoSnapshotId ID of the TDR snapshot to use for snapshot references
-   * @param dataRepoInstanceName Instance ID to use for snapshot references
-   * @param bucket GCS Bucket to use for bucket references
-   * @param bqTable BigQuery table to use for BQ dataset and table references.
-   * @param gitRepo Git repository to use for git references
-   * @param resourceCount number of resources to allocate
    * @return list of resources
    * @throws Exception whatever might come up
    */
   public static List<ResourceMetadata> makeResources(
       ReferencedGcpResourceApi referencedGcpResourceApi,
       ControlledGcpResourceApi controlledGcpResourceApi,
-      UUID workspaceId,
-      String dataRepoSnapshotId,
-      String dataRepoInstanceName,
-      GcpGcsBucketAttributes bucket,
-      GcpBigQueryDataTableAttributes bqTable,
-      GitRepoAttributes gitRepo,
-      int resourceCount)
+      UUID workspaceId)
       throws Exception {
 
-    // Array of resource allocators
-    List<SupplierException<ResourceMetadata>> makers =
-        List.of(
-            // BQ dataset reference
-            () -> {
-              // Use the same BQ dataset specified for table references
-              GcpBigQueryDatasetAttributes dataset =
-                  new GcpBigQueryDatasetAttributes()
-                      .projectId(bqTable.getProjectId())
-                      .datasetId(bqTable.getDatasetId());
-              GcpBigQueryDatasetResource resource =
-                  BqDatasetUtils.makeBigQueryDatasetReference(
-                      dataset, referencedGcpResourceApi, workspaceId, makeName());
-              return resource.getMetadata();
-            },
-
-            // TDR snapshot reference
-            () -> {
-              DataRepoSnapshotResource resource =
-                  DataRepoUtils.makeDataRepoSnapshotReference(
-                      referencedGcpResourceApi,
-                      workspaceId,
-                      makeName(),
-                      dataRepoSnapshotId,
-                      dataRepoInstanceName);
-              return resource.getMetadata();
-            },
-
-            // GCS bucket reference
-            () -> {
-              GcpGcsBucketResource resource =
-                  GcsBucketUtils.makeGcsBucketReference(
-                      bucket,
-                      referencedGcpResourceApi,
-                      workspaceId,
-                      makeName(),
-                      CloningInstructionsEnum.NOTHING);
-              return resource.getMetadata();
-            },
-
-            // GCS bucket controlled shared
-            () -> {
-              GcpGcsBucketResource resource =
-                  GcsBucketUtils.makeControlledGcsBucketUserShared(
-                          controlledGcpResourceApi,
-                          workspaceId,
-                          makeName(),
-                          CloningInstructionsEnum.NOTHING)
-                      .getGcpBucket();
-              return resource.getMetadata();
-            },
-
-            // GCS bucket controlled private
-            () -> {
-              GcpGcsBucketResource resource =
-                  GcsBucketUtils.makeControlledGcsBucketUserPrivate(
-                          controlledGcpResourceApi,
-                          workspaceId,
-                          makeName(),
-                          CloningInstructionsEnum.NOTHING)
-                      .getGcpBucket();
-              return resource.getMetadata();
-            },
-
-            // BQ dataset controlled shared
-            () -> {
-              GcpBigQueryDatasetResource resource =
-                  BqDatasetUtils.makeControlledBigQueryDatasetUserShared(
-                      controlledGcpResourceApi,
-                      workspaceId,
-                      makeName(),
-                      null,
-                      CloningInstructionsEnum.NOTHING);
-              return resource.getMetadata();
-            },
-
-            // BQ data table reference
-            () -> {
-              GcpBigQueryDataTableResource resource =
-                  BqDatasetUtils.makeBigQueryDataTableReference(
-                      bqTable, referencedGcpResourceApi, workspaceId, makeName());
-              return resource.getMetadata();
-            },
-
-            // GitHub repository reference
-            () -> {
-              GitRepoResource resource =
-                  GitRepoUtils.makeGitRepoReference(
-                      gitRepo, referencedGcpResourceApi, workspaceId, makeName());
-              return resource.getMetadata();
-            });
-
-    // Build the resources
-    List<ResourceMetadata> resources = new ArrayList<>();
-    for (int i = 0; i < resourceCount; i++) {
-      int index = i % makers.size();
-      resources.add(makers.get(index).get());
-    }
-    return resources;
+    // Create a shared GCS bucket, a private GCS bucket, and a shared BQ dataset
+    GcpGcsBucketResource sharedBucket =
+        GcsBucketUtils.makeControlledGcsBucketUserShared(
+                controlledGcpResourceApi, workspaceId, makeName(), CloningInstructionsEnum.NOTHING)
+            .getGcpBucket();
+    GcpGcsBucketResource privateBucket =
+        GcsBucketUtils.makeControlledGcsBucketUserPrivate(
+                controlledGcpResourceApi, workspaceId, makeName(), CloningInstructionsEnum.NOTHING)
+            .getGcpBucket();
+    GcpBigQueryDatasetResource sharedDataset =
+        BqDatasetUtils.makeControlledBigQueryDatasetUserShared(
+            controlledGcpResourceApi,
+            workspaceId,
+            makeName(),
+            null,
+            CloningInstructionsEnum.NOTHING);
+    GcpAiNotebookInstanceResource notebook =
+        NotebookUtils.makeControlledNotebookUserPrivate(
+                workspaceId, /*instanceId=*/ null, /*location=*/ null, controlledGcpResourceApi)
+            .getAiNotebookInstance();
+    // Create references to the above buckets and datasets
+    GcpGcsBucketResource sharedBucketReference =
+        GcsBucketUtils.makeGcsBucketReference(
+            sharedBucket.getAttributes(),
+            referencedGcpResourceApi,
+            workspaceId,
+            makeName(),
+            CloningInstructionsEnum.NOTHING);
+    GcpGcsBucketResource privateBucketReference =
+        GcsBucketUtils.makeGcsBucketReference(
+            privateBucket.getAttributes(),
+            referencedGcpResourceApi,
+            workspaceId,
+            makeName(),
+            CloningInstructionsEnum.NOTHING);
+    GcpBigQueryDatasetResource datasetReference =
+        BqDatasetUtils.makeBigQueryDatasetReference(
+            sharedDataset.getAttributes(), referencedGcpResourceApi, workspaceId, makeName());
+    return List.of(
+        sharedBucket.getMetadata(),
+        privateBucket.getMetadata(),
+        sharedDataset.getMetadata(),
+        notebook.getMetadata(),
+        sharedBucketReference.getMetadata(),
+        privateBucketReference.getMetadata(),
+        datasetReference.getMetadata());
   }
 
   /**
@@ -180,6 +118,10 @@ public class MultiResourcesUtils {
           case BIG_QUERY_DATASET:
             controlledGcpResourceApi.deleteBigQueryDataset(workspaceId, metadata.getResourceId());
             break;
+          case AI_NOTEBOOK:
+            NotebookUtils.deleteControlledNotebookUserPrivate(
+                workspaceId, metadata.getResourceId(), controlledGcpResourceApi);
+            break;
           default:
             throw new IllegalStateException(
                 String.format(
@@ -188,5 +130,11 @@ public class MultiResourcesUtils {
         }
       }
     }
+  }
+
+  /** Assert that each element of a ResourceList has the same provided resource type. */
+  public static void assertResourceType(ResourceType type, ResourceList list) {
+    list.getResources()
+        .forEach(resource -> assertEquals(type, resource.getMetadata().getResourceType()));
   }
 }

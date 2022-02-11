@@ -22,6 +22,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import scripts.utils.DataRepoTestScriptBase;
 
+// TODO(PF-404): Once we remove the old data reference APIs which only supported TDR snapshots,
+//   this test should be deleted. The equivalent functionality in the new endpoints is already
+//   tested elsewhere.
 public class EnumerateDataReferences extends DataRepoTestScriptBase {
 
   private static final Logger logger = LoggerFactory.getLogger(EnumerateDataReferences.class);

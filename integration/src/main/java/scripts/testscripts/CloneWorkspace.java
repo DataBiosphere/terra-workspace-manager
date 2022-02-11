@@ -20,7 +20,6 @@ import bio.terra.testrunner.runner.config.TestUserSpecification;
 import bio.terra.workspace.api.ControlledGcpResourceApi;
 import bio.terra.workspace.api.ReferencedGcpResourceApi;
 import bio.terra.workspace.api.WorkspaceApi;
-import bio.terra.workspace.client.ApiClient;
 import bio.terra.workspace.model.CloneResourceResult;
 import bio.terra.workspace.model.CloneWorkspaceRequest;
 import bio.terra.workspace.model.CloneWorkspaceResult;
@@ -28,14 +27,10 @@ import bio.terra.workspace.model.CloningInstructionsEnum;
 import bio.terra.workspace.model.CreatedControlledGcpGcsBucket;
 import bio.terra.workspace.model.GcpBigQueryDataTableAttributes;
 import bio.terra.workspace.model.GcpBigQueryDataTableResource;
-import bio.terra.workspace.model.GcpBigQueryDatasetAttributes;
 import bio.terra.workspace.model.GcpBigQueryDatasetResource;
-import bio.terra.workspace.model.GcpGcsBucketAttributes;
 import bio.terra.workspace.model.GcpGcsBucketResource;
 import bio.terra.workspace.model.GcpGcsObjectAttributes;
 import bio.terra.workspace.model.GcpGcsObjectResource;
-import bio.terra.workspace.model.GitRepoAttributes;
-import bio.terra.workspace.model.GitRepoResource;
 import bio.terra.workspace.model.GrantRoleRequestBody;
 import bio.terra.workspace.model.IamRole;
 import bio.terra.workspace.model.ResourceCloneDetails;
@@ -50,7 +45,6 @@ import com.google.cloud.storage.Storage;
 import java.io.IOException;
 import java.time.Duration;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 import java.util.stream.StreamSupport;
 import org.apache.commons.lang3.RandomStringUtils;
@@ -61,8 +55,6 @@ import scripts.utils.ClientTestUtils;
 import scripts.utils.CloudContextMaker;
 import scripts.utils.GcsBucketObjectUtils;
 import scripts.utils.GcsBucketUtils;
-import scripts.utils.GitRepoUtils;
-import scripts.utils.ParameterUtils;
 import scripts.utils.WorkspaceAllocateTestScriptBase;
 
 public class CloneWorkspace extends WorkspaceAllocateTestScriptBase {
@@ -73,16 +65,11 @@ public class CloneWorkspace extends WorkspaceAllocateTestScriptBase {
   private CreatedControlledGcpGcsBucket sharedCopyNothingSourceBucket;
   private CreatedControlledGcpGcsBucket sharedSourceBucket;
   private GcpBigQueryDatasetResource sourceDatasetReference;
-  private GcpBigQueryDataTableAttributes sourceDataTableAttributes;
   private GcpBigQueryDataTableResource sourceDataTableReference;
-  private GitRepoAttributes sourceGitRepoAttributes;
-  private GitRepoResource sourceGitRepoReference;
   private GcpBigQueryDatasetResource copyDefinitionDataset;
   private GcpBigQueryDatasetResource copyResourceDataset;
   private GcpBigQueryDatasetResource privateDataset;
-  private GcpGcsBucketAttributes sourceUniformAccessBucketAttributes;
   private GcpGcsBucketResource sourceBucketReference;
-  private GcpGcsObjectAttributes sourceBucketFileAttributes;
   private GcpGcsObjectResource sourceBucketFileReference;
   private String copyDefinitionDatasetResourceName;
   private String copyResourceDatasetResourceName;
@@ -94,16 +81,7 @@ public class CloneWorkspace extends WorkspaceAllocateTestScriptBase {
   private UUID destinationWorkspaceId;
   private WorkspaceApi cloningUserWorkspaceApi;
 
-  private static final int EXPECTED_NUM_CLONED_RESOURCES = 12;
-
-  @Override
-  public void setParameters(Map<String, String> parameters) throws Exception {
-    super.setParameters(parameters);
-    sourceUniformAccessBucketAttributes = ParameterUtils.getUniformBucketReference(parameters);
-    sourceBucketFileAttributes = ParameterUtils.getGcsFileReference(parameters);
-    sourceDataTableAttributes = ParameterUtils.getBigQueryDataTableReference(parameters);
-    sourceGitRepoAttributes = ParameterUtils.getSshGitRepoReference(parameters);
-  }
+  private static final int EXPECTED_NUM_CLONED_RESOURCES = 11;
 
   @Override
   protected void doSetup(
@@ -204,52 +182,49 @@ public class CloneWorkspace extends WorkspaceAllocateTestScriptBase {
             null,
             CloningInstructionsEnum.RESOURCE);
 
-    // Create reference to GCS bucket with COPY_REFERENCE
-    final ApiClient apiClient = ClientTestUtils.getClientForTestUser(sourceOwnerUser, server);
-    ReferencedGcpResourceApi referencedGcpResourceApi = new ReferencedGcpResourceApi(apiClient);
+    // Create reference to the shared GCS bucket in this workspace with COPY_REFERENCE
+    ReferencedGcpResourceApi referencedGcpResourceApi =
+        ClientTestUtils.getReferencedGcpResourceClient(sourceOwnerUser, server);
     final String bucketReferenceName = RandomStringUtils.random(16, true, false);
 
     sourceBucketReference =
         GcsBucketUtils.makeGcsBucketReference(
-            sourceUniformAccessBucketAttributes,
+            sharedSourceBucket.getGcpBucket().getAttributes(),
             referencedGcpResourceApi,
             getWorkspaceId(),
             bucketReferenceName,
             CloningInstructionsEnum.REFERENCE);
 
+    GcpGcsObjectAttributes referencedFileAttributes =
+        new GcpGcsObjectAttributes()
+            .bucketName(sharedSourceBucket.getGcpBucket().getAttributes().getBucketName())
+            .fileName(GCS_BLOB_NAME);
     sourceBucketFileReference =
         makeGcsObjectReference(
-            sourceBucketFileAttributes,
+            referencedFileAttributes,
             referencedGcpResourceApi,
             getWorkspaceId(),
-            "a_reference_to_foo_monkey_sees_monkey_dos",
+            "a_reference_to_wsmtestblob",
             CloningInstructionsEnum.REFERENCE);
 
-    // create reference to BQ dataset with COPY_NOTHING
-    // Use the BQ dataset referenced by the BQ data table parameter
-    GcpBigQueryDatasetAttributes sourceDatasetAttributes =
-        new GcpBigQueryDatasetAttributes()
-            .projectId(sourceDataTableAttributes.getProjectId())
-            .datasetId(sourceDataTableAttributes.getDatasetId());
+    // create reference to the shared BQ dataset with COPY_DEFINITION
     sourceDatasetReference =
         BqDatasetUtils.makeBigQueryDatasetReference(
-            sourceDatasetAttributes,
+            copyDefinitionDataset.getAttributes(),
             referencedGcpResourceApi,
             getWorkspaceId(),
             "dataset_resource_1");
+    GcpBigQueryDataTableAttributes bqTableReferenceAttributes =
+        new GcpBigQueryDataTableAttributes()
+            .projectId(copyDefinitionDataset.getAttributes().getProjectId())
+            .datasetId(copyDefinitionDataset.getAttributes().getDatasetId())
+            .dataTableId(BqDatasetUtils.BQ_EMPLOYEE_TABLE_NAME);
     sourceDataTableReference =
         BqDatasetUtils.makeBigQueryDataTableReference(
-            sourceDataTableAttributes,
+            bqTableReferenceAttributes,
             referencedGcpResourceApi,
             getWorkspaceId(),
             "datatable_resource_1");
-
-    sourceGitRepoReference =
-        GitRepoUtils.makeGitRepoReference(
-            sourceGitRepoAttributes,
-            referencedGcpResourceApi,
-            getWorkspaceId(),
-            "wsm_git_repo_referenced_resource");
   }
 
   @Override
@@ -541,24 +516,6 @@ public class CloneWorkspace extends WorkspaceAllocateTestScriptBase {
     assertEquals(StewardshipType.REFERENCED, dataTableReferenceDetails.getStewardshipType());
     assertNull(dataTableReferenceDetails.getDestinationResourceId());
     assertNull(dataTableReferenceDetails.getErrorMessage());
-
-    ResourceCloneDetails gitReferenceCloneDetails =
-        getOrFail(
-            cloneResult.getWorkspace().getResources().stream()
-                .filter(
-                    r ->
-                        sourceGitRepoReference
-                            .getMetadata()
-                            .getResourceId()
-                            .equals(r.getSourceResourceId()))
-                .findFirst());
-    assertEquals(CloneResourceResult.SUCCEEDED, gitReferenceCloneDetails.getResult());
-    assertEquals(
-        CloningInstructionsEnum.REFERENCE, gitReferenceCloneDetails.getCloningInstructions());
-    assertEquals(ResourceType.GIT_REPO, gitReferenceCloneDetails.getResourceType());
-    assertEquals(StewardshipType.REFERENCED, gitReferenceCloneDetails.getStewardshipType());
-    assertNotNull(gitReferenceCloneDetails.getDestinationResourceId());
-    assertNull(gitReferenceCloneDetails.getErrorMessage());
   }
 
   @Override
