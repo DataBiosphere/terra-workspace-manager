@@ -180,12 +180,22 @@ public class ReferencedGcsResourceLifecycle extends WorkspaceAllocateTestScriptB
         noAccessApi.enumerateResources(
             getWorkspaceId(), 0, 5, /*referenceType=*/ null, StewardshipType.REFERENCED);
     assertEquals(4, referenceList.getResources().size());
-    ResourceList bucketList = noAccessApi.enumerateResources(
-        getWorkspaceId(), 0, 5, /*referenceType=*/ ResourceType.GCS_BUCKET, StewardshipType.REFERENCED);
+    ResourceList bucketList =
+        noAccessApi.enumerateResources(
+            getWorkspaceId(),
+            0,
+            5,
+            /*referenceType=*/ ResourceType.GCS_BUCKET,
+            StewardshipType.REFERENCED);
     assertEquals(2, bucketList.getResources().size());
     MultiResourcesUtils.assertResourceType(ResourceType.GCS_BUCKET, bucketList);
-    ResourceList fileList = noAccessApi.enumerateResources(
-        getWorkspaceId(), 0, 5, /*referenceType=*/ ResourceType.GCS_OBJECT, StewardshipType.REFERENCED);
+    ResourceList fileList =
+        noAccessApi.enumerateResources(
+            getWorkspaceId(),
+            0,
+            5,
+            /*referenceType=*/ ResourceType.GCS_OBJECT,
+            StewardshipType.REFERENCED);
     assertEquals(2, fileList.getResources().size());
     MultiResourcesUtils.assertResourceType(ResourceType.GCS_OBJECT, fileList);
   }

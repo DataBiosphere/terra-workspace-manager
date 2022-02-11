@@ -143,12 +143,22 @@ public class ReferencedBigQueryResourceLifecycle extends WorkspaceAllocateTestSc
         noAccessApi.enumerateResources(
             getWorkspaceId(), 0, 5, /*referenceType=*/ null, StewardshipType.REFERENCED);
     assertEquals(2, referenceList.getResources().size());
-    ResourceList datasetList = noAccessApi.enumerateResources(
-        getWorkspaceId(), 0, 5, /*referenceType=*/ ResourceType.BIG_QUERY_DATASET, StewardshipType.REFERENCED);
+    ResourceList datasetList =
+        noAccessApi.enumerateResources(
+            getWorkspaceId(),
+            0,
+            5,
+            /*referenceType=*/ ResourceType.BIG_QUERY_DATASET,
+            StewardshipType.REFERENCED);
     assertEquals(1, datasetList.getResources().size());
     MultiResourcesUtils.assertResourceType(ResourceType.BIG_QUERY_DATASET, datasetList);
-    ResourceList tableList = noAccessApi.enumerateResources(
-        getWorkspaceId(), 0, 5, /*referenceType=*/ ResourceType.BIG_QUERY_DATA_TABLE, StewardshipType.REFERENCED);
+    ResourceList tableList =
+        noAccessApi.enumerateResources(
+            getWorkspaceId(),
+            0,
+            5,
+            /*referenceType=*/ ResourceType.BIG_QUERY_DATA_TABLE,
+            StewardshipType.REFERENCED);
     assertEquals(1, tableList.getResources().size());
     MultiResourcesUtils.assertResourceType(ResourceType.BIG_QUERY_DATA_TABLE, tableList);
   }
