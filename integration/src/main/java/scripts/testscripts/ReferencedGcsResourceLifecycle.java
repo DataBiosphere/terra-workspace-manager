@@ -22,6 +22,7 @@ import bio.terra.workspace.model.GcpGcsObjectResource;
 import bio.terra.workspace.model.GrantRoleRequestBody;
 import bio.terra.workspace.model.IamRole;
 import bio.terra.workspace.model.ResourceList;
+import bio.terra.workspace.model.StewardshipType;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -69,7 +70,7 @@ public class ReferencedGcsResourceLifecycle extends WorkspaceAllocateTestScriptB
   protected void doUserJourney(TestUserSpecification testUser, WorkspaceApi workspaceApi)
       throws Exception {
     ReferencedGcpResourceApi referencedGcpResourceApi =
-        ClientTestUtils.getReferencedGpcResourceClient(testUser, server);
+        ClientTestUtils.getReferencedGcpResourceClient(testUser, server);
     // Grant secondary users READER permission in the workspace.
     workspaceApi.grantRole(
         new GrantRoleRequestBody().memberEmail(partialAccessUser.userEmail),
@@ -115,57 +116,24 @@ public class ReferencedGcsResourceLifecycle extends WorkspaceAllocateTestScriptB
     folderResourceId = referencedGcsFolder.getMetadata().getResourceId();
 
     // Get the references
-    GcpGcsBucketResource fetchedBucket =
-        referencedGcpResourceApi.getBucketReference(getWorkspaceId(), bucketResourceId);
-    assertEquals(referencedBucket, fetchedBucket);
-    GcpGcsBucketResource fetchedFineGrainedBucket =
-        referencedGcpResourceApi.getBucketReference(getWorkspaceId(), fineGrainedBucketResourceId);
-    assertEquals(fineGrainedBucket, fetchedFineGrainedBucket);
-    GcpGcsObjectResource fetchedGcsFile =
-        referencedGcpResourceApi.getGcsObjectReference(getWorkspaceId(), fileResourceId);
-    assertEquals(referencedGcsFile, fetchedGcsFile);
-    GcpGcsObjectResource fetchedGcsFolder =
-        referencedGcpResourceApi.getGcsObjectReference(getWorkspaceId(), folderResourceId);
-    assertEquals(referencedGcsFolder, fetchedGcsFolder);
+    testGetReferences(
+        referencedBucket,
+        fineGrainedBucket,
+        referencedGcsFile,
+        referencedGcsFolder,
+        referencedGcpResourceApi);
 
     // Create a second workspace to clone references into, owned by the same user
-    destinationWorkspaceId = UUID.randomUUID();
-    createWorkspace(destinationWorkspaceId, getSpendProfileId(), workspaceApi);
-    // Clone references
-    CloneReferencedGcpGcsBucketResourceResult bucketCloneResult =
-        referencedGcpResourceApi.cloneGcpGcsBucketReference(
-            new CloneReferencedResourceRequestBody().destinationWorkspaceId(destinationWorkspaceId),
-            getWorkspaceId(),
-            bucketResourceId);
-    assertEquals(getWorkspaceId(), bucketCloneResult.getSourceWorkspaceId());
-    assertEquals(referencedBucket.getAttributes(), bucketCloneResult.getResource().getAttributes());
-    CloneReferencedGcpGcsBucketResourceResult fineGrainedBucketCloneResult =
-        referencedGcpResourceApi.cloneGcpGcsBucketReference(
-            new CloneReferencedResourceRequestBody().destinationWorkspaceId(destinationWorkspaceId),
-            getWorkspaceId(),
-            fineGrainedBucketResourceId);
-    assertEquals(getWorkspaceId(), fineGrainedBucketCloneResult.getSourceWorkspaceId());
-    assertEquals(
-        fineGrainedBucket.getAttributes(),
-        fineGrainedBucketCloneResult.getResource().getAttributes());
-    CloneReferencedGcpGcsObjectResourceResult fileCloneResult =
-        referencedGcpResourceApi.cloneGcpGcsObjectReference(
-            new CloneReferencedResourceRequestBody().destinationWorkspaceId(destinationWorkspaceId),
-            getWorkspaceId(),
-            fileResourceId);
-    assertEquals(getWorkspaceId(), fileCloneResult.getSourceWorkspaceId());
-    assertEquals(referencedGcsFile.getAttributes(), fileCloneResult.getResource().getAttributes());
-    CloneReferencedGcpGcsObjectResourceResult folderCloneResult =
-        referencedGcpResourceApi.cloneGcpGcsObjectReference(
-            new CloneReferencedResourceRequestBody().destinationWorkspaceId(destinationWorkspaceId),
-            getWorkspaceId(),
-            folderResourceId);
-    assertEquals(getWorkspaceId(), folderCloneResult.getSourceWorkspaceId());
-    assertEquals(
-        referencedGcsFolder.getAttributes(), folderCloneResult.getResource().getAttributes());
+    testCloneReference(
+        referencedBucket,
+        fineGrainedBucket,
+        referencedGcsFile,
+        referencedGcsFolder,
+        referencedGcpResourceApi,
+        workspaceApi);
 
     // Validate reference access
-    validateAccess(testUser);
+    testValidateReference(testUser);
 
     // Update the references
     testUpdateReferences(fineGrainedBucket, referencedGcpResourceApi);
@@ -183,7 +151,81 @@ public class ReferencedGcsResourceLifecycle extends WorkspaceAllocateTestScriptB
     assertTrue(enumerateResult.getResources().isEmpty());
   }
 
-  private void validateAccess(TestUserSpecification owner) throws Exception {
+  private void testGetReferences(
+      GcpGcsBucketResource uniformBucketReference,
+      GcpGcsBucketResource fineGrainedBucketReference,
+      GcpGcsObjectResource fileReference,
+      GcpGcsObjectResource folderReference,
+      ReferencedGcpResourceApi referencedGcpResourceApi)
+      throws Exception {
+    GcpGcsBucketResource fetchedBucket =
+        referencedGcpResourceApi.getBucketReference(getWorkspaceId(), bucketResourceId);
+    assertEquals(uniformBucketReference, fetchedBucket);
+    GcpGcsBucketResource fetchedFineGrainedBucket =
+        referencedGcpResourceApi.getBucketReference(getWorkspaceId(), fineGrainedBucketResourceId);
+    assertEquals(fineGrainedBucketReference, fetchedFineGrainedBucket);
+    GcpGcsObjectResource fetchedGcsFile =
+        referencedGcpResourceApi.getGcsObjectReference(getWorkspaceId(), fileResourceId);
+    assertEquals(fileReference, fetchedGcsFile);
+    GcpGcsObjectResource fetchedGcsFolder =
+        referencedGcpResourceApi.getGcsObjectReference(getWorkspaceId(), folderResourceId);
+    assertEquals(folderReference, fetchedGcsFolder);
+
+    // Enumerate the references
+    // Any workspace member can view references in WSM, even if they can't view the underlying cloud
+    // resource or contents.
+    ResourceApi noAccessApi = ClientTestUtils.getResourceClient(noAccessUser, server);
+    ResourceList referenceList =
+        noAccessApi.enumerateResources(
+            getWorkspaceId(), 0, 5, /*referenceType=*/ null, StewardshipType.REFERENCED);
+    assertEquals(4, referenceList.getResources().size());
+  }
+
+  private void testCloneReference(
+      GcpGcsBucketResource uniformBucketReference,
+      GcpGcsBucketResource fineGrainedBucketReference,
+      GcpGcsObjectResource fileReference,
+      GcpGcsObjectResource folderReference,
+      ReferencedGcpResourceApi referencedGcpResourceApi,
+      WorkspaceApi workspaceApi)
+      throws Exception {
+    destinationWorkspaceId = UUID.randomUUID();
+    createWorkspace(destinationWorkspaceId, getSpendProfileId(), workspaceApi);
+    // Clone references
+    CloneReferencedGcpGcsBucketResourceResult bucketCloneResult =
+        referencedGcpResourceApi.cloneGcpGcsBucketReference(
+            new CloneReferencedResourceRequestBody().destinationWorkspaceId(destinationWorkspaceId),
+            getWorkspaceId(),
+            bucketResourceId);
+    assertEquals(getWorkspaceId(), bucketCloneResult.getSourceWorkspaceId());
+    assertEquals(
+        uniformBucketReference.getAttributes(), bucketCloneResult.getResource().getAttributes());
+    CloneReferencedGcpGcsBucketResourceResult fineGrainedBucketCloneResult =
+        referencedGcpResourceApi.cloneGcpGcsBucketReference(
+            new CloneReferencedResourceRequestBody().destinationWorkspaceId(destinationWorkspaceId),
+            getWorkspaceId(),
+            fineGrainedBucketResourceId);
+    assertEquals(getWorkspaceId(), fineGrainedBucketCloneResult.getSourceWorkspaceId());
+    assertEquals(
+        fineGrainedBucketReference.getAttributes(),
+        fineGrainedBucketCloneResult.getResource().getAttributes());
+    CloneReferencedGcpGcsObjectResourceResult fileCloneResult =
+        referencedGcpResourceApi.cloneGcpGcsObjectReference(
+            new CloneReferencedResourceRequestBody().destinationWorkspaceId(destinationWorkspaceId),
+            getWorkspaceId(),
+            fileResourceId);
+    assertEquals(getWorkspaceId(), fileCloneResult.getSourceWorkspaceId());
+    assertEquals(fileReference.getAttributes(), fileCloneResult.getResource().getAttributes());
+    CloneReferencedGcpGcsObjectResourceResult folderCloneResult =
+        referencedGcpResourceApi.cloneGcpGcsObjectReference(
+            new CloneReferencedResourceRequestBody().destinationWorkspaceId(destinationWorkspaceId),
+            getWorkspaceId(),
+            folderResourceId);
+    assertEquals(getWorkspaceId(), folderCloneResult.getSourceWorkspaceId());
+    assertEquals(folderReference.getAttributes(), folderCloneResult.getResource().getAttributes());
+  }
+
+  private void testValidateReference(TestUserSpecification owner) throws Exception {
     ResourceApi ownerApi = ClientTestUtils.getResourceClient(owner, server);
     ResourceApi noAccessUserApi = ClientTestUtils.getResourceClient(noAccessUser, server);
     ResourceApi fileReaderApi = ClientTestUtils.getResourceClient(partialAccessUser, server);
@@ -209,7 +251,7 @@ public class ReferencedGcsResourceLifecycle extends WorkspaceAllocateTestScriptB
       GcpGcsBucketResource fineGrainedBucket, ReferencedGcpResourceApi fullAccessApi)
       throws Exception {
     ReferencedGcpResourceApi partialAccessApi =
-        ClientTestUtils.getReferencedGpcResourceClient(partialAccessUser, server);
+        ClientTestUtils.getReferencedGcpResourceClient(partialAccessUser, server);
     ResourceApi partialAccessResourceApi =
         ClientTestUtils.getResourceClient(partialAccessUser, server);
     // Update GCS bucket's name and description

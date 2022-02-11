@@ -11,6 +11,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import bio.terra.testrunner.runner.config.TestUserSpecification;
 import bio.terra.workspace.api.ControlledGcpResourceApi;
+import bio.terra.workspace.api.ResourceApi;
 import bio.terra.workspace.api.WorkspaceApi;
 import bio.terra.workspace.client.ApiException;
 import bio.terra.workspace.model.CloneControlledGcpBigQueryDatasetRequest;
@@ -22,7 +23,10 @@ import bio.terra.workspace.model.GcpBigQueryDatasetUpdateParameters;
 import bio.terra.workspace.model.GrantRoleRequestBody;
 import bio.terra.workspace.model.IamRole;
 import bio.terra.workspace.model.JobControl;
+import bio.terra.workspace.model.ResourceList;
 import bio.terra.workspace.model.ResourceMetadata;
+import bio.terra.workspace.model.ResourceType;
+import bio.terra.workspace.model.StewardshipType;
 import bio.terra.workspace.model.UpdateControlledGcpBigQueryDatasetRequestBody;
 import com.google.api.client.http.HttpStatusCodes;
 import com.google.cloud.bigquery.BigQuery;
@@ -53,6 +57,7 @@ import org.slf4j.LoggerFactory;
 import scripts.utils.BqDatasetUtils;
 import scripts.utils.ClientTestUtils;
 import scripts.utils.GcpWorkspaceCloneTestScriptBase;
+import scripts.utils.MultiResourcesUtils;
 import scripts.utils.SamClientUtils;
 
 public class ControlledBigQueryDatasetLifecycle extends GcpWorkspaceCloneTestScriptBase {
@@ -63,23 +68,22 @@ public class ControlledBigQueryDatasetLifecycle extends GcpWorkspaceCloneTestScr
   private static final String COLUMN_NAME = "myColumn";
 
   private TestUserSpecification writer;
-  private TestUserSpecification reader;
   // We require a reader, writer, and owner for this test. Arbitrarily, user 0 in the provided list
-  // will be the workspace owner (handled in base class), user 1 will be the writer, and user 2 will
-  // be the reader.
+  // will be the workspace owner (handled in base class), user 1 will be the reader of the test
+  // workspace and owner of the cloned workspace (both handled in the base class), and user 2 will
+  // be the writer.
   private static final int WRITER_USER_INDEX = 1;
-  private static final int READER_USER_INDEX = 2;
 
   @Override
   protected void doSetup(List<TestUserSpecification> testUsers, WorkspaceApi workspaceApi)
       throws Exception {
     super.doSetup(testUsers, workspaceApi);
-    // Note the 0th user is the owner of the workspace, pulled out in the super class.
+    // Note the 0th user is the owner of the workspace and 1st user is the reader, both pulled out
+    // in the super class.
     assertThat(
         "There must be at least three test users defined for this test.",
         testUsers != null && testUsers.size() > 2);
     this.writer = testUsers.get(WRITER_USER_INDEX);
-    this.reader = testUsers.get(READER_USER_INDEX);
   }
 
   @Override
@@ -89,21 +93,10 @@ public class ControlledBigQueryDatasetLifecycle extends GcpWorkspaceCloneTestScr
     ControlledGcpResourceApi ownerResourceApi =
         ClientTestUtils.getControlledGcpResourceClient(testUser, server);
 
-    // Add a writer and reader to the source workspace
-    logger.info(
-        "Adding {} as writer and {} as reader to workspace {}",
-        writer.userEmail,
-        reader.userEmail,
-        getWorkspaceId());
+    // Add a writer the source workspace. Reader is already added by the base class
+    logger.info("Adding {} as writer to workspace {}", writer.userEmail, getWorkspaceId());
     workspaceApi.grantRole(
         new GrantRoleRequestBody().memberEmail(writer.userEmail), getWorkspaceId(), IamRole.WRITER);
-    workspaceApi.grantRole(
-        new GrantRoleRequestBody().memberEmail(reader.userEmail), getWorkspaceId(), IamRole.READER);
-    // Also add the "reader" user as a writer to the destination workspace for cloning.
-    workspaceApi.grantRole(
-        new GrantRoleRequestBody().memberEmail(reader.userEmail),
-        getDestinationWorkspaceId(),
-        IamRole.WRITER);
 
     SamClientUtils.dumpResourcePolicy(testUser, server, "workspace", getWorkspaceId().toString());
 
@@ -129,7 +122,8 @@ public class ControlledBigQueryDatasetLifecycle extends GcpWorkspaceCloneTestScr
 
     BigQuery ownerBqClient = ClientTestUtils.getGcpBigQueryClient(testUser, getSourceProjectId());
     BigQuery writerBqClient = ClientTestUtils.getGcpBigQueryClient(writer, getSourceProjectId());
-    BigQuery readerBqClient = ClientTestUtils.getGcpBigQueryClient(reader, getSourceProjectId());
+    BigQuery readerBqClient =
+        ClientTestUtils.getGcpBigQueryClient(getWorkspaceReader(), getSourceProjectId());
 
     // Workspace owner can create a table in this dataset
     Table table = createTable(ownerBqClient, getSourceProjectId());
@@ -218,8 +212,16 @@ public class ControlledBigQueryDatasetLifecycle extends GcpWorkspaceCloneTestScr
     BqDatasetUtils.populateBigQueryDataset(createdDataset, testUser, getSourceProjectId());
     // Verify workspace reader is able to clone the resource they can read
     ControlledGcpResourceApi readerResourceApi =
-        ClientTestUtils.getControlledGcpResourceClient(reader, server);
-    testCloneBigQueryDataset(createdDataset, reader, readerResourceApi);
+        ClientTestUtils.getControlledGcpResourceClient(getWorkspaceReader(), server);
+    testCloneBigQueryDataset(createdDataset, getWorkspaceReader(), readerResourceApi);
+
+    // The reader should be able to enumerate the dataset.
+    ResourceApi readerApi = ClientTestUtils.getResourceClient(getWorkspaceReader(), server);
+    ResourceList datasetList =
+        readerApi.enumerateResources(
+            getWorkspaceId(), 0, 5, ResourceType.BIG_QUERY_DATASET, StewardshipType.CONTROLLED);
+    assertEquals(1, datasetList.getResources().size());
+    MultiResourcesUtils.assertResourceType(ResourceType.BIG_QUERY_DATASET, datasetList);
 
     // Workspace writer cannot delete the dataset directly
     var writerCannotDeleteException =
@@ -430,6 +432,7 @@ public class ControlledBigQueryDatasetLifecycle extends GcpWorkspaceCloneTestScr
         StreamSupport.stream(departmentTableResult.getValues().spliterator(), false)
             .findFirst()
             .orElseThrow(() -> new RuntimeException("Can't find expected result row"));
+    // Assert data matches the expected values from BqDatasetUtils.populateBigQueryDataset
     final FieldValue nameFieldValue = row.get("name");
     assertEquals("ocean", nameFieldValue.getStringValue());
     final FieldValue managerFieldValue = row.get("manager_id");

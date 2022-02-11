@@ -22,7 +22,7 @@
     "integration/ReferencedBigQueryResourceLifecycle.json",
     "integration/ReferencedGcsResourceLifecycle.json",
     "integration/ReferencedGitRepoLifecycle.json",
-    "integration/ReferencedTdrSnapshotLifecycle.json",
+    "integration/ReferencedDataRepoSnapshotLifecycle.json",
     "integration/RemoveUser.json",
     "integration/WorkspaceLifecycle.json"
   ]

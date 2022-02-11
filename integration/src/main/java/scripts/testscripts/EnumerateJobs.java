@@ -110,7 +110,13 @@ public class EnumerateJobs extends WorkspaceAllocateTestScriptBase {
     // Case 4: filter by resource type
     EnumerateJobsResult buckets =
         alpha1Api.enumerateJobs(
-            getWorkspaceId(), null, null, ResourceType.GCS_BUCKET, null, null, null);
+            getWorkspaceId(),
+            /*limit=*/ null,
+            /*pageToken=*/ null,
+            ResourceType.GCS_BUCKET,
+            /*stewardship=*/ null,
+            /*name=*/ null,
+            /*jobState=*/ null);
     logResult("buckets", buckets);
     for (EnumeratedJob job : buckets.getResults()) {
       assertThat("Job is a bucket", job.getResourceType(), equalTo(ResourceType.GCS_BUCKET));

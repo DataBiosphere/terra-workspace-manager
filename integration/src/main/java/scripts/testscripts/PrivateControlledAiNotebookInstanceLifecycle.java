@@ -12,6 +12,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import bio.terra.testrunner.runner.config.TestUserSpecification;
 import bio.terra.workspace.api.ControlledGcpResourceApi;
+import bio.terra.workspace.api.ResourceApi;
 import bio.terra.workspace.api.WorkspaceApi;
 import bio.terra.workspace.client.ApiException;
 import bio.terra.workspace.model.CreatedControlledGcpAiNotebookInstanceResult;
@@ -21,6 +22,9 @@ import bio.terra.workspace.model.GcpAiNotebookInstanceResource;
 import bio.terra.workspace.model.GrantRoleRequestBody;
 import bio.terra.workspace.model.IamRole;
 import bio.terra.workspace.model.JobControl;
+import bio.terra.workspace.model.ResourceList;
+import bio.terra.workspace.model.ResourceType;
+import bio.terra.workspace.model.StewardshipType;
 import com.google.api.client.googleapis.json.GoogleJsonResponseException;
 import com.google.api.services.notebooks.v1.AIPlatformNotebooks;
 import com.google.api.services.notebooks.v1.model.StopInstanceRequest;
@@ -34,6 +38,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import scripts.utils.ClientTestUtils;
 import scripts.utils.CloudContextMaker;
+import scripts.utils.MultiResourcesUtils;
 import scripts.utils.NotebookUtils;
 import scripts.utils.WorkspaceAllocateTestScriptBase;
 
@@ -142,6 +147,15 @@ public class PrivateControlledAiNotebookInstanceLifecycle extends WorkspaceAlloc
         HttpStatus.SC_FORBIDDEN,
         directDeleteForbidden.getStatusCode(),
         "User may not delete notebook directly on GCP");
+
+    // Any workspace user should be able to enumerate all created notebooks, even though they can't
+    // read or write them.
+    ResourceApi otherUserApi = ClientTestUtils.getResourceClient(otherWorkspaceUser, server);
+    ResourceList notebookList =
+        otherUserApi.enumerateResources(
+            getWorkspaceId(), 0, 5, ResourceType.AI_NOTEBOOK, StewardshipType.CONTROLLED);
+    assertEquals(3, notebookList.getResources().size());
+    MultiResourcesUtils.assertResourceType(ResourceType.AI_NOTEBOOK, notebookList);
 
     // Delete the AI Notebook through WSM.
     DeleteControlledGcpAiNotebookInstanceResult deleteResult =

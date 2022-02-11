@@ -12,6 +12,8 @@ import bio.terra.workspace.model.CloneReferencedResourceRequestBody;
 import bio.terra.workspace.model.GitRepoAttributes;
 import bio.terra.workspace.model.GitRepoResource;
 import bio.terra.workspace.model.ResourceList;
+import bio.terra.workspace.model.ResourceType;
+import bio.terra.workspace.model.StewardshipType;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -25,6 +27,7 @@ public class ReferencedGitRepoLifecycle extends WorkspaceAllocateTestScriptBase 
 
   private GitRepoAttributes gitRepoAttributes;
   private UUID destinationWorkspaceId;
+  private UUID gitResourceId;
 
   public void setParameters(Map<String, String> parameters) throws Exception {
     super.setParameters(parameters);
@@ -35,7 +38,7 @@ public class ReferencedGitRepoLifecycle extends WorkspaceAllocateTestScriptBase 
   protected void doUserJourney(TestUserSpecification testUser, WorkspaceApi workspaceApi)
       throws Exception {
     ReferencedGcpResourceApi referencedGcpResourceApi =
-        ClientTestUtils.getReferencedGpcResourceClient(testUser, server);
+        ClientTestUtils.getReferencedGcpResourceClient(testUser, server);
     // Create the reference
     GitRepoResource gitResource =
         GitRepoUtils.makeGitRepoReference(
@@ -43,13 +46,55 @@ public class ReferencedGitRepoLifecycle extends WorkspaceAllocateTestScriptBase 
             referencedGcpResourceApi,
             getWorkspaceId(),
             MultiResourcesUtils.makeName());
-    UUID gitResourceId = gitResource.getMetadata().getResourceId();
+    gitResourceId = gitResource.getMetadata().getResourceId();
 
     // Read the reference
+    ResourceApi resourceApi = ClientTestUtils.getResourceClient(testUser, server);
+    testGetReference(gitResource, referencedGcpResourceApi, resourceApi);
+
+    // Clone the reference
+    testCloneReference(gitResource, referencedGcpResourceApi, workspaceApi);
+
+    // No validation checks yet, we don't validate access to git repos.
+
+    // Update the reference
+    testUpdateReference(referencedGcpResourceApi);
+
+    // Delete the reference
+    referencedGcpResourceApi.deleteGitRepoReference(getWorkspaceId(), gitResourceId);
+
+    // Enumerating all resources with no filters should be empty
+    ResourceList enumerateResult =
+        resourceApi.enumerateResources(getWorkspaceId(), 0, 100, null, null);
+    assertTrue(enumerateResult.getResources().isEmpty());
+  }
+
+  private void testGetReference(
+      GitRepoResource gitResource,
+      ReferencedGcpResourceApi referencedGcpResourceApi,
+      ResourceApi resourceApi)
+      throws Exception {
     GitRepoResource fetchedGitResource =
         referencedGcpResourceApi.getGitRepoReference(getWorkspaceId(), gitResourceId);
     assertEquals(gitResource, fetchedGitResource);
 
+    // Enumerate the reference
+    ResourceList referenceList =
+        resourceApi.enumerateResources(
+            getWorkspaceId(), 0, 5, /*referenceType=*/ null, /*stewardShipType=*/ null);
+    assertEquals(1, referenceList.getResources().size());
+    assertEquals(
+        StewardshipType.REFERENCED,
+        referenceList.getResources().get(0).getMetadata().getStewardshipType());
+    assertEquals(
+        ResourceType.GIT_REPO, referenceList.getResources().get(0).getMetadata().getResourceType());
+  }
+
+  private void testCloneReference(
+      GitRepoResource gitResource,
+      ReferencedGcpResourceApi referencedGcpResourceApi,
+      WorkspaceApi workspaceApi)
+      throws Exception {
     // Create a second workspace to clone the reference into, owned by the same user
     destinationWorkspaceId = UUID.randomUUID();
     createWorkspace(destinationWorkspaceId, getSpendProfileId(), workspaceApi);
@@ -61,10 +106,10 @@ public class ReferencedGitRepoLifecycle extends WorkspaceAllocateTestScriptBase 
             gitResourceId);
     assertEquals(getWorkspaceId(), gitCloneResult.getSourceWorkspaceId());
     assertEquals(gitResource.getAttributes(), gitCloneResult.getResource().getAttributes());
+  }
 
-    // No validation checks yet, we don't validate access to git repos.
-
-    // Update the reference
+  private void testUpdateReference(ReferencedGcpResourceApi referencedGcpResourceApi)
+      throws Exception {
     String newGitRepoReferenceName = "newGitRepoReferenceName";
     String newGitRepoReferenceDescription = "a new description for git repo reference";
     GitRepoUtils.updateGitRepoReferenceResource(
@@ -78,15 +123,6 @@ public class ReferencedGitRepoLifecycle extends WorkspaceAllocateTestScriptBase 
         referencedGcpResourceApi.getGitRepoReference(getWorkspaceId(), gitResourceId);
     assertEquals(newGitRepoReferenceName, updatedResource.getMetadata().getName());
     assertEquals(newGitRepoReferenceDescription, updatedResource.getMetadata().getDescription());
-
-    // Delete the reference
-    referencedGcpResourceApi.deleteGitRepoReference(getWorkspaceId(), gitResourceId);
-
-    // Enumerating all resources with no filters should be empty
-    ResourceApi resourceApi = ClientTestUtils.getResourceClient(testUser, server);
-    ResourceList enumerateResult =
-        resourceApi.enumerateResources(getWorkspaceId(), 0, 100, null, null);
-    assertTrue(enumerateResult.getResources().isEmpty());
   }
 
   @Override

@@ -184,7 +184,7 @@ public class CloneWorkspace extends WorkspaceAllocateTestScriptBase {
 
     // Create reference to the shared GCS bucket in this workspace with COPY_REFERENCE
     ReferencedGcpResourceApi referencedGcpResourceApi =
-        ClientTestUtils.getReferencedGpcResourceClient(sourceOwnerUser, server);
+        ClientTestUtils.getReferencedGcpResourceClient(sourceOwnerUser, server);
     final String bucketReferenceName = RandomStringUtils.random(16, true, false);
 
     sourceBucketReference =

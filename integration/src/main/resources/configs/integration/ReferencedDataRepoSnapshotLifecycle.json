@@ -1,12 +1,12 @@
 {
-  "name": "ReferencedTdrSnapshotLifecycle",
+  "name": "ReferencedDataRepoSnapshotLifecycle",
   "description": "CRUD TDR snapshot reference operations",
   "serverSpecificationFile": "workspace-local.json",
   "kubernetes": {},
   "application": {},
   "testScripts": [
     {
-      "name": "ReferencedTdrSnapshotLifecycle",
+      "name": "ReferencedDataRepoSnapshotLifecycle",
       "numberOfUserJourneyThreadsToRun": 1,
       "userJourneyThreadPoolSize": 1,
       "expectedTimeForEach": 5,

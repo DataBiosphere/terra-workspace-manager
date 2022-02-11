@@ -1,12 +1,16 @@
 package scripts.utils;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
 import bio.terra.workspace.api.ControlledGcpResourceApi;
 import bio.terra.workspace.api.ReferencedGcpResourceApi;
 import bio.terra.workspace.model.CloningInstructionsEnum;
 import bio.terra.workspace.model.GcpAiNotebookInstanceResource;
 import bio.terra.workspace.model.GcpBigQueryDatasetResource;
 import bio.terra.workspace.model.GcpGcsBucketResource;
+import bio.terra.workspace.model.ResourceList;
 import bio.terra.workspace.model.ResourceMetadata;
+import bio.terra.workspace.model.ResourceType;
 import bio.terra.workspace.model.StewardshipType;
 import java.util.List;
 import java.util.UUID;
@@ -126,5 +130,11 @@ public class MultiResourcesUtils {
         }
       }
     }
+  }
+
+  /** Assert that each element of a ResourceList has the same provided resource type. */
+  public static void assertResourceType(ResourceType type, ResourceList list) {
+    list.getResources()
+        .forEach(resource -> assertEquals(type, resource.getMetadata().getResourceType()));
   }
 }

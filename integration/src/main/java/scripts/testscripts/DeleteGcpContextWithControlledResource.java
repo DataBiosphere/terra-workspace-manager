@@ -30,7 +30,7 @@ public class DeleteGcpContextWithControlledResource extends WorkspaceAllocateTes
     ControlledGcpResourceApi controlledResourceApi =
         ClientTestUtils.getControlledGcpResourceClient(testUser, server);
     ReferencedGcpResourceApi referencedResourceApi =
-        ClientTestUtils.getReferencedGpcResourceClient(testUser, server);
+        ClientTestUtils.getReferencedGcpResourceClient(testUser, server);
 
     // Create a cloud context
     String projectId = CloudContextMaker.createGcpCloudContext(getWorkspaceId(), workspaceApi);

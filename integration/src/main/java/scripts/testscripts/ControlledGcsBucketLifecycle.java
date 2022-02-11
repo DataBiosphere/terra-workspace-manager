@@ -1,6 +1,7 @@
 package scripts.testscripts;
 
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.hasSize;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -8,6 +9,9 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static scripts.utils.GcsBucketUtils.BUCKET_LIFECYCLE_RULES;
+import static scripts.utils.GcsBucketUtils.BUCKET_LIFECYCLE_RULE_1_CONDITION_AGE;
+import static scripts.utils.GcsBucketUtils.BUCKET_LIFECYCLE_RULE_1_CONDITION_LIVE;
+import static scripts.utils.GcsBucketUtils.BUCKET_LIFECYCLE_RULE_1_CONDITION_NUM_NEWER_VERSIONS;
 import static scripts.utils.GcsBucketUtils.BUCKET_LOCATION;
 import static scripts.utils.GcsBucketUtils.BUCKET_PREFIX;
 import static scripts.utils.GcsBucketUtils.BUCKET_RESOURCE_PREFIX;
@@ -21,6 +25,7 @@ import static scripts.utils.GcsBucketUtils.UPDATED_BUCKET_RESOURCE_NAME_2;
 
 import bio.terra.testrunner.runner.config.TestUserSpecification;
 import bio.terra.workspace.api.ControlledGcpResourceApi;
+import bio.terra.workspace.api.ResourceApi;
 import bio.terra.workspace.api.WorkspaceApi;
 import bio.terra.workspace.client.ApiException;
 import bio.terra.workspace.model.AccessScope;
@@ -39,10 +44,9 @@ import bio.terra.workspace.model.GcpGcsBucketDefaultStorageClass;
 import bio.terra.workspace.model.GcpGcsBucketLifecycle;
 import bio.terra.workspace.model.GcpGcsBucketResource;
 import bio.terra.workspace.model.GcpGcsBucketUpdateParameters;
-import bio.terra.workspace.model.GrantRoleRequestBody;
-import bio.terra.workspace.model.IamRole;
 import bio.terra.workspace.model.JobControl;
 import bio.terra.workspace.model.ManagedBy;
+import bio.terra.workspace.model.ResourceList;
 import bio.terra.workspace.model.ResourceMetadata;
 import bio.terra.workspace.model.ResourceType;
 import bio.terra.workspace.model.StewardshipType;
@@ -54,6 +58,7 @@ import com.google.cloud.storage.BlobId;
 import com.google.cloud.storage.BlobInfo;
 import com.google.cloud.storage.Bucket;
 import com.google.cloud.storage.BucketInfo.LifecycleRule;
+import com.google.cloud.storage.BucketInfo.LifecycleRule.DeleteLifecycleAction;
 import com.google.cloud.storage.BucketInfo.LifecycleRule.LifecycleCondition;
 import com.google.cloud.storage.BucketInfo.LifecycleRule.SetStorageClassLifecycleAction;
 import com.google.cloud.storage.Storage;
@@ -74,6 +79,7 @@ import scripts.utils.CloudContextMaker;
 import scripts.utils.GcpWorkspaceCloneTestScriptBase;
 import scripts.utils.GcsBucketAccessTester;
 import scripts.utils.GcsBucketUtils;
+import scripts.utils.MultiResourcesUtils;
 import scripts.utils.ParameterUtils;
 
 public class ControlledGcsBucketLifecycle extends GcpWorkspaceCloneTestScriptBase {
@@ -82,7 +88,6 @@ public class ControlledGcsBucketLifecycle extends GcpWorkspaceCloneTestScriptBas
   // This is a publicly accessible bucket provided by GCP.
   private static final String PUBLIC_GCP_BUCKET_NAME = "gcp-public-data-landsat";
 
-  private TestUserSpecification reader;
   private String bucketName;
   private String resourceName;
   // An existing GCS bucket. Used to validate behavior around bucket name conflicts. Access to this
@@ -99,11 +104,6 @@ public class ControlledGcsBucketLifecycle extends GcpWorkspaceCloneTestScriptBas
   protected void doSetup(List<TestUserSpecification> testUsers, WorkspaceApi workspaceApi)
       throws Exception {
     super.doSetup(testUsers, workspaceApi);
-    // Note the 0th user is the owner of the workspace, pulled out in the super class.
-    assertThat(
-        "There must be at least two test users defined for this test.",
-        testUsers != null && testUsers.size() > 1);
-    this.reader = testUsers.get(1);
     String nameSuffix = UUID.randomUUID().toString();
     this.bucketName = BUCKET_PREFIX + nameSuffix;
     this.resourceName = BUCKET_RESOURCE_PREFIX + nameSuffix;
@@ -125,7 +125,7 @@ public class ControlledGcsBucketLifecycle extends GcpWorkspaceCloneTestScriptBas
     logger.info("Failed to create bucket with duplicate name, as expected");
 
     // Create a bucket with a name that's already taken by a publicly accessible bucket. WSM should
-    // have get and read access, as the bucket is open to everyone.
+    // have get and read access, as the bucket is open to everyone, but this should still fail.
     ApiException publicDuplicateNameFails =
         assertThrows(
             ApiException.class, () -> createBucketAttempt(resourceApi, PUBLIC_GCP_BUCKET_NAME));
@@ -153,19 +153,7 @@ public class ControlledGcsBucketLifecycle extends GcpWorkspaceCloneTestScriptBas
     try (GcsBucketAccessTester tester =
         new GcsBucketAccessTester(testUser, bucketName, getSourceProjectId())) {
       tester.checkAccess(testUser, ControlledResourceIamRole.EDITOR);
-
-      // Second user has not yet been added to the workspace, use null to indicate no role
-      tester.checkAccess(reader, null);
-
-      // Owner can add second user as a reader to the workspace
-      workspaceApi.grantRole(
-          new GrantRoleRequestBody().memberEmail(reader.userEmail),
-          getWorkspaceId(),
-          IamRole.READER);
-      logger.info("Added {} as a reader to workspace {}", reader.userEmail, getWorkspaceId());
-
-      tester.checkAccessWait(reader, ControlledResourceIamRole.READER);
-      tester.checkAccess(testUser, ControlledResourceIamRole.EDITOR);
+      tester.checkAccessWait(getWorkspaceReader(), ControlledResourceIamRole.READER);
     }
 
     // Populate bucket to test that objects are cloned
@@ -178,7 +166,9 @@ public class ControlledGcsBucketLifecycle extends GcpWorkspaceCloneTestScriptBas
             blobInfo, GCS_BLOB_CONTENT.getBytes(StandardCharsets.UTF_8));
     logger.info("Wrote blob {} to bucket", createdFile.getBlobId());
     // Clone the bucket into another workspace
-    testCloneBucket(bucket.getGcpBucket(), testUser, resourceApi);
+    ControlledGcpResourceApi readerControlledResourceApi =
+        ClientTestUtils.getControlledGcpResourceClient(getWorkspaceReader(), server);
+    testCloneBucket(bucket.getGcpBucket(), getWorkspaceReader(), readerControlledResourceApi);
     // Delete file after successful clone so that source bucket deletion later is faster
     sourceOwnerStorageClient.delete(blobId);
 
@@ -246,6 +236,14 @@ public class ControlledGcsBucketLifecycle extends GcpWorkspaceCloneTestScriptBas
         UPDATED_BUCKET_RESOURCE_DESCRIPTION, resource3.getMetadata().getDescription()); // no change
     assertEquals(StorageClass.COLDLINE, retrievedUpdatedBucket3.getStorageClass()); // no change
     verifyUpdatedLifecycleRules(retrievedUpdatedBucket3.getLifecycleRules()); // no change
+
+    // Enumerate the bucket
+    ResourceApi readerApi = ClientTestUtils.getResourceClient(getWorkspaceReader(), server);
+    ResourceList bucketList =
+        readerApi.enumerateResources(
+            getWorkspaceId(), 0, 5, ResourceType.GCS_BUCKET, StewardshipType.CONTROLLED);
+    assertEquals(1, bucketList.getResources().size());
+    MultiResourcesUtils.assertResourceType(ResourceType.GCS_BUCKET, bucketList);
 
     // Owner can delete the bucket through WSM
     GcsBucketUtils.deleteControlledGcsBucket(resourceId, getWorkspaceId(), resourceApi);
@@ -412,6 +410,7 @@ public class ControlledGcsBucketLifecycle extends GcpWorkspaceCloneTestScriptBas
     assertEquals(
         BUCKET_LOCATION, destinationGcsBucket.getLocation()); // default since not specified
     assertEquals(2, destinationGcsBucket.getLifecycleRules().size());
+    verifyClonedLifecycleRules(destinationGcsBucket);
     assertEquals(CloningInstructionsEnum.RESOURCE, clonedBucket.getEffectiveCloningInstructions());
 
     // test retrieving file from destination bucket
@@ -423,6 +422,37 @@ public class ControlledGcsBucketLifecycle extends GcpWorkspaceCloneTestScriptBas
     final Blob retrievedFile = cloningUserStorageClient.get(blobId);
     assertNotNull(retrievedFile);
     assertEquals(blobId.getName(), retrievedFile.getBlobId().getName());
+  }
+
+  private void verifyClonedLifecycleRules(Bucket destinationBucket) {
+    // We can't rely on the order of the lifecycle rules being maintained
+    final LifecycleRule clonedDeleteRule =
+        destinationBucket.getLifecycleRules().stream()
+            .filter(r -> DeleteLifecycleAction.TYPE.equals(r.getAction().getActionType()))
+            .findFirst()
+            .orElseThrow(() -> new RuntimeException("Can't find Delete lifecycle rule."));
+    assertEquals(BUCKET_LIFECYCLE_RULE_1_CONDITION_AGE, clonedDeleteRule.getCondition().getAge());
+    assertEquals(
+        BUCKET_LIFECYCLE_RULE_1_CONDITION_LIVE, clonedDeleteRule.getCondition().getIsLive());
+    assertEquals(
+        StorageClass.ARCHIVE, clonedDeleteRule.getCondition().getMatchesStorageClass().get(0));
+    assertEquals(
+        BUCKET_LIFECYCLE_RULE_1_CONDITION_NUM_NEWER_VERSIONS,
+        clonedDeleteRule.getCondition().getNumberOfNewerVersions());
+
+    final LifecycleRule setStorageClassRule =
+        destinationBucket.getLifecycleRules().stream()
+            .filter(r -> SetStorageClassLifecycleAction.TYPE.equals(r.getAction().getActionType()))
+            .findFirst()
+            .orElseThrow(() -> new RuntimeException("Can't find SetStorageClass lifecycle rule."));
+    final SetStorageClassLifecycleAction setStorageClassLifecycleAction =
+        (SetStorageClassLifecycleAction) setStorageClassRule.getAction();
+    assertEquals(StorageClass.NEARLINE, setStorageClassLifecycleAction.getStorageClass());
+    assertEquals(
+        DateTime.parseRfc3339("2007-01-03"), setStorageClassRule.getCondition().getCreatedBefore());
+    assertThat(
+        setStorageClassRule.getCondition().getMatchesStorageClass(),
+        contains(StorageClass.STANDARD));
   }
 
   @Override

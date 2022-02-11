@@ -19,6 +19,8 @@ import bio.terra.workspace.model.DataRepoSnapshotResource;
 import bio.terra.workspace.model.GrantRoleRequestBody;
 import bio.terra.workspace.model.IamRole;
 import bio.terra.workspace.model.ResourceList;
+import bio.terra.workspace.model.ResourceType;
+import bio.terra.workspace.model.StewardshipType;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -29,7 +31,7 @@ import scripts.utils.ParameterKeys;
 import scripts.utils.ParameterUtils;
 import scripts.utils.WorkspaceAllocateTestScriptBase;
 
-public class ReferencedTdrSnapshotLifecycle extends WorkspaceAllocateTestScriptBase {
+public class ReferencedDataRepoSnapshotLifecycle extends WorkspaceAllocateTestScriptBase {
 
   private String tdrInstance;
   private String snapshotId;
@@ -61,7 +63,7 @@ public class ReferencedTdrSnapshotLifecycle extends WorkspaceAllocateTestScriptB
   protected void doUserJourney(TestUserSpecification testUser, WorkspaceApi workspaceApi)
       throws Exception {
     ReferencedGcpResourceApi referencedGcpResourceApi =
-        ClientTestUtils.getReferencedGpcResourceClient(testUser, server);
+        ClientTestUtils.getReferencedGcpResourceClient(testUser, server);
     // Add the "partial access" user as a workspace reader. This does not give them access to any
     // underlying referenced resources.
     workspaceApi.grantRole(
@@ -79,12 +81,56 @@ public class ReferencedTdrSnapshotLifecycle extends WorkspaceAllocateTestScriptB
             tdrInstance);
     snapshotResourceId = snapshotResource.getMetadata().getResourceId();
 
+    // Get the reference
+    ResourceApi resourceApi = ClientTestUtils.getResourceClient(testUser, server);
+    testGetReference(snapshotResource, referencedGcpResourceApi, resourceApi);
+
+    // Create a second workspace to clone the reference into, owned by the same user
+    testCloneReference(snapshotResource, referencedGcpResourceApi, workspaceApi);
+
+    // Validate snapshot access
+    testValidateReference(testUser);
+
+    // Update reference
+    testUpdateReference(referencedGcpResourceApi);
+
+    // Delete the reference
+    referencedGcpResourceApi.deleteDataRepoSnapshotReference(getWorkspaceId(), snapshotResourceId);
+
+    // Enumerating all resources with no filters should be empty
+    ResourceList enumerateResult =
+        resourceApi.enumerateResources(getWorkspaceId(), 0, 100, null, null);
+    assertTrue(enumerateResult.getResources().isEmpty());
+  }
+
+  private void testGetReference(
+      DataRepoSnapshotResource snapshotResource,
+      ReferencedGcpResourceApi referencedGcpResourceApi,
+      ResourceApi resourceApi)
+      throws Exception {
     // Read the reference
     DataRepoSnapshotResource fetchedSnapshot =
         referencedGcpResourceApi.getDataRepoSnapshotReference(getWorkspaceId(), snapshotResourceId);
     assertEquals(snapshotResource, fetchedSnapshot);
 
-    // Create a second workspace to clone the reference into, owned by the same user
+    // Enumerate the reference
+    ResourceList referenceList =
+        resourceApi.enumerateResources(
+            getWorkspaceId(), 0, 5, /*referenceType=*/ null, /*stewardShipType=*/ null);
+    assertEquals(1, referenceList.getResources().size());
+    assertEquals(
+        StewardshipType.REFERENCED,
+        referenceList.getResources().get(0).getMetadata().getStewardshipType());
+    assertEquals(
+        ResourceType.DATA_REPO_SNAPSHOT,
+        referenceList.getResources().get(0).getMetadata().getResourceType());
+  }
+
+  private void testCloneReference(
+      DataRepoSnapshotResource snapshotResource,
+      ReferencedGcpResourceApi referencedGcpResourceApi,
+      WorkspaceApi workspaceApi)
+      throws Exception {
     destinationWorkspaceId = UUID.randomUUID();
     createWorkspace(destinationWorkspaceId, getSpendProfileId(), workspaceApi);
     // Clone references
@@ -98,32 +144,21 @@ public class ReferencedTdrSnapshotLifecycle extends WorkspaceAllocateTestScriptB
     assertEquals(getWorkspaceId(), snapshotCloneResult.getSourceWorkspaceId());
     assertEquals(
         snapshotResource.getAttributes(), snapshotCloneResult.getResource().getAttributes());
+  }
 
-    // Validate snapshot access
-    ResourceApi ownerResourceApi = ClientTestUtils.getResourceClient(testUser, server);
+  private void testValidateReference(TestUserSpecification owner) throws Exception {
+    ResourceApi ownerResourceApi = ClientTestUtils.getResourceClient(owner, server);
     ResourceApi partialAccessResourceApi =
         ClientTestUtils.getResourceClient(partialAccessUser, server);
     assertTrue(ownerResourceApi.checkReferenceAccess(getWorkspaceId(), snapshotResourceId));
     // Partial-access user cannot access snapshot 1. They can access the second snapshot.
     assertFalse(
         partialAccessResourceApi.checkReferenceAccess(getWorkspaceId(), snapshotResourceId));
-
-    // Update reference
-    testUpdateReference(referencedGcpResourceApi);
-
-    // Delete the reference
-    referencedGcpResourceApi.deleteDataRepoSnapshotReference(getWorkspaceId(), snapshotResourceId);
-
-    // Enumerating all resources with no filters should be empty
-    ResourceApi resourceApi = ClientTestUtils.getResourceClient(testUser, server);
-    ResourceList enumerateResult =
-        resourceApi.enumerateResources(getWorkspaceId(), 0, 100, null, null);
-    assertTrue(enumerateResult.getResources().isEmpty());
   }
 
   private void testUpdateReference(ReferencedGcpResourceApi ownerApi) throws Exception {
     ReferencedGcpResourceApi partialAccessApi =
-        ClientTestUtils.getReferencedGpcResourceClient(partialAccessUser, server);
+        ClientTestUtils.getReferencedGcpResourceClient(partialAccessUser, server);
     ResourceApi partialAccessResourceApi =
         ClientTestUtils.getResourceClient(partialAccessUser, server);
     // Update snapshot's name and description
