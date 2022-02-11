@@ -19,6 +19,7 @@ import bio.terra.workspace.service.resource.controlled.flight.create.CreateContr
 import bio.terra.workspace.service.resource.controlled.flight.delete.DeleteControlledResourceFlight;
 import bio.terra.workspace.service.resource.controlled.model.AccessScopeType;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
+import bio.terra.workspace.service.resource.controlled.model.ControlledResourceFields;
 import bio.terra.workspace.service.resource.controlled.model.ManagedByType;
 import bio.terra.workspace.service.resource.controlled.model.PrivateResourceState;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
@@ -30,7 +31,6 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.Optional;
 import java.util.UUID;
-import javax.annotation.Nullable;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 
@@ -69,24 +69,35 @@ public class ControlledBigQueryDatasetResource extends ControlledResource {
     validate();
   }
 
+  public ControlledBigQueryDatasetResource(
+      ControlledResourceFields common, String datasetName, String projectId) {
+    super(common);
+    this.datasetName = datasetName;
+    this.projectId = projectId;
+    validate();
+  }
+
   public static ControlledBigQueryDatasetResource.Builder builder() {
     return new ControlledBigQueryDatasetResource.Builder();
   }
 
   public Builder toBuilder() {
-    return new Builder()
-        .workspaceId(getWorkspaceId())
-        .resourceId(getResourceId())
-        .name(getName())
-        .description(getDescription())
-        .cloningInstructions(getCloningInstructions())
-        .assignedUser(getAssignedUser().orElse(null))
-        .privateResourceState(getPrivateResourceState().orElse(null))
-        .accessScope(getAccessScope())
-        .managedBy(getManagedBy())
-        .applicationId(getApplicationId())
-        .datasetName(getDatasetName())
-        .projectId(projectId);
+    ControlledResourceFields common =
+        new ControlledResourceFields()
+            .workspaceId(getWorkspaceId())
+            .resourceId(getResourceId())
+            .name(getName())
+            .description(getDescription())
+            .cloningInstructions(getCloningInstructions())
+            .assignedUser(getAssignedUser().orElse(null))
+            .accessScope(getAccessScope())
+            .privateResourceState(getPrivateResourceState().orElse(null))
+            .managedBy(getManagedBy())
+            .applicationId(getApplicationId());
+
+    Builder builder = new Builder();
+    builder.datasetName(getDatasetName()).projectId(projectId).common(common);
+    return builder;
   }
 
   /** {@inheritDoc} */
@@ -233,44 +244,17 @@ public class ControlledBigQueryDatasetResource extends ControlledResource {
   }
 
   public static class Builder {
-    private UUID workspaceId;
-    private UUID resourceId;
-    private String name;
-    private String description;
-    private CloningInstructions cloningInstructions;
-    private String assignedUser;
-    // Default value is NOT_APPLICABLE for shared resources and INITIALIZING for private resources.
-    @Nullable private PrivateResourceState privateResourceState;
-    private AccessScopeType accessScope;
-    private ManagedByType managedBy;
-    private UUID applicationId;
+    private ControlledResourceFields common;
     private String datasetName;
     private String projectId;
 
-    public ControlledBigQueryDatasetResource.Builder workspaceId(UUID workspaceId) {
-      this.workspaceId = workspaceId;
+    public ControlledBigQueryDatasetResource.Builder common(ControlledResourceFields common) {
+      this.common = common;
       return this;
     }
 
-    public ControlledBigQueryDatasetResource.Builder resourceId(UUID resourceId) {
-      this.resourceId = resourceId;
-      return this;
-    }
-
-    public ControlledBigQueryDatasetResource.Builder name(String name) {
-      this.name = name;
-      return this;
-    }
-
-    public ControlledBigQueryDatasetResource.Builder description(String description) {
-      this.description = description;
-      return this;
-    }
-
-    public ControlledBigQueryDatasetResource.Builder cloningInstructions(
-        CloningInstructions cloningInstructions) {
-      this.cloningInstructions = cloningInstructions;
-      return this;
+    public ControlledResourceFields getCommon() {
+      return common;
     }
 
     public ControlledBigQueryDatasetResource.Builder datasetName(String datasetName) {
@@ -291,51 +275,8 @@ public class ControlledBigQueryDatasetResource extends ControlledResource {
       return this;
     }
 
-    public Builder assignedUser(String assignedUser) {
-      this.assignedUser = assignedUser;
-      return this;
-    }
-
-    public Builder privateResourceState(PrivateResourceState privateResourceState) {
-      this.privateResourceState = privateResourceState;
-      return this;
-    }
-
-    private PrivateResourceState defaultPrivateResourceState() {
-      return this.accessScope == AccessScopeType.ACCESS_SCOPE_PRIVATE
-          ? PrivateResourceState.INITIALIZING
-          : PrivateResourceState.NOT_APPLICABLE;
-    }
-
-    public Builder accessScope(AccessScopeType accessScope) {
-      this.accessScope = accessScope;
-      return this;
-    }
-
-    public Builder managedBy(ManagedByType managedBy) {
-      this.managedBy = managedBy;
-      return this;
-    }
-
-    public Builder applicationId(UUID applicationId) {
-      this.applicationId = applicationId;
-      return this;
-    }
-
     public ControlledBigQueryDatasetResource build() {
-      return new ControlledBigQueryDatasetResource(
-          workspaceId,
-          resourceId,
-          name,
-          description,
-          cloningInstructions,
-          assignedUser,
-          Optional.ofNullable(privateResourceState).orElse(defaultPrivateResourceState()),
-          accessScope,
-          managedBy,
-          applicationId,
-          datasetName,
-          projectId);
+      return new ControlledBigQueryDatasetResource(common, datasetName, projectId);
     }
   }
 }

@@ -9,6 +9,7 @@ import bio.terra.workspace.generated.model.ApiCloneControlledGcpGcsBucketRequest
 import bio.terra.workspace.generated.model.ApiCloneControlledGcpGcsBucketResult;
 import bio.terra.workspace.generated.model.ApiClonedControlledGcpBigQueryDataset;
 import bio.terra.workspace.generated.model.ApiClonedControlledGcpGcsBucket;
+import bio.terra.workspace.generated.model.ApiControlledResourceCommonFields;
 import bio.terra.workspace.generated.model.ApiCreateControlledGcpAiNotebookInstanceRequestBody;
 import bio.terra.workspace.generated.model.ApiCreateControlledGcpBigQueryDatasetRequestBody;
 import bio.terra.workspace.generated.model.ApiCreateControlledGcpGcsBucketRequestBody;
@@ -39,6 +40,7 @@ import bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.Contr
 import bio.terra.workspace.service.resource.controlled.exception.InvalidControlledResourceException;
 import bio.terra.workspace.service.resource.controlled.model.AccessScopeType;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
+import bio.terra.workspace.service.resource.controlled.model.ControlledResourceFields;
 import bio.terra.workspace.service.resource.controlled.model.ManagedByType;
 import bio.terra.workspace.service.resource.controlled.model.PrivateUserRole;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
@@ -271,44 +273,56 @@ public class ControlledGcpResourceApiController implements ControlledGcpResource
     return new ResponseEntity<>(updatedResource.toApiResource(), HttpStatus.OK);
   }
 
+  public ControlledResourceFields toCommonFields(
+      UUID workspaceId,
+      ApiControlledResourceCommonFields apiCommonFields,
+      AuthenticatedUserRequest userRequest) {
+
+    ManagedByType managedBy = ManagedByType.fromApi(apiCommonFields.getManagedBy());
+    AccessScopeType accessScopeType = AccessScopeType.fromApi(apiCommonFields.getAccessScope());
+    PrivateUserRole privateUserRole =
+        ControllerUtils.computePrivateUserRole(
+            workspaceId, apiCommonFields, userRequest, samService);
+
+    return new ControlledResourceFields()
+        .workspaceId(workspaceId)
+        .resourceId(UUID.randomUUID())
+        .name(apiCommonFields.getName())
+        .description(apiCommonFields.getDescription())
+        .cloningInstructions(
+            CloningInstructions.fromApiModel(apiCommonFields.getCloningInstructions()))
+        .iamRole(privateUserRole.getRole())
+        .assignedUser(privateUserRole.getUserEmail())
+        .accessScope(accessScopeType)
+        .managedBy(managedBy)
+        .applicationId(controlledResourceService.getAssociatedApp(managedBy, userRequest));
+  }
+
   @Override
   public ResponseEntity<ApiCreatedControlledGcpBigQueryDataset> createBigQueryDataset(
       UUID workspaceId, ApiCreateControlledGcpBigQueryDatasetRequestBody body) {
     final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
-
-    PrivateUserRole privateUserRole =
-        ControllerUtils.computePrivateUserRole(
-            workspaceId, body.getCommon(), userRequest, samService);
-
-    ManagedByType managedBy = ManagedByType.fromApi(body.getCommon().getManagedBy());
-    AccessScopeType accessScopeType = AccessScopeType.fromApi(body.getCommon().getAccessScope());
+    ControlledResourceFields commonFields =
+        toCommonFields(workspaceId, body.getCommon(), userRequest);
 
     // We need to retrieve the project id so it can be used in the BQ dataset attributes.
     String projectId = workspaceService.getAuthorizedRequiredGcpProject(workspaceId, userRequest);
 
     ControlledBigQueryDatasetResource resource =
         ControlledBigQueryDatasetResource.builder()
-            .workspaceId(workspaceId)
-            .resourceId(UUID.randomUUID())
-            .name(body.getCommon().getName())
-            .description(body.getCommon().getDescription())
-            .cloningInstructions(
-                CloningInstructions.fromApiModel(body.getCommon().getCloningInstructions()))
-            .assignedUser(privateUserRole.getUserEmail())
-            .accessScope(accessScopeType)
-            .managedBy(managedBy)
-            .applicationId(controlledResourceService.getAssociatedApp(managedBy, userRequest))
             .datasetName(
                 Optional.ofNullable(body.getDataset().getDatasetId())
                     .orElse(body.getCommon().getName()))
             .projectId(projectId)
+            .common(commonFields)
             .build();
 
     final ControlledBigQueryDatasetResource createdDataset =
         controlledResourceService
-            .createBigQueryDataset(
-                resource, body.getDataset(), privateUserRole.getRole(), userRequest)
+            .createControlledResourceSync(
+                resource, commonFields.getIamRole(), userRequest, body.getDataset())
             .castByEnum(WsmResourceType.CONTROLLED_GCP_BIG_QUERY_DATASET);
+
     var response =
         new ApiCreatedControlledGcpBigQueryDataset()
             .resourceId(createdDataset.getResourceId())

@@ -543,12 +543,10 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
     ApiGcpBigQueryDatasetCreationParameters creationParameters =
         new ApiGcpBigQueryDatasetCreationParameters().datasetId(datasetId).location(location);
     ControlledBigQueryDatasetResource resource =
-        ControlledResourceFixtures.makeDefaultControlledBigQueryDatasetResource()
-            .workspaceId(workspace.getWorkspaceId())
-            .accessScope(AccessScopeType.ACCESS_SCOPE_SHARED)
-            .managedBy(ManagedByType.MANAGED_BY_USER)
+        ControlledResourceFixtures.makeDefaultControlledBigQueryBuilder(workspace.getWorkspaceId())
             .datasetName(datasetId)
             .build();
+
     ControlledBigQueryDatasetResource createdDataset =
         controlledResourceService.createBigQueryDataset(
             resource, creationParameters, null, user.getAuthenticatedRequest());
@@ -622,10 +620,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
             .defaultTableLifetime(defaultTableLifetimeSec)
             .defaultPartitionLifetime(defaultPartitionLifetimeSec);
     ControlledBigQueryDatasetResource resource =
-        ControlledResourceFixtures.makeDefaultControlledBigQueryDatasetResource()
-            .workspaceId(workspace.getWorkspaceId())
-            .accessScope(AccessScopeType.ACCESS_SCOPE_SHARED)
-            .managedBy(ManagedByType.MANAGED_BY_USER)
+        ControlledResourceFixtures.makeDefaultControlledBigQueryBuilder(workspace.getWorkspaceId())
             .datasetName(datasetId)
             .build();
 
@@ -667,10 +662,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
     ApiGcpBigQueryDatasetCreationParameters creationParameters =
         new ApiGcpBigQueryDatasetCreationParameters().datasetId(datasetId).location(location);
     ControlledBigQueryDatasetResource resource =
-        ControlledResourceFixtures.makeDefaultControlledBigQueryDatasetResource()
-            .workspaceId(workspace.getWorkspaceId())
-            .accessScope(AccessScopeType.ACCESS_SCOPE_SHARED)
-            .managedBy(ManagedByType.MANAGED_BY_USER)
+        ControlledResourceFixtures.makeDefaultControlledBigQueryBuilder(workspace.getWorkspaceId())
             .datasetName(datasetId)
             .build();
 
@@ -718,10 +710,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
     ApiGcpBigQueryDatasetCreationParameters creationParameters =
         new ApiGcpBigQueryDatasetCreationParameters().datasetId(datasetId).location(location);
     ControlledBigQueryDatasetResource resource =
-        ControlledResourceFixtures.makeDefaultControlledBigQueryDatasetResource()
-            .workspaceId(workspace.getWorkspaceId())
-            .accessScope(AccessScopeType.ACCESS_SCOPE_SHARED)
-            .managedBy(ManagedByType.MANAGED_BY_USER)
+        ControlledResourceFixtures.makeDefaultControlledBigQueryBuilder(workspace.getWorkspaceId())
             .datasetName(datasetId)
             .build();
 
@@ -766,10 +755,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
     ApiGcpBigQueryDatasetCreationParameters creationParameters =
         new ApiGcpBigQueryDatasetCreationParameters().datasetId(datasetId).location(location);
     ControlledBigQueryDatasetResource resource =
-        ControlledResourceFixtures.makeDefaultControlledBigQueryDatasetResource()
-            .workspaceId(workspace.getWorkspaceId())
-            .accessScope(AccessScopeType.ACCESS_SCOPE_SHARED)
-            .managedBy(ManagedByType.MANAGED_BY_USER)
+        ControlledResourceFixtures.makeDefaultControlledBigQueryBuilder(workspace.getWorkspaceId())
             .datasetName(datasetId)
             .build();
 
@@ -816,12 +802,10 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
     ApiGcpBigQueryDatasetCreationParameters creationParameters =
         new ApiGcpBigQueryDatasetCreationParameters().datasetId(datasetId).location(location);
     ControlledBigQueryDatasetResource resource =
-        ControlledResourceFixtures.makeDefaultControlledBigQueryDatasetResource()
-            .workspaceId(workspace.getWorkspaceId())
-            .accessScope(AccessScopeType.ACCESS_SCOPE_SHARED)
-            .managedBy(ManagedByType.MANAGED_BY_USER)
+        ControlledResourceFixtures.makeDefaultControlledBigQueryBuilder(workspace.getWorkspaceId())
             .datasetName(datasetId)
             .build();
+
     ControlledBigQueryDatasetResource createdDataset =
         controlledResourceService.createBigQueryDataset(
             resource, creationParameters, null, user.getAuthenticatedRequest());
@@ -883,10 +867,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
             .defaultTableLifetime(initialDefaultTableLifetime)
             .defaultPartitionLifetime(initialDefaultPartitionLifetime);
     ControlledBigQueryDatasetResource resource =
-        ControlledResourceFixtures.makeDefaultControlledBigQueryDatasetResource()
-            .workspaceId(workspace.getWorkspaceId())
-            .accessScope(AccessScopeType.ACCESS_SCOPE_SHARED)
-            .managedBy(ManagedByType.MANAGED_BY_USER)
+        ControlledResourceFixtures.makeDefaultControlledBigQueryBuilder(workspace.getWorkspaceId())
             .datasetName(datasetId)
             .build();
     ControlledBigQueryDatasetResource createdDataset =
@@ -961,10 +942,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
             .defaultTableLifetime(initialDefaultTableLifetime)
             .defaultPartitionLifetime(initialDefaultPartitionLifetime);
     ControlledBigQueryDatasetResource resource =
-        ControlledResourceFixtures.makeDefaultControlledBigQueryDatasetResource()
-            .workspaceId(workspace.getWorkspaceId())
-            .accessScope(AccessScopeType.ACCESS_SCOPE_SHARED)
-            .managedBy(ManagedByType.MANAGED_BY_USER)
+        ControlledResourceFixtures.makeDefaultControlledBigQueryBuilder(workspace.getWorkspaceId())
             .datasetName(datasetId)
             .build();
     ControlledBigQueryDatasetResource createdDataset =
@@ -1028,12 +1006,10 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
     ApiGcpBigQueryDatasetCreationParameters creationParameters =
         new ApiGcpBigQueryDatasetCreationParameters().datasetId(datasetId).location(location);
     ControlledBigQueryDatasetResource resource =
-        ControlledResourceFixtures.makeDefaultControlledBigQueryDatasetResource()
-            .workspaceId(workspace.getWorkspaceId())
-            .accessScope(AccessScopeType.ACCESS_SCOPE_SHARED)
-            .managedBy(ManagedByType.MANAGED_BY_USER)
+        ControlledResourceFixtures.makeDefaultControlledBigQueryBuilder(workspace.getWorkspaceId())
             .datasetName(datasetId)
             .build();
+
     ControlledBigQueryDatasetResource createdDataset =
         controlledResourceService.createBigQueryDataset(
             resource, creationParameters, null, user.getAuthenticatedRequest());

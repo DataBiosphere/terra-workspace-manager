@@ -27,6 +27,7 @@ import bio.terra.workspace.service.job.JobService.AsyncJobResult;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceService;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.bqdataset.ControlledBigQueryDatasetResource;
 import bio.terra.workspace.service.resource.controlled.model.AccessScopeType;
+import bio.terra.workspace.service.resource.controlled.model.ControlledResourceFields;
 import bio.terra.workspace.service.resource.controlled.model.ManagedByType;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.spendprofile.SpendConnectedTestUtils;
@@ -190,13 +191,15 @@ public class RemoveUserFromWorkspaceFlightTest extends BaseConnectedTest {
       UUID workspaceId, String datasetName, String projectId) {
     ControlledBigQueryDatasetResource datasetToCreate =
         ControlledBigQueryDatasetResource.builder()
-            .workspaceId(workspaceId)
-            .resourceId(UUID.randomUUID())
-            .name(datasetName)
-            .cloningInstructions(CloningInstructions.COPY_NOTHING)
-            .assignedUser(userAccessUtils.getSecondUserEmail())
-            .accessScope(AccessScopeType.ACCESS_SCOPE_PRIVATE)
-            .managedBy(ManagedByType.MANAGED_BY_USER)
+            .common(
+                new ControlledResourceFields()
+                    .workspaceId(workspaceId)
+                    .resourceId(UUID.randomUUID())
+                    .name(datasetName)
+                    .cloningInstructions(CloningInstructions.COPY_NOTHING)
+                    .assignedUser(userAccessUtils.getSecondUserEmail())
+                    .accessScope(AccessScopeType.ACCESS_SCOPE_PRIVATE)
+                    .managedBy(ManagedByType.MANAGED_BY_USER))
             .datasetName(datasetName)
             .projectId(projectId)
             .build();

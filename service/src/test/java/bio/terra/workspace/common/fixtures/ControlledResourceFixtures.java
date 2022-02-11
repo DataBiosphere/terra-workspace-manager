@@ -1,9 +1,9 @@
 package bio.terra.workspace.common.fixtures;
 
-import bio.terra.workspace.generated.model.*;
 import bio.terra.workspace.generated.model.ApiAzureDiskCreationParameters;
 import bio.terra.workspace.generated.model.ApiAzureIpCreationParameters;
 import bio.terra.workspace.generated.model.ApiAzureNetworkCreationParameters;
+import bio.terra.workspace.generated.model.ApiAzureStorageCreationParameters;
 import bio.terra.workspace.generated.model.ApiAzureVmCreationParameters;
 import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceCreationParameters;
 import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceVmImage;
@@ -24,8 +24,10 @@ import bio.terra.workspace.service.resource.controlled.cloud.azure.storage.Contr
 import bio.terra.workspace.service.resource.controlled.cloud.azure.vm.ControlledAzureVmResource;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook.ControlledAiNotebookInstanceResource;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.bqdataset.ControlledBigQueryDatasetResource;
+import bio.terra.workspace.service.resource.controlled.cloud.gcp.bqdataset.ControlledBigQueryDatasetResource.Builder;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.ControlledGcsBucketResource;
 import bio.terra.workspace.service.resource.controlled.model.AccessScopeType;
+import bio.terra.workspace.service.resource.controlled.model.ControlledResourceFields;
 import bio.terra.workspace.service.resource.controlled.model.ManagedByType;
 import bio.terra.workspace.service.resource.controlled.model.PrivateResourceState;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
@@ -43,7 +45,9 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
+import javax.annotation.Nullable;
 
 /** A series of static objects useful for testing controlled resources. */
 public class ControlledResourceFixtures {
@@ -314,25 +318,34 @@ public class ControlledResourceFixtures {
   }
 
   /**
-   * Returns a {@link ControlledBigQueryDatasetResource.Builder} that is ready to be built.
-   *
-   * <p>Tests should not rely on any particular value for the fields returned by this function and
-   * instead override the values that they care about.
+   * Returns a {@link ControlledResourceFields} that is ready to be includeded in a controlled
+   * resource builder.
    */
-  public static ControlledBigQueryDatasetResource.Builder
-      makeDefaultControlledBigQueryDatasetResource() {
-    UUID resourceId = UUID.randomUUID();
-    return new ControlledBigQueryDatasetResource.Builder()
-        .workspaceId(UUID.randomUUID())
-        .resourceId(resourceId)
+  public static ControlledResourceFields makeDefaultControlledResourceFields(
+      @Nullable UUID inWorkspaceId) {
+    UUID workspaceId = Optional.ofNullable(inWorkspaceId).orElse(UUID.randomUUID());
+    return new ControlledResourceFields()
+        .workspaceId(workspaceId)
+        .resourceId(UUID.randomUUID())
         .name(uniqueName("test_dataset").replace("-", "_"))
         .description("how much data could a dataset set if a dataset could set data?")
         .cloningInstructions(CLONING_INSTRUCTIONS)
         .assignedUser(null)
         .accessScope(AccessScopeType.ACCESS_SCOPE_SHARED)
-        .managedBy(ManagedByType.MANAGED_BY_USER)
-        .datasetName("test_dataset")
-        .projectId("my-project-id");
+        .managedBy(ManagedByType.MANAGED_BY_USER);
+  }
+
+  /**
+   * Make a bigquery builder with defaults filled in
+   *
+   * @return resource builder
+   */
+  public static ControlledBigQueryDatasetResource.Builder makeDefaultControlledBigQueryBuilder(
+      @Nullable UUID workspaceId) {
+    return new Builder()
+        .common(makeDefaultControlledResourceFields(workspaceId))
+        .projectId("my_project")
+        .datasetName("my_dataset");
   }
 
   public static final ApiGcpBigQueryDatasetUpdateParameters BQ_DATASET_UPDATE_PARAMETERS_NEW =

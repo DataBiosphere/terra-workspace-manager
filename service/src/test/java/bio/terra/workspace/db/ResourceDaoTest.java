@@ -69,9 +69,7 @@ public class ResourceDaoTest extends BaseUnitTest {
   public void createGetDeleteControlledBigQueryDataset() {
     UUID workspaceId = createGcpWorkspace();
     ControlledBigQueryDatasetResource resource =
-        ControlledResourceFixtures.makeDefaultControlledBigQueryDatasetResource()
-            .workspaceId(workspaceId)
-            .build();
+        ControlledResourceFixtures.makeDefaultControlledBigQueryBuilder(workspaceId).build();
     resourceDao.createControlledResource(resource);
 
     assertEquals(
@@ -100,9 +98,7 @@ public class ResourceDaoTest extends BaseUnitTest {
             .workspaceId(workspaceId)
             .build();
     ControlledBigQueryDatasetResource dataset =
-        ControlledResourceFixtures.makeDefaultControlledBigQueryDatasetResource()
-            .workspaceId(workspaceId)
-            .build();
+        ControlledResourceFixtures.makeDefaultControlledBigQueryBuilder(workspaceId).build();
     resourceDao.createControlledResource(bucket);
     resourceDao.createControlledResource(dataset);
 
@@ -240,29 +236,30 @@ public class ResourceDaoTest extends BaseUnitTest {
     String datasetName1 = "dataset1";
     final UUID workspaceId1 = createGcpWorkspace();
     final ControlledBigQueryDatasetResource initialResource =
-        ControlledResourceFixtures.makeDefaultControlledBigQueryDatasetResource()
-            .workspaceId(workspaceId1)
+        ControlledResourceFixtures.makeDefaultControlledBigQueryBuilder(workspaceId1)
+            .common(ControlledResourceFixtures.makeDefaultControlledResourceFields(workspaceId1))
             .datasetName(datasetName1)
             .build();
-
     resourceDao.createControlledResource(initialResource);
 
     final UUID workspaceId2 = createGcpWorkspace();
     // This is in a different workspace (and so a different cloud context), so it is not a conflict
     // even with the same Dataset ID.
     final ControlledBigQueryDatasetResource uniqueResource =
-        ControlledResourceFixtures.makeDefaultControlledBigQueryDatasetResource()
-            .workspaceId(workspaceId2)
-            .name("uniqueResourceName")
+        ControlledResourceFixtures.makeDefaultControlledBigQueryBuilder(workspaceId1)
+            .common(
+                ControlledResourceFixtures.makeDefaultControlledResourceFields(workspaceId2)
+                    .name("uniqueResourcename"))
             .datasetName(datasetName1)
             .build();
     resourceDao.createControlledResource(uniqueResource);
 
     // This is in the same workspace as initialResource, so it should be a conflict.
     final ControlledBigQueryDatasetResource duplicatingResource =
-        ControlledResourceFixtures.makeDefaultControlledBigQueryDatasetResource()
-            .workspaceId(workspaceId1)
-            .name("differentResourceName")
+        ControlledResourceFixtures.makeDefaultControlledBigQueryBuilder(workspaceId1)
+            .common(
+                ControlledResourceFixtures.makeDefaultControlledResourceFields(workspaceId1)
+                    .name("differentResourceName"))
             .datasetName(datasetName1)
             .build();
 

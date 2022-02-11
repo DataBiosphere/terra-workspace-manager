@@ -62,6 +62,20 @@ public abstract class ControlledResource extends WsmResource {
     this.privateResourceState = dbResource.getPrivateResourceState().orElse(null);
   }
 
+  public ControlledResource(ControlledResourceFields builder) {
+    super(
+        builder.getWorkspaceId(),
+        builder.getResourceId(),
+        builder.getName(),
+        builder.getDescription(),
+        builder.getCloningInstructions());
+    this.assignedUser = builder.getAssignedUser();
+    this.accessScope = builder.getAccessScope();
+    this.managedBy = builder.getManagedBy();
+    this.applicationId = builder.getApplicationId();
+    this.privateResourceState = builder.getPrivateResourceState();
+  }
+
   /**
    * The ResourceDao calls this method for controlled parameters. The return value describes
    * filtering the DAO should do to verify the uniqueness of the resource. If the return is not

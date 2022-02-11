@@ -314,6 +314,18 @@ public class ControlledResourceService {
     return jobBuilder.submit();
   }
 
+  public <T> ControlledResource createControlledResourceSync(
+      ControlledResource resource,
+      ControlledResourceIamRole privateResourceIamRole,
+      AuthenticatedUserRequest userRequest,
+      T creationParameters) {
+
+    JobBuilder jobBuilder =
+        commonCreationJobBuilder(resource, privateResourceIamRole, userRequest)
+            .addParameter(ControlledResourceKeys.CREATION_PARAMETERS, creationParameters);
+    return jobBuilder.submitAndWait(ControlledResource.class);
+  }
+
   /**
    * Starts a job to create controlled BigQuery dataset resource, blocking until its job is
    * finished.
