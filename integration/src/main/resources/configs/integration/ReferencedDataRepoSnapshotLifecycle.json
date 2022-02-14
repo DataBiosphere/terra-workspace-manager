@@ -1,0 +1,23 @@
+{
+  "name": "ReferencedDataRepoSnapshotLifecycle",
+  "description": "CRUD TDR snapshot reference operations",
+  "serverSpecificationFile": "workspace-local.json",
+  "kubernetes": {},
+  "application": {},
+  "testScripts": [
+    {
+      "name": "ReferencedDataRepoSnapshotLifecycle",
+      "numberOfUserJourneyThreadsToRun": 1,
+      "userJourneyThreadPoolSize": 1,
+      "expectedTimeForEach": 5,
+      "expectedTimeForEachUnit": "MINUTES",
+      "parameters": {
+        "spend-profile-id": "wm-default-spend-profile",
+        "data-repo-instance": "terra",
+        "snapshot-id": "97b5559a-2f8f-4df3-89ae-5a249173ee0c",
+        "snapshot-id-2": "de189c9b-ef96-4ade-9970-5829056083e3"
+      }
+    }
+  ],
+  "testUserFiles": ["bella.json", "elijah.json"]
+}

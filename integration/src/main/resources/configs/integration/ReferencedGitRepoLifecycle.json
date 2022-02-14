@@ -1,20 +1,21 @@
 {
-  "name": "EnumerateResources",
-  "description": "Exercise enumeration over all resource types",
+  "name": "ReferencedGitRepoLifecycle",
+  "description": "CRUD git repo reference operations",
   "serverSpecificationFile": "workspace-local.json",
   "kubernetes": {},
   "application": {},
   "testScripts": [
     {
-      "name": "EnumerateResources",
+      "name": "ReferencedGitRepoLifecycle",
       "numberOfUserJourneyThreadsToRun": 1,
       "userJourneyThreadPoolSize": 1,
       "expectedTimeForEach": 5,
       "expectedTimeForEachUnit": "MINUTES",
       "parameters": {
-        "spend-profile-id": "wm-default-spend-profile"
+        "spend-profile-id": "wm-default-spend-profile",
+        "git-repo": "git@github.com:DataBiosphere/terra-workspace-manager.git"
       }
     }
   ],
-  "testUserFiles": ["bella.json", "liam.json"]
+  "testUserFiles": ["bella.json"]
 }

@@ -182,7 +182,7 @@ public class ClientTestUtils {
     return new ControlledAzureResourceApi();
   }
 
-  public static ReferencedGcpResourceApi getReferencedGpcResourceClient(
+  public static ReferencedGcpResourceApi getReferencedGcpResourceClient(
       TestUserSpecification testUser, ServerSpecification server) throws IOException {
     final ApiClient apiClient = getClientForTestUser(testUser, server);
     return new ReferencedGcpResourceApi(apiClient);

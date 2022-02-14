@@ -13,6 +13,9 @@ import bio.terra.workspace.model.ReferenceTypeEnum;
 import org.apache.http.HttpStatus;
 import scripts.utils.DataRepoTestScriptBase;
 
+// TODO(PF-404): Once we remove the old data reference APIs which only supported TDR snapshots,
+//   this test should be deleted. The equivalent functionality in the new endpoints is already
+//   tested elsewhere.
 public class DataReferenceLifecycle extends DataRepoTestScriptBase {
 
   @Override

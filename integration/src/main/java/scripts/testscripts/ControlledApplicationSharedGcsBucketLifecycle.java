@@ -9,6 +9,7 @@ import static scripts.utils.ClientTestUtils.TEST_WSM_APP;
 
 import bio.terra.testrunner.runner.config.TestUserSpecification;
 import bio.terra.workspace.api.ControlledGcpResourceApi;
+import bio.terra.workspace.api.ResourceApi;
 import bio.terra.workspace.api.WorkspaceApi;
 import bio.terra.workspace.api.WorkspaceApplicationApi;
 import bio.terra.workspace.client.ApiClient;
@@ -19,6 +20,9 @@ import bio.terra.workspace.model.ControlledResourceIamRole;
 import bio.terra.workspace.model.CreatedControlledGcpGcsBucket;
 import bio.terra.workspace.model.GrantRoleRequestBody;
 import bio.terra.workspace.model.IamRole;
+import bio.terra.workspace.model.ResourceList;
+import bio.terra.workspace.model.ResourceType;
+import bio.terra.workspace.model.StewardshipType;
 import bio.terra.workspace.model.WorkspaceApplicationDescription;
 import bio.terra.workspace.model.WorkspaceApplicationState;
 import com.google.api.client.http.HttpStatusCodes;
@@ -30,6 +34,7 @@ import scripts.utils.ClientTestUtils;
 import scripts.utils.CloudContextMaker;
 import scripts.utils.GcsBucketAccessTester;
 import scripts.utils.GcsBucketUtils;
+import scripts.utils.MultiResourcesUtils;
 import scripts.utils.WorkspaceAllocateTestScriptBase;
 
 public class ControlledApplicationSharedGcsBucketLifecycle extends WorkspaceAllocateTestScriptBase {
@@ -135,6 +140,14 @@ public class ControlledApplicationSharedGcsBucketLifecycle extends WorkspaceAllo
       tester.checkAccess(writer, ControlledResourceIamRole.WRITER);
       tester.checkAccess(reader, ControlledResourceIamRole.READER);
     }
+
+    // The reader should be able to enumerate the bucket.
+    ResourceApi readerResourceApi = ClientTestUtils.getResourceClient(reader, server);
+    ResourceList bucketList =
+        readerResourceApi.enumerateResources(
+            getWorkspaceId(), 0, 5, ResourceType.GCS_BUCKET, StewardshipType.CONTROLLED);
+    assertEquals(1, bucketList.getResources().size());
+    MultiResourcesUtils.assertResourceType(ResourceType.GCS_BUCKET, bucketList);
 
     // Owner cannot delete the bucket through WSM
     ControlledGcpResourceApi ownerResourceApi = new ControlledGcpResourceApi(ownerApiClient);

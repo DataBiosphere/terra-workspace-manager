@@ -9,6 +9,7 @@ import static scripts.utils.GcsBucketUtils.makeControlledGcsBucketUserPrivate;
 
 import bio.terra.testrunner.runner.config.TestUserSpecification;
 import bio.terra.workspace.api.ControlledGcpResourceApi;
+import bio.terra.workspace.api.ResourceApi;
 import bio.terra.workspace.api.WorkspaceApi;
 import bio.terra.workspace.client.ApiException;
 import bio.terra.workspace.model.AccessScope;
@@ -24,6 +25,9 @@ import bio.terra.workspace.model.JobControl;
 import bio.terra.workspace.model.ManagedBy;
 import bio.terra.workspace.model.PrivateResourceIamRoles;
 import bio.terra.workspace.model.PrivateResourceUser;
+import bio.terra.workspace.model.ResourceList;
+import bio.terra.workspace.model.ResourceType;
+import bio.terra.workspace.model.StewardshipType;
 import com.google.api.client.http.HttpStatusCodes;
 import com.google.cloud.storage.Bucket;
 import com.google.cloud.storage.Storage;
@@ -36,6 +40,7 @@ import scripts.utils.ClientTestUtils;
 import scripts.utils.CloudContextMaker;
 import scripts.utils.GcsBucketAccessTester;
 import scripts.utils.GcsBucketUtils;
+import scripts.utils.MultiResourcesUtils;
 import scripts.utils.WorkspaceAllocateTestScriptBase;
 
 public class PrivateControlledGcsBucketLifecycle extends WorkspaceAllocateTestScriptBase {
@@ -119,6 +124,15 @@ public class PrivateControlledGcsBucketLifecycle extends WorkspaceAllocateTestSc
       tester.checkAccess(testUser, null);
       tester.checkAccess(workspaceReader, null);
     }
+
+    // Any workspace user should be able to enumerate all buckets, even though they can't access
+    // their contents.
+    ResourceApi readerApi = ClientTestUtils.getResourceClient(workspaceReader, server);
+    ResourceList bucketList =
+        readerApi.enumerateResources(
+            getWorkspaceId(), 0, 5, ResourceType.GCS_BUCKET, StewardshipType.CONTROLLED);
+    assertEquals(1, bucketList.getResources().size());
+    MultiResourcesUtils.assertResourceType(ResourceType.GCS_BUCKET, bucketList);
 
     // Workspace owner has DELETER role and can delete the bucket through WSM
     var ownerDeleteResult = deleteBucket(workspaceOwnerResourceApi, resourceId);

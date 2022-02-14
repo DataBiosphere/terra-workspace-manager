@@ -12,8 +12,7 @@
       "expectedTimeForEach": 5,
       "expectedTimeForEachUnit": "MINUTES",
       "parameters": {
-        "spend-profile-id": "wm-default-spend-profile",
-        "bq-table": "projects/terra-kernel-k8s/datasets/terra_wsm_test_dataset/tables/terra wsm test data table"
+        "spend-profile-id": "wm-default-spend-profile"
       }
     }
   ],
