@@ -10,6 +10,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import bio.terra.workspace.common.BaseUnitTest;
 import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
+import bio.terra.workspace.common.fixtures.WorkspaceFixtures;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook.ControlledAiNotebookInstanceResource;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.bqdataset.ControlledBigQueryDatasetResource;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.ControlledGcsBucketResource;
@@ -17,7 +18,6 @@ import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import bio.terra.workspace.service.resource.exception.DuplicateResourceException;
 import bio.terra.workspace.service.workspace.GcpCloudContextService;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
-import bio.terra.workspace.service.workspace.model.GcpCloudContext;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
 import java.util.List;
@@ -44,10 +44,8 @@ public class ResourceDaoTest extends BaseUnitTest {
             .workspaceStage(WorkspaceStage.MC_WORKSPACE)
             .build();
     workspaceDao.createWorkspace(workspace);
-    gcpCloudContextService.createGcpCloudContext(
-        workspace.getWorkspaceId(),
-        new GcpCloudContext("my-project-id"),
-        "flight-creategcpworkspace");
+    WorkspaceFixtures.createGcpCloudContext(
+        workspaceDao, workspace.getWorkspaceId(), "my-project-id");
     return workspace.getWorkspaceId();
   }
 
@@ -55,9 +53,7 @@ public class ResourceDaoTest extends BaseUnitTest {
   public void createGetControlledGcsBucket() {
     UUID workspaceId = createGcpWorkspace();
     ControlledGcsBucketResource resource =
-        ControlledResourceFixtures.makeDefaultControlledGcsBucketResource()
-            .workspaceId(workspaceId)
-            .build();
+        ControlledResourceFixtures.makeDefaultControlledGcsBucketBuilder(workspaceId).build();
     resourceDao.createControlledResource(resource);
 
     assertEquals(
@@ -94,9 +90,7 @@ public class ResourceDaoTest extends BaseUnitTest {
   public void listAndDeleteControlledResourceInContext() {
     UUID workspaceId = createGcpWorkspace();
     ControlledGcsBucketResource bucket =
-        ControlledResourceFixtures.makeDefaultControlledGcsBucketResource()
-            .workspaceId(workspaceId)
-            .build();
+        ControlledResourceFixtures.makeDefaultControlledGcsBucketBuilder(workspaceId).build();
     ControlledBigQueryDatasetResource dataset =
         ControlledResourceFixtures.makeDefaultControlledBigQueryBuilder(workspaceId).build();
     resourceDao.createControlledResource(bucket);
@@ -124,8 +118,7 @@ public class ResourceDaoTest extends BaseUnitTest {
     final String clashingBucketName = "not-a-pail";
     final UUID workspaceId1 = createGcpWorkspace();
     final ControlledGcsBucketResource initialResource =
-        ControlledResourceFixtures.makeDefaultControlledGcsBucketResource()
-            .workspaceId(workspaceId1)
+        ControlledResourceFixtures.makeDefaultControlledGcsBucketBuilder(workspaceId1)
             .bucketName(clashingBucketName)
             .build();
 
@@ -133,9 +126,7 @@ public class ResourceDaoTest extends BaseUnitTest {
 
     final UUID workspaceId2 = createGcpWorkspace();
     final ControlledGcsBucketResource duplicatingResource =
-        ControlledResourceFixtures.makeDefaultControlledGcsBucketResource()
-            .workspaceId(workspaceId2)
-            .name("another-bucket-resource")
+        ControlledResourceFixtures.makeDefaultControlledGcsBucketBuilder(workspaceId2)
             .bucketName(clashingBucketName)
             .build();
 
@@ -234,10 +225,13 @@ public class ResourceDaoTest extends BaseUnitTest {
   @Test
   public void duplicateBigQueryDatasetRejected() {
     String datasetName1 = "dataset1";
+    String projectId1 = "projectId1";
+    String projectId2 = "projectId2";
     final UUID workspaceId1 = createGcpWorkspace();
     final ControlledBigQueryDatasetResource initialResource =
-        ControlledResourceFixtures.makeDefaultControlledBigQueryBuilder(workspaceId1)
+        ControlledBigQueryDatasetResource.builder()
             .common(ControlledResourceFixtures.makeDefaultControlledResourceFields(workspaceId1))
+            .projectId(projectId1)
             .datasetName(datasetName1)
             .build();
     resourceDao.createControlledResource(initialResource);
@@ -246,20 +240,18 @@ public class ResourceDaoTest extends BaseUnitTest {
     // This is in a different workspace (and so a different cloud context), so it is not a conflict
     // even with the same Dataset ID.
     final ControlledBigQueryDatasetResource uniqueResource =
-        ControlledResourceFixtures.makeDefaultControlledBigQueryBuilder(workspaceId1)
-            .common(
-                ControlledResourceFixtures.makeDefaultControlledResourceFields(workspaceId2)
-                    .name("uniqueResourcename"))
+        ControlledBigQueryDatasetResource.builder()
+            .common(ControlledResourceFixtures.makeDefaultControlledResourceFields(workspaceId2))
             .datasetName(datasetName1)
+            .projectId(projectId2)
             .build();
     resourceDao.createControlledResource(uniqueResource);
 
     // This is in the same workspace as initialResource, so it should be a conflict.
     final ControlledBigQueryDatasetResource duplicatingResource =
-        ControlledResourceFixtures.makeDefaultControlledBigQueryBuilder(workspaceId1)
-            .common(
-                ControlledResourceFixtures.makeDefaultControlledResourceFields(workspaceId1)
-                    .name("differentResourceName"))
+        ControlledBigQueryDatasetResource.builder()
+            .common(ControlledResourceFixtures.makeDefaultControlledResourceFields(workspaceId1))
+            .projectId(projectId1)
             .datasetName(datasetName1)
             .build();
 

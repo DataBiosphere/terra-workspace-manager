@@ -14,9 +14,7 @@ import bio.terra.workspace.generated.model.ApiAzureStorageCreationParameters;
 import bio.terra.workspace.generated.model.ApiAzureVmCreationParameters;
 import bio.terra.workspace.generated.model.ApiCloningInstructionsEnum;
 import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceCreationParameters;
-import bio.terra.workspace.generated.model.ApiGcpBigQueryDatasetCreationParameters;
 import bio.terra.workspace.generated.model.ApiGcpBigQueryDatasetUpdateParameters;
-import bio.terra.workspace.generated.model.ApiGcpGcsBucketCreationParameters;
 import bio.terra.workspace.generated.model.ApiGcpGcsBucketUpdateParameters;
 import bio.terra.workspace.generated.model.ApiJobControl;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
@@ -199,18 +197,6 @@ public class ControlledResourceService {
     return jobId;
   }
 
-  /** Starts a create controlled bucket resource, blocking until its job is finished. */
-  public ControlledGcsBucketResource createBucket(
-      ControlledGcsBucketResource resource,
-      ApiGcpGcsBucketCreationParameters creationParameters,
-      ControlledResourceIamRole privateResourceIamRole,
-      AuthenticatedUserRequest userRequest) {
-    JobBuilder jobBuilder =
-        commonCreationJobBuilder(resource, privateResourceIamRole, userRequest)
-            .addParameter(ControlledResourceKeys.CREATION_PARAMETERS, creationParameters);
-    return jobBuilder.submitAndWait(ControlledGcsBucketResource.class);
-  }
-
   public ControlledGcsBucketResource updateGcsBucket(
       ControlledGcsBucketResource resource,
       @Nullable ApiGcpGcsBucketUpdateParameters updateParameters,
@@ -324,22 +310,6 @@ public class ControlledResourceService {
         commonCreationJobBuilder(resource, privateResourceIamRole, userRequest)
             .addParameter(ControlledResourceKeys.CREATION_PARAMETERS, creationParameters);
     return jobBuilder.submitAndWait(ControlledResource.class);
-  }
-
-  /**
-   * Starts a job to create controlled BigQuery dataset resource, blocking until its job is
-   * finished.
-   */
-  public ControlledBigQueryDatasetResource createBigQueryDataset(
-      ControlledBigQueryDatasetResource resource,
-      ApiGcpBigQueryDatasetCreationParameters creationParameters,
-      ControlledResourceIamRole privateResourceIamRole,
-      AuthenticatedUserRequest userRequest) {
-
-    JobBuilder jobBuilder =
-        commonCreationJobBuilder(resource, privateResourceIamRole, userRequest)
-            .addParameter(ControlledResourceKeys.CREATION_PARAMETERS, creationParameters);
-    return jobBuilder.submitAndWait(ControlledBigQueryDatasetResource.class);
   }
 
   /** Starts an update controlled BigQuery dataset resource, blocking until its job is finished. */

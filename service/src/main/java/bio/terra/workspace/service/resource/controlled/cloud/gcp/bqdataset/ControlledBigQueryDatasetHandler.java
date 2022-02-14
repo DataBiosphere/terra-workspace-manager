@@ -48,18 +48,7 @@ public class ControlledBigQueryDatasetHandler implements WsmResourceHandler {
         ControlledBigQueryDatasetResource.builder()
             .datasetName(attributes.getDatasetName())
             .projectId(projectId)
-            .common(
-                new ControlledResourceFields()
-                    .workspaceId(dbResource.getWorkspaceId())
-                    .resourceId(dbResource.getResourceId())
-                    .name(dbResource.getName().orElse(null))
-                    .description(dbResource.getDescription().orElse(null))
-                    .cloningInstructions(dbResource.getCloningInstructions())
-                    .assignedUser(dbResource.getAssignedUser().orElse(null))
-                    .privateResourceState(dbResource.getPrivateResourceState().orElse(null))
-                    .accessScope(dbResource.getAccessScope().orElse(null))
-                    .managedBy(dbResource.getManagedBy().orElse(null))
-                    .applicationId(dbResource.getApplicationId().orElse(null)))
+            .common(new ControlledResourceFields(dbResource))
             .build();
     resource.validate();
     return resource;

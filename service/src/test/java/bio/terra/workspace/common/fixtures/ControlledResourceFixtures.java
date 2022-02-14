@@ -45,7 +45,6 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 import javax.annotation.Nullable;
 
@@ -297,35 +296,10 @@ public class ControlledResourceFixtures {
 
   private ControlledResourceFixtures() {}
 
-  /**
-   * Returns a {@link ControlledGcsBucketResource.Builder} that is ready to be built.
-   *
-   * <p>Tests should not rely on any particular value for the fields returned by this function and
-   * instead override the values that they care about.
-   */
-  public static ControlledGcsBucketResource.Builder makeDefaultControlledGcsBucketResource() {
-    UUID resourceId = UUID.randomUUID();
-    return new ControlledGcsBucketResource.Builder()
+  /** Returns a {@link ControlledResourceFields.Builder} with the fields filled in */
+  public static ControlledResourceFields.Builder makeDefaultControlledResourceFieldsBuilder() {
+    return ControlledResourceFields.builder()
         .workspaceId(UUID.randomUUID())
-        .resourceId(resourceId)
-        .name("testgcs-" + resourceId)
-        .description(RESOURCE_DESCRIPTION)
-        .cloningInstructions(CLONING_INSTRUCTIONS)
-        .assignedUser(null)
-        .accessScope(AccessScopeType.ACCESS_SCOPE_SHARED)
-        .managedBy(ManagedByType.MANAGED_BY_USER)
-        .bucketName(uniqueBucketName());
-  }
-
-  /**
-   * Returns a {@link ControlledResourceFields} that is ready to be includeded in a controlled
-   * resource builder.
-   */
-  public static ControlledResourceFields makeDefaultControlledResourceFields(
-      @Nullable UUID inWorkspaceId) {
-    UUID workspaceId = Optional.ofNullable(inWorkspaceId).orElse(UUID.randomUUID());
-    return new ControlledResourceFields()
-        .workspaceId(workspaceId)
         .resourceId(UUID.randomUUID())
         .name(uniqueName("test_dataset").replace("-", "_"))
         .description("how much data could a dataset set if a dataset could set data?")
@@ -333,6 +307,32 @@ public class ControlledResourceFixtures {
         .assignedUser(null)
         .accessScope(AccessScopeType.ACCESS_SCOPE_SHARED)
         .managedBy(ManagedByType.MANAGED_BY_USER);
+  }
+
+  /**
+   * Returns a {@link ControlledResourceFields} that is ready to be included in a controlled
+   * resource builder.
+   */
+  public static ControlledResourceFields makeDefaultControlledResourceFields(
+      @Nullable UUID inWorkspaceId) {
+    ControlledResourceFields.Builder builder = makeDefaultControlledResourceFieldsBuilder();
+    if (inWorkspaceId != null) {
+      builder.workspaceId(inWorkspaceId);
+    }
+    return builder.build();
+  }
+
+  /**
+   * Returns a {@link ControlledGcsBucketResource.Builder} that is ready to be built.
+   *
+   * <p>Tests should not rely on any particular value for the fields returned by this function and
+   * instead override the values that they care about.
+   */
+  public static ControlledGcsBucketResource.Builder makeDefaultControlledGcsBucketBuilder(
+      @Nullable UUID workspaceId) {
+    return new ControlledGcsBucketResource.Builder()
+        .common(makeDefaultControlledResourceFields(workspaceId))
+        .bucketName(uniqueBucketName());
   }
 
   /**
@@ -345,7 +345,7 @@ public class ControlledResourceFixtures {
     return new Builder()
         .common(makeDefaultControlledResourceFields(workspaceId))
         .projectId("my_project")
-        .datasetName("my_dataset");
+        .datasetName(uniqueDatasetId());
   }
 
   public static final ApiGcpBigQueryDatasetUpdateParameters BQ_DATASET_UPDATE_PARAMETERS_NEW =
@@ -364,6 +364,10 @@ public class ControlledResourceFixtures {
 
   public static String uniqueName(String prefix) {
     return prefix + "-" + UUID.randomUUID().toString();
+  }
+
+  public static String uniqueDatasetId() {
+    return "my_test_dataset_" + (int) (Math.floor(Math.random() * 10000));
   }
 
   /**

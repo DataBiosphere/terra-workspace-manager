@@ -30,6 +30,7 @@ import bio.terra.workspace.service.resource.controlled.model.AccessScopeType;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResourceFields;
 import bio.terra.workspace.service.resource.controlled.model.ManagedByType;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
+import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.spendprofile.SpendConnectedTestUtils;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.model.CloudContextHolder;
@@ -189,17 +190,19 @@ public class RemoveUserFromWorkspaceFlightTest extends BaseConnectedTest {
 
   private ControlledBigQueryDatasetResource buildPrivateDataset(
       UUID workspaceId, String datasetName, String projectId) {
+    ControlledResourceFields commonFields =
+        ControlledResourceFields.builder()
+            .workspaceId(workspaceId)
+            .resourceId(UUID.randomUUID())
+            .name(datasetName)
+            .cloningInstructions(CloningInstructions.COPY_NOTHING)
+            .assignedUser(userAccessUtils.getSecondUserEmail())
+            .accessScope(AccessScopeType.ACCESS_SCOPE_PRIVATE)
+            .managedBy(ManagedByType.MANAGED_BY_USER)
+            .build();
     ControlledBigQueryDatasetResource datasetToCreate =
         ControlledBigQueryDatasetResource.builder()
-            .common(
-                new ControlledResourceFields()
-                    .workspaceId(workspaceId)
-                    .resourceId(UUID.randomUUID())
-                    .name(datasetName)
-                    .cloningInstructions(CloningInstructions.COPY_NOTHING)
-                    .assignedUser(userAccessUtils.getSecondUserEmail())
-                    .accessScope(AccessScopeType.ACCESS_SCOPE_PRIVATE)
-                    .managedBy(ManagedByType.MANAGED_BY_USER))
+            .common(commonFields)
             .datasetName(datasetName)
             .projectId(projectId)
             .build();
@@ -208,10 +211,12 @@ public class RemoveUserFromWorkspaceFlightTest extends BaseConnectedTest {
             .datasetId(datasetName)
             .location("us-central1");
 
-    return controlledResourceService.createBigQueryDataset(
-        datasetToCreate,
-        datasetCreationParameters,
-        ControlledResourceIamRole.EDITOR,
-        userAccessUtils.secondUserAuthRequest());
+    return controlledResourceService
+        .createControlledResourceSync(
+            datasetToCreate,
+            ControlledResourceIamRole.EDITOR,
+            userAccessUtils.secondUserAuthRequest(),
+            datasetCreationParameters)
+        .castByEnum(WsmResourceType.CONTROLLED_GCP_BIG_QUERY_DATASET);
   }
 }

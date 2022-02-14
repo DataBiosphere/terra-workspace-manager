@@ -69,7 +69,8 @@ public class ControlledBigQueryDatasetResource extends ControlledResource {
     validate();
   }
 
-  public ControlledBigQueryDatasetResource(
+  // Constructor for the builder
+  private ControlledBigQueryDatasetResource(
       ControlledResourceFields common, String datasetName, String projectId) {
     super(common);
     this.datasetName = datasetName;
@@ -79,25 +80,6 @@ public class ControlledBigQueryDatasetResource extends ControlledResource {
 
   public static ControlledBigQueryDatasetResource.Builder builder() {
     return new ControlledBigQueryDatasetResource.Builder();
-  }
-
-  public Builder toBuilder() {
-    ControlledResourceFields common =
-        new ControlledResourceFields()
-            .workspaceId(getWorkspaceId())
-            .resourceId(getResourceId())
-            .name(getName())
-            .description(getDescription())
-            .cloningInstructions(getCloningInstructions())
-            .assignedUser(getAssignedUser().orElse(null))
-            .accessScope(getAccessScope())
-            .privateResourceState(getPrivateResourceState().orElse(null))
-            .managedBy(getManagedBy())
-            .applicationId(getApplicationId());
-
-    Builder builder = new Builder();
-    builder.datasetName(getDatasetName()).projectId(projectId).common(common);
-    return builder;
   }
 
   /** {@inheritDoc} */
@@ -251,10 +233,6 @@ public class ControlledBigQueryDatasetResource extends ControlledResource {
     public ControlledBigQueryDatasetResource.Builder common(ControlledResourceFields common) {
       this.common = common;
       return this;
-    }
-
-    public ControlledResourceFields getCommon() {
-      return common;
     }
 
     public ControlledBigQueryDatasetResource.Builder datasetName(String datasetName) {

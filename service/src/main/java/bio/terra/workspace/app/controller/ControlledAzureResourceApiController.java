@@ -2,7 +2,6 @@ package bio.terra.workspace.app.controller;
 
 import bio.terra.common.exception.ApiException;
 import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
-import bio.terra.workspace.common.utils.ControllerUtils;
 import bio.terra.workspace.generated.controller.ControlledAzureResourceApi;
 import bio.terra.workspace.generated.model.ApiAzureDiskResource;
 import bio.terra.workspace.generated.model.ApiAzureIpResource;
@@ -48,13 +47,11 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 
 @Controller
-public class ControlledAzureResourceApiController implements ControlledAzureResourceApi {
+public class ControlledAzureResourceApiController extends ControlledResourceControllerCommon
+    implements ControlledAzureResourceApi {
   private final Logger logger = LoggerFactory.getLogger(ControlledGcpResourceApiController.class);
 
-  private final AuthenticatedUserRequestFactory authenticatedUserRequestFactory;
   private final ControlledResourceService controlledResourceService;
-  private final SamService samService;
-  private final HttpServletRequest request;
   private final JobService jobService;
   private final FeatureConfiguration features;
 
@@ -66,10 +63,8 @@ public class ControlledAzureResourceApiController implements ControlledAzureReso
       JobService jobService,
       HttpServletRequest request,
       FeatureConfiguration features) {
-    this.authenticatedUserRequestFactory = authenticatedUserRequestFactory;
+    super(authenticatedUserRequestFactory, request, controlledResourceService, samService);
     this.controlledResourceService = controlledResourceService;
-    this.samService = samService;
-    this.request = request;
     this.jobService = jobService;
     this.features = features;
   }
@@ -81,8 +76,7 @@ public class ControlledAzureResourceApiController implements ControlledAzureReso
 
     final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     final PrivateUserRole privateUserRole =
-        ControllerUtils.computePrivateUserRole(
-            workspaceId, body.getCommon(), userRequest, samService);
+        computePrivateUserRole(workspaceId, body.getCommon(), userRequest);
 
     ControlledAzureDiskResource resource =
         ControlledAzureDiskResource.builder()
@@ -118,8 +112,7 @@ public class ControlledAzureResourceApiController implements ControlledAzureReso
 
     final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     final PrivateUserRole privateUserRole =
-        ControllerUtils.computePrivateUserRole(
-            workspaceId, body.getCommon(), userRequest, samService);
+        computePrivateUserRole(workspaceId, body.getCommon(), userRequest);
 
     ControlledAzureIpResource resource =
         ControlledAzureIpResource.builder()
@@ -153,8 +146,7 @@ public class ControlledAzureResourceApiController implements ControlledAzureReso
 
     final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     final PrivateUserRole privateUserRole =
-        ControllerUtils.computePrivateUserRole(
-            workspaceId, body.getCommon(), userRequest, samService);
+        computePrivateUserRole(workspaceId, body.getCommon(), userRequest);
 
     ControlledAzureStorageResource resource =
         ControlledAzureStorageResource.builder()
@@ -188,8 +180,7 @@ public class ControlledAzureResourceApiController implements ControlledAzureReso
 
     final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     final PrivateUserRole privateUserRole =
-        ControllerUtils.computePrivateUserRole(
-            workspaceId, body.getCommon(), userRequest, samService);
+        computePrivateUserRole(workspaceId, body.getCommon(), userRequest);
 
     ControlledAzureVmResource resource =
         ControlledAzureVmResource.builder()
@@ -217,8 +208,7 @@ public class ControlledAzureResourceApiController implements ControlledAzureReso
             body.getAzureVm(),
             privateUserRole.getRole(),
             body.getJobControl(),
-            ControllerUtils.getAsyncResultEndpoint(
-                request, body.getJobControl().getId(), "create-result"),
+            getAsyncResultEndpoint(body.getJobControl().getId(), "create-result"),
             userRequest);
 
     final ApiCreatedControlledAzureVmResult result =
@@ -235,8 +225,7 @@ public class ControlledAzureResourceApiController implements ControlledAzureReso
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     ApiCreatedControlledAzureVmResult result =
         fetchCreateControlledAzureVmResult(jobId, userRequest);
-    return new ResponseEntity<>(
-        result, ControllerUtils.getAsyncResponseCode(result.getJobReport()));
+    return new ResponseEntity<>(result, getAsyncResponseCode(result.getJobReport()));
   }
 
   private ApiCreatedControlledAzureVmResult fetchCreateControlledAzureVmResult(
@@ -256,8 +245,7 @@ public class ControlledAzureResourceApiController implements ControlledAzureReso
 
     final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     final PrivateUserRole privateUserRole =
-        ControllerUtils.computePrivateUserRole(
-            workspaceId, body.getCommon(), userRequest, samService);
+        computePrivateUserRole(workspaceId, body.getCommon(), userRequest);
 
     ControlledAzureNetworkResource resource =
         ControlledAzureNetworkResource.builder()
@@ -300,7 +288,7 @@ public class ControlledAzureResourceApiController implements ControlledAzureReso
             jobControl,
             workspaceId,
             resourceId,
-            ControllerUtils.getAsyncResultEndpoint(request, jobControl.getId(), "delete-result"),
+            getAsyncResultEndpoint(jobControl.getId(), "delete-result"),
             userRequest);
     return getJobDeleteResult(jobId, userRequest);
   }
@@ -319,7 +307,7 @@ public class ControlledAzureResourceApiController implements ControlledAzureReso
             jobControl,
             workspaceId,
             resourceId,
-            ControllerUtils.getAsyncResultEndpoint(request, jobControl.getId(), "delete-result"),
+            getAsyncResultEndpoint(jobControl.getId(), "delete-result"),
             userRequest);
     return getJobDeleteResult(jobId, userRequest);
   }
@@ -338,7 +326,7 @@ public class ControlledAzureResourceApiController implements ControlledAzureReso
             jobControl,
             workspaceId,
             resourceId,
-            ControllerUtils.getAsyncResultEndpoint(request, jobControl.getId(), "delete-result"),
+            getAsyncResultEndpoint(jobControl.getId(), "delete-result"),
             userRequest);
     return getJobDeleteResult(jobId, userRequest);
   }
@@ -357,7 +345,7 @@ public class ControlledAzureResourceApiController implements ControlledAzureReso
             jobControl,
             workspaceId,
             resourceId,
-            ControllerUtils.getAsyncResultEndpoint(request, jobControl.getId(), "delete-result"),
+            getAsyncResultEndpoint(jobControl.getId(), "delete-result"),
             userRequest);
     return getJobDeleteResult(jobId, userRequest);
   }
@@ -448,11 +436,6 @@ public class ControlledAzureResourceApiController implements ControlledAzureReso
         new ApiDeleteControlledAzureResourceResult()
             .jobReport(jobResult.getJobReport())
             .errorReport(jobResult.getApiErrorReport());
-    return new ResponseEntity<>(
-        response, ControllerUtils.getAsyncResponseCode(response.getJobReport()));
-  }
-
-  private AuthenticatedUserRequest getAuthenticatedInfo() {
-    return authenticatedUserRequestFactory.from(request);
+    return new ResponseEntity<>(response, getAsyncResponseCode(response.getJobReport()));
   }
 }

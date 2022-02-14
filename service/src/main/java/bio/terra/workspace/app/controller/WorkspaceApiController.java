@@ -1,6 +1,5 @@
 package bio.terra.workspace.app.controller;
 
-import bio.terra.workspace.common.utils.ControllerUtils;
 import bio.terra.workspace.common.utils.ControllerValidationUtils;
 import bio.terra.workspace.generated.controller.WorkspaceApi;
 import bio.terra.workspace.generated.model.ApiAzureContext;
@@ -51,7 +50,6 @@ import bio.terra.workspace.service.spendprofile.SpendProfileId;
 import bio.terra.workspace.service.workspace.AzureCloudContextService;
 import bio.terra.workspace.service.workspace.GcpCloudContextService;
 import bio.terra.workspace.service.workspace.WorkspaceService;
-import bio.terra.workspace.service.workspace.WsmApplicationService;
 import bio.terra.workspace.service.workspace.exceptions.CloudContextRequiredException;
 import bio.terra.workspace.service.workspace.model.AzureCloudContext;
 import bio.terra.workspace.service.workspace.model.CloudContextHolder;
@@ -77,18 +75,15 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 
 @Controller
-public class WorkspaceApiController implements WorkspaceApi {
+public class WorkspaceApiController extends ControllerCommon implements WorkspaceApi {
   private static final Logger logger = LoggerFactory.getLogger(WorkspaceApiController.class);
   private final WorkspaceService workspaceService;
   private final JobService jobService;
   private final SamService samService;
-  private final AuthenticatedUserRequestFactory authenticatedUserRequestFactory;
-  private final HttpServletRequest request;
   private final ReferencedResourceService referenceResourceService;
   private final AzureCloudContextService azureCloudContextService;
   private final GcpCloudContextService gcpCloudContextService;
   private final PetSaService petSaService;
-  private final WsmApplicationService appService;
 
   @Autowired
   public WorkspaceApiController(
@@ -100,22 +95,15 @@ public class WorkspaceApiController implements WorkspaceApi {
       ReferencedResourceService referenceResourceService,
       GcpCloudContextService gcpCloudContextService,
       PetSaService petSaService,
-      WsmApplicationService appService,
       AzureCloudContextService azureCloudContextService) {
+    super(authenticatedUserRequestFactory, request, samService);
     this.workspaceService = workspaceService;
     this.jobService = jobService;
     this.samService = samService;
-    this.authenticatedUserRequestFactory = authenticatedUserRequestFactory;
-    this.request = request;
     this.referenceResourceService = referenceResourceService;
     this.azureCloudContextService = azureCloudContextService;
     this.gcpCloudContextService = gcpCloudContextService;
     this.petSaService = petSaService;
-    this.appService = appService;
-  }
-
-  private AuthenticatedUserRequest getAuthenticatedInfo() {
-    return authenticatedUserRequestFactory.from(request);
   }
 
   @Override
@@ -454,7 +442,7 @@ public class WorkspaceApiController implements WorkspaceApi {
     ControllerValidationUtils.validateCloudPlatform(body.getCloudPlatform());
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     String jobId = body.getJobControl().getId();
-    String resultPath = ControllerUtils.getAsyncResultEndpoint(request, jobId);
+    String resultPath = getAsyncResultEndpoint(jobId);
 
     if (body.getCloudPlatform() == ApiCloudPlatform.AZURE) {
       ApiAzureContext azureContext =
@@ -470,18 +458,15 @@ public class WorkspaceApiController implements WorkspaceApi {
     }
 
     ApiCreateCloudContextResult response = fetchCreateCloudContextResult(jobId, userRequest);
-    return new ResponseEntity<>(
-        response, ControllerUtils.getAsyncResponseCode(response.getJobReport()));
+    return new ResponseEntity<>(response, getAsyncResponseCode(response.getJobReport()));
   }
 
   @Override
   public ResponseEntity<ApiCreateCloudContextResult> getCreateCloudContextResult(
       UUID id, String jobId) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
-
-    final ApiCreateCloudContextResult response = fetchCreateCloudContextResult(jobId, userRequest);
-    return new ResponseEntity<>(
-        response, ControllerUtils.getAsyncResponseCode(response.getJobReport()));
+    ApiCreateCloudContextResult response = fetchCreateCloudContextResult(jobId, userRequest);
+    return new ResponseEntity<>(response, getAsyncResponseCode(response.getJobReport()));
   }
 
   private ApiCreateCloudContextResult fetchCreateCloudContextResult(
@@ -571,8 +556,7 @@ public class WorkspaceApiController implements WorkspaceApi {
             workspaceId, petRequest, body.getLocation(), destinationWorkspace);
 
     final ApiCloneWorkspaceResult result = fetchCloneWorkspaceResult(jobId, getAuthenticatedInfo());
-    return new ResponseEntity<>(
-        result, ControllerUtils.getAsyncResponseCode(result.getJobReport()));
+    return new ResponseEntity<>(result, getAsyncResponseCode(result.getJobReport()));
   }
 
   /**
@@ -587,8 +571,7 @@ public class WorkspaceApiController implements WorkspaceApi {
       UUID workspaceId, String jobId) {
     final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     final ApiCloneWorkspaceResult result = fetchCloneWorkspaceResult(jobId, userRequest);
-    return new ResponseEntity<>(
-        result, ControllerUtils.getAsyncResponseCode(result.getJobReport()));
+    return new ResponseEntity<>(result, getAsyncResponseCode(result.getJobReport()));
   }
 
   // Retrieve the async result or progress for clone workspace.

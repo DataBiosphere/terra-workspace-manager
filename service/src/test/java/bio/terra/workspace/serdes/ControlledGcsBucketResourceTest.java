@@ -21,15 +21,19 @@ public class ControlledGcsBucketResourceTest extends BaseUnitTest {
     assertThrows(
         MissingRequiredFieldException.class,
         () ->
-            ControlledResourceFixtures.makeDefaultControlledGcsBucketResource()
-                .workspaceId(null)
+            ControlledGcsBucketResource.builder()
+                .bucketName(ControlledResourceFixtures.uniqueBucketName())
+                .common(
+                    ControlledResourceFixtures.makeDefaultControlledResourceFieldsBuilder()
+                        .workspaceId(null)
+                        .build())
                 .build());
   }
 
   @Test
   public void testSerialization() throws JsonProcessingException {
     ControlledGcsBucketResource gcsBucketResource =
-        ControlledResourceFixtures.makeDefaultControlledGcsBucketResource().build();
+        ControlledResourceFixtures.makeDefaultControlledGcsBucketBuilder(null).build();
 
     final ObjectMapper objectMapper = StairwayMapper.getObjectMapper();
     final String serialized = objectMapper.writeValueAsString(gcsBucketResource);

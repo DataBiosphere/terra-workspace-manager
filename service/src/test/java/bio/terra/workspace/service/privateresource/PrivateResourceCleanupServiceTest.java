@@ -29,6 +29,7 @@ import bio.terra.workspace.service.resource.controlled.ControlledResourceService
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.ControlledGcsBucketResource;
 import bio.terra.workspace.service.resource.controlled.model.AccessScopeType;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
+import bio.terra.workspace.service.resource.controlled.model.ControlledResourceFields;
 import bio.terra.workspace.service.resource.controlled.model.ManagedByType;
 import bio.terra.workspace.service.resource.controlled.model.PrivateResourceState;
 import bio.terra.workspace.service.workspace.WorkspaceService;
@@ -114,20 +115,25 @@ public class PrivateResourceCleanupServiceTest extends BaseConnectedTest {
                 groupEmail),
         "grantWorkspaceRole");
     // Create private bucket as second user.
-    ControlledGcsBucketResource resource =
-        ControlledResourceFixtures.makeDefaultControlledGcsBucketResource()
+    ControlledResourceFields commonFields =
+        ControlledResourceFixtures.makeDefaultControlledResourceFieldsBuilder()
             .workspaceId(workspace.getWorkspaceId())
             .accessScope(AccessScopeType.ACCESS_SCOPE_PRIVATE)
             .managedBy(ManagedByType.MANAGED_BY_USER)
             .assignedUser(userAccessUtils.getSecondUserEmail())
             .build();
+    ControlledGcsBucketResource resource =
+        ControlledGcsBucketResource.builder()
+            .common(commonFields)
+            .bucketName(ControlledResourceFixtures.uniqueBucketName())
+            .build();
     ApiGcpGcsBucketCreationParameters creationParameters =
         new ApiGcpGcsBucketCreationParameters().location("us-central1");
-    controlledResourceService.createBucket(
+    controlledResourceService.createControlledResourceSync(
         resource,
-        creationParameters,
         ControlledResourceIamRole.EDITOR,
-        userAccessUtils.defaultUserAuthRequest());
+        userAccessUtils.defaultUserAuthRequest(),
+        creationParameters);
     // Verify second user can read the private resource in Sam.
     SamRethrow.onInterrupted(
         () ->
@@ -204,20 +210,29 @@ public class PrivateResourceCleanupServiceTest extends BaseConnectedTest {
         applicationAccessUtils.applicationSaAuthenticatedUserRequest();
     wsmApplicationService.enableWorkspaceApplication(
         userAccessUtils.defaultUserAuthRequest(), workspace.getWorkspaceId(), appId);
+
     // Create application private bucket assigned to second user.
-    ControlledGcsBucketResource resource =
-        ControlledResourceFixtures.makeDefaultControlledGcsBucketResource()
+    ControlledResourceFields commonFields =
+        ControlledResourceFixtures.makeDefaultControlledResourceFieldsBuilder()
             .workspaceId(workspace.getWorkspaceId())
             .accessScope(AccessScopeType.ACCESS_SCOPE_PRIVATE)
             .managedBy(ManagedByType.MANAGED_BY_APPLICATION)
             .applicationId(appId)
             .assignedUser(userAccessUtils.getSecondUserEmail())
             .build();
+
+    ControlledGcsBucketResource resource =
+        ControlledGcsBucketResource.builder()
+            .common(commonFields)
+            .bucketName(ControlledResourceFixtures.uniqueBucketName())
+            .build();
+
     ApiGcpGcsBucketCreationParameters creationParameters =
         new ApiGcpGcsBucketCreationParameters().location("us-central1");
     // Create resource as application.
-    controlledResourceService.createBucket(
-        resource, creationParameters, ControlledResourceIamRole.WRITER, appRequest);
+    controlledResourceService.createControlledResourceSync(
+        resource, ControlledResourceIamRole.WRITER, appRequest, creationParameters);
+
     // Verify second user can read the private resource in Sam.
     SamRethrow.onInterrupted(
         () ->

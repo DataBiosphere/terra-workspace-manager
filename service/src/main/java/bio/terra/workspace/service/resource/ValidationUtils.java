@@ -1,6 +1,7 @@
 package bio.terra.workspace.service.resource;
 
 import bio.terra.common.exception.InconsistentFieldsException;
+import bio.terra.common.exception.MissingRequiredFieldException;
 import bio.terra.workspace.app.configuration.external.GitRepoReferencedResourceConfiguration;
 import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceCreationParameters;
 import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceVmImage;
@@ -340,6 +341,13 @@ public class ValidationUtils {
       logger.warn("Invalid Azure region {}", region);
       throw new InvalidReferenceException(
           "Invalid Azure Region specified. See the class `com.azure.core.management.Region`");
+    }
+  }
+
+  public static <T> void checkFieldNonNull(@Nullable T fieldValue, String fieldName) {
+    if (fieldValue == null) {
+      throw new MissingRequiredFieldException(
+          String.format("Missing required field '%s' for ControlledNotebookInstance.", fieldName));
     }
   }
 }

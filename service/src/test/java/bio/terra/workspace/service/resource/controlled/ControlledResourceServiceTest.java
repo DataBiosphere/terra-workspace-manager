@@ -548,8 +548,10 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
             .build();
 
     ControlledBigQueryDatasetResource createdDataset =
-        controlledResourceService.createBigQueryDataset(
-            resource, creationParameters, null, user.getAuthenticatedRequest());
+        controlledResourceService
+            .createControlledResourceSync(
+                resource, null, user.getAuthenticatedRequest(), creationParameters)
+            .castByEnum(WsmResourceType.CONTROLLED_GCP_BIG_QUERY_DATASET);
     assertEquals(resource, createdDataset);
 
     ControlledBigQueryDatasetResource fetchedDataset =
@@ -609,7 +611,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
   @Test
   @DisabledIfEnvironmentVariable(named = "TEST_ENV", matches = BUFFER_SERVICE_DISABLED_ENVS_REG_EX)
   void createBqDatasetDo() throws Exception {
-    String datasetId = uniqueDatasetId();
+    String datasetId = ControlledResourceFixtures.uniqueDatasetId();
     String location = "us-central1";
     Integer defaultTableLifetimeSec = 5900;
     Integer defaultPartitionLifetimeSec = 5901;
@@ -630,8 +632,10 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
     jobService.setFlightDebugInfoForTest(
         FlightDebugInfo.newBuilder().doStepFailures(retrySteps).build());
     ControlledBigQueryDatasetResource createdDataset =
-        controlledResourceService.createBigQueryDataset(
-            resource, creationParameters, null, user.getAuthenticatedRequest());
+        controlledResourceService
+            .createControlledResourceSync(
+                resource, null, user.getAuthenticatedRequest(), creationParameters)
+            .castByEnum(WsmResourceType.CONTROLLED_GCP_BIG_QUERY_DATASET);
     assertEquals(resource, createdDataset);
 
     BigQueryCow bqCow = crlService.createWsmSaBigQueryCow();
@@ -656,7 +660,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
   @Test
   @DisabledIfEnvironmentVariable(named = "TEST_ENV", matches = BUFFER_SERVICE_DISABLED_ENVS_REG_EX)
   void createBqDatasetUndo() throws Exception {
-    String datasetId = uniqueDatasetId();
+    String datasetId = ControlledResourceFixtures.uniqueDatasetId();
     String location = "us-central1";
 
     ApiGcpBigQueryDatasetCreationParameters creationParameters =
@@ -682,8 +686,8 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
     assertThrows(
         InvalidResultStateException.class,
         () ->
-            controlledResourceService.createBigQueryDataset(
-                resource, creationParameters, null, user.getAuthenticatedRequest()));
+            controlledResourceService.createControlledResourceSync(
+                resource, null, user.getAuthenticatedRequest(), creationParameters));
 
     BigQueryCow bqCow = crlService.createWsmSaBigQueryCow();
     GoogleJsonResponseException getException =
@@ -704,7 +708,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
   @Test
   @DisabledIfEnvironmentVariable(named = "TEST_ENV", matches = BUFFER_SERVICE_DISABLED_ENVS_REG_EX)
   void deleteBqDatasetDo() throws Exception {
-    String datasetId = uniqueDatasetId();
+    String datasetId = ControlledResourceFixtures.uniqueDatasetId();
     String location = "us-central1";
 
     ApiGcpBigQueryDatasetCreationParameters creationParameters =
@@ -715,8 +719,10 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
             .build();
 
     ControlledBigQueryDatasetResource createdDataset =
-        controlledResourceService.createBigQueryDataset(
-            resource, creationParameters, null, user.getAuthenticatedRequest());
+        controlledResourceService
+            .createControlledResourceSync(
+                resource, null, user.getAuthenticatedRequest(), creationParameters)
+            .castByEnum(WsmResourceType.CONTROLLED_GCP_BIG_QUERY_DATASET);
     assertEquals(resource, createdDataset);
 
     // Test idempotency of delete by retrying steps once.
@@ -749,7 +755,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
   @Test
   @DisabledIfEnvironmentVariable(named = "TEST_ENV", matches = BUFFER_SERVICE_DISABLED_ENVS_REG_EX)
   void deleteBqDatasetUndo() throws Exception {
-    String datasetId = uniqueDatasetId();
+    String datasetId = ControlledResourceFixtures.uniqueDatasetId();
     String location = "us-central1";
 
     ApiGcpBigQueryDatasetCreationParameters creationParameters =
@@ -760,8 +766,10 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
             .build();
 
     ControlledBigQueryDatasetResource createdDataset =
-        controlledResourceService.createBigQueryDataset(
-            resource, creationParameters, null, user.getAuthenticatedRequest());
+        controlledResourceService
+            .createControlledResourceSync(
+                resource, null, user.getAuthenticatedRequest(), creationParameters)
+            .castByEnum(WsmResourceType.CONTROLLED_GCP_BIG_QUERY_DATASET);
     assertEquals(resource, createdDataset);
 
     // None of the steps on this flight are undoable, so even with lastStepFailure set to true we
@@ -797,7 +805,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
   @DisabledIfEnvironmentVariable(named = "TEST_ENV", matches = BUFFER_SERVICE_DISABLED_ENVS_REG_EX)
   void updateBqDatasetDo() throws Exception {
     // create the dataset
-    String datasetId = uniqueDatasetId();
+    String datasetId = ControlledResourceFixtures.uniqueDatasetId();
     String location = "us-central1";
     ApiGcpBigQueryDatasetCreationParameters creationParameters =
         new ApiGcpBigQueryDatasetCreationParameters().datasetId(datasetId).location(location);
@@ -807,8 +815,10 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
             .build();
 
     ControlledBigQueryDatasetResource createdDataset =
-        controlledResourceService.createBigQueryDataset(
-            resource, creationParameters, null, user.getAuthenticatedRequest());
+        controlledResourceService
+            .createControlledResourceSync(
+                resource, null, user.getAuthenticatedRequest(), creationParameters)
+            .castByEnum(WsmResourceType.CONTROLLED_GCP_BIG_QUERY_DATASET);
     assertEquals(resource, createdDataset);
 
     // Test idempotency of dataset-specific steps by retrying them once.
@@ -856,7 +866,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
   @DisabledIfEnvironmentVariable(named = "TEST_ENV", matches = BUFFER_SERVICE_DISABLED_ENVS_REG_EX)
   void updateBqDatasetUndo() throws Exception {
     // create the dataset
-    String datasetId = uniqueDatasetId();
+    String datasetId = ControlledResourceFixtures.uniqueDatasetId();
     String location = "us-central1";
     Integer initialDefaultTableLifetime = 4800;
     Integer initialDefaultPartitionLifetime = 4801;
@@ -871,8 +881,10 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
             .datasetName(datasetId)
             .build();
     ControlledBigQueryDatasetResource createdDataset =
-        controlledResourceService.createBigQueryDataset(
-            resource, creationParameters, null, user.getAuthenticatedRequest());
+        controlledResourceService
+            .createControlledResourceSync(
+                resource, null, user.getAuthenticatedRequest(), creationParameters)
+            .castByEnum(WsmResourceType.CONTROLLED_GCP_BIG_QUERY_DATASET);
     assertEquals(resource, createdDataset);
 
     // Test idempotency of dataset-specific steps by retrying them once.
@@ -931,7 +943,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
   @DisabledIfEnvironmentVariable(named = "TEST_ENV", matches = BUFFER_SERVICE_DISABLED_ENVS_REG_EX)
   void updateBqDatasetWithUndefinedExpirationTimes() throws Exception {
     // create the dataset, with expiration times initially defined
-    String datasetId = uniqueDatasetId();
+    String datasetId = ControlledResourceFixtures.uniqueDatasetId();
     String location = "us-central1";
     Integer initialDefaultTableLifetime = 4800;
     Integer initialDefaultPartitionLifetime = 4801;
@@ -946,8 +958,10 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
             .datasetName(datasetId)
             .build();
     ControlledBigQueryDatasetResource createdDataset =
-        controlledResourceService.createBigQueryDataset(
-            resource, creationParameters, null, user.getAuthenticatedRequest());
+        controlledResourceService
+            .createControlledResourceSync(
+                resource, null, user.getAuthenticatedRequest(), creationParameters)
+            .castByEnum(WsmResourceType.CONTROLLED_GCP_BIG_QUERY_DATASET);
 
     // check the expiration times stored on the cloud are defined
     validateBigQueryDatasetCloudMetadata(
@@ -1001,7 +1015,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
   @DisabledIfEnvironmentVariable(named = "TEST_ENV", matches = BUFFER_SERVICE_DISABLED_ENVS_REG_EX)
   void updateBqDatasetWithInvalidExpirationTimes() throws Exception {
     // create the dataset, with expiration times initially undefined
-    String datasetId = uniqueDatasetId();
+    String datasetId = ControlledResourceFixtures.uniqueDatasetId();
     String location = "us-central1";
     ApiGcpBigQueryDatasetCreationParameters creationParameters =
         new ApiGcpBigQueryDatasetCreationParameters().datasetId(datasetId).location(location);
@@ -1011,8 +1025,10 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
             .build();
 
     ControlledBigQueryDatasetResource createdDataset =
-        controlledResourceService.createBigQueryDataset(
-            resource, creationParameters, null, user.getAuthenticatedRequest());
+        controlledResourceService
+            .createControlledResourceSync(
+                resource, null, user.getAuthenticatedRequest(), creationParameters)
+            .castByEnum(WsmResourceType.CONTROLLED_GCP_BIG_QUERY_DATASET);
 
     // make an update request to set the table expiration time to an invalid value (<3600)
     final ApiGcpBigQueryDatasetUpdateParameters updateParameters =
@@ -1051,10 +1067,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
   @DisabledIfEnvironmentVariable(named = "TEST_ENV", matches = BUFFER_SERVICE_DISABLED_ENVS_REG_EX)
   void createGcsBucketDo() throws Exception {
     ControlledGcsBucketResource resource =
-        ControlledResourceFixtures.makeDefaultControlledGcsBucketResource()
-            .workspaceId(workspace.getWorkspaceId())
-            .accessScope(AccessScopeType.ACCESS_SCOPE_SHARED)
-            .managedBy(ManagedByType.MANAGED_BY_USER)
+        ControlledResourceFixtures.makeDefaultControlledGcsBucketBuilder(workspace.getWorkspaceId())
             .build();
 
     // Test idempotency of bucket-specific steps by retrying them once.
@@ -1064,11 +1077,13 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
     jobService.setFlightDebugInfoForTest(
         FlightDebugInfo.newBuilder().doStepFailures(retrySteps).build());
     ControlledGcsBucketResource createdBucket =
-        controlledResourceService.createBucket(
-            resource,
-            ControlledResourceFixtures.getGoogleBucketCreationParameters(),
-            null,
-            user.getAuthenticatedRequest());
+        controlledResourceService
+            .createControlledResourceSync(
+                resource,
+                null,
+                user.getAuthenticatedRequest(),
+                ControlledResourceFixtures.getGoogleBucketCreationParameters())
+            .castByEnum(WsmResourceType.CONTROLLED_GCP_GCS_BUCKET);
     assertEquals(resource, createdBucket);
 
     StorageCow storageCow = crlService.createStorageCow(projectId);
@@ -1084,31 +1099,25 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
   @DisabledIfEnvironmentVariable(named = "TEST_ENV", matches = BUFFER_SERVICE_DISABLED_ENVS_REG_EX)
   void createGcsBucketDo_invalidBucketName_throwsBadRequestException() throws Exception {
     ControlledGcsBucketResource resource =
-        ControlledResourceFixtures.makeDefaultControlledGcsBucketResource()
-            .workspaceId(workspace.getWorkspaceId())
-            .accessScope(AccessScopeType.ACCESS_SCOPE_SHARED)
-            .managedBy(ManagedByType.MANAGED_BY_USER)
+        ControlledResourceFixtures.makeDefaultControlledGcsBucketBuilder(workspace.getWorkspaceId())
             .bucketName("192.168.5.4")
             .build();
 
     assertThrows(
         BadRequestException.class,
         () ->
-            controlledResourceService.createBucket(
+            controlledResourceService.createControlledResourceSync(
                 resource,
-                ControlledResourceFixtures.getGoogleBucketCreationParameters(),
                 null,
-                user.getAuthenticatedRequest()));
+                user.getAuthenticatedRequest(),
+                ControlledResourceFixtures.getGoogleBucketCreationParameters()));
   }
 
   @Test
   @DisabledIfEnvironmentVariable(named = "TEST_ENV", matches = BUFFER_SERVICE_DISABLED_ENVS_REG_EX)
   void createGcsBucketUndo() throws Exception {
     ControlledGcsBucketResource resource =
-        ControlledResourceFixtures.makeDefaultControlledGcsBucketResource()
-            .workspaceId(workspace.getWorkspaceId())
-            .accessScope(AccessScopeType.ACCESS_SCOPE_SHARED)
-            .managedBy(ManagedByType.MANAGED_BY_USER)
+        ControlledResourceFixtures.makeDefaultControlledGcsBucketBuilder(workspace.getWorkspaceId())
             .build();
 
     // Test idempotency of bucket-specific undo steps by retrying them once. Fail at the end of
@@ -1124,11 +1133,11 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
     assertThrows(
         InvalidResultStateException.class,
         () ->
-            controlledResourceService.createBucket(
+            controlledResourceService.createControlledResourceSync(
                 resource,
-                ControlledResourceFixtures.getGoogleBucketCreationParameters(),
                 null,
-                user.getAuthenticatedRequest()));
+                user.getAuthenticatedRequest(),
+                ControlledResourceFixtures.getGoogleBucketCreationParameters()));
 
     // Validate the bucket does not exist.
     StorageCow storageCow = crlService.createStorageCow(projectId);
@@ -1278,18 +1287,17 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
   private ControlledGcsBucketResource createDefaultSharedGcsBucket(
       Workspace workspace, UserAccessUtils.TestUser user) {
     ControlledGcsBucketResource originalResource =
-        ControlledResourceFixtures.makeDefaultControlledGcsBucketResource()
-            .workspaceId(workspace.getWorkspaceId())
-            .accessScope(AccessScopeType.ACCESS_SCOPE_SHARED)
-            .managedBy(ManagedByType.MANAGED_BY_USER)
+        ControlledResourceFixtures.makeDefaultControlledGcsBucketBuilder(workspace.getWorkspaceId())
             .build();
 
     ControlledGcsBucketResource createdBucket =
-        controlledResourceService.createBucket(
-            originalResource,
-            ControlledResourceFixtures.getGoogleBucketCreationParameters(),
-            null,
-            user.getAuthenticatedRequest());
+        controlledResourceService
+            .createControlledResourceSync(
+                originalResource,
+                null,
+                user.getAuthenticatedRequest(),
+                ControlledResourceFixtures.getGoogleBucketCreationParameters())
+            .castByEnum(WsmResourceType.CONTROLLED_GCP_GCS_BUCKET);
     assertEquals(originalResource, createdBucket);
     return createdBucket;
   }

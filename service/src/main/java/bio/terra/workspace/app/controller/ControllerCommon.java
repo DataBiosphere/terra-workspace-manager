@@ -1,13 +1,15 @@
-package bio.terra.workspace.common.utils;
+package bio.terra.workspace.app.controller;
 
 import bio.terra.common.exception.BadRequestException;
 import bio.terra.common.exception.ValidationException;
 import bio.terra.workspace.common.exception.InternalLogicException;
+import bio.terra.workspace.common.utils.ControllerValidationUtils;
 import bio.terra.workspace.generated.model.ApiControlledResourceCommonFields;
 import bio.terra.workspace.generated.model.ApiJobReport;
 import bio.terra.workspace.generated.model.ApiJobReport.StatusEnum;
 import bio.terra.workspace.generated.model.ApiPrivateResourceUser;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
+import bio.terra.workspace.service.iam.AuthenticatedUserRequestFactory;
 import bio.terra.workspace.service.iam.SamRethrow;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.iam.model.ControlledResourceIamRole;
@@ -23,8 +25,31 @@ import javax.servlet.http.HttpServletRequest;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.http.HttpStatus;
 
-/** Class of static helper methods for controllers */
-public class ControllerUtils {
+/**
+ * Super class for controllers containing common code. The code in here requires the @Autowired
+ * beans from the @Controller classes, so it is better as a superclass rather than static methods.
+ */
+public class ControllerCommon {
+  private final AuthenticatedUserRequestFactory authenticatedUserRequestFactory;
+  private final HttpServletRequest request;
+  private final SamService samService;
+
+  public ControllerCommon(
+      AuthenticatedUserRequestFactory authenticatedUserRequestFactory,
+      HttpServletRequest request,
+      SamService samService) {
+    this.authenticatedUserRequestFactory = authenticatedUserRequestFactory;
+    this.request = request;
+    this.samService = samService;
+  }
+
+  public SamService getSamService() {
+    return samService;
+  }
+
+  public AuthenticatedUserRequest getAuthenticatedInfo() {
+    return authenticatedUserRequestFactory.from(request);
+  }
 
   /**
    * Returns the result endpoint corresponding to an async request, prefixed with a / character. The
@@ -34,13 +59,11 @@ public class ControllerUtils {
    * <p>Sometimes we have more than one async endpoint with the same prefix, so need to distinguish
    * them with different result words. For example, "update-result".
    *
-   * @param request the servlet request
    * @param jobId the job id
    * @param resultWord the path component identifying the result
    * @return a string with the result endpoint URL
    */
-  public static String getAsyncResultEndpoint(
-      HttpServletRequest request, String jobId, String resultWord) {
+  public String getAsyncResultEndpoint(String jobId, String resultWord) {
     return String.format("%s/%s/%s", request.getServletPath(), resultWord, jobId);
   }
 
@@ -48,12 +71,11 @@ public class ControllerUtils {
    * Returns the result endpoint corresponding to an async request where the desired path has the
    * form {servletpath}/result/{jobId}. Most of the time, the result word is "result".
    *
-   * @param request the servlet request
    * @param jobId the job id
    * @return a string with the result endpoint URL
    */
-  public static String getAsyncResultEndpoint(HttpServletRequest request, String jobId) {
-    return getAsyncResultEndpoint(request, jobId, "result");
+  public String getAsyncResultEndpoint(String jobId) {
+    return getAsyncResultEndpoint(jobId, "result");
   }
 
   /**
@@ -83,11 +105,10 @@ public class ControllerUtils {
    * @param userRequest authenticate user
    * @return PrivateUserRole holding the user email and the role list
    */
-  public static PrivateUserRole computePrivateUserRole(
+  public PrivateUserRole computePrivateUserRole(
       UUID workspaceId,
       ApiControlledResourceCommonFields commonFields,
-      AuthenticatedUserRequest userRequest,
-      SamService samService) {
+      AuthenticatedUserRequest userRequest) {
 
     AccessScopeType accessScope = AccessScopeType.fromApi(commonFields.getAccessScope());
     ManagedByType managedBy = ManagedByType.fromApi(commonFields.getManagedBy());
@@ -198,12 +219,10 @@ public class ControllerUtils {
     }
   }
 
-  public static void validateNoInputUser(@Nullable ApiPrivateResourceUser inputUser) {
+  public void validateNoInputUser(@Nullable ApiPrivateResourceUser inputUser) {
     if (inputUser != null) {
       throw new ValidationException(
           "PrivateResourceUser can only be specified by applications for private resources");
     }
   }
-
-  private ControllerUtils() {}
 }

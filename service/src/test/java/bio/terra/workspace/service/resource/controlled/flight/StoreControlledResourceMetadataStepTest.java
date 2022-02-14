@@ -51,9 +51,7 @@ public class StoreControlledResourceMetadataStepTest extends BaseUnitTest {
 
     // Stub the flight map as of this step
     ControlledGcsBucketResource bucketResource =
-        ControlledResourceFixtures.makeDefaultControlledGcsBucketResource()
-            .workspaceId(workspaceId)
-            .build();
+        ControlledResourceFixtures.makeDefaultControlledGcsBucketBuilder(workspaceId).build();
 
     final FlightMap inputFlightMap = new FlightMap();
     inputFlightMap.put(ResourceKeys.RESOURCE, bucketResource);
