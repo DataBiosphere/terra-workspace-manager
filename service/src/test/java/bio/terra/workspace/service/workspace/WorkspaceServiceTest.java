@@ -462,7 +462,7 @@ class WorkspaceServiceTest extends BaseConnectedTest {
   }
 
   @Test
-  void createGetAzureContext() {
+  void createGetDeleteAzureContext() {
     Workspace request =
         defaultRequestBuilder(UUID.randomUUID())
             .spendProfileId(spendUtils.defaultSpendId())
@@ -486,6 +486,9 @@ class WorkspaceServiceTest extends BaseConnectedTest {
         testUtils
             .getAuthorizedAzureCloudContext(request.getWorkspaceId(), USER_REQUEST)
             .isPresent());
+    workspaceService.deleteAzureCloudContext(request.getWorkspaceId(), USER_REQUEST);
+    assertTrue(
+        testUtils.getAuthorizedAzureCloudContext(request.getWorkspaceId(), USER_REQUEST).isEmpty());
   }
 
   @Test

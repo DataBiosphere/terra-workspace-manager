@@ -15,12 +15,7 @@ import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.resource.controlled.flight.clone.workspace.CloneGcpWorkspaceFlight;
 import bio.terra.workspace.service.stage.StageService;
 import bio.terra.workspace.service.workspace.exceptions.BufferServiceDisabledException;
-import bio.terra.workspace.service.workspace.flight.CreateGcpContextFlightV2;
-import bio.terra.workspace.service.workspace.flight.DeleteGcpContextFlight;
-import bio.terra.workspace.service.workspace.flight.RemoveUserFromWorkspaceFlight;
-import bio.terra.workspace.service.workspace.flight.WorkspaceCreateFlight;
-import bio.terra.workspace.service.workspace.flight.WorkspaceDeleteFlight;
-import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
+import bio.terra.workspace.service.workspace.flight.*;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import bio.terra.workspace.service.workspace.flight.create.azure.CreateAzureContextFlight;
 import bio.terra.workspace.service.workspace.model.AzureCloudContext;
@@ -338,6 +333,26 @@ public class WorkspaceService {
         .newJob()
         .description(jobDescription)
         .flightClass(DeleteGcpContextFlight.class)
+        .userRequest(userRequest)
+        .operationType(OperationType.DELETE)
+        .workspaceId(workspaceId.toString())
+        .submitAndWait(null);
+  }
+
+  public void deleteAzureCloudContext(UUID workspaceId, AuthenticatedUserRequest userRequest) {
+    Workspace workspace =
+        validateWorkspaceAndAction(userRequest, workspaceId, SamWorkspaceAction.WRITE);
+
+    stageService.assertMcWorkspace(workspace, "deleteAzureCloudContext");
+    String workspaceName = workspace.getDisplayName().orElse("");
+    String jobDescription =
+        String.format(
+            "Delete Azure cloud context for workspace: name: '%s' id: '%s'  ",
+            workspaceName, workspaceId);
+    jobService
+        .newJob()
+        .description(jobDescription)
+        .flightClass(DeleteAzureContextFlight.class)
         .userRequest(userRequest)
         .operationType(OperationType.DELETE)
         .workspaceId(workspaceId.toString())
