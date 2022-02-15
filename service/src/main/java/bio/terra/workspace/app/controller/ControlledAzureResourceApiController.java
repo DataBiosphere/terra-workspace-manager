@@ -31,10 +31,7 @@ import bio.terra.workspace.service.resource.controlled.cloud.azure.ip.Controlled
 import bio.terra.workspace.service.resource.controlled.cloud.azure.network.ControlledAzureNetworkResource;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.storage.ControlledAzureStorageResource;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.vm.ControlledAzureVmResource;
-import bio.terra.workspace.service.resource.controlled.model.AccessScopeType;
-import bio.terra.workspace.service.resource.controlled.model.ManagedByType;
-import bio.terra.workspace.service.resource.controlled.model.PrivateUserRole;
-import bio.terra.workspace.service.resource.model.CloningInstructions;
+import bio.terra.workspace.service.resource.controlled.model.ControlledResourceFields;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
 import java.util.UUID;
 import javax.servlet.http.HttpServletRequest;
@@ -75,29 +72,24 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
     features.azureEnabledCheck();
 
     final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
-    final PrivateUserRole privateUserRole =
-        computePrivateUserRole(workspaceId, body.getCommon(), userRequest);
+    ControlledResourceFields commonFields =
+        toCommonFields(workspaceId, body.getCommon(), userRequest);
 
     ControlledAzureDiskResource resource =
         ControlledAzureDiskResource.builder()
-            .workspaceId(workspaceId)
-            .resourceId(UUID.randomUUID())
-            .name(body.getCommon().getName())
-            .description(body.getCommon().getDescription())
-            .cloningInstructions(
-                CloningInstructions.fromApiModel(body.getCommon().getCloningInstructions()))
-            .assignedUser(privateUserRole.getUserEmail())
-            .accessScope(AccessScopeType.fromApi(body.getCommon().getAccessScope()))
-            .managedBy(ManagedByType.fromApi(body.getCommon().getManagedBy()))
+            .common(commonFields)
             .diskName(body.getAzureDisk().getName())
             .region(body.getAzureDisk().getRegion())
             .size(body.getAzureDisk().getSize())
             .build();
 
     // TODO: make createDisk call async once we have things working e2e
-    final var createdDisk =
-        controlledResourceService.createDisk(
-            resource, body.getAzureDisk(), privateUserRole.getRole(), userRequest);
+    final ControlledAzureDiskResource createdDisk =
+        controlledResourceService
+            .createControlledResourceSync(
+                resource, commonFields.getIamRole(), userRequest, body.getAzureDisk())
+            .castByEnum(WsmResourceType.CONTROLLED_AZURE_DISK);
+
     var response =
         new ApiCreatedControlledAzureDisk()
             .resourceId(createdDisk.getResourceId())
@@ -111,27 +103,22 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
     features.azureEnabledCheck();
 
     final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
-    final PrivateUserRole privateUserRole =
-        computePrivateUserRole(workspaceId, body.getCommon(), userRequest);
+    ControlledResourceFields commonFields =
+        toCommonFields(workspaceId, body.getCommon(), userRequest);
 
     ControlledAzureIpResource resource =
         ControlledAzureIpResource.builder()
-            .workspaceId(workspaceId)
-            .resourceId(UUID.randomUUID())
-            .name(body.getCommon().getName())
-            .description(body.getCommon().getDescription())
-            .cloningInstructions(
-                CloningInstructions.fromApiModel(body.getCommon().getCloningInstructions()))
-            .assignedUser(privateUserRole.getUserEmail())
-            .accessScope(AccessScopeType.fromApi(body.getCommon().getAccessScope()))
-            .managedBy(ManagedByType.fromApi(body.getCommon().getManagedBy()))
+            .common(commonFields)
             .ipName(body.getAzureIp().getName())
             .region(body.getAzureIp().getRegion())
             .build();
 
     final ControlledAzureIpResource createdIp =
-        controlledResourceService.createIp(
-            resource, body.getAzureIp(), privateUserRole.getRole(), userRequest);
+        controlledResourceService
+            .createControlledResourceSync(
+                resource, commonFields.getIamRole(), userRequest, body.getAzureIp())
+            .castByEnum(WsmResourceType.CONTROLLED_AZURE_IP);
+
     var response =
         new ApiCreatedControlledAzureIp()
             .resourceId(createdIp.getResourceId())
@@ -145,27 +132,21 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
     features.azureEnabledCheck();
 
     final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
-    final PrivateUserRole privateUserRole =
-        computePrivateUserRole(workspaceId, body.getCommon(), userRequest);
+    final ControlledResourceFields commonFields =
+        toCommonFields(workspaceId, body.getCommon(), userRequest);
 
     ControlledAzureStorageResource resource =
         ControlledAzureStorageResource.builder()
-            .workspaceId(workspaceId)
-            .resourceId(UUID.randomUUID())
-            .name(body.getCommon().getName())
-            .description(body.getCommon().getDescription())
-            .cloningInstructions(
-                CloningInstructions.fromApiModel(body.getCommon().getCloningInstructions()))
-            .assignedUser(privateUserRole.getUserEmail())
-            .accessScope(AccessScopeType.fromApi(body.getCommon().getAccessScope()))
-            .managedBy(ManagedByType.fromApi(body.getCommon().getManagedBy()))
+            .common(commonFields)
             .storageAccountName(body.getAzureStorage().getName())
             .region(body.getAzureStorage().getRegion())
             .build();
 
     final ControlledAzureStorageResource createdStorage =
-        controlledResourceService.createStorage(
-            resource, body.getAzureStorage(), privateUserRole.getRole(), userRequest);
+        controlledResourceService
+            .createControlledResourceSync(
+                resource, commonFields.getIamRole(), userRequest, body.getAzureStorage())
+            .castByEnum(WsmResourceType.CONTROLLED_AZURE_STORAGE_ACCOUNT);
     var response =
         new ApiCreatedControlledAzureStorage()
             .resourceId(createdStorage.getResourceId())
@@ -179,20 +160,12 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
     features.azureEnabledCheck();
 
     final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
-    final PrivateUserRole privateUserRole =
-        computePrivateUserRole(workspaceId, body.getCommon(), userRequest);
+    final ControlledResourceFields commonFields =
+        toCommonFields(workspaceId, body.getCommon(), userRequest);
 
     ControlledAzureVmResource resource =
         ControlledAzureVmResource.builder()
-            .workspaceId(workspaceId)
-            .resourceId(UUID.randomUUID())
-            .name(body.getCommon().getName())
-            .description(body.getCommon().getDescription())
-            .cloningInstructions(
-                CloningInstructions.fromApiModel(body.getCommon().getCloningInstructions()))
-            .assignedUser(privateUserRole.getUserEmail())
-            .accessScope(AccessScopeType.fromApi(body.getCommon().getAccessScope()))
-            .managedBy(ManagedByType.fromApi(body.getCommon().getManagedBy()))
+            .common(commonFields)
             .vmName(body.getAzureVm().getName())
             .region(body.getAzureVm().getRegion())
             .vmSize(body.getAzureVm().getVmSize())
@@ -206,7 +179,7 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
         controlledResourceService.createVm(
             resource,
             body.getAzureVm(),
-            privateUserRole.getRole(),
+            commonFields.getIamRole(),
             body.getJobControl(),
             getAsyncResultEndpoint(body.getJobControl().getId(), "create-result"),
             userRequest);
@@ -244,20 +217,12 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
     features.azureEnabledCheck();
 
     final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
-    final PrivateUserRole privateUserRole =
-        computePrivateUserRole(workspaceId, body.getCommon(), userRequest);
+    final ControlledResourceFields commonFields =
+        toCommonFields(workspaceId, body.getCommon(), userRequest);
 
     ControlledAzureNetworkResource resource =
         ControlledAzureNetworkResource.builder()
-            .workspaceId(workspaceId)
-            .resourceId(UUID.randomUUID())
-            .name(body.getCommon().getName())
-            .description(body.getCommon().getDescription())
-            .cloningInstructions(
-                CloningInstructions.fromApiModel(body.getCommon().getCloningInstructions()))
-            .assignedUser(privateUserRole.getUserEmail())
-            .accessScope(AccessScopeType.fromApi(body.getCommon().getAccessScope()))
-            .managedBy(ManagedByType.fromApi(body.getCommon().getManagedBy()))
+            .common(commonFields)
             .networkName(body.getAzureNetwork().getName())
             .subnetName(body.getAzureNetwork().getSubnetName())
             .addressSpaceCidr(body.getAzureNetwork().getAddressSpaceCidr())
@@ -266,8 +231,10 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
             .build();
 
     final ControlledAzureNetworkResource createdNetwork =
-        controlledResourceService.createNetwork(
-            resource, body.getAzureNetwork(), privateUserRole.getRole(), userRequest);
+        controlledResourceService
+            .createControlledResourceSync(
+                resource, commonFields.getIamRole(), userRequest, body.getAzureNetwork())
+            .castByEnum(WsmResourceType.CONTROLLED_AZURE_NETWORK);
     var response =
         new ApiCreatedControlledAzureNetwork()
             .resourceId(createdNetwork.getResourceId())

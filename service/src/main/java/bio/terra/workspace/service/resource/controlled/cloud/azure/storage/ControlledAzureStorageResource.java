@@ -8,7 +8,6 @@ import bio.terra.workspace.common.exception.InternalLogicException;
 import bio.terra.workspace.common.utils.FlightBeanBag;
 import bio.terra.workspace.common.utils.RetryRules;
 import bio.terra.workspace.db.DbSerDes;
-import bio.terra.workspace.db.model.DbResource;
 import bio.terra.workspace.db.model.UniquenessCheckAttributes;
 import bio.terra.workspace.db.model.UniquenessCheckAttributes.UniquenessScope;
 import bio.terra.workspace.generated.model.ApiAzureStorageAttributes;
@@ -21,6 +20,7 @@ import bio.terra.workspace.service.resource.controlled.flight.create.CreateContr
 import bio.terra.workspace.service.resource.controlled.flight.delete.DeleteControlledResourceFlight;
 import bio.terra.workspace.service.resource.controlled.model.AccessScopeType;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
+import bio.terra.workspace.service.resource.controlled.model.ControlledResourceFields;
 import bio.terra.workspace.service.resource.controlled.model.ManagedByType;
 import bio.terra.workspace.service.resource.controlled.model.PrivateResourceState;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
@@ -31,7 +31,6 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.Optional;
 import java.util.UUID;
-import javax.annotation.Nullable;
 
 public class ControlledAzureStorageResource extends ControlledResource {
   private final String storageAccountName;
@@ -68,12 +67,11 @@ public class ControlledAzureStorageResource extends ControlledResource {
     validate();
   }
 
-  public ControlledAzureStorageResource(DbResource dbResource) {
-    super(dbResource);
-    ControlledAzureStorageAttributes attributes =
-        DbSerDes.fromJson(dbResource.getAttributes(), ControlledAzureStorageAttributes.class);
-    this.storageAccountName = attributes.getStorageAccountName();
-    this.region = attributes.getRegion();
+  private ControlledAzureStorageResource(
+      ControlledResourceFields common, String storageAccountName, String region) {
+    super(common);
+    this.storageAccountName = storageAccountName;
+    this.region = region;
     validate();
   }
 
@@ -212,43 +210,12 @@ public class ControlledAzureStorageResource extends ControlledResource {
   }
 
   public static class Builder {
-    private UUID workspaceId;
-    private UUID resourceId;
-    private String name;
-    private String description;
-    private CloningInstructions cloningInstructions;
-    private String assignedUser;
-    // Default value is NOT_APPLICABLE for shared resources and INITIALIZING for private resources.
-    @Nullable private PrivateResourceState privateResourceState;
-    private AccessScopeType accessScope;
-    private ManagedByType managedBy;
-    private UUID applicationId;
+    private ControlledResourceFields common;
     private String storageAccountName;
     private String region;
 
-    public ControlledAzureStorageResource.Builder workspaceId(UUID workspaceId) {
-      this.workspaceId = workspaceId;
-      return this;
-    }
-
-    public ControlledAzureStorageResource.Builder resourceId(UUID resourceId) {
-      this.resourceId = resourceId;
-      return this;
-    }
-
-    public ControlledAzureStorageResource.Builder name(String name) {
-      this.name = name;
-      return this;
-    }
-
-    public ControlledAzureStorageResource.Builder description(String description) {
-      this.description = description;
-      return this;
-    }
-
-    public ControlledAzureStorageResource.Builder cloningInstructions(
-        CloningInstructions cloningInstructions) {
-      this.cloningInstructions = cloningInstructions;
+    public Builder common(ControlledResourceFields common) {
+      this.common = common;
       return this;
     }
 
@@ -262,52 +229,8 @@ public class ControlledAzureStorageResource extends ControlledResource {
       return this;
     }
 
-    public ControlledAzureStorageResource.Builder assignedUser(String assignedUser) {
-      this.assignedUser = assignedUser;
-      return this;
-    }
-
-    public ControlledAzureStorageResource.Builder privateResourceState(
-        PrivateResourceState privateResourceState) {
-      this.privateResourceState = privateResourceState;
-      return this;
-    }
-
-    private PrivateResourceState defaultPrivateResourceState() {
-      return this.accessScope == AccessScopeType.ACCESS_SCOPE_PRIVATE
-          ? PrivateResourceState.INITIALIZING
-          : PrivateResourceState.NOT_APPLICABLE;
-    }
-
-    public ControlledAzureStorageResource.Builder accessScope(AccessScopeType accessScope) {
-      this.accessScope = accessScope;
-      return this;
-    }
-
-    public ControlledAzureStorageResource.Builder managedBy(ManagedByType managedBy) {
-      this.managedBy = managedBy;
-      return this;
-    }
-
-    public ControlledAzureStorageResource.Builder applicationId(UUID applicationId) {
-      this.applicationId = applicationId;
-      return this;
-    }
-
     public ControlledAzureStorageResource build() {
-      return new ControlledAzureStorageResource(
-          workspaceId,
-          resourceId,
-          name,
-          description,
-          cloningInstructions,
-          assignedUser,
-          Optional.ofNullable(privateResourceState).orElse(defaultPrivateResourceState()),
-          accessScope,
-          managedBy,
-          applicationId,
-          storageAccountName,
-          region);
+      return new ControlledAzureStorageResource(common, storageAccountName, region);
     }
   }
 }

@@ -59,11 +59,9 @@ import bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.Updat
 import bio.terra.workspace.service.resource.controlled.flight.delete.DeleteMetadataStep;
 import bio.terra.workspace.service.resource.controlled.flight.update.RetrieveControlledResourceMetadataStep;
 import bio.terra.workspace.service.resource.controlled.flight.update.UpdateControlledResourceMetadataStep;
-import bio.terra.workspace.service.resource.controlled.model.AccessScopeType;
-import bio.terra.workspace.service.resource.controlled.model.ManagedByType;
+import bio.terra.workspace.service.resource.controlled.model.ControlledResourceFields;
 import bio.terra.workspace.service.resource.exception.DuplicateResourceException;
 import bio.terra.workspace.service.resource.exception.ResourceNotFoundException;
-import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.spendprofile.SpendConnectedTestUtils;
 import bio.terra.workspace.service.workspace.Alpha1Service;
@@ -216,18 +214,8 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
             .instanceId(instanceId)
             .location(DEFAULT_NOTEBOOK_LOCATION);
 
-    ControlledAiNotebookInstanceResource.Builder resourceBuilder =
-        ControlledResourceFixtures.makeDefaultAiNotebookInstance()
-            .workspaceId(workspaceId)
-            .resourceId(UUID.randomUUID())
-            .name(instanceId)
-            .cloningInstructions(CloningInstructions.COPY_NOTHING)
-            .accessScope(AccessScopeType.ACCESS_SCOPE_PRIVATE)
-            .managedBy(ManagedByType.MANAGED_BY_USER)
-            .assignedUser(user.getEmail())
-            .instanceId(instanceId)
-            .location(DEFAULT_NOTEBOOK_LOCATION);
-    ControlledAiNotebookInstanceResource resource = resourceBuilder.build();
+    ControlledAiNotebookInstanceResource resource =
+        makeNotebookTestResource(workspaceId, "initial-notebook-name", instanceId);
 
     // Test idempotency of steps by retrying them once.
     Map<String, StepStatus> retrySteps = new HashMap<>();
@@ -310,10 +298,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
 
     // Creating a controlled resource with a duplicate underlying notebook instance is not allowed.
     ControlledAiNotebookInstanceResource duplicateResource =
-        resourceBuilder
-            .resourceId(UUID.randomUUID())
-            .name("new-name-same-notebook-instance")
-            .build();
+        makeNotebookTestResource(workspaceId, "new-name-same-notebook-instance", instanceId);
     String duplicateResourceJobId =
         controlledResourceService.createAiNotebookInstance(
             duplicateResource,
@@ -332,6 +317,24 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
     assertEquals(DuplicateResourceException.class, duplicateJobResult.getException().getClass());
   }
 
+  private ControlledAiNotebookInstanceResource makeNotebookTestResource(
+      UUID workspaceId, String name, String instanceId) {
+
+    ControlledResourceFields commonFields =
+        ControlledResourceFixtures.makeNotebookCommonFieldsBuilder()
+            .workspaceId(workspaceId)
+            .name(name)
+            .assignedUser(user.getEmail())
+            .build();
+
+    return ControlledAiNotebookInstanceResource.builder()
+        .common(commonFields)
+        .instanceId(instanceId)
+        .location(DEFAULT_NOTEBOOK_LOCATION)
+        .projectId("my-project-id")
+        .build();
+  }
+
   @Test
   @DisabledIfEnvironmentVariable(named = "TEST_ENV", matches = BUFFER_SERVICE_DISABLED_ENVS_REG_EX)
   void createAiNotebookInstanceUndo() throws Exception {
@@ -342,15 +345,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
             .instanceId(instanceId)
             .location(DEFAULT_NOTEBOOK_LOCATION);
     ControlledAiNotebookInstanceResource resource =
-        ControlledResourceFixtures.makeDefaultAiNotebookInstance()
-            .workspaceId(workspace.getWorkspaceId())
-            .name(instanceId)
-            .accessScope(AccessScopeType.ACCESS_SCOPE_PRIVATE)
-            .managedBy(ManagedByType.MANAGED_BY_USER)
-            .assignedUser(user.getEmail())
-            .instanceId(instanceId)
-            .location(DEFAULT_NOTEBOOK_LOCATION)
-            .build();
+        makeNotebookTestResource(workspace.getWorkspaceId(), instanceId, instanceId);
 
     // Test idempotency of undo steps by retrying them once.
     Map<String, StepStatus> retrySteps = new HashMap<>();
@@ -420,15 +415,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
             .instanceId(instanceId)
             .location(DEFAULT_NOTEBOOK_LOCATION);
     ControlledAiNotebookInstanceResource resource =
-        ControlledResourceFixtures.makeDefaultAiNotebookInstance()
-            .workspaceId(workspace.getWorkspaceId())
-            .name(instanceId)
-            .accessScope(AccessScopeType.ACCESS_SCOPE_PRIVATE)
-            .managedBy(ManagedByType.MANAGED_BY_USER)
-            .assignedUser(user.getEmail())
-            .instanceId(instanceId)
-            .location(DEFAULT_NOTEBOOK_LOCATION)
-            .build();
+        makeNotebookTestResource(workspace.getWorkspaceId(), instanceId, instanceId);
 
     // Shared notebooks not yet implemented.
     // Private IAM roles must include writer role.
@@ -504,15 +491,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
             .instanceId(instanceId)
             .location(DEFAULT_NOTEBOOK_LOCATION);
     ControlledAiNotebookInstanceResource resource =
-        ControlledResourceFixtures.makeDefaultAiNotebookInstance()
-            .name(instanceId)
-            .workspaceId(workspace.getWorkspaceId())
-            .accessScope(AccessScopeType.ACCESS_SCOPE_PRIVATE)
-            .managedBy(ManagedByType.MANAGED_BY_USER)
-            .assignedUser(user.getEmail())
-            .instanceId(instanceId)
-            .location(DEFAULT_NOTEBOOK_LOCATION)
-            .build();
+        makeNotebookTestResource(workspace.getWorkspaceId(), instanceId, instanceId);
 
     String createJobId =
         controlledResourceService.createAiNotebookInstance(

@@ -7,10 +7,6 @@ import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
 import bio.terra.workspace.common.exception.InternalLogicException;
 import bio.terra.workspace.db.ApplicationDao;
 import bio.terra.workspace.db.ResourceDao;
-import bio.terra.workspace.generated.model.ApiAzureDiskCreationParameters;
-import bio.terra.workspace.generated.model.ApiAzureIpCreationParameters;
-import bio.terra.workspace.generated.model.ApiAzureNetworkCreationParameters;
-import bio.terra.workspace.generated.model.ApiAzureStorageCreationParameters;
 import bio.terra.workspace.generated.model.ApiAzureVmCreationParameters;
 import bio.terra.workspace.generated.model.ApiCloningInstructionsEnum;
 import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceCreationParameters;
@@ -26,10 +22,6 @@ import bio.terra.workspace.service.job.JobBuilder;
 import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceSyncMapping.SyncMapping;
-import bio.terra.workspace.service.resource.controlled.cloud.azure.disk.ControlledAzureDiskResource;
-import bio.terra.workspace.service.resource.controlled.cloud.azure.ip.ControlledAzureIpResource;
-import bio.terra.workspace.service.resource.controlled.cloud.azure.network.ControlledAzureNetworkResource;
-import bio.terra.workspace.service.resource.controlled.cloud.azure.storage.ControlledAzureStorageResource;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.vm.ControlledAzureVmResource;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.GcpPolicyBuilder;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook.ControlledAiNotebookInstanceResource;
@@ -104,78 +96,6 @@ public class ControlledResourceService {
     this.gcpCloudContextService = gcpCloudContextService;
     this.controlledResourceMetadataManager = controlledResourceMetadataManager;
     this.features = features;
-  }
-
-  public ControlledAzureIpResource createIp(
-      ControlledAzureIpResource resource,
-      ApiAzureIpCreationParameters creationParameters,
-      ControlledResourceIamRole privateResourceIamRole,
-      AuthenticatedUserRequest userRequest) {
-    features.azureEnabledCheck();
-
-    JobBuilder jobBuilder =
-        commonCreationJobBuilder(
-                resource,
-                privateResourceIamRole,
-                new ApiJobControl().id(UUID.randomUUID().toString()),
-                null,
-                userRequest)
-            .addParameter(ControlledResourceKeys.CREATION_PARAMETERS, creationParameters);
-    return jobBuilder.submitAndWait(ControlledAzureIpResource.class);
-  }
-
-  public ControlledAzureStorageResource createStorage(
-      ControlledAzureStorageResource resource,
-      ApiAzureStorageCreationParameters creationParameters,
-      ControlledResourceIamRole privateResourceIamRole,
-      AuthenticatedUserRequest userRequest) {
-    features.azureEnabledCheck();
-
-    JobBuilder jobBuilder =
-        commonCreationJobBuilder(
-                resource,
-                privateResourceIamRole,
-                new ApiJobControl().id(UUID.randomUUID().toString()),
-                null,
-                userRequest)
-            .addParameter(ControlledResourceKeys.CREATION_PARAMETERS, creationParameters);
-    return jobBuilder.submitAndWait(ControlledAzureStorageResource.class);
-  }
-
-  public ControlledAzureDiskResource createDisk(
-      ControlledAzureDiskResource resource,
-      ApiAzureDiskCreationParameters creationParameters,
-      ControlledResourceIamRole privateResourceIamRole,
-      AuthenticatedUserRequest userRequest) {
-    features.azureEnabledCheck();
-
-    JobBuilder jobBuilder =
-        commonCreationJobBuilder(
-                resource,
-                privateResourceIamRole,
-                new ApiJobControl().id(UUID.randomUUID().toString()),
-                null,
-                userRequest)
-            .addParameter(ControlledResourceKeys.CREATION_PARAMETERS, creationParameters);
-    return jobBuilder.submitAndWait(ControlledAzureDiskResource.class);
-  }
-
-  public ControlledAzureNetworkResource createNetwork(
-      ControlledAzureNetworkResource resource,
-      ApiAzureNetworkCreationParameters creationParameters,
-      ControlledResourceIamRole privateResourceIamRole,
-      AuthenticatedUserRequest userRequest) {
-    features.azureEnabledCheck();
-
-    JobBuilder jobBuilder =
-        commonCreationJobBuilder(
-                resource,
-                privateResourceIamRole,
-                new ApiJobControl().id(UUID.randomUUID().toString()),
-                null,
-                userRequest)
-            .addParameter(ControlledResourceKeys.CREATION_PARAMETERS, creationParameters);
-    return jobBuilder.submitAndWait(ControlledAzureNetworkResource.class);
   }
 
   public String createVm(

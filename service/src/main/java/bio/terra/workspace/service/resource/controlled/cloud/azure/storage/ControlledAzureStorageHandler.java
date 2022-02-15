@@ -1,6 +1,8 @@
 package bio.terra.workspace.service.resource.controlled.cloud.azure.storage;
 
+import bio.terra.workspace.db.DbSerDes;
 import bio.terra.workspace.db.model.DbResource;
+import bio.terra.workspace.service.resource.controlled.model.ControlledResourceFields;
 import bio.terra.workspace.service.resource.model.WsmResource;
 import bio.terra.workspace.service.resource.model.WsmResourceHandler;
 
@@ -17,6 +19,16 @@ public class ControlledAzureStorageHandler implements WsmResourceHandler {
   /** {@inheritDoc} */
   @Override
   public WsmResource makeResourceFromDb(DbResource dbResource) {
-    return new ControlledAzureStorageResource(dbResource);
+    ControlledAzureStorageResource attributes =
+        DbSerDes.fromJson(dbResource.getAttributes(), ControlledAzureStorageResource.class);
+
+    var resource =
+        ControlledAzureStorageResource.builder()
+            .storageAccountName(attributes.getStorageAccountName())
+            .region(attributes.getRegion())
+            .common(new ControlledResourceFields(dbResource))
+            .build();
+    resource.validate();
+    return resource;
   }
 }

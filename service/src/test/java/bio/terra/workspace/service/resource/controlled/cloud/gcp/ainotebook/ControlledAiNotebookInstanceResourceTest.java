@@ -13,6 +13,7 @@ import bio.terra.workspace.common.BaseUnitTest;
 import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
 import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceResource;
 import bio.terra.workspace.service.resource.controlled.model.AccessScopeType;
+import bio.terra.workspace.service.resource.controlled.model.ControlledResourceFields;
 import org.junit.jupiter.api.Test;
 
 public class ControlledAiNotebookInstanceResourceTest extends BaseUnitTest {
@@ -33,11 +34,19 @@ public class ControlledAiNotebookInstanceResourceTest extends BaseUnitTest {
 
   @Test
   public void validateSharedAccessThrows() {
+    ControlledResourceFields commonFields =
+        ControlledResourceFixtures.makeNotebookCommonFieldsBuilder()
+            .accessScope(AccessScopeType.ACCESS_SCOPE_SHARED)
+            .build();
+
     assertThrows(
         BadRequestException.class,
         () ->
-            ControlledResourceFixtures.makeDefaultAiNotebookInstance()
-                .accessScope(AccessScopeType.ACCESS_SCOPE_SHARED)
+            ControlledAiNotebookInstanceResource.builder()
+                .common(commonFields)
+                .instanceId("an-instance")
+                .location("us-east1-b")
+                .projectId("a-projecct-id")
                 .build());
   }
 
@@ -108,14 +117,12 @@ public class ControlledAiNotebookInstanceResourceTest extends BaseUnitTest {
   public void toApiResource() {
     ControlledAiNotebookInstanceResource resource =
         ControlledResourceFixtures.makeDefaultAiNotebookInstance()
-            .name("my-notebook")
             .instanceId("my-instance-id")
             .location("us-east1-b")
             .projectId("my-project-id")
             .build();
 
     ApiGcpAiNotebookInstanceResource apiResource = resource.toApiResource();
-    assertEquals("my-notebook", apiResource.getMetadata().getName());
     assertEquals("my-project-id", apiResource.getAttributes().getProjectId());
     assertEquals("us-east1-b", apiResource.getAttributes().getLocation());
     assertEquals("my-instance-id", apiResource.getAttributes().getInstanceId());

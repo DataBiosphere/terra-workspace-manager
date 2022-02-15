@@ -36,12 +36,8 @@ import bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook.Cont
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.bqdataset.ControlledBigQueryDatasetResource;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.ControlledGcsBucketResource;
 import bio.terra.workspace.service.resource.controlled.exception.InvalidControlledResourceException;
-import bio.terra.workspace.service.resource.controlled.model.AccessScopeType;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResourceFields;
-import bio.terra.workspace.service.resource.controlled.model.ManagedByType;
-import bio.terra.workspace.service.resource.controlled.model.PrivateUserRole;
-import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import java.util.Optional;
@@ -301,40 +297,27 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
   public ResponseEntity<ApiCreatedControlledGcpAiNotebookInstanceResult> createAiNotebookInstance(
       UUID workspaceId, @Valid ApiCreateControlledGcpAiNotebookInstanceRequestBody body) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    ControlledResourceFields commonFields =
+        toCommonFields(workspaceId, body.getCommon(), userRequest);
     String projectId = workspaceService.getAuthorizedRequiredGcpProject(workspaceId, userRequest);
-
-    PrivateUserRole privateUserRole =
-        computePrivateUserRole(workspaceId, body.getCommon(), userRequest);
-
-    ManagedByType managedBy = ManagedByType.fromApi(body.getCommon().getManagedBy());
-    AccessScopeType accessScopeType = AccessScopeType.fromApi(body.getCommon().getAccessScope());
 
     ControlledAiNotebookInstanceResource resource =
         ControlledAiNotebookInstanceResource.builder()
-            .workspaceId(workspaceId)
-            .resourceId(UUID.randomUUID())
-            .name(body.getCommon().getName())
-            .description(body.getCommon().getDescription())
-            .cloningInstructions(
-                CloningInstructions.fromApiModel(body.getCommon().getCloningInstructions()))
-            .assignedUser(privateUserRole.getUserEmail())
-            .accessScope(accessScopeType)
-            .managedBy(managedBy)
-            .applicationId(controlledResourceService.getAssociatedApp(managedBy, userRequest))
+            .common(commonFields)
             .location(body.getAiNotebookInstance().getLocation())
+            .projectId(projectId)
             .instanceId(
                 Optional.ofNullable(body.getAiNotebookInstance().getInstanceId())
                     .orElse(
                         ControlledAiNotebookInstanceResource.generateInstanceId(
-                            privateUserRole.getUserEmail())))
-            .projectId(projectId)
+                            commonFields.getAssignedUser())))
             .build();
 
     String jobId =
         controlledResourceService.createAiNotebookInstance(
             resource,
             body.getAiNotebookInstance(),
-            privateUserRole.getRole(),
+            commonFields.getIamRole(),
             body.getJobControl(),
             getAsyncResultEndpoint(body.getJobControl().getId(), "create-result"),
             userRequest);

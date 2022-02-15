@@ -376,8 +376,8 @@ public class ControlledResourceFixtures {
    * <p>Tests should not rely on any particular value for the fields returned by this function and
    * instead override the values that they care about.
    */
-  public static ControlledAiNotebookInstanceResource.Builder makeDefaultAiNotebookInstance() {
-    return ControlledAiNotebookInstanceResource.builder()
+  public static ControlledResourceFields.Builder makeNotebookCommonFieldsBuilder() {
+    return ControlledResourceFields.builder()
         .workspaceId(UUID.randomUUID())
         .resourceId(UUID.randomUUID())
         .name("my-notebook")
@@ -385,7 +385,12 @@ public class ControlledResourceFixtures {
         .cloningInstructions(CloningInstructions.COPY_NOTHING)
         .assignedUser("myusername@mydomain.mine")
         .accessScope(AccessScopeType.ACCESS_SCOPE_PRIVATE)
-        .managedBy(ManagedByType.MANAGED_BY_USER)
+        .managedBy(ManagedByType.MANAGED_BY_USER);
+  }
+
+  public static ControlledAiNotebookInstanceResource.Builder makeDefaultAiNotebookInstance() {
+    return ControlledAiNotebookInstanceResource.builder()
+        .common(makeNotebookCommonFieldsBuilder().build())
         .instanceId("my-instance-id")
         .location("us-east1-b")
         .projectId("my-project-id");
