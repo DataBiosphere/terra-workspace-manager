@@ -53,7 +53,11 @@ import bio.terra.workspace.service.workspace.GcpCloudContextService;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.WsmApplicationService;
 import bio.terra.workspace.service.workspace.exceptions.CloudContextRequiredException;
-import bio.terra.workspace.service.workspace.model.*;
+import bio.terra.workspace.service.workspace.model.WorkspaceStage;
+import bio.terra.workspace.service.workspace.model.Workspace;
+import bio.terra.workspace.service.workspace.model.CloudContextHolder;
+import bio.terra.workspace.service.workspace.model.GcpCloudContext;
+import bio.terra.workspace.service.workspace.model.AzureCloudContext;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -485,27 +489,25 @@ public class WorkspaceApiController implements WorkspaceApi {
     final AsyncJobResult<CloudContextHolder> jobResult =
         jobService.retrieveAsyncJobResult(jobId, CloudContextHolder.class, userRequest);
 
-    final ApiGcpContext gcpContext;
-    if (jobResult.getJobReport().getStatus().equals(StatusEnum.SUCCEEDED)
-        && jobResult.getResult().getGcpCloudContext() != null) {
+    ApiGcpContext gcpContext = null;
+    if (jobResult.getJobReport().getStatus().equals(StatusEnum.SUCCEEDED)) {
       gcpContext =
-          new ApiGcpContext()
-              .projectId(jobResult.getResult().getGcpCloudContext().getGcpProjectId());
-    } else {
-      gcpContext = null;
+          Optional.ofNullable(jobResult.getResult().getGcpCloudContext())
+              .map(c -> new ApiGcpContext().projectId(c.getGcpProjectId()))
+              .orElse(null);
     }
 
-    final ApiAzureContext azureContext;
-    if (jobResult.getJobReport().getStatus().equals(StatusEnum.SUCCEEDED)
-        && jobResult.getResult().getAzureCloudContext() != null) {
-      final AzureCloudContext azureResult = jobResult.getResult().getAzureCloudContext();
+    ApiAzureContext azureContext = null;
+    if (jobResult.getJobReport().getStatus().equals(StatusEnum.SUCCEEDED)) {
       azureContext =
-          new ApiAzureContext()
-              .tenantId(azureResult.getAzureTenantId())
-              .subscriptionId(azureResult.getAzureSubscriptionId())
-              .resourceGroupId(azureResult.getAzureResourceGroupId());
-    } else {
-      azureContext = null;
+          Optional.ofNullable(jobResult.getResult().getAzureCloudContext())
+              .map(
+                  c ->
+                      new ApiAzureContext()
+                          .tenantId(c.getAzureTenantId())
+                          .subscriptionId(c.getAzureSubscriptionId())
+                          .resourceGroupId(c.getAzureResourceGroupId()))
+              .orElse(null);
     }
 
     return new ApiCreateCloudContextResult()
