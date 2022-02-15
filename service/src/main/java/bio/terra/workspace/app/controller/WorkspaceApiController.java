@@ -53,11 +53,11 @@ import bio.terra.workspace.service.workspace.GcpCloudContextService;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.WsmApplicationService;
 import bio.terra.workspace.service.workspace.exceptions.CloudContextRequiredException;
-import bio.terra.workspace.service.workspace.model.WorkspaceStage;
-import bio.terra.workspace.service.workspace.model.Workspace;
+import bio.terra.workspace.service.workspace.model.AzureCloudContext;
 import bio.terra.workspace.service.workspace.model.CloudContextHolder;
 import bio.terra.workspace.service.workspace.model.GcpCloudContext;
-import bio.terra.workspace.service.workspace.model.AzureCloudContext;
+import bio.terra.workspace.service.workspace.model.Workspace;
+import bio.terra.workspace.service.workspace.model.WorkspaceStage;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -490,15 +490,14 @@ public class WorkspaceApiController implements WorkspaceApi {
         jobService.retrieveAsyncJobResult(jobId, CloudContextHolder.class, userRequest);
 
     ApiGcpContext gcpContext = null;
+    ApiAzureContext azureContext = null;
+
     if (jobResult.getJobReport().getStatus().equals(StatusEnum.SUCCEEDED)) {
       gcpContext =
           Optional.ofNullable(jobResult.getResult().getGcpCloudContext())
               .map(c -> new ApiGcpContext().projectId(c.getGcpProjectId()))
               .orElse(null);
-    }
 
-    ApiAzureContext azureContext = null;
-    if (jobResult.getJobReport().getStatus().equals(StatusEnum.SUCCEEDED)) {
       azureContext =
           Optional.ofNullable(jobResult.getResult().getAzureCloudContext())
               .map(

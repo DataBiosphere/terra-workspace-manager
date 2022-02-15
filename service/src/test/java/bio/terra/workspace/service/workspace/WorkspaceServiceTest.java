@@ -15,7 +15,6 @@ import bio.terra.common.sam.exception.SamExceptionFactory;
 import bio.terra.common.sam.exception.SamInternalServerErrorException;
 import bio.terra.stairway.FlightDebugInfo;
 import bio.terra.stairway.StepStatus;
-import bio.terra.workspace.app.configuration.external.AzureTestConfiguration;
 import bio.terra.workspace.common.BaseConnectedTest;
 import bio.terra.workspace.connected.WorkspaceConnectedTestUtils;
 import bio.terra.workspace.db.ResourceDao;
@@ -40,7 +39,6 @@ import bio.terra.workspace.service.workspace.exceptions.StageDisabledException;
 import bio.terra.workspace.service.workspace.flight.CheckSamWorkspaceAuthzStep;
 import bio.terra.workspace.service.workspace.flight.CreateWorkspaceAuthzStep;
 import bio.terra.workspace.service.workspace.flight.CreateWorkspaceStep;
-import bio.terra.workspace.service.workspace.model.AzureCloudContext;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
 import com.google.api.services.cloudresourcemanager.v3.model.Project;
@@ -56,9 +54,7 @@ import org.junit.jupiter.api.condition.DisabledIfEnvironmentVariable;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.test.context.ActiveProfiles;
 
-@ActiveProfiles({"azure", "azure-test"})
 class WorkspaceServiceTest extends BaseConnectedTest {
 
   /** A fake authenticated user request. */
@@ -75,7 +71,6 @@ class WorkspaceServiceTest extends BaseConnectedTest {
   @Autowired private ReferencedResourceService referenceResourceService;
   @Autowired private ResourceDao resourceDao;
   @Autowired private WorkspaceConnectedTestUtils testUtils;
-  @Autowired private AzureTestConfiguration azureTestConfiguration;
   @MockBean private DataRepoService dataRepoService;
   /** Mock SamService does nothing for all calls that would throw if unauthorized. */
   @MockBean private SamService mockSamService;
@@ -459,36 +454,6 @@ class WorkspaceServiceTest extends BaseConnectedTest {
     workspaceService.deleteGcpCloudContext(request.getWorkspaceId(), USER_REQUEST);
     assertTrue(
         testUtils.getAuthorizedGcpCloudContext(request.getWorkspaceId(), USER_REQUEST).isEmpty());
-  }
-
-  @Test
-  void createGetDeleteAzureContext() {
-    Workspace request =
-        defaultRequestBuilder(UUID.randomUUID())
-            .spendProfileId(spendUtils.defaultSpendId())
-            .workspaceStage(WorkspaceStage.MC_WORKSPACE)
-            .build();
-
-    workspaceService.createWorkspace(request, USER_REQUEST);
-
-    String jobId = UUID.randomUUID().toString();
-    AzureCloudContext azureCloudContext =
-        new AzureCloudContext(
-            azureTestConfiguration.getTenantId(),
-            azureTestConfiguration.getSubscriptionId(),
-            azureTestConfiguration.getManagedResourceGroupId());
-    workspaceService.createAzureCloudContext(
-        request.getWorkspaceId(), jobId, USER_REQUEST, "/fake/value", azureCloudContext);
-    jobService.waitForJob(jobId);
-
-    assertNull(jobService.retrieveJobResult(jobId, Object.class, USER_REQUEST).getException());
-    assertTrue(
-        testUtils
-            .getAuthorizedAzureCloudContext(request.getWorkspaceId(), USER_REQUEST)
-            .isPresent());
-    workspaceService.deleteAzureCloudContext(request.getWorkspaceId(), USER_REQUEST);
-    assertTrue(
-        testUtils.getAuthorizedAzureCloudContext(request.getWorkspaceId(), USER_REQUEST).isEmpty());
   }
 
   @Test
