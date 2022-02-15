@@ -152,6 +152,14 @@ public class ControlledBigQueryDatasetLifecycle extends GcpWorkspaceCloneTestScr
         "Workspace reader was able to insert data into a table");
     logger.info("Workspace reader could not modify table {} contents as expected", tableName);
 
+    // Workspace writer can also read the table
+    // This is the writer's first use of cloud APIs after being added to the workspace, so we
+    // retry this operation until cloud IAM has properly synced.
+    var writerReadTable =
+        ClientTestUtils.getWithRetryOnException(() -> writerBqClient.getTable(table.getTableId()));
+    assertEquals(table, writerReadTable);
+    logger.info("Read table {} as workspace writer", tableName);
+
     // In contrast, a workspace writer can write data to tables
     String columnValue = "this value lives in a table";
     insertValueIntoTable(writerBqClient, columnValue);
