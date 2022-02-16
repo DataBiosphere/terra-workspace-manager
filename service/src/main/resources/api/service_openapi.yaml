@@ -3203,9 +3203,10 @@ components:
     CreatedControlledGcpGcsBucket:
       description: Response Payload for requesting a new controlled GCS bucket.
       type: object
+      required: [resourceId, gcpBucket]
       properties:
         resourceId:
-          description: UUID of a newly-created resource. Null if not created yet.
+          description: UUID of a newly-created resource.
           type: string
           format: uuid
         gcpBucket:
@@ -3213,9 +3214,10 @@ components:
     CreatedControlledGcpBigQueryDataset:
       description: Response Payload for requesting a new controlled BigQuery dataset.
       type: object
+      required: [resourceId, bigQueryDataset]
       properties:
         resourceId:
-          description: UUID of a newly-created resource. Null if not created yet.
+          description: UUID of a newly-created resource.
           type: string
           format: uuid
         bigQueryDataset:
