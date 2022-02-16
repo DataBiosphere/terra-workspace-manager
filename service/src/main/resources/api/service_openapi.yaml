@@ -2704,6 +2704,11 @@ components:
         build:
           type: string
           description: Version of the currently deployed app declared in build.gradle. Client and server versions are linked.
+        oldestSupportedCliVersion:
+          type: string
+          description: |
+            For the terra CLI client, the oldest version known to work with the current version of
+            WSM.
 
     CreateWorkspaceRequestBody:
       type: object

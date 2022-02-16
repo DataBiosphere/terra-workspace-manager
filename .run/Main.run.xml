@@ -6,8 +6,10 @@
     <option name="ACTIVE_PROFILES" value="human-readable-logging" />
     <option name="WORKING_DIRECTORY" value="file://$PROJECT_DIR$/service" />
     <option name="ALTERNATIVE_JRE_PATH" />
+    <option name="SHORTEN_COMMAND_LINE" value="NONE" />
     <envs>
       <env name="GOOGLE_APPLICATION_CREDENTIALS" value="../config/wsm-sa.json" />
+      <env name="WORKSPACE_CLI_OLDESTSUPPORTEDVERSION" value="0.149.0" />
     </envs>
     <method v="2">
       <option name="Make" enabled="true" />
