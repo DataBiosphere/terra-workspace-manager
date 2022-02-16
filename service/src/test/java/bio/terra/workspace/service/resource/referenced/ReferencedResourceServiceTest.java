@@ -763,10 +763,9 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
       void bigQueryDataTableReference_deleteWithWrongTypeThenRightType_doesNotDeleteFirstTime() {
         referenceResource = makeBigQueryDataTableResource();
 
-        ReferencedBigQueryDataTableResource resultReferenceResource =
-            referenceResourceService
-                .createReferenceResource(referenceResource, USER_REQUEST)
-                .castByEnum(WsmResourceType.REFERENCED_GCP_BIG_QUERY_DATA_TABLE);
+        referenceResourceService
+            .createReferenceResource(referenceResource, USER_REQUEST)
+            .castByEnum(WsmResourceType.REFERENCED_GCP_BIG_QUERY_DATA_TABLE);
 
         referenceResourceService.deleteReferenceResourceForResourceType(
             workspaceId,
