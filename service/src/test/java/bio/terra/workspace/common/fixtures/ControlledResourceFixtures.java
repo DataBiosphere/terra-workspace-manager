@@ -20,6 +20,7 @@ import bio.terra.workspace.generated.model.ApiGcpGcsBucketUpdateParameters;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.disk.ControlledAzureDiskResource;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.ip.ControlledAzureIpResource;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.network.ControlledAzureNetworkResource;
+import bio.terra.workspace.service.resource.controlled.cloud.azure.relayNamespace.ControlledAzureRelayNamespaceResource;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.storage.ControlledAzureStorageResource;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.vm.ControlledAzureVmResource;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook.ControlledAiNotebookInstanceResource;
@@ -84,8 +85,9 @@ public class ControlledResourceFixtures {
   static final List<ApiGcpGcsBucketLifecycleRule> LIFECYCLE_RULES =
       new ArrayList<>(List.of(LIFECYCLE_RULE_1, LIFECYCLE_RULE_2));
   public static final String BUCKET_NAME_PREFIX = "my-bucket";
-  public static final String AZURE_NAME_PREFIX = "azure";
+  public static final String AZURE_NAME_PREFIX = "az";
   public static final String AZURE_IP_NAME_PREFIX = "ip";
+  public static final String AZURE_RELAY_NAMESPACE_NAME_PREFIX = "relay-ns";
   public static final String AZURE_DISK_NAME_PREFIX = "disk";
   public static final String AZURE_NETWORK_NAME_PREFIX = "network";
   public static final String AZURE_SUBNET_NAME_PREFIX = "subnet";
@@ -106,6 +108,13 @@ public class ControlledResourceFixtures {
   public static ApiAzureIpCreationParameters getAzureIpCreationParameters() {
     return new ApiAzureIpCreationParameters()
         .name(uniqueAzureName(AZURE_IP_NAME_PREFIX))
+        .region("westcentralus");
+  }
+
+  /** Construct a parameter object with a unique ip name to avoid unintended clashes. */
+  public static ApiAzureRelayNamespaceCreationParameters getAzureRelayNamespaceCreationParameters() {
+    return new ApiAzureRelayNamespaceCreationParameters()
+        .namespaceName(uniqueAzureName(AZURE_RELAY_NAMESPACE_NAME_PREFIX))
         .region("westcentralus");
   }
 
@@ -154,7 +163,7 @@ public class ControlledResourceFixtures {
   }
 
   public static String uniqueAzureName(String resourcePrefix) {
-    return uniqueName(AZURE_NAME_PREFIX + "-" + AZURE_NAME_PREFIX);
+    return uniqueName(AZURE_NAME_PREFIX + "-" + resourcePrefix);
   }
 
   public static String uniqueStorageAccountName() {
@@ -211,6 +220,23 @@ public class ControlledResourceFixtures {
         ManagedByType.MANAGED_BY_USER,
         null,
         ipName,
+        region);
+  }
+
+  public static ControlledAzureRelayNamespaceResource getAzureRelayNamespace(String namespaceName, String region) {
+    return new ControlledAzureRelayNamespaceResource(
+        WORKSPACE_ID,
+        RESOURCE_ID,
+        RESOURCE_NAME,
+        RESOURCE_DESCRIPTION,
+        CLONING_INSTRUCTIONS,
+        OWNER_EMAIL,
+        // TODO: these should be changed when we group the resources
+        PrivateResourceState.ACTIVE,
+        AccessScopeType.ACCESS_SCOPE_PRIVATE,
+        ManagedByType.MANAGED_BY_USER,
+        null,
+            namespaceName,
         region);
   }
 

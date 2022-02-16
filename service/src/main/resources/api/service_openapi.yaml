@@ -1690,6 +1690,83 @@ paths:
         '500':
           $ref: '#/components/responses/ServerError'
 
+  /api/workspaces/v1/{workspaceId}/resources/controlled/azure/relayNamespace:
+    parameters:
+      - $ref: '#/components/parameters/WorkspaceId'
+    post:
+      summary: Create a new controlled Azure Relay Namespace
+      operationId: createAzureRelayNamespace
+      tags: [ControlledAzureResource]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateControlledAzureRelayNamespaceRequestBody'
+      responses:
+        '200':
+          $ref: '#/components/responses/CreateControlledAzureRelayNamespaceResponse'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /api/workspaces/v1/{workspaceId}/resources/controlled/azure/relayNamespace/{resourceId}:
+    parameters:
+      - $ref: '#/components/parameters/WorkspaceId'
+      - $ref: '#/components/parameters/ResourceId'
+    get:
+      summary: Get a controlled Azure Relay Namespace resource
+      operationId: getRelayNamespace
+      tags: [ControlledAzureResource]
+      responses:
+        '200':
+          $ref: '#/components/responses/GetControlledAzureRelayNamespaceResponse'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+    post:
+      summary: |
+        Delete an Azure Relay Namespace
+      operationId: deleteAzureRelayNamespace
+      tags: [ControlledAzureResource]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeleteControlledAzureResourceRequest'
+      responses:
+        '200':
+          $ref: '#/components/responses/DeleteControlledAzureResourceResponse'
+        '202':
+          $ref: '#/components/responses/DeleteControlledAzureResourceResponse'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /api/workspaces/v1/{workspaceId}/resources/controlled/azure/relayNamespace/delete-result/{jobId}:
+    parameters:
+      - $ref: '#/components/parameters/WorkspaceId'
+      - $ref: '#/components/parameters/JobId'
+    get:
+      summary: Retrieve information about an azure relay namespace deletion job.
+      operationId: getDeleteAzureRelayNamespaceResult
+      tags: [ControlledAzureResource]
+      responses:
+        '200':
+          $ref: '#/components/responses/DeleteControlledAzureResourceResponse'
+        '202':
+          $ref: '#/components/responses/DeleteControlledAzureResourceResponse'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
   /api/workspaces/v1/{workspaceId}/resources/controlled/azure/disks:
     parameters:
       - $ref: '#/components/parameters/WorkspaceId'
@@ -3034,6 +3111,15 @@ components:
         azureIp:
           $ref: '#/components/schemas/AzureIpCreationParameters'
 
+    CreateControlledAzureRelayNamespaceRequestBody:
+      description: Payload for requesting a new controlled Azure IP resource.
+      type: object
+      properties:
+        common:
+          $ref: '#/components/schemas/ControlledResourceCommonFields'
+        azureRelayNamespace:
+          $ref: '#/components/schemas/AzureRelayNamespaceCreationParameters'
+
     CreateControlledAzureStorageRequestBody:
       description: Payload for requesting a new controlled Azure storage account resource.
       type: object
@@ -3244,6 +3330,22 @@ components:
             It is best to look at the Region class definition for valid strings (e.g. 'eastus' == Region.US_EAST.toString())
           type: string
 
+    AzureRelayNamespaceCreationParameters:
+      description: >-
+        Relay namespace specific properties to be set on creation. These are a subset of the values
+        accepted by the azure resource API
+      type: object
+      required: [namespaceName, region]
+      properties:
+        namespaceName:
+          description: A valid relay name per https://docs.microsoft.com/en-us/azure/azure-resource-manager/management/resource-name-rules
+          type: string
+        region:
+          description: |
+            A valid region string representation per https://docs.microsoft.com/en-us/dotnet/api/microsoft.azure.management.resourcemanager.fluent.core.region.
+            It is best to look at the Region class definition for valid strings (e.g. 'eastus' == Region.US_EAST.toString())
+          type: string
+
     AzureStorageCreationParameters:
       description: >-
         Storage-specific properties to be set on creation. These are a subset of the values
@@ -3349,6 +3451,17 @@ components:
           format: uuid
         azureIp:
           $ref: '#/components/schemas/AzureIpResource'
+
+    CreateControlledAzureRelayNamespace:
+      description: Response payload for requesting a new Azure Relay Namespace
+      type: object
+      properties:
+        resourceId:
+          description: UUID of a newly-created resource.
+          type: string
+          format: uuid
+        azureRelayNameSpace:
+          $ref: '#/components/schemas/AzureRelayNamespaceResource'
 
     CreatedControlledAzureStorage:
       description: Response payload for requesting a new Azure storage account
@@ -4223,6 +4336,18 @@ components:
           description: Azure region of created ip
           type: string
 
+    AzureRelayNamespaceAttributes:
+      description: >-
+        Azure Relay Namespace properties included in post-creation get. Others must be retrieved from Azure using the name.
+      type: object
+      properties:
+        namespaceName:
+          description: Name of created relay namespace (not the resource name).
+          type: string
+        region:
+          description: Azure region of created resource
+          type: string
+
     AzureStorageAttributes:
       description: >-
         Storage properties included in post-creation get.
@@ -4331,6 +4456,17 @@ components:
         attributes:
           $ref: '#/components/schemas/AzureIpAttributes'
 
+    AzureRelayNamespaceResource:
+      type: object
+      description: Description of an Azure Relay namespace
+      required: [metadata, attributes]
+      properties:
+        metadata:
+          description: the resource metadata common to all resources
+          $ref: '#/components/schemas/ResourceMetadata'
+        attributes:
+          $ref: '#/components/schemas/AzureRelayNamespaceAttributes'
+
     AzureStorageResource:
       type: object
       description: Description of an Azure storage account.
@@ -4426,6 +4562,8 @@ components:
           $ref: '#/components/schemas/AzureDiskAttributes'
         azureIp:
           $ref: '#/components/schemas/AzureIpAttributes'
+        azureRelayNamespace:
+          $ref: '#/components/schemas/AzureRelayNamespaceAttributes'
         azureNetwork:
           $ref: '#/components/schemas/AzureNetworkAttributes'
         azureStorage:
@@ -4521,6 +4659,7 @@ components:
         - AZURE_DISK
         - AZURE_NETWORK
         - AZURE_VM
+        - AZURE_RELAY_NAMESPACE
         - AZURE_STORAGE_ACCOUNT
         - GIT_REPO
 
@@ -4551,6 +4690,8 @@ components:
           $ref: '#/components/schemas/GcpAiNotebookInstanceResource'
         azureIp:
           $ref: '#/components/schemas/AzureIpResource'
+        azureRelayNamespace:
+          $ref: '#/components/schemas/AzureRelayNamespaceResource'
         azureDisk:
           $ref: '#/components/schemas/AzureDiskResource'
         azureNetwork:
@@ -4697,6 +4838,13 @@ components:
           schema:
             $ref: '#/components/schemas/CreatedControlledAzureIp'
 
+    CreateControlledAzureRelayNamespaceResponse:
+      description: Response to create controlled azure relay namespace
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/CreateControlledAzureRelayNamespace'
+
     CreateControlledAzureDiskResponse:
       description: Response to create controlled Azure disk
       content:
@@ -4731,6 +4879,13 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/AzureIpResource'
+
+    GetControlledAzureRelayNamespaceResponse:
+      description: Response to get Relay namespace
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/AzureRelayNamespaceResource'
 
     GetControlledAzureNetworkResponse:
       description: Response to get network

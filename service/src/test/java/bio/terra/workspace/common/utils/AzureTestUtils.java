@@ -19,6 +19,8 @@ import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
 import com.azure.resourcemanager.compute.ComputeManager;
 import java.util.UUID;
+
+import com.azure.resourcemanager.relay.RelayManager;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
@@ -49,6 +51,10 @@ public class AzureTestUtils {
 
   public ComputeManager getComputeManager() {
     return crlService.getComputeManager(getAzureCloudContext(), this.azureConfiguration);
+  }
+
+  public RelayManager getRelayManager() {
+    return crlService.getRelayManager(getAzureCloudContext(), this.azureConfiguration);
   }
 
   /** Create the FlightMap input parameters required for the {@link CreateAzureContextFlight}. */

@@ -20,7 +20,6 @@ import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.Resou
  */
 public class CreateControlledResourceFlight extends Flight {
 
-  private final RetryRule gcpRetryRule = RetryRules.cloud();
   private final RetryRule dbRetryRule = RetryRules.shortDatabase();
 
   // addStep is protected in Flight, so make an override that is public

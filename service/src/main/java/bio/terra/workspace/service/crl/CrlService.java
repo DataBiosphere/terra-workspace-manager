@@ -25,6 +25,7 @@ import com.azure.core.management.AzureEnvironment;
 import com.azure.core.management.profile.AzureProfile;
 import com.azure.identity.ClientSecretCredentialBuilder;
 import com.azure.resourcemanager.compute.ComputeManager;
+import com.azure.resourcemanager.relay.RelayManager;
 import com.azure.resourcemanager.resources.ResourceManager;
 import com.azure.resourcemanager.storage.StorageManager;
 import com.google.api.client.googleapis.json.GoogleJsonResponseException;
@@ -151,6 +152,13 @@ public class CrlService {
       AzureCloudContext azureCloudContext, AzureConfiguration azureConfig) {
     assertCrlInUse();
     return buildComputeManager(azureCloudContext, azureConfig);
+  }
+
+  /** Returns an Azure {@link ComputeManager} configured for use with CRL. */
+  public RelayManager getRelayManager(
+      AzureCloudContext azureCloudContext, AzureConfiguration azureConfig) {
+    assertCrlInUse();
+    return buildRelayManager(azureCloudContext, azureConfig);
   }
 
   /** Returns an Azure {@link StorageManager} configured for use with CRL. */
@@ -495,6 +503,24 @@ public class CrlService {
                 clientConfig, ComputeManager.configure())
             .authenticate(azureCreds, azureProfile);
 
+    return manager;
+  }
+
+  private RelayManager buildRelayManager(
+      AzureCloudContext azureCloudContext, AzureConfiguration azureConfig) {
+    TokenCredential azureCreds = getManagedAppCredentials(azureConfig);
+
+    AzureProfile azureProfile =
+        new AzureProfile(
+            azureCloudContext.getAzureTenantId(),
+            azureCloudContext.getAzureSubscriptionId(),
+            AzureEnvironment.AZURE);
+
+    // We must use FQDN because there are two `Defaults` symbols imported otherwise.
+    RelayManager manager =
+            bio.terra.cloudres.azure.resourcemanager.relay.Defaults.crlConfigure(
+                            clientConfig, RelayManager.configure())
+                    .authenticate(azureCreds, azureProfile);
     return manager;
   }
 

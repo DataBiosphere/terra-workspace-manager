@@ -30,6 +30,7 @@ dependencies {
   implementation group: 'bio.terra.cloud-resource-lib', name: 'google-storage'
   implementation group: 'bio.terra.cloud-resource-lib', name: 'azure-resourcemanager-compute'
   implementation group: 'bio.terra.cloud-resource-lib', name: 'azure-resourcemanager-common'
+  implementation group: 'bio.terra.cloud-resource-lib', name: 'azure-resourcemanager-relay'
 
   // Storage transfer service
   implementation group: 'com.google.apis', name: 'google-api-services-storagetransfer', version: 'v1-rev20210602-1.31.5'

@@ -10,6 +10,8 @@ import bio.terra.workspace.generated.model.ApiAzureVmResource;
 import bio.terra.workspace.generated.model.ApiCreateControlledAzureDiskRequestBody;
 import bio.terra.workspace.generated.model.ApiCreateControlledAzureIpRequestBody;
 import bio.terra.workspace.generated.model.ApiCreateControlledAzureNetworkRequestBody;
+import bio.terra.workspace.generated.model.ApiCreateControlledAzureRelayNamespace;
+import bio.terra.workspace.generated.model.ApiCreateControlledAzureRelayNamespaceRequestBody;
 import bio.terra.workspace.generated.model.ApiCreateControlledAzureStorageRequestBody;
 import bio.terra.workspace.generated.model.ApiCreateControlledAzureVmRequestBody;
 import bio.terra.workspace.generated.model.ApiCreatedControlledAzureDisk;
@@ -29,6 +31,7 @@ import bio.terra.workspace.service.resource.controlled.ControlledResourceService
 import bio.terra.workspace.service.resource.controlled.cloud.azure.disk.ControlledAzureDiskResource;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.ip.ControlledAzureIpResource;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.network.ControlledAzureNetworkResource;
+import bio.terra.workspace.service.resource.controlled.cloud.azure.relayNamespace.ControlledAzureRelayNamespaceResource;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.storage.ControlledAzureStorageResource;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.vm.ControlledAzureVmResource;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResourceFields;
@@ -123,6 +126,41 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
         new ApiCreatedControlledAzureIp()
             .resourceId(createdIp.getResourceId())
             .azureIp(createdIp.toApiResource());
+    return new ResponseEntity<>(response, HttpStatus.OK);
+  }
+
+  @Override
+  public ResponseEntity<ApiCreateControlledAzureRelayNamespace> createAzureRelayNamespace(
+      UUID workspaceId, @Valid ApiCreateControlledAzureRelayNamespaceRequestBody body) {
+    features.azureEnabledCheck();
+
+    final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    final PrivateUserRole privateUserRole =
+        ControllerUtils.computePrivateUserRole(
+            workspaceId, body.getCommon(), userRequest, samService);
+
+    ControlledAzureRelayNamespaceResource resource =
+            ControlledAzureRelayNamespaceResource.builder()
+            .workspaceId(workspaceId)
+            .resourceId(UUID.randomUUID())
+            .name(body.getCommon().getName())
+            .description(body.getCommon().getDescription())
+            .cloningInstructions(
+                CloningInstructions.fromApiModel(body.getCommon().getCloningInstructions()))
+            .assignedUser(privateUserRole.getUserEmail())
+            .accessScope(AccessScopeType.fromApi(body.getCommon().getAccessScope()))
+            .managedBy(ManagedByType.fromApi(body.getCommon().getManagedBy()))
+            .namespaceName(body.getAzureRelayNamespace().getNamespaceName())
+            .region(body.getAzureRelayNamespace().getRegion())
+            .build();
+
+    final ControlledAzureRelayNamespaceResource created =
+        controlledResourceService.createAzureRelayNamespace(
+            resource, body.getAzureRelayNamespace(), privateUserRole.getRole(), userRequest);
+    var response =
+        new ApiCreateControlledAzureRelayNamespace()
+            .resourceId(created.getResourceId())
+            .azureRelayNameSpace(created.toApiResource());
     return new ResponseEntity<>(response, HttpStatus.OK);
   }
 

@@ -212,6 +212,21 @@ public class ResourceValidationUtils {
     }
   }
 
+  /**
+   * See
+   * https://docs.microsoft.com/en-us/azure/azure-resource-manager/management/resource-name-rules
+   * for azure resource rules
+   */
+  public static void validateAzureNamespace(String name) {
+    Pattern pattern = Pattern.compile("^[a-zA-Z0-9][a-zA-Z0-9-]{0,78}[a-zA-Z0-9]$");
+
+    if (!pattern.matcher(name).matches() || name.length() > 50 || name.length() < 6) {
+      logger.warn("Invalid Azure Namespace", name);
+      throw new InvalidReferenceException(
+          "Invalid Azure Namespace specified. See documentation for full specification https://docs.microsoft.com/en-us/azure/azure-resource-manager/management/resource-name-rules.");
+    }
+  }
+
   public static void validateAzureNetworkName(String name) {
     Pattern pattern = Pattern.compile("^[a-zA-Z0-9][a-zA-Z0-9-_.]{2,62}[a-zA-Z0-9_]$");
 
