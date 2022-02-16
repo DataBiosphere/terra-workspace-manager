@@ -47,10 +47,7 @@ class CreateAzureContextFlightTest extends BaseAzureTest {
     // Wait for the job to complete
     FlightState flightState =
         StairwayTestUtils.pollUntilComplete(
-            jobId,
-            jobService.getStairway(),
-            Duration.ofSeconds(30),
-            STAIRWAY_FLIGHT_TIMEOUT);
+            jobId, jobService.getStairway(), Duration.ofSeconds(30), STAIRWAY_FLIGHT_TIMEOUT);
     assertEquals(FlightStatus.SUCCESS, flightState.getFlightStatus());
 
     // Flight should have created a cloud context.
