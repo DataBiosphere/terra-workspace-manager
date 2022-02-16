@@ -6,7 +6,7 @@ import org.springframework.context.annotation.Configuration;
 
 @Configuration
 @EnableConfigurationProperties
-@ConfigurationProperties(prefix="workspace.cli")
+@ConfigurationProperties(prefix = "workspace.cli")
 public class CliConfiguration {
 
   private String oldestSupportedVersion;
