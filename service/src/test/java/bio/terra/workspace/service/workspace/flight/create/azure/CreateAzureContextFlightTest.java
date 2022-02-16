@@ -36,14 +36,21 @@ class CreateAzureContextFlightTest extends BaseAzureTest {
     // There should be no cloud context initially.
     assertTrue(workspaceService.getAuthorizedAzureCloudContext(workspaceId, userRequest).isEmpty());
 
-    // Run the flight.
+    String jobId = UUID.randomUUID().toString();
+    workspaceService.createAzureCloudContext(
+        workspaceId,
+        jobId,
+        userRequest,
+        /* resultPath */ null,
+        azureTestUtils.getAzureCloudContext());
+
+    // Wait for the job to complete
     FlightState flightState =
-        StairwayTestUtils.blockUntilFlightCompletes(
+        StairwayTestUtils.pollUntilComplete(
+            jobId,
             jobService.getStairway(),
-            CreateAzureContextFlight.class,
-            azureTestUtils.createAzureContextInputParameters(workspaceId, userRequest),
-            STAIRWAY_FLIGHT_TIMEOUT,
-            null);
+            Duration.ofSeconds(30),
+            STAIRWAY_FLIGHT_TIMEOUT);
     assertEquals(FlightStatus.SUCCESS, flightState.getFlightStatus());
 
     // Flight should have created a cloud context.
