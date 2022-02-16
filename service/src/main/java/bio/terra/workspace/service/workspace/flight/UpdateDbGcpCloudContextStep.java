@@ -9,6 +9,7 @@ import bio.terra.stairway.StepResult;
 import bio.terra.workspace.common.utils.FlightUtils;
 import bio.terra.workspace.service.iam.model.WsmIamRole;
 import bio.terra.workspace.service.workspace.GcpCloudContextService;
+import bio.terra.workspace.service.workspace.model.CloudContextHolder;
 import bio.terra.workspace.service.workspace.model.GcpCloudContext;
 import com.fasterxml.jackson.core.type.TypeReference;
 import java.util.Map;
@@ -48,7 +49,10 @@ public class UpdateDbGcpCloudContextStep implements Step {
     gcpCloudContextService.createGcpCloudContextFinish(
         workspaceId, context, flightContext.getFlightId());
 
-    FlightUtils.setResponse(flightContext, context, HttpStatus.OK);
+    CloudContextHolder cch = new CloudContextHolder();
+    cch.setGcpCloudContext(context);
+
+    FlightUtils.setResponse(flightContext, cch, HttpStatus.OK);
     return StepResult.getStepResultSuccess();
   }
 

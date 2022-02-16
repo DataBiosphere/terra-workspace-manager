@@ -7,6 +7,7 @@ import bio.terra.workspace.common.utils.FlightUtils;
 import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.workspace.AzureCloudContextService;
 import bio.terra.workspace.service.workspace.model.AzureCloudContext;
+import bio.terra.workspace.service.workspace.model.CloudContextHolder;
 import java.util.UUID;
 import org.springframework.http.HttpStatus;
 
@@ -32,7 +33,10 @@ public class CreateDbAzureCloudContextFinishStep implements Step {
     azureCloudContextService.createAzureCloudContextFinish(
         workspaceId, azureCloudContext, flightContext.getFlightId());
 
-    FlightUtils.setResponse(flightContext, azureCloudContext, HttpStatus.OK);
+    CloudContextHolder cch = new CloudContextHolder();
+    cch.setAzureCloudContext(azureCloudContext);
+
+    FlightUtils.setResponse(flightContext, cch, HttpStatus.OK);
     return StepResult.getStepResultSuccess();
   }
 

@@ -2913,6 +2913,8 @@ components:
           $ref: '#/components/schemas/JobReport'
         gcpContext:
           $ref: '#/components/schemas/GcpContext'
+        azureContext:
+          $ref: '#/components/schemas/AzureContext'
         errorReport:
           $ref: '#/components/schemas/ErrorReport'
 

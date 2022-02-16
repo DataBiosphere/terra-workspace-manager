@@ -31,6 +31,7 @@ import bio.terra.workspace.service.resource.controlled.model.ManagedByType;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.spendprofile.SpendConnectedTestUtils;
 import bio.terra.workspace.service.workspace.WorkspaceService;
+import bio.terra.workspace.service.workspace.model.CloudContextHolder;
 import bio.terra.workspace.service.workspace.model.GcpCloudContext;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
@@ -83,11 +84,11 @@ public class RemoveUserFromWorkspaceFlightTest extends BaseConnectedTest {
     workspaceService.createGcpCloudContext(
         workspaceId, makeContextJobId, userAccessUtils.defaultUserAuthRequest());
     jobService.waitForJob(makeContextJobId);
-    AsyncJobResult<GcpCloudContext> createContextJobResult =
+    AsyncJobResult<CloudContextHolder> createContextJobResult =
         jobService.retrieveAsyncJobResult(
-            makeContextJobId, GcpCloudContext.class, userAccessUtils.defaultUserAuthRequest());
+            makeContextJobId, CloudContextHolder.class, userAccessUtils.defaultUserAuthRequest());
     assertEquals(StatusEnum.SUCCEEDED, createContextJobResult.getJobReport().getStatus());
-    GcpCloudContext cloudContext = createContextJobResult.getResult();
+    GcpCloudContext cloudContext = createContextJobResult.getResult().getGcpCloudContext();
 
     // Create a private dataset for secondary user
     String datasetId = RandomStringUtils.randomAlphabetic(8);
