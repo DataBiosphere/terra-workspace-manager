@@ -26,7 +26,6 @@ public class ControlledGcsBucketHandler implements WsmResourceHandler {
             .bucketName(attributes.getBucketName())
             .common(new ControlledResourceFields(dbResource))
             .build();
-    resource.validate();
     return resource;
   }
 }

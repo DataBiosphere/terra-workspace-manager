@@ -28,7 +28,6 @@ public class ControlledAzureStorageHandler implements WsmResourceHandler {
             .region(attributes.getRegion())
             .common(new ControlledResourceFields(dbResource))
             .build();
-    resource.validate();
     return resource;
   }
 }

@@ -50,7 +50,6 @@ public class ControlledBigQueryDatasetHandler implements WsmResourceHandler {
             .projectId(projectId)
             .common(new ControlledResourceFields(dbResource))
             .build();
-    resource.validate();
     return resource;
   }
 }

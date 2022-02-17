@@ -14,7 +14,7 @@ import bio.terra.workspace.generated.model.ApiAzureIpResource;
 import bio.terra.workspace.generated.model.ApiResourceAttributesUnion;
 import bio.terra.workspace.generated.model.ApiResourceUnion;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
-import bio.terra.workspace.service.resource.ValidationUtils;
+import bio.terra.workspace.service.resource.ResourceValidationUtils;
 import bio.terra.workspace.service.resource.controlled.flight.create.CreateControlledResourceFlight;
 import bio.terra.workspace.service.resource.controlled.flight.delete.DeleteControlledResourceFlight;
 import bio.terra.workspace.service.resource.controlled.model.AccessScopeType;
@@ -182,8 +182,8 @@ public class ControlledAzureIpResource extends ControlledResource {
       throw new MissingRequiredFieldException(
           "Missing required region field for ControlledAzureIP.");
     }
-    ValidationUtils.validateRegion(getRegion());
-    ValidationUtils.validateAzureIPorSubnetName(getIpName());
+    ResourceValidationUtils.validateRegion(getRegion());
+    ResourceValidationUtils.validateAzureIPorSubnetName(getIpName());
   }
 
   @Override

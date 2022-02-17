@@ -118,12 +118,12 @@ public class CopyGcsBucketDefinitionStep implements Step {
                 destinationBucketResource, iamRole, userRequest, destinationCreationParameters)
             .castByEnum(WsmResourceType.CONTROLLED_GCP_GCS_BUCKET);
     workingMap.put(ControlledResourceKeys.CLONED_RESOURCE_DEFINITION, clonedBucket);
-    // TODO: create new type & use it here
+
     final ApiCreatedControlledGcpGcsBucket apiCreatedBucket =
         new ApiCreatedControlledGcpGcsBucket()
             .gcpBucket(clonedBucket.toApiResource())
             .resourceId(destinationBucketResource.getResourceId());
-    // todo: bundle everything so it doesn't use API types here.
+
     final ApiClonedControlledGcpGcsBucket apiBucketResult =
         new ApiClonedControlledGcpGcsBucket()
             .effectiveCloningInstructions(cloningInstructions.toApiModel())

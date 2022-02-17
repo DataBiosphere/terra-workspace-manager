@@ -29,12 +29,12 @@ import org.springframework.http.HttpStatus;
  * Super class for controllers containing common code. The code in here requires the @Autowired
  * beans from the @Controller classes, so it is better as a superclass rather than static methods.
  */
-public class ControllerCommon {
+public class ControllerBase {
   private final AuthenticatedUserRequestFactory authenticatedUserRequestFactory;
   private final HttpServletRequest request;
   private final SamService samService;
 
-  public ControllerCommon(
+  public ControllerBase(
       AuthenticatedUserRequestFactory authenticatedUserRequestFactory,
       HttpServletRequest request,
       SamService samService) {

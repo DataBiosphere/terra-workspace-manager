@@ -14,7 +14,7 @@ import bio.terra.workspace.generated.model.ApiAzureVmResource;
 import bio.terra.workspace.generated.model.ApiResourceAttributesUnion;
 import bio.terra.workspace.generated.model.ApiResourceUnion;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
-import bio.terra.workspace.service.resource.ValidationUtils;
+import bio.terra.workspace.service.resource.ResourceValidationUtils;
 import bio.terra.workspace.service.resource.controlled.flight.create.CreateControlledResourceFlight;
 import bio.terra.workspace.service.resource.controlled.flight.delete.DeleteControlledResourceFlight;
 import bio.terra.workspace.service.resource.controlled.model.AccessScopeType;
@@ -264,9 +264,9 @@ public class ControlledAzureVmResource extends ControlledResource {
       throw new MissingRequiredFieldException(
           "Missing required diskId field for ControlledAzureVm.");
     }
-    ValidationUtils.validateAzureIPorSubnetName(getVmName());
-    ValidationUtils.validateAzureVmSize(getVmSize());
-    ValidationUtils.validateRegion(getRegion());
+    ResourceValidationUtils.validateAzureIPorSubnetName(getVmName());
+    ResourceValidationUtils.validateAzureVmSize(getVmSize());
+    ResourceValidationUtils.validateRegion(getRegion());
   }
 
   @Override

@@ -133,7 +133,7 @@ public class AzureDisabledTest extends BaseConnectedTest {
     assertThrows(
         FeatureNotSupportedException.class,
         () ->
-            controlledResourceService.createVm(
+            controlledResourceService.createAzureVm(
                 vmResource, vmCreationParameters, null, null, null, userRequest));
   }
 }

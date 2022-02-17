@@ -2,7 +2,7 @@ package bio.terra.workspace.service.resource.controlled.model;
 
 import bio.terra.workspace.db.model.DbResource;
 import bio.terra.workspace.service.iam.model.ControlledResourceIamRole;
-import bio.terra.workspace.service.resource.ValidationUtils;
+import bio.terra.workspace.service.resource.ResourceValidationUtils;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import java.util.Optional;
 import java.util.UUID;
@@ -16,6 +16,8 @@ import javax.annotation.Nullable;
  *
  * <p>This allows us to make controller code that processes the common parts of the API input and
  * uses the methods in this class to populate the builder.
+ *
+ * <p>See {@link ControlledResource} for details on the meaning of the fields
  */
 public class ControlledResourceFields {
   private final UUID workspaceId;
@@ -37,15 +39,15 @@ public class ControlledResourceFields {
   public ControlledResourceFields(DbResource dbResource) {
     workspaceId = dbResource.getWorkspaceId();
     resourceId = dbResource.getResourceId();
-    name = dbResource.getName().orElse(null);
-    description = dbResource.getDescription().orElse(null);
+    name = dbResource.getName();
+    description = dbResource.getDescription();
     cloningInstructions = dbResource.getCloningInstructions();
     assignedUser = dbResource.getAssignedUser().orElse(null);
     // This field is used on create, but not stored in the database.
     iamRole = null;
     privateResourceState = dbResource.getPrivateResourceState().orElse(null);
-    accessScope = dbResource.getAccessScope().orElse(null);
-    managedBy = dbResource.getManagedBy().orElse(null);
+    accessScope = dbResource.getAccessScope();
+    managedBy = dbResource.getManagedBy();
     applicationId = dbResource.getApplicationId().orElse(null);
   }
 
@@ -150,12 +152,12 @@ public class ControlledResourceFields {
     @Nullable private UUID applicationId;
 
     public ControlledResourceFields build() {
-      ValidationUtils.checkFieldNonNull(workspaceId, "workspaceId");
-      ValidationUtils.checkFieldNonNull(resourceId, "resourceId");
-      ValidationUtils.checkFieldNonNull(name, "name");
-      ValidationUtils.checkFieldNonNull(cloningInstructions, "cloningInstructions");
-      ValidationUtils.checkFieldNonNull(accessScope, "accessScope");
-      ValidationUtils.checkFieldNonNull(managedBy, "managedBy");
+      ResourceValidationUtils.checkFieldNonNull(workspaceId, "workspaceId");
+      ResourceValidationUtils.checkFieldNonNull(resourceId, "resourceId");
+      ResourceValidationUtils.checkFieldNonNull(name, "name");
+      ResourceValidationUtils.checkFieldNonNull(cloningInstructions, "cloningInstructions");
+      ResourceValidationUtils.checkFieldNonNull(accessScope, "accessScope");
+      ResourceValidationUtils.checkFieldNonNull(managedBy, "managedBy");
 
       return new ControlledResourceFields(
           workspaceId,

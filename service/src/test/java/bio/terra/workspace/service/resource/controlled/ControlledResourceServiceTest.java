@@ -339,13 +339,14 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
   @DisabledIfEnvironmentVariable(named = "TEST_ENV", matches = BUFFER_SERVICE_DISABLED_ENVS_REG_EX)
   void createAiNotebookInstanceUndo() throws Exception {
     String instanceId = "create-ai-notebook-instance-undo";
+    String name = "create-ai-notebook-instance-undo-name";
 
     ApiGcpAiNotebookInstanceCreationParameters creationParameters =
         ControlledResourceFixtures.defaultNotebookCreationParameters()
             .instanceId(instanceId)
             .location(DEFAULT_NOTEBOOK_LOCATION);
     ControlledAiNotebookInstanceResource resource =
-        makeNotebookTestResource(workspace.getWorkspaceId(), instanceId, instanceId);
+        makeNotebookTestResource(workspace.getWorkspaceId(), name, instanceId);
 
     // Test idempotency of undo steps by retrying them once.
     Map<String, StepStatus> retrySteps = new HashMap<>();

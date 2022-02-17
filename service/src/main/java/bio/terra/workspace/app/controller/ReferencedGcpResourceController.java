@@ -30,7 +30,7 @@ import bio.terra.workspace.generated.model.ApiUpdateGitRepoReferenceRequestBody;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequestFactory;
 import bio.terra.workspace.service.petserviceaccount.PetSaService;
-import bio.terra.workspace.service.resource.ValidationUtils;
+import bio.terra.workspace.service.resource.ResourceValidationUtils;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.resource.referenced.cloud.any.gitrepo.ReferencedGitRepoResource;
@@ -60,7 +60,7 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
 
   private final ReferencedResourceService referenceResourceService;
   private final AuthenticatedUserRequestFactory authenticatedUserRequestFactory;
-  private final ValidationUtils validationUtils;
+  private final ResourceValidationUtils validationUtils;
   private final HttpServletRequest request;
   private final PetSaService petSaService;
   private final Logger logger = LoggerFactory.getLogger(ReferencedGcpResourceController.class);
@@ -69,7 +69,7 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
   public ReferencedGcpResourceController(
       ReferencedResourceService referenceResourceService,
       AuthenticatedUserRequestFactory authenticatedUserRequestFactory,
-      ValidationUtils validationUtils,
+      ResourceValidationUtils validationUtils,
       HttpServletRequest request,
       PetSaService petSaService) {
     this.referenceResourceService = referenceResourceService;

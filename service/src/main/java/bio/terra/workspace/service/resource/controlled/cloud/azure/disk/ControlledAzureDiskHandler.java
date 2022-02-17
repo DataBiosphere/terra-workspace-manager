@@ -29,7 +29,6 @@ public class ControlledAzureDiskHandler implements WsmResourceHandler {
             .size(attributes.getSize())
             .common(new ControlledResourceFields(dbResource))
             .build();
-    resource.validate();
     return resource;
   }
 }

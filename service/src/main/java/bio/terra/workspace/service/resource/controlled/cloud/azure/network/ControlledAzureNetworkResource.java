@@ -14,7 +14,7 @@ import bio.terra.workspace.generated.model.ApiAzureNetworkResource;
 import bio.terra.workspace.generated.model.ApiResourceAttributesUnion;
 import bio.terra.workspace.generated.model.ApiResourceUnion;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
-import bio.terra.workspace.service.resource.ValidationUtils;
+import bio.terra.workspace.service.resource.ResourceValidationUtils;
 import bio.terra.workspace.service.resource.controlled.flight.create.CreateControlledResourceFlight;
 import bio.terra.workspace.service.resource.controlled.flight.delete.DeleteControlledResourceFlight;
 import bio.terra.workspace.service.resource.controlled.model.AccessScopeType;
@@ -240,11 +240,11 @@ public class ControlledAzureNetworkResource extends ControlledResource {
       throw new MissingRequiredFieldException(
           "Missing required region field for ControlledAzureNetwork.");
     }
-    ValidationUtils.validateRegion(getRegion());
-    ValidationUtils.validateAzureNetworkName(getNetworkName());
-    ValidationUtils.validateAzureIPorSubnetName(getSubnetName());
-    ValidationUtils.validateAzureCidrBlock(getAddressSpaceCidr());
-    ValidationUtils.validateAzureCidrBlock(getSubnetAddressCidr());
+    ResourceValidationUtils.validateRegion(getRegion());
+    ResourceValidationUtils.validateAzureNetworkName(getNetworkName());
+    ResourceValidationUtils.validateAzureIPorSubnetName(getSubnetName());
+    ResourceValidationUtils.validateAzureCidrBlock(getAddressSpaceCidr());
+    ResourceValidationUtils.validateAzureCidrBlock(getSubnetAddressCidr());
   }
 
   @Override

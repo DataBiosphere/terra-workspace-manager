@@ -17,7 +17,7 @@ import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceResource;
 import bio.terra.workspace.generated.model.ApiResourceAttributesUnion;
 import bio.terra.workspace.generated.model.ApiResourceUnion;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
-import bio.terra.workspace.service.resource.ValidationUtils;
+import bio.terra.workspace.service.resource.ResourceValidationUtils;
 import bio.terra.workspace.service.resource.controlled.flight.create.CreateControlledResourceFlight;
 import bio.terra.workspace.service.resource.controlled.flight.delete.DeleteControlledResourceFlight;
 import bio.terra.workspace.service.resource.controlled.model.AccessScopeType;
@@ -233,7 +233,7 @@ public class ControlledAiNotebookInstanceResource extends ControlledResource {
     checkFieldNonNull(getInstanceId(), "instanceId");
     checkFieldNonNull(getLocation(), "location");
     checkFieldNonNull(getProjectId(), "projectId");
-    ValidationUtils.validateAiNotebookInstanceId(getInstanceId());
+    ResourceValidationUtils.validateAiNotebookInstanceId(getInstanceId());
   }
 
   /** Returns an auto generated instance name with the username and date time. */

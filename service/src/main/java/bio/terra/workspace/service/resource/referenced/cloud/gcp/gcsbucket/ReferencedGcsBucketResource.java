@@ -13,7 +13,7 @@ import bio.terra.workspace.generated.model.ApiResourceUnion;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.petserviceaccount.PetSaService;
-import bio.terra.workspace.service.resource.ValidationUtils;
+import bio.terra.workspace.service.resource.ResourceValidationUtils;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.model.WsmResourceFamily;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
@@ -121,7 +121,7 @@ public class ReferencedGcsBucketResource extends ReferencedResource {
     if (Strings.isNullOrEmpty(getBucketName())) {
       throw new MissingRequiredFieldException("Missing required field for ReferenceGcsBucket.");
     }
-    ValidationUtils.validateBucketName(getBucketName());
+    ResourceValidationUtils.validateBucketName(getBucketName());
   }
 
   @Override

@@ -51,7 +51,6 @@ public class ControlledAiNotebookHandler implements WsmResourceHandler {
             .location(attributes.getLocation())
             .projectId(projectId)
             .build();
-    resource.validate();
     return resource;
   }
 }

@@ -14,7 +14,7 @@ import bio.terra.workspace.generated.model.ApiGcpBigQueryDatasetResource;
 import bio.terra.workspace.generated.model.ApiResourceAttributesUnion;
 import bio.terra.workspace.generated.model.ApiResourceUnion;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
-import bio.terra.workspace.service.resource.ValidationUtils;
+import bio.terra.workspace.service.resource.ResourceValidationUtils;
 import bio.terra.workspace.service.resource.controlled.flight.create.CreateControlledResourceFlight;
 import bio.terra.workspace.service.resource.controlled.flight.delete.DeleteControlledResourceFlight;
 import bio.terra.workspace.service.resource.controlled.model.AccessScopeType;
@@ -190,7 +190,7 @@ public class ControlledBigQueryDatasetResource extends ControlledResource {
       throw new MissingRequiredFieldException(
           "Missing required field projectId for BigQuery dataset");
     }
-    ValidationUtils.validateBqDatasetName(getDatasetName());
+    ResourceValidationUtils.validateBqDatasetName(getDatasetName());
   }
 
   @Override
@@ -240,7 +240,7 @@ public class ControlledBigQueryDatasetResource extends ControlledResource {
         // If the user doesn't specify a dataset name, we will use the resource name by default.
         // But if the resource name is not a valid dataset name, we will need to generate a unique
         // dataset id.
-        ValidationUtils.validateBqDatasetName(datasetName);
+        ResourceValidationUtils.validateBqDatasetName(datasetName);
         this.datasetName = datasetName;
       } catch (InvalidReferenceException e) {
         this.datasetName = generateUniqueDatasetId();

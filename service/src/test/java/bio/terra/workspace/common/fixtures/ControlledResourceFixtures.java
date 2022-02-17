@@ -301,7 +301,7 @@ public class ControlledResourceFixtures {
     return ControlledResourceFields.builder()
         .workspaceId(UUID.randomUUID())
         .resourceId(UUID.randomUUID())
-        .name(uniqueName("test_dataset").replace("-", "_"))
+        .name(uniqueName("test_resource").replace("-", "_"))
         .description("how much data could a dataset set if a dataset could set data?")
         .cloningInstructions(CLONING_INSTRUCTIONS)
         .assignedUser(null)
@@ -322,12 +322,7 @@ public class ControlledResourceFixtures {
     return builder.build();
   }
 
-  /**
-   * Returns a {@link ControlledGcsBucketResource.Builder} that is ready to be built.
-   *
-   * <p>Tests should not rely on any particular value for the fields returned by this function and
-   * instead override the values that they care about.
-   */
+  /** Returns a {@link ControlledGcsBucketResource.Builder} that is ready to be built. */
   public static ControlledGcsBucketResource.Builder makeDefaultControlledGcsBucketBuilder(
       @Nullable UUID workspaceId) {
     return new ControlledGcsBucketResource.Builder()

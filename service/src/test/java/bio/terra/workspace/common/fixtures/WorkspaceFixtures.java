@@ -7,7 +7,15 @@ import java.util.UUID;
 
 public class WorkspaceFixtures {
 
-  public static void createGcpCloudContext(
+  /**
+   * This method creates the database artifact for a cloud context without actually creating
+   * anything beyond the database row.
+   *
+   * @param workspaceDao workspace DAO for the creation
+   * @param workspaceId fake workspaceId to connect the context to
+   * @param projectId fake projectId to for the context
+   */
+  public static void createGcpCloudContextInDatabase(
       WorkspaceDao workspaceDao, UUID workspaceId, String projectId) {
     String flightId = UUID.randomUUID().toString();
     workspaceDao.createCloudContextStart(workspaceId, CloudPlatform.GCP, flightId);

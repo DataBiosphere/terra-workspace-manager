@@ -17,10 +17,10 @@ import javax.servlet.http.HttpServletRequest;
  * Super class for controllers containing common code. The code in here requires the @Autowired
  * beans from the @Controller classes, so it is better as a superclass rather than static methods.
  */
-public class ControlledResourceControllerCommon extends ControllerCommon {
+public class ControlledResourceControllerBase extends ControllerBase {
   private final ControlledResourceService controlledResourceService;
 
-  public ControlledResourceControllerCommon(
+  public ControlledResourceControllerBase(
       AuthenticatedUserRequestFactory authenticatedUserRequestFactory,
       HttpServletRequest request,
       ControlledResourceService controlledResourceService,

@@ -56,8 +56,8 @@ public abstract class ControlledResource extends WsmResource {
       throw new InvalidMetadataException("Expected CONTROLLED");
     }
     this.assignedUser = dbResource.getAssignedUser().orElse(null);
-    this.accessScope = dbResource.getAccessScope().orElse(null);
-    this.managedBy = dbResource.getManagedBy().orElse(null);
+    this.accessScope = dbResource.getAccessScope();
+    this.managedBy = dbResource.getManagedBy();
     this.applicationId = dbResource.getApplicationId().orElse(null);
     this.privateResourceState = dbResource.getPrivateResourceState().orElse(null);
   }

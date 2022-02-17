@@ -6,7 +6,7 @@ import bio.terra.workspace.db.model.DbResource;
 import bio.terra.workspace.generated.model.ApiResourceAttributesUnion;
 import bio.terra.workspace.generated.model.ApiResourceMetadata;
 import bio.terra.workspace.generated.model.ApiResourceUnion;
-import bio.terra.workspace.service.resource.ValidationUtils;
+import bio.terra.workspace.service.resource.ResourceValidationUtils;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import bio.terra.workspace.service.resource.referenced.cloud.gcp.ReferencedResource;
 import com.google.common.base.Strings;
@@ -52,8 +52,8 @@ public abstract class WsmResource {
     this(
         dbResource.getWorkspaceId(),
         dbResource.getResourceId(),
-        dbResource.getName().orElse(null),
-        dbResource.getDescription().orElse(null),
+        dbResource.getName(),
+        dbResource.getDescription(),
         dbResource.getCloningInstructions());
   }
 
@@ -174,9 +174,9 @@ public abstract class WsmResource {
         || getResourceId() == null) {
       throw new MissingRequiredFieldException("Missing required field for WsmResource.");
     }
-    ValidationUtils.validateResourceName(getName());
+    ResourceValidationUtils.validateResourceName(getName());
     if (getDescription() != null) {
-      ValidationUtils.validateResourceDescriptionName(getDescription());
+      ResourceValidationUtils.validateResourceDescriptionName(getDescription());
     }
   }
 

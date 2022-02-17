@@ -52,7 +52,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 
 @Controller
-public class ControlledGcpResourceApiController extends ControlledResourceControllerCommon
+public class ControlledGcpResourceApiController extends ControlledResourceControllerBase
     implements ControlledGcpResourceApi {
   private final Logger logger = LoggerFactory.getLogger(ControlledGcpResourceApiController.class);
 

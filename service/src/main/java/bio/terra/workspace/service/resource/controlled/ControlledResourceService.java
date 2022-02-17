@@ -99,7 +99,7 @@ public class ControlledResourceService {
     this.features = features;
   }
 
-  public String createVm(
+  public String createAzureVm(
       ControlledAzureVmResource resource,
       ApiAzureVmCreationParameters creationParameters,
       ControlledResourceIamRole privateResourceIamRole,

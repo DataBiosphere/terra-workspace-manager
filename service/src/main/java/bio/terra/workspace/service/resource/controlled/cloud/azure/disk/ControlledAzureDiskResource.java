@@ -14,7 +14,7 @@ import bio.terra.workspace.generated.model.ApiAzureDiskResource;
 import bio.terra.workspace.generated.model.ApiResourceAttributesUnion;
 import bio.terra.workspace.generated.model.ApiResourceUnion;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
-import bio.terra.workspace.service.resource.ValidationUtils;
+import bio.terra.workspace.service.resource.ResourceValidationUtils;
 import bio.terra.workspace.service.resource.controlled.flight.create.CreateControlledResourceFlight;
 import bio.terra.workspace.service.resource.controlled.flight.delete.DeleteControlledResourceFlight;
 import bio.terra.workspace.service.resource.controlled.model.AccessScopeType;
@@ -34,6 +34,7 @@ import java.util.UUID;
 public class ControlledAzureDiskResource extends ControlledResource {
   private final String diskName;
   private final String region;
+  /** size is in GB */
   private final int size;
 
   @JsonCreator
@@ -194,8 +195,8 @@ public class ControlledAzureDiskResource extends ControlledResource {
       throw new MissingRequiredFieldException(
           "Missing required region field for ControlledAzureDisk.");
     }
-    ValidationUtils.validateRegion(getRegion());
-    ValidationUtils.validateAzureDiskName(getDiskName());
+    ResourceValidationUtils.validateRegion(getRegion());
+    ResourceValidationUtils.validateAzureDiskName(getDiskName());
   }
 
   @Override

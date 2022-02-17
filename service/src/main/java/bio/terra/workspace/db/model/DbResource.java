@@ -7,9 +7,11 @@ import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.model.StewardshipType;
 import bio.terra.workspace.service.resource.model.WsmResourceFamily;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
+import bio.terra.workspace.service.workspace.exceptions.MissingRequiredFieldsException;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.function.Supplier;
 import javax.annotation.Nullable;
 
 /**
@@ -34,6 +36,9 @@ public class DbResource {
   @Nullable private UUID applicationId;
   @Nullable private String assignedUser;
   @Nullable private PrivateResourceState privateResourceState;
+
+  private static final Supplier<RuntimeException> MISSING_REQUIRED_FIELD =
+      () -> new MissingRequiredFieldsException("Missing required field");
 
   public UUID getWorkspaceId() {
     return workspaceId;
@@ -62,8 +67,8 @@ public class DbResource {
     return this;
   }
 
-  public Optional<String> getName() {
-    return Optional.ofNullable(name);
+  public String getName() {
+    return name;
   }
 
   public DbResource name(String name) {
@@ -71,8 +76,8 @@ public class DbResource {
     return this;
   }
 
-  public Optional<String> getDescription() {
-    return Optional.ofNullable(description);
+  public String getDescription() {
+    return description;
   }
 
   public DbResource description(String description) {
@@ -125,8 +130,8 @@ public class DbResource {
     return this;
   }
 
-  public Optional<AccessScopeType> getAccessScope() {
-    return Optional.ofNullable(accessScope);
+  public AccessScopeType getAccessScope() {
+    return Optional.ofNullable(accessScope).orElseThrow(MISSING_REQUIRED_FIELD);
   }
 
   public DbResource accessScope(@Nullable AccessScopeType accessScope) {
@@ -134,8 +139,8 @@ public class DbResource {
     return this;
   }
 
-  public Optional<ManagedByType> getManagedBy() {
-    return Optional.ofNullable(managedBy);
+  public ManagedByType getManagedBy() {
+    return Optional.ofNullable(managedBy).orElseThrow(MISSING_REQUIRED_FIELD);
   }
 
   public DbResource managedBy(@Nullable ManagedByType managedBy) {

@@ -39,7 +39,7 @@ import bio.terra.workspace.service.iam.model.WsmIamRole;
 import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.job.JobService.AsyncJobResult;
 import bio.terra.workspace.service.petserviceaccount.PetSaService;
-import bio.terra.workspace.service.resource.ValidationUtils;
+import bio.terra.workspace.service.resource.ResourceValidationUtils;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.resource.referenced.cloud.gcp.ReferencedResource;
@@ -75,7 +75,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 
 @Controller
-public class WorkspaceApiController extends ControllerCommon implements WorkspaceApi {
+public class WorkspaceApiController extends ControllerBase implements WorkspaceApi {
   private static final Logger logger = LoggerFactory.getLogger(WorkspaceApiController.class);
   private final WorkspaceService workspaceService;
   private final JobService jobService;
@@ -245,7 +245,7 @@ public class WorkspaceApiController extends ControllerCommon implements Workspac
         body);
 
     ControllerValidationUtils.validate(body);
-    ValidationUtils.validateResourceName(body.getName());
+    ResourceValidationUtils.validateResourceName(body.getName());
 
     var resource =
         new ReferencedDataRepoSnapshotResource(
@@ -300,7 +300,7 @@ public class WorkspaceApiController extends ControllerCommon implements Workspac
       throw new InvalidReferenceException(
           "This endpoint does not support non-snapshot references. Use the newer type-specific endpoints instead.");
     }
-    ValidationUtils.validateResourceName(name);
+    ResourceValidationUtils.validateResourceName(name);
 
     ReferencedResource referenceResource =
         referenceResourceService.getReferenceResourceByName(workspaceId, name, userRequest);
@@ -320,7 +320,7 @@ public class WorkspaceApiController extends ControllerCommon implements Workspac
     }
 
     if (body.getName() != null) {
-      ValidationUtils.validateResourceName(body.getName());
+      ResourceValidationUtils.validateResourceName(body.getName());
     }
 
     referenceResourceService.updateReferenceResource(

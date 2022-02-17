@@ -14,7 +14,7 @@ import bio.terra.workspace.generated.model.ApiGcpGcsBucketResource;
 import bio.terra.workspace.generated.model.ApiResourceAttributesUnion;
 import bio.terra.workspace.generated.model.ApiResourceUnion;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
-import bio.terra.workspace.service.resource.ValidationUtils;
+import bio.terra.workspace.service.resource.ResourceValidationUtils;
 import bio.terra.workspace.service.resource.controlled.flight.create.CreateControlledResourceFlight;
 import bio.terra.workspace.service.resource.controlled.flight.delete.DeleteControlledResourceFlight;
 import bio.terra.workspace.service.resource.controlled.model.AccessScopeType;
@@ -178,7 +178,7 @@ public class ControlledGcsBucketResource extends ControlledResource {
     if (getBucketName() == null) {
       throw new MissingRequiredFieldException("Missing required field for ControlledGcsBucket.");
     }
-    ValidationUtils.validateBucketName(getBucketName());
+    ResourceValidationUtils.validateBucketName(getBucketName());
   }
 
   @Override

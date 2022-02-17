@@ -44,7 +44,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 
 @Controller
-public class ControlledAzureResourceApiController extends ControlledResourceControllerCommon
+public class ControlledAzureResourceApiController extends ControlledResourceControllerBase
     implements ControlledAzureResourceApi {
   private final Logger logger = LoggerFactory.getLogger(ControlledGcpResourceApiController.class);
 
@@ -176,7 +176,7 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
             .build();
 
     final String jobId =
-        controlledResourceService.createVm(
+        controlledResourceService.createAzureVm(
             resource,
             body.getAzureVm(),
             commonFields.getIamRole(),

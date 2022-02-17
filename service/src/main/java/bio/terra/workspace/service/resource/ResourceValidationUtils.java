@@ -25,9 +25,9 @@ import org.springframework.stereotype.Component;
 
 /** A collection of static validation functions */
 @Component
-public class ValidationUtils {
+public class ResourceValidationUtils {
 
-  private static final Logger logger = LoggerFactory.getLogger(ValidationUtils.class);
+  private static final Logger logger = LoggerFactory.getLogger(ResourceValidationUtils.class);
 
   /**
    * GCS bucket name validation is somewhat complex due to rules about usage of "." and restricted
@@ -91,7 +91,7 @@ public class ValidationUtils {
   private final GitRepoReferencedResourceConfiguration gitRepoReferencedResourceConfiguration;
 
   @Autowired
-  public ValidationUtils(
+  public ResourceValidationUtils(
       GitRepoReferencedResourceConfiguration gitRepoReferencedResourceConfiguration) {
     this.gitRepoReferencedResourceConfiguration = gitRepoReferencedResourceConfiguration;
   }
@@ -347,7 +347,7 @@ public class ValidationUtils {
   public static <T> void checkFieldNonNull(@Nullable T fieldValue, String fieldName) {
     if (fieldValue == null) {
       throw new MissingRequiredFieldException(
-          String.format("Missing required field '%s' for ControlledNotebookInstance.", fieldName));
+          String.format("Missing required field '%s' for resource", fieldName));
     }
   }
 }

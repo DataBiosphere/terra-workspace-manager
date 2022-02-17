@@ -8,7 +8,7 @@ import bio.terra.workspace.service.iam.model.SamConstants;
 import bio.terra.workspace.service.iam.model.SamConstants.SamWorkspaceAction;
 import bio.terra.workspace.service.job.JobBuilder;
 import bio.terra.workspace.service.job.JobService;
-import bio.terra.workspace.service.resource.ValidationUtils;
+import bio.terra.workspace.service.resource.ResourceValidationUtils;
 import bio.terra.workspace.service.resource.controlled.flight.clone.workspace.WorkspaceCloneUtils;
 import bio.terra.workspace.service.resource.model.StewardshipType;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
@@ -121,10 +121,10 @@ public class ReferencedResourceService {
         userRequest, workspaceId, SamConstants.SamWorkspaceAction.UPDATE_REFERENCE);
     // Name may be null if the user is not updating it in this request.
     if (name != null) {
-      ValidationUtils.validateResourceName(name);
+      ResourceValidationUtils.validateResourceName(name);
     }
     // Description may also be null, but this validator accepts null descriptions.
-    ValidationUtils.validateResourceDescriptionName(description);
+    ResourceValidationUtils.validateResourceDescriptionName(description);
     boolean updated;
     if (resource != null) {
       JobBuilder updateJob =

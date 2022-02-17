@@ -33,7 +33,6 @@ public class ControlledAzureVmHandler implements WsmResourceHandler {
             .diskId(attributes.getDiskId())
             .common(new ControlledResourceFields(dbResource))
             .build();
-    resource.validate();
     return resource;
   }
 }

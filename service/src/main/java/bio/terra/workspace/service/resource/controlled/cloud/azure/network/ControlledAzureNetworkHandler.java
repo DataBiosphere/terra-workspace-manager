@@ -31,7 +31,6 @@ public class ControlledAzureNetworkHandler implements WsmResourceHandler {
             .subnetAddressCidr(attributes.getSubnetAddressCidr())
             .region(attributes.getRegion())
             .build();
-    resource.validate();
     return resource;
   }
 }
