@@ -7,7 +7,6 @@ import bio.terra.stairway.RetryRule;
 import bio.terra.workspace.common.utils.FlightBeanBag;
 import bio.terra.workspace.common.utils.RetryRules;
 import bio.terra.workspace.db.DbSerDes;
-import bio.terra.workspace.db.model.DbResource;
 import bio.terra.workspace.db.model.UniquenessCheckAttributes;
 import bio.terra.workspace.db.model.UniquenessCheckAttributes.UniquenessScope;
 import bio.terra.workspace.generated.model.ApiGcpGcsBucketAttributes;
@@ -15,11 +14,12 @@ import bio.terra.workspace.generated.model.ApiGcpGcsBucketResource;
 import bio.terra.workspace.generated.model.ApiResourceAttributesUnion;
 import bio.terra.workspace.generated.model.ApiResourceUnion;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
-import bio.terra.workspace.service.resource.ValidationUtils;
+import bio.terra.workspace.service.resource.ResourceValidationUtils;
 import bio.terra.workspace.service.resource.controlled.flight.create.CreateControlledResourceFlight;
 import bio.terra.workspace.service.resource.controlled.flight.delete.DeleteControlledResourceFlight;
 import bio.terra.workspace.service.resource.controlled.model.AccessScopeType;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
+import bio.terra.workspace.service.resource.controlled.model.ControlledResourceFields;
 import bio.terra.workspace.service.resource.controlled.model.ManagedByType;
 import bio.terra.workspace.service.resource.controlled.model.PrivateResourceState;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
@@ -65,12 +65,15 @@ public class ControlledGcsBucketResource extends ControlledResource {
     validate();
   }
 
-  public ControlledGcsBucketResource(DbResource dbResource) {
-    super(dbResource);
-    ControlledGcsBucketAttributes attributes =
-        DbSerDes.fromJson(dbResource.getAttributes(), ControlledGcsBucketAttributes.class);
-    this.bucketName = attributes.getBucketName();
+  // Constructor for the builder
+  private ControlledGcsBucketResource(ControlledResourceFields common, String bucketName) {
+    super(common);
+    this.bucketName = bucketName;
     validate();
+  }
+
+  public static ControlledGcsBucketResource.Builder builder() {
+    return new ControlledGcsBucketResource.Builder();
   }
 
   /** {@inheritDoc} */
@@ -121,27 +124,8 @@ public class ControlledGcsBucketResource extends ControlledResource {
         new DeleteGcsBucketStep(this, flightBeanBag.getCrlService()), RetryRules.cloud());
   }
 
-  public static ControlledGcsBucketResource.Builder builder() {
-    return new ControlledGcsBucketResource.Builder();
-  }
-
   private static String generateBucketName() {
     return String.format("terra_%s_bucket", UUID.randomUUID()).replace("-", "_");
-  }
-
-  public Builder toBuilder() {
-    return new Builder()
-        .workspaceId(getWorkspaceId())
-        .resourceId(getResourceId())
-        .name(getName())
-        .description(getDescription())
-        .cloningInstructions(getCloningInstructions())
-        .assignedUser(getAssignedUser().orElse(null))
-        .privateResourceState(getPrivateResourceState().orElse(null))
-        .accessScope(getAccessScope())
-        .managedBy(getManagedBy())
-        .applicationId(getApplicationId())
-        .bucketName(getBucketName());
   }
 
   public String getBucketName() {
@@ -194,7 +178,7 @@ public class ControlledGcsBucketResource extends ControlledResource {
     if (getBucketName() == null) {
       throw new MissingRequiredFieldException("Missing required field for ControlledGcsBucket.");
     }
-    ValidationUtils.validateBucketName(getBucketName());
+    ResourceValidationUtils.validateBucketName(getBucketName());
   }
 
   @Override
@@ -222,43 +206,11 @@ public class ControlledGcsBucketResource extends ControlledResource {
   }
 
   public static class Builder {
-
-    private UUID workspaceId;
-    private UUID resourceId;
-    private String name;
-    private String description;
-    private CloningInstructions cloningInstructions;
-    private String assignedUser;
-    // Default value is NOT_APPLICABLE for shared resources and INITIALIZING for private resources.
-    @Nullable private PrivateResourceState privateResourceState;
-    private AccessScopeType accessScope;
-    private ManagedByType managedBy;
-    private UUID applicationId;
+    private ControlledResourceFields common;
     private String bucketName;
 
-    public ControlledGcsBucketResource.Builder workspaceId(UUID workspaceId) {
-      this.workspaceId = workspaceId;
-      return this;
-    }
-
-    public ControlledGcsBucketResource.Builder resourceId(UUID resourceId) {
-      this.resourceId = resourceId;
-      return this;
-    }
-
-    public ControlledGcsBucketResource.Builder name(String name) {
-      this.name = name;
-      return this;
-    }
-
-    public ControlledGcsBucketResource.Builder description(String description) {
-      this.description = description;
-      return this;
-    }
-
-    public ControlledGcsBucketResource.Builder cloningInstructions(
-        CloningInstructions cloningInstructions) {
-      this.cloningInstructions = cloningInstructions;
+    public ControlledGcsBucketResource.Builder common(ControlledResourceFields common) {
+      this.common = common;
       return this;
     }
 
@@ -267,50 +219,8 @@ public class ControlledGcsBucketResource extends ControlledResource {
       return this;
     }
 
-    public Builder assignedUser(String assignedUser) {
-      this.assignedUser = assignedUser;
-      return this;
-    }
-
-    public Builder privateResourceState(PrivateResourceState privateResourceState) {
-      this.privateResourceState = privateResourceState;
-      return this;
-    }
-
-    private PrivateResourceState defaultPrivateResourceState() {
-      return this.accessScope == AccessScopeType.ACCESS_SCOPE_PRIVATE
-          ? PrivateResourceState.INITIALIZING
-          : PrivateResourceState.NOT_APPLICABLE;
-    }
-
-    public Builder accessScope(AccessScopeType accessScope) {
-      this.accessScope = accessScope;
-      return this;
-    }
-
-    public Builder managedBy(ManagedByType managedBy) {
-      this.managedBy = managedBy;
-      return this;
-    }
-
-    public Builder applicationId(UUID applicationId) {
-      this.applicationId = applicationId;
-      return this;
-    }
-
     public ControlledGcsBucketResource build() {
-      return new ControlledGcsBucketResource(
-          workspaceId,
-          resourceId,
-          name,
-          description,
-          cloningInstructions,
-          assignedUser,
-          Optional.ofNullable(privateResourceState).orElse(defaultPrivateResourceState()),
-          accessScope,
-          managedBy,
-          applicationId,
-          bucketName);
+      return new ControlledGcsBucketResource(common, bucketName);
     }
   }
 }

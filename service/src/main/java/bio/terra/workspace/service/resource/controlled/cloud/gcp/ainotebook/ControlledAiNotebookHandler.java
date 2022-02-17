@@ -2,6 +2,7 @@ package bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook;
 
 import bio.terra.workspace.db.DbSerDes;
 import bio.terra.workspace.db.model.DbResource;
+import bio.terra.workspace.service.resource.controlled.model.ControlledResourceFields;
 import bio.terra.workspace.service.resource.model.WsmResource;
 import bio.terra.workspace.service.resource.model.WsmResourceHandler;
 import bio.terra.workspace.service.workspace.GcpCloudContextService;
@@ -45,21 +46,11 @@ public class ControlledAiNotebookHandler implements WsmResourceHandler {
 
     var resource =
         ControlledAiNotebookInstanceResource.builder()
-            .workspaceId(dbResource.getWorkspaceId())
-            .resourceId(dbResource.getResourceId())
-            .name(dbResource.getName().orElse(null))
-            .description(dbResource.getDescription().orElse(null))
-            .cloningInstructions(dbResource.getCloningInstructions())
-            .assignedUser(dbResource.getAssignedUser().orElse(null))
-            .privateResourceState(dbResource.getPrivateResourceState().orElse(null))
-            .accessScope(dbResource.getAccessScope().orElse(null))
-            .managedBy(dbResource.getManagedBy().orElse(null))
-            .applicationId(dbResource.getApplicationId().orElse(null))
+            .common(new ControlledResourceFields(dbResource))
             .instanceId(attributes.getInstanceId())
             .location(attributes.getLocation())
             .projectId(projectId)
             .build();
-    resource.validate();
     return resource;
   }
 }

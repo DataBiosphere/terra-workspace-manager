@@ -13,6 +13,7 @@ import static org.mockito.Mockito.doReturn;
 import bio.terra.common.exception.ForbiddenException;
 import bio.terra.common.sam.exception.SamBadRequestException;
 import bio.terra.workspace.common.BaseConnectedTest;
+import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
 import bio.terra.workspace.common.fixtures.ReferenceResourceFixtures;
 import bio.terra.workspace.connected.UserAccessUtils;
 import bio.terra.workspace.db.exception.WorkspaceNotFoundException;
@@ -26,9 +27,8 @@ import bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.Contr
 import bio.terra.workspace.service.resource.controlled.model.AccessScopeType;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResourceCategory;
-import bio.terra.workspace.service.resource.controlled.model.ManagedByType;
+import bio.terra.workspace.service.resource.controlled.model.ControlledResourceFields;
 import bio.terra.workspace.service.resource.controlled.model.PrivateResourceState;
-import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.resource.referenced.cloud.gcp.ReferencedResource;
 import bio.terra.workspace.service.resource.referenced.cloud.gcp.ReferencedResourceService;
@@ -254,7 +254,8 @@ class SamServiceTest extends BaseConnectedTest {
     samService.grantWorkspaceRole(
         workspaceId, defaultUserRequest(), WsmIamRole.READER, userAccessUtils.getSecondUserEmail());
 
-    ControlledResource bucketResource = defaultBucket(workspaceId).build();
+    ControlledResource bucketResource =
+        ControlledResourceFixtures.makeDefaultControlledGcsBucketBuilder(workspaceId).build();
     samService.createControlledResource(bucketResource, null, null, defaultUserRequest());
 
     // Workspace reader should have read access on a user-shared resource via inheritance
@@ -275,12 +276,20 @@ class SamServiceTest extends BaseConnectedTest {
         workspaceId, defaultUserRequest(), WsmIamRole.READER, userAccessUtils.getSecondUserEmail());
 
     // Create private resource assigned to the default user.
-    ControlledResource bucketResource =
-        defaultBucket(workspaceId)
+    ControlledResourceFields commonFields =
+        ControlledResourceFixtures.makeDefaultControlledResourceFieldsBuilder()
+            .workspaceId(workspaceId)
             .accessScope(AccessScopeType.ACCESS_SCOPE_PRIVATE)
             .assignedUser(userAccessUtils.getDefaultUserEmail())
             .privateResourceState(PrivateResourceState.ACTIVE)
             .build();
+
+    ControlledResource bucketResource =
+        ControlledGcsBucketResource.builder()
+            .bucketName(ControlledResourceFixtures.uniqueBucketName())
+            .common(commonFields)
+            .build();
+
     samService.createControlledResource(
         bucketResource,
         ControlledResourceIamRole.EDITOR,
@@ -307,7 +316,8 @@ class SamServiceTest extends BaseConnectedTest {
 
   @Test
   void duplicateResourceCreateIgnored() throws Exception {
-    ControlledResource bucketResource = defaultBucket(workspaceId).build();
+    ControlledResource bucketResource =
+        ControlledResourceFixtures.makeDefaultControlledGcsBucketBuilder(workspaceId).build();
     samService.createControlledResource(bucketResource, null, null, defaultUserRequest());
     // This duplicate call should complete without throwing.
     samService.createControlledResource(bucketResource, null, null, defaultUserRequest());
@@ -317,7 +327,8 @@ class SamServiceTest extends BaseConnectedTest {
 
   @Test
   void duplicateResourceDeleteIgnored() throws Exception {
-    ControlledResource bucketResource = defaultBucket(workspaceId).build();
+    ControlledResource bucketResource =
+        ControlledResourceFixtures.makeDefaultControlledGcsBucketBuilder(workspaceId).build();
     samService.createControlledResource(bucketResource, null, null, defaultUserRequest());
 
     samService.deleteControlledResource(bucketResource, defaultUserRequest());
@@ -356,20 +367,5 @@ class SamServiceTest extends BaseConnectedTest {
             .workspaceStage(WorkspaceStage.MC_WORKSPACE)
             .build();
     return workspaceService.createWorkspace(request, userRequest);
-  }
-
-  /**
-   * Creates a controlled user-shared GCS bucket with random resource ID and constant name, bucket
-   * name, and cloning instructions.
-   */
-  private ControlledGcsBucketResource.Builder defaultBucket(UUID workspaceId) {
-    return ControlledGcsBucketResource.builder()
-        .workspaceId(workspaceId)
-        .resourceId(UUID.randomUUID())
-        .bucketName("fake-bucket-name")
-        .name("fakeResourceName")
-        .cloningInstructions(CloningInstructions.COPY_NOTHING)
-        .accessScope(AccessScopeType.ACCESS_SCOPE_SHARED)
-        .managedBy(ManagedByType.MANAGED_BY_USER);
   }
 }

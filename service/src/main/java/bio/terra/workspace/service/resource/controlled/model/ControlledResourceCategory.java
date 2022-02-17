@@ -26,13 +26,13 @@ public enum ControlledResourceCategory {
       AccessScopeType.ACCESS_SCOPE_SHARED,
       ManagedByType.MANAGED_BY_APPLICATION,
       SamConstants.SamResource.CONTROLLED_APPLICATION_SHARED,
-      SamConstants.SamWorkspaceAction.CREATE_CONTROLLED_USER_SHARED,
+      SamConstants.SamWorkspaceAction.CREATE_CONTROLLED_APPLICATION_SHARED,
       ControlledResourceSyncMapping.APPLICATION_SHARED_MAPPING),
   APPLICATION_PRIVATE(
       AccessScopeType.ACCESS_SCOPE_PRIVATE,
       ManagedByType.MANAGED_BY_APPLICATION,
       SamConstants.SamResource.CONTROLLED_APPLICATION_PRIVATE,
-      SamConstants.SamWorkspaceAction.CREATE_CONTROLLED_USER_PRIVATE,
+      SamConstants.SamWorkspaceAction.CREATE_CONTROLLED_APPLICATION_PRIVATE,
       ControlledResourceSyncMapping.APPLICATION_PRIVATE_MAPPING);
 
   private final AccessScopeType accessScopeType;

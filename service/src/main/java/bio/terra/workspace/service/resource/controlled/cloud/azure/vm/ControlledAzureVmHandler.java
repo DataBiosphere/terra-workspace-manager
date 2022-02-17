@@ -1,6 +1,8 @@
 package bio.terra.workspace.service.resource.controlled.cloud.azure.vm;
 
+import bio.terra.workspace.db.DbSerDes;
 import bio.terra.workspace.db.model.DbResource;
+import bio.terra.workspace.service.resource.controlled.model.ControlledResourceFields;
 import bio.terra.workspace.service.resource.model.WsmResource;
 import bio.terra.workspace.service.resource.model.WsmResourceHandler;
 
@@ -17,6 +19,20 @@ public class ControlledAzureVmHandler implements WsmResourceHandler {
   /** {@inheritDoc} */
   @Override
   public WsmResource makeResourceFromDb(DbResource dbResource) {
-    return new ControlledAzureVmResource(dbResource);
+    ControlledAzureVmAttributes attributes =
+        DbSerDes.fromJson(dbResource.getAttributes(), ControlledAzureVmAttributes.class);
+
+    var resource =
+        ControlledAzureVmResource.builder()
+            .vmName(attributes.getVmName())
+            .region(attributes.getRegion())
+            .vmSize(attributes.getVmSize())
+            .vmImageUri(attributes.getVmImageUri())
+            .ipId(attributes.getIpId())
+            .networkId(attributes.getNetworkId())
+            .diskId(attributes.getDiskId())
+            .common(new ControlledResourceFields(dbResource))
+            .build();
+    return resource;
   }
 }

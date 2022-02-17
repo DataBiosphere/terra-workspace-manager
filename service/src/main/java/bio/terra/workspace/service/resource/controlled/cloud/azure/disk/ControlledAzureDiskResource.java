@@ -7,7 +7,6 @@ import bio.terra.stairway.RetryRule;
 import bio.terra.workspace.common.utils.FlightBeanBag;
 import bio.terra.workspace.common.utils.RetryRules;
 import bio.terra.workspace.db.DbSerDes;
-import bio.terra.workspace.db.model.DbResource;
 import bio.terra.workspace.db.model.UniquenessCheckAttributes;
 import bio.terra.workspace.db.model.UniquenessCheckAttributes.UniquenessScope;
 import bio.terra.workspace.generated.model.ApiAzureDiskAttributes;
@@ -15,11 +14,12 @@ import bio.terra.workspace.generated.model.ApiAzureDiskResource;
 import bio.terra.workspace.generated.model.ApiResourceAttributesUnion;
 import bio.terra.workspace.generated.model.ApiResourceUnion;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
-import bio.terra.workspace.service.resource.ValidationUtils;
+import bio.terra.workspace.service.resource.ResourceValidationUtils;
 import bio.terra.workspace.service.resource.controlled.flight.create.CreateControlledResourceFlight;
 import bio.terra.workspace.service.resource.controlled.flight.delete.DeleteControlledResourceFlight;
 import bio.terra.workspace.service.resource.controlled.model.AccessScopeType;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
+import bio.terra.workspace.service.resource.controlled.model.ControlledResourceFields;
 import bio.terra.workspace.service.resource.controlled.model.ManagedByType;
 import bio.terra.workspace.service.resource.controlled.model.PrivateResourceState;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
@@ -30,11 +30,11 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.Optional;
 import java.util.UUID;
-import javax.annotation.Nullable;
 
 public class ControlledAzureDiskResource extends ControlledResource {
   private final String diskName;
   private final String region;
+  /** size is in GB */
   private final int size;
 
   @JsonCreator
@@ -70,13 +70,13 @@ public class ControlledAzureDiskResource extends ControlledResource {
     validate();
   }
 
-  public ControlledAzureDiskResource(DbResource dbResource) {
-    super(dbResource);
-    ControlledAzureDiskAttributes attributes =
-        DbSerDes.fromJson(dbResource.getAttributes(), ControlledAzureDiskAttributes.class);
-    this.diskName = attributes.getDiskName();
-    this.region = attributes.getRegion();
-    this.size = attributes.getSize();
+  // Constructor for the builder
+  private ControlledAzureDiskResource(
+      ControlledResourceFields common, String diskName, String region, int size) {
+    super(common);
+    this.diskName = diskName;
+    this.region = region;
+    this.size = size;
     validate();
   }
 
@@ -195,8 +195,8 @@ public class ControlledAzureDiskResource extends ControlledResource {
       throw new MissingRequiredFieldException(
           "Missing required region field for ControlledAzureDisk.");
     }
-    ValidationUtils.validateRegion(getRegion());
-    ValidationUtils.validateAzureDiskName(getDiskName());
+    ResourceValidationUtils.validateRegion(getRegion());
+    ResourceValidationUtils.validateAzureDiskName(getDiskName());
   }
 
   @Override
@@ -218,44 +218,13 @@ public class ControlledAzureDiskResource extends ControlledResource {
   }
 
   public static class Builder {
-    private UUID workspaceId;
-    private UUID resourceId;
-    private String name;
-    private String description;
-    private CloningInstructions cloningInstructions;
-    private String assignedUser;
-    // Default value is NOT_APPLICABLE for shared resources and INITIALIZING for private resources.
-    @Nullable private PrivateResourceState privateResourceState;
-    private AccessScopeType accessScope;
-    private ManagedByType managedBy;
-    private UUID applicationId;
+    private ControlledResourceFields common;
     private String diskName;
     private String region;
     private int size;
 
-    public ControlledAzureDiskResource.Builder workspaceId(UUID workspaceId) {
-      this.workspaceId = workspaceId;
-      return this;
-    }
-
-    public ControlledAzureDiskResource.Builder resourceId(UUID resourceId) {
-      this.resourceId = resourceId;
-      return this;
-    }
-
-    public ControlledAzureDiskResource.Builder name(String name) {
-      this.name = name;
-      return this;
-    }
-
-    public ControlledAzureDiskResource.Builder description(String description) {
-      this.description = description;
-      return this;
-    }
-
-    public ControlledAzureDiskResource.Builder cloningInstructions(
-        CloningInstructions cloningInstructions) {
-      this.cloningInstructions = cloningInstructions;
+    public Builder common(ControlledResourceFields common) {
+      this.common = common;
       return this;
     }
 
@@ -274,53 +243,8 @@ public class ControlledAzureDiskResource extends ControlledResource {
       return this;
     }
 
-    public ControlledAzureDiskResource.Builder assignedUser(String assignedUser) {
-      this.assignedUser = assignedUser;
-      return this;
-    }
-
-    public ControlledAzureDiskResource.Builder privateResourceState(
-        PrivateResourceState privateResourceState) {
-      this.privateResourceState = privateResourceState;
-      return this;
-    }
-
-    private PrivateResourceState defaultPrivateResourceState() {
-      return this.accessScope == AccessScopeType.ACCESS_SCOPE_PRIVATE
-          ? PrivateResourceState.INITIALIZING
-          : PrivateResourceState.NOT_APPLICABLE;
-    }
-
-    public ControlledAzureDiskResource.Builder accessScope(AccessScopeType accessScope) {
-      this.accessScope = accessScope;
-      return this;
-    }
-
-    public ControlledAzureDiskResource.Builder managedBy(ManagedByType managedBy) {
-      this.managedBy = managedBy;
-      return this;
-    }
-
-    public ControlledAzureDiskResource.Builder applicationId(UUID applicationId) {
-      this.applicationId = applicationId;
-      return this;
-    }
-
     public ControlledAzureDiskResource build() {
-      return new ControlledAzureDiskResource(
-          workspaceId,
-          resourceId,
-          name,
-          description,
-          cloningInstructions,
-          assignedUser,
-          Optional.ofNullable(privateResourceState).orElse(defaultPrivateResourceState()),
-          accessScope,
-          managedBy,
-          applicationId,
-          diskName,
-          region,
-          size);
+      return new ControlledAzureDiskResource(common, diskName, region, size);
     }
   }
 }

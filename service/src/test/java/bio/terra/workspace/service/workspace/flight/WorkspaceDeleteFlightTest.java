@@ -49,13 +49,15 @@ public class WorkspaceDeleteFlightTest extends BaseConnectedTest {
     AuthenticatedUserRequest userRequest = userAccessUtils.defaultUserAuthRequest();
     Workspace workspace = connectedTestUtils.createWorkspaceWithGcpContext(userRequest);
     ControlledBigQueryDatasetResource dataset =
-        ControlledResourceFixtures.makeDefaultControlledBigQueryDatasetResource()
-            .workspaceId(workspace.getWorkspaceId())
+        ControlledResourceFixtures.makeDefaultControlledBigQueryBuilder(workspace.getWorkspaceId())
             .build();
+
     var creationParameters =
         ControlledResourceFixtures.defaultBigQueryDatasetCreationParameters()
             .datasetId(dataset.getDatasetName());
-    controlledResourceService.createBigQueryDataset(dataset, creationParameters, null, userRequest);
+    controlledResourceService
+        .createControlledResourceSync(dataset, null, userRequest, creationParameters)
+        .castByEnum(WsmResourceType.CONTROLLED_GCP_BIG_QUERY_DATASET);
 
     ControlledBigQueryDatasetResource gotResource =
         controlledResourceService
@@ -106,13 +108,14 @@ public class WorkspaceDeleteFlightTest extends BaseConnectedTest {
     AuthenticatedUserRequest userRequest = userAccessUtils.defaultUserAuthRequest();
     Workspace workspace = connectedTestUtils.createWorkspaceWithGcpContext(userRequest);
     ControlledBigQueryDatasetResource dataset =
-        ControlledResourceFixtures.makeDefaultControlledBigQueryDatasetResource()
-            .workspaceId(workspace.getWorkspaceId())
+        ControlledResourceFixtures.makeDefaultControlledBigQueryBuilder(workspace.getWorkspaceId())
             .build();
     var creationParameters =
         ControlledResourceFixtures.defaultBigQueryDatasetCreationParameters()
             .datasetId(dataset.getDatasetName());
-    controlledResourceService.createBigQueryDataset(dataset, creationParameters, null, userRequest);
+    controlledResourceService
+        .createControlledResourceSync(dataset, null, userRequest, creationParameters)
+        .castByEnum(WsmResourceType.CONTROLLED_GCP_BIG_QUERY_DATASET);
 
     ControlledBigQueryDatasetResource gotResource =
         controlledResourceService

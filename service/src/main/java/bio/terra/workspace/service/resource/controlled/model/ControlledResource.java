@@ -56,10 +56,24 @@ public abstract class ControlledResource extends WsmResource {
       throw new InvalidMetadataException("Expected CONTROLLED");
     }
     this.assignedUser = dbResource.getAssignedUser().orElse(null);
-    this.accessScope = dbResource.getAccessScope().orElse(null);
-    this.managedBy = dbResource.getManagedBy().orElse(null);
+    this.accessScope = dbResource.getAccessScope();
+    this.managedBy = dbResource.getManagedBy();
     this.applicationId = dbResource.getApplicationId().orElse(null);
     this.privateResourceState = dbResource.getPrivateResourceState().orElse(null);
+  }
+
+  public ControlledResource(ControlledResourceFields builder) {
+    super(
+        builder.getWorkspaceId(),
+        builder.getResourceId(),
+        builder.getName(),
+        builder.getDescription(),
+        builder.getCloningInstructions());
+    this.assignedUser = builder.getAssignedUser();
+    this.accessScope = builder.getAccessScope();
+    this.managedBy = builder.getManagedBy();
+    this.applicationId = builder.getApplicationId();
+    this.privateResourceState = builder.getPrivateResourceState();
   }
 
   /**

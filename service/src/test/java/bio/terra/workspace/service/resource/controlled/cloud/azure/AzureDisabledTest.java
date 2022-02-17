@@ -6,12 +6,10 @@ import bio.terra.workspace.common.BaseConnectedTest;
 import bio.terra.workspace.common.exception.FeatureNotSupportedException;
 import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
 import bio.terra.workspace.connected.UserAccessUtils;
-import bio.terra.workspace.generated.model.ApiAccessScope;
 import bio.terra.workspace.generated.model.ApiAzureDiskCreationParameters;
 import bio.terra.workspace.generated.model.ApiAzureIpCreationParameters;
 import bio.terra.workspace.generated.model.ApiAzureNetworkCreationParameters;
 import bio.terra.workspace.generated.model.ApiAzureVmCreationParameters;
-import bio.terra.workspace.generated.model.ApiManagedBy;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceService;
@@ -19,9 +17,7 @@ import bio.terra.workspace.service.resource.controlled.cloud.azure.disk.Controll
 import bio.terra.workspace.service.resource.controlled.cloud.azure.ip.ControlledAzureIpResource;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.network.ControlledAzureNetworkResource;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.vm.ControlledAzureVmResource;
-import bio.terra.workspace.service.resource.controlled.model.AccessScopeType;
-import bio.terra.workspace.service.resource.controlled.model.ManagedByType;
-import bio.terra.workspace.service.resource.model.CloningInstructions;
+import bio.terra.workspace.service.resource.controlled.model.ControlledResourceFields;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
@@ -67,15 +63,12 @@ public class AzureDisabledTest extends BaseConnectedTest {
     final ApiAzureIpCreationParameters ipCreationParameters =
         ControlledResourceFixtures.getAzureIpCreationParameters();
 
+    ControlledResourceFields commonFields =
+        ControlledResourceFixtures.makeDefaultControlledResourceFields(workspaceId);
+
     ControlledAzureIpResource ipResource =
         ControlledAzureIpResource.builder()
-            .workspaceId(workspaceId)
-            .resourceId(uuid)
-            .name(getAzureName("ip"))
-            .description(getAzureName("ip-desc"))
-            .cloningInstructions(CloningInstructions.COPY_RESOURCE)
-            .accessScope(AccessScopeType.fromApi(ApiAccessScope.SHARED_ACCESS))
-            .managedBy(ManagedByType.fromApi(ApiManagedBy.USER))
+            .common(commonFields)
             .ipName(ipCreationParameters.getName())
             .region(ipCreationParameters.getRegion())
             .build();
@@ -83,21 +76,15 @@ public class AzureDisabledTest extends BaseConnectedTest {
     assertThrows(
         FeatureNotSupportedException.class,
         () ->
-            controlledResourceService.createIp(
-                ipResource, ipCreationParameters, null, userRequest));
+            controlledResourceService.createControlledResourceSync(
+                ipResource, null, userRequest, ipCreationParameters));
 
     final ApiAzureDiskCreationParameters diskCreationParameters =
         ControlledResourceFixtures.getAzureDiskCreationParameters();
 
     ControlledAzureDiskResource diskResource =
         ControlledAzureDiskResource.builder()
-            .workspaceId(workspaceId)
-            .resourceId(uuid)
-            .name(getAzureName("disk"))
-            .description(getAzureName("disk-desc"))
-            .cloningInstructions(CloningInstructions.COPY_RESOURCE)
-            .accessScope(AccessScopeType.fromApi(ApiAccessScope.SHARED_ACCESS))
-            .managedBy(ManagedByType.fromApi(ApiManagedBy.USER))
+            .common(commonFields)
             .diskName(diskCreationParameters.getName())
             .region(diskCreationParameters.getRegion())
             .size(diskCreationParameters.getSize())
@@ -106,21 +93,15 @@ public class AzureDisabledTest extends BaseConnectedTest {
     assertThrows(
         FeatureNotSupportedException.class,
         () ->
-            controlledResourceService.createDisk(
-                diskResource, diskCreationParameters, null, userRequest));
+            controlledResourceService.createControlledResourceSync(
+                diskResource, null, userRequest, diskCreationParameters));
 
     final ApiAzureNetworkCreationParameters networkCreationParameters =
         ControlledResourceFixtures.getAzureNetworkCreationParameters();
 
     ControlledAzureNetworkResource networkResource =
         ControlledAzureNetworkResource.builder()
-            .workspaceId(workspaceId)
-            .resourceId(uuid)
-            .name(getAzureName("network"))
-            .description(getAzureName("network-desc"))
-            .cloningInstructions(CloningInstructions.COPY_RESOURCE)
-            .accessScope(AccessScopeType.fromApi(ApiAccessScope.SHARED_ACCESS))
-            .managedBy(ManagedByType.fromApi(ApiManagedBy.USER))
+            .common(commonFields)
             .networkName(networkCreationParameters.getName())
             .region(networkCreationParameters.getRegion())
             .subnetName(networkCreationParameters.getSubnetName())
@@ -131,21 +112,15 @@ public class AzureDisabledTest extends BaseConnectedTest {
     assertThrows(
         FeatureNotSupportedException.class,
         () ->
-            controlledResourceService.createNetwork(
-                networkResource, networkCreationParameters, null, userRequest));
+            controlledResourceService.createControlledResourceSync(
+                networkResource, null, userRequest, networkCreationParameters));
 
     final ApiAzureVmCreationParameters vmCreationParameters =
         ControlledResourceFixtures.getAzureVmCreationParameters();
 
     ControlledAzureVmResource vmResource =
         ControlledAzureVmResource.builder()
-            .workspaceId(workspaceId)
-            .resourceId(uuid)
-            .name(getAzureName("vm"))
-            .description(getAzureName("vm-desc"))
-            .cloningInstructions(CloningInstructions.COPY_RESOURCE)
-            .accessScope(AccessScopeType.fromApi(ApiAccessScope.SHARED_ACCESS))
-            .managedBy(ManagedByType.fromApi(ApiManagedBy.USER))
+            .common(commonFields)
             .vmName(vmCreationParameters.getName())
             .vmSize(vmCreationParameters.getVmSize())
             .vmImageUri(vmCreationParameters.getVmImageUri())
@@ -158,7 +133,7 @@ public class AzureDisabledTest extends BaseConnectedTest {
     assertThrows(
         FeatureNotSupportedException.class,
         () ->
-            controlledResourceService.createVm(
+            controlledResourceService.createAzureVm(
                 vmResource, vmCreationParameters, null, null, null, userRequest));
   }
 }

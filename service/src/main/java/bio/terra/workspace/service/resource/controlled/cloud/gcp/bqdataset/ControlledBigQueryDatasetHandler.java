@@ -2,6 +2,7 @@ package bio.terra.workspace.service.resource.controlled.cloud.gcp.bqdataset;
 
 import bio.terra.workspace.db.DbSerDes;
 import bio.terra.workspace.db.model.DbResource;
+import bio.terra.workspace.service.resource.controlled.model.ControlledResourceFields;
 import bio.terra.workspace.service.resource.model.WsmResource;
 import bio.terra.workspace.service.resource.model.WsmResourceHandler;
 import bio.terra.workspace.service.workspace.GcpCloudContextService;
@@ -45,20 +46,10 @@ public class ControlledBigQueryDatasetHandler implements WsmResourceHandler {
 
     var resource =
         ControlledBigQueryDatasetResource.builder()
-            .workspaceId(dbResource.getWorkspaceId())
-            .resourceId(dbResource.getResourceId())
-            .name(dbResource.getName().orElse(null))
-            .description(dbResource.getDescription().orElse(null))
-            .cloningInstructions(dbResource.getCloningInstructions())
-            .assignedUser(dbResource.getAssignedUser().orElse(null))
-            .privateResourceState(dbResource.getPrivateResourceState().orElse(null))
-            .accessScope(dbResource.getAccessScope().orElse(null))
-            .managedBy(dbResource.getManagedBy().orElse(null))
-            .applicationId(dbResource.getApplicationId().orElse(null))
             .datasetName(attributes.getDatasetName())
             .projectId(projectId)
+            .common(new ControlledResourceFields(dbResource))
             .build();
-    resource.validate();
     return resource;
   }
 }

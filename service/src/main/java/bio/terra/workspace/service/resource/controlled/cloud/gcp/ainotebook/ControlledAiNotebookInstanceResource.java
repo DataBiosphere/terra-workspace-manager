@@ -17,11 +17,12 @@ import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceResource;
 import bio.terra.workspace.generated.model.ApiResourceAttributesUnion;
 import bio.terra.workspace.generated.model.ApiResourceUnion;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
-import bio.terra.workspace.service.resource.ValidationUtils;
+import bio.terra.workspace.service.resource.ResourceValidationUtils;
 import bio.terra.workspace.service.resource.controlled.flight.create.CreateControlledResourceFlight;
 import bio.terra.workspace.service.resource.controlled.flight.delete.DeleteControlledResourceFlight;
 import bio.terra.workspace.service.resource.controlled.model.AccessScopeType;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
+import bio.terra.workspace.service.resource.controlled.model.ControlledResourceFields;
 import bio.terra.workspace.service.resource.controlled.model.ManagedByType;
 import bio.terra.workspace.service.resource.controlled.model.PrivateResourceState;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
@@ -79,25 +80,18 @@ public class ControlledAiNotebookInstanceResource extends ControlledResource {
     validate();
   }
 
-  public static Builder builder() {
-    return new Builder();
+  // Constructor for the builder
+  private ControlledAiNotebookInstanceResource(
+      ControlledResourceFields common, String instanceId, String location, String projectId) {
+    super(common);
+    this.instanceId = instanceId;
+    this.location = location;
+    this.projectId = projectId;
+    validate();
   }
 
-  public Builder toBuilder() {
-    return new Builder()
-        .workspaceId(getWorkspaceId())
-        .resourceId(getResourceId())
-        .name(getName())
-        .description(getDescription())
-        .cloningInstructions(getCloningInstructions())
-        .assignedUser(getAssignedUser().orElse(null))
-        .privateResourceState(getPrivateResourceState().orElse(null))
-        .accessScope(getAccessScope())
-        .managedBy(getManagedBy())
-        .applicationId(getApplicationId())
-        .instanceId(getInstanceId())
-        .location(getLocation())
-        .projectId(getProjectId());
+  public static Builder builder() {
+    return new Builder();
   }
 
   /** {@inheritDoc} */
@@ -239,7 +233,7 @@ public class ControlledAiNotebookInstanceResource extends ControlledResource {
     checkFieldNonNull(getInstanceId(), "instanceId");
     checkFieldNonNull(getLocation(), "location");
     checkFieldNonNull(getProjectId(), "projectId");
-    ValidationUtils.validateAiNotebookInstanceId(getInstanceId());
+    ResourceValidationUtils.validateAiNotebookInstanceId(getInstanceId());
   }
 
   /** Returns an auto generated instance name with the username and date time. */
@@ -308,43 +302,13 @@ public class ControlledAiNotebookInstanceResource extends ControlledResource {
 
   /** Builder for {@link ControlledAiNotebookInstanceResource}. */
   public static class Builder {
-    private UUID workspaceId;
-    private UUID resourceId;
-    private String name;
-    private String description;
-    private CloningInstructions cloningInstructions;
-    private String assignedUser;
-    // Default value is NOT_APPLICABLE for shared resources and INITIALIZING for private resources.
-    @Nullable private PrivateResourceState privateResourceState;
-    private AccessScopeType accessScope;
-    private ManagedByType managedBy;
-    private UUID applicationId;
+    private ControlledResourceFields common;
     private String instanceId;
     private String location;
     private String projectId;
 
-    public Builder workspaceId(UUID workspaceId) {
-      this.workspaceId = workspaceId;
-      return this;
-    }
-
-    public Builder resourceId(UUID resourceId) {
-      this.resourceId = resourceId;
-      return this;
-    }
-
-    public Builder name(String name) {
-      this.name = name;
-      return this;
-    }
-
-    public Builder description(String description) {
-      this.description = description;
-      return this;
-    }
-
-    public Builder cloningInstructions(CloningInstructions cloningInstructions) {
-      this.cloningInstructions = cloningInstructions;
+    public Builder common(ControlledResourceFields common) {
+      this.common = common;
       return this;
     }
 
@@ -363,52 +327,8 @@ public class ControlledAiNotebookInstanceResource extends ControlledResource {
       return this;
     }
 
-    public Builder assignedUser(String assignedUser) {
-      this.assignedUser = assignedUser;
-      return this;
-    }
-
-    public Builder privateResourceState(PrivateResourceState privateResourceState) {
-      this.privateResourceState = privateResourceState;
-      return this;
-    }
-
-    private PrivateResourceState defaultPrivateResourceState() {
-      return this.accessScope == AccessScopeType.ACCESS_SCOPE_PRIVATE
-          ? PrivateResourceState.INITIALIZING
-          : PrivateResourceState.NOT_APPLICABLE;
-    }
-
-    public Builder accessScope(AccessScopeType accessScope) {
-      this.accessScope = accessScope;
-      return this;
-    }
-
-    public Builder managedBy(ManagedByType managedBy) {
-      this.managedBy = managedBy;
-      return this;
-    }
-
-    public Builder applicationId(UUID applicationId) {
-      this.applicationId = applicationId;
-      return this;
-    }
-
     public ControlledAiNotebookInstanceResource build() {
-      return new ControlledAiNotebookInstanceResource(
-          workspaceId,
-          resourceId,
-          name,
-          description,
-          cloningInstructions,
-          assignedUser,
-          Optional.ofNullable(privateResourceState).orElse(defaultPrivateResourceState()),
-          accessScope,
-          managedBy,
-          applicationId,
-          instanceId,
-          location,
-          projectId);
+      return new ControlledAiNotebookInstanceResource(common, instanceId, location, projectId);
     }
   }
 }

@@ -15,8 +15,10 @@ import bio.terra.workspace.service.iam.model.ControlledResourceIamRole;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceService;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.ControlledGcsBucketResource;
 import bio.terra.workspace.service.resource.controlled.model.AccessScopeType;
+import bio.terra.workspace.service.resource.controlled.model.ControlledResourceFields;
 import bio.terra.workspace.service.resource.controlled.model.PrivateResourceState;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
+import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ResourceKeys;
 import java.util.Optional;
@@ -86,8 +88,8 @@ public class CopyGcsBucketDefinitionStep implements Step {
         inputParameters.get(ControlledResourceKeys.DESTINATION_WORKSPACE_ID, UUID.class);
 
     // bucket resource for create flight
-    ControlledGcsBucketResource destinationBucketResource =
-        ControlledGcsBucketResource.builder()
+    ControlledResourceFields commonFields =
+        ControlledResourceFields.builder()
             .workspaceId(destinationWorkspaceId)
             .resourceId(UUID.randomUUID()) // random ID for new resource
             .name(resourceName)
@@ -97,9 +99,11 @@ public class CopyGcsBucketDefinitionStep implements Step {
             .accessScope(sourceBucket.getAccessScope())
             .managedBy(sourceBucket.getManagedBy())
             .applicationId(sourceBucket.getApplicationId())
-            .bucketName(bucketName)
             .privateResourceState(privateResourceState)
             .build();
+
+    ControlledGcsBucketResource destinationBucketResource =
+        ControlledGcsBucketResource.builder().bucketName(bucketName).common(commonFields).build();
 
     final ApiGcpGcsBucketCreationParameters destinationCreationParameters =
         getDestinationCreationParameters(inputParameters, workingMap);
@@ -109,15 +113,17 @@ public class CopyGcsBucketDefinitionStep implements Step {
 
     // Launch a CreateControlledResourcesFlight to make the destination bucket
     final ControlledGcsBucketResource clonedBucket =
-        controlledResourceService.createBucket(
-            destinationBucketResource, destinationCreationParameters, iamRole, userRequest);
+        controlledResourceService
+            .createControlledResourceSync(
+                destinationBucketResource, iamRole, userRequest, destinationCreationParameters)
+            .castByEnum(WsmResourceType.CONTROLLED_GCP_GCS_BUCKET);
     workingMap.put(ControlledResourceKeys.CLONED_RESOURCE_DEFINITION, clonedBucket);
-    // TODO: create new type & use it here
+
     final ApiCreatedControlledGcpGcsBucket apiCreatedBucket =
         new ApiCreatedControlledGcpGcsBucket()
             .gcpBucket(clonedBucket.toApiResource())
             .resourceId(destinationBucketResource.getResourceId());
-    // todo: bundle everything so it doesn't use API types here.
+
     final ApiClonedControlledGcpGcsBucket apiBucketResult =
         new ApiClonedControlledGcpGcsBucket()
             .effectiveCloningInstructions(cloningInstructions.toApiModel())
