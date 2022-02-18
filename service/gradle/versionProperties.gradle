@@ -1,0 +1,13 @@
+// Generate/clean the version properties file
+// This was being done by a plugin: https://github.com/palantir/gradle-git-version
+// but it does not work with Gradle 7.0. It was also very complicated for a
+// what we need, so easily replaced with a bash script
+def generatedVersionFile = "${resourceDir}/generated/version.properties"
+
+task generateVersionProperties(type: Exec) {
+  commandLine "${projectDir}/writeVersionProperties.sh", "${version}", "${generatedVersionFile}"
+}
+
+task cleanVersionProperties(type: Exec) {
+  commandLine "rm", "-f", "${generatedVersionFile}"
+}
