@@ -1,12 +1,13 @@
+// Build Script Classpath
 buildscript {
     ext {
         springBootVersion = '2.4.0'
     }
 }
 
+// Project Plugins
 plugins {
     id 'terra-workspace-manager.java-conventions'
-
     id "com.github.ben-manes.versions" version "0.36.0"
     id "com.google.cloud.tools.jib" version "3.0.0"
     id "de.undercouch.download" version "4.1.1"
@@ -19,11 +20,10 @@ plugins {
 // constants visible to all .gradle files in this project
 project.ext {
     artifactGroup = "${group}.workspace"
+    includeDir = "$projectDir/gradle"
     openapiOutputDir = "${buildDir}/openapi"
     resourceDir = "${projectDir}/src/main/resources"
 }
-
-def includeDir = "$projectDir/gradle"
 
 // include order matters, so don't alphabetize
 apply(from: "$includeDir/profiler.gradle")
@@ -35,4 +35,3 @@ apply(from: "$includeDir/taskDependencies.gradle")
 apply(from: "$includeDir/dependencies.gradle")
 apply(from: "$includeDir/testing.gradle")
 
-sourceSets.main.java.srcDir "${openapiOutputDir}/src/main/java"

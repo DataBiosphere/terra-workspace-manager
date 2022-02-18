@@ -19,3 +19,5 @@ swaggerSources {
     }
   }
 }
+
+sourceSets.main.java.srcDir "${openapiOutputDir}/src/main/java"
