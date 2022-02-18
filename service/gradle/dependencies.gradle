@@ -1,4 +1,4 @@
-// Manual Task Dependencies
+// Library Dependencies, Versions, etc.
 dependencies {
   // Google dependencies
   constraints {
