@@ -56,6 +56,9 @@ public class CreateAiNotebookInstanceStep implements Step {
   // git secrets gets a false positive if 'service_account' is double quoted.
   private static final String PROXY_MODE_SA_VALUE = "service_" + "account";
 
+  /**
+   * Service account for the notebook instance needs to contain these scopes to interact with SAM.
+   */
   private static final List<String> SERVICE_ACCOUNT_SCOPE =
       ImmutableList.of(
           "https://www.googleapis.com/auth/cloud-platform",
