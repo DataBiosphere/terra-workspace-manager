@@ -1,677 +1,311 @@
-# terra-cli
+# terra-workspace-manager
+This repository holds the MC Terra Workspace Manager (WSM) service, client, and
+integration test projects.
 
-1. [Install and run](#install-and-run)
-    * [Requirements](#requirements)
-    * [Login](#login)
-    * [Spend profile access](#spend-profile-access)
-    * [External data](#external-data)
-    * [Local Tools Installation](#local-tools-installation)
-    * [Troubleshooting](#troubleshooting)
-      * [Clear context](#clear-context)
-      * [Manual Install](#manual-install)
-      * [Manual Uninstall](#manual-uninstall)
-2. [Example usage](#example-usage)
-3. [Commands description](#commands-description)
-    * [Authentication](#authentication)
-    * [Server](#server)
-    * [Workspace](#workspace)
-    * [Resources](#resources)
-        * [GCS bucket lifecycle rules](#gcs-bucket-lifecycle-rules)
-        * [GCS bucket object reference](#gcs-bucket-object-reference)
-          * [Reference to a file or folder](#reference-to-a-file-or-folder)
-          * [Reference to multiple objects under a folder](#reference-to-multiple-objects-under-a-folder)
-        * [Update A Reference resource](#update-a-reference-resource)
-    * [Data References](#data-references)
-    * [Applications](#applications)
-    * [Notebooks](#notebooks)
-    * [Groups](#groups)
-    * [Spend](#spend)
-    * [Config](#config)
-4. [Workspace context for applications](#workspace-context-for-applications)
-    * [Reference in a CLI command](#reference-in-a-cli-command)
-    * [Reference in file](#reference-in-file)
-    * [See all environment variables](#see-all-environment-variables)
-5. [Exit codes](#exit-codes)
+This readme provides general information about WSM. Specifics about how to do development
+within the Broad Institute's CI/CD system can be found in [DEVELOPMENT](DEVELOPMENT.md).
 
------
+## Overview
 
-### Install and run
-To install the latest version:
-```
-curl -L https://github.com/DataBiosphere/terra-cli/releases/latest/download/download-install.sh | bash
-./terra
-```
+WSM provides workspaces; contexts for holding the work of
+individuals and teams. A _workspace_ has members that are granted some role on the
+workspace (OWNER, READER, WRITER). The members can create and manage _resources_ in the
+workspace. There are two types of resources:
+- _controlled resources_ are cloud resources (e.g., buckets) whose attributes,
+  permissions, and lifecycle are controlled by the Workspace Manager. Controlled resources
+  are created and managed using Workspace Manager APIs.
+- _referenced resources_ are cloud resources that are independent of the
+  Workspace Manager. A workspace may hold a reference to such a resource. The Workspace
+  Manager has no role in managing the resource’s lifecycle or attributes.
 
-To install a specific version:
-```
-export TERRA_CLI_VERSION=0.106.0
-curl -L https://github.com/DataBiosphere/terra-cli/releases/latest/download/download-install.sh | bash
-./terra
-```
+Resources have unique names within the workspace, allowing users of the workspace to
+locate and refer to them in a consistent way, whether they are controlled or referenced.
 
-This will install the Terra CLI in the current directory. Afterwards, you may want to add it to your `$PATH` directly
-or move it to a place that is already on your `$PATH` (e.g. `/usr/local/bin`).
+The resources in a workspace may reside on different clouds. Users may create one _cloud
+context_ for each cloud platform where they have controlled or referenced resources.
 
-Re-installing will overwrite any existing installation (i.e. all JARs and scripts will be overwritten), but will not
-modify the `$PATH`. So if you have added it to your `$PATH`, that step needs to be repeated after each install.
+Workspace Manager provides the minimum interface to allow it to control permissions and
+lifecycle of controlled resources. All other access, in particular data reading and
+writing, are done using the native cloud APIs.
 
-#### Requirements
-1. Java 11
-2. Docker 20.10.2 (Must be running)
-3. `curl`, `tar`, `gcloud` (For install only)
+Controlled resources may be _shared_ or _private_. Shared resources are accessible to
+workspace members with their workspace role. That is, if you have READER on the workspace,
+then you can read the resource (however that is defined for the specific resource); if you
+have WRITER on the workspace, then you can write the resource.
 
-Note: The CLI doesn't use `gcloud` directly either during install or normal operation.
-However, `docker pull` [may use](https://cloud.google.com/container-registry/docs/quickstart#auth) `gcloud` under the 
-covers to pull the default Docker image from GCR. This is the reason for the `gcloud` requirement for install.
+Private resources are available to a single member of the workspace. At the present time,
+a private resource is available only to its creator.
 
-#### Login
-1. `terra auth login` launches an OAuth flow that pops out a browser window to complete the login.
-2. If the machine where you're running the CLI does not have a browser available to it, then use the
-manual login flow by setting the browser flag `terra config set browser MANUAL`. See the [Authentication](#authentication)
-section below for more details.
+WSM has latent support for _applications_. No applications exist at this time. The concept
+is that an application is a distinguished service accounts. Owners of the workspace can
+control which applications are allowed access to the workspace. If an application is given
+access, then it can create application-owned resources. The goal is to allow applications
+to create constellations of resources that support the application, and not let them be
+messed with by workspace READERS and WRITERS.
 
-#### Spend profile access
-In order to spend money (e.g. by creating a workspace and resources within it) in Terra, you need
-access to a billing account via a spend profile. Currently, there is a single spend profile used
-by Workspace Manager. An admin user can grant you access.
-Admins, see [ADMIN.md](https://github.com/DataBiosphere/terra-cli/blob/main/ADMIN.md#spend) for more details.
+## WSM Client
+Workspace Manager publishes an API client library generated from its OpenAPI Spec v3
+interface definition.
 
-#### External data 
-In order to read or write external data from Terra, you should grant data access to your proxy group.
-`terra auth status` shows the email of your proxy group.
+### Usage (Gradle)
 
-#### Local Tools Installation
-When running `terra app` commands in `LOCAL_PROCESS` `app-launch` mode (the default),
-it's necessary to install the various tools locally. The following instructions are
-for MacOS or Linux.
-- `gcloud` - Make sure you have Python installed, then download the .tar.gz archive file from the [installation page](https://cloud.google.com/sdk/docs/install). Run `gcloud version` to verify the installation.
-- `gsutil` - included in the [`gcloud` CLI](https://cloud.google.com/sdk/docs/install), or available separately [here](https://cloud.google.com/storage/docs/gsutil_install).
-Verify the installation with `gsutil version` (also printed as part of `gcloud version`)
-- `bq` - included with `gcloud`. More details are available [here](https://cloud.google.com/bigquery/docs/bq-command-line-tool).
-Similarly, verify the installation with `bq version`.
-- `nextflow` - Install by downloading a `bash` script and running it locally. Create a `nextflow` directory
-somewhere convenient (e.g. $HOME/nextflow) and switch to it. Then do `curl -s https://get.nextflow.io | bash`.
-Finally, move the `nextflow` executable script to a location on the `$PATH`: `sudo mv nextflow /usr/local/bin/`.
-Verify the installation with `nextflow -version`.
-
-Now, these applications are available in `terra` by doing, for example, `terra gsutil ls`. When
-run in `terra`, environment variables are set based on resources in the active workspace, and
-context such as the active GCP project is set up automatically. 
-#### Troubleshooting
-##### Clear context
-Clear the context file and all credentials. This will require you to login and select a workspace again.
-```
-cd $HOME/.terra
-rm context.json
-rm StoredCredential
-rm -R pet-keys
-```
-
-##### Manual install
-A Terra CLI release includes a GitHub release of the `terra-cli` repository and a corresponding Docker image in GCR.
-`download-install.sh` is a convenience script that downloads the latest (or specific) version of the install package,
-unarchives it, runs the `install.sh` script included inside, and then deletes the install package.
-
-You can also skip the `download-install.sh` script and do the install manually.
-- Download the `terra-cli.tar` install package directly from the 
-[GitHub releases page.](https://github.com/DataBiosphere/terra-cli/releases)
-- Unarchive the `tar` file.
-- Run the install script from the unarchived directory: `./install.sh`
-
-##### Manual uninstall
-There is not yet an uninstaller. You can clear the entire context directory, which includes the context file, all
-credentials, and all JARs. This will then require a re-install (see above).
-```
-rm -R $HOME/.terra
-```
-
-### Example usage
-The commands below walk through a brief demo of the existing commands.
-
-Fetch the user's credentials.
-Check the authentication status to confirm the login was successful.
-```
-terra auth login
-terra auth status
-```
-
-Ping the Terra server.
-```
-terra server status
-```
-
-Create a new Terra workspace and backing Google project.
-Check the current context to confirm it was created successfully.
-```
-terra workspace create
-terra status
-```
-
-List all workspaces the user has read or write access to.
-```
-terra workspace list
-```
-
-If you want to use an existing Terra workspace, use the `set` command instead of `create`.
-```
-terra workspace set --id=eb0753f9-5c45-46b3-b3b4-80b4c7bea248
-```
-
-Set the Gcloud user and application default credentials.
-```
-gcloud auth login
-gcloud auth application-default login
-```
-
-Run a Nextflow hello world example.
-```
-terra nextflow run hello
-```
-
-Run an [example Nextflow workflow](https://github.com/nextflow-io/rnaseq-nf) in the context of the Terra workspace (i.e.
-in the workspace's backing Google project). This is the same example workflow used in the 
-[GCLS tutorial](https://cloud.google.com/life-sciences/docs/tutorials/nextflow).
-- Download the workflow code from GitHub.
-    ```
-    git clone https://github.com/nextflow-io/rnaseq-nf.git
-    cd rnaseq-nf
-    git checkout v2.0
-    cd ..
-    ```
-- Create a bucket in the workspace for Nextflow to use.
-    ```
-    terra resource create gcs-bucket --name=mybucket --bucket-name=mybucket
-    ```
-- Update the `gls` section of the `rnaseq-nf/nextflow.config` file to point to the workspace project and bucket 
-we just created.
-    ```
-      gls {
-          params.transcriptome = 'gs://rnaseq-nf/data/ggal/transcript.fa'
-          params.reads = 'gs://rnaseq-nf/data/ggal/gut_{1,2}.fq'
-          params.multiqc = 'gs://rnaseq-nf/multiqc'
-          process.executor = 'google-lifesciences'
-          process.container = 'nextflow/rnaseq-nf:latest'
-          workDir = "$TERRA_mybucket/scratch"
-
-          google.region  = 'us-east1'
-          google.project = "$GOOGLE_CLOUD_PROJECT"
-
-          google.lifeSciences.serviceAccountEmail = "$GOOGLE_SERVICE_ACCOUNT_EMAIL"
-          google.lifeSciences.network = 'network'
-          google.lifeSciences.subnetwork = 'subnetwork'
-      }
-    ```
-- Do a dry-run to confirm the config is set correctly.
-    ```
-    terra nextflow config rnaseq-nf/main.nf -profile gls
-    ```
-- Kick off the workflow. (This takes about 10 minutes to complete.)
-    ```
-    terra nextflow run rnaseq-nf/main.nf -profile gls
-    ```
-
-- To send metrics about the workflow run to a Nextflow Tower server, first define an environment variable with the Tower
-access token. Then specify the `-with-tower` flag when kicking off the workflow.
-    ```
-    export TOWER_ACCESS_TOKEN=*****
-    terra nextflow run hello -with-tower
-    terra nextflow run rnaseq-nf/main.nf -profile gls -with-tower
-    ```
-
-- Call the Gcloud CLI tools in the current workspace context.
-This means that Gcloud is configured with the backing Google project and environment variables are defined that
-contain workspace and resource properties (e.g. bucket names, pet service account email).
-```
-terra gcloud config get-value project
-terra gsutil ls
-terra bq version
-```
-
-- See the list of supported third-party tools.
-The CLI runs these tools in a Docker image. Print the image tag that the CLI is currently using.
-```
-terra app list
-terra config get image
-```
-
-### Commands description
-```
-Usage: terra [COMMAND]
-Terra CLI
-Commands:
-  app        Run applications in the workspace.
-  auth       Retrieve and manage user credentials.
-  bq         Call bq in the Terra workspace.
-  config     Configure the CLI.
-  gcloud     Call gcloud in the Terra workspace.
-  group      Manage groups of users.
-  gsutil     Call gsutil in the Terra workspace.
-  nextflow   Call nextflow in the Terra workspace.
-  notebook   Use GCP Notebooks in the workspace.
-  resolve    Resolve a resource to its cloud id or path.
-  resource   Manage resources in the workspace.
-  server     Connect to a Terra server.
-  spend      Manage spend profiles.
-  status     Print details about the current workspace and server.
-  user       Manage users.
-  version    Get the installed version.
-  workspace  Setup a Terra workspace.
-```
-
-The `status` command prints details about the current workspace and server.
-
-The `version` command prints the installed version string.
-
-The `gcloud`, `gsutil`, `bq`, and `nextflow` commands call third-party applications in the context of a Terra workspace.
-
-The `resolve` command is an alias for the `terra resource resolve` command.
-
-The other commands are groupings of sub-commands, described in the sections below.
-* `app` [Applications](#applications)
-* `auth` [Authentication](#authentication)
-* `config` [Config](#config)
-* `group` [Groups](#groups)
-* `notebook` [Notebooks](#notebooks)
-* `resource` [Resources](#resources)
-* `server` [Server](#server)
-* `spend` [Spend](#spend)
-* `user` [User](#user)
-* `workspace` [Workspace](#workspace)
-
-#### Applications
-```
-Usage: terra app [COMMAND]
-Run applications in the workspace.
-Commands:
-  execute  [FOR DEBUG] Execute a command in the application container for the
-             Terra workspace, with no setup.
-  list     List the supported applications.
-```
-
-The Terra CLI allows running supported third-party tools within the context of a workspace.
-The `app-launch` configuration property controls how tools are run: in a Docker container,
-or a local child process.
-
-Nextflow and the Gcloud SDK are the first examples of supported tools.
-
-#### Authentication
-```
-Usage: terra auth [COMMAND]
-Retrieve and manage user credentials.
-Commands:
-  login   Authorize the CLI to access Terra APIs and data with user credentials.
-  revoke  Revoke credentials from an account.
-  status  Print details about the currently authorized account.
-```
-
-Only one user can be logged in at a time. Call `terra auth login` to login as a different user.
-
-Login uses the Google OAuth 2.0 installed application [flow](https://developers.google.com/identity/protocols/oauth2/native-app).
-
-You don't need to login again after switching workspaces. You will need to login again after switching servers, because
-different Terra deployments may have different OAuth flows.
-
-By default, the CLI opens a browser window for the user to click through the OAuth flow. For some use cases (e.g. CloudShell,
-notebook VM), this is not practical because there is no default (or any) browser on the machine. The CLI has a browser
-option that controls this behavior. `terra config set browser MANUAL` means the user can copy the URL into a browser on a different
-machine (e.g. their laptop), complete the login prompt, and then copy/paste the response token back into a shell on the
-machine where they want to use the Terra CLI. Example usage:
-```
-> terra config set browser MANUAL
-Browser launch mode for login is MANUAL (CHANGED).
-
-> terra auth login
-Please open the following address in a browser on any machine:
-  https://accounts.google.com/o/oauth2/auth?access_type=offline&approval_prompt=force&client_id=[...]
-Please enter code: *****
-Login successful: testuser@gmail.com
-```
-
-#### Config
-```
-Usage: terra config [COMMAND]
-Configure the CLI.
-Commands:
-  get   Get a configuration property value.
-  list  List all configuration properties and their values.
-  set   Set a configuration property value.
-```
-
-These commands are property getters and setters for configuring the Terra CLI. Currently the available
-configuration properties are:
-```
-[app-launch] app launch mode = DOCKER_CONTAINER
-[browser] browser launch for login = AUTO
-[image] docker image id = gcr.io/terra-cli-dev/terra-cli/0.118.0:stable
-[resource-limit] max number of resources to allow per workspace = 1000
-
-[logging, console] logging level for printing directly to the terminal = OFF
-[logging, file] logging level for writing to files in /Users/jaycarlton/.terra/logs = INFO
-
-[server] server = broad-dev-cli-testing
-[workspace] workspace = (unset)
-[format] output format = TEXT
-```
-
-#### Groups
-```
-Usage: terra group [COMMAND]
-Manage groups of users.
-Commands:
-  add-user     Add a user to a group with a given policy.
-  create       Create a new Terra group.
-  delete       Delete an existing Terra group.
-  describe     Describe the group.
-  list         List the groups to which the current user belongs.
-  list-users   List the users in a group.
-  remove-user  Remove a user from a group with a given policy.
-```
-
-Terra groups are managed by SAM. These commands are utility wrappers around the group endpoints.
-
-The `enterprise-pilot-testers` group is used for managing access to the default WSM spend profile.
-
-#### Notebooks
-```
-Usage: terra notebook [COMMAND]
-Use GCP Notebooks in the workspace.
-Commands:
-  start  Start a stopped GCP Notebook instance within your workspace.
-  stop   Stop a running GCP Notebook instance within your workspace.
-```
-
-You can create a [GCP Notebook](https://cloud.google.com/vertex-ai/docs/workbench/notebook-solution) controlled
-resource with `terra resource create gcp-notebook --name=<resourcename> [--workspace=<id>]`. These `stop`, `start`
-commands are provided for convenience. You can also stop and start the notebook using the `gcloud notebooks instances
-start/stop` commands.
-
-#### Resources
-```
-Usage: terra resource [COMMAND]
-Manage resources in the workspace.
-Commands:
-  add-ref, add-referenced    Add a new referenced resource.
-  check-access               Check if you have access to a referenced resource.
-  create, create-controlled  Add a new controlled resource.
-  delete                     Delete a resource from the workspace.
-  describe                   Describe a resource.
-  list                       List all resources.
-  resolve                    Resolve a resource to its cloud id or path.
-  update                     Update the properties of a resouce
-```
-
-A controlled resource is a cloud resource that is managed by Terra. It exists within the current workspace context.
-For example, a bucket within the workspace Google project. You can create these with the `create` command.
-
-A referenced resource is a cloud resource that is NOT managed by Terra. It exists outside the current workspace
-context. For example, a BigQuery dataset hosted outside of Terra or in another workspace. You can add these with the
-`add-ref` command. The workspace currently supports the following referenced resource: 
-- `gcs-bucket`
-- `gcs-object`
-- `bq-dataset`
-- `bq-table`
-- `git-repo`
-
-The `check-access` command lets you see whether you have access to a particular resource. This is useful when a
-different user created or added the resource and subsequently shared the workspace with you. `check-access` currently always 
-returns true for `git-repo` reference type because workspace doesn't support authentication to external git services yet.
-
-The list of resources in a workspace is maintained on the Terra Workspace Manager server. The CLI caches this list
-of resources locally. Third-party tools can access resource details via environment variables (e.g. $TERRA_mybucket
-holds the `gs://` URL of the workspace bucket resource named `mybucket`). The CLI updates the cache on every call to
-a `terra resource` command. So, if you are working in a shared workspace, you can run `terra resource list` (for
-example) to pick up any changes that your collaborators have made.
-
-##### GCS bucket lifecycle rules
-GCS bucket lifecycle rules are specified by passing a JSON-formatted file path to the
-`terra resource create gcs-bucket` command. The expected JSON structure matches the one used by the `gsutil lifecycle` 
-[command](https://cloud.google.com/storage/docs/gsutil/commands/lifecycle). This structure is a subset of the GCS
-resource [specification](https://cloud.google.com/storage/docs/json_api/v1/buckets#lifecycle). Below are some
-example file contents for specifying a lifecycle rule.
-
-(1) Change the storage class to `ARCHIVE` after 10 days.
-```json
-{
-  "rule": [
-    {
-      "action": {
-        "type": "SetStorageClass",
-        "storageClass": "ARCHIVE"
-      },
-      "condition": {
-      	"age": 10
-      }
+Include the Broad Artifactory repositories:
+```gradle
+repositories {
+    maven {
+        url "https://broadinstitute.jfrog.io/broadinstitute/libs-snapshot-local/"
     }
-  ]
 }
 ```
 
-(2) Delete any objects with storage class `STANDARD` that were created before December 3, 2007.
-```json
-{
-  "rule": [
-    {
-      "action": {
-        "type": "Delete"
-      },
-      "condition": {
-      	"createdBefore": "2007-12-03",
-        "matchesStorageClass": [
-          "STANDARD"
-        ]
-      }
+Add a dependency like
+```gradle
+implementation(group: 'bio.terra', name: 'terra-workspace-manager-client', version: 'x.x.x')
+```
+See [settings.gradle](settings.gradle) for the latest version information.
+
+## Build Structure
+
+We use [gradle](https://gradle.org/) as our build tool. The repository is organized as a
+composite build, with common build logic pulled into [convention plugins](https://docs.gradle.org/current/samples/sample_convention_plugins.html).
+There are three mostly independent projects:
+- _service_ - the Workspace Manager Service
+- _client_ - the OpenAPI-generated client
+- _integration_ - the TestRunner-based integration test project
+
+The build structure is:
+```
+terra-workspace-manager
+  |
+  + settings.gradle
+  + build.gradle
+  |
+  +-- buildSrc/src/main/groovy (convention plugins)
+  |    |
+  |    + terra-workspace-manager.java-conventions.gradle
+  |    + terra-workspace-manager.library-conventions.gradle
+  |
+  +-- service
+  |    |
+  |    + build.gradle (service build; test dependency on client)
+  |
+  +–- client
+  |    |
+  |    + build.gradle
+  |
+  +-- integration (formerly clienttest)
+       |
+       + build.gradle (dependency on client)
+```
+
+This build, and others in MC Terra require access to the Broad Institute's
+Artifactory server. That is where supporting libraries are published and where we publish
+the WSM client
+
+### Dependencies
+We use [Gradle's dependency locking](https://docs.gradle.org/current/userguide/dependency_locking.html)
+to ensure that builds use the same transitive dependencies, so they're reproducible. This means that
+adding or updating a dependency requires telling Gradle to save the change.
+
+Each WSM project has separate dependency lock state.  If you're getting errors
+that mention "dependency lock state" after changing a build file, you will need to one of
+these commands:
+
+```sh
+./gradlew :service:dependencies --write-locks
+./gradlew :client:dependencies --write-locks
+./gradlew :integration:dependencies --write-locks
+```
+
+## Workspace Manager Service
+The bulk of the code is in the `service` project. This section describes that projet.
+
+### Spring Boot
+The service project uses Spring Boot as the framework for REST servers. The objective is to use a minimal set
+of Spring features; there are many ways to do the same thing and we would like to constrain ourselves
+to a common set of techniques.
+
+#### Configuration
+We only use YAML configuration. We never use XML or .properties files.
+
+In general, we use type-safe configuration parameters as shown here: 
+[Type-safe Configuration Properties](https://docs.spring.io/spring-boot/docs/current/reference/html/features.html#features.external-config.typesafe-configuration-properties).
+That allows proper typing of parameters read from property files or environment variables. Parameters are
+then accessed with normal accessor methods. You should never need to use an `@Value` annotation.
+
+Be aware that environment variables will override values in our YAML configuration.
+This should not be used for configuration as it makes the source of values harder to track,
+but it may be useful for debugging unexpected configurations. See Spring Boot's 
+[Externalized Configuration documentation](https://docs.spring.io/spring-boot/docs/current/reference/html/features.html#boot-features-external-config)
+for the exact priority order of configurations.
+
+#### Initialization
+When the applications starts, Spring wires up the components based on the profiles in place.
+Setting different profiles allows different components to be included. This technique is used
+as the way to choose the cloud platform (Google, Azure, AWS) code to include.
+
+We use the Spring idiom of the `postSetupInitialization`, found in ApplicationConfiguration.java,
+to perform initialization of the application between the point of having the entire application initialized and
+the point of opening the port to start accepting REST requests.
+
+#### Annotating Singletons	
+The typical pattern when using Spring is to make singleton classes for each service, controller, and DAO.	
+You do not have to write the class with its own singleton support. Instead, annotate the class with	
+the appropriate Spring annotation. Here are ones we use:
+
+- `@Component` Regular singleton class, like a service.
+- `@Repository` DAO component
+- `@Controller` REST Controller
+- `@Configuration` Definition of properties
+
+#### Common Annotations
+There are other annotations that are handy to know about.
+
+Use `@Nullable` to mark method interface and return parameters that can be null.
+
+##### Autowiring
+Spring wires up the singletons and other beans when the application is launched.
+That allows us to use Spring profiles to control the collection of code that is
+run for different environments. Perhaps obviously, you can only autowire singletons to each other. You cannot autowire
+dynamically created objects.
+
+There are two styles for declaring autowiring.
+The preferred method of autowiring, is to put the annotation on the constructor
+of the class. Spring will autowire all of the inputs to the constructor.
+
+```java
+@Component
+public class Foo {
+    private final Bar bar;
+    private Fribble fribble;
+
+    @Autowired
+    public Foo(Bar bar, Fribble fribble) {
+        this.bar = bar;
+        this.foo = foo;
     }
-  ]
 }
 ```
 
-(3) Delete any objects that are more than 365 days old.
-```json
-{
-  "rule": [
-    {
-      "action": {
-        "type": "Delete"
-      },
-      "condition": {
-      	"age": 365
-      }
-    }
-  ]
-}
-```
-There is also a command shortcut for specifying this type of lifecycle rule (3).
-```
-terra resource create gcs-bucket --name=mybucket --bucket-name=mybucket --auto-delete=365
-```
+Spring will pass in the instances of Bar and Fribble into the constructor.
+It is possible to autowire a specific class member, but that is rarely necessary:
 
-##### GCS bucket object reference
-A reference to an GCS bucket object can be created by calling
-```
-terra resource add-ref gcs-object --name=referencename --bucket-name=mybucket --object-name=myobject
-```
-
-###### Reference to a file or folder
-A file or folder is treated as an object in GCS bucket. By either creating a folder
-through the cloud console UI or copying an existing folder of files to the GCS
-bucket, a user can create a folder object. So the user can create a reference to
-the folder if they have at least `READER` access to the bucket and/or `READER` access to
-the folder. Same with a file. 
-
-###### Reference to multiple objects under a folder
-Different from other referenced resource type, there is also support for
-creating a reference to objects in the folder. For instance, a user may create a
-a `foo/` folder with `bar.txt` and `secret.txt` in it. If the user have at least READ
-access to foo/ folder, they have access to anything in the foo/ folder. So
-they can add a reference to `foo/bar.txt`, `foo/\*` or `foo/\*.txt`. 
-
-> **NOTE** Be careful to provide the correct object name when creating a
-> reference. We only check if the user has READER access to the provided path, 
-> we **do not** check whether the object exists. This is helpful
-> because when referencing to foo/\*, it is actually not a real object! So
-> a reference to `fooo/` (where object `fooo` does not exist) can be created if
-> the user has `READER` access to the bucket or `foo/\*.png` (where there is no
-> png files) if they have access to the `foo/` folder.
-
-##### Update A Reference resource
-User can update the name and description of a reference resource. User can also
-update a reference resource to another of the same type. For instance, if a user 
-creates a reference resource to Bq dataset `foo` and later on wants to point to
-Bq dataset `bar` in the same project, one can use 
-`terra resource udpate --name=<fooReferenceName> --new-dataset-id=bar` to update
-the reference. However, one is not allowed to update the reference to a
-different type (e.g. update a dataset reference to a data table reference is not
-allowed).
-
-#### Server
-```
-Usage: terra server [COMMAND]
-Connect to a Terra server.
-Commands:
-  list    List all available Terra servers.
-  set     Set the Terra server to connect to.
-  status  Print status and details of the Terra server context.
-```
-
-A Terra server or environment is a set of connected Terra services (e.g. Workspace Manager, Data Repo, SAM).
-
-Workspaces exist on a single server, so switching servers will change the list of workspaces available to you.
-
-#### Spend
-These commands are intended for admin users.
-Admins, see [ADMIN.md](https://github.com/DataBiosphere/terra-cli/blob/main/ADMIN.md#spend) for more details.
-
-#### User
-These commands are intended for admin users.
-Admins, see [ADMIN.md](https://github.com/DataBiosphere/terra-cli/blob/main/ADMIN.md#users) for more details.
-
-#### Workspace
-```
-Usage: terra workspace [COMMAND]
-Setup a Terra workspace.
-Commands:
-  add-user     Add a user or group to the workspace.
-  break-glass  Grant break-glass access to a workspace user.
-  clone        Clone an existing workspace.
-  create       Create a new workspace.
-  delete       Delete an existing workspace.
-  describe     Describe the workspace.
-  list         List all workspaces the current user can access.
-  list-users   List the users of the workspace.
-  remove-user  Remove a user or group from the workspace.
-  set          Set the workspace to an existing one.
-  update       Update an existing workspace.
-```
-
-A Terra workspace is backed by a Google project. Creating/deleting a workspace also creates/deletes the project.
-
-The `break-glass` command is intended for admin users.
-Admins, see [ADMIN.md](https://github.com/DataBiosphere/terra-cli/blob/main/ADMIN.md#break-glass) for more details.
-
-### Workspace context for applications
-The Terra CLI defines a workspace context for applications to run in. This context includes:
-- `GOOGLE_CLOUD_PROJECT` environment variable set to the backing google project id.
-- `GOOGLE_SERVICE_ACCOUNT_EMAIL` environment variable set to the current user's pet SA email in the current workspace.
-- Environment variables that are the name of the workspace resources, prefixed with `TERRA_` are set to the resolved
-cloud identifier for those resources (e.g. `mybucket` -> `TERRA_mybucket` set to `gs://mybucket`). Applies to 
-referenced and controlled resources.
-
-#### Reference in a CLI command
-To use a workspace reference in a Terra CLI command, escape the environment variable to bypass the
-shell substitution on the host machine.
-
-Example commands for creating a new controlled bucket resource and then using `gsutil` to get its IAM bindings.
-```
-> terra resource create gcs-bucket --name=mybucket --bucket_name=mybucket
-Successfully added controlled GCS bucket.
-
-> terra gsutil iam get \$TERRA_mybucket
-  Setting the gcloud project to the workspace project
-  Updated property [core/project].
-  
-  {
-    "bindings": [
-      {
-        "members": [
-          "projectEditor:terra-wsm-dev-e3d8e1f5",
-          "projectOwner:terra-wsm-dev-e3d8e1f5"
-        ],
-        "role": "roles/storage.legacyBucketOwner"
-      },
-      {
-        "members": [
-          "projectViewer:terra-wsm-dev-e3d8e1f5"
-        ],
-        "role": "roles/storage.legacyBucketReader"
-      }
-    ],
-    "etag": "CAE="
-  }
-```
-
-#### Reference in file
-To use a workspace reference in a file or config that will be read by an application, do not escape the
-environment variable. Since this will be running inside the Docker container or local process, there is
-no need to bypass shell substitution.
-
-Example `nextflow.config` file that includes a reference to a bucket resource in the workspace, the backing
-Google project, and the workspace pet SA email.
-```
-profiles {
-  gls {
-      params.transcriptome = 'gs://rnaseq-nf/data/ggal/transcript.fa'
-      params.reads = 'gs://rnaseq-nf/data/ggal/gut_{1,2}.fq'
-      params.multiqc = 'gs://rnaseq-nf/multiqc'
-      process.executor = 'google-lifesciences'
-      process.container = 'nextflow/rnaseq-nf:latest'
-      workDir = "$TERRA_mybucket/scratch"
-   
-      google.region  = 'us-east1'
-      google.project = "$GOOGLE_CLOUD_PROJECT"
-   
-      google.lifeSciences.serviceAccountEmail = "$GOOGLE_SERVICE_ACCOUNT_EMAIL"
-      google.lifeSciences.network = 'network'
-      google.lifeSciences.subnetwork = 'subnetwork'
-  }
+```java
+@Component
+public class Foo {
+    @Autowired
+    private Bar bar;
 }
 ```
 
-#### See all environment variables
-Run `terra app execute env` to see all environment variables defined in the Docker container or local process
-when applications are launched.
+##### REST Annotations
+- `@RequestBody` Marks the controller input parameter receiving the body of the request
+- `@PathVariable("x")` Marks the controller input parameter receiving the parameter `x`
+- `@RequestParam("y")` Marks the controller input parameter receiving the query parameter`y`
 
-The `terra app execute ...` command is intended for debugging. It lets you execute any command in the Docker
-container or local process, not just the ones we've officially supported (i.e. `gsutil`, `bq`, `gcloud`, `nextflow`).
 
-#### Run unsupported tools
-To run tools that are not yet supported by the Terra CLI, or to use local versions of tools, set the `app-launch`
-configuration property to launch a child process on the local machine instead of inside a Docker container.
+##### JSON Annotations
+We use the Jackson JSON library for serializing objects to and from JSON. Most of the time, you don't need to 
+use JSON annotations. It is sufficient to provide setter/getter methods for class members
+and let Jackson figure things out with interospection. There are cases where it needs help
+and you have to be specific.
+
+The common JSON annotations are:
+
+- `@JsonValue` Marks a class member as data that should be (de)serialized to(from) JSON.
+  You can specify a name as a parameter to specify the JSON name for the member.
+- `@JsonIgnore`  Marks a class member that should not be (de)serialized
+- `@JsonCreator` Marks a constructor to be used to create an object from JSON.
+
+For more details see [Jackson JSON Documentation](https://github.com/FasterXML/jackson-docs)
+
+
+### Service Code Structure
+This section explains the code structure of the template. Here is the directory structure:
+
 ```
-terra config set app-launch LOCAL_PROCESS
+src/main/
+  java/
+    bio/terra/workspace/
+      app/
+        configuration/
+        controller/
+      common/
+        exception/
+        utils/
+      db/
+        exception/
+        model/
+      service/
+        buffer/
+        crl/
+        datarepo/
+        iam/
+        job/
+        resource/
+        spendprofile/
+        stage/
+        status/
+        workspace/
+  resources/
 ```
+- `app/` For the top of the application, including Main and the StartupInitializer
+- `app/configuration/` For all of the bean and property definitions
+- `app/controller/` For the REST controllers. The controllers typically do very little.
+They invoke a service to do the work and package the service output into the response. The
+controller package also defines the global exception handling.
+- `common/` For common models, exceptions, and utilities.
+shared by more than one service.
+- `common/exception/` A set of common abstract base classes that support the ErrorReport REST API
+return structure live in the [Terra Common Library ](https://github.com/DataBiosphere/terra-common-lib).
+All WSM exceptions derive from those. Exceptions common across services live here.
+- `service/` Each service gets a package within. We handle cloud-platform specializations
+within each service.
+- `service/buffer/` Thin interface to access the
+[Resource Buffer Service](https://github.com/DataBiosphere/terra-resource-buffer)
+for allocating GCP projects: the cloud context for Google cloud.
+- `service/crl/` Thin interface to access the
+[Terra Cloud Resource Library](https://github.com/DataBiosphere/terra-cloud-resource-lib)
+used for allocating cloud resources.
+- `service/datarepo` Thin interface to access the
+[Terra Data Repository](https://github.com/DataBiosphere/jade-data-repo) for making
+_referenced resources_ pointing to TDR snapshots.
+- `service/iam` Methods for accessing [Sam](https://github.com/broadinstitute/sam) for
+authorization definition and checking. This service provides retries and specific methods
+for the WSM operations on Sam.
+- `service/job` Methods for launching Stairway flights, waiting on completion, and getting
+flight results
+- `service/resource` One of the main services in WSM. Manages controlled and referenced resources.
+- `service/spendprofile` Temporary methods to use fake spend profiles. Eventually, it will
+become a thin layer accessing the Spend Profile Manager when that arrives.
+- `service/stage` Feature locking service
+- `service/status` Implementation of the /status endpoint
+- `service/workspace` The other main service in WSM. Manages CRUD for workspaces and cloud
+contexts.
+- `resources/` Properties definitions, database schema definitions, and the REST API definition
 
-Then call the tool with `terra app execute`. Before running the tool command, the CLI defines environment variables
-for each workspace resource and configures `gcloud` with the workspace project. After running the tool command, the
-CLI restores the original `gcloud` project configuration.
-```
-terra app execute dsub \
-    --provider google-v2 \
-    --project \$GOOGLE_CLOUD_PROJECT \
-    --regions us-central1 \
-    --logging \$TERRA_MY_BUCKET/logging/ \
-    --output OUT=\$TERRA_MY_BUCKET/output/out.txt \
-    --command 'echo "Hello World" > "${OUT}"' \
-    --wait
-```
-(Note: The command above came from the `dsub` [README](https://github.com/DataBiosphere/dsub/blob/main/README.md#getting-started-on-google-cloud).)
+### Service Test Structure
+There are three groups of tests.
 
-### Exit codes
-The CLI sets the process exit code as follows.
+#### Unit Tests
+The unit tests are written using JUnit. The implementations are in
+`src/test/java/bio/terra/workspace/`. Unit tests derive from `common/BaseUnitTest.java`.
+Some unit tests depend on the availability of a running Postgresql server.
 
-- 0 = Successful program execution
-- 1 = User-actionable error (e.g. missing parameter, workspace not defined in the current context)
-- 2 = System or internal error (e.g. error making a request to a Terra service)
-- 3 = Unexpected error (e.g. null pointer exception)
+#### Connected Tests
+The connected tests are also written using JUnit.
+The implementations are mixed in with the unit tests in
+`src/test/java/bio/terra/workspace/`. Connected tests derive from `common/BaseConnectedTest.java`.
+Connected tests depend on the availability of a running Postgresql server. They also rely
+on a populated "config" directory containing service accounts and keys that allows the tests
+to use dependent services such as Sam, Buffer, and TDR. The config collecting process relies on
+secrets maintained in Vault in the Broad Institute environment.
 
-App exit codes will be passed through to the caller. e.g. If `gcloud --malformedOption` returns exit code `2`, then
-`terra gcloud --malformedOption` will also return exit code `2`.
+#### Integration Tests
+Integration testing is done using
+[Test Runner](https://github.com/DataBiosphere/terra-test-runner).
+The integration tests live in the `integration` project. Consult the integration
+[README](integration/README.md) for more details.
+
+In the early days of the project, there were JUnit-based integration tests. We are in
+process of migrating them to Test Runner.
