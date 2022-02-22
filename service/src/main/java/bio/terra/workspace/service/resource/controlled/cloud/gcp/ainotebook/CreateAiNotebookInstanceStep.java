@@ -59,7 +59,7 @@ public class CreateAiNotebookInstanceStep implements Step {
   /**
    * Service account for the notebook instance needs to contain these scopes to interact with SAM.
    */
-  private static final List<String> SERVICE_ACCOUNT_SCOPE =
+  private static final List<String> SERVICE_ACCOUNT_SCOPES =
       ImmutableList.of(
           "https://www.googleapis.com/auth/cloud-platform",
           "https://www.googleapis.com/auth/userinfo.email",
@@ -156,7 +156,7 @@ public class CreateAiNotebookInstanceStep implements Step {
     }
     instance.setMetadata(metadata);
     instance.setServiceAccount(serviceAccountEmail);
-    instance.setServiceAccountScopes(SERVICE_ACCOUNT_SCOPE);
+    instance.setServiceAccountScopes(SERVICE_ACCOUNT_SCOPES);
 
     ApiGcpAiNotebookInstanceAcceleratorConfig acceleratorConfig =
         creationParameters.getAcceleratorConfig();
