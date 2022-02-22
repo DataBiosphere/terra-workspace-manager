@@ -1,0 +1,24 @@
+components:
+  schemas:
+    DataRepoSnapshotAttributes:
+      description: Attributes of a data repository snapshot
+      type: object
+      required: [instanceName, snapshot]
+      properties:
+        instanceName:
+          description: The name of the Data Repo instance
+          type: string
+        snapshot:
+          description: The ID of the Data Repo snapshot
+          type: string
+  
+    DataRepoSnapshotResource:
+      type: object
+      description: A Data Repo snapshot resource
+      required: [metadata, attributes]
+      properties:
+        metadata:
+          description: the resource metadata common to all resources
+          $ref: '#/components/schemas/ResourceMetadata'
+        attributes:
+          $ref: '#/components/schemas/DataRepoSnapshotAttributes'

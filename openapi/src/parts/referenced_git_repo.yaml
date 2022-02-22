@@ -1,0 +1,179 @@
+paths:
+  /api/workspaces/v1/{workspaceId}/resources/referenced/gitrepos:
+    parameters:
+      - $ref: '#/components/parameters/WorkspaceId'
+    post:
+      summary: Create a new Git repository reference in a workspace.
+      operationId: createGitRepoReference
+      tags: [ ReferencedGcpResource ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateGitRepoReferenceRequestBody'
+      responses:
+        '200':
+          $ref: '#/components/responses/GitRepoReferenceResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /api/workspaces/v1/{workspaceId}/resources/referenced/gitrepos/{resourceId}:
+    parameters:
+    - $ref: '#/components/parameters/WorkspaceId'
+    - $ref: '#/components/parameters/ResourceId'
+    get:
+      summary: Gets a reference to a Git repository from a workspace.
+      operationId: getGitRepoReference
+      tags: [ ReferencedGcpResource ]
+      responses:
+        '200':
+          $ref: '#/components/responses/GitRepoReferenceResponse'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+    patch:
+      summary: Update name, description or referencing target of a Git repository reference in a workspace.
+      operationId: updateGitRepoReference
+      tags: [ ReferencedGcpResource ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateGitRepoReferenceRequestBody'
+      responses:
+        '204':
+          description: OK
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+    delete:
+      summary: Delete Git repository reference
+      operationId: deleteGitRepoReference
+      tags: [ ReferencedGcpResource ]
+      responses:
+        '204':
+          description: OK
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /api/workspaces/v1/{workspaceId}/resources/referenced/gitrepos/{resourceId}/clone:
+    parameters:
+    - $ref: '#/components/parameters/WorkspaceId'
+    - $ref: '#/components/parameters/ResourceId'
+    post:
+      summary: Clone a Git repository
+      operationId: cloneGitRepoReference
+      tags: [ ReferencedGcpResource ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CloneReferencedResourceRequestBody'
+      responses:
+        '200':
+          $ref: '#/components/responses/CloneReferencedGitRepoResourceResponse'
+        '202':
+          $ref: '#/components/responses/CloneReferencedGitRepoResourceResponse'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /api/workspaces/v1/{workspaceId}/resources/referenced/gitrepos/name/{name}:
+    parameters:
+    - $ref: '#/components/parameters/WorkspaceId'
+    - $ref: '#/components/parameters/Name'
+    get:
+      summary: Gets a reference to a Git repo referenced resource by name
+      operationId: getGitRepoReferenceByName
+      tags: [ ReferencedGcpResource ]
+      responses:
+        '200':
+          $ref: '#/components/responses/GitRepoReferenceResponse'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+components:
+  schemas:
+    CloneReferencedGitRepoResourceResult:
+      description: >-
+        API result class for cloning a referenced Git repo resource. Includes source workspace
+        and resource IDs for provenance. If the effective cloning instructions are not
+        COPY_REFERENCE, then no clone is created and the resource is null.
+      type: object
+      properties:
+        effectiveCloningInstructions:
+          $ref: '#/components/schemas/CloningInstructionsEnum'
+        sourceWorkspaceId:
+          description: ID of the workspace of the source resource for this clone
+          type: string
+          format: uuid
+        sourceResourceId:
+          description: ID of the source resource
+          type: string
+          format: uuid
+        resource:
+          $ref: '#/components/schemas/GitRepoResource'
+
+    CreateGitRepoReferenceRequestBody:
+      type: object
+      description: A request to create a reference to a Git repo.
+      required: [metadata, gitrepo]
+      properties:
+        metadata:
+          $ref: '#/components/schemas/ReferenceResourceCommonFields'
+        gitrepo:
+          $ref: '#/components/schemas/GitRepoAttributes'
+
+    UpdateGitRepoReferenceRequestBody:
+      type: object
+      properties:
+        name:
+          $ref: "#/components/schemas/Name"
+        description:
+          type: string
+        gitRepoUrl:
+          description: the url for cloning the corresponding git repository
+          type: string
+
+  responses:
+    CloneReferencedGitRepoResourceResponse:
+      description: Response for successful Git Repo resource reference clone
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/CloneReferencedGitRepoResourceResult'
+
+    GitRepoReferenceResponse:
+      description: Response containing a reference to a git repository.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/GitRepoResource'
+
+    

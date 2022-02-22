@@ -1,0 +1,24 @@
+components:
+  schemas:
+    GcpBigQueryDataTableAttributes:
+      description: Attributes of a BigQuery data table
+      type: object
+      required: [ projectId, datasetId, dataTableId ]
+      properties:
+        projectId:
+          type: string
+        datasetId:
+          type: string
+        dataTableId:
+          type: string
+  
+    GcpBigQueryDataTableResource:
+      type: object
+      description: A reference to a BigQuery data table.
+      required: [ metadata, attributes ]
+      properties:
+        metadata:
+          description: the resource metadata common to all resources
+          $ref: '#/components/schemas/ResourceMetadata'
+        attributes:
+          $ref: '#/components/schemas/GcpBigQueryDataTableAttributes'

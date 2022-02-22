@@ -1,0 +1,38 @@
+# Job endpoint. Something of an outlier
+paths:
+  /api/job/v1/jobs/{jobId}:
+    parameters:
+      - $ref: '#/components/parameters/JobId'
+    get:
+      tags:
+        - jobs
+      operationId: retrieveJob
+      responses:
+        200:
+          description: Job is complete (succeeded or failed)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JobReport'
+        202:
+          description: Job is running
+          headers:
+            Retry-After:
+              description: >-
+                optional - estimated seconds to wait before polling again. This allows
+                a server to offer a hint as to when the job might be complete.
+              schema:
+                type: integer
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JobReport'
+        400:
+          $ref: '#/components/responses/BadRequest'
+        403:
+          $ref: '#/components/responses/PermissionDenied'
+        404:
+          $ref: '#/components/responses/NotFound'
+
+
+  

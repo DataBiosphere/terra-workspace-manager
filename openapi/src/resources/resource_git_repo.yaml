@@ -1,0 +1,21 @@
+components:
+  schemas:
+    GitRepoAttributes:
+      description: Attributes of a Git repository
+      type: object
+      required: [ gitRepoUrl ]
+      properties:
+        gitRepoUrl:
+          description: URL for cloning the git repository, could be an HTTPs or SSH url.
+          type: string
+
+    GitRepoResource:
+      type: object
+      description: A git repository resource
+      required: [ metadata, attributes ]
+      properties:
+        metadata:
+          description:  the resource metadata common to all resources
+          $ref: '#/components/schemas/ResourceMetadata'
+        attributes:
+          $ref: '#/components/schemas/GitRepoAttributes'

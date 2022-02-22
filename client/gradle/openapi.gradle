@@ -4,7 +4,7 @@ def openapiOutputDir = "${buildDir}/openapi"
 
 swaggerSources {
   client {
-    inputFile = file(gradle.openapiSourceFile)
+    inputFile = file(tasks.getByPath(':openapi:buildOpenApi').openApiSource)
     code {
       language = "java"
       library = "jersey2"
@@ -28,5 +28,6 @@ swaggerSources {
 }
 
 // Internal dependencies
+generateSwaggerCodeClient.dependsOn(tasks.getByPath(':openapi:buildOpenApi'))
 sourceSets.main.java.srcDir "${openapiOutputDir}/src/main/java"
 compileJava.dependsOn swaggerSources.client.code

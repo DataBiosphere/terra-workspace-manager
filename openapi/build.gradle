@@ -1,0 +1,59 @@
+// NOTES
+// In general, this build file is not used independently. The tasks are depended on by the
+// service and client builds to construct the openapi YAML input from parts.
+// The scripts and the tasks share a lot of knowledge about the layout. If you
+// move files around, you will probably have to change both the scripts and these
+// tasks.
+//
+// You might wonder why write these tasks instead of using the built-in Gradle
+// Exec task type. The reason is that Exec has no understanding of inputs and outputs
+// so it will run every time. Doing the tasks this way give Gradle the information about
+// the inputs and outputs so it can skip tasks if there have been no changes.
+//
+// There may be better ways to do this. Gradle is vast and complex.
+// All I know is that this is a way that works.
+
+def outDir = "${buildDir}/openapi"
+def toolsDir = "${projectDir}/tools"
+def srcDir = "${projectDir}/src"
+
+tasks.register('configureVenv') {
+    inputs.files(files("${toolsDir}/requirements.txt", "${toolsDir}/configure_venv.sh"))
+            .withPropertyName('requirementsFile')
+    outputs.dir(file("${outDir}/venv"))
+
+    doLast {
+        def script = "${projectDir}/tools/configure_venv.sh"
+        exec {
+            commandLine '/bin/bash', '-c', "${script} ${toolsDir} ${outDir}"
+        }
+    }
+}
+
+tasks.register('buildOpenApi') {
+    ext {
+        openApiSource = "${outDir}/openapi.yaml"
+    }
+
+    dependsOn('configureVenv')
+    ConfigurableFileTree yamlFiles = fileTree(dir: 'src')
+    yamlFiles.include '**/*.yaml'
+
+    inputs.files(yamlFiles)
+            .withPropertyName('yamlFiles')
+            .withPathSensitivity(PathSensitivity.RELATIVE)
+    outputs.dir(file("${outDir}"))
+            .withPropertyName('outputDir')
+
+    doLast {
+        def script = "${projectDir}/tools/merge_openapi.sh"
+        logger.quiet('Executing {} with rootDir={} and outdir={}', "${script}", "${toolsDir}",  "${outDir}")
+        exec {
+            commandLine '/bin/bash', '-c', "${script} ${toolsDir} ${srcDir} ${outDir}"
+        }
+    }
+}
+
+task clean(type: Delete) {
+    delete "${buildDir}"
+}

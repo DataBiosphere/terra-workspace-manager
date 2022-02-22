@@ -9,22 +9,16 @@ import bio.terra.workspace.generated.model.ApiClonedWorkspace;
 import bio.terra.workspace.generated.model.ApiCloudPlatform;
 import bio.terra.workspace.generated.model.ApiCreateCloudContextRequest;
 import bio.terra.workspace.generated.model.ApiCreateCloudContextResult;
-import bio.terra.workspace.generated.model.ApiCreateDataReferenceRequestBody;
 import bio.terra.workspace.generated.model.ApiCreateWorkspaceRequestBody;
 import bio.terra.workspace.generated.model.ApiCreatedWorkspace;
-import bio.terra.workspace.generated.model.ApiDataReferenceDescription;
-import bio.terra.workspace.generated.model.ApiDataReferenceList;
-import bio.terra.workspace.generated.model.ApiDataRepoSnapshot;
 import bio.terra.workspace.generated.model.ApiGcpContext;
 import bio.terra.workspace.generated.model.ApiGrantRoleRequestBody;
 import bio.terra.workspace.generated.model.ApiIamRole;
 import bio.terra.workspace.generated.model.ApiJobReport.StatusEnum;
 import bio.terra.workspace.generated.model.ApiProperties;
 import bio.terra.workspace.generated.model.ApiProperty;
-import bio.terra.workspace.generated.model.ApiReferenceTypeEnum;
 import bio.terra.workspace.generated.model.ApiRoleBinding;
 import bio.terra.workspace.generated.model.ApiRoleBindingList;
-import bio.terra.workspace.generated.model.ApiUpdateDataReferenceRequestBody;
 import bio.terra.workspace.generated.model.ApiUpdateWorkspaceRequestBody;
 import bio.terra.workspace.generated.model.ApiWorkspaceDescription;
 import bio.terra.workspace.generated.model.ApiWorkspaceDescriptionList;
@@ -39,13 +33,7 @@ import bio.terra.workspace.service.iam.model.WsmIamRole;
 import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.job.JobService.AsyncJobResult;
 import bio.terra.workspace.service.petserviceaccount.PetSaService;
-import bio.terra.workspace.service.resource.ResourceValidationUtils;
-import bio.terra.workspace.service.resource.model.CloningInstructions;
-import bio.terra.workspace.service.resource.model.WsmResourceType;
-import bio.terra.workspace.service.resource.referenced.cloud.gcp.ReferencedResource;
 import bio.terra.workspace.service.resource.referenced.cloud.gcp.ReferencedResourceService;
-import bio.terra.workspace.service.resource.referenced.cloud.gcp.datareposnapshot.ReferencedDataRepoSnapshotResource;
-import bio.terra.workspace.service.resource.referenced.exception.InvalidReferenceException;
 import bio.terra.workspace.service.spendprofile.SpendProfileId;
 import bio.terra.workspace.service.workspace.AzureCloudContextService;
 import bio.terra.workspace.service.workspace.GcpCloudContextService;
@@ -72,7 +60,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestParam;
 
 @Controller
 public class WorkspaceApiController extends ControllerBase implements WorkspaceApi {
@@ -230,163 +217,6 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
     logger.info("Deleted workspace {} for {}", id, userRequest.getEmail());
 
     return new ResponseEntity<>(HttpStatus.NO_CONTENT);
-  }
-
-  // TODO(PF-404): the following DataReference endpoints are deprecated and will go away
-
-  @Override
-  public ResponseEntity<ApiDataReferenceDescription> createDataReference(
-      @PathVariable("workspaceId") UUID id, @RequestBody ApiCreateDataReferenceRequestBody body) {
-    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
-    logger.info(
-        "Creating data reference in workspace {} for {} with body {}",
-        id,
-        userRequest.getEmail(),
-        body);
-
-    ControllerValidationUtils.validate(body);
-    ResourceValidationUtils.validateResourceName(body.getName());
-
-    var resource =
-        new ReferencedDataRepoSnapshotResource(
-            id,
-            UUID.randomUUID(), // mint a resource id for this bucket
-            body.getName(),
-            body.getDescription(),
-            CloningInstructions.fromApiModel(body.getCloningInstructions()),
-            body.getReference().getInstanceName(),
-            body.getReference().getSnapshot());
-
-    ReferencedResource referenceResource =
-        referenceResourceService.createReferenceResource(resource, getAuthenticatedInfo());
-    ApiDataReferenceDescription response = makeApiDataReferenceDescription(referenceResource);
-    return new ResponseEntity<>(response, HttpStatus.OK);
-  }
-
-  @Override
-  public ResponseEntity<ApiDataReferenceDescription> getDataReference(
-      @PathVariable("workspaceId") UUID workspaceId,
-      @PathVariable("referenceId") UUID referenceId) {
-    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
-    logger.info(
-        "Getting data reference by id {} in workspace {} for {}",
-        referenceId,
-        workspaceId,
-        userRequest.getEmail());
-
-    ReferencedResource referenceResource =
-        referenceResourceService.getReferenceResource(workspaceId, referenceId, userRequest);
-
-    // TODO(PF-404): this endpoint's return type does not support reference types beyond snapshots.
-    // Clients should migrate to type-specific endpoints, and this endpoint should be removed.
-    if (referenceResource.getResourceType() != WsmResourceType.REFERENCED_ANY_DATA_REPO_SNAPSHOT) {
-      throw new InvalidReferenceException(
-          "This endpoint does not support non-snapshot references. Use the newer type-specific endpoints instead.");
-    }
-
-    ApiDataReferenceDescription response = makeApiDataReferenceDescription(referenceResource);
-    return new ResponseEntity<>(response, HttpStatus.OK);
-  }
-
-  @Override
-  public ResponseEntity<ApiDataReferenceDescription> getDataReferenceByName(
-      @PathVariable("workspaceId") UUID workspaceId,
-      @PathVariable("referenceType") ApiReferenceTypeEnum referenceType,
-      @PathVariable("name") String name) {
-    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
-    // TODO(PF-404): this endpoint's return type does not support reference types beyond snapshots.
-    // Clients should migrate to type-specific endpoints, and this endpoint should be removed.
-    if (referenceType != ApiReferenceTypeEnum.DATA_REPO_SNAPSHOT) {
-      throw new InvalidReferenceException(
-          "This endpoint does not support non-snapshot references. Use the newer type-specific endpoints instead.");
-    }
-    ResourceValidationUtils.validateResourceName(name);
-
-    ReferencedResource referenceResource =
-        referenceResourceService.getReferenceResourceByName(workspaceId, name, userRequest);
-    ApiDataReferenceDescription response = makeApiDataReferenceDescription(referenceResource);
-    return new ResponseEntity<>(response, HttpStatus.OK);
-  }
-
-  @Override
-  public ResponseEntity<Void> updateDataReference(
-      @PathVariable("workspaceId") UUID id,
-      @PathVariable("referenceId") UUID referenceId,
-      @RequestBody ApiUpdateDataReferenceRequestBody body) {
-    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
-
-    if (body.getName() == null && body.getDescription() == null) {
-      throw new InvalidReferenceException("Must specify name or description to update.");
-    }
-
-    if (body.getName() != null) {
-      ResourceValidationUtils.validateResourceName(body.getName());
-    }
-
-    referenceResourceService.updateReferenceResource(
-        id, referenceId, body.getName(), body.getDescription(), userRequest);
-    return new ResponseEntity<>(HttpStatus.NO_CONTENT);
-  }
-
-  @Override
-  public ResponseEntity<Void> deleteDataReference(
-      @PathVariable("workspaceId") UUID workspaceId,
-      @PathVariable("referenceId") UUID referenceId) {
-    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
-    logger.info(
-        "Deleting data reference by id {} in workspace {} for {}",
-        referenceId,
-        workspaceId,
-        userRequest.getEmail());
-
-    referenceResourceService.deleteReferenceResource(workspaceId, referenceId, userRequest);
-
-    logger.info(
-        "Deleted data reference by id {} in workspace {} for {}",
-        referenceId,
-        workspaceId,
-        userRequest.getEmail());
-
-    return new ResponseEntity<>(HttpStatus.NO_CONTENT);
-  }
-
-  @Override
-  public ResponseEntity<ApiDataReferenceList> enumerateReferences(
-      @PathVariable("workspaceId") UUID id,
-      @Valid @RequestParam(value = "offset", required = false, defaultValue = "0") Integer offset,
-      @Valid @RequestParam(value = "limit", required = false, defaultValue = "10") Integer limit) {
-    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
-    logger.info(
-        "Getting snapshot data references in workspace {} for {}", id, userRequest.getEmail());
-    ControllerValidationUtils.validatePaginationParams(offset, limit);
-    List<ReferencedResource> enumerateResult =
-        referenceResourceService.enumerateReferences(id, offset, limit, userRequest);
-    // TODO(PF-404): this is a workaround until clients migrate off this endpoint.
-    ApiDataReferenceList responseList = new ApiDataReferenceList();
-    for (ReferencedResource resource : enumerateResult) {
-      if (resource.getResourceType() == WsmResourceType.REFERENCED_ANY_DATA_REPO_SNAPSHOT) {
-        responseList.addResourcesItem(makeApiDataReferenceDescription(resource));
-      }
-    }
-    return ResponseEntity.ok(responseList);
-  }
-
-  private ApiDataReferenceDescription makeApiDataReferenceDescription(
-      ReferencedResource referenceResource) {
-    ReferencedDataRepoSnapshotResource snapshotResource =
-        referenceResource.castByEnum(WsmResourceType.REFERENCED_ANY_DATA_REPO_SNAPSHOT);
-    var reference =
-        new ApiDataRepoSnapshot()
-            .instanceName(snapshotResource.getInstanceName())
-            .snapshot(snapshotResource.getSnapshotId());
-    return new ApiDataReferenceDescription()
-        .referenceId(referenceResource.getResourceId())
-        .name(referenceResource.getName())
-        .description(referenceResource.getDescription())
-        .workspaceId(referenceResource.getWorkspaceId())
-        .cloningInstructions(referenceResource.getCloningInstructions().toApiModel())
-        .referenceType(ApiReferenceTypeEnum.DATA_REPO_SNAPSHOT)
-        .reference(reference);
   }
 
   @Override

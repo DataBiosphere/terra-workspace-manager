@@ -1,0 +1,459 @@
+# Workspace paths
+paths:
+  /api/workspaces/v1:
+    post:
+      summary: Create a new Workspace.
+      operationId: createWorkspace
+      tags: [Workspace]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateWorkspaceRequestBody'
+      responses:
+        '200':
+          description: Response to createWorkspace calls
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreatedWorkspace'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '500':
+          $ref: '#/components/responses/NotFound'
+    get:
+      parameters:
+        - $ref: '#/components/parameters/Offset'
+        - $ref: '#/components/parameters/Limit'
+      summary: List all workspaces a user can read.
+      operationId: listWorkspaces
+      tags: [ Workspace ]
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkspaceDescriptionList'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /api/workspaces/v1/{workspaceId}:
+    parameters:
+      - $ref: '#/components/parameters/WorkspaceId'
+    get:
+      summary: Get an existing Workspace.
+      operationId: getWorkspace
+      tags: [Workspace]
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkspaceDescription'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+    patch:
+      summary: Update an existing Workspace.
+      operationId: updateWorkspace
+      tags: [Workspace]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateWorkspaceRequestBody'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkspaceDescription'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+    delete:
+      summary: Delete a Workspace.
+      operationId: deleteWorkspace
+      tags: [Workspace]
+      responses:
+        '204':
+          description: Success
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /api/workspaces/v1/{workspaceId}/clone:
+    parameters:
+      - $ref: '#/components/parameters/WorkspaceId'
+    post:
+      summary: Clone a workspace and its eligible resources
+      operationId: cloneWorkspace
+      tags: [Workspace]
+      requestBody:
+        description: Details of workspce clone operation
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CloneWorkspaceRequest'
+      responses:
+        '200':
+          $ref: '#/components/responses/CloneWorkspaceResponse'
+        '202':
+          $ref: '#/components/responses/CloneWorkspaceResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /api/workspaces/v1/{workspaceId}/clone-result/{jobId}:
+    parameters:
+      - $ref: '#/components/parameters/WorkspaceId'
+      - $ref: '#/components/parameters/JobId'
+    get:
+      summary: Retrieve information about a gcp bucket clone job.
+      operationId: getCloneWorkspaceResult
+      tags: [Workspace]
+      responses:
+        '200':
+          $ref: '#/components/responses/CloneWorkspaceResponse'
+        '202':
+          $ref: '#/components/responses/CloneWorkspaceResponse'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /api/workspaces/v1/{workspaceId}/roles:
+    parameters:
+      - $ref: '#/components/parameters/WorkspaceId'
+    get:
+      summary: Read all IAM roles and their members in a workspace.
+      operationId: getRoles
+      tags: [Workspace]
+      responses:
+        '200':
+          description: Response to list permissions calls
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RoleBindingList'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /api/workspaces/v1/{workspaceId}/roles/{role}/members:
+    parameters:
+      - $ref: '#/components/parameters/WorkspaceId'
+      - $ref: '#/components/parameters/Role'
+    post:
+      summary: Grant an IAM role to a user or group.
+      operationId: grantRole
+      tags: [Workspace]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GrantRoleRequestBody'
+      responses:
+        '204':
+          description: Role granted successfully
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /api/workspaces/v1/{workspaceId}/roles/{role}/members/{memberEmail}:
+    parameters:
+      - $ref: '#/components/parameters/WorkspaceId'
+      - $ref: '#/components/parameters/Role'
+      - $ref: '#/components/parameters/MemberEmail'
+    delete:
+      summary: Remove an IAM role from a user or group.
+      operationId: removeRole
+      tags: [Workspace]
+      responses:
+        '204':
+          description: Role removed successfully
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+components:
+  responses:
+    CloneWorkspaceResponse:
+      description: Response to clone workspace request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/CloneWorkspaceResult'
+
+  schemas:
+    ClonedWorkspace:
+      description: >-
+        Flight result class for workspace clone. Indicates status for each resource
+        cloned (or skipped).
+      type: object
+      properties:
+        sourceWorkspaceId:
+          type: string
+          format: uuid
+        destinationWorkspaceId:
+          type: string
+          format: uuid
+        resources:
+          type: array
+          items:
+            $ref: '#/components/schemas/ResourceCloneDetails'
+
+    CloneResourceResult:
+      type: string
+      enum:
+        - SUCCEEDED
+        - FAILED
+        - SKIPPED
+        
+    CloneWorkspaceRequest:
+      description: >-
+        Request body for cloning an entire workspace. The stage is always MC. Cloning instructions
+        are taken from individual resources.
+      type: object
+      required:
+        - spendProfile
+      properties:
+        displayName:
+          description: The human readable name of the workspace
+          type: string
+        description:
+          description: A description of the cloned workspace
+          type: string
+        spendProfile:
+          description: ID of provided spend profile
+          type: string
+        location:
+          description: >-
+            GCP Location to use for cloud-based resources. If omitted, the location of the source
+            resource will be used.
+          type: string
+        properties:
+          $ref: '#/components/schemas/Properties'
+
+    ResourceCloneDetails:
+      description: >-
+        A structure to give provenance of a controlled or referenced resource clone
+      type: object
+      properties:
+        cloningInstructions:
+          $ref: '#/components/schemas/CloningInstructionsEnum'
+        resourceType:
+          $ref: '#/components/schemas/ResourceType'
+        stewardshipType:
+          $ref: '#/components/schemas/StewardshipType'
+        sourceResourceId:
+          description: resource ID of the original resource
+          type: string
+          format: uuid
+        destinationResourceId:
+          description: resource ID of the cloned resource, or null if failed or skipped
+          type: string
+          format: uuid
+        result:
+          $ref: '#/components/schemas/CloneResourceResult'
+        errorMessage:
+          description: If result is FAILED, a short description of the cause, if available.
+          type: string
+        name:
+          description: name of the resource (same as source)
+          type: string
+        description:
+          description:  description of the destination resource (same as source)
+          type: string
+
+    CloneWorkspaceResult:
+      description: >-
+        Response for workspace clone, including details on each controlled or referenced resource
+        either cloned or attempted to be cloned.
+      type: object
+      properties:
+        jobReport:
+          $ref: '#/components/schemas/JobReport'
+        errorReport:
+          $ref: '#/components/schemas/ErrorReport'
+        workspace:
+          $ref: '#/components/schemas/ClonedWorkspace'
+
+    CreatedWorkspace:
+      type: object
+      required: [id]
+      properties:
+        id:
+          description: UUID of a newly-created workspace
+          type: string
+          format: uuid
+
+    CreateWorkspaceRequestBody:
+      type: object
+      required: [id]
+      properties:
+        id:
+          description: The ID of the workspace
+          type: string
+          format: uuid
+        displayName:
+          description: The human readable name of the workspace
+          type: string
+        description:
+          description: A description of the workspace
+          type: string
+        spendProfile:
+          description: ID of provided spend profile
+          type: string
+        policies:
+          description: Policies provided by the containing folder; NOT IMPLEMENTED
+          type: array
+          items:
+            type: string
+            format: uuid
+        stage:
+          $ref: '#/components/schemas/WorkspaceStageModel'
+        properties:
+          $ref: '#/components/schemas/Properties'
+          
+    GrantRoleRequestBody:
+      description: The body for a request to grant a role to a single user.
+      type: object
+      required: [memberEmail]
+      properties:
+        memberEmail:
+          type: string
+
+    IamRole:
+      description: Enum containing all valid IAM roles on a Workspace
+      type: string
+      enum: ['READER', 'WRITER', 'APPLICATION', 'OWNER']
+
+    Properties:
+      description: Optional list of key-value pairs of strings
+      type: array
+      items:
+        $ref: '#/components/schemas/Property'
+
+    Property:
+      type: object
+      required: [key, value]
+      properties:
+        key:
+          description: |
+            String to identify the key. Keys must be 1-1024 characters, using letters,
+            numbers, dashes, and underscores and must not start with a dash or underscore.
+          type: string
+        value:
+          description: Arbitrary string value
+          type: string
+
+    RoleBinding:
+      description: A binding between an IAM role and users with that role
+      type: object
+      required: [role]
+      properties:
+        role:
+          $ref: '#/components/schemas/IamRole'
+        members:
+          description: A list of users that this role applies to
+          type: array
+          items:
+            type: string
+
+    RoleBindingList:
+      description: A list of role bindings
+      type: array
+      items:
+        $ref: '#/components/schemas/RoleBinding'
+
+    UpdateWorkspaceRequestBody:
+      type: object
+      properties:
+        displayName:
+          description: The human readable name of the workspace
+          type: string
+        description:
+          description: A description of the workspace
+          type: string
+        properties:
+          description: If present, it will replace all properties with this list
+          $ref: '#/components/schemas/Properties'
+
+    WorkspaceDescription:
+      type: object
+      required: [id]
+      properties:
+        id:
+          description: The ID of the workspace
+          type: string
+          format: uuid
+        displayName:
+          description: The human readable name of the workspace
+          type: string
+        description:
+          description: A description of the workspace
+          type: string
+        spendProfile:
+          description: ID of provided spend profile
+          type: string
+        stage:
+          $ref: '#/components/schemas/WorkspaceStageModel'
+        gcpContext:
+          description: GCP context, if one exists
+          $ref: '#/components/schemas/GcpContext'
+        azureContext:
+          description: Azure context, if one exists
+          $ref: '#/components/schemas/AzureContext'
+        properties:
+          $ref: '#/components/schemas/Properties'
+
+    WorkspaceDescriptionList:
+      type: object
+      required: [ workspaces ]
+      properties:
+        workspaces:
+          description: A list of workspaces
+          type: array
+          items:
+            $ref: '#/components/schemas/WorkspaceDescription'
+
+    WorkspaceStageModel:
+      description: Enum for possible stages of a workspace along the Rawls migration path
+      type: string
+      enum: ['RAWLS_WORKSPACE', 'MC_WORKSPACE']
+

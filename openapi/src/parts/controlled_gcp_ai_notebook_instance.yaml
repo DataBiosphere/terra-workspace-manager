@@ -1,0 +1,297 @@
+paths:
+  /api/workspaces/v1/{workspaceId}/resources/controlled/gcp/ai-notebook-instances:
+    parameters:
+      - $ref: '#/components/parameters/WorkspaceId'
+    post:
+      summary: Create a new controlled Gcp AI Platform Notebook Instance
+      operationId: createAiNotebookInstance
+      tags: [ControlledGcpResource]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateControlledGcpAiNotebookInstanceRequestBody'
+      responses:
+        '200':
+          $ref: '#/components/responses/CreatedControlledGcpAiNotebookInstanceResponse'
+        '202':
+          $ref: '#/components/responses/CreatedControlledGcpAiNotebookInstanceResponse'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /api/workspaces/v1/{workspaceId}/resources/controlled/gcp/ai-notebook-instances/create-result/{jobId}:
+    parameters:
+      - $ref: '#/components/parameters/WorkspaceId'
+      - $ref: '#/components/parameters/JobId'
+    get:
+      summary: Retrieve information about a GCP AI Platform Notebook create instance job.
+      operationId: getCreateAiNotebookInstanceResult
+      tags: [ControlledGcpResource]
+      responses:
+        '200':
+          $ref: '#/components/responses/CreatedControlledGcpAiNotebookInstanceResponse'
+        '202':
+          $ref: '#/components/responses/CreatedControlledGcpAiNotebookInstanceResponse'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /api/workspaces/v1/{workspaceId}/resources/controlled/gcp/ai-notebook-instances/{resourceId}:
+    parameters:
+      - $ref: '#/components/parameters/WorkspaceId'
+      - $ref: '#/components/parameters/ResourceId'
+    get:
+      summary: Get a controlled AI Notebook instance resource
+      operationId: getAiNotebookInstance
+      tags: [ControlledGcpResource]
+      responses:
+        '200':
+          description: Response to get AI Notebook instance.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GcpAiNotebookInstanceResource'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+    post:
+      summary: |
+        Delete a controlled GCP AI Notebook instance resource. This is async, because deleting the
+        notebook instance can take ~5 minutes. NOTE: this cannot be an HTTP DELETE, because
+        something between generated code and server behavior does not support delete operations with
+        bodies. We require the body for the async state, so this is a POST.
+      operationId: deleteAiNotebookInstance
+      tags: [ ControlledGcpResource ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeleteControlledGcpAiNotebookInstanceRequest'
+      responses:
+        '200':
+          $ref: '#/components/responses/DeleteControlledGcpAiNotebookInstanceResponse'
+        '202':
+          $ref: '#/components/responses/DeleteControlledGcpAiNotebookInstanceResponse'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /api/workspaces/v1/{workspaceId}/resources/controlled/gcp/ai-notebook-instances/delete-result/{jobId}:
+    parameters:
+      - $ref: '#/components/parameters/WorkspaceId'
+      - $ref: '#/components/parameters/JobId'
+    get:
+      summary: Retrieve information about a GCP AI Platform Notebook delete instance job.
+      operationId: getDeleteAiNotebookInstanceResult
+      tags: [ControlledGcpResource]
+      responses:
+        '200':
+          $ref: '#/components/responses/DeleteControlledGcpAiNotebookInstanceResponse'
+        '202':
+          $ref: '#/components/responses/DeleteControlledGcpAiNotebookInstanceResponse'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+components:
+  schemas:
+    CreateControlledGcpAiNotebookInstanceRequestBody:
+      description: Payload for requesting a new controlled GCS Api notebook instance.
+      type: object
+      required: [common, aiNotebookInstance, jobControl]
+      properties:
+        common:
+          $ref: '#/components/schemas/ControlledResourceCommonFields'
+        aiNotebookInstance:
+          $ref: '#/components/schemas/GcpAiNotebookInstanceCreationParameters'
+        jobControl:
+          $ref: '#/components/schemas/JobControl'
+
+    CreatedControlledGcpAiNotebookInstanceResult:
+      type: object
+      properties:
+        jobReport:
+          $ref: '#/components/schemas/JobReport'
+        errorReport:
+          $ref: '#/components/schemas/ErrorReport'
+        aiNotebookInstance:
+          $ref: '#/components/schemas/GcpAiNotebookInstanceResource'
+
+    GcpAiNotebookInstanceCreationParameters:
+      description: >-
+        AI Platform Notebook instance specific properties to be set on creation. These are a subset of the
+        values accepted by the GCP AI Platforms API. See https://cloud.google.com/ai-platform/notebooks/docs/reference/rest/v1/projects.locations.instances/create
+      type: object
+      required: [machineType]
+      properties:
+        instanceId:
+          description: >-
+            An instanceId unique to this project and location. Must be 1-63 characters, using lower
+            case letters, numbers, and dashes. The first character must be a lower case letter,
+            and the last character must not be a dash.
+          type: string
+        location:
+          description: The canonical GCP id for this location. For example, \'us-east1\'.
+          type: string
+        postStartupScript:
+          description: >-
+            Path to a Bash script that automatically runs after a notebook instance fully boots up.
+            If path is not specified, a default startup script will run to install NextFlow and Terra CLI
+            to the notebook instance.
+            The path must be a URL or Cloud Storage path (gs://path-to-file/file-name). If the path
+            is a cloud storage path, the created VM instance's service account's credentials is used
+            to access it.
+          type: string
+        machineType:
+          description: The Compute Engine machine type of this instance, see
+            https://cloud.google.com/compute/docs/machine-types
+          type: string
+        acceleratorConfig:
+          $ref: '#/components/schemas/GcpAiNotebookInstanceAcceleratorConfig'
+        installGpuDriver:
+          description: >-
+            Whether the end user authorizes Google Cloud to install GPU driver on this instance. If
+            this field is empty or set to false, the GPU driver won't be installed. Only applicable
+            to instances with GPUs.
+          type: boolean
+        customGpuDriverPath:
+          description: >-
+            Specify a custom Cloud Storage path where the GPU driver is stored. If not specified,
+            we'll automatically choose from official GPU drivers.
+          type: string
+        bootDiskType:
+          description: >-
+            The type of the boot disk attached to this instance, defaults to standard persistent
+            disk (PD_STANDARD). See https://cloud.google.com/ai-platform/notebooks/docs/reference/rest/v1/projects.locations.instances#DiskType
+          type: string
+        bootDiskSizeGb:
+          description: >-
+            Input only. The size of the boot disk in GB attached to this instance, up to a maximum
+            of 64000 GB (64 TB). The minimum recommended value is 100 GB. If not specified, this
+            defaults to 100.
+          type: integer
+          format: int64
+        dataDiskType:
+          description: >-
+            Input only. The type of the data disk attached to this instance, defaults to standard
+            persistent disk (PD_STANDARD). See https://cloud.google.com/ai-platform/notebooks/docs/reference/rest/v1/projects.locations.instances#DiskType
+          type: string
+        dataDiskSizeGb:
+          description: >-
+            Input only. The size of the data disk in GB attached to this instance, up to a maximum
+            of 64000 GB (64 TB). If not specified, this defaults to 100.
+          type: integer
+          format: int64
+        metadata:
+          description: >-
+            Custom metadata to apply to this instance. Some metadata keys are reserved by Terra and
+            will throw a bad request error if specified: 'proxy-mode'.
+          type: object
+          additionalProperties:
+            type: string
+        vmImage:
+          $ref: '#/components/schemas/GcpAiNotebookInstanceVmImage'
+        containerImage:
+          $ref: '#/components/schemas/GcpAiNotebookInstanceContainerImage'
+
+    GcpAiNotebookInstanceAcceleratorConfig:
+      description: >-
+        The hardware accelerator used on this instance. If you use accelerators, make sure that your
+        configuration has enough vCPUs and memory to support the machineType you have selected.
+        See https://cloud.google.com/ai-platform/notebooks/docs/reference/rest/v1/projects.locations.instances#AcceleratorConfig
+      type: object
+      required: [type, coreCount]
+      properties:
+        type:
+          description: Type of this accelerator
+          type: string
+        coreCount:
+          description: Count of cores of this accelerator.
+          type: integer
+          format: int64
+
+    GcpAiNotebookInstanceVmImage:
+      description: >-
+        Either this or containerImage must be specified. Definition of a custom Compute Engine
+        virtual machine image for starting a notebook instance with the environment installed
+        directly on the VM. See
+        https://cloud.google.com/ai-platform/notebooks/docs/reference/rest/v1/VmImage
+      type: object
+      required: [projectId]
+      properties:
+        projectId:
+          description: >-
+            The name of the Google Cloud project that this VM image belongs to. Format:
+            'projects/{project_id}'
+          type: string
+        imageName:
+          description: >-
+            Either this or imageFamily must be specified. Use VM image name to find the image.
+          type: string
+        imageFamily:
+          description: >-
+            Either this or imageName must be specified. Use this VM image family to find the image;
+            the newest image in this family will be used.
+          type: string
+
+    GcpAiNotebookInstanceContainerImage:
+      description: >-
+        Either this or vmImage must be specified. Definition of a container image for starting a
+        notebook instance with the environment installed in a container. See
+        https://cloud.google.com/ai-platform/notebooks/docs/reference/rest/v1/ContainerImage
+      type: object
+      required: [repository]
+      properties:
+        repository:
+          description: >-
+            Required. The path to the container image repository. For example:
+            'gcr.io/{project_id}/{imageName}'
+          type: string
+        tag:
+          description: >-
+            The tag of the container image. If not specified, this defaults to the latest tag.
+          type: string
+
+    DeleteControlledGcpAiNotebookInstanceRequest:
+      type: object
+      required: [ jobControl ]
+      properties:
+        jobControl:
+          $ref: '#/components/schemas/JobControl'
+
+    DeleteControlledGcpAiNotebookInstanceResult:
+      type: object
+      properties:
+        jobReport:
+          $ref: '#/components/schemas/JobReport'
+        errorReport:
+          $ref: '#/components/schemas/ErrorReport'
+
+  responses:    
+    CreatedControlledGcpAiNotebookInstanceResponse:
+      description: Response to Create controlled resource
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/CreatedControlledGcpAiNotebookInstanceResult'
+
+    DeleteControlledGcpAiNotebookInstanceResponse:
+      description: Response Payload for deleting a Gcs bucket
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/DeleteControlledGcpAiNotebookInstanceResult'

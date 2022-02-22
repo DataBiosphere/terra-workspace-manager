@@ -1,0 +1,178 @@
+# Referenced GCP Bucket Objects
+paths:
+  /api/workspaces/v1/{workspaceId}/resources/referenced/gcp/bucket/objects:
+    parameters:
+    - $ref: '#/components/parameters/WorkspaceId'
+    post:
+      summary: Create a new GCS object reference in a workspace.
+      operationId: createGcsObjectReference
+      tags: [ReferencedGcpResource]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateGcpGcsObjectReferenceRequestBody'
+      responses:
+        '200':
+          $ref: '#/components/responses/GcpGcsObjectReferenceResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /api/workspaces/v1/{workspaceId}/resources/referenced/gcp/bucket/objects/{resourceId}:
+    parameters:
+    - $ref: '#/components/parameters/WorkspaceId'
+    - $ref: '#/components/parameters/ResourceId'
+    get:
+      summary: Gets a reference to a GCS object from a workspace.
+      operationId: getGcsObjectReference
+      tags: [ReferencedGcpResource]
+      responses:
+        '200':
+          $ref: '#/components/responses/GcpGcsObjectReferenceResponse'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+    post:
+      summary: Update name, description or referencing target of a bucket object reference in a workspace.
+      operationId: updateBucketObjectReferenceResource
+      tags: [ ReferencedGcpResource ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateGcsBucketObjectReferenceRequestBody'
+      responses:
+        '204':
+          description: OK
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+    delete:
+      summary: Delete Gcp GCS object reference
+      operationId: deleteGcsObjectReference
+      tags: [ReferencedGcpResource]
+      responses:
+        '204':
+          description: OK
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /api/workspaces/v1/{workspaceId}/resources/referenced/gcp/bucket/objects/{resourceId}/clone:
+    parameters:
+    - $ref: '#/components/parameters/WorkspaceId'
+    - $ref: '#/components/parameters/ResourceId'
+    post:
+      summary: Clone a referenced GCS object resource
+      operationId: cloneGcpGcsObjectReference
+      tags: [ReferencedGcpResource]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CloneReferencedResourceRequestBody'
+      responses:
+        '200':
+          description: Response for successful GCS object reference clone
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CloneReferencedGcpGcsObjectResourceResult'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /api/workspaces/v1/{workspaceId}/resources/referenced/gcp/bucket/objects/name/{name}:
+    parameters:
+    - $ref: '#/components/parameters/WorkspaceId'
+    - $ref: '#/components/parameters/Name'
+    get:
+      summary: Gets a reference to a Gcp GCS object by name.
+      operationId: getGcsObjectReferenceByName
+      tags: [ReferencedGcpResource]
+      responses:
+        '200':
+          $ref: '#/components/responses/GcpGcsObjectReferenceResponse'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+components:
+  schemas:
+    CreateGcpGcsObjectReferenceRequestBody:
+      type: object
+      description: A request to create a reference to a GCS object.
+      required: [ metadata, file ]
+      properties:
+        metadata:
+          $ref: '#/components/schemas/ReferenceResourceCommonFields'
+        file:
+          $ref: '#/components/schemas/GcpGcsObjectAttributes'
+
+    UpdateGcsBucketObjectReferenceRequestBody:
+      type: object
+      properties:
+        name:
+          $ref: "#/components/schemas/Name"
+        description:
+          type: string
+        bucketName:
+          description: Name of created bucket (not the resource name).
+          type: string
+        objectName:
+          description: Full path to the file in the gcs bucket.
+          type: string
+  
+    CloneReferencedGcpGcsObjectResourceResult:
+      description: >-
+        API result class for cloning a referenced GCS object resource. Includes source workspace
+        and resource IDs for provenance. If the effective cloning instructions are not
+        COPY_REFERENCE, then no clone is created and the resource is null.
+      type: object
+      properties:
+        effectiveCloningInstructions:
+          $ref: '#/components/schemas/CloningInstructionsEnum'
+        sourceWorkspaceId:
+          description: ID of the workspace of the source resource for this clone
+          type: string
+          format: uuid
+        sourceResourceId:
+          description: ID of the source resource
+          type: string
+          format: uuid
+        resource:
+          $ref: '#/components/schemas/GcpGcsObjectResource'
+  
+  responses:
+    GcpGcsObjectReferenceResponse:
+      description: Response containing a reference to a Gcp GCS object.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/GcpGcsObjectResource'

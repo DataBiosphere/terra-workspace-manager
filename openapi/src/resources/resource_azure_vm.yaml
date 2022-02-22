@@ -1,0 +1,42 @@
+components:
+  schemas:
+    AzureVmAttributes:
+      description: >-
+        Vm properties included in post-creation get and update. Others must be retrieved from Azure using the name.
+      type: object
+      properties:
+        vmName:
+          description: Name of created vm (not the resource name).
+          type: string
+        region:
+          description: Azure region of created vm
+          type: string
+        vmSize:
+          description: A valid image size as per com.azure.resourcemanager.compute.models.VirtualMachineSizeTypes
+          type: string
+        vmImageUri:
+          description: A valid image Uri. Must be in the same region specified. E.x. /subscriptions/3efc5bdf-be0e-44e7-b1d7-c08931e3c16c/resourceGroups/mrg-qi-1-preview-20210517084351/providers/Microsoft.Compute/galleries/msdsvm/images/customized_ms_dsvm/versions/0.0.4
+          type: string
+        ipId:
+          description: A valid WSM identifier for an Azure Ip that corresponds to a valid azure resource
+          type: string
+          format: uuid
+        diskId:
+          description: A valid WSM identifier for an Azure Disk that corresponds to a valid azure resource
+          type: string
+          format: uuid
+        networkId:
+          description: A valid WSM identifier for an Azure Network that corresponds to a valid azure resource
+          type: string
+          format: uuid
+
+    AzureVmResource:
+      type: object
+      description: Description of an Azure vm
+      required: [metadata, attributes]
+      properties:
+        metadata:
+          description: the resource metadata common to all resources
+          $ref: '#/components/schemas/ResourceMetadata'
+        attributes:
+          $ref: '#/components/schemas/AzureVmAttributes'

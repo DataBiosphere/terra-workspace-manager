@@ -1,0 +1,107 @@
+# Common parameters
+# These parameters should be referenced from the source like this:
+#  $ref: '#/components/parameters/<item-you-want>
+components:
+  parameters:
+    ApplicationId:
+      name: applicationId
+      in: path
+      description: A UUID to used to identify an application in the workspace manager
+      required: true
+      schema:
+        type: string
+        format: uuid
+    
+    CloudContext:
+      name: cloudContext
+      in: path
+      description: A cloud platform which holds context for a workspace.
+      required: true
+      schema:
+        $ref: '#/components/schemas/CloudPlatform'
+    
+    JobId:
+      name: jobId
+      in: path
+      description: A String ID to used to identify a job
+      required: true
+      schema:
+        type: string
+    
+    Limit:
+      name: limit
+      in: query
+      description: The maximum number of items to return. Default 10
+      required: false
+      schema:
+        type: integer
+        minimum: 1
+        default: 10
+    
+    MemberEmail:
+      name: memberEmail
+      in: path
+      description: A user or group's email. Used for adding or removing IAM permissions
+      required: true
+      schema:
+        type: string
+
+    Name:
+      name: name
+      in: path
+      description: A name used to identify an object in the workspace manager
+      required: true
+      schema:
+        $ref: '#/components/schemas/Name'
+  
+    Offset:
+      name: offset
+      in: query
+      description: The number of items to skip before starting to collect the result set.
+      required: false
+      schema:
+        type: integer
+        minimum: 0
+        default: 0
+  
+    ResourceId:
+      name: resourceId
+      in: path
+      description: A UUID used to identify a controlled resource in a workspace.
+      required: true
+      schema:
+        type: string
+        format: uuid
+  
+    ResourceType:
+      name: resource
+      in: query
+      description: Filter on a specific resource type
+      required: false
+      schema:
+        $ref: '#/components/schemas/ResourceType'
+  
+    Role:
+      name: role
+      in: path
+      description: An IAM role
+      required: true
+      schema:
+        $ref: '#/components/schemas/IamRole'
+
+    StewardshipType:
+      name: stewardship
+      in: query
+      description: Filter on a stewardship type
+      required: false
+      schema:
+        $ref: '#/components/schemas/StewardshipType'
+  
+    WorkspaceId:
+      name: workspaceId
+      in: path
+      description: A UUID to used to identify a workspace in the workspace manager
+      required: true
+      schema:
+        type: string
+        format: uuid

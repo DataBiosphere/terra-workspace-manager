@@ -1,0 +1,180 @@
+# Referenced BigQuery Data Table
+paths:
+  /api/workspaces/v1/{workspaceId}/resources/referenced/gcp/bigquerydatatables:
+    parameters:
+    - $ref: '#/components/parameters/WorkspaceId'
+    post:
+      summary: Create a new BigQuery data table reference in a workspace.
+      operationId: createBigQueryDataTableReference
+      tags: [ ReferencedGcpResource ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateGcpBigQueryDataTableReferenceRequestBody'
+      responses:
+        '200':
+          $ref: '#/components/responses/GcpBigQueryDataTableReferenceResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /api/workspaces/v1/{workspaceId}/resources/referenced/gcp/bigquerydatatables/{resourceId}:
+    parameters:
+    - $ref: '#/components/parameters/WorkspaceId'
+    - $ref: '#/components/parameters/ResourceId'
+    get:
+      summary: Gets a reference to a BigQuery data table from a workspace.
+      operationId: getBigQueryDataTableReference
+      tags: [ ReferencedGcpResource ]
+      responses:
+        '200':
+          $ref: '#/components/responses/GcpBigQueryDataTableReferenceResponse'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+    post:
+      summary: Update name, description or referencing target of a BigQuery data table reference in a workspace.
+      operationId: updateBigQueryDataTableReferenceResource
+      tags: [ ReferencedGcpResource ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateBigQueryDataTableReferenceRequestBody'
+      responses:
+        '204':
+          description: OK
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+    delete:
+      summary: Delete BigQuery data table reference
+      operationId: deleteBigQueryDataTableReference
+      tags: [ ReferencedGcpResource ]
+      responses:
+        '204':
+          description: OK
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+  /api/workspaces/v1/{workspaceId}/resources/referenced/gcp/bigquerydatatables/{resourceId}/clone:
+    parameters:
+    - $ref: '#/components/parameters/WorkspaceId'
+    - $ref: '#/components/parameters/ResourceId'
+    post:
+      summary: Clone a BigQuery Data table
+      operationId: cloneGcpBigQueryDataTableReference
+      tags: [ ReferencedGcpResource ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CloneReferencedResourceRequestBody'
+      responses:
+        '200':
+          $ref: '#/components/responses/CloneReferencedGcpBigQueryDataTableResourceResponse'
+        '202':
+          $ref: '#/components/responses/CloneReferencedGcpBigQueryDataTableResourceResponse'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+  /api/workspaces/v1/{workspaceId}/resources/referenced/gcp/bigquerydatatables/name/{name}:
+    parameters:
+    - $ref: '#/components/parameters/WorkspaceId'
+    - $ref: '#/components/parameters/Name'
+    get:
+      summary: Gets a reference to a BigQuery data table by name.
+      operationId: getBigQueryDataTableReferenceByName
+      tags: [ ReferencedGcpResource ]
+      responses:
+        '200':
+          $ref: '#/components/responses/GcpBigQueryDataTableReferenceResponse'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+components:
+  schemas:
+    CloneReferencedGcpBigQueryDataTableResourceResult:
+      description: >-
+        API result class for cloning a referenced BigQuery data table resource. Includes source workspace
+        and resource IDs for provenance. If the effective cloning instructions are not
+        COPY_REFERENCE, then no clone is created and the resource is null.
+      type: object
+      properties:
+        effectiveCloningInstructions:
+          $ref: '#/components/schemas/CloningInstructionsEnum'
+        sourceWorkspaceId:
+          description: ID of the workspace of the source resource for this clone
+          type: string
+          format: uuid
+        sourceResourceId:
+          description: ID of the source resource
+          type: string
+          format: uuid
+        resource:
+          $ref: '#/components/schemas/GcpBigQueryDataTableResource'
+
+    CreateGcpBigQueryDataTableReferenceRequestBody:
+      type: object
+      description: A request to create a reference to a BigQuery data table.
+      required: [ metadata, dataTable ]
+      properties:
+        metadata:
+          $ref: '#/components/schemas/ReferenceResourceCommonFields'
+        dataTable:
+          $ref: '#/components/schemas/GcpBigQueryDataTableAttributes'
+
+    UpdateBigQueryDataTableReferenceRequestBody:
+      type: object
+      properties:
+        name:
+          $ref: "#/components/schemas/Name"
+        description:
+          type: string
+        projectId:
+          type: string
+        datasetId:
+          type: string
+        dataTableId:
+          type: string
+
+  responses:
+    GcpBigQueryDataTableReferenceResponse:
+      description: Response containing a reference to a BiqQuery data table.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/GcpBigQueryDataTableResource'
+
+    CloneReferencedGcpBigQueryDataTableResourceResponse:
+      description: Response for successful BigQuery data table reference clone
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/CloneReferencedGcpBigQueryDataTableResourceResult'
+

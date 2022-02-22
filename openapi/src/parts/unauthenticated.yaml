@@ -1,0 +1,52 @@
+# Unauthenticated paths
+paths:
+  # Unauthenticated Paths
+  /status:
+    get:
+      security: []
+      summary: Returns the operational status of the service
+      operationId: serviceStatus
+      tags: [Unauthenticated]
+      responses:
+        '200':
+          description: Service can process requests
+        '500':
+          description: |
+            Service cannot process requests. That might be because dependent services are
+            unavailable, or because there is a problem with the service itself.
+  /version:
+    get:
+      security: []
+      summary: Returns the deployed version of the service
+      operationId: serviceVersion
+      tags: [Unauthenticated]
+      responses:
+        '200':
+          description: System version response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SystemVersion'
+
+components:
+  schemas:
+    SystemVersion:
+      type: object
+      required: [gitTag, gitHash, github, build]
+      properties:
+        gitTag:
+          type: string
+          description: Git tag of currently deployed app.
+        gitHash:
+          type: string
+          description: Git hash of currently deployed app.
+        github:
+          type: string
+          description: Github link to currently deployed commit.
+        build:
+          type: string
+          description: Version of the currently deployed app declared in build.gradle. Client and server versions are linked.
+        oldestSupportedCliVersion:
+          type: string
+          description: |
+            For the terra CLI client, the oldest version known to work with the current version of WSM.

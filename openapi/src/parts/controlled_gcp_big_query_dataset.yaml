@@ -1,0 +1,264 @@
+paths:
+  /api/workspaces/v1/{workspaceId}/resources/controlled/gcp/bqdatasets:
+    parameters:
+      - $ref: '#/components/parameters/WorkspaceId'
+    post:
+      summary: Create a new controlled BigQuery dataset
+      operationId: createBigQueryDataset
+      tags: [ControlledGcpResource]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateControlledGcpBigQueryDatasetRequestBody'
+      responses:
+        '200':
+          description: Response to Create controlled BigQuery dataset
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreatedControlledGcpBigQueryDataset'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /api/workspaces/v1/{workspaceId}/resources/controlled/gcp/bqdatasets/{resourceId}:
+    parameters:
+      - $ref: '#/components/parameters/WorkspaceId'
+      - $ref: '#/components/parameters/ResourceId'
+    get:
+      summary: Get a controlled BigQuery dataset resource
+      operationId: getBigQueryDataset
+      tags: [ ControlledGcpResource ]
+      responses:
+        '200':
+          $ref: '#/components/responses/ControlledGcpBigQueryDatasetResponse'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+    patch:
+      summary: Update a controlled BigQuery dataset resource
+      operationId: updateBigQueryDataset
+      tags: [ ControlledGcpResource ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateControlledGcpBigQueryDatasetRequestBody'
+      responses:
+        '200':
+          $ref: '#/components/responses/ControlledGcpBigQueryDatasetResponse'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+    delete:
+      summary: Delete a controlled Bigquery dataset
+      operationId: deleteBigQueryDataset
+      tags: [ ControlledGcpResource ]
+      responses:
+        '204':
+          description: Success
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+  /api/workspaces/v1/{workspaceId}/resources/controlled/gcp/bqdatasets/{resourceId}/clone:
+    parameters:
+      - $ref: '#/components/parameters/WorkspaceId'
+      - $ref: '#/components/parameters/ResourceId'
+    post:
+      summary: Clone a BigQuery dataset
+      operationId: cloneBigQueryDataset
+      tags: [ControlledGcpResource]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CloneControlledGcpBigQueryDatasetRequest'
+      responses:
+        '200':
+          $ref: '#/components/responses/CloneControlledGcpBigQueryDatasetResponse'
+        '202':
+          $ref: '#/components/responses/CloneControlledGcpBigQueryDatasetResponse'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /api/workspaces/v1/{workspaceId}/resources/controlled/gcp/bqdatasets/clone-result/{jobId}:
+    parameters:
+      - $ref: '#/components/parameters/WorkspaceId'
+      - $ref: '#/components/parameters/JobId'
+    get:
+      summary: Retrieve information about a gcp BigQuery dataset clone job.
+      operationId: getCloneBigQueryDatasetResult
+      tags: [ControlledGcpResource]
+      responses:
+        '200':
+          $ref: '#/components/responses/CloneControlledGcpBigQueryDatasetResponse'
+        '202':
+          $ref: '#/components/responses/CloneControlledGcpBigQueryDatasetResponse'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+components:
+  schemas:
+    ClonedControlledGcpBigQueryDataset:
+      description: >-
+        Response object for clone of a BigQuery dataset. Destination workspace and
+        resource IDs are available in the bucket's metadata object.
+      type: object
+      properties:
+        effectiveCloningInstructions:
+          $ref: '#/components/schemas/CloningInstructionsEnum'
+        sourceWorkspaceId:
+          description: ID of the workspace of the source resource for this clone
+          type: string
+          format: uuid
+        sourceResourceId:
+          description: ID of the source resource
+          type: string
+          format: uuid
+        dataset:
+          $ref: "#/components/schemas/GcpBigQueryDatasetResource"
+
+    CloneControlledGcpBigQueryDatasetResult:
+      description: Result of successful BigQuery dataset clone
+      type: object
+      properties:
+        dataset:
+          $ref: '#/components/schemas/ClonedControlledGcpBigQueryDataset'
+        jobReport:
+          $ref: '#/components/schemas/JobReport'
+        errorReport:
+          $ref: '#/components/schemas/ErrorReport'
+
+    CloneControlledGcpBigQueryDatasetRequest:
+      description: >-
+        Values to assign to the cloned dataset for a given source dataset. Leave
+        name and description null to take the source object's values.
+      type: object
+      required: [destinationWorkspaceId, jobControl]
+      properties:
+        destinationWorkspaceId:
+          description: ID of workspace to be cloned into
+          type: string
+          format: uuid
+        destinationDatasetName:
+          description: Name for destination dataset. Letters, numbers and underscores only.
+          type: string
+        cloningInstructions:
+          $ref: "#/components/schemas/CloningInstructionsEnum"
+        name:
+          $ref: "#/components/schemas/Name"
+        description:
+          type: string
+        location:
+          description: >-
+            A valid dataset location per https://cloud.google.com/bigquery/docs/locations.
+            If null, will use source dataset's location.
+          type: string
+        jobControl:
+          $ref: '#/components/schemas/JobControl'
+    
+    CreatedControlledGcpBigQueryDataset:
+      description: Response Payload for requesting a new controlled BigQuery dataset.
+      type: object
+      required: [resourceId, bigQueryDataset]
+      properties:
+        resourceId:
+          description: UUID of a newly-created resource.
+          type: string
+          format: uuid
+        bigQueryDataset:
+          $ref: '#/components/schemas/GcpBigQueryDatasetResource'
+
+    CreateControlledGcpBigQueryDatasetRequestBody:
+      description: Payload for requesting a new controlled BigQuery dataset resource.
+      type: object
+      required: [common, dataset]
+      properties:
+        common:
+          $ref: '#/components/schemas/ControlledResourceCommonFields'
+        dataset:
+          $ref: '#/components/schemas/GcpBigQueryDatasetCreationParameters'
+
+    GcpBigQueryDatasetCreationParameters:
+      description: >-
+        Dataset-specific properties to be set on creation. These are a subset of the
+        values accepted by the BigQuery API.
+      type: object
+      properties:
+        datasetId:
+          description: A valid dataset name per https://cloud.google.com/bigquery/docs/datasets#dataset-naming
+          type: string
+        location:
+          description: A valid dataset location per https://cloud.google.com/bigquery/docs/locations.
+          type: string
+        defaultTableLifetime:
+          description: Optional. Default lifetime (in seconds) for newly created tables.
+          type: integer
+        defaultPartitionLifetime:
+          description: Optional. Default lifetime (in seconds) for partitions in newly created partitioned tables.
+          type: integer
+
+    GcpBigQueryDatasetUpdateParameters:
+      description: >-
+        Parameters that may be changed by a user. Location and dataset id are fixed upon create.
+      properties:
+        defaultTableLifetime:
+          description:  >-
+            Optional. Default lifetime (in seconds) for newly created tables.
+            Specify zero (0) to unset an existing value.
+            The default table lifetime will not be updated if this is omitted.
+          type: integer
+        defaultPartitionLifetime:
+          description:  >-
+            Optional. Default lifetime (in seconds) for partitions in newly created partitioned tables.
+            Specify zero (0) to unset an existing value.
+            The default partition lifetime will not be updated if this is omitted.
+          type: integer
+
+    UpdateControlledGcpBigQueryDatasetRequestBody:
+      type: object
+      description: Update a BigQuery dataset's metadata and expiration times.
+      properties:
+        name:
+          description: Optional. New name to give to this resource. The resource name will not be updated if this is omitted.
+          type: string
+        description:
+          description: Optional. New description to give to this resource. The resource description will not be updated if this is omitted.
+          type: string
+        updateParameters:
+          $ref: '#/components/schemas/GcpBigQueryDatasetUpdateParameters'
+
+  responses:
+    CloneControlledGcpBigQueryDatasetResponse:
+      description: response to clone BigQuery dataset operation.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/CloneControlledGcpBigQueryDatasetResult'
+
+    ControlledGcpBigQueryDatasetResponse:
+      description: Response containing a controlled BigQuery dataset
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/GcpBigQueryDatasetResource'

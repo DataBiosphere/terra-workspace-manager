@@ -1,0 +1,24 @@
+components:
+  schemas:
+    AzureDiskAttributes:
+      description: >-
+        Disk properties included in post-creation get and update. Others must be retrieved from Azure using the name.
+      type: object
+      properties:
+        diskName:
+          description: Name of created disk (not the resource name).
+          type: string
+        region:
+          description: Azure region of created disk
+          type: string
+
+    AzureDiskResource:
+      type: object
+      description: Description of an Azure disk
+      required: [metadata, attributes]
+      properties:
+        metadata:
+          description: the resource metadata common to all resources
+          $ref: '#/components/schemas/ResourceMetadata'
+        attributes:
+          $ref: '#/components/schemas/AzureDiskAttributes'

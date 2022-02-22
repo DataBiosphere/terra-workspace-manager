@@ -1,7 +1,7 @@
 // OpenAPI/Swagger Server Generation
 swaggerSources {
   server {
-    inputFile = file("${gradle.openapiSourceFile}")
+    inputFile = file(tasks.getByPath(':openapi:buildOpenApi').openApiSource)
     code {
       language = "spring"
       library = "spring-boot"
@@ -20,4 +20,5 @@ swaggerSources {
   }
 }
 
+generateSwaggerCodeServer.dependsOn(tasks.getByPath(':openapi:buildOpenApi'))
 sourceSets.main.java.srcDir "${openapiOutputDir}/src/main/java"

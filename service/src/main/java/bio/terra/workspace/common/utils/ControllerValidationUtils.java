@@ -2,9 +2,6 @@ package bio.terra.workspace.common.utils;
 
 import bio.terra.common.exception.ValidationException;
 import bio.terra.workspace.generated.model.ApiCloudPlatform;
-import bio.terra.workspace.generated.model.ApiCreateDataReferenceRequestBody;
-import bio.terra.workspace.service.resource.controlled.exception.ControlledResourceNotImplementedException;
-import bio.terra.workspace.service.resource.referenced.exception.InvalidReferenceException;
 import bio.terra.workspace.service.workspace.exceptions.CloudPlatformNotImplementedException;
 import java.util.ArrayList;
 import java.util.List;
@@ -45,26 +42,6 @@ public final class ControllerValidationUtils {
     }
     if (!errors.isEmpty()) {
       throw new ValidationException("Invalid pagination parameters.", errors);
-    }
-  }
-
-  /**
-   * Utility function for validating a ApiCreateDataReferenceRequestBody.
-   *
-   * <p>ApiCreateDataReferenceRequestBody is currently structured to allow several parameters for
-   * controlled and private resources that aren't supported in WM. This function throws exceptions
-   * if any of those fields are set, or if any required fields are missing.
-   */
-  // TODO(PF-404): remove this once ApiCreateDataReferenceRequestBody is removed.
-  public static void validate(ApiCreateDataReferenceRequestBody body) {
-    if (body.getResourceId() != null) {
-      throw new ControlledResourceNotImplementedException(
-          "Unable to create a reference with a resourceId, use a reference type and description"
-              + " instead. This functionality will be implemented in the future.");
-    }
-    if (body.getReferenceType() == null || body.getReference() == null) {
-      throw new InvalidReferenceException(
-          "Data reference must contain a reference type and a reference description");
     }
   }
 

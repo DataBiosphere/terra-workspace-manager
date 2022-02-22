@@ -1,0 +1,47 @@
+# Common responses
+# These responses should be referenced from the source like this:
+#  $ref: '#/components/responses/<item-you-want>
+components:
+  responses:
+    BadRequest:
+      description: Bad request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorReport'
+  
+    Conflict:
+      description: Request conflicts with current state
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorReport'
+            
+    NotFound:
+      description: Not found (or unauthorized)
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorReport'
+  
+    PermissionDenied:
+      description: Permission denied
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorReport'
+    ServerError:
+      description: Server error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorReport'
+
+    # Shared Azure delete response
+    DeleteControlledAzureResourceResponse:
+      description: Response Payload for deleting an azure ip
+      content:
+        application/json:
+            schema:
+              $ref: '#/components/schemas/DeleteControlledAzureResourceResult'
+  
