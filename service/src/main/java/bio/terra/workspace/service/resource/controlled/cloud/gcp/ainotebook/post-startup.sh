@@ -68,8 +68,9 @@ fi
 # Log in with app-default-credentials
 sudo -u "${JUPYTER_USER}" sh -c "terra auth login --mode=APP_DEFAULT_CREDENTIALS"
 
-# Get all the git repo clone urls from the workspace resource list with type GIT_REPO and try to clone all of them.
-sudo -u "${JUPYTER_USER}" sh -c "terra resource list --type=GIT_REPO --format=JSON" | jq -r '.[] | {gitRepoUrl} | join (" ") ' | while read -r line; do
-  sudo -u "${JUPYTER_USER}" sh -c "git clone ${line}"
+# Get all the git repvoio clone urls from the workspace resource list with type GIT_REPO and try to clone all of them.
+cd /home/${JUPYTER_USER}
+sudo -u "${JUPYTER_USER}" sh -c "terra resource list --type=GIT_REPO --format=JSON" | jq -r 'unique_by(.gitRepoUrl) | .[] | {gitRepoUrl} | join (" ") ' | while read -r line; do
+  sudo -u "${JUPYTER_USER}" sh -c "git clone ${line}" && echo "cloned ${line}" || echo "clone ${line} failed"
 done
 
