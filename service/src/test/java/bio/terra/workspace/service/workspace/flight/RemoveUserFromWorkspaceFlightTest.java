@@ -27,10 +27,13 @@ import bio.terra.workspace.service.job.JobService.AsyncJobResult;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceService;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.bqdataset.ControlledBigQueryDatasetResource;
 import bio.terra.workspace.service.resource.controlled.model.AccessScopeType;
+import bio.terra.workspace.service.resource.controlled.model.ControlledResourceFields;
 import bio.terra.workspace.service.resource.controlled.model.ManagedByType;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
+import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.spendprofile.SpendConnectedTestUtils;
 import bio.terra.workspace.service.workspace.WorkspaceService;
+import bio.terra.workspace.service.workspace.model.CloudContextHolder;
 import bio.terra.workspace.service.workspace.model.GcpCloudContext;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
@@ -83,11 +86,11 @@ public class RemoveUserFromWorkspaceFlightTest extends BaseConnectedTest {
     workspaceService.createGcpCloudContext(
         workspaceId, makeContextJobId, userAccessUtils.defaultUserAuthRequest());
     jobService.waitForJob(makeContextJobId);
-    AsyncJobResult<GcpCloudContext> createContextJobResult =
+    AsyncJobResult<CloudContextHolder> createContextJobResult =
         jobService.retrieveAsyncJobResult(
-            makeContextJobId, GcpCloudContext.class, userAccessUtils.defaultUserAuthRequest());
+            makeContextJobId, CloudContextHolder.class, userAccessUtils.defaultUserAuthRequest());
     assertEquals(StatusEnum.SUCCEEDED, createContextJobResult.getJobReport().getStatus());
-    GcpCloudContext cloudContext = createContextJobResult.getResult();
+    GcpCloudContext cloudContext = createContextJobResult.getResult().getGcpCloudContext();
 
     // Create a private dataset for secondary user
     String datasetId = RandomStringUtils.randomAlphabetic(8);
@@ -187,8 +190,8 @@ public class RemoveUserFromWorkspaceFlightTest extends BaseConnectedTest {
 
   private ControlledBigQueryDatasetResource buildPrivateDataset(
       UUID workspaceId, String datasetName, String projectId) {
-    ControlledBigQueryDatasetResource datasetToCreate =
-        ControlledBigQueryDatasetResource.builder()
+    ControlledResourceFields commonFields =
+        ControlledResourceFields.builder()
             .workspaceId(workspaceId)
             .resourceId(UUID.randomUUID())
             .name(datasetName)
@@ -196,6 +199,10 @@ public class RemoveUserFromWorkspaceFlightTest extends BaseConnectedTest {
             .assignedUser(userAccessUtils.getSecondUserEmail())
             .accessScope(AccessScopeType.ACCESS_SCOPE_PRIVATE)
             .managedBy(ManagedByType.MANAGED_BY_USER)
+            .build();
+    ControlledBigQueryDatasetResource datasetToCreate =
+        ControlledBigQueryDatasetResource.builder()
+            .common(commonFields)
             .datasetName(datasetName)
             .projectId(projectId)
             .build();
@@ -204,10 +211,12 @@ public class RemoveUserFromWorkspaceFlightTest extends BaseConnectedTest {
             .datasetId(datasetName)
             .location("us-central1");
 
-    return controlledResourceService.createBigQueryDataset(
-        datasetToCreate,
-        datasetCreationParameters,
-        ControlledResourceIamRole.EDITOR,
-        userAccessUtils.secondUserAuthRequest());
+    return controlledResourceService
+        .createControlledResourceSync(
+            datasetToCreate,
+            ControlledResourceIamRole.EDITOR,
+            userAccessUtils.secondUserAuthRequest(),
+            datasetCreationParameters)
+        .castByEnum(WsmResourceType.CONTROLLED_GCP_BIG_QUERY_DATASET);
   }
 }

@@ -12,62 +12,38 @@ import bio.terra.testrunner.runner.config.TestUserSpecification;
 import bio.terra.workspace.api.Alpha1Api;
 import bio.terra.workspace.api.ControlledGcpResourceApi;
 import bio.terra.workspace.api.ReferencedGcpResourceApi;
-import bio.terra.workspace.api.ResourceApi;
 import bio.terra.workspace.api.WorkspaceApi;
 import bio.terra.workspace.client.ApiClient;
 import bio.terra.workspace.client.ApiException;
-import bio.terra.workspace.model.ControlledResourceIamRole;
 import bio.terra.workspace.model.EnumerateJobsResult;
 import bio.terra.workspace.model.EnumeratedJob;
-import bio.terra.workspace.model.GcpBigQueryDataTableAttributes;
-import bio.terra.workspace.model.GcpGcsBucketAttributes;
-import bio.terra.workspace.model.GitRepoAttributes;
 import bio.terra.workspace.model.ResourceMetadata;
 import bio.terra.workspace.model.ResourceType;
 import bio.terra.workspace.model.ResourceUnion;
 import bio.terra.workspace.model.StewardshipType;
-import com.google.common.collect.ImmutableList;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import scripts.utils.ClientTestUtils;
 import scripts.utils.CloudContextMaker;
-import scripts.utils.DataRepoTestScriptBase;
 import scripts.utils.MultiResourcesUtils;
-import scripts.utils.ParameterUtils;
+import scripts.utils.WorkspaceAllocateTestScriptBase;
 
-public class EnumerateJobs extends DataRepoTestScriptBase {
+public class EnumerateJobs extends WorkspaceAllocateTestScriptBase {
   private static final Logger logger = LoggerFactory.getLogger(EnumerateJobs.class);
 
   // The test is written so that these can be modified here. The invariant is that the
   // resulting set of resources can be read in 3 pages where the third page is not full.
   // Number of resources to create for enumeration
-  private static final int RESOURCE_COUNT = 12;
+  private static final int RESOURCE_COUNT = 7;
   // Page size to use for enumeration paging
-  private static final int PAGE_SIZE = 4;
-  // Roles to grant user on private resource
-  private static final ImmutableList<ControlledResourceIamRole> PRIVATE_ROLES =
-      ImmutableList.of(ControlledResourceIamRole.WRITER, ControlledResourceIamRole.EDITOR);
+  private static final int PAGE_SIZE = 3;
 
   private ControlledGcpResourceApi ownerControlledGcpResourceApi;
   private ReferencedGcpResourceApi ownerReferencedGcpResourceApi;
-  private GcpGcsBucketAttributes referenceBucketAttributes;
-  private GcpBigQueryDataTableAttributes referenceBqTableAttributes;
-  private GitRepoAttributes referenceGitRepoAttributes;
-  private ResourceApi ownerResourceApi;
-  private ResourceApi readerResourceApi;
   private Alpha1Api alpha1Api;
   private List<ResourceMetadata> resourceList;
-  private TestUserSpecification workspaceReader;
-
-  public void setParameters(Map<String, String> parameters) throws Exception {
-    super.setParameters(parameters);
-    referenceBucketAttributes = ParameterUtils.getFineGrainedBucketReference(parameters);
-    referenceBqTableAttributes = ParameterUtils.getBigQueryDataTableReference(parameters);
-    referenceGitRepoAttributes = ParameterUtils.getSshGitRepoReference(parameters);
-  }
 
   @Override
   public void doSetup(List<TestUserSpecification> testUsers, WorkspaceApi workspaceApi)
@@ -84,7 +60,6 @@ public class EnumerateJobs extends DataRepoTestScriptBase {
     ApiClient ownerApiClient = ClientTestUtils.getClientForTestUser(workspaceOwner, server);
     ownerControlledGcpResourceApi = new ControlledGcpResourceApi(ownerApiClient);
     ownerReferencedGcpResourceApi = new ReferencedGcpResourceApi(ownerApiClient);
-    ownerResourceApi = new ResourceApi(ownerApiClient);
     alpha1Api = new Alpha1Api(ownerApiClient);
 
     // Create a cloud context for the workspace
@@ -94,15 +69,7 @@ public class EnumerateJobs extends DataRepoTestScriptBase {
     logger.info("Creating {} resources", RESOURCE_COUNT);
     resourceList =
         MultiResourcesUtils.makeResources(
-            ownerReferencedGcpResourceApi,
-            ownerControlledGcpResourceApi,
-            getWorkspaceId(),
-            getDataRepoSnapshotId(),
-            getDataRepoInstanceName(),
-            referenceBucketAttributes,
-            referenceBqTableAttributes,
-            referenceGitRepoAttributes,
-            RESOURCE_COUNT);
+            ownerReferencedGcpResourceApi, ownerControlledGcpResourceApi, getWorkspaceId());
 
     logger.info("Created {} resources", resourceList.size());
     logger.info("Cleaning up {} resources", resourceList.size());
@@ -141,18 +108,23 @@ public class EnumerateJobs extends DataRepoTestScriptBase {
     }
 
     // Case 4: filter by resource type
-    EnumerateJobsResult snapshots =
+    EnumerateJobsResult buckets =
         alpha1Api.enumerateJobs(
-            getWorkspaceId(), null, null, ResourceType.DATA_REPO_SNAPSHOT, null, null, null);
-    logResult("snapshots", snapshots);
-    for (EnumeratedJob job : snapshots.getResults()) {
+            getWorkspaceId(),
+            /*limit=*/ null,
+            /*pageToken=*/ null,
+            ResourceType.GCS_BUCKET,
+            /*stewardship=*/ null,
+            /*name=*/ null,
+            /*jobState=*/ null);
+    logResult("buckets", buckets);
+    for (EnumeratedJob job : buckets.getResults()) {
+      assertThat("Job is a bucket", job.getResourceType(), equalTo(ResourceType.GCS_BUCKET));
+      assertNotNull(job.getResource().getGcpGcsBucket(), "Bucket resource present");
       assertThat(
-          "Job is a snapshot", job.getResourceType(), equalTo(ResourceType.DATA_REPO_SNAPSHOT));
-      assertNotNull(job.getResource().getGcpDataRepoSnapshot(), "Snapshot resource present");
-      assertThat(
-          "Resource is a snapshot",
-          job.getResource().getGcpDataRepoSnapshot().getMetadata().getResourceType(),
-          equalTo(ResourceType.DATA_REPO_SNAPSHOT));
+          "Resource is a bucket",
+          job.getResource().getGcpGcsBucket().getMetadata().getResourceType(),
+          equalTo(ResourceType.GCS_BUCKET));
     }
 
     // Case 5: filter by stewardship type

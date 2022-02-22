@@ -7,6 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doReturn;
 
+import bio.terra.common.exception.BadRequestException;
 import bio.terra.common.exception.MissingRequiredFieldException;
 import bio.terra.stairway.FlightDebugInfo;
 import bio.terra.stairway.StepStatus;
@@ -114,28 +115,29 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
     referenceResourceService.createReferenceResource(referenceResource, USER_REQUEST);
 
     UUID resourceId = referenceResource.getResourceId();
-    ReferencedResource originalResource =
-        referenceResourceService.getReferenceResource(workspaceId, resourceId, USER_REQUEST);
+    ReferencedDataRepoSnapshotResource originalResource =
+        referenceResourceService
+            .getReferenceResource(workspaceId, resourceId, USER_REQUEST)
+            .castByEnum(WsmResourceType.REFERENCED_ANY_DATA_REPO_SNAPSHOT);
     String originalName = referenceResource.getName();
     String originalDescription = referenceResource.getDescription();
-    String originalInstanceName =
-        referenceResource.castToDataRepoSnapshotResource().getInstanceName();
+    String originalInstanceName = originalResource.getInstanceName();
 
     String newSnapshotId = "new_snapshot_id";
     ReferencedResource updatedResource =
-        originalResource.castToDataRepoSnapshotResource().toBuilder()
-            .snapshotId(newSnapshotId)
-            .build();
+        originalResource.toBuilder().snapshotId(newSnapshotId).build();
 
     referenceResourceService.updateReferenceResource(
         workspaceId, referenceResource.getResourceId(), null, null, updatedResource, USER_REQUEST);
 
-    ReferencedResource result =
-        referenceResourceService.getReferenceResource(workspaceId, resourceId, USER_REQUEST);
+    ReferencedDataRepoSnapshotResource result =
+        referenceResourceService
+            .getReferenceResource(workspaceId, resourceId, USER_REQUEST)
+            .castByEnum(WsmResourceType.REFERENCED_ANY_DATA_REPO_SNAPSHOT);
     assertEquals(originalName, result.getName());
     assertEquals(originalDescription, result.getDescription());
-    assertEquals(originalInstanceName, result.castToDataRepoSnapshotResource().getInstanceName());
-    assertEquals(newSnapshotId, result.castToDataRepoSnapshotResource().getSnapshotId());
+    assertEquals(originalInstanceName, result.getInstanceName());
+    assertEquals(newSnapshotId, result.getSnapshotId());
   }
 
   @Test
@@ -144,15 +146,17 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
     referenceResourceService.createReferenceResource(referenceResource, USER_REQUEST);
 
     UUID resourceId = referenceResource.getResourceId();
-    ReferencedResource originalResource =
-        referenceResourceService.getReferenceResource(workspaceId, resourceId, USER_REQUEST);
+    ReferencedDataRepoSnapshotResource originalResource =
+        referenceResourceService
+            .getReferenceResource(workspaceId, resourceId, USER_REQUEST)
+            .castByEnum(WsmResourceType.REFERENCED_ANY_DATA_REPO_SNAPSHOT);
     String originalName = referenceResource.getName();
     String originalDescription = referenceResource.getDescription();
 
     String newSnapshotId = "new_snapshot_id";
     String newInstanceName = "new_instance_name";
     ReferencedResource updatedResource =
-        originalResource.castToDataRepoSnapshotResource().toBuilder()
+        originalResource.toBuilder()
             .snapshotId(newSnapshotId)
             .instanceName(newInstanceName)
             .build();
@@ -160,12 +164,14 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
     referenceResourceService.updateReferenceResource(
         workspaceId, referenceResource.getResourceId(), null, null, updatedResource, USER_REQUEST);
 
-    ReferencedResource result =
-        referenceResourceService.getReferenceResource(workspaceId, resourceId, USER_REQUEST);
+    ReferencedDataRepoSnapshotResource result =
+        referenceResourceService
+            .getReferenceResource(workspaceId, resourceId, USER_REQUEST)
+            .castByEnum(WsmResourceType.REFERENCED_ANY_DATA_REPO_SNAPSHOT);
     assertEquals(originalName, result.getName());
     assertEquals(originalDescription, result.getDescription());
-    assertEquals(newInstanceName, result.castToDataRepoSnapshotResource().getInstanceName());
-    assertEquals(newSnapshotId, result.castToDataRepoSnapshotResource().getSnapshotId());
+    assertEquals(newInstanceName, result.getInstanceName());
+    assertEquals(newSnapshotId, result.getSnapshotId());
   }
 
   @Test
@@ -364,26 +370,27 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
       assertEquals(referenceResource.getStewardshipType(), StewardshipType.REFERENCED);
 
       ReferencedDataRepoSnapshotResource resource =
-          referenceResource.castToDataRepoSnapshotResource();
-      assertEquals(resource.getResourceType(), WsmResourceType.REFERENCED_ANY_DATA_REPO_SNAPSHOT);
+          referenceResource.castByEnum(WsmResourceType.REFERENCED_ANY_DATA_REPO_SNAPSHOT);
 
       ReferencedResource resultReferenceResource =
           referenceResourceService.createReferenceResource(referenceResource, USER_REQUEST);
       ReferencedDataRepoSnapshotResource resultResource =
-          resultReferenceResource.castToDataRepoSnapshotResource();
+          resultReferenceResource.castByEnum(WsmResourceType.REFERENCED_ANY_DATA_REPO_SNAPSHOT);
       assertEquals(resource, resultResource);
 
       assertTrue(
           referenceResourceService.checkAccess(
               workspaceId, referenceResource.getResourceId(), USER_REQUEST));
 
-      ReferencedResource byid =
-          referenceResourceService.getReferenceResource(
-              workspaceId, resource.getResourceId(), USER_REQUEST);
-      ReferencedResource byname =
-          referenceResourceService.getReferenceResourceByName(
-              workspaceId, resource.getName(), USER_REQUEST);
-      assertEquals(byid.castToDataRepoSnapshotResource(), byname.castToDataRepoSnapshotResource());
+      ReferencedDataRepoSnapshotResource byid =
+          referenceResourceService
+              .getReferenceResource(workspaceId, resource.getResourceId(), USER_REQUEST)
+              .castByEnum(WsmResourceType.REFERENCED_ANY_DATA_REPO_SNAPSHOT);
+      ReferencedDataRepoSnapshotResource byname =
+          referenceResourceService
+              .getReferenceResourceByName(workspaceId, resource.getName(), USER_REQUEST)
+              .castByEnum(WsmResourceType.REFERENCED_ANY_DATA_REPO_SNAPSHOT);
+      assertEquals(byid, byname);
 
       referenceResourceService.deleteReferenceResourceForResourceType(
           workspaceId,
@@ -432,7 +439,8 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
     void testInvalidCast() {
       referenceResource = ReferenceResourceFixtures.makeDataRepoSnapshotResource(workspaceId);
       assertThrows(
-          InvalidMetadataException.class, () -> referenceResource.castToBigQueryDatasetResource());
+          BadRequestException.class,
+          () -> referenceResource.castByEnum(WsmResourceType.REFERENCED_GCP_GCS_BUCKET));
 
       WsmResource wsmResource = referenceResource;
       assertThrows(InvalidMetadataException.class, wsmResource::castToControlledResource);
@@ -493,27 +501,29 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
         referenceResource = makeGcsObjectReference();
         assertEquals(referenceResource.getStewardshipType(), StewardshipType.REFERENCED);
 
-        ReferencedGcsObjectResource resource = referenceResource.castToGcsObjectResource();
-        assertEquals(resource.getResourceType(), WsmResourceType.REFERENCED_GCP_GCS_OBJECT);
+        ReferencedGcsObjectResource resource =
+            referenceResource.castByEnum(WsmResourceType.REFERENCED_GCP_GCS_OBJECT);
 
         ReferencedResource resultReferenceResource =
             referenceResourceService.createReferenceResource(referenceResource, USER_REQUEST);
         ReferencedGcsObjectResource resultResource =
-            resultReferenceResource.castToGcsObjectResource();
+            resultReferenceResource.castByEnum(WsmResourceType.REFERENCED_GCP_GCS_OBJECT);
         assertEquals(resource, resultResource);
 
         assertTrue(
             referenceResourceService.checkAccess(
                 workspaceId, referenceResource.getResourceId(), USER_REQUEST));
 
-        ReferencedResource byid =
-            referenceResourceService.getReferenceResource(
-                workspaceId, resource.getResourceId(), USER_REQUEST);
-        ReferencedResource byname =
-            referenceResourceService.getReferenceResourceByName(
-                workspaceId, resource.getName(), USER_REQUEST);
-        assertNotNull(byid.castToGcsObjectResource());
-        assertEquals(byid.castToGcsObjectResource(), byname.castToGcsObjectResource());
+        ReferencedGcsObjectResource byid =
+            referenceResourceService
+                .getReferenceResource(workspaceId, resource.getResourceId(), USER_REQUEST)
+                .castByEnum(WsmResourceType.REFERENCED_GCP_GCS_OBJECT);
+        ReferencedGcsObjectResource byname =
+            referenceResourceService
+                .getReferenceResourceByName(workspaceId, resource.getName(), USER_REQUEST)
+                .castByEnum(WsmResourceType.REFERENCED_GCP_GCS_OBJECT);
+        assertNotNull(byid);
+        assertEquals(byid, byname);
 
         referenceResourceService.deleteReferenceResourceForResourceType(
             workspaceId,
@@ -540,13 +550,13 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
         referenceResource = makeGcsBucketResource();
         assertEquals(referenceResource.getStewardshipType(), StewardshipType.REFERENCED);
 
-        ReferencedGcsBucketResource resource = referenceResource.castToGcsBucketResource();
-        assertEquals(resource.getResourceType(), WsmResourceType.REFERENCED_GCP_GCS_BUCKET);
+        ReferencedGcsBucketResource resource =
+            referenceResource.castByEnum(WsmResourceType.REFERENCED_GCP_GCS_BUCKET);
 
         ReferencedResource resultReferenceResource =
             referenceResourceService.createReferenceResource(referenceResource, USER_REQUEST);
         ReferencedGcsBucketResource resultResource =
-            resultReferenceResource.castToGcsBucketResource();
+            resultReferenceResource.castByEnum(WsmResourceType.REFERENCED_GCP_GCS_BUCKET);
         assertEquals(resource, resultResource);
 
         // Mock Sam will not return real credentials for a pet SA to make this call, but we don't
@@ -555,13 +565,15 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
             referenceResourceService.checkAccess(
                 workspaceId, referenceResource.getResourceId(), USER_REQUEST));
 
-        ReferencedResource byid =
-            referenceResourceService.getReferenceResource(
-                workspaceId, resource.getResourceId(), USER_REQUEST);
-        ReferencedResource byname =
-            referenceResourceService.getReferenceResourceByName(
-                workspaceId, resource.getName(), USER_REQUEST);
-        assertEquals(byid.castToGcsBucketResource(), byname.castToGcsBucketResource());
+        ReferencedGcsBucketResource byid =
+            referenceResourceService
+                .getReferenceResource(workspaceId, resource.getResourceId(), USER_REQUEST)
+                .castByEnum(WsmResourceType.REFERENCED_GCP_GCS_BUCKET);
+        ReferencedGcsBucketResource byname =
+            referenceResourceService
+                .getReferenceResourceByName(workspaceId, resource.getName(), USER_REQUEST)
+                .castByEnum(WsmResourceType.REFERENCED_GCP_GCS_BUCKET);
+        assertEquals(byid, byname);
 
         referenceResourceService.deleteReferenceResourceForResourceType(
             workspaceId,
@@ -624,8 +636,8 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
       void testInvalidCast() {
         referenceResource = makeGcsBucketResource();
         assertThrows(
-            InvalidMetadataException.class,
-            () -> referenceResource.castToBigQueryDatasetResource());
+            BadRequestException.class,
+            () -> referenceResource.castByEnum(WsmResourceType.REFERENCED_GCP_BIG_QUERY_DATASET));
 
         WsmResource wsmResource = referenceResource;
         assertThrows(InvalidMetadataException.class, wsmResource::castToControlledResource);
@@ -679,13 +691,13 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
         assertEquals(referenceResource.getStewardshipType(), StewardshipType.REFERENCED);
 
         ReferencedBigQueryDatasetResource resource =
-            referenceResource.castToBigQueryDatasetResource();
+            referenceResource.castByEnum(WsmResourceType.REFERENCED_GCP_BIG_QUERY_DATASET);
         assertEquals(resource.getResourceType(), WsmResourceType.REFERENCED_GCP_BIG_QUERY_DATASET);
 
         ReferencedResource resultReferenceResource =
             referenceResourceService.createReferenceResource(referenceResource, USER_REQUEST);
         ReferencedBigQueryDatasetResource resultResource =
-            resultReferenceResource.castToBigQueryDatasetResource();
+            resultReferenceResource.castByEnum(WsmResourceType.REFERENCED_GCP_BIG_QUERY_DATASET);
         assertEquals(resource, resultResource);
 
         // Mock Sam will not return real credentials for a pet SA to make this call, but we don't
@@ -694,13 +706,15 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
             referenceResourceService.checkAccess(
                 workspaceId, referenceResource.getResourceId(), USER_REQUEST));
 
-        ReferencedResource byid =
-            referenceResourceService.getReferenceResource(
-                workspaceId, resource.getResourceId(), USER_REQUEST);
-        ReferencedResource byname =
-            referenceResourceService.getReferenceResourceByName(
-                workspaceId, resource.getName(), USER_REQUEST);
-        assertEquals(byid.castToBigQueryDatasetResource(), byname.castToBigQueryDatasetResource());
+        ReferencedBigQueryDatasetResource byid =
+            referenceResourceService
+                .getReferenceResource(workspaceId, resource.getResourceId(), USER_REQUEST)
+                .castByEnum(WsmResourceType.REFERENCED_GCP_BIG_QUERY_DATASET);
+        ReferencedBigQueryDatasetResource byname =
+            referenceResourceService
+                .getReferenceResourceByName(workspaceId, resource.getName(), USER_REQUEST)
+                .castByEnum(WsmResourceType.REFERENCED_GCP_BIG_QUERY_DATASET);
+        assertEquals(byid, byname);
 
         referenceResourceService.deleteReferenceResourceForResourceType(
             workspaceId,
@@ -715,9 +729,7 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
         assertEquals(referenceResource.getStewardshipType(), StewardshipType.REFERENCED);
 
         ReferencedBigQueryDataTableResource resource =
-            referenceResource.castToBigQueryDataTableResource();
-        assertEquals(
-            resource.getResourceType(), WsmResourceType.REFERENCED_GCP_BIG_QUERY_DATA_TABLE);
+            referenceResource.castByEnum(WsmResourceType.REFERENCED_GCP_BIG_QUERY_DATA_TABLE);
         assertEquals(resource.getDataTableId(), DATA_TABLE_NAME);
         assertEquals(resource.getDatasetId(), DATASET_NAME);
 
@@ -725,19 +737,20 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
             referenceResourceService.createReferenceResource(referenceResource, USER_REQUEST);
 
         ReferencedBigQueryDataTableResource resultResource =
-            resultReferenceResource.castToBigQueryDataTableResource();
+            resultReferenceResource.castByEnum(WsmResourceType.REFERENCED_GCP_BIG_QUERY_DATA_TABLE);
         assertEquals(resource, resultResource);
         assertTrue(
             referenceResourceService.checkAccess(
                 workspaceId, referenceResource.getResourceId(), USER_REQUEST));
-        ReferencedResource byid =
-            referenceResourceService.getReferenceResource(
-                workspaceId, resource.getResourceId(), USER_REQUEST);
-        ReferencedResource byname =
-            referenceResourceService.getReferenceResourceByName(
-                workspaceId, resource.getName(), USER_REQUEST);
-        assertEquals(
-            byid.castToBigQueryDataTableResource(), byname.castToBigQueryDataTableResource());
+        ReferencedBigQueryDataTableResource byid =
+            referenceResourceService
+                .getReferenceResource(workspaceId, resource.getResourceId(), USER_REQUEST)
+                .castByEnum(WsmResourceType.REFERENCED_GCP_BIG_QUERY_DATA_TABLE);
+        ReferencedBigQueryDataTableResource byname =
+            referenceResourceService
+                .getReferenceResourceByName(workspaceId, resource.getName(), USER_REQUEST)
+                .castByEnum(WsmResourceType.REFERENCED_GCP_BIG_QUERY_DATA_TABLE);
+        assertEquals(byid, byname);
 
         referenceResourceService.deleteReferenceResourceForResourceType(
             workspaceId,
@@ -750,9 +763,9 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
       void bigQueryDataTableReference_deleteWithWrongTypeThenRightType_doesNotDeleteFirstTime() {
         referenceResource = makeBigQueryDataTableResource();
 
-        ReferencedResource resultReferenceResource =
-            referenceResourceService.createReferenceResource(referenceResource, USER_REQUEST);
-        resultReferenceResource.castToBigQueryDataTableResource();
+        referenceResourceService
+            .createReferenceResource(referenceResource, USER_REQUEST)
+            .castByEnum(WsmResourceType.REFERENCED_GCP_BIG_QUERY_DATA_TABLE);
 
         referenceResourceService.deleteReferenceResourceForResourceType(
             workspaceId,
@@ -761,12 +774,13 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
             WsmResourceType.REFERENCED_GCP_BIG_QUERY_DATASET);
 
         // Fail to delete the resource the first time with the wrong resource type.
-        ReferencedResource resource =
-            referenceResourceService.getReferenceResource(
-                workspaceId, referenceResource.getResourceId(), USER_REQUEST);
+        ReferencedBigQueryDataTableResource resource =
+            referenceResourceService
+                .getReferenceResource(workspaceId, referenceResource.getResourceId(), USER_REQUEST)
+                .castByEnum(WsmResourceType.REFERENCED_GCP_BIG_QUERY_DATA_TABLE);
         assertEquals(
-            referenceResource.castToBigQueryDataTableResource(),
-            resource.castToBigQueryDataTableResource());
+            referenceResource.castByEnum(WsmResourceType.REFERENCED_GCP_BIG_QUERY_DATA_TABLE),
+            resource);
 
         referenceResourceService.deleteReferenceResourceForResourceType(
             workspaceId,
@@ -877,8 +891,8 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
       void testInvalidCast() {
         referenceResource = makeBigQueryDatasetResource();
         assertThrows(
-            InvalidMetadataException.class, () -> referenceResource.castToGcsBucketResource());
-
+            BadRequestException.class,
+            () -> referenceResource.castByEnum(WsmResourceType.REFERENCED_GCP_GCS_BUCKET));
         WsmResource wsmResource = referenceResource;
         assertThrows(InvalidMetadataException.class, wsmResource::castToControlledResource);
       }
@@ -916,13 +930,9 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
         referenceResource = ReferenceResourceFixtures.makeDataRepoSnapshotResource(workspaceId);
         assertEquals(referenceResource.getStewardshipType(), StewardshipType.REFERENCED);
 
-        ReferencedDataRepoSnapshotResource resource =
-            referenceResource.castToDataRepoSnapshotResource();
-        assertEquals(resource.getResourceType(), WsmResourceType.REFERENCED_ANY_DATA_REPO_SNAPSHOT);
         referenceResourceService.createReferenceResource(referenceResource, USER_REQUEST);
 
         UUID resourceId = UUID.randomUUID();
-
         ReferencedDataRepoSnapshotResource duplicateNameResource =
             new ReferencedDataRepoSnapshotResource(
                 workspaceId,

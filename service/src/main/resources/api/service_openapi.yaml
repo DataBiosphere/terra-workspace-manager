@@ -2704,6 +2704,11 @@ components:
         build:
           type: string
           description: Version of the currently deployed app declared in build.gradle. Client and server versions are linked.
+        oldestSupportedCliVersion:
+          type: string
+          description: |
+            For the terra CLI client, the oldest version known to work with the current version of
+            WSM.
 
     CreateWorkspaceRequestBody:
       type: object
@@ -2913,6 +2918,8 @@ components:
           $ref: '#/components/schemas/JobReport'
         gcpContext:
           $ref: '#/components/schemas/GcpContext'
+        azureContext:
+          $ref: '#/components/schemas/AzureContext'
         errorReport:
           $ref: '#/components/schemas/ErrorReport'
 
@@ -3201,9 +3208,10 @@ components:
     CreatedControlledGcpGcsBucket:
       description: Response Payload for requesting a new controlled GCS bucket.
       type: object
+      required: [resourceId, gcpBucket]
       properties:
         resourceId:
-          description: UUID of a newly-created resource. Null if not created yet.
+          description: UUID of a newly-created resource.
           type: string
           format: uuid
         gcpBucket:
@@ -3211,9 +3219,10 @@ components:
     CreatedControlledGcpBigQueryDataset:
       description: Response Payload for requesting a new controlled BigQuery dataset.
       type: object
+      required: [resourceId, bigQueryDataset]
       properties:
         resourceId:
-          description: UUID of a newly-created resource. Null if not created yet.
+          description: UUID of a newly-created resource.
           type: string
           format: uuid
         bigQueryDataset:
@@ -4962,3 +4971,4 @@ components:
 security:
   - bearerAuth: []
   - authorization: [openid, email, profile]
+

@@ -5,7 +5,7 @@ import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamRethrow;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.iam.model.SamConstants.SamControlledResourceActions;
-import bio.terra.workspace.service.resource.ValidationUtils;
+import bio.terra.workspace.service.resource.ResourceValidationUtils;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import bio.terra.workspace.service.resource.model.WsmResource;
 import bio.terra.workspace.service.stage.StageService;
@@ -51,10 +51,10 @@ public class ControlledResourceMetadataManager {
         userRequest, workspaceId, resourceId, SamControlledResourceActions.EDIT_ACTION);
     // Name may be null if the user is not updating it in this request.
     if (name != null) {
-      ValidationUtils.validateResourceName(name);
+      ResourceValidationUtils.validateResourceName(name);
     }
     // Description may also be null, but this validator accepts null descriptions.
-    ValidationUtils.validateResourceDescriptionName(description);
+    ResourceValidationUtils.validateResourceDescriptionName(description);
     resourceDao.updateResource(workspaceId, resourceId, name, description);
   }
 

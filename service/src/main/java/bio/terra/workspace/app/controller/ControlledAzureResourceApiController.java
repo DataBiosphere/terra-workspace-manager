@@ -1,10 +1,7 @@
 package bio.terra.workspace.app.controller;
 
 import bio.terra.common.exception.ApiException;
-import bio.terra.common.exception.BadRequestException;
 import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
-import bio.terra.workspace.common.utils.ControllerUtils;
-import bio.terra.workspace.db.exception.InvalidMetadataException;
 import bio.terra.workspace.generated.controller.ControlledAzureResourceApi;
 import bio.terra.workspace.generated.model.ApiAzureDiskResource;
 import bio.terra.workspace.generated.model.ApiAzureIpResource;
@@ -34,11 +31,8 @@ import bio.terra.workspace.service.resource.controlled.cloud.azure.ip.Controlled
 import bio.terra.workspace.service.resource.controlled.cloud.azure.network.ControlledAzureNetworkResource;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.storage.ControlledAzureStorageResource;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.vm.ControlledAzureVmResource;
-import bio.terra.workspace.service.resource.controlled.model.AccessScopeType;
-import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
-import bio.terra.workspace.service.resource.controlled.model.ManagedByType;
-import bio.terra.workspace.service.resource.controlled.model.PrivateUserRole;
-import bio.terra.workspace.service.resource.model.CloningInstructions;
+import bio.terra.workspace.service.resource.controlled.model.ControlledResourceFields;
+import bio.terra.workspace.service.resource.model.WsmResourceType;
 import java.util.UUID;
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
@@ -50,13 +44,11 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 
 @Controller
-public class ControlledAzureResourceApiController implements ControlledAzureResourceApi {
+public class ControlledAzureResourceApiController extends ControlledResourceControllerBase
+    implements ControlledAzureResourceApi {
   private final Logger logger = LoggerFactory.getLogger(ControlledGcpResourceApiController.class);
 
-  private final AuthenticatedUserRequestFactory authenticatedUserRequestFactory;
   private final ControlledResourceService controlledResourceService;
-  private final SamService samService;
-  private final HttpServletRequest request;
   private final JobService jobService;
   private final FeatureConfiguration features;
 
@@ -68,10 +60,8 @@ public class ControlledAzureResourceApiController implements ControlledAzureReso
       JobService jobService,
       HttpServletRequest request,
       FeatureConfiguration features) {
-    this.authenticatedUserRequestFactory = authenticatedUserRequestFactory;
+    super(authenticatedUserRequestFactory, request, controlledResourceService, samService);
     this.controlledResourceService = controlledResourceService;
-    this.samService = samService;
-    this.request = request;
     this.jobService = jobService;
     this.features = features;
   }
@@ -82,30 +72,24 @@ public class ControlledAzureResourceApiController implements ControlledAzureReso
     features.azureEnabledCheck();
 
     final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
-    final PrivateUserRole privateUserRole =
-        ControllerUtils.computePrivateUserRole(
-            workspaceId, body.getCommon(), userRequest, samService);
+    ControlledResourceFields commonFields =
+        toCommonFields(workspaceId, body.getCommon(), userRequest);
 
     ControlledAzureDiskResource resource =
         ControlledAzureDiskResource.builder()
-            .workspaceId(workspaceId)
-            .resourceId(UUID.randomUUID())
-            .name(body.getCommon().getName())
-            .description(body.getCommon().getDescription())
-            .cloningInstructions(
-                CloningInstructions.fromApiModel(body.getCommon().getCloningInstructions()))
-            .assignedUser(privateUserRole.getUserEmail())
-            .accessScope(AccessScopeType.fromApi(body.getCommon().getAccessScope()))
-            .managedBy(ManagedByType.fromApi(body.getCommon().getManagedBy()))
+            .common(commonFields)
             .diskName(body.getAzureDisk().getName())
             .region(body.getAzureDisk().getRegion())
             .size(body.getAzureDisk().getSize())
             .build();
 
     // TODO: make createDisk call async once we have things working e2e
-    final var createdDisk =
-        controlledResourceService.createDisk(
-            resource, body.getAzureDisk(), privateUserRole.getRole(), userRequest);
+    final ControlledAzureDiskResource createdDisk =
+        controlledResourceService
+            .createControlledResourceSync(
+                resource, commonFields.getIamRole(), userRequest, body.getAzureDisk())
+            .castByEnum(WsmResourceType.CONTROLLED_AZURE_DISK);
+
     var response =
         new ApiCreatedControlledAzureDisk()
             .resourceId(createdDisk.getResourceId())
@@ -119,28 +103,22 @@ public class ControlledAzureResourceApiController implements ControlledAzureReso
     features.azureEnabledCheck();
 
     final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
-    final PrivateUserRole privateUserRole =
-        ControllerUtils.computePrivateUserRole(
-            workspaceId, body.getCommon(), userRequest, samService);
+    ControlledResourceFields commonFields =
+        toCommonFields(workspaceId, body.getCommon(), userRequest);
 
     ControlledAzureIpResource resource =
         ControlledAzureIpResource.builder()
-            .workspaceId(workspaceId)
-            .resourceId(UUID.randomUUID())
-            .name(body.getCommon().getName())
-            .description(body.getCommon().getDescription())
-            .cloningInstructions(
-                CloningInstructions.fromApiModel(body.getCommon().getCloningInstructions()))
-            .assignedUser(privateUserRole.getUserEmail())
-            .accessScope(AccessScopeType.fromApi(body.getCommon().getAccessScope()))
-            .managedBy(ManagedByType.fromApi(body.getCommon().getManagedBy()))
+            .common(commonFields)
             .ipName(body.getAzureIp().getName())
             .region(body.getAzureIp().getRegion())
             .build();
 
     final ControlledAzureIpResource createdIp =
-        controlledResourceService.createIp(
-            resource, body.getAzureIp(), privateUserRole.getRole(), userRequest);
+        controlledResourceService
+            .createControlledResourceSync(
+                resource, commonFields.getIamRole(), userRequest, body.getAzureIp())
+            .castByEnum(WsmResourceType.CONTROLLED_AZURE_IP);
+
     var response =
         new ApiCreatedControlledAzureIp()
             .resourceId(createdIp.getResourceId())
@@ -154,28 +132,21 @@ public class ControlledAzureResourceApiController implements ControlledAzureReso
     features.azureEnabledCheck();
 
     final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
-    final PrivateUserRole privateUserRole =
-        ControllerUtils.computePrivateUserRole(
-            workspaceId, body.getCommon(), userRequest, samService);
+    final ControlledResourceFields commonFields =
+        toCommonFields(workspaceId, body.getCommon(), userRequest);
 
     ControlledAzureStorageResource resource =
         ControlledAzureStorageResource.builder()
-            .workspaceId(workspaceId)
-            .resourceId(UUID.randomUUID())
-            .name(body.getCommon().getName())
-            .description(body.getCommon().getDescription())
-            .cloningInstructions(
-                CloningInstructions.fromApiModel(body.getCommon().getCloningInstructions()))
-            .assignedUser(privateUserRole.getUserEmail())
-            .accessScope(AccessScopeType.fromApi(body.getCommon().getAccessScope()))
-            .managedBy(ManagedByType.fromApi(body.getCommon().getManagedBy()))
+            .common(commonFields)
             .storageAccountName(body.getAzureStorage().getName())
             .region(body.getAzureStorage().getRegion())
             .build();
 
     final ControlledAzureStorageResource createdStorage =
-        controlledResourceService.createStorage(
-            resource, body.getAzureStorage(), privateUserRole.getRole(), userRequest);
+        controlledResourceService
+            .createControlledResourceSync(
+                resource, commonFields.getIamRole(), userRequest, body.getAzureStorage())
+            .castByEnum(WsmResourceType.CONTROLLED_AZURE_STORAGE_ACCOUNT);
     var response =
         new ApiCreatedControlledAzureStorage()
             .resourceId(createdStorage.getResourceId())
@@ -189,21 +160,12 @@ public class ControlledAzureResourceApiController implements ControlledAzureReso
     features.azureEnabledCheck();
 
     final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
-    final PrivateUserRole privateUserRole =
-        ControllerUtils.computePrivateUserRole(
-            workspaceId, body.getCommon(), userRequest, samService);
+    final ControlledResourceFields commonFields =
+        toCommonFields(workspaceId, body.getCommon(), userRequest);
 
     ControlledAzureVmResource resource =
         ControlledAzureVmResource.builder()
-            .workspaceId(workspaceId)
-            .resourceId(UUID.randomUUID())
-            .name(body.getCommon().getName())
-            .description(body.getCommon().getDescription())
-            .cloningInstructions(
-                CloningInstructions.fromApiModel(body.getCommon().getCloningInstructions()))
-            .assignedUser(privateUserRole.getUserEmail())
-            .accessScope(AccessScopeType.fromApi(body.getCommon().getAccessScope()))
-            .managedBy(ManagedByType.fromApi(body.getCommon().getManagedBy()))
+            .common(commonFields)
             .vmName(body.getAzureVm().getName())
             .region(body.getAzureVm().getRegion())
             .vmSize(body.getAzureVm().getVmSize())
@@ -214,13 +176,12 @@ public class ControlledAzureResourceApiController implements ControlledAzureReso
             .build();
 
     final String jobId =
-        controlledResourceService.createVm(
+        controlledResourceService.createAzureVm(
             resource,
             body.getAzureVm(),
-            privateUserRole.getRole(),
+            commonFields.getIamRole(),
             body.getJobControl(),
-            ControllerUtils.getAsyncResultEndpoint(
-                request, body.getJobControl().getId(), "create-result"),
+            getAsyncResultEndpoint(body.getJobControl().getId(), "create-result"),
             userRequest);
 
     final ApiCreatedControlledAzureVmResult result =
@@ -237,8 +198,7 @@ public class ControlledAzureResourceApiController implements ControlledAzureReso
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     ApiCreatedControlledAzureVmResult result =
         fetchCreateControlledAzureVmResult(jobId, userRequest);
-    return new ResponseEntity<>(
-        result, ControllerUtils.getAsyncResponseCode(result.getJobReport()));
+    return new ResponseEntity<>(result, getAsyncResponseCode(result.getJobReport()));
   }
 
   private ApiCreatedControlledAzureVmResult fetchCreateControlledAzureVmResult(
@@ -257,21 +217,12 @@ public class ControlledAzureResourceApiController implements ControlledAzureReso
     features.azureEnabledCheck();
 
     final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
-    final PrivateUserRole privateUserRole =
-        ControllerUtils.computePrivateUserRole(
-            workspaceId, body.getCommon(), userRequest, samService);
+    final ControlledResourceFields commonFields =
+        toCommonFields(workspaceId, body.getCommon(), userRequest);
 
     ControlledAzureNetworkResource resource =
         ControlledAzureNetworkResource.builder()
-            .workspaceId(workspaceId)
-            .resourceId(UUID.randomUUID())
-            .name(body.getCommon().getName())
-            .description(body.getCommon().getDescription())
-            .cloningInstructions(
-                CloningInstructions.fromApiModel(body.getCommon().getCloningInstructions()))
-            .assignedUser(privateUserRole.getUserEmail())
-            .accessScope(AccessScopeType.fromApi(body.getCommon().getAccessScope()))
-            .managedBy(ManagedByType.fromApi(body.getCommon().getManagedBy()))
+            .common(commonFields)
             .networkName(body.getAzureNetwork().getName())
             .subnetName(body.getAzureNetwork().getSubnetName())
             .addressSpaceCidr(body.getAzureNetwork().getAddressSpaceCidr())
@@ -280,8 +231,10 @@ public class ControlledAzureResourceApiController implements ControlledAzureReso
             .build();
 
     final ControlledAzureNetworkResource createdNetwork =
-        controlledResourceService.createNetwork(
-            resource, body.getAzureNetwork(), privateUserRole.getRole(), userRequest);
+        controlledResourceService
+            .createControlledResourceSync(
+                resource, commonFields.getIamRole(), userRequest, body.getAzureNetwork())
+            .castByEnum(WsmResourceType.CONTROLLED_AZURE_NETWORK);
     var response =
         new ApiCreatedControlledAzureNetwork()
             .resourceId(createdNetwork.getResourceId())
@@ -302,7 +255,7 @@ public class ControlledAzureResourceApiController implements ControlledAzureReso
             jobControl,
             workspaceId,
             resourceId,
-            ControllerUtils.getAsyncResultEndpoint(request, jobControl.getId(), "delete-result"),
+            getAsyncResultEndpoint(jobControl.getId(), "delete-result"),
             userRequest);
     return getJobDeleteResult(jobId, userRequest);
   }
@@ -321,7 +274,7 @@ public class ControlledAzureResourceApiController implements ControlledAzureReso
             jobControl,
             workspaceId,
             resourceId,
-            ControllerUtils.getAsyncResultEndpoint(request, jobControl.getId(), "delete-result"),
+            getAsyncResultEndpoint(jobControl.getId(), "delete-result"),
             userRequest);
     return getJobDeleteResult(jobId, userRequest);
   }
@@ -340,7 +293,7 @@ public class ControlledAzureResourceApiController implements ControlledAzureReso
             jobControl,
             workspaceId,
             resourceId,
-            ControllerUtils.getAsyncResultEndpoint(request, jobControl.getId(), "delete-result"),
+            getAsyncResultEndpoint(jobControl.getId(), "delete-result"),
             userRequest);
     return getJobDeleteResult(jobId, userRequest);
   }
@@ -359,7 +312,7 @@ public class ControlledAzureResourceApiController implements ControlledAzureReso
             jobControl,
             workspaceId,
             resourceId,
-            ControllerUtils.getAsyncResultEndpoint(request, jobControl.getId(), "delete-result"),
+            getAsyncResultEndpoint(jobControl.getId(), "delete-result"),
             userRequest);
     return getJobDeleteResult(jobId, userRequest);
   }
@@ -368,73 +321,45 @@ public class ControlledAzureResourceApiController implements ControlledAzureReso
   public ResponseEntity<ApiAzureIpResource> getAzureIp(UUID workspaceId, UUID resourceId) {
     final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     features.azureEnabledCheck();
-
-    ControlledResource controlledResource =
-        controlledResourceService.getControlledResource(workspaceId, resourceId, userRequest);
-    try {
-      ApiAzureIpResource response = controlledResource.castToAzureIpResource().toApiResource();
-      return new ResponseEntity<>(response, HttpStatus.OK);
-    } catch (InvalidMetadataException ex) {
-      throw new BadRequestException(
-          String.format(
-              "Resource %s in workspace %s is not a controlled Azure Ip.",
-              resourceId, workspaceId));
-    }
+    final ControlledAzureIpResource resource =
+        controlledResourceService
+            .getControlledResource(workspaceId, resourceId, userRequest)
+            .castByEnum(WsmResourceType.CONTROLLED_AZURE_IP);
+    return new ResponseEntity<>(resource.toApiResource(), HttpStatus.OK);
   }
 
   @Override
   public ResponseEntity<ApiAzureDiskResource> getAzureDisk(UUID workspaceId, UUID resourceId) {
-    features.azureEnabledCheck();
-
     final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
-    ControlledResource controlledResource =
-        controlledResourceService.getControlledResource(workspaceId, resourceId, userRequest);
-    try {
-      var response = controlledResource.castToAzureDiskResource().toApiResource();
-      return new ResponseEntity<>(response, HttpStatus.OK);
-    } catch (InvalidMetadataException ex) {
-      throw new BadRequestException(
-          String.format(
-              "Resource %s in workspace %s is not a controlled Azure Disk.",
-              resourceId, workspaceId));
-    }
+    features.azureEnabledCheck();
+    final ControlledAzureDiskResource resource =
+        controlledResourceService
+            .getControlledResource(workspaceId, resourceId, userRequest)
+            .castByEnum(WsmResourceType.CONTROLLED_AZURE_DISK);
+    return new ResponseEntity<>(resource.toApiResource(), HttpStatus.OK);
   }
 
   @Override
   public ResponseEntity<ApiAzureVmResource> getAzureVm(UUID workspaceId, UUID resourceId) {
-    features.azureEnabledCheck();
-
     final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
-    ControlledResource controlledResource =
-        controlledResourceService.getControlledResource(workspaceId, resourceId, userRequest);
-    try {
-      var response = controlledResource.castToAzureVmResource().toApiResource();
-      return new ResponseEntity<>(response, HttpStatus.OK);
-    } catch (InvalidMetadataException ex) {
-      throw new BadRequestException(
-          String.format(
-              "Resource %s in workspace %s is not a controlled Azure Vm.",
-              resourceId, workspaceId));
-    }
+    features.azureEnabledCheck();
+    final ControlledAzureVmResource resource =
+        controlledResourceService
+            .getControlledResource(workspaceId, resourceId, userRequest)
+            .castByEnum(WsmResourceType.CONTROLLED_AZURE_VM);
+    return new ResponseEntity<>(resource.toApiResource(), HttpStatus.OK);
   }
 
   @Override
   public ResponseEntity<ApiAzureNetworkResource> getAzureNetwork(
       UUID workspaceId, UUID resourceId) {
-    features.azureEnabledCheck();
-
     final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
-    ControlledResource controlledResource =
-        controlledResourceService.getControlledResource(workspaceId, resourceId, userRequest);
-    try {
-      var response = controlledResource.castToAzureNetworkResource().toApiResource();
-      return new ResponseEntity<>(response, HttpStatus.OK);
-    } catch (InvalidMetadataException ex) {
-      throw new BadRequestException(
-          String.format(
-              "Resource %s in workspace %s is not a controlled Azure Network.",
-              resourceId, workspaceId));
-    }
+    features.azureEnabledCheck();
+    final ControlledAzureNetworkResource resource =
+        controlledResourceService
+            .getControlledResource(workspaceId, resourceId, userRequest)
+            .castByEnum(WsmResourceType.CONTROLLED_AZURE_NETWORK);
+    return new ResponseEntity<>(resource.toApiResource(), HttpStatus.OK);
   }
 
   @Override
@@ -478,11 +403,6 @@ public class ControlledAzureResourceApiController implements ControlledAzureReso
         new ApiDeleteControlledAzureResourceResult()
             .jobReport(jobResult.getJobReport())
             .errorReport(jobResult.getApiErrorReport());
-    return new ResponseEntity<>(
-        response, ControllerUtils.getAsyncResponseCode(response.getJobReport()));
-  }
-
-  private AuthenticatedUserRequest getAuthenticatedInfo() {
-    return authenticatedUserRequestFactory.from(request);
+    return new ResponseEntity<>(response, getAsyncResponseCode(response.getJobReport()));
   }
 }

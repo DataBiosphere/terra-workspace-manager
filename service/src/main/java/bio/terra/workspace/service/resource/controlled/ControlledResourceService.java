@@ -7,16 +7,10 @@ import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
 import bio.terra.workspace.common.exception.InternalLogicException;
 import bio.terra.workspace.db.ApplicationDao;
 import bio.terra.workspace.db.ResourceDao;
-import bio.terra.workspace.generated.model.ApiAzureDiskCreationParameters;
-import bio.terra.workspace.generated.model.ApiAzureIpCreationParameters;
-import bio.terra.workspace.generated.model.ApiAzureNetworkCreationParameters;
-import bio.terra.workspace.generated.model.ApiAzureStorageCreationParameters;
 import bio.terra.workspace.generated.model.ApiAzureVmCreationParameters;
 import bio.terra.workspace.generated.model.ApiCloningInstructionsEnum;
 import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceCreationParameters;
-import bio.terra.workspace.generated.model.ApiGcpBigQueryDatasetCreationParameters;
 import bio.terra.workspace.generated.model.ApiGcpBigQueryDatasetUpdateParameters;
-import bio.terra.workspace.generated.model.ApiGcpGcsBucketCreationParameters;
 import bio.terra.workspace.generated.model.ApiGcpGcsBucketUpdateParameters;
 import bio.terra.workspace.generated.model.ApiJobControl;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
@@ -28,10 +22,6 @@ import bio.terra.workspace.service.job.JobBuilder;
 import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceSyncMapping.SyncMapping;
-import bio.terra.workspace.service.resource.controlled.cloud.azure.disk.ControlledAzureDiskResource;
-import bio.terra.workspace.service.resource.controlled.cloud.azure.ip.ControlledAzureIpResource;
-import bio.terra.workspace.service.resource.controlled.cloud.azure.network.ControlledAzureNetworkResource;
-import bio.terra.workspace.service.resource.controlled.cloud.azure.storage.ControlledAzureStorageResource;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.vm.ControlledAzureVmResource;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.GcpPolicyBuilder;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook.ControlledAiNotebookInstanceResource;
@@ -52,6 +42,7 @@ import bio.terra.workspace.service.workspace.GcpCloudContextService;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ResourceKeys;
+import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import bio.terra.workspace.service.workspace.model.GcpCloudContext;
 import bio.terra.workspace.service.workspace.model.OperationType;
 import bio.terra.workspace.service.workspace.model.WsmApplication;
@@ -108,79 +99,7 @@ public class ControlledResourceService {
     this.features = features;
   }
 
-  public ControlledAzureIpResource createIp(
-      ControlledAzureIpResource resource,
-      ApiAzureIpCreationParameters creationParameters,
-      ControlledResourceIamRole privateResourceIamRole,
-      AuthenticatedUserRequest userRequest) {
-    features.azureEnabledCheck();
-
-    JobBuilder jobBuilder =
-        commonCreationJobBuilder(
-                resource,
-                privateResourceIamRole,
-                new ApiJobControl().id(UUID.randomUUID().toString()),
-                null,
-                userRequest)
-            .addParameter(ControlledResourceKeys.CREATION_PARAMETERS, creationParameters);
-    return jobBuilder.submitAndWait(ControlledAzureIpResource.class);
-  }
-
-  public ControlledAzureStorageResource createStorage(
-      ControlledAzureStorageResource resource,
-      ApiAzureStorageCreationParameters creationParameters,
-      ControlledResourceIamRole privateResourceIamRole,
-      AuthenticatedUserRequest userRequest) {
-    features.azureEnabledCheck();
-
-    JobBuilder jobBuilder =
-        commonCreationJobBuilder(
-                resource,
-                privateResourceIamRole,
-                new ApiJobControl().id(UUID.randomUUID().toString()),
-                null,
-                userRequest)
-            .addParameter(ControlledResourceKeys.CREATION_PARAMETERS, creationParameters);
-    return jobBuilder.submitAndWait(ControlledAzureStorageResource.class);
-  }
-
-  public ControlledAzureDiskResource createDisk(
-      ControlledAzureDiskResource resource,
-      ApiAzureDiskCreationParameters creationParameters,
-      ControlledResourceIamRole privateResourceIamRole,
-      AuthenticatedUserRequest userRequest) {
-    features.azureEnabledCheck();
-
-    JobBuilder jobBuilder =
-        commonCreationJobBuilder(
-                resource,
-                privateResourceIamRole,
-                new ApiJobControl().id(UUID.randomUUID().toString()),
-                null,
-                userRequest)
-            .addParameter(ControlledResourceKeys.CREATION_PARAMETERS, creationParameters);
-    return jobBuilder.submitAndWait(ControlledAzureDiskResource.class);
-  }
-
-  public ControlledAzureNetworkResource createNetwork(
-      ControlledAzureNetworkResource resource,
-      ApiAzureNetworkCreationParameters creationParameters,
-      ControlledResourceIamRole privateResourceIamRole,
-      AuthenticatedUserRequest userRequest) {
-    features.azureEnabledCheck();
-
-    JobBuilder jobBuilder =
-        commonCreationJobBuilder(
-                resource,
-                privateResourceIamRole,
-                new ApiJobControl().id(UUID.randomUUID().toString()),
-                null,
-                userRequest)
-            .addParameter(ControlledResourceKeys.CREATION_PARAMETERS, creationParameters);
-    return jobBuilder.submitAndWait(ControlledAzureNetworkResource.class);
-  }
-
-  public String createVm(
+  public String createAzureVm(
       ControlledAzureVmResource resource,
       ApiAzureVmCreationParameters creationParameters,
       ControlledResourceIamRole privateResourceIamRole,
@@ -197,18 +116,6 @@ public class ControlledResourceService {
     String jobId = jobBuilder.submit();
     waitForResourceOrJob(resource.getWorkspaceId(), resource.getResourceId(), jobId);
     return jobId;
-  }
-
-  /** Starts a create controlled bucket resource, blocking until its job is finished. */
-  public ControlledGcsBucketResource createBucket(
-      ControlledGcsBucketResource resource,
-      ApiGcpGcsBucketCreationParameters creationParameters,
-      ControlledResourceIamRole privateResourceIamRole,
-      AuthenticatedUserRequest userRequest) {
-    JobBuilder jobBuilder =
-        commonCreationJobBuilder(resource, privateResourceIamRole, userRequest)
-            .addParameter(ControlledResourceKeys.CREATION_PARAMETERS, creationParameters);
-    return jobBuilder.submitAndWait(ControlledGcsBucketResource.class);
   }
 
   public ControlledGcsBucketResource updateGcsBucket(
@@ -314,20 +221,20 @@ public class ControlledResourceService {
     return jobBuilder.submit();
   }
 
-  /**
-   * Starts a job to create controlled BigQuery dataset resource, blocking until its job is
-   * finished.
-   */
-  public ControlledBigQueryDatasetResource createBigQueryDataset(
-      ControlledBigQueryDatasetResource resource,
-      ApiGcpBigQueryDatasetCreationParameters creationParameters,
+  public <T> ControlledResource createControlledResourceSync(
+      ControlledResource resource,
       ControlledResourceIamRole privateResourceIamRole,
-      AuthenticatedUserRequest userRequest) {
+      AuthenticatedUserRequest userRequest,
+      T creationParameters) {
+
+    if (resource.getResourceType().getCloudPlatform() == CloudPlatform.AZURE) {
+      features.azureEnabledCheck();
+    }
 
     JobBuilder jobBuilder =
         commonCreationJobBuilder(resource, privateResourceIamRole, userRequest)
             .addParameter(ControlledResourceKeys.CREATION_PARAMETERS, creationParameters);
-    return jobBuilder.submitAndWait(ControlledBigQueryDatasetResource.class);
+    return jobBuilder.submitAndWait(ControlledResource.class);
   }
 
   /** Starts an update controlled BigQuery dataset resource, blocking until its job is finished. */
@@ -655,7 +562,6 @@ public class ControlledResourceService {
         .resourceName(resource.getName())
         .stewardshipType(resource.getStewardshipType())
         .workspaceId(workspaceId.toString())
-        .addParameter(ResourceKeys.RESOURCE_ID, resourceId.toString())
         .addParameter(JobMapKeys.RESULT_PATH.getKeyName(), resultPath);
   }
 

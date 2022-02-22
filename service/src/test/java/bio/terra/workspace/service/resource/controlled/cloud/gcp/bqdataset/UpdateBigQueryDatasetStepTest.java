@@ -2,7 +2,6 @@ package bio.terra.workspace.service.resource.controlled.cloud.gcp.bqdataset;
 
 import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.BQ_DATASET_UPDATE_PARAMETERS_NEW;
 import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.BQ_DATASET_UPDATE_PARAMETERS_PREV;
-import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.makeDefaultControlledBigQueryDatasetResource;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -17,6 +16,7 @@ import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.common.BaseUnitTest;
+import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
 import bio.terra.workspace.generated.model.ApiGcpBigQueryDatasetUpdateParameters;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.workspace.GcpCloudContextService;
@@ -70,7 +70,8 @@ public class UpdateBigQueryDatasetStepTest extends BaseUnitTest {
             eq(mockBigQueryCow), eq(PROJECT_ID), any(String.class), datasetCaptor.capture());
 
     final ControlledBigQueryDatasetResource datasetResource =
-        makeDefaultControlledBigQueryDatasetResource().build();
+        ControlledResourceFixtures.makeDefaultControlledBigQueryBuilder(null).build();
+
     doReturn(PROJECT_ID)
         .when(mockGcpCloudContextService)
         .getRequiredGcpProject(datasetResource.getWorkspaceId());

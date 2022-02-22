@@ -44,11 +44,6 @@ public class UpdateControlledResourceMetadataStep implements Step {
     return StepResult.getStepResultSuccess();
   }
 
-  /**
-   * Restore the previous values of the metadata.
-   *
-   * @param flightContext
-   */
   @Override
   public StepResult undoStep(FlightContext flightContext) throws InterruptedException {
     final FlightMap workingMap = flightContext.getWorkingMap();

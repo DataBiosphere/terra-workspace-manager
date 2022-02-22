@@ -147,4 +147,21 @@ public final class FlightUtils {
   public static void copyCommonParams(FlightMap source, FlightMap dest) {
     COMMON_FLIGHT_INPUTS.forEach((key, clazz) -> dest.put(key, source.get(key, clazz)));
   }
+
+  /**
+   * Get a value from one of the flight maps and check that it is not null. If it is null, throw.
+   *
+   * @param flightMap input or working map
+   * @param key string key to lookup in the map
+   * @param tClass class to return
+   * @param <T> generic
+   * @return T
+   */
+  public static <T> T getRequired(FlightMap flightMap, String key, Class<T> tClass) {
+    var value = flightMap.get(key, tClass);
+    if (value == null) {
+      throw new IllegalArgumentException("Missing required flight map key: " + key);
+    }
+    return value;
+  }
 }

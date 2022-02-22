@@ -30,9 +30,11 @@ import bio.terra.workspace.service.resource.controlled.flight.create.CreateContr
 import bio.terra.workspace.service.resource.controlled.flight.delete.DeleteControlledResourceFlight;
 import bio.terra.workspace.service.resource.controlled.model.AccessScopeType;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
+import bio.terra.workspace.service.resource.controlled.model.ControlledResourceFields;
 import bio.terra.workspace.service.resource.controlled.model.ManagedByType;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.model.WsmResource;
+import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.flight.create.azure.CreateAzureContextFlight;
 import com.azure.resourcemanager.compute.ComputeManager;
@@ -78,13 +80,16 @@ public class CreateAndDeleteAzureControlledResourceFlightTest extends BaseAzureT
     final UUID resourceId = UUID.randomUUID();
     ControlledAzureIpResource resource =
         ControlledAzureIpResource.builder()
-            .workspaceId(workspaceId)
-            .resourceId(resourceId)
-            .name(getAzureName("ip"))
-            .description(getAzureName("ip-desc"))
-            .cloningInstructions(CloningInstructions.COPY_RESOURCE)
-            .accessScope(AccessScopeType.fromApi(ApiAccessScope.SHARED_ACCESS))
-            .managedBy(ManagedByType.fromApi(ApiManagedBy.USER))
+            .common(
+                ControlledResourceFields.builder()
+                    .workspaceId(workspaceId)
+                    .resourceId(resourceId)
+                    .name(getAzureName("ip"))
+                    .description(getAzureName("ip-desc"))
+                    .cloningInstructions(CloningInstructions.COPY_RESOURCE)
+                    .accessScope(AccessScopeType.fromApi(ApiAccessScope.SHARED_ACCESS))
+                    .managedBy(ManagedByType.fromApi(ApiManagedBy.USER))
+                    .build())
             .ipName(creationParameters.getName())
             .region(creationParameters.getRegion())
             .build();
@@ -106,7 +111,7 @@ public class CreateAndDeleteAzureControlledResourceFlightTest extends BaseAzureT
         controlledResourceService.getControlledResource(workspaceId, resourceId, userRequest);
 
     try {
-      ControlledAzureIpResource azureIpResource = res.castToAzureIpResource();
+      var azureIpResource = res.castByEnum(WsmResourceType.CONTROLLED_AZURE_IP);
       assertEquals(resource, azureIpResource);
     } catch (Exception e) {
       fail("Failed to cast resource to ControlledAzureIpResource", e);
@@ -138,13 +143,16 @@ public class CreateAndDeleteAzureControlledResourceFlightTest extends BaseAzureT
     final UUID resourceId = UUID.randomUUID();
     ControlledAzureDiskResource resource =
         ControlledAzureDiskResource.builder()
-            .workspaceId(workspaceId)
-            .resourceId(resourceId)
-            .name(getAzureName("disk"))
-            .description(getAzureName("disk-desc"))
-            .cloningInstructions(CloningInstructions.COPY_RESOURCE)
-            .accessScope(AccessScopeType.fromApi(ApiAccessScope.SHARED_ACCESS))
-            .managedBy(ManagedByType.fromApi(ApiManagedBy.USER))
+            .common(
+                ControlledResourceFields.builder()
+                    .workspaceId(workspaceId)
+                    .resourceId(resourceId)
+                    .name(getAzureName("disk"))
+                    .description(getAzureName("disk-desc"))
+                    .cloningInstructions(CloningInstructions.COPY_RESOURCE)
+                    .accessScope(AccessScopeType.fromApi(ApiAccessScope.SHARED_ACCESS))
+                    .managedBy(ManagedByType.fromApi(ApiManagedBy.USER))
+                    .build())
             .diskName(creationParameters.getName())
             .region(creationParameters.getRegion())
             .size(creationParameters.getSize())
@@ -167,7 +175,8 @@ public class CreateAndDeleteAzureControlledResourceFlightTest extends BaseAzureT
         controlledResourceService.getControlledResource(workspaceId, resourceId, userRequest);
 
     try {
-      ControlledAzureDiskResource azureDiskResource = res.castToAzureDiskResource();
+      ControlledAzureDiskResource azureDiskResource =
+          res.castByEnum(WsmResourceType.CONTROLLED_AZURE_DISK);
       assertEquals(resource, azureDiskResource);
     } catch (Exception e) {
       fail("Failed to cast resource to ControlledAzureDiskResource", e);
@@ -209,13 +218,16 @@ public class CreateAndDeleteAzureControlledResourceFlightTest extends BaseAzureT
     final UUID resourceId = UUID.randomUUID();
     ControlledAzureVmResource resource =
         ControlledAzureVmResource.builder()
-            .workspaceId(workspaceId)
-            .resourceId(resourceId)
-            .name(getAzureName("vm"))
-            .description(getAzureName("vm-desc"))
-            .cloningInstructions(CloningInstructions.COPY_RESOURCE)
-            .accessScope(AccessScopeType.fromApi(ApiAccessScope.SHARED_ACCESS))
-            .managedBy(ManagedByType.fromApi(ApiManagedBy.USER))
+            .common(
+                ControlledResourceFields.builder()
+                    .workspaceId(workspaceId)
+                    .resourceId(resourceId)
+                    .name(getAzureName("vm"))
+                    .description(getAzureName("vm-desc"))
+                    .cloningInstructions(CloningInstructions.COPY_RESOURCE)
+                    .accessScope(AccessScopeType.fromApi(ApiAccessScope.SHARED_ACCESS))
+                    .managedBy(ManagedByType.fromApi(ApiManagedBy.USER))
+                    .build())
             .vmName(creationParameters.getName())
             .vmSize(creationParameters.getVmSize())
             .vmImageUri(creationParameters.getVmImageUri())
@@ -242,7 +254,8 @@ public class CreateAndDeleteAzureControlledResourceFlightTest extends BaseAzureT
         controlledResourceService.getControlledResource(workspaceId, resourceId, userRequest);
 
     try {
-      ControlledAzureVmResource azureVmResource = res.castToAzureVmResource();
+      ControlledAzureVmResource azureVmResource =
+          res.castByEnum(WsmResourceType.CONTROLLED_AZURE_VM);
       assertEquals(resource, azureVmResource);
     } catch (Exception e) {
       fail("Failed to cast resource to ControlledAzureVmResource", e);
@@ -327,13 +340,16 @@ public class CreateAndDeleteAzureControlledResourceFlightTest extends BaseAzureT
     final UUID resourceId = UUID.randomUUID();
     ControlledAzureDiskResource resource =
         ControlledAzureDiskResource.builder()
-            .workspaceId(workspaceId)
-            .resourceId(resourceId)
-            .name(getAzureName("disk"))
-            .description(getAzureName("disk-desc"))
-            .cloningInstructions(CloningInstructions.COPY_RESOURCE)
-            .accessScope(AccessScopeType.fromApi(ApiAccessScope.SHARED_ACCESS))
-            .managedBy(ManagedByType.fromApi(ApiManagedBy.USER))
+            .common(
+                ControlledResourceFields.builder()
+                    .workspaceId(workspaceId)
+                    .resourceId(resourceId)
+                    .name(getAzureName("disk"))
+                    .description(getAzureName("disk-desc"))
+                    .cloningInstructions(CloningInstructions.COPY_RESOURCE)
+                    .accessScope(AccessScopeType.fromApi(ApiAccessScope.SHARED_ACCESS))
+                    .managedBy(ManagedByType.fromApi(ApiManagedBy.USER))
+                    .build())
             .diskName(creationParameters.getName())
             .region(creationParameters.getRegion())
             .size(creationParameters.getSize())
@@ -362,13 +378,16 @@ public class CreateAndDeleteAzureControlledResourceFlightTest extends BaseAzureT
     final UUID resourceId = UUID.randomUUID();
     ControlledAzureIpResource resource =
         ControlledAzureIpResource.builder()
-            .workspaceId(workspaceId)
-            .resourceId(resourceId)
-            .name(getAzureName("ip"))
-            .description(getAzureName("ip-desc"))
-            .cloningInstructions(CloningInstructions.COPY_RESOURCE)
-            .accessScope(AccessScopeType.fromApi(ApiAccessScope.SHARED_ACCESS))
-            .managedBy(ManagedByType.fromApi(ApiManagedBy.USER))
+            .common(
+                ControlledResourceFields.builder()
+                    .workspaceId(workspaceId)
+                    .resourceId(resourceId)
+                    .name(getAzureName("ip"))
+                    .description(getAzureName("ip-desc"))
+                    .cloningInstructions(CloningInstructions.COPY_RESOURCE)
+                    .accessScope(AccessScopeType.fromApi(ApiAccessScope.SHARED_ACCESS))
+                    .managedBy(ManagedByType.fromApi(ApiManagedBy.USER))
+                    .build())
             .ipName(ipCreationParameters.getName())
             .region(ipCreationParameters.getRegion())
             .build();
@@ -397,13 +416,16 @@ public class CreateAndDeleteAzureControlledResourceFlightTest extends BaseAzureT
     final UUID resourceId = UUID.randomUUID();
     ControlledAzureNetworkResource resource =
         ControlledAzureNetworkResource.builder()
-            .workspaceId(workspaceId)
-            .resourceId(resourceId)
-            .name(getAzureName("network"))
-            .description(getAzureName("network-desc"))
-            .cloningInstructions(CloningInstructions.COPY_RESOURCE)
-            .accessScope(AccessScopeType.fromApi(ApiAccessScope.SHARED_ACCESS))
-            .managedBy(ManagedByType.fromApi(ApiManagedBy.USER))
+            .common(
+                ControlledResourceFields.builder()
+                    .workspaceId(workspaceId)
+                    .resourceId(resourceId)
+                    .name(getAzureName("network"))
+                    .description(getAzureName("network-desc"))
+                    .cloningInstructions(CloningInstructions.COPY_RESOURCE)
+                    .accessScope(AccessScopeType.fromApi(ApiAccessScope.SHARED_ACCESS))
+                    .managedBy(ManagedByType.fromApi(ApiManagedBy.USER))
+                    .build())
             .networkName(creationParameters.getName())
             .region(creationParameters.getRegion())
             .subnetName(creationParameters.getSubnetName())
@@ -455,13 +477,16 @@ public class CreateAndDeleteAzureControlledResourceFlightTest extends BaseAzureT
     final UUID resourceId = UUID.randomUUID();
     ControlledAzureNetworkResource resource =
         ControlledAzureNetworkResource.builder()
-            .workspaceId(workspaceId)
-            .resourceId(resourceId)
-            .name("testNetwork")
-            .description("testDesc")
-            .cloningInstructions(CloningInstructions.COPY_RESOURCE)
-            .accessScope(AccessScopeType.fromApi(ApiAccessScope.SHARED_ACCESS))
-            .managedBy(ManagedByType.fromApi(ApiManagedBy.USER))
+            .common(
+                ControlledResourceFields.builder()
+                    .workspaceId(workspaceId)
+                    .resourceId(resourceId)
+                    .name("testNetwork")
+                    .description("testDesc")
+                    .cloningInstructions(CloningInstructions.COPY_RESOURCE)
+                    .accessScope(AccessScopeType.fromApi(ApiAccessScope.SHARED_ACCESS))
+                    .managedBy(ManagedByType.fromApi(ApiManagedBy.USER))
+                    .build())
             .networkName(creationParams.getName())
             .region(creationParams.getRegion())
             .subnetName(creationParams.getSubnetName())
@@ -486,7 +511,8 @@ public class CreateAndDeleteAzureControlledResourceFlightTest extends BaseAzureT
         controlledResourceService.getControlledResource(workspaceId, resourceId, userRequest);
 
     try {
-      ControlledAzureNetworkResource azureNetworkResource = res.castToAzureNetworkResource();
+      ControlledAzureNetworkResource azureNetworkResource =
+          res.castByEnum(WsmResourceType.CONTROLLED_AZURE_NETWORK);
       assertEquals(resource, azureNetworkResource);
     } catch (Exception e) {
       fail("Failed to cast resource to ControlledAzureNetworkResource", e);

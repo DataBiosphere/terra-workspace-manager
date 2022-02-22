@@ -16,6 +16,7 @@ import bio.terra.workspace.service.resource.controlled.flight.clone.workspace.Cl
 import bio.terra.workspace.service.stage.StageService;
 import bio.terra.workspace.service.workspace.exceptions.BufferServiceDisabledException;
 import bio.terra.workspace.service.workspace.flight.CreateGcpContextFlightV2;
+import bio.terra.workspace.service.workspace.flight.DeleteAzureContextFlight;
 import bio.terra.workspace.service.workspace.flight.DeleteGcpContextFlight;
 import bio.terra.workspace.service.workspace.flight.RemoveUserFromWorkspaceFlight;
 import bio.terra.workspace.service.workspace.flight.WorkspaceCreateFlight;
@@ -234,6 +235,7 @@ public class WorkspaceService {
         .newJob()
         .description("Create Azure Cloud Context " + workspaceId)
         .jobId(jobId)
+        .workspaceId(workspaceId.toString())
         .flightClass(CreateAzureContextFlight.class)
         .request(azureContext)
         .userRequest(userRequest)
@@ -337,6 +339,26 @@ public class WorkspaceService {
         .newJob()
         .description(jobDescription)
         .flightClass(DeleteGcpContextFlight.class)
+        .userRequest(userRequest)
+        .operationType(OperationType.DELETE)
+        .workspaceId(workspaceId.toString())
+        .submitAndWait(null);
+  }
+
+  public void deleteAzureCloudContext(UUID workspaceId, AuthenticatedUserRequest userRequest) {
+    Workspace workspace =
+        validateWorkspaceAndAction(userRequest, workspaceId, SamWorkspaceAction.WRITE);
+
+    stageService.assertMcWorkspace(workspace, "deleteAzureCloudContext");
+    String workspaceName = workspace.getDisplayName().orElse("");
+    String jobDescription =
+        String.format(
+            "Delete Azure cloud context for workspace: name: '%s' id: '%s'  ",
+            workspaceName, workspaceId);
+    jobService
+        .newJob()
+        .description(jobDescription)
+        .flightClass(DeleteAzureContextFlight.class)
         .userRequest(userRequest)
         .operationType(OperationType.DELETE)
         .workspaceId(workspaceId.toString())

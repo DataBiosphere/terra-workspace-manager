@@ -13,7 +13,9 @@ import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.model.ControlledResourceIamRole;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceService;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.bqdataset.ControlledBigQueryDatasetResource;
+import bio.terra.workspace.service.resource.controlled.model.ControlledResourceFields;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
+import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.workspace.GcpCloudContextService;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ResourceKeys;
@@ -87,18 +89,22 @@ public class CopyBigQueryDatasetDefinitionStep implements Step {
             String.class);
     final String destinationProjectId =
         gcpCloudContextService.getRequiredGcpProject(destinationWorkspaceId);
-    final ControlledBigQueryDatasetResource destinationResource =
-        ControlledBigQueryDatasetResource.builder()
+    final ControlledResourceFields commonFields =
+        ControlledResourceFields.builder()
             .accessScope(sourceDataset.getAccessScope())
             .assignedUser(sourceDataset.getAssignedUser().orElse(null))
             .cloningInstructions(sourceDataset.getCloningInstructions())
-            .datasetName(datasetName)
             .description(description)
             .managedBy(sourceDataset.getManagedBy())
             .name(resourceName)
             .resourceId(UUID.randomUUID())
             .workspaceId(destinationWorkspaceId)
+            .build();
+    final ControlledBigQueryDatasetResource destinationResource =
+        ControlledBigQueryDatasetResource.builder()
             .projectId(destinationProjectId)
+            .datasetName(datasetName)
+            .common(commonFields)
             .build();
 
     final ApiGcpBigQueryDatasetCreationParameters creationParameters =
@@ -107,8 +113,10 @@ public class CopyBigQueryDatasetDefinitionStep implements Step {
         IamRoleUtils.getIamRoleForAccessScope(destinationResource.getAccessScope());
 
     final ControlledBigQueryDatasetResource clonedResource =
-        controlledResourceService.createBigQueryDataset(
-            destinationResource, creationParameters, iamRole, userRequest);
+        controlledResourceService
+            .createControlledResourceSync(
+                destinationResource, iamRole, userRequest, creationParameters)
+            .castByEnum(WsmResourceType.CONTROLLED_GCP_BIG_QUERY_DATASET);
 
     workingMap.put(ControlledResourceKeys.CLONED_RESOURCE_DEFINITION, clonedResource);
     final ApiClonedControlledGcpBigQueryDataset apiResult =

@@ -1,5 +1,6 @@
 package bio.terra.workspace.app.controller;
 
+import bio.terra.workspace.app.configuration.external.CliConfiguration;
 import bio.terra.workspace.app.configuration.external.VersionConfiguration;
 import bio.terra.workspace.generated.controller.UnauthenticatedApi;
 import bio.terra.workspace.generated.model.ApiSystemVersion;
@@ -17,7 +18,9 @@ public class UnauthenticatedApiController implements UnauthenticatedApi {
 
   @Autowired
   public UnauthenticatedApiController(
-      WorkspaceManagerStatusService statusService, VersionConfiguration versionConfiguration) {
+      WorkspaceManagerStatusService statusService,
+      VersionConfiguration versionConfiguration,
+      CliConfiguration cliConfiguration) {
     this.statusService = statusService;
 
     this.currentVersion =
@@ -27,6 +30,7 @@ public class UnauthenticatedApiController implements UnauthenticatedApi {
             .github(
                 "https://github.com/DataBiosphere/terra-workspace-manager/commit/"
                     + versionConfiguration.getGitHash())
+            .oldestSupportedCliVersion(cliConfiguration.getOldestSupportedVersion())
             .build(versionConfiguration.getBuild());
   }
 

@@ -1,5 +1,6 @@
 package bio.terra.workspace.service.resource.referenced.cloud.gcp.gcsobject;
 
+import bio.terra.common.exception.BadRequestException;
 import bio.terra.common.exception.InconsistentFieldsException;
 import bio.terra.common.exception.MissingRequiredFieldException;
 import bio.terra.workspace.common.utils.FlightBeanBag;
@@ -12,7 +13,7 @@ import bio.terra.workspace.generated.model.ApiResourceUnion;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.petserviceaccount.PetSaService;
-import bio.terra.workspace.service.resource.ValidationUtils;
+import bio.terra.workspace.service.resource.ResourceValidationUtils;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.model.WsmResourceFamily;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
@@ -86,6 +87,16 @@ public class ReferencedGcsObjectResource extends ReferencedResource {
         .attributes(toApiAttributes());
   }
 
+  /** {@inheritDoc} */
+  @Override
+  @SuppressWarnings("unchecked")
+  public <T> T castByEnum(WsmResourceType expectedType) {
+    if (getResourceType() != expectedType) {
+      throw new BadRequestException(String.format("Resource is not a %s", expectedType));
+    }
+    return (T) this;
+  }
+
   @Override
   public WsmResourceType getResourceType() {
     return WsmResourceType.REFERENCED_GCP_GCS_OBJECT;
@@ -121,8 +132,8 @@ public class ReferencedGcsObjectResource extends ReferencedResource {
       throw new MissingRequiredFieldException(
           "Missing required field for ReferenceGcsObjectResource.");
     }
-    ValidationUtils.validateBucketName(getBucketName());
-    ValidationUtils.validateGcsObjectName(getObjectName());
+    ResourceValidationUtils.validateBucketName(getBucketName());
+    ResourceValidationUtils.validateGcsObjectName(getObjectName());
   }
 
   @Override

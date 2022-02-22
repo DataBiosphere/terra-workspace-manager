@@ -6,7 +6,7 @@ import bio.terra.workspace.db.model.DbResource;
 import bio.terra.workspace.generated.model.ApiResourceAttributesUnion;
 import bio.terra.workspace.generated.model.ApiResourceMetadata;
 import bio.terra.workspace.generated.model.ApiResourceUnion;
-import bio.terra.workspace.service.resource.ValidationUtils;
+import bio.terra.workspace.service.resource.ResourceValidationUtils;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import bio.terra.workspace.service.resource.referenced.cloud.gcp.ReferencedResource;
 import com.google.common.base.Strings;
@@ -52,8 +52,8 @@ public abstract class WsmResource {
     this(
         dbResource.getWorkspaceId(),
         dbResource.getResourceId(),
-        dbResource.getName().orElse(null),
-        dbResource.getDescription().orElse(null),
+        dbResource.getName(),
+        dbResource.getDescription(),
         dbResource.getCloningInstructions());
   }
 
@@ -122,6 +122,27 @@ public abstract class WsmResource {
   public abstract ApiResourceUnion toApiResourceUnion();
 
   /**
+   * Every subclass mst implement this cast to its own type. This implementation should be made in
+   * each subclass:
+   *
+   * <pre>{@code
+   * @Override
+   * @SuppressWarnings("unchecked")
+   * public <T> T castByEnum(WsmResourceType expectedType) {
+   *   if (getResourceType() != expectedType) {
+   *     throw new BadRequestException(String.format("Resource is not a %s", expectedType));
+   *   }
+   *   return (T) this;
+   * }
+   * }</pre>
+   *
+   * @param expectedType resource type enum
+   * @param <T> implicit
+   * @return cast to subtype
+   */
+  public abstract <T> T castByEnum(WsmResourceType expectedType);
+
+  /**
    * The API metadata object contains the data for both referenced and controlled resources. This
    * class fills in the common part. Referenced resources have no additional data to fill in.
    * Controlled resources overrides this method to fill in the controlled resource specifics.
@@ -153,9 +174,9 @@ public abstract class WsmResource {
         || getResourceId() == null) {
       throw new MissingRequiredFieldException("Missing required field for WsmResource.");
     }
-    ValidationUtils.validateResourceName(getName());
+    ResourceValidationUtils.validateResourceName(getName());
     if (getDescription() != null) {
-      ValidationUtils.validateResourceDescriptionName(getDescription());
+      ResourceValidationUtils.validateResourceDescriptionName(getDescription());
     }
   }
 

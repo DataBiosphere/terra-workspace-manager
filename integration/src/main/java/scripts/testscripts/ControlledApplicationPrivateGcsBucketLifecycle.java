@@ -2,11 +2,13 @@ package scripts.testscripts;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static scripts.utils.ClientTestUtils.TEST_WSM_APP;
 
 import bio.terra.testrunner.runner.config.TestUserSpecification;
 import bio.terra.workspace.api.ControlledGcpResourceApi;
+import bio.terra.workspace.api.ResourceApi;
 import bio.terra.workspace.api.WorkspaceApi;
 import bio.terra.workspace.api.WorkspaceApplicationApi;
 import bio.terra.workspace.client.ApiClient;
@@ -18,6 +20,9 @@ import bio.terra.workspace.model.GrantRoleRequestBody;
 import bio.terra.workspace.model.IamRole;
 import bio.terra.workspace.model.PrivateResourceIamRoles;
 import bio.terra.workspace.model.PrivateResourceUser;
+import bio.terra.workspace.model.ResourceList;
+import bio.terra.workspace.model.ResourceType;
+import bio.terra.workspace.model.StewardshipType;
 import bio.terra.workspace.model.WorkspaceApplicationDescription;
 import java.util.List;
 import org.apache.commons.lang3.RandomStringUtils;
@@ -27,6 +32,7 @@ import scripts.utils.ClientTestUtils;
 import scripts.utils.CloudContextMaker;
 import scripts.utils.GcsBucketAccessTester;
 import scripts.utils.GcsBucketUtils;
+import scripts.utils.MultiResourcesUtils;
 import scripts.utils.WorkspaceAllocateTestScriptBase;
 
 /**
@@ -105,6 +111,14 @@ public class ControlledApplicationPrivateGcsBucketLifecycle
 
     // CASE 3: Create a bucket with workspace reader as WRITER
     testAssignedWriter(wsmappResourceApi, projectId);
+
+    // All buckets should be visible to enumeration
+    ResourceApi ownerResourceApi = ClientTestUtils.getResourceClient(owner, server);
+    ResourceList bucketList =
+        ownerResourceApi.enumerateResources(
+            getWorkspaceId(), 0, 5, ResourceType.GCS_BUCKET, StewardshipType.CONTROLLED);
+    assertEquals(3, bucketList.getResources().size());
+    MultiResourcesUtils.assertResourceType(ResourceType.GCS_BUCKET, bucketList);
   }
 
   private void testNoAssignedUser(ControlledGcpResourceApi resourceApi, String projectId)

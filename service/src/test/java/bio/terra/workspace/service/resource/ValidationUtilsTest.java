@@ -30,75 +30,75 @@ public class ValidationUtilsTest extends BaseUnitTest {
           + "."
           + "012345678901234567890123456789";
 
-  ValidationUtils validationUtils;
+  ResourceValidationUtils validationUtils;
   @Autowired GitRepoReferencedResourceConfiguration gitRepoReferencedResourceConfiguration;
 
   @BeforeEach
   public void setup() {
     gitRepoReferencedResourceConfiguration.setAllowListedGitRepoHostNames(
         List.of("github.com", "gitlab.com"));
-    validationUtils = new ValidationUtils(gitRepoReferencedResourceConfiguration);
+    validationUtils = new ResourceValidationUtils(gitRepoReferencedResourceConfiguration);
   }
 
   @Test
   public void aiNotebookInstanceName() {
-    ValidationUtils.validateAiNotebookInstanceId("valid-instance-id-0");
+    ResourceValidationUtils.validateAiNotebookInstanceId("valid-instance-id-0");
     assertThrows(
         InvalidReferenceException.class,
-        () -> ValidationUtils.validateAiNotebookInstanceId("1number-first"));
+        () -> ResourceValidationUtils.validateAiNotebookInstanceId("1number-first"));
     assertThrows(
         InvalidReferenceException.class,
-        () -> ValidationUtils.validateAiNotebookInstanceId("-dash-first"));
+        () -> ResourceValidationUtils.validateAiNotebookInstanceId("-dash-first"));
     assertThrows(
         InvalidReferenceException.class,
-        () -> ValidationUtils.validateAiNotebookInstanceId("dash-last-"));
+        () -> ResourceValidationUtils.validateAiNotebookInstanceId("dash-last-"));
     assertThrows(
         InvalidReferenceException.class,
-        () -> ValidationUtils.validateAiNotebookInstanceId("white space"));
+        () -> ResourceValidationUtils.validateAiNotebookInstanceId("white space"));
     assertThrows(
         InvalidReferenceException.class,
-        () -> ValidationUtils.validateAiNotebookInstanceId("other-symbols^&)"));
+        () -> ResourceValidationUtils.validateAiNotebookInstanceId("other-symbols^&)"));
     assertThrows(
         InvalidReferenceException.class,
-        () -> ValidationUtils.validateAiNotebookInstanceId("unicode-\\u00C6"));
+        () -> ResourceValidationUtils.validateAiNotebookInstanceId("unicode-\\u00C6"));
     assertThrows(
         InvalidReferenceException.class,
         () ->
-            ValidationUtils.validateAiNotebookInstanceId(
+            ResourceValidationUtils.validateAiNotebookInstanceId(
                 "more-than-63-chars111111111111111111111111111111111111111111111111111"));
   }
 
   @Test
   public void notebookCreationParametersExactlyOneOfVmImageOrContainerImage() {
     // Nothing throws on successful validation.
-    ValidationUtils.validate(defaultNotebookCreationParameters());
+    ResourceValidationUtils.validate(defaultNotebookCreationParameters());
 
     // Neither vmImage nor containerImage.
     assertThrows(
         InconsistentFieldsException.class,
         () ->
-            ValidationUtils.validate(
+            ResourceValidationUtils.validate(
                 defaultNotebookCreationParameters().containerImage(null).vmImage(null)));
     // Both vmImage and containerImage.
     assertThrows(
         InconsistentFieldsException.class,
         () ->
-            ValidationUtils.validate(
+            ResourceValidationUtils.validate(
                 defaultNotebookCreationParameters()
                     .containerImage(new ApiGcpAiNotebookInstanceContainerImage())
                     .vmImage(new ApiGcpAiNotebookInstanceVmImage())));
     // Valid containerImage.
-    ValidationUtils.validate(
+    ResourceValidationUtils.validate(
         defaultNotebookCreationParameters()
             .vmImage(null)
             .containerImage(
                 new ApiGcpAiNotebookInstanceContainerImage().repository("my-repository")));
     // Valid vmImage.
-    ValidationUtils.validate(
+    ResourceValidationUtils.validate(
         defaultNotebookCreationParameters()
             .vmImage(new ApiGcpAiNotebookInstanceVmImage().imageName("image-name"))
             .containerImage(null));
-    ValidationUtils.validate(
+    ResourceValidationUtils.validate(
         defaultNotebookCreationParameters()
             .vmImage(new ApiGcpAiNotebookInstanceVmImage().imageFamily("image-family"))
             .containerImage(null));
@@ -106,7 +106,7 @@ public class ValidationUtilsTest extends BaseUnitTest {
     assertThrows(
         InconsistentFieldsException.class,
         () ->
-            ValidationUtils.validate(
+            ResourceValidationUtils.validate(
                 defaultNotebookCreationParameters()
                     .vmImage(new ApiGcpAiNotebookInstanceVmImage())
                     .containerImage(null)));
@@ -114,7 +114,7 @@ public class ValidationUtilsTest extends BaseUnitTest {
     assertThrows(
         InconsistentFieldsException.class,
         () ->
-            ValidationUtils.validate(
+            ResourceValidationUtils.validate(
                 defaultNotebookCreationParameters()
                     .vmImage(
                         new ApiGcpAiNotebookInstanceVmImage()
@@ -126,63 +126,69 @@ public class ValidationUtilsTest extends BaseUnitTest {
   @Test
   public void validateBucketName_nameHas64Character_throwsException() {
     assertThrows(
-        InvalidNameException.class, () -> ValidationUtils.validateBucketName(INVALID_STRING));
+        InvalidNameException.class,
+        () -> ResourceValidationUtils.validateBucketName(INVALID_STRING));
   }
 
   @Test
   public void validateBucketName_nameHas63Character_OK() {
-    ValidationUtils.validateBucketName(MAX_VALID_STRING);
+    ResourceValidationUtils.validateBucketName(MAX_VALID_STRING);
   }
 
   @Test
   public void validateBucketName_nameHas2Character_throwsException() {
-    assertThrows(InvalidNameException.class, () -> ValidationUtils.validateBucketName("aa"));
+    assertThrows(
+        InvalidNameException.class, () -> ResourceValidationUtils.validateBucketName("aa"));
   }
 
   @Test
   public void validateBucketName_nameHas3Character_OK() {
-    ValidationUtils.validateBucketName("123");
+    ResourceValidationUtils.validateBucketName("123");
   }
 
   @Test
   public void validateBucketName_nameHas222CharacterWithDotSeparator_OK() {
-    ValidationUtils.validateBucketName(MAX_VALID_STRING_WITH_DOTS);
+    ResourceValidationUtils.validateBucketName(MAX_VALID_STRING_WITH_DOTS);
   }
 
   @Test
   public void validateBucketName_nameWithDotSeparatorButOneSubstringExceedsLimit_throwsException() {
     assertThrows(
         InvalidNameException.class,
-        () -> ValidationUtils.validateBucketName(INVALID_STRING + "." + MAX_VALID_STRING));
+        () -> ResourceValidationUtils.validateBucketName(INVALID_STRING + "." + MAX_VALID_STRING));
   }
 
   @Test
   public void validateBucketName_nameStartAndEndWithNumber_OK() {
-    ValidationUtils.validateBucketName("1-bucket-1");
+    ResourceValidationUtils.validateBucketName("1-bucket-1");
   }
 
   @Test
   public void validateBucketName_nameStartAndEndWithDot_throwsException() {
     assertThrows(
-        InvalidNameException.class, () -> ValidationUtils.validateBucketName(".bucket-name."));
+        InvalidNameException.class,
+        () -> ResourceValidationUtils.validateBucketName(".bucket-name."));
   }
 
   @Test
   public void validateBucketName_nameWithGoogPrefix_throwsException() {
     assertThrows(
-        InvalidNameException.class, () -> ValidationUtils.validateBucketName("goog-bucket-name1"));
+        InvalidNameException.class,
+        () -> ResourceValidationUtils.validateBucketName("goog-bucket-name1"));
   }
 
   @Test
   public void validateBucketName_nameContainsGoogle_throwsException() {
     assertThrows(
-        InvalidNameException.class, () -> ValidationUtils.validateBucketName("bucket-google-name"));
+        InvalidNameException.class,
+        () -> ResourceValidationUtils.validateBucketName("bucket-google-name"));
   }
 
   @Test
   public void validateBucketName_nameContainsG00gle_throwsException() {
     assertThrows(
-        InvalidNameException.class, () -> ValidationUtils.validateBucketName("bucket-g00gle-name"));
+        InvalidNameException.class,
+        () -> ResourceValidationUtils.validateBucketName("bucket-g00gle-name"));
   }
 
   @Test
@@ -193,7 +199,7 @@ public class ValidationUtilsTest extends BaseUnitTest {
     }
     assertThrows(
         InvalidNameException.class,
-        () -> ValidationUtils.validateResourceDescriptionName(sb.toString()));
+        () -> ResourceValidationUtils.validateResourceDescriptionName(sb.toString()));
   }
 
   @Test
@@ -202,24 +208,27 @@ public class ValidationUtilsTest extends BaseUnitTest {
     for (int i = 0; i < 2048; i++) {
       sb.append("a");
     }
-    ValidationUtils.validateResourceDescriptionName(sb.toString());
+    ResourceValidationUtils.validateResourceDescriptionName(sb.toString());
   }
 
   @Test
   public void validateBucketFileName_disallowName_throwException() {
-    assertThrows(InvalidNameException.class, () -> ValidationUtils.validateGcsObjectName("."));
+    assertThrows(
+        InvalidNameException.class, () -> ResourceValidationUtils.validateGcsObjectName("."));
   }
 
   @Test
   public void validateBucketFileName_emptyOrNullString_throwsException() {
-    assertThrows(InvalidNameException.class, () -> ValidationUtils.validateGcsObjectName(""));
+    assertThrows(
+        InvalidNameException.class, () -> ResourceValidationUtils.validateGcsObjectName(""));
   }
 
   @Test
   public void validateBucketFileName_startsWithAcmeChallengePrefix_throwsException() {
     String file = ".well-known/acme-challenge/hello.txt";
 
-    assertThrows(InvalidNameException.class, () -> ValidationUtils.validateGcsObjectName(file));
+    assertThrows(
+        InvalidNameException.class, () -> ResourceValidationUtils.validateGcsObjectName(file));
   }
 
   @Test
@@ -227,31 +236,33 @@ public class ValidationUtilsTest extends BaseUnitTest {
     assertThrows(
         InvalidNameException.class,
         () ->
-            ValidationUtils.validateGcsObjectName(
+            ResourceValidationUtils.validateGcsObjectName(
                 RandomStringUtils.random(1025, /*letters=*/ true, /*numbers=*/ true)));
   }
 
   @Test
   public void validateBucketFileName_legalFileName_validate() {
-    ValidationUtils.validateGcsObjectName("hello.txt");
-    ValidationUtils.validateGcsObjectName(
+    ResourceValidationUtils.validateGcsObjectName("hello.txt");
+    ResourceValidationUtils.validateGcsObjectName(
         RandomStringUtils.random(1024, /*letters=*/ true, /*numbers=*/ true));
-    ValidationUtils.validateGcsObjectName("你好.png");
+    ResourceValidationUtils.validateGcsObjectName("你好.png");
   }
 
   @Test
   public void validateBqDataTableName() {
-    ValidationUtils.validateBqDataTableName("00_お客様");
-    ValidationUtils.validateBqDataTableName("table 01");
-    ValidationUtils.validateBqDataTableName("ग्राहक");
-    ValidationUtils.validateBqDataTableName("étudiant-01");
+    ResourceValidationUtils.validateBqDataTableName("00_お客様");
+    ResourceValidationUtils.validateBqDataTableName("table 01");
+    ResourceValidationUtils.validateBqDataTableName("ग्राहक");
+    ResourceValidationUtils.validateBqDataTableName("étudiant-01");
   }
 
   @Test
   public void validateBqDataTableName_invalidName_throwsException() {
     assertThrows(
-        InvalidNameException.class, () -> ValidationUtils.validateBqDataTableName("00_お客様*"));
-    assertThrows(InvalidNameException.class, () -> ValidationUtils.validateBqDataTableName(""));
+        InvalidNameException.class,
+        () -> ResourceValidationUtils.validateBqDataTableName("00_お客様*"));
+    assertThrows(
+        InvalidNameException.class, () -> ResourceValidationUtils.validateBqDataTableName(""));
   }
 
   @Test

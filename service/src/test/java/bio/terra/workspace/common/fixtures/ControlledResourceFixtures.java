@@ -1,9 +1,9 @@
 package bio.terra.workspace.common.fixtures;
 
-import bio.terra.workspace.generated.model.*;
 import bio.terra.workspace.generated.model.ApiAzureDiskCreationParameters;
 import bio.terra.workspace.generated.model.ApiAzureIpCreationParameters;
 import bio.terra.workspace.generated.model.ApiAzureNetworkCreationParameters;
+import bio.terra.workspace.generated.model.ApiAzureStorageCreationParameters;
 import bio.terra.workspace.generated.model.ApiAzureVmCreationParameters;
 import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceCreationParameters;
 import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceVmImage;
@@ -24,8 +24,10 @@ import bio.terra.workspace.service.resource.controlled.cloud.azure.storage.Contr
 import bio.terra.workspace.service.resource.controlled.cloud.azure.vm.ControlledAzureVmResource;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook.ControlledAiNotebookInstanceResource;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.bqdataset.ControlledBigQueryDatasetResource;
+import bio.terra.workspace.service.resource.controlled.cloud.gcp.bqdataset.ControlledBigQueryDatasetResource.Builder;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.ControlledGcsBucketResource;
 import bio.terra.workspace.service.resource.controlled.model.AccessScopeType;
+import bio.terra.workspace.service.resource.controlled.model.ControlledResourceFields;
 import bio.terra.workspace.service.resource.controlled.model.ManagedByType;
 import bio.terra.workspace.service.resource.controlled.model.PrivateResourceState;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
@@ -44,6 +46,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
+import javax.annotation.Nullable;
 
 /** A series of static objects useful for testing controlled resources. */
 public class ControlledResourceFixtures {
@@ -293,46 +296,51 @@ public class ControlledResourceFixtures {
 
   private ControlledResourceFixtures() {}
 
-  /**
-   * Returns a {@link ControlledGcsBucketResource.Builder} that is ready to be built.
-   *
-   * <p>Tests should not rely on any particular value for the fields returned by this function and
-   * instead override the values that they care about.
-   */
-  public static ControlledGcsBucketResource.Builder makeDefaultControlledGcsBucketResource() {
-    UUID resourceId = UUID.randomUUID();
-    return new ControlledGcsBucketResource.Builder()
+  /** Returns a {@link ControlledResourceFields.Builder} with the fields filled in */
+  public static ControlledResourceFields.Builder makeDefaultControlledResourceFieldsBuilder() {
+    return ControlledResourceFields.builder()
         .workspaceId(UUID.randomUUID())
-        .resourceId(resourceId)
-        .name("testgcs-" + resourceId)
-        .description(RESOURCE_DESCRIPTION)
-        .cloningInstructions(CLONING_INSTRUCTIONS)
-        .assignedUser(null)
-        .accessScope(AccessScopeType.ACCESS_SCOPE_SHARED)
-        .managedBy(ManagedByType.MANAGED_BY_USER)
-        .bucketName(uniqueBucketName());
-  }
-
-  /**
-   * Returns a {@link ControlledBigQueryDatasetResource.Builder} that is ready to be built.
-   *
-   * <p>Tests should not rely on any particular value for the fields returned by this function and
-   * instead override the values that they care about.
-   */
-  public static ControlledBigQueryDatasetResource.Builder
-      makeDefaultControlledBigQueryDatasetResource() {
-    UUID resourceId = UUID.randomUUID();
-    return new ControlledBigQueryDatasetResource.Builder()
-        .workspaceId(UUID.randomUUID())
-        .resourceId(resourceId)
-        .name(uniqueName("test_dataset").replace("-", "_"))
+        .resourceId(UUID.randomUUID())
+        .name(uniqueName("test_resource").replace("-", "_"))
         .description("how much data could a dataset set if a dataset could set data?")
         .cloningInstructions(CLONING_INSTRUCTIONS)
         .assignedUser(null)
         .accessScope(AccessScopeType.ACCESS_SCOPE_SHARED)
-        .managedBy(ManagedByType.MANAGED_BY_USER)
-        .datasetName("test_dataset")
-        .projectId("my-project-id");
+        .managedBy(ManagedByType.MANAGED_BY_USER);
+  }
+
+  /**
+   * Returns a {@link ControlledResourceFields} that is ready to be included in a controlled
+   * resource builder.
+   */
+  public static ControlledResourceFields makeDefaultControlledResourceFields(
+      @Nullable UUID inWorkspaceId) {
+    ControlledResourceFields.Builder builder = makeDefaultControlledResourceFieldsBuilder();
+    if (inWorkspaceId != null) {
+      builder.workspaceId(inWorkspaceId);
+    }
+    return builder.build();
+  }
+
+  /** Returns a {@link ControlledGcsBucketResource.Builder} that is ready to be built. */
+  public static ControlledGcsBucketResource.Builder makeDefaultControlledGcsBucketBuilder(
+      @Nullable UUID workspaceId) {
+    return new ControlledGcsBucketResource.Builder()
+        .common(makeDefaultControlledResourceFields(workspaceId))
+        .bucketName(uniqueBucketName());
+  }
+
+  /**
+   * Make a bigquery builder with defaults filled in
+   *
+   * @return resource builder
+   */
+  public static ControlledBigQueryDatasetResource.Builder makeDefaultControlledBigQueryBuilder(
+      @Nullable UUID workspaceId) {
+    return new Builder()
+        .common(makeDefaultControlledResourceFields(workspaceId))
+        .projectId("my_project")
+        .datasetName(uniqueDatasetId());
   }
 
   public static final ApiGcpBigQueryDatasetUpdateParameters BQ_DATASET_UPDATE_PARAMETERS_NEW =
@@ -353,14 +361,18 @@ public class ControlledResourceFixtures {
     return prefix + "-" + UUID.randomUUID().toString();
   }
 
+  public static String uniqueDatasetId() {
+    return "my_test_dataset_" + (int) (Math.floor(Math.random() * 10000));
+  }
+
   /**
    * Returns a {@link ControlledAiNotebookInstanceResource.Builder} that is ready to be built.
    *
    * <p>Tests should not rely on any particular value for the fields returned by this function and
    * instead override the values that they care about.
    */
-  public static ControlledAiNotebookInstanceResource.Builder makeDefaultAiNotebookInstance() {
-    return ControlledAiNotebookInstanceResource.builder()
+  public static ControlledResourceFields.Builder makeNotebookCommonFieldsBuilder() {
+    return ControlledResourceFields.builder()
         .workspaceId(UUID.randomUUID())
         .resourceId(UUID.randomUUID())
         .name("my-notebook")
@@ -368,7 +380,12 @@ public class ControlledResourceFixtures {
         .cloningInstructions(CloningInstructions.COPY_NOTHING)
         .assignedUser("myusername@mydomain.mine")
         .accessScope(AccessScopeType.ACCESS_SCOPE_PRIVATE)
-        .managedBy(ManagedByType.MANAGED_BY_USER)
+        .managedBy(ManagedByType.MANAGED_BY_USER);
+  }
+
+  public static ControlledAiNotebookInstanceResource.Builder makeDefaultAiNotebookInstance() {
+    return ControlledAiNotebookInstanceResource.builder()
+        .common(makeNotebookCommonFieldsBuilder().build())
         .instanceId("my-instance-id")
         .location("us-east1-b")
         .projectId("my-project-id");

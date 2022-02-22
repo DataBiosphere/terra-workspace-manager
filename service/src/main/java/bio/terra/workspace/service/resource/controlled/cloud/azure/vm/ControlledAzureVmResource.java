@@ -1,18 +1,25 @@
 package bio.terra.workspace.service.resource.controlled.cloud.azure.vm;
 
+import bio.terra.common.exception.BadRequestException;
 import bio.terra.common.exception.InconsistentFieldsException;
 import bio.terra.common.exception.MissingRequiredFieldException;
+import bio.terra.stairway.RetryRule;
+import bio.terra.workspace.common.utils.FlightBeanBag;
+import bio.terra.workspace.common.utils.RetryRules;
 import bio.terra.workspace.db.DbSerDes;
-import bio.terra.workspace.db.model.DbResource;
 import bio.terra.workspace.db.model.UniquenessCheckAttributes;
 import bio.terra.workspace.db.model.UniquenessCheckAttributes.UniquenessScope;
 import bio.terra.workspace.generated.model.ApiAzureVmAttributes;
 import bio.terra.workspace.generated.model.ApiAzureVmResource;
 import bio.terra.workspace.generated.model.ApiResourceAttributesUnion;
 import bio.terra.workspace.generated.model.ApiResourceUnion;
-import bio.terra.workspace.service.resource.ValidationUtils;
+import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
+import bio.terra.workspace.service.resource.ResourceValidationUtils;
+import bio.terra.workspace.service.resource.controlled.flight.create.CreateControlledResourceFlight;
+import bio.terra.workspace.service.resource.controlled.flight.delete.DeleteControlledResourceFlight;
 import bio.terra.workspace.service.resource.controlled.model.AccessScopeType;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
+import bio.terra.workspace.service.resource.controlled.model.ControlledResourceFields;
 import bio.terra.workspace.service.resource.controlled.model.ManagedByType;
 import bio.terra.workspace.service.resource.controlled.model.PrivateResourceState;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
@@ -23,7 +30,6 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.Optional;
 import java.util.UUID;
-import javax.annotation.Nullable;
 
 public class ControlledAzureVmResource extends ControlledResource {
   private final String vmName;
@@ -76,27 +82,71 @@ public class ControlledAzureVmResource extends ControlledResource {
     validate();
   }
 
-  public ControlledAzureVmResource(DbResource dbResource) {
-    super(dbResource);
-    ControlledAzureVmAttributes attributes =
-        DbSerDes.fromJson(dbResource.getAttributes(), ControlledAzureVmAttributes.class);
-    this.vmName = attributes.getVmName();
-    this.region = attributes.getRegion();
-    this.vmImageUri = attributes.getVmImageUri();
-    this.vmSize = attributes.getVmSize();
-    this.ipId = attributes.getIpId();
-    this.networkId = attributes.getNetworkId();
-    this.diskId = attributes.getDiskId();
+  private ControlledAzureVmResource(
+      ControlledResourceFields common,
+      String vmName,
+      String region,
+      String vmSize,
+      String vmImageUri,
+      UUID ipId,
+      UUID networkId,
+      UUID diskId) {
+    super(common);
+    this.vmName = vmName;
+    this.region = region;
+    this.vmImageUri = vmImageUri;
+    this.vmSize = vmSize;
+    this.ipId = ipId;
+    this.networkId = networkId;
+    this.diskId = diskId;
     validate();
   }
 
   /** {@inheritDoc} */
   @Override
-  public Optional<UniquenessCheckAttributes> getUniquenessCheckParameters() {
+  @SuppressWarnings("unchecked")
+  public <T> T castByEnum(WsmResourceType expectedType) {
+    if (getResourceType() != expectedType) {
+      throw new BadRequestException(String.format("Resource is not a %s", expectedType));
+    }
+    return (T) this;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public Optional<UniquenessCheckAttributes> getUniquenessCheckAttributes() {
     return Optional.of(
         new UniquenessCheckAttributes()
             .uniquenessScope(UniquenessScope.WORKSPACE)
             .addParameter("vmName", getVmName()));
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void addCreateSteps(
+      CreateControlledResourceFlight flight,
+      String petSaEmail,
+      AuthenticatedUserRequest userRequest,
+      FlightBeanBag flightBeanBag) {
+    RetryRule cloudRetry = RetryRules.cloud();
+    flight.addStep(
+        new GetAzureVmStep(flightBeanBag.getAzureConfig(), flightBeanBag.getCrlService(), this),
+        cloudRetry);
+    flight.addStep(
+        new CreateAzureVmStep(
+            flightBeanBag.getAzureConfig(),
+            flightBeanBag.getCrlService(),
+            this,
+            flightBeanBag.getResourceDao()),
+        cloudRetry);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void addDeleteSteps(DeleteControlledResourceFlight flight, FlightBeanBag flightBeanBag) {
+    flight.addStep(
+        new DeleteAzureVmStep(flightBeanBag.getAzureConfig(), flightBeanBag.getCrlService(), this),
+        RetryRules.cloud());
   }
 
   public String getVmName() {
@@ -214,9 +264,9 @@ public class ControlledAzureVmResource extends ControlledResource {
       throw new MissingRequiredFieldException(
           "Missing required diskId field for ControlledAzureVm.");
     }
-    ValidationUtils.validateAzureIPorSubnetName(getVmName());
-    ValidationUtils.validateAzureVmSize(getVmSize());
-    ValidationUtils.validateRegion(getRegion());
+    ResourceValidationUtils.validateAzureIPorSubnetName(getVmName());
+    ResourceValidationUtils.validateAzureVmSize(getVmSize());
+    ResourceValidationUtils.validateRegion(getRegion());
   }
 
   @Override
@@ -242,17 +292,7 @@ public class ControlledAzureVmResource extends ControlledResource {
   }
 
   public static class Builder {
-    private UUID workspaceId;
-    private UUID resourceId;
-    private String name;
-    private String description;
-    private CloningInstructions cloningInstructions;
-    private String assignedUser;
-    // Default value is NOT_APPLICABLE for shared resources and INITIALIZING for private resources.
-    @Nullable private PrivateResourceState privateResourceState;
-    private AccessScopeType accessScope;
-    private ManagedByType managedBy;
-    private UUID applicationId;
+    private ControlledResourceFields common;
     private String vmName;
     private String region;
     private String vmSize;
@@ -261,29 +301,8 @@ public class ControlledAzureVmResource extends ControlledResource {
     private UUID networkId;
     private UUID diskId;
 
-    public ControlledAzureVmResource.Builder workspaceId(UUID workspaceId) {
-      this.workspaceId = workspaceId;
-      return this;
-    }
-
-    public ControlledAzureVmResource.Builder resourceId(UUID resourceId) {
-      this.resourceId = resourceId;
-      return this;
-    }
-
-    public ControlledAzureVmResource.Builder name(String name) {
-      this.name = name;
-      return this;
-    }
-
-    public ControlledAzureVmResource.Builder description(String description) {
-      this.description = description;
-      return this;
-    }
-
-    public ControlledAzureVmResource.Builder cloningInstructions(
-        CloningInstructions cloningInstructions) {
-      this.cloningInstructions = cloningInstructions;
+    public Builder common(ControlledResourceFields common) {
+      this.common = common;
       return this;
     }
 
@@ -322,57 +341,9 @@ public class ControlledAzureVmResource extends ControlledResource {
       return this;
     }
 
-    public ControlledAzureVmResource.Builder assignedUser(String assignedUser) {
-      this.assignedUser = assignedUser;
-      return this;
-    }
-
-    public ControlledAzureVmResource.Builder privateResourceState(
-        PrivateResourceState privateResourceState) {
-      this.privateResourceState = privateResourceState;
-      return this;
-    }
-
-    private PrivateResourceState defaultPrivateResourceState() {
-      return this.accessScope == AccessScopeType.ACCESS_SCOPE_PRIVATE
-          ? PrivateResourceState.INITIALIZING
-          : PrivateResourceState.NOT_APPLICABLE;
-    }
-
-    public ControlledAzureVmResource.Builder accessScope(AccessScopeType accessScope) {
-      this.accessScope = accessScope;
-      return this;
-    }
-
-    public ControlledAzureVmResource.Builder managedBy(ManagedByType managedBy) {
-      this.managedBy = managedBy;
-      return this;
-    }
-
-    public ControlledAzureVmResource.Builder applicationId(UUID applicationId) {
-      this.applicationId = applicationId;
-      return this;
-    }
-
     public ControlledAzureVmResource build() {
       return new ControlledAzureVmResource(
-          workspaceId,
-          resourceId,
-          name,
-          description,
-          cloningInstructions,
-          assignedUser,
-          Optional.ofNullable(privateResourceState).orElse(defaultPrivateResourceState()),
-          accessScope,
-          managedBy,
-          applicationId,
-          vmName,
-          region,
-          vmSize,
-          vmImageUri,
-          ipId,
-          networkId,
-          diskId);
+          common, vmName, region, vmSize, vmImageUri, ipId, networkId, diskId);
     }
   }
 }

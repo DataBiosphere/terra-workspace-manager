@@ -21,7 +21,8 @@ import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceContainerImag
 import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceCreationParameters;
 import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceVmImage;
 import bio.terra.workspace.service.crl.CrlService;
-import bio.terra.workspace.service.workspace.GcpCloudContextService;
+import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
+import bio.terra.workspace.service.workspace.model.GcpCloudContext;
 import com.google.api.client.googleapis.json.GoogleJsonResponseException;
 import com.google.api.services.notebooks.v1.model.AcceleratorConfig;
 import com.google.api.services.notebooks.v1.model.ContainerImage;
@@ -29,9 +30,11 @@ import com.google.api.services.notebooks.v1.model.Instance;
 import com.google.api.services.notebooks.v1.model.Operation;
 import com.google.api.services.notebooks.v1.model.VmImage;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.ImmutableList;
 import java.io.IOException;
 import java.time.Duration;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import org.slf4j.Logger;
@@ -54,27 +57,35 @@ public class CreateAiNotebookInstanceStep implements Step {
   // git secrets gets a false positive if 'service_account' is double quoted.
   private static final String PROXY_MODE_SA_VALUE = "service_" + "account";
 
+  /**
+   * Service account for the notebook instance needs to contain these scopes to interact with SAM.
+   */
+  private static final List<String> SERVICE_ACCOUNT_SCOPES =
+      ImmutableList.of(
+          "https://www.googleapis.com/auth/cloud-platform",
+          "https://www.googleapis.com/auth/userinfo.email",
+          "https://www.googleapis.com/auth/userinfo.profile");
+
   private final Logger logger = LoggerFactory.getLogger(CreateAiNotebookInstanceStep.class);
   private final ControlledAiNotebookInstanceResource resource;
   private final String petEmail;
   private final CrlService crlService;
-  private final GcpCloudContextService gcpCloudContextService;
 
   public CreateAiNotebookInstanceStep(
-      ControlledAiNotebookInstanceResource resource,
-      String petEmail,
-      CrlService crlService,
-      GcpCloudContextService gcpCloudContextService) {
+      ControlledAiNotebookInstanceResource resource, String petEmail, CrlService crlService) {
     this.petEmail = petEmail;
     this.resource = resource;
     this.crlService = crlService;
-    this.gcpCloudContextService = gcpCloudContextService;
   }
 
   @Override
   public StepResult doStep(FlightContext flightContext)
       throws InterruptedException, RetryException {
-    String projectId = gcpCloudContextService.getRequiredGcpProject(resource.getWorkspaceId());
+    final GcpCloudContext gcpCloudContext =
+        flightContext
+            .getWorkingMap()
+            .get(ControlledResourceKeys.GCP_CLOUD_CONTEXT, GcpCloudContext.class);
+    String projectId = gcpCloudContext.getGcpProjectId();
     InstanceName instanceName = resource.toInstanceName(projectId);
     Instance instance = createInstanceModel(flightContext, projectId, petEmail);
 
@@ -145,6 +156,7 @@ public class CreateAiNotebookInstanceStep implements Step {
     }
     instance.setMetadata(metadata);
     instance.setServiceAccount(serviceAccountEmail);
+    instance.setServiceAccountScopes(SERVICE_ACCOUNT_SCOPES);
 
     ApiGcpAiNotebookInstanceAcceleratorConfig acceleratorConfig =
         creationParameters.getAcceleratorConfig();
@@ -184,8 +196,11 @@ public class CreateAiNotebookInstanceStep implements Step {
 
   @Override
   public StepResult undoStep(FlightContext flightContext) throws InterruptedException {
-    String projectId = gcpCloudContextService.getRequiredGcpProject(resource.getWorkspaceId());
-    InstanceName instanceName = resource.toInstanceName(projectId);
+    final GcpCloudContext gcpCloudContext =
+        flightContext
+            .getWorkingMap()
+            .get(ControlledResourceKeys.GCP_CLOUD_CONTEXT, GcpCloudContext.class);
+    InstanceName instanceName = resource.toInstanceName(gcpCloudContext.getGcpProjectId());
 
     AIPlatformNotebooksCow notebooks = crlService.getAIPlatformNotebooksCow();
     try {

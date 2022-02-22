@@ -21,6 +21,7 @@ import bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook.Cont
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.bqdataset.ControlledBigQueryDatasetResource;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.ControlledGcsBucketResource;
 import bio.terra.workspace.service.resource.controlled.model.AccessScopeType;
+import bio.terra.workspace.service.resource.controlled.model.ControlledResourceFields;
 import bio.terra.workspace.service.resource.controlled.model.ManagedByType;
 import bio.terra.workspace.service.resource.controlled.model.PrivateResourceState;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
@@ -223,14 +224,17 @@ public class MakeApiResourceDescriptionTest extends BaseUnitTest {
 
       var resource =
           ControlledAiNotebookInstanceResource.builder()
-              .workspaceId(workspaceId)
-              .resourceId(resourceId)
-              .name(resourceName)
-              .description(description)
-              .cloningInstructions(cloning)
-              .assignedUser(assignedUser)
-              .accessScope(accessScopeType)
-              .managedBy(managedByType)
+              .common(
+                  ControlledResourceFields.builder()
+                      .workspaceId(workspaceId)
+                      .resourceId(resourceId)
+                      .name(resourceName)
+                      .description(description)
+                      .cloningInstructions(cloning)
+                      .assignedUser(assignedUser)
+                      .accessScope(accessScopeType)
+                      .managedBy(managedByType)
+                      .build())
               .location("us-east1-b")
               .instanceId(instanceId)
               .projectId("my-project-id")

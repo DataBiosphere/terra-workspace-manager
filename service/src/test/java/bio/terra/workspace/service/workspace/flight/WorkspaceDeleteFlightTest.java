@@ -19,7 +19,7 @@ import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceService;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.bqdataset.ControlledBigQueryDatasetResource;
-import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
+import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import java.time.Duration;
@@ -49,18 +49,21 @@ public class WorkspaceDeleteFlightTest extends BaseConnectedTest {
     AuthenticatedUserRequest userRequest = userAccessUtils.defaultUserAuthRequest();
     Workspace workspace = connectedTestUtils.createWorkspaceWithGcpContext(userRequest);
     ControlledBigQueryDatasetResource dataset =
-        ControlledResourceFixtures.makeDefaultControlledBigQueryDatasetResource()
-            .workspaceId(workspace.getWorkspaceId())
+        ControlledResourceFixtures.makeDefaultControlledBigQueryBuilder(workspace.getWorkspaceId())
             .build();
+
     var creationParameters =
         ControlledResourceFixtures.defaultBigQueryDatasetCreationParameters()
             .datasetId(dataset.getDatasetName());
-    controlledResourceService.createBigQueryDataset(dataset, creationParameters, null, userRequest);
+    controlledResourceService
+        .createControlledResourceSync(dataset, null, userRequest, creationParameters)
+        .castByEnum(WsmResourceType.CONTROLLED_GCP_BIG_QUERY_DATASET);
 
-    ControlledResource gotResource =
-        controlledResourceService.getControlledResource(
-            workspace.getWorkspaceId(), dataset.getResourceId(), userRequest);
-    assertEquals(dataset, gotResource.castToBigQueryDatasetResource());
+    ControlledBigQueryDatasetResource gotResource =
+        controlledResourceService
+            .getControlledResource(workspace.getWorkspaceId(), dataset.getResourceId(), userRequest)
+            .castByEnum(WsmResourceType.CONTROLLED_GCP_BIG_QUERY_DATASET);
+    assertEquals(dataset, gotResource);
 
     // Run the delete flight, retrying every step once
     FlightMap deleteParameters = new FlightMap();
@@ -105,18 +108,20 @@ public class WorkspaceDeleteFlightTest extends BaseConnectedTest {
     AuthenticatedUserRequest userRequest = userAccessUtils.defaultUserAuthRequest();
     Workspace workspace = connectedTestUtils.createWorkspaceWithGcpContext(userRequest);
     ControlledBigQueryDatasetResource dataset =
-        ControlledResourceFixtures.makeDefaultControlledBigQueryDatasetResource()
-            .workspaceId(workspace.getWorkspaceId())
+        ControlledResourceFixtures.makeDefaultControlledBigQueryBuilder(workspace.getWorkspaceId())
             .build();
     var creationParameters =
         ControlledResourceFixtures.defaultBigQueryDatasetCreationParameters()
             .datasetId(dataset.getDatasetName());
-    controlledResourceService.createBigQueryDataset(dataset, creationParameters, null, userRequest);
+    controlledResourceService
+        .createControlledResourceSync(dataset, null, userRequest, creationParameters)
+        .castByEnum(WsmResourceType.CONTROLLED_GCP_BIG_QUERY_DATASET);
 
-    ControlledResource gotResource =
-        controlledResourceService.getControlledResource(
-            workspace.getWorkspaceId(), dataset.getResourceId(), userRequest);
-    assertEquals(dataset, gotResource.castToBigQueryDatasetResource());
+    ControlledBigQueryDatasetResource gotResource =
+        controlledResourceService
+            .getControlledResource(workspace.getWorkspaceId(), dataset.getResourceId(), userRequest)
+            .castByEnum(WsmResourceType.CONTROLLED_GCP_BIG_QUERY_DATASET);
+    assertEquals(dataset, gotResource);
 
     FlightMap deleteParameters = new FlightMap();
     deleteParameters.put(

@@ -2,24 +2,19 @@ package bio.terra.workspace.service.resource.controlled.model;
 
 import bio.terra.common.exception.InconsistentFieldsException;
 import bio.terra.common.exception.MissingRequiredFieldException;
+import bio.terra.workspace.common.utils.FlightBeanBag;
 import bio.terra.workspace.db.exception.InvalidMetadataException;
 import bio.terra.workspace.db.model.DbResource;
 import bio.terra.workspace.db.model.UniquenessCheckAttributes;
 import bio.terra.workspace.generated.model.ApiControlledResourceMetadata;
 import bio.terra.workspace.generated.model.ApiPrivateResourceUser;
 import bio.terra.workspace.generated.model.ApiResourceMetadata;
-import bio.terra.workspace.service.resource.controlled.cloud.azure.disk.ControlledAzureDiskResource;
-import bio.terra.workspace.service.resource.controlled.cloud.azure.ip.ControlledAzureIpResource;
-import bio.terra.workspace.service.resource.controlled.cloud.azure.network.ControlledAzureNetworkResource;
-import bio.terra.workspace.service.resource.controlled.cloud.azure.storage.ControlledAzureStorageResource;
-import bio.terra.workspace.service.resource.controlled.cloud.azure.vm.ControlledAzureVmResource;
-import bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook.ControlledAiNotebookInstanceResource;
-import bio.terra.workspace.service.resource.controlled.cloud.gcp.bqdataset.ControlledBigQueryDatasetResource;
-import bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.ControlledGcsBucketResource;
+import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
+import bio.terra.workspace.service.resource.controlled.flight.create.CreateControlledResourceFlight;
+import bio.terra.workspace.service.resource.controlled.flight.delete.DeleteControlledResourceFlight;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.model.StewardshipType;
 import bio.terra.workspace.service.resource.model.WsmResource;
-import bio.terra.workspace.service.resource.model.WsmResourceType;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
@@ -61,10 +56,24 @@ public abstract class ControlledResource extends WsmResource {
       throw new InvalidMetadataException("Expected CONTROLLED");
     }
     this.assignedUser = dbResource.getAssignedUser().orElse(null);
-    this.accessScope = dbResource.getAccessScope().orElse(null);
-    this.managedBy = dbResource.getManagedBy().orElse(null);
+    this.accessScope = dbResource.getAccessScope();
+    this.managedBy = dbResource.getManagedBy();
     this.applicationId = dbResource.getApplicationId().orElse(null);
     this.privateResourceState = dbResource.getPrivateResourceState().orElse(null);
+  }
+
+  public ControlledResource(ControlledResourceFields builder) {
+    super(
+        builder.getWorkspaceId(),
+        builder.getResourceId(),
+        builder.getName(),
+        builder.getDescription(),
+        builder.getCloningInstructions());
+    this.assignedUser = builder.getAssignedUser();
+    this.accessScope = builder.getAccessScope();
+    this.managedBy = builder.getManagedBy();
+    this.applicationId = builder.getApplicationId();
+    this.privateResourceState = builder.getPrivateResourceState();
   }
 
   /**
@@ -74,7 +83,32 @@ public abstract class ControlledResource extends WsmResource {
    *
    * @return optional uniqueness description
    */
-  public abstract Optional<UniquenessCheckAttributes> getUniquenessCheckParameters();
+  public abstract Optional<UniquenessCheckAttributes> getUniquenessCheckAttributes();
+
+  /**
+   * The CreateControlledResourceFlight calls this method to populate the resource-specific steps to
+   * create the specific cloud resource.
+   *
+   * @param flight the create flight
+   * @param petSaEmail the pet SA to use for creation
+   * @param userRequest authenticated user
+   * @param flightBeanBag bean bag for finding Spring singletons
+   */
+  public abstract void addCreateSteps(
+      CreateControlledResourceFlight flight,
+      String petSaEmail,
+      AuthenticatedUserRequest userRequest,
+      FlightBeanBag flightBeanBag);
+
+  /**
+   * The DeleteControlledResourceFlight calls this method to populate the resource-specific step(s)
+   * to delete the specific cloud resource.
+   *
+   * @param flight the delete flight
+   * @param flightBeanBag bean bag for finding Spring singletons
+   */
+  public abstract void addDeleteSteps(
+      DeleteControlledResourceFlight flight, FlightBeanBag flightBeanBag);
 
   /**
    * If specified, the assigned user must be equal to the user making the request.
@@ -132,7 +166,8 @@ public abstract class ControlledResource extends WsmResource {
     if (getResourceType() == null
         || attributesToJson() == null
         || getAccessScope() == null
-        || getManagedBy() == null) {
+        || getManagedBy() == null
+        || getResourceId() == null) {
       throw new MissingRequiredFieldException("Missing required field for ControlledResource.");
     }
     if (getAssignedUser().isPresent() && getAccessScope() == AccessScopeType.ACCESS_SCOPE_SHARED) {
@@ -150,54 +185,6 @@ public abstract class ControlledResource extends WsmResource {
         && privateResourceState != PrivateResourceState.NOT_APPLICABLE) {
       throw new InconsistentFieldsException(
           "Private resource state must be NOT_APPLICABLE for all non-private resources.");
-    }
-  }
-
-  // Double-checked down casts when we need to re-specialize from a ControlledResource
-  public ControlledGcsBucketResource castToGcsBucketResource() {
-    validateSubclass(WsmResourceType.CONTROLLED_GCP_GCS_BUCKET);
-    return (ControlledGcsBucketResource) this;
-  }
-
-  public ControlledAzureIpResource castToAzureIpResource() {
-    validateSubclass(WsmResourceType.CONTROLLED_AZURE_IP);
-    return (ControlledAzureIpResource) this;
-  }
-
-  public ControlledAzureStorageResource castToAzureStorageResource() {
-    validateSubclass(WsmResourceType.CONTROLLED_AZURE_STORAGE_ACCOUNT);
-    return (ControlledAzureStorageResource) this;
-  }
-
-  public ControlledAzureDiskResource castToAzureDiskResource() {
-    validateSubclass(WsmResourceType.CONTROLLED_AZURE_DISK);
-    return (ControlledAzureDiskResource) this;
-  }
-
-  public ControlledAzureNetworkResource castToAzureNetworkResource() {
-    validateSubclass(WsmResourceType.CONTROLLED_AZURE_NETWORK);
-    return (ControlledAzureNetworkResource) this;
-  }
-
-  public ControlledAzureVmResource castToAzureVmResource() {
-    validateSubclass(WsmResourceType.CONTROLLED_AZURE_VM);
-    return (ControlledAzureVmResource) this;
-  }
-
-  public ControlledAiNotebookInstanceResource castToAiNotebookInstanceResource() {
-    validateSubclass(WsmResourceType.CONTROLLED_GCP_AI_NOTEBOOK_INSTANCE);
-    return (ControlledAiNotebookInstanceResource) this;
-  }
-
-  public ControlledBigQueryDatasetResource castToBigQueryDatasetResource() {
-    validateSubclass(WsmResourceType.CONTROLLED_GCP_BIG_QUERY_DATASET);
-    return (ControlledBigQueryDatasetResource) this;
-  }
-
-  private void validateSubclass(WsmResourceType expectedType) {
-    if (getResourceType() != expectedType) {
-      throw new InvalidMetadataException(
-          String.format("Expected %s, found %s", expectedType, getResourceType()));
     }
   }
 

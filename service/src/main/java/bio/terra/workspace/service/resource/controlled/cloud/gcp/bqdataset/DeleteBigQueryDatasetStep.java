@@ -7,7 +7,8 @@ import bio.terra.stairway.StepResult;
 import bio.terra.stairway.StepStatus;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.service.crl.CrlService;
-import bio.terra.workspace.service.workspace.GcpCloudContextService;
+import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
+import bio.terra.workspace.service.workspace.model.GcpCloudContext;
 import com.google.api.client.googleapis.json.GoogleJsonResponseException;
 import java.io.IOException;
 import org.apache.http.HttpStatus;
@@ -22,23 +23,24 @@ public class DeleteBigQueryDatasetStep implements Step {
 
   private final ControlledBigQueryDatasetResource resource;
   private final CrlService crlService;
-  private final GcpCloudContextService gcpCloudContextService;
 
   private final Logger logger = LoggerFactory.getLogger(DeleteBigQueryDatasetStep.class);
 
   public DeleteBigQueryDatasetStep(
-      ControlledBigQueryDatasetResource resource,
-      CrlService crlService,
-      GcpCloudContextService gcpCloudContextService) {
+      ControlledBigQueryDatasetResource resource, CrlService crlService) {
     this.resource = resource;
     this.crlService = crlService;
-    this.gcpCloudContextService = gcpCloudContextService;
   }
 
   @Override
   public StepResult doStep(FlightContext flightContext)
       throws InterruptedException, RetryException {
-    String projectId = gcpCloudContextService.getRequiredGcpProject(resource.getWorkspaceId());
+    final GcpCloudContext gcpCloudContext =
+        flightContext
+            .getWorkingMap()
+            .get(ControlledResourceKeys.GCP_CLOUD_CONTEXT, GcpCloudContext.class);
+    String projectId = gcpCloudContext.getGcpProjectId();
+
     BigQueryCow bqCow = crlService.createWsmSaBigQueryCow();
     try {
       // With deleteContents set to true, this will delete the dataset even if it still has tables.
@@ -64,10 +66,10 @@ public class DeleteBigQueryDatasetStep implements Step {
   @Override
   public StepResult undoStep(FlightContext flightContext) throws InterruptedException {
     // Deletes cannot be undone, so we log a warning and continue the flight.
-    String projectId = gcpCloudContextService.getRequiredGcpProject(resource.getWorkspaceId());
-
     logger.error(
-        "Cannot undo delete of BQ dataset {} in project {}.", resource.getDatasetName(), projectId);
+        "Cannot undo delete of BQ dataset {} in workspace {}.",
+        resource.getDatasetName(),
+        resource.getWorkspaceId());
     // Surface whatever error caused Stairway to begin undoing.
     return flightContext.getResult();
   }

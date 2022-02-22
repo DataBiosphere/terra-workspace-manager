@@ -1,60 +1,35 @@
 package bio.terra.workspace.service.resource.controlled.flight.create;
 
 import bio.terra.stairway.FlightContext;
-import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.exception.RetryException;
-import bio.terra.workspace.db.exception.InvalidMetadataException;
+import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.service.job.JobMapKeys;
-import bio.terra.workspace.service.resource.controlled.model.AccessScopeType;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
-import bio.terra.workspace.service.resource.controlled.model.PrivateResourceState;
+import bio.terra.workspace.service.resource.model.WsmResource;
 
 public class SetCreateResponseStep implements Step {
   private final ControlledResource resource;
+  private final ResourceDao resourceDao;
 
-  public SetCreateResponseStep(ControlledResource resource) {
+  /**
+   * This step retrieves the created resource from the database and returns it as the response.
+   *
+   * @param resource resource being created
+   * @param resourceDao DAO for lookup
+   */
+  public SetCreateResponseStep(ControlledResource resource, ResourceDao resourceDao) {
     this.resource = resource;
+    this.resourceDao = resourceDao;
   }
 
   @Override
   public StepResult doStep(FlightContext flightContext)
       throws InterruptedException, RetryException {
-
-    // Return the input resource as the response; it is filled in properly on the request,
-    // so has all the right data except the private resource state, if relevant. And if we have made
-    // it this far, we have made the request contents true.
-    FlightMap workingMap = flightContext.getWorkingMap();
-    ControlledResource responseResource;
-    if (resource.getAccessScope() == AccessScopeType.ACCESS_SCOPE_PRIVATE) {
-      switch (resource.getResourceType()) {
-        case CONTROLLED_GCP_GCS_BUCKET:
-          responseResource =
-              resource.castToGcsBucketResource().toBuilder()
-                  .privateResourceState(PrivateResourceState.ACTIVE)
-                  .build();
-          break;
-        case CONTROLLED_GCP_BIG_QUERY_DATASET:
-          responseResource =
-              resource.castToBigQueryDatasetResource().toBuilder()
-                  .privateResourceState(PrivateResourceState.ACTIVE)
-                  .build();
-          break;
-        case CONTROLLED_GCP_AI_NOTEBOOK_INSTANCE:
-          responseResource =
-              resource.castToAiNotebookInstanceResource().toBuilder()
-                  .privateResourceState(PrivateResourceState.ACTIVE)
-                  .build();
-          break;
-        default:
-          throw new InvalidMetadataException(
-              "Unknown controlled resource type " + resource.getResourceType());
-      }
-    } else {
-      responseResource = resource;
-    }
-    workingMap.put(JobMapKeys.RESPONSE.getKeyName(), responseResource);
+    WsmResource responseResource =
+        resourceDao.getResource(resource.getWorkspaceId(), resource.getResourceId());
+    flightContext.getWorkingMap().put(JobMapKeys.RESPONSE.getKeyName(), responseResource);
     return StepResult.getStepResultSuccess();
   }
 

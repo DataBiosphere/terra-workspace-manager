@@ -5,11 +5,10 @@ import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.StepStatus;
 import bio.terra.workspace.app.configuration.external.AzureConfiguration;
-import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.service.crl.CrlService;
+import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import bio.terra.workspace.service.workspace.model.AzureCloudContext;
 import com.azure.resourcemanager.compute.ComputeManager;
-import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -20,32 +19,22 @@ import org.slf4j.LoggerFactory;
 public class DeleteAzureDiskStep implements Step {
   private static final Logger logger = LoggerFactory.getLogger(DeleteAzureDiskStep.class);
   private final AzureConfiguration azureConfig;
-  private final ResourceDao resourceDao;
   private final CrlService crlService;
-  private final AzureCloudContext azureCloudContext;
-
-  private final UUID workspaceId;
-  private final UUID resourceId;
+  private final ControlledAzureDiskResource resource;
 
   public DeleteAzureDiskStep(
-      AzureConfiguration azureConfig,
-      AzureCloudContext azureCloudContext,
-      CrlService crlService,
-      ResourceDao resourceDao,
-      UUID workspaceId,
-      UUID resourceId) {
+      AzureConfiguration azureConfig, CrlService crlService, ControlledAzureDiskResource resource) {
     this.crlService = crlService;
-    this.resourceDao = resourceDao;
-    this.azureCloudContext = azureCloudContext;
     this.azureConfig = azureConfig;
-    this.workspaceId = workspaceId;
-    this.resourceId = resourceId;
+    this.resource = resource;
   }
 
   @Override
   public StepResult doStep(FlightContext context) throws InterruptedException {
-    var wsmResource = resourceDao.getResource(workspaceId, resourceId);
-    var disk = wsmResource.castToControlledResource().castToAzureDiskResource();
+    final AzureCloudContext azureCloudContext =
+        context
+            .getWorkingMap()
+            .get(ControlledResourceKeys.AZURE_CLOUD_CONTEXT, AzureCloudContext.class);
 
     ComputeManager computeManager = crlService.getComputeManager(azureCloudContext, azureConfig);
     var azureResourceId =
@@ -53,7 +42,7 @@ public class DeleteAzureDiskStep implements Step {
             "/subscriptions/%s/resourceGroups/%s/providers/Microsoft.Compute/disks/%s",
             azureCloudContext.getAzureSubscriptionId(),
             azureCloudContext.getAzureResourceGroupId(),
-            disk.getDiskName());
+            resource.getDiskName());
     try {
       logger.info("Attempting to delete disk " + azureResourceId);
 
@@ -68,8 +57,9 @@ public class DeleteAzureDiskStep implements Step {
   @Override
   public StepResult undoStep(FlightContext flightContext) throws InterruptedException {
     logger.error(
-        "Cannot undo delete of Azure disk resource {} in workspace {}.", resourceId, workspaceId);
-    // Surface whatever error caused Stairway to begin undoing.
+        "Cannot undo delete of Azure disk resource {} in workspace {}.",
+        resource.getResourceId(),
+        resource.getWorkspaceId());
     return flightContext.getResult();
   }
 }
