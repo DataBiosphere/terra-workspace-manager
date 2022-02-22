@@ -59,13 +59,14 @@ if [[ -n "${TERRA_SERVER}" ]]; then
   sudo -u "${JUPYTER_USER}" sh -c "terra server set --name=${TERRA_SERVER}"
 fi
 
-sudo -u "${JUPYTER_USER}" sh -c "terra auth login --mode=APP_DEFAULT_CREDENTIALS"
-
 # Set the CLI terra workspace id using the VM metadata, if set.
 readonly TERRA_WORKSPACE=$(get_metadata_value "instance/attributes/terra-workspace-id")
 if [[ -n "${TERRA_WORKSPACE}" ]]; then
-  sudo -u "${JUPYTER_USER}" sh -c "terra workspace set --id=${TERRA_WORKSPACE}"
+  sudo -u "${JUPYTER_USER}" sh -c "terra workspace set --id=${TERRA_WORKSPACE} --defer-login"
 fi
+
+# Log in with app-default-credentials
+sudo -u "${JUPYTER_USER}" sh -c "terra auth login --mode=APP_DEFAULT_CREDENTIALS"
 
 sudo -u "${JUPYTER_USER}" sh -c "terra resource list --type=GIT_REPO" | awk '{print $1}' | while read line; do
   sudo -u "${JUPYTER_USER}" sh -c "terra resource describe --name=$line" | awk '/Git repo Url/ {print $4}'
