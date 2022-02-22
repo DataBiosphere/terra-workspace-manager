@@ -23,6 +23,7 @@ project.ext {
     includeDir = "$projectDir/gradle"
     openapiOutputDir = "${buildDir}/openapi"
     resourceDir = "${projectDir}/src/main/resources"
+    implementation platform('bio.terra.cloud-resource-lib:platform:0.6.0')
     // where to place the Cloud Profiler agent in the container
     cloudProfilerLocation = "/opt/cprof"
 

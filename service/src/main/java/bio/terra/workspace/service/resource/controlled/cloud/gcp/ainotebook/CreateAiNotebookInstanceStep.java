@@ -30,9 +30,11 @@ import com.google.api.services.notebooks.v1.model.Instance;
 import com.google.api.services.notebooks.v1.model.Operation;
 import com.google.api.services.notebooks.v1.model.VmImage;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.ImmutableList;
 import java.io.IOException;
 import java.time.Duration;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import org.slf4j.Logger;
@@ -54,6 +56,15 @@ public class CreateAiNotebookInstanceStep implements Step {
   /** The Notebook instance metadata value used to set the service account proxy mode. */
   // git secrets gets a false positive if 'service_account' is double quoted.
   private static final String PROXY_MODE_SA_VALUE = "service_" + "account";
+
+  /**
+   * Service account for the notebook instance needs to contain these scopes to interact with SAM.
+   */
+  private static final List<String> SERVICE_ACCOUNT_SCOPES =
+      ImmutableList.of(
+          "https://www.googleapis.com/auth/cloud-platform",
+          "https://www.googleapis.com/auth/userinfo.email",
+          "https://www.googleapis.com/auth/userinfo.profile");
 
   private final Logger logger = LoggerFactory.getLogger(CreateAiNotebookInstanceStep.class);
   private final ControlledAiNotebookInstanceResource resource;
@@ -145,6 +156,7 @@ public class CreateAiNotebookInstanceStep implements Step {
     }
     instance.setMetadata(metadata);
     instance.setServiceAccount(serviceAccountEmail);
+    instance.setServiceAccountScopes(SERVICE_ACCOUNT_SCOPES);
 
     ApiGcpAiNotebookInstanceAcceleratorConfig acceleratorConfig =
         creationParameters.getAcceleratorConfig();

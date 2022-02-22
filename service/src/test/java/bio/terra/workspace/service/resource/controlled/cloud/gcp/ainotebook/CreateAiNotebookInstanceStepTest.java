@@ -12,11 +12,20 @@ import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceContainerImag
 import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceCreationParameters;
 import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceVmImage;
 import com.google.api.services.notebooks.v1.model.Instance;
+import com.google.common.collect.ImmutableList;
+import java.util.List;
 import java.util.Map;
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.Test;
 
 public class CreateAiNotebookInstanceStepTest extends BaseUnitTest {
+
+  private List<String> sa_scopes =
+      ImmutableList.of(
+          "https://www.googleapis.com/auth/cloud-platform",
+          "https://www.googleapis.com/auth/userinfo.email",
+          "https://www.googleapis.com/auth/userinfo.profile");
+
   @Test
   public void setFields() {
     var creationParameters =
@@ -56,6 +65,7 @@ public class CreateAiNotebookInstanceStepTest extends BaseUnitTest {
     assertThat(instance.getMetadata(), Matchers.hasEntry("proxy-mode", "service_" + "account"));
     assertThat(instance.getMetadata(), Matchers.hasEntry("metadata-key", "metadata-value"));
     assertEquals("foo@bar.com", instance.getServiceAccount());
+    assertEquals(sa_scopes, instance.getServiceAccountScopes());
     assertEquals(4L, instance.getAcceleratorConfig().getCoreCount());
     assertEquals("accelerator-type", instance.getAcceleratorConfig().getType());
     assertEquals("project-id", instance.getVmImage().getProject());
@@ -73,6 +83,7 @@ public class CreateAiNotebookInstanceStepTest extends BaseUnitTest {
     assertThat(instance.getMetadata(), Matchers.aMapWithSize(1));
     assertThat(instance.getMetadata(), Matchers.hasEntry("proxy-mode", "service_" + "account"));
     assertEquals("foo@bar.com", instance.getServiceAccount());
+    assertEquals(sa_scopes, instance.getServiceAccountScopes());
     assertEquals(DEFAULT_POST_STARTUP_SCRIPT, instance.getPostStartupScript());
   }
 
