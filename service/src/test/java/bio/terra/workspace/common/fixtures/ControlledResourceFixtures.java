@@ -232,10 +232,9 @@ public class ControlledResourceFixtures {
         RESOURCE_DESCRIPTION,
         CLONING_INSTRUCTIONS,
         OWNER_EMAIL,
-        // TODO: these should be changed when we group the resources
         PrivateResourceState.ACTIVE,
         AccessScopeType.ACCESS_SCOPE_PRIVATE,
-        ManagedByType.MANAGED_BY_USER,
+        ManagedByType.MANAGED_BY_APPLICATION,
         null,
             namespaceName,
         region);
