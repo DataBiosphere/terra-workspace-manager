@@ -11,7 +11,9 @@ import bio.terra.workspace.model.GcpBigQueryDataTableAttributes;
 import bio.terra.workspace.model.GcpBigQueryDatasetResource;
 import bio.terra.workspace.model.UpdateBigQueryDataTableReferenceRequestBody;
 import com.google.cloud.bigquery.BigQuery;
+import com.google.cloud.bigquery.JobInfo.WriteDisposition;
 import com.google.cloud.bigquery.QueryJobConfiguration;
+import com.google.cloud.bigquery.TableId;
 import com.google.cloud.bigquery.TableResult;
 import java.io.IOException;
 import java.util.UUID;
@@ -65,6 +67,9 @@ public class BqDataTableUtils {
       throws IOException, InterruptedException {
 
     final BigQuery bigQueryClient = ClientTestUtils.getGcpBigQueryClient(user, projectId);
+    final TableId resultTableId =
+        TableId.of(
+            projectId, dataset.getAttributes().getDatasetId(), BqDatasetUtils.BQ_RESULT_TABLE_NAME);
     final TableResult employeeTableResult =
         bigQueryClient.query(
             QueryJobConfiguration.newBuilder(
@@ -73,6 +78,8 @@ public class BqDataTableUtils {
                         + "."
                         + dataset.getAttributes().getDatasetId()
                         + ".employee`;")
+                .setDestinationTable(resultTableId)
+                .setWriteDisposition(WriteDisposition.WRITE_TRUNCATE)
                 .build());
     final long numRows =
         StreamSupport.stream(employeeTableResult.getValues().spliterator(), false).count();

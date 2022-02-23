@@ -26,6 +26,7 @@ import bio.terra.workspace.model.UpdateBigQueryDatasetReferenceRequestBody;
 import com.google.cloud.bigquery.BigQuery;
 import com.google.cloud.bigquery.Field;
 import com.google.cloud.bigquery.InsertAllRequest;
+import com.google.cloud.bigquery.JobInfo.WriteDisposition;
 import com.google.cloud.bigquery.LegacySQLTypeName;
 import com.google.cloud.bigquery.QueryJobConfiguration;
 import com.google.cloud.bigquery.Schema;
@@ -52,6 +53,7 @@ public class BqDatasetUtils {
   private static final Logger logger = LoggerFactory.getLogger(BqDatasetUtils.class);
 
   public static final String BQ_EMPLOYEE_TABLE_NAME = "employee";
+  public static final String BQ_RESULT_TABLE_NAME = "results";
   /**
    * Calls WSM to create a referenced BigQuery dataset in the specified workspace.
    *
@@ -227,11 +229,14 @@ public class BqDatasetUtils {
   }
 
   /**
-   * Create two tables with multiple rows in them into the provided dataset. Uses a mixture of
+   * Create three tables with multiple rows in them into the provided dataset. Uses a mixture of
    * streaming and DDL insertion to demonstrate the difference in copy job behavior.
    *
    * <p>This method retries on all GCP exceptions, do not use it for the negative case (where you do
    * not expect a user to be able to create tables in a dataset).
+   *
+   * <p>This method also creates a result table to avoid Domain Restricted Sharing conflicts created
+   * by temporary result table IAM.
    *
    * @param dataset - empty BigQuery dataset
    * @param ownerUser - User who owns the dataset
@@ -274,6 +279,11 @@ public class BqDatasetUtils {
                 .setFriendlyName("Department")
                 .build());
     logger.debug("Department Table: {}", createdDepartmentTable);
+
+    // Table to hold results. Queries can create this table or clobber the existing table contents
+    // as needed.
+    final TableId resultTableId =
+        TableId.of(projectId, dataset.getAttributes().getDatasetId(), BQ_RESULT_TABLE_NAME);
 
     // Add rows to the tables
 
@@ -319,6 +329,8 @@ public class BqDatasetUtils {
                         + "."
                         + BQ_EMPLOYEE_TABLE_NAME
                         + "`;")
+                .setDestinationTable(resultTableId)
+                .setWriteDisposition(WriteDisposition.WRITE_TRUNCATE)
                 .build());
     final long numRows =
         StreamSupport.stream(employeeTableResult.getValues().spliterator(), false).count();
