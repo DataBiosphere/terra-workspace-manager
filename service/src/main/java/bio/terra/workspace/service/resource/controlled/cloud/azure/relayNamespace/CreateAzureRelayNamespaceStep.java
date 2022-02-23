@@ -18,7 +18,10 @@ import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/** Creates an Azure RelayNamespace address. Designed to run directly after {@link GetAzureRelayNamespaceStep}. */
+/**
+ * Creates an Azure RelayNamespace address. Designed to run directly after {@link
+ * GetAzureRelayNamespaceStep}.
+ */
 public class CreateAzureRelayNamespaceStep implements Step {
 
   private static final Logger logger = LoggerFactory.getLogger(CreateAzureRelayNamespaceStep.class);
@@ -27,7 +30,9 @@ public class CreateAzureRelayNamespaceStep implements Step {
   private final ControlledAzureRelayNamespaceResource resource;
 
   public CreateAzureRelayNamespaceStep(
-      AzureConfiguration azureConfig, CrlService crlService, ControlledAzureRelayNamespaceResource resource) {
+      AzureConfiguration azureConfig,
+      CrlService crlService,
+      ControlledAzureRelayNamespaceResource resource) {
     this.azureConfig = azureConfig;
     this.crlService = crlService;
     this.resource = resource;
@@ -85,7 +90,8 @@ public class CreateAzureRelayNamespaceStep implements Step {
     try {
       manager
           .namespaces()
-          .deleteByResourceGroup(azureCloudContext.getAzureResourceGroupId(), resource.getNamespaceName());
+          .deleteByResourceGroup(
+              azureCloudContext.getAzureResourceGroupId(), resource.getNamespaceName());
     } catch (ManagementException e) {
       // Stairway steps may run multiple times, so we may already have deleted this resource.
       if (StringUtils.equals(e.getValue().getCode(), "ResourceNotFound")) {

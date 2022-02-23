@@ -1,5 +1,13 @@
 package bio.terra.workspace.service.resource.controlled.cloud.azure.relayNamespace;
 
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.equalTo;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
 import bio.terra.cloudres.azure.resourcemanager.relay.data.CreateRelayRequestData;
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.FlightMap;
@@ -10,7 +18,6 @@ import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
 import bio.terra.workspace.generated.model.ApiAzureIpCreationParameters;
 import bio.terra.workspace.generated.model.ApiAzureRelayNamespaceCreationParameters;
 import bio.terra.workspace.service.crl.CrlService;
-import bio.terra.workspace.service.resource.controlled.cloud.azure.ip.CreateAzureIpStep;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import bio.terra.workspace.service.workspace.model.AzureCloudContext;
 import com.azure.core.management.Region;
@@ -20,21 +27,12 @@ import com.azure.core.util.Context;
 import com.azure.resourcemanager.relay.RelayManager;
 import com.azure.resourcemanager.relay.models.Namespaces;
 import com.azure.resourcemanager.relay.models.RelayNamespace;
+import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.springframework.test.context.ActiveProfiles;
-
-import java.util.Optional;
-
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.equalTo;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 
 @ActiveProfiles("azure")
 public class CreateAzureRelayNamespaceStepTest extends BaseAzureTest {
@@ -48,9 +46,9 @@ public class CreateAzureRelayNamespaceStepTest extends BaseAzureTest {
   @Mock private RelayManager mockRelayManager;
   @Mock private Namespaces mockNamespaces;
   @Mock private RelayNamespace.DefinitionStages.Blank mockStage1;
-  @Mock private RelayNamespace.DefinitionStages.WithResourceGroup  mockStage2;
-  @Mock private RelayNamespace.DefinitionStages.WithCreate   mockStage3;
-  @Mock private RelayNamespace  mockRelayNamespace;
+  @Mock private RelayNamespace.DefinitionStages.WithResourceGroup mockStage2;
+  @Mock private RelayNamespace.DefinitionStages.WithCreate mockStage3;
+  @Mock private RelayNamespace mockRelayNamespace;
   @Mock private ManagementException mockException;
   @Mock private FlightMap mockWorkingMap;
 
@@ -66,22 +64,21 @@ public class CreateAzureRelayNamespaceStepTest extends BaseAzureTest {
 
     when(mockAzureCloudContext.getAzureResourceGroupId()).thenReturn(STUB_STRING_RETURN);
     when(mockCrlService.getRelayManager(mockAzureCloudContext, mockAzureConfig))
-            .thenReturn(mockRelayManager);
+        .thenReturn(mockRelayManager);
     when(mockRelayManager.namespaces()).thenReturn(mockNamespaces);
     when(mockNamespaces.define(anyString())).thenReturn(mockStage1);
-    when(mockStage1.withRegion(anyString()))
-            .thenReturn(mockStage2);
+    when(mockStage1.withRegion(anyString())).thenReturn(mockStage2);
 
     when(mockStage2.withExistingResourceGroup(anyString())).thenReturn(mockStage3);
     when(mockStage3.create(any())).thenReturn(mockRelayNamespace);
 
     // Exception mock
     when(mockException.getValue())
-            .thenReturn(new ManagementError("Conflict", "Resource already exists."));
+        .thenReturn(new ManagementError("Conflict", "Resource already exists."));
 
     when(mockFlightContext.getWorkingMap()).thenReturn(mockWorkingMap);
     when(mockWorkingMap.get(ControlledResourceKeys.AZURE_CLOUD_CONTEXT, AzureCloudContext.class))
-            .thenReturn(mockAzureCloudContext);
+        .thenReturn(mockAzureCloudContext);
 
     // Deletion mocks
     doNothing().when(mockNamespaces).deleteByResourceGroup(anyString(), anyString());
@@ -123,7 +120,7 @@ public class CreateAzureRelayNamespaceStepTest extends BaseAzureTest {
             .findFirst();
 
     CreateRelayRequestData expected =
-            CreateRelayRequestData.builder()
+        CreateRelayRequestData.builder()
             .setName(creationParameters.getNamespaceName())
             .setRegion(Region.fromName(creationParameters.getRegion()))
             .setTenantId(mockAzureCloudContext.getAzureTenantId())

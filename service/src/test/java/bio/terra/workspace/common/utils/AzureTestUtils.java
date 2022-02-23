@@ -18,9 +18,8 @@ import bio.terra.workspace.service.workspace.model.OperationType;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
 import com.azure.resourcemanager.compute.ComputeManager;
-import java.util.UUID;
-
 import com.azure.resourcemanager.relay.RelayManager;
+import java.util.UUID;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;

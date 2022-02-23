@@ -42,11 +42,10 @@ import bio.terra.workspace.service.workspace.flight.create.azure.CreateAzureCont
 import com.azure.core.management.exception.ManagementException;
 import com.azure.resourcemanager.compute.ComputeManager;
 import com.azure.resourcemanager.compute.models.VirtualMachine;
+import com.azure.resourcemanager.relay.RelayManager;
 import java.time.Duration;
 import java.util.List;
 import java.util.UUID;
-
-import com.azure.resourcemanager.relay.RelayManager;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -146,17 +145,17 @@ public class CreateAndDeleteAzureControlledResourceFlightTest extends BaseAzureT
 
     final UUID resourceId = UUID.randomUUID();
     ControlledAzureRelayNamespaceResource resource =
-            ControlledAzureRelayNamespaceResource.builder()
-                    .common(
-                            ControlledResourceFields.builder()
-                                    .workspaceId(workspaceId)
-                                    .resourceId(resourceId)
-                                    .name(getAzureName("ip"))
-                                    .description(getAzureName("ip-desc"))
-                                    .cloningInstructions(CloningInstructions.COPY_RESOURCE)
-                                    .accessScope(AccessScopeType.fromApi(ApiAccessScope.SHARED_ACCESS))
-                                    .managedBy(ManagedByType.fromApi(ApiManagedBy.USER))
-                                    .build())
+        ControlledAzureRelayNamespaceResource.builder()
+            .common(
+                ControlledResourceFields.builder()
+                    .workspaceId(workspaceId)
+                    .resourceId(resourceId)
+                    .name(getAzureName("ip"))
+                    .description(getAzureName("ip-desc"))
+                    .cloningInstructions(CloningInstructions.COPY_RESOURCE)
+                    .accessScope(AccessScopeType.fromApi(ApiAccessScope.SHARED_ACCESS))
+                    .managedBy(ManagedByType.fromApi(ApiManagedBy.USER))
+                    .build())
             .namespaceName(creationParameters.getNamespaceName())
             .region(creationParameters.getRegion())
             .build();
@@ -186,19 +185,26 @@ public class CreateAndDeleteAzureControlledResourceFlightTest extends BaseAzureT
 
     // Submit a VM deletion flight.
     FlightState deleteFlightState =
-            StairwayTestUtils.blockUntilFlightCompletes(
-                    jobService.getStairway(),
-                    DeleteControlledResourceFlight.class,
-                    azureTestUtils.deleteControlledResourceInputParameters(
-                            workspaceId, resourceId, userRequest, resource),
-                    STAIRWAY_FLIGHT_TIMEOUT,
-                    null);
+        StairwayTestUtils.blockUntilFlightCompletes(
+            jobService.getStairway(),
+            DeleteControlledResourceFlight.class,
+            azureTestUtils.deleteControlledResourceInputParameters(
+                workspaceId, resourceId, userRequest, resource),
+            STAIRWAY_FLIGHT_TIMEOUT,
+            null);
     assertEquals(FlightStatus.SUCCESS, deleteFlightState.getFlightStatus());
 
     Thread.sleep(10000);
     RelayManager manager = azureTestUtils.getRelayManager();
-    ManagementException exception = assertThrows(ManagementException.class,
-            () -> manager.namespaces().getByResourceGroup(azureTestUtils.getAzureCloudContext().getAzureResourceGroupId(), resource.getNamespaceName()));
+    ManagementException exception =
+        assertThrows(
+            ManagementException.class,
+            () ->
+                manager
+                    .namespaces()
+                    .getByResourceGroup(
+                        azureTestUtils.getAzureCloudContext().getAzureResourceGroupId(),
+                        resource.getNamespaceName()));
     assertEquals("NotFound", exception.getValue().getCode());
   }
 

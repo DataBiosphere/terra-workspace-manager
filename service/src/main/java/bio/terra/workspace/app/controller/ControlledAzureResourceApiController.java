@@ -136,19 +136,19 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
 
     final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     ControlledResourceFields commonFields =
-            toCommonFields(
-            workspaceId, body.getCommon(), userRequest);
+        toCommonFields(workspaceId, body.getCommon(), userRequest);
 
     ControlledAzureRelayNamespaceResource resource =
-            ControlledAzureRelayNamespaceResource.builder()
+        ControlledAzureRelayNamespaceResource.builder()
             .common(commonFields)
             .namespaceName(body.getAzureRelayNamespace().getNamespaceName())
             .region(body.getAzureRelayNamespace().getRegion())
             .build();
 
     final ControlledAzureRelayNamespaceResource created =
-        controlledResourceService.createControlledResourceSync(
-            resource, commonFields.getIamRole(),  userRequest, body.getAzureRelayNamespace())
+        controlledResourceService
+            .createControlledResourceSync(
+                resource, commonFields.getIamRole(), userRequest, body.getAzureRelayNamespace())
             .castByEnum(WsmResourceType.CONTROLLED_AZURE_RELAY_NAMESPACE);
 
     var response =

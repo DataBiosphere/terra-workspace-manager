@@ -17,8 +17,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Gets an Azure RelayNamespace, and fails if it already exists. This step is designed to run immediately before
- * {@link CreateAzureRelayNamespaceStep} to ensure idempotency of the create operation.
+ * Gets an Azure RelayNamespace, and fails if it already exists. This step is designed to run
+ * immediately before {@link CreateAzureRelayNamespaceStep} to ensure idempotency of the create
+ * operation.
  */
 public class GetAzureRelayNamespaceStep implements Step {
 
@@ -28,7 +29,9 @@ public class GetAzureRelayNamespaceStep implements Step {
   private final ControlledAzureRelayNamespaceResource resource;
 
   public GetAzureRelayNamespaceStep(
-      AzureConfiguration azureConfig, CrlService crlService, ControlledAzureRelayNamespaceResource resource) {
+      AzureConfiguration azureConfig,
+      CrlService crlService,
+      ControlledAzureRelayNamespaceResource resource) {
     this.azureConfig = azureConfig;
     this.crlService = crlService;
     this.resource = resource;
@@ -44,7 +47,8 @@ public class GetAzureRelayNamespaceStep implements Step {
     try {
       manager
           .namespaces()
-          .getByResourceGroup(azureCloudContext.getAzureResourceGroupId(), resource.getNamespaceName());
+          .getByResourceGroup(
+              azureCloudContext.getAzureResourceGroupId(), resource.getNamespaceName());
       return new StepResult(
           StepStatus.STEP_RESULT_FAILURE_FATAL,
           new DuplicateResourceException(

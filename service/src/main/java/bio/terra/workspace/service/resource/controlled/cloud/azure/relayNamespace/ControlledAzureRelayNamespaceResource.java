@@ -7,16 +7,14 @@ import bio.terra.stairway.RetryRule;
 import bio.terra.workspace.common.utils.FlightBeanBag;
 import bio.terra.workspace.common.utils.RetryRules;
 import bio.terra.workspace.db.DbSerDes;
-import bio.terra.workspace.db.model.DbResource;
 import bio.terra.workspace.db.model.UniquenessCheckAttributes;
 import bio.terra.workspace.db.model.UniquenessCheckAttributes.UniquenessScope;
-import bio.terra.workspace.generated.model.ApiAzureRelayNamespaceResource;
 import bio.terra.workspace.generated.model.ApiAzureRelayNamespaceAttributes;
+import bio.terra.workspace.generated.model.ApiAzureRelayNamespaceResource;
 import bio.terra.workspace.generated.model.ApiResourceAttributesUnion;
 import bio.terra.workspace.generated.model.ApiResourceUnion;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.resource.ResourceValidationUtils;
-import bio.terra.workspace.service.resource.controlled.cloud.azure.ip.ControlledAzureIpResource;
 import bio.terra.workspace.service.resource.controlled.flight.create.CreateControlledResourceFlight;
 import bio.terra.workspace.service.resource.controlled.flight.delete.DeleteControlledResourceFlight;
 import bio.terra.workspace.service.resource.controlled.model.AccessScopeType;
@@ -30,8 +28,6 @@ import bio.terra.workspace.service.resource.model.WsmResourceFamily;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
-
-import javax.annotation.Nullable;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -70,7 +66,8 @@ public class ControlledAzureRelayNamespaceResource extends ControlledResource {
     validate();
   }
 
-  public ControlledAzureRelayNamespaceResource(ControlledResourceFields common, String namespaceName, String region) {
+  public ControlledAzureRelayNamespaceResource(
+      ControlledResourceFields common, String namespaceName, String region) {
     super(common);
     this.namespaceName = namespaceName;
     this.region = region;
@@ -109,10 +106,12 @@ public class ControlledAzureRelayNamespaceResource extends ControlledResource {
       FlightBeanBag flightBeanBag) {
     RetryRule cloudRetry = RetryRules.cloud();
     flight.addStep(
-        new GetAzureRelayNamespaceStep(flightBeanBag.getAzureConfig(), flightBeanBag.getCrlService(), this),
+        new GetAzureRelayNamespaceStep(
+            flightBeanBag.getAzureConfig(), flightBeanBag.getCrlService(), this),
         cloudRetry);
     flight.addStep(
-        new CreateAzureRelayNamespaceStep(flightBeanBag.getAzureConfig(), flightBeanBag.getCrlService(), this),
+        new CreateAzureRelayNamespaceStep(
+            flightBeanBag.getAzureConfig(), flightBeanBag.getCrlService(), this),
         cloudRetry);
   }
 
@@ -120,7 +119,8 @@ public class ControlledAzureRelayNamespaceResource extends ControlledResource {
   @Override
   public void addDeleteSteps(DeleteControlledResourceFlight flight, FlightBeanBag flightBeanBag) {
     flight.addStep(
-        new DeleteAzureRelayNamespaceStep(flightBeanBag.getAzureConfig(), flightBeanBag.getCrlService(), this),
+        new DeleteAzureRelayNamespaceStep(
+            flightBeanBag.getAzureConfig(), flightBeanBag.getCrlService(), this),
         RetryRules.cloud());
   }
 
@@ -133,11 +133,15 @@ public class ControlledAzureRelayNamespaceResource extends ControlledResource {
   }
 
   public ApiAzureRelayNamespaceAttributes toApiAttributes() {
-    return new ApiAzureRelayNamespaceAttributes().namespaceName(getName()).region(region.toString());
+    return new ApiAzureRelayNamespaceAttributes()
+        .namespaceName(getName())
+        .region(region.toString());
   }
 
   public ApiAzureRelayNamespaceResource toApiResource() {
-    return new ApiAzureRelayNamespaceResource().metadata(super.toApiMetadata()).attributes(toApiAttributes());
+    return new ApiAzureRelayNamespaceResource()
+        .metadata(super.toApiMetadata())
+        .attributes(toApiAttributes());
   }
 
   @Override
@@ -152,7 +156,8 @@ public class ControlledAzureRelayNamespaceResource extends ControlledResource {
 
   @Override
   public String attributesToJson() {
-    return DbSerDes.toJson(new ControlledAzureRelayNamespaceAttributes(getNamespaceName(), getRegion()));
+    return DbSerDes.toJson(
+        new ControlledAzureRelayNamespaceAttributes(getNamespaceName(), getRegion()));
   }
 
   @Override
@@ -228,10 +233,7 @@ public class ControlledAzureRelayNamespaceResource extends ControlledResource {
     }
 
     public ControlledAzureRelayNamespaceResource build() {
-      return new ControlledAzureRelayNamespaceResource(
-          common,
-          namespaceName,
-          region);
+      return new ControlledAzureRelayNamespaceResource(common, namespaceName, region);
     }
   }
 }

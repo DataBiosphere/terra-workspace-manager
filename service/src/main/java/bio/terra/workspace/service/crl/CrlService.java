@@ -518,9 +518,9 @@ public class CrlService {
 
     // We must use FQDN because there are two `Defaults` symbols imported otherwise.
     RelayManager manager =
-            bio.terra.cloudres.azure.resourcemanager.relay.Defaults.crlConfigure(
-                            clientConfig, RelayManager.configure())
-                    .authenticate(azureCreds, azureProfile);
+        bio.terra.cloudres.azure.resourcemanager.relay.Defaults.crlConfigure(
+                clientConfig, RelayManager.configure())
+            .authenticate(azureCreds, azureProfile);
     return manager;
   }
 

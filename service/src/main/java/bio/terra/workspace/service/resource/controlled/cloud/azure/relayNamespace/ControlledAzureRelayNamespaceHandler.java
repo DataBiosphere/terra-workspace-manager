@@ -20,14 +20,15 @@ public class ControlledAzureRelayNamespaceHandler implements WsmResourceHandler 
   @Override
   public WsmResource makeResourceFromDb(DbResource dbResource) {
     ControlledAzureRelayNamespaceAttributes attributes =
-            DbSerDes.fromJson(dbResource.getAttributes(), ControlledAzureRelayNamespaceAttributes.class);
+        DbSerDes.fromJson(
+            dbResource.getAttributes(), ControlledAzureRelayNamespaceAttributes.class);
 
     var resource =
-            ControlledAzureRelayNamespaceResource.builder()
-                    .namespaceName(attributes.getNamespaceName())
-                    .region(attributes.getRegion())
-                    .common(new ControlledResourceFields(dbResource))
-                    .build();
+        ControlledAzureRelayNamespaceResource.builder()
+            .namespaceName(attributes.getNamespaceName())
+            .region(attributes.getRegion())
+            .common(new ControlledResourceFields(dbResource))
+            .build();
     return resource;
   }
 }

@@ -13,8 +13,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * A step for deleting a controlled Azure RelayNamespace resource. This step uses the following process to
- * actually delete the Azure RelayNamespace
+ * A step for deleting a controlled Azure RelayNamespace resource. This step uses the following
+ * process to actually delete the Azure RelayNamespace
  */
 public class DeleteAzureRelayNamespaceStep implements Step {
   private static final Logger logger = LoggerFactory.getLogger(CreateAzureRelayNamespaceStep.class);
@@ -23,7 +23,9 @@ public class DeleteAzureRelayNamespaceStep implements Step {
   private final ControlledAzureRelayNamespaceResource resource;
 
   public DeleteAzureRelayNamespaceStep(
-      AzureConfiguration azureConfig, CrlService crlService, ControlledAzureRelayNamespaceResource resource) {
+      AzureConfiguration azureConfig,
+      CrlService crlService,
+      ControlledAzureRelayNamespaceResource resource) {
     this.crlService = crlService;
     this.azureConfig = azureConfig;
     this.resource = resource;
@@ -49,7 +51,8 @@ public class DeleteAzureRelayNamespaceStep implements Step {
       manager.namespaces().deleteById(azureResourceId);
       return StepResult.getStepResultSuccess();
     } catch (Exception ex) {
-      logger.info("Attempt to delete Azure Relay Namespace failed on this try: " + azureResourceId, ex);
+      logger.info(
+          "Attempt to delete Azure Relay Namespace failed on this try: " + azureResourceId, ex);
       return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, ex);
     }
   }

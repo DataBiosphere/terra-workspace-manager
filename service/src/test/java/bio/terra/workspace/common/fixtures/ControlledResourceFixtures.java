@@ -113,7 +113,8 @@ public class ControlledResourceFixtures {
   }
 
   /** Construct a parameter object with a unique ip name to avoid unintended clashes. */
-  public static ApiAzureRelayNamespaceCreationParameters getAzureRelayNamespaceCreationParameters() {
+  public static ApiAzureRelayNamespaceCreationParameters
+      getAzureRelayNamespaceCreationParameters() {
     return new ApiAzureRelayNamespaceCreationParameters()
         .namespaceName(uniqueAzureName(AZURE_RELAY_NAMESPACE_NAME_PREFIX))
         .region("westcentralus");
@@ -224,7 +225,8 @@ public class ControlledResourceFixtures {
         region);
   }
 
-  public static ControlledAzureRelayNamespaceResource getAzureRelayNamespace(String namespaceName, String region) {
+  public static ControlledAzureRelayNamespaceResource getAzureRelayNamespace(
+      String namespaceName, String region) {
     return new ControlledAzureRelayNamespaceResource(
         WORKSPACE_ID,
         RESOURCE_ID,
@@ -236,7 +238,7 @@ public class ControlledResourceFixtures {
         AccessScopeType.ACCESS_SCOPE_PRIVATE,
         ManagedByType.MANAGED_BY_APPLICATION,
         null,
-            namespaceName,
+        namespaceName,
         region);
   }
 
