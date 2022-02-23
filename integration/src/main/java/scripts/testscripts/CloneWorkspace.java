@@ -7,6 +7,7 @@ import static org.hamcrest.Matchers.is;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static scripts.utils.BqDatasetUtils.BQ_RESULT_TABLE_NAME;
 import static scripts.utils.BqDatasetUtils.makeControlledBigQueryDatasetUserPrivate;
 import static scripts.utils.BqDatasetUtils.makeControlledBigQueryDatasetUserShared;
 import static scripts.utils.ClientTestUtils.getOrFail;
@@ -38,7 +39,9 @@ import bio.terra.workspace.model.ResourceType;
 import bio.terra.workspace.model.StewardshipType;
 import bio.terra.workspace.model.WorkspaceDescription;
 import com.google.cloud.bigquery.BigQuery;
+import com.google.cloud.bigquery.JobInfo.WriteDisposition;
 import com.google.cloud.bigquery.QueryJobConfiguration;
+import com.google.cloud.bigquery.TableId;
 import com.google.cloud.bigquery.TableResult;
 import com.google.cloud.storage.BlobId;
 import com.google.cloud.storage.Storage;
@@ -412,6 +415,10 @@ public class CloneWorkspace extends WorkspaceAllocateTestScriptBase {
     assertEquals(StewardshipType.CONTROLLED, copyResourceDatasetDetails.getStewardshipType());
     assertNotNull(copyResourceDatasetDetails.getDestinationResourceId());
     assertNull(copyResourceDatasetDetails.getErrorMessage());
+    // Use cloned result table to avoid Domain Restricted Sharing conflicts created by temporary
+    // result table IAM.
+    TableId resultTableId =
+        TableId.of(destinationProjectId, copyResourceDatasetResourceName, BQ_RESULT_TABLE_NAME);
     final QueryJobConfiguration employeeQueryJobConfiguration =
         QueryJobConfiguration.newBuilder(
                 "SELECT * FROM `"
@@ -419,6 +426,8 @@ public class CloneWorkspace extends WorkspaceAllocateTestScriptBase {
                     + "."
                     + copyResourceDatasetResourceName
                     + ".employee`;")
+            .setDestinationTable(resultTableId)
+            .setWriteDisposition(WriteDisposition.WRITE_TRUNCATE)
             .build();
     final TableResult employeeTableResult = bigQueryClient.query(employeeQueryJobConfiguration);
     final long numEmployees =
@@ -531,6 +540,8 @@ public class CloneWorkspace extends WorkspaceAllocateTestScriptBase {
   private static void assertDatasetHasNoTables(
       String destinationProjectId, BigQuery bigQueryClient, String datasetName)
       throws InterruptedException {
+    // The result table will not be created if there are no results.
+    TableId resultTableId = TableId.of(destinationProjectId, datasetName, "FAKE TABLE NAME");
     final QueryJobConfiguration listTablesQuery =
         QueryJobConfiguration.newBuilder(
                 "SELECT * FROM `"
@@ -538,6 +549,8 @@ public class CloneWorkspace extends WorkspaceAllocateTestScriptBase {
                     + "."
                     + datasetName
                     + ".INFORMATION_SCHEMA.TABLES`;")
+            .setDestinationTable(resultTableId)
+            .setWriteDisposition(WriteDisposition.WRITE_TRUNCATE)
             .build();
     // Will throw not found if the dataset doesn't exist
     final TableResult listTablesResult = bigQueryClient.query(listTablesQuery);

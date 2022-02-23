@@ -39,6 +39,7 @@ import com.google.cloud.bigquery.FieldValueList;
 import com.google.cloud.bigquery.Job;
 import com.google.cloud.bigquery.JobId;
 import com.google.cloud.bigquery.JobInfo;
+import com.google.cloud.bigquery.JobInfo.WriteDisposition;
 import com.google.cloud.bigquery.QueryJobConfiguration;
 import com.google.cloud.bigquery.QueryParameterValue;
 import com.google.cloud.bigquery.Schema;
@@ -165,8 +166,22 @@ public class ControlledBigQueryDatasetLifecycle extends GcpWorkspaceCloneTestScr
     insertValueIntoTable(writerBqClient, columnValue);
     logger.info("Workspace writer wrote a row to table {}", tableName);
 
+    // Create a dataset to hold query results in the destination project.
+    ControlledGcpResourceApi readerResourceApi =
+        ClientTestUtils.getControlledGcpResourceClient(getWorkspaceReader(), server);
+    String resultDatasetId = "temporary_result_dataset";
+    GcpBigQueryDatasetResource temporaryResultDataset =
+        BqDatasetUtils.makeControlledBigQueryDatasetUserShared(
+            readerResourceApi,
+            getDestinationWorkspaceId(),
+            "temporary_result_resource",
+            resultDatasetId,
+            CloningInstructionsEnum.NOTHING);
+    // The table does not exist yet, but will be created to hold query results.
+    TableId resultTableId =
+        TableId.of(getDestinationProjectId(), resultDatasetId, BqDatasetUtils.BQ_RESULT_TABLE_NAME);
     // Workspace reader can now read the row inserted above
-    assertEquals(columnValue, readValueFromTable(readerBqClient));
+    assertEquals(columnValue, readValueFromTable(readerBqClient, resultTableId));
     logger.info("Workspace reader read that row from table {}", tableName);
 
     // Workspace writer can update the table metadata
@@ -216,11 +231,13 @@ public class ControlledBigQueryDatasetLifecycle extends GcpWorkspaceCloneTestScr
             TableId.of(
                 getSourceProjectId(), DATASET_RESOURCE_NAME, table.getTableId().getTable())));
 
+    // Workspace reader can clean up the results table and dataset before cloning
+    readerResourceApi.deleteBigQueryDataset(
+        getDestinationWorkspaceId(), temporaryResultDataset.getMetadata().getResourceId());
+
     // Populate dataset with additional tables to verify cloning behavior
     BqDatasetUtils.populateBigQueryDataset(createdDataset, testUser, getSourceProjectId());
     // Verify workspace reader is able to clone the resource they can read
-    ControlledGcpResourceApi readerResourceApi =
-        ClientTestUtils.getControlledGcpResourceClient(getWorkspaceReader(), server);
     testCloneBigQueryDataset(createdDataset, getWorkspaceReader(), readerResourceApi);
 
     // The reader should be able to enumerate the dataset.
@@ -299,10 +316,15 @@ public class ControlledBigQueryDatasetLifecycle extends GcpWorkspaceCloneTestScr
   }
 
   /** Read a single String value from the column/table/dataset specified by constant values. */
-  private String readValueFromTable(BigQuery bigQueryClient) throws Exception {
+  private String readValueFromTable(BigQuery bigQueryClient, TableId resultTableId)
+      throws Exception {
     String query =
         String.format("SELECT %s FROM %s.%s", COLUMN_NAME, DATASET_RESOURCE_NAME, TABLE_NAME);
-    QueryJobConfiguration queryConfig = QueryJobConfiguration.newBuilder(query).build();
+    QueryJobConfiguration queryConfig =
+        QueryJobConfiguration.newBuilder(query)
+            .setDestinationTable(resultTableId)
+            .setWriteDisposition(WriteDisposition.WRITE_TRUNCATE)
+            .build();
     TableResult result = runBigQueryJob(bigQueryClient, queryConfig);
     assertEquals(1, result.getTotalRows());
     return result.getValues().iterator().next().get(COLUMN_NAME).getStringValue();
@@ -413,6 +435,12 @@ public class ControlledBigQueryDatasetLifecycle extends GcpWorkspaceCloneTestScr
     // compare dataset contents
     final BigQuery bigQueryClient =
         ClientTestUtils.getGcpBigQueryClient(cloningUser, getDestinationProjectId());
+    // Create an empty table to hold results
+    TableId resultTableId =
+        TableId.of(
+            getDestinationProjectId(),
+            clonedResource.getAttributes().getDatasetId(),
+            "results_table");
     final QueryJobConfiguration employeeQueryJobConfiguration =
         QueryJobConfiguration.newBuilder(
                 "SELECT * FROM `"
@@ -420,6 +448,8 @@ public class ControlledBigQueryDatasetLifecycle extends GcpWorkspaceCloneTestScr
                     + "."
                     + clonedResource.getAttributes().getDatasetId()
                     + ".employee`;")
+            .setDestinationTable(resultTableId)
+            .setWriteDisposition(WriteDisposition.WRITE_TRUNCATE)
             .build();
     final TableResult employeeTableResult = bigQueryClient.query(employeeQueryJobConfiguration);
     final long numRows =
@@ -435,6 +465,8 @@ public class ControlledBigQueryDatasetLifecycle extends GcpWorkspaceCloneTestScr
                         + clonedResource.getAttributes().getDatasetId()
                         + ".department` "
                         + "WHERE department_id = 201;")
+                .setDestinationTable(resultTableId)
+                .setWriteDisposition(WriteDisposition.WRITE_TRUNCATE)
                 .build());
     final FieldValueList row =
         StreamSupport.stream(departmentTableResult.getValues().spliterator(), false)
