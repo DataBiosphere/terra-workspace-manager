@@ -1,0 +1,49 @@
+// Testing config
+
+// The path to the default Google service account for the Workspace Manager to run as.
+// Created by scripts/write_config.sh
+def googleCredentialsFile = "${rootDir}/config/wsm-sa.json"
+bootRun {
+  environment.put("GOOGLE_APPLICATION_CREDENTIALS", "${googleCredentialsFile}")
+}
+
+tasks.withType(Test) {
+  environment.put("GOOGLE_APPLICATION_CREDENTIALS", "${googleCredentialsFile}")
+  testLogging {
+    if (System.getenv('PRINT_STANDARD_STREAMS') == null) {
+      events = ["passed", "failed", "skipped", "started"]
+    } else {
+      events = ["passed", "failed", "skipped", "started", "standard_out", "standard_error"]
+    }
+  }
+}
+
+test {
+  useJUnitPlatform {
+    includeTags "unit"
+  }
+  outputs.upToDateWhen { false }
+}
+
+task unitTest(type: Test) {
+  useJUnitPlatform {
+    includeTags "unit"
+  }
+  outputs.upToDateWhen { false }
+  finalizedBy jacocoTestReport
+}
+
+task connectedTest(type: Test) {
+  environment.put('TEST_ENV', System.getenv("TEST_ENV"))
+  useJUnitPlatform {
+    includeTags "connected"
+  }
+  outputs.upToDateWhen { false }
+}
+
+task azureTest(type: Test) {
+  useJUnitPlatform {
+    includeTags "azure"
+  }
+  outputs.upToDateWhen { false }
+}

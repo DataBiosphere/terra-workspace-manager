@@ -1,0 +1,32 @@
+// OpenAPI/Swagger Client Generation
+def artifactGroup = "${group}.workspace"
+def openapiOutputDir = "${buildDir}/openapi"
+
+swaggerSources {
+  client {
+    inputFile = file(gradle.openapiSourceFile)
+    code {
+      language = "java"
+      library = "jersey2"
+      templateDir = file("${projectDir}/src/main/resources/swaggercodegen")
+      outputDir = file(openapiOutputDir)
+      rawOptions = [
+              "--model-package", "${artifactGroup}.model",
+              "--api-package", "${artifactGroup}.api",
+              "--invoker-package", "${artifactGroup}.client",
+              "--group-id", "${artifactGroup}",
+              "--artifact-version", "${version}",
+              "--ignore-file-override", "${projectDir}/.swagger-codegen-ignore",
+              "-D", "apiTests=false," +
+                      "apiDocs=false," +
+                      "modelTests=false," +
+                      "modelDocs=false," +
+                      "dateLibrary=java8"
+      ]
+    }
+  }
+}
+
+// Internal dependencies
+sourceSets.main.java.srcDir "${openapiOutputDir}/src/main/java"
+compileJava.dependsOn swaggerSources.client.code
