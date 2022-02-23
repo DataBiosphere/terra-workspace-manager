@@ -135,28 +135,22 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
     features.azureEnabledCheck();
 
     final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
-    final PrivateUserRole privateUserRole =
-        ControllerUtils.computePrivateUserRole(
-            workspaceId, body.getCommon(), userRequest, samService);
+    ControlledResourceFields commonFields =
+            toCommonFields(
+            workspaceId, body.getCommon(), userRequest);
 
     ControlledAzureRelayNamespaceResource resource =
             ControlledAzureRelayNamespaceResource.builder()
-            .workspaceId(workspaceId)
-            .resourceId(UUID.randomUUID())
-            .name(body.getCommon().getName())
-            .description(body.getCommon().getDescription())
-            .cloningInstructions(
-                CloningInstructions.fromApiModel(body.getCommon().getCloningInstructions()))
-            .assignedUser(privateUserRole.getUserEmail())
-            .accessScope(AccessScopeType.fromApi(body.getCommon().getAccessScope()))
-            .managedBy(ManagedByType.fromApi(body.getCommon().getManagedBy()))
+            .common(commonFields)
             .namespaceName(body.getAzureRelayNamespace().getNamespaceName())
             .region(body.getAzureRelayNamespace().getRegion())
             .build();
 
     final ControlledAzureRelayNamespaceResource created =
-        controlledResourceService.createAzureRelayNamespace(
-            resource, body.getAzureRelayNamespace(), privateUserRole.getRole(), userRequest);
+        controlledResourceService.createControlledResourceSync(
+            resource, commonFields.getIamRole(),  userRequest, body.getAzureRelayNamespace())
+            .castByEnum(WsmResourceType.CONTROLLED_AZURE_RELAY_NAMESPACE);
+
     var response =
         new ApiCreateControlledAzureRelayNamespace()
             .resourceId(created.getResourceId())

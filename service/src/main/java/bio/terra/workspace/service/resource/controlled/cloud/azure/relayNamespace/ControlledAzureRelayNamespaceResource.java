@@ -15,11 +15,13 @@ import bio.terra.workspace.generated.model.ApiAzureRelayNamespaceAttributes;
 import bio.terra.workspace.generated.model.ApiResourceAttributesUnion;
 import bio.terra.workspace.generated.model.ApiResourceUnion;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
-import bio.terra.workspace.service.resource.ValidationUtils;
+import bio.terra.workspace.service.resource.ResourceValidationUtils;
+import bio.terra.workspace.service.resource.controlled.cloud.azure.ip.ControlledAzureIpResource;
 import bio.terra.workspace.service.resource.controlled.flight.create.CreateControlledResourceFlight;
 import bio.terra.workspace.service.resource.controlled.flight.delete.DeleteControlledResourceFlight;
 import bio.terra.workspace.service.resource.controlled.model.AccessScopeType;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
+import bio.terra.workspace.service.resource.controlled.model.ControlledResourceFields;
 import bio.terra.workspace.service.resource.controlled.model.ManagedByType;
 import bio.terra.workspace.service.resource.controlled.model.PrivateResourceState;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
@@ -68,12 +70,10 @@ public class ControlledAzureRelayNamespaceResource extends ControlledResource {
     validate();
   }
 
-  public ControlledAzureRelayNamespaceResource(DbResource dbResource) {
-    super(dbResource);
-    ControlledAzureRelayNamespaceAttributes attributes =
-        DbSerDes.fromJson(dbResource.getAttributes(), ControlledAzureRelayNamespaceAttributes.class);
-    this.namespaceName = attributes.getNamespaceName();
-    this.region = attributes.getRegion();
+  public ControlledAzureRelayNamespaceResource(ControlledResourceFields common, String namespaceName, String region) {
+    super(common);
+    this.namespaceName = namespaceName;
+    this.region = region;
     validate();
   }
 
@@ -185,8 +185,8 @@ public class ControlledAzureRelayNamespaceResource extends ControlledResource {
       throw new MissingRequiredFieldException(
           "Missing required region field for ControlledAzureRelayNamespace.");
     }
-    ValidationUtils.validateRegion(getRegion());
-    ValidationUtils.validateAzureNamespace(getNamespaceName());
+    ResourceValidationUtils.validateRegion(getRegion());
+    ResourceValidationUtils.validateAzureNamespace(getNamespaceName());
   }
 
   @Override
@@ -208,43 +208,12 @@ public class ControlledAzureRelayNamespaceResource extends ControlledResource {
   }
 
   public static class Builder {
-    private UUID workspaceId;
-    private UUID resourceId;
-    private String name;
-    private String description;
-    private CloningInstructions cloningInstructions;
-    // Default value is NOT_APPLICABLE for shared resources and INITIALIZING for private resources.
-    @Nullable private PrivateResourceState privateResourceState;
-    private String assignedUser;
-    private AccessScopeType accessScope;
-    private ManagedByType managedBy;
-    private UUID applicationId;
+    private ControlledResourceFields common;
     private String namespaceName;
     private String region;
 
-    public Builder workspaceId(UUID workspaceId) {
-      this.workspaceId = workspaceId;
-      return this;
-    }
-
-    public Builder resourceId(UUID resourceId) {
-      this.resourceId = resourceId;
-      return this;
-    }
-
-    public Builder description(String description) {
-      this.description = description;
-      return this;
-    }
-
-    public Builder cloningInstructions(
-        CloningInstructions cloningInstructions) {
-      this.cloningInstructions = cloningInstructions;
-      return this;
-    }
-
-    public Builder name(String name) {
-      this.name = name;
+    public ControlledAzureRelayNamespaceResource.Builder common(ControlledResourceFields common) {
+      this.common = common;
       return this;
     }
 
@@ -258,50 +227,9 @@ public class ControlledAzureRelayNamespaceResource extends ControlledResource {
       return this;
     }
 
-    public Builder assignedUser(String assignedUser) {
-      this.assignedUser = assignedUser;
-      return this;
-    }
-
-    public Builder privateResourceState(
-        PrivateResourceState privateResourceState) {
-      this.privateResourceState = privateResourceState;
-      return this;
-    }
-
-    private PrivateResourceState defaultPrivateResourceState() {
-      return this.accessScope == AccessScopeType.ACCESS_SCOPE_PRIVATE
-          ? PrivateResourceState.INITIALIZING
-          : PrivateResourceState.NOT_APPLICABLE;
-    }
-
-    public Builder accessScope(AccessScopeType accessScope) {
-      this.accessScope = accessScope;
-      return this;
-    }
-
-    public Builder managedBy(ManagedByType managedBy) {
-      this.managedBy = managedBy;
-      return this;
-    }
-
-    public Builder applicationId(UUID applicationId) {
-      this.applicationId = applicationId;
-      return this;
-    }
-
     public ControlledAzureRelayNamespaceResource build() {
       return new ControlledAzureRelayNamespaceResource(
-          workspaceId,
-          resourceId,
-          name,
-          description,
-          cloningInstructions,
-          assignedUser,
-          Optional.ofNullable(privateResourceState).orElse(defaultPrivateResourceState()),
-          accessScope,
-          managedBy,
-          applicationId,
+          common,
           namespaceName,
           region);
     }

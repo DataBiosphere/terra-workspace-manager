@@ -147,13 +147,16 @@ public class CreateAndDeleteAzureControlledResourceFlightTest extends BaseAzureT
     final UUID resourceId = UUID.randomUUID();
     ControlledAzureRelayNamespaceResource resource =
             ControlledAzureRelayNamespaceResource.builder()
-            .workspaceId(workspaceId)
-            .resourceId(resourceId)
-            .name(getAzureName("relayNamespace"))
-            .description(getAzureName("relay-namespace-desc"))
-            .cloningInstructions(CloningInstructions.COPY_RESOURCE)
-            .accessScope(AccessScopeType.fromApi(ApiAccessScope.SHARED_ACCESS))
-            .managedBy(ManagedByType.fromApi(ApiManagedBy.USER))
+                    .common(
+                            ControlledResourceFields.builder()
+                                    .workspaceId(workspaceId)
+                                    .resourceId(resourceId)
+                                    .name(getAzureName("ip"))
+                                    .description(getAzureName("ip-desc"))
+                                    .cloningInstructions(CloningInstructions.COPY_RESOURCE)
+                                    .accessScope(AccessScopeType.fromApi(ApiAccessScope.SHARED_ACCESS))
+                                    .managedBy(ManagedByType.fromApi(ApiManagedBy.USER))
+                                    .build())
             .namespaceName(creationParameters.getNamespaceName())
             .region(creationParameters.getRegion())
             .build();
