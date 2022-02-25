@@ -225,8 +225,7 @@ components:
         controlledResourceMetadata:
           description: Present if stewardship type is CONTROLLED
           $ref: '#/components/schemas/ControlledResourceMetadata'
-  
-k
+
     StewardshipType:
       description: Enum containing valid stewardship types. Used for enumeration
       type: string

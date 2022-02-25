@@ -47,14 +47,14 @@ to compile your code as you go.
 1. Edit the appropriate controller to implement your API. Depending on the implementation
    details, you may need to add methods to the `ControlledResourceService` or the
    `ReferencedResourceService`.
-1. Create matching package in the `test/java/bio.terra.workspace/service/resource` package
+1. Create a matching package in the `test/java/bio.terra.workspace/service/resource` package
    for your resource tests. Add tests following the pattern of other resources.
 1. Add integration tests for your resource in the `integration` sub-project. Every
    resource type should have a "lifecycle test". See
    `testscripts/ControlledBigQueryDatasetLifecycle` for an example. If you implement
    cloning, then add your resource to the `CloneWorkspace` test as well.
 
-## DetailsMore Information
+## More Information
 
 ### Asynchronous Interfaces
 
@@ -105,12 +105,44 @@ Most of the code you make is in files specific to the new resource. These are:
 | service | src/main/java/.../service/resource/model | `WsmResource.java` | `enum` of all specific resources |
 | service | src/main/java/.../service/resource/model | `WsmResourceFamily.java` | `enum` of kinds of resources |
 
+### Cloud Resource Library (CRL)
 
+All cloud resource allocation in WSM should be done using CRL. CRL provides a common point
+of logging and, in the fullness of time, perhaps tagging resources. It is out of scope for
+this document to describe adding things to CRL. See
+[Common Resource Library Github](https://github.com/DataBiosphere/terra-cloud-resource-lib)
+for information.
 
+Adding resource allocation to CRL sometimes requires adding resource cleanup to the Janitor
+service. We use the Janitor service in development to clean up test resources. That way,
+tests can crash and burn and we are still able to clean up. See
+[Janitor Github](https://github.com/DataBiosphere/terra-resource-janitor) for more information.
 
+### GCP Specifics
 
+When adding a controlled resource in GCP, there are often other tasks that need to be
+done.
 
+#### Custom Roles
 
+Typically, the built-in GCP roles for objects do not work well for WSM. WSM needs to be in
+sole control of create, delete, and IAM. Often, roles that allow attribute update also
+allow those actions. The solution is to create custom roles.
 
+The code structure for adding these roles is in `resource/controlled/cloud/gcp` in the
+files `CustomGcpIamRole` and `CustomGcpIamRoleMapping`.
 
+#### Enabling APIs
 
+Enabling resources can take a while so we do it in the Resource Buffer Service (RBS). RBS
+manages pools of pre-configured projects. When a GCP cloud context is created, we request
+a project from a particular pool in RBS.
+
+If you need to enable a new API to support your new GCP resource, it needs to be done in
+RBS. See
+[Resource Buffer Service Github](https://github.com/DataBiosphere/terra-resource-buffer)
+for more details.
+
+### Azure Specifics
+
+**TBS**
