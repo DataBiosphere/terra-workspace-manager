@@ -361,14 +361,6 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
             .undoStepFailures(retrySteps)
             .build());
 
-    String jobId =
-        controlledResourceService.createAiNotebookInstance(
-            resource,
-            creationParameters,
-            DEFAULT_ROLE,
-            new ApiJobControl().id(UUID.randomUUID().toString()),
-            "fakeResultPath",
-            user.getAuthenticatedRequest());
     // Revoke user's Pet SA access, if they have it. Because these tests re-use a common workspace,
     // the user may have pet SA access enabled prior to this test.
     String serviceAccountEmail =
@@ -383,6 +375,15 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
         canImpersonateSa(
             ServiceAccountName.builder().projectId(projectId).email(serviceAccountEmail).build(),
             userIamCow));
+
+    String jobId =
+        controlledResourceService.createAiNotebookInstance(
+            resource,
+            creationParameters,
+            DEFAULT_ROLE,
+            new ApiJobControl().id(UUID.randomUUID().toString()),
+            "fakeResultPath",
+            user.getAuthenticatedRequest());
     jobService.waitForJob(jobId);
     assertEquals(
         FlightStatus.ERROR, stairwayComponent.get().getFlightState(jobId).getFlightStatus());
