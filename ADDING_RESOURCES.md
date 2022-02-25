@@ -1,0 +1,116 @@
+# Adding Resources to Workspace Manager
+
+*ddietterich@verily.com*
+
+*created: 2022-02-25*
+
+One of the most frequent WSM tasks is to add a new resource. I have tried to make this as
+simple as practical. I have also tried to allow parallel resource development with a
+minimum of file conflicts.
+
+## Checklist
+
+This section summarizes the steps to add a new resource. I recommend this order to be able
+to compile your code as you go.
+
+1. Create your resource type and attributes in the `openapi` sub-project.
+   - Add your resource file to `src/resources/` directory, defining the resource and the
+     attributes objects.
+   - Edit the `resource_type.yaml` file in that directory, creating an enumeration for the
+     resource and adding the appropriate resource element to the union objects.
+   - Run `gradle :openapi:buildOpenApi` to make sure your syntax and references are correct.
+1. Create your Java resource package in `service/src/main/java/bio.terra/workspace/service/resources/`
+      in the appropriate package
+    - `controlled/{cloud}/{your resource}`
+    - `referenced/{cloud}/{your resource}`
+1. Create classes for your resource
+   - Attributes class describing the fields beyond the common metadata
+   - Resource class. This is the most complex class to implement and supplies the bulk of
+     your resource code
+1. If you are making a controlled resource you will also need to add:
+   - Step classes as required for object create and update. These will be needed to
+     complete the resource class.
+   - Handler class. Used primarily to give the `ResourceDao` a way to create resource
+     objects by type.
+1. Add your new resource type to `resource/model/WsmResourceFamily` and
+   `resource/model/WsmResourceType`. At this point, you should be able to cleanly build
+   the `service` sub-project.
+1. Add your REST API
+   - In the `openapi` sub-project, in the `parts` directory, create a yaml file for your
+     resource API. The file should contain all resource-type-specific parameters,
+     responses, and schemas as well as the endpoint paths. You can find shared components
+     in the `src/common` directory.
+
+       **NOTE:** *At this point in time, there is too much variation in the different
+       resource APIs. Please follow the pattern in the* `??_gcp_big_query_dataset`
+       *interface.*
+1. Edit the appropriate controller to implement your API. Depending on the implementation
+   details, you may need to add methods to the `ControlledResourceService` or the
+   `ReferencedResourceService`.
+1. Create matching package in the `test/java/bio.terra.workspace/service/resource` package
+   for your resource tests. Add tests following the pattern of other resources.
+1. Add integration tests for your resource in the `integration` sub-project. Every
+   resource type should have a "lifecycle test". See
+   `testscripts/ControlledBigQueryDatasetLifecycle` for an example. If you implement
+   cloning, then add your resource to the `CloneWorkspace` test as well.
+
+## DetailsMore Information
+
+### Asynchronous Interfaces
+
+We have a strong bias for synchronous APIs. If you have an operation that runs over the
+network time more that 10% of the time, it is appropriate to make it an asynchronous
+interface. See
+[MC Terra - Async REST API Specification](https://docs.google.com/document/d/1PTd4xvmV9xnEkWaIgFc6d3VUyJwwymQTFdhpKrdsUKw/edit#heading=h.ol9mx3vfhjjj)
+for details about how async interfaces are provided in MC Terra.
+
+### Writing Flight Steps
+
+When writing steps for a Stairway flight, you need to make your code idempotent. It needs
+to be able to be restarted in the event of pod failures and rolling upgrades. See 
+[Stairway Github Repo](https://github.com/DataBiosphere/stairway) for further documentation.
+
+### Files for Resources
+
+This section itemizes the files you will probably need to create or edit to add your resource.
+
+* {stewardship} is either `controlled` or `referenced` as defined in StewardshipType.java
+* {cloud} is either `gcp`, `azure`, or `any` as defined in CloudPlatform.java
+* {resource} is the name of your resource; for example, `BigQueryDataset`
+
+#### Resource-Specific Files
+
+Most of the code you make is in files specific to the new resource. These are:
+
+| Project | Directory Path | File | Notes |
+| ------- | -------------- | ---- | ----- |
+| integration | src/main/java/scripts/testscripts | `{resource}Lifecycle.java` |  |
+| integration | src/main/resources/configs/integration | `{resource}Lifecycle.java` |  |
+| openapi | src/parts | `{stewardship}_{cloud}_{resource}.yaml` | |
+| openapi | src/resources | `resource_{cloud}_{resource}.yam`l |  |
+| service | src/main/java/.../service/resource/{stewardship}/cloud/{cloud}/{resource} | `{resource}Attributes.java` | |
+| service | src/main/java/.../service/resource/{stewardship}/cloud/{cloud}/{resource} | `{resource}Handler.java` | controlled only |
+| service | src/main/java/.../service/resource/{stewardship}/cloud/{cloud}/{resource} | `{resource}Resource.java` |
+| service | src/main/java/.../service/resource/{stewardship}/cloud/{cloud}/{resource} | `*Steps.java` | Create and update step files; controlled only |
+| service | src/test/java/.../service/resource/{stewardship}/cloud/{cloud}/{resource} | `*Test.java` | Unit and connected tests |
+
+#### Shared Files
+
+| Project | Directory Path | File | Notes |
+| ------- | -------------- | ---- | ----- |
+| integration | src/main/resources/suites | FullIntegration.json | If your test should run as part of the automated integration tests |
+| openapi | src/resources | resource_type.yaml | |
+| service | src/main/java/.../app/controller | `{stewardship}{cloud}Controller.java` | |
+| service | src/main/java/.../service/resource/{stewardship} | `{stewardship}ResourceService.java` | If the common paths are not sufficient |
+| service | src/main/java/.../service/resource/model | `WsmResource.java` | `enum` of all specific resources |
+| service | src/main/java/.../service/resource/model | `WsmResourceFamily.java` | `enum` of kinds of resources |
+
+
+
+
+
+
+
+
+
+
