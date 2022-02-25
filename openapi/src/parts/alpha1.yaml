@@ -83,38 +83,6 @@ components:
       description: Types of job operations
       enum: [ 'CLONE', 'CREATE', 'DELETE', 'UPDATE', 'UNKNOWN' ]
 
-
-    ResourceUnion:
-      type: object
-      description: |
-        This object contains a reference to an object for each resource type.
-        Exactly one will be populated based on its ResourceType.
-      properties:
-        gcpBqDataset:
-          $ref: '#/components/schemas/GcpBigQueryDatasetResource'
-        gcpBqDataTable:
-          $ref: '#/components/schemas/GcpBigQueryDataTableResource'
-        gcpDataRepoSnapshot:
-          $ref: '#/components/schemas/DataRepoSnapshotResource'
-        gcpGcsBucket:
-          $ref: '#/components/schemas/GcpGcsBucketResource'
-        gcpGcsObject:
-          $ref: '#/components/schemas/GcpGcsObjectResource'
-        gcpAiNotebookInstance:
-          $ref: '#/components/schemas/GcpAiNotebookInstanceResource'
-        azureIp:
-          $ref: '#/components/schemas/AzureIpResource'
-        azureDisk:
-          $ref: '#/components/schemas/AzureDiskResource'
-        azureNetwork:
-          $ref: '#/components/schemas/AzureNetworkResource'
-        azureVm:
-          $ref: '#/components/schemas/AzureVmResource'
-        azureStorageAccount:
-          $ref: '#/components/schemas/AzureStorageResource'
-        gitRepo:
-          $ref: '#/components/schemas/GitRepoResource'
-
   parameters:
     PageToken:
       name: pageToken

@@ -45,15 +45,15 @@ class YFile:
         make_dict(self.data['components'], 'responses')
 
 
-def get_dict(yfile, ypath):
+def lookup_dict(yfile, ypath):
     tpath = yfile.data
     for i in range(len(ypath)):
         tpath = tpath[ypath[i]]
     return tpath
 
 def check_duplicates(target, source, ypath):
-    tdict = get_dict(target, ypath)
-    sdict = get_dict(source, ypath)
+    tdict = lookup_dict(target, ypath)
+    sdict = lookup_dict(source, ypath)
     for k in sdict.keys():
         if (k in tdict):
             raise ValueError(f'Duplicate key "{k}" found in "{source.filepath}"')
@@ -61,10 +61,37 @@ def check_duplicates(target, source, ypath):
 # Both inputs are YFile objects
 def merge(target, source, ypath):
     check_duplicates(target, source, ypath)
-    tdict = get_dict(target, ypath)
-    sdict = get_dict(source, ypath)
+    tdict = lookup_dict(target, ypath)
+    sdict = lookup_dict(source, ypath)
     tdict.update(sdict)
 
+def sortDictionary(indict):
+    return dict(sorted(indict.items(), key=lambda t: t[0]))
+
+# Generate a result dictionary in the desired order.
+#
+# We generate the top-level items in the traditional order:
+#  openapi
+#  info
+#  paths
+#  components
+#  security
+#
+# We generate the paths, components, and component sections in alphabetical order. By
+# happy coincidence, that leaves the securitySchemes last, right next to the security
+# element that references them.
+def order_merge(indict):
+    paths = sortDictionary(indict['paths'])
+    for k in indict['components'].keys():
+        indict['components'][k] = sortDictionary(indict['components'][k])
+    components = sortDictionary(indict['components'])
+    result = dict()
+    result['openapi'] = indict['openapi']
+    result['info'] = indict['info']
+    result['paths'] = paths
+    result['components'] = components
+    result['security'] = indict['security']
+    return result
 
 def main():
     parser = argparse.ArgumentParser(description='Merge parts into an openapi document')
@@ -94,13 +121,16 @@ def main():
         merge(mainy, p, ['components', 'parameters'])
         merge(mainy, p, ['components', 'responses'])
 
+    # Put the merged parts into a pretty order
+    result = order_merge(mainy.data)
+
     # Write the output
     outdir = argdict['outdir']
     Path(outdir).mkdir(parents=True, exist_ok=True)
 
     outfilepath = outdir + '/openapi.yaml'
     outfile = open(outfilepath, 'w')
-    outfile.write(yaml.safe_dump(mainy.data))
+    outfile.write(yaml.safe_dump(result, sort_keys=False))
     outfile.close()
 
     # Validate the resulting openapi file

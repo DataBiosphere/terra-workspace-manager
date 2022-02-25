@@ -1,0 +1,66 @@
+components:
+  schemas:
+    ResourceAttributesUnion:
+      type: object
+      description: |
+        This object is a union of reference to each resource type's attributes.
+        Exactly one will be populated based on the ResourceType in the
+        ResourceDescription. The value of the other references is undefined.
+      properties:
+        gcpBqDataset:
+          $ref: '#/components/schemas/GcpBigQueryDatasetAttributes'
+        gcpBqDataTable:
+          $ref: '#/components/schemas/GcpBigQueryDataTableAttributes'
+        gcpDataRepoSnapshot:
+          $ref: '#/components/schemas/DataRepoSnapshotAttributes'
+        gcpGcsBucket:
+          $ref: '#/components/schemas/GcpGcsBucketAttributes'
+        gcpGcsObject:
+          $ref: '#/components/schemas/GcpGcsObjectAttributes'
+        gcpAiNotebookInstance:
+          $ref: '#/components/schemas/GcpAiNotebookInstanceAttributes'
+        azureDisk:
+          $ref: '#/components/schemas/AzureDiskAttributes'
+        azureIp:
+          $ref: '#/components/schemas/AzureIpAttributes'
+        azureNetwork:
+          $ref: '#/components/schemas/AzureNetworkAttributes'
+        azureStorage:
+          $ref: '#/components/schemas/AzureStorageAttributes'
+        azureVm:
+          $ref: '#/components/schemas/AzureVmAttributes'
+        gitRepo:
+          $ref: '#/components/schemas/GitRepoAttributes'
+
+    ResourceUnion:
+      type: object
+      description: |
+        This object is a union of reference to each resource type's resource object.
+        Exactly one will be populated based on the ResourceType.
+        The value of the other references is undefined.
+      properties:
+        gcpBqDataset:
+          $ref: '#/components/schemas/GcpBigQueryDatasetResource'
+        gcpBqDataTable:
+          $ref: '#/components/schemas/GcpBigQueryDataTableResource'
+        gcpDataRepoSnapshot:
+          $ref: '#/components/schemas/DataRepoSnapshotResource'
+        gcpGcsBucket:
+          $ref: '#/components/schemas/GcpGcsBucketResource'
+        gcpGcsObject:
+          $ref: '#/components/schemas/GcpGcsObjectResource'
+        gcpAiNotebookInstance:
+          $ref: '#/components/schemas/GcpAiNotebookInstanceResource'
+        azureIp:
+          $ref: '#/components/schemas/AzureIpResource'
+        azureDisk:
+          $ref: '#/components/schemas/AzureDiskResource'
+        azureNetwork:
+          $ref: '#/components/schemas/AzureNetworkResource'
+        azureVm:
+          $ref: '#/components/schemas/AzureVmResource'
+        azureStorageAccount:
+          $ref: '#/components/schemas/AzureStorageResource'
+        gitRepo:
+          $ref: '#/components/schemas/GitRepoResource'
+
