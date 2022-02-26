@@ -55,7 +55,7 @@ class YFile:
 
 def lookup_dict(yfile, ypath):
     tpath = yfile.data
-    for p in enumerate(ypath)
+    for p in enumerate(ypath):
         tpath = tpath[p[1]]
     return tpath
 
