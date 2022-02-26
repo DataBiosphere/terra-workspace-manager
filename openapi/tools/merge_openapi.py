@@ -1,7 +1,6 @@
 import sys
 import argparse
 import yaml
-from yaml import SafeLoader, SafeDumper
 from glob import glob
 from openapi_spec_validator import validate_spec
 from openapi_spec_validator.readers import read_from_filename
@@ -32,10 +31,13 @@ def make_dict(data, ypath):
         data[ypath] = dict()
 
 class YFile:
-    """ Hold the association of the source file and the loaded yaml """
+    """
+    Hold the association of the source file and the loaded yaml
+    """
     def __init__(self, filepath):
         """
          Make sure all of the dict's are initialized.
+
          Note that a load failure does not cause an exit. We want to get all of the load errors
          in one pass and then exit. The global `global_had_load_error` is used to track the state.
          """
