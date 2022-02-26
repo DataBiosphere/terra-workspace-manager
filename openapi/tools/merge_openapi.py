@@ -1,8 +1,7 @@
 import sys
-import os
 import argparse
 import yaml
-from yaml import Loader, Dumper, SafeLoader, SafeDumper
+from yaml import SafeLoader, SafeDumper
 from glob import glob
 from openapi_spec_validator import validate_spec
 from openapi_spec_validator.readers import read_from_filename
@@ -11,14 +10,14 @@ from pathlib import Path
 global_had_load_error = False
 
 def validate_openapi(filepath):
-    spec_dict, spec_url = read_from_filename(filepath)
+    spec_dict = read_from_filename(filepath)[0]
     validate_spec(spec_dict)
 
 
 def yaml_loader(filepath):
     global global_had_load_error
     with open(filepath,'r')as file_descriptor:
-        try: 
+        try:
             data = yaml.safe_load(file_descriptor)
         except yaml.YAMLError as err:
             global_had_load_error = True
@@ -33,7 +32,13 @@ def make_dict(data, ypath):
         data[ypath] = dict()
 
 class YFile:
+    """ Hold the association of the source file and the loaded yaml """
     def __init__(self, filepath):
+        """
+         Make sure all of the dict's are initialized.
+         Note that a load failure does not cause an exit. We want to get all of the load errors
+         in one pass and then exit. The global `global_had_load_error` is used to track the state.
+         """
         self.filepath = filepath
         self.data = yaml_loader(filepath)
         if self.data == None:
@@ -43,7 +48,6 @@ class YFile:
         make_dict(self.data['components'], 'schemas')
         make_dict(self.data['components'], 'parameters')
         make_dict(self.data['components'], 'responses')
-
 
 def lookup_dict(yfile, ypath):
     tpath = yfile.data
