@@ -3,7 +3,7 @@
 # you must have the 'python3' command available.
 toolsDir=$1
 outDir=$2
-python3installed=$(which python3 | wc -l)
+python3installed=$(which python3 | wc -l | tr -d '[:space:]')
 if [ "${python3installed}" != "1" ]; then
   echo "ERROR: python3 must be installed"
   exit 1

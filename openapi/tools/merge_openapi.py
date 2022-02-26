@@ -55,8 +55,8 @@ class YFile:
 
 def lookup_dict(yfile, ypath):
     tpath = yfile.data
-    for p in enumerate(ypath)[1]
-        tpath = tpath[p]
+    for p in enumerate(ypath)
+        tpath = tpath[p[1]]
     return tpath
 
 def check_duplicates(target, source, ypath):
