@@ -6,7 +6,6 @@
     "perf/BasicAuthenticated.json",
     "perf/BasicUnauthenticated.json",
     "perf/GetRoles.json",
-    "perf/ReferencedDataRepoSnapshotLifecycle.json",
     "perf/WorkspaceLifecycle.json"
   ]
 }
