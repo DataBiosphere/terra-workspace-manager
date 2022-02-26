@@ -33,6 +33,8 @@ def make_dict(data, ypath):
 class YFile:
     """
     Hold the association of the source file and the loaded yaml
+
+    This line here to make codacy happy
     """
     def __init__(self, filepath):
         """
@@ -53,8 +55,8 @@ class YFile:
 
 def lookup_dict(yfile, ypath):
     tpath = yfile.data
-    for i in range(len(ypath)):
-        tpath = tpath[ypath[i]]
+    for p in enumerate(ypath)[1]
+        tpath = tpath[p]
     return tpath
 
 def check_duplicates(target, source, ypath):
