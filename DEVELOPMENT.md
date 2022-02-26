@@ -69,10 +69,27 @@ integration environments), update the
 
     jenv add /Library/Java/JavaVirtualMachines/adoptopenjdk-11.jdk/Contents/Home
     ```
+
+- The build and the integration tests assume `python3` and its built-in module `venv` are available. The
+  build of openapi creates a python virtual environment and activates it to run the script to merge
+  the various YAML files comprising the REST API.
+
+  `python3` is typically available on *ix distributions, but may not be available Mac or Windows.
+  On Mac, you can install it using Homebrew like
+  ```
+  brew install python3
+  ```
+  The advantage of using `venv` is that it is built in so does not require extra installation steps.
+  However, it is not so useful as a developer tools because it has no way to de-activate a virtual
+  environment. Consider installing `virtualenv` for your developer use. It can be installed using
+  `pip` like so:
+  ```
+  python3 -m pip install virtualenv
+  ```
+
 - Recommended: read the [README](README.md) to understand the general structure of the service
 
 **NOTE**: You may encounter issues with the application when running an unexpected version of Java. So make sure you are running `AdoptOpenJDK Java 11 (Hotspot)` as specified above.
-
 
 ### Database Configuration
 Workspace Manager Service relies on a Postgresql database server containing two databases:
