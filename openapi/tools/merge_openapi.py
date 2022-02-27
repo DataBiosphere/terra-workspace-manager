@@ -31,12 +31,9 @@ def make_dict(data, ypath):
         data[ypath] = dict()
 
 class YFile:
-    """ Hold the association of the source file and the loaded yaml
-
-    This line here to make codacy happy
-    """
+    """Hold the association of the source file and the loaded yaml"""
     def __init__(self, filepath):
-        """ Make sure all of the dict's are initialized.
+        """Make sure all of the dict's are initialized.
 
          Note that a load failure does not cause an exit. We want to get all of the load errors
          in one pass and then exit. The global `global_had_load_error` is used to track the state.
