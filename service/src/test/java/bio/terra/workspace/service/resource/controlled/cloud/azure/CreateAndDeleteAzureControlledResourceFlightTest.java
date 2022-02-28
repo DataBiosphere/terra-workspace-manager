@@ -176,12 +176,8 @@ public class CreateAndDeleteAzureControlledResourceFlightTest extends BaseAzureT
     ControlledResource res =
         controlledResourceService.getControlledResource(workspaceId, resourceId, userRequest);
 
-    try {
-      var relayNamespaceResource = res.castByEnum(WsmResourceType.CONTROLLED_AZURE_RELAY_NAMESPACE);
-      assertEquals(resource, relayNamespaceResource);
-    } catch (Exception e) {
-      fail("Failed to cast resource to ControlledAzureIpResource", e);
-    }
+    var relayNamespaceResource = res.castByEnum(WsmResourceType.CONTROLLED_AZURE_RELAY_NAMESPACE);
+    assertEquals(resource, relayNamespaceResource);
 
     // Submit a VM deletion flight.
     FlightState deleteFlightState =
