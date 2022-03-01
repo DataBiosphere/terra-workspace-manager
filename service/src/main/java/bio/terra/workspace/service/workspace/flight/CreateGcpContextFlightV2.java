@@ -72,6 +72,7 @@ public class CreateGcpContextFlightV2 extends Flight {
     addStep(
         new SyncSamGroupsStep(appContext.getSamService(), workspaceId, userRequest), shortRetry);
     addStep(new GcpCloudSyncStep(crl.getCloudResourceManagerCow()), cloudRetry);
+    addStep(new CreatePetSaStep(appContext.getSamService(), userRequest), shortRetry);
 
     // Store the cloud context data and unlock the database row
     // This must be the last step, since it clears the lock. So this step also
