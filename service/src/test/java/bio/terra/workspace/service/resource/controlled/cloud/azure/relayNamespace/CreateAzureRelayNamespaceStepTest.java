@@ -172,6 +172,7 @@ public class CreateAzureRelayNamespaceStepTest extends BaseAzureTest {
     // Verify Azure deletion was called
     verify(mockNamespaces)
         .deleteByResourceGroup(
-            dummyAzureCloudContext.getAzureResourceGroupId(), creationParameters.getNamespaceName());
+            dummyAzureCloudContext.getAzureResourceGroupId(),
+            creationParameters.getNamespaceName());
   }
 }
