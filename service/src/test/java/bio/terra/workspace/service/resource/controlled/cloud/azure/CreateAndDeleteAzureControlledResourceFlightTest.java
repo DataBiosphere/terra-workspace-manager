@@ -46,6 +46,8 @@ import com.azure.resourcemanager.relay.RelayManager;
 import java.time.Duration;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
+
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -190,7 +192,7 @@ public class CreateAndDeleteAzureControlledResourceFlightTest extends BaseAzureT
             null);
     assertEquals(FlightStatus.SUCCESS, deleteFlightState.getFlightStatus());
 
-    Thread.sleep(10000);
+    TimeUnit.SECONDS.sleep(5);
     RelayManager manager = azureTestUtils.getRelayManager();
     ManagementException exception =
         assertThrows(

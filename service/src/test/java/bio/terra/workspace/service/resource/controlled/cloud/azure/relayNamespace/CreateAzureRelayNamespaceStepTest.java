@@ -42,7 +42,7 @@ public class CreateAzureRelayNamespaceStepTest extends BaseAzureTest {
   @Mock private FlightContext mockFlightContext;
   @Mock private CrlService mockCrlService;
   @Mock private AzureConfiguration mockAzureConfig;
-  @Mock private AzureCloudContext mockAzureCloudContext;
+  @Mock private AzureCloudContext dummyAzureCloudContext;
   @Mock private RelayManager mockRelayManager;
   @Mock private Namespaces mockNamespaces;
   @Mock private RelayNamespace.DefinitionStages.Blank mockStage1;
@@ -56,14 +56,14 @@ public class CreateAzureRelayNamespaceStepTest extends BaseAzureTest {
 
   @BeforeEach
   public void setup() {
-    when(mockAzureCloudContext.getAzureResourceGroupId()).thenReturn(STUB_STRING_RETURN);
-    when(mockAzureCloudContext.getAzureTenantId()).thenReturn(STUB_STRING_RETURN);
-    when(mockAzureCloudContext.getAzureSubscriptionId()).thenReturn(STUB_STRING_RETURN);
-    when(mockCrlService.getRelayManager(mockAzureCloudContext, mockAzureConfig))
+    when(dummyAzureCloudContext.getAzureResourceGroupId()).thenReturn(STUB_STRING_RETURN);
+    when(dummyAzureCloudContext.getAzureTenantId()).thenReturn(STUB_STRING_RETURN);
+    when(dummyAzureCloudContext.getAzureSubscriptionId()).thenReturn(STUB_STRING_RETURN);
+    when(mockCrlService.getRelayManager(dummyAzureCloudContext, mockAzureConfig))
         .thenReturn(mockRelayManager);
 
-    when(mockAzureCloudContext.getAzureResourceGroupId()).thenReturn(STUB_STRING_RETURN);
-    when(mockCrlService.getRelayManager(mockAzureCloudContext, mockAzureConfig))
+    when(dummyAzureCloudContext.getAzureResourceGroupId()).thenReturn(STUB_STRING_RETURN);
+    when(mockCrlService.getRelayManager(dummyAzureCloudContext, mockAzureConfig))
         .thenReturn(mockRelayManager);
     when(mockRelayManager.namespaces()).thenReturn(mockNamespaces);
     when(mockNamespaces.define(anyString())).thenReturn(mockStage1);
@@ -78,7 +78,7 @@ public class CreateAzureRelayNamespaceStepTest extends BaseAzureTest {
 
     when(mockFlightContext.getWorkingMap()).thenReturn(mockWorkingMap);
     when(mockWorkingMap.get(ControlledResourceKeys.AZURE_CLOUD_CONTEXT, AzureCloudContext.class))
-        .thenReturn(mockAzureCloudContext);
+        .thenReturn(dummyAzureCloudContext);
 
     // Deletion mocks
     doNothing().when(mockNamespaces).deleteByResourceGroup(anyString(), anyString());
@@ -89,7 +89,7 @@ public class CreateAzureRelayNamespaceStepTest extends BaseAzureTest {
 
     when(mockFlightContext.getWorkingMap()).thenReturn(mockWorkingMap);
     when(mockWorkingMap.get(ControlledResourceKeys.AZURE_CLOUD_CONTEXT, AzureCloudContext.class))
-        .thenReturn(mockAzureCloudContext);
+        .thenReturn(dummyAzureCloudContext);
   }
 
   @Test
@@ -123,9 +123,9 @@ public class CreateAzureRelayNamespaceStepTest extends BaseAzureTest {
         CreateRelayRequestData.builder()
             .setName(creationParameters.getNamespaceName())
             .setRegion(Region.fromName(creationParameters.getRegion()))
-            .setTenantId(mockAzureCloudContext.getAzureTenantId())
-            .setSubscriptionId(mockAzureCloudContext.getAzureSubscriptionId())
-            .setResourceGroupName(mockAzureCloudContext.getAzureResourceGroupId())
+            .setTenantId(dummyAzureCloudContext.getAzureTenantId())
+            .setSubscriptionId(dummyAzureCloudContext.getAzureSubscriptionId())
+            .setResourceGroupName(dummyAzureCloudContext.getAzureResourceGroupId())
             .build();
 
     assertThat(requestDataOpt, equalTo(Optional.of(expected)));
@@ -172,6 +172,6 @@ public class CreateAzureRelayNamespaceStepTest extends BaseAzureTest {
     // Verify Azure deletion was called
     verify(mockNamespaces)
         .deleteByResourceGroup(
-            mockAzureCloudContext.getAzureResourceGroupId(), creationParameters.getNamespaceName());
+            dummyAzureCloudContext.getAzureResourceGroupId(), creationParameters.getNamespaceName());
   }
 }
