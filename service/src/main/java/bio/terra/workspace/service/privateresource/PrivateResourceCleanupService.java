@@ -1,6 +1,6 @@
 package bio.terra.workspace.service.privateresource;
 
-import bio.terra.common.sam.exception.SamForbiddenException;
+import bio.terra.common.sam.exception.SamNotFoundException;
 import bio.terra.workspace.app.configuration.external.PrivateResourceCleanupConfiguration;
 import bio.terra.workspace.db.CronjobDao;
 import bio.terra.workspace.db.ResourceDao;
@@ -121,10 +121,11 @@ public class PrivateResourceCleanupService {
               workspaceUserPair.getWorkspaceId());
           runCleanupFlight(workspaceUserPair);
         }
-      } catch (SamForbiddenException forbiddenEx) {
+      } catch (SamNotFoundException notFoundEx) {
         // Older workspaces do not have the "manager" role, so WSM cannot read permissions from
-        // them and will never be able to. Mark these resources as NOT_APPLICABLE so we don't keep
-        // polling.
+        // them and will never be able to. Sam responds to these requests with 404 rather than 403
+        // to avoid leaking workspace existence information.
+        // Mark these resources as NOT_APPLICABLE so we don't keep polling.
         logger.warn("Found legacy workspace {}", workspaceUserPair.getWorkspaceId());
         resourceDao.setPrivateResourcesStateForWorkspaceUser(
             workspaceUserPair.getWorkspaceId(),
@@ -157,7 +158,8 @@ public class PrivateResourceCleanupService {
             // workspace.
             .addParameter(WorkspaceFlightMapKeys.ROLE_TO_REMOVE, null);
     try {
-      userCleanupJob.submitAndWait(null);
+      // Skip the job access check as the "manager" role does not grant read access to a workspace.
+      userCleanupJob.submitAndWait(null, /*doAccessCheck=*/ false);
     } catch (RuntimeException e) {
       // Log the error, but don't kill this thread as it still needs to clean up other users.
       logger.error(
