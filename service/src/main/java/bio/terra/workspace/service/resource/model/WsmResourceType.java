@@ -7,6 +7,8 @@ import bio.terra.workspace.service.resource.controlled.cloud.azure.ip.Controlled
 import bio.terra.workspace.service.resource.controlled.cloud.azure.ip.ControlledAzureIpResource;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.network.ControlledAzureNetworkHandler;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.network.ControlledAzureNetworkResource;
+import bio.terra.workspace.service.resource.controlled.cloud.azure.relayNamespace.ControlledAzureRelayNamespaceHandler;
+import bio.terra.workspace.service.resource.controlled.cloud.azure.relayNamespace.ControlledAzureRelayNamespaceResource;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.storage.ControlledAzureStorageHandler;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.storage.ControlledAzureStorageResource;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.vm.ControlledAzureVmHandler;
@@ -116,6 +118,13 @@ public enum WsmResourceType {
       ApiResourceType.AZURE_IP,
       ControlledAzureIpResource.class,
       ControlledAzureIpHandler::getHandler),
+  CONTROLLED_AZURE_RELAY_NAMESPACE(
+      CloudPlatform.AZURE,
+      StewardshipType.CONTROLLED,
+      "CONTROLLED_AZURE_RELAY_NAMESPACE",
+      ApiResourceType.AZURE_RELAY_NAMESPACE,
+      ControlledAzureRelayNamespaceResource.class,
+      ControlledAzureRelayNamespaceHandler::getHandler),
   CONTROLLED_AZURE_DISK(
       CloudPlatform.AZURE,
       StewardshipType.CONTROLLED,

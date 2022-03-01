@@ -226,6 +226,9 @@ public class EnumerateJobs extends WorkspaceAllocateTestScriptBase {
       case AZURE_IP:
         return union.getAzureIp().getMetadata();
 
+      case AZURE_RELAY_NAMESPACE:
+        return union.getAzureRelayNamespace().getMetadata();
+
       case AZURE_DISK:
         return union.getAzureDisk().getMetadata();
 

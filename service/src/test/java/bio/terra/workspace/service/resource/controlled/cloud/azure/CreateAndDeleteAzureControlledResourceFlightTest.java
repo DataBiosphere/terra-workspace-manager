@@ -16,6 +16,7 @@ import bio.terra.workspace.generated.model.ApiAccessScope;
 import bio.terra.workspace.generated.model.ApiAzureDiskCreationParameters;
 import bio.terra.workspace.generated.model.ApiAzureIpCreationParameters;
 import bio.terra.workspace.generated.model.ApiAzureNetworkCreationParameters;
+import bio.terra.workspace.generated.model.ApiAzureRelayNamespaceCreationParameters;
 import bio.terra.workspace.generated.model.ApiAzureVmCreationParameters;
 import bio.terra.workspace.generated.model.ApiManagedBy;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
@@ -25,6 +26,7 @@ import bio.terra.workspace.service.resource.controlled.ControlledResourceService
 import bio.terra.workspace.service.resource.controlled.cloud.azure.disk.ControlledAzureDiskResource;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.ip.ControlledAzureIpResource;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.network.ControlledAzureNetworkResource;
+import bio.terra.workspace.service.resource.controlled.cloud.azure.relayNamespace.ControlledAzureRelayNamespaceResource;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.vm.ControlledAzureVmResource;
 import bio.terra.workspace.service.resource.controlled.flight.create.CreateControlledResourceFlight;
 import bio.terra.workspace.service.resource.controlled.flight.delete.DeleteControlledResourceFlight;
@@ -37,11 +39,14 @@ import bio.terra.workspace.service.resource.model.WsmResource;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.flight.create.azure.CreateAzureContextFlight;
+import com.azure.core.management.exception.ManagementException;
 import com.azure.resourcemanager.compute.ComputeManager;
 import com.azure.resourcemanager.compute.models.VirtualMachine;
+import com.azure.resourcemanager.relay.RelayManager;
 import java.time.Duration;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -116,6 +121,88 @@ public class CreateAndDeleteAzureControlledResourceFlightTest extends BaseAzureT
     } catch (Exception e) {
       fail("Failed to cast resource to ControlledAzureIpResource", e);
     }
+  }
+
+  @Test
+  public void createAndDeleteAzureRelayNamespaceControlledResource() throws InterruptedException {
+    UUID workspaceId = azureTestUtils.createWorkspace(workspaceService);
+    AuthenticatedUserRequest userRequest = userAccessUtils.defaultUserAuthRequest();
+
+    // Cloud context needs to be created first
+    FlightState createAzureContextFlightState =
+        StairwayTestUtils.blockUntilFlightCompletes(
+            jobService.getStairway(),
+            CreateAzureContextFlight.class,
+            azureTestUtils.createAzureContextInputParameters(workspaceId, userRequest),
+            STAIRWAY_FLIGHT_TIMEOUT,
+            null);
+
+    assertEquals(FlightStatus.SUCCESS, createAzureContextFlightState.getFlightStatus());
+    assertTrue(
+        workspaceService.getAuthorizedAzureCloudContext(workspaceId, userRequest).isPresent());
+
+    final ApiAzureRelayNamespaceCreationParameters creationParameters =
+        ControlledResourceFixtures.getAzureRelayNamespaceCreationParameters();
+
+    final UUID resourceId = UUID.randomUUID();
+    ControlledAzureRelayNamespaceResource resource =
+        ControlledAzureRelayNamespaceResource.builder()
+            .common(
+                ControlledResourceFields.builder()
+                    .workspaceId(workspaceId)
+                    .resourceId(resourceId)
+                    .name(getAzureName("ip"))
+                    .description(getAzureName("ip-desc"))
+                    .cloningInstructions(CloningInstructions.COPY_RESOURCE)
+                    .accessScope(AccessScopeType.fromApi(ApiAccessScope.SHARED_ACCESS))
+                    .managedBy(ManagedByType.fromApi(ApiManagedBy.USER))
+                    .build())
+            .namespaceName(creationParameters.getNamespaceName())
+            .region(creationParameters.getRegion())
+            .build();
+
+    // Submit an IP creation flight.
+    FlightState flightState =
+        StairwayTestUtils.blockUntilFlightCompletes(
+            jobService.getStairway(),
+            CreateControlledResourceFlight.class,
+            azureTestUtils.createControlledResourceInputParameters(
+                workspaceId, userRequest, resource),
+            STAIRWAY_FLIGHT_TIMEOUT,
+            null);
+
+    assertEquals(FlightStatus.SUCCESS, flightState.getFlightStatus());
+
+    // Verify controlled resource exists in the workspace.
+    ControlledResource res =
+        controlledResourceService.getControlledResource(workspaceId, resourceId, userRequest);
+
+    var relayNamespaceResource = res.castByEnum(WsmResourceType.CONTROLLED_AZURE_RELAY_NAMESPACE);
+    assertEquals(resource, relayNamespaceResource);
+
+    // Submit a VM deletion flight.
+    FlightState deleteFlightState =
+        StairwayTestUtils.blockUntilFlightCompletes(
+            jobService.getStairway(),
+            DeleteControlledResourceFlight.class,
+            azureTestUtils.deleteControlledResourceInputParameters(
+                workspaceId, resourceId, userRequest, resource),
+            STAIRWAY_FLIGHT_TIMEOUT,
+            null);
+    assertEquals(FlightStatus.SUCCESS, deleteFlightState.getFlightStatus());
+
+    TimeUnit.SECONDS.sleep(5);
+    RelayManager manager = azureTestUtils.getRelayManager();
+    ManagementException exception =
+        assertThrows(
+            ManagementException.class,
+            () ->
+                manager
+                    .namespaces()
+                    .getByResourceGroup(
+                        azureTestUtils.getAzureCloudContext().getAzureResourceGroupId(),
+                        resource.getNamespaceName()));
+    assertEquals("NotFound", exception.getValue().getCode());
   }
 
   @Test
