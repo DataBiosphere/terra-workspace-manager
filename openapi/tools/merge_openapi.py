@@ -1,4 +1,4 @@
-"""Merge OpenAPI YAML files together into a single output file"""
+"""Merge OpenAPI YAML files together into a single output file."""
 import sys
 import argparse
 import yaml
@@ -9,6 +9,7 @@ from pathlib import Path
 
 
 class OpenApiTree:
+
     """Hold the association of the source file and the loaded yaml"""
 
     def __init__(self, filepath):
@@ -28,18 +29,18 @@ class OpenApiTree:
         self.ensure_dict_exists(self.data['components'], 'responses')
 
     def ensure_dict_exists(self, input_dict, yaml_path):
-        """Fill in a dictionary if none is present"""
+        """Fill in a dictionary if none is present."""
         if yaml_path not in input_dict:
             input_dict[yaml_path] = dict()
         if input_dict[yaml_path] is None:
             input_dict[yaml_path] = dict()
 
     def load_failed(self):
-        """Expose the state of the load"""
+        """Expose the state of the load."""
         return self.data == None
 
     def load_yaml(self):
-        """Load a yaml file and handle parse errors"""
+        """Load a yaml file and handle parse errors."""
         with open(self.filepath,'r') as file_descriptor:
             try:
                 self.data = yaml.safe_load(file_descriptor)
@@ -79,7 +80,7 @@ class OpenApiTree:
 
                 
 def check_duplicates(target, source, yaml_path):
-    """Check for duplicate keys in a merge target and the source"""
+    """Check for duplicate keys in a merge target and the source."""
     tdict = lookup_dict(target, yaml_path)
     sdict = lookup_dict(source, yaml_path)
     dups = set.intersection(set(tdict.keys()), set(sdict.keys()))
@@ -88,7 +89,7 @@ def check_duplicates(target, source, yaml_path):
         raise ValueError(f'Duplicate key(s) "{dups}" found in "{source.filepath}"')
 
 def lookup_dict(OpenApiTree, yaml_path):
-    """Given an array of keys, traverse dictionaries, returning the last one"""
+    """Given an array of keys, traverse dictionaries, returning the last one."""
     result_dict = OpenApiTree.data
     for p in enumerate(yaml_path):
         # Enumerate returns a list where the second member is the string, so we have to get index 1
@@ -97,7 +98,7 @@ def lookup_dict(OpenApiTree, yaml_path):
 
 
 def merge(target, source, yaml_path):
-    """Merge the source dictionary at yaml_path into the target dictionary at yaml_path"""
+    """Merge the source dictionary at yaml_path into the target dictionary at yaml_path."""
     check_duplicates(target, source, yaml_path)
     target_dict = lookup_dict(target, yaml_path)
     source_dict = lookup_dict(source, yaml_path)
@@ -130,7 +131,6 @@ def main():
     # Bail if we did not get a clean load
     for tree in [main_tree] + part_tree_list:
         if tree.load_failed():
-            print
             return 1
 
     # Merge each section. We don't worry about the order of the merges or the order of
