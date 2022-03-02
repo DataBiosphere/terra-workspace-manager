@@ -13,11 +13,12 @@
 // There may be better ways to do this. Gradle is vast and complex.
 // All I know is that this is a way that works.
 
+def srcDir = "${projectDir}/src"
 def outDir = "${buildDir}/openapi"
 def toolsDir = "${projectDir}/tools"
-def srcDir = "${projectDir}/src"
 
 tasks.register('configureVenv') {
+    description 'Creates and configures a python3 virtual environment for the build'
     inputs.files(files("${toolsDir}/requirements.txt", "${toolsDir}/configure_venv.sh"))
             .withPropertyName('requirementsFile')
     outputs.dir(file("${outDir}/venv"))
@@ -31,6 +32,7 @@ tasks.register('configureVenv') {
 }
 
 tasks.register('buildOpenApi') {
+    description 'Constructs a single OpenAPI yaml file from parts'
     ext {
         openApiSource = "${outDir}/openapi.yaml"
     }

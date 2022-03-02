@@ -1,9 +1,5 @@
 # Adding Resources to Workspace Manager
 
-*ddietterich@verily.com*
-
-*created: 2022-02-25*
-
 One of the most frequent WSM tasks is to add a new resource. I have tried to make this as
 simple as practical. I have also tried to allow parallel resource development with a
 minimum of file conflicts.
@@ -34,7 +30,7 @@ to compile your code as you go.
      objects by type.
 1. Add your new resource type to `resource/model/WsmResourceFamily` and
    `resource/model/WsmResourceType`. At this point, you should be able to cleanly build
-   the `service` sub-project.
+   the `service` Workspace Manager sub-project.
 1. Add your REST API
    - In the `openapi` sub-project, in the `parts` directory, create a yaml file for your
      resource API. The file should contain all resource-type-specific parameters,
@@ -69,6 +65,7 @@ for details about how async interfaces are provided in MC Terra.
 When writing steps for a Stairway flight, you need to make your code idempotent. It needs
 to be able to be restarted in the event of pod failures and rolling upgrades. See 
 [Stairway Github Repo](https://github.com/DataBiosphere/stairway) for further documentation.
+In particular, the [Flight Developer Guide](https://github.com/DataBiosphere/stairway/blob/develop/FLIGHT_DEVELOPER_GUIDE.md).
 
 ### Files for Resources
 
@@ -87,7 +84,7 @@ Most of the code you make is in files specific to the new resource. These are:
 | integration | src/main/java/scripts/testscripts | `{resource}Lifecycle.java` |  |
 | integration | src/main/resources/configs/integration | `{resource}Lifecycle.java` |  |
 | openapi | src/parts | `{stewardship}_{cloud}_{resource}.yaml` | |
-| openapi | src/resources | `resource_{cloud}_{resource}.yam`l |  |
+| openapi | src/resources | `{cloud}_{resource}.yam` |  |
 | service | src/main/java/.../service/resource/{stewardship}/cloud/{cloud}/{resource} | `{resource}Attributes.java` | |
 | service | src/main/java/.../service/resource/{stewardship}/cloud/{cloud}/{resource} | `{resource}Handler.java` | controlled only |
 | service | src/main/java/.../service/resource/{stewardship}/cloud/{cloud}/{resource} | `{resource}Resource.java` |

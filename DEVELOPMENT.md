@@ -7,6 +7,8 @@ Dev Ops github repositories and practices. Some of those are locked down, becaus
 Broad deployment of Terra needs to maintain a FedRamp approval level in order to host US
 Government data.
 
+You should read the [README](README.md) to understand the general structure of the service.
+
 ## OpenAPI V3 - formerly swagger
 A swagger-ui page is available at /swagger-ui.html on any running instance. For existing
 instances running in the Broad deployment, those are:
@@ -42,17 +44,29 @@ integration environments), update the
 3. This updates the default [version mapping for the app in question](https://github.com/broadinstitute/terra-helmfile/blob/master/versions.yaml).
 4. [Our deployment of ArgoCD](https://ap-argocd.dsp-devops.broadinstitute.org/applications) monitors the above repo, and any environments in which the app is set to auto-sync will immediately pick up the new version of the image. If the app is not set to auto-sync in an environment, it can be manually synced via the ArgoCD UI or API.
 
-
 ## Setup
 
 ### Prerequisites:
 
-- Install Postgres 13.1: https://www.postgresql.org/download/
-  ```sh
-  brew install postgresql@13
-  ```
-  - [The app](https://postgresapp.com/downloads.html) may be easier, just make sure to download the right version. It'll manage things for you and has a useful menulet where the server can be turned on and off. Don't forget to create a server if you go this route.
-- Install AdoptOpenJDK Java 11 (Hotspot). Here's an easy way on Mac, using [jEnv](https://www.jenv.be/) to manage the active version:
+#### Postgres
+We are currently using Postgres 13.1.
+
+You have choices for how to install Postgres:
+- Directly from the Postgresql website: https://www.postgresql.org/download/
+- Via homebre:
+```sh
+brew install postgresql@13
+```
+- By installing the Mac application: [Postgresql app](https://postgresapp.com/downloads.html). This
+is the easiest. Just make sure to download the right version. It'll manage things for you and has a
+useful menulet where the server can be turned on and off. Don't forget to create a server if you
+go this route.
+
+#### JDK
+We use AdoptOpenJDK Java 11 (Hotspot). Some teams are trying Java 11, but the Terra project
+has not moved there as a whole.
+
+Here's an easy way to install on Mac, using [jEnv](https://www.jenv.be/) to manage the active version:
 
     ```sh
     brew install jenv
@@ -70,26 +84,33 @@ integration environments), update the
     jenv add /Library/Java/JavaVirtualMachines/adoptopenjdk-11.jdk/Contents/Home
     ```
 
-- The build and the integration tests assume `python3` and its built-in module `venv` are available. The
-  build of openapi creates a python virtual environment and activates it to run the script to merge
-  the various YAML files comprising the REST API.
+**NOTE**: You may encounter issues with the application when running an unexpected version of Java.
+So make sure you are running `AdoptOpenJDK Java 11 (Hotspot)` as specified above.
 
-  `python3` is typically available on *ix distributions, but may not be available Mac or Windows.
-  On Mac, you can install it using Homebrew like
-  ```
-  brew install python3
-  ```
-  The advantage of using `venv` is that it is built in so does not require extra installation steps.
-  However, it is not so useful as a developer tools because it has no way to de-activate a virtual
-  environment. Consider installing `virtualenv` for your developer use. It can be installed using
-  `pip` like so:
-  ```
-  python3 -m pip install virtualenv
-  ```
+#### Python3
+We are currently using Python 3.9.10
 
-- Recommended: read the [README](README.md) to understand the general structure of the service
+The build and the integration tests assume `python3` and its built-in module `venv` are available. The
+build of openapi creates a python virtual environment and activates it to run the script to merge
+the various YAML files comprising the REST API.
 
-**NOTE**: You may encounter issues with the application when running an unexpected version of Java. So make sure you are running `AdoptOpenJDK Java 11 (Hotspot)` as specified above.
+The recommended practice is to install `pyenv` and use that to install and manage your versions
+of python. Follow the instructions [here](https://github.com/pyenv/pyenv#homebrew-in-macos) to
+install pyenv.
+
+Then use `pyenv` to install the right version of python like so:
+```
+pyenv install 3.9.10
+```
+
+In the automation, we use the `venv` to make virtual environments. The advantage of using `venv`
+is that it is built in so does not require extra installation steps.
+However, it is not so useful as a developer tools because it has no way to de-activate a virtual
+environment. Consider installing `virtualenv` for your developer use. It can be installed using
+`pip` like so:
+```
+python3 -m pip install virtualenv
+```
 
 ### Database Configuration
 Workspace Manager Service relies on a Postgresql database server containing two databases:
@@ -124,8 +145,6 @@ To set up Workspace Manager's required database, run the following command, whic
 ```sh
 psql -f local-dev/local-postgres-init.sql
 ```
-
-At some point, we will connect this to a CloudSQL instance but for local dev purposes having the option to use a local DB instead makes sense.
 
 ### IntelliJ Setup
 
