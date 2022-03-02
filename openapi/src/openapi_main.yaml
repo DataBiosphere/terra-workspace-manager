@@ -1,8 +1,5 @@
 # DEVELOPER NOTES
 #
-# There are three sections of the file bracketed with ## ## that are deprecated. They are the
-# data references interface that we abandoned in favor of the unified resources interface.
-#
 # CLOUD RESOURCE STRUCTURE
 # Each cloud resource has a structure named '{cloud}{resource-type}Resource';
 # for example, GcpGcsBucketResource. It has two properties: 'metadata' and 'attributes'
@@ -12,7 +9,7 @@
 # Metadata includes both the common data for all resources and an optional structure for
 # properties of controlled resources.
 #
-# The 'attributes' property is a reference to a unique structure named '{resource-type}Attributes';
+# The 'attributes' property is a reference to a unique structure named '{cloud}{resource-type}Attributes';
 # for example, GcpGcsBucketAttributes. Attributes are specific to the cloud resource so may
 # be a complex structure.
 #

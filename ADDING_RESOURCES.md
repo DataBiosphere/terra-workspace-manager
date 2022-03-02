@@ -82,7 +82,7 @@ Most of the code you make is in files specific to the new resource. These are:
 | Project | Directory Path | File | Notes |
 | ------- | -------------- | ---- | ----- |
 | integration | src/main/java/scripts/testscripts | `{resource}Lifecycle.java` |  |
-| integration | src/main/resources/configs/integration | `{resource}Lifecycle.java` |  |
+| integration | src/main/resources/configs/integration | `{resource}Lifecycle.json` |  |
 | openapi | src/parts | `{stewardship}_{cloud}_{resource}.yaml` | |
 | openapi | src/resources | `{cloud}_{resource}.yaml` |  |
 | service | src/main/java/.../service/resource/{stewardship}/cloud/{cloud}/{resource} | `{resource}Attributes.java` | |
