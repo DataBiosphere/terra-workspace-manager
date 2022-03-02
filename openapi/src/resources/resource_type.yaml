@@ -15,6 +15,7 @@ components:
         - AZURE_DISK
         - AZURE_NETWORK
         - AZURE_VM
+        - AZURE_RELAY_NAMESPACE
         - AZURE_STORAGE_ACCOUNT
         - GIT_REPO
 
@@ -43,6 +44,8 @@ components:
           $ref: '#/components/schemas/AzureIpAttributes'
         azureNetwork:
           $ref: '#/components/schemas/AzureNetworkAttributes'
+        azureRelayNamespace:
+          $ref: '#/components/schemas/AzureRelayNamespaceAttributes'
         azureStorage:
           $ref: '#/components/schemas/AzureStorageAttributes'
         azureVm:
@@ -77,6 +80,8 @@ components:
           $ref: '#/components/schemas/AzureNetworkResource'
         azureVm:
           $ref: '#/components/schemas/AzureVmResource'
+        azureRelayNamespace:
+          $ref: '#/components/schemas/AzureRelayNamespaceResource'
         azureStorageAccount:
           $ref: '#/components/schemas/AzureStorageResource'
         gitRepo:
