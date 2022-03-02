@@ -51,9 +51,10 @@ integration environments), update the
 #### Postgres
 We are currently using Postgres 13.1.
 
-You have choices for how to install Postgres:
+You do not have to run a local version of Postgres. You will see below how to run it in a
+docker container. If you decide to install a local version, you have choices:
 - Directly from the Postgresql website: https://www.postgresql.org/download/
-- Via homebre:
+- Via homebrew:
 ```sh
 brew install postgresql@13
 ```

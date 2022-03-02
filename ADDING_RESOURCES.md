@@ -84,7 +84,7 @@ Most of the code you make is in files specific to the new resource. These are:
 | integration | src/main/java/scripts/testscripts | `{resource}Lifecycle.java` |  |
 | integration | src/main/resources/configs/integration | `{resource}Lifecycle.java` |  |
 | openapi | src/parts | `{stewardship}_{cloud}_{resource}.yaml` | |
-| openapi | src/resources | `{cloud}_{resource}.yam` |  |
+| openapi | src/resources | `{cloud}_{resource}.yaml` |  |
 | service | src/main/java/.../service/resource/{stewardship}/cloud/{cloud}/{resource} | `{resource}Attributes.java` | |
 | service | src/main/java/.../service/resource/{stewardship}/cloud/{cloud}/{resource} | `{resource}Handler.java` | controlled only |
 | service | src/main/java/.../service/resource/{stewardship}/cloud/{cloud}/{resource} | `{resource}Resource.java` |

@@ -47,6 +47,37 @@ class OpenApiTree:
                 print("Parse error: ", err)
                 self.data = None
 
+
+    def order_merge(self):
+        """Generate a result dictionary in the desired order.
+
+        We generate the top-level items in the traditional order:
+          openapi
+          info
+          paths
+          components
+          security
+
+        We generate the paths, components, and component sections in alphabetical order. By
+        happy coincidence, that leaves the components.securitySchemes last, right next to
+        the security element that references them.
+        """
+        input_dict = self.data
+        for k in input_dict['components'].keys():
+            input_dict['components'][k] = self.sortDictionary(input_dict['components'][k])
+        components = self.sortDictionary(input_dict['components'])
+        result = dict()
+        result['openapi'] = input_dict['openapi']
+        result['info'] = input_dict['info']
+        result['paths'] = self.sortDictionary(input_dict['paths'])
+        result['components'] = components
+        result['security'] = input_dict['security']
+        return result
+
+    def sortDictionary(self, input_dict):
+        return dict(sorted(input_dict.items(), key=lambda t: t[0]))
+
+                
 def check_duplicates(target, source, yaml_path):
     """Check for duplicate keys in a merge target and the source"""
     tdict = lookup_dict(target, yaml_path)
@@ -71,34 +102,6 @@ def merge(target, source, yaml_path):
     target_dict = lookup_dict(target, yaml_path)
     source_dict = lookup_dict(source, yaml_path)
     target_dict.update(source_dict)
-
-def order_merge(input_dict):
-    """Generate a result dictionary in the desired order.
-
-    We generate the top-level items in the traditional order:
-      openapi
-      info
-      paths
-      components
-      security
-
-    We generate the paths, components, and component sections in alphabetical order. By
-    happy coincidence, that leaves the components.securitySchemes last, right next to
-    the security element that references them.
-    """
-    for k in input_dict['components'].keys():
-        input_dict['components'][k] = sortDictionary(input_dict['components'][k])
-    components = sortDictionary(input_dict['components'])
-    result = dict()
-    result['openapi'] = input_dict['openapi']
-    result['info'] = input_dict['info']
-    result['paths'] = sortDictionary(input_dict['paths'])
-    result['components'] = components
-    result['security'] = input_dict['security']
-    return result
-
-def sortDictionary(input_dict):
-    return dict(sorted(input_dict.items(), key=lambda t: t[0]))
 
 def validate_openapi(filepath):
     """Run the OpenApi validator on the combined output"""
@@ -139,7 +142,7 @@ def main():
         merge(main_tree, p, ['components', 'responses'])
 
     # Put the merged parts into a pretty order
-    result = order_merge(main_tree.data)
+    result = main_tree.order_merge()
 
     # Write the output
     outdir = argdict['outdir']

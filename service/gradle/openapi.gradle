@@ -23,6 +23,7 @@ swaggerSources {
 // Copy the result of the openapi build into the built resources
 // so it is available for the swagger_ui.html endpoint
 task copyOpenApiToResources(type: Copy) {
+  description 'Copy the openapi results into build resources to support swagger_ui'
   dependsOn(tasks.getByPath(':openapi:buildOpenApi'))
   from tasks.getByPath(':openapi:buildOpenApi').openApiSource
   into 'build/resources/main/api'
