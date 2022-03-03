@@ -60,7 +60,7 @@ repositories {
 
 Add a dependency like
 ```gradle
-implementation(group: 'bio.terra', name: 'terra-workspace-manager-client', version: 'x.x.x')
+implementation(group: 'bio.terra', name: 'workspace-manager-client', version: 'x.x.x')
 ```
 See [settings.gradle](settings.gradle) for the latest version information.
 
