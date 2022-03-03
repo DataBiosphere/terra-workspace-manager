@@ -1,0 +1,27 @@
+components:
+  schemas:
+    GcpGcsObjectAttributes:
+      description: >-
+        GCS object properties included in post-creation, get, and update. Others must be
+        retrieved from GCS using the name.
+      type: object
+      required: [ bucketName, fileName ]
+      properties:
+        bucketName:
+          description: Name of created bucket (not the resource name).
+          type: string
+        fileName:
+          description: Full path to the file in the gcs bucket.
+          type: string
+
+    GcpGcsObjectResource:
+      type: object
+      description: Description of a GCS object.
+      required: [ metadata, attributes ]
+      properties:
+        metadata:
+          description: the resource metadata common to all resources
+          $ref: '#/components/schemas/ResourceMetadata'
+        attributes:
+          $ref: '#/components/schemas/GcpGcsObjectAttributes'
+

@@ -1,0 +1,176 @@
+paths:
+  /api/workspaces/v1/{workspaceId}/resources/controlled/azure/vm:
+    parameters:
+      - $ref: '#/components/parameters/WorkspaceId'
+    post:
+      summary: Create a new controlled Azure VM
+      operationId: createAzureVm
+      tags: [ControlledAzureResource]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateControlledAzureVmRequestBody'
+      responses:
+        '200':
+          $ref: '#/components/responses/CreateControlledAzureVmResponse'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /api/workspaces/v1/{workspaceId}/resources/controlled/azure/vm/create-result/{jobId}:
+    parameters:
+      - $ref: '#/components/parameters/WorkspaceId'
+      - $ref: '#/components/parameters/JobId'
+    get:
+      summary: Retrieve information about an Azure Vm create job.
+      operationId: getCreateAzureVmResult
+      tags: [ ControlledAzureResource ]
+      responses:
+        '200':
+          $ref: '#/components/responses/CreateControlledAzureVmResponse'
+        '202':
+          $ref: '#/components/responses/CreateControlledAzureVmResponse'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /api/workspaces/v1/{workspaceId}/resources/controlled/azure/vm/{resourceId}:
+    parameters:
+      - $ref: '#/components/parameters/WorkspaceId'
+      - $ref: '#/components/parameters/ResourceId'
+    get:
+      summary: Get a controlled Azure VM resource
+      operationId: getAzureVm
+      tags: [ ControlledAzureResource ]
+      responses:
+        '200':
+          description: Response to get vm
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AzureVmResource'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+    post:
+      summary: |
+        Delete an azure Vm
+      operationId: deleteAzureVm
+      tags: [ControlledAzureResource]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeleteControlledAzureResourceRequest'
+      responses:
+        '200':
+          $ref: '#/components/responses/DeleteControlledAzureResourceResponse'
+        '202':
+          $ref: '#/components/responses/DeleteControlledAzureResourceResponse'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /api/workspaces/v1/{workspaceId}/resources/controlled/azure/vm/delete-result/{jobId}:
+    parameters:
+      - $ref: '#/components/parameters/WorkspaceId'
+      - $ref: '#/components/parameters/JobId'
+    get:
+      summary: Retrieve information about an azure vm deletion job.
+      operationId: getDeleteAzureVmResult
+      tags: [ ControlledAzureResource ]
+      responses:
+        '200':
+          $ref: '#/components/responses/DeleteControlledAzureResourceResponse'
+        '202':
+          $ref: '#/components/responses/DeleteControlledAzureResourceResponse'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+components:
+  schemas:
+    AzureVmCreationParameters:
+      description: >-
+        Vm-specific properties to be set on creation. These are a subset of the values
+        accepted by the azure resource API
+      type: object
+      required: [name, region, ipId, diskId, networkId, vmSize, vmImageUri]
+      properties:
+        name:
+          description: A valid vm name per https://docs.microsoft.com/en-us/azure/azure-resource-manager/management/resource-name-rules
+          type: string
+        region:
+          description: |
+            A valid region string representation per https://docs.microsoft.com/en-us/dotnet/api/microsoft.azure.management.resourcemanager.fluent.core.region.
+            It is best to look at the Region class definition for valid strings (e.g. 'eastus' == Region.US_EAST.toString())
+          type: string
+        vmSize:
+          description: A valid image size as per com.azure.resourcemanager.compute.models.VirtualMachineSizeTypes
+          type: string
+        vmImageUri:
+          description: A valid image Uri. Must be in the same region specified. E.x. /subscriptions/3efc5bdf-be0e-44e7-b1d7-c08931e3c16c/resourceGroups/mrg-qi-1-preview-20210517084351/providers/Microsoft.Compute/galleries/msdsvm/images/customized_ms_dsvm/versions/0.1.0
+          type: string
+        ipId:
+          description: A valid WSM identifier for an Azure Ip that corresponds to a valid azure resource
+          type: string
+          format: uuid
+        diskId:
+          description: A valid WSM identifier for an Azure Disk that corresponds to a valid azure resource
+          type: string
+          format: uuid
+        networkId:
+          description: A valid WSM identifier for an Azure Network that corresponds to a valid azure resource
+          type: string
+          format: uuid
+
+    CreatedControlledAzureVm:
+      description: Api result class for creating A new Azure VM
+      type: object
+      properties:
+        resourceId:
+          description: UUID of a newly-created resource.
+          type: string
+          format: uuid
+        azureVm:
+          $ref: '#/components/schemas/AzureVmResource'
+
+    CreateControlledAzureVmRequestBody:
+      description: Payload for requesting a new controlled Azure VM resource.
+      type: object
+      properties:
+        common:
+          $ref: '#/components/schemas/ControlledResourceCommonFields'
+        azureVm:
+          $ref: '#/components/schemas/AzureVmCreationParameters'
+        jobControl:
+          $ref: '#/components/schemas/JobControl'
+
+    CreatedControlledAzureVmResult:
+      description: Api result class for creating an azure vm
+      type: object
+      properties:
+        azureVm:
+          $ref: '#/components/schemas/CreatedControlledAzureVm'
+        jobReport:
+          $ref: '#/components/schemas/JobReport'
+        errorReport:
+          $ref: '#/components/schemas/ErrorReport'
+
+  responses:
+    CreateControlledAzureVmResponse:
+      description: Response to create controlled Azure Vm
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/CreatedControlledAzureVmResult'

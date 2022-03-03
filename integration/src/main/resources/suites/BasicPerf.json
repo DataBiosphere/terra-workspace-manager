@@ -5,8 +5,6 @@
   "testConfigurationFiles": [
     "perf/BasicAuthenticated.json",
     "perf/BasicUnauthenticated.json",
-    "perf/DataReferenceLifecycle.json",
-    "perf/EnumerateDataReferences.json",
     "perf/GetRoles.json",
     "perf/WorkspaceLifecycle.json"
   ]

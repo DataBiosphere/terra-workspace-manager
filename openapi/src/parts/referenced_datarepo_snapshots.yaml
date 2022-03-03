@@ -1,0 +1,180 @@
+# Referenced Data Repo Snapshots
+paths:
+  /api/workspaces/v1/{workspaceId}/resources/referenced/datarepo/snapshots:
+    parameters:
+      - $ref: '#/components/parameters/WorkspaceId'
+    post:
+      summary: Create a new data repo snapshot reference in a workspace.
+      operationId: createDataRepoSnapshotReference
+      tags: [ReferencedGcpResource]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateDataRepoSnapshotReferenceRequestBody'
+      responses:
+        '200':
+          $ref: '#/components/responses/DataRepoSnapshotReferenceResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /api/workspaces/v1/{workspaceId}/resources/referenced/datarepo/snapshots/{resourceId}:
+    parameters:
+      - $ref: '#/components/parameters/WorkspaceId'
+      - $ref: '#/components/parameters/ResourceId'
+    get:
+      summary: Gets a reference to a snapshot from a workspace.
+      operationId: getDataRepoSnapshotReference
+      tags: [ReferencedGcpResource]
+      responses:
+        '200':
+          $ref: '#/components/responses/DataRepoSnapshotReferenceResponse'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+    post:
+      summary: Update name, description or referencing target of a snapshot reference in a workspace.
+      operationId: updateDataRepoSnapshotReferenceResource
+      tags: [ReferencedGcpResource]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateDataRepoSnapshotReferenceRequestBody'
+      responses:
+        '204':
+          description: OK
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+    delete:
+      summary: Delete datarepo snapshot reference
+      operationId: deleteDataRepoSnapshotReference
+      tags: [ReferencedGcpResource]
+      responses:
+        '204':
+          description: OK
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+          
+  /api/workspaces/v1/{workspaceId}/resources/referenced/datarepo/snapshots/{resourceId}/clone:
+    parameters:
+      - $ref: '#/components/parameters/WorkspaceId'
+      - $ref: '#/components/parameters/ResourceId'
+    post:
+      summary: Clone a referenced Data Repo Snapshot resource
+      operationId: cloneGcpDataRepoSnapshotReference
+      tags: [ ReferencedGcpResource ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CloneReferencedResourceRequestBody'
+      responses:
+        '200':
+          description: Response for successful Data Repo Snapshot reference clone
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CloneReferencedGcpDataRepoSnapshotResourceResult'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /api/workspaces/v1/{workspaceId}/resources/referenced/datarepo/snapshots/name/{name}:
+    parameters:
+      - $ref: '#/components/parameters/WorkspaceId'
+      - $ref: '#/components/parameters/Name'
+    get:
+      summary: Gets a reference to a snapshot by name.
+      operationId: getDataRepoSnapshotReferenceByName
+      tags: [ReferencedGcpResource]
+      responses:
+        '200':
+          $ref: '#/components/responses/DataRepoSnapshotReferenceResponse'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+components:
+  schemas:
+    CreateDataRepoSnapshotReferenceRequestBody:
+      type: object
+      description: A request to create a reference to a Data Repo snapshot.
+      required: [metadata, snapshot]
+      properties:
+        metadata:
+          $ref: '#/components/schemas/ReferenceResourceCommonFields'
+        snapshot:
+          $ref: '#/components/schemas/DataRepoSnapshotAttributes'
+
+
+    UpdateDataRepoSnapshotReferenceRequestBody:
+      type: object
+      properties:
+        name:
+          $ref: "#/components/schemas/Name"
+        description:
+          type: string
+        instanceName:
+          description: The name of the Data Repo instance
+          type: string
+        snapshot:
+          description: The ID of the Data Repo snapshot
+          type: string
+
+    CloneReferencedGcpDataRepoSnapshotResourceResult:
+      description: >-
+        API result class for cloning a referenced Data Repo snapshot resource. Includes source workspace
+        and resource IDs for provenance. If the effective cloning instructions are not
+        COPY_REFERENCE, then no clone is created and the resource is null.
+      type: object
+      properties:
+        effectiveCloningInstructions:
+          $ref: '#/components/schemas/CloningInstructionsEnum'
+        sourceWorkspaceId:
+          description: ID of the workspace of the source resource for this clone
+          type: string
+          format: uuid
+        sourceResourceId:
+          description: ID of the source resource
+          type: string
+          format: uuid
+        resource:
+          $ref: '#/components/schemas/DataRepoSnapshotResource'
+
+  responses:
+    DataRepoSnapshotReferenceResponse:
+      description: Response containing a reference to a Data Repo snapshot.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/DataRepoSnapshotResource'
+

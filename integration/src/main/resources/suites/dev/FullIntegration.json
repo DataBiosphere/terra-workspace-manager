@@ -7,8 +7,6 @@
     "integration/BasicUnauthenticated.json",
     "integration/GetRoles.json",
     "integration/ListWorkspaces.json",
-    "integration/WorkspaceLifecycle.json",
-    "integration/DataReferenceLifecycle.json",
-    "integration/EnumerateDataReferences.json"
+    "integration/WorkspaceLifecycle.json"
   ]
 }

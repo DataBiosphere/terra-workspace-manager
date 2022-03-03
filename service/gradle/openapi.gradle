@@ -1,7 +1,7 @@
 // OpenAPI/Swagger Server Generation
 swaggerSources {
   server {
-    inputFile = file("${gradle.openapiSourceFile}")
+    inputFile = file(tasks.getByPath(':openapi:buildOpenApi').openApiSource)
     code {
       language = "spring"
       library = "spring-boot"
@@ -20,4 +20,17 @@ swaggerSources {
   }
 }
 
+// Copy the result of the openapi build into the built resources
+// so it is available for the swagger_ui.html endpoint
+task copyOpenApiToResources(type: Copy) {
+  description 'Copy the openapi results into build resources to support swagger_ui'
+  dependsOn(tasks.getByPath(':openapi:buildOpenApi'))
+  from tasks.getByPath(':openapi:buildOpenApi').openApiSource
+  into 'build/resources/main/api'
+  rename { String filename -> "service_openapi.yaml" }
+}
+
+// We depend on the copy to make sure the copy happens. The real dependency is
+// on the open api source generation
+generateSwaggerCodeServer.dependsOn(copyOpenApiToResources)
 sourceSets.main.java.srcDir "${openapiOutputDir}/src/main/java"

@@ -1,0 +1,29 @@
+components:
+  schemas:
+    GcpAiNotebookInstanceAttributes:
+      description: >-
+        AI Notebook instance properties included in post-creation, get, and update. Others must be
+        retrieved from GCP using the specification.
+      type: object
+      required: [projectId, location, instanceId]
+      properties:
+        projectId:
+          description: The GCP project id for the project containing the notebook instance.
+          type: string
+        location:
+          description: The GCP location containing the notebook instance, e.g. 'us-east1-b'
+          type: string
+        instanceId:
+          description: An instance id unique to this project and location.
+          type: string
+
+    GcpAiNotebookInstanceResource:
+      type: object
+      description: Description of a AI Notebook Instance resource.
+      required: [metadata, attributes]
+      properties:
+        metadata:
+          description: the resource metadata common to all resources
+          $ref: '#/components/schemas/ResourceMetadata'
+        attributes:
+          $ref: '#/components/schemas/GcpAiNotebookInstanceAttributes'

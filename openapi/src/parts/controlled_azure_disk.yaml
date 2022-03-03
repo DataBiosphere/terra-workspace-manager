@@ -1,0 +1,129 @@
+paths:
+  /api/workspaces/v1/{workspaceId}/resources/controlled/azure/disks:
+    parameters:
+      - $ref: '#/components/parameters/WorkspaceId'
+    post:
+      summary: Create a new controlled Azure Disk
+      operationId: createAzureDisk
+      tags: [ ControlledAzureResource ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateControlledAzureDiskRequestBody'
+      responses:
+        '200':
+          description: Response to create controlled Azure disk
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreatedControlledAzureDisk'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /api/workspaces/v1/{workspaceId}/resources/controlled/azure/disks/{resourceId}:
+    parameters:
+      - $ref: '#/components/parameters/WorkspaceId'
+      - $ref: '#/components/parameters/ResourceId'
+    get:
+      summary: Get a controlled Azure Disk resource
+      operationId: getAzureDisk
+      tags: [ControlledAzureResource]
+      responses:
+        '200':
+          description: Response to get disk
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AzureDiskResource'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+    post:
+      summary: |
+        Delete an azure Disk
+      operationId: deleteAzureDisk
+      tags: [ControlledAzureResource]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeleteControlledAzureResourceRequest'
+      responses:
+        '200':
+          $ref: '#/components/responses/DeleteControlledAzureResourceResponse'
+        '202':
+          $ref: '#/components/responses/DeleteControlledAzureResourceResponse'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+
+  /api/workspaces/v1/{workspaceId}/resources/controlled/azure/disks/delete-result/{jobId}:
+    parameters:
+      - $ref: '#/components/parameters/WorkspaceId'
+      - $ref: '#/components/parameters/JobId'
+    get:
+      summary: Retrieve information about an azure disk deletion job.
+      operationId: getDeleteAzureDiskResult
+      tags: [ControlledAzureResource]
+      responses:
+        '200':
+          $ref: '#/components/responses/DeleteControlledAzureResourceResponse'
+        '202':
+          $ref: '#/components/responses/DeleteControlledAzureResourceResponse'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+components:
+  schemas:
+    AzureDiskCreationParameters:
+      description: >-
+        Disk-specific properties to be set on creation. These are a subset of the values
+        accepted by the azure resource API
+      type: object
+      required: [ name, region, size ]
+      properties:
+        name:
+          description: A valid disk name per https://docs.microsoft.com/en-us/azure/azure-resource-manager/management/resource-name-rules
+          type: string
+        region:
+          description: |
+            A valid region string representation per https://docs.microsoft.com/en-us/dotnet/api/microsoft.azure.management.resourcemanager.fluent.core.region.
+            It is best to look at the Region class definition for valid strings (e.g. 'eastus' == Region.US_EAST.toString())
+          type: string
+        size:
+          description: |
+            A valid size in GB integer representation
+          type: integer
+
+    CreatedControlledAzureDisk:
+      description: Response payload for requesting a new Azure disk
+      type: object
+      properties:
+        resourceId:
+          description: UUID of a newly-created resource.
+          type: string
+          format: uuid
+        azureDisk:
+          $ref: '#/components/schemas/AzureDiskResource'
+
+    CreateControlledAzureDiskRequestBody:
+      description: Payload for requesting a new controlled Azure Disk resource.
+      type: object
+      properties:
+        common:
+          $ref: '#/components/schemas/ControlledResourceCommonFields'
+        azureDisk:
+          $ref: '#/components/schemas/AzureDiskCreationParameters'
+  

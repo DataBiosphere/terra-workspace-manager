@@ -1,0 +1,444 @@
+paths:
+  /api/workspaces/v1/{workspaceId}/resources/controlled/gcp/buckets:
+    parameters:
+      - $ref: '#/components/parameters/WorkspaceId'
+    post:
+      summary: Create a new controlled Gcp bucket
+      operationId: createBucket
+      tags: [ControlledGcpResource]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateControlledGcpGcsBucketRequestBody'
+      responses:
+        '200':
+          $ref: '#/components/responses/CreatedControlledGcpGcsBucketResponse'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /api/workspaces/v1/{workspaceId}/resources/controlled/gcp/buckets/{resourceId}:
+    parameters:
+      - $ref: '#/components/parameters/WorkspaceId'
+      - $ref: '#/components/parameters/ResourceId'
+    get:
+      summary: Get a controlled GCS bucket resource
+      operationId: getBucket
+      tags: [ControlledGcpResource]
+      responses:
+        '200':
+          $ref: '#/components/responses/GetControlledGcpGcsBucketResponse'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+    patch:
+      summary: Update a controlled GCS Bucket resource.
+      operationId: updateGcsBucket
+      tags: [ ControlledGcpResource ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateControlledGcpGcsBucketRequestBody'
+      responses:
+        '200':
+          $ref: '#/components/responses/UpdateControlledGcpGcsBucketResponse'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+    post:
+      summary: |
+        Delete a controlled GCS bucket resource. This is async, because deleting the bucket and contents can
+        take a very long time. NOTE: this cannot be an HTTP DELETE, because something between generated code
+        and server behavior does not support delete operations with bodies. We require the body for the async
+        state, so this is a POST.
+      operationId: deleteBucket
+      tags: [ControlledGcpResource]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeleteControlledGcpGcsBucketRequest'
+      responses:
+        '200':
+          $ref: '#/components/responses/DeleteControlledGcpGcsBucketResponse'
+        '202':
+          $ref: '#/components/responses/DeleteControlledGcpGcsBucketResponse'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /api/workspaces/v1/{workspaceId}/resources/controlled/gcp/buckets/{resourceId}/clone:
+    parameters:
+      - $ref: '#/components/parameters/WorkspaceId'
+      - $ref: '#/components/parameters/ResourceId'
+    post:
+      summary: Clone a GCS Bucket
+      operationId: cloneGcsBucket
+      tags: [ControlledGcpResource]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CloneControlledGcpGcsBucketRequest'
+      responses:
+        '200':
+          $ref: '#/components/responses/ClonedControlledGcpGcsBucketResponse'
+        '202':
+          $ref: '#/components/responses/ClonedControlledGcpGcsBucketResponse'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /api/workspaces/v1/{workspaceId}/resources/controlled/gcp/buckets/clone-result/{jobId}:
+    parameters:
+      - $ref: '#/components/parameters/WorkspaceId'
+      - $ref: '#/components/parameters/JobId'
+    get:
+      summary: Retrieve information about a gcp bucket clone job.
+      operationId: getCloneGcsBucketResult
+      tags: [ControlledGcpResource]
+      responses:
+        '200':
+          $ref: '#/components/responses/ClonedControlledGcpGcsBucketResponse'
+        '202':
+          $ref: '#/components/responses/ClonedControlledGcpGcsBucketResponse'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /api/workspaces/v1/{workspaceId}/resources/controlled/gcp/buckets/delete-result/{jobId}:
+    parameters:
+      - $ref: '#/components/parameters/WorkspaceId'
+      - $ref: '#/components/parameters/JobId'
+    get:
+      summary: Retrieve information about a gcp bucket deletion job.
+      operationId: getDeleteBucketResult
+      tags: [ControlledGcpResource]
+      responses:
+        '200':
+          $ref: '#/components/responses/DeleteControlledGcpGcsBucketResponse'
+        '202':
+          $ref: '#/components/responses/DeleteControlledGcpGcsBucketResponse'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+components:
+  schemas:
+    CreatedControlledGcpGcsBucket:
+      description: Response Payload for requesting a new controlled GCS bucket.
+      type: object
+      required: [resourceId, gcpBucket]
+      properties:
+        resourceId:
+          description: UUID of a newly-created resource.
+          type: string
+          format: uuid
+        gcpBucket:
+          $ref: '#/components/schemas/GcpGcsBucketResource'
+
+    CreateControlledGcpGcsBucketRequestBody:
+      description: Payload for requesting a new controlled GCS bucket resource.
+      type: object
+      required: [common, gcsBucket]
+      properties:
+        common:
+          $ref: '#/components/schemas/ControlledResourceCommonFields'
+        gcsBucket:
+          $ref: '#/components/schemas/GcpGcsBucketCreationParameters'
+
+    GcpGcsBucketCreationParameters:
+      description: >-
+        Bucket-specific properties to be set on creation. These are a subset of the
+        values accepted by the Gcp Storage API.
+      type: object
+      properties:
+        name:
+          description: A valid bucket name per https://cloud.google.com/storage/docs/naming-buckets.
+          type: string
+        location:
+          description: A valid bucket location per https://cloud.google.com/storage/docs/locations.
+          type: string
+        defaultStorageClass:
+          $ref: '#/components/schemas/GcpGcsBucketDefaultStorageClass'
+        lifecycle:
+          $ref: '#/components/schemas/GcpGcsBucketLifecycle'
+
+    GcpGcsBucketUpdateParameters:
+      description: >-
+        Parameters that may be changed by a user. Location and Bucket name are fixed upon create.
+      type: object
+      properties:
+        defaultStorageClass:
+          $ref: '#/components/schemas/GcpGcsBucketDefaultStorageClass'
+        lifecycle:
+          $ref: '#/components/schemas/GcpGcsBucketLifecycle'
+
+    GcpGcsBucketDefaultStorageClass:
+      description: >-
+        Type and availability of objects in a bucket, described at https://cloud.google.com/storage/docs/storage-classes.
+        This list does not include legacy types that apply to some existing buckets.
+      type: string
+      enum:
+        - STANDARD
+        - NEARLINE
+        - COLDLINE
+        - ARCHIVE
+    GcpGcsBucketLifecycle:
+      description: >-
+        Options to control automatic deletion or storage class change for a bucket.
+        Described at https://cloud.google.com/storage/docs/lifecycle.
+      type: object
+      required: [rules]
+      properties:
+        rules:
+          description: List of rules for this bucket
+          type: array
+          items:
+            $ref: '#/components/schemas/GcpGcsBucketLifecycleRule'
+
+    GcpGcsBucketLifecycleRule:
+      description: A lifecycle rule for a bucket.
+      type: object
+      required: [action]
+      properties:
+        action:
+          $ref: '#/components/schemas/GcpGcsBucketLifecycleRuleAction'
+        condition:
+          $ref: '#/components/schemas/GcpGcsBucketLifecycleRuleCondition'
+
+    GcpGcsBucketLifecycleRuleAction:
+      description: The lifecycle action to take. See https://cloud.google.com/storage/docs/lifecycle#actions.
+      type: object
+      required: [type]
+      properties:
+        storageClass:
+          $ref: '#/components/schemas/GcpGcsBucketDefaultStorageClass'
+        type:
+          $ref: '#/components/schemas/GcpGcsBucketLifecycleRuleActionType'
+
+    GcpGcsBucketLifecycleRuleActionType:
+      description: >-
+        Type of action to perform. Formatted like our Java enums, but spelled in Camel case in Gcp API.
+      type: string
+      enum:
+        - DELETE
+        - SET_STORAGE_CLASS
+
+    GcpGcsBucketLifecycleRuleCondition:
+      description: The condition(s) under which the action will be taken.
+      type: object
+      properties:
+        age:
+          description: Age of an object (in days). This condition is satisfied when an object reaches the specified age.
+          type: integer
+        createdBefore:
+          description: This condition is satisfied when an object is created before midnight of the specified date in UTC.
+          type: string
+          format: date-time
+        customTimeBefore:
+          description: >-
+            This condition is satisfied when the customTime metadata for the object is set to an
+            earlier date than the date used in this lifecycle condition.
+          type: string
+          format: date-time
+        daysSinceCustomTime:
+          description: >-
+            Days since the date set in the customTime metadata for the object. This condition is
+            satisfied when the current date and time is at least the specified number of days after
+            the customTime.
+          type: integer
+        daysSinceNoncurrentTime:
+          description: >-
+            Relevant only for versioned objects. This condition is satisfied when an object has
+            been noncurrent for more than the specified number of days.
+          type: integer
+        live:
+          description: >-
+            Relevant only for versioned objects. If the value is true, this condition matches the
+            live version of objects; if the value is false, it matches noncurrent versions of objects.
+          type: boolean
+        matchesStorageClass:
+          description: >-
+            Objects having any of the storage classes specified by this condition will be matched.
+            Values include "STANDARD", "NEARLINE", "COLDLINE", "ARCHIVE", "MULTI_REGIONAL",
+            "REGIONAL", and "DURABLE_REDUCED_AVAILABILITY".
+          type: array
+          items:
+            $ref: '#/components/schemas/GcpGcsBucketDefaultStorageClass'
+        noncurrentTimeBefore:
+          description: >-
+            Relevant only for versioned objects. This condition is satisfied for objects that became
+            noncurrent on a date prior to the one specified in this condition.
+          type: string
+          format: date-time
+        numNewerVersions:
+          description: >-
+            Relevant only for versioned objects. If the value is N, this condition is satisfied
+            when there are at least N versions (including the live version) newer than this version
+            of the object.
+          type: integer
+
+    CloneControlledGcpGcsBucketRequest:
+      description: >-
+        Values to assign to the cloned bucket for a given source bucket. Leave
+        name and description null to take the source object's values.
+      type: object
+      required: [destinationWorkspaceId, jobControl]
+      properties:
+        destinationWorkspaceId:
+          description: ID of workspace to be cloned into
+          type: string
+          format: uuid
+        cloningInstructions:
+          $ref: "#/components/schemas/CloningInstructionsEnum"
+        name:
+          $ref: "#/components/schemas/Name"
+        description:
+          type: string
+        bucketName:
+          description: >-
+            Name of created bucket (not the resource name). This name must
+            be globally unique, so it can't be a copy of the original bucket name.
+            It also can't be a simple formula like copy-of-bucket-name, as that would
+            fail on subsequent clone operations with bucket-name as the source bucket.
+            If null, a random bucket name will be created.
+          type: string
+        location:
+          description: >-
+            A valid bucket location per https://cloud.google.com/storage/docs/locations.
+            If null, will use source bucket's location.
+          type: string
+        jobControl:
+          $ref: '#/components/schemas/JobControl'
+    ClonedControlledGcpGcsBucket:
+      description: >-
+        Response object for clone of a GCS Bucket. Destination workspace and
+        resource IDs are available in the bucket's metadata object. TODO: generalize so there's a
+        single response type for all resource clones?
+      type: object
+      properties:
+        effectiveCloningInstructions:
+          $ref: '#/components/schemas/CloningInstructionsEnum'
+        sourceWorkspaceId:
+          description: ID of the workspace of the source resource for this clone
+          type: string
+          format: uuid
+        sourceResourceId:
+          description: ID of the source resource
+          type: string
+          format: uuid
+        bucket:
+          $ref: "#/components/schemas/CreatedControlledGcpGcsBucket"
+    CloneControlledGcpGcsBucketResult:
+      description: >-
+        API result class for cloning a GCS bucket.
+      type: object
+      properties:
+        bucket:
+          $ref: '#/components/schemas/ClonedControlledGcpGcsBucket'
+        jobReport:
+          $ref: '#/components/schemas/JobReport'
+        errorReport:
+          $ref: '#/components/schemas/ErrorReport'
+    CloneReferencedGcpGcsBucketResourceResult:
+      description: >-
+        API result class for cloning a referenced GCS Bucket resource. Includes source workspace
+        and resource IDs for provenance. If the effective cloning instructions are not
+        COPY_REFERENCE, then no clone is created and the resource is null.
+      type: object
+      properties:
+        effectiveCloningInstructions:
+          $ref: '#/components/schemas/CloningInstructionsEnum'
+        sourceWorkspaceId:
+          description: ID of the workspace of the source resource for this clone
+          type: string
+          format: uuid
+        sourceResourceId:
+          description: ID of the source resource
+          type: string
+          format: uuid
+        resource:
+          $ref: '#/components/schemas/GcpGcsBucketResource'
+    DeleteControlledGcpGcsBucketRequest:
+      type: object
+      required: [ jobControl ]
+      properties:
+        jobControl:
+          $ref: '#/components/schemas/JobControl'
+
+    DeleteControlledGcpGcsBucketResult:
+      type: object
+      properties:
+        jobReport:
+          $ref: '#/components/schemas/JobReport'
+        errorReport:
+          $ref: '#/components/schemas/ErrorReport'
+
+    UpdateControlledGcpGcsBucketRequestBody:
+      type: object
+      description: Update a GCS bucket's metadata and lifecycle rules.
+      properties:
+        name:
+          description: Optional. New name to give to this resource. The resource name will not be updated if this is omitted.
+          type: string
+        description:
+          description: Optional. New description to give to this resource. The resource description will not be updated if this is omitted.
+          type: string
+        updateParameters:
+          $ref: '#/components/schemas/GcpGcsBucketUpdateParameters'
+
+  responses:
+    CreatedControlledGcpGcsBucketResponse:
+      description: Response to Create controlled Gcs bucket
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/CreatedControlledGcpGcsBucket'
+
+    ClonedControlledGcpGcsBucketResponse:
+      description: Response to GCS bucket clone operation.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/CloneControlledGcpGcsBucketResult'
+
+    DeleteControlledGcpGcsBucketResponse:
+      description: Response Payload for deleting a Gcs bucket
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/DeleteControlledGcpGcsBucketResult'
+
+    GetControlledGcpGcsBucketResponse:
+      description: Response to get bucket
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/GcpGcsBucketResource'
+            
+    UpdateControlledGcpGcsBucketResponse:
+      description: Reponse to GCP GCS Bucket update.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/GcpGcsBucketResource'

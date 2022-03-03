@@ -22,7 +22,6 @@ import bio.terra.workspace.generated.model.ApiGcpGcsObjectResource;
 import bio.terra.workspace.generated.model.ApiGitRepoResource;
 import bio.terra.workspace.generated.model.ApiUpdateBigQueryDataTableReferenceRequestBody;
 import bio.terra.workspace.generated.model.ApiUpdateBigQueryDatasetReferenceRequestBody;
-import bio.terra.workspace.generated.model.ApiUpdateDataReferenceRequestBody;
 import bio.terra.workspace.generated.model.ApiUpdateDataRepoSnapshotReferenceRequestBody;
 import bio.terra.workspace.generated.model.ApiUpdateGcsBucketObjectReferenceRequestBody;
 import bio.terra.workspace.generated.model.ApiUpdateGcsBucketReferenceRequestBody;
@@ -129,15 +128,6 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
   }
 
   @Override
-  public ResponseEntity<Void> updateGcsObjectReference(
-      UUID workspaceId, UUID referenceId, ApiUpdateDataReferenceRequestBody body) {
-    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
-    referenceResourceService.updateReferenceResource(
-        workspaceId, referenceId, body.getName(), body.getDescription(), userRequest);
-    return new ResponseEntity<>(HttpStatus.NO_CONTENT);
-  }
-
-  @Override
   public ResponseEntity<Void> updateBucketObjectReferenceResource(
       UUID workspaceId, UUID referenceId, ApiUpdateGcsBucketObjectReferenceRequestBody body) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
@@ -222,15 +212,6 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
   }
 
   @Override
-  public ResponseEntity<Void> updateBucketReference(
-      UUID id, UUID referenceId, ApiUpdateDataReferenceRequestBody body) {
-    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
-    referenceResourceService.updateReferenceResource(
-        id, referenceId, body.getName(), body.getDescription(), userRequest);
-    return new ResponseEntity<>(HttpStatus.NO_CONTENT);
-  }
-
-  @Override
   public ResponseEntity<Void> updateBucketReferenceResource(
       UUID id, UUID referenceId, ApiUpdateGcsBucketReferenceRequestBody body) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
@@ -306,15 +287,6 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
             .getReferenceResourceByName(id, name, userRequest)
             .castByEnum(WsmResourceType.REFERENCED_GCP_BIG_QUERY_DATA_TABLE);
     return new ResponseEntity<>(referenceResource.toApiResource(), HttpStatus.OK);
-  }
-
-  @Override
-  public ResponseEntity<Void> updateBigQueryDataTableReference(
-      UUID id, UUID referenceId, ApiUpdateDataReferenceRequestBody body) {
-    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
-    referenceResourceService.updateReferenceResource(
-        id, referenceId, body.getName(), body.getDescription(), userRequest);
-    return new ResponseEntity<>(HttpStatus.NO_CONTENT);
   }
 
   @Override
@@ -413,15 +385,6 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
   }
 
   @Override
-  public ResponseEntity<Void> updateBigQueryDatasetReference(
-      UUID id, UUID referenceId, ApiUpdateDataReferenceRequestBody body) {
-    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
-    referenceResourceService.updateReferenceResource(
-        id, referenceId, body.getName(), body.getDescription(), userRequest);
-    return new ResponseEntity<>(HttpStatus.NO_CONTENT);
-  }
-
-  @Override
   public ResponseEntity<Void> updateBigQueryDatasetReferenceResource(
       UUID workspaceId, UUID resourceId, ApiUpdateBigQueryDatasetReferenceRequestBody body) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
@@ -506,15 +469,6 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
             .getReferenceResourceByName(id, name, userRequest)
             .castByEnum(WsmResourceType.REFERENCED_ANY_DATA_REPO_SNAPSHOT);
     return new ResponseEntity<>(referenceResource.toApiResource(), HttpStatus.OK);
-  }
-
-  @Override
-  public ResponseEntity<Void> updateDataRepoSnapshotReference(
-      UUID workspaceId, UUID referenceId, ApiUpdateDataReferenceRequestBody body) {
-    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
-    referenceResourceService.updateReferenceResource(
-        workspaceId, referenceId, body.getName(), body.getDescription(), userRequest);
-    return new ResponseEntity<>(HttpStatus.NO_CONTENT);
   }
 
   @Override

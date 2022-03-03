@@ -1,0 +1,232 @@
+# Common schemas
+# These schemas should be referenced from the source like this:
+#  $ref: '#/components/schemas/<item-you-want>
+components:
+  schemas:
+    AccessScope:
+      type: string
+      description: Specifies the resource as shared or private
+      enum: ['SHARED_ACCESS', 'PRIVATE_ACCESS']
+
+    CloudPlatform:
+      type: string
+      description: Enum representing a cloud platform type.
+      enum: ['AZURE', 'GCP']
+
+    CloneReferencedResourceRequestBody:
+      description: >-
+        Cloning options for referenced resources. If optional parameters are omitted,
+        the source values will be used.
+      type: object
+      required: [destinationWorkspaceId]
+      properties:
+        cloningInstructions:
+          $ref: '#/components/schemas/CloningInstructionsEnum'
+        destinationWorkspaceId:
+          type: string
+          format: uuid
+          # Null for original name
+        name:
+          $ref: "#/components/schemas/Name"
+        description:
+          description: Description for the referenced resource clone, or null to use original.
+          type: string
+
+    CloningInstructionsEnum:
+      type: string
+      description: Instructions for copying this reference when cloning the workspace
+      enum: ['COPY_NOTHING', 'COPY_DEFINITION', 'COPY_RESOURCE', 'COPY_REFERENCE']
+  
+    ControlledResourceIamRole:
+      description: Enum containing all IAM roles on controlled resources available to users
+      type: string
+      enum: [ 'READER', 'WRITER', 'EDITOR']
+  
+    ControlledResourceMetadata:
+      type: object
+      properties:
+        accessScope:
+          $ref: '#/components/schemas/AccessScope'
+        managedBy:
+          $ref: '#/components/schemas/ManagedBy'
+        privateResourceUser:
+          $ref: '#/components/schemas/PrivateResourceUser'
+        privateResourceState:
+          $ref: '#/components/schemas/PrivateResourceState'
+  
+    ControlledResourceCommonFields:
+      type: object
+      required: [ name, cloningInstructions, accessScope, managedBy ]
+      properties:
+        name:
+          $ref: "#/components/schemas/Name"
+        description:
+          type: string
+        cloningInstructions:
+          $ref: '#/components/schemas/CloningInstructionsEnum'
+        accessScope:
+          $ref: '#/components/schemas/AccessScope'
+        managedBy:
+          $ref: '#/components/schemas/ManagedBy'
+        privateResourceUser:
+          $ref: '#/components/schemas/PrivateResourceUser'
+  
+    DeleteControlledAzureResourceRequest:
+      type: object
+      required: [ jobControl ]
+      properties:
+        jobControl:
+          $ref: '#/components/schemas/JobControl'
+
+    DeleteControlledAzureResourceResult:
+      type: object
+      properties:
+        jobReport:
+          $ref: '#/components/schemas/JobReport'
+        errorReport:
+          $ref: '#/components/schemas/ErrorReport'
+
+    ErrorReport:
+      type: object
+      required: [message, statusCode, causes]
+      properties:
+        message:
+          type: string
+        statusCode:
+          type: integer
+        causes:
+          type: array
+          items:
+            type: string
+
+    JobReport:
+      type: object
+      required: [id, status, statusCode, resultURL]
+      properties:
+        id:
+          description: caller-provided unique identifier for the job
+          type: string
+        description:
+          description: caller-provided description of the job
+          type: string
+        status:
+          description: status of the job
+          type: string
+          enum: [RUNNING, SUCCEEDED, FAILED]
+        statusCode:
+          description: HTTP code providing status of the job.
+          type: integer
+        submitted:
+          description: timestamp when the job was submitted; in ISO-8601 format
+          type: string
+        completed:
+          description: >-
+            timestamp when the job completed - in ISO-8601 format. Present if
+            status is SUCCEEDED or FAILED.
+          type: string
+        resultURL:
+          description: >-
+            URL where the result of the job can be retrieved. Equivalent to a
+            Location header in HTTP.
+          type: string
+  
+    JobControl:
+      type: object
+      required: [id]
+      properties:
+        id:
+          description: >-
+            Unique identifier for the job. Best practice is for job identifier to be a UUID,
+            a ShortUUID, or other globally unique identifier.
+          type: string
+        # TODO: In the future, notification configuration will also be part of JobControl.
+  
+      
+    ManagedBy:
+      type: string
+      description: Specifies the controller of the resource, workspace users or an application
+      enum: [ 'USER', 'APPLICATION' ]
+  
+    Name:
+      type: string
+      pattern: '^[a-zA-Z0-9][-_a-zA-Z0-9]{0,1023}$'
+
+    PrivateResourceIamRoles:
+      description: >-
+        List of role(s) granted to the user of a private resource. In the current permission model
+        EDITOR includes WRITER includes READER by definition. We only grant the maximum role listed.
+      type: array
+      items:
+        $ref: '#/components/schemas/ControlledResourceIamRole'
+  
+    PrivateResourceUser:
+      description: >-
+        This text describes the target state:
+        Applications may optionally specify a workspace user to have access to the private
+        resource by providing this element. If this element is not specified, workspace
+        users will have no direct access to the associated cloud resource. If this element
+        is specified both fields are required.
+      type: object
+  # TODO: PF-1218 - when CLI and UI are no longer passing this, disallow it for user-private
+  #  resources, make the role List into a single role, and require both fields to be present.
+  #      required: [ userName, privateResourceIamRoles ]
+      properties:
+        userName:
+          description: email of the workspace user to grant access
+          type: string
+        privateResourceIamRoles:
+          $ref: '#/components/schemas/PrivateResourceIamRoles'
+  
+    PrivateResourceState:
+      description: >-
+        The possible states of ownership of a private resource. When a resource is abandoned, the
+        assigned user loses permission to access it.
+      type: string
+      enum:
+      - ABANDONED
+      - ACTIVE
+      - INITIALIZING
+      - NOT_APPLICABLE
+  
+    ReferenceResourceCommonFields:
+      type: object
+      required: [name, cloningInstructions]
+      description: Common information used in all reference requests
+      properties:
+        name:
+          $ref: "#/components/schemas/Name"
+        description:
+          type: string
+        cloningInstructions:
+          $ref: '#/components/schemas/CloningInstructionsEnum'
+  
+    # All resource objects include this resource metadata object and call it 'metadata'
+    ResourceMetadata:
+      type: object
+      properties:
+        workspaceId:
+          type: string
+          format: uuid
+        resourceId:
+          type: string
+          format: uuid
+        name:
+          $ref: "#/components/schemas/Name"
+        description:
+          type: string
+        resourceType:
+          $ref: '#/components/schemas/ResourceType'
+        stewardshipType:
+          $ref: '#/components/schemas/StewardshipType'
+        cloudPlatform:
+          $ref: '#/components/schemas/CloudPlatform'
+        cloningInstructions:
+          $ref: '#/components/schemas/CloningInstructionsEnum'
+        controlledResourceMetadata:
+          description: Present if stewardship type is CONTROLLED
+          $ref: '#/components/schemas/ControlledResourceMetadata'
+
+    StewardshipType:
+      description: Enum containing valid stewardship types. Used for enumeration
+      type: string
+      enum: ['REFERENCED', 'CONTROLLED']

@@ -1,0 +1,78 @@
+# Resource endpoints not specific to a resource typ
+paths:
+  /api/workspaces/v1/{workspaceId}/resources:
+    parameters:
+      - $ref: '#/components/parameters/WorkspaceId'
+      - $ref: '#/components/parameters/Offset'
+      - $ref: '#/components/parameters/Limit'
+      - $ref: '#/components/parameters/ResourceType'
+      - $ref: '#/components/parameters/StewardshipType'
+    get:
+      summary: |
+        Enumerate resources in a workspace. The visible resources depend on the permissions of the caller.
+        These are presented sorted by ascending resource name. The offset and limit parameters allow paging
+        through the results. You can also filter by a resource type and by a stewardship type.
+      operationId: enumerateResources
+      tags: [Resource]
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResourceList'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /api/workspaces/v1/{workspaceId}/resources/referenced/{resourceId}/access:
+    parameters:
+      - $ref: '#/components/parameters/WorkspaceId'
+      - $ref: '#/components/parameters/ResourceId'
+    get:
+      summary: Check a user's access to a referenced resource
+      operationId: checkReferenceAccess
+      tags: [Resource]
+      responses:
+        '200':
+          description: Whether the specified reference is accessible or not
+          content:
+            application/json:
+              schema:
+                type: boolean
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+components:
+  schemas:
+    ResourceDescription:
+      type: object
+      required: [metadata, resourceAttributes]
+      properties:
+        metadata:
+          description: the resource metadata common to all resources
+          $ref: '#/components/schemas/ResourceMetadata'
+        resourceAttributes:
+          description: Data specific to the type of resource and whether it is controlled or not
+          $ref: '#/components/schemas/ResourceAttributesUnion'
+
+    ResourceList:
+      type: object
+      required: [resources]
+      properties:
+        resources:
+          description: Enumerated list of controlled and referenced resources
+          type: array
+          items:
+            $ref: '#/components/schemas/ResourceDescription'

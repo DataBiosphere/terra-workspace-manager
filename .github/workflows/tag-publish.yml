@@ -141,3 +141,11 @@ jobs:
         repository: broadinstitute/terra-helmfile
         event-type: update-service
         client-payload: '{"service": "workspacemanager", "version": "${{ steps.tag.outputs.tag }}", "dev_only": false}'
+    - name: Build the OpenAPI interface
+      run: ./gradlew :service:generateSwaggerCodeServer
+    - name: Make release
+      uses: ncipollo/release-action@v1
+      id: create_release
+      with:
+        tag: ${{ steps.tag.outputs.tag }}
+        artifacts: "service/build/main/resources/api/service_openapi.yaml"

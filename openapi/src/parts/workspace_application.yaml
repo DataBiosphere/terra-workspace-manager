@@ -1,0 +1,140 @@
+# Workspace applications
+paths:
+  /api/workspaces/v1/{workspaceId}/applications:
+    get:
+      parameters:
+        - $ref: '#/components/parameters/WorkspaceId'
+        - $ref: '#/components/parameters/Offset'
+        - $ref: '#/components/parameters/Limit'
+      summary: List all applications and whether they are enabled on a workspace
+      operationId: listWorkspaceApplications
+      tags: [WorkspaceApplication]
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkspaceApplicationDescriptionList'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /api/workspaces/v1/{workspaceId}/applications/{applicationId}:
+    parameters:
+      - $ref: '#/components/parameters/WorkspaceId'
+      - $ref: '#/components/parameters/ApplicationId'
+    get:
+      summary: Get an application and its state in this workspace
+      operationId: getWorkspaceApplication
+      tags: [WorkspaceApplication]
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkspaceApplicationDescription'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /api/workspaces/v1/{workspaceId}/applications/{applicationId}/disable:
+    parameters:
+      - $ref: '#/components/parameters/WorkspaceId'
+      - $ref: '#/components/parameters/ApplicationId'
+    post:
+      summary: Disable an application in a workspace
+      operationId: disableWorkspaceApplication
+      tags: [WorkspaceApplication]
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkspaceApplicationDescription'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /api/workspaces/v1/{workspaceId}/applications/{applicationId}/enable:
+    parameters:
+      - $ref: '#/components/parameters/WorkspaceId'
+      - $ref: '#/components/parameters/ApplicationId'
+    post:
+      summary: Enable an application in a workspace
+      operationId: enableWorkspaceApplication
+      tags: [WorkspaceApplication]
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkspaceApplicationDescription'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+components:
+  schemas:
+    ApplicationState:
+      description: State of an application in the system
+      type: string
+      enum:
+        - OPERATING
+        - DEPRECATED
+        - DECOMMISSIONED
+
+    WorkspaceApplicationState:
+      description: State of the application in the workspace.
+      type: string
+      enum:
+        - ENABLED
+        - DISABLED
+
+    WorkspaceApplicationDescription:
+      type: object
+      required: [ workspaceId, applicationId, applicationState, workspaceApplicationState ]
+      properties:
+        workspaceId:
+          description: The ID of the workspace
+          type: string
+          format: uuid
+        applicationId:
+          description: The ID of the application
+          type: string
+          format: uuid
+        displayName:
+          description: The human readable name of the application
+          type: string
+        description:
+          description: A description of the application
+          type: string
+        applicationState:
+          $ref: '#/components/schemas/ApplicationState'
+        workspaceApplicationState:
+          $ref: '#/components/schemas/WorkspaceApplicationState'
+
+    WorkspaceApplicationDescriptionList:
+      type: object
+      required: [ applications ]
+      properties:
+        applications:
+          description: A list of known applications and their relationship to the workspace
+          type: array
+          items:
+            $ref: '#/components/schemas/WorkspaceApplicationDescription'

@@ -1,0 +1,178 @@
+paths:
+  /api/workspaces/v1/{workspaceId}/resources/referenced/gcp/bigquerydatasets:
+    parameters:
+      - $ref: '#/components/parameters/WorkspaceId'
+    post:
+      summary: Create a new BigQuery dataset reference in a workspace.
+      operationId: createBigQueryDatasetReference
+      tags: [ReferencedGcpResource]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateGcpBigQueryDatasetReferenceRequestBody'
+      responses:
+        '200':
+          $ref: '#/components/responses/GcpBigQueryDatasetReferenceResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /api/workspaces/v1/{workspaceId}/resources/referenced/gcp/bigquerydatasets/{resourceId}:
+    parameters:
+      - $ref: '#/components/parameters/WorkspaceId'
+      - $ref: '#/components/parameters/ResourceId'
+    get:
+      summary: Gets a reference to a BigQuery dataset from a workspace.
+      operationId: getBigQueryDatasetReference
+      tags: [ReferencedGcpResource]
+      responses:
+        '200':
+          $ref: '#/components/responses/GcpBigQueryDatasetReferenceResponse'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+    post:
+      summary: Update name, description or referencing target of a BigQuery dataset reference in a workspace.
+      operationId: updateBigQueryDatasetReferenceResource
+      tags: [ ReferencedGcpResource ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateBigQueryDatasetReferenceRequestBody'
+      responses:
+        '204':
+          description: OK
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+    delete:
+      summary: Delete BigQuery dataset reference
+      operationId: deleteBigQueryDatasetReference
+      tags: [ReferencedGcpResource]
+      responses:
+        '204':
+          description: OK
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+  /api/workspaces/v1/{workspaceId}/resources/referenced/gcp/bigquerydatasets/{resourceId}/clone:
+    parameters:
+      - $ref: '#/components/parameters/WorkspaceId'
+      - $ref: '#/components/parameters/ResourceId'
+    post:
+      summary: Clone a BigQuery Dataset
+      operationId: cloneGcpBigQueryDatasetReference
+      tags: [ReferencedGcpResource]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CloneReferencedResourceRequestBody'
+      responses:
+        '200':
+          $ref: '#/components/responses/CloneReferencedGcpBigQueryDatasetResourceResponse'
+        '202':
+          $ref: '#/components/responses/CloneReferencedGcpBigQueryDatasetResourceResponse'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+  /api/workspaces/v1/{workspaceId}/resources/referenced/gcp/bigquerydatasets/name/{name}:
+    parameters:
+      - $ref: '#/components/parameters/WorkspaceId'
+      - $ref: '#/components/parameters/Name'
+    get:
+      summary: Gets a reference to a BigQuery dataset by name.
+      operationId: getBigQueryDatasetReferenceByName
+      tags: [ReferencedGcpResource]
+      responses:
+        '200':
+          $ref: '#/components/responses/GcpBigQueryDatasetReferenceResponse'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+components:
+  schemas:
+    CreateGcpBigQueryDatasetReferenceRequestBody:
+      type: object
+      description: A request to create a reference to a BigQuery dataset.
+      required: [metadata, dataset]
+      properties:
+        metadata:
+          $ref: '#/components/schemas/ReferenceResourceCommonFields'
+        dataset:
+          $ref: '#/components/schemas/GcpBigQueryDatasetAttributes'
+
+    UpdateBigQueryDatasetReferenceRequestBody:
+      type: object
+      properties:
+        name:
+          $ref: "#/components/schemas/Name"
+        description:
+          type: string
+        projectId:
+          type: string
+        datasetId:
+          type: string
+
+    CloneReferencedGcpBigQueryDatasetResourceResult:
+      description: >-
+        API result class for cloning a referenced BigQuery dataset resource. Includes source workspace
+        and resource IDs for provenance. If the effective cloning instructions are not
+        COPY_REFERENCE, then no clone is created and the resource is null.
+      type: object
+      properties:
+        effectiveCloningInstructions:
+          $ref: '#/components/schemas/CloningInstructionsEnum'
+        sourceWorkspaceId:
+          description: ID of the workspace of the source resource for this clone
+          type: string
+          format: uuid
+        sourceResourceId:
+          description: ID of the source resource
+          type: string
+          format: uuid
+        resource:
+          $ref: '#/components/schemas/GcpBigQueryDatasetResource'
+
+  responses:
+    CloneReferencedGcpBigQueryDatasetResourceResponse:
+      description: Response for successful BigQuery dataset reference clone
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/CloneReferencedGcpBigQueryDatasetResourceResult'
+
+    GcpBigQueryDatasetReferenceResponse:
+      description: Response containing a reference to a BiqQuery dataset.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/GcpBigQueryDatasetResource'
+  
+

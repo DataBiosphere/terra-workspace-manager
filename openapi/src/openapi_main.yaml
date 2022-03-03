@@ -1,0 +1,54 @@
+# DEVELOPER NOTES
+#
+# CLOUD RESOURCE STRUCTURE
+# Each cloud resource has a structure named '{cloud}{resource-type}Resource';
+# for example, GcpGcsBucketResource. It has two properties: 'metadata' and 'attributes'
+#
+# The 'metadata' property is a reference to the common metadata structure for all resource types:
+#  $ref: '#/components/schemas/ResourceMetadata'
+# Metadata includes both the common data for all resources and an optional structure for
+# properties of controlled resources.
+#
+# The 'attributes' property is a reference to a unique structure named '{cloud}{resource-type}Attributes';
+# for example, GcpGcsBucketAttributes. Attributes are specific to the cloud resource so may
+# be a complex structure.
+#
+# The resource structure should be used as the common form of return in the CRUD operations on
+# the object. Well, the CRU ones anyway...
+#
+# ENUMERATION STRUCTURE
+# Resource enumeration returns ResourceList - a list of ResourceDescription. Each description
+# provides the common metadata, as described above and then a union structure with an entry
+# for the metadata for each cloud resource type. It is a bit clumsy, but provides complete
+# description for a resource.
+#
+
+openapi: 3.0.3
+info:
+  title: Workspace Manager API
+  description: Workspace Manager REST API to manage workspaces.
+  version: 0.0.1
+
+paths:
+components:
+  parameters:
+  schemas:
+  responses:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+    authorization:
+      type: oauth2
+      flows:
+        implicit:
+          authorizationUrl: https://accounts.google.com/o/oauth2/auth
+          scopes:
+            openid: open id authorization
+            email: email authorization
+            profile: profile authorization
+
+security:
+  - bearerAuth: []
+  - authorization: [openid, email, profile]
+
