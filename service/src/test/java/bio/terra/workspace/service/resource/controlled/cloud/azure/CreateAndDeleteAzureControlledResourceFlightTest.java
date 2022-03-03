@@ -202,7 +202,8 @@ public class CreateAndDeleteAzureControlledResourceFlightTest extends BaseAzureT
                     .getByResourceGroup(
                         azureTestUtils.getAzureCloudContext().getAzureResourceGroupId(),
                         resource.getNamespaceName()));
-    assertEquals("NotFound", exception.getValue().getCode());
+    // We see both ResourceNotFound and NotFound in the code field
+    assertTrue(exception.getValue().getCode().contains("NotFound"));
   }
 
   @Test
