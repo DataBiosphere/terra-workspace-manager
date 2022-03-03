@@ -142,8 +142,15 @@ jobs:
         event-type: update-service
         client-payload: '{"service": "workspacemanager", "version": "${{ steps.tag.outputs.tag }}", "dev_only": false}'
     - name: Build the OpenAPI interface
+      if: steps.skiptest.outputs.is-bump == 'no'
       run: ./gradlew :service:generateSwaggerCodeServer
+    - name: Where is the file
+      if: steps.skiptest.outputs.is-bump == 'no'
+      run: |
+        pwd
+        find . -name "service_openapi.yaml"
     - name: Make release
+      if: steps.skiptest.outputs.is-bump == 'no'
       uses: ncipollo/release-action@v1
       id: create_release
       with:
