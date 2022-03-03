@@ -1,5 +1,6 @@
-tasks.compileJava.dependsOn swaggerSources.server.code, generateVersionProperties
-tasks.jib.dependsOn extractProfilerAgent
-tasks.jibDockerBuild.dependsOn extractProfilerAgent
-tasks.jibBuildTar.dependsOn extractProfilerAgent
-tasks.clean.dependsOn cleanVersionProperties
+tasks.compileJava.dependsOn(swaggerSources.server.code, generateVersionProperties)
+tasks.jib.dependsOn(extractProfilerAgent)
+tasks.jibDockerBuild.dependsOn(extractProfilerAgent)
+tasks.jibBuildTar.dependsOn(extractProfilerAgent)
+tasks.clean.dependsOn(cleanVersionProperties)
+tasks.spotlessJava.dependsOn(generateSwaggerCodeServer)

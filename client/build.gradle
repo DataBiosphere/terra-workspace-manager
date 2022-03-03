@@ -6,3 +6,4 @@ plugins {
 def includeDir = "$projectDir/gradle"
 apply(from: "$includeDir/dependencies.gradle")
 apply(from: "$includeDir/openapi.gradle")
+tasks.spotlessJava.dependsOn(generateSwaggerCodeClient)
