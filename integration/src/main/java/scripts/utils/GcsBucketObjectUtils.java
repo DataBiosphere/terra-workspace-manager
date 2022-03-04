@@ -52,7 +52,7 @@ public class GcsBucketObjectUtils {
       UUID workspaceId,
       String name,
       @Nullable CloningInstructionsEnum cloningInstructionsEnum)
-      throws InterruptedException {
+      throws Exception {
     var body =
         new CreateGcpGcsObjectReferenceRequestBody()
             .metadata(

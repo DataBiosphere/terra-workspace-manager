@@ -34,7 +34,6 @@ import com.google.cloud.storage.BlobId;
 import com.google.cloud.storage.BlobInfo;
 import com.google.cloud.storage.Storage;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
@@ -224,7 +223,7 @@ public class GcsBucketUtils {
       UUID workspaceId,
       String name,
       @Nullable CloningInstructionsEnum cloningInstructions)
-      throws ApiException, InterruptedException {
+      throws Exception {
     var body =
         new CreateGcpGcsBucketReferenceRequestBody()
             .metadata(
@@ -327,7 +326,7 @@ public class GcsBucketUtils {
    */
   public static Blob addFileToBucket(
       CreatedControlledGcpGcsBucket bucket, TestUserSpecification bucketWriter, String gcpProjectId)
-      throws IOException, InterruptedException {
+      throws Exception {
     final Storage sourceOwnerStorageClient =
         ClientTestUtils.getGcpStorageClient(bucketWriter, gcpProjectId);
     final BlobId blobId =

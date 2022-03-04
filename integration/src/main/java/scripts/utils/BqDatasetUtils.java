@@ -65,7 +65,7 @@ public class BqDatasetUtils {
       ReferencedGcpResourceApi resourceApi,
       UUID workspaceId,
       String name)
-      throws ApiException, InterruptedException {
+      throws Exception {
     return makeBigQueryDatasetReference(
         dataset, resourceApi, workspaceId, name, CloningInstructionsEnum.NOTHING);
   }
@@ -76,7 +76,7 @@ public class BqDatasetUtils {
       UUID workspaceId,
       String name,
       CloningInstructionsEnum cloningInstructions)
-      throws ApiException, InterruptedException {
+      throws Exception {
 
     var body =
         new CreateGcpBigQueryDatasetReferenceRequestBody()
@@ -129,7 +129,7 @@ public class BqDatasetUtils {
       ReferencedGcpResourceApi resourceApi,
       UUID workspaceId,
       String name)
-      throws ApiException, InterruptedException {
+      throws Exception {
     return makeBigQueryDataTableReference(
         dataTable, resourceApi, workspaceId, name, CloningInstructionsEnum.NOTHING);
   }
@@ -140,7 +140,7 @@ public class BqDatasetUtils {
       UUID workspaceId,
       String name,
       CloningInstructionsEnum cloningInstructions)
-      throws ApiException, InterruptedException {
+      throws Exception {
     var body =
         new CreateGcpBigQueryDataTableReferenceRequestBody()
             .metadata(
@@ -246,7 +246,7 @@ public class BqDatasetUtils {
    */
   public static void populateBigQueryDataset(
       GcpBigQueryDatasetResource dataset, TestUserSpecification ownerUser, String projectId)
-      throws IOException, InterruptedException {
+      throws Exception {
     // Add tables to the source dataset
     final BigQuery bigQueryClient = ClientTestUtils.getGcpBigQueryClient(ownerUser, projectId);
 
