@@ -5,7 +5,6 @@ import static org.hamcrest.Matchers.greaterThanOrEqualTo;
 import static org.hamcrest.Matchers.is;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -301,9 +300,7 @@ public class ControlledBigQueryDatasetLifecycle extends GcpWorkspaceCloneTestScr
     var tableInfo = TableInfo.of(tableId, tableDefinition);
 
     logger.info("Creating table {} in dataset {}", TABLE_NAME, DATASET_RESOURCE_NAME);
-    Table result = ClientTestUtils.getWithRetryOnException(() -> bigQueryClient.create(tableInfo));
-    assertNotNull(result, "Failed to create a BQ table.");
-    return result;
+    return ClientTestUtils.getWithRetryOnException(() -> bigQueryClient.create(tableInfo));
   }
 
   /** Insert a single String value into the column/table/dataset specified by constant values. */

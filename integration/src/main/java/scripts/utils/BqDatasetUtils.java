@@ -3,7 +3,6 @@ package scripts.utils;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.greaterThanOrEqualTo;
 import static org.hamcrest.Matchers.is;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import bio.terra.testrunner.runner.config.TestUserSpecification;
 import bio.terra.workspace.api.ControlledGcpResourceApi;
@@ -88,11 +87,8 @@ public class BqDatasetUtils {
                     .name(name))
             .dataset(dataset);
 
-    GcpBigQueryDatasetResource result =
-        ClientTestUtils.getWithRetryOnException(
-            () -> resourceApi.createBigQueryDatasetReference(body, workspaceId));
-    assertNotNull(result, "Failed to make a BigQuery dataset reference.");
-    return result;
+    return ClientTestUtils.getWithRetryOnException(
+        () -> resourceApi.createBigQueryDatasetReference(body, workspaceId));
   }
 
   /** Updates the name, description or referencing target of a BQ dataset reference. */
@@ -154,11 +150,8 @@ public class BqDatasetUtils {
                     .name(name))
             .dataTable(dataTable);
 
-    GcpBigQueryDataTableResource result =
-        ClientTestUtils.getWithRetryOnException(
-            () -> resourceApi.createBigQueryDataTableReference(body, workspaceId));
-    assertNotNull(result, "Failed to make a BQ Data Table Reference.");
-    return result;
+    return ClientTestUtils.getWithRetryOnException(
+        () -> resourceApi.createBigQueryDataTableReference(body, workspaceId));
   }
 
   public static GcpBigQueryDatasetResource makeControlledBigQueryDatasetUserPrivate(

@@ -2,7 +2,6 @@ package scripts.utils;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static scripts.utils.GcsBucketUtils.GCS_BLOB_CONTENT;
 
@@ -157,8 +156,7 @@ public class GcsBucketAccessTester implements AutoCloseable {
   private boolean doWithOptionalWait(TestFunction function) throws Exception {
     try {
       if (needToWait) {
-        Object result = ClientTestUtils.getWithRetryOnException(function::apply);
-        assertNotNull(result, "Exceeded max retries executing function in doWithOptionalWait()");
+        ClientTestUtils.getWithRetryOnException(function::apply);
         needToWait = false;
       } else {
         function.apply();
