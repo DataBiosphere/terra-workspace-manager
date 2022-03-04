@@ -65,8 +65,9 @@ public class GcsBucketObjectUtils {
             .file(file);
 
     logger.info("Making reference to a gcs bucket file");
-    GcpGcsObjectResource result = ClientTestUtils.getWithRetryOnException(
-        () -> resourceApi.createGcsObjectReference(body, workspaceId));
+    GcpGcsObjectResource result =
+        ClientTestUtils.getWithRetryOnException(
+            () -> resourceApi.createGcsObjectReference(body, workspaceId));
     assertNotNull(result, "Failed to make a reference to a GCS bucket file.");
     return result;
   }

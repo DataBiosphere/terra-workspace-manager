@@ -88,8 +88,9 @@ public class BqDatasetUtils {
                     .name(name))
             .dataset(dataset);
 
-    GcpBigQueryDatasetResource result = ClientTestUtils.getWithRetryOnException(
-        () -> resourceApi.createBigQueryDatasetReference(body, workspaceId));
+    GcpBigQueryDatasetResource result =
+        ClientTestUtils.getWithRetryOnException(
+            () -> resourceApi.createBigQueryDatasetReference(body, workspaceId));
     assertNotNull(result, "Failed to make a BigQuery dataset reference.");
     return result;
   }
@@ -153,8 +154,9 @@ public class BqDatasetUtils {
                     .name(name))
             .dataTable(dataTable);
 
-    GcpBigQueryDataTableResource result = ClientTestUtils.getWithRetryOnException(
-        () -> resourceApi.createBigQueryDataTableReference(body, workspaceId));
+    GcpBigQueryDataTableResource result =
+        ClientTestUtils.getWithRetryOnException(
+            () -> resourceApi.createBigQueryDataTableReference(body, workspaceId));
     assertNotNull(result, "Failed to make a BQ Data Table Reference.");
     return result;
   }

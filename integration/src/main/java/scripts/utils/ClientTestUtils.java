@@ -292,8 +292,8 @@ public class ClientTestUtils {
   }
 
   /**
-    * Run a nullary function with retries on exceptions. Note that this will fail silently
-   * if the number of retries is exceeded.
+   * Run a nullary function with retries on exceptions. Note that this will fail silently if the
+   * number of retries is exceeded.
    */
   public static void runWithRetryOnException(Runnable fn) throws InterruptedException {
     getWithRetryOnException(
