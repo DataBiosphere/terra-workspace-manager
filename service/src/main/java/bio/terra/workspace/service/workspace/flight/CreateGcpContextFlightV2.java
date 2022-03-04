@@ -43,6 +43,7 @@ public class CreateGcpContextFlightV2 extends Flight {
 
     RetryRule shortRetry = RetryRules.shortExponential();
     RetryRule cloudRetry = RetryRules.cloud();
+    RetryRule bufferRetry = RetryRules.buffer();
 
     // Check that we are allowed to spend money. No point doing anything else unless that
     // is true.
@@ -71,7 +72,8 @@ public class CreateGcpContextFlightV2 extends Flight {
     addStep(new CreateCustomGcpRolesStep(crl.getIamCow()), shortRetry);
     addStep(
         new SyncSamGroupsStep(appContext.getSamService(), workspaceId, userRequest), shortRetry);
-    addStep(new GcpCloudSyncStep(crl.getCloudResourceManagerCow()), cloudRetry);
+    // TODO(PF-1227): When IAM performance issue is fixed, change back to cloudRetry.
+    addStep(new GcpCloudSyncStep(crl.getCloudResourceManagerCow()), bufferRetry);
     addStep(new CreatePetSaStep(appContext.getSamService(), userRequest), shortRetry);
 
     // Store the cloud context data and unlock the database row
