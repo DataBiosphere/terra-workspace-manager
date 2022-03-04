@@ -1,5 +1,7 @@
 package scripts.utils;
 
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+
 import bio.terra.testrunner.runner.config.TestUserSpecification;
 import bio.terra.workspace.api.ControlledGcpResourceApi;
 import bio.terra.workspace.api.ReferencedGcpResourceApi;
@@ -34,6 +36,7 @@ import com.google.cloud.storage.BlobId;
 import com.google.cloud.storage.BlobInfo;
 import com.google.cloud.storage.Storage;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.time.OffsetDateTime;
@@ -217,6 +220,8 @@ public class GcsBucketUtils {
    *
    * <p>This method retries on all WSM exceptions, do not use it for the negative case (where you do
    * not expect a user to be able to create a reference).
+   *
+   * <p> If we run out of retries, throw an assertion failure.
    */
   public static GcpGcsBucketResource makeGcsBucketReference(
       GcpGcsBucketAttributes bucket,
@@ -237,8 +242,10 @@ public class GcsBucketUtils {
             .bucket(bucket);
 
     logger.info("Making reference to a gcs bucket");
-    return ClientTestUtils.getWithRetryOnException(
+    GcpGcsBucketResource result = ClientTestUtils.getWithRetryOnException(
         () -> resourceApi.createBucketReference(body, workspaceId));
+    assertNotNull(result, "Failed to create bucket reference");
+    return result;
   }
 
   public static CreatedControlledGcpGcsBucket makeControlledGcsBucketAppShared(
@@ -324,6 +331,8 @@ public class GcsBucketUtils {
    *
    * <p>This method retries on all GCP exceptions, do not use it for the negative case (where you do
    * not expect a user to be able to create a file in the bucket).
+   *
+   * <p> If we run out of retries, throw an assertion failure.
    */
   public static Blob addFileToBucket(
       CreatedControlledGcpGcsBucket bucket, TestUserSpecification bucketWriter, String gcpProjectId)
@@ -335,10 +344,12 @@ public class GcsBucketUtils {
     final BlobInfo blobInfo = BlobInfo.newBuilder(blobId).setContentType("text/plain").build();
 
     // There can be IAM propagation delays, so be a patient with the creation
-    return ClientTestUtils.getWithRetryOnException(
+    Blob result = ClientTestUtils.getWithRetryOnException(
         () ->
             sourceOwnerStorageClient.create(
                 blobInfo, GCS_BLOB_CONTENT.getBytes(StandardCharsets.UTF_8)));
+    assertNotNull(result, String.format("Failed to add file to bucket %s", bucket.getGcpBucket().getAttributes().getBucketName()));
+    return result;
   }
 
   /**
