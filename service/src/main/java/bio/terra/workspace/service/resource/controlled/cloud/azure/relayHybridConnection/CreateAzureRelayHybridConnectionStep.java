@@ -24,7 +24,8 @@ import org.slf4j.LoggerFactory;
  */
 public class CreateAzureRelayHybridConnectionStep implements Step {
 
-  private static final Logger logger = LoggerFactory.getLogger(CreateAzureRelayHybridConnectionStep.class);
+  private static final Logger logger =
+      LoggerFactory.getLogger(CreateAzureRelayHybridConnectionStep.class);
   private final AzureConfiguration azureConfig;
   private final CrlService crlService;
   private final ControlledAzureRelayHybridConnectionResource resource;
@@ -49,14 +50,15 @@ public class CreateAzureRelayHybridConnectionStep implements Step {
     try {
       manager
           .hybridConnections()
-              .define(resource.getHybridConnectionName())
-              .withExistingNamespace(azureCloudContext.getAzureResourceGroupId(), resource.getNamespaceName())
-              .withRequiresClientAuthorization(resource.isRequiresClientAuthorization())
+          .define(resource.getHybridConnectionName())
+          .withExistingNamespace(
+              azureCloudContext.getAzureResourceGroupId(), resource.getNamespaceName())
+          .withRequiresClientAuthorization(resource.isRequiresClientAuthorization())
           .create(
               Defaults.buildContext(
                   CreateRelayHybridConnectionRequestData.builder()
                       .setName(resource.getHybridConnectionName())
-                      .setRegion(Region.US_CENTRAL) //TODO: bump CRL version with https://github.com/DataBiosphere/terra-cloud-resource-lib/pull/117
+                      // https://github.com/DataBiosphere/terra-cloud-resource-lib/pull/117
                       .setResourceGroupName(azureCloudContext.getAzureResourceGroupId())
                       .setTenantId(azureCloudContext.getAzureTenantId())
                       .setSubscriptionId(azureCloudContext.getAzureSubscriptionId())
@@ -91,7 +93,9 @@ public class CreateAzureRelayHybridConnectionStep implements Step {
       manager
           .hybridConnections()
           .delete(
-              azureCloudContext.getAzureResourceGroupId(), resource.getNamespaceName(), resource.getHybridConnectionName());
+              azureCloudContext.getAzureResourceGroupId(),
+              resource.getNamespaceName(),
+              resource.getHybridConnectionName());
     } catch (ManagementException e) {
       // Stairway steps may run multiple times, so we may already have deleted this resource.
       if (StringUtils.equals(e.getValue().getCode(), "ResourceNotFound")) {

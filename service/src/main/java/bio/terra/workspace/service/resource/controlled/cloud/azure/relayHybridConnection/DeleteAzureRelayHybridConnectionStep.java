@@ -13,11 +13,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * A step for deleting a controlled Azure RelayHybridConnection resource. This step uses the following
- * process to actually delete the Azure RelayHybridConnection
+ * A step for deleting a controlled Azure RelayHybridConnection resource. This step uses the
+ * following process to actually delete the Azure RelayHybridConnection
  */
 public class DeleteAzureRelayHybridConnectionStep implements Step {
-  private static final Logger logger = LoggerFactory.getLogger(CreateAzureRelayHybridConnectionStep.class);
+  private static final Logger logger =
+      LoggerFactory.getLogger(CreateAzureRelayHybridConnectionStep.class);
   private final AzureConfiguration azureConfig;
   private final CrlService crlService;
   private final ControlledAzureRelayHybridConnectionResource resource;
@@ -45,7 +46,7 @@ public class DeleteAzureRelayHybridConnectionStep implements Step {
             azureCloudContext.getAzureSubscriptionId(),
             azureCloudContext.getAzureResourceGroupId(),
             resource.getNamespaceName(),
-                resource.getHybridConnectionName());
+            resource.getHybridConnectionName());
 
     try {
       logger.info("Attempting to delete Relay Hybrid Connection " + azureResourceId);
@@ -53,7 +54,8 @@ public class DeleteAzureRelayHybridConnectionStep implements Step {
       return StepResult.getStepResultSuccess();
     } catch (Exception ex) {
       logger.info(
-          "Attempt to delete Azure Relay Hybrid Connection failed on this try: " + azureResourceId, ex);
+          "Attempt to delete Azure Relay Hybrid Connection failed on this try: " + azureResourceId,
+          ex);
       return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, ex);
     }
   }

@@ -10,7 +10,9 @@ public class ControlledAzureRelayHybridConnectionAttributes {
 
   @JsonCreator
   public ControlledAzureRelayHybridConnectionAttributes(
-      @JsonProperty("namespaceName") String namespaceName, @JsonProperty("hybridConnectionName") String hybridConnectionName, @JsonProperty("requiresClientAuthorization") Boolean requiresClientAuthorization) {
+      @JsonProperty("namespaceName") String namespaceName,
+      @JsonProperty("hybridConnectionName") String hybridConnectionName,
+      @JsonProperty("requiresClientAuthorization") Boolean requiresClientAuthorization) {
     this.namespaceName = namespaceName;
     this.hybridConnectionName = hybridConnectionName;
     this.requiresClientAuthorization = requiresClientAuthorization;

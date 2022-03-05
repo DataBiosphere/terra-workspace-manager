@@ -162,7 +162,8 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
   }
 
   @Override
-  public ResponseEntity<ApiCreateControlledAzureRelayHybridConnection> createAzureRelayHybridConnection(
+  public ResponseEntity<ApiCreateControlledAzureRelayHybridConnection>
+      createAzureRelayHybridConnection(
           UUID workspaceId, @Valid ApiCreateControlledAzureRelayHybridConnectionRequestBody body) {
     features.azureEnabledCheck();
 
@@ -171,17 +172,21 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
         toCommonFields(workspaceId, body.getCommon(), userRequest);
 
     ControlledAzureRelayHybridConnectionResource resource =
-            ControlledAzureRelayHybridConnectionResource.builder()
+        ControlledAzureRelayHybridConnectionResource.builder()
             .common(commonFields)
-                    .hybridConnectionName(body.getAzureRelayHybridConnection().getHybridConnectionName())
-                    .namespaceName(body.getAzureRelayHybridConnection().getNamespaceName())
-                    .requiresClientAuthorization(body.getAzureRelayHybridConnection().isRequiresClientAuthorization())
+            .hybridConnectionName(body.getAzureRelayHybridConnection().getHybridConnectionName())
+            .namespaceName(body.getAzureRelayHybridConnection().getNamespaceName())
+            .requiresClientAuthorization(
+                body.getAzureRelayHybridConnection().isRequiresClientAuthorization())
             .build();
 
     final ControlledAzureRelayHybridConnectionResource created =
         controlledResourceService
             .createControlledResourceSync(
-                resource, commonFields.getIamRole(), userRequest, body.getAzureRelayHybridConnection())
+                resource,
+                commonFields.getIamRole(),
+                userRequest,
+                body.getAzureRelayHybridConnection())
             .castByEnum(WsmResourceType.CONTROLLED_AZURE_RELAY_HYBRID_CONNECTION);
 
     var response =

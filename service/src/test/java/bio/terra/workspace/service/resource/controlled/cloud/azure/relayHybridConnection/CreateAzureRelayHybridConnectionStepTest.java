@@ -1,7 +1,17 @@
 package bio.terra.workspace.service.resource.controlled.cloud.azure.relayHybridConnection;
 
+import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.AZURE_RELAY_NAMESPACE_NAME_PREFIX;
+import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.uniqueAzureName;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.equalTo;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
 import bio.terra.cloudres.azure.resourcemanager.relay.data.CreateRelayHybridConnectionRequestData;
-import bio.terra.cloudres.azure.resourcemanager.relay.data.CreateRelayRequestData;
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.StepResult;
@@ -19,24 +29,12 @@ import com.azure.core.util.Context;
 import com.azure.resourcemanager.relay.RelayManager;
 import com.azure.resourcemanager.relay.models.HybridConnection;
 import com.azure.resourcemanager.relay.models.HybridConnections;
+import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.springframework.test.context.ActiveProfiles;
-
-import java.util.Optional;
-
-import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.AZURE_RELAY_NAMESPACE_NAME_PREFIX;
-import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.uniqueAzureName;
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.equalTo;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyBoolean;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 
 @ActiveProfiles("azure")
 public class CreateAzureRelayHybridConnectionStepTest extends BaseAzureTest {
@@ -99,14 +97,17 @@ public class CreateAzureRelayHybridConnectionStepTest extends BaseAzureTest {
   @Test
   void createRelayHybridConnection() throws InterruptedException {
     final ApiAzureRelayHybridConnectionCreationParameters creationParameters =
-        ControlledResourceFixtures.getAzureRelayHybridConnectionCreationParameters(uniqueAzureName(AZURE_RELAY_NAMESPACE_NAME_PREFIX));
+        ControlledResourceFixtures.getAzureRelayHybridConnectionCreationParameters(
+            uniqueAzureName(AZURE_RELAY_NAMESPACE_NAME_PREFIX));
 
     CreateAzureRelayHybridConnectionStep createAzureIpStep =
         new CreateAzureRelayHybridConnectionStep(
             mockAzureConfig,
             mockCrlService,
-                ControlledResourceFixtures.getAzureRelayHybridConnection(
-                        creationParameters.getNamespaceName(), creationParameters.getHybridConnectionName(), creationParameters.isRequiresClientAuthorization()));
+            ControlledResourceFixtures.getAzureRelayHybridConnection(
+                creationParameters.getNamespaceName(),
+                creationParameters.getHybridConnectionName(),
+                creationParameters.isRequiresClientAuthorization()));
 
     final StepResult stepResult = createAzureIpStep.doStep(mockFlightContext);
 
@@ -124,9 +125,10 @@ public class CreateAzureRelayHybridConnectionStepTest extends BaseAzureTest {
             .findFirst();
 
     CreateRelayHybridConnectionRequestData expected =
-          CreateRelayHybridConnectionRequestData.builder()
+        CreateRelayHybridConnectionRequestData.builder()
             .setName(creationParameters.getHybridConnectionName())
-            .setRegion(Region.US_CENTRAL) //TODO: bump CRL version with https://github.com/DataBiosphere/terra-cloud-resource-lib/pull/117
+            .setRegion(Region.US_CENTRAL) // TODO: bump CRL version with
+            // https://github.com/DataBiosphere/terra-cloud-resource-lib/pull/117
             .setTenantId(dummyAzureCloudContext.getAzureTenantId())
             .setSubscriptionId(dummyAzureCloudContext.getAzureSubscriptionId())
             .setResourceGroupName(dummyAzureCloudContext.getAzureResourceGroupId())
@@ -138,14 +140,17 @@ public class CreateAzureRelayHybridConnectionStepTest extends BaseAzureTest {
   @Test
   public void createRelayHybridConnection_alreadyExists() throws InterruptedException {
     final ApiAzureRelayHybridConnectionCreationParameters creationParameters =
-        ControlledResourceFixtures.getAzureRelayHybridConnectionCreationParameters(uniqueAzureName(AZURE_RELAY_NAMESPACE_NAME_PREFIX));
+        ControlledResourceFixtures.getAzureRelayHybridConnectionCreationParameters(
+            uniqueAzureName(AZURE_RELAY_NAMESPACE_NAME_PREFIX));
 
     CreateAzureRelayHybridConnectionStep createStep =
         new CreateAzureRelayHybridConnectionStep(
             mockAzureConfig,
             mockCrlService,
-                ControlledResourceFixtures.getAzureRelayHybridConnection(
-                        creationParameters.getNamespaceName(), creationParameters.getHybridConnectionName(), creationParameters.isRequiresClientAuthorization()));
+            ControlledResourceFixtures.getAzureRelayHybridConnection(
+                creationParameters.getNamespaceName(),
+                creationParameters.getHybridConnectionName(),
+                creationParameters.isRequiresClientAuthorization()));
 
     // Stub creation to throw Conflict exception.
     when(mockStage3.create(any(Context.class))).thenThrow(mockException);
@@ -159,14 +164,17 @@ public class CreateAzureRelayHybridConnectionStepTest extends BaseAzureTest {
   @Test
   public void deleteRelayHybridConnection() throws InterruptedException {
     final ApiAzureRelayHybridConnectionCreationParameters creationParameters =
-        ControlledResourceFixtures.getAzureRelayHybridConnectionCreationParameters(uniqueAzureName(AZURE_RELAY_NAMESPACE_NAME_PREFIX));
+        ControlledResourceFixtures.getAzureRelayHybridConnectionCreationParameters(
+            uniqueAzureName(AZURE_RELAY_NAMESPACE_NAME_PREFIX));
 
     CreateAzureRelayHybridConnectionStep createStep =
         new CreateAzureRelayHybridConnectionStep(
             mockAzureConfig,
             mockCrlService,
-                ControlledResourceFixtures.getAzureRelayHybridConnection(
-                        creationParameters.getNamespaceName(), creationParameters.getHybridConnectionName(), creationParameters.isRequiresClientAuthorization()));
+            ControlledResourceFixtures.getAzureRelayHybridConnection(
+                creationParameters.getNamespaceName(),
+                creationParameters.getHybridConnectionName(),
+                creationParameters.isRequiresClientAuthorization()));
 
     final StepResult stepResult = createStep.undoStep(mockFlightContext);
 
@@ -174,7 +182,6 @@ public class CreateAzureRelayHybridConnectionStepTest extends BaseAzureTest {
     assertThat(stepResult, equalTo(StepResult.getStepResultSuccess()));
 
     // Verify Azure deletion was called
-    verify(mockHybridConnections)
-        .delete(anyString(), anyString(), anyString());
+    verify(mockHybridConnections).delete(anyString(), anyString(), anyString());
   }
 }

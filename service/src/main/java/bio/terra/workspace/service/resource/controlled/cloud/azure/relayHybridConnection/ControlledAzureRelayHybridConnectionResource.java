@@ -28,7 +28,6 @@ import bio.terra.workspace.service.resource.model.WsmResourceFamily;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
-
 import java.util.Optional;
 import java.util.UUID;
 
@@ -71,7 +70,10 @@ public class ControlledAzureRelayHybridConnectionResource extends ControlledReso
   }
 
   public ControlledAzureRelayHybridConnectionResource(
-      ControlledResourceFields common, String namespaceName, String hybridConnectionName, Boolean requiresClientAuthorization) {
+      ControlledResourceFields common,
+      String namespaceName,
+      String hybridConnectionName,
+      Boolean requiresClientAuthorization) {
     super(common);
     this.namespaceName = namespaceName;
     this.hybridConnectionName = hybridConnectionName;
@@ -167,7 +169,8 @@ public class ControlledAzureRelayHybridConnectionResource extends ControlledReso
   @Override
   public String attributesToJson() {
     return DbSerDes.toJson(
-        new ControlledAzureRelayHybridConnectionAttributes(getNamespaceName(), getHybridConnectionName(), isRequiresClientAuthorization()));
+        new ControlledAzureRelayHybridConnectionAttributes(
+            getNamespaceName(), getHybridConnectionName(), isRequiresClientAuthorization()));
   }
 
   @Override
@@ -214,9 +217,11 @@ public class ControlledAzureRelayHybridConnectionResource extends ControlledReso
     if (o == null || getClass() != o.getClass()) return false;
     if (!super.equals(o)) return false;
 
-    ControlledAzureRelayHybridConnectionResource that = (ControlledAzureRelayHybridConnectionResource) o;
+    ControlledAzureRelayHybridConnectionResource that =
+        (ControlledAzureRelayHybridConnectionResource) o;
 
-    return namespaceName.equals(that.getNamespaceName()) && hybridConnectionName.equals(that.getHybridConnectionName());
+    return namespaceName.equals(that.getNamespaceName())
+        && hybridConnectionName.equals(that.getHybridConnectionName());
   }
 
   @Override
@@ -253,7 +258,8 @@ public class ControlledAzureRelayHybridConnectionResource extends ControlledReso
     }
 
     public ControlledAzureRelayHybridConnectionResource build() {
-      return new ControlledAzureRelayHybridConnectionResource(common, namespaceName, hybridConnectionName, requiresClientAuthorization);
+      return new ControlledAzureRelayHybridConnectionResource(
+          common, namespaceName, hybridConnectionName, requiresClientAuthorization);
     }
   }
 }

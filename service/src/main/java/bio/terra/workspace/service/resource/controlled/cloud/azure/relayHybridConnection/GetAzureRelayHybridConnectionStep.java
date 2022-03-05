@@ -18,12 +18,13 @@ import org.slf4j.LoggerFactory;
 
 /**
  * Gets an Azure RelayHybridConnection, and fails if it already exists. This step is designed to run
- * immediately before {@link CreateAzureRelayHybridConnectionStep} to ensure idempotency of the create
- * operation.
+ * immediately before {@link CreateAzureRelayHybridConnectionStep} to ensure idempotency of the
+ * create operation.
  */
 public class GetAzureRelayHybridConnectionStep implements Step {
 
-  private static final Logger logger = LoggerFactory.getLogger(GetAzureRelayHybridConnectionStep.class);
+  private static final Logger logger =
+      LoggerFactory.getLogger(GetAzureRelayHybridConnectionStep.class);
   private final AzureConfiguration azureConfig;
   private final CrlService crlService;
   private final ControlledAzureRelayHybridConnectionResource resource;
@@ -45,23 +46,19 @@ public class GetAzureRelayHybridConnectionStep implements Step {
             .get(ControlledResourceKeys.AZURE_CLOUD_CONTEXT, AzureCloudContext.class);
     RelayManager manager = crlService.getRelayManager(azureCloudContext, azureConfig);
     var azureResourceId =
-            String.format(
-                    "/subscriptions/%s/resourceGroups/%s/providers/Microsoft.Relay/namespaces/%s/hybridConnections/%s",
-                    azureCloudContext.getAzureSubscriptionId(),
-                    azureCloudContext.getAzureResourceGroupId(),
-                    resource.getNamespaceName(),
-                    resource.getHybridConnectionName());
+        String.format(
+            "/subscriptions/%s/resourceGroups/%s/providers/Microsoft.Relay/namespaces/%s/hybridConnections/%s",
+            azureCloudContext.getAzureSubscriptionId(),
+            azureCloudContext.getAzureResourceGroupId(),
+            resource.getNamespaceName(),
+            resource.getHybridConnectionName());
 
     try {
-      manager
-          .hybridConnections()
-          .getById(azureResourceId);
+      manager.hybridConnections().getById(azureResourceId);
       return new StepResult(
           StepStatus.STEP_RESULT_FAILURE_FATAL,
           new DuplicateResourceException(
-              String.format(
-                  "An Azure Relay Hybrid Connection %s",
-                      azureResourceId)));
+              String.format("An Azure Relay Hybrid Connection %s", azureResourceId)));
     } catch (ManagementException e) {
       // Azure error codes can be found here:
       // https://docs.microsoft.com/en-us/azure/azure-resource-manager/templates/common-deployment-errors

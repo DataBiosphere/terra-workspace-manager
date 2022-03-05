@@ -1,5 +1,14 @@
 package bio.terra.workspace.service.resource.controlled.cloud.azure.relayHybridConnection;
 
+import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.AZURE_RELAY_NAMESPACE_NAME_PREFIX;
+import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.uniqueAzureName;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.instanceOf;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.when;
+
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.StepResult;
@@ -21,15 +30,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.springframework.test.context.ActiveProfiles;
-
-import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.AZURE_RELAY_NAMESPACE_NAME_PREFIX;
-import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.uniqueAzureName;
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.instanceOf;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.when;
 
 @ActiveProfiles("azure")
 public class GetAzureRelayHybridConnectionStepTest extends BaseAzureTest {
@@ -67,17 +67,19 @@ public class GetAzureRelayHybridConnectionStepTest extends BaseAzureTest {
   @Test
   public void getHybridConnection_doesNotExist() throws InterruptedException {
     final ApiAzureRelayHybridConnectionCreationParameters creationParameters =
-        ControlledResourceFixtures.getAzureRelayHybridConnectionCreationParameters(uniqueAzureName(AZURE_RELAY_NAMESPACE_NAME_PREFIX));
+        ControlledResourceFixtures.getAzureRelayHybridConnectionCreationParameters(
+            uniqueAzureName(AZURE_RELAY_NAMESPACE_NAME_PREFIX));
 
     GetAzureRelayHybridConnectionStep getStep =
         new GetAzureRelayHybridConnectionStep(
             mockAzureConfig,
             mockCrlService,
             ControlledResourceFixtures.getAzureRelayHybridConnection(
-                creationParameters.getNamespaceName(), creationParameters.getHybridConnectionName(), creationParameters.isRequiresClientAuthorization()));
+                creationParameters.getNamespaceName(),
+                creationParameters.getHybridConnectionName(),
+                creationParameters.isRequiresClientAuthorization()));
 
-    when(mockHybridConnections.getById(anyString()))
-        .thenThrow(mockException);
+    when(mockHybridConnections.getById(anyString())).thenThrow(mockException);
 
     final StepResult stepResult = getStep.doStep(mockFlightContext);
 
@@ -88,17 +90,19 @@ public class GetAzureRelayHybridConnectionStepTest extends BaseAzureTest {
   @Test
   public void getHybridConnection_alreadyExists() throws InterruptedException {
     final ApiAzureRelayHybridConnectionCreationParameters creationParameters =
-        ControlledResourceFixtures.getAzureRelayHybridConnectionCreationParameters(uniqueAzureName(AZURE_RELAY_NAMESPACE_NAME_PREFIX));
+        ControlledResourceFixtures.getAzureRelayHybridConnectionCreationParameters(
+            uniqueAzureName(AZURE_RELAY_NAMESPACE_NAME_PREFIX));
 
     GetAzureRelayHybridConnectionStep getStep =
         new GetAzureRelayHybridConnectionStep(
             mockAzureConfig,
             mockCrlService,
             ControlledResourceFixtures.getAzureRelayHybridConnection(
-                creationParameters.getNamespaceName(), creationParameters.getHybridConnectionName(), creationParameters.isRequiresClientAuthorization()));
+                creationParameters.getNamespaceName(),
+                creationParameters.getHybridConnectionName(),
+                creationParameters.isRequiresClientAuthorization()));
 
-    when(mockHybridConnections.getById(anyString()))
-        .thenReturn(mockHybridConnection);
+    when(mockHybridConnections.getById(anyString())).thenReturn(mockHybridConnection);
 
     final StepResult stepResult = getStep.doStep(mockFlightContext);
 

@@ -3,7 +3,7 @@
 # This file is expected to be part of source control.
 bio.terra.cloud-resource-lib:azure-resourcemanager-common:0.4.0=compileClasspath,productionRuntimeClasspath,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
 bio.terra.cloud-resource-lib:azure-resourcemanager-compute:0.3.0=compileClasspath,productionRuntimeClasspath,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
-bio.terra.cloud-resource-lib:azure-resourcemanager-relay:0.2.0=compileClasspath,productionRuntimeClasspath,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
+bio.terra.cloud-resource-lib:azure-resourcemanager-relay:0.3.0=compileClasspath,productionRuntimeClasspath,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
 bio.terra.cloud-resource-lib:cloud-resource-schema:0.10.0=productionRuntimeClasspath,runtimeClasspath,testRuntimeClasspath
 bio.terra.cloud-resource-lib:common:0.11.0=compileClasspath,productionRuntimeClasspath,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
 bio.terra.cloud-resource-lib:google-api-services-common:0.10.0=compileClasspath,productionRuntimeClasspath,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
@@ -15,7 +15,7 @@ bio.terra.cloud-resource-lib:google-iam:0.11.0=compileClasspath,productionRuntim
 bio.terra.cloud-resource-lib:google-notebooks:0.10.0=compileClasspath,productionRuntimeClasspath,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
 bio.terra.cloud-resource-lib:google-serviceusage:0.11.0=compileClasspath,productionRuntimeClasspath,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
 bio.terra.cloud-resource-lib:google-storage:0.14.0=compileClasspath,productionRuntimeClasspath,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
-bio.terra.cloud-resource-lib:platform:0.9.0=compileClasspath,productionRuntimeClasspath,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
+bio.terra.cloud-resource-lib:platform:0.10.0=compileClasspath,productionRuntimeClasspath,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
 bio.terra:datarepo-client:1.41.0-SNAPSHOT=compileClasspath,productionRuntimeClasspath,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
 bio.terra:stairway-gcp:0.0.67-SNAPSHOT=compileClasspath,productionRuntimeClasspath,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
 bio.terra:stairway:0.0.67-SNAPSHOT=compileClasspath,productionRuntimeClasspath,runtimeClasspath,testCompileClasspath,testRuntimeClasspath

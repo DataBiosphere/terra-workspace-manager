@@ -269,7 +269,7 @@ public class ControlledResourceFixtures {
         null,
         namespaceName,
         hybridConnectionName,
-            isRequiresClientAuthorization);
+        isRequiresClientAuthorization);
   }
 
   public static ControlledAzureDiskResource getAzureDisk(String diskName, String region, int size) {

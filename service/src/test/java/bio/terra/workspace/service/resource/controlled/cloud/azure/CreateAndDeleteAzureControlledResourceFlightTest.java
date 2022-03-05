@@ -125,7 +125,8 @@ public class CreateAndDeleteAzureControlledResourceFlightTest extends BaseAzureT
     }
   }
 
-  // Test both relay namespace and relay hybrid connection since hybrid connection requires namespace to exist first
+  // Test both relay namespace and relay hybrid connection since hybrid connection requires
+  // namespace to exist first
   @Test
   public void createAndDeleteAzureRelayControlledResource() throws InterruptedException {
     UUID workspaceId = azureTestUtils.createWorkspace(workspaceService);
@@ -185,7 +186,8 @@ public class CreateAndDeleteAzureControlledResourceFlightTest extends BaseAzureT
 
     // Test relay hybrid connection creation
     final ApiAzureRelayHybridConnectionCreationParameters hcCreationParameters =
-        ControlledResourceFixtures.getAzureRelayHybridConnectionCreationParameters(creationParameters.getNamespaceName());
+        ControlledResourceFixtures.getAzureRelayHybridConnectionCreationParameters(
+            creationParameters.getNamespaceName());
 
     final UUID hcResourceId = UUID.randomUUID();
     ControlledAzureRelayHybridConnectionResource hcResource =
@@ -220,7 +222,8 @@ public class CreateAndDeleteAzureControlledResourceFlightTest extends BaseAzureT
     ControlledResource hcRes =
         controlledResourceService.getControlledResource(workspaceId, hcResourceId, userRequest);
 
-    var relayHcResource = hcRes.castByEnum(WsmResourceType.CONTROLLED_AZURE_RELAY_HYBRID_CONNECTION);
+    var relayHcResource =
+        hcRes.castByEnum(WsmResourceType.CONTROLLED_AZURE_RELAY_HYBRID_CONNECTION);
     assertEquals(hcResource, relayHcResource);
 
     // Verify hybrid connection deletion.
@@ -237,19 +240,16 @@ public class CreateAndDeleteAzureControlledResourceFlightTest extends BaseAzureT
     TimeUnit.SECONDS.sleep(2);
     RelayManager manager = azureTestUtils.getRelayManager();
     var hcAzureResourceId =
-            String.format(
-                    "/subscriptions/%s/resourceGroups/%s/providers/Microsoft.Relay/namespaces/%s/hybridConnections/%s",
-                    azureTestUtils.getAzureCloudContext().getAzureSubscriptionId(),
-                    azureTestUtils.getAzureCloudContext().getAzureResourceGroupId(),
-                    hcResource.getNamespaceName(),
-                    hcResource.getHybridConnectionName());
+        String.format(
+            "/subscriptions/%s/resourceGroups/%s/providers/Microsoft.Relay/namespaces/%s/hybridConnections/%s",
+            azureTestUtils.getAzureCloudContext().getAzureSubscriptionId(),
+            azureTestUtils.getAzureCloudContext().getAzureResourceGroupId(),
+            hcResource.getNamespaceName(),
+            hcResource.getHybridConnectionName());
     ManagementException hcException =
         assertThrows(
             ManagementException.class,
-            () ->
-                manager
-                    .hybridConnections()
-                    .getById(hcAzureResourceId));
+            () -> manager.hybridConnections().getById(hcAzureResourceId));
     // We see both ResourceNotFound and NotFound in the code field
     assertTrue(hcException.getValue().getCode().contains("NotFound"));
 
