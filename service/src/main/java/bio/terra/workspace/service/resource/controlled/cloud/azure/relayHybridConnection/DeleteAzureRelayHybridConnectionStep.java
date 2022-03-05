@@ -8,7 +8,9 @@ import bio.terra.workspace.app.configuration.external.AzureConfiguration;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import bio.terra.workspace.service.workspace.model.AzureCloudContext;
+import com.azure.core.management.exception.ManagementException;
 import com.azure.resourcemanager.relay.RelayManager;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -52,6 +54,17 @@ public class DeleteAzureRelayHybridConnectionStep implements Step {
       logger.info("Attempting to delete Relay Hybrid Connection " + azureResourceId);
       manager.hybridConnections().deleteById(azureResourceId);
       return StepResult.getStepResultSuccess();
+    } catch(ManagementException e) {
+      if (StringUtils.contains(e.getValue().getCode(), "NotFound")) {
+        logger.info(
+                "Azure Relay Hybrid Connection "+ azureResourceId + " already deleted",
+                e);
+        return StepResult.getStepResultSuccess();
+      }
+      logger.info(
+              "Attempt to delete Azure Relay Hybrid Connection failed on this try: " + azureResourceId,
+              e);
+      return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, e);
     } catch (Exception ex) {
       logger.info(
           "Attempt to delete Azure Relay Hybrid Connection failed on this try: " + azureResourceId,

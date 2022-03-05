@@ -15,6 +15,7 @@ import bio.terra.workspace.generated.model.ApiResourceAttributesUnion;
 import bio.terra.workspace.generated.model.ApiResourceUnion;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.resource.ResourceValidationUtils;
+import bio.terra.workspace.service.resource.controlled.cloud.azure.relayHybridConnection.DeleteAzureRelayHybridConnectionStep;
 import bio.terra.workspace.service.resource.controlled.flight.create.CreateControlledResourceFlight;
 import bio.terra.workspace.service.resource.controlled.flight.delete.DeleteControlledResourceFlight;
 import bio.terra.workspace.service.resource.controlled.model.AccessScopeType;
@@ -122,6 +123,11 @@ public class ControlledAzureRelayNamespaceResource extends ControlledResource {
         new DeleteAzureRelayNamespaceStep(
             flightBeanBag.getAzureConfig(), flightBeanBag.getCrlService(), this),
         RetryRules.cloud());
+//    //TODO: get all the hybrid connections this has
+//    flight.addStep(
+//        new DeleteAzureRelayHybridConnectionStep(
+//            flightBeanBag.getAzureConfig(), flightBeanBag.getCrlService(), ???),
+//        RetryRules.cloud());
   }
 
   public String getNamespaceName() {
