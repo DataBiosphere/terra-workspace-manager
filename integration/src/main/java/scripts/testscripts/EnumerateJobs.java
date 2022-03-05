@@ -240,6 +240,9 @@ public class EnumerateJobs extends WorkspaceAllocateTestScriptBase {
       case AZURE_STORAGE_ACCOUNT:
         return union.getAzureStorageAccount().getMetadata();
 
+      case AZURE_RELAY_HYBRID_CONNECTION:
+        return union.getAzureRelayHybridConnection().getMetadata();
+
       default:
         fail("Unknown resource type: " + job.getResourceType());
     }

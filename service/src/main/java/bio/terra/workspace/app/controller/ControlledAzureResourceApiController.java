@@ -10,6 +10,8 @@ import bio.terra.workspace.generated.model.ApiAzureVmResource;
 import bio.terra.workspace.generated.model.ApiCreateControlledAzureDiskRequestBody;
 import bio.terra.workspace.generated.model.ApiCreateControlledAzureIpRequestBody;
 import bio.terra.workspace.generated.model.ApiCreateControlledAzureNetworkRequestBody;
+import bio.terra.workspace.generated.model.ApiCreateControlledAzureRelayHybridConnection;
+import bio.terra.workspace.generated.model.ApiCreateControlledAzureRelayHybridConnectionRequestBody;
 import bio.terra.workspace.generated.model.ApiCreateControlledAzureRelayNamespace;
 import bio.terra.workspace.generated.model.ApiCreateControlledAzureRelayNamespaceRequestBody;
 import bio.terra.workspace.generated.model.ApiCreateControlledAzureStorageRequestBody;
@@ -31,6 +33,7 @@ import bio.terra.workspace.service.resource.controlled.ControlledResourceService
 import bio.terra.workspace.service.resource.controlled.cloud.azure.disk.ControlledAzureDiskResource;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.ip.ControlledAzureIpResource;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.network.ControlledAzureNetworkResource;
+import bio.terra.workspace.service.resource.controlled.cloud.azure.relayHybridConnection.ControlledAzureRelayHybridConnectionResource;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.relayNamespace.ControlledAzureRelayNamespaceResource;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.storage.ControlledAzureStorageResource;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.vm.ControlledAzureVmResource;
@@ -155,6 +158,36 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
         new ApiCreateControlledAzureRelayNamespace()
             .resourceId(created.getResourceId())
             .azureRelayNameSpace(created.toApiResource());
+    return new ResponseEntity<>(response, HttpStatus.OK);
+  }
+
+  @Override
+  public ResponseEntity<ApiCreateControlledAzureRelayHybridConnection> createAzureRelayHybridConnection(
+          UUID workspaceId, @Valid ApiCreateControlledAzureRelayHybridConnectionRequestBody body) {
+    features.azureEnabledCheck();
+
+    final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    ControlledResourceFields commonFields =
+        toCommonFields(workspaceId, body.getCommon(), userRequest);
+
+    ControlledAzureRelayHybridConnectionResource resource =
+            ControlledAzureRelayHybridConnectionResource.builder()
+            .common(commonFields)
+                    .hybridConnectionName(body.getAzureRelayHybridConnection().getHybridConnectionName())
+                    .namespaceName(body.getAzureRelayHybridConnection().getNamespaceName())
+                    .requiresClientAuthorization(body.getAzureRelayHybridConnection().isRequiresClientAuthorization())
+            .build();
+
+    final ControlledAzureRelayHybridConnectionResource created =
+        controlledResourceService
+            .createControlledResourceSync(
+                resource, commonFields.getIamRole(), userRequest, body.getAzureRelayHybridConnection())
+            .castByEnum(WsmResourceType.CONTROLLED_AZURE_RELAY_HYBRID_CONNECTION);
+
+    var response =
+        new ApiCreateControlledAzureRelayHybridConnection()
+            .resourceId(created.getResourceId())
+            .azureRelayHybridConnection(created.toApiResource());
     return new ResponseEntity<>(response, HttpStatus.OK);
   }
 

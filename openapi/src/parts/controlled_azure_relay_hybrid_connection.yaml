@@ -1,0 +1,134 @@
+paths:
+  /api/workspaces/v1/{workspaceId}/resources/controlled/azure/relay-hybrid-connection:
+    parameters:
+      - $ref: '#/components/parameters/WorkspaceId'
+    post:
+      summary: Create a new controlled Azure Relay Hybrid Connection
+      operationId: createAzureRelayHybridConnection
+      tags: [ControlledAzureResource]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateControlledAzureRelayHybridConnectionRequestBody'
+      responses:
+        '200':
+          $ref: '#/components/responses/CreateControlledAzureRelayHybridConnectionResponse'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /api/workspaces/v1/{workspaceId}/resources/controlled/azure/relay-hybrid-connection/{resourceId}:
+    parameters:
+      - $ref: '#/components/parameters/WorkspaceId'
+      - $ref: '#/components/parameters/ResourceId'
+    get:
+      summary: Get a controlled Azure Relay Hybrid Connection resource
+      operationId: getRelayHybridConnection
+      tags: [ControlledAzureResource]
+      responses:
+        '200':
+          $ref: '#/components/responses/GetControlledAzureRelayHybridConnectionResponse'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+    post:
+      summary: |
+        Delete an Azure Relay Hybrid Connection
+      operationId: deleteAzureRelayHybridConnection
+      tags: [ControlledAzureResource]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeleteControlledAzureResourceRequest'
+      responses:
+        '200':
+          $ref: '#/components/responses/DeleteControlledAzureResourceResponse'
+        '202':
+          $ref: '#/components/responses/DeleteControlledAzureResourceResponse'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /api/workspaces/v1/{workspaceId}/resources/controlled/azure/relay-hybrid-connection/delete-result/{jobId}:
+    parameters:
+      - $ref: '#/components/parameters/WorkspaceId'
+      - $ref: '#/components/parameters/JobId'
+    get:
+      summary: Retrieve information about an azure relay hybrid connection deletion job.
+      operationId: getDeleteAzureRelayHybridConnectionResult
+      tags: [ControlledAzureResource]
+      responses:
+        '200':
+          $ref: '#/components/responses/DeleteControlledAzureResourceResponse'
+        '202':
+          $ref: '#/components/responses/DeleteControlledAzureResourceResponse'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+components:
+  schemas:
+    AzureRelayHybridConnectionCreationParameters:
+      description: >-
+        Relay hybrid connection specific properties to be set on creation. These are a subset of the values
+        accepted by the azure resource API
+      type: object
+      required: [hybridConnectionName, namespaceName, requiresClientAuthorization]
+      properties:
+        hybridConnectionName:
+          description: A valid relay name per https://docs.microsoft.com/en-us/azure/azure-resource-manager/management/resource-name-rules
+          type: string
+        namespaceName:
+          description: |
+            An existing Azure Relay Namespace
+          type: string
+        requiresClientAuthorization:
+          description: Indicates whether client authorization is required.
+          type: boolean
+
+    CreateControlledAzureRelayHybridConnectionRequestBody:
+      description: Payload for requesting a new controlled Azure IP resource.
+      type: object
+      properties:
+        common:
+          $ref: '#/components/schemas/ControlledResourceCommonFields'
+        azureRelayHybridConnection:
+          $ref: '#/components/schemas/AzureRelayHybridConnectionCreationParameters'
+
+
+    CreateControlledAzureRelayHybridConnection:
+      description: Response payload for requesting a new Azure Relay Hybrid Connection
+      type: object
+      properties:
+        resourceId:
+          description: UUID of a newly-created resource.
+          type: string
+          format: uuid
+        azureRelayHybridConnection:
+          $ref: '#/components/schemas/AzureRelayHybridConnectionResource'
+
+  responses:
+    CreateControlledAzureRelayHybridConnectionResponse:
+      description: Response to create controlled azure relay hybrid connection
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/CreateControlledAzureRelayHybridConnection'
+
+
+    GetControlledAzureRelayHybridConnectionResponse:
+      description: Response to get Relay hybrid connection
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/AzureRelayHybridConnectionResource'

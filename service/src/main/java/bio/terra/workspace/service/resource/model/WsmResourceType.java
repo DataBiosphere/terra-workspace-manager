@@ -7,6 +7,8 @@ import bio.terra.workspace.service.resource.controlled.cloud.azure.ip.Controlled
 import bio.terra.workspace.service.resource.controlled.cloud.azure.ip.ControlledAzureIpResource;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.network.ControlledAzureNetworkHandler;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.network.ControlledAzureNetworkResource;
+import bio.terra.workspace.service.resource.controlled.cloud.azure.relayHybridConnection.ControlledAzureRelayHybridConnectionHandler;
+import bio.terra.workspace.service.resource.controlled.cloud.azure.relayHybridConnection.ControlledAzureRelayHybridConnectionResource;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.relayNamespace.ControlledAzureRelayNamespaceHandler;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.relayNamespace.ControlledAzureRelayNamespaceResource;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.storage.ControlledAzureStorageHandler;
@@ -125,6 +127,13 @@ public enum WsmResourceType {
       ApiResourceType.AZURE_RELAY_NAMESPACE,
       ControlledAzureRelayNamespaceResource.class,
       ControlledAzureRelayNamespaceHandler::getHandler),
+  CONTROLLED_AZURE_RELAY_HYBRID_CONNECTION(
+      CloudPlatform.AZURE,
+      StewardshipType.CONTROLLED,
+      "CONTROLLED_AZURE_RELAY_HYBRID_CONNECTION",
+      ApiResourceType.AZURE_RELAY_HYBRID_CONNECTION,
+      ControlledAzureRelayHybridConnectionResource.class,
+      ControlledAzureRelayHybridConnectionHandler::getHandler),
   CONTROLLED_AZURE_DISK(
       CloudPlatform.AZURE,
       StewardshipType.CONTROLLED,

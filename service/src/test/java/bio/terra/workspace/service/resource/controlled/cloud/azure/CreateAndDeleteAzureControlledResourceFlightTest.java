@@ -16,6 +16,7 @@ import bio.terra.workspace.generated.model.ApiAccessScope;
 import bio.terra.workspace.generated.model.ApiAzureDiskCreationParameters;
 import bio.terra.workspace.generated.model.ApiAzureIpCreationParameters;
 import bio.terra.workspace.generated.model.ApiAzureNetworkCreationParameters;
+import bio.terra.workspace.generated.model.ApiAzureRelayHybridConnectionCreationParameters;
 import bio.terra.workspace.generated.model.ApiAzureRelayNamespaceCreationParameters;
 import bio.terra.workspace.generated.model.ApiAzureVmCreationParameters;
 import bio.terra.workspace.generated.model.ApiManagedBy;
@@ -26,6 +27,7 @@ import bio.terra.workspace.service.resource.controlled.ControlledResourceService
 import bio.terra.workspace.service.resource.controlled.cloud.azure.disk.ControlledAzureDiskResource;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.ip.ControlledAzureIpResource;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.network.ControlledAzureNetworkResource;
+import bio.terra.workspace.service.resource.controlled.cloud.azure.relayHybridConnection.ControlledAzureRelayHybridConnectionResource;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.relayNamespace.ControlledAzureRelayNamespaceResource;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.vm.ControlledAzureVmResource;
 import bio.terra.workspace.service.resource.controlled.flight.create.CreateControlledResourceFlight;
@@ -123,8 +125,9 @@ public class CreateAndDeleteAzureControlledResourceFlightTest extends BaseAzureT
     }
   }
 
+  // Test both relay namespace and relay hybrid connection since hybrid connection requires namespace to exist first
   @Test
-  public void createAndDeleteAzureRelayNamespaceControlledResource() throws InterruptedException {
+  public void createAndDeleteAzureRelayControlledResource() throws InterruptedException {
     UUID workspaceId = azureTestUtils.createWorkspace(workspaceService);
     AuthenticatedUserRequest userRequest = userAccessUtils.defaultUserAuthRequest();
 
@@ -141,6 +144,7 @@ public class CreateAndDeleteAzureControlledResourceFlightTest extends BaseAzureT
     assertTrue(
         workspaceService.getAuthorizedAzureCloudContext(workspaceId, userRequest).isPresent());
 
+    // Test relay namespace creation
     final ApiAzureRelayNamespaceCreationParameters creationParameters =
         ControlledResourceFixtures.getAzureRelayNamespaceCreationParameters();
 
@@ -161,7 +165,6 @@ public class CreateAndDeleteAzureControlledResourceFlightTest extends BaseAzureT
             .region(creationParameters.getRegion())
             .build();
 
-    // Submit an IP creation flight.
     FlightState flightState =
         StairwayTestUtils.blockUntilFlightCompletes(
             jobService.getStairway(),
@@ -180,7 +183,77 @@ public class CreateAndDeleteAzureControlledResourceFlightTest extends BaseAzureT
     var relayNamespaceResource = res.castByEnum(WsmResourceType.CONTROLLED_AZURE_RELAY_NAMESPACE);
     assertEquals(resource, relayNamespaceResource);
 
-    // Submit a VM deletion flight.
+    // Test relay hybrid connection creation
+    final ApiAzureRelayHybridConnectionCreationParameters hcCreationParameters =
+        ControlledResourceFixtures.getAzureRelayHybridConnectionCreationParameters(creationParameters.getNamespaceName());
+
+    final UUID hcResourceId = UUID.randomUUID();
+    ControlledAzureRelayHybridConnectionResource hcResource =
+        ControlledAzureRelayHybridConnectionResource.builder()
+            .common(
+                ControlledResourceFields.builder()
+                    .workspaceId(workspaceId)
+                    .resourceId(hcResourceId)
+                    .name(getAzureName("hc"))
+                    .description(getAzureName("hc-desc"))
+                    .cloningInstructions(CloningInstructions.COPY_RESOURCE)
+                    .accessScope(AccessScopeType.fromApi(ApiAccessScope.SHARED_ACCESS))
+                    .managedBy(ManagedByType.fromApi(ApiManagedBy.USER))
+                    .build())
+            .namespaceName(hcCreationParameters.getNamespaceName())
+            .hybridConnectionName(hcCreationParameters.getHybridConnectionName())
+            .requiresClientAuthorization(hcCreationParameters.isRequiresClientAuthorization())
+            .build();
+
+    FlightState hcFlightState =
+        StairwayTestUtils.blockUntilFlightCompletes(
+            jobService.getStairway(),
+            CreateControlledResourceFlight.class,
+            azureTestUtils.createControlledResourceInputParameters(
+                workspaceId, userRequest, hcResource),
+            STAIRWAY_FLIGHT_TIMEOUT,
+            null);
+
+    assertEquals(FlightStatus.SUCCESS, hcFlightState.getFlightStatus());
+
+    // Verify controlled resource exists in the workspace.
+    ControlledResource hcRes =
+        controlledResourceService.getControlledResource(workspaceId, hcResourceId, userRequest);
+
+    var relayHcResource = hcRes.castByEnum(WsmResourceType.CONTROLLED_AZURE_RELAY_HYBRID_CONNECTION);
+    assertEquals(hcResource, relayHcResource);
+
+    // Verify hybrid connection deletion.
+    FlightState hcDeleteFlightState =
+        StairwayTestUtils.blockUntilFlightCompletes(
+            jobService.getStairway(),
+            DeleteControlledResourceFlight.class,
+            azureTestUtils.deleteControlledResourceInputParameters(
+                workspaceId, hcResourceId, userRequest, hcResource),
+            STAIRWAY_FLIGHT_TIMEOUT,
+            null);
+    assertEquals(FlightStatus.SUCCESS, hcDeleteFlightState.getFlightStatus());
+
+    TimeUnit.SECONDS.sleep(2);
+    RelayManager manager = azureTestUtils.getRelayManager();
+    var hcAzureResourceId =
+            String.format(
+                    "/subscriptions/%s/resourceGroups/%s/providers/Microsoft.Relay/namespaces/%s/hybridConnections/%s",
+                    azureTestUtils.getAzureCloudContext().getAzureSubscriptionId(),
+                    azureTestUtils.getAzureCloudContext().getAzureResourceGroupId(),
+                    hcResource.getNamespaceName(),
+                    hcResource.getHybridConnectionName());
+    ManagementException hcException =
+        assertThrows(
+            ManagementException.class,
+            () ->
+                manager
+                    .hybridConnections()
+                    .getById(hcAzureResourceId));
+    // We see both ResourceNotFound and NotFound in the code field
+    assertTrue(hcException.getValue().getCode().contains("NotFound"));
+
+    // Verify relay namespace deletion.
     FlightState deleteFlightState =
         StairwayTestUtils.blockUntilFlightCompletes(
             jobService.getStairway(),
@@ -192,7 +265,6 @@ public class CreateAndDeleteAzureControlledResourceFlightTest extends BaseAzureT
     assertEquals(FlightStatus.SUCCESS, deleteFlightState.getFlightStatus());
 
     TimeUnit.SECONDS.sleep(5);
-    RelayManager manager = azureTestUtils.getRelayManager();
     ManagementException exception =
         assertThrows(
             ManagementException.class,

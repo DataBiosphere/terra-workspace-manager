@@ -3,6 +3,7 @@ package bio.terra.workspace.common.fixtures;
 import bio.terra.workspace.generated.model.ApiAzureDiskCreationParameters;
 import bio.terra.workspace.generated.model.ApiAzureIpCreationParameters;
 import bio.terra.workspace.generated.model.ApiAzureNetworkCreationParameters;
+import bio.terra.workspace.generated.model.ApiAzureRelayHybridConnectionCreationParameters;
 import bio.terra.workspace.generated.model.ApiAzureRelayNamespaceCreationParameters;
 import bio.terra.workspace.generated.model.ApiAzureStorageCreationParameters;
 import bio.terra.workspace.generated.model.ApiAzureVmCreationParameters;
@@ -21,6 +22,7 @@ import bio.terra.workspace.generated.model.ApiGcpGcsBucketUpdateParameters;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.disk.ControlledAzureDiskResource;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.ip.ControlledAzureIpResource;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.network.ControlledAzureNetworkResource;
+import bio.terra.workspace.service.resource.controlled.cloud.azure.relayHybridConnection.ControlledAzureRelayHybridConnectionResource;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.relayNamespace.ControlledAzureRelayNamespaceResource;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.storage.ControlledAzureStorageResource;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.vm.ControlledAzureVmResource;
@@ -89,6 +91,7 @@ public class ControlledResourceFixtures {
   public static final String AZURE_NAME_PREFIX = "az";
   public static final String AZURE_IP_NAME_PREFIX = "ip";
   public static final String AZURE_RELAY_NAMESPACE_NAME_PREFIX = "relay-ns";
+  public static final String AZURE_RELAY_HYBRID_CONNECTION_NAME_PREFIX = "relay-hc";
   public static final String AZURE_DISK_NAME_PREFIX = "disk";
   public static final String AZURE_NETWORK_NAME_PREFIX = "network";
   public static final String AZURE_SUBNET_NAME_PREFIX = "subnet";
@@ -118,6 +121,15 @@ public class ControlledResourceFixtures {
     return new ApiAzureRelayNamespaceCreationParameters()
         .namespaceName(uniqueAzureName(AZURE_RELAY_NAMESPACE_NAME_PREFIX))
         .region("westcentralus");
+  }
+
+  /** Construct a parameter object with a unique ip name to avoid unintended clashes. */
+  public static ApiAzureRelayHybridConnectionCreationParameters
+      getAzureRelayHybridConnectionCreationParameters(String namespaceName) {
+    return new ApiAzureRelayHybridConnectionCreationParameters()
+        .namespaceName(namespaceName)
+        .hybridConnectionName(uniqueAzureName(AZURE_RELAY_HYBRID_CONNECTION_NAME_PREFIX))
+        .requiresClientAuthorization(false);
   }
 
   /** Construct a parameter object with a unique disk name to avoid unintended clashes. */
@@ -240,6 +252,24 @@ public class ControlledResourceFixtures {
         null,
         namespaceName,
         region);
+  }
+
+  public static ControlledAzureRelayHybridConnectionResource getAzureRelayHybridConnection(
+      String namespaceName, String hybridConnectionName, Boolean isRequiresClientAuthorization) {
+    return new ControlledAzureRelayHybridConnectionResource(
+        WORKSPACE_ID,
+        RESOURCE_ID,
+        RESOURCE_NAME,
+        RESOURCE_DESCRIPTION,
+        CLONING_INSTRUCTIONS,
+        OWNER_EMAIL,
+        PrivateResourceState.ACTIVE,
+        AccessScopeType.ACCESS_SCOPE_PRIVATE,
+        ManagedByType.MANAGED_BY_APPLICATION,
+        null,
+        namespaceName,
+        hybridConnectionName,
+            isRequiresClientAuthorization);
   }
 
   public static ControlledAzureDiskResource getAzureDisk(String diskName, String region, int size) {

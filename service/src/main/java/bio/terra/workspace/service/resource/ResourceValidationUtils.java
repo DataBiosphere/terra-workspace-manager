@@ -76,6 +76,9 @@ public class ResourceValidationUtils {
   public static final Pattern AZURE_RELAY_NAMESPACE_PATTERN =
       Pattern.compile("^[a-zA-Z0-9][a-zA-Z0-9-]{0,78}[a-zA-Z0-9]$");
 
+  public static final Pattern AZURE_RELAY_HYBRID_CONNECTION_NAME_PATTERN =
+      Pattern.compile("^[A-Za-z0-9]$|^[A-Za-z0-9][\\w-\\.\\/]*[A-Za-z0-9]$");
+
   // An object named "." or ".." is nearly impossible for a user to delete.
   private static final ImmutableList<String> DISALLOWED_OBJECT_NAMES = ImmutableList.of(".", "..");
 
@@ -224,9 +227,24 @@ public class ResourceValidationUtils {
     if (!AZURE_RELAY_NAMESPACE_PATTERN.matcher(name).matches()
         || name.length() > 50
         || name.length() < 6) {
-      logger.warn("Invalid Azure Namespace", name);
+      logger.warn("Invalid Azure Namespace {}", name);
       throw new InvalidReferenceException(
           "Invalid Azure Namespace specified. See documentation for full specification https://docs.microsoft.com/en-us/azure/azure-resource-manager/management/resource-name-rules.");
+    }
+  }
+
+  /**
+   * See
+   * https://docs.microsoft.com/en-us/azure/azure-resource-manager/management/resource-name-rules
+   * for azure resource rules
+   */
+  public static void validateAzureHybridConnectionName(String name) {
+    if (!AZURE_RELAY_HYBRID_CONNECTION_NAME_PATTERN.matcher(name).matches()
+        || name.length() < 1
+        || name.length() > 260) {
+      logger.warn("Invalid Azure Hybrid Connection name {}", name);
+      throw new InvalidReferenceException(
+          "Invalid Azure Hybrid Connection specified. See documentation for full specification https://docs.microsoft.com/en-us/azure/azure-resource-manager/management/resource-name-rules.");
     }
   }
 

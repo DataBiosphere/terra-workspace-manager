@@ -16,6 +16,7 @@ components:
         - AZURE_NETWORK
         - AZURE_VM
         - AZURE_RELAY_NAMESPACE
+        - AZURE_RELAY_HYBRID_CONNECTION
         - AZURE_STORAGE_ACCOUNT
         - GIT_REPO
 
@@ -46,6 +47,8 @@ components:
           $ref: '#/components/schemas/AzureNetworkAttributes'
         azureRelayNamespace:
           $ref: '#/components/schemas/AzureRelayNamespaceAttributes'
+        azureRelayHybridConnection:
+          $ref: '#/components/schemas/AzureRelayHybridConnectionAttributes'
         azureStorage:
           $ref: '#/components/schemas/AzureStorageAttributes'
         azureVm:
@@ -82,6 +85,8 @@ components:
           $ref: '#/components/schemas/AzureVmResource'
         azureRelayNamespace:
           $ref: '#/components/schemas/AzureRelayNamespaceResource'
+        azureRelayHybridConnection:
+          $ref: '#/components/schemas/AzureRelayHybridConnectionResource'
         azureStorageAccount:
           $ref: '#/components/schemas/AzureStorageResource'
         gitRepo:

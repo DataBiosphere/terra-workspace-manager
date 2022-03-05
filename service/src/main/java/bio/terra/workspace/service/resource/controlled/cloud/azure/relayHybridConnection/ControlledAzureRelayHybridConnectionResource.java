@@ -1,4 +1,4 @@
-package bio.terra.workspace.service.resource.controlled.cloud.azure.relayNamespace;
+package bio.terra.workspace.service.resource.controlled.cloud.azure.relayHybridConnection;
 
 import bio.terra.common.exception.BadRequestException;
 import bio.terra.common.exception.InconsistentFieldsException;
@@ -9,8 +9,8 @@ import bio.terra.workspace.common.utils.RetryRules;
 import bio.terra.workspace.db.DbSerDes;
 import bio.terra.workspace.db.model.UniquenessCheckAttributes;
 import bio.terra.workspace.db.model.UniquenessCheckAttributes.UniquenessScope;
-import bio.terra.workspace.generated.model.ApiAzureRelayNamespaceAttributes;
-import bio.terra.workspace.generated.model.ApiAzureRelayNamespaceResource;
+import bio.terra.workspace.generated.model.ApiAzureRelayHybridConnectionAttributes;
+import bio.terra.workspace.generated.model.ApiAzureRelayHybridConnectionResource;
 import bio.terra.workspace.generated.model.ApiResourceAttributesUnion;
 import bio.terra.workspace.generated.model.ApiResourceUnion;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
@@ -28,15 +28,17 @@ import bio.terra.workspace.service.resource.model.WsmResourceFamily;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+
 import java.util.Optional;
 import java.util.UUID;
 
-public class ControlledAzureRelayNamespaceResource extends ControlledResource {
+public class ControlledAzureRelayHybridConnectionResource extends ControlledResource {
   private final String namespaceName;
-  private final String region;
+  private final String hybridConnectionName;
+  private final Boolean requiresClientAuthorization;
 
   @JsonCreator
-  public ControlledAzureRelayNamespaceResource(
+  public ControlledAzureRelayHybridConnectionResource(
       @JsonProperty("workspaceId") UUID workspaceId,
       @JsonProperty("resourceId") UUID resourceId,
       @JsonProperty("name") String name,
@@ -48,7 +50,8 @@ public class ControlledAzureRelayNamespaceResource extends ControlledResource {
       @JsonProperty("managedBy") ManagedByType managedBy,
       @JsonProperty("applicationId") UUID applicationId,
       @JsonProperty("namespaceName") String namespaceName,
-      @JsonProperty("region") String region) {
+      @JsonProperty("hybridConnectionName") String hybridConnectionName,
+      @JsonProperty("requiresClientAuthorization") Boolean requiresClientAuthorization) {
 
     super(
         workspaceId,
@@ -62,15 +65,17 @@ public class ControlledAzureRelayNamespaceResource extends ControlledResource {
         applicationId,
         privateResourceState);
     this.namespaceName = namespaceName;
-    this.region = region;
+    this.hybridConnectionName = hybridConnectionName;
+    this.requiresClientAuthorization = requiresClientAuthorization;
     validate();
   }
 
-  public ControlledAzureRelayNamespaceResource(
-      ControlledResourceFields common, String namespaceName, String region) {
+  public ControlledAzureRelayHybridConnectionResource(
+      ControlledResourceFields common, String namespaceName, String hybridConnectionName, Boolean requiresClientAuthorization) {
     super(common);
     this.namespaceName = namespaceName;
-    this.region = region;
+    this.hybridConnectionName = hybridConnectionName;
+    this.requiresClientAuthorization = requiresClientAuthorization;
     validate();
   }
 
@@ -106,11 +111,11 @@ public class ControlledAzureRelayNamespaceResource extends ControlledResource {
       FlightBeanBag flightBeanBag) {
     RetryRule cloudRetry = RetryRules.cloud();
     flight.addStep(
-        new GetAzureRelayNamespaceStep(
+        new GetAzureRelayHybridConnectionStep(
             flightBeanBag.getAzureConfig(), flightBeanBag.getCrlService(), this),
         cloudRetry);
     flight.addStep(
-        new CreateAzureRelayNamespaceStep(
+        new CreateAzureRelayHybridConnectionStep(
             flightBeanBag.getAzureConfig(), flightBeanBag.getCrlService(), this),
         cloudRetry);
   }
@@ -119,7 +124,7 @@ public class ControlledAzureRelayNamespaceResource extends ControlledResource {
   @Override
   public void addDeleteSteps(DeleteControlledResourceFlight flight, FlightBeanBag flightBeanBag) {
     flight.addStep(
-        new DeleteAzureRelayNamespaceStep(
+        new DeleteAzureRelayHybridConnectionStep(
             flightBeanBag.getAzureConfig(), flightBeanBag.getCrlService(), this),
         RetryRules.cloud());
   }
@@ -128,70 +133,79 @@ public class ControlledAzureRelayNamespaceResource extends ControlledResource {
     return namespaceName;
   }
 
-  public String getRegion() {
-    return region;
+  public String getHybridConnectionName() {
+    return hybridConnectionName;
   }
 
-  public ApiAzureRelayNamespaceAttributes toApiAttributes() {
-    return new ApiAzureRelayNamespaceAttributes()
+  public Boolean isRequiresClientAuthorization() {
+    return requiresClientAuthorization;
+  }
+
+  public ApiAzureRelayHybridConnectionAttributes toApiAttributes() {
+    return new ApiAzureRelayHybridConnectionAttributes()
         .namespaceName(getNamespaceName())
-        .region(region.toString());
+        .hybridConnectionName(getHybridConnectionName())
+        .requiresClientAuthorization(isRequiresClientAuthorization());
   }
 
-  public ApiAzureRelayNamespaceResource toApiResource() {
-    return new ApiAzureRelayNamespaceResource()
+  public ApiAzureRelayHybridConnectionResource toApiResource() {
+    return new ApiAzureRelayHybridConnectionResource()
         .metadata(super.toApiMetadata())
         .attributes(toApiAttributes());
   }
 
   @Override
   public WsmResourceType getResourceType() {
-    return WsmResourceType.CONTROLLED_AZURE_RELAY_NAMESPACE;
+    return WsmResourceType.CONTROLLED_AZURE_RELAY_HYBRID_CONNECTION;
   }
 
   @Override
   public WsmResourceFamily getResourceFamily() {
-    return WsmResourceFamily.AZURE_RELAY_NAMESPACE;
+    return WsmResourceFamily.AZURE_RELAY_HYBRID_CONNECTION;
   }
 
   @Override
   public String attributesToJson() {
     return DbSerDes.toJson(
-        new ControlledAzureRelayNamespaceAttributes(getNamespaceName(), getRegion()));
+        new ControlledAzureRelayHybridConnectionAttributes(getNamespaceName(), getHybridConnectionName(), isRequiresClientAuthorization()));
   }
 
   @Override
   public ApiResourceAttributesUnion toApiAttributesUnion() {
     ApiResourceAttributesUnion union = new ApiResourceAttributesUnion();
-    union.azureRelayNamespace(toApiAttributes());
+    union.azureRelayHybridConnection(toApiAttributes());
     return union;
   }
 
   @Override
   public ApiResourceUnion toApiResourceUnion() {
     ApiResourceUnion union = new ApiResourceUnion();
-    union.azureRelayNamespace(toApiResource());
+    union.azureRelayHybridConnection(toApiResource());
     return union;
   }
 
   @Override
   public void validate() {
     super.validate();
-    if (getResourceType() != WsmResourceType.CONTROLLED_AZURE_RELAY_NAMESPACE
-        || getResourceFamily() != WsmResourceFamily.AZURE_RELAY_NAMESPACE
+    if (getResourceType() != WsmResourceType.CONTROLLED_AZURE_RELAY_HYBRID_CONNECTION
+        || getResourceFamily() != WsmResourceFamily.AZURE_RELAY_HYBRID_CONNECTION
         || getStewardshipType() != StewardshipType.CONTROLLED) {
-      throw new InconsistentFieldsException("Expected controlled AZURE_RELAY_NAMESPACE");
+      throw new InconsistentFieldsException("Expected controlled AZURE_RELAY_HYBRID_CONNECTION");
     }
     if (getName() == null) {
       throw new MissingRequiredFieldException(
-          "Missing required Name field for ControlledAzureRelayNamespace.");
+          "Missing required Name field for ControlledAzureRelayHybridConnection.");
     }
-    if (getRegion() == null) {
+    if (getHybridConnectionName() == null) {
       throw new MissingRequiredFieldException(
-          "Missing required region field for ControlledAzureRelayNamespace.");
+          "Missing required hybridConnectionName field for ControlledAzureRelayHybridConnection.");
     }
-    ResourceValidationUtils.validateRegion(getRegion());
+    if (isRequiresClientAuthorization() == null) {
+      throw new MissingRequiredFieldException(
+          "Missing required requiresClientAuthorization field for ControlledAzureRelayHybridConnection.");
+    }
     ResourceValidationUtils.validateAzureNamespace(getNamespaceName());
+    ResourceValidationUtils.validateAzureHybridConnectionName(getHybridConnectionName());
   }
 
   @Override
@@ -200,24 +214,25 @@ public class ControlledAzureRelayNamespaceResource extends ControlledResource {
     if (o == null || getClass() != o.getClass()) return false;
     if (!super.equals(o)) return false;
 
-    ControlledAzureRelayNamespaceResource that = (ControlledAzureRelayNamespaceResource) o;
+    ControlledAzureRelayHybridConnectionResource that = (ControlledAzureRelayHybridConnectionResource) o;
 
-    return namespaceName.equals(that.getNamespaceName());
+    return namespaceName.equals(that.getNamespaceName()) && hybridConnectionName.equals(that.getHybridConnectionName());
   }
 
   @Override
   public int hashCode() {
     int result = super.hashCode();
-    result = 31 * result + namespaceName.hashCode();
+    result = 31 * result + namespaceName.hashCode() + hybridConnectionName.hashCode();
     return result;
   }
 
   public static class Builder {
     private ControlledResourceFields common;
     private String namespaceName;
-    private String region;
+    private String hybridConnectionName;
+    private Boolean requiresClientAuthorization;
 
-    public ControlledAzureRelayNamespaceResource.Builder common(ControlledResourceFields common) {
+    public Builder common(ControlledResourceFields common) {
       this.common = common;
       return this;
     }
@@ -227,13 +242,18 @@ public class ControlledAzureRelayNamespaceResource extends ControlledResource {
       return this;
     }
 
-    public Builder region(String region) {
-      this.region = region;
+    public Builder hybridConnectionName(String hybridConnectionName) {
+      this.hybridConnectionName = hybridConnectionName;
       return this;
     }
 
-    public ControlledAzureRelayNamespaceResource build() {
-      return new ControlledAzureRelayNamespaceResource(common, namespaceName, region);
+    public Builder requiresClientAuthorization(Boolean requiresClientAuthorization) {
+      this.requiresClientAuthorization = requiresClientAuthorization;
+      return this;
+    }
+
+    public ControlledAzureRelayHybridConnectionResource build() {
+      return new ControlledAzureRelayHybridConnectionResource(common, namespaceName, hybridConnectionName, requiresClientAuthorization);
     }
   }
 }
