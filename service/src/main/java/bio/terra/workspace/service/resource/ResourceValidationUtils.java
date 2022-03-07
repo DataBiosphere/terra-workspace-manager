@@ -224,7 +224,7 @@ public class ResourceValidationUtils {
     if (!AZURE_RELAY_NAMESPACE_PATTERN.matcher(name).matches()
         || name.length() > 50
         || name.length() < 6) {
-      logger.warn("Invalid Azure Namespace", name);
+      logger.warn("Invalid Azure Namespace {}", name);
       throw new InvalidReferenceException(
           "Invalid Azure Namespace specified. See documentation for full specification https://docs.microsoft.com/en-us/azure/azure-resource-manager/management/resource-name-rules.");
     }

@@ -277,76 +277,31 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
   @Override
   public ResponseEntity<ApiDeleteControlledAzureResourceResult> deleteAzureIp(
       UUID workspaceId, UUID resourceId, @Valid ApiDeleteControlledAzureResourceRequest body) {
-    features.azureEnabledCheck();
+    return deleteHelper(workspaceId, resourceId, body, "Azure IP");
+  }
 
-    final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
-    final ApiJobControl jobControl = body.getJobControl();
-    logger.info("deleteIp workspace {} resource {}", workspaceId.toString(), resourceId.toString());
-    final String jobId =
-        controlledResourceService.deleteControlledResourceAsync(
-            jobControl,
-            workspaceId,
-            resourceId,
-            getAsyncResultEndpoint(jobControl.getId(), "delete-result"),
-            userRequest);
-    return getJobDeleteResult(jobId, userRequest);
+  @Override
+  public ResponseEntity<ApiDeleteControlledAzureResourceResult> deleteAzureRelayNamespace(
+      UUID workspaceId, UUID resourceId, @Valid ApiDeleteControlledAzureResourceRequest body) {
+    return deleteHelper(workspaceId, resourceId, body, "Azure Relay Namespace");
   }
 
   @Override
   public ResponseEntity<ApiDeleteControlledAzureResourceResult> deleteAzureDisk(
       UUID workspaceId, UUID resourceId, @Valid ApiDeleteControlledAzureResourceRequest body) {
-    features.azureEnabledCheck();
-
-    final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
-    final ApiJobControl jobControl = body.getJobControl();
-    logger.info(
-        "deleteDisk workspace {} resource {}", workspaceId.toString(), resourceId.toString());
-    final String jobId =
-        controlledResourceService.deleteControlledResourceAsync(
-            jobControl,
-            workspaceId,
-            resourceId,
-            getAsyncResultEndpoint(jobControl.getId(), "delete-result"),
-            userRequest);
-    return getJobDeleteResult(jobId, userRequest);
+    return deleteHelper(workspaceId, resourceId, body, "Azure Disk");
   }
 
   @Override
   public ResponseEntity<ApiDeleteControlledAzureResourceResult> deleteAzureVm(
       UUID workspaceId, UUID resourceId, @Valid ApiDeleteControlledAzureResourceRequest body) {
-    features.azureEnabledCheck();
-
-    final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
-    final ApiJobControl jobControl = body.getJobControl();
-    logger.info(
-        "deleteAzureVm workspace {} resource {}", workspaceId.toString(), resourceId.toString());
-    final String jobId =
-        controlledResourceService.deleteControlledResourceAsync(
-            jobControl,
-            workspaceId,
-            resourceId,
-            getAsyncResultEndpoint(jobControl.getId(), "delete-result"),
-            userRequest);
-    return getJobDeleteResult(jobId, userRequest);
+    return deleteHelper(workspaceId, resourceId, body, "Azure VM");
   }
 
   @Override
   public ResponseEntity<ApiDeleteControlledAzureResourceResult> deleteAzureNetwork(
       UUID workspaceId, UUID resourceId, @Valid ApiDeleteControlledAzureResourceRequest body) {
-    features.azureEnabledCheck();
-
-    final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
-    final ApiJobControl jobControl = body.getJobControl();
-    logger.info(
-        "deleteNetwork workspace {} resource {}", workspaceId.toString(), resourceId.toString());
-    final String jobId =
-        controlledResourceService.deleteControlledResourceAsync(
-            jobControl,
-            workspaceId,
-            resourceId,
-            getAsyncResultEndpoint(jobControl.getId(), "delete-result"),
-            userRequest);
-    return getJobDeleteResult(jobId, userRequest);
+    return deleteHelper(workspaceId, resourceId, body, "Azure Networks");
   }
 
   @Override
@@ -426,6 +381,14 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
     return getJobDeleteResult(jobId, userRequest);
   }
 
+  @Override
+  public ResponseEntity<ApiDeleteControlledAzureResourceResult> getDeleteAzureRelayNamespaceResult(
+          UUID workspaceId, String jobId) {
+    features.azureEnabledCheck();
+    final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    return getJobDeleteResult(jobId, userRequest);
+  }
+
   private ResponseEntity<ApiDeleteControlledAzureResourceResult> getJobDeleteResult(
       String jobId, AuthenticatedUserRequest userRequest) {
 
@@ -436,5 +399,23 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
             .jobReport(jobResult.getJobReport())
             .errorReport(jobResult.getApiErrorReport());
     return new ResponseEntity<>(response, getAsyncResponseCode(response.getJobReport()));
+  }
+
+  private ResponseEntity<ApiDeleteControlledAzureResourceResult> deleteHelper(
+          UUID workspaceId, UUID resourceId, @Valid ApiDeleteControlledAzureResourceRequest body, String resourceName) {
+    features.azureEnabledCheck();
+
+    final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    final ApiJobControl jobControl = body.getJobControl();
+    logger.info(
+            "delete {}({}) from workspace {}", resourceName, resourceId.toString(), workspaceId.toString());
+    final String jobId =
+            controlledResourceService.deleteControlledResourceAsync(
+                    jobControl,
+                    workspaceId,
+                    resourceId,
+                    getAsyncResultEndpoint(jobControl.getId(), "delete-result"),
+                    userRequest);
+    return getJobDeleteResult(jobId, userRequest);
   }
 }

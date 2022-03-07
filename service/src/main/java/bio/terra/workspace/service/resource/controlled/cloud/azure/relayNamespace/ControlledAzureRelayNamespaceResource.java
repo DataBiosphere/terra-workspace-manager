@@ -134,8 +134,8 @@ public class ControlledAzureRelayNamespaceResource extends ControlledResource {
 
   public ApiAzureRelayNamespaceAttributes toApiAttributes() {
     return new ApiAzureRelayNamespaceAttributes()
-        .namespaceName(getName())
-        .region(region.toString());
+        .namespaceName(getNamespaceName())
+        .region(region);
   }
 
   public ApiAzureRelayNamespaceResource toApiResource() {
