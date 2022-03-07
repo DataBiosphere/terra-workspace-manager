@@ -415,10 +415,12 @@ public class CloneWorkspace extends WorkspaceAllocateTestScriptBase {
         clonedCopyDefinitionBucket.getAttributes().getBucketName(), destinationProjectId);
     assertEquals(
         copyDefinitionSourceBucket.getGcpBucket().getMetadata().getName(),
-        copyDefinitionBucketDetails.getName());
+        copyDefinitionBucketDetails.getName(),
+        "Copy definition bucket name is preserved.");
     assertEquals(
         copyDefinitionSourceBucket.getGcpBucket().getMetadata().getDescription(),
-        copyDefinitionBucketDetails.getDescription());
+        copyDefinitionBucketDetails.getDescription(),
+        "Copy definition bucket description is preserved.");
 
     // verify COPY_DEFINITION dataset exists but has no tables
     final ResourceCloneDetails copyDefinitionDatasetDetails =
@@ -430,20 +432,29 @@ public class CloneWorkspace extends WorkspaceAllocateTestScriptBase {
                             .getMetadata()
                             .getResourceId()
                             .equals(r.getSourceResourceId()))
-                .findFirst());
-    logger.info(copyDefinitionDatasetDetails.toString());
-    assertEquals(CloneResourceResult.SUCCEEDED, copyDefinitionDatasetDetails.getResult());
+                .findFirst(),
+            "Copy Definition BQ Dataset is included in workspace clone details.");
+    logger.info("Copy Definition Dataset (expected success): {}", copyDefinitionDatasetDetails);
+    assertEquals(CloneResourceResult.SUCCEEDED, copyDefinitionDatasetDetails.getResult(),
+        "Clone Succeeded");
     assertEquals(
-        CloningInstructionsEnum.DEFINITION, copyDefinitionDatasetDetails.getCloningInstructions());
-    assertEquals(ResourceType.BIG_QUERY_DATASET, copyDefinitionDatasetDetails.getResourceType());
-    assertEquals(StewardshipType.CONTROLLED, copyDefinitionDatasetDetails.getStewardshipType());
-    assertNotNull(copyDefinitionDatasetDetails.getDestinationResourceId());
-    assertNull(copyDefinitionDatasetDetails.getErrorMessage());
+        CloningInstructionsEnum.DEFINITION, copyDefinitionDatasetDetails.getCloningInstructions(),
+        "Cloning instructions preserved.");
+    assertEquals(ResourceType.BIG_QUERY_DATASET, copyDefinitionDatasetDetails.getResourceType(),
+        "Resource Type preserved");
+    assertEquals(StewardshipType.CONTROLLED, copyDefinitionDatasetDetails.getStewardshipType(),
+        "Stewardship Type preserved");
+    assertNotNull(copyDefinitionDatasetDetails.getDestinationResourceId(),
+        "Destination resource ID populated.");
+    assertNull(copyDefinitionDatasetDetails.getErrorMessage(),
+        "Error message omitted for successful clone");
     assertEquals(
-        copyDefinitionDataset.getMetadata().getName(), copyDefinitionDatasetDetails.getName());
+        copyDefinitionDataset.getMetadata().getName(), copyDefinitionDatasetDetails.getName(),
+        "Resource name preserved.");
     assertEquals(
         copyDefinitionDataset.getMetadata().getDescription(),
-        copyDefinitionDatasetDetails.getDescription());
+        copyDefinitionDatasetDetails.getDescription(),
+        "Description preserved.");
 
     final BigQuery bigQueryClient =
         ClientTestUtils.getGcpBigQueryClient(cloningUser, destinationProjectId);
@@ -460,7 +471,8 @@ public class CloneWorkspace extends WorkspaceAllocateTestScriptBase {
                             .getMetadata()
                             .getResourceId()
                             .equals(r.getSourceResourceId()))
-                .findFirst());
+                .findFirst(),
+            "COPY_RESOURCE dataset is included in workspace clone details.");
     logger.info(copyResourceDatasetDetails.toString());
     assertEquals(CloneResourceResult.SUCCEEDED, copyResourceDatasetDetails.getResult());
     assertEquals(
@@ -611,7 +623,8 @@ public class CloneWorkspace extends WorkspaceAllocateTestScriptBase {
     final TableResult listTablesResult = bigQueryClient.query(listTablesQuery);
     final long numRows =
         StreamSupport.stream(listTablesResult.getValues().spliterator(), false).count();
-    assertEquals(0, numRows);
+    assertEquals(0, numRows, "Expected zero tables for COPY_DEFINITION dataset");
+    logger.info("BQ Dataset {} in project {} has no tables, as expected.", datasetName, destinationProjectId);
   }
 
   private void assertEmptyBucket(String bucketName, String destinationProjectId)
@@ -621,7 +634,7 @@ public class CloneWorkspace extends WorkspaceAllocateTestScriptBase {
     BlobId blobId = BlobId.of(bucketName, GCS_BLOB_NAME);
 
     assertNull(cloningUserStorageClient.get(blobId));
-    logger.info("Bucket {} does not contain blob {}, as expected.",
+    logger.info("COPY_DEFINITION Bucket {} does not contain blob {}, as expected.",
         bucketName, GCS_BLOB_NAME);
   }
 }
