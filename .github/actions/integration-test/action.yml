@@ -9,7 +9,7 @@ inputs:
   test:
     description: 'Test suite or config to run'
     required: true
-    default: 'suites/FullIntegration.json'
+    default: 'suites/CloneWorkspaceHardening.json'
 runs:
   using: "composite"
   steps:
