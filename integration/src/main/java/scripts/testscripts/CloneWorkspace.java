@@ -90,6 +90,7 @@ public class CloneWorkspace extends WorkspaceAllocateTestScriptBase {
   protected void doSetup(
       List<TestUserSpecification> testUsers, WorkspaceApi sourceOwnerWorkspaceApi)
       throws Exception {
+    logger.info("Begin setup");
     super.doSetup(testUsers, sourceOwnerWorkspaceApi);
     // set up 2 users
     assertThat(testUsers, hasSize(2));
@@ -97,7 +98,8 @@ public class CloneWorkspace extends WorkspaceAllocateTestScriptBase {
     final TestUserSpecification sourceOwnerUser = testUsers.get(0);
     // user cloning the workspace
     cloningUser = testUsers.get(1);
-
+    logger.info(
+        "Owning user: {}, Cloning user: {}", sourceOwnerUser.userEmail, cloningUser.userEmail);
     // Build source GCP project in main test workspace
     sourceProjectId =
         CloudContextMaker.createGcpCloudContext(getWorkspaceId(), sourceOwnerWorkspaceApi);
@@ -108,11 +110,17 @@ public class CloneWorkspace extends WorkspaceAllocateTestScriptBase {
         new GrantRoleRequestBody().memberEmail(cloningUser.userEmail),
         getWorkspaceId(),
         IamRole.READER);
+    logger.info(
+        "Granted role {} for user {} on workspace {}",
+        IamRole.READER,
+        cloningUser.userEmail,
+        getWorkspaceId());
 
     // give users resource APIs
     final ControlledGcpResourceApi sourceOwnerResourceApi =
         ClientTestUtils.getControlledGcpResourceClient(sourceOwnerUser, server);
     cloningUserResourceApi = ClientTestUtils.getControlledGcpResourceClient(cloningUser, server);
+    logger.info("Built API clients for users.");
 
     // Create a GCS bucket with data
     // create source bucket with COPY_RESOURCE - should clone fine
@@ -124,6 +132,11 @@ public class CloneWorkspace extends WorkspaceAllocateTestScriptBase {
             getWorkspaceId(),
             sharedBucketSourceResourceName,
             CloningInstructionsEnum.RESOURCE);
+    //    logger.info(
+    //        "Created shared GCS Bucket {} resource ID {}",
+    //        sharedSourceBucket.getGcpBucket().getAttributes().getBucketName(),
+    //        sharedSourceBucket.getResourceId());
+
     GcsBucketUtils.addFileToBucket(sharedSourceBucket, sourceOwnerUser, sourceProjectId);
 
     // create a private GCS bucket, which the non-creating user can't clone
@@ -134,6 +147,10 @@ public class CloneWorkspace extends WorkspaceAllocateTestScriptBase {
             UUID.randomUUID().toString(),
             CloningInstructionsEnum.RESOURCE);
     GcsBucketUtils.addFileToBucket(privateSourceBucket, sourceOwnerUser, sourceProjectId);
+    //    logger.info(
+    //        "Created private GCS Bucket {} resource ID {}",
+    //        privateSourceBucket.getGcpBucket().getAttributes().getBucketName(),
+    //        privateSourceBucket.getResourceId());
 
     // create a GCS bucket with data and COPY_NOTHING instruction
     sharedCopyNothingSourceBucket =
@@ -228,15 +245,18 @@ public class CloneWorkspace extends WorkspaceAllocateTestScriptBase {
             referencedGcpResourceApi,
             getWorkspaceId(),
             "datatable_resource_1");
+    logger.info("End setup");
   }
 
   @Override
   protected void doUserJourney(
       TestUserSpecification sourceOwnerUser, WorkspaceApi sourceOwnerWorkspaceApi)
       throws Exception {
+    logger.info("Start User Journey");
     // As reader user, clone the workspace
     // Get a new workspace API for the reader
     cloningUserWorkspaceApi = ClientTestUtils.getWorkspaceClient(cloningUser, server);
+
     final CloneWorkspaceRequest cloneWorkspaceRequest =
         new CloneWorkspaceRequest()
             .displayName("Cloned Workspace")
@@ -245,44 +265,55 @@ public class CloneWorkspace extends WorkspaceAllocateTestScriptBase {
             .location("us-central1");
     CloneWorkspaceResult cloneResult =
         cloningUserWorkspaceApi.cloneWorkspace(cloneWorkspaceRequest, getWorkspaceId());
+    logger.info(
+        "Started clone of workspace {} to workspace {}",
+        getWorkspaceId(),
+        cloneResult.getWorkspace().getDestinationWorkspaceId());
 
     final String jobId = cloneResult.getJobReport().getId();
+    logger.info("Clone Job ID {}", jobId);
+
     cloneResult =
         ClientTestUtils.pollWhileRunning(
             cloneResult,
             () -> cloningUserWorkspaceApi.getCloneWorkspaceResult(getWorkspaceId(), jobId),
             CloneWorkspaceResult::getJobReport,
             Duration.ofSeconds(10));
-    logger.info("Clone result: {}", cloneResult);
+    logger.info("Completed clone result: {}", cloneResult);
+
     ClientTestUtils.assertJobSuccess(
         "Clone Workspace", cloneResult.getJobReport(), cloneResult.getErrorReport());
-    assertNull(cloneResult.getErrorReport());
-    assertNotNull(cloneResult.getWorkspace());
-    assertThat(cloneResult.getWorkspace().getResources(), hasSize(EXPECTED_NUM_CLONED_RESOURCES));
-    assertEquals(getWorkspaceId(), cloneResult.getWorkspace().getSourceWorkspaceId());
+    assertNull(cloneResult.getErrorReport(), "Error report should be null for successful clone.");
+    assertNotNull(cloneResult.getWorkspace(), "Workspace should be populated.");
+    assertThat("Cloned workspace has expected number of resources.", cloneResult.getWorkspace().getResources(), hasSize(EXPECTED_NUM_CLONED_RESOURCES));
+    assertEquals(getWorkspaceId(), cloneResult.getWorkspace().getSourceWorkspaceId(), "Source workspace ID reported accurately.");
     destinationWorkspaceId = cloneResult.getWorkspace().getDestinationWorkspaceId();
-    assertNotNull(destinationWorkspaceId);
+    assertNotNull(destinationWorkspaceId, "Destination Workspace ID populated.");
 
     // Verify shared GCS bucket succeeds and is populated
     final ResourceCloneDetails sharedBucketCloneDetails =
         getOrFail(
             cloneResult.getWorkspace().getResources().stream()
                 .filter(r -> sharedSourceBucket.getResourceId().equals(r.getSourceResourceId()))
-                .findFirst());
-    logger.info(sharedBucketCloneDetails.toString());
-    assertEquals(CloneResourceResult.SUCCEEDED, sharedBucketCloneDetails.getResult());
+                .findFirst(),
+            "Shared bucket included in workspace clone results.");
+    logger.info("Expected success: {}", sharedBucketCloneDetails.toString());
+    assertEquals(CloneResourceResult.SUCCEEDED, sharedBucketCloneDetails.getResult(), "Shared Bucket clone succeeded.");
     assertEquals(
-        CloningInstructionsEnum.RESOURCE, sharedBucketCloneDetails.getCloningInstructions());
-    assertEquals(ResourceType.GCS_BUCKET, sharedBucketCloneDetails.getResourceType());
-    assertEquals(StewardshipType.CONTROLLED, sharedBucketCloneDetails.getStewardshipType());
-    assertNotNull(sharedBucketCloneDetails.getDestinationResourceId());
-    assertNull(sharedBucketCloneDetails.getErrorMessage());
+        CloningInstructionsEnum.RESOURCE, sharedBucketCloneDetails.getCloningInstructions(),
+        "RESOURCE cloning instructions preserved.");
+    assertEquals(ResourceType.GCS_BUCKET, sharedBucketCloneDetails.getResourceType(),
+        "Resource Type preserved.");
+    assertEquals(StewardshipType.CONTROLLED, sharedBucketCloneDetails.getStewardshipType(),
+        "Stewardship Type preserved.");
+    assertNotNull(sharedBucketCloneDetails.getDestinationResourceId(), "Destination Resource ID populated.");
+    assertNull(sharedBucketCloneDetails.getErrorMessage(), "No error message present for successful resource clone.");
     assertEquals(
         sharedSourceBucket.getGcpBucket().getMetadata().getName(),
-        sharedBucketCloneDetails.getName());
+        sharedBucketCloneDetails.getName(), "Resource name is preserved.");
     assertEquals(
         sharedSourceBucket.getGcpBucket().getMetadata().getDescription(),
-        sharedBucketCloneDetails.getDescription());
+        sharedBucketCloneDetails.getDescription(), "Description is preserved.");
 
     // We need to get the destination bucket name and project ID
     final WorkspaceDescription destinationWorkspace =
@@ -291,6 +322,7 @@ public class CloneWorkspace extends WorkspaceAllocateTestScriptBase {
     final var clonedSharedBucket =
         cloningUserResourceApi.getBucket(
             destinationWorkspaceId, sharedBucketCloneDetails.getDestinationResourceId());
+    logger.info("Cloned Shared Bucket: {}", clonedSharedBucket);
     GcsBucketObjectUtils.retrieveBucketFile(
         clonedSharedBucket.getAttributes().getBucketName(), destinationProjectId, cloningUser);
 
@@ -299,21 +331,27 @@ public class CloneWorkspace extends WorkspaceAllocateTestScriptBase {
         getOrFail(
             cloneResult.getWorkspace().getResources().stream()
                 .filter(r -> privateSourceBucket.getResourceId().equals(r.getSourceResourceId()))
-                .findFirst());
-    logger.info(privateBucketCloneDetails.toString());
-    assertEquals(CloneResourceResult.FAILED, privateBucketCloneDetails.getResult());
+                .findFirst(),
+            "Private bucket included in workspace clone details.");
+    logger.info("Private Bucket (expected failure): {}", privateBucketCloneDetails);
+    assertEquals(CloneResourceResult.FAILED, privateBucketCloneDetails.getResult(), "Reports failure.");
     assertEquals(
-        CloningInstructionsEnum.RESOURCE, privateBucketCloneDetails.getCloningInstructions());
-    assertEquals(ResourceType.GCS_BUCKET, privateBucketCloneDetails.getResourceType());
-    assertEquals(StewardshipType.CONTROLLED, privateBucketCloneDetails.getStewardshipType());
-    assertNull(privateBucketCloneDetails.getDestinationResourceId());
-    assertNotNull(privateBucketCloneDetails.getErrorMessage());
+        CloningInstructionsEnum.RESOURCE, privateBucketCloneDetails.getCloningInstructions(),
+        "preserves cloning instructions.");
+    assertEquals(ResourceType.GCS_BUCKET, privateBucketCloneDetails.getResourceType(),
+        "preserves Resource Type.");
+    assertEquals(StewardshipType.CONTROLLED, privateBucketCloneDetails.getStewardshipType(),
+        "preserves Stewardship Type");
+    assertNull(privateBucketCloneDetails.getDestinationResourceId(), "Destination Resource ID is not populated for failed clone.");
+    assertNotNull(privateBucketCloneDetails.getErrorMessage(), "Error message is present.");
     assertEquals(
         privateSourceBucket.getGcpBucket().getMetadata().getName(),
-        privateBucketCloneDetails.getName());
+        privateBucketCloneDetails.getName(),
+        "Bucket resource name is preserved.");
     assertEquals(
         privateSourceBucket.getGcpBucket().getMetadata().getDescription(),
-        privateBucketCloneDetails.getDescription());
+        privateBucketCloneDetails.getDescription(),
+        "Description is preserved.");
 
     // Verify COPY_NOTHING bucket was skipped
     final ResourceCloneDetails copyNothingBucketCloneDetails =
@@ -324,21 +362,31 @@ public class CloneWorkspace extends WorkspaceAllocateTestScriptBase {
                         sharedCopyNothingSourceBucket
                             .getResourceId()
                             .equals(r.getSourceResourceId()))
-                .findFirst());
-    logger.info(copyNothingBucketCloneDetails.toString());
-    assertEquals(CloneResourceResult.SKIPPED, copyNothingBucketCloneDetails.getResult());
+                .findFirst(),
+            "Shared copy nothing bucket included in workspace clone results.");
+    logger.info("Copy Nothing Bucket (expected SKIPPED): {}", copyNothingBucketCloneDetails);
+    assertEquals(CloneResourceResult.SKIPPED, copyNothingBucketCloneDetails.getResult(),
+        "Result is SKIPPED");
     assertEquals(
-        CloningInstructionsEnum.NOTHING, copyNothingBucketCloneDetails.getCloningInstructions());
-    assertEquals(ResourceType.GCS_BUCKET, copyNothingBucketCloneDetails.getResourceType());
-    assertEquals(StewardshipType.CONTROLLED, copyNothingBucketCloneDetails.getStewardshipType());
-    assertNull(copyNothingBucketCloneDetails.getDestinationResourceId());
-    assertNull(copyNothingBucketCloneDetails.getErrorMessage());
+        CloningInstructionsEnum.NOTHING, copyNothingBucketCloneDetails.getCloningInstructions(),
+        "Cloning instructions of Nothing honored and preserved."
+        );
+    assertEquals(ResourceType.GCS_BUCKET, copyNothingBucketCloneDetails.getResourceType(),
+        "Resource type preserved");
+    assertEquals(StewardshipType.CONTROLLED, copyNothingBucketCloneDetails.getStewardshipType(),
+        "Stewardship Type preserved");
+    assertNull(copyNothingBucketCloneDetails.getDestinationResourceId(),
+        "Destination resource ID omitted for skipped resource.");
+    assertNull(copyNothingBucketCloneDetails.getErrorMessage(),
+        "No error message for successfully skipped resource.");
     assertEquals(
         sharedCopyNothingSourceBucket.getGcpBucket().getMetadata().getName(),
-        copyNothingBucketCloneDetails.getName());
+        copyNothingBucketCloneDetails.getName(),
+        "Resource name is preserved");
     assertEquals(
         sharedCopyNothingSourceBucket.getGcpBucket().getMetadata().getDescription(),
-        copyNothingBucketCloneDetails.getDescription());
+        copyNothingBucketCloneDetails.getDescription(),
+        "Description is preserved.");
 
     // verify COPY_DEFINITION bucket exists but is empty
     final ResourceCloneDetails copyDefinitionBucketDetails =
@@ -346,14 +394,20 @@ public class CloneWorkspace extends WorkspaceAllocateTestScriptBase {
             cloneResult.getWorkspace().getResources().stream()
                 .filter(
                     r -> copyDefinitionSourceBucket.getResourceId().equals(r.getSourceResourceId()))
-                .findFirst());
-    logger.info(copyDefinitionBucketDetails.toString());
-    assertEquals(CloneResourceResult.SUCCEEDED, copyDefinitionBucketDetails.getResult());
+                .findFirst(),
+            "Copy definition bucket included in workspace clone results.");
+    logger.info("Copy Definition bucket (expected success) {}", copyDefinitionBucketDetails);
+    assertEquals(CloneResourceResult.SUCCEEDED, copyDefinitionBucketDetails.getResult(),
+        "Copy of COPY_DEFINITION bucket succeeded.");
     assertEquals(
-        CloningInstructionsEnum.DEFINITION, copyDefinitionBucketDetails.getCloningInstructions());
-    assertEquals(ResourceType.GCS_BUCKET, copyDefinitionBucketDetails.getResourceType());
-    assertEquals(StewardshipType.CONTROLLED, copyDefinitionBucketDetails.getStewardshipType());
-    assertNotNull(copyDefinitionBucketDetails.getDestinationResourceId());
+        CloningInstructionsEnum.DEFINITION, copyDefinitionBucketDetails.getCloningInstructions(),
+        "Cloning instructions preserved.");
+    assertEquals(ResourceType.GCS_BUCKET, copyDefinitionBucketDetails.getResourceType(),
+        "Resource Type preserved.");
+    assertEquals(StewardshipType.CONTROLLED, copyDefinitionBucketDetails.getStewardshipType(),
+        "Stewardship Type Preserved.");
+    assertNotNull(copyDefinitionBucketDetails.getDestinationResourceId(),
+        "Destination resource ID populated.");
     final GcpGcsBucketResource clonedCopyDefinitionBucket =
         cloningUserResourceApi.getBucket(
             destinationWorkspaceId, copyDefinitionBucketDetails.getDestinationResourceId());
@@ -525,6 +579,7 @@ public class CloneWorkspace extends WorkspaceAllocateTestScriptBase {
     assertEquals(StewardshipType.REFERENCED, dataTableReferenceDetails.getStewardshipType());
     assertNull(dataTableReferenceDetails.getDestinationResourceId());
     assertNull(dataTableReferenceDetails.getErrorMessage());
+    logger.info("End User Journey");
   }
 
   @Override
@@ -566,5 +621,7 @@ public class CloneWorkspace extends WorkspaceAllocateTestScriptBase {
     BlobId blobId = BlobId.of(bucketName, GCS_BLOB_NAME);
 
     assertNull(cloningUserStorageClient.get(blobId));
+    logger.info("Bucket {} does not contain blob {}, as expected.",
+        bucketName, GCS_BLOB_NAME);
   }
 }
