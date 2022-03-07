@@ -102,12 +102,12 @@ public class ControlledResourceService {
   }
 
   public String createAzureRelayNamespace(
-          ControlledAzureRelayNamespaceResource resource,
-          ApiAzureRelayNamespaceCreationParameters creationParameters,
-          ControlledResourceIamRole privateResourceIamRole,
-          ApiJobControl jobControl,
-          String resultPath,
-          AuthenticatedUserRequest userRequest) {
+      ControlledAzureRelayNamespaceResource resource,
+      ApiAzureRelayNamespaceCreationParameters creationParameters,
+      ControlledResourceIamRole privateResourceIamRole,
+      ApiJobControl jobControl,
+      String resultPath,
+      AuthenticatedUserRequest userRequest) {
     features.azureEnabledCheck();
 
     JobBuilder jobBuilder =

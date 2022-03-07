@@ -10,8 +10,8 @@ import bio.terra.workspace.generated.model.ApiAzureVmResource;
 import bio.terra.workspace.generated.model.ApiCreateControlledAzureDiskRequestBody;
 import bio.terra.workspace.generated.model.ApiCreateControlledAzureIpRequestBody;
 import bio.terra.workspace.generated.model.ApiCreateControlledAzureNetworkRequestBody;
-import bio.terra.workspace.generated.model.ApiCreateControlledAzureRelayNamespaceResult;
 import bio.terra.workspace.generated.model.ApiCreateControlledAzureRelayNamespaceRequestBody;
+import bio.terra.workspace.generated.model.ApiCreateControlledAzureRelayNamespaceResult;
 import bio.terra.workspace.generated.model.ApiCreateControlledAzureStorageRequestBody;
 import bio.terra.workspace.generated.model.ApiCreateControlledAzureVmRequestBody;
 import bio.terra.workspace.generated.model.ApiCreatedControlledAzureDisk;
@@ -147,29 +147,28 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
             .build();
 
     final String jobId =
-            controlledResourceService.createAzureRelayNamespace(
-                    resource,
-                    body.getAzureRelayNamespace(),
-                    commonFields.getIamRole(),
-                    body.getJobControl(),
-                    getAsyncResultEndpoint(body.getJobControl().getId(), "create-result"),
-                    userRequest);
+        controlledResourceService.createAzureRelayNamespace(
+            resource,
+            body.getAzureRelayNamespace(),
+            commonFields.getIamRole(),
+            body.getJobControl(),
+            getAsyncResultEndpoint(body.getJobControl().getId(), "create-result"),
+            userRequest);
 
     final ApiCreateControlledAzureRelayNamespaceResult result =
-            fetchCreateControlledAzureRelayNamespaceResult(jobId, userRequest);
+        fetchCreateControlledAzureRelayNamespaceResult(jobId, userRequest);
 
     return new ResponseEntity<>(result, HttpStatus.OK);
   }
 
-
   @Override
-  public ResponseEntity<ApiCreateControlledAzureRelayNamespaceResult> getCreateAzureRelayNamespaceResult(
-          UUID workspaceId, String jobId) throws ApiException {
+  public ResponseEntity<ApiCreateControlledAzureRelayNamespaceResult>
+      getCreateAzureRelayNamespaceResult(UUID workspaceId, String jobId) throws ApiException {
     features.azureEnabledCheck();
 
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     ApiCreateControlledAzureRelayNamespaceResult result =
-            fetchCreateControlledAzureRelayNamespaceResult(jobId, userRequest);
+        fetchCreateControlledAzureRelayNamespaceResult(jobId, userRequest);
     return new ResponseEntity<>(result, getAsyncResponseCode(result.getJobReport()));
   }
 
@@ -398,7 +397,7 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
 
   @Override
   public ResponseEntity<ApiDeleteControlledAzureResourceResult> getDeleteAzureRelayNamespaceResult(
-          UUID workspaceId, String jobId) {
+      UUID workspaceId, String jobId) {
     features.azureEnabledCheck();
     final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     return getJobDeleteResult(jobId, userRequest);
@@ -417,30 +416,38 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
   }
 
   private ResponseEntity<ApiDeleteControlledAzureResourceResult> deleteHelper(
-          UUID workspaceId, UUID resourceId, @Valid ApiDeleteControlledAzureResourceRequest body, String resourceName) {
+      UUID workspaceId,
+      UUID resourceId,
+      @Valid ApiDeleteControlledAzureResourceRequest body,
+      String resourceName) {
     features.azureEnabledCheck();
 
     final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     final ApiJobControl jobControl = body.getJobControl();
     logger.info(
-            "delete {}({}) from workspace {}", resourceName, resourceId.toString(), workspaceId.toString());
+        "delete {}({}) from workspace {}",
+        resourceName,
+        resourceId.toString(),
+        workspaceId.toString());
     final String jobId =
-            controlledResourceService.deleteControlledResourceAsync(
-                    jobControl,
-                    workspaceId,
-                    resourceId,
-                    getAsyncResultEndpoint(jobControl.getId(), "delete-result"),
-                    userRequest);
+        controlledResourceService.deleteControlledResourceAsync(
+            jobControl,
+            workspaceId,
+            resourceId,
+            getAsyncResultEndpoint(jobControl.getId(), "delete-result"),
+            userRequest);
     return getJobDeleteResult(jobId, userRequest);
   }
 
-  private ApiCreateControlledAzureRelayNamespaceResult fetchCreateControlledAzureRelayNamespaceResult(
+  private ApiCreateControlledAzureRelayNamespaceResult
+      fetchCreateControlledAzureRelayNamespaceResult(
           String jobId, AuthenticatedUserRequest userRequest) {
     final JobService.AsyncJobResult<ApiCreatedControlledAzureRelayNamespace> jobResult =
-            jobService.retrieveAsyncJobResult(jobId, ApiCreatedControlledAzureRelayNamespace.class, userRequest);
+        jobService.retrieveAsyncJobResult(
+            jobId, ApiCreatedControlledAzureRelayNamespace.class, userRequest);
     return new ApiCreateControlledAzureRelayNamespaceResult()
-            .jobReport(jobResult.getJobReport())
-            .errorReport(jobResult.getApiErrorReport())
-            .azureRelayNameSpace(jobResult.getResult());
+        .jobReport(jobResult.getJobReport())
+        .errorReport(jobResult.getApiErrorReport())
+        .azureRelayNameSpace(jobResult.getResult());
   }
 }
