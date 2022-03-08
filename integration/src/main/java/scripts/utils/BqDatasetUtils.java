@@ -76,7 +76,7 @@ public class BqDatasetUtils {
       UUID workspaceId,
       String name,
       CloningInstructionsEnum cloningInstructions)
-      throws ApiException, InterruptedException {
+      throws InterruptedException {
 
     var body =
         new CreateGcpBigQueryDatasetReferenceRequestBody()
@@ -87,8 +87,16 @@ public class BqDatasetUtils {
                     .name(name))
             .dataset(dataset);
 
-    return ClientTestUtils.getWithRetryOnException(
-        () -> resourceApi.createBigQueryDatasetReference(body, workspaceId));
+    GcpBigQueryDatasetResource result =
+        ClientTestUtils.getWithRetryOnException(
+            () -> resourceApi.createBigQueryDatasetReference(body, workspaceId));
+    logger.info(
+        "Created BigQuery Dataset Reference {} project {} resource ID {} workspace {}",
+        dataset.getDatasetId(),
+        dataset.getProjectId(),
+        result.getMetadata().getResourceId(),
+        workspaceId);
+    return result;
   }
 
   /** Updates the name, description or referencing target of a BQ dataset reference. */
