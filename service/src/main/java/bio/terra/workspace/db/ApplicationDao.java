@@ -38,7 +38,7 @@ public class ApplicationDao {
   private static final RowMapper<WsmApplication> APPLICATION_ROW_MAPPER =
       (rs, rowNum) ->
           new WsmApplication()
-              .applicationId(UUID.fromString(rs.getString("application_id")))
+              .applicationId(rs.getString("application_id"))
               .displayName(rs.getString("display_name"))
               .description(rs.getString("description"))
               .serviceAccount(rs.getString(SERVICE_ACCOUNT))
@@ -52,7 +52,7 @@ public class ApplicationDao {
       (rs, rowNum) -> {
         var wsmApp =
             new WsmApplication()
-                .applicationId(UUID.fromString(rs.getString("application_id")))
+                .applicationId(rs.getString("application_id"))
                 .displayName(rs.getString("display_name"))
                 .description(rs.getString("description"))
                 .serviceAccount(rs.getString(SERVICE_ACCOUNT))
@@ -79,11 +79,11 @@ public class ApplicationDao {
    * @return true if the application is in use
    */
   @ReadTransaction
-  public boolean applicationInUse(UUID applicationId) {
+  public boolean applicationInUse(String applicationId) {
     final String sql = "SELECT COUNT(*) FROM resource WHERE associated_app = :application_id";
 
     MapSqlParameterSource params =
-        new MapSqlParameterSource().addValue("application_id", applicationId.toString());
+        new MapSqlParameterSource().addValue("application_id", applicationId);
 
     Integer count = jdbcTemplate.queryForObject(sql, params, Integer.class);
     return (count != null && count > 0);
@@ -117,7 +117,8 @@ public class ApplicationDao {
    * @return workspace-application object
    */
   @WriteTransaction
-  public WsmWorkspaceApplication disableWorkspaceApplication(UUID workspaceId, UUID applicationId) {
+  public WsmWorkspaceApplication disableWorkspaceApplication(
+      UUID workspaceId, String applicationId) {
 
     // Validate that the application exists; workspace is validated in layers above this
     getApplicationOrThrow(applicationId);
@@ -166,7 +167,8 @@ public class ApplicationDao {
    * @return workspace-application object
    */
   @WriteTransaction
-  public WsmWorkspaceApplication enableWorkspaceApplication(UUID workspaceId, UUID applicationId) {
+  public WsmWorkspaceApplication enableWorkspaceApplication(
+      UUID workspaceId, String applicationId) {
 
     WsmApplication application = getApplicationOrThrow(applicationId);
     if (application.getState() != WsmApplicationState.OPERATING) {
@@ -190,13 +192,13 @@ public class ApplicationDao {
   @VisibleForTesting
   @WriteTransaction
   public WsmWorkspaceApplication enableWorkspaceApplicationNoCheck(
-      UUID workspaceId, UUID applicationId) {
+      UUID workspaceId, String applicationId) {
 
     return enableWorkspaceApplicationWorker(workspaceId, applicationId);
   }
 
   private WsmWorkspaceApplication enableWorkspaceApplicationWorker(
-      UUID workspaceId, UUID applicationId) {
+      UUID workspaceId, String applicationId) {
 
     final String sql =
         "INSERT INTO enabled_application (workspace_id, application_id)"
@@ -229,7 +231,7 @@ public class ApplicationDao {
    * @return workspace-application object
    */
   @ReadTransaction
-  public WsmWorkspaceApplication getWorkspaceApplication(UUID workspaceId, UUID applicationId) {
+  public WsmWorkspaceApplication getWorkspaceApplication(UUID workspaceId, String applicationId) {
     return getWorkspaceApplicationWorker(workspaceId, applicationId);
   }
 
@@ -256,12 +258,12 @@ public class ApplicationDao {
 
   // internal workspace application lookup
   private WsmWorkspaceApplication getWorkspaceApplicationWorker(
-      UUID workspaceId, UUID applicationId) {
+      UUID workspaceId, String applicationId) {
     final String sql = WORKSPACE_APPLICATION_QUERY + " WHERE A.application_id = :application_id";
 
     var params =
         new MapSqlParameterSource()
-            .addValue("application_id", applicationId.toString())
+            .addValue("application_id", applicationId)
             .addValue("workspace_id", workspaceId.toString());
 
     try {
@@ -272,7 +274,7 @@ public class ApplicationDao {
       return result;
     } catch (EmptyResultDataAccessException e) {
       throw new ApplicationNotFoundException(
-          String.format("Application %s not found.", applicationId.toString()));
+          String.format("Application %s not found.", applicationId));
     }
   }
 
@@ -284,12 +286,12 @@ public class ApplicationDao {
    * @throws ApplicationNotFoundException when application is not found
    */
   @ReadTransaction
-  public WsmApplication getApplication(UUID applicationId) throws ApplicationNotFoundException {
+  public WsmApplication getApplication(String applicationId) throws ApplicationNotFoundException {
     return getApplicationOrThrow(applicationId);
   }
 
   // internal application lookup
-  private WsmApplication getApplicationOrThrow(UUID applicationId) {
+  private WsmApplication getApplicationOrThrow(String applicationId) {
     final String sql = APPLICATION_QUERY + " WHERE application_id = :application_id";
 
     var params = new MapSqlParameterSource().addValue("application_id", applicationId.toString());
@@ -342,12 +344,30 @@ public class ApplicationDao {
 
     var params =
         new MapSqlParameterSource()
-            .addValue("application_id", app.getApplicationId().toString())
+            .addValue("application_id", app.getApplicationId())
             .addValue("display_name", app.getDisplayName())
             .addValue("description", app.getDescription())
             .addValue(SERVICE_ACCOUNT, app.getServiceAccount())
             .addValue("state", app.getState().toDb());
 
     jdbcTemplate.update(sql, params);
+  }
+
+  /**
+   * Temporary method to delete the old Leo application. This is based on the understanding that
+   * there is no use of the application anywhere. No enabling in any workspace and no dependent
+   * resources in any workspace. TODO: PF-1408 - remove this call and target method when PF-1330
+   * merge has been deployed in all environments
+   */
+  @WriteTransaction
+  public void removeOldLeoApp() {
+    final String sql =
+        "DELETE FROM application WHERE application_id = '6397C5FF-F83C-4837-95DB-059198FD89BF'";
+    int rowCount = jdbcTemplate.getJdbcTemplate().update(sql);
+    if (rowCount > 0) {
+      logger.info("Deleted old Leo application with id 6397C5FF-F83C-4837-95DB-059198FD89BF");
+    } else {
+      logger.info("Did not find old Leo application with id 6397C5FF-F83C-4837-95DB-059198FD89BF");
+    }
   }
 }

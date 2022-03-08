@@ -27,7 +27,7 @@ public class ApplicationAblePrecheckStep implements Step {
   private final SamService samService;
   private final AuthenticatedUserRequest userRequest;
   private final UUID workspaceId;
-  private final UUID applicationId;
+  private final String applicationId;
   private final AbleEnum ableEnum;
 
   public ApplicationAblePrecheckStep(
@@ -35,7 +35,7 @@ public class ApplicationAblePrecheckStep implements Step {
       SamService samService,
       AuthenticatedUserRequest userRequest,
       UUID workspaceId,
-      UUID applicationId,
+      String applicationId,
       AbleEnum ableEnum) {
     this.applicationDao = applicationDao;
     this.samService = samService;

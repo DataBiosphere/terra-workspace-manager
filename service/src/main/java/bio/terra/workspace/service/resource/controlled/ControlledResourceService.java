@@ -432,7 +432,7 @@ public class ControlledResourceService {
    * @param userRequest the user request
    * @return null if not an application managed resource; application UUID otherwise
    */
-  public @Nullable UUID getAssociatedApp(
+  public @Nullable String getAssociatedApp(
       ManagedByType managedBy, AuthenticatedUserRequest userRequest) {
     if (managedBy != ManagedByType.MANAGED_BY_APPLICATION) {
       return null;

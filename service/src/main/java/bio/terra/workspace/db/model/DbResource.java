@@ -33,7 +33,7 @@ public class DbResource {
   // controlled resource fields
   @Nullable private AccessScopeType accessScope;
   @Nullable private ManagedByType managedBy;
-  @Nullable private UUID applicationId;
+  @Nullable private String applicationId;
   @Nullable private String assignedUser;
   @Nullable private PrivateResourceState privateResourceState;
 
@@ -148,11 +148,11 @@ public class DbResource {
     return this;
   }
 
-  public Optional<UUID> getApplicationId() {
+  public Optional<String> getApplicationId() {
     return Optional.ofNullable(applicationId);
   }
 
-  public DbResource applicationId(@Nullable UUID applicationId) {
+  public DbResource applicationId(@Nullable String applicationId) {
     this.applicationId = applicationId;
     return this;
   }

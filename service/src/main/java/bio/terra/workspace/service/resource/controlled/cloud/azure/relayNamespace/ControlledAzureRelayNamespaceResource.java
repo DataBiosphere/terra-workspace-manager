@@ -46,7 +46,7 @@ public class ControlledAzureRelayNamespaceResource extends ControlledResource {
       @JsonProperty("privateResourceState") PrivateResourceState privateResourceState,
       @JsonProperty("accessScope") AccessScopeType accessScope,
       @JsonProperty("managedBy") ManagedByType managedBy,
-      @JsonProperty("applicationId") UUID applicationId,
+      @JsonProperty("applicationId") String applicationId,
       @JsonProperty("namespaceName") String namespaceName,
       @JsonProperty("region") String region) {
 

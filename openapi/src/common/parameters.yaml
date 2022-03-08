@@ -3,15 +3,6 @@
 #  $ref: '#/components/parameters/<item-you-want>
 components:
   parameters:
-    ApplicationId:
-      name: applicationId
-      in: path
-      description: A UUID to used to identify an application in the workspace manager
-      required: true
-      schema:
-        type: string
-        format: uuid
-    
     CloudContext:
       name: cloudContext
       in: path

@@ -1,23 +1,22 @@
 package bio.terra.workspace.service.workspace.model;
 
-import java.util.UUID;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 
 /** An instance of this class represents a WSM application. */
 public class WsmApplication {
-  private UUID applicationId;
+  private String applicationId;
   private String displayName;
   private String description;
   private String serviceAccount;
   private WsmApplicationState state;
 
-  public UUID getApplicationId() {
+  public String getApplicationId() {
     return applicationId;
   }
 
-  public WsmApplication applicationId(UUID applicationId) {
+  public WsmApplication applicationId(String applicationId) {
     this.applicationId = applicationId;
     return this;
   }
