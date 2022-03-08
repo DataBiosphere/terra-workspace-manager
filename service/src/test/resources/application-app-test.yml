@@ -4,7 +4,7 @@ workspace:
     configurations:
       TestWsmApp:
       # This app uses a test user as the SA, so we can actually impersonate credentials.
-        name: a-test-wsm-app
+        name: TestWsmApp
         description: WSM test application
         service-account: Elizabeth.Shadowmoon@test.firecloud.org
         state: operating
