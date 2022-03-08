@@ -570,7 +570,7 @@ public class CloneWorkspace extends WorkspaceAllocateTestScriptBase {
                             .equals(r.getSourceResourceId()))
                 .findFirst(),
             "Private dataset clone results located.");
-    logger.info("Preivate dataset (expected failure): {}", privateDatasetDetails);
+    logger.info("Private dataset (expected failure): {}", privateDatasetDetails);
     assertEquals(
         CloneResourceResult.FAILED,
         privateDatasetDetails.getResult(),
@@ -766,7 +766,7 @@ public class CloneWorkspace extends WorkspaceAllocateTestScriptBase {
         ClientTestUtils.getGcpStorageClient(cloningUser, destinationProjectId);
     BlobId blobId = BlobId.of(bucketName, GCS_BLOB_NAME);
 
-    assertNull(cloningUserStorageClient.get(blobId));
+    assertNull(cloningUserStorageClient.get(blobId), "Returned blob should be null");
     logger.info(
         "COPY_DEFINITION Bucket {} does not contain blob {}, as expected.",
         bucketName,
