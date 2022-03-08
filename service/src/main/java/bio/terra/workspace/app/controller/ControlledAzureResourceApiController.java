@@ -6,6 +6,7 @@ import bio.terra.workspace.generated.controller.ControlledAzureResourceApi;
 import bio.terra.workspace.generated.model.ApiAzureDiskResource;
 import bio.terra.workspace.generated.model.ApiAzureIpResource;
 import bio.terra.workspace.generated.model.ApiAzureNetworkResource;
+import bio.terra.workspace.generated.model.ApiAzureRelayNamespaceResource;
 import bio.terra.workspace.generated.model.ApiAzureVmResource;
 import bio.terra.workspace.generated.model.ApiCreateControlledAzureDiskRequestBody;
 import bio.terra.workspace.generated.model.ApiCreateControlledAzureIpRequestBody;
@@ -17,13 +18,12 @@ import bio.terra.workspace.generated.model.ApiCreateControlledAzureVmRequestBody
 import bio.terra.workspace.generated.model.ApiCreatedControlledAzureDisk;
 import bio.terra.workspace.generated.model.ApiCreatedControlledAzureIp;
 import bio.terra.workspace.generated.model.ApiCreatedControlledAzureNetwork;
-import bio.terra.workspace.generated.model.ApiCreatedControlledAzureRelayNamespace;
 import bio.terra.workspace.generated.model.ApiCreatedControlledAzureStorage;
-import bio.terra.workspace.generated.model.ApiCreatedControlledAzureVm;
 import bio.terra.workspace.generated.model.ApiCreatedControlledAzureVmResult;
 import bio.terra.workspace.generated.model.ApiDeleteControlledAzureResourceRequest;
 import bio.terra.workspace.generated.model.ApiDeleteControlledAzureResourceResult;
 import bio.terra.workspace.generated.model.ApiJobControl;
+import bio.terra.workspace.generated.model.ApiJobReport;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequestFactory;
 import bio.terra.workspace.service.iam.SamService;
@@ -37,15 +37,16 @@ import bio.terra.workspace.service.resource.controlled.cloud.azure.storage.Contr
 import bio.terra.workspace.service.resource.controlled.cloud.azure.vm.ControlledAzureVmResource;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResourceFields;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
-import java.util.UUID;
-import javax.servlet.http.HttpServletRequest;
-import javax.validation.Valid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.validation.Valid;
+import java.util.UUID;
 
 @Controller
 public class ControlledAzureResourceApiController extends ControlledResourceControllerBase
@@ -247,16 +248,6 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
     return new ResponseEntity<>(result, getAsyncResponseCode(result.getJobReport()));
   }
 
-  private ApiCreatedControlledAzureVmResult fetchCreateControlledAzureVmResult(
-      String jobId, AuthenticatedUserRequest userRequest) {
-    final JobService.AsyncJobResult<ApiCreatedControlledAzureVm> jobResult =
-        jobService.retrieveAsyncJobResult(jobId, ApiCreatedControlledAzureVm.class, userRequest);
-    return new ApiCreatedControlledAzureVmResult()
-        .jobReport(jobResult.getJobReport())
-        .errorReport(jobResult.getApiErrorReport())
-        .azureVm(jobResult.getResult());
-  }
-
   @Override
   public ResponseEntity<ApiCreatedControlledAzureNetwork> createAzureNetwork(
       UUID workspaceId, ApiCreateControlledAzureNetworkRequestBody body) {
@@ -439,15 +430,37 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
     return getJobDeleteResult(jobId, userRequest);
   }
 
+  private ApiCreatedControlledAzureVmResult fetchCreateControlledAzureVmResult(
+          String jobId, AuthenticatedUserRequest userRequest) {
+    final JobService.AsyncJobResult<ControlledAzureVmResource> jobResult =
+            jobService.retrieveAsyncJobResult(jobId, ControlledAzureVmResource.class, userRequest);
+
+    ApiAzureVmResource apiResource = null;
+    if (jobResult.getJobReport().getStatus().equals(ApiJobReport.StatusEnum.SUCCEEDED)) {
+      ControlledAzureVmResource resource = jobResult.getResult();
+      apiResource = resource.toApiResource();
+    }
+    return new ApiCreatedControlledAzureVmResult()
+            .jobReport(jobResult.getJobReport())
+            .errorReport(jobResult.getApiErrorReport())
+            .azureVm(apiResource);
+  }
+
   private ApiCreateControlledAzureRelayNamespaceResult
       fetchCreateControlledAzureRelayNamespaceResult(
           String jobId, AuthenticatedUserRequest userRequest) {
-    final JobService.AsyncJobResult<ApiCreatedControlledAzureRelayNamespace> jobResult =
+    final JobService.AsyncJobResult<ControlledAzureRelayNamespaceResource> jobResult =
         jobService.retrieveAsyncJobResult(
-            jobId, ApiCreatedControlledAzureRelayNamespace.class, userRequest);
+            jobId, ControlledAzureRelayNamespaceResource.class, userRequest);
+
+    ApiAzureRelayNamespaceResource apiResource = null;
+    if (jobResult.getJobReport().getStatus().equals(ApiJobReport.StatusEnum.SUCCEEDED)) {
+      ControlledAzureRelayNamespaceResource resource = jobResult.getResult();
+      apiResource = resource.toApiResource();
+    }
     return new ApiCreateControlledAzureRelayNamespaceResult()
         .jobReport(jobResult.getJobReport())
         .errorReport(jobResult.getApiErrorReport())
-        .azureRelayNameSpace(jobResult.getResult());
+        .azureRelayNameSpace(apiResource);
   }
 }

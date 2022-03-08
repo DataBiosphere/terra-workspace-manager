@@ -134,17 +134,6 @@ components:
           type: string
           format: uuid
 
-    CreatedControlledAzureVm:
-      description: Api result class for creating A new Azure VM
-      type: object
-      properties:
-        resourceId:
-          description: UUID of a newly-created resource.
-          type: string
-          format: uuid
-        azureVm:
-          $ref: '#/components/schemas/AzureVmResource'
-
     CreateControlledAzureVmRequestBody:
       description: Payload for requesting a new controlled Azure VM resource.
       type: object
@@ -161,7 +150,7 @@ components:
       type: object
       properties:
         azureVm:
-          $ref: '#/components/schemas/CreatedControlledAzureVm'
+          $ref: '#/components/schemas/AzureVmResource'
         jobReport:
           $ref: '#/components/schemas/JobReport'
         errorReport:
