@@ -10,7 +10,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static scripts.utils.BqDatasetUtils.BQ_RESULT_TABLE_NAME;
 import static scripts.utils.BqDatasetUtils.makeControlledBigQueryDatasetUserPrivate;
 import static scripts.utils.BqDatasetUtils.makeControlledBigQueryDatasetUserShared;
-import static scripts.utils.ClientTestUtils.getOrFail;
+import static scripts.utils.ClientTestUtils.assertPresent;
 import static scripts.utils.GcsBucketObjectUtils.makeGcsObjectReference;
 import static scripts.utils.GcsBucketUtils.BUCKET_RESOURCE_PREFIX;
 import static scripts.utils.GcsBucketUtils.GCS_BLOB_NAME;
@@ -285,35 +285,54 @@ public class CloneWorkspace extends WorkspaceAllocateTestScriptBase {
         "Clone Workspace", cloneResult.getJobReport(), cloneResult.getErrorReport());
     assertNull(cloneResult.getErrorReport(), "Error report should be null for successful clone.");
     assertNotNull(cloneResult.getWorkspace(), "Workspace should be populated.");
-    assertThat("Cloned workspace has expected number of resources.", cloneResult.getWorkspace().getResources(), hasSize(EXPECTED_NUM_CLONED_RESOURCES));
-    assertEquals(getWorkspaceId(), cloneResult.getWorkspace().getSourceWorkspaceId(), "Source workspace ID reported accurately.");
+    assertThat(
+        "Cloned workspace has expected number of resources.",
+        cloneResult.getWorkspace().getResources(),
+        hasSize(EXPECTED_NUM_CLONED_RESOURCES));
+    assertEquals(
+        getWorkspaceId(),
+        cloneResult.getWorkspace().getSourceWorkspaceId(),
+        "Source workspace ID reported accurately.");
     destinationWorkspaceId = cloneResult.getWorkspace().getDestinationWorkspaceId();
     assertNotNull(destinationWorkspaceId, "Destination Workspace ID populated.");
 
     // Verify shared GCS bucket succeeds and is populated
     final ResourceCloneDetails sharedBucketCloneDetails =
-        getOrFail(
+        assertPresent(
             cloneResult.getWorkspace().getResources().stream()
                 .filter(r -> sharedSourceBucket.getResourceId().equals(r.getSourceResourceId()))
                 .findFirst(),
             "Shared bucket included in workspace clone results.");
     logger.info("Expected success: {}", sharedBucketCloneDetails.toString());
-    assertEquals(CloneResourceResult.SUCCEEDED, sharedBucketCloneDetails.getResult(), "Shared Bucket clone succeeded.");
     assertEquals(
-        CloningInstructionsEnum.RESOURCE, sharedBucketCloneDetails.getCloningInstructions(),
+        CloneResourceResult.SUCCEEDED,
+        sharedBucketCloneDetails.getResult(),
+        "Shared Bucket clone succeeded.");
+    assertEquals(
+        CloningInstructionsEnum.RESOURCE,
+        sharedBucketCloneDetails.getCloningInstructions(),
         "RESOURCE cloning instructions preserved.");
-    assertEquals(ResourceType.GCS_BUCKET, sharedBucketCloneDetails.getResourceType(),
+    assertEquals(
+        ResourceType.GCS_BUCKET,
+        sharedBucketCloneDetails.getResourceType(),
         "Resource Type preserved.");
-    assertEquals(StewardshipType.CONTROLLED, sharedBucketCloneDetails.getStewardshipType(),
+    assertEquals(
+        StewardshipType.CONTROLLED,
+        sharedBucketCloneDetails.getStewardshipType(),
         "Stewardship Type preserved.");
-    assertNotNull(sharedBucketCloneDetails.getDestinationResourceId(), "Destination Resource ID populated.");
-    assertNull(sharedBucketCloneDetails.getErrorMessage(), "No error message present for successful resource clone.");
+    assertNotNull(
+        sharedBucketCloneDetails.getDestinationResourceId(), "Destination Resource ID populated.");
+    assertNull(
+        sharedBucketCloneDetails.getErrorMessage(),
+        "No error message present for successful resource clone.");
     assertEquals(
         sharedSourceBucket.getGcpBucket().getMetadata().getName(),
-        sharedBucketCloneDetails.getName(), "Resource name is preserved.");
+        sharedBucketCloneDetails.getName(),
+        "Resource name is preserved.");
     assertEquals(
         sharedSourceBucket.getGcpBucket().getMetadata().getDescription(),
-        sharedBucketCloneDetails.getDescription(), "Description is preserved.");
+        sharedBucketCloneDetails.getDescription(),
+        "Description is preserved.");
 
     // We need to get the destination bucket name and project ID
     final WorkspaceDescription destinationWorkspace =
@@ -328,21 +347,29 @@ public class CloneWorkspace extends WorkspaceAllocateTestScriptBase {
 
     // Verify clone of private bucket fails
     final ResourceCloneDetails privateBucketCloneDetails =
-        getOrFail(
+        assertPresent(
             cloneResult.getWorkspace().getResources().stream()
                 .filter(r -> privateSourceBucket.getResourceId().equals(r.getSourceResourceId()))
                 .findFirst(),
             "Private bucket included in workspace clone details.");
     logger.info("Private Bucket (expected failure): {}", privateBucketCloneDetails);
-    assertEquals(CloneResourceResult.FAILED, privateBucketCloneDetails.getResult(), "Reports failure.");
     assertEquals(
-        CloningInstructionsEnum.RESOURCE, privateBucketCloneDetails.getCloningInstructions(),
+        CloneResourceResult.FAILED, privateBucketCloneDetails.getResult(), "Reports failure.");
+    assertEquals(
+        CloningInstructionsEnum.RESOURCE,
+        privateBucketCloneDetails.getCloningInstructions(),
         "preserves cloning instructions.");
-    assertEquals(ResourceType.GCS_BUCKET, privateBucketCloneDetails.getResourceType(),
+    assertEquals(
+        ResourceType.GCS_BUCKET,
+        privateBucketCloneDetails.getResourceType(),
         "preserves Resource Type.");
-    assertEquals(StewardshipType.CONTROLLED, privateBucketCloneDetails.getStewardshipType(),
+    assertEquals(
+        StewardshipType.CONTROLLED,
+        privateBucketCloneDetails.getStewardshipType(),
         "preserves Stewardship Type");
-    assertNull(privateBucketCloneDetails.getDestinationResourceId(), "Destination Resource ID is not populated for failed clone.");
+    assertNull(
+        privateBucketCloneDetails.getDestinationResourceId(),
+        "Destination Resource ID is not populated for failed clone.");
     assertNotNull(privateBucketCloneDetails.getErrorMessage(), "Error message is present.");
     assertEquals(
         privateSourceBucket.getGcpBucket().getMetadata().getName(),
@@ -355,7 +382,7 @@ public class CloneWorkspace extends WorkspaceAllocateTestScriptBase {
 
     // Verify COPY_NOTHING bucket was skipped
     final ResourceCloneDetails copyNothingBucketCloneDetails =
-        getOrFail(
+        assertPresent(
             cloneResult.getWorkspace().getResources().stream()
                 .filter(
                     r ->
@@ -365,19 +392,27 @@ public class CloneWorkspace extends WorkspaceAllocateTestScriptBase {
                 .findFirst(),
             "Shared copy nothing bucket included in workspace clone results.");
     logger.info("Copy Nothing Bucket (expected SKIPPED): {}", copyNothingBucketCloneDetails);
-    assertEquals(CloneResourceResult.SKIPPED, copyNothingBucketCloneDetails.getResult(),
+    assertEquals(
+        CloneResourceResult.SKIPPED,
+        copyNothingBucketCloneDetails.getResult(),
         "Result is SKIPPED");
     assertEquals(
-        CloningInstructionsEnum.NOTHING, copyNothingBucketCloneDetails.getCloningInstructions(),
-        "Cloning instructions of Nothing honored and preserved."
-        );
-    assertEquals(ResourceType.GCS_BUCKET, copyNothingBucketCloneDetails.getResourceType(),
+        CloningInstructionsEnum.NOTHING,
+        copyNothingBucketCloneDetails.getCloningInstructions(),
+        "Cloning instructions of Nothing honored and preserved.");
+    assertEquals(
+        ResourceType.GCS_BUCKET,
+        copyNothingBucketCloneDetails.getResourceType(),
         "Resource type preserved");
-    assertEquals(StewardshipType.CONTROLLED, copyNothingBucketCloneDetails.getStewardshipType(),
+    assertEquals(
+        StewardshipType.CONTROLLED,
+        copyNothingBucketCloneDetails.getStewardshipType(),
         "Stewardship Type preserved");
-    assertNull(copyNothingBucketCloneDetails.getDestinationResourceId(),
+    assertNull(
+        copyNothingBucketCloneDetails.getDestinationResourceId(),
         "Destination resource ID omitted for skipped resource.");
-    assertNull(copyNothingBucketCloneDetails.getErrorMessage(),
+    assertNull(
+        copyNothingBucketCloneDetails.getErrorMessage(),
         "No error message for successfully skipped resource.");
     assertEquals(
         sharedCopyNothingSourceBucket.getGcpBucket().getMetadata().getName(),
@@ -390,23 +425,31 @@ public class CloneWorkspace extends WorkspaceAllocateTestScriptBase {
 
     // verify COPY_DEFINITION bucket exists but is empty
     final ResourceCloneDetails copyDefinitionBucketDetails =
-        getOrFail(
+        assertPresent(
             cloneResult.getWorkspace().getResources().stream()
                 .filter(
                     r -> copyDefinitionSourceBucket.getResourceId().equals(r.getSourceResourceId()))
                 .findFirst(),
             "Copy definition bucket included in workspace clone results.");
     logger.info("Copy Definition bucket (expected success) {}", copyDefinitionBucketDetails);
-    assertEquals(CloneResourceResult.SUCCEEDED, copyDefinitionBucketDetails.getResult(),
+    assertEquals(
+        CloneResourceResult.SUCCEEDED,
+        copyDefinitionBucketDetails.getResult(),
         "Copy of COPY_DEFINITION bucket succeeded.");
     assertEquals(
-        CloningInstructionsEnum.DEFINITION, copyDefinitionBucketDetails.getCloningInstructions(),
+        CloningInstructionsEnum.DEFINITION,
+        copyDefinitionBucketDetails.getCloningInstructions(),
         "Cloning instructions preserved.");
-    assertEquals(ResourceType.GCS_BUCKET, copyDefinitionBucketDetails.getResourceType(),
+    assertEquals(
+        ResourceType.GCS_BUCKET,
+        copyDefinitionBucketDetails.getResourceType(),
         "Resource Type preserved.");
-    assertEquals(StewardshipType.CONTROLLED, copyDefinitionBucketDetails.getStewardshipType(),
+    assertEquals(
+        StewardshipType.CONTROLLED,
+        copyDefinitionBucketDetails.getStewardshipType(),
         "Stewardship Type Preserved.");
-    assertNotNull(copyDefinitionBucketDetails.getDestinationResourceId(),
+    assertNotNull(
+        copyDefinitionBucketDetails.getDestinationResourceId(),
         "Destination resource ID populated.");
     final GcpGcsBucketResource clonedCopyDefinitionBucket =
         cloningUserResourceApi.getBucket(
@@ -424,7 +467,7 @@ public class CloneWorkspace extends WorkspaceAllocateTestScriptBase {
 
     // verify COPY_DEFINITION dataset exists but has no tables
     final ResourceCloneDetails copyDefinitionDatasetDetails =
-        getOrFail(
+        assertPresent(
             cloneResult.getWorkspace().getResources().stream()
                 .filter(
                     r ->
@@ -435,21 +478,29 @@ public class CloneWorkspace extends WorkspaceAllocateTestScriptBase {
                 .findFirst(),
             "Copy Definition BQ Dataset is included in workspace clone details.");
     logger.info("Copy Definition Dataset (expected success): {}", copyDefinitionDatasetDetails);
-    assertEquals(CloneResourceResult.SUCCEEDED, copyDefinitionDatasetDetails.getResult(),
-        "Clone Succeeded");
     assertEquals(
-        CloningInstructionsEnum.DEFINITION, copyDefinitionDatasetDetails.getCloningInstructions(),
+        CloneResourceResult.SUCCEEDED, copyDefinitionDatasetDetails.getResult(), "Clone Succeeded");
+    assertEquals(
+        CloningInstructionsEnum.DEFINITION,
+        copyDefinitionDatasetDetails.getCloningInstructions(),
         "Cloning instructions preserved.");
-    assertEquals(ResourceType.BIG_QUERY_DATASET, copyDefinitionDatasetDetails.getResourceType(),
+    assertEquals(
+        ResourceType.BIG_QUERY_DATASET,
+        copyDefinitionDatasetDetails.getResourceType(),
         "Resource Type preserved");
-    assertEquals(StewardshipType.CONTROLLED, copyDefinitionDatasetDetails.getStewardshipType(),
+    assertEquals(
+        StewardshipType.CONTROLLED,
+        copyDefinitionDatasetDetails.getStewardshipType(),
         "Stewardship Type preserved");
-    assertNotNull(copyDefinitionDatasetDetails.getDestinationResourceId(),
+    assertNotNull(
+        copyDefinitionDatasetDetails.getDestinationResourceId(),
         "Destination resource ID populated.");
-    assertNull(copyDefinitionDatasetDetails.getErrorMessage(),
+    assertNull(
+        copyDefinitionDatasetDetails.getErrorMessage(),
         "Error message omitted for successful clone");
     assertEquals(
-        copyDefinitionDataset.getMetadata().getName(), copyDefinitionDatasetDetails.getName(),
+        copyDefinitionDataset.getMetadata().getName(),
+        copyDefinitionDatasetDetails.getName(),
         "Resource name preserved.");
     assertEquals(
         copyDefinitionDataset.getMetadata().getDescription(),
@@ -463,7 +514,7 @@ public class CloneWorkspace extends WorkspaceAllocateTestScriptBase {
 
     // verify clone resource dataset succeeded and has rows and tables
     final ResourceCloneDetails copyResourceDatasetDetails =
-        getOrFail(
+        assertPresent(
             cloneResult.getWorkspace().getResources().stream()
                 .filter(
                     r ->
@@ -473,14 +524,28 @@ public class CloneWorkspace extends WorkspaceAllocateTestScriptBase {
                             .equals(r.getSourceResourceId()))
                 .findFirst(),
             "COPY_RESOURCE dataset is included in workspace clone details.");
-    logger.info(copyResourceDatasetDetails.toString());
-    assertEquals(CloneResourceResult.SUCCEEDED, copyResourceDatasetDetails.getResult());
+    logger.info("COPY_RESOURCE dataset (expected success): {}", copyResourceDatasetDetails);
     assertEquals(
-        CloningInstructionsEnum.RESOURCE, copyResourceDatasetDetails.getCloningInstructions());
-    assertEquals(ResourceType.BIG_QUERY_DATASET, copyResourceDatasetDetails.getResourceType());
-    assertEquals(StewardshipType.CONTROLLED, copyResourceDatasetDetails.getStewardshipType());
-    assertNotNull(copyResourceDatasetDetails.getDestinationResourceId());
-    assertNull(copyResourceDatasetDetails.getErrorMessage());
+        CloneResourceResult.SUCCEEDED,
+        copyResourceDatasetDetails.getResult(),
+        "COPY_RESOURCE dataset successfully cloned");
+    assertEquals(
+        CloningInstructionsEnum.RESOURCE,
+        copyResourceDatasetDetails.getCloningInstructions(),
+        "Cloning instructions preserved.");
+    assertEquals(
+        ResourceType.BIG_QUERY_DATASET,
+        copyResourceDatasetDetails.getResourceType(),
+        "Resource Type preserved");
+    assertEquals(
+        StewardshipType.CONTROLLED,
+        copyResourceDatasetDetails.getStewardshipType(),
+        "Stewardship Type preserved.");
+    assertNotNull(
+        copyResourceDatasetDetails.getDestinationResourceId(),
+        "Destination Resourcde ID populated.");
+    assertNull(copyResourceDatasetDetails.getErrorMessage(), "Error message omitted for success");
+
     // Use cloned result table to avoid Domain Restricted Sharing conflicts created by temporary
     // result table IAM.
     TableId resultTableId =
@@ -496,13 +561,17 @@ public class CloneWorkspace extends WorkspaceAllocateTestScriptBase {
             .setWriteDisposition(WriteDisposition.WRITE_TRUNCATE)
             .build();
     final TableResult employeeTableResult = bigQueryClient.query(employeeQueryJobConfiguration);
+    logger.info("Queried COPY_RESOURCE dataset for employee count");
     final long numEmployees =
         StreamSupport.stream(employeeTableResult.getValues().spliterator(), false).count();
-    assertThat(numEmployees, is(greaterThanOrEqualTo(2L)));
+    assertThat(
+        "Correct number of employees inserted (with possible duplicates)",
+        numEmployees,
+        is(greaterThanOrEqualTo(2L)));
 
     // verify private dataset clone failed
     final ResourceCloneDetails privateDatasetDetails =
-        getOrFail(
+        ClientTestUtils.assertPresent(
             cloneResult.getWorkspace().getResources().stream()
                 .filter(
                     r ->
@@ -510,17 +579,34 @@ public class CloneWorkspace extends WorkspaceAllocateTestScriptBase {
                             .getMetadata()
                             .getResourceId()
                             .equals(r.getSourceResourceId()))
-                .findFirst());
-    logger.info(privateDatasetDetails.toString());
-    assertEquals(CloneResourceResult.FAILED, privateDatasetDetails.getResult());
-    assertEquals(CloningInstructionsEnum.RESOURCE, privateDatasetDetails.getCloningInstructions());
-    assertEquals(ResourceType.BIG_QUERY_DATASET, privateDatasetDetails.getResourceType());
-    assertEquals(StewardshipType.CONTROLLED, privateDatasetDetails.getStewardshipType());
-    assertNull(privateDatasetDetails.getDestinationResourceId());
-    assertNotNull(privateDatasetDetails.getErrorMessage());
+                .findFirst(),
+            "Private dataset clone results located.");
+    logger.info("Preivate dataset (expected failure): {}", privateDatasetDetails);
+    assertEquals(
+        CloneResourceResult.FAILED,
+        privateDatasetDetails.getResult(),
+        "Attempt to clone private dataset failed");
+    assertEquals(
+        CloningInstructionsEnum.RESOURCE,
+        privateDatasetDetails.getCloningInstructions(),
+        "Cloning instructions preserved.");
+    assertEquals(
+        ResourceType.BIG_QUERY_DATASET,
+        privateDatasetDetails.getResourceType(),
+        "Resource Type preserved");
+    assertEquals(
+        StewardshipType.CONTROLLED,
+        privateDatasetDetails.getStewardshipType(),
+        "Stewardship Type preserved");
+    assertNull(
+        privateDatasetDetails.getDestinationResourceId(),
+        "Destination resource ID omitted for failed resource clone");
+    assertNotNull(
+        privateDatasetDetails.getErrorMessage(),
+        "Error message populated for failed resource clone.");
 
     final ResourceCloneDetails bucketReferenceDetails =
-        getOrFail(
+        ClientTestUtils.assertPresent(
             cloneResult.getWorkspace().getResources().stream()
                 .filter(
                     r ->
@@ -528,18 +614,29 @@ public class CloneWorkspace extends WorkspaceAllocateTestScriptBase {
                             .getMetadata()
                             .getResourceId()
                             .equals(r.getSourceResourceId()))
-                .findFirst());
-    logger.info(bucketReferenceDetails.toString());
-    assertEquals(CloneResourceResult.SUCCEEDED, bucketReferenceDetails.getResult());
+                .findFirst(),
+            "Bucket reference clone results included.");
+    logger.info("Bucket reference (expected success): {}", bucketReferenceDetails);
     assertEquals(
-        CloningInstructionsEnum.REFERENCE, bucketReferenceDetails.getCloningInstructions());
-    assertEquals(ResourceType.GCS_BUCKET, bucketReferenceDetails.getResourceType());
-    assertEquals(StewardshipType.REFERENCED, bucketReferenceDetails.getStewardshipType());
-    assertNotNull(bucketReferenceDetails.getDestinationResourceId());
-    assertNull(bucketReferenceDetails.getErrorMessage());
+        CloneResourceResult.SUCCEEDED, bucketReferenceDetails.getResult(), "Success reported");
+    assertEquals(
+        CloningInstructionsEnum.REFERENCE,
+        bucketReferenceDetails.getCloningInstructions(),
+        "Cloning instructinos preserved");
+    assertEquals(
+        ResourceType.GCS_BUCKET,
+        bucketReferenceDetails.getResourceType(),
+        "resource type preserved");
+    assertEquals(
+        StewardshipType.REFERENCED,
+        bucketReferenceDetails.getStewardshipType(),
+        "stewardship type preserved");
+    assertNotNull(
+        bucketReferenceDetails.getDestinationResourceId(), "destination resource ID populated");
+    assertNull(bucketReferenceDetails.getErrorMessage(), "Error message omitted");
 
     final ResourceCloneDetails bucketFileReferenceDetails =
-        getOrFail(
+        ClientTestUtils.assertPresent(
             cloneResult.getWorkspace().getResources().stream()
                 .filter(
                     r ->
@@ -547,18 +644,31 @@ public class CloneWorkspace extends WorkspaceAllocateTestScriptBase {
                             .getMetadata()
                             .getResourceId()
                             .equals(r.getSourceResourceId()))
-                .findFirst());
-    logger.info(bucketFileReferenceDetails.toString());
-    assertEquals(CloneResourceResult.SUCCEEDED, bucketFileReferenceDetails.getResult());
+                .findFirst(),
+            "Bucket file reference clone details present");
+    logger.info("Reference to GCS Bucket File (expected success): {}", bucketFileReferenceDetails);
     assertEquals(
-        CloningInstructionsEnum.REFERENCE, bucketFileReferenceDetails.getCloningInstructions());
-    assertEquals(ResourceType.GCS_OBJECT, bucketFileReferenceDetails.getResourceType());
-    assertEquals(StewardshipType.REFERENCED, bucketFileReferenceDetails.getStewardshipType());
-    assertNotNull(bucketFileReferenceDetails.getDestinationResourceId());
-    assertNull(bucketFileReferenceDetails.getErrorMessage());
+        CloneResourceResult.SUCCEEDED,
+        bucketFileReferenceDetails.getResult(),
+        "bucket file reference clone succeeded");
+    assertEquals(
+        CloningInstructionsEnum.REFERENCE,
+        bucketFileReferenceDetails.getCloningInstructions(),
+        "Cloning instructions preserved.");
+    assertEquals(
+        ResourceType.GCS_OBJECT,
+        bucketFileReferenceDetails.getResourceType(),
+        "Resource type preserved");
+    assertEquals(
+        StewardshipType.REFERENCED,
+        bucketFileReferenceDetails.getStewardshipType(),
+        "Stewardship type preserved");
+    assertNotNull(
+        bucketFileReferenceDetails.getDestinationResourceId(), "Destination resource ID populated");
+    assertNull(bucketFileReferenceDetails.getErrorMessage(), "Error message omitted.");
 
     final ResourceCloneDetails datasetReferenceDetails =
-        getOrFail(
+        ClientTestUtils.assertPresent(
             cloneResult.getWorkspace().getResources().stream()
                 .filter(
                     r ->
@@ -566,16 +676,32 @@ public class CloneWorkspace extends WorkspaceAllocateTestScriptBase {
                             .getMetadata()
                             .getResourceId()
                             .equals(r.getSourceResourceId()))
-                .findFirst());
-    assertEquals(CloneResourceResult.SKIPPED, datasetReferenceDetails.getResult());
-    assertEquals(CloningInstructionsEnum.NOTHING, datasetReferenceDetails.getCloningInstructions());
-    assertEquals(ResourceType.BIG_QUERY_DATASET, datasetReferenceDetails.getResourceType());
-    assertEquals(StewardshipType.REFERENCED, datasetReferenceDetails.getStewardshipType());
-    assertNull(datasetReferenceDetails.getDestinationResourceId());
-    assertNull(datasetReferenceDetails.getErrorMessage());
+                .findFirst(),
+            "Dataset reference clone results included");
+    logger.info("Dataset reference clone details (expected skipped): {}", datasetReferenceDetails);
+    assertEquals(
+        CloneResourceResult.SKIPPED, datasetReferenceDetails.getResult(), "Resource was skipped");
+    assertEquals(
+        CloningInstructionsEnum.NOTHING,
+        datasetReferenceDetails.getCloningInstructions(),
+        "Clone instructions preserved");
+    assertEquals(
+        ResourceType.BIG_QUERY_DATASET,
+        datasetReferenceDetails.getResourceType(),
+        "resource type preserved");
+    assertEquals(
+        StewardshipType.REFERENCED,
+        datasetReferenceDetails.getStewardshipType(),
+        "stewardship type preserved");
+    assertNull(
+        datasetReferenceDetails.getDestinationResourceId(),
+        "Destination resource ID omitted for skipped resource clone");
+    assertNull(
+        datasetReferenceDetails.getErrorMessage(),
+        "Error message omitted for skipped resource clone.");
 
     final ResourceCloneDetails dataTableReferenceDetails =
-        getOrFail(
+        ClientTestUtils.assertPresent(
             cloneResult.getWorkspace().getResources().stream()
                 .filter(
                     r ->
@@ -583,14 +709,29 @@ public class CloneWorkspace extends WorkspaceAllocateTestScriptBase {
                             .getMetadata()
                             .getResourceId()
                             .equals(r.getSourceResourceId()))
-                .findFirst());
-    assertEquals(CloneResourceResult.SKIPPED, dataTableReferenceDetails.getResult());
+                .findFirst(),
+            "Data table reference clone result included");
+    logger.info("Data table reference clone result (expect skipped): {}", datasetReferenceDetails);
     assertEquals(
-        CloningInstructionsEnum.NOTHING, dataTableReferenceDetails.getCloningInstructions());
-    assertEquals(ResourceType.BIG_QUERY_DATA_TABLE, dataTableReferenceDetails.getResourceType());
-    assertEquals(StewardshipType.REFERENCED, dataTableReferenceDetails.getStewardshipType());
-    assertNull(dataTableReferenceDetails.getDestinationResourceId());
-    assertNull(dataTableReferenceDetails.getErrorMessage());
+        CloneResourceResult.SKIPPED,
+        dataTableReferenceDetails.getResult(),
+        "result of skip is SKIPPED");
+    assertEquals(
+        CloningInstructionsEnum.NOTHING,
+        dataTableReferenceDetails.getCloningInstructions(),
+        "cloning instructions preserved");
+    assertEquals(
+        ResourceType.BIG_QUERY_DATA_TABLE,
+        dataTableReferenceDetails.getResourceType(),
+        "resource type preserved");
+    assertEquals(
+        StewardshipType.REFERENCED,
+        dataTableReferenceDetails.getStewardshipType(),
+        "stewardship type preserved");
+    assertNull(
+        dataTableReferenceDetails.getDestinationResourceId(),
+        "Destination resource ID omitted for skipped resource");
+    assertNull(dataTableReferenceDetails.getErrorMessage(), "No error message for successful skip");
     logger.info("End User Journey");
   }
 
@@ -624,7 +765,10 @@ public class CloneWorkspace extends WorkspaceAllocateTestScriptBase {
     final long numRows =
         StreamSupport.stream(listTablesResult.getValues().spliterator(), false).count();
     assertEquals(0, numRows, "Expected zero tables for COPY_DEFINITION dataset");
-    logger.info("BQ Dataset {} in project {} has no tables, as expected.", datasetName, destinationProjectId);
+    logger.info(
+        "BQ Dataset {} in project {} has no tables, as expected.",
+        datasetName,
+        destinationProjectId);
   }
 
   private void assertEmptyBucket(String bucketName, String destinationProjectId)
@@ -634,7 +778,9 @@ public class CloneWorkspace extends WorkspaceAllocateTestScriptBase {
     BlobId blobId = BlobId.of(bucketName, GCS_BLOB_NAME);
 
     assertNull(cloningUserStorageClient.get(blobId));
-    logger.info("COPY_DEFINITION Bucket {} does not contain blob {}, as expected.",
-        bucketName, GCS_BLOB_NAME);
+    logger.info(
+        "COPY_DEFINITION Bucket {} does not contain blob {}, as expected.",
+        bucketName,
+        GCS_BLOB_NAME);
   }
 }

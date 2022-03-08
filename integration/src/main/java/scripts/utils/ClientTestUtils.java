@@ -367,13 +367,14 @@ public class ClientTestUtils {
    * @return - value of optional, if present
    */
   @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
-  public static <T> T getOrFail(Optional<T> optional, @Nullable String message) {
-    assertTrue(optional.isPresent(), Optional.ofNullable(message).orElse("Optional value not present."));
+  public static <T> T assertPresent(Optional<T> optional, @Nullable String message) {
+    assertTrue(
+        optional.isPresent(), Optional.ofNullable(message).orElse("Optional value not present."));
     return optional.get();
   }
 
   @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
-  public static <T> T getOrFail(Optional<T> optional) {
-    return getOrFail(optional, null);
+  public static <T> T assertPresent(Optional<T> optional) {
+    return assertPresent(optional, null);
   }
 }
