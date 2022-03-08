@@ -132,10 +132,6 @@ public class CloneWorkspace extends WorkspaceAllocateTestScriptBase {
             getWorkspaceId(),
             sharedBucketSourceResourceName,
             CloningInstructionsEnum.RESOURCE);
-    //    logger.info(
-    //        "Created shared GCS Bucket {} resource ID {}",
-    //        sharedSourceBucket.getGcpBucket().getAttributes().getBucketName(),
-    //        sharedSourceBucket.getResourceId());
 
     GcsBucketUtils.addFileToBucket(sharedSourceBucket, sourceOwnerUser, sourceProjectId);
 
@@ -147,10 +143,6 @@ public class CloneWorkspace extends WorkspaceAllocateTestScriptBase {
             UUID.randomUUID().toString(),
             CloningInstructionsEnum.RESOURCE);
     GcsBucketUtils.addFileToBucket(privateSourceBucket, sourceOwnerUser, sourceProjectId);
-    //    logger.info(
-    //        "Created private GCS Bucket {} resource ID {}",
-    //        privateSourceBucket.getGcpBucket().getAttributes().getBucketName(),
-    //        privateSourceBucket.getResourceId());
 
     // create a GCS bucket with data and COPY_NOTHING instruction
     sharedCopyNothingSourceBucket =
@@ -265,10 +257,7 @@ public class CloneWorkspace extends WorkspaceAllocateTestScriptBase {
             .location("us-central1");
     CloneWorkspaceResult cloneResult =
         cloningUserWorkspaceApi.cloneWorkspace(cloneWorkspaceRequest, getWorkspaceId());
-    logger.info(
-        "Started clone of workspace {} to workspace {}",
-        getWorkspaceId(),
-        cloneResult.getWorkspace().getDestinationWorkspaceId());
+    logger.info("Started clone of workspace {}", getWorkspaceId());
 
     final String jobId = cloneResult.getJobReport().getId();
     logger.info("Clone Job ID {}", jobId);
