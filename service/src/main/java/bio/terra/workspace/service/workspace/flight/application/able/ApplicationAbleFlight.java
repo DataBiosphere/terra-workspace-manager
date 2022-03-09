@@ -32,7 +32,7 @@ public class ApplicationAbleFlight extends Flight {
     AuthenticatedUserRequest userRequest =
         inputParameters.get(JobMapKeys.AUTH_USER_INFO.getKeyName(), AuthenticatedUserRequest.class);
     UUID workspaceId = inputParameters.get(WorkspaceFlightMapKeys.WORKSPACE_ID, UUID.class);
-    UUID applicationId = inputParameters.get(WorkspaceFlightMapKeys.APPLICATION_ID, UUID.class);
+    String applicationId = inputParameters.get(WorkspaceFlightMapKeys.APPLICATION_ID, String.class);
     AbleEnum ableEnum =
         inputParameters.get(WsmApplicationKeys.APPLICATION_ABLE_ENUM, AbleEnum.class);
 

@@ -16,7 +16,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.UUID;
 import org.apache.commons.lang3.StringUtils;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,8 +30,8 @@ public class ApplicationUnitTest extends BaseUnitTest {
   // These strings have to match the text in WsmApplicationService or the test will fail
   private static final String ERROR_MISSING_REQUIRED =
       "Invalid application configuration: missing some required fields (identifier, service-account, state)";
-  private static final String ERROR_BAD_UUID =
-      "Invalid application configuration: invalid UUID format";
+  private static final String ERROR_BAD_ID =
+      "Invalid application configuration: id must match ^[a-zA-Z0-9][-_a-zA-Z0-9]{0,1023}$";
   private static final String ERROR_BAD_EMAIL =
       "Invalid application configuration: service account is not a valid email address";
   private static final String ERROR_BAD_STATE =
@@ -49,8 +48,9 @@ public class ApplicationUnitTest extends BaseUnitTest {
   private static final String ERROR_MISSING_APP =
       "Invalid application configuration: missing application(s): ";
 
-  private static final String GOOD_UUID_STRING = "4BD1D59D-5827-4375-A41D-BBC65919F269";
-  private static final UUID GOOD_UUID = UUID.fromString(GOOD_UUID_STRING);
+  // The WSM test app is the good id
+  private static final String GOOD_ID = "TestWsmApp";
+  private static final String BAD_ID = "**invalid characters!";
   private static final String GOOD_EMAIL = "foo@kripalu.yoga";
   private static final String GOOD_STATE = WsmApplicationState.OPERATING.name();
   private static final String GOOD_NAME = "BestApplication";
@@ -64,41 +64,41 @@ public class ApplicationUnitTest extends BaseUnitTest {
 
     // Test with empty object
     App testApp = new App();
-    configValidationFail(testApp, ERROR_MISSING_REQUIRED);
+    configValidationFail(null, testApp, ERROR_MISSING_REQUIRED);
 
-    // Test with missing UUID
-    testApp = makeApp(null, GOOD_EMAIL, GOOD_STATE);
-    configValidationFail(testApp, ERROR_MISSING_REQUIRED);
+    // Test with missing identifier
+    testApp = makeApp(GOOD_EMAIL, GOOD_STATE);
+    configValidationFail(null, testApp, ERROR_MISSING_REQUIRED);
 
     // Test with missing service account
-    testApp = makeApp(GOOD_UUID_STRING, null, GOOD_STATE);
-    configValidationFail(testApp, ERROR_MISSING_REQUIRED);
+    testApp = makeApp(null, GOOD_STATE);
+    configValidationFail(GOOD_ID, testApp, ERROR_MISSING_REQUIRED);
 
     // Test with missing state
-    testApp = makeApp(GOOD_UUID_STRING, GOOD_EMAIL, null);
-    configValidationFail(testApp, ERROR_MISSING_REQUIRED);
+    testApp = makeApp(GOOD_EMAIL, null);
+    configValidationFail(GOOD_ID, testApp, ERROR_MISSING_REQUIRED);
 
-    // Test with bad UUID
-    testApp = makeApp(BAD_DATA, GOOD_EMAIL, GOOD_STATE);
-    configValidationFail(testApp, ERROR_BAD_UUID);
+    // Test with bad id
+    testApp = makeApp(GOOD_EMAIL, GOOD_STATE);
+    configValidationFail(BAD_ID, testApp, ERROR_BAD_ID);
 
     // Test with bad email
-    testApp = makeApp(GOOD_UUID_STRING, BAD_DATA, GOOD_STATE);
-    configValidationFail(testApp, ERROR_BAD_EMAIL);
+    testApp = makeApp(BAD_DATA, GOOD_STATE);
+    configValidationFail(GOOD_ID, testApp, ERROR_BAD_EMAIL);
 
     // Test with bad state
-    testApp = makeApp(GOOD_UUID_STRING, GOOD_EMAIL, BAD_DATA);
-    configValidationFail(testApp, ERROR_BAD_STATE);
+    testApp = makeApp(GOOD_EMAIL, BAD_DATA);
+    configValidationFail(GOOD_ID, testApp, ERROR_BAD_STATE);
 
     // Test with everything good
-    testApp = makeApp(GOOD_UUID_STRING, GOOD_EMAIL, GOOD_STATE);
-    configValidationSuccess(testApp);
+    testApp = makeApp(GOOD_EMAIL, GOOD_STATE);
+    configValidationSuccess(GOOD_ID, testApp);
 
     // Test with name and desc filled in
-    testApp = makeApp(GOOD_UUID_STRING, GOOD_EMAIL, GOOD_STATE);
+    testApp = makeApp(GOOD_EMAIL, GOOD_STATE);
     testApp.setName(GOOD_NAME);
     testApp.setDescription(GOOD_DESC);
-    WsmApplication wsmApp = configValidationSuccess(testApp);
+    WsmApplication wsmApp = configValidationSuccess(GOOD_ID, testApp);
     assertEquals(GOOD_NAME, wsmApp.getDisplayName());
     assertEquals(GOOD_DESC, wsmApp.getDescription());
   }
@@ -110,7 +110,7 @@ public class ApplicationUnitTest extends BaseUnitTest {
     // Each "pass" in the test represents starting up with a different configuration.
 
     // Start with an empty map == no data in the database
-    Map<UUID, WsmDbApplication> dbAppMap = new HashMap<>();
+    Map<String, WsmDbApplication> dbAppMap = new HashMap<>();
     WsmApplication wsmApp = makeWsmApp();
 
     // -- First Pass --
@@ -171,7 +171,7 @@ public class ApplicationUnitTest extends BaseUnitTest {
   @Test
   public void missingConfigTest() {
     // Create two applications
-    Map<UUID, WsmDbApplication> dbAppMap = new HashMap<>();
+    Map<String, WsmDbApplication> dbAppMap = new HashMap<>();
     WsmApplication wsmApp = makeWsmApp();
     appService.enableTestMode();
     appService.processApp(wsmApp, dbAppMap);
@@ -179,7 +179,7 @@ public class ApplicationUnitTest extends BaseUnitTest {
 
     WsmApplication wsmApp2 =
         new WsmApplication()
-            .applicationId(UUID.fromString("EF580D18-5CB4-4BEF-A5C9-DB5F30EBE368"))
+            .applicationId("EF580D18-5CB4-4BEF-A5C9-DB5F30EBE368")
             .serviceAccount("bar@kripalu.yoga")
             .state(WsmApplicationState.OPERATING);
     appService.processApp(wsmApp2, dbAppMap);
@@ -202,7 +202,7 @@ public class ApplicationUnitTest extends BaseUnitTest {
 
   private WsmApplication makeWsmApp() {
     return new WsmApplication()
-        .applicationId(GOOD_UUID)
+        .applicationId(GOOD_ID)
         .serviceAccount(GOOD_EMAIL)
         .state(WsmApplicationState.OPERATING);
   }
@@ -215,36 +215,35 @@ public class ApplicationUnitTest extends BaseUnitTest {
   private void stateTransition(WsmApplicationState targetState, String message) {
     WsmApplication wsmApp = makeWsmApp();
     wsmApp.state(targetState);
-    Map<UUID, WsmDbApplication> dbAppMap = appService.buildAppMap();
+    Map<String, WsmDbApplication> dbAppMap = appService.buildAppMap();
     appService.enableTestMode();
     appService.processApp(wsmApp, dbAppMap);
     assertMessage(0, message);
   }
 
-  private App makeApp(String identifier, String serviceAccount, String state) {
+  private App makeApp(String serviceAccount, String state) {
     App configApp = new App();
-    configApp.setIdentifier(identifier);
     configApp.setServiceAccount(serviceAccount);
     configApp.setState(state);
     return configApp;
   }
 
-  private void configValidationFail(App testApp, String expectedError) {
+  private void configValidationFail(String identifier, App testApp, String expectedError) {
     appService.enableTestMode();
-    Optional<WsmApplication> wsmApp = appService.appFromConfig(testApp);
+    Optional<WsmApplication> wsmApp = appService.appFromConfig(identifier, testApp);
     assertTrue(wsmApp.isEmpty());
     List<String> errorList = appService.getErrorList();
     assertEquals(errorList.get(0), expectedError);
   }
 
-  private WsmApplication configValidationSuccess(App testApp) {
+  private WsmApplication configValidationSuccess(String identifier, App testApp) {
     appService.enableTestMode();
-    Optional<WsmApplication> wsmAppOpt = appService.appFromConfig(testApp);
+    Optional<WsmApplication> wsmAppOpt = appService.appFromConfig(identifier, testApp);
     assertTrue(wsmAppOpt.isPresent());
     List<String> errorList = appService.getErrorList();
     assertEquals(errorList.size(), 0);
     WsmApplication wsmApp = wsmAppOpt.get();
-    assertEquals(wsmApp.getApplicationId(), GOOD_UUID);
+    assertEquals(wsmApp.getApplicationId(), identifier);
     assertEquals(wsmApp.getServiceAccount(), GOOD_EMAIL);
     assertEquals(wsmApp.getState().name(), GOOD_STATE);
     return wsmApp;

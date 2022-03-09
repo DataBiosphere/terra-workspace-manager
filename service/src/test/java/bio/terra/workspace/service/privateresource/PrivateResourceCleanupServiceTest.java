@@ -4,17 +4,14 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import bio.terra.common.exception.NotFoundException;
 import bio.terra.common.sam.exception.SamExceptionFactory;
 import bio.terra.workspace.app.configuration.external.PrivateResourceCleanupConfiguration;
 import bio.terra.workspace.app.configuration.external.SamConfiguration;
-import bio.terra.workspace.app.configuration.external.WsmApplicationConfiguration;
-import bio.terra.workspace.app.configuration.external.WsmApplicationConfiguration.App;
 import bio.terra.workspace.common.BaseConnectedTest;
 import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
-import bio.terra.workspace.connected.ApplicationAccessUtils;
 import bio.terra.workspace.connected.UserAccessUtils;
 import bio.terra.workspace.connected.WorkspaceConnectedTestUtils;
+import bio.terra.workspace.db.ApplicationDao;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.generated.model.ApiGcpGcsBucketCreationParameters;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
@@ -35,7 +32,10 @@ import bio.terra.workspace.service.resource.controlled.model.PrivateResourceStat
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.WsmApplicationService;
 import bio.terra.workspace.service.workspace.model.Workspace;
+import bio.terra.workspace.service.workspace.model.WsmApplication;
+import com.google.auth.oauth2.AccessToken;
 import java.time.Duration;
+import java.util.Optional;
 import java.util.UUID;
 import org.broadinstitute.dsde.workbench.client.sam.ApiClient;
 import org.broadinstitute.dsde.workbench.client.sam.ApiException;
@@ -54,6 +54,10 @@ public class PrivateResourceCleanupServiceTest extends BaseConnectedTest {
   // The name of the "member" policy created by default for groups. If this is ever used for
   // implementation code, it should live in SamConstants instead.
   private static final String SAM_GROUP_MEMBER_POLICY = "member";
+  // Name of the test WSM application. This must match the identifier in the
+  // application-app-test.yml file.
+  private static final String TEST_WSM_APP = "TestWsmApp";
+
   private Workspace workspace;
   private GroupApi ownerGroupApi;
   private String groupName;
@@ -61,7 +65,6 @@ public class PrivateResourceCleanupServiceTest extends BaseConnectedTest {
 
   @Autowired WorkspaceConnectedTestUtils workspaceUtils;
   @Autowired UserAccessUtils userAccessUtils;
-  @Autowired ApplicationAccessUtils applicationAccessUtils;
   @Autowired SamConfiguration samConfiguration;
   @Autowired WorkspaceService workspaceService;
   @Autowired SamService samService;
@@ -69,7 +72,7 @@ public class PrivateResourceCleanupServiceTest extends BaseConnectedTest {
   @Autowired PrivateResourceCleanupConfiguration privateResourceCleanupConfiguration;
   @Autowired PrivateResourceCleanupService privateResourceCleanupService;
   @Autowired ResourceDao resourceDao;
-  @Autowired WsmApplicationConfiguration appConfig;
+  @Autowired ApplicationDao applicationDao;
   @Autowired WsmApplicationService wsmApplicationService;
 
   /** Set up default workspace, group ID, and GroupApi client object. */
@@ -204,12 +207,15 @@ public class PrivateResourceCleanupServiceTest extends BaseConnectedTest {
         "grantWorkspaceRole");
     // Enable the WSM test app in this workspace. This has a test user as the "service account" so
     // we can delegate credentials normally.
-    App appConfig = getAppBySa(applicationAccessUtils.getApplicationSaEmail());
-    UUID appId = UUID.fromString(appConfig.getIdentifier());
+    WsmApplication app = applicationDao.getApplication(TEST_WSM_APP);
+    AccessToken saAccessToken = userAccessUtils.generateAccessToken(app.getServiceAccount());
     AuthenticatedUserRequest appRequest =
-        applicationAccessUtils.applicationSaAuthenticatedUserRequest();
+        new AuthenticatedUserRequest()
+            .email(app.getServiceAccount())
+            .token(Optional.of(saAccessToken.getTokenValue()));
+
     wsmApplicationService.enableWorkspaceApplication(
-        userAccessUtils.defaultUserAuthRequest(), workspace.getWorkspaceId(), appId);
+        userAccessUtils.defaultUserAuthRequest(), workspace.getWorkspaceId(), TEST_WSM_APP);
 
     // Create application private bucket assigned to second user.
     ControlledResourceFields commonFields =
@@ -217,7 +223,7 @@ public class PrivateResourceCleanupServiceTest extends BaseConnectedTest {
             .workspaceId(workspace.getWorkspaceId())
             .accessScope(AccessScopeType.ACCESS_SCOPE_PRIVATE)
             .managedBy(ManagedByType.MANAGED_BY_APPLICATION)
-            .applicationId(appId)
+            .applicationId(TEST_WSM_APP)
             .assignedUser(userAccessUtils.getSecondUserEmail())
             .build();
 
@@ -295,15 +301,6 @@ public class PrivateResourceCleanupServiceTest extends BaseConnectedTest {
                     resource.getResourceId().toString(),
                     SamControlledResourceActions.READ_ACTION),
             "checkResourceAuth"));
-  }
-
-  private App getAppBySa(String serviceAccount) {
-    for (App app : appConfig.getConfigurations()) {
-      if (app.getServiceAccount().equals(serviceAccount)) {
-        return app;
-      }
-    }
-    throw new NotFoundException("No application configured with service account " + serviceAccount);
   }
 
   /**

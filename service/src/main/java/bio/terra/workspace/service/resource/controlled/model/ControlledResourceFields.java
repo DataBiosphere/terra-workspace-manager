@@ -33,7 +33,7 @@ public class ControlledResourceFields {
   @Nullable private final PrivateResourceState privateResourceState;
   private final AccessScopeType accessScope;
   private final ManagedByType managedBy;
-  @Nullable private final UUID applicationId;
+  @Nullable private final String applicationId;
 
   /** construct from database resource */
   public ControlledResourceFields(DbResource dbResource) {
@@ -63,7 +63,7 @@ public class ControlledResourceFields {
       @Nullable PrivateResourceState privateResourceState,
       AccessScopeType accessScope,
       ManagedByType managedBy,
-      @Nullable UUID applicationId) {
+      @Nullable String applicationId) {
     this.workspaceId = workspaceId;
     this.resourceId = resourceId;
     this.name = name;
@@ -131,7 +131,7 @@ public class ControlledResourceFields {
   }
 
   @Nullable
-  public UUID getApplicationId() {
+  public String getApplicationId() {
     return applicationId;
   }
 
@@ -149,7 +149,7 @@ public class ControlledResourceFields {
     @Nullable private PrivateResourceState privateResourceState;
     private AccessScopeType accessScope;
     private ManagedByType managedBy;
-    @Nullable private UUID applicationId;
+    @Nullable private String applicationId;
 
     public ControlledResourceFields build() {
       ResourceValidationUtils.checkFieldNonNull(workspaceId, "workspaceId");
@@ -227,7 +227,7 @@ public class ControlledResourceFields {
       return this;
     }
 
-    public Builder applicationId(@Nullable UUID applicationId) {
+    public Builder applicationId(@Nullable String applicationId) {
       this.applicationId = applicationId;
       return this;
     }

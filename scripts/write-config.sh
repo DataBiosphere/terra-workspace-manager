@@ -264,8 +264,7 @@ if [ "$target" == "local" ]; then
 workspace:
   application:
     configurations:
-      -
-        identifier: E4C0924A-3D7D-4D3D-8DE4-3D2CF50C3818
+      TestWsmApp:
         name: TestWsmApp
         description: WSM test application
         service-account: Elizabeth.Shadowmoon@test.firecloud.org

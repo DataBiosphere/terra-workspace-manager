@@ -24,6 +24,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.regex.Pattern;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.validator.routines.EmailValidator;
 import org.slf4j.Logger;
@@ -38,6 +39,11 @@ import org.springframework.stereotype.Component;
 @Component
 public class WsmApplicationService {
   private static final Logger logger = LoggerFactory.getLogger(WsmApplicationService.class);
+
+  public static final String APPLICATION_ID_VALIDATION_STRING =
+      "^[a-zA-Z0-9][-_a-zA-Z0-9]{0,1023}$";
+  public static final Pattern APPLICATION_ID_VALIDATION_PATTERN =
+      Pattern.compile(APPLICATION_ID_VALIDATION_STRING);
 
   private final ApplicationDao applicationDao;
   private final JobService jobService;
@@ -71,12 +77,12 @@ public class WsmApplicationService {
   // -- REST API Methods -- //
 
   public WsmWorkspaceApplication disableWorkspaceApplication(
-      AuthenticatedUserRequest userRequest, UUID workspaceId, UUID applicationId) {
+      AuthenticatedUserRequest userRequest, UUID workspaceId, String applicationId) {
     return commonAbleJob(userRequest, workspaceId, applicationId, AbleEnum.DISABLE);
   }
 
   public WsmWorkspaceApplication enableWorkspaceApplication(
-      AuthenticatedUserRequest userRequest, UUID workspaceId, UUID applicationId) {
+      AuthenticatedUserRequest userRequest, UUID workspaceId, String applicationId) {
     return commonAbleJob(userRequest, workspaceId, applicationId, AbleEnum.ENABLE);
   }
 
@@ -84,7 +90,7 @@ public class WsmApplicationService {
   private WsmWorkspaceApplication commonAbleJob(
       AuthenticatedUserRequest userRequest,
       UUID workspaceId,
-      UUID applicationId,
+      String applicationId,
       AbleEnum ableEnum) {
     Workspace workspace =
         workspaceService.validateWorkspaceAndAction(
@@ -98,7 +104,7 @@ public class WsmApplicationService {
     String description =
         String.format(
             "%s application %s on workspace %s",
-            ableEnum.name().toLowerCase(), applicationId.toString(), workspaceId.toString());
+            ableEnum.name().toLowerCase(), applicationId, workspaceId.toString());
 
     JobBuilder job =
         jobService
@@ -113,7 +119,7 @@ public class WsmApplicationService {
   }
 
   public WsmWorkspaceApplication getWorkspaceApplication(
-      AuthenticatedUserRequest userRequest, UUID workspaceId, UUID applicationId) {
+      AuthenticatedUserRequest userRequest, UUID workspaceId, String applicationId) {
     Workspace workspace =
         workspaceService.validateWorkspaceAndAction(
             userRequest, workspaceId, SamConstants.SamWorkspaceAction.READ);
@@ -136,7 +142,13 @@ public class WsmApplicationService {
    * Configure applications mapping from the incoming configuration to the current database context.
    */
   public void configure() {
-    Map<UUID, WsmDbApplication> dbAppMap = buildAppMap();
+    // TODO: PF-1408 - remove this call and target method when PF-1330 merge has been deployed in
+    //  all environments
+    // Remove old Leo application
+    applicationDao.removeOldLeoApp();
+
+    // Gather all apps from the database
+    Map<String, WsmDbApplication> dbAppMap = buildAppMap();
 
     // Read the config and validate the inputs. Log errors. Badly formed configs are error logged
     // and not included on the resulting list.
@@ -152,7 +164,7 @@ public class WsmApplicationService {
   }
 
   @VisibleForTesting
-  void checkMissingConfig(Map<UUID, WsmDbApplication> dbAppMap) {
+  void checkMissingConfig(Map<String, WsmDbApplication> dbAppMap) {
     List<String> missing = new ArrayList<>();
     for (WsmDbApplication dbApp : dbAppMap.values()) {
       if (!dbApp.isMatched()) {
@@ -173,7 +185,7 @@ public class WsmApplicationService {
    * @param dbAppMap map of apps from database
    */
   @VisibleForTesting
-  void processApp(WsmApplication configApp, Map<UUID, WsmDbApplication> dbAppMap) {
+  void processApp(WsmApplication configApp, Map<String, WsmDbApplication> dbAppMap) {
     WsmDbApplication dbApp = dbAppMap.get(configApp.getApplicationId());
 
     // If the application id is not in the database, create it.
@@ -231,9 +243,9 @@ public class WsmApplicationService {
   }
 
   @VisibleForTesting
-  Map<UUID, WsmDbApplication> buildAppMap() {
+  Map<String, WsmDbApplication> buildAppMap() {
     List<WsmApplication> dbApps = applicationDao.listApplications();
-    Map<UUID, WsmDbApplication> dbAppMap = new HashMap<>();
+    Map<String, WsmDbApplication> dbAppMap = new HashMap<>();
     for (WsmApplication app : dbApps) {
       dbAppMap.put(app.getApplicationId(), new WsmDbApplication(app));
     }
@@ -243,24 +255,31 @@ public class WsmApplicationService {
   private List<WsmApplication> listFromConfig() {
     // scan the config building WsmApplications
     List<WsmApplication> configApps = new ArrayList<>();
-    for (var config : wsmApplicationConfiguration.getConfigurations()) {
-      appFromConfig(config).ifPresent(configApps::add);
-    }
+
+    wsmApplicationConfiguration
+        .getConfigurations()
+        .forEach((identifier, app) -> appFromConfig(identifier, app).ifPresent(configApps::add));
     return configApps;
   }
 
   @VisibleForTesting
-  Optional<WsmApplication> appFromConfig(App config) {
+  Optional<WsmApplication> appFromConfig(String identifier, App config) {
     try {
-      if (config.getIdentifier() == null
-          || config.getServiceAccount() == null
-          || config.getState() == null) {
+      if (identifier == null || config.getServiceAccount() == null || config.getState() == null) {
         logError(
             "Invalid application configuration: missing some required fields (identifier, service-account, state)");
         return Optional.empty();
       }
+      if (!APPLICATION_ID_VALIDATION_PATTERN.matcher(identifier).matches()) {
+        logError(
+            "Invalid application configuration: id must match " + APPLICATION_ID_VALIDATION_STRING);
+        return Optional.empty();
+      }
+      // Default the name to the identifier
+      if (StringUtils.isBlank(config.getName())) {
+        config.setName(identifier);
+      }
 
-      UUID applicationId = UUID.fromString(config.getIdentifier());
       WsmApplicationState state = WsmApplicationState.fromString(config.getState());
       if (!EmailValidator.getInstance(false, true).isValid(config.getServiceAccount())) {
         logError("Invalid application configuration: service account is not a valid email address");
@@ -271,14 +290,12 @@ public class WsmApplicationService {
 
       return Optional.of(
           new WsmApplication()
-              .applicationId(applicationId)
+              .applicationId(identifier)
               .displayName(config.getName())
               .description(config.getDescription())
               .serviceAccount(serviceAccount)
               .state(state));
 
-    } catch (IllegalArgumentException e) {
-      logError("Invalid application configuration: invalid UUID format", e);
     } catch (InvalidApplicationConfigException e) {
       logError(
           "Invalid application configuration: state must be operating, deprecated, or decommissioned",

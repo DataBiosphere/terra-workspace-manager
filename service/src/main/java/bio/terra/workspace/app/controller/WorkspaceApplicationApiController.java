@@ -47,7 +47,7 @@ public class WorkspaceApplicationApiController implements WorkspaceApplicationAp
   @Override
   public ResponseEntity<ApiWorkspaceApplicationDescription> disableWorkspaceApplication(
       @PathVariable("workspaceId") UUID workspaceId,
-      @PathVariable("applicationId") UUID applicationId) {
+      @PathVariable("applicationId") String applicationId) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     WsmWorkspaceApplication wsmApp =
         appService.disableWorkspaceApplication(userRequest, workspaceId, applicationId);
@@ -58,7 +58,7 @@ public class WorkspaceApplicationApiController implements WorkspaceApplicationAp
   @Override
   public ResponseEntity<ApiWorkspaceApplicationDescription> enableWorkspaceApplication(
       @PathVariable("workspaceId") UUID workspaceId,
-      @PathVariable("applicationId") UUID applicationId) {
+      @PathVariable("applicationId") String applicationId) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     WsmWorkspaceApplication wsmApp =
         appService.enableWorkspaceApplication(userRequest, workspaceId, applicationId);
@@ -69,7 +69,7 @@ public class WorkspaceApplicationApiController implements WorkspaceApplicationAp
   @Override
   public ResponseEntity<ApiWorkspaceApplicationDescription> getWorkspaceApplication(
       @PathVariable("workspaceId") UUID workspaceId,
-      @PathVariable("applicationId") UUID applicationId) {
+      @PathVariable("applicationId") String applicationId) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     WsmWorkspaceApplication wsmApp =
         appService.getWorkspaceApplication(userRequest, workspaceId, applicationId);

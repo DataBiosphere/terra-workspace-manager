@@ -90,6 +90,15 @@ paths:
           $ref: '#/components/responses/ServerError'
 
 components:
+  parameters:
+    ApplicationId:
+      name: applicationId
+      in: path
+      description: A string used to identify an application in the workspace manager
+      required: true
+      schema:
+        type: string
+
   schemas:
     ApplicationState:
       description: State of an application in the system
@@ -117,7 +126,7 @@ components:
         applicationId:
           description: The ID of the application
           type: string
-          format: uuid
+          format: string
         displayName:
           description: The human readable name of the application
           type: string

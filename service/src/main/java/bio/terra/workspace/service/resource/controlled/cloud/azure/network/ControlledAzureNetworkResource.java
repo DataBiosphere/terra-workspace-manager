@@ -49,7 +49,7 @@ public class ControlledAzureNetworkResource extends ControlledResource {
       @JsonProperty("privateResourceState") PrivateResourceState privateResourceState,
       @JsonProperty("accessScope") AccessScopeType accessScope,
       @JsonProperty("managedBy") ManagedByType managedBy,
-      @JsonProperty("applicationId") UUID applicationId,
+      @JsonProperty("applicationId") String applicationId,
       @JsonProperty("networkName") String networkName,
       @JsonProperty("subnetName") String subnetName,
       @JsonProperty("addressSpaceCidr") String addressSpaceCidr,

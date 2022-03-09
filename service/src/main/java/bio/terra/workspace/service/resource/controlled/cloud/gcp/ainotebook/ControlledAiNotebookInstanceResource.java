@@ -59,7 +59,7 @@ public class ControlledAiNotebookInstanceResource extends ControlledResource {
       @JsonProperty("privateResourceState") PrivateResourceState privateResourceState,
       @JsonProperty("accessScope") AccessScopeType accessScope,
       @JsonProperty("managedBy") ManagedByType managedBy,
-      @JsonProperty("application") UUID applicationId,
+      @JsonProperty("application") String applicationId,
       @JsonProperty("instanceId") String instanceId,
       @JsonProperty("location") String location,
       @JsonProperty("projectId") String projectId) {

@@ -48,7 +48,7 @@ public class ControlledAzureDiskResource extends ControlledResource {
       @JsonProperty("privateResourceState") PrivateResourceState privateResourceState,
       @JsonProperty("accessScope") AccessScopeType accessScope,
       @JsonProperty("managedBy") ManagedByType managedBy,
-      @JsonProperty("applicationId") UUID applicationId,
+      @JsonProperty("applicationId") String applicationId,
       @JsonProperty("diskName") String diskName,
       @JsonProperty("region") String region,
       @JsonProperty("size") int size) {
