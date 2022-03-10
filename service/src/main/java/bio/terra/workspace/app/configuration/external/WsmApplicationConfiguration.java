@@ -1,6 +1,9 @@
 package bio.terra.workspace.app.configuration.external;
 
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
@@ -59,7 +62,7 @@ public class WsmApplicationConfiguration {
   Map<String, App> configurations;
 
   public Map<String, App> getConfigurations() {
-    return configurations;
+    return Optional.ofNullable(configurations).orElse(Collections.emptyMap());
   }
 
   public void setConfigurations(Map<String, App> configurations) {
