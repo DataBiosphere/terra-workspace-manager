@@ -1,7 +1,6 @@
 package bio.terra.workspace.app.configuration.external;
 
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import org.springframework.boot.context.properties.ConfigurationProperties;
