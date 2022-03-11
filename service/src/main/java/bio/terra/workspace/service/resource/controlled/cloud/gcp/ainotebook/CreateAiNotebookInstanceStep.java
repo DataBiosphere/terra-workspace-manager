@@ -15,6 +15,7 @@ import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.StepStatus;
 import bio.terra.stairway.exception.RetryException;
+import bio.terra.workspace.app.configuration.external.CliConfiguration;
 import bio.terra.workspace.common.utils.GcpUtils;
 import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceAcceleratorConfig;
 import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceContainerImage;
@@ -37,8 +38,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 
 /**
@@ -57,6 +60,11 @@ public class CreateAiNotebookInstanceStep implements Step {
   // git secrets gets a false positive if 'service_account' is double quoted.
   private static final String PROXY_MODE_SA_VALUE = "service_" + "account";
 
+  /** The Notebook instance metadata key used to set the terra workspace. */
+  private static final String WORKSPACE_ID_METADATA_KEY = "terra-workspace-id";
+  /** The Notebook instance metadata key used to set the terra server. */
+  private static final String SERVER_ID_METADATA_KEY = "terra-cli-server";
+
   /**
    * Service account for the notebook instance needs to contain these scopes to interact with SAM.
    */
@@ -70,6 +78,8 @@ public class CreateAiNotebookInstanceStep implements Step {
   private final ControlledAiNotebookInstanceResource resource;
   private final String petEmail;
   private final CrlService crlService;
+
+  @Autowired CliConfiguration cliConfiguration;
 
   public CreateAiNotebookInstanceStep(
       ControlledAiNotebookInstanceResource resource, String petEmail, CrlService crlService) {
@@ -87,7 +97,8 @@ public class CreateAiNotebookInstanceStep implements Step {
             .get(ControlledResourceKeys.GCP_CLOUD_CONTEXT, GcpCloudContext.class);
     String projectId = gcpCloudContext.getGcpProjectId();
     InstanceName instanceName = resource.toInstanceName(projectId);
-    Instance instance = createInstanceModel(flightContext, projectId, petEmail);
+
+    Instance instance = createInstanceModel(flightContext, projectId, petEmail, resource.getWorkspaceId().toString(), cliConfiguration.getServerName());
 
     AIPlatformNotebooksCow notebooks = crlService.getAIPlatformNotebooksCow();
     try {
@@ -117,14 +128,14 @@ public class CreateAiNotebookInstanceStep implements Step {
     return StepResult.getStepResultSuccess();
   }
 
-  private static Instance createInstanceModel(
-      FlightContext flightContext, String projectId, String serviceAccountEmail) {
+  private Instance createInstanceModel(
+      FlightContext flightContext, String projectId, String serviceAccountEmail, String workspaceId, String cliServer) {
     Instance instance = new Instance();
     ApiGcpAiNotebookInstanceCreationParameters creationParameters =
         flightContext
             .getInputParameters()
             .get(CREATE_NOTEBOOK_PARAMETERS, ApiGcpAiNotebookInstanceCreationParameters.class);
-    setFields(creationParameters, serviceAccountEmail, instance);
+    setFields(creationParameters, serviceAccountEmail, workspaceId, cliServer, instance);
     setNetworks(instance, projectId, flightContext.getWorkingMap());
     return instance;
   }
@@ -133,6 +144,8 @@ public class CreateAiNotebookInstanceStep implements Step {
   static Instance setFields(
       ApiGcpAiNotebookInstanceCreationParameters creationParameters,
       String serviceAccountEmail,
+      String workspaceId,
+      String cliServer,
       Instance instance) {
     instance
         .setPostStartupScript(
@@ -146,7 +159,7 @@ public class CreateAiNotebookInstanceStep implements Step {
         .setDataDiskType(creationParameters.getDataDiskType())
         .setDataDiskSizeGb(creationParameters.getDataDiskSizeGb());
 
-    Map<String, String> metadata = new HashMap<>();
+    Map<String, String> metadata = defaultMetadata(workspaceId, cliServer);
     Optional.ofNullable(creationParameters.getMetadata()).ifPresent(metadata::putAll);
     // Create the AI Notebook instance in the service account proxy mode to control proxy access by
     // means of IAM permissions on the service account.
@@ -184,6 +197,16 @@ public class CreateAiNotebookInstanceStep implements Step {
     }
     return instance;
   }
+
+  private static Map<String, String> defaultMetadata(String workspaceId, String cliServer) {
+    Map<String, String> metadata = new HashMap<>();
+    metadata.put(WORKSPACE_ID_METADATA_KEY, workspaceId);
+    if (!StringUtils.isEmpty(cliServer)) {
+      metadata.put(SERVER_ID_METADATA_KEY, cliServer);
+    }
+    return metadata;
+  }
+
 
   private static void setNetworks(Instance instance, String projectId, FlightMap workingMap) {
     String region = workingMap.get(CREATE_NOTEBOOK_REGION, String.class);
