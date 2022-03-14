@@ -134,7 +134,7 @@ public class CreateAiNotebookInstanceStep implements Step {
     return StepResult.getStepResultSuccess();
   }
 
-  private Instance createInstanceModel(
+  private static Instance createInstanceModel(
       FlightContext flightContext,
       String projectId,
       String serviceAccountEmail,
@@ -169,14 +169,10 @@ public class CreateAiNotebookInstanceStep implements Step {
         .setDataDiskType(creationParameters.getDataDiskType())
         .setDataDiskSizeGb(creationParameters.getDataDiskSizeGb());
 
-    Map<String, String> metadata = defaultMetadata(workspaceId, cliServer);
+    Map<String, String> metadata = new HashMap<>();
     Optional.ofNullable(creationParameters.getMetadata()).ifPresent(metadata::putAll);
-    // Create the AI Notebook instance in the service account proxy mode to control proxy access by
-    // means of IAM permissions on the service account.
-    // https://cloud.google.com/ai-platform/notebooks/docs/troubleshooting#opening_a_notebook_results_in_a_403_forbidden_error
-    if (metadata.put(PROXY_MODE_METADATA_KEY, PROXY_MODE_SA_VALUE) != null) {
-      throw new BadRequestException("proxy-mode metadata is reserved for Terra.");
-    }
+
+    addDefaultMetadata(metadata, workspaceId, cliServer);
     instance.setMetadata(metadata);
     instance.setServiceAccount(serviceAccountEmail);
     instance.setServiceAccountScopes(SERVICE_ACCOUNT_SCOPES);
@@ -208,13 +204,19 @@ public class CreateAiNotebookInstanceStep implements Step {
     return instance;
   }
 
-  private static Map<String, String> defaultMetadata(String workspaceId, String cliServer) {
-    Map<String, String> metadata = new HashMap<>();
-    metadata.put(WORKSPACE_ID_METADATA_KEY, workspaceId);
-    if (!StringUtils.isEmpty(cliServer)) {
-      metadata.put(SERVER_ID_METADATA_KEY, cliServer);
+  private static void addDefaultMetadata(Map<String, String> metadata, String workspaceId, String cliServer) {
+    if (metadata.put(WORKSPACE_ID_METADATA_KEY, workspaceId) != null) {
+      throw new BadRequestException(WORKSPACE_ID_METADATA_KEY + " metadata is reserved for Terra");
     }
-    return metadata;
+    if (!StringUtils.isEmpty(cliServer) && metadata.put(SERVER_ID_METADATA_KEY, cliServer) != null) {
+      throw new BadRequestException(SERVER_ID_METADATA_KEY + " metadata is reserved for Terra");
+    }
+    // Create the AI Notebook instance in the service account proxy mode to control proxy access by
+    // means of IAM permissions on the service account.
+    // https://cloud.google.com/ai-platform/notebooks/docs/troubleshooting#opening_a_notebook_results_in_a_403_forbidden_error
+    if (metadata.put(PROXY_MODE_METADATA_KEY, PROXY_MODE_SA_VALUE) != null) {
+      throw new BadRequestException("proxy-mode metadata is reserved for Terra.");
+    }
   }
 
   private static void setNetworks(Instance instance, String projectId, FlightMap workingMap) {

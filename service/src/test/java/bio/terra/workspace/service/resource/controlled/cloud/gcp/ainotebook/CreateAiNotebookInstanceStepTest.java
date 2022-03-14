@@ -4,7 +4,6 @@ import static bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebo
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.TestInstance.Lifecycle.*;
 
 import bio.terra.common.exception.BadRequestException;
 import bio.terra.workspace.common.BaseUnitTest;
@@ -112,6 +111,30 @@ public class CreateAiNotebookInstanceStepTest extends BaseUnitTest {
                 new ApiGcpAiNotebookInstanceCreationParameters()
                     // "proxy-mode" is a reserved metadata key.
                     .metadata(Map.of("proxy-mode", "mail")),
+                "foo@bar.com",
+                "workspaceId",
+                "server-id",
+                new Instance()));
+
+    assertThrows(
+        BadRequestException.class,
+        () ->
+            CreateAiNotebookInstanceStep.setFields(
+                new ApiGcpAiNotebookInstanceCreationParameters()
+                    // "proxy-mode" is a reserved metadata key.
+                    .metadata(Map.of("terra-workspace-id", "12345")),
+                "foo@bar.com",
+                "workspaceId",
+                "server-id",
+                new Instance()));
+
+    assertThrows(
+        BadRequestException.class,
+        () ->
+            CreateAiNotebookInstanceStep.setFields(
+                new ApiGcpAiNotebookInstanceCreationParameters()
+                    // "proxy-mode" is a reserved metadata key.
+                    .metadata(Map.of("terra-cli-server", "devel")),
                 "foo@bar.com",
                 "workspaceId",
                 "server-id",
