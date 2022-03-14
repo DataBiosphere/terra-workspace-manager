@@ -12,22 +12,13 @@ import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceAcceleratorCo
 import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceContainerImage;
 import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceCreationParameters;
 import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceVmImage;
-import bio.terra.workspace.service.crl.CrlService;
-import bio.terra.workspace.service.resource.controlled.model.AccessScopeType;
-import bio.terra.workspace.service.resource.controlled.model.ControlledResourceFields;
-import bio.terra.workspace.service.resource.model.CloningInstructions;
 import com.google.api.services.notebooks.v1.model.Instance;
 import com.google.common.collect.ImmutableList;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import org.apache.commons.lang3.RandomStringUtils;
 import org.hamcrest.Matchers;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestInstance;
-import org.junit.jupiter.api.TestInstance.Lifecycle;
-import org.springframework.beans.factory.annotation.Autowired;
 
 public class CreateAiNotebookInstanceStepTest extends BaseUnitTest {
 
@@ -38,7 +29,6 @@ public class CreateAiNotebookInstanceStepTest extends BaseUnitTest {
           "https://www.googleapis.com/auth/userinfo.profile");
   private static final UUID WORKSPACE_ID = UUID.randomUUID();
   private static final String SERVER_ID = "test-server";
-
 
   @Test
   public void setFields() {
@@ -66,7 +56,8 @@ public class CreateAiNotebookInstanceStepTest extends BaseUnitTest {
                 new ApiGcpAiNotebookInstanceContainerImage().repository("repository").tag("tag"));
 
     Instance instance =
-        CreateAiNotebookInstanceStep.setFields(creationParameters, "foo@bar.com", WORKSPACE_ID.toString(), SERVER_ID,  new Instance());
+        CreateAiNotebookInstanceStep.setFields(
+            creationParameters, "foo@bar.com", WORKSPACE_ID.toString(), SERVER_ID, new Instance());
     assertEquals("script.sh", instance.getPostStartupScript());
     assertEquals(true, instance.getInstallGpuDriver());
     assertEquals("custom-path", instance.getCustomGpuDriverPath());
@@ -92,7 +83,11 @@ public class CreateAiNotebookInstanceStepTest extends BaseUnitTest {
   public void setFieldsNoFields() {
     Instance instance =
         CreateAiNotebookInstanceStep.setFields(
-            new ApiGcpAiNotebookInstanceCreationParameters(), "foo@bar.com", WORKSPACE_ID.toString(), SERVER_ID, new Instance());
+            new ApiGcpAiNotebookInstanceCreationParameters(),
+            "foo@bar.com",
+            WORKSPACE_ID.toString(),
+            SERVER_ID,
+            new Instance());
     assertThat(instance.getMetadata(), Matchers.aMapWithSize(3));
     assertDefaultMetadata(instance);
     assertEquals("foo@bar.com", instance.getServiceAccount());
@@ -103,7 +98,8 @@ public class CreateAiNotebookInstanceStepTest extends BaseUnitTest {
   private void assertDefaultMetadata(Instance instance) {
     // git secrets gets a false positive if 'service_account' is double quoted.
     assertThat(instance.getMetadata(), Matchers.hasEntry("proxy-mode", "service_" + "account"));
-    assertThat(instance.getMetadata(), Matchers.hasEntry("terra-workspace-id", WORKSPACE_ID.toString()));
+    assertThat(
+        instance.getMetadata(), Matchers.hasEntry("terra-workspace-id", WORKSPACE_ID.toString()));
     assertThat(instance.getMetadata(), Matchers.hasEntry("terra-cli-server", SERVER_ID));
   }
 

@@ -98,7 +98,13 @@ public class CreateAiNotebookInstanceStep implements Step {
     String projectId = gcpCloudContext.getGcpProjectId();
     InstanceName instanceName = resource.toInstanceName(projectId);
 
-    Instance instance = createInstanceModel(flightContext, projectId, petEmail, resource.getWorkspaceId().toString(), cliConfiguration.getServerName());
+    Instance instance =
+        createInstanceModel(
+            flightContext,
+            projectId,
+            petEmail,
+            resource.getWorkspaceId().toString(),
+            cliConfiguration.getServerName());
 
     AIPlatformNotebooksCow notebooks = crlService.getAIPlatformNotebooksCow();
     try {
@@ -129,7 +135,11 @@ public class CreateAiNotebookInstanceStep implements Step {
   }
 
   private Instance createInstanceModel(
-      FlightContext flightContext, String projectId, String serviceAccountEmail, String workspaceId, String cliServer) {
+      FlightContext flightContext,
+      String projectId,
+      String serviceAccountEmail,
+      String workspaceId,
+      String cliServer) {
     Instance instance = new Instance();
     ApiGcpAiNotebookInstanceCreationParameters creationParameters =
         flightContext
@@ -206,7 +216,6 @@ public class CreateAiNotebookInstanceStep implements Step {
     }
     return metadata;
   }
-
 
   private static void setNetworks(Instance instance, String projectId, FlightMap workingMap) {
     String region = workingMap.get(CREATE_NOTEBOOK_REGION, String.class);
