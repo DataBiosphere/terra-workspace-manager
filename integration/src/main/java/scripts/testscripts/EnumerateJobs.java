@@ -6,7 +6,6 @@ import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.lessThanOrEqualTo;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.fail;
 
 import bio.terra.testrunner.runner.config.TestUserSpecification;
 import bio.terra.workspace.api.Alpha1Api;
@@ -19,7 +18,6 @@ import bio.terra.workspace.model.EnumerateJobsResult;
 import bio.terra.workspace.model.EnumeratedJob;
 import bio.terra.workspace.model.ResourceMetadata;
 import bio.terra.workspace.model.ResourceType;
-import bio.terra.workspace.model.ResourceUnion;
 import bio.terra.workspace.model.StewardshipType;
 import java.util.List;
 import java.util.Optional;
@@ -120,10 +118,10 @@ public class EnumerateJobs extends WorkspaceAllocateTestScriptBase {
     logResult("buckets", buckets);
     for (EnumeratedJob job : buckets.getResults()) {
       assertThat("Job is a bucket", job.getResourceType(), equalTo(ResourceType.GCS_BUCKET));
-      assertNotNull(job.getResource().getGcpGcsBucket(), "Bucket resource present");
+      assertNotNull(job.getResourceAttributes().getGcpGcsBucket(), "Bucket resource present");
       assertThat(
           "Resource is a bucket",
-          job.getResource().getGcpGcsBucket().getMetadata().getResourceType(),
+          job.getMetadata().getResourceType(),
           equalTo(ResourceType.GCS_BUCKET));
     }
 
@@ -133,7 +131,7 @@ public class EnumerateJobs extends WorkspaceAllocateTestScriptBase {
             getWorkspaceId(), null, null, null, StewardshipType.CONTROLLED, null, null);
     logResult("controlled", controlled);
     for (EnumeratedJob job : controlled.getResults()) {
-      ResourceMetadata metadata = getResourceMetadata(job);
+      ResourceMetadata metadata = job.getMetadata();
       assertNotNull(metadata, "Resource has metadata");
       assertThat(
           "Resource is controlled",
@@ -153,7 +151,7 @@ public class EnumerateJobs extends WorkspaceAllocateTestScriptBase {
             null);
     logResult("controlledBuckets", controlledBuckets);
     for (EnumeratedJob job : controlledBuckets.getResults()) {
-      ResourceMetadata metadata = getResourceMetadata(job);
+      ResourceMetadata metadata = job.getMetadata();
       assertNotNull(metadata, "Resource has metadata");
       assertThat(
           "Resource is controlled",
@@ -199,56 +197,8 @@ public class EnumerateJobs extends WorkspaceAllocateTestScriptBase {
     }
   }
 
-  private ResourceMetadata getResourceMetadata(EnumeratedJob job) {
-    if (job.getResourceType() == null || job.getResource() == null) {
-      return null;
-    }
-    ResourceUnion union = job.getResource();
-    switch (job.getResourceType()) {
-      case AI_NOTEBOOK:
-        return union.getGcpAiNotebookInstance().getMetadata();
-
-      case DATA_REPO_SNAPSHOT:
-        return union.getGcpDataRepoSnapshot().getMetadata();
-
-      case GCS_BUCKET:
-        return union.getGcpGcsBucket().getMetadata();
-
-      case GCS_OBJECT:
-        return union.getGcpGcsObject().getMetadata();
-
-      case BIG_QUERY_DATASET:
-        return union.getGcpBqDataset().getMetadata();
-
-      case BIG_QUERY_DATA_TABLE:
-        return union.getGcpBqDataTable().getMetadata();
-
-      case AZURE_IP:
-        return union.getAzureIp().getMetadata();
-
-      case AZURE_RELAY_NAMESPACE:
-        return union.getAzureRelayNamespace().getMetadata();
-
-      case AZURE_DISK:
-        return union.getAzureDisk().getMetadata();
-
-      case AZURE_NETWORK:
-        return union.getAzureNetwork().getMetadata();
-      case AZURE_VM:
-        return union.getAzureVm().getMetadata();
-
-      case AZURE_STORAGE_ACCOUNT:
-        return union.getAzureStorageAccount().getMetadata();
-
-      default:
-        fail("Unknown resource type: " + job.getResourceType());
-    }
-
-    return null;
-  }
-
   private String resourceString(EnumeratedJob job) {
-    ResourceMetadata metadata = getResourceMetadata(job);
+    ResourceMetadata metadata = job.getMetadata();
     if (metadata == null) {
       return "<>";
     }
