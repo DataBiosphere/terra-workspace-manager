@@ -48,6 +48,12 @@ public class ResourceValidationUtils {
   public static final Pattern CONTROLLED_BUCKET_NAME_VALIDATION_PATTERN =
       Pattern.compile("^[a-z0-9][-.a-z0-9]{1,220}[a-z0-9]$");
 
+  private static final String REFERENCED_BUCKET_NAME_VALIDATION_FAILURE_ERROR =
+      "Invalid GCS bucket name specified. Names must be 3-222 lowercase letters, numbers, dashes, and underscores. See Google documentation for the full specification.";
+
+  private static final String CONTROLLED_BUCKET_NAME_VALIDATION_FAILURE_ERROR =
+      "Invalid GCS bucket name specified. Names must be 3-222 lowercase letters, numbers, and dashes. See Google documentation for the full specification.";
+
   /**
    * Azure Storage Account name validation valid. An storage account name must be between 3-24
    * characters in length and may contain numbers and lowercase letters only.
@@ -109,16 +115,22 @@ public class ResourceValidationUtils {
     this.gitRepoReferencedResourceConfiguration = gitRepoReferencedResourceConfiguration;
   }
 
+  public static Logger getLogger() {
+    return logger;
+  }
+
   public static void validateControlledBucketName(String name) {
-    validateBucketName(CONTROLLED_BUCKET_NAME_VALIDATION_PATTERN, name);
+    validateBucketName(
+        name,
+        CONTROLLED_BUCKET_NAME_VALIDATION_PATTERN,
+        CONTROLLED_BUCKET_NAME_VALIDATION_FAILURE_ERROR);
   }
 
   public static void validateReferencedBucketName(String name) {
-    validateBucketName(REFERENCED_BUCKET_NAME_VALIDATION_PATTERN, name);
-  }
-
-  public static Logger getLogger() {
-    return logger;
+    validateBucketName(
+        name,
+        REFERENCED_BUCKET_NAME_VALIDATION_PATTERN,
+        REFERENCED_BUCKET_NAME_VALIDATION_FAILURE_ERROR);
   }
 
   /**
@@ -128,15 +140,16 @@ public class ResourceValidationUtils {
    * <p>This method DOES NOT guarentee that the bucket name is valid.
    *
    * @param name gcs-bucket name
+   * @param validationFailureError
    * @throws InvalidNameException throws exception when the bucket name fails to conform to the
    *     Google naming convention for bucket name.
    */
   @VisibleForTesting
-  public static void validateBucketName(Pattern validationPattern, String name) {
+  public static void validateBucketName(
+      String name, Pattern validationPattern, String validationFailureError) {
     if (StringUtils.isEmpty(name) || !validationPattern.matcher(name).matches()) {
       logger.warn("Invalid bucket name {}", name);
-      throw new InvalidNameException(
-          "Invalid GCS bucket name specified. Names must be 3-222 lowercase letters, numbers, dashes, and underscores. See Google documentation for the full specification.");
+      throw new InvalidNameException(validationFailureError);
     }
     for (String s : name.split("\\.")) {
       if (s.length() > 63) {

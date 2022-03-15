@@ -84,8 +84,8 @@ public class GcsBucketUtils {
   public static final List<GcpGcsBucketLifecycleRule> BUCKET_LIFECYCLE_RULES =
       new ArrayList<>(List.of(BUCKET_LIFECYCLE_RULE_1, BUCKET_LIFECYCLE_RULE_2));
 
-  public static final String UPDATED_BUCKET_RESOURCE_NAME = "new_resource_name";
-  public static final String UPDATED_BUCKET_RESOURCE_NAME_2 = "another_resource_name";
+  public static final String UPDATED_BUCKET_RESOURCE_NAME = "new-resource-name";
+  public static final String UPDATED_BUCKET_RESOURCE_NAME_2 = "another-resource-name";
   public static final String UPDATED_BUCKET_RESOURCE_DESCRIPTION = "A bucket with a hole in it.";
   public static final String BUCKET_LOCATION = "US-CENTRAL1";
   public static final String BUCKET_PREFIX = "wsmtestbucket-";
