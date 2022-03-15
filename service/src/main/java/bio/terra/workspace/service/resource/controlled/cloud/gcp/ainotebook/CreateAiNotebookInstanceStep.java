@@ -206,12 +206,11 @@ public class CreateAiNotebookInstanceStep implements Step {
 
   private static void addDefaultMetadata(
       Map<String, String> metadata, String workspaceId, String cliServer) {
-    if (metadata.put(WORKSPACE_ID_METADATA_KEY, workspaceId) != null) {
-      throw new BadRequestException(WORKSPACE_ID_METADATA_KEY + " metadata is reserved for Terra");
-    }
-    if (!StringUtils.isEmpty(cliServer)
-        && metadata.put(SERVER_ID_METADATA_KEY, cliServer) != null) {
-      throw new BadRequestException(SERVER_ID_METADATA_KEY + " metadata is reserved for Terra");
+    // TODO(PF-1409): throw bad request exception when these two metadata key is specified by the
+    // user after we remove them from CLI.
+    metadata.put(WORKSPACE_ID_METADATA_KEY, workspaceId);
+    if (!StringUtils.isEmpty(cliServer)) {
+      metadata.put(SERVER_ID_METADATA_KEY, cliServer);
     }
     // Create the AI Notebook instance in the service account proxy mode to control proxy access by
     // means of IAM permissions on the service account.
