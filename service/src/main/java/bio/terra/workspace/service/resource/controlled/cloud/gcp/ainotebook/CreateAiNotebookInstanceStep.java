@@ -41,7 +41,6 @@ import java.util.Optional;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 
 /**
@@ -78,14 +77,17 @@ public class CreateAiNotebookInstanceStep implements Step {
   private final ControlledAiNotebookInstanceResource resource;
   private final String petEmail;
   private final CrlService crlService;
-
-  @Autowired CliConfiguration cliConfiguration;
+  private final CliConfiguration cliConfiguration;
 
   public CreateAiNotebookInstanceStep(
-      ControlledAiNotebookInstanceResource resource, String petEmail, CrlService crlService) {
+      ControlledAiNotebookInstanceResource resource,
+      String petEmail,
+      CrlService crlService,
+      CliConfiguration cliConfiguration) {
     this.petEmail = petEmail;
     this.resource = resource;
     this.crlService = crlService;
+    this.cliConfiguration = cliConfiguration;
   }
 
   @Override

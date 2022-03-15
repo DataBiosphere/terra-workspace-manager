@@ -284,7 +284,8 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
     assertThat(instance.getMetadata(), Matchers.hasEntry("proxy-mode", "service_" + "account"));
     assertThat(instance.getMetadata(), Matchers.hasEntry("terra-cli-server", serverName));
     assertThat(
-        instance.getMetadata(), Matchers.hasEntry("terra-workspace-id", resource.getWorkspaceId()));
+        instance.getMetadata(),
+        Matchers.hasEntry("terra-workspace-id", resource.getWorkspaceId().toString()));
     ServiceAccountName serviceAccountName =
         ServiceAccountName.builder()
             .projectId(instanceName.projectId())
