@@ -4,6 +4,7 @@ import static bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebo
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import bio.terra.common.exception.BadRequestException;
 import bio.terra.workspace.common.BaseUnitTest;
@@ -58,7 +59,7 @@ public class CreateAiNotebookInstanceStepTest extends BaseUnitTest {
         CreateAiNotebookInstanceStep.setFields(
             creationParameters, "foo@bar.com", WORKSPACE_ID.toString(), SERVER_ID, new Instance());
     assertEquals("script.sh", instance.getPostStartupScript());
-    assertEquals(true, instance.getInstallGpuDriver());
+    assertTrue(instance.getInstallGpuDriver());
     assertEquals("custom-path", instance.getCustomGpuDriverPath());
     assertEquals("boot-disk-type", instance.getBootDiskType());
     assertEquals(111L, instance.getBootDiskSizeGb());

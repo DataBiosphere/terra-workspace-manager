@@ -8,7 +8,7 @@ import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKey
 import bio.terra.cloudres.google.api.services.common.OperationCow;
 import bio.terra.cloudres.google.notebooks.AIPlatformNotebooksCow;
 import bio.terra.cloudres.google.notebooks.InstanceName;
-import bio.terra.common.exception.BadRequestException;
+import bio.terra.common.exception.ConflictException;
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.Step;
@@ -61,7 +61,10 @@ public class CreateAiNotebookInstanceStep implements Step {
 
   /** The Notebook instance metadata key used to set the terra workspace. */
   private static final String WORKSPACE_ID_METADATA_KEY = "terra-workspace-id";
-  /** The Notebook instance metadata key used to set the terra server. */
+  /**
+   * The Notebook instance metadata key used to point the terra CLI at the correct WSM and SAM
+   * instances given a CLI specific name.
+   */
   private static final String SERVER_ID_METADATA_KEY = "terra-cli-server";
 
   /**
@@ -208,7 +211,7 @@ public class CreateAiNotebookInstanceStep implements Step {
 
   private static void addDefaultMetadata(
       Map<String, String> metadata, String workspaceId, String cliServer) {
-    // TODO(PF-1409): throw bad request exception when these two metadata key is specified by the
+    // TODO(PF-1409): throw conflict exception when these two metadata key is specified by the
     // user after we remove them from CLI.
     metadata.put(WORKSPACE_ID_METADATA_KEY, workspaceId);
     if (!StringUtils.isEmpty(cliServer)) {
@@ -218,7 +221,7 @@ public class CreateAiNotebookInstanceStep implements Step {
     // means of IAM permissions on the service account.
     // https://cloud.google.com/ai-platform/notebooks/docs/troubleshooting#opening_a_notebook_results_in_a_403_forbidden_error
     if (metadata.put(PROXY_MODE_METADATA_KEY, PROXY_MODE_SA_VALUE) != null) {
-      throw new BadRequestException("proxy-mode metadata is reserved for Terra.");
+      throw new ConflictException("proxy-mode metadata is reserved for Terra.");
     }
   }
 
