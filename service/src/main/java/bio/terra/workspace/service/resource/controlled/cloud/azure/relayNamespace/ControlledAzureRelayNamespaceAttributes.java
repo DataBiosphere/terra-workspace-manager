@@ -9,8 +9,8 @@ public class ControlledAzureRelayNamespaceAttributes {
 
   @JsonCreator
   public ControlledAzureRelayNamespaceAttributes(
-      @JsonProperty("name") String name, @JsonProperty("region") String region) {
-    this.namespaceName = name;
+      @JsonProperty("namespaceName") String namespaceName, @JsonProperty("region") String region) {
+    this.namespaceName = namespaceName;
     this.region = region;
   }
 
