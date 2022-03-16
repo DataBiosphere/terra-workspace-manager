@@ -96,6 +96,8 @@ jobs:
     - name: Launch local server
       uses: ./.github/actions/start-local-server
 
+    - name: Setup tmate session
+      uses: mxschmitt/action-tmate@v3
     - name: Run the integration test suite
       id: integration-test
       uses: ./.github/actions/integration-test

@@ -6,7 +6,7 @@ how to write and execute tests.
 
 #### Run a test
 The workspace manager tests require the appropriate service account keys to be available
-in the build root `config/` folder. See [DEVELOPMENT](DEVELOPMENT.md) for details on using `scripts/write-config.sh`
+in the build root `config/` folder. See [DEVELOPMENT](../DEVELOPMENT.md) for details on using `scripts/write-config.sh`
 to write the configuration.
 
 The test runner task `runTest` can be used to launch tests in two different modes
