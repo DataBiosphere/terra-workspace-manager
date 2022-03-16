@@ -41,3 +41,6 @@ apply(from: "$includeDir/taskDependencies.gradle")
 apply(from: "$includeDir/dependencies.gradle")
 apply(from: "$includeDir/testing.gradle")
 
+tasks.withType(JavaCompile) {
+    options.compilerArgs.addAll(['-parameters'])
+}

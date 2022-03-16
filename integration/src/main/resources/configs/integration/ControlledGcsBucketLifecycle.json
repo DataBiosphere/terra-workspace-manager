@@ -12,8 +12,7 @@
       "expectedTimeForEach": 10,
       "expectedTimeForEachUnit": "MINUTES",
       "parameters": {
-        "spend-profile-id": "wm-default-spend-profile",
-        "gcs-uniform-bucket": "gs://terra_wsm_test_resource"
+        "spend-profile-id": "wm-default-spend-profile"
       }
     }
   ],
