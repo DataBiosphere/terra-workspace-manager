@@ -7,6 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import bio.terra.common.exception.BadRequestException;
+import bio.terra.common.exception.ConflictException;
 import bio.terra.workspace.common.BaseUnitTest;
 import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceAcceleratorConfig;
 import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceContainerImage;
@@ -106,7 +107,7 @@ public class CreateAiNotebookInstanceStepTest extends BaseUnitTest {
   @Test
   public void setFieldsThrowsForReservedMetadataKeys() {
     assertThrows(
-        BadRequestException.class,
+        ConflictException.class,
         () ->
             CreateAiNotebookInstanceStep.setFields(
                 new ApiGcpAiNotebookInstanceCreationParameters()
