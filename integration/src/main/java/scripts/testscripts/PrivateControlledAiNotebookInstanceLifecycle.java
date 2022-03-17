@@ -119,7 +119,7 @@ public class PrivateControlledAiNotebookInstanceLifecycle extends WorkspaceAlloc
     ResourceList notebookList =
         otherUserApi.enumerateResources(
             getWorkspaceId(), 0, 5, ResourceType.AI_NOTEBOOK, StewardshipType.CONTROLLED);
-    assertEquals(3, notebookList.getResources().size());
+    assertEquals(1, notebookList.getResources().size());
     MultiResourcesUtils.assertResourceType(ResourceType.AI_NOTEBOOK, notebookList);
 
     createAControlledAiNotebookInstanceWithoutSpecifiedInstanceId_validInstanceIdIsGenerated(
