@@ -86,12 +86,6 @@ public class ControlledGcsBucketLifecycle extends GcpWorkspaceCloneTestScriptBas
   private String bucketName;
   private String resourceName;
 
-  //  @Override
-  //  public void setParameters(Map<String, String> parameters) throws Exception {
-  //    super.setParameters(parameters);
-  //    existingBucket = ParameterUtils.getUniformBucketReference(parameters);
-  //  }
-
   @Override
   protected void doSetup(List<TestUserSpecification> testUsers, WorkspaceApi workspaceApi)
       throws Exception {
