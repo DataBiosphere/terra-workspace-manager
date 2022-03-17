@@ -83,6 +83,9 @@ public class ControlledGcsBucketLifecycle extends GcpWorkspaceCloneTestScriptBas
 
   private static final Logger logger = LoggerFactory.getLogger(ControlledGcsBucketLifecycle.class);
 
+  // This is a publicly accessible bucket provided by GCP.
+  private static final String PUBLIC_GCP_BUCKET_NAME = "gcp-public-data-landsat";
+
   private String bucketName;
   private String resourceName;
 
@@ -101,7 +104,18 @@ public class ControlledGcsBucketLifecycle extends GcpWorkspaceCloneTestScriptBas
     ControlledGcpResourceApi resourceApi =
         ClientTestUtils.getControlledGcpResourceClient(testUser, server);
 
-    // Create a bucket.
+    // Create a bucket with a name that's already taken by a publicly accessible bucket. WSM should
+    // have get and read access, as the bucket is open to everyone, but this should still fail.
+    // If bucket already exists, create bucket step has logic that checks if existing bucket is in
+    // same project (step reran, so not an error) or not (should throw error). This tests that
+    // logic.
+    ApiException publicDuplicateNameFails =
+        assertThrows(
+            ApiException.class, () -> createBucketAttempt(resourceApi, PUBLIC_GCP_BUCKET_NAME));
+    assertEquals(HttpStatus.SC_CONFLICT, publicDuplicateNameFails.getCode());
+    logger.info("Failed to create bucket with duplicate name of public bucket, as expected");
+
+    // Create the bucket - should work this time
     CreatedControlledGcpGcsBucket bucket = createBucketAttempt(resourceApi, bucketName);
     UUID resourceId = bucket.getResourceId();
 

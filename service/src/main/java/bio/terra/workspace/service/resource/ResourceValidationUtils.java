@@ -115,10 +115,6 @@ public class ResourceValidationUtils {
     this.gitRepoReferencedResourceConfiguration = gitRepoReferencedResourceConfiguration;
   }
 
-  public static Logger getLogger() {
-    return logger;
-  }
-
   public static void validateControlledBucketName(String name) {
     validateBucketName(
         name,

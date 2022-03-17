@@ -40,9 +40,3 @@ apply(from: "$rootDir/gradle/quality.gradle")
 apply(from: "$includeDir/taskDependencies.gradle")
 apply(from: "$includeDir/dependencies.gradle")
 apply(from: "$includeDir/testing.gradle")
-
-// Needed for ParameterNamesModule in StairwayMapper. See
-// https://github.com/FasterXML/jackson-modules-java8/tree/master/parameter-names#:~:text=class%20Person%20must%20be%20compiled%20with%20Java%208%20compliant%20compiler%20with%20option%20to%20store%20formal%20parameter%20names%20turned%20on%20(%2Dparameters%20option).
-tasks.withType(JavaCompile) {
-    options.compilerArgs.addAll(['-parameters'])
-}
