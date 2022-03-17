@@ -17,8 +17,6 @@ jobs:
     - name: Run linter
       id: run_linter
       run: ./gradlew spotlessCheck
-    - name: Setup tmate session
-      uses: mxschmitt/action-tmate@v3
     - name: Run static analysis
       id: run_static_analysis
       run: ./gradlew spotbugsMain spotbugsTest
