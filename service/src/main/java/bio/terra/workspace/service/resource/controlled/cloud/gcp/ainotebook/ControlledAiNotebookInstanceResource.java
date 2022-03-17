@@ -135,7 +135,8 @@ public class ControlledAiNotebookInstanceResource extends ControlledResource {
             flightBeanBag.getSamService()),
         gcpRetryRule);
     flight.addStep(
-        new CreateAiNotebookInstanceStep(this, petSaEmail, flightBeanBag.getCrlService()),
+        new CreateAiNotebookInstanceStep(
+            this, petSaEmail, flightBeanBag.getCrlService(), flightBeanBag.getCliConfiguration()),
         gcpRetryRule);
     flight.addStep(
         new NotebookCloudSyncStep(

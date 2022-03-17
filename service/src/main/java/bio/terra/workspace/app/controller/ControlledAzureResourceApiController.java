@@ -37,16 +37,15 @@ import bio.terra.workspace.service.resource.controlled.cloud.azure.storage.Contr
 import bio.terra.workspace.service.resource.controlled.cloud.azure.vm.ControlledAzureVmResource;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResourceFields;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
+import java.util.UUID;
+import javax.servlet.http.HttpServletRequest;
+import javax.validation.Valid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
-
-import javax.servlet.http.HttpServletRequest;
-import javax.validation.Valid;
-import java.util.UUID;
 
 @Controller
 public class ControlledAzureResourceApiController extends ControlledResourceControllerBase
@@ -431,9 +430,9 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
   }
 
   private ApiCreatedControlledAzureVmResult fetchCreateControlledAzureVmResult(
-          String jobId, AuthenticatedUserRequest userRequest) {
+      String jobId, AuthenticatedUserRequest userRequest) {
     final JobService.AsyncJobResult<ControlledAzureVmResource> jobResult =
-            jobService.retrieveAsyncJobResult(jobId, ControlledAzureVmResource.class, userRequest);
+        jobService.retrieveAsyncJobResult(jobId, ControlledAzureVmResource.class, userRequest);
 
     ApiAzureVmResource apiResource = null;
     if (jobResult.getJobReport().getStatus().equals(ApiJobReport.StatusEnum.SUCCEEDED)) {
@@ -441,9 +440,9 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
       apiResource = resource.toApiResource();
     }
     return new ApiCreatedControlledAzureVmResult()
-            .jobReport(jobResult.getJobReport())
-            .errorReport(jobResult.getApiErrorReport())
-            .azureVm(apiResource);
+        .jobReport(jobResult.getJobReport())
+        .errorReport(jobResult.getApiErrorReport())
+        .azureVm(apiResource);
   }
 
   private ApiCreateControlledAzureRelayNamespaceResult
