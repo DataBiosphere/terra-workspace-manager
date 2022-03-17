@@ -113,6 +113,15 @@ public class PrivateControlledAiNotebookInstanceLifecycle extends WorkspaceAlloc
         resource.getAttributes().getLocation(),
         "The notebook uses the default location because location is not specified.");
 
+    // Any workspace user should be able to enumerate notebooks, even though they can't
+    // read or write them.
+    ResourceApi otherUserApi = ClientTestUtils.getResourceClient(otherWorkspaceUser, server);
+    ResourceList notebookList =
+        otherUserApi.enumerateResources(
+            getWorkspaceId(), 0, 5, ResourceType.AI_NOTEBOOK, StewardshipType.CONTROLLED);
+    assertEquals(3, notebookList.getResources().size());
+    MultiResourcesUtils.assertResourceType(ResourceType.AI_NOTEBOOK, notebookList);
+
     createAControlledAiNotebookInstanceWithoutSpecifiedInstanceId_validInstanceIdIsGenerated(
         resourceUserApi);
 
@@ -147,15 +156,6 @@ public class PrivateControlledAiNotebookInstanceLifecycle extends WorkspaceAlloc
         HttpStatus.SC_FORBIDDEN,
         directDeleteForbidden.getStatusCode(),
         "User may not delete notebook directly on GCP");
-
-    // Any workspace user should be able to enumerate all created notebooks, even though they can't
-    // read or write them.
-    ResourceApi otherUserApi = ClientTestUtils.getResourceClient(otherWorkspaceUser, server);
-    ResourceList notebookList =
-        otherUserApi.enumerateResources(
-            getWorkspaceId(), 0, 5, ResourceType.AI_NOTEBOOK, StewardshipType.CONTROLLED);
-    assertEquals(3, notebookList.getResources().size());
-    MultiResourcesUtils.assertResourceType(ResourceType.AI_NOTEBOOK, notebookList);
 
     // Delete the AI Notebook through WSM.
     DeleteControlledGcpAiNotebookInstanceResult deleteResult =
