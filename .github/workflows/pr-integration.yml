@@ -99,8 +99,6 @@ jobs:
     - name: Run the integration test suite
       id: integration-test
       uses: ./.github/actions/integration-test
-      env:
-        PRINT_STANDARD_STREAMS: please
       with:
         test-server: workspace-local.json
         test: suites/FullIntegration.json
@@ -126,3 +124,12 @@ jobs:
         author_name: "integrationTest"
         icon_emoji: ":triangular_ruler:"
         fields: job, commit
+
+    - name: Archive WSM logs
+      id: archive_logs
+      if: always()
+      uses: actions/upload-artifact@v2
+      with:
+        name: wsm-logs
+        path: |
+          wsm.log
