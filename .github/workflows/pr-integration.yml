@@ -124,3 +124,12 @@ jobs:
         author_name: "integrationTest"
         icon_emoji: ":triangular_ruler:"
         fields: job, commit
+
+    - name: Archive WSM logs
+      id: archive_logs
+      if: always()
+      uses: actions/upload-artifact@v2
+      with:
+        name: wsm-logs
+        path: |
+          wsm.log
