@@ -14,12 +14,12 @@ public class ReferenceValidationUtilsTest extends BaseUnitTest {
   public void testInvalidCharInBucketName() {
     assertThrows(
         InvalidNameException.class,
-        () -> ResourceValidationUtils.validateBucketName("INVALIDBUCKETNAME"));
+        () -> ResourceValidationUtils.validateReferencedBucketName("INVALIDBUCKETNAME"));
   }
 
   @Test
   public void validBucketNameOk() {
-    ResourceValidationUtils.validateBucketName("valid-bucket_name.1");
+    ResourceValidationUtils.validateReferencedBucketName("valid-bucket_name.1");
   }
 
   @Test

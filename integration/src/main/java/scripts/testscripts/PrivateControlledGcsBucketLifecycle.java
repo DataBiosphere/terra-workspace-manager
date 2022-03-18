@@ -196,8 +196,7 @@ public class PrivateControlledGcsBucketLifecycle extends WorkspaceAllocateTestSc
     assertNotNull(userNoEmailBucket.getGcpBucket().getAttributes().getBucketName());
     deleteBucket(workspaceOwnerResourceApi, userNoEmailBucket.getResourceId());
 
-    String uniqueBucketName =
-        String.format("terra_%s_bucket", UUID.randomUUID().toString().replace("-", "_"));
+    String uniqueBucketName = String.format("terra-%s-bucket", UUID.randomUUID().toString());
     CreatedControlledGcpGcsBucket bucketWithBucketNameSpecified =
         GcsBucketUtils.makeControlledGcsBucket(
             privateUserResourceApi,
