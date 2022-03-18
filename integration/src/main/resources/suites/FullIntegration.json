@@ -3,26 +3,23 @@
   "description": "All integration tests - to be run on a K8s environment",
   "serverSpecificationFile": "workspace-local.json",
   "testConfigurationFiles": [
-    "integration/BasicAuthenticated.json",
-    "integration/BasicUnauthenticated.json",
-    "integration/CloneWorkspace.json",
-    "integration/ControlledBigQueryDatasetLifecycle.json",
-    "integration/ControlledGcsBucketLifecycle.json",
-    "integration/DeleteGcpContextWithControlledResource.json",
-    "integration/DeleteWorkspaceWithControlledResource.json",
-    "integration/EnablePet.json",
-    "integration/EnumerateResources.json",
-    "integration/GetRoles.json",
-    "integration/Jobs.json",
-    "integration/ListWorkspaces.json",
-    "integration/PrivateControlledAiNotebookInstanceLifecycle.json",
-    "integration/PrivateControlledGcsBucketLifecycle.json",
-    "integration/ReferencedBigQueryResourceLifecycle.json",
-    "integration/ReferencedGcsResourceLifecycle.json",
-    "integration/ReferencedGitRepoLifecycle.json",
-    "integration/ReferencedDataRepoSnapshotLifecycle.json",
-    "integration/RemoveUser.json",
-    "integration/WorkspaceLifecycle.json"
+//    "integration/BasicAuthenticated.json",
+//    "integration/BasicUnauthenticated.json",
+//    "integration/CloneWorkspace.json",
+//    "integration/ControlledBigQueryDatasetLifecycle.json",
+//    "integration/ControlledGcsBucketLifecycle.json",
+//    "integration/DeleteGcpContextWithControlledResource.json",
+//    "integration/DeleteWorkspaceWithControlledResource.json",
+//    "integration/EnablePet.json",
+//    "integration/EnumerateResources.json",
+//    "integration/GetRoles.json",
+//    "integration/Jobs.json",
+//    "integration/ListWorkspaces.json",
+//    "integration/PrivateControlledAiNotebookInstanceLifecycle.json",
+//    "integration/PrivateControlledGcsBucketLifecycle.json",
+//    "integration/ReferencedBigQueryResourceLifecycle.json",
+    "integration/RemoveUser.json"
+//    "integration/WorkspaceLifecycle.json"
   ]
 }
 

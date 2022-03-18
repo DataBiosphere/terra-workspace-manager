@@ -99,6 +99,8 @@ jobs:
     - name: Run the integration test suite
       id: integration-test
       uses: ./.github/actions/integration-test
+      env:
+        PRINT_STANDARD_STREAMS: please
       with:
         test-server: workspace-local.json
         test: suites/FullIntegration.json
