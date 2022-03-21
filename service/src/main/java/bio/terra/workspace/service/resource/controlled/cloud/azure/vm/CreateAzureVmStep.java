@@ -17,22 +17,13 @@ import bio.terra.workspace.service.resource.controlled.cloud.azure.network.Contr
 import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import bio.terra.workspace.service.workspace.model.AzureCloudContext;
-import com.azure.core.credential.TokenCredential;
-import com.azure.core.management.AzureEnvironment;
 import com.azure.core.management.Region;
 import com.azure.core.management.exception.ManagementException;
-import com.azure.core.management.profile.AzureProfile;
-import com.azure.resourcemanager.AzureResourceManager;
 import com.azure.resourcemanager.compute.ComputeManager;
 import com.azure.resourcemanager.compute.models.Disk;
 import com.azure.resourcemanager.compute.models.VirtualMachineSizeTypes;
 import com.azure.resourcemanager.network.models.Network;
-import com.azure.resourcemanager.network.models.NetworkInterface;
 import com.azure.resourcemanager.network.models.PublicIpAddress;
-import com.azure.resourcemanager.resources.ResourceManager;
-import com.azure.resourcemanager.resources.fluentcore.arm.models.GroupableResource;
-import com.azure.resourcemanager.resources.fluentcore.arm.models.Resource;
-import com.azure.resourcemanager.resources.fluentcore.model.Creatable;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -100,15 +91,19 @@ public class CreateAzureVmStep implements Step {
               .getByResourceGroup(
                   azureCloudContext.getAzureResourceGroupId(), networkResource.getNetworkName());
 
-
-      var createNic = computeManager.networkManager().networkInterfaces()
+      var createNic =
+          computeManager
+              .networkManager()
+              .networkInterfaces()
               .define(String.format("nic-%s", resource.getVmName()))
               .withRegion(resource.getRegion())
               .withExistingResourceGroup(azureCloudContext.getAzureResourceGroupId())
               .withExistingPrimaryNetwork(existingNetwork)
               .withSubnet(networkResource.getSubnetName())
               .withPrimaryPrivateIPAddressDynamic()
-              .withExistingPrimaryPublicIPAddress(existingAzureIp) //TODO this needs to be updated to support not exposing public IP
+              .withExistingPrimaryPublicIPAddress(
+                  existingAzureIp) // TODO this needs to be updated to support not exposing public
+              // IP
               .create();
 
       computeManager
