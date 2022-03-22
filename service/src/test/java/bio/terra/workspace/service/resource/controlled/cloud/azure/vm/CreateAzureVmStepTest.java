@@ -99,7 +99,11 @@ public class CreateAzureVmStepTest extends BaseAzureTest {
   @Mock private NetworkInterface.DefinitionStages.Blank mockNicDefine;
   @Mock private NetworkInterface.DefinitionStages.WithGroup mockNicWithRegion;
   @Mock private NetworkInterface.DefinitionStages.WithPrimaryNetwork mockNicWithExistingRg;
-  @Mock private NetworkInterface.DefinitionStages.WithPrimaryNetworkSubnet mockNicWithExistingPrimaryNetwork;
+
+  @Mock
+  private NetworkInterface.DefinitionStages.WithPrimaryNetworkSubnet
+      mockNicWithExistingPrimaryNetwork;
+
   @Mock private NetworkInterface.DefinitionStages.WithPrimaryPrivateIP mockNicWithPrivateIp;
   @Mock private NetworkInterface.DefinitionStages.WithCreate mockNicWithCreate;
   @Mock private NetworkInterface mockNi;
@@ -191,11 +195,15 @@ public class CreateAzureVmStepTest extends BaseAzureTest {
     when(mockNetworkManager.networkInterfaces()).thenReturn(mockNis);
     when(mockNis.define(anyString())).thenReturn(mockNicDefine);
     when(mockNicDefine.withRegion(anyString())).thenReturn(mockNicWithRegion);
-    when(mockNicWithRegion.withExistingResourceGroup(anyString())).thenReturn(mockNicWithExistingRg);
-    when(mockNicWithExistingRg.withExistingPrimaryNetwork(mockNetwork)).thenReturn(mockNicWithExistingPrimaryNetwork);
-    when(mockNicWithExistingPrimaryNetwork.withSubnet(anyString())).thenReturn(mockNicWithPrivateIp);
+    when(mockNicWithRegion.withExistingResourceGroup(anyString()))
+        .thenReturn(mockNicWithExistingRg);
+    when(mockNicWithExistingRg.withExistingPrimaryNetwork(mockNetwork))
+        .thenReturn(mockNicWithExistingPrimaryNetwork);
+    when(mockNicWithExistingPrimaryNetwork.withSubnet(anyString()))
+        .thenReturn(mockNicWithPrivateIp);
     when(mockNicWithPrivateIp.withPrimaryPrivateIPAddressDynamic()).thenReturn(mockNicWithCreate);
-    when(mockNicWithCreate.withExistingPrimaryPublicIPAddress(mockPublicIpAddress)).thenReturn(mockNicWithCreate);
+    when(mockNicWithCreate.withExistingPrimaryPublicIPAddress(mockPublicIpAddress))
+        .thenReturn(mockNicWithCreate);
     when(mockNicWithCreate.create()).thenReturn(mockNi);
 
     // create network security group mocks
