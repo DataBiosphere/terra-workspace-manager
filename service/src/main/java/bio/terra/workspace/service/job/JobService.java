@@ -1,5 +1,6 @@
 package bio.terra.workspace.service.job;
 
+import bio.terra.common.logging.LoggingUtils;
 import bio.terra.common.stairway.StairwayComponent;
 import bio.terra.common.stairway.TracingHook;
 import bio.terra.stairway.Flight;
@@ -381,18 +382,12 @@ public class JobService {
 
     switch (flightState.getFlightStatus()) {
       case FATAL:
+        // Dismal failures always require manual intervention, so developers should be notified
+        // if they happen.
+        LoggingUtils.logAlert(logger, "WSM Stairway encountered dismal failure");
+        return handleFailedFlight(flightState);
       case ERROR:
-        if (flightState.getException().isPresent()) {
-          Exception exception = flightState.getException().get();
-          if (exception instanceof RuntimeException) {
-            return new JobResultOrException<T>().exception((RuntimeException) exception);
-          } else {
-            return new JobResultOrException<T>()
-                .exception(new JobResponseException("wrap non-runtime exception", exception));
-          }
-        }
-        throw new InvalidResultStateException("Failed operation with no exception reported");
-
+        return handleFailedFlight(flightState);
       case SUCCESS:
         return new JobResultOrException<T>()
             .result(resultMap.get(JobMapKeys.RESPONSE.getKeyName(), resultClass));
@@ -405,6 +400,19 @@ public class JobService {
       default:
         throw new InvalidResultStateException("Impossible case reached");
     }
+  }
+
+  private <T> JobResultOrException<T> handleFailedFlight(FlightState flightState) {
+    if (flightState.getException().isPresent()) {
+      Exception exception = flightState.getException().get();
+      if (exception instanceof RuntimeException) {
+        return new JobResultOrException<T>().exception((RuntimeException) exception);
+      } else {
+        return new JobResultOrException<T>()
+            .exception(new JobResponseException("wrap non-runtime exception", exception));
+      }
+    }
+    throw new InvalidResultStateException("Failed operation with no exception reported");
   }
 
   private FlightMap getResultMap(FlightState flightState) {

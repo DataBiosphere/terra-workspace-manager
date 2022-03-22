@@ -1,5 +1,6 @@
 package bio.terra.workspace.service.privateresource;
 
+import bio.terra.common.logging.LoggingUtils;
 import bio.terra.common.sam.exception.SamNotFoundException;
 import bio.terra.workspace.app.configuration.external.PrivateResourceCleanupConfiguration;
 import bio.terra.workspace.db.CronjobDao;
@@ -82,7 +83,7 @@ public class PrivateResourceCleanupService {
     try {
       cleanupResources();
     } catch (Exception e) {
-      logger.error("Error during privateResourceCleanup execution: ", e);
+      logger.error("Error during privateResourceCleanup execution: ", e, LoggingUtils.alertObject());
     }
   }
 
