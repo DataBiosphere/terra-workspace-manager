@@ -37,6 +37,8 @@ import com.azure.resourcemanager.compute.models.VirtualMachineSizeTypes;
 import com.azure.resourcemanager.compute.models.VirtualMachines;
 import com.azure.resourcemanager.network.NetworkManager;
 import com.azure.resourcemanager.network.models.Network;
+import com.azure.resourcemanager.network.models.NetworkInterface;
+import com.azure.resourcemanager.network.models.NetworkInterfaces;
 import com.azure.resourcemanager.network.models.NetworkSecurityGroup;
 import com.azure.resourcemanager.network.models.NetworkSecurityGroups;
 import com.azure.resourcemanager.network.models.NetworkSecurityRule;
@@ -74,9 +76,6 @@ public class CreateAzureVmStepTest extends BaseAzureTest {
   @Mock private VirtualMachine.DefinitionStages.Blank mockVmStage1;
   @Mock private VirtualMachine.DefinitionStages.WithGroup mockVmStage2;
   @Mock private VirtualMachine.DefinitionStages.WithNetwork mockVmStage3;
-  @Mock private VirtualMachine.DefinitionStages.WithSubnet mockVmStage4;
-  @Mock private VirtualMachine.DefinitionStages.WithPrivateIP mockVmStage5;
-  @Mock private VirtualMachine.DefinitionStages.WithPublicIPAddress mockVmStage6;
   @Mock private VirtualMachine.DefinitionStages.WithProximityPlacementGroup mockVmStage7;
 
   @Mock private VirtualMachine.DefinitionStages.WithLinuxCreateManaged mockVmStage10;
@@ -96,6 +95,15 @@ public class CreateAzureVmStepTest extends BaseAzureTest {
 
   @Mock private NetworkSecurityGroup mockNsg;
   @Mock private NetworkSecurityGroups mockNsgs;
+  @Mock private NetworkInterfaces mockNis;
+  @Mock private NetworkInterface.DefinitionStages.Blank mockNicDefine;
+  @Mock private NetworkInterface.DefinitionStages.WithGroup mockNicWithRegion;
+  @Mock private NetworkInterface.DefinitionStages.WithPrimaryNetwork mockNicWithExistingRg;
+  @Mock private NetworkInterface.DefinitionStages.WithPrimaryNetworkSubnet mockNicWithExistingPrimaryNetwork;
+  @Mock private NetworkInterface.DefinitionStages.WithPrimaryPrivateIP mockNicWithPrivateIp;
+  @Mock private NetworkInterface.DefinitionStages.WithCreate mockNicWithCreate;
+  @Mock private NetworkInterface mockNi;
+
   @Mock private NetworkSecurityGroup.DefinitionStages.Blank mockNetworkStage1;
   @Mock private NetworkSecurityGroup.DefinitionStages.WithGroup mockNetworkStage1a;
   @Mock private NetworkSecurityGroup.DefinitionStages.WithCreate mockNetworkStage2;
@@ -180,6 +188,15 @@ public class CreateAzureVmStepTest extends BaseAzureTest {
     // get network mocks
     when(mockNetworkManager.networks()).thenReturn(mockNetworks);
     when(mockNetworks.getByResourceGroup(anyString(), anyString())).thenReturn(mockNetwork);
+    when(mockNetworkManager.networkInterfaces()).thenReturn(mockNis);
+    when(mockNis.define(anyString())).thenReturn(mockNicDefine);
+    when(mockNicDefine.withRegion(anyString())).thenReturn(mockNicWithRegion);
+    when(mockNicWithRegion.withExistingResourceGroup(anyString())).thenReturn(mockNicWithExistingRg);
+    when(mockNicWithExistingRg.withExistingPrimaryNetwork(mockNetwork)).thenReturn(mockNicWithExistingPrimaryNetwork);
+    when(mockNicWithExistingPrimaryNetwork.withSubnet(anyString())).thenReturn(mockNicWithPrivateIp);
+    when(mockNicWithPrivateIp.withPrimaryPrivateIPAddressDynamic()).thenReturn(mockNicWithCreate);
+    when(mockNicWithCreate.withExistingPrimaryPublicIPAddress(mockPublicIpAddress)).thenReturn(mockNicWithCreate);
+    when(mockNicWithCreate.create()).thenReturn(mockNi);
 
     // create network security group mocks
     when(mockNetworkManager.networkSecurityGroups()).thenReturn(mockNsgs);
@@ -220,11 +237,7 @@ public class CreateAzureVmStepTest extends BaseAzureTest {
     when(mockVms.define(anyString())).thenReturn(mockVmStage1);
     when(mockVmStage1.withRegion(anyString())).thenReturn(mockVmStage2);
     when(mockVmStage2.withExistingResourceGroup(anyString())).thenReturn(mockVmStage3);
-    when(mockVmStage3.withExistingPrimaryNetwork(any(Network.class))).thenReturn(mockVmStage4);
-    when(mockVmStage4.withSubnet(anyString())).thenReturn(mockVmStage5);
-    when(mockVmStage5.withPrimaryPrivateIPAddressDynamic()).thenReturn(mockVmStage6);
-    when(mockVmStage6.withExistingPrimaryPublicIPAddress(any(PublicIpAddress.class)))
-        .thenReturn(mockVmStage7);
+    when(mockVmStage3.withExistingPrimaryNetworkInterface(mockNi)).thenReturn(mockVmStage7);
     when(mockVmStage7.withSpecializedLinuxCustomImage(anyString())).thenReturn(mockVmStage10);
     when(mockVmStage10.withExistingDataDisk(any(Disk.class))).thenReturn(mockVmStage11);
     when(mockVmStage11.withTag(anyString(), anyString())).thenReturn(mockVmStage11a);
