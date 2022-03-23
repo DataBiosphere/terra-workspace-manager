@@ -384,7 +384,10 @@ public class JobService {
       case FATAL:
         // Dismal failures always require manual intervention, so developers should be notified
         // if they happen.
-        LoggingUtils.logAlert(logger, "WSM Stairway encountered dismal failure");
+        logger.error(
+            "WSM Stairway flight {} encountered dismal failure",
+            flightState.getFlightId(),
+            LoggingUtils.alertObject());
         return handleFailedFlight(flightState);
       case ERROR:
         return handleFailedFlight(flightState);
@@ -412,6 +415,10 @@ public class JobService {
             .exception(new JobResponseException("wrap non-runtime exception", exception));
       }
     }
+    logger.error(
+        "WSM Stairway flight {} failed with no exception given",
+        flightState.getFlightId(),
+        LoggingUtils.alertObject());
     throw new InvalidResultStateException("Failed operation with no exception reported");
   }
 
