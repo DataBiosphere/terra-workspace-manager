@@ -91,15 +91,27 @@ public class CreateAzureVmStep implements Step {
               .getByResourceGroup(
                   azureCloudContext.getAzureResourceGroupId(), networkResource.getNetworkName());
 
+      var createNic =
+          computeManager
+              .networkManager()
+              .networkInterfaces()
+              .define(String.format("nic-%s", resource.getVmName()))
+              .withRegion(resource.getRegion())
+              .withExistingResourceGroup(azureCloudContext.getAzureResourceGroupId())
+              .withExistingPrimaryNetwork(existingNetwork)
+              .withSubnet(networkResource.getSubnetName())
+              .withPrimaryPrivateIPAddressDynamic()
+              .withExistingPrimaryPublicIPAddress(
+                  existingAzureIp) // TODO this needs to be updated to support not exposing public
+              // IP
+              .create();
+
       computeManager
           .virtualMachines()
           .define(resource.getVmName())
           .withRegion(resource.getRegion())
           .withExistingResourceGroup(azureCloudContext.getAzureResourceGroupId())
-          .withExistingPrimaryNetwork(existingNetwork)
-          .withSubnet(networkResource.getSubnetName())
-          .withPrimaryPrivateIPAddressDynamic()
-          .withExistingPrimaryPublicIPAddress(existingAzureIp)
+          .withExistingPrimaryNetworkInterface(createNic)
           // See here for difference between 'specialized' and 'general' LinuxCustomImage, the
           // managed disk storage option being the key factor
           // https://docs.microsoft.com/en-us/azure/virtual-machines/linux/imaging#generalized-and-specialized
