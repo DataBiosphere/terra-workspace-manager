@@ -419,7 +419,7 @@ public class JobService {
         "WSM Stairway flight {} failed with no exception given",
         flightState.getFlightId(),
         LoggingUtils.alertObject());
-    throw new InvalidResultStateException("Failed operation with no exception reported");
+    throw new InvalidResultStateException("Failed operation with no exception reported.");
   }
 
   private FlightMap getResultMap(FlightState flightState) {
