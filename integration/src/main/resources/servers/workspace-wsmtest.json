@@ -16,7 +16,6 @@
     "containerName": "workspacemanager-deployment",
     "apiComponentLabel":  "workspacemanager"
   },
-  "deploymentScript": {},
   "testRunnerServiceAccountFile": "testrunner-sa.json",
   "testRunnerK8SServiceAccountFile": "testrunner-k8s-wsmtest-sa.json",
 
