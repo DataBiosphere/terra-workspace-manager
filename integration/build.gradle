@@ -5,7 +5,7 @@ plugins {
     id 'application'
 
     // Terra Test Runner Plugin.
-    id 'bio.terra.test-runner-plugin' version '0.1.0-SNAPSHOT'
+    id 'bio.terra.test-runner-plugin' version '0.1.1-SNAPSHOT'
 }
 
 dependencies {
@@ -29,7 +29,7 @@ dependencies {
         googleNotebook = "v1-rev20201110-1.30.10"
 
         datarepoClient = "1.0.155-SNAPSHOT"
-        testRunnerVersion = "0.1.0-SNAPSHOT"
+        testRunnerVersion = "0.1.1-SNAPSHOT"
         samClient = "0.1-61135c7"
         tclClient = "0.0.51-SNAPSHOT"
     }
