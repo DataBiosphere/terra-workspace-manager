@@ -33,6 +33,11 @@ on:
         description: 'Part of the version to bump: major, minor, patch'
         required: false
         default: 'patch'
+        type: choice
+        options:
+          - patch
+          - minor
+          - major
       branch:
         description: 'Branch to run the workflow on'
         required: false
