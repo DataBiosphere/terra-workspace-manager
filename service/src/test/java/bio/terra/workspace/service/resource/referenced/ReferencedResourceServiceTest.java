@@ -247,7 +247,6 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
     @Test
     void createReferencedResourceDo() {
       Map<String, StepStatus> retrySteps = new HashMap<>();
-      retrySteps.put(ValidateReferenceStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
       retrySteps.put(
           CreateReferenceMetadataStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
       FlightDebugInfo debugInfo = FlightDebugInfo.newBuilder().doStepFailures(retrySteps).build();
@@ -266,7 +265,6 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
                 + "test undo step.")
     void createReferencedResourceUndo() {
       Map<String, StepStatus> retrySteps = new HashMap<>();
-      retrySteps.put(ValidateReferenceStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
       retrySteps.put(
           CreateReferenceMetadataStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
       FlightDebugInfo debugInfo =

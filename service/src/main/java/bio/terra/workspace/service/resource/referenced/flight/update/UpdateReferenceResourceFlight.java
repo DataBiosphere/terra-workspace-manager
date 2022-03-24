@@ -25,9 +25,6 @@ public class UpdateReferenceResourceFlight extends Flight {
     final ReferencedResource resource =
         inputParameters.get(ResourceKeys.RESOURCE, ReferencedResource.class);
 
-    // Perform access verification
-    addStep(new ValidateReferenceStep(appContext), RetryRules.cloud());
-
     RetryRule shortDatabaseRetryRule = RetryRules.shortDatabase();
     addStep(
         new RetrieveReferenceMetadataStep(
