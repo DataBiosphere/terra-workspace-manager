@@ -133,3 +133,4 @@ jobs:
         name: wsm-logs
         path: |
           wsm.log
+          ${{ steps.integration-test.outputs.results_dir }}
