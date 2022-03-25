@@ -29,9 +29,9 @@ public class ReferencedGitRepoLifecycle extends WorkspaceAllocateTestScriptBase 
   private UUID destinationWorkspaceId;
   private UUID gitResourceId;
 
-  public void setParameters(Map<String, String> parameters) throws Exception {
-    super.setParameters(parameters);
-    gitRepoAttributes = ParameterUtils.getSshGitRepoReference(parameters);
+  public void setParametersMap(Map<String, String> parametersMap) throws Exception {
+    super.setParametersMap(parametersMap);
+    gitRepoAttributes = ParameterUtils.getSshGitRepoReference(parametersMap);
   }
 
   @Override

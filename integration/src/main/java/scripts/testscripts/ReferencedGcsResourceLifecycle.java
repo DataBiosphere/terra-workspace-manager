@@ -48,12 +48,12 @@ public class ReferencedGcsResourceLifecycle extends WorkspaceAllocateTestScriptB
   private UUID folderResourceId;
   private UUID destinationWorkspaceId;
 
-  public void setParameters(Map<String, String> parameters) throws Exception {
-    super.setParameters(parameters);
-    gcsUniformAccessBucketAttributes = ParameterUtils.getUniformBucketReference(parameters);
-    gcsFineGrainedAccessBucketAttributes = ParameterUtils.getFineGrainedBucketReference(parameters);
-    gcsFileAttributes = ParameterUtils.getGcsFileReference(parameters);
-    gcsFolderAttributes = ParameterUtils.getGcsFolderReference(parameters);
+  public void setParametersMap(Map<String, String> parametersMap) throws Exception {
+    super.setParametersMap(parametersMap);
+    gcsUniformAccessBucketAttributes = ParameterUtils.getUniformBucketReference(parametersMap);
+    gcsFineGrainedAccessBucketAttributes = ParameterUtils.getFineGrainedBucketReference(parametersMap);
+    gcsFileAttributes = ParameterUtils.getGcsFileReference(parametersMap);
+    gcsFolderAttributes = ParameterUtils.getGcsFolderReference(parametersMap);
   }
 
   @Override
