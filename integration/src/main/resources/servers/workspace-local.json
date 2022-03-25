@@ -7,6 +7,7 @@
   "workspaceManagerUri": "http://localhost:8080",
 
   "cluster": {},
+  "deploymentScript": {},
   "testRunnerServiceAccountFile": "delegate-user-sa.json",
 
   "skipDeployment": true,
@@ -16,7 +17,7 @@
     {
       "name": "ReadFromGitCommitLog",
       "description": "Hash of local git branch from Git Commit Log",
-      "parameters": {
+      "parametersMap": {
         "git-dir": "../.git"
       }
     }

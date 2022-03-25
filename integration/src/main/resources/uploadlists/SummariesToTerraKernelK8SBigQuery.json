@@ -6,7 +6,7 @@
     {
       "name": "SummariesToBigQuery",
       "description": "Write the summary results to BigQuery with the Test Runner schema.",
-      "parameters": {
+      "parametersMap": {
         "project-id": "terra-kernel-k8s",
         "dataset-name": "test_runner_results"
       }

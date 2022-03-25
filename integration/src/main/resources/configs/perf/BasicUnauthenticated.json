@@ -11,7 +11,7 @@
       "userJourneyThreadPoolSize": 2,
       "expectedTimeForEach": 5,
       "expectedTimeForEachUnit": "SECONDS",
-      "parameters": {
+      "parametersMap": {
         "status-check-delay": 0
       }
     }
