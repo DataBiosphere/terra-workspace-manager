@@ -1,7 +1,7 @@
 # This workflow runs the WSM full regression tests, including perf, integration, and
 # resilience suites.
 
-name: TrDash Test 23
+name: TrDash Test 24
 
 on:
   push
@@ -90,6 +90,18 @@ jobs:
           version=$(curl https://workspace.wsmtest.integ.envs.broadinstitute.org/version)
           echo "$(date "+%Y-%m-%dT%H:%M:%S") post-sync wsmtest version: $version"
 
+      - name: clean databases before integration suite
+        if: always()
+        uses: ./.github/actions/clean-databases
+
+      - name: Run the integration test suite
+        id: integration-test
+        if: always()
+        uses: ./.github/actions/integration-test
+        with:
+          test-server: workspace-wsmtest.json
+          test: suites/FullIntegration.json
+
       - name: clean databases before perf suite
         if: always()
         uses: ./.github/actions/clean-databases
@@ -102,3 +114,14 @@ jobs:
           test-server: workspace-wsmtest.json
           test: suites/BasicPerf.json
 
+      - name: clean databases before resiliency suite
+        if: always()
+        uses: ./.github/actions/clean-databases
+
+      - name: Run the resiliency test suite
+        id: resiliency-test
+        if: always()
+        uses: ./.github/actions/integration-test
+        with:
+          test-server: workspace-wsmtest.json
+          test: suites/BasicResiliency.json
