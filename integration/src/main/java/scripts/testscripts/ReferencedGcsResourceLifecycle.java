@@ -51,7 +51,8 @@ public class ReferencedGcsResourceLifecycle extends WorkspaceAllocateTestScriptB
   public void setParametersMap(Map<String, String> parametersMap) throws Exception {
     super.setParametersMap(parametersMap);
     gcsUniformAccessBucketAttributes = ParameterUtils.getUniformBucketReference(parametersMap);
-    gcsFineGrainedAccessBucketAttributes = ParameterUtils.getFineGrainedBucketReference(parametersMap);
+    gcsFineGrainedAccessBucketAttributes =
+        ParameterUtils.getFineGrainedBucketReference(parametersMap);
     gcsFileAttributes = ParameterUtils.getGcsFileReference(parametersMap);
     gcsFolderAttributes = ParameterUtils.getGcsFolderReference(parametersMap);
   }

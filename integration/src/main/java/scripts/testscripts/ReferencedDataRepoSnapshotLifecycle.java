@@ -46,7 +46,7 @@ public class ReferencedDataRepoSnapshotLifecycle extends WorkspaceAllocateTestSc
     snapshotId = ParameterUtils.getDataRepoSnapshot(parametersMap);
     snapshotId2 =
         ParameterUtils.getParamOrThrow(
-                parametersMap, ParameterKeys.DATA_REPO_ALTERNATE_SNAPSHOT_PARAMETER);
+            parametersMap, ParameterKeys.DATA_REPO_ALTERNATE_SNAPSHOT_PARAMETER);
   }
 
   @Override

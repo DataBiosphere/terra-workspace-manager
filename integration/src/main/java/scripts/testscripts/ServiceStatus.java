@@ -23,7 +23,7 @@ public class ServiceStatus extends TestScript {
         Duration.ofSeconds(
             Long.parseLong(
                 ParameterUtils.getParamOrThrow(
-                        parametersMap, ParameterKeys.STATUS_CHECK_DELAY_PARAMETER)));
+                    parametersMap, ParameterKeys.STATUS_CHECK_DELAY_PARAMETER)));
   }
 
   @Override
