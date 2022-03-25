@@ -1,7 +1,7 @@
 # This workflow runs the WSM full regression tests, including perf, integration, and
 # resilience suites.
 
-name: TrDash Test 22
+name: TrDash Test 23
 
 on:
   push
