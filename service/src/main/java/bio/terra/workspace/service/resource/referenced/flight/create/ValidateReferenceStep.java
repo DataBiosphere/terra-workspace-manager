@@ -12,6 +12,7 @@ import bio.terra.workspace.service.resource.referenced.cloud.gcp.ReferencedResou
 import bio.terra.workspace.service.resource.referenced.exception.InvalidReferenceException;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ResourceKeys;
 // Note: this is technically dead code, but will be used again soon in PF-1427
+
 public class ValidateReferenceStep implements Step {
 
   private final FlightBeanBag beanBag;

@@ -37,7 +37,6 @@ import bio.terra.workspace.service.resource.referenced.cloud.gcp.gcsbucket.Refer
 import bio.terra.workspace.service.resource.referenced.cloud.gcp.gcsobject.ReferencedGcsObjectResource;
 import bio.terra.workspace.service.resource.referenced.exception.InvalidReferenceException;
 import bio.terra.workspace.service.resource.referenced.flight.create.CreateReferenceMetadataStep;
-import bio.terra.workspace.service.resource.referenced.flight.create.ValidateReferenceStep;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
