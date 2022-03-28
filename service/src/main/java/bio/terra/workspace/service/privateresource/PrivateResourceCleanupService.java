@@ -83,8 +83,8 @@ public class PrivateResourceCleanupService {
     try {
       cleanupResources();
     } catch (Exception e) {
-      logger.error(
-          "Error during privateResourceCleanup execution: ", e, LoggingUtils.alertObject());
+      LoggingUtils.logAlert(logger, "Unexpected error during privateResourceCleanup execution, see stacktrace below");
+      logger.error("privateResourceCleanup stacktrace: ", e);
     }
   }
 
