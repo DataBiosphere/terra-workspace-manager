@@ -6,7 +6,7 @@
     {
       "name": "SummariesToBigQuery",
       "description": "Write the summary results to BigQuery with the Test Runner schema.",
-      "parameters": {
+      "parametersMap": {
         "project-id": "broad-dsde-dev",
         "dataset-name": "test_runner_results"
       }

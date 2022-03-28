@@ -11,7 +11,7 @@
       "userJourneyThreadPoolSize": 1,
       "expectedTimeForEach": 10,
       "expectedTimeForEachUnit": "MINUTES",
-      "parameters": {
+      "parametersMap": {
         "spend-profile-id": "wm-default-spend-profile"
       }
     }
