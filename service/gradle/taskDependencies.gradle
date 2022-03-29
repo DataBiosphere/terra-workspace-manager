@@ -2,4 +2,4 @@ tasks.compileJava.dependsOn(swaggerSources.server.code, generateVersionPropertie
 tasks.jib.dependsOn(extractProfilerAgent)
 tasks.jibDockerBuild.dependsOn(extractProfilerAgent)
 tasks.jibBuildTar.dependsOn(extractProfilerAgent)
-tasks.spotlessJava.dependsOn(generateSwaggerCodeServer, tasks.getByPath(':client:generateSwaggerCodeClient'))
+tasks.spotlessJava.dependsOn(generateSwaggerCodeServer)
