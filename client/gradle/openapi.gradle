@@ -28,7 +28,7 @@ swaggerSources {
 }
 
 // Internal dependencies
-generateSwaggerCodeClient.dependsOn(tasks.getByPath(':openapi:buildOpenApi'))
+generateSwaggerCodeClient.dependsOn(':openapi:buildOpenApi')
 sourceSets.main.java.srcDir "${openapiOutputDir}/src/main/java"
 compileJava.dependsOn swaggerSources.client.code
 // This should not be dependency on client code for spotless, but there's an accidental implicit one.

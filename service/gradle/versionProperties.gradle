@@ -4,11 +4,19 @@
 // what we need, so easily replaced with a bash script
 def generatedVersionFile = "${resourceDir}/generated/version.properties"
 
+
 task generateVersionProperties(type: Exec) {
+  description("Produce a version.properties file based on Git properties for use by the WSM server application.")
   commandLine "${projectDir}/writeVersionProperties.sh", "${version}", "${generatedVersionFile}"
-  outputs.files(generatedVersionFile) // for up-to-date checking only
+  // This task should run every time, as Gradle has no knowledge of when git properties such as the
+  // SHA change. This also means we should not mark generatedVersionFile as output. It might be
+  // possible to add logic that calls git within this block for more accurate out-of-date checking
+  // but this task takes very little time. The right way to do it might be to have three precursor
+  // tasks for the hash, build, and tag, and declare this task dependent on those.
+  outputs.upToDateWhen { false }
+  outputs.file(generatedVersionFile)
 }
 
-task cleanVersionProperties(type: Exec) {
-  commandLine "rm", "-f", "${generatedVersionFile}"
+clean.doFirst {
+  delete(generatedVersionFile)
 }
