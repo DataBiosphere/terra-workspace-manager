@@ -6,3 +6,51 @@ plugins {
 def includeDir = "$projectDir/gradle"
 apply(from: "$includeDir/dependencies.gradle")
 apply(from: "$includeDir/openapi.gradle")
+
+spotbugsMain.configure {
+    // This task is useless, as we don't care what generated code looks like. More importantly, it
+    // also causes false positives in the up-to-date checking.
+    onlyIf {
+        return false
+    }
+}
+
+spotbugsTest.configure {
+    // This task is useless, as we don't care what generated code looks like. More importantly, it
+    // also causes false positives in the up-to-date checking.
+    onlyIf {
+        return false
+    }
+}
+
+spotlessJava.configure {
+    // This task is useless, as we don't care what generated code looks like. More importantly, it
+    // also causes false positives in the up-to-date checking.
+    onlyIf {
+        return false
+    }
+}
+
+spotlessJavaApply.configure {
+    // This task is useless, as we don't care what generated code looks like. More importantly, it
+    // also causes false positives in the up-to-date checking.
+    onlyIf {
+        return false
+    }
+}
+
+spotlessJavaCheck.configure {
+    // This task is useless, as we don't care what generated code looks like. More importantly, it
+    // also causes false positives in the up-to-date checking.
+    onlyIf {
+        return false
+    }
+}
+
+spotlessCheck.configure {
+    // This task is useless, as we don't care what generated code looks like. More importantly, it
+    // also causes false positives in the up-to-date checking.
+    onlyIf {
+        return false
+    }
+}
