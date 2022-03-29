@@ -9,6 +9,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.fasterxml.jackson.module.paramnames.ParameterNamesModule;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.springframework.beans.factory.SmartInitializingSingleton;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
@@ -25,21 +26,23 @@ public class BeanConfig {
   }
 
   public static class HTMLCharacterEscapes extends CharacterEscapes {
-    private final int[] asciiEscapes;
+    private static final int[] asciiEscapes;
 
-    public HTMLCharacterEscapes() {
+    static {
       // Start with a copy of the default set of escaped characters, then modify.
-      int[] esc = CharacterEscapes.standardAsciiEscapesForJSON();
+      asciiEscapes = CharacterEscapes.standardAsciiEscapesForJSON();
       // Escape HTML metacharacters for security reasons. For JSON, CharacterEscapes.ESCAPE_STANDARD
       // means unicode-escaping.
-      esc['<'] = CharacterEscapes.ESCAPE_STANDARD;
-      esc['>'] = CharacterEscapes.ESCAPE_STANDARD;
-      esc['&'] = CharacterEscapes.ESCAPE_STANDARD;
-      asciiEscapes = esc;
+      asciiEscapes['<'] = CharacterEscapes.ESCAPE_STANDARD;
+      asciiEscapes['>'] = CharacterEscapes.ESCAPE_STANDARD;
+      asciiEscapes['&'] = CharacterEscapes.ESCAPE_STANDARD;
     }
 
     /** Return the escape codes used for ASCII characters. */
     @Override
+    @SuppressFBWarnings(
+        value = "EI",
+        justification = "per base class documentation, callers may not modify returned value")
     public int[] getEscapeCodesForAscii() {
       return asciiEscapes;
     }
