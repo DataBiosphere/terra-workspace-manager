@@ -14,8 +14,8 @@ components:
         vmSize:
           description: A valid image size as per com.azure.resourcemanager.compute.models.VirtualMachineSizeTypes
           type: string
-        vmImageUri:
-          description: A valid image Uri. Must be in the same region specified. E.x. /subscriptions/3efc5bdf-be0e-44e7-b1d7-c08931e3c16c/resourceGroups/mrg-qi-1-preview-20210517084351/providers/Microsoft.Compute/galleries/msdsvm/images/customized_ms_dsvm/versions/0.0.4
+        vmImage:
+          description: A valid data which identifies the VM image
           type: string
         ipId:
           description: A valid WSM identifier for an Azure Ip that corresponds to a valid azure resource

@@ -1,12 +1,17 @@
 package bio.terra.workspace.common.fixtures;
 
 import bio.terra.stairway.ShortUUID;
+import bio.terra.workspace.common.utils.AzureVmUtils;
 import bio.terra.workspace.generated.model.ApiAzureDiskCreationParameters;
 import bio.terra.workspace.generated.model.ApiAzureIpCreationParameters;
 import bio.terra.workspace.generated.model.ApiAzureNetworkCreationParameters;
 import bio.terra.workspace.generated.model.ApiAzureRelayNamespaceCreationParameters;
 import bio.terra.workspace.generated.model.ApiAzureStorageCreationParameters;
 import bio.terra.workspace.generated.model.ApiAzureVmCreationParameters;
+import bio.terra.workspace.generated.model.ApiAzureVmCustomScriptExtension;
+import bio.terra.workspace.generated.model.ApiAzureVmCustomScriptExtensionSetting;
+import bio.terra.workspace.generated.model.ApiAzureVmCustomScriptExtensionTag;
+import bio.terra.workspace.generated.model.ApiAzureVmImage;
 import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceCreationParameters;
 import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceVmImage;
 import bio.terra.workspace.generated.model.ApiGcpBigQueryDatasetCreationParameters;
@@ -46,6 +51,7 @@ import com.google.common.collect.ImmutableList;
 import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
@@ -154,11 +160,42 @@ public class ControlledResourceFixtures {
         .vmSize(VirtualMachineSizeTypes.STANDARD_D2S_V3.toString())
         // TODO: it'd be nice to support standard Linux OSes in addition to custom image URIs.
         // The below image is a Jupyter image and should be stable.
-        .vmImageUri(
-            "/subscriptions/3efc5bdf-be0e-44e7-b1d7-c08931e3c16c/resourceGroups/mrg-qi-1-preview-20210517084351/providers/Microsoft.Compute/galleries/msdsvm/images/customized_ms_dsvm/versions/0.1.0")
+        .vmImage(
+            new ApiAzureVmImage()
+                .uri(
+                    "/subscriptions/3efc5bdf-be0e-44e7-b1d7-c08931e3c16c/resourceGroups/mrg-qi-1-preview-20210517084351/providers/Microsoft.Compute/galleries/msdsvm/images/customized_ms_dsvm/versions/0.1.0"))
         .ipId(UUID.randomUUID())
         .diskId(UUID.randomUUID())
-        .networkId(UUID.randomUUID());
+        .networkId(UUID.randomUUID())
+        .customScriptExtension(getAzureVmCustomScriptExtension());
+  }
+
+  public static ApiAzureVmCustomScriptExtension getAzureVmCustomScriptExtension() {
+    final String[] customScriptFileUri =
+        new String[] {
+          "https://raw.githubusercontent.com/DataBiosphere/leonardo/TOAZ-83-dummy-script/http/src/main/resources/init-resources/msdsvmcontent/dummy_script.sh"
+        };
+    final String commandToExecute = "bash dummy_script.sh hello";
+
+    var publicSettings =
+        Arrays.asList(
+            new ApiAzureVmCustomScriptExtensionSetting().key("fileUris").value(customScriptFileUri),
+            new ApiAzureVmCustomScriptExtensionSetting()
+                .key("commandToExecute")
+                .value(commandToExecute));
+
+    var tags =
+        Collections.singletonList(
+            new ApiAzureVmCustomScriptExtensionTag().key("tag").value("tagValue"));
+
+    return new ApiAzureVmCustomScriptExtension()
+        .name("vm-custom-script-extension")
+        .publisher("Microsoft.Azure.Extensions")
+        .type("CustomScript")
+        .version("2.1")
+        .minorVersionAutoUpgrade(true)
+        .publicSettings(publicSettings)
+        .tags(tags);
   }
 
   public static String uniqueBucketName() {
@@ -317,7 +354,7 @@ public class ControlledResourceFixtures {
         creationParameters.getName(),
         creationParameters.getRegion(),
         creationParameters.getVmSize(),
-        creationParameters.getVmImageUri(),
+        AzureVmUtils.getImageData(creationParameters.getVmImage()),
         creationParameters.getIpId(),
         creationParameters.getNetworkId(),
         creationParameters.getDiskId());

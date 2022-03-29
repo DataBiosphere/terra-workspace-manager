@@ -8,7 +8,7 @@ public class ControlledAzureVmAttributes {
   private final String vmName;
   private final String region;
   private final String vmSize;
-  private final String vmImageUri;
+  private final String vmImage;
 
   private final UUID ipId;
   private final UUID networkId;
@@ -19,14 +19,14 @@ public class ControlledAzureVmAttributes {
       @JsonProperty("vmName") String vmName,
       @JsonProperty("region") String region,
       @JsonProperty("vmSize") String vmSize,
-      @JsonProperty("vmImageUri") String vmImageUri,
+      @JsonProperty("vmImage") String vmImage,
       @JsonProperty("ipId") UUID ipId,
       @JsonProperty("networkId") UUID networkId,
       @JsonProperty("diskId") UUID diskId) {
     this.vmName = vmName;
     this.region = region;
     this.vmSize = vmSize;
-    this.vmImageUri = vmImageUri;
+    this.vmImage = vmImage;
 
     this.ipId = ipId;
     this.networkId = networkId;
@@ -45,8 +45,8 @@ public class ControlledAzureVmAttributes {
     return vmSize;
   }
 
-  public String getVmImageUri() {
-    return vmImageUri;
+  public String getVmImage() {
+    return vmImage;
   }
 
   public UUID getIpId() {

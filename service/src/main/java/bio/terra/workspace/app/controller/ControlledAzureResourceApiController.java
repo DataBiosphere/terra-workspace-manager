@@ -2,6 +2,7 @@ package bio.terra.workspace.app.controller;
 
 import bio.terra.common.exception.ApiException;
 import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
+import bio.terra.workspace.common.utils.AzureVmUtils;
 import bio.terra.workspace.generated.controller.ControlledAzureResourceApi;
 import bio.terra.workspace.generated.model.ApiAzureDiskResource;
 import bio.terra.workspace.generated.model.ApiAzureIpResource;
@@ -215,7 +216,7 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
             .vmName(body.getAzureVm().getName())
             .region(body.getAzureVm().getRegion())
             .vmSize(body.getAzureVm().getVmSize())
-            .vmImageUri(body.getAzureVm().getVmImageUri())
+            .vmImage(AzureVmUtils.getImageData(body.getAzureVm().getVmImage()))
             .ipId(body.getAzureVm().getIpId())
             .networkId(body.getAzureVm().getNetworkId())
             .diskId(body.getAzureVm().getDiskId())

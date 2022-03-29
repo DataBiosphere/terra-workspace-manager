@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import bio.terra.workspace.common.BaseConnectedTest;
 import bio.terra.workspace.common.exception.FeatureNotSupportedException;
 import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
+import bio.terra.workspace.common.utils.AzureVmUtils;
 import bio.terra.workspace.connected.UserAccessUtils;
 import bio.terra.workspace.generated.model.ApiAzureDiskCreationParameters;
 import bio.terra.workspace.generated.model.ApiAzureIpCreationParameters;
@@ -123,7 +124,7 @@ public class AzureDisabledTest extends BaseConnectedTest {
             .common(commonFields)
             .vmName(vmCreationParameters.getName())
             .vmSize(vmCreationParameters.getVmSize())
-            .vmImageUri(vmCreationParameters.getVmImageUri())
+            .vmImage(AzureVmUtils.getImageData(vmCreationParameters.getVmImage()))
             .region(vmCreationParameters.getRegion())
             .ipId(ipResource.getResourceId())
             .diskId(diskResource.getResourceId())
