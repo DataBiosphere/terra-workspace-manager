@@ -33,6 +33,11 @@ on:
         description: 'Part of the version to bump: major, minor, patch'
         required: false
         default: 'patch'
+        type: choice
+        options:
+          - patch
+          - minor
+          - major
       branch:
         description: 'Branch to run the workflow on'
         required: false
@@ -107,7 +112,7 @@ jobs:
         ARTIFACTORY_REPO_KEY: "libs-snapshot-local"
     - name: Auth to GCR
       if: steps.skiptest.outputs.is-bump == 'no'
-      uses: google-github-actions/setup-gcloud@master
+      uses: google-github-actions/setup-gcloud@v0
       with:
         version: '270.0.0'
         service_account_email: ${{ secrets.GCR_PUBLISH_EMAIL }}

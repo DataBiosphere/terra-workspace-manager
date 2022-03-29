@@ -9,6 +9,7 @@ import bio.terra.workspace.service.resource.exception.InvalidNameException;
 import bio.terra.workspace.service.resource.referenced.exception.InvalidReferenceException;
 import com.azure.core.management.Region;
 import com.azure.resourcemanager.compute.models.VirtualMachineSizeTypes;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -35,8 +36,23 @@ public class ResourceValidationUtils {
    * letters, numbers, dashes, underscores, and dots, and must start and end with a letter or
    * number. Matching this pattern is necessary but not sufficient for a valid bucket name.
    */
-  public static final Pattern BUCKET_NAME_VALIDATION_PATTERN =
+  public static final Pattern REFERENCED_BUCKET_NAME_VALIDATION_PATTERN =
       Pattern.compile("^[a-z0-9][-_.a-z0-9]{1,220}[a-z0-9]$");
+
+  /**
+   * Similar to REFERENCED_BUCKET_NAME_VALIDATION_PATTERN, except prohibits underscores. GCP
+   * recommends against underscores in bucket names because DNS hostnames can't have underscores. In
+   * particular, Nextflow fails if bucket name has underscore (because bucket name isn't valid DNS
+   * hostname.)
+   */
+  public static final Pattern CONTROLLED_BUCKET_NAME_VALIDATION_PATTERN =
+      Pattern.compile("^[a-z0-9][-.a-z0-9]{1,220}[a-z0-9]$");
+
+  private static final String REFERENCED_BUCKET_NAME_VALIDATION_FAILURE_ERROR =
+      "Invalid GCS bucket name specified. Names must be 3-222 lowercase letters, numbers, dashes, and underscores. See Google documentation for the full specification.";
+
+  private static final String CONTROLLED_BUCKET_NAME_VALIDATION_FAILURE_ERROR =
+      "Invalid GCS bucket name specified. Names must be 3-222 lowercase letters, numbers, and dashes. See Google documentation for the full specification.";
 
   /**
    * Azure Storage Account name validation valid. An storage account name must be between 3-24
@@ -98,6 +114,21 @@ public class ResourceValidationUtils {
       GitRepoReferencedResourceConfiguration gitRepoReferencedResourceConfiguration) {
     this.gitRepoReferencedResourceConfiguration = gitRepoReferencedResourceConfiguration;
   }
+
+  public static void validateControlledBucketName(String name) {
+    validateBucketName(
+        name,
+        CONTROLLED_BUCKET_NAME_VALIDATION_PATTERN,
+        CONTROLLED_BUCKET_NAME_VALIDATION_FAILURE_ERROR);
+  }
+
+  public static void validateReferencedBucketName(String name) {
+    validateBucketName(
+        name,
+        REFERENCED_BUCKET_NAME_VALIDATION_PATTERN,
+        REFERENCED_BUCKET_NAME_VALIDATION_FAILURE_ERROR);
+  }
+
   /**
    * Validates gcs-bucket name following Google documentation
    * https://cloud.google.com/storage/docs/naming-buckets#requirements on a best-effort base.
@@ -105,14 +136,16 @@ public class ResourceValidationUtils {
    * <p>This method DOES NOT guarentee that the bucket name is valid.
    *
    * @param name gcs-bucket name
+   * @param validationFailureError
    * @throws InvalidNameException throws exception when the bucket name fails to conform to the
    *     Google naming convention for bucket name.
    */
-  public static void validateBucketName(String name) {
-    if (StringUtils.isEmpty(name) || !BUCKET_NAME_VALIDATION_PATTERN.matcher(name).matches()) {
+  @VisibleForTesting
+  public static void validateBucketName(
+      String name, Pattern validationPattern, String validationFailureError) {
+    if (StringUtils.isEmpty(name) || !validationPattern.matcher(name).matches()) {
       logger.warn("Invalid bucket name {}", name);
-      throw new InvalidNameException(
-          "Invalid GCS bucket name specified. Names must be 3-222 lowercase letters, numbers, dashes, and underscores. See Google documentation for the full specification.");
+      throw new InvalidNameException(validationFailureError);
     }
     for (String s : name.split("\\.")) {
       if (s.length() > 63) {
@@ -224,7 +257,7 @@ public class ResourceValidationUtils {
     if (!AZURE_RELAY_NAMESPACE_PATTERN.matcher(name).matches()
         || name.length() > 50
         || name.length() < 6) {
-      logger.warn("Invalid Azure Namespace", name);
+      logger.warn("Invalid Azure Namespace {}", name);
       throw new InvalidReferenceException(
           "Invalid Azure Namespace specified. See documentation for full specification https://docs.microsoft.com/en-us/azure/azure-resource-manager/management/resource-name-rules.");
     }

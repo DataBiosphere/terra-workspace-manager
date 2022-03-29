@@ -51,7 +51,7 @@ public class ClientTestUtils {
 
   public static final String RESOURCE_NAME_PREFIX = "terratest";
   // We may want this to be a test parameter. It has to match what is in the config or in the helm
-  public static final UUID TEST_WSM_APP = UUID.fromString("E4C0924A-3D7D-4D3D-8DE4-3D2CF50C3818");
+  public static final String TEST_WSM_APP = "TestWsmApp";
   private static final Logger logger = LoggerFactory.getLogger(ClientTestUtils.class);
 
   // Required scopes for client tests include the usual login scopes and GCP scope.
@@ -370,8 +370,14 @@ public class ClientTestUtils {
    * @return - value of optional, if present
    */
   @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
-  public static <T> T getOrFail(Optional<T> optional) {
-    assertTrue(optional.isPresent(), "Optional value was empty.");
+  public static <T> T assertPresent(Optional<T> optional, @Nullable String message) {
+    assertTrue(
+        optional.isPresent(), Optional.ofNullable(message).orElse("Optional value not present."));
     return optional.get();
+  }
+
+  @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
+  public static <T> T assertPresent(Optional<T> optional) {
+    return assertPresent(optional, null);
   }
 }

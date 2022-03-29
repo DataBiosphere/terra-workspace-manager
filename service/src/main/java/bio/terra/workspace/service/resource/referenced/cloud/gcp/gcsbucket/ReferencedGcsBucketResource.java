@@ -121,7 +121,9 @@ public class ReferencedGcsBucketResource extends ReferencedResource {
     if (Strings.isNullOrEmpty(getBucketName())) {
       throw new MissingRequiredFieldException("Missing required field for ReferenceGcsBucket.");
     }
-    ResourceValidationUtils.validateBucketName(getBucketName());
+    // Validate in case there's a typo and user gave wrong name. This gives a slightly more usable
+    // error message than "You do not have access to bucket".
+    ResourceValidationUtils.validateReferencedBucketName(getBucketName());
   }
 
   @Override

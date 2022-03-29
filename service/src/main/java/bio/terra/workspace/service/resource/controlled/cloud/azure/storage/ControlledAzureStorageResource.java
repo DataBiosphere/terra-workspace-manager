@@ -47,7 +47,7 @@ public class ControlledAzureStorageResource extends ControlledResource {
       @JsonProperty("privateResourceState") PrivateResourceState privateResourceState,
       @JsonProperty("accessScope") AccessScopeType accessScope,
       @JsonProperty("managedBy") ManagedByType managedBy,
-      @JsonProperty("applicationId") UUID applicationId,
+      @JsonProperty("applicationId") String applicationId,
       @JsonProperty("storageAccountName") String storageAccountName,
       @JsonProperty("region") String region) {
 

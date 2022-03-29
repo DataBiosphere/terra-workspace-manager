@@ -11,7 +11,7 @@
       "userJourneyThreadPoolSize": 1,
       "expectedTimeForEach": 5,
       "expectedTimeForEachUnit": "MINUTES",
-      "parameters": {
+      "parametersMap": {
         "spend-profile-id": "wm-default-spend-profile",
         "gcs-bucket": "gs://terra_wsm_fine_grained_test_bucket",
         "gcs-uniform-bucket": "gs://terra_wsm_test_resource",

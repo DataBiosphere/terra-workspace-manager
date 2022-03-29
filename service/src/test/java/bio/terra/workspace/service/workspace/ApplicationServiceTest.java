@@ -46,14 +46,14 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 // Enumerate/get
 
 public class ApplicationServiceTest extends BaseUnitTest {
-  private static final UUID LEO_UUID = UUID.fromString("4BD1D59D-5827-4375-A41D-BBC65919F269");
-  private static final UUID CARMEN_UUID = UUID.fromString("EB9D37F5-BAD7-4951-AE9A-86B3F03F4DD7");
-  private static final UUID NORM_UUID = UUID.fromString("DB186A44-2881-4CD6-9D1B-65441574C3B1");
-  private static final UUID UNKNOWN_UUID = UUID.fromString("DB186A44-2881-4CD6-9D1B-65441574C3B2");
+  private static final String LEO_ID = "4BD1D59D-5827-4375-A41D-BBC65919F269";
+  private static final String CARMEN_ID = "Carmen";
+  private static final String NORM_ID = "normal";
+  private static final String UNKNOWN_ID = "never-heard_of_you";
 
   private static final WsmApplication LEO_APP =
       new WsmApplication()
-          .applicationId(LEO_UUID)
+          .applicationId(LEO_ID)
           .displayName("Leo")
           .description("application execution framework")
           .serviceAccount("leo@terra-dev.iam.gserviceaccount.com")
@@ -61,7 +61,7 @@ public class ApplicationServiceTest extends BaseUnitTest {
 
   private static final WsmApplication CARMEN_APP =
       new WsmApplication()
-          .applicationId(CARMEN_UUID)
+          .applicationId(CARMEN_ID)
           .displayName("Carmen")
           .description("musical performance framework")
           .serviceAccount("carmen@terra-dev.iam.gserviceaccount.com")
@@ -69,7 +69,7 @@ public class ApplicationServiceTest extends BaseUnitTest {
 
   private static final WsmApplication NORM_APP =
       new WsmApplication()
-          .applicationId(NORM_UUID)
+          .applicationId(NORM_ID)
           .displayName("Norm")
           .description("old house framework")
           .serviceAccount("norm@terra-dev.iam.gserviceaccount.com")
@@ -110,7 +110,7 @@ public class ApplicationServiceTest extends BaseUnitTest {
 
     // Populate the applications - this should be idempotent since we are
     // re-creating the same configuration every time.
-    Map<UUID, WsmDbApplication> dbAppMap = appService.buildAppMap();
+    Map<String, WsmDbApplication> dbAppMap = appService.buildAppMap();
     appService.processApp(LEO_APP, dbAppMap);
     appService.processApp(CARMEN_APP, dbAppMap);
     appService.processApp(NORM_APP, dbAppMap);
@@ -142,55 +142,55 @@ public class ApplicationServiceTest extends BaseUnitTest {
     enumerateCheck(false, false, false);
 
     // enable leo - should work
-    appService.enableWorkspaceApplication(USER_REQUEST, workspaceId, LEO_UUID);
+    appService.enableWorkspaceApplication(USER_REQUEST, workspaceId, LEO_ID);
 
     // enable carmen - should fail - deprecated
     assertThrows(
         InvalidApplicationStateException.class,
-        () -> appService.enableWorkspaceApplication(USER_REQUEST, workspaceId, CARMEN_UUID));
+        () -> appService.enableWorkspaceApplication(USER_REQUEST, workspaceId, CARMEN_ID));
 
     // enable norm - should fail - decommissioned
     assertThrows(
         InvalidApplicationStateException.class,
-        () -> appService.enableWorkspaceApplication(USER_REQUEST, workspaceId, NORM_UUID));
+        () -> appService.enableWorkspaceApplication(USER_REQUEST, workspaceId, NORM_ID));
 
     enumerateCheck(true, false, false);
 
     // Use the DAO directly and skip the check to enable carmen so we can check that state.
-    appDao.enableWorkspaceApplicationNoCheck(workspaceId, CARMEN_UUID);
+    appDao.enableWorkspaceApplicationNoCheck(workspaceId, CARMEN_ID);
     enumerateCheck(true, true, false);
 
     // test the argument checking
     assertThrows(
         ApplicationNotFoundException.class,
-        () -> appService.enableWorkspaceApplication(USER_REQUEST, workspaceId, UNKNOWN_UUID));
+        () -> appService.enableWorkspaceApplication(USER_REQUEST, workspaceId, UNKNOWN_ID));
     assertThrows(
         WorkspaceNotFoundException.class,
-        () -> appService.enableWorkspaceApplication(USER_REQUEST, UNKNOWN_UUID, LEO_UUID));
+        () -> appService.enableWorkspaceApplication(USER_REQUEST, UUID.randomUUID(), LEO_ID));
 
     // explicit get
     WsmWorkspaceApplication wsmApp =
-        appService.getWorkspaceApplication(USER_REQUEST, workspaceId, LEO_UUID);
+        appService.getWorkspaceApplication(USER_REQUEST, workspaceId, LEO_ID);
     assertEquals(LEO_APP, wsmApp.getApplication());
     assertTrue(wsmApp.isEnabled());
 
     // get from workspace2
-    wsmApp = appService.getWorkspaceApplication(USER_REQUEST, workspaceId2, LEO_UUID);
+    wsmApp = appService.getWorkspaceApplication(USER_REQUEST, workspaceId2, LEO_ID);
     assertEquals(LEO_APP, wsmApp.getApplication());
     assertFalse(wsmApp.isEnabled());
 
     // enable Leo in workspace2
-    appService.enableWorkspaceApplication(USER_REQUEST, workspaceId2, LEO_UUID);
+    appService.enableWorkspaceApplication(USER_REQUEST, workspaceId2, LEO_ID);
 
     // do the disables...
-    appService.disableWorkspaceApplication(USER_REQUEST, workspaceId, LEO_UUID);
+    appService.disableWorkspaceApplication(USER_REQUEST, workspaceId, LEO_ID);
     enumerateCheck(false, true, false);
 
-    appService.disableWorkspaceApplication(USER_REQUEST, workspaceId, CARMEN_UUID);
+    appService.disableWorkspaceApplication(USER_REQUEST, workspaceId, CARMEN_ID);
     enumerateCheck(false, false, false);
 
     // make sure Leo is still enabled in workspace2
-    wsmApp = appService.getWorkspaceApplication(USER_REQUEST, workspaceId2, LEO_UUID);
+    wsmApp = appService.getWorkspaceApplication(USER_REQUEST, workspaceId2, LEO_ID);
     assertEquals(LEO_APP, wsmApp.getApplication());
     assertTrue(wsmApp.isEnabled());
   }
@@ -201,11 +201,11 @@ public class ApplicationServiceTest extends BaseUnitTest {
     // There may be stray applications in the DB, so we make sure that we at least have ours
     assertThat(wsmAppList.size(), greaterThanOrEqualTo(3));
     for (WsmWorkspaceApplication wsmApp : wsmAppList) {
-      if (wsmApp.getApplication().getApplicationId().equals(LEO_UUID)) {
+      if (wsmApp.getApplication().getApplicationId().equals(LEO_ID)) {
         assertEquals(leoEnabled, wsmApp.isEnabled());
-      } else if (wsmApp.getApplication().getApplicationId().equals(CARMEN_UUID)) {
+      } else if (wsmApp.getApplication().getApplicationId().equals(CARMEN_ID)) {
         assertEquals(carmenEnabled, wsmApp.isEnabled());
-      } else if (wsmApp.getApplication().getApplicationId().equals(NORM_UUID)) {
+      } else if (wsmApp.getApplication().getApplicationId().equals(NORM_ID)) {
         assertEquals(normEnabled, wsmApp.isEnabled());
       }
     }

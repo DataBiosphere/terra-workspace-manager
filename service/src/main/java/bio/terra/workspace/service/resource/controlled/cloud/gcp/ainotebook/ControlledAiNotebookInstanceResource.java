@@ -59,7 +59,7 @@ public class ControlledAiNotebookInstanceResource extends ControlledResource {
       @JsonProperty("privateResourceState") PrivateResourceState privateResourceState,
       @JsonProperty("accessScope") AccessScopeType accessScope,
       @JsonProperty("managedBy") ManagedByType managedBy,
-      @JsonProperty("application") UUID applicationId,
+      @JsonProperty("application") String applicationId,
       @JsonProperty("instanceId") String instanceId,
       @JsonProperty("location") String location,
       @JsonProperty("projectId") String projectId) {
@@ -135,7 +135,8 @@ public class ControlledAiNotebookInstanceResource extends ControlledResource {
             flightBeanBag.getSamService()),
         gcpRetryRule);
     flight.addStep(
-        new CreateAiNotebookInstanceStep(this, petSaEmail, flightBeanBag.getCrlService()),
+        new CreateAiNotebookInstanceStep(
+            this, petSaEmail, flightBeanBag.getCrlService(), flightBeanBag.getCliConfiguration()),
         gcpRetryRule);
     flight.addStep(
         new NotebookCloudSyncStep(

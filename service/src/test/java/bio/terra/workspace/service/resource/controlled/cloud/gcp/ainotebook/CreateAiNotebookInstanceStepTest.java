@@ -4,8 +4,9 @@ import static bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebo
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import bio.terra.common.exception.BadRequestException;
+import bio.terra.common.exception.ConflictException;
 import bio.terra.workspace.common.BaseUnitTest;
 import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceAcceleratorConfig;
 import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceContainerImage;
@@ -15,16 +16,19 @@ import com.google.api.services.notebooks.v1.model.Instance;
 import com.google.common.collect.ImmutableList;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.Test;
 
 public class CreateAiNotebookInstanceStepTest extends BaseUnitTest {
 
-  private List<String> sa_scopes =
+  private static final List<String> SA_SCOPES =
       ImmutableList.of(
           "https://www.googleapis.com/auth/cloud-platform",
           "https://www.googleapis.com/auth/userinfo.email",
           "https://www.googleapis.com/auth/userinfo.profile");
+  private static final UUID WORKSPACE_ID = UUID.randomUUID();
+  private static final String SERVER_ID = "test-server";
 
   @Test
   public void setFields() {
@@ -52,20 +56,20 @@ public class CreateAiNotebookInstanceStepTest extends BaseUnitTest {
                 new ApiGcpAiNotebookInstanceContainerImage().repository("repository").tag("tag"));
 
     Instance instance =
-        CreateAiNotebookInstanceStep.setFields(creationParameters, "foo@bar.com", new Instance());
+        CreateAiNotebookInstanceStep.setFields(
+            creationParameters, "foo@bar.com", WORKSPACE_ID.toString(), SERVER_ID, new Instance());
     assertEquals("script.sh", instance.getPostStartupScript());
-    assertEquals(true, instance.getInstallGpuDriver());
+    assertTrue(instance.getInstallGpuDriver());
     assertEquals("custom-path", instance.getCustomGpuDriverPath());
     assertEquals("boot-disk-type", instance.getBootDiskType());
     assertEquals(111L, instance.getBootDiskSizeGb());
     assertEquals("data-disk-type", instance.getDataDiskType());
     assertEquals(222L, instance.getDataDiskSizeGb());
-    assertThat(instance.getMetadata(), Matchers.aMapWithSize(2));
-    // git secrets gets a false positive if 'service_account' is double quoted.
-    assertThat(instance.getMetadata(), Matchers.hasEntry("proxy-mode", "service_" + "account"));
+    assertThat(instance.getMetadata(), Matchers.aMapWithSize(4));
     assertThat(instance.getMetadata(), Matchers.hasEntry("metadata-key", "metadata-value"));
+    assertDefaultMetadata(instance);
     assertEquals("foo@bar.com", instance.getServiceAccount());
-    assertEquals(sa_scopes, instance.getServiceAccountScopes());
+    assertEquals(SA_SCOPES, instance.getServiceAccountScopes());
     assertEquals(4L, instance.getAcceleratorConfig().getCoreCount());
     assertEquals("accelerator-type", instance.getAcceleratorConfig().getType());
     assertEquals("project-id", instance.getVmImage().getProject());
@@ -79,24 +83,38 @@ public class CreateAiNotebookInstanceStepTest extends BaseUnitTest {
   public void setFieldsNoFields() {
     Instance instance =
         CreateAiNotebookInstanceStep.setFields(
-            new ApiGcpAiNotebookInstanceCreationParameters(), "foo@bar.com", new Instance());
-    assertThat(instance.getMetadata(), Matchers.aMapWithSize(1));
-    assertThat(instance.getMetadata(), Matchers.hasEntry("proxy-mode", "service_" + "account"));
+            new ApiGcpAiNotebookInstanceCreationParameters(),
+            "foo@bar.com",
+            WORKSPACE_ID.toString(),
+            SERVER_ID,
+            new Instance());
+    assertThat(instance.getMetadata(), Matchers.aMapWithSize(3));
+    assertDefaultMetadata(instance);
     assertEquals("foo@bar.com", instance.getServiceAccount());
-    assertEquals(sa_scopes, instance.getServiceAccountScopes());
+    assertEquals(SA_SCOPES, instance.getServiceAccountScopes());
     assertEquals(DEFAULT_POST_STARTUP_SCRIPT, instance.getPostStartupScript());
+  }
+
+  private void assertDefaultMetadata(Instance instance) {
+    // git secrets gets a false positive if 'service_account' is double quoted.
+    assertThat(instance.getMetadata(), Matchers.hasEntry("proxy-mode", "service_" + "account"));
+    assertThat(
+        instance.getMetadata(), Matchers.hasEntry("terra-workspace-id", WORKSPACE_ID.toString()));
+    assertThat(instance.getMetadata(), Matchers.hasEntry("terra-cli-server", SERVER_ID));
   }
 
   @Test
   public void setFieldsThrowsForReservedMetadataKeys() {
     assertThrows(
-        BadRequestException.class,
+        ConflictException.class,
         () ->
             CreateAiNotebookInstanceStep.setFields(
                 new ApiGcpAiNotebookInstanceCreationParameters()
                     // "proxy-mode" is a reserved metadata key.
                     .metadata(Map.of("proxy-mode", "mail")),
                 "foo@bar.com",
+                "workspaceId",
+                "server-id",
                 new Instance()));
   }
 }

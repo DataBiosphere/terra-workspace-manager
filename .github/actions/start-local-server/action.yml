@@ -14,7 +14,7 @@ runs:
       run: |
         # The redirect magic provides null input to work around a gradle bug and sends
         # both stdout and stderr to the log file.
-        ./gradlew :service:bootRun --args='--spring.profiles.include=human-readable-logging'  2>&1 < /dev/null | tee bootrun.log &
+        ./gradlew :service:bootRun --args='--spring.profiles.include=human-readable-logging'  2>&1 < /dev/null | tee wsm.log &
         bootrunpid=$!
         disown $bootrunpid
         echo "Launched WSM service pid $bootrunpid"
@@ -41,6 +41,6 @@ runs:
         if [ "${started}" -eq "1" ]
         then
           echo "Server did not start successfully. Dumping log file"
-          cat bootrun.log
+          cat wsm.log
         fi
       shell: bash

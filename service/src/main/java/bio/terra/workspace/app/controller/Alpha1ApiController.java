@@ -113,7 +113,8 @@ public class Alpha1ApiController implements Alpha1Api {
               .jobDescription(enumeratedJob.getJobDescription())
               .operationType(enumeratedJob.getOperationType().toApiModel())
               .resourceType(optResource.map(r -> r.getResourceType().toApiModel()).orElse(null))
-              .resource(optResource.map(WsmResource::toApiResourceUnion).orElse(null));
+              .metadata(optResource.map(WsmResource::toApiMetadata).orElse(null))
+              .resourceAttributes(optResource.map(WsmResource::toApiAttributesUnion).orElse(null));
       apiJobList.add(apiJob);
     }
 

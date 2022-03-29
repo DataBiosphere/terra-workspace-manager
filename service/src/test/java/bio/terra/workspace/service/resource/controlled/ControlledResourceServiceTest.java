@@ -20,6 +20,7 @@ import bio.terra.common.stairway.StairwayComponent;
 import bio.terra.stairway.FlightDebugInfo;
 import bio.terra.stairway.FlightStatus;
 import bio.terra.stairway.StepStatus;
+import bio.terra.workspace.app.configuration.external.CliConfiguration;
 import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
 import bio.terra.workspace.common.BaseConnectedTest;
 import bio.terra.workspace.common.CloudUtils;
@@ -119,6 +120,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
   @Autowired private WorkspaceConnectedTestUtils workspaceUtils;
   @Autowired private WorkspaceService workspaceService;
   @Autowired private GcpCloudContextService gcpCloudContextService;
+  @Autowired private CliConfiguration cliConfiguration;
 
   private static void assertNotFound(InstanceName instanceName, AIPlatformNotebooksCow notebooks) {
     GoogleJsonResponseException exception =
@@ -208,7 +210,9 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
   @DisabledIfEnvironmentVariable(named = "TEST_ENV", matches = BUFFER_SERVICE_DISABLED_ENVS_REG_EX)
   void createAiNotebookInstanceDo() throws Exception {
     UUID workspaceId = reusableWorkspace(user).getWorkspaceId();
-    String instanceId = "create-ai-notebook-instance-do";
+    var instanceId = "create-ai-notebook-instance-do";
+    var serverName = "verily-autopush";
+    cliConfiguration.setServerName(serverName);
     ApiGcpAiNotebookInstanceCreationParameters creationParameters =
         ControlledResourceFixtures.defaultNotebookCreationParameters()
             .instanceId(instanceId)
@@ -278,6 +282,10 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
     // Test that the user has access to the notebook with a service account through proxy mode.
     // git secrets gets a false positive if 'service_account' is double quoted.
     assertThat(instance.getMetadata(), Matchers.hasEntry("proxy-mode", "service_" + "account"));
+    assertThat(instance.getMetadata(), Matchers.hasEntry("terra-cli-server", serverName));
+    assertThat(
+        instance.getMetadata(),
+        Matchers.hasEntry("terra-workspace-id", resource.getWorkspaceId().toString()));
     ServiceAccountName serviceAccountName =
         ServiceAccountName.builder()
             .projectId(instanceName.projectId())

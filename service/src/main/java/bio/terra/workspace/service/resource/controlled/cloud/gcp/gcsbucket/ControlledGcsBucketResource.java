@@ -47,7 +47,7 @@ public class ControlledGcsBucketResource extends ControlledResource {
       @JsonProperty("privateResourceState") PrivateResourceState privateResourceState,
       @JsonProperty("accessScope") AccessScopeType accessScope,
       @JsonProperty("managedBy") ManagedByType managedBy,
-      @JsonProperty("applicationId") UUID applicationId,
+      @JsonProperty("applicationId") String applicationId,
       @JsonProperty("bucketName") String bucketName) {
 
     super(
@@ -125,7 +125,7 @@ public class ControlledGcsBucketResource extends ControlledResource {
   }
 
   private static String generateBucketName() {
-    return String.format("terra_%s_bucket", UUID.randomUUID()).replace("-", "_");
+    return String.format("terra-%s-bucket", UUID.randomUUID());
   }
 
   public String getBucketName() {
@@ -178,7 +178,7 @@ public class ControlledGcsBucketResource extends ControlledResource {
     if (getBucketName() == null) {
       throw new MissingRequiredFieldException("Missing required field for ControlledGcsBucket.");
     }
-    ResourceValidationUtils.validateBucketName(getBucketName());
+    ResourceValidationUtils.validateControlledBucketName(getBucketName());
   }
 
   @Override

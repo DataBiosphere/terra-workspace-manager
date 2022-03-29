@@ -35,6 +35,7 @@ public class GcsBucketObjectUtils {
     BlobId blobId = BlobId.of(bucketName, GcsBucketUtils.GCS_BLOB_NAME);
 
     final Blob retrievedFile = cloningUserStorageClient.get(blobId);
+    logger.info("Retrieved file {} from bucket {}", GcsBucketUtils.GCS_BLOB_NAME, bucketName);
     assertNotNull(retrievedFile);
     assertEquals(blobId.getName(), retrievedFile.getBlobId().getName());
     return retrievedFile;

@@ -132,7 +132,7 @@ public class ReferencedGcsObjectResource extends ReferencedResource {
       throw new MissingRequiredFieldException(
           "Missing required field for ReferenceGcsObjectResource.");
     }
-    ResourceValidationUtils.validateBucketName(getBucketName());
+    ResourceValidationUtils.validateReferencedBucketName(getBucketName());
     ResourceValidationUtils.validateGcsObjectName(getObjectName());
   }
 

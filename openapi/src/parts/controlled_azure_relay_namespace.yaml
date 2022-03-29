@@ -3,7 +3,7 @@ paths:
     parameters:
       - $ref: '#/components/parameters/WorkspaceId'
     post:
-      summary: Create a new controlled Azure Relay Namespace
+      summary: Asynchronously create a new controlled Azure Relay Namespace
       operationId: createAzureRelayNamespace
       tags: [ControlledAzureResource]
       requestBody:
@@ -13,7 +13,25 @@ paths:
             schema:
               $ref: '#/components/schemas/CreateControlledAzureRelayNamespaceRequestBody'
       responses:
+        '202':
+          $ref: '#/components/responses/CreateControlledAzureRelayNamespaceResponse'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /api/workspaces/v1/{workspaceId}/resources/controlled/azure/relayNamespace/create-result/{jobId}:
+    parameters:
+      - $ref: '#/components/parameters/WorkspaceId'
+      - $ref: '#/components/parameters/JobId'
+    get:
+      summary: Retrieve information about an Azure Relay Namespace create job.
+      operationId: getCreateAzureRelayNamespaceResult
+      tags: [ ControlledAzureResource ]
+      responses:
         '200':
+          $ref: '#/components/responses/CreateControlledAzureRelayNamespaceResponse'
+        '202':
           $ref: '#/components/responses/CreateControlledAzureRelayNamespaceResponse'
         '403':
           $ref: '#/components/responses/PermissionDenied'
@@ -102,18 +120,19 @@ components:
           $ref: '#/components/schemas/ControlledResourceCommonFields'
         azureRelayNamespace:
           $ref: '#/components/schemas/AzureRelayNamespaceCreationParameters'
+        jobControl:
+          $ref: '#/components/schemas/JobControl'
 
-
-    CreateControlledAzureRelayNamespace:
+    CreateControlledAzureRelayNamespaceResult:
       description: Response payload for requesting a new Azure Relay Namespace
       type: object
       properties:
-        resourceId:
-          description: UUID of a newly-created resource.
-          type: string
-          format: uuid
         azureRelayNameSpace:
           $ref: '#/components/schemas/AzureRelayNamespaceResource'
+        jobReport:
+          $ref: '#/components/schemas/JobReport'
+        errorReport:
+          $ref: '#/components/schemas/ErrorReport'
 
   responses:
     CreateControlledAzureRelayNamespaceResponse:
@@ -121,7 +140,7 @@ components:
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/CreateControlledAzureRelayNamespace'
+            $ref: '#/components/schemas/CreateControlledAzureRelayNamespaceResult'
 
 
     GetControlledAzureRelayNamespaceResponse:

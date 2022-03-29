@@ -170,9 +170,15 @@ public class GcsBucketUtils {
                     .defaultStorageClass(GcpGcsBucketDefaultStorageClass.STANDARD)
                     .lifecycle(new GcpGcsBucketLifecycle().rules(BUCKET_LIFECYCLE_RULES)));
 
+    CreatedControlledGcpGcsBucket result = resourceApi.createBucket(body, workspaceId);
     logger.info(
-        "Creating {} {} bucket in workspace {}", managedBy.name(), accessScope.name(), workspaceId);
-    return resourceApi.createBucket(body, workspaceId);
+        "Creating {} {} bucket {} resource ID {} in workspace {}",
+        managedBy.name(),
+        accessScope.name(),
+        bucketName,
+        result.getResourceId(),
+        workspaceId);
+    return result;
   }
 
   public static CreatedControlledGcpGcsBucket makeControlledGcsBucketAppPrivate(
@@ -235,9 +241,15 @@ public class GcsBucketUtils {
                     .name(name))
             .bucket(bucket);
 
-    logger.info("Making reference to a gcs bucket");
-    return ClientTestUtils.getWithRetryOnException(
-        () -> resourceApi.createBucketReference(body, workspaceId));
+    GcpGcsBucketResource result =
+        ClientTestUtils.getWithRetryOnException(
+            () -> resourceApi.createBucketReference(body, workspaceId));
+    logger.info(
+        "Created reference to GCS bucket {} resourceID {} workspaceID {}",
+        result.getAttributes().getBucketName(),
+        result.getMetadata().getResourceId(),
+        workspaceId);
+    return result;
   }
 
   public static CreatedControlledGcpGcsBucket makeControlledGcsBucketAppShared(
@@ -334,10 +346,18 @@ public class GcsBucketUtils {
     final BlobInfo blobInfo = BlobInfo.newBuilder(blobId).setContentType("text/plain").build();
 
     // There can be IAM propagation delays, so be a patient with the creation
-    return ClientTestUtils.getWithRetryOnException(
-        () ->
-            sourceOwnerStorageClient.create(
-                blobInfo, GCS_BLOB_CONTENT.getBytes(StandardCharsets.UTF_8)));
+    Blob result =
+        ClientTestUtils.getWithRetryOnException(
+            () ->
+                sourceOwnerStorageClient.create(
+                    blobInfo, GCS_BLOB_CONTENT.getBytes(StandardCharsets.UTF_8)));
+    logger.info(
+        "Added blob (file) {} to GCS Bucket {} Resource ID {} Workspace ID {}",
+        GCS_BLOB_NAME,
+        bucket.getGcpBucket().getAttributes().getBucketName(),
+        bucket.getResourceId(),
+        bucket.getGcpBucket().getMetadata().getWorkspaceId());
+    return result;
   }
 
   /**

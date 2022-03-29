@@ -2,9 +2,9 @@ workspace:
   application:
     test-app-sa: Elizabeth.Shadowmoon@test.firecloud.org
     configurations:
-    # This app uses a test user as the SA, so we can actually impersonate credentials.
-    - identifier: E4C0924A-3D7D-4D3D-8DE4-3D2CF50C3818
-      name: TestWsmApp
-      description: WSM test application
-      service-account: Elizabeth.Shadowmoon@test.firecloud.org
-      state: operating
+      TestWsmApp:
+      # This app uses a test user as the SA, so we can actually impersonate credentials.
+        name: TestWsmApp
+        description: WSM test application
+        service-account: Elizabeth.Shadowmoon@test.firecloud.org
+        state: operating

@@ -37,7 +37,6 @@ import bio.terra.workspace.service.resource.referenced.cloud.gcp.gcsbucket.Refer
 import bio.terra.workspace.service.resource.referenced.cloud.gcp.gcsobject.ReferencedGcsObjectResource;
 import bio.terra.workspace.service.resource.referenced.exception.InvalidReferenceException;
 import bio.terra.workspace.service.resource.referenced.flight.create.CreateReferenceMetadataStep;
-import bio.terra.workspace.service.resource.referenced.flight.create.ValidateReferenceStep;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
@@ -247,7 +246,6 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
     @Test
     void createReferencedResourceDo() {
       Map<String, StepStatus> retrySteps = new HashMap<>();
-      retrySteps.put(ValidateReferenceStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
       retrySteps.put(
           CreateReferenceMetadataStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
       FlightDebugInfo debugInfo = FlightDebugInfo.newBuilder().doStepFailures(retrySteps).build();
@@ -266,7 +264,6 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
                 + "test undo step.")
     void createReferencedResourceUndo() {
       Map<String, StepStatus> retrySteps = new HashMap<>();
-      retrySteps.put(ValidateReferenceStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
       retrySteps.put(
           CreateReferenceMetadataStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
       FlightDebugInfo debugInfo =

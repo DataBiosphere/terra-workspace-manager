@@ -19,11 +19,11 @@ public class ApplicationAbleDaoStep implements Step {
 
   private final ApplicationDao applicationDao;
   private final UUID workspaceId;
-  private final UUID applicationId;
+  private final String applicationId;
   private final AbleEnum ableEnum;
 
   public ApplicationAbleDaoStep(
-      ApplicationDao applicationDao, UUID workspaceId, UUID applicationId, AbleEnum ableEnum) {
+      ApplicationDao applicationDao, UUID workspaceId, String applicationId, AbleEnum ableEnum) {
     this.applicationDao = applicationDao;
     this.workspaceId = workspaceId;
     this.applicationId = applicationId;

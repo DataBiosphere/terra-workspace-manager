@@ -47,9 +47,9 @@ public abstract class WorkspaceAllocateTestScriptBase extends WorkspaceApiTestSc
   }
 
   @Override
-  public void setParameters(Map<String, String> parameters) throws Exception {
-    super.setParameters(parameters);
-    spendProfileId = ParameterUtils.getSpendProfile(parameters);
+  public void setParametersMap(Map<String, String> parametersMap) throws Exception {
+    super.setParametersMap(parametersMap);
+    spendProfileId = ParameterUtils.getSpendProfile(parametersMap);
   }
 
   /**

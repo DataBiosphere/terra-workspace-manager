@@ -93,10 +93,7 @@ public class ResourceDao {
                 Optional.ofNullable(rs.getString("managed_by"))
                     .map(ManagedByType::fromSql)
                     .orElse(null))
-            .applicationId(
-                Optional.ofNullable(rs.getString("associated_app"))
-                    .map(UUID::fromString)
-                    .orElse(null))
+            .applicationId(Optional.ofNullable(rs.getString("associated_app")).orElse(null))
             .assignedUser(rs.getString("assigned_user"))
             .privateResourceState(
                 Optional.ofNullable(rs.getString("private_resource_state"))

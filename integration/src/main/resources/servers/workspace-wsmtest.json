@@ -27,7 +27,7 @@
     {
       "name": "ReadFromTerraHelmfileRepo",
       "description": "Version from https://github.com/broadinstitute/terra-helmfile",
-      "parameters": {
+      "parametersMap": {
         "app-name": "workspacemanager",
         "base-file-path": "terra-helmfile/versions/app/dev.yaml",
         "override-file-path": "terra-helmfile/environments/personal/wsmtest.yaml"
@@ -36,7 +36,7 @@
     {
       "name": "ReadFromGitCommitLog",
       "description": "Hash of git branch from Git Commit Log",
-      "parameters": {
+      "parametersMap": {
         "git-dir": "../.git"
       }
     }

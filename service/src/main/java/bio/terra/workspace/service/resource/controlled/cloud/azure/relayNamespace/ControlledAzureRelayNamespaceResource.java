@@ -46,7 +46,7 @@ public class ControlledAzureRelayNamespaceResource extends ControlledResource {
       @JsonProperty("privateResourceState") PrivateResourceState privateResourceState,
       @JsonProperty("accessScope") AccessScopeType accessScope,
       @JsonProperty("managedBy") ManagedByType managedBy,
-      @JsonProperty("applicationId") UUID applicationId,
+      @JsonProperty("applicationId") String applicationId,
       @JsonProperty("namespaceName") String namespaceName,
       @JsonProperty("region") String region) {
 
@@ -133,9 +133,7 @@ public class ControlledAzureRelayNamespaceResource extends ControlledResource {
   }
 
   public ApiAzureRelayNamespaceAttributes toApiAttributes() {
-    return new ApiAzureRelayNamespaceAttributes()
-        .namespaceName(getName())
-        .region(region.toString());
+    return new ApiAzureRelayNamespaceAttributes().namespaceName(getNamespaceName()).region(region);
   }
 
   public ApiAzureRelayNamespaceResource toApiResource() {

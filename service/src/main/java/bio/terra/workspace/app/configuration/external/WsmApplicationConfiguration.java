@@ -1,7 +1,7 @@
 package bio.terra.workspace.app.configuration.external;
 
 import java.util.Collections;
-import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
@@ -19,19 +19,10 @@ import org.springframework.context.annotation.Configuration;
 @ConfigurationProperties(prefix = "workspace.application")
 public class WsmApplicationConfiguration {
   public static class App {
-    private String identifier;
     private String name;
     private String description;
     private String serviceAccount;
     private String state;
-
-    public String getIdentifier() {
-      return identifier;
-    }
-
-    public void setIdentifier(String identifier) {
-      this.identifier = identifier;
-    }
 
     public String getName() {
       return name;
@@ -66,13 +57,14 @@ public class WsmApplicationConfiguration {
     }
   }
 
-  List<App> configurations;
+  // Configurations by name
+  Map<String, App> configurations;
 
-  public List<App> getConfigurations() {
-    return Optional.ofNullable(configurations).orElse(Collections.emptyList());
+  public Map<String, App> getConfigurations() {
+    return Optional.ofNullable(configurations).orElse(Collections.emptyMap());
   }
 
-  public void setConfigurations(List<App> configurations) {
+  public void setConfigurations(Map<String, App> configurations) {
     this.configurations = configurations;
   }
 }

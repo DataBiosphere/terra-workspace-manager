@@ -1,6 +1,7 @@
 package bio.terra.workspace.common.utils;
 
 import bio.terra.workspace.app.configuration.external.AzureConfiguration;
+import bio.terra.workspace.app.configuration.external.CliConfiguration;
 import bio.terra.workspace.db.ApplicationDao;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.db.WorkspaceDao;
@@ -47,6 +48,7 @@ public class FlightBeanBag {
   private final WorkspaceService workspaceService;
   private final SpendProfileService spendProfileService;
   private final AzureConfiguration azureConfig;
+  private final CliConfiguration cliConfiguration;
 
   @Lazy
   @Autowired
@@ -67,7 +69,8 @@ public class FlightBeanBag {
       SpendProfileService spendProfileService,
       WorkspaceDao workspaceDao,
       WorkspaceService workspaceService,
-      AzureConfiguration azureConfig) {
+      AzureConfiguration azureConfig,
+      CliConfiguration cliConfiguration) {
     this.applicationDao = applicationDao;
     this.azureCloudContextService = azureCloudContextService;
     this.bucketCloneRolesComponent = bucketCloneRolesComponent;
@@ -85,6 +88,7 @@ public class FlightBeanBag {
     this.workspaceService = workspaceService;
     this.spendProfileService = spendProfileService;
     this.azureConfig = azureConfig;
+    this.cliConfiguration = cliConfiguration;
   }
 
   public static FlightBeanBag getFromObject(Object object) {
@@ -157,5 +161,9 @@ public class FlightBeanBag {
 
   public AzureConfiguration getAzureConfig() {
     return azureConfig;
+  }
+
+  public CliConfiguration getCliConfiguration() {
+    return cliConfiguration;
   }
 }

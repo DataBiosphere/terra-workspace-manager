@@ -54,8 +54,12 @@ components:
           $ref: '#/components/schemas/OperationType'
         resourceType:
           $ref: '#/components/schemas/ResourceType'
-        resource:
-          $ref: '#/components/schemas/ResourceUnion'
+        metadata:
+          description: the resource metadata common to all resources
+          $ref: '#/components/schemas/ResourceMetadata'
+        resourceAttributes:
+          description: Data specific to the type of resource and whether it is controlled or not
+          $ref: '#/components/schemas/ResourceAttributesUnion'
 
     EnumerateJobsResult:
       description: result of an enumerateJobs request

@@ -1,14 +1,13 @@
 package bio.terra.workspace.service.workspace;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.fail;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import bio.terra.workspace.common.BaseTest;
 import bio.terra.workspace.db.ApplicationDao;
 import bio.terra.workspace.service.workspace.model.WsmApplication;
 import bio.terra.workspace.service.workspace.model.WsmApplicationState;
 import java.util.List;
-import java.util.UUID;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,34 +23,34 @@ public class ApplicationConfigurationTest extends BaseTest {
 
   @Autowired ApplicationDao appDao;
 
-  private static final UUID LEO_UUID = UUID.fromString("4BD1D59D-5827-4375-A41D-BBC65919F269");
-  private static final UUID CARMEN_UUID = UUID.fromString("EB9D37F5-BAD7-4951-AE9A-86B3F03F4DD7");
+  private static final String SAN_DIEGO_ID = "SanDiego";
+  private static final String CARMEN_ID = "Carmen";
 
   @Test
   public void configurationTest() {
     // This test has to be in sync with the contents of application-configuration-test.yml
     List<WsmApplication> wsmApps = appDao.listApplications();
-    assertEquals(2, wsmApps.size());
+    assertTrue(wsmApps.size() >= 2);
 
     for (WsmApplication wsmApp : wsmApps) {
-      if (wsmApp.getApplicationId().equals(LEO_UUID)) {
-        checkLeo(wsmApp);
-      } else if (wsmApp.getApplicationId().equals(CARMEN_UUID)) {
+      if (wsmApp.getApplicationId().equals(SAN_DIEGO_ID)) {
+        checkSanDiego(wsmApp);
+      } else if (wsmApp.getApplicationId().equals(CARMEN_ID)) {
         checkCarmen(wsmApp);
-      } else {
-        fail();
       }
     }
   }
 
-  private void checkLeo(WsmApplication leoApp) {
-    assertEquals("Leo", leoApp.getDisplayName());
-    assertEquals("application execution framework", leoApp.getDescription());
-    assertEquals("leo@terra-dev.iam.gserviceaccount.com", leoApp.getServiceAccount());
-    assertEquals(WsmApplicationState.OPERATING, leoApp.getState());
+  private void checkSanDiego(WsmApplication sdApp) {
+    assertEquals("SanDiego", sdApp.getApplicationId());
+    assertEquals("Sunny", sdApp.getDisplayName());
+    assertEquals("beachgoing framework", sdApp.getDescription());
+    assertEquals("sandiego@terra-dev.iam.gserviceaccount.com", sdApp.getServiceAccount());
+    assertEquals(WsmApplicationState.OPERATING, sdApp.getState());
   }
 
   private void checkCarmen(WsmApplication carmenApp) {
+    assertEquals("Carmen", carmenApp.getApplicationId());
     assertEquals("Carmen", carmenApp.getDisplayName());
     assertEquals("musical performance framework", carmenApp.getDescription());
     assertEquals("carmen@terra-dev.iam.gserviceaccount.com", carmenApp.getServiceAccount());
