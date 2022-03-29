@@ -6,6 +6,7 @@ def generatedVersionFile = "${resourceDir}/generated/version.properties"
 
 task generateVersionProperties(type: Exec) {
   commandLine "${projectDir}/writeVersionProperties.sh", "${version}", "${generatedVersionFile}"
+  outputs.files(generatedVersionFile) // for up-to-date checking only
 }
 
 task cleanVersionProperties(type: Exec) {
