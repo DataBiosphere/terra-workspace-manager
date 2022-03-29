@@ -48,7 +48,7 @@ public class GitRepoUtils {
       ReferencedGcpResourceApi resourceApi,
       UUID workspaceId,
       String name)
-      throws InterruptedException {
+      throws Exception {
 
     CreateGitRepoReferenceRequestBody body =
         new CreateGitRepoReferenceRequestBody()

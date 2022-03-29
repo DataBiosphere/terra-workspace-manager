@@ -270,7 +270,7 @@ public class ClientTestUtils {
    * @throws InterruptedException if the sleep is interrupted
    */
   public static @Nullable <T> T getWithRetryOnException(SupplierWithException<T> supplier)
-      throws InterruptedException {
+      throws Exception {
     T result = null;
     int numTries = 40;
     Duration sleepDuration = Duration.ofSeconds(15);
@@ -280,6 +280,9 @@ public class ClientTestUtils {
         break;
       } catch (Exception e) {
         numTries--;
+        if (0 == numTries) {
+          throw e;
+        }
         logger.info(
             "Exception \"{}\". Waiting {} seconds for permissions to propagate. Tries remaining: {}",
             e.getMessage(),
@@ -291,7 +294,7 @@ public class ClientTestUtils {
     return result;
   }
 
-  public static void runWithRetryOnException(Runnable fn) throws InterruptedException {
+  public static void runWithRetryOnException(Runnable fn) throws Exception {
     getWithRetryOnException(
         () -> {
           fn.run();
