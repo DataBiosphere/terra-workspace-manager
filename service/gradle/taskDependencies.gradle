@@ -3,4 +3,15 @@ tasks.jib.dependsOn(extractProfilerAgent)
 tasks.jibDockerBuild.dependsOn(extractProfilerAgent)
 tasks.jibBuildTar.dependsOn(extractProfilerAgent)
 tasks.spotlessJava.dependsOn(generateSwaggerCodeServer)
+
+// Don't run any spotless or spotbugs tasks unless we have actual source file chnages. The best
+// way to determine that is to rely on the compileJava determination
+final TASKS_ONLY_IF_COMPILE_JAVA = [spotlessApply, spotlessJava, spotlessCheck, spotbugsMain]
+for (task in TASKS_ONLY_IF_COMPILE_JAVA) {
+  task.configure {
+    onlyIf {
+      compileJava.didWork
+    }
+  }
+}
 tasks.processResources.dependsOn(generateVersionProperties)
