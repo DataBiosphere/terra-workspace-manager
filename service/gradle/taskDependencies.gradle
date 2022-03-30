@@ -8,8 +8,12 @@ tasks.spotlessJava.dependsOn(generateSwaggerCodeServer)
 // way to determine that is to rely on the compileJava determination.
 final TASKS_ONLY_IF_COMPILE_JAVA = [spotlessApply, spotlessJava, spotlessJavaApply, spotlessCheck, spotbugsMain]
 for (task in TASKS_ONLY_IF_COMPILE_JAVA) {
+  // Run every time the inputs to compilation change
   task.dependsOn(compileJava.inputs.files)
+  // If compileJava runs, this must run after it (for the following to work).
   task.mustRunAfter(compileJava)
+  // Don't run if compileJava didn't do any work. This is necessary because otherwise, these
+  // tasks always want to run.
   task.configure {
     onlyIf {
       compileJava.didWork
