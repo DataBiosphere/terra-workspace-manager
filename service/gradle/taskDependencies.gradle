@@ -15,10 +15,14 @@ for (task in TASKS_ONLY_IF_COMPILE_JAVA) {
   // Don't run if compileJava didn't do any work. This is necessary because otherwise, these
   // tasks always want to run.
   task.configure {
-    onlyIf {
-      compileJava.didWork
-    }
+    onlyIf { compileJava.didWork }
   }
+}
+
+spotbugsTest.dependsOn(compileTestJava.inputs.files)
+spotbugsTest.mustRunAfter(compileTestJava)
+spotbugsTest.configure {
+  onlyIf { compileTestJava.didWork }
 }
 // Explicit dep to avoid accidental dep deprecation warning.
 tasks.processResources.dependsOn(generateVersionProperties)
