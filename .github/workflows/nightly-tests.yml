@@ -9,10 +9,9 @@ on:
     - cron: '0 7 * * *' # run at 7 AM UTC, 2 AM ET.
 
 jobs:
-  nightly-tests:
-
+  set-up-environment:
+    name: Set Up Environment
     runs-on: self-hosted
-
     steps:
       - uses: actions/checkout@v2
 
@@ -52,7 +51,11 @@ jobs:
 
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
-
+  get-secrets:
+    name: Get Secrets and Configure Credentials
+    needs: set-up-environment
+    runs-on: self-hosted
+    steps:
       - name: Get Vault token
         id: vault-token-step
         env:
@@ -67,13 +70,17 @@ jobs:
           echo ::set-output name=vault-token::$VAULT_TOKEN
           echo ::add-mask::$VAULT_TOKEN
 
-      - name: Write config
+      - name: Configure Database Credentials
         id: config
         uses: ./.github/actions/write-config
         with:
           vault-token: ${{ steps.vault-token-step.outputs.vault-token }}
           target: wsmtest
-
+  sync-argocd:
+    name: Syncronize ArgoCD
+    needs: [set-up-environment, get-secrets]
+    runs-on: self-hosted
+    steps:
       # The ArgoCD sync triggers the synchronization of the wsmtest cluster. Typically,
       # the cluster is reset within a few seconds. However, it is possible for it to take
       # minutes or hours. We have no way to check that the sync is complete. We sleep
@@ -91,7 +98,11 @@ jobs:
           sleep 120
           version=$(curl https://workspace.wsmtest.integ.envs.broadinstitute.org/version)
           echo "$(date "+%Y-%m-%dT%H:%M:%S") post-sync wsmtest version: $version"
-
+  integration-suite:
+    name: Integration Test Suite
+    needs: [set-up-environment, get-secrets, sync-argocd]
+    runs-on: self-hosted
+    steps:
       - name: clean databases before integration suite
         if: always()
         uses: ./.github/actions/clean-databases
@@ -103,7 +114,12 @@ jobs:
         with:
           test-server: workspace-wsmtest.json
           test: suites/FullIntegration.json
-
+  perf-suite:
+    name: Performance Test Suite
+    # We need to run the suites serially because each one drops the databases
+    needs: [set-up-environment, get-secrets, sync-argocd, integration-suite]
+    runs-on: self-hosted
+    steps:
       - name: clean databases before perf suite
         if: always()
         uses: ./.github/actions/clean-databases
@@ -115,7 +131,16 @@ jobs:
         with:
           test-server: workspace-wsmtest.json
           test: suites/BasicPerf.json
-
+  resiliency-suite:
+    name: Resiliency Test Suite
+    needs:
+      - set-up-environment
+      - get-secrets
+      - sync-argocd
+      - integration-suite
+      - perf-suite
+    runs-on: self-hosted
+    steps:
       - name: clean databases before resiliency suite
         if: always()
         uses: ./.github/actions/clean-databases
@@ -127,7 +152,17 @@ jobs:
         with:
           test-server: workspace-wsmtest.json
           test: suites/BasicResiliency.json
-
+  report-results:
+    name: Report Test Results
+    needs:
+      - set-up-environment
+      - get-secrets
+      - sync-argocd
+      - integration-suite
+      - perf-suite
+      - resiliency-suite
+    runs-on: self-hosted
+    steps:
       - name: Compose status message
         if: always()
         id: status-message
