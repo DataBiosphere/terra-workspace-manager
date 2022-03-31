@@ -6,3 +6,5 @@ plugins {
 def includeDir = "$projectDir/gradle"
 apply(from: "$includeDir/dependencies.gradle")
 apply(from: "$includeDir/openapi.gradle")
+apply(from: "$includeDir/taskDependencies.gradle")
+
