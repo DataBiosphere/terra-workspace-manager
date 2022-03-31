@@ -115,9 +115,8 @@ public class ReferencedDataRepoSnapshotLifecycle extends WorkspaceAllocateTestSc
 
     // Read the reference by name
     DataRepoSnapshotResource snapshotFetchedByName =
-            referencedGcpResourceApi.getDataRepoSnapshotReferenceByName(
-                    getWorkspaceId(),
-                    snapshotResource.getMetadata().getName());
+        referencedGcpResourceApi.getDataRepoSnapshotReferenceByName(
+            getWorkspaceId(), snapshotResource.getMetadata().getName());
     assertEquals(snapshotResource, snapshotFetchedByName);
 
     // Enumerate the reference
