@@ -9,17 +9,14 @@ on:
     - '**'
 
 jobs:
-  checkout-code:
-    name: Checkout Code
-    runs-on: ubuntu-latest
-    steps:
-    - name: Checkout current code
-      uses: actions/checkout@v2
   # Spotless and SpotBugs can run simultaneously
   run-spotless:
+    name: Run Spotless Linter
     runs-on: ubuntu-latest
     needs: checkout-code
     steps:
+    - name: Checkout current code
+      uses: actions/checkout@v2
     - name: Run Spotless Linter
       id: run_linter
       run: ./gradlew spotlessCheck --scan
@@ -28,6 +25,8 @@ jobs:
     runs-on: ubuntu-latest
     needs: checkout-code
     steps:
+    - name: Checkout current code
+      uses: actions/checkout@v2
     - name: Run static analysis
       id: run_static_analysis
       run: ./gradlew spotbugsMain spotbugsTest --scan
