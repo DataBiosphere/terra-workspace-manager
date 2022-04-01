@@ -16,7 +16,7 @@ public class AwaitWorkspaceCreateFlightStep implements Step {
 
   public AwaitWorkspaceCreateFlightStep() {}
 
-  
+
   @Override
   public StepResult doStep(FlightContext context) throws InterruptedException, RetryException {
     FlightUtils.validateRequiredEntries(

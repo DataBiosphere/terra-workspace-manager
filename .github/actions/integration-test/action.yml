@@ -10,6 +10,11 @@ inputs:
     description: 'Test suite or config to run'
     required: true
     default: 'suites/FullIntegration.json'
+outputs:
+  results-dir:
+    description: TestRunner results directory
+    value: {{ steps.test-run.outputs.results-dir}}
+
 runs:
   using: "composite"
   steps:
@@ -29,6 +34,6 @@ runs:
         ../gradlew :integration:uploadResults --args="CompressDirectoryToTerraKernelK8S.json $resultsDir" --scan
         echo "Upload test results to BigQuery Test Runner Dataset"
         ../gradlew :integration:uploadResults --args="SummariesToTerraKernelK8SBigQuery.json $resultsDir" --scan
-        echo '::set-output name=results_dir::$resultsDir'
+        echo '::set-output name=results-dir::$resultsDir'
         exit $testResult
       shell: bash
