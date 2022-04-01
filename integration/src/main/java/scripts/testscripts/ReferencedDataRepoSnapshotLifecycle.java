@@ -108,10 +108,16 @@ public class ReferencedDataRepoSnapshotLifecycle extends WorkspaceAllocateTestSc
       ReferencedGcpResourceApi referencedGcpResourceApi,
       ResourceApi resourceApi)
       throws Exception {
-    // Read the reference
-    DataRepoSnapshotResource fetchedSnapshot =
+    // Read the reference by id
+    DataRepoSnapshotResource snapshotFetchedById =
         referencedGcpResourceApi.getDataRepoSnapshotReference(getWorkspaceId(), snapshotResourceId);
-    assertEquals(snapshotResource, fetchedSnapshot);
+    assertEquals(snapshotResource, snapshotFetchedById);
+
+    // Read the reference by name
+    DataRepoSnapshotResource snapshotFetchedByName =
+        referencedGcpResourceApi.getDataRepoSnapshotReferenceByName(
+            getWorkspaceId(), snapshotResource.getMetadata().getName());
+    assertEquals(snapshotResource, snapshotFetchedByName);
 
     // Enumerate the reference
     ResourceList referenceList =
