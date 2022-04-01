@@ -34,6 +34,7 @@ runs:
         ../gradlew :integration:uploadResults --args="CompressDirectoryToTerraKernelK8S.json $resultsDir" --scan
         echo "Upload test results to BigQuery Test Runner Dataset"
         ../gradlew :integration:uploadResults --args="SummariesToTerraKernelK8SBigQuery.json $resultsDir" --scan
+        echo "TestRunner results written to $resultsDir"
         echo "::set-output name=results-dir::$resultsDir"
         exit $testResult
       shell: bash
