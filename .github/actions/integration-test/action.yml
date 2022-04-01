@@ -13,7 +13,7 @@ inputs:
 outputs:
   results-dir:
     description: TestRunner results directory
-    value: {{ steps.test-run.outputs.results-dir }}
+    value: ${{ steps.test-run.outputs.results-dir }}
 
 runs:
   using: "composite"
