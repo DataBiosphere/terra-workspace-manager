@@ -19,18 +19,7 @@ dependencies {
   implementation group: "bio.terra", name: "terra-resource-buffer-client", version: "0.4.3-SNAPSHOT"
 
   // Cloud Resource Library
-  implementation platform('bio.terra.cloud-resource-lib:platform:0.9.0')
-  implementation group: 'bio.terra.cloud-resource-lib', name: 'google-bigquery'
-  implementation group: 'bio.terra.cloud-resource-lib', name: 'google-billing'
-  implementation group: 'bio.terra.cloud-resource-lib', name: 'google-cloudresourcemanager'
-  implementation group: 'bio.terra.cloud-resource-lib', name: 'google-compute'
-  implementation group: 'bio.terra.cloud-resource-lib', name: 'google-iam'
-  implementation group: 'bio.terra.cloud-resource-lib', name: 'google-notebooks'
-  implementation group: 'bio.terra.cloud-resource-lib', name: 'google-serviceusage'
-  implementation group: 'bio.terra.cloud-resource-lib', name: 'google-storage'
-  implementation group: 'bio.terra.cloud-resource-lib', name: 'azure-resourcemanager-compute'
-  implementation group: 'bio.terra.cloud-resource-lib', name: 'azure-resourcemanager-common'
-  implementation group: 'bio.terra.cloud-resource-lib', name: 'azure-resourcemanager-relay'
+  implementation group: 'bio.terra', name: 'terra-cloud-resource-lib', version: "1.0.4-SNAPSHOT"
 
   // Storage transfer service
   implementation group: 'com.google.apis', name: 'google-api-services-storagetransfer', version: 'v1-rev20210602-1.31.5'
