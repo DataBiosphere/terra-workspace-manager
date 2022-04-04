@@ -370,10 +370,11 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
     Optional<SpendProfileId> spendProfileId =
         Optional.ofNullable(body.getSpendProfile()).map(SpendProfileId::new);
 
+    UUID destinationWorkspaceId = UUID.randomUUID();
     // Construct the target workspace object from the inputs
     Workspace destinationWorkspace =
         Workspace.builder()
-            .workspaceId(UUID.randomUUID())
+            .workspaceId(destinationWorkspaceId)
             .spendProfileId(spendProfileId.orElse(null))
             .workspaceStage(WorkspaceStage.MC_WORKSPACE)
             .displayName(body.getDisplayName())
@@ -385,7 +386,13 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
         workspaceService.cloneWorkspace(
             workspaceId, petRequest, body.getLocation(), destinationWorkspace);
 
+    // Set destination workspace ID ASAP so UI can build a landing page for it
     final ApiCloneWorkspaceResult result = fetchCloneWorkspaceResult(jobId, getAuthenticatedInfo());
+    final ApiClonedWorkspace clonedWorkspaceStub = new ApiClonedWorkspace()
+        .destinationWorkspaceId(destinationWorkspaceId)
+            .sourceWorkspaceId(workspaceId);
+    result.setWorkspace(clonedWorkspaceStub);
+
     return new ResponseEntity<>(result, getAsyncResponseCode(result.getJobReport()));
   }
 
