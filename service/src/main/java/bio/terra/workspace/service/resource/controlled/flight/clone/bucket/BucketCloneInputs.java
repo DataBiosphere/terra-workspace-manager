@@ -41,11 +41,9 @@ class BucketCloneInputs {
         + workspaceId
         + ", projectId='"
         + projectId
-        + '\''
-        + ", bucketName='"
+        + "', bucketName='"
         + bucketName
-        + '\''
-        + ", roles="
+        + "', roles="
         + roleNames
         + '}';
   }
