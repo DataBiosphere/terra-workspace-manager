@@ -31,7 +31,7 @@ public class BucketCloneRolesComponent {
   }
 
   /**
-   * A utility method for flight steps, at least two of which need this exact implemnetation. Fetch
+   * A utility method for flight steps, at least two of which need this exact implementation. Fetch
    * bucket details from the working map along with the correct project ID and remove the roles.
    *
    * @param workingMap
