@@ -261,7 +261,8 @@ public class CloneWorkspace extends WorkspaceAllocateTestScriptBase {
 
     final String jobId = cloneResult.getJobReport().getId();
     logger.info("Clone Job ID {}", jobId);
-
+    assertNotNull(cloneResult.getWorkspace().getDestinationWorkspaceId(),
+        "Destination workspace ID available immediately.");
     cloneResult =
         ClientTestUtils.pollWhileRunning(
             cloneResult,
