@@ -18,6 +18,7 @@ import bio.terra.workspace.service.spendprofile.SpendProfileService;
 import bio.terra.workspace.service.workspace.AzureCloudContextService;
 import bio.terra.workspace.service.workspace.GcpCloudContextService;
 import bio.terra.workspace.service.workspace.WorkspaceService;
+import com.google.api.services.storagetransfer.v1.Storagetransfer;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
@@ -33,8 +34,10 @@ import org.springframework.stereotype.Component;
 public class FlightBeanBag {
   private final ApplicationDao applicationDao;
   private final AzureCloudContextService azureCloudContextService;
+  private final AzureConfiguration azureConfig;
   private final BucketCloneRolesComponent bucketCloneRolesComponent;
   private final BufferService bufferService;
+  private final CliConfiguration cliConfiguration;
   private final ControlledResourceMetadataManager controlledResourceMetadataManager;
   private final ControlledResourceService controlledResourceService;
   private final CrlService crlService;
@@ -44,19 +47,20 @@ public class FlightBeanBag {
   private final ReferencedResourceService referencedResourceService;
   private final ResourceDao resourceDao;
   private final SamService samService;
+  private final SpendProfileService spendProfileService;
+  private final Storagetransfer storagetransfer;
   private final WorkspaceDao workspaceDao;
   private final WorkspaceService workspaceService;
-  private final SpendProfileService spendProfileService;
-  private final AzureConfiguration azureConfig;
-  private final CliConfiguration cliConfiguration;
 
   @Lazy
   @Autowired
   public FlightBeanBag(
       ApplicationDao applicationDao,
       AzureCloudContextService azureCloudContextService,
+      AzureConfiguration azureConfig,
       BucketCloneRolesComponent bucketCloneRolesComponent,
       BufferService bufferService,
+      CliConfiguration cliConfiguration,
       ControlledResourceMetadataManager controlledResourceMetadataManager,
       ControlledResourceService controlledResourceService,
       CrlService crlService,
@@ -67,14 +71,15 @@ public class FlightBeanBag {
       ResourceDao resourceDao,
       SamService samService,
       SpendProfileService spendProfileService,
+      Storagetransfer storagetransfer,
       WorkspaceDao workspaceDao,
-      WorkspaceService workspaceService,
-      AzureConfiguration azureConfig,
-      CliConfiguration cliConfiguration) {
+      WorkspaceService workspaceService) {
     this.applicationDao = applicationDao;
     this.azureCloudContextService = azureCloudContextService;
+    this.azureConfig = azureConfig;
     this.bucketCloneRolesComponent = bucketCloneRolesComponent;
     this.bufferService = bufferService;
+    this.cliConfiguration = cliConfiguration;
     this.controlledResourceMetadataManager = controlledResourceMetadataManager;
     this.controlledResourceService = controlledResourceService;
     this.crlService = crlService;
@@ -84,11 +89,10 @@ public class FlightBeanBag {
     this.referencedResourceService = referencedResourceService;
     this.resourceDao = resourceDao;
     this.samService = samService;
+    this.spendProfileService = spendProfileService;
+    this.storagetransfer = storagetransfer;
     this.workspaceDao = workspaceDao;
     this.workspaceService = workspaceService;
-    this.spendProfileService = spendProfileService;
-    this.azureConfig = azureConfig;
-    this.cliConfiguration = cliConfiguration;
   }
 
   public static FlightBeanBag getFromObject(Object object) {
@@ -145,6 +149,10 @@ public class FlightBeanBag {
 
   public SamService getSamService() {
     return samService;
+  }
+
+  public Storagetransfer getStoragetransfer() {
+    return storagetransfer;
   }
 
   public WorkspaceDao getWorkspaceDao() {
