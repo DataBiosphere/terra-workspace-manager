@@ -45,12 +45,12 @@ public class ReferencedBigQueryResourceLifecycle extends WorkspaceAllocateTestSc
   private UUID bqDatasetResourceId;
   private UUID bqDataTableResourceId;
 
-  public void setParameters(Map<String, String> parameters) throws Exception {
-    super.setParameters(parameters);
-    referencedBqDatasetAttributes = ParameterUtils.getBigQueryDatasetReference(parameters);
-    referencedBqTableAttributes = ParameterUtils.getBigQueryDataTableReference(parameters);
+  public void setParametersMap(Map<String, String> parametersMap) throws Exception {
+    super.setParametersMap(parametersMap);
+    referencedBqDatasetAttributes = ParameterUtils.getBigQueryDatasetReference(parametersMap);
+    referencedBqTableAttributes = ParameterUtils.getBigQueryDataTableReference(parametersMap);
     bqTableFromAlternateDatasetAttributes =
-        ParameterUtils.getBigQueryDataTableFromAlternateDatasetReference(parameters);
+        ParameterUtils.getBigQueryDataTableFromAlternateDatasetReference(parametersMap);
   }
 
   @Override

@@ -292,7 +292,7 @@ public class ControlledBigQueryDatasetLifecycle extends GcpWorkspaceCloneTestScr
    * Create and return a table with a single column in this test's dataset. Unlike createDataset,
    * this talks directly to BigQuery and does not go through WSM.
    */
-  private Table createTable(BigQuery bigQueryClient, String projectId) throws InterruptedException {
+  private Table createTable(BigQuery bigQueryClient, String projectId) throws Exception {
     var tableId = TableId.of(projectId, DATASET_RESOURCE_NAME, TABLE_NAME);
     var tableField = Field.of(COLUMN_NAME, StandardSQLTypeName.STRING);
     var schema = Schema.of(tableField);

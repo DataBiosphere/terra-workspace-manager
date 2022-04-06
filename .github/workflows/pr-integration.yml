@@ -124,3 +124,13 @@ jobs:
         author_name: "integrationTest"
         icon_emoji: ":triangular_ruler:"
         fields: job, commit
+
+    - name: Archive WSM and TestRunner logs
+      id: archive_logs
+      if: always()
+      uses: actions/upload-artifact@v2
+      with:
+        name: wsm-and-testrunner-logs
+        path: |
+          wsm.log
+          ${{ steps.integration-test.outputs.results-dir }}

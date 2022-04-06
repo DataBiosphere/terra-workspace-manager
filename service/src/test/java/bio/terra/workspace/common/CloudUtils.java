@@ -33,7 +33,7 @@ public class CloudUtils {
    * @throws InterruptedException
    */
   public static @Nullable <T> T getWithRetryOnException(SupplierWithException<T> supplier)
-      throws InterruptedException {
+      throws Exception {
     T result = null;
     int numTries = 40;
     Duration sleepDuration = Duration.ofSeconds(15);
@@ -43,6 +43,9 @@ public class CloudUtils {
         break;
       } catch (Exception e) {
         numTries--;
+        if (0 == numTries) {
+          throw e;
+        }
         logger.info(
             "Exception \"{}\". Waiting {} seconds for permissions to propagate. Tries remaining: {}",
             e.getMessage(),
@@ -54,12 +57,11 @@ public class CloudUtils {
     return result;
   }
 
-  public static boolean runWithRetryOnException(RunnableWithException fn)
-      throws InterruptedException {
-    return getWithRetryOnException(
+  public static void runWithRetryOnException(RunnableWithException fn) throws Exception {
+    getWithRetryOnException(
         () -> {
           fn.run();
-          return true;
+          return null;
         });
   }
 }

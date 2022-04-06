@@ -21,10 +21,7 @@ public class CreateReferenceResourceFlight extends Flight {
 
     FlightBeanBag appContext = FlightBeanBag.getFromObject(beanBag);
 
-    // Perform access verification
-    addStep(new ValidateReferenceStep(appContext), RetryRules.cloud());
-
-    // If all is well, then store the reference metadata
+    // Store the reference metadata
     addStep(
         new CreateReferenceMetadataStep(appContext.getResourceDao()), RetryRules.shortDatabase());
   }

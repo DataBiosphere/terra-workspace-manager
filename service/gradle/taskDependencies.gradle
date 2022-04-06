@@ -1,5 +1,28 @@
-tasks.compileJava.dependsOn swaggerSources.server.code, generateVersionProperties
-tasks.jib.dependsOn extractProfilerAgent
-tasks.jibDockerBuild.dependsOn extractProfilerAgent
-tasks.jibBuildTar.dependsOn extractProfilerAgent
-tasks.clean.dependsOn cleanVersionProperties
+tasks.compileJava.dependsOn(swaggerSources.server.code, generateVersionProperties)
+tasks.jib.dependsOn(extractProfilerAgent)
+tasks.jibDockerBuild.dependsOn(extractProfilerAgent)
+tasks.jibBuildTar.dependsOn(extractProfilerAgent)
+tasks.spotlessJava.dependsOn(generateSwaggerCodeServer)
+
+// Don't run any spotless or spotbugs tasks unless we have actual source file changes. The best
+// way to determine that is to rely on the compileJava determination.
+final TASKS_ONLY_IF_COMPILE_JAVA = [spotlessApply, spotlessJava, spotlessJavaApply, spotlessCheck, spotbugsMain]
+for (task in TASKS_ONLY_IF_COMPILE_JAVA) {
+  // Run every time the inputs to compilation change
+  task.dependsOn(compileJava.inputs.files)
+  // If compileJava runs, this must run after it (for the following to work).
+  task.mustRunAfter(compileJava)
+  // Don't run if compileJava didn't do any work. This is necessary because otherwise, these
+  // tasks always want to run.
+  task.configure {
+    onlyIf { compileJava.didWork }
+  }
+}
+
+spotbugsTest.dependsOn(compileTestJava.inputs.files)
+spotbugsTest.mustRunAfter(compileTestJava)
+spotbugsTest.configure {
+  onlyIf { compileTestJava.didWork }
+}
+// Explicit dep to avoid accidental dep deprecation warning.
+tasks.processResources.dependsOn(generateVersionProperties)

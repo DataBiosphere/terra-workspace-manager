@@ -40,13 +40,13 @@ public class ReferencedDataRepoSnapshotLifecycle extends WorkspaceAllocateTestSc
   private TestUserSpecification partialAccessUser;
   private UUID destinationWorkspaceId;
 
-  public void setParameters(Map<String, String> parameters) throws Exception {
-    super.setParameters(parameters);
-    tdrInstance = ParameterUtils.getDataRepoInstance(parameters);
-    snapshotId = ParameterUtils.getDataRepoSnapshot(parameters);
+  public void setParametersMap(Map<String, String> parametersMap) throws Exception {
+    super.setParametersMap(parametersMap);
+    tdrInstance = ParameterUtils.getDataRepoInstance(parametersMap);
+    snapshotId = ParameterUtils.getDataRepoSnapshot(parametersMap);
     snapshotId2 =
         ParameterUtils.getParamOrThrow(
-            parameters, ParameterKeys.DATA_REPO_ALTERNATE_SNAPSHOT_PARAMETER);
+            parametersMap, ParameterKeys.DATA_REPO_ALTERNATE_SNAPSHOT_PARAMETER);
   }
 
   @Override

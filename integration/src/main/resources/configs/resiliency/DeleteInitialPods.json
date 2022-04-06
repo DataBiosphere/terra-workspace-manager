@@ -8,7 +8,7 @@
   "application": {},
   "disruptiveScript": {
     "name": "DeleteInitialPods",
-    "parameters": {}
+    "parametersMap": {}
   },
   "testScripts": [
     {
@@ -17,7 +17,7 @@
       "userJourneyThreadPoolSize": 2,
       "expectedTimeForEach": 150,
       "expectedTimeForEachUnit": "SECONDS",
-      "parameters": {
+      "parametersMap": {
         "status-check-delay": 150
       }
     }

@@ -18,12 +18,12 @@ public class ServiceStatus extends TestScript {
   private Duration delay = Duration.ZERO;
 
   @Override
-  public void setParameters(Map<String, String> parameters) {
+  public void setParametersMap(Map<String, String> parametersMap) {
     delay =
         Duration.ofSeconds(
             Long.parseLong(
                 ParameterUtils.getParamOrThrow(
-                    parameters, ParameterKeys.STATUS_CHECK_DELAY_PARAMETER)));
+                    parametersMap, ParameterKeys.STATUS_CHECK_DELAY_PARAMETER)));
   }
 
   @Override

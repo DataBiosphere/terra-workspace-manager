@@ -1,0 +1,13 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="Integration test" type="Application" factoryName="Application">
+    <option name="ALTERNATIVE_JRE_PATH" value="11" />
+    <option name="ALTERNATIVE_JRE_PATH_ENABLED" value="true" />
+    <option name="MAIN_CLASS_NAME" value="bio.terra.testrunner.common.commands.RunTest" />
+    <module name="terra-workspace-manager.integration.main" />
+    <option name="PROGRAM_PARAMETERS" value="configs/integration/ControlledGcsBucketLifecycle.json /tmp/TR" />
+    <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/integration" />
+    <method v="2">
+      <option name="Make" enabled="true" />
+    </method>
+  </configuration>
+</component>
