@@ -47,6 +47,12 @@ public final class StorageTransferServiceUtils {
   public static void deleteTransferJob(
       Storagetransfer storageTransferService, String transferJobName, String controlPlaneProjectId)
       throws IOException {
+    // If there's no job  to delete, return early
+    final TransferJob existingTransferJob = storageTransferService.transferJobs().get(transferJobName, controlPlaneProjectId).execute();
+    if (existingTransferJob == null) {
+      logger.info("Transfer Job {} in project {} was not found when trying to delete it.", transferJobName, controlPlaneProjectId);
+      return;
+    }
     final TransferJob patchedTransferJob = new TransferJob().setStatus(DELETED_STATUS);
     final UpdateTransferJobRequest updateTransferJobRequest =
         new UpdateTransferJobRequest()
