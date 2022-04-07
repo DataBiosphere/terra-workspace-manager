@@ -11,7 +11,7 @@
       "userJourneyThreadPoolSize": 1,
       "expectedTimeForEach": 5,
       "expectedTimeForEachUnit": "MINUTES",
-      "parameters": {
+      "parametersMap": {
         "spend-profile-id": "wm-default-spend-profile",
         "data-repo-instance": "terra",
         "snapshot-id":"07f33ba4-b3ee-4514-bcd1-a4b013d2f0bb",
