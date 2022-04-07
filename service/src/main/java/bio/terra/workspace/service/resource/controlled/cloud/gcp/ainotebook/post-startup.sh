@@ -44,6 +44,14 @@ sudo -u "${JUPYTER_USER}" sh -c "/opt/conda/bin/nbstripout --install --global"
 # Install Nextflow. Use an edge release that allows overriding the default compute engine SA and VPC network
 export NXF_VER=21.05.0-edge
 export NXF_MODE=google
+
+if [[ -n "$(which java)" ]];
+then
+  echo "java is installed"
+else
+  sudo apt-get -y install default-jre
+fi
+
 sudo -u "${JUPYTER_USER}" sh -c "curl -s https://get.nextflow.io | bash"
 sudo mv nextflow /usr/bin/nextflow
 
