@@ -11,7 +11,11 @@ import bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.Contr
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.workspace.GcpCloudContextService;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
+import com.google.api.client.googleapis.util.Utils;
 import com.google.api.services.storagetransfer.v1.Storagetransfer;
+import com.google.api.services.storagetransfer.v1.StoragetransferScopes;
+import com.google.auth.http.HttpCredentialsAdapter;
+import com.google.auth.oauth2.GoogleCredentials;
 import java.io.IOException;
 import java.util.List;
 import java.util.UUID;
@@ -70,7 +74,18 @@ public class SetBucketRolesStep implements Step {
     // Determine the Storage Transfer Service SA
     final String storageTransferServiceSAEmail;
     try {
-      storageTransferService = StorageTransferServiceUtils.createStorageTransferService();
+      GoogleCredentials credential = GoogleCredentials.getApplicationDefault();
+      if (credential.createScopedRequired()) {
+        credential = credential.createScoped(StoragetransferScopes.all());
+      }
+
+      storageTransferService =
+          new Storagetransfer.Builder(
+                  Utils.getDefaultTransport(),
+                  Utils.getDefaultJsonFactory(),
+                  new HttpCredentialsAdapter(credential))
+              .setApplicationName(StorageTransferServiceUtils.APPLICATION_NAME)
+              .build();
       storageTransferServiceSAEmail =
           getStorageTransferServiceSAEmail(storageTransferService, controlPlaneProjectId);
     } catch (IOException e) {

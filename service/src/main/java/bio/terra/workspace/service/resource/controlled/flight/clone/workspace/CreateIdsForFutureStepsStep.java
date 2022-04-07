@@ -10,8 +10,8 @@ import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 
 /**
- * Generate flight IDs ahead of the steps that need them. The steps can then check the
- * existence of the flights or workspaces before creation to ensure idempotency.
+ * Generate flight IDs ahead of the steps that need them. The steps can then check the existence of
+ * the flights or workspaces before creation to ensure idempotency.
  */
 public class CreateIdsForFutureStepsStep implements Step {
 

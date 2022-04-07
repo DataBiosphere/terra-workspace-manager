@@ -17,24 +17,10 @@ import org.slf4j.LoggerFactory;
 
 public final class StorageTransferServiceUtils {
   private static final Logger logger = LoggerFactory.getLogger(StorageTransferServiceUtils.class);
-  private static final String APPLICATION_NAME = "terra-workspace-manager";
+  public static final String APPLICATION_NAME = "terra-workspace-manager";
   private static final String DELETED_STATUS = "DELETED";
 
   private StorageTransferServiceUtils() {}
-
-  public static Storagetransfer createStorageTransferService() throws IOException {
-    GoogleCredentials credential = GoogleCredentials.getApplicationDefault();
-    if (credential.createScopedRequired()) {
-      credential = credential.createScoped(StoragetransferScopes.all());
-    }
-
-    return new Storagetransfer.Builder(
-            Utils.getDefaultTransport(),
-            Utils.getDefaultJsonFactory(),
-            new HttpCredentialsAdapter(credential))
-        .setApplicationName(APPLICATION_NAME)
-        .build();
-  }
 
   /**
    * Delete the transfer job, as we don't support reusing them.
@@ -71,7 +57,18 @@ public final class StorageTransferServiceUtils {
    */
   public static StepResult deleteTransferJobStepImpl(FlightContext flightContext) {
     try {
-      final Storagetransfer storageTransferService = createStorageTransferService();
+      GoogleCredentials credential = GoogleCredentials.getApplicationDefault();
+      if (credential.createScopedRequired()) {
+        credential = credential.createScoped(StoragetransferScopes.all());
+      }
+
+      final Storagetransfer storageTransferService =
+          new Storagetransfer.Builder(
+                  Utils.getDefaultTransport(),
+                  Utils.getDefaultJsonFactory(),
+                  new HttpCredentialsAdapter(credential))
+              .setApplicationName(APPLICATION_NAME)
+              .build();
       final String transferJobName =
           createTransferJobName(flightContext.getFlightId()); // might not be in map yet
       final String controlPlaneProjectId =

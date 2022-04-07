@@ -10,9 +10,13 @@ import bio.terra.workspace.generated.model.ApiClonedControlledGcpGcsBucket;
 import bio.terra.workspace.service.resource.controlled.exception.StorageTransferServiceTimeoutException;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
+import com.google.api.client.googleapis.util.Utils;
 import com.google.api.services.storagetransfer.v1.Storagetransfer;
+import com.google.api.services.storagetransfer.v1.StoragetransferScopes;
 import com.google.api.services.storagetransfer.v1.model.Operation;
 import com.google.api.services.storagetransfer.v1.model.TransferJob;
+import com.google.auth.http.HttpCredentialsAdapter;
+import com.google.auth.oauth2.GoogleCredentials;
 import java.io.IOException;
 import java.time.Duration;
 import java.util.concurrent.TimeUnit;
@@ -45,8 +49,18 @@ public class CompleteTransferOperationStep implements Step {
     }
 
     try {
+      GoogleCredentials credential = GoogleCredentials.getApplicationDefault();
+      if (credential.createScopedRequired()) {
+        credential = credential.createScoped(StoragetransferScopes.all());
+      }
+
       final Storagetransfer storageTransferService =
-          StorageTransferServiceUtils.createStorageTransferService();
+          new Storagetransfer.Builder(
+                  Utils.getDefaultTransport(),
+                  Utils.getDefaultJsonFactory(),
+                  new HttpCredentialsAdapter(credential))
+              .setApplicationName(StorageTransferServiceUtils.APPLICATION_NAME)
+              .build();
       final String transferJobName =
           flightContext
               .getWorkingMap()

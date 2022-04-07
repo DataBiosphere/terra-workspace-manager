@@ -23,9 +23,7 @@ import org.mockito.Mock;
 
 public class BucketCloneRolesComponentTest extends BaseUnitTest {
 
-
-  @Mock
-  private StorageCow mockStorageCow;
+  @Mock private StorageCow mockStorageCow;
   @Mock private CrlService mockCrlService;
   private BucketCloneRolesComponent bucketCloneRolesComponent;
 
@@ -38,14 +36,16 @@ public class BucketCloneRolesComponentTest extends BaseUnitTest {
   @Test
   public void testAddBucketRoles() {
     doReturn(EMPTY_POLICY).when(mockStorageCow).getIamPolicy(SOURCE_BUCKET_NAME);
-    bucketCloneRolesComponent.addBucketRoles(SOURCE_BUCKET_CLONE_INPUTS, STORAGE_TRANSFER_SERVICE_SA_EMAIL);
+    bucketCloneRolesComponent.addBucketRoles(
+        SOURCE_BUCKET_CLONE_INPUTS, STORAGE_TRANSFER_SERVICE_SA_EMAIL);
     verify(mockStorageCow).setIamPolicy(SOURCE_BUCKET_NAME, SOURCE_BUCKET_POLICY);
   }
 
   @Test
   public void testRemoveBucketRoles() {
     doReturn(SOURCE_BUCKET_POLICY).when(mockStorageCow).getIamPolicy(SOURCE_BUCKET_NAME);
-    bucketCloneRolesComponent.removeBucketRoles(SOURCE_BUCKET_CLONE_INPUTS, STORAGE_TRANSFER_SERVICE_SA_EMAIL);
+    bucketCloneRolesComponent.removeBucketRoles(
+        SOURCE_BUCKET_CLONE_INPUTS, STORAGE_TRANSFER_SERVICE_SA_EMAIL);
     verify(mockStorageCow).setIamPolicy(SOURCE_BUCKET_NAME, EMPTY_POLICY);
   }
 
@@ -54,7 +54,9 @@ public class BucketCloneRolesComponentTest extends BaseUnitTest {
     final FlightMap flightMap = new FlightMap();
     flightMap.put(ControlledResourceKeys.SOURCE_CLONE_INPUTS, SOURCE_BUCKET_CLONE_INPUTS);
     flightMap.put(ControlledResourceKeys.DESTINATION_CLONE_INPUTS, DESTINATION_BUCKET_CLONE_INPUTS);
-    flightMap.put(ControlledResourceKeys.STORAGE_TRANSFER_SERVICE_SA_EMAIL, STORAGE_TRANSFER_SERVICE_SA_EMAIL);
+    flightMap.put(
+        ControlledResourceKeys.STORAGE_TRANSFER_SERVICE_SA_EMAIL,
+        STORAGE_TRANSFER_SERVICE_SA_EMAIL);
 
     doReturn(SOURCE_BUCKET_POLICY).when(mockStorageCow).getIamPolicy(SOURCE_BUCKET_NAME);
     doReturn(DESTINATION_BUCKET_POLICY).when(mockStorageCow).getIamPolicy(DESTINATION_BUCKET_NAME);

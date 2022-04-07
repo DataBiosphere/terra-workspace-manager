@@ -29,8 +29,12 @@ public final class CreateStorageTransferServiceJobStep implements Step {
   private static final Logger logger =
       LoggerFactory.getLogger(CreateStorageTransferServiceJobStep.class);
   @VisibleForTesting public static final String ENABLED_STATUS = "ENABLED";
-  @VisibleForTesting public static final String TRANSFER_JOB_DESCRIPTION = "Terra Workspace Manager Clone GCS Bucket";
+
+  @VisibleForTesting
+  public static final String TRANSFER_JOB_DESCRIPTION = "Terra Workspace Manager Clone GCS Bucket";
+
   private final Storagetransfer storageTransferService;
+
   public CreateStorageTransferServiceJobStep(Storagetransfer storagetransfer) {
     this.storageTransferService = storagetransfer;
   }
@@ -42,7 +46,8 @@ public final class CreateStorageTransferServiceJobStep implements Step {
   public StepResult doStep(FlightContext flightContext)
       throws InterruptedException, RetryException {
     final FlightMap workingMap = flightContext.getWorkingMap();
-    FlightUtils.validateRequiredEntries(workingMap,
+    FlightUtils.validateRequiredEntries(
+        workingMap,
         ControlledResourceKeys.CLONING_INSTRUCTIONS,
         ControlledResourceKeys.SOURCE_CLONE_INPUTS,
         ControlledResourceKeys.DESTINATION_CLONE_INPUTS,

@@ -30,7 +30,6 @@ import java.io.IOException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
-import org.mockito.ArgumentMatchers;
 import org.mockito.Mock;
 
 public class CreateStorageTransferServiceJobStepTest extends BaseUnitTest {
@@ -44,7 +43,8 @@ public class CreateStorageTransferServiceJobStepTest extends BaseUnitTest {
 
   @BeforeEach
   public void setup() throws IOException {
-    createStorageTransferServiceJobStep = new CreateStorageTransferServiceJobStep(mockStoragetransfer);
+    createStorageTransferServiceJobStep =
+        new CreateStorageTransferServiceJobStep(mockStoragetransfer);
     doReturn(mockTransferJobs).when(mockStoragetransfer).transferJobs();
     doReturn(mockTransferJobsGet).when(mockTransferJobs).get(anyString(), anyString());
     doReturn(mockTransferJobsCreate).when(mockTransferJobs).create(any(TransferJob.class));
@@ -55,9 +55,12 @@ public class CreateStorageTransferServiceJobStepTest extends BaseUnitTest {
     FlightMap workingMap = new FlightMap();
     workingMap.put(ControlledResourceKeys.CLONING_INSTRUCTIONS, CloningInstructions.COPY_RESOURCE);
     workingMap.put(ControlledResourceKeys.SOURCE_CLONE_INPUTS, SOURCE_BUCKET_CLONE_INPUTS);
-    workingMap.put(ControlledResourceKeys.DESTINATION_CLONE_INPUTS, DESTINATION_BUCKET_CLONE_INPUTS);
+    workingMap.put(
+        ControlledResourceKeys.DESTINATION_CLONE_INPUTS, DESTINATION_BUCKET_CLONE_INPUTS);
     workingMap.put(ControlledResourceKeys.CONTROL_PLANE_PROJECT_ID, CONTROL_PLANE_PROJECT_ID);
-    workingMap.put(ControlledResourceKeys.STORAGE_TRANSFER_SERVICE_SA_EMAIL, STORAGE_TRANSFER_SERVICE_SA_EMAIL);
+    workingMap.put(
+        ControlledResourceKeys.STORAGE_TRANSFER_SERVICE_SA_EMAIL,
+        STORAGE_TRANSFER_SERVICE_SA_EMAIL);
 
     FlightContext mockFlightContext = mock(FlightContext.class);
     doReturn(workingMap).when(mockFlightContext).getWorkingMap();
@@ -74,12 +77,21 @@ public class CreateStorageTransferServiceJobStepTest extends BaseUnitTest {
     assertEquals("transferJobs/wsm-" + FLIGHT_ID, submittedJob.getName());
     assertEquals(TRANSFER_JOB_DESCRIPTION, submittedJob.getDescription());
     assertEquals(CONTROL_PLANE_PROJECT_ID, submittedJob.getProjectId());
-    assertEquals(SOURCE_BUCKET_NAME, submittedJob.getTransferSpec().getGcsDataSource().getBucketName());
-    assertEquals(DESTINATION_BUCKET_NAME, submittedJob.getTransferSpec().getGcsDataSink().getBucketName());
-    assertFalse(submittedJob.getTransferSpec().getTransferOptions().getDeleteObjectsFromSourceAfterTransfer());
-    assertFalse(submittedJob.getTransferSpec().getTransferOptions().getOverwriteObjectsAlreadyExistingInSink());
+    assertEquals(
+        SOURCE_BUCKET_NAME, submittedJob.getTransferSpec().getGcsDataSource().getBucketName());
+    assertEquals(
+        DESTINATION_BUCKET_NAME, submittedJob.getTransferSpec().getGcsDataSink().getBucketName());
+    assertFalse(
+        submittedJob
+            .getTransferSpec()
+            .getTransferOptions()
+            .getDeleteObjectsFromSourceAfterTransfer());
+    assertFalse(
+        submittedJob
+            .getTransferSpec()
+            .getTransferOptions()
+            .getOverwriteObjectsAlreadyExistingInSink());
     assertEquals(ENABLED_STATUS, submittedJob.getStatus());
     verify(mockTransferJobsCreate).execute();
   }
-
 }
