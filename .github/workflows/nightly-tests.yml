@@ -36,9 +36,10 @@ jobs:
           workload_identity_provider: 'projects/1038484894585/locations/global/workloadIdentityPools/github-wi-pool/providers/github-wi-provider'
           service_account: 'dsp-tools-iap-access@dsp-tools-k8s.iam.gserviceaccount.com'
           # Create `steps.auth.outputs.id_token` that can access Identity Aware Proxy
-          token_format: 'id_token'
-          id_token_audience: '${{ secrets.IAP_ID_TOKEN_AUDIENCE }}'
-          id_token_include_email: true
+          #token_format: 'id_token'
+          #id_token_audience: '${{ secrets.IAP_ID_TOKEN_AUDIENCE }}'
+          #id_token_include_email: true
+          token_format: 'access_token'
 
       # Install postgres:
       # - Create the file repository configuration.
@@ -96,6 +97,7 @@ jobs:
       # for a bit and just accept that in some crazy long cases, these tests will fail.
       # The sync is bracketed by /version probes so we have the pre and post sync versions
       # in the log.
+      # --header "Proxy-Authorization: Bearer ${{ steps.auth.outputs.id_token }}" \
       - name: ArgoCD sync
         run: |
           version=$(curl https://workspace.wsmtest.integ.envs.broadinstitute.org/version)
@@ -103,7 +105,6 @@ jobs:
           curl --fail --silent --show-error --location --request POST \
           'https://ap-argocd.dsp-devops.broadinstitute.org/api/v1/applications/workspacemanager-wsmtest/sync' \
           --header "Authorization: Bearer ${{ secrets.WSMTEST_SYNC_ARGOCD_TOKEN }}" \
-          --header "Proxy-Authorization: Bearer ${{ steps.auth.outputs.id_token }}" \
           | jq .operation
           sleep 120
           version=$(curl https://workspace.wsmtest.integ.envs.broadinstitute.org/version)
