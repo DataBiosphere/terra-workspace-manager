@@ -49,7 +49,7 @@ if [[ -n "$(which java)" ]];
 then
   echo "java is installed"
 else
-  sudo apt-get -y install default-jre
+  sudo apt-get -y install openjdk-11-jdk
 fi
 
 sudo -u "${JUPYTER_USER}" sh -c "curl -s https://get.nextflow.io | bash"
