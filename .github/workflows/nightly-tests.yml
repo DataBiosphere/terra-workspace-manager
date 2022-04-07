@@ -39,7 +39,6 @@ jobs:
           #token_format: 'id_token'
           #id_token_audience: '${{ secrets.IAP_ID_TOKEN_AUDIENCE }}'
           #id_token_include_email: true
-          token_format: 'access_token'
 
       # Install postgres:
       # - Create the file repository configuration.
