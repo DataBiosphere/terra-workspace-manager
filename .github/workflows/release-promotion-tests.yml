@@ -114,3 +114,12 @@ jobs:
           author_name: "Workspace Manager ${{ steps.set-env-step.outputs.test-env }} integrationTest"
           fields: repo,job,workflow,commit,eventName,author,took
 
+      - name: Archive WSM and TestRunner logs
+        id: archive_logs
+        if: always()
+        uses: actions/upload-artifact@v2
+        with:
+          name: wsm-and-testrunner-logs
+          path: |
+            wsm.log
+            ${{ steps.integration-test.outputs.results-dir }}
