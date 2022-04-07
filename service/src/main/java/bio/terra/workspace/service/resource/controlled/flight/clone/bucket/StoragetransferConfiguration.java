@@ -8,14 +8,17 @@ import com.google.auth.oauth2.GoogleCredentials;
 import java.io.IOException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.BeanCreationException;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Profile;
 
 @Configuration
 public class StoragetransferConfiguration {
   private static final Logger logger = LoggerFactory.getLogger(StoragetransferConfiguration.class);
 
   @Bean
+  @Profile("!unit-test")
   public GoogleCredentials getGoogleCredentials() {
     try {
       GoogleCredentials googleCredentials = GoogleCredentials.getApplicationDefault();
@@ -25,11 +28,18 @@ public class StoragetransferConfiguration {
       return googleCredentials;
 
     } catch (IOException e) {
-      logger.warn(
-          "Failed to get ADC. This is expected in unit tests. Returning empty instance.", e);
-      //      throw new BeanCreationException(e.getMessage());
-      return GoogleCredentials.newBuilder().build();
+      throw new BeanCreationException(e.getMessage());
     }
+  }
+
+  /**
+   * We don't need ADC in unit tests, but we do need to provide something that looks like them
+   * in unit tests.
+   */
+  @Bean
+  @Profile("unit-test")
+  public GoogleCredentials getFakeGoogleCredentials() {
+    return GoogleCredentials.newBuilder().build();
   }
 
   @Bean
