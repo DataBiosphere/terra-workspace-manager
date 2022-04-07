@@ -11,6 +11,7 @@ import com.google.api.services.storagetransfer.v1.model.TransferJob;
 import com.google.api.services.storagetransfer.v1.model.UpdateTransferJobRequest;
 import com.google.auth.http.HttpCredentialsAdapter;
 import com.google.auth.oauth2.GoogleCredentials;
+import io.grpc.Context.Storage;
 import java.io.IOException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -55,27 +56,15 @@ public final class StorageTransferServiceUtils {
    * @param flightContext
    * @return
    */
-  public static StepResult deleteTransferJobStepImpl(FlightContext flightContext) {
+  public static StepResult deleteTransferJobStepImpl(FlightContext flightContext, Storagetransfer storagetransfer) {
     try {
-      GoogleCredentials credential = GoogleCredentials.getApplicationDefault();
-      if (credential.createScopedRequired()) {
-        credential = credential.createScoped(StoragetransferScopes.all());
-      }
-
-      final Storagetransfer storageTransferService =
-          new Storagetransfer.Builder(
-                  Utils.getDefaultTransport(),
-                  Utils.getDefaultJsonFactory(),
-                  new HttpCredentialsAdapter(credential))
-              .setApplicationName(APPLICATION_NAME)
-              .build();
       final String transferJobName =
           createTransferJobName(flightContext.getFlightId()); // might not be in map yet
       final String controlPlaneProjectId =
           flightContext
               .getWorkingMap()
               .get(ControlledResourceKeys.CONTROL_PLANE_PROJECT_ID, String.class);
-      deleteTransferJob(storageTransferService, transferJobName, controlPlaneProjectId);
+      deleteTransferJob(storagetransfer, transferJobName, controlPlaneProjectId);
     } catch (IOException e) {
       return new StepResult(StepStatus.STEP_RESULT_FAILURE_FATAL, e);
     }

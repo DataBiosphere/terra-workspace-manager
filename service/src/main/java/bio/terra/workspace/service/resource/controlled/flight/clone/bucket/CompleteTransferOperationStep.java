@@ -10,13 +10,9 @@ import bio.terra.workspace.generated.model.ApiClonedControlledGcpGcsBucket;
 import bio.terra.workspace.service.resource.controlled.exception.StorageTransferServiceTimeoutException;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
-import com.google.api.client.googleapis.util.Utils;
 import com.google.api.services.storagetransfer.v1.Storagetransfer;
-import com.google.api.services.storagetransfer.v1.StoragetransferScopes;
 import com.google.api.services.storagetransfer.v1.model.Operation;
 import com.google.api.services.storagetransfer.v1.model.TransferJob;
-import com.google.auth.http.HttpCredentialsAdapter;
-import com.google.auth.oauth2.GoogleCredentials;
 import java.io.IOException;
 import java.time.Duration;
 import java.util.concurrent.TimeUnit;
@@ -33,6 +29,11 @@ public class CompleteTransferOperationStep implements Step {
   private static final Duration JOBS_POLL_INTERVAL = Duration.ofSeconds(10);
   private static final Duration OPERATIONS_POLL_INTERVAL = Duration.ofSeconds(30);
   private static final int MAX_ATTEMPTS = 25;
+  private final Storagetransfer storagetransfer;
+
+  public CompleteTransferOperationStep(Storagetransfer storagetransfer) {
+    this.storagetransfer = storagetransfer;
+  }
 
   @Override
   public StepResult doStep(FlightContext flightContext)
@@ -49,18 +50,6 @@ public class CompleteTransferOperationStep implements Step {
     }
 
     try {
-      GoogleCredentials credential = GoogleCredentials.getApplicationDefault();
-      if (credential.createScopedRequired()) {
-        credential = credential.createScoped(StoragetransferScopes.all());
-      }
-
-      final Storagetransfer storageTransferService =
-          new Storagetransfer.Builder(
-                  Utils.getDefaultTransport(),
-                  Utils.getDefaultJsonFactory(),
-                  new HttpCredentialsAdapter(credential))
-              .setApplicationName(StorageTransferServiceUtils.APPLICATION_NAME)
-              .build();
       final String transferJobName =
           flightContext
               .getWorkingMap()
@@ -76,10 +65,10 @@ public class CompleteTransferOperationStep implements Step {
       // millisecond
       // to hours. The transfer operation won't exist until it starts.
       final String operationName =
-          getLatestOperationName(storageTransferService, transferJobName, controlPlaneProjectId);
+          getLatestOperationName(transferJobName, controlPlaneProjectId);
 
       final StepResult operationResult =
-          getTransferOperationResult(storageTransferService, transferJobName, operationName);
+          getTransferOperationResult(transferJobName, operationName);
 
       if (StepStatus.STEP_RESULT_FAILURE_FATAL == operationResult.getStepStatus()) {
         return operationResult;
@@ -87,7 +76,8 @@ public class CompleteTransferOperationStep implements Step {
     } catch (IOException e) {
       return new StepResult(StepStatus.STEP_RESULT_FAILURE_FATAL, e);
     }
-    final ApiClonedControlledGcpGcsBucket apiBucketResult =
+
+    final var apiBucketResult =
         flightContext
             .getWorkingMap()
             .get(
@@ -106,7 +96,6 @@ public class CompleteTransferOperationStep implements Step {
   /**
    * Poll for completion of the named transfer operation and return the result.
    *
-   * @param storageTransferService - svc to perform the transfer
    * @param transferJobName - name of job owning the transfer operation
    * @param operationName - server-generated name of running operation
    * @return StepResult indicating success or failure
@@ -114,14 +103,14 @@ public class CompleteTransferOperationStep implements Step {
    * @throws InterruptedException
    */
   private StepResult getTransferOperationResult(
-      Storagetransfer storageTransferService, String transferJobName, String operationName)
+      String transferJobName, String operationName)
       throws IOException, InterruptedException {
     // Now that we have an operation name, we can poll the operations endpoint for completion
     // information.
     int attempts = 0;
     Operation operation;
     do {
-      operation = storageTransferService.transferOperations().get(operationName).execute();
+      operation = storagetransfer.transferOperations().get(operationName).execute();
       if (operation == null) {
         throw new RuntimeException(
             String.format("Failed to get transfer operation with name %s", operationName));
@@ -157,12 +146,12 @@ public class CompleteTransferOperationStep implements Step {
   // First, we poll the transfer jobs endpoint until an operation has started so that we can get
   // its server-generated name. Returns the most recently started operation's name.
   private String getLatestOperationName(
-      Storagetransfer storageTransferService, String transferJobName, String projectId)
+      String transferJobName, String projectId)
       throws InterruptedException, IOException {
     String operationName = null;
     for (int numAttempts = 0; numAttempts < MAX_ATTEMPTS; ++numAttempts) {
       final TransferJob getResponse =
-          storageTransferService.transferJobs().get(transferJobName, projectId).execute();
+          storagetransfer.transferJobs().get(transferJobName, projectId).execute();
       operationName = getResponse.getLatestOperationName();
       if (null != operationName) {
         break;

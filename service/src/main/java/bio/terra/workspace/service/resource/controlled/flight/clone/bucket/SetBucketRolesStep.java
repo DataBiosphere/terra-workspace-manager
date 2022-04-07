@@ -11,10 +11,8 @@ import bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.Contr
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.workspace.GcpCloudContextService;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
-import com.google.api.client.googleapis.util.Utils;
 import com.google.api.services.storagetransfer.v1.Storagetransfer;
 import com.google.api.services.storagetransfer.v1.StoragetransferScopes;
-import com.google.auth.http.HttpCredentialsAdapter;
 import com.google.auth.oauth2.GoogleCredentials;
 import java.io.IOException;
 import java.util.List;
@@ -36,14 +34,17 @@ public class SetBucketRolesStep implements Step {
   private final ControlledGcsBucketResource sourceBucket;
   private final GcpCloudContextService gcpCloudContextService;
   private final BucketCloneRolesComponent bucketCloneRolesService;
+  private final Storagetransfer storagetransfer;
 
   public SetBucketRolesStep(
       ControlledGcsBucketResource sourceBucket,
       GcpCloudContextService gcpCloudContextService,
-      BucketCloneRolesComponent bucketCloneRolesService) {
+      BucketCloneRolesComponent bucketCloneRolesService,
+      Storagetransfer storagetransfer) {
     this.sourceBucket = sourceBucket;
     this.gcpCloudContextService = gcpCloudContextService;
     this.bucketCloneRolesService = bucketCloneRolesService;
+    this.storagetransfer = storagetransfer;
   }
 
   @Override
@@ -69,8 +70,6 @@ public class SetBucketRolesStep implements Step {
     final String controlPlaneProjectId = GcpUtils.getControlPlaneProjectId();
     workingMap.put(ControlledResourceKeys.CONTROL_PLANE_PROJECT_ID, controlPlaneProjectId);
 
-    // Get the Storage Transfer Service
-    final Storagetransfer storageTransferService;
     // Determine the Storage Transfer Service SA
     final String storageTransferServiceSAEmail;
     try {
@@ -79,15 +78,8 @@ public class SetBucketRolesStep implements Step {
         credential = credential.createScoped(StoragetransferScopes.all());
       }
 
-      storageTransferService =
-          new Storagetransfer.Builder(
-                  Utils.getDefaultTransport(),
-                  Utils.getDefaultJsonFactory(),
-                  new HttpCredentialsAdapter(credential))
-              .setApplicationName(StorageTransferServiceUtils.APPLICATION_NAME)
-              .build();
       storageTransferServiceSAEmail =
-          getStorageTransferServiceSAEmail(storageTransferService, controlPlaneProjectId);
+          getStorageTransferServiceSAEmail(controlPlaneProjectId);
     } catch (IOException e) {
       return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, e);
     }
@@ -141,10 +133,10 @@ public class SetBucketRolesStep implements Step {
   }
 
   final String getStorageTransferServiceSAEmail(
-      Storagetransfer storageTransferService, String controlPlaneProjectId) throws IOException {
+      String controlPlaneProjectId) throws IOException {
     // Get the service account in the control plane project used by the transfer service to
     // perform the actual data transfer. It's named for and scoped to the project.
-    return storageTransferService
+    return storagetransfer
         .googleServiceAccounts()
         .get(controlPlaneProjectId)
         .execute()

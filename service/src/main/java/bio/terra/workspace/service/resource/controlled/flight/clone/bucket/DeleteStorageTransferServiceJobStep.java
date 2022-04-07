@@ -6,12 +6,19 @@ import bio.terra.stairway.StepResult;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
+import com.google.api.services.storagetransfer.v1.Storagetransfer;
 
 /**
  * Delete a Storage Transfer Service job, which has already had an operation run to completion or
  * failure.
  */
 public class DeleteStorageTransferServiceJobStep implements Step {
+
+  private final Storagetransfer storagetransfer;
+
+  public DeleteStorageTransferServiceJobStep(Storagetransfer storagetransfer) {
+    this.storagetransfer = storagetransfer;
+  }
 
   @Override
   public StepResult doStep(FlightContext flightContext)
@@ -24,7 +31,7 @@ public class DeleteStorageTransferServiceJobStep implements Step {
     if (CloningInstructions.COPY_RESOURCE != effectiveCloningInstructions) {
       return StepResult.getStepResultSuccess();
     } else {
-      return StorageTransferServiceUtils.deleteTransferJobStepImpl(flightContext);
+      return StorageTransferServiceUtils.deleteTransferJobStepImpl(flightContext, storagetransfer);
     }
   }
 

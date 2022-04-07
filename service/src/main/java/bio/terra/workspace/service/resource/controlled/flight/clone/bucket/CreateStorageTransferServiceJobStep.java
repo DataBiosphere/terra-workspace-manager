@@ -33,10 +33,10 @@ public final class CreateStorageTransferServiceJobStep implements Step {
   @VisibleForTesting
   public static final String TRANSFER_JOB_DESCRIPTION = "Terra Workspace Manager Clone GCS Bucket";
 
-  private final Storagetransfer storageTransferService;
+  private final Storagetransfer storagetransfer;
 
   public CreateStorageTransferServiceJobStep(Storagetransfer storagetransfer) {
-    this.storageTransferService = storagetransfer;
+    this.storagetransfer = storagetransfer;
   }
 
   // See https://cloud.google.com/storage-transfer/docs/reference/rest/v1/transferJobs/create
@@ -83,7 +83,7 @@ public final class CreateStorageTransferServiceJobStep implements Step {
     // the job either has an operation in progress or completed (possibly failed).
     try {
       final TransferJob existingTransferJob =
-          storageTransferService
+          storagetransfer
               .transferJobs()
               .get(transferJobName, controlPlaneProjectId)
               .execute();
@@ -115,8 +115,8 @@ public final class CreateStorageTransferServiceJobStep implements Step {
           sourceInputs,
           destinationInputs,
           transferJobName,
-          controlPlaneProjectId,
-          storageTransferService);
+          controlPlaneProjectId
+      );
     } catch (IOException e) {
       return new StepResult(
           StepStatus.STEP_RESULT_FAILURE_FATAL,
@@ -130,8 +130,7 @@ public final class CreateStorageTransferServiceJobStep implements Step {
       BucketCloneInputs sourceInputs,
       BucketCloneInputs destinationInputs,
       String transferJobName,
-      String controlPlaneProjectId,
-      Storagetransfer storageTransferService)
+      String controlPlaneProjectId)
       throws IOException {
     final TransferJob transferJobInput =
         new TransferJob()
@@ -144,7 +143,7 @@ public final class CreateStorageTransferServiceJobStep implements Step {
             .setStatus(ENABLED_STATUS);
     // Create the TransferJob for the associated schedule and spec in the correct project.
     final TransferJob transferJobOutput =
-        storageTransferService.transferJobs().create(transferJobInput).execute();
+        storagetransfer.transferJobs().create(transferJobInput).execute();
     logger.debug("Created transfer job {}", transferJobOutput);
   }
 
@@ -152,7 +151,7 @@ public final class CreateStorageTransferServiceJobStep implements Step {
   // previous step's undo method.
   @Override
   public StepResult undoStep(FlightContext flightContext) throws InterruptedException {
-    return StorageTransferServiceUtils.deleteTransferJobStepImpl(flightContext);
+    return StorageTransferServiceUtils.deleteTransferJobStepImpl(flightContext, storagetransfer);
   }
 
   private TransferSpec createTransferSpec(String sourceBucketName, String destinationBucketName) {
