@@ -96,14 +96,14 @@ jobs:
       # for a bit and just accept that in some crazy long cases, these tests will fail.
       # The sync is bracketed by /version probes so we have the pre and post sync versions
       # in the log.
-      # --header "Proxy-Authorization: Bearer ${{ steps.auth.outputs.id_token }}" \
       - name: ArgoCD sync
         run: |
           version=$(curl https://workspace.wsmtest.integ.envs.broadinstitute.org/version)
           echo "$(date "+%Y-%m-%dT%H:%M:%S") pre-sync wsmtest version: $version"
           curl --fail --silent --show-error --location --request POST \
           'https://ap-argocd.dsp-devops.broadinstitute.org/api/v1/applications/workspacemanager-wsmtest/sync' \
-          --header "Authorization: Bearer ${{ secrets.WSMTEST_SYNC_ARGOCD_TOKEN }}" \
+          --header "Authorization: Bearer ${{ secrets.WSMTEST_SYNC_ARGOCD_TOKEN }}" \ 
+          --header "Proxy-Authorization: Bearer ${{ steps.auth.outputs.id_token }}" \
           | jq .operation
           sleep 120
           version=$(curl https://workspace.wsmtest.integ.envs.broadinstitute.org/version)
