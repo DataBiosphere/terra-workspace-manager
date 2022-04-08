@@ -62,7 +62,8 @@ import scripts.utils.MultiResourcesUtils;
 import scripts.utils.SamClientUtils;
 
 public class ControlledBigQueryDatasetLifecycle extends GcpWorkspaceCloneTestScriptBase {
-  private static final Logger logger = LoggerFactory.getLogger(ControlledBigQueryDatasetLifecycle.class);
+  private static final Logger logger =
+      LoggerFactory.getLogger(ControlledBigQueryDatasetLifecycle.class);
 
   private static final String DATASET_RESOURCE_NAME = "wsmtest_dataset";
   private static final String TABLE_NAME = "wsmtest_table";
