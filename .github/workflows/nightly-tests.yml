@@ -102,7 +102,7 @@ jobs:
           echo "$(date "+%Y-%m-%dT%H:%M:%S") pre-sync wsmtest version: $version"
           curl --fail --silent --show-error --location --request POST \
           'https://ap-argocd.dsp-devops.broadinstitute.org/api/v1/applications/workspacemanager-wsmtest/sync' \
-          --header "Authorization: Bearer ${{ secrets.WSMTEST_SYNC_ARGOCD_TOKEN }}" \ 
+          --header "Authorization: Bearer ${{ secrets.WSMTEST_SYNC_ARGOCD_TOKEN }}" \
           --header "Proxy-Authorization: Bearer ${{ steps.auth.outputs.id_token }}" \
           | jq .operation
           sleep 120
