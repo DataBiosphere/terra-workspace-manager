@@ -48,18 +48,10 @@ public final class CreateStorageTransferServiceJobStep implements Step {
     final FlightMap workingMap = flightContext.getWorkingMap();
     FlightUtils.validateRequiredEntries(
         workingMap,
-        ControlledResourceKeys.CLONING_INSTRUCTIONS,
         ControlledResourceKeys.SOURCE_CLONE_INPUTS,
         ControlledResourceKeys.DESTINATION_CLONE_INPUTS,
         ControlledResourceKeys.CONTROL_PLANE_PROJECT_ID,
         ControlledResourceKeys.STORAGE_TRANSFER_SERVICE_SA_EMAIL);
-    final CloningInstructions effectiveCloningInstructions =
-        workingMap.get(ControlledResourceKeys.CLONING_INSTRUCTIONS, CloningInstructions.class);
-    // This step is only run for full resource clones
-    if (CloningInstructions.COPY_RESOURCE != effectiveCloningInstructions) {
-      return StepResult.getStepResultSuccess();
-    }
-
     // Get source & destination bucket input values
     final BucketCloneInputs sourceInputs =
         workingMap.get(ControlledResourceKeys.SOURCE_CLONE_INPUTS, BucketCloneInputs.class);

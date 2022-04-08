@@ -33,7 +33,7 @@ public class CheckControlledResourceAuthStep implements Step {
 
   @Override
   public StepResult doStep(FlightContext context) throws InterruptedException, RetryException {
-    // Validate caller can read the source resource before launching flight.
+    // Validate caller can read the source resource before proceeding with the flight.
     controlledResourceMetadataManager.validateControlledResourceAndAction(
         userRequest,
         resource.getWorkspaceId(),

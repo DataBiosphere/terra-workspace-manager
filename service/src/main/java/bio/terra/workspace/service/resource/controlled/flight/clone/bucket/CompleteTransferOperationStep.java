@@ -39,16 +39,9 @@ public class CompleteTransferOperationStep implements Step {
   public StepResult doStep(FlightContext flightContext)
       throws InterruptedException, RetryException {
 
-    // If cloning instructions don't say copy resource, bail
-    final CloningInstructions effectiveCloningInstructions =
-        flightContext
-            .getWorkingMap()
-            .get(ControlledResourceKeys.CLONING_INSTRUCTIONS, CloningInstructions.class);
-    // This step is only run for full resource clones
-    if (CloningInstructions.COPY_RESOURCE != effectiveCloningInstructions) {
-      return StepResult.getStepResultSuccess();
-    }
-
+    FlightUtils.validateRequiredEntries(flightContext.getWorkingMap(),
+        ControlledResourceKeys.STORAGE_TRANSFER_JOB_NAME,
+        ControlledResourceKeys.CONTROL_PLANE_PROJECT_ID);
     try {
       final String transferJobName =
           flightContext
@@ -144,7 +137,8 @@ public class CompleteTransferOperationStep implements Step {
   }
 
   // First, we poll the transfer jobs endpoint until an operation has started so that we can get
-  // its server-generated name. Returns the most recently started operation's name.
+  // its server-generated name. Returns the most recently started operation's name. This is
+  // reasonably safe, because the names are scoped to the transfer job.
   private String getLatestOperationName(
       String transferJobName, String projectId)
       throws InterruptedException, IOException {

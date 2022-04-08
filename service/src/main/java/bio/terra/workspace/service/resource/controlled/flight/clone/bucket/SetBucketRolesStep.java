@@ -50,17 +50,8 @@ public class SetBucketRolesStep implements Step {
   public StepResult doStep(FlightContext flightContext)
       throws InterruptedException, RetryException {
     final FlightMap workingMap = flightContext.getWorkingMap();
-    FlightUtils.validateRequiredEntries(workingMap,
-        ControlledResourceKeys.CLONING_INSTRUCTIONS,
-        ControlledResourceKeys.DESTINATION_WORKSPACE_ID,
+    FlightUtils.validateRequiredEntries(flightContext.getInputParameters(),
         ControlledResourceKeys.DESTINATION_WORKSPACE_ID);
-
-    final CloningInstructions effectiveCloningInstructions =
-        workingMap.get(ControlledResourceKeys.CLONING_INSTRUCTIONS, CloningInstructions.class);
-    // This step is only run for full resource clones
-    if (CloningInstructions.COPY_RESOURCE != effectiveCloningInstructions) {
-      return StepResult.getStepResultSuccess();
-    }
 
     // Gather bucket inputs and store them in the working map for the next
     // step.
@@ -106,9 +97,6 @@ public class SetBucketRolesStep implements Step {
    */
   @Override
   public StepResult undoStep(FlightContext flightContext) throws InterruptedException {
-    FlightUtils.validateRequiredEntries(flightContext.getWorkingMap(),
-        ControlledResourceKeys.SOURCE_CLONE_INPUTS,
-        ControlledResourceKeys.DESTINATION_CLONE_INPUTS);
     bucketCloneRolesService.removeAllAddedBucketRoles(flightContext.getWorkingMap());
     return StepResult.getStepResultSuccess();
   }

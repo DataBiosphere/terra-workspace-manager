@@ -8,6 +8,8 @@ import com.google.api.client.util.Strings;
 import com.google.cloud.Identity;
 import com.google.cloud.Policy;
 import com.google.cloud.Role;
+import javax.annotation.Nullable;
+import javax.validation.constraints.Null;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -35,11 +37,11 @@ public class BucketCloneRolesService {
    * bucket details from the working map along with the correct project ID and remove the roles.
    */
   public void removeAllAddedBucketRoles(FlightMap workingMap) {
-    final BucketCloneInputs sourceInputs =
+    final @Nullable BucketCloneInputs sourceInputs =
         workingMap.get(ControlledResourceKeys.SOURCE_CLONE_INPUTS, BucketCloneInputs.class);
-    final BucketCloneInputs destinationInputs =
+    final @Nullable BucketCloneInputs destinationInputs =
         workingMap.get(ControlledResourceKeys.DESTINATION_CLONE_INPUTS, BucketCloneInputs.class);
-    final String transferServiceSAEmail =
+    final @Nullable String transferServiceSAEmail =
         workingMap.get(ControlledResourceKeys.STORAGE_TRANSFER_SERVICE_SA_EMAIL, String.class);
 
     if (!Strings.isNullOrEmpty(transferServiceSAEmail)) {
