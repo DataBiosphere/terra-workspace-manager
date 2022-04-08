@@ -83,7 +83,7 @@ public class CloneControlledGcsBucketResourceFlight extends Flight {
               userRequest, sourceBucket, flightBeanBag.getControlledResourceService(),
           resolvedCloningInstructions));
 
-      if (CloningInstructions.COPY_RESOURCE.equals(resolvedCloningInstructions)) {
+      if (CloningInstructions.COPY_RESOURCE == resolvedCloningInstructions) {
         addStep(
             new SetBucketRolesStep(
                 sourceBucket,

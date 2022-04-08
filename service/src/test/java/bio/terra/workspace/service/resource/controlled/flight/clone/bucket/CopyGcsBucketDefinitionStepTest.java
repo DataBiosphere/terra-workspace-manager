@@ -1,9 +1,15 @@
 package bio.terra.workspace.service.resource.controlled.flight.clone.bucket;
 
 import static bio.terra.workspace.service.resource.controlled.flight.clone.bucket.GcsBucketCloneTestFixtures.CREATED_BUCKET_RESOURCE;
+import static bio.terra.workspace.service.resource.controlled.flight.clone.bucket.GcsBucketCloneTestFixtures.DESTINATION_BUCKET_NAME;
 import static bio.terra.workspace.service.resource.controlled.flight.clone.bucket.GcsBucketCloneTestFixtures.DESTINATION_WORKSPACE_ID;
+import static bio.terra.workspace.service.resource.controlled.flight.clone.bucket.GcsBucketCloneTestFixtures.SOURCE_BUCKET_CLONE_INPUTS;
+import static bio.terra.workspace.service.resource.controlled.flight.clone.bucket.GcsBucketCloneTestFixtures.SOURCE_BUCKET_CREATION_PARAMETERS;
 import static bio.terra.workspace.service.resource.controlled.flight.clone.bucket.GcsBucketCloneTestFixtures.SOURCE_BUCKET_RESOURCE;
+import static bio.terra.workspace.service.resource.controlled.flight.clone.bucket.GcsBucketCloneTestFixtures.SOURCE_RESOURCE_NAME;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.verify;
@@ -17,6 +23,7 @@ import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.model.ControlledResourceIamRole;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceService;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.ControlledGcsBucketResource;
+import bio.terra.workspace.service.resource.controlled.model.AccessScopeType;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
@@ -46,12 +53,15 @@ public class CopyGcsBucketDefinitionStepTest extends BaseUnitTest {
   public void testDoStep() throws InterruptedException {
     final var inputParameters = new FlightMap();
     inputParameters.put(ControlledResourceKeys.DESTINATION_WORKSPACE_ID, DESTINATION_WORKSPACE_ID);
-    inputParameters.put(ResourceKeys.RESOURCE_NAME, "source-resource");
+    inputParameters.put(ResourceKeys.RESOURCE_NAME, GcsBucketCloneTestFixtures.SOURCE_RESOURCE_NAME);
+    inputParameters.put(ControlledResourceKeys.DESTINATION_BUCKET_NAME, DESTINATION_BUCKET_NAME);
+    inputParameters.put(ControlledResourceKeys.CREATION_PARAMETERS, SOURCE_BUCKET_CREATION_PARAMETERS);
     doReturn(inputParameters).when(mockFlightContext).getInputParameters();
 
     final var workingMap = new FlightMap();
-    workingMap.put(ResourceKeys.PREVIOUS_RESOURCE_DESCRIPTION, "A bucket with a hole in it.");
+    workingMap.put(ResourceKeys.PREVIOUS_RESOURCE_DESCRIPTION, GcsBucketCloneTestFixtures.SOURCE_BUCKET_DESCRIPTION);
     doReturn(workingMap).when(mockFlightContext).getWorkingMap();
+
     doReturn(CREATED_BUCKET_RESOURCE).when(mockControlledResourceService)
         .createControlledResourceSync(
             any(ControlledResource.class),
@@ -71,7 +81,26 @@ public class CopyGcsBucketDefinitionStepTest extends BaseUnitTest {
         iamRoleCaptor.capture(),
         any(AuthenticatedUserRequest.class),
         creationParametersCaptor.capture());
-    // todo: assert all the captured values
+
+    final ControlledGcsBucketResource destinationBucketResource = destinationBucketCaptor.getValue();
+    assertEquals(DESTINATION_BUCKET_NAME, destinationBucketResource.getBucketName());
+    assertEquals(DESTINATION_WORKSPACE_ID, destinationBucketResource.getWorkspaceId());
+    assertNotNull(destinationBucketResource.getResourceId());
+    assertEquals(SOURCE_RESOURCE_NAME, destinationBucketResource.getName());
+    assertEquals(GcsBucketCloneTestFixtures.SOURCE_BUCKET_DESCRIPTION, destinationBucketResource.getDescription());
+    assertEquals(SOURCE_BUCKET_RESOURCE.getCloningInstructions(), destinationBucketResource.getCloningInstructions());
+    assertEquals(SOURCE_BUCKET_RESOURCE.getAssignedUser(), destinationBucketResource.getAssignedUser());
+    assertEquals(AccessScopeType.ACCESS_SCOPE_PRIVATE, destinationBucketResource.getAccessScope());
+    assertEquals(SOURCE_BUCKET_RESOURCE.getManagedBy(), destinationBucketResource.getManagedBy());
+    assertEquals(SOURCE_BUCKET_RESOURCE.getApplicationId(), destinationBucketResource.getApplicationId());
+    assertEquals(SOURCE_BUCKET_RESOURCE.getPrivateResourceState(), destinationBucketResource.getPrivateResourceState());
+
+    final ControlledResourceIamRole controlledResourceIamRole = iamRoleCaptor.getValue();
+    assertEquals(ControlledResourceIamRole.EDITOR, controlledResourceIamRole);
+
+    final ApiGcpGcsBucketCreationParameters bucketCreationParameters = creationParametersCaptor.getValue();
+    assertEquals(SOURCE_BUCKET_CREATION_PARAMETERS, bucketCreationParameters);
+
     assertEquals(StepResult.getStepResultSuccess(), stepResult);
   }
 }

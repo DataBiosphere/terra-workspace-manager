@@ -48,8 +48,9 @@ public class CopyGcsBucketDefinitionStep implements Step {
       throws InterruptedException, RetryException {
     final FlightMap inputParameters = flightContext.getInputParameters();
     final FlightMap workingMap = flightContext.getWorkingMap();
-    FlightUtils.validateRequiredEntries(inputParameters, ControlledResourceKeys.DESTINATION_WORKSPACE_ID);
-
+    FlightUtils.validateRequiredEntries(inputParameters,
+        ControlledResourceKeys.DESTINATION_WORKSPACE_ID,
+        ControlledResourceKeys.CREATION_PARAMETERS);
      // todo: handle COPY_REFERENCE PF-811, PF-812
     final String resourceName =
         FlightUtils.getInputParameterOrWorkingValue(
@@ -77,22 +78,22 @@ public class CopyGcsBucketDefinitionStep implements Step {
         inputParameters.get(ControlledResourceKeys.DESTINATION_WORKSPACE_ID, UUID.class);
 
     // bucket resource for create flight
-    ControlledResourceFields commonFields =
-        ControlledResourceFields.builder()
-            .workspaceId(destinationWorkspaceId)
-            .resourceId(UUID.randomUUID()) // random ID for new resource
-            .name(resourceName)
-            .description(description)
-            .cloningInstructions(sourceBucket.getCloningInstructions())
-            .assignedUser(sourceBucket.getAssignedUser().orElse(null))
-            .accessScope(sourceBucket.getAccessScope())
-            .managedBy(sourceBucket.getManagedBy())
-            .applicationId(sourceBucket.getApplicationId())
-            .privateResourceState(privateResourceState)
-            .build();
-
     ControlledGcsBucketResource destinationBucketResource =
-        ControlledGcsBucketResource.builder().bucketName(bucketName).common(commonFields).build();
+        ControlledGcsBucketResource.builder()
+            .bucketName(bucketName)
+            .common(ControlledResourceFields.builder()
+              .workspaceId(destinationWorkspaceId)
+              .resourceId(UUID.randomUUID()) // random ID for new resource
+              .name(resourceName)
+              .description(description)
+              .cloningInstructions(sourceBucket.getCloningInstructions())
+              .assignedUser(sourceBucket.getAssignedUser().orElse(null))
+              .accessScope(sourceBucket.getAccessScope())
+              .managedBy(sourceBucket.getManagedBy())
+              .applicationId(sourceBucket.getApplicationId())
+              .privateResourceState(privateResourceState)
+              .build())
+            .build();
 
     final ApiGcpGcsBucketCreationParameters destinationCreationParameters =
         getDestinationCreationParameters(inputParameters, workingMap);
@@ -145,7 +146,7 @@ public class CopyGcsBucketDefinitionStep implements Step {
   private ApiGcpGcsBucketCreationParameters getDestinationCreationParameters(
       FlightMap inputParameters, FlightMap workingMap) {
     final ApiGcpGcsBucketCreationParameters sourceCreationParameters =
-        workingMap.get(
+        inputParameters.get(
             ControlledResourceKeys.CREATION_PARAMETERS, ApiGcpGcsBucketCreationParameters.class);
     final Optional<String> suppliedLocation =
         Optional.ofNullable(inputParameters.get(ControlledResourceKeys.LOCATION, String.class));

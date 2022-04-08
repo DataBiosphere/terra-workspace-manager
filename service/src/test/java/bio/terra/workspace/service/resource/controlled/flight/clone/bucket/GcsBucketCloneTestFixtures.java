@@ -1,5 +1,12 @@
 package bio.terra.workspace.service.resource.controlled.flight.clone.bucket;
 
+import bio.terra.workspace.generated.model.ApiGcpGcsBucketCreationParameters;
+import bio.terra.workspace.generated.model.ApiGcpGcsBucketDefaultStorageClass;
+import bio.terra.workspace.generated.model.ApiGcpGcsBucketLifecycle;
+import bio.terra.workspace.generated.model.ApiGcpGcsBucketLifecycleRule;
+import bio.terra.workspace.generated.model.ApiGcpGcsBucketLifecycleRuleAction;
+import bio.terra.workspace.generated.model.ApiGcpGcsBucketLifecycleRuleActionType;
+import bio.terra.workspace.generated.model.ApiGcpGcsBucketLifecycleRuleCondition;
 import bio.terra.workspace.service.iam.model.ControlledResourceIamRole;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.ControlledGcsBucketResource;
 import bio.terra.workspace.service.resource.controlled.model.AccessScopeType;
@@ -20,8 +27,20 @@ public class GcsBucketCloneTestFixtures {
   public static final String SOURCE_PROJECT_ID = "popular-strawberry-1234";
   public static final String DESTINATION_PROJECT_ID = "hairless-kiwi-5678";
   public static final String SOURCE_BUCKET_NAME = "source-bucket";
+  public static final String SOURCE_BUCKET_DESCRIPTION = "A bucket with a hole in it.";
   public static final String DESTINATION_BUCKET_NAME = "destination-bucket";
   public static final String SOURCE_RESOURCE_NAME = "source_bucket";
+  public static final ApiGcpGcsBucketCreationParameters SOURCE_BUCKET_CREATION_PARAMETERS =
+      new ApiGcpGcsBucketCreationParameters()
+          .defaultStorageClass(ApiGcpGcsBucketDefaultStorageClass.NEARLINE)
+          .name(SOURCE_RESOURCE_NAME)
+          .lifecycle(new ApiGcpGcsBucketLifecycle()
+              .addRulesItem(new ApiGcpGcsBucketLifecycleRule()
+                  .condition(new ApiGcpGcsBucketLifecycleRuleCondition()
+                      .age(30))
+                  .action(new ApiGcpGcsBucketLifecycleRuleAction()
+                      .type(ApiGcpGcsBucketLifecycleRuleActionType.DELETE))))
+          .location("us-west1");
   public static final ControlledGcsBucketResource SOURCE_BUCKET_RESOURCE =
       ControlledGcsBucketResource.builder()
           .bucketName(SOURCE_BUCKET_NAME)
