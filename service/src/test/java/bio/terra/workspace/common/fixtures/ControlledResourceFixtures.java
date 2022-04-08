@@ -1,5 +1,6 @@
 package bio.terra.workspace.common.fixtures;
 
+import bio.terra.stairway.ShortUUID;
 import bio.terra.workspace.generated.model.ApiAzureDiskCreationParameters;
 import bio.terra.workspace.generated.model.ApiAzureIpCreationParameters;
 import bio.terra.workspace.generated.model.ApiAzureNetworkCreationParameters;
@@ -390,7 +391,7 @@ public class ControlledResourceFixtures {
   }
 
   public static String uniqueDatasetId() {
-    return "my_test_dataset_" + (int) (Math.floor(Math.random() * 10000));
+    return "my_test_dataset_" + ShortUUID.get().replace("-", "_");
   }
 
   /**
