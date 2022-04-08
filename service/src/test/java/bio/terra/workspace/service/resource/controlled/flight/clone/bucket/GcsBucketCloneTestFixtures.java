@@ -21,6 +21,7 @@ public class GcsBucketCloneTestFixtures {
   public static final String DESTINATION_PROJECT_ID = "hairless-kiwi-5678";
   public static final String SOURCE_BUCKET_NAME = "source-bucket";
   public static final String DESTINATION_BUCKET_NAME = "destination-bucket";
+  public static final String SOURCE_RESOURCE_NAME = "source_bucket";
   public static final ControlledGcsBucketResource SOURCE_BUCKET_RESOURCE =
       ControlledGcsBucketResource.builder()
           .bucketName(SOURCE_BUCKET_NAME)
@@ -30,10 +31,29 @@ public class GcsBucketCloneTestFixtures {
               .assignedUser(null)
               .cloningInstructions(CloningInstructions.COPY_RESOURCE)
               .description(null)
-              .resourceId(UUID.randomUUID())
-              .privateResourceState(null)
               .iamRole(ControlledResourceIamRole.OWNER)
               .managedBy(ManagedByType.MANAGED_BY_USER)
+              .name(SOURCE_RESOURCE_NAME)
+              .privateResourceState(null)
+              .resourceId(UUID.randomUUID())
+              .workspaceId(SOURCE_WORKSPACE_ID)
+              .build())
+          .build();
+  public static final ControlledGcsBucketResource CREATED_BUCKET_RESOURCE =
+      ControlledGcsBucketResource.builder()
+          .bucketName(DESTINATION_BUCKET_NAME)
+          .common(ControlledResourceFields.builder()
+              .accessScope(AccessScopeType.ACCESS_SCOPE_PRIVATE)
+              .applicationId(null)
+              .assignedUser(null)
+              .cloningInstructions(CloningInstructions.COPY_RESOURCE)
+              .description(null)
+              .iamRole(ControlledResourceIamRole.OWNER)
+              .managedBy(ManagedByType.MANAGED_BY_USER)
+              .name("clone_of_source_bucket")
+              .privateResourceState(null)
+              .resourceId(UUID.randomUUID())
+              .workspaceId(DESTINATION_WORKSPACE_ID)
               .build())
           .build();
   // Stairway ser/des doesn't handle unmodifiable lists

@@ -55,6 +55,9 @@ public class CloneControlledGcsBucketResourceFlight extends Flight {
                 inputParameters.get(
                     ControlledResourceKeys.CLONING_INSTRUCTIONS, CloningInstructions.class))
             .orElse(sourceBucket.getCloningInstructions());
+    // We can't put the cloning instructions into the working map, because it's not available
+    // from within a flight constructor. Instead, pass it in to the constructors of the steps
+    // that need it.
     if (CloningInstructions.COPY_NOTHING == resolvedCloningInstructions) {
       addStep(new SkipBucketCloneStep(sourceBucket));
     } else {
