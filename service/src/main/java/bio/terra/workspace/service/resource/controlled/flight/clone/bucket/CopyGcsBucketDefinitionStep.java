@@ -23,6 +23,7 @@ import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.Contr
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ResourceKeys;
 import java.util.Optional;
 import java.util.UUID;
+import javax.annotation.Nullable;
 import org.springframework.http.HttpStatus;
 
 public class CopyGcsBucketDefinitionStep implements Step {
@@ -49,8 +50,7 @@ public class CopyGcsBucketDefinitionStep implements Step {
     final FlightMap inputParameters = flightContext.getInputParameters();
     final FlightMap workingMap = flightContext.getWorkingMap();
     FlightUtils.validateRequiredEntries(inputParameters,
-        ControlledResourceKeys.DESTINATION_WORKSPACE_ID,
-        ControlledResourceKeys.CREATION_PARAMETERS);
+        ControlledResourceKeys.DESTINATION_WORKSPACE_ID);
      // todo: handle COPY_REFERENCE PF-811, PF-812
     final String resourceName =
         FlightUtils.getInputParameterOrWorkingValue(
@@ -96,7 +96,7 @@ public class CopyGcsBucketDefinitionStep implements Step {
             .build();
 
     final ApiGcpGcsBucketCreationParameters destinationCreationParameters =
-        getDestinationCreationParameters(inputParameters, workingMap);
+        getDestinationCreationParameters(inputParameters);
 
     final ControlledResourceIamRole iamRole =
         IamRoleUtils.getIamRoleForAccessScope(sourceBucket.getAccessScope());
@@ -143,9 +143,9 @@ public class CopyGcsBucketDefinitionStep implements Step {
     return StepResult.getStepResultSuccess();
   }
 
-  private ApiGcpGcsBucketCreationParameters getDestinationCreationParameters(
-      FlightMap inputParameters, FlightMap workingMap) {
-    final ApiGcpGcsBucketCreationParameters sourceCreationParameters =
+  @Nullable private ApiGcpGcsBucketCreationParameters getDestinationCreationParameters(
+      FlightMap inputParameters) {
+    @Nullable final ApiGcpGcsBucketCreationParameters sourceCreationParameters =
         inputParameters.get(
             ControlledResourceKeys.CREATION_PARAMETERS, ApiGcpGcsBucketCreationParameters.class);
     final Optional<String> suppliedLocation =
