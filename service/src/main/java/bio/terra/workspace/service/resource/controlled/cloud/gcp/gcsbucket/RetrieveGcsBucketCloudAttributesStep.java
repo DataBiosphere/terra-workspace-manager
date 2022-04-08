@@ -18,6 +18,10 @@ import javax.ws.rs.BadRequestException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * Extract source bucket info from the cloud. This information takes
+ * the form of one of two {@link RetrievalMode} values.
+ */
 public class RetrieveGcsBucketCloudAttributesStep implements Step {
   private static final Logger logger =
       LoggerFactory.getLogger(RetrieveGcsBucketCloudAttributesStep.class);

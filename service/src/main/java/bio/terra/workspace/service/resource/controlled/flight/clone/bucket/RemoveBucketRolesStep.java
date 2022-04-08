@@ -15,10 +15,10 @@ import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.Contr
  */
 public class RemoveBucketRolesStep implements Step {
 
-  private final BucketCloneRolesComponent bucketCloneRolesService;
+  private final BucketCloneRolesService bucketCloneRolesComponent;
 
-  public RemoveBucketRolesStep(BucketCloneRolesComponent bucketCloneRolesService) {
-    this.bucketCloneRolesService = bucketCloneRolesService;
+  public RemoveBucketRolesStep(BucketCloneRolesService bucketCloneRolesComponent) {
+    this.bucketCloneRolesComponent = bucketCloneRolesComponent;
   }
 
   @Override
@@ -34,7 +34,7 @@ public class RemoveBucketRolesStep implements Step {
       return StepResult.getStepResultSuccess();
     }
 
-    bucketCloneRolesService.removeAllAddedBucketRoles(workingMap);
+    bucketCloneRolesComponent.removeAllAddedBucketRoles(workingMap);
     return StepResult.getStepResultSuccess();
   }
 

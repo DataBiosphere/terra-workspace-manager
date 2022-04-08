@@ -25,11 +25,11 @@ public class BucketCloneRolesComponentTest extends BaseUnitTest {
 
   @Mock private StorageCow mockStorageCow;
   @Mock private CrlService mockCrlService;
-  private BucketCloneRolesComponent bucketCloneRolesComponent;
+  private BucketCloneRolesService bucketCloneRolesComponent;
 
   @BeforeEach
   public void setup() {
-    bucketCloneRolesComponent = new BucketCloneRolesComponent(mockCrlService);
+    bucketCloneRolesComponent = new BucketCloneRolesService(mockCrlService);
     doReturn(mockStorageCow).when(mockCrlService).createStorageCow(anyString());
   }
 

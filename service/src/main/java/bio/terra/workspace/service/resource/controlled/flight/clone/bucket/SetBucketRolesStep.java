@@ -6,14 +6,13 @@ import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.StepStatus;
 import bio.terra.stairway.exception.RetryException;
+import bio.terra.workspace.common.utils.FlightUtils;
 import bio.terra.workspace.common.utils.GcpUtils;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.ControlledGcsBucketResource;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.workspace.GcpCloudContextService;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import com.google.api.services.storagetransfer.v1.Storagetransfer;
-import com.google.api.services.storagetransfer.v1.StoragetransferScopes;
-import com.google.auth.oauth2.GoogleCredentials;
 import java.io.IOException;
 import java.util.List;
 import java.util.UUID;
@@ -33,13 +32,13 @@ public class SetBucketRolesStep implements Step {
 
   private final ControlledGcsBucketResource sourceBucket;
   private final GcpCloudContextService gcpCloudContextService;
-  private final BucketCloneRolesComponent bucketCloneRolesService;
+  private final BucketCloneRolesService bucketCloneRolesService;
   private final Storagetransfer storagetransfer;
 
   public SetBucketRolesStep(
       ControlledGcsBucketResource sourceBucket,
       GcpCloudContextService gcpCloudContextService,
-      BucketCloneRolesComponent bucketCloneRolesService,
+      BucketCloneRolesService bucketCloneRolesService,
       Storagetransfer storagetransfer) {
     this.sourceBucket = sourceBucket;
     this.gcpCloudContextService = gcpCloudContextService;
@@ -51,6 +50,10 @@ public class SetBucketRolesStep implements Step {
   public StepResult doStep(FlightContext flightContext)
       throws InterruptedException, RetryException {
     final FlightMap workingMap = flightContext.getWorkingMap();
+    FlightUtils.validateRequiredEntries(workingMap,
+        ControlledResourceKeys.CLONING_INSTRUCTIONS,
+        ControlledResourceKeys.DESTINATION_WORKSPACE_ID,
+        ControlledResourceKeys.DESTINATION_WORKSPACE_ID);
 
     final CloningInstructions effectiveCloningInstructions =
         workingMap.get(ControlledResourceKeys.CLONING_INSTRUCTIONS, CloningInstructions.class);
@@ -73,11 +76,6 @@ public class SetBucketRolesStep implements Step {
     // Determine the Storage Transfer Service SA
     final String storageTransferServiceSAEmail;
     try {
-      GoogleCredentials credential = GoogleCredentials.getApplicationDefault();
-      if (credential.createScopedRequired()) {
-        credential = credential.createScoped(StoragetransferScopes.all());
-      }
-
       storageTransferServiceSAEmail =
           getStorageTransferServiceSAEmail(controlPlaneProjectId);
     } catch (IOException e) {
@@ -90,6 +88,12 @@ public class SetBucketRolesStep implements Step {
     bucketCloneRolesService.addBucketRoles(sourceInputs, storageTransferServiceSAEmail);
     bucketCloneRolesService.addBucketRoles(destinationInputs, storageTransferServiceSAEmail);
 
+    // Validate the outputs, so we fail fast if one goes missing.
+    FlightUtils.validateRequiredEntries(workingMap,
+        ControlledResourceKeys.SOURCE_CLONE_INPUTS,
+        ControlledResourceKeys.DESTINATION_CLONE_INPUTS,
+        ControlledResourceKeys.CONTROL_PLANE_PROJECT_ID,
+        ControlledResourceKeys.STORAGE_TRANSFER_SERVICE_SA_EMAIL);
     return StepResult.getStepResultSuccess();
   }
 
@@ -102,6 +106,9 @@ public class SetBucketRolesStep implements Step {
    */
   @Override
   public StepResult undoStep(FlightContext flightContext) throws InterruptedException {
+    FlightUtils.validateRequiredEntries(flightContext.getWorkingMap(),
+        ControlledResourceKeys.SOURCE_CLONE_INPUTS,
+        ControlledResourceKeys.DESTINATION_CLONE_INPUTS);
     bucketCloneRolesService.removeAllAddedBucketRoles(flightContext.getWorkingMap());
     return StepResult.getStepResultSuccess();
   }

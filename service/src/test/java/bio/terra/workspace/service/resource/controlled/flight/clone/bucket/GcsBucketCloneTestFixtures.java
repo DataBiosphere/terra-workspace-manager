@@ -1,5 +1,11 @@
 package bio.terra.workspace.service.resource.controlled.flight.clone.bucket;
 
+import bio.terra.workspace.service.iam.model.ControlledResourceIamRole;
+import bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.ControlledGcsBucketResource;
+import bio.terra.workspace.service.resource.controlled.model.AccessScopeType;
+import bio.terra.workspace.service.resource.controlled.model.ControlledResourceFields;
+import bio.terra.workspace.service.resource.controlled.model.ManagedByType;
+import bio.terra.workspace.service.resource.model.CloningInstructions;
 import com.google.cloud.Identity;
 import com.google.cloud.Policy;
 import com.google.cloud.Role;
@@ -15,6 +21,21 @@ public class GcsBucketCloneTestFixtures {
   public static final String DESTINATION_PROJECT_ID = "hairless-kiwi-5678";
   public static final String SOURCE_BUCKET_NAME = "source-bucket";
   public static final String DESTINATION_BUCKET_NAME = "destination-bucket";
+  public static final ControlledGcsBucketResource SOURCE_BUCKET_RESOURCE =
+      ControlledGcsBucketResource.builder()
+          .bucketName(SOURCE_BUCKET_NAME)
+          .common(ControlledResourceFields.builder()
+              .accessScope(AccessScopeType.ACCESS_SCOPE_PRIVATE)
+              .applicationId(null)
+              .assignedUser(null)
+              .cloningInstructions(CloningInstructions.COPY_RESOURCE)
+              .description(null)
+              .resourceId(UUID.randomUUID())
+              .privateResourceState(null)
+              .iamRole(ControlledResourceIamRole.OWNER)
+              .managedBy(ManagedByType.MANAGED_BY_USER)
+              .build())
+          .build();
   // Stairway ser/des doesn't handle unmodifiable lists
   public static final List<String> SOURCE_ROLE_NAMES =
       Stream.of("roles/storage.objectViewer", "roles/storage.legacyBucketReader")

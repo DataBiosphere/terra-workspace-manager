@@ -12,7 +12,7 @@ import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.petserviceaccount.PetSaService;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceMetadataManager;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceService;
-import bio.terra.workspace.service.resource.controlled.flight.clone.bucket.BucketCloneRolesComponent;
+import bio.terra.workspace.service.resource.controlled.flight.clone.bucket.BucketCloneRolesService;
 import bio.terra.workspace.service.resource.referenced.cloud.gcp.ReferencedResourceService;
 import bio.terra.workspace.service.spendprofile.SpendProfileService;
 import bio.terra.workspace.service.workspace.AzureCloudContextService;
@@ -35,7 +35,7 @@ public class FlightBeanBag {
   private final ApplicationDao applicationDao;
   private final AzureCloudContextService azureCloudContextService;
   private final AzureConfiguration azureConfig;
-  private final BucketCloneRolesComponent bucketCloneRolesComponent;
+  private final BucketCloneRolesService bucketCloneRolesComponent;
   private final BufferService bufferService;
   private final CliConfiguration cliConfiguration;
   private final ControlledResourceMetadataManager controlledResourceMetadataManager;
@@ -58,7 +58,7 @@ public class FlightBeanBag {
       ApplicationDao applicationDao,
       AzureCloudContextService azureCloudContextService,
       AzureConfiguration azureConfig,
-      BucketCloneRolesComponent bucketCloneRolesComponent,
+      BucketCloneRolesService bucketCloneRolesComponent,
       BufferService bufferService,
       CliConfiguration cliConfiguration,
       ControlledResourceMetadataManager controlledResourceMetadataManager,
@@ -107,7 +107,7 @@ public class FlightBeanBag {
     return azureCloudContextService;
   }
 
-  public BucketCloneRolesComponent getBucketCloneRolesComponent() {
+  public BucketCloneRolesService getBucketCloneRolesComponent() {
     return bucketCloneRolesComponent;
   }
 
