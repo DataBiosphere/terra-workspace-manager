@@ -90,24 +90,31 @@ jobs:
           vault-token: ${{ steps.vault-token-step.outputs.vault-token }}
           target: wsmtest
 
-      # The ArgoCD sync triggers the synchronization of the wsmtest cluster. Typically,
-      # the cluster is reset within a few seconds. However, it is possible for it to take
-      # minutes or hours. We have no way to check that the sync is complete. We sleep
-      # for a bit and just accept that in some crazy long cases, these tests will fail.
+      # The ArgoCD sync triggers the synchronization of the wsmtest cluster. The ArgoCD CLI
+      # will wait for the initial sync to complete, but it won't necessarily wait for WSM's
+      # new version to actually come fully online--which could take minutes or hours in rare
+      # cases. We sleep for two minutes to try to allow WSM to come online.
       # The sync is bracketed by /version probes so we have the pre and post sync versions
       # in the log.
+      - name: Download ArgoCD CLI
+        run: |
+          curl -sSL -o ./argocd https://github.com/argoproj/argo-cd/releases/latest/download/argocd-linux-amd64
+          chmod +x ./argocd
       - name: ArgoCD sync
         run: |
           version=$(curl https://workspace.wsmtest.integ.envs.broadinstitute.org/version)
           echo "$(date "+%Y-%m-%dT%H:%M:%S") pre-sync wsmtest version: $version"
-          curl --fail --silent --show-error --location --request POST \
-          'https://ap-argocd.dsp-devops.broadinstitute.org/api/v1/applications/workspacemanager-wsmtest/sync' \
-          --header "Authorization: Bearer ${{ secrets.WSMTEST_SYNC_ARGOCD_TOKEN }}" \
-          --header "Proxy-Authorization: Bearer ${{ steps.auth.outputs.id_token }}" \
-          | jq .operation
+          ./argocd --grpc-web --server ap-argocd.dsp-devops.broadinstitute.org:443 \
+            --auth-token '${{ secrets.WSMTEST_SYNC_ARGOCD_TOKEN }}' \
+            --header 'Proxy-Authorization: Bearer ${{ steps.auth.outputs.id_token }}' \
+            app sync workspacemanager-wsmtest
           sleep 120
           version=$(curl https://workspace.wsmtest.integ.envs.broadinstitute.org/version)
           echo "$(date "+%Y-%m-%dT%H:%M:%S") post-sync wsmtest version: $version"
+      - name: Remove ArgoCD CLI
+        if: always()
+        run: |
+          rm -f ./argocd
 
       - name: clean databases before integration suite
         if: always()
