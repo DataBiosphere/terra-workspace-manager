@@ -36,10 +36,9 @@ jobs:
           workload_identity_provider: 'projects/1038484894585/locations/global/workloadIdentityPools/github-wi-pool/providers/github-wi-provider'
           service_account: 'dsp-tools-iap-access@dsp-tools-k8s.iam.gserviceaccount.com'
           # Create `steps.auth.outputs.id_token` that can access Identity Aware Proxy
-          #token_format: 'id_token'
-          #id_token_audience: '${{ secrets.IAP_ID_TOKEN_AUDIENCE }}'
-          #id_token_include_email: true
-          token_format: 'access_token'
+          token_format: 'id_token'
+          id_token_audience: '${{ secrets.IAP_ID_TOKEN_AUDIENCE }}'
+          id_token_include_email: true
 
       # Install postgres:
       # - Create the file repository configuration.
