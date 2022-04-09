@@ -96,9 +96,9 @@ public class CopyGcsBucketDefinitionStep implements Step {
             .build();
 
     final ApiGcpGcsBucketCreationParameters destinationCreationParameters =
-        getDestinationCreationParameters(inputParameters);
+        getDestinationCreationParameters(inputParameters, workingMap);
 
-    final ControlledResourceIamRole iamRole =
+    @Nullable final ControlledResourceIamRole iamRole =
         IamRoleUtils.getIamRoleForAccessScope(sourceBucket.getAccessScope());
 
     // Launch a CreateControlledResourcesFlight to make the destination bucket
@@ -144,9 +144,9 @@ public class CopyGcsBucketDefinitionStep implements Step {
   }
 
   @Nullable private ApiGcpGcsBucketCreationParameters getDestinationCreationParameters(
-      FlightMap inputParameters) {
+      FlightMap inputParameters, FlightMap workingMap) {
     @Nullable final ApiGcpGcsBucketCreationParameters sourceCreationParameters =
-        inputParameters.get(
+        workingMap.get(
             ControlledResourceKeys.CREATION_PARAMETERS, ApiGcpGcsBucketCreationParameters.class);
     final Optional<String> suppliedLocation =
         Optional.ofNullable(inputParameters.get(ControlledResourceKeys.LOCATION, String.class));
