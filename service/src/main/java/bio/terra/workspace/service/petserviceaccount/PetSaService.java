@@ -1,6 +1,7 @@
 package bio.terra.workspace.service.petserviceaccount;
 
 import bio.terra.cloudres.google.iam.ServiceAccountName;
+import bio.terra.common.exception.ConflictException;
 import bio.terra.common.exception.InternalServerErrorException;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
@@ -20,6 +21,7 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -94,6 +96,7 @@ public class PetSaService {
     String proxyGroupEmail =
         SamRethrow.onInterrupted(
             () -> samService.getProxyGroupEmail(userToEnableEmail, token), "enablePet");
+    String targetMember = "group:" + proxyGroupEmail;
 
     String projectId = gcpCloudContextService.getRequiredGcpProject(workspaceId);
     ServiceAccountName petSaName =
@@ -111,10 +114,17 @@ public class PetSaService {
             workspaceId);
         return Optional.empty();
       }
+      // See if the user is already on the policy. If so, return the policy. This avoids
+      // calls to set the IAM policy that have a rate limit.
+      if (bindingExists(saPolicy, targetMember)) {
+        logger.info("user {} is already enabled on petSA {}", userToEnableEmail, petSaEmail);
+        return Optional.of(saPolicy);
+      }
+
       Binding saUserBinding =
           new Binding()
               .setRole(SERVICE_ACCOUNT_USER_ROLE)
-              .setMembers(ImmutableList.of("group:" + proxyGroupEmail));
+              .setMembers(ImmutableList.of(targetMember));
       // If no bindings exist, getBindings() returns null instead of an empty list.
       List<Binding> bindingList =
           Optional.ofNullable(saPolicy.getBindings()).orElse(new ArrayList<>());
@@ -131,8 +141,7 @@ public class PetSaService {
               .setIamPolicy(petSaName, request)
               .execute());
     } catch (IOException e) {
-      throw new InternalServerErrorException(
-          "Error enabling user's proxy group to impersonate pet SA", e);
+      return handleProxyUpdateError(e, "enabling");
     }
   }
 
@@ -170,6 +179,7 @@ public class PetSaService {
         SamRethrow.onInterrupted(
             () -> samService.getProxyGroupEmail(userToDisableEmail, userRequest.getRequiredToken()),
             "disablePet");
+    String targetMember = "group:" + proxyGroupEmail;
 
     String projectId = gcpCloudContextService.getRequiredGcpProject(workspaceId);
     try {
@@ -196,17 +206,20 @@ public class PetSaService {
             workspaceId);
         return Optional.empty();
       }
+
+      // If the member is already not on the policy, we are done
+      // This handles the case where there are no bindings at all, so we don't
+      // need to worry about null binding later in the logic.
+      if (!bindingExists(saPolicy, targetMember)) {
+        return Optional.empty();
+      }
+
       Binding bindingToRemove =
           new Binding()
               .setRole(SERVICE_ACCOUNT_USER_ROLE)
-              .setMembers(ImmutableList.of("group:" + proxyGroupEmail));
-      // If no bindings exist, getBindings() returns null instead of an empty list. If there are
-      // no policies, there is nothing to revoke, so this method is finished.
-      List<Binding> oldBindingList = saPolicy.getBindings();
-      if (oldBindingList == null) {
-        return Optional.empty();
-      }
-      List<Binding> newBindingsList = removeBinding(oldBindingList, bindingToRemove);
+              .setMembers(ImmutableList.of(targetMember));
+
+      List<Binding> newBindingsList = removeBinding(saPolicy.getBindings(), bindingToRemove);
       saPolicy.setBindings(newBindingsList);
       SetIamPolicyRequest request = new SetIamPolicyRequest().setPolicy(saPolicy);
       return Optional.of(
@@ -217,9 +230,22 @@ public class PetSaService {
               .setIamPolicy(userToDisablePetSA.get(), request)
               .execute());
     } catch (IOException e) {
-      throw new InternalServerErrorException(
-          "Error disabling user's proxy group to impersonate pet SA", e);
+      return handleProxyUpdateError(e, "disabling");
     }
+  }
+
+  // Handle exceptions from attempting the enable or disable of pet SA impersonation
+  // This always throws, but we give it a return value, so the compiler knows there
+  // is no escape from the catch.
+  private Optional<Policy> handleProxyUpdateError(Exception e, String op) {
+    if (e instanceof GoogleJsonResponseException) {
+      var g = (GoogleJsonResponseException) e;
+      if (g.getStatusCode() == HttpStatus.SC_CONFLICT) {
+        throw new ConflictException("Conflict " + op + " pet SA", e);
+      }
+    }
+    throw new InternalServerErrorException(
+        "Error " + op + " user's proxy group to impersonate pet SA", e);
   }
 
   /**
@@ -230,6 +256,24 @@ public class PetSaService {
     return bindingList.stream()
         .filter(binding -> !bindingEquals(binding, bindingToRemove))
         .collect(Collectors.toList());
+  }
+
+  // Check the policy to see if the binding to the target member already exists
+  private boolean bindingExists(Policy saPolicy, String targetMember) {
+    if (saPolicy.getBindings() == null) {
+      return false;
+    }
+    for (Binding binding : saPolicy.getBindings()) {
+      if (binding.getRole().equals(SERVICE_ACCOUNT_USER_ROLE)) {
+        for (String member : binding.getMembers()) {
+          if (StringUtils.equals(member, targetMember)) {
+            return true;
+          }
+        }
+        break; // found the role, but not the member
+      }
+    }
+    return false;
   }
 
   private static boolean bindingEquals(Binding binding1, Binding binding2) {
