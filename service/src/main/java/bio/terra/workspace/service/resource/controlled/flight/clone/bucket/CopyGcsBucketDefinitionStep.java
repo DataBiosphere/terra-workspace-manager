@@ -23,21 +23,39 @@ import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.Contr
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ResourceKeys;
 import java.util.Optional;
 import java.util.UUID;
+import javax.annotation.Nullable;
 import org.springframework.http.HttpStatus;
 
+/**
+ * Copy the definition of a GCS bucket (i.e. everything but the data) into a destionation bucket.
+ *
+ * <p>Preconditions: Source bucket exists in GCS. Cloning insitructions are either COPY_RESOURCE or
+ * COPY_DEFINITION. DESTINATION_WORKSPACE_ID has been created and is in the input parameters map.
+ *
+ * <p>Post conditions: A controlled GCS bucket resource is created for the destination. Its
+ * RESOURCE_NAME is taken either from the input parameters or the source resource name, if not in
+ * the input map. Likewise, its description is taken from the input parameters or the source bucket
+ * resource. Creation parameters (lifecycle, storage class, etc) are copied from the source bucket.
+ * CLONED_RESOURCE_DEFINITION is put into the working map for future steps. A
+ * CLONE_DEFINITION_RESULT object is put into the working map, and if the cloning instructions are
+ * COPY_DEFINITION, the response is set on the flight.
+ */
 public class CopyGcsBucketDefinitionStep implements Step {
 
   private final AuthenticatedUserRequest userRequest;
   private final ControlledGcsBucketResource sourceBucket;
   private final ControlledResourceService controlledResourceService;
+  private final CloningInstructions resolvedCloningInstructions;
 
   public CopyGcsBucketDefinitionStep(
       AuthenticatedUserRequest userRequest,
       ControlledGcsBucketResource sourceBucket,
-      ControlledResourceService controlledResourceService) {
+      ControlledResourceService controlledResourceService,
+      CloningInstructions resolvedCloningInstructions) {
     this.userRequest = userRequest;
     this.sourceBucket = sourceBucket;
     this.controlledResourceService = controlledResourceService;
+    this.resolvedCloningInstructions = resolvedCloningInstructions;
   }
 
   @Override
@@ -45,23 +63,8 @@ public class CopyGcsBucketDefinitionStep implements Step {
       throws InterruptedException, RetryException {
     final FlightMap inputParameters = flightContext.getInputParameters();
     final FlightMap workingMap = flightContext.getWorkingMap();
-    final CloningInstructions cloningInstructions =
-        Optional.ofNullable(
-                inputParameters.get(
-                    ControlledResourceKeys.CLONING_INSTRUCTIONS, CloningInstructions.class))
-            .orElse(sourceBucket.getCloningInstructions());
-    // future steps need the resolved cloning instructions
-    workingMap.put(ControlledResourceKeys.CLONING_INSTRUCTIONS, cloningInstructions);
-    if (CloningInstructions.COPY_NOTHING.equals(cloningInstructions)) {
-      final ApiClonedControlledGcpGcsBucket noOpResult =
-          new ApiClonedControlledGcpGcsBucket()
-              .effectiveCloningInstructions(cloningInstructions.toApiModel())
-              .bucket(null)
-              .sourceWorkspaceId(sourceBucket.getWorkspaceId())
-              .sourceResourceId(sourceBucket.getResourceId());
-      FlightUtils.setResponse(flightContext, noOpResult, HttpStatus.OK);
-      return StepResult.getStepResultSuccess();
-    } // todo: handle COPY_REFERENCE PF-811, PF-812
+    FlightUtils.validateRequiredEntries(
+        inputParameters, ControlledResourceKeys.DESTINATION_WORKSPACE_ID);
     final String resourceName =
         FlightUtils.getInputParameterOrWorkingValue(
             flightContext,
@@ -88,26 +91,28 @@ public class CopyGcsBucketDefinitionStep implements Step {
         inputParameters.get(ControlledResourceKeys.DESTINATION_WORKSPACE_ID, UUID.class);
 
     // bucket resource for create flight
-    ControlledResourceFields commonFields =
-        ControlledResourceFields.builder()
-            .workspaceId(destinationWorkspaceId)
-            .resourceId(UUID.randomUUID()) // random ID for new resource
-            .name(resourceName)
-            .description(description)
-            .cloningInstructions(sourceBucket.getCloningInstructions())
-            .assignedUser(sourceBucket.getAssignedUser().orElse(null))
-            .accessScope(sourceBucket.getAccessScope())
-            .managedBy(sourceBucket.getManagedBy())
-            .applicationId(sourceBucket.getApplicationId())
-            .privateResourceState(privateResourceState)
-            .build();
-
     ControlledGcsBucketResource destinationBucketResource =
-        ControlledGcsBucketResource.builder().bucketName(bucketName).common(commonFields).build();
+        ControlledGcsBucketResource.builder()
+            .bucketName(bucketName)
+            .common(
+                ControlledResourceFields.builder()
+                    .workspaceId(destinationWorkspaceId)
+                    .resourceId(UUID.randomUUID()) // random ID for new resource
+                    .name(resourceName)
+                    .description(description)
+                    .cloningInstructions(sourceBucket.getCloningInstructions())
+                    .assignedUser(sourceBucket.getAssignedUser().orElse(null))
+                    .accessScope(sourceBucket.getAccessScope())
+                    .managedBy(sourceBucket.getManagedBy())
+                    .applicationId(sourceBucket.getApplicationId())
+                    .privateResourceState(privateResourceState)
+                    .build())
+            .build();
 
     final ApiGcpGcsBucketCreationParameters destinationCreationParameters =
         getDestinationCreationParameters(inputParameters, workingMap);
 
+    @Nullable
     final ControlledResourceIamRole iamRole =
         IamRoleUtils.getIamRoleForAccessScope(sourceBucket.getAccessScope());
 
@@ -126,12 +131,12 @@ public class CopyGcsBucketDefinitionStep implements Step {
 
     final ApiClonedControlledGcpGcsBucket apiBucketResult =
         new ApiClonedControlledGcpGcsBucket()
-            .effectiveCloningInstructions(cloningInstructions.toApiModel())
+            .effectiveCloningInstructions(resolvedCloningInstructions.toApiModel())
             .bucket(apiCreatedBucket)
             .sourceWorkspaceId(sourceBucket.getWorkspaceId())
             .sourceResourceId(sourceBucket.getResourceId());
     workingMap.put(ControlledResourceKeys.CLONE_DEFINITION_RESULT, apiBucketResult);
-    if (cloningInstructions.equals(CloningInstructions.COPY_DEFINITION)) {
+    if (resolvedCloningInstructions.equals(CloningInstructions.COPY_DEFINITION)) {
       FlightUtils.setResponse(flightContext, apiBucketResult, HttpStatus.OK);
     }
     return StepResult.getStepResultSuccess();
@@ -153,8 +158,10 @@ public class CopyGcsBucketDefinitionStep implements Step {
     return StepResult.getStepResultSuccess();
   }
 
+  @Nullable
   private ApiGcpGcsBucketCreationParameters getDestinationCreationParameters(
       FlightMap inputParameters, FlightMap workingMap) {
+    @Nullable
     final ApiGcpGcsBucketCreationParameters sourceCreationParameters =
         workingMap.get(
             ControlledResourceKeys.CREATION_PARAMETERS, ApiGcpGcsBucketCreationParameters.class);

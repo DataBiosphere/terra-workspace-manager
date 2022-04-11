@@ -4,37 +4,19 @@ import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.StepStatus;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
-import com.google.api.client.googleapis.util.Utils;
 import com.google.api.services.storagetransfer.v1.Storagetransfer;
-import com.google.api.services.storagetransfer.v1.StoragetransferScopes;
 import com.google.api.services.storagetransfer.v1.model.TransferJob;
 import com.google.api.services.storagetransfer.v1.model.UpdateTransferJobRequest;
-import com.google.auth.http.HttpCredentialsAdapter;
-import com.google.auth.oauth2.GoogleCredentials;
 import java.io.IOException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public final class StorageTransferServiceUtils {
   private static final Logger logger = LoggerFactory.getLogger(StorageTransferServiceUtils.class);
-  private static final String APPLICATION_NAME = "terra-workspace-manager";
+  public static final String APPLICATION_NAME = "terra-workspace-manager";
   private static final String DELETED_STATUS = "DELETED";
 
   private StorageTransferServiceUtils() {}
-
-  public static Storagetransfer createStorageTransferService() throws IOException {
-    GoogleCredentials credential = GoogleCredentials.getApplicationDefault();
-    if (credential.createScopedRequired()) {
-      credential = credential.createScoped(StoragetransferScopes.all());
-    }
-
-    return new Storagetransfer.Builder(
-            Utils.getDefaultTransport(),
-            Utils.getDefaultJsonFactory(),
-            new HttpCredentialsAdapter(credential))
-        .setApplicationName(APPLICATION_NAME)
-        .build();
-  }
 
   /**
    * Delete the transfer job, as we don't support reusing them.
@@ -48,9 +30,13 @@ public final class StorageTransferServiceUtils {
       Storagetransfer storageTransferService, String transferJobName, String controlPlaneProjectId)
       throws IOException {
     // If there's no job  to delete, return early
-    final TransferJob existingTransferJob = storageTransferService.transferJobs().get(transferJobName, controlPlaneProjectId).execute();
+    final TransferJob existingTransferJob =
+        storageTransferService.transferJobs().get(transferJobName, controlPlaneProjectId).execute();
     if (existingTransferJob == null) {
-      logger.info("Transfer Job {} in project {} was not found when trying to delete it.", transferJobName, controlPlaneProjectId);
+      logger.info(
+          "Transfer Job {} in project {} was not found when trying to delete it.",
+          transferJobName,
+          controlPlaneProjectId);
       return;
     }
     final TransferJob patchedTransferJob = new TransferJob().setStatus(DELETED_STATUS);
@@ -75,16 +61,16 @@ public final class StorageTransferServiceUtils {
    * @param flightContext
    * @return
    */
-  public static StepResult deleteTransferJobStepImpl(FlightContext flightContext) {
+  public static StepResult deleteTransferJobStepImpl(
+      FlightContext flightContext, Storagetransfer storagetransfer) {
     try {
-      final Storagetransfer storageTransferService = createStorageTransferService();
       final String transferJobName =
           createTransferJobName(flightContext.getFlightId()); // might not be in map yet
       final String controlPlaneProjectId =
           flightContext
               .getWorkingMap()
               .get(ControlledResourceKeys.CONTROL_PLANE_PROJECT_ID, String.class);
-      deleteTransferJob(storageTransferService, transferJobName, controlPlaneProjectId);
+      deleteTransferJob(storagetransfer, transferJobName, controlPlaneProjectId);
     } catch (IOException e) {
       return new StepResult(StepStatus.STEP_RESULT_FAILURE_FATAL, e);
     }

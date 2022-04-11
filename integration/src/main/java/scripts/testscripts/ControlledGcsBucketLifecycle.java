@@ -356,7 +356,7 @@ public class ControlledGcsBucketLifecycle extends GcpWorkspaceCloneTestScriptBas
             Duration.ofSeconds(5));
 
     ClientTestUtils.assertJobSuccess(
-        "cloned bucket", cloneResult.getJobReport(), cloneResult.getErrorReport());
+        "clone bucket", cloneResult.getJobReport(), cloneResult.getErrorReport());
 
     final ClonedControlledGcpGcsBucket clonedBucket = cloneResult.getBucket();
     assertEquals(getWorkspaceId(), clonedBucket.getSourceWorkspaceId());

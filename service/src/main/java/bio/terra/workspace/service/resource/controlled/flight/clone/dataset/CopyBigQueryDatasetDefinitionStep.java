@@ -48,7 +48,6 @@ public class CopyBigQueryDatasetDefinitionStep implements Step {
     final FlightMap workingMap = flightContext.getWorkingMap();
     final CloningInstructions effectiveCloningInstructions =
         inputParameters.get(ControlledResourceKeys.CLONING_INSTRUCTIONS, CloningInstructions.class);
-    // TODO: handle cloning a controlled resource with REFERENCE option, PF-812
     if (CloningInstructions.COPY_NOTHING.equals(effectiveCloningInstructions)
         || CloningInstructions.COPY_REFERENCE.equals(effectiveCloningInstructions)) {
       // nothing further to do here or on following steps
