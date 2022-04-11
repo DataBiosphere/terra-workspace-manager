@@ -89,8 +89,7 @@ public class CloneControlledGcsBucketResourceFlight extends Flight {
         addStep(new CreateStorageTransferServiceJobStep(flightBeanBag.getStoragetransfer()));
         addStep(new CompleteTransferOperationStep(flightBeanBag.getStoragetransfer()));
         addStep(
-            new DeleteStorageTransferServiceJobStep(
-                flightBeanBag.getStoragetransfer(), resolvedCloningInstructions));
+            new DeleteStorageTransferServiceJobStep(flightBeanBag.getStoragetransfer()));
         addStep(new RemoveBucketRolesStep(flightBeanBag.getBucketCloneRolesComponent()));
       }
     }
