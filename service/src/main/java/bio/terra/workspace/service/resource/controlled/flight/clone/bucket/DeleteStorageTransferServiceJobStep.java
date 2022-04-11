@@ -19,7 +19,6 @@ import com.google.api.services.storagetransfer.v1.Storagetransfer;
 public class DeleteStorageTransferServiceJobStep implements Step {
 
   private final Storagetransfer storagetransfer;
-  private final CloningInstructions cloningInstructions;
 
   public DeleteStorageTransferServiceJobStep(
       Storagetransfer storagetransfer) {
