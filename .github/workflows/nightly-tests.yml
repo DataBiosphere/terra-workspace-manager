@@ -13,6 +13,10 @@ jobs:
 
     runs-on: self-hosted
 
+    permissions:
+      contents: 'read'
+      id-token: 'write'
+
     steps:
       - uses: actions/checkout@v2
 
@@ -23,6 +27,18 @@ jobs:
           ref: master
           token: ${{ secrets.BROADBOT_TOKEN }}
           path: integration/terra-helmfile
+
+      - id: 'auth'
+        name: 'Authenticate to Google Cloud'
+        uses: 'google-github-actions/auth@v0'
+        with:
+          # Centralized in dsp-tools-k8s; ask in #dsp-devops-champions for help troubleshooting
+          workload_identity_provider: 'projects/1038484894585/locations/global/workloadIdentityPools/github-wi-pool/providers/github-wi-provider'
+          service_account: 'dsp-tools-iap-access@dsp-tools-k8s.iam.gserviceaccount.com'
+          # Create `steps.auth.outputs.id_token` that can access Identity Aware Proxy
+          token_format: 'id_token'
+          id_token_audience: '${{ secrets.IAP_ID_TOKEN_AUDIENCE }}'
+          id_token_include_email: true
 
       # Install postgres:
       # - Create the file repository configuration.
@@ -74,23 +90,31 @@ jobs:
           vault-token: ${{ steps.vault-token-step.outputs.vault-token }}
           target: wsmtest
 
-      # The ArgoCD sync triggers the synchronization of the wsmtest cluster. Typically,
-      # the cluster is reset within a few seconds. However, it is possible for it to take
-      # minutes or hours. We have no way to check that the sync is complete. We sleep
-      # for a bit and just accept that in some crazy long cases, these tests will fail.
+      # The ArgoCD sync triggers the synchronization of the wsmtest cluster. The ArgoCD CLI
+      # will wait for the initial sync to complete, but it won't necessarily wait for WSM's
+      # new version to actually come fully online--which could take minutes or hours in rare
+      # cases. We sleep for two minutes to try to allow WSM to come online.
       # The sync is bracketed by /version probes so we have the pre and post sync versions
       # in the log.
+      - name: Download ArgoCD CLI
+        run: |
+          curl -sSL -o ./argocd https://github.com/argoproj/argo-cd/releases/latest/download/argocd-linux-amd64
+          chmod +x ./argocd
       - name: ArgoCD sync
         run: |
           version=$(curl https://workspace.wsmtest.integ.envs.broadinstitute.org/version)
           echo "$(date "+%Y-%m-%dT%H:%M:%S") pre-sync wsmtest version: $version"
-          curl --fail --silent --show-error --location --request POST \
-          'https://ap-argocd.dsp-devops.broadinstitute.org/api/v1/applications/workspacemanager-wsmtest/sync' \
-          --header "Authorization: Bearer ${{ secrets.WSMTEST_SYNC_ARGOCD_TOKEN }}" \
-          | jq .operation
+          ./argocd --grpc-web --server ap-argocd.dsp-devops.broadinstitute.org:443 \
+            --auth-token '${{ secrets.WSMTEST_SYNC_ARGOCD_TOKEN }}' \
+            --header 'Proxy-Authorization: Bearer ${{ steps.auth.outputs.id_token }}' \
+            app sync workspacemanager-wsmtest
           sleep 120
           version=$(curl https://workspace.wsmtest.integ.envs.broadinstitute.org/version)
           echo "$(date "+%Y-%m-%dT%H:%M:%S") post-sync wsmtest version: $version"
+      - name: Remove ArgoCD CLI
+        if: always()
+        run: |
+          rm -f ./argocd
 
       - name: clean databases before integration suite
         if: always()
