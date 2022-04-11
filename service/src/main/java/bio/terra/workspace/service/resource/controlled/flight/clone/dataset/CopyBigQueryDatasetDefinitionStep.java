@@ -23,6 +23,11 @@ import java.util.Optional;
 import java.util.UUID;
 import org.springframework.http.HttpStatus;
 
+/**
+ * Copy a BQ dataset's defining attributes to a new dataset.
+ *
+ * Preconditions: Accessible source dataset exists
+ */
 public class CopyBigQueryDatasetDefinitionStep implements Step {
 
   private final ControlledBigQueryDatasetResource sourceDataset;
@@ -48,18 +53,18 @@ public class CopyBigQueryDatasetDefinitionStep implements Step {
     final FlightMap workingMap = flightContext.getWorkingMap();
     final CloningInstructions effectiveCloningInstructions =
         inputParameters.get(ControlledResourceKeys.CLONING_INSTRUCTIONS, CloningInstructions.class);
-    // TODO: handle cloning a controlled resource with REFERENCE option, PF-812
+    // TODO: move to the flight
     if (CloningInstructions.COPY_NOTHING.equals(effectiveCloningInstructions)
         || CloningInstructions.COPY_REFERENCE.equals(effectiveCloningInstructions)) {
       // nothing further to do here or on following steps
       // Build an empty response object
-      final ApiClonedControlledGcpBigQueryDataset result =
+      final ApiClonedControlledGcpBigQueryDataset noOpResult =
           new ApiClonedControlledGcpBigQueryDataset()
               .dataset(null)
               .sourceWorkspaceId(sourceDataset.getWorkspaceId())
               .sourceResourceId(sourceDataset.getResourceId())
               .effectiveCloningInstructions(effectiveCloningInstructions.toApiModel());
-      FlightUtils.setResponse(flightContext, result, HttpStatus.OK);
+      FlightUtils.setResponse(flightContext, noOpResult, HttpStatus.OK);
       return StepResult.getStepResultSuccess();
     }
     final String resourceName =

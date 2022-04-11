@@ -15,23 +15,26 @@ import com.google.api.client.util.Strings;
 import com.google.api.services.bigquery.model.Dataset;
 import java.io.IOException;
 
-/** Retrieve the Dataset creation parameters from the cloud object. */
+/** Retrieve the Dataset creation parameters from the cloud object.
+ *
+ * Preconditions: dataset exists in BigQuery.
+ *
+ * Post conditions: Working map is updated with LOCATION, either from the input parameters or from
+ * the source dataset.
+ * */
 public class RetrieveBigQueryDatasetCloudAttributesStep implements Step {
 
   private final ControlledBigQueryDatasetResource datasetResource;
   private final CrlService crlService;
   private final GcpCloudContextService gcpCloudContextService;
-  private final AuthenticatedUserRequest userRequest;
 
   public RetrieveBigQueryDatasetCloudAttributesStep(
       ControlledBigQueryDatasetResource datasetResource,
       CrlService crlService,
-      GcpCloudContextService gcpCloudContextService,
-      AuthenticatedUserRequest userRequest) {
+      GcpCloudContextService gcpCloudContextService) {
     this.datasetResource = datasetResource;
     this.crlService = crlService;
     this.gcpCloudContextService = gcpCloudContextService;
-    this.userRequest = userRequest;
   }
 
   @Override
