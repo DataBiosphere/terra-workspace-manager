@@ -60,6 +60,7 @@ public class CopyGcsBucketDefinitionStepTest extends BaseUnitTest {
 
     final var workingMap = new FlightMap();
     workingMap.put(ResourceKeys.PREVIOUS_RESOURCE_DESCRIPTION, GcsBucketCloneTestFixtures.SOURCE_BUCKET_DESCRIPTION);
+    workingMap.put(ControlledResourceKeys.CREATION_PARAMETERS, SOURCE_BUCKET_CREATION_PARAMETERS);
     doReturn(workingMap).when(mockFlightContext).getWorkingMap();
 
     doReturn(CREATED_BUCKET_RESOURCE).when(mockControlledResourceService)
