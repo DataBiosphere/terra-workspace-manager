@@ -22,9 +22,8 @@ public class DeleteStorageTransferServiceJobStep implements Step {
   private final CloningInstructions cloningInstructions;
 
   public DeleteStorageTransferServiceJobStep(
-      Storagetransfer storagetransfer, CloningInstructions cloningInstructions) {
+      Storagetransfer storagetransfer) {
     this.storagetransfer = storagetransfer;
-    this.cloningInstructions = cloningInstructions;
   }
 
   @Override
