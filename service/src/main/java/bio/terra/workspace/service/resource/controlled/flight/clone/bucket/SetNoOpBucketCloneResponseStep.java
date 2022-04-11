@@ -12,13 +12,16 @@ import org.springframework.http.HttpStatus;
 
 /**
  * If cloning instructions say COPY_NOTHING, we need to stub the response object and add
- * it to the flight context. This step assumes we are indeed copying nothing.
+ * it to the flight context.
+ *
+ * Preconditions: Source bucket exists. Resolved cloning instructions are COPY_NOTHING.
+ * Post conditions: Response is set on flight contexts to a no-op structure.
  */
-public class SkipBucketCloneStep implements Step {
+public class SetNoOpBucketCloneResponseStep implements Step {
 
   private final ControlledGcsBucketResource sourceBucket;
 
-  public SkipBucketCloneStep(ControlledGcsBucketResource sourceBucket) {
+  public SetNoOpBucketCloneResponseStep(ControlledGcsBucketResource sourceBucket) {
     this.sourceBucket = sourceBucket;
   }
 

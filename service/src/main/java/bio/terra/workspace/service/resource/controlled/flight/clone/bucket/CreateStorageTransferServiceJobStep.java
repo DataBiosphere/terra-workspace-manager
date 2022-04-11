@@ -24,6 +24,16 @@ import java.time.ZoneOffset;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * Create an STS Job for transfer operations from the source bucket ot the destination.
+ *
+ * Preconditions: Source and destination buckets exist, and have appropriate IAM roles in place
+ * for the control plane service account. The working map contains SOURECE_CLONE_INPUTS,
+ * DESTINATION_CLONE_INPUTS, CONTROL_PLAN_PROJECT_ID, and STORAGE_TRANSFER_SERVICE_SA_EMAIL.
+ *
+ * Post conditions: A transfer job in the control plane project with a unique name for this
+ * flight is created. It is scheduled to run once immediately.
+ */
 public final class CreateStorageTransferServiceJobStep implements Step {
 
   private static final Logger logger =
@@ -87,9 +97,7 @@ public final class CreateStorageTransferServiceJobStep implements Step {
     } catch (GoogleJsonResponseException e) {
       logger.info("No pre-existing transfer job named {} found.", transferJobName);
     } catch (IOException e) {
-      return new StepResult(
-          StepStatus.STEP_RESULT_FAILURE_FATAL,
-          new IllegalStateException("Failed to check for existing storage transfer job.", e));
+      return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, e);
     }
     // Get the service account in the control plane project used by the transfer service to
     // perform the actual data transfer. It's named for and scoped to the project.
@@ -110,9 +118,7 @@ public final class CreateStorageTransferServiceJobStep implements Step {
           controlPlaneProjectId
       );
     } catch (IOException e) {
-      return new StepResult(
-          StepStatus.STEP_RESULT_FAILURE_FATAL,
-          new IllegalStateException("Failed to copy bucket data", e));
+      return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, e);
     }
 
     return StepResult.getStepResultSuccess();
@@ -143,6 +149,7 @@ public final class CreateStorageTransferServiceJobStep implements Step {
   // previous step's undo method.
   @Override
   public StepResult undoStep(FlightContext flightContext) throws InterruptedException {
+    // A failure to delete will result in a DISMAL_FAILURE of the flight.
     return StorageTransferServiceUtils.deleteTransferJobStepImpl(flightContext, storagetransfer);
   }
 

@@ -22,6 +22,13 @@ import java.util.stream.Stream;
 /**
  * Give the Storage Transfer Service SA the appropriate roles on the source and destination (sink)
  * buckets to allow a transfer job to be created.
+ *
+ * Preconditions: Destination bucket is created. Working map contains DESTINATION_WORKSPACE_ID.
+ *
+ * Post conditions: Working map updated with SOURCE_CLONE_INPUTS, DESTINATION_CLONE_INPUTS,
+ * CONTROL_PLANE_PROJECT_ID, and STORAGE_TRANSFER_SERVICE_SA_EMAIL. IAM roles are added to both the
+ * source and destination buckets in GCS that will allow the transfer service SA the necessary
+ * access to create a Storage Transfer Service Job.
  */
 public class SetBucketRolesStep implements Step {
   private static final List<String> DESTINATION_BUCKET_ROLE_NAMES =

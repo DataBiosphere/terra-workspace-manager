@@ -15,6 +15,12 @@ import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.Contr
  * This step validates that the provided user has access to read the provided resource. Unlike other
  * flights, this is handled inside a step instead of before the flight because the containing flight
  * is sometimes launched from within another flight, where it's hard to run pre-flight validation.
+ *
+ * Preconditions: Resolved cloning instructions are COPY_RESOURCE or COPY_DEFINITION. Source resource
+ * exists and user request is valid.
+ *
+ * Post conditions: No side effects, but validation has occured successfully, or we fail with a
+ * ForbiddenException.
  */
 public class CheckControlledResourceAuthStep implements Step {
 

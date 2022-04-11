@@ -5,7 +5,6 @@ import bio.terra.stairway.FlightMap;
 import bio.terra.workspace.common.utils.FlightBeanBag;
 import bio.terra.workspace.common.utils.FlightUtils;
 import bio.terra.workspace.common.utils.RetryRules;
-import bio.terra.workspace.generated.model.ApiClonedControlledGcpGcsBucket;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.ControlledGcsBucketResource;
@@ -19,7 +18,6 @@ import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ResourceKeys;
 import java.util.Optional;
-import org.springframework.http.HttpStatus;
 
 // Flight Plan
 // 0. If cloning instructions resolve to COPY_NOTHING, exit without any further steps.
@@ -59,7 +57,7 @@ public class CloneControlledGcsBucketResourceFlight extends Flight {
     // from within a flight constructor. Instead, pass it in to the constructors of the steps
     // that need it.
     if (CloningInstructions.COPY_NOTHING == resolvedCloningInstructions) {
-      addStep(new SkipBucketCloneStep(sourceBucket));
+      addStep(new SetNoOpBucketCloneResponseStep(sourceBucket));
     } else {
       addStep(
           new CheckControlledResourceAuthStep(

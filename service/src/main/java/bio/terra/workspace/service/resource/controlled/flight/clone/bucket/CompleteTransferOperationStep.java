@@ -23,6 +23,12 @@ import org.springframework.http.HttpStatus;
 /**
  * Find the most recently started transfer operation for the flight's Storage Transfer job and wait
  * for it to complete.
+ *
+ * Preconditions: Storage Transfer Service Job exists and an operation under it has been started. The
+ * working map contains STORAGE_TRANSFER_JOB_NAME and CONTROL_PLANE_PROJECT_ID. The operation
+ * created is assumed to be the most recent one started for this job.
+ *
+ * Post conditions: Operation has completed or failed.
  */
 public class CompleteTransferOperationStep implements Step {
   public static final Logger logger = LoggerFactory.getLogger(CompleteTransferOperationStep.class);
@@ -55,8 +61,7 @@ public class CompleteTransferOperationStep implements Step {
       // Job is now submitted with its schedule. We need to poll the transfer operations API
       // for completion of the first transfer operation. The trick is going to be setting up a
       // polling interval that's appropriate for a wide range of bucket sizes. Everything from
-      // millisecond
-      // to hours. The transfer operation won't exist until it starts.
+      // milliseconds to hours. The transfer operation won't exist until it starts.
       final String operationName =
           getLatestOperationName(transferJobName, controlPlaneProjectId);
 
