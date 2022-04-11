@@ -4,14 +4,9 @@ import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.StepStatus;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
-import com.google.api.client.googleapis.util.Utils;
 import com.google.api.services.storagetransfer.v1.Storagetransfer;
-import com.google.api.services.storagetransfer.v1.StoragetransferScopes;
 import com.google.api.services.storagetransfer.v1.model.TransferJob;
 import com.google.api.services.storagetransfer.v1.model.UpdateTransferJobRequest;
-import com.google.auth.http.HttpCredentialsAdapter;
-import com.google.auth.oauth2.GoogleCredentials;
-import io.grpc.Context.Storage;
 import java.io.IOException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -66,7 +61,8 @@ public final class StorageTransferServiceUtils {
    * @param flightContext
    * @return
    */
-  public static StepResult deleteTransferJobStepImpl(FlightContext flightContext, Storagetransfer storagetransfer) {
+  public static StepResult deleteTransferJobStepImpl(
+      FlightContext flightContext, Storagetransfer storagetransfer) {
     try {
       final String transferJobName =
           createTransferJobName(flightContext.getFlightId()); // might not be in map yet

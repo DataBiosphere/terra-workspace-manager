@@ -26,6 +26,7 @@ import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import com.google.api.services.storagetransfer.v1.Storagetransfer;
 import com.google.api.services.storagetransfer.v1.model.TransferJob;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.io.IOException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -42,6 +43,7 @@ public class CreateStorageTransferServiceJobStepTest extends BaseUnitTest {
   private CreateStorageTransferServiceJobStep createStorageTransferServiceJobStep;
 
   @BeforeEach
+  @SuppressFBWarnings(value = "RV", justification = "False positive for Mockito doReturn() statement")
   public void setup() throws IOException {
     createStorageTransferServiceJobStep =
         new CreateStorageTransferServiceJobStep(mockStoragetransfer);

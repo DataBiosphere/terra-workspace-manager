@@ -7,7 +7,6 @@ import bio.terra.stairway.StepResult;
 import bio.terra.stairway.StepStatus;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.common.utils.FlightUtils;
-import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import com.google.api.client.googleapis.json.GoogleJsonResponseException;
 import com.google.api.services.storagetransfer.v1.Storagetransfer;
@@ -27,11 +26,11 @@ import org.slf4j.LoggerFactory;
 /**
  * Create an STS Job for transfer operations from the source bucket ot the destination.
  *
- * Preconditions: Source and destination buckets exist, and have appropriate IAM roles in place
+ * <p>Preconditions: Source and destination buckets exist, and have appropriate IAM roles in place
  * for the control plane service account. The working map contains SOURECE_CLONE_INPUTS,
  * DESTINATION_CLONE_INPUTS, CONTROL_PLAN_PROJECT_ID, and STORAGE_TRANSFER_SERVICE_SA_EMAIL.
  *
- * Post conditions: A transfer job in the control plane project with a unique name for this
+ * <p>Post conditions: A transfer job in the control plane project with a unique name for this
  * flight is created. It is scheduled to run once immediately.
  */
 public final class CreateStorageTransferServiceJobStep implements Step {
@@ -85,10 +84,7 @@ public final class CreateStorageTransferServiceJobStep implements Step {
     // the job either has an operation in progress or completed (possibly failed).
     try {
       final TransferJob existingTransferJob =
-          storagetransfer
-              .transferJobs()
-              .get(transferJobName, controlPlaneProjectId)
-              .execute();
+          storagetransfer.transferJobs().get(transferJobName, controlPlaneProjectId).execute();
       if (null != existingTransferJob) {
         logger.info(
             "Transfer Job {} already exists. Nothing more for this step to do.", transferJobName);
@@ -111,12 +107,7 @@ public final class CreateStorageTransferServiceJobStep implements Step {
     logger.debug("Storage Transfer Service SA: {}", transferServiceSAEmail);
 
     try {
-      createTransferJob(
-          sourceInputs,
-          destinationInputs,
-          transferJobName,
-          controlPlaneProjectId
-      );
+      createTransferJob(sourceInputs, destinationInputs, transferJobName, controlPlaneProjectId);
     } catch (IOException e) {
       return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, e);
     }

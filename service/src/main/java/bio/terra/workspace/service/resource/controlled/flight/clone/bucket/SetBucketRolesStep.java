@@ -9,7 +9,6 @@ import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.common.utils.FlightUtils;
 import bio.terra.workspace.common.utils.GcpUtils;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.ControlledGcsBucketResource;
-import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.workspace.GcpCloudContextService;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import com.google.api.services.storagetransfer.v1.Storagetransfer;
@@ -23,9 +22,9 @@ import java.util.stream.Stream;
  * Give the Storage Transfer Service SA the appropriate roles on the source and destination (sink)
  * buckets to allow a transfer job to be created.
  *
- * Preconditions: Destination bucket is created. Working map contains DESTINATION_WORKSPACE_ID.
+ * <p>Preconditions: Destination bucket is created. Working map contains DESTINATION_WORKSPACE_ID.
  *
- * Post conditions: Working map updated with SOURCE_CLONE_INPUTS, DESTINATION_CLONE_INPUTS,
+ * <p>Post conditions: Working map updated with SOURCE_CLONE_INPUTS, DESTINATION_CLONE_INPUTS,
  * CONTROL_PLANE_PROJECT_ID, and STORAGE_TRANSFER_SERVICE_SA_EMAIL. IAM roles are added to both the
  * source and destination buckets in GCS that will allow the transfer service SA the necessary
  * access to create a Storage Transfer Service Job.
@@ -57,8 +56,8 @@ public class SetBucketRolesStep implements Step {
   public StepResult doStep(FlightContext flightContext)
       throws InterruptedException, RetryException {
     final FlightMap workingMap = flightContext.getWorkingMap();
-    FlightUtils.validateRequiredEntries(flightContext.getInputParameters(),
-        ControlledResourceKeys.DESTINATION_WORKSPACE_ID);
+    FlightUtils.validateRequiredEntries(
+        flightContext.getInputParameters(), ControlledResourceKeys.DESTINATION_WORKSPACE_ID);
 
     // Gather bucket inputs and store them in the working map for the next
     // step.
@@ -74,8 +73,7 @@ public class SetBucketRolesStep implements Step {
     // Determine the Storage Transfer Service SA
     final String storageTransferServiceSAEmail;
     try {
-      storageTransferServiceSAEmail =
-          getStorageTransferServiceSAEmail(controlPlaneProjectId);
+      storageTransferServiceSAEmail = getStorageTransferServiceSAEmail(controlPlaneProjectId);
     } catch (IOException e) {
       return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, e);
     }
@@ -87,7 +85,8 @@ public class SetBucketRolesStep implements Step {
     bucketCloneRolesService.addBucketRoles(destinationInputs, storageTransferServiceSAEmail);
 
     // Validate the outputs, so we fail fast if one goes missing.
-    FlightUtils.validateRequiredEntries(workingMap,
+    FlightUtils.validateRequiredEntries(
+        workingMap,
         ControlledResourceKeys.SOURCE_CLONE_INPUTS,
         ControlledResourceKeys.DESTINATION_CLONE_INPUTS,
         ControlledResourceKeys.CONTROL_PLANE_PROJECT_ID,
@@ -134,8 +133,7 @@ public class SetBucketRolesStep implements Step {
     return new BucketCloneInputs(workspaceId, projectId, bucketName, DESTINATION_BUCKET_ROLE_NAMES);
   }
 
-  final String getStorageTransferServiceSAEmail(
-      String controlPlaneProjectId) throws IOException {
+  final String getStorageTransferServiceSAEmail(String controlPlaneProjectId) throws IOException {
     // Get the service account in the control plane project used by the transfer service to
     // perform the actual data transfer. It's named for and scoped to the project.
     return storagetransfer

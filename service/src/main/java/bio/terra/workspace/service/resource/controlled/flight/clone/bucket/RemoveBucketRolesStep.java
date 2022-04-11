@@ -5,18 +5,16 @@ import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.exception.RetryException;
-import bio.terra.workspace.service.resource.model.CloningInstructions;
-import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 
 /**
  * Remove roles from the source and destination buckets that are no longer necessary after the
  * transfer has completed. This will prevent transfer jobs from being re-run in the Console, but
  * that's not really a supported use case at the moment.
  *
- * Preconditions: Cloning instructions are COPY_RESOURCE. Source and destination buckets have IAM
+ * <p>Preconditions: Cloning instructions are COPY_RESOURCE. Source and destination buckets have IAM
  * roles for the control plane project SA.
  *
- * Post conditions: All added IAM roles for this flight are removed from the buckets.
+ * <p>Post conditions: All added IAM roles for this flight are removed from the buckets.
  */
 public class RemoveBucketRolesStep implements Step {
 

@@ -11,11 +11,11 @@ import bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.Contr
 import org.springframework.http.HttpStatus;
 
 /**
- * If cloning instructions say COPY_NOTHING, we need to stub the response object and add
- * it to the flight context.
+ * If cloning instructions say COPY_NOTHING, we need to stub the response object and add it to the
+ * flight context.
  *
- * Preconditions: Source bucket exists. Resolved cloning instructions are COPY_NOTHING.
- * Post conditions: Response is set on flight contexts to a no-op structure.
+ * <p>Preconditions: Source bucket exists. Resolved cloning instructions are COPY_NOTHING. Post
+ * conditions: Response is set on flight contexts to a no-op structure.
  */
 public class SetNoOpBucketCloneResponseStep implements Step {
 

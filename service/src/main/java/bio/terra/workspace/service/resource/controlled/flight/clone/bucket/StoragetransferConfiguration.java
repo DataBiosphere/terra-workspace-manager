@@ -33,8 +33,8 @@ public class StoragetransferConfiguration {
   }
 
   /**
-   * We don't need ADC in unit tests, but we do need to provide something that looks like them
-   * in unit tests.
+   * We don't need ADC in unit tests, but we do need to provide something that looks like them in
+   * unit tests.
    */
   @Bean
   @Profile("unit-test")
