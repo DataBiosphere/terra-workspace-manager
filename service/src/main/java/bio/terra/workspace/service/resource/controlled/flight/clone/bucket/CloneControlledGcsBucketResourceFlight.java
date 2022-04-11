@@ -37,9 +37,7 @@ public class CloneControlledGcsBucketResourceFlight extends Flight {
       FlightMap inputParameters, Object applicationContext) {
     super(inputParameters, applicationContext);
     FlightUtils.validateRequiredEntries(
-        inputParameters,
-        ResourceKeys.RESOURCE,
-        JobMapKeys.AUTH_USER_INFO.getKeyName());
+        inputParameters, ResourceKeys.RESOURCE, JobMapKeys.AUTH_USER_INFO.getKeyName());
 
     final FlightBeanBag flightBeanBag = FlightBeanBag.getFromObject(applicationContext);
     final ControlledResource sourceResource =
@@ -61,9 +59,7 @@ public class CloneControlledGcsBucketResourceFlight extends Flight {
     } else {
       addStep(
           new CheckControlledResourceAuthStep(
-              sourceResource,
-              flightBeanBag.getControlledResourceMetadataManager(),
-              userRequest),
+              sourceResource, flightBeanBag.getControlledResourceMetadataManager(), userRequest),
           RetryRules.shortExponential());
       addStep(
           new RetrieveControlledResourceMetadataStep(
@@ -78,8 +74,10 @@ public class CloneControlledGcsBucketResourceFlight extends Flight {
               RetrievalMode.CREATION_PARAMETERS));
       addStep(
           new CopyGcsBucketDefinitionStep(
-              userRequest, sourceBucket, flightBeanBag.getControlledResourceService(),
-          resolvedCloningInstructions));
+              userRequest,
+              sourceBucket,
+              flightBeanBag.getControlledResourceService(),
+              resolvedCloningInstructions));
 
       if (CloningInstructions.COPY_RESOURCE == resolvedCloningInstructions) {
         addStep(
@@ -90,7 +88,9 @@ public class CloneControlledGcsBucketResourceFlight extends Flight {
                 flightBeanBag.getStoragetransfer()));
         addStep(new CreateStorageTransferServiceJobStep(flightBeanBag.getStoragetransfer()));
         addStep(new CompleteTransferOperationStep(flightBeanBag.getStoragetransfer()));
-        addStep(new DeleteStorageTransferServiceJobStep(flightBeanBag.getStoragetransfer()));
+        addStep(
+            new DeleteStorageTransferServiceJobStep(
+                flightBeanBag.getStoragetransfer(), resolvedCloningInstructions));
         addStep(new RemoveBucketRolesStep(flightBeanBag.getBucketCloneRolesComponent()));
       }
     }

@@ -19,12 +19,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * For controlled GCS bucket resource clone, extract source bucket info from the cloud.
- * This information takes the form of one of two {@link RetrievalMode} values.
+ * For controlled GCS bucket resource clone, extract source bucket info from the cloud. This
+ * information takes the form of one of two {@link RetrievalMode} values.
  *
- * Preconditions: Source bucket exists in GCS.
+ * <p>Preconditions: Source bucket exists in GCS.
  *
- * Post-conditions: BucketInfo information from GCS is in the working map under
+ * <p>Post-conditions: BucketInfo information from GCS is in the working map under
  * CREATION_PARAMETERS or PREVIOUS_UPDATE_PARAMETERS, depending on retrievalMode.
  */
 public class RetrieveGcsBucketCloudAttributesStep implements Step {

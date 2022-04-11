@@ -11,12 +11,13 @@ import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.Resou
 import java.util.UUID;
 
 /**
- * For Controlled Resource clone, save a copy of the metadata before update so that the update can be restored on the undo path.
- * Uses the working map of the flight.
+ * For Controlled Resource clone, save a copy of the metadata before update so that the update can
+ * be restored on the undo path. Uses the working map of the flight.
  *
- * Preconditions: Source resource exists in the DAO and is a Controlled Resource.
+ * <p>Preconditions: Source resource exists in the DAO and is a Controlled Resource.
  *
- * Post conditions: Working map has PREVIOUS_RESOURCE_NAME and PREVIOUS_RESOURCE_DESCRIPTION populated.
+ * <p>Post conditions: Working map has PREVIOUS_RESOURCE_NAME and PREVIOUS_RESOURCE_DESCRIPTION
+ * populated.
  */
 public class RetrieveControlledResourceMetadataStep implements Step {
 

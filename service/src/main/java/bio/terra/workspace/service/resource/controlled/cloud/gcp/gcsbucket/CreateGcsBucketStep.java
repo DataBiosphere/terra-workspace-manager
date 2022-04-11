@@ -50,7 +50,8 @@ public class CreateGcsBucketStep implements Step {
     FlightMap inputMap = flightContext.getInputParameters();
     FlightUtils.validateRequiredEntries(inputMap, ControlledResourceKeys.CREATION_PARAMETERS);
     ApiGcpGcsBucketCreationParameters creationParameters =
-        inputMap.get(ControlledResourceKeys.CREATION_PARAMETERS, ApiGcpGcsBucketCreationParameters.class);
+        inputMap.get(
+            ControlledResourceKeys.CREATION_PARAMETERS, ApiGcpGcsBucketCreationParameters.class);
     String projectId = gcpCloudContextService.getRequiredGcpProject(resource.getWorkspaceId());
 
     BucketInfo.Builder bucketInfoBuilder =
