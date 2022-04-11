@@ -641,11 +641,6 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
             workspace.getWorkspaceId(), resource.getResourceId(), user.getAuthenticatedRequest()));
   }
 
-  /** Create a dataset name with a random 4-digit (rarely 5) suffix */
-  private String uniqueDatasetId() {
-    return "my_test_dataset_" + (int) (Math.floor(Math.random() * 10000));
-  }
-
   @Test
   @DisabledIfEnvironmentVariable(named = "TEST_ENV", matches = BUFFER_SERVICE_DISABLED_ENVS_REG_EX)
   void createBqDatasetUndo() throws Exception {
