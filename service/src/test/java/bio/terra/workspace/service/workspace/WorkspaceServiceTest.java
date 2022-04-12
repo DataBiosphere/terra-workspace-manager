@@ -23,6 +23,7 @@ import bio.terra.workspace.common.BaseConnectedTest;
 import bio.terra.workspace.connected.WorkspaceConnectedTestUtils;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.db.exception.WorkspaceNotFoundException;
+import bio.terra.workspace.generated.model.ApiClonedWorkspace;
 import bio.terra.workspace.generated.model.ApiGcpGcsBucketCreationParameters;
 import bio.terra.workspace.generated.model.ApiGcpGcsBucketDefaultStorageClass;
 import bio.terra.workspace.generated.model.ApiGcpGcsBucketLifecycle;
@@ -521,7 +522,7 @@ class WorkspaceServiceTest extends BaseConnectedTest {
   }
 
   @Test
-  public void cloneGcpWorkspace() throws InterruptedException {
+  public void cloneGcpWorkspace() {
         // Create a workspace
     final Workspace sourceWorkspace = defaultRequestBuilder(UUID.randomUUID())
         .displayName("Source Workspace")
@@ -579,11 +580,11 @@ class WorkspaceServiceTest extends BaseConnectedTest {
     final String cloneJobId = workspaceService.cloneWorkspace(
         sourceWorkspaceId, USER_REQUEST, destinationLocation, destinationWorkspace);
     jobService.waitForJob(cloneJobId);
-    JobResultOrException<WsmCloneWorkspaceResult> cloneResultOrException = jobService.retrieveJobResult(cloneJobId, WsmCloneWorkspaceResult.class, USER_REQUEST);
+    JobResultOrException<ApiClonedWorkspace> cloneResultOrException = jobService.retrieveJobResult(cloneJobId, ApiClonedWorkspace.class, USER_REQUEST);
     assertNull(cloneResultOrException.getException());
-    WsmCloneWorkspaceResult cloneResult = cloneResultOrException.getResult();
-    assertEquals(destinationWorkspace.getWorkspaceId(), cloneResult.getWorkspace().getDestinationWorkspaceId());
-    assertThat(cloneResult.getWorkspace().getResources(), hasSize(1));
+    ApiClonedWorkspace cloneResult = cloneResultOrException.getResult();
+    assertEquals(destinationWorkspace.getWorkspaceId(), cloneResult.getDestinationWorkspaceId());
+    assertThat(cloneResult.getResources(), hasSize(1));
 
     // destination WS should exist
     final Workspace retrievedDestinationWorkspace = workspaceService.getWorkspace(
