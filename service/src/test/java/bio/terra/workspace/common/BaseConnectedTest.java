@@ -2,6 +2,7 @@ package bio.terra.workspace.common;
 
 import org.junit.jupiter.api.Tag;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.junit.jupiter.SpringJUnitConfig;
 
 /**
  * Base class for connected tests to extend.

@@ -106,7 +106,7 @@ class WorkspaceServiceTest extends BaseConnectedTest {
   void setup() throws Exception {
     doReturn(true).when(mockDataRepoService).snapshotReadable(any(), any(), any());
     // By default, allow all spend link calls as authorized. (All other isAuthorized calls return
-    // false by Mockito default.
+    // false by Mockito default).
     Mockito.when(
             mockSamService.isAuthorized(
                 Mockito.any(),
@@ -114,9 +114,15 @@ class WorkspaceServiceTest extends BaseConnectedTest {
                 Mockito.any(),
                 eq(SamSpendProfileAction.LINK)))
         .thenReturn(true);
+    final String policyGroup = "terra-workspace-manager-test-group@googlegroups.com";
     // Return a valid google group for cloud sync, as Google validates groups added to GCP projects.
     Mockito.when(mockSamService.syncWorkspacePolicy(any(), any(), any()))
-        .thenReturn("terra-workspace-manager-test-group@googlegroups.com");
+        .thenReturn(policyGroup);
+
+    doReturn(policyGroup).when(mockSamService).syncResourcePolicy(
+        any(ControlledResource.class),
+        any(ControlledResourceIamRole.class),
+        any(AuthenticatedUserRequest.class));
   }
 
   /**
@@ -516,13 +522,7 @@ class WorkspaceServiceTest extends BaseConnectedTest {
 
   @Test
   public void cloneGcpWorkspace() throws InterruptedException {
-    String policyGroup = "terra-workspace-manager-test-group@googlegroups.com";
-    doReturn(policyGroup).when(mockSamService).syncResourcePolicy(
-        any(ControlledResource.class),
-        any(ControlledResourceIamRole.class),
-        eq(USER_REQUEST));
-
-    // Create a workspace
+        // Create a workspace
     final Workspace sourceWorkspace = defaultRequestBuilder(UUID.randomUUID())
         .displayName("Source Workspace")
         .description("The original workspace.")
