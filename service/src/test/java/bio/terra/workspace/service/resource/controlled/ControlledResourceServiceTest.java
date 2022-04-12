@@ -1136,6 +1136,29 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
                 user.getAuthenticatedRequest()));
   }
 
+//  @Test
+//  void cloneGcsBucketDo() {
+//    final ControlledGcsBucketResource resource =
+//        ControlledResourceFixtures.makeDefaultControlledGcsBucketBuilder(workspace.getWorkspaceId())
+//            .build();
+//    final ControlledGcsBucketResource createdBucket =
+//        controlledResourceService
+//            .createControlledResourceSync(
+//                resource,
+//                null,
+//                user.getAuthenticatedRequest(),
+//                ControlledResourceFixtures.getGoogleBucketCreationParameters())
+//            .castByEnum(WsmResourceType.CONTROLLED_GCP_GCS_BUCKET);
+//    assertEquals(resource, createdBucket);
+//
+//    controlledResourceService.cloneGcsBucket(
+//        workspace.getWorkspaceId(),
+//        createdBucket.getResourceId(),
+//        workspace.getWorkspaceId(), // copy back into same workspace
+//
+//        )
+//  }
+
   @Test
   @DisabledIfEnvironmentVariable(named = "TEST_ENV", matches = BUFFER_SERVICE_DISABLED_ENVS_REG_EX)
   void deleteGcsBucketDo() throws Exception {

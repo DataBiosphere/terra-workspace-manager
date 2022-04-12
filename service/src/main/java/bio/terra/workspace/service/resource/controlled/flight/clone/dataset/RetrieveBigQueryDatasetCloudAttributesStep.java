@@ -59,8 +59,7 @@ public class RetrieveBigQueryDatasetCloudAttributesStep implements Step {
       flightContext.getWorkingMap().put(ControlledResourceKeys.LOCATION, sourceLocation);
       return StepResult.getStepResultSuccess();
     } catch (IOException e) {
-      // TODO: consider retry here
-      return new StepResult(StepStatus.STEP_RESULT_FAILURE_FATAL, e);
+      return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, e);
     }
   }
 

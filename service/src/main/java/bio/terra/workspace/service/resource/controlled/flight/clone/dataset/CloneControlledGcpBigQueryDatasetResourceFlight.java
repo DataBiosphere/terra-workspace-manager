@@ -38,9 +38,10 @@ public class CloneControlledGcpBigQueryDatasetResourceFlight extends Flight {
     final CloningInstructions resolvedCloningInstructions = Optional.ofNullable(inputParameters.get(
         ControlledResourceKeys.CLONING_INSTRUCTIONS, CloningInstructions.class))
         .orElse(sourceResource.getCloningInstructions());
+
     if (CloningInstructions.COPY_NOTHING == resolvedCloningInstructions) {
       addStep(new SetNoOpBucketCloneResponseStep(sourceResource.castByEnum(WsmResourceType.CONTROLLED_GCP_BIG_QUERY_DATASET)));
-    } else {
+    } else if (CloningInstructions.COPY_RESOURCE == resolvedCloningInstructions || CloningInstructions.COPY_DEFINITION == resolvedCloningInstructions) {
       // Flight Plan
       // 1. Validate user has read access to the source object
       // 2. Gather controlled resource metadata for source object
@@ -55,6 +56,7 @@ public class CloneControlledGcpBigQueryDatasetResourceFlight extends Flight {
               flightBeanBag.getResourceDao(),
               sourceResource.getWorkspaceId(),
               sourceResource.getResourceId()));
+
       final ControlledBigQueryDatasetResource sourceDataset =
           sourceResource.castByEnum(WsmResourceType.CONTROLLED_GCP_BIG_QUERY_DATASET);
 
@@ -62,23 +64,29 @@ public class CloneControlledGcpBigQueryDatasetResourceFlight extends Flight {
           new RetrieveBigQueryDatasetCloudAttributesStep(
               sourceDataset,
               flightBeanBag.getCrlService(),
-              flightBeanBag.getGcpCloudContextService()));
+              flightBeanBag.getGcpCloudContextService()),
+          RetryRules.cloud());
 
       addStep(
           new CopyBigQueryDatasetDefinitionStep(
               sourceDataset,
               flightBeanBag.getControlledResourceService(),
               userRequest,
-              flightBeanBag.getGcpCloudContextService()));
-      addStep(
-          new CreateTableCopyJobsStep(
-              flightBeanBag.getCrlService(),
               flightBeanBag.getGcpCloudContextService(),
-              sourceDataset),
-          RetryRules.cloud());
-      addStep(
-          new CompleteTableCopyJobsStep(flightBeanBag.getCrlService()),
-          RetryRules.cloudLongRunning());
+              resolvedCloningInstructions));
+      if (CloningInstructions.COPY_RESOURCE == resolvedCloningInstructions) {
+        addStep(
+            new CreateTableCopyJobsStep(
+                flightBeanBag.getCrlService(),
+                flightBeanBag.getGcpCloudContextService(),
+                sourceDataset),
+            RetryRules.cloud());
+        addStep(
+            new CompleteTableCopyJobsStep(flightBeanBag.getCrlService()),
+            RetryRules.cloudLongRunning());
+      }
+    } else {
+      throw new IllegalArgumentException(String.format("Cloining Instructions %s not supported", resolvedCloningInstructions.toString()));
     }
   }
 }

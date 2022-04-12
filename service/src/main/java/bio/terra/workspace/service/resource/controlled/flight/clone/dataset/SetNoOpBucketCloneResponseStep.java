@@ -6,9 +6,16 @@ import bio.terra.stairway.StepResult;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.common.utils.FlightUtils;
 import bio.terra.workspace.generated.model.ApiClonedControlledGcpBigQueryDataset;
+import bio.terra.workspace.generated.model.ApiCloningInstructionsEnum;
+import bio.terra.workspace.service.resource.controlled.cloud.gcp.bqdataset.ControlledBigQueryDatasetResource;
 import org.springframework.http.HttpStatus;
 
 public class SetNoOpBucketCloneResponseStep implements Step {
+  private final ControlledBigQueryDatasetResource sourceDataset;
+
+  public SetNoOpBucketCloneResponseStep(ControlledBigQueryDatasetResource sourceDataset) {
+    this.sourceDataset = sourceDataset;
+  }
 
   @Override
   public StepResult doStep(FlightContext context) throws InterruptedException, RetryException {
@@ -19,8 +26,8 @@ public class SetNoOpBucketCloneResponseStep implements Step {
             .dataset(null)
             .sourceWorkspaceId(sourceDataset.getWorkspaceId())
             .sourceResourceId(sourceDataset.getResourceId())
-            .effectiveCloningInstructions(effectiveCloningInstructions.toApiModel());
-    FlightUtils.setResponse(flightContext, noOpResult, HttpStatus.OK);
+            .effectiveCloningInstructions(ApiCloningInstructionsEnum.NOTHING);
+    FlightUtils.setResponse(context, noOpResult, HttpStatus.OK);
     return StepResult.getStepResultSuccess();
   }
 

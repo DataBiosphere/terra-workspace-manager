@@ -26,7 +26,11 @@ import org.springframework.http.HttpStatus;
 /**
  * Copy a BQ dataset's defining attributes to a new dataset.
  *
- * Preconditions: Accessible source dataset exists
+ * Preconditions: Accessible source dataset exists. Cloning instructions are COPY_DEFINITION or
+ * COPY_RESOURCE.
+ *
+ * Post conditions: Empty destination dataset exists. Flight response is marked successful if
+ * appropriate.
  */
 public class CopyBigQueryDatasetDefinitionStep implements Step {
 
@@ -34,16 +38,19 @@ public class CopyBigQueryDatasetDefinitionStep implements Step {
   private final ControlledResourceService controlledResourceService;
   private final AuthenticatedUserRequest userRequest;
   private final GcpCloudContextService gcpCloudContextService;
+  private final CloningInstructions resolvedCloningInstructions;
 
   public CopyBigQueryDatasetDefinitionStep(
       ControlledBigQueryDatasetResource sourceDataset,
       ControlledResourceService controlledResourceService,
       AuthenticatedUserRequest userRequest,
-      GcpCloudContextService gcpCloudContextService) {
+      GcpCloudContextService gcpCloudContextService,
+      CloningInstructions resolvedCloningInstructions) {
     this.sourceDataset = sourceDataset;
     this.controlledResourceService = controlledResourceService;
     this.userRequest = userRequest;
     this.gcpCloudContextService = gcpCloudContextService;
+    this.resolvedCloningInstructions = resolvedCloningInstructions;
   }
 
   @Override
@@ -51,22 +58,6 @@ public class CopyBigQueryDatasetDefinitionStep implements Step {
       throws InterruptedException, RetryException {
     final FlightMap inputParameters = flightContext.getInputParameters();
     final FlightMap workingMap = flightContext.getWorkingMap();
-    final CloningInstructions effectiveCloningInstructions =
-        inputParameters.get(ControlledResourceKeys.CLONING_INSTRUCTIONS, CloningInstructions.class);
-    // TODO: move to the flight
-    if (CloningInstructions.COPY_NOTHING.equals(effectiveCloningInstructions)
-        || CloningInstructions.COPY_REFERENCE.equals(effectiveCloningInstructions)) {
-      // nothing further to do here or on following steps
-      // Build an empty response object
-      final ApiClonedControlledGcpBigQueryDataset noOpResult =
-          new ApiClonedControlledGcpBigQueryDataset()
-              .dataset(null)
-              .sourceWorkspaceId(sourceDataset.getWorkspaceId())
-              .sourceResourceId(sourceDataset.getResourceId())
-              .effectiveCloningInstructions(effectiveCloningInstructions.toApiModel());
-      FlightUtils.setResponse(flightContext, noOpResult, HttpStatus.OK);
-      return StepResult.getStepResultSuccess();
-    }
     final String resourceName =
         FlightUtils.getInputParameterOrWorkingValue(
             flightContext,
@@ -127,16 +118,14 @@ public class CopyBigQueryDatasetDefinitionStep implements Step {
     final ApiClonedControlledGcpBigQueryDataset apiResult =
         new ApiClonedControlledGcpBigQueryDataset()
             .dataset(clonedResource.toApiResource())
-            .effectiveCloningInstructions(effectiveCloningInstructions.toApiModel())
+            .effectiveCloningInstructions(resolvedCloningInstructions.toApiModel())
             .sourceWorkspaceId(sourceDataset.getWorkspaceId())
             .sourceResourceId(sourceDataset.getResourceId());
     workingMap.put(ControlledResourceKeys.CLONE_DEFINITION_RESULT, apiResult);
-    if (CloningInstructions.COPY_DEFINITION.equals(effectiveCloningInstructions)
-        || CloningInstructions.COPY_RESOURCE.equals(effectiveCloningInstructions)) {
-      // Later steps, if any, don't change the success response, since they only affect
-      // internal tables and rows in the dataset.
-      FlightUtils.setResponse(flightContext, apiResult, HttpStatus.OK);
-    }
+
+    // Later steps, if any, don't change the success response, since they only affect
+    // internal tables and rows in the dataset.
+    FlightUtils.setResponse(flightContext, apiResult, HttpStatus.OK);
 
     return StepResult.getStepResultSuccess();
   }
