@@ -43,7 +43,7 @@ public class CreateAzureStorageStepTest extends BaseAzureTest {
   @Mock private AzureConfiguration mockAzureConfig;
   @Mock private AzureCloudContext mockAzureCloudContext;
   @Mock private StorageManager mockStorageManager;
-  @Mock private ManagementException mockException;
+  private ManagementException resourceNotFoundException;
   @Mock private StorageAccounts mockStorageAccounts;
   @Mock private StorageAccount.DefinitionStages.Blank mockStorageBlankStage;
   @Mock private StorageAccount.DefinitionStages.WithGroup mockStorageGroupStage;
@@ -64,8 +64,8 @@ public class CreateAzureStorageStepTest extends BaseAzureTest {
 
     when(mockStorageManager.storageAccounts()).thenReturn(mockStorageAccounts);
 
-    when(mockException.getValue())
-        .thenReturn(new ManagementError("ResourceNotFound", "Resource was not found."));
+    resourceNotFoundException = new ManagementException("Resource was not found.", /*response=*/
+        null, new ManagementError("ResourceNotFound", "Resource was not found."));
 
     // Creation stages mocks
     when(mockStorageAccounts.define(anyString())).thenReturn(mockStorageBlankStage);
@@ -80,8 +80,6 @@ public class CreateAzureStorageStepTest extends BaseAzureTest {
     creationParameters = ControlledResourceFixtures.getAzureStorageCreationParameters();
 
     // Exception mock
-    when(mockException.getValue())
-        .thenReturn(new ManagementError("Conflict", "Invalid resource state."));
     when(mockFlightContext.getWorkingMap()).thenReturn(mockWorkingMap);
     when(mockWorkingMap.get(ControlledResourceKeys.AZURE_CLOUD_CONTEXT, AzureCloudContext.class))
         .thenReturn(mockAzureCloudContext);
@@ -119,7 +117,7 @@ public class CreateAzureStorageStepTest extends BaseAzureTest {
   @Test
   public void createStorage_failsToCreate() throws InterruptedException {
     CreateAzureStorageStep createAzureStorageStep = createCreateAzureStorageStep();
-    when(mockStorageCreateStage.create(any(Context.class))).thenThrow(mockException);
+    when(mockStorageCreateStage.create(any(Context.class))).thenThrow(resourceNotFoundException);
 
     StepResult stepResult = createAzureStorageStep.doStep(mockFlightContext);
 
