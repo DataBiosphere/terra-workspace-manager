@@ -31,6 +31,12 @@ task copyOpenApiToResources(type: Copy) {
   rename { String filename -> "service_openapi.yaml" }
 }
 
+// For JVM 16+
+/*
+tasks.withType(GenerateSwaggerCode).all {
+  jvmArgs = ['--add-exports=java.base/java.util=ALL-UNNAMED']
+}
+*/
 // We depend on the copy to make sure the copy happens. The real dependency is
 // on the open api source generation
 generateSwaggerCodeServer.dependsOn(copyOpenApiToResources)

@@ -44,7 +44,7 @@ jacocoTestReport {
 
 version = gradle.wsmVersion
 group = 'bio.terra'
-sourceCompatibility = JavaVersion.VERSION_11
+sourceCompatibility = JavaVersion.VERSION_17
 
 // Spotless configuration
 spotless {

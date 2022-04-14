@@ -56,10 +56,10 @@ jobs:
           echo ::set-output name=test-server::$TEST_SERVER
           echo ::set-output name=test::$TEST
 
-      - name: Set up AdoptOpenJDK 11
-        uses: joschi/setup-jdk@v2
+      - name: Set up JDK
+        uses: actions/setup-java@v2
         with:
-          java-version: 11
+          java-version: 17
 
       - name: Cache Gradle packages
         uses: actions/cache@v2
