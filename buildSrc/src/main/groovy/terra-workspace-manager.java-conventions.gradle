@@ -31,13 +31,14 @@ dependencyLocking {
 }
 
 jacoco {
-    toolVersion = '0.8.2'
+    toolVersion = '0.8.8'
 }
 
 jacocoTestReport {
     reports {
         xml.enabled = true
         xml.destination = file("$buildDir/reports/jacoco/test/jacoco.xml")
+        html.outputLocation = file("$buildDir/reports/jacoco/test/jacocoHtml")
     }
     dependsOn test
 }
@@ -66,6 +67,7 @@ if (hasProperty("buildScan")) {
 
 // Spotbugs configuration
 spotbugs {
+    toolVersion = '4.5.3'
     effort = 'max'
     // This makes the "html" reports come out in plain text so you can just open the file in IntelliJ
     // and look at your bugs instead of having to switch to a browser.
