@@ -55,10 +55,10 @@ jobs:
         PGPASSWORD: postgres
       run: psql -h 127.0.0.1 -U postgres -f ./service/local-dev/local-postgres-init.sql
 
-    - name: Set up AdoptOpenJDK 11
-      uses: joschi/setup-jdk@v2
+    - name: Set up JDK
+      uses: actions/setup-java@v2
       with:
-        java-version: 11
+        java-version: 17
 
     - name: Cache Gradle packages
       uses: actions/cache@v2
