@@ -43,7 +43,9 @@ public class CreateStorageTransferServiceJobStepTest extends BaseUnitTest {
   private CreateStorageTransferServiceJobStep createStorageTransferServiceJobStep;
 
   @BeforeEach
-  @SuppressFBWarnings(value = "RV", justification = "False positive for Mockito doReturn() statement")
+  @SuppressFBWarnings(
+      value = "RV",
+      justification = "False positive for Mockito doReturn() statement")
   public void setup() throws IOException {
     createStorageTransferServiceJobStep =
         new CreateStorageTransferServiceJobStep(mockStoragetransfer);
