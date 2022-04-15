@@ -126,20 +126,18 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
   private UserAccessUtils.TestUser user;
   private String projectId;
   @Autowired private Alpha1Service alpha1Service;
-  @Autowired private FeatureConfiguration features;
+  @Autowired private CliConfiguration cliConfiguration;
   @Autowired private ControlledResourceService controlledResourceService;
-  @Autowired private ControlledResourceMetadataManager controlledResourceMetadataManager;
   @Autowired private CrlService crlService;
-  @Autowired private SamService samService;
-  @Autowired private PetSaService petSaService;
+  @Autowired private FeatureConfiguration features;
+  @Autowired private GcpCloudContextService gcpCloudContextService;
   @Autowired private JobService jobService;
-  @Autowired private SpendConnectedTestUtils spendUtils;
+  @Autowired private PetSaService petSaService;
+  @Autowired private SamService samService;
   @Autowired private StairwayComponent stairwayComponent;
   @Autowired private UserAccessUtils userAccessUtils;
   @Autowired private WorkspaceConnectedTestUtils workspaceUtils;
   @Autowired private WorkspaceService workspaceService;
-  @Autowired private GcpCloudContextService gcpCloudContextService;
-  @Autowired private CliConfiguration cliConfiguration;
 
   private @MockBean SpendProfileService mockSpendProfileService;
   // TODO: fetch these from the yaml

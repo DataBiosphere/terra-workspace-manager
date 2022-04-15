@@ -10,8 +10,3 @@ workspace:
   crl:
     use-crl: true
     use-janitor: true
-  spend:
-    spend-profiles:
-      - # A default spend profile available in dev Sam.
-        id: connected-test-profile
-        billing-account-id: 01A82E-CA8A14-367457 # todo find a better one than this stolen one
