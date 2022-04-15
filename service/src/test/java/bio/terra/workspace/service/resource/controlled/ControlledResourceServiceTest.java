@@ -10,8 +10,6 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.doReturn;
 
 import bio.terra.cloudres.google.bigquery.BigQueryCow;
 import bio.terra.cloudres.google.iam.IamCow;
@@ -34,7 +32,6 @@ import bio.terra.workspace.common.StairwayTestUtils;
 import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
 import bio.terra.workspace.connected.UserAccessUtils;
 import bio.terra.workspace.connected.WorkspaceConnectedTestUtils;
-import bio.terra.workspace.generated.model.ApiCloneControlledGcpGcsBucketResult;
 import bio.terra.workspace.generated.model.ApiClonedControlledGcpGcsBucket;
 import bio.terra.workspace.generated.model.ApiCloningInstructionsEnum;
 import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceCreationParameters;
@@ -43,7 +40,6 @@ import bio.terra.workspace.generated.model.ApiGcpBigQueryDatasetUpdateParameters
 import bio.terra.workspace.generated.model.ApiGcpGcsBucketUpdateParameters;
 import bio.terra.workspace.generated.model.ApiJobControl;
 import bio.terra.workspace.service.crl.CrlService;
-import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.iam.model.ControlledResourceIamRole;
 import bio.terra.workspace.service.job.JobMapKeys;
@@ -75,16 +71,10 @@ import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResourceFields;
 import bio.terra.workspace.service.resource.exception.DuplicateResourceException;
 import bio.terra.workspace.service.resource.exception.ResourceNotFoundException;
-import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
-import bio.terra.workspace.service.spendprofile.SpendConnectedTestUtils;
-import bio.terra.workspace.service.spendprofile.SpendProfile;
-import bio.terra.workspace.service.spendprofile.SpendProfileId;
-import bio.terra.workspace.service.spendprofile.SpendProfileService;
 import bio.terra.workspace.service.workspace.Alpha1Service;
 import bio.terra.workspace.service.workspace.GcpCloudContextService;
 import bio.terra.workspace.service.workspace.WorkspaceService;
-import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import com.google.api.client.googleapis.json.GoogleJsonResponseException;
 import com.google.api.services.bigquery.model.Dataset;
@@ -109,7 +99,6 @@ import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.TestInstance.Lifecycle;
 import org.junit.jupiter.api.condition.DisabledIfEnvironmentVariable;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.HttpStatus;
 
 // Per-class lifecycle on this test to allow a shared workspace object across tests, which saves
@@ -138,21 +127,6 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
   @Autowired private UserAccessUtils userAccessUtils;
   @Autowired private WorkspaceConnectedTestUtils workspaceUtils;
   @Autowired private WorkspaceService workspaceService;
-
-  private @MockBean SpendProfileService mockSpendProfileService;
-  // TODO: fetch these from the yaml
-  private static final SpendProfileId SPEND_PROFILE_ID = new SpendProfileId("connected-test-profile");
-  private static final String BILLING_ACCOUNT_ID = "01A82E-CA8A14-367457";
-  private static final SpendProfile SPEND_PROFILE = SpendProfile.builder()
-      .id(SPEND_PROFILE_ID)
-      .billingAccountId(BILLING_ACCOUNT_ID)
-      .build();
-
-  @BeforeEach
-  public void setup() {
-    doReturn(SPEND_PROFILE).when(mockSpendProfileService)
-        .authorizeLinking(any(SpendProfileId.class), any(AuthenticatedUserRequest.class));
-  }
 
   private static void assertNotFound(InstanceName instanceName, AIPlatformNotebooksCow notebooks) {
     GoogleJsonResponseException exception =

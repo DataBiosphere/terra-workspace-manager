@@ -87,7 +87,7 @@ class WorkspaceServiceTest extends BaseConnectedTest {
           .token(Optional.of("fake-token"))
           .email("fake@email.com")
           .subjectId("fakeID123");
-  public static final String SPEND_PROFILE_ID = "connected-test-profile";
+  public static final String SPEND_PROFILE_ID = "wm-default-spend-profile";
 
   @MockBean private DataRepoService mockDataRepoService;
   /** Mock SamService does nothing for all calls that would throw if unauthorized. */
@@ -223,16 +223,10 @@ class WorkspaceServiceTest extends BaseConnectedTest {
 
   @Test
   void testWithSpendProfile() {
-    SpendProfileId spendProfileId = new SpendProfileId(SPEND_PROFILE_ID);
+    SpendProfileId spendProfileId = new SpendProfileId("foo");
     Workspace request =
         defaultRequestBuilder(UUID.randomUUID()).spendProfileId(spendProfileId).build();
     workspaceService.createWorkspace(request, USER_REQUEST);
-
-    // create a cloud context
-    final String createCloudContextJobId = UUID.randomUUID().toString();
-    workspaceService.createGcpCloudContext(request.getWorkspaceId(), createCloudContextJobId, USER_REQUEST);
-    jobService.waitForJob(createCloudContextJobId);
-    assertNull(jobService.retrieveJobResult(createCloudContextJobId, Object.class, USER_REQUEST).getException());
 
     Workspace createdWorkspace =
         workspaceService.getWorkspace(request.getWorkspaceId(), USER_REQUEST);
