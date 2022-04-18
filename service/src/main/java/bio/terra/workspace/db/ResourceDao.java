@@ -490,6 +490,20 @@ public class ResourceDao {
     return updateResourceWorker(workspaceId, resourceId, name, description, /*attributes=*/ null);
   }
 
+  @WriteTransaction
+  public boolean updateResourceCloningInstructions(
+      UUID workspaceId, UUID resourceId, CloningInstructions cloningInstructions) {
+    final String sql =
+        "UPDATE resource SET cloning_instructions = :cloning_instructions "
+            + " WHERE workspace_id = :workspace_id AND resource_id = :resource_id";
+    final MapSqlParameterSource params =
+        new MapSqlParameterSource()
+            .addValue(":cloning_instructions", cloningInstructions.toSql())
+            .addValue(":workspace_id", workspaceId)
+            .addValue(":resource_id", resourceId);
+    int rowsAffected = jdbcTemplate.update(sql, params);
+    return rowsAffected > 0;
+  }
   /**
    * Create a controlled resource in the database
    *

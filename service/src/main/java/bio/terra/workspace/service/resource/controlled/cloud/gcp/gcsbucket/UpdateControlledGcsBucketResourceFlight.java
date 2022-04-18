@@ -52,7 +52,8 @@ public class UpdateControlledGcsBucketResourceFlight extends Flight {
         new UpdateGcsBucketStep(
             resource.castByEnum(WsmResourceType.CONTROLLED_GCP_GCS_BUCKET),
             flightBeanBag.getCrlService(),
-            flightBeanBag.getGcpCloudContextService()),
+            flightBeanBag.getGcpCloudContextService(),
+            flightBeanBag.getResourceDao()),
         gcpRetry);
   }
 }
