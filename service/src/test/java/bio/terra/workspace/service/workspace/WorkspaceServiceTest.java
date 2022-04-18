@@ -23,6 +23,7 @@ import bio.terra.workspace.common.BaseConnectedTest;
 import bio.terra.workspace.connected.WorkspaceConnectedTestUtils;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.db.exception.WorkspaceNotFoundException;
+import bio.terra.workspace.generated.model.ApiCloneResourceResult;
 import bio.terra.workspace.generated.model.ApiClonedWorkspace;
 import bio.terra.workspace.generated.model.ApiGcpGcsBucketCreationParameters;
 import bio.terra.workspace.generated.model.ApiGcpGcsBucketDefaultStorageClass;
@@ -31,6 +32,8 @@ import bio.terra.workspace.generated.model.ApiGcpGcsBucketLifecycleRule;
 import bio.terra.workspace.generated.model.ApiGcpGcsBucketLifecycleRuleAction;
 import bio.terra.workspace.generated.model.ApiGcpGcsBucketLifecycleRuleActionType;
 import bio.terra.workspace.generated.model.ApiGcpGcsBucketLifecycleRuleCondition;
+import bio.terra.workspace.generated.model.ApiResourceCloneDetails;
+import bio.terra.workspace.generated.model.ApiResourceType;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.datarepo.DataRepoService;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
@@ -39,7 +42,6 @@ import bio.terra.workspace.service.iam.model.ControlledResourceIamRole;
 import bio.terra.workspace.service.iam.model.SamConstants.SamResource;
 import bio.terra.workspace.service.iam.model.SamConstants.SamSpendProfileAction;
 import bio.terra.workspace.service.iam.model.SamConstants.SamWorkspaceAction;
-import bio.terra.workspace.service.iam.model.WsmIamRole;
 import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.job.JobService.JobResultOrException;
 import bio.terra.workspace.service.job.exception.InvalidResultStateException;
@@ -52,6 +54,7 @@ import bio.terra.workspace.service.resource.controlled.model.ManagedByType;
 import bio.terra.workspace.service.resource.controlled.model.PrivateResourceState;
 import bio.terra.workspace.service.resource.exception.ResourceNotFoundException;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
+import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.resource.referenced.cloud.gcp.ReferencedResourceService;
 import bio.terra.workspace.service.resource.referenced.cloud.gcp.datareposnapshot.ReferencedDataRepoSnapshotResource;
 import bio.terra.workspace.service.spendprofile.SpendConnectedTestUtils;
@@ -63,9 +66,7 @@ import bio.terra.workspace.service.workspace.flight.CreateWorkspaceAuthzStep;
 import bio.terra.workspace.service.workspace.flight.CreateWorkspaceStep;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
-import bio.terra.workspace.service.workspace.model.WsmCloneWorkspaceResult;
 import com.google.api.services.cloudresourcemanager.v3.model.Project;
-import com.google.api.services.storage.model.Policy;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -532,7 +533,7 @@ class WorkspaceServiceTest extends BaseConnectedTest {
     assertNull(jobService.retrieveJobResult(createCloudContextJobId, Object.class, USER_REQUEST).getException());
 
     // add a bucket resource
-    ControlledGcsBucketResource bucketResource = ControlledGcsBucketResource.builder()
+    final ControlledGcsBucketResource bucketResource = ControlledGcsBucketResource.builder()
         .bucketName("terra-test-" + UUID.randomUUID().toString().toLowerCase())
         .common(ControlledResourceFields.builder()
             .name("bucket_1")
@@ -548,7 +549,7 @@ class WorkspaceServiceTest extends BaseConnectedTest {
             .assignedUser(USER_REQUEST.getEmail())
             .build())
         .build();
-    ApiGcpGcsBucketCreationParameters creationParameters = new ApiGcpGcsBucketCreationParameters()
+    final ApiGcpGcsBucketCreationParameters creationParameters = new ApiGcpGcsBucketCreationParameters()
         .name("foo")
         .defaultStorageClass(ApiGcpGcsBucketDefaultStorageClass.NEARLINE)
             .lifecycle(new ApiGcpGcsBucketLifecycle()
@@ -559,12 +560,14 @@ class WorkspaceServiceTest extends BaseConnectedTest {
                         .type(ApiGcpGcsBucketLifecycleRuleActionType.SET_STORAGE_CLASS)
                         .storageClass(ApiGcpGcsBucketDefaultStorageClass.STANDARD))));
 
-    controlledResourceService.createControlledResourceSync(
+    final ControlledResource createdResource = controlledResourceService.createControlledResourceSync(
         bucketResource,
         ControlledResourceIamRole.OWNER,
         USER_REQUEST,
         creationParameters);
 
+    final ControlledGcsBucketResource createdBucketResource = createdResource.castByEnum(
+        WsmResourceType.CONTROLLED_GCP_GCS_BUCKET);
     final Workspace destinationWorkspace = defaultRequestBuilder(UUID.randomUUID())
         .displayName("Destination Workspace")
         .description("Copied from source")
@@ -574,11 +577,18 @@ class WorkspaceServiceTest extends BaseConnectedTest {
     final String cloneJobId = workspaceService.cloneWorkspace(
         sourceWorkspaceId, USER_REQUEST, destinationLocation, destinationWorkspace);
     jobService.waitForJob(cloneJobId);
-    JobResultOrException<ApiClonedWorkspace> cloneResultOrException = jobService.retrieveJobResult(cloneJobId, ApiClonedWorkspace.class, USER_REQUEST);
+    final JobResultOrException<ApiClonedWorkspace> cloneResultOrException = jobService.retrieveJobResult(
+        cloneJobId, ApiClonedWorkspace.class, USER_REQUEST);
     assertNull(cloneResultOrException.getException());
-    ApiClonedWorkspace cloneResult = cloneResultOrException.getResult();
+    final ApiClonedWorkspace cloneResult = cloneResultOrException.getResult();
     assertEquals(destinationWorkspace.getWorkspaceId(), cloneResult.getDestinationWorkspaceId());
     assertThat(cloneResult.getResources(), hasSize(1));
+
+    final ApiResourceCloneDetails bucketCloneDetails = cloneResult.getResources().get(0);
+    assertEquals(ApiCloneResourceResult.SUCCEEDED, bucketCloneDetails.getResult());
+    assertNull(bucketCloneDetails.getErrorMessage());
+    assertEquals(ApiResourceType.GCS_BUCKET, bucketCloneDetails.getResourceType());
+    assertEquals(createdBucketResource.getResourceId(), bucketCloneDetails.getSourceResourceId());
 
     // destination WS should exist
     final Workspace retrievedDestinationWorkspace = workspaceService.getWorkspace(
