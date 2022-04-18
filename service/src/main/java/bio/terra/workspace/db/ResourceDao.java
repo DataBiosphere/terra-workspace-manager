@@ -498,9 +498,9 @@ public class ResourceDao {
             + " WHERE workspace_id = :workspace_id AND resource_id = :resource_id";
     final MapSqlParameterSource params =
         new MapSqlParameterSource()
-            .addValue(":cloning_instructions", cloningInstructions.toSql())
-            .addValue(":workspace_id", workspaceId)
-            .addValue(":resource_id", resourceId);
+            .addValue("cloning_instructions", cloningInstructions.toSql())
+            .addValue("workspace_id", workspaceId.toString())
+            .addValue("resource_id", resourceId.toString());
     int rowsAffected = jdbcTemplate.update(sql, params);
     return rowsAffected > 0;
   }

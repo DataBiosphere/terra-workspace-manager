@@ -156,7 +156,7 @@ public class ControlledGcsBucketLifecycle extends GcpWorkspaceCloneTestScriptBas
     sourceOwnerStorageClient.delete(blobId);
 
     // Update the bucket
-    final GcpGcsBucketResource resource =
+    final GcpGcsBucketResource updatedResource =
         updateBucketAttempt(
             resourceApi,
             resourceId,
@@ -165,10 +165,11 @@ public class ControlledGcsBucketLifecycle extends GcpWorkspaceCloneTestScriptBas
             BUCKET_UPDATE_PARAMETER_1);
     logger.info(
         "Updated resource name to {} and description to {}",
-        resource.getMetadata().getName(),
-        resource.getMetadata().getDescription());
-    assertEquals(UPDATED_BUCKET_RESOURCE_NAME, resource.getMetadata().getName());
-    assertEquals(UPDATED_BUCKET_RESOURCE_DESCRIPTION, resource.getMetadata().getDescription());
+        updatedResource.getMetadata().getName(),
+        updatedResource.getMetadata().getDescription());
+    assertEquals(UPDATED_BUCKET_RESOURCE_NAME, updatedResource.getMetadata().getName());
+    assertEquals(UPDATED_BUCKET_RESOURCE_DESCRIPTION, updatedResource.getMetadata().getDescription());
+    assertEquals(CloningInstructionsEnum.DEFINITION, updatedResource.getMetadata().getCloningInstructions());
     // However, invalid updates are rejected.
     String invalidName = "!!!invalid_name!!!";
     ApiException invalidUpdateEx =
