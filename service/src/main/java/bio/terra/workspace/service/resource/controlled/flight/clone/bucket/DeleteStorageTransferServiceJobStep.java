@@ -4,7 +4,6 @@ import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.exception.RetryException;
-import bio.terra.workspace.service.resource.model.CloningInstructions;
 import com.google.api.services.storagetransfer.v1.Storagetransfer;
 
 /**
@@ -20,8 +19,7 @@ public class DeleteStorageTransferServiceJobStep implements Step {
 
   private final Storagetransfer storagetransfer;
 
-  public DeleteStorageTransferServiceJobStep(
-      Storagetransfer storagetransfer) {
+  public DeleteStorageTransferServiceJobStep(Storagetransfer storagetransfer) {
     this.storagetransfer = storagetransfer;
   }
 

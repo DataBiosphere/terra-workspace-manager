@@ -1,11 +1,14 @@
 package bio.terra.workspace.service.resource;
 
+import bio.terra.common.exception.BadRequestException;
 import bio.terra.common.exception.InconsistentFieldsException;
 import bio.terra.common.exception.MissingRequiredFieldException;
 import bio.terra.workspace.app.configuration.external.GitRepoReferencedResourceConfiguration;
+import bio.terra.workspace.generated.model.ApiCloningInstructionsEnum;
 import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceCreationParameters;
 import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceVmImage;
 import bio.terra.workspace.service.resource.exception.InvalidNameException;
+import bio.terra.workspace.service.resource.model.StewardshipType;
 import bio.terra.workspace.service.resource.referenced.exception.InvalidReferenceException;
 import com.azure.core.management.Region;
 import com.azure.resourcemanager.compute.models.VirtualMachineSizeTypes;
@@ -399,6 +402,32 @@ public class ResourceValidationUtils {
     if (fieldValue == null) {
       throw new MissingRequiredFieldException(
           String.format("Missing required field '%s' for resource", fieldName));
+    }
+  }
+
+  /**
+   * Assert that the cloning instructions specified for a controlled or referenced resource are a
+   * valid combination. Intended for use at the api controller level.
+   *
+   * @param stewardshipType - controlled or referenced
+   * @param cloningInstructions - supplied cloning instructions with the API request
+   * @throws BadRequestException if the combination is not valid
+   */
+  public static void validateCloningInstructions(
+      StewardshipType stewardshipType, ApiCloningInstructionsEnum cloningInstructions) {
+    final boolean valid =
+        (StewardshipType.CONTROLLED == stewardshipType
+                && (ApiCloningInstructionsEnum.NOTHING == cloningInstructions
+                    || ApiCloningInstructionsEnum.DEFINITION == cloningInstructions
+                    || ApiCloningInstructionsEnum.RESOURCE == cloningInstructions))
+            || (StewardshipType.REFERENCED == stewardshipType
+                && (ApiCloningInstructionsEnum.NOTHING == cloningInstructions
+                    || ApiCloningInstructionsEnum.REFERENCE == cloningInstructions));
+    if (!valid) {
+      throw new BadRequestException(
+          String.format(
+              "Cloning Instruction %s is not valid with Stewardship Type %s",
+              cloningInstructions.toString(), stewardshipType.toString()));
     }
   }
 }

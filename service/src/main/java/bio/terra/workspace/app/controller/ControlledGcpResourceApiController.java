@@ -31,6 +31,7 @@ import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.job.JobService.AsyncJobResult;
 import bio.terra.workspace.service.petserviceaccount.PetSaService;
+import bio.terra.workspace.service.resource.ResourceValidationUtils;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceService;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook.ControlledAiNotebookInstanceResource;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.bqdataset.ControlledBigQueryDatasetResource;
@@ -38,6 +39,7 @@ import bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.Contr
 import bio.terra.workspace.service.resource.controlled.exception.InvalidControlledResourceException;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResourceFields;
+import bio.terra.workspace.service.resource.model.StewardshipType;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import java.util.Optional;
@@ -80,6 +82,9 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
   @Override
   public ResponseEntity<ApiCreatedControlledGcpGcsBucket> createBucket(
       UUID workspaceId, @Valid ApiCreateControlledGcpGcsBucketRequestBody body) {
+    ResourceValidationUtils.validateCloningInstructions(
+        StewardshipType.CONTROLLED, body.getCommon().getCloningInstructions());
+
     final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     ControlledResourceFields commonFields =
         toCommonFields(workspaceId, body.getCommon(), userRequest);
@@ -253,6 +258,9 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
   @Override
   public ResponseEntity<ApiCreatedControlledGcpBigQueryDataset> createBigQueryDataset(
       UUID workspaceId, ApiCreateControlledGcpBigQueryDatasetRequestBody body) {
+    ResourceValidationUtils.validateCloningInstructions(
+        StewardshipType.CONTROLLED, body.getCommon().getCloningInstructions());
+
     final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     ControlledResourceFields commonFields =
         toCommonFields(workspaceId, body.getCommon(), userRequest);
@@ -296,6 +304,9 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
   @Override
   public ResponseEntity<ApiCreatedControlledGcpAiNotebookInstanceResult> createAiNotebookInstance(
       UUID workspaceId, @Valid ApiCreateControlledGcpAiNotebookInstanceRequestBody body) {
+    ResourceValidationUtils.validateCloningInstructions(
+        StewardshipType.CONTROLLED, body.getCommon().getCloningInstructions());
+
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     ControlledResourceFields commonFields =
         toCommonFields(workspaceId, body.getCommon(), userRequest);
