@@ -8,6 +8,7 @@ import bio.terra.workspace.generated.model.ApiCloningInstructionsEnum;
 import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceCreationParameters;
 import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceVmImage;
 import bio.terra.workspace.service.resource.exception.InvalidNameException;
+import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.model.StewardshipType;
 import bio.terra.workspace.service.resource.referenced.exception.InvalidReferenceException;
 import com.azure.core.management.Region;
@@ -414,15 +415,15 @@ public class ResourceValidationUtils {
    * @throws BadRequestException if the combination is not valid
    */
   public static void validateCloningInstructions(
-      StewardshipType stewardshipType, ApiCloningInstructionsEnum cloningInstructions) {
+      StewardshipType stewardshipType, CloningInstructions cloningInstructions) {
     final boolean valid =
         (StewardshipType.CONTROLLED == stewardshipType
-                && (ApiCloningInstructionsEnum.NOTHING == cloningInstructions
-                    || ApiCloningInstructionsEnum.DEFINITION == cloningInstructions
-                    || ApiCloningInstructionsEnum.RESOURCE == cloningInstructions))
+                && (CloningInstructions.COPY_NOTHING == cloningInstructions
+                    || CloningInstructions.COPY_DEFINITION == cloningInstructions
+                    || CloningInstructions.COPY_RESOURCE == cloningInstructions))
             || (StewardshipType.REFERENCED == stewardshipType
-                && (ApiCloningInstructionsEnum.NOTHING == cloningInstructions
-                    || ApiCloningInstructionsEnum.REFERENCE == cloningInstructions));
+                && (CloningInstructions.COPY_NOTHING == cloningInstructions
+                    || CloningInstructions.COPY_REFERENCE == cloningInstructions));
     if (!valid) {
       throw new BadRequestException(
           String.format(

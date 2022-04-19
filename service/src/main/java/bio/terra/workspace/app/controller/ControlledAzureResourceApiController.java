@@ -28,7 +28,6 @@ import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequestFactory;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.job.JobService;
-import bio.terra.workspace.service.resource.ResourceValidationUtils;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceService;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.disk.ControlledAzureDiskResource;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.ip.ControlledAzureIpResource;
@@ -37,7 +36,6 @@ import bio.terra.workspace.service.resource.controlled.cloud.azure.relayNamespac
 import bio.terra.workspace.service.resource.controlled.cloud.azure.storage.ControlledAzureStorageResource;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.vm.ControlledAzureVmResource;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResourceFields;
-import bio.terra.workspace.service.resource.model.StewardshipType;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
 import java.util.UUID;
 import javax.servlet.http.HttpServletRequest;
@@ -77,8 +75,6 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
       UUID workspaceId, ApiCreateControlledAzureDiskRequestBody body) {
     features.azureEnabledCheck();
 
-    ResourceValidationUtils.validateCloningInstructions(
-        StewardshipType.CONTROLLED, body.getCommon().getCloningInstructions());
     final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     ControlledResourceFields commonFields =
         toCommonFields(workspaceId, body.getCommon(), userRequest);
@@ -109,8 +105,6 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
   public ResponseEntity<ApiCreatedControlledAzureIp> createAzureIp(
       UUID workspaceId, @Valid ApiCreateControlledAzureIpRequestBody body) {
     features.azureEnabledCheck();
-    ResourceValidationUtils.validateCloningInstructions(
-        StewardshipType.CONTROLLED, body.getCommon().getCloningInstructions());
 
     final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     ControlledResourceFields commonFields =
@@ -140,8 +134,6 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
   public ResponseEntity<ApiCreateControlledAzureRelayNamespaceResult> createAzureRelayNamespace(
       UUID workspaceId, @Valid ApiCreateControlledAzureRelayNamespaceRequestBody body) {
     features.azureEnabledCheck();
-    ResourceValidationUtils.validateCloningInstructions(
-        StewardshipType.CONTROLLED, body.getCommon().getCloningInstructions());
 
     final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     ControlledResourceFields commonFields =
@@ -184,8 +176,6 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
   public ResponseEntity<ApiCreatedControlledAzureStorage> createAzureStorage(
       UUID workspaceId, @Valid ApiCreateControlledAzureStorageRequestBody body) {
     features.azureEnabledCheck();
-    ResourceValidationUtils.validateCloningInstructions(
-        StewardshipType.CONTROLLED, body.getCommon().getCloningInstructions());
 
     final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     final ControlledResourceFields commonFields =
@@ -214,8 +204,6 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
   public ResponseEntity<ApiCreatedControlledAzureVmResult> createAzureVm(
       UUID workspaceId, @Valid ApiCreateControlledAzureVmRequestBody body) {
     features.azureEnabledCheck();
-    ResourceValidationUtils.validateCloningInstructions(
-        StewardshipType.CONTROLLED, body.getCommon().getCloningInstructions());
 
     final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     final ControlledResourceFields commonFields =
@@ -263,8 +251,6 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
   public ResponseEntity<ApiCreatedControlledAzureNetwork> createAzureNetwork(
       UUID workspaceId, ApiCreateControlledAzureNetworkRequestBody body) {
     features.azureEnabledCheck();
-    ResourceValidationUtils.validateCloningInstructions(
-        StewardshipType.CONTROLLED, body.getCommon().getCloningInstructions());
 
     final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     final ControlledResourceFields commonFields =

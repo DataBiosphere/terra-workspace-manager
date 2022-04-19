@@ -31,7 +31,6 @@ import bio.terra.workspace.service.iam.AuthenticatedUserRequestFactory;
 import bio.terra.workspace.service.petserviceaccount.PetSaService;
 import bio.terra.workspace.service.resource.ResourceValidationUtils;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
-import bio.terra.workspace.service.resource.model.StewardshipType;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.resource.referenced.cloud.any.gitrepo.ReferencedGitRepoResource;
 import bio.terra.workspace.service.resource.referenced.cloud.gcp.ReferencedResource;
@@ -57,6 +56,7 @@ import org.springframework.stereotype.Controller;
 
 @Controller
 public class ReferencedGcpResourceController implements ReferencedGcpResourceApi {
+
   private final ReferencedResourceService referenceResourceService;
   private final AuthenticatedUserRequestFactory authenticatedUserRequestFactory;
   private final ResourceValidationUtils validationUtils;
@@ -87,8 +87,7 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
   @Override
   public ResponseEntity<ApiGcpGcsObjectResource> createGcsObjectReference(
       UUID workspaceId, @Valid ApiCreateGcpGcsObjectReferenceRequestBody body) {
-    ResourceValidationUtils.validateCloningInstructions(
-        StewardshipType.REFERENCED, body.getMetadata().getCloningInstructions());
+
     // Construct a ReferenceGcsBucketResource object from the API input
     var resource =
         ReferencedGcsObjectResource.builder()
@@ -173,8 +172,7 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
   @Override
   public ResponseEntity<ApiGcpGcsBucketResource> createBucketReference(
       UUID id, @Valid ApiCreateGcpGcsBucketReferenceRequestBody body) {
-    ResourceValidationUtils.validateCloningInstructions(
-        StewardshipType.REFERENCED, body.getMetadata().getCloningInstructions());
+
     // Construct a ReferenceGcsBucketResource object from the API input
     var resource =
         ReferencedGcsBucketResource.builder()
@@ -251,8 +249,6 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
   @Override
   public ResponseEntity<ApiGcpBigQueryDataTableResource> createBigQueryDataTableReference(
       UUID id, @Valid ApiCreateGcpBigQueryDataTableReferenceRequestBody body) {
-    ResourceValidationUtils.validateCloningInstructions(
-        StewardshipType.REFERENCED, body.getMetadata().getCloningInstructions());
     var resource =
         ReferencedBigQueryDataTableResource.builder()
             .workspaceId(id)
@@ -346,8 +342,7 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
   @Override
   public ResponseEntity<ApiGcpBigQueryDatasetResource> createBigQueryDatasetReference(
       UUID id, @Valid ApiCreateGcpBigQueryDatasetReferenceRequestBody body) {
-    ResourceValidationUtils.validateCloningInstructions(
-        StewardshipType.REFERENCED, body.getMetadata().getCloningInstructions());
+
     // Construct a ReferenceBigQueryResource object from the API input
     var resource =
         ReferencedBigQueryDatasetResource.builder()
@@ -435,8 +430,6 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
   @Override
   public ResponseEntity<ApiDataRepoSnapshotResource> createDataRepoSnapshotReference(
       UUID id, @Valid ApiCreateDataRepoSnapshotReferenceRequestBody body) {
-    ResourceValidationUtils.validateCloningInstructions(
-        StewardshipType.REFERENCED, body.getMetadata().getCloningInstructions());
 
     var resource =
         ReferencedDataRepoSnapshotResource.builder()
@@ -742,8 +735,6 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
   @Override
   public ResponseEntity<ApiGitRepoResource> createGitRepoReference(
       UUID workspaceId, @Valid ApiCreateGitRepoReferenceRequestBody body) {
-    ResourceValidationUtils.validateCloningInstructions(
-        StewardshipType.REFERENCED, body.getMetadata().getCloningInstructions());
     // Construct a ReferenceGcsBucketResource object from the API input
     validationUtils.validateGitRepoUri(body.getGitrepo().getGitRepoUrl());
     ReferencedGitRepoResource resource =
