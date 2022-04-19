@@ -409,10 +409,6 @@ components:
     UpdateWorkspaceRequestBody:
       type: object
       properties:
-        userFacingId:
-          description: |
-            Human-settable, mutable id
-          type: string
         displayName:
           description: The human readable name of the workspace
           type: string
@@ -425,15 +421,12 @@ components:
 
     WorkspaceDescription:
       type: object
-      required: [id, userFacingId]
+      required: [id]
       properties:
         id:
-          description: The ID of the workspace. Immutable.
+          description: The ID of the workspace
           type: string
           format: uuid
-        userFacingId:
-          description: Human-settable, mutable id
-          type: string
         displayName:
           description: The human readable name of the workspace
           type: string

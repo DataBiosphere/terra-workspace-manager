@@ -1,7 +1,9 @@
 package scripts.testscripts;
 
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.equalTo;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import bio.terra.testrunner.runner.config.TestUserSpecification;
 import bio.terra.workspace.api.WorkspaceApi;
@@ -18,6 +20,9 @@ import scripts.utils.WorkspaceApiTestScriptBase;
 
 public class WorkspaceLifecycle extends WorkspaceApiTestScriptBase {
   private static final Logger logger = LoggerFactory.getLogger(WorkspaceLifecycle.class);
+  private static final String invalidUserFacingId = "User facing id";
+  private static final String validUserFacingId = "user-facing-id";
+  private static final String validUserFacingId2 = "user-facing-id-2";
   private static final String workspaceName = "name";
   private static final String workspaceDescriptionString = "description";
 
@@ -25,9 +30,21 @@ public class WorkspaceLifecycle extends WorkspaceApiTestScriptBase {
   public void doUserJourney(TestUserSpecification testUser, WorkspaceApi workspaceApi)
       throws ApiException {
     UUID workspaceId = UUID.randomUUID();
-    CreateWorkspaceRequestBody requestBody =
-        new CreateWorkspaceRequestBody().id(workspaceId).stage(WorkspaceStageModel.MC_WORKSPACE);
-    workspaceApi.createWorkspace(requestBody);
+    CreateWorkspaceRequestBody createBody =
+        new CreateWorkspaceRequestBody()
+            .id(workspaceId)
+            .userFacingId(invalidUserFacingId)
+            .stage(WorkspaceStageModel.MC_WORKSPACE);
+
+    ApiException ex =
+        assertThrows(ApiException.class, () -> workspaceApi.createWorkspace(createBody));
+    assertThat(
+        ex.getMessage(),
+        containsString(
+            "ID must have 3-63 characters, contain lowercase letters, numbers, dashes, or underscores, and start with lowercase letter"));
+
+    createBody.userFacingId(validUserFacingId);
+    workspaceApi.createWorkspace(createBody);
     ClientTestUtils.assertHttpSuccess(workspaceApi, "CREATE workspace");
 
     WorkspaceDescription workspaceDescription = workspaceApi.getWorkspace(workspaceId);
@@ -37,10 +54,21 @@ public class WorkspaceLifecycle extends WorkspaceApiTestScriptBase {
 
     UpdateWorkspaceRequestBody updateBody =
         new UpdateWorkspaceRequestBody()
+            .userFacingId(invalidUserFacingId)
             .displayName(workspaceName)
             .description(workspaceDescriptionString);
+    ex =
+        assertThrows(
+            ApiException.class, () -> workspaceApi.updateWorkspace(updateBody, workspaceId));
+    assertThat(
+        ex.getMessage(),
+        containsString(
+            "ID must have 3-63 characters, contain lowercase letters, numbers, dashes, or underscores, and start with lowercase letter"));
+
+    updateBody.userFacingId(validUserFacingId2);
     WorkspaceDescription updatedDescription = workspaceApi.updateWorkspace(updateBody, workspaceId);
     ClientTestUtils.assertHttpSuccess(workspaceApi, "PATCH workspace");
+    assertThat(updatedDescription.getUserFacingId(), equalTo(validUserFacingId2));
     assertThat(updatedDescription.getDisplayName(), equalTo(workspaceName));
     assertThat(updatedDescription.getDescription(), equalTo(workspaceDescriptionString));
 

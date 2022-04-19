@@ -201,6 +201,10 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
       propertyMap = propertyMapFromApi(body.getProperties());
     }
 
+    if (body.getUserFacingId() != null) {
+      ControllerValidationUtils.validateUserFacingId(body.getUserFacingId());
+    }
+
     Workspace workspace =
         workspaceService.updateWorkspace(
             userRequest, workspaceId, body.getUserFacingId(), body.getDisplayName(), body.getDescription(), propertyMap);
