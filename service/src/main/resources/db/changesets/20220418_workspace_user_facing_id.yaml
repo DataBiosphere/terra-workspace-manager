@@ -1,4 +1,3 @@
-# PF-1359
 databaseChangeLog:
 - changeSet:
     id: add workspace user_facing_id
@@ -13,7 +12,7 @@ databaseChangeLog:
               constraints:
                 unique: true
               remarks: |
-                A later changeset will add not null constraint (PF-1583).
+                See PF-1359. A later changeset will make this required (PF-1583).
     - sql:
         # user_facing_id is a required field. For new workspaces, UI/CLI will
         # require it. For existing workspaces, backfill with workspace_id.
