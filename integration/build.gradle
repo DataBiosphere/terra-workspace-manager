@@ -18,7 +18,7 @@ dependencies {
         kubernetesClient = "10.0.0"
         logback = "1.2.3"
         slf4j = "1.7.25"
-        hamcrest = "2.1"
+        hamcrest = "2.2"
         jUnit = "5.7.0"
 
         googleApi = "1.23.0"

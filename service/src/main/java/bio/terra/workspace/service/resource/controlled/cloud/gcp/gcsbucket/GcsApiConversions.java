@@ -23,6 +23,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -136,6 +137,12 @@ public class GcsApiConversions {
         toGcsApi(lifecycleRule.getAction()), toGcsApi(lifecycleRule.getCondition()));
   }
 
+  public static List<LifecycleRule> toGcsApi(Collection<ApiGcpGcsBucketLifecycleRule> lifecycleRules) {
+    return lifecycleRules.stream()
+        .map(GcsApiConversions::toGcsApi)
+        .collect(Collectors.toList());
+  }
+
   public static ApiGcpGcsBucketLifecycleRule toWsmApi(LifecycleRule lifeCycleRule) {
     return new ApiGcpGcsBucketLifecycleRule()
         .action(toWsmApi(lifeCycleRule.getAction()))
@@ -209,7 +216,8 @@ public class GcsApiConversions {
     final var resultBuilder = LifecycleCondition.newBuilder();
 
     resultBuilder.setAge(condition.getAge());
-    resultBuilder.setCreatedBefore(toGoogleDateTime(condition.getCreatedBefore()));
+    // This DateTime object doesn't include a time in the BucketInfo structure
+    resultBuilder.setCreatedBefore(toGoogleDateTimeDateOnly(condition.getCreatedBefore()));
     resultBuilder.setNumberOfNewerVersions(condition.getNumNewerVersions());
     resultBuilder.setIsLive(condition.isLive());
     resultBuilder.setDaysSinceNoncurrentTime(condition.getDaysSinceNoncurrentTime());
@@ -250,7 +258,16 @@ public class GcsApiConversions {
         Math.toIntExact(
             Duration.ofSeconds(offsetDateTime.getOffset().getTotalSeconds()).toMinutes()));
   }
-
+  @Nullable
+  public static DateTime toGoogleDateTimeDateOnly(@Nullable OffsetDateTime offsetDateTime) {
+    if (offsetDateTime == null) {
+      return null;
+    }
+    return new DateTime(true,
+        offsetDateTime.toInstant().toEpochMilli(),
+        Math.toIntExact(
+            Duration.ofSeconds(offsetDateTime.getOffset().getTotalSeconds()).toMinutes()));
+  }
   @Nullable
   public static OffsetDateTime toOffsetDateTime(@Nullable DateTime dateTime) {
     if (dateTime == null) {

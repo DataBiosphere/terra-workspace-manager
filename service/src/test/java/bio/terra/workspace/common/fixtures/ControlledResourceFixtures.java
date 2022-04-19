@@ -65,7 +65,7 @@ public class ControlledResourceFixtures {
               new ApiGcpGcsBucketLifecycleRuleAction()
                   .type(
                       ApiGcpGcsBucketLifecycleRuleActionType
-                          .DELETE)) // no storage class require for delete actions
+                          .DELETE)) // no storage class required for delete actions
           .condition(
               new ApiGcpGcsBucketLifecycleRuleCondition()
                   .age(64)
@@ -424,13 +424,14 @@ public class ControlledResourceFixtures {
       OffsetDateTime.parse("2017-12-03T10:15:30+01:00", DateTimeFormatter.ISO_OFFSET_DATE_TIME);
   public static final OffsetDateTime OFFSET_DATE_TIME_2 =
       OffsetDateTime.parse("2017-12-03T10:15:30-05:00", DateTimeFormatter.ISO_OFFSET_DATE_TIME);
+
   public static final DateTime DATE_TIME_1 = DateTime.parseRfc3339("1985-04-12T23:20:50.52Z");
   public static final DateTime DATE_TIME_2 = DateTime.parseRfc3339("1996-12-19T16:39:57-08:00");
 
   public static final ApiGcpGcsBucketLifecycleRuleCondition WSM_LIFECYCLE_RULE_CONDITION_1 =
       new ApiGcpGcsBucketLifecycleRuleCondition()
           .age(31)
-          .createdBefore(OFFSET_DATE_TIME_2)
+          .createdBefore(OFFSET_DATE_TIME_2) // need date part only
           .numNewerVersions(3)
           .live(true)
           .matchesStorageClass(
