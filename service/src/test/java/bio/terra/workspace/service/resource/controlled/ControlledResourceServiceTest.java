@@ -2,22 +2,26 @@ package bio.terra.workspace.service.resource.controlled;
 
 import static bio.terra.workspace.service.resource.controlled.cloud.gcp.GcpResourceConstant.DEFAULT_REGION;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import bio.terra.cloudres.google.bigquery.BigQueryCow;
 import bio.terra.cloudres.google.iam.IamCow;
 import bio.terra.cloudres.google.iam.ServiceAccountName;
 import bio.terra.cloudres.google.notebooks.AIPlatformNotebooksCow;
 import bio.terra.cloudres.google.notebooks.InstanceName;
+import bio.terra.cloudres.google.storage.BucketCow;
 import bio.terra.cloudres.google.storage.StorageCow;
 import bio.terra.common.exception.BadRequestException;
 import bio.terra.common.stairway.StairwayComponent;
 import bio.terra.stairway.FlightDebugInfo;
+import bio.terra.stairway.FlightState;
 import bio.terra.stairway.FlightStatus;
 import bio.terra.stairway.StepStatus;
 import bio.terra.workspace.app.configuration.external.CliConfiguration;
@@ -28,6 +32,8 @@ import bio.terra.workspace.common.StairwayTestUtils;
 import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
 import bio.terra.workspace.connected.UserAccessUtils;
 import bio.terra.workspace.connected.WorkspaceConnectedTestUtils;
+import bio.terra.workspace.generated.model.ApiClonedControlledGcpGcsBucket;
+import bio.terra.workspace.generated.model.ApiCloningInstructionsEnum;
 import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceCreationParameters;
 import bio.terra.workspace.generated.model.ApiGcpBigQueryDatasetCreationParameters;
 import bio.terra.workspace.generated.model.ApiGcpBigQueryDatasetUpdateParameters;
@@ -36,6 +42,7 @@ import bio.terra.workspace.generated.model.ApiJobControl;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.iam.model.ControlledResourceIamRole;
+import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.job.exception.InvalidResultStateException;
 import bio.terra.workspace.service.petserviceaccount.PetSaService;
@@ -60,11 +67,11 @@ import bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.Updat
 import bio.terra.workspace.service.resource.controlled.flight.delete.DeleteMetadataStep;
 import bio.terra.workspace.service.resource.controlled.flight.update.RetrieveControlledResourceMetadataStep;
 import bio.terra.workspace.service.resource.controlled.flight.update.UpdateControlledResourceMetadataStep;
+import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResourceFields;
 import bio.terra.workspace.service.resource.exception.DuplicateResourceException;
 import bio.terra.workspace.service.resource.exception.ResourceNotFoundException;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
-import bio.terra.workspace.service.spendprofile.SpendConnectedTestUtils;
 import bio.terra.workspace.service.workspace.Alpha1Service;
 import bio.terra.workspace.service.workspace.GcpCloudContextService;
 import bio.terra.workspace.service.workspace.WorkspaceService;
@@ -75,6 +82,7 @@ import com.google.api.services.iam.v1.model.TestIamPermissionsRequest;
 import com.google.api.services.iam.v1.model.TestIamPermissionsResponse;
 import com.google.api.services.notebooks.v1.model.Instance;
 import com.google.cloud.storage.BucketInfo;
+import com.google.cloud.storage.BucketInfo.LifecycleRule;
 import com.google.common.collect.ImmutableList;
 import java.io.IOException;
 import java.util.Collections;
@@ -107,20 +115,18 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
   private UserAccessUtils.TestUser user;
   private String projectId;
   @Autowired private Alpha1Service alpha1Service;
-  @Autowired private FeatureConfiguration features;
+  @Autowired private CliConfiguration cliConfiguration;
   @Autowired private ControlledResourceService controlledResourceService;
-  @Autowired private ControlledResourceMetadataManager controlledResourceMetadataManager;
   @Autowired private CrlService crlService;
-  @Autowired private SamService samService;
-  @Autowired private PetSaService petSaService;
+  @Autowired private FeatureConfiguration features;
+  @Autowired private GcpCloudContextService gcpCloudContextService;
   @Autowired private JobService jobService;
-  @Autowired private SpendConnectedTestUtils spendUtils;
+  @Autowired private PetSaService petSaService;
+  @Autowired private SamService samService;
   @Autowired private StairwayComponent stairwayComponent;
   @Autowired private UserAccessUtils userAccessUtils;
   @Autowired private WorkspaceConnectedTestUtils workspaceUtils;
   @Autowired private WorkspaceService workspaceService;
-  @Autowired private GcpCloudContextService gcpCloudContextService;
-  @Autowired private CliConfiguration cliConfiguration;
 
   private static void assertNotFound(InstanceName instanceName, AIPlatformNotebooksCow notebooks) {
     GoogleJsonResponseException exception =
@@ -277,7 +283,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
                     .setPermissions(expectedWriterPermissions))
             .execute()
             .getPermissions(),
-        Matchers.containsInAnyOrder(expectedWriterPermissions.toArray()));
+        containsInAnyOrder(expectedWriterPermissions.toArray()));
 
     // Test that the user has access to the notebook with a service account through proxy mode.
     // git secrets gets a false positive if 'service_account' is double quoted.
@@ -1134,6 +1140,61 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
                 workspace.getWorkspaceId(),
                 resource.getResourceId(),
                 user.getAuthenticatedRequest()));
+  }
+
+  @Test
+  void cloneGcsBucketDo() throws InterruptedException {
+    final ControlledGcsBucketResource resource =
+        ControlledResourceFixtures.makeDefaultControlledGcsBucketBuilder(workspace.getWorkspaceId())
+            .build();
+    final ControlledGcsBucketResource createdBucket =
+        controlledResourceService
+            .createControlledResourceSync(
+                resource,
+                null,
+                user.getAuthenticatedRequest(),
+                ControlledResourceFixtures.getGoogleBucketCreationParameters())
+            .castByEnum(WsmResourceType.CONTROLLED_GCP_GCS_BUCKET);
+    assertEquals(resource, createdBucket);
+    final ApiJobControl apiJobControl = new ApiJobControl()
+        .id(UUID.randomUUID().toString());
+    final String destinationBucketName = "cloned-bucket-" + UUID.randomUUID().toString().toLowerCase();
+    final String destinationLocation = "US-EAST1";
+    final String jobId = controlledResourceService.cloneGcsBucket(
+        workspace.getWorkspaceId(),
+        createdBucket.getResourceId(),
+        workspace.getWorkspaceId(), // copy back into same workspace
+        apiJobControl,
+        user.getAuthenticatedRequest(),
+        "cloned_bucket",
+        "A bucket cloned individually into the same workspace.",
+        destinationBucketName,
+        destinationLocation,
+        ApiCloningInstructionsEnum.RESOURCE);
+
+    jobService.waitForJob(jobId);
+    final FlightState flightState = stairwayComponent.get().getFlightState(jobId);
+    assertEquals(FlightStatus.SUCCESS, flightState.getFlightStatus());
+    assertTrue(flightState.getException().isEmpty());
+    assertTrue(flightState.getResultMap().isPresent());
+    var response = flightState.getResultMap().get()
+        .get(JobMapKeys.RESPONSE.getKeyName(), ApiClonedControlledGcpGcsBucket.class);
+    assertNotNull(response);
+    assertEquals(destinationBucketName, response.getBucket().getGcpBucket().getAttributes().getBucketName());
+    final UUID resourceId = response.getBucket().getResourceId();
+    final ControlledResource destinationControlledResource = controlledResourceService.getControlledResource(workspace.getWorkspaceId(), resourceId, user.getAuthenticatedRequest());
+    final ControlledGcsBucketResource destinationBucketResource = destinationControlledResource.castByEnum(WsmResourceType.CONTROLLED_GCP_GCS_BUCKET);
+    assertNotNull(destinationBucketResource);
+    assertEquals("cloned_bucket", destinationBucketResource.getName());
+
+    // check creation parameters on cloud (not stored by WSM). Source project is same as destination in this case.
+    final StorageCow storageCow = crlService.createStorageCow(gcpCloudContextService.getRequiredGcpProject(workspace.getWorkspaceId()));
+    final BucketCow bucketCow = storageCow.get(destinationBucketName);
+    final BucketInfo bucketInfo = bucketCow.getBucketInfo();
+    assertEquals(destinationLocation, bucketInfo.getLocation());
+    assertEquals(GcsApiConversions.toGcsApi(ControlledResourceFixtures.getGoogleBucketCreationParameters().getDefaultStorageClass()), bucketInfo.getStorageClass());
+    final List<LifecycleRule> expectedLifecycleRules = GcsApiConversions.toGcsApi(ControlledResourceFixtures.getGoogleBucketCreationParameters().getLifecycle().getRules());
+    assertThat(expectedLifecycleRules, containsInAnyOrder(bucketInfo.getLifecycleRules().toArray()));
   }
 
   @Test
