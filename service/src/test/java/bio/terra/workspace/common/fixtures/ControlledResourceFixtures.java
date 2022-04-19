@@ -200,7 +200,7 @@ public class ControlledResourceFixtures {
         RESOURCE_ID,
         RESOURCE_NAME,
         RESOURCE_DESCRIPTION,
-        CLONING_INSTRUCTIONS,
+        CloningInstructions.COPY_RESOURCE,
         OWNER_EMAIL,
         PrivateResourceState.ACTIVE,
         AccessScopeType.ACCESS_SCOPE_PRIVATE,
@@ -332,7 +332,7 @@ public class ControlledResourceFixtures {
         .resourceId(UUID.randomUUID())
         .name(uniqueName("test_resource").replace("-", "_"))
         .description("how much data could a dataset set if a dataset could set data?")
-        .cloningInstructions(CLONING_INSTRUCTIONS)
+        .cloningInstructions(CloningInstructions.COPY_DEFINITION)
         .assignedUser(null)
         .accessScope(AccessScopeType.ACCESS_SCOPE_SHARED)
         .managedBy(ManagedByType.MANAGED_BY_USER);

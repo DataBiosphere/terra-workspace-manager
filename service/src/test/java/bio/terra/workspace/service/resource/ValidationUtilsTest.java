@@ -1,6 +1,5 @@
 package bio.terra.workspace.service.resource;
 
-import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.CLONING_INSTRUCTIONS;
 import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.defaultNotebookCreationParameters;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
@@ -336,13 +335,22 @@ public class ValidationUtilsTest extends BaseUnitTest {
 
   @Test
   public void validateCloningInstructions_invalidCombination_throwsException() {
-    assertThrows(BadRequestException.class,
-        () -> ResourceValidationUtils.validateCloningInstructions(StewardshipType.REFERENCED, CloningInstructions.COPY_RESOURCE));
-    assertThrows(BadRequestException.class,
-        () -> ResourceValidationUtils.validateCloningInstructions(StewardshipType.REFERENCED, CloningInstructions.COPY_DEFINITION));
+    assertThrows(
+        BadRequestException.class,
+        () ->
+            ResourceValidationUtils.validateCloningInstructions(
+                StewardshipType.REFERENCED, CloningInstructions.COPY_RESOURCE));
+    assertThrows(
+        BadRequestException.class,
+        () ->
+            ResourceValidationUtils.validateCloningInstructions(
+                StewardshipType.REFERENCED, CloningInstructions.COPY_DEFINITION));
 
     // This will be supported if we implement PF-812.
-    assertThrows(BadRequestException.class,
-        () -> ResourceValidationUtils.validateCloningInstructions(StewardshipType.CONTROLLED, CloningInstructions.COPY_REFERENCE));
+    assertThrows(
+        BadRequestException.class,
+        () ->
+            ResourceValidationUtils.validateCloningInstructions(
+                StewardshipType.CONTROLLED, CloningInstructions.COPY_REFERENCE));
   }
 }

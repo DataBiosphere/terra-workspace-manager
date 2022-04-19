@@ -51,20 +51,23 @@ public class ControlledGcsBucketResourceTest extends BaseUnitTest {
 
   @Test
   public void testCloningInstructionsValidation() {
-    assertThrows(BadRequestException.class,
-        () -> ControlledGcsBucketResource.builder()
-            .bucketName(ControlledResourceFixtures.uniqueBucketName())
-            .common(
-                ControlledResourceFixtures.makeDefaultControlledResourceFieldsBuilder()
-                    .workspaceId(UUID.randomUUID())
-                    .resourceId(UUID.randomUUID())
-                    .name("controlled_bucket_1")
-                    .description("how much data could a dataset set if a dataset could set data?")
-                    .cloningInstructions(CloningInstructions.COPY_REFERENCE) // not valid (yet!)
-                    .assignedUser(null)
-                    .accessScope(AccessScopeType.ACCESS_SCOPE_SHARED)
-                    .managedBy(ManagedByType.MANAGED_BY_USER)
-                    .build())
-            .build());
+    assertThrows(
+        BadRequestException.class,
+        () ->
+            ControlledGcsBucketResource.builder()
+                .bucketName(ControlledResourceFixtures.uniqueBucketName())
+                .common(
+                    ControlledResourceFixtures.makeDefaultControlledResourceFieldsBuilder()
+                        .workspaceId(UUID.randomUUID())
+                        .resourceId(UUID.randomUUID())
+                        .name("controlled_bucket_1")
+                        .description(
+                            "how much data could a dataset set if a dataset could set data?")
+                        .cloningInstructions(CloningInstructions.COPY_REFERENCE) // not valid (yet!)
+                        .assignedUser(null)
+                        .accessScope(AccessScopeType.ACCESS_SCOPE_SHARED)
+                        .managedBy(ManagedByType.MANAGED_BY_USER)
+                        .build())
+                .build());
   }
 }

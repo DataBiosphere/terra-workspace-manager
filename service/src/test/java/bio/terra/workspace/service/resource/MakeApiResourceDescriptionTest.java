@@ -7,6 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import bio.terra.workspace.app.controller.ResourceController;
 import bio.terra.workspace.common.BaseUnitTest;
+import bio.terra.workspace.generated.model.ApiCloningInstructionsEnum;
 import bio.terra.workspace.generated.model.ApiControlledResourceMetadata;
 import bio.terra.workspace.generated.model.ApiDataRepoSnapshotAttributes;
 import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceAttributes;
@@ -35,7 +36,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-
+// TODO: most assertEquals() assertions are backwards
 public class MakeApiResourceDescriptionTest extends BaseUnitTest {
   @Autowired ResourceController resourceController;
 
@@ -51,7 +52,7 @@ public class MakeApiResourceDescriptionTest extends BaseUnitTest {
     resourceId = UUID.randomUUID();
     resourceName = RandomStringUtils.randomAlphabetic(6);
     description = "Description of " + resourceName;
-    cloning = CloningInstructions.COPY_DEFINITION;
+    cloning = CloningInstructions.COPY_REFERENCE;
   }
 
   @Test
@@ -143,7 +144,6 @@ public class MakeApiResourceDescriptionTest extends BaseUnitTest {
     assertEquals(metadata.getResourceId(), resourceId);
     assertEquals(metadata.getName(), resourceName);
     assertEquals(metadata.getDescription(), description);
-    assertEquals(metadata.getCloningInstructions(), cloning.toApiModel());
   }
 
   @Nested
@@ -171,7 +171,7 @@ public class MakeApiResourceDescriptionTest extends BaseUnitTest {
               resourceId,
               resourceName,
               description,
-              cloning,
+              CloningInstructions.COPY_RESOURCE,
               assignedUser,
               privateResourceState,
               accessScopeType,
@@ -199,7 +199,7 @@ public class MakeApiResourceDescriptionTest extends BaseUnitTest {
               resourceId,
               resourceName,
               description,
-              cloning,
+              CloningInstructions.COPY_RESOURCE,
               assignedUser,
               privateResourceState,
               accessScopeType,
@@ -230,7 +230,7 @@ public class MakeApiResourceDescriptionTest extends BaseUnitTest {
                       .resourceId(resourceId)
                       .name(resourceName)
                       .description(description)
-                      .cloningInstructions(cloning)
+                      .cloningInstructions(CloningInstructions.COPY_RESOURCE)
                       .assignedUser(assignedUser)
                       .accessScope(accessScopeType)
                       .managedBy(managedByType)
@@ -262,6 +262,7 @@ public class MakeApiResourceDescriptionTest extends BaseUnitTest {
       ApiPrivateResourceUser user = common.getPrivateResourceUser();
       assertThat(user, is(notNullValue()));
       assertEquals(user.getUserName(), assignedUser);
+      assertEquals(ApiCloningInstructionsEnum.RESOURCE, metadata.getCloningInstructions());
     }
   }
 }
