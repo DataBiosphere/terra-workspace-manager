@@ -168,8 +168,10 @@ public class ControlledGcsBucketLifecycle extends GcpWorkspaceCloneTestScriptBas
         updatedResource.getMetadata().getName(),
         updatedResource.getMetadata().getDescription());
     assertEquals(UPDATED_BUCKET_RESOURCE_NAME, updatedResource.getMetadata().getName());
-    assertEquals(UPDATED_BUCKET_RESOURCE_DESCRIPTION, updatedResource.getMetadata().getDescription());
-    assertEquals(CloningInstructionsEnum.DEFINITION, updatedResource.getMetadata().getCloningInstructions());
+    assertEquals(
+        UPDATED_BUCKET_RESOURCE_DESCRIPTION, updatedResource.getMetadata().getDescription());
+    assertEquals(
+        CloningInstructionsEnum.DEFINITION, updatedResource.getMetadata().getCloningInstructions());
     // However, invalid updates are rejected.
     String invalidName = "!!!invalid_name!!!";
     ApiException invalidUpdateEx =
