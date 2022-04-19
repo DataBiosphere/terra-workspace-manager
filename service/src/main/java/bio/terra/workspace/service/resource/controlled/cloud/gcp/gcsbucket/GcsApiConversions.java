@@ -137,10 +137,9 @@ public class GcsApiConversions {
         toGcsApi(lifecycleRule.getAction()), toGcsApi(lifecycleRule.getCondition()));
   }
 
-  public static List<LifecycleRule> toGcsApi(Collection<ApiGcpGcsBucketLifecycleRule> lifecycleRules) {
-    return lifecycleRules.stream()
-        .map(GcsApiConversions::toGcsApi)
-        .collect(Collectors.toList());
+  public static List<LifecycleRule> toGcsApi(
+      Collection<ApiGcpGcsBucketLifecycleRule> lifecycleRules) {
+    return lifecycleRules.stream().map(GcsApiConversions::toGcsApi).collect(Collectors.toList());
   }
 
   public static ApiGcpGcsBucketLifecycleRule toWsmApi(LifecycleRule lifeCycleRule) {
@@ -258,16 +257,19 @@ public class GcsApiConversions {
         Math.toIntExact(
             Duration.ofSeconds(offsetDateTime.getOffset().getTotalSeconds()).toMinutes()));
   }
+
   @Nullable
   public static DateTime toGoogleDateTimeDateOnly(@Nullable OffsetDateTime offsetDateTime) {
     if (offsetDateTime == null) {
       return null;
     }
-    return new DateTime(true,
+    return new DateTime(
+        true,
         offsetDateTime.toInstant().toEpochMilli(),
         Math.toIntExact(
             Duration.ofSeconds(offsetDateTime.getOffset().getTotalSeconds()).toMinutes()));
   }
+
   @Nullable
   public static OffsetDateTime toOffsetDateTime(@Nullable DateTime dateTime) {
     if (dateTime == null) {

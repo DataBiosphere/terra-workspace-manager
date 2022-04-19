@@ -178,7 +178,8 @@ public abstract class WsmResource {
     if (getDescription() != null) {
       ResourceValidationUtils.validateResourceDescriptionName(getDescription());
     }
-    ResourceValidationUtils.validateCloningInstructions(getStewardshipType(), getCloningInstructions());
+    ResourceValidationUtils.validateCloningInstructions(
+        getStewardshipType(), getCloningInstructions());
   }
 
   public ReferencedResource castToReferencedResource() {
