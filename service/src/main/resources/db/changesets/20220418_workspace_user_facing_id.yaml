@@ -12,12 +12,10 @@ databaseChangeLog:
               constraints:
                 unique: true
               remarks: |
-                See PF-1359. A later changeset will make this required (PF-1583).
+                A user-settable, mutable id. See PF-1359. Required (a later
+                changeset will add not null constraint PF-1583).
     - sql:
         # user_facing_id is a required field. For new workspaces, UI/CLI will
         # require it. For existing workspaces, backfill with workspace_id.
-        sql: update workspace set user_facing_id = workspace_id;
-    - sql:
-        # display_name is a required field. For new workspaces, UI/CLI will
-        # require it. For existing workspaces, backfill with workspace_id.
-        sql: update workspace set display_name = workspace_id where display_name is null or display_name = '';
+        # Prepend 'a' because user_facing_id must start with letter.
+        sql: update workspace set user_facing_id = concat('a', workspace_id);

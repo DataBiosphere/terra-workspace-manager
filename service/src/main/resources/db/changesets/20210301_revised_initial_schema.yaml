@@ -18,7 +18,6 @@ databaseChangeLog:
           - column:
               name: display_name
               type: text
-              # Note: this is now required. A future changeset will add not-null constraint (PF-1583).
               remarks: |
                 A user-friendly name for the workspace. There is no guarantee of uniqueness across workspaces.
                 Can be null. Omitted for Rawls workspaces, since Rawls maintains its own name
