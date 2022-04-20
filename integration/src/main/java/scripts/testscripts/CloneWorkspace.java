@@ -292,7 +292,7 @@ public class CloneWorkspace extends WorkspaceAllocateTestScriptBase {
                 .filter(r -> sharedSourceBucket.getResourceId().equals(r.getSourceResourceId()))
                 .findFirst(),
             "Shared bucket included in workspace clone results.");
-    logger.info("Expected success: {}", sharedBucketCloneDetails.toString());
+    logger.info("Expected success: {}", sharedBucketCloneDetails);
     assertEquals(
         CloneResourceResult.SUCCEEDED,
         sharedBucketCloneDetails.getResult(),

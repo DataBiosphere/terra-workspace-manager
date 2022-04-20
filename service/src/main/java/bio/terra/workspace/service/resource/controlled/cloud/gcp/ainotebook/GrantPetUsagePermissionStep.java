@@ -1,9 +1,11 @@
 package bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook;
 
+import bio.terra.common.exception.ConflictException;
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
+import bio.terra.stairway.StepStatus;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamRethrow;
@@ -50,9 +52,16 @@ public class GrantPetUsagePermissionStep implements Step {
   public StepResult doStep(FlightContext context) throws InterruptedException, RetryException {
     String userEmail =
         SamRethrow.onInterrupted(() -> samService.getUserEmailFromSam(userRequest), "enablePet");
-    Policy modifiedPolicy =
-        petSaService.enablePetServiceAccountImpersonation(
-            workspaceId, userEmail, userRequest.getRequiredToken());
+    Policy modifiedPolicy;
+    try {
+      modifiedPolicy =
+          petSaService.enablePetServiceAccountImpersonation(
+              workspaceId, userEmail, userRequest.getRequiredToken());
+    } catch (ConflictException e) {
+      // There was a conflict enabling the service account. Request retry.
+      return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, e);
+    }
+
     // Store the eTag value of the modified policy in case this step needs to be undone.
     FlightMap workingMap = context.getWorkingMap();
     workingMap.put(PetSaKeys.MODIFIED_PET_SA_POLICY_ETAG, modifiedPolicy.getEtag());
@@ -71,8 +80,16 @@ public class GrantPetUsagePermissionStep implements Step {
           workspaceId);
       return StepResult.getStepResultSuccess();
     }
-    petSaService.disablePetServiceAccountImpersonationWithEtag(
-        workspaceId, userRequest.getEmail(), userRequest, expectedEtag);
+    try {
+      petSaService.disablePetServiceAccountImpersonationWithEtag(
+          workspaceId, userRequest.getEmail(), userRequest, expectedEtag);
+    } catch (ConflictException e) {
+      // There was a conflict disabling the service account. Request retry.
+      // There is a possible concurrency error here: if two threads are trying to enable and
+      // one succeeds and one fails, the failed one will disable the impersonation on undo.
+      return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, e);
+    }
+
     return StepResult.getStepResultSuccess();
   }
 }

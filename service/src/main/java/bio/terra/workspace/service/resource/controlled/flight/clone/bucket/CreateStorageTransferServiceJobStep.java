@@ -6,7 +6,7 @@ import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.StepStatus;
 import bio.terra.stairway.exception.RetryException;
-import bio.terra.workspace.service.resource.model.CloningInstructions;
+import bio.terra.workspace.common.utils.FlightUtils;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import com.google.api.client.googleapis.json.GoogleJsonResponseException;
 import com.google.api.services.storagetransfer.v1.Storagetransfer;
@@ -16,19 +16,37 @@ import com.google.api.services.storagetransfer.v1.model.Schedule;
 import com.google.api.services.storagetransfer.v1.model.TransferJob;
 import com.google.api.services.storagetransfer.v1.model.TransferOptions;
 import com.google.api.services.storagetransfer.v1.model.TransferSpec;
+import com.google.common.annotations.VisibleForTesting;
 import java.io.IOException;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * Create an STS Job for transfer operations from the source bucket ot the destination.
+ *
+ * <p>Preconditions: Source and destination buckets exist, and have appropriate IAM roles in place
+ * for the control plane service account. The working map contains SOURECE_CLONE_INPUTS,
+ * DESTINATION_CLONE_INPUTS, CONTROL_PLAN_PROJECT_ID, and STORAGE_TRANSFER_SERVICE_SA_EMAIL.
+ *
+ * <p>Post conditions: A transfer job in the control plane project with a unique name for this
+ * flight is created. It is scheduled to run once immediately.
+ */
 public final class CreateStorageTransferServiceJobStep implements Step {
 
   private static final Logger logger =
       LoggerFactory.getLogger(CreateStorageTransferServiceJobStep.class);
-  private static final String ENABLED_STATUS = "ENABLED";
+  @VisibleForTesting public static final String ENABLED_STATUS = "ENABLED";
 
-  public CreateStorageTransferServiceJobStep() {}
+  @VisibleForTesting
+  public static final String TRANSFER_JOB_DESCRIPTION = "Terra Workspace Manager Clone GCS Bucket";
+
+  private final Storagetransfer storagetransfer;
+
+  public CreateStorageTransferServiceJobStep(Storagetransfer storagetransfer) {
+    this.storagetransfer = storagetransfer;
+  }
 
   // See https://cloud.google.com/storage-transfer/docs/reference/rest/v1/transferJobs/create
   // (somewhat dated) and
@@ -37,13 +55,12 @@ public final class CreateStorageTransferServiceJobStep implements Step {
   public StepResult doStep(FlightContext flightContext)
       throws InterruptedException, RetryException {
     final FlightMap workingMap = flightContext.getWorkingMap();
-    final CloningInstructions effectiveCloningInstructions =
-        workingMap.get(ControlledResourceKeys.CLONING_INSTRUCTIONS, CloningInstructions.class);
-    // This step is only run for full resource clones
-    if (CloningInstructions.COPY_RESOURCE != effectiveCloningInstructions) {
-      return StepResult.getStepResultSuccess();
-    }
-
+    FlightUtils.validateRequiredEntries(
+        workingMap,
+        ControlledResourceKeys.SOURCE_CLONE_INPUTS,
+        ControlledResourceKeys.DESTINATION_CLONE_INPUTS,
+        ControlledResourceKeys.CONTROL_PLANE_PROJECT_ID,
+        ControlledResourceKeys.STORAGE_TRANSFER_SERVICE_SA_EMAIL);
     // Get source & destination bucket input values
     final BucketCloneInputs sourceInputs =
         workingMap.get(ControlledResourceKeys.SOURCE_CLONE_INPUTS, BucketCloneInputs.class);
@@ -63,48 +80,36 @@ public final class CreateStorageTransferServiceJobStep implements Step {
     logger.info(
         "Creating transfer job named {} in project {}", transferJobName, controlPlaneProjectId);
 
+    // Look up the transfer job by name. If it's found, it means we are restarting this step and
+    // the job either has an operation in progress or completed (possibly failed).
     try {
-      final Storagetransfer storageTransferService =
-          StorageTransferServiceUtils.createStorageTransferService();
-
-      // Look up the transfer job by name. If it's found, it means we are restarting this step and
-      // the job either has an operation in progress or completed (possibly failed).
-      try {
-        final TransferJob existingTransferJob =
-            storageTransferService
-                .transferJobs()
-                .get(transferJobName, controlPlaneProjectId)
-                .execute();
-        if (null != existingTransferJob) {
-          logger.info(
-              "Transfer Job {} already exists. Nothing more for this step to do.", transferJobName);
-          return StepResult.getStepResultSuccess();
-        }
-      } catch (GoogleJsonResponseException e) {
-        logger.info("No pre-existing transfer job named {} found.", transferJobName);
+      final TransferJob existingTransferJob =
+          storagetransfer.transferJobs().get(transferJobName, controlPlaneProjectId).execute();
+      if (null != existingTransferJob) {
+        logger.info(
+            "Transfer Job {} already exists. Nothing more for this step to do.", transferJobName);
+        return StepResult.getStepResultSuccess();
       }
-      // Get the service account in the control plane project used by the transfer service to
-      // perform the actual data transfer. It's named for and scoped to the project.
-      // Storage transfer service itself is free, so there should be no charges to the control
-      // plane project. The usual egress charges will be made on the source bucket.
-      // TODO(PF-888): understand what happens when the source bucket is requester pays. We don't
-      //   support requester pays right now for controlled gcs buckets, but it might be set on a
-      //   referenced bucket.
-      final String transferServiceSAEmail =
-          workingMap.get(ControlledResourceKeys.STORAGE_TRANSFER_SERVICE_SA_EMAIL, String.class);
-      logger.debug("Storage Transfer Service SA: {}", transferServiceSAEmail);
-
-      createTransferJob(
-          sourceInputs,
-          destinationInputs,
-          transferJobName,
-          controlPlaneProjectId,
-          storageTransferService);
+    } catch (GoogleJsonResponseException e) {
+      logger.info("No pre-existing transfer job named {} found.", transferJobName);
     } catch (IOException e) {
+      return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, e);
+    }
+    // Get the service account in the control plane project used by the transfer service to
+    // perform the actual data transfer. It's named for and scoped to the project.
+    // Storage transfer service itself is free, so there should be no charges to the control
+    // plane project. The usual egress charges will be made on the source bucket.
+    // TODO(PF-888): understand what happens when the source bucket is requester pays. We don't
+    //   support requester pays right now for controlled gcs buckets, but it might be set on a
+    //   referenced bucket.
+    final String transferServiceSAEmail =
+        workingMap.get(ControlledResourceKeys.STORAGE_TRANSFER_SERVICE_SA_EMAIL, String.class);
+    logger.debug("Storage Transfer Service SA: {}", transferServiceSAEmail);
 
-      return new StepResult(
-          StepStatus.STEP_RESULT_FAILURE_FATAL,
-          new IllegalStateException("Failed to copy bucket data", e));
+    try {
+      createTransferJob(sourceInputs, destinationInputs, transferJobName, controlPlaneProjectId);
+    } catch (IOException e) {
+      return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, e);
     }
 
     return StepResult.getStepResultSuccess();
@@ -114,13 +119,12 @@ public final class CreateStorageTransferServiceJobStep implements Step {
       BucketCloneInputs sourceInputs,
       BucketCloneInputs destinationInputs,
       String transferJobName,
-      String controlPlaneProjectId,
-      Storagetransfer storageTransferService)
+      String controlPlaneProjectId)
       throws IOException {
     final TransferJob transferJobInput =
         new TransferJob()
             .setName(transferJobName)
-            .setDescription("Terra Workspace Manager Clone GCS Bucket")
+            .setDescription(TRANSFER_JOB_DESCRIPTION)
             .setProjectId(controlPlaneProjectId)
             .setSchedule(createScheduleRunOnceNow())
             .setTransferSpec(
@@ -128,7 +132,7 @@ public final class CreateStorageTransferServiceJobStep implements Step {
             .setStatus(ENABLED_STATUS);
     // Create the TransferJob for the associated schedule and spec in the correct project.
     final TransferJob transferJobOutput =
-        storageTransferService.transferJobs().create(transferJobInput).execute();
+        storagetransfer.transferJobs().create(transferJobInput).execute();
     logger.debug("Created transfer job {}", transferJobOutput);
   }
 
@@ -136,7 +140,8 @@ public final class CreateStorageTransferServiceJobStep implements Step {
   // previous step's undo method.
   @Override
   public StepResult undoStep(FlightContext flightContext) throws InterruptedException {
-    return StorageTransferServiceUtils.deleteTransferJobStepImpl(flightContext);
+    // A failure to delete will result in a DISMAL_FAILURE of the flight.
+    return StorageTransferServiceUtils.deleteTransferJobStepImpl(flightContext, storagetransfer);
   }
 
   private TransferSpec createTransferSpec(String sourceBucketName, String destinationBucketName) {

@@ -386,7 +386,7 @@ public class ResourceValidationUtils {
 
   public static void validateRegion(String region) {
     if (!Region.values().stream()
-        .map(x -> x.toString())
+        .map(Region::toString)
         .collect(Collectors.toList())
         .contains(region)) {
       logger.warn("Invalid Azure region {}", region);

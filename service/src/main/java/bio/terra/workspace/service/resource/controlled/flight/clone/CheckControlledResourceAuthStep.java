@@ -13,6 +13,12 @@ import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
  * This step validates that the provided user has access to read the provided resource. Unlike other
  * flights, this is handled inside a step instead of before the flight because the containing flight
  * is sometimes launched from within another flight, where it's hard to run pre-flight validation.
+ *
+ * <p>Preconditions: Resolved cloning instructions are COPY_RESOURCE or COPY_DEFINITION. Source
+ * resource exists and user request is valid.
+ *
+ * <p>Post conditions: No side effects, but validation has occured successfully, or we fail with a
+ * ForbiddenException.
  */
 public class CheckControlledResourceAuthStep implements Step {
 
@@ -31,7 +37,7 @@ public class CheckControlledResourceAuthStep implements Step {
 
   @Override
   public StepResult doStep(FlightContext context) throws InterruptedException, RetryException {
-    // Validate caller can read the source resource before launching flight.
+    // Validate caller can read the source resource before proceeding with the flight.
     controlledResourceMetadataManager.validateControlledResourceAndAction(
         userRequest,
         resource.getWorkspaceId(),
