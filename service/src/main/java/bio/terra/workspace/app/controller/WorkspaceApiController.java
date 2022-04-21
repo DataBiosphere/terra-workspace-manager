@@ -117,6 +117,7 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
             .workspaceId(body.getId())
             .spendProfileId(spendProfileId.orElse(null))
             .workspaceStage(internalStage)
+            .userFacingId(body.getUserFacingId())
             .displayName(body.getDisplayName())
             .description(body.getDescription())
             .properties(propertyMapFromApi(body.getProperties()))
@@ -170,6 +171,7 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
         .stage(workspace.getWorkspaceStage().toApiModel())
         .gcpContext(gcpContext)
         .azureContext(azureContext)
+        .userFacingId(workspace.getUserFacingId().orElse(null))
         .displayName(workspace.getDisplayName().orElse(null))
         .description(workspace.getDescription().orElse(null))
         .properties(apiProperties);
@@ -201,7 +203,7 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
 
     Workspace workspace =
         workspaceService.updateWorkspace(
-            userRequest, workspaceId, body.getDisplayName(), body.getDescription(), propertyMap);
+            userRequest, workspaceId, body.getUserFacingId(), body.getDisplayName(), body.getDescription(), propertyMap);
 
     ApiWorkspaceDescription desc = buildWorkspaceDescription(workspace);
     logger.info("Updated workspace {} for {}", desc, userRequest.getEmail());

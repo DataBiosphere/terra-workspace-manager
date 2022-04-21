@@ -41,13 +41,14 @@ import org.springframework.stereotype.Component;
 public class WorkspaceDao {
   /** SQL query for reading a workspace */
   private static final String WORKSPACE_SELECT_SQL =
-      "SELECT workspace_id, display_name, description, spend_profile, properties, workspace_stage"
+      "SELECT workspace_id, user_facing_id, display_name, description, spend_profile, properties, workspace_stage"
           + " FROM workspace";
 
   private static final RowMapper<Workspace> WORKSPACE_ROW_MAPPER =
       (rs, rowNum) ->
           Workspace.builder()
               .workspaceId(UUID.fromString(rs.getString("workspace_id")))
+              .userFacingId(rs.getString("user_facing_id"))
               .displayName(rs.getString("display_name"))
               .description(rs.getString("description"))
               .spendProfileId(
@@ -77,8 +78,8 @@ public class WorkspaceDao {
   @WriteTransaction
   public UUID createWorkspace(Workspace workspace) {
     final String sql =
-        "INSERT INTO workspace (workspace_id, display_name, description, spend_profile, properties, workspace_stage) "
-            + "values (:workspace_id, :display_name, :description, :spend_profile,"
+        "INSERT INTO workspace (workspace_id, user_facing_id, display_name, description, spend_profile, properties, workspace_stage) "
+            + "values (:workspace_id, :user_facing_id, :display_name, :description, :spend_profile,"
             + " cast(:properties AS jsonb), :workspace_stage)";
 
     final String workspaceId = workspace.getWorkspaceId().toString();
@@ -86,6 +87,7 @@ public class WorkspaceDao {
     MapSqlParameterSource params =
         new MapSqlParameterSource()
             .addValue("workspace_id", workspaceId)
+            .addValue("user_facing_id", workspace.getUserFacingId().orElse(null))
             .addValue("display_name", workspace.getDisplayName().orElse(null))
             .addValue("description", workspace.getDescription().orElse(null))
             .addValue(
@@ -147,6 +149,7 @@ public class WorkspaceDao {
       return Optional.empty();
     }
   }
+
   /**
    * Retrieves a workspace from database by ID.
    *
@@ -165,16 +168,22 @@ public class WorkspaceDao {
   @WriteTransaction
   public boolean updateWorkspace(
       UUID workspaceId,
+      @Nullable String userFacingId,
       @Nullable String name,
       @Nullable String description,
       @Nullable Map<String, String> propertyMap) {
-    if (name == null && description == null && propertyMap == null) {
+    if (userFacingId == null && name == null && description == null && propertyMap == null) {
       throw new MissingRequiredFieldException(
-          "Must specify name, description, or properties to update.");
+          // "id" instead of "userFacingId", in case end user sees this error
+          "Must specify id, name, description, or properties to update.");
     }
 
     var params = new MapSqlParameterSource();
     params.addValue("workspace_id", workspaceId.toString());
+
+    if (userFacingId != null) {
+      params.addValue("user_facing_id", userFacingId);
+    }
 
     if (name != null) {
       params.addValue("display_name", name);

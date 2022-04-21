@@ -230,6 +230,7 @@ class WorkspaceServiceTest extends BaseConnectedTest {
     assertEquals("", createdWorkspace.getDescription().orElse(null));
 
     UUID workspaceId = request.getWorkspaceId();
+    String userFacingId = "my-user-facing-id";
     String name = "My workspace";
     String description = "The greatest workspace";
     Map<String, String> propertyMap2 = new HashMap<>();
@@ -238,7 +239,7 @@ class WorkspaceServiceTest extends BaseConnectedTest {
 
     Workspace updatedWorkspace =
         workspaceService.updateWorkspace(
-            USER_REQUEST, workspaceId, name, description, propertyMap2);
+            USER_REQUEST, workspaceId, userFacingId, name, description, propertyMap2);
 
     assertEquals(name, updatedWorkspace.getDisplayName().orElse(null));
     assertEquals(description, updatedWorkspace.getDescription().orElse(null));
@@ -247,9 +248,10 @@ class WorkspaceServiceTest extends BaseConnectedTest {
     String otherDescription = "The deprecated workspace";
 
     Workspace secondUpdatedWorkspace =
-        workspaceService.updateWorkspace(USER_REQUEST, workspaceId, null, otherDescription, null);
+        workspaceService.updateWorkspace(USER_REQUEST, workspaceId, null, null, otherDescription, null);
 
     // Since name is null, leave it alone. Description should be updated.
+    assertEquals(userFacingId, secondUpdatedWorkspace.getUserFacingId().orElse(null));
     assertEquals(name, secondUpdatedWorkspace.getDisplayName().orElse(null));
     assertEquals(otherDescription, secondUpdatedWorkspace.getDescription().orElse(null));
     assertEquals(propertyMap2, updatedWorkspace.getProperties());
@@ -257,13 +259,14 @@ class WorkspaceServiceTest extends BaseConnectedTest {
     // Sending through empty strings and an empty map clears the values.
     Map<String, String> propertyMap3 = new HashMap<>();
     Workspace thirdUpdatedWorkspace =
-        workspaceService.updateWorkspace(USER_REQUEST, workspaceId, "", "", propertyMap3);
+        workspaceService.updateWorkspace(USER_REQUEST, workspaceId, "", "", "", propertyMap3);
+    assertEquals("", thirdUpdatedWorkspace.getUserFacingId().orElse(null));
     assertEquals("", thirdUpdatedWorkspace.getDisplayName().orElse(null));
     assertEquals("", thirdUpdatedWorkspace.getDescription().orElse(null));
 
     assertThrows(
         MissingRequiredFieldException.class,
-        () -> workspaceService.updateWorkspace(USER_REQUEST, workspaceId, null, null, null));
+        () -> workspaceService.updateWorkspace(USER_REQUEST, workspaceId, null, null, null, null));
   }
 
   @Test

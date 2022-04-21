@@ -185,16 +185,14 @@ View current usage information for `write-config.sh` by entering
 To run unit tests:
 
 ```sh
-cd service
-../gradlew unitTest
+./gradlew :service:unitTest
 ```
   
 To run connected tests:
 
 ```sh
 ./scripts/write-config.sh # First time only
-cd service
-../gradlew connectedTest
+./gradlew :service:connectedTest
 ```
 To run integration tests, we use Test Runner. Learn to run the Test Runner
 integration tests by reading [Integration README](integration/README.md)
@@ -206,8 +204,7 @@ and then launch the application:
 
 ```sh
 ./scripts/write-config.sh # First time only
-cd service
-../gradlew bootRun
+./gradlew :service:bootRun
 ```
 
 Then navigate to the Swagger: http://localhost:8080/swagger-ui.html
