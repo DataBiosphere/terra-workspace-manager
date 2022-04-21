@@ -115,11 +115,11 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
     Workspace workspace =
         Workspace.builder()
             .workspaceId(body.getId())
-            .spendProfileId(spendProfileId.orElse(null))
-            .workspaceStage(internalStage)
             .userFacingId(body.getUserFacingId())
             .displayName(body.getDisplayName())
             .description(body.getDescription())
+            .spendProfileId(spendProfileId.orElse(null))
+            .workspaceStage(internalStage)
             .properties(propertyMapFromApi(body.getProperties()))
             .build();
     UUID createdId = workspaceService.createWorkspace(workspace, userRequest);

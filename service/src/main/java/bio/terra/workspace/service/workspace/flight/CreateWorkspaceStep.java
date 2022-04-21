@@ -6,6 +6,7 @@ import bio.terra.stairway.StepResult;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.common.utils.FlightUtils;
 import bio.terra.workspace.db.WorkspaceDao;
+import bio.terra.workspace.service.workspace.exceptions.DuplicateUserFacingIdException;
 import bio.terra.workspace.service.workspace.exceptions.DuplicateWorkspaceException;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import java.util.UUID;
@@ -39,6 +40,10 @@ public class CreateWorkspaceStep implements Step {
       if (!workspace.equals(existingWorkspace)) {
         throw ex;
       }
+    } catch (DuplicateUserFacingIdException ex) {
+      // workspace_id is new and user_facing_id already exists. This is user error -- user is trying to create a
+      // workspace with an existing user_facing_id.
+      throw ex;
     }
 
     FlightUtils.setResponse(flightContext, workspaceId, HttpStatus.OK);

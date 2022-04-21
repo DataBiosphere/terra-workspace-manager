@@ -8,6 +8,7 @@ import bio.terra.workspace.db.exception.WorkspaceNotFoundException;
 import bio.terra.workspace.service.resource.controlled.model.PrivateResourceState;
 import bio.terra.workspace.service.spendprofile.SpendProfileId;
 import bio.terra.workspace.service.workspace.exceptions.DuplicateCloudContextException;
+import bio.terra.workspace.service.workspace.exceptions.DuplicateUserFacingIdException;
 import bio.terra.workspace.service.workspace.exceptions.DuplicateWorkspaceException;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import bio.terra.workspace.service.workspace.model.Workspace;
@@ -99,13 +100,25 @@ public class WorkspaceDao {
       jdbcTemplate.update(sql, params);
       logger.info("Inserted record for workspace {}", workspaceId);
     } catch (DuplicateKeyException e) {
-      throw new DuplicateWorkspaceException(
-          String.format(
-              "Workspace with id %s already exists - display name %s stage %s",
-              workspaceId,
-              workspace.getDisplayName().toString(),
-              workspace.getWorkspaceStage().toString()),
-          e);
+      // Workspace with workspace_id already exists.
+      if (e.getMessage()
+          .contains("duplicate key value violates unique constraint \"workspace_pkey\"")) {
+        throw new DuplicateWorkspaceException(
+            String.format(
+                "Workspace with id %s already exists - display name %s stage %s",
+                workspaceId,
+                workspace.getDisplayName().toString(),
+                workspace.getWorkspaceStage().toString()),
+            e);
+      } else {
+        // workspace_id is new, but workspace with user_facing_id already exists.
+        throw new DuplicateUserFacingIdException(
+                String.format(
+                        // "ID" instead of "userFacingId" because end user sees this.
+                        "Workspace with ID %s already exists",
+                        workspace.getUserFacingId().get()),
+                e);
+      }
     }
     return workspace.getWorkspaceId();
   }
@@ -174,8 +187,8 @@ public class WorkspaceDao {
       @Nullable Map<String, String> propertyMap) {
     if (userFacingId == null && name == null && description == null && propertyMap == null) {
       throw new MissingRequiredFieldException(
-          // "id" instead of "userFacingId", in case end user sees this error
-          "Must specify id, name, description, or properties to update.");
+              // "ID" instead of "userFacingId" because end user sees this.
+              "Must specify ID, name, description, or properties to update.");
     }
 
     var params = new MapSqlParameterSource();
@@ -202,14 +215,28 @@ public class WorkspaceDao {
             "UPDATE workspace SET %s WHERE workspace_id = :workspace_id",
             DbUtils.setColumnsClause(params, "properties"));
 
-    int rowsAffected = jdbcTemplate.update(sql, params);
+    int rowsAffected;
+    try {
+      rowsAffected = jdbcTemplate.update(sql, params);
+    } catch (DuplicateKeyException e) {
+      // Workspace with user_facing_id already exists.
+      if (e.getMessage()
+          .contains(
+              "duplicate key value violates unique constraint \"workspace_user_facing_id_key\"")) {
+        throw new DuplicateUserFacingIdException(
+            String.format(
+                // "ID" instead of "userFacingId" because end user sees this.
+                "Workspace with ID %s already exists", userFacingId),
+            e);
+      }
+      throw e;
+    }
+
     boolean updated = rowsAffected > 0;
-
     logger.info(
-        "{} record for workspace {}",
-        (updated ? "Updated" : "No Update - did not find"),
-        workspaceId);
-
+            "{} record for workspace {}",
+            (updated ? "Updated" : "No Update - did not find"),
+            workspaceId);
     return updated;
   }
 
