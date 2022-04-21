@@ -5,8 +5,7 @@ import static org.hamcrest.Matchers.equalTo;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 import bio.terra.cloudres.azure.resourcemanager.compute.data.CreateVirtualMachineRequestData;
 import bio.terra.stairway.FlightContext;
@@ -15,6 +14,7 @@ import bio.terra.stairway.StepResult;
 import bio.terra.workspace.app.configuration.external.AzureConfiguration;
 import bio.terra.workspace.common.BaseAzureTest;
 import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
+import bio.terra.workspace.common.utils.AzureVmUtils;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.generated.model.ApiAzureVmCreationParameters;
 import bio.terra.workspace.service.crl.CrlService;
@@ -33,6 +33,7 @@ import com.azure.resourcemanager.compute.ComputeManager;
 import com.azure.resourcemanager.compute.models.Disk;
 import com.azure.resourcemanager.compute.models.Disks;
 import com.azure.resourcemanager.compute.models.VirtualMachine;
+import com.azure.resourcemanager.compute.models.VirtualMachineExtension;
 import com.azure.resourcemanager.compute.models.VirtualMachineSizeTypes;
 import com.azure.resourcemanager.compute.models.VirtualMachines;
 import com.azure.resourcemanager.network.NetworkManager;
@@ -82,6 +83,26 @@ public class CreateAzureVmStepTest extends BaseAzureTest {
   @Mock private VirtualMachine.DefinitionStages.WithManagedCreate mockVmStage11;
   @Mock private VirtualMachine.DefinitionStages.WithCreate mockVmStage11a;
   @Mock private VirtualMachine.DefinitionStages.WithCreate mockVmStage12;
+
+  @Mock
+  private VirtualMachineExtension.DefinitionStages.Blank<VirtualMachine.DefinitionStages.WithCreate>
+      mockVmStage13;
+
+  @Mock
+  private VirtualMachineExtension.DefinitionStages.WithType<
+          VirtualMachine.DefinitionStages.WithCreate>
+      mockVmStage14;
+
+  @Mock
+  private VirtualMachineExtension.DefinitionStages.WithVersion<
+          VirtualMachine.DefinitionStages.WithCreate>
+      mockVmStage15;
+
+  @Mock
+  private VirtualMachineExtension.DefinitionStages.WithAttach<
+          VirtualMachine.DefinitionStages.WithCreate>
+      mockVmStage16;
+
   @Mock private ManagementException mockException;
 
   @Mock private Disks mockDisks;
@@ -165,6 +186,7 @@ public class CreateAzureVmStepTest extends BaseAzureTest {
   @Mock private ControlledAzureDiskResource mockAzureDiskResource;
   @Mock private ControlledAzureNetworkResource mockAzureNetworkResource;
   @Mock private FlightMap mockWorkingMap;
+  @Mock private FlightMap mockInputParameters;
 
   private ArgumentCaptor<Context> contextCaptor = ArgumentCaptor.forClass(Context.class);
 
@@ -251,6 +273,15 @@ public class CreateAzureVmStepTest extends BaseAzureTest {
     when(mockVmStage11.withTag(anyString(), anyString())).thenReturn(mockVmStage11a);
     when(mockVmStage11a.withTag(anyString(), anyString())).thenReturn(mockVmStage12);
     when(mockVmStage12.withSize(any(VirtualMachineSizeTypes.class))).thenReturn(mockVmStage12);
+    when(mockVmStage12.defineNewExtension(anyString())).thenReturn(mockVmStage13);
+    when(mockVmStage13.withPublisher(anyString())).thenReturn(mockVmStage14);
+    when(mockVmStage14.withType(anyString())).thenReturn(mockVmStage15);
+    when(mockVmStage15.withVersion(anyString())).thenReturn(mockVmStage16);
+    when(mockVmStage16.withPublicSettings(any())).thenReturn(mockVmStage16);
+    when(mockVmStage16.withProtectedSettings(any())).thenReturn(mockVmStage16);
+    when(mockVmStage16.withTags(any())).thenReturn(mockVmStage16);
+    when(mockVmStage16.withoutMinorVersionAutoUpgrade()).thenReturn(mockVmStage16);
+    when(mockVmStage16.attach()).thenReturn(mockVmStage12);
     when(mockVmStage12.create(any(Context.class))).thenReturn(mockVm);
 
     // Resource dao mocks
@@ -281,6 +312,11 @@ public class CreateAzureVmStepTest extends BaseAzureTest {
   void createVm() throws InterruptedException {
     final ApiAzureVmCreationParameters creationParameters =
         ControlledResourceFixtures.getAzureVmCreationParameters();
+
+    final FlightMap creationParametersFlightMap = new FlightMap();
+    creationParametersFlightMap.put(ControlledResourceKeys.CREATION_PARAMETERS, creationParameters);
+    creationParametersFlightMap.makeImmutable();
+    when(mockFlightContext.getInputParameters()).thenReturn(creationParametersFlightMap);
 
     var createAzureVmStep =
         new CreateAzureVmStep(
@@ -315,7 +351,9 @@ public class CreateAzureVmStepTest extends BaseAzureTest {
             .setNetwork(mockNetwork)
             .setSubnetName(STUB_SUBNET_NAME)
             .setPublicIpAddress(mockPublicIpAddress)
-            .setImage(ControlledResourceFixtures.getAzureVmCreationParameters().getVmImageUri())
+            .setImage(
+                AzureVmUtils.getImageData(
+                    ControlledResourceFixtures.getAzureVmCreationParameters().getVmImage()))
             .build();
 
     assertThat(requestDataOpt, equalTo(Optional.of(expected)));
@@ -325,6 +363,11 @@ public class CreateAzureVmStepTest extends BaseAzureTest {
   public void createVm_alreadyExists() throws InterruptedException {
     final ApiAzureVmCreationParameters creationParameters =
         ControlledResourceFixtures.getAzureVmCreationParameters();
+
+    final FlightMap creationParametersFlightMap = new FlightMap();
+    creationParametersFlightMap.put(ControlledResourceKeys.CREATION_PARAMETERS, creationParameters);
+    creationParametersFlightMap.makeImmutable();
+    when(mockFlightContext.getInputParameters()).thenReturn(creationParametersFlightMap);
 
     var createAzureVmStep =
         new CreateAzureVmStep(

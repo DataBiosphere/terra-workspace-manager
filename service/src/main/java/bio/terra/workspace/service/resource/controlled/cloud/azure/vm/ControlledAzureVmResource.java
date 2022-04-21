@@ -35,7 +35,7 @@ public class ControlledAzureVmResource extends ControlledResource {
   private final String vmName;
   private final String region;
   private final String vmSize;
-  private final String vmImageUri;
+  private final String vmImage;
 
   private final UUID ipId;
   private final UUID networkId;
@@ -56,7 +56,7 @@ public class ControlledAzureVmResource extends ControlledResource {
       @JsonProperty("vmName") String vmName,
       @JsonProperty("region") String region,
       @JsonProperty("vmSize") String vmSize,
-      @JsonProperty("vmImageUri") String vmImageUri,
+      @JsonProperty("vmImage") String vmImage,
       @JsonProperty("ipId") UUID ipId,
       @JsonProperty("networkId") UUID networkId,
       @JsonProperty("diskId") UUID diskId) {
@@ -75,7 +75,7 @@ public class ControlledAzureVmResource extends ControlledResource {
     this.vmName = vmName;
     this.region = region;
     this.vmSize = vmSize;
-    this.vmImageUri = vmImageUri;
+    this.vmImage = vmImage;
     this.ipId = ipId;
     this.networkId = networkId;
     this.diskId = diskId;
@@ -87,14 +87,14 @@ public class ControlledAzureVmResource extends ControlledResource {
       String vmName,
       String region,
       String vmSize,
-      String vmImageUri,
+      String vmImage,
       UUID ipId,
       UUID networkId,
       UUID diskId) {
     super(common);
     this.vmName = vmName;
     this.region = region;
-    this.vmImageUri = vmImageUri;
+    this.vmImage = vmImage;
     this.vmSize = vmSize;
     this.ipId = ipId;
     this.networkId = networkId;
@@ -161,8 +161,8 @@ public class ControlledAzureVmResource extends ControlledResource {
     return vmSize;
   }
 
-  public String getVmImageUri() {
-    return vmImageUri;
+  public String getVmImage() {
+    return vmImage;
   }
 
   public UUID getIpId() {
@@ -182,7 +182,7 @@ public class ControlledAzureVmResource extends ControlledResource {
         .vmName(getVmName())
         .region(getRegion())
         .vmSize(getVmSize())
-        .vmImageUri(getVmImageUri())
+        .vmImage(getVmImage())
         .ipId(getIpId())
         .diskId(getDiskId())
         .networkId(getNetworkId());
@@ -223,7 +223,7 @@ public class ControlledAzureVmResource extends ControlledResource {
             getVmName(),
             getRegion(),
             getVmSize(),
-            getVmImageUri(),
+            getVmImage(),
             getIpId(),
             getNetworkId(),
             getDiskId()));
@@ -249,9 +249,9 @@ public class ControlledAzureVmResource extends ControlledResource {
       throw new MissingRequiredFieldException(
           "Missing required valid vmSize field for ControlledAzureVm.");
     }
-    if (getVmImageUri() == null) {
+    if (getVmImage() == null) {
       throw new MissingRequiredFieldException(
-          "Missing required valid vmImageUri field for ControlledAzureVm.");
+          "Missing required valid vmImage field for ControlledAzureVm.");
     }
     if (getIpId() == null) {
       throw new MissingRequiredFieldException("Missing required ipId field for ControlledAzureVm.");
@@ -296,7 +296,7 @@ public class ControlledAzureVmResource extends ControlledResource {
     private String vmName;
     private String region;
     private String vmSize;
-    private String vmImageUri;
+    private String vmImage;
     private UUID ipId;
     private UUID networkId;
     private UUID diskId;
@@ -316,8 +316,8 @@ public class ControlledAzureVmResource extends ControlledResource {
       return this;
     }
 
-    public ControlledAzureVmResource.Builder vmImageUri(String vmImageUri) {
-      this.vmImageUri = vmImageUri;
+    public ControlledAzureVmResource.Builder vmImage(String vmImage) {
+      this.vmImage = vmImage;
       return this;
     }
 
@@ -343,7 +343,7 @@ public class ControlledAzureVmResource extends ControlledResource {
 
     public ControlledAzureVmResource build() {
       return new ControlledAzureVmResource(
-          common, vmName, region, vmSize, vmImageUri, ipId, networkId, diskId);
+          common, vmName, region, vmSize, vmImage, ipId, networkId, diskId);
     }
   }
 }

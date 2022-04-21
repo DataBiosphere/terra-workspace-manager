@@ -4,6 +4,7 @@ import bio.terra.stairway.FlightMap;
 import bio.terra.workspace.app.configuration.external.AzureConfiguration;
 import bio.terra.workspace.app.configuration.external.AzureTestConfiguration;
 import bio.terra.workspace.connected.UserAccessUtils;
+import bio.terra.workspace.generated.model.ApiAzureVmCreationParameters;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.job.JobMapKeys;
@@ -78,6 +79,17 @@ public class AzureTestUtils {
     inputs.put(ResourceKeys.STEWARDSHIP_TYPE, StewardshipType.CONTROLLED);
     inputs.put(WorkspaceFlightMapKeys.WORKSPACE_ID, workspaceId.toString());
     inputs.put(JobMapKeys.AUTH_USER_INFO.getKeyName(), userRequest);
+    return inputs;
+  }
+
+  public FlightMap createControlledResourceInputParameters(
+      UUID workspaceId,
+      AuthenticatedUserRequest userRequest,
+      ControlledResource resource,
+      ApiAzureVmCreationParameters creationParameters) {
+    var inputs = createControlledResourceInputParameters(workspaceId, userRequest, resource);
+    inputs.put(
+        WorkspaceFlightMapKeys.ControlledResourceKeys.CREATION_PARAMETERS, creationParameters);
     return inputs;
   }
 

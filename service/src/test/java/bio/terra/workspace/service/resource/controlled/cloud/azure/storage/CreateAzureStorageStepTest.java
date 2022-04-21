@@ -64,8 +64,11 @@ public class CreateAzureStorageStepTest extends BaseAzureTest {
 
     when(mockStorageManager.storageAccounts()).thenReturn(mockStorageAccounts);
 
-    resourceNotFoundException = new ManagementException("Resource was not found.", /*response=*/
-        null, new ManagementError("ResourceNotFound", "Resource was not found."));
+    resourceNotFoundException =
+        new ManagementException(
+            "Resource was not found.",
+            /*response=*/ null,
+            new ManagementError("ResourceNotFound", "Resource was not found."));
 
     // Creation stages mocks
     when(mockStorageAccounts.define(anyString())).thenReturn(mockStorageBlankStage);
