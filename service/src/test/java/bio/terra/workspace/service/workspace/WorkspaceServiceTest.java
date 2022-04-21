@@ -34,6 +34,7 @@ import bio.terra.workspace.service.resource.referenced.cloud.gcp.ReferencedResou
 import bio.terra.workspace.service.resource.referenced.cloud.gcp.datareposnapshot.ReferencedDataRepoSnapshotResource;
 import bio.terra.workspace.service.spendprofile.SpendConnectedTestUtils;
 import bio.terra.workspace.service.spendprofile.SpendProfileId;
+import bio.terra.workspace.service.workspace.exceptions.DuplicateUserFacingIdException;
 import bio.terra.workspace.service.workspace.exceptions.DuplicateWorkspaceException;
 import bio.terra.workspace.service.workspace.exceptions.StageDisabledException;
 import bio.terra.workspace.service.workspace.flight.CheckSamWorkspaceAuthzStep;
@@ -167,6 +168,21 @@ class WorkspaceServiceTest extends BaseConnectedTest {
   }
 
   @Test
+  void duplicateWorkspaceUserFacingIdRequestsRejected() {
+    String userFacingId = "user-facing-id";
+    Workspace request = defaultRequestBuilder(UUID.randomUUID()).userFacingId(userFacingId).build();
+    workspaceService.createWorkspace(request, USER_REQUEST);
+    Workspace duplicateUserFacingId =
+            defaultRequestBuilder(UUID.randomUUID()).userFacingId(userFacingId)
+                    .build();
+
+    DuplicateUserFacingIdException ex = assertThrows(
+            DuplicateUserFacingIdException.class,
+            () -> workspaceService.createWorkspace(duplicateUserFacingId, USER_REQUEST));
+    assertEquals(ex.getMessage(), String.format("Workspace with ID %s already exists", userFacingId));
+  }
+
+  @Test
   void duplicateOperationSharesFailureResponse() throws Exception {
     String errorMsg = "fake SAM error message";
     doThrow(SamExceptionFactory.create(errorMsg, new ApiException(("test"))))
@@ -267,6 +283,24 @@ class WorkspaceServiceTest extends BaseConnectedTest {
     assertThrows(
         MissingRequiredFieldException.class,
         () -> workspaceService.updateWorkspace(USER_REQUEST, workspaceId, null, null, null, null));
+  }
+
+  @Test
+  void testUpdateWorkspaceUserFacingIdAlreadyExistsRejected() {
+    // Create one workspace with userFacingId, one without.
+    String userFacingId = "user-facing-id";
+    Workspace request = defaultRequestBuilder(UUID.randomUUID()).userFacingId(userFacingId).build();
+    workspaceService.createWorkspace(request, USER_REQUEST);
+    UUID secondWorkspaceUuid = UUID.randomUUID();
+    request = defaultRequestBuilder(secondWorkspaceUuid).build();
+    workspaceService.createWorkspace(request, USER_REQUEST);
+
+    // Try to set second workspace's userFacing to first.
+    DuplicateUserFacingIdException ex = assertThrows(
+            DuplicateUserFacingIdException.class,
+            () ->  workspaceService.updateWorkspace(
+                    USER_REQUEST, secondWorkspaceUuid, userFacingId, null, null, null));
+    assertEquals(ex.getMessage(), String.format("Workspace with ID %s already exists", userFacingId));
   }
 
   @Test
