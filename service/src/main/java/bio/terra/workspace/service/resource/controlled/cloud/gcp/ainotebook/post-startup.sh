@@ -77,11 +77,14 @@ fi
 sudo -u "${JUPYTER_USER}" sh -c "terra auth login --mode=APP_DEFAULT_CREDENTIALS"
 
 sudo -u "${JUPYTER_USER}" sh -c "mkdir -p /home/${JUPYTER_USER}/.ssh"
-cd /home/${JUPYTER_USER}/.ssh
-sudo -u "${JUPYTER_USER}" sh -c "terra user ssh-key get --format=JSON | jq -r '.privateSshKey'> id_rsa"
-sudo -u "${JUPYTER_USER}" sh -c 'chmod go-rwx id_rsa'
-
 cd /home/${JUPYTER_USER}
-echo eval '"$(ssh-agent -s)"' >> .bash_profile
-sudo -u "${JUPYTER_USER}" sh -c 'eval `ssh-agent -s`; ssh-add .ssh/id_rsa; ssh-keyscan -H github.com >> ~/.ssh/known_hosts; terra git clone --all'
+readonly TERRA_SSH_KEY=$(sudo -u "${JUPYTER_USER}" sh -c "terra user ssh-key get --format=JSON")
+if [[ -n "${TERRA_SSH_KEY}" ]]; then
+  printf '%s' "${TERRA_SSH_KEY}" | sudo -u "${JUPYTER_USER}" sh -c "jq -r '.privateSshKey'> .ssh/id_rsa"
+  sudo -u "${JUPYTER_USER}" sh -c 'chmod go-rwx .ssh/id_rsa'
+  echo eval '"$(ssh-agent -s)"' >> .bash_profile
+  sudo -u "${JUPYTER_USER}" sh -c 'eval `ssh-agent -s`; ssh-add .ssh/id_rsa; ssh-keyscan -H github.com >> ~/.ssh/known_hosts'
+fi
+
+sudo -u "${JUPYTER_USER}" sh -c 'terra git clone --all'
 
