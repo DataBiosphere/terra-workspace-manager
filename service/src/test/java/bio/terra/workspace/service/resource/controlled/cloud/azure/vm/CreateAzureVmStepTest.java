@@ -23,7 +23,6 @@ import bio.terra.workspace.service.resource.controlled.cloud.azure.ip.Controlled
 import bio.terra.workspace.service.resource.controlled.cloud.azure.network.ControlledAzureNetworkResource;
 import bio.terra.workspace.service.resource.model.WsmResource;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
-import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import bio.terra.workspace.service.workspace.model.AzureCloudContext;
 import com.azure.core.management.Region;
@@ -307,8 +306,6 @@ public class CreateAzureVmStepTest extends BaseAzureTest {
     when(mockFlightContext.getWorkingMap()).thenReturn(mockWorkingMap);
     when(mockWorkingMap.get(ControlledResourceKeys.AZURE_CLOUD_CONTEXT, AzureCloudContext.class))
         .thenReturn(mockAzureCloudContext);
-//    when(mockFlightContext.getInputParameters()).thenReturn(mockInputParameters);
-    //when(mockInputParameters.get(ControlledResourceKeys.CREATION_PARAMETERS, ApiAzureVmCreationParameters.class)).thenReturn(mockApiAzureVmCreationParameters);
   }
 
   @Test
@@ -317,8 +314,7 @@ public class CreateAzureVmStepTest extends BaseAzureTest {
         ControlledResourceFixtures.getAzureVmCreationParameters();
 
     final FlightMap creationParametersFlightMap = new FlightMap();
-    creationParametersFlightMap.put(
-            ControlledResourceKeys.CREATION_PARAMETERS, creationParameters);
+    creationParametersFlightMap.put(ControlledResourceKeys.CREATION_PARAMETERS, creationParameters);
     creationParametersFlightMap.makeImmutable();
     when(mockFlightContext.getInputParameters()).thenReturn(creationParametersFlightMap);
 
@@ -369,8 +365,7 @@ public class CreateAzureVmStepTest extends BaseAzureTest {
         ControlledResourceFixtures.getAzureVmCreationParameters();
 
     final FlightMap creationParametersFlightMap = new FlightMap();
-    creationParametersFlightMap.put(
-            ControlledResourceKeys.CREATION_PARAMETERS, creationParameters);
+    creationParametersFlightMap.put(ControlledResourceKeys.CREATION_PARAMETERS, creationParameters);
     creationParametersFlightMap.makeImmutable();
     when(mockFlightContext.getInputParameters()).thenReturn(creationParametersFlightMap);
 

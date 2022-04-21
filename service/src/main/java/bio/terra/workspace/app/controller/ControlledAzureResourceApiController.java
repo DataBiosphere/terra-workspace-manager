@@ -29,6 +29,7 @@ import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequestFactory;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.job.JobService;
+import bio.terra.workspace.service.resource.ResourceValidationUtils;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceService;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.disk.ControlledAzureDiskResource;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.ip.ControlledAzureIpResource;
@@ -210,6 +211,7 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
     final ControlledResourceFields commonFields =
         toCommonFields(workspaceId, body.getCommon(), userRequest);
 
+    ResourceValidationUtils.validateApiAzureVmCreationParameters(body.getAzureVm());
     ControlledAzureVmResource resource =
         ControlledAzureVmResource.builder()
             .common(commonFields)

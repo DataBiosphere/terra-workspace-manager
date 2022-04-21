@@ -438,7 +438,7 @@ public class CreateAndDeleteAzureControlledResourceFlightTest extends BaseAzureT
     ControlledAzureNetworkResource networkResource = createNetwork(workspaceId, userRequest);
 
     final ApiAzureVmCreationParameters creationParameters =
-        ControlledResourceFixtures.getAzureVmCreationParameters();
+        ControlledResourceFixtures.getAzureVmCreationParametersWithCustomScriptExtension();
 
     // TODO: make this application-private resource once the POC supports it
     final UUID resourceId = UUID.randomUUID();

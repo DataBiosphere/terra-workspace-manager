@@ -3,6 +3,7 @@ package bio.terra.workspace.service.resource;
 import bio.terra.common.exception.InconsistentFieldsException;
 import bio.terra.common.exception.MissingRequiredFieldException;
 import bio.terra.workspace.app.configuration.external.GitRepoReferencedResourceConfiguration;
+import bio.terra.workspace.generated.model.ApiAzureVmCreationParameters;
 import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceCreationParameters;
 import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceVmImage;
 import bio.terra.workspace.service.resource.exception.InvalidNameException;
@@ -399,6 +400,31 @@ public class ResourceValidationUtils {
     if (fieldValue == null) {
       throw new MissingRequiredFieldException(
           String.format("Missing required field '%s' for resource", fieldName));
+    }
+  }
+
+  public static void validateApiAzureVmCreationParameters(
+      ApiAzureVmCreationParameters apiAzureVmCreationParameters) {
+    var vmImage = apiAzureVmCreationParameters.getVmImage();
+    if (StringUtils.isEmpty(vmImage.getUri())
+            && StringUtils.isEmpty(vmImage.getPublisher())
+            && StringUtils.isEmpty(vmImage.getOffer())
+            && StringUtils.isEmpty(vmImage.getSku())) {
+      throw new MissingRequiredFieldException(
+              "Missing required fields for vmImage. Either uri or publisher, offer, sku should be defined.");
+    }
+    if (StringUtils.isEmpty(vmImage.getUri())
+            && (StringUtils.isEmpty(vmImage.getPublisher())
+            || StringUtils.isEmpty(vmImage.getOffer())
+            || StringUtils.isEmpty(vmImage.getSku()))) {
+      throw new MissingRequiredFieldException(
+              "Missing required fields for vmImage. Publisher, offer, sku should be defined.");
+    }
+    if (StringUtils.isEmpty(vmImage.getUri())
+        && (!StringUtils.isEmpty(vmImage.getPublisher())
+            && !StringUtils.isEmpty(vmImage.getOffer())
+            && !StringUtils.isEmpty(vmImage.getSku()))) {
+      checkFieldNonNull(apiAzureVmCreationParameters.getVmUser(), "vmUser");
     }
   }
 }
