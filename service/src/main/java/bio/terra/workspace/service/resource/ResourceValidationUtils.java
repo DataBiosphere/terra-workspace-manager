@@ -407,18 +407,18 @@ public class ResourceValidationUtils {
       ApiAzureVmCreationParameters apiAzureVmCreationParameters) {
     var vmImage = apiAzureVmCreationParameters.getVmImage();
     if (StringUtils.isEmpty(vmImage.getUri())
-            && StringUtils.isEmpty(vmImage.getPublisher())
-            && StringUtils.isEmpty(vmImage.getOffer())
-            && StringUtils.isEmpty(vmImage.getSku())) {
+        && StringUtils.isEmpty(vmImage.getPublisher())
+        && StringUtils.isEmpty(vmImage.getOffer())
+        && StringUtils.isEmpty(vmImage.getSku())) {
       throw new MissingRequiredFieldException(
-              "Missing required fields for vmImage. Either uri or publisher, offer, sku should be defined.");
+          "Missing required fields for vmImage. Either uri or publisher, offer, sku should be defined.");
     }
     if (StringUtils.isEmpty(vmImage.getUri())
-            && (StringUtils.isEmpty(vmImage.getPublisher())
+        && (StringUtils.isEmpty(vmImage.getPublisher())
             || StringUtils.isEmpty(vmImage.getOffer())
             || StringUtils.isEmpty(vmImage.getSku()))) {
       throw new MissingRequiredFieldException(
-              "Missing required fields for vmImage. Publisher, offer, sku should be defined.");
+          "Missing required fields for vmImage. Publisher, offer, sku should be defined.");
     }
     if (StringUtils.isEmpty(vmImage.getUri())
         && (!StringUtils.isEmpty(vmImage.getPublisher())

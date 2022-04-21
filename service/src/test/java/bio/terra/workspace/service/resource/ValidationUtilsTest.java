@@ -4,8 +4,11 @@ import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.def
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import bio.terra.common.exception.InconsistentFieldsException;
+import bio.terra.common.exception.MissingRequiredFieldException;
 import bio.terra.workspace.app.configuration.external.GitRepoReferencedResourceConfiguration;
 import bio.terra.workspace.common.BaseUnitTest;
+import bio.terra.workspace.generated.model.ApiAzureVmCreationParameters;
+import bio.terra.workspace.generated.model.ApiAzureVmImage;
 import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceContainerImage;
 import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceVmImage;
 import bio.terra.workspace.service.resource.exception.InvalidNameException;
@@ -328,5 +331,41 @@ public class ValidationUtilsTest extends BaseUnitTest {
         () ->
             validationUtils.validateGitRepoUri(
                 "https://git@github.com:DataBiosphere/terra-workspace-manager"));
+  }
+
+  @Test
+  public void validateVmCreatePayload_missedVmImageParameters_throwsException() {
+    var apiVmCreationParameters =
+        new ApiAzureVmCreationParameters()
+            .vmImage(new ApiAzureVmImage().uri("").publisher("").offer("").sku(""));
+
+    assertThrows(
+        MissingRequiredFieldException.class,
+        () ->
+            ResourceValidationUtils.validateApiAzureVmCreationParameters(apiVmCreationParameters));
+  }
+
+  @Test
+  public void validateVmCreatePayload_missedMarketplaceImageParameters_throwsException() {
+    var apiVmCreationParameters =
+        new ApiAzureVmCreationParameters()
+            .vmImage(new ApiAzureVmImage().publisher("").offer("ubuntu").sku("gen2"));
+
+    assertThrows(
+        MissingRequiredFieldException.class,
+        () ->
+            ResourceValidationUtils.validateApiAzureVmCreationParameters(apiVmCreationParameters));
+  }
+
+  @Test
+  public void validateVmCreatePayload_missedVmUser_throwsException() {
+    var apiVmCreationParameters =
+        new ApiAzureVmCreationParameters()
+            .vmImage(new ApiAzureVmImage().publisher("microsoft").offer("ubuntu").sku("gen2"));
+
+    assertThrows(
+        MissingRequiredFieldException.class,
+        () ->
+            ResourceValidationUtils.validateApiAzureVmCreationParameters(apiVmCreationParameters));
   }
 }
