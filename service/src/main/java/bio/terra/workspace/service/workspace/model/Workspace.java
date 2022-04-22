@@ -172,7 +172,6 @@ public class Workspace {
       if (properties == null) {
         properties = new HashMap<>();
       }
-      // Don't need to check userFacingId since it is required.
       if (displayName == null) {
         displayName = "";
       }
