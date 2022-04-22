@@ -333,7 +333,7 @@ components:
         userFacingId:
           description: |
             Human-settable, mutable id. Optional. If this isn't set, one will
-            be generated based id.
+            be generated based on id.
           type: string
         displayName:
           description: The human readable name of the workspace

@@ -112,10 +112,14 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
     Optional<SpendProfileId> spendProfileId =
         Optional.ofNullable(body.getSpendProfile()).map(SpendProfileId::new);
 
+    // ET uses userFacingId; CWB doesn't. Schema enforces that userFacingId must be set. CWB doesn't pass
+    // userFacingId in request, so use id. Prefix with "a" because userFacingId must start with letter.
+    String userFacingId = body.getUserFacingId() != null ? body.getUserFacingId() : "a" + body.getId();
+
     Workspace workspace =
         Workspace.builder()
             .workspaceId(body.getId())
-            .userFacingId(body.getUserFacingId())
+            .userFacingId(userFacingId)
             .displayName(body.getDisplayName())
             .description(body.getDescription())
             .spendProfileId(spendProfileId.orElse(null))
