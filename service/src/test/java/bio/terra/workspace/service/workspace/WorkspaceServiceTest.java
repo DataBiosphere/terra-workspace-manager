@@ -169,7 +169,7 @@ class WorkspaceServiceTest extends BaseConnectedTest {
 
   @Test
   void duplicateWorkspaceUserFacingIdRequestsRejected() {
-    String userFacingId = "user-facing-id";
+    String userFacingId = "create-workspace-user-facing-id";
     Workspace request = defaultRequestBuilder(UUID.randomUUID()).userFacingId(userFacingId).build();
     workspaceService.createWorkspace(request, USER_REQUEST);
     Workspace duplicateUserFacingId =
@@ -288,7 +288,7 @@ class WorkspaceServiceTest extends BaseConnectedTest {
   @Test
   void testUpdateWorkspaceUserFacingIdAlreadyExistsRejected() {
     // Create one workspace with userFacingId, one without.
-    String userFacingId = "user-facing-id";
+    String userFacingId = "update-workspace-user-facing-id";
     Workspace request = defaultRequestBuilder(UUID.randomUUID()).userFacingId(userFacingId).build();
     workspaceService.createWorkspace(request, USER_REQUEST);
     UUID secondWorkspaceUuid = UUID.randomUUID();
