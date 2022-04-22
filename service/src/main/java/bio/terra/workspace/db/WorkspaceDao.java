@@ -110,7 +110,9 @@ public class WorkspaceDao {
                 workspace.getDisplayName().toString(),
                 workspace.getWorkspaceStage().toString()),
             e);
-      } else {
+      } else if (e.getMessage()
+          .contains(
+              "duplicate key value violates unique constraint \"workspace_user_facing_id_key\"")) {
         // workspace_id is new, but workspace with user_facing_id already exists.
         throw new DuplicateUserFacingIdException(
                 String.format(
@@ -118,6 +120,8 @@ public class WorkspaceDao {
                         "Workspace with ID %s already exists",
                         workspace.getUserFacingId().get()),
                 e);
+      } else {
+        throw e;
       }
     }
     return workspace.getWorkspaceId();
@@ -186,9 +190,7 @@ public class WorkspaceDao {
       @Nullable String description,
       @Nullable Map<String, String> propertyMap) {
     if (userFacingId == null && name == null && description == null && propertyMap == null) {
-      throw new MissingRequiredFieldException(
-              // "ID" instead of "userFacingId" because end user sees this.
-              "Must specify ID, name, description, or properties to update.");
+      throw new MissingRequiredFieldException("Must specify field to update.");
     }
 
     var params = new MapSqlParameterSource();
@@ -234,9 +236,9 @@ public class WorkspaceDao {
 
     boolean updated = rowsAffected > 0;
     logger.info(
-            "{} record for workspace {}",
-            (updated ? "Updated" : "No Update - did not find"),
-            workspaceId);
+      "{} record for workspace {}",
+      (updated ? "Updated" : "No Update - did not find"),
+      workspaceId);
     return updated;
   }
 
