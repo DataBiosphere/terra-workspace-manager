@@ -405,6 +405,7 @@ public class ResourceValidationUtils {
           String.format("Missing required field '%s' for resource", fieldName));
     }
   }
+
   public static void validateApiAzureVmCreationParameters(
       ApiAzureVmCreationParameters apiAzureVmCreationParameters) {
     var vmImage = apiAzureVmCreationParameters.getVmImage();
