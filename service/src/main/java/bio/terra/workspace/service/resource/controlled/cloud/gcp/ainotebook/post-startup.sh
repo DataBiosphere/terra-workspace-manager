@@ -88,5 +88,7 @@ if [[ -n "$TERRA_SSH_KEY" ]]; then
   sudo -u "$JUPYTER_USER" sh -c 'eval `ssh-agent -s`; ssh-add .ssh/id_rsa; ssh-keyscan -H github.com >> ~/.ssh/known_hosts'
 fi
 
+# Attempt to clone all the git repo references in the workspace. If the user's ssh key does not exist or doesn't have access
+# to the git references, the corresponding git repo cloning will be skipped.
 sudo -u "$JUPYTER_USER" sh -c 'terra git clone --all'
 
