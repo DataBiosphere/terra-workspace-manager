@@ -3,16 +3,19 @@ package bio.terra.workspace.service.resource.controlled.cloud.azure.vm;
 import bio.terra.cloudres.azure.resourcemanager.common.Defaults;
 import bio.terra.cloudres.azure.resourcemanager.compute.data.CreateVirtualMachineRequestData;
 import bio.terra.stairway.FlightContext;
+import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.StepStatus;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.app.configuration.external.AzureConfiguration;
+import bio.terra.workspace.common.utils.AzureVmUtils;
+import bio.terra.workspace.common.utils.FlightUtils;
 import bio.terra.workspace.db.ResourceDao;
+import bio.terra.workspace.generated.model.ApiAzureVmCreationParameters;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.disk.ControlledAzureDiskResource;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.ip.ControlledAzureIpResource;
-import bio.terra.workspace.service.resource.controlled.cloud.azure.ip.CreateAzureIpStep;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.network.ControlledAzureNetworkResource;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
@@ -21,8 +24,10 @@ import com.azure.core.management.Region;
 import com.azure.core.management.exception.ManagementException;
 import com.azure.resourcemanager.compute.ComputeManager;
 import com.azure.resourcemanager.compute.models.Disk;
+import com.azure.resourcemanager.compute.models.VirtualMachine;
 import com.azure.resourcemanager.compute.models.VirtualMachineSizeTypes;
 import com.azure.resourcemanager.network.models.Network;
+import com.azure.resourcemanager.network.models.NetworkInterface;
 import com.azure.resourcemanager.network.models.PublicIpAddress;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
@@ -30,7 +35,7 @@ import org.slf4j.LoggerFactory;
 
 public class CreateAzureVmStep implements Step {
 
-  private static final Logger logger = LoggerFactory.getLogger(CreateAzureIpStep.class);
+  private static final Logger logger = LoggerFactory.getLogger(CreateAzureVmStep.class);
   private final AzureConfiguration azureConfig;
   private final CrlService crlService;
   private final ControlledAzureVmResource resource;
@@ -49,6 +54,12 @@ public class CreateAzureVmStep implements Step {
 
   @Override
   public StepResult doStep(FlightContext context) throws InterruptedException, RetryException {
+    FlightMap inputMap = context.getInputParameters();
+    FlightUtils.validateRequiredEntries(inputMap, ControlledResourceKeys.CREATION_PARAMETERS);
+    var creationParameters =
+        inputMap.get(
+            ControlledResourceKeys.CREATION_PARAMETERS, ApiAzureVmCreationParameters.class);
+
     final AzureCloudContext azureCloudContext =
         context
             .getWorkingMap()
@@ -106,34 +117,28 @@ public class CreateAzureVmStep implements Step {
               // IP
               .create();
 
-      computeManager
-          .virtualMachines()
-          .define(resource.getVmName())
-          .withRegion(resource.getRegion())
-          .withExistingResourceGroup(azureCloudContext.getAzureResourceGroupId())
-          .withExistingPrimaryNetworkInterface(createNic)
-          // See here for difference between 'specialized' and 'general' LinuxCustomImage, the
-          // managed disk storage option being the key factor
-          // https://docs.microsoft.com/en-us/azure/virtual-machines/linux/imaging#generalized-and-specialized
-          .withSpecializedLinuxCustomImage(resource.getVmImageUri())
-          .withExistingDataDisk(existingAzureDisk)
-          .withTag("workspaceId", resource.getWorkspaceId().toString())
-          .withTag("resourceId", resource.getResourceId().toString())
-          .withSize(VirtualMachineSizeTypes.fromString(resource.getVmSize()))
-          .create(
-              Defaults.buildContext(
-                  CreateVirtualMachineRequestData.builder()
-                      .setName(resource.getVmName())
-                      .setRegion(Region.fromName(resource.getRegion()))
-                      .setTenantId(azureCloudContext.getAzureTenantId())
-                      .setSubscriptionId(azureCloudContext.getAzureSubscriptionId())
-                      .setResourceGroupName(azureCloudContext.getAzureResourceGroupId())
-                      .setNetwork(existingNetwork)
-                      .setSubnetName(networkResource.getSubnetName())
-                      .setDisk(existingAzureDisk)
-                      .setPublicIpAddress(existingAzureIp)
-                      .setImage(resource.getVmImageUri())
-                      .build()));
+      var virtualMachineDefinition =
+          buildVmConfiguration(
+              computeManager,
+              createNic,
+              existingAzureDisk,
+              azureCloudContext.getAzureResourceGroupId(),
+              creationParameters);
+
+      virtualMachineDefinition.create(
+          Defaults.buildContext(
+              CreateVirtualMachineRequestData.builder()
+                  .setName(resource.getVmName())
+                  .setRegion(Region.fromName(resource.getRegion()))
+                  .setTenantId(azureCloudContext.getAzureTenantId())
+                  .setSubscriptionId(azureCloudContext.getAzureSubscriptionId())
+                  .setResourceGroupName(azureCloudContext.getAzureResourceGroupId())
+                  .setNetwork(existingNetwork)
+                  .setSubnetName(networkResource.getSubnetName())
+                  .setDisk(existingAzureDisk)
+                  .setPublicIpAddress(existingAzureIp)
+                  .setImage(AzureVmUtils.getImageData(creationParameters.getVmImage()))
+                  .build()));
     } catch (ManagementException e) {
       // Stairway steps may run multiple times, so we may already have created this resource. In all
       // other cases, surface the exception and attempt to retry.
@@ -187,5 +192,69 @@ public class CreateAzureVmStep implements Step {
       return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, e);
     }
     return StepResult.getStepResultSuccess();
+  }
+
+  private VirtualMachine.DefinitionStages.WithCreate buildVmConfiguration(
+      ComputeManager computeManager,
+      NetworkInterface networkInterface,
+      Disk disk,
+      String azureResourceGroupId,
+      ApiAzureVmCreationParameters creationParameters) {
+    var vmConfigurationCommonStep =
+        computeManager
+            .virtualMachines()
+            .define(resource.getVmName())
+            .withRegion(resource.getRegion())
+            .withExistingResourceGroup(azureResourceGroupId)
+            .withExistingPrimaryNetworkInterface(networkInterface);
+
+    VirtualMachine.DefinitionStages.WithCreate vmConfigurationFinalStep;
+    if (creationParameters.getVmImage().getUri() != null) {
+      vmConfigurationFinalStep =
+          vmConfigurationCommonStep
+              .withSpecializedLinuxCustomImage(creationParameters.getVmImage().getUri())
+              .withExistingDataDisk(disk)
+              .withTag("workspaceId", resource.getWorkspaceId().toString())
+              .withTag("resourceId", resource.getResourceId().toString())
+              .withSize(VirtualMachineSizeTypes.fromString(resource.getVmSize()));
+    } else {
+      vmConfigurationFinalStep =
+          vmConfigurationCommonStep
+              .withLatestLinuxImage(
+                  creationParameters.getVmImage().getPublisher(),
+                  creationParameters.getVmImage().getOffer(),
+                  creationParameters.getVmImage().getSku())
+              .withRootUsername(creationParameters.getVmUser().getName())
+              .withRootPassword(creationParameters.getVmUser().getPassword())
+              .withExistingDataDisk(disk)
+              .withTag("workspaceId", resource.getWorkspaceId().toString())
+              .withTag("resourceId", resource.getResourceId().toString())
+              .withSize(VirtualMachineSizeTypes.fromString(resource.getVmSize()));
+    }
+
+    if (creationParameters.getCustomScriptExtension() != null) {
+      var customScriptExtension =
+          vmConfigurationFinalStep
+              .defineNewExtension(creationParameters.getCustomScriptExtension().getName())
+              .withPublisher(creationParameters.getCustomScriptExtension().getPublisher())
+              .withType(creationParameters.getCustomScriptExtension().getType())
+              .withVersion(creationParameters.getCustomScriptExtension().getVersion())
+              .withPublicSettings(
+                  AzureVmUtils.settingsFrom(
+                      creationParameters.getCustomScriptExtension().getPublicSettings()))
+              .withProtectedSettings(
+                  AzureVmUtils.settingsFrom(
+                      creationParameters.getCustomScriptExtension().getProtectedSettings()))
+              .withTags(
+                  AzureVmUtils.tagsFrom(creationParameters.getCustomScriptExtension().getTags()));
+
+      if (creationParameters.getCustomScriptExtension().isMinorVersionAutoUpgrade()) {
+        customScriptExtension.withMinorVersionAutoUpgrade();
+      } else {
+        customScriptExtension.withoutMinorVersionAutoUpgrade();
+      }
+      customScriptExtension.attach();
+    }
+    return vmConfigurationFinalStep;
   }
 }

@@ -27,7 +27,7 @@ public class ControlledAzureVmHandler implements WsmResourceHandler {
             .vmName(attributes.getVmName())
             .region(attributes.getRegion())
             .vmSize(attributes.getVmSize())
-            .vmImageUri(attributes.getVmImageUri())
+            .vmImage(attributes.getVmImage())
             .ipId(attributes.getIpId())
             .networkId(attributes.getNetworkId())
             .diskId(attributes.getDiskId())
