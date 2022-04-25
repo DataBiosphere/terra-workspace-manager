@@ -35,7 +35,7 @@ public class FlightBeanBag {
   private final ApplicationDao applicationDao;
   private final AzureCloudContextService azureCloudContextService;
   private final AzureConfiguration azureConfig;
-  private final BucketCloneRolesService bucketCloneRolesComponent;
+  private final BucketCloneRolesService bucketCloneRolesService;
   private final BufferService bufferService;
   private final CliConfiguration cliConfiguration;
   private final ControlledResourceMetadataManager controlledResourceMetadataManager;
@@ -58,7 +58,7 @@ public class FlightBeanBag {
       ApplicationDao applicationDao,
       AzureCloudContextService azureCloudContextService,
       AzureConfiguration azureConfig,
-      BucketCloneRolesService bucketCloneRolesComponent,
+      BucketCloneRolesService bucketCloneRolesService,
       BufferService bufferService,
       CliConfiguration cliConfiguration,
       ControlledResourceMetadataManager controlledResourceMetadataManager,
@@ -77,7 +77,7 @@ public class FlightBeanBag {
     this.applicationDao = applicationDao;
     this.azureCloudContextService = azureCloudContextService;
     this.azureConfig = azureConfig;
-    this.bucketCloneRolesComponent = bucketCloneRolesComponent;
+    this.bucketCloneRolesService = bucketCloneRolesService;
     this.bufferService = bufferService;
     this.cliConfiguration = cliConfiguration;
     this.controlledResourceMetadataManager = controlledResourceMetadataManager;
@@ -107,8 +107,8 @@ public class FlightBeanBag {
     return azureCloudContextService;
   }
 
-  public BucketCloneRolesService getBucketCloneRolesComponent() {
-    return bucketCloneRolesComponent;
+  public BucketCloneRolesService getBucketCloneRolesService() {
+    return bucketCloneRolesService;
   }
 
   public BufferService getBufferService() {

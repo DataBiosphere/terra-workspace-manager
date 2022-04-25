@@ -1,10 +1,14 @@
 package bio.terra.workspace.service.workspace;
 
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.hasSize;
+import static org.hibernate.validator.internal.util.Contracts.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 
@@ -19,17 +23,38 @@ import bio.terra.workspace.common.BaseConnectedTest;
 import bio.terra.workspace.connected.WorkspaceConnectedTestUtils;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.db.exception.WorkspaceNotFoundException;
+import bio.terra.workspace.generated.model.ApiCloneResourceResult;
+import bio.terra.workspace.generated.model.ApiClonedWorkspace;
+import bio.terra.workspace.generated.model.ApiGcpGcsBucketCreationParameters;
+import bio.terra.workspace.generated.model.ApiGcpGcsBucketDefaultStorageClass;
+import bio.terra.workspace.generated.model.ApiGcpGcsBucketLifecycle;
+import bio.terra.workspace.generated.model.ApiGcpGcsBucketLifecycleRule;
+import bio.terra.workspace.generated.model.ApiGcpGcsBucketLifecycleRuleAction;
+import bio.terra.workspace.generated.model.ApiGcpGcsBucketLifecycleRuleActionType;
+import bio.terra.workspace.generated.model.ApiGcpGcsBucketLifecycleRuleCondition;
+import bio.terra.workspace.generated.model.ApiResourceCloneDetails;
+import bio.terra.workspace.generated.model.ApiResourceType;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.datarepo.DataRepoService;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
+import bio.terra.workspace.service.iam.model.ControlledResourceIamRole;
 import bio.terra.workspace.service.iam.model.SamConstants.SamResource;
 import bio.terra.workspace.service.iam.model.SamConstants.SamSpendProfileAction;
 import bio.terra.workspace.service.iam.model.SamConstants.SamWorkspaceAction;
 import bio.terra.workspace.service.job.JobService;
+import bio.terra.workspace.service.job.JobService.JobResultOrException;
 import bio.terra.workspace.service.job.exception.InvalidResultStateException;
+import bio.terra.workspace.service.resource.controlled.ControlledResourceService;
+import bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.ControlledGcsBucketResource;
+import bio.terra.workspace.service.resource.controlled.model.AccessScopeType;
+import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
+import bio.terra.workspace.service.resource.controlled.model.ControlledResourceFields;
+import bio.terra.workspace.service.resource.controlled.model.ManagedByType;
+import bio.terra.workspace.service.resource.controlled.model.PrivateResourceState;
 import bio.terra.workspace.service.resource.exception.ResourceNotFoundException;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
+import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.resource.referenced.cloud.gcp.ReferencedResourceService;
 import bio.terra.workspace.service.resource.referenced.cloud.gcp.datareposnapshot.ReferencedDataRepoSnapshotResource;
 import bio.terra.workspace.service.spendprofile.SpendConnectedTestUtils;
@@ -63,33 +88,43 @@ class WorkspaceServiceTest extends BaseConnectedTest {
           .token(Optional.of("fake-token"))
           .email("fake@email.com")
           .subjectId("fakeID123");
+  public static final String SPEND_PROFILE_ID = "wm-default-spend-profile";
 
-  @Autowired private WorkspaceService workspaceService;
-  @Autowired private JobService jobService;
-  @Autowired private CrlService crl;
-  @Autowired private SpendConnectedTestUtils spendUtils;
-  @Autowired private ReferencedResourceService referenceResourceService;
-  @Autowired private ResourceDao resourceDao;
-  @Autowired private WorkspaceConnectedTestUtils testUtils;
-  @MockBean private DataRepoService dataRepoService;
+  @MockBean private DataRepoService mockDataRepoService;
   /** Mock SamService does nothing for all calls that would throw if unauthorized. */
   @MockBean private SamService mockSamService;
 
+  @Autowired private ControlledResourceService controlledResourceService;
+  @Autowired private CrlService crl;
+  @Autowired private GcpCloudContextService gcpCloudContextService;
+  @Autowired private JobService jobService;
+  @Autowired private ReferencedResourceService referenceResourceService;
+  @Autowired private ResourceDao resourceDao;
+  @Autowired private SpendConnectedTestUtils spendUtils;
+  @Autowired private WorkspaceConnectedTestUtils testUtils;
+  @Autowired private WorkspaceService workspaceService;
+
   @BeforeEach
   void setup() throws Exception {
-    doReturn(true).when(dataRepoService).snapshotReadable(any(), any(), any());
+    doReturn(true).when(mockDataRepoService).snapshotReadable(any(), any(), any());
     // By default, allow all spend link calls as authorized. (All other isAuthorized calls return
-    // false by Mockito default.
+    // false by Mockito default).
     Mockito.when(
             mockSamService.isAuthorized(
                 Mockito.any(),
-                Mockito.eq(SamResource.SPEND_PROFILE),
+                eq(SamResource.SPEND_PROFILE),
                 Mockito.any(),
-                Mockito.eq(SamSpendProfileAction.LINK)))
+                eq(SamSpendProfileAction.LINK)))
         .thenReturn(true);
+    final String policyGroup = "terra-workspace-manager-test-group@googlegroups.com";
     // Return a valid google group for cloud sync, as Google validates groups added to GCP projects.
     Mockito.when(mockSamService.syncWorkspacePolicy(any(), any(), any()))
-        .thenReturn("terra-workspace-manager-test-group@googlegroups.com");
+        .thenReturn(policyGroup);
+
+    doReturn(policyGroup).when(mockSamService).syncResourcePolicy(
+        any(ControlledResource.class),
+        any(ControlledResourceIamRole.class),
+        any(AuthenticatedUserRequest.class));
   }
 
   /**
@@ -463,9 +498,9 @@ class WorkspaceServiceTest extends BaseConnectedTest {
     Mockito.when(
             mockSamService.isAuthorized(
                 Mockito.any(),
-                Mockito.eq(SamResource.WORKSPACE),
+                eq(SamResource.WORKSPACE),
                 Mockito.any(),
-                Mockito.eq(SamWorkspaceAction.READ)))
+                eq(SamWorkspaceAction.READ)))
         .thenReturn(true);
     Workspace request =
         defaultRequestBuilder(UUID.randomUUID())
@@ -479,6 +514,95 @@ class WorkspaceServiceTest extends BaseConnectedTest {
         () ->
             workspaceService.createGcpCloudContext(
                 request.getWorkspaceId(), jobId, USER_REQUEST, "/fake/value"));
+  }
+
+  @Test
+  public void cloneGcpWorkspace() {
+        // Create a workspace
+    final Workspace sourceWorkspace = defaultRequestBuilder(UUID.randomUUID())
+        .displayName("Source Workspace")
+        .description("The original workspace.")
+        .spendProfileId(new SpendProfileId(SPEND_PROFILE_ID))
+        .build();
+    final UUID sourceWorkspaceId = workspaceService.createWorkspace(sourceWorkspace, USER_REQUEST);
+
+    // create a cloud context
+    final String createCloudContextJobId = UUID.randomUUID().toString();
+    workspaceService.createGcpCloudContext(sourceWorkspaceId, createCloudContextJobId, USER_REQUEST);
+    jobService.waitForJob(createCloudContextJobId);
+    assertNull(jobService.retrieveJobResult(createCloudContextJobId, Object.class, USER_REQUEST).getException());
+
+    // add a bucket resource
+    final ControlledGcsBucketResource bucketResource = ControlledGcsBucketResource.builder()
+        .bucketName("terra-test-" + UUID.randomUUID().toString().toLowerCase())
+        .common(ControlledResourceFields.builder()
+            .name("bucket_1")
+            .description("Just a plain bucket.")
+            .cloningInstructions(CloningInstructions.COPY_RESOURCE)
+            .resourceId(UUID.randomUUID())
+            .workspaceId(sourceWorkspaceId)
+            .managedBy(ManagedByType.MANAGED_BY_USER)
+            .privateResourceState(PrivateResourceState.INITIALIZING)
+            .accessScope(AccessScopeType.ACCESS_SCOPE_PRIVATE)
+            .applicationId(null)
+            .iamRole(ControlledResourceIamRole.OWNER)
+            .assignedUser(USER_REQUEST.getEmail())
+            .build())
+        .build();
+    final ApiGcpGcsBucketCreationParameters creationParameters = new ApiGcpGcsBucketCreationParameters()
+        .name("foo")
+        .defaultStorageClass(ApiGcpGcsBucketDefaultStorageClass.NEARLINE)
+            .lifecycle(new ApiGcpGcsBucketLifecycle()
+                .addRulesItem(new ApiGcpGcsBucketLifecycleRule()
+                    .condition(new ApiGcpGcsBucketLifecycleRuleCondition()
+                        .age(90))
+                    .action(new ApiGcpGcsBucketLifecycleRuleAction()
+                        .type(ApiGcpGcsBucketLifecycleRuleActionType.SET_STORAGE_CLASS)
+                        .storageClass(ApiGcpGcsBucketDefaultStorageClass.STANDARD))));
+
+    final ControlledResource createdResource = controlledResourceService.createControlledResourceSync(
+        bucketResource,
+        ControlledResourceIamRole.OWNER,
+        USER_REQUEST,
+        creationParameters);
+
+    final ControlledGcsBucketResource createdBucketResource = createdResource.castByEnum(
+        WsmResourceType.CONTROLLED_GCP_GCS_BUCKET);
+    final Workspace destinationWorkspace = defaultRequestBuilder(UUID.randomUUID())
+        .displayName("Destination Workspace")
+        .description("Copied from source")
+        .spendProfileId(new SpendProfileId(SPEND_PROFILE_ID))
+        .build();
+    final String destinationLocation = "us-east1";
+    final String cloneJobId = workspaceService.cloneWorkspace(
+        sourceWorkspaceId, USER_REQUEST, destinationLocation, destinationWorkspace);
+    jobService.waitForJob(cloneJobId);
+    final JobResultOrException<ApiClonedWorkspace> cloneResultOrException = jobService.retrieveJobResult(
+        cloneJobId, ApiClonedWorkspace.class, USER_REQUEST);
+    assertNull(cloneResultOrException.getException());
+    final ApiClonedWorkspace cloneResult = cloneResultOrException.getResult();
+    assertEquals(destinationWorkspace.getWorkspaceId(), cloneResult.getDestinationWorkspaceId());
+    assertThat(cloneResult.getResources(), hasSize(1));
+
+    final ApiResourceCloneDetails bucketCloneDetails = cloneResult.getResources().get(0);
+    assertEquals(ApiCloneResourceResult.SUCCEEDED, bucketCloneDetails.getResult());
+    assertNull(bucketCloneDetails.getErrorMessage());
+    assertEquals(ApiResourceType.GCS_BUCKET, bucketCloneDetails.getResourceType());
+    assertEquals(createdBucketResource.getResourceId(), bucketCloneDetails.getSourceResourceId());
+
+    // destination WS should exist
+    final Workspace retrievedDestinationWorkspace = workspaceService.getWorkspace(
+        destinationWorkspace.getWorkspaceId(), USER_REQUEST);
+    assertEquals("Destination Workspace", retrievedDestinationWorkspace.getDisplayName().orElseThrow());
+    assertEquals("Copied from source", retrievedDestinationWorkspace.getDescription().orElseThrow());
+    assertEquals(WorkspaceStage.MC_WORKSPACE, retrievedDestinationWorkspace.getWorkspaceStage());
+
+    // Destination Workspace should have a GCP context
+    assertNotNull(gcpCloudContextService.getGcpCloudContext(destinationWorkspace.getWorkspaceId()).orElseThrow());
+
+    // clean up
+    workspaceService.deleteWorkspace(sourceWorkspaceId, USER_REQUEST);
+    workspaceService.deleteWorkspace(destinationWorkspace.getWorkspaceId(), USER_REQUEST);
   }
 
   /**

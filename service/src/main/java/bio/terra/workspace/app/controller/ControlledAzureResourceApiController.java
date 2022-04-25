@@ -2,6 +2,7 @@ package bio.terra.workspace.app.controller;
 
 import bio.terra.common.exception.ApiException;
 import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
+import bio.terra.workspace.common.utils.AzureVmUtils;
 import bio.terra.workspace.generated.controller.ControlledAzureResourceApi;
 import bio.terra.workspace.generated.model.ApiAzureDiskResource;
 import bio.terra.workspace.generated.model.ApiAzureIpResource;
@@ -28,6 +29,7 @@ import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequestFactory;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.job.JobService;
+import bio.terra.workspace.service.resource.ResourceValidationUtils;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceService;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.disk.ControlledAzureDiskResource;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.ip.ControlledAzureIpResource;
@@ -209,13 +211,14 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
     final ControlledResourceFields commonFields =
         toCommonFields(workspaceId, body.getCommon(), userRequest);
 
+    ResourceValidationUtils.validateApiAzureVmCreationParameters(body.getAzureVm());
     ControlledAzureVmResource resource =
         ControlledAzureVmResource.builder()
             .common(commonFields)
             .vmName(body.getAzureVm().getName())
             .region(body.getAzureVm().getRegion())
             .vmSize(body.getAzureVm().getVmSize())
-            .vmImageUri(body.getAzureVm().getVmImageUri())
+            .vmImage(AzureVmUtils.getImageData(body.getAzureVm().getVmImage()))
             .ipId(body.getAzureVm().getIpId())
             .networkId(body.getAzureVm().getNetworkId())
             .diskId(body.getAzureVm().getDiskId())

@@ -105,7 +105,7 @@ components:
         Vm-specific properties to be set on creation. These are a subset of the values
         accepted by the azure resource API
       type: object
-      required: [name, region, ipId, diskId, networkId, vmSize, vmImageUri]
+      required: [name, region, ipId, diskId, networkId, vmSize, vmImage]
       properties:
         name:
           description: A valid vm name per https://docs.microsoft.com/en-us/azure/azure-resource-manager/management/resource-name-rules
@@ -117,9 +117,6 @@ components:
           type: string
         vmSize:
           description: A valid image size as per com.azure.resourcemanager.compute.models.VirtualMachineSizeTypes
-          type: string
-        vmImageUri:
-          description: A valid image Uri. Must be in the same region specified. E.x. /subscriptions/3efc5bdf-be0e-44e7-b1d7-c08931e3c16c/resourceGroups/mrg-qi-1-preview-20210517084351/providers/Microsoft.Compute/galleries/msdsvm/images/customized_ms_dsvm/versions/0.1.0
           type: string
         ipId:
           description: A valid WSM identifier for an Azure Ip that corresponds to a valid azure resource
@@ -133,6 +130,111 @@ components:
           description: A valid WSM identifier for an Azure Network that corresponds to a valid azure resource
           type: string
           format: uuid
+        vmImage:
+          description: A valid data which identifies the VM image
+          $ref: '#/components/schemas/AzureVmImage'
+        vmUser:
+          description: A valid VM user data. This data is required only for marketplace VM image.
+          $ref: '#/components/schemas/AzureVmUser'
+        customScriptExtension:
+          description: A custom script extension
+          $ref: '#/components/schemas/AzureVmCustomScriptExtension'
+
+    AzureVmImage:
+      description: >-
+        A valid data which identifies the VM image. It supports custom and marketplace images. Properties are mutually exclusive.
+        Either Uri can be defined or publisher, offer and sku. Uri should be assigned in order to refer to custom image. Custom image must be in the same region.
+        For instance /subscriptions/3efc5bdf-be0e-44e7-b1d7-c08931e3c16c/resourceGroups/mrg-qi-1-preview-20210517084351/providers/Microsoft.Compute/galleries/msdsvm/images/customized_ms_dsvm/versions/0.1.0
+        In order to use marketplace image following properties should be defined: publisher, offer, sku.
+        For instance publisher=microsoft-dsvm, offer=ubuntu-1804, sku=1804-gen2
+        If all parameters are defined then uri parameter will take precedence and vmUser parameter will be ignored.
+      type: object
+      properties:
+        uri:
+          description: A valid image Uri
+          type: string
+        publisher:
+          description: A publisher of an image
+          type: string
+        offer:
+          description: An offer of an image
+          type: string
+        sku:
+          description: A sku of an image
+          type: string
+
+    AzureVmCustomScriptExtension:
+      description: >-
+        Azure VM custom script extension definition. Azure documentation https://docs.microsoft.com/en-us/azure/virtual-machines/extensions/custom-script-linux
+      type: object
+      required: [name, publisher]
+      properties:
+        name:
+          description: A name of the extension
+          type: string
+        publisher:
+          description: A publisher of the extension
+          type: string
+        type:
+          description: A type of the extension
+          type: string
+        version:
+          description: A version of the extension
+          type: string
+        minorVersionAutoUpgrade:
+          description: Flag which controls auto upgrade of the extension
+          type: boolean
+        publicSettings:
+          description: List of public settings of the extension
+          type: array
+          items:
+            $ref: '#/components/schemas/AzureVmCustomScriptExtensionSetting'
+        protectedSettings:
+          description: List of protected settings of the extension
+          type: array
+          items:
+            $ref: '#/components/schemas/AzureVmCustomScriptExtensionSetting'
+        tags:
+          description: List of tags of the extension
+          type: array
+          items:
+            $ref: '#/components/schemas/AzureVmCustomScriptExtensionTag'
+
+    AzureVmCustomScriptExtensionSetting:
+      description: Azure VM extension settings
+      type: object
+      required: [key, value]
+      properties:
+        key:
+          description: Name of the settings entry
+          type: string
+        value:
+          description: Value of the settings entry
+          type: object
+
+    AzureVmCustomScriptExtensionTag:
+      description: List of tags for VM extension
+      type: object
+      required: [key, value]
+      properties:
+        key:
+          description: Name of the tag
+          type: string
+        value:
+          description: Value of the tag
+          type: string
+
+    AzureVmUser:
+      description: User credentials which are required for VM creation
+      type: object
+      required: [name, password]
+      properties:
+        name:
+          description: Specifies an SSH root user name for the Linux virtual machine
+          type: string
+        password:
+          description: Specifies the SSH root password for the Linux virtual machine
+          type: string
 
     CreateControlledAzureVmRequestBody:
       description: Payload for requesting a new controlled Azure VM resource.
