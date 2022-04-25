@@ -79,12 +79,14 @@ sudo -u "${JUPYTER_USER}" sh -c "terra auth login --mode=APP_DEFAULT_CREDENTIALS
 sudo -u "${JUPYTER_USER}" sh -c "mkdir -p /home/${JUPYTER_USER}/.ssh"
 cd /home/${JUPYTER_USER}
 readonly TERRA_SSH_KEY=$(sudo -u "${JUPYTER_USER}" sh -c "terra user ssh-key get --format=JSON")
-if [[ -n "${TERRA_SSH_KEY}" ]]; then
-  printf '%s' "${TERRA_SSH_KEY}" | sudo -u "${JUPYTER_USER}" sh -c "jq -r '.privateSshKey'> .ssh/id_rsa"
-  sudo -u "${JUPYTER_USER}" sh -c 'chmod go-rwx .ssh/id_rsa'
-  echo eval '"$(ssh-agent -s)"' >> .bash_profile
-  sudo -u "${JUPYTER_USER}" sh -c 'eval `ssh-agent -s`; ssh-add .ssh/id_rsa; ssh-keyscan -H github.com >> ~/.ssh/known_hosts'
+
+# Start the ssh-agent. Set this command in bash_profile so everytime user starts a shell, we start the ssh-agent.
+echo eval '"$(ssh-agent -s)"' >> .bash_profile
+if [[ -n "$TERRA_SSH_KEY" ]]; then
+  printf '%s' "$TERRA_SSH_KEY" | sudo -u "${JUPYTER_USER}" sh -c "jq -r '.privateSshKey' > .ssh/id_rsa"
+  sudo -u "$JUPYTER_USER" sh -c 'chmod go-rwx .ssh/id_rsa'
+  sudo -u "$JUPYTER_USER" sh -c 'eval `ssh-agent -s`; ssh-add .ssh/id_rsa; ssh-keyscan -H github.com >> ~/.ssh/known_hosts'
 fi
 
-sudo -u "${JUPYTER_USER}" sh -c 'terra git clone --all'
+sudo -u "$JUPYTER_USER" sh -c 'terra git clone --all'
 
