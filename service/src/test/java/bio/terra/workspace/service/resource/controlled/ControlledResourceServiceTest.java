@@ -1156,45 +1156,65 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
                 ControlledResourceFixtures.getGoogleBucketCreationParameters())
             .castByEnum(WsmResourceType.CONTROLLED_GCP_GCS_BUCKET);
     assertEquals(resource, createdBucket);
-    final ApiJobControl apiJobControl = new ApiJobControl()
-        .id(UUID.randomUUID().toString());
-    final String destinationBucketName = "cloned-bucket-" + UUID.randomUUID().toString().toLowerCase();
+    final ApiJobControl apiJobControl = new ApiJobControl().id(UUID.randomUUID().toString());
+    final String destinationBucketName =
+        "cloned-bucket-" + UUID.randomUUID().toString().toLowerCase();
     final String destinationLocation = "US-EAST1";
-    final String jobId = controlledResourceService.cloneGcsBucket(
-        workspace.getWorkspaceId(),
-        createdBucket.getResourceId(),
-        workspace.getWorkspaceId(), // copy back into same workspace
-        apiJobControl,
-        user.getAuthenticatedRequest(),
-        "cloned_bucket",
-        "A bucket cloned individually into the same workspace.",
-        destinationBucketName,
-        destinationLocation,
-        ApiCloningInstructionsEnum.RESOURCE);
+    final String jobId =
+        controlledResourceService.cloneGcsBucket(
+            workspace.getWorkspaceId(),
+            createdBucket.getResourceId(),
+            workspace.getWorkspaceId(), // copy back into same workspace
+            apiJobControl,
+            user.getAuthenticatedRequest(),
+            "cloned_bucket",
+            "A bucket cloned individually into the same workspace.",
+            destinationBucketName,
+            destinationLocation,
+            ApiCloningInstructionsEnum.RESOURCE);
 
     jobService.waitForJob(jobId);
     final FlightState flightState = stairwayComponent.get().getFlightState(jobId);
     assertEquals(FlightStatus.SUCCESS, flightState.getFlightStatus());
     assertTrue(flightState.getException().isEmpty());
     assertTrue(flightState.getResultMap().isPresent());
-    var response = flightState.getResultMap().get()
-        .get(JobMapKeys.RESPONSE.getKeyName(), ApiClonedControlledGcpGcsBucket.class);
+    var response =
+        flightState
+            .getResultMap()
+            .get()
+            .get(JobMapKeys.RESPONSE.getKeyName(), ApiClonedControlledGcpGcsBucket.class);
     assertNotNull(response);
-    assertEquals(destinationBucketName, response.getBucket().getGcpBucket().getAttributes().getBucketName());
+    assertEquals(
+        destinationBucketName, response.getBucket().getGcpBucket().getAttributes().getBucketName());
     final UUID resourceId = response.getBucket().getResourceId();
-    final ControlledResource destinationControlledResource = controlledResourceService.getControlledResource(workspace.getWorkspaceId(), resourceId, user.getAuthenticatedRequest());
-    final ControlledGcsBucketResource destinationBucketResource = destinationControlledResource.castByEnum(WsmResourceType.CONTROLLED_GCP_GCS_BUCKET);
+    final ControlledResource destinationControlledResource =
+        controlledResourceService.getControlledResource(
+            workspace.getWorkspaceId(), resourceId, user.getAuthenticatedRequest());
+    final ControlledGcsBucketResource destinationBucketResource =
+        destinationControlledResource.castByEnum(WsmResourceType.CONTROLLED_GCP_GCS_BUCKET);
     assertNotNull(destinationBucketResource);
     assertEquals("cloned_bucket", destinationBucketResource.getName());
 
-    // check creation parameters on cloud (not stored by WSM). Source project is same as destination in this case.
-    final StorageCow storageCow = crlService.createStorageCow(gcpCloudContextService.getRequiredGcpProject(workspace.getWorkspaceId()));
+    // check creation parameters on cloud (not stored by WSM). Source project is same as destination
+    // in this case.
+    final StorageCow storageCow =
+        crlService.createStorageCow(
+            gcpCloudContextService.getRequiredGcpProject(workspace.getWorkspaceId()));
     final BucketCow bucketCow = storageCow.get(destinationBucketName);
     final BucketInfo bucketInfo = bucketCow.getBucketInfo();
     assertEquals(destinationLocation, bucketInfo.getLocation());
-    assertEquals(GcsApiConversions.toGcsApi(ControlledResourceFixtures.getGoogleBucketCreationParameters().getDefaultStorageClass()), bucketInfo.getStorageClass());
-    final List<LifecycleRule> expectedLifecycleRules = GcsApiConversions.toGcsApi(ControlledResourceFixtures.getGoogleBucketCreationParameters().getLifecycle().getRules());
-    assertThat(expectedLifecycleRules, containsInAnyOrder(bucketInfo.getLifecycleRules().toArray()));
+    assertEquals(
+        GcsApiConversions.toGcsApi(
+            ControlledResourceFixtures.getGoogleBucketCreationParameters()
+                .getDefaultStorageClass()),
+        bucketInfo.getStorageClass());
+    final List<LifecycleRule> expectedLifecycleRules =
+        GcsApiConversions.toGcsApi(
+            ControlledResourceFixtures.getGoogleBucketCreationParameters()
+                .getLifecycle()
+                .getRules());
+    assertThat(
+        expectedLifecycleRules, containsInAnyOrder(bucketInfo.getLifecycleRules().toArray()));
   }
 
   @Test

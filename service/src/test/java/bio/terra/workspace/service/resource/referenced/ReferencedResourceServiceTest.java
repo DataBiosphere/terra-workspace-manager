@@ -488,7 +488,7 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
             resourceId,
             resourceName,
             "description of " + resourceName,
-            CloningInstructions.COPY_DEFINITION,
+            CloningInstructions.COPY_REFERENCE,
             /*bucketName=*/ "theres-a-hole-in-the-bottom-of-the",
             /*objectName=*/ "balloon");
       }
@@ -538,7 +538,7 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
             resourceId,
             resourceName,
             "description of " + resourceName,
-            CloningInstructions.COPY_DEFINITION,
+            CloningInstructions.COPY_REFERENCE,
             "theres-a-hole-in-the-bottom-of-the");
       }
 
@@ -582,7 +582,7 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
       @Test
       void missingObjectName_throwsException() {
         UUID resourceId = UUID.randomUUID();
-        String resourceName = "testgcs-" + resourceId.toString();
+        String resourceName = "testgcs-" + resourceId;
         assertThrows(
             MissingRequiredFieldException.class,
             () ->
@@ -591,7 +591,7 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
                     resourceId,
                     resourceName,
                     "description of " + resourceName,
-                    CloningInstructions.COPY_DEFINITION,
+                    CloningInstructions.COPY_REFERENCE,
                     /*bucketName=*/ "spongebob",
                     /*fileName=*/ ""));
       }
@@ -599,7 +599,7 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
       @Test
       void testMissingBucketName() {
         UUID resourceId = UUID.randomUUID();
-        String resourceName = "testgcs-" + resourceId.toString();
+        String resourceName = "testgcs-" + resourceId;
         assertThrows(
             MissingRequiredFieldException.class,
             () ->
@@ -608,14 +608,14 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
                     resourceId,
                     resourceName,
                     "description of " + resourceName,
-                    CloningInstructions.COPY_DEFINITION,
+                    CloningInstructions.COPY_REFERENCE,
                     null));
       }
 
       @Test
       void testInvalidBucketName() {
         UUID resourceId = UUID.randomUUID();
-        String resourceName = "testgcs-" + resourceId.toString();
+        String resourceName = "testgcs-" + resourceId;
 
         assertThrows(
             InvalidNameException.class,
@@ -625,7 +625,7 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
                     resourceId,
                     resourceName,
                     "description of " + resourceName,
-                    CloningInstructions.COPY_DEFINITION,
+                    CloningInstructions.COPY_REFERENCE,
                     "Buckets don't accept * in the names, either"));
       }
 

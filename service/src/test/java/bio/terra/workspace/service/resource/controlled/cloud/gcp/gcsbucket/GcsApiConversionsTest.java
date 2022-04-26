@@ -84,7 +84,8 @@ public class GcsApiConversionsTest extends BaseUnitTest {
     final LifecycleRule gcsRule1 = bucketInfo1.getLifecycleRules().get(0);
     assertEquals(DeleteLifecycleAction.TYPE, gcsRule1.getAction().getActionType());
     assertEquals(31, gcsRule1.getCondition().getAge());
-    assertEquals(toGoogleDateTimeDateOnly(OFFSET_DATE_TIME_2), gcsRule1.getCondition().getCreatedBefore());
+    assertEquals(
+        toGoogleDateTimeDateOnly(OFFSET_DATE_TIME_2), gcsRule1.getCondition().getCreatedBefore());
     assertTrue(gcsRule1.getCondition().getIsLive());
     assertThat(gcsRule1.getCondition().getMatchesStorageClass(), hasSize(2));
   }
@@ -183,15 +184,27 @@ public class GcsApiConversionsTest extends BaseUnitTest {
     assertEquals(
         toGoogleDateTimeDateOnly(WSM_LIFECYCLE_RULE_CONDITION_1.getCreatedBefore()),
         googleLifecycleCondition1.getCreatedBefore());
-    ApiGcpGcsBucketLifecycleRuleCondition roundTrippedCondition = toWsmApi(googleLifecycleCondition1);
-    // We can't compare the round-tripped condition with the original for equality, because the conversion
+    ApiGcpGcsBucketLifecycleRuleCondition roundTrippedCondition =
+        toWsmApi(googleLifecycleCondition1);
+    // We can't compare the round-tripped condition with the original for equality, because the
+    // conversion
     // to Google DateTime with dateOnly=true is lossy.
     assertEquals(WSM_LIFECYCLE_RULE_CONDITION_1.getAge(), roundTrippedCondition.getAge());
-    assertEquals(WSM_LIFECYCLE_RULE_CONDITION_1.getDaysSinceCustomTime(), roundTrippedCondition.getDaysSinceCustomTime());
-    assertEquals(WSM_LIFECYCLE_RULE_CONDITION_1.getDaysSinceNoncurrentTime(), roundTrippedCondition.getDaysSinceNoncurrentTime());
-    assertThat(WSM_LIFECYCLE_RULE_CONDITION_1.getMatchesStorageClass(), containsInAnyOrder(roundTrippedCondition.getMatchesStorageClass().toArray()));
-    assertEquals(WSM_LIFECYCLE_RULE_CONDITION_1.getCustomTimeBefore(), roundTrippedCondition.getCustomTimeBefore());
-    assertEquals(WSM_LIFECYCLE_RULE_CONDITION_1.getNumNewerVersions(), roundTrippedCondition.getNumNewerVersions());
+    assertEquals(
+        WSM_LIFECYCLE_RULE_CONDITION_1.getDaysSinceCustomTime(),
+        roundTrippedCondition.getDaysSinceCustomTime());
+    assertEquals(
+        WSM_LIFECYCLE_RULE_CONDITION_1.getDaysSinceNoncurrentTime(),
+        roundTrippedCondition.getDaysSinceNoncurrentTime());
+    assertThat(
+        WSM_LIFECYCLE_RULE_CONDITION_1.getMatchesStorageClass(),
+        containsInAnyOrder(roundTrippedCondition.getMatchesStorageClass().toArray()));
+    assertEquals(
+        WSM_LIFECYCLE_RULE_CONDITION_1.getCustomTimeBefore(),
+        roundTrippedCondition.getCustomTimeBefore());
+    assertEquals(
+        WSM_LIFECYCLE_RULE_CONDITION_1.getNumNewerVersions(),
+        roundTrippedCondition.getNumNewerVersions());
 
     ApiGcpGcsBucketLifecycleRuleCondition wsmCondition = toWsmApi(GCS_LIFECYCLE_CONDITION_1);
     assertEquals(42, wsmCondition.getAge());

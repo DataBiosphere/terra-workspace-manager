@@ -3,6 +3,7 @@ package bio.terra.workspace.service.resource;
 import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.defaultNotebookCreationParameters;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
+import bio.terra.common.exception.BadRequestException;
 import bio.terra.common.exception.InconsistentFieldsException;
 import bio.terra.common.exception.MissingRequiredFieldException;
 import bio.terra.workspace.app.configuration.external.GitRepoReferencedResourceConfiguration;
@@ -12,6 +13,8 @@ import bio.terra.workspace.generated.model.ApiAzureVmImage;
 import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceContainerImage;
 import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceVmImage;
 import bio.terra.workspace.service.resource.exception.InvalidNameException;
+import bio.terra.workspace.service.resource.model.CloningInstructions;
+import bio.terra.workspace.service.resource.model.StewardshipType;
 import bio.terra.workspace.service.resource.referenced.exception.InvalidReferenceException;
 import java.util.List;
 import org.apache.commons.lang3.RandomStringUtils;
@@ -367,5 +370,26 @@ public class ValidationUtilsTest extends BaseUnitTest {
         MissingRequiredFieldException.class,
         () ->
             ResourceValidationUtils.validateApiAzureVmCreationParameters(apiVmCreationParameters));
+  }
+
+  @Test
+  public void validateCloningInstructions_invalidCombination_throwsException() {
+    assertThrows(
+        BadRequestException.class,
+        () ->
+            ResourceValidationUtils.validateCloningInstructions(
+                StewardshipType.REFERENCED, CloningInstructions.COPY_RESOURCE));
+    assertThrows(
+        BadRequestException.class,
+        () ->
+            ResourceValidationUtils.validateCloningInstructions(
+                StewardshipType.REFERENCED, CloningInstructions.COPY_DEFINITION));
+
+    // This will be supported if we implement PF-812.
+    assertThrows(
+        BadRequestException.class,
+        () ->
+            ResourceValidationUtils.validateCloningInstructions(
+                StewardshipType.CONTROLLED, CloningInstructions.COPY_REFERENCE));
   }
 }

@@ -76,9 +76,19 @@ fi
 # Log in with app-default-credentials
 sudo -u "${JUPYTER_USER}" sh -c "terra auth login --mode=APP_DEFAULT_CREDENTIALS"
 
-# Get all the git repvoio clone urls from the workspace resource list with type GIT_REPO and try to clone all of them.
+sudo -u "${JUPYTER_USER}" sh -c "mkdir -p /home/${JUPYTER_USER}/.ssh"
 cd /home/${JUPYTER_USER}
-sudo -u "${JUPYTER_USER}" sh -c "terra resource list --type=GIT_REPO --format=JSON" | jq -r 'unique_by(.gitRepoUrl) | .[] | {gitRepoUrl} | join (" ") ' | while read -r repoUrl; do
-  sudo -u "${JUPYTER_USER}" sh -c "git clone ${repoUrl}" && echo "cloned ${repoUrl}" || echo "clone ${repoUrl} failed"
-done
+readonly TERRA_SSH_KEY=$(sudo -u "${JUPYTER_USER}" sh -c "terra user ssh-key get --format=JSON")
+
+# Start the ssh-agent. Set this command in bash_profile so everytime user starts a shell, we start the ssh-agent.
+echo eval '"$(ssh-agent -s)"' >> .bash_profile
+if [[ -n "$TERRA_SSH_KEY" ]]; then
+  printf '%s' "$TERRA_SSH_KEY" | sudo -u "${JUPYTER_USER}" sh -c "jq -r '.privateSshKey' > .ssh/id_rsa"
+  sudo -u "$JUPYTER_USER" sh -c 'chmod go-rwx .ssh/id_rsa'
+  sudo -u "$JUPYTER_USER" sh -c 'ssh-add .ssh/id_rsa; ssh-keyscan -H github.com >> ~/.ssh/known_hosts'
+fi
+
+# Attempt to clone all the git repo references in the workspace. If the user's ssh key does not exist or doesn't have access
+# to the git references, the corresponding git repo cloning will be skipped.
+sudo -u "$JUPYTER_USER" sh -c 'terra git clone --all'
 

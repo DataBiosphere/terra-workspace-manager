@@ -1,5 +1,6 @@
 package bio.terra.workspace.service.resource;
 
+import bio.terra.common.exception.BadRequestException;
 import bio.terra.common.exception.InconsistentFieldsException;
 import bio.terra.common.exception.MissingRequiredFieldException;
 import bio.terra.workspace.app.configuration.external.GitRepoReferencedResourceConfiguration;
@@ -7,6 +8,8 @@ import bio.terra.workspace.generated.model.ApiAzureVmCreationParameters;
 import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceCreationParameters;
 import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceVmImage;
 import bio.terra.workspace.service.resource.exception.InvalidNameException;
+import bio.terra.workspace.service.resource.model.CloningInstructions;
+import bio.terra.workspace.service.resource.model.StewardshipType;
 import bio.terra.workspace.service.resource.referenced.exception.InvalidReferenceException;
 import com.azure.core.management.Region;
 import com.azure.resourcemanager.compute.models.VirtualMachineSizeTypes;
@@ -425,6 +428,32 @@ public class ResourceValidationUtils {
             && !StringUtils.isEmpty(vmImage.getOffer())
             && !StringUtils.isEmpty(vmImage.getSku()))) {
       checkFieldNonNull(apiAzureVmCreationParameters.getVmUser(), "vmUser");
+    }
+  }
+
+  /**
+   * Assert that the cloning instructions specified for a controlled or referenced resource are a
+   * valid combination. Intended for use at the api controller level.
+   *
+   * @param stewardshipType - controlled or referenced
+   * @param cloningInstructions - supplied cloning instructions with the API request
+   * @throws BadRequestException if the combination is not valid
+   */
+  public static void validateCloningInstructions(
+      StewardshipType stewardshipType, CloningInstructions cloningInstructions) {
+    final boolean valid =
+        (StewardshipType.CONTROLLED == stewardshipType
+                && (CloningInstructions.COPY_NOTHING == cloningInstructions
+                    || CloningInstructions.COPY_DEFINITION == cloningInstructions
+                    || CloningInstructions.COPY_RESOURCE == cloningInstructions))
+            || (StewardshipType.REFERENCED == stewardshipType
+                && (CloningInstructions.COPY_NOTHING == cloningInstructions
+                    || CloningInstructions.COPY_REFERENCE == cloningInstructions));
+    if (!valid) {
+      throw new BadRequestException(
+          String.format(
+              "Cloning Instruction %s is not valid with Stewardship Type %s",
+              cloningInstructions.toString(), stewardshipType.toString()));
     }
   }
 }
