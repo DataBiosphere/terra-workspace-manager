@@ -6,10 +6,14 @@ import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.db.ResourceDao;
+import bio.terra.workspace.generated.model.ApiGcpGcsBucketUpdateParameters;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceMetadataManager;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
+import bio.terra.workspace.service.resource.model.CloningInstructions;
+import bio.terra.workspace.service.resource.model.WsmResourceType;
+import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ResourceKeys;
 
 public class UpdateControlledResourceMetadataStep implements Step {
@@ -36,12 +40,23 @@ public class UpdateControlledResourceMetadataStep implements Step {
         inputParameters.get(ResourceKeys.RESOURCE_DESCRIPTION, String.class);
     final AuthenticatedUserRequest userRequest =
         inputParameters.get(JobMapKeys.AUTH_USER_INFO.getKeyName(), AuthenticatedUserRequest.class);
+    final CloningInstructions cloningInstructions;
+    if (WsmResourceType.CONTROLLED_GCP_GCS_BUCKET == resource.getResourceType()) {
+      final var bucketUpdateParameters =
+          inputParameters.get(
+              ControlledResourceKeys.UPDATE_PARAMETERS, ApiGcpGcsBucketUpdateParameters.class);
+      cloningInstructions =
+          CloningInstructions.fromApiModel(bucketUpdateParameters.getCloningInstructions());
+    } else {
+      cloningInstructions = null; // don't change the value
+    }
+
     controlledResourceMetadataManager.updateControlledResourceMetadata(
         resource.getWorkspaceId(),
         resource.getResourceId(),
         resourceName,
         resourceDescription,
-        resource.getCloningInstructions(),
+        cloningInstructions,
         userRequest);
     return StepResult.getStepResultSuccess();
   }
@@ -52,8 +67,15 @@ public class UpdateControlledResourceMetadataStep implements Step {
     final String previousName = workingMap.get(ResourceKeys.PREVIOUS_RESOURCE_NAME, String.class);
     final String previousDescription =
         workingMap.get(ResourceKeys.PREVIOUS_RESOURCE_DESCRIPTION, String.class);
+    final var previousCloningInstructions =
+        workingMap.get(ResourceKeys.PREVIOUS_CLONING_INSTRUCTIONS, CloningInstructions.class);
     resourceDao.updateResource(
-        resource.getWorkspaceId(), resource.getResourceId(), previousName, previousDescription);
+        resource.getWorkspaceId(),
+        resource.getResourceId(),
+        previousName,
+        previousDescription,
+        null,
+        previousCloningInstructions);
     return StepResult.getStepResultSuccess();
   }
 }
