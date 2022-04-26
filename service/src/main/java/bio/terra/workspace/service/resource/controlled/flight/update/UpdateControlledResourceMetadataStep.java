@@ -5,6 +5,7 @@ import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.exception.RetryException;
+import bio.terra.workspace.common.utils.FlightUtils;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.generated.model.ApiGcpGcsBucketUpdateParameters;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
@@ -15,6 +16,7 @@ import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ResourceKeys;
+import java.util.Optional;
 
 public class UpdateControlledResourceMetadataStep implements Step {
 
@@ -34,6 +36,10 @@ public class UpdateControlledResourceMetadataStep implements Step {
   @Override
   public StepResult doStep(FlightContext flightContext)
       throws InterruptedException, RetryException {
+    FlightUtils.validateRequiredEntries(flightContext.getInputParameters(),
+        ResourceKeys.RESOURCE_NAME,
+        ResourceKeys.RESOURCE_DESCRIPTION,
+        JobMapKeys.AUTH_USER_INFO.getKeyName());
     final FlightMap inputParameters = flightContext.getInputParameters();
     final String resourceName = inputParameters.get(ResourceKeys.RESOURCE_NAME, String.class);
     final String resourceDescription =
@@ -46,7 +52,10 @@ public class UpdateControlledResourceMetadataStep implements Step {
           inputParameters.get(
               ControlledResourceKeys.UPDATE_PARAMETERS, ApiGcpGcsBucketUpdateParameters.class);
       cloningInstructions =
-          CloningInstructions.fromApiModel(bucketUpdateParameters.getCloningInstructions());
+          CloningInstructions.fromApiModel(
+              Optional.ofNullable(bucketUpdateParameters)
+                  .map(ApiGcpGcsBucketUpdateParameters::getCloningInstructions)
+                  .orElse(null));
     } else {
       cloningInstructions = null; // don't change the value
     }
