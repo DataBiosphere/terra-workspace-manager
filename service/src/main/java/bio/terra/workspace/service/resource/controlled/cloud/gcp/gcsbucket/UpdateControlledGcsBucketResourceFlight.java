@@ -33,8 +33,7 @@ public class UpdateControlledGcsBucketResourceFlight extends Flight {
         new UpdateControlledResourceMetadataStep(
             flightBeanBag.getControlledResourceMetadataManager(),
             flightBeanBag.getResourceDao(),
-            resource.getWorkspaceId(),
-            resource.getResourceId()),
+            resource),
         dbRetry);
 
     // retrieve existing attributes in case of undo later
@@ -52,8 +51,7 @@ public class UpdateControlledGcsBucketResourceFlight extends Flight {
         new UpdateGcsBucketStep(
             resource.castByEnum(WsmResourceType.CONTROLLED_GCP_GCS_BUCKET),
             flightBeanBag.getCrlService(),
-            flightBeanBag.getGcpCloudContextService(),
-            flightBeanBag.getResourceDao()),
+            flightBeanBag.getGcpCloudContextService()),
         gcpRetry);
   }
 }

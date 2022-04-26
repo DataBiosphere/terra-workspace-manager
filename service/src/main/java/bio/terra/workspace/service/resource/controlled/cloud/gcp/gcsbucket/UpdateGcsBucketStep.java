@@ -13,10 +13,8 @@ import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.StepStatus;
 import bio.terra.stairway.exception.RetryException;
-import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.generated.model.ApiGcpGcsBucketUpdateParameters;
 import bio.terra.workspace.service.crl.CrlService;
-import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.workspace.GcpCloudContextService;
 import com.google.cloud.storage.BucketInfo.LifecycleRule;
 import com.google.cloud.storage.StorageClass;
@@ -34,17 +32,14 @@ public class UpdateGcsBucketStep implements Step {
   private final ControlledGcsBucketResource bucketResource;
   private final CrlService crlService;
   private final GcpCloudContextService gcpCloudContextService;
-  private ResourceDao resourceDao;
 
   public UpdateGcsBucketStep(
       ControlledGcsBucketResource bucketResource,
       CrlService crlService,
-      GcpCloudContextService gcpCloudContextService,
-      ResourceDao resourceDao) {
+      GcpCloudContextService gcpCloudContextService) {
     this.bucketResource = bucketResource;
     this.crlService = crlService;
     this.gcpCloudContextService = gcpCloudContextService;
-    this.resourceDao = resourceDao;
   }
 
   @Override
@@ -113,13 +108,6 @@ public class UpdateGcsBucketStep implements Step {
       bucketCowBuilder.setStorageClass(gcsStorageClass);
     }
 
-    final boolean replaceCloningInstructions = null != updateParameters.getCloningInstructions();
-    if (replaceCloningInstructions) {
-      resourceDao.updateResourceCloningInstructions(
-          bucketResource.getWorkspaceId(),
-          bucketResource.getResourceId(),
-          CloningInstructions.fromApiModel(updateParameters.getCloningInstructions()));
-    }
     if (doReplaceLifecycleRules || replaceStorageClass) {
       bucketCowBuilder.build().update();
     } else {

@@ -71,6 +71,7 @@ public final class WorkspaceFlightMapKeys {
     public static final String RESOURCE_DESCRIPTION = "resourceDescription";
     public static final String PREVIOUS_RESOURCE_DESCRIPTION = "previousResourceDescription";
     public static final String PREVIOUS_ATTRIBUTES = "previousAttributes";
+    public static final String PREVIOUS_CLONING_INSTRUCTIONS = "previousCloningInstructions";
     // additional keys for job filtering
     public static final String STEWARDSHIP_TYPE = "stewardshipType";
     public static final String RESOURCE = "resource";

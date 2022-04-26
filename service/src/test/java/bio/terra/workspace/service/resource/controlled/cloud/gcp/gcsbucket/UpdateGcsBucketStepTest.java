@@ -22,7 +22,6 @@ import bio.terra.stairway.StepResult;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.common.BaseUnitTest;
 import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
-import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.workspace.GcpCloudContextService;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
@@ -39,7 +38,6 @@ import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
-import org.springframework.boot.test.mock.mockito.MockBean;
 
 @SuppressFBWarnings(value = "RV_RETURN_VALUE_IGNORED", justification = "storageCow is mocked.")
 public class UpdateGcsBucketStepTest extends BaseUnitTest {
@@ -55,7 +53,6 @@ public class UpdateGcsBucketStepTest extends BaseUnitTest {
   @Mock private StorageCow mockStorageCow;
   @Mock private GcpCloudContextService mockGcpCloudContextService;
 
-  @MockBean private ResourceDao mockResourceDao;
   @Captor private ArgumentCaptor<List<LifecycleRule>> lifecycleRulesCaptor;
   @Captor private ArgumentCaptor<StorageClass> storageClassCaptor;
 
@@ -90,8 +87,7 @@ public class UpdateGcsBucketStepTest extends BaseUnitTest {
         .getRequiredGcpProject(bucketResource.getWorkspaceId());
 
     updateGcsBucketStep =
-        new UpdateGcsBucketStep(
-            bucketResource, mockCrlService, mockGcpCloudContextService, mockResourceDao);
+        new UpdateGcsBucketStep(bucketResource, mockCrlService, mockGcpCloudContextService);
   }
 
   @Test

@@ -33,6 +33,9 @@ public class RetrieveReferenceMetadataStep implements Step {
     context
         .getWorkingMap()
         .put(ResourceKeys.PREVIOUS_RESOURCE_DESCRIPTION, resource.getDescription());
+    context
+        .getWorkingMap()
+        .put(ResourceKeys.PREVIOUS_CLONING_INSTRUCTIONS, resource.getCloningInstructions());
     return StepResult.getStepResultSuccess();
   }
 
