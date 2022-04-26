@@ -26,10 +26,10 @@ import org.springframework.http.HttpStatus;
 /**
  * Copy a BQ dataset's defining attributes to a new dataset.
  *
- * Preconditions: Accessible source dataset exists. Cloning instructions are COPY_DEFINITION or
+ * <p>Preconditions: Accessible source dataset exists. Cloning instructions are COPY_DEFINITION or
  * COPY_RESOURCE.
  *
- * Post conditions: Empty destination dataset exists. Flight response is marked successful if
+ * <p>Post conditions: Empty destination dataset exists. Flight response is marked successful if
  * appropriate.
  */
 public class CopyBigQueryDatasetDefinitionStep implements Step {

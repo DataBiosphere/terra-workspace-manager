@@ -35,13 +35,18 @@ public class CloneControlledGcpBigQueryDatasetResourceFlight extends Flight {
     final AuthenticatedUserRequest userRequest =
         inputParameters.get(JobMapKeys.AUTH_USER_INFO.getKeyName(), AuthenticatedUserRequest.class);
 
-    final CloningInstructions resolvedCloningInstructions = Optional.ofNullable(inputParameters.get(
-        ControlledResourceKeys.CLONING_INSTRUCTIONS, CloningInstructions.class))
-        .orElse(sourceResource.getCloningInstructions());
+    final CloningInstructions resolvedCloningInstructions =
+        Optional.ofNullable(
+                inputParameters.get(
+                    ControlledResourceKeys.CLONING_INSTRUCTIONS, CloningInstructions.class))
+            .orElse(sourceResource.getCloningInstructions());
 
     if (CloningInstructions.COPY_NOTHING == resolvedCloningInstructions) {
-      addStep(new SetNoOpBucketCloneResponseStep(sourceResource.castByEnum(WsmResourceType.CONTROLLED_GCP_BIG_QUERY_DATASET)));
-    } else if (CloningInstructions.COPY_RESOURCE == resolvedCloningInstructions || CloningInstructions.COPY_DEFINITION == resolvedCloningInstructions) {
+      addStep(
+          new SetNoOpBucketCloneResponseStep(
+              sourceResource.castByEnum(WsmResourceType.CONTROLLED_GCP_BIG_QUERY_DATASET)));
+    } else if (CloningInstructions.COPY_RESOURCE == resolvedCloningInstructions
+        || CloningInstructions.COPY_DEFINITION == resolvedCloningInstructions) {
       // Flight Plan
       // 1. Validate user has read access to the source object
       // 2. Gather controlled resource metadata for source object
@@ -86,7 +91,9 @@ public class CloneControlledGcpBigQueryDatasetResourceFlight extends Flight {
             RetryRules.cloudLongRunning());
       }
     } else {
-      throw new IllegalArgumentException(String.format("Cloining Instructions %s not supported", resolvedCloningInstructions.toString()));
+      throw new IllegalArgumentException(
+          String.format(
+              "Cloining Instructions %s not supported", resolvedCloningInstructions.toString()));
     }
   }
 }
