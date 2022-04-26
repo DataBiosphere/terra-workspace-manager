@@ -305,6 +305,10 @@ public class WorkspaceService {
     String jobDescription =
         String.format("Clone workspace: name: '%s' id: '%s'  ", workspaceName, workspaceId);
 
+    // Create the destination workspace synchronously first.
+    createWorkspace(destinationWorkspace, userRequest);
+
+    // Remaining steps are an async flight.
     return jobService
         .newJob()
         .description(jobDescription)

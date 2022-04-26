@@ -13,8 +13,6 @@ public class CloneGcpWorkspaceFlight extends Flight {
     // Flight Map
     // 0. Build a list of resources to clone
     // 1. Create job IDs for future sub-flights and a couple other things
-    // 2. Launch the flight to create destination workspace
-    // 2a. Wait for the workspace create flight.
     // 3. Launch a flight to create the GCP cloud context
     // 3a. Await the context flight
     // 4. Launch a flight to clone all resources on the list
@@ -23,9 +21,6 @@ public class CloneGcpWorkspaceFlight extends Flight {
     addStep(new FindResourcesToCloneStep(flightBeanBag.getResourceDao()), RetryRules.cloud());
 
     addStep(new CreateIdsForFutureStepsStep());
-
-    addStep(new LaunchWorkspaceCreateFlightStep(), RetryRules.cloud());
-    addStep(new AwaitWorkspaceCreateFlightStep(), RetryRules.cloud());
 
     addStep(
         new LaunchCreateGcpContextFlightStep(flightBeanBag.getWorkspaceService()),
