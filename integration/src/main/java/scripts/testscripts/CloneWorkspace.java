@@ -261,6 +261,15 @@ public class CloneWorkspace extends WorkspaceAllocateTestScriptBase {
 
     final String jobId = cloneResult.getJobReport().getId();
     logger.info("Clone Job ID {}", jobId);
+    final UUID destinationWorkspaceId = cloneResult.getWorkspace().getDestinationWorkspaceId();
+    assertNotNull(destinationWorkspaceId, "Destination workspace ID available immediately.");
+    final WorkspaceDescription destinationWorkspaceDescription =
+        cloningUserWorkspaceApi.getWorkspace(destinationWorkspaceId);
+    assertNotNull(
+        destinationWorkspaceDescription,
+        "Destination workspace is available in DB immediately after return from cloneWorkspace().");
+    assertEquals(
+        destinationWorkspaceId, destinationWorkspaceDescription.getId(), "Destination IDs match");
 
     cloneResult =
         ClientTestUtils.pollWhileRunning(
@@ -282,8 +291,6 @@ public class CloneWorkspace extends WorkspaceAllocateTestScriptBase {
         getWorkspaceId(),
         cloneResult.getWorkspace().getSourceWorkspaceId(),
         "Source workspace ID reported accurately.");
-    destinationWorkspaceId = cloneResult.getWorkspace().getDestinationWorkspaceId();
-    assertNotNull(destinationWorkspaceId, "Destination Workspace ID populated.");
 
     // Verify shared GCS bucket succeeds and is populated
     final ResourceCloneDetails sharedBucketCloneDetails =

@@ -33,7 +33,6 @@ import bio.terra.workspace.service.iam.model.WsmIamRole;
 import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.job.JobService.AsyncJobResult;
 import bio.terra.workspace.service.petserviceaccount.PetSaService;
-import bio.terra.workspace.service.resource.referenced.cloud.gcp.ReferencedResourceService;
 import bio.terra.workspace.service.spendprofile.SpendProfileId;
 import bio.terra.workspace.service.workspace.AzureCloudContextService;
 import bio.terra.workspace.service.workspace.GcpCloudContextService;
@@ -67,7 +66,6 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
   private final WorkspaceService workspaceService;
   private final JobService jobService;
   private final SamService samService;
-  private final ReferencedResourceService referenceResourceService;
   private final AzureCloudContextService azureCloudContextService;
   private final GcpCloudContextService gcpCloudContextService;
   private final PetSaService petSaService;
@@ -79,7 +77,6 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
       SamService samService,
       AuthenticatedUserRequestFactory authenticatedUserRequestFactory,
       HttpServletRequest request,
-      ReferencedResourceService referenceResourceService,
       GcpCloudContextService gcpCloudContextService,
       PetSaService petSaService,
       AzureCloudContextService azureCloudContextService) {
@@ -87,7 +84,6 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
     this.workspaceService = workspaceService;
     this.jobService = jobService;
     this.samService = samService;
-    this.referenceResourceService = referenceResourceService;
     this.azureCloudContextService = azureCloudContextService;
     this.gcpCloudContextService = gcpCloudContextService;
     this.petSaService = petSaService;
@@ -369,11 +365,11 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
 
     Optional<SpendProfileId> spendProfileId =
         Optional.ofNullable(body.getSpendProfile()).map(SpendProfileId::new);
-
+    final UUID destinationWorkspaceId = UUID.randomUUID();
     // Construct the target workspace object from the inputs
-    Workspace destinationWorkspace =
+    final Workspace destinationWorkspace =
         Workspace.builder()
-            .workspaceId(UUID.randomUUID())
+            .workspaceId(destinationWorkspaceId)
             .spendProfileId(spendProfileId.orElse(null))
             .workspaceStage(WorkspaceStage.MC_WORKSPACE)
             .displayName(body.getDisplayName())
@@ -386,6 +382,11 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
             workspaceId, petRequest, body.getLocation(), destinationWorkspace);
 
     final ApiCloneWorkspaceResult result = fetchCloneWorkspaceResult(jobId, getAuthenticatedInfo());
+    final ApiClonedWorkspace clonedWorkspaceStub =
+        new ApiClonedWorkspace()
+            .destinationWorkspaceId(destinationWorkspaceId)
+            .sourceWorkspaceId(workspaceId);
+    result.setWorkspace(clonedWorkspaceStub);
     return new ResponseEntity<>(result, getAsyncResponseCode(result.getJobReport()));
   }
 
