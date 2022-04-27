@@ -48,9 +48,9 @@ public class ControlledResourceMetadataManager {
       @Nullable String description,
       @Nullable CloningInstructions cloningInstructions,
       AuthenticatedUserRequest userRequest) {
-    stageService.assertMcWorkspace(workspaceId, "updateControlledResource");
+    stageService.assertMcWorkspace(workspaceUuid, "updateControlledResource");
     validateControlledResourceAndAction(
-        userRequest, workspaceId, resourceId, SamControlledResourceActions.EDIT_ACTION);
+        userRequest, workspaceUuid, resourceId, SamControlledResourceActions.EDIT_ACTION);
     // Name may be null if the user is not updating it in this request.
     if (name != null) {
       ResourceValidationUtils.validateResourceName(name);

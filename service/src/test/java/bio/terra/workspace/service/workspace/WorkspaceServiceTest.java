@@ -312,13 +312,13 @@ class WorkspaceServiceTest extends BaseConnectedTest {
     // Sending through empty strings and an empty map clears the values.
     Map<String, String> propertyMap3 = new HashMap<>();
     Workspace thirdUpdatedWorkspace =
-        workspaceService.updateWorkspace(USER_REQUEST, workspaceId, userFacingId, "", "", propertyMap3);
+        workspaceService.updateWorkspace(USER_REQUEST, workspaceUuid, userFacingId, "", "", propertyMap3);
     assertEquals("", thirdUpdatedWorkspace.getDisplayName().orElse(null));
     assertEquals("", thirdUpdatedWorkspace.getDescription().orElse(null));
 
     assertThrows(
         MissingRequiredFieldException.class,
-        () -> workspaceService.updateWorkspace(USER_REQUEST, workspaceUuid, null, null, null));
+        () -> workspaceService.updateWorkspace(USER_REQUEST, workspaceUuid, null, null, null, null));
   }
 
   @Test

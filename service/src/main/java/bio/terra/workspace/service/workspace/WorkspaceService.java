@@ -188,7 +188,7 @@ public class WorkspaceService {
       @Nullable Map<String, String> properties) {
     validateWorkspaceAndAction(userRequest, workspaceUuid, SamConstants.SamWorkspaceAction.WRITE);
     workspaceDao.updateWorkspace(workspaceUuid, userFacingId, name, description, properties);
-    return workspaceDao.getWorkspace(workspaceId);
+    return workspaceDao.getWorkspace(workspaceUuid);
   }
 
   /** Delete an existing workspace by ID. */

@@ -163,7 +163,7 @@ public class ControlledResourceService {
             .resource(resource)
             .userRequest(userRequest)
             .operationType(OperationType.UPDATE)
-            .workspaceId(resource.getWorkspaceId().toString())
+            .workspaceUuid( resource.getWorkspaceId().toString())
             // TODO: [PF-1282] need to disambiguate the RESOURCE and RESOURCE_NAME usage
             .resourceType(resource.getResourceType())
             .stewardshipType(resource.getStewardshipType())

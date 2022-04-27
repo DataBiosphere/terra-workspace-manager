@@ -491,7 +491,7 @@ public class ResourceDao {
    */
   @WriteTransaction
   public boolean updateResource(
-      UUID workspaceId, UUID resourceId, @Nullable String name, @Nullable String description) {
+      UUID workspaceUuid, UUID resourceId, @Nullable String name, @Nullable String description) {
     return updateResourceWorker(
         workspaceUuid,
         resourceId,
