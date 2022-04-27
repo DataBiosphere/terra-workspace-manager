@@ -81,10 +81,10 @@ public class AwaitCloneAllResourcesFlightStep implements Step {
                       new TypeReference<Map<UUID, WsmResourceCloneDetails>>() {}))
               .orElse(Collections.emptyMap());
       final var apiClonedWorkspace = new ApiClonedWorkspace();
-      apiClonedWorkspace.setDestinationWorkspaceUuid(destinationWorkspace.getWorkspaceUuid());
-      final var sourceWorkspaceUuid =
+      apiClonedWorkspace.setDestinationWorkspaceId(destinationWorkspace.getWorkspaceId());
+      final var sourceWorkspaceId =
           context.getInputParameters().get(ControlledResourceKeys.SOURCE_WORKSPACE_ID, UUID.class);
-      apiClonedWorkspace.setSourceWorkspaceUuid(sourceWorkspaceUuid);
+      apiClonedWorkspace.setSourceWorkspaceId(sourceWorkspaceId);
       final List<ApiResourceCloneDetails> resources =
           resourceIdToDetails.values().stream()
               .map(WsmResourceCloneDetails::toApiModel)

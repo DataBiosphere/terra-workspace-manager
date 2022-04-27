@@ -62,7 +62,7 @@ public class DeleteAzureRelayNamespaceStep implements Step {
     logger.error(
         "Cannot undo delete of Azure Relay Namespace resource {} in workspace {}.",
         resource.getResourceId(),
-        resource.getWorkspaceUuid());
+        resource.getWorkspaceId());
     // Surface whatever error caused Stairway to begin undoing.
     return flightContext.getResult();
   }

@@ -62,19 +62,19 @@ public class RemoveUser extends WorkspaceAllocateTestScriptBase {
     // Add one user as a reader, and one as both a reader and writer.
     ownerWorkspaceApi.grantRole(
         new GrantRoleRequestBody().memberEmail(privateResourceUser.userEmail),
-        getWorkspaceUuid(),
+        getWorkspaceId(),
         IamRole.READER);
     ownerWorkspaceApi.grantRole(
         new GrantRoleRequestBody().memberEmail(privateResourceUser.userEmail),
-        getWorkspaceUuid(),
+        getWorkspaceId(),
         IamRole.WRITER);
     ownerWorkspaceApi.grantRole(
         new GrantRoleRequestBody().memberEmail(sharedResourceUser.userEmail),
-        getWorkspaceUuid(),
+        getWorkspaceId(),
         IamRole.WRITER);
 
     // Create a GCP cloud context.
-    projectId = CloudContextMaker.createGcpCloudContext(getWorkspaceUuid(), ownerWorkspaceApi);
+    projectId = CloudContextMaker.createGcpCloudContext(getWorkspaceId(), ownerWorkspaceApi);
 
     // Create a shared GCS bucket with one object inside.
     ControlledGcpResourceApi ownerResourceApi =
@@ -82,7 +82,7 @@ public class RemoveUser extends WorkspaceAllocateTestScriptBase {
     String sharedBucketName = BUCKET_PREFIX + UUID.randomUUID();
     sharedBucket =
         makeControlledGcsBucketUserShared(
-            ownerResourceApi, getWorkspaceUuid(), sharedBucketName, CloningInstructionsEnum.NOTHING);
+            ownerResourceApi, getWorkspaceId(), sharedBucketName, CloningInstructionsEnum.NOTHING);
     GcsBucketUtils.addFileToBucket(sharedBucket, workspaceOwner, projectId);
 
     // Create a private GCS bucket for privateResourceUser with one object inside.
@@ -92,7 +92,7 @@ public class RemoveUser extends WorkspaceAllocateTestScriptBase {
     privateBucket =
         makeControlledGcsBucketUserPrivate(
             privateUserResourceApi,
-            getWorkspaceUuid(),
+            getWorkspaceId(),
             privateBucketName,
             CloningInstructionsEnum.NOTHING);
     GcsBucketUtils.addFileToBucket(privateBucket, privateResourceUser, projectId);
@@ -102,7 +102,7 @@ public class RemoveUser extends WorkspaceAllocateTestScriptBase {
     privateDataset =
         BqDatasetUtils.makeControlledBigQueryDatasetUserPrivate(
             privateUserResourceApi,
-            getWorkspaceUuid(),
+            getWorkspaceId(),
             datasetResourceName,
             null,
             CloningInstructionsEnum.NOTHING);
@@ -111,7 +111,7 @@ public class RemoveUser extends WorkspaceAllocateTestScriptBase {
     String notebookInstanceId = RandomStringUtils.randomAlphabetic(8).toLowerCase();
     privateNotebook =
         NotebookUtils.makeControlledNotebookUserPrivate(
-            getWorkspaceUuid(), notebookInstanceId, /*location=*/ null, privateUserResourceApi);
+            getWorkspaceId(), notebookInstanceId, /*location=*/ null, privateUserResourceApi);
   }
 
   @Override
@@ -125,7 +125,7 @@ public class RemoveUser extends WorkspaceAllocateTestScriptBase {
 
     // Remove WRITER role from sharedResourceUser. This is their only role, so they are no longer
     // a member of this workspace.
-    ownerWorkspaceApi.removeRole(getWorkspaceUuid(), IamRole.WRITER, sharedResourceUser.userEmail);
+    ownerWorkspaceApi.removeRole(getWorkspaceId(), IamRole.WRITER, sharedResourceUser.userEmail);
 
     // Validate that sharedResourceUser can no longer read resources in the workspace.
     // This requires syncing google groups, so there is often a delay that we need to wait for.
@@ -137,7 +137,7 @@ public class RemoveUser extends WorkspaceAllocateTestScriptBase {
 
     // Remove READER role from privateResourceUser. They are also a writer, so they should not lose
     // access to workspace resources because of this.
-    ownerWorkspaceApi.removeRole(getWorkspaceUuid(), IamRole.READER, privateResourceUser.userEmail);
+    ownerWorkspaceApi.removeRole(getWorkspaceId(), IamRole.READER, privateResourceUser.userEmail);
 
     // Validate privateResourceWriter still has access to all resources.
     GcsBucketObjectUtils.retrieveBucketFile(sharedBucketName, projectId, privateResourceUser);
@@ -147,7 +147,7 @@ public class RemoveUser extends WorkspaceAllocateTestScriptBase {
 
     // Remove WRITER role from privateResourceUser. This is their last role, so they are no longer
     // a member of this workspace.
-    ownerWorkspaceApi.removeRole(getWorkspaceUuid(), IamRole.WRITER, privateResourceUser.userEmail);
+    ownerWorkspaceApi.removeRole(getWorkspaceId(), IamRole.WRITER, privateResourceUser.userEmail);
 
     // Validate privateResourceWriter no longer has access to any private resources.
     ClientTestUtils.runWithRetryOnException(

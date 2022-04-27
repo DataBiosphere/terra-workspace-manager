@@ -25,7 +25,7 @@ public class UpdateControlledGcsBucketResourceFlight extends Flight {
     RetryRule dbRetry = RetryRules.shortDatabase();
     addStep(
         new RetrieveControlledResourceMetadataStep(
-            flightBeanBag.getResourceDao(), resource.getWorkspaceUuid(), resource.getResourceId()),
+            flightBeanBag.getResourceDao(), resource.getWorkspaceId(), resource.getResourceId()),
         dbRetry);
 
     // update the metadata (name & description of resource)
@@ -33,7 +33,7 @@ public class UpdateControlledGcsBucketResourceFlight extends Flight {
         new UpdateControlledResourceMetadataStep(
             flightBeanBag.getControlledResourceMetadataManager(),
             flightBeanBag.getResourceDao(),
-            resource.getWorkspaceUuid(),
+            resource.getWorkspaceId(),
             resource.getResourceId()),
         dbRetry);
 

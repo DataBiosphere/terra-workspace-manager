@@ -59,7 +59,7 @@ public class DeleteAzureDiskStep implements Step {
     logger.error(
         "Cannot undo delete of Azure disk resource {} in workspace {}.",
         resource.getResourceId(),
-        resource.getWorkspaceUuid());
+        resource.getWorkspaceId());
     return flightContext.getResult();
   }
 }

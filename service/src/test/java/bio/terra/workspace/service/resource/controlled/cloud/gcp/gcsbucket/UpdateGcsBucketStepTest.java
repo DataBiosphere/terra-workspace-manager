@@ -84,7 +84,7 @@ public class UpdateGcsBucketStepTest extends BaseUnitTest {
         ControlledResourceFixtures.makeDefaultControlledGcsBucketBuilder(null).build();
     doReturn(PROJECT_ID)
         .when(mockGcpCloudContextService)
-        .getRequiredGcpProject(bucketResource.getWorkspaceUuid());
+        .getRequiredGcpProject(bucketResource.getWorkspaceId());
 
     updateGcsBucketStep =
         new UpdateGcsBucketStep(bucketResource, mockCrlService, mockGcpCloudContextService);

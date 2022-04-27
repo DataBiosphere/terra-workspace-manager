@@ -42,7 +42,7 @@ public class ControlledBigQueryDatasetHandler implements WsmResourceHandler {
         DbSerDes.fromJson(dbResource.getAttributes(), ControlledBigQueryDatasetAttributes.class);
     String projectId =
         Optional.ofNullable(attributes.getProjectId())
-            .orElse(gcpCloudContextService.getRequiredGcpProject(dbResource.getWorkspaceUuid()));
+            .orElse(gcpCloudContextService.getRequiredGcpProject(dbResource.getWorkspaceId()));
 
     var resource =
         ControlledBigQueryDatasetResource.builder()

@@ -35,7 +35,7 @@ public class CreateReferenceMetadataStep implements Step {
     WsmResource referencedResource = getReferencedResource(flightContext);
     // Ignore return value, as we don't care whether a reference was deleted or just not found.
     resourceDao.deleteResource(
-        referencedResource.getWorkspaceUuid(), referencedResource.getResourceId());
+        referencedResource.getWorkspaceId(), referencedResource.getResourceId());
 
     return StepResult.getStepResultSuccess();
   }

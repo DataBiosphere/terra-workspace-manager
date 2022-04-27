@@ -150,7 +150,7 @@ public class ReferencedBigQueryDatasetResource extends ReferencedResource {
     CrlService crlService = context.getCrlService();
     PetSaService petSaService = context.getPetSaService();
     Optional<AuthenticatedUserRequest> maybePetCreds =
-        petSaService.getWorkspacePetCredentials(getWorkspaceUuid(), userRequest);
+        petSaService.getWorkspacePetCredentials(getWorkspaceId(), userRequest);
     return crlService.canReadBigQueryDataset(
         projectId, datasetName, maybePetCreds.orElse(userRequest));
   }
@@ -169,7 +169,7 @@ public class ReferencedBigQueryDatasetResource extends ReferencedResource {
         .name(getName())
         .projectId(getProjectId())
         .resourceId(getResourceId())
-        .workspaceUuid(getWorkspaceUuid());
+        .workspaceUuid(getWorkspaceId());
   }
 
   public static class Builder {

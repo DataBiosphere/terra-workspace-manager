@@ -38,7 +38,7 @@ public class ReferencedDataRepoSnapshotLifecycle extends WorkspaceAllocateTestSc
   private String snapshotId2;
   private UUID snapshotResourceId;
   private TestUserSpecification partialAccessUser;
-  private UUID destinationWorkspaceUuid;
+  private UUID destinationWorkspaceId;
 
   public void setParametersMap(Map<String, String> parametersMap) throws Exception {
     super.setParametersMap(parametersMap);
@@ -68,14 +68,14 @@ public class ReferencedDataRepoSnapshotLifecycle extends WorkspaceAllocateTestSc
     // underlying referenced resources.
     workspaceApi.grantRole(
         new GrantRoleRequestBody().memberEmail(partialAccessUser.userEmail),
-        getWorkspaceUuid(),
+        getWorkspaceId(),
         IamRole.READER);
 
     // Create the reference
     DataRepoSnapshotResource snapshotResource =
         DataRepoUtils.makeDataRepoSnapshotReference(
             referencedGcpResourceApi,
-            getWorkspaceUuid(),
+            getWorkspaceId(),
             MultiResourcesUtils.makeName(),
             snapshotId,
             tdrInstance);
@@ -95,11 +95,11 @@ public class ReferencedDataRepoSnapshotLifecycle extends WorkspaceAllocateTestSc
     testUpdateReference(referencedGcpResourceApi);
 
     // Delete the reference
-    referencedGcpResourceApi.deleteDataRepoSnapshotReference(getWorkspaceUuid(), snapshotResourceId);
+    referencedGcpResourceApi.deleteDataRepoSnapshotReference(getWorkspaceId(), snapshotResourceId);
 
     // Enumerating all resources with no filters should be empty
     ResourceList enumerateResult =
-        resourceApi.enumerateResources(getWorkspaceUuid(), 0, 100, null, null);
+        resourceApi.enumerateResources(getWorkspaceId(), 0, 100, null, null);
     assertTrue(enumerateResult.getResources().isEmpty());
   }
 
@@ -110,19 +110,19 @@ public class ReferencedDataRepoSnapshotLifecycle extends WorkspaceAllocateTestSc
       throws Exception {
     // Read the reference by id
     DataRepoSnapshotResource snapshotFetchedById =
-        referencedGcpResourceApi.getDataRepoSnapshotReference(getWorkspaceUuid(), snapshotResourceId);
+        referencedGcpResourceApi.getDataRepoSnapshotReference(getWorkspaceId(), snapshotResourceId);
     assertEquals(snapshotResource, snapshotFetchedById);
 
     // Read the reference by name
     DataRepoSnapshotResource snapshotFetchedByName =
         referencedGcpResourceApi.getDataRepoSnapshotReferenceByName(
-            getWorkspaceUuid(), snapshotResource.getMetadata().getName());
+            getWorkspaceId(), snapshotResource.getMetadata().getName());
     assertEquals(snapshotResource, snapshotFetchedByName);
 
     // Enumerate the reference
     ResourceList referenceList =
         resourceApi.enumerateResources(
-            getWorkspaceUuid(), 0, 5, /*referenceType=*/ null, /*stewardShipType=*/ null);
+            getWorkspaceId(), 0, 5, /*referenceType=*/ null, /*stewardShipType=*/ null);
     assertEquals(1, referenceList.getResources().size());
     assertEquals(
         StewardshipType.REFERENCED,
@@ -137,17 +137,17 @@ public class ReferencedDataRepoSnapshotLifecycle extends WorkspaceAllocateTestSc
       ReferencedGcpResourceApi referencedGcpResourceApi,
       WorkspaceApi workspaceApi)
       throws Exception {
-    destinationWorkspaceUuid = UUID.randomUUID();
-    createWorkspace(destinationWorkspaceUuid, getSpendProfileId(), workspaceApi);
+    destinationWorkspaceId = UUID.randomUUID();
+    createWorkspace(destinationWorkspaceId, getSpendProfileId(), workspaceApi);
     // Clone references
     CloneReferencedGcpDataRepoSnapshotResourceResult snapshotCloneResult =
         referencedGcpResourceApi.cloneGcpDataRepoSnapshotReference(
             new CloneReferencedResourceRequestBody()
-                .destinationWorkspaceUuid(destinationWorkspaceUuid)
+                .destinationWorkspaceId(destinationWorkspaceId)
                 .cloningInstructions(CloningInstructionsEnum.REFERENCE),
-            getWorkspaceUuid(),
+            getWorkspaceId(),
             snapshotResourceId);
-    assertEquals(getWorkspaceUuid(), snapshotCloneResult.getSourceWorkspaceUuid());
+    assertEquals(getWorkspaceId(), snapshotCloneResult.getSourceWorkspaceId());
     assertEquals(
         snapshotResource.getAttributes(), snapshotCloneResult.getResource().getAttributes());
   }
@@ -156,10 +156,10 @@ public class ReferencedDataRepoSnapshotLifecycle extends WorkspaceAllocateTestSc
     ResourceApi ownerResourceApi = ClientTestUtils.getResourceClient(owner, server);
     ResourceApi partialAccessResourceApi =
         ClientTestUtils.getResourceClient(partialAccessUser, server);
-    assertTrue(ownerResourceApi.checkReferenceAccess(getWorkspaceUuid(), snapshotResourceId));
+    assertTrue(ownerResourceApi.checkReferenceAccess(getWorkspaceId(), snapshotResourceId));
     // Partial-access user cannot access snapshot 1. They can access the second snapshot.
     assertFalse(
-        partialAccessResourceApi.checkReferenceAccess(getWorkspaceUuid(), snapshotResourceId));
+        partialAccessResourceApi.checkReferenceAccess(getWorkspaceId(), snapshotResourceId));
   }
 
   private void testUpdateReference(ReferencedGcpResourceApi ownerApi) throws Exception {
@@ -172,25 +172,25 @@ public class ReferencedDataRepoSnapshotLifecycle extends WorkspaceAllocateTestSc
     String newSnapshotReferenceDescription = "a new description of another snapshot reference";
     updateDataRepoSnapshotReferenceResource(
         ownerApi,
-        getWorkspaceUuid(),
+        getWorkspaceId(),
         snapshotResourceId,
         newSnapshotReferenceName,
         newSnapshotReferenceDescription,
         /*instanceId=*/ null,
         /*snapshot=*/ null);
     DataRepoSnapshotResource snapshotResource =
-        ownerApi.getDataRepoSnapshotReference(getWorkspaceUuid(), snapshotResourceId);
+        ownerApi.getDataRepoSnapshotReference(getWorkspaceId(), snapshotResourceId);
     assertEquals(newSnapshotReferenceName, snapshotResource.getMetadata().getName());
     assertEquals(newSnapshotReferenceDescription, snapshotResource.getMetadata().getDescription());
     assertFalse(
-        partialAccessResourceApi.checkReferenceAccess(getWorkspaceUuid(), snapshotResourceId));
+        partialAccessResourceApi.checkReferenceAccess(getWorkspaceId(), snapshotResourceId));
 
     assertThrows(
         ApiException.class,
         () ->
             updateDataRepoSnapshotReferenceResource(
                 partialAccessApi,
-                getWorkspaceUuid(),
+                getWorkspaceId(),
                 snapshotResourceId,
                 newSnapshotReferenceName,
                 newSnapshotReferenceDescription,
@@ -198,29 +198,29 @@ public class ReferencedDataRepoSnapshotLifecycle extends WorkspaceAllocateTestSc
                 snapshotId2));
     updateDataRepoSnapshotReferenceResource(
         ownerApi,
-        getWorkspaceUuid(),
+        getWorkspaceId(),
         snapshotResourceId,
         newSnapshotReferenceName,
         newSnapshotReferenceDescription,
         /*instanceId=*/ null,
         snapshotId2);
     DataRepoSnapshotResource snapshotResourceSecondUpdate =
-        ownerApi.getDataRepoSnapshotReference(getWorkspaceUuid(), snapshotResourceId);
+        ownerApi.getDataRepoSnapshotReference(getWorkspaceId(), snapshotResourceId);
     assertEquals(newSnapshotReferenceName, snapshotResourceSecondUpdate.getMetadata().getName());
     assertEquals(
         newSnapshotReferenceDescription,
         snapshotResourceSecondUpdate.getMetadata().getDescription());
     assertEquals(snapshotId2, snapshotResourceSecondUpdate.getAttributes().getSnapshot());
     assertEquals(tdrInstance, snapshotResourceSecondUpdate.getAttributes().getInstanceName());
-    assertTrue(partialAccessResourceApi.checkReferenceAccess(getWorkspaceUuid(), snapshotResourceId));
+    assertTrue(partialAccessResourceApi.checkReferenceAccess(getWorkspaceId(), snapshotResourceId));
   }
 
   @Override
   public void doCleanup(List<TestUserSpecification> testUsers, WorkspaceApi workspaceApi)
       throws Exception {
     super.doCleanup(testUsers, workspaceApi);
-    if (destinationWorkspaceUuid != null) {
-      workspaceApi.deleteWorkspace(destinationWorkspaceUuid);
+    if (destinationWorkspaceId != null) {
+      workspaceApi.deleteWorkspace(destinationWorkspaceId);
     }
   }
 }

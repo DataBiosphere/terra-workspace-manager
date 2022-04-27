@@ -75,7 +75,7 @@ public class CopyBigQueryDatasetDefinitionStep implements Step {
                 inputParameters.get(ControlledResourceKeys.DESTINATION_DATASET_NAME, String.class))
             .orElse(sourceDataset.getDatasetName());
     workingMap.put(ControlledResourceKeys.DESTINATION_DATASET_NAME, datasetName);
-    final UUID destinationWorkspaceUuid =
+    final UUID destinationWorkspaceId =
         inputParameters.get(ControlledResourceKeys.DESTINATION_WORKSPACE_ID, UUID.class);
     final String location =
         FlightUtils.getInputParameterOrWorkingValue(
@@ -84,7 +84,7 @@ public class CopyBigQueryDatasetDefinitionStep implements Step {
             ControlledResourceKeys.LOCATION,
             String.class);
     final String destinationProjectId =
-        gcpCloudContextService.getRequiredGcpProject(destinationWorkspaceUuid);
+        gcpCloudContextService.getRequiredGcpProject(destinationWorkspaceId);
     final ControlledResourceFields commonFields =
         ControlledResourceFields.builder()
             .accessScope(sourceDataset.getAccessScope())
@@ -94,7 +94,7 @@ public class CopyBigQueryDatasetDefinitionStep implements Step {
             .managedBy(sourceDataset.getManagedBy())
             .name(resourceName)
             .resourceId(UUID.randomUUID())
-            .workspaceUuid(destinationWorkspaceUuid)
+            .workspaceUuid(destinationWorkspaceId)
             .build();
     final ControlledBigQueryDatasetResource destinationResource =
         ControlledBigQueryDatasetResource.builder()
@@ -119,7 +119,7 @@ public class CopyBigQueryDatasetDefinitionStep implements Step {
         new ApiClonedControlledGcpBigQueryDataset()
             .dataset(clonedResource.toApiResource())
             .effectiveCloningInstructions(resolvedCloningInstructions.toApiModel())
-            .sourceWorkspaceUuid(sourceDataset.getWorkspaceUuid())
+            .sourceWorkspaceId(sourceDataset.getWorkspaceId())
             .sourceResourceId(sourceDataset.getResourceId());
     workingMap.put(ControlledResourceKeys.CLONE_DEFINITION_RESULT, apiResult);
 
@@ -141,7 +141,7 @@ public class CopyBigQueryDatasetDefinitionStep implements Step {
                 ControlledBigQueryDatasetResource.class);
     if (clonedDataset != null) {
       controlledResourceService.deleteControlledResourceSync(
-          clonedDataset.getWorkspaceUuid(), clonedDataset.getResourceId(), userRequest);
+          clonedDataset.getWorkspaceId(), clonedDataset.getResourceId(), userRequest);
     }
     return StepResult.getStepResultSuccess();
   }

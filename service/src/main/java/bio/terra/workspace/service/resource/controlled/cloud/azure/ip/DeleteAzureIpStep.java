@@ -59,7 +59,7 @@ public class DeleteAzureIpStep implements Step {
     logger.error(
         "Cannot undo delete of Azure IP resource {} in workspace {}.",
         resource.getResourceId(),
-        resource.getWorkspaceUuid());
+        resource.getWorkspaceId());
     // Surface whatever error caused Stairway to begin undoing.
     return flightContext.getResult();
   }

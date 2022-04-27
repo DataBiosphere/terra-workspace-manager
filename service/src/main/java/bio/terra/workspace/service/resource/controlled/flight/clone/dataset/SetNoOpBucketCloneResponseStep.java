@@ -24,7 +24,7 @@ public class SetNoOpBucketCloneResponseStep implements Step {
     final ApiClonedControlledGcpBigQueryDataset noOpResult =
         new ApiClonedControlledGcpBigQueryDataset()
             .dataset(null)
-            .sourceWorkspaceUuid(sourceDataset.getWorkspaceUuid())
+            .sourceWorkspaceId(sourceDataset.getWorkspaceId())
             .sourceResourceId(sourceDataset.getResourceId())
             .effectiveCloningInstructions(ApiCloningInstructionsEnum.NOTHING);
     FlightUtils.setResponse(context, noOpResult, HttpStatus.OK);

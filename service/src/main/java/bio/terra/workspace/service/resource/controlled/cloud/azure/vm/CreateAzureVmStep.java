@@ -68,17 +68,17 @@ public class CreateAzureVmStep implements Step {
 
     final ControlledAzureIpResource ipResource =
         resourceDao
-            .getResource(resource.getWorkspaceUuid(), resource.getIpId())
+            .getResource(resource.getWorkspaceId(), resource.getIpId())
             .castByEnum(WsmResourceType.CONTROLLED_AZURE_IP);
 
     final ControlledAzureDiskResource diskResource =
         resourceDao
-            .getResource(resource.getWorkspaceUuid(), resource.getDiskId())
+            .getResource(resource.getWorkspaceId(), resource.getDiskId())
             .castByEnum(WsmResourceType.CONTROLLED_AZURE_DISK);
 
     final ControlledAzureNetworkResource networkResource =
         resourceDao
-            .getResource(resource.getWorkspaceUuid(), resource.getNetworkId())
+            .getResource(resource.getWorkspaceId(), resource.getNetworkId())
             .castByEnum(WsmResourceType.CONTROLLED_AZURE_NETWORK);
 
     try {
@@ -214,7 +214,7 @@ public class CreateAzureVmStep implements Step {
           vmConfigurationCommonStep
               .withSpecializedLinuxCustomImage(creationParameters.getVmImage().getUri())
               .withExistingDataDisk(disk)
-              .withTag("workspaceUuid", resource.getWorkspaceUuid().toString())
+              .withTag("workspaceUuid", resource.getWorkspaceId().toString())
               .withTag("resourceId", resource.getResourceId().toString())
               .withSize(VirtualMachineSizeTypes.fromString(resource.getVmSize()));
     } else {
@@ -227,7 +227,7 @@ public class CreateAzureVmStep implements Step {
               .withRootUsername(creationParameters.getVmUser().getName())
               .withRootPassword(creationParameters.getVmUser().getPassword())
               .withExistingDataDisk(disk)
-              .withTag("workspaceUuid", resource.getWorkspaceUuid().toString())
+              .withTag("workspaceUuid", resource.getWorkspaceId().toString())
               .withTag("resourceId", resource.getResourceId().toString())
               .withSize(VirtualMachineSizeTypes.fromString(resource.getVmSize()));
     }

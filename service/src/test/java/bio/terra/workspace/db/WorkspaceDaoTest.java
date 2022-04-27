@@ -117,16 +117,16 @@ class WorkspaceDaoTest extends BaseUnitTest {
   void getWorkspacesFromList() {
     Workspace realWorkspace = defaultWorkspace();
     workspaceDao.createWorkspace(realWorkspace);
-    UUID fakeWorkspaceUuid = UUID.randomUUID();
+    UUID fakeWorkspaceId = UUID.randomUUID();
     List<Workspace> workspaceList =
         workspaceDao.getWorkspacesMatchingList(
-            ImmutableList.of(realWorkspace.getWorkspaceUuid(), fakeWorkspaceUuid), 0, 1);
+            ImmutableList.of(realWorkspace.getWorkspaceId(), fakeWorkspaceId), 0, 1);
     // The DAO should return all workspaces this user has access to, including realWorkspace but
     // not including the fake workspace id.
     assertThat(workspaceList, hasItem(equalTo(realWorkspace)));
     List<UUID> workspaceIdList =
-        workspaceList.stream().map(Workspace::getWorkspaceUuid).collect(Collectors.toList());
-    assertThat(workspaceIdList, not(hasItem(equalTo(fakeWorkspaceUuid))));
+        workspaceList.stream().map(Workspace::getWorkspaceId).collect(Collectors.toList());
+    assertThat(workspaceIdList, not(hasItem(equalTo(fakeWorkspaceId))));
   }
 
   @Test
@@ -141,7 +141,7 @@ class WorkspaceDaoTest extends BaseUnitTest {
     workspaceDao.createWorkspace(secondWorkspace);
     List<Workspace> workspaceList =
         workspaceDao.getWorkspacesMatchingList(
-            ImmutableList.of(firstWorkspace.getWorkspaceUuid(), secondWorkspace.getWorkspaceUuid()),
+            ImmutableList.of(firstWorkspace.getWorkspaceId(), secondWorkspace.getWorkspaceId()),
             1,
             10);
     assertThat(workspaceList.size(), equalTo(1));
@@ -160,7 +160,7 @@ class WorkspaceDaoTest extends BaseUnitTest {
     workspaceDao.createWorkspace(secondWorkspace);
     List<Workspace> workspaceList =
         workspaceDao.getWorkspacesMatchingList(
-            ImmutableList.of(firstWorkspace.getWorkspaceUuid(), secondWorkspace.getWorkspaceUuid()),
+            ImmutableList.of(firstWorkspace.getWorkspaceId(), secondWorkspace.getWorkspaceId()),
             0,
             1);
     assertThat(workspaceList.size(), equalTo(1));
@@ -170,15 +170,15 @@ class WorkspaceDaoTest extends BaseUnitTest {
   @Nested
   class McWorkspace {
 
-    UUID mcWorkspaceUuid;
+    UUID mcWorkspaceId;
     Workspace mcWorkspace;
 
     @BeforeEach
     void setup() {
-      mcWorkspaceUuid = UUID.randomUUID();
+      mcWorkspaceId = UUID.randomUUID();
       mcWorkspace =
           Workspace.builder()
-              .workspaceUuid(mcWorkspaceUuid)
+              .workspaceUuid(mcWorkspaceId)
               .workspaceStage(WorkspaceStage.MC_WORKSPACE)
               .build();
       workspaceDao.createWorkspace(mcWorkspace);
@@ -186,15 +186,15 @@ class WorkspaceDaoTest extends BaseUnitTest {
 
     @Test
     void createAndGetMcWorkspace() {
-      Workspace workspace = workspaceDao.getWorkspace(mcWorkspaceUuid);
+      Workspace workspace = workspaceDao.getWorkspace(mcWorkspaceId);
 
       assertEquals(mcWorkspace, workspace);
-      assertTrue(workspaceDao.deleteWorkspace(mcWorkspaceUuid));
+      assertTrue(workspaceDao.deleteWorkspace(mcWorkspaceId));
     }
 
     @Test
     void getStageMatchesWorkspace() {
-      Workspace workspace = workspaceDao.getWorkspace(mcWorkspaceUuid);
+      Workspace workspace = workspaceDao.getWorkspace(mcWorkspaceId);
       assertThat(workspace.getWorkspaceStage(), equalTo(WorkspaceStage.MC_WORKSPACE));
     }
   }
@@ -236,7 +236,7 @@ class WorkspaceDaoTest extends BaseUnitTest {
 
       Workspace workspace = workspaceDao.getWorkspace(workspaceUuid);
       Optional<GcpCloudContext> cloudContext =
-          gcpCloudContextService.getGcpCloudContext(workspace.getWorkspaceUuid());
+          gcpCloudContextService.getGcpCloudContext(workspace.getWorkspaceId());
       checkCloudContext(cloudContext);
 
       // Make sure service and dao get the same answer

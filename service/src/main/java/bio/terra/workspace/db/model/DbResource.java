@@ -40,7 +40,7 @@ public class DbResource {
   private static final Supplier<RuntimeException> MISSING_REQUIRED_FIELD =
       () -> new MissingRequiredFieldsException("Missing required field");
 
-  public UUID getWorkspaceUuid() {
+  public UUID getWorkspaceId() {
     return workspaceUuid;
   }
 

@@ -76,13 +76,13 @@ public class EnumerateResources extends WorkspaceAllocateTestScriptBase {
     readerResourceApi = new ResourceApi(readerApiClient);
 
     // Create a cloud context for the workspace
-    CloudContextMaker.createGcpCloudContext(getWorkspaceUuid(), workspaceApi);
+    CloudContextMaker.createGcpCloudContext(getWorkspaceId(), workspaceApi);
 
     // create the resources for the test
     logger.info("Creating {} resources", RESOURCE_COUNT);
     resourceList =
         MultiResourcesUtils.makeResources(
-            ownerReferencedGcpResourceApi, ownerControlledGcpResourceApi, getWorkspaceUuid());
+            ownerReferencedGcpResourceApi, ownerControlledGcpResourceApi, getWorkspaceId());
 
     logger.info("Created {} resources", resourceList.size());
   }
@@ -94,12 +94,12 @@ public class EnumerateResources extends WorkspaceAllocateTestScriptBase {
     // Add second user to the workspace as a reader
     workspaceApi.grantRole(
         new GrantRoleRequestBody().memberEmail(workspaceReader.userEmail),
-        getWorkspaceUuid(),
+        getWorkspaceId(),
         IamRole.READER);
 
     // Case 1: fetch all
     ResourceList enumList =
-        ownerResourceApi.enumerateResources(getWorkspaceUuid(), 0, RESOURCE_COUNT, null, null);
+        ownerResourceApi.enumerateResources(getWorkspaceId(), 0, RESOURCE_COUNT, null, null);
     logResult("fetchall", enumList);
     // Make sure we got all of the expected ids
     matchFullResourceList(enumList.getResources());
@@ -111,21 +111,21 @@ public class EnumerateResources extends WorkspaceAllocateTestScriptBase {
         ClientTestUtils.getWithRetryOnException(
             () ->
                 readerResourceApi.enumerateResources(
-                    getWorkspaceUuid(), 0, RESOURCE_COUNT, null, null));
+                    getWorkspaceId(), 0, RESOURCE_COUNT, null, null));
     logResult("fetchall reader", readerEnumList);
     matchFullResourceList(readerEnumList.getResources());
 
     // Case 2: fetch by pages
     ResourceList page1List =
-        ownerResourceApi.enumerateResources(getWorkspaceUuid(), 0, PAGE_SIZE, null, null);
+        ownerResourceApi.enumerateResources(getWorkspaceId(), 0, PAGE_SIZE, null, null);
     logResult("page1", page1List);
     assertThat(page1List.getResources().size(), equalTo(PAGE_SIZE));
     ResourceList page2List =
-        ownerResourceApi.enumerateResources(getWorkspaceUuid(), PAGE_SIZE, PAGE_SIZE, null, null);
+        ownerResourceApi.enumerateResources(getWorkspaceId(), PAGE_SIZE, PAGE_SIZE, null, null);
     logResult("page2", page2List);
     assertThat(page2List.getResources().size(), equalTo(PAGE_SIZE));
     ResourceList page3List =
-        ownerResourceApi.enumerateResources(getWorkspaceUuid(), 2 * PAGE_SIZE, PAGE_SIZE, null, null);
+        ownerResourceApi.enumerateResources(getWorkspaceId(), 2 * PAGE_SIZE, PAGE_SIZE, null, null);
     logResult("page3", page3List);
     assertThat(page3List.getResources().size(), lessThan(PAGE_SIZE));
 
@@ -138,13 +138,13 @@ public class EnumerateResources extends WorkspaceAllocateTestScriptBase {
     // Case 3: no results if offset is too high
     ResourceList enumEmptyList =
         ownerResourceApi.enumerateResources(
-            getWorkspaceUuid(), 10 * PAGE_SIZE, PAGE_SIZE, null, null);
+            getWorkspaceId(), 10 * PAGE_SIZE, PAGE_SIZE, null, null);
     assertThat(enumEmptyList.getResources().size(), equalTo(0));
 
     // Case 4: filter by resource type
     ResourceList buckets =
         ownerResourceApi.enumerateResources(
-            getWorkspaceUuid(), 0, RESOURCE_COUNT, ResourceType.GCS_BUCKET, null);
+            getWorkspaceId(), 0, RESOURCE_COUNT, ResourceType.GCS_BUCKET, null);
     logResult("buckets", buckets);
     long expectedBuckets =
         resourceList.stream().filter(m -> m.getResourceType() == ResourceType.GCS_BUCKET).count();
@@ -156,7 +156,7 @@ public class EnumerateResources extends WorkspaceAllocateTestScriptBase {
     // Case 5: filter by stewardship type
     ResourceList referencedList =
         ownerResourceApi.enumerateResources(
-            getWorkspaceUuid(), 0, RESOURCE_COUNT, null, StewardshipType.REFERENCED);
+            getWorkspaceId(), 0, RESOURCE_COUNT, null, StewardshipType.REFERENCED);
     logResult("referenced", referencedList);
     long expectedReferenced =
         resourceList.stream()
@@ -169,7 +169,7 @@ public class EnumerateResources extends WorkspaceAllocateTestScriptBase {
     // Case 6: filter by resource and stewardship
     ResourceList controlledBucketList =
         ownerResourceApi.enumerateResources(
-            getWorkspaceUuid(),
+            getWorkspaceId(),
             0,
             RESOURCE_COUNT,
             ResourceType.GCS_BUCKET,
@@ -192,7 +192,7 @@ public class EnumerateResources extends WorkspaceAllocateTestScriptBase {
             ApiException.class,
             () ->
                 ownerResourceApi.enumerateResources(
-                    getWorkspaceUuid(), -11, 2, ResourceType.GCS_BUCKET, StewardshipType.CONTROLLED));
+                    getWorkspaceId(), -11, 2, ResourceType.GCS_BUCKET, StewardshipType.CONTROLLED));
     assertThat(invalidPaginationException.getMessage(), containsString("Invalid pagination"));
 
     invalidPaginationException =
@@ -200,7 +200,7 @@ public class EnumerateResources extends WorkspaceAllocateTestScriptBase {
             ApiException.class,
             () ->
                 ownerResourceApi.enumerateResources(
-                    getWorkspaceUuid(), 0, 0, ResourceType.GCS_BUCKET, StewardshipType.CONTROLLED));
+                    getWorkspaceId(), 0, 0, ResourceType.GCS_BUCKET, StewardshipType.CONTROLLED));
     assertThat(invalidPaginationException.getMessage(), containsString("Invalid pagination"));
   }
 

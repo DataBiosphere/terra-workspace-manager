@@ -18,7 +18,7 @@ public class GetWorkspace extends WorkspaceAllocateTestScriptBase {
      *
      * <p>Throw exception if anything goes wrong *
      */
-    final WorkspaceDescription workspaceDescription = workspaceApi.getWorkspace(getWorkspaceUuid());
-    assertThat(workspaceDescription.getId(), equalTo(getWorkspaceUuid()));
+    final WorkspaceDescription workspaceDescription = workspaceApi.getWorkspace(getWorkspaceId());
+    assertThat(workspaceDescription.getId(), equalTo(getWorkspaceId()));
   }
 }

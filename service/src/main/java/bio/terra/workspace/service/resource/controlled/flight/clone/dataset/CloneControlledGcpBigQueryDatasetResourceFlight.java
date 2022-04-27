@@ -59,7 +59,7 @@ public class CloneControlledGcpBigQueryDatasetResourceFlight extends Flight {
       addStep(
           new RetrieveControlledResourceMetadataStep(
               flightBeanBag.getResourceDao(),
-              sourceResource.getWorkspaceUuid(),
+              sourceResource.getWorkspaceId(),
               sourceResource.getResourceId()));
 
       final ControlledBigQueryDatasetResource sourceDataset =

@@ -152,7 +152,7 @@ public class ReferencedDataRepoSnapshotResource extends ReferencedResource {
         .name(getName())
         .snapshotId(getSnapshotId())
         .resourceId(getResourceId())
-        .workspaceUuid(getWorkspaceUuid());
+        .workspaceUuid(getWorkspaceId());
   }
 
   public static class Builder {

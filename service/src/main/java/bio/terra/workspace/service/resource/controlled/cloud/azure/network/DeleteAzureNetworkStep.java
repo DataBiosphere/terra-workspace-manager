@@ -71,7 +71,7 @@ public class DeleteAzureNetworkStep implements Step {
     logger.error(
         "Cannot undo delete of Azure network resource {} in workspace {}.",
         resource.getResourceId(),
-        resource.getWorkspaceUuid());
+        resource.getWorkspaceId());
     // Surface whatever error caused Stairway to begin undoing.
     return flightContext.getResult();
   }

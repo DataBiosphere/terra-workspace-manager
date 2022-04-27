@@ -43,7 +43,7 @@ public class Workspace {
   }
 
   /** The globally unique identifier of this workspace */
-  public UUID getWorkspaceUuid() {
+  public UUID getWorkspaceId() {
     return workspaceUuid;
   }
 

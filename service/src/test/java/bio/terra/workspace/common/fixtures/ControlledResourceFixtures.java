@@ -397,10 +397,10 @@ public class ControlledResourceFixtures {
    * resource builder.
    */
   public static ControlledResourceFields makeDefaultControlledResourceFields(
-      @Nullable UUID inWorkspaceUuid) {
+      @Nullable UUID inWorkspaceId) {
     ControlledResourceFields.Builder builder = makeDefaultControlledResourceFieldsBuilder();
-    if (inWorkspaceUuid != null) {
-      builder.workspaceUuid(inWorkspaceUuid);
+    if (inWorkspaceId != null) {
+      builder.workspaceUuid(inWorkspaceId);
     }
     return builder.build();
   }

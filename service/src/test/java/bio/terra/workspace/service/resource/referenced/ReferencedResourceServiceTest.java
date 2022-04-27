@@ -97,7 +97,7 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
     if (referenceResource != null) {
       try {
         referenceResourceService.deleteReferenceResourceForResourceType(
-            referenceResource.getWorkspaceUuid(),
+            referenceResource.getWorkspaceId(),
             referenceResource.getResourceId(),
             USER_REQUEST,
             referenceResource.getResourceType());
@@ -299,7 +299,7 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
     // Test that all of the WsmResource validity checks catch invalid input
 
     @Test
-    void testInvalidWorkspaceUuid() {
+    void testInvalidWorkspaceId() {
       assertThrows(
           MissingRequiredFieldException.class,
           () ->

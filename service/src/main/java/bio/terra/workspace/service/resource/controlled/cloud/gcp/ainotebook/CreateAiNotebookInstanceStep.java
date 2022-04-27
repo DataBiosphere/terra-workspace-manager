@@ -108,7 +108,7 @@ public class CreateAiNotebookInstanceStep implements Step {
             flightContext,
             projectId,
             petEmail,
-            resource.getWorkspaceUuid().toString(),
+            resource.getWorkspaceId().toString(),
             cliConfiguration.getServerName());
 
     AIPlatformNotebooksCow notebooks = crlService.getAIPlatformNotebooksCow();

@@ -64,7 +64,7 @@ public abstract class ControlledResource extends WsmResource {
 
   public ControlledResource(ControlledResourceFields builder) {
     super(
-        builder.getWorkspaceUuid(),
+        builder.getWorkspaceId(),
         builder.getResourceId(),
         builder.getName(),
         builder.getDescription(),

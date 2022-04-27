@@ -87,7 +87,7 @@ public class CopyGcsBucketDefinitionStep implements Step {
             : PrivateResourceState.NOT_APPLICABLE;
     // Store effective bucket name for destination
     workingMap.put(ControlledResourceKeys.DESTINATION_BUCKET_NAME, bucketName);
-    final UUID destinationWorkspaceUuid =
+    final UUID destinationWorkspaceId =
         inputParameters.get(ControlledResourceKeys.DESTINATION_WORKSPACE_ID, UUID.class);
 
     // bucket resource for create flight
@@ -96,7 +96,7 @@ public class CopyGcsBucketDefinitionStep implements Step {
             .bucketName(bucketName)
             .common(
                 ControlledResourceFields.builder()
-                    .workspaceUuid(destinationWorkspaceUuid)
+                    .workspaceUuid(destinationWorkspaceId)
                     .resourceId(UUID.randomUUID()) // random ID for new resource
                     .name(resourceName)
                     .description(description)
@@ -133,7 +133,7 @@ public class CopyGcsBucketDefinitionStep implements Step {
         new ApiClonedControlledGcpGcsBucket()
             .effectiveCloningInstructions(resolvedCloningInstructions.toApiModel())
             .bucket(apiCreatedBucket)
-            .sourceWorkspaceUuid(sourceBucket.getWorkspaceUuid())
+            .sourceWorkspaceId(sourceBucket.getWorkspaceId())
             .sourceResourceId(sourceBucket.getResourceId());
     workingMap.put(ControlledResourceKeys.CLONE_DEFINITION_RESULT, apiBucketResult);
     if (resolvedCloningInstructions.equals(CloningInstructions.COPY_DEFINITION)) {
@@ -153,7 +153,7 @@ public class CopyGcsBucketDefinitionStep implements Step {
                 ControlledGcsBucketResource.class);
     if (clonedBucket != null) {
       controlledResourceService.deleteControlledResourceSync(
-          clonedBucket.getWorkspaceUuid(), clonedBucket.getResourceId(), userRequest);
+          clonedBucket.getWorkspaceId(), clonedBucket.getResourceId(), userRequest);
     }
     return StepResult.getStepResultSuccess();
   }

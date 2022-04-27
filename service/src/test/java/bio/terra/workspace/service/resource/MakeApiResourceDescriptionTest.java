@@ -141,7 +141,7 @@ public class MakeApiResourceDescriptionTest extends BaseUnitTest {
 
   public void validateWsmResource(ApiResourceDescription resourceDescription) {
     ApiResourceMetadata metadata = resourceDescription.getMetadata();
-    assertEquals(metadata.getWorkspaceUuid(), workspaceUuid);
+    assertEquals(metadata.getWorkspaceId(), workspaceUuid);
     assertEquals(metadata.getResourceId(), resourceId);
     assertEquals(metadata.getName(), resourceName);
     assertEquals(metadata.getDescription(), description);

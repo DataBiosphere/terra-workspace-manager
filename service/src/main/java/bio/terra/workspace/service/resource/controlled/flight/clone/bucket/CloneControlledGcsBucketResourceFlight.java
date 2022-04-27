@@ -64,7 +64,7 @@ public class CloneControlledGcsBucketResourceFlight extends Flight {
       addStep(
           new RetrieveControlledResourceMetadataStep(
               flightBeanBag.getResourceDao(),
-              sourceResource.getWorkspaceUuid(),
+              sourceResource.getWorkspaceId(),
               sourceResource.getResourceId()));
       addStep(
           new RetrieveGcsBucketCloudAttributesStep(

@@ -201,24 +201,24 @@ public class CreateTableCopyJobsStep implements Step {
 
   private DatasetCloneInputs getSourceInputs() {
     final String sourceProjectId =
-        gcpCloudContextService.getRequiredGcpProject(sourceDataset.getWorkspaceUuid());
+        gcpCloudContextService.getRequiredGcpProject(sourceDataset.getWorkspaceId());
     final String sourceDatasetName = sourceDataset.getDatasetName();
     return new DatasetCloneInputs(
-        sourceDataset.getWorkspaceUuid(), sourceProjectId, sourceDatasetName);
+        sourceDataset.getWorkspaceId(), sourceProjectId, sourceDatasetName);
   }
 
   private DatasetCloneInputs getDestinationInputs(FlightContext flightContext) {
-    final UUID destinationWorkspaceUuid =
+    final UUID destinationWorkspaceId =
         flightContext
             .getInputParameters()
             .get(ControlledResourceKeys.DESTINATION_WORKSPACE_ID, UUID.class);
     final String destinationProjectId =
-        gcpCloudContextService.getRequiredGcpProject(destinationWorkspaceUuid);
+        gcpCloudContextService.getRequiredGcpProject(destinationWorkspaceId);
     final String destinationDatasetName =
         flightContext
             .getWorkingMap()
             .get(ControlledResourceKeys.DESTINATION_DATASET_NAME, String.class);
     return new DatasetCloneInputs(
-        destinationWorkspaceUuid, destinationProjectId, destinationDatasetName);
+        destinationWorkspaceId, destinationProjectId, destinationDatasetName);
   }
 }

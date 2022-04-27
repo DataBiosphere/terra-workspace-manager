@@ -22,7 +22,7 @@ public abstract class GcpWorkspaceCloneTestScriptBase extends WorkspaceAllocateT
 
   private String sourceProjectId;
   private TestUserSpecification reader;
-  private UUID destinationWorkspaceUuid;
+  private UUID destinationWorkspaceId;
   private String destinationProjectId;
 
   protected String getSourceProjectId() {
@@ -33,8 +33,8 @@ public abstract class GcpWorkspaceCloneTestScriptBase extends WorkspaceAllocateT
     return reader;
   }
 
-  protected UUID getDestinationWorkspaceUuid() {
-    return destinationWorkspaceUuid;
+  protected UUID getDestinationWorkspaceId() {
+    return destinationWorkspaceId;
   }
 
   protected String getDestinationProjectId() {
@@ -58,13 +58,13 @@ public abstract class GcpWorkspaceCloneTestScriptBase extends WorkspaceAllocateT
         testUsers != null && testUsers.size() > 1);
     reader = testUsers.get(1);
     workspaceApi.grantRole(
-        new GrantRoleRequestBody().memberEmail(reader.userEmail), getWorkspaceUuid(), IamRole.READER);
-    sourceProjectId = CloudContextMaker.createGcpCloudContext(getWorkspaceUuid(), workspaceApi);
-    destinationWorkspaceUuid = UUID.randomUUID();
+        new GrantRoleRequestBody().memberEmail(reader.userEmail), getWorkspaceId(), IamRole.READER);
+    sourceProjectId = CloudContextMaker.createGcpCloudContext(getWorkspaceId(), workspaceApi);
+    destinationWorkspaceId = UUID.randomUUID();
     WorkspaceApi secondUserWorkspaceApi = ClientTestUtils.getWorkspaceClient(reader, server);
-    createWorkspace(destinationWorkspaceUuid, getSpendProfileId(), secondUserWorkspaceApi);
+    createWorkspace(destinationWorkspaceId, getSpendProfileId(), secondUserWorkspaceApi);
     destinationProjectId =
-        CloudContextMaker.createGcpCloudContext(destinationWorkspaceUuid, secondUserWorkspaceApi);
+        CloudContextMaker.createGcpCloudContext(destinationWorkspaceId, secondUserWorkspaceApi);
   }
 
   /** Clean up source and destination workspaces. */
@@ -75,6 +75,6 @@ public abstract class GcpWorkspaceCloneTestScriptBase extends WorkspaceAllocateT
     super.doCleanup(testUsers, workspaceApi);
     // Destination workspace is owner by reader, so they need to clean it up.
     WorkspaceApi secondUserWorkspaceApi = ClientTestUtils.getWorkspaceClient(reader, server);
-    secondUserWorkspaceApi.deleteWorkspace(destinationWorkspaceUuid);
+    secondUserWorkspaceApi.deleteWorkspace(destinationWorkspaceId);
   }
 }

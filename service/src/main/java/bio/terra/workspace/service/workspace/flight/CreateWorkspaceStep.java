@@ -28,7 +28,7 @@ public class CreateWorkspaceStep implements Step {
   @Override
   public StepResult doStep(FlightContext flightContext)
       throws RetryException, InterruptedException {
-    UUID workspaceUuid = workspace.getWorkspaceUuid();
+    UUID workspaceUuid = workspace.getWorkspaceId();
 
     try {
       workspaceDao.createWorkspace(workspace);
@@ -49,7 +49,7 @@ public class CreateWorkspaceStep implements Step {
 
   @Override
   public StepResult undoStep(FlightContext flightContext) throws InterruptedException {
-    UUID workspaceUuid = workspace.getWorkspaceUuid();
+    UUID workspaceUuid = workspace.getWorkspaceId();
     // Ignore return value, as we don't care whether a workspace was deleted or just not found.
     workspaceDao.deleteWorkspace(workspaceUuid);
     return StepResult.getStepResultSuccess();

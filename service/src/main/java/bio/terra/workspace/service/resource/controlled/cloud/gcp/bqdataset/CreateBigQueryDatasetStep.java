@@ -156,7 +156,7 @@ public class CreateBigQueryDatasetStep implements Step {
 
   @Override
   public StepResult undoStep(FlightContext flightContext) throws InterruptedException {
-    String projectId = gcpCloudContextService.getRequiredGcpProject(resource.getWorkspaceUuid());
+    String projectId = gcpCloudContextService.getRequiredGcpProject(resource.getWorkspaceId());
     BigQueryCow bqCow = crlService.createWsmSaBigQueryCow();
 
     try {

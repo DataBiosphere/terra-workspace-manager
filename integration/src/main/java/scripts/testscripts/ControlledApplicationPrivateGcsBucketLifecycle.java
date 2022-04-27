@@ -86,22 +86,22 @@ public class ControlledApplicationPrivateGcsBucketLifecycle
 
     // Owner adds a reader and a writer to the workspace
     workspaceApi.grantRole(
-        new GrantRoleRequestBody().memberEmail(reader.userEmail), getWorkspaceUuid(), IamRole.READER);
-    logger.info("Added {} as a reader to workspace {}", reader.userEmail, getWorkspaceUuid());
+        new GrantRoleRequestBody().memberEmail(reader.userEmail), getWorkspaceId(), IamRole.READER);
+    logger.info("Added {} as a reader to workspace {}", reader.userEmail, getWorkspaceId());
     workspaceApi.grantRole(
-        new GrantRoleRequestBody().memberEmail(writer.userEmail), getWorkspaceUuid(), IamRole.WRITER);
-    logger.info("Added {} as a writer to workspace {}", writer.userEmail, getWorkspaceUuid());
+        new GrantRoleRequestBody().memberEmail(writer.userEmail), getWorkspaceId(), IamRole.WRITER);
+    logger.info("Added {} as a writer to workspace {}", writer.userEmail, getWorkspaceId());
 
     // Create the cloud context
-    String projectId = CloudContextMaker.createGcpCloudContext(getWorkspaceUuid(), workspaceApi);
+    String projectId = CloudContextMaker.createGcpCloudContext(getWorkspaceId(), workspaceApi);
     assertNotNull(projectId);
     logger.info("Created project {}", projectId);
 
     // Enable the application in the workspace
     WorkspaceApplicationDescription applicationDescription =
-        ownerWsmAppApi.enableWorkspaceApplication(getWorkspaceUuid(), TEST_WSM_APP);
+        ownerWsmAppApi.enableWorkspaceApplication(getWorkspaceId(), TEST_WSM_APP);
     assertThat(applicationDescription.getApplicationState(), equalTo(ApplicationState.OPERATING));
-    logger.info("Enabled application {} in the workspace {}", TEST_WSM_APP, getWorkspaceUuid());
+    logger.info("Enabled application {} in the workspace {}", TEST_WSM_APP, getWorkspaceId());
 
     // CASE 1: Create a bucket with no assigned user
     testNoAssignedUser(wsmappResourceApi, projectId);
@@ -116,7 +116,7 @@ public class ControlledApplicationPrivateGcsBucketLifecycle
     ResourceApi ownerResourceApi = ClientTestUtils.getResourceClient(owner, server);
     ResourceList bucketList =
         ownerResourceApi.enumerateResources(
-            getWorkspaceUuid(), 0, 5, ResourceType.GCS_BUCKET, StewardshipType.CONTROLLED);
+            getWorkspaceId(), 0, 5, ResourceType.GCS_BUCKET, StewardshipType.CONTROLLED);
     assertEquals(3, bucketList.getResources().size());
     MultiResourcesUtils.assertResourceType(ResourceType.GCS_BUCKET, bucketList);
   }
@@ -127,7 +127,7 @@ public class ControlledApplicationPrivateGcsBucketLifecycle
     CreatedControlledGcpGcsBucket createdBucket =
         GcsBucketUtils.makeControlledGcsBucketAppPrivate(
             resourceApi,
-            getWorkspaceUuid(),
+            getWorkspaceId(),
             bucketResourceName,
             CloningInstructionsEnum.NOTHING,
             null);
@@ -154,7 +154,7 @@ public class ControlledApplicationPrivateGcsBucketLifecycle
     CreatedControlledGcpGcsBucket createdBucket =
         GcsBucketUtils.makeControlledGcsBucketAppPrivate(
             resourceApi,
-            getWorkspaceUuid(),
+            getWorkspaceId(),
             bucketResourceName,
             CloningInstructionsEnum.NOTHING,
             privateUser);
@@ -181,7 +181,7 @@ public class ControlledApplicationPrivateGcsBucketLifecycle
     CreatedControlledGcpGcsBucket createdBucket =
         GcsBucketUtils.makeControlledGcsBucketAppPrivate(
             resourceApi,
-            getWorkspaceUuid(),
+            getWorkspaceId(),
             bucketResourceName,
             CloningInstructionsEnum.NOTHING,
             privateUser);
@@ -201,7 +201,7 @@ public class ControlledApplicationPrivateGcsBucketLifecycle
       ControlledGcpResourceApi resourceApi, CreatedControlledGcpGcsBucket createdBucket)
       throws Exception {
     GcsBucketUtils.deleteControlledGcsBucket(
-        createdBucket.getResourceId(), getWorkspaceUuid(), resourceApi);
+        createdBucket.getResourceId(), getWorkspaceId(), resourceApi);
     logger.info("Application deleted bucket {}", bucketName);
     bucketName = null;
   }

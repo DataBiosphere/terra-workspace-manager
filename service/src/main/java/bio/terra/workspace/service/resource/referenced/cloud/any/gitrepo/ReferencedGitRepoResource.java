@@ -132,7 +132,7 @@ public class ReferencedGitRepoResource extends ReferencedResource {
         .description(getDescription())
         .name(getName())
         .resourceId(getResourceId())
-        .workspaceUuid(getWorkspaceUuid());
+        .workspaceUuid(getWorkspaceId());
   }
 
   public static ReferencedGitRepoResource.Builder builder() {

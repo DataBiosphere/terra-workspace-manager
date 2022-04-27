@@ -33,7 +33,7 @@ public abstract class WorkspaceAllocateTestScriptBase extends WorkspaceApiTestSc
    *
    * @return workspace UUID
    */
-  protected UUID getWorkspaceUuid() {
+  protected UUID getWorkspaceId() {
     return workspaceUuid;
   }
 

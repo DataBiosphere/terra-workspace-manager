@@ -47,7 +47,7 @@ public class CreateAzureStorageStep implements Step {
           .withRegion(resource.getRegion())
           .withExistingResourceGroup(azureCloudContext.getAzureResourceGroupId())
           .withHnsEnabled(true)
-          .withTag("workspaceUuid", resource.getWorkspaceUuid().toString())
+          .withTag("workspaceUuid", resource.getWorkspaceId().toString())
           .withTag("resourceId", resource.getResourceId().toString())
           .create(
               Defaults.buildContext(

@@ -50,14 +50,14 @@ public abstract class WsmResource {
   /** construct from database data */
   public WsmResource(DbResource dbResource) {
     this(
-        dbResource.getWorkspaceUuid(),
+        dbResource.getWorkspaceId(),
         dbResource.getResourceId(),
         dbResource.getName(),
         dbResource.getDescription(),
         dbResource.getCloningInstructions());
   }
 
-  public UUID getWorkspaceUuid() {
+  public UUID getWorkspaceId() {
     return workspaceUuid;
   }
 
@@ -168,7 +168,7 @@ public abstract class WsmResource {
    */
   public void validate() {
     if (Strings.isNullOrEmpty(getName())
-        || getWorkspaceUuid() == null
+        || getWorkspaceId() == null
         || getCloningInstructions() == null
         || getStewardshipType() == null
         || getResourceId() == null) {

@@ -74,7 +74,7 @@ public class UpdateBigQueryDatasetStepTest extends BaseUnitTest {
 
     doReturn(PROJECT_ID)
         .when(mockGcpCloudContextService)
-        .getRequiredGcpProject(datasetResource.getWorkspaceUuid());
+        .getRequiredGcpProject(datasetResource.getWorkspaceId());
 
     updateBigQueryDatasetStep =
         new UpdateBigQueryDatasetStep(datasetResource, mockCrlService, mockGcpCloudContextService);

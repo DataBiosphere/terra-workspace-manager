@@ -116,7 +116,7 @@ public class ControlledResourceService {
             .addParameter(ControlledResourceKeys.CREATION_PARAMETERS, creationParameters);
 
     String jobId = jobBuilder.submit();
-    waitForResourceOrJob(resource.getWorkspaceUuid(), resource.getResourceId(), jobId);
+    waitForResourceOrJob(resource.getWorkspaceId(), resource.getResourceId(), jobId);
     return jobId;
   }
 
@@ -135,7 +135,7 @@ public class ControlledResourceService {
             .addParameter(ControlledResourceKeys.CREATION_PARAMETERS, creationParameters);
 
     String jobId = jobBuilder.submit();
-    waitForResourceOrJob(resource.getWorkspaceUuid(), resource.getResourceId(), jobId);
+    waitForResourceOrJob(resource.getWorkspaceId(), resource.getResourceId(), jobId);
     return jobId;
   }
 
@@ -147,7 +147,7 @@ public class ControlledResourceService {
       @Nullable String resourceDescription) {
     controlledResourceMetadataManager.validateControlledResourceAndAction(
         userRequest,
-        resource.getWorkspaceUuid(),
+        resource.getWorkspaceId(),
         resource.getResourceId(),
         SamControlledResourceActions.EDIT_ACTION);
 
@@ -163,11 +163,11 @@ public class ControlledResourceService {
             .resource(resource)
             .userRequest(userRequest)
             .operationType(OperationType.UPDATE)
-            .workspaceUuid(resource.getWorkspaceUuid().toString())
+            .workspaceUuid(resource.getWorkspaceId().toString())
             // TODO: [PF-1282] need to disambiguate the RESOURCE and RESOURCE_NAME usage
             .resourceType(resource.getResourceType())
             .stewardshipType(resource.getStewardshipType())
-            .workspaceUuid(resource.getWorkspaceUuid().toString())
+            .workspaceUuid(resource.getWorkspaceId().toString())
             .addParameter(ControlledResourceKeys.UPDATE_PARAMETERS, updateParameters)
             .addParameter(ResourceKeys.RESOURCE_NAME, resourceName)
             .addParameter(ResourceKeys.RESOURCE_DESCRIPTION, resourceDescription);
@@ -177,9 +177,9 @@ public class ControlledResourceService {
   /**
    * Clone a GCS Bucket to another workspace.
    *
-   * @param sourceWorkspaceUuid - workspace ID fo source bucket
+   * @param sourceWorkspaceId - workspace ID fo source bucket
    * @param sourceResourceId - resource ID of source bucket
-   * @param destinationWorkspaceUuid - workspace ID to clone into
+   * @param destinationWorkspaceId - workspace ID to clone into
    * @param jobControl - job service control structure
    * @param userRequest - incoming request
    * @param destinationResourceName - override value for resource name. Re-uses previous name if
@@ -195,9 +195,9 @@ public class ControlledResourceService {
    * @return - Job ID of submitted flight
    */
   public String cloneGcsBucket(
-      UUID sourceWorkspaceUuid,
+      UUID sourceWorkspaceId,
       UUID sourceResourceId,
-      UUID destinationWorkspaceUuid,
+      UUID destinationWorkspaceId,
       ApiJobControl jobControl,
       AuthenticatedUserRequest userRequest,
       @Nullable String destinationResourceName,
@@ -205,12 +205,12 @@ public class ControlledResourceService {
       @Nullable String destinationBucketName,
       @Nullable String destinationLocation,
       @Nullable ApiCloningInstructionsEnum cloningInstructionsOverride) {
-    stageService.assertMcWorkspace(destinationWorkspaceUuid, "cloneGcsBucket");
+    stageService.assertMcWorkspace(destinationWorkspaceId, "cloneGcsBucket");
     // Authorization check is handled as the first flight step rather than before the flight, as
     // this flight is re-used for cloneWorkspace.
 
     final ControlledResource sourceBucketResource =
-        getControlledResource(sourceWorkspaceUuid, sourceResourceId, userRequest);
+        getControlledResource(sourceWorkspaceId, sourceResourceId, userRequest);
 
     // Write access to the target workspace will be established in the create flight
     final String jobDescription =
@@ -228,8 +228,8 @@ public class ControlledResourceService {
             .flightClass(CloneControlledGcsBucketResourceFlight.class)
             .resource(sourceBucketResource)
             .userRequest(userRequest)
-            .workspaceUuid(sourceWorkspaceUuid.toString())
-            .addParameter(ControlledResourceKeys.DESTINATION_WORKSPACE_ID, destinationWorkspaceUuid)
+            .workspaceUuid(sourceWorkspaceId.toString())
+            .addParameter(ControlledResourceKeys.DESTINATION_WORKSPACE_ID, destinationWorkspaceId)
             .addParameter(ResourceKeys.RESOURCE_NAME, destinationResourceName)
             .addParameter(ResourceKeys.RESOURCE_DESCRIPTION, destinationDescription)
             .addParameter(ControlledResourceKeys.DESTINATION_BUCKET_NAME, destinationBucketName)
@@ -267,7 +267,7 @@ public class ControlledResourceService {
       @Nullable String resourceDescription) {
     controlledResourceMetadataManager.validateControlledResourceAndAction(
         userRequest,
-        resource.getWorkspaceUuid(),
+        resource.getWorkspaceId(),
         resource.getResourceId(),
         SamControlledResourceActions.EDIT_ACTION);
 
@@ -285,7 +285,7 @@ public class ControlledResourceService {
             .operationType(OperationType.UPDATE)
             .resourceType(resource.getResourceType())
             .resourceName(resource.getName())
-            .workspaceUuid(resource.getWorkspaceUuid().toString())
+            .workspaceUuid(resource.getWorkspaceId().toString())
             .stewardshipType(resource.getStewardshipType())
             .addParameter(ControlledResourceKeys.UPDATE_PARAMETERS, updateParameters)
             .addParameter(ResourceKeys.RESOURCE_NAME, resourceName)
@@ -296,9 +296,9 @@ public class ControlledResourceService {
   /**
    * Make a clone of a BigQuery dataset
    *
-   * @param sourceWorkspaceUuid - workspace ID of original dataset
+   * @param sourceWorkspaceId - workspace ID of original dataset
    * @param sourceResourceId - resource ID of original dataset
-   * @param destinationWorkspaceUuid - destination (sink) workspace ID
+   * @param destinationWorkspaceId - destination (sink) workspace ID
    * @param jobControl - job control structure (should already have ID)
    * @param userRequest - request object for this call
    * @param destinationResourceName - resource name. Uses source name if null
@@ -311,9 +311,9 @@ public class ControlledResourceService {
    *     any existing instructions. Existing instructions are used if null.
    */
   public String cloneBigQueryDataset(
-      UUID sourceWorkspaceUuid,
+      UUID sourceWorkspaceId,
       UUID sourceResourceId,
-      UUID destinationWorkspaceUuid,
+      UUID destinationWorkspaceId,
       ApiJobControl jobControl,
       AuthenticatedUserRequest userRequest,
       @Nullable String destinationResourceName,
@@ -321,9 +321,9 @@ public class ControlledResourceService {
       @Nullable String destinationDatasetName,
       @Nullable String destinationLocation,
       @Nullable ApiCloningInstructionsEnum cloningInstructionsOverride) {
-    stageService.assertMcWorkspace(destinationWorkspaceUuid, "cloneGcpBigQueryDataset");
+    stageService.assertMcWorkspace(destinationWorkspaceId, "cloneGcpBigQueryDataset");
     final ControlledResource sourceDatasetResource =
-        getControlledResource(sourceWorkspaceUuid, sourceResourceId, userRequest);
+        getControlledResource(sourceWorkspaceId, sourceResourceId, userRequest);
     // Authorization check is handled as the first flight step rather than before the flight, as
     // this flight is re-used for cloneWorkspace.
 
@@ -346,8 +346,8 @@ public class ControlledResourceService {
             // TODO: fix resource name key for this case
             .resourceType(sourceDatasetResource.getResourceType())
             .stewardshipType(sourceDatasetResource.getStewardshipType())
-            .workspaceUuid(sourceWorkspaceUuid.toString())
-            .addParameter(ControlledResourceKeys.DESTINATION_WORKSPACE_ID, destinationWorkspaceUuid)
+            .workspaceUuid(sourceWorkspaceId.toString())
+            .addParameter(ControlledResourceKeys.DESTINATION_WORKSPACE_ID, destinationWorkspaceId)
             .addParameter(ResourceKeys.RESOURCE_NAME, destinationResourceName)
             .addParameter(ResourceKeys.RESOURCE_DESCRIPTION, destinationDescription)
             .addParameter(ControlledResourceKeys.LOCATION, destinationLocation)
@@ -383,13 +383,13 @@ public class ControlledResourceService {
         SamRethrow.onInterrupted(
             () ->
                 samService.getOrCreatePetSaEmail(
-                    gcpCloudContextService.getRequiredGcpProject(resource.getWorkspaceUuid()),
+                    gcpCloudContextService.getRequiredGcpProject(resource.getWorkspaceId()),
                     userRequest.getRequiredToken()),
             "enablePet");
     jobBuilder.addParameter(ControlledResourceKeys.CREATE_NOTEBOOK_PARAMETERS, creationParameters);
     jobBuilder.addParameter(ControlledResourceKeys.NOTEBOOK_PET_SERVICE_ACCOUNT, petSaEmail);
     String jobId = jobBuilder.submit();
-    waitForResourceOrJob(resource.getWorkspaceUuid(), resource.getResourceId(), jobId);
+    waitForResourceOrJob(resource.getWorkspaceId(), resource.getResourceId(), jobId);
     return jobId;
   }
 
@@ -425,7 +425,7 @@ public class ControlledResourceService {
         .resource(resource)
         .userRequest(userRequest)
         .operationType(OperationType.CREATE)
-        .workspaceUuid(resource.getWorkspaceUuid().toString())
+        .workspaceUuid(resource.getWorkspaceId().toString())
         .resourceName(resource.getName())
         .resourceType(resource.getResourceType())
         .stewardshipType(resource.getStewardshipType())
@@ -435,10 +435,10 @@ public class ControlledResourceService {
 
   private void validateCreateFlightPrerequisites(
       ControlledResource resource, AuthenticatedUserRequest userRequest) {
-    stageService.assertMcWorkspace(resource.getWorkspaceUuid(), "createControlledResource");
+    stageService.assertMcWorkspace(resource.getWorkspaceId(), "createControlledResource");
     workspaceService.validateWorkspaceAndAction(
         userRequest,
-        resource.getWorkspaceUuid(),
+        resource.getWorkspaceId(),
         resource.getCategory().getSamCreateResourceAction());
   }
 

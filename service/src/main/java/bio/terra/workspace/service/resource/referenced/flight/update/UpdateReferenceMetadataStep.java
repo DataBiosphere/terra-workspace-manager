@@ -23,7 +23,7 @@ public class UpdateReferenceMetadataStep implements Step {
       ResourceDao resourceDao, ReferencedResource referencedResource) {
     this.resourceDao = resourceDao;
     this.referencedResource = referencedResource;
-    workspaceUuid = referencedResource.getWorkspaceUuid();
+    workspaceUuid = referencedResource.getWorkspaceId();
     resourceId = referencedResource.getResourceId();
   }
 

@@ -46,7 +46,7 @@ public class LaunchCreateReferenceResourceFlightStep implements Step {
         context.getInputParameters(),
         ControlledResourceKeys.DESTINATION_WORKSPACE_ID,
         JobMapKeys.AUTH_USER_INFO.getKeyName());
-    final var destinationWorkspaceUuid =
+    final var destinationWorkspaceId =
         context
             .getInputParameters()
             .get(ControlledResourceKeys.DESTINATION_WORKSPACE_ID, UUID.class);
@@ -59,7 +59,7 @@ public class LaunchCreateReferenceResourceFlightStep implements Step {
 
     final ReferencedResource destinationResource =
         WorkspaceCloneUtils.buildDestinationReferencedResource(
-            resource, destinationWorkspaceUuid, null, description);
+            resource, destinationWorkspaceId, null, description);
     // put the destination resource in the map, because it's not communicated
     // from the flight as the response (and we need the workspace ID)
     context

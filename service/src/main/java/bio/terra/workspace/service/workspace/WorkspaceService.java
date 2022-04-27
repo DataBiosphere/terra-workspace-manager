@@ -85,7 +85,7 @@ public class WorkspaceService {
   @Traced
   public UUID createWorkspace(Workspace workspace, AuthenticatedUserRequest userRequest) {
     String workspaceName = workspace.getDisplayName().orElse("");
-    String workspaceUuid = workspace.getWorkspaceUuid().toString();
+    String workspaceUuid = workspace.getWorkspaceId().toString();
     String jobDescription =
         String.format("Create workspace: name: '%s' id: '%s'  ", workspaceName, workspaceUuid);
 
@@ -157,10 +157,10 @@ public class WorkspaceService {
   @Traced
   public List<Workspace> listWorkspaces(
       AuthenticatedUserRequest userRequest, int offset, int limit) {
-    List<UUID> samWorkspaceUuids =
+    List<UUID> samWorkspaceIds =
         SamRethrow.onInterrupted(
-            () -> samService.listWorkspaceUuids(userRequest), "listWorkspaceUuids");
-    return workspaceDao.getWorkspacesMatchingList(samWorkspaceUuids, offset, limit);
+            () -> samService.listWorkspaceIds(userRequest), "listWorkspaceIds");
+    return workspaceDao.getWorkspacesMatchingList(samWorkspaceIds, offset, limit);
   }
 
   /** Retrieves an existing workspace by ID */
@@ -292,16 +292,16 @@ public class WorkspaceService {
   }
 
   public String cloneWorkspace(
-      UUID sourceWorkspaceUuid,
+      UUID sourceWorkspaceId,
       AuthenticatedUserRequest userRequest,
       @Nullable String location,
       Workspace destinationWorkspace) {
     final Workspace sourceWorkspace =
         validateWorkspaceAndAction(
-            userRequest, sourceWorkspaceUuid, SamConstants.SamWorkspaceAction.READ);
+            userRequest, sourceWorkspaceId, SamConstants.SamWorkspaceAction.READ);
     stageService.assertMcWorkspace(sourceWorkspace, "cloneGcpWorkspace");
     String workspaceName = sourceWorkspace.getDisplayName().orElse("");
-    String workspaceUuid = sourceWorkspace.getWorkspaceUuid().toString();
+    String workspaceUuid = sourceWorkspace.getWorkspaceId().toString();
     String jobDescription =
         String.format("Clone workspace: name: '%s' id: '%s'  ", workspaceName, workspaceUuid);
 
@@ -316,10 +316,10 @@ public class WorkspaceService {
         .userRequest(userRequest)
         .request(destinationWorkspace)
         .operationType(OperationType.CLONE)
-        .workspaceUuid(sourceWorkspaceUuid.toString())
+        .workspaceUuid(sourceWorkspaceId.toString())
         .addParameter(
             ControlledResourceKeys.SOURCE_WORKSPACE_ID,
-            sourceWorkspaceUuid) // TODO: remove this duplication
+            sourceWorkspaceId) // TODO: remove this duplication
         .addParameter(ControlledResourceKeys.LOCATION, location)
         .submit();
   }

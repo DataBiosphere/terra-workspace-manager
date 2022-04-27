@@ -240,7 +240,7 @@ public class SamService {
    * Rawls, some of these workspaces will be Rawls managed and WSM will not know about them.
    */
   @Traced
-  public List<UUID> listWorkspaceUuids(AuthenticatedUserRequest userRequest)
+  public List<UUID> listWorkspaceIds(AuthenticatedUserRequest userRequest)
       throws InterruptedException {
     ResourcesApi resourceApi = samResourcesApi(userRequest.getRequiredToken());
     List<UUID> workspaceIds = new ArrayList<>();
@@ -482,7 +482,7 @@ public class SamService {
     checkAuthz(
         userRequest,
         SamConstants.SamResource.WORKSPACE,
-        resource.getWorkspaceUuid().toString(),
+        resource.getWorkspaceId().toString(),
         samActionToModifyRole(WsmIamRole.OWNER));
 
     try {
@@ -533,7 +533,7 @@ public class SamService {
     checkAuthz(
         userRequest,
         SamConstants.SamResource.WORKSPACE,
-        resource.getWorkspaceUuid().toString(),
+        resource.getWorkspaceId().toString(),
         samActionToModifyRole(WsmIamRole.OWNER));
 
     try {
@@ -783,7 +783,7 @@ public class SamService {
     initializeWsmServiceAccount();
     FullyQualifiedResourceId workspaceParentFqId =
         new FullyQualifiedResourceId()
-            .resourceId(resource.getWorkspaceUuid().toString())
+            .resourceId(resource.getWorkspaceId().toString())
             .resourceTypeName(SamConstants.SamResource.WORKSPACE);
 
     CreateResourceRequestV2 resourceRequest =
@@ -903,7 +903,7 @@ public class SamService {
     checkAuthz(
         userRequest,
         SamConstants.SamResource.WORKSPACE,
-        resource.getWorkspaceUuid().toString(),
+        resource.getWorkspaceId().toString(),
         samActionToModifyRole(WsmIamRole.OWNER));
 
     try {

@@ -127,7 +127,7 @@ public class ControlledGcsBucketLifecycle extends GcpWorkspaceCloneTestScriptBas
     logger.info("Failed to create bucket with duplicate name again, as expected");
     // Retrieve the bucket resource
     logger.info("Retrieving bucket resource id {}", resourceId.toString());
-    GcpGcsBucketResource gotBucket = resourceApi.getBucket(getWorkspaceUuid(), resourceId);
+    GcpGcsBucketResource gotBucket = resourceApi.getBucket(getWorkspaceId(), resourceId);
     assertEquals(
         bucket.getGcpBucket().getAttributes().getBucketName(),
         gotBucket.getAttributes().getBucketName());
@@ -224,18 +224,18 @@ public class ControlledGcsBucketLifecycle extends GcpWorkspaceCloneTestScriptBas
     ResourceApi readerApi = ClientTestUtils.getResourceClient(getWorkspaceReader(), server);
     ResourceList bucketList =
         readerApi.enumerateResources(
-            getWorkspaceUuid(), 0, 5, ResourceType.GCS_BUCKET, StewardshipType.CONTROLLED);
+            getWorkspaceId(), 0, 5, ResourceType.GCS_BUCKET, StewardshipType.CONTROLLED);
     assertEquals(1, bucketList.getResources().size());
     MultiResourcesUtils.assertResourceType(ResourceType.GCS_BUCKET, bucketList);
 
     // Owner can delete the bucket through WSM
-    GcsBucketUtils.deleteControlledGcsBucket(resourceId, getWorkspaceUuid(), resourceApi);
+    GcsBucketUtils.deleteControlledGcsBucket(resourceId, getWorkspaceId(), resourceApi);
 
     // verify the bucket was deleted from WSM metadata
     ApiException bucketNotFound =
         assertThrows(
             ApiException.class,
-            () -> resourceApi.getBucket(getWorkspaceUuid(), resourceId),
+            () -> resourceApi.getBucket(getWorkspaceId(), resourceId),
             "Incorrectly found a deleted bucket!");
     assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, bucketNotFound.getCode());
 
@@ -246,7 +246,7 @@ public class ControlledGcsBucketLifecycle extends GcpWorkspaceCloneTestScriptBas
     bucketName = null;
 
     // Delete the cloud context. This is not required. Just some exercise for deleteCloudContext
-    CloudContextMaker.deleteGcpCloudContext(getWorkspaceUuid(), workspaceApi);
+    CloudContextMaker.deleteGcpCloudContext(getWorkspaceId(), workspaceApi);
     logger.info("Cloud context deleted. User Journey complete.");
   }
 
@@ -288,8 +288,8 @@ public class ControlledGcsBucketLifecycle extends GcpWorkspaceCloneTestScriptBas
             .gcsBucket(creationParameters)
             .common(commonParameters);
 
-    logger.info("Attempting to create bucket {} workspace {}", bucketName, getWorkspaceUuid());
-    return resourceApi.createBucket(body, getWorkspaceUuid());
+    logger.info("Attempting to create bucket {} workspace {}", bucketName, getWorkspaceId());
+    return resourceApi.createBucket(body, getWorkspaceId());
   }
 
   private GcpGcsBucketResource updateBucketAttempt(
@@ -308,8 +308,8 @@ public class ControlledGcsBucketLifecycle extends GcpWorkspaceCloneTestScriptBas
         "Attempting to update bucket {} resource ID {} workspace {}",
         bucketName,
         resourceId,
-        getWorkspaceUuid());
-    return resourceApi.updateGcsBucket(body, getWorkspaceUuid(), resourceId);
+        getWorkspaceId());
+    return resourceApi.updateGcsBucket(body, getWorkspaceId(), resourceId);
   }
 
   private void testCloneBucket(
@@ -323,7 +323,7 @@ public class ControlledGcsBucketLifecycle extends GcpWorkspaceCloneTestScriptBas
     final CloneControlledGcpGcsBucketRequest cloneRequest =
         new CloneControlledGcpGcsBucketRequest()
             .bucketName(destinationBucketName)
-            .destinationWorkspaceUuid(getDestinationWorkspaceUuid())
+            .destinationWorkspaceId(getDestinationWorkspaceId())
             .name(sourceBucket.getMetadata().getName())
             .description(clonedBucketDescription)
             .location(null) // use same as src
@@ -335,15 +335,15 @@ public class ControlledGcsBucketLifecycle extends GcpWorkspaceCloneTestScriptBas
             + "projectID: {}\ninto destination bucket\n\tname: {}\n\tworkspace: {}\n\tprojectID: {}",
         sourceBucket.getMetadata().getName(),
         sourceBucket.getMetadata().getResourceId(),
-        sourceBucket.getMetadata().getWorkspaceUuid(),
+        sourceBucket.getMetadata().getWorkspaceId(),
         getSourceProjectId(),
         destinationBucketName,
-        getDestinationWorkspaceUuid(),
+        getDestinationWorkspaceId(),
         getDestinationProjectId());
     CloneControlledGcpGcsBucketResult cloneResult =
         resourceApi.cloneGcsBucket(
             cloneRequest,
-            sourceBucket.getMetadata().getWorkspaceUuid(),
+            sourceBucket.getMetadata().getWorkspaceId(),
             sourceBucket.getMetadata().getResourceId());
 
     cloneResult =
@@ -351,7 +351,7 @@ public class ControlledGcsBucketLifecycle extends GcpWorkspaceCloneTestScriptBas
             cloneResult,
             () ->
                 resourceApi.getCloneGcsBucketResult(
-                    cloneRequest.getDestinationWorkspaceUuid(), cloneRequest.getJobControl().getId()),
+                    cloneRequest.getDestinationWorkspaceId(), cloneRequest.getJobControl().getId()),
             CloneControlledGcpGcsBucketResult::getJobReport,
             Duration.ofSeconds(5));
 
@@ -359,7 +359,7 @@ public class ControlledGcsBucketLifecycle extends GcpWorkspaceCloneTestScriptBas
         "clone bucket", cloneResult.getJobReport(), cloneResult.getErrorReport());
 
     final ClonedControlledGcpGcsBucket clonedBucket = cloneResult.getBucket();
-    assertEquals(getWorkspaceUuid(), clonedBucket.getSourceWorkspaceUuid());
+    assertEquals(getWorkspaceId(), clonedBucket.getSourceWorkspaceId());
     assertEquals(sourceBucket.getMetadata().getResourceId(), clonedBucket.getSourceResourceId());
 
     final CreatedControlledGcpGcsBucket createdBucket = clonedBucket.getBucket();
@@ -367,7 +367,7 @@ public class ControlledGcsBucketLifecycle extends GcpWorkspaceCloneTestScriptBas
 
     assertEquals(destinationBucketName, clonedResource.getAttributes().getBucketName());
     final ResourceMetadata clonedResourceMetadata = clonedResource.getMetadata();
-    assertEquals(getDestinationWorkspaceUuid(), clonedResourceMetadata.getWorkspaceUuid());
+    assertEquals(getDestinationWorkspaceId(), clonedResourceMetadata.getWorkspaceId());
     assertEquals(sourceBucket.getMetadata().getName(), clonedResourceMetadata.getName());
     assertEquals(clonedBucketDescription, clonedResourceMetadata.getDescription());
     final ResourceMetadata sourceMetadata = sourceBucket.getMetadata();

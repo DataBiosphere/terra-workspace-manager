@@ -31,33 +31,33 @@ public class DeleteWorkspaceWithControlledResource extends WorkspaceAllocateTest
         ClientTestUtils.getControlledGcpResourceClient(testUser, server);
 
     // Create a cloud context
-    String projectId = CloudContextMaker.createGcpCloudContext(getWorkspaceUuid(), workspaceApi);
+    String projectId = CloudContextMaker.createGcpCloudContext(getWorkspaceId(), workspaceApi);
     logger.info("Created project {}", projectId);
 
     // Create a shared BigQuery dataset
     GcpBigQueryDatasetResource createdDataset =
         BqDatasetUtils.makeControlledBigQueryDatasetUserShared(
-            resourceApi, getWorkspaceUuid(), DATASET_RESOURCE_NAME, null, null);
+            resourceApi, getWorkspaceId(), DATASET_RESOURCE_NAME, null, null);
     UUID resourceId = createdDataset.getMetadata().getResourceId();
     logger.info("Created controlled dataset {}", resourceId);
 
     // Confirm the dataset was created in WSM
     GcpBigQueryDatasetResource fetchedDataset =
-        resourceApi.getBigQueryDataset(getWorkspaceUuid(), resourceId);
+        resourceApi.getBigQueryDataset(getWorkspaceId(), resourceId);
     assertEquals(createdDataset, fetchedDataset);
 
     // Delete the workspace, which should delete the included context and resource
-    workspaceApi.deleteWorkspace(getWorkspaceUuid());
+    workspaceApi.deleteWorkspace(getWorkspaceId());
 
     // Confirm the workspace is deleted
     var workspaceMissingException =
-        assertThrows(ApiException.class, () -> workspaceApi.getWorkspace(getWorkspaceUuid()));
+        assertThrows(ApiException.class, () -> workspaceApi.getWorkspace(getWorkspaceId()));
     assertEquals(HttpStatus.SC_NOT_FOUND, workspaceMissingException.getCode());
 
     // Confirm the controlled resource was deleted
     var resourceMissingException =
         assertThrows(
-            ApiException.class, () -> resourceApi.getBigQueryDataset(getWorkspaceUuid(), resourceId));
+            ApiException.class, () -> resourceApi.getBigQueryDataset(getWorkspaceId(), resourceId));
     assertEquals(HttpStatus.SC_NOT_FOUND, resourceMissingException.getCode());
   }
 
@@ -69,7 +69,7 @@ public class DeleteWorkspaceWithControlledResource extends WorkspaceAllocateTest
   public void doCleanup(List<TestUserSpecification> testUsers, WorkspaceApi workspaceApi)
       throws Exception {
     try {
-      workspaceApi.deleteWorkspace(getWorkspaceUuid());
+      workspaceApi.deleteWorkspace(getWorkspaceId());
     } catch (ApiException e) {
       if (e.getCode() != HttpStatus.SC_NOT_FOUND) {
         throw e;

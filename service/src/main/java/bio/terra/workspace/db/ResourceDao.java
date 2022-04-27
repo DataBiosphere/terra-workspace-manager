@@ -501,7 +501,7 @@ public class ResourceDao {
       throws DuplicateResourceException {
 
     if (!cloudContextExists(
-        controlledResource.getWorkspaceUuid(),
+        controlledResource.getWorkspaceId(),
         controlledResource.getResourceType().getCloudPlatform())) {
       throw new CloudContextRequiredException(
           "No cloud context found in which to create a controlled resource");
@@ -544,7 +544,7 @@ public class ResourceDao {
 
       if (uniquenessCheck.getUniquenessScope() == UniquenessScope.WORKSPACE) {
         queryBuilder.append(" AND workspace_id = :workspace_id");
-        params.addValue("workspace_id", controlledResource.getWorkspaceUuid().toString());
+        params.addValue("workspace_id", controlledResource.getWorkspaceId().toString());
       }
 
       for (Pair<String, String> pair : uniquenessCheck.getParameters()) {
@@ -574,7 +574,7 @@ public class ResourceDao {
     MapSqlParameterSource params =
         new MapSqlParameterSource()
             .addValue("private_resource_state", privateResourceState.toSql())
-            .addValue("workspace_id", resource.getWorkspaceUuid().toString())
+            .addValue("workspace_id", resource.getWorkspaceId().toString())
             .addValue("resource_id", resource.getResourceId().toString())
             .addValue("private_access_scope", AccessScopeType.ACCESS_SCOPE_PRIVATE.toSql());
     jdbcTemplate.update(sql, params);
@@ -657,7 +657,7 @@ public class ResourceDao {
         new MapSqlParameterSource()
             .addValue("resource_type", AI_NOTEBOOK_INSTANCE.toSql())
             .addValue("stewardship_type", CONTROLLED.toSql())
-            .addValue("workspace_id", notebookResource.getWorkspaceUuid().toString())
+            .addValue("workspace_id", notebookResource.getWorkspaceId().toString())
             .addValue("instance_id", notebookResource.getInstanceId())
             .addValue("location", notebookResource.getLocation());
     Integer matchingCount = jdbcTemplate.queryForObject(sql, sqlParams, Integer.class);
@@ -683,7 +683,7 @@ public class ResourceDao {
         new MapSqlParameterSource()
             .addValue("resource_type", BIG_QUERY_DATASET.toSql())
             .addValue("stewardship_type", CONTROLLED.toSql())
-            .addValue("workspace_id", datasetResource.getWorkspaceUuid().toString())
+            .addValue("workspace_id", datasetResource.getWorkspaceId().toString())
             .addValue("dataset_name", datasetResource.getDatasetName());
     Integer matchingCount = jdbcTemplate.queryForObject(sql, sqlParams, Integer.class);
     if (matchingCount != null && matchingCount > 0) {
@@ -705,7 +705,7 @@ public class ResourceDao {
         new MapSqlParameterSource()
             .addValue("resource_type", AZURE_IP.toSql())
             .addValue("stewardship_type", CONTROLLED.toSql())
-            .addValue("workspace_id", ipResource.getWorkspaceUuid().toString())
+            .addValue("workspace_id", ipResource.getWorkspaceId().toString())
             .addValue("ip_name", ipResource.getIpName());
     Integer matchingCount = jdbcTemplate.queryForObject(sql, sqlParams, Integer.class);
     if (matchingCount != null && matchingCount > 0) {
@@ -726,7 +726,7 @@ public class ResourceDao {
         new MapSqlParameterSource()
             .addValue("resource_type", AZURE_DISK.toSql())
             .addValue("stewardship_type", CONTROLLED.toSql())
-            .addValue("workspace_id", resource.getWorkspaceUuid().toString())
+            .addValue("workspace_id", resource.getWorkspaceId().toString())
             .addValue("disk_name", resource.getDiskName());
     Integer matchingCount = jdbcTemplate.queryForObject(sql, sqlParams, Integer.class);
     if (matchingCount != null && matchingCount > 0) {
@@ -767,7 +767,7 @@ public class ResourceDao {
         new MapSqlParameterSource()
             .addValue("resource_type", AZURE_NETWORK.toSql())
             .addValue("stewardship_type", CONTROLLED.toSql())
-            .addValue("workspace_id", resource.getWorkspaceUuid().toString())
+            .addValue("workspace_id", resource.getWorkspaceId().toString())
             .addValue("network_name", resource.getNetworkName());
     Integer matchingCount = jdbcTemplate.queryForObject(sql, sqlParams, Integer.class);
     if (matchingCount != null && matchingCount > 0) {
@@ -788,7 +788,7 @@ public class ResourceDao {
         new MapSqlParameterSource()
             .addValue("resource_type", AZURE_STORAGE_ACCOUNT.toSql())
             .addValue("stewardship_type", CONTROLLED.toSql())
-            .addValue("workspace_id", resource.getWorkspaceUuid().toString())
+            .addValue("workspace_id", resource.getWorkspaceId().toString())
             .addValue("name", resource.getStorageAccountName());
     Integer matchingCount = jdbcTemplate.queryForObject(sql, sqlParams, Integer.class);
     if (matchingCount != null && matchingCount > 0) {
@@ -826,7 +826,7 @@ public class ResourceDao {
 
     final var params =
         new MapSqlParameterSource()
-            .addValue("workspace_id", resource.getWorkspaceUuid().toString())
+            .addValue("workspace_id", resource.getWorkspaceId().toString())
             .addValue("cloud_platform", resource.getResourceType().getCloudPlatform().toString())
             .addValue("resource_id", resource.getResourceId().toString())
             .addValue("name", resource.getName())
@@ -864,7 +864,7 @@ public class ResourceDao {
       logger.info(
           "Inserted record for resource {} for workspace {}",
           resource.getResourceId(),
-          resource.getWorkspaceUuid());
+          resource.getWorkspaceId());
     } catch (DuplicateKeyException e) {
       throw new DuplicateResourceException(
           String.format(

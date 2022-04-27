@@ -81,7 +81,7 @@ public class CloneWorkspace extends WorkspaceAllocateTestScriptBase {
   private String sharedBucketSourceResourceName;
   private String sourceProjectId;
   private TestUserSpecification cloningUser;
-  private UUID destinationWorkspaceUuid;
+  private UUID destinationWorkspaceId;
   private WorkspaceApi cloningUserWorkspaceApi;
 
   private static final int EXPECTED_NUM_CLONED_RESOURCES = 11;
@@ -102,19 +102,19 @@ public class CloneWorkspace extends WorkspaceAllocateTestScriptBase {
         "Owning user: {}, Cloning user: {}", sourceOwnerUser.userEmail, cloningUser.userEmail);
     // Build source GCP project in main test workspace
     sourceProjectId =
-        CloudContextMaker.createGcpCloudContext(getWorkspaceUuid(), sourceOwnerWorkspaceApi);
-    logger.info("Created source project {} in workspace {}", sourceProjectId, getWorkspaceUuid());
+        CloudContextMaker.createGcpCloudContext(getWorkspaceId(), sourceOwnerWorkspaceApi);
+    logger.info("Created source project {} in workspace {}", sourceProjectId, getWorkspaceId());
 
     // add cloning user as reader on the workspace
     sourceOwnerWorkspaceApi.grantRole(
         new GrantRoleRequestBody().memberEmail(cloningUser.userEmail),
-        getWorkspaceUuid(),
+        getWorkspaceId(),
         IamRole.READER);
     logger.info(
         "Granted role {} for user {} on workspace {}",
         IamRole.READER,
         cloningUser.userEmail,
-        getWorkspaceUuid());
+        getWorkspaceId());
 
     // give users resource APIs
     final ControlledGcpResourceApi sourceOwnerResourceApi =
@@ -129,7 +129,7 @@ public class CloneWorkspace extends WorkspaceAllocateTestScriptBase {
     sharedSourceBucket =
         makeControlledGcsBucketUserShared(
             sourceOwnerResourceApi,
-            getWorkspaceUuid(),
+            getWorkspaceId(),
             sharedBucketSourceResourceName,
             CloningInstructionsEnum.RESOURCE);
 
@@ -139,7 +139,7 @@ public class CloneWorkspace extends WorkspaceAllocateTestScriptBase {
     privateSourceBucket =
         makeControlledGcsBucketUserPrivate(
             sourceOwnerResourceApi,
-            getWorkspaceUuid(),
+            getWorkspaceId(),
             UUID.randomUUID().toString(),
             CloningInstructionsEnum.RESOURCE);
     GcsBucketUtils.addFileToBucket(privateSourceBucket, sourceOwnerUser, sourceProjectId);
@@ -148,7 +148,7 @@ public class CloneWorkspace extends WorkspaceAllocateTestScriptBase {
     sharedCopyNothingSourceBucket =
         makeControlledGcsBucketUserShared(
             sourceOwnerResourceApi,
-            getWorkspaceUuid(),
+            getWorkspaceId(),
             UUID.randomUUID().toString(),
             CloningInstructionsEnum.NOTHING);
     GcsBucketUtils.addFileToBucket(sharedCopyNothingSourceBucket, sourceOwnerUser, sourceProjectId);
@@ -157,7 +157,7 @@ public class CloneWorkspace extends WorkspaceAllocateTestScriptBase {
     copyDefinitionSourceBucket =
         makeControlledGcsBucketUserShared(
             sourceOwnerResourceApi,
-            getWorkspaceUuid(),
+            getWorkspaceId(),
             UUID.randomUUID().toString(),
             CloningInstructionsEnum.DEFINITION);
     GcsBucketUtils.addFileToBucket(copyDefinitionSourceBucket, sourceOwnerUser, sourceProjectId);
@@ -167,7 +167,7 @@ public class CloneWorkspace extends WorkspaceAllocateTestScriptBase {
     copyDefinitionDataset =
         makeControlledBigQueryDatasetUserShared(
             sourceOwnerResourceApi,
-            getWorkspaceUuid(),
+            getWorkspaceId(),
             copyDefinitionDatasetResourceName,
             null,
             CloningInstructionsEnum.DEFINITION);
@@ -178,7 +178,7 @@ public class CloneWorkspace extends WorkspaceAllocateTestScriptBase {
     copyResourceDataset =
         makeControlledBigQueryDatasetUserShared(
             sourceOwnerResourceApi,
-            getWorkspaceUuid(),
+            getWorkspaceId(),
             copyResourceDatasetResourceName,
             null,
             CloningInstructionsEnum.RESOURCE);
@@ -189,7 +189,7 @@ public class CloneWorkspace extends WorkspaceAllocateTestScriptBase {
     privateDataset =
         makeControlledBigQueryDatasetUserPrivate(
             sourceOwnerResourceApi,
-            getWorkspaceUuid(),
+            getWorkspaceId(),
             privateDatasetResourceName,
             null,
             CloningInstructionsEnum.RESOURCE);
@@ -203,7 +203,7 @@ public class CloneWorkspace extends WorkspaceAllocateTestScriptBase {
         GcsBucketUtils.makeGcsBucketReference(
             sharedSourceBucket.getGcpBucket().getAttributes(),
             referencedGcpResourceApi,
-            getWorkspaceUuid(),
+            getWorkspaceId(),
             bucketReferenceName,
             CloningInstructionsEnum.REFERENCE);
 
@@ -215,7 +215,7 @@ public class CloneWorkspace extends WorkspaceAllocateTestScriptBase {
         makeGcsObjectReference(
             referencedFileAttributes,
             referencedGcpResourceApi,
-            getWorkspaceUuid(),
+            getWorkspaceId(),
             "a_reference_to_wsmtestblob",
             CloningInstructionsEnum.REFERENCE);
 
@@ -224,7 +224,7 @@ public class CloneWorkspace extends WorkspaceAllocateTestScriptBase {
         BqDatasetUtils.makeBigQueryDatasetReference(
             copyDefinitionDataset.getAttributes(),
             referencedGcpResourceApi,
-            getWorkspaceUuid(),
+            getWorkspaceId(),
             "dataset_resource_1");
     GcpBigQueryDataTableAttributes bqTableReferenceAttributes =
         new GcpBigQueryDataTableAttributes()
@@ -235,7 +235,7 @@ public class CloneWorkspace extends WorkspaceAllocateTestScriptBase {
         BqDatasetUtils.makeBigQueryDataTableReference(
             bqTableReferenceAttributes,
             referencedGcpResourceApi,
-            getWorkspaceUuid(),
+            getWorkspaceId(),
             "datatable_resource_1");
     logger.info("End setup");
   }
@@ -252,29 +252,29 @@ public class CloneWorkspace extends WorkspaceAllocateTestScriptBase {
     final CloneWorkspaceRequest cloneWorkspaceRequest =
         new CloneWorkspaceRequest()
             .displayName("Cloned Workspace")
-            .description("A clone of workspace " + getWorkspaceUuid().toString())
+            .description("A clone of workspace " + getWorkspaceId().toString())
             .spendProfile(getSpendProfileId()) // TODO- use a different one if available
             .location("us-central1");
     CloneWorkspaceResult cloneResult =
-        cloningUserWorkspaceApi.cloneWorkspace(cloneWorkspaceRequest, getWorkspaceUuid());
-    logger.info("Started clone of workspace {}", getWorkspaceUuid());
+        cloningUserWorkspaceApi.cloneWorkspace(cloneWorkspaceRequest, getWorkspaceId());
+    logger.info("Started clone of workspace {}", getWorkspaceId());
 
     final String jobId = cloneResult.getJobReport().getId();
     logger.info("Clone Job ID {}", jobId);
-    final UUID destinationWorkspaceUuid = cloneResult.getWorkspace().getDestinationWorkspaceUuid();
-    assertNotNull(destinationWorkspaceUuid, "Destination workspace ID available immediately.");
+    final UUID destinationWorkspaceId = cloneResult.getWorkspace().getDestinationWorkspaceId();
+    assertNotNull(destinationWorkspaceId, "Destination workspace ID available immediately.");
     final WorkspaceDescription destinationWorkspaceDescription =
-        cloningUserWorkspaceApi.getWorkspace(destinationWorkspaceUuid);
+        cloningUserWorkspaceApi.getWorkspace(destinationWorkspaceId);
     assertNotNull(
         destinationWorkspaceDescription,
         "Destination workspace is available in DB immediately after return from cloneWorkspace().");
     assertEquals(
-        destinationWorkspaceUuid, destinationWorkspaceDescription.getId(), "Destination IDs match");
+        destinationWorkspaceId, destinationWorkspaceDescription.getId(), "Destination IDs match");
 
     cloneResult =
         ClientTestUtils.pollWhileRunning(
             cloneResult,
-            () -> cloningUserWorkspaceApi.getCloneWorkspaceResult(getWorkspaceUuid(), jobId),
+            () -> cloningUserWorkspaceApi.getCloneWorkspaceResult(getWorkspaceId(), jobId),
             CloneWorkspaceResult::getJobReport,
             Duration.ofSeconds(10));
     logger.info("Completed clone result: {}", cloneResult);
@@ -288,8 +288,8 @@ public class CloneWorkspace extends WorkspaceAllocateTestScriptBase {
         cloneResult.getWorkspace().getResources(),
         hasSize(EXPECTED_NUM_CLONED_RESOURCES));
     assertEquals(
-        getWorkspaceUuid(),
-        cloneResult.getWorkspace().getSourceWorkspaceUuid(),
+        getWorkspaceId(),
+        cloneResult.getWorkspace().getSourceWorkspaceId(),
         "Source workspace ID reported accurately.");
 
     // Verify shared GCS bucket succeeds and is populated
@@ -332,11 +332,11 @@ public class CloneWorkspace extends WorkspaceAllocateTestScriptBase {
 
     // We need to get the destination bucket name and project ID
     final WorkspaceDescription destinationWorkspace =
-        cloningUserWorkspaceApi.getWorkspace(destinationWorkspaceUuid);
+        cloningUserWorkspaceApi.getWorkspace(destinationWorkspaceId);
     final String destinationProjectId = destinationWorkspace.getGcpContext().getProjectId();
     final var clonedSharedBucket =
         cloningUserResourceApi.getBucket(
-            destinationWorkspaceUuid, sharedBucketCloneDetails.getDestinationResourceId());
+            destinationWorkspaceId, sharedBucketCloneDetails.getDestinationResourceId());
     logger.info("Cloned Shared Bucket: {}", clonedSharedBucket);
     GcsBucketObjectUtils.retrieveBucketFile(
         clonedSharedBucket.getAttributes().getBucketName(), destinationProjectId, cloningUser);
@@ -449,7 +449,7 @@ public class CloneWorkspace extends WorkspaceAllocateTestScriptBase {
         "Destination resource ID populated.");
     final GcpGcsBucketResource clonedCopyDefinitionBucket =
         cloningUserResourceApi.getBucket(
-            destinationWorkspaceUuid, copyDefinitionBucketDetails.getDestinationResourceId());
+            destinationWorkspaceId, copyDefinitionBucketDetails.getDestinationResourceId());
     assertEmptyBucket(
         clonedCopyDefinitionBucket.getAttributes().getBucketName(), destinationProjectId);
     assertEquals(
@@ -736,8 +736,8 @@ public class CloneWorkspace extends WorkspaceAllocateTestScriptBase {
       throws Exception {
     super.doCleanup(testUsers, workspaceApi);
     // Delete the cloned workspace (will delete context and resources)
-    if (null != destinationWorkspaceUuid) {
-      cloningUserWorkspaceApi.deleteWorkspace(destinationWorkspaceUuid);
+    if (null != destinationWorkspaceId) {
+      cloningUserWorkspaceApi.deleteWorkspace(destinationWorkspaceId);
     }
   }
 

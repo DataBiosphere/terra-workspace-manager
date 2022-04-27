@@ -63,7 +63,7 @@ public class StoreControlledResourceMetadataStepTest extends BaseUnitTest {
     assertThat(result, equalTo(StepResult.getStepResultSuccess()));
 
     WsmResource daoResource =
-        resourceDao.getResource(bucketResource.getWorkspaceUuid(), bucketResource.getResourceId());
+        resourceDao.getResource(bucketResource.getWorkspaceId(), bucketResource.getResourceId());
     assertThat(daoResource.getResourceType(), equalTo(WsmResourceType.CONTROLLED_GCP_GCS_BUCKET));
 
     ControlledGcsBucketResource daoBucket = (ControlledGcsBucketResource) daoResource;

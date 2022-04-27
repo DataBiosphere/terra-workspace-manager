@@ -6,26 +6,26 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 public class WsmClonedWorkspace {
-  private UUID sourceWorkspaceUuid;
-  private UUID destinationWorkspaceUuid;
+  private UUID sourceWorkspaceId;
+  private UUID destinationWorkspaceId;
   private List<WsmResourceCloneDetails> resources;
 
   public WsmClonedWorkspace() {}
 
-  public UUID getSourceWorkspaceUuid() {
-    return sourceWorkspaceUuid;
+  public UUID getSourceWorkspaceId() {
+    return sourceWorkspaceId;
   }
 
-  public void setSourceWorkspaceUuid(UUID sourceWorkspaceUuid) {
-    this.sourceWorkspaceUuid = sourceWorkspaceUuid;
+  public void setSourceWorkspaceId(UUID sourceWorkspaceId) {
+    this.sourceWorkspaceId = sourceWorkspaceId;
   }
 
-  public UUID getDestinationWorkspaceUuid() {
-    return destinationWorkspaceUuid;
+  public UUID getDestinationWorkspaceId() {
+    return destinationWorkspaceId;
   }
 
-  public void setDestinationWorkspaceUuid(UUID destinationWorkspaceUuid) {
-    this.destinationWorkspaceUuid = destinationWorkspaceUuid;
+  public void setDestinationWorkspaceId(UUID destinationWorkspaceId) {
+    this.destinationWorkspaceId = destinationWorkspaceId;
   }
 
   public List<WsmResourceCloneDetails> getResources() {
@@ -38,8 +38,8 @@ public class WsmClonedWorkspace {
 
   public ApiClonedWorkspace toApiModel() {
     return new ApiClonedWorkspace()
-        .sourceWorkspaceUuid(sourceWorkspaceUuid)
-        .destinationWorkspaceUuid(destinationWorkspaceUuid)
+        .sourceWorkspaceId(sourceWorkspaceId)
+        .destinationWorkspaceId(destinationWorkspaceId)
         .resources(
             resources.stream()
                 .map(WsmResourceCloneDetails::toApiModel)

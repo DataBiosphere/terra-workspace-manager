@@ -57,7 +57,7 @@ public class RetrieveGcsBucketCloudAttributesStep implements Step {
       throws InterruptedException, RetryException {
     final FlightMap workingMap = flightContext.getWorkingMap();
     final String projectId =
-        gcpCloudContextService.getRequiredGcpProject(bucketResource.getWorkspaceUuid());
+        gcpCloudContextService.getRequiredGcpProject(bucketResource.getWorkspaceId());
     // get the storage cow
     final StorageCow storageCow = crlService.createStorageCow(projectId);
 

@@ -27,7 +27,7 @@ public class UpdateReferenceResourceFlight extends Flight {
     RetryRule shortDatabaseRetryRule = RetryRules.shortDatabase();
     addStep(
         new RetrieveReferenceMetadataStep(
-            appContext.getResourceDao(), resource.getWorkspaceUuid(), resource.getResourceId()),
+            appContext.getResourceDao(), resource.getWorkspaceId(), resource.getResourceId()),
         shortDatabaseRetryRule);
 
     addStep(

@@ -49,7 +49,7 @@ public class WorkspaceDeleteFlightTest extends BaseConnectedTest {
     AuthenticatedUserRequest userRequest = userAccessUtils.defaultUserAuthRequest();
     Workspace workspace = connectedTestUtils.createWorkspaceWithGcpContext(userRequest);
     ControlledBigQueryDatasetResource dataset =
-        ControlledResourceFixtures.makeDefaultControlledBigQueryBuilder(workspace.getWorkspaceUuid())
+        ControlledResourceFixtures.makeDefaultControlledBigQueryBuilder(workspace.getWorkspaceId())
             .build();
 
     var creationParameters =
@@ -61,14 +61,14 @@ public class WorkspaceDeleteFlightTest extends BaseConnectedTest {
 
     ControlledBigQueryDatasetResource gotResource =
         controlledResourceService
-            .getControlledResource(workspace.getWorkspaceUuid(), dataset.getResourceId(), userRequest)
+            .getControlledResource(workspace.getWorkspaceId(), dataset.getResourceId(), userRequest)
             .castByEnum(WsmResourceType.CONTROLLED_GCP_BIG_QUERY_DATASET);
     assertEquals(dataset, gotResource);
 
     // Run the delete flight, retrying every step once
     FlightMap deleteParameters = new FlightMap();
     deleteParameters.put(
-        WorkspaceFlightMapKeys.WORKSPACE_ID, workspace.getWorkspaceUuid().toString());
+        WorkspaceFlightMapKeys.WORKSPACE_ID, workspace.getWorkspaceId().toString());
     deleteParameters.put(
         WorkspaceFlightMapKeys.WORKSPACE_STAGE, workspace.getWorkspaceStage().name());
     deleteParameters.put(JobMapKeys.AUTH_USER_INFO.getKeyName(), userRequest);
@@ -95,10 +95,10 @@ public class WorkspaceDeleteFlightTest extends BaseConnectedTest {
         WorkspaceNotFoundException.class,
         () ->
             controlledResourceService.getControlledResource(
-                dataset.getWorkspaceUuid(), dataset.getResourceId(), userRequest));
+                dataset.getWorkspaceId(), dataset.getResourceId(), userRequest));
     assertThrows(
         WorkspaceNotFoundException.class,
-        () -> workspaceService.getWorkspace(workspace.getWorkspaceUuid(), userRequest));
+        () -> workspaceService.getWorkspace(workspace.getWorkspaceId(), userRequest));
   }
 
   @Test
@@ -108,7 +108,7 @@ public class WorkspaceDeleteFlightTest extends BaseConnectedTest {
     AuthenticatedUserRequest userRequest = userAccessUtils.defaultUserAuthRequest();
     Workspace workspace = connectedTestUtils.createWorkspaceWithGcpContext(userRequest);
     ControlledBigQueryDatasetResource dataset =
-        ControlledResourceFixtures.makeDefaultControlledBigQueryBuilder(workspace.getWorkspaceUuid())
+        ControlledResourceFixtures.makeDefaultControlledBigQueryBuilder(workspace.getWorkspaceId())
             .build();
     var creationParameters =
         ControlledResourceFixtures.defaultBigQueryDatasetCreationParameters()
@@ -119,13 +119,13 @@ public class WorkspaceDeleteFlightTest extends BaseConnectedTest {
 
     ControlledBigQueryDatasetResource gotResource =
         controlledResourceService
-            .getControlledResource(workspace.getWorkspaceUuid(), dataset.getResourceId(), userRequest)
+            .getControlledResource(workspace.getWorkspaceId(), dataset.getResourceId(), userRequest)
             .castByEnum(WsmResourceType.CONTROLLED_GCP_BIG_QUERY_DATASET);
     assertEquals(dataset, gotResource);
 
     FlightMap deleteParameters = new FlightMap();
     deleteParameters.put(
-        WorkspaceFlightMapKeys.WORKSPACE_ID, workspace.getWorkspaceUuid().toString());
+        WorkspaceFlightMapKeys.WORKSPACE_ID, workspace.getWorkspaceId().toString());
     deleteParameters.put(
         WorkspaceFlightMapKeys.WORKSPACE_STAGE, workspace.getWorkspaceStage().name());
     deleteParameters.put(JobMapKeys.AUTH_USER_INFO.getKeyName(), userRequest);
@@ -147,9 +147,9 @@ public class WorkspaceDeleteFlightTest extends BaseConnectedTest {
         WorkspaceNotFoundException.class,
         () ->
             controlledResourceService.getControlledResource(
-                dataset.getWorkspaceUuid(), dataset.getResourceId(), userRequest));
+                dataset.getWorkspaceId(), dataset.getResourceId(), userRequest));
     assertThrows(
         WorkspaceNotFoundException.class,
-        () -> workspaceService.getWorkspace(workspace.getWorkspaceUuid(), userRequest));
+        () -> workspaceService.getWorkspace(workspace.getWorkspaceId(), userRequest));
   }
 }

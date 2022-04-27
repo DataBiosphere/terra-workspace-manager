@@ -52,16 +52,16 @@ public class AzureWorkspaceTest extends BaseAzureTest {
             azureTestConfiguration.getSubscriptionId(),
             azureTestConfiguration.getManagedResourceGroupId());
     workspaceService.createAzureCloudContext(
-        request.getWorkspaceUuid(), jobId, userRequest, "/fake/value", azureCloudContext);
+        request.getWorkspaceId(), jobId, userRequest, "/fake/value", azureCloudContext);
     jobService.waitForJob(jobId);
 
     assertNull(jobService.retrieveJobResult(jobId, Object.class, userRequest).getException());
     assertTrue(
         testUtils
-            .getAuthorizedAzureCloudContext(request.getWorkspaceUuid(), userRequest)
+            .getAuthorizedAzureCloudContext(request.getWorkspaceId(), userRequest)
             .isPresent());
-    workspaceService.deleteAzureCloudContext(request.getWorkspaceUuid(), userRequest);
+    workspaceService.deleteAzureCloudContext(request.getWorkspaceId(), userRequest);
     assertTrue(
-        testUtils.getAuthorizedAzureCloudContext(request.getWorkspaceUuid(), userRequest).isEmpty());
+        testUtils.getAuthorizedAzureCloudContext(request.getWorkspaceId(), userRequest).isEmpty());
   }
 }

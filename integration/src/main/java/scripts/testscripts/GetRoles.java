@@ -30,10 +30,10 @@ public class GetRoles extends WorkspaceAllocateTestScriptBase {
           "Granting role {} for user {} on workspace id {}",
           IAM_ROLE.toString(),
           testUser.userEmail,
-          getWorkspaceUuid().toString());
+          getWorkspaceId().toString());
       final var body = new GrantRoleRequestBody().memberEmail(testUser.userEmail);
       // grant the role
-      workspaceApi.grantRole(body, getWorkspaceUuid(), IAM_ROLE);
+      workspaceApi.grantRole(body, getWorkspaceId(), IAM_ROLE);
     }
   }
 
@@ -42,11 +42,11 @@ public class GetRoles extends WorkspaceAllocateTestScriptBase {
       throws ApiException {
 
     // check granted roles
-    final RoleBindingList roles = workspaceApi.getRoles(getWorkspaceUuid());
+    final RoleBindingList roles = workspaceApi.getRoles(getWorkspaceId());
 
     logger.debug(
         "For workspace id {}, retrieved role bindings:\n{}",
-        getWorkspaceUuid().toString(),
+        getWorkspaceId().toString(),
         roles.toString());
     // our user should be in this list, with the correct role
     boolean isInList = ClientTestUtils.containsBinding(roles, testUser.userEmail, IAM_ROLE);

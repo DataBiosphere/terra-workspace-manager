@@ -40,7 +40,7 @@ public class CheckControlledResourceAuthStep implements Step {
     // Validate caller can read the source resource before proceeding with the flight.
     controlledResourceMetadataManager.validateControlledResourceAndAction(
         userRequest,
-        resource.getWorkspaceUuid(),
+        resource.getWorkspaceId(),
         resource.getResourceId(),
         SamControlledResourceActions.READ_ACTION);
     return StepResult.getStepResultSuccess();

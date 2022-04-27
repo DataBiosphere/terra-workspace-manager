@@ -96,17 +96,17 @@ public class ControlledBigQueryDatasetLifecycle extends GcpWorkspaceCloneTestScr
         ClientTestUtils.getControlledGcpResourceClient(testUser, server);
 
     // Add a writer the source workspace. Reader is already added by the base class
-    logger.info("Adding {} as writer to workspace {}", writer.userEmail, getWorkspaceUuid());
+    logger.info("Adding {} as writer to workspace {}", writer.userEmail, getWorkspaceId());
     workspaceApi.grantRole(
-        new GrantRoleRequestBody().memberEmail(writer.userEmail), getWorkspaceUuid(), IamRole.WRITER);
+        new GrantRoleRequestBody().memberEmail(writer.userEmail), getWorkspaceId(), IamRole.WRITER);
 
-    SamClientUtils.dumpResourcePolicy(testUser, server, "workspace", getWorkspaceUuid().toString());
+    SamClientUtils.dumpResourcePolicy(testUser, server, "workspace", getWorkspaceId().toString());
 
     // Create a shared BigQuery dataset
     GcpBigQueryDatasetResource createdDataset =
         BqDatasetUtils.makeControlledBigQueryDatasetUserShared(
             ownerResourceApi,
-            getWorkspaceUuid(),
+            getWorkspaceId(),
             DATASET_RESOURCE_NAME,
             /*datasetId=*/ null,
             /*cloningInstructions=*/ null);
@@ -116,7 +116,7 @@ public class ControlledBigQueryDatasetLifecycle extends GcpWorkspaceCloneTestScr
     // Retrieve the dataset resource
     logger.info("Retrieving dataset resource id {}", resourceId.toString());
     GcpBigQueryDatasetResource fetchedResource =
-        ownerResourceApi.getBigQueryDataset(getWorkspaceUuid(), resourceId);
+        ownerResourceApi.getBigQueryDataset(getWorkspaceId(), resourceId);
     assertEquals(createdDataset, fetchedResource);
     assertEquals(DATASET_RESOURCE_NAME, fetchedResource.getAttributes().getDatasetId());
 
@@ -174,7 +174,7 @@ public class ControlledBigQueryDatasetLifecycle extends GcpWorkspaceCloneTestScr
     GcpBigQueryDatasetResource temporaryResultDataset =
         BqDatasetUtils.makeControlledBigQueryDatasetUserShared(
             readerResourceApi,
-            getDestinationWorkspaceUuid(),
+            getDestinationWorkspaceId(),
             "temporary_result_resource",
             resultDatasetId,
             CloningInstructionsEnum.NOTHING);
@@ -201,8 +201,8 @@ public class ControlledBigQueryDatasetLifecycle extends GcpWorkspaceCloneTestScr
             .updateParameters(
                 new GcpBigQueryDatasetUpdateParameters()
                     .defaultTableLifetime(defaultTableLifetimeSec));
-    ownerResourceApi.updateBigQueryDataset(updateDatasetRequest, getWorkspaceUuid(), resourceId);
-    var datasetAfterUpdate = ownerResourceApi.getBigQueryDataset(getWorkspaceUuid(), resourceId);
+    ownerResourceApi.updateBigQueryDataset(updateDatasetRequest, getWorkspaceId(), resourceId);
+    var datasetAfterUpdate = ownerResourceApi.getBigQueryDataset(getWorkspaceId(), resourceId);
     assertEquals(datasetAfterUpdate.getMetadata().getDescription(), resourceDescription);
     logger.info("Workspace owner updated resource {}", resourceId);
 
@@ -215,7 +215,7 @@ public class ControlledBigQueryDatasetLifecycle extends GcpWorkspaceCloneTestScr
             ApiException.class,
             () ->
                 ownerResourceApi.updateBigQueryDataset(
-                    invalidUpdateDatasetRequest, getWorkspaceUuid(), resourceId));
+                    invalidUpdateDatasetRequest, getWorkspaceId(), resourceId));
     assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, invalidUpdateEx.getCode());
 
     // Cloud metadata matches the updated values
@@ -234,7 +234,7 @@ public class ControlledBigQueryDatasetLifecycle extends GcpWorkspaceCloneTestScr
 
     // Workspace reader can clean up the results table and dataset before cloning
     readerResourceApi.deleteBigQueryDataset(
-        getDestinationWorkspaceUuid(), temporaryResultDataset.getMetadata().getResourceId());
+        getDestinationWorkspaceId(), temporaryResultDataset.getMetadata().getResourceId());
 
     // Populate dataset with additional tables to verify cloning behavior
     BqDatasetUtils.populateBigQueryDataset(createdDataset, testUser, getSourceProjectId());
@@ -245,7 +245,7 @@ public class ControlledBigQueryDatasetLifecycle extends GcpWorkspaceCloneTestScr
     ResourceApi readerApi = ClientTestUtils.getResourceClient(getWorkspaceReader(), server);
     ResourceList datasetList =
         readerApi.enumerateResources(
-            getWorkspaceUuid(), 0, 5, ResourceType.BIG_QUERY_DATASET, StewardshipType.CONTROLLED);
+            getWorkspaceId(), 0, 5, ResourceType.BIG_QUERY_DATASET, StewardshipType.CONTROLLED);
     assertEquals(1, datasetList.getResources().size());
     MultiResourcesUtils.assertResourceType(ResourceType.BIG_QUERY_DATASET, datasetList);
 
@@ -259,7 +259,7 @@ public class ControlledBigQueryDatasetLifecycle extends GcpWorkspaceCloneTestScr
     assertEquals(HttpStatusCodes.STATUS_CODE_FORBIDDEN, ownerCannotDeleteException.getCode());
 
     // Workspace owner can delete the dataset through WSM
-    ownerResourceApi.deleteBigQueryDataset(getWorkspaceUuid(), resourceId);
+    ownerResourceApi.deleteBigQueryDataset(getWorkspaceId(), resourceId);
   }
 
   private void createControlledDatasetWithBothResourceNameAndDatasetIdSpecified(
@@ -270,7 +270,7 @@ public class ControlledBigQueryDatasetLifecycle extends GcpWorkspaceCloneTestScr
     GcpBigQueryDatasetResource createdDatasetWithDifferentDatasetId =
         BqDatasetUtils.makeControlledBigQueryDatasetUserShared(
             ownerResourceApi,
-            getWorkspaceUuid(),
+            getWorkspaceId(),
             datasetResourceName,
             datasetIdName,
             /*cloningInstructions=*/ null);
@@ -280,13 +280,13 @@ public class ControlledBigQueryDatasetLifecycle extends GcpWorkspaceCloneTestScr
     // Retrieve the dataset resource
     GcpBigQueryDatasetResource fetchedResourceWithDifferentDatasetId =
         ownerResourceApi.getBigQueryDataset(
-            getWorkspaceUuid(), createdDatasetWithDifferentDatasetId.getMetadata().getResourceId());
+            getWorkspaceId(), createdDatasetWithDifferentDatasetId.getMetadata().getResourceId());
     assertEquals(createdDatasetWithDifferentDatasetId, fetchedResourceWithDifferentDatasetId);
     assertEquals(
         datasetIdName, fetchedResourceWithDifferentDatasetId.getAttributes().getDatasetId());
 
     ownerResourceApi.deleteBigQueryDataset(
-        getWorkspaceUuid(), createdDatasetWithDifferentDatasetId.getMetadata().getResourceId());
+        getWorkspaceId(), createdDatasetWithDifferentDatasetId.getMetadata().getResourceId());
   }
 
   /**
@@ -362,7 +362,7 @@ public class ControlledBigQueryDatasetLifecycle extends GcpWorkspaceCloneTestScr
             .cloningInstructions(CloningInstructionsEnum.RESOURCE)
             .description(clonedDatasetDescription)
             .location(null) // keep same
-            .destinationWorkspaceUuid(getDestinationWorkspaceUuid())
+            .destinationWorkspaceId(getDestinationWorkspaceId())
             .name("MyClonedDataset")
             .jobControl(new JobControl().id(jobId))
             .destinationDatasetName(null); // keep same
@@ -372,31 +372,31 @@ public class ControlledBigQueryDatasetLifecycle extends GcpWorkspaceCloneTestScr
             + "projectID: {}\ninto destination \n\tname: {}\n\tworkspace: {}\n\tprojectID: {}",
         sourceDatasetMetadata.getName(),
         sourceDatasetMetadata.getResourceId(),
-        sourceDatasetMetadata.getWorkspaceUuid(),
+        sourceDatasetMetadata.getWorkspaceId(),
         getSourceProjectId(),
         sourceDatasetMetadata.getName(),
-        getDestinationWorkspaceUuid(),
+        getDestinationWorkspaceId(),
         getDestinationProjectId());
 
     // Submit clone request and poll for async result
     CloneControlledGcpBigQueryDatasetResult cloneResult =
         cloningUserResourceApi.cloneBigQueryDataset(
             cloneRequest,
-            sourceDatasetMetadata.getWorkspaceUuid(),
+            sourceDatasetMetadata.getWorkspaceId(),
             sourceDatasetMetadata.getResourceId());
     cloneResult =
         ClientTestUtils.pollWhileRunning(
             cloneResult,
             () ->
                 cloningUserResourceApi.getCloneBigQueryDatasetResult(
-                    cloneRequest.getDestinationWorkspaceUuid(), cloneRequest.getJobControl().getId()),
+                    cloneRequest.getDestinationWorkspaceId(), cloneRequest.getJobControl().getId()),
             CloneControlledGcpBigQueryDatasetResult::getJobReport,
             Duration.ofSeconds(5));
 
     ClientTestUtils.assertJobSuccess(
         "clone BigQuery dataset", cloneResult.getJobReport(), cloneResult.getErrorReport());
     assertEquals(
-        sourceDatasetMetadata.getWorkspaceUuid(), cloneResult.getDataset().getSourceWorkspaceUuid());
+        sourceDatasetMetadata.getWorkspaceId(), cloneResult.getDataset().getSourceWorkspaceId());
     assertEquals(
         sourceDatasetMetadata.getResourceId(), cloneResult.getDataset().getSourceResourceId());
 

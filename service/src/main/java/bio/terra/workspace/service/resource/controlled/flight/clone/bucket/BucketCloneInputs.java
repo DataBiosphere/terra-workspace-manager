@@ -18,7 +18,7 @@ class BucketCloneInputs {
     this.roleNames = roleNames;
   }
 
-  public UUID getWorkspaceUuid() {
+  public UUID getWorkspaceId() {
     return workspaceUuid;
   }
 

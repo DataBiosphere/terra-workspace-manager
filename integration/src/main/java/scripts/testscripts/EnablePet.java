@@ -35,7 +35,7 @@ public class EnablePet extends WorkspaceAllocateTestScriptBase {
         "There must be at least two test users defined for this test.",
         testUsers != null && testUsers.size() > 1);
     secondUser = testUsers.get(1);
-    projectId = CloudContextMaker.createGcpCloudContext(getWorkspaceUuid(), workspaceApi);
+    projectId = CloudContextMaker.createGcpCloudContext(getWorkspaceId(), workspaceApi);
   }
 
   @Override
@@ -47,7 +47,7 @@ public class EnablePet extends WorkspaceAllocateTestScriptBase {
     Iam userIamClient = ClientTestUtils.getGcpIamClient(testUser);
     assertFalse(canImpersonateSa(userIamClient, petSaEmail));
 
-    userWorkspaceApi.enablePet(getWorkspaceUuid());
+    userWorkspaceApi.enablePet(getWorkspaceId());
     assertTrue(canImpersonateSa(userIamClient, petSaEmail));
 
     // Validate that calling this endpoint as the pet does not grant the pet permission to
@@ -61,12 +61,12 @@ public class EnablePet extends WorkspaceAllocateTestScriptBase {
     WorkspaceApi petSaWorkspaceApi =
         ClientTestUtils.getWorkspaceClientFromToken(petSaToken, server);
 
-    petSaWorkspaceApi.enablePet(getWorkspaceUuid());
+    petSaWorkspaceApi.enablePet(getWorkspaceId());
 
     // Add second user to the workspace as a reader.
     userWorkspaceApi.grantRole(
         new GrantRoleRequestBody().memberEmail(secondUser.userEmail),
-        getWorkspaceUuid(),
+        getWorkspaceId(),
         IamRole.READER);
     // Validate the second user cannot impersonate either user's pet.
     GoogleApi secondUserSamGoogleApi = SamClientUtils.samGoogleApi(secondUser, server);
@@ -78,14 +78,14 @@ public class EnablePet extends WorkspaceAllocateTestScriptBase {
 
     // Enable the second user to impersonate their pet
     WorkspaceApi secondUserWorkspaceApi = ClientTestUtils.getWorkspaceClient(secondUser, server);
-    secondUserWorkspaceApi.enablePet(getWorkspaceUuid());
+    secondUserWorkspaceApi.enablePet(getWorkspaceId());
     assertTrue(canImpersonateSa(secondUserIamClient, secondUserPetSaEmail));
     // Second user still cannot impersonate first user's pet
     assertFalse(canImpersonateSa(secondUserIamClient, petSaEmail));
 
     // Remove second user from workspace. This should revoke their permission to impersonate their
     // pet.
-    userWorkspaceApi.removeRole(getWorkspaceUuid(), IamRole.READER, secondUser.userEmail);
+    userWorkspaceApi.removeRole(getWorkspaceId(), IamRole.READER, secondUser.userEmail);
     assertTrue(
         ClientTestUtils.getWithRetryOnException(
             () -> assertCannotImpersonateSa(secondUserIamClient, secondUserPetSaEmail)));

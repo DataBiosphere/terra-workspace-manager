@@ -61,19 +61,19 @@ public class EnumerateJobs extends WorkspaceAllocateTestScriptBase {
     alpha1Api = new Alpha1Api(ownerApiClient);
 
     // Create a cloud context for the workspace
-    CloudContextMaker.createGcpCloudContext(getWorkspaceUuid(), workspaceApi);
+    CloudContextMaker.createGcpCloudContext(getWorkspaceId(), workspaceApi);
 
     // create the resources for the test
     logger.info("Creating {} resources", RESOURCE_COUNT);
     resourceList =
         MultiResourcesUtils.makeResources(
-            ownerReferencedGcpResourceApi, ownerControlledGcpResourceApi, getWorkspaceUuid());
+            ownerReferencedGcpResourceApi, ownerControlledGcpResourceApi, getWorkspaceId());
 
     logger.info("Created {} resources", resourceList.size());
     logger.info("Cleaning up {} resources", resourceList.size());
 
     MultiResourcesUtils.cleanupResources(
-        resourceList, ownerControlledGcpResourceApi, getWorkspaceUuid());
+        resourceList, ownerControlledGcpResourceApi, getWorkspaceId());
     logger.info("Cleaned up {} resources", resourceList.size());
   }
 
@@ -83,7 +83,7 @@ public class EnumerateJobs extends WorkspaceAllocateTestScriptBase {
 
     // Case 1: fetch all
     EnumerateJobsResult fetchall =
-        alpha1Api.enumerateJobs(getWorkspaceUuid(), null, null, null, null, null, null);
+        alpha1Api.enumerateJobs(getWorkspaceId(), null, null, null, null, null, null);
     logResult("fetchall", fetchall);
     // TODO: [PF-1281] we need another type of filtering to be able to do better validation of the
     // result return.
@@ -92,7 +92,7 @@ public class EnumerateJobs extends WorkspaceAllocateTestScriptBase {
     String pageToken = null;
     for (int pageCount = 1; true; pageCount++) {
       EnumerateJobsResult page =
-          alpha1Api.enumerateJobs(getWorkspaceUuid(), PAGE_SIZE, pageToken, null, null, null, null);
+          alpha1Api.enumerateJobs(getWorkspaceId(), PAGE_SIZE, pageToken, null, null, null, null);
       logResult("page " + pageCount, page);
       assertThat(
           "Not more than page size items returned",
@@ -108,7 +108,7 @@ public class EnumerateJobs extends WorkspaceAllocateTestScriptBase {
     // Case 4: filter by resource type
     EnumerateJobsResult buckets =
         alpha1Api.enumerateJobs(
-            getWorkspaceUuid(),
+            getWorkspaceId(),
             /*limit=*/ null,
             /*pageToken=*/ null,
             ResourceType.GCS_BUCKET,
@@ -128,7 +128,7 @@ public class EnumerateJobs extends WorkspaceAllocateTestScriptBase {
     // Case 5: filter by stewardship type
     EnumerateJobsResult controlled =
         alpha1Api.enumerateJobs(
-            getWorkspaceUuid(), null, null, null, StewardshipType.CONTROLLED, null, null);
+            getWorkspaceId(), null, null, null, StewardshipType.CONTROLLED, null, null);
     logResult("controlled", controlled);
     for (EnumeratedJob job : controlled.getResults()) {
       ResourceMetadata metadata = job.getMetadata();
@@ -142,7 +142,7 @@ public class EnumerateJobs extends WorkspaceAllocateTestScriptBase {
     // Case 6: filter by resource and stewardship
     EnumerateJobsResult controlledBuckets =
         alpha1Api.enumerateJobs(
-            getWorkspaceUuid(),
+            getWorkspaceId(),
             null,
             null,
             ResourceType.GCS_BUCKET,
@@ -165,14 +165,14 @@ public class EnumerateJobs extends WorkspaceAllocateTestScriptBase {
     ApiException invalidPaginationException =
         assertThrows(
             ApiException.class,
-            () -> alpha1Api.enumerateJobs(getWorkspaceUuid(), -5, null, null, null, null, null));
+            () -> alpha1Api.enumerateJobs(getWorkspaceId(), -5, null, null, null, null, null));
     assertThat(invalidPaginationException.getMessage(), containsString("Invalid pagination"));
 
     invalidPaginationException =
         assertThrows(
             ApiException.class,
             () ->
-                alpha1Api.enumerateJobs(getWorkspaceUuid(), 22, "junktoken", null, null, null, null));
+                alpha1Api.enumerateJobs(getWorkspaceId(), 22, "junktoken", null, null, null, null));
     assertThat(invalidPaginationException.getMessage(), containsString("Invalid page token"));
   }
 

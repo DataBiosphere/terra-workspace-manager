@@ -25,14 +25,14 @@ public class UpdateControlledBigQueryDatasetResourceFlight extends Flight {
     // get copy of existing metadata
     addStep(
         new RetrieveControlledResourceMetadataStep(
-            flightBeanBag.getResourceDao(), resource.getWorkspaceUuid(), resource.getResourceId()));
+            flightBeanBag.getResourceDao(), resource.getWorkspaceId(), resource.getResourceId()));
 
     // update the metadata (name & description of resource)
     addStep(
         new UpdateControlledResourceMetadataStep(
             flightBeanBag.getControlledResourceMetadataManager(),
             flightBeanBag.getResourceDao(),
-            resource.getWorkspaceUuid(),
+            resource.getWorkspaceId(),
             resource.getResourceId()));
 
     // retrieve existing attributes in case of undo later

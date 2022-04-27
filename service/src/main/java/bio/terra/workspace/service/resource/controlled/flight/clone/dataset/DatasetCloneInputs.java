@@ -14,7 +14,7 @@ public class DatasetCloneInputs {
     this.datasetName = datasetName;
   }
 
-  public UUID getWorkspaceUuid() {
+  public UUID getWorkspaceId() {
     return workspaceUuid;
   }
 
