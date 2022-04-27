@@ -182,12 +182,13 @@ public class WorkspaceService {
   public Workspace updateWorkspace(
       AuthenticatedUserRequest userRequest,
       UUID workspaceUuid,
+      @Nullable String userFacingId,
       @Nullable String name,
       @Nullable String description,
       @Nullable Map<String, String> properties) {
     validateWorkspaceAndAction(userRequest, workspaceUuid, SamConstants.SamWorkspaceAction.WRITE);
-    workspaceDao.updateWorkspace(workspaceUuid, name, description, properties);
-    return workspaceDao.getWorkspace(workspaceUuid);
+    workspaceDao.updateWorkspace(workspaceUuid, userFacingId, name, description, properties);
+    return workspaceDao.getWorkspace(workspaceId);
   }
 
   /** Delete an existing workspace by ID. */

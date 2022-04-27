@@ -421,8 +421,9 @@ public class ResourceDao {
       UUID resourceId,
       @Nullable String name,
       @Nullable String description,
-      @Nullable String attributes) {
-    if (name == null && description == null && attributes == null) {
+      @Nullable String attributes,
+      @Nullable CloningInstructions cloningInstructions) {
+    if (name == null && description == null && attributes == null && cloningInstructions == null) {
       return false;
     }
 
@@ -437,7 +438,9 @@ public class ResourceDao {
     if (!StringUtils.isEmpty(attributes)) {
       params.addValue("attributes", attributes);
     }
-
+    if (null != cloningInstructions) {
+      params.addValue("cloning_instructions", cloningInstructions.toSql());
+    }
     StringBuilder sb = new StringBuilder("UPDATE resource SET ");
 
     sb.append(DbUtils.setColumnsClause(params, "attributes"));
@@ -474,8 +477,10 @@ public class ResourceDao {
       UUID resourceId,
       @Nullable String name,
       @Nullable String description,
-      @Nullable String attributes) {
-    return updateResourceWorker(workspaceUuid, resourceId, name, description, attributes);
+      @Nullable String attributes,
+      @Nullable CloningInstructions cloningInstructions) {
+    return updateResourceWorker(
+        workspaceUuid, resourceId, name, description, attributes, cloningInstructions);
   }
 
   /**
@@ -486,8 +491,14 @@ public class ResourceDao {
    */
   @WriteTransaction
   public boolean updateResource(
-      UUID workspaceUuid, UUID resourceId, @Nullable String name, @Nullable String description) {
-    return updateResourceWorker(workspaceUuid, resourceId, name, description, /*attributes=*/ null);
+      UUID workspaceId, UUID resourceId, @Nullable String name, @Nullable String description) {
+    return updateResourceWorker(
+        workspaceUuid,
+        resourceId,
+        name,
+        description,
+        /*attributes=*/ null,
+        /*cloningInstructions=*/ null);
   }
 
   /**

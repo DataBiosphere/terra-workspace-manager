@@ -192,6 +192,8 @@ components:
           $ref: '#/components/schemas/GcpGcsBucketDefaultStorageClass'
         lifecycle:
           $ref: '#/components/schemas/GcpGcsBucketLifecycle'
+        cloningInstructions:
+          $ref: '#/components/schemas/CloningInstructionsEnum'
 
     GcpGcsBucketDefaultStorageClass:
       description: >-

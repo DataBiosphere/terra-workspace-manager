@@ -330,6 +330,11 @@ components:
           description: The ID of the workspace
           type: string
           format: uuid
+        userFacingId:
+          description: |
+            Human-settable, mutable id. Optional. If this isn't set, one will
+            be generated based on id (guid).
+          type: string
         displayName:
           description: The human readable name of the workspace
           type: string
@@ -404,6 +409,10 @@ components:
     UpdateWorkspaceRequestBody:
       type: object
       properties:
+        userFacingId:
+          description: |
+            Human-settable, mutable id
+          type: string
         displayName:
           description: The human readable name of the workspace
           type: string
@@ -416,12 +425,15 @@ components:
 
     WorkspaceDescription:
       type: object
-      required: [id]
+      required: [id, userFacingId]
       properties:
         id:
-          description: The ID of the workspace
+          description: The ID of the workspace. Immutable.
           type: string
           format: uuid
+        userFacingId:
+          description: Human-settable, mutable id
+          type: string
         displayName:
           description: The human readable name of the workspace
           type: string

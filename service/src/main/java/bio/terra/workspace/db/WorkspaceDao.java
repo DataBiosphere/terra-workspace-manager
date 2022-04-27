@@ -8,6 +8,7 @@ import bio.terra.workspace.db.exception.WorkspaceNotFoundException;
 import bio.terra.workspace.service.resource.controlled.model.PrivateResourceState;
 import bio.terra.workspace.service.spendprofile.SpendProfileId;
 import bio.terra.workspace.service.workspace.exceptions.DuplicateCloudContextException;
+import bio.terra.workspace.service.workspace.exceptions.DuplicateUserFacingIdException;
 import bio.terra.workspace.service.workspace.exceptions.DuplicateWorkspaceException;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import bio.terra.workspace.service.workspace.model.Workspace;
@@ -41,13 +42,14 @@ import org.springframework.stereotype.Component;
 public class WorkspaceDao {
   /** SQL query for reading a workspace */
   private static final String WORKSPACE_SELECT_SQL =
-      "SELECT workspace_id, display_name, description, spend_profile, properties, workspace_stage"
+      "SELECT workspace_id, user_facing_id, display_name, description, spend_profile, properties, workspace_stage"
           + " FROM workspace";
 
   private static final RowMapper<Workspace> WORKSPACE_ROW_MAPPER =
       (rs, rowNum) ->
           Workspace.builder()
               .workspaceId(UUID.fromString(rs.getString("workspace_id")))
+              .userFacingId(rs.getString("user_facing_id"))
               .displayName(rs.getString("display_name"))
               .description(rs.getString("description"))
               .spendProfileId(
@@ -77,8 +79,8 @@ public class WorkspaceDao {
   @WriteTransaction
   public UUID createWorkspace(Workspace workspace) {
     final String sql =
-        "INSERT INTO workspace (workspace_id, display_name, description, spend_profile, properties, workspace_stage) "
-            + "values (:workspace_id, :display_name, :description, :spend_profile,"
+        "INSERT INTO workspace (workspace_id, user_facing_id, display_name, description, spend_profile, properties, workspace_stage) "
+            + "values (:workspace_id, :user_facing_id, :display_name, :description, :spend_profile,"
             + " cast(:properties AS jsonb), :workspace_stage)";
 
     final String workspaceUuid = workspace.getWorkspaceId().toString();
@@ -86,6 +88,7 @@ public class WorkspaceDao {
     MapSqlParameterSource params =
         new MapSqlParameterSource()
             .addValue("workspace_id", workspaceUuid)
+            .addValue("user_facing_id", workspace.getUserFacingId().orElse(null))
             .addValue("display_name", workspace.getDisplayName().orElse(null))
             .addValue("description", workspace.getDescription().orElse(null))
             .addValue(
@@ -147,6 +150,7 @@ public class WorkspaceDao {
       return Optional.empty();
     }
   }
+
   /**
    * Retrieves a workspace from database by ID.
    *
@@ -165,16 +169,20 @@ public class WorkspaceDao {
   @WriteTransaction
   public boolean updateWorkspace(
       UUID workspaceUuid,
+      @Nullable String userFacingId,
       @Nullable String name,
       @Nullable String description,
       @Nullable Map<String, String> propertyMap) {
-    if (name == null && description == null && propertyMap == null) {
-      throw new MissingRequiredFieldException(
-          "Must specify name, description, or properties to update.");
+    if (userFacingId == null && name == null && description == null && propertyMap == null) {
+      throw new MissingRequiredFieldException("Must specify field to update.");
     }
 
     var params = new MapSqlParameterSource();
     params.addValue("workspace_id", workspaceUuid.toString());
+
+    if (userFacingId != null) {
+      params.addValue("user_facing_id", userFacingId);
+    }
 
     if (name != null) {
       params.addValue("display_name", name);
@@ -193,14 +201,28 @@ public class WorkspaceDao {
             "UPDATE workspace SET %s WHERE workspace_id = :workspace_id",
             DbUtils.setColumnsClause(params, "properties"));
 
-    int rowsAffected = jdbcTemplate.update(sql, params);
+    int rowsAffected;
+    try {
+      rowsAffected = jdbcTemplate.update(sql, params);
+    } catch (DuplicateKeyException e) {
+      // Workspace with user_facing_id already exists.
+      if (e.getMessage()
+          .contains(
+              "duplicate key value violates unique constraint \"workspace_user_facing_id_key\"")) {
+        throw new DuplicateUserFacingIdException(
+            String.format(
+                // "ID" instead of "userFacingId" because end user sees this.
+                "Workspace with ID %s already exists", userFacingId),
+            e);
+      }
+      throw e;
+    }
+
     boolean updated = rowsAffected > 0;
-
     logger.info(
-        "{} record for workspace {}",
-        (updated ? "Updated" : "No Update - did not find"),
-        workspaceUuid);
-
+      "{} record for workspace {}",
+      (updated ? "Updated" : "No Update - did not find"),
+      workspaceUuid);
     return updated;
   }
 

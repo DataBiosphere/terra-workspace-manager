@@ -1,0 +1,21 @@
+databaseChangeLog:
+- changeSet:
+    id: add workspace user_facing_id
+    author: melchang
+    changes:
+    - addColumn:
+        tableName: workspace
+        columns:
+          - column:
+              name: user_facing_id
+              type: text
+              constraints:
+                unique: true
+              remarks: |
+                A user-settable, mutable id. See PF-1359. Required (a later
+                changeset will add not null constraint PF-1583).
+    - sql:
+        # user_facing_id is a required field. For new workspaces, UI/CLI will
+        # require it. For existing workspaces, backfill with workspace_id.
+        # Prepend 'a' because user_facing_id must start with letter.
+        sql: update workspace set user_facing_id = concat('a', workspace_id);
