@@ -111,6 +111,7 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
     // ET uses userFacingId; CWB doesn't. Schema enforces that userFacingId must be set. CWB doesn't pass
     // userFacingId in request, so use id. Prefix with "a" because userFacingId must start with letter.
     String userFacingId = Optional.ofNullable(body.getUserFacingId()).orElse("a" + body.getId());
+    ControllerValidationUtils.validateUserFacingId(body.getUserFacingId());
 
     Workspace workspace =
         Workspace.builder()
