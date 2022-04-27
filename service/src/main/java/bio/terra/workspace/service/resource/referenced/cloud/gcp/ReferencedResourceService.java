@@ -52,7 +52,7 @@ public class ReferencedResourceService {
   public ReferencedResource createReferenceResource(
       ReferencedResource resource, AuthenticatedUserRequest userRequest) {
     workspaceService.validateWorkspaceAndAction(
-        userRequest, resource.getWorkspaceId(), SamConstants.SamWorkspaceAction.CREATE_REFERENCE);
+        userRequest, resource.getWorkspaceUuid(), SamConstants.SamWorkspaceAction.CREATE_REFERENCE);
 
     String jobDescription =
         String.format(
@@ -70,7 +70,7 @@ public class ReferencedResourceService {
             .resource(resource)
             .userRequest(userRequest)
             .operationType(OperationType.CREATE)
-            .workspaceUuid(resource.getWorkspaceId().toString())
+            .workspaceUuid(resource.getWorkspaceUuid().toString())
             .resourceType(resource.getResourceType())
             .stewardshipType(StewardshipType.REFERENCED);
 
@@ -79,7 +79,7 @@ public class ReferencedResourceService {
       throw new InvalidMetadataException("Input and output resource ids do not match");
     }
 
-    return getReferenceResource(resource.getWorkspaceId(), resourceIdResult, userRequest);
+    return getReferenceResource(resource.getWorkspaceUuid(), resourceIdResult, userRequest);
   }
 
   /**
@@ -214,13 +214,13 @@ public class ReferencedResourceService {
 
   public ReferencedResource cloneReferencedResource(
       ReferencedResource sourceReferencedResource,
-      UUID destinationWorkspaceId,
+      UUID destinationWorkspaceUuid,
       @Nullable String name,
       @Nullable String description,
       AuthenticatedUserRequest userRequest) {
     final ReferencedResource destinationResource =
         WorkspaceCloneUtils.buildDestinationReferencedResource(
-            sourceReferencedResource, destinationWorkspaceId, name, description);
+            sourceReferencedResource, destinationWorkspaceUuid, name, description);
     // launch the creation flight
     return createReferenceResource(destinationResource, userRequest);
   }

@@ -37,7 +37,7 @@ public class ControlledResourceFields {
 
   /** construct from database resource */
   public ControlledResourceFields(DbResource dbResource) {
-    workspaceUuid = dbResource.getWorkspaceId();
+    workspaceUuid = dbResource.getWorkspaceUuid();
     resourceId = dbResource.getResourceId();
     name = dbResource.getName();
     description = dbResource.getDescription();
@@ -81,7 +81,7 @@ public class ControlledResourceFields {
     return new Builder();
   }
 
-  public UUID getWorkspaceId() {
+  public UUID getWorkspaceUuid() {
     return workspaceUuid;
   }
 

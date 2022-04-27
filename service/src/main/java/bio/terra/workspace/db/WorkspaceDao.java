@@ -81,7 +81,7 @@ public class WorkspaceDao {
             + "values (:workspace_id, :display_name, :description, :spend_profile,"
             + " cast(:properties AS jsonb), :workspace_stage)";
 
-    final String workspaceUuid = workspace.getWorkspaceId().toString();
+    final String workspaceUuid = workspace.getWorkspaceUuid().toString();
 
     MapSqlParameterSource params =
         new MapSqlParameterSource()
@@ -105,7 +105,7 @@ public class WorkspaceDao {
               workspace.getWorkspaceStage().toString()),
           e);
     }
-    return workspace.getWorkspaceId();
+    return workspace.getWorkspaceUuid();
   }
 
   /**
@@ -510,7 +510,7 @@ public class WorkspaceDao {
       this.userEmail = userEmail;
     }
 
-    public UUID getWorkspaceId() {
+    public UUID getWorkspaceUuid() {
       return workspaceUuid;
     }
 

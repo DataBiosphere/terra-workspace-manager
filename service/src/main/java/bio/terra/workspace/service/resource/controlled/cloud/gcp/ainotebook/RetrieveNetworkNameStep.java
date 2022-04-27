@@ -44,7 +44,7 @@ public class RetrieveNetworkNameStep implements Step {
   @Override
   public StepResult doStep(FlightContext flightContext)
       throws InterruptedException, RetryException {
-    String projectId = gcpCloudContextService.getRequiredGcpProject(resource.getWorkspaceId());
+    String projectId = gcpCloudContextService.getRequiredGcpProject(resource.getWorkspaceUuid());
     CloudComputeCow compute = crlService.getCloudComputeCow();
     SubnetworkList subnetworks;
     try {

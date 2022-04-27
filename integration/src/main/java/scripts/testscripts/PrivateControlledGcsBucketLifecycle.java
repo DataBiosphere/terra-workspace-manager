@@ -74,7 +74,7 @@ public class PrivateControlledGcsBucketLifecycle extends WorkspaceAllocateTestSc
   public void doUserJourney(TestUserSpecification testUser, WorkspaceApi workspaceApi)
       throws Exception {
 
-    String projectId = CloudContextMaker.createGcpCloudContext(getWorkspaceId(), workspaceApi);
+    String projectId = CloudContextMaker.createGcpCloudContext(getWorkspaceUuid(), workspaceApi);
 
     ControlledGcpResourceApi workspaceOwnerResourceApi =
         ClientTestUtils.getControlledGcpResourceClient(testUser, server);
@@ -83,16 +83,16 @@ public class PrivateControlledGcsBucketLifecycle extends WorkspaceAllocateTestSc
 
     workspaceApi.grantRole(
         new GrantRoleRequestBody().memberEmail(workspaceReader.userEmail),
-        getWorkspaceId(),
+        getWorkspaceUuid(),
         IamRole.READER);
     logger.info(
-        "Added {} as a reader to workspace {}", workspaceReader.userEmail, getWorkspaceId());
+        "Added {} as a reader to workspace {}", workspaceReader.userEmail, getWorkspaceUuid());
     workspaceApi.grantRole(
         new GrantRoleRequestBody().memberEmail(privateResourceUser.userEmail),
-        getWorkspaceId(),
+        getWorkspaceUuid(),
         IamRole.WRITER);
     logger.info(
-        "Added {} as a writer to workspace {}", privateResourceUser.userEmail, getWorkspaceId());
+        "Added {} as a writer to workspace {}", privateResourceUser.userEmail, getWorkspaceUuid());
 
     // Create a private bucket, which privateResourceUser assigns to themselves.
     // Cloud IAM permissions may take several minutes to sync, so we retry this operation until
@@ -103,7 +103,7 @@ public class PrivateControlledGcsBucketLifecycle extends WorkspaceAllocateTestSc
 
     // Retrieve the bucket resource from WSM
     logger.info("Retrieving bucket resource id {}", resourceId.toString());
-    GcpGcsBucketResource gotBucket = privateUserResourceApi.getBucket(getWorkspaceId(), resourceId);
+    GcpGcsBucketResource gotBucket = privateUserResourceApi.getBucket(getWorkspaceUuid(), resourceId);
     String bucketName = gotBucket.getAttributes().getBucketName();
     assertEquals(bucket.getGcpBucket().getAttributes().getBucketName(), bucketName);
 
@@ -130,7 +130,7 @@ public class PrivateControlledGcsBucketLifecycle extends WorkspaceAllocateTestSc
     ResourceApi readerApi = ClientTestUtils.getResourceClient(workspaceReader, server);
     ResourceList bucketList =
         readerApi.enumerateResources(
-            getWorkspaceId(), 0, 5, ResourceType.GCS_BUCKET, StewardshipType.CONTROLLED);
+            getWorkspaceUuid(), 0, 5, ResourceType.GCS_BUCKET, StewardshipType.CONTROLLED);
     assertEquals(1, bucketList.getResources().size());
     MultiResourcesUtils.assertResourceType(ResourceType.GCS_BUCKET, bucketList);
 
@@ -145,7 +145,7 @@ public class PrivateControlledGcsBucketLifecycle extends WorkspaceAllocateTestSc
     ApiException bucketIsMissing =
         assertThrows(
             ApiException.class,
-            () -> workspaceOwnerResourceApi.getBucket(getWorkspaceId(), resourceId),
+            () -> workspaceOwnerResourceApi.getBucket(getWorkspaceUuid(), resourceId),
             "Incorrectly found a deleted bucket!");
     assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, bucketIsMissing.getCode());
 
@@ -169,7 +169,7 @@ public class PrivateControlledGcsBucketLifecycle extends WorkspaceAllocateTestSc
     CreatedControlledGcpGcsBucket userFullBucket =
         GcsBucketUtils.makeControlledGcsBucket(
             privateUserResourceApi,
-            getWorkspaceId(),
+            getWorkspaceUuid(),
             RESOURCE_PREFIX + UUID.randomUUID().toString(),
             /*bucketName=*/ null,
             AccessScope.PRIVATE_ACCESS,
@@ -186,7 +186,7 @@ public class PrivateControlledGcsBucketLifecycle extends WorkspaceAllocateTestSc
     CreatedControlledGcpGcsBucket userNoEmailBucket =
         GcsBucketUtils.makeControlledGcsBucket(
             privateUserResourceApi,
-            getWorkspaceId(),
+            getWorkspaceUuid(),
             RESOURCE_PREFIX + UUID.randomUUID().toString(),
             /*bucketName=*/ null,
             AccessScope.PRIVATE_ACCESS,
@@ -200,7 +200,7 @@ public class PrivateControlledGcsBucketLifecycle extends WorkspaceAllocateTestSc
     CreatedControlledGcpGcsBucket bucketWithBucketNameSpecified =
         GcsBucketUtils.makeControlledGcsBucket(
             privateUserResourceApi,
-            getWorkspaceId(),
+            getWorkspaceUuid(),
             RESOURCE_PREFIX + UUID.randomUUID().toString(),
             /*bucketName=*/ uniqueBucketName,
             AccessScope.PRIVATE_ACCESS,
@@ -216,7 +216,7 @@ public class PrivateControlledGcsBucketLifecycle extends WorkspaceAllocateTestSc
   private CreatedControlledGcpGcsBucket createPrivateBucket(ControlledGcpResourceApi resourceApi)
       throws Exception {
     return makeControlledGcsBucketUserPrivate(
-        resourceApi, getWorkspaceId(), resourceName, CloningInstructionsEnum.NOTHING);
+        resourceApi, getWorkspaceUuid(), resourceName, CloningInstructionsEnum.NOTHING);
   }
 
   private DeleteControlledGcpGcsBucketResult deleteBucket(
@@ -226,10 +226,10 @@ public class PrivateControlledGcsBucketLifecycle extends WorkspaceAllocateTestSc
         new DeleteControlledGcpGcsBucketRequest().jobControl(new JobControl().id(deleteJobId));
     logger.info("Deleting bucket resource id {} jobId {}", resourceId, deleteJobId);
     DeleteControlledGcpGcsBucketResult result =
-        resourceApi.deleteBucket(deleteRequest, getWorkspaceId(), resourceId);
+        resourceApi.deleteBucket(deleteRequest, getWorkspaceUuid(), resourceId);
     while (ClientTestUtils.jobIsRunning(result.getJobReport())) {
       TimeUnit.SECONDS.sleep(DELETE_BUCKET_POLL_SECONDS);
-      result = resourceApi.getDeleteBucketResult(getWorkspaceId(), deleteJobId);
+      result = resourceApi.getDeleteBucketResult(getWorkspaceUuid(), deleteJobId);
     }
     return result;
   }

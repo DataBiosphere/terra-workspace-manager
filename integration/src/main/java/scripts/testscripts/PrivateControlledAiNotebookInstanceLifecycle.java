@@ -71,27 +71,27 @@ public class PrivateControlledAiNotebookInstanceLifecycle extends WorkspaceAlloc
   @SuppressFBWarnings(value = "DLS_DEAD_LOCAL_STORE")
   protected void doUserJourney(TestUserSpecification testUser, WorkspaceApi workspaceApi)
       throws Exception {
-    CloudContextMaker.createGcpCloudContext(getWorkspaceId(), workspaceApi);
+    CloudContextMaker.createGcpCloudContext(getWorkspaceUuid(), workspaceApi);
 
     workspaceApi.grantRole(
         new GrantRoleRequestBody().memberEmail(resourceUser.userEmail),
-        getWorkspaceId(),
+        getWorkspaceUuid(),
         IamRole.WRITER);
     workspaceApi.grantRole(
         new GrantRoleRequestBody().memberEmail(otherWorkspaceUser.userEmail),
-        getWorkspaceId(),
+        getWorkspaceUuid(),
         IamRole.WRITER);
 
     ControlledGcpResourceApi resourceUserApi =
         ClientTestUtils.getControlledGcpResourceClient(resourceUser, server);
     CreatedControlledGcpAiNotebookInstanceResult creationResult =
         NotebookUtils.makeControlledNotebookUserPrivate(
-            getWorkspaceId(), instanceId, /*location=*/ null, resourceUserApi);
+            getWorkspaceUuid(), instanceId, /*location=*/ null, resourceUserApi);
 
     UUID resourceId = creationResult.getAiNotebookInstance().getMetadata().getResourceId();
 
     GcpAiNotebookInstanceResource resource =
-        resourceUserApi.getAiNotebookInstance(getWorkspaceId(), resourceId);
+        resourceUserApi.getAiNotebookInstance(getWorkspaceUuid(), resourceId);
     assertEquals(
         instanceId,
         resource.getAttributes().getInstanceId(),
@@ -118,7 +118,7 @@ public class PrivateControlledAiNotebookInstanceLifecycle extends WorkspaceAlloc
     ResourceApi otherUserApi = ClientTestUtils.getResourceClient(otherWorkspaceUser, server);
     ResourceList notebookList =
         otherUserApi.enumerateResources(
-            getWorkspaceId(), 0, 5, ResourceType.AI_NOTEBOOK, StewardshipType.CONTROLLED);
+            getWorkspaceUuid(), 0, 5, ResourceType.AI_NOTEBOOK, StewardshipType.CONTROLLED);
     assertEquals(1, notebookList.getResources().size());
     MultiResourcesUtils.assertResourceType(ResourceType.AI_NOTEBOOK, notebookList);
 
@@ -162,13 +162,13 @@ public class PrivateControlledAiNotebookInstanceLifecycle extends WorkspaceAlloc
         resourceUserApi.deleteAiNotebookInstance(
             new DeleteControlledGcpAiNotebookInstanceRequest()
                 .jobControl(new JobControl().id(UUID.randomUUID().toString())),
-            getWorkspaceId(),
+            getWorkspaceUuid(),
             resourceId);
     String deleteJobId = deleteResult.getJobReport().getId();
     deleteResult =
         ClientTestUtils.pollWhileRunning(
             deleteResult,
-            () -> resourceUserApi.getDeleteAiNotebookInstanceResult(getWorkspaceId(), deleteJobId),
+            () -> resourceUserApi.getDeleteAiNotebookInstanceResult(getWorkspaceUuid(), deleteJobId),
             DeleteControlledGcpAiNotebookInstanceResult::getJobReport,
             Duration.ofSeconds(10));
 
@@ -179,7 +179,7 @@ public class PrivateControlledAiNotebookInstanceLifecycle extends WorkspaceAlloc
     ApiException notebookIsMissing =
         assertThrows(
             ApiException.class,
-            () -> resourceUserApi.getAiNotebookInstance(getWorkspaceId(), resourceId),
+            () -> resourceUserApi.getAiNotebookInstance(getWorkspaceUuid(), resourceId),
             "Notebook is deleted from WSM");
     assertEquals(HttpStatus.SC_NOT_FOUND, notebookIsMissing.getCode(), "Error from WSM is 404");
     // Verify the notebook was deleted from GCP.
@@ -201,7 +201,7 @@ public class PrivateControlledAiNotebookInstanceLifecycle extends WorkspaceAlloc
           ControlledGcpResourceApi resourceUserApi) throws ApiException, InterruptedException {
     CreatedControlledGcpAiNotebookInstanceResult resourceWithNotebookInstanceIdNotSpecified =
         NotebookUtils.makeControlledNotebookUserPrivate(
-            getWorkspaceId(), /*instanceId=*/ null, /*location=*/ null, resourceUserApi);
+            getWorkspaceUuid(), /*instanceId=*/ null, /*location=*/ null, resourceUserApi);
     assertNotNull(
         resourceWithNotebookInstanceIdNotSpecified
             .getAiNotebookInstance()
@@ -210,7 +210,7 @@ public class PrivateControlledAiNotebookInstanceLifecycle extends WorkspaceAlloc
     resourceUserApi.deleteAiNotebookInstance(
         new DeleteControlledGcpAiNotebookInstanceRequest()
             .jobControl(new JobControl().id(UUID.randomUUID().toString())),
-        getWorkspaceId(),
+        getWorkspaceUuid(),
         resourceWithNotebookInstanceIdNotSpecified
             .getAiNotebookInstance()
             .getMetadata()
@@ -222,7 +222,7 @@ public class PrivateControlledAiNotebookInstanceLifecycle extends WorkspaceAlloc
     String location = "us-east1-b";
     CreatedControlledGcpAiNotebookInstanceResult resourceWithNotebookInstanceIdNotSpecified =
         NotebookUtils.makeControlledNotebookUserPrivate(
-            getWorkspaceId(), /*instanceId=*/ null, /*location=*/ location, resourceUserApi);
+            getWorkspaceUuid(), /*instanceId=*/ null, /*location=*/ location, resourceUserApi);
     assertEquals(
         location,
         resourceWithNotebookInstanceIdNotSpecified
@@ -232,7 +232,7 @@ public class PrivateControlledAiNotebookInstanceLifecycle extends WorkspaceAlloc
     resourceUserApi.deleteAiNotebookInstance(
         new DeleteControlledGcpAiNotebookInstanceRequest()
             .jobControl(new JobControl().id(UUID.randomUUID().toString())),
-        getWorkspaceId(),
+        getWorkspaceUuid(),
         resourceWithNotebookInstanceIdNotSpecified
             .getAiNotebookInstance()
             .getMetadata()

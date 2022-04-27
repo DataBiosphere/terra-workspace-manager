@@ -113,7 +113,7 @@ public class PrivateResourceCleanupService {
                 () ->
                     samService.checkAuthAsWsmSa(
                         SamResource.WORKSPACE,
-                        workspaceUserPair.getWorkspaceId().toString(),
+                        workspaceUserPair.getWorkspaceUuid().toString(),
                         SamWorkspaceAction.READ,
                         workspaceUserPair.getUserEmail()),
                 "cleanupResources");
@@ -121,7 +121,7 @@ public class PrivateResourceCleanupService {
           logger.info(
               "Cleaning up resources for user {} from workspace {}",
               workspaceUserPair.getUserEmail(),
-              workspaceUserPair.getWorkspaceId());
+              workspaceUserPair.getWorkspaceUuid());
           runCleanupFlight(workspaceUserPair);
         }
       } catch (SamNotFoundException notFoundEx) {
@@ -129,9 +129,9 @@ public class PrivateResourceCleanupService {
         // them and will never be able to. Sam responds to these requests with 404 rather than 403
         // to avoid leaking workspace existence information.
         // Mark these resources as NOT_APPLICABLE so we don't keep polling.
-        logger.warn("Found legacy workspace {}", workspaceUserPair.getWorkspaceId());
+        logger.warn("Found legacy workspace {}", workspaceUserPair.getWorkspaceUuid());
         resourceDao.setPrivateResourcesStateForWorkspaceUser(
-            workspaceUserPair.getWorkspaceId(),
+            workspaceUserPair.getWorkspaceUuid(),
             workspaceUserPair.getUserEmail(),
             PrivateResourceState.NOT_APPLICABLE);
       }
@@ -143,7 +143,7 @@ public class PrivateResourceCleanupService {
         "Clean up after user "
             + workspaceUserPair.getUserEmail()
             + " in workspace "
-            + workspaceUserPair.getWorkspaceId().toString();
+            + workspaceUserPair.getWorkspaceUuid().toString();
     String wsmSaToken = samService.getWsmServiceAccountToken();
     AuthenticatedUserRequest wsmSaRequest =
         new AuthenticatedUserRequest().token(Optional.of(wsmSaToken));
@@ -153,9 +153,9 @@ public class PrivateResourceCleanupService {
             .description(description)
             .flightClass(RemoveUserFromWorkspaceFlight.class)
             .userRequest(wsmSaRequest)
-            .workspaceUuid(workspaceUserPair.getWorkspaceId().toString())
+            .workspaceUuid(workspaceUserPair.getWorkspaceUuid().toString())
             .addParameter(
-                WorkspaceFlightMapKeys.WORKSPACE_ID, workspaceUserPair.getWorkspaceId().toString())
+                WorkspaceFlightMapKeys.WORKSPACE_ID, workspaceUserPair.getWorkspaceUuid().toString())
             .addParameter(WorkspaceFlightMapKeys.USER_TO_REMOVE, workspaceUserPair.getUserEmail())
             // Explicitly indicate there is no role to remove, as the user is already out of the
             // workspace.
@@ -168,7 +168,7 @@ public class PrivateResourceCleanupService {
       logger.error(
           "Flight cleaning up user {} in workspace {} failed: ",
           workspaceUserPair.getUserEmail(),
-          workspaceUserPair.getWorkspaceId(),
+          workspaceUserPair.getWorkspaceUuid(),
           e);
     }
   }

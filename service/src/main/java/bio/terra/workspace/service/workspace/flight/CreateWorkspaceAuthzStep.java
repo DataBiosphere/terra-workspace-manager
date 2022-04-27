@@ -38,15 +38,15 @@ public class CreateWorkspaceAuthzStep implements Step {
     // Even though WSM should own this resource, Stairway steps can run multiple times, so it's
     // possible this step already created the resource. If WSM can either read the existing Sam
     // resource or create a new one, this is considered successful.
-    if (!canReadExistingWorkspace(workspace.getWorkspaceId())) {
-      samService.createWorkspaceWithDefaults(userRequest, workspace.getWorkspaceId());
+    if (!canReadExistingWorkspace(workspace.getWorkspaceUuid())) {
+      samService.createWorkspaceWithDefaults(userRequest, workspace.getWorkspaceUuid());
     }
     return StepResult.getStepResultSuccess();
   }
 
   @Override
   public StepResult undoStep(FlightContext flightContext) throws InterruptedException {
-    samService.deleteWorkspace(userRequest, workspace.getWorkspaceId());
+    samService.deleteWorkspace(userRequest, workspace.getWorkspaceUuid());
     return StepResult.getStepResultSuccess();
   }
 

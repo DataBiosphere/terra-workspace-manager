@@ -60,7 +60,7 @@ public class LaunchCloneAllResourcesFlightStep implements Step {
     subflightInputParameters.put(JobMapKeys.AUTH_USER_INFO.getKeyName(), userRequest);
     subflightInputParameters.put(ControlledResourceKeys.RESOURCES_TO_CLONE, resourcesAndFlightIds);
     subflightInputParameters.put(
-        ControlledResourceKeys.DESTINATION_WORKSPACE_ID, destinationWorkspace.getWorkspaceId());
+        ControlledResourceKeys.DESTINATION_WORKSPACE_ID, destinationWorkspace.getWorkspaceUuid());
     subflightInputParameters.put(ControlledResourceKeys.LOCATION, location);
 
     // Build a CloneAllResourcesFlight

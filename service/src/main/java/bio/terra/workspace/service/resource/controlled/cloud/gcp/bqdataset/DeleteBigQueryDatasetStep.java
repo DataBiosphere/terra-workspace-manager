@@ -69,7 +69,7 @@ public class DeleteBigQueryDatasetStep implements Step {
     logger.error(
         "Cannot undo delete of BQ dataset {} in workspace {}.",
         resource.getDatasetName(),
-        resource.getWorkspaceId());
+        resource.getWorkspaceUuid());
     // Surface whatever error caused Stairway to begin undoing.
     return flightContext.getResult();
   }

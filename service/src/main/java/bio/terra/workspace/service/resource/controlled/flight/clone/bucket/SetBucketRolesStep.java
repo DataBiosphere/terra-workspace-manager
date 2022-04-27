@@ -109,10 +109,10 @@ public class SetBucketRolesStep implements Step {
 
   private BucketCloneInputs getSourceInputs() {
     final String sourceProjectId =
-        gcpCloudContextService.getRequiredGcpProject(sourceBucket.getWorkspaceId());
+        gcpCloudContextService.getRequiredGcpProject(sourceBucket.getWorkspaceUuid());
     final String sourceBucketName = sourceBucket.getBucketName();
     return new BucketCloneInputs(
-        sourceBucket.getWorkspaceId(), sourceProjectId, sourceBucketName, SOURCE_BUCKET_ROLE_NAMES);
+        sourceBucket.getWorkspaceUuid(), sourceProjectId, sourceBucketName, SOURCE_BUCKET_ROLE_NAMES);
   }
 
   private BucketCloneInputs getDestinationInputs(FlightContext flightContext) {

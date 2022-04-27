@@ -87,7 +87,7 @@ class SamServiceTest extends BaseConnectedTest {
     samService.grantWorkspaceRole(
         workspaceUuid, defaultUserRequest(), WsmIamRole.READER, userAccessUtils.getSecondUserEmail());
     Workspace readWorkspace = workspaceService.getWorkspace(workspaceUuid, secondaryUserRequest());
-    assertEquals(workspaceUuid, readWorkspace.getWorkspaceId());
+    assertEquals(workspaceUuid, readWorkspace.getWorkspaceUuid());
   }
 
   @Test
@@ -123,7 +123,7 @@ class SamServiceTest extends BaseConnectedTest {
     samService.grantWorkspaceRole(
         workspaceUuid, defaultUserRequest(), WsmIamRole.READER, userAccessUtils.getSecondUserEmail());
     Workspace readWorkspace = workspaceService.getWorkspace(workspaceUuid, secondaryUserRequest());
-    assertEquals(workspaceUuid, readWorkspace.getWorkspaceId());
+    assertEquals(workspaceUuid, readWorkspace.getWorkspaceUuid());
     // After removing permission, secondary user can no longer read.
     samService.removeWorkspaceRole(
         workspaceUuid, defaultUserRequest(), WsmIamRole.READER, userAccessUtils.getSecondUserEmail());
@@ -243,9 +243,9 @@ class SamServiceTest extends BaseConnectedTest {
 
   @Test
   void listWorkspacesIncludesWsmWorkspace() throws Exception {
-    List<UUID> samWorkspaceIdList =
-        samService.listWorkspaceIds(userAccessUtils.defaultUserAuthRequest());
-    assertTrue(samWorkspaceIdList.contains(workspaceUuid));
+    List<UUID> samWorkspaceUuidList =
+        samService.listWorkspaceUuids(userAccessUtils.defaultUserAuthRequest());
+    assertTrue(samWorkspaceUuidList.contains(workspaceUuid));
   }
 
   @Test

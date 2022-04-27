@@ -356,7 +356,7 @@ public class GcsBucketUtils {
         GCS_BLOB_NAME,
         bucket.getGcpBucket().getAttributes().getBucketName(),
         bucket.getResourceId(),
-        bucket.getGcpBucket().getMetadata().getWorkspaceId());
+        bucket.getGcpBucket().getMetadata().getWorkspaceUuid());
     return result;
   }
 

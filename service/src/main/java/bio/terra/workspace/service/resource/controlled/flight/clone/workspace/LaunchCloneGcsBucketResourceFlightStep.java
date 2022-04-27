@@ -45,7 +45,7 @@ public class LaunchCloneGcsBucketResourceFlightStep implements Step {
         context
             .getInputParameters()
             .get(JobMapKeys.AUTH_USER_INFO.getKeyName(), AuthenticatedUserRequest.class);
-    final var destinationWorkspaceId =
+    final var destinationWorkspaceUuid =
         context
             .getInputParameters()
             .get(ControlledResourceKeys.DESTINATION_WORKSPACE_ID, UUID.class);
@@ -55,7 +55,7 @@ public class LaunchCloneGcsBucketResourceFlightStep implements Step {
     final FlightMap subflightInputParameters = new FlightMap();
     subflightInputParameters.put(ControlledResourceKeys.LOCATION, location);
     subflightInputParameters.put(
-        ControlledResourceKeys.DESTINATION_WORKSPACE_ID, destinationWorkspaceId);
+        ControlledResourceKeys.DESTINATION_WORKSPACE_ID, destinationWorkspaceUuid);
     subflightInputParameters.put(JobMapKeys.AUTH_USER_INFO.getKeyName(), userRequest);
     subflightInputParameters.put(ResourceKeys.RESOURCE, resource);
     subflightInputParameters.put(

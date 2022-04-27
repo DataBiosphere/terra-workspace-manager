@@ -46,8 +46,8 @@ public class ResourceDaoTest extends BaseUnitTest {
             .build();
     workspaceDao.createWorkspace(workspace);
     WorkspaceFixtures.createGcpCloudContextInDatabase(
-        workspaceDao, workspace.getWorkspaceId(), "my-project-id");
-    return workspace.getWorkspaceId();
+        workspaceDao, workspace.getWorkspaceUuid(), "my-project-id");
+    return workspace.getWorkspaceUuid();
   }
 
   @Test
@@ -58,8 +58,8 @@ public class ResourceDaoTest extends BaseUnitTest {
     resourceDao.createControlledResource(resource);
 
     assertEquals(
-        resource, resourceDao.getResource(resource.getWorkspaceId(), resource.getResourceId()));
-    resourceDao.deleteResource(resource.getWorkspaceId(), resource.getResourceId());
+        resource, resourceDao.getResource(resource.getWorkspaceUuid(), resource.getResourceId()));
+    resourceDao.deleteResource(resource.getWorkspaceUuid(), resource.getResourceId());
   }
 
   @Test
@@ -70,8 +70,8 @@ public class ResourceDaoTest extends BaseUnitTest {
     resourceDao.createControlledResource(resource);
 
     assertEquals(
-        resource, resourceDao.getResource(resource.getWorkspaceId(), resource.getResourceId()));
-    resourceDao.deleteResource(resource.getWorkspaceId(), resource.getResourceId());
+        resource, resourceDao.getResource(resource.getWorkspaceUuid(), resource.getResourceId()));
+    resourceDao.deleteResource(resource.getWorkspaceUuid(), resource.getResourceId());
   }
 
   @Test
@@ -86,9 +86,9 @@ public class ResourceDaoTest extends BaseUnitTest {
     resourceDao.createControlledResource(resource);
 
     assertEquals(
-        resource, resourceDao.getResource(resource.getWorkspaceId(), resource.getResourceId()));
+        resource, resourceDao.getResource(resource.getWorkspaceUuid(), resource.getResourceId()));
 
-    resourceDao.deleteResource(resource.getWorkspaceId(), resource.getResourceId());
+    resourceDao.deleteResource(resource.getWorkspaceUuid(), resource.getResourceId());
   }
 
   @Test
@@ -140,9 +140,9 @@ public class ResourceDaoTest extends BaseUnitTest {
         () -> resourceDao.createControlledResource(duplicatingResource));
 
     // clean up
-    resourceDao.deleteResource(initialResource.getWorkspaceId(), initialResource.getResourceId());
+    resourceDao.deleteResource(initialResource.getWorkspaceUuid(), initialResource.getResourceId());
     resourceDao.deleteResource(
-        duplicatingResource.getWorkspaceId(), duplicatingResource.getResourceId());
+        duplicatingResource.getWorkspaceUuid(), duplicatingResource.getResourceId());
   }
 
   // AI Notebooks are unique on the tuple {instanceId, location, projectId } in addition
@@ -160,7 +160,7 @@ public class ResourceDaoTest extends BaseUnitTest {
     resourceDao.createControlledResource(initialResource);
     assertEquals(
         initialResource,
-        resourceDao.getResource(initialResource.getWorkspaceId(), initialResource.getResourceId()));
+        resourceDao.getResource(initialResource.getWorkspaceUuid(), initialResource.getResourceId()));
 
     ControlledResourceFields commonFields2 =
         ControlledResourceFixtures.makeNotebookCommonFieldsBuilder()
@@ -178,17 +178,17 @@ public class ResourceDaoTest extends BaseUnitTest {
             .workspaceUuid(createGcpWorkspace())
             .name("resource-3")
             .build();
-    final ControlledResource resourceWithDifferentWorkspaceId =
+    final ControlledResource resourceWithDifferentWorkspaceUuid =
         ControlledResourceFixtures.makeDefaultAiNotebookInstance().common(commonFields3).build();
 
     // should be fine: separate workspaces implies separate gcp projects
-    resourceDao.createControlledResource(resourceWithDifferentWorkspaceId);
+    resourceDao.createControlledResource(resourceWithDifferentWorkspaceUuid);
 
     assertEquals(
-        resourceWithDifferentWorkspaceId,
+        resourceWithDifferentWorkspaceUuid,
         resourceDao.getResource(
-            resourceWithDifferentWorkspaceId.getWorkspaceId(),
-            resourceWithDifferentWorkspaceId.getResourceId()));
+            resourceWithDifferentWorkspaceUuid.getWorkspaceUuid(),
+            resourceWithDifferentWorkspaceUuid.getResourceId()));
 
     ControlledResourceFields commonFields4 =
         ControlledResourceFixtures.makeNotebookCommonFieldsBuilder()
@@ -206,7 +206,7 @@ public class ResourceDaoTest extends BaseUnitTest {
     assertEquals(
         resourceWithDifferentLocation,
         resourceDao.getResource(
-            resourceWithDifferentLocation.getWorkspaceId(),
+            resourceWithDifferentLocation.getWorkspaceUuid(),
             resourceWithDifferentLocation.getResourceId()));
 
     ControlledResourceFields commonFields5 =
@@ -224,22 +224,22 @@ public class ResourceDaoTest extends BaseUnitTest {
     assertEquals(
         resourceWithDefaultLocation,
         resourceDao.getResource(
-            resourceWithDefaultLocation.getWorkspaceId(),
+            resourceWithDefaultLocation.getWorkspaceUuid(),
             resourceWithDefaultLocation.getResourceId()));
 
     assertEquals(DEFAULT_ZONE, resourceWithDefaultLocation.getLocation());
 
     // clean up
-    resourceDao.deleteResource(initialResource.getWorkspaceId(), initialResource.getResourceId());
+    resourceDao.deleteResource(initialResource.getWorkspaceUuid(), initialResource.getResourceId());
     // resource2 never got created
     resourceDao.deleteResource(
-        resourceWithDifferentWorkspaceId.getWorkspaceId(),
-        resourceWithDifferentWorkspaceId.getResourceId());
+        resourceWithDifferentWorkspaceUuid.getWorkspaceUuid(),
+        resourceWithDifferentWorkspaceUuid.getResourceId());
     resourceDao.deleteResource(
-        resourceWithDifferentLocation.getWorkspaceId(),
+        resourceWithDifferentLocation.getWorkspaceUuid(),
         resourceWithDifferentLocation.getResourceId());
     resourceDao.deleteResource(
-        resourceWithDefaultLocation.getWorkspaceId(), resourceWithDefaultLocation.getResourceId());
+        resourceWithDefaultLocation.getWorkspaceUuid(), resourceWithDefaultLocation.getResourceId());
   }
 
   @Test
@@ -280,9 +280,9 @@ public class ResourceDaoTest extends BaseUnitTest {
         () -> resourceDao.createControlledResource(duplicatingResource));
 
     // clean up
-    resourceDao.deleteResource(initialResource.getWorkspaceId(), initialResource.getResourceId());
-    resourceDao.deleteResource(uniqueResource.getWorkspaceId(), uniqueResource.getResourceId());
+    resourceDao.deleteResource(initialResource.getWorkspaceUuid(), initialResource.getResourceId());
+    resourceDao.deleteResource(uniqueResource.getWorkspaceUuid(), uniqueResource.getResourceId());
     resourceDao.deleteResource(
-        duplicatingResource.getWorkspaceId(), duplicatingResource.getResourceId());
+        duplicatingResource.getWorkspaceUuid(), duplicatingResource.getResourceId());
   }
 }

@@ -63,7 +63,7 @@ public class ListWorkspaces extends WorkspaceAllocateTestScriptBase {
         workspaceList.getWorkspaces().stream()
             .map(WorkspaceDescription::getId)
             .collect(Collectors.toList());
-    assertThat(workspaceIdList, hasItems(getWorkspaceId(), workspaceId2, workspaceId3));
+    assertThat(workspaceIdList, hasItems(getWorkspaceUuid(), workspaceId2, workspaceId3));
 
     // Next, cover the same set of workspaces across 3 pages.
     int pageSize = MAX_USER_WORKSPACES / 3;
@@ -80,7 +80,7 @@ public class ListWorkspaces extends WorkspaceAllocateTestScriptBase {
             .getWorkspaces());
     List<UUID> callResultIdList =
         callResults.stream().map(WorkspaceDescription::getId).collect(Collectors.toList());
-    assertThat(callResultIdList, hasItems(getWorkspaceId(), workspaceId2, workspaceId3));
+    assertThat(callResultIdList, hasItems(getWorkspaceUuid(), workspaceId2, workspaceId3));
 
     // Validate that a different user will not see any of these workspaces.
     WorkspaceDescriptionList secondUserResult =
@@ -89,7 +89,7 @@ public class ListWorkspaces extends WorkspaceAllocateTestScriptBase {
         secondUserResult.getWorkspaces().stream()
             .map(WorkspaceDescription::getId)
             .collect(Collectors.toList());
-    assertThat(secondCallResultList, not(hasItem(getWorkspaceId())));
+    assertThat(secondCallResultList, not(hasItem(getWorkspaceUuid())));
     assertThat(secondCallResultList, not(hasItem(workspaceId2)));
     assertThat(secondCallResultList, not(hasItem(workspaceId3)));
   }

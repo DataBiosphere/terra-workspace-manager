@@ -31,7 +31,7 @@ public class SetNoOpBucketCloneResponseStep implements Step {
         new ApiClonedControlledGcpGcsBucket()
             .effectiveCloningInstructions(ApiCloningInstructionsEnum.NOTHING)
             .bucket(null)
-            .sourceWorkspaceId(sourceBucket.getWorkspaceId())
+            .sourceWorkspaceUuid(sourceBucket.getWorkspaceUuid())
             .sourceResourceId(sourceBucket.getResourceId());
     FlightUtils.setResponse(context, noOpResult, HttpStatus.OK);
 

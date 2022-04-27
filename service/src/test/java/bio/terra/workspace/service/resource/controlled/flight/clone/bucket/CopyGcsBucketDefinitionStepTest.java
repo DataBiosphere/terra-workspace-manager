@@ -91,7 +91,7 @@ public class CopyGcsBucketDefinitionStepTest extends BaseUnitTest {
     final ControlledGcsBucketResource destinationBucketResource =
         destinationBucketCaptor.getValue();
     assertEquals(DESTINATION_BUCKET_NAME, destinationBucketResource.getBucketName());
-    assertEquals(DESTINATION_WORKSPACE_ID, destinationBucketResource.getWorkspaceId());
+    assertEquals(DESTINATION_WORKSPACE_ID, destinationBucketResource.getWorkspaceUuid());
     assertNotNull(destinationBucketResource.getResourceId());
     assertEquals(SOURCE_RESOURCE_NAME, destinationBucketResource.getName());
     assertEquals(

@@ -32,7 +32,7 @@ public class CheckSamWorkspaceAuthzStep implements Step {
   @Override
   public StepResult doStep(FlightContext flightContext)
       throws InterruptedException, RetryException {
-    UUID workspaceUuid = workspace.getWorkspaceId();
+    UUID workspaceUuid = workspace.getWorkspaceUuid();
     if (!canReadExistingWorkspace(workspaceUuid)) {
       throw new WorkspaceNotFoundException(
           String.format(

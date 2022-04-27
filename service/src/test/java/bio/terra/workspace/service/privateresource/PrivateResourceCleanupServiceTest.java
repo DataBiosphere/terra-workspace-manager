@@ -98,7 +98,7 @@ public class PrivateResourceCleanupServiceTest extends BaseConnectedTest {
   @AfterEach
   private void cleanup() {
     workspaceService.deleteWorkspace(
-        workspace.getWorkspaceId(), userAccessUtils.defaultUserAuthRequest());
+        workspace.getWorkspaceUuid(), userAccessUtils.defaultUserAuthRequest());
     deleteGroup(groupName, ownerGroupApi);
   }
 
@@ -112,7 +112,7 @@ public class PrivateResourceCleanupServiceTest extends BaseConnectedTest {
     SamRethrow.onInterrupted(
         () ->
             samService.grantWorkspaceRole(
-                workspace.getWorkspaceId(),
+                workspace.getWorkspaceUuid(),
                 userAccessUtils.defaultUserAuthRequest(),
                 WsmIamRole.WRITER,
                 groupEmail),
@@ -120,7 +120,7 @@ public class PrivateResourceCleanupServiceTest extends BaseConnectedTest {
     // Create private bucket as second user.
     ControlledResourceFields commonFields =
         ControlledResourceFixtures.makeDefaultControlledResourceFieldsBuilder()
-            .workspaceUuid(workspace.getWorkspaceId())
+            .workspaceUuid(workspace.getWorkspaceUuid())
             .accessScope(AccessScopeType.ACCESS_SCOPE_PRIVATE)
             .managedBy(ManagedByType.MANAGED_BY_USER)
             .assignedUser(userAccessUtils.getSecondUserEmail())
@@ -156,7 +156,7 @@ public class PrivateResourceCleanupServiceTest extends BaseConnectedTest {
                 samService.isAuthorized(
                     userAccessUtils.secondUserAuthRequest(),
                     SamResource.WORKSPACE,
-                    resource.getWorkspaceId().toString(),
+                    resource.getWorkspaceUuid().toString(),
                     SamWorkspaceAction.READ),
             "checkResourceAuth"));
     assertTrue(
@@ -185,7 +185,7 @@ public class PrivateResourceCleanupServiceTest extends BaseConnectedTest {
     // Verify resource is marked "abandoned"
     ControlledResource dbResource =
         resourceDao
-            .getResource(resource.getWorkspaceId(), resource.getResourceId())
+            .getResource(resource.getWorkspaceUuid(), resource.getResourceId())
             .castToControlledResource();
     assertEquals(PrivateResourceState.ABANDONED, dbResource.getPrivateResourceState().get());
   }
@@ -200,7 +200,7 @@ public class PrivateResourceCleanupServiceTest extends BaseConnectedTest {
     SamRethrow.onInterrupted(
         () ->
             samService.grantWorkspaceRole(
-                workspace.getWorkspaceId(),
+                workspace.getWorkspaceUuid(),
                 userAccessUtils.defaultUserAuthRequest(),
                 WsmIamRole.WRITER,
                 groupEmail),
@@ -215,12 +215,12 @@ public class PrivateResourceCleanupServiceTest extends BaseConnectedTest {
             .token(Optional.of(saAccessToken.getTokenValue()));
 
     wsmApplicationService.enableWorkspaceApplication(
-        userAccessUtils.defaultUserAuthRequest(), workspace.getWorkspaceId(), TEST_WSM_APP);
+        userAccessUtils.defaultUserAuthRequest(), workspace.getWorkspaceUuid(), TEST_WSM_APP);
 
     // Create application private bucket assigned to second user.
     ControlledResourceFields commonFields =
         ControlledResourceFixtures.makeDefaultControlledResourceFieldsBuilder()
-            .workspaceUuid(workspace.getWorkspaceId())
+            .workspaceUuid(workspace.getWorkspaceUuid())
             .accessScope(AccessScopeType.ACCESS_SCOPE_PRIVATE)
             .managedBy(ManagedByType.MANAGED_BY_APPLICATION)
             .applicationId(TEST_WSM_APP)
@@ -258,7 +258,7 @@ public class PrivateResourceCleanupServiceTest extends BaseConnectedTest {
                 samService.isAuthorized(
                     userAccessUtils.secondUserAuthRequest(),
                     SamResource.WORKSPACE,
-                    resource.getWorkspaceId().toString(),
+                    resource.getWorkspaceUuid().toString(),
                     SamWorkspaceAction.READ),
             "checkResourceAuth"));
     assertTrue(
@@ -287,7 +287,7 @@ public class PrivateResourceCleanupServiceTest extends BaseConnectedTest {
     // Verify resource is marked "abandoned"
     ControlledResource dbResource =
         resourceDao
-            .getResource(resource.getWorkspaceId(), resource.getResourceId())
+            .getResource(resource.getWorkspaceUuid(), resource.getResourceId())
             .castToControlledResource();
     assertEquals(PrivateResourceState.ABANDONED, dbResource.getPrivateResourceState().get());
     // Application can still read the resource, because applications have EDITOR role on their

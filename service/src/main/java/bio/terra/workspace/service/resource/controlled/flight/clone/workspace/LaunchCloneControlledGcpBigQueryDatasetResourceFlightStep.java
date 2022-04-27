@@ -42,7 +42,7 @@ public class LaunchCloneControlledGcpBigQueryDatasetResourceFlightStep implement
         context
             .getInputParameters()
             .get(JobMapKeys.AUTH_USER_INFO.getKeyName(), AuthenticatedUserRequest.class);
-    final var destinationWorkspaceId =
+    final var destinationWorkspaceUuid =
         context
             .getInputParameters()
             .get(ControlledResourceKeys.DESTINATION_WORKSPACE_ID, UUID.class);
@@ -55,7 +55,7 @@ public class LaunchCloneControlledGcpBigQueryDatasetResourceFlightStep implement
     final var subflightInputParameters = new FlightMap();
     subflightInputParameters.put(JobMapKeys.AUTH_USER_INFO.getKeyName(), userRequest);
     subflightInputParameters.put(
-        ControlledResourceKeys.DESTINATION_WORKSPACE_ID, destinationWorkspaceId);
+        ControlledResourceKeys.DESTINATION_WORKSPACE_ID, destinationWorkspaceUuid);
     subflightInputParameters.put(ControlledResourceKeys.LOCATION, location);
     subflightInputParameters.put(
         ControlledResourceKeys.CLONING_INSTRUCTIONS, resource.getCloningInstructions());

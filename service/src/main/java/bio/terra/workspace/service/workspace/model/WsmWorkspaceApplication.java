@@ -9,7 +9,7 @@ public class WsmWorkspaceApplication {
   private UUID workspaceUuid;
   private boolean enabled;
 
-  public UUID getWorkspaceId() {
+  public UUID getWorkspaceUuid() {
     return workspaceUuid;
   }
 

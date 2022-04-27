@@ -31,14 +31,14 @@ public class FindResourcesToCloneStep implements Step {
   public StepResult doStep(FlightContext context) throws InterruptedException, RetryException {
     FlightUtils.validateRequiredEntries(
         context.getInputParameters(), ControlledResourceKeys.SOURCE_WORKSPACE_ID);
-    final var sourceWorkspaceId =
+    final var sourceWorkspaceUuid =
         context.getInputParameters().get(ControlledResourceKeys.SOURCE_WORKSPACE_ID, UUID.class);
     int offset = 0;
     final int limit = 100;
     List<WsmResource> batch;
     final List<ResourceWithFlightId> result = new ArrayList<>();
     do {
-      batch = resourceDao.enumerateResources(sourceWorkspaceId, null, null, offset, limit);
+      batch = resourceDao.enumerateResources(sourceWorkspaceUuid, null, null, offset, limit);
       offset += limit;
       final List<WsmResource> cloneableResources =
           batch.stream().filter(FindResourcesToCloneStep::isCloneable).collect(Collectors.toList());

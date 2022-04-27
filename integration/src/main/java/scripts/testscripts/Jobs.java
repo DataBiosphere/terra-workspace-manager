@@ -51,7 +51,7 @@ public class Jobs extends WorkspaceAllocateTestScriptBase {
 
     logger.info("Creating GCP cloud context");
     CreateCloudContextResult contextResult =
-        workspaceApi.createCloudContext(createContext, getWorkspaceId());
+        workspaceApi.createCloudContext(createContext, getWorkspaceUuid());
     JobReport jobReport = contextResult.getJobReport();
 
     while (ClientTestUtils.jobIsRunning(jobReport)) {

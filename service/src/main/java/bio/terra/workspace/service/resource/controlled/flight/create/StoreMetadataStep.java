@@ -33,7 +33,7 @@ public class StoreMetadataStep implements Step {
     final ControlledResource resource =
         inputMap.get(ResourceKeys.RESOURCE, ControlledResource.class);
 
-    resourceDao.deleteResource(resource.getWorkspaceId(), resource.getResourceId());
+    resourceDao.deleteResource(resource.getWorkspaceUuid(), resource.getResourceId());
     return StepResult.getStepResultSuccess();
   }
 }

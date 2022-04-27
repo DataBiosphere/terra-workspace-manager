@@ -63,7 +63,7 @@ public class CreateControlledResourceFlight extends Flight {
     // Get the cloud context and store it in the working map
     addStep(
         new GetCloudContextStep(
-            resource.getWorkspaceId(),
+            resource.getWorkspaceUuid(),
             resource.getResourceType().getCloudPlatform(),
             flightBeanBag.getGcpCloudContextService(),
             flightBeanBag.getAzureCloudContextService(),

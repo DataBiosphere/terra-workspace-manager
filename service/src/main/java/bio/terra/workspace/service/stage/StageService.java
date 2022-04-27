@@ -30,7 +30,7 @@ public class StageService {
   public void assertMcWorkspace(Workspace workspace, String actionMessage) {
     if (!WorkspaceStage.MC_WORKSPACE.equals(workspace.getWorkspaceStage())) {
       throw new StageDisabledException(
-          workspace.getWorkspaceId(), workspace.getWorkspaceStage(), actionMessage);
+          workspace.getWorkspaceUuid(), workspace.getWorkspaceStage(), actionMessage);
     }
   }
 

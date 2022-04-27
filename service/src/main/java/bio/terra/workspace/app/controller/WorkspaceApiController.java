@@ -143,13 +143,13 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
   private ApiWorkspaceDescription buildWorkspaceDescription(Workspace workspace) {
     ApiGcpContext gcpContext =
         gcpCloudContextService
-            .getGcpCloudContext(workspace.getWorkspaceId())
+            .getGcpCloudContext(workspace.getWorkspaceUuid())
             .map(GcpCloudContext::toApi)
             .orElse(null);
 
     ApiAzureContext azureContext =
         azureCloudContextService
-            .getAzureCloudContext(workspace.getWorkspaceId())
+            .getAzureCloudContext(workspace.getWorkspaceUuid())
             .map(AzureCloudContext::toApi)
             .orElse(null);
 
@@ -161,7 +161,7 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
 
     // When we have another cloud context, we will need to do a similar retrieval for it.
     return new ApiWorkspaceDescription()
-        .id(workspace.getWorkspaceId())
+        .id(workspace.getWorkspaceUuid())
         .spendProfile(workspace.getSpendProfileId().map(SpendProfileId::getId).orElse(null))
         .stage(workspace.getWorkspaceStage().toApiModel())
         .gcpContext(gcpContext)
@@ -365,11 +365,11 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
 
     Optional<SpendProfileId> spendProfileId =
         Optional.ofNullable(body.getSpendProfile()).map(SpendProfileId::new);
-    final UUID destinationWorkspaceId = UUID.randomUUID();
+    final UUID destinationWorkspaceUuid = UUID.randomUUID();
     // Construct the target workspace object from the inputs
     final Workspace destinationWorkspace =
         Workspace.builder()
-            .workspaceUuid(destinationWorkspaceId)
+            .workspaceUuid(destinationWorkspaceUuid)
             .spendProfileId(spendProfileId.orElse(null))
             .workspaceStage(WorkspaceStage.MC_WORKSPACE)
             .displayName(body.getDisplayName())
@@ -384,8 +384,8 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
     final ApiCloneWorkspaceResult result = fetchCloneWorkspaceResult(jobId, getAuthenticatedInfo());
     final ApiClonedWorkspace clonedWorkspaceStub =
         new ApiClonedWorkspace()
-            .destinationWorkspaceId(destinationWorkspaceId)
-            .sourceWorkspaceId(workspaceUuid);
+            .destinationWorkspaceUuid(destinationWorkspaceUuid)
+            .sourceWorkspaceUuid(workspaceUuid);
     result.setWorkspace(clonedWorkspaceStub);
     return new ResponseEntity<>(result, getAsyncResponseCode(result.getJobReport()));
   }

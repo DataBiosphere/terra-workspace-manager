@@ -81,7 +81,7 @@ public class DeleteAiNotebookInstanceStep implements Step {
     logger.error(
         "Cannot undo delete of GCS AI Platform Notebook instance {} in workspace {}.",
         resource.getResourceId(),
-        resource.getWorkspaceId());
+        resource.getWorkspaceUuid());
     // Surface whatever error caused Stairway to begin undoing.
     return flightContext.getResult();
   }

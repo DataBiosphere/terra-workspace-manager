@@ -28,7 +28,7 @@ public class SetCreateResponseStep implements Step {
   public StepResult doStep(FlightContext flightContext)
       throws InterruptedException, RetryException {
     WsmResource responseResource =
-        resourceDao.getResource(resource.getWorkspaceId(), resource.getResourceId());
+        resourceDao.getResource(resource.getWorkspaceUuid(), resource.getResourceId());
     flightContext.getWorkingMap().put(JobMapKeys.RESPONSE.getKeyName(), responseResource);
     return StepResult.getStepResultSuccess();
   }

@@ -26,7 +26,7 @@ import scripts.utils.WorkspaceAllocateTestScriptBase;
 public class ReferencedGitRepoLifecycle extends WorkspaceAllocateTestScriptBase {
 
   private GitRepoAttributes gitRepoAttributes;
-  private UUID destinationWorkspaceId;
+  private UUID destinationWorkspaceUuid;
   private UUID gitResourceId;
 
   public void setParametersMap(Map<String, String> parametersMap) throws Exception {
@@ -44,7 +44,7 @@ public class ReferencedGitRepoLifecycle extends WorkspaceAllocateTestScriptBase 
         GitRepoUtils.makeGitRepoReference(
             gitRepoAttributes,
             referencedGcpResourceApi,
-            getWorkspaceId(),
+            getWorkspaceUuid(),
             MultiResourcesUtils.makeName());
     gitResourceId = gitResource.getMetadata().getResourceId();
 
@@ -61,11 +61,11 @@ public class ReferencedGitRepoLifecycle extends WorkspaceAllocateTestScriptBase 
     testUpdateReference(referencedGcpResourceApi);
 
     // Delete the reference
-    referencedGcpResourceApi.deleteGitRepoReference(getWorkspaceId(), gitResourceId);
+    referencedGcpResourceApi.deleteGitRepoReference(getWorkspaceUuid(), gitResourceId);
 
     // Enumerating all resources with no filters should be empty
     ResourceList enumerateResult =
-        resourceApi.enumerateResources(getWorkspaceId(), 0, 100, null, null);
+        resourceApi.enumerateResources(getWorkspaceUuid(), 0, 100, null, null);
     assertTrue(enumerateResult.getResources().isEmpty());
   }
 
@@ -75,13 +75,13 @@ public class ReferencedGitRepoLifecycle extends WorkspaceAllocateTestScriptBase 
       ResourceApi resourceApi)
       throws Exception {
     GitRepoResource fetchedGitResource =
-        referencedGcpResourceApi.getGitRepoReference(getWorkspaceId(), gitResourceId);
+        referencedGcpResourceApi.getGitRepoReference(getWorkspaceUuid(), gitResourceId);
     assertEquals(gitResource, fetchedGitResource);
 
     // Enumerate the reference
     ResourceList referenceList =
         resourceApi.enumerateResources(
-            getWorkspaceId(), 0, 5, /*referenceType=*/ null, /*stewardShipType=*/ null);
+            getWorkspaceUuid(), 0, 5, /*referenceType=*/ null, /*stewardShipType=*/ null);
     assertEquals(1, referenceList.getResources().size());
     assertEquals(
         StewardshipType.REFERENCED,
@@ -96,15 +96,15 @@ public class ReferencedGitRepoLifecycle extends WorkspaceAllocateTestScriptBase 
       WorkspaceApi workspaceApi)
       throws Exception {
     // Create a second workspace to clone the reference into, owned by the same user
-    destinationWorkspaceId = UUID.randomUUID();
-    createWorkspace(destinationWorkspaceId, getSpendProfileId(), workspaceApi);
+    destinationWorkspaceUuid = UUID.randomUUID();
+    createWorkspace(destinationWorkspaceUuid, getSpendProfileId(), workspaceApi);
     // Clone references
     CloneReferencedGitRepoResourceResult gitCloneResult =
         referencedGcpResourceApi.cloneGitRepoReference(
-            new CloneReferencedResourceRequestBody().destinationWorkspaceId(destinationWorkspaceId),
-            getWorkspaceId(),
+            new CloneReferencedResourceRequestBody().destinationWorkspaceUuid(destinationWorkspaceUuid),
+            getWorkspaceUuid(),
             gitResourceId);
-    assertEquals(getWorkspaceId(), gitCloneResult.getSourceWorkspaceId());
+    assertEquals(getWorkspaceUuid(), gitCloneResult.getSourceWorkspaceUuid());
     assertEquals(gitResource.getAttributes(), gitCloneResult.getResource().getAttributes());
   }
 
@@ -114,13 +114,13 @@ public class ReferencedGitRepoLifecycle extends WorkspaceAllocateTestScriptBase 
     String newGitRepoReferenceDescription = "a new description for git repo reference";
     GitRepoUtils.updateGitRepoReferenceResource(
         referencedGcpResourceApi,
-        getWorkspaceId(),
+        getWorkspaceUuid(),
         gitResourceId,
         newGitRepoReferenceName,
         newGitRepoReferenceDescription,
         /*gitCloneUrl=*/ null);
     GitRepoResource updatedResource =
-        referencedGcpResourceApi.getGitRepoReference(getWorkspaceId(), gitResourceId);
+        referencedGcpResourceApi.getGitRepoReference(getWorkspaceUuid(), gitResourceId);
     assertEquals(newGitRepoReferenceName, updatedResource.getMetadata().getName());
     assertEquals(newGitRepoReferenceDescription, updatedResource.getMetadata().getDescription());
   }
@@ -129,8 +129,8 @@ public class ReferencedGitRepoLifecycle extends WorkspaceAllocateTestScriptBase 
   public void doCleanup(List<TestUserSpecification> testUsers, WorkspaceApi workspaceApi)
       throws Exception {
     super.doCleanup(testUsers, workspaceApi);
-    if (destinationWorkspaceId != null) {
-      workspaceApi.deleteWorkspace(destinationWorkspaceId);
+    if (destinationWorkspaceUuid != null) {
+      workspaceApi.deleteWorkspace(destinationWorkspaceUuid);
     }
   }
 }

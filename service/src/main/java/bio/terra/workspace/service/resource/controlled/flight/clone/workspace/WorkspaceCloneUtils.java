@@ -46,7 +46,7 @@ public class WorkspaceCloneUtils {
 
   public static ReferencedResource buildDestinationReferencedResource(
       ReferencedResource sourceReferencedResource,
-      UUID destinationWorkspaceId,
+      UUID destinationWorkspaceUuid,
       String name,
       String description) {
     final ReferencedResource destinationResource;
@@ -55,7 +55,7 @@ public class WorkspaceCloneUtils {
         destinationResource =
             buildDestinationGcsBucketReference(
                 sourceReferencedResource.castByEnum(WsmResourceType.REFERENCED_GCP_GCS_BUCKET),
-                destinationWorkspaceId,
+                destinationWorkspaceUuid,
                 name,
                 description);
         break;
@@ -63,7 +63,7 @@ public class WorkspaceCloneUtils {
         destinationResource =
             buildDestinationGcsObjectReference(
                 sourceReferencedResource.castByEnum(WsmResourceType.REFERENCED_GCP_GCS_OBJECT),
-                destinationWorkspaceId,
+                destinationWorkspaceUuid,
                 name,
                 description);
         break;
@@ -72,7 +72,7 @@ public class WorkspaceCloneUtils {
             buildDestinationDataRepoSnapshotReference(
                 sourceReferencedResource.castByEnum(
                     WsmResourceType.REFERENCED_ANY_DATA_REPO_SNAPSHOT),
-                destinationWorkspaceId,
+                destinationWorkspaceUuid,
                 name,
                 description);
         break;
@@ -81,7 +81,7 @@ public class WorkspaceCloneUtils {
             buildDestinationBigQueryDatasetReference(
                 sourceReferencedResource.castByEnum(
                     WsmResourceType.REFERENCED_GCP_BIG_QUERY_DATASET),
-                destinationWorkspaceId,
+                destinationWorkspaceUuid,
                 name,
                 description);
         break;
@@ -90,7 +90,7 @@ public class WorkspaceCloneUtils {
             buildDestinationBigQueryDataTableReference(
                 sourceReferencedResource.castByEnum(
                     WsmResourceType.REFERENCED_GCP_BIG_QUERY_DATA_TABLE),
-                destinationWorkspaceId,
+                destinationWorkspaceUuid,
                 name,
                 description);
         break;
@@ -98,7 +98,7 @@ public class WorkspaceCloneUtils {
         destinationResource =
             buildDestinationGitHubRepoReference(
                 sourceReferencedResource.castByEnum(WsmResourceType.REFERENCED_ANY_GIT_REPO),
-                destinationWorkspaceId,
+                destinationWorkspaceUuid,
                 name,
                 description);
         break;
@@ -116,20 +116,20 @@ public class WorkspaceCloneUtils {
    * workspace ID, resource ID, and (possibly) name and description.
    *
    * @param sourceBucketResource - original resource to be cloned
-   * @param destinationWorkspaceId - workspace ID for new reference
+   * @param destinationWorkspaceUuid - workspace ID for new reference
    * @param name - resource name for cloned reference. Will use original name if this is null.
    * @param description - resource description for cloned reference. Uses original if left null.
    * @return referenced resource
    */
   private static ReferencedResource buildDestinationGcsBucketReference(
       ReferencedGcsBucketResource sourceBucketResource,
-      UUID destinationWorkspaceId,
+      UUID destinationWorkspaceUuid,
       @Nullable String name,
       @Nullable String description) {
 
     final ReferencedGcsBucketResource.Builder resultBuilder =
         sourceBucketResource.toBuilder()
-            .workspaceUuid(destinationWorkspaceId)
+            .workspaceUuid(destinationWorkspaceUuid)
             .resourceId(UUID.randomUUID());
     // apply optional override variables
     Optional.ofNullable(name).ifPresent(resultBuilder::name);
@@ -139,12 +139,12 @@ public class WorkspaceCloneUtils {
 
   private static ReferencedResource buildDestinationGcsObjectReference(
       ReferencedGcsObjectResource sourceBucketFileResource,
-      UUID destinationWorkspaceId,
+      UUID destinationWorkspaceUuid,
       @Nullable String name,
       @Nullable String description) {
     final ReferencedGcsObjectResource.Builder resultBuilder =
         sourceBucketFileResource.toBuilder()
-            .workspaceUuid(destinationWorkspaceId)
+            .workspaceUuid(destinationWorkspaceUuid)
             .resourceId(UUID.randomUUID());
     // apply optional override variables
     Optional.ofNullable(name).ifPresent(resultBuilder::name);
@@ -154,13 +154,13 @@ public class WorkspaceCloneUtils {
 
   private static ReferencedResource buildDestinationBigQueryDatasetReference(
       ReferencedBigQueryDatasetResource sourceBigQueryResource,
-      UUID destinationWorkspaceId,
+      UUID destinationWorkspaceUuid,
       @Nullable String name,
       @Nullable String description) {
     // keep projectId and dataset name the same since they are for the referent
     final ReferencedBigQueryDatasetResource.Builder resultBuilder =
         sourceBigQueryResource.toBuilder()
-            .workspaceUuid(destinationWorkspaceId)
+            .workspaceUuid(destinationWorkspaceUuid)
             .resourceId(UUID.randomUUID());
     Optional.ofNullable(name).ifPresent(resultBuilder::name);
     Optional.ofNullable(description).ifPresent(resultBuilder::description);
@@ -169,13 +169,13 @@ public class WorkspaceCloneUtils {
 
   private static ReferencedResource buildDestinationBigQueryDataTableReference(
       ReferencedBigQueryDataTableResource sourceBigQueryResource,
-      UUID destinationWorkspaceId,
+      UUID destinationWorkspaceUuid,
       @Nullable String name,
       @Nullable String description) {
     // keep projectId, dataset name and data table name the same since they are for the referent
     final ReferencedBigQueryDataTableResource.Builder resultBuilder =
         sourceBigQueryResource.toBuilder()
-            .workspaceUuid(destinationWorkspaceId)
+            .workspaceUuid(destinationWorkspaceUuid)
             .resourceId(UUID.randomUUID());
     Optional.ofNullable(name).ifPresent(resultBuilder::name);
     Optional.ofNullable(description).ifPresent(resultBuilder::description);
@@ -184,12 +184,12 @@ public class WorkspaceCloneUtils {
 
   private static ReferencedResource buildDestinationDataRepoSnapshotReference(
       ReferencedDataRepoSnapshotResource sourceReferencedDataRepoSnapshotResource,
-      UUID destinationWorkspaceId,
+      UUID destinationWorkspaceUuid,
       @Nullable String name,
       @Nullable String description) {
     final ReferencedDataRepoSnapshotResource.Builder resultBuilder =
         sourceReferencedDataRepoSnapshotResource.toBuilder()
-            .workspaceUuid(destinationWorkspaceId)
+            .workspaceUuid(destinationWorkspaceUuid)
             .resourceId(UUID.randomUUID());
     Optional.ofNullable(name).ifPresent(resultBuilder::name);
     Optional.ofNullable(description).ifPresent(resultBuilder::description);
@@ -198,12 +198,12 @@ public class WorkspaceCloneUtils {
 
   private static ReferencedResource buildDestinationGitHubRepoReference(
       ReferencedGitRepoResource gitHubRepoResource,
-      UUID destinationWorkspaceId,
+      UUID destinationWorkspaceUuid,
       @Nullable String name,
       @Nullable String description) {
     ReferencedGitRepoResource.Builder resultBuilder =
         gitHubRepoResource.toBuilder()
-            .workspaceUuid(destinationWorkspaceId)
+            .workspaceUuid(destinationWorkspaceUuid)
             .resourceId(UUID.randomUUID());
     Optional.ofNullable(name).ifPresent(resultBuilder::name);
     Optional.ofNullable(description).ifPresent(resultBuilder::description);

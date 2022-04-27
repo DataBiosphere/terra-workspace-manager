@@ -530,7 +530,7 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
           new ApiCloneReferencedGcpGcsObjectResourceResult()
               .effectiveCloningInstructions(effectiveCloningInstructions.toApiModel())
               .sourceResourceId(sourceReferencedResource.getResourceId())
-              .sourceWorkspaceId(sourceReferencedResource.getWorkspaceId())
+              .sourceWorkspaceUuid(sourceReferencedResource.getWorkspaceUuid())
               .resource(null);
       return new ResponseEntity<>(emptyResult, HttpStatus.OK);
     }
@@ -539,7 +539,7 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
         referenceResourceService
             .cloneReferencedResource(
                 sourceReferencedResource,
-                body.getDestinationWorkspaceId(),
+                body.getDestinationWorkspaceUuid(),
                 body.getName(),
                 body.getDescription(),
                 userRequest)
@@ -549,7 +549,7 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
     final var result =
         new ApiCloneReferencedGcpGcsObjectResourceResult()
             .resource(clonedReferencedResource.toApiResource())
-            .sourceWorkspaceId(sourceReferencedResource.getWorkspaceId())
+            .sourceWorkspaceUuid(sourceReferencedResource.getWorkspaceUuid())
             .sourceResourceId(sourceReferencedResource.getResourceId())
             .effectiveCloningInstructions(effectiveCloningInstructions.toApiModel());
     return new ResponseEntity<>(result, HttpStatus.OK);
@@ -572,7 +572,7 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
           new ApiCloneReferencedGcpGcsBucketResourceResult()
               .effectiveCloningInstructions(effectiveCloningInstructions.toApiModel())
               .sourceResourceId(sourceReferencedResource.getResourceId())
-              .sourceWorkspaceId(sourceReferencedResource.getWorkspaceId())
+              .sourceWorkspaceUuid(sourceReferencedResource.getWorkspaceUuid())
               .resource(null);
       return new ResponseEntity<>(emptyResult, HttpStatus.OK);
     }
@@ -582,7 +582,7 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
         referenceResourceService
             .cloneReferencedResource(
                 sourceReferencedResource,
-                body.getDestinationWorkspaceId(),
+                body.getDestinationWorkspaceUuid(),
                 body.getName(),
                 body.getDescription(),
                 petRequest)
@@ -592,7 +592,7 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
     final var result =
         new ApiCloneReferencedGcpGcsBucketResourceResult()
             .resource(clonedReferencedResource.toApiResource())
-            .sourceWorkspaceId(sourceReferencedResource.getWorkspaceId())
+            .sourceWorkspaceUuid(sourceReferencedResource.getWorkspaceUuid())
             .sourceResourceId(sourceReferencedResource.getResourceId())
             .effectiveCloningInstructions(effectiveCloningInstructions.toApiModel());
     return new ResponseEntity<>(result, HttpStatus.OK);
@@ -617,7 +617,7 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
           new ApiCloneReferencedGcpBigQueryDataTableResourceResult()
               .effectiveCloningInstructions(effectiveCloningInstructions.toApiModel())
               .sourceResourceId(sourceReferencedResource.getResourceId())
-              .sourceWorkspaceId(sourceReferencedResource.getWorkspaceId())
+              .sourceWorkspaceUuid(sourceReferencedResource.getWorkspaceUuid())
               .resource(null);
       return new ResponseEntity<>(emptyResult, HttpStatus.OK);
     }
@@ -626,7 +626,7 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
         referenceResourceService
             .cloneReferencedResource(
                 sourceReferencedResource,
-                body.getDestinationWorkspaceId(),
+                body.getDestinationWorkspaceUuid(),
                 body.getName(),
                 body.getDescription(),
                 userRequest)
@@ -636,7 +636,7 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
     final var result =
         new ApiCloneReferencedGcpBigQueryDataTableResourceResult()
             .resource(clonedReferencedResource.toApiResource())
-            .sourceWorkspaceId(sourceReferencedResource.getWorkspaceId())
+            .sourceWorkspaceUuid(sourceReferencedResource.getWorkspaceUuid())
             .sourceResourceId(sourceReferencedResource.getResourceId())
             .effectiveCloningInstructions(effectiveCloningInstructions.toApiModel());
     return new ResponseEntity<>(result, HttpStatus.OK);
@@ -660,7 +660,7 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
           new ApiCloneReferencedGcpBigQueryDatasetResourceResult()
               .effectiveCloningInstructions(effectiveCloningInstructions.toApiModel())
               .sourceResourceId(sourceReferencedResource.getResourceId())
-              .sourceWorkspaceId(sourceReferencedResource.getWorkspaceId())
+              .sourceWorkspaceUuid(sourceReferencedResource.getWorkspaceUuid())
               .resource(null);
       return new ResponseEntity<>(emptyResult, HttpStatus.OK);
     }
@@ -670,7 +670,7 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
         referenceResourceService
             .cloneReferencedResource(
                 sourceReferencedResource,
-                body.getDestinationWorkspaceId(),
+                body.getDestinationWorkspaceUuid(),
                 body.getName(),
                 body.getDescription(),
                 petRequest)
@@ -680,7 +680,7 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
     final var result =
         new ApiCloneReferencedGcpBigQueryDatasetResourceResult()
             .resource(clonedReferencedResource.toApiResource())
-            .sourceWorkspaceId(sourceReferencedResource.getWorkspaceId())
+            .sourceWorkspaceUuid(sourceReferencedResource.getWorkspaceUuid())
             .sourceResourceId(sourceReferencedResource.getResourceId())
             .effectiveCloningInstructions(effectiveCloningInstructions.toApiModel());
     return new ResponseEntity<>(result, HttpStatus.OK);
@@ -705,7 +705,7 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
           new ApiCloneReferencedGcpDataRepoSnapshotResourceResult()
               .effectiveCloningInstructions(effectiveCloningInstructions.toApiModel())
               .sourceResourceId(sourceReferencedResource.getResourceId())
-              .sourceWorkspaceId(sourceReferencedResource.getWorkspaceId())
+              .sourceWorkspaceUuid(sourceReferencedResource.getWorkspaceUuid())
               .resource(null);
       return new ResponseEntity<>(emptyResult, HttpStatus.OK);
     }
@@ -715,7 +715,7 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
         referenceResourceService
             .cloneReferencedResource(
                 sourceReferencedResource,
-                body.getDestinationWorkspaceId(),
+                body.getDestinationWorkspaceUuid(),
                 body.getName(),
                 body.getDescription(),
                 userRequest)
@@ -725,7 +725,7 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
     final var result =
         new ApiCloneReferencedGcpDataRepoSnapshotResourceResult()
             .resource(clonedReferencedResource.toApiResource())
-            .sourceWorkspaceId(sourceReferencedResource.getWorkspaceId())
+            .sourceWorkspaceUuid(sourceReferencedResource.getWorkspaceUuid())
             .sourceResourceId(sourceReferencedResource.getResourceId())
             .effectiveCloningInstructions(effectiveCloningInstructions.toApiModel());
     return new ResponseEntity<>(result, HttpStatus.OK);
@@ -829,7 +829,7 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
           new ApiCloneReferencedGitRepoResourceResult()
               .effectiveCloningInstructions(effectiveCloningInstructions.toApiModel())
               .sourceResourceId(sourceReferencedResource.getResourceId())
-              .sourceWorkspaceId(sourceReferencedResource.getWorkspaceId())
+              .sourceWorkspaceUuid(sourceReferencedResource.getWorkspaceUuid())
               .resource(null);
       return new ResponseEntity<>(emptyResult, HttpStatus.OK);
     }
@@ -838,7 +838,7 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
         referenceResourceService
             .cloneReferencedResource(
                 sourceReferencedResource,
-                body.getDestinationWorkspaceId(),
+                body.getDestinationWorkspaceUuid(),
                 body.getName(),
                 body.getDescription(),
                 userRequest)
@@ -848,7 +848,7 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
     ApiCloneReferencedGitRepoResourceResult result =
         new ApiCloneReferencedGitRepoResourceResult()
             .resource(clonedReferencedResource.toApiResource())
-            .sourceWorkspaceId(sourceReferencedResource.getWorkspaceId())
+            .sourceWorkspaceUuid(sourceReferencedResource.getWorkspaceUuid())
             .sourceResourceId(sourceReferencedResource.getResourceId())
             .effectiveCloningInstructions(effectiveCloningInstructions.toApiModel());
     return new ResponseEntity<>(result, HttpStatus.OK);

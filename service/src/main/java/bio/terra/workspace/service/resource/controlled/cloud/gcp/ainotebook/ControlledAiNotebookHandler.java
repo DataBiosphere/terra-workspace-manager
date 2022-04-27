@@ -42,7 +42,7 @@ public class ControlledAiNotebookHandler implements WsmResourceHandler {
         DbSerDes.fromJson(dbResource.getAttributes(), ControlledAiNotebookInstanceAttributes.class);
     String projectId =
         Optional.ofNullable(attributes.getProjectId())
-            .orElse(gcpCloudContextService.getRequiredGcpProject(dbResource.getWorkspaceId()));
+            .orElse(gcpCloudContextService.getRequiredGcpProject(dbResource.getWorkspaceUuid()));
 
     var resource =
         ControlledAiNotebookInstanceResource.builder()

@@ -144,7 +144,7 @@ public class ReferencedGcsObjectResource extends ReferencedResource {
     // use the provided credentials. This cannot use arbitrary pet SA credentials, as they may not
     // have the Storage APIs enabled.
     Optional<AuthenticatedUserRequest> maybePetCreds =
-        petSaService.getWorkspacePetCredentials(getWorkspaceId(), userRequest);
+        petSaService.getWorkspacePetCredentials(getWorkspaceUuid(), userRequest);
     return crlService.canReadGcsObject(bucketName, objectName, maybePetCreds.orElse(userRequest));
   }
 
@@ -162,7 +162,7 @@ public class ReferencedGcsObjectResource extends ReferencedResource {
         .description(getDescription())
         .name(getName())
         .resourceId(getResourceId())
-        .workspaceUuid(getWorkspaceId());
+        .workspaceUuid(getWorkspaceUuid());
   }
 
   public static Builder builder() {

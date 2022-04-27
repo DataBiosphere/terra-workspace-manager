@@ -549,7 +549,7 @@ public class CreateAndDeleteAzureControlledResourceFlightTest extends BaseAzureT
     for (WsmResource wsmResource : resourceList) {
       if (wsmResource.getResourceId().equals(resource.getResourceId())) {
         assertEquals(resource.getResourceType(), wsmResource.getResourceType());
-        assertEquals(resource.getWorkspaceId(), wsmResource.getWorkspaceId());
+        assertEquals(resource.getWorkspaceUuid(), wsmResource.getWorkspaceUuid());
         assertEquals(resource.getName(), wsmResource.getName());
         return;
       }

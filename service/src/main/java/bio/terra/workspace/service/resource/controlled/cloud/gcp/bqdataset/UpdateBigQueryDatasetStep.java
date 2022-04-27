@@ -63,7 +63,7 @@ public class UpdateBigQueryDatasetStep implements Step {
       return StepResult.getStepResultSuccess();
     }
     final String projectId =
-        gcpCloudContextService.getRequiredGcpProject(datasetResource.getWorkspaceId());
+        gcpCloudContextService.getRequiredGcpProject(datasetResource.getWorkspaceUuid());
     final String datasetId = datasetResource.getDatasetName();
     final BigQueryCow bigQueryCow = crlService.createWsmSaBigQueryCow();
     try {

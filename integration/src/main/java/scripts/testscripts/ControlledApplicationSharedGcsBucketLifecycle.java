@@ -74,14 +74,14 @@ public class ControlledApplicationSharedGcsBucketLifecycle extends WorkspaceAllo
 
     // Owner adds a reader and a writer to the workspace
     workspaceApi.grantRole(
-        new GrantRoleRequestBody().memberEmail(reader.userEmail), getWorkspaceId(), IamRole.READER);
-    logger.info("Added {} as a reader to workspace {}", reader.userEmail, getWorkspaceId());
+        new GrantRoleRequestBody().memberEmail(reader.userEmail), getWorkspaceUuid(), IamRole.READER);
+    logger.info("Added {} as a reader to workspace {}", reader.userEmail, getWorkspaceUuid());
     workspaceApi.grantRole(
-        new GrantRoleRequestBody().memberEmail(writer.userEmail), getWorkspaceId(), IamRole.WRITER);
-    logger.info("Added {} as a writer to workspace {}", writer.userEmail, getWorkspaceId());
+        new GrantRoleRequestBody().memberEmail(writer.userEmail), getWorkspaceUuid(), IamRole.WRITER);
+    logger.info("Added {} as a writer to workspace {}", writer.userEmail, getWorkspaceUuid());
 
     // Create the cloud context
-    String projectId = CloudContextMaker.createGcpCloudContext(getWorkspaceId(), workspaceApi);
+    String projectId = CloudContextMaker.createGcpCloudContext(getWorkspaceUuid(), workspaceApi);
     assertNotNull(projectId);
     logger.info("Created project {}", projectId);
 
@@ -93,7 +93,7 @@ public class ControlledApplicationSharedGcsBucketLifecycle extends WorkspaceAllo
             () ->
                 GcsBucketUtils.makeControlledGcsBucketAppShared(
                     wsmappResourceApi,
-                    getWorkspaceId(),
+                    getWorkspaceUuid(),
                     bucketResourceName,
                     CloningInstructionsEnum.NOTHING));
     // TODO: [PF-1208] this should be FORBIDDEN (403), but we are throwing the wrong thing
@@ -102,13 +102,13 @@ public class ControlledApplicationSharedGcsBucketLifecycle extends WorkspaceAllo
 
     // Enable the application in the workspace
     WorkspaceApplicationDescription applicationDescription =
-        ownerWsmAppApi.enableWorkspaceApplication(getWorkspaceId(), TEST_WSM_APP);
+        ownerWsmAppApi.enableWorkspaceApplication(getWorkspaceUuid(), TEST_WSM_APP);
     assertThat(applicationDescription.getApplicationState(), equalTo(ApplicationState.OPERATING));
     logger.info("Enabled application in the workspace");
 
     // Validate that it is enabled
     WorkspaceApplicationDescription retrievedDescription =
-        ownerWsmAppApi.getWorkspaceApplication(getWorkspaceId(), TEST_WSM_APP);
+        ownerWsmAppApi.getWorkspaceApplication(getWorkspaceUuid(), TEST_WSM_APP);
     assertThat(applicationDescription, equalTo(retrievedDescription));
     assertThat(
         applicationDescription.getWorkspaceApplicationState(),
@@ -118,7 +118,7 @@ public class ControlledApplicationSharedGcsBucketLifecycle extends WorkspaceAllo
     CreatedControlledGcpGcsBucket createdBucket =
         GcsBucketUtils.makeControlledGcsBucketAppShared(
             wsmappResourceApi,
-            getWorkspaceId(),
+            getWorkspaceUuid(),
             bucketResourceName,
             CloningInstructionsEnum.NOTHING);
     bucketName = createdBucket.getGcpBucket().getAttributes().getBucketName();
@@ -130,7 +130,7 @@ public class ControlledApplicationSharedGcsBucketLifecycle extends WorkspaceAllo
     ApiException disableAppFails =
         assertThrows(
             ApiException.class,
-            () -> ownerWsmAppApi.disableWorkspaceApplication(getWorkspaceId(), TEST_WSM_APP));
+            () -> ownerWsmAppApi.disableWorkspaceApplication(getWorkspaceUuid(), TEST_WSM_APP));
     assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, disableAppFails.getCode());
     logger.info("Failed to disable app, as expected");
 
@@ -145,7 +145,7 @@ public class ControlledApplicationSharedGcsBucketLifecycle extends WorkspaceAllo
     ResourceApi readerResourceApi = ClientTestUtils.getResourceClient(reader, server);
     ResourceList bucketList =
         readerResourceApi.enumerateResources(
-            getWorkspaceId(), 0, 5, ResourceType.GCS_BUCKET, StewardshipType.CONTROLLED);
+            getWorkspaceUuid(), 0, 5, ResourceType.GCS_BUCKET, StewardshipType.CONTROLLED);
     assertEquals(1, bucketList.getResources().size());
     MultiResourcesUtils.assertResourceType(ResourceType.GCS_BUCKET, bucketList);
 
@@ -156,14 +156,14 @@ public class ControlledApplicationSharedGcsBucketLifecycle extends WorkspaceAllo
             ApiException.class,
             () ->
                 GcsBucketUtils.deleteControlledGcsBucket(
-                    createdBucket.getResourceId(), getWorkspaceId(), ownerResourceApi));
+                    createdBucket.getResourceId(), getWorkspaceUuid(), ownerResourceApi));
     // TODO: [PF-1208] this should be FORBIDDEN (403), but we are throwing the wrong thing
     assertEquals(HttpStatusCodes.STATUS_CODE_UNAUTHORIZED, cannotDelete.getCode());
     logger.info("Owner delete failed as expected");
 
     // Application can delete the bucket through WSM
     GcsBucketUtils.deleteControlledGcsBucket(
-        createdBucket.getResourceId(), getWorkspaceId(), wsmappResourceApi);
+        createdBucket.getResourceId(), getWorkspaceUuid(), wsmappResourceApi);
     logger.info("Application delete succeeded");
   }
 

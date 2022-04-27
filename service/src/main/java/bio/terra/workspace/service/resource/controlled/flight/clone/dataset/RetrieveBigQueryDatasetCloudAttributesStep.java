@@ -50,7 +50,7 @@ public class RetrieveBigQueryDatasetCloudAttributesStep implements Step {
     // Since no location was specified, we need to find the original one
     // from the source dataset.
     final String projectId =
-        gcpCloudContextService.getRequiredGcpProject(datasetResource.getWorkspaceId());
+        gcpCloudContextService.getRequiredGcpProject(datasetResource.getWorkspaceUuid());
     final BigQueryCow bigQueryCow = crlService.createWsmSaBigQueryCow();
     try {
       final Dataset dataset =

@@ -52,7 +52,7 @@ public class CreateGcsBucketStep implements Step {
     ApiGcpGcsBucketCreationParameters creationParameters =
         inputMap.get(
             ControlledResourceKeys.CREATION_PARAMETERS, ApiGcpGcsBucketCreationParameters.class);
-    String projectId = gcpCloudContextService.getRequiredGcpProject(resource.getWorkspaceId());
+    String projectId = gcpCloudContextService.getRequiredGcpProject(resource.getWorkspaceUuid());
 
     BucketInfo.Builder bucketInfoBuilder =
         BucketInfo.newBuilder(resource.getBucketName())
@@ -162,7 +162,7 @@ public class CreateGcsBucketStep implements Step {
 
   @Override
   public StepResult undoStep(FlightContext flightContext) throws InterruptedException {
-    String projectId = gcpCloudContextService.getRequiredGcpProject(resource.getWorkspaceId());
+    String projectId = gcpCloudContextService.getRequiredGcpProject(resource.getWorkspaceUuid());
     // WSM should only attempt to delete the buckets it created, so it does nothing if the bucket
     // exists outside the current project. We can guarantee another flight did not create this
     // bucket because uniqueness within the project is already verified in WSM's DB earlier in this

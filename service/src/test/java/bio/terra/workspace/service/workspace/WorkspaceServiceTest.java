@@ -150,8 +150,8 @@ class WorkspaceServiceTest extends BaseConnectedTest {
     workspaceService.createWorkspace(request, USER_REQUEST);
 
     assertEquals(
-        request.getWorkspaceId(),
-        workspaceService.getWorkspace(request.getWorkspaceId(), USER_REQUEST).getWorkspaceId());
+        request.getWorkspaceUuid(),
+        workspaceService.getWorkspace(request.getWorkspaceUuid(), USER_REQUEST).getWorkspaceUuid());
   }
 
   @Test
@@ -174,7 +174,7 @@ class WorkspaceServiceTest extends BaseConnectedTest {
         .checkAuthz(any(), any(), any(), any());
     assertThrows(
         ForbiddenException.class,
-        () -> workspaceService.getWorkspace(request.getWorkspaceId(), USER_REQUEST));
+        () -> workspaceService.getWorkspace(request.getWorkspaceUuid(), USER_REQUEST));
   }
 
   @Test
@@ -185,17 +185,17 @@ class WorkspaceServiceTest extends BaseConnectedTest {
             .build();
     workspaceService.createWorkspace(mcWorkspaceRequest, USER_REQUEST);
     Workspace createdWorkspace =
-        workspaceService.getWorkspace(mcWorkspaceRequest.getWorkspaceId(), USER_REQUEST);
-    assertEquals(mcWorkspaceRequest.getWorkspaceId(), createdWorkspace.getWorkspaceId());
+        workspaceService.getWorkspace(mcWorkspaceRequest.getWorkspaceUuid(), USER_REQUEST);
+    assertEquals(mcWorkspaceRequest.getWorkspaceUuid(), createdWorkspace.getWorkspaceUuid());
     assertEquals(WorkspaceStage.MC_WORKSPACE, createdWorkspace.getWorkspaceStage());
   }
 
   @Test
-  void duplicateWorkspaceIdRequestsRejected() {
+  void duplicateWorkspaceUuidRequestsRejected() {
     Workspace request = defaultRequestBuilder(UUID.randomUUID()).build();
     workspaceService.createWorkspace(request, USER_REQUEST);
     Workspace duplicateWorkspace =
-        defaultRequestBuilder(request.getWorkspaceId())
+        defaultRequestBuilder(request.getWorkspaceUuid())
             .description("slightly different workspace")
             .build();
     assertThrows(
@@ -232,8 +232,8 @@ class WorkspaceServiceTest extends BaseConnectedTest {
     workspaceService.createWorkspace(request, USER_REQUEST);
 
     Workspace createdWorkspace =
-        workspaceService.getWorkspace(request.getWorkspaceId(), USER_REQUEST);
-    assertEquals(request.getWorkspaceId(), createdWorkspace.getWorkspaceId());
+        workspaceService.getWorkspace(request.getWorkspaceUuid(), USER_REQUEST);
+    assertEquals(request.getWorkspaceUuid(), createdWorkspace.getWorkspaceUuid());
     assertEquals(spendProfileId, createdWorkspace.getSpendProfileId().orElse(null));
   }
 
@@ -246,7 +246,7 @@ class WorkspaceServiceTest extends BaseConnectedTest {
     workspaceService.createWorkspace(request, USER_REQUEST);
 
     Workspace createdWorkspace =
-        workspaceService.getWorkspace(request.getWorkspaceId(), USER_REQUEST);
+        workspaceService.getWorkspace(request.getWorkspaceUuid(), USER_REQUEST);
     assertEquals(
         request.getDescription().orElse(null), createdWorkspace.getDescription().orElse(null));
     assertEquals(name, createdWorkspace.getDisplayName().orElse(null));
@@ -261,12 +261,12 @@ class WorkspaceServiceTest extends BaseConnectedTest {
     Workspace request = defaultRequestBuilder(UUID.randomUUID()).properties(propertyMap).build();
     workspaceService.createWorkspace(request, USER_REQUEST);
     Workspace createdWorkspace =
-        workspaceService.getWorkspace(request.getWorkspaceId(), USER_REQUEST);
-    assertEquals(request.getWorkspaceId(), createdWorkspace.getWorkspaceId());
+        workspaceService.getWorkspace(request.getWorkspaceUuid(), USER_REQUEST);
+    assertEquals(request.getWorkspaceUuid(), createdWorkspace.getWorkspaceUuid());
     assertEquals("", createdWorkspace.getDisplayName().orElse(null));
     assertEquals("", createdWorkspace.getDescription().orElse(null));
 
-    UUID workspaceUuid = request.getWorkspaceId();
+    UUID workspaceUuid = request.getWorkspaceUuid();
     String name = "My workspace";
     String description = "The greatest workspace";
     Map<String, String> propertyMap2 = new HashMap<>();
@@ -322,10 +322,10 @@ class WorkspaceServiceTest extends BaseConnectedTest {
     Workspace request = defaultRequestBuilder(UUID.randomUUID()).build();
     workspaceService.createWorkspace(request, USER_REQUEST);
 
-    workspaceService.deleteWorkspace(request.getWorkspaceId(), USER_REQUEST);
+    workspaceService.deleteWorkspace(request.getWorkspaceUuid(), USER_REQUEST);
     assertThrows(
         WorkspaceNotFoundException.class,
-        () -> workspaceService.getWorkspace(request.getWorkspaceId(), USER_REQUEST));
+        () -> workspaceService.getWorkspace(request.getWorkspaceUuid(), USER_REQUEST));
   }
 
   @Test
@@ -338,7 +338,7 @@ class WorkspaceServiceTest extends BaseConnectedTest {
     jobService.setFlightDebugInfoForTest(debugInfo);
 
     UUID createdId = workspaceService.createWorkspace(request, USER_REQUEST);
-    assertEquals(createdId, request.getWorkspaceId());
+    assertEquals(createdId, request.getWorkspaceUuid());
   }
 
   @Test
@@ -357,7 +357,7 @@ class WorkspaceServiceTest extends BaseConnectedTest {
     jobService.setFlightDebugInfoForTest(debugInfo);
 
     UUID createdId = workspaceService.createWorkspace(request, USER_REQUEST);
-    assertEquals(createdId, request.getWorkspaceId());
+    assertEquals(createdId, request.getWorkspaceUuid());
   }
 
   @Test
@@ -379,7 +379,7 @@ class WorkspaceServiceTest extends BaseConnectedTest {
         () -> workspaceService.createWorkspace(request, USER_REQUEST));
     assertThrows(
         WorkspaceNotFoundException.class,
-        () -> workspaceService.getWorkspace(request.getWorkspaceId(), USER_REQUEST));
+        () -> workspaceService.getWorkspace(request.getWorkspaceUuid(), USER_REQUEST));
   }
 
   @Test
@@ -404,7 +404,7 @@ class WorkspaceServiceTest extends BaseConnectedTest {
 
     assertThrows(
         ForbiddenException.class,
-        () -> workspaceService.deleteWorkspace(request.getWorkspaceId(), USER_REQUEST));
+        () -> workspaceService.deleteWorkspace(request.getWorkspaceUuid(), USER_REQUEST));
   }
 
   @Test
@@ -431,7 +431,7 @@ class WorkspaceServiceTest extends BaseConnectedTest {
     referenceResourceService.getReferenceResource(workspaceUuid, resourceId, USER_REQUEST);
 
     // Delete the workspace.
-    workspaceService.deleteWorkspace(request.getWorkspaceId(), USER_REQUEST);
+    workspaceService.deleteWorkspace(request.getWorkspaceUuid(), USER_REQUEST);
 
     // Verify that the workspace was successfully deleted, even though it contained references
     assertThrows(
@@ -454,17 +454,17 @@ class WorkspaceServiceTest extends BaseConnectedTest {
     workspaceService.createWorkspace(request, USER_REQUEST);
     String jobId = UUID.randomUUID().toString();
     workspaceService.createGcpCloudContext(
-        request.getWorkspaceId(), jobId, USER_REQUEST, "/fake/value");
+        request.getWorkspaceUuid(), jobId, USER_REQUEST, "/fake/value");
     jobService.waitForJob(jobId);
     assertNull(jobService.retrieveJobResult(jobId, Object.class, USER_REQUEST).getException());
-    Workspace workspace = workspaceService.getWorkspace(request.getWorkspaceId(), USER_REQUEST);
+    Workspace workspace = workspaceService.getWorkspace(request.getWorkspaceUuid(), USER_REQUEST);
     String projectId =
-        workspaceService.getAuthorizedRequiredGcpProject(workspace.getWorkspaceId(), USER_REQUEST);
+        workspaceService.getAuthorizedRequiredGcpProject(workspace.getWorkspaceUuid(), USER_REQUEST);
 
     // Verify project exists by retrieving it.
     crl.getCloudResourceManagerCow().projects().get(projectId).execute();
 
-    workspaceService.deleteWorkspace(request.getWorkspaceId(), USER_REQUEST);
+    workspaceService.deleteWorkspace(request.getWorkspaceUuid(), USER_REQUEST);
 
     // Check that project is now being deleted.
     Project project = crl.getCloudResourceManagerCow().projects().get(projectId).execute();
@@ -483,14 +483,14 @@ class WorkspaceServiceTest extends BaseConnectedTest {
 
     String jobId = UUID.randomUUID().toString();
     workspaceService.createGcpCloudContext(
-        request.getWorkspaceId(), jobId, USER_REQUEST, "/fake/value");
+        request.getWorkspaceUuid(), jobId, USER_REQUEST, "/fake/value");
     jobService.waitForJob(jobId);
     assertNull(jobService.retrieveJobResult(jobId, Object.class, USER_REQUEST).getException());
     assertTrue(
-        testUtils.getAuthorizedGcpCloudContext(request.getWorkspaceId(), USER_REQUEST).isPresent());
-    workspaceService.deleteGcpCloudContext(request.getWorkspaceId(), USER_REQUEST);
+        testUtils.getAuthorizedGcpCloudContext(request.getWorkspaceUuid(), USER_REQUEST).isPresent());
+    workspaceService.deleteGcpCloudContext(request.getWorkspaceUuid(), USER_REQUEST);
     assertTrue(
-        testUtils.getAuthorizedGcpCloudContext(request.getWorkspaceId(), USER_REQUEST).isEmpty());
+        testUtils.getAuthorizedGcpCloudContext(request.getWorkspaceUuid(), USER_REQUEST).isEmpty());
   }
 
   @Test
@@ -515,7 +515,7 @@ class WorkspaceServiceTest extends BaseConnectedTest {
         StageDisabledException.class,
         () ->
             workspaceService.createGcpCloudContext(
-                request.getWorkspaceId(), jobId, USER_REQUEST, "/fake/value"));
+                request.getWorkspaceUuid(), jobId, USER_REQUEST, "/fake/value"));
   }
 
   @Test
@@ -527,12 +527,12 @@ class WorkspaceServiceTest extends BaseConnectedTest {
             .description("The original workspace.")
             .spendProfileId(new SpendProfileId(SPEND_PROFILE_ID))
             .build();
-    final UUID sourceWorkspaceId = workspaceService.createWorkspace(sourceWorkspace, USER_REQUEST);
+    final UUID sourceWorkspaceUuid = workspaceService.createWorkspace(sourceWorkspace, USER_REQUEST);
 
     // create a cloud context
     final String createCloudContextJobId = UUID.randomUUID().toString();
     workspaceService.createGcpCloudContext(
-        sourceWorkspaceId, createCloudContextJobId, USER_REQUEST);
+        sourceWorkspaceUuid, createCloudContextJobId, USER_REQUEST);
     jobService.waitForJob(createCloudContextJobId);
     assertNull(
         jobService
@@ -549,7 +549,7 @@ class WorkspaceServiceTest extends BaseConnectedTest {
                     .description("Just a plain bucket.")
                     .cloningInstructions(CloningInstructions.COPY_RESOURCE)
                     .resourceId(UUID.randomUUID())
-                    .workspaceUuid(sourceWorkspaceId)
+                    .workspaceUuid(sourceWorkspaceUuid)
                     .managedBy(ManagedByType.MANAGED_BY_USER)
                     .privateResourceState(PrivateResourceState.INITIALIZING)
                     .accessScope(AccessScopeType.ACCESS_SCOPE_PRIVATE)
@@ -587,13 +587,13 @@ class WorkspaceServiceTest extends BaseConnectedTest {
     final String destinationLocation = "us-east1";
     final String cloneJobId =
         workspaceService.cloneWorkspace(
-            sourceWorkspaceId, USER_REQUEST, destinationLocation, destinationWorkspace);
+            sourceWorkspaceUuid, USER_REQUEST, destinationLocation, destinationWorkspace);
     jobService.waitForJob(cloneJobId);
     final JobResultOrException<ApiClonedWorkspace> cloneResultOrException =
         jobService.retrieveJobResult(cloneJobId, ApiClonedWorkspace.class, USER_REQUEST);
     assertNull(cloneResultOrException.getException());
     final ApiClonedWorkspace cloneResult = cloneResultOrException.getResult();
-    assertEquals(destinationWorkspace.getWorkspaceId(), cloneResult.getDestinationWorkspaceId());
+    assertEquals(destinationWorkspace.getWorkspaceUuid(), cloneResult.getDestinationWorkspaceUuid());
     assertThat(cloneResult.getResources(), hasSize(1));
 
     final ApiResourceCloneDetails bucketCloneDetails = cloneResult.getResources().get(0);
@@ -604,7 +604,7 @@ class WorkspaceServiceTest extends BaseConnectedTest {
 
     // destination WS should exist
     final Workspace retrievedDestinationWorkspace =
-        workspaceService.getWorkspace(destinationWorkspace.getWorkspaceId(), USER_REQUEST);
+        workspaceService.getWorkspace(destinationWorkspace.getWorkspaceUuid(), USER_REQUEST);
     assertEquals(
         "Destination Workspace", retrievedDestinationWorkspace.getDisplayName().orElseThrow());
     assertEquals(
@@ -614,12 +614,12 @@ class WorkspaceServiceTest extends BaseConnectedTest {
     // Destination Workspace should have a GCP context
     assertNotNull(
         gcpCloudContextService
-            .getGcpCloudContext(destinationWorkspace.getWorkspaceId())
+            .getGcpCloudContext(destinationWorkspace.getWorkspaceUuid())
             .orElseThrow());
 
     // clean up
-    workspaceService.deleteWorkspace(sourceWorkspaceId, USER_REQUEST);
-    workspaceService.deleteWorkspace(destinationWorkspace.getWorkspaceId(), USER_REQUEST);
+    workspaceService.deleteWorkspace(sourceWorkspaceUuid, USER_REQUEST);
+    workspaceService.deleteWorkspace(destinationWorkspace.getWorkspaceUuid(), USER_REQUEST);
   }
 
   /**

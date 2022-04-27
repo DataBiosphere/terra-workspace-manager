@@ -187,7 +187,7 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
         controlledResourceService.cloneGcsBucket(
             workspaceUuid,
             resourceId,
-            body.getDestinationWorkspaceId(),
+            body.getDestinationWorkspaceUuid(),
             body.getJobControl(),
             petRequest,
             body.getName(),
@@ -416,7 +416,7 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
         controlledResourceService.cloneBigQueryDataset(
             workspaceUuid,
             resourceId,
-            body.getDestinationWorkspaceId(),
+            body.getDestinationWorkspaceUuid(),
             body.getJobControl(),
             petRequest,
             body.getName(),

@@ -129,7 +129,7 @@ public class ControlledAiNotebookInstanceResource extends ControlledResource {
         gcpRetryRule);
     flight.addStep(
         new GrantPetUsagePermissionStep(
-            getWorkspaceId(),
+            getWorkspaceUuid(),
             userRequest,
             flightBeanBag.getPetSaService(),
             flightBeanBag.getSamService()),
