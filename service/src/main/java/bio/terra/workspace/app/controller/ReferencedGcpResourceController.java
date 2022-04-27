@@ -91,7 +91,7 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
     // Construct a ReferenceGcsBucketResource object from the API input
     var resource =
         ReferencedGcsObjectResource.builder()
-            .workspaceUuid(workspaceUuid)
+            .workspaceId(workspaceUuid)
             .name(body.getMetadata().getName())
             .description(body.getMetadata().getDescription())
             .cloningInstructions(
@@ -171,12 +171,12 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
   // -- GCS Bucket -- //
   @Override
   public ResponseEntity<ApiGcpGcsBucketResource> createBucketReference(
-      UUID id, @Valid ApiCreateGcpGcsBucketReferenceRequestBody body) {
+      UUID workspaceUuid, @Valid ApiCreateGcpGcsBucketReferenceRequestBody body) {
 
     // Construct a ReferenceGcsBucketResource object from the API input
     var resource =
         ReferencedGcsBucketResource.builder()
-            .workspaceUuid(id)
+            .workspaceId(workspaceUuid)
             .name(body.getMetadata().getName())
             .description(body.getMetadata().getDescription())
             .cloningInstructions(
@@ -248,10 +248,10 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
   // -- BigQuery DataTable -- //
   @Override
   public ResponseEntity<ApiGcpBigQueryDataTableResource> createBigQueryDataTableReference(
-      UUID id, @Valid ApiCreateGcpBigQueryDataTableReferenceRequestBody body) {
+      UUID workspaceUuid, @Valid ApiCreateGcpBigQueryDataTableReferenceRequestBody body) {
     var resource =
         ReferencedBigQueryDataTableResource.builder()
-            .workspaceUuid(id)
+            .workspaceId(workspaceUuid)
             .name(body.getMetadata().getName())
             .description(body.getMetadata().getDescription())
             .cloningInstructions(
