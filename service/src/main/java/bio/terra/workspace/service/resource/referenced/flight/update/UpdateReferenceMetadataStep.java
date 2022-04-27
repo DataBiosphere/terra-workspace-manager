@@ -7,6 +7,7 @@ import bio.terra.stairway.StepResult;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.common.utils.FlightUtils;
 import bio.terra.workspace.db.ResourceDao;
+import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.referenced.cloud.gcp.ReferencedResource;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ResourceKeys;
 import java.util.UUID;
@@ -41,7 +42,8 @@ public class UpdateReferenceMetadataStep implements Step {
             resourceId,
             resourceName,
             resourceDescription,
-            referencedResource.attributesToJson());
+            referencedResource.attributesToJson(),
+            referencedResource.getCloningInstructions());
     FlightUtils.setResponse(flightContext, updated, HttpStatus.OK);
     return StepResult.getStepResultSuccess();
   }
@@ -54,9 +56,15 @@ public class UpdateReferenceMetadataStep implements Step {
         workingMap.get(ResourceKeys.PREVIOUS_RESOURCE_DESCRIPTION, String.class);
     final String previousAttributes =
         workingMap.get(ResourceKeys.PREVIOUS_ATTRIBUTES, String.class);
-
+    final var previousCloningInstructions =
+        workingMap.get(ResourceKeys.PREVIOUS_CLONING_INSTRUCTIONS, CloningInstructions.class);
     resourceDao.updateResource(
-        workspaceId, resourceId, previousName, previousDescription, previousAttributes);
+        workspaceId,
+        resourceId,
+        previousName,
+        previousDescription,
+        previousAttributes,
+        previousCloningInstructions);
     return StepResult.getStepResultSuccess();
   }
 }

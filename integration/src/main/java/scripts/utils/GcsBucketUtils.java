@@ -112,7 +112,8 @@ public class GcsBucketUtils {
                                   .live(true)
                                   .numNewerVersions(3)
                                   .addMatchesStorageClassItem(
-                                      GcpGcsBucketDefaultStorageClass.ARCHIVE))));
+                                      GcpGcsBucketDefaultStorageClass.ARCHIVE))))
+          .cloningInstructions(CloningInstructionsEnum.DEFINITION);
   public static final GcpGcsBucketUpdateParameters BUCKET_UPDATE_PARAMETERS_2 =
       new GcpGcsBucketUpdateParameters()
           .defaultStorageClass(GcpGcsBucketDefaultStorageClass.COLDLINE);

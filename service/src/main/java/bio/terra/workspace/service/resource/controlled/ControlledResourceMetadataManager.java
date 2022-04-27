@@ -7,6 +7,7 @@ import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.iam.model.SamConstants.SamControlledResourceActions;
 import bio.terra.workspace.service.resource.ResourceValidationUtils;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
+import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.model.WsmResource;
 import bio.terra.workspace.service.stage.StageService;
 import io.opencensus.contrib.spring.aop.Traced;
@@ -45,6 +46,7 @@ public class ControlledResourceMetadataManager {
       UUID resourceId,
       @Nullable String name,
       @Nullable String description,
+      @Nullable CloningInstructions cloningInstructions,
       AuthenticatedUserRequest userRequest) {
     stageService.assertMcWorkspace(workspaceId, "updateControlledResource");
     validateControlledResourceAndAction(
@@ -55,7 +57,8 @@ public class ControlledResourceMetadataManager {
     }
     // Description may also be null, but this validator accepts null descriptions.
     ResourceValidationUtils.validateResourceDescriptionName(description);
-    resourceDao.updateResource(workspaceId, resourceId, name, description);
+    resourceDao.updateResource(
+        workspaceId, resourceId, name, description, null, cloningInstructions);
   }
 
   /**
