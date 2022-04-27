@@ -182,11 +182,12 @@ public class WorkspaceService {
   public Workspace updateWorkspace(
       AuthenticatedUserRequest userRequest,
       UUID workspaceId,
+      @Nullable String userFacingId,
       @Nullable String name,
       @Nullable String description,
       @Nullable Map<String, String> properties) {
     validateWorkspaceAndAction(userRequest, workspaceId, SamConstants.SamWorkspaceAction.WRITE);
-    workspaceDao.updateWorkspace(workspaceId, name, description, properties);
+    workspaceDao.updateWorkspace(workspaceId, userFacingId, name, description, properties);
     return workspaceDao.getWorkspace(workspaceId);
   }
 

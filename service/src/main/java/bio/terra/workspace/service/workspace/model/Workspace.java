@@ -21,6 +21,7 @@ import org.apache.commons.lang3.builder.HashCodeBuilder;
 @JsonDeserialize(builder = Workspace.Builder.class)
 public class Workspace {
   private final UUID workspaceId;
+  private final String userFacingId;
   private final String displayName;
   private final String description;
   private final SpendProfileId spendProfileId;
@@ -29,12 +30,14 @@ public class Workspace {
 
   public Workspace(
       UUID workspaceId,
+      String userFacingId,
       String displayName,
       String description,
       SpendProfileId spendProfileId,
       Map<String, String> properties,
       WorkspaceStage workspaceStage) {
     this.workspaceId = workspaceId;
+    this.userFacingId = userFacingId;
     this.displayName = displayName;
     this.description = description;
     this.spendProfileId = spendProfileId;
@@ -45,6 +48,11 @@ public class Workspace {
   /** The globally unique identifier of this workspace */
   public UUID getWorkspaceId() {
     return workspaceId;
+  }
+
+  /** User facing id. Required in db, but optional in API requests (eg CreateWorkspaceRequestBody. */
+  public Optional<String> getUserFacingId() {
+    return Optional.ofNullable(userFacingId);
   }
 
   /** Optional display name for the workspace. */
@@ -88,6 +96,7 @@ public class Workspace {
 
     return new EqualsBuilder()
         .append(workspaceId, workspace.workspaceId)
+        .append(userFacingId, workspace.userFacingId)
         .append(displayName, workspace.displayName)
         .append(description, workspace.description)
         .append(spendProfileId, workspace.spendProfileId)
@@ -100,6 +109,7 @@ public class Workspace {
   public int hashCode() {
     return new HashCodeBuilder(17, 37)
         .append(workspaceId)
+        .append(userFacingId)
         .append(displayName)
         .append(description)
         .append(spendProfileId)
@@ -115,6 +125,7 @@ public class Workspace {
   @JsonPOJOBuilder(withPrefix = "")
   public static class Builder {
     private UUID workspaceId;
+    private String userFacingId;
     private String displayName;
     private String description;
     private SpendProfileId spendProfileId;
@@ -123,6 +134,11 @@ public class Workspace {
 
     public Builder workspaceId(UUID workspaceId) {
       this.workspaceId = workspaceId;
+      return this;
+    }
+
+    public Builder userFacingId(String userFacingId) {
+      this.userFacingId = userFacingId;
       return this;
     }
 
@@ -166,7 +182,7 @@ public class Workspace {
         throw new MissingRequiredFieldsException("Workspace requires id and stage");
       }
       return new Workspace(
-          workspaceId, displayName, description, spendProfileId, properties, workspaceStage);
+          workspaceId, userFacingId, displayName, description, spendProfileId, properties, workspaceStage);
     }
   }
 }

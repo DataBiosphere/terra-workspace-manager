@@ -128,6 +128,7 @@ public class GcpCloudContextUnitTest extends BaseUnitTest {
     var workspace =
         new Workspace(
             workspaceId,
+            "cloud-context-user-facing-id",
             "gcpCloudContextAutoUpgradeTest",
             "cloud context description",
             new SpendProfileId("spend-profile"),

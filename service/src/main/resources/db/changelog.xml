@@ -6,4 +6,5 @@
     <include file="changesets/20211130_private_resource_state.yaml" relativeToChangelogFile="true"/>
     <include file="changesets/20211201_cronjob_table.yaml" relativeToChangelogFile="true"/>
     <include file="changesets/20220131_resource_type.yaml" relativeToChangelogFile="true"/>
+    <include file="changesets/20220418_workspace_user_facing_id.yaml" relativeToChangelogFile="true"/>
 </databaseChangeLog>

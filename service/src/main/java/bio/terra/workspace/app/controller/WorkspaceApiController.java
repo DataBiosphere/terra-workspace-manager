@@ -108,13 +108,18 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
     Optional<SpendProfileId> spendProfileId =
         Optional.ofNullable(body.getSpendProfile()).map(SpendProfileId::new);
 
+    // ET uses userFacingId; CWB doesn't. Schema enforces that userFacingId must be set. CWB doesn't pass
+    // userFacingId in request, so use id. Prefix with "a" because userFacingId must start with letter.
+    String userFacingId = Optional.ofNullable(body.getUserFacingId()).orElse("a" + body.getId());
+
     Workspace workspace =
         Workspace.builder()
             .workspaceId(body.getId())
-            .spendProfileId(spendProfileId.orElse(null))
-            .workspaceStage(internalStage)
+            .userFacingId(userFacingId)
             .displayName(body.getDisplayName())
             .description(body.getDescription())
+            .spendProfileId(spendProfileId.orElse(null))
+            .workspaceStage(internalStage)
             .properties(propertyMapFromApi(body.getProperties()))
             .build();
     UUID createdId = workspaceService.createWorkspace(workspace, userRequest);
@@ -166,6 +171,7 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
         .stage(workspace.getWorkspaceStage().toApiModel())
         .gcpContext(gcpContext)
         .azureContext(azureContext)
+        .userFacingId(workspace.getUserFacingId().orElse(null))
         .displayName(workspace.getDisplayName().orElse(null))
         .description(workspace.getDescription().orElse(null))
         .properties(apiProperties);
@@ -197,7 +203,7 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
 
     Workspace workspace =
         workspaceService.updateWorkspace(
-            userRequest, workspaceId, body.getDisplayName(), body.getDescription(), propertyMap);
+            userRequest, workspaceId, body.getUserFacingId(), body.getDisplayName(), body.getDescription(), propertyMap);
 
     ApiWorkspaceDescription desc = buildWorkspaceDescription(workspace);
     logger.info("Updated workspace {} for {}", desc, userRequest.getEmail());
