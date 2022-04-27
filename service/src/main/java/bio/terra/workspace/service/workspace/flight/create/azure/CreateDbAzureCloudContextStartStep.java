@@ -23,7 +23,8 @@ public class CreateDbAzureCloudContextStartStep implements Step {
 
   @Override
   public StepResult doStep(FlightContext flightContext) throws InterruptedException {
-    azureCloudContextService.createAzureCloudContextStart(workspaceUuid, flightContext.getFlightId());
+    azureCloudContextService.createAzureCloudContextStart(
+        workspaceUuid, flightContext.getFlightId());
     return StepResult.getStepResultSuccess();
   }
 

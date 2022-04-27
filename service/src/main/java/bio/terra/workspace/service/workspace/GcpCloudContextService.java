@@ -88,7 +88,8 @@ public class GcpCloudContextService {
    * @param flightId flight id making the delete request
    */
   public void deleteGcpCloudContextWithCheck(UUID workspaceUuid, String flightId) {
-    workspaceDao.deleteCloudContextWithFlightIdValidation(workspaceUuid, CloudPlatform.GCP, flightId);
+    workspaceDao.deleteCloudContextWithFlightIdValidation(
+        workspaceUuid, CloudPlatform.GCP, flightId);
   }
 
   /**

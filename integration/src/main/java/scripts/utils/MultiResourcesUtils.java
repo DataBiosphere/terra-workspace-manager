@@ -53,11 +53,17 @@ public class MultiResourcesUtils {
     // Create a shared GCS bucket, a private GCS bucket, and a shared BQ dataset
     GcpGcsBucketResource sharedBucket =
         GcsBucketUtils.makeControlledGcsBucketUserShared(
-                controlledGcpResourceApi, workspaceUuid, makeName(), CloningInstructionsEnum.NOTHING)
+                controlledGcpResourceApi,
+                workspaceUuid,
+                makeName(),
+                CloningInstructionsEnum.NOTHING)
             .getGcpBucket();
     GcpGcsBucketResource privateBucket =
         GcsBucketUtils.makeControlledGcsBucketUserPrivate(
-                controlledGcpResourceApi, workspaceUuid, makeName(), CloningInstructionsEnum.NOTHING)
+                controlledGcpResourceApi,
+                workspaceUuid,
+                makeName(),
+                CloningInstructionsEnum.NOTHING)
             .getGcpBucket();
     GcpBigQueryDatasetResource sharedDataset =
         BqDatasetUtils.makeControlledBigQueryDatasetUserShared(

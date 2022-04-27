@@ -39,7 +39,7 @@ public class ControlledAzureDiskResource extends ControlledResource {
 
   @JsonCreator
   public ControlledAzureDiskResource(
-      @JsonProperty("workspaceUuid") UUID workspaceUuid,
+      @JsonProperty("workspaceId") UUID workspaceId,
       @JsonProperty("resourceId") UUID resourceId,
       @JsonProperty("name") String name,
       @JsonProperty("description") String description,
@@ -54,7 +54,7 @@ public class ControlledAzureDiskResource extends ControlledResource {
       @JsonProperty("size") int size) {
 
     super(
-        workspaceUuid,
+        workspaceId,
         resourceId,
         name,
         description,

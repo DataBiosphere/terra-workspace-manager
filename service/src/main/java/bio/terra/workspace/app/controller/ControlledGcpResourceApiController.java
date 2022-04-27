@@ -409,7 +409,9 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
 
   @Override
   public ResponseEntity<ApiCloneControlledGcpBigQueryDatasetResult> cloneBigQueryDataset(
-      UUID workspaceUuid, UUID resourceId, @Valid ApiCloneControlledGcpBigQueryDatasetRequest body) {
+      UUID workspaceUuid,
+      UUID resourceId,
+      @Valid ApiCloneControlledGcpBigQueryDatasetRequest body) {
     final AuthenticatedUserRequest petRequest = getPetRequest(workspaceUuid);
 
     final String jobId =

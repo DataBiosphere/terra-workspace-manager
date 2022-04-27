@@ -30,7 +30,7 @@ public class ReferencedGcsBucketResource extends ReferencedResource {
   /**
    * Constructor for serialized form for Stairway use and used by the builder
    *
-   * @param workspaceUuid workspace unique identifier
+   * @param workspaceId workspace unique identifier
    * @param resourceId resource unique identifier
    * @param name name - may be null
    * @param description description - may be null
@@ -39,13 +39,13 @@ public class ReferencedGcsBucketResource extends ReferencedResource {
    */
   @JsonCreator
   public ReferencedGcsBucketResource(
-      @JsonProperty("workspaceUuid") UUID workspaceUuid,
+      @JsonProperty("workspaceId") UUID workspaceId,
       @JsonProperty("resourceId") UUID resourceId,
       @JsonProperty("name") String name,
       @JsonProperty("description") String description,
       @JsonProperty("cloningInstructions") CloningInstructions cloningInstructions,
       @JsonProperty("bucketName") String bucketName) {
-    super(workspaceUuid, resourceId, name, description, cloningInstructions);
+    super(workspaceId, resourceId, name, description, cloningInstructions);
     this.bucketName = bucketName;
     validate();
   }
@@ -151,7 +151,7 @@ public class ReferencedGcsBucketResource extends ReferencedResource {
         .description(getDescription())
         .name(getName())
         .resourceId(getResourceId())
-        .workspaceUuid(getWorkspaceId());
+        .workspaceId(getWorkspaceId());
   }
 
   public static Builder builder() {
@@ -164,10 +164,10 @@ public class ReferencedGcsBucketResource extends ReferencedResource {
     private String description;
     private String name;
     private UUID resourceId;
-    private UUID workspaceUuid;
+    private UUID workspaceId;
 
-    public Builder workspaceUuid(UUID workspaceUuid) {
-      this.workspaceUuid = workspaceUuid;
+    public Builder workspaceId(UUID workspaceId) {
+      this.workspaceId = workspaceId;
       return this;
     }
 
@@ -199,7 +199,7 @@ public class ReferencedGcsBucketResource extends ReferencedResource {
     public ReferencedGcsBucketResource build() {
       // On the create path, we can omit the resourceId and have it filled in by the builder.
       return new ReferencedGcsBucketResource(
-          workspaceUuid,
+          workspaceId,
           Optional.ofNullable(resourceId).orElse(UUID.randomUUID()),
           name,
           description,

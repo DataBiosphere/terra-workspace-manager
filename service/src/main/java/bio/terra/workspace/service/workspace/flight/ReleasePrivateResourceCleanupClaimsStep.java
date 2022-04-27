@@ -38,7 +38,8 @@ public class ReleasePrivateResourceCleanupClaimsStep implements Step {
 
   @Override
   public StepResult doStep(FlightContext context) throws InterruptedException, RetryException {
-    resourceDao.releasePrivateResourceCleanupClaims(workspaceUuid, userEmail, context.getFlightId());
+    resourceDao.releasePrivateResourceCleanupClaims(
+        workspaceUuid, userEmail, context.getFlightId());
     return StepResult.getStepResultSuccess();
   }
 

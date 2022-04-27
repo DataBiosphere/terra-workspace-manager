@@ -18,7 +18,7 @@ public class WorkspaceUnitTest extends BaseUnitTest {
 
     assertThrows(
         MissingRequiredFieldsException.class,
-        () -> Workspace.builder().workspaceUuid(UUID.randomUUID()).build());
+        () -> Workspace.builder().workspaceId(UUID.randomUUID()).build());
 
     assertThrows(
         MissingRequiredFieldsException.class,

@@ -80,7 +80,8 @@ public class Alpha1ApiController implements Alpha1Api {
     ResourceValidationUtils.validateOptionalResourceName(name);
 
     // Make sure the caller has read access to the workspace
-    workspaceService.validateWorkspaceAndAction(userRequest, workspaceUuid, SamWorkspaceAction.READ);
+    workspaceService.validateWorkspaceAndAction(
+        userRequest, workspaceUuid, SamWorkspaceAction.READ);
 
     // Do the enumeration
     EnumeratedJobs enumeratedJobs =

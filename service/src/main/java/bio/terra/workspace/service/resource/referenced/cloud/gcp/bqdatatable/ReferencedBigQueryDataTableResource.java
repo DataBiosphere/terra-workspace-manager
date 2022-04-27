@@ -45,7 +45,7 @@ public class ReferencedBigQueryDataTableResource extends ReferencedResource {
    */
   @JsonCreator
   public ReferencedBigQueryDataTableResource(
-      @JsonProperty("workspaceUuid") UUID workspaceUuid,
+      @JsonProperty("workspaceId") UUID workspaceId,
       @JsonProperty("resourceId") UUID resourceId,
       @JsonProperty("name") String name,
       @JsonProperty("description") @Nullable String description,
@@ -53,7 +53,7 @@ public class ReferencedBigQueryDataTableResource extends ReferencedResource {
       @JsonProperty("projectId") String projectId,
       @JsonProperty("datasetId") String datasetId,
       @JsonProperty("dataTableId") String dataTableId) {
-    super(workspaceUuid, resourceId, name, description, cloningInstructions);
+    super(workspaceId, resourceId, name, description, cloningInstructions);
     this.projectId = projectId;
     this.datasetId = datasetId;
     this.dataTableId = dataTableId;
@@ -183,12 +183,12 @@ public class ReferencedBigQueryDataTableResource extends ReferencedResource {
         .name(getName())
         .projectId(getProjectId())
         .resourceId(getResourceId())
-        .workspaceUuid(getWorkspaceId());
+        .workspaceId(getWorkspaceId());
   }
 
   public static class Builder {
 
-    private UUID workspaceUuid;
+    private UUID workspaceId;
     private UUID resourceId;
     private String name;
     private String description;
@@ -197,8 +197,8 @@ public class ReferencedBigQueryDataTableResource extends ReferencedResource {
     private String datasetId;
     private String dataTableId;
 
-    public ReferencedBigQueryDataTableResource.Builder workspaceUuid(UUID workspaceUuid) {
-      this.workspaceUuid = workspaceUuid;
+    public ReferencedBigQueryDataTableResource.Builder workspaceId(UUID workspaceId) {
+      this.workspaceId = workspaceId;
       return this;
     }
 
@@ -241,7 +241,7 @@ public class ReferencedBigQueryDataTableResource extends ReferencedResource {
     public ReferencedBigQueryDataTableResource build() {
       // On the create path, we can omit the resourceId and have it filled in by the builder.
       return new ReferencedBigQueryDataTableResource(
-          workspaceUuid,
+          workspaceId,
           Optional.ofNullable(resourceId).orElse(UUID.randomUUID()),
           name,
           description,

@@ -110,7 +110,13 @@ public class MakeApiResourceDescriptionTest extends BaseUnitTest {
 
     var resource =
         new ReferencedDataRepoSnapshotResource(
-            workspaceUuid, resourceId, resourceName, description, cloning, instanceName, snapshotId);
+            workspaceUuid,
+            resourceId,
+            resourceName,
+            description,
+            cloning,
+            instanceName,
+            snapshotId);
 
     ApiResourceDescription resourceDescription =
         resourceController.makeApiResourceDescription(resource);

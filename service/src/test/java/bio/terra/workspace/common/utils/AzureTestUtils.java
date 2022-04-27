@@ -43,7 +43,7 @@ public class AzureTestUtils {
   public UUID createWorkspace(WorkspaceService workspaceService) {
     Workspace request =
         Workspace.builder()
-            .workspaceUuid(UUID.randomUUID())
+            .workspaceId(UUID.randomUUID())
             .workspaceStage(WorkspaceStage.MC_WORKSPACE)
             .build();
     return workspaceService.createWorkspace(request, userAccessUtils.defaultUserAuthRequest());

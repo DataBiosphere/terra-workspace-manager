@@ -42,7 +42,7 @@ public class AzureDisabledTest extends BaseConnectedTest {
   public void azureDisabledTest() throws InterruptedException {
     Workspace request =
         Workspace.builder()
-            .workspaceUuid(UUID.randomUUID())
+            .workspaceId(UUID.randomUUID())
             .workspaceStage(WorkspaceStage.MC_WORKSPACE)
             .build();
     UUID workspaceUuid =

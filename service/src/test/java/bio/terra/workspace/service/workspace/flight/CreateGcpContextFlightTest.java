@@ -255,7 +255,7 @@ class CreateGcpContextFlightTest extends BaseConnectedTest {
   private UUID createWorkspace(@Nullable SpendProfileId spendProfileId) {
     Workspace request =
         Workspace.builder()
-            .workspaceUuid(UUID.randomUUID())
+            .workspaceId(UUID.randomUUID())
             .workspaceStage(WorkspaceStage.MC_WORKSPACE)
             .spendProfileId(spendProfileId)
             .build();

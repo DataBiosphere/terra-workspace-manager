@@ -50,7 +50,8 @@ public class StoreGcpContextStep implements Step {
   @Override
   public StepResult undoStep(FlightContext flightContext) throws InterruptedException {
     // Delete the cloud context, but only if it is the one with our flight id
-    gcpCloudContextService.deleteGcpCloudContextWithCheck(workspaceUuid, flightContext.getFlightId());
+    gcpCloudContextService.deleteGcpCloudContextWithCheck(
+        workspaceUuid, flightContext.getFlightId());
     return StepResult.getStepResultSuccess();
   }
 }

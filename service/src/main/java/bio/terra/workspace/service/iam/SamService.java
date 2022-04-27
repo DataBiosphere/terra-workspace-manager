@@ -562,8 +562,8 @@ public class SamService {
    * permissions directly on other workspaces.
    */
   @Traced
-  public List<RoleBinding> listRoleBindings(UUID workspaceUuid, AuthenticatedUserRequest userRequest)
-      throws InterruptedException {
+  public List<RoleBinding> listRoleBindings(
+      UUID workspaceUuid, AuthenticatedUserRequest userRequest) throws InterruptedException {
     stageService.assertMcWorkspace(workspaceUuid, "listRoleBindings");
     checkAuthz(
         userRequest,
@@ -601,7 +601,8 @@ public class SamService {
     ResourcesApi resourcesApi = samResourcesApi(userRequest.getRequiredToken());
     try {
       return resourcesApi
-          .getPolicyV2(SamConstants.SamResource.WORKSPACE, workspaceUuid.toString(), role.toSamRole())
+          .getPolicyV2(
+              SamConstants.SamResource.WORKSPACE, workspaceUuid.toString(), role.toSamRole())
           .getMemberEmails();
     } catch (ApiException e) {
       throw SamExceptionFactory.create("Error retrieving workspace policy members from Sam", e);
@@ -685,7 +686,9 @@ public class SamService {
       return SamRetry.retry(
               () ->
                   googleApi.syncStatus(
-                      SamConstants.SamResource.WORKSPACE, workspaceUuid.toString(), role.toSamRole()))
+                      SamConstants.SamResource.WORKSPACE,
+                      workspaceUuid.toString(),
+                      role.toSamRole()))
           .getEmail();
     } catch (ApiException apiException) {
       throw SamExceptionFactory.create("Error getting sync policy in Sam", apiException);

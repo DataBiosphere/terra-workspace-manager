@@ -97,7 +97,7 @@ public class WorkspaceApplicationApiController implements WorkspaceApplicationAp
   private ApiWorkspaceApplicationDescription makeApiWorkspaceApplication(
       WsmWorkspaceApplication wsmApp) {
     return new ApiWorkspaceApplicationDescription()
-        .workspaceUuid(wsmApp.getWorkspaceId())
+        .workspaceId(wsmApp.getWorkspaceId())
         .applicationId(wsmApp.getApplication().getApplicationId())
         .displayName(wsmApp.getApplication().getDisplayName())
         .description(wsmApp.getApplication().getDescription())

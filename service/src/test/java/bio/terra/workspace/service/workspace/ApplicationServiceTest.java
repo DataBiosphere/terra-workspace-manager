@@ -119,7 +119,7 @@ public class ApplicationServiceTest extends BaseUnitTest {
     workspaceUuid = UUID.randomUUID();
     var request =
         Workspace.builder()
-            .workspaceUuid(workspaceUuid)
+            .workspaceId(workspaceUuid)
             .spendProfileId(null)
             .workspaceStage(WorkspaceStage.MC_WORKSPACE)
             .build();
@@ -129,7 +129,7 @@ public class ApplicationServiceTest extends BaseUnitTest {
     workspaceId2 = UUID.randomUUID();
     request =
         Workspace.builder()
-            .workspaceUuid(workspaceId2)
+            .workspaceId(workspaceId2)
             .spendProfileId(null)
             .workspaceStage(WorkspaceStage.MC_WORKSPACE)
             .build();

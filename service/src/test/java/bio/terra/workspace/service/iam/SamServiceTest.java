@@ -85,7 +85,10 @@ class SamServiceTest extends BaseConnectedTest {
         () -> workspaceService.getWorkspace(workspaceUuid, secondaryUserRequest()));
     // After being granted permission, secondary user can read the workspace.
     samService.grantWorkspaceRole(
-        workspaceUuid, defaultUserRequest(), WsmIamRole.READER, userAccessUtils.getSecondUserEmail());
+        workspaceUuid,
+        defaultUserRequest(),
+        WsmIamRole.READER,
+        userAccessUtils.getSecondUserEmail());
     Workspace readWorkspace = workspaceService.getWorkspace(workspaceUuid, secondaryUserRequest());
     assertEquals(workspaceUuid, readWorkspace.getWorkspaceId());
   }
@@ -104,7 +107,10 @@ class SamServiceTest extends BaseConnectedTest {
 
     // After being granted permission, secondary user can modify the workspace.
     samService.grantWorkspaceRole(
-        workspaceUuid, defaultUserRequest(), WsmIamRole.WRITER, userAccessUtils.getSecondUserEmail());
+        workspaceUuid,
+        defaultUserRequest(),
+        WsmIamRole.WRITER,
+        userAccessUtils.getSecondUserEmail());
 
     ReferencedResource ref =
         referenceResourceService.createReferenceResource(referenceResource, secondaryUserRequest());
@@ -121,12 +127,18 @@ class SamServiceTest extends BaseConnectedTest {
         () -> workspaceService.getWorkspace(workspaceUuid, secondaryUserRequest()));
     // After being granted permission, secondary user can read the workspace.
     samService.grantWorkspaceRole(
-        workspaceUuid, defaultUserRequest(), WsmIamRole.READER, userAccessUtils.getSecondUserEmail());
+        workspaceUuid,
+        defaultUserRequest(),
+        WsmIamRole.READER,
+        userAccessUtils.getSecondUserEmail());
     Workspace readWorkspace = workspaceService.getWorkspace(workspaceUuid, secondaryUserRequest());
     assertEquals(workspaceUuid, readWorkspace.getWorkspaceId());
     // After removing permission, secondary user can no longer read.
     samService.removeWorkspaceRole(
-        workspaceUuid, defaultUserRequest(), WsmIamRole.READER, userAccessUtils.getSecondUserEmail());
+        workspaceUuid,
+        defaultUserRequest(),
+        WsmIamRole.READER,
+        userAccessUtils.getSecondUserEmail());
     assertThrows(
         ForbiddenException.class,
         () -> workspaceService.getWorkspace(workspaceUuid, secondaryUserRequest()));
@@ -154,7 +166,7 @@ class SamServiceTest extends BaseConnectedTest {
 
     Workspace rawlsWorkspace =
         Workspace.builder()
-            .workspaceUuid(workspaceUuid)
+            .workspaceId(workspaceUuid)
             .workspaceStage(WorkspaceStage.RAWLS_WORKSPACE)
             .build();
     workspaceService.createWorkspace(rawlsWorkspace, defaultUserRequest());
@@ -185,7 +197,10 @@ class SamServiceTest extends BaseConnectedTest {
   @Test
   void listPermissionsIncludesAddedUsers() throws Exception {
     samService.grantWorkspaceRole(
-        workspaceUuid, defaultUserRequest(), WsmIamRole.READER, userAccessUtils.getSecondUserEmail());
+        workspaceUuid,
+        defaultUserRequest(),
+        WsmIamRole.READER,
+        userAccessUtils.getSecondUserEmail());
     List<RoleBinding> policyList = samService.listRoleBindings(workspaceUuid, defaultUserRequest());
 
     RoleBinding expectedOwnerBinding =
@@ -214,7 +229,10 @@ class SamServiceTest extends BaseConnectedTest {
   @Test
   void writerCannotListPermissions() throws Exception {
     samService.grantWorkspaceRole(
-        workspaceUuid, defaultUserRequest(), WsmIamRole.WRITER, userAccessUtils.getSecondUserEmail());
+        workspaceUuid,
+        defaultUserRequest(),
+        WsmIamRole.WRITER,
+        userAccessUtils.getSecondUserEmail());
     assertThrows(
         ForbiddenException.class,
         () -> samService.listRoleBindings(workspaceUuid, secondaryUserRequest()));
@@ -252,7 +270,10 @@ class SamServiceTest extends BaseConnectedTest {
   void workspaceReaderIsSharedResourceReader() throws Exception {
     // Default user is workspace owner, secondary user is workspace reader
     samService.grantWorkspaceRole(
-        workspaceUuid, defaultUserRequest(), WsmIamRole.READER, userAccessUtils.getSecondUserEmail());
+        workspaceUuid,
+        defaultUserRequest(),
+        WsmIamRole.READER,
+        userAccessUtils.getSecondUserEmail());
 
     ControlledResource bucketResource =
         ControlledResourceFixtures.makeDefaultControlledGcsBucketBuilder(workspaceUuid).build();
@@ -273,7 +294,10 @@ class SamServiceTest extends BaseConnectedTest {
   void workspaceReaderIsNotPrivateResourceReader() throws Exception {
     // Default user is workspace owner, secondary user is workspace reader
     samService.grantWorkspaceRole(
-        workspaceUuid, defaultUserRequest(), WsmIamRole.READER, userAccessUtils.getSecondUserEmail());
+        workspaceUuid,
+        defaultUserRequest(),
+        WsmIamRole.READER,
+        userAccessUtils.getSecondUserEmail());
 
     // Create private resource assigned to the default user.
     ControlledResourceFields commonFields =
@@ -363,7 +387,7 @@ class SamServiceTest extends BaseConnectedTest {
   private UUID createWorkspaceForUser(AuthenticatedUserRequest userRequest) {
     Workspace request =
         Workspace.builder()
-            .workspaceUuid(UUID.randomUUID())
+            .workspaceId(UUID.randomUUID())
             .workspaceStage(WorkspaceStage.MC_WORKSPACE)
             .build();
     return workspaceService.createWorkspace(request, userRequest);

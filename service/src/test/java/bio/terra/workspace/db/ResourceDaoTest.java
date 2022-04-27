@@ -41,7 +41,7 @@ public class ResourceDaoTest extends BaseUnitTest {
   private UUID createGcpWorkspace() {
     Workspace workspace =
         Workspace.builder()
-            .workspaceUuid(UUID.randomUUID())
+            .workspaceId(UUID.randomUUID())
             .workspaceStage(WorkspaceStage.MC_WORKSPACE)
             .build();
     workspaceDao.createWorkspace(workspace);
@@ -105,7 +105,8 @@ public class ResourceDaoTest extends BaseUnitTest {
         resourceDao.listControlledResources(workspaceUuid, CloudPlatform.GCP);
     List<ControlledResource> azureList =
         resourceDao.listControlledResources(workspaceUuid, CloudPlatform.AZURE);
-    List<ControlledResource> allCloudList = resourceDao.listControlledResources(workspaceUuid, null);
+    List<ControlledResource> allCloudList =
+        resourceDao.listControlledResources(workspaceUuid, null);
 
     assertTrue(azureList.isEmpty());
     assertThat(gcpList, containsInAnyOrder(bucket, dataset));

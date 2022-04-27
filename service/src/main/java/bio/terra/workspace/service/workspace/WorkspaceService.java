@@ -265,7 +265,8 @@ public class WorkspaceService {
     }
 
     Workspace workspace =
-        validateWorkspaceAndAction(userRequest, workspaceUuid, SamConstants.SamWorkspaceAction.WRITE);
+        validateWorkspaceAndAction(
+            userRequest, workspaceUuid, SamConstants.SamWorkspaceAction.WRITE);
     stageService.assertMcWorkspace(workspace, "createCloudContext");
 
     String workspaceName = workspace.getDisplayName().orElse("");
@@ -331,7 +332,8 @@ public class WorkspaceService {
   @Traced
   public void deleteGcpCloudContext(UUID workspaceUuid, AuthenticatedUserRequest userRequest) {
     Workspace workspace =
-        validateWorkspaceAndAction(userRequest, workspaceUuid, SamConstants.SamWorkspaceAction.WRITE);
+        validateWorkspaceAndAction(
+            userRequest, workspaceUuid, SamConstants.SamWorkspaceAction.WRITE);
     stageService.assertMcWorkspace(workspace, "deleteGcpCloudContext");
     String workspaceName = workspace.getDisplayName().orElse("");
     String jobDescription =

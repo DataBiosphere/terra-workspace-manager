@@ -19,7 +19,8 @@ public class RetrieveReferenceMetadataStep implements Step {
   private final UUID workspaceUuid;
   private final UUID resourceId;
 
-  public RetrieveReferenceMetadataStep(ResourceDao resourceDao, UUID workspaceUuid, UUID resourceId) {
+  public RetrieveReferenceMetadataStep(
+      ResourceDao resourceDao, UUID workspaceUuid, UUID resourceId) {
     this.resourceDao = resourceDao;
     this.workspaceUuid = workspaceUuid;
     this.resourceId = resourceId;

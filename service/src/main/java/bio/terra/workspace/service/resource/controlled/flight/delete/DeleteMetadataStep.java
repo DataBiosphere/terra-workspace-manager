@@ -35,7 +35,8 @@ public class DeleteMetadataStep implements Step {
 
   @Override
   public StepResult undoStep(FlightContext flightContext) throws InterruptedException {
-    logger.error("Cannot undo delete of WSM resource {} in workspace {}.", resourceId, workspaceUuid);
+    logger.error(
+        "Cannot undo delete of WSM resource {} in workspace {}.", resourceId, workspaceUuid);
     // Surface whatever error caused Stairway to begin undoing.
     return flightContext.getResult();
   }

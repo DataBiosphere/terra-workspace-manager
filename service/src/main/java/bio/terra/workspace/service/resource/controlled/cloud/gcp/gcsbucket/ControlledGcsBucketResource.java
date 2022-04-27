@@ -38,7 +38,7 @@ public class ControlledGcsBucketResource extends ControlledResource {
 
   @JsonCreator
   public ControlledGcsBucketResource(
-      @JsonProperty("workspaceUuid") UUID workspaceUuid,
+      @JsonProperty("workspaceId") UUID workspaceId,
       @JsonProperty("resourceId") UUID resourceId,
       @JsonProperty("name") String name,
       @JsonProperty("description") String description,
@@ -51,7 +51,7 @@ public class ControlledGcsBucketResource extends ControlledResource {
       @JsonProperty("bucketName") String bucketName) {
 
     super(
-        workspaceUuid,
+        workspaceId,
         resourceId,
         name,
         description,

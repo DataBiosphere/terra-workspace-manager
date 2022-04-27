@@ -63,7 +63,7 @@ public class RemoveUserFromWorkspaceFlightTest extends BaseConnectedTest {
     // Create a workspace as the default test user
     Workspace request =
         Workspace.builder()
-            .workspaceUuid(UUID.randomUUID())
+            .workspaceId(UUID.randomUUID())
             .workspaceStage(WorkspaceStage.MC_WORKSPACE)
             .spendProfileId(spendUtils.defaultSpendId())
             .build();

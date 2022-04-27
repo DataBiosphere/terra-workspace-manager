@@ -59,7 +59,7 @@ class DeleteGcpContextFlightTest extends BaseConnectedTest {
     // Create a new workspace at the start of each test.
     Workspace request =
         Workspace.builder()
-            .workspaceUuid(UUID.randomUUID())
+            .workspaceId(UUID.randomUUID())
             .workspaceStage(WorkspaceStage.MC_WORKSPACE)
             .spendProfileId(spendUtils.defaultSpendId())
             .build();
@@ -95,7 +95,8 @@ class DeleteGcpContextFlightTest extends BaseConnectedTest {
     assertNotNull(projectId);
 
     // validate that required project does not throw and gives the same answer
-    String projectId2 = workspaceService.getAuthorizedRequiredGcpProject(workspaceUuid, userRequest);
+    String projectId2 =
+        workspaceService.getAuthorizedRequiredGcpProject(workspaceUuid, userRequest);
     assertEquals(projectId, projectId2);
 
     Project project = crl.getCloudResourceManagerCow().projects().get(projectId).execute();

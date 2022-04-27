@@ -34,7 +34,8 @@ class CreateAzureContextFlightTest extends BaseAzureTest {
     AuthenticatedUserRequest userRequest = userAccessUtils.defaultUserAuthRequest();
 
     // There should be no cloud context initially.
-    assertTrue(workspaceService.getAuthorizedAzureCloudContext(workspaceUuid, userRequest).isEmpty());
+    assertTrue(
+        workspaceService.getAuthorizedAzureCloudContext(workspaceUuid, userRequest).isEmpty());
 
     String jobId = UUID.randomUUID().toString();
     workspaceService.createAzureCloudContext(
@@ -64,7 +65,8 @@ class CreateAzureContextFlightTest extends BaseAzureTest {
     AuthenticatedUserRequest userRequest = userAccessUtils.defaultUserAuthRequest();
 
     // There should be no cloud context initially.
-    assertTrue(workspaceService.getAuthorizedAzureCloudContext(workspaceUuid, userRequest).isEmpty());
+    assertTrue(
+        workspaceService.getAuthorizedAzureCloudContext(workspaceUuid, userRequest).isEmpty());
 
     // Submit a flight class that always errors.
     FlightDebugInfo debugInfo = FlightDebugInfo.newBuilder().lastStepFailure(true).build();
@@ -78,6 +80,7 @@ class CreateAzureContextFlightTest extends BaseAzureTest {
     assertEquals(FlightStatus.ERROR, flightState.getFlightStatus());
 
     // There should be no cloud context created.
-    assertTrue(workspaceService.getAuthorizedAzureCloudContext(workspaceUuid, userRequest).isEmpty());
+    assertTrue(
+        workspaceService.getAuthorizedAzureCloudContext(workspaceUuid, userRequest).isEmpty());
   }
 }

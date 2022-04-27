@@ -51,7 +51,8 @@ public class DeleteSamResourceStep implements Step {
   @Override
   public StepResult undoStep(FlightContext flightContext) throws InterruptedException {
     // No undo for delete. There is no way to put it back.
-    logger.error("Cannot undo delete of Sam resource {} in workspace {}.", resourceId, workspaceUuid);
+    logger.error(
+        "Cannot undo delete of Sam resource {} in workspace {}.", resourceId, workspaceUuid);
     // Surface whatever error caused Stairway to begin undoing.
     return flightContext.getResult();
   }

@@ -50,7 +50,7 @@ public class ControlledAiNotebookInstanceResource extends ControlledResource {
 
   @JsonCreator
   public ControlledAiNotebookInstanceResource(
-      @JsonProperty("workspaceUuid") UUID workspaceUuid,
+      @JsonProperty("workspaceId") UUID workspaceId,
       @JsonProperty("resourceId") UUID resourceId,
       @JsonProperty("name") String name,
       @JsonProperty("description") String description,
@@ -64,7 +64,7 @@ public class ControlledAiNotebookInstanceResource extends ControlledResource {
       @JsonProperty("location") String location,
       @JsonProperty("projectId") String projectId) {
     super(
-        workspaceUuid,
+        workspaceId,
         resourceId,
         name,
         description,

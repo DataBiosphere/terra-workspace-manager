@@ -633,7 +633,7 @@ class WorkspaceServiceTest extends BaseConnectedTest {
    */
   private Workspace.Builder defaultRequestBuilder(UUID workspaceUuid) {
     return Workspace.builder()
-        .workspaceUuid(workspaceUuid)
+        .workspaceId(workspaceUuid)
         .spendProfileId(null)
         .workspaceStage(WorkspaceStage.MC_WORKSPACE);
   }

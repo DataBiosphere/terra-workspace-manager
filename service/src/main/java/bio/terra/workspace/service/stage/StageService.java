@@ -35,8 +35,8 @@ public class StageService {
   }
 
   /**
-   * Given a workspaceUuid, read the workspace info from the database and then validate that it is an
-   * MC workspace.
+   * Given a workspaceUuid, read the workspace info from the database and then validate that it is
+   * an MC workspace.
    *
    * @param workspaceUuid workspace unique id
    * @param actionMessage message to include in the error

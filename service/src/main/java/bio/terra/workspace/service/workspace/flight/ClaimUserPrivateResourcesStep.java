@@ -70,7 +70,8 @@ public class ClaimUserPrivateResourcesStep implements Step {
     // This only releases resources claimed by the current flight, so it cannot overwrite claims
     // from
     // other flights.
-    resourceDao.releasePrivateResourceCleanupClaims(workspaceUuid, userEmail, context.getFlightId());
+    resourceDao.releasePrivateResourceCleanupClaims(
+        workspaceUuid, userEmail, context.getFlightId());
     return StepResult.getStepResultSuccess();
   }
 }

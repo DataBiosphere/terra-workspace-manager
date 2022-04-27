@@ -191,7 +191,7 @@ class JobServiceTest extends BaseUnitTest {
     UUID workspaceUuid = UUID.randomUUID();
     Workspace workspace =
         Workspace.builder()
-            .workspaceUuid(workspaceUuid)
+            .workspaceId(workspaceUuid)
             .workspaceStage(WorkspaceStage.MC_WORKSPACE)
             .description("Workspace for runFlight: " + description)
             .build();

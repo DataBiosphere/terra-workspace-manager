@@ -39,7 +39,8 @@ public class WorkspaceLifecycle extends WorkspaceApiTestScriptBase {
         new UpdateWorkspaceRequestBody()
             .displayName(workspaceName)
             .description(workspaceDescriptionString);
-    WorkspaceDescription updatedDescription = workspaceApi.updateWorkspace(updateBody, workspaceUuid);
+    WorkspaceDescription updatedDescription =
+        workspaceApi.updateWorkspace(updateBody, workspaceUuid);
     ClientTestUtils.assertHttpSuccess(workspaceApi, "PATCH workspace");
     assertThat(updatedDescription.getDisplayName(), equalTo(workspaceName));
     assertThat(updatedDescription.getDescription(), equalTo(workspaceDescriptionString));

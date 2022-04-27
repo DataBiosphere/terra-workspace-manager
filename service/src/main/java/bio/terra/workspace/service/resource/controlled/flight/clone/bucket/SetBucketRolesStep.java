@@ -130,7 +130,8 @@ public class SetBucketRolesStep implements Step {
         flightContext
             .getWorkingMap()
             .get(ControlledResourceKeys.DESTINATION_BUCKET_NAME, String.class);
-    return new BucketCloneInputs(workspaceUuid, projectId, bucketName, DESTINATION_BUCKET_ROLE_NAMES);
+    return new BucketCloneInputs(
+        workspaceUuid, projectId, bucketName, DESTINATION_BUCKET_ROLE_NAMES);
   }
 
   final String getStorageTransferServiceSAEmail(String controlPlaneProjectId) throws IOException {

@@ -66,7 +66,7 @@ class WorkspaceDaoTest extends BaseUnitTest {
   void verifyCreatedWorkspaceExists() {
     Workspace workspace =
         Workspace.builder()
-            .workspaceUuid(workspaceUuid)
+            .workspaceId(workspaceUuid)
             .spendProfileId(spendProfileId)
             .workspaceStage(WorkspaceStage.RAWLS_WORKSPACE)
             .build();
@@ -135,7 +135,7 @@ class WorkspaceDaoTest extends BaseUnitTest {
     workspaceDao.createWorkspace(firstWorkspace);
     Workspace secondWorkspace =
         Workspace.builder()
-            .workspaceUuid(UUID.randomUUID())
+            .workspaceId(UUID.randomUUID())
             .workspaceStage(WorkspaceStage.RAWLS_WORKSPACE)
             .build();
     workspaceDao.createWorkspace(secondWorkspace);
@@ -154,7 +154,7 @@ class WorkspaceDaoTest extends BaseUnitTest {
     workspaceDao.createWorkspace(firstWorkspace);
     Workspace secondWorkspace =
         Workspace.builder()
-            .workspaceUuid(UUID.randomUUID())
+            .workspaceId(UUID.randomUUID())
             .workspaceStage(WorkspaceStage.RAWLS_WORKSPACE)
             .build();
     workspaceDao.createWorkspace(secondWorkspace);
@@ -178,7 +178,7 @@ class WorkspaceDaoTest extends BaseUnitTest {
       mcWorkspaceId = UUID.randomUUID();
       mcWorkspace =
           Workspace.builder()
-              .workspaceUuid(mcWorkspaceId)
+              .workspaceId(mcWorkspaceId)
               .workspaceStage(WorkspaceStage.MC_WORKSPACE)
               .build();
       workspaceDao.createWorkspace(mcWorkspace);
@@ -269,7 +269,8 @@ class WorkspaceDaoTest extends BaseUnitTest {
       gcpCloudContextService.createGcpCloudContextFinish(workspaceUuid, gcpCloudContext, flightId);
 
       assertTrue(workspaceDao.deleteWorkspace(workspaceUuid));
-      assertThrows(WorkspaceNotFoundException.class, () -> workspaceDao.getWorkspace(workspaceUuid));
+      assertThrows(
+          WorkspaceNotFoundException.class, () -> workspaceDao.getWorkspace(workspaceUuid));
 
       assertTrue(gcpCloudContextService.getGcpCloudContext(workspaceUuid).isEmpty());
     }
@@ -283,7 +284,7 @@ class WorkspaceDaoTest extends BaseUnitTest {
 
   private Workspace defaultWorkspace() {
     return Workspace.builder()
-        .workspaceUuid(workspaceUuid)
+        .workspaceId(workspaceUuid)
         .workspaceStage(WorkspaceStage.RAWLS_WORKSPACE)
         .build();
   }

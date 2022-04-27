@@ -28,13 +28,13 @@ public class ReferencedGitRepoResource extends ReferencedResource {
 
   @JsonCreator
   public ReferencedGitRepoResource(
-      @JsonProperty("workspaceUuid") UUID workspaceUuid,
+      @JsonProperty("workspaceId") UUID workspaceId,
       @JsonProperty("resourceId") UUID resourceId,
       @JsonProperty("name") String name,
       @JsonProperty("description") @Nullable String description,
       @JsonProperty("cloningInstructions") CloningInstructions cloningInstructions,
       @JsonProperty("gitRepoUrl") String gitRepoUrl) {
-    super(workspaceUuid, resourceId, name, description, cloningInstructions);
+    super(workspaceId, resourceId, name, description, cloningInstructions);
     this.gitRepoUrl = gitRepoUrl;
     validate();
   }
@@ -132,7 +132,7 @@ public class ReferencedGitRepoResource extends ReferencedResource {
         .description(getDescription())
         .name(getName())
         .resourceId(getResourceId())
-        .workspaceUuid(getWorkspaceId());
+        .workspaceId(getWorkspaceId());
   }
 
   public static ReferencedGitRepoResource.Builder builder() {
@@ -146,10 +146,10 @@ public class ReferencedGitRepoResource extends ReferencedResource {
     private String description;
     private String name;
     private UUID resourceId;
-    private UUID workspaceUuid;
+    private UUID workspaceId;
 
-    public ReferencedGitRepoResource.Builder workspaceUuid(UUID workspaceUuid) {
-      this.workspaceUuid = workspaceUuid;
+    public ReferencedGitRepoResource.Builder workspaceId(UUID workspaceUuid) {
+      this.workspaceId = workspaceUuid;
       return this;
     }
 
@@ -182,7 +182,7 @@ public class ReferencedGitRepoResource extends ReferencedResource {
     public ReferencedGitRepoResource build() {
       // On the create path, we can omit the resourceId and have it filled in by the builder.
       return new ReferencedGitRepoResource(
-          workspaceUuid,
+          workspaceId,
           Optional.ofNullable(resourceId).orElse(UUID.randomUUID()),
           name,
           description,

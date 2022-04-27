@@ -127,7 +127,12 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
         originalResource.toBuilder().snapshotId(newSnapshotId).build();
 
     referenceResourceService.updateReferenceResource(
-        workspaceUuid, referenceResource.getResourceId(), null, null, updatedResource, USER_REQUEST);
+        workspaceUuid,
+        referenceResource.getResourceId(),
+        null,
+        null,
+        updatedResource,
+        USER_REQUEST);
 
     ReferencedDataRepoSnapshotResource result =
         referenceResourceService
@@ -161,7 +166,12 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
             .build();
 
     referenceResourceService.updateReferenceResource(
-        workspaceUuid, referenceResource.getResourceId(), null, null, updatedResource, USER_REQUEST);
+        workspaceUuid,
+        referenceResource.getResourceId(),
+        null,
+        null,
+        updatedResource,
+        USER_REQUEST);
 
     ReferencedDataRepoSnapshotResource result =
         referenceResourceService
@@ -185,7 +195,8 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
     referenceResourceService.updateReferenceResource(
         workspaceUuid, referenceResource.getResourceId(), updatedName, null, USER_REQUEST);
     referenceResource =
-        referenceResourceService.getReferenceResourceByName(workspaceUuid, updatedName, USER_REQUEST);
+        referenceResourceService.getReferenceResourceByName(
+            workspaceUuid, updatedName, USER_REQUEST);
     assertEquals(referenceResource.getName(), updatedName);
     assertEquals(referenceResource.getDescription(), originalDescription);
 
@@ -232,7 +243,7 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
   private UUID createMcTestWorkspace() {
     Workspace request =
         Workspace.builder()
-            .workspaceUuid(UUID.randomUUID())
+            .workspaceId(UUID.randomUUID())
             .spendProfileId(null)
             .workspaceStage(WorkspaceStage.MC_WORKSPACE)
             .build();
@@ -290,7 +301,8 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
       assertThrows(
           ResourceNotFoundException.class,
           () ->
-              referenceResourceService.getReferenceResource(workspaceUuid, resourceId, USER_REQUEST));
+              referenceResourceService.getReferenceResource(
+                  workspaceUuid, resourceId, USER_REQUEST));
     }
   }
 
@@ -773,7 +785,8 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
         // Fail to delete the resource the first time with the wrong resource type.
         ReferencedBigQueryDataTableResource resource =
             referenceResourceService
-                .getReferenceResource(workspaceUuid, referenceResource.getResourceId(), USER_REQUEST)
+                .getReferenceResource(
+                    workspaceUuid, referenceResource.getResourceId(), USER_REQUEST)
                 .castByEnum(WsmResourceType.REFERENCED_GCP_BIG_QUERY_DATA_TABLE);
         assertEquals(
             referenceResource.castByEnum(WsmResourceType.REFERENCED_GCP_BIG_QUERY_DATA_TABLE),

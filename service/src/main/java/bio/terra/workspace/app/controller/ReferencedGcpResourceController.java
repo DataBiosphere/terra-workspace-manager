@@ -330,10 +330,14 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
   }
 
   @Override
-  public ResponseEntity<Void> deleteBigQueryDataTableReference(UUID workspaceUuid, UUID resourceId) {
+  public ResponseEntity<Void> deleteBigQueryDataTableReference(
+      UUID workspaceUuid, UUID resourceId) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     referenceResourceService.deleteReferenceResourceForResourceType(
-        workspaceUuid, resourceId, userRequest, WsmResourceType.REFERENCED_GCP_BIG_QUERY_DATA_TABLE);
+        workspaceUuid,
+        resourceId,
+        userRequest,
+        WsmResourceType.REFERENCED_GCP_BIG_QUERY_DATA_TABLE);
     return new ResponseEntity<>(HttpStatus.NO_CONTENT);
   }
 
@@ -346,7 +350,7 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
     // Construct a ReferenceBigQueryResource object from the API input
     var resource =
         ReferencedBigQueryDatasetResource.builder()
-            .workspaceUuid(id)
+            .workspaceId(id)
             .name(body.getMetadata().getName())
             .description(body.getMetadata().getDescription())
             .cloningInstructions(
@@ -433,7 +437,7 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
 
     var resource =
         ReferencedDataRepoSnapshotResource.builder()
-            .workspaceUuid(id)
+            .workspaceId(id)
             .name(body.getMetadata().getName())
             .description(body.getMetadata().getDescription())
             .cloningInstructions(
@@ -739,7 +743,7 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
     validationUtils.validateGitRepoUri(body.getGitrepo().getGitRepoUrl());
     ReferencedGitRepoResource resource =
         ReferencedGitRepoResource.builder()
-            .workspaceUuid(workspaceUuid)
+            .workspaceId(workspaceUuid)
             .name(body.getMetadata().getName())
             .description(body.getMetadata().getDescription())
             .cloningInstructions(
@@ -755,7 +759,8 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
   }
 
   @Override
-  public ResponseEntity<ApiGitRepoResource> getGitRepoReference(UUID workspaceUuid, UUID resourceId) {
+  public ResponseEntity<ApiGitRepoResource> getGitRepoReference(
+      UUID workspaceUuid, UUID resourceId) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     ReferencedGitRepoResource referenceResource =
         referenceResourceService

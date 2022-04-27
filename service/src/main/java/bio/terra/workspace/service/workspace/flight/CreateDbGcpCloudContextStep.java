@@ -30,7 +30,8 @@ public class CreateDbGcpCloudContextStep implements Step {
   @Override
   public StepResult undoStep(FlightContext flightContext) throws InterruptedException {
     // Delete the cloud context, but only if it is the one we created
-    gcpCloudContextService.deleteGcpCloudContextWithCheck(workspaceUuid, flightContext.getFlightId());
+    gcpCloudContextService.deleteGcpCloudContextWithCheck(
+        workspaceUuid, flightContext.getFlightId());
     return StepResult.getStepResultSuccess();
   }
 }

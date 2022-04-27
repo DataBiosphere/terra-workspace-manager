@@ -41,7 +41,7 @@ public class StoreControlledResourceMetadataStepTest extends BaseUnitTest {
     Workspace workspace =
         Workspace.builder()
             .workspaceStage(WorkspaceStage.RAWLS_WORKSPACE)
-            .workspaceUuid(workspaceUuid)
+            .workspaceId(workspaceUuid)
             .build();
     workspaceDao.createWorkspace(workspace);
     gcpCloudContextService.createGcpCloudContext(

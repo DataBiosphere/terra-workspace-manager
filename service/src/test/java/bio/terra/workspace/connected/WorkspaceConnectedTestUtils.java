@@ -32,7 +32,7 @@ public class WorkspaceConnectedTestUtils {
     UUID workspaceUuid =
         workspaceService.createWorkspace(
             Workspace.builder()
-                .workspaceUuid(UUID.randomUUID())
+                .workspaceId(UUID.randomUUID())
                 .spendProfileId(spendUtils.defaultSpendId())
                 .workspaceStage(WorkspaceStage.MC_WORKSPACE)
                 .build(),

@@ -110,7 +110,7 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
 
     Workspace workspace =
         Workspace.builder()
-            .workspaceUuid(body.getId())
+            .workspaceId(body.getId())
             .spendProfileId(spendProfileId.orElse(null))
             .workspaceStage(internalStage)
             .displayName(body.getDisplayName())
@@ -369,7 +369,7 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
     // Construct the target workspace object from the inputs
     final Workspace destinationWorkspace =
         Workspace.builder()
-            .workspaceUuid(destinationWorkspaceId)
+            .workspaceId(destinationWorkspaceId)
             .spendProfileId(spendProfileId.orElse(null))
             .workspaceStage(WorkspaceStage.MC_WORKSPACE)
             .displayName(body.getDisplayName())

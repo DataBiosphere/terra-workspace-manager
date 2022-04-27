@@ -27,8 +27,8 @@ public abstract class WsmResource {
   /**
    * construct from individual fields
    *
-   * @param workspaceUuid unique identifier of the workspace where this resource lives (or is going to
-   *     live)
+   * @param workspaceUuid unique identifier of the workspace where this resource lives (or is going
+   *     to live)
    * @param resourceId unique identifier of the resource
    * @param name resource name; unique within a workspace
    * @param description free-form text description of the resource
@@ -151,7 +151,7 @@ public abstract class WsmResource {
    */
   public ApiResourceMetadata toApiMetadata() {
     return new ApiResourceMetadata()
-        .workspaceUuid(workspaceUuid)
+        .workspaceId(workspaceUuid)
         .resourceId(resourceId)
         .name(name)
         .description(description)
@@ -203,8 +203,9 @@ public abstract class WsmResource {
 
     WsmResource that = (WsmResource) o;
 
-    if (workspaceUuid != null ? !workspaceUuid.equals(that.workspaceUuid) : that.workspaceUuid != null)
-      return false;
+    if (workspaceUuid != null
+        ? !workspaceUuid.equals(that.workspaceUuid)
+        : that.workspaceUuid != null) return false;
     if (resourceId != null ? !resourceId.equals(that.resourceId) : that.resourceId != null)
       return false;
     if (name != null ? !name.equals(that.name) : that.name != null) return false;

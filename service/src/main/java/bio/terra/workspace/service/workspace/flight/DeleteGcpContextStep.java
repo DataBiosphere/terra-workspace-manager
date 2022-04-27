@@ -14,7 +14,8 @@ public class DeleteGcpContextStep implements Step {
   private final GcpCloudContextService gcpCloudContextService;
   private final UUID workspaceUuid;
 
-  protected DeleteGcpContextStep(GcpCloudContextService gcpCloudContextService, UUID workspaceUuid) {
+  protected DeleteGcpContextStep(
+      GcpCloudContextService gcpCloudContextService, UUID workspaceUuid) {
     this.gcpCloudContextService = gcpCloudContextService;
     this.workspaceUuid = workspaceUuid;
   }

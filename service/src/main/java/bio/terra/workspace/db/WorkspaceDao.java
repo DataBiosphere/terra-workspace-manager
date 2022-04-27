@@ -47,7 +47,7 @@ public class WorkspaceDao {
   private static final RowMapper<Workspace> WORKSPACE_ROW_MAPPER =
       (rs, rowNum) ->
           Workspace.builder()
-              .workspaceUuid(UUID.fromString(rs.getString("workspace_id")))
+              .workspaceId(UUID.fromString(rs.getString("workspace_id")))
               .displayName(rs.getString("display_name"))
               .description(rs.getString("description"))
               .spendProfileId(
@@ -260,7 +260,8 @@ public class WorkspaceDao {
     } catch (DuplicateKeyException e) {
       throw new DuplicateCloudContextException(
           String.format(
-              "Workspace with id %s already has context for %s cloud type", workspaceUuid, platform),
+              "Workspace with id %s already has context for %s cloud type",
+              workspaceUuid, platform),
           e);
     }
   }
@@ -287,7 +288,8 @@ public class WorkspaceDao {
     } catch (DuplicateKeyException e) {
       throw new DuplicateCloudContextException(
           String.format(
-              "Workspace with id %s already has context for %s cloud type", workspaceUuid, platform),
+              "Workspace with id %s already has context for %s cloud type",
+              workspaceUuid, platform),
           e);
     }
   }

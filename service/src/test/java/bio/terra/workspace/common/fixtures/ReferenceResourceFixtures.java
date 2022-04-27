@@ -5,7 +5,8 @@ import bio.terra.workspace.service.resource.referenced.cloud.gcp.datareposnapsho
 import java.util.UUID;
 
 public class ReferenceResourceFixtures {
-  public static ReferencedDataRepoSnapshotResource makeDataRepoSnapshotResource(UUID workspaceUuid) {
+  public static ReferencedDataRepoSnapshotResource makeDataRepoSnapshotResource(
+      UUID workspaceUuid) {
     UUID resourceId = UUID.randomUUID();
     String resourceName = "testdatarepo-" + resourceId.toString();
 
