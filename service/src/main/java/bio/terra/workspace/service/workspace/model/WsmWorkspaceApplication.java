@@ -6,15 +6,15 @@ import java.util.UUID;
 public class WsmWorkspaceApplication {
   WsmApplication application;
   // workspace and whether the application is enabled
-  private UUID workspaceId;
+  private UUID workspaceUuid;
   private boolean enabled;
 
   public UUID getWorkspaceId() {
-    return workspaceId;
+    return workspaceUuid;
   }
 
-  public WsmWorkspaceApplication workspaceId(UUID workspaceId) {
-    this.workspaceId = workspaceId;
+  public WsmWorkspaceApplication workspaceUuid(UUID workspaceUuid) {
+    this.workspaceUuid = workspaceUuid;
     return this;
   }
 

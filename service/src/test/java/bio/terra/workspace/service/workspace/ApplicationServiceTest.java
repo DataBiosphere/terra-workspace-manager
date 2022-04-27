@@ -90,7 +90,7 @@ public class ApplicationServiceTest extends BaseUnitTest {
   /** Mock SamService does nothing for all calls that would throw if unauthorized. */
   @MockBean private SamService mockSamService;
 
-  private UUID workspaceId;
+  private UUID workspaceUuid;
   private UUID workspaceId2;
 
   @BeforeEach
@@ -116,10 +116,10 @@ public class ApplicationServiceTest extends BaseUnitTest {
     appService.processApp(NORM_APP, dbAppMap);
 
     // Create two workspaces
-    workspaceId = UUID.randomUUID();
+    workspaceUuid = UUID.randomUUID();
     var request =
         Workspace.builder()
-            .workspaceId(workspaceId)
+            .workspaceUuid(workspaceUuid)
             .spendProfileId(null)
             .workspaceStage(WorkspaceStage.MC_WORKSPACE)
             .build();
@@ -129,7 +129,7 @@ public class ApplicationServiceTest extends BaseUnitTest {
     workspaceId2 = UUID.randomUUID();
     request =
         Workspace.builder()
-            .workspaceId(workspaceId2)
+            .workspaceUuid(workspaceId2)
             .spendProfileId(null)
             .workspaceStage(WorkspaceStage.MC_WORKSPACE)
             .build();
@@ -142,35 +142,35 @@ public class ApplicationServiceTest extends BaseUnitTest {
     enumerateCheck(false, false, false);
 
     // enable leo - should work
-    appService.enableWorkspaceApplication(USER_REQUEST, workspaceId, LEO_ID);
+    appService.enableWorkspaceApplication(USER_REQUEST, workspaceUuid, LEO_ID);
 
     // enable carmen - should fail - deprecated
     assertThrows(
         InvalidApplicationStateException.class,
-        () -> appService.enableWorkspaceApplication(USER_REQUEST, workspaceId, CARMEN_ID));
+        () -> appService.enableWorkspaceApplication(USER_REQUEST, workspaceUuid, CARMEN_ID));
 
     // enable norm - should fail - decommissioned
     assertThrows(
         InvalidApplicationStateException.class,
-        () -> appService.enableWorkspaceApplication(USER_REQUEST, workspaceId, NORM_ID));
+        () -> appService.enableWorkspaceApplication(USER_REQUEST, workspaceUuid, NORM_ID));
 
     enumerateCheck(true, false, false);
 
     // Use the DAO directly and skip the check to enable carmen so we can check that state.
-    appDao.enableWorkspaceApplicationNoCheck(workspaceId, CARMEN_ID);
+    appDao.enableWorkspaceApplicationNoCheck(workspaceUuid, CARMEN_ID);
     enumerateCheck(true, true, false);
 
     // test the argument checking
     assertThrows(
         ApplicationNotFoundException.class,
-        () -> appService.enableWorkspaceApplication(USER_REQUEST, workspaceId, UNKNOWN_ID));
+        () -> appService.enableWorkspaceApplication(USER_REQUEST, workspaceUuid, UNKNOWN_ID));
     assertThrows(
         WorkspaceNotFoundException.class,
         () -> appService.enableWorkspaceApplication(USER_REQUEST, UUID.randomUUID(), LEO_ID));
 
     // explicit get
     WsmWorkspaceApplication wsmApp =
-        appService.getWorkspaceApplication(USER_REQUEST, workspaceId, LEO_ID);
+        appService.getWorkspaceApplication(USER_REQUEST, workspaceUuid, LEO_ID);
     assertEquals(LEO_APP, wsmApp.getApplication());
     assertTrue(wsmApp.isEnabled());
 
@@ -183,10 +183,10 @@ public class ApplicationServiceTest extends BaseUnitTest {
     appService.enableWorkspaceApplication(USER_REQUEST, workspaceId2, LEO_ID);
 
     // do the disables...
-    appService.disableWorkspaceApplication(USER_REQUEST, workspaceId, LEO_ID);
+    appService.disableWorkspaceApplication(USER_REQUEST, workspaceUuid, LEO_ID);
     enumerateCheck(false, true, false);
 
-    appService.disableWorkspaceApplication(USER_REQUEST, workspaceId, CARMEN_ID);
+    appService.disableWorkspaceApplication(USER_REQUEST, workspaceUuid, CARMEN_ID);
     enumerateCheck(false, false, false);
 
     // make sure Leo is still enabled in workspace2
@@ -197,7 +197,7 @@ public class ApplicationServiceTest extends BaseUnitTest {
 
   private void enumerateCheck(boolean leoEnabled, boolean carmenEnabled, boolean normEnabled) {
     List<WsmWorkspaceApplication> wsmAppList =
-        appService.listWorkspaceApplications(USER_REQUEST, workspaceId, 0, 10);
+        appService.listWorkspaceApplications(USER_REQUEST, workspaceUuid, 0, 10);
     // There may be stray applications in the DB, so we make sure that we at least have ours
     assertThat(wsmAppList.size(), greaterThanOrEqualTo(3));
     for (WsmWorkspaceApplication wsmApp : wsmAppList) {

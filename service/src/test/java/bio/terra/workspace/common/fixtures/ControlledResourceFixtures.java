@@ -382,7 +382,7 @@ public class ControlledResourceFixtures {
   /** Returns a {@link ControlledResourceFields.Builder} with the fields filled in */
   public static ControlledResourceFields.Builder makeDefaultControlledResourceFieldsBuilder() {
     return ControlledResourceFields.builder()
-        .workspaceId(UUID.randomUUID())
+        .workspaceUuid(UUID.randomUUID())
         .resourceId(UUID.randomUUID())
         .name(uniqueName("test_resource").replace("-", "_"))
         .description("how much data could a dataset set if a dataset could set data?")
@@ -400,16 +400,16 @@ public class ControlledResourceFixtures {
       @Nullable UUID inWorkspaceId) {
     ControlledResourceFields.Builder builder = makeDefaultControlledResourceFieldsBuilder();
     if (inWorkspaceId != null) {
-      builder.workspaceId(inWorkspaceId);
+      builder.workspaceUuid(inWorkspaceId);
     }
     return builder.build();
   }
 
   /** Returns a {@link ControlledGcsBucketResource.Builder} that is ready to be built. */
   public static ControlledGcsBucketResource.Builder makeDefaultControlledGcsBucketBuilder(
-      @Nullable UUID workspaceId) {
+      @Nullable UUID workspaceUuid) {
     return new ControlledGcsBucketResource.Builder()
-        .common(makeDefaultControlledResourceFields(workspaceId))
+        .common(makeDefaultControlledResourceFields(workspaceUuid))
         .bucketName(uniqueBucketName());
   }
 
@@ -419,9 +419,9 @@ public class ControlledResourceFixtures {
    * @return resource builder
    */
   public static ControlledBigQueryDatasetResource.Builder makeDefaultControlledBigQueryBuilder(
-      @Nullable UUID workspaceId) {
+      @Nullable UUID workspaceUuid) {
     return new Builder()
-        .common(makeDefaultControlledResourceFields(workspaceId))
+        .common(makeDefaultControlledResourceFields(workspaceUuid))
         .projectId("my_project")
         .datasetName(uniqueDatasetId());
   }
@@ -456,7 +456,7 @@ public class ControlledResourceFixtures {
    */
   public static ControlledResourceFields.Builder makeNotebookCommonFieldsBuilder() {
     return ControlledResourceFields.builder()
-        .workspaceId(UUID.randomUUID())
+        .workspaceUuid(UUID.randomUUID())
         .resourceId(UUID.randomUUID())
         .name("my-notebook")
         .description("my notebook description")

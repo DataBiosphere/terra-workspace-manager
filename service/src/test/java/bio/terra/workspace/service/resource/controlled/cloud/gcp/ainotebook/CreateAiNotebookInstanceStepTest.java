@@ -113,7 +113,7 @@ public class CreateAiNotebookInstanceStepTest extends BaseUnitTest {
                     // "proxy-mode" is a reserved metadata key.
                     .metadata(Map.of("proxy-mode", "mail")),
                 "foo@bar.com",
-                "workspaceId",
+                "workspaceUuid",
                 "server-id",
                 new Instance()));
   }

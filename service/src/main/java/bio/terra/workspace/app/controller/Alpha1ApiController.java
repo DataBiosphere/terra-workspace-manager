@@ -64,7 +64,7 @@ public class Alpha1ApiController implements Alpha1Api {
 
   @Override
   public ResponseEntity<ApiEnumerateJobsResult> enumerateJobs(
-      UUID workspaceId,
+      UUID workspaceUuid,
       Integer limit,
       String pageToken,
       ApiResourceType resource,
@@ -80,12 +80,12 @@ public class Alpha1ApiController implements Alpha1Api {
     ResourceValidationUtils.validateOptionalResourceName(name);
 
     // Make sure the caller has read access to the workspace
-    workspaceService.validateWorkspaceAndAction(userRequest, workspaceId, SamWorkspaceAction.READ);
+    workspaceService.validateWorkspaceAndAction(userRequest, workspaceUuid, SamWorkspaceAction.READ);
 
     // Do the enumeration
     EnumeratedJobs enumeratedJobs =
         alpha1Service.enumerateJobs(
-            workspaceId,
+            workspaceUuid,
             userRequest,
             limit,
             pageToken,

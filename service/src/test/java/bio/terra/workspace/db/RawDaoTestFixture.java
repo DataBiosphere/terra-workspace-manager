@@ -24,7 +24,7 @@ public class RawDaoTestFixture {
   // Write a resource into the database from bare parts
   @WriteTransaction
   public void storeResource(
-      String workspaceId,
+      String workspaceUuid,
       String cloudPlatform,
       String resourceId,
       String name,
@@ -49,7 +49,7 @@ public class RawDaoTestFixture {
 
     final var params =
         new MapSqlParameterSource()
-            .addValue("workspace_id", workspaceId)
+            .addValue("workspace_id", workspaceUuid)
             .addValue("cloud_platform", cloudPlatform)
             .addValue("resource_id", resourceId)
             .addValue("name", name)
@@ -67,7 +67,7 @@ public class RawDaoTestFixture {
 
     try {
       jdbcTemplate.update(sql, params);
-      logger.info("Inserted record for resource {} for workspace {}", resourceId, workspaceId);
+      logger.info("Inserted record for resource {} for workspace {}", resourceId, workspaceUuid);
     } catch (DuplicateKeyException e) {
       throw new DuplicateResourceException(
           String.format(

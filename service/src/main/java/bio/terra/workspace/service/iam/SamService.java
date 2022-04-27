@@ -385,7 +385,7 @@ public class SamService {
    * <p>This operation is only available to MC_WORKSPACE stage workspaces, as Rawls manages
    * permissions directly on other workspaces.
    *
-   * @param workspaceId The workspace this operation takes place in
+   * @param workspaceUuid The workspace this operation takes place in
    * @param userRequest Credentials of the user requesting this operation. Only owners have
    *     permission to modify roles in a workspace.
    * @param role The role being granted.
@@ -393,13 +393,13 @@ public class SamService {
    */
   @Traced
   public void grantWorkspaceRole(
-      UUID workspaceId, AuthenticatedUserRequest userRequest, WsmIamRole role, String email)
+      UUID workspaceUuid, AuthenticatedUserRequest userRequest, WsmIamRole role, String email)
       throws InterruptedException {
-    stageService.assertMcWorkspace(workspaceId, "grantWorkspaceRole");
+    stageService.assertMcWorkspace(workspaceUuid, "grantWorkspaceRole");
     checkAuthz(
         userRequest,
         SamConstants.SamResource.WORKSPACE,
-        workspaceId.toString(),
+        workspaceUuid.toString(),
         samActionToModifyRole(role));
     ResourcesApi resourceApi = samResourcesApi(userRequest.getRequiredToken());
     try {
@@ -408,11 +408,11 @@ public class SamService {
           () ->
               resourceApi.addUserToPolicy(
                   SamConstants.SamResource.WORKSPACE,
-                  workspaceId.toString(),
+                  workspaceUuid.toString(),
                   role.toSamRole(),
                   email.toLowerCase()));
       logger.info(
-          "Granted role {} to user {} in workspace {}", role.toSamRole(), email, workspaceId);
+          "Granted role {} to user {} in workspace {}", role.toSamRole(), email, workspaceUuid);
     } catch (ApiException apiException) {
       throw SamExceptionFactory.create("Error granting workspace role in Sam", apiException);
     }
@@ -427,13 +427,13 @@ public class SamService {
    */
   @Traced
   public void removeWorkspaceRole(
-      UUID workspaceId, AuthenticatedUserRequest userRequest, WsmIamRole role, String email)
+      UUID workspaceUuid, AuthenticatedUserRequest userRequest, WsmIamRole role, String email)
       throws InterruptedException {
-    stageService.assertMcWorkspace(workspaceId, "removeWorkspaceRole");
+    stageService.assertMcWorkspace(workspaceUuid, "removeWorkspaceRole");
     checkAuthz(
         userRequest,
         SamConstants.SamResource.WORKSPACE,
-        workspaceId.toString(),
+        workspaceUuid.toString(),
         samActionToModifyRole(role));
 
     ResourcesApi resourceApi = samResourcesApi(userRequest.getRequiredToken());
@@ -442,11 +442,11 @@ public class SamService {
           () ->
               resourceApi.removeUserFromPolicy(
                   SamConstants.SamResource.WORKSPACE,
-                  workspaceId.toString(),
+                  workspaceUuid.toString(),
                   role.toSamRole(),
                   email.toLowerCase()));
       logger.info(
-          "Removed role {} from user {} in workspace {}", role.toSamRole(), email, workspaceId);
+          "Removed role {} from user {} in workspace {}", role.toSamRole(), email, workspaceUuid);
     } catch (ApiException apiException) {
       throw SamExceptionFactory.create("Error removing workspace role in Sam", apiException);
     }
@@ -562,13 +562,13 @@ public class SamService {
    * permissions directly on other workspaces.
    */
   @Traced
-  public List<RoleBinding> listRoleBindings(UUID workspaceId, AuthenticatedUserRequest userRequest)
+  public List<RoleBinding> listRoleBindings(UUID workspaceUuid, AuthenticatedUserRequest userRequest)
       throws InterruptedException {
-    stageService.assertMcWorkspace(workspaceId, "listRoleBindings");
+    stageService.assertMcWorkspace(workspaceUuid, "listRoleBindings");
     checkAuthz(
         userRequest,
         SamConstants.SamResource.WORKSPACE,
-        workspaceId.toString(),
+        workspaceUuid.toString(),
         SamWorkspaceAction.READ_IAM);
 
     ResourcesApi resourceApi = samResourcesApi(userRequest.getRequiredToken());
@@ -577,7 +577,7 @@ public class SamService {
           SamRetry.retry(
               () ->
                   resourceApi.listResourcePolicies(
-                      SamConstants.SamResource.WORKSPACE, workspaceId.toString()));
+                      SamConstants.SamResource.WORKSPACE, workspaceUuid.toString()));
       // Don't include WSM's SA as a manager. This is true for all workspaces and not useful to
       // callers.
       return samResult.stream()
@@ -597,11 +597,11 @@ public class SamService {
   /** Wrapper around Sam client to fetch the list of users with a specific role in a workspace. */
   @Traced
   public List<String> listUsersWithWorkspaceRole(
-      UUID workspaceId, WsmIamRole role, AuthenticatedUserRequest userRequest) {
+      UUID workspaceUuid, WsmIamRole role, AuthenticatedUserRequest userRequest) {
     ResourcesApi resourcesApi = samResourcesApi(userRequest.getRequiredToken());
     try {
       return resourcesApi
-          .getPolicyV2(SamConstants.SamResource.WORKSPACE, workspaceId.toString(), role.toSamRole())
+          .getPolicyV2(SamConstants.SamResource.WORKSPACE, workspaceUuid.toString(), role.toSamRole())
           .getMemberEmails();
     } catch (ApiException e) {
       throw SamExceptionFactory.create("Error retrieving workspace policy members from Sam", e);
@@ -629,14 +629,14 @@ public class SamService {
 
   @Traced
   public boolean isApplicationEnabledInSam(
-      UUID workspaceId, String email, AuthenticatedUserRequest userRequest) {
+      UUID workspaceUuid, String email, AuthenticatedUserRequest userRequest) {
     // We detect that an application is enabled in Sam by checking if the application has
     // the create-controlled-application-private action on the workspace.
     try {
       ResourcesApi resourcesApi = samResourcesApi(userRequest.getRequiredToken());
       return resourcesApi.resourceActionV2(
           SamConstants.SamResource.WORKSPACE,
-          workspaceId.toString(),
+          workspaceUuid.toString(),
           SamConstants.SamWorkspaceAction.CREATE_CONTROLLED_USER_PRIVATE,
           email);
     } catch (ApiException apiException) {
@@ -651,19 +651,19 @@ public class SamService {
    */
   @Traced
   public String syncWorkspacePolicy(
-      UUID workspaceId, WsmIamRole role, AuthenticatedUserRequest userRequest)
+      UUID workspaceUuid, WsmIamRole role, AuthenticatedUserRequest userRequest)
       throws InterruptedException {
     String group =
         syncPolicyOnObject(
             SamConstants.SamResource.WORKSPACE,
-            workspaceId.toString(),
+            workspaceUuid.toString(),
             role.toSamRole(),
             userRequest);
     logger.info(
         "Synced workspace role {} to google group {} in workspace {}",
         role.toSamRole(),
         group,
-        workspaceId);
+        workspaceUuid);
     return group;
   }
 
@@ -671,21 +671,21 @@ public class SamService {
    * Retrieve the email of a sync'd workspace policy. This is used during controlled resource
    * create.
    *
-   * @param workspaceId workspace to use
+   * @param workspaceUuid workspace to use
    * @param role workspace role to lookup
    * @param userRequest
    * @return email of the sync'd policy group
    * @throws InterruptedException on shutdown during retry wait
    */
   public String getWorkspacePolicy(
-      UUID workspaceId, WsmIamRole role, AuthenticatedUserRequest userRequest)
+      UUID workspaceUuid, WsmIamRole role, AuthenticatedUserRequest userRequest)
       throws InterruptedException {
     GoogleApi googleApi = samGoogleApi(userRequest.getRequiredToken());
     try {
       return SamRetry.retry(
               () ->
                   googleApi.syncStatus(
-                      SamConstants.SamResource.WORKSPACE, workspaceId.toString(), role.toSamRole()))
+                      SamConstants.SamResource.WORKSPACE, workspaceUuid.toString(), role.toSamRole()))
           .getEmail();
     } catch (ApiException apiException) {
       throw SamExceptionFactory.create("Error getting sync policy in Sam", apiException);

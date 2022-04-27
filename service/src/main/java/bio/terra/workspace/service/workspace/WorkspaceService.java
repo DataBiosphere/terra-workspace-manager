@@ -85,9 +85,9 @@ public class WorkspaceService {
   @Traced
   public UUID createWorkspace(Workspace workspace, AuthenticatedUserRequest userRequest) {
     String workspaceName = workspace.getDisplayName().orElse("");
-    String workspaceId = workspace.getWorkspaceId().toString();
+    String workspaceUuid = workspace.getWorkspaceId().toString();
     String jobDescription =
-        String.format("Create workspace: name: '%s' id: '%s'  ", workspaceName, workspaceId);
+        String.format("Create workspace: name: '%s' id: '%s'  ", workspaceName, workspaceUuid);
 
     JobBuilder createJob =
         jobService
@@ -96,7 +96,7 @@ public class WorkspaceService {
             .flightClass(WorkspaceCreateFlight.class)
             .request(workspace)
             .userRequest(userRequest)
-            .workspaceId(workspaceId)
+            .workspaceUuid(workspaceUuid)
             .operationType(OperationType.CREATE)
             .addParameter(
                 WorkspaceFlightMapKeys.WORKSPACE_STAGE, workspace.getWorkspaceStage().name())
@@ -126,23 +126,23 @@ public class WorkspaceService {
    * action.
    *
    * @param userRequest the user's authenticated request
-   * @param workspaceId id of the workspace in question
+   * @param workspaceUuid id of the workspace in question
    * @param action the action to authorize against the workspace
    * @return the workspace, if it exists and the user is permitted to perform the specified action.
    */
   @Traced
   public Workspace validateWorkspaceAndAction(
-      AuthenticatedUserRequest userRequest, UUID workspaceId, String action) {
+      AuthenticatedUserRequest userRequest, UUID workspaceUuid, String action) {
     logger.info(
-        "validateWorkspaceAndAction - userRequest: {}\nworkspaceId: {}\naction: {}",
+        "validateWorkspaceAndAction - userRequest: {}\nworkspaceUuid: {}\naction: {}",
         userRequest,
-        workspaceId,
+        workspaceUuid,
         action);
-    Workspace workspace = workspaceDao.getWorkspace(workspaceId);
+    Workspace workspace = workspaceDao.getWorkspace(workspaceUuid);
     SamRethrow.onInterrupted(
         () ->
             samService.checkAuthz(
-                userRequest, SamConstants.SamResource.WORKSPACE, workspaceId.toString(), action),
+                userRequest, SamConstants.SamResource.WORKSPACE, workspaceUuid.toString(), action),
         "checkAuthz");
     return workspace;
   }
@@ -174,20 +174,20 @@ public class WorkspaceService {
    * description.
    *
    * @param userRequest authenticated user
-   * @param workspaceId workspace of interest
+   * @param workspaceUuid workspace of interest
    * @param name name to change - may be null
    * @param properties optional map of key-value properties
    * @param description description to change - may be null
    */
   public Workspace updateWorkspace(
       AuthenticatedUserRequest userRequest,
-      UUID workspaceId,
+      UUID workspaceUuid,
       @Nullable String name,
       @Nullable String description,
       @Nullable Map<String, String> properties) {
-    validateWorkspaceAndAction(userRequest, workspaceId, SamConstants.SamWorkspaceAction.WRITE);
-    workspaceDao.updateWorkspace(workspaceId, name, description, properties);
-    return workspaceDao.getWorkspace(workspaceId);
+    validateWorkspaceAndAction(userRequest, workspaceUuid, SamConstants.SamWorkspaceAction.WRITE);
+    workspaceDao.updateWorkspace(workspaceUuid, name, description, properties);
+    return workspaceDao.getWorkspace(workspaceUuid);
   }
 
   /** Delete an existing workspace by ID. */
@@ -201,7 +201,7 @@ public class WorkspaceService {
             .description(description)
             .flightClass(WorkspaceDeleteFlight.class)
             .operationType(OperationType.DELETE)
-            .workspaceId(id.toString())
+            .workspaceUuid(id.toString())
             .userRequest(userRequest)
             .addParameter(
                 WorkspaceFlightMapKeys.WORKSPACE_STAGE, workspace.getWorkspaceStage().name());
@@ -212,7 +212,7 @@ public class WorkspaceService {
   /**
    * Process the request to create a Azure cloud context
    *
-   * @param workspaceId workspace in which to create the context
+   * @param workspaceUuid workspace in which to create the context
    * @param jobId caller-supplied job id of the async job
    * @param userRequest user authentication info
    * @param resultPath optional endpoint where the result of the completed job can be retrieved
@@ -220,7 +220,7 @@ public class WorkspaceService {
    */
   @Traced
   public void createAzureCloudContext(
-      UUID workspaceId,
+      UUID workspaceUuid,
       String jobId,
       AuthenticatedUserRequest userRequest,
       @Nullable String resultPath,
@@ -228,18 +228,18 @@ public class WorkspaceService {
     features.azureEnabledCheck();
 
     Workspace workspace =
-        validateWorkspaceAndAction(userRequest, workspaceId, SamWorkspaceAction.WRITE);
+        validateWorkspaceAndAction(userRequest, workspaceUuid, SamWorkspaceAction.WRITE);
     stageService.assertMcWorkspace(workspace, "createCloudContext");
 
     jobService
         .newJob()
-        .description("Create Azure Cloud Context " + workspaceId)
+        .description("Create Azure Cloud Context " + workspaceUuid)
         .jobId(jobId)
-        .workspaceId(workspaceId.toString())
+        .workspaceUuid(workspaceUuid.toString())
         .flightClass(CreateAzureContextFlight.class)
         .request(azureContext)
         .userRequest(userRequest)
-        .addParameter(WorkspaceFlightMapKeys.WORKSPACE_ID, workspaceId.toString())
+        .addParameter(WorkspaceFlightMapKeys.WORKSPACE_ID, workspaceUuid.toString())
         .addParameter(JobMapKeys.RESULT_PATH.getKeyName(), resultPath)
         .submit();
   }
@@ -247,14 +247,14 @@ public class WorkspaceService {
   /**
    * Process the request to create a GCP cloud context
    *
-   * @param workspaceId workspace in which to create the context
+   * @param workspaceUuid workspace in which to create the context
    * @param jobId caller-supplied job id of the async job
    * @param userRequest user authentication info
    * @param resultPath optional endpoint where the result of the completed job can be retrieved
    */
   @Traced
   public void createGcpCloudContext(
-      UUID workspaceId,
+      UUID workspaceUuid,
       String jobId,
       AuthenticatedUserRequest userRequest,
       @Nullable String resultPath) {
@@ -265,14 +265,14 @@ public class WorkspaceService {
     }
 
     Workspace workspace =
-        validateWorkspaceAndAction(userRequest, workspaceId, SamConstants.SamWorkspaceAction.WRITE);
+        validateWorkspaceAndAction(userRequest, workspaceUuid, SamConstants.SamWorkspaceAction.WRITE);
     stageService.assertMcWorkspace(workspace, "createCloudContext");
 
     String workspaceName = workspace.getDisplayName().orElse("");
     String jobDescription =
         String.format(
             "Create GCP cloud context for workspace: name: '%s' id: '%s'  ",
-            workspaceName, workspaceId);
+            workspaceName, workspaceUuid);
 
     jobService
         .newJob()
@@ -281,14 +281,14 @@ public class WorkspaceService {
         .flightClass(CreateGcpContextFlightV2.class)
         .userRequest(userRequest)
         .operationType(OperationType.CREATE)
-        .workspaceId(workspaceId.toString())
+        .workspaceUuid(workspaceUuid.toString())
         .addParameter(JobMapKeys.RESULT_PATH.getKeyName(), resultPath)
         .submit();
   }
 
   public void createGcpCloudContext(
-      UUID workspaceId, String jobId, AuthenticatedUserRequest userRequest) {
-    createGcpCloudContext(workspaceId, jobId, userRequest, null);
+      UUID workspaceUuid, String jobId, AuthenticatedUserRequest userRequest) {
+    createGcpCloudContext(workspaceUuid, jobId, userRequest, null);
   }
 
   public String cloneWorkspace(
@@ -301,9 +301,9 @@ public class WorkspaceService {
             userRequest, sourceWorkspaceId, SamConstants.SamWorkspaceAction.READ);
     stageService.assertMcWorkspace(sourceWorkspace, "cloneGcpWorkspace");
     String workspaceName = sourceWorkspace.getDisplayName().orElse("");
-    String workspaceId = sourceWorkspace.getWorkspaceId().toString();
+    String workspaceUuid = sourceWorkspace.getWorkspaceId().toString();
     String jobDescription =
-        String.format("Clone workspace: name: '%s' id: '%s'  ", workspaceName, workspaceId);
+        String.format("Clone workspace: name: '%s' id: '%s'  ", workspaceName, workspaceUuid);
 
     // Create the destination workspace synchronously first.
     createWorkspace(destinationWorkspace, userRequest);
@@ -316,7 +316,7 @@ public class WorkspaceService {
         .userRequest(userRequest)
         .request(destinationWorkspace)
         .operationType(OperationType.CLONE)
-        .workspaceId(sourceWorkspaceId.toString())
+        .workspaceUuid(sourceWorkspaceId.toString())
         .addParameter(
             ControlledResourceKeys.SOURCE_WORKSPACE_ID,
             sourceWorkspaceId) // TODO: remove this duplication
@@ -329,15 +329,15 @@ public class WorkspaceService {
    * permission before deleting the cloud context.
    */
   @Traced
-  public void deleteGcpCloudContext(UUID workspaceId, AuthenticatedUserRequest userRequest) {
+  public void deleteGcpCloudContext(UUID workspaceUuid, AuthenticatedUserRequest userRequest) {
     Workspace workspace =
-        validateWorkspaceAndAction(userRequest, workspaceId, SamConstants.SamWorkspaceAction.WRITE);
+        validateWorkspaceAndAction(userRequest, workspaceUuid, SamConstants.SamWorkspaceAction.WRITE);
     stageService.assertMcWorkspace(workspace, "deleteGcpCloudContext");
     String workspaceName = workspace.getDisplayName().orElse("");
     String jobDescription =
         String.format(
             "Delete GCP cloud context for workspace: name: '%s' id: '%s'  ",
-            workspaceName, workspaceId);
+            workspaceName, workspaceUuid);
 
     jobService
         .newJob()
@@ -345,27 +345,27 @@ public class WorkspaceService {
         .flightClass(DeleteGcpContextFlight.class)
         .userRequest(userRequest)
         .operationType(OperationType.DELETE)
-        .workspaceId(workspaceId.toString())
+        .workspaceUuid(workspaceUuid.toString())
         .submitAndWait(null);
   }
 
-  public void deleteAzureCloudContext(UUID workspaceId, AuthenticatedUserRequest userRequest) {
+  public void deleteAzureCloudContext(UUID workspaceUuid, AuthenticatedUserRequest userRequest) {
     Workspace workspace =
-        validateWorkspaceAndAction(userRequest, workspaceId, SamWorkspaceAction.WRITE);
+        validateWorkspaceAndAction(userRequest, workspaceUuid, SamWorkspaceAction.WRITE);
 
     stageService.assertMcWorkspace(workspace, "deleteAzureCloudContext");
     String workspaceName = workspace.getDisplayName().orElse("");
     String jobDescription =
         String.format(
             "Delete Azure cloud context for workspace: name: '%s' id: '%s'  ",
-            workspaceName, workspaceId);
+            workspaceName, workspaceUuid);
     jobService
         .newJob()
         .description(jobDescription)
         .flightClass(DeleteAzureContextFlight.class)
         .userRequest(userRequest)
         .operationType(OperationType.DELETE)
-        .workspaceId(workspaceId.toString())
+        .workspaceUuid(workspaceUuid.toString())
         .submitAndWait(null);
   }
 
@@ -373,63 +373,63 @@ public class WorkspaceService {
    * We ensure that the workspace exists and the user has read access. If so, we lookup the Azure
    * cloud context, if any.
    *
-   * @param workspaceId id of the workspace whose cloud context we want to get
+   * @param workspaceUuid id of the workspace whose cloud context we want to get
    * @param userRequest auth of user to test for read access
    * @return optional Azure cloud context
    */
   public Optional<AzureCloudContext> getAuthorizedAzureCloudContext(
-      UUID workspaceId, AuthenticatedUserRequest userRequest) {
-    validateWorkspaceAndAction(userRequest, workspaceId, SamWorkspaceAction.READ);
+      UUID workspaceUuid, AuthenticatedUserRequest userRequest) {
+    validateWorkspaceAndAction(userRequest, workspaceUuid, SamWorkspaceAction.READ);
     features.azureEnabledCheck();
-    return azureCloudContextService.getAzureCloudContext(workspaceId);
+    return azureCloudContextService.getAzureCloudContext(workspaceUuid);
   }
 
   /**
    * We ensure that the workspace exists and the user has read access. If so, we lookup the GCP
    * project id, if any.
    *
-   * @param workspaceId id of the workspace whose GCP project id we want to get
+   * @param workspaceUuid id of the workspace whose GCP project id we want to get
    * @param userRequest auth of user to test for read access
    * @return optional project id
    */
   public Optional<String> getAuthorizedGcpProject(
-      UUID workspaceId, AuthenticatedUserRequest userRequest) {
-    validateWorkspaceAndAction(userRequest, workspaceId, SamConstants.SamWorkspaceAction.READ);
-    return gcpCloudContextService.getGcpProject(workspaceId);
+      UUID workspaceUuid, AuthenticatedUserRequest userRequest) {
+    validateWorkspaceAndAction(userRequest, workspaceUuid, SamConstants.SamWorkspaceAction.READ);
+    return gcpCloudContextService.getGcpProject(workspaceUuid);
   }
 
   /**
    * We ensure that the workspace exists and the user has read access. If so, we lookup the GCP
    * project id. If it does not exist, an exception is thrown.
    *
-   * @param workspaceId id of the workspace whose GCP project id we want to get
+   * @param workspaceUuid id of the workspace whose GCP project id we want to get
    * @param userRequest auth of user to test for read access
    * @return project id
    */
   public String getAuthorizedRequiredGcpProject(
-      UUID workspaceId, AuthenticatedUserRequest userRequest) {
-    validateWorkspaceAndAction(userRequest, workspaceId, SamConstants.SamWorkspaceAction.READ);
-    return gcpCloudContextService.getRequiredGcpProject(workspaceId);
+      UUID workspaceUuid, AuthenticatedUserRequest userRequest) {
+    validateWorkspaceAndAction(userRequest, workspaceUuid, SamConstants.SamWorkspaceAction.READ);
+    return gcpCloudContextService.getRequiredGcpProject(workspaceUuid);
   }
 
   /**
    * Remove a workspace role from a user. This will also remove a user from their private resources
    * if they are no longer a member of the workspace (i.e. have no other roles) after role removal.
    *
-   * @param workspaceId ID of the workspace user to remove user's role in
+   * @param workspaceUuid ID of the workspace user to remove user's role in
    * @param role Role to remove
    * @param rawUserEmail Email identifier of user whose role is being removed
    * @param executingUserRequest User credentials to authenticate this removal. Must belong to a
    *     workspace owner, and likely do not belong to {@code userEmail}.
    */
   public void removeWorkspaceRoleFromUser(
-      UUID workspaceId,
+      UUID workspaceUuid,
       WsmIamRole role,
       String rawUserEmail,
       AuthenticatedUserRequest executingUserRequest) {
     Workspace workspace =
         validateWorkspaceAndAction(
-            executingUserRequest, workspaceId, SamConstants.SamWorkspaceAction.OWN);
+            executingUserRequest, workspaceUuid, SamConstants.SamWorkspaceAction.OWN);
     stageService.assertMcWorkspace(workspace, "removeWorkspaceRoleFromUser");
     // GCP always uses lowercase email identifiers, so we do the same here.
     String targetUserEmail = rawUserEmail.toLowerCase();
@@ -437,7 +437,7 @@ public class WorkspaceService {
     // specified role. Users may also be added to a workspace via managed groups, but WSM does not
     // control membership of those groups, and so cannot remove them here.
     List<String> roleMembers =
-        samService.listUsersWithWorkspaceRole(workspaceId, role, executingUserRequest).stream()
+        samService.listUsersWithWorkspaceRole(workspaceUuid, role, executingUserRequest).stream()
             // SAM does not always use lowercase emails, so lowercase everything here before the
             // contains check below
             .map(String::toLowerCase)
@@ -450,11 +450,11 @@ public class WorkspaceService {
         .description(
             String.format(
                 "Remove role %s from user %s in workspace %s",
-                role.name(), targetUserEmail, workspaceId))
+                role.name(), targetUserEmail, workspaceUuid))
         .flightClass(RemoveUserFromWorkspaceFlight.class)
         .userRequest(executingUserRequest)
         .operationType(OperationType.DELETE)
-        .workspaceId(workspaceId.toString())
+        .workspaceUuid(workspaceUuid.toString())
         .addParameter(WorkspaceFlightMapKeys.USER_TO_REMOVE, targetUserEmail)
         .addParameter(WorkspaceFlightMapKeys.ROLE_TO_REMOVE, role)
         .submitAndWait(null);

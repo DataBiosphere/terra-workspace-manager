@@ -37,7 +37,7 @@ public class ControlledAzureIpResource extends ControlledResource {
 
   @JsonCreator
   public ControlledAzureIpResource(
-      @JsonProperty("workspaceId") UUID workspaceId,
+      @JsonProperty("workspaceUuid") UUID workspaceUuid,
       @JsonProperty("resourceId") UUID resourceId,
       @JsonProperty("name") String name,
       @JsonProperty("description") String description,
@@ -51,7 +51,7 @@ public class ControlledAzureIpResource extends ControlledResource {
       @JsonProperty("region") String region) {
 
     super(
-        workspaceId,
+        workspaceUuid,
         resourceId,
         name,
         description,

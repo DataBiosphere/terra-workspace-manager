@@ -120,7 +120,7 @@ public class PrivateResourceCleanupServiceTest extends BaseConnectedTest {
     // Create private bucket as second user.
     ControlledResourceFields commonFields =
         ControlledResourceFixtures.makeDefaultControlledResourceFieldsBuilder()
-            .workspaceId(workspace.getWorkspaceId())
+            .workspaceUuid(workspace.getWorkspaceId())
             .accessScope(AccessScopeType.ACCESS_SCOPE_PRIVATE)
             .managedBy(ManagedByType.MANAGED_BY_USER)
             .assignedUser(userAccessUtils.getSecondUserEmail())
@@ -220,7 +220,7 @@ public class PrivateResourceCleanupServiceTest extends BaseConnectedTest {
     // Create application private bucket assigned to second user.
     ControlledResourceFields commonFields =
         ControlledResourceFixtures.makeDefaultControlledResourceFieldsBuilder()
-            .workspaceId(workspace.getWorkspaceId())
+            .workspaceUuid(workspace.getWorkspaceId())
             .accessScope(AccessScopeType.ACCESS_SCOPE_PRIVATE)
             .managedBy(ManagedByType.MANAGED_BY_APPLICATION)
             .applicationId(TEST_WSM_APP)

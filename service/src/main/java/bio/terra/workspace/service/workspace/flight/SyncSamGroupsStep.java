@@ -18,13 +18,13 @@ import java.util.UUID;
 public class SyncSamGroupsStep implements Step {
 
   private final SamService samService;
-  private final UUID workspaceId;
+  private final UUID workspaceUuid;
   private final AuthenticatedUserRequest userRequest;
 
   public SyncSamGroupsStep(
-      SamService samService, UUID workspaceId, AuthenticatedUserRequest userRequest) {
+      SamService samService, UUID workspaceUuid, AuthenticatedUserRequest userRequest) {
     this.samService = samService;
-    this.workspaceId = workspaceId;
+    this.workspaceUuid = workspaceUuid;
     this.userRequest = userRequest;
   }
 
@@ -37,16 +37,16 @@ public class SyncSamGroupsStep implements Step {
     var workspaceRoleGroupMap = new HashMap<WsmIamRole, String>();
     workspaceRoleGroupMap.put(
         WsmIamRole.OWNER,
-        samService.syncWorkspacePolicy(workspaceId, WsmIamRole.OWNER, userRequest));
+        samService.syncWorkspacePolicy(workspaceUuid, WsmIamRole.OWNER, userRequest));
     workspaceRoleGroupMap.put(
         WsmIamRole.APPLICATION,
-        samService.syncWorkspacePolicy(workspaceId, WsmIamRole.APPLICATION, userRequest));
+        samService.syncWorkspacePolicy(workspaceUuid, WsmIamRole.APPLICATION, userRequest));
     workspaceRoleGroupMap.put(
         WsmIamRole.WRITER,
-        samService.syncWorkspacePolicy(workspaceId, WsmIamRole.WRITER, userRequest));
+        samService.syncWorkspacePolicy(workspaceUuid, WsmIamRole.WRITER, userRequest));
     workspaceRoleGroupMap.put(
         WsmIamRole.READER,
-        samService.syncWorkspacePolicy(workspaceId, WsmIamRole.READER, userRequest));
+        samService.syncWorkspacePolicy(workspaceUuid, WsmIamRole.READER, userRequest));
 
     FlightMap workingMap = flightContext.getWorkingMap();
     workingMap.put(WorkspaceFlightMapKeys.IAM_GROUP_EMAIL_MAP, workspaceRoleGroupMap);

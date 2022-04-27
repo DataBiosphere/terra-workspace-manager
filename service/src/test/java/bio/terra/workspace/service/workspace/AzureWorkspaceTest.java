@@ -38,7 +38,7 @@ public class AzureWorkspaceTest extends BaseAzureTest {
 
     Workspace request =
         Workspace.builder()
-            .workspaceId(UUID.randomUUID())
+            .workspaceUuid(UUID.randomUUID())
             .spendProfileId(spendUtils.defaultSpendId())
             .workspaceStage(WorkspaceStage.MC_WORKSPACE)
             .build();

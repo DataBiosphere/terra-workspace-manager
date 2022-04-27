@@ -143,14 +143,14 @@ public class CreateAiNotebookInstanceStep implements Step {
       FlightContext flightContext,
       String projectId,
       String serviceAccountEmail,
-      String workspaceId,
+      String workspaceUuid,
       String cliServer) {
     Instance instance = new Instance();
     ApiGcpAiNotebookInstanceCreationParameters creationParameters =
         flightContext
             .getInputParameters()
             .get(CREATE_NOTEBOOK_PARAMETERS, ApiGcpAiNotebookInstanceCreationParameters.class);
-    setFields(creationParameters, serviceAccountEmail, workspaceId, cliServer, instance);
+    setFields(creationParameters, serviceAccountEmail, workspaceUuid, cliServer, instance);
     setNetworks(instance, projectId, flightContext.getWorkingMap());
     return instance;
   }
@@ -159,7 +159,7 @@ public class CreateAiNotebookInstanceStep implements Step {
   static Instance setFields(
       ApiGcpAiNotebookInstanceCreationParameters creationParameters,
       String serviceAccountEmail,
-      String workspaceId,
+      String workspaceUuid,
       String cliServer,
       Instance instance) {
     instance
@@ -177,7 +177,7 @@ public class CreateAiNotebookInstanceStep implements Step {
     Map<String, String> metadata = new HashMap<>();
     Optional.ofNullable(creationParameters.getMetadata()).ifPresent(metadata::putAll);
 
-    addDefaultMetadata(metadata, workspaceId, cliServer);
+    addDefaultMetadata(metadata, workspaceUuid, cliServer);
     instance.setMetadata(metadata);
     instance.setServiceAccount(serviceAccountEmail);
     instance.setServiceAccountScopes(SERVICE_ACCOUNT_SCOPES);
@@ -210,10 +210,10 @@ public class CreateAiNotebookInstanceStep implements Step {
   }
 
   private static void addDefaultMetadata(
-      Map<String, String> metadata, String workspaceId, String cliServer) {
+      Map<String, String> metadata, String workspaceUuid, String cliServer) {
     // TODO(PF-1409): throw conflict exception when these two metadata key is specified by the
     // user after we remove them from CLI.
-    metadata.put(WORKSPACE_ID_METADATA_KEY, workspaceId);
+    metadata.put(WORKSPACE_ID_METADATA_KEY, workspaceUuid);
     if (!StringUtils.isEmpty(cliServer)) {
       metadata.put(SERVER_ID_METADATA_KEY, cliServer);
     }

@@ -18,12 +18,12 @@ import org.springframework.http.HttpStatus;
 
 /** Updates the previously stored cloud context row, filling in the context JSON. */
 public class UpdateDbGcpCloudContextStep implements Step {
-  private final UUID workspaceId;
+  private final UUID workspaceUuid;
   private final GcpCloudContextService gcpCloudContextService;
 
   public UpdateDbGcpCloudContextStep(
-      UUID workspaceId, GcpCloudContextService gcpCloudContextService) {
-    this.workspaceId = workspaceId;
+      UUID workspaceUuid, GcpCloudContextService gcpCloudContextService) {
+    this.workspaceUuid = workspaceUuid;
     this.gcpCloudContextService = gcpCloudContextService;
   }
 
@@ -47,7 +47,7 @@ public class UpdateDbGcpCloudContextStep implements Step {
             workspaceRoleGroupsMap.get(WsmIamRole.APPLICATION));
 
     gcpCloudContextService.createGcpCloudContextFinish(
-        workspaceId, context, flightContext.getFlightId());
+        workspaceUuid, context, flightContext.getFlightId());
 
     CloudContextHolder cch = new CloudContextHolder();
     cch.setGcpCloudContext(context);

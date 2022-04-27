@@ -20,17 +20,17 @@ public class ApplicationAbleIamStep implements Step {
 
   private final SamService samService;
   private final AuthenticatedUserRequest userRequest;
-  private final UUID workspaceId;
+  private final UUID workspaceUuid;
   private final AbleEnum ableEnum;
 
   public ApplicationAbleIamStep(
       SamService samService,
       AuthenticatedUserRequest userRequest,
-      UUID workspaceId,
+      UUID workspaceUuid,
       AbleEnum ableEnum) {
     this.samService = samService;
     this.userRequest = userRequest;
-    this.workspaceId = workspaceId;
+    this.workspaceUuid = workspaceUuid;
     this.ableEnum = ableEnum;
   }
 
@@ -51,10 +51,10 @@ public class ApplicationAbleIamStep implements Step {
 
     if (ableEnum == AbleEnum.ENABLE) {
       samService.grantWorkspaceRole(
-          workspaceId, userRequest, WsmIamRole.APPLICATION, application.getServiceAccount());
+          workspaceUuid, userRequest, WsmIamRole.APPLICATION, application.getServiceAccount());
     } else {
       samService.removeWorkspaceRole(
-          workspaceId, userRequest, WsmIamRole.APPLICATION, application.getServiceAccount());
+          workspaceUuid, userRequest, WsmIamRole.APPLICATION, application.getServiceAccount());
     }
 
     return StepResult.getStepResultSuccess();
@@ -73,10 +73,10 @@ public class ApplicationAbleIamStep implements Step {
         workingMap.get(WsmApplicationKeys.WSM_APPLICATION, WsmApplication.class);
     if (ableEnum == AbleEnum.ENABLE) {
       samService.removeWorkspaceRole(
-          workspaceId, userRequest, WsmIamRole.APPLICATION, application.getServiceAccount());
+          workspaceUuid, userRequest, WsmIamRole.APPLICATION, application.getServiceAccount());
     } else {
       samService.grantWorkspaceRole(
-          workspaceId, userRequest, WsmIamRole.APPLICATION, application.getServiceAccount());
+          workspaceUuid, userRequest, WsmIamRole.APPLICATION, application.getServiceAccount());
     }
 
     return StepResult.getStepResultSuccess();

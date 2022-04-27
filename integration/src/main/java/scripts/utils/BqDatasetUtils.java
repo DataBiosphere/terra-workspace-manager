@@ -63,17 +63,17 @@ public class BqDatasetUtils {
   public static GcpBigQueryDatasetResource makeBigQueryDatasetReference(
       GcpBigQueryDatasetAttributes dataset,
       ReferencedGcpResourceApi resourceApi,
-      UUID workspaceId,
+      UUID workspaceUuid,
       String name)
       throws Exception {
     return makeBigQueryDatasetReference(
-        dataset, resourceApi, workspaceId, name, CloningInstructionsEnum.NOTHING);
+        dataset, resourceApi, workspaceUuid, name, CloningInstructionsEnum.NOTHING);
   }
 
   public static GcpBigQueryDatasetResource makeBigQueryDatasetReference(
       GcpBigQueryDatasetAttributes dataset,
       ReferencedGcpResourceApi resourceApi,
-      UUID workspaceId,
+      UUID workspaceUuid,
       String name,
       CloningInstructionsEnum cloningInstructions)
       throws Exception {
@@ -89,13 +89,13 @@ public class BqDatasetUtils {
 
     GcpBigQueryDatasetResource result =
         ClientTestUtils.getWithRetryOnException(
-            () -> resourceApi.createBigQueryDatasetReference(body, workspaceId));
+            () -> resourceApi.createBigQueryDatasetReference(body, workspaceUuid));
     logger.info(
         "Created BigQuery Dataset Reference {} project {} resource ID {} workspace {}",
         dataset.getDatasetId(),
         dataset.getProjectId(),
         result.getMetadata().getResourceId(),
-        workspaceId);
+        workspaceUuid);
     return result;
   }
 
@@ -135,17 +135,17 @@ public class BqDatasetUtils {
   public static GcpBigQueryDataTableResource makeBigQueryDataTableReference(
       GcpBigQueryDataTableAttributes dataTable,
       ReferencedGcpResourceApi resourceApi,
-      UUID workspaceId,
+      UUID workspaceUuid,
       String name)
       throws Exception {
     return makeBigQueryDataTableReference(
-        dataTable, resourceApi, workspaceId, name, CloningInstructionsEnum.NOTHING);
+        dataTable, resourceApi, workspaceUuid, name, CloningInstructionsEnum.NOTHING);
   }
 
   public static GcpBigQueryDataTableResource makeBigQueryDataTableReference(
       GcpBigQueryDataTableAttributes dataTable,
       ReferencedGcpResourceApi resourceApi,
-      UUID workspaceId,
+      UUID workspaceUuid,
       String name,
       CloningInstructionsEnum cloningInstructions)
       throws Exception {
@@ -159,19 +159,19 @@ public class BqDatasetUtils {
             .dataTable(dataTable);
 
     return ClientTestUtils.getWithRetryOnException(
-        () -> resourceApi.createBigQueryDataTableReference(body, workspaceId));
+        () -> resourceApi.createBigQueryDataTableReference(body, workspaceUuid));
   }
 
   public static GcpBigQueryDatasetResource makeControlledBigQueryDatasetUserPrivate(
       ControlledGcpResourceApi resourceApi,
-      UUID workspaceId,
+      UUID workspaceUuid,
       String resourceName,
       @Nullable String datasetId,
       @Nullable CloningInstructionsEnum cloningInstructions)
       throws Exception {
     return makeControlledBigQueryDataset(
         resourceApi,
-        workspaceId,
+        workspaceUuid,
         resourceName,
         datasetId,
         AccessScope.PRIVATE_ACCESS,
@@ -182,14 +182,14 @@ public class BqDatasetUtils {
 
   public static GcpBigQueryDatasetResource makeControlledBigQueryDatasetUserShared(
       ControlledGcpResourceApi resourceApi,
-      UUID workspaceId,
+      UUID workspaceUuid,
       String resourceName,
       @Nullable String datasetId,
       @Nullable CloningInstructionsEnum cloningInstructions)
       throws Exception {
     return makeControlledBigQueryDataset(
         resourceApi,
-        workspaceId,
+        workspaceUuid,
         resourceName,
         datasetId,
         AccessScope.SHARED_ACCESS,
@@ -204,7 +204,7 @@ public class BqDatasetUtils {
    */
   private static GcpBigQueryDatasetResource makeControlledBigQueryDataset(
       ControlledGcpResourceApi resourceApi,
-      UUID workspaceId,
+      UUID workspaceUuid,
       String resourceName,
       @Nullable String datasetId,
       AccessScope accessScope,
@@ -232,8 +232,8 @@ public class BqDatasetUtils {
         managedBy.name(),
         accessScope.name(),
         datasetId,
-        workspaceId);
-    return resourceApi.createBigQueryDataset(body, workspaceId).getBigQueryDataset();
+        workspaceUuid);
+    return resourceApi.createBigQueryDataset(body, workspaceUuid).getBigQueryDataset();
   }
 
   /**

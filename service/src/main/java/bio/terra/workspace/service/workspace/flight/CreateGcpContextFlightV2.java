@@ -36,7 +36,7 @@ public class CreateGcpContextFlightV2 extends Flight {
     FlightBeanBag appContext = FlightBeanBag.getFromObject(applicationContext);
     CrlService crl = appContext.getCrlService();
 
-    UUID workspaceId =
+    UUID workspaceUuid =
         UUID.fromString(inputParameters.get(WorkspaceFlightMapKeys.WORKSPACE_ID, String.class));
     AuthenticatedUserRequest userRequest =
         inputParameters.get(JobMapKeys.AUTH_USER_INFO.getKeyName(), AuthenticatedUserRequest.class);
@@ -51,12 +51,12 @@ public class CreateGcpContextFlightV2 extends Flight {
         new CheckSpendProfileStep(
             appContext.getWorkspaceDao(),
             appContext.getSpendProfileService(),
-            workspaceId,
+            workspaceUuid,
             userRequest));
 
     // Write the cloud context row in a "locked" state
     addStep(
-        new CreateDbGcpCloudContextStep(workspaceId, appContext.getGcpCloudContextService()),
+        new CreateDbGcpCloudContextStep(workspaceUuid, appContext.getGcpCloudContextService()),
         shortRetry);
 
     // Allocate the GCP project from RBS by generating the id and then getting the project.
@@ -71,7 +71,7 @@ public class CreateGcpContextFlightV2 extends Flight {
     addStep(new GrantWsmRoleAdminStep(crl), shortRetry);
     addStep(new CreateCustomGcpRolesStep(crl.getIamCow()), shortRetry);
     addStep(
-        new SyncSamGroupsStep(appContext.getSamService(), workspaceId, userRequest), shortRetry);
+        new SyncSamGroupsStep(appContext.getSamService(), workspaceUuid, userRequest), shortRetry);
     // TODO(PF-1227): When IAM performance issue is fixed, change back to cloudRetry.
     addStep(new GcpCloudSyncStep(crl.getCloudResourceManagerCow()), bufferRetry);
     addStep(new CreatePetSaStep(appContext.getSamService(), userRequest), shortRetry);
@@ -80,7 +80,7 @@ public class CreateGcpContextFlightV2 extends Flight {
     // This must be the last step, since it clears the lock. So this step also
     // sets the flight response.
     addStep(
-        new UpdateDbGcpCloudContextStep(workspaceId, appContext.getGcpCloudContextService()),
+        new UpdateDbGcpCloudContextStep(workspaceUuid, appContext.getGcpCloudContextService()),
         shortRetry);
   }
 }

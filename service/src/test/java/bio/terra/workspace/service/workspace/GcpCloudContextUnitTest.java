@@ -124,10 +124,10 @@ public class GcpCloudContextUnitTest extends BaseUnitTest {
         .thenReturn(POLICY_APPLICATION);
 
     // Create a workspace record
-    UUID workspaceId = UUID.randomUUID();
+    UUID workspaceUuid = UUID.randomUUID();
     var workspace =
         new Workspace(
-            workspaceId,
+            workspaceUuid,
             "gcpCloudContextAutoUpgradeTest",
             "cloud context description",
             new SpendProfileId("spend-profile"),
@@ -137,12 +137,12 @@ public class GcpCloudContextUnitTest extends BaseUnitTest {
 
     // Create a cloud context in the database with a V1 format
     final String flightId = UUID.randomUUID().toString();
-    workspaceDao.createCloudContextStart(workspaceId, CloudPlatform.GCP, flightId);
-    workspaceDao.createCloudContextFinish(workspaceId, CloudPlatform.GCP, V1_JSON, flightId);
+    workspaceDao.createCloudContextStart(workspaceUuid, CloudPlatform.GCP, flightId);
+    workspaceDao.createCloudContextFinish(workspaceUuid, CloudPlatform.GCP, V1_JSON, flightId);
 
     // Run the service call that should do the upgrade
     GcpCloudContext updatedContext =
-        gcpCloudContextService.getRequiredGcpCloudContext(workspaceId, USER_REQUEST);
+        gcpCloudContextService.getRequiredGcpCloudContext(workspaceUuid, USER_REQUEST);
     assertEquals(updatedContext.getSamPolicyOwner().orElse(null), POLICY_OWNER);
     assertEquals(updatedContext.getSamPolicyWriter().orElse(null), POLICY_WRITER);
     assertEquals(updatedContext.getSamPolicyReader().orElse(null), POLICY_READER);

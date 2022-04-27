@@ -16,17 +16,17 @@ public class UpdateControlledResourceMetadataStep implements Step {
 
   private final ResourceDao resourceDao;
   private final UUID resourceId;
-  private final UUID workspaceId;
+  private final UUID workspaceUuid;
   private final ControlledResourceMetadataManager controlledResourceMetadataManager;
 
   public UpdateControlledResourceMetadataStep(
       ControlledResourceMetadataManager controlledResourceMetadataManager,
       ResourceDao resourceDao,
-      UUID workspaceId,
+      UUID workspaceUuid,
       UUID resourceId) {
     this.resourceDao = resourceDao;
     this.resourceId = resourceId;
-    this.workspaceId = workspaceId;
+    this.workspaceUuid = workspaceUuid;
     this.controlledResourceMetadataManager = controlledResourceMetadataManager;
   }
 
@@ -40,7 +40,7 @@ public class UpdateControlledResourceMetadataStep implements Step {
     final AuthenticatedUserRequest userRequest =
         inputParameters.get(JobMapKeys.AUTH_USER_INFO.getKeyName(), AuthenticatedUserRequest.class);
     controlledResourceMetadataManager.updateControlledResourceMetadata(
-        workspaceId, resourceId, resourceName, resourceDescription, userRequest);
+        workspaceUuid, resourceId, resourceName, resourceDescription, userRequest);
     return StepResult.getStepResultSuccess();
   }
 
@@ -50,7 +50,7 @@ public class UpdateControlledResourceMetadataStep implements Step {
     final String previousName = workingMap.get(ResourceKeys.PREVIOUS_RESOURCE_NAME, String.class);
     final String previousDescription =
         workingMap.get(ResourceKeys.PREVIOUS_RESOURCE_DESCRIPTION, String.class);
-    resourceDao.updateResource(workspaceId, resourceId, previousName, previousDescription);
+    resourceDao.updateResource(workspaceUuid, resourceId, previousName, previousDescription);
     return StepResult.getStepResultSuccess();
   }
 }

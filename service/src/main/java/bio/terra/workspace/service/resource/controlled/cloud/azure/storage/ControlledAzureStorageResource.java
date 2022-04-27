@@ -38,7 +38,7 @@ public class ControlledAzureStorageResource extends ControlledResource {
 
   @JsonCreator
   public ControlledAzureStorageResource(
-      @JsonProperty("workspaceId") UUID workspaceId,
+      @JsonProperty("workspaceUuid") UUID workspaceUuid,
       @JsonProperty("resourceId") UUID resourceId,
       @JsonProperty("name") String name,
       @JsonProperty("description") String description,
@@ -52,7 +52,7 @@ public class ControlledAzureStorageResource extends ControlledResource {
       @JsonProperty("region") String region) {
 
     super(
-        workspaceId,
+        workspaceUuid,
         resourceId,
         name,
         description,

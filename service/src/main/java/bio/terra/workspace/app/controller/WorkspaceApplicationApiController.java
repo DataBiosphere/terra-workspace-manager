@@ -46,47 +46,47 @@ public class WorkspaceApplicationApiController implements WorkspaceApplicationAp
 
   @Override
   public ResponseEntity<ApiWorkspaceApplicationDescription> disableWorkspaceApplication(
-      @PathVariable("workspaceId") UUID workspaceId,
+      @PathVariable("workspaceUuid") UUID workspaceUuid,
       @PathVariable("applicationId") String applicationId) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     WsmWorkspaceApplication wsmApp =
-        appService.disableWorkspaceApplication(userRequest, workspaceId, applicationId);
+        appService.disableWorkspaceApplication(userRequest, workspaceUuid, applicationId);
     ApiWorkspaceApplicationDescription response = makeApiWorkspaceApplication(wsmApp);
     return new ResponseEntity<>(response, HttpStatus.OK);
   }
 
   @Override
   public ResponseEntity<ApiWorkspaceApplicationDescription> enableWorkspaceApplication(
-      @PathVariable("workspaceId") UUID workspaceId,
+      @PathVariable("workspaceUuid") UUID workspaceUuid,
       @PathVariable("applicationId") String applicationId) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     WsmWorkspaceApplication wsmApp =
-        appService.enableWorkspaceApplication(userRequest, workspaceId, applicationId);
+        appService.enableWorkspaceApplication(userRequest, workspaceUuid, applicationId);
     ApiWorkspaceApplicationDescription response = makeApiWorkspaceApplication(wsmApp);
     return new ResponseEntity<>(response, HttpStatus.OK);
   }
 
   @Override
   public ResponseEntity<ApiWorkspaceApplicationDescription> getWorkspaceApplication(
-      @PathVariable("workspaceId") UUID workspaceId,
+      @PathVariable("workspaceUuid") UUID workspaceUuid,
       @PathVariable("applicationId") String applicationId) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     WsmWorkspaceApplication wsmApp =
-        appService.getWorkspaceApplication(userRequest, workspaceId, applicationId);
+        appService.getWorkspaceApplication(userRequest, workspaceUuid, applicationId);
     ApiWorkspaceApplicationDescription response = makeApiWorkspaceApplication(wsmApp);
     return new ResponseEntity<>(response, HttpStatus.OK);
   }
 
   @Override
   public ResponseEntity<ApiWorkspaceApplicationDescriptionList> listWorkspaceApplications(
-      @PathVariable("workspaceId") UUID workspaceId,
+      @PathVariable("workspaceUuid") UUID workspaceUuid,
       @Valid @RequestParam(value = "offset", required = false, defaultValue = "0") Integer offset,
       @Valid @RequestParam(value = "limit", required = false, defaultValue = "10") Integer limit) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     ControllerValidationUtils.validatePaginationParams(offset, limit);
 
     List<WsmWorkspaceApplication> wsmApps =
-        appService.listWorkspaceApplications(userRequest, workspaceId, offset, limit);
+        appService.listWorkspaceApplications(userRequest, workspaceUuid, offset, limit);
     var response = new ApiWorkspaceApplicationDescriptionList();
     for (WsmWorkspaceApplication wsmApp : wsmApps) {
       response.addApplicationsItem(makeApiWorkspaceApplication(wsmApp));
@@ -97,7 +97,7 @@ public class WorkspaceApplicationApiController implements WorkspaceApplicationAp
   private ApiWorkspaceApplicationDescription makeApiWorkspaceApplication(
       WsmWorkspaceApplication wsmApp) {
     return new ApiWorkspaceApplicationDescription()
-        .workspaceId(wsmApp.getWorkspaceId())
+        .workspaceUuid(wsmApp.getWorkspaceId())
         .applicationId(wsmApp.getApplication().getApplicationId())
         .displayName(wsmApp.getApplication().getDisplayName())
         .description(wsmApp.getApplication().getDescription())

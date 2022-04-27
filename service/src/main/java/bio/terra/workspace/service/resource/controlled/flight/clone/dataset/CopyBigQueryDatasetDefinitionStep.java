@@ -94,7 +94,7 @@ public class CopyBigQueryDatasetDefinitionStep implements Step {
             .managedBy(sourceDataset.getManagedBy())
             .name(resourceName)
             .resourceId(UUID.randomUUID())
-            .workspaceId(destinationWorkspaceId)
+            .workspaceUuid(destinationWorkspaceId)
             .build();
     final ControlledBigQueryDatasetResource destinationResource =
         ControlledBigQueryDatasetResource.builder()

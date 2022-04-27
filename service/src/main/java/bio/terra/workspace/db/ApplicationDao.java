@@ -112,13 +112,13 @@ public class ApplicationDao {
    * Disable an application in a workspace. It is not an error to disable an already disabled
    * application.
    *
-   * @param workspaceId workspace of interest
+   * @param workspaceUuid workspace of interest
    * @param applicationId application of interest
    * @return workspace-application object
    */
   @WriteTransaction
   public WsmWorkspaceApplication disableWorkspaceApplication(
-      UUID workspaceId, String applicationId) {
+      UUID workspaceUuid, String applicationId) {
 
     // Validate that the application exists; workspace is validated in layers above this
     getApplicationOrThrow(applicationId);
@@ -130,13 +130,13 @@ public class ApplicationDao {
 
     MapSqlParameterSource params =
         new MapSqlParameterSource()
-            .addValue("workspace_id", workspaceId.toString())
+            .addValue("workspace_id", workspaceUuid.toString())
             .addValue("application_id", applicationId.toString());
 
     Integer count = jdbcTemplate.queryForObject(countAppUsesSql, params, Integer.class);
     if (count != null && count > 0) {
       throw new ApplicationInUseException(
-          String.format("Application %s in use in workspace %s", applicationId, workspaceId));
+          String.format("Application %s in use in workspace %s", applicationId, workspaceUuid));
     }
 
     // No uses, so we disable
@@ -147,28 +147,28 @@ public class ApplicationDao {
     int rowCount = jdbcTemplate.update(sql, params);
     if (rowCount > 0) {
       logger.info(
-          "Deleted record enabling application {} for workspace {}", applicationId, workspaceId);
+          "Deleted record enabling application {} for workspace {}", applicationId, workspaceUuid);
     } else {
       logger.info(
           "Ignoring duplicate disabling of application {} for workspace {}",
           applicationId,
-          workspaceId);
+          workspaceUuid);
     }
 
-    return getWorkspaceApplicationWorker(workspaceId, applicationId);
+    return getWorkspaceApplicationWorker(workspaceUuid, applicationId);
   }
 
   /**
    * Enable an application in a workspace. It is not an error to enable an already enabled
    * application.
    *
-   * @param workspaceId workspace of interest
+   * @param workspaceUuid workspace of interest
    * @param applicationId application of interest
    * @return workspace-application object
    */
   @WriteTransaction
   public WsmWorkspaceApplication enableWorkspaceApplication(
-      UUID workspaceId, String applicationId) {
+      UUID workspaceUuid, String applicationId) {
 
     WsmApplication application = getApplicationOrThrow(applicationId);
     if (application.getState() != WsmApplicationState.OPERATING) {
@@ -176,7 +176,7 @@ public class ApplicationDao {
           "Applications is " + application.getState().toApi() + " and cannot be enabled");
     }
 
-    return enableWorkspaceApplicationWorker(workspaceId, applicationId);
+    return enableWorkspaceApplicationWorker(workspaceUuid, applicationId);
   }
 
   /**
@@ -185,20 +185,20 @@ public class ApplicationDao {
    *
    * <p>It is not an error to enable an already enabled application.
    *
-   * @param workspaceId workspace of interest
+   * @param workspaceUuid workspace of interest
    * @param applicationId application of interest
    * @return workspace-application object
    */
   @VisibleForTesting
   @WriteTransaction
   public WsmWorkspaceApplication enableWorkspaceApplicationNoCheck(
-      UUID workspaceId, String applicationId) {
+      UUID workspaceUuid, String applicationId) {
 
-    return enableWorkspaceApplicationWorker(workspaceId, applicationId);
+    return enableWorkspaceApplicationWorker(workspaceUuid, applicationId);
   }
 
   private WsmWorkspaceApplication enableWorkspaceApplicationWorker(
-      UUID workspaceId, String applicationId) {
+      UUID workspaceUuid, String applicationId) {
 
     final String sql =
         "INSERT INTO enabled_application (workspace_id, application_id)"
@@ -206,44 +206,44 @@ public class ApplicationDao {
 
     MapSqlParameterSource params =
         new MapSqlParameterSource()
-            .addValue("workspace_id", workspaceId.toString())
+            .addValue("workspace_id", workspaceUuid.toString())
             .addValue("application_id", applicationId.toString());
 
     try {
       jdbcTemplate.update(sql, params);
       logger.info(
-          "Inserted record enabling application {} for workspace {}", applicationId, workspaceId);
+          "Inserted record enabling application {} for workspace {}", applicationId, workspaceUuid);
     } catch (DuplicateKeyException e) {
       logger.info(
           "Ignoring duplicate enabling application {} for workspace {}",
           applicationId,
-          workspaceId);
+          workspaceUuid);
     }
 
-    return getWorkspaceApplicationWorker(workspaceId, applicationId);
+    return getWorkspaceApplicationWorker(workspaceUuid, applicationId);
   }
 
   /**
    * Return the state of a specific application viz a workspace
    *
-   * @param workspaceId workspace of interest
+   * @param workspaceUuid workspace of interest
    * @param applicationId application of interest
    * @return workspace-application object
    */
   @ReadTransaction
-  public WsmWorkspaceApplication getWorkspaceApplication(UUID workspaceId, String applicationId) {
-    return getWorkspaceApplicationWorker(workspaceId, applicationId);
+  public WsmWorkspaceApplication getWorkspaceApplication(UUID workspaceUuid, String applicationId) {
+    return getWorkspaceApplicationWorker(workspaceUuid, applicationId);
   }
 
   @ReadTransaction
   public List<WsmWorkspaceApplication> listWorkspaceApplications(
-      UUID workspaceId, int offset, int limit) {
+      UUID workspaceUuid, int offset, int limit) {
 
     final String sql = WORKSPACE_APPLICATION_QUERY + " OFFSET :offset LIMIT :limit";
 
     var params =
         new MapSqlParameterSource()
-            .addValue("workspace_id", workspaceId.toString())
+            .addValue("workspace_id", workspaceUuid.toString())
             .addValue("offset", offset)
             .addValue("limit", limit);
 
@@ -251,26 +251,26 @@ public class ApplicationDao {
         jdbcTemplate.query(sql, params, WORKSPACE_APPLICATION_ROW_MAPPER);
 
     for (WsmWorkspaceApplication result : resultList) {
-      result.workspaceId(workspaceId);
+      result.workspaceUuid(workspaceUuid);
     }
     return resultList;
   }
 
   // internal workspace application lookup
   private WsmWorkspaceApplication getWorkspaceApplicationWorker(
-      UUID workspaceId, String applicationId) {
+      UUID workspaceUuid, String applicationId) {
     final String sql = WORKSPACE_APPLICATION_QUERY + " WHERE A.application_id = :application_id";
 
     var params =
         new MapSqlParameterSource()
             .addValue("application_id", applicationId)
-            .addValue("workspace_id", workspaceId.toString());
+            .addValue("workspace_id", workspaceUuid.toString());
 
     try {
       WsmWorkspaceApplication result =
           DataAccessUtils.requiredSingleResult(
               jdbcTemplate.query(sql, params, WORKSPACE_APPLICATION_ROW_MAPPER));
-      result.workspaceId(workspaceId);
+      result.workspaceUuid(workspaceUuid);
       return result;
     } catch (EmptyResultDataAccessException e) {
       throw new ApplicationNotFoundException(

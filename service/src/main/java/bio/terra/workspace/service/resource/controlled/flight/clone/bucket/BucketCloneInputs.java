@@ -5,21 +5,21 @@ import java.util.UUID;
 
 class BucketCloneInputs {
 
-  private final UUID workspaceId;
+  private final UUID workspaceUuid;
   private final String projectId;
   private final String bucketName;
   private final List<String> roleNames;
 
   public BucketCloneInputs(
-      UUID workspaceId, String projectId, String bucketName, List<String> roleNames) {
-    this.workspaceId = workspaceId;
+      UUID workspaceUuid, String projectId, String bucketName, List<String> roleNames) {
+    this.workspaceUuid = workspaceUuid;
     this.projectId = projectId;
     this.bucketName = bucketName;
     this.roleNames = roleNames;
   }
 
   public UUID getWorkspaceId() {
-    return workspaceId;
+    return workspaceUuid;
   }
 
   public String getProjectId() {
@@ -37,8 +37,8 @@ class BucketCloneInputs {
   @Override
   public String toString() {
     return "BucketInputs{"
-        + "workspaceId="
-        + workspaceId
+        + "workspaceUuid="
+        + workspaceUuid
         + ", projectId='"
         + projectId
         + "', bucketName='"

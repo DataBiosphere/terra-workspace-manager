@@ -30,7 +30,7 @@ public class ControlledGcsBucketResourceTest extends BaseUnitTest {
                 .bucketName(ControlledResourceFixtures.uniqueBucketName())
                 .common(
                     ControlledResourceFixtures.makeDefaultControlledResourceFieldsBuilder()
-                        .workspaceId(null)
+                        .workspaceUuid(null)
                         .build())
                 .build());
   }
@@ -58,7 +58,7 @@ public class ControlledGcsBucketResourceTest extends BaseUnitTest {
                 .bucketName(ControlledResourceFixtures.uniqueBucketName())
                 .common(
                     ControlledResourceFixtures.makeDefaultControlledResourceFieldsBuilder()
-                        .workspaceId(UUID.randomUUID())
+                        .workspaceUuid(UUID.randomUUID())
                         .resourceId(UUID.randomUUID())
                         .name("controlled_bucket_1")
                         .description(

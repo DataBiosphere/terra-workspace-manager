@@ -37,21 +37,21 @@ public class StoreControlledResourceMetadataStepTest extends BaseUnitTest {
   public void testEntersInfo() throws InterruptedException, RetryException {
     // Generate a fake workspace and cloud context so that the
     // database insert will pass FK constraints.
-    UUID workspaceId = UUID.randomUUID();
+    UUID workspaceUuid = UUID.randomUUID();
     Workspace workspace =
         Workspace.builder()
             .workspaceStage(WorkspaceStage.RAWLS_WORKSPACE)
-            .workspaceId(workspaceId)
+            .workspaceUuid(workspaceUuid)
             .build();
     workspaceDao.createWorkspace(workspace);
     gcpCloudContextService.createGcpCloudContext(
-        workspaceId, new GcpCloudContext("fake-project"), "flight-testentersinfo");
+        workspaceUuid, new GcpCloudContext("fake-project"), "flight-testentersinfo");
 
     StoreMetadataStep storeGoogleBucketMetadataStep = new StoreMetadataStep(resourceDao);
 
     // Stub the flight map as of this step
     ControlledGcsBucketResource bucketResource =
-        ControlledResourceFixtures.makeDefaultControlledGcsBucketBuilder(workspaceId).build();
+        ControlledResourceFixtures.makeDefaultControlledGcsBucketBuilder(workspaceUuid).build();
 
     final FlightMap inputFlightMap = new FlightMap();
     inputFlightMap.put(ResourceKeys.RESOURCE, bucketResource);

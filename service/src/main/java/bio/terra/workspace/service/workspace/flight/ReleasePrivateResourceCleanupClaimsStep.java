@@ -25,20 +25,20 @@ public class ReleasePrivateResourceCleanupClaimsStep implements Step {
   private final Logger logger =
       LoggerFactory.getLogger(ReleasePrivateResourceCleanupClaimsStep.class);
 
-  private final UUID workspaceId;
+  private final UUID workspaceUuid;
   private final String userEmail;
   private final ResourceDao resourceDao;
 
   public ReleasePrivateResourceCleanupClaimsStep(
-      UUID workspaceId, String userEmail, ResourceDao resourceDao) {
-    this.workspaceId = workspaceId;
+      UUID workspaceUuid, String userEmail, ResourceDao resourceDao) {
+    this.workspaceUuid = workspaceUuid;
     this.userEmail = userEmail;
     this.resourceDao = resourceDao;
   }
 
   @Override
   public StepResult doStep(FlightContext context) throws InterruptedException, RetryException {
-    resourceDao.releasePrivateResourceCleanupClaims(workspaceId, userEmail, context.getFlightId());
+    resourceDao.releasePrivateResourceCleanupClaims(workspaceUuid, userEmail, context.getFlightId());
     return StepResult.getStepResultSuccess();
   }
 
@@ -50,7 +50,7 @@ public class ReleasePrivateResourceCleanupClaimsStep implements Step {
     // cannot undo them further without clobbering, so this is a dismal failure.
     List<ControlledResource> relockedResources =
         resourceDao.claimCleanupForWorkspacePrivateResources(
-            workspaceId, userEmail, context.getFlightId());
+            workspaceUuid, userEmail, context.getFlightId());
     List<ResourceRolePair> originalResourceRolePairs =
         workingMap.get(ControlledResourceKeys.RESOURCE_ROLES_TO_REMOVE, new TypeReference<>() {});
     List<ControlledResource> originalResources =

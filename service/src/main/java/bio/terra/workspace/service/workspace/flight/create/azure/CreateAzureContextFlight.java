@@ -19,7 +19,7 @@ public class CreateAzureContextFlight extends Flight {
 
     FlightBeanBag appContext = FlightBeanBag.getFromObject(applicationContext);
 
-    UUID workspaceId =
+    UUID workspaceUuid =
         UUID.fromString(inputParameters.get(WorkspaceFlightMapKeys.WORKSPACE_ID, String.class));
 
     RetryRule dbRetry = RetryRules.shortDatabase();
@@ -27,7 +27,7 @@ public class CreateAzureContextFlight extends Flight {
     // 0. Write the incomplete DB row to prevent concurrent creates
     addStep(
         new CreateDbAzureCloudContextStartStep(
-            workspaceId, appContext.getAzureCloudContextService()),
+            workspaceUuid, appContext.getAzureCloudContextService()),
         dbRetry);
 
     // 1. validate the MRG
@@ -37,7 +37,7 @@ public class CreateAzureContextFlight extends Flight {
     // 2. Update the DB row filling in the cloud context
     addStep(
         new CreateDbAzureCloudContextFinishStep(
-            workspaceId, appContext.getAzureCloudContextService()),
+            workspaceUuid, appContext.getAzureCloudContextService()),
         dbRetry);
   }
 }

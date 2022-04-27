@@ -18,7 +18,7 @@ import javax.annotation.Nullable;
  * or (future) monitored resources.
  */
 public abstract class WsmResource {
-  private final UUID workspaceId;
+  private final UUID workspaceUuid;
   private final UUID resourceId;
   private final String name;
   private @Nullable final String description;
@@ -27,7 +27,7 @@ public abstract class WsmResource {
   /**
    * construct from individual fields
    *
-   * @param workspaceId unique identifier of the workspace where this resource lives (or is going to
+   * @param workspaceUuid unique identifier of the workspace where this resource lives (or is going to
    *     live)
    * @param resourceId unique identifier of the resource
    * @param name resource name; unique within a workspace
@@ -35,12 +35,12 @@ public abstract class WsmResource {
    * @param cloningInstructions how to treat the resource when cloning the workspace
    */
   public WsmResource(
-      UUID workspaceId,
+      UUID workspaceUuid,
       UUID resourceId,
       String name,
       @Nullable String description,
       CloningInstructions cloningInstructions) {
-    this.workspaceId = workspaceId;
+    this.workspaceUuid = workspaceUuid;
     this.resourceId = resourceId;
     this.name = name;
     this.description = description;
@@ -58,7 +58,7 @@ public abstract class WsmResource {
   }
 
   public UUID getWorkspaceId() {
-    return workspaceId;
+    return workspaceUuid;
   }
 
   public UUID getResourceId() {
@@ -151,7 +151,7 @@ public abstract class WsmResource {
    */
   public ApiResourceMetadata toApiMetadata() {
     return new ApiResourceMetadata()
-        .workspaceId(workspaceId)
+        .workspaceUuid(workspaceUuid)
         .resourceId(resourceId)
         .name(name)
         .description(description)
@@ -203,7 +203,7 @@ public abstract class WsmResource {
 
     WsmResource that = (WsmResource) o;
 
-    if (workspaceId != null ? !workspaceId.equals(that.workspaceId) : that.workspaceId != null)
+    if (workspaceUuid != null ? !workspaceUuid.equals(that.workspaceUuid) : that.workspaceUuid != null)
       return false;
     if (resourceId != null ? !resourceId.equals(that.resourceId) : that.resourceId != null)
       return false;
@@ -215,7 +215,7 @@ public abstract class WsmResource {
 
   @Override
   public int hashCode() {
-    int result = workspaceId != null ? workspaceId.hashCode() : 0;
+    int result = workspaceUuid != null ? workspaceUuid.hashCode() : 0;
     result = 31 * result + (resourceId != null ? resourceId.hashCode() : 0);
     result = 31 * result + (name != null ? name.hashCode() : 0);
     result = 31 * result + (description != null ? description.hashCode() : 0);

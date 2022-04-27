@@ -32,7 +32,7 @@ public abstract class ControlledResource extends WsmResource {
   private final String applicationId;
 
   public ControlledResource(
-      UUID workspaceId,
+      UUID workspaceUuid,
       UUID resourceId,
       String name,
       String description,
@@ -42,7 +42,7 @@ public abstract class ControlledResource extends WsmResource {
       ManagedByType managedBy,
       String applicationId,
       PrivateResourceState privateResourceState) {
-    super(workspaceId, resourceId, name, description, cloningInstructions);
+    super(workspaceUuid, resourceId, name, description, cloningInstructions);
     this.assignedUser = assignedUser;
     this.accessScope = accessScope;
     this.managedBy = managedBy;

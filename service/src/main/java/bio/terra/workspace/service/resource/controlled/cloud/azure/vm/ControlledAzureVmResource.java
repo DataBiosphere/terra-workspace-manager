@@ -43,7 +43,7 @@ public class ControlledAzureVmResource extends ControlledResource {
 
   @JsonCreator
   public ControlledAzureVmResource(
-      @JsonProperty("workspaceId") UUID workspaceId,
+      @JsonProperty("workspaceUuid") UUID workspaceUuid,
       @JsonProperty("resourceId") UUID resourceId,
       @JsonProperty("name") String name,
       @JsonProperty("description") String description,
@@ -62,7 +62,7 @@ public class ControlledAzureVmResource extends ControlledResource {
       @JsonProperty("diskId") UUID diskId) {
 
     super(
-        workspaceId,
+        workspaceUuid,
         resourceId,
         name,
         description,

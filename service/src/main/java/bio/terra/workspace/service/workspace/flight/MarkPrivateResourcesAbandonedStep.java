@@ -23,13 +23,13 @@ import java.util.stream.Collectors;
 public class MarkPrivateResourcesAbandonedStep implements Step {
 
   private final ResourceDao resourceDao;
-  private final UUID workspaceId;
+  private final UUID workspaceUuid;
   private final String userEmailToRemove;
 
   public MarkPrivateResourcesAbandonedStep(
-      UUID workspaceId, String userEmailToRemove, ResourceDao resourceDao) {
+      UUID workspaceUuid, String userEmailToRemove, ResourceDao resourceDao) {
     this.resourceDao = resourceDao;
-    this.workspaceId = workspaceId;
+    this.workspaceUuid = workspaceUuid;
     this.userEmailToRemove = userEmailToRemove;
   }
 
@@ -47,7 +47,7 @@ public class MarkPrivateResourcesAbandonedStep implements Step {
     // If the user has been fully removed from the workspace, mark all their private resources as
     // abandoned.
     resourceDao.setPrivateResourcesStateForWorkspaceUser(
-        workspaceId, userEmailToRemove, PrivateResourceState.ABANDONED);
+        workspaceUuid, userEmailToRemove, PrivateResourceState.ABANDONED);
     return StepResult.getStepResultSuccess();
   }
 

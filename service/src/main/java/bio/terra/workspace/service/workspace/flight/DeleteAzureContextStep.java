@@ -12,23 +12,23 @@ import org.slf4j.LoggerFactory;
 public class DeleteAzureContextStep implements Step {
   private final Logger logger = LoggerFactory.getLogger(DeleteAzureContextStep.class);
   private final AzureCloudContextService azureCloudContextService;
-  private final UUID workspaceId;
+  private final UUID workspaceUuid;
 
   protected DeleteAzureContextStep(
-      AzureCloudContextService azureCloudContextService, UUID workspaceId) {
+      AzureCloudContextService azureCloudContextService, UUID workspaceUuid) {
     this.azureCloudContextService = azureCloudContextService;
-    this.workspaceId = workspaceId;
+    this.workspaceUuid = workspaceUuid;
   }
 
   @Override
   public StepResult doStep(FlightContext context) throws InterruptedException, RetryException {
-    azureCloudContextService.deleteAzureCloudContext(workspaceId);
+    azureCloudContextService.deleteAzureCloudContext(workspaceUuid);
     return StepResult.getStepResultSuccess();
   }
 
   @Override
   public StepResult undoStep(FlightContext context) throws InterruptedException {
-    logger.error("Unable to undo DAO deletion of azure context [{}]", workspaceId);
+    logger.error("Unable to undo DAO deletion of azure context [{}]", workspaceUuid);
     return context.getResult();
   }
 }

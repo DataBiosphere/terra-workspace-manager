@@ -13,17 +13,17 @@ import java.util.UUID;
 
 public class CheckUserStillInWorkspaceStep implements Step {
 
-  private final UUID workspaceId;
+  private final UUID workspaceUuid;
   private final SamService samService;
   private final AuthenticatedUserRequest userRequest;
   private final String removedUserEmail;
 
   public CheckUserStillInWorkspaceStep(
-      UUID workspaceId,
+      UUID workspaceUuid,
       String removedUserEmail,
       SamService samService,
       AuthenticatedUserRequest userRequest) {
-    this.workspaceId = workspaceId;
+    this.workspaceUuid = workspaceUuid;
     this.samService = samService;
     this.userRequest = userRequest;
     this.removedUserEmail = removedUserEmail;
@@ -34,7 +34,7 @@ public class CheckUserStillInWorkspaceStep implements Step {
     boolean userCanReadWorkspace =
         samService.userIsAuthorized(
             SamConstants.SamResource.WORKSPACE,
-            workspaceId.toString(),
+            workspaceUuid.toString(),
             SamConstants.SamWorkspaceAction.READ,
             removedUserEmail,
             userRequest);

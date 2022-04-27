@@ -18,14 +18,14 @@ public class ApplicationAbleDaoStep implements Step {
   private static final Logger logger = LoggerFactory.getLogger(ApplicationAbleDaoStep.class);
 
   private final ApplicationDao applicationDao;
-  private final UUID workspaceId;
+  private final UUID workspaceUuid;
   private final String applicationId;
   private final AbleEnum ableEnum;
 
   public ApplicationAbleDaoStep(
-      ApplicationDao applicationDao, UUID workspaceId, String applicationId, AbleEnum ableEnum) {
+      ApplicationDao applicationDao, UUID workspaceUuid, String applicationId, AbleEnum ableEnum) {
     this.applicationDao = applicationDao;
-    this.workspaceId = workspaceId;
+    this.workspaceUuid = workspaceUuid;
     this.applicationId = applicationId;
     this.ableEnum = ableEnum;
   }
@@ -44,9 +44,9 @@ public class ApplicationAbleDaoStep implements Step {
 
     WsmWorkspaceApplication wsmApp;
     if (ableEnum == AbleEnum.ENABLE) {
-      wsmApp = applicationDao.enableWorkspaceApplication(workspaceId, applicationId);
+      wsmApp = applicationDao.enableWorkspaceApplication(workspaceUuid, applicationId);
     } else {
-      wsmApp = applicationDao.disableWorkspaceApplication(workspaceId, applicationId);
+      wsmApp = applicationDao.disableWorkspaceApplication(workspaceUuid, applicationId);
     }
     workingMap.put(JobMapKeys.RESPONSE.getKeyName(), wsmApp);
     return StepResult.getStepResultSuccess();
@@ -62,9 +62,9 @@ public class ApplicationAbleDaoStep implements Step {
     }
 
     if (ableEnum == AbleEnum.ENABLE) {
-      applicationDao.disableWorkspaceApplication(workspaceId, applicationId);
+      applicationDao.disableWorkspaceApplication(workspaceUuid, applicationId);
     } else {
-      applicationDao.enableWorkspaceApplication(workspaceId, applicationId);
+      applicationDao.enableWorkspaceApplication(workspaceUuid, applicationId);
     }
     return StepResult.getStepResultSuccess();
   }

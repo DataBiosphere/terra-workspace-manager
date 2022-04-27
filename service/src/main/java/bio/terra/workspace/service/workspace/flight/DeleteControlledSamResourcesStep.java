@@ -26,17 +26,17 @@ public class DeleteControlledSamResourcesStep implements Step {
   private final Logger logger = LoggerFactory.getLogger(DeleteControlledSamResourcesStep.class);
   private final SamService samService;
   private final ResourceDao resourceDao;
-  private final UUID workspaceId;
+  private final UUID workspaceUuid;
   private final CloudPlatform cloudPlatform;
 
   public DeleteControlledSamResourcesStep(
       SamService samService,
       ResourceDao resourceDao,
-      UUID workspaceId,
+      UUID workspaceUuid,
       CloudPlatform cloudPlatform) {
     this.samService = samService;
     this.resourceDao = resourceDao;
-    this.workspaceId = workspaceId;
+    this.workspaceUuid = workspaceUuid;
     this.cloudPlatform = cloudPlatform;
   }
 
@@ -45,7 +45,7 @@ public class DeleteControlledSamResourcesStep implements Step {
       throws InterruptedException, RetryException {
 
     List<ControlledResource> controlledResourceList =
-        resourceDao.listControlledResources(workspaceId, cloudPlatform);
+        resourceDao.listControlledResources(workspaceUuid, cloudPlatform);
 
     for (ControlledResource resource : controlledResourceList) {
       samService.deleteControlledResource(resource, samService.getWsmServiceAccountToken());
@@ -58,7 +58,7 @@ public class DeleteControlledSamResourcesStep implements Step {
     // Resource deletion can't be undone, so this just surfaces the error from the DO direction
     // instead.
     logger.error(
-        "Unable to undo deletion of controlled resources in Sam for workspace {}", workspaceId);
+        "Unable to undo deletion of controlled resources in Sam for workspace {}", workspaceUuid);
     return flightContext.getResult();
   }
 }

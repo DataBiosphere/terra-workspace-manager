@@ -266,7 +266,7 @@ class WorkspaceServiceTest extends BaseConnectedTest {
     assertEquals("", createdWorkspace.getDisplayName().orElse(null));
     assertEquals("", createdWorkspace.getDescription().orElse(null));
 
-    UUID workspaceId = request.getWorkspaceId();
+    UUID workspaceUuid = request.getWorkspaceId();
     String name = "My workspace";
     String description = "The greatest workspace";
     Map<String, String> propertyMap2 = new HashMap<>();
@@ -275,7 +275,7 @@ class WorkspaceServiceTest extends BaseConnectedTest {
 
     Workspace updatedWorkspace =
         workspaceService.updateWorkspace(
-            USER_REQUEST, workspaceId, name, description, propertyMap2);
+            USER_REQUEST, workspaceUuid, name, description, propertyMap2);
 
     assertEquals(name, updatedWorkspace.getDisplayName().orElse(null));
     assertEquals(description, updatedWorkspace.getDescription().orElse(null));
@@ -284,7 +284,7 @@ class WorkspaceServiceTest extends BaseConnectedTest {
     String otherDescription = "The deprecated workspace";
 
     Workspace secondUpdatedWorkspace =
-        workspaceService.updateWorkspace(USER_REQUEST, workspaceId, null, otherDescription, null);
+        workspaceService.updateWorkspace(USER_REQUEST, workspaceUuid, null, otherDescription, null);
 
     // Since name is null, leave it alone. Description should be updated.
     assertEquals(name, secondUpdatedWorkspace.getDisplayName().orElse(null));
@@ -294,13 +294,13 @@ class WorkspaceServiceTest extends BaseConnectedTest {
     // Sending through empty strings and an empty map clears the values.
     Map<String, String> propertyMap3 = new HashMap<>();
     Workspace thirdUpdatedWorkspace =
-        workspaceService.updateWorkspace(USER_REQUEST, workspaceId, "", "", propertyMap3);
+        workspaceService.updateWorkspace(USER_REQUEST, workspaceUuid, "", "", propertyMap3);
     assertEquals("", thirdUpdatedWorkspace.getDisplayName().orElse(null));
     assertEquals("", thirdUpdatedWorkspace.getDescription().orElse(null));
 
     assertThrows(
         MissingRequiredFieldException.class,
-        () -> workspaceService.updateWorkspace(USER_REQUEST, workspaceId, null, null, null));
+        () -> workspaceService.updateWorkspace(USER_REQUEST, workspaceUuid, null, null, null));
   }
 
   @Test
@@ -410,15 +410,15 @@ class WorkspaceServiceTest extends BaseConnectedTest {
   @Test
   void deleteWorkspaceWithDataReference() {
     // First, create a workspace.
-    UUID workspaceId = UUID.randomUUID();
-    Workspace request = defaultRequestBuilder(workspaceId).build();
+    UUID workspaceUuid = UUID.randomUUID();
+    Workspace request = defaultRequestBuilder(workspaceUuid).build();
     workspaceService.createWorkspace(request, USER_REQUEST);
 
     // Next, add a data reference to that workspace.
     UUID resourceId = UUID.randomUUID();
     ReferencedDataRepoSnapshotResource snapshot =
         new ReferencedDataRepoSnapshotResource(
-            workspaceId,
+            workspaceUuid,
             resourceId,
             "fake_data_reference",
             null,
@@ -428,7 +428,7 @@ class WorkspaceServiceTest extends BaseConnectedTest {
     referenceResourceService.createReferenceResource(snapshot, USER_REQUEST);
 
     // Validate that the reference exists.
-    referenceResourceService.getReferenceResource(workspaceId, resourceId, USER_REQUEST);
+    referenceResourceService.getReferenceResource(workspaceUuid, resourceId, USER_REQUEST);
 
     // Delete the workspace.
     workspaceService.deleteWorkspace(request.getWorkspaceId(), USER_REQUEST);
@@ -436,11 +436,11 @@ class WorkspaceServiceTest extends BaseConnectedTest {
     // Verify that the workspace was successfully deleted, even though it contained references
     assertThrows(
         WorkspaceNotFoundException.class,
-        () -> workspaceService.getWorkspace(workspaceId, USER_REQUEST));
+        () -> workspaceService.getWorkspace(workspaceUuid, USER_REQUEST));
 
     // Verify that the resource is also deleted
     assertThrows(
-        ResourceNotFoundException.class, () -> resourceDao.getResource(workspaceId, resourceId));
+        ResourceNotFoundException.class, () -> resourceDao.getResource(workspaceUuid, resourceId));
   }
 
   @Test
@@ -549,7 +549,7 @@ class WorkspaceServiceTest extends BaseConnectedTest {
                     .description("Just a plain bucket.")
                     .cloningInstructions(CloningInstructions.COPY_RESOURCE)
                     .resourceId(UUID.randomUUID())
-                    .workspaceId(sourceWorkspaceId)
+                    .workspaceUuid(sourceWorkspaceId)
                     .managedBy(ManagedByType.MANAGED_BY_USER)
                     .privateResourceState(PrivateResourceState.INITIALIZING)
                     .accessScope(AccessScopeType.ACCESS_SCOPE_PRIVATE)
@@ -631,9 +631,9 @@ class WorkspaceServiceTest extends BaseConnectedTest {
    * <p>Because the tests in this class mock Sam, we do not need to explicitly clean up workspaces
    * created here.
    */
-  private Workspace.Builder defaultRequestBuilder(UUID workspaceId) {
+  private Workspace.Builder defaultRequestBuilder(UUID workspaceUuid) {
     return Workspace.builder()
-        .workspaceId(workspaceId)
+        .workspaceUuid(workspaceUuid)
         .spendProfileId(null)
         .workspaceStage(WorkspaceStage.MC_WORKSPACE);
   }

@@ -12,7 +12,7 @@ public class DeleteAzureContextFlight extends Flight {
     super(inputParameters, applicationContext);
 
     FlightBeanBag appContext = FlightBeanBag.getFromObject(applicationContext);
-    UUID workspaceId =
+    UUID workspaceUuid =
         UUID.fromString(inputParameters.get(WorkspaceFlightMapKeys.WORKSPACE_ID, String.class));
 
     RetryRule retryRule = RetryRules.cloudLongRunning();
@@ -20,7 +20,7 @@ public class DeleteAzureContextFlight extends Flight {
     // TODO cleanup any azure resources here
 
     addStep(
-        new DeleteAzureContextStep(appContext.getAzureCloudContextService(), workspaceId),
+        new DeleteAzureContextStep(appContext.getAzureCloudContextService(), workspaceUuid),
         retryRule);
   }
 }

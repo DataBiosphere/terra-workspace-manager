@@ -40,54 +40,54 @@ public class MultiResourcesUtils {
    *
    * @param referencedGcpResourceApi api for referenced resources
    * @param controlledGcpResourceApi api for controlled resources
-   * @param workspaceId workspace where we allocate
+   * @param workspaceUuid workspace where we allocate
    * @return list of resources
    * @throws Exception whatever might come up
    */
   public static List<ResourceMetadata> makeResources(
       ReferencedGcpResourceApi referencedGcpResourceApi,
       ControlledGcpResourceApi controlledGcpResourceApi,
-      UUID workspaceId)
+      UUID workspaceUuid)
       throws Exception {
 
     // Create a shared GCS bucket, a private GCS bucket, and a shared BQ dataset
     GcpGcsBucketResource sharedBucket =
         GcsBucketUtils.makeControlledGcsBucketUserShared(
-                controlledGcpResourceApi, workspaceId, makeName(), CloningInstructionsEnum.NOTHING)
+                controlledGcpResourceApi, workspaceUuid, makeName(), CloningInstructionsEnum.NOTHING)
             .getGcpBucket();
     GcpGcsBucketResource privateBucket =
         GcsBucketUtils.makeControlledGcsBucketUserPrivate(
-                controlledGcpResourceApi, workspaceId, makeName(), CloningInstructionsEnum.NOTHING)
+                controlledGcpResourceApi, workspaceUuid, makeName(), CloningInstructionsEnum.NOTHING)
             .getGcpBucket();
     GcpBigQueryDatasetResource sharedDataset =
         BqDatasetUtils.makeControlledBigQueryDatasetUserShared(
             controlledGcpResourceApi,
-            workspaceId,
+            workspaceUuid,
             makeName(),
             null,
             CloningInstructionsEnum.NOTHING);
     GcpAiNotebookInstanceResource notebook =
         NotebookUtils.makeControlledNotebookUserPrivate(
-                workspaceId, /*instanceId=*/ null, /*location=*/ null, controlledGcpResourceApi)
+                workspaceUuid, /*instanceId=*/ null, /*location=*/ null, controlledGcpResourceApi)
             .getAiNotebookInstance();
     // Create references to the above buckets and datasets
     GcpGcsBucketResource sharedBucketReference =
         GcsBucketUtils.makeGcsBucketReference(
             sharedBucket.getAttributes(),
             referencedGcpResourceApi,
-            workspaceId,
+            workspaceUuid,
             makeName(),
             CloningInstructionsEnum.NOTHING);
     GcpGcsBucketResource privateBucketReference =
         GcsBucketUtils.makeGcsBucketReference(
             privateBucket.getAttributes(),
             referencedGcpResourceApi,
-            workspaceId,
+            workspaceUuid,
             makeName(),
             CloningInstructionsEnum.NOTHING);
     GcpBigQueryDatasetResource datasetReference =
         BqDatasetUtils.makeBigQueryDatasetReference(
-            sharedDataset.getAttributes(), referencedGcpResourceApi, workspaceId, makeName());
+            sharedDataset.getAttributes(), referencedGcpResourceApi, workspaceUuid, makeName());
     return List.of(
         sharedBucket.getMetadata(),
         privateBucket.getMetadata(),
@@ -106,21 +106,21 @@ public class MultiResourcesUtils {
   public static void cleanupResources(
       List<ResourceMetadata> resources,
       ControlledGcpResourceApi controlledGcpResourceApi,
-      UUID workspaceId)
+      UUID workspaceUuid)
       throws Exception {
     for (ResourceMetadata metadata : resources) {
       if (metadata.getStewardshipType() == StewardshipType.CONTROLLED) {
         switch (metadata.getResourceType()) {
           case GCS_BUCKET:
             GcsBucketUtils.deleteControlledGcsBucket(
-                metadata.getResourceId(), workspaceId, controlledGcpResourceApi);
+                metadata.getResourceId(), workspaceUuid, controlledGcpResourceApi);
             break;
           case BIG_QUERY_DATASET:
-            controlledGcpResourceApi.deleteBigQueryDataset(workspaceId, metadata.getResourceId());
+            controlledGcpResourceApi.deleteBigQueryDataset(workspaceUuid, metadata.getResourceId());
             break;
           case AI_NOTEBOOK:
             NotebookUtils.deleteControlledNotebookUserPrivate(
-                workspaceId, metadata.getResourceId(), controlledGcpResourceApi);
+                workspaceUuid, metadata.getResourceId(), controlledGcpResourceApi);
             break;
           default:
             throw new IllegalStateException(

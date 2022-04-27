@@ -20,7 +20,7 @@ import org.apache.commons.lang3.builder.HashCodeBuilder;
  */
 @JsonDeserialize(builder = Workspace.Builder.class)
 public class Workspace {
-  private final UUID workspaceId;
+  private final UUID workspaceUuid;
   private final String displayName;
   private final String description;
   private final SpendProfileId spendProfileId;
@@ -28,13 +28,13 @@ public class Workspace {
   private final WorkspaceStage workspaceStage;
 
   public Workspace(
-      UUID workspaceId,
+      UUID workspaceUuid,
       String displayName,
       String description,
       SpendProfileId spendProfileId,
       Map<String, String> properties,
       WorkspaceStage workspaceStage) {
-    this.workspaceId = workspaceId;
+    this.workspaceUuid = workspaceUuid;
     this.displayName = displayName;
     this.description = description;
     this.spendProfileId = spendProfileId;
@@ -44,7 +44,7 @@ public class Workspace {
 
   /** The globally unique identifier of this workspace */
   public UUID getWorkspaceId() {
-    return workspaceId;
+    return workspaceUuid;
   }
 
   /** Optional display name for the workspace. */
@@ -87,7 +87,7 @@ public class Workspace {
     Workspace workspace = (Workspace) o;
 
     return new EqualsBuilder()
-        .append(workspaceId, workspace.workspaceId)
+        .append(workspaceUuid, workspace.workspaceUuid)
         .append(displayName, workspace.displayName)
         .append(description, workspace.description)
         .append(spendProfileId, workspace.spendProfileId)
@@ -99,7 +99,7 @@ public class Workspace {
   @Override
   public int hashCode() {
     return new HashCodeBuilder(17, 37)
-        .append(workspaceId)
+        .append(workspaceUuid)
         .append(displayName)
         .append(description)
         .append(spendProfileId)
@@ -114,15 +114,15 @@ public class Workspace {
 
   @JsonPOJOBuilder(withPrefix = "")
   public static class Builder {
-    private UUID workspaceId;
+    private UUID workspaceUuid;
     private String displayName;
     private String description;
     private SpendProfileId spendProfileId;
     private Map<String, String> properties;
     private WorkspaceStage workspaceStage;
 
-    public Builder workspaceId(UUID workspaceId) {
-      this.workspaceId = workspaceId;
+    public Builder workspaceUuid(UUID workspaceUuid) {
+      this.workspaceUuid = workspaceUuid;
       return this;
     }
 
@@ -162,11 +162,11 @@ public class Workspace {
       if (description == null) {
         description = "";
       }
-      if (workspaceId == null || workspaceStage == null) {
+      if (workspaceUuid == null || workspaceStage == null) {
         throw new MissingRequiredFieldsException("Workspace requires id and stage");
       }
       return new Workspace(
-          workspaceId, displayName, description, spendProfileId, properties, workspaceStage);
+          workspaceUuid, displayName, description, spendProfileId, properties, workspaceStage);
     }
   }
 }

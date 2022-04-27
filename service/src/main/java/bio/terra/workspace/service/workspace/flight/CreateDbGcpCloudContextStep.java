@@ -12,25 +12,25 @@ import java.util.UUID;
  * context for the workspace.
  */
 public class CreateDbGcpCloudContextStep implements Step {
-  private final UUID workspaceId;
+  private final UUID workspaceUuid;
   private final GcpCloudContextService gcpCloudContextService;
 
   public CreateDbGcpCloudContextStep(
-      UUID workspaceId, GcpCloudContextService gcpCloudContextService) {
-    this.workspaceId = workspaceId;
+      UUID workspaceUuid, GcpCloudContextService gcpCloudContextService) {
+    this.workspaceUuid = workspaceUuid;
     this.gcpCloudContextService = gcpCloudContextService;
   }
 
   @Override
   public StepResult doStep(FlightContext flightContext) throws InterruptedException {
-    gcpCloudContextService.createGcpCloudContextStart(workspaceId, flightContext.getFlightId());
+    gcpCloudContextService.createGcpCloudContextStart(workspaceUuid, flightContext.getFlightId());
     return StepResult.getStepResultSuccess();
   }
 
   @Override
   public StepResult undoStep(FlightContext flightContext) throws InterruptedException {
     // Delete the cloud context, but only if it is the one we created
-    gcpCloudContextService.deleteGcpCloudContextWithCheck(workspaceId, flightContext.getFlightId());
+    gcpCloudContextService.deleteGcpCloudContextWithCheck(workspaceUuid, flightContext.getFlightId());
     return StepResult.getStepResultSuccess();
   }
 }

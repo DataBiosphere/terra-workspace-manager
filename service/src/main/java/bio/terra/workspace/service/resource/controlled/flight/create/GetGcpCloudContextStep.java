@@ -15,15 +15,15 @@ import org.slf4j.LoggerFactory;
 public class GetGcpCloudContextStep implements Step {
 
   private static final Logger logger = LoggerFactory.getLogger(GetGcpCloudContextStep.class);
-  private final UUID workspaceId;
+  private final UUID workspaceUuid;
   private final GcpCloudContextService gcpCloudContextService;
   private final AuthenticatedUserRequest userRequest;
 
   public GetGcpCloudContextStep(
-      UUID workspaceId,
+      UUID workspaceUuid,
       GcpCloudContextService gcpCloudContextService,
       AuthenticatedUserRequest userRequest) {
-    this.workspaceId = workspaceId;
+    this.workspaceUuid = workspaceUuid;
     this.gcpCloudContextService = gcpCloudContextService;
     this.userRequest = userRequest;
   }
@@ -35,7 +35,7 @@ public class GetGcpCloudContextStep implements Step {
     // It is idempotent. Either the update to the database with proper policy names
     // will work, or it won't. So re-doing this step is fine.
     GcpCloudContext context =
-        gcpCloudContextService.getRequiredGcpCloudContext(workspaceId, userRequest);
+        gcpCloudContextService.getRequiredGcpCloudContext(workspaceUuid, userRequest);
     flightContext.getWorkingMap().put(ControlledResourceKeys.GCP_CLOUD_CONTEXT, context);
     return StepResult.getStepResultSuccess();
   }

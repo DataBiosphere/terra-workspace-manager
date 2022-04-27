@@ -31,19 +31,19 @@ public class RevokePetUsagePermissionStep implements Step {
 
   private static final Logger logger = LoggerFactory.getLogger(RevokePetUsagePermissionStep.class);
 
-  private final UUID workspaceId;
+  private final UUID workspaceUuid;
   private final String userEmailToRemove;
   private final PetSaService petSaService;
   private final GcpCloudContextService gcpCloudContextService;
   private final AuthenticatedUserRequest userRequest;
 
   public RevokePetUsagePermissionStep(
-      UUID workspaceId,
+      UUID workspaceUuid,
       String userEmailToRemove,
       PetSaService petSaService,
       GcpCloudContextService gcpCloudContextService,
       AuthenticatedUserRequest userRequest) {
-    this.workspaceId = workspaceId;
+    this.workspaceUuid = workspaceUuid;
     this.userEmailToRemove = userEmailToRemove;
     this.petSaService = petSaService;
     this.gcpCloudContextService = gcpCloudContextService;
@@ -61,7 +61,7 @@ public class RevokePetUsagePermissionStep implements Step {
     }
     String updatedPolicyEtag =
         petSaService
-            .disablePetServiceAccountImpersonation(workspaceId, userEmailToRemove, userRequest)
+            .disablePetServiceAccountImpersonation(workspaceUuid, userEmailToRemove, userRequest)
             .map(Policy::getEtag)
             .orElse(null);
     workingMap.put(PetSaKeys.MODIFIED_PET_SA_POLICY_ETAG, updatedPolicyEtag);
@@ -83,11 +83,11 @@ public class RevokePetUsagePermissionStep implements Step {
       logger.info(
           "Unable to undo RevokePetUsagePermissionStep for user {} in workspace {} as do step did not complete.",
           userEmailToRemove,
-          workspaceId);
+          workspaceUuid);
       return StepResult.getStepResultSuccess();
     }
     petSaService.enablePetServiceAccountImpersonationWithEtag(
-        workspaceId, userEmailToRemove, userRequest.getRequiredToken(), expectedEtag);
+        workspaceUuid, userEmailToRemove, userRequest.getRequiredToken(), expectedEtag);
     return StepResult.getStepResultSuccess();
   }
 
@@ -110,7 +110,7 @@ public class RevokePetUsagePermissionStep implements Step {
     }
     // Pet service accounts only live in a GCP context. If this workspace does not have a GCP
     // context, this step does not need to do anything.
-    Optional<String> maybeProjectId = gcpCloudContextService.getGcpProject(workspaceId);
+    Optional<String> maybeProjectId = gcpCloudContextService.getGcpProject(workspaceUuid);
     if (maybeProjectId.isEmpty()) {
       return Optional.empty();
     }

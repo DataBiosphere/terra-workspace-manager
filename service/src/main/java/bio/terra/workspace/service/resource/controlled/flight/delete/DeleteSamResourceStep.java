@@ -19,7 +19,7 @@ public class DeleteSamResourceStep implements Step {
 
   private final ResourceDao resourceDao;
   private final SamService samService;
-  private final UUID workspaceId;
+  private final UUID workspaceUuid;
   private final UUID resourceId;
   private final AuthenticatedUserRequest userRequest;
 
@@ -28,19 +28,19 @@ public class DeleteSamResourceStep implements Step {
   public DeleteSamResourceStep(
       ResourceDao resourceDao,
       SamService samService,
-      UUID workspaceId,
+      UUID workspaceUuid,
       UUID resourceId,
       AuthenticatedUserRequest userRequest) {
     this.resourceDao = resourceDao;
     this.samService = samService;
-    this.workspaceId = workspaceId;
+    this.workspaceUuid = workspaceUuid;
     this.resourceId = resourceId;
     this.userRequest = userRequest;
   }
 
   @Override
   public StepResult doStep(FlightContext flightContext) throws InterruptedException {
-    WsmResource wsmResource = resourceDao.getResource(workspaceId, resourceId);
+    WsmResource wsmResource = resourceDao.getResource(workspaceUuid, resourceId);
     ControlledResource resource = wsmResource.castToControlledResource();
     // deleteControlledResource already handles duplicate deletion, so we do not need to explicitly
     // handle it inside this step.
@@ -51,7 +51,7 @@ public class DeleteSamResourceStep implements Step {
   @Override
   public StepResult undoStep(FlightContext flightContext) throws InterruptedException {
     // No undo for delete. There is no way to put it back.
-    logger.error("Cannot undo delete of Sam resource {} in workspace {}.", resourceId, workspaceId);
+    logger.error("Cannot undo delete of Sam resource {} in workspace {}.", resourceId, workspaceUuid);
     // Surface whatever error caused Stairway to begin undoing.
     return flightContext.getResult();
   }

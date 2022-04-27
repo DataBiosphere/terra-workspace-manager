@@ -42,10 +42,10 @@ public class AzureDisabledTest extends BaseConnectedTest {
   public void azureDisabledTest() throws InterruptedException {
     Workspace request =
         Workspace.builder()
-            .workspaceId(UUID.randomUUID())
+            .workspaceUuid(UUID.randomUUID())
             .workspaceStage(WorkspaceStage.MC_WORKSPACE)
             .build();
-    UUID workspaceId =
+    UUID workspaceUuid =
         workspaceService.createWorkspace(request, userAccessUtils.defaultUserAuthRequest());
 
     AuthenticatedUserRequest userRequest = userAccessUtils.defaultUserAuthRequest();
@@ -55,17 +55,17 @@ public class AzureDisabledTest extends BaseConnectedTest {
         FeatureNotSupportedException.class,
         () ->
             workspaceService.createAzureCloudContext(
-                workspaceId, uuid.toString(), userRequest, null, null));
+                workspaceUuid, uuid.toString(), userRequest, null, null));
 
     assertThrows(
         FeatureNotSupportedException.class,
-        () -> workspaceService.getAuthorizedAzureCloudContext(workspaceId, userRequest));
+        () -> workspaceService.getAuthorizedAzureCloudContext(workspaceUuid, userRequest));
 
     final ApiAzureIpCreationParameters ipCreationParameters =
         ControlledResourceFixtures.getAzureIpCreationParameters();
 
     ControlledResourceFields commonFields =
-        ControlledResourceFixtures.makeDefaultControlledResourceFields(workspaceId);
+        ControlledResourceFixtures.makeDefaultControlledResourceFields(workspaceUuid);
 
     ControlledAzureIpResource ipResource =
         ControlledAzureIpResource.builder()

@@ -29,7 +29,7 @@ public class ReferencedDataRepoSnapshotResource extends ReferencedResource {
   /**
    * Constructor for serialized form for Stairway use
    *
-   * @param workspaceId workspace unique identifier
+   * @param workspaceUuid workspace unique identifier
    * @param resourceId resource unique identifier
    * @param name name - may be null
    * @param description description - may be null
@@ -39,14 +39,14 @@ public class ReferencedDataRepoSnapshotResource extends ReferencedResource {
    */
   @JsonCreator
   public ReferencedDataRepoSnapshotResource(
-      @JsonProperty("workspaceId") UUID workspaceId,
+      @JsonProperty("workspaceUuid") UUID workspaceUuid,
       @JsonProperty("resourceId") UUID resourceId,
       @JsonProperty("name") String name,
       @JsonProperty("description") String description,
       @JsonProperty("cloningInstructions") CloningInstructions cloningInstructions,
       @JsonProperty("instanceName") String instanceName,
       @JsonProperty("snapshotId") String snapshotId) {
-    super(workspaceId, resourceId, name, description, cloningInstructions);
+    super(workspaceUuid, resourceId, name, description, cloningInstructions);
     this.instanceName = instanceName;
     this.snapshotId = snapshotId;
     validate();
@@ -152,7 +152,7 @@ public class ReferencedDataRepoSnapshotResource extends ReferencedResource {
         .name(getName())
         .snapshotId(getSnapshotId())
         .resourceId(getResourceId())
-        .workspaceId(getWorkspaceId());
+        .workspaceUuid(getWorkspaceId());
   }
 
   public static class Builder {
@@ -162,10 +162,10 @@ public class ReferencedDataRepoSnapshotResource extends ReferencedResource {
     private String name;
     private String snapshotId;
     private UUID resourceId;
-    private UUID workspaceId;
+    private UUID workspaceUuid;
 
-    public ReferencedDataRepoSnapshotResource.Builder workspaceId(UUID workspaceId) {
-      this.workspaceId = workspaceId;
+    public ReferencedDataRepoSnapshotResource.Builder workspaceUuid(UUID workspaceUuid) {
+      this.workspaceUuid = workspaceUuid;
       return this;
     }
 
@@ -203,7 +203,7 @@ public class ReferencedDataRepoSnapshotResource extends ReferencedResource {
     public ReferencedDataRepoSnapshotResource build() {
       // On the create path, we can omit the resourceId and have it filled in by the builder.
       return new ReferencedDataRepoSnapshotResource(
-          workspaceId,
+          workspaceUuid,
           Optional.ofNullable(resourceId).orElse(UUID.randomUUID()),
           name,
           description,

@@ -214,7 +214,7 @@ public class CreateAzureVmStep implements Step {
           vmConfigurationCommonStep
               .withSpecializedLinuxCustomImage(creationParameters.getVmImage().getUri())
               .withExistingDataDisk(disk)
-              .withTag("workspaceId", resource.getWorkspaceId().toString())
+              .withTag("workspaceUuid", resource.getWorkspaceId().toString())
               .withTag("resourceId", resource.getResourceId().toString())
               .withSize(VirtualMachineSizeTypes.fromString(resource.getVmSize()));
     } else {
@@ -227,7 +227,7 @@ public class CreateAzureVmStep implements Step {
               .withRootUsername(creationParameters.getVmUser().getName())
               .withRootPassword(creationParameters.getVmUser().getPassword())
               .withExistingDataDisk(disk)
-              .withTag("workspaceId", resource.getWorkspaceId().toString())
+              .withTag("workspaceUuid", resource.getWorkspaceId().toString())
               .withTag("resourceId", resource.getResourceId().toString())
               .withSize(VirtualMachineSizeTypes.fromString(resource.getVmSize()));
     }

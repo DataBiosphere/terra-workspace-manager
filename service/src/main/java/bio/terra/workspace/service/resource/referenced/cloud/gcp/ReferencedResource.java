@@ -12,12 +12,12 @@ import javax.annotation.Nullable;
 
 public abstract class ReferencedResource extends WsmResource {
   public ReferencedResource(
-      UUID workspaceId,
+      UUID workspaceUuid,
       UUID resourceId,
       String name,
       @Nullable String description,
       CloningInstructions cloningInstructions) {
-    super(workspaceId, resourceId, name, description, cloningInstructions);
+    super(workspaceUuid, resourceId, name, description, cloningInstructions);
   }
 
   public ReferencedResource(DbResource dbResource) {

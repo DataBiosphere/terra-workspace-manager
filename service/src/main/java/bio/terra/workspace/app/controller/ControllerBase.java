@@ -106,7 +106,7 @@ public class ControllerBase {
    * @return PrivateUserRole holding the user email and the role list
    */
   public PrivateUserRole computePrivateUserRole(
-      UUID workspaceId,
+      UUID workspaceUuid,
       ApiControlledResourceCommonFields commonFields,
       AuthenticatedUserRequest userRequest) {
 
@@ -139,7 +139,7 @@ public class ControllerBase {
               () ->
                   samService.userIsAuthorized(
                       SamConstants.SamResource.WORKSPACE,
-                      workspaceId.toString(),
+                      workspaceUuid.toString(),
                       SamConstants.SamWorkspaceAction.READ,
                       userEmail,
                       userRequest),

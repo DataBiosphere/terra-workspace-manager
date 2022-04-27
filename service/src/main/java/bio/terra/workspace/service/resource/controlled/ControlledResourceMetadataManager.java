@@ -34,28 +34,28 @@ public class ControlledResourceMetadataManager {
    * Update the name and description metadata fields of a controlled resource. These are only stored
    * inside WSM, so this does not require any calls to clouds.
    *
-   * @param workspaceId workspace of interest
+   * @param workspaceUuid workspace of interest
    * @param resourceId resource to update
    * @param name name to change - may be null, in which case resource name will not be changed.
    * @param description description to change - may be null, in which case resource description will
    *     not be changed.
    */
   public void updateControlledResourceMetadata(
-      UUID workspaceId,
+      UUID workspaceUuid,
       UUID resourceId,
       @Nullable String name,
       @Nullable String description,
       AuthenticatedUserRequest userRequest) {
-    stageService.assertMcWorkspace(workspaceId, "updateControlledResource");
+    stageService.assertMcWorkspace(workspaceUuid, "updateControlledResource");
     validateControlledResourceAndAction(
-        userRequest, workspaceId, resourceId, SamControlledResourceActions.EDIT_ACTION);
+        userRequest, workspaceUuid, resourceId, SamControlledResourceActions.EDIT_ACTION);
     // Name may be null if the user is not updating it in this request.
     if (name != null) {
       ResourceValidationUtils.validateResourceName(name);
     }
     // Description may also be null, but this validator accepts null descriptions.
     ResourceValidationUtils.validateResourceDescriptionName(description);
-    resourceDao.updateResource(workspaceId, resourceId, name, description);
+    resourceDao.updateResource(workspaceUuid, resourceId, name, description);
   }
 
   /**
@@ -71,15 +71,15 @@ public class ControlledResourceMetadataManager {
    * the resource in question.
    *
    * @param userRequest the user's authenticated request
-   * @param workspaceId if of the workspace this resource exists in
+   * @param workspaceUuid if of the workspace this resource exists in
    * @param resourceId id of the resource in question
    * @param action the action to authorize against the resource
    * @return validated resource
    */
   @Traced
   public WsmResource validateControlledResourceAndAction(
-      AuthenticatedUserRequest userRequest, UUID workspaceId, UUID resourceId, String action) {
-    WsmResource resource = resourceDao.getResource(workspaceId, resourceId);
+      AuthenticatedUserRequest userRequest, UUID workspaceUuid, UUID resourceId, String action) {
+    WsmResource resource = resourceDao.getResource(workspaceUuid, resourceId);
     ControlledResource controlledResource = resource.castToControlledResource();
     SamRethrow.onInterrupted(
         () ->

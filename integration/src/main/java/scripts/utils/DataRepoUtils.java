@@ -16,7 +16,7 @@ public class DataRepoUtils {
   /** Calls WSM to create a referenced TDR snapshot in the specified workspace. */
   public static DataRepoSnapshotResource makeDataRepoSnapshotReference(
       ReferencedGcpResourceApi resourceApi,
-      UUID workspaceId,
+      UUID workspaceUuid,
       String name,
       String dataRepoSnapshotId,
       String dataRepoInstanceName)
@@ -34,13 +34,13 @@ public class DataRepoUtils {
                     .snapshot(dataRepoSnapshotId)
                     .instanceName(dataRepoInstanceName));
 
-    return resourceApi.createDataRepoSnapshotReference(body, workspaceId);
+    return resourceApi.createDataRepoSnapshotReference(body, workspaceUuid);
   }
 
   /** Updates name, description, and/or referencing target of a data repo snapshot reference. */
   public static void updateDataRepoSnapshotReferenceResource(
       ReferencedGcpResourceApi resourceApi,
-      UUID workspaceId,
+      UUID workspaceUuid,
       UUID resourceId,
       @Nullable String name,
       @Nullable String description,
@@ -61,6 +61,6 @@ public class DataRepoUtils {
     if (snapshot != null) {
       body.setSnapshot(snapshot);
     }
-    resourceApi.updateDataRepoSnapshotReferenceResource(body, workspaceId, resourceId);
+    resourceApi.updateDataRepoSnapshotReferenceResource(body, workspaceUuid, resourceId);
   }
 }

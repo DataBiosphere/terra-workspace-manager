@@ -27,7 +27,7 @@ public class WsmResourceService {
   }
 
   public List<WsmResource> enumerateResources(
-      UUID workspaceId,
+      UUID workspaceUuid,
       @Nullable WsmResourceFamily cloudResourceType,
       @Nullable StewardshipType stewardshipType,
       int offset,
@@ -37,9 +37,9 @@ public class WsmResourceService {
     // First, we check if the caller has read action on the workspace. If not, we are done. They see
     // nothing!
     workspaceService.validateWorkspaceAndAction(
-        userRequest, workspaceId, SamConstants.SamWorkspaceAction.READ);
+        userRequest, workspaceUuid, SamConstants.SamWorkspaceAction.READ);
 
     return resourceDao.enumerateResources(
-        workspaceId, cloudResourceType, stewardshipType, offset, limit);
+        workspaceUuid, cloudResourceType, stewardshipType, offset, limit);
   }
 }

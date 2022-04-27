@@ -93,10 +93,10 @@ class CreateGcpContextFlightTest extends BaseConnectedTest {
   @Test
   @DisabledIfEnvironmentVariable(named = "TEST_ENV", matches = BUFFER_SERVICE_DISABLED_ENVS_REG_EX)
   void successCreatesProjectAndContext() throws Exception {
-    UUID workspaceId = createWorkspace(spendUtils.defaultSpendId());
+    UUID workspaceUuid = createWorkspace(spendUtils.defaultSpendId());
     AuthenticatedUserRequest userRequest = userAccessUtils.defaultUserAuthRequest();
 
-    assertTrue(testUtils.getAuthorizedGcpCloudContext(workspaceId, userRequest).isEmpty());
+    assertTrue(testUtils.getAuthorizedGcpCloudContext(workspaceUuid, userRequest).isEmpty());
 
     // Retry steps once to validate idempotency.
     Map<String, StepStatus> retrySteps = getStepNameToStepStatusMap();
@@ -106,7 +106,7 @@ class CreateGcpContextFlightTest extends BaseConnectedTest {
         StairwayTestUtils.blockUntilFlightCompletes(
             jobService.getStairway(),
             CreateGcpContextFlight.class,
-            createInputParameters(workspaceId, userRequest),
+            createInputParameters(workspaceUuid, userRequest),
             STAIRWAY_FLIGHT_TIMEOUT,
             debugInfo);
     assertEquals(FlightStatus.SUCCESS, flightState.getFlightStatus());
@@ -114,10 +114,10 @@ class CreateGcpContextFlightTest extends BaseConnectedTest {
     String projectId =
         flightState.getResultMap().get().get(WorkspaceFlightMapKeys.GCP_PROJECT_ID, String.class);
 
-    assertTrue(testUtils.getAuthorizedGcpCloudContext(workspaceId, userRequest).isPresent());
+    assertTrue(testUtils.getAuthorizedGcpCloudContext(workspaceUuid, userRequest).isPresent());
 
     String contextProjectId =
-        workspaceService.getAuthorizedRequiredGcpProject(workspaceId, userRequest);
+        workspaceService.getAuthorizedRequiredGcpProject(workspaceUuid, userRequest);
     assertEquals(projectId, contextProjectId);
 
     Project project = crl.getCloudResourceManagerCow().projects().get(projectId).execute();
@@ -128,28 +128,28 @@ class CreateGcpContextFlightTest extends BaseConnectedTest {
             .getProjectBillingInfo("projects/" + projectId)
             .getBillingAccountName());
     assertRolesExist(project);
-    assertPolicyGroupsSynced(workspaceId, project);
+    assertPolicyGroupsSynced(workspaceUuid, project);
   }
 
   @Test
   @DisabledIfEnvironmentVariable(named = "TEST_ENV", matches = BUFFER_SERVICE_DISABLED_ENVS_REG_EX)
   void createsProjectAndContext_noBillingAccount_flightFailsAndGcpProjectNotCreated()
       throws Exception {
-    UUID workspaceId = createWorkspace(spendUtils.noBillingAccount());
+    UUID workspaceUuid = createWorkspace(spendUtils.noBillingAccount());
     AuthenticatedUserRequest userRequest = userAccessUtils.defaultUserAuthRequest();
-    assertTrue(testUtils.getAuthorizedGcpCloudContext(workspaceId, userRequest).isEmpty());
+    assertTrue(testUtils.getAuthorizedGcpCloudContext(workspaceUuid, userRequest).isEmpty());
 
     FlightState flightState =
         StairwayTestUtils.blockUntilFlightCompletes(
             jobService.getStairway(),
             CreateGcpContextFlight.class,
-            createInputParameters(workspaceId, userRequest),
+            createInputParameters(workspaceUuid, userRequest),
             STAIRWAY_FLIGHT_TIMEOUT,
             FlightDebugInfo.newBuilder().build());
 
     assertEquals(FlightStatus.ERROR, flightState.getFlightStatus());
     assertEquals(NoBillingAccountException.class, flightState.getException().get().getClass());
-    assertTrue(testUtils.getAuthorizedGcpCloudContext(workspaceId, userRequest).isEmpty());
+    assertTrue(testUtils.getAuthorizedGcpCloudContext(workspaceUuid, userRequest).isEmpty());
     assertFalse(
         flightState.getResultMap().get().containsKey(WorkspaceFlightMapKeys.GCP_PROJECT_ID));
   }
@@ -158,21 +158,21 @@ class CreateGcpContextFlightTest extends BaseConnectedTest {
   @DisabledIfEnvironmentVariable(named = "TEST_ENV", matches = BUFFER_SERVICE_DISABLED_ENVS_REG_EX)
   void createsProjectAndContext_emptySpendProfile_flightFailsAndGcpProjectNotCreated()
       throws Exception {
-    UUID workspaceId = createWorkspace(null);
+    UUID workspaceUuid = createWorkspace(null);
     AuthenticatedUserRequest userRequest = userAccessUtils.defaultUserAuthRequest();
-    assertTrue(testUtils.getAuthorizedGcpCloudContext(workspaceId, userRequest).isEmpty());
+    assertTrue(testUtils.getAuthorizedGcpCloudContext(workspaceUuid, userRequest).isEmpty());
 
     FlightState flightState =
         StairwayTestUtils.blockUntilFlightCompletes(
             jobService.getStairway(),
             CreateGcpContextFlight.class,
-            createInputParameters(workspaceId, userRequest),
+            createInputParameters(workspaceUuid, userRequest),
             STAIRWAY_FLIGHT_TIMEOUT,
             FlightDebugInfo.newBuilder().build());
 
     assertEquals(FlightStatus.ERROR, flightState.getFlightStatus());
     assertEquals(MissingSpendProfileException.class, flightState.getException().get().getClass());
-    assertTrue(testUtils.getAuthorizedGcpCloudContext(workspaceId, userRequest).isEmpty());
+    assertTrue(testUtils.getAuthorizedGcpCloudContext(workspaceUuid, userRequest).isEmpty());
     assertFalse(
         flightState.getResultMap().get().containsKey(WorkspaceFlightMapKeys.GCP_PROJECT_ID));
   }
@@ -188,14 +188,14 @@ class CreateGcpContextFlightTest extends BaseConnectedTest {
                 Mockito.any(),
                 Mockito.eq(SamSpendProfileAction.LINK)))
         .thenReturn(false);
-    UUID workspaceId = createWorkspace(spendUtils.defaultSpendId());
+    UUID workspaceUuid = createWorkspace(spendUtils.defaultSpendId());
     AuthenticatedUserRequest unauthorizedUserRequest = userAccessUtils.secondUserAuthRequest();
 
     FlightState flightState =
         StairwayTestUtils.blockUntilFlightCompletes(
             jobService.getStairway(),
             CreateGcpContextFlight.class,
-            createInputParameters(workspaceId, unauthorizedUserRequest),
+            createInputParameters(workspaceUuid, unauthorizedUserRequest),
             STAIRWAY_FLIGHT_TIMEOUT,
             FlightDebugInfo.newBuilder().build());
 
@@ -208,9 +208,9 @@ class CreateGcpContextFlightTest extends BaseConnectedTest {
   @Test
   @DisabledIfEnvironmentVariable(named = "TEST_ENV", matches = BUFFER_SERVICE_DISABLED_ENVS_REG_EX)
   void errorRevertsChanges() throws Exception {
-    UUID workspaceId = createWorkspace(spendUtils.defaultSpendId());
+    UUID workspaceUuid = createWorkspace(spendUtils.defaultSpendId());
     AuthenticatedUserRequest userRequest = userAccessUtils.defaultUserAuthRequest();
-    assertTrue(testUtils.getAuthorizedGcpCloudContext(workspaceId, userRequest).isEmpty());
+    assertTrue(testUtils.getAuthorizedGcpCloudContext(workspaceUuid, userRequest).isEmpty());
 
     // Submit a flight class that always errors.
     Map<String, StepStatus> retrySteps = getStepNameToStepStatusMap();
@@ -220,11 +220,11 @@ class CreateGcpContextFlightTest extends BaseConnectedTest {
         StairwayTestUtils.blockUntilFlightCompletes(
             jobService.getStairway(),
             CreateGcpContextFlight.class,
-            createInputParameters(workspaceId, userRequest),
+            createInputParameters(workspaceUuid, userRequest),
             STAIRWAY_FLIGHT_TIMEOUT,
             debugInfo);
     assertEquals(FlightStatus.ERROR, flightState.getFlightStatus());
-    assertTrue(testUtils.getAuthorizedGcpCloudContext(workspaceId, userRequest).isEmpty());
+    assertTrue(testUtils.getAuthorizedGcpCloudContext(workspaceUuid, userRequest).isEmpty());
 
     String projectId =
         flightState.getResultMap().get().get(WorkspaceFlightMapKeys.GCP_PROJECT_ID, String.class);
@@ -247,7 +247,7 @@ class CreateGcpContextFlightTest extends BaseConnectedTest {
   }
 
   /**
-   * Creates a workspace, returning its workspaceId.
+   * Creates a workspace, returning its workspaceUuid.
    *
    * <p>Because the tests in this class mock Sam and Janitor service cleans up GCP projects, we do
    * not need to explicitly clean up the workspaces created here.
@@ -255,7 +255,7 @@ class CreateGcpContextFlightTest extends BaseConnectedTest {
   private UUID createWorkspace(@Nullable SpendProfileId spendProfileId) {
     Workspace request =
         Workspace.builder()
-            .workspaceId(UUID.randomUUID())
+            .workspaceUuid(UUID.randomUUID())
             .workspaceStage(WorkspaceStage.MC_WORKSPACE)
             .spendProfileId(spendProfileId)
             .build();
@@ -264,9 +264,9 @@ class CreateGcpContextFlightTest extends BaseConnectedTest {
 
   /** Create the FlightMap input parameters required for the {@link CreateGcpContextFlight}. */
   private static FlightMap createInputParameters(
-      UUID workspaceId, AuthenticatedUserRequest userRequest) {
+      UUID workspaceUuid, AuthenticatedUserRequest userRequest) {
     FlightMap inputs = new FlightMap();
-    inputs.put(WorkspaceFlightMapKeys.WORKSPACE_ID, workspaceId.toString());
+    inputs.put(WorkspaceFlightMapKeys.WORKSPACE_ID, workspaceUuid.toString());
     inputs.put(JobMapKeys.AUTH_USER_INFO.getKeyName(), userRequest);
     return inputs;
   }
@@ -290,7 +290,7 @@ class CreateGcpContextFlightTest extends BaseConnectedTest {
   }
 
   /** Asserts that Sam groups are granted their appropriate IAM roles on a GCP project. */
-  private void assertPolicyGroupsSynced(UUID workspaceId, Project project) throws Exception {
+  private void assertPolicyGroupsSynced(UUID workspaceUuid, Project project) throws Exception {
     Map<WsmIamRole, String> roleToSamGroup =
         Arrays.stream(WsmIamRole.values())
             // Don't check MANAGER role as it isn't synced to GCP.
@@ -303,7 +303,7 @@ class CreateGcpContextFlightTest extends BaseConnectedTest {
                             + SamRethrow.onInterrupted(
                                 () ->
                                     mockSamService.syncWorkspacePolicy(
-                                        workspaceId,
+                                        workspaceUuid,
                                         role,
                                         userAccessUtils.defaultUserAuthRequest()),
                                 "syncWorkspacePolicy")));

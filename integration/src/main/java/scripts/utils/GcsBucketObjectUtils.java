@@ -50,7 +50,7 @@ public class GcsBucketObjectUtils {
   public static GcpGcsObjectResource makeGcsObjectReference(
       GcpGcsObjectAttributes file,
       ReferencedGcpResourceApi resourceApi,
-      UUID workspaceId,
+      UUID workspaceUuid,
       String name,
       @Nullable CloningInstructionsEnum cloningInstructionsEnum)
       throws Exception {
@@ -67,7 +67,7 @@ public class GcsBucketObjectUtils {
 
     logger.info("Making reference to a gcs bucket file");
     return ClientTestUtils.getWithRetryOnException(
-        () -> resourceApi.createGcsObjectReference(body, workspaceId));
+        () -> resourceApi.createGcsObjectReference(body, workspaceUuid));
   }
 
   /**

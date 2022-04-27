@@ -20,7 +20,7 @@ public class CloudContextMaker {
   private CloudContextMaker() {}
 
   /** Creates a GCP cloud context for a given workspace. Returns the GCP project ID as a string. */
-  public static String createGcpCloudContext(UUID workspaceId, WorkspaceApi workspaceApi)
+  public static String createGcpCloudContext(UUID workspaceUuid, WorkspaceApi workspaceApi)
       throws Exception {
     String contextJobId = UUID.randomUUID().toString();
     var createContext =
@@ -30,10 +30,10 @@ public class CloudContextMaker {
 
     logger.info("Creating GCP cloud context");
     CreateCloudContextResult contextResult =
-        workspaceApi.createCloudContext(createContext, workspaceId);
+        workspaceApi.createCloudContext(createContext, workspaceUuid);
     while (ClientTestUtils.jobIsRunning(contextResult.getJobReport())) {
       Thread.sleep(CREATE_CONTEXT_POLL_INTERVAL.toMillis());
-      contextResult = workspaceApi.getCreateCloudContextResult(workspaceId, contextJobId);
+      contextResult = workspaceApi.getCreateCloudContextResult(workspaceUuid, contextJobId);
     }
     logger.info(
         "Create GCP context status is {}", contextResult.getJobReport().getStatus().toString());
@@ -58,9 +58,9 @@ public class CloudContextMaker {
    * Deletes the GCP cloud context on a given workspace. Cloud context deletion will happen
    * automatically as part of workspace deletion, but can also be executed separately here.
    */
-  public static void deleteGcpCloudContext(UUID workspaceId, WorkspaceApi workspaceApi)
+  public static void deleteGcpCloudContext(UUID workspaceUuid, WorkspaceApi workspaceApi)
       throws Exception {
     logger.info("Deleting the cloud context");
-    workspaceApi.deleteCloudContext(workspaceId, CloudPlatform.GCP);
+    workspaceApi.deleteCloudContext(workspaceUuid, CloudPlatform.GCP);
   }
 }

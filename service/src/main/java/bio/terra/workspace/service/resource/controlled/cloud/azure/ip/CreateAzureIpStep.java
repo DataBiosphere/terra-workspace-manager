@@ -50,7 +50,7 @@ public class CreateAzureIpStep implements Step {
           .withRegion(resource.getRegion())
           .withExistingResourceGroup(azureCloudContext.getAzureResourceGroupId())
           .withDynamicIP()
-          .withTag("workspaceId", resource.getWorkspaceId().toString())
+          .withTag("workspaceUuid", resource.getWorkspaceId().toString())
           .withTag("resourceId", resource.getResourceId().toString())
           .create(
               Defaults.buildContext(

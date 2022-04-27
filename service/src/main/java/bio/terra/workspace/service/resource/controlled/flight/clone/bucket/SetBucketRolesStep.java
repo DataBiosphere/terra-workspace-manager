@@ -121,16 +121,16 @@ public class SetBucketRolesStep implements Step {
     // in a previous step. This is the effective destination bucket name that was either
     // user-supplied
     // or generated randomly.
-    final UUID workspaceId =
+    final UUID workspaceUuid =
         flightContext
             .getInputParameters()
             .get(ControlledResourceKeys.DESTINATION_WORKSPACE_ID, UUID.class);
-    final String projectId = gcpCloudContextService.getRequiredGcpProject(workspaceId);
+    final String projectId = gcpCloudContextService.getRequiredGcpProject(workspaceUuid);
     final String bucketName =
         flightContext
             .getWorkingMap()
             .get(ControlledResourceKeys.DESTINATION_BUCKET_NAME, String.class);
-    return new BucketCloneInputs(workspaceId, projectId, bucketName, DESTINATION_BUCKET_ROLE_NAMES);
+    return new BucketCloneInputs(workspaceUuid, projectId, bucketName, DESTINATION_BUCKET_ROLE_NAMES);
   }
 
   final String getStorageTransferServiceSAEmail(String controlPlaneProjectId) throws IOException {

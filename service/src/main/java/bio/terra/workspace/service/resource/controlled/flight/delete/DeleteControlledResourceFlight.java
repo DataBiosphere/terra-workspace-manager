@@ -32,7 +32,7 @@ public class DeleteControlledResourceFlight extends Flight {
     super(inputParameters, beanBag);
     final FlightBeanBag flightBeanBag = FlightBeanBag.getFromObject(beanBag);
 
-    final UUID workspaceId =
+    final UUID workspaceUuid =
         UUID.fromString(
             FlightUtils.getRequired(
                 inputParameters, WorkspaceFlightMapKeys.WORKSPACE_ID, String.class));
@@ -48,7 +48,7 @@ public class DeleteControlledResourceFlight extends Flight {
     // Get the cloud context for the resource we are deleting
     addStep(
         new GetCloudContextStep(
-            workspaceId,
+            workspaceUuid,
             resource.getResourceType().getCloudPlatform(),
             flightBeanBag.getGcpCloudContextService(),
             flightBeanBag.getAzureCloudContextService(),
@@ -64,14 +64,14 @@ public class DeleteControlledResourceFlight extends Flight {
         new DeleteSamResourceStep(
             flightBeanBag.getResourceDao(),
             flightBeanBag.getSamService(),
-            workspaceId,
+            workspaceUuid,
             resource.getResourceId(),
             userRequest));
 
     // Delete the metadata
     addStep(
         new DeleteMetadataStep(
-            flightBeanBag.getResourceDao(), workspaceId, resource.getResourceId()),
+            flightBeanBag.getResourceDao(), workspaceUuid, resource.getResourceId()),
         RetryRules.shortDatabase());
   }
 }

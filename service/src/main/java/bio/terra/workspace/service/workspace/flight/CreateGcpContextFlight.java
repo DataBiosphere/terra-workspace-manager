@@ -25,7 +25,7 @@ public class CreateGcpContextFlight extends Flight {
     FlightBeanBag appContext = FlightBeanBag.getFromObject(applicationContext);
     CrlService crl = appContext.getCrlService();
 
-    UUID workspaceId =
+    UUID workspaceUuid =
         UUID.fromString(inputParameters.get(WorkspaceFlightMapKeys.WORKSPACE_ID, String.class));
     AuthenticatedUserRequest userRequest =
         inputParameters.get(JobMapKeys.AUTH_USER_INFO.getKeyName(), AuthenticatedUserRequest.class);
@@ -38,7 +38,7 @@ public class CreateGcpContextFlight extends Flight {
         new CheckSpendProfileStep(
             appContext.getWorkspaceDao(),
             appContext.getSpendProfileService(),
-            workspaceId,
+            workspaceUuid,
             userRequest));
     addStep(new GenerateRbsRequestIdStep());
     addStep(
@@ -50,9 +50,9 @@ public class CreateGcpContextFlight extends Flight {
     addStep(new GrantWsmRoleAdminStep(crl), shortRetry);
     addStep(new CreateCustomGcpRolesStep(crl.getIamCow()), shortRetry);
     addStep(
-        new SyncSamGroupsStep(appContext.getSamService(), workspaceId, userRequest), shortRetry);
+        new SyncSamGroupsStep(appContext.getSamService(), workspaceUuid, userRequest), shortRetry);
     addStep(new GcpCloudSyncStep(crl.getCloudResourceManagerCow()), cloudRetry);
-    addStep(new StoreGcpContextStep(appContext.getGcpCloudContextService(), workspaceId), dbRetry);
+    addStep(new StoreGcpContextStep(appContext.getGcpCloudContextService(), workspaceUuid), dbRetry);
     addStep(new SetGcpContextOutputStep());
   }
 }

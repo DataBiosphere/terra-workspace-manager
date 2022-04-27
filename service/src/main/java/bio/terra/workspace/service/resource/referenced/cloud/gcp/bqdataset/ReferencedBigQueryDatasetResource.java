@@ -31,7 +31,7 @@ public class ReferencedBigQueryDatasetResource extends ReferencedResource {
   /**
    * Constructor for serialized form for Stairway use
    *
-   * @param workspaceId workspace unique identifier
+   * @param workspaceUuid workspace unique identifier
    * @param resourceId resource unique identifier
    * @param name name - may be null
    * @param description description - may be null
@@ -41,14 +41,14 @@ public class ReferencedBigQueryDatasetResource extends ReferencedResource {
    */
   @JsonCreator
   public ReferencedBigQueryDatasetResource(
-      @JsonProperty("workspaceId") UUID workspaceId,
+      @JsonProperty("workspaceUuid") UUID workspaceUuid,
       @JsonProperty("resourceId") UUID resourceId,
       @JsonProperty("name") String name,
       @JsonProperty("description") String description,
       @JsonProperty("cloningInstructions") CloningInstructions cloningInstructions,
       @JsonProperty("projectId") String projectId,
       @JsonProperty("datasetName") String datasetName) {
-    super(workspaceId, resourceId, name, description, cloningInstructions);
+    super(workspaceUuid, resourceId, name, description, cloningInstructions);
     this.projectId = projectId;
     this.datasetName = datasetName;
     validate();
@@ -169,11 +169,11 @@ public class ReferencedBigQueryDatasetResource extends ReferencedResource {
         .name(getName())
         .projectId(getProjectId())
         .resourceId(getResourceId())
-        .workspaceId(getWorkspaceId());
+        .workspaceUuid(getWorkspaceId());
   }
 
   public static class Builder {
-    private UUID workspaceId;
+    private UUID workspaceUuid;
     private UUID resourceId;
     private String name;
     private String description;
@@ -181,8 +181,8 @@ public class ReferencedBigQueryDatasetResource extends ReferencedResource {
     private String projectId;
     private String datasetName;
 
-    public ReferencedBigQueryDatasetResource.Builder workspaceId(UUID workspaceId) {
-      this.workspaceId = workspaceId;
+    public ReferencedBigQueryDatasetResource.Builder workspaceUuid(UUID workspaceUuid) {
+      this.workspaceUuid = workspaceUuid;
       return this;
     }
 
@@ -220,7 +220,7 @@ public class ReferencedBigQueryDatasetResource extends ReferencedResource {
     public ReferencedBigQueryDatasetResource build() {
       // On the create path, we can omit the resourceId and have it filled in by the builder.
       return new ReferencedBigQueryDatasetResource(
-          workspaceId,
+          workspaceUuid,
           Optional.ofNullable(resourceId).orElse(UUID.randomUUID()),
           name,
           description,
