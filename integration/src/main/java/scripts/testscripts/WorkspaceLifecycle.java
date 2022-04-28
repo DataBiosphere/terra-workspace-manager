@@ -21,7 +21,7 @@ import scripts.utils.WorkspaceApiTestScriptBase;
 public class WorkspaceLifecycle extends WorkspaceApiTestScriptBase {
   private static final Logger logger = LoggerFactory.getLogger(WorkspaceLifecycle.class);
   // Perf tests run same test in different threads. Use uuid to make userFacingIds unique.
-  String uuid = UUID.randomUUID().toString();
+  private static final String uuid = UUID.randomUUID().toString();
   private static final String invalidUserFacingId = "User facing id" + uuid;
   private static final String validUserFacingId = "user-facing-id" + uuid;
   private static final String validUserFacingId2 = "user-facing-id-2" + uuid;
