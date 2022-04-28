@@ -22,12 +22,12 @@ public class WorkspaceLifecycle extends WorkspaceApiTestScriptBase {
   private static final Logger logger = LoggerFactory.getLogger(WorkspaceLifecycle.class);
   // Perf tests run same test in different threads. Use uuid to make userFacingIds unique.
   private static final String uuid = UUID.randomUUID().toString();
-  private static final String invalidUserFacingId = "User facing id" + uuid;
-  private static final String validUserFacingId = "user-facing-id" + uuid;
-  private static final String validUserFacingId2 = "user-facing-id-2" + uuid;
+  private static final String INVALID_USER_FACING_ID = "User facing id" + uuid;
+  private static final String VALID_USER_FACING_ID = "user-facing-id" + uuid;
+  private static final String VALID_USER_FACING_ID_2 = "user-facing-id-2" + uuid;
 
-  private static final String workspaceName = "name";
-  private static final String workspaceDescriptionString = "description";
+  private static final String WORKSPACE_NAME = "name";
+  private static final String WORKSPACE_DESCRIPTION = "description";
 
   @Override
   public void doUserJourney(TestUserSpecification testUser, WorkspaceApi workspaceApi)
@@ -36,7 +36,7 @@ public class WorkspaceLifecycle extends WorkspaceApiTestScriptBase {
     CreateWorkspaceRequestBody createBody =
         new CreateWorkspaceRequestBody()
             .id(workspaceUuid)
-            .userFacingId(invalidUserFacingId)
+            .userFacingId(INVALID_USER_FACING_ID)
             .stage(WorkspaceStageModel.MC_WORKSPACE);
 
     ApiException ex =
@@ -46,7 +46,7 @@ public class WorkspaceLifecycle extends WorkspaceApiTestScriptBase {
         containsString(
             "ID must have 3-63 characters, contain lowercase letters, numbers, dashes, or underscores, and start with lowercase letter"));
 
-    createBody.userFacingId(validUserFacingId);
+    createBody.userFacingId(VALID_USER_FACING_ID);
     workspaceApi.createWorkspace(createBody);
     ClientTestUtils.assertHttpSuccess(workspaceApi, "CREATE workspace");
 
@@ -57,9 +57,9 @@ public class WorkspaceLifecycle extends WorkspaceApiTestScriptBase {
 
     UpdateWorkspaceRequestBody updateBody =
         new UpdateWorkspaceRequestBody()
-            .userFacingId(invalidUserFacingId)
-            .displayName(workspaceName)
-            .description(workspaceDescriptionString);
+            .userFacingId(INVALID_USER_FACING_ID)
+            .displayName(WORKSPACE_NAME)
+            .description(WORKSPACE_DESCRIPTION);
     ex =
         assertThrows(
             ApiException.class, () -> workspaceApi.updateWorkspace(updateBody, workspaceUuid));
@@ -68,13 +68,13 @@ public class WorkspaceLifecycle extends WorkspaceApiTestScriptBase {
         containsString(
             "ID must have 3-63 characters, contain lowercase letters, numbers, dashes, or underscores, and start with lowercase letter"));
 
-    updateBody.userFacingId(validUserFacingId2);
+    updateBody.userFacingId(VALID_USER_FACING_ID_2);
     WorkspaceDescription updatedDescription =
         workspaceApi.updateWorkspace(updateBody, workspaceUuid);
     ClientTestUtils.assertHttpSuccess(workspaceApi, "PATCH workspace");
-    assertThat(updatedDescription.getUserFacingId(), equalTo(validUserFacingId2));
-    assertThat(updatedDescription.getDisplayName(), equalTo(workspaceName));
-    assertThat(updatedDescription.getDescription(), equalTo(workspaceDescriptionString));
+    assertThat(updatedDescription.getUserFacingId(), equalTo(VALID_USER_FACING_ID_2));
+    assertThat(updatedDescription.getDisplayName(), equalTo(WORKSPACE_NAME));
+    assertThat(updatedDescription.getDescription(), equalTo(WORKSPACE_DESCRIPTION));
 
     workspaceApi.deleteWorkspace(workspaceUuid);
     ClientTestUtils.assertHttpSuccess(workspaceApi, "DELETE workspace");
