@@ -7,6 +7,7 @@ import bio.terra.stairway.StepResult;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.common.utils.FlightUtils;
 import bio.terra.workspace.db.ResourceDao;
+import bio.terra.workspace.generated.model.ApiGcpBigQueryDatasetUpdateParameters;
 import bio.terra.workspace.generated.model.ApiGcpGcsBucketUpdateParameters;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.job.JobMapKeys;
@@ -36,7 +37,8 @@ public class UpdateControlledResourceMetadataStep implements Step {
   @Override
   public StepResult doStep(FlightContext flightContext)
       throws InterruptedException, RetryException {
-    FlightUtils.validateRequiredEntries(flightContext.getInputParameters(),
+    FlightUtils.validateRequiredEntries(
+        flightContext.getInputParameters(),
         ResourceKeys.RESOURCE_NAME,
         ResourceKeys.RESOURCE_DESCRIPTION,
         JobMapKeys.AUTH_USER_INFO.getKeyName());
@@ -46,6 +48,8 @@ public class UpdateControlledResourceMetadataStep implements Step {
         inputParameters.get(ResourceKeys.RESOURCE_DESCRIPTION, String.class);
     final AuthenticatedUserRequest userRequest =
         inputParameters.get(JobMapKeys.AUTH_USER_INFO.getKeyName(), AuthenticatedUserRequest.class);
+
+    // Cloning storage is in different update parameters class depending on resource type.
     final CloningInstructions cloningInstructions;
     if (WsmResourceType.CONTROLLED_GCP_GCS_BUCKET == resource.getResourceType()) {
       final var bucketUpdateParameters =
@@ -55,6 +59,16 @@ public class UpdateControlledResourceMetadataStep implements Step {
           CloningInstructions.fromApiModel(
               Optional.ofNullable(bucketUpdateParameters)
                   .map(ApiGcpGcsBucketUpdateParameters::getCloningInstructions)
+                  .orElse(null));
+    } else if (WsmResourceType.CONTROLLED_GCP_BIG_QUERY_DATASET == resource.getResourceType()) {
+      final var datasetUpdateParameters =
+          inputParameters.get(
+              ControlledResourceKeys.UPDATE_PARAMETERS,
+              ApiGcpBigQueryDatasetUpdateParameters.class);
+      cloningInstructions =
+          CloningInstructions.fromApiModel(
+              Optional.ofNullable(datasetUpdateParameters)
+                  .map(ApiGcpBigQueryDatasetUpdateParameters::getCloningInstructions)
                   .orElse(null));
     } else {
       cloningInstructions = null; // don't change the value

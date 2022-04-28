@@ -234,6 +234,8 @@ components:
             Specify zero (0) to unset an existing value.
             The default partition lifetime will not be updated if this is omitted.
           type: integer
+        cloningInstructions:
+          $ref: '#/components/schemas/CloningInstructionsEnum'
 
     UpdateControlledGcpBigQueryDatasetRequestBody:
       type: object
