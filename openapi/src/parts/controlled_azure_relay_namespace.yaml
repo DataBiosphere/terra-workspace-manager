@@ -44,7 +44,7 @@ paths:
       - $ref: '#/components/parameters/ResourceId'
     get:
       summary: Get a controlled Azure Relay Namespace resource
-      operationId: getRelayNamespace
+      operationId: getAzureRelayNamespace
       tags: [ControlledAzureResource]
       responses:
         '200':
