@@ -109,9 +109,8 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
         Optional.ofNullable(body.getSpendProfile()).map(SpendProfileId::new);
 
     // ET uses userFacingId; CWB doesn't. Schema enforces that userFacingId must be set. CWB doesn't
-    // pass
-    // userFacingId in request, so use id. Prefix with "a" because userFacingId must start with
-    // letter.
+    // pass userFacingId in request, so use id. Prefix with "a" because userFacingId must start with
+    // a letter.
     String userFacingId = Optional.ofNullable(body.getUserFacingId()).orElse("a" + body.getId());
     ControllerValidationUtils.validateUserFacingId(userFacingId);
 
