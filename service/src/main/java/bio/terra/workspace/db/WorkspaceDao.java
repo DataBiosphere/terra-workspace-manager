@@ -100,13 +100,29 @@ public class WorkspaceDao {
       jdbcTemplate.update(sql, params);
       logger.info("Inserted record for workspace {}", workspaceUuid);
     } catch (DuplicateKeyException e) {
-      throw new DuplicateWorkspaceException(
-          String.format(
-              "Workspace with id %s already exists - display name %s stage %s",
-              workspaceUuid,
-              workspace.getDisplayName().toString(),
-              workspace.getWorkspaceStage().toString()),
-          e);
+      if (e.getMessage()
+          .contains("duplicate key value violates unique constraint \"workspace_pkey\"")) {
+        // Workspace with workspace_id already exists.
+        throw new DuplicateWorkspaceException(
+            String.format(
+                "Workspace with id %s already exists - display name %s stage %s",
+                workspaceUuid,
+                workspace.getDisplayName().toString(),
+                workspace.getWorkspaceStage().toString()),
+            e);
+      } else if (e.getMessage()
+          .contains(
+              "duplicate key value violates unique constraint \"workspace_user_facing_id_key\"")) {
+        // workspace_id is new, but workspace with user_facing_id already exists.
+        throw new DuplicateUserFacingIdException(
+                String.format(
+                        // "ID" instead of "userFacingId" because end user sees this.
+                        "Workspace with user facing ID %s already exists",
+                        workspace.getUserFacingId().get()),
+                e);
+      } else {
+        throw e;
+      }
     }
     return workspace.getWorkspaceId();
   }
