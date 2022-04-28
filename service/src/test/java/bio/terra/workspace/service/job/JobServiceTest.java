@@ -72,7 +72,7 @@ class JobServiceTest extends BaseUnitTest {
                 .description("description")
                 .jobId(testJobId)
                 .flightClass(JobServiceTestFlight.class)
-                .workspaceUuid(UUID.randomUUID().toString())
+                .workspaceId(UUID.randomUUID().toString())
                 .userRequest(testUser));
   }
 
@@ -88,7 +88,7 @@ class JobServiceTest extends BaseUnitTest {
                 .jobId(testJobId)
                 .flightClass(JobServiceTestFlight.class)
                 .userRequest(testUser)
-                .workspaceUuid(UUID.randomUUID().toString()));
+                .workspaceId(UUID.randomUUID().toString()));
   }
 
   @Test
@@ -202,7 +202,7 @@ class JobServiceTest extends BaseUnitTest {
             .description(description)
             .flightClass(JobServiceTestFlight.class)
             .userRequest(testUser)
-            .workspaceUuid(workspaceUuid.toString())
+            .workspaceId(workspaceUuid.toString())
             .submit();
     jobService.waitForJob(jobId);
     return jobId;

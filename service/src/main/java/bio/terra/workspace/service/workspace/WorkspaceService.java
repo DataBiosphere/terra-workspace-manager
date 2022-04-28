@@ -96,7 +96,7 @@ public class WorkspaceService {
             .flightClass(WorkspaceCreateFlight.class)
             .request(workspace)
             .userRequest(userRequest)
-            .workspaceUuid(workspaceUuid)
+            .workspaceId(workspaceUuid)
             .operationType(OperationType.CREATE)
             .addParameter(
                 WorkspaceFlightMapKeys.WORKSPACE_STAGE, workspace.getWorkspaceStage().name())
@@ -202,7 +202,7 @@ public class WorkspaceService {
             .description(description)
             .flightClass(WorkspaceDeleteFlight.class)
             .operationType(OperationType.DELETE)
-            .workspaceUuid(id.toString())
+            .workspaceId(id.toString())
             .userRequest(userRequest)
             .addParameter(
                 WorkspaceFlightMapKeys.WORKSPACE_STAGE, workspace.getWorkspaceStage().name());
@@ -236,7 +236,7 @@ public class WorkspaceService {
         .newJob()
         .description("Create Azure Cloud Context " + workspaceUuid)
         .jobId(jobId)
-        .workspaceUuid(workspaceUuid.toString())
+        .workspaceId(workspaceUuid.toString())
         .flightClass(CreateAzureContextFlight.class)
         .request(azureContext)
         .userRequest(userRequest)
@@ -283,7 +283,7 @@ public class WorkspaceService {
         .flightClass(CreateGcpContextFlightV2.class)
         .userRequest(userRequest)
         .operationType(OperationType.CREATE)
-        .workspaceUuid(workspaceUuid.toString())
+        .workspaceId(workspaceUuid.toString())
         .addParameter(JobMapKeys.RESULT_PATH.getKeyName(), resultPath)
         .submit();
   }
@@ -318,7 +318,7 @@ public class WorkspaceService {
         .userRequest(userRequest)
         .request(destinationWorkspace)
         .operationType(OperationType.CLONE)
-        .workspaceUuid(sourceWorkspaceId.toString())
+        .workspaceId(sourceWorkspaceId.toString())
         .addParameter(
             ControlledResourceKeys.SOURCE_WORKSPACE_ID,
             sourceWorkspaceId) // TODO: remove this duplication
@@ -348,7 +348,7 @@ public class WorkspaceService {
         .flightClass(DeleteGcpContextFlight.class)
         .userRequest(userRequest)
         .operationType(OperationType.DELETE)
-        .workspaceUuid(workspaceUuid.toString())
+        .workspaceId(workspaceUuid.toString())
         .submitAndWait(null);
   }
 
@@ -368,7 +368,7 @@ public class WorkspaceService {
         .flightClass(DeleteAzureContextFlight.class)
         .userRequest(userRequest)
         .operationType(OperationType.DELETE)
-        .workspaceUuid(workspaceUuid.toString())
+        .workspaceId(workspaceUuid.toString())
         .submitAndWait(null);
   }
 
@@ -457,7 +457,7 @@ public class WorkspaceService {
         .flightClass(RemoveUserFromWorkspaceFlight.class)
         .userRequest(executingUserRequest)
         .operationType(OperationType.DELETE)
-        .workspaceUuid(workspaceUuid.toString())
+        .workspaceId(workspaceUuid.toString())
         .addParameter(WorkspaceFlightMapKeys.USER_TO_REMOVE, targetUserEmail)
         .addParameter(WorkspaceFlightMapKeys.ROLE_TO_REMOVE, role)
         .submitAndWait(null);

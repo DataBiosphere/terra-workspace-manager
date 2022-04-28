@@ -70,7 +70,7 @@ public class ReferencedResourceService {
             .resource(resource)
             .userRequest(userRequest)
             .operationType(OperationType.CREATE)
-            .workspaceUuid(resource.getWorkspaceId().toString())
+            .workspaceId(resource.getWorkspaceId().toString())
             .resourceType(resource.getResourceType())
             .stewardshipType(StewardshipType.REFERENCED);
 
@@ -135,7 +135,7 @@ public class ReferencedResourceService {
               .resource(resource)
               .userRequest(userRequest)
               .operationType(OperationType.UPDATE)
-              .workspaceUuid(workspaceUuid.toString())
+              .workspaceId(workspaceUuid.toString())
               .resourceType(resource.getResourceType())
               .resourceName(name)
               .addParameter(ResourceKeys.RESOURCE_DESCRIPTION, description);

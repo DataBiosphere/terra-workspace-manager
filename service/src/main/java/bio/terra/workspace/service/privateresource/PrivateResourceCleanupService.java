@@ -153,7 +153,7 @@ public class PrivateResourceCleanupService {
             .description(description)
             .flightClass(RemoveUserFromWorkspaceFlight.class)
             .userRequest(wsmSaRequest)
-            .workspaceUuid(workspaceUserPair.getWorkspaceId().toString())
+            .workspaceId(workspaceUserPair.getWorkspaceId().toString())
             .addParameter(
                 WorkspaceFlightMapKeys.WORKSPACE_ID, workspaceUserPair.getWorkspaceId().toString())
             .addParameter(WorkspaceFlightMapKeys.USER_TO_REMOVE, workspaceUserPair.getUserEmail())

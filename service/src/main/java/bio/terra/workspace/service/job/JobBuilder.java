@@ -31,7 +31,7 @@ public class JobBuilder {
   @Nullable private AuthenticatedUserRequest userRequest;
   // Well-known keys used for filtering workspace jobs
   // All applicable ones of these should be supplied on every flight
-  private String workspaceUuid;
+  private String workspaceId;
   @Nullable private WsmResource resource;
   @Nullable private WsmResourceType resourceType;
   @Nullable private String resourceName;
@@ -74,8 +74,8 @@ public class JobBuilder {
     return this;
   }
 
-  public JobBuilder workspaceUuid(@Nullable String workspaceUuid) {
-    this.workspaceUuid = workspaceUuid;
+  public JobBuilder workspaceId(@Nullable String workspaceId) {
+    this.workspaceId = workspaceId;
     return this;
   }
 
@@ -147,7 +147,7 @@ public class JobBuilder {
       throw new MissingRequiredFieldException("Missing flight class: flightClass");
     }
 
-    if (workspaceUuid == null) {
+    if (workspaceId == null) {
       throw new MissingRequiredFieldException("Missing workspace ID");
     }
 
@@ -173,8 +173,8 @@ public class JobBuilder {
       addParameter(JobMapKeys.AUTH_USER_INFO.getKeyName(), userRequest);
       addParameter(JobMapKeys.SUBJECT_ID.getKeyName(), userRequest.getSubjectId());
     }
-    if (shouldInsert(WorkspaceFlightMapKeys.WORKSPACE_ID, workspaceUuid)) {
-      addParameter(WorkspaceFlightMapKeys.WORKSPACE_ID, workspaceUuid);
+    if (shouldInsert(WorkspaceFlightMapKeys.WORKSPACE_ID, workspaceId)) {
+      addParameter(WorkspaceFlightMapKeys.WORKSPACE_ID, workspaceId);
     }
     if (shouldInsert(ResourceKeys.RESOURCE, resource)) {
       addParameter(ResourceKeys.RESOURCE, resource);
