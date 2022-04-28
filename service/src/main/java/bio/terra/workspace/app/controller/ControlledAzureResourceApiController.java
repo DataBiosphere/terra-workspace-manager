@@ -74,12 +74,12 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
 
   @Override
   public ResponseEntity<ApiCreatedControlledAzureDisk> createAzureDisk(
-      UUID workspaceId, ApiCreateControlledAzureDiskRequestBody body) {
+      UUID workspaceUuid, ApiCreateControlledAzureDiskRequestBody body) {
     features.azureEnabledCheck();
 
     final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     ControlledResourceFields commonFields =
-        toCommonFields(workspaceId, body.getCommon(), userRequest);
+        toCommonFields(workspaceUuid, body.getCommon(), userRequest);
 
     ControlledAzureDiskResource resource =
         ControlledAzureDiskResource.builder()
@@ -105,12 +105,12 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
 
   @Override
   public ResponseEntity<ApiCreatedControlledAzureIp> createAzureIp(
-      UUID workspaceId, @Valid ApiCreateControlledAzureIpRequestBody body) {
+      UUID workspaceUuid, @Valid ApiCreateControlledAzureIpRequestBody body) {
     features.azureEnabledCheck();
 
     final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     ControlledResourceFields commonFields =
-        toCommonFields(workspaceId, body.getCommon(), userRequest);
+        toCommonFields(workspaceUuid, body.getCommon(), userRequest);
 
     ControlledAzureIpResource resource =
         ControlledAzureIpResource.builder()
@@ -134,12 +134,12 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
 
   @Override
   public ResponseEntity<ApiCreateControlledAzureRelayNamespaceResult> createAzureRelayNamespace(
-      UUID workspaceId, @Valid ApiCreateControlledAzureRelayNamespaceRequestBody body) {
+      UUID workspaceUuid, @Valid ApiCreateControlledAzureRelayNamespaceRequestBody body) {
     features.azureEnabledCheck();
 
     final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     ControlledResourceFields commonFields =
-        toCommonFields(workspaceId, body.getCommon(), userRequest);
+        toCommonFields(workspaceUuid, body.getCommon(), userRequest);
 
     ControlledAzureRelayNamespaceResource resource =
         ControlledAzureRelayNamespaceResource.builder()
@@ -165,7 +165,7 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
 
   @Override
   public ResponseEntity<ApiCreateControlledAzureRelayNamespaceResult>
-      getCreateAzureRelayNamespaceResult(UUID workspaceId, String jobId) throws ApiException {
+      getCreateAzureRelayNamespaceResult(UUID workspaceUuid, String jobId) throws ApiException {
     features.azureEnabledCheck();
 
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
@@ -176,12 +176,12 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
 
   @Override
   public ResponseEntity<ApiCreatedControlledAzureStorage> createAzureStorage(
-      UUID workspaceId, @Valid ApiCreateControlledAzureStorageRequestBody body) {
+      UUID workspaceUuid, @Valid ApiCreateControlledAzureStorageRequestBody body) {
     features.azureEnabledCheck();
 
     final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     final ControlledResourceFields commonFields =
-        toCommonFields(workspaceId, body.getCommon(), userRequest);
+        toCommonFields(workspaceUuid, body.getCommon(), userRequest);
 
     ControlledAzureStorageResource resource =
         ControlledAzureStorageResource.builder()
@@ -204,12 +204,12 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
 
   @Override
   public ResponseEntity<ApiCreatedControlledAzureVmResult> createAzureVm(
-      UUID workspaceId, @Valid ApiCreateControlledAzureVmRequestBody body) {
+      UUID workspaceUuid, @Valid ApiCreateControlledAzureVmRequestBody body) {
     features.azureEnabledCheck();
 
     final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     final ControlledResourceFields commonFields =
-        toCommonFields(workspaceId, body.getCommon(), userRequest);
+        toCommonFields(workspaceUuid, body.getCommon(), userRequest);
 
     ResourceValidationUtils.validateApiAzureVmCreationParameters(body.getAzureVm());
     ControlledAzureVmResource resource =
@@ -241,7 +241,7 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
 
   @Override
   public ResponseEntity<ApiCreatedControlledAzureVmResult> getCreateAzureVmResult(
-      UUID workspaceId, String jobId) throws ApiException {
+      UUID workspaceUuid, String jobId) throws ApiException {
     features.azureEnabledCheck();
 
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
@@ -252,12 +252,12 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
 
   @Override
   public ResponseEntity<ApiCreatedControlledAzureNetwork> createAzureNetwork(
-      UUID workspaceId, ApiCreateControlledAzureNetworkRequestBody body) {
+      UUID workspaceUuid, ApiCreateControlledAzureNetworkRequestBody body) {
     features.azureEnabledCheck();
 
     final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     final ControlledResourceFields commonFields =
-        toCommonFields(workspaceId, body.getCommon(), userRequest);
+        toCommonFields(workspaceUuid, body.getCommon(), userRequest);
 
     ControlledAzureNetworkResource resource =
         ControlledAzureNetworkResource.builder()
@@ -283,82 +283,82 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
 
   @Override
   public ResponseEntity<ApiDeleteControlledAzureResourceResult> deleteAzureIp(
-      UUID workspaceId, UUID resourceId, @Valid ApiDeleteControlledAzureResourceRequest body) {
-    return deleteHelper(workspaceId, resourceId, body, "Azure IP");
+      UUID workspaceUuid, UUID resourceId, @Valid ApiDeleteControlledAzureResourceRequest body) {
+    return deleteHelper(workspaceUuid, resourceId, body, "Azure IP");
   }
 
   @Override
   public ResponseEntity<ApiDeleteControlledAzureResourceResult> deleteAzureRelayNamespace(
-      UUID workspaceId, UUID resourceId, @Valid ApiDeleteControlledAzureResourceRequest body) {
-    return deleteHelper(workspaceId, resourceId, body, "Azure Relay Namespace");
+      UUID workspaceUuid, UUID resourceId, @Valid ApiDeleteControlledAzureResourceRequest body) {
+    return deleteHelper(workspaceUuid, resourceId, body, "Azure Relay Namespace");
   }
 
   @Override
   public ResponseEntity<ApiDeleteControlledAzureResourceResult> deleteAzureDisk(
-      UUID workspaceId, UUID resourceId, @Valid ApiDeleteControlledAzureResourceRequest body) {
-    return deleteHelper(workspaceId, resourceId, body, "Azure Disk");
+      UUID workspaceUuid, UUID resourceId, @Valid ApiDeleteControlledAzureResourceRequest body) {
+    return deleteHelper(workspaceUuid, resourceId, body, "Azure Disk");
   }
 
   @Override
   public ResponseEntity<ApiDeleteControlledAzureResourceResult> deleteAzureVm(
-      UUID workspaceId, UUID resourceId, @Valid ApiDeleteControlledAzureResourceRequest body) {
-    return deleteHelper(workspaceId, resourceId, body, "Azure VM");
+      UUID workspaceUuid, UUID resourceId, @Valid ApiDeleteControlledAzureResourceRequest body) {
+    return deleteHelper(workspaceUuid, resourceId, body, "Azure VM");
   }
 
   @Override
   public ResponseEntity<ApiDeleteControlledAzureResourceResult> deleteAzureNetwork(
-      UUID workspaceId, UUID resourceId, @Valid ApiDeleteControlledAzureResourceRequest body) {
-    return deleteHelper(workspaceId, resourceId, body, "Azure Networks");
+      UUID workspaceUuid, UUID resourceId, @Valid ApiDeleteControlledAzureResourceRequest body) {
+    return deleteHelper(workspaceUuid, resourceId, body, "Azure Networks");
   }
 
   @Override
-  public ResponseEntity<ApiAzureIpResource> getAzureIp(UUID workspaceId, UUID resourceId) {
+  public ResponseEntity<ApiAzureIpResource> getAzureIp(UUID workspaceUuid, UUID resourceId) {
     final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     features.azureEnabledCheck();
     final ControlledAzureIpResource resource =
         controlledResourceService
-            .getControlledResource(workspaceId, resourceId, userRequest)
+            .getControlledResource(workspaceUuid, resourceId, userRequest)
             .castByEnum(WsmResourceType.CONTROLLED_AZURE_IP);
     return new ResponseEntity<>(resource.toApiResource(), HttpStatus.OK);
   }
 
   @Override
-  public ResponseEntity<ApiAzureDiskResource> getAzureDisk(UUID workspaceId, UUID resourceId) {
+  public ResponseEntity<ApiAzureDiskResource> getAzureDisk(UUID workspaceUuid, UUID resourceId) {
     final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     features.azureEnabledCheck();
     final ControlledAzureDiskResource resource =
         controlledResourceService
-            .getControlledResource(workspaceId, resourceId, userRequest)
+            .getControlledResource(workspaceUuid, resourceId, userRequest)
             .castByEnum(WsmResourceType.CONTROLLED_AZURE_DISK);
     return new ResponseEntity<>(resource.toApiResource(), HttpStatus.OK);
   }
 
   @Override
-  public ResponseEntity<ApiAzureVmResource> getAzureVm(UUID workspaceId, UUID resourceId) {
+  public ResponseEntity<ApiAzureVmResource> getAzureVm(UUID workspaceUuid, UUID resourceId) {
     final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     features.azureEnabledCheck();
     final ControlledAzureVmResource resource =
         controlledResourceService
-            .getControlledResource(workspaceId, resourceId, userRequest)
+            .getControlledResource(workspaceUuid, resourceId, userRequest)
             .castByEnum(WsmResourceType.CONTROLLED_AZURE_VM);
     return new ResponseEntity<>(resource.toApiResource(), HttpStatus.OK);
   }
 
   @Override
   public ResponseEntity<ApiAzureNetworkResource> getAzureNetwork(
-      UUID workspaceId, UUID resourceId) {
+      UUID workspaceUuid, UUID resourceId) {
     final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     features.azureEnabledCheck();
     final ControlledAzureNetworkResource resource =
         controlledResourceService
-            .getControlledResource(workspaceId, resourceId, userRequest)
+            .getControlledResource(workspaceUuid, resourceId, userRequest)
             .castByEnum(WsmResourceType.CONTROLLED_AZURE_NETWORK);
     return new ResponseEntity<>(resource.toApiResource(), HttpStatus.OK);
   }
 
   @Override
   public ResponseEntity<ApiDeleteControlledAzureResourceResult> getDeleteAzureDiskResult(
-      UUID workspaceId, String jobId) {
+      UUID workspaceUuid, String jobId) {
     features.azureEnabledCheck();
     final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     return getJobDeleteResult(jobId, userRequest);
@@ -366,7 +366,7 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
 
   @Override
   public ResponseEntity<ApiDeleteControlledAzureResourceResult> getDeleteAzureIpResult(
-      UUID workspaceId, String jobId) {
+      UUID workspaceUuid, String jobId) {
     features.azureEnabledCheck();
     final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     return getJobDeleteResult(jobId, userRequest);
@@ -374,7 +374,7 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
 
   @Override
   public ResponseEntity<ApiDeleteControlledAzureResourceResult> getDeleteAzureVmResult(
-      UUID workspaceId, String jobId) {
+      UUID workspaceUuid, String jobId) {
     features.azureEnabledCheck();
     final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     return getJobDeleteResult(jobId, userRequest);
@@ -382,7 +382,7 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
 
   @Override
   public ResponseEntity<ApiDeleteControlledAzureResourceResult> getDeleteAzureNetworkResult(
-      UUID workspaceId, String jobId) {
+      UUID workspaceUuid, String jobId) {
     features.azureEnabledCheck();
     final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     return getJobDeleteResult(jobId, userRequest);
@@ -390,7 +390,7 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
 
   @Override
   public ResponseEntity<ApiDeleteControlledAzureResourceResult> getDeleteAzureRelayNamespaceResult(
-      UUID workspaceId, String jobId) {
+      UUID workspaceUuid, String jobId) {
     features.azureEnabledCheck();
     final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     return getJobDeleteResult(jobId, userRequest);
@@ -409,7 +409,7 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
   }
 
   private ResponseEntity<ApiDeleteControlledAzureResourceResult> deleteHelper(
-      UUID workspaceId,
+      UUID workspaceUuid,
       UUID resourceId,
       @Valid ApiDeleteControlledAzureResourceRequest body,
       String resourceName) {
@@ -421,11 +421,11 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
         "delete {}({}) from workspace {}",
         resourceName,
         resourceId.toString(),
-        workspaceId.toString());
+        workspaceUuid.toString());
     final String jobId =
         controlledResourceService.deleteControlledResourceAsync(
             jobControl,
-            workspaceId,
+            workspaceUuid,
             resourceId,
             getAsyncResultEndpoint(jobControl.getId(), "delete-result"),
             userRequest);

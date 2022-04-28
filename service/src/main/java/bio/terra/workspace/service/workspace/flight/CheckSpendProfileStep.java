@@ -22,28 +22,28 @@ public class CheckSpendProfileStep implements Step {
 
   private final WorkspaceDao workspaceDao;
   private final SpendProfileService spendProfileService;
-  private final UUID workspaceId;
+  private final UUID workspaceUuid;
   private final AuthenticatedUserRequest userRequest;
 
   public CheckSpendProfileStep(
       WorkspaceDao workspaceDao,
       SpendProfileService spendProfileService,
-      UUID workspaceId,
+      UUID workspaceUuid,
       AuthenticatedUserRequest userRequest) {
     this.workspaceDao = workspaceDao;
     this.spendProfileService = spendProfileService;
-    this.workspaceId = workspaceId;
+    this.workspaceUuid = workspaceUuid;
     this.userRequest = userRequest;
   }
 
   @Override
   public StepResult doStep(FlightContext context) throws InterruptedException, RetryException {
     FlightMap workingMap = context.getWorkingMap();
-    Workspace workspace = workspaceDao.getWorkspace(workspaceId);
+    Workspace workspace = workspaceDao.getWorkspace(workspaceUuid);
     SpendProfileId spendProfileId =
         workspace
             .getSpendProfileId()
-            .orElseThrow(() -> MissingSpendProfileException.forWorkspace(workspaceId));
+            .orElseThrow(() -> MissingSpendProfileException.forWorkspace(workspaceUuid));
 
     SpendProfile spendProfile = spendProfileService.authorizeLinking(spendProfileId, userRequest);
     if (spendProfile.billingAccountId().isEmpty()) {

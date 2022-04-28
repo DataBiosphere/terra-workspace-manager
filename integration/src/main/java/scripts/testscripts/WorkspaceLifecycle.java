@@ -29,10 +29,10 @@ public class WorkspaceLifecycle extends WorkspaceApiTestScriptBase {
   @Override
   public void doUserJourney(TestUserSpecification testUser, WorkspaceApi workspaceApi)
       throws ApiException {
-    UUID workspaceId = UUID.randomUUID();
+    UUID workspaceUuid = UUID.randomUUID();
     CreateWorkspaceRequestBody createBody =
         new CreateWorkspaceRequestBody()
-            .id(workspaceId)
+            .id(workspaceUuid)
             .userFacingId(invalidUserFacingId)
             .stage(WorkspaceStageModel.MC_WORKSPACE);
 
@@ -47,9 +47,9 @@ public class WorkspaceLifecycle extends WorkspaceApiTestScriptBase {
     workspaceApi.createWorkspace(createBody);
     ClientTestUtils.assertHttpSuccess(workspaceApi, "CREATE workspace");
 
-    WorkspaceDescription workspaceDescription = workspaceApi.getWorkspace(workspaceId);
+    WorkspaceDescription workspaceDescription = workspaceApi.getWorkspace(workspaceUuid);
     ClientTestUtils.assertHttpSuccess(workspaceApi, "GET workspace");
-    assertThat(workspaceDescription.getId(), equalTo(workspaceId));
+    assertThat(workspaceDescription.getId(), equalTo(workspaceUuid));
     assertThat(workspaceDescription.getStage(), equalTo(WorkspaceStageModel.MC_WORKSPACE));
 
     UpdateWorkspaceRequestBody updateBody =
@@ -59,20 +59,21 @@ public class WorkspaceLifecycle extends WorkspaceApiTestScriptBase {
             .description(workspaceDescriptionString);
     ex =
         assertThrows(
-            ApiException.class, () -> workspaceApi.updateWorkspace(updateBody, workspaceId));
+            ApiException.class, () -> workspaceApi.updateWorkspace(updateBody, workspaceUuid));
     assertThat(
         ex.getMessage(),
         containsString(
             "ID must have 3-63 characters, contain lowercase letters, numbers, dashes, or underscores, and start with lowercase letter"));
 
     updateBody.userFacingId(validUserFacingId2);
-    WorkspaceDescription updatedDescription = workspaceApi.updateWorkspace(updateBody, workspaceId);
+    WorkspaceDescription updatedDescription =
+        workspaceApi.updateWorkspace(updateBody, workspaceUuid);
     ClientTestUtils.assertHttpSuccess(workspaceApi, "PATCH workspace");
     assertThat(updatedDescription.getUserFacingId(), equalTo(validUserFacingId2));
     assertThat(updatedDescription.getDisplayName(), equalTo(workspaceName));
     assertThat(updatedDescription.getDescription(), equalTo(workspaceDescriptionString));
 
-    workspaceApi.deleteWorkspace(workspaceId);
+    workspaceApi.deleteWorkspace(workspaceUuid);
     ClientTestUtils.assertHttpSuccess(workspaceApi, "DELETE workspace");
   }
 }

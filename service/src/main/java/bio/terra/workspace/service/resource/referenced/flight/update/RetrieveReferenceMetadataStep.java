@@ -16,18 +16,19 @@ import java.util.UUID;
  */
 public class RetrieveReferenceMetadataStep implements Step {
   private final ResourceDao resourceDao;
-  private final UUID workspaceId;
+  private final UUID workspaceUuid;
   private final UUID resourceId;
 
-  public RetrieveReferenceMetadataStep(ResourceDao resourceDao, UUID workspaceId, UUID resourceId) {
+  public RetrieveReferenceMetadataStep(
+      ResourceDao resourceDao, UUID workspaceUuid, UUID resourceId) {
     this.resourceDao = resourceDao;
-    this.workspaceId = workspaceId;
+    this.workspaceUuid = workspaceUuid;
     this.resourceId = resourceId;
   }
 
   @Override
   public StepResult doStep(FlightContext context) throws InterruptedException, RetryException {
-    WsmResource resource = resourceDao.getResource(workspaceId, resourceId);
+    WsmResource resource = resourceDao.getResource(workspaceUuid, resourceId);
     context.getWorkingMap().put(ResourceKeys.PREVIOUS_ATTRIBUTES, resource.attributesToJson());
     context.getWorkingMap().put(ResourceKeys.PREVIOUS_RESOURCE_NAME, resource.getName());
     context

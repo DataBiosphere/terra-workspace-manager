@@ -29,11 +29,11 @@ public class AzureCloudContextService {
    * in the createGcpContext flight and assumes that a later step will call {@link
    * #createAzureCloudContextFinish}.
    *
-   * @param workspaceId workspace id where the context is being created
+   * @param workspaceUuid workspace id where the context is being created
    * @param flightId flight doing the creating
    */
-  public void createAzureCloudContextStart(UUID workspaceId, String flightId) {
-    workspaceDao.createCloudContextStart(workspaceId, CloudPlatform.AZURE, flightId);
+  public void createAzureCloudContextStart(UUID workspaceUuid, String flightId) {
+    workspaceDao.createCloudContextStart(workspaceUuid, CloudPlatform.AZURE, flightId);
   }
 
   /**
@@ -41,52 +41,52 @@ public class AzureCloudContextService {
    * designed for use in createAzureContext flight and assumes that an earlier step has called
    * {@link #createAzureCloudContextStart}.
    *
-   * @param workspaceId workspace id of the context
+   * @param workspaceUuid workspace id of the context
    * @param cloudContext cloud context data
    * @param flightId flight completing the creation
    */
   public void createAzureCloudContextFinish(
-      UUID workspaceId, AzureCloudContext cloudContext, String flightId) {
+      UUID workspaceUuid, AzureCloudContext cloudContext, String flightId) {
     workspaceDao.createCloudContextFinish(
-        workspaceId, CloudPlatform.AZURE, cloudContext.serialize(), flightId);
+        workspaceUuid, CloudPlatform.AZURE, cloudContext.serialize(), flightId);
   }
 
   /**
    * Delete the Azure cloud context for a workspace For details: {@link
    * WorkspaceDao#deleteCloudContext(UUID, CloudPlatform)}
    *
-   * @param workspaceId workspace of the cloud context
+   * @param workspaceUuid workspace of the cloud context
    */
-  public void deleteAzureCloudContext(UUID workspaceId) {
-    workspaceDao.deleteCloudContext(workspaceId, CloudPlatform.AZURE);
+  public void deleteAzureCloudContext(UUID workspaceUuid) {
+    workspaceDao.deleteCloudContext(workspaceUuid, CloudPlatform.AZURE);
   }
 
   /**
    * Delete a cloud context for the workspace validating the flight id. For details: {@link
    * WorkspaceDao#deleteCloudContextWithFlightIdValidation(UUID, CloudPlatform, String)}
    *
-   * @param workspaceId workspace of the cloud context
+   * @param workspaceUuid workspace of the cloud context
    * @param flightId flight id making the delete request
    */
-  public void deleteAzureCloudContextWithFlightIdValidation(UUID workspaceId, String flightId) {
+  public void deleteAzureCloudContextWithFlightIdValidation(UUID workspaceUuid, String flightId) {
     workspaceDao.deleteCloudContextWithFlightIdValidation(
-        workspaceId, CloudPlatform.AZURE, flightId);
+        workspaceUuid, CloudPlatform.AZURE, flightId);
   }
 
   /**
    * Retrieve the optional GCP cloud context
    *
-   * @param workspaceId workspace identifier of the cloud context
+   * @param workspaceUuid workspace identifier of the cloud context
    * @return optional GCP cloud context
    */
-  public Optional<AzureCloudContext> getAzureCloudContext(UUID workspaceId) {
+  public Optional<AzureCloudContext> getAzureCloudContext(UUID workspaceUuid) {
     return workspaceDao
-        .getCloudContext(workspaceId, CloudPlatform.AZURE)
+        .getCloudContext(workspaceUuid, CloudPlatform.AZURE)
         .map(AzureCloudContext::deserialize);
   }
 
-  public AzureCloudContext getRequiredAzureCloudContext(UUID workspaceId) {
-    return getAzureCloudContext(workspaceId)
+  public AzureCloudContext getRequiredAzureCloudContext(UUID workspaceUuid) {
+    return getAzureCloudContext(workspaceUuid)
         .orElseThrow(
             () -> new CloudContextRequiredException("Operation requires Azure cloud context"));
   }

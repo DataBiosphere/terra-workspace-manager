@@ -441,11 +441,11 @@ public class JobService {
     try {
       FlightState flightState = stairwayComponent.get().getFlightState(jobId);
       FlightMap inputParameters = flightState.getInputParameters();
-      UUID workspaceId = inputParameters.get(WorkspaceFlightMapKeys.WORKSPACE_ID, UUID.class);
+      UUID workspaceUuid = inputParameters.get(WorkspaceFlightMapKeys.WORKSPACE_ID, UUID.class);
 
       flightBeanBag
           .getWorkspaceService()
-          .validateWorkspaceAndAction(userRequest, workspaceId, SamWorkspaceAction.READ);
+          .validateWorkspaceAndAction(userRequest, workspaceUuid, SamWorkspaceAction.READ);
     } catch (DatabaseOperationException | InterruptedException ex) {
       throw new InternalStairwayException("Stairway exception looking up the job", ex);
     } catch (FlightNotFoundException ex) {

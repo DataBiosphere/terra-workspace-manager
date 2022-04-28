@@ -31,7 +31,7 @@ public class ApplicationAbleFlight extends Flight {
     // get data from inputs that steps need
     AuthenticatedUserRequest userRequest =
         inputParameters.get(JobMapKeys.AUTH_USER_INFO.getKeyName(), AuthenticatedUserRequest.class);
-    UUID workspaceId = inputParameters.get(WorkspaceFlightMapKeys.WORKSPACE_ID, UUID.class);
+    UUID workspaceUuid = inputParameters.get(WorkspaceFlightMapKeys.WORKSPACE_ID, UUID.class);
     String applicationId = inputParameters.get(WorkspaceFlightMapKeys.APPLICATION_ID, String.class);
     AbleEnum ableEnum =
         inputParameters.get(WsmApplicationKeys.APPLICATION_ABLE_ENUM, AbleEnum.class);
@@ -48,14 +48,14 @@ public class ApplicationAbleFlight extends Flight {
             beanBag.getApplicationDao(),
             beanBag.getSamService(),
             userRequest,
-            workspaceId,
+            workspaceUuid,
             applicationId,
             ableEnum));
 
     // ApplicationEnableIamStep - On do, if application did not already have the role, add it.
     // On undo, if application did not already have the role, remove it.
     addStep(
-        new ApplicationAbleIamStep(beanBag.getSamService(), userRequest, workspaceId, ableEnum));
+        new ApplicationAbleIamStep(beanBag.getSamService(), userRequest, workspaceUuid, ableEnum));
 
     // ApplicationEnableDaoStep - On do, if application did not already have the application
     // enabled,
@@ -63,6 +63,6 @@ public class ApplicationAbleFlight extends Flight {
     // set the result
     addStep(
         new ApplicationAbleDaoStep(
-            beanBag.getApplicationDao(), workspaceId, applicationId, ableEnum));
+            beanBag.getApplicationDao(), workspaceUuid, applicationId, ableEnum));
   }
 }

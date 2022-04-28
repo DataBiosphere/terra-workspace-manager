@@ -13,19 +13,19 @@ import javax.annotation.Nullable;
 public class RemoveUserFromSamStep implements Step {
 
   private final SamService samService;
-  private final UUID workspaceId;
+  private final UUID workspaceUuid;
   private final WsmIamRole roleToRemove;
   private final String userToRemoveEmail;
   private final AuthenticatedUserRequest userRequest;
 
   public RemoveUserFromSamStep(
-      UUID workspaceId,
+      UUID workspaceUuid,
       @Nullable WsmIamRole roleToRemove,
       String userToRemoveEmail,
       SamService samService,
       AuthenticatedUserRequest userRequest) {
     this.samService = samService;
-    this.workspaceId = workspaceId;
+    this.workspaceUuid = workspaceUuid;
     this.roleToRemove = roleToRemove;
     this.userToRemoveEmail = userToRemoveEmail;
     this.userRequest = userRequest;
@@ -36,7 +36,7 @@ public class RemoveUserFromSamStep implements Step {
     // Sam returns a 204 regardless of whether the user was actually removed or not, so this step is
     // always idempotent.
     if (roleToRemove != null) {
-      samService.removeWorkspaceRole(workspaceId, userRequest, roleToRemove, userToRemoveEmail);
+      samService.removeWorkspaceRole(workspaceUuid, userRequest, roleToRemove, userToRemoveEmail);
     }
     return StepResult.getStepResultSuccess();
   }
@@ -46,7 +46,7 @@ public class RemoveUserFromSamStep implements Step {
     // Sam de-duplicates policy membership, so it's safe to restore roles that may not have been
     // removed in the DO step.
     if (roleToRemove != null) {
-      samService.grantWorkspaceRole(workspaceId, userRequest, roleToRemove, userToRemoveEmail);
+      samService.grantWorkspaceRole(workspaceUuid, userRequest, roleToRemove, userToRemoveEmail);
     }
     return StepResult.getStepResultSuccess();
   }

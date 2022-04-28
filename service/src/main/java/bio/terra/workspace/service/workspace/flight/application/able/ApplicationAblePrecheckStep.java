@@ -26,7 +26,7 @@ public class ApplicationAblePrecheckStep implements Step {
   private final ApplicationDao applicationDao;
   private final SamService samService;
   private final AuthenticatedUserRequest userRequest;
-  private final UUID workspaceId;
+  private final UUID workspaceUuid;
   private final String applicationId;
   private final AbleEnum ableEnum;
 
@@ -34,13 +34,13 @@ public class ApplicationAblePrecheckStep implements Step {
       ApplicationDao applicationDao,
       SamService samService,
       AuthenticatedUserRequest userRequest,
-      UUID workspaceId,
+      UUID workspaceUuid,
       String applicationId,
       AbleEnum ableEnum) {
     this.applicationDao = applicationDao;
     this.samService = samService;
     this.userRequest = userRequest;
-    this.workspaceId = workspaceId;
+    this.workspaceUuid = workspaceUuid;
     this.applicationId = applicationId;
     this.ableEnum = ableEnum;
   }
@@ -63,7 +63,7 @@ public class ApplicationAblePrecheckStep implements Step {
     // See if the application is enabled
     WsmWorkspaceApplication workspaceApp;
     try {
-      workspaceApp = applicationDao.getWorkspaceApplication(workspaceId, applicationId);
+      workspaceApp = applicationDao.getWorkspaceApplication(workspaceUuid, applicationId);
       workingMap.put(
           WsmApplicationKeys.APPLICATION_ABLE_DAO,
           computeCorrectState(ableEnum, workspaceApp.isEnabled()));
@@ -74,7 +74,7 @@ public class ApplicationAblePrecheckStep implements Step {
     // See if the application already has APPLICATION role for the workspace
     boolean enabledSam =
         samService.isApplicationEnabledInSam(
-            workspaceId, application.getServiceAccount(), userRequest);
+            workspaceUuid, application.getServiceAccount(), userRequest);
     workingMap.put(
         WsmApplicationKeys.APPLICATION_ABLE_SAM, computeCorrectState(ableEnum, enabledSam));
 

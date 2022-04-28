@@ -20,7 +20,7 @@ import javax.annotation.Nullable;
  * <p>See {@link ControlledResource} for details on the meaning of the fields
  */
 public class ControlledResourceFields {
-  private final UUID workspaceId;
+  private final UUID workspaceUuid;
   private final UUID resourceId;
   private final String name;
   @Nullable private final String description;
@@ -37,7 +37,7 @@ public class ControlledResourceFields {
 
   /** construct from database resource */
   public ControlledResourceFields(DbResource dbResource) {
-    workspaceId = dbResource.getWorkspaceId();
+    workspaceUuid = dbResource.getWorkspaceId();
     resourceId = dbResource.getResourceId();
     name = dbResource.getName();
     description = dbResource.getDescription();
@@ -53,7 +53,7 @@ public class ControlledResourceFields {
 
   // constructor for the builder
   private ControlledResourceFields(
-      UUID workspaceId,
+      UUID workspaceUuid,
       UUID resourceId,
       String name,
       String description,
@@ -64,7 +64,7 @@ public class ControlledResourceFields {
       AccessScopeType accessScope,
       ManagedByType managedBy,
       @Nullable String applicationId) {
-    this.workspaceId = workspaceId;
+    this.workspaceUuid = workspaceUuid;
     this.resourceId = resourceId;
     this.name = name;
     this.description = description;
@@ -82,7 +82,7 @@ public class ControlledResourceFields {
   }
 
   public UUID getWorkspaceId() {
-    return workspaceId;
+    return workspaceUuid;
   }
 
   public UUID getResourceId() {
@@ -136,7 +136,7 @@ public class ControlledResourceFields {
   }
 
   public static class Builder {
-    private UUID workspaceId;
+    private UUID workspaceUuid;
     private UUID resourceId;
     private String name;
     private String description;
@@ -152,7 +152,7 @@ public class ControlledResourceFields {
     @Nullable private String applicationId;
 
     public ControlledResourceFields build() {
-      ResourceValidationUtils.checkFieldNonNull(workspaceId, "workspaceId");
+      ResourceValidationUtils.checkFieldNonNull(workspaceUuid, "workspaceId");
       ResourceValidationUtils.checkFieldNonNull(resourceId, "resourceId");
       ResourceValidationUtils.checkFieldNonNull(name, "name");
       ResourceValidationUtils.checkFieldNonNull(cloningInstructions, "cloningInstructions");
@@ -160,7 +160,7 @@ public class ControlledResourceFields {
       ResourceValidationUtils.checkFieldNonNull(managedBy, "managedBy");
 
       return new ControlledResourceFields(
-          workspaceId,
+          workspaceUuid,
           resourceId,
           name,
           description,
@@ -173,8 +173,8 @@ public class ControlledResourceFields {
           applicationId);
     }
 
-    public Builder workspaceId(UUID workspaceId) {
-      this.workspaceId = workspaceId;
+    public Builder workspaceUuid(UUID workspaceUuid) {
+      this.workspaceUuid = workspaceUuid;
       return this;
     }
 

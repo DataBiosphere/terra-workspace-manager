@@ -163,7 +163,7 @@ public class ControlledResourceService {
             .resource(resource)
             .userRequest(userRequest)
             .operationType(OperationType.UPDATE)
-            .workspaceId(resource.getWorkspaceId().toString())
+            .workspaceId( resource.getWorkspaceId().toString())
             // TODO: [PF-1282] need to disambiguate the RESOURCE and RESOURCE_NAME usage
             .resourceType(resource.getResourceType())
             .stewardshipType(resource.getStewardshipType())
@@ -467,19 +467,19 @@ public class ControlledResourceService {
   }
 
   public ControlledResource getControlledResource(
-      UUID workspaceId, UUID resourceId, AuthenticatedUserRequest userRequest) {
-    stageService.assertMcWorkspace(workspaceId, "getControlledResource");
+      UUID workspaceUuid, UUID resourceId, AuthenticatedUserRequest userRequest) {
+    stageService.assertMcWorkspace(workspaceUuid, "getControlledResource");
     controlledResourceMetadataManager.validateControlledResourceAndAction(
-        userRequest, workspaceId, resourceId, SamControlledResourceActions.READ_ACTION);
-    return resourceDao.getResource(workspaceId, resourceId).castToControlledResource();
+        userRequest, workspaceUuid, resourceId, SamControlledResourceActions.READ_ACTION);
+    return resourceDao.getResource(workspaceUuid, resourceId).castToControlledResource();
   }
 
   /** Synchronously delete a controlled resource. */
   public void deleteControlledResourceSync(
-      UUID workspaceId, UUID resourceId, AuthenticatedUserRequest userRequest) {
+      UUID workspaceUuid, UUID resourceId, AuthenticatedUserRequest userRequest) {
     JobBuilder deleteJob =
         commonDeletionJobBuilder(
-            UUID.randomUUID().toString(), workspaceId, resourceId, null, userRequest);
+            UUID.randomUUID().toString(), workspaceUuid, resourceId, null, userRequest);
     // Delete flight does not produce a result, so the resultClass parameter here is never used.
     deleteJob.submitAndWait(Void.class);
   }
@@ -490,14 +490,14 @@ public class ControlledResourceService {
    */
   public String deleteControlledResourceAsync(
       ApiJobControl jobControl,
-      UUID workspaceId,
+      UUID workspaceUuid,
       UUID resourceId,
       String resultPath,
       AuthenticatedUserRequest userRequest) {
 
     JobBuilder deleteJob =
         commonDeletionJobBuilder(
-            jobControl.getId(), workspaceId, resourceId, resultPath, userRequest);
+            jobControl.getId(), workspaceUuid, resourceId, resultPath, userRequest);
     return deleteJob.submit();
   }
 
@@ -559,14 +559,14 @@ public class ControlledResourceService {
    */
   private JobBuilder commonDeletionJobBuilder(
       String jobId,
-      UUID workspaceId,
+      UUID workspaceUuid,
       UUID resourceId,
       String resultPath,
       AuthenticatedUserRequest userRequest) {
-    stageService.assertMcWorkspace(workspaceId, "deleteControlledResource");
+    stageService.assertMcWorkspace(workspaceUuid, "deleteControlledResource");
     WsmResource resource =
         controlledResourceMetadataManager.validateControlledResourceAndAction(
-            userRequest, workspaceId, resourceId, SamControlledResourceActions.DELETE_ACTION);
+            userRequest, workspaceUuid, resourceId, SamControlledResourceActions.DELETE_ACTION);
     final String jobDescription = "Delete controlled resource; id: " + resourceId.toString();
 
     return jobService
@@ -575,13 +575,13 @@ public class ControlledResourceService {
         .jobId(jobId)
         .flightClass(DeleteControlledResourceFlight.class)
         .userRequest(userRequest)
-        .workspaceId(workspaceId.toString())
+        .workspaceId(workspaceUuid.toString())
         .operationType(OperationType.DELETE)
         .resource(resource)
         .resourceType(resource.getResourceType())
         .resourceName(resource.getName())
         .stewardshipType(resource.getStewardshipType())
-        .workspaceId(workspaceId.toString())
+        .workspaceId(workspaceUuid.toString())
         .addParameter(JobMapKeys.RESULT_PATH.getKeyName(), resultPath);
   }
 
@@ -597,15 +597,15 @@ public class ControlledResourceService {
    * the async return to the client. That path returns the current job state. If the job is
    * complete, the client calls the result endpoint and gets the full result.
    *
-   * @param workspaceId workspace of the resource create
+   * @param workspaceUuid workspace of the resource create
    * @param resourceId id of resource being created
    * @param jobId id of the create flight.
    */
-  private void waitForResourceOrJob(UUID workspaceId, UUID resourceId, String jobId) {
+  private void waitForResourceOrJob(UUID workspaceUuid, UUID resourceId, String jobId) {
     Instant exitTime = Instant.now().plus(RESOURCE_ROW_MAX_WAIT_TIME);
     try {
       while (Instant.now().isBefore(exitTime)) {
-        if (resourceDao.resourceExists(workspaceId, resourceId)) {
+        if (resourceDao.resourceExists(workspaceUuid, resourceId)) {
           return;
         }
         FlightState flightState = jobService.getStairway().getFlightState(jobId);

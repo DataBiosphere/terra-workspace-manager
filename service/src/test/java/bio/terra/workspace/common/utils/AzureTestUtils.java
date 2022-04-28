@@ -39,7 +39,7 @@ public class AzureTestUtils {
     this.userAccessUtils = userAccessUtils;
   }
 
-  /** Creates a workspace, returning its workspaceId. */
+  /** Creates a workspace, returning its workspaceUuid. */
   public UUID createWorkspace(WorkspaceService workspaceService) {
     Workspace request =
         Workspace.builder()
@@ -59,17 +59,17 @@ public class AzureTestUtils {
 
   /** Create the FlightMap input parameters required for the {@link CreateAzureContextFlight}. */
   public FlightMap createAzureContextInputParameters(
-      UUID workspaceId, AuthenticatedUserRequest userRequest) {
+      UUID workspaceUuid, AuthenticatedUserRequest userRequest) {
     AzureCloudContext azureCloudContext = getAzureCloudContext();
     FlightMap inputs = new FlightMap();
     inputs.put(JobMapKeys.REQUEST.getKeyName(), azureCloudContext);
-    inputs.put(WorkspaceFlightMapKeys.WORKSPACE_ID, workspaceId.toString());
+    inputs.put(WorkspaceFlightMapKeys.WORKSPACE_ID, workspaceUuid.toString());
     inputs.put(JobMapKeys.AUTH_USER_INFO.getKeyName(), userRequest);
     return inputs;
   }
 
   public FlightMap createControlledResourceInputParameters(
-      UUID workspaceId, AuthenticatedUserRequest userRequest, ControlledResource resource) {
+      UUID workspaceUuid, AuthenticatedUserRequest userRequest, ControlledResource resource) {
     FlightMap inputs = new FlightMap();
     inputs.put(ResourceKeys.RESOURCE, resource);
     inputs.put(ResourceKeys.RESOURCE_NAME, resource.getName());
@@ -77,30 +77,30 @@ public class AzureTestUtils {
     inputs.put(ResourceKeys.RESOURCE_ID, resource.getResourceId().toString());
     inputs.put(WorkspaceFlightMapKeys.OPERATION_TYPE, OperationType.CREATE);
     inputs.put(ResourceKeys.STEWARDSHIP_TYPE, StewardshipType.CONTROLLED);
-    inputs.put(WorkspaceFlightMapKeys.WORKSPACE_ID, workspaceId.toString());
+    inputs.put(WorkspaceFlightMapKeys.WORKSPACE_ID, workspaceUuid.toString());
     inputs.put(JobMapKeys.AUTH_USER_INFO.getKeyName(), userRequest);
     return inputs;
   }
 
   public FlightMap createControlledResourceInputParameters(
-      UUID workspaceId,
+      UUID workspaceUuid,
       AuthenticatedUserRequest userRequest,
       ControlledResource resource,
       ApiAzureVmCreationParameters creationParameters) {
-    var inputs = createControlledResourceInputParameters(workspaceId, userRequest, resource);
+    var inputs = createControlledResourceInputParameters(workspaceUuid, userRequest, resource);
     inputs.put(
         WorkspaceFlightMapKeys.ControlledResourceKeys.CREATION_PARAMETERS, creationParameters);
     return inputs;
   }
 
   public FlightMap deleteControlledResourceInputParameters(
-      UUID workspaceId,
+      UUID workspaceUuid,
       UUID resourceId,
       AuthenticatedUserRequest userRequest,
       ControlledResource resource) {
     FlightMap inputs = new FlightMap();
     inputs.put(ResourceKeys.RESOURCE, resource);
-    inputs.put(WorkspaceFlightMapKeys.WORKSPACE_ID, workspaceId.toString());
+    inputs.put(WorkspaceFlightMapKeys.WORKSPACE_ID, workspaceUuid.toString());
     inputs.put(WorkspaceFlightMapKeys.ResourceKeys.RESOURCE_ID, resourceId.toString());
     inputs.put(JobMapKeys.AUTH_USER_INFO.getKeyName(), userRequest);
     return inputs;

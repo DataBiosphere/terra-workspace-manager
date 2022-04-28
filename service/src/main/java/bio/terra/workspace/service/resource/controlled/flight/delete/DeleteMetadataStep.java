@@ -13,14 +13,14 @@ import org.slf4j.LoggerFactory;
 public class DeleteMetadataStep implements Step {
 
   private final ResourceDao resourceDao;
-  private final UUID workspaceId;
+  private final UUID workspaceUuid;
   private final UUID resourceId;
 
   private final Logger logger = LoggerFactory.getLogger(DeleteMetadataStep.class);
 
-  public DeleteMetadataStep(ResourceDao resourceDao, UUID workspaceId, UUID resourceId) {
+  public DeleteMetadataStep(ResourceDao resourceDao, UUID workspaceUuid, UUID resourceId) {
     this.resourceDao = resourceDao;
-    this.workspaceId = workspaceId;
+    this.workspaceUuid = workspaceUuid;
     this.resourceId = resourceId;
   }
 
@@ -29,13 +29,14 @@ public class DeleteMetadataStep implements Step {
       throws InterruptedException, RetryException {
     // deleteResource is idempotent, and here we don't care whether the resource was actually
     // deleted or just not found.
-    resourceDao.deleteResource(workspaceId, resourceId);
+    resourceDao.deleteResource(workspaceUuid, resourceId);
     return StepResult.getStepResultSuccess();
   }
 
   @Override
   public StepResult undoStep(FlightContext flightContext) throws InterruptedException {
-    logger.error("Cannot undo delete of WSM resource {} in workspace {}.", resourceId, workspaceId);
+    logger.error(
+        "Cannot undo delete of WSM resource {} in workspace {}.", resourceId, workspaceUuid);
     // Surface whatever error caused Stairway to begin undoing.
     return flightContext.getResult();
   }

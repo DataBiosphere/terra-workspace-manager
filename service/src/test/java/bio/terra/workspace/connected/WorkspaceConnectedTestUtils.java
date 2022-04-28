@@ -29,7 +29,7 @@ public class WorkspaceConnectedTestUtils {
 
   /** Creates a workspace with a GCP cloud context. */
   public Workspace createWorkspaceWithGcpContext(AuthenticatedUserRequest userRequest) {
-    UUID workspaceId =
+    UUID workspaceUuid =
         workspaceService.createWorkspace(
             Workspace.builder()
                 .workspaceId(UUID.randomUUID())
@@ -39,24 +39,24 @@ public class WorkspaceConnectedTestUtils {
             userRequest);
     String gcpContextJobId = UUID.randomUUID().toString();
     workspaceService.createGcpCloudContext(
-        workspaceId, gcpContextJobId, userRequest, "fakeResultPath");
+        workspaceUuid, gcpContextJobId, userRequest, "fakeResultPath");
     jobService.waitForJob(gcpContextJobId);
     assertNull(
         jobService.retrieveJobResult(gcpContextJobId, Object.class, userRequest).getException());
-    return workspaceService.getWorkspace(workspaceId, userRequest);
+    return workspaceService.getWorkspace(workspaceUuid, userRequest);
   }
 
   public Optional<GcpCloudContext> getAuthorizedGcpCloudContext(
-      UUID workspaceId, AuthenticatedUserRequest userRequest) {
+      UUID workspaceUuid, AuthenticatedUserRequest userRequest) {
     workspaceService.validateWorkspaceAndAction(
-        userRequest, workspaceId, SamConstants.SamWorkspaceAction.READ);
-    return gcpCloudContextService.getGcpCloudContext(workspaceId);
+        userRequest, workspaceUuid, SamConstants.SamWorkspaceAction.READ);
+    return gcpCloudContextService.getGcpCloudContext(workspaceUuid);
   }
 
   public Optional<AzureCloudContext> getAuthorizedAzureCloudContext(
-      UUID workspaceId, AuthenticatedUserRequest userRequest) {
+      UUID workspaceUuid, AuthenticatedUserRequest userRequest) {
     workspaceService.validateWorkspaceAndAction(
-        userRequest, workspaceId, SamConstants.SamWorkspaceAction.READ);
-    return azureCloudContextService.getAzureCloudContext(workspaceId);
+        userRequest, workspaceUuid, SamConstants.SamWorkspaceAction.READ);
+    return azureCloudContextService.getAzureCloudContext(workspaceUuid);
   }
 }

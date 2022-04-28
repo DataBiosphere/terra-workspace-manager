@@ -32,12 +32,12 @@ public class CheckSamWorkspaceAuthzStep implements Step {
   @Override
   public StepResult doStep(FlightContext flightContext)
       throws InterruptedException, RetryException {
-    UUID workspaceId = workspace.getWorkspaceId();
-    if (!canReadExistingWorkspace(workspaceId)) {
+    UUID workspaceUuid = workspace.getWorkspaceId();
+    if (!canReadExistingWorkspace(workspaceUuid)) {
       throw new WorkspaceNotFoundException(
           String.format(
               "Sam resource not found for workspace %s. WSM requires an existing Sam resource for a RAWLS_WORKSPACE.",
-              workspaceId));
+              workspaceUuid));
     }
 
     return StepResult.getStepResultSuccess();
@@ -48,11 +48,11 @@ public class CheckSamWorkspaceAuthzStep implements Step {
     return StepResult.getStepResultSuccess();
   }
 
-  private boolean canReadExistingWorkspace(UUID workspaceId) throws InterruptedException {
+  private boolean canReadExistingWorkspace(UUID workspaceUuid) throws InterruptedException {
     return samService.isAuthorized(
         userRequest,
         SamConstants.SamResource.WORKSPACE,
-        workspaceId.toString(),
+        workspaceUuid.toString(),
         SamConstants.SamWorkspaceAction.READ);
   }
 }

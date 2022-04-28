@@ -67,11 +67,11 @@ public class DeleteGcpProjectStep implements Step {
 
   private Optional<GcpCloudContext> getContext(FlightContext flightContext)
       throws InterruptedException {
-    UUID workspaceId =
+    UUID workspaceUuid =
         UUID.fromString(
             flightContext
                 .getInputParameters()
                 .get(WorkspaceFlightMapKeys.WORKSPACE_ID, String.class));
-    return gcpCloudContextService.getGcpCloudContext(workspaceId);
+    return gcpCloudContextService.getGcpCloudContext(workspaceUuid);
   }
 }

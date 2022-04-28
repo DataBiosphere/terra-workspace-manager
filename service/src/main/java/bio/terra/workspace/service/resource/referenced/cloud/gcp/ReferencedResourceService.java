@@ -85,25 +85,25 @@ public class ReferencedResourceService {
   /**
    * Updates name and/or description of the reference resource.
    *
-   * @param workspaceId workspace of interest
+   * @param workspaceUuid workspace of interest
    * @param resourceId resource to update
    * @param name name to change - may be null
    * @param description description to change - may be null
    */
   public void updateReferenceResource(
-      UUID workspaceId,
+      UUID workspaceUuid,
       UUID resourceId,
       @Nullable String name,
       @Nullable String description,
       AuthenticatedUserRequest userRequest) {
     updateReferenceResource(
-        workspaceId, resourceId, name, description, /*referencedResource=*/ null, userRequest);
+        workspaceUuid, resourceId, name, description, /*referencedResource=*/ null, userRequest);
   }
 
   /**
    * Updates name, description and/or referencing traget of the reference resource.
    *
-   * @param workspaceId workspace of interest
+   * @param workspaceUuid workspace of interest
    * @param resourceId resource to update
    * @param name name to change - may be null
    * @param description description to change - may be null
@@ -111,14 +111,14 @@ public class ReferencedResourceService {
    *     referencing target.
    */
   public void updateReferenceResource(
-      UUID workspaceId,
+      UUID workspaceUuid,
       UUID resourceId,
       @Nullable String name,
       @Nullable String description,
       @Nullable ReferencedResource resource,
       AuthenticatedUserRequest userRequest) {
     workspaceService.validateWorkspaceAndAction(
-        userRequest, workspaceId, SamConstants.SamWorkspaceAction.UPDATE_REFERENCE);
+        userRequest, workspaceUuid, SamConstants.SamWorkspaceAction.UPDATE_REFERENCE);
     // Name may be null if the user is not updating it in this request.
     if (name != null) {
       ResourceValidationUtils.validateResourceName(name);
@@ -135,14 +135,14 @@ public class ReferencedResourceService {
               .resource(resource)
               .userRequest(userRequest)
               .operationType(OperationType.UPDATE)
-              .workspaceId(workspaceId.toString())
+              .workspaceId(workspaceUuid.toString())
               .resourceType(resource.getResourceType())
               .resourceName(name)
               .addParameter(ResourceKeys.RESOURCE_DESCRIPTION, description);
 
       updated = updateJob.submitAndWait(Boolean.class);
     } else {
-      updated = resourceDao.updateResource(workspaceId, resourceId, name, description);
+      updated = resourceDao.updateResource(workspaceUuid, resourceId, name, description);
     }
     if (!updated) {
       logger.warn("There's no update to the referenced resource");
@@ -152,63 +152,63 @@ public class ReferencedResourceService {
    * Delete a reference. The only state we hold for a reference is in the metadata database so we
    * directly delete that.
    *
-   * @param workspaceId workspace of interest
+   * @param workspaceUuid workspace of interest
    * @param resourceId resource to delete
    * @param userRequest authenticated user
    */
   public void deleteReferenceResource(
-      UUID workspaceId, UUID resourceId, AuthenticatedUserRequest userRequest) {
+      UUID workspaceUuid, UUID resourceId, AuthenticatedUserRequest userRequest) {
     workspaceService.validateWorkspaceAndAction(
-        userRequest, workspaceId, SamConstants.SamWorkspaceAction.DELETE_REFERENCE);
-    resourceDao.deleteResource(workspaceId, resourceId);
+        userRequest, workspaceUuid, SamConstants.SamWorkspaceAction.DELETE_REFERENCE);
+    resourceDao.deleteResource(workspaceUuid, resourceId);
   }
 
   /**
    * Delete a reference for the specified resource type. If the resource type stored in the metadata
    * database does not match with the specified type, we do not delete the data.
    *
-   * @param workspaceId workspace of interest
+   * @param workspaceUuid workspace of interest
    * @param resourceId resource to delete
    * @param userRequest authenticated user
    * @param resourceType wsm resource type that the to-be-deleted resource should have
    */
   public void deleteReferenceResourceForResourceType(
-      UUID workspaceId,
+      UUID workspaceUuid,
       UUID resourceId,
       AuthenticatedUserRequest userRequest,
       WsmResourceType resourceType) {
     workspaceService.validateWorkspaceAndAction(
-        userRequest, workspaceId, SamWorkspaceAction.DELETE_REFERENCE);
-    resourceDao.deleteResourceForResourceType(workspaceId, resourceId, resourceType);
+        userRequest, workspaceUuid, SamWorkspaceAction.DELETE_REFERENCE);
+    resourceDao.deleteResourceForResourceType(workspaceUuid, resourceId, resourceType);
   }
 
   public ReferencedResource getReferenceResource(
-      UUID workspaceId, UUID resourceId, AuthenticatedUserRequest userRequest) {
+      UUID workspaceUuid, UUID resourceId, AuthenticatedUserRequest userRequest) {
     workspaceService.validateWorkspaceAndAction(
-        userRequest, workspaceId, SamConstants.SamWorkspaceAction.READ);
-    return resourceDao.getResource(workspaceId, resourceId).castToReferencedResource();
+        userRequest, workspaceUuid, SamConstants.SamWorkspaceAction.READ);
+    return resourceDao.getResource(workspaceUuid, resourceId).castToReferencedResource();
   }
 
   public ReferencedResource getReferenceResourceByName(
-      UUID workspaceId, String name, AuthenticatedUserRequest userRequest) {
+      UUID workspaceUuid, String name, AuthenticatedUserRequest userRequest) {
     workspaceService.validateWorkspaceAndAction(
-        userRequest, workspaceId, SamConstants.SamWorkspaceAction.READ);
-    return resourceDao.getResourceByName(workspaceId, name).castToReferencedResource();
+        userRequest, workspaceUuid, SamConstants.SamWorkspaceAction.READ);
+    return resourceDao.getResourceByName(workspaceUuid, name).castToReferencedResource();
   }
 
   public List<ReferencedResource> enumerateReferences(
-      UUID workspaceId, int offset, int limit, AuthenticatedUserRequest userRequest) {
+      UUID workspaceUuid, int offset, int limit, AuthenticatedUserRequest userRequest) {
     workspaceService.validateWorkspaceAndAction(
-        userRequest, workspaceId, SamConstants.SamWorkspaceAction.READ);
-    return resourceDao.enumerateReferences(workspaceId, offset, limit);
+        userRequest, workspaceUuid, SamConstants.SamWorkspaceAction.READ);
+    return resourceDao.enumerateReferences(workspaceUuid, offset, limit);
   }
 
   public boolean checkAccess(
-      UUID workspaceId, UUID resourceId, AuthenticatedUserRequest userRequest) {
+      UUID workspaceUuid, UUID resourceId, AuthenticatedUserRequest userRequest) {
     workspaceService.validateWorkspaceAndAction(
-        userRequest, workspaceId, SamConstants.SamWorkspaceAction.READ);
+        userRequest, workspaceUuid, SamConstants.SamWorkspaceAction.READ);
     ReferencedResource referencedResource =
-        resourceDao.getResource(workspaceId, resourceId).castToReferencedResource();
+        resourceDao.getResource(workspaceUuid, resourceId).castToReferencedResource();
     return referencedResource.checkAccess(beanBag, userRequest);
   }
 

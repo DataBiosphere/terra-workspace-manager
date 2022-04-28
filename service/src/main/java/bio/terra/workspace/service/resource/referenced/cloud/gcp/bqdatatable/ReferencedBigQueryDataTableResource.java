@@ -34,7 +34,7 @@ public class ReferencedBigQueryDataTableResource extends ReferencedResource {
   /**
    * Constructor for serialized form for Stairway use
    *
-   * @param workspaceId workspace unique identifier
+   * @param workspaceUuid workspace unique identifier
    * @param resourceId resource unique identifier
    * @param name name resource name; unique within a workspace
    * @param description description - may be null

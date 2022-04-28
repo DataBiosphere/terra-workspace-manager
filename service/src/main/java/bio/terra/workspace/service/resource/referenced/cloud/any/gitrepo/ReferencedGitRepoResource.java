@@ -148,8 +148,8 @@ public class ReferencedGitRepoResource extends ReferencedResource {
     private UUID resourceId;
     private UUID workspaceId;
 
-    public ReferencedGitRepoResource.Builder workspaceId(UUID workspaceId) {
-      this.workspaceId = workspaceId;
+    public ReferencedGitRepoResource.Builder workspaceId(UUID workspaceUuid) {
+      this.workspaceId = workspaceUuid;
       return this;
     }
 

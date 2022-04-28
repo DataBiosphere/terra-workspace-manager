@@ -64,7 +64,7 @@ public class ResourceController implements ResourceApi {
 
   @Override
   public ResponseEntity<ApiResourceList> enumerateResources(
-      UUID workspaceId,
+      UUID workspaceUuid,
       @Valid @RequestParam(value = "offset", required = false, defaultValue = "0") Integer offset,
       @Valid @RequestParam(value = "limit", required = false, defaultValue = "10") Integer limit,
       @Valid ApiResourceType resource,
@@ -72,11 +72,11 @@ public class ResourceController implements ResourceApi {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     ControllerValidationUtils.validatePaginationParams(offset, limit);
     workspaceService.validateWorkspaceAndAction(
-        userRequest, workspaceId, SamConstants.SamWorkspaceAction.READ);
+        userRequest, workspaceUuid, SamConstants.SamWorkspaceAction.READ);
 
     List<WsmResource> wsmResources =
         resourceService.enumerateResources(
-            workspaceId,
+            workspaceUuid,
             WsmResourceFamily.fromApiOptional(resource),
             StewardshipType.fromApiOptional(stewardship),
             offset,
@@ -91,9 +91,9 @@ public class ResourceController implements ResourceApi {
   }
 
   @Override
-  public ResponseEntity<Boolean> checkReferenceAccess(UUID workspaceId, UUID resourceId) {
+  public ResponseEntity<Boolean> checkReferenceAccess(UUID workspaceUuid, UUID resourceId) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
-    boolean isValid = referencedResourceService.checkAccess(workspaceId, resourceId, userRequest);
+    boolean isValid = referencedResourceService.checkAccess(workspaceUuid, resourceId, userRequest);
     return new ResponseEntity<>(isValid, HttpStatus.OK);
   }
 

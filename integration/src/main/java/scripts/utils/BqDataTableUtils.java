@@ -30,7 +30,7 @@ public class BqDataTableUtils {
   /** Updates name, description and/or referencing target of BigQuery data table reference. */
   public static void updateBigQueryDataTableReference(
       ReferencedGcpResourceApi resourceApi,
-      UUID workspaceId,
+      UUID workspaceUuid,
       UUID resourceId,
       @Nullable String name,
       @Nullable String description,
@@ -55,7 +55,7 @@ public class BqDataTableUtils {
     if (tableId != null) {
       body.setDataTableId(tableId);
     }
-    resourceApi.updateBigQueryDataTableReferenceResource(body, workspaceId, resourceId);
+    resourceApi.updateBigQueryDataTableReferenceResource(body, workspaceUuid, resourceId);
   }
 
   /**

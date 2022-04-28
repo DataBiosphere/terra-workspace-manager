@@ -83,11 +83,11 @@ public class WorkspaceDao {
             + "values (:workspace_id, :user_facing_id, :display_name, :description, :spend_profile,"
             + " cast(:properties AS jsonb), :workspace_stage)";
 
-    final String workspaceId = workspace.getWorkspaceId().toString();
+    final String workspaceUuid = workspace.getWorkspaceId().toString();
 
     MapSqlParameterSource params =
         new MapSqlParameterSource()
-            .addValue("workspace_id", workspaceId)
+            .addValue("workspace_id", workspaceUuid)
             .addValue("user_facing_id", workspace.getUserFacingId().orElse(null))
             .addValue("display_name", workspace.getDisplayName().orElse(null))
             .addValue("description", workspace.getDescription().orElse(null))
@@ -98,15 +98,15 @@ public class WorkspaceDao {
             .addValue("workspace_stage", workspace.getWorkspaceStage().toString());
     try {
       jdbcTemplate.update(sql, params);
-      logger.info("Inserted record for workspace {}", workspaceId);
+      logger.info("Inserted record for workspace {}", workspaceUuid);
     } catch (DuplicateKeyException e) {
-      // Workspace with workspace_id already exists.
       if (e.getMessage()
           .contains("duplicate key value violates unique constraint \"workspace_pkey\"")) {
+        // Workspace with workspace_id already exists.
         throw new DuplicateWorkspaceException(
             String.format(
                 "Workspace with id %s already exists - display name %s stage %s",
-                workspaceId,
+                workspaceUuid,
                 workspace.getDisplayName().toString(),
                 workspace.getWorkspaceStage().toString()),
             e);
@@ -115,10 +115,11 @@ public class WorkspaceDao {
               "duplicate key value violates unique constraint \"workspace_user_facing_id_key\"")) {
         // workspace_id is new, but workspace with user_facing_id already exists.
         throw new DuplicateUserFacingIdException(
-            String.format(
-                // "ID" instead of "userFacingId" because end user sees this.
-                "Workspace with ID %s already exists", workspace.getUserFacingId().get()),
-            e);
+                String.format(
+                        // "ID" instead of "userFacingId" because end user sees this.
+                        "Workspace with user facing ID %s already exists",
+                        workspace.getUserFacingId().get()),
+                e);
       } else {
         throw e;
       }
@@ -127,22 +128,22 @@ public class WorkspaceDao {
   }
 
   /**
-   * @param workspaceId unique identifier of the workspace
+   * @param workspaceUuid unique identifier of the workspace
    * @return true on successful delete, false if there's nothing to delete
    */
   @WriteTransaction
-  public boolean deleteWorkspace(UUID workspaceId) {
+  public boolean deleteWorkspace(UUID workspaceUuid) {
     final String sql = "DELETE FROM workspace WHERE workspace_id = :id";
 
     MapSqlParameterSource params =
-        new MapSqlParameterSource().addValue("id", workspaceId.toString());
+        new MapSqlParameterSource().addValue("id", workspaceUuid.toString());
     int rowsAffected = jdbcTemplate.update(sql, params);
     boolean deleted = rowsAffected > 0;
 
     if (deleted) {
-      logger.info("Deleted record for workspace {}", workspaceId);
+      logger.info("Deleted record for workspace {}", workspaceUuid);
     } else {
-      logger.info("No record found for delete workspace {}", workspaceId);
+      logger.info("No record found for delete workspace {}", workspaceUuid);
     }
 
     return deleted;
@@ -183,7 +184,7 @@ public class WorkspaceDao {
 
   @WriteTransaction
   public boolean updateWorkspace(
-      UUID workspaceId,
+      UUID workspaceUuid,
       @Nullable String userFacingId,
       @Nullable String name,
       @Nullable String description,
@@ -193,7 +194,7 @@ public class WorkspaceDao {
     }
 
     var params = new MapSqlParameterSource();
-    params.addValue("workspace_id", workspaceId.toString());
+    params.addValue("workspace_id", workspaceUuid.toString());
 
     if (userFacingId != null) {
       params.addValue("user_facing_id", userFacingId);
@@ -235,9 +236,9 @@ public class WorkspaceDao {
 
     boolean updated = rowsAffected > 0;
     logger.info(
-        "{} record for workspace {}",
-        (updated ? "Updated" : "No Update - did not find"),
-        workspaceId);
+      "{} record for workspace {}",
+      (updated ? "Updated" : "No Update - did not find"),
+      workspaceUuid);
     return updated;
   }
 
@@ -271,7 +272,7 @@ public class WorkspaceDao {
   /**
    * Create cloud context
    *
-   * @param workspaceId unique id of the workspace
+   * @param workspaceUuid unique id of the workspace
    * @param cloudPlatform cloud platform enum
    * @param context serialized cloud context attributes
    * @param flightId calling flight id. Used to ensure that we do not delete a good context while
@@ -280,24 +281,25 @@ public class WorkspaceDao {
   @Deprecated // TODO: PF-1238 remove
   @WriteTransaction
   public void createCloudContext(
-      UUID workspaceId, CloudPlatform cloudPlatform, String context, String flightId) {
+      UUID workspaceUuid, CloudPlatform cloudPlatform, String context, String flightId) {
     final String platform = cloudPlatform.toSql();
     final String sql =
         "INSERT INTO cloud_context (workspace_id, cloud_platform, context, creating_flight)"
             + " VALUES (:workspace_id, :cloud_platform, :context::json, :creating_flight)";
     MapSqlParameterSource params =
         new MapSqlParameterSource()
-            .addValue("workspace_id", workspaceId.toString())
+            .addValue("workspace_id", workspaceUuid.toString())
             .addValue("cloud_platform", platform)
             .addValue("context", context)
             .addValue("creating_flight", flightId);
     try {
       jdbcTemplate.update(sql, params);
-      logger.info("Inserted record for {} cloud context for workspace {}", platform, workspaceId);
+      logger.info("Inserted record for {} cloud context for workspace {}", platform, workspaceUuid);
     } catch (DuplicateKeyException e) {
       throw new DuplicateCloudContextException(
           String.format(
-              "Workspace with id %s already has context for %s cloud type", workspaceId, platform),
+              "Workspace with id %s already has context for %s cloud type",
+              workspaceUuid, platform),
           e);
     }
   }
@@ -308,23 +310,24 @@ public class WorkspaceDao {
    */
   @WriteTransaction
   public void createCloudContextStart(
-      UUID workspaceId, CloudPlatform cloudPlatform, String flightId) {
+      UUID workspaceUuid, CloudPlatform cloudPlatform, String flightId) {
     final String platform = cloudPlatform.toSql();
     final String sql =
         "INSERT INTO cloud_context (workspace_id, cloud_platform, creating_flight)"
             + " VALUES (:workspace_id, :cloud_platform, :creating_flight)";
     MapSqlParameterSource params =
         new MapSqlParameterSource()
-            .addValue("workspace_id", workspaceId.toString())
+            .addValue("workspace_id", workspaceUuid.toString())
             .addValue("cloud_platform", platform)
             .addValue("creating_flight", flightId);
     try {
       jdbcTemplate.update(sql, params);
-      logger.info("Inserted record for {} cloud context for workspace {}", platform, workspaceId);
+      logger.info("Inserted record for {} cloud context for workspace {}", platform, workspaceUuid);
     } catch (DuplicateKeyException e) {
       throw new DuplicateCloudContextException(
           String.format(
-              "Workspace with id %s already has context for %s cloud type", workspaceId, platform),
+              "Workspace with id %s already has context for %s cloud type",
+              workspaceUuid, platform),
           e);
     }
   }
@@ -341,30 +344,30 @@ public class WorkspaceDao {
    *
    * Since the typical case will be a successful update, we won't do the get frequently.
    *
-   * @param workspaceId workspaceId part of PK for lookup
+   * @param workspaceUuid workspaceUuid part of PK for lookup
    * @param cloudPlatform platform part of PK for lookup
    * @param context serialized cloud context
    * @param flightId flight id
    */
   @WriteTransaction
   public void createCloudContextFinish(
-      UUID workspaceId, CloudPlatform cloudPlatform, String context, String flightId) {
-    int updatedCount = updateCloudContextWorker(workspaceId, cloudPlatform, context, flightId);
+      UUID workspaceUuid, CloudPlatform cloudPlatform, String context, String flightId) {
+    int updatedCount = updateCloudContextWorker(workspaceUuid, cloudPlatform, context, flightId);
 
     if (updatedCount == 1) {
       // Success path
-      logger.info("Updated {} cloud context for workspace {}", cloudPlatform, workspaceId);
+      logger.info("Updated {} cloud context for workspace {}", cloudPlatform, workspaceUuid);
       return;
     }
 
     if (updatedCount == 0) {
       // We didn't change anything. Make sure the context is there
-      Optional<String> dbContext = getCloudContextWorker(workspaceId, cloudPlatform);
+      Optional<String> dbContext = getCloudContextWorker(workspaceUuid, cloudPlatform);
       if (dbContext.isPresent()) {
         logger.info(
             "{} cloud context for workspace {} already updated and unlocked",
             cloudPlatform,
-            workspaceId);
+            workspaceUuid);
         return;
       }
       throw new InternalLogicException(
@@ -377,13 +380,13 @@ public class WorkspaceDao {
   /**
    * This unconditional update is used to upgrade an existing V1 cloud context to a V2 context.
    *
-   * @param workspaceId workspaceId part of PK for lookup
+   * @param workspaceUuid workspaceUuid part of PK for lookup
    * @param cloudPlatform platform part of PK for lookup
    * @param context serialized cloud context
    */
   @WriteTransaction
-  public void updateCloudContext(UUID workspaceId, CloudPlatform cloudPlatform, String context) {
-    int updatedCount = updateCloudContextWorker(workspaceId, cloudPlatform, context, null);
+  public void updateCloudContext(UUID workspaceUuid, CloudPlatform cloudPlatform, String context) {
+    int updatedCount = updateCloudContextWorker(workspaceUuid, cloudPlatform, context, null);
     if (updatedCount != 1) {
       throw new InternalLogicException("Cloud context not found");
     }
@@ -392,14 +395,14 @@ public class WorkspaceDao {
   /**
    * Shared worker for updating cloud context
    *
-   * @param workspaceId workspaceId part of PK for lookup
+   * @param workspaceUuid workspaceUuid part of PK for lookup
    * @param cloudPlatform platform part of PK for lookup
    * @param context serialized cloud context
    * @param creatingFlightId flightId - if not null, the update filters on creating_flight
    * @return number of rows updated
    */
   private int updateCloudContextWorker(
-      UUID workspaceId,
+      UUID workspaceUuid,
       CloudPlatform cloudPlatform,
       String context,
       @Nullable String creatingFlightId) {
@@ -412,7 +415,7 @@ public class WorkspaceDao {
     MapSqlParameterSource params =
         new MapSqlParameterSource()
             .addValue("context", context)
-            .addValue("workspace_id", workspaceId.toString())
+            .addValue("workspace_id", workspaceUuid.toString())
             .addValue("cloud_platform", cloudPlatform.toSql());
 
     if (StringUtils.isNotEmpty(creatingFlightId)) {
@@ -428,39 +431,39 @@ public class WorkspaceDao {
    * creating_flight of the cloud context. We will only delete if they match. That makes sure that
    * undoing a create does not delete a valid cloud context.
    *
-   * @param workspaceId workspace of the cloud context
+   * @param workspaceUuid workspace of the cloud context
    * @param cloudPlatform cloud platform of the cloud context
    * @param flightId flight id making the delete request
    */
   @WriteTransaction
   public void deleteCloudContextWithFlightIdValidation(
-      UUID workspaceId, CloudPlatform cloudPlatform, String flightId) {
-    deleteCloudContextWorker(workspaceId, cloudPlatform, flightId);
+      UUID workspaceUuid, CloudPlatform cloudPlatform, String flightId) {
+    deleteCloudContextWorker(workspaceUuid, cloudPlatform, flightId);
   }
 
   /**
    * Delete the GCP cloud context for a workspace. This is intended for the cloud context delete
    * flight, where we do not have idempotency issues on undo.
    *
-   * @param workspaceId workspace of the cloud context
+   * @param workspaceUuid workspace of the cloud context
    * @param cloudPlatform cloud platform of the cloud context
    */
   @WriteTransaction
-  public void deleteCloudContext(UUID workspaceId, CloudPlatform cloudPlatform) {
-    deleteCloudContextWorker(workspaceId, cloudPlatform, null);
+  public void deleteCloudContext(UUID workspaceUuid, CloudPlatform cloudPlatform) {
+    deleteCloudContextWorker(workspaceUuid, cloudPlatform, null);
   }
 
   /**
    * Common worker for deleting cloud context
    *
-   * @param workspaceId workspace holding the context
+   * @param workspaceUuid workspace holding the context
    * @param cloudPlatform platform of the context
    * @param creatingFlightId if non-null, then it is compared to the creating_flight to make sure a
    *     conflicting create does not delete a valid cloud context. This behavior can be removed when
    *     we are able to do PF-1238.
    */
   private void deleteCloudContextWorker(
-      UUID workspaceId, CloudPlatform cloudPlatform, @Nullable String creatingFlightId) {
+      UUID workspaceUuid, CloudPlatform cloudPlatform, @Nullable String creatingFlightId) {
     final String platform = cloudPlatform.toSql();
     String sql =
         "DELETE FROM cloud_context "
@@ -469,7 +472,7 @@ public class WorkspaceDao {
 
     MapSqlParameterSource params =
         new MapSqlParameterSource()
-            .addValue("workspace_id", workspaceId.toString())
+            .addValue("workspace_id", workspaceUuid.toString())
             .addValue("cloud_platform", platform);
 
     if (StringUtils.isNotEmpty(creatingFlightId)) {
@@ -481,34 +484,34 @@ public class WorkspaceDao {
     boolean deleted = rowsAffected > 0;
 
     if (deleted) {
-      logger.info("Deleted {} cloud context for workspace {}", platform, workspaceId);
+      logger.info("Deleted {} cloud context for workspace {}", platform, workspaceUuid);
     } else {
       logger.info(
-          "No record to delete for {} cloud context for workspace {}", platform, workspaceId);
+          "No record to delete for {} cloud context for workspace {}", platform, workspaceUuid);
     }
   }
 
   /**
    * Retrieve the serialized cloud context
    *
-   * @param workspaceId workspace of the context
+   * @param workspaceUuid workspace of the context
    * @param cloudPlatform platform context to retrieve
    * @return empty or the serialized cloud context info
    */
   @ReadTransaction
-  public Optional<String> getCloudContext(UUID workspaceId, CloudPlatform cloudPlatform) {
-    return getCloudContextWorker(workspaceId, cloudPlatform);
+  public Optional<String> getCloudContext(UUID workspaceUuid, CloudPlatform cloudPlatform) {
+    return getCloudContextWorker(workspaceUuid, cloudPlatform);
   }
 
   /** Retrieve the flight ID which created the cloud context for a workspace, if one exists. */
   @Deprecated // TODO: PF-1238 remove
   @ReadTransaction
-  public Optional<String> getCloudContextFlightId(UUID workspaceId, CloudPlatform cloudPlatform) {
+  public Optional<String> getCloudContextFlightId(UUID workspaceUuid, CloudPlatform cloudPlatform) {
     String sql =
         "SELECT creating_flight FROM cloud_context WHERE workspace_id = :workspace_id AND cloud_platform = :cloud_platform";
     MapSqlParameterSource params =
         new MapSqlParameterSource()
-            .addValue("workspace_id", workspaceId.toString())
+            .addValue("workspace_id", workspaceUuid.toString())
             .addValue("cloud_platform", cloudPlatform.toSql());
     return Optional.ofNullable(
         DataAccessUtils.singleResult(
@@ -519,18 +522,18 @@ public class WorkspaceDao {
    * Retrieve the serialized cloud context of an unlocked cloud context. That is, a cloud context
    * that is done being created.
    *
-   * @param workspaceId workspace of the context
+   * @param workspaceUuid workspace of the context
    * @param cloudPlatform platform context to retrieve
    * @return empty or the serialized cloud context info
    */
-  private Optional<String> getCloudContextWorker(UUID workspaceId, CloudPlatform cloudPlatform) {
+  private Optional<String> getCloudContextWorker(UUID workspaceUuid, CloudPlatform cloudPlatform) {
     String sql =
         "SELECT context FROM cloud_context"
             + " WHERE workspace_id = :workspace_id"
             + " AND cloud_platform = :cloud_platform";
     MapSqlParameterSource params =
         new MapSqlParameterSource()
-            .addValue("workspace_id", workspaceId.toString())
+            .addValue("workspace_id", workspaceUuid.toString())
             .addValue("cloud_platform", cloudPlatform.toSql());
 
     return Optional.ofNullable(
@@ -539,16 +542,16 @@ public class WorkspaceDao {
   }
 
   public static class WorkspaceUserPair {
-    private final UUID workspaceId;
+    private final UUID workspaceUuid;
     private final String userEmail;
 
-    public WorkspaceUserPair(UUID workspaceId, String userEmail) {
-      this.workspaceId = workspaceId;
+    public WorkspaceUserPair(UUID workspaceUuid, String userEmail) {
+      this.workspaceUuid = workspaceUuid;
       this.userEmail = userEmail;
     }
 
     public UUID getWorkspaceId() {
-      return workspaceId;
+      return workspaceUuid;
     }
 
     public String getUserEmail() {

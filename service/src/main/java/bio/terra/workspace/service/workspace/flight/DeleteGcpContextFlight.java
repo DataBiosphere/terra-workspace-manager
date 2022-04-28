@@ -18,7 +18,7 @@ public class DeleteGcpContextFlight extends Flight {
     super(inputParameters, applicationContext);
 
     FlightBeanBag appContext = FlightBeanBag.getFromObject(applicationContext);
-    UUID workspaceId =
+    UUID workspaceUuid =
         UUID.fromString(inputParameters.get(WorkspaceFlightMapKeys.WORKSPACE_ID, String.class));
 
     RetryRule retryRule = RetryRules.cloudLongRunning();
@@ -27,17 +27,17 @@ public class DeleteGcpContextFlight extends Flight {
     // actual cloud objects, as GCP handles the cleanup when we delete the containing project.
     addStep(
         new DeleteControlledSamResourcesStep(
-            appContext.getSamService(), appContext.getResourceDao(), workspaceId, CLOUD_PLATFORM),
+            appContext.getSamService(), appContext.getResourceDao(), workspaceUuid, CLOUD_PLATFORM),
         retryRule);
     addStep(
         new DeleteControlledDbResourcesStep(
-            appContext.getResourceDao(), workspaceId, CLOUD_PLATFORM),
+            appContext.getResourceDao(), workspaceUuid, CLOUD_PLATFORM),
         retryRule);
     addStep(
         new DeleteGcpProjectStep(
             appContext.getCrlService(), appContext.getGcpCloudContextService()),
         retryRule);
     addStep(
-        new DeleteGcpContextStep(appContext.getGcpCloudContextService(), workspaceId), retryRule);
+        new DeleteGcpContextStep(appContext.getGcpCloudContextService(), workspaceUuid), retryRule);
   }
 }

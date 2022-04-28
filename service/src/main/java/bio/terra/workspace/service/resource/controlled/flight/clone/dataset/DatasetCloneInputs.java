@@ -4,18 +4,18 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import java.util.UUID;
 
 public class DatasetCloneInputs {
-  private final UUID workspaceId;
+  private final UUID workspaceUuid;
   private final String projectId;
   private final String datasetName;
 
-  public DatasetCloneInputs(UUID workspaceId, String projectId, String datasetName) {
-    this.workspaceId = workspaceId;
+  public DatasetCloneInputs(UUID workspaceUuid, String projectId, String datasetName) {
+    this.workspaceUuid = workspaceUuid;
     this.projectId = projectId;
     this.datasetName = datasetName;
   }
 
   public UUID getWorkspaceId() {
-    return workspaceId;
+    return workspaceUuid;
   }
 
   public String getProjectId() {
@@ -29,8 +29,8 @@ public class DatasetCloneInputs {
   @Override
   public String toString() {
     return "DatasetCloneInputs{"
-        + "workspaceId="
-        + workspaceId
+        + "workspaceUuid="
+        + workspaceUuid
         + ", projectId='"
         + projectId
         + '\''

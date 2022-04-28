@@ -194,10 +194,10 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
 
   @Override
   public ResponseEntity<ApiWorkspaceDescription> updateWorkspace(
-      @PathVariable("workspaceId") UUID workspaceId,
+      @PathVariable("workspaceId") UUID workspaceUuid,
       @RequestBody ApiUpdateWorkspaceRequestBody body) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
-    logger.info("Updating workspace {} for {}", workspaceId, userRequest.getEmail());
+    logger.info("Updating workspace {} for {}", workspaceUuid, userRequest.getEmail());
 
     Map<String, String> propertyMap = null;
     if (body.getProperties() != null) {
@@ -210,12 +210,7 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
 
     Workspace workspace =
         workspaceService.updateWorkspace(
-            userRequest,
-            workspaceId,
-            body.getUserFacingId(),
-            body.getDisplayName(),
-            body.getDescription(),
-            propertyMap);
+            userRequest, workspaceUuid, body.getUserFacingId(), body.getDisplayName(), body.getDescription(), propertyMap);
 
     ApiWorkspaceDescription desc = buildWorkspaceDescription(workspace);
     logger.info("Updated workspace {} for {}", desc, userRequest.getEmail());
@@ -354,17 +349,17 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
   }
 
   @Override
-  public ResponseEntity<Void> enablePet(UUID workspaceId) {
+  public ResponseEntity<Void> enablePet(UUID workspaceUuid) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     // TODO(PF-1007): This would be a nice use for an authorized workspace ID.
     // Validate that the user is a workspace member, as enablePetServiceAccountImpersonation does
     // not authenticate.
     workspaceService.validateWorkspaceAndAction(
-        userRequest, workspaceId, SamConstants.SamWorkspaceAction.READ);
+        userRequest, workspaceUuid, SamConstants.SamWorkspaceAction.READ);
     String userEmail =
         SamRethrow.onInterrupted(() -> samService.getUserEmailFromSam(userRequest), "enablePet");
     petSaService.enablePetServiceAccountImpersonation(
-        workspaceId, userEmail, userRequest.getRequiredToken());
+        workspaceUuid, userEmail, userRequest.getRequiredToken());
     return new ResponseEntity<>(HttpStatus.NO_CONTENT);
   }
 
@@ -372,14 +367,14 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
    * Clone an entire workspace by creating a new workspace and cloning the workspace's resources
    * into it.
    *
-   * @param workspaceId - ID of source workspace
+   * @param workspaceUuid - ID of source workspace
    * @param body - request body
    * @return - result structure for the overall clone operation with details for each resource
    */
   @Override
   public ResponseEntity<ApiCloneWorkspaceResult> cloneWorkspace(
-      UUID workspaceId, @Valid ApiCloneWorkspaceRequest body) {
-    final AuthenticatedUserRequest petRequest = getCloningCredentials(workspaceId);
+      UUID workspaceUuid, @Valid ApiCloneWorkspaceRequest body) {
+    final AuthenticatedUserRequest petRequest = getCloningCredentials(workspaceUuid);
 
     Optional<SpendProfileId> spendProfileId =
         Optional.ofNullable(body.getSpendProfile()).map(SpendProfileId::new);
@@ -397,13 +392,13 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
 
     final String jobId =
         workspaceService.cloneWorkspace(
-            workspaceId, petRequest, body.getLocation(), destinationWorkspace);
+            workspaceUuid, petRequest, body.getLocation(), destinationWorkspace);
 
     final ApiCloneWorkspaceResult result = fetchCloneWorkspaceResult(jobId, getAuthenticatedInfo());
     final ApiClonedWorkspace clonedWorkspaceStub =
         new ApiClonedWorkspace()
             .destinationWorkspaceId(destinationWorkspaceId)
-            .sourceWorkspaceId(workspaceId);
+            .sourceWorkspaceId(workspaceUuid);
     result.setWorkspace(clonedWorkspaceStub);
     return new ResponseEntity<>(result, getAsyncResponseCode(result.getJobReport()));
   }
@@ -411,13 +406,13 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
   /**
    * Return the workspace clone result, including job result and error result.
    *
-   * @param workspaceId - source workspace ID
+   * @param workspaceUuid - source workspace ID
    * @param jobId - ID of flight
    * @return - response with result
    */
   @Override
   public ResponseEntity<ApiCloneWorkspaceResult> getCloneWorkspaceResult(
-      UUID workspaceId, String jobId) {
+      UUID workspaceUuid, String jobId) {
     final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     final ApiCloneWorkspaceResult result = fetchCloneWorkspaceResult(jobId, userRequest);
     return new ResponseEntity<>(result, getAsyncResponseCode(result.getJobReport()));
@@ -451,11 +446,11 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
    * request. It's possible to clone a workspace that has no cloud context, and thus no (GCP) pet
    * account.
    *
-   * @param workspaceId - ID of workspace to be cloned
+   * @param workspaceUuid - ID of workspace to be cloned
    * @return user or pet request
    */
-  private AuthenticatedUserRequest getCloningCredentials(UUID workspaceId) {
+  private AuthenticatedUserRequest getCloningCredentials(UUID workspaceUuid) {
     final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
-    return petSaService.getWorkspacePetCredentials(workspaceId, userRequest).orElse(userRequest);
+    return petSaService.getWorkspacePetCredentials(workspaceUuid, userRequest).orElse(userRequest);
   }
 }

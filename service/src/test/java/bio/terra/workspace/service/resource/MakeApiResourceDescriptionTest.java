@@ -41,7 +41,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 public class MakeApiResourceDescriptionTest extends BaseUnitTest {
   @Autowired ResourceController resourceController;
 
-  private UUID workspaceId;
+  private UUID workspaceUuid;
   private UUID resourceId;
   private String resourceName;
   private String description;
@@ -49,7 +49,7 @@ public class MakeApiResourceDescriptionTest extends BaseUnitTest {
 
   @BeforeEach
   public void setup() {
-    workspaceId = UUID.randomUUID();
+    workspaceUuid = UUID.randomUUID();
     resourceId = UUID.randomUUID();
     resourceName = RandomStringUtils.randomAlphabetic(6);
     description = "Description of " + resourceName;
@@ -63,7 +63,7 @@ public class MakeApiResourceDescriptionTest extends BaseUnitTest {
 
     var resource =
         new ReferencedBigQueryDatasetResource(
-            workspaceId, resourceId, resourceName, description, cloning, projectId, datasetName);
+            workspaceUuid, resourceId, resourceName, description, cloning, projectId, datasetName);
 
     ApiResourceDescription resourceDescription =
         resourceController.makeApiResourceDescription(resource);
@@ -83,7 +83,7 @@ public class MakeApiResourceDescriptionTest extends BaseUnitTest {
 
     var resource =
         new ReferencedBigQueryDataTableResource(
-            workspaceId,
+            workspaceUuid,
             resourceId,
             resourceName,
             description,
@@ -110,7 +110,13 @@ public class MakeApiResourceDescriptionTest extends BaseUnitTest {
 
     var resource =
         new ReferencedDataRepoSnapshotResource(
-            workspaceId, resourceId, resourceName, description, cloning, instanceName, snapshotId);
+            workspaceUuid,
+            resourceId,
+            resourceName,
+            description,
+            cloning,
+            instanceName,
+            snapshotId);
 
     ApiResourceDescription resourceDescription =
         resourceController.makeApiResourceDescription(resource);
@@ -128,7 +134,7 @@ public class MakeApiResourceDescriptionTest extends BaseUnitTest {
 
     var resource =
         new ReferencedGcsBucketResource(
-            workspaceId, resourceId, resourceName, description, cloning, bucketName);
+            workspaceUuid, resourceId, resourceName, description, cloning, bucketName);
 
     ApiResourceDescription resourceDescription =
         resourceController.makeApiResourceDescription(resource);
@@ -141,7 +147,7 @@ public class MakeApiResourceDescriptionTest extends BaseUnitTest {
 
   public void validateWsmResource(ApiResourceDescription resourceDescription) {
     ApiResourceMetadata metadata = resourceDescription.getMetadata();
-    assertEquals(metadata.getWorkspaceId(), workspaceId);
+    assertEquals(metadata.getWorkspaceId(), workspaceUuid);
     assertEquals(metadata.getResourceId(), resourceId);
     assertEquals(metadata.getName(), resourceName);
     assertEquals(metadata.getDescription(), description);
@@ -168,7 +174,7 @@ public class MakeApiResourceDescriptionTest extends BaseUnitTest {
 
       var resource =
           new ControlledGcsBucketResource(
-              workspaceId,
+              workspaceUuid,
               resourceId,
               resourceName,
               description,
@@ -196,7 +202,7 @@ public class MakeApiResourceDescriptionTest extends BaseUnitTest {
 
       var resource =
           new ControlledBigQueryDatasetResource(
-              workspaceId,
+              workspaceUuid,
               resourceId,
               resourceName,
               description,
@@ -227,7 +233,7 @@ public class MakeApiResourceDescriptionTest extends BaseUnitTest {
           ControlledAiNotebookInstanceResource.builder()
               .common(
                   ControlledResourceFields.builder()
-                      .workspaceId(workspaceId)
+                      .workspaceUuid(workspaceUuid)
                       .resourceId(resourceId)
                       .name(resourceName)
                       .description(description)

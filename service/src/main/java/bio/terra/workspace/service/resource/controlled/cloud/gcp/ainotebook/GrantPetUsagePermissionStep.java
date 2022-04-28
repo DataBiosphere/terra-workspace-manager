@@ -32,17 +32,17 @@ public class GrantPetUsagePermissionStep implements Step {
 
   private static final Logger logger = LoggerFactory.getLogger(GrantPetUsagePermissionStep.class);
 
-  private final UUID workspaceId;
+  private final UUID workspaceUuid;
   private final AuthenticatedUserRequest userRequest;
   private final PetSaService petSaService;
   private final SamService samService;
 
   public GrantPetUsagePermissionStep(
-      UUID workspaceId,
+      UUID workspaceUuid,
       AuthenticatedUserRequest userRequest,
       PetSaService petSaService,
       SamService samService) {
-    this.workspaceId = workspaceId;
+    this.workspaceUuid = workspaceUuid;
     this.userRequest = userRequest;
     this.petSaService = petSaService;
     this.samService = samService;
@@ -56,7 +56,7 @@ public class GrantPetUsagePermissionStep implements Step {
     try {
       modifiedPolicy =
           petSaService.enablePetServiceAccountImpersonation(
-              workspaceId, userEmail, userRequest.getRequiredToken());
+              workspaceUuid, userEmail, userRequest.getRequiredToken());
     } catch (ConflictException e) {
       // There was a conflict enabling the service account. Request retry.
       return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, e);
@@ -77,12 +77,12 @@ public class GrantPetUsagePermissionStep implements Step {
       logger.warn(
           "Unable to undo GrantUsagePermissionStep for user {} in workspace {} as do step may not have completed.",
           userRequest.getEmail(),
-          workspaceId);
+          workspaceUuid);
       return StepResult.getStepResultSuccess();
     }
     try {
       petSaService.disablePetServiceAccountImpersonationWithEtag(
-          workspaceId, userRequest.getEmail(), userRequest, expectedEtag);
+          workspaceUuid, userRequest.getEmail(), userRequest, expectedEtag);
     } catch (ConflictException e) {
       // There was a conflict disabling the service account. Request retry.
       // There is a possible concurrency error here: if two threads are trying to enable and

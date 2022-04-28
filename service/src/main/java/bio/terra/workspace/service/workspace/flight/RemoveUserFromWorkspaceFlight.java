@@ -18,7 +18,7 @@ public class RemoveUserFromWorkspaceFlight extends Flight {
 
     FlightBeanBag appContext = FlightBeanBag.getFromObject(applicationContext);
 
-    UUID workspaceId =
+    UUID workspaceUuid =
         UUID.fromString(inputParameters.get(WorkspaceFlightMapKeys.WORKSPACE_ID, String.class));
     AuthenticatedUserRequest userRequest =
         inputParameters.get(JobMapKeys.AUTH_USER_INFO.getKeyName(), AuthenticatedUserRequest.class);
@@ -44,7 +44,7 @@ public class RemoveUserFromWorkspaceFlight extends Flight {
     RetryRule dbRetry = RetryRules.shortDatabase();
     addStep(
         new RemoveUserFromSamStep(
-            workspaceId,
+            workspaceUuid,
             roleToRemove.orElse(null),
             userToRemove,
             appContext.getSamService(),
@@ -52,11 +52,11 @@ public class RemoveUserFromWorkspaceFlight extends Flight {
         samRetry);
     addStep(
         new CheckUserStillInWorkspaceStep(
-            workspaceId, userToRemove, appContext.getSamService(), userRequest),
+            workspaceUuid, userToRemove, appContext.getSamService(), userRequest),
         samRetry);
     addStep(
         new ClaimUserPrivateResourcesStep(
-            workspaceId,
+            workspaceUuid,
             userToRemove,
             appContext.getResourceDao(),
             appContext.getSamService(),
@@ -67,11 +67,11 @@ public class RemoveUserFromWorkspaceFlight extends Flight {
         samRetry);
     addStep(
         new MarkPrivateResourcesAbandonedStep(
-            workspaceId, userToRemove, appContext.getResourceDao()),
+            workspaceUuid, userToRemove, appContext.getResourceDao()),
         dbRetry);
     addStep(
         new RevokePetUsagePermissionStep(
-            workspaceId,
+            workspaceUuid,
             userToRemove,
             appContext.getPetSaService(),
             appContext.getGcpCloudContextService(),
@@ -79,7 +79,7 @@ public class RemoveUserFromWorkspaceFlight extends Flight {
         RetryRules.cloud());
     addStep(
         new ReleasePrivateResourceCleanupClaimsStep(
-            workspaceId, userToRemove, appContext.getResourceDao()),
+            workspaceUuid, userToRemove, appContext.getResourceDao()),
         dbRetry);
   }
 }

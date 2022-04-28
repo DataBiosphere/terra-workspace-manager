@@ -17,20 +17,20 @@ import java.util.UUID;
 
 public class ClaimUserPrivateResourcesStep implements Step {
 
-  private final UUID workspaceId;
+  private final UUID workspaceUuid;
   private final String userEmail;
   private final ResourceDao resourceDao;
   private final SamService samService;
   private final AuthenticatedUserRequest userRequest;
 
   public ClaimUserPrivateResourcesStep(
-      UUID workspaceId,
+      UUID workspaceUuid,
       String userEmail,
       ResourceDao resourceDao,
       SamService samService,
       AuthenticatedUserRequest userRequest) {
     this.resourceDao = resourceDao;
-    this.workspaceId = workspaceId;
+    this.workspaceUuid = workspaceUuid;
     this.userEmail = userEmail;
     this.samService = samService;
     this.userRequest = userRequest;
@@ -51,7 +51,7 @@ public class ClaimUserPrivateResourcesStep implements Step {
     // other flights and indicate this flight is cleaning them up.
     List<ControlledResource> userResources =
         resourceDao.claimCleanupForWorkspacePrivateResources(
-            workspaceId, userEmail, context.getFlightId());
+            workspaceUuid, userEmail, context.getFlightId());
     // For each private resource, query Sam to find the roles the user has.
     List<ResourceRolePair> resourceRolesToRemove = new ArrayList<>();
     for (ControlledResource resource : userResources) {
@@ -70,7 +70,8 @@ public class ClaimUserPrivateResourcesStep implements Step {
     // This only releases resources claimed by the current flight, so it cannot overwrite claims
     // from
     // other flights.
-    resourceDao.releasePrivateResourceCleanupClaims(workspaceId, userEmail, context.getFlightId());
+    resourceDao.releasePrivateResourceCleanupClaims(
+        workspaceUuid, userEmail, context.getFlightId());
     return StepResult.getStepResultSuccess();
   }
 }

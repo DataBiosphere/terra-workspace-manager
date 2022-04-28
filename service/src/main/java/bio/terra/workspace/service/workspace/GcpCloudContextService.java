@@ -32,14 +32,14 @@ public class GcpCloudContextService {
   /**
    * Create the GCP cloud context of the workspace
    *
-   * @param workspaceId unique id of the workspace
+   * @param workspaceUuid unique id of the workspace
    * @param cloudContext the GCP cloud context to create
    */
   @Deprecated // TODO: PF-1238 remove
   public void createGcpCloudContext(
-      UUID workspaceId, GcpCloudContext cloudContext, String flightId) {
+      UUID workspaceUuid, GcpCloudContext cloudContext, String flightId) {
     workspaceDao.createCloudContext(
-        workspaceId, CloudPlatform.GCP, cloudContext.serialize(), flightId);
+        workspaceUuid, CloudPlatform.GCP, cloudContext.serialize(), flightId);
   }
 
   /**
@@ -48,11 +48,11 @@ public class GcpCloudContextService {
    * in the createGcpContext flight and assumes that a later step will call {@link
    * #createGcpCloudContextFinish}.
    *
-   * @param workspaceId workspace id where the context is being created
+   * @param workspaceUuid workspace id where the context is being created
    * @param flightId flight doing the creating
    */
-  public void createGcpCloudContextStart(UUID workspaceId, String flightId) {
-    workspaceDao.createCloudContextStart(workspaceId, CloudPlatform.GCP, flightId);
+  public void createGcpCloudContextStart(UUID workspaceUuid, String flightId) {
+    workspaceDao.createCloudContextStart(workspaceUuid, CloudPlatform.GCP, flightId);
   }
 
   /**
@@ -60,46 +60,47 @@ public class GcpCloudContextService {
    * designed for use in createGcpContext flight and assumes that an earlier step has called {@link
    * #createGcpCloudContextStart}.
    *
-   * @param workspaceId workspace id of the context
+   * @param workspaceUuid workspace id of the context
    * @param cloudContext cloud context data
    * @param flightId flight completing the creation
    */
   public void createGcpCloudContextFinish(
-      UUID workspaceId, GcpCloudContext cloudContext, String flightId) {
+      UUID workspaceUuid, GcpCloudContext cloudContext, String flightId) {
     workspaceDao.createCloudContextFinish(
-        workspaceId, CloudPlatform.GCP, cloudContext.serialize(), flightId);
+        workspaceUuid, CloudPlatform.GCP, cloudContext.serialize(), flightId);
   }
 
   /**
    * Delete the GCP cloud context for a workspace For details: {@link
    * WorkspaceDao#deleteCloudContext(UUID, CloudPlatform)}
    *
-   * @param workspaceId workspace of the cloud context
+   * @param workspaceUuid workspace of the cloud context
    */
-  public void deleteGcpCloudContext(UUID workspaceId) {
-    workspaceDao.deleteCloudContext(workspaceId, CloudPlatform.GCP);
+  public void deleteGcpCloudContext(UUID workspaceUuid) {
+    workspaceDao.deleteCloudContext(workspaceUuid, CloudPlatform.GCP);
   }
 
   /**
    * Delete a cloud context for the workspace validating the flight id. For details: {@link
    * WorkspaceDao#deleteCloudContextWithFlightIdValidation(UUID, CloudPlatform, String)}
    *
-   * @param workspaceId workspace of the cloud context
+   * @param workspaceUuid workspace of the cloud context
    * @param flightId flight id making the delete request
    */
-  public void deleteGcpCloudContextWithCheck(UUID workspaceId, String flightId) {
-    workspaceDao.deleteCloudContextWithFlightIdValidation(workspaceId, CloudPlatform.GCP, flightId);
+  public void deleteGcpCloudContextWithCheck(UUID workspaceUuid, String flightId) {
+    workspaceDao.deleteCloudContextWithFlightIdValidation(
+        workspaceUuid, CloudPlatform.GCP, flightId);
   }
 
   /**
    * Retrieve the optional GCP cloud context
    *
-   * @param workspaceId workspace identifier of the cloud context
+   * @param workspaceUuid workspace identifier of the cloud context
    * @return optional GCP cloud context
    */
-  public Optional<GcpCloudContext> getGcpCloudContext(UUID workspaceId) {
+  public Optional<GcpCloudContext> getGcpCloudContext(UUID workspaceUuid) {
     return workspaceDao
-        .getCloudContext(workspaceId, CloudPlatform.GCP)
+        .getCloudContext(workspaceUuid, CloudPlatform.GCP)
         .map(GcpCloudContext::deserialize);
   }
 
@@ -110,13 +111,13 @@ public class GcpCloudContextService {
    * <p>This is used during controlled resource create. Since the caller may not have permission to
    * read the workspace policies, we use the WSM SA to query Sam.
    *
-   * @param workspaceId workspace identifier of the cloud context
+   * @param workspaceUuid workspace identifier of the cloud context
    * @return GCP cloud context with all policies filled in.
    */
   public GcpCloudContext getRequiredGcpCloudContext(
-      UUID workspaceId, AuthenticatedUserRequest userRequest) throws InterruptedException {
+      UUID workspaceUuid, AuthenticatedUserRequest userRequest) throws InterruptedException {
     GcpCloudContext context =
-        getGcpCloudContext(workspaceId)
+        getGcpCloudContext(workspaceUuid)
             .orElseThrow(
                 () -> new CloudContextRequiredException("Operation requires GCP cloud context"));
 
@@ -124,15 +125,15 @@ public class GcpCloudContextService {
     // store the sync'd workspace policies.
     if (context.getSamPolicyOwner().isEmpty()) {
       context.setSamPolicyOwner(
-          samService.getWorkspacePolicy(workspaceId, WsmIamRole.OWNER, userRequest));
+          samService.getWorkspacePolicy(workspaceUuid, WsmIamRole.OWNER, userRequest));
       context.setSamPolicyWriter(
-          samService.getWorkspacePolicy(workspaceId, WsmIamRole.WRITER, userRequest));
+          samService.getWorkspacePolicy(workspaceUuid, WsmIamRole.WRITER, userRequest));
       context.setSamPolicyReader(
-          samService.getWorkspacePolicy(workspaceId, WsmIamRole.READER, userRequest));
+          samService.getWorkspacePolicy(workspaceUuid, WsmIamRole.READER, userRequest));
       context.setSamPolicyApplication(
-          samService.getWorkspacePolicy(workspaceId, WsmIamRole.APPLICATION, userRequest));
+          samService.getWorkspacePolicy(workspaceUuid, WsmIamRole.APPLICATION, userRequest));
     }
-    workspaceDao.updateCloudContext(workspaceId, CloudPlatform.GCP, context.serialize());
+    workspaceDao.updateCloudContext(workspaceUuid, CloudPlatform.GCP, context.serialize());
     return context;
   }
 
@@ -141,8 +142,8 @@ public class GcpCloudContextService {
    * context exists.
    */
   @Deprecated // TODO: PF-1238 remove
-  public Optional<String> getGcpCloudContextFlightId(UUID workspaceId) {
-    return workspaceDao.getCloudContextFlightId(workspaceId, CloudPlatform.GCP);
+  public Optional<String> getGcpCloudContextFlightId(UUID workspaceUuid) {
+    return workspaceDao.getCloudContextFlightId(workspaceUuid, CloudPlatform.GCP);
   }
 
   /**
@@ -150,22 +151,22 @@ public class GcpCloudContextService {
    * {@link #getRequiredGcpProject(UUID)}, this returns an empty Optional instead of throwing if the
    * given workspace does not have a GCP cloud context. NOTE: no user auth validation
    *
-   * @param workspaceId workspace identifier of the cloud context
+   * @param workspaceUuid workspace identifier of the cloud context
    * @return optional GCP project from the cloud context
    */
-  public Optional<String> getGcpProject(UUID workspaceId) {
-    return getGcpCloudContext(workspaceId).map(GcpCloudContext::getGcpProjectId);
+  public Optional<String> getGcpProject(UUID workspaceUuid) {
+    return getGcpCloudContext(workspaceUuid).map(GcpCloudContext::getGcpProjectId);
   }
 
   /**
    * Helper method used by other classes that require the GCP project to exist in the workspace. It
    * throws if the project (GCP cloud context) is not set up. NOTE: no user auth validation
    *
-   * @param workspaceId unique workspace id
+   * @param workspaceUuid unique workspace id
    * @return GCP project id
    */
-  public String getRequiredGcpProject(UUID workspaceId) {
-    return getGcpProject(workspaceId)
+  public String getRequiredGcpProject(UUID workspaceUuid) {
+    return getGcpProject(workspaceUuid)
         .orElseThrow(
             () -> new CloudContextRequiredException("Operation requires GCP cloud context"));
   }
