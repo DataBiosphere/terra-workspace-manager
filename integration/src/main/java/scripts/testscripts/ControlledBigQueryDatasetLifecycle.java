@@ -413,7 +413,7 @@ public class ControlledBigQueryDatasetLifecycle extends GcpWorkspaceCloneTestScr
         clonedControlledGcpBigQueryDataset.getDataset();
     final ResourceMetadata clonedDatasetMetadata = clonedResource.getMetadata();
     assertEquals(
-        sourceDatasetMetadata.getCloningInstructions(),
+        CloningInstructionsEnum.RESOURCE,
         clonedDatasetMetadata.getCloningInstructions());
     assertEquals(
         sourceDatasetMetadata.getCloudPlatform(), clonedDatasetMetadata.getCloudPlatform());
