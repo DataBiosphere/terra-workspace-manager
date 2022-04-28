@@ -216,7 +216,9 @@ class WorkspaceServiceTest extends BaseConnectedTest {
         assertThrows(
             DuplicateUserFacingIdException.class,
             () -> workspaceService.createWorkspace(duplicateUserFacingId, USER_REQUEST));
-    assertEquals(String.format("Workspace with user facing ID %s already exists", userFacingId), ex.getMessage());
+    assertEquals(
+        String.format("Workspace with user facing ID %s already exists", userFacingId),
+        ex.getMessage());
   }
 
   @Test
@@ -301,7 +303,8 @@ class WorkspaceServiceTest extends BaseConnectedTest {
     String otherDescription = "The deprecated workspace";
 
     Workspace secondUpdatedWorkspace =
-        workspaceService.updateWorkspace(USER_REQUEST, workspaceUuid, null, null, otherDescription, null);
+        workspaceService.updateWorkspace(
+            USER_REQUEST, workspaceUuid, null, null, otherDescription, null);
 
     // Since name is null, leave it alone. Description should be updated.
     assertEquals(userFacingId, secondUpdatedWorkspace.getUserFacingId().orElse(null));
@@ -312,13 +315,15 @@ class WorkspaceServiceTest extends BaseConnectedTest {
     // Sending through empty strings and an empty map clears the values.
     Map<String, String> propertyMap3 = new HashMap<>();
     Workspace thirdUpdatedWorkspace =
-        workspaceService.updateWorkspace(USER_REQUEST, workspaceUuid, userFacingId, "", "", propertyMap3);
+        workspaceService.updateWorkspace(
+            USER_REQUEST, workspaceUuid, userFacingId, "", "", propertyMap3);
     assertEquals("", thirdUpdatedWorkspace.getDisplayName().orElse(null));
     assertEquals("", thirdUpdatedWorkspace.getDescription().orElse(null));
 
     assertThrows(
         MissingRequiredFieldException.class,
-        () -> workspaceService.updateWorkspace(USER_REQUEST, workspaceUuid, null, null, null, null));
+        () ->
+            workspaceService.updateWorkspace(USER_REQUEST, workspaceUuid, null, null, null, null));
   }
 
   @Test

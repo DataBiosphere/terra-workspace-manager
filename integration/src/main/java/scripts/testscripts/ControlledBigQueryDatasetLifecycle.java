@@ -205,7 +205,9 @@ public class ControlledBigQueryDatasetLifecycle extends GcpWorkspaceCloneTestScr
     ownerResourceApi.updateBigQueryDataset(updateDatasetRequest, getWorkspaceId(), resourceId);
     var datasetAfterUpdate = ownerResourceApi.getBigQueryDataset(getWorkspaceId(), resourceId);
     assertEquals(resourceDescription, datasetAfterUpdate.getMetadata().getDescription());
-    assertEquals(CloningInstructionsEnum.RESOURCE, datasetAfterUpdate.getMetadata().getCloningInstructions());
+    assertEquals(
+        CloningInstructionsEnum.RESOURCE,
+        datasetAfterUpdate.getMetadata().getCloningInstructions());
     logger.info("Workspace owner updated resource {}", resourceId);
 
     // However, invalid updates are rejected.
@@ -412,9 +414,7 @@ public class ControlledBigQueryDatasetLifecycle extends GcpWorkspaceCloneTestScr
     final GcpBigQueryDatasetResource clonedResource =
         clonedControlledGcpBigQueryDataset.getDataset();
     final ResourceMetadata clonedDatasetMetadata = clonedResource.getMetadata();
-    assertEquals(
-        CloningInstructionsEnum.RESOURCE,
-        clonedDatasetMetadata.getCloningInstructions());
+    assertEquals(CloningInstructionsEnum.RESOURCE, clonedDatasetMetadata.getCloningInstructions());
     assertEquals(
         sourceDatasetMetadata.getCloudPlatform(), clonedDatasetMetadata.getCloudPlatform());
     assertEquals(sourceDatasetMetadata.getResourceType(), clonedDatasetMetadata.getResourceType());

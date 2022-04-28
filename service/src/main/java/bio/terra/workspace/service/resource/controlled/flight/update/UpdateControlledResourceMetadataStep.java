@@ -63,12 +63,13 @@ public class UpdateControlledResourceMetadataStep implements Step {
     } else if (WsmResourceType.CONTROLLED_GCP_BIG_QUERY_DATASET == resource.getResourceType()) {
       final var datasetUpdateParameters =
           inputParameters.get(
-              ControlledResourceKeys.UPDATE_PARAMETERS, ApiGcpBigQueryDatasetUpdateParameters.class);
-        cloningInstructions =
-            CloningInstructions.fromApiModel(
-                Optional.ofNullable(datasetUpdateParameters)
-                    .map(ApiGcpBigQueryDatasetUpdateParameters::getCloningInstructions)
-                    .orElse(null));
+              ControlledResourceKeys.UPDATE_PARAMETERS,
+              ApiGcpBigQueryDatasetUpdateParameters.class);
+      cloningInstructions =
+          CloningInstructions.fromApiModel(
+              Optional.ofNullable(datasetUpdateParameters)
+                  .map(ApiGcpBigQueryDatasetUpdateParameters::getCloningInstructions)
+                  .orElse(null));
     } else {
       cloningInstructions = null; // don't change the value
     }

@@ -210,7 +210,12 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
 
     Workspace workspace =
         workspaceService.updateWorkspace(
-            userRequest, workspaceUuid, body.getUserFacingId(), body.getDisplayName(), body.getDescription(), propertyMap);
+            userRequest,
+            workspaceUuid,
+            body.getUserFacingId(),
+            body.getDisplayName(),
+            body.getDescription(),
+            propertyMap);
 
     ApiWorkspaceDescription desc = buildWorkspaceDescription(workspace);
     logger.info("Updated workspace {} for {}", desc, userRequest.getEmail());
