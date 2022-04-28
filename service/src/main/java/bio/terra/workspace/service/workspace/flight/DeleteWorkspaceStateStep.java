@@ -12,19 +12,19 @@ import org.slf4j.LoggerFactory;
 public class DeleteWorkspaceStateStep implements Step {
 
   private final WorkspaceDao workspaceDao;
-  private final UUID workspaceId;
+  private final UUID workspaceUuid;
 
   private final Logger logger = LoggerFactory.getLogger(DeleteWorkspaceStateStep.class);
 
-  public DeleteWorkspaceStateStep(WorkspaceDao workspaceDao, UUID workspaceId) {
+  public DeleteWorkspaceStateStep(WorkspaceDao workspaceDao, UUID workspaceUuid) {
     this.workspaceDao = workspaceDao;
-    this.workspaceId = workspaceId;
+    this.workspaceUuid = workspaceUuid;
   }
 
   @Override
   public StepResult doStep(FlightContext flightContext)
       throws RetryException, InterruptedException {
-    workspaceDao.deleteWorkspace(workspaceId);
+    workspaceDao.deleteWorkspace(workspaceUuid);
     return StepResult.getStepResultSuccess();
   }
 
@@ -34,7 +34,7 @@ public class DeleteWorkspaceStateStep implements Step {
     // state tables, and this undo can't re-create all that state.
     // This should absolutely be the last step of a flight, and because we're unable to undo it
     // we surface the error from the DO step that led to this issue.
-    logger.error("Unable to undo deletion of workspace {} in WSM DB", workspaceId);
+    logger.error("Unable to undo deletion of workspace {} in WSM DB", workspaceUuid);
     return flightContext.getResult();
   }
 }

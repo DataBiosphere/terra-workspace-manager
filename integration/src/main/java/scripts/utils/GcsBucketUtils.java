@@ -125,7 +125,7 @@ public class GcsBucketUtils {
   /** Updates name, description, and/or referencing target for GCS bucket reference. */
   public static void updateGcsBucketReference(
       ReferencedGcpResourceApi resourceApi,
-      UUID workspaceId,
+      UUID workspaceUuid,
       UUID resourceId,
       @Nullable String name,
       @Nullable String description,
@@ -141,13 +141,13 @@ public class GcsBucketUtils {
     if (bucketName != null) {
       body.setBucketName(bucketName);
     }
-    resourceApi.updateBucketReferenceResource(body, workspaceId, resourceId);
+    resourceApi.updateBucketReferenceResource(body, workspaceUuid, resourceId);
   }
 
   // Fully parameterized version; category-specific versions below
   public static CreatedControlledGcpGcsBucket makeControlledGcsBucket(
       ControlledGcpResourceApi resourceApi,
-      UUID workspaceId,
+      UUID workspaceUuid,
       String name,
       @Nullable String bucketName,
       AccessScope accessScope,
@@ -171,27 +171,27 @@ public class GcsBucketUtils {
                     .defaultStorageClass(GcpGcsBucketDefaultStorageClass.STANDARD)
                     .lifecycle(new GcpGcsBucketLifecycle().rules(BUCKET_LIFECYCLE_RULES)));
 
-    CreatedControlledGcpGcsBucket result = resourceApi.createBucket(body, workspaceId);
+    CreatedControlledGcpGcsBucket result = resourceApi.createBucket(body, workspaceUuid);
     logger.info(
         "Creating {} {} bucket {} resource ID {} in workspace {}",
         managedBy.name(),
         accessScope.name(),
         bucketName,
         result.getResourceId(),
-        workspaceId);
+        workspaceUuid);
     return result;
   }
 
   public static CreatedControlledGcpGcsBucket makeControlledGcsBucketAppPrivate(
       ControlledGcpResourceApi resourceApi,
-      UUID workspaceId,
+      UUID workspaceUuid,
       String name,
       CloningInstructionsEnum cloningInstructions,
       @Nullable PrivateResourceUser privateUser)
       throws Exception {
     return makeControlledGcsBucket(
         resourceApi,
-        workspaceId,
+        workspaceUuid,
         name,
         /*bucketName=*/ null,
         AccessScope.PRIVATE_ACCESS,
@@ -201,16 +201,16 @@ public class GcsBucketUtils {
   }
 
   public static void deleteControlledGcsBucket(
-      UUID resourceId, UUID workspaceId, ControlledGcpResourceApi resourceApi) throws Exception {
+      UUID resourceId, UUID workspaceUuid, ControlledGcpResourceApi resourceApi) throws Exception {
     String deleteJobId = UUID.randomUUID().toString();
     var deleteRequest =
         new DeleteControlledGcpGcsBucketRequest().jobControl(new JobControl().id(deleteJobId));
     logger.info("Deleting bucket resource id {} jobId {}", resourceId, deleteJobId);
     DeleteControlledGcpGcsBucketResult result =
-        resourceApi.deleteBucket(deleteRequest, workspaceId, resourceId);
+        resourceApi.deleteBucket(deleteRequest, workspaceUuid, resourceId);
     while (ClientTestUtils.jobIsRunning(result.getJobReport())) {
       TimeUnit.SECONDS.sleep(DELETE_BUCKET_POLL_SECONDS);
-      result = resourceApi.getDeleteBucketResult(workspaceId, deleteJobId);
+      result = resourceApi.getDeleteBucketResult(workspaceUuid, deleteJobId);
     }
     logger.info("Delete bucket status is {}", result.getJobReport().getStatus().toString());
     if (result.getJobReport().getStatus() != JobReport.StatusEnum.SUCCEEDED) {
@@ -227,7 +227,7 @@ public class GcsBucketUtils {
   public static GcpGcsBucketResource makeGcsBucketReference(
       GcpGcsBucketAttributes bucket,
       ReferencedGcpResourceApi resourceApi,
-      UUID workspaceId,
+      UUID workspaceUuid,
       String name,
       @Nullable CloningInstructionsEnum cloningInstructions)
       throws Exception {
@@ -244,24 +244,24 @@ public class GcsBucketUtils {
 
     GcpGcsBucketResource result =
         ClientTestUtils.getWithRetryOnException(
-            () -> resourceApi.createBucketReference(body, workspaceId));
+            () -> resourceApi.createBucketReference(body, workspaceUuid));
     logger.info(
         "Created reference to GCS bucket {} resourceID {} workspaceID {}",
         result.getAttributes().getBucketName(),
         result.getMetadata().getResourceId(),
-        workspaceId);
+        workspaceUuid);
     return result;
   }
 
   public static CreatedControlledGcpGcsBucket makeControlledGcsBucketAppShared(
       ControlledGcpResourceApi resourceApi,
-      UUID workspaceId,
+      UUID workspaceUuid,
       String name,
       @Nullable CloningInstructionsEnum cloningInstructions)
       throws Exception {
     return makeControlledGcsBucket(
         resourceApi,
-        workspaceId,
+        workspaceUuid,
         name,
         /*bucketName=*/ null,
         AccessScope.SHARED_ACCESS,
@@ -272,13 +272,13 @@ public class GcsBucketUtils {
 
   public static CreatedControlledGcpGcsBucket makeControlledGcsBucketUserShared(
       ControlledGcpResourceApi resourceApi,
-      UUID workspaceId,
+      UUID workspaceUuid,
       String name,
       CloningInstructionsEnum cloningInstructions)
       throws Exception {
     return GcsBucketUtils.makeControlledGcsBucket(
         resourceApi,
-        workspaceId,
+        workspaceUuid,
         name,
         /*bucketName=*/ null,
         AccessScope.SHARED_ACCESS,
@@ -289,13 +289,13 @@ public class GcsBucketUtils {
 
   public static CreatedControlledGcpGcsBucket makeControlledGcsBucketUserPrivate(
       ControlledGcpResourceApi resourceApi,
-      UUID workspaceId,
+      UUID workspaceUuid,
       String name,
       CloningInstructionsEnum cloningInstructions)
       throws Exception {
     return GcsBucketUtils.makeControlledGcsBucket(
         resourceApi,
-        workspaceId,
+        workspaceUuid,
         name,
         /*bucketName=*/ null,
         AccessScope.PRIVATE_ACCESS,
@@ -307,7 +307,7 @@ public class GcsBucketUtils {
   /** Updates name, description, and/or referencing target for GCS bucket object reference. */
   public static void updateGcsBucketObjectReference(
       ReferencedGcpResourceApi resourceApi,
-      UUID workspaceId,
+      UUID workspaceUuid,
       UUID resourceId,
       @Nullable String name,
       @Nullable String description,
@@ -328,7 +328,7 @@ public class GcsBucketUtils {
     if (objectName != null) {
       body.setObjectName(objectName);
     }
-    resourceApi.updateBucketObjectReferenceResource(body, workspaceId, resourceId);
+    resourceApi.updateBucketObjectReferenceResource(body, workspaceUuid, resourceId);
   }
 
   /**

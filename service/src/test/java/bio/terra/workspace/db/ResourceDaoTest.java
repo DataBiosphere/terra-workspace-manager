@@ -52,9 +52,9 @@ public class ResourceDaoTest extends BaseUnitTest {
 
   @Test
   public void createGetControlledGcsBucket() {
-    UUID workspaceId = createGcpWorkspace();
+    UUID workspaceUuid = createGcpWorkspace();
     ControlledGcsBucketResource resource =
-        ControlledResourceFixtures.makeDefaultControlledGcsBucketBuilder(workspaceId).build();
+        ControlledResourceFixtures.makeDefaultControlledGcsBucketBuilder(workspaceUuid).build();
     resourceDao.createControlledResource(resource);
 
     assertEquals(
@@ -64,9 +64,9 @@ public class ResourceDaoTest extends BaseUnitTest {
 
   @Test
   public void createGetDeleteControlledBigQueryDataset() {
-    UUID workspaceId = createGcpWorkspace();
+    UUID workspaceUuid = createGcpWorkspace();
     ControlledBigQueryDatasetResource resource =
-        ControlledResourceFixtures.makeDefaultControlledBigQueryBuilder(workspaceId).build();
+        ControlledResourceFixtures.makeDefaultControlledBigQueryBuilder(workspaceUuid).build();
     resourceDao.createControlledResource(resource);
 
     assertEquals(
@@ -76,10 +76,10 @@ public class ResourceDaoTest extends BaseUnitTest {
 
   @Test
   public void createGetControlledAiNotebookInstance() {
-    UUID workspaceId = createGcpWorkspace();
+    UUID workspaceUuid = createGcpWorkspace();
     ControlledResourceFields commonFields =
         ControlledResourceFixtures.makeNotebookCommonFieldsBuilder()
-            .workspaceId(workspaceId)
+            .workspaceUuid(workspaceUuid)
             .build();
     ControlledAiNotebookInstanceResource resource =
         ControlledResourceFixtures.makeDefaultAiNotebookInstance().common(commonFields).build();
@@ -93,28 +93,29 @@ public class ResourceDaoTest extends BaseUnitTest {
 
   @Test
   public void listAndDeleteControlledResourceInContext() {
-    UUID workspaceId = createGcpWorkspace();
+    UUID workspaceUuid = createGcpWorkspace();
     ControlledGcsBucketResource bucket =
-        ControlledResourceFixtures.makeDefaultControlledGcsBucketBuilder(workspaceId).build();
+        ControlledResourceFixtures.makeDefaultControlledGcsBucketBuilder(workspaceUuid).build();
     ControlledBigQueryDatasetResource dataset =
-        ControlledResourceFixtures.makeDefaultControlledBigQueryBuilder(workspaceId).build();
+        ControlledResourceFixtures.makeDefaultControlledBigQueryBuilder(workspaceUuid).build();
     resourceDao.createControlledResource(bucket);
     resourceDao.createControlledResource(dataset);
 
     List<ControlledResource> gcpList =
-        resourceDao.listControlledResources(workspaceId, CloudPlatform.GCP);
+        resourceDao.listControlledResources(workspaceUuid, CloudPlatform.GCP);
     List<ControlledResource> azureList =
-        resourceDao.listControlledResources(workspaceId, CloudPlatform.AZURE);
-    List<ControlledResource> allCloudList = resourceDao.listControlledResources(workspaceId, null);
+        resourceDao.listControlledResources(workspaceUuid, CloudPlatform.AZURE);
+    List<ControlledResource> allCloudList =
+        resourceDao.listControlledResources(workspaceUuid, null);
 
     assertTrue(azureList.isEmpty());
     assertThat(gcpList, containsInAnyOrder(bucket, dataset));
     assertThat(allCloudList, containsInAnyOrder(bucket, dataset));
 
-    assertTrue(resourceDao.deleteAllControlledResources(workspaceId, CloudPlatform.GCP));
-    assertFalse(resourceDao.deleteAllControlledResources(workspaceId, CloudPlatform.AZURE));
+    assertTrue(resourceDao.deleteAllControlledResources(workspaceUuid, CloudPlatform.GCP));
+    assertFalse(resourceDao.deleteAllControlledResources(workspaceUuid, CloudPlatform.AZURE));
     List<ControlledResource> listAfterDeletion =
-        resourceDao.listControlledResources(workspaceId, CloudPlatform.GCP);
+        resourceDao.listControlledResources(workspaceUuid, CloudPlatform.GCP);
     assertTrue(listAfterDeletion.isEmpty());
   }
 
@@ -153,7 +154,7 @@ public class ResourceDaoTest extends BaseUnitTest {
     final UUID workspaceId1 = createGcpWorkspace();
     ControlledResourceFields commonFields1 =
         ControlledResourceFixtures.makeNotebookCommonFieldsBuilder()
-            .workspaceId(workspaceId1)
+            .workspaceUuid(workspaceId1)
             .build();
     ControlledAiNotebookInstanceResource initialResource =
         ControlledResourceFixtures.makeDefaultAiNotebookInstance().common(commonFields1).build();
@@ -164,7 +165,7 @@ public class ResourceDaoTest extends BaseUnitTest {
 
     ControlledResourceFields commonFields2 =
         ControlledResourceFixtures.makeNotebookCommonFieldsBuilder()
-            .workspaceId(workspaceId1)
+            .workspaceUuid(workspaceId1)
             .name("resource-2")
             .build();
     final ControlledResource duplicatingResource =
@@ -175,7 +176,7 @@ public class ResourceDaoTest extends BaseUnitTest {
 
     ControlledResourceFields commonFields3 =
         ControlledResourceFixtures.makeNotebookCommonFieldsBuilder()
-            .workspaceId(createGcpWorkspace())
+            .workspaceUuid(createGcpWorkspace())
             .name("resource-3")
             .build();
     final ControlledResource resourceWithDifferentWorkspaceId =
@@ -192,7 +193,7 @@ public class ResourceDaoTest extends BaseUnitTest {
 
     ControlledResourceFields commonFields4 =
         ControlledResourceFixtures.makeNotebookCommonFieldsBuilder()
-            .workspaceId(workspaceId1)
+            .workspaceUuid(workspaceId1)
             .name("resource-4")
             .build();
     final ControlledResource resourceWithDifferentLocation =
@@ -211,7 +212,7 @@ public class ResourceDaoTest extends BaseUnitTest {
 
     ControlledResourceFields commonFields5 =
         ControlledResourceFixtures.makeNotebookCommonFieldsBuilder()
-            .workspaceId(workspaceId1)
+            .workspaceUuid(workspaceId1)
             .name("resource-5")
             .build();
     final ControlledAiNotebookInstanceResource resourceWithDefaultLocation =

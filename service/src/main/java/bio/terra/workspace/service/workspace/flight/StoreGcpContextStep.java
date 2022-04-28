@@ -19,11 +19,11 @@ import java.util.UUID;
 @Deprecated // TODO: PF-1238 remove
 public class StoreGcpContextStep implements Step {
   private final GcpCloudContextService gcpCloudContextService;
-  private final UUID workspaceId;
+  private final UUID workspaceUuid;
 
-  public StoreGcpContextStep(GcpCloudContextService gcpCloudContextService, UUID workspaceId) {
+  public StoreGcpContextStep(GcpCloudContextService gcpCloudContextService, UUID workspaceUuid) {
     this.gcpCloudContextService = gcpCloudContextService;
-    this.workspaceId = workspaceId;
+    this.workspaceUuid = workspaceUuid;
   }
 
   @Override
@@ -32,25 +32,26 @@ public class StoreGcpContextStep implements Step {
 
     // Create the cloud context; throws if another flight already created the context.
     Optional<String> creatingFlightId =
-        gcpCloudContextService.getGcpCloudContextFlightId(workspaceId);
+        gcpCloudContextService.getGcpCloudContextFlightId(workspaceUuid);
     if (creatingFlightId.isPresent()) {
       if (creatingFlightId.get().equals(flightContext.getFlightId())) {
         // This flight has already created the context, meaning this step is being re-run.
         return StepResult.getStepResultSuccess();
       } else {
         throw new DuplicateCloudContextException(
-            String.format("Workspace %s already has a GCP cloud context", workspaceId));
+            String.format("Workspace %s already has a GCP cloud context", workspaceUuid));
       }
     }
     gcpCloudContextService.createGcpCloudContext(
-        workspaceId, new GcpCloudContext(projectId), flightContext.getFlightId());
+        workspaceUuid, new GcpCloudContext(projectId), flightContext.getFlightId());
     return StepResult.getStepResultSuccess();
   }
 
   @Override
   public StepResult undoStep(FlightContext flightContext) throws InterruptedException {
     // Delete the cloud context, but only if it is the one with our flight id
-    gcpCloudContextService.deleteGcpCloudContextWithCheck(workspaceId, flightContext.getFlightId());
+    gcpCloudContextService.deleteGcpCloudContextWithCheck(
+        workspaceUuid, flightContext.getFlightId());
     return StepResult.getStepResultSuccess();
   }
 }

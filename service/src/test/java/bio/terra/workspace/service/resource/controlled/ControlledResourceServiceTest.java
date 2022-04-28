@@ -215,7 +215,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
   @Test
   @DisabledIfEnvironmentVariable(named = "TEST_ENV", matches = BUFFER_SERVICE_DISABLED_ENVS_REG_EX)
   void createAiNotebookInstanceDo() throws Exception {
-    UUID workspaceId = reusableWorkspace(user).getWorkspaceId();
+    UUID workspaceUuid = reusableWorkspace(user).getWorkspaceId();
     var instanceId = "create-ai-notebook-instance-do";
     var serverName = "verily-autopush";
     cliConfiguration.setServerName(serverName);
@@ -225,7 +225,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
             .location(DEFAULT_NOTEBOOK_LOCATION);
 
     ControlledAiNotebookInstanceResource resource =
-        makeNotebookTestResource(workspaceId, "initial-notebook-name", instanceId);
+        makeNotebookTestResource(workspaceUuid, "initial-notebook-name", instanceId);
 
     // Test idempotency of steps by retrying them once.
     Map<String, StepStatus> retrySteps = new HashMap<>();
@@ -253,12 +253,12 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
     assertEquals(
         resource,
         controlledResourceService.getControlledResource(
-            workspaceId, resource.getResourceId(), user.getAuthenticatedRequest()));
+            workspaceUuid, resource.getResourceId(), user.getAuthenticatedRequest()));
 
     InstanceName instanceName =
         resource.toInstanceName(
             workspaceService.getAuthorizedRequiredGcpProject(
-                workspaceId, user.getAuthenticatedRequest()));
+                workspaceUuid, user.getAuthenticatedRequest()));
     Instance instance =
         crlService.getAIPlatformNotebooksCow().instances().get(instanceName).execute();
 
@@ -312,7 +312,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
 
     // Creating a controlled resource with a duplicate underlying notebook instance is not allowed.
     ControlledAiNotebookInstanceResource duplicateResource =
-        makeNotebookTestResource(workspaceId, "new-name-same-notebook-instance", instanceId);
+        makeNotebookTestResource(workspaceUuid, "new-name-same-notebook-instance", instanceId);
     String duplicateResourceJobId =
         controlledResourceService.createAiNotebookInstance(
             duplicateResource,
@@ -332,11 +332,11 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
   }
 
   private ControlledAiNotebookInstanceResource makeNotebookTestResource(
-      UUID workspaceId, String name, String instanceId) {
+      UUID workspaceUuid, String name, String instanceId) {
 
     ControlledResourceFields commonFields =
         ControlledResourceFixtures.makeNotebookCommonFieldsBuilder()
-            .workspaceId(workspaceId)
+            .workspaceUuid(workspaceUuid)
             .name(name)
             .assignedUser(user.getEmail())
             .build();

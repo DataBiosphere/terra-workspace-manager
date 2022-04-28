@@ -16,20 +16,20 @@ public class DeleteControlledDbResourcesStep implements Step {
   private final Logger logger = LoggerFactory.getLogger(DeleteControlledDbResourcesStep.class);
 
   private final ResourceDao resourceDao;
-  private final UUID workspaceId;
+  private final UUID workspaceUuid;
   private final CloudPlatform cloudPlatform;
 
   public DeleteControlledDbResourcesStep(
-      ResourceDao resourceDao, UUID workspaceId, CloudPlatform cloudPlatform) {
+      ResourceDao resourceDao, UUID workspaceUuid, CloudPlatform cloudPlatform) {
     this.resourceDao = resourceDao;
-    this.workspaceId = workspaceId;
+    this.workspaceUuid = workspaceUuid;
     this.cloudPlatform = cloudPlatform;
   }
 
   @Override
   public StepResult doStep(FlightContext flightContext)
       throws InterruptedException, RetryException {
-    resourceDao.deleteAllControlledResources(workspaceId, cloudPlatform);
+    resourceDao.deleteAllControlledResources(workspaceUuid, cloudPlatform);
     return StepResult.getStepResultSuccess();
   }
 
@@ -37,7 +37,7 @@ public class DeleteControlledDbResourcesStep implements Step {
   public StepResult undoStep(FlightContext flightContext) throws InterruptedException {
     logger.error(
         "Unable to undo deletion of controlled resources in workspace {}, cloud {}",
-        workspaceId,
+        workspaceUuid,
         cloudPlatform);
     return flightContext.getResult();
   }

@@ -18,7 +18,7 @@ public class GitRepoUtils {
 
   public static void updateGitRepoReferenceResource(
       ReferencedGcpResourceApi resourceApi,
-      UUID workspaceId,
+      UUID workspaceUuid,
       UUID resourceId,
       @Nullable String name,
       @Nullable String description,
@@ -34,7 +34,7 @@ public class GitRepoUtils {
     if (gitRepoUrl != null) {
       body.setGitRepoUrl(gitRepoUrl);
     }
-    resourceApi.updateGitRepoReference(body, workspaceId, resourceId);
+    resourceApi.updateGitRepoReference(body, workspaceUuid, resourceId);
   }
 
   /**
@@ -46,7 +46,7 @@ public class GitRepoUtils {
   public static GitRepoResource makeGitRepoReference(
       GitRepoAttributes attributes,
       ReferencedGcpResourceApi resourceApi,
-      UUID workspaceId,
+      UUID workspaceUuid,
       String name)
       throws Exception {
 
@@ -60,6 +60,6 @@ public class GitRepoUtils {
             .gitrepo(new GitRepoAttributes().gitRepoUrl(attributes.getGitRepoUrl()));
     logger.info("Making git repo reference of {} with name {}", attributes.getGitRepoUrl(), name);
     return ClientTestUtils.getWithRetryOnException(
-        () -> resourceApi.createGitRepoReference(body, workspaceId));
+        () -> resourceApi.createGitRepoReference(body, workspaceUuid));
   }
 }

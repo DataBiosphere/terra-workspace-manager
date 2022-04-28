@@ -55,7 +55,7 @@ public class Alpha1Service {
    * Stairway's getFlights calls. The resulting flights are translated into enumerated jobs. The
    * jobs are ordered by submit time.
    *
-   * @param workspaceId workspace we are listing in
+   * @param workspaceUuid workspace we are listing in
    * @param userRequest authenticated user
    * @param limit max number of jobs to return
    * @param pageToken optional starting place in the result set; start at beginning if missing
@@ -66,7 +66,7 @@ public class Alpha1Service {
    * @return POJO containing the results
    */
   public EnumeratedJobs enumerateJobs(
-      UUID workspaceId,
+      UUID workspaceUuid,
       AuthenticatedUserRequest userRequest,
       int limit,
       @Nullable String pageToken,
@@ -78,13 +78,13 @@ public class Alpha1Service {
 
     // Readers can see the workspace jobs list
     workspaceService.validateWorkspaceAndAction(
-        userRequest, workspaceId, SamConstants.SamWorkspaceAction.READ);
+        userRequest, workspaceUuid, SamConstants.SamWorkspaceAction.READ);
 
     FlightEnumeration flightEnumeration;
     try {
       FlightFilter filter =
           buildFlightFilter(
-              workspaceId, cloudResourceType, stewardshipType, resourceName, jobStateFilter);
+              workspaceUuid, cloudResourceType, stewardshipType, resourceName, jobStateFilter);
       flightEnumeration = stairwayComponent.get().getFlights(pageToken, limit, filter);
     } catch (StairwayException | InterruptedException stairwayEx) {
       throw new InternalStairwayException(stairwayEx);
@@ -124,7 +124,7 @@ public class Alpha1Service {
   }
 
   private FlightFilter buildFlightFilter(
-      UUID workspaceId,
+      UUID workspaceUuid,
       @Nullable WsmResourceFamily cloudResourceType,
       @Nullable StewardshipType stewardshipType,
       @Nullable String resourceName,
@@ -133,7 +133,7 @@ public class Alpha1Service {
     FlightFilter filter = new FlightFilter();
     // Always filter by workspace
     filter.addFilterInputParameter(
-        WorkspaceFlightMapKeys.WORKSPACE_ID, FlightFilterOp.EQUAL, workspaceId.toString());
+        WorkspaceFlightMapKeys.WORKSPACE_ID, FlightFilterOp.EQUAL, workspaceUuid.toString());
     // Add optional filters
     Optional.ofNullable(cloudResourceType)
         .map(

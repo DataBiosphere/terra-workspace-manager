@@ -75,7 +75,7 @@ public class ResourceDao {
   private static final RowMapper<DbResource> DB_RESOURCE_ROW_MAPPER =
       (rs, rowNum) -> {
         return new DbResource()
-            .workspaceId(UUID.fromString(rs.getString("workspace_id")))
+            .workspaceUuid(UUID.fromString(rs.getString("workspace_id")))
             .cloudPlatform(CloudPlatform.fromSql(rs.getString("cloud_platform")))
             .resourceId(UUID.fromString(rs.getString("resource_id")))
             .name(rs.getString("name"))
@@ -111,12 +111,12 @@ public class ResourceDao {
   }
 
   @WriteTransaction
-  public boolean deleteResource(UUID workspaceId, UUID resourceId) {
+  public boolean deleteResource(UUID workspaceUuid, UUID resourceId) {
     final String sql =
         "DELETE FROM resource WHERE workspace_id = :workspace_id AND resource_id = :resource_id";
     MapSqlParameterSource params =
         new MapSqlParameterSource()
-            .addValue("workspace_id", workspaceId.toString())
+            .addValue("workspace_id", workspaceUuid.toString())
             .addValue("resource_id", resourceId.toString());
     int rowsAffected = jdbcTemplate.update(sql, params);
     boolean deleted = rowsAffected > 0;
@@ -125,20 +125,20 @@ public class ResourceDao {
         "{} record for resource {} in workspace {}",
         (deleted ? "Deleted" : "No Delete - did not find"),
         resourceId,
-        workspaceId);
+        workspaceUuid);
 
     return deleted;
   }
 
   @WriteTransaction
   public boolean deleteResourceForResourceType(
-      UUID workspaceId, UUID resourceId, WsmResourceType resourceType) {
+      UUID workspaceUuid, UUID resourceId, WsmResourceType resourceType) {
     final String sql =
         "DELETE FROM resource WHERE workspace_id = :workspace_id AND resource_id = :resource_id"
             + " AND exact_resource_type = :exact_resource_type";
     MapSqlParameterSource params =
         new MapSqlParameterSource()
-            .addValue("workspace_id", workspaceId.toString())
+            .addValue("workspace_id", workspaceUuid.toString())
             .addValue("resource_id", resourceId.toString())
             .addValue("exact_resource_type", resourceType.toSql());
     int rowsAffected = jdbcTemplate.update(sql, params);
@@ -149,7 +149,7 @@ public class ResourceDao {
         (deleted ? "Deleted" : "No Delete - did not find"),
         resourceId,
         resourceType,
-        workspaceId);
+        workspaceUuid);
 
     return deleted;
   }
@@ -159,19 +159,19 @@ public class ResourceDao {
    * DataReference model. It also does not filter by what is visible to the user. I think we will
    * probably change to use a single enumerate across all resources.
    *
-   * @param workspaceId workspace of interest
+   * @param workspaceUuid workspace of interest
    * @param offset paging support
    * @param limit paging support
    * @return list of reference resources
    */
   @ReadTransaction
-  public List<ReferencedResource> enumerateReferences(UUID workspaceId, int offset, int limit) {
+  public List<ReferencedResource> enumerateReferences(UUID workspaceUuid, int offset, int limit) {
     String sql =
         RESOURCE_SELECT_SQL
             + " AND stewardship_type = :stewardship_type ORDER BY name OFFSET :offset LIMIT :limit";
     MapSqlParameterSource params =
         new MapSqlParameterSource()
-            .addValue("workspace_id", workspaceId.toString())
+            .addValue("workspace_id", workspaceUuid.toString())
             .addValue("stewardship_type", REFERENCED.toSql())
             .addValue("offset", offset)
             .addValue("limit", limit);
@@ -194,7 +194,7 @@ public class ResourceDao {
    * only that type of resource is returned. The enumeration can also be filtered by a stewardship
    * type.
    *
-   * @param workspaceId identifier for work space to enumerate
+   * @param workspaceUuid identifier for work space to enumerate
    * @param cloudResourceType filter by this cloud resource type - optional
    * @param stewardshipType filtered by this stewardship type - optional
    * @param offset starting row for result
@@ -203,7 +203,7 @@ public class ResourceDao {
    */
   @ReadTransaction
   public List<WsmResource> enumerateResources(
-      UUID workspaceId,
+      UUID workspaceUuid,
       @Nullable WsmResourceFamily cloudResourceType,
       @Nullable StewardshipType stewardshipType,
       int offset,
@@ -214,7 +214,7 @@ public class ResourceDao {
     // in having extra params.
     MapSqlParameterSource params =
         new MapSqlParameterSource()
-            .addValue("workspace_id", workspaceId.toString())
+            .addValue("workspace_id", workspaceUuid.toString())
             .addValue("offset", offset)
             .addValue("limit", limit)
             .addValue("referenced_resource", REFERENCED.toSql())
@@ -259,17 +259,17 @@ public class ResourceDao {
    * Returns a list of all controlled resources in a workspace, optionally filtering by cloud
    * platform.
    *
-   * @param workspaceId ID of the workspace to return resources from.
+   * @param workspaceUuid ID of the workspace to return resources from.
    * @param cloudPlatform Optional. If present, this will only return resources from the specified
    *     cloud platform. If null, this will return resources from all cloud platforms.
    */
   @ReadTransaction
   public List<ControlledResource> listControlledResources(
-      UUID workspaceId, @Nullable CloudPlatform cloudPlatform) {
+      UUID workspaceUuid, @Nullable CloudPlatform cloudPlatform) {
     String sql = RESOURCE_SELECT_SQL + " AND stewardship_type = :controlled_resource ";
     MapSqlParameterSource params =
         new MapSqlParameterSource()
-            .addValue("workspace_id", workspaceId.toString())
+            .addValue("workspace_id", workspaceUuid.toString())
             .addValue("controlled_resource", CONTROLLED.toSql());
 
     if (cloudPlatform != null) {
@@ -294,7 +294,7 @@ public class ResourceDao {
    */
   @WriteTransaction
   public List<ControlledResource> claimCleanupForWorkspacePrivateResources(
-      UUID workspaceId, String userEmail, String flightId) {
+      UUID workspaceUuid, String userEmail, String flightId) {
     String filterClause =
         " AND stewardship_type = :controlled_resource"
             + " AND access_scope = :access_scope"
@@ -307,7 +307,7 @@ public class ResourceDao {
             + filterClause;
     MapSqlParameterSource params =
         new MapSqlParameterSource()
-            .addValue("workspace_id", workspaceId.toString())
+            .addValue("workspace_id", workspaceUuid.toString())
             .addValue("controlled_resource", CONTROLLED.toSql())
             .addValue("access_scope", AccessScopeType.ACCESS_SCOPE_PRIVATE.toSql())
             .addValue("user_email", userEmail)
@@ -327,12 +327,12 @@ public class ResourceDao {
    */
   @WriteTransaction
   public void releasePrivateResourceCleanupClaims(
-      UUID workspaceId, String userEmail, String flightId) {
+      UUID workspaceUuid, String userEmail, String flightId) {
     String writeSql =
         "UPDATE resource SET cleanup_flight_id = NULL WHERE workspace_id = :workspace_id AND stewardship_type = :controlled_resource AND access_scope = :access_scope AND assigned_user = :user_email AND cleanup_flight_id = :flight_id";
     MapSqlParameterSource params =
         new MapSqlParameterSource()
-            .addValue("workspace_id", workspaceId.toString())
+            .addValue("workspace_id", workspaceUuid.toString())
             .addValue("controlled_resource", CONTROLLED.toSql())
             .addValue("access_scope", AccessScopeType.ACCESS_SCOPE_PRIVATE.toSql())
             .addValue("user_email", userEmail)
@@ -343,18 +343,18 @@ public class ResourceDao {
   /**
    * Deletes all controlled resources on a specified cloud platform in a workspace.
    *
-   * @param workspaceId ID of the workspace to return resources from.
+   * @param workspaceUuid ID of the workspace to return resources from.
    * @param cloudPlatform The cloud platform to delete resources from. Unlike
    *     listControlledResources, this is not optional.
    * @return True if at least one resource was deleted, false if no resources were deleted.
    */
   @WriteTransaction
-  public boolean deleteAllControlledResources(UUID workspaceId, CloudPlatform cloudPlatform) {
+  public boolean deleteAllControlledResources(UUID workspaceUuid, CloudPlatform cloudPlatform) {
     String sql =
         "DELETE FROM resource WHERE workspace_id = :workspace_id AND cloud_platform = :cloud_platform AND stewardship_type = :controlled_resource";
     MapSqlParameterSource params =
         new MapSqlParameterSource()
-            .addValue("workspace_id", workspaceId.toString())
+            .addValue("workspace_id", workspaceUuid.toString())
             .addValue("cloud_platform", cloudPlatform.toSql())
             .addValue("controlled_resource", CONTROLLED.toSql());
     int rowsDeleted = jdbcTemplate.update(sql, params);
@@ -364,17 +364,17 @@ public class ResourceDao {
   /**
    * Retrieve a resource by ID
    *
-   * @param workspaceId identifier of workspace for the lookup
+   * @param workspaceUuid identifier of workspace for the lookup
    * @param resourceId identifier of the resource for the lookup
    * @return WsmResource object
    */
   @ReadTransaction
-  public WsmResource getResource(UUID workspaceId, UUID resourceId) {
+  public WsmResource getResource(UUID workspaceUuid, UUID resourceId) {
     final String sql = RESOURCE_SELECT_SQL + " AND resource_id = :resource_id";
 
     final var params =
         new MapSqlParameterSource()
-            .addValue("workspace_id", workspaceId.toString())
+            .addValue("workspace_id", workspaceUuid.toString())
             .addValue("resource_id", resourceId.toString());
 
     return constructResource(getDbResource(sql, params));
@@ -383,17 +383,17 @@ public class ResourceDao {
   /**
    * Retrieve a data reference by name. Names are unique per workspace.
    *
-   * @param workspaceId identifier of workspace for the lookup
+   * @param workspaceUuid identifier of workspace for the lookup
    * @param name name of the resource
    * @return WsmResource object
    */
   @ReadTransaction
-  public WsmResource getResourceByName(UUID workspaceId, String name) {
+  public WsmResource getResourceByName(UUID workspaceUuid, String name) {
     final String sql = RESOURCE_SELECT_SQL + " AND name = :name";
 
     final var params =
         new MapSqlParameterSource()
-            .addValue("workspace_id", workspaceId.toString())
+            .addValue("workspace_id", workspaceUuid.toString())
             .addValue("name", name);
 
     return constructResource(getDbResource(sql, params));
@@ -417,7 +417,7 @@ public class ResourceDao {
   }
 
   private boolean updateResourceWorker(
-      UUID workspaceId,
+      UUID workspaceUuid,
       UUID resourceId,
       @Nullable String name,
       @Nullable String description,
@@ -448,7 +448,7 @@ public class ResourceDao {
     sb.append(" WHERE workspace_id = :workspace_id AND resource_id = :resource_id");
 
     params
-        .addValue("workspace_id", workspaceId.toString())
+        .addValue("workspace_id", workspaceUuid.toString())
         .addValue("resource_id", resourceId.toString());
 
     int rowsAffected = jdbcTemplate.update(sb.toString(), params);
@@ -458,7 +458,7 @@ public class ResourceDao {
         "{} record for resource {} in workspace {}",
         (updated ? "Updated" : "No Update - did not find"),
         resourceId,
-        workspaceId);
+        workspaceUuid);
 
     return updated;
   }
@@ -473,14 +473,14 @@ public class ResourceDao {
    */
   @WriteTransaction
   public boolean updateResource(
-      UUID workspaceId,
+      UUID workspaceUuid,
       UUID resourceId,
       @Nullable String name,
       @Nullable String description,
       @Nullable String attributes,
       @Nullable CloningInstructions cloningInstructions) {
     return updateResourceWorker(
-        workspaceId, resourceId, name, description, attributes, cloningInstructions);
+        workspaceUuid, resourceId, name, description, attributes, cloningInstructions);
   }
 
   /**
@@ -491,9 +491,9 @@ public class ResourceDao {
    */
   @WriteTransaction
   public boolean updateResource(
-      UUID workspaceId, UUID resourceId, @Nullable String name, @Nullable String description) {
+      UUID workspaceUuid, UUID resourceId, @Nullable String name, @Nullable String description) {
     return updateResourceWorker(
-        workspaceId,
+        workspaceUuid,
         resourceId,
         name,
         description,
@@ -522,7 +522,7 @@ public class ResourceDao {
     storeResource(controlledResource);
   }
 
-  private boolean cloudContextExists(UUID workspaceId, CloudPlatform cloudPlatform) {
+  private boolean cloudContextExists(UUID workspaceUuid, CloudPlatform cloudPlatform) {
     // Check existence of the cloud context for this workspace
     final String sql =
         "SELECT COUNT(*) FROM cloud_context"
@@ -530,7 +530,7 @@ public class ResourceDao {
 
     MapSqlParameterSource params =
         new MapSqlParameterSource()
-            .addValue("workspace_id", workspaceId.toString())
+            .addValue("workspace_id", workspaceUuid.toString())
             .addValue("cloud_platform", cloudPlatform.toSql());
     Integer count = jdbcTemplate.queryForObject(sql, params, Integer.class);
     return (count != null && count > 0);
@@ -598,13 +598,13 @@ public class ResourceDao {
    */
   @WriteTransaction
   public void setPrivateResourcesStateForWorkspaceUser(
-      UUID workspaceId, String userEmail, PrivateResourceState state) {
+      UUID workspaceUuid, String userEmail, PrivateResourceState state) {
     final String sql =
         "UPDATE resource SET private_resource_state = :private_resource_state WHERE workspace_id = :workspace_id AND assigned_user = :user_email";
     MapSqlParameterSource params =
         new MapSqlParameterSource()
             .addValue("private_resource_state", state.toSql())
-            .addValue("workspace_id", workspaceId.toString())
+            .addValue("workspace_id", workspaceUuid.toString())
             .addValue("user_email", userEmail);
     jdbcTemplate.update(sql, params);
   }
@@ -614,17 +614,17 @@ public class ResourceDao {
    * calls return after the database row has been inserted. That allows clients to see the resource
    * with a resource enumeration.
    *
-   * @param workspaceId workspace where the resource is being created
+   * @param workspaceUuid workspace where the resource is being created
    * @param resourceId resource being created
    */
   @ReadTransaction
-  public boolean resourceExists(UUID workspaceId, UUID resourceId) {
+  public boolean resourceExists(UUID workspaceUuid, UUID resourceId) {
     final String sql =
         "SELECT COUNT(1) FROM resource"
             + " WHERE workspace_id = :workspace_id AND resource_id = :resource_id";
     MapSqlParameterSource params =
         new MapSqlParameterSource()
-            .addValue("workspace_id", workspaceId.toString())
+            .addValue("workspace_id", workspaceUuid.toString())
             .addValue("resource_id", resourceId.toString());
 
     Integer count = jdbcTemplate.queryForObject(sql, params, Integer.class);

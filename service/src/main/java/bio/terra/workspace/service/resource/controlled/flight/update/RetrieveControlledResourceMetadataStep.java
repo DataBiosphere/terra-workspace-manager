@@ -22,20 +22,20 @@ import java.util.UUID;
 public class RetrieveControlledResourceMetadataStep implements Step {
 
   private final ResourceDao resourceDao;
-  private final UUID workspaceId;
+  private final UUID workspaceUuid;
   private final UUID resourceId;
 
   public RetrieveControlledResourceMetadataStep(
-      ResourceDao resourceDao, UUID workspaceId, UUID resourceId) {
+      ResourceDao resourceDao, UUID workspaceUuid, UUID resourceId) {
     this.resourceDao = resourceDao;
-    this.workspaceId = workspaceId;
+    this.workspaceUuid = workspaceUuid;
     this.resourceId = resourceId;
   }
 
   @Override
   public StepResult doStep(FlightContext flightContext)
       throws InterruptedException, RetryException {
-    WsmResource resource = resourceDao.getResource(workspaceId, resourceId);
+    WsmResource resource = resourceDao.getResource(workspaceUuid, resourceId);
     ControlledResource controlledResource = resource.castToControlledResource();
 
     flightContext

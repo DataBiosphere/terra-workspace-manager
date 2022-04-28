@@ -181,8 +181,8 @@ public class ReferencedBigQueryDatasetResource extends ReferencedResource {
     private String projectId;
     private String datasetName;
 
-    public ReferencedBigQueryDatasetResource.Builder workspaceId(UUID workspaceId) {
-      this.workspaceId = workspaceId;
+    public ReferencedBigQueryDatasetResource.Builder workspaceId(UUID workspaceUuid) {
+      this.workspaceId = workspaceUuid;
       return this;
     }
 

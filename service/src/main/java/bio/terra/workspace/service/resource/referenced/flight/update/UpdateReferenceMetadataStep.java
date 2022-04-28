@@ -17,14 +17,14 @@ import org.springframework.http.HttpStatus;
 public class UpdateReferenceMetadataStep implements Step {
   private final ResourceDao resourceDao;
   private final ReferencedResource referencedResource;
-  private final UUID workspaceId;
+  private final UUID workspaceUuid;
   private final UUID resourceId;
 
   public UpdateReferenceMetadataStep(
       ResourceDao resourceDao, ReferencedResource referencedResource) {
     this.resourceDao = resourceDao;
     this.referencedResource = referencedResource;
-    workspaceId = referencedResource.getWorkspaceId();
+    workspaceUuid = referencedResource.getWorkspaceId();
     resourceId = referencedResource.getResourceId();
   }
 
@@ -38,7 +38,7 @@ public class UpdateReferenceMetadataStep implements Step {
 
     boolean updated =
         resourceDao.updateResource(
-            workspaceId,
+            workspaceUuid,
             resourceId,
             resourceName,
             resourceDescription,
@@ -59,7 +59,7 @@ public class UpdateReferenceMetadataStep implements Step {
     final var previousCloningInstructions =
         workingMap.get(ResourceKeys.PREVIOUS_CLONING_INSTRUCTIONS, CloningInstructions.class);
     resourceDao.updateResource(
-        workspaceId,
+        workspaceUuid,
         resourceId,
         previousName,
         previousDescription,

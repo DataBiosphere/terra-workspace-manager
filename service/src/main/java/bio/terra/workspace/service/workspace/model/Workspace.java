@@ -132,8 +132,8 @@ public class Workspace {
     private Map<String, String> properties;
     private WorkspaceStage workspaceStage;
 
-    public Builder workspaceId(UUID workspaceId) {
-      this.workspaceId = workspaceId;
+    public Builder workspaceId(UUID workspaceUuid) {
+      this.workspaceId = workspaceUuid;
       return this;
     }
 

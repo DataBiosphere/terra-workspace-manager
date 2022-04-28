@@ -188,10 +188,10 @@ class JobServiceTest extends BaseUnitTest {
   // Use the jobId defaulting in the JobBuilder
   private String runFlight(String description) {
     // workspace must exist in the Dao for authorization check to pass
-    UUID workspaceId = UUID.randomUUID();
+    UUID workspaceUuid = UUID.randomUUID();
     Workspace workspace =
         Workspace.builder()
-            .workspaceId(workspaceId)
+            .workspaceId(workspaceUuid)
             .workspaceStage(WorkspaceStage.MC_WORKSPACE)
             .description("Workspace for runFlight: " + description)
             .build();
@@ -202,7 +202,7 @@ class JobServiceTest extends BaseUnitTest {
             .description(description)
             .flightClass(JobServiceTestFlight.class)
             .userRequest(testUser)
-            .workspaceId(workspaceId.toString())
+            .workspaceId(workspaceUuid.toString())
             .submit();
     jobService.waitForJob(jobId);
     return jobId;

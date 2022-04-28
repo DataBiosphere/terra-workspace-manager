@@ -77,24 +77,24 @@ public class WsmApplicationService {
   // -- REST API Methods -- //
 
   public WsmWorkspaceApplication disableWorkspaceApplication(
-      AuthenticatedUserRequest userRequest, UUID workspaceId, String applicationId) {
-    return commonAbleJob(userRequest, workspaceId, applicationId, AbleEnum.DISABLE);
+      AuthenticatedUserRequest userRequest, UUID workspaceUuid, String applicationId) {
+    return commonAbleJob(userRequest, workspaceUuid, applicationId, AbleEnum.DISABLE);
   }
 
   public WsmWorkspaceApplication enableWorkspaceApplication(
-      AuthenticatedUserRequest userRequest, UUID workspaceId, String applicationId) {
-    return commonAbleJob(userRequest, workspaceId, applicationId, AbleEnum.ENABLE);
+      AuthenticatedUserRequest userRequest, UUID workspaceUuid, String applicationId) {
+    return commonAbleJob(userRequest, workspaceUuid, applicationId, AbleEnum.ENABLE);
   }
 
   // Common method to launch and wait for enable and disable flights.
   private WsmWorkspaceApplication commonAbleJob(
       AuthenticatedUserRequest userRequest,
-      UUID workspaceId,
+      UUID workspaceUuid,
       String applicationId,
       AbleEnum ableEnum) {
     Workspace workspace =
         workspaceService.validateWorkspaceAndAction(
-            userRequest, workspaceId, SamConstants.SamWorkspaceAction.OWN);
+            userRequest, workspaceUuid, SamConstants.SamWorkspaceAction.OWN);
     stageService.assertMcWorkspace(
         workspace,
         (ableEnum == AbleEnum.ENABLE)
@@ -104,7 +104,7 @@ public class WsmApplicationService {
     String description =
         String.format(
             "%s application %s on workspace %s",
-            ableEnum.name().toLowerCase(), applicationId, workspaceId.toString());
+            ableEnum.name().toLowerCase(), applicationId, workspaceUuid.toString());
 
     JobBuilder job =
         jobService
@@ -112,28 +112,28 @@ public class WsmApplicationService {
             .description(description)
             .flightClass(ApplicationAbleFlight.class)
             .userRequest(userRequest)
-            .workspaceId(workspaceId.toString())
+            .workspaceId(workspaceUuid.toString())
             .addParameter(WorkspaceFlightMapKeys.APPLICATION_ID, applicationId)
             .addParameter(WsmApplicationKeys.APPLICATION_ABLE_ENUM, ableEnum);
     return job.submitAndWait(WsmWorkspaceApplication.class);
   }
 
   public WsmWorkspaceApplication getWorkspaceApplication(
-      AuthenticatedUserRequest userRequest, UUID workspaceId, String applicationId) {
+      AuthenticatedUserRequest userRequest, UUID workspaceUuid, String applicationId) {
     Workspace workspace =
         workspaceService.validateWorkspaceAndAction(
-            userRequest, workspaceId, SamConstants.SamWorkspaceAction.READ);
+            userRequest, workspaceUuid, SamConstants.SamWorkspaceAction.READ);
     stageService.assertMcWorkspace(workspace, "getWorkspaceApplication");
-    return applicationDao.getWorkspaceApplication(workspaceId, applicationId);
+    return applicationDao.getWorkspaceApplication(workspaceUuid, applicationId);
   }
 
   public List<WsmWorkspaceApplication> listWorkspaceApplications(
-      AuthenticatedUserRequest userRequest, UUID workspaceId, int offset, int limit) {
+      AuthenticatedUserRequest userRequest, UUID workspaceUuid, int offset, int limit) {
     Workspace workspace =
         workspaceService.validateWorkspaceAndAction(
-            userRequest, workspaceId, SamConstants.SamWorkspaceAction.READ);
+            userRequest, workspaceUuid, SamConstants.SamWorkspaceAction.READ);
     stageService.assertMcWorkspace(workspace, "listWorkspaceApplication");
-    return applicationDao.listWorkspaceApplications(workspaceId, offset, limit);
+    return applicationDao.listWorkspaceApplications(workspaceUuid, offset, limit);
   }
 
   // -- Configuration Processing Methods -- //

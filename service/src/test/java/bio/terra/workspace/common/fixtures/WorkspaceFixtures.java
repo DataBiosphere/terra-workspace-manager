@@ -12,14 +12,14 @@ public class WorkspaceFixtures {
    * anything beyond the database row.
    *
    * @param workspaceDao workspace DAO for the creation
-   * @param workspaceId fake workspaceId to connect the context to
+   * @param workspaceUuid fake workspaceUuid to connect the context to
    * @param projectId fake projectId to for the context
    */
   public static void createGcpCloudContextInDatabase(
-      WorkspaceDao workspaceDao, UUID workspaceId, String projectId) {
+      WorkspaceDao workspaceDao, UUID workspaceUuid, String projectId) {
     String flightId = UUID.randomUUID().toString();
-    workspaceDao.createCloudContextStart(workspaceId, CloudPlatform.GCP, flightId);
+    workspaceDao.createCloudContextStart(workspaceUuid, CloudPlatform.GCP, flightId);
     workspaceDao.createCloudContextFinish(
-        workspaceId, CloudPlatform.GCP, new GcpCloudContext(projectId).serialize(), flightId);
+        workspaceUuid, CloudPlatform.GCP, new GcpCloudContext(projectId).serialize(), flightId);
   }
 }

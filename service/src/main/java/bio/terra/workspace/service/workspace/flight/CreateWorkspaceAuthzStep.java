@@ -50,11 +50,11 @@ public class CreateWorkspaceAuthzStep implements Step {
     return StepResult.getStepResultSuccess();
   }
 
-  private boolean canReadExistingWorkspace(UUID workspaceId) throws InterruptedException {
+  private boolean canReadExistingWorkspace(UUID workspaceUuid) throws InterruptedException {
     return samService.isAuthorized(
         userRequest,
         SamConstants.SamResource.WORKSPACE,
-        workspaceId.toString(),
+        workspaceUuid.toString(),
         SamConstants.SamWorkspaceAction.READ);
   }
 }

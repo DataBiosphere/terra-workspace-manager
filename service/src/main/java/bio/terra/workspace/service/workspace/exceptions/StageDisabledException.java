@@ -6,9 +6,9 @@ import java.util.UUID;
 
 /** Exception for when an operation on workspace is not allowed according to its stage. */
 public class StageDisabledException extends BadRequestException {
-  public StageDisabledException(UUID workspaceId, WorkspaceStage stage, String operationName) {
+  public StageDisabledException(UUID workspaceUuid, WorkspaceStage stage, String operationName) {
     super(
         String.format(
-            "'%s' not allowed for workspace %s in stage %s.", operationName, workspaceId, stage));
+            "'%s' not allowed for workspace %s in stage %s.", operationName, workspaceUuid, stage));
   }
 }

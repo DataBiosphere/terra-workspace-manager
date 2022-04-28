@@ -23,19 +23,19 @@ import org.slf4j.LoggerFactory;
 public class GetCloudContextStep implements Step {
 
   private static final Logger logger = LoggerFactory.getLogger(GetCloudContextStep.class);
-  private final UUID workspaceId;
+  private final UUID workspaceUuid;
   private final CloudPlatform cloudPlatform;
   private final GcpCloudContextService gcpCloudContextService;
   private final AzureCloudContextService azureCloudContextService;
   private final AuthenticatedUserRequest userRequest;
 
   public GetCloudContextStep(
-      UUID workspaceId,
+      UUID workspaceUuid,
       CloudPlatform cloudPlatform,
       GcpCloudContextService gcpCloudContextService,
       AzureCloudContextService azureCloudContextService,
       AuthenticatedUserRequest userRequest) {
-    this.workspaceId = workspaceId;
+    this.workspaceUuid = workspaceUuid;
     this.cloudPlatform = cloudPlatform;
     this.gcpCloudContextService = gcpCloudContextService;
     this.azureCloudContextService = azureCloudContextService;
@@ -50,7 +50,7 @@ public class GetCloudContextStep implements Step {
     switch (cloudPlatform) {
       case AZURE:
         AzureCloudContext azureCloudContext =
-            azureCloudContextService.getRequiredAzureCloudContext(workspaceId);
+            azureCloudContextService.getRequiredAzureCloudContext(workspaceUuid);
         flightContext
             .getWorkingMap()
             .put(ControlledResourceKeys.AZURE_CLOUD_CONTEXT, azureCloudContext);
@@ -58,7 +58,7 @@ public class GetCloudContextStep implements Step {
 
       case GCP:
         GcpCloudContext gcpCloudContext =
-            gcpCloudContextService.getRequiredGcpCloudContext(workspaceId, userRequest);
+            gcpCloudContextService.getRequiredGcpCloudContext(workspaceUuid, userRequest);
         flightContext
             .getWorkingMap()
             .put(ControlledResourceKeys.GCP_CLOUD_CONTEXT, gcpCloudContext);

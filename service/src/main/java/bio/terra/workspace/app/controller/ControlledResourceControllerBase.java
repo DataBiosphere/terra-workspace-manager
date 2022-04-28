@@ -30,17 +30,17 @@ public class ControlledResourceControllerBase extends ControllerBase {
   }
 
   public ControlledResourceFields toCommonFields(
-      UUID workspaceId,
+      UUID workspaceUuid,
       ApiControlledResourceCommonFields apiCommonFields,
       AuthenticatedUserRequest userRequest) {
 
     ManagedByType managedBy = ManagedByType.fromApi(apiCommonFields.getManagedBy());
     AccessScopeType accessScopeType = AccessScopeType.fromApi(apiCommonFields.getAccessScope());
     PrivateUserRole privateUserRole =
-        computePrivateUserRole(workspaceId, apiCommonFields, userRequest);
+        computePrivateUserRole(workspaceUuid, apiCommonFields, userRequest);
 
     return ControlledResourceFields.builder()
-        .workspaceId(workspaceId)
+        .workspaceUuid(workspaceUuid)
         .resourceId(UUID.randomUUID())
         .name(apiCommonFields.getName())
         .description(apiCommonFields.getDescription())

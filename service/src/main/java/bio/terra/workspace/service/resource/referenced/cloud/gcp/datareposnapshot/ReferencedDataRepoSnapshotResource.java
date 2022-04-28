@@ -164,8 +164,8 @@ public class ReferencedDataRepoSnapshotResource extends ReferencedResource {
     private UUID resourceId;
     private UUID workspaceId;
 
-    public ReferencedDataRepoSnapshotResource.Builder workspaceId(UUID workspaceId) {
-      this.workspaceId = workspaceId;
+    public ReferencedDataRepoSnapshotResource.Builder workspaceId(UUID workspaceUuid) {
+      this.workspaceId = workspaceUuid;
       return this;
     }
 

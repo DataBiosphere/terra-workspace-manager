@@ -96,7 +96,7 @@ public class CopyGcsBucketDefinitionStep implements Step {
             .bucketName(bucketName)
             .common(
                 ControlledResourceFields.builder()
-                    .workspaceId(destinationWorkspaceId)
+                    .workspaceUuid(destinationWorkspaceId)
                     .resourceId(UUID.randomUUID()) // random ID for new resource
                     .name(resourceName)
                     .description(description)

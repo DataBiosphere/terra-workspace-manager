@@ -67,24 +67,24 @@ public class RemoveUserFromWorkspaceFlightTest extends BaseConnectedTest {
             .workspaceStage(WorkspaceStage.MC_WORKSPACE)
             .spendProfileId(spendUtils.defaultSpendId())
             .build();
-    UUID workspaceId =
+    UUID workspaceUuid =
         workspaceService.createWorkspace(request, userAccessUtils.defaultUserAuthRequest());
     // Add the secondary test user as a writer
     samService.grantWorkspaceRole(
-        workspaceId,
+        workspaceUuid,
         userAccessUtils.defaultUserAuthRequest(),
         WsmIamRole.WRITER,
         userAccessUtils.getSecondUserEmail());
 
     samService.dumpRoleBindings(
         SamResource.WORKSPACE,
-        workspaceId.toString(),
+        workspaceUuid.toString(),
         userAccessUtils.defaultUserAuthRequest().getRequiredToken());
 
     // Create a GCP context as default user
     String makeContextJobId = UUID.randomUUID().toString();
     workspaceService.createGcpCloudContext(
-        workspaceId, makeContextJobId, userAccessUtils.defaultUserAuthRequest());
+        workspaceUuid, makeContextJobId, userAccessUtils.defaultUserAuthRequest());
     jobService.waitForJob(makeContextJobId);
     AsyncJobResult<CloudContextHolder> createContextJobResult =
         jobService.retrieveAsyncJobResult(
@@ -95,7 +95,7 @@ public class RemoveUserFromWorkspaceFlightTest extends BaseConnectedTest {
     // Create a private dataset for secondary user
     String datasetId = RandomStringUtils.randomAlphabetic(8);
     ControlledBigQueryDatasetResource privateDataset =
-        buildPrivateDataset(workspaceId, datasetId, cloudContext.getGcpProjectId());
+        buildPrivateDataset(workspaceUuid, datasetId, cloudContext.getGcpProjectId());
     assertNotNull(privateDataset);
 
     // Validate with Sam that secondary user can read their private resource
@@ -126,7 +126,7 @@ public class RemoveUserFromWorkspaceFlightTest extends BaseConnectedTest {
         FlightDebugInfo.newBuilder().undoStepFailures(retrySteps).lastStepFailure(true).build();
 
     FlightMap inputParameters = new FlightMap();
-    inputParameters.put(WorkspaceFlightMapKeys.WORKSPACE_ID, workspaceId.toString());
+    inputParameters.put(WorkspaceFlightMapKeys.WORKSPACE_ID, workspaceUuid.toString());
     inputParameters.put(
         WorkspaceFlightMapKeys.USER_TO_REMOVE, userAccessUtils.getSecondUserEmail());
     inputParameters.put(
@@ -149,7 +149,7 @@ public class RemoveUserFromWorkspaceFlightTest extends BaseConnectedTest {
         samService.isAuthorized(
             userAccessUtils.secondUserAuthRequest(),
             SamResource.WORKSPACE,
-            workspaceId.toString(),
+            workspaceUuid.toString(),
             SamWorkspaceAction.WRITE));
     assertTrue(
         samService.isAuthorized(
@@ -175,7 +175,7 @@ public class RemoveUserFromWorkspaceFlightTest extends BaseConnectedTest {
         samService.isAuthorized(
             userAccessUtils.secondUserAuthRequest(),
             SamResource.WORKSPACE,
-            workspaceId.toString(),
+            workspaceUuid.toString(),
             SamWorkspaceAction.WRITE));
     assertFalse(
         samService.isAuthorized(
@@ -185,14 +185,14 @@ public class RemoveUserFromWorkspaceFlightTest extends BaseConnectedTest {
             SamControlledResourceActions.WRITE_ACTION));
 
     // Cleanup
-    workspaceService.deleteWorkspace(workspaceId, userAccessUtils.defaultUserAuthRequest());
+    workspaceService.deleteWorkspace(workspaceUuid, userAccessUtils.defaultUserAuthRequest());
   }
 
   private ControlledBigQueryDatasetResource buildPrivateDataset(
-      UUID workspaceId, String datasetName, String projectId) {
+      UUID workspaceUuid, String datasetName, String projectId) {
     ControlledResourceFields commonFields =
         ControlledResourceFields.builder()
-            .workspaceId(workspaceId)
+            .workspaceUuid(workspaceUuid)
             .resourceId(UUID.randomUUID())
             .name(datasetName)
             .cloningInstructions(CloningInstructions.COPY_NOTHING)

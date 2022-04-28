@@ -38,7 +38,7 @@ public class NotebookUtils {
    * method calls the asynchronous creation endpoint and polls until the creation job completes.
    */
   public static CreatedControlledGcpAiNotebookInstanceResult makeControlledNotebookUserPrivate(
-      UUID workspaceId,
+      UUID workspaceUuid,
       @Nullable String instanceId,
       @Nullable String location,
       ControlledGcpResourceApi resourceApi)
@@ -68,12 +68,12 @@ public class NotebookUtils {
             .common(commonParameters)
             .jobControl(new JobControl().id(UUID.randomUUID().toString()));
 
-    var creationResult = resourceApi.createAiNotebookInstance(body, workspaceId);
+    var creationResult = resourceApi.createAiNotebookInstance(body, workspaceUuid);
     String creationJobId = creationResult.getJobReport().getId();
     creationResult =
         ClientTestUtils.pollWhileRunning(
             creationResult,
-            () -> resourceApi.getCreateAiNotebookInstanceResult(workspaceId, creationJobId),
+            () -> resourceApi.getCreateAiNotebookInstanceResult(workspaceUuid, creationJobId),
             CreatedControlledGcpAiNotebookInstanceResult::getJobReport,
             Duration.ofSeconds(10));
     ClientTestUtils.assertJobSuccess(
@@ -86,18 +86,18 @@ public class NotebookUtils {
    * the delete job completes.
    */
   public static void deleteControlledNotebookUserPrivate(
-      UUID workspaceId, UUID resourceId, ControlledGcpResourceApi resourceApi)
+      UUID workspaceUuid, UUID resourceId, ControlledGcpResourceApi resourceApi)
       throws ApiException, InterruptedException {
     var body =
         new DeleteControlledGcpAiNotebookInstanceRequest()
             .jobControl(new JobControl().id(UUID.randomUUID().toString()));
 
-    var deletionResult = resourceApi.deleteAiNotebookInstance(body, workspaceId, resourceId);
+    var deletionResult = resourceApi.deleteAiNotebookInstance(body, workspaceUuid, resourceId);
     String deletionJobId = deletionResult.getJobReport().getId();
     deletionResult =
         ClientTestUtils.pollWhileRunning(
             deletionResult,
-            () -> resourceApi.getDeleteAiNotebookInstanceResult(workspaceId, deletionJobId),
+            () -> resourceApi.getDeleteAiNotebookInstanceResult(workspaceUuid, deletionJobId),
             DeleteControlledGcpAiNotebookInstanceResult::getJobReport,
             Duration.ofSeconds(10));
     ClientTestUtils.assertJobSuccess(

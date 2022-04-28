@@ -20,7 +20,7 @@ import javax.annotation.Nullable;
  * one-to-one with the resource table.
  */
 public class DbResource {
-  private UUID workspaceId;
+  private UUID workspaceUuid;
   private CloudPlatform cloudPlatform;
   private UUID resourceId;
   private String name;
@@ -41,11 +41,11 @@ public class DbResource {
       () -> new MissingRequiredFieldsException("Missing required field");
 
   public UUID getWorkspaceId() {
-    return workspaceId;
+    return workspaceUuid;
   }
 
-  public DbResource workspaceId(UUID workspaceId) {
-    this.workspaceId = workspaceId;
+  public DbResource workspaceUuid(UUID workspaceUuid) {
+    this.workspaceUuid = workspaceUuid;
     return this;
   }
 

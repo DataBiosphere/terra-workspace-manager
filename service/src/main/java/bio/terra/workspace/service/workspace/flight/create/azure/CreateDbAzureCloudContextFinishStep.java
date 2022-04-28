@@ -13,12 +13,12 @@ import org.springframework.http.HttpStatus;
 
 /** Updates the previously stored cloud context row, filling in the context JSON. */
 public class CreateDbAzureCloudContextFinishStep implements Step {
-  private final UUID workspaceId;
+  private final UUID workspaceUuid;
   private final AzureCloudContextService azureCloudContextService;
 
   public CreateDbAzureCloudContextFinishStep(
-      UUID workspaceId, AzureCloudContextService azureCloudContextService) {
-    this.workspaceId = workspaceId;
+      UUID workspaceUuid, AzureCloudContextService azureCloudContextService) {
+    this.workspaceUuid = workspaceUuid;
     this.azureCloudContextService = azureCloudContextService;
   }
 
@@ -31,7 +31,7 @@ public class CreateDbAzureCloudContextFinishStep implements Step {
 
     // Create the cloud context; throws if the context already exists.
     azureCloudContextService.createAzureCloudContextFinish(
-        workspaceId, azureCloudContext, flightContext.getFlightId());
+        workspaceUuid, azureCloudContext, flightContext.getFlightId());
 
     CloudContextHolder cch = new CloudContextHolder();
     cch.setAzureCloudContext(azureCloudContext);

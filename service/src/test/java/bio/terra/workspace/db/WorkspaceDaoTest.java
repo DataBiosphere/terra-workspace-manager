@@ -51,14 +51,14 @@ class WorkspaceDaoTest extends BaseUnitTest {
   @Autowired private WorkspaceService workspaceService;
   @Autowired private ObjectMapper persistenceObjectMapper;
 
-  private UUID workspaceId;
+  private UUID workspaceUuid;
   @Nullable private SpendProfileId spendProfileId;
   private static final String READ_SQL =
       "SELECT workspace_id, spend_profile FROM workspace WHERE workspace_id = :id";
 
   @BeforeEach
   void setup() {
-    workspaceId = UUID.randomUUID();
+    workspaceUuid = UUID.randomUUID();
     spendProfileId = new SpendProfileId("foo");
   }
 
@@ -66,17 +66,17 @@ class WorkspaceDaoTest extends BaseUnitTest {
   void verifyCreatedWorkspaceExists() {
     Workspace workspace =
         Workspace.builder()
-            .workspaceId(workspaceId)
+            .workspaceId(workspaceUuid)
             .spendProfileId(spendProfileId)
             .workspaceStage(WorkspaceStage.RAWLS_WORKSPACE)
             .build();
     workspaceDao.createWorkspace(workspace);
 
     MapSqlParameterSource params =
-        new MapSqlParameterSource().addValue("id", workspaceId.toString());
+        new MapSqlParameterSource().addValue("id", workspaceUuid.toString());
     Map<String, Object> queryOutput = jdbcTemplate.queryForMap(READ_SQL, params);
 
-    assertThat(queryOutput.get("workspace_id"), equalTo(workspaceId.toString()));
+    assertThat(queryOutput.get("workspace_id"), equalTo(workspaceUuid.toString()));
     assertThat(queryOutput.get("spend_profile"), equalTo(spendProfileId.getId()));
 
     // This test doesn't clean up after itself - be sure it only runs on unit test DBs, which
@@ -89,12 +89,12 @@ class WorkspaceDaoTest extends BaseUnitTest {
     workspaceDao.createWorkspace(defaultWorkspace());
 
     MapSqlParameterSource params =
-        new MapSqlParameterSource().addValue("id", workspaceId.toString());
+        new MapSqlParameterSource().addValue("id", workspaceUuid.toString());
     Map<String, Object> queryOutput = jdbcTemplate.queryForMap(READ_SQL, params);
 
-    assertThat(queryOutput.get("workspace_id"), equalTo(workspaceId.toString()));
+    assertThat(queryOutput.get("workspace_id"), equalTo(workspaceUuid.toString()));
 
-    assertTrue(workspaceDao.deleteWorkspace(workspaceId));
+    assertTrue(workspaceDao.deleteWorkspace(workspaceUuid));
 
     // Assert the object no longer exists after deletion
     assertThrows(
@@ -106,11 +106,11 @@ class WorkspaceDaoTest extends BaseUnitTest {
     Workspace createdWorkspace = defaultWorkspace();
     workspaceDao.createWorkspace(createdWorkspace);
 
-    Workspace workspace = workspaceDao.getWorkspace(workspaceId);
+    Workspace workspace = workspaceDao.getWorkspace(workspaceUuid);
 
     assertEquals(createdWorkspace, workspace);
 
-    assertTrue(workspaceDao.deleteWorkspace(workspaceId));
+    assertTrue(workspaceDao.deleteWorkspace(workspaceUuid));
   }
 
   @Test
@@ -201,12 +201,12 @@ class WorkspaceDaoTest extends BaseUnitTest {
 
   @Test
   void getNonExistingWorkspace() {
-    assertThrows(WorkspaceNotFoundException.class, () -> workspaceDao.getWorkspace(workspaceId));
+    assertThrows(WorkspaceNotFoundException.class, () -> workspaceDao.getWorkspace(workspaceUuid));
   }
 
   @Test
   void deleteNonExistentWorkspaceFails() {
-    assertFalse(workspaceDao.deleteWorkspace(workspaceId));
+    assertFalse(workspaceDao.deleteWorkspace(workspaceUuid));
   }
 
   @Test
@@ -228,50 +228,51 @@ class WorkspaceDaoTest extends BaseUnitTest {
     @Test
     void createDeleteGcpCloudContext() {
       String flightId = "flight-createdeletegcpcloudcontext";
-      gcpCloudContextService.createGcpCloudContextStart(workspaceId, flightId);
-      gcpCloudContextService.deleteGcpCloudContextWithCheck(workspaceId, "mismatched-flight-id");
+      gcpCloudContextService.createGcpCloudContextStart(workspaceUuid, flightId);
+      gcpCloudContextService.deleteGcpCloudContextWithCheck(workspaceUuid, "mismatched-flight-id");
 
       GcpCloudContext gcpCloudContext = makeCloudContext();
-      gcpCloudContextService.createGcpCloudContextFinish(workspaceId, gcpCloudContext, flightId);
+      gcpCloudContextService.createGcpCloudContextFinish(workspaceUuid, gcpCloudContext, flightId);
 
-      Workspace workspace = workspaceDao.getWorkspace(workspaceId);
+      Workspace workspace = workspaceDao.getWorkspace(workspaceUuid);
       Optional<GcpCloudContext> cloudContext =
           gcpCloudContextService.getGcpCloudContext(workspace.getWorkspaceId());
       checkCloudContext(cloudContext);
 
       // Make sure service and dao get the same answer
-      cloudContext = gcpCloudContextService.getGcpCloudContext(workspaceId);
+      cloudContext = gcpCloudContextService.getGcpCloudContext(workspaceUuid);
       checkCloudContext(cloudContext);
 
       // delete with mismatched flight id - it should not delete
-      gcpCloudContextService.deleteGcpCloudContextWithCheck(workspaceId, "mismatched-flight-id");
+      gcpCloudContextService.deleteGcpCloudContextWithCheck(workspaceUuid, "mismatched-flight-id");
 
       // Make sure the context is still there
-      cloudContext = gcpCloudContextService.getGcpCloudContext(workspaceId);
+      cloudContext = gcpCloudContextService.getGcpCloudContext(workspaceUuid);
       checkCloudContext(cloudContext);
 
       // delete with no check - should delete
-      gcpCloudContextService.deleteGcpCloudContext(workspaceId);
-      cloudContext = gcpCloudContextService.getGcpCloudContext(workspaceId);
+      gcpCloudContextService.deleteGcpCloudContext(workspaceUuid);
+      cloudContext = gcpCloudContextService.getGcpCloudContext(workspaceUuid);
       assertTrue(cloudContext.isEmpty());
     }
 
     @Test
     void noSetCloudContextIsNone() {
-      assertTrue(gcpCloudContextService.getGcpCloudContext(workspaceId).isEmpty());
+      assertTrue(gcpCloudContextService.getGcpCloudContext(workspaceUuid).isEmpty());
     }
 
     @Test
     void deleteWorkspaceWithCloudContext() {
       String flightId = "flight-deleteworkspacewithcloudcontext";
-      gcpCloudContextService.createGcpCloudContextStart(workspaceId, flightId);
+      gcpCloudContextService.createGcpCloudContextStart(workspaceUuid, flightId);
       GcpCloudContext gcpCloudContext = makeCloudContext();
-      gcpCloudContextService.createGcpCloudContextFinish(workspaceId, gcpCloudContext, flightId);
+      gcpCloudContextService.createGcpCloudContextFinish(workspaceUuid, gcpCloudContext, flightId);
 
-      assertTrue(workspaceDao.deleteWorkspace(workspaceId));
-      assertThrows(WorkspaceNotFoundException.class, () -> workspaceDao.getWorkspace(workspaceId));
+      assertTrue(workspaceDao.deleteWorkspace(workspaceUuid));
+      assertThrows(
+          WorkspaceNotFoundException.class, () -> workspaceDao.getWorkspace(workspaceUuid));
 
-      assertTrue(gcpCloudContextService.getGcpCloudContext(workspaceId).isEmpty());
+      assertTrue(gcpCloudContextService.getGcpCloudContext(workspaceUuid).isEmpty());
     }
   }
 
@@ -283,7 +284,7 @@ class WorkspaceDaoTest extends BaseUnitTest {
 
   private Workspace defaultWorkspace() {
     return Workspace.builder()
-        .workspaceId(workspaceId)
+        .workspaceId(workspaceUuid)
         .workspaceStage(WorkspaceStage.RAWLS_WORKSPACE)
         .build();
   }

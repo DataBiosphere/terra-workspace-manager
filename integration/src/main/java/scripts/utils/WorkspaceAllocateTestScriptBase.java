@@ -25,7 +25,7 @@ import java.util.UUID;
  * classes.
  */
 public abstract class WorkspaceAllocateTestScriptBase extends WorkspaceApiTestScriptBase {
-  private UUID workspaceId;
+  private UUID workspaceUuid;
   private String spendProfileId;
 
   /**
@@ -34,7 +34,7 @@ public abstract class WorkspaceAllocateTestScriptBase extends WorkspaceApiTestSc
    * @return workspace UUID
    */
   protected UUID getWorkspaceId() {
-    return workspaceId;
+    return workspaceUuid;
   }
 
   /**
@@ -62,8 +62,8 @@ public abstract class WorkspaceAllocateTestScriptBase extends WorkspaceApiTestSc
   @Override
   protected void doSetup(List<TestUserSpecification> testUsers, WorkspaceApi workspaceApi)
       throws Exception {
-    workspaceId = UUID.randomUUID();
-    createWorkspace(workspaceId, spendProfileId, workspaceApi);
+    workspaceUuid = UUID.randomUUID();
+    createWorkspace(workspaceUuid, spendProfileId, workspaceApi);
   }
 
   /**
@@ -71,14 +71,14 @@ public abstract class WorkspaceAllocateTestScriptBase extends WorkspaceApiTestSc
    * implementations which need to create additional workspaces.
    */
   protected CreatedWorkspace createWorkspace(
-      UUID workspaceId, String spendProfileId, WorkspaceApi workspaceApi) throws Exception {
+      UUID workspaceUuid, String spendProfileId, WorkspaceApi workspaceApi) throws Exception {
     final var requestBody =
         new CreateWorkspaceRequestBody()
-            .id(workspaceId)
+            .id(workspaceUuid)
             .spendProfile(spendProfileId)
             .stage(getStageModel());
     final CreatedWorkspace workspace = workspaceApi.createWorkspace(requestBody);
-    assertThat(workspace.getId(), equalTo(workspaceId));
+    assertThat(workspace.getId(), equalTo(workspaceUuid));
     return workspace;
   }
 
@@ -92,7 +92,7 @@ public abstract class WorkspaceAllocateTestScriptBase extends WorkspaceApiTestSc
   @Override
   protected void doCleanup(List<TestUserSpecification> testUsers, WorkspaceApi workspaceApi)
       throws Exception {
-    workspaceApi.deleteWorkspace(workspaceId);
+    workspaceApi.deleteWorkspace(workspaceUuid);
   }
 
   /**

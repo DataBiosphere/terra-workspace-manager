@@ -25,7 +25,7 @@ public class WorkspaceDeleteFlight extends Flight {
     WorkspaceStage workspaceStage =
         WorkspaceStage.valueOf(
             inputParameters.get(WorkspaceFlightMapKeys.WORKSPACE_STAGE, String.class));
-    UUID workspaceId =
+    UUID workspaceUuid =
         UUID.fromString(inputParameters.get(WorkspaceFlightMapKeys.WORKSPACE_ID, String.class));
     // TODO: we still need the following steps once their features are supported:
     // 1. Delete the cloud contexts from non-GCP cloud platforms
@@ -41,7 +41,7 @@ public class WorkspaceDeleteFlight extends Flight {
         new DeleteControlledSamResourcesStep(
             appContext.getSamService(),
             appContext.getResourceDao(),
-            workspaceId,
+            workspaceUuid,
             /* cloudPlatform= */ null),
         retryRule);
     addStep(
@@ -53,7 +53,7 @@ public class WorkspaceDeleteFlight extends Flight {
     switch (workspaceStage) {
       case MC_WORKSPACE:
         addStep(
-            new DeleteWorkspaceAuthzStep(appContext.getSamService(), userRequest, workspaceId),
+            new DeleteWorkspaceAuthzStep(appContext.getSamService(), userRequest, workspaceUuid),
             retryRule);
         break;
       case RAWLS_WORKSPACE:
@@ -63,6 +63,6 @@ public class WorkspaceDeleteFlight extends Flight {
         throw new InternalLogicException(
             "Unknown workspace stage during deletion: " + workspaceStage.name());
     }
-    addStep(new DeleteWorkspaceStateStep(appContext.getWorkspaceDao(), workspaceId), retryRule);
+    addStep(new DeleteWorkspaceStateStep(appContext.getWorkspaceDao(), workspaceUuid), retryRule);
   }
 }

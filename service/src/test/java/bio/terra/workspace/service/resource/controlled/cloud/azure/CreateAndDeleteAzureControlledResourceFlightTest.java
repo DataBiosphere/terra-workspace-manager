@@ -63,7 +63,7 @@ public class CreateAndDeleteAzureControlledResourceFlightTest extends BaseAzureT
 
   @Test
   public void createAzureIpControlledResource() throws InterruptedException {
-    UUID workspaceId = azureTestUtils.createWorkspace(workspaceService);
+    UUID workspaceUuid = azureTestUtils.createWorkspace(workspaceService);
     AuthenticatedUserRequest userRequest = userAccessUtils.defaultUserAuthRequest();
 
     // Cloud context needs to be created first
@@ -71,13 +71,13 @@ public class CreateAndDeleteAzureControlledResourceFlightTest extends BaseAzureT
         StairwayTestUtils.blockUntilFlightCompletes(
             jobService.getStairway(),
             CreateAzureContextFlight.class,
-            azureTestUtils.createAzureContextInputParameters(workspaceId, userRequest),
+            azureTestUtils.createAzureContextInputParameters(workspaceUuid, userRequest),
             STAIRWAY_FLIGHT_TIMEOUT,
             null);
 
     assertEquals(FlightStatus.SUCCESS, createAzureContextFlightState.getFlightStatus());
     assertTrue(
-        workspaceService.getAuthorizedAzureCloudContext(workspaceId, userRequest).isPresent());
+        workspaceService.getAuthorizedAzureCloudContext(workspaceUuid, userRequest).isPresent());
 
     final ApiAzureIpCreationParameters creationParameters =
         ControlledResourceFixtures.getAzureIpCreationParameters();
@@ -88,7 +88,7 @@ public class CreateAndDeleteAzureControlledResourceFlightTest extends BaseAzureT
         ControlledAzureIpResource.builder()
             .common(
                 ControlledResourceFields.builder()
-                    .workspaceId(workspaceId)
+                    .workspaceUuid(workspaceUuid)
                     .resourceId(resourceId)
                     .name(getAzureName("ip"))
                     .description(getAzureName("ip-desc"))
@@ -106,7 +106,7 @@ public class CreateAndDeleteAzureControlledResourceFlightTest extends BaseAzureT
             jobService.getStairway(),
             CreateControlledResourceFlight.class,
             azureTestUtils.createControlledResourceInputParameters(
-                workspaceId, userRequest, resource),
+                workspaceUuid, userRequest, resource),
             STAIRWAY_FLIGHT_TIMEOUT,
             null);
 
@@ -114,7 +114,7 @@ public class CreateAndDeleteAzureControlledResourceFlightTest extends BaseAzureT
 
     // Verify controlled resource exists in the workspace.
     ControlledResource res =
-        controlledResourceService.getControlledResource(workspaceId, resourceId, userRequest);
+        controlledResourceService.getControlledResource(workspaceUuid, resourceId, userRequest);
 
     try {
       var azureIpResource = res.castByEnum(WsmResourceType.CONTROLLED_AZURE_IP);
@@ -126,7 +126,7 @@ public class CreateAndDeleteAzureControlledResourceFlightTest extends BaseAzureT
 
   @Test
   public void createAndDeleteAzureRelayNamespaceControlledResource() throws InterruptedException {
-    UUID workspaceId = azureTestUtils.createWorkspace(workspaceService);
+    UUID workspaceUuid = azureTestUtils.createWorkspace(workspaceService);
     AuthenticatedUserRequest userRequest = userAccessUtils.defaultUserAuthRequest();
 
     // Cloud context needs to be created first
@@ -134,13 +134,13 @@ public class CreateAndDeleteAzureControlledResourceFlightTest extends BaseAzureT
         StairwayTestUtils.blockUntilFlightCompletes(
             jobService.getStairway(),
             CreateAzureContextFlight.class,
-            azureTestUtils.createAzureContextInputParameters(workspaceId, userRequest),
+            azureTestUtils.createAzureContextInputParameters(workspaceUuid, userRequest),
             STAIRWAY_FLIGHT_TIMEOUT,
             null);
 
     assertEquals(FlightStatus.SUCCESS, createAzureContextFlightState.getFlightStatus());
     assertTrue(
-        workspaceService.getAuthorizedAzureCloudContext(workspaceId, userRequest).isPresent());
+        workspaceService.getAuthorizedAzureCloudContext(workspaceUuid, userRequest).isPresent());
 
     final ApiAzureRelayNamespaceCreationParameters creationParameters =
         ControlledResourceFixtures.getAzureRelayNamespaceCreationParameters();
@@ -150,7 +150,7 @@ public class CreateAndDeleteAzureControlledResourceFlightTest extends BaseAzureT
         ControlledAzureRelayNamespaceResource.builder()
             .common(
                 ControlledResourceFields.builder()
-                    .workspaceId(workspaceId)
+                    .workspaceUuid(workspaceUuid)
                     .resourceId(resourceId)
                     .name(getAzureName("ip"))
                     .description(getAzureName("ip-desc"))
@@ -168,7 +168,7 @@ public class CreateAndDeleteAzureControlledResourceFlightTest extends BaseAzureT
             jobService.getStairway(),
             CreateControlledResourceFlight.class,
             azureTestUtils.createControlledResourceInputParameters(
-                workspaceId, userRequest, resource),
+                workspaceUuid, userRequest, resource),
             STAIRWAY_FLIGHT_TIMEOUT,
             null);
 
@@ -176,7 +176,7 @@ public class CreateAndDeleteAzureControlledResourceFlightTest extends BaseAzureT
 
     // Verify controlled resource exists in the workspace.
     ControlledResource res =
-        controlledResourceService.getControlledResource(workspaceId, resourceId, userRequest);
+        controlledResourceService.getControlledResource(workspaceUuid, resourceId, userRequest);
 
     var relayNamespaceResource = res.castByEnum(WsmResourceType.CONTROLLED_AZURE_RELAY_NAMESPACE);
     assertEquals(resource, relayNamespaceResource);
@@ -187,7 +187,7 @@ public class CreateAndDeleteAzureControlledResourceFlightTest extends BaseAzureT
             jobService.getStairway(),
             DeleteControlledResourceFlight.class,
             azureTestUtils.deleteControlledResourceInputParameters(
-                workspaceId, resourceId, userRequest, resource),
+                workspaceUuid, resourceId, userRequest, resource),
             STAIRWAY_FLIGHT_TIMEOUT,
             null);
     assertEquals(FlightStatus.SUCCESS, deleteFlightState.getFlightStatus());
@@ -209,7 +209,7 @@ public class CreateAndDeleteAzureControlledResourceFlightTest extends BaseAzureT
 
   @Test
   public void createAzureDiskControlledResource() throws InterruptedException {
-    UUID workspaceId = azureTestUtils.createWorkspace(workspaceService);
+    UUID workspaceUuid = azureTestUtils.createWorkspace(workspaceService);
     AuthenticatedUserRequest userRequest = userAccessUtils.defaultUserAuthRequest();
 
     // Cloud context needs to be created first
@@ -217,13 +217,13 @@ public class CreateAndDeleteAzureControlledResourceFlightTest extends BaseAzureT
         StairwayTestUtils.blockUntilFlightCompletes(
             jobService.getStairway(),
             CreateAzureContextFlight.class,
-            azureTestUtils.createAzureContextInputParameters(workspaceId, userRequest),
+            azureTestUtils.createAzureContextInputParameters(workspaceUuid, userRequest),
             STAIRWAY_FLIGHT_TIMEOUT,
             null);
 
     assertEquals(FlightStatus.SUCCESS, createAzureContextFlightState.getFlightStatus());
     assertTrue(
-        workspaceService.getAuthorizedAzureCloudContext(workspaceId, userRequest).isPresent());
+        workspaceService.getAuthorizedAzureCloudContext(workspaceUuid, userRequest).isPresent());
 
     final ApiAzureDiskCreationParameters creationParameters =
         ControlledResourceFixtures.getAzureDiskCreationParameters();
@@ -234,7 +234,7 @@ public class CreateAndDeleteAzureControlledResourceFlightTest extends BaseAzureT
         ControlledAzureDiskResource.builder()
             .common(
                 ControlledResourceFields.builder()
-                    .workspaceId(workspaceId)
+                    .workspaceUuid(workspaceUuid)
                     .resourceId(resourceId)
                     .name(getAzureName("disk"))
                     .description(getAzureName("disk-desc"))
@@ -253,7 +253,7 @@ public class CreateAndDeleteAzureControlledResourceFlightTest extends BaseAzureT
             jobService.getStairway(),
             CreateControlledResourceFlight.class,
             azureTestUtils.createControlledResourceInputParameters(
-                workspaceId, userRequest, resource),
+                workspaceUuid, userRequest, resource),
             STAIRWAY_FLIGHT_TIMEOUT,
             null);
 
@@ -261,7 +261,7 @@ public class CreateAndDeleteAzureControlledResourceFlightTest extends BaseAzureT
 
     // Verify controlled resource exists in the workspace.
     ControlledResource res =
-        controlledResourceService.getControlledResource(workspaceId, resourceId, userRequest);
+        controlledResourceService.getControlledResource(workspaceUuid, resourceId, userRequest);
 
     try {
       ControlledAzureDiskResource azureDiskResource =
@@ -275,7 +275,7 @@ public class CreateAndDeleteAzureControlledResourceFlightTest extends BaseAzureT
   @Test
   public void createAndDeleteAzureVmControlledResource() throws InterruptedException {
     // Setup workspace and cloud context
-    UUID workspaceId = azureTestUtils.createWorkspace(workspaceService);
+    UUID workspaceUuid = azureTestUtils.createWorkspace(workspaceService);
     AuthenticatedUserRequest userRequest = userAccessUtils.defaultUserAuthRequest();
 
     // Cloud context needs to be created first
@@ -283,22 +283,22 @@ public class CreateAndDeleteAzureControlledResourceFlightTest extends BaseAzureT
         StairwayTestUtils.blockUntilFlightCompletes(
             jobService.getStairway(),
             CreateAzureContextFlight.class,
-            azureTestUtils.createAzureContextInputParameters(workspaceId, userRequest),
+            azureTestUtils.createAzureContextInputParameters(workspaceUuid, userRequest),
             STAIRWAY_FLIGHT_TIMEOUT,
             null);
 
     assertEquals(FlightStatus.SUCCESS, createAzureContextFlightState.getFlightStatus());
     assertTrue(
-        workspaceService.getAuthorizedAzureCloudContext(workspaceId, userRequest).isPresent());
+        workspaceService.getAuthorizedAzureCloudContext(workspaceUuid, userRequest).isPresent());
 
     // Create ip
-    ControlledAzureIpResource ipResource = createIp(workspaceId, userRequest);
+    ControlledAzureIpResource ipResource = createIp(workspaceUuid, userRequest);
 
     // Create disk
-    ControlledAzureDiskResource diskResource = createDisk(workspaceId, userRequest);
+    ControlledAzureDiskResource diskResource = createDisk(workspaceUuid, userRequest);
 
     // Create network
-    ControlledAzureNetworkResource networkResource = createNetwork(workspaceId, userRequest);
+    ControlledAzureNetworkResource networkResource = createNetwork(workspaceUuid, userRequest);
 
     final ApiAzureVmCreationParameters creationParameters =
         ControlledResourceFixtures.getAzureVmCreationParameters();
@@ -309,7 +309,7 @@ public class CreateAndDeleteAzureControlledResourceFlightTest extends BaseAzureT
         ControlledAzureVmResource.builder()
             .common(
                 ControlledResourceFields.builder()
-                    .workspaceId(workspaceId)
+                    .workspaceUuid(workspaceUuid)
                     .resourceId(resourceId)
                     .name(getAzureName("vm"))
                     .description(getAzureName("vm-desc"))
@@ -332,7 +332,7 @@ public class CreateAndDeleteAzureControlledResourceFlightTest extends BaseAzureT
             jobService.getStairway(),
             CreateControlledResourceFlight.class,
             azureTestUtils.createControlledResourceInputParameters(
-                workspaceId, userRequest, resource, creationParameters),
+                workspaceUuid, userRequest, resource, creationParameters),
             STAIRWAY_FLIGHT_TIMEOUT,
             null);
 
@@ -340,7 +340,7 @@ public class CreateAndDeleteAzureControlledResourceFlightTest extends BaseAzureT
 
     // Verify controlled resource exists in the workspace.
     ControlledResource res =
-        controlledResourceService.getControlledResource(workspaceId, resourceId, userRequest);
+        controlledResourceService.getControlledResource(workspaceUuid, resourceId, userRequest);
 
     try {
       ControlledAzureVmResource azureVmResource =
@@ -353,7 +353,7 @@ public class CreateAndDeleteAzureControlledResourceFlightTest extends BaseAzureT
     // Exercise resource enumeration for the underlying resources.
     // Verify that the resources we created are in the enumeration.
     List<WsmResource> resourceList =
-        wsmResourceService.enumerateResources(workspaceId, null, null, 0, 100, userRequest);
+        wsmResourceService.enumerateResources(workspaceUuid, null, null, 0, 100, userRequest);
     checkForResource(resourceList, ipResource);
     checkForResource(resourceList, diskResource);
     checkForResource(resourceList, networkResource);
@@ -390,7 +390,7 @@ public class CreateAndDeleteAzureControlledResourceFlightTest extends BaseAzureT
             jobService.getStairway(),
             DeleteControlledResourceFlight.class,
             azureTestUtils.deleteControlledResourceInputParameters(
-                workspaceId, resourceId, userRequest, resource),
+                workspaceUuid, resourceId, userRequest, resource),
             STAIRWAY_FLIGHT_TIMEOUT,
             null);
     assertEquals(FlightStatus.SUCCESS, deleteFlightState.getFlightStatus());
@@ -412,7 +412,7 @@ public class CreateAndDeleteAzureControlledResourceFlightTest extends BaseAzureT
   public void createAndDeleteAzureVmControlledResourceWithCustomScriptExtension()
       throws InterruptedException {
     // Setup workspace and cloud context
-    UUID workspaceId = azureTestUtils.createWorkspace(workspaceService);
+    UUID workspaceUuid = azureTestUtils.createWorkspace(workspaceService);
     AuthenticatedUserRequest userRequest = userAccessUtils.defaultUserAuthRequest();
 
     // Cloud context needs to be created first
@@ -420,22 +420,22 @@ public class CreateAndDeleteAzureControlledResourceFlightTest extends BaseAzureT
         StairwayTestUtils.blockUntilFlightCompletes(
             jobService.getStairway(),
             CreateAzureContextFlight.class,
-            azureTestUtils.createAzureContextInputParameters(workspaceId, userRequest),
+            azureTestUtils.createAzureContextInputParameters(workspaceUuid, userRequest),
             STAIRWAY_FLIGHT_TIMEOUT,
             null);
 
     assertEquals(FlightStatus.SUCCESS, createAzureContextFlightState.getFlightStatus());
     assertTrue(
-        workspaceService.getAuthorizedAzureCloudContext(workspaceId, userRequest).isPresent());
+        workspaceService.getAuthorizedAzureCloudContext(workspaceUuid, userRequest).isPresent());
 
     // Create ip
-    ControlledAzureIpResource ipResource = createIp(workspaceId, userRequest);
+    ControlledAzureIpResource ipResource = createIp(workspaceUuid, userRequest);
 
     // Create disk
-    ControlledAzureDiskResource diskResource = createDisk(workspaceId, userRequest);
+    ControlledAzureDiskResource diskResource = createDisk(workspaceUuid, userRequest);
 
     // Create network
-    ControlledAzureNetworkResource networkResource = createNetwork(workspaceId, userRequest);
+    ControlledAzureNetworkResource networkResource = createNetwork(workspaceUuid, userRequest);
 
     final ApiAzureVmCreationParameters creationParameters =
         ControlledResourceFixtures.getAzureVmCreationParametersWithCustomScriptExtension();
@@ -446,7 +446,7 @@ public class CreateAndDeleteAzureControlledResourceFlightTest extends BaseAzureT
         ControlledAzureVmResource.builder()
             .common(
                 ControlledResourceFields.builder()
-                    .workspaceId(workspaceId)
+                    .workspaceUuid(workspaceUuid)
                     .resourceId(resourceId)
                     .name(getAzureName("vm"))
                     .description(getAzureName("vm-desc"))
@@ -469,7 +469,7 @@ public class CreateAndDeleteAzureControlledResourceFlightTest extends BaseAzureT
             jobService.getStairway(),
             CreateControlledResourceFlight.class,
             azureTestUtils.createControlledResourceInputParameters(
-                workspaceId, userRequest, resource, creationParameters),
+                workspaceUuid, userRequest, resource, creationParameters),
             STAIRWAY_FLIGHT_TIMEOUT,
             null);
 
@@ -477,7 +477,7 @@ public class CreateAndDeleteAzureControlledResourceFlightTest extends BaseAzureT
 
     // Verify controlled resource exists in the workspace.
     ControlledResource res =
-        controlledResourceService.getControlledResource(workspaceId, resourceId, userRequest);
+        controlledResourceService.getControlledResource(workspaceUuid, resourceId, userRequest);
 
     try {
       ControlledAzureVmResource azureVmResource =
@@ -490,7 +490,7 @@ public class CreateAndDeleteAzureControlledResourceFlightTest extends BaseAzureT
     // Exercise resource enumeration for the underlying resources.
     // Verify that the resources we created are in the enumeration.
     List<WsmResource> resourceList =
-        wsmResourceService.enumerateResources(workspaceId, null, null, 0, 100, userRequest);
+        wsmResourceService.enumerateResources(workspaceUuid, null, null, 0, 100, userRequest);
     checkForResource(resourceList, ipResource);
     checkForResource(resourceList, diskResource);
     checkForResource(resourceList, networkResource);
@@ -527,7 +527,7 @@ public class CreateAndDeleteAzureControlledResourceFlightTest extends BaseAzureT
             jobService.getStairway(),
             DeleteControlledResourceFlight.class,
             azureTestUtils.deleteControlledResourceInputParameters(
-                workspaceId, resourceId, userRequest, resource),
+                workspaceUuid, resourceId, userRequest, resource),
             STAIRWAY_FLIGHT_TIMEOUT,
             null);
     assertEquals(FlightStatus.SUCCESS, deleteFlightState.getFlightStatus());
@@ -558,7 +558,7 @@ public class CreateAndDeleteAzureControlledResourceFlightTest extends BaseAzureT
   }
 
   private ControlledAzureDiskResource createDisk(
-      UUID workspaceId, AuthenticatedUserRequest userRequest) throws InterruptedException {
+      UUID workspaceUuid, AuthenticatedUserRequest userRequest) throws InterruptedException {
     final ApiAzureDiskCreationParameters creationParameters =
         ControlledResourceFixtures.getAzureDiskCreationParameters();
 
@@ -568,7 +568,7 @@ public class CreateAndDeleteAzureControlledResourceFlightTest extends BaseAzureT
         ControlledAzureDiskResource.builder()
             .common(
                 ControlledResourceFields.builder()
-                    .workspaceId(workspaceId)
+                    .workspaceUuid(workspaceUuid)
                     .resourceId(resourceId)
                     .name(getAzureName("disk"))
                     .description(getAzureName("disk-desc"))
@@ -587,7 +587,7 @@ public class CreateAndDeleteAzureControlledResourceFlightTest extends BaseAzureT
             jobService.getStairway(),
             CreateControlledResourceFlight.class,
             azureTestUtils.createControlledResourceInputParameters(
-                workspaceId, userRequest, resource),
+                workspaceUuid, userRequest, resource),
             STAIRWAY_FLIGHT_TIMEOUT,
             null);
 
@@ -595,7 +595,7 @@ public class CreateAndDeleteAzureControlledResourceFlightTest extends BaseAzureT
     return resource;
   }
 
-  ControlledAzureIpResource createIp(UUID workspaceId, AuthenticatedUserRequest userRequest)
+  ControlledAzureIpResource createIp(UUID workspaceUuid, AuthenticatedUserRequest userRequest)
       throws InterruptedException {
     final ApiAzureIpCreationParameters ipCreationParameters =
         ControlledResourceFixtures.getAzureIpCreationParameters();
@@ -606,7 +606,7 @@ public class CreateAndDeleteAzureControlledResourceFlightTest extends BaseAzureT
         ControlledAzureIpResource.builder()
             .common(
                 ControlledResourceFields.builder()
-                    .workspaceId(workspaceId)
+                    .workspaceUuid(workspaceUuid)
                     .resourceId(resourceId)
                     .name(getAzureName("ip"))
                     .description(getAzureName("ip-desc"))
@@ -624,7 +624,7 @@ public class CreateAndDeleteAzureControlledResourceFlightTest extends BaseAzureT
             jobService.getStairway(),
             CreateControlledResourceFlight.class,
             azureTestUtils.createControlledResourceInputParameters(
-                workspaceId, userRequest, resource),
+                workspaceUuid, userRequest, resource),
             STAIRWAY_FLIGHT_TIMEOUT,
             null);
 
@@ -634,7 +634,7 @@ public class CreateAndDeleteAzureControlledResourceFlightTest extends BaseAzureT
   }
 
   private ControlledAzureNetworkResource createNetwork(
-      UUID workspaceId, AuthenticatedUserRequest userRequest) throws InterruptedException {
+      UUID workspaceUuid, AuthenticatedUserRequest userRequest) throws InterruptedException {
     final ApiAzureNetworkCreationParameters creationParameters =
         ControlledResourceFixtures.getAzureNetworkCreationParameters();
 
@@ -644,7 +644,7 @@ public class CreateAndDeleteAzureControlledResourceFlightTest extends BaseAzureT
         ControlledAzureNetworkResource.builder()
             .common(
                 ControlledResourceFields.builder()
-                    .workspaceId(workspaceId)
+                    .workspaceUuid(workspaceUuid)
                     .resourceId(resourceId)
                     .name(getAzureName("network"))
                     .description(getAzureName("network-desc"))
@@ -665,7 +665,7 @@ public class CreateAndDeleteAzureControlledResourceFlightTest extends BaseAzureT
             jobService.getStairway(),
             CreateControlledResourceFlight.class,
             azureTestUtils.createControlledResourceInputParameters(
-                workspaceId, userRequest, resource),
+                workspaceUuid, userRequest, resource),
             STAIRWAY_FLIGHT_TIMEOUT,
             null);
 
@@ -680,7 +680,7 @@ public class CreateAndDeleteAzureControlledResourceFlightTest extends BaseAzureT
 
   @Test
   public void createAzureNetworkControlledResource() throws InterruptedException {
-    UUID workspaceId = azureTestUtils.createWorkspace(workspaceService);
+    UUID workspaceUuid = azureTestUtils.createWorkspace(workspaceService);
     AuthenticatedUserRequest userRequest = userAccessUtils.defaultUserAuthRequest();
 
     // Cloud context needs to be created first
@@ -688,13 +688,13 @@ public class CreateAndDeleteAzureControlledResourceFlightTest extends BaseAzureT
         StairwayTestUtils.blockUntilFlightCompletes(
             jobService.getStairway(),
             CreateAzureContextFlight.class,
-            azureTestUtils.createAzureContextInputParameters(workspaceId, userRequest),
+            azureTestUtils.createAzureContextInputParameters(workspaceUuid, userRequest),
             STAIRWAY_FLIGHT_TIMEOUT,
             null);
 
     assertEquals(FlightStatus.SUCCESS, createAzureContextFlightState.getFlightStatus());
     assertTrue(
-        workspaceService.getAuthorizedAzureCloudContext(workspaceId, userRequest).isPresent());
+        workspaceService.getAuthorizedAzureCloudContext(workspaceUuid, userRequest).isPresent());
 
     final ApiAzureNetworkCreationParameters creationParams =
         ControlledResourceFixtures.getAzureNetworkCreationParameters();
@@ -705,7 +705,7 @@ public class CreateAndDeleteAzureControlledResourceFlightTest extends BaseAzureT
         ControlledAzureNetworkResource.builder()
             .common(
                 ControlledResourceFields.builder()
-                    .workspaceId(workspaceId)
+                    .workspaceUuid(workspaceUuid)
                     .resourceId(resourceId)
                     .name("testNetwork")
                     .description("testDesc")
@@ -726,7 +726,7 @@ public class CreateAndDeleteAzureControlledResourceFlightTest extends BaseAzureT
             jobService.getStairway(),
             CreateControlledResourceFlight.class,
             azureTestUtils.createControlledResourceInputParameters(
-                workspaceId, userRequest, resource),
+                workspaceUuid, userRequest, resource),
             STAIRWAY_FLIGHT_TIMEOUT,
             null);
 
@@ -734,7 +734,7 @@ public class CreateAndDeleteAzureControlledResourceFlightTest extends BaseAzureT
 
     // Verify controlled resource exists in the workspace.
     ControlledResource res =
-        controlledResourceService.getControlledResource(workspaceId, resourceId, userRequest);
+        controlledResourceService.getControlledResource(workspaceUuid, resourceId, userRequest);
 
     try {
       ControlledAzureNetworkResource azureNetworkResource =

@@ -58,7 +58,7 @@ public class GcsBucketCloneTestFixtures {
                   .name(SOURCE_RESOURCE_NAME)
                   .privateResourceState(null)
                   .resourceId(UUID.randomUUID())
-                  .workspaceId(SOURCE_WORKSPACE_ID)
+                  .workspaceUuid(SOURCE_WORKSPACE_ID)
                   .build())
           .build();
   public static final ControlledGcsBucketResource CREATED_BUCKET_RESOURCE =
@@ -76,7 +76,7 @@ public class GcsBucketCloneTestFixtures {
                   .name("clone_of_source_bucket")
                   .privateResourceState(null)
                   .resourceId(UUID.randomUUID())
-                  .workspaceId(DESTINATION_WORKSPACE_ID)
+                  .workspaceUuid(DESTINATION_WORKSPACE_ID)
                   .build())
           .build();
   // Stairway ser/des doesn't handle unmodifiable lists

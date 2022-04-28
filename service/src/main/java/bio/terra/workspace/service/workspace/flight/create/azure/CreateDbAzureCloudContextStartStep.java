@@ -12,18 +12,19 @@ import java.util.UUID;
  * context for the workspace.
  */
 public class CreateDbAzureCloudContextStartStep implements Step {
-  private final UUID workspaceId;
+  private final UUID workspaceUuid;
   private final AzureCloudContextService azureCloudContextService;
 
   public CreateDbAzureCloudContextStartStep(
-      UUID workspaceId, AzureCloudContextService azureCloudContextService) {
-    this.workspaceId = workspaceId;
+      UUID workspaceUuid, AzureCloudContextService azureCloudContextService) {
+    this.workspaceUuid = workspaceUuid;
     this.azureCloudContextService = azureCloudContextService;
   }
 
   @Override
   public StepResult doStep(FlightContext flightContext) throws InterruptedException {
-    azureCloudContextService.createAzureCloudContextStart(workspaceId, flightContext.getFlightId());
+    azureCloudContextService.createAzureCloudContextStart(
+        workspaceUuid, flightContext.getFlightId());
     return StepResult.getStepResultSuccess();
   }
 
@@ -31,7 +32,7 @@ public class CreateDbAzureCloudContextStartStep implements Step {
   public StepResult undoStep(FlightContext flightContext) throws InterruptedException {
     // Delete the cloud context, but only if it is the one we created
     azureCloudContextService.deleteAzureCloudContextWithFlightIdValidation(
-        workspaceId, flightContext.getFlightId());
+        workspaceUuid, flightContext.getFlightId());
     return StepResult.getStepResultSuccess();
   }
 }

@@ -28,30 +28,30 @@ public class CreateWorkspaceStep implements Step {
   @Override
   public StepResult doStep(FlightContext flightContext)
       throws RetryException, InterruptedException {
-    UUID workspaceId = workspace.getWorkspaceId();
+    UUID workspaceUuid = workspace.getWorkspaceId();
 
     try {
       workspaceDao.createWorkspace(workspace);
     } catch (DuplicateWorkspaceException ex) {
       // This might be the result of a step re-running, or it might be an ID conflict. We can ignore
       // this if the existing workspace matches the one we were about to create, otherwise rethrow.
-      Workspace existingWorkspace = workspaceDao.getWorkspace(workspaceId);
+      Workspace existingWorkspace = workspaceDao.getWorkspace(workspaceUuid);
       if (!workspace.equals(existingWorkspace)) {
         throw ex;
       }
     }
 
-    FlightUtils.setResponse(flightContext, workspaceId, HttpStatus.OK);
-    logger.info("Workspace created with id {}", workspaceId);
+    FlightUtils.setResponse(flightContext, workspaceUuid, HttpStatus.OK);
+    logger.info("Workspace created with id {}", workspaceUuid);
 
     return StepResult.getStepResultSuccess();
   }
 
   @Override
   public StepResult undoStep(FlightContext flightContext) throws InterruptedException {
-    UUID workspaceId = workspace.getWorkspaceId();
+    UUID workspaceUuid = workspace.getWorkspaceId();
     // Ignore return value, as we don't care whether a workspace was deleted or just not found.
-    workspaceDao.deleteWorkspace(workspaceId);
+    workspaceDao.deleteWorkspace(workspaceUuid);
     return StepResult.getStepResultSuccess();
   }
 }

@@ -35,14 +35,14 @@ public class StageService {
   }
 
   /**
-   * Given a workspaceId, read the workspace info from the database and then validate that it is an
-   * MC workspace.
+   * Given a workspaceUuid, read the workspace info from the database and then validate that it is
+   * an MC workspace.
    *
-   * @param workspaceId workspace unique id
+   * @param workspaceUuid workspace unique id
    * @param actionMessage message to include in the error
    */
-  public void assertMcWorkspace(UUID workspaceId, String actionMessage) {
-    Workspace workspace = workspaceDao.getWorkspace(workspaceId);
+  public void assertMcWorkspace(UUID workspaceUuid, String actionMessage) {
+    Workspace workspace = workspaceDao.getWorkspace(workspaceUuid);
     assertMcWorkspace(workspace, actionMessage);
   }
 }

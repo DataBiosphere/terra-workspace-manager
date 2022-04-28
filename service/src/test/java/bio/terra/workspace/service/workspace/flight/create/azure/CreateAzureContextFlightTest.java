@@ -30,15 +30,16 @@ class CreateAzureContextFlightTest extends BaseAzureTest {
 
   @Test
   void successCreatesContext() throws Exception {
-    UUID workspaceId = azureTestUtils.createWorkspace(workspaceService);
+    UUID workspaceUuid = azureTestUtils.createWorkspace(workspaceService);
     AuthenticatedUserRequest userRequest = userAccessUtils.defaultUserAuthRequest();
 
     // There should be no cloud context initially.
-    assertTrue(workspaceService.getAuthorizedAzureCloudContext(workspaceId, userRequest).isEmpty());
+    assertTrue(
+        workspaceService.getAuthorizedAzureCloudContext(workspaceUuid, userRequest).isEmpty());
 
     String jobId = UUID.randomUUID().toString();
     workspaceService.createAzureCloudContext(
-        workspaceId,
+        workspaceUuid,
         jobId,
         userRequest,
         /* resultPath */ null,
@@ -52,19 +53,20 @@ class CreateAzureContextFlightTest extends BaseAzureTest {
 
     // Flight should have created a cloud context.
     assertTrue(
-        workspaceService.getAuthorizedAzureCloudContext(workspaceId, userRequest).isPresent());
+        workspaceService.getAuthorizedAzureCloudContext(workspaceUuid, userRequest).isPresent());
     AzureCloudContext azureCloudContext =
-        workspaceService.getAuthorizedAzureCloudContext(workspaceId, userRequest).get();
+        workspaceService.getAuthorizedAzureCloudContext(workspaceUuid, userRequest).get();
     assertEquals(azureCloudContext, azureTestUtils.getAzureCloudContext());
   }
 
   @Test
   void errorRevertsChanges() throws Exception {
-    UUID workspaceId = azureTestUtils.createWorkspace(workspaceService);
+    UUID workspaceUuid = azureTestUtils.createWorkspace(workspaceService);
     AuthenticatedUserRequest userRequest = userAccessUtils.defaultUserAuthRequest();
 
     // There should be no cloud context initially.
-    assertTrue(workspaceService.getAuthorizedAzureCloudContext(workspaceId, userRequest).isEmpty());
+    assertTrue(
+        workspaceService.getAuthorizedAzureCloudContext(workspaceUuid, userRequest).isEmpty());
 
     // Submit a flight class that always errors.
     FlightDebugInfo debugInfo = FlightDebugInfo.newBuilder().lastStepFailure(true).build();
@@ -72,12 +74,13 @@ class CreateAzureContextFlightTest extends BaseAzureTest {
         StairwayTestUtils.blockUntilFlightCompletes(
             jobService.getStairway(),
             CreateAzureContextFlight.class,
-            azureTestUtils.createAzureContextInputParameters(workspaceId, userRequest),
+            azureTestUtils.createAzureContextInputParameters(workspaceUuid, userRequest),
             STAIRWAY_FLIGHT_TIMEOUT,
             debugInfo);
     assertEquals(FlightStatus.ERROR, flightState.getFlightStatus());
 
     // There should be no cloud context created.
-    assertTrue(workspaceService.getAuthorizedAzureCloudContext(workspaceId, userRequest).isEmpty());
+    assertTrue(
+        workspaceService.getAuthorizedAzureCloudContext(workspaceUuid, userRequest).isEmpty());
   }
 }
