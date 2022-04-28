@@ -109,7 +109,7 @@ public class ControlledBigQueryDatasetLifecycle extends GcpWorkspaceCloneTestScr
             getWorkspaceId(),
             DATASET_RESOURCE_NAME,
             /*datasetId=*/ null,
-            /*cloningInstructions=*/ null);
+            CloningInstructionsEnum.NOTHING);
     assertEquals(DATASET_RESOURCE_NAME, createdDataset.getAttributes().getDatasetId());
     UUID resourceId = createdDataset.getMetadata().getResourceId();
 
@@ -200,10 +200,12 @@ public class ControlledBigQueryDatasetLifecycle extends GcpWorkspaceCloneTestScr
             .description(resourceDescription)
             .updateParameters(
                 new GcpBigQueryDatasetUpdateParameters()
-                    .defaultTableLifetime(defaultTableLifetimeSec));
+                    .defaultTableLifetime(defaultTableLifetimeSec)
+                    .cloningInstructions(CloningInstructionsEnum.RESOURCE));
     ownerResourceApi.updateBigQueryDataset(updateDatasetRequest, getWorkspaceId(), resourceId);
     var datasetAfterUpdate = ownerResourceApi.getBigQueryDataset(getWorkspaceId(), resourceId);
-    assertEquals(datasetAfterUpdate.getMetadata().getDescription(), resourceDescription);
+    assertEquals(resourceDescription, datasetAfterUpdate.getMetadata().getDescription());
+    assertEquals(CloningInstructionsEnum.RESOURCE, datasetAfterUpdate.getMetadata().getCloningInstructions());
     logger.info("Workspace owner updated resource {}", resourceId);
 
     // However, invalid updates are rejected.
