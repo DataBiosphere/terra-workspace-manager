@@ -36,7 +36,8 @@ public class UpdateControlledResourceMetadataStep implements Step {
   @Override
   public StepResult doStep(FlightContext flightContext)
       throws InterruptedException, RetryException {
-    FlightUtils.validateRequiredEntries(flightContext.getInputParameters(),
+    FlightUtils.validateRequiredEntries(
+        flightContext.getInputParameters(),
         ResourceKeys.RESOURCE_NAME,
         ResourceKeys.RESOURCE_DESCRIPTION,
         JobMapKeys.AUTH_USER_INFO.getKeyName());

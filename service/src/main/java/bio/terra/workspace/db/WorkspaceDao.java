@@ -115,11 +115,10 @@ public class WorkspaceDao {
               "duplicate key value violates unique constraint \"workspace_user_facing_id_key\"")) {
         // workspace_id is new, but workspace with user_facing_id already exists.
         throw new DuplicateUserFacingIdException(
-                String.format(
-                        // "ID" instead of "userFacingId" because end user sees this.
-                        "Workspace with ID %s already exists",
-                        workspace.getUserFacingId().get()),
-                e);
+            String.format(
+                // "ID" instead of "userFacingId" because end user sees this.
+                "Workspace with ID %s already exists", workspace.getUserFacingId().get()),
+            e);
       } else {
         throw e;
       }
@@ -236,9 +235,9 @@ public class WorkspaceDao {
 
     boolean updated = rowsAffected > 0;
     logger.info(
-      "{} record for workspace {}",
-      (updated ? "Updated" : "No Update - did not find"),
-      workspaceId);
+        "{} record for workspace {}",
+        (updated ? "Updated" : "No Update - did not find"),
+        workspaceId);
     return updated;
   }
 

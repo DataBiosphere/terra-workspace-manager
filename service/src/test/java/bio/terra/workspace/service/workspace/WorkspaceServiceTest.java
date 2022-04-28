@@ -210,13 +210,14 @@ class WorkspaceServiceTest extends BaseConnectedTest {
     Workspace request = defaultRequestBuilder(UUID.randomUUID()).userFacingId(userFacingId).build();
     workspaceService.createWorkspace(request, USER_REQUEST);
     Workspace duplicateUserFacingId =
-            defaultRequestBuilder(UUID.randomUUID()).userFacingId(userFacingId)
-                    .build();
+        defaultRequestBuilder(UUID.randomUUID()).userFacingId(userFacingId).build();
 
-    DuplicateUserFacingIdException ex = assertThrows(
+    DuplicateUserFacingIdException ex =
+        assertThrows(
             DuplicateUserFacingIdException.class,
             () -> workspaceService.createWorkspace(duplicateUserFacingId, USER_REQUEST));
-    assertEquals(ex.getMessage(), String.format("Workspace with ID %s already exists", userFacingId));
+    assertEquals(
+        ex.getMessage(), String.format("Workspace with ID %s already exists", userFacingId));
   }
 
   @Test
@@ -301,7 +302,8 @@ class WorkspaceServiceTest extends BaseConnectedTest {
     String otherDescription = "The deprecated workspace";
 
     Workspace secondUpdatedWorkspace =
-        workspaceService.updateWorkspace(USER_REQUEST, workspaceId, null, null, otherDescription, null);
+        workspaceService.updateWorkspace(
+            USER_REQUEST, workspaceId, null, null, otherDescription, null);
 
     // Since name is null, leave it alone. Description should be updated.
     assertEquals(userFacingId, secondUpdatedWorkspace.getUserFacingId().orElse(null));
@@ -312,7 +314,8 @@ class WorkspaceServiceTest extends BaseConnectedTest {
     // Sending through empty strings and an empty map clears the values.
     Map<String, String> propertyMap3 = new HashMap<>();
     Workspace thirdUpdatedWorkspace =
-        workspaceService.updateWorkspace(USER_REQUEST, workspaceId, userFacingId, "", "", propertyMap3);
+        workspaceService.updateWorkspace(
+            USER_REQUEST, workspaceId, userFacingId, "", "", propertyMap3);
     assertEquals("", thirdUpdatedWorkspace.getDisplayName().orElse(null));
     assertEquals("", thirdUpdatedWorkspace.getDescription().orElse(null));
 
@@ -332,11 +335,14 @@ class WorkspaceServiceTest extends BaseConnectedTest {
     workspaceService.createWorkspace(request, USER_REQUEST);
 
     // Try to set second workspace's userFacing to first.
-    DuplicateUserFacingIdException ex = assertThrows(
+    DuplicateUserFacingIdException ex =
+        assertThrows(
             DuplicateUserFacingIdException.class,
-            () ->  workspaceService.updateWorkspace(
+            () ->
+                workspaceService.updateWorkspace(
                     USER_REQUEST, secondWorkspaceUuid, userFacingId, null, null, null));
-    assertEquals(ex.getMessage(), String.format("Workspace with ID %s already exists", userFacingId));
+    assertEquals(
+        ex.getMessage(), String.format("Workspace with ID %s already exists", userFacingId));
   }
 
   @Test

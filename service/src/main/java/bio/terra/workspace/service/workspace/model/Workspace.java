@@ -50,7 +50,9 @@ public class Workspace {
     return workspaceId;
   }
 
-  /** User facing id. Required in db, but optional in API requests (eg CreateWorkspaceRequestBody. */
+  /**
+   * User facing id. Required in db, but optional in API requests (eg CreateWorkspaceRequestBody.
+   */
   public Optional<String> getUserFacingId() {
     return Optional.ofNullable(userFacingId);
   }
@@ -182,7 +184,13 @@ public class Workspace {
         throw new MissingRequiredFieldsException("Workspace requires id and stage");
       }
       return new Workspace(
-          workspaceId, userFacingId, displayName, description, spendProfileId, properties, workspaceStage);
+          workspaceId,
+          userFacingId,
+          displayName,
+          description,
+          spendProfileId,
+          properties,
+          workspaceStage);
     }
   }
 }
