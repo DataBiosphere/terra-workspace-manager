@@ -26,6 +26,13 @@ public final class ControllerValidationUtils {
       Pattern.compile("^[a-zA-Z0-9][-_a-zA-Z0-9]{0,1023}$");
 
   /**
+   * userFacingId must be 3-63 characters, use lower-case letters, numbers, dashes, or underscores
+   * and must start with a letter.
+   */
+  public static final Pattern USER_FACING_ID_VALIDATION_PATTERN =
+      Pattern.compile("^[a-z][-_a-z0-9]{2,62}$");
+
+  /**
    * Utility to validate limit/offset parameters used in pagination.
    *
    * <p>This throws ValidationExceptions if invalid offset or limit values are provided. This only
@@ -73,6 +80,7 @@ public final class ControllerValidationUtils {
       throw new ValidationException("Invalid property key provided");
     }
   }
+
   /** Validate that a user is requesting a valid cloud for adding workspace context. */
   public static void validateCloudPlatform(ApiCloudPlatform platform) {
     switch (platform) {
@@ -82,6 +90,20 @@ public final class ControllerValidationUtils {
       default:
         throw new CloudPlatformNotImplementedException(
             "Invalid cloud platform. Currently, only AZURE and GCP are supported.");
+    }
+  }
+
+  public static void validateUserFacingId(String userFacingId) {
+    if (userFacingId == null) {
+      logger.warn("userFacingId cannot be null");
+      // "ID" instead of "userFacingId" because user sees this.
+      throw new ValidationException("ID must be set");
+    }
+    if (!USER_FACING_ID_VALIDATION_PATTERN.matcher(userFacingId).matches()) {
+      logger.warn("User provided invalid userFacingId: " + userFacingId);
+      // "ID" instead of "userFacingId" because user sees this.
+      throw new ValidationException(
+          "ID must have 3-63 characters, contain lowercase letters, numbers, dashes, or underscores, and start with lowercase letter");
     }
   }
 }
