@@ -152,7 +152,7 @@ public class ControlledResourceFields {
     @Nullable private String applicationId;
 
     public ControlledResourceFields build() {
-      ResourceValidationUtils.checkFieldNonNull(workspaceUuid, "workspaceUuid");
+      ResourceValidationUtils.checkFieldNonNull(workspaceUuid, "workspaceId");
       ResourceValidationUtils.checkFieldNonNull(resourceId, "resourceId");
       ResourceValidationUtils.checkFieldNonNull(name, "name");
       ResourceValidationUtils.checkFieldNonNull(cloningInstructions, "cloningInstructions");

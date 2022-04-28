@@ -180,7 +180,7 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
 
   @Override
   public ResponseEntity<ApiWorkspaceDescription> getWorkspace(
-      @PathVariable("workspaceUuid") UUID id) {
+      @PathVariable("workspaceId") UUID id) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     logger.info("Getting workspace {} for {}", id, userRequest.getEmail());
     Workspace workspace = workspaceService.getWorkspace(id, userRequest);
@@ -192,7 +192,7 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
 
   @Override
   public ResponseEntity<ApiWorkspaceDescription> updateWorkspace(
-      @PathVariable("workspaceUuid") UUID workspaceUuid,
+      @PathVariable("workspaceId") UUID workspaceUuid,
       @RequestBody ApiUpdateWorkspaceRequestBody body) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     logger.info("Updating workspace {} for {}", workspaceUuid, userRequest.getEmail());
@@ -217,7 +217,7 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
   }
 
   @Override
-  public ResponseEntity<Void> deleteWorkspace(@PathVariable("workspaceUuid") UUID id) {
+  public ResponseEntity<Void> deleteWorkspace(@PathVariable("workspaceId") UUID id) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     logger.info("Deleting workspace {} for {}", id, userRequest.getEmail());
     workspaceService.deleteWorkspace(id, userRequest);
@@ -228,7 +228,7 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
 
   @Override
   public ResponseEntity<Void> grantRole(
-      @PathVariable("workspaceUuid") UUID id,
+      @PathVariable("workspaceId") UUID id,
       @PathVariable("role") ApiIamRole role,
       @RequestBody ApiGrantRoleRequestBody body) {
     ControllerValidationUtils.validateEmail(body.getMemberEmail());
@@ -246,7 +246,7 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
 
   @Override
   public ResponseEntity<Void> removeRole(
-      @PathVariable("workspaceUuid") UUID id,
+      @PathVariable("workspaceId") UUID id,
       @PathVariable("role") ApiIamRole role,
       @PathVariable("memberEmail") String memberEmail) {
     ControllerValidationUtils.validateEmail(memberEmail);
@@ -261,7 +261,7 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
   }
 
   @Override
-  public ResponseEntity<ApiRoleBindingList> getRoles(@PathVariable("workspaceUuid") UUID id) {
+  public ResponseEntity<ApiRoleBindingList> getRoles(@PathVariable("workspaceId") UUID id) {
     List<bio.terra.workspace.service.iam.model.RoleBinding> bindingList =
         SamRethrow.onInterrupted(
             () -> samService.listRoleBindings(id, getAuthenticatedInfo()), "listRoleBindings");

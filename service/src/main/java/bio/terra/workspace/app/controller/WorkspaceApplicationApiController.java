@@ -46,7 +46,7 @@ public class WorkspaceApplicationApiController implements WorkspaceApplicationAp
 
   @Override
   public ResponseEntity<ApiWorkspaceApplicationDescription> disableWorkspaceApplication(
-      @PathVariable("workspaceUuid") UUID workspaceUuid,
+      @PathVariable("workspaceId") UUID workspaceUuid,
       @PathVariable("applicationId") String applicationId) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     WsmWorkspaceApplication wsmApp =
@@ -57,7 +57,7 @@ public class WorkspaceApplicationApiController implements WorkspaceApplicationAp
 
   @Override
   public ResponseEntity<ApiWorkspaceApplicationDescription> enableWorkspaceApplication(
-      @PathVariable("workspaceUuid") UUID workspaceUuid,
+      @PathVariable("workspaceId") UUID workspaceUuid,
       @PathVariable("applicationId") String applicationId) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     WsmWorkspaceApplication wsmApp =
@@ -68,7 +68,7 @@ public class WorkspaceApplicationApiController implements WorkspaceApplicationAp
 
   @Override
   public ResponseEntity<ApiWorkspaceApplicationDescription> getWorkspaceApplication(
-      @PathVariable("workspaceUuid") UUID workspaceUuid,
+      @PathVariable("workspaceId") UUID workspaceUuid,
       @PathVariable("applicationId") String applicationId) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     WsmWorkspaceApplication wsmApp =
@@ -79,7 +79,7 @@ public class WorkspaceApplicationApiController implements WorkspaceApplicationAp
 
   @Override
   public ResponseEntity<ApiWorkspaceApplicationDescriptionList> listWorkspaceApplications(
-      @PathVariable("workspaceUuid") UUID workspaceUuid,
+      @PathVariable("workspaceId") UUID workspaceUuid,
       @Valid @RequestParam(value = "offset", required = false, defaultValue = "0") Integer offset,
       @Valid @RequestParam(value = "limit", required = false, defaultValue = "10") Integer limit) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();

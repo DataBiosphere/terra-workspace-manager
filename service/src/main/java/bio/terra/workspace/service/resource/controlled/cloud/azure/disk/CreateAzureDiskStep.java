@@ -49,7 +49,7 @@ public class CreateAzureDiskStep implements Step {
           .withExistingResourceGroup(azureCloudContext.getAzureResourceGroupId())
           .withData()
           .withSizeInGB(resource.getSize())
-          .withTag("workspaceUuid", resource.getWorkspaceId().toString())
+          .withTag("workspaceId", resource.getWorkspaceId().toString())
           .withTag("resourceId", resource.getResourceId().toString())
           .create(
               Defaults.buildContext(
