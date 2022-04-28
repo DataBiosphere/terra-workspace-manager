@@ -216,7 +216,7 @@ class WorkspaceServiceTest extends BaseConnectedTest {
     DuplicateUserFacingIdException ex = assertThrows(
             DuplicateUserFacingIdException.class,
             () -> workspaceService.createWorkspace(duplicateUserFacingId, USER_REQUEST));
-    assertEquals(ex.getMessage(), String.format("Workspace with ID %s already exists", userFacingId));
+    assertEquals(ex.getMessage(), String.format("Workspace with user facing ID %s already exists", userFacingId));
   }
 
   @Test
