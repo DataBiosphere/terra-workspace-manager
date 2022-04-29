@@ -116,17 +116,17 @@ jobs:
         run: |
           rm -f ./argocd
 
-      - name: clean databases before integration suite
-        if: always()
-        uses: ./.github/actions/clean-databases
-
-      - name: Run the integration test suite
-        id: integration-test
-        if: always()
-        uses: ./.github/actions/integration-test
-        with:
-          test-server: workspace-wsmtest.json
-          test: suites/FullIntegration.json
+#      - name: clean databases before integration suite
+#        if: always()
+#        uses: ./.github/actions/clean-databases
+#
+#      - name: Run the integration test suite
+#        id: integration-test
+#        if: always()
+#        uses: ./.github/actions/integration-test
+#        with:
+#          test-server: workspace-wsmtest.json
+#          test: suites/FullIntegration.json
 
       - name: clean databases before perf suite
         if: always()
