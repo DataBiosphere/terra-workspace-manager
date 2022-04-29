@@ -26,11 +26,11 @@ public class WorkspaceLifecycle extends WorkspaceApiTestScriptBase {
   // use UUID.randomUuid(); that returns the same uuid for different threads in a JVM. See
   // https://issues.apache.org/jira/browse/SPARK-23599 and
   // https://stackoverflow.com/questions/31361833/same-uuid-being-generated-in-multi-threaded-application
-  private static final String threadId = String.valueOf(ThreadLocalRandom.current().nextInt());
+  private static final String threadId = String.valueOf(System.nanoTime());
 
-  private static final String INVALID_USER_FACING_ID = "User facing id" + threadId;
-  private static final String VALID_USER_FACING_ID = "user-facing-id" + threadId;
-  private static final String VALID_USER_FACING_ID_2 = "user-facing-id-2" + threadId;
+  private static final String INVALID_USER_FACING_ID = "User facing id " + threadId;
+  private static final String VALID_USER_FACING_ID = "user-facing-id-" + threadId;
+  private static final String VALID_USER_FACING_ID_2 = "user-facing-id-2-" + threadId;
 
   private static final String WORKSPACE_NAME = "name";
   private static final String WORKSPACE_DESCRIPTION = "description";
