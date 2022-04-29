@@ -185,3 +185,14 @@ jobs:
           author_name: ${{ steps.status-message.outputs.status-bold }}
           icon_emoji: ${{ steps.status-message.outputs.status-emoji }}
           text: ${{ steps.status-message.outputs.status-text }}
+
+      - name: Archive WSM and TestRunner logs
+        id: archive_logs
+        if: always()
+        uses: actions/upload-artifact@v2
+        with:
+          name: wsm-and-testrunner-logs
+          path: |
+            wsm.log
+            ${{ steps.integration-test.outputs.results-dir }}
+            ${{ steps.perf-test.outputs.results-dir }}
