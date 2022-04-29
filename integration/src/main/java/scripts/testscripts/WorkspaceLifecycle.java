@@ -13,6 +13,7 @@ import bio.terra.workspace.model.UpdateWorkspaceRequestBody;
 import bio.terra.workspace.model.WorkspaceDescription;
 import bio.terra.workspace.model.WorkspaceStageModel;
 import java.util.UUID;
+import java.util.concurrent.ThreadLocalRandom;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import scripts.utils.ClientTestUtils;
@@ -25,7 +26,7 @@ public class WorkspaceLifecycle extends WorkspaceApiTestScriptBase {
   // use UUID.randomUuid(); that returns the same uuid for different threads in a JVM. See
   // https://issues.apache.org/jira/browse/SPARK-23599 and
   // https://stackoverflow.com/questions/31361833/same-uuid-being-generated-in-multi-threaded-application
-  private static final String threadId = String.valueOf(Thread.currentThread().getId());
+  private static final String threadId = String.valueOf(ThreadLocalRandom.current().nextInt());
 
   private static final String INVALID_USER_FACING_ID = "User facing id" + threadId;
   private static final String VALID_USER_FACING_ID = "user-facing-id" + threadId;
