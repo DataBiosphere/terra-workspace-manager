@@ -140,17 +140,17 @@ jobs:
           test-server: workspace-wsmtest.json
           test: suites/BasicPerf.json
 
-      - name: clean databases before resiliency suite
-        if: always()
-        uses: ./.github/actions/clean-databases
-
-      - name: Run the resiliency test suite
-        id: resiliency-test
-        if: always()
-        uses: ./.github/actions/integration-test
-        with:
-          test-server: workspace-wsmtest.json
-          test: suites/BasicResiliency.json
+#      - name: clean databases before resiliency suite
+#        if: always()
+#        uses: ./.github/actions/clean-databases
+#
+#      - name: Run the resiliency test suite
+#        id: resiliency-test
+#        if: always()
+#        uses: ./.github/actions/integration-test
+#        with:
+#          test-server: workspace-wsmtest.json
+#          test: suites/BasicResiliency.json
 
       - name: Compose status message
         if: always()
@@ -196,3 +196,4 @@ jobs:
             wsm.log
             ${{ steps.integration-test.outputs.results-dir }}
             ${{ steps.perf-test.outputs.results-dir }}
+            ${{ steps.resiliency-test.outputs.results-dir }}
