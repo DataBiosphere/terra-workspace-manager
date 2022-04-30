@@ -3,6 +3,9 @@
   "description": "Perf tests.",
   "serverSpecificationFile": "workspace-local.json",
   "testConfigurationFiles": [
+    "perf/BasicAuthenticated.json",
+    "perf/BasicUnauthenticated.json",
+    "perf/GetRoles.json",
     "perf/WorkspaceLifecycle.json"
   ]
 }

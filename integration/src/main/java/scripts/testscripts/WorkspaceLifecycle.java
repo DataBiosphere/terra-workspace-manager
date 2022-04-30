@@ -29,6 +29,10 @@ public class WorkspaceLifecycle extends WorkspaceApiTestScriptBase {
       throws ApiException {
     UUID workspaceUuid = UUID.randomUUID();
 
+    // Perf tests run this test repeatedly. userFacingId needs to be unique for each invocation.
+    // Note: These userFacingIds can't be static because UUID.randomUUID() can't be set in a static
+    // variable. If a static variable called UUID.randonUUID(), uuid would be the same for some
+    // invocations.
     String uuidStr = workspaceUuid.toString();
     String invalidUserFacingId = "User facing id " + uuidStr;
     String validUserFacingId = "user-facing-id-" + uuidStr;
