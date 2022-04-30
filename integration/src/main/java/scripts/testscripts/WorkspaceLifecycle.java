@@ -24,9 +24,9 @@ public class WorkspaceLifecycle extends WorkspaceApiTestScriptBase {
   private static final ThreadLocal<String> uuid =
       ThreadLocal.withInitial(() -> UUID.randomUUID().toString());
 
-  private static final String INVALID_USER_FACING_ID = "User facing id " + uuid;
-  private static final String VALID_USER_FACING_ID = "user-facing-id-" + uuid;
-  private static final String VALID_USER_FACING_ID_2 = "user-facing-id-2-" + uuid;
+  private static final String INVALID_USER_FACING_ID = "User facing id " + uuid.get();
+  private static final String VALID_USER_FACING_ID = "user-facing-id-" + uuid.get();
+  private static final String VALID_USER_FACING_ID_2 = "user-facing-id-2-" + uuid.get();
 
   private static final String WORKSPACE_NAME = "name";
   private static final String WORKSPACE_DESCRIPTION = "description";
