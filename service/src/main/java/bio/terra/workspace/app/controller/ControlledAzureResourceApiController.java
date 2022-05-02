@@ -175,6 +175,17 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
   }
 
   @Override
+  public ResponseEntity<ApiAzureRelayNamespaceResource> getAzureRelayNamespace(UUID workspaceId, UUID resourceId) {
+    final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    features.azureEnabledCheck();
+    final ControlledAzureRelayNamespaceResource resource =
+            controlledResourceService
+                    .getControlledResource(workspaceId, resourceId, userRequest)
+                    .castByEnum(WsmResourceType.CONTROLLED_AZURE_RELAY_NAMESPACE);
+    return new ResponseEntity<>(resource.toApiResource(), HttpStatus.OK);
+  }
+
+  @Override
   public ResponseEntity<ApiCreatedControlledAzureStorage> createAzureStorage(
       UUID workspaceUuid, @Valid ApiCreateControlledAzureStorageRequestBody body) {
     features.azureEnabledCheck();
