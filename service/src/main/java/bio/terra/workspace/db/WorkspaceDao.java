@@ -150,12 +150,12 @@ public class WorkspaceDao {
   }
 
   @ReadTransaction
-  public Optional<Workspace> getWorkspaceIfExists(UUID id) {
-    if (id == null) {
+  public Optional<Workspace> getWorkspaceIfExists(UUID uuid) {
+    if (uuid == null) {
       throw new MissingRequiredFieldException("Valid workspace id is required");
     }
     String sql = WORKSPACE_SELECT_SQL + " WHERE workspace_id = :id";
-    MapSqlParameterSource params = new MapSqlParameterSource().addValue("id", id.toString());
+    MapSqlParameterSource params = new MapSqlParameterSource().addValue("id", uuid.toString());
     try {
       Workspace result =
           DataAccessUtils.requiredSingleResult(
@@ -170,16 +170,35 @@ public class WorkspaceDao {
   /**
    * Retrieves a workspace from database by ID.
    *
-   * @param id unique identifier of the workspace
+   * @param uuid unique identifier of the workspace
    * @return workspace value object
    */
-  @ReadTransaction
-  public Workspace getWorkspace(UUID id) {
-    return getWorkspaceIfExists(id)
-            .orElseThrow(
-                    () ->
-                            new WorkspaceNotFoundException(
-                                    String.format("Workspace %s not found.", id.toString())));
+  public Workspace getWorkspace(UUID uuid) {
+    return getWorkspaceIfExists(uuid)
+        .orElseThrow(
+            () ->
+                new WorkspaceNotFoundException(
+                    String.format("Workspace %s not found.", uuid.toString())));
+  }
+
+  /** Retrieves a workspace from database by userFacingId. */
+  public Workspace getWorkspaceByUserFacingId(String userFacingId) {
+    if (userFacingId == null || userFacingId.isEmpty()) {
+      throw new MissingRequiredFieldException("userFacingId is required");
+    }
+    String sql = WORKSPACE_SELECT_SQL + " WHERE user_facing_id = :user_facing_id";
+    MapSqlParameterSource params = new MapSqlParameterSource().addValue("user_facing_id", userFacingId);
+    Workspace result;
+    try {
+      result =
+          DataAccessUtils.requiredSingleResult(
+              jdbcTemplate.query(sql, params, WORKSPACE_ROW_MAPPER));
+      logger.info("Retrieved workspace record {}", result);
+      return result;
+    } catch (EmptyResultDataAccessException e) {
+      throw new WorkspaceNotFoundException(
+          String.format("Workspace %s not found.", userFacingId));
+    }
   }
 
   @WriteTransaction
@@ -267,25 +286,6 @@ public class WorkspaceDao {
             .addValue("offset", offset)
             .addValue("limit", limit);
     return jdbcTemplate.query(sql, params, WORKSPACE_ROW_MAPPER);
-  }
-
-  @ReadTransaction
-  public UUID getUuidByUserFacingId(String userFacingId) {
-    if (userFacingId == null || userFacingId.isEmpty()) {
-      throw new MissingRequiredFieldException("userFacingId is required");
-    }
-    String sql = "SELECT workspace_id FROM workspace WHERE user_facing_id = :user_facing_id";
-    MapSqlParameterSource params = new MapSqlParameterSource().addValue("user_facing_id", userFacingId);
-    try {
-      UUID result =
-              DataAccessUtils.requiredSingleResult(
-                      jdbcTemplate.query(sql, params, UUID_ROW_MAPPER));
-      logger.info("Retrieved workspace uuid {}", result);
-      return result;
-    } catch (EmptyResultDataAccessException e) {
-      throw new WorkspaceNotFoundException(
-              String.format("Workspace %s not found.", userFacingId));
-    }
   }
 
   /**
