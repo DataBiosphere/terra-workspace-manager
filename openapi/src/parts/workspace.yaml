@@ -433,7 +433,8 @@ components:
       properties:
         userFacingId:
           description: |
-            Human-settable, mutable id
+            Human-settable, mutable id. Must have 3-63 characters, contain lowercase letters, numbers, dashes, or
+            underscores, and start with lowercase letter.
           type: string
         displayName:
           description: The human readable name of the workspace
@@ -454,7 +455,9 @@ components:
           type: string
           format: uuid
         userFacingId:
-          description: Human-settable, mutable id
+          description: |
+            Human-settable, mutable id. Must have 3-63 characters, contain lowercase letters, numbers, dashes, or
+            underscores, and start with lowercase letter.
           type: string
         displayName:
           description: The human readable name of the workspace

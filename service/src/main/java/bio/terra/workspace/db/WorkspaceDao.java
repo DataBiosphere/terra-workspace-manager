@@ -578,9 +578,6 @@ public class WorkspaceDao {
     }
   }
 
-  private static final RowMapper<UUID> UUID_ROW_MAPPER =
-          (rs, rowNum) -> UUID.fromString(rs.getString("workspace_id"));
-
   private static final RowMapper<WorkspaceUserPair> WORKSPACE_USER_PAIR_ROW_MAPPER =
       (rs, rowNum) ->
           new WorkspaceUserPair(
