@@ -96,3 +96,11 @@ components:
       schema:
         type: string
         format: uuid
+
+    WorkspaceUserFacingId:
+      name: workspaceUserFacingId
+      in: path
+      description: Human-settable, mutable id.
+      required: true
+      schema:
+        type: string

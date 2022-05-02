@@ -100,6 +100,27 @@ paths:
         '500':
           $ref: '#/components/responses/ServerError'
 
+  /api/workspaces/v1/workspaceByUserFacingId/{workspaceUserFacingId}:
+    parameters:
+      - $ref: '#/components/parameters/WorkspaceUserFacingId'
+    get:
+      summary: Get an existing Workspace by userFacingId.
+      operationId: getWorkspaceByUserFacingId
+      tags: [Workspace]
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkspaceDescription'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
   /api/workspaces/v1/{workspaceId}/clone:
     parameters:
       - $ref: '#/components/parameters/WorkspaceId'

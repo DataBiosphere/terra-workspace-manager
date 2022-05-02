@@ -170,14 +170,14 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
     // When we have another cloud context, we will need to do a similar retrieval for it.
     return new ApiWorkspaceDescription()
         .id(workspace.getWorkspaceId())
+        .userFacingId(workspace.getUserFacingId())
+        .displayName(workspace.getDisplayName().orElse(null))
+        .description(workspace.getDescription().orElse(null))
+        .properties(apiProperties)
         .spendProfile(workspace.getSpendProfileId().map(SpendProfileId::getId).orElse(null))
         .stage(workspace.getWorkspaceStage().toApiModel())
         .gcpContext(gcpContext)
-        .azureContext(azureContext)
-        .userFacingId(workspace.getUserFacingId().orElse(null))
-        .displayName(workspace.getDisplayName().orElse(null))
-        .description(workspace.getDescription().orElse(null))
-        .properties(apiProperties);
+        .azureContext(azureContext);
   }
 
   @Override
@@ -231,6 +231,18 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
     logger.info("Deleted workspace {} for {}", id, userRequest.getEmail());
 
     return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+  }
+
+  @Override
+  public ResponseEntity<ApiWorkspaceDescription> getWorkspaceByUserFacingId(
+          @PathVariable("workspaceUserFacingId") String userFacingId) {
+    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    logger.info("Getting workspace {} for {}", userFacingId, userRequest.getEmail());
+    Workspace workspace = workspaceService.getWorkspaceByUserFacingId(userFacingId, userRequest);
+    ApiWorkspaceDescription desc = buildWorkspaceDescription(workspace);
+    logger.info("Got workspace {} for {}", desc, userRequest.getEmail());
+
+    return new ResponseEntity<>(desc, HttpStatus.OK);
   }
 
   @Override

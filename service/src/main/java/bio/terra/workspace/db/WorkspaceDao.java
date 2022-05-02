@@ -88,7 +88,7 @@ public class WorkspaceDao {
     MapSqlParameterSource params =
         new MapSqlParameterSource()
             .addValue("workspace_id", workspaceUuid)
-            .addValue("user_facing_id", workspace.getUserFacingId().orElse(null))
+            .addValue("user_facing_id", workspace.getUserFacingId())
             .addValue("display_name", workspace.getDisplayName().orElse(null))
             .addValue("description", workspace.getDescription().orElse(null))
             .addValue(
@@ -117,8 +117,8 @@ public class WorkspaceDao {
         throw new DuplicateUserFacingIdException(
             String.format(
                 // "ID" instead of "userFacingId" because end user sees this.
-                "Workspace with user facing ID %s already exists",
-                workspace.getUserFacingId().get()),
+                "Workspace with ID %s already exists",
+                workspace.getUserFacingId()),
             e);
       } else {
         throw e;
@@ -176,10 +176,10 @@ public class WorkspaceDao {
   @ReadTransaction
   public Workspace getWorkspace(UUID id) {
     return getWorkspaceIfExists(id)
-        .orElseThrow(
-            () ->
-                new WorkspaceNotFoundException(
-                    String.format("Workspace %s not found.", id.toString())));
+            .orElseThrow(
+                    () ->
+                            new WorkspaceNotFoundException(
+                                    String.format("Workspace %s not found.", id.toString())));
   }
 
   @WriteTransaction
@@ -267,6 +267,25 @@ public class WorkspaceDao {
             .addValue("offset", offset)
             .addValue("limit", limit);
     return jdbcTemplate.query(sql, params, WORKSPACE_ROW_MAPPER);
+  }
+
+  @ReadTransaction
+  public UUID getUuidByUserFacingId(String userFacingId) {
+    if (userFacingId == null || userFacingId.isEmpty()) {
+      throw new MissingRequiredFieldException("userFacingId is required");
+    }
+    String sql = "SELECT workspace_id FROM workspace WHERE user_facing_id = :user_facing_id";
+    MapSqlParameterSource params = new MapSqlParameterSource().addValue("user_facing_id", userFacingId);
+    try {
+      UUID result =
+              DataAccessUtils.requiredSingleResult(
+                      jdbcTemplate.query(sql, params, UUID_ROW_MAPPER));
+      logger.info("Retrieved workspace uuid {}", result);
+      return result;
+    } catch (EmptyResultDataAccessException e) {
+      throw new WorkspaceNotFoundException(
+              String.format("Workspace %s not found.", userFacingId));
+    }
   }
 
   /**
@@ -558,6 +577,9 @@ public class WorkspaceDao {
       return userEmail;
     }
   }
+
+  private static final RowMapper<UUID> UUID_ROW_MAPPER =
+          (rs, rowNum) -> UUID.fromString(rs.getString("workspace_id"));
 
   private static final RowMapper<WorkspaceUserPair> WORKSPACE_USER_PAIR_ROW_MAPPER =
       (rs, rowNum) ->

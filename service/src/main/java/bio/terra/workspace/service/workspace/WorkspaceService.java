@@ -169,6 +169,13 @@ public class WorkspaceService {
     return validateWorkspaceAndAction(userRequest, id, SamConstants.SamWorkspaceAction.READ);
   }
 
+  /** Retrieves an existing workspace by userFacingId */
+  @Traced
+  public Workspace getWorkspaceByUserFacingId(String userFacingId, AuthenticatedUserRequest userRequest) {
+    UUID uuid = workspaceDao.getUuidByUserFacingId(userFacingId);
+    return validateWorkspaceAndAction(userRequest, uuid, SamConstants.SamWorkspaceAction.READ);
+  }
+
   /**
    * Update an existing workspace. Currently, can change the workspace's display name or
    * description.
