@@ -181,14 +181,13 @@ class WorkspaceServiceTest extends BaseConnectedTest {
 
   @Test
   void getWorkspaceByUserFacingId_existing() {
-    Workspace request = defaultRequestBuilder(UUID.randomUUID()).build();
+    String userFacingId = "user-facing-id-getWorkspaceByUserFacingId_existing";
+    Workspace request = defaultRequestBuilder(UUID.randomUUID()).userFacingId(userFacingId).build();
     workspaceService.createWorkspace(request, USER_REQUEST);
-    Workspace createdWorkspace =
-            workspaceService.getWorkspace(request.getWorkspaceId(), USER_REQUEST);
 
     assertEquals(
             request.getWorkspaceId(),
-            workspaceService.getWorkspaceByUserFacingId(createdWorkspace.getUserFacingId(), USER_REQUEST).getWorkspaceId());
+            workspaceService.getWorkspaceByUserFacingId(userFacingId, USER_REQUEST).getWorkspaceId());
   }
 
   @Test
@@ -210,7 +209,8 @@ class WorkspaceServiceTest extends BaseConnectedTest {
 
   @Test
   void getWorkspaceByUserFacingId_forbiddenExisting() throws Exception {
-    Workspace request = defaultRequestBuilder(UUID.randomUUID()).build();
+    String userFacingId = "user-facing-id-getWorkspaceByUserFacingId_forbiddenExisting";
+    Workspace request = defaultRequestBuilder(UUID.randomUUID()).userFacingId(userFacingId).build();
     workspaceService.createWorkspace(request, USER_REQUEST);
     Workspace createdWorkspace =
             workspaceService.getWorkspace(request.getWorkspaceId(), USER_REQUEST);
@@ -220,7 +220,7 @@ class WorkspaceServiceTest extends BaseConnectedTest {
             .checkAuthz(any(), any(), any(), any());
     assertThrows(
             ForbiddenException.class,
-            () -> workspaceService.getWorkspaceByUserFacingId(createdWorkspace.getUserFacingId(), USER_REQUEST));
+            () -> workspaceService.getWorkspaceByUserFacingId(userFacingId, USER_REQUEST));
   }
 
   @Test
@@ -362,8 +362,8 @@ class WorkspaceServiceTest extends BaseConnectedTest {
     Workspace thirdUpdatedWorkspace =
         workspaceService.updateWorkspace(
             USER_REQUEST, workspaceUuid, userFacingId, "", "", propertyMap3);
-    assertFalse(thirdUpdatedWorkspace.getDisplayName().isPresent());
-    assertFalse(thirdUpdatedWorkspace.getDescription().isPresent());
+    assertEquals("", thirdUpdatedWorkspace.getDisplayName().get());
+    assertEquals("", thirdUpdatedWorkspace.getDescription().get());
 
     // Fail if request doesn't contain any updated fields.
     assertThrows(
