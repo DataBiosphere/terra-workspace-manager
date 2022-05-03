@@ -67,6 +67,7 @@ class WorkspaceDaoTest extends BaseUnitTest {
     Workspace workspace =
         Workspace.builder()
             .workspaceId(workspaceUuid)
+            .userFacingId("a" + workspaceUuid)
             .spendProfileId(spendProfileId)
             .workspaceStage(WorkspaceStage.RAWLS_WORKSPACE)
             .build();

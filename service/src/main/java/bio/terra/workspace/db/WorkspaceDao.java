@@ -85,7 +85,7 @@ public class WorkspaceDao {
             + " cast(:properties AS jsonb), :workspace_stage)";
 
     final String workspaceUuid = workspace.getWorkspaceId().toString();
-    ControllerValidationUtils.validateUserFacingId(workspace.getUserFacingId().get());
+    ControllerValidationUtils.validateUserFacingId(workspace.getUserFacingId());
 
     MapSqlParameterSource params =
         new MapSqlParameterSource()
@@ -206,7 +206,7 @@ public class WorkspaceDao {
   @WriteTransaction
   public boolean updateWorkspace(
       UUID workspaceUuid,
-      String userFacingId,
+      @Nullable String userFacingId,
       @Nullable String name,
       @Nullable String description,
       @Nullable Map<String, String> propertyMap) {
@@ -217,7 +217,10 @@ public class WorkspaceDao {
     var params = new MapSqlParameterSource();
     params.addValue("workspace_id", workspaceUuid.toString());
 
-    ControllerValidationUtils.validateUserFacingId(userFacingId);
+    if (userFacingId != null) {
+      ControllerValidationUtils.validateUserFacingId(userFacingId);
+      params.addValue("user_facing_id", userFacingId);
+    }
 
     if (name != null) {
       params.addValue("display_name", name);

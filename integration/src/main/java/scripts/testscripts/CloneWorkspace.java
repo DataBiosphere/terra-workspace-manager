@@ -244,6 +244,9 @@ public class CloneWorkspace extends WorkspaceAllocateTestScriptBase {
   protected void doUserJourney(
       TestUserSpecification sourceOwnerUser, WorkspaceApi sourceOwnerWorkspaceApi)
       throws Exception {
+    // Perf tests run same test repeatedly. Use a different userFacingId for each invocation,
+    // otherwise the insert will fail.
+    String destinationUserFacingId = "cloned-workspace-" + UUID.randomUUID().toString();
     logger.info("Start User Journey");
     // As reader user, clone the workspace
     // Get a new workspace API for the reader
@@ -251,6 +254,7 @@ public class CloneWorkspace extends WorkspaceAllocateTestScriptBase {
 
     final CloneWorkspaceRequest cloneWorkspaceRequest =
         new CloneWorkspaceRequest()
+            .userFacingId(destinationUserFacingId)
             .displayName("Cloned Workspace")
             .description("A clone of workspace " + getWorkspaceId().toString())
             .spendProfile(getSpendProfileId()) // TODO- use a different one if available
@@ -263,6 +267,7 @@ public class CloneWorkspace extends WorkspaceAllocateTestScriptBase {
     logger.info("Clone Job ID {}", jobId);
     final UUID destinationWorkspaceId = cloneResult.getWorkspace().getDestinationWorkspaceId();
     assertNotNull(destinationWorkspaceId, "Destination workspace ID available immediately.");
+    assertEquals(destinationUserFacingId, cloneResult.getWorkspace().getDestinationUserFacingId());
     final WorkspaceDescription destinationWorkspaceDescription =
         cloningUserWorkspaceApi.getWorkspace(destinationWorkspaceId);
     assertNotNull(
@@ -333,6 +338,7 @@ public class CloneWorkspace extends WorkspaceAllocateTestScriptBase {
     // We need to get the destination bucket name and project ID
     final WorkspaceDescription destinationWorkspace =
         cloningUserWorkspaceApi.getWorkspace(destinationWorkspaceId);
+    assertEquals(destinationUserFacingId, destinationWorkspace.getUserFacingId());
     final String destinationProjectId = destinationWorkspace.getGcpContext().getProjectId();
     final var clonedSharedBucket =
         cloningUserResourceApi.getBucket(

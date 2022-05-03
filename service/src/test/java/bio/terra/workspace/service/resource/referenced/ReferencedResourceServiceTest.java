@@ -241,9 +241,11 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
    * MC_WORKSPACE. Returns the generated workspace ID.
    */
   private UUID createMcTestWorkspace() {
+    UUID uuid = UUID.randomUUID();
     Workspace request =
         Workspace.builder()
-            .workspaceId(UUID.randomUUID())
+            .workspaceId(uuid)
+            .userFacingId("a" + uuid.toString())
             .spendProfileId(null)
             .workspaceStage(WorkspaceStage.MC_WORKSPACE)
             .build();
