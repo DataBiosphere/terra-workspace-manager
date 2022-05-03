@@ -4,6 +4,7 @@ import bio.terra.common.db.ReadTransaction;
 import bio.terra.common.db.WriteTransaction;
 import bio.terra.common.exception.MissingRequiredFieldException;
 import bio.terra.workspace.common.exception.InternalLogicException;
+import bio.terra.workspace.common.utils.ControllerValidationUtils;
 import bio.terra.workspace.db.exception.WorkspaceNotFoundException;
 import bio.terra.workspace.service.resource.controlled.model.PrivateResourceState;
 import bio.terra.workspace.service.spendprofile.SpendProfileId;
@@ -84,6 +85,7 @@ public class WorkspaceDao {
             + " cast(:properties AS jsonb), :workspace_stage)";
 
     final String workspaceUuid = workspace.getWorkspaceId().toString();
+    ControllerValidationUtils.validateUserFacingId(workspace.getUserFacingId().get());
 
     MapSqlParameterSource params =
         new MapSqlParameterSource()
@@ -185,7 +187,7 @@ public class WorkspaceDao {
   @WriteTransaction
   public boolean updateWorkspace(
       UUID workspaceUuid,
-      @Nullable String userFacingId,
+      String userFacingId,
       @Nullable String name,
       @Nullable String description,
       @Nullable Map<String, String> propertyMap) {
@@ -196,9 +198,7 @@ public class WorkspaceDao {
     var params = new MapSqlParameterSource();
     params.addValue("workspace_id", workspaceUuid.toString());
 
-    if (userFacingId != null) {
-      params.addValue("user_facing_id", userFacingId);
-    }
+    ControllerValidationUtils.validateUserFacingId(userFacingId);
 
     if (name != null) {
       params.addValue("display_name", name);
