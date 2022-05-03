@@ -206,7 +206,7 @@ public class WorkspaceDao {
   @WriteTransaction
   public boolean updateWorkspace(
       UUID workspaceUuid,
-      @Nullable String userFacingId,
+      String userFacingId,
       @Nullable String name,
       @Nullable String description,
       @Nullable Map<String, String> propertyMap) {
