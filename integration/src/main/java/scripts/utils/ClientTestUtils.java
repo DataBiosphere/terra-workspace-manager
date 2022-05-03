@@ -46,7 +46,6 @@ import java.util.function.Function;
 import javax.annotation.Nullable;
 import javax.ws.rs.client.ClientBuilder;
 
-import okhttp3.OkHttpClient;
 import org.glassfish.jersey.client.ClientConfig;
 import org.glassfish.jersey.jdk.connector.JdkConnectorProvider;
 import org.slf4j.Logger;
