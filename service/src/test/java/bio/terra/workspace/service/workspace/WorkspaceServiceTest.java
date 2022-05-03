@@ -342,7 +342,9 @@ class WorkspaceServiceTest extends BaseConnectedTest {
             USER_REQUEST, workspaceUuid, userFacingId, name, description, propertyMap2);
 
     assertEquals(userFacingId, updatedWorkspace.getUserFacingId());
+    assertTrue(updatedWorkspace.getDisplayName().isPresent());
     assertEquals(name, updatedWorkspace.getDisplayName().get());
+    assertTrue(updatedWorkspace.getDescription().isPresent());
     assertEquals(description, updatedWorkspace.getDescription().get());
     assertEquals(propertyMap2, updatedWorkspace.getProperties());
 
@@ -353,7 +355,9 @@ class WorkspaceServiceTest extends BaseConnectedTest {
             USER_REQUEST, workspaceUuid, null, null, otherDescription, null);
 
     // Since name is null, leave it alone. Description should be updated.
+    assertTrue(secondUpdatedWorkspace.getDisplayName().isPresent());
     assertEquals(name, secondUpdatedWorkspace.getDisplayName().get());
+    assertTrue(secondUpdatedWorkspace.getDescription().isPresent());
     assertEquals(otherDescription, secondUpdatedWorkspace.getDescription().get());
     assertEquals(propertyMap2, updatedWorkspace.getProperties());
 
@@ -362,7 +366,9 @@ class WorkspaceServiceTest extends BaseConnectedTest {
     Workspace thirdUpdatedWorkspace =
         workspaceService.updateWorkspace(
             USER_REQUEST, workspaceUuid, userFacingId, "", "", propertyMap3);
+    assertTrue(thirdUpdatedWorkspace.getDisplayName().isPresent());
     assertEquals("", thirdUpdatedWorkspace.getDisplayName().get());
+    assertTrue(thirdUpdatedWorkspace.getDescription().isPresent());
     assertEquals("", thirdUpdatedWorkspace.getDescription().get());
 
     // Fail if request doesn't contain any updated fields.
