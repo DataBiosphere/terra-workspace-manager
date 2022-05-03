@@ -170,22 +170,22 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
     // When we have another cloud context, we will need to do a similar retrieval for it.
     return new ApiWorkspaceDescription()
         .id(workspace.getWorkspaceId())
+        .userFacingId(workspace.getUserFacingId())
+        .displayName(workspace.getDisplayName().orElse(null))
+        .description(workspace.getDescription().orElse(null))
+        .properties(apiProperties)
         .spendProfile(workspace.getSpendProfileId().map(SpendProfileId::getId).orElse(null))
         .stage(workspace.getWorkspaceStage().toApiModel())
         .gcpContext(gcpContext)
-        .azureContext(azureContext)
-        .userFacingId(workspace.getUserFacingId().orElse(null))
-        .displayName(workspace.getDisplayName().orElse(null))
-        .description(workspace.getDescription().orElse(null))
-        .properties(apiProperties);
+        .azureContext(azureContext);
   }
 
   @Override
   public ResponseEntity<ApiWorkspaceDescription> getWorkspace(
-      @PathVariable("workspaceId") UUID id) {
+      @PathVariable("workspaceId") UUID uuid) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
-    logger.info("Getting workspace {} for {}", id, userRequest.getEmail());
-    Workspace workspace = workspaceService.getWorkspace(id, userRequest);
+    logger.info("Getting workspace {} for {}", uuid, userRequest.getEmail());
+    Workspace workspace = workspaceService.getWorkspace(uuid, userRequest);
     ApiWorkspaceDescription desc = buildWorkspaceDescription(workspace);
     logger.info("Got workspace {} for {}", desc, userRequest.getEmail());
 
@@ -224,18 +224,30 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
   }
 
   @Override
-  public ResponseEntity<Void> deleteWorkspace(@PathVariable("workspaceId") UUID id) {
+  public ResponseEntity<Void> deleteWorkspace(@PathVariable("workspaceId") UUID uuid) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
-    logger.info("Deleting workspace {} for {}", id, userRequest.getEmail());
-    workspaceService.deleteWorkspace(id, userRequest);
-    logger.info("Deleted workspace {} for {}", id, userRequest.getEmail());
+    logger.info("Deleting workspace {} for {}", uuid, userRequest.getEmail());
+    workspaceService.deleteWorkspace(uuid, userRequest);
+    logger.info("Deleted workspace {} for {}", uuid, userRequest.getEmail());
 
     return new ResponseEntity<>(HttpStatus.NO_CONTENT);
   }
 
   @Override
+  public ResponseEntity<ApiWorkspaceDescription> getWorkspaceByUserFacingId(
+          @PathVariable("workspaceUserFacingId") String userFacingId) {
+    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    logger.info("Getting workspace {} for {}", userFacingId, userRequest.getEmail());
+    Workspace workspace = workspaceService.getWorkspaceByUserFacingId(userFacingId, userRequest);
+    ApiWorkspaceDescription desc = buildWorkspaceDescription(workspace);
+    logger.info("Got workspace {} for {}", desc, userRequest.getEmail());
+
+    return new ResponseEntity<>(desc, HttpStatus.OK);
+  }
+
+  @Override
   public ResponseEntity<Void> grantRole(
-      @PathVariable("workspaceId") UUID id,
+      @PathVariable("workspaceId") UUID uuid,
       @PathVariable("role") ApiIamRole role,
       @RequestBody ApiGrantRoleRequestBody body) {
     ControllerValidationUtils.validateEmail(body.getMemberEmail());
@@ -246,14 +258,14 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
     SamRethrow.onInterrupted(
         () ->
             samService.grantWorkspaceRole(
-                id, getAuthenticatedInfo(), WsmIamRole.fromApiModel(role), body.getMemberEmail()),
+                    uuid, getAuthenticatedInfo(), WsmIamRole.fromApiModel(role), body.getMemberEmail()),
         "grantWorkspaceRole");
     return new ResponseEntity<>(HttpStatus.NO_CONTENT);
   }
 
   @Override
   public ResponseEntity<Void> removeRole(
-      @PathVariable("workspaceId") UUID id,
+      @PathVariable("workspaceId") UUID uuid,
       @PathVariable("role") ApiIamRole role,
       @PathVariable("memberEmail") String memberEmail) {
     ControllerValidationUtils.validateEmail(memberEmail);
@@ -263,15 +275,15 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
     }
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     workspaceService.removeWorkspaceRoleFromUser(
-        id, WsmIamRole.fromApiModel(role), memberEmail, userRequest);
+        uuid, WsmIamRole.fromApiModel(role), memberEmail, userRequest);
     return new ResponseEntity<>(HttpStatus.NO_CONTENT);
   }
 
   @Override
-  public ResponseEntity<ApiRoleBindingList> getRoles(@PathVariable("workspaceId") UUID id) {
+  public ResponseEntity<ApiRoleBindingList> getRoles(@PathVariable("workspaceId") UUID uuid) {
     List<bio.terra.workspace.service.iam.model.RoleBinding> bindingList =
         SamRethrow.onInterrupted(
-            () -> samService.listRoleBindings(id, getAuthenticatedInfo()), "listRoleBindings");
+            () -> samService.listRoleBindings(uuid, getAuthenticatedInfo()), "listRoleBindings");
     ApiRoleBindingList responseList = new ApiRoleBindingList();
     for (bio.terra.workspace.service.iam.model.RoleBinding roleBinding : bindingList) {
       responseList.add(
@@ -282,7 +294,7 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
 
   @Override
   public ResponseEntity<ApiCreateCloudContextResult> createCloudContext(
-      UUID id, @Valid ApiCreateCloudContextRequest body) {
+          UUID uuid, @Valid ApiCreateCloudContextRequest body) {
     ControllerValidationUtils.validateCloudPlatform(body.getCloudPlatform());
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     String jobId = body.getJobControl().getId();
@@ -296,9 +308,9 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
                       new CloudContextRequiredException(
                           "AzureContext is required when creating an azure cloud context for a workspace"));
       workspaceService.createAzureCloudContext(
-          id, jobId, userRequest, resultPath, AzureCloudContext.fromApi(azureContext));
+              uuid, jobId, userRequest, resultPath, AzureCloudContext.fromApi(azureContext));
     } else {
-      workspaceService.createGcpCloudContext(id, jobId, userRequest, resultPath);
+      workspaceService.createGcpCloudContext(uuid, jobId, userRequest, resultPath);
     }
 
     ApiCreateCloudContextResult response = fetchCreateCloudContextResult(jobId, userRequest);
@@ -307,7 +319,7 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
 
   @Override
   public ResponseEntity<ApiCreateCloudContextResult> getCreateCloudContextResult(
-      UUID id, String jobId) {
+          UUID uuid, String jobId) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     ApiCreateCloudContextResult response = fetchCreateCloudContextResult(jobId, userRequest);
     return new ResponseEntity<>(response, getAsyncResponseCode(response.getJobReport()));
@@ -346,10 +358,10 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
   }
 
   @Override
-  public ResponseEntity<Void> deleteCloudContext(UUID id, ApiCloudPlatform cloudPlatform) {
+  public ResponseEntity<Void> deleteCloudContext(UUID uuid, ApiCloudPlatform cloudPlatform) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     ControllerValidationUtils.validateCloudPlatform(cloudPlatform);
-    workspaceService.deleteGcpCloudContext(id, userRequest);
+    workspaceService.deleteGcpCloudContext(uuid, userRequest);
     return new ResponseEntity<>(HttpStatus.NO_CONTENT);
   }
 

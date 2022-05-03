@@ -209,7 +209,7 @@ public class SamService {
    * specific exception types.
    */
   @Traced
-  public void createWorkspaceWithDefaults(AuthenticatedUserRequest userRequest, UUID id)
+  public void createWorkspaceWithDefaults(AuthenticatedUserRequest userRequest, UUID uuid)
       throws InterruptedException {
     ResourcesApi resourceApi = samResourcesApi(userRequest.getRequiredToken());
     // Sam will throw an error if no owner is specified, so the caller's email is required. It can
@@ -222,17 +222,17 @@ public class SamService {
     String humanUserEmail = getUserEmailFromSam(userRequest);
     CreateResourceRequestV2 workspaceRequest =
         new CreateResourceRequestV2()
-            .resourceId(id.toString())
+            .resourceId(uuid.toString())
             .policies(defaultWorkspacePolicies(humanUserEmail));
     try {
       SamRetry.retry(
           () -> resourceApi.createResourceV2(SamConstants.SamResource.WORKSPACE, workspaceRequest));
-      logger.info("Created Sam resource for workspace {}", id);
+      logger.info("Created Sam resource for workspace {}", uuid);
     } catch (ApiException apiException) {
       throw SamExceptionFactory.create("Error creating a Workspace resource in Sam", apiException);
     }
     dumpRoleBindings(
-        SamConstants.SamResource.WORKSPACE, id.toString(), userRequest.getRequiredToken());
+        SamConstants.SamResource.WORKSPACE, uuid.toString(), userRequest.getRequiredToken());
   }
 
   /**
@@ -265,14 +265,14 @@ public class SamService {
   }
 
   @Traced
-  public void deleteWorkspace(AuthenticatedUserRequest userRequest, UUID id)
+  public void deleteWorkspace(AuthenticatedUserRequest userRequest, UUID uuid)
       throws InterruptedException {
     String authToken = userRequest.getRequiredToken();
     ResourcesApi resourceApi = samResourcesApi(authToken);
     try {
       SamRetry.retry(
-          () -> resourceApi.deleteResource(SamConstants.SamResource.WORKSPACE, id.toString()));
-      logger.info("Deleted Sam resource for workspace {}", id);
+          () -> resourceApi.deleteResource(SamConstants.SamResource.WORKSPACE, uuid.toString()));
+      logger.info("Deleted Sam resource for workspace {}", uuid);
     } catch (ApiException apiException) {
       logger.info("Sam API error while deleting workspace, code is " + apiException.getCode());
       // Do nothing if the resource to delete is not found, this may not be the first time undo is

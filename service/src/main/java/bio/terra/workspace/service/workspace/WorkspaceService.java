@@ -165,8 +165,24 @@ public class WorkspaceService {
 
   /** Retrieves an existing workspace by ID */
   @Traced
-  public Workspace getWorkspace(UUID id, AuthenticatedUserRequest userRequest) {
-    return validateWorkspaceAndAction(userRequest, id, SamConstants.SamWorkspaceAction.READ);
+  public Workspace getWorkspace(UUID uuid, AuthenticatedUserRequest userRequest) {
+    return validateWorkspaceAndAction(userRequest, uuid, SamConstants.SamWorkspaceAction.READ);
+  }
+
+  /** Retrieves an existing workspace by userFacingId */
+  @Traced
+  public Workspace getWorkspaceByUserFacingId(String userFacingId, AuthenticatedUserRequest userRequest) {
+    logger.info(
+        "getWorkspaceByUserFacingId - userRequest: {}\nuserFacingId: {}",
+        userRequest,
+        userFacingId);
+    Workspace workspace = workspaceDao.getWorkspaceByUserFacingId(userFacingId);
+    SamRethrow.onInterrupted(
+        () ->
+            samService.checkAuthz(
+                userRequest, SamConstants.SamResource.WORKSPACE, workspace.getWorkspaceId().toString(), SamWorkspaceAction.READ),
+        "checkAuthz");
+    return workspace;
   }
 
   /**
@@ -193,16 +209,16 @@ public class WorkspaceService {
 
   /** Delete an existing workspace by ID. */
   @Traced
-  public void deleteWorkspace(UUID id, AuthenticatedUserRequest userRequest) {
-    Workspace workspace = validateWorkspaceAndAction(userRequest, id, SamWorkspaceAction.DELETE);
-    String description = "Delete workspace " + id;
+  public void deleteWorkspace(UUID uuid, AuthenticatedUserRequest userRequest) {
+    Workspace workspace = validateWorkspaceAndAction(userRequest, uuid, SamWorkspaceAction.DELETE);
+    String description = "Delete workspace " + uuid;
     JobBuilder deleteJob =
         jobService
             .newJob()
             .description(description)
             .flightClass(WorkspaceDeleteFlight.class)
             .operationType(OperationType.DELETE)
-            .workspaceId(id.toString())
+            .workspaceId(uuid.toString())
             .userRequest(userRequest)
             .addParameter(
                 WorkspaceFlightMapKeys.WORKSPACE_STAGE, workspace.getWorkspaceStage().name());
