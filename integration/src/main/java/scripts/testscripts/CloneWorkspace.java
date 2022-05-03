@@ -244,9 +244,7 @@ public class CloneWorkspace extends WorkspaceAllocateTestScriptBase {
   protected void doUserJourney(
       TestUserSpecification sourceOwnerUser, WorkspaceApi sourceOwnerWorkspaceApi)
       throws Exception {
-    // Perf tests run same test repeatedly. Use a different userFacingId for each invocation,
-    // otherwise the insert will fail.
-    String destinationUserFacingId = "cloned-workspace-" + UUID.randomUUID().toString();
+    String destinationUserFacingId = "cloned-workspace-user-facing-id";
     logger.info("Start User Journey");
     // As reader user, clone the workspace
     // Get a new workspace API for the reader
