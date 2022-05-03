@@ -1,5 +1,6 @@
 package bio.terra.workspace.app.controller;
 
+import bio.terra.common.exception.MissingRequiredFieldException;
 import bio.terra.workspace.common.utils.ControllerValidationUtils;
 import bio.terra.workspace.generated.controller.WorkspaceApi;
 import bio.terra.workspace.generated.model.ApiAzureContext;
@@ -109,8 +110,7 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
         Optional.ofNullable(body.getSpendProfile()).map(SpendProfileId::new);
 
     // ET uses userFacingId; CWB doesn't. Schema enforces that userFacingId must be set. CWB doesn't
-    // pass
-    // userFacingId in request, so use id. Prefix with "a" because userFacingId must start with
+    // pass userFacingId in request, so use id. Prefix with "a" because userFacingId must start with
     // letter.
     String userFacingId = Optional.ofNullable(body.getUserFacingId()).orElse("a" + body.getId());
     ControllerValidationUtils.validateUserFacingId(userFacingId);
@@ -396,10 +396,18 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
     Optional<SpendProfileId> spendProfileId =
         Optional.ofNullable(body.getSpendProfile()).map(SpendProfileId::new);
     final UUID destinationWorkspaceId = UUID.randomUUID();
+
+    // ET uses userFacingId; CWB doesn't. Schema enforces that userFacingId must be set. CWB doesn't
+    // pass userFacingId in request, so use id. Prefix with "a" because userFacingId must start with
+    // letter.
+    String userFacingId = Optional.ofNullable(body.getUserFacingId()).orElse("a" + destinationWorkspaceId);
+    ControllerValidationUtils.validateUserFacingId(userFacingId);
+
     // Construct the target workspace object from the inputs
     final Workspace destinationWorkspace =
         Workspace.builder()
             .workspaceId(destinationWorkspaceId)
+            .userFacingId(userFacingId)
             .spendProfileId(spendProfileId.orElse(null))
             .workspaceStage(WorkspaceStage.MC_WORKSPACE)
             .displayName(body.getDisplayName())
