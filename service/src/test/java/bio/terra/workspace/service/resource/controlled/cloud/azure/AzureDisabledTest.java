@@ -40,9 +40,11 @@ public class AzureDisabledTest extends BaseConnectedTest {
 
   @Test
   public void azureDisabledTest() throws InterruptedException {
+    UUID uuid = UUID.randomUUID();
     Workspace request =
         Workspace.builder()
-            .workspaceId(UUID.randomUUID())
+            .workspaceId(uuid)
+            .userFacingId("a" + uuid.toString())
             .workspaceStage(WorkspaceStage.MC_WORKSPACE)
             .build();
     UUID workspaceUuid =

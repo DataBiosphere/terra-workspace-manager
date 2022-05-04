@@ -61,9 +61,11 @@ public class RemoveUserFromWorkspaceFlightTest extends BaseConnectedTest {
   @DisabledIfEnvironmentVariable(named = "TEST_ENV", matches = BUFFER_SERVICE_DISABLED_ENVS_REG_EX)
   void removeUserFromWorkspaceFlightDoUndo() throws Exception {
     // Create a workspace as the default test user
+    UUID uuid = UUID.randomUUID();
     Workspace request =
         Workspace.builder()
-            .workspaceId(UUID.randomUUID())
+            .workspaceId(uuid)
+            .userFacingId("a" + uuid.toString())
             .workspaceStage(WorkspaceStage.MC_WORKSPACE)
             .spendProfileId(spendUtils.defaultSpendId())
             .build();
