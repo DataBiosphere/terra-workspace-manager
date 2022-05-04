@@ -112,7 +112,7 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
     // ET uses userFacingId; CWB doesn't. Schema enforces that userFacingId must be set. CWB doesn't
     // pass userFacingId in request, so use id. Prefix with "a" because userFacingId must start with
     // letter.
-    String userFacingId = Optional.ofNullable(body.getUserFacingId()).orElse("a" + body.getId());
+    String userFacingId = Optional.ofNullable(body.getUserFacingId()).orElse("a-" + body.getId());
     ControllerValidationUtils.validateUserFacingId(userFacingId);
 
     Workspace workspace =
@@ -400,7 +400,7 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
     // ET uses userFacingId; CWB doesn't. Schema enforces that userFacingId must be set. CWB doesn't
     // pass userFacingId in request, so use id. Prefix with "a" because userFacingId must start with
     // letter.
-    String destinationUserFacingId = Optional.ofNullable(body.getUserFacingId()).orElse("a" + destinationWorkspaceId);
+    String destinationUserFacingId = Optional.ofNullable(body.getUserFacingId()).orElse("a-" + destinationWorkspaceId);
     ControllerValidationUtils.validateUserFacingId(destinationUserFacingId);
 
     // Construct the target workspace object from the inputs

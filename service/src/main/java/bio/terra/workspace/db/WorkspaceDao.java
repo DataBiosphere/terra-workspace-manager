@@ -85,6 +85,7 @@ public class WorkspaceDao {
             + " cast(:properties AS jsonb), :workspace_stage)";
 
     final String workspaceUuid = workspace.getWorkspaceId().toString();
+    // validateUserFacingId() is called in controller. Also call here to be safe (eg see bug PF-1616).
     ControllerValidationUtils.validateUserFacingId(workspace.getUserFacingId());
 
     MapSqlParameterSource params =
@@ -218,6 +219,7 @@ public class WorkspaceDao {
     params.addValue("workspace_id", workspaceUuid.toString());
 
     if (userFacingId != null) {
+      // validateUserFacingId() is called in controller. Also call here to be safe (eg see bug PF-1616).
       ControllerValidationUtils.validateUserFacingId(userFacingId);
       params.addValue("user_facing_id", userFacingId);
     }

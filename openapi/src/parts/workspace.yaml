@@ -256,7 +256,7 @@ components:
         destinationUserFacingId:
           description: |
             Human-settable, mutable id. Must have 3-63 characters, contain lowercase letters, numbers, dashes, or
-            underscores, and start with lowercase letter. Required.
+            underscores, and start with lowercase letter.
           type: string
         resources:
           type: array
@@ -280,8 +280,9 @@ components:
       properties:
         userFacingId:
           description: |
-            Human-settable, mutable id. ID must have 3-63 characters, contain lowercase letters, numbers, dashes, or
-            underscores, and start with lowercase letter. Optional. If this isn't set, one will be generated.
+            Human-settable, mutable id for cloned workspace. ID must have 3-63 characters, contain lowercase letters,
+            numbers, dashes, or underscores, and start with lowercase letter. Optional. If this isn't set, one will be
+            generated.
           type: string
         displayName:
           description: The human readable name of the workspace
