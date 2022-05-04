@@ -177,9 +177,22 @@ public class CreateAzureVmStep implements Step {
     ComputeManager computeManager = crlService.getComputeManager(azureCloudContext, azureConfig);
 
     try {
+      VirtualMachine resolvedVm =
+              computeManager
+                      .virtualMachines()
+                      .getByResourceGroup(
+                              azureCloudContext.getAzureResourceGroupId(), resource.getVmName());
+
       computeManager
-          .virtualMachines()
-          .deleteByResourceGroup(azureCloudContext.getAzureResourceGroupId(), resource.getVmName());
+              .virtualMachines()
+              .deleteByResourceGroup(azureCloudContext.getAzureResourceGroupId(), resource.getVmName());
+
+      resolvedVm
+              .networkInterfaceIds()
+              .forEach(nic -> computeManager.networkManager().networkInterfaces().deleteById(nic));
+
+      // Delete the OS disk
+      computeManager.disks().deleteById(resolvedVm.osDiskId());
     } catch (ManagementException e) {
       // Stairway steps may run multiple times, so we may already have deleted this resource.
       if (StringUtils.equals(e.getValue().getCode(), "ResourceNotFound")) {
