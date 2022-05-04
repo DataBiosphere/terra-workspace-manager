@@ -9,6 +9,7 @@ import bio.terra.workspace.common.utils.RetryRules;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
+
 import java.util.UUID;
 
 // TODO(PF-555): There is a race condition if this flight runs at the same time as new controlled
@@ -48,6 +49,14 @@ public class WorkspaceDeleteFlight extends Flight {
         new DeleteGcpProjectStep(
             appContext.getCrlService(), appContext.getGcpCloudContextService()),
         retryRule);
+
+    addStep(
+        new DeleteControlledAzureResourcesStep(
+            appContext.getResourceDao(),
+            appContext.getControlledResourceService(),
+            workspaceUuid,
+            userRequest));
+    addStep(new DeleteAzureContextStep(appContext.getAzureCloudContextService(), workspaceUuid));
     // Workspace authz is handled differently depending on whether WSM owns the underlying Sam
     // resource or not, as indicated by the workspace stage enum.
     switch (workspaceStage) {
