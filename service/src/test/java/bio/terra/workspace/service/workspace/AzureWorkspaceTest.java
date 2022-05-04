@@ -36,9 +36,11 @@ public class AzureWorkspaceTest extends BaseAzureTest {
             .email("fake@email.com")
             .subjectId("fakeID123");
 
+    UUID uuid = UUID.randomUUID();
     Workspace request =
         Workspace.builder()
-            .workspaceId(UUID.randomUUID())
+            .workspaceId(uuid)
+            .userFacingId("a" + uuid.toString())
             .spendProfileId(spendUtils.defaultSpendId())
             .workspaceStage(WorkspaceStage.MC_WORKSPACE)
             .build();
