@@ -4,6 +4,7 @@ import bio.terra.common.db.ReadTransaction;
 import bio.terra.common.db.WriteTransaction;
 import bio.terra.common.exception.MissingRequiredFieldException;
 import bio.terra.workspace.common.exception.InternalLogicException;
+import bio.terra.workspace.common.utils.ControllerValidationUtils;
 import bio.terra.workspace.db.exception.WorkspaceNotFoundException;
 import bio.terra.workspace.service.resource.controlled.model.PrivateResourceState;
 import bio.terra.workspace.service.spendprofile.SpendProfileId;
@@ -84,6 +85,8 @@ public class WorkspaceDao {
             + " cast(:properties AS jsonb), :workspace_stage)";
 
     final String workspaceUuid = workspace.getWorkspaceId().toString();
+    // validateUserFacingId() is called in controller. Also call here to be safe (eg see bug PF-1616).
+    ControllerValidationUtils.validateUserFacingId(workspace.getUserFacingId());
 
     MapSqlParameterSource params =
         new MapSqlParameterSource()
@@ -216,6 +219,8 @@ public class WorkspaceDao {
     params.addValue("workspace_id", workspaceUuid.toString());
 
     if (userFacingId != null) {
+      // validateUserFacingId() is called in controller. Also call here to be safe (eg see bug PF-1616).
+      ControllerValidationUtils.validateUserFacingId(userFacingId);
       params.addValue("user_facing_id", userFacingId);
     }
 

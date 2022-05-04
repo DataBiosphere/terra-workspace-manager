@@ -57,9 +57,11 @@ class DeleteGcpContextFlightTest extends BaseConnectedTest {
   @BeforeEach
   public void setup() {
     // Create a new workspace at the start of each test.
+    UUID uuid = UUID.randomUUID();
     Workspace request =
         Workspace.builder()
-            .workspaceId(UUID.randomUUID())
+            .workspaceId(uuid)
+            .userFacingId("a" + uuid.toString())
             .workspaceStage(WorkspaceStage.MC_WORKSPACE)
             .spendProfileId(spendUtils.defaultSpendId())
             .build();

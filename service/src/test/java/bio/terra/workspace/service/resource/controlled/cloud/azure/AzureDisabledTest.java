@@ -43,6 +43,7 @@ public class AzureDisabledTest extends BaseConnectedTest {
     Workspace request =
         Workspace.builder()
             .workspaceId(UUID.randomUUID())
+            .userFacingId("a" + UUID.randomUUID())
             .workspaceStage(WorkspaceStage.MC_WORKSPACE)
             .build();
     UUID workspaceUuid =

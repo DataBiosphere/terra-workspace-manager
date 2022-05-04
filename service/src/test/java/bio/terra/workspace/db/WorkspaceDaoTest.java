@@ -67,6 +67,7 @@ class WorkspaceDaoTest extends BaseUnitTest {
     Workspace workspace =
         Workspace.builder()
             .workspaceId(workspaceUuid)
+            .userFacingId("a" + workspaceUuid)
             .spendProfileId(spendProfileId)
             .workspaceStage(WorkspaceStage.RAWLS_WORKSPACE)
             .build();
@@ -133,9 +134,11 @@ class WorkspaceDaoTest extends BaseUnitTest {
   void offsetSkipsWorkspaceInList() {
     Workspace firstWorkspace = defaultWorkspace();
     workspaceDao.createWorkspace(firstWorkspace);
+    UUID uuid = UUID.randomUUID();
     Workspace secondWorkspace =
         Workspace.builder()
-            .workspaceId(UUID.randomUUID())
+            .workspaceId(uuid)
+            .userFacingId("a" + uuid)
             .workspaceStage(WorkspaceStage.RAWLS_WORKSPACE)
             .build();
     workspaceDao.createWorkspace(secondWorkspace);
@@ -152,9 +155,11 @@ class WorkspaceDaoTest extends BaseUnitTest {
   void listWorkspaceLimitEnforced() {
     Workspace firstWorkspace = defaultWorkspace();
     workspaceDao.createWorkspace(firstWorkspace);
+    UUID uuid = UUID.randomUUID();
     Workspace secondWorkspace =
         Workspace.builder()
-            .workspaceId(UUID.randomUUID())
+            .workspaceId(uuid)
+            .userFacingId("a" + uuid.toString())
             .workspaceStage(WorkspaceStage.RAWLS_WORKSPACE)
             .build();
     workspaceDao.createWorkspace(secondWorkspace);
@@ -179,6 +184,7 @@ class WorkspaceDaoTest extends BaseUnitTest {
       mcWorkspace =
           Workspace.builder()
               .workspaceId(mcWorkspaceId)
+              .userFacingId("a" + mcWorkspaceId)
               .workspaceStage(WorkspaceStage.MC_WORKSPACE)
               .build();
       workspaceDao.createWorkspace(mcWorkspace);
@@ -285,6 +291,7 @@ class WorkspaceDaoTest extends BaseUnitTest {
   private Workspace defaultWorkspace() {
     return Workspace.builder()
         .workspaceId(workspaceUuid)
+        .userFacingId("a" + workspaceUuid)
         .workspaceStage(WorkspaceStage.RAWLS_WORKSPACE)
         .build();
   }

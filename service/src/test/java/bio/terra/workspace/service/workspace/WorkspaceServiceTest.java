@@ -181,7 +181,7 @@ class WorkspaceServiceTest extends BaseConnectedTest {
 
   @Test
   void getWorkspaceByUserFacingId_existing() {
-    String userFacingId = "user-facing-id-getWorkspaceByUserFacingId_existing";
+    String userFacingId = "user-facing-id-getworkspacebyuserfacingid_existing";
     Workspace request = defaultRequestBuilder(UUID.randomUUID()).userFacingId(userFacingId).build();
     workspaceService.createWorkspace(request, USER_REQUEST);
 
@@ -209,7 +209,7 @@ class WorkspaceServiceTest extends BaseConnectedTest {
 
   @Test
   void getWorkspaceByUserFacingId_forbiddenExisting() throws Exception {
-    String userFacingId = "user-facing-id-getWorkspaceByUserFacingId_forbiddenExisting";
+    String userFacingId = "user-facing-id-getworkspacebyuserfacingid_forbiddenexisting";
     Workspace request = defaultRequestBuilder(UUID.randomUUID()).userFacingId(userFacingId).build();
     workspaceService.createWorkspace(request, USER_REQUEST);
     Workspace createdWorkspace =
@@ -619,6 +619,7 @@ class WorkspaceServiceTest extends BaseConnectedTest {
     // Create a workspace
     final Workspace sourceWorkspace =
         defaultRequestBuilder(UUID.randomUUID())
+            .userFacingId("source-user-facing-id")
             .displayName("Source Workspace")
             .description("The original workspace.")
             .spendProfileId(new SpendProfileId(SPEND_PROFILE_ID))
@@ -676,6 +677,7 @@ class WorkspaceServiceTest extends BaseConnectedTest {
         createdResource.castByEnum(WsmResourceType.CONTROLLED_GCP_GCS_BUCKET);
     final Workspace destinationWorkspace =
         defaultRequestBuilder(UUID.randomUUID())
+            .userFacingId("dest-user-facing-id")
             .displayName("Destination Workspace")
             .description("Copied from source")
             .spendProfileId(new SpendProfileId(SPEND_PROFILE_ID))
@@ -730,6 +732,7 @@ class WorkspaceServiceTest extends BaseConnectedTest {
   private Workspace.Builder defaultRequestBuilder(UUID workspaceUuid) {
     return Workspace.builder()
         .workspaceId(workspaceUuid)
+        .userFacingId("a" + workspaceUuid.toString())
         .spendProfileId(null)
         .workspaceStage(WorkspaceStage.MC_WORKSPACE);
   }
