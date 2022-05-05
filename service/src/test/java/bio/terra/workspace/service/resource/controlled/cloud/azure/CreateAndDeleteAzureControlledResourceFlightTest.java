@@ -498,28 +498,7 @@ public class CreateAndDeleteAzureControlledResourceFlightTest extends BaseAzureT
 
     ComputeManager computeManager = azureTestUtils.getComputeManager();
 
-    VirtualMachine vmTemp = null;
-    var retries = 20;
-    while (vmTemp == null) {
-      try {
-        retries = retries - 1;
-
-        if (retries >= 0) {
-          vmTemp =
-              computeManager
-                  .virtualMachines()
-                  .getByResourceGroup(
-                      azureTestUtils.getAzureCloudContext().getAzureResourceGroupId(),
-                      creationParameters.getName());
-        } else
-          throw new RuntimeException(
-              String.format("%s is not created in time in Azure", creationParameters.getName()));
-      } catch (com.azure.core.exception.HttpResponseException ex) {
-        if (ex.getResponse().getStatusCode() == 404) Thread.sleep(10000);
-        else throw ex;
-      }
-    }
-    final VirtualMachine resolvedVm = vmTemp;
+    final VirtualMachine resolvedVm = getVirtualMachine(creationParameters, computeManager);
 
     // Submit a VM deletion flight.
     FlightState deleteFlightState =
@@ -543,6 +522,144 @@ public class CreateAndDeleteAzureControlledResourceFlightTest extends BaseAzureT
     assertThrows(
         com.azure.core.exception.HttpResponseException.class,
         () -> computeManager.disks().getById(resolvedVm.osDiskId()));
+  }
+
+  @Test
+  public void createAndDeleteAzureVmControlledResourceWithCustomScriptExtensionWithNoPublicIp()
+          throws InterruptedException {
+    // Setup workspace and cloud context
+    UUID workspaceUuid = azureTestUtils.createWorkspace(workspaceService);
+    AuthenticatedUserRequest userRequest = userAccessUtils.defaultUserAuthRequest();
+
+    // Cloud context needs to be created first
+    FlightState createAzureContextFlightState =
+            StairwayTestUtils.blockUntilFlightCompletes(
+                    jobService.getStairway(),
+                    CreateAzureContextFlight.class,
+                    azureTestUtils.createAzureContextInputParameters(workspaceUuid, userRequest),
+                    STAIRWAY_FLIGHT_TIMEOUT,
+                    null);
+
+    assertEquals(FlightStatus.SUCCESS, createAzureContextFlightState.getFlightStatus());
+    assertTrue(
+            workspaceService.getAuthorizedAzureCloudContext(workspaceUuid, userRequest).isPresent());
+
+    // Create disk
+    ControlledAzureDiskResource diskResource = createDisk(workspaceUuid, userRequest);
+
+    // Create network
+    ControlledAzureNetworkResource networkResource = createNetwork(workspaceUuid, userRequest);
+
+    final ApiAzureVmCreationParameters creationParameters =
+            ControlledResourceFixtures.getAzureVmCreationParametersWithCustomScriptExtension();
+
+    // TODO: make this application-private resource once the POC supports it
+    final UUID resourceId = UUID.randomUUID();
+    ControlledAzureVmResource resource =
+            ControlledAzureVmResource.builder()
+                    .common(
+                            ControlledResourceFields.builder()
+                                    .workspaceUuid(workspaceUuid)
+                                    .resourceId(resourceId)
+                                    .name(getAzureName("vm"))
+                                    .description(getAzureName("vm-desc"))
+                                    .cloningInstructions(CloningInstructions.COPY_RESOURCE)
+                                    .accessScope(AccessScopeType.fromApi(ApiAccessScope.SHARED_ACCESS))
+                                    .managedBy(ManagedByType.fromApi(ApiManagedBy.USER))
+                                    .build())
+                    .vmName(creationParameters.getName())
+                    .vmSize(creationParameters.getVmSize())
+                    .vmImage(AzureVmUtils.getImageData(creationParameters.getVmImage()))
+                    .region(creationParameters.getRegion())
+                    //.ipId(ipResource.getResourceId())
+                    .diskId(diskResource.getResourceId())
+                    .networkId(networkResource.getResourceId())
+                    .build();
+
+    // Submit a VM creation flight.
+    FlightState flightState =
+            StairwayTestUtils.blockUntilFlightCompletes(
+                    jobService.getStairway(),
+                    CreateControlledResourceFlight.class,
+                    azureTestUtils.createControlledResourceInputParameters(
+                            workspaceUuid, userRequest, resource, creationParameters),
+                    STAIRWAY_FLIGHT_TIMEOUT,
+                    null);
+
+    assertEquals(FlightStatus.SUCCESS, flightState.getFlightStatus());
+
+    // Verify controlled resource exists in the workspace.
+    ControlledResource res =
+            controlledResourceService.getControlledResource(workspaceUuid, resourceId, userRequest);
+
+    try {
+      ControlledAzureVmResource azureVmResource =
+              res.castByEnum(WsmResourceType.CONTROLLED_AZURE_VM);
+      assertEquals(resource, azureVmResource);
+    } catch (Exception e) {
+      fail("Failed to cast resource to ControlledAzureVmResource", e);
+    }
+
+    // Exercise resource enumeration for the underlying resources.
+    // Verify that the resources we created are in the enumeration.
+    List<WsmResource> resourceList =
+            wsmResourceService.enumerateResources(workspaceUuid, null, null, 0, 100, userRequest);
+    //checkForResource(resourceList, ipResource);
+    checkForResource(resourceList, diskResource);
+    checkForResource(resourceList, networkResource);
+    checkForResource(resourceList, resource);
+
+    ComputeManager computeManager = azureTestUtils.getComputeManager();
+
+    final VirtualMachine resolvedVm = getVirtualMachine(creationParameters, computeManager);
+
+    // Submit a VM deletion flight.
+    FlightState deleteFlightState =
+            StairwayTestUtils.blockUntilFlightCompletes(
+                    jobService.getStairway(),
+                    DeleteControlledResourceFlight.class,
+                    azureTestUtils.deleteControlledResourceInputParameters(
+                            workspaceUuid, resourceId, userRequest, resource),
+                    STAIRWAY_FLIGHT_TIMEOUT,
+                    null);
+    assertEquals(FlightStatus.SUCCESS, deleteFlightState.getFlightStatus());
+
+    Thread.sleep(10000);
+    resolvedVm
+            .networkInterfaceIds()
+            .forEach(
+                    nic ->
+                            assertThrows(
+                                    com.azure.core.exception.HttpResponseException.class,
+                                    () -> computeManager.networkManager().networks().getById(nic)));
+    assertThrows(
+            com.azure.core.exception.HttpResponseException.class,
+            () -> computeManager.disks().getById(resolvedVm.osDiskId()));
+  }
+
+  private VirtualMachine getVirtualMachine(ApiAzureVmCreationParameters creationParameters, ComputeManager computeManager) throws InterruptedException {
+    var retries = 20;
+    VirtualMachine vmTemp = null;
+    while (vmTemp == null) {
+      try {
+        retries = retries - 1;
+
+        if (retries >= 0) {
+          vmTemp =
+                  computeManager
+                          .virtualMachines()
+                          .getByResourceGroup(
+                                  azureTestUtils.getAzureCloudContext().getAzureResourceGroupId(),
+                                  creationParameters.getName());
+        } else
+          throw new RuntimeException(
+                  String.format("%s is not created in time in Azure", creationParameters.getName()));
+      } catch (com.azure.core.exception.HttpResponseException ex) {
+        if (ex.getResponse().getStatusCode() == 404) Thread.sleep(10000);
+        else throw ex;
+      }
+    }
+    return vmTemp;
   }
 
   private void checkForResource(List<WsmResource> resourceList, ControlledResource resource) {
