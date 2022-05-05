@@ -40,6 +40,7 @@ public class CreateAzureVmStep implements Step {
   private final CrlService crlService;
   private final ControlledAzureVmResource resource;
   private final ResourceDao resourceDao;
+  private final String NIC_NAME;
 
   public CreateAzureVmStep(
       AzureConfiguration azureConfig,
@@ -50,6 +51,7 @@ public class CreateAzureVmStep implements Step {
     this.crlService = crlService;
     this.resource = resource;
     this.resourceDao = resourceDao;
+    this.NIC_NAME = String.format("nic-%s", resource.getVmName());
   }
 
   @Override
@@ -106,7 +108,7 @@ public class CreateAzureVmStep implements Step {
           computeManager
               .networkManager()
               .networkInterfaces()
-              .define(String.format("nic-%s", resource.getVmName()))
+              .define(NIC_NAME)
               .withRegion(resource.getRegion())
               .withExistingResourceGroup(azureCloudContext.getAzureResourceGroupId())
               .withExistingPrimaryNetwork(existingNetwork)
@@ -187,9 +189,7 @@ public class CreateAzureVmStep implements Step {
               .virtualMachines()
               .deleteByResourceGroup(azureCloudContext.getAzureResourceGroupId(), resource.getVmName());
 
-      resolvedVm
-              .networkInterfaceIds()
-              .forEach(nic -> computeManager.networkManager().networkInterfaces().deleteById(nic));
+      computeManager.networkManager().networkInterfaces().deleteByResourceGroup(azureCloudContext.getAzureResourceGroupId(), NIC_NAME);
 
       // Delete the OS disk
       computeManager.disks().deleteById(resolvedVm.osDiskId());
