@@ -51,9 +51,7 @@ public class DeleteAzureVmStep implements Step {
 
       computeManager.virtualMachines().deleteById(azureResourceId);
 
-      resolvedVm
-          .networkInterfaceIds()
-          .forEach(nic -> computeManager.networkManager().networkInterfaces().deleteById(nic));
+      computeManager.networkManager().networkInterfaces().deleteByResourceGroup(azureCloudContext.getAzureResourceGroupId(), String.format("nic-%s", resource.getVmName()));
 
       // Delete the OS disk
       computeManager.disks().deleteById(resolvedVm.osDiskId());
