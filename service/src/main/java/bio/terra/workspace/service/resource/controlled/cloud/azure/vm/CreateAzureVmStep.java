@@ -40,7 +40,6 @@ public class CreateAzureVmStep implements Step {
   private final CrlService crlService;
   private final ControlledAzureVmResource resource;
   private final ResourceDao resourceDao;
-  private final String NIC_NAME;
 
   public CreateAzureVmStep(
       AzureConfiguration azureConfig,
@@ -51,7 +50,6 @@ public class CreateAzureVmStep implements Step {
     this.crlService = crlService;
     this.resource = resource;
     this.resourceDao = resourceDao;
-    this.NIC_NAME = String.format("nic-%s", resource.getVmName());
   }
 
   @Override
@@ -108,7 +106,7 @@ public class CreateAzureVmStep implements Step {
           computeManager
               .networkManager()
               .networkInterfaces()
-              .define(NIC_NAME)
+              .define(String.format("nic-%s", resource.getVmName()))
               .withRegion(resource.getRegion())
               .withExistingResourceGroup(azureCloudContext.getAzureResourceGroupId())
               .withExistingPrimaryNetwork(existingNetwork)
@@ -178,33 +176,7 @@ public class CreateAzureVmStep implements Step {
             .get(ControlledResourceKeys.AZURE_CLOUD_CONTEXT, AzureCloudContext.class);
     ComputeManager computeManager = crlService.getComputeManager(azureCloudContext, azureConfig);
 
-    try {
-      VirtualMachine resolvedVm =
-              computeManager
-                      .virtualMachines()
-                      .getByResourceGroup(
-                              azureCloudContext.getAzureResourceGroupId(), resource.getVmName());
-
-      computeManager
-              .virtualMachines()
-              .deleteByResourceGroup(azureCloudContext.getAzureResourceGroupId(), resource.getVmName());
-
-      computeManager.networkManager().networkInterfaces().deleteByResourceGroup(azureCloudContext.getAzureResourceGroupId(), NIC_NAME);
-
-      // Delete the OS disk
-      computeManager.disks().deleteById(resolvedVm.osDiskId());
-    } catch (ManagementException e) {
-      // Stairway steps may run multiple times, so we may already have deleted this resource.
-      if (StringUtils.equals(e.getValue().getCode(), "ResourceNotFound")) {
-        logger.info(
-            "Azure VM {} in managed resource group {} already deleted",
-            resource.getVmName(),
-            azureCloudContext.getAzureResourceGroupId());
-        return StepResult.getStepResultSuccess();
-      }
-      return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, e);
-    }
-    return StepResult.getStepResultSuccess();
+    return AzureVmHelper.deleteVm(azureCloudContext, computeManager, resource.getVmName());
   }
 
   private VirtualMachine.DefinitionStages.WithCreate buildVmConfiguration(
