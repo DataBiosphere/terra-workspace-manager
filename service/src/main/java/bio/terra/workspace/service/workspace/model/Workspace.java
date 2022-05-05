@@ -51,10 +51,10 @@ public class Workspace {
   }
 
   /**
-   * User facing id. Required in db, but optional in API requests (eg CreateWorkspaceRequestBody.
+   * User facing id. Required.
    */
-  public Optional<String> getUserFacingId() {
-    return Optional.ofNullable(userFacingId);
+  public String getUserFacingId() {
+    return userFacingId;
   }
 
   /** Optional display name for the workspace. */

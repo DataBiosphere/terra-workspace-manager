@@ -167,6 +167,7 @@ class SamServiceTest extends BaseConnectedTest {
     Workspace rawlsWorkspace =
         Workspace.builder()
             .workspaceId(workspaceUuid)
+            .userFacingId("a" + workspaceUuid.toString())
             .workspaceStage(WorkspaceStage.RAWLS_WORKSPACE)
             .build();
     workspaceService.createWorkspace(rawlsWorkspace, defaultUserRequest());
@@ -385,9 +386,11 @@ class SamServiceTest extends BaseConnectedTest {
   }
 
   private UUID createWorkspaceForUser(AuthenticatedUserRequest userRequest) {
+    UUID uuid = UUID.randomUUID();
     Workspace request =
         Workspace.builder()
-            .workspaceId(UUID.randomUUID())
+            .workspaceId(uuid)
+            .userFacingId("a" + uuid.toString())
             .workspaceStage(WorkspaceStage.MC_WORKSPACE)
             .build();
     return workspaceService.createWorkspace(request, userRequest);

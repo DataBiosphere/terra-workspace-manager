@@ -100,6 +100,27 @@ paths:
         '500':
           $ref: '#/components/responses/ServerError'
 
+  /api/workspaces/v1/workspaceByUserFacingId/{workspaceUserFacingId}:
+    parameters:
+      - $ref: '#/components/parameters/WorkspaceUserFacingId'
+    get:
+      summary: Get an existing Workspace by userFacingId.
+      operationId: getWorkspaceByUserFacingId
+      tags: [Workspace]
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkspaceDescription'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
   /api/workspaces/v1/{workspaceId}/clone:
     parameters:
       - $ref: '#/components/parameters/WorkspaceId'
@@ -232,6 +253,11 @@ components:
         destinationWorkspaceId:
           type: string
           format: uuid
+        destinationUserFacingId:
+          description: |
+            Human-settable, mutable id. Must have 3-63 characters, contain lowercase letters, numbers, dashes, or
+            underscores, and start with lowercase letter.
+          type: string
         resources:
           type: array
           items:
@@ -252,6 +278,12 @@ components:
       required:
         - spendProfile
       properties:
+        userFacingId:
+          description: |
+            Human-settable, mutable id for cloned workspace. ID must have 3-63 characters, contain lowercase letters,
+            numbers, dashes, or underscores, and start with lowercase letter. Optional. If this isn't set, one will be
+            generated.
+          type: string
         displayName:
           description: The human readable name of the workspace
           type: string
@@ -332,8 +364,9 @@ components:
           format: uuid
         userFacingId:
           description: |
-            Human-settable, mutable id. Optional. If this isn't set, one will
-            be generated based on id (guid).
+            Human-settable, mutable id. Must have 3-63 characters, contain lowercase letters, numbers, dashes, or
+            underscores, and start with lowercase letter. Optional. If this isn't set, one will be generated based on
+            id (uuid).
           type: string
         displayName:
           description: The human readable name of the workspace
@@ -411,7 +444,8 @@ components:
       properties:
         userFacingId:
           description: |
-            Human-settable, mutable id
+            Human-settable, mutable id. Must have 3-63 characters, contain lowercase letters, numbers, dashes, or
+            underscores, and start with lowercase letter.
           type: string
         displayName:
           description: The human readable name of the workspace
@@ -432,7 +466,9 @@ components:
           type: string
           format: uuid
         userFacingId:
-          description: Human-settable, mutable id
+          description: |
+            Human-settable, mutable id. Must have 3-63 characters, contain lowercase letters, numbers, dashes, or
+            underscores, and start with lowercase letter.
           type: string
         displayName:
           description: The human readable name of the workspace

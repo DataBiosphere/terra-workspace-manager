@@ -20,16 +20,24 @@ import scripts.utils.WorkspaceApiTestScriptBase;
 
 public class WorkspaceLifecycle extends WorkspaceApiTestScriptBase {
   private static final Logger logger = LoggerFactory.getLogger(WorkspaceLifecycle.class);
-  private static final String invalidUserFacingId = "User facing id";
-  private static final String validUserFacingId = "user-facing-id";
-  private static final String validUserFacingId2 = "user-facing-id-2";
-  private static final String workspaceName = "name";
-  private static final String workspaceDescriptionString = "description";
+
+  private static final String WORKSPACE_NAME = "name";
+  private static final String WORKSPACE_DESCRIPTION = "description";
 
   @Override
   public void doUserJourney(TestUserSpecification testUser, WorkspaceApi workspaceApi)
       throws ApiException {
     UUID workspaceUuid = UUID.randomUUID();
+
+    // Perf tests run this test repeatedly. userFacingId needs to be unique for each invocation.
+    // Note: These userFacingIds can't be static because UUID.randomUUID() can't be set in a static
+    // variable. If a static variable called UUID.randonUUID(), uuid would be the same for some
+    // invocations.
+    String uuidStr = workspaceUuid.toString();
+    String invalidUserFacingId = "User facing id " + uuidStr;
+    String validUserFacingId = "user-facing-id-" + uuidStr;
+    String validUserFacingId2 = "user-facing-id-2-" + uuidStr;
+
     CreateWorkspaceRequestBody createBody =
         new CreateWorkspaceRequestBody()
             .id(workspaceUuid)
@@ -55,8 +63,8 @@ public class WorkspaceLifecycle extends WorkspaceApiTestScriptBase {
     UpdateWorkspaceRequestBody updateBody =
         new UpdateWorkspaceRequestBody()
             .userFacingId(invalidUserFacingId)
-            .displayName(workspaceName)
-            .description(workspaceDescriptionString);
+            .displayName(WORKSPACE_NAME)
+            .description(WORKSPACE_DESCRIPTION);
     ex =
         assertThrows(
             ApiException.class, () -> workspaceApi.updateWorkspace(updateBody, workspaceUuid));
@@ -70,8 +78,8 @@ public class WorkspaceLifecycle extends WorkspaceApiTestScriptBase {
         workspaceApi.updateWorkspace(updateBody, workspaceUuid);
     ClientTestUtils.assertHttpSuccess(workspaceApi, "PATCH workspace");
     assertThat(updatedDescription.getUserFacingId(), equalTo(validUserFacingId2));
-    assertThat(updatedDescription.getDisplayName(), equalTo(workspaceName));
-    assertThat(updatedDescription.getDescription(), equalTo(workspaceDescriptionString));
+    assertThat(updatedDescription.getDisplayName(), equalTo(WORKSPACE_NAME));
+    assertThat(updatedDescription.getDescription(), equalTo(WORKSPACE_DESCRIPTION));
 
     workspaceApi.deleteWorkspace(workspaceUuid);
     ClientTestUtils.assertHttpSuccess(workspaceApi, "DELETE workspace");

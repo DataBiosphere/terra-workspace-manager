@@ -270,9 +270,11 @@ class CreateGcpContextFlightV2Test extends BaseConnectedTest {
    * not need to explicitly clean up the workspaces created here.
    */
   private UUID createWorkspace(@Nullable SpendProfileId spendProfileId) {
+    UUID uuid = UUID.randomUUID();
     Workspace request =
         Workspace.builder()
-            .workspaceId(UUID.randomUUID())
+            .workspaceId(uuid)
+            .userFacingId("a" + uuid)
             .workspaceStage(WorkspaceStage.MC_WORKSPACE)
             .spendProfileId(spendProfileId)
             .build();

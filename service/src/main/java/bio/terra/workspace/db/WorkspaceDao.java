@@ -4,6 +4,7 @@ import bio.terra.common.db.ReadTransaction;
 import bio.terra.common.db.WriteTransaction;
 import bio.terra.common.exception.MissingRequiredFieldException;
 import bio.terra.workspace.common.exception.InternalLogicException;
+import bio.terra.workspace.common.utils.ControllerValidationUtils;
 import bio.terra.workspace.db.exception.WorkspaceNotFoundException;
 import bio.terra.workspace.service.resource.controlled.model.PrivateResourceState;
 import bio.terra.workspace.service.spendprofile.SpendProfileId;
@@ -84,11 +85,13 @@ public class WorkspaceDao {
             + " cast(:properties AS jsonb), :workspace_stage)";
 
     final String workspaceUuid = workspace.getWorkspaceId().toString();
+    // validateUserFacingId() is called in controller. Also call here to be safe (eg see bug PF-1616).
+    ControllerValidationUtils.validateUserFacingId(workspace.getUserFacingId());
 
     MapSqlParameterSource params =
         new MapSqlParameterSource()
             .addValue("workspace_id", workspaceUuid)
-            .addValue("user_facing_id", workspace.getUserFacingId().orElse(null))
+            .addValue("user_facing_id", workspace.getUserFacingId())
             .addValue("display_name", workspace.getDisplayName().orElse(null))
             .addValue("description", workspace.getDescription().orElse(null))
             .addValue(
@@ -117,8 +120,8 @@ public class WorkspaceDao {
         throw new DuplicateUserFacingIdException(
             String.format(
                 // "ID" instead of "userFacingId" because end user sees this.
-                "Workspace with user facing ID %s already exists",
-                workspace.getUserFacingId().get()),
+                "Workspace with ID %s already exists",
+                workspace.getUserFacingId()),
             e);
       } else {
         throw e;
@@ -150,12 +153,12 @@ public class WorkspaceDao {
   }
 
   @ReadTransaction
-  public Optional<Workspace> getWorkspaceIfExists(UUID id) {
-    if (id == null) {
+  public Optional<Workspace> getWorkspaceIfExists(UUID uuid) {
+    if (uuid == null) {
       throw new MissingRequiredFieldException("Valid workspace id is required");
     }
     String sql = WORKSPACE_SELECT_SQL + " WHERE workspace_id = :id";
-    MapSqlParameterSource params = new MapSqlParameterSource().addValue("id", id.toString());
+    MapSqlParameterSource params = new MapSqlParameterSource().addValue("id", uuid.toString());
     try {
       Workspace result =
           DataAccessUtils.requiredSingleResult(
@@ -170,16 +173,35 @@ public class WorkspaceDao {
   /**
    * Retrieves a workspace from database by ID.
    *
-   * @param id unique identifier of the workspace
+   * @param uuid unique identifier of the workspace
    * @return workspace value object
    */
-  @ReadTransaction
-  public Workspace getWorkspace(UUID id) {
-    return getWorkspaceIfExists(id)
+  public Workspace getWorkspace(UUID uuid) {
+    return getWorkspaceIfExists(uuid)
         .orElseThrow(
             () ->
                 new WorkspaceNotFoundException(
-                    String.format("Workspace %s not found.", id.toString())));
+                    String.format("Workspace %s not found.", uuid.toString())));
+  }
+
+  /** Retrieves a workspace from database by userFacingId. */
+  public Workspace getWorkspaceByUserFacingId(String userFacingId) {
+    if (userFacingId == null || userFacingId.isEmpty()) {
+      throw new MissingRequiredFieldException("userFacingId is required");
+    }
+    String sql = WORKSPACE_SELECT_SQL + " WHERE user_facing_id = :user_facing_id";
+    MapSqlParameterSource params = new MapSqlParameterSource().addValue("user_facing_id", userFacingId);
+    Workspace result;
+    try {
+      result =
+          DataAccessUtils.requiredSingleResult(
+              jdbcTemplate.query(sql, params, WORKSPACE_ROW_MAPPER));
+      logger.info("Retrieved workspace record {}", result);
+      return result;
+    } catch (EmptyResultDataAccessException e) {
+      throw new WorkspaceNotFoundException(
+          String.format("Workspace %s not found.", userFacingId));
+    }
   }
 
   @WriteTransaction
@@ -197,6 +219,8 @@ public class WorkspaceDao {
     params.addValue("workspace_id", workspaceUuid.toString());
 
     if (userFacingId != null) {
+      // validateUserFacingId() is called in controller. Also call here to be safe (eg see bug PF-1616).
+      ControllerValidationUtils.validateUserFacingId(userFacingId);
       params.addValue("user_facing_id", userFacingId);
     }
 
