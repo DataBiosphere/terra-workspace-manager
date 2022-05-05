@@ -22,6 +22,7 @@ public final class AzureVmHelper {
                             .getByResourceGroup(
                                     azureCloudContext.getAzureResourceGroupId(), vmName);
 
+            //TODO: If VM is already deleted, nic and disk will fail to delete
             computeManager
                     .virtualMachines()
                     .deleteByResourceGroup(azureCloudContext.getAzureResourceGroupId(), vmName);
