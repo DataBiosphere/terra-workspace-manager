@@ -15,33 +15,48 @@ public final class AzureVmHelper {
 
     public static StepResult deleteVm(AzureCloudContext azureCloudContext, ComputeManager computeManager, String vmName) throws InterruptedException {
         var nicName = String.format("nic-%s", vmName);
+        VirtualMachine resolvedVm = null;
         try {
-            VirtualMachine resolvedVm =
+            resolvedVm =
                     computeManager
                             .virtualMachines()
                             .getByResourceGroup(
                                     azureCloudContext.getAzureResourceGroupId(), vmName);
 
-            //TODO: If VM is already deleted, nic and disk will fail to delete
             computeManager
                     .virtualMachines()
                     .deleteByResourceGroup(azureCloudContext.getAzureResourceGroupId(), vmName);
-
-            computeManager.networkManager().networkInterfaces().deleteByResourceGroup(azureCloudContext.getAzureResourceGroupId(), nicName);
-
-            // Delete the OS disk
-            computeManager.disks().deleteById(resolvedVm.osDiskId());
         } catch (ManagementException e) {
-            // Stairway steps may run multiple times, so we may already have deleted this resource.
-            if (StringUtils.equals(e.getValue().getCode(), "ResourceNotFound")) {
-                logger.info(
-                        "Azure VM {} in managed resource group {} already deleted",
-                        vmName,
-                        azureCloudContext.getAzureResourceGroupId());
-                return StepResult.getStepResultSuccess();
-            }
-            return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, e);
+            handleNotFound(e, vmName, azureCloudContext.getAzureResourceGroupId());
         }
+
+
+        try {
+            computeManager.networkManager().networkInterfaces().deleteByResourceGroup(azureCloudContext.getAzureResourceGroupId(), nicName);
+        } catch (ManagementException e) {
+            handleNotFound(e, vmName, azureCloudContext.getAzureResourceGroupId());
+        }
+
+        //TODO: If VM is already deleted, nic and disk will fail to delete
+        if (resolvedVm != null)
+            try {
+                computeManager.disks().deleteById(resolvedVm.osDiskId());
+            }catch (ManagementException e) {
+                handleNotFound(e, vmName, azureCloudContext.getAzureResourceGroupId());
+            }
+
         return StepResult.getStepResultSuccess();
+    }
+
+    private static StepResult handleNotFound(ManagementException e, String vmName, String resourceId) {
+        // Stairway steps may run multiple times, so we may already have deleted this resource.
+        if (StringUtils.equals(e.getValue().getCode(), "ResourceNotFound")) {
+            logger.info(
+                    "Azure VM {} in managed resource group {} already deleted",
+                    vmName,
+                    resourceId);
+            return StepResult.getStepResultSuccess();
+        }
+        return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, e);
     }
 }
