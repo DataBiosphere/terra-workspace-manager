@@ -67,14 +67,14 @@ if [[ -n "${TERRA_SERVER}" ]]; then
   sudo -u "${JUPYTER_USER}" sh -c "terra server set --name=${TERRA_SERVER}"
 fi
 
+# Log in with app-default-credentials
+sudo -u "${JUPYTER_USER}" sh -c "terra auth login --mode=APP_DEFAULT_CREDENTIALS"
+
 # Set the CLI terra workspace id using the VM metadata, if set.
 readonly TERRA_WORKSPACE=$(get_metadata_value "instance/attributes/terra-workspace-id")
 if [[ -n "${TERRA_WORKSPACE}" ]]; then
-  sudo -u "${JUPYTER_USER}" sh -c "terra workspace set --id=${TERRA_WORKSPACE} --defer-login"
+  sudo -u "${JUPYTER_USER}" sh -c "terra workspace set --id=${TERRA_WORKSPACE}"
 fi
-
-# Log in with app-default-credentials
-sudo -u "${JUPYTER_USER}" sh -c "terra auth login --mode=APP_DEFAULT_CREDENTIALS"
 
 sudo -u "${JUPYTER_USER}" sh -c "mkdir -p /home/${JUPYTER_USER}/.ssh"
 cd /home/${JUPYTER_USER}
