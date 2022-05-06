@@ -360,7 +360,11 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
   public ResponseEntity<Void> deleteCloudContext(UUID uuid, ApiCloudPlatform cloudPlatform) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     ControllerValidationUtils.validateCloudPlatform(cloudPlatform);
-    workspaceService.deleteGcpCloudContext(uuid, userRequest);
+    if (cloudPlatform == ApiCloudPlatform.AZURE) {
+      workspaceService.deleteAzureCloudContext(uuid, userRequest);
+    } else {
+      workspaceService.deleteGcpCloudContext(uuid, userRequest);
+    }
     return new ResponseEntity<>(HttpStatus.NO_CONTENT);
   }
 
