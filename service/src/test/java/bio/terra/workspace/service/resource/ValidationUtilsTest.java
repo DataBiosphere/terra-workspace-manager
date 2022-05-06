@@ -340,7 +340,7 @@ public class ValidationUtilsTest extends BaseUnitTest {
   public void validateVmCreatePayload_missedVmImageParameters_throwsException() {
     var apiVmCreationParameters =
         new ApiAzureVmCreationParameters()
-            .vmImage(new ApiAzureVmImage().uri("").publisher("").offer("").sku(""));
+            .vmImage(new ApiAzureVmImage().uri("").publisher("").offer("").sku("").version(""));
 
     assertThrows(
         MissingRequiredFieldException.class,
@@ -352,7 +352,25 @@ public class ValidationUtilsTest extends BaseUnitTest {
   public void validateVmCreatePayload_missedMarketplaceImageParameters_throwsException() {
     var apiVmCreationParameters =
         new ApiAzureVmCreationParameters()
-            .vmImage(new ApiAzureVmImage().publisher("").offer("ubuntu").sku("gen2"));
+            .vmImage(
+                new ApiAzureVmImage().publisher("").offer("ubuntu").sku("gen2").version("latest"));
+
+    assertThrows(
+        MissingRequiredFieldException.class,
+        () ->
+            ResourceValidationUtils.validateApiAzureVmCreationParameters(apiVmCreationParameters));
+  }
+
+  @Test
+  public void validateVmCreatePayload_missedMarketplaceImageVersionParameters_throwsException() {
+    var apiVmCreationParameters =
+        new ApiAzureVmCreationParameters()
+            .vmImage(
+                new ApiAzureVmImage()
+                    .publisher("microsoft")
+                    .offer("ubuntu")
+                    .sku("gen2")
+                    .version(""));
 
     assertThrows(
         MissingRequiredFieldException.class,
@@ -364,7 +382,12 @@ public class ValidationUtilsTest extends BaseUnitTest {
   public void validateVmCreatePayload_missedVmUser_throwsException() {
     var apiVmCreationParameters =
         new ApiAzureVmCreationParameters()
-            .vmImage(new ApiAzureVmImage().publisher("microsoft").offer("ubuntu").sku("gen2"));
+            .vmImage(
+                new ApiAzureVmImage()
+                    .publisher("microsoft")
+                    .offer("ubuntu")
+                    .sku("gen2")
+                    .version("latest"));
 
     assertThrows(
         MissingRequiredFieldException.class,

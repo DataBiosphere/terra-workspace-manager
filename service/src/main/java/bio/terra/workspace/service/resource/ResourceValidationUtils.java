@@ -412,21 +412,24 @@ public class ResourceValidationUtils {
     if (StringUtils.isEmpty(vmImage.getUri())
         && StringUtils.isEmpty(vmImage.getPublisher())
         && StringUtils.isEmpty(vmImage.getOffer())
-        && StringUtils.isEmpty(vmImage.getSku())) {
+        && StringUtils.isEmpty(vmImage.getSku())
+        && StringUtils.isEmpty(vmImage.getVersion())) {
       throw new MissingRequiredFieldException(
-          "Missing required fields for vmImage. Either uri or publisher, offer, sku should be defined.");
+          "Missing required fields for vmImage. Either uri or publisher, offer, sku, version should be defined.");
     }
     if (StringUtils.isEmpty(vmImage.getUri())
         && (StringUtils.isEmpty(vmImage.getPublisher())
             || StringUtils.isEmpty(vmImage.getOffer())
-            || StringUtils.isEmpty(vmImage.getSku()))) {
+            || StringUtils.isEmpty(vmImage.getSku())
+            || StringUtils.isEmpty(vmImage.getVersion()))) {
       throw new MissingRequiredFieldException(
-          "Missing required fields for vmImage. Publisher, offer, sku should be defined.");
+          "Missing required fields for vmImage. Publisher, offer, sku, version should be defined.");
     }
     if (StringUtils.isEmpty(vmImage.getUri())
         && (!StringUtils.isEmpty(vmImage.getPublisher())
             && !StringUtils.isEmpty(vmImage.getOffer())
-            && !StringUtils.isEmpty(vmImage.getSku()))) {
+            && !StringUtils.isEmpty(vmImage.getSku())
+            && !StringUtils.isEmpty(vmImage.getVersion()))) {
       checkFieldNonNull(apiAzureVmCreationParameters.getVmUser(), "vmUser");
     }
   }

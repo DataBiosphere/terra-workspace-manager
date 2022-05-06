@@ -24,6 +24,7 @@ import com.azure.core.management.Region;
 import com.azure.core.management.exception.ManagementException;
 import com.azure.resourcemanager.compute.ComputeManager;
 import com.azure.resourcemanager.compute.models.Disk;
+import com.azure.resourcemanager.compute.models.ImageReference;
 import com.azure.resourcemanager.compute.models.VirtualMachine;
 import com.azure.resourcemanager.compute.models.VirtualMachineSizeTypes;
 import com.azure.resourcemanager.network.models.Network;
@@ -220,10 +221,12 @@ public class CreateAzureVmStep implements Step {
     } else {
       vmConfigurationFinalStep =
           vmConfigurationCommonStep
-              .withLatestLinuxImage(
-                  creationParameters.getVmImage().getPublisher(),
-                  creationParameters.getVmImage().getOffer(),
-                  creationParameters.getVmImage().getSku())
+              .withSpecificLinuxImageVersion(
+                  new ImageReference()
+                      .withPublisher(creationParameters.getVmImage().getPublisher())
+                      .withOffer(creationParameters.getVmImage().getOffer())
+                      .withSku(creationParameters.getVmImage().getSku())
+                      .withVersion(creationParameters.getVmImage().getVersion()))
               .withRootUsername(creationParameters.getVmUser().getName())
               .withRootPassword(creationParameters.getVmUser().getPassword())
               .withExistingDataDisk(disk)

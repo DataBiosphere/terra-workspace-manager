@@ -41,8 +41,11 @@ public class AzureVmUtils {
     return apiAzureVmImage.getUri() != null
         ? apiAzureVmImage.getUri()
         : String.format(
-            "publisher=%s;offer=%s;sku=%s",
-            apiAzureVmImage.getPublisher(), apiAzureVmImage.getOffer(), apiAzureVmImage.getSku());
+            "publisher=%s:offer=%s:sku=%s:version=%s",
+            apiAzureVmImage.getPublisher(),
+            apiAzureVmImage.getOffer(),
+            apiAzureVmImage.getSku(),
+            apiAzureVmImage.getVersion());
   }
 
   private static <T> Stream<T> nullSafeListToStream(Collection<T> collection) {
