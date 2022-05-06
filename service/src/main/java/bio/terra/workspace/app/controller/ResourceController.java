@@ -84,7 +84,7 @@ public class ResourceController implements ResourceApi {
             userRequest);
 
     List<ApiResourceDescription> apiResourceDescriptionList =
-        wsmResources.stream().map(r -> makeApiResourceDescription(r)).collect(Collectors.toList());
+        wsmResources.stream().map(this::makeApiResourceDescription).collect(Collectors.toList());
 
     var apiResourceList = new ApiResourceList().resources(apiResourceDescriptionList);
     return new ResponseEntity<>(apiResourceList, HttpStatus.OK);

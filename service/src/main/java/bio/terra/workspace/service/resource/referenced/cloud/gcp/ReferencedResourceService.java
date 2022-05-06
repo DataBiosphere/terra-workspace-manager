@@ -10,6 +10,7 @@ import bio.terra.workspace.service.job.JobBuilder;
 import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.resource.ResourceValidationUtils;
 import bio.terra.workspace.service.resource.controlled.flight.clone.workspace.WorkspaceCloneUtils;
+import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.model.StewardshipType;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.resource.referenced.flight.create.CreateReferenceResourceFlight;
@@ -86,37 +87,41 @@ public class ReferencedResourceService {
    * Updates name and/or description of the reference resource.
    *
    * @param workspaceUuid workspace of interest
-   * @param resourceId resource to update
-   * @param name name to change - may be null
-   * @param description description to change - may be null
+   * @param resourceId    resource to update
+   * @param name          name to change - may be null
+   * @param description   description to change - may be null
    */
   public void updateReferenceResource(
       UUID workspaceUuid,
       UUID resourceId,
+      AuthenticatedUserRequest userRequest,
       @Nullable String name,
-      @Nullable String description,
-      AuthenticatedUserRequest userRequest) {
+      @Nullable String description) {
     updateReferenceResource(
-        workspaceUuid, resourceId, name, description, /*referencedResource=*/ null, userRequest);
+        workspaceUuid, resourceId, userRequest, name, description, /*referencedResource=*/ null, /*cloningInstructions=*/ null);
   }
 
   /**
    * Updates name, description and/or referencing traget of the reference resource.
    *
    * @param workspaceUuid workspace of interest
-   * @param resourceId resource to update
-   * @param name name to change - may be null
-   * @param description description to change - may be null
-   * @param resource referencedResource to be updated to - may be null if not intending to update
-   *     referencing target.
+   * @param resourceId    resource to update
+   * @param name          name to change - may be null
+   * @param description   description to change - may be null
+   * @param resource      referencedResource to be updated to - may be null if not intending to
+   *                      update referencing target.
+   * @param cloningInstructions cloning instructions to change - may be null. If resource is non-null,
+   *                            the cloning instructions will be taken from its metadata and this parameter
+   *                            will be ignored.
    */
   public void updateReferenceResource(
       UUID workspaceUuid,
       UUID resourceId,
+      AuthenticatedUserRequest userRequest,
       @Nullable String name,
       @Nullable String description,
       @Nullable ReferencedResource resource,
-      AuthenticatedUserRequest userRequest) {
+      @Nullable CloningInstructions cloningInstructions) {
     workspaceService.validateWorkspaceAndAction(
         userRequest, workspaceUuid, SamConstants.SamWorkspaceAction.UPDATE_REFERENCE);
     // Name may be null if the user is not updating it in this request.
@@ -139,10 +144,10 @@ public class ReferencedResourceService {
               .resourceType(resource.getResourceType())
               .resourceName(name)
               .addParameter(ResourceKeys.RESOURCE_DESCRIPTION, description);
-
       updated = updateJob.submitAndWait(Boolean.class);
     } else {
-      updated = resourceDao.updateResource(workspaceUuid, resourceId, name, description);
+      // we are not updating anything on the cloud, just the DB
+      updated = resourceDao.updateResource(workspaceUuid, resourceId, name, description, cloningInstructions);
     }
     if (!updated) {
       logger.warn("There's no update to the referenced resource");

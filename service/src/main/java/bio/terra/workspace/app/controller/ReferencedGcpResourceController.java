@@ -137,7 +137,7 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
     String objectName = body.getObjectName();
     if (StringUtils.isEmpty(bucketName) && StringUtils.isEmpty(objectName)) {
       referenceResourceService.updateReferenceResource(
-          workspaceUuid, referenceId, body.getName(), body.getDescription(), userRequest);
+          workspaceUuid, referenceId, userRequest, body.getName(), body.getDescription());
     } else {
       ReferencedGcsObjectResource referencedResource =
           referenceResourceService
@@ -154,10 +154,10 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
       referenceResourceService.updateReferenceResource(
           workspaceUuid,
           referenceId,
-          body.getName(),
+          userRequest, body.getName(),
           body.getDescription(),
           updateBucketObjectResourceBuilder.build(),
-          userRequest);
+          null);
     }
     return new ResponseEntity<>(HttpStatus.NO_CONTENT);
   }
@@ -215,26 +215,28 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
 
   @Override
   public ResponseEntity<Void> updateBucketReferenceResource(
-      UUID uuid, UUID referenceId, ApiUpdateGcsBucketReferenceRequestBody body) {
+      UUID workspaceUuid, UUID referenceId, ApiUpdateGcsBucketReferenceRequestBody body) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     String bucketName = body.getBucketName();
     if (StringUtils.isEmpty(bucketName)) {
       referenceResourceService.updateReferenceResource(
-          uuid, referenceId, body.getName(), body.getDescription(), userRequest);
+          workspaceUuid, referenceId, userRequest, body.getName(), body.getDescription());
     } else {
       ReferencedGcsBucketResource referencedResource =
           referenceResourceService
-              .getReferenceResource(uuid, referenceId, userRequest)
+              .getReferenceResource(workspaceUuid, referenceId, userRequest)
               .castByEnum(WsmResourceType.REFERENCED_GCP_GCS_BUCKET);
       ReferencedGcsBucketResource.Builder updateBucketResourceBuilder =
-          referencedResource.toBuilder().bucketName(bucketName);
+          referencedResource.toBuilder()
+              .bucketName(bucketName)
+              .cloningInstructions(CloningInstructions.fromApiModel(body.getCloningInstructions()));
       referenceResourceService.updateReferenceResource(
-          uuid,
+          workspaceUuid,
           referenceId,
-          body.getName(),
+          userRequest, body.getName(),
           body.getDescription(),
           updateBucketResourceBuilder.build(),
-          userRequest);
+          null); // passed in via resource argument
     }
     return new ResponseEntity<>(HttpStatus.NO_CONTENT);
   }
@@ -302,7 +304,7 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
         && StringUtils.isEmpty(updatedDatasetId)
         && StringUtils.isEmpty(updatedDataTableId)) {
       referenceResourceService.updateReferenceResource(
-          workspaceUuid, referenceId, body.getName(), body.getDescription(), userRequest);
+          workspaceUuid, referenceId, userRequest, body.getName(), body.getDescription());
     } else {
       ReferencedBigQueryDataTableResource referencedResource =
           referenceResourceService
@@ -322,10 +324,11 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
       referenceResourceService.updateReferenceResource(
           workspaceUuid,
           referenceId,
-          body.getName(),
+          userRequest, body.getName(),
           body.getDescription(),
           updateBqTableResource.build(),
-          userRequest);
+          null
+      );
     }
 
     return new ResponseEntity<>(HttpStatus.NO_CONTENT);
@@ -398,7 +401,7 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
     String updatedProjectId = body.getProjectId();
     if (StringUtils.isEmpty(updatedDatasetId) && StringUtils.isEmpty(updatedProjectId)) {
       referenceResourceService.updateReferenceResource(
-          workspaceUuid, resourceId, body.getName(), body.getDescription(), userRequest);
+          workspaceUuid, resourceId, userRequest, body.getName(), body.getDescription());
     } else {
       ReferencedBigQueryDatasetResource referenceResource =
           referenceResourceService
@@ -415,10 +418,12 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
       referenceResourceService.updateReferenceResource(
           workspaceUuid,
           resourceId,
+          userRequest,
           body.getName(),
           body.getDescription(),
           updatedBqDatasetResourceBuilder.build(),
-          userRequest);
+          null
+      );
     }
     return new ResponseEntity<>(HttpStatus.NO_CONTENT);
   }
@@ -485,7 +490,7 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
     String updatedInstanceName = body.getInstanceName();
     if (StringUtils.isEmpty(updatedSnapshot) && StringUtils.isEmpty(updatedInstanceName)) {
       referenceResourceService.updateReferenceResource(
-          workspaceUuid, resourceId, body.getName(), body.getDescription(), userRequest);
+          workspaceUuid, resourceId, userRequest, body.getName(), body.getDescription());
     } else {
       ReferencedDataRepoSnapshotResource referencedResource =
           referenceResourceService
@@ -502,10 +507,11 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
       referenceResourceService.updateReferenceResource(
           workspaceUuid,
           resourceId,
-          body.getName(),
+          userRequest, body.getName(),
           body.getDescription(),
           updatedResourceBuilder.build(),
-          userRequest);
+          null
+      );
     }
     return new ResponseEntity<>(HttpStatus.NO_CONTENT);
   }
@@ -789,7 +795,7 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
     String gitRepoUrl = body.getGitRepoUrl();
     if (StringUtils.isEmpty(gitRepoUrl)) {
       referenceResourceService.updateReferenceResource(
-          workspaceUuid, referenceId, body.getName(), body.getDescription(), userRequest);
+          workspaceUuid, referenceId, userRequest, body.getName(), body.getDescription());
     } else {
       ReferencedGitRepoResource referencedResource =
           referenceResourceService
@@ -803,10 +809,11 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
       referenceResourceService.updateReferenceResource(
           workspaceUuid,
           referenceId,
-          body.getName(),
+          userRequest, body.getName(),
           body.getDescription(),
           updateGitRepoResource.build(),
-          userRequest);
+          null
+      );
     }
     return new ResponseEntity<>(HttpStatus.OK);
   }
