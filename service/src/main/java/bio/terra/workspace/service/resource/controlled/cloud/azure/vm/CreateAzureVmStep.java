@@ -176,22 +176,7 @@ public class CreateAzureVmStep implements Step {
             .get(ControlledResourceKeys.AZURE_CLOUD_CONTEXT, AzureCloudContext.class);
     ComputeManager computeManager = crlService.getComputeManager(azureCloudContext, azureConfig);
 
-    try {
-      computeManager
-          .virtualMachines()
-          .deleteByResourceGroup(azureCloudContext.getAzureResourceGroupId(), resource.getVmName());
-    } catch (ManagementException e) {
-      // Stairway steps may run multiple times, so we may already have deleted this resource.
-      if (StringUtils.equals(e.getValue().getCode(), "ResourceNotFound")) {
-        logger.info(
-            "Azure VM {} in managed resource group {} already deleted",
-            resource.getVmName(),
-            azureCloudContext.getAzureResourceGroupId());
-        return StepResult.getStepResultSuccess();
-      }
-      return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, e);
-    }
-    return StepResult.getStepResultSuccess();
+    return AzureVmHelper.deleteVm(azureCloudContext, computeManager, resource.getVmName());
   }
 
   private VirtualMachine.DefinitionStages.WithCreate buildVmConfiguration(
