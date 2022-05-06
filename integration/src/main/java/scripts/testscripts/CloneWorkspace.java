@@ -244,7 +244,9 @@ public class CloneWorkspace extends WorkspaceAllocateTestScriptBase {
   protected void doUserJourney(
       TestUserSpecification sourceOwnerUser, WorkspaceApi sourceOwnerWorkspaceApi)
       throws Exception {
-    String destinationUserFacingId = "cloned-workspace-user-facing-id";
+    // Verily deployment doesn't have janitor. For nightly tests, need different userFacingId for
+    // each environment.
+    String destinationUserFacingId = "cloned-workspace-" + UUID.randomUUID().toString();
     logger.info("Start User Journey");
     // As reader user, clone the workspace
     // Get a new workspace API for the reader
