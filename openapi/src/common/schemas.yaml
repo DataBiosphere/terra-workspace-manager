@@ -70,6 +70,9 @@ components:
           $ref: '#/components/schemas/ManagedBy'
         privateResourceUser:
           $ref: '#/components/schemas/PrivateResourceUser'
+        resourceId:
+          type: string
+          format: uuid
   
     DeleteControlledAzureResourceRequest:
       type: object
