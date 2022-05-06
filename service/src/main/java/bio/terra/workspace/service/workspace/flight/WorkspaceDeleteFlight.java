@@ -35,6 +35,13 @@ public class WorkspaceDeleteFlight extends Flight {
 
     RetryRule retryRule = RetryRules.cloudLongRunning();
 
+    addStep(
+        new DeleteControlledAzureResourcesStep(
+            appContext.getResourceDao(),
+            appContext.getControlledResourceService(),
+            workspaceUuid,
+            userRequest));
+
     // We delete controlled resources from the Sam, but do not need to explicitly delete the
     // actual cloud objects or entries in WSM DB. GCP handles the cleanup when we delete the
     // containing project, and we cascade workspace deletion to resources in the DB.
@@ -49,13 +56,6 @@ public class WorkspaceDeleteFlight extends Flight {
         new DeleteGcpProjectStep(
             appContext.getCrlService(), appContext.getGcpCloudContextService()),
         retryRule);
-
-    addStep(
-        new DeleteControlledAzureResourcesStep(
-            appContext.getResourceDao(),
-            appContext.getControlledResourceService(),
-            workspaceUuid,
-            userRequest));
     addStep(new DeleteAzureContextStep(appContext.getAzureCloudContextService(), workspaceUuid));
     // Workspace authz is handled differently depending on whether WSM owns the underlying Sam
     // resource or not, as indicated by the workspace stage enum.
