@@ -43,7 +43,7 @@ public class ControlledResourceControllerBase extends ControllerBase {
 
     return ControlledResourceFields.builder()
         .workspaceUuid(workspaceUuid)
-        .resourceId(Optional.ofNullable(apiCommonFields.getResourceId()).orElse(UUID.randomUUID())) //TODO: add duplicate resourceId check
+        .resourceId(Optional.ofNullable(apiCommonFields.getResourceId()).orElse(UUID.randomUUID())) //TODO: add duplicate resourceId check https://broadworkbench.atlassian.net/browse/TOAZ-138
         .name(apiCommonFields.getName())
         .description(apiCommonFields.getDescription())
         .cloningInstructions(
