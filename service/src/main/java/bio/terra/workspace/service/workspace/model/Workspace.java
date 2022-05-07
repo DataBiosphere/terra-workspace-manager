@@ -50,9 +50,7 @@ public class Workspace {
     return workspaceId;
   }
 
-  /**
-   * User facing id. Required.
-   */
+  /** User facing id. Required. */
   public String getUserFacingId() {
     return userFacingId;
   }

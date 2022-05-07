@@ -4,7 +4,6 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hibernate.validator.internal.util.Contracts.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -145,8 +144,8 @@ class WorkspaceServiceTest extends BaseConnectedTest {
     workspaceService.createWorkspace(request, USER_REQUEST);
 
     assertEquals(
-            request.getWorkspaceId(),
-            workspaceService.getWorkspace(request.getWorkspaceId(), USER_REQUEST).getWorkspaceId());
+        request.getWorkspaceId(),
+        workspaceService.getWorkspace(request.getWorkspaceId(), USER_REQUEST).getWorkspaceId());
   }
 
   @Test
@@ -186,25 +185,25 @@ class WorkspaceServiceTest extends BaseConnectedTest {
     workspaceService.createWorkspace(request, USER_REQUEST);
 
     assertEquals(
-            request.getWorkspaceId(),
-            workspaceService.getWorkspaceByUserFacingId(userFacingId, USER_REQUEST).getWorkspaceId());
+        request.getWorkspaceId(),
+        workspaceService.getWorkspaceByUserFacingId(userFacingId, USER_REQUEST).getWorkspaceId());
   }
 
   @Test
   void getWorkspaceByUserFacingId_missing() {
     assertThrows(
-            WorkspaceNotFoundException.class,
-            () -> workspaceService.getWorkspaceByUserFacingId("missing-workspace", USER_REQUEST));
+        WorkspaceNotFoundException.class,
+        () -> workspaceService.getWorkspaceByUserFacingId("missing-workspace", USER_REQUEST));
   }
 
   @Test
   void getWorkspaceByUserFacingId_forbiddenMissing() throws Exception {
     doThrow(new ForbiddenException("forbid!"))
-            .when(mockSamService)
-            .checkAuthz(any(), any(), any(), any());
+        .when(mockSamService)
+        .checkAuthz(any(), any(), any(), any());
     assertThrows(
-            WorkspaceNotFoundException.class,
-            () -> workspaceService.getWorkspaceByUserFacingId("missing-workspace", USER_REQUEST));
+        WorkspaceNotFoundException.class,
+        () -> workspaceService.getWorkspaceByUserFacingId("missing-workspace", USER_REQUEST));
   }
 
   @Test
@@ -213,14 +212,14 @@ class WorkspaceServiceTest extends BaseConnectedTest {
     Workspace request = defaultRequestBuilder(UUID.randomUUID()).userFacingId(userFacingId).build();
     workspaceService.createWorkspace(request, USER_REQUEST);
     Workspace createdWorkspace =
-            workspaceService.getWorkspace(request.getWorkspaceId(), USER_REQUEST);
+        workspaceService.getWorkspace(request.getWorkspaceId(), USER_REQUEST);
 
     doThrow(new ForbiddenException("forbid!"))
-            .when(mockSamService)
-            .checkAuthz(any(), any(), any(), any());
+        .when(mockSamService)
+        .checkAuthz(any(), any(), any(), any());
     assertThrows(
-            ForbiddenException.class,
-            () -> workspaceService.getWorkspaceByUserFacingId(userFacingId, USER_REQUEST));
+        ForbiddenException.class,
+        () -> workspaceService.getWorkspaceByUserFacingId(userFacingId, USER_REQUEST));
   }
 
   @Test
@@ -262,8 +261,7 @@ class WorkspaceServiceTest extends BaseConnectedTest {
             DuplicateUserFacingIdException.class,
             () -> workspaceService.createWorkspace(duplicateUserFacingId, USER_REQUEST));
     assertEquals(
-        String.format("Workspace with ID %s already exists", userFacingId),
-        ex.getMessage());
+        String.format("Workspace with ID %s already exists", userFacingId), ex.getMessage());
   }
 
   @Test

@@ -85,7 +85,8 @@ public class WorkspaceDao {
             + " cast(:properties AS jsonb), :workspace_stage)";
 
     final String workspaceUuid = workspace.getWorkspaceId().toString();
-    // validateUserFacingId() is called in controller. Also call here to be safe (eg see bug PF-1616).
+    // validateUserFacingId() is called in controller. Also call here to be safe (eg see bug
+    // PF-1616).
     ControllerValidationUtils.validateUserFacingId(workspace.getUserFacingId());
 
     MapSqlParameterSource params =
@@ -120,8 +121,7 @@ public class WorkspaceDao {
         throw new DuplicateUserFacingIdException(
             String.format(
                 // "ID" instead of "userFacingId" because end user sees this.
-                "Workspace with ID %s already exists",
-                workspace.getUserFacingId()),
+                "Workspace with ID %s already exists", workspace.getUserFacingId()),
             e);
       } else {
         throw e;
@@ -190,7 +190,8 @@ public class WorkspaceDao {
       throw new MissingRequiredFieldException("userFacingId is required");
     }
     String sql = WORKSPACE_SELECT_SQL + " WHERE user_facing_id = :user_facing_id";
-    MapSqlParameterSource params = new MapSqlParameterSource().addValue("user_facing_id", userFacingId);
+    MapSqlParameterSource params =
+        new MapSqlParameterSource().addValue("user_facing_id", userFacingId);
     Workspace result;
     try {
       result =
@@ -199,8 +200,7 @@ public class WorkspaceDao {
       logger.info("Retrieved workspace record {}", result);
       return result;
     } catch (EmptyResultDataAccessException e) {
-      throw new WorkspaceNotFoundException(
-          String.format("Workspace %s not found.", userFacingId));
+      throw new WorkspaceNotFoundException(String.format("Workspace %s not found.", userFacingId));
     }
   }
 
@@ -219,7 +219,8 @@ public class WorkspaceDao {
     params.addValue("workspace_id", workspaceUuid.toString());
 
     if (userFacingId != null) {
-      // validateUserFacingId() is called in controller. Also call here to be safe (eg see bug PF-1616).
+      // validateUserFacingId() is called in controller. Also call here to be safe (eg see bug
+      // PF-1616).
       ControllerValidationUtils.validateUserFacingId(userFacingId);
       params.addValue("user_facing_id", userFacingId);
     }

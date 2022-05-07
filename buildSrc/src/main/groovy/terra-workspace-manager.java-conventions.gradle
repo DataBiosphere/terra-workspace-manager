@@ -66,7 +66,7 @@ if (hasProperty("buildScan")) {
 
 // Spotbugs configuration
 spotbugs {
-    toolVersion = '4.5.3'
+    toolVersion = '4.2.2'
     effort = 'max'
     // This makes the "html" reports come out in plain text so you can just open the file in IntelliJ
     // and look at your bugs instead of having to switch to a browser.
