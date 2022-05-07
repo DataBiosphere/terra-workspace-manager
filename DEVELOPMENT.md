@@ -164,7 +164,7 @@ For the Stairway database `wsm_stairway` use user `stairwayuser` with password `
 To set up Workspace Manager's required database, run the following command, which will create the DB's and users for unit tests, Stairway, and the app itself:
 
 ```sh
-psql -f local-dev/local-postgres-init.sql
+psql -f service/local-dev/local-postgres-init.sql
 ```
 
 ### IntelliJ Setup
