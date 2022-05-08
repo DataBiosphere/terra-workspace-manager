@@ -30,19 +30,6 @@ public class GcpCloudContextService {
   }
 
   /**
-   * Create the GCP cloud context of the workspace
-   *
-   * @param workspaceUuid unique id of the workspace
-   * @param cloudContext the GCP cloud context to create
-   */
-  @Deprecated // TODO: PF-1238 remove
-  public void createGcpCloudContext(
-      UUID workspaceUuid, GcpCloudContext cloudContext, String flightId) {
-    workspaceDao.createCloudContext(
-        workspaceUuid, CloudPlatform.GCP, cloudContext.serialize(), flightId);
-  }
-
-  /**
    * Create an empty GCP cloud context in the database for a workspace. Supports {@link
    * bio.terra.workspace.service.workspace.flight.CreateGcpContextFlightV2} This is designed for use
    * in the createGcpContext flight and assumes that a later step will call {@link
@@ -135,15 +122,6 @@ public class GcpCloudContextService {
     }
     workspaceDao.updateCloudContext(workspaceUuid, CloudPlatform.GCP, context.serialize());
     return context;
-  }
-
-  /**
-   * Retrieve the flight ID that created the GCP cloud context for a given workspace, if that cloud
-   * context exists.
-   */
-  @Deprecated // TODO: PF-1238 remove
-  public Optional<String> getGcpCloudContextFlightId(UUID workspaceUuid) {
-    return workspaceDao.getCloudContextFlightId(workspaceUuid, CloudPlatform.GCP);
   }
 
   /**

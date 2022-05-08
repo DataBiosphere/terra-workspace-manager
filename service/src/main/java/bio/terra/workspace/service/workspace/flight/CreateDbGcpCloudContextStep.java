@@ -5,6 +5,7 @@ import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
 import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.service.workspace.GcpCloudContextService;
+import bio.terra.workspace.service.workspace.exceptions.DuplicateCloudContextException;
 import java.util.UUID;
 
 /**
@@ -23,7 +24,11 @@ public class CreateDbGcpCloudContextStep implements Step {
 
   @Override
   public StepResult doStep(FlightContext flightContext) throws InterruptedException {
-    gcpCloudContextService.createGcpCloudContextStart(workspaceUuid, flightContext.getFlightId());
+    try {
+      gcpCloudContextService.createGcpCloudContextStart(workspaceUuid, flightContext.getFlightId());
+    } catch (DuplicateCloudContextException e) {
+      // On a retry or restart, we may have already started the cloud context create
+    }
     return StepResult.getStepResultSuccess();
   }
 

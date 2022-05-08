@@ -61,11 +61,6 @@ import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.MockBean;
 
-/**
- * TODO: PF-1238 this is a near duplicate of CreateGoogleContextFlightTest for testing
- * CreateGcpContextFlightV2. When we implement PF-1238, we can just remove the whole
- * CreateGoogleContextFlightTest module.
- */
 class CreateGcpContextFlightV2Test extends BaseConnectedTest {
 
   /** How long to wait for a Stairway flight to complete before timing out the test. */
@@ -253,13 +248,15 @@ class CreateGcpContextFlightV2Test extends BaseConnectedTest {
   private Map<String, StepStatus> getStepNameToStepStatusMap() {
     // Retry steps once to validate idempotency.
     Map<String, StepStatus> retrySteps = new HashMap<>();
+    retrySteps.put(CreateDbGcpCloudContextStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
     retrySteps.put(PullProjectFromPoolStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
     retrySteps.put(SetProjectBillingStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
+    retrySteps.put(GrantWsmRoleAdminStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
     retrySteps.put(CreateCustomGcpRolesStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
-    retrySteps.put(StoreGcpContextStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
     retrySteps.put(SyncSamGroupsStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
     retrySteps.put(GcpCloudSyncStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
     retrySteps.put(CreatePetSaStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
+    retrySteps.put(UpdateDbGcpCloudContextStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
     return retrySteps;
   }
 
@@ -281,7 +278,7 @@ class CreateGcpContextFlightV2Test extends BaseConnectedTest {
     return workspaceService.createWorkspace(request, userAccessUtils.defaultUserAuthRequest());
   }
 
-  /** Create the FlightMap input parameters required for the {@link CreateGcpContextFlight}. */
+  /** Create the FlightMap input parameters required for the {@link CreateGcpContextFlightV2}. */
   private static FlightMap createInputParameters(
       UUID workspaceUuid, AuthenticatedUserRequest userRequest) {
     FlightMap inputs = new FlightMap();
