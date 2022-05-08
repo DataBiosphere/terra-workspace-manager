@@ -352,22 +352,4 @@ public class ApplicationDao {
 
     jdbcTemplate.update(sql, params);
   }
-
-  /**
-   * Temporary method to delete the old Leo application. This is based on the understanding that
-   * there is no use of the application anywhere. No enabling in any workspace and no dependent
-   * resources in any workspace. TODO: PF-1408 - remove this call and target method when PF-1330
-   * merge has been deployed in all environments
-   */
-  @WriteTransaction
-  public void removeOldLeoApp() {
-    final String sql =
-        "DELETE FROM application WHERE application_id = '6397C5FF-F83C-4837-95DB-059198FD89BF'";
-    int rowCount = jdbcTemplate.getJdbcTemplate().update(sql);
-    if (rowCount > 0) {
-      logger.info("Deleted old Leo application with id 6397C5FF-F83C-4837-95DB-059198FD89BF");
-    } else {
-      logger.info("Did not find old Leo application with id 6397C5FF-F83C-4837-95DB-059198FD89BF");
-    }
-  }
 }
