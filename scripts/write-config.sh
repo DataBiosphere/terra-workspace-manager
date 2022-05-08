@@ -157,18 +157,17 @@ fi
 
 # Run vault either using a docker container or using the installed vault
 function dovault {
-    vaultpath=$1
-    filename=$2
-    tmpfile=$3
+    local dovaultpath=$1
+    local dofilename=$2
     case $vaultenv in
         docker)
             docker run --rm -e VAULT_TOKEN="${vaulttoken}" broadinstitute/dsde-toolbox:consul-0.20.0 \
-                   vault read -format=json "${vaultpath}" > "${tmpfile}"
+                   vault read -format=json "${dovaultpath}" > "${dofilename}"
             ;;
 
         local)
             VAULT_TOKEN="${vaulttoken}" VAULT_ADDR="https://clotho.broadinstitute.org:8200" \
-                   vault read -format=json "${vaultpath}" > "${tmpfile}"
+                   vault read -format=json "${dovaultpath}" > "${dofilename}"
             ;;
     esac
 }
@@ -180,7 +179,7 @@ function vaultgetb64 {
     vaultpath=$1
     filename=$2
     fntmpfile=$(mktemp)
-    dovault "${vaultpath}" "${filename}" "${fntmpfile}"
+    dovault "${vaultpath}" "${fntmpfile}"
     result=$?
     if [ $result -ne 0 ]; then return $result; fi
     jq -r .data.key "${fntmpfile}" | base64 -d > "${filename}"
@@ -191,7 +190,7 @@ function vaultget {
     vaultpath=$1
     filename=$2
     fntmpfile=$(mktemp)
-    dovault "${vaultpath}" "${filename}" "${fntmpfile}"
+    dovault "${vaultpath}" "${fntmpfile}"
     result=$?
     if [ $result -ne 0 ]; then return $result; fi
     jq -r .data "${fntmpfile}" > "${filename}"
@@ -202,7 +201,7 @@ function vaultgetdb {
     vaultpath=$1
     fileprefix=$2
     fntmpfile=$(mktemp)
-    dovault "${vaultpath}" "${filename}" "${fntmpfile}"
+    dovault "${vaultpath}" "${fntmpfile}"
     result=$?
     if [ $result -ne 0 ]; then return $result; fi
     datafile=$(mktemp)
