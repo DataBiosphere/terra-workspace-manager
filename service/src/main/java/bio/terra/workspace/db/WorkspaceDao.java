@@ -294,41 +294,6 @@ public class WorkspaceDao {
   }
 
   /**
-   * Create cloud context
-   *
-   * @param workspaceUuid unique id of the workspace
-   * @param cloudPlatform cloud platform enum
-   * @param context serialized cloud context attributes
-   * @param flightId calling flight id. Used to ensure that we do not delete a good context while
-   *     undoing from trying to create a conflicting context.
-   */
-  @Deprecated // TODO: PF-1238 remove
-  @WriteTransaction
-  public void createCloudContext(
-      UUID workspaceUuid, CloudPlatform cloudPlatform, String context, String flightId) {
-    final String platform = cloudPlatform.toSql();
-    final String sql =
-        "INSERT INTO cloud_context (workspace_id, cloud_platform, context, creating_flight)"
-            + " VALUES (:workspace_id, :cloud_platform, :context::json, :creating_flight)";
-    MapSqlParameterSource params =
-        new MapSqlParameterSource()
-            .addValue("workspace_id", workspaceUuid.toString())
-            .addValue("cloud_platform", platform)
-            .addValue("context", context)
-            .addValue("creating_flight", flightId);
-    try {
-      jdbcTemplate.update(sql, params);
-      logger.info("Inserted record for {} cloud context for workspace {}", platform, workspaceUuid);
-    } catch (DuplicateKeyException e) {
-      throw new DuplicateCloudContextException(
-          String.format(
-              "Workspace with id %s already has context for %s cloud type",
-              workspaceUuid, platform),
-          e);
-    }
-  }
-
-  /**
    * Create cloud context - this is used as part of CreateGcpContextFlightV2 to insert the context
    * row at the start of the create context operation.
    */
@@ -483,8 +448,7 @@ public class WorkspaceDao {
    * @param workspaceUuid workspace holding the context
    * @param cloudPlatform platform of the context
    * @param creatingFlightId if non-null, then it is compared to the creating_flight to make sure a
-   *     conflicting create does not delete a valid cloud context. This behavior can be removed when
-   *     we are able to do PF-1238.
+   *     conflicting create does not delete a valid cloud context.
    */
   private void deleteCloudContextWorker(
       UUID workspaceUuid, CloudPlatform cloudPlatform, @Nullable String creatingFlightId) {
@@ -525,21 +489,6 @@ public class WorkspaceDao {
   @ReadTransaction
   public Optional<String> getCloudContext(UUID workspaceUuid, CloudPlatform cloudPlatform) {
     return getCloudContextWorker(workspaceUuid, cloudPlatform);
-  }
-
-  /** Retrieve the flight ID which created the cloud context for a workspace, if one exists. */
-  @Deprecated // TODO: PF-1238 remove
-  @ReadTransaction
-  public Optional<String> getCloudContextFlightId(UUID workspaceUuid, CloudPlatform cloudPlatform) {
-    String sql =
-        "SELECT creating_flight FROM cloud_context WHERE workspace_id = :workspace_id AND cloud_platform = :cloud_platform";
-    MapSqlParameterSource params =
-        new MapSqlParameterSource()
-            .addValue("workspace_id", workspaceUuid.toString())
-            .addValue("cloud_platform", cloudPlatform.toSql());
-    return Optional.ofNullable(
-        DataAccessUtils.singleResult(
-            jdbcTemplate.query(sql, params, (rs, rowNum) -> rs.getString("creating_flight"))));
   }
 
   /**

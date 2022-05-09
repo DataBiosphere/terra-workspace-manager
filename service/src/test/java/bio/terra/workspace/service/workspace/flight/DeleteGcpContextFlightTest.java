@@ -86,7 +86,7 @@ class DeleteGcpContextFlightTest extends BaseConnectedTest {
     FlightState flightState =
         StairwayTestUtils.blockUntilFlightCompletes(
             jobService.getStairway(),
-            CreateGcpContextFlight.class,
+            CreateGcpContextFlightV2.class,
             createParameters,
             CREATION_FLIGHT_TIMEOUT,
             null);
@@ -150,7 +150,7 @@ class DeleteGcpContextFlightTest extends BaseConnectedTest {
     FlightState flightState =
         StairwayTestUtils.blockUntilFlightCompletes(
             jobService.getStairway(),
-            CreateGcpContextFlight.class,
+            CreateGcpContextFlightV2.class,
             createParameters,
             CREATION_FLIGHT_TIMEOUT,
             null);

@@ -59,7 +59,7 @@
 
 function usage {
   cat <<EOF
-Usage: $0 [<target>] [<vaulttoken>] [<outputdir>]"
+Usage: $0 [<target>] [<vaulttoken>] [<outputdir>] [<vaultenv>]"
 
   <target> can be:
     local - for testing against a local (bootRun) WSM
@@ -76,6 +76,12 @@ Usage: $0 [<target>] [<vaulttoken>] [<outputdir>]"
 
   <outputdir> defaults to "../config/" relative to the script. When run from the gradle rootdir, it will be
   in the expected place for automation.
+
+  <vaultenv> can be:
+    docker - run a docker image containing vault
+    local  - run the vault installed locally
+  If <vaultenv> is not specified, then use the envvar WSM_VAULT_ENV
+  If WSM_VAULT_ENV is not specified, then we use docker
 EOF
  exit 1
 }
@@ -87,6 +93,8 @@ default_target=${WSM_WRITE_CONFIG:-local}
 target=${1:-$default_target}
 vaulttoken=${2:-$(cat "$HOME"/.vault-token)}
 outputdir=${3:-$default_outputdir}
+default_vaultenv=${WSM_VAULT_ENV:-docker}
+vaultenv=${4:-$default_vaultenv}
 
 # The vault paths are irregular, so we map the target into three variables:
 # k8senv    - the kubernetes environment: alpha, staging, dev, or integration
@@ -147,6 +155,23 @@ if [ -e "${outputdir}/target.txt" ]; then
     fi
 fi
 
+# Run vault either using a docker container or using the installed vault
+function dovault {
+    local dovaultpath=$1
+    local dofilename=$2
+    case $vaultenv in
+        docker)
+            docker run --rm -e VAULT_TOKEN="${vaulttoken}" broadinstitute/dsde-toolbox:consul-0.20.0 \
+                   vault read -format=json "${dovaultpath}" > "${dofilename}"
+            ;;
+
+        local)
+            VAULT_TOKEN="${vaulttoken}" VAULT_ADDR="https://clotho.broadinstitute.org:8200" \
+                   vault read -format=json "${dovaultpath}" > "${dofilename}"
+            ;;
+    esac
+}
+
 # Read a vault path into an output file, decoding from base64
 # To detect missing tokens, we need to capture the docker result before
 # doing the rest of the pipeline.
@@ -154,8 +179,7 @@ function vaultgetb64 {
     vaultpath=$1
     filename=$2
     fntmpfile=$(mktemp)
-    docker run --rm -e VAULT_TOKEN="${vaulttoken}" broadinstitute/dsde-toolbox:consul-0.20.0 \
-           vault read -format=json "${vaultpath}" > "${fntmpfile}"
+    dovault "${vaultpath}" "${fntmpfile}"
     result=$?
     if [ $result -ne 0 ]; then return $result; fi
     jq -r .data.key "${fntmpfile}" | base64 -d > "${filename}"
@@ -166,8 +190,7 @@ function vaultget {
     vaultpath=$1
     filename=$2
     fntmpfile=$(mktemp)
-    docker run --rm -e VAULT_TOKEN="${vaulttoken}" broadinstitute/dsde-toolbox:consul-0.20.0 \
-           vault read -format=json "${vaultpath}" > "${fntmpfile}"
+    dovault "${vaultpath}" "${fntmpfile}"
     result=$?
     if [ $result -ne 0 ]; then return $result; fi
     jq -r .data "${fntmpfile}" > "${filename}"
@@ -178,8 +201,7 @@ function vaultgetdb {
     vaultpath=$1
     fileprefix=$2
     fntmpfile=$(mktemp)
-    docker run --rm -e VAULT_TOKEN="${vaulttoken}" broadinstitute/dsde-toolbox:consul-0.20.0 \
-        vault read -format=json "${vaultpath}" > "${fntmpfile}"
+    dovault "${vaultpath}" "${fntmpfile}"
     result=$?
     if [ $result -ne 0 ]; then return $result; fi
     datafile=$(mktemp)
