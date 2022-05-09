@@ -87,9 +87,9 @@ public class ReferencedResourceService {
    * Updates name and/or description of the reference resource.
    *
    * @param workspaceUuid workspace of interest
-   * @param resourceId    resource to update
-   * @param name          name to change - may be null
-   * @param description   description to change - may be null
+   * @param resourceId resource to update
+   * @param name name to change - may be null
+   * @param description description to change - may be null
    */
   public void updateReferenceResource(
       UUID workspaceUuid,
@@ -98,21 +98,27 @@ public class ReferencedResourceService {
       @Nullable String name,
       @Nullable String description) {
     updateReferenceResource(
-        workspaceUuid, resourceId, userRequest, name, description, /*referencedResource=*/ null, /*cloningInstructions=*/ null);
+        workspaceUuid,
+        resourceId,
+        userRequest,
+        name,
+        description,
+        /*referencedResource=*/ null,
+        /*cloningInstructions=*/ null);
   }
 
   /**
    * Updates name, description and/or referencing traget of the reference resource.
    *
    * @param workspaceUuid workspace of interest
-   * @param resourceId    resource to update
-   * @param name          name to change - may be null
-   * @param description   description to change - may be null
-   * @param resource      referencedResource to be updated to - may be null if not intending to
-   *                      update referencing target.
-   * @param cloningInstructions cloning instructions to change - may be null. If resource is non-null,
-   *                            the cloning instructions will be taken from its metadata and this parameter
-   *                            will be ignored.
+   * @param resourceId resource to update
+   * @param name name to change - may be null
+   * @param description description to change - may be null
+   * @param resource referencedResource to be updated to - may be null if not intending to update
+   *     referencing target.
+   * @param cloningInstructions cloning instructions to change - may be null. If resource is
+   *     non-null, the cloning instructions will be taken from its metadata and this parameter will
+   *     be ignored.
    */
   public void updateReferenceResource(
       UUID workspaceUuid,
@@ -147,7 +153,9 @@ public class ReferencedResourceService {
       updated = updateJob.submitAndWait(Boolean.class);
     } else {
       // we are not updating anything on the cloud, just the DB
-      updated = resourceDao.updateResource(workspaceUuid, resourceId, name, description, cloningInstructions);
+      updated =
+          resourceDao.updateResource(
+              workspaceUuid, resourceId, name, description, cloningInstructions);
     }
     if (!updated) {
       logger.warn("There's no update to the referenced resource");

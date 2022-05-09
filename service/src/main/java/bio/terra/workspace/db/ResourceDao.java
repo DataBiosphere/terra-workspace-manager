@@ -497,12 +497,7 @@ public class ResourceDao {
       @Nullable String description,
       @Nullable CloningInstructions cloningInstructions) {
     return updateResourceWorker(
-        workspaceUuid,
-        resourceId,
-        name,
-        description,
-        /*attributes=*/ null,
-        cloningInstructions);
+        workspaceUuid, resourceId, name, description, /*attributes=*/ null, cloningInstructions);
   }
 
   /**

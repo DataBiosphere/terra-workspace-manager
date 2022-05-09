@@ -133,8 +133,7 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
         null,
         null,
         updatedResource,
-        null
-    );
+        null);
 
     ReferencedDataRepoSnapshotResource result =
         referenceResourceService
@@ -174,8 +173,7 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
         null,
         null,
         updatedResource,
-        null
-    );
+        null);
 
     ReferencedDataRepoSnapshotResource result =
         referenceResourceService
@@ -197,7 +195,13 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
     String originalDescription = referenceResource.getDescription();
     CloningInstructions updatedCloningInstructions = CloningInstructions.COPY_REFERENCE;
     referenceResourceService.updateReferenceResource(
-        workspaceUuid, referenceResource.getResourceId(), USER_REQUEST, updatedName, null, null, updatedCloningInstructions);
+        workspaceUuid,
+        referenceResource.getResourceId(),
+        USER_REQUEST,
+        updatedName,
+        null,
+        null,
+        updatedCloningInstructions);
     referenceResource =
         referenceResourceService.getReferenceResourceByName(
             workspaceUuid, updatedName, USER_REQUEST);
@@ -216,16 +220,15 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
     assertEquals(updatedName, referenceResource.getName());
     assertEquals(updatedDescription, referenceResource.getDescription());
 
-
     // Change both
     String updatedName2 = "2" + updatedName;
     String updatedDescription2 = "2" + updatedDescription;
     referenceResourceService.updateReferenceResource(
         workspaceUuid,
         referenceResource.getResourceId(),
-        USER_REQUEST, updatedName2,
-        updatedDescription2
-    );
+        USER_REQUEST,
+        updatedName2,
+        updatedDescription2);
     referenceResource =
         referenceResourceService.getReferenceResource(
             workspaceUuid, referenceResource.getResourceId(), USER_REQUEST);

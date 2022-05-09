@@ -154,7 +154,8 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
       referenceResourceService.updateReferenceResource(
           workspaceUuid,
           referenceId,
-          userRequest, body.getName(),
+          userRequest,
+          body.getName(),
           body.getDescription(),
           updateBucketObjectResourceBuilder.build(),
           null);
@@ -233,7 +234,8 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
       referenceResourceService.updateReferenceResource(
           workspaceUuid,
           referenceId,
-          userRequest, body.getName(),
+          userRequest,
+          body.getName(),
           body.getDescription(),
           updateBucketResourceBuilder.build(),
           null); // passed in via resource argument
@@ -324,11 +326,11 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
       referenceResourceService.updateReferenceResource(
           workspaceUuid,
           referenceId,
-          userRequest, body.getName(),
+          userRequest,
+          body.getName(),
           body.getDescription(),
           updateBqTableResource.build(),
-          null
-      );
+          null);
     }
 
     return new ResponseEntity<>(HttpStatus.NO_CONTENT);
@@ -400,9 +402,17 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
     String updatedDatasetId = body.getDatasetId();
     String updatedProjectId = body.getProjectId();
     if (StringUtils.isEmpty(updatedDatasetId) && StringUtils.isEmpty(updatedProjectId)) {
+      // identity of the resource is the same
       referenceResourceService.updateReferenceResource(
-          workspaceUuid, resourceId, userRequest, body.getName(), body.getDescription());
+          workspaceUuid,
+          resourceId,
+          userRequest,
+          body.getName(),
+          body.getDescription(),
+          null,
+          CloningInstructions.fromApiModel(body.getCloningInstructions()));
     } else {
+      // build new one from scratch
       ReferencedBigQueryDatasetResource referenceResource =
           referenceResourceService
               .getReferenceResource(workspaceUuid, resourceId, userRequest)
@@ -422,8 +432,7 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
           body.getName(),
           body.getDescription(),
           updatedBqDatasetResourceBuilder.build(),
-          null
-      );
+          CloningInstructions.fromApiModel(body.getCloningInstructions()));
     }
     return new ResponseEntity<>(HttpStatus.NO_CONTENT);
   }
@@ -507,11 +516,11 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
       referenceResourceService.updateReferenceResource(
           workspaceUuid,
           resourceId,
-          userRequest, body.getName(),
+          userRequest,
+          body.getName(),
           body.getDescription(),
           updatedResourceBuilder.build(),
-          null
-      );
+          null);
     }
     return new ResponseEntity<>(HttpStatus.NO_CONTENT);
   }
@@ -809,11 +818,11 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
       referenceResourceService.updateReferenceResource(
           workspaceUuid,
           referenceId,
-          userRequest, body.getName(),
+          userRequest,
+          body.getName(),
           body.getDescription(),
           updateGitRepoResource.build(),
-          null
-      );
+          null);
     }
     return new ResponseEntity<>(HttpStatus.OK);
   }

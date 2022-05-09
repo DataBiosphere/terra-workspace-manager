@@ -149,6 +149,8 @@ components:
         snapshot:
           description: The ID of the Data Repo snapshot
           type: string
+        cloningInstructions:
+          $ref: '#/components/schemas/CloningInstructionsEnum'
 
     CloneReferencedGcpDataRepoSnapshotResourceResult:
       description: >-
