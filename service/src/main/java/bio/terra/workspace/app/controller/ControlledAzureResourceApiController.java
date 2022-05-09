@@ -175,13 +175,14 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
   }
 
   @Override
-  public ResponseEntity<ApiAzureRelayNamespaceResource> getAzureRelayNamespace(UUID workspaceId, UUID resourceId) {
+  public ResponseEntity<ApiAzureRelayNamespaceResource> getAzureRelayNamespace(
+      UUID workspaceId, UUID resourceId) {
     final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     features.azureEnabledCheck();
     final ControlledAzureRelayNamespaceResource resource =
-            controlledResourceService
-                    .getControlledResource(workspaceId, resourceId, userRequest)
-                    .castByEnum(WsmResourceType.CONTROLLED_AZURE_RELAY_NAMESPACE);
+        controlledResourceService
+            .getControlledResource(workspaceId, resourceId, userRequest)
+            .castByEnum(WsmResourceType.CONTROLLED_AZURE_RELAY_NAMESPACE);
     return new ResponseEntity<>(resource.toApiResource(), HttpStatus.OK);
   }
 

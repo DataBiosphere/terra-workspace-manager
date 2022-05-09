@@ -171,7 +171,8 @@ public class WorkspaceService {
 
   /** Retrieves an existing workspace by userFacingId */
   @Traced
-  public Workspace getWorkspaceByUserFacingId(String userFacingId, AuthenticatedUserRequest userRequest) {
+  public Workspace getWorkspaceByUserFacingId(
+      String userFacingId, AuthenticatedUserRequest userRequest) {
     logger.info(
         "getWorkspaceByUserFacingId - userRequest: {}\nuserFacingId: {}",
         userRequest,
@@ -180,7 +181,10 @@ public class WorkspaceService {
     SamRethrow.onInterrupted(
         () ->
             samService.checkAuthz(
-                userRequest, SamConstants.SamResource.WORKSPACE, workspace.getWorkspaceId().toString(), SamWorkspaceAction.READ),
+                userRequest,
+                SamConstants.SamResource.WORKSPACE,
+                workspace.getWorkspaceId().toString(),
+                SamWorkspaceAction.READ),
         "checkAuthz");
     return workspace;
   }

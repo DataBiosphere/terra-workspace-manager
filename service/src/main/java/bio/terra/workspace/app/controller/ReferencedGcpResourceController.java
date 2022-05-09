@@ -108,7 +108,8 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
   }
 
   @Override
-  public ResponseEntity<ApiGcpGcsObjectResource> getGcsObjectReference(UUID uuid, UUID referenceId) {
+  public ResponseEntity<ApiGcpGcsObjectResource> getGcsObjectReference(
+      UUID uuid, UUID referenceId) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     ReferencedGcsObjectResource referenceResource =
         referenceResourceService
@@ -118,7 +119,8 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
   }
 
   @Override
-  public ResponseEntity<ApiGcpGcsObjectResource> getGcsObjectReferenceByName(UUID uuid, String name) {
+  public ResponseEntity<ApiGcpGcsObjectResource> getGcsObjectReferenceByName(
+      UUID uuid, String name) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     ReferencedGcsObjectResource referenceResource =
         referenceResourceService
@@ -213,12 +215,12 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
 
   @Override
   public ResponseEntity<Void> updateBucketReferenceResource(
-          UUID uuid, UUID referenceId, ApiUpdateGcsBucketReferenceRequestBody body) {
+      UUID uuid, UUID referenceId, ApiUpdateGcsBucketReferenceRequestBody body) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     String bucketName = body.getBucketName();
     if (StringUtils.isEmpty(bucketName)) {
       referenceResourceService.updateReferenceResource(
-              uuid, referenceId, body.getName(), body.getDescription(), userRequest);
+          uuid, referenceId, body.getName(), body.getDescription(), userRequest);
     } else {
       ReferencedGcsBucketResource referencedResource =
           referenceResourceService
@@ -227,7 +229,7 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
       ReferencedGcsBucketResource.Builder updateBucketResourceBuilder =
           referencedResource.toBuilder().bucketName(bucketName);
       referenceResourceService.updateReferenceResource(
-              uuid,
+          uuid,
           referenceId,
           body.getName(),
           body.getDescription(),
@@ -269,7 +271,7 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
 
   @Override
   public ResponseEntity<ApiGcpBigQueryDataTableResource> getBigQueryDataTableReference(
-          UUID uuid, UUID referenceId) {
+      UUID uuid, UUID referenceId) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     ReferencedBigQueryDataTableResource referenceResource =
         referenceResourceService
@@ -433,7 +435,7 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
 
   @Override
   public ResponseEntity<ApiDataRepoSnapshotResource> createDataRepoSnapshotReference(
-          UUID uuid, @Valid ApiCreateDataRepoSnapshotReferenceRequestBody body) {
+      UUID uuid, @Valid ApiCreateDataRepoSnapshotReferenceRequestBody body) {
 
     var resource =
         ReferencedDataRepoSnapshotResource.builder()
