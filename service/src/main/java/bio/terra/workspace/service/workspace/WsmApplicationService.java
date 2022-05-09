@@ -142,11 +142,6 @@ public class WsmApplicationService {
    * Configure applications mapping from the incoming configuration to the current database context.
    */
   public void configure() {
-    // TODO: PF-1408 - remove this call and target method when PF-1330 merge has been deployed in
-    //  all environments
-    // Remove old Leo application
-    applicationDao.removeOldLeoApp();
-
     // Gather all apps from the database
     Map<String, WsmDbApplication> dbAppMap = buildAppMap();
 
