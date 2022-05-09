@@ -1,6 +1,5 @@
 package bio.terra.workspace.app.controller;
 
-import bio.terra.common.exception.MissingRequiredFieldException;
 import bio.terra.workspace.common.utils.ControllerValidationUtils;
 import bio.terra.workspace.generated.controller.WorkspaceApi;
 import bio.terra.workspace.generated.model.ApiAzureContext;
@@ -235,7 +234,7 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
 
   @Override
   public ResponseEntity<ApiWorkspaceDescription> getWorkspaceByUserFacingId(
-          @PathVariable("workspaceUserFacingId") String userFacingId) {
+      @PathVariable("workspaceUserFacingId") String userFacingId) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     logger.info("Getting workspace {} for {}", userFacingId, userRequest.getEmail());
     Workspace workspace = workspaceService.getWorkspaceByUserFacingId(userFacingId, userRequest);
@@ -258,7 +257,7 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
     SamRethrow.onInterrupted(
         () ->
             samService.grantWorkspaceRole(
-                    uuid, getAuthenticatedInfo(), WsmIamRole.fromApiModel(role), body.getMemberEmail()),
+                uuid, getAuthenticatedInfo(), WsmIamRole.fromApiModel(role), body.getMemberEmail()),
         "grantWorkspaceRole");
     return new ResponseEntity<>(HttpStatus.NO_CONTENT);
   }
@@ -294,7 +293,7 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
 
   @Override
   public ResponseEntity<ApiCreateCloudContextResult> createCloudContext(
-          UUID uuid, @Valid ApiCreateCloudContextRequest body) {
+      UUID uuid, @Valid ApiCreateCloudContextRequest body) {
     ControllerValidationUtils.validateCloudPlatform(body.getCloudPlatform());
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     String jobId = body.getJobControl().getId();
@@ -308,7 +307,7 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
                       new CloudContextRequiredException(
                           "AzureContext is required when creating an azure cloud context for a workspace"));
       workspaceService.createAzureCloudContext(
-              uuid, jobId, userRequest, resultPath, AzureCloudContext.fromApi(azureContext));
+          uuid, jobId, userRequest, resultPath, AzureCloudContext.fromApi(azureContext));
     } else {
       workspaceService.createGcpCloudContext(uuid, jobId, userRequest, resultPath);
     }
@@ -319,7 +318,7 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
 
   @Override
   public ResponseEntity<ApiCreateCloudContextResult> getCreateCloudContextResult(
-          UUID uuid, String jobId) {
+      UUID uuid, String jobId) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     ApiCreateCloudContextResult response = fetchCreateCloudContextResult(jobId, userRequest);
     return new ResponseEntity<>(response, getAsyncResponseCode(response.getJobReport()));
@@ -400,7 +399,8 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
     // ET uses userFacingId; CWB doesn't. Schema enforces that userFacingId must be set. CWB doesn't
     // pass userFacingId in request, so use id. Prefix with "a" because userFacingId must start with
     // letter.
-    String destinationUserFacingId = Optional.ofNullable(body.getUserFacingId()).orElse("a-" + destinationWorkspaceId);
+    String destinationUserFacingId =
+        Optional.ofNullable(body.getUserFacingId()).orElse("a-" + destinationWorkspaceId);
     ControllerValidationUtils.validateUserFacingId(destinationUserFacingId);
 
     // Construct the target workspace object from the inputs

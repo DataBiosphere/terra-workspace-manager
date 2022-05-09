@@ -10,7 +10,6 @@ import bio.terra.workspace.service.resource.controlled.model.ControlledResourceF
 import bio.terra.workspace.service.resource.controlled.model.ManagedByType;
 import bio.terra.workspace.service.resource.controlled.model.PrivateUserRole;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
-
 import java.util.Optional;
 import java.util.UUID;
 import javax.servlet.http.HttpServletRequest;
@@ -43,7 +42,10 @@ public class ControlledResourceControllerBase extends ControllerBase {
 
     return ControlledResourceFields.builder()
         .workspaceUuid(workspaceUuid)
-        .resourceId(Optional.ofNullable(apiCommonFields.getResourceId()).orElse(UUID.randomUUID())) //TODO: add duplicate resourceId check https://broadworkbench.atlassian.net/browse/TOAZ-138
+        .resourceId(
+            Optional.ofNullable(apiCommonFields.getResourceId())
+                .orElse(UUID.randomUUID())) // TODO: add duplicate resourceId check
+        // https://broadworkbench.atlassian.net/browse/TOAZ-138
         .name(apiCommonFields.getName())
         .description(apiCommonFields.getDescription())
         .cloningInstructions(
