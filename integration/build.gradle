@@ -39,7 +39,6 @@ dependencies {
     implementation group: 'com.google.guava', name: 'guava', version: "${guava}"
     implementation "com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:${jackson}"
     implementation "org.glassfish.jersey.inject:jersey-hk2:${jersey}"
-    implementation "org.glassfish.jersey.connectors:jersey-jdk-connector:${jersey}"
     implementation "io.kubernetes:client-java:${kubernetesClient}"
     implementation "ch.qos.logback:logback-classic:${logback}"
     implementation "org.slf4j:slf4j-api:${slf4j}"

@@ -44,9 +44,6 @@ import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import javax.annotation.Nullable;
-import javax.ws.rs.client.ClientBuilder;
-import org.glassfish.jersey.client.ClientConfig;
-import org.glassfish.jersey.jdk.connector.JdkConnectorProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -228,10 +225,6 @@ public class ClientTestUtils {
     if (accessToken != null) {
       apiClient.setAccessToken(accessToken.getTokenValue());
     }
-
-    ClientConfig clientConfig = new ClientConfig();
-    clientConfig.connectorProvider(new JdkConnectorProvider());
-    apiClient.setHttpClient(ClientBuilder.newClient(clientConfig));
 
     return apiClient;
   }

@@ -29,6 +29,12 @@ import org.glassfish.jersey.client.ClientConfig;
 import org.glassfish.jersey.client.ClientProperties;
 import org.glassfish.jersey.client.HttpUrlConnectorProvider;
 import org.glassfish.jersey.jackson.JacksonFeature;
+
+{{! Begin Terra change }}
+// Import the connector we use to workaround the JDK17 issues in Jersey
+import org.glassfish.jersey.jdk.connector.JdkConnectorProvider;
+{{! End Terra change }}
+
 {{^supportJava6}}
 import org.glassfish.jersey.logging.LoggingFeature;
 {{/supportJava6}}
@@ -813,7 +819,11 @@ public class ApiClient {
   }
 
   protected void performAdditionalClientConfiguration(ClientConfig clientConfig) {
-    // No-op extension point
+    {{! Begin Terra change }}
+    // For JDK17, we need to use this connection provider to work around the way Jersey
+    // implements PATCH
+    clientConfig.connectorProvider(new JdkConnectorProvider());
+    {{! End Terra change }}
   }
 
   protected Map<String, List<String>> buildResponseHeaders(Response response) {
