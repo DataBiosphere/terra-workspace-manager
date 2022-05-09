@@ -6,6 +6,7 @@ swaggerSources {
   client {
     inputFile = file(tasks.getByPath(':openapi:buildOpenApi').openApiSource)
     code {
+      jvmArgs = ['--add-opens=java.base/java.util=ALL-UNNAMED'] // for Java 16+
       language = "java"
       library = "jersey2"
       templateDir = file("${projectDir}/src/main/resources/swaggercodegen")

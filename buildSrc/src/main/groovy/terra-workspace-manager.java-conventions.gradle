@@ -31,7 +31,7 @@ dependencyLocking {
 }
 
 jacoco {
-    toolVersion = '0.8.2'
+    toolVersion = '0.8.8'
 }
 
 jacocoTestReport {
@@ -44,7 +44,7 @@ jacocoTestReport {
 
 version = gradle.wsmVersion
 group = 'bio.terra'
-sourceCompatibility = JavaVersion.VERSION_11
+sourceCompatibility = JavaVersion.VERSION_17
 
 // Spotless configuration
 spotless {
@@ -66,6 +66,7 @@ if (hasProperty("buildScan")) {
 
 // Spotbugs configuration
 spotbugs {
+    toolVersion = '4.2.2'
     effort = 'max'
     // This makes the "html" reports come out in plain text so you can just open the file in IntelliJ
     // and look at your bugs instead of having to switch to a browser.

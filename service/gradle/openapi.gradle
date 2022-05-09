@@ -3,6 +3,7 @@ swaggerSources {
   server {
     inputFile = file(tasks.getByPath(':openapi:buildOpenApi').openApiSource)
     code {
+      jvmArgs = ['--add-opens=java.base/java.util=ALL-UNNAMED'] // for Java 16+
       language = "spring"
       library = "spring-boot"
       outputDir = file(openapiOutputDir)

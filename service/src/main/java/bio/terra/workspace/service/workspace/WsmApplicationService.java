@@ -189,7 +189,7 @@ public class WsmApplicationService {
         applicationDao.createApplication(configApp);
         logInfo("Created application " + configApp.getApplicationId());
       } catch (Exception e) {
-        logError("Failed to create application: " + configApp.getApplicationId());
+        logError("Failed to create application: " + configApp.getApplicationId(), e);
       }
       return;
     }

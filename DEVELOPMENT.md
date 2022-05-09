@@ -64,12 +64,13 @@ useful menulet where the server can be turned on and off. Don't forget to create
 go this route.
 
 #### JDK
-We use AdoptOpenJDK Java 11 (Hotspot). Some teams are trying Java 11, but the Terra project
-has not moved there as a whole.
+We use the Adoptium JDK version 17. (At this writing, the Mac x86 version is 17.0.2+8).
+You learn about it at [Adoptium](https://adoptium.net/).
 
-Here's an easy way to install on Mac, using [jEnv](https://www.jenv.be/) to manage the active version:
+The recommended process for installing on Mac is to first install [jEnv](https://www.jenv.be/) to
+manage the active version:
 
-    ```sh
+```sh
     brew install jenv
     # follow postinstall instructions to activate jenv...
     
@@ -77,16 +78,35 @@ Here's an easy way to install on Mac, using [jEnv](https://www.jenv.be/) to mana
     # /usr/libexec/java_home -V
     # and then add them:
     # jenv add /Library/Java/JavaVirtualMachines/<JAVA VERSION HERE>/Contents/Home
+```
 
-    # follow instructions from https://github.com/AdoptOpenJDK/homebrew-openjdk to install adoptopenjdk11:
-    brew tap AdoptOpenJDK/openjdk
-    brew install --cask adoptopenjdk11
+You can install the JDK from IntelliJ::
+- File menu
+- Project Structure...
+- Under Project Settings select Project
+- Select Project SDK
+- Select Download SDK...
+- Select version 17
+- Select Eclipse Temurin
 
-    jenv add /Library/Java/JavaVirtualMachines/adoptopenjdk-11.jdk/Contents/Home
-    ```
+If you use homebrew, you can do this instead:
+```sh
+    # In getting set up initially, I made some mess, but I think this will work.
+    brew install temurin17
+    jenv add /Library/Java/JavaVirtualMachines/temurin-17.jdk/Contents/Home
+ ```
 
-**NOTE**: You may encounter issues with the application when running an unexpected version of Java.
-So make sure you are running `AdoptOpenJDK Java 11 (Hotspot)` as specified above.
+You may want to use jenv to set this JDK as your global setting to avoid surprises.
+
+#### Configuring IntelliJ SDK
+
+You will need to configure IntelliJ to use a particular SDK. Here are settings you may need to
+make:
+- IntelliJIdea | Preferences... | Build, Execution, Deployment | Build Tools | Gradle - set Gradle
+JVM to your JDK 17
+- File | Project Structure... | Project Settings | Project | Project SDK
+  - set Project SDK to your JDK 17 SDK
+  - set Project Language Level to 17
 
 #### Python3
 We are currently using Python 3.9.10
@@ -144,7 +164,7 @@ For the Stairway database `wsm_stairway` use user `stairwayuser` with password `
 To set up Workspace Manager's required database, run the following command, which will create the DB's and users for unit tests, Stairway, and the app itself:
 
 ```sh
-psql -f local-dev/local-postgres-init.sql
+psql -f service/local-dev/local-postgres-init.sql
 ```
 
 ### IntelliJ Setup
