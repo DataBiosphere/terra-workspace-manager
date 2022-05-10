@@ -27,7 +27,8 @@ public class DeleteAzureContextFlight extends Flight {
             appContext.getResourceDao(),
             appContext.getControlledResourceService(),
             workspaceUuid,
-            userRequest));
+            userRequest),
+        retryRule);
 
     addStep(
         new DeleteAzureContextStep(appContext.getAzureCloudContextService(), workspaceUuid),
