@@ -7,6 +7,7 @@ import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
 import bio.terra.workspace.common.utils.AzureTestUtils;
 import bio.terra.workspace.connected.UserAccessUtils;
 import bio.terra.workspace.connected.WorkspaceConnectedTestUtils;
+import bio.terra.workspace.db.exception.WorkspaceNotFoundException;
 import bio.terra.workspace.generated.model.ApiAccessScope;
 import bio.terra.workspace.generated.model.ApiAzureRelayNamespaceCreationParameters;
 import bio.terra.workspace.generated.model.ApiManagedBy;
@@ -15,9 +16,6 @@ import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceService;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.relayNamespace.ControlledAzureRelayNamespaceResource;
-import bio.terra.workspace.service.resource.controlled.flight.create.GetCloudContextStep;
-import bio.terra.workspace.service.resource.controlled.flight.delete.DeleteMetadataStep;
-import bio.terra.workspace.service.resource.controlled.flight.delete.DeleteSamResourceStep;
 import bio.terra.workspace.service.resource.controlled.model.AccessScopeType;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResourceFields;
 import bio.terra.workspace.service.resource.controlled.model.ManagedByType;
@@ -238,9 +236,11 @@ public class DeleteAzureContextFlightTest extends BaseAzureTest {
 
     // Force each step to be retried once to ensure proper behavior.
     Map<String, StepStatus> doFailures = new HashMap<>();
-    // todo: this step will fail if retried bc the resource has already been deleted from Sam... what to do about that?
-//    doFailures.put(
-//        DeleteControlledAzureResourcesStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
+    // todo: this step will fail if retried bc the resource has already been deleted from Sam...
+    // what to do about that?
+    //    doFailures.put(
+    //        DeleteControlledAzureResourcesStep.class.getName(),
+    // StepStatus.STEP_RESULT_FAILURE_RETRY);
     doFailures.put(DeleteAzureContextStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
     FlightDebugInfo debugInfo = FlightDebugInfo.newBuilder().doStepFailures(doFailures).build();
 
@@ -253,5 +253,107 @@ public class DeleteAzureContextFlightTest extends BaseAzureTest {
             debugInfo);
     assertEquals(FlightStatus.SUCCESS, flightState.getFlightStatus());
     assertTrue(testUtils.getAuthorizedAzureCloudContext(workspaceUuid, userRequest).isEmpty());
+    // todo: verify relayNamespace was deleted
+  }
+
+  // todo: this test would be better in the WorkspaceDeleteFlightTest, but that class extends
+  // BaseConnectedTest which doesn't have azure enabled... figure out what to do about this test
+  @Test
+  void deleteMcWorkspaceWithAzureContextAndResource() throws Exception {
+    // Create a new workspace at the start of each test.
+    UUID uuid = UUID.randomUUID();
+    Workspace request =
+        Workspace.builder()
+            .workspaceId(uuid)
+            .userFacingId("a" + uuid.toString())
+            .workspaceStage(WorkspaceStage.MC_WORKSPACE)
+            .spendProfileId(spendUtils.defaultSpendId())
+            .build();
+    UUID mcWorkspaceUuid =
+        workspaceService.createWorkspace(request, userAccessUtils.defaultUserAuthRequest());
+
+    // Create a workspace with a controlled resource
+    AuthenticatedUserRequest userRequest = userAccessUtils.defaultUserAuthRequest();
+    FlightMap createParameters =
+        azureTestUtils.createAzureContextInputParameters(mcWorkspaceUuid, userRequest);
+
+    // Create the azure context.
+    FlightState flightState =
+        StairwayTestUtils.blockUntilFlightCompletes(
+            jobService.getStairway(),
+            CreateAzureContextFlight.class,
+            createParameters,
+            CREATION_FLIGHT_TIMEOUT,
+            null);
+    assertEquals(FlightStatus.SUCCESS, flightState.getFlightStatus());
+
+    AzureCloudContext azureCloudContext =
+        workspaceService.getAuthorizedAzureCloudContext(mcWorkspaceUuid, userRequest).orElse(null);
+    assertNotNull(azureCloudContext);
+
+    UUID relayId = UUID.randomUUID();
+    ApiAzureRelayNamespaceCreationParameters creationParameters =
+        ControlledResourceFixtures.getAzureRelayNamespaceCreationParameters();
+
+    ControlledAzureRelayNamespaceResource relayNamespaceResource =
+        ControlledAzureRelayNamespaceResource.builder()
+            .common(
+                ControlledResourceFields.builder()
+                    .workspaceUuid(mcWorkspaceUuid)
+                    .resourceId(relayId)
+                    .name(UUID.randomUUID().toString())
+                    .cloningInstructions(CloningInstructions.COPY_RESOURCE)
+                    .accessScope(AccessScopeType.fromApi(ApiAccessScope.SHARED_ACCESS))
+                    .managedBy(ManagedByType.fromApi(ApiManagedBy.USER))
+                    .build())
+            .namespaceName(creationParameters.getNamespaceName())
+            .region(creationParameters.getRegion())
+            .build();
+
+    controlledResourceService.createAzureRelayNamespace(
+        relayNamespaceResource, creationParameters, null, null, null, userRequest);
+    ControlledAzureRelayNamespaceResource gotRelayNamespaceResource =
+        controlledResourceService
+            .getControlledResource(mcWorkspaceUuid, relayId, userRequest)
+            .castByEnum(WsmResourceType.CONTROLLED_AZURE_RELAY_NAMESPACE);
+
+    assertEquals(relayNamespaceResource, gotRelayNamespaceResource);
+
+    // Run the delete flight, retrying every step once
+    FlightMap deleteParameters = new FlightMap();
+    deleteParameters.put(WorkspaceFlightMapKeys.WORKSPACE_ID, mcWorkspaceUuid.toString());
+    deleteParameters.put(WorkspaceFlightMapKeys.WORKSPACE_STAGE, WorkspaceStage.MC_WORKSPACE);
+    deleteParameters.put(JobMapKeys.AUTH_USER_INFO.getKeyName(), userRequest);
+
+    Map<String, StepStatus> doFailures = new HashMap<>();
+    doFailures.put(
+        DeleteControlledSamResourcesStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
+    doFailures.put(DeleteGcpProjectStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
+    doFailures.put(DeleteWorkspaceAuthzStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
+    doFailures.put(DeleteWorkspaceStateStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
+    FlightDebugInfo debugInfo = FlightDebugInfo.newBuilder().doStepFailures(doFailures).build();
+
+    flightState =
+        StairwayTestUtils.blockUntilFlightCompletes(
+            jobService.getStairway(),
+            WorkspaceDeleteFlight.class,
+            deleteParameters,
+            DELETION_FLIGHT_TIMEOUT,
+            debugInfo);
+    assertEquals(FlightStatus.SUCCESS, flightState.getFlightStatus());
+
+    // Verify the resource and workspace are not in WSM DB
+    assertThrows(
+        WorkspaceNotFoundException.class,
+        () ->
+            controlledResourceService.getControlledResource(
+                relayNamespaceResource.getWorkspaceId(),
+                relayNamespaceResource.getResourceId(),
+                userRequest));
+    assertThrows(
+        WorkspaceNotFoundException.class,
+        () -> workspaceService.getWorkspace(mcWorkspaceUuid, userRequest));
+
+    // todo: verify relay namespace has been deleted
   }
 }
