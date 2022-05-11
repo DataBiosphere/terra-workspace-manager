@@ -71,7 +71,6 @@ import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResourceFields;
 import bio.terra.workspace.service.resource.exception.DuplicateResourceException;
 import bio.terra.workspace.service.resource.exception.ResourceNotFoundException;
-import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.workspace.Alpha1Service;
 import bio.terra.workspace.service.workspace.GcpCloudContextService;
@@ -594,8 +593,9 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
             .cloningInstructions(ApiCloningInstructionsEnum.REFERENCE); // not valid (yet)
     assertThrows(
         BadRequestException.class,
-        () -> controlledResourceService.updateBqDataset(
-            updatedResource, updateCloningParams, user.getAuthenticatedRequest(), null, null));
+        () ->
+            controlledResourceService.updateBqDataset(
+                updatedResource, updateCloningParams, user.getAuthenticatedRequest(), null, null));
 
     controlledResourceService.deleteControlledResourceSync(
         resource.getWorkspaceId(), resource.getResourceId(), user.getAuthenticatedRequest());
@@ -611,8 +611,6 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
     features.setAlpha1Enabled(true);
     StairwayTestUtils.enumerateJobsDump(
         alpha1Service, workspace.getWorkspaceId(), user.getAuthenticatedRequest());
-
-
   }
 
   @Test
@@ -1303,11 +1301,16 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
     assertEquals(newName, fetchedResource.getName());
     assertEquals(newDescription, fetchedResource.getDescription());
 
-    assertThrows(BadRequestException.class,
-        () -> controlledResourceService.updateGcsBucket(createdBucket,
-            new ApiGcpGcsBucketUpdateParameters().cloningInstructions(ApiCloningInstructionsEnum.REFERENCE),
-            user.getAuthenticatedRequest(),
-                null, null));
+    assertThrows(
+        BadRequestException.class,
+        () ->
+            controlledResourceService.updateGcsBucket(
+                createdBucket,
+                new ApiGcpGcsBucketUpdateParameters()
+                    .cloningInstructions(ApiCloningInstructionsEnum.REFERENCE),
+                user.getAuthenticatedRequest(),
+                null,
+                null));
   }
 
   @Test
