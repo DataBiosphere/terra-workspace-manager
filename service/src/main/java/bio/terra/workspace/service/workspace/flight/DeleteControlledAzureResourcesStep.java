@@ -46,9 +46,8 @@ public class DeleteControlledAzureResourcesStep implements Step {
         resourceDao.listControlledResources(workspaceUuid, CloudPlatform.AZURE);
 
     /**
-     * TODO: does this need to be done in any particular order? Most resources are likely fine, but
-     * Storage accounts and containers will both be modeled as controlled resources yet I imagine
-     * containers will need to be deleted first or not at all
+     * TODO: https://broadworkbench.atlassian.net/browse/WOR-92 delete Azure storage containers
+     * first before deleting storage account to ensure Sam and WSM DBs are cleaned up
      */
     for (ControlledResource resource : controlledResourceList) {
       controlledResourceService.deleteControlledResourceSync(
