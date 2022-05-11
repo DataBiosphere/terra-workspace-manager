@@ -234,8 +234,11 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
               .castByEnum(WsmResourceType.REFERENCED_GCP_GCS_BUCKET);
       ReferencedGcsBucketResource.Builder updateBucketResourceBuilder =
           referencedResource.toBuilder()
-              .bucketName(bucketName)
-              .cloningInstructions(cloningInstructions);
+              .bucketName(bucketName);
+      if (null != cloningInstructions) {
+        // only overwrite if non-null
+        updateBucketResourceBuilder.cloningInstructions(cloningInstructions);
+      }
       referenceResourceService.updateReferenceResource(
           workspaceUuid,
           referenceId,
