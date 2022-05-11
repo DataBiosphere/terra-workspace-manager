@@ -221,7 +221,8 @@ public class ReferencedBigQueryResourceLifecycle extends WorkspaceAllocateTestSc
         newDatasetName,
         newDatasetDescription,
         /*projectId=*/ null,
-        /*datasetId=*/ null);
+        /*datasetId=*/ null,
+        CloningInstructionsEnum.NOTHING);
     GcpBigQueryDatasetResource datasetReferenceFirstUpdate =
         fullAccessApi.getBigQueryDatasetReference(getWorkspaceId(), bqDatasetResourceId);
     assertEquals(newDatasetName, datasetReferenceFirstUpdate.getMetadata().getName());
@@ -232,6 +233,7 @@ public class ReferencedBigQueryResourceLifecycle extends WorkspaceAllocateTestSc
     assertEquals(
         referencedBqTableAttributes.getProjectId(),
         datasetReferenceFirstUpdate.getAttributes().getProjectId());
+    assertEquals(CloningInstructionsEnum.NOTHING, datasetReferenceFirstUpdate.getMetadata().getCloningInstructions());
     // {@code userWithPartialAccess} does not have access to the original dataset.
     assertFalse(
         partialAccessResourceApi.checkReferenceAccess(getWorkspaceId(), bqDatasetResourceId));
@@ -250,7 +252,8 @@ public class ReferencedBigQueryResourceLifecycle extends WorkspaceAllocateTestSc
                 /*name=*/ null,
                 /*description=*/ null,
                 /*projectId=*/ null,
-                bqTableFromAlternateDatasetAttributes.getDatasetId()));
+                bqTableFromAlternateDatasetAttributes.getDatasetId(),
+                /*cloningInstructions=*/ null));
     BqDatasetUtils.updateBigQueryDatasetReference(
         fullAccessApi,
         getWorkspaceId(),
@@ -258,7 +261,8 @@ public class ReferencedBigQueryResourceLifecycle extends WorkspaceAllocateTestSc
         /*name=*/ null,
         /*description=*/ null,
         /*projectId=*/ null,
-        bqTableFromAlternateDatasetAttributes.getDatasetId());
+        bqTableFromAlternateDatasetAttributes.getDatasetId(),
+        CloningInstructionsEnum.NOTHING);
     GcpBigQueryDatasetResource datasetReferenceSecondUpdate =
         fullAccessApi.getBigQueryDatasetReference(getWorkspaceId(), bqDatasetResourceId);
     assertEquals(newDatasetName, datasetReferenceSecondUpdate.getMetadata().getName());
@@ -274,6 +278,7 @@ public class ReferencedBigQueryResourceLifecycle extends WorkspaceAllocateTestSc
     // to dataset 2, the user have access to this reference now.
     assertTrue(
         partialAccessResourceApi.checkReferenceAccess(getWorkspaceId(), bqDatasetResourceId));
+    assertEquals(CloningInstructionsEnum.NOTHING, datasetReferenceSecondUpdate.getMetadata().getCloningInstructions());
 
     // Update BQ data table's name and description.
     String newDataTableName = "newDataTableName";
@@ -286,7 +291,8 @@ public class ReferencedBigQueryResourceLifecycle extends WorkspaceAllocateTestSc
         newDataTableDescription,
         /*projectId=*/ null,
         /*datasetId=*/ null,
-        /*tableId=*/ null);
+        /*tableId=*/ null,
+        /*cloningInstructions=*/ null);
     GcpBigQueryDataTableResource dataTableReferenceFirstUpdate =
         fullAccessApi.getBigQueryDataTableReference(getWorkspaceId(), bqTableResourceId);
     assertEquals(newDataTableName, dataTableReferenceFirstUpdate.getMetadata().getName());
@@ -317,7 +323,8 @@ public class ReferencedBigQueryResourceLifecycle extends WorkspaceAllocateTestSc
                 /*description=*/ null,
                 /*projectId=*/ null,
                 bqTableFromAlternateDatasetAttributes.getDatasetId(),
-                bqTableFromAlternateDatasetAttributes.getDataTableId()));
+                bqTableFromAlternateDatasetAttributes.getDataTableId(),
+                /*cloningInstructions=*/ null));
     // Successfully update the referencing target because the {@code userWithFullAccess} has
     // access to the bq table 2.
     BqDataTableUtils.updateBigQueryDataTableReference(
@@ -328,7 +335,8 @@ public class ReferencedBigQueryResourceLifecycle extends WorkspaceAllocateTestSc
         /*description=*/ null,
         /*projectId=*/ null,
         bqTableFromAlternateDatasetAttributes.getDatasetId(),
-        bqTableFromAlternateDatasetAttributes.getDataTableId());
+        bqTableFromAlternateDatasetAttributes.getDataTableId(),
+        /*cloningInstructions=*/ null);
 
     GcpBigQueryDataTableResource dataTableReferenceSecondUpdate =
         fullAccessApi.getBigQueryDataTableReference(getWorkspaceId(), bqTableResourceId);
@@ -353,7 +361,8 @@ public class ReferencedBigQueryResourceLifecycle extends WorkspaceAllocateTestSc
         /*description=*/ null,
         /*projectId=*/ null,
         table.getAttributes().getDatasetId(),
-        /*tableId=*/ null);
+        /*tableId=*/ null,
+        /*cloningInstructions=*/ null);
 
     GcpBigQueryDataTableResource dataTableReferenceThirdUpdate =
         fullAccessApi.getBigQueryDataTableReference(getWorkspaceId(), bqTableResourceId);
@@ -378,7 +387,8 @@ public class ReferencedBigQueryResourceLifecycle extends WorkspaceAllocateTestSc
         /*description=*/ null,
         /*projectId=*/ null,
         /*datasetId=*/ null,
-        table.getAttributes().getDataTableId());
+        table.getAttributes().getDataTableId(),
+        /*cloningInstructions*/ null);
     GcpBigQueryDataTableResource dataTableReferenceFourthUpdate =
         fullAccessApi.getBigQueryDataTableReference(getWorkspaceId(), bqTableResourceId);
     assertEquals(newDataTableName, dataTableReferenceFourthUpdate.getMetadata().getName());

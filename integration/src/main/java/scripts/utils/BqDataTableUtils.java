@@ -7,6 +7,7 @@ import static org.hamcrest.Matchers.is;
 import bio.terra.testrunner.runner.config.TestUserSpecification;
 import bio.terra.workspace.api.ReferencedGcpResourceApi;
 import bio.terra.workspace.client.ApiException;
+import bio.terra.workspace.model.CloningInstructionsEnum;
 import bio.terra.workspace.model.GcpBigQueryDataTableAttributes;
 import bio.terra.workspace.model.GcpBigQueryDatasetResource;
 import bio.terra.workspace.model.UpdateBigQueryDataTableReferenceRequestBody;
@@ -36,7 +37,8 @@ public class BqDataTableUtils {
       @Nullable String description,
       @Nullable String projectId,
       @Nullable String datasetId,
-      @Nullable String tableId)
+      @Nullable String tableId,
+      @Nullable CloningInstructionsEnum cloningInstructions)
       throws ApiException {
     UpdateBigQueryDataTableReferenceRequestBody body =
         new UpdateBigQueryDataTableReferenceRequestBody();
@@ -54,6 +56,9 @@ public class BqDataTableUtils {
     }
     if (tableId != null) {
       body.setDataTableId(tableId);
+    }
+    if (cloningInstructions != null) {
+      body.setCloningInstructions(cloningInstructions);
     }
     resourceApi.updateBigQueryDataTableReferenceResource(body, workspaceUuid, resourceId);
   }
