@@ -233,7 +233,9 @@ public class ReferencedBigQueryResourceLifecycle extends WorkspaceAllocateTestSc
     assertEquals(
         referencedBqTableAttributes.getProjectId(),
         datasetReferenceFirstUpdate.getAttributes().getProjectId());
-    assertEquals(CloningInstructionsEnum.NOTHING, datasetReferenceFirstUpdate.getMetadata().getCloningInstructions());
+    assertEquals(
+        CloningInstructionsEnum.NOTHING,
+        datasetReferenceFirstUpdate.getMetadata().getCloningInstructions());
     // {@code userWithPartialAccess} does not have access to the original dataset.
     assertFalse(
         partialAccessResourceApi.checkReferenceAccess(getWorkspaceId(), bqDatasetResourceId));
@@ -278,7 +280,9 @@ public class ReferencedBigQueryResourceLifecycle extends WorkspaceAllocateTestSc
     // to dataset 2, the user have access to this reference now.
     assertTrue(
         partialAccessResourceApi.checkReferenceAccess(getWorkspaceId(), bqDatasetResourceId));
-    assertEquals(CloningInstructionsEnum.NOTHING, datasetReferenceSecondUpdate.getMetadata().getCloningInstructions());
+    assertEquals(
+        CloningInstructionsEnum.NOTHING,
+        datasetReferenceSecondUpdate.getMetadata().getCloningInstructions());
 
     // Update BQ data table's name and description.
     String newDataTableName = "newDataTableName";

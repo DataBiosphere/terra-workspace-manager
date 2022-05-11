@@ -125,7 +125,8 @@ public class ReferencedGitRepoLifecycle extends WorkspaceAllocateTestScriptBase 
         referencedGcpResourceApi.getGitRepoReference(getWorkspaceId(), gitResourceId);
     assertEquals(newGitRepoReferenceName, updatedResource.getMetadata().getName());
     assertEquals(newGitRepoReferenceDescription, updatedResource.getMetadata().getDescription());
-    assertEquals(CloningInstructionsEnum.NOTHING, updatedResource.getMetadata().getCloningInstructions());
+    assertEquals(
+        CloningInstructionsEnum.NOTHING, updatedResource.getMetadata().getCloningInstructions());
   }
 
   @Override

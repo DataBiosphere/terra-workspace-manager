@@ -185,7 +185,8 @@ public class ReferencedDataRepoSnapshotLifecycle extends WorkspaceAllocateTestSc
     assertEquals(newSnapshotReferenceDescription, snapshotResource.getMetadata().getDescription());
     assertFalse(
         partialAccessResourceApi.checkReferenceAccess(getWorkspaceId(), snapshotResourceId));
-    assertEquals(CloningInstructionsEnum.NOTHING, snapshotResource.getMetadata().getCloningInstructions());
+    assertEquals(
+        CloningInstructionsEnum.NOTHING, snapshotResource.getMetadata().getCloningInstructions());
     assertThrows(
         ApiException.class,
         () ->
