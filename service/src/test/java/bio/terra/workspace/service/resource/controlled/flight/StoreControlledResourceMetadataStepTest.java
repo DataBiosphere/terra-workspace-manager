@@ -46,10 +46,9 @@ public class StoreControlledResourceMetadataStepTest extends BaseUnitTest {
             .build();
     workspaceDao.createWorkspace(workspace);
 
-    gcpCloudContextService.createGcpCloudContextStart(
-        workspaceUuid, "flight-testentersinfo");
+    gcpCloudContextService.createGcpCloudContextStart(workspaceUuid, "flight-testentersinfo");
     gcpCloudContextService.createGcpCloudContextFinish(
-        workspaceUuid, new GcpCloudContext("fake-project"),"flight-testentersinfo");
+        workspaceUuid, new GcpCloudContext("fake-project"), "flight-testentersinfo");
 
     StoreMetadataStep storeGoogleBucketMetadataStep = new StoreMetadataStep(resourceDao);
 
