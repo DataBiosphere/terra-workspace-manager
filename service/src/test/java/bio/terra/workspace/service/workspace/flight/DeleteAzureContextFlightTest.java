@@ -19,6 +19,7 @@ import bio.terra.workspace.service.resource.controlled.cloud.azure.relayNamespac
 import bio.terra.workspace.service.resource.controlled.model.AccessScopeType;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResourceFields;
 import bio.terra.workspace.service.resource.controlled.model.ManagedByType;
+import bio.terra.workspace.service.resource.exception.ResourceNotFoundException;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.spendprofile.SpendConnectedTestUtils;
@@ -211,7 +212,7 @@ public class DeleteAzureContextFlightTest extends BaseAzureTest {
                 ControlledResourceFields.builder()
                     .workspaceUuid(workspaceUuid)
                     .resourceId(relayId)
-                    .name("wsm-test" + UUID.randomUUID().toString())
+                    .name("wsm-test" + relayId.toString())
                     .cloningInstructions(CloningInstructions.COPY_RESOURCE)
                     .accessScope(AccessScopeType.fromApi(ApiAccessScope.SHARED_ACCESS))
                     .managedBy(ManagedByType.fromApi(ApiManagedBy.USER))
@@ -253,7 +254,9 @@ public class DeleteAzureContextFlightTest extends BaseAzureTest {
             debugInfo);
     assertEquals(FlightStatus.SUCCESS, flightState.getFlightStatus());
     assertTrue(testUtils.getAuthorizedAzureCloudContext(workspaceUuid, userRequest).isEmpty());
-    // todo: verify relayNamespace was deleted
+    assertThrows(
+        ResourceNotFoundException.class,
+        () -> controlledResourceService.getControlledResource(workspaceUuid, relayId, userRequest));
   }
 
   // todo: this test would be better in the WorkspaceDeleteFlightTest, but that class extends
@@ -353,7 +356,5 @@ public class DeleteAzureContextFlightTest extends BaseAzureTest {
     assertThrows(
         WorkspaceNotFoundException.class,
         () -> workspaceService.getWorkspace(mcWorkspaceUuid, userRequest));
-
-    // todo: verify relay namespace has been deleted
   }
 }
