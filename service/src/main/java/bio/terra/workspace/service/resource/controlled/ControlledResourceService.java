@@ -152,7 +152,7 @@ public class ControlledResourceService {
         resource.getWorkspaceId(),
         resource.getResourceId(),
         SamControlledResourceActions.EDIT_ACTION);
-    if (null != updateParameters) {
+    if (null != updateParameters && null != updateParameters.getCloningInstructions()) {
       ResourceValidationUtils.validateCloningInstructions(
           StewardshipType.CONTROLLED,
           CloningInstructions.fromApiModel(updateParameters.getCloningInstructions()));
@@ -275,7 +275,7 @@ public class ControlledResourceService {
         resource.getWorkspaceId(),
         resource.getResourceId(),
         SamControlledResourceActions.EDIT_ACTION);
-    if (null != updateParameters) {
+    if (null != updateParameters && null != updateParameters.getCloningInstructions()) {
       ResourceValidationUtils.validateCloningInstructions(
           StewardshipType.CONTROLLED,
           CloningInstructions.fromApiModel(updateParameters.getCloningInstructions()));
