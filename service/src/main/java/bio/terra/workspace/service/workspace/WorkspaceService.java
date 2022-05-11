@@ -338,7 +338,8 @@ public class WorkspaceService {
         .userRequest(userRequest)
         .request(destinationWorkspace)
         .operationType(OperationType.CLONE)
-        .workspaceId(sourceWorkspaceId.toString())
+        // allow UI to watch this job (and sub-flights) from dest workspace page during clone
+        .workspaceId(destinationWorkspace.getWorkspaceId().toString())
         .addParameter(
             ControlledResourceKeys.SOURCE_WORKSPACE_ID,
             sourceWorkspaceId) // TODO: remove this duplication
