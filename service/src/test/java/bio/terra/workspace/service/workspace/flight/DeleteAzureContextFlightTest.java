@@ -271,8 +271,7 @@ public class DeleteAzureContextFlightTest extends BaseAzureTest {
             .workspaceStage(WorkspaceStage.MC_WORKSPACE)
             .spendProfileId(spendUtils.defaultSpendId())
             .build();
-    UUID mcWorkspaceUuid =
-        workspaceService.createWorkspace(request, userRequest);
+    UUID mcWorkspaceUuid = workspaceService.createWorkspace(request, userRequest);
 
     // Create the azure context.
     FlightMap createParameters =
@@ -324,8 +323,11 @@ public class DeleteAzureContextFlightTest extends BaseAzureTest {
 
     Map<String, StepStatus> doFailures = new HashMap<>();
     doFailures.put(
+        DeleteControlledAzureResourcesStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
+    doFailures.put(
         DeleteControlledSamResourcesStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
     doFailures.put(DeleteGcpProjectStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
+    doFailures.put(DeleteAzureContextStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
     doFailures.put(DeleteWorkspaceAuthzStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
     doFailures.put(DeleteWorkspaceStateStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
     FlightDebugInfo debugInfo = FlightDebugInfo.newBuilder().doStepFailures(doFailures).build();

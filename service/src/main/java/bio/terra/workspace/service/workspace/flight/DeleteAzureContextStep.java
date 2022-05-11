@@ -22,7 +22,9 @@ public class DeleteAzureContextStep implements Step {
 
   @Override
   public StepResult doStep(FlightContext context) throws InterruptedException, RetryException {
-    azureCloudContextService.deleteAzureCloudContext(workspaceUuid);
+    if (azureCloudContextService.getAzureCloudContext(workspaceUuid).isPresent()) {
+      azureCloudContextService.deleteAzureCloudContext(workspaceUuid);
+    }
     return StepResult.getStepResultSuccess();
   }
 
