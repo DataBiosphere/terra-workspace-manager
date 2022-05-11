@@ -160,6 +160,8 @@ components:
         gitRepoUrl:
           description: the url for cloning the corresponding git repository
           type: string
+        cloningInstructions:
+          $ref: '#/components/schemas/CloningInstructionsEnum'
 
   responses:
     CloneReferencedGitRepoResourceResponse:
