@@ -52,10 +52,11 @@ jobs:
             sudo apt-get update
             sudo apt-get -y install postgresql
 
-      - name: Set up AdoptOpenJDK 11
-        uses: joschi/setup-jdk@v2
+      - name: Set up JDK
+        uses: actions/setup-java@v2
         with:
-          java-version: 11
+          distribution: 'temurin'
+          java-version: 17
 
       - name: Cache Gradle packages
         uses: actions/cache@v2

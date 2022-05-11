@@ -83,11 +83,12 @@ jobs:
         PGPASSWORD: postgres
       run: psql -h 127.0.0.1 -U postgres -f ./service/local-dev/local-postgres-init.sql
 
-    - name: Set up AdoptOpenJDK 11
+    - name: Set up JDK
       if: steps.skiptest.outputs.is-bump == 'no'
-      uses: joschi/setup-jdk@v2
+      uses: actions/setup-java@v2
       with:
-        java-version: 11
+        distribution: 'temurin'
+        java-version: 17
 
     - name: Cache Gradle packages
       if: steps.skiptest.outputs.is-bump == 'no'
