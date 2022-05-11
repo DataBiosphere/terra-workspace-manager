@@ -237,11 +237,8 @@ public class DeleteAzureContextFlightTest extends BaseAzureTest {
 
     // Force each step to be retried once to ensure proper behavior.
     Map<String, StepStatus> doFailures = new HashMap<>();
-    // todo: this step will fail if retried bc the resource has already been deleted from Sam...
-    // what to do about that?
-    //    doFailures.put(
-    //        DeleteControlledAzureResourcesStep.class.getName(),
-    // StepStatus.STEP_RESULT_FAILURE_RETRY);
+    doFailures.put(
+        DeleteControlledAzureResourcesStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
     doFailures.put(DeleteAzureContextStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
     FlightDebugInfo debugInfo = FlightDebugInfo.newBuilder().doStepFailures(doFailures).build();
 
@@ -263,7 +260,9 @@ public class DeleteAzureContextFlightTest extends BaseAzureTest {
   // BaseConnectedTest which doesn't have azure enabled... figure out what to do about this test
   @Test
   void deleteMcWorkspaceWithAzureContextAndResource() throws Exception {
-    // Create a new workspace at the start of each test.
+    AuthenticatedUserRequest userRequest = userAccessUtils.defaultUserAuthRequest();
+
+    // create new workspace so delete at end of test won't interfere with @AfterEach teardown
     UUID uuid = UUID.randomUUID();
     Workspace request =
         Workspace.builder()
@@ -273,14 +272,11 @@ public class DeleteAzureContextFlightTest extends BaseAzureTest {
             .spendProfileId(spendUtils.defaultSpendId())
             .build();
     UUID mcWorkspaceUuid =
-        workspaceService.createWorkspace(request, userAccessUtils.defaultUserAuthRequest());
-
-    // Create a workspace with a controlled resource
-    AuthenticatedUserRequest userRequest = userAccessUtils.defaultUserAuthRequest();
-    FlightMap createParameters =
-        azureTestUtils.createAzureContextInputParameters(mcWorkspaceUuid, userRequest);
+        workspaceService.createWorkspace(request, userRequest);
 
     // Create the azure context.
+    FlightMap createParameters =
+        azureTestUtils.createAzureContextInputParameters(mcWorkspaceUuid, userRequest);
     FlightState flightState =
         StairwayTestUtils.blockUntilFlightCompletes(
             jobService.getStairway(),
@@ -289,15 +285,14 @@ public class DeleteAzureContextFlightTest extends BaseAzureTest {
             CREATION_FLIGHT_TIMEOUT,
             null);
     assertEquals(FlightStatus.SUCCESS, flightState.getFlightStatus());
-
     AzureCloudContext azureCloudContext =
         workspaceService.getAuthorizedAzureCloudContext(mcWorkspaceUuid, userRequest).orElse(null);
     assertNotNull(azureCloudContext);
 
+    // Create Azure relay namespace
     UUID relayId = UUID.randomUUID();
     ApiAzureRelayNamespaceCreationParameters creationParameters =
         ControlledResourceFixtures.getAzureRelayNamespaceCreationParameters();
-
     ControlledAzureRelayNamespaceResource relayNamespaceResource =
         ControlledAzureRelayNamespaceResource.builder()
             .common(
@@ -312,7 +307,6 @@ public class DeleteAzureContextFlightTest extends BaseAzureTest {
             .namespaceName(creationParameters.getNamespaceName())
             .region(creationParameters.getRegion())
             .build();
-
     controlledResourceService.createAzureRelayNamespace(
         relayNamespaceResource, creationParameters, null, null, null, userRequest);
     ControlledAzureRelayNamespaceResource gotRelayNamespaceResource =
