@@ -9,19 +9,19 @@ import bio.terra.workspace.connected.UserAccessUtils;
 import bio.terra.workspace.connected.WorkspaceConnectedTestUtils;
 import bio.terra.workspace.db.exception.WorkspaceNotFoundException;
 import bio.terra.workspace.generated.model.ApiAccessScope;
-import bio.terra.workspace.generated.model.ApiAzureRelayNamespaceCreationParameters;
+import bio.terra.workspace.generated.model.ApiAzureIpCreationParameters;
 import bio.terra.workspace.generated.model.ApiManagedBy;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceService;
-import bio.terra.workspace.service.resource.controlled.cloud.azure.relayNamespace.ControlledAzureRelayNamespaceResource;
+import bio.terra.workspace.service.resource.controlled.cloud.azure.ip.ControlledAzureIpResource;
+import bio.terra.workspace.service.resource.controlled.flight.create.CreateControlledResourceFlight;
 import bio.terra.workspace.service.resource.controlled.model.AccessScopeType;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResourceFields;
 import bio.terra.workspace.service.resource.controlled.model.ManagedByType;
 import bio.terra.workspace.service.resource.exception.ResourceNotFoundException;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
-import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.spendprofile.SpendConnectedTestUtils;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.flight.create.azure.CreateAzureContextFlight;
@@ -202,33 +202,36 @@ public class DeleteAzureContextFlightTest extends BaseAzureTest {
         workspaceService.getAuthorizedAzureCloudContext(workspaceUuid, userRequest).orElse(null);
     assertNotNull(azureCloudContext);
 
-    // Create Azure relay namespace
-    UUID relayId = UUID.randomUUID();
-    ApiAzureRelayNamespaceCreationParameters creationParameters =
-        ControlledResourceFixtures.getAzureRelayNamespaceCreationParameters();
-    ControlledAzureRelayNamespaceResource relayNamespaceResource =
-        ControlledAzureRelayNamespaceResource.builder()
+    // Create Azure IP resource
+    ApiAzureIpCreationParameters ipCreationParameters =
+        ControlledResourceFixtures.getAzureIpCreationParameters();
+
+    final UUID ipId = UUID.randomUUID();
+    ControlledAzureIpResource ipResource =
+        ControlledAzureIpResource.builder()
             .common(
                 ControlledResourceFields.builder()
                     .workspaceUuid(workspaceUuid)
-                    .resourceId(relayId)
-                    .name("wsm-test" + relayId.toString())
+                    .resourceId(ipId)
+                    .name("wsm-test" + ipId.toString())
                     .cloningInstructions(CloningInstructions.COPY_RESOURCE)
                     .accessScope(AccessScopeType.fromApi(ApiAccessScope.SHARED_ACCESS))
                     .managedBy(ManagedByType.fromApi(ApiManagedBy.USER))
                     .build())
-            .namespaceName(creationParameters.getNamespaceName())
-            .region(creationParameters.getRegion())
+            .ipName(ipCreationParameters.getName())
+            .region(ipCreationParameters.getRegion())
             .build();
 
-    controlledResourceService.createAzureRelayNamespace(
-        relayNamespaceResource, creationParameters, null, null, null, userRequest);
-    ControlledAzureRelayNamespaceResource gotRelayNamespaceResource =
-        controlledResourceService
-            .getControlledResource(workspaceUuid, relayId, userRequest)
-            .castByEnum(WsmResourceType.CONTROLLED_AZURE_RELAY_NAMESPACE);
-
-    assertEquals(relayNamespaceResource, gotRelayNamespaceResource);
+    // Submit an IP creation flight.
+    flightState =
+        StairwayTestUtils.blockUntilFlightCompletes(
+            jobService.getStairway(),
+            CreateControlledResourceFlight.class,
+            azureTestUtils.createControlledResourceInputParameters(
+                workspaceUuid, userRequest, ipResource),
+            CREATION_FLIGHT_TIMEOUT,
+            null);
+    assertEquals(FlightStatus.SUCCESS, flightState.getFlightStatus());
 
     // Delete the azure context.
     FlightMap deleteParameters = new FlightMap();
@@ -253,7 +256,7 @@ public class DeleteAzureContextFlightTest extends BaseAzureTest {
     assertTrue(testUtils.getAuthorizedAzureCloudContext(workspaceUuid, userRequest).isEmpty());
     assertThrows(
         ResourceNotFoundException.class,
-        () -> controlledResourceService.getControlledResource(workspaceUuid, relayId, userRequest));
+        () -> controlledResourceService.getControlledResource(workspaceUuid, ipId, userRequest));
   }
 
   // todo: this test would be better in the WorkspaceDeleteFlightTest, but that class extends
@@ -288,32 +291,36 @@ public class DeleteAzureContextFlightTest extends BaseAzureTest {
         workspaceService.getAuthorizedAzureCloudContext(mcWorkspaceUuid, userRequest).orElse(null);
     assertNotNull(azureCloudContext);
 
-    // Create Azure relay namespace
-    UUID relayId = UUID.randomUUID();
-    ApiAzureRelayNamespaceCreationParameters creationParameters =
-        ControlledResourceFixtures.getAzureRelayNamespaceCreationParameters();
-    ControlledAzureRelayNamespaceResource relayNamespaceResource =
-        ControlledAzureRelayNamespaceResource.builder()
+    // Create Azure IP resource
+    ApiAzureIpCreationParameters ipCreationParameters =
+        ControlledResourceFixtures.getAzureIpCreationParameters();
+
+    final UUID ipId = UUID.randomUUID();
+    ControlledAzureIpResource ipResource =
+        ControlledAzureIpResource.builder()
             .common(
                 ControlledResourceFields.builder()
                     .workspaceUuid(mcWorkspaceUuid)
-                    .resourceId(relayId)
-                    .name(UUID.randomUUID().toString())
+                    .resourceId(ipId)
+                    .name("wsm-test" + ipId.toString())
                     .cloningInstructions(CloningInstructions.COPY_RESOURCE)
                     .accessScope(AccessScopeType.fromApi(ApiAccessScope.SHARED_ACCESS))
                     .managedBy(ManagedByType.fromApi(ApiManagedBy.USER))
                     .build())
-            .namespaceName(creationParameters.getNamespaceName())
-            .region(creationParameters.getRegion())
+            .ipName(ipCreationParameters.getName())
+            .region(ipCreationParameters.getRegion())
             .build();
-    controlledResourceService.createAzureRelayNamespace(
-        relayNamespaceResource, creationParameters, null, null, null, userRequest);
-    ControlledAzureRelayNamespaceResource gotRelayNamespaceResource =
-        controlledResourceService
-            .getControlledResource(mcWorkspaceUuid, relayId, userRequest)
-            .castByEnum(WsmResourceType.CONTROLLED_AZURE_RELAY_NAMESPACE);
 
-    assertEquals(relayNamespaceResource, gotRelayNamespaceResource);
+    // Submit an IP creation flight.
+    flightState =
+        StairwayTestUtils.blockUntilFlightCompletes(
+            jobService.getStairway(),
+            CreateControlledResourceFlight.class,
+            azureTestUtils.createControlledResourceInputParameters(
+                mcWorkspaceUuid, userRequest, ipResource),
+            CREATION_FLIGHT_TIMEOUT,
+            null);
+    assertEquals(FlightStatus.SUCCESS, flightState.getFlightStatus());
 
     // Run the delete flight, retrying every step once
     FlightMap deleteParameters = new FlightMap();
@@ -346,9 +353,7 @@ public class DeleteAzureContextFlightTest extends BaseAzureTest {
         WorkspaceNotFoundException.class,
         () ->
             controlledResourceService.getControlledResource(
-                relayNamespaceResource.getWorkspaceId(),
-                relayNamespaceResource.getResourceId(),
-                userRequest));
+                ipResource.getWorkspaceId(), ipResource.getResourceId(), userRequest));
     assertThrows(
         WorkspaceNotFoundException.class,
         () -> workspaceService.getWorkspace(mcWorkspaceUuid, userRequest));
