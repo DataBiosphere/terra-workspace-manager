@@ -22,6 +22,7 @@ import bio.terra.workspace.service.iam.model.SamConstants.SamControlledResourceA
 import bio.terra.workspace.service.job.JobBuilder;
 import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.job.JobService;
+import bio.terra.workspace.service.resource.ResourceValidationUtils;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceSyncMapping.SyncMapping;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.relayNamespace.ControlledAzureRelayNamespaceResource;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.vm.ControlledAzureVmResource;
@@ -38,6 +39,7 @@ import bio.terra.workspace.service.resource.controlled.flight.delete.DeleteContr
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import bio.terra.workspace.service.resource.controlled.model.ManagedByType;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
+import bio.terra.workspace.service.resource.model.StewardshipType;
 import bio.terra.workspace.service.resource.model.WsmResource;
 import bio.terra.workspace.service.stage.StageService;
 import bio.terra.workspace.service.workspace.GcpCloudContextService;
@@ -150,7 +152,11 @@ public class ControlledResourceService {
         resource.getWorkspaceId(),
         resource.getResourceId(),
         SamControlledResourceActions.EDIT_ACTION);
-
+    if (null != updateParameters && null != updateParameters.getCloningInstructions()) {
+      ResourceValidationUtils.validateCloningInstructions(
+          StewardshipType.CONTROLLED,
+          CloningInstructions.fromApiModel(updateParameters.getCloningInstructions()));
+    }
     final String jobDescription =
         String.format(
             "Update controlled GCS Bucket resource %s; id %s; name %s",
@@ -269,7 +275,11 @@ public class ControlledResourceService {
         resource.getWorkspaceId(),
         resource.getResourceId(),
         SamControlledResourceActions.EDIT_ACTION);
-
+    if (null != updateParameters && null != updateParameters.getCloningInstructions()) {
+      ResourceValidationUtils.validateCloningInstructions(
+          StewardshipType.CONTROLLED,
+          CloningInstructions.fromApiModel(updateParameters.getCloningInstructions()));
+    }
     final String jobDescription =
         String.format(
             "Update controlled BigQuery Dataset name %s ; resource id %s; resource name %s",

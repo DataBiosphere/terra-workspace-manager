@@ -587,6 +587,16 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
         newDefaultPartitionLifetime * 1000L,
         updatedDatasetFromCloud.getDefaultPartitionExpirationMs());
 
+    // try to update with invalid cloning instructions
+    ApiGcpBigQueryDatasetUpdateParameters updateCloningParams =
+        new ApiGcpBigQueryDatasetUpdateParameters()
+            .cloningInstructions(ApiCloningInstructionsEnum.REFERENCE); // not valid (yet)
+    assertThrows(
+        BadRequestException.class,
+        () ->
+            controlledResourceService.updateBqDataset(
+                updatedResource, updateCloningParams, user.getAuthenticatedRequest(), null, null));
+
     controlledResourceService.deleteControlledResourceSync(
         resource.getWorkspaceId(), resource.getResourceId(), user.getAuthenticatedRequest());
 
@@ -1290,6 +1300,17 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
 
     assertEquals(newName, fetchedResource.getName());
     assertEquals(newDescription, fetchedResource.getDescription());
+
+    assertThrows(
+        BadRequestException.class,
+        () ->
+            controlledResourceService.updateGcsBucket(
+                createdBucket,
+                new ApiGcpGcsBucketUpdateParameters()
+                    .cloningInstructions(ApiCloningInstructionsEnum.REFERENCE),
+                user.getAuthenticatedRequest(),
+                null,
+                null));
   }
 
   @Test
