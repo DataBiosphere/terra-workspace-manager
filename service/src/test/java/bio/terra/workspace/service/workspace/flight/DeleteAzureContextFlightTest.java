@@ -259,8 +259,9 @@ public class DeleteAzureContextFlightTest extends BaseAzureTest {
         () -> controlledResourceService.getControlledResource(workspaceUuid, ipId, userRequest));
   }
 
-  // todo: this test would be better in the WorkspaceDeleteFlightTest, but that class extends
-  // BaseConnectedTest which doesn't have azure enabled... figure out what to do about this test
+  // This test would be better in the WorkspaceDeleteFlightTest, but that class extends
+  // BaseConnectedTest which doesn't have azure enabled so it lives here for now. If/when test
+  // structure is re-evaluated and BaseAzureTest goes away, this test should be moved
   @Test
   void deleteMcWorkspaceWithAzureContextAndResource() throws Exception {
     AuthenticatedUserRequest userRequest = userAccessUtils.defaultUserAuthRequest();
