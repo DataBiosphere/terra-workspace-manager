@@ -30,6 +30,7 @@ import com.azure.resourcemanager.compute.models.VirtualMachineSizeTypes;
 import com.azure.resourcemanager.network.models.Network;
 import com.azure.resourcemanager.network.models.NetworkInterface;
 import com.azure.resourcemanager.network.models.PublicIpAddress;
+import java.util.Optional;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -67,10 +68,13 @@ public class CreateAzureVmStep implements Step {
             .get(ControlledResourceKeys.AZURE_CLOUD_CONTEXT, AzureCloudContext.class);
     ComputeManager computeManager = crlService.getComputeManager(azureCloudContext, azureConfig);
 
-    final ControlledAzureIpResource ipResource =
-        resourceDao
-            .getResource(resource.getWorkspaceId(), resource.getIpId())
-            .castByEnum(WsmResourceType.CONTROLLED_AZURE_IP);
+    final Optional<ControlledAzureIpResource> ipResource =
+        Optional.ofNullable(resource.getIpId())
+            .map(
+                ipId ->
+                    resourceDao
+                        .getResource(resource.getWorkspaceId(), ipId)
+                        .castByEnum(WsmResourceType.CONTROLLED_AZURE_IP));
 
     final ControlledAzureDiskResource diskResource =
         resourceDao
@@ -89,12 +93,14 @@ public class CreateAzureVmStep implements Step {
               .getByResourceGroup(
                   azureCloudContext.getAzureResourceGroupId(), diskResource.getDiskName());
 
-      PublicIpAddress existingAzureIp =
-          computeManager
-              .networkManager()
-              .publicIpAddresses()
-              .getByResourceGroup(
-                  azureCloudContext.getAzureResourceGroupId(), ipResource.getIpName());
+      Optional<PublicIpAddress> existingAzureIp =
+          ipResource.map(
+              ipRes ->
+                  computeManager
+                      .networkManager()
+                      .publicIpAddresses()
+                      .getByResourceGroup(
+                          azureCloudContext.getAzureResourceGroupId(), ipRes.getIpName()));
 
       Network existingNetwork =
           computeManager
@@ -104,19 +110,12 @@ public class CreateAzureVmStep implements Step {
                   azureCloudContext.getAzureResourceGroupId(), networkResource.getNetworkName());
 
       var createNic =
-          computeManager
-              .networkManager()
-              .networkInterfaces()
-              .define(String.format("nic-%s", resource.getVmName()))
-              .withRegion(resource.getRegion())
-              .withExistingResourceGroup(azureCloudContext.getAzureResourceGroupId())
-              .withExistingPrimaryNetwork(existingNetwork)
-              .withSubnet(networkResource.getSubnetName())
-              .withPrimaryPrivateIPAddressDynamic()
-              .withExistingPrimaryPublicIPAddress(
-                  existingAzureIp) // TODO this needs to be updated to support not exposing public
-              // IP
-              .create();
+          createNetworkInterface(
+              computeManager,
+              azureCloudContext,
+              existingNetwork,
+              networkResource.getSubnetName(),
+              existingAzureIp);
 
       var virtualMachineDefinition =
           buildVmConfiguration(
@@ -137,7 +136,7 @@ public class CreateAzureVmStep implements Step {
                   .setNetwork(existingNetwork)
                   .setSubnetName(networkResource.getSubnetName())
                   .setDisk(existingAzureDisk)
-                  .setPublicIpAddress(existingAzureIp)
+                  .setPublicIpAddress(existingAzureIp.orElse(null))
                   .setImage(AzureVmUtils.getImageData(creationParameters.getVmImage()))
                   .build()));
     } catch (ManagementException e) {
@@ -158,7 +157,7 @@ public class CreateAzureVmStep implements Step {
                 + String.format(
                     "%nResource Group: %s%n\tIp Name: %s%n\tNetwork Name: %s%n\tDisk Name: %s",
                     azureCloudContext.getAzureResourceGroupId(),
-                    ipResource.getIpName(),
+                    ipResource.isPresent() ? ipResource.get().getIpName() : "NoPublicIp",
                     "TODO",
                     diskResource.getDiskName()));
         return new StepResult(StepStatus.STEP_RESULT_FAILURE_FATAL, e);
@@ -244,5 +243,27 @@ public class CreateAzureVmStep implements Step {
       customScriptExtension.attach();
     }
     return vmConfigurationFinalStep;
+  }
+
+  private NetworkInterface createNetworkInterface(
+      ComputeManager computeManager,
+      AzureCloudContext azureCloudContext,
+      Network existingNetwork,
+      String subnetName,
+      Optional<PublicIpAddress> existingAzureIp) {
+    var createNicStep =
+        computeManager
+            .networkManager()
+            .networkInterfaces()
+            .define(String.format("nic-%s", resource.getVmName()))
+            .withRegion(resource.getRegion())
+            .withExistingResourceGroup(azureCloudContext.getAzureResourceGroupId())
+            .withExistingPrimaryNetwork(existingNetwork)
+            .withSubnet(subnetName)
+            .withPrimaryPrivateIPAddressDynamic();
+    if (existingAzureIp.isPresent()) {
+      createNicStep.withExistingPrimaryPublicIPAddress(existingAzureIp.get());
+    }
+    return createNicStep.create();
   }
 }
