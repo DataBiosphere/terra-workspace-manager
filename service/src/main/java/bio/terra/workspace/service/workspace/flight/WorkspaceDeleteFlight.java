@@ -42,8 +42,7 @@ public class WorkspaceDeleteFlight extends Flight {
             appContext.getResourceDao(),
             appContext.getControlledResourceService(),
             workspaceUuid,
-            userRequest),
-        retryRule);
+            userRequest));
 
     // We delete controlled resources from the Sam, but do not need to explicitly delete the
     // actual cloud objects or entries in WSM DB. GCP handles the cleanup when we delete the
