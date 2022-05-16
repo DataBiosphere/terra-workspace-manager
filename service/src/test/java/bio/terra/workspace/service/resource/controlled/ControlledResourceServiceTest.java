@@ -1,16 +1,5 @@
 package bio.terra.workspace.service.resource.controlled;
 
-import static bio.terra.workspace.service.resource.controlled.cloud.gcp.GcpResourceConstant.DEFAULT_REGION;
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.containsInAnyOrder;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-
 import bio.terra.cloudres.google.bigquery.BigQueryCow;
 import bio.terra.cloudres.google.iam.IamCow;
 import bio.terra.cloudres.google.iam.ServiceAccountName;
@@ -32,13 +21,7 @@ import bio.terra.workspace.common.StairwayTestUtils;
 import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
 import bio.terra.workspace.connected.UserAccessUtils;
 import bio.terra.workspace.connected.WorkspaceConnectedTestUtils;
-import bio.terra.workspace.generated.model.ApiClonedControlledGcpGcsBucket;
-import bio.terra.workspace.generated.model.ApiCloningInstructionsEnum;
-import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceCreationParameters;
-import bio.terra.workspace.generated.model.ApiGcpBigQueryDatasetCreationParameters;
-import bio.terra.workspace.generated.model.ApiGcpBigQueryDatasetUpdateParameters;
-import bio.terra.workspace.generated.model.ApiGcpGcsBucketUpdateParameters;
-import bio.terra.workspace.generated.model.ApiJobControl;
+import bio.terra.workspace.generated.model.*;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.iam.model.ControlledResourceIamRole;
@@ -46,24 +29,9 @@ import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.job.exception.InvalidResultStateException;
 import bio.terra.workspace.service.petserviceaccount.PetSaService;
-import bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook.ControlledAiNotebookInstanceResource;
-import bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook.CreateAiNotebookInstanceStep;
-import bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook.DeleteAiNotebookInstanceStep;
-import bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook.GrantPetUsagePermissionStep;
-import bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook.NotebookCloudSyncStep;
-import bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook.RetrieveNetworkNameStep;
-import bio.terra.workspace.service.resource.controlled.cloud.gcp.bqdataset.ControlledBigQueryDatasetResource;
-import bio.terra.workspace.service.resource.controlled.cloud.gcp.bqdataset.CreateBigQueryDatasetStep;
-import bio.terra.workspace.service.resource.controlled.cloud.gcp.bqdataset.DeleteBigQueryDatasetStep;
-import bio.terra.workspace.service.resource.controlled.cloud.gcp.bqdataset.RetrieveBigQueryDatasetCloudAttributesStep;
-import bio.terra.workspace.service.resource.controlled.cloud.gcp.bqdataset.UpdateBigQueryDatasetStep;
-import bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.ControlledGcsBucketResource;
-import bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.CreateGcsBucketStep;
-import bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.DeleteGcsBucketStep;
-import bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.GcsApiConversions;
-import bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.GcsBucketCloudSyncStep;
-import bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.RetrieveGcsBucketCloudAttributesStep;
-import bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.UpdateGcsBucketStep;
+import bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook.*;
+import bio.terra.workspace.service.resource.controlled.cloud.gcp.bqdataset.*;
+import bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.*;
 import bio.terra.workspace.service.resource.controlled.flight.delete.DeleteMetadataStep;
 import bio.terra.workspace.service.resource.controlled.flight.update.RetrieveControlledResourceMetadataStep;
 import bio.terra.workspace.service.resource.controlled.flight.update.UpdateControlledResourceMetadataStep;
@@ -84,22 +52,20 @@ import com.google.api.services.notebooks.v1.model.Instance;
 import com.google.cloud.storage.BucketInfo;
 import com.google.cloud.storage.BucketInfo.LifecycleRule;
 import com.google.common.collect.ImmutableList;
-import java.io.IOException;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
 import org.hamcrest.Matchers;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestInstance;
+import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.TestInstance.Lifecycle;
 import org.junit.jupiter.api.condition.DisabledIfEnvironmentVariable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+
+import java.io.IOException;
+import java.util.*;
+
+import static bio.terra.workspace.service.resource.controlled.cloud.gcp.GcpResourceConstant.DEFAULT_REGION;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.containsInAnyOrder;
+import static org.junit.jupiter.api.Assertions.*;
 
 // Per-class lifecycle on this test to allow a shared workspace object across tests, which saves
 // time creating and deleting GCP contexts.
@@ -469,7 +435,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
         FlightDebugInfo.newBuilder().doStepFailures(retrySteps).build());
 
     controlledResourceService.deleteControlledResourceSync(
-        resource.getWorkspaceId(), resource.getResourceId(), user.getAuthenticatedRequest());
+        resource.getWorkspaceId(), resource.getResourceId(), user.getAuthenticatedRequest(), true);
     assertNotFound(instanceName, notebooks);
     assertThrows(
         ResourceNotFoundException.class,
@@ -495,7 +461,8 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
             controlledResourceService.deleteControlledResourceSync(
                 resource.getWorkspaceId(),
                 resource.getResourceId(),
-                user.getAuthenticatedRequest()));
+                user.getAuthenticatedRequest(),
+                true));
   }
 
   /** Create a controlled AI Notebook instance with default private settings. */
@@ -598,7 +565,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
                 updatedResource, updateCloningParams, user.getAuthenticatedRequest(), null, null));
 
     controlledResourceService.deleteControlledResourceSync(
-        resource.getWorkspaceId(), resource.getResourceId(), user.getAuthenticatedRequest());
+        resource.getWorkspaceId(), resource.getResourceId(), user.getAuthenticatedRequest(), true);
 
     assertThrows(
         ResourceNotFoundException.class,
@@ -734,7 +701,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
         FlightDebugInfo.newBuilder().doStepFailures(retrySteps).build());
 
     controlledResourceService.deleteControlledResourceSync(
-        resource.getWorkspaceId(), resource.getResourceId(), user.getAuthenticatedRequest());
+        resource.getWorkspaceId(), resource.getResourceId(), user.getAuthenticatedRequest(), true);
 
     BigQueryCow bqCow = crlService.createWsmSaBigQueryCow();
     GoogleJsonResponseException getException =
@@ -783,7 +750,8 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
             controlledResourceService.deleteControlledResourceSync(
                 resource.getWorkspaceId(),
                 resource.getResourceId(),
-                user.getAuthenticatedRequest()));
+                user.getAuthenticatedRequest(),
+                true));
 
     BigQueryCow bqCow = crlService.createWsmSaBigQueryCow();
     GoogleJsonResponseException getException =
@@ -1244,7 +1212,8 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
             workspace.getWorkspaceId(),
             createdBucket.getResourceId(),
             "fake result path",
-            user.getAuthenticatedRequest());
+            user.getAuthenticatedRequest(),
+            true);
     jobService.waitForJob(jobId);
     assertEquals(
         FlightStatus.SUCCESS, stairwayComponent.get().getFlightState(jobId).getFlightStatus());

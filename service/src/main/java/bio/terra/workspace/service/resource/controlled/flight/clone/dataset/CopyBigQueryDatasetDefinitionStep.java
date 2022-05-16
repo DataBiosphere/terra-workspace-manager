@@ -19,9 +19,10 @@ import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.workspace.GcpCloudContextService;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ResourceKeys;
+import org.springframework.http.HttpStatus;
+
 import java.util.Optional;
 import java.util.UUID;
-import org.springframework.http.HttpStatus;
 
 /**
  * Copy a BQ dataset's defining attributes to a new dataset.
@@ -141,7 +142,7 @@ public class CopyBigQueryDatasetDefinitionStep implements Step {
                 ControlledBigQueryDatasetResource.class);
     if (clonedDataset != null) {
       controlledResourceService.deleteControlledResourceSync(
-          clonedDataset.getWorkspaceId(), clonedDataset.getResourceId(), userRequest);
+          clonedDataset.getWorkspaceId(), clonedDataset.getResourceId(), userRequest, true);
     }
     return StepResult.getStepResultSuccess();
   }

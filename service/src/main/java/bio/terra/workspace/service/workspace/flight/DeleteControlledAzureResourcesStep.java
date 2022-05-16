@@ -56,7 +56,7 @@ public class DeleteControlledAzureResourcesStep implements Step {
                     cr -> cr.getResourceType() == WsmResourceType.CONTROLLED_AZURE_VM));
     for (ControlledResource vm : vmsAndOtherControlledResources.get(true)) {
       controlledResourceService.deleteControlledResourceSync(
-          workspaceUuid, vm.getResourceId(), userRequest);
+          workspaceUuid, vm.getResourceId(), userRequest, false);
     }
     /**
      * TODO: https://broadworkbench.atlassian.net/browse/WOR-92 delete Azure storage containers
@@ -64,7 +64,7 @@ public class DeleteControlledAzureResourcesStep implements Step {
      */
     for (ControlledResource resource : vmsAndOtherControlledResources.get(false)) {
       controlledResourceService.deleteControlledResourceSync(
-          workspaceUuid, resource.getResourceId(), userRequest);
+          workspaceUuid, resource.getResourceId(), userRequest, false);
     }
     return StepResult.getStepResultSuccess();
   }

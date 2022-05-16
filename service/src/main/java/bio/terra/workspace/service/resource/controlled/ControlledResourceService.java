@@ -7,13 +7,7 @@ import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
 import bio.terra.workspace.common.exception.InternalLogicException;
 import bio.terra.workspace.db.ApplicationDao;
 import bio.terra.workspace.db.ResourceDao;
-import bio.terra.workspace.generated.model.ApiAzureRelayNamespaceCreationParameters;
-import bio.terra.workspace.generated.model.ApiAzureVmCreationParameters;
-import bio.terra.workspace.generated.model.ApiCloningInstructionsEnum;
-import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceCreationParameters;
-import bio.terra.workspace.generated.model.ApiGcpBigQueryDatasetUpdateParameters;
-import bio.terra.workspace.generated.model.ApiGcpGcsBucketUpdateParameters;
-import bio.terra.workspace.generated.model.ApiJobControl;
+import bio.terra.workspace.generated.model.*;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamRethrow;
 import bio.terra.workspace.service.iam.SamService;
@@ -51,6 +45,10 @@ import bio.terra.workspace.service.workspace.model.GcpCloudContext;
 import bio.terra.workspace.service.workspace.model.OperationType;
 import bio.terra.workspace.service.workspace.model.WsmApplication;
 import com.google.cloud.Policy;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
+
+import javax.annotation.Nullable;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
@@ -58,9 +56,6 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
-import javax.annotation.Nullable;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
 
 /** CRUD methods for controlled objects. */
 @Component
@@ -486,10 +481,18 @@ public class ControlledResourceService {
 
   /** Synchronously delete a controlled resource. */
   public void deleteControlledResourceSync(
-      UUID workspaceUuid, UUID resourceId, AuthenticatedUserRequest userRequest) {
+      UUID workspaceUuid,
+      UUID resourceId,
+      AuthenticatedUserRequest userRequest,
+      Boolean withValidations) {
     JobBuilder deleteJob =
         commonDeletionJobBuilder(
-            UUID.randomUUID().toString(), workspaceUuid, resourceId, null, userRequest);
+            UUID.randomUUID().toString(),
+            workspaceUuid,
+            resourceId,
+            null,
+            userRequest,
+            withValidations);
     // Delete flight does not produce a result, so the resultClass parameter here is never used.
     deleteJob.submitAndWait(Void.class);
   }
@@ -503,11 +506,17 @@ public class ControlledResourceService {
       UUID workspaceUuid,
       UUID resourceId,
       String resultPath,
-      AuthenticatedUserRequest userRequest) {
+      AuthenticatedUserRequest userRequest,
+      Boolean withValidations) {
 
     JobBuilder deleteJob =
         commonDeletionJobBuilder(
-            jobControl.getId(), workspaceUuid, resourceId, resultPath, userRequest);
+            jobControl.getId(),
+            workspaceUuid,
+            resourceId,
+            resultPath,
+            userRequest,
+            withValidations);
     return deleteJob.submit();
   }
 
@@ -572,11 +581,18 @@ public class ControlledResourceService {
       UUID workspaceUuid,
       UUID resourceId,
       String resultPath,
-      AuthenticatedUserRequest userRequest) {
-    stageService.assertMcWorkspace(workspaceUuid, "deleteControlledResource");
-    WsmResource resource =
-        controlledResourceMetadataManager.validateControlledResourceAndAction(
-            userRequest, workspaceUuid, resourceId, SamControlledResourceActions.DELETE_ACTION);
+      AuthenticatedUserRequest userRequest,
+      Boolean withValidations) {
+    WsmResource resource;
+    if (withValidations) {
+      stageService.assertMcWorkspace(workspaceUuid, "deleteControlledResource");
+      resource =
+          controlledResourceMetadataManager.validateControlledResourceAndAction(
+              userRequest, workspaceUuid, resourceId, SamControlledResourceActions.DELETE_ACTION);
+    } else {
+      resource = resourceDao.getResource(workspaceUuid, resourceId);
+    }
+
     final String jobDescription = "Delete controlled resource; id: " + resourceId.toString();
 
     return jobService

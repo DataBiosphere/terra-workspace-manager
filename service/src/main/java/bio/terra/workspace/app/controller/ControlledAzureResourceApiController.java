@@ -4,27 +4,7 @@ import bio.terra.common.exception.ApiException;
 import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
 import bio.terra.workspace.common.utils.AzureVmUtils;
 import bio.terra.workspace.generated.controller.ControlledAzureResourceApi;
-import bio.terra.workspace.generated.model.ApiAzureDiskResource;
-import bio.terra.workspace.generated.model.ApiAzureIpResource;
-import bio.terra.workspace.generated.model.ApiAzureNetworkResource;
-import bio.terra.workspace.generated.model.ApiAzureRelayNamespaceResource;
-import bio.terra.workspace.generated.model.ApiAzureVmResource;
-import bio.terra.workspace.generated.model.ApiCreateControlledAzureDiskRequestBody;
-import bio.terra.workspace.generated.model.ApiCreateControlledAzureIpRequestBody;
-import bio.terra.workspace.generated.model.ApiCreateControlledAzureNetworkRequestBody;
-import bio.terra.workspace.generated.model.ApiCreateControlledAzureRelayNamespaceRequestBody;
-import bio.terra.workspace.generated.model.ApiCreateControlledAzureRelayNamespaceResult;
-import bio.terra.workspace.generated.model.ApiCreateControlledAzureStorageRequestBody;
-import bio.terra.workspace.generated.model.ApiCreateControlledAzureVmRequestBody;
-import bio.terra.workspace.generated.model.ApiCreatedControlledAzureDisk;
-import bio.terra.workspace.generated.model.ApiCreatedControlledAzureIp;
-import bio.terra.workspace.generated.model.ApiCreatedControlledAzureNetwork;
-import bio.terra.workspace.generated.model.ApiCreatedControlledAzureStorage;
-import bio.terra.workspace.generated.model.ApiCreatedControlledAzureVmResult;
-import bio.terra.workspace.generated.model.ApiDeleteControlledAzureResourceRequest;
-import bio.terra.workspace.generated.model.ApiDeleteControlledAzureResourceResult;
-import bio.terra.workspace.generated.model.ApiJobControl;
-import bio.terra.workspace.generated.model.ApiJobReport;
+import bio.terra.workspace.generated.model.*;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequestFactory;
 import bio.terra.workspace.service.iam.SamService;
@@ -39,15 +19,16 @@ import bio.terra.workspace.service.resource.controlled.cloud.azure.storage.Contr
 import bio.terra.workspace.service.resource.controlled.cloud.azure.vm.ControlledAzureVmResource;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResourceFields;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
-import java.util.UUID;
-import javax.servlet.http.HttpServletRequest;
-import javax.validation.Valid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.validation.Valid;
+import java.util.UUID;
 
 @Controller
 public class ControlledAzureResourceApiController extends ControlledResourceControllerBase
@@ -440,7 +421,8 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
             workspaceUuid,
             resourceId,
             getAsyncResultEndpoint(jobControl.getId(), "delete-result"),
-            userRequest);
+            userRequest,
+            true);
     return getJobDeleteResult(jobId, userRequest);
   }
 
