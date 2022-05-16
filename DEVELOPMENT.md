@@ -101,6 +101,8 @@ If you use homebrew, you can do this instead:
 
 You may want to use jenv to set this JDK as your global setting to avoid surprises.
 
+To switch between jdk versions, modify `.bash_profile` and run `jenv global` as [described here](https://stackoverflow.com/a/43900696/6447189).
+
 #### Configuring IntelliJ SDK
 
 You will need to configure IntelliJ to use a particular SDK. Here are settings you may need to
