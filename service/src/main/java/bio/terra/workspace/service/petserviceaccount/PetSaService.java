@@ -117,22 +117,29 @@ public class PetSaService {
       }
       // See if the user is already on the policy. If so, return the policy. This avoids
       // calls to set the IAM policy that have a rate limit.
-      if (bindingExists(saPolicy, targetMember)) {
+      Optional<Binding> serviceAccountUserBinding = findServiceAccountUserBinding(saPolicy);
+      if (serviceAccountUserBinding.isPresent() && serviceAccountUserBinding.get().getMembers().contains(targetMember)) {
         logger.info("user {} is already enabled on petSA {}", userToEnableEmail, petSaEmail);
         return Optional.of(saPolicy);
+      } else if (serviceAccountUserBinding.isPresent()) {
+        // If a binding exists for the ServiceAccountUser role but the proxy group is not a member,
+        // add it.
+        serviceAccountUserBinding.get().getMembers().add(targetMember);
+      } else {
+        // Otherwise, create the ServiceAccountUser role binding.
+        Binding newBinding = new Binding()
+            .setRole(SERVICE_ACCOUNT_USER_ROLE)
+            .setMembers(ImmutableList.of(targetMember));
+        // If no bindings exist, getBindings() returns null instead of an empty list.
+        if (saPolicy.getBindings() != null) {
+          saPolicy.getBindings().add(newBinding);
+        } else {
+          List<Binding> bindingList = new ArrayList<>();
+          bindingList.add(newBinding);
+          saPolicy.setBindings(bindingList);
+        }
       }
 
-      Binding saUserBinding =
-          new Binding()
-              .setRole(SERVICE_ACCOUNT_USER_ROLE)
-              .setMembers(ImmutableList.of(targetMember));
-      // If no bindings exist, getBindings() returns null instead of an empty list.
-      List<Binding> bindingList =
-          Optional.ofNullable(saPolicy.getBindings()).orElse(new ArrayList<>());
-      // GCP automatically de-duplicates bindings, so this will have no effect if the user already
-      // has permission to use their pet service account.
-      bindingList.add(saUserBinding);
-      saPolicy.setBindings(bindingList);
       SetIamPolicyRequest request = new SetIamPolicyRequest().setPolicy(saPolicy);
       return Optional.of(
           crlService
@@ -212,17 +219,11 @@ public class PetSaService {
       // If the member is already not on the policy, we are done
       // This handles the case where there are no bindings at all, so we don't
       // need to worry about null binding later in the logic.
-      if (!bindingExists(saPolicy, targetMember)) {
+      Optional<Binding> bindingToModify = findServiceAccountUserBinding(saPolicy);
+      if (bindingToModify.isEmpty() || !bindingToModify.get().getMembers().contains(targetMember)) {
         return Optional.empty();
       }
-
-      Binding bindingToRemove =
-          new Binding()
-              .setRole(SERVICE_ACCOUNT_USER_ROLE)
-              .setMembers(ImmutableList.of(targetMember));
-
-      List<Binding> newBindingsList = removeBinding(saPolicy.getBindings(), bindingToRemove);
-      saPolicy.setBindings(newBindingsList);
+      bindingToModify.get().getMembers().remove(targetMember);
       SetIamPolicyRequest request = new SetIamPolicyRequest().setPolicy(saPolicy);
       return Optional.of(
           crlService
@@ -251,37 +252,20 @@ public class PetSaService {
   }
 
   /**
-   * Utility function for removing all instances of a GCP IAM binding from a list if it is present.
-   * List.remove does not work here as GCP may re-order the binding's member list.
+   * Find and return the IAM binding granting "roles/iam.serviceAccountUser", if one exists.
+   * Sam will automatically grant pet service accounts this permission on themselves, but the
+   * proxy group may or may not be a member of the binding.
    */
-  private List<Binding> removeBinding(List<Binding> bindingList, Binding bindingToRemove) {
-    return bindingList.stream()
-        .filter(binding -> !bindingEquals(binding, bindingToRemove))
-        .collect(Collectors.toList());
-  }
-
-  // Check the policy to see if the binding to the target member already exists
-  private boolean bindingExists(Policy saPolicy, String targetMember) {
+  private Optional<Binding> findServiceAccountUserBinding(Policy saPolicy) {
     if (saPolicy.getBindings() == null) {
-      return false;
+      return Optional.empty();
     }
     for (Binding binding : saPolicy.getBindings()) {
       if (binding.getRole().equals(SERVICE_ACCOUNT_USER_ROLE)) {
-        for (String member : binding.getMembers()) {
-          if (StringUtils.equals(member, targetMember)) {
-            return true;
-          }
-        }
-        break; // found the role, but not the member
+        return Optional.of(binding);
       }
     }
-    return false;
-  }
-
-  private static boolean bindingEquals(Binding binding1, Binding binding2) {
-    return binding1.getRole().equals(binding2.getRole())
-        && binding1.getMembers().containsAll(binding2.getMembers())
-        && binding2.getMembers().containsAll(binding1.getMembers());
+    return Optional.empty();
   }
 
   /**
