@@ -45,7 +45,8 @@ public class DataRepoUtils {
       @Nullable String name,
       @Nullable String description,
       @Nullable String instanceId,
-      @Nullable String snapshot)
+      @Nullable String snapshot,
+      @Nullable CloningInstructionsEnum cloningInstructions)
       throws ApiException {
     UpdateDataRepoSnapshotReferenceRequestBody body =
         new UpdateDataRepoSnapshotReferenceRequestBody();
@@ -60,6 +61,9 @@ public class DataRepoUtils {
     }
     if (snapshot != null) {
       body.setSnapshot(snapshot);
+    }
+    if (cloningInstructions != null) {
+      body.setCloningInstructions(cloningInstructions);
     }
     resourceApi.updateDataRepoSnapshotReferenceResource(body, workspaceUuid, resourceId);
   }

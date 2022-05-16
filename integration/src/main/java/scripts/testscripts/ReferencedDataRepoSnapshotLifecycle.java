@@ -177,14 +177,16 @@ public class ReferencedDataRepoSnapshotLifecycle extends WorkspaceAllocateTestSc
         newSnapshotReferenceName,
         newSnapshotReferenceDescription,
         /*instanceId=*/ null,
-        /*snapshot=*/ null);
+        /*snapshot=*/ null,
+        CloningInstructionsEnum.NOTHING);
     DataRepoSnapshotResource snapshotResource =
         ownerApi.getDataRepoSnapshotReference(getWorkspaceId(), snapshotResourceId);
     assertEquals(newSnapshotReferenceName, snapshotResource.getMetadata().getName());
     assertEquals(newSnapshotReferenceDescription, snapshotResource.getMetadata().getDescription());
     assertFalse(
         partialAccessResourceApi.checkReferenceAccess(getWorkspaceId(), snapshotResourceId));
-
+    assertEquals(
+        CloningInstructionsEnum.NOTHING, snapshotResource.getMetadata().getCloningInstructions());
     assertThrows(
         ApiException.class,
         () ->
@@ -195,7 +197,8 @@ public class ReferencedDataRepoSnapshotLifecycle extends WorkspaceAllocateTestSc
                 newSnapshotReferenceName,
                 newSnapshotReferenceDescription,
                 /*instanceId=*/ null,
-                snapshotId2));
+                snapshotId2,
+                /*cloningInstructions=*/ null));
     updateDataRepoSnapshotReferenceResource(
         ownerApi,
         getWorkspaceId(),
@@ -203,7 +206,8 @@ public class ReferencedDataRepoSnapshotLifecycle extends WorkspaceAllocateTestSc
         newSnapshotReferenceName,
         newSnapshotReferenceDescription,
         /*instanceId=*/ null,
-        snapshotId2);
+        snapshotId2,
+        /*cloningInstructions=*/ null);
     DataRepoSnapshotResource snapshotResourceSecondUpdate =
         ownerApi.getDataRepoSnapshotReference(getWorkspaceId(), snapshotResourceId);
     assertEquals(newSnapshotReferenceName, snapshotResourceSecondUpdate.getMetadata().getName());

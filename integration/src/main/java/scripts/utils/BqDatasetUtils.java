@@ -107,7 +107,8 @@ public class BqDatasetUtils {
       @Nullable String name,
       @Nullable String description,
       @Nullable String projectId,
-      @Nullable String datasetId)
+      @Nullable String datasetId,
+      @Nullable CloningInstructionsEnum cloningInstructions)
       throws ApiException {
     UpdateBigQueryDatasetReferenceRequestBody body =
         new UpdateBigQueryDatasetReferenceRequestBody();
@@ -122,6 +123,9 @@ public class BqDatasetUtils {
     }
     if (datasetId != null) {
       body.setDatasetId(datasetId);
+    }
+    if (cloningInstructions != null) {
+      body.setCloningInstructions(cloningInstructions);
     }
     resourceApi.updateBigQueryDatasetReferenceResource(body, workspace, resourceId);
   }

@@ -9,6 +9,7 @@ import bio.terra.workspace.api.ResourceApi;
 import bio.terra.workspace.api.WorkspaceApi;
 import bio.terra.workspace.model.CloneReferencedGitRepoResourceResult;
 import bio.terra.workspace.model.CloneReferencedResourceRequestBody;
+import bio.terra.workspace.model.CloningInstructionsEnum;
 import bio.terra.workspace.model.GitRepoAttributes;
 import bio.terra.workspace.model.GitRepoResource;
 import bio.terra.workspace.model.ResourceList;
@@ -118,11 +119,14 @@ public class ReferencedGitRepoLifecycle extends WorkspaceAllocateTestScriptBase 
         gitResourceId,
         newGitRepoReferenceName,
         newGitRepoReferenceDescription,
-        /*gitCloneUrl=*/ null);
+        /*gitCloneUrl=*/ null,
+        CloningInstructionsEnum.NOTHING);
     GitRepoResource updatedResource =
         referencedGcpResourceApi.getGitRepoReference(getWorkspaceId(), gitResourceId);
     assertEquals(newGitRepoReferenceName, updatedResource.getMetadata().getName());
     assertEquals(newGitRepoReferenceDescription, updatedResource.getMetadata().getDescription());
+    assertEquals(
+        CloningInstructionsEnum.NOTHING, updatedResource.getMetadata().getCloningInstructions());
   }
 
   @Override

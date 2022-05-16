@@ -129,7 +129,8 @@ public class GcsBucketUtils {
       UUID resourceId,
       @Nullable String name,
       @Nullable String description,
-      @Nullable String bucketName)
+      @Nullable String bucketName,
+      @Nullable CloningInstructionsEnum cloningInstructions)
       throws ApiException {
     UpdateGcsBucketReferenceRequestBody body = new UpdateGcsBucketReferenceRequestBody();
     if (name != null) {
@@ -140,6 +141,9 @@ public class GcsBucketUtils {
     }
     if (bucketName != null) {
       body.setBucketName(bucketName);
+    }
+    if (cloningInstructions != null) {
+      body.setCloningInstructions(cloningInstructions);
     }
     resourceApi.updateBucketReferenceResource(body, workspaceUuid, resourceId);
   }
@@ -312,7 +316,8 @@ public class GcsBucketUtils {
       @Nullable String name,
       @Nullable String description,
       @Nullable String bucketName,
-      @Nullable String objectName)
+      @Nullable String objectName,
+      @Nullable CloningInstructionsEnum cloningInstructions)
       throws ApiException {
     UpdateGcsBucketObjectReferenceRequestBody body =
         new UpdateGcsBucketObjectReferenceRequestBody();
@@ -327,6 +332,9 @@ public class GcsBucketUtils {
     }
     if (objectName != null) {
       body.setObjectName(objectName);
+    }
+    if (cloningInstructions != null) {
+      body.setCloningInstructions(cloningInstructions);
     }
     resourceApi.updateBucketObjectReferenceResource(body, workspaceUuid, resourceId);
   }

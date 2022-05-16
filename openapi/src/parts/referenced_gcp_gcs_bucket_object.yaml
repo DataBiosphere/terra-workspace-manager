@@ -148,7 +148,9 @@ components:
         objectName:
           description: Full path to the file in the gcs bucket.
           type: string
-  
+        cloningInstructions:
+          $ref: '#/components/schemas/CloningInstructionsEnum'
+
     CloneReferencedGcpGcsObjectResourceResult:
       description: >-
         API result class for cloning a referenced GCS object resource. Includes source workspace

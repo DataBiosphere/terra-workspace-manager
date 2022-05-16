@@ -484,21 +484,20 @@ public class ResourceDao {
   }
 
   /**
-   * Update name and/or description of the resource.
+   * Update name, description, and/or cloning instructions of the resource.
    *
    * @param name name of the resource, may be null if it does not need to be updated
    * @param description description of the resource, may be null if it does not need to be updated
    */
   @WriteTransaction
   public boolean updateResource(
-      UUID workspaceUuid, UUID resourceId, @Nullable String name, @Nullable String description) {
+      UUID workspaceUuid,
+      UUID resourceId,
+      @Nullable String name,
+      @Nullable String description,
+      @Nullable CloningInstructions cloningInstructions) {
     return updateResourceWorker(
-        workspaceUuid,
-        resourceId,
-        name,
-        description,
-        /*attributes=*/ null,
-        /*cloningInstructions=*/ null);
+        workspaceUuid, resourceId, name, description, /*attributes=*/ null, cloningInstructions);
   }
 
   /**

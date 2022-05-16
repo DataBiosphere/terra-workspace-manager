@@ -22,7 +22,8 @@ public class GitRepoUtils {
       UUID resourceId,
       @Nullable String name,
       @Nullable String description,
-      @Nullable String gitRepoUrl)
+      @Nullable String gitRepoUrl,
+      @Nullable CloningInstructionsEnum cloningInstructions)
       throws ApiException {
     UpdateGitRepoReferenceRequestBody body = new UpdateGitRepoReferenceRequestBody();
     if (name != null) {
@@ -33,6 +34,9 @@ public class GitRepoUtils {
     }
     if (gitRepoUrl != null) {
       body.setGitRepoUrl(gitRepoUrl);
+    }
+    if (cloningInstructions != null) {
+      body.setCloningInstructions(cloningInstructions);
     }
     resourceApi.updateGitRepoReference(body, workspaceUuid, resourceId);
   }

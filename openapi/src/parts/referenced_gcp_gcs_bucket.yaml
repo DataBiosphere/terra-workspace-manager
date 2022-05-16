@@ -132,6 +132,7 @@ components:
 
     UpdateGcsBucketReferenceRequestBody:
       type: object
+      description: Fields updatable on a GCS bucket. Leave properties null to keep them the same.
       properties:
         name:
           $ref: "#/components/schemas/Name"
@@ -140,6 +141,8 @@ components:
         bucketName:
           description: Name of created bucket (not the resource name).
           type: string
+        cloningInstructions:
+          $ref: '#/components/schemas/CloningInstructionsEnum'
 
   responses:
     GcpGcsBucketReferenceResponse:

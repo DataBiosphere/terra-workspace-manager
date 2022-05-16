@@ -129,10 +129,11 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
     referenceResourceService.updateReferenceResource(
         workspaceUuid,
         referenceResource.getResourceId(),
+        USER_REQUEST,
         null,
         null,
         updatedResource,
-        USER_REQUEST);
+        null);
 
     ReferencedDataRepoSnapshotResource result =
         referenceResourceService
@@ -168,10 +169,11 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
     referenceResourceService.updateReferenceResource(
         workspaceUuid,
         referenceResource.getResourceId(),
+        USER_REQUEST,
         null,
         null,
         updatedResource,
-        USER_REQUEST);
+        null);
 
     ReferencedDataRepoSnapshotResource result =
         referenceResourceService
@@ -184,32 +186,39 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
   }
 
   @Test
-  void updateNameAndDescription() {
+  void updateNameDescriptionAndCloningInstructions() {
     referenceResource = ReferenceResourceFixtures.makeDataRepoSnapshotResource(workspaceUuid);
     referenceResourceService.createReferenceResource(referenceResource, USER_REQUEST);
 
-    // Change the name
-    String updatedName = "renamed" + referenceResource.getName();
+    // Change the name & cloning instructions
+    String updatedName = "renamed-" + referenceResource.getName();
     String originalDescription = referenceResource.getDescription();
-
+    CloningInstructions updatedCloningInstructions = CloningInstructions.COPY_REFERENCE;
     referenceResourceService.updateReferenceResource(
-        workspaceUuid, referenceResource.getResourceId(), updatedName, null, USER_REQUEST);
+        workspaceUuid,
+        referenceResource.getResourceId(),
+        USER_REQUEST,
+        updatedName,
+        null,
+        null,
+        updatedCloningInstructions);
     referenceResource =
         referenceResourceService.getReferenceResourceByName(
             workspaceUuid, updatedName, USER_REQUEST);
     assertEquals(referenceResource.getName(), updatedName);
     assertEquals(referenceResource.getDescription(), originalDescription);
+    assertEquals(updatedCloningInstructions, referenceResource.getCloningInstructions());
 
     // Change the description
-    String updatedDescription = "updated" + referenceResource.getDescription();
+    String updatedDescription = "updated " + referenceResource.getDescription();
 
     referenceResourceService.updateReferenceResource(
-        workspaceUuid, referenceResource.getResourceId(), null, updatedDescription, USER_REQUEST);
+        workspaceUuid, referenceResource.getResourceId(), USER_REQUEST, null, updatedDescription);
     referenceResource =
         referenceResourceService.getReferenceResource(
             workspaceUuid, referenceResource.getResourceId(), USER_REQUEST);
-    assertEquals(referenceResource.getName(), updatedName);
-    assertEquals(referenceResource.getDescription(), updatedDescription);
+    assertEquals(updatedName, referenceResource.getName());
+    assertEquals(updatedDescription, referenceResource.getDescription());
 
     // Change both
     String updatedName2 = "2" + updatedName;
@@ -217,9 +226,9 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
     referenceResourceService.updateReferenceResource(
         workspaceUuid,
         referenceResource.getResourceId(),
+        USER_REQUEST,
         updatedName2,
-        updatedDescription2,
-        USER_REQUEST);
+        updatedDescription2);
     referenceResource =
         referenceResourceService.getReferenceResource(
             workspaceUuid, referenceResource.getResourceId(), USER_REQUEST);
@@ -232,7 +241,7 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
         InvalidNameException.class,
         () ->
             referenceResourceService.updateReferenceResource(
-                workspaceUuid, referenceResource.getResourceId(), invalidName, null, USER_REQUEST));
+                workspaceUuid, referenceResource.getResourceId(), USER_REQUEST, invalidName, null));
     // Update to invalid description
   }
 

@@ -139,6 +139,8 @@ components:
           type: string
         datasetId:
           type: string
+        cloningInstructions:
+          $ref: '#/components/schemas/CloningInstructionsEnum'
 
     CloneReferencedGcpBigQueryDatasetResourceResult:
       description: >-
