@@ -1,5 +1,6 @@
 package bio.terra.workspace.service.workspace.flight;
 
+import bio.terra.common.sam.exception.SamConflictException;
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
@@ -35,11 +36,11 @@ public class CreateWorkspaceAuthzStep implements Step {
   public StepResult doStep(FlightContext flightContext)
       throws RetryException, InterruptedException {
 
-    // Even though WSM should own this resource, Stairway steps can run multiple times, so it's
-    // possible this step already created the resource. If WSM can either read the existing Sam
-    // resource or create a new one, this is considered successful.
-    if (!canReadExistingWorkspace(workspace.getWorkspaceId())) {
+    try {
       samService.createWorkspaceWithDefaults(userRequest, workspace.getWorkspaceId());
+    } catch (SamConflictException e) {
+      // Stairway steps can run multiple times. This step must have run before.
+      return StepResult.getStepResultSuccess();
     }
     return StepResult.getStepResultSuccess();
   }
@@ -48,13 +49,5 @@ public class CreateWorkspaceAuthzStep implements Step {
   public StepResult undoStep(FlightContext flightContext) throws InterruptedException {
     samService.deleteWorkspace(userRequest, workspace.getWorkspaceId());
     return StepResult.getStepResultSuccess();
-  }
-
-  private boolean canReadExistingWorkspace(UUID workspaceUuid) throws InterruptedException {
-    return samService.isAuthorized(
-        userRequest,
-        SamConstants.SamResource.WORKSPACE,
-        workspaceUuid.toString(),
-        SamConstants.SamWorkspaceAction.READ);
   }
 }
