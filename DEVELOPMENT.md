@@ -91,12 +91,17 @@ You can install the JDK from IntelliJ::
 
 If you use homebrew, you can do this instead:
 ```sh
-    # In getting set up initially, I made some mess, but I think this will work.
-    brew install temurin17
+    brew tap homebrew/cask-versions
+    brew install --cask temurin17
+
+    # If ~/.jenv/versions directory doesn't exist:
+    mkdir -p ~/.jenv/versions
     jenv add /Library/Java/JavaVirtualMachines/temurin-17.jdk/Contents/Home
  ```
 
 You may want to use jenv to set this JDK as your global setting to avoid surprises.
+
+To switch between jdk versions, modify `.bash_profile` and run `jenv` as [described here](https://www.jenv.be/).
 
 #### Configuring IntelliJ SDK
 
