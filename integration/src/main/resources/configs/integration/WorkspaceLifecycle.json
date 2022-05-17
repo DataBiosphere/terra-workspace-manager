@@ -9,8 +9,8 @@
       "name": "WorkspaceLifecycle",
       "numberOfUserJourneyThreadsToRun": 1,
       "userJourneyThreadPoolSize": 1,
-      "expectedTimeForEach": 1,
-      "expectedTimeForEachUnit": "MINUTES"
+      "expectedTimeForEach": 10,
+      "expectedTimeForEachUnit": "SECONDS"
     }
   ],
   "testUserFiles": ["liam.json"]
