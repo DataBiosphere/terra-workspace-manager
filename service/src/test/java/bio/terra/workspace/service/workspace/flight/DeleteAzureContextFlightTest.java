@@ -80,38 +80,75 @@ public class DeleteAzureContextFlightTest extends BaseAzureTest {
     workspaceService.deleteWorkspace(workspaceUuid, userAccessUtils.defaultUserAuthRequest());
   }
 
-  @Test
-  void deleteContextDo() throws Exception {
-    AuthenticatedUserRequest userRequest = userAccessUtils.defaultUserAuthRequest();
+  private void createAzureContext(UUID workspaceUuid, AuthenticatedUserRequest userRequest) throws Exception {
     FlightMap createParameters =
-        azureTestUtils.createAzureContextInputParameters(workspaceUuid, userRequest);
+            azureTestUtils.createAzureContextInputParameters(workspaceUuid, userRequest);
 
-    // Create the azure context.
     FlightState flightState =
-        StairwayTestUtils.blockUntilFlightCompletes(
-            jobService.getStairway(),
-            CreateAzureContextFlight.class,
-            createParameters,
-            CREATION_FLIGHT_TIMEOUT,
-            null);
+            StairwayTestUtils.blockUntilFlightCompletes(
+                    jobService.getStairway(),
+                    CreateAzureContextFlight.class,
+                    createParameters,
+                    CREATION_FLIGHT_TIMEOUT,
+                    null);
 
     assertEquals(FlightStatus.SUCCESS, flightState.getFlightStatus());
 
     AzureCloudContext azureCloudContext =
-        workspaceService.getAuthorizedAzureCloudContext(workspaceUuid, userRequest).orElse(null);
+            workspaceService.getAuthorizedAzureCloudContext(workspaceUuid, userRequest).orElse(null);
     assertNotNull(azureCloudContext);
+  }
+
+  private UUID createAzureIpResource(UUID workspaceUuid, AuthenticatedUserRequest userRequest) throws Exception {
+    ApiAzureIpCreationParameters ipCreationParameters =
+            ControlledResourceFixtures.getAzureIpCreationParameters();
+
+    final UUID ipId = UUID.randomUUID();
+    ControlledAzureIpResource ipResource =
+            ControlledAzureIpResource.builder()
+                    .common(
+                            ControlledResourceFields.builder()
+                                    .workspaceUuid(workspaceUuid)
+                                    .resourceId(ipId)
+                                    .name("wsm-test" + ipId.toString())
+                                    .cloningInstructions(CloningInstructions.COPY_RESOURCE)
+                                    .accessScope(AccessScopeType.fromApi(ApiAccessScope.SHARED_ACCESS))
+                                    .managedBy(ManagedByType.fromApi(ApiManagedBy.USER))
+                                    .build())
+                    .ipName(ipCreationParameters.getName())
+                    .region(ipCreationParameters.getRegion())
+                    .build();
+
+    // Submit an IP creation flight.
+    FlightState flightState =
+            StairwayTestUtils.blockUntilFlightCompletes(
+                    jobService.getStairway(),
+                    CreateControlledResourceFlight.class,
+                    azureTestUtils.createControlledResourceInputParameters(
+                            workspaceUuid, userRequest, ipResource),
+                    CREATION_FLIGHT_TIMEOUT,
+                    null);
+    assertEquals(FlightStatus.SUCCESS, flightState.getFlightStatus());
+
+    return ipId;
+  }
+
+  @Test
+  void deleteContextDo() throws Exception {
+    AuthenticatedUserRequest userRequest = userAccessUtils.defaultUserAuthRequest();
+    createAzureContext(workspaceUuid, userRequest);
 
     // Delete the azure context.
     FlightMap deleteParameters = new FlightMap();
     deleteParameters.put(WorkspaceFlightMapKeys.WORKSPACE_ID, workspaceUuid.toString());
     deleteParameters.put(JobMapKeys.AUTH_USER_INFO.getKeyName(), userRequest);
 
-    // Force each step to be retried once to ensure proper behavior.
+    // Force each retryable step to be retried once to ensure proper behavior.
     Map<String, StepStatus> doFailures = new HashMap<>();
     doFailures.put(DeleteAzureContextStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
     FlightDebugInfo debugInfo = FlightDebugInfo.newBuilder().doStepFailures(doFailures).build();
 
-    flightState =
+    FlightState flightState =
         StairwayTestUtils.blockUntilFlightCompletes(
             jobService.getStairway(),
             DeleteAzureContextFlight.class,
@@ -126,19 +163,7 @@ public class DeleteAzureContextFlightTest extends BaseAzureTest {
   @Test
   void deleteContextUndo() throws Exception {
     AuthenticatedUserRequest userRequest = userAccessUtils.defaultUserAuthRequest();
-    FlightMap createParameters =
-        azureTestUtils.createAzureContextInputParameters(workspaceUuid, userRequest);
-
-    // Create the azure context.
-    FlightState flightState =
-        StairwayTestUtils.blockUntilFlightCompletes(
-            jobService.getStairway(),
-            CreateAzureContextFlight.class,
-            createParameters,
-            CREATION_FLIGHT_TIMEOUT,
-            null);
-
-    assertEquals(FlightStatus.SUCCESS, flightState.getFlightStatus());
+    createAzureContext(workspaceUuid, userRequest);
 
     // Delete the azure context.
     FlightMap deleteParameters = new FlightMap();
@@ -147,7 +172,7 @@ public class DeleteAzureContextFlightTest extends BaseAzureTest {
     // Fail at the end of the flight to verify it can't be undone.
     FlightDebugInfo debugInfo = FlightDebugInfo.newBuilder().lastStepFailure(true).build();
 
-    flightState =
+    FlightState flightState =
         StairwayTestUtils.blockUntilFlightCompletes(
             jobService.getStairway(),
             DeleteAzureContextFlight.class,
@@ -183,65 +208,20 @@ public class DeleteAzureContextFlightTest extends BaseAzureTest {
   @Test
   void deleteResourcesInContext() throws Exception {
     AuthenticatedUserRequest userRequest = userAccessUtils.defaultUserAuthRequest();
-    FlightMap createParameters =
-        azureTestUtils.createAzureContextInputParameters(workspaceUuid, userRequest);
-
-    // Create the azure context.
-    FlightState flightState =
-        StairwayTestUtils.blockUntilFlightCompletes(
-            jobService.getStairway(),
-            CreateAzureContextFlight.class,
-            createParameters,
-            CREATION_FLIGHT_TIMEOUT,
-            null);
-    assertEquals(FlightStatus.SUCCESS, flightState.getFlightStatus());
-
-    AzureCloudContext azureCloudContext =
-        workspaceService.getAuthorizedAzureCloudContext(workspaceUuid, userRequest).orElse(null);
-    assertNotNull(azureCloudContext);
-
-    // Create Azure IP resource
-    ApiAzureIpCreationParameters ipCreationParameters =
-        ControlledResourceFixtures.getAzureIpCreationParameters();
-
-    final UUID ipId = UUID.randomUUID();
-    ControlledAzureIpResource ipResource =
-        ControlledAzureIpResource.builder()
-            .common(
-                ControlledResourceFields.builder()
-                    .workspaceUuid(workspaceUuid)
-                    .resourceId(ipId)
-                    .name("wsm-test" + ipId.toString())
-                    .cloningInstructions(CloningInstructions.COPY_RESOURCE)
-                    .accessScope(AccessScopeType.fromApi(ApiAccessScope.SHARED_ACCESS))
-                    .managedBy(ManagedByType.fromApi(ApiManagedBy.USER))
-                    .build())
-            .ipName(ipCreationParameters.getName())
-            .region(ipCreationParameters.getRegion())
-            .build();
-
-    // Submit an IP creation flight.
-    flightState =
-        StairwayTestUtils.blockUntilFlightCompletes(
-            jobService.getStairway(),
-            CreateControlledResourceFlight.class,
-            azureTestUtils.createControlledResourceInputParameters(
-                workspaceUuid, userRequest, ipResource),
-            CREATION_FLIGHT_TIMEOUT,
-            null);
-    assertEquals(FlightStatus.SUCCESS, flightState.getFlightStatus());
+    createAzureContext(workspaceUuid, userRequest);
+    UUID ipId = createAzureIpResource(workspaceUuid, userRequest);
 
     // Delete the azure context.
     FlightMap deleteParameters = new FlightMap();
     deleteParameters.put(WorkspaceFlightMapKeys.WORKSPACE_ID, workspaceUuid.toString());
     deleteParameters.put(JobMapKeys.AUTH_USER_INFO.getKeyName(), userRequest);
 
-    // Force each step to be retried once to ensure proper behavior.
+    // Force each retryable step to be retried once to ensure proper behavior.
     Map<String, StepStatus> doFailures = new HashMap<>();
     doFailures.put(DeleteAzureContextStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
     FlightDebugInfo debugInfo = FlightDebugInfo.newBuilder().doStepFailures(doFailures).build();
 
-    flightState =
+    FlightState flightState =
         StairwayTestUtils.blockUntilFlightCompletes(
             jobService.getStairway(),
             DeleteAzureContextFlight.class,
@@ -273,53 +253,10 @@ public class DeleteAzureContextFlightTest extends BaseAzureTest {
             .build();
     UUID mcWorkspaceUuid = workspaceService.createWorkspace(request, userRequest);
 
-    // Create the azure context.
-    FlightMap createParameters =
-        azureTestUtils.createAzureContextInputParameters(mcWorkspaceUuid, userRequest);
-    FlightState flightState =
-        StairwayTestUtils.blockUntilFlightCompletes(
-            jobService.getStairway(),
-            CreateAzureContextFlight.class,
-            createParameters,
-            CREATION_FLIGHT_TIMEOUT,
-            null);
-    assertEquals(FlightStatus.SUCCESS, flightState.getFlightStatus());
-    AzureCloudContext azureCloudContext =
-        workspaceService.getAuthorizedAzureCloudContext(mcWorkspaceUuid, userRequest).orElse(null);
-    assertNotNull(azureCloudContext);
+    createAzureContext(mcWorkspaceUuid, userRequest);
+    UUID ipId = createAzureIpResource(mcWorkspaceUuid, userRequest);
 
-    // Create Azure IP resource
-    ApiAzureIpCreationParameters ipCreationParameters =
-        ControlledResourceFixtures.getAzureIpCreationParameters();
-
-    final UUID ipId = UUID.randomUUID();
-    ControlledAzureIpResource ipResource =
-        ControlledAzureIpResource.builder()
-            .common(
-                ControlledResourceFields.builder()
-                    .workspaceUuid(mcWorkspaceUuid)
-                    .resourceId(ipId)
-                    .name("wsm-test" + ipId.toString())
-                    .cloningInstructions(CloningInstructions.COPY_RESOURCE)
-                    .accessScope(AccessScopeType.fromApi(ApiAccessScope.SHARED_ACCESS))
-                    .managedBy(ManagedByType.fromApi(ApiManagedBy.USER))
-                    .build())
-            .ipName(ipCreationParameters.getName())
-            .region(ipCreationParameters.getRegion())
-            .build();
-
-    // Submit an IP creation flight.
-    flightState =
-        StairwayTestUtils.blockUntilFlightCompletes(
-            jobService.getStairway(),
-            CreateControlledResourceFlight.class,
-            azureTestUtils.createControlledResourceInputParameters(
-                mcWorkspaceUuid, userRequest, ipResource),
-            CREATION_FLIGHT_TIMEOUT,
-            null);
-    assertEquals(FlightStatus.SUCCESS, flightState.getFlightStatus());
-
-    // Run the delete flight, retrying every step once
+    // Run the delete flight, retrying every retryable step once
     FlightMap deleteParameters = new FlightMap();
     deleteParameters.put(WorkspaceFlightMapKeys.WORKSPACE_ID, mcWorkspaceUuid.toString());
     deleteParameters.put(WorkspaceFlightMapKeys.WORKSPACE_STAGE, WorkspaceStage.MC_WORKSPACE);
@@ -334,7 +271,7 @@ public class DeleteAzureContextFlightTest extends BaseAzureTest {
     doFailures.put(DeleteWorkspaceStateStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
     FlightDebugInfo debugInfo = FlightDebugInfo.newBuilder().doStepFailures(doFailures).build();
 
-    flightState =
+    FlightState flightState =
         StairwayTestUtils.blockUntilFlightCompletes(
             jobService.getStairway(),
             WorkspaceDeleteFlight.class,
@@ -348,7 +285,7 @@ public class DeleteAzureContextFlightTest extends BaseAzureTest {
         WorkspaceNotFoundException.class,
         () ->
             controlledResourceService.getControlledResource(
-                ipResource.getWorkspaceId(), ipResource.getResourceId(), userRequest));
+                mcWorkspaceUuid, ipId, userRequest));
     assertThrows(
         WorkspaceNotFoundException.class,
         () -> workspaceService.getWorkspace(mcWorkspaceUuid, userRequest));
