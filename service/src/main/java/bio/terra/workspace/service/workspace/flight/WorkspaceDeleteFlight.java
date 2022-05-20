@@ -9,6 +9,7 @@ import bio.terra.workspace.common.utils.RetryRules;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
+
 import java.util.UUID;
 
 // TODO(PF-555): There is a race condition if this flight runs at the same time as new controlled
@@ -34,6 +35,15 @@ public class WorkspaceDeleteFlight extends Flight {
 
     RetryRule retryRule = RetryRules.cloudLongRunning();
 
+    // In Azure, we need to explicitly delete the controlled resources as there is no containing
+    // object (like a GCP project) that we can delete which will also delete all resources
+    addStep(
+        new DeleteControlledAzureResourcesStep(
+            appContext.getResourceDao(),
+            appContext.getControlledResourceService(),
+            workspaceUuid,
+            userRequest));
+
     // We delete controlled resources from the Sam, but do not need to explicitly delete the
     // actual cloud objects or entries in WSM DB. GCP handles the cleanup when we delete the
     // containing project, and we cascade workspace deletion to resources in the DB.
@@ -47,6 +57,9 @@ public class WorkspaceDeleteFlight extends Flight {
     addStep(
         new DeleteGcpProjectStep(
             appContext.getCrlService(), appContext.getGcpCloudContextService()),
+        retryRule);
+    addStep(
+        new DeleteAzureContextStep(appContext.getAzureCloudContextService(), workspaceUuid),
         retryRule);
     // Workspace authz is handled differently depending on whether WSM owns the underlying Sam
     // resource or not, as indicated by the workspace stage enum.

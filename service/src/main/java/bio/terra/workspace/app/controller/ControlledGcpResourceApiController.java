@@ -2,29 +2,7 @@ package bio.terra.workspace.app.controller;
 
 import bio.terra.common.exception.BadRequestException;
 import bio.terra.workspace.generated.controller.ControlledGcpResourceApi;
-import bio.terra.workspace.generated.model.ApiCloneControlledGcpBigQueryDatasetRequest;
-import bio.terra.workspace.generated.model.ApiCloneControlledGcpBigQueryDatasetResult;
-import bio.terra.workspace.generated.model.ApiCloneControlledGcpGcsBucketRequest;
-import bio.terra.workspace.generated.model.ApiCloneControlledGcpGcsBucketResult;
-import bio.terra.workspace.generated.model.ApiClonedControlledGcpBigQueryDataset;
-import bio.terra.workspace.generated.model.ApiClonedControlledGcpGcsBucket;
-import bio.terra.workspace.generated.model.ApiCreateControlledGcpAiNotebookInstanceRequestBody;
-import bio.terra.workspace.generated.model.ApiCreateControlledGcpBigQueryDatasetRequestBody;
-import bio.terra.workspace.generated.model.ApiCreateControlledGcpGcsBucketRequestBody;
-import bio.terra.workspace.generated.model.ApiCreatedControlledGcpAiNotebookInstanceResult;
-import bio.terra.workspace.generated.model.ApiCreatedControlledGcpBigQueryDataset;
-import bio.terra.workspace.generated.model.ApiCreatedControlledGcpGcsBucket;
-import bio.terra.workspace.generated.model.ApiDeleteControlledGcpAiNotebookInstanceRequest;
-import bio.terra.workspace.generated.model.ApiDeleteControlledGcpAiNotebookInstanceResult;
-import bio.terra.workspace.generated.model.ApiDeleteControlledGcpGcsBucketRequest;
-import bio.terra.workspace.generated.model.ApiDeleteControlledGcpGcsBucketResult;
-import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceResource;
-import bio.terra.workspace.generated.model.ApiGcpBigQueryDatasetResource;
-import bio.terra.workspace.generated.model.ApiGcpGcsBucketResource;
-import bio.terra.workspace.generated.model.ApiJobControl;
-import bio.terra.workspace.generated.model.ApiJobReport;
-import bio.terra.workspace.generated.model.ApiUpdateControlledGcpBigQueryDatasetRequestBody;
-import bio.terra.workspace.generated.model.ApiUpdateControlledGcpGcsBucketRequestBody;
+import bio.terra.workspace.generated.model.*;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequestFactory;
 import bio.terra.workspace.service.iam.SamService;
@@ -40,16 +18,17 @@ import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResourceFields;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.workspace.WorkspaceService;
-import java.util.Optional;
-import java.util.UUID;
-import javax.servlet.http.HttpServletRequest;
-import javax.validation.Valid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.validation.Valid;
+import java.util.Optional;
+import java.util.UUID;
 
 @Controller
 public class ControlledGcpResourceApiController extends ControlledResourceControllerBase
@@ -116,7 +95,8 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
             workspaceUuid,
             resourceId,
             getAsyncResultEndpoint(jobControl.getId(), "delete-result"),
-            userRequest);
+            userRequest,
+            true);
     return getDeleteResult(jobId, userRequest);
   }
 
@@ -289,7 +269,8 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
         "Deleting controlled BQ dataset resource {} in workspace {}",
         resourceId.toString(),
         workspaceUuid.toString());
-    controlledResourceService.deleteControlledResourceSync(workspaceUuid, resourceId, userRequest);
+    controlledResourceService.deleteControlledResourceSync(
+        workspaceUuid, resourceId, userRequest, true);
     return new ResponseEntity<>(HttpStatus.NO_CONTENT);
   }
 
@@ -370,7 +351,8 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
             workspaceUuid,
             resourceId,
             getAsyncResultEndpoint(jobControl.getId(), "delete-result"),
-            userRequest);
+            userRequest,
+            true);
     ApiDeleteControlledGcpAiNotebookInstanceResult result =
         fetchNotebookInstanceDeleteResult(jobId, userRequest);
     return new ResponseEntity<>(result, getAsyncResponseCode(result.getJobReport()));
