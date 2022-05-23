@@ -1,6 +1,8 @@
 package bio.terra.workspace.app.controller;
 
 import bio.terra.workspace.generated.model.ApiControlledResourceCommonFields;
+import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceResource;
+import bio.terra.workspace.generated.model.ApiGcpAiNotebookUpdateParameters;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequestFactory;
 import bio.terra.workspace.service.iam.SamService;
@@ -13,12 +15,13 @@ import bio.terra.workspace.service.resource.model.CloningInstructions;
 import java.util.Optional;
 import java.util.UUID;
 import javax.servlet.http.HttpServletRequest;
+import org.springframework.http.ResponseEntity;
 
 /**
  * Super class for controllers containing common code. The code in here requires the @Autowired
  * beans from the @Controller classes, so it is better as a superclass rather than static methods.
  */
-public class ControlledResourceControllerBase extends ControllerBase {
+public abstract class ControlledResourceControllerBase extends ControllerBase {
   private final ControlledResourceService controlledResourceService;
 
   public ControlledResourceControllerBase(
