@@ -124,7 +124,7 @@ public class ControlledAiNotebookInstanceResource extends ControlledResource {
       FlightBeanBag flightBeanBag) {
 
     WorkspaceDao workspaceDao = flightBeanBag.getWorkspaceDao();
-    String userFacingWorkspaceId = workspaceDao.getWorkspace(getWorkspaceId()).getUserFacingId();
+    String workspaceUserFacingId = workspaceDao.getWorkspace(getWorkspaceId()).getUserFacingId();
 
     RetryRule gcpRetryRule = RetryRules.cloud();
     flight.addStep(
@@ -140,7 +140,7 @@ public class ControlledAiNotebookInstanceResource extends ControlledResource {
         gcpRetryRule);
     flight.addStep(
         new CreateAiNotebookInstanceStep(
-            this, petSaEmail, userFacingWorkspaceId, flightBeanBag.getCrlService(), flightBeanBag.getCliConfiguration()),
+            this, petSaEmail, workspaceUserFacingId, flightBeanBag.getCrlService(), flightBeanBag.getCliConfiguration()),
         gcpRetryRule);
     flight.addStep(
         new NotebookCloudSyncStep(

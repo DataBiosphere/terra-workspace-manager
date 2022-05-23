@@ -181,7 +181,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
   @DisabledIfEnvironmentVariable(named = "TEST_ENV", matches = BUFFER_SERVICE_DISABLED_ENVS_REG_EX)
   void createAiNotebookInstanceDo() throws Exception {
     UUID workspaceUuid = workspace.getWorkspaceId();
-    String userFacingWorkspaceId = workspace.getUserFacingId();
+    String workspaceUserFacingId = workspace.getUserFacingId();
     var instanceId = "create-ai-notebook-instance-do";
     var serverName = "verily-autopush";
     cliConfiguration.setServerName(serverName);
@@ -257,7 +257,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
     assertThat(instance.getMetadata(), Matchers.hasEntry("terra-cli-server", serverName));
     assertThat(
         instance.getMetadata(),
-        Matchers.hasEntry("terra-workspace-id", userFacingWorkspaceId));
+        Matchers.hasEntry("terra-workspace-id", workspaceUserFacingId));
     ServiceAccountName serviceAccountName =
         ServiceAccountName.builder()
             .projectId(instanceName.projectId())

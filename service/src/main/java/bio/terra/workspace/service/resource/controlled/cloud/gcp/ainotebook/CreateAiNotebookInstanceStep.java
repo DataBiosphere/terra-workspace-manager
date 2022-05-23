@@ -8,7 +8,6 @@ import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKey
 import bio.terra.cloudres.google.api.services.common.OperationCow;
 import bio.terra.cloudres.google.notebooks.AIPlatformNotebooksCow;
 import bio.terra.cloudres.google.notebooks.InstanceName;
-import bio.terra.common.exception.ConflictException;
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.Step;
@@ -80,19 +79,19 @@ public class CreateAiNotebookInstanceStep implements Step {
   private final Logger logger = LoggerFactory.getLogger(CreateAiNotebookInstanceStep.class);
   private final ControlledAiNotebookInstanceResource resource;
   private final String petEmail;
-  private final String userFacingWorkspaceId;
+  private final String workspaceUserFacingId;
   private final CrlService crlService;
   private final CliConfiguration cliConfiguration;
 
   public CreateAiNotebookInstanceStep(
       ControlledAiNotebookInstanceResource resource,
       String petEmail,
-      String userFacingWorkspaceId,
+      String workspaceUserFacingId,
       CrlService crlService,
       CliConfiguration cliConfiguration) {
     this.petEmail = petEmail;
     this.resource = resource;
-    this.userFacingWorkspaceId = userFacingWorkspaceId;
+    this.workspaceUserFacingId = workspaceUserFacingId;
     this.crlService = crlService;
     this.cliConfiguration = cliConfiguration;
   }
@@ -112,7 +111,7 @@ public class CreateAiNotebookInstanceStep implements Step {
             flightContext,
             projectId,
             petEmail,
-            userFacingWorkspaceId,
+            workspaceUserFacingId,
             cliConfiguration.getServerName());
 
     AIPlatformNotebooksCow notebooks = crlService.getAIPlatformNotebooksCow();
@@ -147,14 +146,14 @@ public class CreateAiNotebookInstanceStep implements Step {
       FlightContext flightContext,
       String projectId,
       String serviceAccountEmail,
-      String userFacingWorkspaceId,
+      String workspaceUserFacingId,
       String cliServer) {
     Instance instance = new Instance();
     ApiGcpAiNotebookInstanceCreationParameters creationParameters =
         flightContext
             .getInputParameters()
             .get(CREATE_NOTEBOOK_PARAMETERS, ApiGcpAiNotebookInstanceCreationParameters.class);
-    setFields(creationParameters, serviceAccountEmail, userFacingWorkspaceId, cliServer, instance);
+    setFields(creationParameters, serviceAccountEmail, workspaceUserFacingId, cliServer, instance);
     setNetworks(instance, projectId, flightContext.getWorkingMap());
     return instance;
   }
@@ -163,7 +162,7 @@ public class CreateAiNotebookInstanceStep implements Step {
   static Instance setFields(
       ApiGcpAiNotebookInstanceCreationParameters creationParameters,
       String serviceAccountEmail,
-      String userFacingWorkspaceId,
+      String workspaceUserFacingId,
       String cliServer,
       Instance instance) {
     instance
@@ -181,7 +180,7 @@ public class CreateAiNotebookInstanceStep implements Step {
     Map<String, String> metadata = new HashMap<>();
     Optional.ofNullable(creationParameters.getMetadata()).ifPresent(metadata::putAll);
 
-    addDefaultMetadata(metadata, userFacingWorkspaceId, cliServer);
+    addDefaultMetadata(metadata, workspaceUserFacingId, cliServer);
     instance.setMetadata(metadata);
     instance.setServiceAccount(serviceAccountEmail);
     instance.setServiceAccountScopes(SERVICE_ACCOUNT_SCOPES);
@@ -214,13 +213,13 @@ public class CreateAiNotebookInstanceStep implements Step {
   }
 
   private static void addDefaultMetadata(
-      Map<String, String> metadata, String userFacingWorkspaceId, String cliServer) {
+      Map<String, String> metadata, String workspaceUserFacingId, String cliServer) {
     if (metadata.containsKey(WORKSPACE_ID_METADATA_KEY) ||
         metadata.containsKey(SERVER_ID_METADATA_KEY) ||
         metadata.containsKey(PROXY_MODE_METADATA_KEY)) {
       throw new ReservedMetadataKeyException("The metadata keys " + WORKSPACE_ID_METADATA_KEY + ", " + SERVER_ID_METADATA_KEY + ", and " + PROXY_MODE_METADATA_KEY + " are reserved for Terra.");
     }
-    metadata.put(WORKSPACE_ID_METADATA_KEY, userFacingWorkspaceId);
+    metadata.put(WORKSPACE_ID_METADATA_KEY, workspaceUserFacingId);
     if (!StringUtils.isEmpty(cliServer)) {
       metadata.put(SERVER_ID_METADATA_KEY, cliServer);
     }
