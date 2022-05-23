@@ -21,11 +21,10 @@ import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ResourceKeys;
-import org.springframework.http.HttpStatus;
-
-import javax.annotation.Nullable;
 import java.util.Optional;
 import java.util.UUID;
+import javax.annotation.Nullable;
+import org.springframework.http.HttpStatus;
 
 /**
  * Copy the definition of a GCS bucket (i.e. everything but the data) into a destionation bucket.
