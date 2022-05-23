@@ -19,9 +19,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.stream.Collectors;
 import javax.annotation.Nullable;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -118,7 +116,8 @@ public class PetSaService {
       // See if the user is already on the policy. If so, return the policy. This avoids
       // calls to set the IAM policy that have a rate limit.
       Optional<Binding> serviceAccountUserBinding = findServiceAccountUserBinding(saPolicy);
-      if (serviceAccountUserBinding.isPresent() && serviceAccountUserBinding.get().getMembers().contains(targetMember)) {
+      if (serviceAccountUserBinding.isPresent()
+          && serviceAccountUserBinding.get().getMembers().contains(targetMember)) {
         logger.info("user {} is already enabled on petSA {}", userToEnableEmail, petSaEmail);
         return Optional.of(saPolicy);
       } else if (serviceAccountUserBinding.isPresent()) {
@@ -127,9 +126,10 @@ public class PetSaService {
         serviceAccountUserBinding.get().getMembers().add(targetMember);
       } else {
         // Otherwise, create the ServiceAccountUser role binding.
-        Binding newBinding = new Binding()
-            .setRole(SERVICE_ACCOUNT_USER_ROLE)
-            .setMembers(ImmutableList.of(targetMember));
+        Binding newBinding =
+            new Binding()
+                .setRole(SERVICE_ACCOUNT_USER_ROLE)
+                .setMembers(ImmutableList.of(targetMember));
         // If no bindings exist, getBindings() returns null instead of an empty list.
         if (saPolicy.getBindings() != null) {
           saPolicy.getBindings().add(newBinding);
@@ -252,9 +252,9 @@ public class PetSaService {
   }
 
   /**
-   * Find and return the IAM binding granting "roles/iam.serviceAccountUser", if one exists.
-   * Sam will automatically grant pet service accounts this permission on themselves, but the
-   * proxy group may or may not be a member of the binding.
+   * Find and return the IAM binding granting "roles/iam.serviceAccountUser", if one exists. Sam
+   * will automatically grant pet service accounts this permission on themselves, but the proxy
+   * group may or may not be a member of the binding.
    */
   private Optional<Binding> findServiceAccountUserBinding(Policy saPolicy) {
     if (saPolicy.getBindings() == null) {

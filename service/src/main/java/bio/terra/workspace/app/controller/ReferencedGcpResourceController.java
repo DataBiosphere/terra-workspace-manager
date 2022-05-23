@@ -135,10 +135,17 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     String bucketName = body.getBucketName();
     String objectName = body.getObjectName();
-    CloningInstructions cloningInstructions = CloningInstructions.fromApiModel(body.getCloningInstructions());
+    CloningInstructions cloningInstructions =
+        CloningInstructions.fromApiModel(body.getCloningInstructions());
     if (StringUtils.isEmpty(bucketName) && StringUtils.isEmpty(objectName)) {
       referenceResourceService.updateReferenceResource(
-          workspaceUuid, referenceId, userRequest, body.getName(), body.getDescription(), null, cloningInstructions);
+          workspaceUuid,
+          referenceId,
+          userRequest,
+          body.getName(),
+          body.getDescription(),
+          null,
+          cloningInstructions);
     } else {
       ReferencedGcsObjectResource referencedResource =
           referenceResourceService
@@ -223,18 +230,24 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
       UUID workspaceUuid, UUID referenceId, ApiUpdateGcsBucketReferenceRequestBody body) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     String bucketName = body.getBucketName();
-    CloningInstructions cloningInstructions = CloningInstructions.fromApiModel(body.getCloningInstructions());
+    CloningInstructions cloningInstructions =
+        CloningInstructions.fromApiModel(body.getCloningInstructions());
     if (StringUtils.isEmpty(bucketName)) {
       referenceResourceService.updateReferenceResource(
-          workspaceUuid, referenceId, userRequest, body.getName(), body.getDescription(), null, cloningInstructions);
+          workspaceUuid,
+          referenceId,
+          userRequest,
+          body.getName(),
+          body.getDescription(),
+          null,
+          cloningInstructions);
     } else {
       ReferencedGcsBucketResource referencedResource =
           referenceResourceService
               .getReferenceResource(workspaceUuid, referenceId, userRequest)
               .castByEnum(WsmResourceType.REFERENCED_GCP_GCS_BUCKET);
       ReferencedGcsBucketResource.Builder updateBucketResourceBuilder =
-          referencedResource.toBuilder()
-              .bucketName(bucketName);
+          referencedResource.toBuilder().bucketName(bucketName);
       if (null != cloningInstructions) {
         // only overwrite if non-null
         updateBucketResourceBuilder.cloningInstructions(cloningInstructions);
@@ -310,12 +323,19 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
     String updatedProjectId = body.getProjectId();
     String updatedDatasetId = body.getDatasetId();
     String updatedDataTableId = body.getDataTableId();
-    CloningInstructions cloningInstructions = CloningInstructions.fromApiModel(body.getCloningInstructions());
+    CloningInstructions cloningInstructions =
+        CloningInstructions.fromApiModel(body.getCloningInstructions());
     if (StringUtils.isEmpty(updatedProjectId)
         && StringUtils.isEmpty(updatedDatasetId)
         && StringUtils.isEmpty(updatedDataTableId)) {
       referenceResourceService.updateReferenceResource(
-          workspaceUuid, referenceId, userRequest, body.getName(), body.getDescription(), null, cloningInstructions);
+          workspaceUuid,
+          referenceId,
+          userRequest,
+          body.getName(),
+          body.getDescription(),
+          null,
+          cloningInstructions);
     } else {
       ReferencedBigQueryDataTableResource referencedResource =
           referenceResourceService
@@ -410,8 +430,8 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     String updatedDatasetId = body.getDatasetId();
     String updatedProjectId = body.getProjectId();
-    CloningInstructions cloningInstructions = CloningInstructions.fromApiModel(
-        body.getCloningInstructions());
+    CloningInstructions cloningInstructions =
+        CloningInstructions.fromApiModel(body.getCloningInstructions());
     if (StringUtils.isEmpty(updatedDatasetId) && StringUtils.isEmpty(updatedProjectId)) {
       // identity of the resource is the same
       referenceResourceService.updateReferenceResource(
@@ -510,8 +530,13 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
     String updatedInstanceName = body.getInstanceName();
     if (StringUtils.isEmpty(updatedSnapshot) && StringUtils.isEmpty(updatedInstanceName)) {
       referenceResourceService.updateReferenceResource(
-          workspaceUuid, resourceId, userRequest, body.getName(), body.getDescription(),
-          null, CloningInstructions.fromApiModel(body.getCloningInstructions()));
+          workspaceUuid,
+          resourceId,
+          userRequest,
+          body.getName(),
+          body.getDescription(),
+          null,
+          CloningInstructions.fromApiModel(body.getCloningInstructions()));
     } else {
       ReferencedDataRepoSnapshotResource referencedResource =
           referenceResourceService
@@ -816,7 +841,12 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
     String gitRepoUrl = body.getGitRepoUrl();
     if (StringUtils.isEmpty(gitRepoUrl)) {
       referenceResourceService.updateReferenceResource(
-          workspaceUuid, referenceId, userRequest, body.getName(), body.getDescription(), null,
+          workspaceUuid,
+          referenceId,
+          userRequest,
+          body.getName(),
+          body.getDescription(),
+          null,
           CloningInstructions.fromApiModel(body.getCloningInstructions()));
     } else {
       ReferencedGitRepoResource referencedResource =
