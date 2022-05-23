@@ -69,6 +69,17 @@ public class CreateAndDeleteAzureControlledResourceFlightTest extends BaseAzureT
     assertTrue(workspaceService.getAuthorizedAzureCloudContext(workspaceUuid, userRequest).isPresent());
   }
 
+  private void createVMResource(UUID workspaceUuid, AuthenticatedUserRequest userRequest, ControlledResource resource,
+                                ApiAzureVmCreationParameters vmCreationParameters) throws InterruptedException {
+    createResource(workspaceUuid, userRequest, resource, WsmResourceType.CONTROLLED_AZURE_VM, vmCreationParameters);
+
+  }
+
+  private void createResource(UUID workspaceUuid, AuthenticatedUserRequest userRequest, ControlledResource resource,
+                              WsmResourceType resourceType) throws InterruptedException {
+    createResource(workspaceUuid, userRequest, resource, resourceType, null);
+  }
+
   private void createResource(UUID workspaceUuid, AuthenticatedUserRequest userRequest, ControlledResource resource,
                               WsmResourceType resourceType, ApiAzureVmCreationParameters vmCreationParameters)
           throws InterruptedException {
@@ -123,7 +134,7 @@ public class CreateAndDeleteAzureControlledResourceFlightTest extends BaseAzureT
             .build();
 
     // Submit an IP creation flight and verify the instance is created.
-    createResource(workspaceUuid, userRequest, resource, WsmResourceType.CONTROLLED_AZURE_IP, null);
+    createResource(workspaceUuid, userRequest, resource, WsmResourceType.CONTROLLED_AZURE_IP);
   }
 
   @Test
@@ -153,7 +164,7 @@ public class CreateAndDeleteAzureControlledResourceFlightTest extends BaseAzureT
             .build();
 
     // Submit a relay creation flight and verify the resource exists in the workspace.
-    createResource(workspaceUuid, userRequest, resource, WsmResourceType.CONTROLLED_AZURE_RELAY_NAMESPACE, null);
+    createResource(workspaceUuid, userRequest, resource, WsmResourceType.CONTROLLED_AZURE_RELAY_NAMESPACE);
 
     // Submit a relay deletion flight.
     FlightState deleteFlightState =
@@ -208,18 +219,18 @@ public class CreateAndDeleteAzureControlledResourceFlightTest extends BaseAzureT
                     .build();
 
     // Submit a storage account creation flight and then verify the resource exists in the workspace.
-    createResource(workspaceUuid, userRequest, resource, WsmResourceType.CONTROLLED_AZURE_STORAGE_ACCOUNT, null);
+    createResource(workspaceUuid, userRequest, resource, WsmResourceType.CONTROLLED_AZURE_STORAGE_ACCOUNT);
 
     // Submit a storage account deletion flight.
-//    FlightState deleteFlightState =
-//            StairwayTestUtils.blockUntilFlightCompletes(
-//                    jobService.getStairway(),
-//                    DeleteControlledResourceFlight.class,
-//                    azureTestUtils.deleteControlledResourceInputParameters(
-//                            workspaceUuid, resourceId, userRequest, resource),
-//                    STAIRWAY_FLIGHT_TIMEOUT,
-//                    null);
-//    assertEquals(FlightStatus.SUCCESS, deleteFlightState.getFlightStatus());
+    FlightState deleteFlightState =
+            StairwayTestUtils.blockUntilFlightCompletes(
+                    jobService.getStairway(),
+                    DeleteControlledResourceFlight.class,
+                    azureTestUtils.deleteControlledResourceInputParameters(
+                            workspaceUuid, resourceId, userRequest, resource),
+                    STAIRWAY_FLIGHT_TIMEOUT,
+                    null);
+    assertEquals(FlightStatus.SUCCESS, deleteFlightState.getFlightStatus());
 
     TimeUnit.SECONDS.sleep(5);
     StorageManager manager = azureTestUtils.getStorageManager();
@@ -263,7 +274,7 @@ public class CreateAndDeleteAzureControlledResourceFlightTest extends BaseAzureT
             .build();
 
     // Submit a Disk creation flight and verify the resource exists in the workspace.
-    createResource(workspaceUuid, userRequest, resource, WsmResourceType.CONTROLLED_AZURE_DISK, null);
+    createResource(workspaceUuid, userRequest, resource, WsmResourceType.CONTROLLED_AZURE_DISK);
   }
 
   @Test
@@ -309,7 +320,7 @@ public class CreateAndDeleteAzureControlledResourceFlightTest extends BaseAzureT
             .build();
 
     // Submit a VM creation flight and verify the resource exists in the workspace.
-    createResource(workspaceUuid, userRequest, resource, WsmResourceType.CONTROLLED_AZURE_VM, creationParameters);
+    createVMResource(workspaceUuid, userRequest, resource, creationParameters);
 
     // Exercise resource enumeration for the underlying resources.
     // Verify that the resources we created are in the enumeration.
@@ -413,7 +424,7 @@ public class CreateAndDeleteAzureControlledResourceFlightTest extends BaseAzureT
             .build();
 
     // Submit a VM creation flight and verify the resource exists in the workspace.
-    createResource(workspaceUuid, userRequest, resource, WsmResourceType.CONTROLLED_AZURE_VM, creationParameters);
+    createVMResource(workspaceUuid, userRequest, resource, creationParameters);
 
     // Exercise resource enumeration for the underlying resources.
     // Verify that the resources we created are in the enumeration.
@@ -493,7 +504,7 @@ public class CreateAndDeleteAzureControlledResourceFlightTest extends BaseAzureT
             .build();
 
     // Submit a VM creation flight and verify the resource exists in the workspace.
-    createResource(workspaceUuid, userRequest, resource, WsmResourceType.CONTROLLED_AZURE_VM, creationParameters);
+    createVMResource(workspaceUuid, userRequest, resource, creationParameters);
 
     // Exercise resource enumeration for the underlying resources.
     // Verify that the resources we created are in the enumeration.
@@ -723,6 +734,6 @@ public class CreateAndDeleteAzureControlledResourceFlightTest extends BaseAzureT
             .build();
 
     // Submit a Network creation flight and verify the resource exists in the workspace.
-    createResource(workspaceUuid, userRequest, resource, WsmResourceType.CONTROLLED_AZURE_NETWORK, null);
+    createResource(workspaceUuid, userRequest, resource, WsmResourceType.CONTROLLED_AZURE_NETWORK);
   }
 }
