@@ -1,5 +1,7 @@
 package bio.terra.workspace.service.workspace.flight;
 
+import static org.junit.jupiter.api.Assertions.*;
+
 import bio.terra.stairway.*;
 import bio.terra.workspace.common.BaseAzureTest;
 import bio.terra.workspace.common.StairwayTestUtils;
@@ -28,17 +30,14 @@ import bio.terra.workspace.service.workspace.flight.create.azure.CreateAzureCont
 import bio.terra.workspace.service.workspace.model.AzureCloudContext;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-
 import java.time.Duration;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
-
-import static org.junit.jupiter.api.Assertions.*;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
 
 public class DeleteAzureContextFlightTest extends BaseAzureTest {
   /**
@@ -80,54 +79,56 @@ public class DeleteAzureContextFlightTest extends BaseAzureTest {
     workspaceService.deleteWorkspace(workspaceUuid, userAccessUtils.defaultUserAuthRequest());
   }
 
-  private void createAzureContext(UUID workspaceUuid, AuthenticatedUserRequest userRequest) throws Exception {
+  private void createAzureContext(UUID workspaceUuid, AuthenticatedUserRequest userRequest)
+      throws Exception {
     FlightMap createParameters =
-            azureTestUtils.createAzureContextInputParameters(workspaceUuid, userRequest);
+        azureTestUtils.createAzureContextInputParameters(workspaceUuid, userRequest);
 
     FlightState flightState =
-            StairwayTestUtils.blockUntilFlightCompletes(
-                    jobService.getStairway(),
-                    CreateAzureContextFlight.class,
-                    createParameters,
-                    CREATION_FLIGHT_TIMEOUT,
-                    null);
+        StairwayTestUtils.blockUntilFlightCompletes(
+            jobService.getStairway(),
+            CreateAzureContextFlight.class,
+            createParameters,
+            CREATION_FLIGHT_TIMEOUT,
+            null);
 
     assertEquals(FlightStatus.SUCCESS, flightState.getFlightStatus());
 
     AzureCloudContext azureCloudContext =
-            workspaceService.getAuthorizedAzureCloudContext(workspaceUuid, userRequest).orElse(null);
+        workspaceService.getAuthorizedAzureCloudContext(workspaceUuid, userRequest).orElse(null);
     assertNotNull(azureCloudContext);
   }
 
-  private UUID createAzureIpResource(UUID workspaceUuid, AuthenticatedUserRequest userRequest) throws Exception {
+  private UUID createAzureIpResource(UUID workspaceUuid, AuthenticatedUserRequest userRequest)
+      throws Exception {
     ApiAzureIpCreationParameters ipCreationParameters =
-            ControlledResourceFixtures.getAzureIpCreationParameters();
+        ControlledResourceFixtures.getAzureIpCreationParameters();
 
     final UUID ipId = UUID.randomUUID();
     ControlledAzureIpResource ipResource =
-            ControlledAzureIpResource.builder()
-                    .common(
-                            ControlledResourceFields.builder()
-                                    .workspaceUuid(workspaceUuid)
-                                    .resourceId(ipId)
-                                    .name("wsm-test" + ipId.toString())
-                                    .cloningInstructions(CloningInstructions.COPY_RESOURCE)
-                                    .accessScope(AccessScopeType.fromApi(ApiAccessScope.SHARED_ACCESS))
-                                    .managedBy(ManagedByType.fromApi(ApiManagedBy.USER))
-                                    .build())
-                    .ipName(ipCreationParameters.getName())
-                    .region(ipCreationParameters.getRegion())
-                    .build();
+        ControlledAzureIpResource.builder()
+            .common(
+                ControlledResourceFields.builder()
+                    .workspaceUuid(workspaceUuid)
+                    .resourceId(ipId)
+                    .name("wsm-test" + ipId.toString())
+                    .cloningInstructions(CloningInstructions.COPY_RESOURCE)
+                    .accessScope(AccessScopeType.fromApi(ApiAccessScope.SHARED_ACCESS))
+                    .managedBy(ManagedByType.fromApi(ApiManagedBy.USER))
+                    .build())
+            .ipName(ipCreationParameters.getName())
+            .region(ipCreationParameters.getRegion())
+            .build();
 
     // Submit an IP creation flight.
     FlightState flightState =
-            StairwayTestUtils.blockUntilFlightCompletes(
-                    jobService.getStairway(),
-                    CreateControlledResourceFlight.class,
-                    azureTestUtils.createControlledResourceInputParameters(
-                            workspaceUuid, userRequest, ipResource),
-                    CREATION_FLIGHT_TIMEOUT,
-                    null);
+        StairwayTestUtils.blockUntilFlightCompletes(
+            jobService.getStairway(),
+            CreateControlledResourceFlight.class,
+            azureTestUtils.createControlledResourceInputParameters(
+                workspaceUuid, userRequest, ipResource),
+            CREATION_FLIGHT_TIMEOUT,
+            null);
     assertEquals(FlightStatus.SUCCESS, flightState.getFlightStatus());
 
     return ipId;
@@ -283,9 +284,7 @@ public class DeleteAzureContextFlightTest extends BaseAzureTest {
     // Verify the resource and workspace are not in WSM DB
     assertThrows(
         WorkspaceNotFoundException.class,
-        () ->
-            controlledResourceService.getControlledResource(
-                mcWorkspaceUuid, ipId, userRequest));
+        () -> controlledResourceService.getControlledResource(mcWorkspaceUuid, ipId, userRequest));
     assertThrows(
         WorkspaceNotFoundException.class,
         () -> workspaceService.getWorkspace(mcWorkspaceUuid, userRequest));

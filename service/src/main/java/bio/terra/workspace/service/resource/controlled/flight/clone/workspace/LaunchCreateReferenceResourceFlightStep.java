@@ -71,6 +71,11 @@ public class LaunchCreateReferenceResourceFlightStep implements Step {
     subflightInputParameters.put(JobMapKeys.AUTH_USER_INFO.getKeyName(), userRequest);
     subflightInputParameters.put(
         WorkspaceFlightMapKeys.ResourceKeys.RESOURCE_TYPE, resource.getResourceType().name());
+    // use destination workspace ID so UI can associate this job with the workspace being cloned
+    subflightInputParameters.put(WorkspaceFlightMapKeys.WORKSPACE_ID, destinationWorkspaceId);
+    subflightInputParameters.put(
+        JobMapKeys.DESCRIPTION.getKeyName(),
+        String.format("Clone referenced resource %s", resource.getResourceId().toString()));
 
     try {
       context

@@ -7,7 +7,6 @@ import bio.terra.workspace.common.utils.FlightBeanBag;
 import bio.terra.workspace.common.utils.RetryRules;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.job.JobMapKeys;
-
 import java.util.UUID;
 
 public class DeleteAzureContextFlight extends Flight {

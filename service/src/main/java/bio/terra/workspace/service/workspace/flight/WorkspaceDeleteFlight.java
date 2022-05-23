@@ -9,7 +9,6 @@ import bio.terra.workspace.common.utils.RetryRules;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
-
 import java.util.UUID;
 
 // TODO(PF-555): There is a race condition if this flight runs at the same time as new controlled
