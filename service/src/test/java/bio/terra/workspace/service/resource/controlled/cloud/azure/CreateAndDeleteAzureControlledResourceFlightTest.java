@@ -57,29 +57,26 @@ public class CreateAndDeleteAzureControlledResourceFlightTest extends BaseAzureT
 
   private void createCloudContext(UUID workspaceUuid, AuthenticatedUserRequest userRequest)
           throws InterruptedException {
-    FlightState createAzureContextFlightState =
-            StairwayTestUtils.blockUntilFlightCompletes(
-                    jobService.getStairway(),
-                    CreateAzureContextFlight.class,
-                    azureTestUtils.createAzureContextInputParameters(workspaceUuid, userRequest),
-                    STAIRWAY_FLIGHT_TIMEOUT,
-                    null);
+    FlightState createAzureContextFlightState = StairwayTestUtils.blockUntilFlightCompletes(
+            jobService.getStairway(),
+            CreateAzureContextFlight.class,
+            azureTestUtils.createAzureContextInputParameters(workspaceUuid, userRequest),
+            STAIRWAY_FLIGHT_TIMEOUT,
+            null);
 
     assertEquals(FlightStatus.SUCCESS, createAzureContextFlightState.getFlightStatus());
-    assertTrue(
-            workspaceService.getAuthorizedAzureCloudContext(workspaceUuid, userRequest).isPresent());
+    assertTrue(workspaceService.getAuthorizedAzureCloudContext(workspaceUuid, userRequest).isPresent());
   }
 
   private void createResource(UUID workspaceUuid, AuthenticatedUserRequest userRequest, ControlledResource resource,
                               WsmResourceType resourceType) throws InterruptedException {
-    FlightState flightState =
-            StairwayTestUtils.blockUntilFlightCompletes(
-                    jobService.getStairway(),
-                    CreateControlledResourceFlight.class,
-                    azureTestUtils.createControlledResourceInputParameters(
-                            workspaceUuid, userRequest, resource),
-                    STAIRWAY_FLIGHT_TIMEOUT,
-                    null);
+    FlightState flightState = StairwayTestUtils.blockUntilFlightCompletes(
+            jobService.getStairway(),
+            CreateControlledResourceFlight.class,
+            azureTestUtils.createControlledResourceInputParameters(
+                    workspaceUuid, userRequest, resource),
+            STAIRWAY_FLIGHT_TIMEOUT,
+            null);
 
     assertEquals(FlightStatus.SUCCESS, flightState.getFlightStatus());
 
