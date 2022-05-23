@@ -1,5 +1,6 @@
 package bio.terra.workspace.service.resource.controlled.cloud.azure;
 
+import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.FlightState;
 import bio.terra.stairway.FlightStatus;
 import bio.terra.workspace.common.BaseAzureTest;
@@ -69,12 +70,14 @@ public class CreateAndDeleteAzureControlledResourceFlightTest extends BaseAzureT
   }
 
   private void createResource(UUID workspaceUuid, AuthenticatedUserRequest userRequest, ControlledResource resource,
-                              WsmResourceType resourceType) throws InterruptedException {
+                              WsmResourceType resourceType, ApiAzureVmCreationParameters vmCreationParameters)
+          throws InterruptedException {
+
     FlightState flightState = StairwayTestUtils.blockUntilFlightCompletes(
             jobService.getStairway(),
             CreateControlledResourceFlight.class,
             azureTestUtils.createControlledResourceInputParameters(
-                    workspaceUuid, userRequest, resource),
+                    workspaceUuid, userRequest, resource, vmCreationParameters),
             STAIRWAY_FLIGHT_TIMEOUT,
             null);
 
@@ -120,7 +123,7 @@ public class CreateAndDeleteAzureControlledResourceFlightTest extends BaseAzureT
             .build();
 
     // Submit an IP creation flight and verify the instance is created.
-    createResource(workspaceUuid, userRequest, resource, WsmResourceType.CONTROLLED_AZURE_IP);
+    createResource(workspaceUuid, userRequest, resource, WsmResourceType.CONTROLLED_AZURE_IP, null);
   }
 
   @Test
@@ -150,7 +153,7 @@ public class CreateAndDeleteAzureControlledResourceFlightTest extends BaseAzureT
             .build();
 
     // Submit a relay creation flight and verify the resource exists in the workspace.
-    createResource(workspaceUuid, userRequest, resource, WsmResourceType.CONTROLLED_AZURE_RELAY_NAMESPACE);
+    createResource(workspaceUuid, userRequest, resource, WsmResourceType.CONTROLLED_AZURE_RELAY_NAMESPACE, null);
 
     // Submit a relay deletion flight.
     FlightState deleteFlightState =
@@ -205,7 +208,7 @@ public class CreateAndDeleteAzureControlledResourceFlightTest extends BaseAzureT
                     .build();
 
     // Submit a storage account creation flight and then verify the resource exists in the workspace.
-    createResource(workspaceUuid, userRequest, resource, WsmResourceType.CONTROLLED_AZURE_STORAGE_ACCOUNT);
+    createResource(workspaceUuid, userRequest, resource, WsmResourceType.CONTROLLED_AZURE_STORAGE_ACCOUNT, null);
 
     // Submit a storage account deletion flight.
     FlightState deleteFlightState =
@@ -260,7 +263,7 @@ public class CreateAndDeleteAzureControlledResourceFlightTest extends BaseAzureT
             .build();
 
     // Submit a Disk creation flight and verify the resource exists in the workspace.
-    createResource(workspaceUuid, userRequest, resource, WsmResourceType.CONTROLLED_AZURE_DISK);
+    createResource(workspaceUuid, userRequest, resource, WsmResourceType.CONTROLLED_AZURE_DISK, null);
   }
 
   @Test
@@ -306,7 +309,7 @@ public class CreateAndDeleteAzureControlledResourceFlightTest extends BaseAzureT
             .build();
 
     // Submit a VM creation flight and verify the resource exists in the workspace.
-    createResource(workspaceUuid, userRequest, resource, WsmResourceType.CONTROLLED_AZURE_VM);
+    createResource(workspaceUuid, userRequest, resource, WsmResourceType.CONTROLLED_AZURE_VM, creationParameters);
 
     // Exercise resource enumeration for the underlying resources.
     // Verify that the resources we created are in the enumeration.
@@ -410,7 +413,7 @@ public class CreateAndDeleteAzureControlledResourceFlightTest extends BaseAzureT
             .build();
 
     // Submit a VM creation flight and verify the resource exists in the workspace.
-    createResource(workspaceUuid, userRequest, resource, WsmResourceType.CONTROLLED_AZURE_VM);
+    createResource(workspaceUuid, userRequest, resource, WsmResourceType.CONTROLLED_AZURE_VM, creationParameters);
 
     // Exercise resource enumeration for the underlying resources.
     // Verify that the resources we created are in the enumeration.
@@ -490,7 +493,7 @@ public class CreateAndDeleteAzureControlledResourceFlightTest extends BaseAzureT
             .build();
 
     // Submit a VM creation flight and verify the resource exists in the workspace.
-    createResource(workspaceUuid, userRequest, resource, WsmResourceType.CONTROLLED_AZURE_VM);
+    createResource(workspaceUuid, userRequest, resource, WsmResourceType.CONTROLLED_AZURE_VM, creationParameters);
 
     // Exercise resource enumeration for the underlying resources.
     // Verify that the resources we created are in the enumeration.
@@ -720,6 +723,6 @@ public class CreateAndDeleteAzureControlledResourceFlightTest extends BaseAzureT
             .build();
 
     // Submit a Network creation flight and verify the resource exists in the workspace.
-    createResource(workspaceUuid, userRequest, resource, WsmResourceType.CONTROLLED_AZURE_NETWORK);
+    createResource(workspaceUuid, userRequest, resource, WsmResourceType.CONTROLLED_AZURE_NETWORK, null);
   }
 }

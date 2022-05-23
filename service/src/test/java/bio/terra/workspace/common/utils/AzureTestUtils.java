@@ -96,8 +96,10 @@ public class AzureTestUtils {
       ControlledResource resource,
       ApiAzureVmCreationParameters creationParameters) {
     var inputs = createControlledResourceInputParameters(workspaceUuid, userRequest, resource);
-    inputs.put(
-        WorkspaceFlightMapKeys.ControlledResourceKeys.CREATION_PARAMETERS, creationParameters);
+    if (creationParameters != null) {
+      inputs.put(
+              WorkspaceFlightMapKeys.ControlledResourceKeys.CREATION_PARAMETERS, creationParameters);
+    }
     return inputs;
   }
 
