@@ -211,15 +211,15 @@ public class CreateAndDeleteAzureControlledResourceFlightTest extends BaseAzureT
     createResource(workspaceUuid, userRequest, resource, WsmResourceType.CONTROLLED_AZURE_STORAGE_ACCOUNT, null);
 
     // Submit a storage account deletion flight.
-    FlightState deleteFlightState =
-            StairwayTestUtils.blockUntilFlightCompletes(
-                    jobService.getStairway(),
-                    DeleteControlledResourceFlight.class,
-                    azureTestUtils.deleteControlledResourceInputParameters(
-                            workspaceUuid, resourceId, userRequest, resource),
-                    STAIRWAY_FLIGHT_TIMEOUT,
-                    null);
-    assertEquals(FlightStatus.SUCCESS, deleteFlightState.getFlightStatus());
+//    FlightState deleteFlightState =
+//            StairwayTestUtils.blockUntilFlightCompletes(
+//                    jobService.getStairway(),
+//                    DeleteControlledResourceFlight.class,
+//                    azureTestUtils.deleteControlledResourceInputParameters(
+//                            workspaceUuid, resourceId, userRequest, resource),
+//                    STAIRWAY_FLIGHT_TIMEOUT,
+//                    null);
+//    assertEquals(FlightStatus.SUCCESS, deleteFlightState.getFlightStatus());
 
     TimeUnit.SECONDS.sleep(5);
     StorageManager manager = azureTestUtils.getStorageManager();
