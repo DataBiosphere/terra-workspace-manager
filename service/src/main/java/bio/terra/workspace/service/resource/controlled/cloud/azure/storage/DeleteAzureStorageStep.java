@@ -35,8 +35,8 @@ public class DeleteAzureStorageStep implements Step {
             .getWorkingMap()
             .get(ControlledResourceKeys.AZURE_CLOUD_CONTEXT, AzureCloudContext.class);
 
-    StorageManager manager = crlService.getStorageManager(azureCloudContext, azureConfig);
-    var azureResourceId =
+    final StorageManager manager = crlService.getStorageManager(azureCloudContext, azureConfig);
+    final var azureResourceId =
         String.format(
             "/subscriptions/%s/resourceGroups/%s/providers/Microsoft.Storage/storageAccounts/%s",
             azureCloudContext.getAzureSubscriptionId(),

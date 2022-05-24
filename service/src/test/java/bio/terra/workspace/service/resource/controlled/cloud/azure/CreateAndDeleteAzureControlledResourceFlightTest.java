@@ -1,6 +1,5 @@
 package bio.terra.workspace.service.resource.controlled.cloud.azure;
 
-import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.FlightState;
 import bio.terra.stairway.FlightStatus;
 import bio.terra.workspace.common.BaseAzureTest;
@@ -188,8 +187,7 @@ public class CreateAndDeleteAzureControlledResourceFlightTest extends BaseAzureT
                     .getByResourceGroup(
                         azureTestUtils.getAzureCloudContext().getAzureResourceGroupId(),
                         resource.getNamespaceName()));
-    // We see both ResourceNotFound and NotFound in the code field
-    assertTrue(exception.getValue().getCode().contains("NotFound"));
+    assertEquals(404, exception.getResponse().getStatusCode());
   }
 
   @Test
@@ -241,8 +239,7 @@ public class CreateAndDeleteAzureControlledResourceFlightTest extends BaseAzureT
                             manager.storageAccounts().getByResourceGroup(
                                     azureTestUtils.getAzureCloudContext().getAzureResourceGroupId(),
                                     resource.getStorageAccountName()));
-    // We see both ResourceNotFound and NotFound in the code field
-    assertTrue(exception.getValue().getCode().contains("NotFound"));
+    assertEquals(404, exception.getResponse().getStatusCode());
   }
 
   @Test
