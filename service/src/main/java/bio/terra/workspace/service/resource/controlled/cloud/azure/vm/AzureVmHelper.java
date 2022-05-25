@@ -6,17 +6,18 @@ import bio.terra.workspace.service.workspace.model.AzureCloudContext;
 import com.azure.core.management.exception.ManagementException;
 import com.azure.resourcemanager.compute.ComputeManager;
 import com.azure.resourcemanager.compute.models.VirtualMachine;
+import java.util.concurrent.TimeUnit;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public final class AzureVmHelper {
+  public static final String WORKING_MAP_NETWORK_INTERFACE_KEY = "NetworkInterfaceName";
+  private static int NIC_RESERVED_FOR_ANOTHER_VM_ERROR_RETRY_SECONDS = 180;
   private static final Logger logger = LoggerFactory.getLogger(AzureVmHelper.class);
 
   public static StepResult deleteVm(
-      AzureCloudContext azureCloudContext, ComputeManager computeManager, String vmName)
-      throws InterruptedException {
-    var nicName = String.format("nic-%s", vmName);
+      AzureCloudContext azureCloudContext, ComputeManager computeManager, String vmName) {
     VirtualMachine resolvedVm = null;
     try {
       resolvedVm =
@@ -28,16 +29,7 @@ public final class AzureVmHelper {
           .virtualMachines()
           .deleteByResourceGroup(azureCloudContext.getAzureResourceGroupId(), vmName);
     } catch (ManagementException e) {
-      handleNotFound(e, vmName, azureCloudContext.getAzureResourceGroupId());
-    }
-
-    try {
-      computeManager
-          .networkManager()
-          .networkInterfaces()
-          .deleteByResourceGroup(azureCloudContext.getAzureResourceGroupId(), nicName);
-    } catch (ManagementException e) {
-      handleNotFound(e, vmName, azureCloudContext.getAzureResourceGroupId());
+      handleNotFound(e, "VM", vmName, azureCloudContext.getAzureResourceGroupId());
     }
 
     // TODO: If VM is already deleted, nic and disk will fail to delete
@@ -45,17 +37,63 @@ public final class AzureVmHelper {
       try {
         computeManager.disks().deleteById(resolvedVm.osDiskId());
       } catch (ManagementException e) {
-        handleNotFound(e, vmName, azureCloudContext.getAzureResourceGroupId());
+        handleNotFound(
+            e, "disk", resolvedVm.osDiskId(), azureCloudContext.getAzureResourceGroupId());
       }
 
     return StepResult.getStepResultSuccess();
   }
 
+  public static StepResult deleteNetworkInterface(
+      AzureCloudContext azureCloudContext,
+      ComputeManager computeManager,
+      String networkInterfaceName)
+      throws InterruptedException {
+    try {
+      computeManager
+          .networkManager()
+          .networkInterfaces()
+          .deleteByResourceGroup(azureCloudContext.getAzureResourceGroupId(), networkInterfaceName);
+    } catch (ManagementException e) {
+      // Stairway steps may run multiple times, so we may already have deleted this resource.
+      if (StringUtils.equals(e.getValue().getCode(), "ResourceNotFound")) {
+        logger.info(
+            "Azure Network Interface {} in managed resource group {} already deleted",
+            networkInterfaceName,
+            azureCloudContext.getAzureResourceGroupId());
+        return StepResult.getStepResultSuccess();
+      } else if (StringUtils.equals(e.getValue().getCode(), "NicReservedForAnotherVm")) {
+        // In case of this particular error Azure asks to wait for 180 seconds before next retry. At
+        // least at the time this code was written.
+        // It would be good to have retry delay as a part of details field, so we can adjust
+        // automatically. But it is just a part of the message.
+        // Error message example below:
+        // "error": {
+        //  "code": "NicReservedForAnotherVm",
+        //          "message": "Nic(s) in request is reserved for another Virtual Machine for 180
+        // seconds.
+        //          Please provide another nic(s) or retry after 180 seconds.
+        //          Reserved VM:
+        // /subscriptions/3efc5bdf-be0e-44e7-b1d7-c08931e3c16c/resourceGroups/mrg-terra-integration-test-20211118/providers/Microsoft.Compute/virtualMachines/az-vm-b606ad7d-9b00-463d-9b6e-d70586d17eb2",
+        //          "details": []
+        // }
+        TimeUnit.SECONDS.sleep(NIC_RESERVED_FOR_ANOTHER_VM_ERROR_RETRY_SECONDS);
+        return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, e);
+      }
+      return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, e);
+    }
+    return StepResult.getStepResultSuccess();
+  }
+
   private static StepResult handleNotFound(
-      ManagementException e, String vmName, String resourceId) {
+      ManagementException e, String resourceType, String resourceName, String resourceId) {
     // Stairway steps may run multiple times, so we may already have deleted this resource.
     if (StringUtils.equals(e.getValue().getCode(), "ResourceNotFound")) {
-      logger.info("Azure VM {} in managed resource group {} already deleted", vmName, resourceId);
+      logger.info(
+          "Azure {} {} in managed resource group {} already deleted",
+          resourceType,
+          resourceName,
+          resourceId);
       return StepResult.getStepResultSuccess();
     }
     return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, e);
