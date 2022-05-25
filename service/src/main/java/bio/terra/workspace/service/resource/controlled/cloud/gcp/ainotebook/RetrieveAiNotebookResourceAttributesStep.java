@@ -10,6 +10,7 @@ import bio.terra.stairway.StepStatus;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.generated.model.ApiGcpAiNotebookUpdateParameters;
 import bio.terra.workspace.service.crl.CrlService;
+import bio.terra.workspace.service.workspace.GcpCloudContextService;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import bio.terra.workspace.service.workspace.model.GcpCloudContext;
 import com.google.api.client.googleapis.json.GoogleJsonResponseException;
@@ -21,21 +22,20 @@ public class RetrieveAiNotebookResourceAttributesStep implements Step {
 
   private final ControlledAiNotebookInstanceResource resource;
   private final CrlService crlService;
+  private final GcpCloudContextService gcpCloudContextService;
   public RetrieveAiNotebookResourceAttributesStep(
       ControlledAiNotebookInstanceResource resource,
-      CrlService crlService
+      CrlService crlService,
+      GcpCloudContextService gcpCloudContextService
   ) {
     this.resource = resource;
     this.crlService = crlService;
+    this.gcpCloudContextService = gcpCloudContextService;
   }
   @Override
   public StepResult doStep(FlightContext context) throws InterruptedException, RetryException {
     final FlightMap workingMap = context.getWorkingMap();
-    final GcpCloudContext gcpCloudContext =
-        context
-            .getWorkingMap()
-            .get(ControlledResourceKeys.GCP_CLOUD_CONTEXT, GcpCloudContext.class);
-    String projectId = gcpCloudContext.getGcpProjectId();
+    String projectId = gcpCloudContextService.getRequiredGcpProject(resource.getWorkspaceId());
     InstanceName instanceName = resource.toInstanceName(projectId);
     AIPlatformNotebooksCow notebooks = crlService.getAIPlatformNotebooksCow();
 

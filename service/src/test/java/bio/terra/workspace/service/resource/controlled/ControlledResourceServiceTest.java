@@ -1,5 +1,6 @@
 package bio.terra.workspace.service.resource.controlled;
 
+import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.AI_NOTEBOOK_UPDATE_PARAMETERS;
 import static bio.terra.workspace.service.resource.controlled.cloud.gcp.GcpResourceConstant.DEFAULT_REGION;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
@@ -59,6 +60,7 @@ import com.google.cloud.storage.BucketInfo.LifecycleRule;
 import com.google.common.collect.ImmutableList;
 import java.io.IOException;
 import java.util.*;
+import java.util.Map.Entry;
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.TestInstance.Lifecycle;
@@ -294,6 +296,134 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
             ControlledAiNotebookInstanceResource.class,
             user.getAuthenticatedRequest());
     assertEquals(DuplicateResourceException.class, duplicateJobResult.getException().getClass());
+  }
+
+  @Test
+  @DisabledIfEnvironmentVariable(named = "TEST_ENV", matches = BUFFER_SERVICE_DISABLED_ENVS_REG_EX)
+  void updateAiNotebookResourceDo() throws InterruptedException, IOException {
+    var instanceId = "update-ai-notebook-instance-do";
+    var name = "update-ai-notebook-instance-do-name";
+    var newName = "update-ai-notebook-instance-do-name-NEW";
+    var newDescription = "new description for update-ai-notebook-instance-do-name-NEW";
+
+    var creationParameters =
+        ControlledResourceFixtures.defaultNotebookCreationParameters()
+            .instanceId(instanceId)
+            .location(DEFAULT_NOTEBOOK_LOCATION);
+    var resource =
+        makeNotebookTestResource(workspace.getWorkspaceId(), name, instanceId);
+    String jobId =
+        controlledResourceService.createAiNotebookInstance(
+            resource,
+            creationParameters,
+            ControlledResourceIamRole.EDITOR,
+            new ApiJobControl().id(UUID.randomUUID().toString()),
+            "fakeResultPath",
+            user.getAuthenticatedRequest());
+    jobService.waitForJob(jobId);
+    assertEquals(
+        FlightStatus.SUCCESS, stairwayComponent.get().getFlightState(jobId).getFlightStatus());
+
+    ControlledAiNotebookInstanceResource fetchedInstance = controlledResourceService.getControlledResource(workspace.getWorkspaceId(), resource.getResourceId(), user.getAuthenticatedRequest()).castByEnum(WsmResourceType.CONTROLLED_GCP_AI_NOTEBOOK_INSTANCE);
+
+    var instanceFromCloud = crlService.getAIPlatformNotebooksCow().instances().get(fetchedInstance.toInstanceName(projectId)).execute();
+    var metadata = instanceFromCloud.getMetadata();
+
+    Map<String, StepStatus> retrySteps = new HashMap<>();
+    retrySteps.put(
+        RetrieveControlledResourceMetadataStep.class.getName(),
+        StepStatus.STEP_RESULT_FAILURE_RETRY);
+    retrySteps.put(
+        UpdateControlledResourceMetadataStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
+    retrySteps.put(
+        RetrieveAiNotebookResourceAttributesStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
+    retrySteps.put(UpdateAiNotebookAttributesStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
+    jobService.setFlightDebugInfoForTest(
+        FlightDebugInfo.newBuilder().doStepFailures(retrySteps).build());
+    controlledResourceService.updateAiNotebookInstance(
+            fetchedInstance, AI_NOTEBOOK_UPDATE_PARAMETERS, Optional.of(newName), Optional.of(newDescription), user.getAuthenticatedRequest());
+
+    ControlledAiNotebookInstanceResource updatedInstance = controlledResourceService.getControlledResource(workspace.getWorkspaceId(), resource.getResourceId(), user.getAuthenticatedRequest()).castByEnum(WsmResourceType.CONTROLLED_GCP_AI_NOTEBOOK_INSTANCE);
+    // resource metadata is updated.
+    assertEquals(
+        newName,
+        updatedInstance.getName()
+    );
+    assertEquals(
+        newDescription,
+        updatedInstance.getDescription()
+    );
+    // cloud notebook attributes are updated.
+    var updatedInstanceFromCloud = crlService.getAIPlatformNotebooksCow().instances().get(updatedInstance.toInstanceName(projectId)).execute();
+    AI_NOTEBOOK_UPDATE_PARAMETERS.getMetadata().forEach(
+        (key, value) -> metadata.merge( key, value, (v1, v2) -> v1.equalsIgnoreCase(v2) ? v1 : v1 + "," + v2)
+    );
+    assertEquals(metadata, updatedInstanceFromCloud.getMetadata());
+  }
+
+  @Test
+  @DisabledIfEnvironmentVariable(named = "TEST_ENV", matches = BUFFER_SERVICE_DISABLED_ENVS_REG_EX)
+  void updateAiNotebookResourceUndo() throws InterruptedException, IOException {
+    String instanceId = "update-ai-notebook-instance-undo";
+    String name = "update-ai-notebook-instance-undo-name";
+    String newName = "update-ai-notebook-instance-undo-name-NEW";
+    String newDescription = "new description for update-ai-notebook-instance-undo-name-NEW";
+
+    var creationParameters =
+        ControlledResourceFixtures.defaultNotebookCreationParameters()
+            .instanceId(instanceId)
+            .location(DEFAULT_NOTEBOOK_LOCATION);
+    var resource =
+        makeNotebookTestResource(workspace.getWorkspaceId(), name, instanceId);
+    String jobId =
+        controlledResourceService.createAiNotebookInstance(
+            resource,
+            creationParameters,
+            ControlledResourceIamRole.EDITOR,
+            new ApiJobControl().id(UUID.randomUUID().toString()),
+            "fakeResultPath",
+            user.getAuthenticatedRequest());
+    jobService.waitForJob(jobId);
+    assertEquals(
+        FlightStatus.SUCCESS, stairwayComponent.get().getFlightState(jobId).getFlightStatus());
+
+    ControlledAiNotebookInstanceResource fetchedInstance = controlledResourceService.getControlledResource(workspace.getWorkspaceId(), resource.getResourceId(), user.getAuthenticatedRequest()).castByEnum(WsmResourceType.CONTROLLED_GCP_AI_NOTEBOOK_INSTANCE);
+
+    var prevInstanceFromCloud = crlService.getAIPlatformNotebooksCow().instances().get(fetchedInstance.toInstanceName(projectId)).execute();
+    var metadata = prevInstanceFromCloud.getMetadata();
+
+    Map<String, StepStatus> retrySteps = new HashMap<>();
+    retrySteps.put(
+        RetrieveControlledResourceMetadataStep.class.getName(),
+        StepStatus.STEP_RESULT_FAILURE_RETRY);
+    retrySteps.put(
+        UpdateControlledResourceMetadataStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
+    retrySteps.put(
+        RetrieveAiNotebookResourceAttributesStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
+    retrySteps.put(UpdateAiNotebookAttributesStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
+    jobService.setFlightDebugInfoForTest(
+        FlightDebugInfo.newBuilder().undoStepFailures(retrySteps).lastStepFailure(true).build());
+    assertThrows(
+        InvalidResultStateException.class,
+        () -> controlledResourceService.updateAiNotebookInstance(
+        fetchedInstance, AI_NOTEBOOK_UPDATE_PARAMETERS, Optional.of(newName), Optional.of(newDescription), user.getAuthenticatedRequest()));
+
+    ControlledAiNotebookInstanceResource updatedInstance = controlledResourceService.getControlledResource(workspace.getWorkspaceId(), resource.getResourceId(), user.getAuthenticatedRequest()).castByEnum(WsmResourceType.CONTROLLED_GCP_AI_NOTEBOOK_INSTANCE);
+    // resource metadata is updated.
+    assertEquals(
+        resource.getName(),
+        updatedInstance.getName()
+    );
+    assertEquals(
+        resource.getDescription(),
+        updatedInstance.getDescription()
+    );
+    // cloud notebook attributes are not updated.
+    var instanceFromCloud = crlService.getAIPlatformNotebooksCow().instances().get(updatedInstance.toInstanceName(projectId)).execute();
+    for(var entry: AI_NOTEBOOK_UPDATE_PARAMETERS.getMetadata().entrySet()) {
+      metadata.put(entry.getKey(), "");
+    }
+    assertEquals(metadata, instanceFromCloud.getMetadata());
   }
 
   private ControlledAiNotebookInstanceResource makeNotebookTestResource(

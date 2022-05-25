@@ -19,15 +19,18 @@ import bio.terra.workspace.model.CreatedControlledGcpAiNotebookInstanceResult;
 import bio.terra.workspace.model.DeleteControlledGcpAiNotebookInstanceRequest;
 import bio.terra.workspace.model.DeleteControlledGcpAiNotebookInstanceResult;
 import bio.terra.workspace.model.GcpAiNotebookInstanceResource;
+import bio.terra.workspace.model.GcpAiNotebookUpdateParameters;
 import bio.terra.workspace.model.GrantRoleRequestBody;
 import bio.terra.workspace.model.IamRole;
 import bio.terra.workspace.model.JobControl;
 import bio.terra.workspace.model.ResourceList;
 import bio.terra.workspace.model.ResourceType;
 import bio.terra.workspace.model.StewardshipType;
+import bio.terra.workspace.model.UpdateControlledGcpAiNotebookInstanceRequestBody;
 import com.google.api.client.googleapis.json.GoogleJsonResponseException;
 import com.google.api.services.notebooks.v1.AIPlatformNotebooks;
 import com.google.api.services.notebooks.v1.model.StopInstanceRequest;
+import com.google.common.collect.ImmutableMap;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.time.Duration;
 import java.util.List;
@@ -156,6 +159,28 @@ public class PrivateControlledAiNotebookInstanceLifecycle extends WorkspaceAlloc
         HttpStatus.SC_FORBIDDEN,
         directDeleteForbidden.getStatusCode(),
         "User may not delete notebook directly on GCP");
+
+    // Update the AI Notebook through WSM.
+    var newName = "new-instance-notebook-name";
+    var newDescription = "new descriptino for the new instance notebook name";
+    var newMetadata = ImmutableMap.of("foo", "bar");
+    resourceUserApi.updateAiNotebookInstance(
+        new UpdateControlledGcpAiNotebookInstanceRequestBody()
+            .description(newDescription)
+            .name(newName)
+            .updateParameters(new GcpAiNotebookUpdateParameters().metadata(newMetadata)),
+        getWorkspaceId(),
+        resourceId);
+
+    GcpAiNotebookInstanceResource updatedResource =
+        resourceUserApi.getAiNotebookInstance(getWorkspaceId(), resourceId);
+    assertEquals(newName, updatedResource.getMetadata().getName());
+    assertEquals(newDescription, updatedResource.getMetadata().getDescription());
+    var metadata =
+        userNotebooks.projects().locations().instances().get(instanceId).execute().getMetadata();
+    for (var entrySet : newMetadata.entrySet()) {
+      assertEquals(entrySet.getValue(), metadata.get(entrySet.getKey()));
+    }
 
     // Delete the AI Notebook through WSM.
     DeleteControlledGcpAiNotebookInstanceResult deleteResult =

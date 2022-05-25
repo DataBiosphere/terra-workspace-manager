@@ -11,6 +11,7 @@ import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.StepStatus;
 import bio.terra.stairway.exception.RetryException;
+import bio.terra.workspace.common.utils.FlightUtils;
 import bio.terra.workspace.generated.model.ApiGcpAiNotebookUpdateParameters;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.workspace.GcpCloudContextService;
@@ -22,6 +23,7 @@ public class UpdateAiNotebookAttributesStep implements Step {
   private final ControlledAiNotebookInstanceResource resource;
   private final CrlService crlService;
   private final GcpCloudContextService cloudContextService;
+
   UpdateAiNotebookAttributesStep(
       ControlledAiNotebookInstanceResource resource,
       CrlService crlService,
@@ -43,11 +45,18 @@ public class UpdateAiNotebookAttributesStep implements Step {
 
   @Override
   public StepResult undoStep(FlightContext context) throws InterruptedException {
-    final FlightMap inputMap = context.getInputParameters();
+    final FlightMap workingMap = context.getWorkingMap();
+    final ApiGcpAiNotebookUpdateParameters prevParameters =
+        workingMap.get(PREVIOUS_UPDATE_PARAMETERS, ApiGcpAiNotebookUpdateParameters.class);
     final ApiGcpAiNotebookUpdateParameters updateParameters =
-        inputMap.get(PREVIOUS_UPDATE_PARAMETERS, ApiGcpAiNotebookUpdateParameters.class);
-
-    return updateAiNotebook(updateParameters);
+        context.getInputParameters().get(UPDATE_PARAMETERS, ApiGcpAiNotebookUpdateParameters.class);
+    for (var entry: updateParameters.getMetadata().entrySet()) {
+      if (!prevParameters.getMetadata().containsKey(entry.getKey())) {
+        // Set the value to "" to undo the step. the cloud api does not allow remove a metadata key.
+        prevParameters.putMetadataItem(entry.getKey(), "");
+      }
+    }
+    return updateAiNotebook(prevParameters);
   }
 
   private StepResult updateAiNotebook(ApiGcpAiNotebookUpdateParameters updateParameters) {
@@ -56,7 +65,7 @@ public class UpdateAiNotebookAttributesStep implements Step {
     InstanceName instanceName = resource.toInstanceName(projectId);
     AIPlatformNotebooksCow notebooks = crlService.getAIPlatformNotebooksCow();
     try {
-      notebooks.instances().updateMetadataItems(instanceName, updateParameters.getMetadata());
+      notebooks.instances().updateMetadataItems(instanceName, updateParameters.getMetadata()).execute();
     } catch (GoogleJsonResponseException e) {
       if (HttpStatus.BAD_REQUEST.value() == e.getStatusCode() || HttpStatus.NOT_FOUND.value() == e.getStatusCode()) {
         return new StepResult(StepStatus.STEP_RESULT_FAILURE_FATAL, e);

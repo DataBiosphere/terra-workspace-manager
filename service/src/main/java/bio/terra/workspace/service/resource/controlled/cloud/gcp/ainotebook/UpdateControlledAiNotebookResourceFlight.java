@@ -46,7 +46,7 @@ public class UpdateControlledAiNotebookResourceFlight extends Flight {
     // retrieve existing attributes in case of undo later
     RetryRule gcpRetry = RetryRules.cloud();
     addStep(
-        new RetrieveAiNotebookResourceAttributesStep(aiNotebookResource, flightBeanBag.getCrlService()),
+        new RetrieveAiNotebookResourceAttributesStep(aiNotebookResource, flightBeanBag.getCrlService(), flightBeanBag.getGcpCloudContextService()),
         gcpRetry
     );
     // update ai notebook
