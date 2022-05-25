@@ -16,7 +16,7 @@ import org.slf4j.LoggerFactory;
  * A step for deleting a controlled Azure Storage Account resource.
  */
 public class DeleteAzureStorageStep implements Step {
-  private static final Logger logger = LoggerFactory.getLogger(CreateAzureStorageStep.class);
+  private static final Logger logger = LoggerFactory.getLogger(DeleteAzureStorageStep.class);
   private final AzureConfiguration azureConfig;
   private final CrlService crlService;
   private final ControlledAzureStorageResource resource;
@@ -36,19 +36,14 @@ public class DeleteAzureStorageStep implements Step {
             .get(ControlledResourceKeys.AZURE_CLOUD_CONTEXT, AzureCloudContext.class);
 
     final StorageManager manager = crlService.getStorageManager(azureCloudContext, azureConfig);
-    final var azureResourceId =
-        String.format(
-            "/subscriptions/%s/resourceGroups/%s/providers/Microsoft.Storage/storageAccounts/%s",
-            azureCloudContext.getAzureSubscriptionId(),
-            azureCloudContext.getAzureResourceGroupId(),
-            resource.getStorageAccountName());
     try {
-      logger.info("Attempting to delete Azure Storage Account " + azureResourceId);
-      manager.storageAccounts().deleteById(azureResourceId);
+      logger.info("Attempting to delete storage account: {}", resource.getStorageAccountName());
+      manager.storageAccounts().deleteByResourceGroup(
+              azureCloudContext.getAzureResourceGroupId(), resource.getStorageAccountName());
       return StepResult.getStepResultSuccess();
     } catch (Exception ex) {
       logger.info(
-          "Attempt to delete Azure Storage Account failed on this try: " + azureResourceId, ex);
+          "Attempt to delete Azure Storage Account failed on this try: " + resource.getStorageAccountName(), ex);
       return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, ex);
     }
   }
