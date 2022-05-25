@@ -9,6 +9,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import bio.terra.workspace.common.BaseUnitTest;
 import bio.terra.workspace.db.ApplicationDao;
+import bio.terra.workspace.db.RawDaoTestFixture;
+import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.db.exception.ApplicationNotFoundException;
 import bio.terra.workspace.db.exception.InvalidApplicationStateException;
 import bio.terra.workspace.db.exception.WorkspaceNotFoundException;
@@ -17,7 +19,16 @@ import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.iam.model.SamConstants.SamResource;
 import bio.terra.workspace.service.iam.model.SamConstants.SamSpendProfileAction;
 import bio.terra.workspace.service.job.JobService;
+import bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.ControlledGcsBucketAttributes;
+import bio.terra.workspace.service.resource.controlled.model.AccessScopeType;
+import bio.terra.workspace.service.resource.controlled.model.ManagedByType;
+import bio.terra.workspace.service.resource.controlled.model.PrivateResourceState;
+import bio.terra.workspace.service.resource.model.CloningInstructions;
+import bio.terra.workspace.service.resource.model.StewardshipType;
+import bio.terra.workspace.service.resource.model.WsmResourceFamily;
+import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.workspace.WsmApplicationService.WsmDbApplication;
+import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
 import bio.terra.workspace.service.workspace.model.WsmApplication;
@@ -49,6 +60,7 @@ public class ApplicationServiceTest extends BaseUnitTest {
   private static final String LEO_ID = "4BD1D59D-5827-4375-A41D-BBC65919F269";
   private static final String CARMEN_ID = "Carmen";
   private static final String NORM_ID = "normal";
+  private static final String DECOMMISSION_ID = "goodbye";
   private static final String UNKNOWN_ID = "never-heard_of_you";
 
   private static final WsmApplication LEO_APP =
@@ -75,6 +87,14 @@ public class ApplicationServiceTest extends BaseUnitTest {
           .serviceAccount("norm@terra-dev.iam.gserviceaccount.com")
           .state(WsmApplicationState.DECOMMISSIONED);
 
+  private static final WsmApplication NORM_APP_RECOMMISSIONED =
+      new WsmApplication()
+          .applicationId(NORM_ID)
+          .displayName("Norm")
+          .description("old house framework")
+          .serviceAccount("norm@terra-dev.iam.gserviceaccount.com")
+          .state(WsmApplicationState.OPERATING);
+
   /** A fake authenticated user request. */
   private static final AuthenticatedUserRequest USER_REQUEST =
       new AuthenticatedUserRequest()
@@ -86,6 +106,8 @@ public class ApplicationServiceTest extends BaseUnitTest {
   @Autowired WsmApplicationService appService;
   @Autowired WorkspaceService workspaceService;
   @Autowired JobService jobService;
+  @Autowired RawDaoTestFixture rawDaoTestFixture;
+  @Autowired ResourceDao resourceDao;
 
   /** Mock SamService does nothing for all calls that would throw if unauthorized. */
   @MockBean private SamService mockSamService;
@@ -108,6 +130,7 @@ public class ApplicationServiceTest extends BaseUnitTest {
                 Mockito.any(), Mockito.eq(SamResource.WORKSPACE), Mockito.any(), Mockito.any()))
         .thenReturn(true);
 
+    appService.enableTestMode();
     // Populate the applications - this should be idempotent since we are
     // re-creating the same configuration every time.
     Map<String, WsmDbApplication> dbAppMap = appService.buildAppMap();
@@ -195,6 +218,49 @@ public class ApplicationServiceTest extends BaseUnitTest {
     wsmApp = appService.getWorkspaceApplication(USER_REQUEST, workspaceId2, LEO_ID);
     assertEquals(LEO_APP, wsmApp.getApplication());
     assertTrue(wsmApp.isEnabled());
+
+    // validate decommissioned apps can't be re-enabled
+    appService.processApp(NORM_APP_RECOMMISSIONED, appService.buildAppMap());
+    assertFalse(appService.getErrorList().isEmpty());
+    assertTrue(appService.getErrorList().get(0).contains("decommissioned"));
+  }
+
+  @Test
+  public void decommissionAppTest() {
+    WsmApplication decommissionApp =
+        new WsmApplication()
+            .applicationId(DECOMMISSION_ID)
+            .displayName("DecommissionApp")
+            .description("An app soon to be decommissioned")
+            .serviceAccount("qwerty@terra-dev.iam.gserviceaccount.com")
+            .state(WsmApplicationState.OPERATING);
+    // Enable the test application in this workspace.
+    appService.enableWorkspaceApplication(USER_REQUEST, workspaceUuid, DECOMMISSION_ID);
+    // Create a fake app-owned referenced resource.
+    UUID resourceId = createFakeResource(DECOMMISSION_ID);
+    // Try to deprecate the app, should fail because this app has an associated resource.
+    decommissionApp.state(WsmApplicationState.DECOMMISSIONED);
+    appService.processApp(decommissionApp, appService.buildAppMap());
+    assertFalse(appService.getErrorList().isEmpty());
+    assertTrue(appService.getErrorList().get(0).contains("associated resources"));
+    // Delete the resource
+    resourceDao.deleteResource(workspaceUuid, resourceId);
+    // try to deprecate the app again, should succeed this time
+    appService.processApp(decommissionApp, appService.buildAppMap());
+    // should be no new errors
+    assertEquals(1, appService.getErrorList().size());
+  }
+
+  // Create a fake application-controlled resource in this test's workspace. Returns the resourceId.
+  private UUID createFakeResource(String appId) {
+    UUID resourceId = UUID.randomUUID();
+    ControlledGcsBucketAttributes fakeAttributes = new ControlledGcsBucketAttributes("fake-bucket-name");
+    rawDaoTestFixture.storeResource(workspaceUuid.toString(), CloudPlatform.GCP.toSql(), resourceId.toString(), "resource_name","resource_description",
+        StewardshipType.CONTROLLED.toSql(), WsmResourceType.CONTROLLED_GCP_GCS_BUCKET.toSql(),
+        WsmResourceFamily.GCS_BUCKET.toSql(), CloningInstructions.COPY_NOTHING.toSql(), fakeAttributes.toString(),
+        AccessScopeType.ACCESS_SCOPE_SHARED.toSql(), ManagedByType.MANAGED_BY_APPLICATION.toSql(), appId, null,
+        PrivateResourceState.NOT_APPLICABLE.toSql());
+    return resourceId;
   }
 
   private void enumerateCheck(boolean leoEnabled, boolean carmenEnabled, boolean normEnabled) {
