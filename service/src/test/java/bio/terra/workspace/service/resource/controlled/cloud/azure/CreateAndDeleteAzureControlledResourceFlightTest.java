@@ -473,7 +473,7 @@ public class CreateAndDeleteAzureControlledResourceFlightTest extends BaseAzureT
   }
 
   @Test
-  public void createVmWithFailureMakeSureNicIsNotAbandoned() throws InterruptedException {
+  public void createVmWithFailureMakeSureNetworkInterfaceIsNotAbandoned() throws InterruptedException {
     // Setup workspace and cloud context
     UUID workspaceUuid = azureTestUtils.createWorkspace(workspaceService);
     AuthenticatedUserRequest userRequest = userAccessUtils.defaultUserAuthRequest();
@@ -575,7 +575,7 @@ public class CreateAndDeleteAzureControlledResourceFlightTest extends BaseAzureT
       assertEquals(404, e.getResponse().getStatusCode());
     }
 
-    // ???? since VM is not created we need to submit a disk deletion and network deletion flights
+    //since VM is not created we need to submit a disk deletion and network deletion flights separately
     Thread.sleep(10000);
     FlightState deleteNetworkResourceFlightState =
         StairwayTestUtils.blockUntilFlightCompletes(
