@@ -1,5 +1,10 @@
 package bio.terra.workspace.service.resource.controlled.cloud.azure;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
+
 import bio.terra.stairway.FlightState;
 import bio.terra.stairway.FlightStatus;
 import bio.terra.workspace.common.BaseAzureTest;
@@ -8,7 +13,14 @@ import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
 import bio.terra.workspace.common.utils.AzureTestUtils;
 import bio.terra.workspace.common.utils.AzureVmUtils;
 import bio.terra.workspace.connected.UserAccessUtils;
-import bio.terra.workspace.generated.model.*;
+import bio.terra.workspace.generated.model.ApiAccessScope;
+import bio.terra.workspace.generated.model.ApiAzureDiskCreationParameters;
+import bio.terra.workspace.generated.model.ApiAzureIpCreationParameters;
+import bio.terra.workspace.generated.model.ApiAzureNetworkCreationParameters;
+import bio.terra.workspace.generated.model.ApiAzureRelayNamespaceCreationParameters;
+import bio.terra.workspace.generated.model.ApiAzureStorageCreationParameters;
+import bio.terra.workspace.generated.model.ApiAzureVmCreationParameters;
+import bio.terra.workspace.generated.model.ApiManagedBy;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.resource.WsmResourceService;
@@ -19,6 +31,7 @@ import bio.terra.workspace.service.resource.controlled.cloud.azure.network.Contr
 import bio.terra.workspace.service.resource.controlled.cloud.azure.relayNamespace.ControlledAzureRelayNamespaceResource;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.storage.ControlledAzureStorageResource;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.vm.ControlledAzureVmResource;
+import bio.terra.workspace.service.resource.controlled.cloud.azure.vm.CreateAzureVmStep;
 import bio.terra.workspace.service.resource.controlled.flight.create.CreateControlledResourceFlight;
 import bio.terra.workspace.service.resource.controlled.flight.delete.DeleteControlledResourceFlight;
 import bio.terra.workspace.service.resource.controlled.model.AccessScopeType;
@@ -30,6 +43,7 @@ import bio.terra.workspace.service.resource.model.WsmResource;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.flight.create.azure.CreateAzureContextFlight;
+import bio.terra.workspace.service.workspace.model.AzureCloudContext;
 import com.azure.core.management.exception.ManagementException;
 import com.azure.resourcemanager.compute.ComputeManager;
 import com.azure.resourcemanager.compute.models.VirtualMachine;
@@ -42,8 +56,6 @@ import java.time.Duration;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
-
-import static org.junit.jupiter.api.Assertions.*;
 
 public class CreateAndDeleteAzureControlledResourceFlightTest extends BaseAzureTest {
   private static final Duration STAIRWAY_FLIGHT_TIMEOUT = Duration.ofMinutes(15);
@@ -458,6 +470,157 @@ public class CreateAndDeleteAzureControlledResourceFlightTest extends BaseAzureT
     assertThrows(
         com.azure.core.exception.HttpResponseException.class,
         () -> computeManager.disks().getById(resolvedVm.osDiskId()));
+  }
+
+  @Test
+  public void createVmWithFailureMakeSureNicIsNotAbandoned() throws InterruptedException {
+    // Setup workspace and cloud context
+    UUID workspaceUuid = azureTestUtils.createWorkspace(workspaceService);
+    AuthenticatedUserRequest userRequest = userAccessUtils.defaultUserAuthRequest();
+
+    // Cloud context needs to be created first
+    FlightState createAzureContextFlightState =
+        StairwayTestUtils.blockUntilFlightCompletes(
+            jobService.getStairway(),
+            CreateAzureContextFlight.class,
+            azureTestUtils.createAzureContextInputParameters(workspaceUuid, userRequest),
+            STAIRWAY_FLIGHT_TIMEOUT,
+            null);
+
+    assertEquals(FlightStatus.SUCCESS, createAzureContextFlightState.getFlightStatus());
+    assertTrue(
+        workspaceService.getAuthorizedAzureCloudContext(workspaceUuid, userRequest).isPresent());
+
+    // Create disk
+    ControlledAzureDiskResource diskResource = createDisk(workspaceUuid, userRequest);
+
+    // Create network
+    ControlledAzureNetworkResource networkResource = createNetwork(workspaceUuid, userRequest);
+
+    final ApiAzureVmCreationParameters creationParameters =
+        ControlledResourceFixtures.getInvalidAzureVmCreationParameters();
+
+    final UUID resourceId = UUID.randomUUID();
+    ControlledAzureVmResource vmResource =
+        ControlledAzureVmResource.builder()
+            .common(
+                ControlledResourceFields.builder()
+                    .workspaceUuid(workspaceUuid)
+                    .resourceId(resourceId)
+                    .name(getAzureName("vm"))
+                    .description(getAzureName("vm-desc"))
+                    .cloningInstructions(CloningInstructions.COPY_RESOURCE)
+                    .accessScope(AccessScopeType.fromApi(ApiAccessScope.SHARED_ACCESS))
+                    .managedBy(ManagedByType.fromApi(ApiManagedBy.USER))
+                    .build())
+            .vmName(creationParameters.getName())
+            .vmSize(creationParameters.getVmSize())
+            .vmImage(AzureVmUtils.getImageData(creationParameters.getVmImage()))
+            .region(creationParameters.getRegion())
+            .diskId(diskResource.getResourceId())
+            .networkId(networkResource.getResourceId())
+            .build();
+
+    // Submit a VM creation flight. This flight will fail. It is made intentionally.
+    // We need this to test undo step and check if network interface is deleted.
+    FlightState vmCreationFlightState =
+        StairwayTestUtils.blockUntilFlightCompletes(
+            jobService.getStairway(),
+            CreateControlledResourceFlight.class,
+            azureTestUtils.createControlledResourceInputParameters(
+                workspaceUuid, userRequest, vmResource, creationParameters),
+            STAIRWAY_FLIGHT_TIMEOUT,
+            null);
+
+    // VM flight was failed intentionally
+    assertEquals(FlightStatus.ERROR, vmCreationFlightState.getFlightStatus());
+
+    ComputeManager computeManager = azureTestUtils.getComputeManager();
+    AzureCloudContext azureCloudContext =
+        vmCreationFlightState
+            .getResultMap()
+            .get()
+            .get("azureCloudContext", AzureCloudContext.class);
+    // validate that VM doesn't exist
+    try {
+      computeManager
+          .virtualMachines()
+          .getByResourceGroup(azureCloudContext.getAzureResourceGroupId(), vmResource.getVmName());
+    } catch (ManagementException e) {
+      assertEquals(404, e.getResponse().getStatusCode());
+    }
+    assertThrows(
+        bio.terra.workspace.service.resource.exception.ResourceNotFoundException.class,
+        () ->
+            controlledResourceService.getControlledResource(
+                workspaceUuid, resourceId, userRequest));
+
+    assertTrue(vmCreationFlightState.getResultMap().isPresent());
+    assertTrue(
+        vmCreationFlightState
+            .getResultMap()
+            .get()
+            .containsKey(CreateAzureVmStep.WORKING_MAP_NETWORK_INTERFACE_KEY));
+    assertTrue(vmCreationFlightState.getResultMap().get().containsKey("azureCloudContext"));
+
+    // validate that our network interface doesn't exist
+    String nicId =
+        vmCreationFlightState
+            .getResultMap()
+            .get()
+            .get(CreateAzureVmStep.WORKING_MAP_NETWORK_INTERFACE_KEY, String.class);
+    try {
+      computeManager.networkManager().networkInterfaces().getById(nicId);
+    } catch (ManagementException e) {
+      assertEquals(404, e.getResponse().getStatusCode());
+    }
+
+    // ???? since VM is not created we need to submit a disk deletion and network deletion flights
+    Thread.sleep(10000);
+    FlightState deleteNetworkResourceFlightState =
+        StairwayTestUtils.blockUntilFlightCompletes(
+            jobService.getStairway(),
+            DeleteControlledResourceFlight.class,
+            azureTestUtils.deleteControlledResourceInputParameters(
+                workspaceUuid, networkResource.getResourceId(), userRequest, networkResource),
+            STAIRWAY_FLIGHT_TIMEOUT,
+            null);
+    assertEquals(FlightStatus.SUCCESS, deleteNetworkResourceFlightState.getFlightStatus());
+    assertThrows(
+        com.azure.core.exception.HttpResponseException.class,
+        () ->
+            computeManager
+                .networkManager()
+                .networks()
+                .getByResourceGroup(
+                    azureCloudContext.getAzureResourceGroupId(), networkResource.getNetworkName()));
+
+    // despite on the fact that vm hasn't been created this flight might be completed with error.
+    // It might complain that disk is attached to a vm. As a result we need retry here.
+    // Number of cloud retry rules attempts might be not enough.
+    int deleteAttemptsNumber = 5;
+    FlightState deleteDiskResourceFlightState;
+    do {
+      deleteDiskResourceFlightState =
+          StairwayTestUtils.blockUntilFlightCompletes(
+              jobService.getStairway(),
+              DeleteControlledResourceFlight.class,
+              azureTestUtils.deleteControlledResourceInputParameters(
+                  workspaceUuid, diskResource.getResourceId(), userRequest, diskResource),
+              STAIRWAY_FLIGHT_TIMEOUT,
+              null);
+      deleteAttemptsNumber--;
+    } while (!deleteDiskResourceFlightState.getFlightStatus().equals(FlightStatus.SUCCESS)
+        || deleteAttemptsNumber == 0);
+    assertEquals(FlightStatus.SUCCESS, deleteDiskResourceFlightState.getFlightStatus());
+
+    assertThrows(
+        com.azure.core.exception.HttpResponseException.class,
+        () ->
+            computeManager
+                .disks()
+                .getByResourceGroup(
+                    azureCloudContext.getAzureResourceGroupId(), diskResource.getDiskName()));
   }
 
   @Test

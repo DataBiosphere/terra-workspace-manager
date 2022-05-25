@@ -36,6 +36,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class CreateAzureVmStep implements Step {
+  public static final String WORKING_MAP_NETWORK_INTERFACE_KEY = "NetworkInterfaceId";
 
   private static final Logger logger = LoggerFactory.getLogger(CreateAzureVmStep.class);
   private final AzureConfiguration azureConfig;
@@ -109,8 +110,9 @@ public class CreateAzureVmStep implements Step {
               .getByResourceGroup(
                   azureCloudContext.getAzureResourceGroupId(), networkResource.getNetworkName());
 
-      var createNic =
-          createNetworkInterface(
+      var networkInterface =
+          createOrGetExistingNetworkInterface(
+              context,
               computeManager,
               azureCloudContext,
               existingNetwork,
@@ -120,7 +122,7 @@ public class CreateAzureVmStep implements Step {
       var virtualMachineDefinition =
           buildVmConfiguration(
               computeManager,
-              createNic,
+              networkInterface,
               existingAzureDisk,
               azureCloudContext.getAzureResourceGroupId(),
               creationParameters);
@@ -261,9 +263,27 @@ public class CreateAzureVmStep implements Step {
             .withExistingPrimaryNetwork(existingNetwork)
             .withSubnet(subnetName)
             .withPrimaryPrivateIPAddressDynamic();
-    if (existingAzureIp.isPresent()) {
-      createNicStep.withExistingPrimaryPublicIPAddress(existingAzureIp.get());
-    }
+    existingAzureIp.ifPresent(createNicStep::withExistingPrimaryPublicIPAddress);
     return createNicStep.create();
+  }
+
+  private NetworkInterface createOrGetExistingNetworkInterface(
+      FlightContext context,
+      ComputeManager computeManager,
+      AzureCloudContext azureCloudContext,
+      Network existingNetwork,
+      String subnetName,
+      Optional<PublicIpAddress> existingAzureIp) {
+    NetworkInterface networkInterface;
+    if (context.getWorkingMap().containsKey(WORKING_MAP_NETWORK_INTERFACE_KEY)) {
+      String nicId = context.getWorkingMap().get(WORKING_MAP_NETWORK_INTERFACE_KEY, String.class);
+      networkInterface = computeManager.networkManager().networkInterfaces().getById(nicId);
+    } else {
+      networkInterface =
+          createNetworkInterface(
+              computeManager, azureCloudContext, existingNetwork, subnetName, existingAzureIp);
+      context.getWorkingMap().put(WORKING_MAP_NETWORK_INTERFACE_KEY, networkInterface.id());
+    }
+    return networkInterface;
   }
 }
