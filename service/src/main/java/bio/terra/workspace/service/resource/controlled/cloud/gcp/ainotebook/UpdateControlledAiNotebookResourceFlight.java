@@ -5,12 +5,10 @@ import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.RetryRule;
 import bio.terra.workspace.common.utils.FlightBeanBag;
 import bio.terra.workspace.common.utils.RetryRules;
-import bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.RetrieveGcsBucketCloudAttributesStep;
-import bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.RetrieveGcsBucketCloudAttributesStep.RetrievalMode;
-import bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.UpdateGcsBucketStep;
 import bio.terra.workspace.service.resource.controlled.flight.update.RetrieveControlledResourceMetadataStep;
 import bio.terra.workspace.service.resource.controlled.flight.update.UpdateControlledResourceMetadataStep;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
+import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ResourceKeys;
 
 public class UpdateControlledAiNotebookResourceFlight extends Flight {
@@ -44,15 +42,16 @@ public class UpdateControlledAiNotebookResourceFlight extends Flight {
             resource),
         dbRetry);
 
+    ControlledAiNotebookInstanceResource aiNotebookResource = resource.castByEnum(WsmResourceType.CONTROLLED_GCP_AI_NOTEBOOK_INSTANCE);
     // retrieve existing attributes in case of undo later
     RetryRule gcpRetry = RetryRules.cloud();
     addStep(
-        new RetrieveAiNotebookResourceAttributesStep(),
+        new RetrieveAiNotebookResourceAttributesStep(aiNotebookResource, flightBeanBag.getCrlService()),
         gcpRetry
     );
     // update ai notebook
     addStep(
-        new UpdateAiNotebookStep(),
+        new UpdateAiNotebookAttributesStep(aiNotebookResource, flightBeanBag.getCrlService(), flightBeanBag.getGcpCloudContextService()),
         gcpRetry
     );
 }}
