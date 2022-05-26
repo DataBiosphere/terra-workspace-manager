@@ -16,6 +16,8 @@ import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.workspace.GcpCloudContextService;
 import com.google.api.client.googleapis.json.GoogleJsonResponseException;
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -84,11 +86,15 @@ public class UpdateAiNotebookAttributesStep implements Step {
     InstanceName instanceName = resource.toInstanceName(projectId);
     AIPlatformNotebooksCow notebooks = crlService.getAIPlatformNotebooksCow();
     try {
-      var metadata = updateParameters.getMetadata();
-      if (metadata.keySet().removeAll(ControlledAiNotebookInstanceResource.RESERVED_METADATA_KEYS)) {
-        logger.info("Cannot modify terra reserved keys");
+      Map<String, String> sanitizedMetadata = new HashMap<>();
+      for (var entrySet: updateParameters.getMetadata().entrySet()) {
+        if (ControlledAiNotebookInstanceResource.RESERVED_METADATA_KEYS.contains(entrySet.getKey())) {
+          logger.info(String.format("Cannot modify terra reserved keys %s", entrySet.getKey()));
+          continue;
+        }
+        sanitizedMetadata.put(entrySet.getKey(), entrySet.getValue());
       }
-      notebooks.instances().updateMetadataItems(instanceName, metadata).execute();
+      notebooks.instances().updateMetadataItems(instanceName, sanitizedMetadata).execute();
     } catch (GoogleJsonResponseException e) {
       if (HttpStatus.BAD_REQUEST.value() == e.getStatusCode() || HttpStatus.NOT_FOUND.value() == e.getStatusCode()) {
         return new StepResult(StepStatus.STEP_RESULT_FAILURE_FATAL, e);
