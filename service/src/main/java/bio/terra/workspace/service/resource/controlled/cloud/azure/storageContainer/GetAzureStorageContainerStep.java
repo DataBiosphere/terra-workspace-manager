@@ -43,12 +43,13 @@ public class GetAzureStorageContainerStep implements Step {
             .get(ControlledResourceKeys.AZURE_CLOUD_CONTEXT, AzureCloudContext.class);
     final StorageManager storageManager = crlService.getStorageManager(azureCloudContext, azureConfig);
 
-    final BlobContainer container = storageManager.blobContainers().get(
-            azureCloudContext.getAzureResourceGroupId(),
-            resource.getStorageAccountName(),
-            resource.getStorageContainerName()
-    );
-
+//    final BlobContainer container = storageManager.blobContainers().get(
+//            azureCloudContext.getAzureResourceGroupId(),
+//            resource.getStorageAccountName(),
+//            resource.getStorageContainerName()
+//    );
+    // Throws exception when it does not exist, and then we didn't properly handle the exception.
+    // Failed to construct exception: com.azure.core.management.exception.ManagementException; Exception message: Status code 404,
       return StepResult.getStepResultSuccess();
 //    }
 //
