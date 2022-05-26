@@ -146,7 +146,7 @@ public class ControlledAzureStorageContainerResource extends ControlledResource 
 
   @Override
   public WsmResourceFamily getResourceFamily() {
-    return WsmResourceFamily.AZURE_STORAGE_ACCOUNT;
+    return WsmResourceFamily.AZURE_STORAGE_CONTAINER;
   }
 
   @Override
