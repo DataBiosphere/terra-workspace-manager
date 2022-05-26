@@ -49,7 +49,7 @@ public class ApplicationUnitTest extends BaseUnitTest {
       "Invalid application configuration: missing application(s): ";
 
   // The WSM test app is the good id
-  private static final String GOOD_ID = "TestWsmApp";
+  private static final String GOOD_ID = "aGoodId";
   private static final String BAD_ID = "**invalid characters!";
   private static final String GOOD_EMAIL = "foo@kripalu.yoga";
   private static final String GOOD_STATE = WsmApplicationState.OPERATING.name();
@@ -57,6 +57,7 @@ public class ApplicationUnitTest extends BaseUnitTest {
   private static final String GOOD_DESC = "The Best of All Possible Applications";
   private static final String BAD_DATA = "xyzzy";
 
+  @DirtiesContext(methodMode = MethodMode.BEFORE_METHOD)
   @Test
   public void configValidationTest() {
     // The App class is what we get from the configuration file. This test verifies that the

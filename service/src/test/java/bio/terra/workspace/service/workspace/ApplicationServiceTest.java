@@ -9,6 +9,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import bio.terra.workspace.common.BaseUnitTest;
 import bio.terra.workspace.db.ApplicationDao;
+import bio.terra.workspace.db.DbSerDes;
 import bio.terra.workspace.db.RawDaoTestFixture;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.db.exception.ApplicationNotFoundException;
@@ -43,6 +44,8 @@ import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.test.annotation.DirtiesContext;
+import org.springframework.test.annotation.DirtiesContext.MethodMode;
 
 // Test notes
 // Populate two applications
@@ -161,6 +164,7 @@ public class ApplicationServiceTest extends BaseUnitTest {
     workspaceService.createWorkspace(request, USER_REQUEST);
   }
 
+  @DirtiesContext(methodMode = MethodMode.BEFORE_METHOD)
   @Test
   public void applicationEnableTest() {
     // Verify no apps enabled in workspace
@@ -220,11 +224,14 @@ public class ApplicationServiceTest extends BaseUnitTest {
     assertTrue(wsmApp.isEnabled());
 
     // validate decommissioned apps can't be re-enabled
+    // Clear error list first
+    appService.enableTestMode();
     appService.processApp(NORM_APP_RECOMMISSIONED, appService.buildAppMap());
     assertFalse(appService.getErrorList().isEmpty());
     assertTrue(appService.getErrorList().get(0).contains("decommissioned"));
   }
 
+  @DirtiesContext(methodMode = MethodMode.BEFORE_METHOD)
   @Test
   public void decommissionAppTest() {
     WsmApplication decommissionApp =
@@ -234,21 +241,27 @@ public class ApplicationServiceTest extends BaseUnitTest {
             .description("An app soon to be decommissioned")
             .serviceAccount("qwerty@terra-dev.iam.gserviceaccount.com")
             .state(WsmApplicationState.OPERATING);
+    // Register the app to be decommissioned
+    appService.processApp(decommissionApp,appService.buildAppMap());
     // Enable the test application in this workspace.
     appService.enableWorkspaceApplication(USER_REQUEST, workspaceUuid, DECOMMISSION_ID);
     // Create a fake app-owned referenced resource.
     UUID resourceId = createFakeResource(DECOMMISSION_ID);
     // Try to deprecate the app, should fail because this app has an associated resource.
+    // Clear the error log first so we're sure this is related to the current operation.
+    appService.enableTestMode();
     decommissionApp.state(WsmApplicationState.DECOMMISSIONED);
     appService.processApp(decommissionApp, appService.buildAppMap());
     assertFalse(appService.getErrorList().isEmpty());
     assertTrue(appService.getErrorList().get(0).contains("associated resources"));
+    // Clear the error log again.
+    appService.enableTestMode();
     // Delete the resource
     resourceDao.deleteResource(workspaceUuid, resourceId);
-    // try to deprecate the app again, should succeed this time
+    // try to decommission the app again, should succeed this time
     appService.processApp(decommissionApp, appService.buildAppMap());
-    // should be no new errors
-    assertEquals(1, appService.getErrorList().size());
+    WsmWorkspaceApplication readApp = appService.getWorkspaceApplication(USER_REQUEST, workspaceUuid,  decommissionApp.getApplicationId());
+    assertEquals(WsmApplicationState.DECOMMISSIONED, readApp.getApplication().getState());
   }
 
   // Create a fake application-controlled resource in this test's workspace. Returns the resourceId.
@@ -257,7 +270,7 @@ public class ApplicationServiceTest extends BaseUnitTest {
     ControlledGcsBucketAttributes fakeAttributes = new ControlledGcsBucketAttributes("fake-bucket-name");
     rawDaoTestFixture.storeResource(workspaceUuid.toString(), CloudPlatform.GCP.toSql(), resourceId.toString(), "resource_name","resource_description",
         StewardshipType.CONTROLLED.toSql(), WsmResourceType.CONTROLLED_GCP_GCS_BUCKET.toSql(),
-        WsmResourceFamily.GCS_BUCKET.toSql(), CloningInstructions.COPY_NOTHING.toSql(), fakeAttributes.toString(),
+        WsmResourceFamily.GCS_BUCKET.toSql(), CloningInstructions.COPY_NOTHING.toSql(), DbSerDes.toJson(fakeAttributes),
         AccessScopeType.ACCESS_SCOPE_SHARED.toSql(), ManagedByType.MANAGED_BY_APPLICATION.toSql(), appId, null,
         PrivateResourceState.NOT_APPLICABLE.toSql());
     return resourceId;
