@@ -974,6 +974,32 @@ public class SamService {
   }
 
   /**
+   * Add WSM's service account as the owner of a controlled resource in Sam. Used for admin
+   * reassignment of resources. This assumes samService.initialize() has already been called, which
+   * should happen on start.
+   */
+  private void addWsmResourceOwnerPolicy(CreateResourceRequestV2 request)
+      throws InterruptedException {
+    try {
+      AuthenticatedUserRequest wsmRequest =
+          new AuthenticatedUserRequest().token(Optional.of(getWsmServiceAccountToken()));
+      String wsmSaEmail = getUserEmailFromSam(wsmRequest);
+      AccessPolicyMembershipV2 ownerPolicy =
+          new AccessPolicyMembershipV2()
+              .addRolesItem(ControlledResourceIamRole.OWNER.toSamRole())
+              .addMemberEmailsItem(wsmSaEmail);
+      request.putPoliciesItem(ControlledResourceIamRole.OWNER.toSamRole(), ownerPolicy);
+    } catch (InternalServerErrorException e) {
+      // In cases where WSM is not running as a service account (e.g. unit tests), the above call to
+      // get application default credentials will fail. This is fine, as those cases don't create
+      // real resources.
+      logger.warn(
+          "Failed to add WSM service account as resource owner Sam. This is expected for tests.",
+          e);
+    }
+  }
+
+  /**
    * Fetch the email of a user's pet service account in a given project. This request to Sam will
    * create the pet SA if it doesn't already exist.
    */
