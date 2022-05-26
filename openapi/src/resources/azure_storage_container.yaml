@@ -1,0 +1,26 @@
+components:
+  schemas:
+    AzureStorageContainerAttributes:
+      description: >-
+        Storage container properties included in post-creation get.
+      type: object
+      properties:
+        storageAccountName:
+          description: Name of the storage account.
+          type: string
+        storageContainerName:
+          description: Name of the storage container.
+          type: string
+
+    AzureStorageContainerResource:
+      type: object
+      description: Description of an Azure storage container.
+      required: [ metadata, attributes ]
+      properties:
+        metadata:
+          description: the resource metadata common to all resources
+          $ref: '#/components/schemas/ResourceMetadata'
+        attributes:
+          $ref: '#/components/schemas/AzureStorageContainerAttributes'
+
+

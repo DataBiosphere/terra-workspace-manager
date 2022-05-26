@@ -11,7 +11,7 @@ public abstract class CreateStorageAccountRequestData extends BaseStorageRequest
 
   @Override
   public CloudOperation cloudOperation() {
-    return StorageManagerOperation.AZURE_CREATE_STORAGE;
+    return StorageManagerOperation.AZURE_CREATE_STORAGE_ACCOUNT;
   }
 
   @Override
