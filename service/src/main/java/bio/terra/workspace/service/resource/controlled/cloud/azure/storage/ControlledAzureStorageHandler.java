@@ -19,15 +19,13 @@ public class ControlledAzureStorageHandler implements WsmResourceHandler {
   /** {@inheritDoc} */
   @Override
   public WsmResource makeResourceFromDb(DbResource dbResource) {
-    ControlledAzureStorageResource attributes =
-        DbSerDes.fromJson(dbResource.getAttributes(), ControlledAzureStorageResource.class);
+    ControlledAzureStorageAttributes attributes =
+        DbSerDes.fromJson(dbResource.getAttributes(), ControlledAzureStorageAttributes.class);
 
-    var resource =
-        ControlledAzureStorageResource.builder()
+    return ControlledAzureStorageResource.builder()
             .storageAccountName(attributes.getStorageAccountName())
             .region(attributes.getRegion())
             .common(new ControlledResourceFields(dbResource))
             .build();
-    return resource;
   }
 }

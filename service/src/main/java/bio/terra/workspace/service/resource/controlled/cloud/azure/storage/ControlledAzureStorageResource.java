@@ -4,7 +4,6 @@ import bio.terra.common.exception.BadRequestException;
 import bio.terra.common.exception.InconsistentFieldsException;
 import bio.terra.common.exception.MissingRequiredFieldException;
 import bio.terra.stairway.RetryRule;
-import bio.terra.workspace.common.exception.InternalLogicException;
 import bio.terra.workspace.common.utils.FlightBeanBag;
 import bio.terra.workspace.common.utils.RetryRules;
 import bio.terra.workspace.db.DbSerDes;
@@ -18,17 +17,14 @@ import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.resource.ResourceValidationUtils;
 import bio.terra.workspace.service.resource.controlled.flight.create.CreateControlledResourceFlight;
 import bio.terra.workspace.service.resource.controlled.flight.delete.DeleteControlledResourceFlight;
-import bio.terra.workspace.service.resource.controlled.model.AccessScopeType;
-import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
-import bio.terra.workspace.service.resource.controlled.model.ControlledResourceFields;
-import bio.terra.workspace.service.resource.controlled.model.ManagedByType;
-import bio.terra.workspace.service.resource.controlled.model.PrivateResourceState;
+import bio.terra.workspace.service.resource.controlled.model.*;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.model.StewardshipType;
 import bio.terra.workspace.service.resource.model.WsmResourceFamily;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+
 import java.util.Optional;
 import java.util.UUID;
 
@@ -119,7 +115,10 @@ public class ControlledAzureStorageResource extends ControlledResource {
   /** {@inheritDoc} */
   @Override
   public void addDeleteSteps(DeleteControlledResourceFlight flight, FlightBeanBag flightBeanBag) {
-    throw new InternalLogicException("Storage delete is not implemented");
+    flight.addStep(
+            new DeleteAzureStorageStep(
+                    flightBeanBag.getAzureConfig(), flightBeanBag.getCrlService(), this),
+            RetryRules.cloud());
   }
 
   public String getStorageAccountName() {
