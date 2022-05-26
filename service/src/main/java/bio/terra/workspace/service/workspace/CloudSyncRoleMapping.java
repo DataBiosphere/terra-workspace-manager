@@ -28,7 +28,6 @@ public class CloudSyncRoleMapping {
           "artifactregistry.files.list",
           "artifactregistry.files.get",
           "artifactregistry.packages.list",
-          "artifactregistry.packages.listTagBindings",
           "artifactregistry.repositories.listEffectiveTags",
           "artifactregistry.packages.list",
           "artifactregistry.tags.list",
