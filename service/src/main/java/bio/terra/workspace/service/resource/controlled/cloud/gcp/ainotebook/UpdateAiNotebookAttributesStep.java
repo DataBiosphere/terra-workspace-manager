@@ -16,6 +16,8 @@ import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.workspace.GcpCloudContextService;
 import com.google.api.client.googleapis.json.GoogleJsonResponseException;
 import java.io.IOException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 
 /**
@@ -25,6 +27,8 @@ public class UpdateAiNotebookAttributesStep implements Step {
   private final ControlledAiNotebookInstanceResource resource;
   private final CrlService crlService;
   private final GcpCloudContextService cloudContextService;
+
+  private final Logger logger = LoggerFactory.getLogger(UpdateAiNotebookAttributesStep.class);
 
   UpdateAiNotebookAttributesStep(
       ControlledAiNotebookInstanceResource resource,
@@ -80,7 +84,11 @@ public class UpdateAiNotebookAttributesStep implements Step {
     InstanceName instanceName = resource.toInstanceName(projectId);
     AIPlatformNotebooksCow notebooks = crlService.getAIPlatformNotebooksCow();
     try {
-      notebooks.instances().updateMetadataItems(instanceName, updateParameters.getMetadata()).execute();
+      var metadata = updateParameters.getMetadata();
+      if (metadata.keySet().removeAll(ControlledAiNotebookInstanceResource.RESERVED_METADATA_KEYS)) {
+        logger.info("Cannot modify terra reserved keys");
+      }
+      notebooks.instances().updateMetadataItems(instanceName, metadata).execute();
     } catch (GoogleJsonResponseException e) {
       if (HttpStatus.BAD_REQUEST.value() == e.getStatusCode() || HttpStatus.NOT_FOUND.value() == e.getStatusCode()) {
         return new StepResult(StepStatus.STEP_RESULT_FAILURE_FATAL, e);

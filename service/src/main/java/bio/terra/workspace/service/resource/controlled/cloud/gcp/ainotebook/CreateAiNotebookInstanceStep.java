@@ -1,5 +1,8 @@
 package bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook;
 
+import static bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook.ControlledAiNotebookInstanceResource.PROXY_MODE_METADATA_KEY;
+import static bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook.ControlledAiNotebookInstanceResource.SERVER_ID_METADATA_KEY;
+import static bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook.ControlledAiNotebookInstanceResource.WORKSPACE_ID_METADATA_KEY;
 import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.CREATE_NOTEBOOK_NETWORK_NAME;
 import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.CREATE_NOTEBOOK_PARAMETERS;
 import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.CREATE_NOTEBOOK_REGION;
@@ -42,6 +45,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
+import scala.Predef.StringFormat;
 
 /**
  * A step for creating the AI Platform notebook instance in the Google cloud.
@@ -53,19 +57,9 @@ public class CreateAiNotebookInstanceStep implements Step {
   /** Default post-startup-script when starting a notebook instance. */
   protected static final String DEFAULT_POST_STARTUP_SCRIPT =
       "https://raw.githubusercontent.com/DataBiosphere/terra-workspace-manager/main/service/src/main/java/bio/terra/workspace/service/resource/controlled/cloud/gcp/ainotebook/post-startup.sh";
-  /** The Notebook instance metadata key used to control proxy mode. */
-  private static final String PROXY_MODE_METADATA_KEY = "proxy-mode";
   /** The Notebook instance metadata value used to set the service account proxy mode. */
   // git secrets gets a false positive if 'service_account' is double quoted.
   private static final String PROXY_MODE_SA_VALUE = "service_" + "account";
-
-  /** The Notebook instance metadata key used to set the terra workspace. */
-  private static final String WORKSPACE_ID_METADATA_KEY = "terra-workspace-id";
-  /**
-   * The Notebook instance metadata key used to point the terra CLI at the correct WSM and SAM
-   * instances given a CLI specific name.
-   */
-  private static final String SERVER_ID_METADATA_KEY = "terra-cli-server";
 
   /**
    * Service account for the notebook instance needs to contain these scopes to interact with SAM.
@@ -211,17 +205,20 @@ public class CreateAiNotebookInstanceStep implements Step {
 
   private static void addDefaultMetadata(
       Map<String, String> metadata, String workspaceUuid, String cliServer) {
-    // TODO(PF-1409): throw conflict exception when these two metadata key is specified by the
-    // user after we remove them from CLI.
-    metadata.put(WORKSPACE_ID_METADATA_KEY, workspaceUuid);
+    addDefaultMetadataAndCheckConflict(metadata, WORKSPACE_ID_METADATA_KEY, workspaceUuid);
     if (!StringUtils.isEmpty(cliServer)) {
-      metadata.put(SERVER_ID_METADATA_KEY, cliServer);
+      addDefaultMetadataAndCheckConflict(metadata, SERVER_ID_METADATA_KEY, cliServer);
     }
     // Create the AI Notebook instance in the service account proxy mode to control proxy access by
     // means of IAM permissions on the service account.
     // https://cloud.google.com/ai-platform/notebooks/docs/troubleshooting#opening_a_notebook_results_in_a_403_forbidden_error
-    if (metadata.put(PROXY_MODE_METADATA_KEY, PROXY_MODE_SA_VALUE) != null) {
-      throw new ConflictException("proxy-mode metadata is reserved for Terra.");
+    addDefaultMetadataAndCheckConflict(metadata, PROXY_MODE_METADATA_KEY, PROXY_MODE_SA_VALUE);
+  }
+
+  private static void addDefaultMetadataAndCheckConflict(Map<String, String> metadata,
+      String metadataKey, String metadataValue) {
+    if (metadata.put(metadataKey, metadataValue) != null) {
+      throw new ConflictException(String.format("%s is reserved for Terra", metadataKey));
     }
   }
 

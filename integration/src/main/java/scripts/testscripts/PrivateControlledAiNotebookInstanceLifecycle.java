@@ -163,7 +163,7 @@ public class PrivateControlledAiNotebookInstanceLifecycle extends WorkspaceAlloc
     // Update the AI Notebook through WSM.
     var newName = "new-instance-notebook-name";
     var newDescription = "new descriptino for the new instance notebook name";
-    var newMetadata = ImmutableMap.of("foo", "bar");
+    var newMetadata = ImmutableMap.of("foo", "bar", "count", "3");
     GcpAiNotebookInstanceResource updatedResource =
         resourceUserApi.updateAiNotebookInstance(
             new UpdateControlledGcpAiNotebookInstanceRequestBody()
