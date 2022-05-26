@@ -13,6 +13,7 @@ import bio.terra.stairway.exception.RetryException;
 import bio.terra.stairway.exception.StairwayException;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.job.JobMapKeys;
+import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -62,6 +63,14 @@ public class LaunchCloneAllResourcesFlightStep implements Step {
     subflightInputParameters.put(
         ControlledResourceKeys.DESTINATION_WORKSPACE_ID, destinationWorkspace.getWorkspaceId());
     subflightInputParameters.put(ControlledResourceKeys.LOCATION, location);
+    // fields normally set by JobBuilder for identifying jobs
+    subflightInputParameters.put(
+        WorkspaceFlightMapKeys.WORKSPACE_ID, destinationWorkspace.getWorkspaceId().toString());
+    subflightInputParameters.put(
+        JobMapKeys.DESCRIPTION.getKeyName(),
+        String.format(
+            "Clone all resources into workspace %s",
+            destinationWorkspace.getWorkspaceId().toString()));
 
     // Build a CloneAllResourcesFlight
     try {

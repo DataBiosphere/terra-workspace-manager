@@ -11,7 +11,6 @@ import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKey
 import bio.terra.cloudres.google.api.services.common.OperationCow;
 import bio.terra.cloudres.google.notebooks.AIPlatformNotebooksCow;
 import bio.terra.cloudres.google.notebooks.InstanceName;
-import bio.terra.common.exception.ConflictException;
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.Step;
@@ -25,6 +24,7 @@ import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceContainerImag
 import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceCreationParameters;
 import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceVmImage;
 import bio.terra.workspace.service.crl.CrlService;
+import bio.terra.workspace.service.resource.controlled.exception.ReservedMetadataKeyException;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import bio.terra.workspace.service.workspace.model.GcpCloudContext;
 import com.google.api.client.googleapis.json.GoogleJsonResponseException;
@@ -73,16 +73,19 @@ public class CreateAiNotebookInstanceStep implements Step {
   private final Logger logger = LoggerFactory.getLogger(CreateAiNotebookInstanceStep.class);
   private final ControlledAiNotebookInstanceResource resource;
   private final String petEmail;
+  private final String workspaceUserFacingId;
   private final CrlService crlService;
   private final CliConfiguration cliConfiguration;
 
   public CreateAiNotebookInstanceStep(
       ControlledAiNotebookInstanceResource resource,
       String petEmail,
+      String workspaceUserFacingId,
       CrlService crlService,
       CliConfiguration cliConfiguration) {
     this.petEmail = petEmail;
     this.resource = resource;
+    this.workspaceUserFacingId = workspaceUserFacingId;
     this.crlService = crlService;
     this.cliConfiguration = cliConfiguration;
   }
@@ -102,7 +105,7 @@ public class CreateAiNotebookInstanceStep implements Step {
             flightContext,
             projectId,
             petEmail,
-            resource.getWorkspaceId().toString(),
+            workspaceUserFacingId,
             cliConfiguration.getServerName());
 
     AIPlatformNotebooksCow notebooks = crlService.getAIPlatformNotebooksCow();
@@ -137,14 +140,14 @@ public class CreateAiNotebookInstanceStep implements Step {
       FlightContext flightContext,
       String projectId,
       String serviceAccountEmail,
-      String workspaceUuid,
+      String workspaceUserFacingId,
       String cliServer) {
     Instance instance = new Instance();
     ApiGcpAiNotebookInstanceCreationParameters creationParameters =
         flightContext
             .getInputParameters()
             .get(CREATE_NOTEBOOK_PARAMETERS, ApiGcpAiNotebookInstanceCreationParameters.class);
-    setFields(creationParameters, serviceAccountEmail, workspaceUuid, cliServer, instance);
+    setFields(creationParameters, serviceAccountEmail, workspaceUserFacingId, cliServer, instance);
     setNetworks(instance, projectId, flightContext.getWorkingMap());
     return instance;
   }
@@ -153,7 +156,7 @@ public class CreateAiNotebookInstanceStep implements Step {
   static Instance setFields(
       ApiGcpAiNotebookInstanceCreationParameters creationParameters,
       String serviceAccountEmail,
-      String workspaceUuid,
+      String workspaceUserFacingId,
       String cliServer,
       Instance instance) {
     instance
@@ -171,7 +174,7 @@ public class CreateAiNotebookInstanceStep implements Step {
     Map<String, String> metadata = new HashMap<>();
     Optional.ofNullable(creationParameters.getMetadata()).ifPresent(metadata::putAll);
 
-    addDefaultMetadata(metadata, workspaceUuid, cliServer);
+    addDefaultMetadata(metadata, workspaceUserFacingId, cliServer);
     instance.setMetadata(metadata);
     instance.setServiceAccount(serviceAccountEmail);
     instance.setServiceAccountScopes(SERVICE_ACCOUNT_SCOPES);
@@ -204,22 +207,20 @@ public class CreateAiNotebookInstanceStep implements Step {
   }
 
   private static void addDefaultMetadata(
-      Map<String, String> metadata, String workspaceUuid, String cliServer) {
-    addDefaultMetadataAndCheckConflict(metadata, WORKSPACE_ID_METADATA_KEY, workspaceUuid);
+      Map<String, String> metadata, String workspaceUserFacingId, String cliServer) {
+    if (metadata.containsKey(WORKSPACE_ID_METADATA_KEY) ||
+        metadata.containsKey(SERVER_ID_METADATA_KEY) ||
+        metadata.containsKey(PROXY_MODE_METADATA_KEY)) {
+      throw new ReservedMetadataKeyException("The metadata keys " + WORKSPACE_ID_METADATA_KEY + ", " + SERVER_ID_METADATA_KEY + ", and " + PROXY_MODE_METADATA_KEY + " are reserved for Terra.");
+    }
+    metadata.put(WORKSPACE_ID_METADATA_KEY, workspaceUserFacingId);
     if (!StringUtils.isEmpty(cliServer)) {
-      addDefaultMetadataAndCheckConflict(metadata, SERVER_ID_METADATA_KEY, cliServer);
+      metadata.put(SERVER_ID_METADATA_KEY, cliServer);
     }
     // Create the AI Notebook instance in the service account proxy mode to control proxy access by
     // means of IAM permissions on the service account.
     // https://cloud.google.com/ai-platform/notebooks/docs/troubleshooting#opening_a_notebook_results_in_a_403_forbidden_error
-    addDefaultMetadataAndCheckConflict(metadata, PROXY_MODE_METADATA_KEY, PROXY_MODE_SA_VALUE);
-  }
-
-  private static void addDefaultMetadataAndCheckConflict(Map<String, String> metadata,
-      String metadataKey, String metadataValue) {
-    if (metadata.put(metadataKey, metadataValue) != null) {
-      throw new ConflictException(String.format("%s is reserved for Terra", metadataKey));
-    }
+    metadata.put(PROXY_MODE_METADATA_KEY, PROXY_MODE_SA_VALUE);
   }
 
   private static void setNetworks(Instance instance, String projectId, FlightMap workingMap) {

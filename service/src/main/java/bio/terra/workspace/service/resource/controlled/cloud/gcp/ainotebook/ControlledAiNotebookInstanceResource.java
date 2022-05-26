@@ -10,6 +10,7 @@ import bio.terra.stairway.RetryRule;
 import bio.terra.workspace.common.utils.FlightBeanBag;
 import bio.terra.workspace.common.utils.RetryRules;
 import bio.terra.workspace.db.DbSerDes;
+import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.db.model.UniquenessCheckAttributes;
 import bio.terra.workspace.db.model.UniquenessCheckAttributes.UniquenessScope;
 import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceAttributes;
@@ -143,6 +144,9 @@ public class ControlledAiNotebookInstanceResource extends ControlledResource {
       AuthenticatedUserRequest userRequest,
       FlightBeanBag flightBeanBag) {
 
+    WorkspaceDao workspaceDao = flightBeanBag.getWorkspaceDao();
+    String workspaceUserFacingId = workspaceDao.getWorkspace(getWorkspaceId()).getUserFacingId();
+
     RetryRule gcpRetryRule = RetryRules.cloud();
     flight.addStep(
         new RetrieveNetworkNameStep(
@@ -157,7 +161,7 @@ public class ControlledAiNotebookInstanceResource extends ControlledResource {
         gcpRetryRule);
     flight.addStep(
         new CreateAiNotebookInstanceStep(
-            this, petSaEmail, flightBeanBag.getCrlService(), flightBeanBag.getCliConfiguration()),
+            this, petSaEmail, workspaceUserFacingId, flightBeanBag.getCrlService(), flightBeanBag.getCliConfiguration()),
         gcpRetryRule);
     flight.addStep(
         new NotebookCloudSyncStep(

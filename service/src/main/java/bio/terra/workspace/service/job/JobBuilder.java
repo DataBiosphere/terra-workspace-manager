@@ -161,7 +161,7 @@ public class JobBuilder {
     addParameter(
         TracingHook.SUBMISSION_SPAN_CONTEXT_MAP_KEY, TracingHook.serializeCurrentTracingContext());
 
-    // Convert the any other members that were set into parameters. However, if they were
+    // Convert any other members that were set into parameters. However, if they were
     // explicitly added with addParameter during construction, we do not overwrite them.
     if (shouldInsert(JobMapKeys.DESCRIPTION, description)) {
       addParameter(JobMapKeys.DESCRIPTION.getKeyName(), description);

@@ -15,6 +15,7 @@ import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.ControlledGcsBucketResource;
 import bio.terra.workspace.service.resource.controlled.flight.clone.bucket.CloneControlledGcsBucketResourceFlight;
+import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ResourceKeys;
 import java.util.UUID;
@@ -60,6 +61,10 @@ public class LaunchCloneGcsBucketResourceFlightStep implements Step {
     subflightInputParameters.put(ResourceKeys.RESOURCE, resource);
     subflightInputParameters.put(
         ControlledResourceKeys.CLONING_INSTRUCTIONS, resource.getCloningInstructions());
+    subflightInputParameters.put(WorkspaceFlightMapKeys.WORKSPACE_ID, destinationWorkspaceId);
+    subflightInputParameters.put(
+        JobMapKeys.DESCRIPTION.getKeyName(),
+        String.format("Clone GCS Bucket resource %s", resource.getResourceId().toString()));
 
     // submit flight
     try {
