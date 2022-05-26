@@ -315,13 +315,17 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
         controlledResourceService
             .getControlledResource(workspaceUuid, resourceId, userRequest)
             .castByEnum(WsmResourceType.CONTROLLED_GCP_AI_NOTEBOOK_INSTANCE);
-    var updatedResource = controlledResourceService.updateAiNotebookInstance(
+    controlledResourceService.updateAiNotebookInstance(
         resource,
         requestBody.getUpdateParameters(),
         Optional.ofNullable(requestBody.getName()),
         Optional.ofNullable(requestBody.getDescription()),
         userRequest
     );
+
+    final ControlledAiNotebookInstanceResource updatedResource = controlledResourceService
+        .getControlledResource(workspaceUuid, resourceId, userRequest)
+        .castByEnum(WsmResourceType.CONTROLLED_GCP_AI_NOTEBOOK_INSTANCE);
 
     return new ResponseEntity<>(updatedResource.toApiResource(), HttpStatus.OK);
   }

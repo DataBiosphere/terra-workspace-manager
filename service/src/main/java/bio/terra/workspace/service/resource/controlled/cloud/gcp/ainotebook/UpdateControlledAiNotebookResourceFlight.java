@@ -11,6 +11,9 @@ import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ResourceKeys;
 
+/**
+ * {@link Flight} to update {@link ControlledAiNotebookInstanceResource}.
+ */
 public class UpdateControlledAiNotebookResourceFlight extends Flight {
 
   /**

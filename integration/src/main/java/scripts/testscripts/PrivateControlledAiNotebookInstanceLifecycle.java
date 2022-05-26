@@ -164,20 +164,19 @@ public class PrivateControlledAiNotebookInstanceLifecycle extends WorkspaceAlloc
     var newName = "new-instance-notebook-name";
     var newDescription = "new descriptino for the new instance notebook name";
     var newMetadata = ImmutableMap.of("foo", "bar");
-    resourceUserApi.updateAiNotebookInstance(
-        new UpdateControlledGcpAiNotebookInstanceRequestBody()
-            .description(newDescription)
-            .name(newName)
-            .updateParameters(new GcpAiNotebookUpdateParameters().metadata(newMetadata)),
-        getWorkspaceId(),
-        resourceId);
-
     GcpAiNotebookInstanceResource updatedResource =
-        resourceUserApi.getAiNotebookInstance(getWorkspaceId(), resourceId);
+        resourceUserApi.updateAiNotebookInstance(
+            new UpdateControlledGcpAiNotebookInstanceRequestBody()
+                .description(newDescription)
+                .name(newName)
+                .updateParameters(new GcpAiNotebookUpdateParameters().metadata(newMetadata)),
+            getWorkspaceId(),
+            resourceId);
+
     assertEquals(newName, updatedResource.getMetadata().getName());
     assertEquals(newDescription, updatedResource.getMetadata().getDescription());
     var metadata =
-        userNotebooks.projects().locations().instances().get(instanceId).execute().getMetadata();
+        userNotebooks.projects().locations().instances().get(instanceName).execute().getMetadata();
     for (var entrySet : newMetadata.entrySet()) {
       assertEquals(entrySet.getValue(), metadata.get(entrySet.getKey()));
     }
