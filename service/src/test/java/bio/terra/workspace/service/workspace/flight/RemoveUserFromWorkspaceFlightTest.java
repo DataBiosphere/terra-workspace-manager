@@ -114,7 +114,6 @@ public class RemoveUserFromWorkspaceFlightTest extends BaseConnectedTest {
         buildPrivateDataset(workspaceUuid, datasetId, cloudContext.getGcpProjectId());
     assertNotNull(privateDataset);
 
-    // test
     // Allow the secondary user to impersonate their pet SA.
     petSaService.enablePetServiceAccountImpersonation(
         workspaceUuid,

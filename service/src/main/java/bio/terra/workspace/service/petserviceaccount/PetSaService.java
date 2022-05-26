@@ -156,17 +156,13 @@ public class PetSaService {
       }
 
       SetIamPolicyRequest request = new SetIamPolicyRequest().setPolicy(saPolicy);
-      Optional<Policy> myPolicy =
-          Optional.of(
+      return Optional.of(
               crlService
                   .getIamCow()
                   .projects()
                   .serviceAccounts()
                   .setIamPolicy(petSaName, request)
                   .execute());
-      Policy getAfterSet =
-          crlService.getIamCow().projects().serviceAccounts().getIamPolicy(petSaName).execute();
-      return myPolicy;
     } catch (IOException e) {
       return handleProxyUpdateError(e, "enabling");
     }
@@ -244,22 +240,13 @@ public class PetSaService {
       }
       bindingToModify.get().getMembers().remove(targetMember);
       SetIamPolicyRequest request = new SetIamPolicyRequest().setPolicy(saPolicy);
-      Optional<Policy> myPolicy =
-          Optional.of(
+      return Optional.of(
               crlService
                   .getIamCow()
                   .projects()
                   .serviceAccounts()
                   .setIamPolicy(userToDisablePetSA.get(), request)
                   .execute());
-      Policy getAfterSet =
-          crlService
-              .getIamCow()
-              .projects()
-              .serviceAccounts()
-              .getIamPolicy(userToDisablePetSA.get())
-              .execute();
-      return myPolicy;
     } catch (IOException e) {
       return handleProxyUpdateError(e, "disabling");
     }
