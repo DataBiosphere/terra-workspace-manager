@@ -11,6 +11,7 @@ import bio.terra.stairway.FlightState;
 import bio.terra.stairway.FlightStatus;
 import bio.terra.stairway.StepStatus;
 import bio.terra.workspace.common.BaseConnectedTest;
+import bio.terra.workspace.common.CloudUtils;
 import bio.terra.workspace.common.StairwayTestUtils;
 import bio.terra.workspace.connected.UserAccessUtils;
 import bio.terra.workspace.generated.model.ApiGcpBigQueryDatasetCreationParameters;
@@ -24,6 +25,7 @@ import bio.terra.workspace.service.iam.model.WsmIamRole;
 import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.job.JobService.AsyncJobResult;
+import bio.terra.workspace.service.petserviceaccount.PetSaService;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceService;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.bqdataset.ControlledBigQueryDatasetResource;
 import bio.terra.workspace.service.resource.controlled.model.AccessScopeType;
@@ -37,7 +39,18 @@ import bio.terra.workspace.service.workspace.model.CloudContextHolder;
 import bio.terra.workspace.service.workspace.model.GcpCloudContext;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
+import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
+import com.google.api.client.json.gson.GsonFactory;
+import com.google.api.services.iam.v1.Iam;
+import com.google.api.services.iam.v1.model.TestIamPermissionsRequest;
+import com.google.api.services.iam.v1.model.TestIamPermissionsResponse;
+import com.google.auth.http.HttpCredentialsAdapter;
+import com.google.auth.oauth2.AccessToken;
+import com.google.auth.oauth2.GoogleCredentials;
+import java.io.IOException;
+import java.security.GeneralSecurityException;
 import java.time.Duration;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -52,6 +65,7 @@ public class RemoveUserFromWorkspaceFlightTest extends BaseConnectedTest {
   @Autowired private ControlledResourceService controlledResourceService;
   @Autowired private JobService jobService;
   @Autowired private SamService samService;
+  @Autowired private PetSaService petSaService;
   @Autowired private SpendConnectedTestUtils spendUtils;
   @Autowired private UserAccessUtils userAccessUtils;
 
@@ -100,6 +114,26 @@ public class RemoveUserFromWorkspaceFlightTest extends BaseConnectedTest {
         buildPrivateDataset(workspaceUuid, datasetId, cloudContext.getGcpProjectId());
     assertNotNull(privateDataset);
 
+    // test
+    // Allow the secondary user to impersonate their pet SA.
+    petSaService.enablePetServiceAccountImpersonation(
+        workspaceUuid,
+        userAccessUtils.getSecondUserEmail(),
+        userAccessUtils.secondUserAuthRequest());
+    String secondaryUserPetServiceEmail =
+        petSaService
+            .getUserPetSa(
+                cloudContext.getGcpProjectId(),
+                userAccessUtils.getSecondUserEmail(),
+                userAccessUtils.secondUserAuthRequest())
+            .get()
+            .email();
+    // Validate the secondary user can impersonate their pet SA directly.
+    Iam secondaryUserIamClient = getIamClientForUser(userAccessUtils.secondUserAccessToken());
+    assertTrue(
+        canImpersonateSa(
+            secondaryUserIamClient, cloudContext.getGcpProjectId(), secondaryUserPetServiceEmail));
+
     // Validate with Sam that secondary user can read their private resource
     assertTrue(
         samService.isAuthorized(
@@ -145,8 +179,8 @@ public class RemoveUserFromWorkspaceFlightTest extends BaseConnectedTest {
             failingDebugInfo);
     assertEquals(FlightStatus.ERROR, flightState.getFlightStatus());
 
-    // Validate that secondary user is still a workspace writer and can still read their private
-    // resource.
+    // Validate that secondary user is still a workspace writer, can still read their private
+    // resource, and can still impersonate their pet SA.
     assertTrue(
         samService.isAuthorized(
             userAccessUtils.secondUserAuthRequest(),
@@ -159,6 +193,9 @@ public class RemoveUserFromWorkspaceFlightTest extends BaseConnectedTest {
             privateDataset.getCategory().getSamResourceName(),
             privateDataset.getResourceId().toString(),
             SamControlledResourceActions.WRITE_ACTION));
+    assertTrue(
+        canImpersonateSa(
+            secondaryUserIamClient, cloudContext.getGcpProjectId(), secondaryUserPetServiceEmail));
 
     // Run the flight again, this time to success. Retry each do step once.
     FlightDebugInfo passingDebugInfo =
@@ -172,7 +209,8 @@ public class RemoveUserFromWorkspaceFlightTest extends BaseConnectedTest {
             passingDebugInfo);
     assertEquals(FlightStatus.SUCCESS, passingFlightState.getFlightStatus());
 
-    // Verify the secondary user can no longer access the workspace or their private resource
+    // Verify the secondary user can no longer access the workspace, their private resource,
+    // or impersonate their pet SA.
     assertFalse(
         samService.isAuthorized(
             userAccessUtils.secondUserAuthRequest(),
@@ -185,6 +223,15 @@ public class RemoveUserFromWorkspaceFlightTest extends BaseConnectedTest {
             privateDataset.getCategory().getSamResourceName(),
             privateDataset.getResourceId().toString(),
             SamControlledResourceActions.WRITE_ACTION));
+    // Permissions can take some time to propagate, retry until the user can no longer impersonate
+    // their pet SA.
+    assertTrue(
+        CloudUtils.getWithRetryOnException(
+            () ->
+                assertCannotImpersonateSa(
+                    secondaryUserIamClient,
+                    cloudContext.getGcpProjectId(),
+                    secondaryUserPetServiceEmail)));
 
     // Cleanup
     workspaceService.deleteWorkspace(workspaceUuid, userAccessUtils.defaultUserAuthRequest());
@@ -220,5 +267,41 @@ public class RemoveUserFromWorkspaceFlightTest extends BaseConnectedTest {
             userAccessUtils.secondUserAuthRequest(),
             datasetCreationParameters)
         .castByEnum(WsmResourceType.CONTROLLED_GCP_BIG_QUERY_DATASET);
+  }
+
+  private Iam getIamClientForUser(AccessToken accessToken)
+      throws GeneralSecurityException, IOException {
+    return new Iam(
+        GoogleNetHttpTransport.newTrustedTransport(),
+        GsonFactory.getDefaultInstance(),
+        new HttpCredentialsAdapter(new GoogleCredentials(accessToken)));
+  }
+
+  // Wrapper around canImpersonateSa for retries
+  private boolean assertCannotImpersonateSa(Iam iamClient, String projectId, String petSaEmail)
+      throws Exception {
+    if (canImpersonateSa(iamClient, projectId, petSaEmail)) {
+      throw new RuntimeException("Can still impersonate the pet SA");
+    }
+    return true;
+  }
+  // Call GCP IAM service directly to determine whether a user can impersonate the provided pet SA.
+  private boolean canImpersonateSa(Iam iamClient, String projectId, String petSaEmail)
+      throws Exception {
+    String fullyQualifiedSaName =
+        String.format("projects/%s/serviceAccounts/%s", projectId, petSaEmail);
+    TestIamPermissionsRequest testIamRequest =
+        new TestIamPermissionsRequest()
+            .setPermissions(Collections.singletonList("iam.serviceAccounts.actAs"));
+    TestIamPermissionsResponse response =
+        iamClient
+            .projects()
+            .serviceAccounts()
+            .testIamPermissions(fullyQualifiedSaName, testIamRequest)
+            .execute();
+    // When no permissions are active, the permissions field of the response is null instead of an
+    // empty list. This is a quirk of the GCP client library.
+    return response.getPermissions() != null
+        && response.getPermissions().contains("iam.serviceAccounts.actAs");
   }
 }
