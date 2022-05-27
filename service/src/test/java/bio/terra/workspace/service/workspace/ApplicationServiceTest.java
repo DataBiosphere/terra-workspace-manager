@@ -224,11 +224,14 @@ public class ApplicationServiceTest extends BaseUnitTest {
     assertTrue(wsmApp.isEnabled());
 
     // validate decommissioned apps can't be re-enabled
-    // Clear error list first
-    appService.enableTestMode();
     appService.processApp(NORM_APP_RECOMMISSIONED, appService.buildAppMap());
     assertFalse(appService.getErrorList().isEmpty());
-    assertTrue(appService.getErrorList().get(0).contains("decommissioned"));
+    // Most recent error should be caused by the decommission.
+    assertTrue(
+        appService
+            .getErrorList()
+            .get(appService.getErrorList().size() - 1)
+            .contains("decommissioned"));
   }
 
   @DirtiesContext(methodMode = MethodMode.BEFORE_METHOD)
@@ -242,36 +245,50 @@ public class ApplicationServiceTest extends BaseUnitTest {
             .serviceAccount("qwerty@terra-dev.iam.gserviceaccount.com")
             .state(WsmApplicationState.OPERATING);
     // Register the app to be decommissioned
-    appService.processApp(decommissionApp,appService.buildAppMap());
+    appService.processApp(decommissionApp, appService.buildAppMap());
     // Enable the test application in this workspace.
     appService.enableWorkspaceApplication(USER_REQUEST, workspaceUuid, DECOMMISSION_ID);
     // Create a fake app-owned referenced resource.
     UUID resourceId = createFakeResource(DECOMMISSION_ID);
     // Try to deprecate the app, should fail because this app has an associated resource.
-    // Clear the error log first so we're sure this is related to the current operation.
-    appService.enableTestMode();
     decommissionApp.state(WsmApplicationState.DECOMMISSIONED);
     appService.processApp(decommissionApp, appService.buildAppMap());
     assertFalse(appService.getErrorList().isEmpty());
-    assertTrue(appService.getErrorList().get(0).contains("associated resources"));
-    // Clear the error log again.
-    appService.enableTestMode();
+    assertTrue(
+        appService
+            .getErrorList()
+            .get(appService.getErrorList().size() - 1)
+            .contains("associated resources"));
     // Delete the resource
     resourceDao.deleteResource(workspaceUuid, resourceId);
     // try to decommission the app again, should succeed this time
     appService.processApp(decommissionApp, appService.buildAppMap());
-    WsmWorkspaceApplication readApp = appService.getWorkspaceApplication(USER_REQUEST, workspaceUuid,  decommissionApp.getApplicationId());
+    WsmWorkspaceApplication readApp =
+        appService.getWorkspaceApplication(
+            USER_REQUEST, workspaceUuid, decommissionApp.getApplicationId());
     assertEquals(WsmApplicationState.DECOMMISSIONED, readApp.getApplication().getState());
   }
 
   // Create a fake application-controlled resource in this test's workspace. Returns the resourceId.
   private UUID createFakeResource(String appId) {
     UUID resourceId = UUID.randomUUID();
-    ControlledGcsBucketAttributes fakeAttributes = new ControlledGcsBucketAttributes("fake-bucket-name");
-    rawDaoTestFixture.storeResource(workspaceUuid.toString(), CloudPlatform.GCP.toSql(), resourceId.toString(), "resource_name","resource_description",
-        StewardshipType.CONTROLLED.toSql(), WsmResourceType.CONTROLLED_GCP_GCS_BUCKET.toSql(),
-        WsmResourceFamily.GCS_BUCKET.toSql(), CloningInstructions.COPY_NOTHING.toSql(), DbSerDes.toJson(fakeAttributes),
-        AccessScopeType.ACCESS_SCOPE_SHARED.toSql(), ManagedByType.MANAGED_BY_APPLICATION.toSql(), appId, null,
+    ControlledGcsBucketAttributes fakeAttributes =
+        new ControlledGcsBucketAttributes("fake-bucket-name");
+    rawDaoTestFixture.storeResource(
+        workspaceUuid.toString(),
+        CloudPlatform.GCP.toSql(),
+        resourceId.toString(),
+        "resource_name",
+        "resource_description",
+        StewardshipType.CONTROLLED.toSql(),
+        WsmResourceType.CONTROLLED_GCP_GCS_BUCKET.toSql(),
+        WsmResourceFamily.GCS_BUCKET.toSql(),
+        CloningInstructions.COPY_NOTHING.toSql(),
+        DbSerDes.toJson(fakeAttributes),
+        AccessScopeType.ACCESS_SCOPE_SHARED.toSql(),
+        ManagedByType.MANAGED_BY_APPLICATION.toSql(),
+        appId,
+        null,
         PrivateResourceState.NOT_APPLICABLE.toSql());
     return resourceId;
   }
