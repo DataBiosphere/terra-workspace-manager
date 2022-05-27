@@ -80,7 +80,9 @@ public class PetSaService {
    *
    * @param workspaceUuid ID of the workspace to enable pet SA in
    * @param userToEnableEmail The user whose proxy group will be granted permission.
-   * @param userReq Auth info for calling SAM.
+   * @param userReq Auth info for calling SAM. Do not use userReq.getEmail() here; it will return
+   *     the caller's email, but there's no guarantee whether that will be an end-user email or a
+   *     pet SA email.
    * @param eTag GCP eTag which must match the pet SA's current policy. If null, this is ignored.
    * @return The new IAM policy on the user's pet service account, or empty if the eTag value
    *     provided is non-null and does not match current IAM policy on the pet SA.
