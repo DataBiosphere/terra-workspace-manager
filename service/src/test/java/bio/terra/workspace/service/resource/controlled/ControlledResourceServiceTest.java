@@ -60,10 +60,8 @@ import com.google.api.services.notebooks.v1.model.Instance;
 import com.google.cloud.storage.BucketInfo;
 import com.google.cloud.storage.BucketInfo.LifecycleRule;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
 import java.io.IOException;
 import java.util.*;
-import java.util.Map.Entry;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.*;
@@ -305,6 +303,82 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
 
   @Test
   @DisabledIfEnvironmentVariable(named = "TEST_ENV", matches = BUFFER_SERVICE_DISABLED_ENVS_REG_EX)
+  void createAiNotebookInstanceUndo() throws Exception {
+    String instanceId = "create-ai-notebook-instance-undo";
+    String name = "create-ai-notebook-instance-undo-name";
+
+    ApiGcpAiNotebookInstanceCreationParameters creationParameters =
+        ControlledResourceFixtures.defaultNotebookCreationParameters()
+            .instanceId(instanceId)
+            .location(DEFAULT_NOTEBOOK_LOCATION);
+    ControlledAiNotebookInstanceResource resource =
+        makeNotebookTestResource(workspace.getWorkspaceId(), name, instanceId);
+
+    // Test idempotency of undo steps by retrying them once.
+    Map<String, StepStatus> retrySteps = new HashMap<>();
+    retrySteps.put(
+        GrantPetUsagePermissionStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
+    retrySteps.put(
+        CreateAiNotebookInstanceStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
+    jobService.setFlightDebugInfoForTest(
+        FlightDebugInfo.newBuilder()
+            // Fail after the last step to test that everything is deleted on undo.
+            .lastStepFailure(true)
+            .undoStepFailures(retrySteps)
+            .build());
+
+    // Revoke user's Pet SA access, if they have it. Because these tests re-use a common workspace,
+    // the user may have pet SA access enabled prior to this test.
+    String serviceAccountEmail =
+        samService.getOrCreatePetSaEmail(
+            projectId, user.getAuthenticatedRequest().getRequiredToken());
+    petSaService.disablePetServiceAccountImpersonation(
+        workspace.getWorkspaceId(), user.getEmail(), user.getAuthenticatedRequest());
+    IamCow userIamCow = crlService.getIamCow(user.getAuthenticatedRequest());
+    // Assert the user does not have access to their pet SA before the flight
+    // Note this uses user credentials for the IAM cow to validate the user's access.
+    CloudUtils.runWithRetryOnException(
+        () ->
+            throwIfImpersonateSa(
+                ServiceAccountName.builder()
+                    .projectId(projectId)
+                    .email(serviceAccountEmail)
+                    .build(),
+                userIamCow));
+
+    String jobId =
+        controlledResourceService.createAiNotebookInstance(
+            resource,
+            creationParameters,
+            DEFAULT_ROLE,
+            new ApiJobControl().id(UUID.randomUUID().toString()),
+            "fakeResultPath",
+            user.getAuthenticatedRequest());
+    jobService.waitForJob(jobId);
+    assertEquals(
+        FlightStatus.ERROR, stairwayComponent.get().getFlightState(jobId).getFlightStatus());
+
+    assertNotFound(resource.toInstanceName(projectId), crlService.getAIPlatformNotebooksCow());
+    assertThrows(
+        ResourceNotFoundException.class,
+        () ->
+            controlledResourceService.getControlledResource(
+                resource.getWorkspaceId(),
+                resource.getResourceId(),
+                user.getAuthenticatedRequest()));
+    // This check relies on cloud IAM propagation and is sometimes delayed.
+    CloudUtils.runWithRetryOnException(
+        () ->
+            throwIfImpersonateSa(
+                ServiceAccountName.builder()
+                    .projectId(projectId)
+                    .email(serviceAccountEmail)
+                    .build(),
+                userIamCow));
+  }
+
+  @Test
+  @DisabledIfEnvironmentVariable(named = "TEST_ENV", matches = BUFFER_SERVICE_DISABLED_ENVS_REG_EX)
   void updateAiNotebookResourceDo() throws InterruptedException, IOException {
     var instanceId = "update-ai-notebook-instance-do";
     var name = "update-ai-notebook-instance-do-name";
@@ -528,78 +602,6 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
         .location(DEFAULT_NOTEBOOK_LOCATION)
         .projectId("my-project-id")
         .build();
-  }
-
-  @Test
-  @DisabledIfEnvironmentVariable(named = "TEST_ENV", matches = BUFFER_SERVICE_DISABLED_ENVS_REG_EX)
-  void createAiNotebookInstanceUndo() throws Exception {
-    String instanceId = "create-ai-notebook-instance-undo";
-    String name = "create-ai-notebook-instance-undo-name";
-
-    ApiGcpAiNotebookInstanceCreationParameters creationParameters =
-        ControlledResourceFixtures.defaultNotebookCreationParameters()
-            .instanceId(instanceId)
-            .location(DEFAULT_NOTEBOOK_LOCATION);
-    ControlledAiNotebookInstanceResource resource =
-        makeNotebookTestResource(workspace.getWorkspaceId(), name, instanceId);
-
-    // Test idempotency of undo steps by retrying them once.
-    Map<String, StepStatus> retrySteps = new HashMap<>();
-    retrySteps.put(
-        GrantPetUsagePermissionStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
-    retrySteps.put(
-        CreateAiNotebookInstanceStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
-    jobService.setFlightDebugInfoForTest(
-        FlightDebugInfo.newBuilder()
-            // Fail after the last step to test that everything is deleted on undo.
-            .lastStepFailure(true)
-            .undoStepFailures(retrySteps)
-            .build());
-
-    // Revoke user's Pet SA access, if they have it. Because these tests re-use a common workspace,
-    // the user may have pet SA access enabled prior to this test.
-    String serviceAccountEmail =
-        samService.getOrCreatePetSaEmail(
-            projectId, user.getAuthenticatedRequest().getRequiredToken());
-    petSaService.disablePetServiceAccountImpersonation(
-        workspace.getWorkspaceId(), user.getEmail(), user.getAuthenticatedRequest());
-    IamCow userIamCow = crlService.getIamCow(user.getAuthenticatedRequest());
-    // Assert the user does not have access to their pet SA before the flight
-    // Note this uses user credentials for the IAM cow to validate the user's access.
-    assertFalse(
-        canImpersonateSa(
-            ServiceAccountName.builder().projectId(projectId).email(serviceAccountEmail).build(),
-            userIamCow));
-
-    String jobId =
-        controlledResourceService.createAiNotebookInstance(
-            resource,
-            creationParameters,
-            DEFAULT_ROLE,
-            new ApiJobControl().id(UUID.randomUUID().toString()),
-            "fakeResultPath",
-            user.getAuthenticatedRequest());
-    jobService.waitForJob(jobId);
-    assertEquals(
-        FlightStatus.ERROR, stairwayComponent.get().getFlightState(jobId).getFlightStatus());
-
-    assertNotFound(resource.toInstanceName(projectId), crlService.getAIPlatformNotebooksCow());
-    assertThrows(
-        ResourceNotFoundException.class,
-        () ->
-            controlledResourceService.getControlledResource(
-                resource.getWorkspaceId(),
-                resource.getResourceId(),
-                user.getAuthenticatedRequest()));
-    // This check relies on cloud IAM propagation and is sometimes delayed.
-    CloudUtils.runWithRetryOnException(
-        () ->
-            throwIfImpersonateSa(
-                ServiceAccountName.builder()
-                    .projectId(projectId)
-                    .email(serviceAccountEmail)
-                    .build(),
-                userIamCow));
   }
 
   @Test
