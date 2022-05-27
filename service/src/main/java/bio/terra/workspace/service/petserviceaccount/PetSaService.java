@@ -80,7 +80,7 @@ public class PetSaService {
    *
    * @param workspaceUuid ID of the workspace to enable pet SA in
    * @param userToEnableEmail The user whose proxy group will be granted permission.
-   * @param userReq Auth token for calling SAM.
+   * @param userReq Auth info for calling SAM.
    * @param eTag GCP eTag which must match the pet SA's current policy. If null, this is ignored.
    * @return The new IAM policy on the user's pet service account, or empty if the eTag value
    *     provided is non-null and does not match current IAM policy on the pet SA.
@@ -91,10 +91,10 @@ public class PetSaService {
       AuthenticatedUserRequest userReq,
       @Nullable String eTag) {
     String projectId = gcpCloudContextService.getRequiredGcpProject(workspaceUuid);
-    ServiceAccountName petSaName = getUserPetSa(projectId, userToEnableEmail, userReq).orElse(null);
-    // If the pet SA does not exist, there's no way the eTag can match, so return empty optional.
-    // If no eTag is specified, create the pet SA and continue.
-    if (petSaName == null) {
+    Optional<ServiceAccountName> maybePetSaName =
+        getUserPetSa(projectId, userToEnableEmail, userReq);
+    // If the pet SA does not exist and no eTag is specified, create the pet SA and continue.
+    if (maybePetSaName.isEmpty()) {
       if (eTag == null) {
         String saEmail =
             SamRethrow.onInterrupted(
@@ -103,11 +103,16 @@ public class PetSaService {
                         gcpCloudContextService.getRequiredGcpProject(workspaceUuid),
                         userReq.getRequiredToken()),
                 "enablePet");
-        petSaName = ServiceAccountName.builder().projectId(projectId).email(saEmail).build();
+        maybePetSaName =
+            Optional.of(ServiceAccountName.builder().projectId(projectId).email(saEmail).build());
       } else {
+        // If the pet SA does not exist but an eTag is specified, there's no way the eTag can match,
+        // so return empty optional.
         return Optional.empty();
       }
     }
+    // Pet name is populated above, so it's always safe to unwrap here.
+    ServiceAccountName petSaName = maybePetSaName.get();
 
     String proxyGroupEmail =
         SamRethrow.onInterrupted(
@@ -157,12 +162,12 @@ public class PetSaService {
 
       SetIamPolicyRequest request = new SetIamPolicyRequest().setPolicy(saPolicy);
       return Optional.of(
-              crlService
-                  .getIamCow()
-                  .projects()
-                  .serviceAccounts()
-                  .setIamPolicy(petSaName, request)
-                  .execute());
+          crlService
+              .getIamCow()
+              .projects()
+              .serviceAccounts()
+              .setIamPolicy(petSaName, request)
+              .execute());
     } catch (IOException e) {
       return handleProxyUpdateError(e, "enabling");
     }
@@ -241,12 +246,12 @@ public class PetSaService {
       bindingToModify.get().getMembers().remove(targetMember);
       SetIamPolicyRequest request = new SetIamPolicyRequest().setPolicy(saPolicy);
       return Optional.of(
-              crlService
-                  .getIamCow()
-                  .projects()
-                  .serviceAccounts()
-                  .setIamPolicy(userToDisablePetSA.get(), request)
-                  .execute());
+          crlService
+              .getIamCow()
+              .projects()
+              .serviceAccounts()
+              .setIamPolicy(userToDisablePetSA.get(), request)
+              .execute());
     } catch (IOException e) {
       return handleProxyUpdateError(e, "disabling");
     }
