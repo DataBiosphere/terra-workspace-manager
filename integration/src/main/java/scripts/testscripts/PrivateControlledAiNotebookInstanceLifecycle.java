@@ -180,7 +180,6 @@ public class PrivateControlledAiNotebookInstanceLifecycle extends WorkspaceAlloc
     var metadata =
         userNotebooks.projects().locations().instances().get(instanceName).execute().getMetadata();
     for (var entrySet : newMetadata.entrySet()) {
-      assertEquals(entrySet.getValue(), metadata.get(entrySet.getKey()));
       assertThat(metadata,
           IsMapContaining.hasEntry(entrySet.getKey(), entrySet.getValue()));
     }
