@@ -346,7 +346,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
     jobService.setFlightDebugInfoForTest(
         FlightDebugInfo.newBuilder().doStepFailures(retrySteps).build());
     controlledResourceService.updateAiNotebookInstance(
-            fetchedInstance, AI_NOTEBOOK_UPDATE_PARAMETERS, Optional.of(newName), Optional.of(newDescription), user.getAuthenticatedRequest());
+            fetchedInstance, AI_NOTEBOOK_UPDATE_PARAMETERS, newName, newDescription, user.getAuthenticatedRequest());
 
     ControlledAiNotebookInstanceResource updatedInstance = controlledResourceService.getControlledResource(workspace.getWorkspaceId(), resource.getResourceId(), user.getAuthenticatedRequest()).castByEnum(WsmResourceType.CONTROLLED_GCP_AI_NOTEBOOK_INSTANCE);
     // resource metadata is updated.
@@ -360,28 +360,13 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
     );
     // cloud notebook attributes are updated.
     var updatedInstanceFromCloud = crlService.getAIPlatformNotebooksCow().instances().get(updatedInstance.toInstanceName(projectId)).execute();
-    // Add the new value to the metadata.
+    // Merge metadata from AI_NOTEBOOK_UPDATE_PARAMETERS to metadata.
     AI_NOTEBOOK_UPDATE_PARAMETERS.getMetadata().forEach(
         (key, value) -> metadata.merge( key, value, (v1, v2) -> v1.equalsIgnoreCase(v2) ? v1 : v1 + "," + v2)
     );
     for(var entrySet: AI_NOTEBOOK_UPDATE_PARAMETERS.getMetadata().entrySet()) {
       assertEquals(entrySet.getValue(),
           updatedInstanceFromCloud.getMetadata().get(entrySet.getKey()));
-    }
-
-    Map<String, String> invalidUpdateMetadata = new HashMap<>();
-    for (var key: ControlledAiNotebookInstanceResource.RESERVED_METADATA_KEYS) {
-      invalidUpdateMetadata.put(key, "abcde");
-    }
-    controlledResourceService.updateAiNotebookInstance(
-        fetchedInstance, new ApiGcpAiNotebookUpdateParameters().metadata(invalidUpdateMetadata), Optional.empty(), Optional.empty(), user.getAuthenticatedRequest());
-
-    ControlledAiNotebookInstanceResource updatedInstance2 = controlledResourceService.getControlledResource(workspace.getWorkspaceId(), resource.getResourceId(), user.getAuthenticatedRequest()).castByEnum(WsmResourceType.CONTROLLED_GCP_AI_NOTEBOOK_INSTANCE);
-    // cloud notebook attributes is not updated because we do not update reserved metadata.
-    var updatedInstanceFromCloud2 = crlService.getAIPlatformNotebooksCow().instances().get(updatedInstance2.toInstanceName(projectId)).execute();
-    for (var key: ControlledAiNotebookInstanceResource.RESERVED_METADATA_KEYS) {
-      assertNotEquals(updatedInstanceFromCloud2.getMetadata().get(key), invalidUpdateMetadata.get(key));
-      assertEquals(updatedInstanceFromCloud2.getMetadata().get(key), metadata.get(key));
     }
   }
 
@@ -429,7 +414,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
     assertThrows(
         InvalidResultStateException.class,
         () -> controlledResourceService.updateAiNotebookInstance(
-        fetchedInstance, AI_NOTEBOOK_UPDATE_PARAMETERS, Optional.of(newName), Optional.of(newDescription), user.getAuthenticatedRequest()));
+        fetchedInstance, AI_NOTEBOOK_UPDATE_PARAMETERS, newName, newDescription, user.getAuthenticatedRequest()));
 
     ControlledAiNotebookInstanceResource updatedInstance = controlledResourceService.getControlledResource(workspace.getWorkspaceId(), resource.getResourceId(), user.getAuthenticatedRequest()).castByEnum(WsmResourceType.CONTROLLED_GCP_AI_NOTEBOOK_INSTANCE);
     // resource metadata is updated.
@@ -477,8 +462,15 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
     assertEquals(
         FlightStatus.SUCCESS, stairwayComponent.get().getFlightState(jobId).getFlightStatus());
 
-    ControlledAiNotebookInstanceResource fetchedInstance = controlledResourceService.getControlledResource(workspace.getWorkspaceId(), resource.getResourceId(), user.getAuthenticatedRequest()).castByEnum(WsmResourceType.CONTROLLED_GCP_AI_NOTEBOOK_INSTANCE);
-    var prevInstanceFromCloud = crlService.getAIPlatformNotebooksCow().instances().get(fetchedInstance.toInstanceName(projectId)).execute();
+    ControlledAiNotebookInstanceResource fetchedInstance =
+        controlledResourceService.getControlledResource(
+            workspace.getWorkspaceId(),
+            resource.getResourceId(),
+            user.getAuthenticatedRequest())
+            .castByEnum(WsmResourceType.CONTROLLED_GCP_AI_NOTEBOOK_INSTANCE);
+    var prevInstanceFromCloud =
+        crlService.getAIPlatformNotebooksCow().instances()
+            .get(fetchedInstance.toInstanceName(projectId)).execute();
 
     Map<String, String> illegalMetadataToUpdate = new HashMap<>();
     for (var key: ControlledAiNotebookInstanceResource.RESERVED_METADATA_KEYS) {
@@ -487,9 +479,18 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
     assertThrows(
         ReservedMetadataKeyException.class,
         () -> controlledResourceService.updateAiNotebookInstance(
-            fetchedInstance, new ApiGcpAiNotebookUpdateParameters().metadata(illegalMetadataToUpdate), Optional.of(newName), Optional.of(newDescription), user.getAuthenticatedRequest()));
+            fetchedInstance,
+            new ApiGcpAiNotebookUpdateParameters().metadata(illegalMetadataToUpdate),
+            newName,
+            newDescription,
+            user.getAuthenticatedRequest()));
 
-    ControlledAiNotebookInstanceResource updatedInstance = controlledResourceService.getControlledResource(workspace.getWorkspaceId(), resource.getResourceId(), user.getAuthenticatedRequest()).castByEnum(WsmResourceType.CONTROLLED_GCP_AI_NOTEBOOK_INSTANCE);
+    ControlledAiNotebookInstanceResource updatedInstance =
+        controlledResourceService.getControlledResource(
+            workspace.getWorkspaceId(),
+            resource.getResourceId(),
+            user.getAuthenticatedRequest())
+            .castByEnum(WsmResourceType.CONTROLLED_GCP_AI_NOTEBOOK_INSTANCE);
     // resource metadata is updated.
     assertEquals(
         resource.getName(),
@@ -500,7 +501,9 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
         updatedInstance.getDescription()
     );
     // cloud notebook attributes are not updated.
-    var instanceFromCloud = crlService.getAIPlatformNotebooksCow().instances().get(updatedInstance.toInstanceName(projectId)).execute();
+    var instanceFromCloud =
+        crlService.getAIPlatformNotebooksCow().instances()
+            .get(updatedInstance.toInstanceName(projectId)).execute();
     Map<String, String> currentCloudInstanceMetadata = instanceFromCloud.getMetadata();
     Map<String, String> prevCloudInstanceMetadata = prevInstanceFromCloud.getMetadata();
     for (var entrySet: illegalMetadataToUpdate.entrySet()) {

@@ -400,8 +400,8 @@ public class ControlledResourceService {
   public ControlledAiNotebookInstanceResource updateAiNotebookInstance(
       ControlledAiNotebookInstanceResource resource,
       ApiGcpAiNotebookUpdateParameters updateParameters,
-      Optional<String> newName,
-      Optional<String> newDescription,
+      @Nullable String newName,
+      @Nullable String newDescription,
       AuthenticatedUserRequest userRequest
   ) {
     controlledResourceMetadataManager.validateControlledResourceAndAction(

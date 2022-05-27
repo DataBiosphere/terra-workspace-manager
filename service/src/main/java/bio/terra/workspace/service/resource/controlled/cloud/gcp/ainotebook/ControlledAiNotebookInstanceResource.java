@@ -32,13 +32,9 @@ import bio.terra.workspace.service.resource.model.WsmResourceFamily;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.google.common.collect.ImmutableList;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
@@ -61,8 +57,8 @@ public class ControlledAiNotebookInstanceResource extends ControlledResource {
   /**
    * Metadata keys that are reserved by terra. User cannot modify those.
    */
-  public static final Set<String> RESERVED_METADATA_KEYS = new HashSet<>(
-      Arrays.asList(PROXY_MODE_METADATA_KEY, WORKSPACE_ID_METADATA_KEY, SERVER_ID_METADATA_KEY));
+  public static final Set<String> RESERVED_METADATA_KEYS =
+      Set.of(PROXY_MODE_METADATA_KEY, WORKSPACE_ID_METADATA_KEY, SERVER_ID_METADATA_KEY);
 
   protected static final int MAX_INSTANCE_NAME_LENGTH = 63;
   protected static final String AUTO_NAME_DATE_FORMAT = "-yyyyMMdd-HHmmss";

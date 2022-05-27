@@ -318,8 +318,8 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
     controlledResourceService.updateAiNotebookInstance(
         resource,
         requestBody.getUpdateParameters(),
-        Optional.ofNullable(requestBody.getName()),
-        Optional.ofNullable(requestBody.getDescription()),
+        requestBody.getName(),
+        requestBody.getDescription(),
         userRequest
     );
 

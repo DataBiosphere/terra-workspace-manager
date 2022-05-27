@@ -310,8 +310,9 @@ components:
       properties:
         metadata:
           description: >-
-            Custom metadata to apply to this instance. Some metadata keys are reserved by Terra and
-            will throw a bad request error if specified: 'proxy-mode'.
+            A map of custom metadata to apply to this instance. Some metadata 
+            keys are reserved by Terra and will throw a bad request error if 
+            specified: 'proxy-mode', 'terra-workspace-id', 'terra-cli-server'.
           type: object
           additionalProperties:
             type: string

@@ -2,6 +2,7 @@ package scripts.testscripts;
 
 import static org.hamcrest.CoreMatchers.anyOf;
 import static org.hamcrest.CoreMatchers.equalTo;
+import static org.hamcrest.CoreMatchers.hasItem;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -37,6 +38,7 @@ import java.util.List;
 import java.util.UUID;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.http.HttpStatus;
+import org.hamcrest.collection.IsMapContaining;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import scripts.utils.ClientTestUtils;
@@ -162,7 +164,7 @@ public class PrivateControlledAiNotebookInstanceLifecycle extends WorkspaceAlloc
 
     // Update the AI Notebook through WSM.
     var newName = "new-instance-notebook-name";
-    var newDescription = "new descriptino for the new instance notebook name";
+    var newDescription = "new description for the new instance notebook name";
     var newMetadata = ImmutableMap.of("foo", "bar", "count", "3");
     GcpAiNotebookInstanceResource updatedResource =
         resourceUserApi.updateAiNotebookInstance(
@@ -179,6 +181,8 @@ public class PrivateControlledAiNotebookInstanceLifecycle extends WorkspaceAlloc
         userNotebooks.projects().locations().instances().get(instanceName).execute().getMetadata();
     for (var entrySet : newMetadata.entrySet()) {
       assertEquals(entrySet.getValue(), metadata.get(entrySet.getKey()));
+      assertThat(metadata,
+          IsMapContaining.hasEntry(entrySet.getKey(), entrySet.getValue()));
     }
 
     // Delete the AI Notebook through WSM.

@@ -16,6 +16,7 @@ import bio.terra.workspace.service.workspace.model.GcpCloudContext;
 import com.google.api.client.googleapis.json.GoogleJsonResponseException;
 import com.google.api.services.notebooks.v1.model.Instance;
 import java.io.IOException;
+import java.util.Map;
 import org.springframework.http.HttpStatus;
 
 public class RetrieveAiNotebookResourceAttributesStep implements Step {
@@ -37,11 +38,10 @@ public class RetrieveAiNotebookResourceAttributesStep implements Step {
     final FlightMap workingMap = context.getWorkingMap();
     String projectId = gcpCloudContextService.getRequiredGcpProject(resource.getWorkspaceId());
     InstanceName instanceName = resource.toInstanceName(projectId);
-    AIPlatformNotebooksCow notebooks = crlService.getAIPlatformNotebooksCow();
-
+    AIPlatformNotebooksCow notebooksCow = crlService.getAIPlatformNotebooksCow();
     try {
-      Instance instance = notebooks.instances().get(instanceName).execute();
-      var metadata = instance.getMetadata();
+      Instance instance = notebooksCow.instances().get(instanceName).execute();
+      Map<String, String> metadata = instance.getMetadata();
       ApiGcpAiNotebookUpdateParameters existingUpdateParameters =
           new ApiGcpAiNotebookUpdateParameters().metadata(metadata);
       workingMap.put(ControlledResourceKeys.PREVIOUS_UPDATE_PARAMETERS, existingUpdateParameters);
