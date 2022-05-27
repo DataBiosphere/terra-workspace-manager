@@ -505,7 +505,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
     Map<String, String> prevCloudInstanceMetadata = prevInstanceFromCloud.getMetadata();
     for (var entrySet: illegalMetadataToUpdate.entrySet()) {
       assertEquals(prevCloudInstanceMetadata.getOrDefault(entrySet.getKey(), ""),
-          currentCloudInstanceMetadata.get(entrySet.getKey()));
+          currentCloudInstanceMetadata.getOrDefault(entrySet.getKey(), ""));
     }
   }
 
