@@ -13,6 +13,7 @@ import bio.terra.stairway.StepStatus;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.generated.model.ApiGcpAiNotebookUpdateParameters;
 import bio.terra.workspace.service.crl.CrlService;
+import bio.terra.workspace.service.resource.controlled.exception.ReservedMetadataKeyException;
 import bio.terra.workspace.service.workspace.GcpCloudContextService;
 import com.google.api.client.googleapis.json.GoogleJsonResponseException;
 import java.io.IOException;
@@ -48,7 +49,16 @@ public class UpdateAiNotebookAttributesStep implements Step {
     final ApiGcpAiNotebookUpdateParameters updateParameters =
         inputMap.get(UPDATE_PARAMETERS, ApiGcpAiNotebookUpdateParameters.class);
 
-    return updateAiNotebook(updateParameters);
+    Map<String, String> sanitizedMetadata = new HashMap<>();
+    for (var entrySet: updateParameters.getMetadata().entrySet()) {
+      if (ControlledAiNotebookInstanceResource.RESERVED_METADATA_KEYS.contains(entrySet.getKey())) {
+        logger.error(String.format("Cannot modify terra reserved keys %s", entrySet.getKey()));
+        throw new ReservedMetadataKeyException(
+            String.format("Cannot modify terra reserved keys %s", entrySet.getKey()));
+      }
+      sanitizedMetadata.put(entrySet.getKey(), entrySet.getValue());
+    }
+    return updateAiNotebook(sanitizedMetadata, cloudContextService.getRequiredGcpProject(resource.getWorkspaceId()));
   }
 
   @Override
@@ -58,18 +68,15 @@ public class UpdateAiNotebookAttributesStep implements Step {
         workingMap.get(PREVIOUS_UPDATE_PARAMETERS, ApiGcpAiNotebookUpdateParameters.class);
     var projectId =
         cloudContextService.getRequiredGcpProject(resource.getWorkspaceId());
-    InstanceName instanceName = resource.toInstanceName(projectId);
-    AIPlatformNotebooksCow notebooks = crlService.getAIPlatformNotebooksCow();
     try {
-      var currentMetadata = notebooks.instances().get(instanceName).execute().getMetadata();
+      var currentMetadata = crlService.getAIPlatformNotebooksCow().instances().get(resource.toInstanceName(projectId)).execute().getMetadata();
       for (var entry: currentMetadata.entrySet()) {
-        if (!prevParameters.getMetadata().containsKey(entry.getKey())) {
-          // reset the new key entry to "" value because the gcp api does not allow deleting
-          // metadata item so we can't simply undo the add.
-          currentMetadata.put(entry.getKey(), "");
-        }
+        // reset the new key entry to "" value because the gcp api does not allow deleting
+        // metadata item so we can't simply undo the add.
+        currentMetadata.put(entry.getKey(),
+            prevParameters.getMetadata().getOrDefault(entry.getKey(), ""));
       }
-      return updateAiNotebook(new ApiGcpAiNotebookUpdateParameters().metadata(currentMetadata));
+      return updateAiNotebook(currentMetadata, projectId);
     } catch (GoogleJsonResponseException e) {
       if (HttpStatus.BAD_REQUEST.value() == e.getStatusCode() || HttpStatus.NOT_FOUND.value() == e.getStatusCode()) {
         return new StepResult(StepStatus.STEP_RESULT_FAILURE_FATAL, e);
@@ -80,21 +87,11 @@ public class UpdateAiNotebookAttributesStep implements Step {
     }
   }
 
-  private StepResult updateAiNotebook(ApiGcpAiNotebookUpdateParameters updateParameters) {
-    var projectId =
-        cloudContextService.getRequiredGcpProject(resource.getWorkspaceId());
+  private StepResult updateAiNotebook(Map<String, String> metadataToUpdate, String projectId) {
     InstanceName instanceName = resource.toInstanceName(projectId);
     AIPlatformNotebooksCow notebooks = crlService.getAIPlatformNotebooksCow();
     try {
-      Map<String, String> sanitizedMetadata = new HashMap<>();
-      for (var entrySet: updateParameters.getMetadata().entrySet()) {
-        if (ControlledAiNotebookInstanceResource.RESERVED_METADATA_KEYS.contains(entrySet.getKey())) {
-          logger.info(String.format("Cannot modify terra reserved keys %s", entrySet.getKey()));
-          continue;
-        }
-        sanitizedMetadata.put(entrySet.getKey(), entrySet.getValue());
-      }
-      notebooks.instances().updateMetadataItems(instanceName, sanitizedMetadata).execute();
+      notebooks.instances().updateMetadataItems(instanceName, metadataToUpdate).execute();
     } catch (GoogleJsonResponseException e) {
       if (HttpStatus.BAD_REQUEST.value() == e.getStatusCode() || HttpStatus.NOT_FOUND.value() == e.getStatusCode()) {
         return new StepResult(StepStatus.STEP_RESULT_FAILURE_FATAL, e);

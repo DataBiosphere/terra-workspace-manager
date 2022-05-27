@@ -480,7 +480,7 @@ public class ControlledResourceFixtures {
 
   public static final ApiGcpAiNotebookUpdateParameters AI_NOTEBOOK_PREV_PARAMETERS =
       new ApiGcpAiNotebookUpdateParameters().metadata(
-          ImmutableMap.of("sky", "blue", "rose", "red")
+          ImmutableMap.of("sky", "blue", "rose", "red", "foo", "bar2", "count", "0")
       );
 
   public static final ApiGcpAiNotebookUpdateParameters AI_NOTEBOOK_UPDATE_PARAMETERS =
