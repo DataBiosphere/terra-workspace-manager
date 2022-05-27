@@ -22,10 +22,26 @@ public class CloudSyncRoleMapping {
   // See https://cloud.google.com/iam/docs/understanding-custom-roles#known_limitations
   private static final List<String> PROJECT_READER_PERMISSIONS =
       ImmutableList.of(
+          "artifactregistry.repositories.list",
+          "artifactregistry.repositories.get",
+          "artifactregistry.repositories.downloadArtifacts",
+          "artifactregistry.files.list",
+          "artifactregistry.files.get",
+          "artifactregistry.packages.list",
+          "artifactregistry.repositories.listEffectiveTags",
+          "artifactregistry.packages.list",
+          "artifactregistry.tags.list",
+          "artifactregistry.tags.get", 
+          "artifactregistry.versions.list",
+          "artifactregistry.versions.get",
+          "artifactregistry.locations.list",
+          "artifactregistry.locations.get",
           "bigquery.jobs.create",
           "bigquery.readsessions.create",
           "bigquery.readsessions.getData",
           "bigquery.readsessions.update",
+          "cloudbuild.builds.get",
+          "cloudbuild.builds.list",
           "compute.acceleratorTypes.list",
           "compute.diskTypes.list",
           "compute.instances.list",
@@ -46,6 +62,11 @@ public class CloudSyncRoleMapping {
       new ImmutableList.Builder<String>()
           .addAll(PROJECT_READER_PERMISSIONS)
           .add(
+              "artifactregistry.repositories.uploadArtifacts",
+              "artifactregistry.tags.create",
+              "artifactregistry.tags.update",
+              "cloudbuild.builds.create",
+              "cloudbuild.builds.update",
               "iam.serviceAccounts.get",
               "iam.serviceAccounts.list",
               "lifesciences.operations.cancel",
