@@ -134,14 +134,6 @@ public class JobService {
     return resultOrException.getResult();
   }
 
-  protected <T> T submitAndWait(
-      Class<? extends Flight> flightClass,
-      FlightMap parameterMap,
-      Class<T> resultClass,
-      String jobId) {
-    return submitAndWait(flightClass, parameterMap, resultClass, jobId, true);
-  }
-
   public void waitForJob(String jobId) {
     try {
       int pollSeconds = jobConfig.getPollingIntervalSeconds();

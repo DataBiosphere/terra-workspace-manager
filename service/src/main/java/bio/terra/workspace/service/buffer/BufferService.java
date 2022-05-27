@@ -44,36 +44,6 @@ public class BufferService {
   }
 
   /**
-   * Return the PoolInfo object for the ResourceBuffer pool that we are using to create Google Cloud
-   * projects. Note that this is configured once per Workspace Manager instance (both the instance
-   * of RBS to use and which pool) so no configuration happens here.
-   *
-   * @return PoolInfo
-   */
-  @Traced
-  public PoolInfo getPoolInfo() {
-    try {
-      BufferApi bufferApi = bufferApi(bufferServiceConfiguration.getInstanceUrl());
-      PoolInfo info = bufferApi.getPoolInfo(bufferServiceConfiguration.getPoolId());
-      logger.info(
-          "Retrieved pool {} on Buffer Service instance {}",
-          bufferServiceConfiguration.getPoolId(),
-          bufferServiceConfiguration.getInstanceUrl());
-      return info;
-    } catch (IOException e) {
-      throw new BufferServiceAuthorizationException(
-          "Error reading or parsing credentials file", e.getCause());
-    } catch (ApiException e) {
-      if (e.getCode() == HttpStatus.UNAUTHORIZED.value()) {
-        throw new BufferServiceAuthorizationException(
-            "Not authorized to access Buffer Service", e.getCause());
-      } else {
-        throw new BufferServiceAPIException(e);
-      }
-    }
-  }
-
-  /**
    * Retrieve a single resource from the Buffer Service. The instance and pool are already
    * configured.
    *
