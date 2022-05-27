@@ -2,7 +2,6 @@ package scripts.testscripts;
 
 import static org.hamcrest.CoreMatchers.anyOf;
 import static org.hamcrest.CoreMatchers.equalTo;
-import static org.hamcrest.CoreMatchers.hasItem;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -180,8 +179,7 @@ public class PrivateControlledAiNotebookInstanceLifecycle extends WorkspaceAlloc
     var metadata =
         userNotebooks.projects().locations().instances().get(instanceName).execute().getMetadata();
     for (var entrySet : newMetadata.entrySet()) {
-      assertThat(metadata,
-          IsMapContaining.hasEntry(entrySet.getKey(), entrySet.getValue()));
+      assertThat(metadata, IsMapContaining.hasEntry(entrySet.getKey(), entrySet.getValue()));
     }
 
     // Delete the AI Notebook through WSM.
