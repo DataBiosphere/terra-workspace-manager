@@ -8,11 +8,9 @@ import bio.terra.stairway.StepStatus;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.app.configuration.external.AzureConfiguration;
 import bio.terra.workspace.service.crl.CrlService;
-import bio.terra.workspace.service.resource.controlled.cloud.azure.storage.resourcemanager.data.CreateStorageAccountRequestData;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.storageContainer.resourcemanager.data.CreateStorageContainerRequestData;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import bio.terra.workspace.service.workspace.model.AzureCloudContext;
-import com.azure.core.management.Region;
 import com.azure.core.management.exception.ManagementException;
 import com.azure.resourcemanager.storage.StorageManager;
 import com.azure.resourcemanager.storage.models.BlobContainer;
@@ -48,13 +46,13 @@ public class CreateAzureStorageContainerStep implements Step {
           .blobContainers()
           .defineContainer(resource.getStorageContainerName())
           .withExistingStorageAccount(azureCloudContext.getAzureResourceGroupId(), resource.getStorageAccountName())
-          //.withTag("resourceId", resource.getResourceId().toString()) Maybe add metdata?
-          .withPublicAccess(PublicAccess.NONE).
-              create(  // TODO: what about access?
+          .withPublicAccess(resource.getPublicAccess()).
+              create(
                 Defaults.buildContext(
                   CreateStorageContainerRequestData.builder()
                       .setName(resource.getStorageContainerName())
                       .setStorageAccountName(resource.getStorageAccountName())
+                      .setPublicAccess(resource.getPublicAccess())
                       .setResourceGroupName(azureCloudContext.getAzureResourceGroupId())
                       .build()));
 

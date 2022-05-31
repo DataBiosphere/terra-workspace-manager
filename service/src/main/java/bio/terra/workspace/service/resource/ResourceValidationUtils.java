@@ -399,6 +399,8 @@ public class ResourceValidationUtils {
     }
   }
 
+  // TODO: add validation for public access
+
   public static <T> void checkFieldNonNull(@Nullable T fieldValue, String fieldName) {
     if (fieldValue == null) {
       throw new MissingRequiredFieldException(

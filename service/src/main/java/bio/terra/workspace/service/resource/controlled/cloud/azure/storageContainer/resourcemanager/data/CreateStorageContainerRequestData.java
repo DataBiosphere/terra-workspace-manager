@@ -2,6 +2,7 @@ package bio.terra.workspace.service.resource.controlled.cloud.azure.storageConta
 
 import bio.terra.cloudres.common.CloudOperation;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.storage.resourcemanager.StorageManagerOperation;
+import com.azure.resourcemanager.storage.models.PublicAccess;
 import com.google.auto.value.AutoValue;
 import com.google.gson.JsonObject;
 
@@ -30,6 +31,8 @@ public abstract class CreateStorageContainerRequestData extends BaseStorageConta
     public abstract CreateStorageContainerRequestData.Builder setStorageAccountName(String value);
 
     public abstract CreateStorageContainerRequestData.Builder setResourceGroupName(String value);
+
+    public abstract CreateStorageContainerRequestData.Builder setPublicAccess(PublicAccess value);
 
     public abstract CreateStorageContainerRequestData build();
   }

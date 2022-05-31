@@ -30,14 +30,18 @@ components:
       description: >-
         Storage container-specific properties to be set on creation. These are a subset of the values
         accepted by the azure resource API
-      type: object
-      required: [ name, storageAccountName ]
+      type: objec      required: [ name, storageAccountName, publicAccess ]
       properties:
         name:
           description: A valid storage container name per https://docs.microsoft.com/en-us/azure/azure-resource-manager/management/resource-name-rules
           type: string
         storageAccountName:
           description: A valid storage account name per https://docs.microsoft.com/en-us/azure/azure-resource-manager/management/resource-name-rules
+          type: string
+        publicAccess:
+          description: A valid public access string representation per https://docs.microsoft.com/en-us/java/api/com.azure.resourcemanager.storage.models.publicaccess
+            Possible values are 'Blob' = PublicAccess.BLOB.toString(), 'Container' = PublicAccess.CONTAINER.toString(),
+            and 'None' = PublicAccess.NONE.toString()
           type: string
 
     CreateControlledAzureStorageContainerRequestBody:

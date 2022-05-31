@@ -12,7 +12,6 @@ import bio.terra.workspace.db.model.UniquenessCheckAttributes.UniquenessScope;
 import bio.terra.workspace.generated.model.*;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.resource.ResourceValidationUtils;
-import bio.terra.workspace.service.resource.controlled.cloud.azure.storage.ControlledAzureStorageAttributes;
 import bio.terra.workspace.service.resource.controlled.flight.create.CreateControlledResourceFlight;
 import bio.terra.workspace.service.resource.controlled.flight.delete.DeleteControlledResourceFlight;
 import bio.terra.workspace.service.resource.controlled.model.*;
@@ -20,6 +19,7 @@ import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.model.StewardshipType;
 import bio.terra.workspace.service.resource.model.WsmResourceFamily;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
+import com.azure.resourcemanager.storage.models.PublicAccess;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
@@ -29,6 +29,7 @@ import java.util.UUID;
 public class ControlledAzureStorageContainerResource extends ControlledResource {
   private final String storageAccountName;
   private final String storageContainerName;
+  private final PublicAccess publicAccess;
 
   @JsonCreator
   public ControlledAzureStorageContainerResource(
@@ -43,7 +44,8 @@ public class ControlledAzureStorageContainerResource extends ControlledResource 
       @JsonProperty("managedBy") ManagedByType managedBy,
       @JsonProperty("applicationId") String applicationId,
       @JsonProperty("storageAccountName") String storageAccountName,
-      @JsonProperty("storageContainerName") String storageContainerName) {
+      @JsonProperty("storageContainerName") String storageContainerName,
+      @JsonProperty("publicAccess") PublicAccess publicAccess) {
     super(
         workspaceId,
         resourceId,
@@ -57,14 +59,16 @@ public class ControlledAzureStorageContainerResource extends ControlledResource 
         privateResourceState);
     this.storageAccountName = storageAccountName;
     this.storageContainerName = storageContainerName;
+    this.publicAccess = publicAccess;
     validate();
   }
 
   private ControlledAzureStorageContainerResource(
-      ControlledResourceFields common, String storageAccountName, String storageContainerName) {
+      ControlledResourceFields common, String storageAccountName, String storageContainerName, PublicAccess publicAccess) {
     super(common);
     this.storageAccountName = storageAccountName;
     this.storageContainerName = storageContainerName;
+    this.publicAccess = publicAccess;
     validate();
   }
 
@@ -127,10 +131,13 @@ public class ControlledAzureStorageContainerResource extends ControlledResource 
     return storageContainerName;
   }
 
+  public PublicAccess getPublicAccess() { return publicAccess; }
+
   public ApiAzureStorageContainerAttributes toApiAttributes() {
     return new ApiAzureStorageContainerAttributes()
         .storageAccountName(getStorageAccountName())
-        .storageContainerName(getStorageContainerName());
+        .storageContainerName(getStorageContainerName())
+        .publicAccess(getPublicAccess().toString());
   }
 
   public ApiAzureStorageContainerResource toApiResource() {
@@ -152,7 +159,7 @@ public class ControlledAzureStorageContainerResource extends ControlledResource 
   @Override
   public String attributesToJson() {
     return DbSerDes.toJson(
-        new ControlledAzureStorageContainerAttributes(getStorageAccountName(), getStorageContainerName()));
+        new ControlledAzureStorageContainerAttributes(getStorageAccountName(), getStorageContainerName(), getPublicAccess()));
   }
 
   @Override
@@ -188,7 +195,12 @@ public class ControlledAzureStorageContainerResource extends ControlledResource 
           "Missing required storage container name field for ControlledAzureStorageContainer.");
     }
 
-    ResourceValidationUtils.validateStorageAccountName(getStorageAccountName()); // TODO add validation for storage container name
+    if (getPublicAccess() == null) {
+      throw new MissingRequiredFieldException(
+              "Missing required public access field for ControlledAzureStorageContainer.");
+    }
+
+    ResourceValidationUtils.validateStorageAccountName(getStorageAccountName()); // TODO add validation for storage container name and public access?
   }
 
   @Override
@@ -214,6 +226,7 @@ public class ControlledAzureStorageContainerResource extends ControlledResource 
     private ControlledResourceFields common;
     private String storageAccountName;
     private String storageContainerName;
+    private PublicAccess publicAccess;
 
     public Builder common(ControlledResourceFields common) {
       this.common = common;
@@ -230,8 +243,13 @@ public class ControlledAzureStorageContainerResource extends ControlledResource 
       return this;
     }
 
+    public ControlledAzureStorageContainerResource.Builder publicAccess(PublicAccess publicAccess) {
+      this.publicAccess = publicAccess;
+      return this;
+    }
+
     public ControlledAzureStorageContainerResource build() {
-      return new ControlledAzureStorageContainerResource(common, storageAccountName, storageContainerName);
+      return new ControlledAzureStorageContainerResource(common, storageAccountName, storageContainerName, publicAccess);
     }
   }
 }

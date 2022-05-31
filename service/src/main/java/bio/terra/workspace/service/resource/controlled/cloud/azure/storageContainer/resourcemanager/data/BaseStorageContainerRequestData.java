@@ -1,7 +1,7 @@
 package bio.terra.workspace.service.resource.controlled.cloud.azure.storageContainer.resourcemanager.data;
 
 import bio.terra.cloudres.azure.resourcemanager.common.ResourceManagerRequestData;
-import com.azure.core.management.Region;
+import com.azure.resourcemanager.storage.models.PublicAccess;
 import com.google.gson.JsonObject;
 
 /**
@@ -24,6 +24,9 @@ public abstract class BaseStorageContainerRequestData implements ResourceManager
   /** The storage account name of the resource. */
   public abstract String storageAccountName();
 
+  /** The public access level of the resource */
+  public abstract PublicAccess publicAccess();
+
   /**
    * Serializes this object to JSON. Not overriding {@link ResourceManagerRequestData#serialize()}
    * to ensure subclasses implement their own serialize method.
@@ -33,6 +36,7 @@ public abstract class BaseStorageContainerRequestData implements ResourceManager
     requestData.addProperty("resourceGroupName", resourceGroupName());
     requestData.addProperty("name", name());
     requestData.addProperty("storageAccountName", storageAccountName());
+    requestData.addProperty("publicAccess", publicAccess().toString());
     return requestData;
   }
 }

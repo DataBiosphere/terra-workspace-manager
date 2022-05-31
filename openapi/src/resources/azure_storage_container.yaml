@@ -11,6 +11,9 @@ components:
         storageContainerName:
           description: Name of the storage container.
           type: string
+        publicAccess:
+          description: Public access level of the storage container.
+          type: string
 
     AzureStorageContainerResource:
       type: object

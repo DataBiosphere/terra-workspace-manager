@@ -23,6 +23,8 @@ import bio.terra.workspace.service.resource.model.WsmResourceType;
 import java.util.UUID;
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
+
+import com.azure.resourcemanager.storage.models.PublicAccess;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -176,11 +178,15 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
     final ControlledResourceFields commonFields =
         toCommonFields(workspaceUuid, body.getCommon(), userRequest);
 
+    // TODO: add validation ??
+    // ResourceValidationUtils.validateApiAzureVmCreationParameters(body.getAzureVm());
+
     ControlledAzureStorageContainerResource resource =
         ControlledAzureStorageContainerResource.builder()
             .common(commonFields)
             .storageAccountName(body.getAzureStorageContainer().getStorageAccountName())
             .storageContainerName(body.getAzureStorageContainer().getName())
+            .publicAccess(PublicAccess.fromString(body.getAzureStorageContainer().getPublicAccess()))
             .build();
 
     final ControlledAzureStorageContainerResource createdStorageContainer =

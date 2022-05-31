@@ -44,8 +44,12 @@ public class DeleteControlledAzureResourcesStep implements Step {
   public StepResult doStep(FlightContext flightContext)
       throws InterruptedException, RetryException {
 
+    // Filter out storage containers because they will automatically get deleted when the storage account
+    // is deleted.
     List<ControlledResource> controlledResourceList =
-        resourceDao.listControlledResources(workspaceUuid, CloudPlatform.AZURE);
+            resourceDao.listControlledResources(workspaceUuid, CloudPlatform.AZURE).stream().filter(
+                    cr -> cr.getResourceType() != WsmResourceType.CONTROLLED_AZURE_STORAGE_CONTAINER
+            ).collect(Collectors.toList());
 
     // Delete VMs first because they use other resources like disks, networks, etc.
     Map<Boolean, List<ControlledResource>> vmsAndOtherControlledResources =
@@ -57,10 +61,6 @@ public class DeleteControlledAzureResourcesStep implements Step {
       controlledResourceService.deleteControlledResourceSync(
           workspaceUuid, vm.getResourceId(), userRequest, false);
     }
-    /**
-     * TODO: https://broadworkbench.atlassian.net/browse/WOR-92 delete Azure storage containers
-     * first before deleting storage account to ensure Sam and WSM DBs are cleaned up
-     */
     for (ControlledResource resource : vmsAndOtherControlledResources.get(false)) {
       controlledResourceService.deleteControlledResourceSync(
           workspaceUuid, resource.getResourceId(), userRequest, false);
