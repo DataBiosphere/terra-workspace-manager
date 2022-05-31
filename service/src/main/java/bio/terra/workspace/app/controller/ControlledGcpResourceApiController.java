@@ -308,6 +308,29 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
   }
 
   @Override
+  public ResponseEntity<ApiGcpAiNotebookInstanceResource> updateAiNotebookInstance(
+      UUID workspaceUuid, UUID resourceId, @Valid ApiUpdateControlledGcpAiNotebookInstanceRequestBody requestBody) {
+    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    ControlledAiNotebookInstanceResource resource =
+        controlledResourceService
+            .getControlledResource(workspaceUuid, resourceId, userRequest)
+            .castByEnum(WsmResourceType.CONTROLLED_GCP_AI_NOTEBOOK_INSTANCE);
+    controlledResourceService.updateAiNotebookInstance(
+        resource,
+        requestBody.getUpdateParameters(),
+        requestBody.getName(),
+        requestBody.getDescription(),
+        userRequest
+    );
+
+    final ControlledAiNotebookInstanceResource updatedResource = controlledResourceService
+        .getControlledResource(workspaceUuid, resourceId, userRequest)
+        .castByEnum(WsmResourceType.CONTROLLED_GCP_AI_NOTEBOOK_INSTANCE);
+
+    return new ResponseEntity<>(updatedResource.toApiResource(), HttpStatus.OK);
+  }
+
+  @Override
   public ResponseEntity<ApiCreatedControlledGcpAiNotebookInstanceResult>
       getCreateAiNotebookInstanceResult(UUID workspaceUuid, String jobId) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();

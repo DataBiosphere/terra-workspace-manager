@@ -36,12 +36,29 @@ import java.time.Instant;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import javax.annotation.Nullable;
 import org.apache.commons.lang3.StringUtils;
 
 /** A {@link ControlledResource} for a Google AI Platform Notebook instance. */
 public class ControlledAiNotebookInstanceResource extends ControlledResource {
+
+  /** The Notebook instance metadata key used to control proxy mode. */
+  protected static final String PROXY_MODE_METADATA_KEY = "proxy-mode";
+  /** The Notebook instance metadata key used to set the terra workspace. */
+  protected static final String WORKSPACE_ID_METADATA_KEY = "terra-workspace-id";
+  /**
+   * The Notebook instance metadata key used to point the terra CLI at the correct WSM and SAM
+   * instances given a CLI specific name.
+   */
+  protected static final String SERVER_ID_METADATA_KEY = "terra-cli-server";
+
+  /**
+   * Metadata keys that are reserved by terra. User cannot modify those.
+   */
+  public static final Set<String> RESERVED_METADATA_KEYS =
+      Set.of(PROXY_MODE_METADATA_KEY, WORKSPACE_ID_METADATA_KEY, SERVER_ID_METADATA_KEY);
 
   protected static final int MAX_INSTANCE_NAME_LENGTH = 63;
   protected static final String AUTO_NAME_DATE_FORMAT = "-yyyyMMdd-HHmmss";

@@ -22,6 +22,7 @@ import bio.terra.workspace.service.resource.controlled.cloud.azure.relayNamespac
 import bio.terra.workspace.service.resource.controlled.cloud.azure.vm.ControlledAzureVmResource;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.GcpPolicyBuilder;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook.ControlledAiNotebookInstanceResource;
+import bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook.UpdateControlledAiNotebookResourceFlight;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.bqdataset.ControlledBigQueryDatasetResource;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.bqdataset.UpdateControlledBigQueryDatasetResourceFlight;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.ControlledGcsBucketResource;
@@ -394,6 +395,39 @@ public class ControlledResourceService {
     String jobId = jobBuilder.submit();
     waitForResourceOrJob(resource.getWorkspaceId(), resource.getResourceId(), jobId);
     return jobId;
+  }
+
+  public ControlledAiNotebookInstanceResource updateAiNotebookInstance(
+      ControlledAiNotebookInstanceResource resource,
+      ApiGcpAiNotebookUpdateParameters updateParameters,
+      @Nullable String newName,
+      @Nullable String newDescription,
+      AuthenticatedUserRequest userRequest
+  ) {
+    controlledResourceMetadataManager.validateControlledResourceAndAction(
+        userRequest,
+        resource.getWorkspaceId(),
+        resource.getResourceId(),
+        SamControlledResourceActions.EDIT_ACTION);
+    final String jobDescription =
+        String.format(
+            "Update controlled AI notebook resource %s; id %s; name %s",
+            resource.getInstanceId(), resource.getResourceId(), resource.getName());
+    final JobBuilder jobBuilder =
+        jobService
+            .newJob()
+            .description(jobDescription)
+            .flightClass(UpdateControlledAiNotebookResourceFlight.class)
+            .resource(resource)
+            .userRequest(userRequest)
+            .operationType(OperationType.UPDATE)
+            .workspaceId(resource.getWorkspaceId().toString())
+            .resourceType(resource.getResourceType())
+            .stewardshipType(resource.getStewardshipType())
+            .addParameter(ControlledResourceKeys.UPDATE_PARAMETERS, updateParameters)
+            .addParameter(ResourceKeys.RESOURCE_NAME, newName)
+            .addParameter(ResourceKeys.RESOURCE_DESCRIPTION, newDescription);
+    return jobBuilder.submitAndWait(ControlledAiNotebookInstanceResource.class);
   }
 
   /** Simpler interface for synchronous controlled resource creation */

@@ -1,5 +1,8 @@
 package bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook;
 
+import static bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook.ControlledAiNotebookInstanceResource.PROXY_MODE_METADATA_KEY;
+import static bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook.ControlledAiNotebookInstanceResource.SERVER_ID_METADATA_KEY;
+import static bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook.ControlledAiNotebookInstanceResource.WORKSPACE_ID_METADATA_KEY;
 import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.CREATE_NOTEBOOK_NETWORK_NAME;
 import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.CREATE_NOTEBOOK_PARAMETERS;
 import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.CREATE_NOTEBOOK_REGION;
@@ -53,19 +56,9 @@ public class CreateAiNotebookInstanceStep implements Step {
   /** Default post-startup-script when starting a notebook instance. */
   protected static final String DEFAULT_POST_STARTUP_SCRIPT =
       "https://raw.githubusercontent.com/DataBiosphere/terra-workspace-manager/main/service/src/main/java/bio/terra/workspace/service/resource/controlled/cloud/gcp/ainotebook/post-startup.sh";
-  /** The Notebook instance metadata key used to control proxy mode. */
-  private static final String PROXY_MODE_METADATA_KEY = "proxy-mode";
   /** The Notebook instance metadata value used to set the service account proxy mode. */
   // git secrets gets a false positive if 'service_account' is double quoted.
   private static final String PROXY_MODE_SA_VALUE = "service_" + "account";
-
-  /** The Notebook instance metadata key used to set the terra workspace. */
-  private static final String WORKSPACE_ID_METADATA_KEY = "terra-workspace-id";
-  /**
-   * The Notebook instance metadata key used to point the terra CLI at the correct WSM and SAM
-   * instances given a CLI specific name.
-   */
-  private static final String SERVER_ID_METADATA_KEY = "terra-cli-server";
 
   /**
    * Service account for the notebook instance needs to contain these scopes to interact with SAM.
