@@ -1,7 +1,6 @@
 package bio.terra.workspace.service.resource.controlled.cloud.azure.storageContainer.resourcemanager.data;
 
 import bio.terra.cloudres.azure.resourcemanager.common.ResourceManagerRequestData;
-import com.azure.core.management.Region;
 import com.google.gson.JsonObject;
 
 /**
