@@ -47,6 +47,7 @@ public class CreateAzureStorageStep implements Step {
           .withRegion(resource.getRegion())
           .withExistingResourceGroup(azureCloudContext.getAzureResourceGroupId())
           .withHnsEnabled(true)
+          .disableBlobPublicAccess()
           .withTag("workspaceId", resource.getWorkspaceId().toString())
           .withTag("resourceId", resource.getResourceId().toString())
           .create(
