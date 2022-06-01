@@ -23,9 +23,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 
-/**
- * {@link Step} to update cloud attributes (e.g. metadata) for a ai notebook instance.
- */
+/** {@link Step} to update cloud attributes (e.g. metadata) for a ai notebook instance. */
 public class UpdateAiNotebookAttributesStep implements Step {
   private final ControlledAiNotebookInstanceResource resource;
   private final CrlService crlService;
@@ -36,8 +34,7 @@ public class UpdateAiNotebookAttributesStep implements Step {
   UpdateAiNotebookAttributesStep(
       ControlledAiNotebookInstanceResource resource,
       CrlService crlService,
-      GcpCloudContextService gcpCloudContextService
-  ) {
+      GcpCloudContextService gcpCloudContextService) {
     this.resource = resource;
     this.crlService = crlService;
     this.cloudContextService = gcpCloudContextService;
@@ -50,7 +47,7 @@ public class UpdateAiNotebookAttributesStep implements Step {
         inputMap.get(UPDATE_PARAMETERS, ApiGcpAiNotebookUpdateParameters.class);
 
     Map<String, String> sanitizedMetadata = new HashMap<>();
-    for (var entrySet: updateParameters.getMetadata().entrySet()) {
+    for (var entrySet : updateParameters.getMetadata().entrySet()) {
       if (ControlledAiNotebookInstanceResource.RESERVED_METADATA_KEYS.contains(entrySet.getKey())) {
         logger.error(String.format("Cannot modify terra reserved keys %s", entrySet.getKey()));
         throw new ReservedMetadataKeyException(
@@ -58,7 +55,8 @@ public class UpdateAiNotebookAttributesStep implements Step {
       }
       sanitizedMetadata.put(entrySet.getKey(), entrySet.getValue());
     }
-    return updateAiNotebook(sanitizedMetadata, cloudContextService.getRequiredGcpProject(resource.getWorkspaceId()));
+    return updateAiNotebook(
+        sanitizedMetadata, cloudContextService.getRequiredGcpProject(resource.getWorkspaceId()));
   }
 
   @Override
@@ -66,19 +64,25 @@ public class UpdateAiNotebookAttributesStep implements Step {
     final FlightMap workingMap = context.getWorkingMap();
     final ApiGcpAiNotebookUpdateParameters prevParameters =
         workingMap.get(PREVIOUS_UPDATE_PARAMETERS, ApiGcpAiNotebookUpdateParameters.class);
-    var projectId =
-        cloudContextService.getRequiredGcpProject(resource.getWorkspaceId());
+    var projectId = cloudContextService.getRequiredGcpProject(resource.getWorkspaceId());
     try {
-      var currentMetadata = crlService.getAIPlatformNotebooksCow().instances().get(resource.toInstanceName(projectId)).execute().getMetadata();
-      for (var entry: currentMetadata.entrySet()) {
+      var currentMetadata =
+          crlService
+              .getAIPlatformNotebooksCow()
+              .instances()
+              .get(resource.toInstanceName(projectId))
+              .execute()
+              .getMetadata();
+      for (var entry : currentMetadata.entrySet()) {
         // reset the new key entry to "" value because the gcp api does not allow deleting
         // metadata item so we can't simply undo the add.
-        currentMetadata.put(entry.getKey(),
-            prevParameters.getMetadata().getOrDefault(entry.getKey(), ""));
+        currentMetadata.put(
+            entry.getKey(), prevParameters.getMetadata().getOrDefault(entry.getKey(), ""));
       }
       return updateAiNotebook(currentMetadata, projectId);
     } catch (GoogleJsonResponseException e) {
-      if (HttpStatus.BAD_REQUEST.value() == e.getStatusCode() || HttpStatus.NOT_FOUND.value() == e.getStatusCode()) {
+      if (HttpStatus.BAD_REQUEST.value() == e.getStatusCode()
+          || HttpStatus.NOT_FOUND.value() == e.getStatusCode()) {
         return new StepResult(StepStatus.STEP_RESULT_FAILURE_FATAL, e);
       }
       return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, e);
@@ -93,7 +97,8 @@ public class UpdateAiNotebookAttributesStep implements Step {
     try {
       notebooks.instances().updateMetadataItems(instanceName, metadataToUpdate).execute();
     } catch (GoogleJsonResponseException e) {
-      if (HttpStatus.BAD_REQUEST.value() == e.getStatusCode() || HttpStatus.NOT_FOUND.value() == e.getStatusCode()) {
+      if (HttpStatus.BAD_REQUEST.value() == e.getStatusCode()
+          || HttpStatus.NOT_FOUND.value() == e.getStatusCode()) {
         return new StepResult(StepStatus.STEP_RESULT_FAILURE_FATAL, e);
       }
       return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, e);

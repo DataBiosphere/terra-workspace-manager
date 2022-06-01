@@ -39,7 +39,6 @@ import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiFunction;
-
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -153,14 +152,15 @@ public class CreateAndDeleteAzureControlledResourceFlightTest extends BaseAzureT
     // Submit an IP creation flight and verify the instance is created.
     createResource(workspaceUuid, userRequest, resource, WsmResourceType.CONTROLLED_AZURE_IP);
 
-    //clean up resources - delete ip resource
+    // clean up resources - delete ip resource
     submitControlledResourceDeletionFlight(
-            workspaceUuid,
-            userRequest,
-            resource,
-            azureTestUtils.getAzureCloudContext().getAzureResourceGroupId(),
-            resource.getIpName(),
-            azureTestUtils.getComputeManager().networkManager().publicIpAddresses()::getByResourceGroup);
+        workspaceUuid,
+        userRequest,
+        resource,
+        azureTestUtils.getAzureCloudContext().getAzureResourceGroupId(),
+        resource.getIpName(),
+        azureTestUtils.getComputeManager().networkManager().publicIpAddresses()
+            ::getByResourceGroup);
   }
 
   @Test
@@ -193,14 +193,14 @@ public class CreateAndDeleteAzureControlledResourceFlightTest extends BaseAzureT
     createResource(
         workspaceUuid, userRequest, resource, WsmResourceType.CONTROLLED_AZURE_RELAY_NAMESPACE);
 
-    //clean up resources - delete relay resource
+    // clean up resources - delete relay resource
     submitControlledResourceDeletionFlight(
-            workspaceUuid,
-            userRequest,
-            resource,
-            azureTestUtils.getAzureCloudContext().getAzureResourceGroupId(),
-            resource.getNamespaceName(),
-            azureTestUtils.getRelayManager().namespaces()::getByResourceGroup);
+        workspaceUuid,
+        userRequest,
+        resource,
+        azureTestUtils.getAzureCloudContext().getAzureResourceGroupId(),
+        resource.getNamespaceName(),
+        azureTestUtils.getRelayManager().namespaces()::getByResourceGroup);
   }
 
   @Test
@@ -234,14 +234,14 @@ public class CreateAndDeleteAzureControlledResourceFlightTest extends BaseAzureT
     createResource(
         workspaceUuid, userRequest, resource, WsmResourceType.CONTROLLED_AZURE_STORAGE_ACCOUNT);
 
-    //clean up resources - delete storage account resource
+    // clean up resources - delete storage account resource
     submitControlledResourceDeletionFlight(
-            workspaceUuid,
-            userRequest,
-            resource,
-            azureTestUtils.getAzureCloudContext().getAzureResourceGroupId(),
-            resource.getStorageAccountName(),
-            azureTestUtils.getStorageManager().storageAccounts()::getByResourceGroup);
+        workspaceUuid,
+        userRequest,
+        resource,
+        azureTestUtils.getAzureCloudContext().getAzureResourceGroupId(),
+        resource.getStorageAccountName(),
+        azureTestUtils.getStorageManager().storageAccounts()::getByResourceGroup);
   }
 
   @Test
@@ -275,14 +275,14 @@ public class CreateAndDeleteAzureControlledResourceFlightTest extends BaseAzureT
     // Submit a Disk creation flight and verify the resource exists in the workspace.
     createResource(workspaceUuid, userRequest, resource, WsmResourceType.CONTROLLED_AZURE_DISK);
 
-    //clean up resources - delete disk resource
+    // clean up resources - delete disk resource
     submitControlledResourceDeletionFlight(
-            workspaceUuid,
-            userRequest,
-            resource,
-            azureTestUtils.getAzureCloudContext().getAzureResourceGroupId(),
-            resource.getDiskName(),
-            azureTestUtils.getComputeManager().disks()::getByResourceGroup);
+        workspaceUuid,
+        userRequest,
+        resource,
+        azureTestUtils.getAzureCloudContext().getAzureResourceGroupId(),
+        resource.getDiskName(),
+        azureTestUtils.getComputeManager().disks()::getByResourceGroup);
   }
 
   @Test
@@ -366,31 +366,33 @@ public class CreateAndDeleteAzureControlledResourceFlightTest extends BaseAzureT
         com.azure.core.exception.HttpResponseException.class,
         () -> computeManager.disks().getById(resolvedVm.osDiskId()));
 
-    //clean up resources - vm deletion flight doesn't remove network and ip resources, so we need to remove them;
+    // clean up resources - vm deletion flight doesn't remove network and ip resources, so we need
+    // to remove them;
     submitControlledResourceDeletionFlight(
-            workspaceUuid,
-            userRequest,
-            networkResource,
-            azureTestUtils.getAzureCloudContext().getAzureResourceGroupId(),
-            networkResource.getNetworkName(),
-            azureTestUtils.getComputeManager().networkManager().networks()::getByResourceGroup);
+        workspaceUuid,
+        userRequest,
+        networkResource,
+        azureTestUtils.getAzureCloudContext().getAzureResourceGroupId(),
+        networkResource.getNetworkName(),
+        azureTestUtils.getComputeManager().networkManager().networks()::getByResourceGroup);
 
     submitControlledResourceDeletionFlight(
-            workspaceUuid,
-            userRequest,
-            ipResource,
-            azureTestUtils.getAzureCloudContext().getAzureResourceGroupId(),
-            ipResource.getIpName(),
-            azureTestUtils.getComputeManager().networkManager().publicIpAddresses()::getByResourceGroup);
+        workspaceUuid,
+        userRequest,
+        ipResource,
+        azureTestUtils.getAzureCloudContext().getAzureResourceGroupId(),
+        ipResource.getIpName(),
+        azureTestUtils.getComputeManager().networkManager().publicIpAddresses()
+            ::getByResourceGroup);
 
-    //we need to create data disk as well
+    // we need to create data disk as well
     submitControlledResourceDeletionFlight(
-            workspaceUuid,
-            userRequest,
-            diskResource,
-            azureTestUtils.getAzureCloudContext().getAzureResourceGroupId(),
-            diskResource.getDiskName(),
-            azureTestUtils.getComputeManager().disks()::getByResourceGroup);
+        workspaceUuid,
+        userRequest,
+        diskResource,
+        azureTestUtils.getAzureCloudContext().getAzureResourceGroupId(),
+        diskResource.getDiskName(),
+        azureTestUtils.getComputeManager().disks()::getByResourceGroup);
   }
 
   @Test
@@ -475,31 +477,33 @@ public class CreateAndDeleteAzureControlledResourceFlightTest extends BaseAzureT
         com.azure.core.exception.HttpResponseException.class,
         () -> computeManager.disks().getById(resolvedVm.osDiskId()));
 
-    //clean up resources - vm deletion flight doesn't remove network and ip resources, so we need to remove them;
+    // clean up resources - vm deletion flight doesn't remove network and ip resources, so we need
+    // to remove them;
     submitControlledResourceDeletionFlight(
-            workspaceUuid,
-            userRequest,
-            networkResource,
-            azureTestUtils.getAzureCloudContext().getAzureResourceGroupId(),
-            networkResource.getNetworkName(),
-            azureTestUtils.getComputeManager().networkManager().networks()::getByResourceGroup);
+        workspaceUuid,
+        userRequest,
+        networkResource,
+        azureTestUtils.getAzureCloudContext().getAzureResourceGroupId(),
+        networkResource.getNetworkName(),
+        azureTestUtils.getComputeManager().networkManager().networks()::getByResourceGroup);
 
     submitControlledResourceDeletionFlight(
-            workspaceUuid,
-            userRequest,
-            ipResource,
-            azureTestUtils.getAzureCloudContext().getAzureResourceGroupId(),
-            ipResource.getIpName(),
-            azureTestUtils.getComputeManager().networkManager().publicIpAddresses()::getByResourceGroup);
+        workspaceUuid,
+        userRequest,
+        ipResource,
+        azureTestUtils.getAzureCloudContext().getAzureResourceGroupId(),
+        ipResource.getIpName(),
+        azureTestUtils.getComputeManager().networkManager().publicIpAddresses()
+            ::getByResourceGroup);
 
-    //we need to create data disk as well
+    // we need to create data disk as well
     submitControlledResourceDeletionFlight(
-            workspaceUuid,
-            userRequest,
-            diskResource,
-            azureTestUtils.getAzureCloudContext().getAzureResourceGroupId(),
-            diskResource.getDiskName(),
-            azureTestUtils.getComputeManager().disks()::getByResourceGroup);
+        workspaceUuid,
+        userRequest,
+        diskResource,
+        azureTestUtils.getAzureCloudContext().getAzureResourceGroupId(),
+        diskResource.getDiskName(),
+        azureTestUtils.getComputeManager().disks()::getByResourceGroup);
   }
 
   @Test
@@ -581,23 +585,23 @@ public class CreateAndDeleteAzureControlledResourceFlightTest extends BaseAzureT
         com.azure.core.exception.HttpResponseException.class,
         () -> computeManager.disks().getById(resolvedVm.osDiskId()));
 
-    //clean up resources - we need to remove only network since current VM has no public ip;
+    // clean up resources - we need to remove only network since current VM has no public ip;
     submitControlledResourceDeletionFlight(
-            workspaceUuid,
-            userRequest,
-            networkResource,
-            azureTestUtils.getAzureCloudContext().getAzureResourceGroupId(),
-            networkResource.getNetworkName(),
-            azureTestUtils.getComputeManager().networkManager().networks()::getByResourceGroup);
+        workspaceUuid,
+        userRequest,
+        networkResource,
+        azureTestUtils.getAzureCloudContext().getAzureResourceGroupId(),
+        networkResource.getNetworkName(),
+        azureTestUtils.getComputeManager().networkManager().networks()::getByResourceGroup);
 
-    //we need to create data disk as well
+    // we need to create data disk as well
     submitControlledResourceDeletionFlight(
-            workspaceUuid,
-            userRequest,
-            diskResource,
-            azureTestUtils.getAzureCloudContext().getAzureResourceGroupId(),
-            diskResource.getDiskName(),
-            azureTestUtils.getComputeManager().disks()::getByResourceGroup);
+        workspaceUuid,
+        userRequest,
+        diskResource,
+        azureTestUtils.getAzureCloudContext().getAzureResourceGroupId(),
+        diskResource.getDiskName(),
+        azureTestUtils.getComputeManager().disks()::getByResourceGroup);
   }
 
   private VirtualMachine getVirtualMachine(
@@ -793,38 +797,39 @@ public class CreateAndDeleteAzureControlledResourceFlightTest extends BaseAzureT
     // Submit a Network creation flight and verify the resource exists in the workspace.
     createResource(workspaceUuid, userRequest, resource, WsmResourceType.CONTROLLED_AZURE_NETWORK);
 
-    //clean up resources - delete network resource;
+    // clean up resources - delete network resource;
     submitControlledResourceDeletionFlight(
-            workspaceUuid,
-            userRequest,
-            resource,
-            azureTestUtils.getAzureCloudContext().getAzureResourceGroupId(),
-            resource.getNetworkName(),
-            azureTestUtils.getComputeManager().networkManager().networks()::getByResourceGroup);
+        workspaceUuid,
+        userRequest,
+        resource,
+        azureTestUtils.getAzureCloudContext().getAzureResourceGroupId(),
+        resource.getNetworkName(),
+        azureTestUtils.getComputeManager().networkManager().networks()::getByResourceGroup);
   }
 
   private <T extends ControlledResource, R> void submitControlledResourceDeletionFlight(
-          UUID workspaceUuid,
-          AuthenticatedUserRequest userRequest,
-          T controlledResource,
-          String azureResourceGroupId,
-          String resourceName,
-          BiFunction<String, String, R> findResource) throws InterruptedException {
+      UUID workspaceUuid,
+      AuthenticatedUserRequest userRequest,
+      T controlledResource,
+      String azureResourceGroupId,
+      String resourceName,
+      BiFunction<String, String, R> findResource)
+      throws InterruptedException {
     FlightState deleteControlledResourceFlightState =
-            StairwayTestUtils.blockUntilFlightCompletes(
-                    jobService.getStairway(),
-                    DeleteControlledResourceFlight.class,
-                    azureTestUtils.deleteControlledResourceInputParameters(
-                            workspaceUuid, controlledResource.getResourceId(), userRequest, controlledResource),
-                    STAIRWAY_FLIGHT_TIMEOUT,
-                    null);
+        StairwayTestUtils.blockUntilFlightCompletes(
+            jobService.getStairway(),
+            DeleteControlledResourceFlight.class,
+            azureTestUtils.deleteControlledResourceInputParameters(
+                workspaceUuid, controlledResource.getResourceId(), userRequest, controlledResource),
+            STAIRWAY_FLIGHT_TIMEOUT,
+            null);
     assertEquals(FlightStatus.SUCCESS, deleteControlledResourceFlightState.getFlightStatus());
 
     TimeUnit.SECONDS.sleep(5);
     com.azure.core.exception.HttpResponseException exception =
-      assertThrows(
-              com.azure.core.exception.HttpResponseException.class,
-              () -> findResource.apply(azureResourceGroupId, resourceName));
+        assertThrows(
+            com.azure.core.exception.HttpResponseException.class,
+            () -> findResource.apply(azureResourceGroupId, resourceName));
     assertEquals(404, exception.getResponse().getStatusCode());
   }
 }

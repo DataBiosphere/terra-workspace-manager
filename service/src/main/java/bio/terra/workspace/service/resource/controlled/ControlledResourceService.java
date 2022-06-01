@@ -402,8 +402,7 @@ public class ControlledResourceService {
       ApiGcpAiNotebookUpdateParameters updateParameters,
       @Nullable String newName,
       @Nullable String newDescription,
-      AuthenticatedUserRequest userRequest
-  ) {
+      AuthenticatedUserRequest userRequest) {
     controlledResourceMetadataManager.validateControlledResourceAndAction(
         userRequest,
         resource.getWorkspaceId(),
