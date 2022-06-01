@@ -24,7 +24,6 @@ import bio.terra.workspace.service.resource.model.WsmResourceFamily;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
-
 import java.util.Optional;
 import java.util.UUID;
 
@@ -116,9 +115,9 @@ public class ControlledAzureStorageResource extends ControlledResource {
   @Override
   public void addDeleteSteps(DeleteControlledResourceFlight flight, FlightBeanBag flightBeanBag) {
     flight.addStep(
-            new DeleteAzureStorageStep(
-                    flightBeanBag.getAzureConfig(), flightBeanBag.getCrlService(), this),
-            RetryRules.cloud());
+        new DeleteAzureStorageStep(
+            flightBeanBag.getAzureConfig(), flightBeanBag.getCrlService(), this),
+        RetryRules.cloud());
   }
 
   public String getStorageAccountName() {

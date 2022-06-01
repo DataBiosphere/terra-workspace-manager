@@ -11,9 +11,9 @@ import bio.terra.workspace.service.resource.model.WsmResource;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 /**
  * Generate a list of resource, flightID pairs for future steps to use. Each one will use the
@@ -41,12 +41,17 @@ public class FindResourcesToCloneStep implements Step {
       batch = resourceDao.enumerateResources(sourceWorkspaceId, null, null, offset, limit);
       offset += limit;
       final List<WsmResource> cloneableResources =
-          batch.stream().filter(FindResourcesToCloneStep::isCloneable).collect(Collectors.toList());
+          batch.stream().filter(FindResourcesToCloneStep::isCloneable).toList();
       cloneableResources.forEach(
           r -> result.add(new ResourceWithFlightId(r, context.getStairway().createFlightId())));
     } while (batch.size() == limit);
-    context.getWorkingMap().put(ControlledResourceKeys.RESOURCES_TO_CLONE, result);
 
+    // sort the resources by stewardship type reversed, so reference types go first
+    result.sort(
+        Comparator.comparing(
+            r -> r.getResource().getStewardshipType().toString(), Comparator.reverseOrder()));
+
+    context.getWorkingMap().put(ControlledResourceKeys.RESOURCES_TO_CLONE, result);
     FlightUtils.validateRequiredEntries(
         context.getWorkingMap(), ControlledResourceKeys.RESOURCES_TO_CLONE);
     return StepResult.getStepResultSuccess();
