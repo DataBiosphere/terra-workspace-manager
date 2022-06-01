@@ -12,7 +12,6 @@ import bio.terra.workspace.generated.model.ApiGcpAiNotebookUpdateParameters;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.workspace.GcpCloudContextService;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
-import bio.terra.workspace.service.workspace.model.GcpCloudContext;
 import com.google.api.client.googleapis.json.GoogleJsonResponseException;
 import com.google.api.services.notebooks.v1.model.Instance;
 import java.io.IOException;
@@ -24,15 +23,16 @@ public class RetrieveAiNotebookResourceAttributesStep implements Step {
   private final ControlledAiNotebookInstanceResource resource;
   private final CrlService crlService;
   private final GcpCloudContextService gcpCloudContextService;
+
   public RetrieveAiNotebookResourceAttributesStep(
       ControlledAiNotebookInstanceResource resource,
       CrlService crlService,
-      GcpCloudContextService gcpCloudContextService
-  ) {
+      GcpCloudContextService gcpCloudContextService) {
     this.resource = resource;
     this.crlService = crlService;
     this.gcpCloudContextService = gcpCloudContextService;
   }
+
   @Override
   public StepResult doStep(FlightContext context) throws InterruptedException, RetryException {
     final FlightMap workingMap = context.getWorkingMap();
@@ -46,7 +46,8 @@ public class RetrieveAiNotebookResourceAttributesStep implements Step {
           new ApiGcpAiNotebookUpdateParameters().metadata(metadata);
       workingMap.put(ControlledResourceKeys.PREVIOUS_UPDATE_PARAMETERS, existingUpdateParameters);
     } catch (GoogleJsonResponseException e) {
-      if (HttpStatus.BAD_REQUEST.value() == e.getStatusCode() || HttpStatus.NOT_FOUND.value() == e.getStatusCode()) {
+      if (HttpStatus.BAD_REQUEST.value() == e.getStatusCode()
+          || HttpStatus.NOT_FOUND.value() == e.getStatusCode()) {
         return new StepResult(StepStatus.STEP_RESULT_FAILURE_FATAL, e);
       }
       return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, e);

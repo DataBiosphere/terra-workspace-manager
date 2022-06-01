@@ -54,9 +54,7 @@ public class ControlledAiNotebookInstanceResource extends ControlledResource {
    */
   protected static final String SERVER_ID_METADATA_KEY = "terra-cli-server";
 
-  /**
-   * Metadata keys that are reserved by terra. User cannot modify those.
-   */
+  /** Metadata keys that are reserved by terra. User cannot modify those. */
   public static final Set<String> RESERVED_METADATA_KEYS =
       Set.of(PROXY_MODE_METADATA_KEY, WORKSPACE_ID_METADATA_KEY, SERVER_ID_METADATA_KEY);
 
@@ -157,7 +155,11 @@ public class ControlledAiNotebookInstanceResource extends ControlledResource {
         gcpRetryRule);
     flight.addStep(
         new CreateAiNotebookInstanceStep(
-            this, petSaEmail, workspaceUserFacingId, flightBeanBag.getCrlService(), flightBeanBag.getCliConfiguration()),
+            this,
+            petSaEmail,
+            workspaceUserFacingId,
+            flightBeanBag.getCrlService(),
+            flightBeanBag.getCliConfiguration()),
         gcpRetryRule);
     flight.addStep(
         new NotebookCloudSyncStep(

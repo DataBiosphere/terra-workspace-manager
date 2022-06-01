@@ -6,7 +6,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import bio.terra.common.exception.ConflictException;
 import bio.terra.workspace.common.BaseUnitTest;
 import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceAcceleratorConfig;
 import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceContainerImage;
@@ -17,7 +16,6 @@ import com.google.api.services.notebooks.v1.model.Instance;
 import com.google.common.collect.ImmutableList;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.Test;
 
@@ -99,8 +97,7 @@ public class CreateAiNotebookInstanceStepTest extends BaseUnitTest {
   private void assertDefaultMetadata(Instance instance) {
     // git secrets gets a false positive if 'service_account' is double quoted.
     assertThat(instance.getMetadata(), Matchers.hasEntry("proxy-mode", "service_" + "account"));
-    assertThat(
-        instance.getMetadata(), Matchers.hasEntry("terra-workspace-id", WORKSPACE_ID));
+    assertThat(instance.getMetadata(), Matchers.hasEntry("terra-workspace-id", WORKSPACE_ID));
     assertThat(instance.getMetadata(), Matchers.hasEntry("terra-cli-server", SERVER_ID));
   }
 
