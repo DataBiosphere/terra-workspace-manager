@@ -207,10 +207,17 @@ public class CreateAiNotebookInstanceStep implements Step {
 
   private static void addDefaultMetadata(
       Map<String, String> metadata, String workspaceUserFacingId, String cliServer) {
-    if (metadata.containsKey(WORKSPACE_ID_METADATA_KEY) ||
-        metadata.containsKey(SERVER_ID_METADATA_KEY) ||
-        metadata.containsKey(PROXY_MODE_METADATA_KEY)) {
-      throw new ReservedMetadataKeyException("The metadata keys " + WORKSPACE_ID_METADATA_KEY + ", " + SERVER_ID_METADATA_KEY + ", and " + PROXY_MODE_METADATA_KEY + " are reserved for Terra.");
+    if (metadata.containsKey(WORKSPACE_ID_METADATA_KEY)
+        || metadata.containsKey(SERVER_ID_METADATA_KEY)
+        || metadata.containsKey(PROXY_MODE_METADATA_KEY)) {
+      throw new ReservedMetadataKeyException(
+          "The metadata keys "
+              + WORKSPACE_ID_METADATA_KEY
+              + ", "
+              + SERVER_ID_METADATA_KEY
+              + ", and "
+              + PROXY_MODE_METADATA_KEY
+              + " are reserved for Terra.");
     }
     metadata.put(WORKSPACE_ID_METADATA_KEY, workspaceUserFacingId);
     if (!StringUtils.isEmpty(cliServer)) {

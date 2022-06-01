@@ -11,9 +11,7 @@ import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ResourceKeys;
 
-/**
- * {@link Flight} to update {@link ControlledAiNotebookInstanceResource}.
- */
+/** {@link Flight} to update {@link ControlledAiNotebookInstanceResource}. */
 public class UpdateControlledAiNotebookResourceFlight extends Flight {
 
   /**
@@ -22,8 +20,7 @@ public class UpdateControlledAiNotebookResourceFlight extends Flight {
    * @param inputParameters FlightMap of the inputs for the flight
    * @param beanBag Anonymous context meaningful to the application using Stairway
    */
-  public UpdateControlledAiNotebookResourceFlight(FlightMap inputParameters,
-      Object beanBag) {
+  public UpdateControlledAiNotebookResourceFlight(FlightMap inputParameters, Object beanBag) {
     super(inputParameters, beanBag);
 
     final FlightBeanBag flightBeanBag = FlightBeanBag.getFromObject(beanBag);
@@ -45,16 +42,22 @@ public class UpdateControlledAiNotebookResourceFlight extends Flight {
             resource),
         dbRetry);
 
-    ControlledAiNotebookInstanceResource aiNotebookResource = resource.castByEnum(WsmResourceType.CONTROLLED_GCP_AI_NOTEBOOK_INSTANCE);
+    ControlledAiNotebookInstanceResource aiNotebookResource =
+        resource.castByEnum(WsmResourceType.CONTROLLED_GCP_AI_NOTEBOOK_INSTANCE);
     // retrieve existing attributes in case of undo later
     RetryRule gcpRetry = RetryRules.cloud();
     addStep(
-        new RetrieveAiNotebookResourceAttributesStep(aiNotebookResource, flightBeanBag.getCrlService(), flightBeanBag.getGcpCloudContextService()),
-        gcpRetry
-    );
+        new RetrieveAiNotebookResourceAttributesStep(
+            aiNotebookResource,
+            flightBeanBag.getCrlService(),
+            flightBeanBag.getGcpCloudContextService()),
+        gcpRetry);
     // update ai notebook
     addStep(
-        new UpdateAiNotebookAttributesStep(aiNotebookResource, flightBeanBag.getCrlService(), flightBeanBag.getGcpCloudContextService()),
-        gcpRetry
-    );
-}}
+        new UpdateAiNotebookAttributesStep(
+            aiNotebookResource,
+            flightBeanBag.getCrlService(),
+            flightBeanBag.getGcpCloudContextService()),
+        gcpRetry);
+  }
+}

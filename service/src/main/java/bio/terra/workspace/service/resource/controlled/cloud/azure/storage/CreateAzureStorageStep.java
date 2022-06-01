@@ -84,7 +84,8 @@ public class CreateAzureStorageStep implements Step {
         context
             .getWorkingMap()
             .get(ControlledResourceKeys.AZURE_CLOUD_CONTEXT, AzureCloudContext.class);
-    final StorageManager storageManager = crlService.getStorageManager(azureCloudContext, azureConfig);
+    final StorageManager storageManager =
+        crlService.getStorageManager(azureCloudContext, azureConfig);
 
     // If the storage account does not exist (isAvailable == true)
     // then return success.
