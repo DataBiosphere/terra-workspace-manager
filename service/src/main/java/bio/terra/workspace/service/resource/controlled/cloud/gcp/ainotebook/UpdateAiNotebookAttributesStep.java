@@ -48,8 +48,12 @@ public class UpdateAiNotebookAttributesStep implements Step {
     final FlightMap inputMap = context.getInputParameters();
     final ApiGcpAiNotebookUpdateParameters updateParameters =
         inputMap.get(UPDATE_PARAMETERS, ApiGcpAiNotebookUpdateParameters.class);
-
+    if (updateParameters == null) {
+      return StepResult.getStepResultSuccess();
+    }
     Map<String, String> sanitizedMetadata = new HashMap<>();
+
+
     for (var entrySet: updateParameters.getMetadata().entrySet()) {
       if (ControlledAiNotebookInstanceResource.RESERVED_METADATA_KEYS.contains(entrySet.getKey())) {
         logger.error(String.format("Cannot modify terra reserved keys %s", entrySet.getKey()));

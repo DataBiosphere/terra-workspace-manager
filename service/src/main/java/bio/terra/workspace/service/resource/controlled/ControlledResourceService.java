@@ -399,7 +399,7 @@ public class ControlledResourceService {
 
   public ControlledAiNotebookInstanceResource updateAiNotebookInstance(
       ControlledAiNotebookInstanceResource resource,
-      ApiGcpAiNotebookUpdateParameters updateParameters,
+      @Nullable ApiGcpAiNotebookUpdateParameters updateParameters,
       @Nullable String newName,
       @Nullable String newDescription,
       AuthenticatedUserRequest userRequest
