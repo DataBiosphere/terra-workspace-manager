@@ -10,6 +10,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.retry.backoff.BackOffInterruptedException;
+import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -35,6 +36,7 @@ public class GlobalExceptionHandler {
     MethodArgumentNotValidException.class,
     MethodArgumentTypeMismatchException.class,
     HttpMessageNotReadableException.class,
+    HttpRequestMethodNotSupportedException.class,
     IllegalArgumentException.class,
     NoHandlerFoundException.class
   })
