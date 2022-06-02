@@ -21,16 +21,6 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import io.opencensus.contrib.spring.aop.Traced;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
-import java.util.UUID;
-import java.util.stream.Collectors;
-import javax.annotation.Nullable;
 import okhttp3.OkHttpClient;
 import org.broadinstitute.dsde.workbench.client.sam.ApiClient;
 import org.broadinstitute.dsde.workbench.client.sam.ApiException;
@@ -38,18 +28,17 @@ import org.broadinstitute.dsde.workbench.client.sam.api.GoogleApi;
 import org.broadinstitute.dsde.workbench.client.sam.api.ResourcesApi;
 import org.broadinstitute.dsde.workbench.client.sam.api.StatusApi;
 import org.broadinstitute.dsde.workbench.client.sam.api.UsersApi;
-import org.broadinstitute.dsde.workbench.client.sam.model.AccessPolicyMembershipV2;
-import org.broadinstitute.dsde.workbench.client.sam.model.AccessPolicyResponseEntry;
-import org.broadinstitute.dsde.workbench.client.sam.model.AccessPolicyResponseEntryV2;
-import org.broadinstitute.dsde.workbench.client.sam.model.CreateResourceRequestV2;
-import org.broadinstitute.dsde.workbench.client.sam.model.FullyQualifiedResourceId;
-import org.broadinstitute.dsde.workbench.client.sam.model.ResourceAndAccessPolicy;
-import org.broadinstitute.dsde.workbench.client.sam.model.SystemStatus;
+import org.broadinstitute.dsde.workbench.client.sam.model.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
+
+import javax.annotation.Nullable;
+import java.io.IOException;
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * SamService encapsulates logic for interacting with Sam. HTTP Statuses returned by Sam are
@@ -284,6 +273,19 @@ public class SamService {
         return;
       }
       throw SamExceptionFactory.create("Error deleting a workspace in Sam", apiException);
+    }
+  }
+
+  @Traced
+  public List<String> listResourceActions(
+      AuthenticatedUserRequest userRequest, String resourceType, String resourceId)
+      throws InterruptedException {
+    String authToken = userRequest.getRequiredToken();
+    ResourcesApi resourceApi = samResourcesApi(authToken);
+    try {
+      return SamRetry.retry(() -> resourceApi.resourceActions(resourceType, resourceId));
+    } catch (ApiException apiException) {
+      throw SamExceptionFactory.create("Error listing resources actions in Sam", apiException);
     }
   }
 
