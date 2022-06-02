@@ -6,6 +6,7 @@ import bio.terra.workspace.generated.model.ApiAzureStorageCreationParameters;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.storage.resourcemanager.data.CreateStorageAccountRequestData;
 import com.azure.core.management.Region;
 import com.azure.core.util.Context;
+import com.azure.resourcemanager.storage.models.CheckNameAvailabilityResult;
 import com.azure.resourcemanager.storage.models.StorageAccount;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -22,6 +23,8 @@ import static org.mockito.Mockito.*;
 
 @ActiveProfiles("azure")
 public class CreateAzureStorageStepTest extends BaseStorageStepTest {
+
+  @Mock private CheckNameAvailabilityResult mockNameAvailabilityResult;
 
   private ApiAzureStorageCreationParameters creationParameters;
   @Mock private StorageAccount.DefinitionStages.Blank mockStorageBlankStage;

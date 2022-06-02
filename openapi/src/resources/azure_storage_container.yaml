@@ -22,5 +22,3 @@ components:
           $ref: '#/components/schemas/ResourceMetadata'
         attributes:
           $ref: '#/components/schemas/AzureStorageContainerAttributes'
-
-

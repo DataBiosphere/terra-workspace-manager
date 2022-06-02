@@ -47,11 +47,9 @@ public class GetAzureStorageContainerStepTest extends BaseStorageStepTest {
             ControlledResourceFixtures.getAzureStorageContainer(
                 creationParameters.getStorageAccountName(), creationParameters.getName()));
 
-    // In order to be able to create a storage container, a storage account with the name must already exist
-    // (so availability of the name is false because it is in use).
-    when(mockNameAvailabilityResult.isAvailable()).thenReturn(false);
-    when(mockStorageAccounts.checkNameAvailability(creationParameters.getStorageAccountName()))
-        .thenReturn(mockNameAvailabilityResult);
+    // Storage account exists.
+    when(mockStorageAccounts.getByResourceGroup(mockAzureCloudContext.getAzureResourceGroupId(),
+            creationParameters.getStorageAccountName())).thenReturn(mockStorageAccount);
 
     // The storage container must not already exist.
     when(mockBlobContainers.list(mockAzureCloudContext.getAzureResourceGroupId(), creationParameters.getStorageAccountName()))

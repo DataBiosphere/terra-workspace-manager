@@ -168,13 +168,40 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
   }
 
   @Override
-  public ResponseEntity<ApiCreatedControlledAzureStorageContainer> createAzureStorageContainer(
-      UUID workspaceUuid, @Valid ApiCreateControlledAzureStorageContainerRequestBody body) {
+  public ResponseEntity<ApiCreatedControlledAzureStorage> createAzureStorage(
+      UUID workspaceUuid, @Valid ApiCreateControlledAzureStorageRequestBody body) {
     features.azureEnabledCheck();
 
     final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     final ControlledResourceFields commonFields =
         toCommonFields(workspaceUuid, body.getCommon(), userRequest);
+
+    ControlledAzureStorageResource resource =
+        ControlledAzureStorageResource.builder()
+            .common(commonFields)
+            .storageAccountName(body.getAzureStorage().getName())
+            .region(body.getAzureStorage().getRegion())
+            .build();
+
+    final ControlledAzureStorageResource createdStorage =
+        controlledResourceService
+            .createControlledResourceSync(
+                resource, commonFields.getIamRole(), userRequest, body.getAzureStorage())
+            .castByEnum(WsmResourceType.CONTROLLED_AZURE_STORAGE_ACCOUNT);
+    var response =
+        new ApiCreatedControlledAzureStorage()
+            .resourceId(createdStorage.getResourceId())
+            .azureStorage(createdStorage.toApiResource());
+    return new ResponseEntity<>(response, HttpStatus.OK);
+  }
+
+  @Override
+  public ResponseEntity<ApiCreatedControlledAzureStorageContainer> createAzureStorageContainer(
+      UUID workspaceUuid, @Valid ApiCreateControlledAzureStorageContainerRequestBody body) {
+    features.azureEnabledCheck();
+
+    final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    final ControlledResourceFields commonFields = toCommonFields(workspaceUuid, body.getCommon(), userRequest);
 
     ControlledAzureStorageContainerResource resource =
         ControlledAzureStorageContainerResource.builder()
@@ -192,34 +219,6 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
         new ApiCreatedControlledAzureStorageContainer()
             .resourceId(createdStorageContainer.getResourceId())
             .azureStorageContainer(createdStorageContainer.toApiResource());
-    return new ResponseEntity<>(response, HttpStatus.OK);
-  }
-
-  @Override
-  public ResponseEntity<ApiCreatedControlledAzureStorage> createAzureStorage(
-          UUID workspaceUuid, @Valid ApiCreateControlledAzureStorageRequestBody body) {
-    features.azureEnabledCheck();
-
-    final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
-    final ControlledResourceFields commonFields =
-            toCommonFields(workspaceUuid, body.getCommon(), userRequest);
-
-    ControlledAzureStorageResource resource =
-            ControlledAzureStorageResource.builder()
-                    .common(commonFields)
-                    .storageAccountName(body.getAzureStorage().getName())
-                    .region(body.getAzureStorage().getRegion())
-                    .build();
-
-    final ControlledAzureStorageResource createdStorage =
-            controlledResourceService
-                    .createControlledResourceSync(
-                            resource, commonFields.getIamRole(), userRequest, body.getAzureStorage())
-                    .castByEnum(WsmResourceType.CONTROLLED_AZURE_STORAGE_ACCOUNT);
-    var response =
-            new ApiCreatedControlledAzureStorage()
-                    .resourceId(createdStorage.getResourceId())
-                    .azureStorage(createdStorage.toApiResource());
     return new ResponseEntity<>(response, HttpStatus.OK);
   }
 

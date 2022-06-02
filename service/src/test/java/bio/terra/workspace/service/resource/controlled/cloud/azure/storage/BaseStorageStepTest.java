@@ -10,7 +10,6 @@ import bio.terra.workspace.service.workspace.model.AzureCloudContext;
 import com.azure.core.management.exception.ManagementError;
 import com.azure.core.management.exception.ManagementException;
 import com.azure.resourcemanager.storage.StorageManager;
-import com.azure.resourcemanager.storage.models.CheckNameAvailabilityResult;
 import com.azure.resourcemanager.storage.models.StorageAccount;
 import com.azure.resourcemanager.storage.models.StorageAccounts;
 import org.junit.jupiter.api.BeforeEach;
@@ -32,7 +31,6 @@ public class BaseStorageStepTest extends BaseAzureTest {
     @Mock protected AzureConfiguration mockAzureConfig;
     @Mock protected AzureCloudContext mockAzureCloudContext;
     @Mock protected StorageManager mockStorageManager;
-    @Mock protected CheckNameAvailabilityResult mockNameAvailabilityResult;
     @Mock protected StorageAccounts mockStorageAccounts;
     @Mock protected StorageAccount mockStorageAccount;
     @Mock protected FlightMap mockWorkingMap;

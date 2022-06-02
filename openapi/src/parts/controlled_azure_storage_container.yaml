@@ -3,7 +3,7 @@ paths:
     parameters:
       - $ref: '#/components/parameters/WorkspaceId'
     post:
-      summary: Create a new controlled Azure Storage Container
+      summary: Create a new controlled Azure Storage Container with private access
       operationId: createAzureStorageContainer
       tags: [ControlledAzureResource]
       requestBody:
@@ -29,7 +29,7 @@ components:
     AzureStorageContainerCreationParameters:
       description: >-
         Storage container-specific properties to be set on creation. These are a subset of the values
-        accepted by the azure resource API
+        accepted by the azure resource API (note that public access is disabled).
       type: object
       required: [ name, storageAccountName ]
       properties:
@@ -59,4 +59,3 @@ components:
           format: uuid
         azureStorageContainer:
           $ref: '#/components/schemas/AzureStorageContainerResource'
-

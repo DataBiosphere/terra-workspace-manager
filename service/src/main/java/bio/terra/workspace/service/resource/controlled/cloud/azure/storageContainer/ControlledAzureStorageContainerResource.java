@@ -87,7 +87,7 @@ public class ControlledAzureStorageContainerResource extends ControlledResource 
   public Optional<UniquenessCheckAttributes> getUniquenessCheckAttributes() {
     return Optional.of(
         new UniquenessCheckAttributes()
-            .uniquenessScope(UniquenessScope.WORKSPACE)  // TODO: combination of storage account name and container name must be unique
+            .uniquenessScope(UniquenessScope.WORKSPACE)
             .addParameter("storageAccountName", getStorageAccountName())
             .addParameter("storageContainerName", getStorageContainerName()));
   }
@@ -114,9 +114,9 @@ public class ControlledAzureStorageContainerResource extends ControlledResource 
   @Override
   public void addDeleteSteps(DeleteControlledResourceFlight flight, FlightBeanBag flightBeanBag) {
     flight.addStep(
-            new DeleteAzureStorageContainerStep(
-                    flightBeanBag.getAzureConfig(), flightBeanBag.getCrlService(), this),
-            RetryRules.cloud());
+        new DeleteAzureStorageContainerStep(
+                flightBeanBag.getAzureConfig(), flightBeanBag.getCrlService(), this),
+        RetryRules.cloud());
   }
 
   public String getStorageAccountName() {
