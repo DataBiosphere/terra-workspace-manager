@@ -11,6 +11,7 @@ import com.azure.core.management.exception.ManagementError;
 import com.azure.core.management.exception.ManagementException;
 import com.azure.resourcemanager.storage.StorageManager;
 import com.azure.resourcemanager.storage.models.CheckNameAvailabilityResult;
+import com.azure.resourcemanager.storage.models.StorageAccount;
 import com.azure.resourcemanager.storage.models.StorageAccounts;
 import org.junit.jupiter.api.BeforeEach;
 import org.mockito.Mock;
@@ -18,6 +19,9 @@ import org.springframework.test.context.ActiveProfiles;
 
 import static org.mockito.Mockito.when;
 
+/**
+ * Base class for storage account and storage container tests.
+ */
 @ActiveProfiles("azure")
 public class BaseStorageStepTest extends BaseAzureTest {
 
@@ -28,10 +32,12 @@ public class BaseStorageStepTest extends BaseAzureTest {
     @Mock protected AzureConfiguration mockAzureConfig;
     @Mock protected AzureCloudContext mockAzureCloudContext;
     @Mock protected StorageManager mockStorageManager;
-    @Mock protected ManagementException mockException;
     @Mock protected CheckNameAvailabilityResult mockNameAvailabilityResult;
     @Mock protected StorageAccounts mockStorageAccounts;
+    @Mock protected StorageAccount mockStorageAccount;
     @Mock protected FlightMap mockWorkingMap;
+    protected ManagementException resourceNotFoundException;
+
 
     @BeforeEach
     public void setup() {
@@ -41,8 +47,11 @@ public class BaseStorageStepTest extends BaseAzureTest {
 
         when(mockStorageManager.storageAccounts()).thenReturn(mockStorageAccounts);
 
-        when(mockException.getValue())
-                .thenReturn(new ManagementError("ResourceNotFound", "Resource was not found."));
+        resourceNotFoundException =
+                new ManagementException(
+                        "Resource was not found.",
+                        /*response=*/ null,
+                        new ManagementError("ResourceNotFound", "Resource was not found."));
 
         when(mockFlightContext.getWorkingMap()).thenReturn(mockWorkingMap);
         when(mockWorkingMap.get(ControlledResourceKeys.AZURE_CLOUD_CONTEXT, AzureCloudContext.class))

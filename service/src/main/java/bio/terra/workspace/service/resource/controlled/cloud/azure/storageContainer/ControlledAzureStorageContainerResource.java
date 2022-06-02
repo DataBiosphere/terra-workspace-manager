@@ -188,7 +188,8 @@ public class ControlledAzureStorageContainerResource extends ControlledResource 
           "Missing required storage container name field for ControlledAzureStorageContainer.");
     }
 
-    ResourceValidationUtils.validateStorageAccountName(getStorageAccountName()); // TODO add validation for storage container name
+    ResourceValidationUtils.validateStorageAccountName(getStorageAccountName());
+    ResourceValidationUtils.validateStorageContainerName(getStorageContainerName());
   }
 
   @Override

@@ -6,13 +6,9 @@ import bio.terra.workspace.generated.model.ApiAzureStorageContainerCreationParam
 import bio.terra.workspace.service.resource.controlled.cloud.azure.storage.BaseStorageStepTest;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.storageContainer.resourcemanager.data.CreateStorageContainerRequestData;
 import com.azure.core.http.rest.PagedIterable;
-import com.azure.core.management.exception.ManagementError;
-import com.azure.core.management.exception.ManagementException;
 import com.azure.core.util.Context;
 import com.azure.resourcemanager.storage.fluent.models.ListContainerItemInner;
-import com.azure.resourcemanager.storage.models.BlobContainer;
-import com.azure.resourcemanager.storage.models.BlobContainers;
-import com.azure.resourcemanager.storage.models.PublicAccess;
+import com.azure.resourcemanager.storage.models.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -40,18 +36,12 @@ public class CreateAzureStorageContainerStepTest extends BaseStorageStepTest {
   @Mock private ListContainerItemInner mockContainerResult;
 
   private ApiAzureStorageContainerCreationParameters creationParameters;
-  private ManagementException resourceNotFoundException;
   private ArgumentCaptor<Context> contextCaptor = ArgumentCaptor.forClass(Context.class);
 
   @BeforeEach
   public void setup() {
     super.setup();
     creationParameters = ControlledResourceFixtures.getAzureStorageContainerCreationParameters();
-    resourceNotFoundException =
-            new ManagementException(
-                    "Resource was not found.",
-                    /*response=*/ null,
-                    new ManagementError("ResourceNotFound", "Resource was not found."));
 
     // Creation stages mocks
     when(mockStorageManager.blobContainers()).thenReturn(mockBlobContainers);
@@ -121,10 +111,33 @@ public class CreateAzureStorageContainerStepTest extends BaseStorageStepTest {
 
     CreateAzureStorageContainerStep createAzureStorageContainerStep = createCreateAzureStorageContainerStep();
 
-    // Storage account does not exist. If I add a check for this, I would need these mocks.
-//    when(mockNameAvailabilityResult.isAvailable()).thenReturn(true);
-//    when(mockStorageAccounts.checkNameAvailability(containerCreationParameters.getStorageAccountName()))
-//        .thenReturn(mockNameAvailabilityResult);
+    // Storage account does not exist. We do not try to delete the container in this case.
+    when(mockStorageAccounts.getByResourceGroup(mockAzureCloudContext.getAzureResourceGroupId(),
+            creationParameters.getStorageAccountName())).thenThrow(resourceNotFoundException);
+
+    StepResult stepResult = createAzureStorageContainerStep.undoStep(mockFlightContext);
+
+    // Verify step returns success
+    assertThat(stepResult, equalTo(StepResult.getStepResultSuccess()));
+
+    // Verify delete operation is not called.
+    verify(mockBlobContainers, times(0)).delete(
+            mockAzureCloudContext.getAzureResourceGroupId(),
+            creationParameters.getStorageAccountName(),
+            creationParameters.getName()
+    );
+  }
+
+  @Test
+  public void undoStep_doesNotDeleteStorageContainerIfStorageContainerDoesNotExist() throws InterruptedException {
+
+    CreateAzureStorageContainerStep createAzureStorageContainerStep = createCreateAzureStorageContainerStep();
+
+    // Storage account does exist.
+    when(mockStorageAccounts.getByResourceGroup(mockAzureCloudContext.getAzureResourceGroupId(),
+            creationParameters.getStorageAccountName())).thenReturn(mockStorageAccount);
+
+    // Storage container does not exist. We do not try to delete the container in this case.
     when(mockBlobContainers.list(mockAzureCloudContext.getAzureResourceGroupId(),
             creationParameters.getStorageAccountName()))
             .thenReturn(mockListResult);
@@ -148,6 +161,9 @@ public class CreateAzureStorageContainerStepTest extends BaseStorageStepTest {
 
     CreateAzureStorageContainerStep createAzureStorageContainerStep = createCreateAzureStorageContainerStep();
 
+    // Storage account and container exist.
+    when(mockStorageAccounts.getByResourceGroup(mockAzureCloudContext.getAzureResourceGroupId(),
+            creationParameters.getStorageAccountName())).thenReturn(mockStorageAccount);
     when(mockBlobContainers.list(mockAzureCloudContext.getAzureResourceGroupId(), creationParameters.getStorageAccountName()))
             .thenReturn(mockListResult);
     when(mockListResult.iterator()).thenReturn(Collections.singletonList(mockContainerResult).iterator());

@@ -12,6 +12,7 @@ import bio.terra.workspace.service.resource.exception.ResourceNotFoundException;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import bio.terra.workspace.service.workspace.model.AzureCloudContext;
 import com.azure.core.http.rest.PagedIterable;
+import com.azure.core.management.exception.ManagementException;
 import com.azure.resourcemanager.storage.StorageManager;
 import com.azure.resourcemanager.storage.fluent.models.ListContainerItemInner;
 
@@ -42,14 +43,16 @@ public class GetAzureStorageContainerStep implements Step {
             context.getWorkingMap().get(ControlledResourceKeys.AZURE_CLOUD_CONTEXT, AzureCloudContext.class);
     final StorageManager storageManager = crlService.getStorageManager(azureCloudContext, azureConfig);
 
-    if (storageManager
-            .storageAccounts()
-            .checkNameAvailability(resource.getStorageAccountName())
-            .isAvailable()) {
+    try {
+      storageManager
+              .storageAccounts()
+              .getByResourceGroup(
+                      azureCloudContext.getAzureResourceGroupId(), resource.getStorageAccountName());
+    } catch (ManagementException ex) {
       return new StepResult(
               StepStatus.STEP_RESULT_FAILURE_FATAL, new ResourceNotFoundException(
-                      String.format("No Azure storage account with name '%s' exists",
-                              resource.getStorageAccountName())));
+              String.format("No Azure storage account with name '%s' exists for this workspace",
+                      resource.getStorageAccountName())));
     }
     final PagedIterable<ListContainerItemInner> existingContainers = storageManager.blobContainers().list(
             azureCloudContext.getAzureResourceGroupId(), resource.getStorageAccountName()

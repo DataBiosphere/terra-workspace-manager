@@ -88,7 +88,17 @@ public class CreateAzureStorageContainerStep implements Step {
                     .get(ControlledResourceKeys.AZURE_CLOUD_CONTEXT, AzureCloudContext.class);
     final StorageManager storageManager = crlService.getStorageManager(azureCloudContext, azureConfig);
 
-    // TODO: should I first check if the storage account exists? Does it matter?
+    try {
+      storageManager
+              .storageAccounts()
+              .getByResourceGroup(
+                      azureCloudContext.getAzureResourceGroupId(), resource.getStorageAccountName());
+    } catch (ManagementException ex) {
+      logger.warn(
+              "Deletion of the storage container is not required. Parent storage account does not exist. {}",
+              resource.getStorageAccountName());
+      return StepResult.getStepResultSuccess();
+    }
     final PagedIterable<ListContainerItemInner> existingContainers = storageManager.blobContainers().list(
             azureCloudContext.getAzureResourceGroupId(), resource.getStorageAccountName()
     );

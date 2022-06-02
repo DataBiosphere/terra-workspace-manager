@@ -76,9 +76,9 @@ public class GetAzureStorageContainerStepTest extends BaseStorageStepTest {
                     ControlledResourceFixtures.getAzureStorageContainer(
                             creationParameters.getStorageAccountName(), creationParameters.getName()));
 
-    when(mockNameAvailabilityResult.isAvailable()).thenReturn(true);
-    when(mockStorageAccounts.checkNameAvailability(creationParameters.getStorageAccountName()))
-        .thenReturn(mockNameAvailabilityResult);
+    // Storage account doesn't exist.
+    when(mockStorageAccounts.getByResourceGroup(mockAzureCloudContext.getAzureResourceGroupId(),
+            creationParameters.getStorageAccountName())).thenThrow(resourceNotFoundException);
 
     final StepResult stepResult = getAzureStorageContainerStep.doStep(mockFlightContext);
 
@@ -99,11 +99,9 @@ public class GetAzureStorageContainerStepTest extends BaseStorageStepTest {
                     ControlledResourceFixtures.getAzureStorageContainer(
                             creationParameters.getStorageAccountName(), creationParameters.getName()));
 
-    // In order to be able to create a storage container, a storage account with the name must already exist
-    // (so availability of the name is false because it is in use).
-    when(mockNameAvailabilityResult.isAvailable()).thenReturn(false);
-    when(mockStorageAccounts.checkNameAvailability(creationParameters.getStorageAccountName()))
-            .thenReturn(mockNameAvailabilityResult);
+    // Storage account exists.
+    when(mockStorageAccounts.getByResourceGroup(mockAzureCloudContext.getAzureResourceGroupId(),
+            creationParameters.getStorageAccountName())).thenReturn(mockStorageAccount);
 
     // A storage container with this name already exists.
     when(mockBlobContainers.list(mockAzureCloudContext.getAzureResourceGroupId(), creationParameters.getStorageAccountName()))

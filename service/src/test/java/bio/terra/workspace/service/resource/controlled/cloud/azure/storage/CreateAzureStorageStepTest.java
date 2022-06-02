@@ -5,8 +5,6 @@ import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
 import bio.terra.workspace.generated.model.ApiAzureStorageCreationParameters;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.storage.resourcemanager.data.CreateStorageAccountRequestData;
 import com.azure.core.management.Region;
-import com.azure.core.management.exception.ManagementError;
-import com.azure.core.management.exception.ManagementException;
 import com.azure.core.util.Context;
 import com.azure.resourcemanager.storage.models.StorageAccount;
 import org.junit.jupiter.api.BeforeEach;
@@ -26,23 +24,15 @@ import static org.mockito.Mockito.*;
 public class CreateAzureStorageStepTest extends BaseStorageStepTest {
 
   private ApiAzureStorageCreationParameters creationParameters;
-  private ManagementException resourceNotFoundException;
   @Mock private StorageAccount.DefinitionStages.Blank mockStorageBlankStage;
   @Mock private StorageAccount.DefinitionStages.WithGroup mockStorageGroupStage;
   @Mock private StorageAccount.DefinitionStages.WithCreate mockStorageCreateStage;
-  @Mock private StorageAccount mockStorageAccount;
 
   private ArgumentCaptor<Context> contextCaptor = ArgumentCaptor.forClass(Context.class);
 
   @BeforeEach
   public void setup() {
     super.setup();
-
-    resourceNotFoundException =
-            new ManagementException(
-                    "Resource was not found.",
-                    /*response=*/ null,
-                    new ManagementError("ResourceNotFound", "Resource was not found."));
 
     // Creation stages mocks
     when(mockStorageAccounts.define(anyString())).thenReturn(mockStorageBlankStage);
