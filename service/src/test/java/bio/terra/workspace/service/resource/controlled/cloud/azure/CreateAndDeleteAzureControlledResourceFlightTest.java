@@ -1027,9 +1027,9 @@ public class CreateAndDeleteAzureControlledResourceFlightTest extends BaseAzureT
             STAIRWAY_FLIGHT_TIMEOUT,
             null);
 
-    if (findResource != null) {
-      assertEquals(FlightStatus.SUCCESS, deleteControlledResourceFlightState.getFlightStatus());
+    assertEquals(FlightStatus.SUCCESS, deleteControlledResourceFlightState.getFlightStatus());
 
+    if (findResource != null) {
       TimeUnit.SECONDS.sleep(5);
       com.azure.core.exception.HttpResponseException exception =
               assertThrows(
