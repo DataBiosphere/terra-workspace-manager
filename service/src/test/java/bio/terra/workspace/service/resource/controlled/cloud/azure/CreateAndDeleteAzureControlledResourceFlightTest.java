@@ -48,13 +48,16 @@ import bio.terra.workspace.service.workspace.model.AzureCloudContext;
 import com.azure.core.management.exception.ManagementException;
 import com.azure.resourcemanager.compute.ComputeManager;
 import com.azure.resourcemanager.compute.models.VirtualMachine;
+import java.util.function.BiFunction;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+
 import java.time.Duration;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.uniqueBucketName;
-import static org.junit.jupiter.api.Assertions.*;
 
 public class CreateAndDeleteAzureControlledResourceFlightTest extends BaseAzureTest {
     private static final Duration STAIRWAY_FLIGHT_TIMEOUT = Duration.ofMinutes(15);
@@ -266,36 +269,34 @@ public class CreateAndDeleteAzureControlledResourceFlightTest extends BaseAzureT
                     .build();
     createResource(workspaceUuid, userRequest, containerResource, WsmResourceType.CONTROLLED_AZURE_STORAGE_CONTAINER);
 
-    // Submit a storage container deletion flight.
-    FlightState deleteContainerFlightState =
-            StairwayTestUtils.blockUntilFlightCompletes(
-                    jobService.getStairway(),
-                    DeleteControlledResourceFlight.class,
-                    azureTestUtils.deleteControlledResourceInputParameters(
-                            workspaceUuid, containerResourceId, userRequest, containerResource),
-                    STAIRWAY_FLIGHT_TIMEOUT,
-                    null);
-    assertEquals(FlightStatus.SUCCESS, deleteContainerFlightState.getFlightStatus());
-
-    // Submit a storage account deletion flight.
-    FlightState deleteFlightState =
-            StairwayTestUtils.blockUntilFlightCompletes(
-                    jobService.getStairway(),
-                    DeleteControlledResourceFlight.class,
-                    azureTestUtils.deleteControlledResourceInputParameters(
-                            workspaceUuid, resourceId, userRequest, resource),
-                    STAIRWAY_FLIGHT_TIMEOUT,
-                    null);
-    assertEquals(FlightStatus.SUCCESS, deleteFlightState.getFlightStatus());
+    // clean up resources - delete storage container resource
+    submitControlledResourceDeletionFlight(
+            workspaceUuid,
+            userRequest,
+            containerResource,
+            azureTestUtils.getAzureCloudContext().getAzureResourceGroupId(),
+            containerResource.getStorageContainerName(),
+            null); // Don't sleep/verify deletion yet.
 
     // clean up resources - delete storage account resource
     submitControlledResourceDeletionFlight(
             workspaceUuid,
             userRequest,
-            resource,
+            accountResource,
             azureTestUtils.getAzureCloudContext().getAzureResourceGroupId(),
-            resource.getStorageAccountName(),
+            accountResource.getStorageAccountName(),
             azureTestUtils.getStorageManager().storageAccounts()::getByResourceGroup);
+
+    // Verify containers have been deleted (Can't do this in submitControlledResourceDeletionFlight because
+    // the get function takes a different number of arguments. Also no need to sleep another 5 seconds.)
+    com.azure.core.exception.HttpResponseException exception =
+            assertThrows(
+                    com.azure.core.exception.HttpResponseException.class,
+                    () -> azureTestUtils.getStorageManager().blobContainers().get(
+                            azureTestUtils.getAzureCloudContext().getAzureResourceGroupId(),
+                            accountResource.getStorageAccountName(),
+                            containerName));
+    assertEquals(404, exception.getResponse().getStatusCode());
   }
 
     @Test
@@ -1009,29 +1010,32 @@ public class CreateAndDeleteAzureControlledResourceFlightTest extends BaseAzureT
                 azureTestUtils.getComputeManager().networkManager().networks()::getByResourceGroup);
     }
 
-    private <T extends ControlledResource, R> void submitControlledResourceDeletionFlight(
-            UUID workspaceUuid,
-            AuthenticatedUserRequest userRequest,
-            T controlledResource,
-            String azureResourceGroupId,
-            String resourceName,
-            BiFunction<String, String, R> findResource)
-            throws InterruptedException {
-        FlightState deleteControlledResourceFlightState =
-                StairwayTestUtils.blockUntilFlightCompletes(
-                        jobService.getStairway(),
-                        DeleteControlledResourceFlight.class,
-                        azureTestUtils.deleteControlledResourceInputParameters(
-                                workspaceUuid, controlledResource.getResourceId(), userRequest, controlledResource),
-                        STAIRWAY_FLIGHT_TIMEOUT,
-                        null);
-        assertEquals(FlightStatus.SUCCESS, deleteControlledResourceFlightState.getFlightStatus());
+  private <T extends ControlledResource, R> void submitControlledResourceDeletionFlight(
+      UUID workspaceUuid,
+      AuthenticatedUserRequest userRequest,
+      T controlledResource,
+      String azureResourceGroupId,
+      String resourceName,
+      BiFunction<String, String, R> findResource)
+      throws InterruptedException {
+    FlightState deleteControlledResourceFlightState =
+        StairwayTestUtils.blockUntilFlightCompletes(
+            jobService.getStairway(),
+            DeleteControlledResourceFlight.class,
+            azureTestUtils.deleteControlledResourceInputParameters(
+                workspaceUuid, controlledResource.getResourceId(), userRequest, controlledResource),
+            STAIRWAY_FLIGHT_TIMEOUT,
+            null);
 
-        TimeUnit.SECONDS.sleep(5);
-        com.azure.core.exception.HttpResponseException exception =
-                assertThrows(
-                        com.azure.core.exception.HttpResponseException.class,
-                        () -> findResource.apply(azureResourceGroupId, resourceName));
-        assertEquals(404, exception.getResponse().getStatusCode());
+    if (findResource != null) {
+      assertEquals(FlightStatus.SUCCESS, deleteControlledResourceFlightState.getFlightStatus());
+
+      TimeUnit.SECONDS.sleep(5);
+      com.azure.core.exception.HttpResponseException exception =
+              assertThrows(
+                      com.azure.core.exception.HttpResponseException.class,
+                      () -> findResource.apply(azureResourceGroupId, resourceName));
+      assertEquals(404, exception.getResponse().getStatusCode());
     }
+  }
 }
