@@ -42,7 +42,7 @@ public class DeleteAzureStorageContainerStep implements Step {
               azureCloudContext.getAzureResourceGroupId(), resource.getStorageAccountName(), resource.getStorageContainerName());
       return StepResult.getStepResultSuccess();
     } catch (Exception ex) {
-      logger.info(
+      logger.warn(
           "Attempt to delete Azure Storage Container failed on this try: " + resource.getStorageContainerName(), ex);
       return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, ex);
     }

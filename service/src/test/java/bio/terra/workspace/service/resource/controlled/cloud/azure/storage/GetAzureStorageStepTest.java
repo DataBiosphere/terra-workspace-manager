@@ -5,58 +5,17 @@ import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.instanceOf;
 import static org.mockito.Mockito.when;
 
-import bio.terra.stairway.FlightContext;
-import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.StepStatus;
-import bio.terra.workspace.app.configuration.external.AzureConfiguration;
-import bio.terra.workspace.common.BaseAzureTest;
 import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
 import bio.terra.workspace.generated.model.ApiAzureStorageCreationParameters;
-import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.resource.exception.DuplicateResourceException;
-import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
-import bio.terra.workspace.service.workspace.model.AzureCloudContext;
-import com.azure.core.management.exception.ManagementError;
-import com.azure.core.management.exception.ManagementException;
-import com.azure.resourcemanager.storage.StorageManager;
-import com.azure.resourcemanager.storage.models.CheckNameAvailabilityResult;
-import com.azure.resourcemanager.storage.models.StorageAccounts;
-import org.junit.jupiter.api.BeforeEach;
+
 import org.junit.jupiter.api.Test;
-import org.mockito.Mock;
 import org.springframework.test.context.ActiveProfiles;
 
 @ActiveProfiles("azure")
-public class GetAzureStorageStepTest extends BaseAzureTest {
-
-  private static final String STUB_STRING_RETURN = "stubbed-return";
-
-  @Mock private FlightContext mockFlightContext;
-  @Mock private CrlService mockCrlService;
-  @Mock private AzureConfiguration mockAzureConfig;
-  @Mock private AzureCloudContext mockAzureCloudContext;
-  @Mock private StorageManager mockStorageManager;
-  @Mock private ManagementException mockException;
-  @Mock private CheckNameAvailabilityResult mockNameAvailabilityResult;
-  @Mock private StorageAccounts mockStorageAccounts;
-  @Mock private FlightMap mockWorkingMap;
-
-  @BeforeEach
-  public void setup() {
-    when(mockAzureCloudContext.getAzureResourceGroupId()).thenReturn(STUB_STRING_RETURN);
-    when(mockCrlService.getStorageManager(mockAzureCloudContext, mockAzureConfig))
-        .thenReturn(mockStorageManager);
-
-    when(mockStorageManager.storageAccounts()).thenReturn(mockStorageAccounts);
-
-    when(mockException.getValue())
-        .thenReturn(new ManagementError("ResourceNotFound", "Resource was not found."));
-
-    when(mockFlightContext.getWorkingMap()).thenReturn(mockWorkingMap);
-    when(mockWorkingMap.get(ControlledResourceKeys.AZURE_CLOUD_CONTEXT, AzureCloudContext.class))
-        .thenReturn(mockAzureCloudContext);
-  }
+public class GetAzureStorageStepTest extends BaseStorageStepTest {
 
   @Test
   public void getStorageAccount_doesNotExist() throws InterruptedException {

@@ -17,8 +17,9 @@ import com.azure.resourcemanager.storage.fluent.models.ListContainerItemInner;
 
 
 /**
- * Gets an Azure Storage Container, and fails if it already exists. This step is designed to run
- * immediately before {@link CreateAzureStorageContainerStep} to ensure idempotency of the create operation.
+ * Gets an Azure Storage Container, and fails if it already exists or if the parent storage account does not exist.
+ * This step is designed to run immediately before {@link CreateAzureStorageContainerStep} to ensure idempotency
+ * of the create operation.
  */
 public class GetAzureStorageContainerStep implements Step {
 
@@ -38,9 +39,7 @@ public class GetAzureStorageContainerStep implements Step {
   @Override
   public StepResult doStep(FlightContext context) throws InterruptedException, RetryException {
     final AzureCloudContext azureCloudContext =
-            context
-                    .getWorkingMap()
-                    .get(ControlledResourceKeys.AZURE_CLOUD_CONTEXT, AzureCloudContext.class);
+            context.getWorkingMap().get(ControlledResourceKeys.AZURE_CLOUD_CONTEXT, AzureCloudContext.class);
     final StorageManager storageManager = crlService.getStorageManager(azureCloudContext, azureConfig);
 
     if (storageManager
@@ -48,10 +47,8 @@ public class GetAzureStorageContainerStep implements Step {
             .checkNameAvailability(resource.getStorageAccountName())
             .isAvailable()) {
       return new StepResult(
-              StepStatus.STEP_RESULT_FAILURE_FATAL,
-              new ResourceNotFoundException(
-                      String.format(
-                              "No Azure storage account with name '%s' exists",
+              StepStatus.STEP_RESULT_FAILURE_FATAL, new ResourceNotFoundException(
+                      String.format("No Azure storage account with name '%s' exists",
                               resource.getStorageAccountName())));
     }
     final PagedIterable<ListContainerItemInner> existingContainers = storageManager.blobContainers().list(
