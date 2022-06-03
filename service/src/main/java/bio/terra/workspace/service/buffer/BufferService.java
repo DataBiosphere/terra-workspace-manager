@@ -4,12 +4,10 @@ import bio.terra.buffer.api.BufferApi;
 import bio.terra.buffer.client.ApiClient;
 import bio.terra.buffer.client.ApiException;
 import bio.terra.buffer.model.HandoutRequestBody;
-import bio.terra.buffer.model.PoolInfo;
 import bio.terra.buffer.model.ResourceInfo;
 import bio.terra.workspace.app.configuration.external.BufferServiceConfiguration;
 import bio.terra.workspace.service.buffer.exception.BufferServiceAPIException;
 import bio.terra.workspace.service.buffer.exception.BufferServiceAuthorizationException;
-import io.opencensus.contrib.spring.aop.Traced;
 import java.io.IOException;
 import javax.ws.rs.client.Client;
 import org.slf4j.Logger;
@@ -41,36 +39,6 @@ public class BufferService {
   private BufferApi bufferApi(String instanceUrl) throws IOException {
     return new BufferApi(
         getApiClient(bufferServiceConfiguration.getAccessToken()).setBasePath(instanceUrl));
-  }
-
-  /**
-   * Return the PoolInfo object for the ResourceBuffer pool that we are using to create Google Cloud
-   * projects. Note that this is configured once per Workspace Manager instance (both the instance
-   * of RBS to use and which pool) so no configuration happens here.
-   *
-   * @return PoolInfo
-   */
-  @Traced
-  public PoolInfo getPoolInfo() {
-    try {
-      BufferApi bufferApi = bufferApi(bufferServiceConfiguration.getInstanceUrl());
-      PoolInfo info = bufferApi.getPoolInfo(bufferServiceConfiguration.getPoolId());
-      logger.info(
-          "Retrieved pool {} on Buffer Service instance {}",
-          bufferServiceConfiguration.getPoolId(),
-          bufferServiceConfiguration.getInstanceUrl());
-      return info;
-    } catch (IOException e) {
-      throw new BufferServiceAuthorizationException(
-          "Error reading or parsing credentials file", e.getCause());
-    } catch (ApiException e) {
-      if (e.getCode() == HttpStatus.UNAUTHORIZED.value()) {
-        throw new BufferServiceAuthorizationException(
-            "Not authorized to access Buffer Service", e.getCause());
-      } else {
-        throw new BufferServiceAPIException(e);
-      }
-    }
   }
 
   /**

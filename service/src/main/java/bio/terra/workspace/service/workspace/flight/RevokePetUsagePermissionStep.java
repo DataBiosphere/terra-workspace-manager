@@ -87,7 +87,7 @@ public class RevokePetUsagePermissionStep implements Step {
       return StepResult.getStepResultSuccess();
     }
     petSaService.enablePetServiceAccountImpersonationWithEtag(
-        workspaceUuid, userEmailToRemove, userRequest.getRequiredToken(), expectedEtag);
+        workspaceUuid, userEmailToRemove, userRequest, expectedEtag);
     return StepResult.getStepResultSuccess();
   }
 

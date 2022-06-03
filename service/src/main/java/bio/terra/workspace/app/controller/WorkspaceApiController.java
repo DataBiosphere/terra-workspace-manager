@@ -378,8 +378,7 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
         userRequest, workspaceUuid, SamConstants.SamWorkspaceAction.READ);
     String userEmail =
         SamRethrow.onInterrupted(() -> samService.getUserEmailFromSam(userRequest), "enablePet");
-    petSaService.enablePetServiceAccountImpersonation(
-        workspaceUuid, userEmail, userRequest.getRequiredToken());
+    petSaService.enablePetServiceAccountImpersonation(workspaceUuid, userEmail, userRequest);
     return new ResponseEntity<>(HttpStatus.NO_CONTENT);
   }
 
