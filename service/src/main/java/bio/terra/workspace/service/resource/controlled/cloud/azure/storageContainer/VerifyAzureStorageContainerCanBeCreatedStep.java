@@ -11,24 +11,23 @@ import bio.terra.workspace.service.resource.exception.DuplicateResourceException
 import bio.terra.workspace.service.resource.exception.ResourceNotFoundException;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import bio.terra.workspace.service.workspace.model.AzureCloudContext;
-import com.azure.core.http.rest.PagedIterable;
 import com.azure.core.management.exception.ManagementException;
 import com.azure.resourcemanager.storage.StorageManager;
-import com.azure.resourcemanager.storage.fluent.models.ListContainerItemInner;
+import org.apache.commons.lang3.StringUtils;
 
 
 /**
- * Gets an Azure Storage Container, and fails if it already exists or if the parent storage account does not exist.
+ * Verifies that the storage account exists in the workspace, and that the storage container does not already exist.
  * This step is designed to run immediately before {@link CreateAzureStorageContainerStep} to ensure idempotency
  * of the create operation.
  */
-public class GetAzureStorageContainerStep implements Step {
+public class VerifyAzureStorageContainerCanBeCreatedStep implements Step {
 
   private final AzureConfiguration azureConfig;
   private final CrlService crlService;
   private final ControlledAzureStorageContainerResource resource;
 
-  public GetAzureStorageContainerStep(
+  public VerifyAzureStorageContainerCanBeCreatedStep(
       AzureConfiguration azureConfig,
       CrlService crlService,
       ControlledAzureStorageContainerResource resource) {
@@ -43,6 +42,7 @@ public class GetAzureStorageContainerStep implements Step {
             context.getWorkingMap().get(ControlledResourceKeys.AZURE_CLOUD_CONTEXT, AzureCloudContext.class);
     final StorageManager storageManager = crlService.getStorageManager(azureCloudContext, azureConfig);
 
+    // Check to see if the storage account is one of the controlled resources of this workspace.
     try {
       storageManager
               .storageAccounts()
@@ -51,24 +51,29 @@ public class GetAzureStorageContainerStep implements Step {
     } catch (ManagementException ex) {
       return new StepResult(
               StepStatus.STEP_RESULT_FAILURE_FATAL, new ResourceNotFoundException(
-              String.format("No Azure storage account with name '%s' exists for this workspace",
+              String.format("The Azure storage account with name '%s' cannot be retrieved.",
                       resource.getStorageAccountName())));
     }
-    final PagedIterable<ListContainerItemInner> existingContainers = storageManager.blobContainers().list(
-            azureCloudContext.getAzureResourceGroupId(), resource.getStorageAccountName()
-    );
-    for (ListContainerItemInner item : existingContainers) {
-      if (item.name().equals(resource.getStorageContainerName())) {
-        return new StepResult(
-                StepStatus.STEP_RESULT_FAILURE_FATAL,
-                new DuplicateResourceException(
-                        String.format(
-                                "An Azure Storage Container with name '%s' already exists in storage account '%s'",
-                                resource.getStorageContainerName(), resource.getStorageAccountName())));
-
+    try {
+      storageManager.blobContainers().get(
+              azureCloudContext.getAzureResourceGroupId(),
+              resource.getStorageAccountName(),
+              resource.getStorageContainerName()
+      );
+      return new StepResult(
+              StepStatus.STEP_RESULT_FAILURE_FATAL,
+              new DuplicateResourceException(
+                      String.format(
+                              "An Azure Storage Container with name '%s' already exists in storage account '%s'",
+                              resource.getStorageContainerName(), resource.getStorageAccountName())));
+    } catch (ManagementException e) {
+      // Azure error codes can be found here: // TODO: look here
+      // https://docs.microsoft.com/en-us/azure/azure-resource-manager/templates/common-deployment-errors
+      if (StringUtils.contains(e.getValue().getCode(), "ResourceNotFound")) {
+        return StepResult.getStepResultSuccess();
       }
+      return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, e);
     }
-    return StepResult.getStepResultSuccess();
   }
 
 

@@ -66,7 +66,7 @@ public class ResourceValidationUtils {
       Pattern.compile("^[a-z0-9]{3,24}$");
 
   /**
-   * Azure Storage Container name validation. An storage container name must be between 3-63
+   * Azure Storage Container name validation. A storage container name must be between 3-63
    * characters in length and may contain numbers, lowercase letters, and dash (-) characters only.
    * It must start and end with a letter or number. Matching this pattern is necessary but not sufficient for a
    * valid container name (in particular, the dash character must be immediately preceded and followed by a letter or

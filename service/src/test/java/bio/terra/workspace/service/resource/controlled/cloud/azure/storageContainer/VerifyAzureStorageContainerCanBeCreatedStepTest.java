@@ -23,7 +23,7 @@ import static org.hamcrest.Matchers.instanceOf;
 import static org.mockito.Mockito.when;
 
 @ActiveProfiles("azure")
-public class GetAzureStorageContainerStepTest extends BaseStorageStepTest {
+public class VerifyAzureStorageContainerCanBeCreatedStepTest extends BaseStorageStepTest {
 
   @Mock private BlobContainers mockBlobContainers;
   @Mock private PagedIterable<ListContainerItemInner> mockListResult;
@@ -40,8 +40,8 @@ public class GetAzureStorageContainerStepTest extends BaseStorageStepTest {
     final ApiAzureStorageContainerCreationParameters creationParameters =
         ControlledResourceFixtures.getAzureStorageContainerCreationParameters();
 
-    GetAzureStorageContainerStep getAzureStorageContainerStep =
-        new GetAzureStorageContainerStep(
+    VerifyAzureStorageContainerCanBeCreatedStep verifyAzureStorageContainerCanBeCreatedStep =
+        new VerifyAzureStorageContainerCanBeCreatedStep(
             mockAzureConfig,
             mockCrlService,
             ControlledResourceFixtures.getAzureStorageContainer(
@@ -56,7 +56,7 @@ public class GetAzureStorageContainerStepTest extends BaseStorageStepTest {
             .thenReturn(mockListResult);
     when(mockListResult.iterator()).thenReturn(Collections.emptyIterator());
 
-    final StepResult stepResult = getAzureStorageContainerStep.doStep(mockFlightContext);
+    final StepResult stepResult = verifyAzureStorageContainerCanBeCreatedStep.doStep(mockFlightContext);
 
     // Verify step returns success
     assertThat(stepResult, equalTo(StepResult.getStepResultSuccess()));
@@ -67,8 +67,8 @@ public class GetAzureStorageContainerStepTest extends BaseStorageStepTest {
     final ApiAzureStorageContainerCreationParameters creationParameters =
             ControlledResourceFixtures.getAzureStorageContainerCreationParameters();
 
-    GetAzureStorageContainerStep getAzureStorageContainerStep =
-            new GetAzureStorageContainerStep(
+    VerifyAzureStorageContainerCanBeCreatedStep verifyAzureStorageContainerCanBeCreatedStep =
+            new VerifyAzureStorageContainerCanBeCreatedStep(
                     mockAzureConfig,
                     mockCrlService,
                     ControlledResourceFixtures.getAzureStorageContainer(
@@ -78,7 +78,7 @@ public class GetAzureStorageContainerStepTest extends BaseStorageStepTest {
     when(mockStorageAccounts.getByResourceGroup(mockAzureCloudContext.getAzureResourceGroupId(),
             creationParameters.getStorageAccountName())).thenThrow(resourceNotFoundException);
 
-    final StepResult stepResult = getAzureStorageContainerStep.doStep(mockFlightContext);
+    final StepResult stepResult = verifyAzureStorageContainerCanBeCreatedStep.doStep(mockFlightContext);
 
     // Verify step returns error because storage account does not exist.
     assertThat(stepResult.getStepStatus(), equalTo(StepStatus.STEP_RESULT_FAILURE_FATAL));
@@ -90,8 +90,8 @@ public class GetAzureStorageContainerStepTest extends BaseStorageStepTest {
     final ApiAzureStorageContainerCreationParameters creationParameters =
             ControlledResourceFixtures.getAzureStorageContainerCreationParameters();
 
-    GetAzureStorageContainerStep getAzureStorageContainerStep =
-            new GetAzureStorageContainerStep(
+    VerifyAzureStorageContainerCanBeCreatedStep verifyAzureStorageContainerCanBeCreatedStep =
+            new VerifyAzureStorageContainerCanBeCreatedStep(
                     mockAzureConfig,
                     mockCrlService,
                     ControlledResourceFixtures.getAzureStorageContainer(
@@ -107,7 +107,7 @@ public class GetAzureStorageContainerStepTest extends BaseStorageStepTest {
     when(mockListResult.iterator()).thenReturn(Collections.singletonList(mockContainerResult).iterator());
     when(mockContainerResult.name()).thenReturn(creationParameters.getName());
 
-    final StepResult stepResult = getAzureStorageContainerStep.doStep(mockFlightContext);
+    final StepResult stepResult = verifyAzureStorageContainerCanBeCreatedStep.doStep(mockFlightContext);
 
     // Verify step fails.
     assertThat(stepResult.getStepStatus(), equalTo(StepStatus.STEP_RESULT_FAILURE_FATAL));

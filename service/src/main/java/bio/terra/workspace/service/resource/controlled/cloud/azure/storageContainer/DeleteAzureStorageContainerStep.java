@@ -13,7 +13,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * A step for deleting a controlled Azure Storage Account resource.
+ * A step for deleting a controlled Azure Storage Container resource.
  */
 public class DeleteAzureStorageContainerStep implements Step {
   private static final Logger logger = LoggerFactory.getLogger(DeleteAzureStorageContainerStep.class);
