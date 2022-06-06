@@ -34,8 +34,11 @@ public class BaseStorageStepTest extends BaseAzureTest {
     @Mock protected StorageAccounts mockStorageAccounts;
     @Mock protected StorageAccount mockStorageAccount;
     @Mock protected FlightMap mockWorkingMap;
-    protected ManagementException resourceNotFoundException;
-
+    final protected ManagementException resourceNotFoundException =
+            new ManagementException(
+                    "Resource was not found.",
+                    /*response=*/ null,
+                    new ManagementError("ResourceNotFound", "Resource was not found."));
 
     @BeforeEach
     public void setup() {
@@ -44,12 +47,6 @@ public class BaseStorageStepTest extends BaseAzureTest {
                 .thenReturn(mockStorageManager);
 
         when(mockStorageManager.storageAccounts()).thenReturn(mockStorageAccounts);
-
-        resourceNotFoundException =
-                new ManagementException(
-                        "Resource was not found.",
-                        /*response=*/ null,
-                        new ManagementError("ResourceNotFound", "Resource was not found."));
 
         when(mockFlightContext.getWorkingMap()).thenReturn(mockWorkingMap);
         when(mockWorkingMap.get(ControlledResourceKeys.AZURE_CLOUD_CONTEXT, AzureCloudContext.class))

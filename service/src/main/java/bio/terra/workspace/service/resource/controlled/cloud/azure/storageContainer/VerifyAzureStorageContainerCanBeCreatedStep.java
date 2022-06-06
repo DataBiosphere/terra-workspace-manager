@@ -6,14 +6,18 @@ import bio.terra.stairway.StepResult;
 import bio.terra.stairway.StepStatus;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.app.configuration.external.AzureConfiguration;
+import bio.terra.workspace.common.utils.ManagementExceptionUtils;
+import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.service.crl.CrlService;
+import bio.terra.workspace.service.resource.controlled.cloud.azure.storage.ControlledAzureStorageResource;
 import bio.terra.workspace.service.resource.exception.DuplicateResourceException;
 import bio.terra.workspace.service.resource.exception.ResourceNotFoundException;
+import bio.terra.workspace.service.resource.model.WsmResource;
+import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import bio.terra.workspace.service.workspace.model.AzureCloudContext;
 import com.azure.core.management.exception.ManagementException;
 import com.azure.resourcemanager.storage.StorageManager;
-import org.apache.commons.lang3.StringUtils;
 
 
 /**
@@ -25,14 +29,17 @@ public class VerifyAzureStorageContainerCanBeCreatedStep implements Step {
 
   private final AzureConfiguration azureConfig;
   private final CrlService crlService;
+  private final ResourceDao resourceDao;
   private final ControlledAzureStorageContainerResource resource;
 
   public VerifyAzureStorageContainerCanBeCreatedStep(
       AzureConfiguration azureConfig,
       CrlService crlService,
+      ResourceDao resourceDao,
       ControlledAzureStorageContainerResource resource) {
     this.azureConfig = azureConfig;
     this.crlService = crlService;
+    this.resourceDao = resourceDao;
     this.resource = resource;
   }
 
@@ -42,22 +49,33 @@ public class VerifyAzureStorageContainerCanBeCreatedStep implements Step {
             context.getWorkingMap().get(ControlledResourceKeys.AZURE_CLOUD_CONTEXT, AzureCloudContext.class);
     final StorageManager storageManager = crlService.getStorageManager(azureCloudContext, azureConfig);
 
-    // Check to see if the storage account is one of the controlled resources of this workspace.
     try {
-      storageManager
-              .storageAccounts()
-              .getByResourceGroup(
-                      azureCloudContext.getAzureResourceGroupId(), resource.getStorageAccountName());
-    } catch (ManagementException ex) {
-      return new StepResult(
-              StepStatus.STEP_RESULT_FAILURE_FATAL, new ResourceNotFoundException(
-              String.format("The Azure storage account with name '%s' cannot be retrieved.",
-                      resource.getStorageAccountName())));
+      final WsmResource wsmResource = resourceDao.getResource(resource.getWorkspaceId(), resource.getStorageAccountId());
+      final ControlledAzureStorageResource storageAccount = wsmResource.castToControlledResource().castByEnum(
+              WsmResourceType.CONTROLLED_AZURE_STORAGE_ACCOUNT);
+
+      context.getWorkingMap().put(ControlledResourceKeys.STORAGE_ACCOUNT_NAME, storageAccount.getStorageAccountName());
+
+      storageManager.storageAccounts().getByResourceGroup(
+              azureCloudContext.getAzureResourceGroupId(), storageAccount.getStorageAccountName());
     }
+    catch (ResourceNotFoundException resourceNotFoundException) { // Thrown by resourceDao.getResource
+      return new StepResult(StepStatus.STEP_RESULT_FAILURE_FATAL, resourceNotFoundException);
+    } catch (ManagementException managementException) { // Thrown by storageManager
+      if (ManagementExceptionUtils.isResourceNotFound(managementException)) {
+        return new StepResult(
+                StepStatus.STEP_RESULT_FAILURE_FATAL, new ResourceNotFoundException(
+                String.format("The storage account with ID '%s' cannot be retrieved from Azure.",
+                        resource.getStorageAccountId())));
+      }
+      return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, managementException);
+    }
+
     try {
+      final String storageAccountName = context.getWorkingMap().get(ControlledResourceKeys.STORAGE_ACCOUNT_NAME, String.class);
       storageManager.blobContainers().get(
               azureCloudContext.getAzureResourceGroupId(),
-              resource.getStorageAccountName(),
+              storageAccountName,
               resource.getStorageContainerName()
       );
       return new StepResult(
@@ -65,11 +83,9 @@ public class VerifyAzureStorageContainerCanBeCreatedStep implements Step {
               new DuplicateResourceException(
                       String.format(
                               "An Azure Storage Container with name '%s' already exists in storage account '%s'",
-                              resource.getStorageContainerName(), resource.getStorageAccountName())));
+                              resource.getStorageContainerName(), storageAccountName)));
     } catch (ManagementException e) {
-      // Azure error codes can be found here: // TODO: look here
-      // https://docs.microsoft.com/en-us/azure/azure-resource-manager/templates/common-deployment-errors
-      if (StringUtils.contains(e.getValue().getCode(), "ResourceNotFound")) {
+      if (ManagementExceptionUtils.isContainerNotFound(e)) {
         return StepResult.getStepResultSuccess();
       }
       return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, e);

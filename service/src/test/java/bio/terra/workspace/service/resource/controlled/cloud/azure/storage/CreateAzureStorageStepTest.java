@@ -71,7 +71,7 @@ public class CreateAzureStorageStepTest extends BaseStorageStepTest {
 
     CreateStorageAccountRequestData expected =
         CreateStorageAccountRequestData.builder()
-            .setName(creationParameters.getName())
+            .setName(creationParameters.getStorageAccountName())
             .setRegion(Region.fromName(creationParameters.getRegion()))
             .setResourceGroupName(mockAzureCloudContext.getAzureResourceGroupId())
             .build();
@@ -97,7 +97,7 @@ public class CreateAzureStorageStepTest extends BaseStorageStepTest {
             mockAzureConfig,
             mockCrlService,
             ControlledResourceFixtures.getAzureStorage(
-                creationParameters.getName(), creationParameters.getRegion()));
+                creationParameters.getStorageAccountName(), creationParameters.getRegion()));
     return createAzureStorageStep;
   }
 
@@ -108,7 +108,7 @@ public class CreateAzureStorageStepTest extends BaseStorageStepTest {
 
     // Storage account does not exist
     when(mockNameAvailabilityResult.isAvailable()).thenReturn(true);
-    when(mockStorageAccounts.checkNameAvailability(creationParameters.getName()))
+    when(mockStorageAccounts.checkNameAvailability(creationParameters.getStorageAccountName()))
         .thenReturn(mockNameAvailabilityResult);
 
     StepResult stepResult = createAzureStorageStep.undoStep(mockFlightContext);
@@ -119,7 +119,7 @@ public class CreateAzureStorageStepTest extends BaseStorageStepTest {
     // Verify delete operation is not called.
     verify(mockStorageAccounts, times(0))
         .deleteByResourceGroup(
-            mockAzureCloudContext.getAzureResourceGroupId(), creationParameters.getName());
+            mockAzureCloudContext.getAzureResourceGroupId(), creationParameters.getStorageAccountName());
   }
 
   @Test
@@ -129,7 +129,7 @@ public class CreateAzureStorageStepTest extends BaseStorageStepTest {
 
     // Storage account exists
     when(mockNameAvailabilityResult.isAvailable()).thenReturn(false);
-    when(mockStorageAccounts.checkNameAvailability(creationParameters.getName()))
+    when(mockStorageAccounts.checkNameAvailability(creationParameters.getStorageAccountName()))
         .thenReturn(mockNameAvailabilityResult);
 
     StepResult stepResult = createAzureStorageStep.undoStep(mockFlightContext);
@@ -140,6 +140,6 @@ public class CreateAzureStorageStepTest extends BaseStorageStepTest {
     // Verify delete operation is called.
     verify(mockStorageAccounts)
         .deleteByResourceGroup(
-            mockAzureCloudContext.getAzureResourceGroupId(), creationParameters.getName());
+            mockAzureCloudContext.getAzureResourceGroupId(), creationParameters.getStorageAccountName());
   }
 }

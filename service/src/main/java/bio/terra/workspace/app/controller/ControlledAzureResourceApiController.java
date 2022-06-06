@@ -179,7 +179,7 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
     ControlledAzureStorageResource resource =
         ControlledAzureStorageResource.builder()
             .common(commonFields)
-            .storageAccountName(body.getAzureStorage().getName())
+            .storageAccountName(body.getAzureStorage().getStorageAccountName())
             .region(body.getAzureStorage().getRegion())
             .build();
 
@@ -206,8 +206,8 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
     ControlledAzureStorageContainerResource resource =
         ControlledAzureStorageContainerResource.builder()
             .common(commonFields)
-            .storageAccountName(body.getAzureStorageContainer().getStorageAccountName())
-            .storageContainerName(body.getAzureStorageContainer().getName())
+            .storageAccountId(body.getAzureStorageContainer().getStorageAccountId())
+            .storageContainerName(body.getAzureStorageContainer().getStorageContainerName())
             .build();
 
     final ControlledAzureStorageContainerResource createdStorageContainer =

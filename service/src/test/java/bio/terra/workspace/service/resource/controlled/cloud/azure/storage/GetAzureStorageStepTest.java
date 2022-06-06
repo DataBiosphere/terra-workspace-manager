@@ -32,10 +32,10 @@ public class GetAzureStorageStepTest extends BaseStorageStepTest {
             mockAzureConfig,
             mockCrlService,
             ControlledResourceFixtures.getAzureStorage(
-                creationParameters.getName(), creationParameters.getRegion()));
+                creationParameters.getStorageAccountName(), creationParameters.getRegion()));
 
     when(mockNameAvailabilityResult.isAvailable()).thenReturn(true);
-    when(mockStorageAccounts.checkNameAvailability(creationParameters.getName()))
+    when(mockStorageAccounts.checkNameAvailability(creationParameters.getStorageAccountName()))
         .thenReturn(mockNameAvailabilityResult);
 
     final StepResult stepResult = getAzureStorageStep.doStep(mockFlightContext);
@@ -54,10 +54,10 @@ public class GetAzureStorageStepTest extends BaseStorageStepTest {
             mockAzureConfig,
             mockCrlService,
             ControlledResourceFixtures.getAzureStorage(
-                creationParameters.getName(), creationParameters.getRegion()));
+                creationParameters.getStorageAccountName(), creationParameters.getRegion()));
 
     when(mockNameAvailabilityResult.isAvailable()).thenReturn(false);
-    when(mockStorageAccounts.checkNameAvailability(creationParameters.getName()))
+    when(mockStorageAccounts.checkNameAvailability(creationParameters.getStorageAccountName()))
         .thenReturn(mockNameAvailabilityResult);
 
     final StepResult stepResult = getAzureStorageStep.doStep(mockFlightContext);

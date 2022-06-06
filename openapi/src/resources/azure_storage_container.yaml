@@ -5,9 +5,10 @@ components:
         Storage container properties included in post-creation get.
       type: object
       properties:
-        storageAccountName:
-          description: Name of the storage account.
+        storageAccountId:
+          description: The resource ID of the storage account in which the container shoudl be created.
           type: string
+          format: uuid
         storageContainerName:
           description: Name of the storage container.
           type: string

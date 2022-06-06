@@ -2,12 +2,12 @@ package bio.terra.workspace.service.resource.controlled.cloud.azure.vm;
 
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.StepStatus;
+import bio.terra.workspace.common.utils.ManagementExceptionUtils;
 import bio.terra.workspace.service.workspace.model.AzureCloudContext;
 import com.azure.core.management.exception.ManagementException;
 import com.azure.resourcemanager.compute.ComputeManager;
 import com.azure.resourcemanager.compute.models.VirtualMachine;
 import java.util.concurrent.TimeUnit;
-import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -88,12 +88,12 @@ public final class AzureVmHelper {
   private static StepResult handleNotFound(
       ManagementException e, String resourceType, String resourceName, String resourceId) {
     // Stairway steps may run multiple times, so we may already have deleted this resource.
-    if (StringUtils.equals(e.getValue().getCode(), "ResourceNotFound")) {
+    if (ManagementExceptionUtils.isResourceNotFound(e)) {
       logger.info(
-          "Azure {} {} in managed resource group {} already deleted",
-          resourceType,
-          resourceName,
-          resourceId);
+              "Azure {} {} in managed resource group {} already deleted",
+              resourceType,
+              resourceName,
+              resourceId);
       return StepResult.getStepResultSuccess();
     }
     return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, e);

@@ -3,6 +3,8 @@ package bio.terra.workspace.service.resource.controlled.cloud.azure.storageConta
 import bio.terra.cloudres.azure.resourcemanager.common.ResourceManagerRequestData;
 import com.google.gson.JsonObject;
 
+import java.util.UUID;
+
 /**
  * Extends {@link ResourceManagerRequestData} to add common fields for working with the Storage
  * Resource Provider API.
@@ -15,13 +17,13 @@ import com.google.gson.JsonObject;
  */
 public abstract class BaseStorageContainerRequestData implements ResourceManagerRequestData {
   /** The name of the resource. */
-  public abstract String name();
+  public abstract String storageContainerName();
 
   /** The resource group of the resource. */
   public abstract String resourceGroupName();
 
-  /** The storage account name of the resource. */
-  public abstract String storageAccountName();
+  /** The storage account resource ID. */
+  public abstract UUID storageAccountId();
 
   /**
    * Serializes this object to JSON. Not overriding {@link ResourceManagerRequestData#serialize()}
@@ -30,8 +32,8 @@ public abstract class BaseStorageContainerRequestData implements ResourceManager
   protected JsonObject serializeCommon() {
     JsonObject requestData = new JsonObject();
     requestData.addProperty("resourceGroupName", resourceGroupName());
-    requestData.addProperty("name", name());
-    requestData.addProperty("storageAccountName", storageAccountName());
+    requestData.addProperty("storageContainerName", storageContainerName());
+    requestData.addProperty("storageAccountId", storageAccountId().toString());
     return requestData;
   }
 }

@@ -43,7 +43,7 @@ public class ControlledResourceFixtures {
 
   public static final UUID WORKSPACE_ID = UUID.fromString("00000000-fcf0-4981-bb96-6b8dd634e7c0");
   public static final UUID RESOURCE_ID = UUID.fromString("11111111-fcf0-4981-bb96-6b8dd634e7c0");
-  public static final UUID DATA_REFERENCE_ID =
+  public static final UUID STORAGE_ACCOUNT_REFERENCE_ID =
       UUID.fromString("33333333-fcf0-4981-bb96-6b8dd634e7c0");
   public static final String OWNER_EMAIL = "jay@all-the-bits-thats-fit-to-blit.dev";
   public static final ApiGcpGcsBucketLifecycleRule LIFECYCLE_RULE_1 =
@@ -119,15 +119,15 @@ public class ControlledResourceFixtures {
   /** Construct a parameter object with a unique name to avoid unintended clashes. */
   public static ApiAzureStorageCreationParameters getAzureStorageCreationParameters() {
     return new ApiAzureStorageCreationParameters()
-        .name(uniqueStorageAccountName())
+        .storageAccountName(uniqueStorageAccountName())
         .region("eastus");
   }
 
   /** Construct a parameter object with a unique name to avoid unintended clashes. */
   public static ApiAzureStorageContainerCreationParameters getAzureStorageContainerCreationParameters() {
     return new ApiAzureStorageContainerCreationParameters()
-            .name(uniqueBucketName())
-            .storageAccountName(uniqueStorageAccountName());
+            .storageContainerName(uniqueBucketName())
+            .storageAccountId(STORAGE_ACCOUNT_REFERENCE_ID);
   }
 
   /** Construct a parameter object with a unique bucket name to avoid unintended clashes. */
@@ -363,7 +363,7 @@ public class ControlledResourceFixtures {
   }
 
   public static ControlledAzureStorageContainerResource getAzureStorageContainer(
-          String storageAccountName, String storageContainerName) {
+          UUID storageAccountId, String storageContainerName) {
     return new ControlledAzureStorageContainerResource(
             WORKSPACE_ID,
             RESOURCE_ID,
@@ -376,7 +376,7 @@ public class ControlledResourceFixtures {
             AccessScopeType.ACCESS_SCOPE_PRIVATE,
             ManagedByType.MANAGED_BY_USER,
             null,
-            storageAccountName,
+            storageAccountId,
             storageContainerName);
   }
 

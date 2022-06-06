@@ -7,14 +7,13 @@ import bio.terra.stairway.StepResult;
 import bio.terra.stairway.StepStatus;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.app.configuration.external.AzureConfiguration;
+import bio.terra.workspace.common.utils.ManagementExceptionUtils;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.storageContainer.resourcemanager.data.CreateStorageContainerRequestData;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import bio.terra.workspace.service.workspace.model.AzureCloudContext;
-import com.azure.core.http.rest.PagedIterable;
 import com.azure.core.management.exception.ManagementException;
 import com.azure.resourcemanager.storage.StorageManager;
-import com.azure.resourcemanager.storage.fluent.models.ListContainerItemInner;
 import com.azure.resourcemanager.storage.models.PublicAccess;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -41,28 +40,29 @@ public class CreateAzureStorageContainerStep implements Step {
             .getWorkingMap()
             .get(ControlledResourceKeys.AZURE_CLOUD_CONTEXT, AzureCloudContext.class);
     final StorageManager storageManager = crlService.getStorageManager(azureCloudContext, azureConfig);
+    final String storageAccountName = context.getWorkingMap().get(ControlledResourceKeys.STORAGE_ACCOUNT_NAME, String.class);
 
     try {
       storageManager
           .blobContainers()
           .defineContainer(resource.getStorageContainerName())
-          .withExistingStorageAccount(azureCloudContext.getAzureResourceGroupId(), resource.getStorageAccountName())
+          .withExistingStorageAccount(azureCloudContext.getAzureResourceGroupId(), storageAccountName)
           .withPublicAccess(PublicAccess.NONE)
           .withMetadata("workspaceId", resource.getWorkspaceId().toString())
           .withMetadata("resourceId", resource.getResourceId().toString()).
               create(
                 Defaults.buildContext(
                   CreateStorageContainerRequestData.builder()
-                      .setName(resource.getStorageContainerName())
-                      .setStorageAccountName(resource.getStorageAccountName())
+                      .setStorageAccountId(resource.getStorageAccountId())
+                      .setStorageContainerName(resource.getStorageContainerName())
                       .setResourceGroupName(azureCloudContext.getAzureResourceGroupId())
                       .build()));
 
     } catch (ManagementException e) {
       logger.error(
-          "Failed to create the Azure storage container '{}' with storage account with the name '{}'. Error Code: {}",
+          "Failed to create the Azure storage container '{}' with storage account with the ID '{}'. Error Code: {}",
           resource.getStorageContainerName(),
-          resource.getStorageAccountName(),
+          resource.getStorageAccountId(),
           e.getValue().getCode(),
           e);
 
@@ -87,56 +87,64 @@ public class CreateAzureStorageContainerStep implements Step {
                     .getWorkingMap()
                     .get(ControlledResourceKeys.AZURE_CLOUD_CONTEXT, AzureCloudContext.class);
     final StorageManager storageManager = crlService.getStorageManager(azureCloudContext, azureConfig);
+    final String storageAccountName = context.getWorkingMap().get(ControlledResourceKeys.STORAGE_ACCOUNT_NAME, String.class);
 
     try {
       storageManager
               .storageAccounts()
               .getByResourceGroup(
-                      azureCloudContext.getAzureResourceGroupId(), resource.getStorageAccountName());
+                      azureCloudContext.getAzureResourceGroupId(), storageAccountName);
     } catch (ManagementException ex) {
-      logger.warn(
-              "Deletion of the storage container is not required. Parent storage account does not exist. {}",
-              resource.getStorageAccountName());
-      return StepResult.getStepResultSuccess();
-    }
-    final PagedIterable<ListContainerItemInner> existingContainers = storageManager.blobContainers().list(
-            azureCloudContext.getAzureResourceGroupId(), resource.getStorageAccountName()
-    );
-    ListContainerItemInner existingContainer = null;
-    for (ListContainerItemInner item : existingContainers) {
-      if (item.name().equals(resource.getStorageContainerName())) {
-        existingContainer = item;
-        break;
-      }
-    }
-    if (existingContainer == null) {
-      logger.warn(
-              "Deletion of the storage container is not required. Storage container does not exist. {}",
-              resource.getStorageContainerName());
-      return StepResult.getStepResultSuccess();
-    } else {
-      try {
-        logger.warn("Attempting to delete storage container '{}' in account '{}'",
-                resource.getStorageContainerName(),
-                resource.getStorageAccountName()
-        );
-        storageManager.blobContainers().delete(
-                azureCloudContext.getAzureResourceGroupId(),
-                resource.getStorageAccountName(),
-                resource.getStorageContainerName()
-        );
-        logger.warn("Successfully deleted storage container '{}' in account '{}'",
-                resource.getStorageContainerName(),
-                resource.getStorageAccountName()
-        );
+      if (ManagementExceptionUtils.isResourceNotFound(ex)) {
+        logger.warn(
+                "Deletion of the storage container is not required. Parent storage account does not exist. {}",
+                storageAccountName);
         return StepResult.getStepResultSuccess();
-      } catch (ManagementException ex) {
-        logger.error(
-                "Attempt to delete Azure Storage Container failed on this try: " + resource.getStorageContainerName(),
-                ex
-        );
-        return new StepResult(StepStatus.STEP_RESULT_FAILURE_FATAL, ex);
       }
+      logger.error(
+              "Attempt to retrieve parent Azure Storage account before deleting container failed on this try: " +
+                      resource.getStorageContainerName(), ex
+      );
+      return new StepResult(StepStatus.STEP_RESULT_FAILURE_FATAL, ex);
+    }
+    try {
+      storageManager.blobContainers().get(
+              azureCloudContext.getAzureResourceGroupId(),
+              storageAccountName,
+              resource.getStorageContainerName());
+    } catch (ManagementException ex) {
+      if (ManagementExceptionUtils.isContainerNotFound(ex)) {
+        logger.warn(
+                "Deletion of the storage container is not required. Storage container does not exist. {}",
+                resource.getStorageContainerName());
+        return StepResult.getStepResultSuccess();
+      }
+      logger.error(
+          "Attempt to retrieve Azure Storage Container before deleting it failed on this try: " +
+                  resource.getStorageContainerName(), ex
+      );
+      return new StepResult(StepStatus.STEP_RESULT_FAILURE_FATAL, ex);
+    }
+
+    try {
+      logger.warn("Attempting to delete storage container '{}' in account '{}'",
+              resource.getStorageContainerName(), storageAccountName
+      );
+      storageManager.blobContainers().delete(
+              azureCloudContext.getAzureResourceGroupId(),
+              storageAccountName,
+              resource.getStorageContainerName()
+      );
+      logger.warn("Successfully deleted storage container '{}' in account '{}'",
+              resource.getStorageContainerName(), storageAccountName
+      );
+      return StepResult.getStepResultSuccess();
+    } catch (ManagementException ex) {
+      logger.error(
+              "Attempt to delete Azure Storage Container failed on this try: " + resource.getStorageContainerName(),
+              ex
+      );
+      return new StepResult(StepStatus.STEP_RESULT_FAILURE_FATAL, ex);
     }
   }
 }

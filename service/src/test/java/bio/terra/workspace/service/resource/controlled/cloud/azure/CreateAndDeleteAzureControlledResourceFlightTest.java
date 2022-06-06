@@ -242,7 +242,7 @@ public class CreateAndDeleteAzureControlledResourceFlightTest extends BaseAzureT
                                     .accessScope(AccessScopeType.fromApi(ApiAccessScope.SHARED_ACCESS))
                                     .managedBy(ManagedByType.fromApi(ApiManagedBy.USER))
                                     .build())
-                    .storageAccountName(accountCreationParameters.getName())
+                    .storageAccountName(accountCreationParameters.getStorageAccountName())
                     .region(accountCreationParameters.getRegion())
                     .build();
 
@@ -264,7 +264,7 @@ public class CreateAndDeleteAzureControlledResourceFlightTest extends BaseAzureT
                                     .accessScope(AccessScopeType.fromApi(ApiAccessScope.SHARED_ACCESS))
                                     .managedBy(ManagedByType.fromApi(ApiManagedBy.USER))
                                     .build())
-                    .storageAccountName(accountCreationParameters.getName())
+                    .storageAccountId(accountResourceId)
                     .storageContainerName(containerName)
                     .build();
     createResource(workspaceUuid, userRequest, containerResource, WsmResourceType.CONTROLLED_AZURE_STORAGE_CONTAINER);

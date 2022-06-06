@@ -26,7 +26,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 public class ControlledAzureStorageContainerResource extends ControlledResource {
-  private final String storageAccountName;
+  private final UUID storageAccountId;
   private final String storageContainerName;
 
   @JsonCreator
@@ -41,7 +41,7 @@ public class ControlledAzureStorageContainerResource extends ControlledResource 
       @JsonProperty("accessScope") AccessScopeType accessScope,
       @JsonProperty("managedBy") ManagedByType managedBy,
       @JsonProperty("applicationId") String applicationId,
-      @JsonProperty("storageAccountName") String storageAccountName,
+      @JsonProperty("storageAccountId") UUID storageAccountId,
       @JsonProperty("storageContainerName") String storageContainerName) {
     super(
         workspaceId,
@@ -54,15 +54,15 @@ public class ControlledAzureStorageContainerResource extends ControlledResource 
         managedBy,
         applicationId,
         privateResourceState);
-    this.storageAccountName = storageAccountName;
+    this.storageAccountId = storageAccountId;
     this.storageContainerName = storageContainerName;
     validate();
   }
 
   private ControlledAzureStorageContainerResource(
-      ControlledResourceFields common, String storageAccountName, String storageContainerName) {
+      ControlledResourceFields common, UUID storageAccountId, String storageContainerName) {
     super(common);
-    this.storageAccountName = storageAccountName;
+    this.storageAccountId = storageAccountId;
     this.storageContainerName = storageContainerName;
     validate();
   }
@@ -87,7 +87,7 @@ public class ControlledAzureStorageContainerResource extends ControlledResource 
     return Optional.of(
         new UniquenessCheckAttributes()
             .uniquenessScope(UniquenessScope.WORKSPACE)
-            .addParameter("storageAccountName", getStorageAccountName())
+            .addParameter("storageAccountId", getStorageAccountId().toString())
             .addParameter("storageContainerName", getStorageContainerName()));
   }
 
@@ -101,7 +101,7 @@ public class ControlledAzureStorageContainerResource extends ControlledResource 
     RetryRule cloudRetry = RetryRules.cloud();
     flight.addStep(
         new VerifyAzureStorageContainerCanBeCreatedStep(
-            flightBeanBag.getAzureConfig(), flightBeanBag.getCrlService(), this),
+            flightBeanBag.getAzureConfig(), flightBeanBag.getCrlService(), flightBeanBag.getResourceDao(), this),
         cloudRetry);
     flight.addStep(
         new CreateAzureStorageContainerStep(
@@ -114,12 +114,13 @@ public class ControlledAzureStorageContainerResource extends ControlledResource 
   public void addDeleteSteps(DeleteControlledResourceFlight flight, FlightBeanBag flightBeanBag) {
     flight.addStep(
         new DeleteAzureStorageContainerStep(
-                flightBeanBag.getAzureConfig(), flightBeanBag.getCrlService(), this),
+                flightBeanBag.getAzureConfig(), flightBeanBag.getCrlService(),
+                flightBeanBag.getResourceDao(), this),
         RetryRules.cloud());
   }
 
-  public String getStorageAccountName() {
-    return storageAccountName;
+  public UUID getStorageAccountId() {
+    return storageAccountId;
   }
 
   public String getStorageContainerName() {
@@ -128,7 +129,7 @@ public class ControlledAzureStorageContainerResource extends ControlledResource 
 
   public ApiAzureStorageContainerAttributes toApiAttributes() {
     return new ApiAzureStorageContainerAttributes()
-        .storageAccountName(getStorageAccountName())
+        .storageAccountId(getStorageAccountId())
         .storageContainerName(getStorageContainerName());
   }
 
@@ -151,7 +152,7 @@ public class ControlledAzureStorageContainerResource extends ControlledResource 
   @Override
   public String attributesToJson() {
     return DbSerDes.toJson(
-        new ControlledAzureStorageContainerAttributes(getStorageAccountName(), getStorageContainerName()));
+        new ControlledAzureStorageContainerAttributes(getStorageAccountId(), getStorageContainerName()));
   }
 
   @Override
@@ -177,9 +178,9 @@ public class ControlledAzureStorageContainerResource extends ControlledResource 
       throw new InconsistentFieldsException("Expected CONTROLLED_AZURE_STORAGE_CONTAINER");
     }
 
-    if (getStorageAccountName() == null) {
+    if (getStorageAccountId() == null) {
       throw new MissingRequiredFieldException(
-              "Missing required storage account name field for ControlledAzureStorageContainer.");
+              "Missing required storage account ID field for ControlledAzureStorageContainer.");
     }
 
     if (getStorageContainerName() == null) {
@@ -187,7 +188,6 @@ public class ControlledAzureStorageContainerResource extends ControlledResource 
           "Missing required storage container name field for ControlledAzureStorageContainer.");
     }
 
-    ResourceValidationUtils.validateStorageAccountName(getStorageAccountName());
     ResourceValidationUtils.validateStorageContainerName(getStorageContainerName());
   }
 
@@ -199,20 +199,20 @@ public class ControlledAzureStorageContainerResource extends ControlledResource 
 
     ControlledAzureStorageContainerResource that = (ControlledAzureStorageContainerResource) o;
 
-    return storageAccountName.equals(that.getStorageAccountName()) && storageContainerName.equals(that.getStorageContainerName());
+    return storageAccountId.equals(that.getStorageAccountId()) && storageContainerName.equals(that.getStorageContainerName());
   }
 
   @Override
   public int hashCode() {
     int result = super.hashCode();
-    result = 31 * result + storageAccountName.hashCode();
+    result = 31 * result + storageAccountId.hashCode();
     result = 31 * result + storageContainerName.hashCode();
     return result;
   }
 
   public static class Builder {
     private ControlledResourceFields common;
-    private String storageAccountName;
+    private UUID storageAccountId;
     private String storageContainerName;
 
     public Builder common(ControlledResourceFields common) {
@@ -220,8 +220,8 @@ public class ControlledAzureStorageContainerResource extends ControlledResource 
       return this;
     }
 
-    public ControlledAzureStorageContainerResource.Builder storageAccountName(String storageAccountName) {
-      this.storageAccountName = storageAccountName;
+    public ControlledAzureStorageContainerResource.Builder storageAccountId(UUID storageAccountId) {
+      this.storageAccountId = storageAccountId;
       return this;
     }
 
@@ -231,7 +231,7 @@ public class ControlledAzureStorageContainerResource extends ControlledResource 
     }
 
     public ControlledAzureStorageContainerResource build() {
-      return new ControlledAzureStorageContainerResource(common, storageAccountName, storageContainerName);
+      return new ControlledAzureStorageContainerResource(common, storageAccountId, storageContainerName);
     }
   }
 }
