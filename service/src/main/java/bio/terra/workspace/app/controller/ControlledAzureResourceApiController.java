@@ -27,10 +27,16 @@ import bio.terra.workspace.service.resource.controlled.model.ControlledResourceF
 import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.workspace.AzureCloudContextService;
 import bio.terra.workspace.service.workspace.model.AzureCloudContext;
-import com.azure.core.http.rest.PagedIterable;
+import com.azure.core.http.HttpClient;
 import com.azure.resourcemanager.storage.StorageManager;
 import com.azure.resourcemanager.storage.models.StorageAccount;
+import com.azure.resourcemanager.storage.models.StorageAccountKey;
+import com.azure.storage.blob.BlobContainerClient;
+import com.azure.storage.blob.BlobContainerClientBuilder;
 import com.azure.storage.blob.sas.BlobContainerSasPermission;
+import com.azure.storage.blob.sas.BlobServiceSasSignatureValues;
+import com.azure.storage.common.StorageSharedKeyCredential;
+import com.azure.storage.common.sas.SasProtocol;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -40,7 +46,9 @@ import org.springframework.stereotype.Controller;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
+import java.time.OffsetDateTime;
 import java.util.List;
+import java.util.Locale;
 import java.util.UUID;
 
 @Controller
@@ -190,11 +198,18 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
   }
 
   @Override
-  public void createAzureStorageContainerSasToken(
-      UUID workspaceUuid, String storageAccountName, UUID storageContainerUuid) {
+  public ResponseEntity<ApiCreatedAzureStorageContainerSasToken>
+      createAzureStorageContainerSasToken(UUID workspaceUuid, UUID storageContainerUuid) {
     features.azureEnabledCheck();
 
     final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    AzureCloudContext azureCloudContext =
+        azureCloudContextService.getRequiredAzureCloudContext(workspaceUuid);
+
+    logger.info(
+        String.format(
+            "user %s requesting SAS token for Azure storage container %s in workspace %s",
+            userRequest.getEmail(), workspaceUuid.toString(), storageContainerUuid.toString()));
     final List<String> containerActions =
         SamRethrow.onInterrupted(
             () ->
@@ -226,35 +241,50 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
     BlobContainerSasPermission blobContainerSasPermission =
         BlobContainerSasPermission.parse(tokenPermissions.toString());
 
-    final ControlledAzureStorageContainerResource resource =
-        controlledResourceService
-            .getControlledResource(workspaceUuid, storageContainerUuid, userRequest)
-            .castByEnum(WsmResourceType.CONTROLLED_AZURE_STORAGE_CONTAINER);
+    //    final ControlledAzureStorageContainerResource resource =
+    //        controlledResourceService
+    //            .getControlledResource(workspaceUuid, storageContainerUuid, userRequest)
+    //            .castByEnum(WsmResourceType.CONTROLLED_AZURE_STORAGE_CONTAINER);
 
-    AzureCloudContext azureCloudContext = azureCloudContextService.getRequiredAzureCloudContext(workspaceUuid);
+    // todo: get these from the container resource attributes
+    String storageAccountName = "";
+    String storageContainerName = "";
+
     StorageManager storageManager = crlService.getStorageManager(azureCloudContext, azureConfig);
-    PagedIterable<StorageAccount> storageAccounts = storageManager.storageAccounts().list();
+    StorageAccount storageAccount =
+        storageManager
+            .storageAccounts()
+            .getByResourceGroup(azureCloudContext.getAzureResourceGroupId(), storageAccountName);
+    // todo: can this be improved? get(0) makes me sad
+    StorageAccountKey key = storageAccount.getKeys().get(0);
+    var storageKey = new StorageSharedKeyCredential(storageAccountName, key.value());
 
+    String endpoint =
+        String.format(Locale.ROOT, "https://%s.blob.core.windows.net", storageAccountName);
+    OffsetDateTime expiryTime = OffsetDateTime.now().plusHours(1);
+    OffsetDateTime startTime = OffsetDateTime.now().minusMinutes(15);
+    BlobContainerClient blobContainerClient =
+        new BlobContainerClientBuilder()
+            .credential(storageKey)
+            .endpoint(endpoint)
+            .httpClient(HttpClient.createDefault())
+            .containerName(storageContainerName)
+            .buildClient();
+    BlobServiceSasSignatureValues sasValues =
+        new BlobServiceSasSignatureValues(expiryTime, blobContainerSasPermission)
+            .setStartTime(startTime)
+            .setProtocol(SasProtocol.HTTPS_ONLY);
+    String sas = blobContainerClient.generateSas(sasValues);
+    logger.info(
+        String.format(
+            "SAS token with expiry time of %s generated for user %s on container %s in workspace %s",
+            expiryTime.toString(),
+            userRequest.getEmail(),
+            storageContainerUuid.toString(),
+            workspaceUuid.toString()));
 
-
-    // check sam permissions on workspace to infer Azure token permissions
-    // add listActions fn to SamService to get all actions on a container at once. probably want to
-    // list actions on container first and then if there's nothing we can list actions on the
-    // workspace
-    // todo: permissions on WORKSPACE or CONTAINER?
-    // read => read / list
-    // write => read / list / create / add / delete
-    // neither => 403? 404 if they don't have permissions? what if either aren't in Sam?
-
-    // pull Storage Account key for specified storage account
-    // todo: can this be inferred by workspace? Should probably not as we'll want to avoid assuming
-    // 1:1 workspace - storage accountt
-    // todo: need to confirm if storage account and container exist?
-
-    // generate SAS per specs in ticket
-
-    // log per specs in ticket
-    // todo: log request regardless of success?
+    return new ResponseEntity<>(
+        new ApiCreatedAzureStorageContainerSasToken().token(sas), HttpStatus.OK);
   }
 
   @Override
