@@ -191,6 +191,25 @@ public class ControlledResourceFixtures {
         .customScriptExtension(getAzureVmCustomScriptExtension());
   }
 
+  public static ApiAzureVmCreationParameters getInvalidAzureVmCreationParameters() {
+    // use password which is not strong enough
+    return new ApiAzureVmCreationParameters()
+        .name(uniqueAzureName(AZURE_VM_NAME_PREFIX))
+        .region("westcentralus")
+        .vmSize(VirtualMachineSizeTypes.STANDARD_D2S_V3.toString())
+        .vmImage(
+            new ApiAzureVmImage()
+                .publisher("microsoft-dsvm")
+                .offer("ubuntu-1804")
+                .sku("1804-gen2")
+                .version("latest"))
+        .vmUser(new ApiAzureVmUser().name("noname").password("noname"))
+        .ipId(UUID.randomUUID())
+        .diskId(UUID.randomUUID())
+        .networkId(UUID.randomUUID())
+        .customScriptExtension(getAzureVmCustomScriptExtension());
+  }
+
   public static ApiAzureVmCustomScriptExtension getAzureVmCustomScriptExtension() {
     final String[] customScriptFileUri =
         new String[] {

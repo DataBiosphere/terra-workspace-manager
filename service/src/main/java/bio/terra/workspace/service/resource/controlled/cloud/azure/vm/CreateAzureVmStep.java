@@ -17,6 +17,7 @@ import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.disk.ControlledAzureDiskResource;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.ip.ControlledAzureIpResource;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.network.ControlledAzureNetworkResource;
+import bio.terra.workspace.service.resource.controlled.exception.AzureNetworkInterfaceNameNotFoundException;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import bio.terra.workspace.service.workspace.model.AzureCloudContext;
@@ -36,7 +37,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class CreateAzureVmStep implements Step {
-
   private static final Logger logger = LoggerFactory.getLogger(CreateAzureVmStep.class);
   private final AzureConfiguration azureConfig;
   private final CrlService crlService;
@@ -109,18 +109,32 @@ public class CreateAzureVmStep implements Step {
               .getByResourceGroup(
                   azureCloudContext.getAzureResourceGroupId(), networkResource.getNetworkName());
 
-      var createNic =
-          createNetworkInterface(
-              computeManager,
-              azureCloudContext,
-              existingNetwork,
-              networkResource.getSubnetName(),
-              existingAzureIp);
+      if (!context.getWorkingMap().containsKey(AzureVmHelper.WORKING_MAP_NETWORK_INTERFACE_KEY)) {
+        logger.error(
+            "Azure VM creation flight couldn't be completed. "
+                + "Network interface name not found. FlightId: {}",
+            context.getFlightId());
+        return new StepResult(
+            StepStatus.STEP_RESULT_FAILURE_FATAL,
+            new AzureNetworkInterfaceNameNotFoundException(
+                String.format(
+                    "Azure network interface name not found. " + "FlightId: %s",
+                    context.getFlightId())));
+      }
+      var networkInterface =
+          computeManager
+              .networkManager()
+              .networkInterfaces()
+              .getByResourceGroup(
+                  azureCloudContext.getAzureResourceGroupId(),
+                  context
+                      .getWorkingMap()
+                      .get(AzureVmHelper.WORKING_MAP_NETWORK_INTERFACE_KEY, String.class));
 
       var virtualMachineDefinition =
           buildVmConfiguration(
               computeManager,
-              createNic,
+              networkInterface,
               existingAzureDisk,
               azureCloudContext.getAzureResourceGroupId(),
               creationParameters);
@@ -164,7 +178,6 @@ public class CreateAzureVmStep implements Step {
       }
       return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, e);
     }
-
     return StepResult.getStepResultSuccess();
   }
 
@@ -243,27 +256,5 @@ public class CreateAzureVmStep implements Step {
       customScriptExtension.attach();
     }
     return vmConfigurationFinalStep;
-  }
-
-  private NetworkInterface createNetworkInterface(
-      ComputeManager computeManager,
-      AzureCloudContext azureCloudContext,
-      Network existingNetwork,
-      String subnetName,
-      Optional<PublicIpAddress> existingAzureIp) {
-    var createNicStep =
-        computeManager
-            .networkManager()
-            .networkInterfaces()
-            .define(String.format("nic-%s", resource.getVmName()))
-            .withRegion(resource.getRegion())
-            .withExistingResourceGroup(azureCloudContext.getAzureResourceGroupId())
-            .withExistingPrimaryNetwork(existingNetwork)
-            .withSubnet(subnetName)
-            .withPrimaryPrivateIPAddressDynamic();
-    if (existingAzureIp.isPresent()) {
-      createNicStep.withExistingPrimaryPublicIPAddress(existingAzureIp.get());
-    }
-    return createNicStep.create();
   }
 }
