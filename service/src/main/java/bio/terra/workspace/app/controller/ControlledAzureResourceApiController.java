@@ -237,10 +237,8 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
     if (tokenPermissions.isEmpty()) {
       throw new ForbiddenException(
           String.format(
-              "User %s is not authorized on resource %s of type %s",
-              userRequest.getEmail(),
-              storageContainerUuid.toString(),
-              SamConstants.SamResource.CONTROLLED_USER_SHARED));
+              "User %s is not authorized to get a SAS token for container %s",
+              userEmail, storageContainerUuid.toString()));
     }
 
     BlobContainerSasPermission blobContainerSasPermission =
@@ -264,10 +262,9 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
         storageManager
             .storageAccounts()
             .getByResourceGroup(azureCloudContext.getAzureResourceGroupId(), storageAccountName);
-    // todo: can this be improved? get(0) makes me sad
+
     StorageAccountKey key = storageAccount.getKeys().get(0);
     var storageKey = new StorageSharedKeyCredential(storageAccountName, key.value());
-
     String endpoint =
         String.format(Locale.ROOT, "https://%s.blob.core.windows.net", storageAccountName);
     OffsetDateTime expiryTime = OffsetDateTime.now().plusHours(1);
