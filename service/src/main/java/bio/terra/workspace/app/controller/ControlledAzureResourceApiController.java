@@ -205,11 +205,16 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
     final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     AzureCloudContext azureCloudContext =
         azureCloudContextService.getRequiredAzureCloudContext(workspaceUuid);
+    final String userEmail =
+        SamRethrow.onInterrupted(
+            () -> getSamService().getUserEmailFromSam(userRequest), "getUserEmailFromSam");
 
     logger.info(
-        String.format(
-            "user %s requesting SAS token for Azure storage container %s in workspace %s",
-            userRequest.getEmail(), storageContainerUuid.toString(), workspaceUuid.toString()));
+        "user {} requesting SAS token for Azure storage container {} in workspace {}",
+        userEmail,
+        storageContainerUuid.toString(),
+        workspaceUuid.toString());
+
     final List<String> containerActions =
         SamRethrow.onInterrupted(
             () ->
@@ -280,12 +285,11 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
             .setProtocol(SasProtocol.HTTPS_ONLY);
     String sas = blobContainerClient.generateSas(sasValues);
     logger.info(
-        String.format(
-            "SAS token with expiry time of %s generated for user %s on container %s in workspace %s",
-            expiryTime.toString(),
-            userRequest.getEmail(),
-            storageContainerUuid.toString(),
-            workspaceUuid.toString()));
+        "SAS token with expiry time of {} generated for user {} on container {} in workspace {}",
+        expiryTime.toString(),
+        userEmail,
+        storageContainerUuid.toString(),
+        workspaceUuid.toString());
 
     return new ResponseEntity<>(
         new ApiCreatedAzureStorageContainerSasToken().token(sas), HttpStatus.OK);
