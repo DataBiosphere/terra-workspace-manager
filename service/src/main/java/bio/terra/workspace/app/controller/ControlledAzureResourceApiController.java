@@ -201,7 +201,8 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
     features.azureEnabledCheck();
 
     final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
-    final ControlledResourceFields commonFields = toCommonFields(workspaceUuid, body.getCommon(), userRequest);
+    final ControlledResourceFields commonFields =
+        toCommonFields(workspaceUuid, body.getCommon(), userRequest);
 
     ControlledAzureStorageContainerResource resource =
         ControlledAzureStorageContainerResource.builder()

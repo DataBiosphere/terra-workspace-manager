@@ -92,7 +92,8 @@ public class CreateAzureDiskStep implements Step {
               azureCloudContext.getAzureResourceGroupId(), resource.getDiskName());
     } catch (ManagementException e) {
       // Stairway steps may run multiple times, so we may already have deleted this resource.
-      if (ManagementExceptionUtils.isExceptionCode(e, ManagementExceptionUtils.RESOURCE_NOT_FOUND)) {
+      if (ManagementExceptionUtils.isExceptionCode(
+          e, ManagementExceptionUtils.RESOURCE_NOT_FOUND)) {
         logger.info(
             "Azure Disk {} in managed resource group {} already deleted",
             resource.getDiskName(),

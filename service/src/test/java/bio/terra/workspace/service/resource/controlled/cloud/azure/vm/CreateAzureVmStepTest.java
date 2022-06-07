@@ -290,7 +290,6 @@ public class CreateAzureVmStepTest extends BaseAzureTest {
         .thenReturn(true);
     when(mockWorkingMap.get(AzureVmHelper.WORKING_MAP_NETWORK_INTERFACE_KEY, String.class))
         .thenReturn(STUB_NETWORK_INTERFACE_NAME);
-
   }
 
   @Test

@@ -47,8 +47,9 @@ public class CreateAzureStorageContainerStep implements Step {
     final String storageAccountName =
         context.getWorkingMap().get(ControlledResourceKeys.STORAGE_ACCOUNT_NAME, String.class);
     if (storageAccountName == null) {
-      logger.error("The storage account name has not been added to the working map. " +
-              "VerifyAzureStorageContainerCanBeCreated must be executed first." );
+      logger.error(
+          "The storage account name has not been added to the working map. "
+              + "VerifyAzureStorageContainerCanBeCreated must be executed first.");
       return new StepResult(StepStatus.STEP_RESULT_FAILURE_FATAL);
     }
 
@@ -102,8 +103,9 @@ public class CreateAzureStorageContainerStep implements Step {
     final String storageAccountName =
         context.getWorkingMap().get(ControlledResourceKeys.STORAGE_ACCOUNT_NAME, String.class);
     if (storageAccountName == null) {
-      logger.warn("Deletion of the storage container is not required. " +
-              "Parent storage account was not found in the create.");
+      logger.warn(
+          "Deletion of the storage container is not required. "
+              + "Parent storage account was not found in the create.");
       return StepResult.getStepResultSuccess();
     }
 

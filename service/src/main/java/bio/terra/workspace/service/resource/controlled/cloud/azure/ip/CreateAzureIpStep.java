@@ -93,7 +93,8 @@ public class CreateAzureIpStep implements Step {
           .deleteByResourceGroup(azureCloudContext.getAzureResourceGroupId(), resource.getIpName());
     } catch (ManagementException e) {
       // Stairway steps may run multiple times, so we may already have deleted this resource.
-      if (ManagementExceptionUtils.isExceptionCode(e, ManagementExceptionUtils.RESOURCE_NOT_FOUND)) {
+      if (ManagementExceptionUtils.isExceptionCode(
+          e, ManagementExceptionUtils.RESOURCE_NOT_FOUND)) {
         logger.info(
             "Azure IP {} in managed resource group {} already deleted",
             resource.getIpName(),

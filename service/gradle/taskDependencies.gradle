@@ -12,11 +12,6 @@ for (task in TASKS_ONLY_IF_COMPILE_JAVA) {
   task.dependsOn(compileJava.inputs.files)
   // If compileJava runs, this must run after it (for the following to work).
   task.mustRunAfter(compileJava)
-  // Don't run if compileJava didn't do any work. This is necessary because otherwise, these
-  // tasks always want to run.
-  task.configure {
-    onlyIf { compileJava.didWork }
-  }
 }
 
 spotbugsTest.dependsOn(compileTestJava.inputs.files)
