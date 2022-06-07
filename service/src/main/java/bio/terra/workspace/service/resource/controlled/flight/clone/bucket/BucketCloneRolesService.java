@@ -80,12 +80,8 @@ public class BucketCloneRolesService {
         storageCow.getIamPolicy(inputs.getBucketName()).toBuilder();
     for (String roleName : inputs.getRoleNames()) {
       switch (operation) {
-        case ADD:
-          policyBuilder.addIdentity(Role.of(roleName), saIdentity);
-          break;
-        case REMOVE:
-          policyBuilder.removeIdentity(Role.of(roleName), saIdentity);
-          break;
+        case ADD -> policyBuilder.addIdentity(Role.of(roleName), saIdentity);
+        case REMOVE -> policyBuilder.removeIdentity(Role.of(roleName), saIdentity);
       }
     }
     storageCow.setIamPolicy(inputs.getBucketName(), policyBuilder.build());
