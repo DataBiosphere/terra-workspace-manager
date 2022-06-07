@@ -27,100 +27,100 @@ import static org.mockito.Mockito.when;
 @ActiveProfiles("azure")
 public class VerifyAzureStorageContainerCanBeCreatedStepTest extends BaseStorageStepTest {
 
-  @Mock private BlobContainers mockBlobContainers;
-  @Mock private BlobContainer mockBlobContainer;
-  @Mock private ResourceDao mockResourceDao;
+    @Mock private BlobContainers mockBlobContainers;
+    @Mock private BlobContainer mockBlobContainer;
+    @Mock private ResourceDao mockResourceDao;
 
-  final private String storageAccountName = ControlledResourceFixtures.uniqueStorageAccountName();
-  final ApiAzureStorageContainerCreationParameters creationParameters =
-          ControlledResourceFixtures.getAzureStorageContainerCreationParameters();
-  final ControlledAzureStorageContainerResource storageContainerResource = ControlledResourceFixtures.getAzureStorageContainer(
-          creationParameters.getStorageAccountId(), creationParameters.getStorageContainerName());
-  final private ControlledAzureStorageResource storageAccountResource = ControlledResourceFixtures.getAzureStorage(
-          storageAccountName, "mockRegion");
-  final private ManagementException containerNotFoundException =
-          new ManagementException(
-                  "Resource was not found.",
-                  /*response=*/ null,
-                  new ManagementError("ContainerNotFound", "Container was not found."));
+    final private String storageAccountName = ControlledResourceFixtures.uniqueStorageAccountName();
+    final ApiAzureStorageContainerCreationParameters creationParameters =
+            ControlledResourceFixtures.getAzureStorageContainerCreationParameters();
+    final ControlledAzureStorageContainerResource storageContainerResource = ControlledResourceFixtures.getAzureStorageContainer(
+            creationParameters.getStorageAccountId(), creationParameters.getStorageContainerName());
+    final private ControlledAzureStorageResource storageAccountResource = ControlledResourceFixtures.getAzureStorage(
+            storageAccountName, "mockRegion");
+    final private ManagementException containerNotFoundException =
+            new ManagementException(
+                    "Resource was not found.",
+                    /*response=*/ null,
+                    new ManagementError("ContainerNotFound", "Container was not found."));
 
-  private VerifyAzureStorageContainerCanBeCreatedStep verifyCanBeCreatedStep;
+    private VerifyAzureStorageContainerCanBeCreatedStep verifyCanBeCreatedStep;
 
-  @BeforeEach
-  public void setup() {
-    super.setup();
-    when(mockStorageManager.blobContainers()).thenReturn(mockBlobContainers);
-    verifyCanBeCreatedStep = new VerifyAzureStorageContainerCanBeCreatedStep(
-            mockAzureConfig, mockCrlService, mockResourceDao, storageContainerResource);
-  }
+    @BeforeEach
+    public void setup() {
+        super.setup();
+        when(mockStorageManager.blobContainers()).thenReturn(mockBlobContainers);
+        verifyCanBeCreatedStep = new VerifyAzureStorageContainerCanBeCreatedStep(
+                mockAzureConfig, mockCrlService, mockResourceDao, storageContainerResource);
+    }
 
-  private void mockStorageAccountExists() {
-    when(mockResourceDao.getResource(storageContainerResource.getWorkspaceId(),
-            creationParameters.getStorageAccountId())).thenReturn(storageAccountResource);
-    when(mockStorageAccounts.getByResourceGroup(mockAzureCloudContext.getAzureResourceGroupId(),
-            storageAccountName)).thenReturn(mockStorageAccount);
-    when(mockFlightContext.getWorkingMap().get(
-            WorkspaceFlightMapKeys.ControlledResourceKeys.STORAGE_ACCOUNT_NAME, String.class)
-    ).thenReturn(storageAccountName);
-  }
+    private void mockStorageAccountExists() {
+        when(mockResourceDao.getResource(storageContainerResource.getWorkspaceId(),
+                creationParameters.getStorageAccountId())).thenReturn(storageAccountResource);
+        when(mockStorageAccounts.getByResourceGroup(mockAzureCloudContext.getAzureResourceGroupId(),
+                storageAccountName)).thenReturn(mockStorageAccount);
+        when(mockFlightContext.getWorkingMap().get(
+                WorkspaceFlightMapKeys.ControlledResourceKeys.STORAGE_ACCOUNT_NAME, String.class)
+        ).thenReturn(storageAccountName);
+    }
 
-  @Test
-  public void getStorageContainer_containerCanBeCreated() throws InterruptedException {
-    mockStorageAccountExists();
+    @Test
+    public void getStorageContainer_containerCanBeCreated() throws InterruptedException {
+        mockStorageAccountExists();
 
-    // The storage container must not already exist.
-    when(mockBlobContainers.get(mockAzureCloudContext.getAzureResourceGroupId(), storageAccountName,
-            creationParameters.getStorageContainerName())).thenThrow(containerNotFoundException);
+        // The storage container must not already exist.
+        when(mockBlobContainers.get(mockAzureCloudContext.getAzureResourceGroupId(), storageAccountName,
+                creationParameters.getStorageContainerName())).thenThrow(containerNotFoundException);
 
-    final StepResult stepResult = verifyCanBeCreatedStep.doStep(mockFlightContext);
+        final StepResult stepResult = verifyCanBeCreatedStep.doStep(mockFlightContext);
 
-    // Verify step returns success
-    assertThat(stepResult, equalTo(StepResult.getStepResultSuccess()));
-  }
+        // Verify step returns success
+        assertThat(stepResult, equalTo(StepResult.getStepResultSuccess()));
+    }
 
-  @Test
-  public void getStorageAccountContainer_storageAccountDoesNotExistInWSM() throws InterruptedException {
-    // Storage account doesn't exist in WSM
-    when(mockResourceDao.getResource(
-            storageContainerResource.getWorkspaceId(), creationParameters.getStorageAccountId())).thenThrow(
-                    new ResourceNotFoundException("Not Found"));
+    @Test
+    public void getStorageAccountContainer_storageAccountDoesNotExistInWSM() throws InterruptedException {
+        // Storage account doesn't exist in WSM
+        when(mockResourceDao.getResource(
+                storageContainerResource.getWorkspaceId(), creationParameters.getStorageAccountId())).thenThrow(
+                new ResourceNotFoundException("Not Found"));
 
-    final StepResult stepResult = verifyCanBeCreatedStep.doStep(mockFlightContext);
+        final StepResult stepResult = verifyCanBeCreatedStep.doStep(mockFlightContext);
 
-    // Verify step returns error because storage account does not exist.
-    assertThat(stepResult.getStepStatus(), equalTo(StepStatus.STEP_RESULT_FAILURE_FATAL));
-    assertThat(stepResult.getException().get(), instanceOf(ResourceNotFoundException.class));
-  }
+        // Verify step returns error because storage account does not exist.
+        assertThat(stepResult.getStepStatus(), equalTo(StepStatus.STEP_RESULT_FAILURE_FATAL));
+        assertThat(stepResult.getException().get(), instanceOf(ResourceNotFoundException.class));
+    }
 
-  @Test
-  public void getStorageAccountContainer_storageAccountDoesNotExistInAzure() throws InterruptedException {
-    // Storage account exists in WSM.
-    when(mockResourceDao.getResource(storageContainerResource.getWorkspaceId(),
-            creationParameters.getStorageAccountId())).thenReturn(storageAccountResource);
+    @Test
+    public void getStorageAccountContainer_storageAccountDoesNotExistInAzure() throws InterruptedException {
+        // Storage account exists in WSM.
+        when(mockResourceDao.getResource(storageContainerResource.getWorkspaceId(),
+                creationParameters.getStorageAccountId())).thenReturn(storageAccountResource);
 
-    // Storage account doesn't exist in Azure
-    when(mockStorageAccounts.getByResourceGroup(mockAzureCloudContext.getAzureResourceGroupId(),
-            storageAccountName)).thenThrow(resourceNotFoundException);
+        // Storage account doesn't exist in Azure
+        when(mockStorageAccounts.getByResourceGroup(mockAzureCloudContext.getAzureResourceGroupId(),
+                storageAccountName)).thenThrow(resourceNotFoundException);
 
-    final StepResult stepResult = verifyCanBeCreatedStep.doStep(mockFlightContext);
+        final StepResult stepResult = verifyCanBeCreatedStep.doStep(mockFlightContext);
 
-    // Verify step returns error because storage account does not exist.
-    assertThat(stepResult.getStepStatus(), equalTo(StepStatus.STEP_RESULT_FAILURE_FATAL));
-    assertThat(stepResult.getException().get(), instanceOf(ResourceNotFoundException.class));
-  }
+        // Verify step returns error because storage account does not exist.
+        assertThat(stepResult.getStepStatus(), equalTo(StepStatus.STEP_RESULT_FAILURE_FATAL));
+        assertThat(stepResult.getException().get(), instanceOf(ResourceNotFoundException.class));
+    }
 
-  @Test
-  public void getStorageContainer_containerAlreadyExists() throws InterruptedException {
-    mockStorageAccountExists();
+    @Test
+    public void getStorageContainer_containerAlreadyExists() throws InterruptedException {
+        mockStorageAccountExists();
 
-    // A storage container with this name already exists.
-    when(mockBlobContainers.get(mockAzureCloudContext.getAzureResourceGroupId(), storageAccountName,
-            creationParameters.getStorageContainerName())).thenReturn(mockBlobContainer);
+        // A storage container with this name already exists.
+        when(mockBlobContainers.get(mockAzureCloudContext.getAzureResourceGroupId(), storageAccountName,
+                creationParameters.getStorageContainerName())).thenReturn(mockBlobContainer);
 
-    final StepResult stepResult = verifyCanBeCreatedStep.doStep(mockFlightContext);
+        final StepResult stepResult = verifyCanBeCreatedStep.doStep(mockFlightContext);
 
-    // Verify step fails.
-    assertThat(stepResult.getStepStatus(), equalTo(StepStatus.STEP_RESULT_FAILURE_FATAL));
-    assertThat(stepResult.getException().get(), instanceOf(DuplicateResourceException.class));
-  }
+        // Verify step fails.
+        assertThat(stepResult.getStepStatus(), equalTo(StepStatus.STEP_RESULT_FAILURE_FATAL));
+        assertThat(stepResult.getException().get(), instanceOf(DuplicateResourceException.class));
+    }
 }

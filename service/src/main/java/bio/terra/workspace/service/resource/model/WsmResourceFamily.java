@@ -57,10 +57,10 @@ public enum WsmResourceFamily {
       null,
       WsmResourceType.CONTROLLED_AZURE_STORAGE_ACCOUNT),
   AZURE_STORAGE_CONTAINER(
-          "AZURE_STORAGE_CONTAINER",
-          ApiResourceType.AZURE_STORAGE_CONTAINER,
-          null,
-          WsmResourceType.CONTROLLED_AZURE_STORAGE_CONTAINER),
+      "AZURE_STORAGE_CONTAINER",
+      ApiResourceType.AZURE_STORAGE_CONTAINER,
+      null,
+      WsmResourceType.CONTROLLED_AZURE_STORAGE_CONTAINER),
   GIT_REPO("GIT_REPO", ApiResourceType.GIT_REPO, WsmResourceType.REFERENCED_ANY_GIT_REPO, null);
 
   private final String dbString; // serialized form of the resource type

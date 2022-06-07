@@ -126,8 +126,8 @@ public class ControlledResourceFixtures {
   /** Construct a parameter object with a unique name to avoid unintended clashes. */
   public static ApiAzureStorageContainerCreationParameters getAzureStorageContainerCreationParameters() {
     return new ApiAzureStorageContainerCreationParameters()
-            .storageContainerName(uniqueBucketName())
-            .storageAccountId(STORAGE_ACCOUNT_REFERENCE_ID);
+        .storageContainerName(uniqueBucketName())
+        .storageAccountId(STORAGE_ACCOUNT_REFERENCE_ID);
   }
 
   /** Construct a parameter object with a unique bucket name to avoid unintended clashes. */
@@ -365,19 +365,19 @@ public class ControlledResourceFixtures {
   public static ControlledAzureStorageContainerResource getAzureStorageContainer(
           UUID storageAccountId, String storageContainerName) {
     return new ControlledAzureStorageContainerResource(
-            WORKSPACE_ID,
-            RESOURCE_ID,
-            RESOURCE_NAME,
-            RESOURCE_DESCRIPTION,
-            CLONING_INSTRUCTIONS,
-            OWNER_EMAIL,
-            // TODO: these should be changed when we group the resources
-            PrivateResourceState.ACTIVE,
-            AccessScopeType.ACCESS_SCOPE_PRIVATE,
-            ManagedByType.MANAGED_BY_USER,
-            null,
-            storageAccountId,
-            storageContainerName);
+        WORKSPACE_ID,
+        RESOURCE_ID,
+        RESOURCE_NAME,
+        RESOURCE_DESCRIPTION,
+        CLONING_INSTRUCTIONS,
+        OWNER_EMAIL,
+        // TODO: these should be changed when we group the resources
+        PrivateResourceState.ACTIVE,
+        AccessScopeType.ACCESS_SCOPE_PRIVATE,
+        ManagedByType.MANAGED_BY_USER,
+        null,
+        storageAccountId,
+        storageContainerName);
   }
 
   public static ControlledAzureVmResource getAzureVm(

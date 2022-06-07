@@ -998,32 +998,32 @@ public class CreateAndDeleteAzureControlledResourceFlightTest extends BaseAzureT
                 azureTestUtils.getComputeManager().networkManager().networks()::getByResourceGroup);
     }
 
-  private <T extends ControlledResource, R> void submitControlledResourceDeletionFlight(
-      UUID workspaceUuid,
-      AuthenticatedUserRequest userRequest,
-      T controlledResource,
-      String azureResourceGroupId,
-      String resourceName,
-      BiFunction<String, String, R> findResource)
-      throws InterruptedException {
-    FlightState deleteControlledResourceFlightState =
-        StairwayTestUtils.blockUntilFlightCompletes(
-            jobService.getStairway(),
-            DeleteControlledResourceFlight.class,
-            azureTestUtils.deleteControlledResourceInputParameters(
-                workspaceUuid, controlledResource.getResourceId(), userRequest, controlledResource),
-            STAIRWAY_FLIGHT_TIMEOUT,
-            null);
+    private <T extends ControlledResource, R> void submitControlledResourceDeletionFlight(
+            UUID workspaceUuid,
+            AuthenticatedUserRequest userRequest,
+            T controlledResource,
+            String azureResourceGroupId,
+            String resourceName,
+            BiFunction<String, String, R> findResource)
+            throws InterruptedException {
+        FlightState deleteControlledResourceFlightState =
+                StairwayTestUtils.blockUntilFlightCompletes(
+                        jobService.getStairway(),
+                        DeleteControlledResourceFlight.class,
+                        azureTestUtils.deleteControlledResourceInputParameters(
+                                workspaceUuid, controlledResource.getResourceId(), userRequest, controlledResource),
+                        STAIRWAY_FLIGHT_TIMEOUT,
+                        null);
 
-    assertEquals(FlightStatus.SUCCESS, deleteControlledResourceFlightState.getFlightStatus());
+        assertEquals(FlightStatus.SUCCESS, deleteControlledResourceFlightState.getFlightStatus());
 
-    if (findResource != null) {
-      TimeUnit.SECONDS.sleep(5);
-      com.azure.core.exception.HttpResponseException exception =
-              assertThrows(
-                      com.azure.core.exception.HttpResponseException.class,
-                      () -> findResource.apply(azureResourceGroupId, resourceName));
-      assertEquals(404, exception.getResponse().getStatusCode());
+        if (findResource != null) {
+            TimeUnit.SECONDS.sleep(5);
+            com.azure.core.exception.HttpResponseException exception =
+                    assertThrows(
+                            com.azure.core.exception.HttpResponseException.class,
+                            () -> findResource.apply(azureResourceGroupId, resourceName));
+            assertEquals(404, exception.getResponse().getStatusCode());
+        }
     }
-  }
 }

@@ -90,10 +90,10 @@ public final class AzureVmHelper {
     // Stairway steps may run multiple times, so we may already have deleted this resource.
     if (ManagementExceptionUtils.isExceptionCode(e, ManagementExceptionUtils.RESOURCE_NOT_FOUND)) {
       logger.info(
-              "Azure {} {} in managed resource group {} already deleted",
-              resourceType,
-              resourceName,
-              resourceId);
+          "Azure {} {} in managed resource group {} already deleted",
+          resourceType,
+          resourceName,
+          resourceId);
       return StepResult.getStepResultSuccess();
     }
     return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, e);

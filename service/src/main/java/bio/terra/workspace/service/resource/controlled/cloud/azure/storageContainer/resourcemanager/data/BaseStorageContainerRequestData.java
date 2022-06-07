@@ -16,24 +16,30 @@ import java.util.UUID;
  * azure-resourcemanager-common.
  */
 public abstract class BaseStorageContainerRequestData implements ResourceManagerRequestData {
-  /** The name of the resource. */
-  public abstract String storageContainerName();
+    /**
+     * The name of the resource.
+     */
+    public abstract String storageContainerName();
 
-  /** The resource group of the resource. */
-  public abstract String resourceGroupName();
+    /**
+     * The resource group of the resource.
+     */
+    public abstract String resourceGroupName();
 
-  /** The storage account resource ID. */
-  public abstract UUID storageAccountId();
+    /**
+     * The storage account resource ID.
+     */
+    public abstract UUID storageAccountId();
 
-  /**
-   * Serializes this object to JSON. Not overriding {@link ResourceManagerRequestData#serialize()}
-   * to ensure subclasses implement their own serialize method.
-   */
-  protected JsonObject serializeCommon() {
-    JsonObject requestData = new JsonObject();
-    requestData.addProperty("resourceGroupName", resourceGroupName());
-    requestData.addProperty("storageContainerName", storageContainerName());
-    requestData.addProperty("storageAccountId", storageAccountId().toString());
-    return requestData;
-  }
+    /**
+     * Serializes this object to JSON. Not overriding {@link ResourceManagerRequestData#serialize()}
+     * to ensure subclasses implement their own serialize method.
+     */
+    protected JsonObject serializeCommon() {
+        JsonObject requestData = new JsonObject();
+        requestData.addProperty("resourceGroupName", resourceGroupName());
+        requestData.addProperty("storageContainerName", storageContainerName());
+        requestData.addProperty("storageAccountId", storageAccountId().toString());
+        return requestData;
+    }
 }

@@ -156,12 +156,12 @@ public enum WsmResourceType {
       ControlledAzureStorageResource.class,
       ControlledAzureStorageHandler::getHandler),
   CONTROLLED_AZURE_STORAGE_CONTAINER(
-          CloudPlatform.AZURE,
-          StewardshipType.CONTROLLED,
-          "CONTROLLED_AZURE_STORAGE_CONTAINER",
-          ApiResourceType.AZURE_STORAGE_CONTAINER,
-          ControlledAzureStorageContainerResource.class,
-          ControlledAzureStorageContainerHandler::getHandler);
+      CloudPlatform.AZURE,
+      StewardshipType.CONTROLLED,
+      "CONTROLLED_AZURE_STORAGE_CONTAINER",
+      ApiResourceType.AZURE_STORAGE_CONTAINER,
+      ControlledAzureStorageContainerResource.class,
+      ControlledAzureStorageContainerHandler::getHandler);
 
   private final CloudPlatform cloudPlatform;
   private final StewardshipType stewardshipType;
