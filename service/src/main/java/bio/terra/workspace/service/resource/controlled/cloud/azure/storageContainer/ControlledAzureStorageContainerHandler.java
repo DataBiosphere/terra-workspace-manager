@@ -7,27 +7,26 @@ import bio.terra.workspace.service.resource.model.WsmResource;
 import bio.terra.workspace.service.resource.model.WsmResourceHandler;
 
 public class ControlledAzureStorageContainerHandler implements WsmResourceHandler {
-    private static ControlledAzureStorageContainerHandler theHandler;
+  private static ControlledAzureStorageContainerHandler theHandler;
 
-    public static ControlledAzureStorageContainerHandler getHandler() {
-        if (theHandler == null) {
-            theHandler = new ControlledAzureStorageContainerHandler();
-        }
-        return theHandler;
+  public static ControlledAzureStorageContainerHandler getHandler() {
+    if (theHandler == null) {
+      theHandler = new ControlledAzureStorageContainerHandler();
     }
+    return theHandler;
+  }
 
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public WsmResource makeResourceFromDb(DbResource dbResource) {
-        ControlledAzureStorageContainerAttributes attributes =
-                DbSerDes.fromJson(dbResource.getAttributes(), ControlledAzureStorageContainerAttributes.class);
+  /** {@inheritDoc} */
+  @Override
+  public WsmResource makeResourceFromDb(DbResource dbResource) {
+    ControlledAzureStorageContainerAttributes attributes =
+        DbSerDes.fromJson(
+            dbResource.getAttributes(), ControlledAzureStorageContainerAttributes.class);
 
-        return ControlledAzureStorageContainerResource.builder()
-                .storageAccountId(attributes.getStorageAccountId())
-                .storageContainerName(attributes.getStorageContainerName())
-                .common(new ControlledResourceFields(dbResource))
-                .build();
-    }
+    return ControlledAzureStorageContainerResource.builder()
+        .storageAccountId(attributes.getStorageAccountId())
+        .storageContainerName(attributes.getStorageContainerName())
+        .common(new ControlledResourceFields(dbResource))
+        .build();
+  }
 }

@@ -18,50 +18,50 @@ import static org.mockito.Mockito.when;
 @ActiveProfiles("azure")
 public class GetAzureStorageStepTest extends BaseStorageStepTest {
 
-    @Mock private CheckNameAvailabilityResult mockNameAvailabilityResult;
+  @Mock private CheckNameAvailabilityResult mockNameAvailabilityResult;
 
-    @Test
-    public void getStorageAccount_doesNotExist() throws InterruptedException {
-        final ApiAzureStorageCreationParameters creationParameters =
-                ControlledResourceFixtures.getAzureStorageCreationParameters();
+  @Test
+  public void getStorageAccount_doesNotExist() throws InterruptedException {
+    final ApiAzureStorageCreationParameters creationParameters =
+        ControlledResourceFixtures.getAzureStorageCreationParameters();
 
-        GetAzureStorageStep getAzureStorageStep =
-                new GetAzureStorageStep(
-                        mockAzureConfig,
-                        mockCrlService,
-                        ControlledResourceFixtures.getAzureStorage(
-                                creationParameters.getStorageAccountName(), creationParameters.getRegion()));
+    GetAzureStorageStep getAzureStorageStep =
+        new GetAzureStorageStep(
+            mockAzureConfig,
+            mockCrlService,
+            ControlledResourceFixtures.getAzureStorage(
+                creationParameters.getStorageAccountName(), creationParameters.getRegion()));
 
-        when(mockNameAvailabilityResult.isAvailable()).thenReturn(true);
-        when(mockStorageAccounts.checkNameAvailability(creationParameters.getStorageAccountName()))
-                .thenReturn(mockNameAvailabilityResult);
+    when(mockNameAvailabilityResult.isAvailable()).thenReturn(true);
+    when(mockStorageAccounts.checkNameAvailability(creationParameters.getStorageAccountName()))
+        .thenReturn(mockNameAvailabilityResult);
 
-        final StepResult stepResult = getAzureStorageStep.doStep(mockFlightContext);
+    final StepResult stepResult = getAzureStorageStep.doStep(mockFlightContext);
 
-        // Verify step returns success
-        assertThat(stepResult, equalTo(StepResult.getStepResultSuccess()));
-    }
+    // Verify step returns success
+    assertThat(stepResult, equalTo(StepResult.getStepResultSuccess()));
+  }
 
-    @Test
-    public void getStorageAccount_alreadyExists() throws InterruptedException {
-        final ApiAzureStorageCreationParameters creationParameters =
-                ControlledResourceFixtures.getAzureStorageCreationParameters();
+  @Test
+  public void getStorageAccount_alreadyExists() throws InterruptedException {
+    final ApiAzureStorageCreationParameters creationParameters =
+        ControlledResourceFixtures.getAzureStorageCreationParameters();
 
-        GetAzureStorageStep getAzureStorageStep =
-                new GetAzureStorageStep(
-                        mockAzureConfig,
-                        mockCrlService,
-                        ControlledResourceFixtures.getAzureStorage(
-                                creationParameters.getStorageAccountName(), creationParameters.getRegion()));
+    GetAzureStorageStep getAzureStorageStep =
+        new GetAzureStorageStep(
+            mockAzureConfig,
+            mockCrlService,
+            ControlledResourceFixtures.getAzureStorage(
+                creationParameters.getStorageAccountName(), creationParameters.getRegion()));
 
-        when(mockNameAvailabilityResult.isAvailable()).thenReturn(false);
-        when(mockStorageAccounts.checkNameAvailability(creationParameters.getStorageAccountName()))
-                .thenReturn(mockNameAvailabilityResult);
+    when(mockNameAvailabilityResult.isAvailable()).thenReturn(false);
+    when(mockStorageAccounts.checkNameAvailability(creationParameters.getStorageAccountName()))
+        .thenReturn(mockNameAvailabilityResult);
 
-        final StepResult stepResult = getAzureStorageStep.doStep(mockFlightContext);
+    final StepResult stepResult = getAzureStorageStep.doStep(mockFlightContext);
 
-        // Verify step returns error
-        assertThat(stepResult.getStepStatus(), equalTo(StepStatus.STEP_RESULT_FAILURE_FATAL));
-        assertThat(stepResult.getException().get(), instanceOf(DuplicateResourceException.class));
-    }
+    // Verify step returns error
+    assertThat(stepResult.getStepStatus(), equalTo(StepStatus.STEP_RESULT_FAILURE_FATAL));
+    assertThat(stepResult.getException().get(), instanceOf(DuplicateResourceException.class));
+  }
 }

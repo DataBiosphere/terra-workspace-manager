@@ -10,30 +10,30 @@ import java.util.UUID;
 @AutoValue
 public abstract class CreateStorageContainerRequestData extends BaseStorageContainerRequestData {
 
-    @Override
-    public CloudOperation cloudOperation() {
-        return StorageManagerOperation.AZURE_CREATE_STORAGE_CONTAINER;
-    }
+  @Override
+  public CloudOperation cloudOperation() {
+    return StorageManagerOperation.AZURE_CREATE_STORAGE_CONTAINER;
+  }
 
-    @Override
-    public JsonObject serialize() {
-        JsonObject requestData = super.serializeCommon();
-        return requestData;
-    }
+  @Override
+  public JsonObject serialize() {
+    JsonObject requestData = super.serializeCommon();
+    return requestData;
+  }
 
-    public static Builder builder() {
-        return new AutoValue_CreateStorageContainerRequestData.Builder();
-    }
+  public static Builder builder() {
+    return new AutoValue_CreateStorageContainerRequestData.Builder();
+  }
 
-    @AutoValue.Builder
-    public abstract static class Builder {
+  @AutoValue.Builder
+  public abstract static class Builder {
 
-        public abstract CreateStorageContainerRequestData.Builder setStorageAccountId(UUID value);
+    public abstract CreateStorageContainerRequestData.Builder setStorageAccountId(UUID value);
 
-        public abstract CreateStorageContainerRequestData.Builder setStorageContainerName(String value);
+    public abstract CreateStorageContainerRequestData.Builder setStorageContainerName(String value);
 
-        public abstract CreateStorageContainerRequestData.Builder setResourceGroupName(String value);
+    public abstract CreateStorageContainerRequestData.Builder setResourceGroupName(String value);
 
-        public abstract CreateStorageContainerRequestData build();
-    }
+    public abstract CreateStorageContainerRequestData build();
+  }
 }

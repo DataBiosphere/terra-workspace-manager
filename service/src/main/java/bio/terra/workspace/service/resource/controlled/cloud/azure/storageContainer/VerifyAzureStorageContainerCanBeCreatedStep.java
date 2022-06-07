@@ -19,82 +19,97 @@ import bio.terra.workspace.service.workspace.model.AzureCloudContext;
 import com.azure.core.management.exception.ManagementException;
 import com.azure.resourcemanager.storage.StorageManager;
 
-
 /**
- * Verifies that the storage account exists in the workspace, and that the storage container does not already exist.
- * This step is designed to run immediately before {@link CreateAzureStorageContainerStep} to ensure idempotency
- * of the create operation.
+ * Verifies that the storage account exists in the workspace, and that the storage container does
+ * not already exist. This step is designed to run immediately before {@link
+ * CreateAzureStorageContainerStep} to ensure idempotency of the create operation.
  */
 public class VerifyAzureStorageContainerCanBeCreatedStep implements Step {
 
-    private final AzureConfiguration azureConfig;
-    private final CrlService crlService;
-    private final ResourceDao resourceDao;
-    private final ControlledAzureStorageContainerResource resource;
+  private final AzureConfiguration azureConfig;
+  private final CrlService crlService;
+  private final ResourceDao resourceDao;
+  private final ControlledAzureStorageContainerResource resource;
 
-    public VerifyAzureStorageContainerCanBeCreatedStep(
-            AzureConfiguration azureConfig,
-            CrlService crlService,
-            ResourceDao resourceDao,
-            ControlledAzureStorageContainerResource resource) {
-        this.azureConfig = azureConfig;
-        this.crlService = crlService;
-        this.resourceDao = resourceDao;
-        this.resource = resource;
+  public VerifyAzureStorageContainerCanBeCreatedStep(
+      AzureConfiguration azureConfig,
+      CrlService crlService,
+      ResourceDao resourceDao,
+      ControlledAzureStorageContainerResource resource) {
+    this.azureConfig = azureConfig;
+    this.crlService = crlService;
+    this.resourceDao = resourceDao;
+    this.resource = resource;
+  }
+
+  @Override
+  public StepResult doStep(FlightContext context) throws InterruptedException, RetryException {
+    final AzureCloudContext azureCloudContext =
+        context
+            .getWorkingMap()
+            .get(ControlledResourceKeys.AZURE_CLOUD_CONTEXT, AzureCloudContext.class);
+    final StorageManager storageManager =
+        crlService.getStorageManager(azureCloudContext, azureConfig);
+
+    try {
+      final WsmResource wsmResource =
+          resourceDao.getResource(resource.getWorkspaceId(), resource.getStorageAccountId());
+      final ControlledAzureStorageResource storageAccount =
+          wsmResource
+              .castToControlledResource()
+              .castByEnum(WsmResourceType.CONTROLLED_AZURE_STORAGE_ACCOUNT);
+
+      context
+          .getWorkingMap()
+          .put(ControlledResourceKeys.STORAGE_ACCOUNT_NAME, storageAccount.getStorageAccountName());
+
+      storageManager
+          .storageAccounts()
+          .getByResourceGroup(
+              azureCloudContext.getAzureResourceGroupId(), storageAccount.getStorageAccountName());
+    } catch (
+        ResourceNotFoundException resourceNotFoundException) { // Thrown by resourceDao.getResource
+      return new StepResult(StepStatus.STEP_RESULT_FAILURE_FATAL, resourceNotFoundException);
+    } catch (ManagementException managementException) { // Thrown by storageManager
+      if (ManagementExceptionUtils.isExceptionCode(
+          managementException, ManagementExceptionUtils.RESOURCE_NOT_FOUND)) {
+        return new StepResult(
+            StepStatus.STEP_RESULT_FAILURE_FATAL,
+            new ResourceNotFoundException(
+                String.format(
+                    "The storage account with ID '%s' cannot be retrieved from Azure.",
+                    resource.getStorageAccountId())));
+      }
+      return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, managementException);
     }
 
-    @Override
-    public StepResult doStep(FlightContext context) throws InterruptedException, RetryException {
-        final AzureCloudContext azureCloudContext =
-                context.getWorkingMap().get(ControlledResourceKeys.AZURE_CLOUD_CONTEXT, AzureCloudContext.class);
-        final StorageManager storageManager = crlService.getStorageManager(azureCloudContext, azureConfig);
-
-        try {
-            final WsmResource wsmResource = resourceDao.getResource(resource.getWorkspaceId(), resource.getStorageAccountId());
-            final ControlledAzureStorageResource storageAccount = wsmResource.castToControlledResource().castByEnum(
-                    WsmResourceType.CONTROLLED_AZURE_STORAGE_ACCOUNT);
-
-            context.getWorkingMap().put(ControlledResourceKeys.STORAGE_ACCOUNT_NAME, storageAccount.getStorageAccountName());
-
-            storageManager.storageAccounts().getByResourceGroup(
-                    azureCloudContext.getAzureResourceGroupId(), storageAccount.getStorageAccountName());
-        } catch (ResourceNotFoundException resourceNotFoundException) { // Thrown by resourceDao.getResource
-            return new StepResult(StepStatus.STEP_RESULT_FAILURE_FATAL, resourceNotFoundException);
-        } catch (ManagementException managementException) { // Thrown by storageManager
-            if (ManagementExceptionUtils.isExceptionCode(managementException, ManagementExceptionUtils.RESOURCE_NOT_FOUND)) {
-                return new StepResult(
-                        StepStatus.STEP_RESULT_FAILURE_FATAL, new ResourceNotFoundException(
-                        String.format("The storage account with ID '%s' cannot be retrieved from Azure.",
-                                resource.getStorageAccountId())));
-            }
-            return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, managementException);
-        }
-
-        try {
-            final String storageAccountName = context.getWorkingMap().get(ControlledResourceKeys.STORAGE_ACCOUNT_NAME, String.class);
-            storageManager.blobContainers().get(
-                    azureCloudContext.getAzureResourceGroupId(),
-                    storageAccountName,
-                    resource.getStorageContainerName()
-            );
-            return new StepResult(
-                    StepStatus.STEP_RESULT_FAILURE_FATAL,
-                    new DuplicateResourceException(
-                            String.format(
-                                    "An Azure Storage Container with name '%s' already exists in storage account '%s'",
-                                    resource.getStorageContainerName(), storageAccountName)));
-        } catch (ManagementException e) {
-            if (ManagementExceptionUtils.isExceptionCode(e, ManagementExceptionUtils.CONTAINER_NOT_FOUND)) {
-                return StepResult.getStepResultSuccess();
-            }
-            return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, e);
-        }
-    }
-
-
-    @Override
-    public StepResult undoStep(FlightContext context) throws InterruptedException {
-        // Nothing to undo
+    try {
+      final String storageAccountName =
+          context.getWorkingMap().get(ControlledResourceKeys.STORAGE_ACCOUNT_NAME, String.class);
+      storageManager
+          .blobContainers()
+          .get(
+              azureCloudContext.getAzureResourceGroupId(),
+              storageAccountName,
+              resource.getStorageContainerName());
+      return new StepResult(
+          StepStatus.STEP_RESULT_FAILURE_FATAL,
+          new DuplicateResourceException(
+              String.format(
+                  "An Azure Storage Container with name '%s' already exists in storage account '%s'",
+                  resource.getStorageContainerName(), storageAccountName)));
+    } catch (ManagementException e) {
+      if (ManagementExceptionUtils.isExceptionCode(
+          e, ManagementExceptionUtils.CONTAINER_NOT_FOUND)) {
         return StepResult.getStepResultSuccess();
+      }
+      return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, e);
     }
+  }
+
+  @Override
+  public StepResult undoStep(FlightContext context) throws InterruptedException {
+    // Nothing to undo
+    return StepResult.getStepResultSuccess();
+  }
 }

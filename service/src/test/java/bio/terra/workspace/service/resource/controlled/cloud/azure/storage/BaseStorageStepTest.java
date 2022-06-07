@@ -18,38 +18,36 @@ import org.springframework.test.context.ActiveProfiles;
 
 import static org.mockito.Mockito.when;
 
-/**
- * Base class for storage account and storage container tests.
- */
+/** Base class for storage account and storage container tests. */
 @ActiveProfiles("azure")
 public class BaseStorageStepTest extends BaseAzureTest {
 
-    protected final String STUB_STRING_RETURN = "stubbed-return";
+  protected final String STUB_STRING_RETURN = "stubbed-return";
 
-    @Mock protected FlightContext mockFlightContext;
-    @Mock protected CrlService mockCrlService;
-    @Mock protected AzureConfiguration mockAzureConfig;
-    @Mock protected AzureCloudContext mockAzureCloudContext;
-    @Mock protected StorageManager mockStorageManager;
-    @Mock protected StorageAccounts mockStorageAccounts;
-    @Mock protected StorageAccount mockStorageAccount;
-    @Mock protected FlightMap mockWorkingMap;
-    final protected ManagementException resourceNotFoundException =
-            new ManagementException(
-                    "Resource was not found.",
-                    /*response=*/ null,
-                    new ManagementError("ResourceNotFound", "Resource was not found."));
+  @Mock protected FlightContext mockFlightContext;
+  @Mock protected CrlService mockCrlService;
+  @Mock protected AzureConfiguration mockAzureConfig;
+  @Mock protected AzureCloudContext mockAzureCloudContext;
+  @Mock protected StorageManager mockStorageManager;
+  @Mock protected StorageAccounts mockStorageAccounts;
+  @Mock protected StorageAccount mockStorageAccount;
+  @Mock protected FlightMap mockWorkingMap;
+  protected final ManagementException resourceNotFoundException =
+      new ManagementException(
+          "Resource was not found.",
+          /*response=*/ null,
+          new ManagementError("ResourceNotFound", "Resource was not found."));
 
-    @BeforeEach
-    public void setup() {
-        when(mockAzureCloudContext.getAzureResourceGroupId()).thenReturn(STUB_STRING_RETURN);
-        when(mockCrlService.getStorageManager(mockAzureCloudContext, mockAzureConfig))
-                .thenReturn(mockStorageManager);
+  @BeforeEach
+  public void setup() {
+    when(mockAzureCloudContext.getAzureResourceGroupId()).thenReturn(STUB_STRING_RETURN);
+    when(mockCrlService.getStorageManager(mockAzureCloudContext, mockAzureConfig))
+        .thenReturn(mockStorageManager);
 
-        when(mockStorageManager.storageAccounts()).thenReturn(mockStorageAccounts);
+    when(mockStorageManager.storageAccounts()).thenReturn(mockStorageAccounts);
 
-        when(mockFlightContext.getWorkingMap()).thenReturn(mockWorkingMap);
-        when(mockWorkingMap.get(ControlledResourceKeys.AZURE_CLOUD_CONTEXT, AzureCloudContext.class))
-                .thenReturn(mockAzureCloudContext);
-    }
+    when(mockFlightContext.getWorkingMap()).thenReturn(mockWorkingMap);
+    when(mockWorkingMap.get(ControlledResourceKeys.AZURE_CLOUD_CONTEXT, AzureCloudContext.class))
+        .thenReturn(mockAzureCloudContext);
+  }
 }

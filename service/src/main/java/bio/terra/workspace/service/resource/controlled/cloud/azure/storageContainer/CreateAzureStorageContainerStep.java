@@ -19,132 +19,144 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class CreateAzureStorageContainerStep implements Step {
-    private static final Logger logger = LoggerFactory.getLogger(CreateAzureStorageContainerStep.class);
-    private final AzureConfiguration azureConfig;
-    private final CrlService crlService;
-    private final ControlledAzureStorageContainerResource resource;
+  private static final Logger logger =
+      LoggerFactory.getLogger(CreateAzureStorageContainerStep.class);
+  private final AzureConfiguration azureConfig;
+  private final CrlService crlService;
+  private final ControlledAzureStorageContainerResource resource;
 
-    public CreateAzureStorageContainerStep(
-            AzureConfiguration azureConfig,
-            CrlService crlService,
-            ControlledAzureStorageContainerResource resource) {
-        this.azureConfig = azureConfig;
-        this.crlService = crlService;
-        this.resource = resource;
+  public CreateAzureStorageContainerStep(
+      AzureConfiguration azureConfig,
+      CrlService crlService,
+      ControlledAzureStorageContainerResource resource) {
+    this.azureConfig = azureConfig;
+    this.crlService = crlService;
+    this.resource = resource;
+  }
+
+  @Override
+  public StepResult doStep(FlightContext context) throws InterruptedException, RetryException {
+    final AzureCloudContext azureCloudContext =
+        context
+            .getWorkingMap()
+            .get(ControlledResourceKeys.AZURE_CLOUD_CONTEXT, AzureCloudContext.class);
+    final StorageManager storageManager =
+        crlService.getStorageManager(azureCloudContext, azureConfig);
+    final String storageAccountName =
+        context.getWorkingMap().get(ControlledResourceKeys.STORAGE_ACCOUNT_NAME, String.class);
+
+    try {
+      storageManager
+          .blobContainers()
+          .defineContainer(resource.getStorageContainerName())
+          .withExistingStorageAccount(
+              azureCloudContext.getAzureResourceGroupId(), storageAccountName)
+          .withPublicAccess(PublicAccess.NONE)
+          .withMetadata("workspaceId", resource.getWorkspaceId().toString())
+          .withMetadata("resourceId", resource.getResourceId().toString())
+          .create(
+              Defaults.buildContext(
+                  CreateStorageContainerRequestData.builder()
+                      .setStorageAccountId(resource.getStorageAccountId())
+                      .setStorageContainerName(resource.getStorageContainerName())
+                      .setResourceGroupName(azureCloudContext.getAzureResourceGroupId())
+                      .build()));
+
+    } catch (ManagementException e) {
+      logger.error(
+          "Failed to create the Azure storage container '{}' with storage account with the ID '{}'. Error Code: {}",
+          resource.getStorageContainerName(),
+          resource.getStorageAccountId(),
+          e.getValue().getCode(),
+          e);
+
+      return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, e);
     }
 
-    @Override
-    public StepResult doStep(FlightContext context) throws InterruptedException, RetryException {
-        final AzureCloudContext azureCloudContext =
-                context
-                        .getWorkingMap()
-                        .get(ControlledResourceKeys.AZURE_CLOUD_CONTEXT, AzureCloudContext.class);
-        final StorageManager storageManager = crlService.getStorageManager(azureCloudContext, azureConfig);
-        final String storageAccountName = context.getWorkingMap().get(ControlledResourceKeys.STORAGE_ACCOUNT_NAME, String.class);
+    return StepResult.getStepResultSuccess();
+  }
 
-        try {
-            storageManager
-                    .blobContainers()
-                    .defineContainer(resource.getStorageContainerName())
-                    .withExistingStorageAccount(azureCloudContext.getAzureResourceGroupId(), storageAccountName)
-                    .withPublicAccess(PublicAccess.NONE)
-                    .withMetadata("workspaceId", resource.getWorkspaceId().toString())
-                    .withMetadata("resourceId", resource.getResourceId().toString()).
-                    create(
-                            Defaults.buildContext(
-                                    CreateStorageContainerRequestData.builder()
-                                            .setStorageAccountId(resource.getStorageAccountId())
-                                            .setStorageContainerName(resource.getStorageContainerName())
-                                            .setResourceGroupName(azureCloudContext.getAzureResourceGroupId())
-                                            .build()));
+  /**
+   * Deletes the storage container if the container is available. If the storage container is
+   * available and deletes fails, the failure is considered fatal and must looked into it.
+   *
+   * @param context
+   * @return Step result.
+   * @throws InterruptedException
+   */
+  @Override
+  public StepResult undoStep(FlightContext context) throws InterruptedException {
+    final AzureCloudContext azureCloudContext =
+        context
+            .getWorkingMap()
+            .get(ControlledResourceKeys.AZURE_CLOUD_CONTEXT, AzureCloudContext.class);
+    final StorageManager storageManager =
+        crlService.getStorageManager(azureCloudContext, azureConfig);
+    final String storageAccountName =
+        context.getWorkingMap().get(ControlledResourceKeys.STORAGE_ACCOUNT_NAME, String.class);
 
-        } catch (ManagementException e) {
-            logger.error(
-                    "Failed to create the Azure storage container '{}' with storage account with the ID '{}'. Error Code: {}",
-                    resource.getStorageContainerName(),
-                    resource.getStorageAccountId(),
-                    e.getValue().getCode(),
-                    e);
-
-            return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, e);
-        }
-
+    try {
+      storageManager
+          .storageAccounts()
+          .getByResourceGroup(azureCloudContext.getAzureResourceGroupId(), storageAccountName);
+    } catch (ManagementException ex) {
+      if (ManagementExceptionUtils.isExceptionCode(
+          ex, ManagementExceptionUtils.RESOURCE_NOT_FOUND)) {
+        logger.warn(
+            "Deletion of the storage container is not required. Parent storage account does not exist. {}",
+            storageAccountName);
         return StepResult.getStepResultSuccess();
+      }
+      logger.error(
+          "Attempt to retrieve parent Azure Storage account before deleting container failed on this try: "
+              + resource.getStorageContainerName(),
+          ex);
+      return new StepResult(StepStatus.STEP_RESULT_FAILURE_FATAL, ex);
+    }
+    try {
+      storageManager
+          .blobContainers()
+          .get(
+              azureCloudContext.getAzureResourceGroupId(),
+              storageAccountName,
+              resource.getStorageContainerName());
+    } catch (ManagementException ex) {
+      if (ManagementExceptionUtils.isExceptionCode(
+          ex, ManagementExceptionUtils.CONTAINER_NOT_FOUND)) {
+        logger.warn(
+            "Deletion of the storage container is not required. Storage container does not exist. {}",
+            resource.getStorageContainerName());
+        return StepResult.getStepResultSuccess();
+      }
+      logger.error(
+          "Attempt to retrieve Azure Storage Container before deleting it failed on this try: "
+              + resource.getStorageContainerName(),
+          ex);
+      return new StepResult(StepStatus.STEP_RESULT_FAILURE_FATAL, ex);
     }
 
-    /**
-     * Deletes the storage container if the container is available. If the storage container is available
-     * and deletes fails, the failure is considered fatal and must looked into it.
-     *
-     * @param context
-     * @return Step result.
-     * @throws InterruptedException
-     */
-    @Override
-    public StepResult undoStep(FlightContext context) throws InterruptedException {
-        final AzureCloudContext azureCloudContext =
-                context
-                        .getWorkingMap()
-                        .get(ControlledResourceKeys.AZURE_CLOUD_CONTEXT, AzureCloudContext.class);
-        final StorageManager storageManager = crlService.getStorageManager(azureCloudContext, azureConfig);
-        final String storageAccountName = context.getWorkingMap().get(ControlledResourceKeys.STORAGE_ACCOUNT_NAME, String.class);
-
-        try {
-            storageManager
-                    .storageAccounts()
-                    .getByResourceGroup(
-                            azureCloudContext.getAzureResourceGroupId(), storageAccountName);
-        } catch (ManagementException ex) {
-            if (ManagementExceptionUtils.isExceptionCode(ex, ManagementExceptionUtils.RESOURCE_NOT_FOUND)) {
-                logger.warn(
-                        "Deletion of the storage container is not required. Parent storage account does not exist. {}",
-                        storageAccountName);
-                return StepResult.getStepResultSuccess();
-            }
-            logger.error(
-                    "Attempt to retrieve parent Azure Storage account before deleting container failed on this try: " +
-                            resource.getStorageContainerName(), ex
-            );
-            return new StepResult(StepStatus.STEP_RESULT_FAILURE_FATAL, ex);
-        }
-        try {
-            storageManager.blobContainers().get(
-                    azureCloudContext.getAzureResourceGroupId(),
-                    storageAccountName,
-                    resource.getStorageContainerName());
-        } catch (ManagementException ex) {
-            if (ManagementExceptionUtils.isExceptionCode(ex, ManagementExceptionUtils.CONTAINER_NOT_FOUND)) {
-                logger.warn(
-                        "Deletion of the storage container is not required. Storage container does not exist. {}",
-                        resource.getStorageContainerName());
-                return StepResult.getStepResultSuccess();
-            }
-            logger.error(
-                    "Attempt to retrieve Azure Storage Container before deleting it failed on this try: " +
-                            resource.getStorageContainerName(), ex
-            );
-            return new StepResult(StepStatus.STEP_RESULT_FAILURE_FATAL, ex);
-        }
-
-        try {
-            logger.warn("Attempting to delete storage container '{}' in account '{}'",
-                    resource.getStorageContainerName(), storageAccountName
-            );
-            storageManager.blobContainers().delete(
-                    azureCloudContext.getAzureResourceGroupId(),
-                    storageAccountName,
-                    resource.getStorageContainerName()
-            );
-            logger.warn("Successfully deleted storage container '{}' in account '{}'",
-                    resource.getStorageContainerName(), storageAccountName
-            );
-            return StepResult.getStepResultSuccess();
-        } catch (ManagementException ex) {
-            logger.error(
-                    "Attempt to delete Azure Storage Container failed on this try: " + resource.getStorageContainerName(),
-                    ex
-            );
-            return new StepResult(StepStatus.STEP_RESULT_FAILURE_FATAL, ex);
-        }
+    try {
+      logger.warn(
+          "Attempting to delete storage container '{}' in account '{}'",
+          resource.getStorageContainerName(),
+          storageAccountName);
+      storageManager
+          .blobContainers()
+          .delete(
+              azureCloudContext.getAzureResourceGroupId(),
+              storageAccountName,
+              resource.getStorageContainerName());
+      logger.warn(
+          "Successfully deleted storage container '{}' in account '{}'",
+          resource.getStorageContainerName(),
+          storageAccountName);
+      return StepResult.getStepResultSuccess();
+    } catch (ManagementException ex) {
+      logger.error(
+          "Attempt to delete Azure Storage Container failed on this try: "
+              + resource.getStorageContainerName(),
+          ex);
+      return new StepResult(StepStatus.STEP_RESULT_FAILURE_FATAL, ex);
     }
+  }
 }

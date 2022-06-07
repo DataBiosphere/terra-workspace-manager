@@ -64,8 +64,6 @@ public class CreateAzureDiskStep implements Step {
     } catch (ManagementException e) {
       // Stairway steps may run multiple times, so we may already have created this resource. In all
       // other cases, surface the exception and attempt to retry.
-      // Azure error codes can be found here:
-      // https://docs.microsoft.com/en-us/azure/azure-resource-manager/templates/common-deployment-errors
       if (ManagementExceptionUtils.isExceptionCode(e, ManagementExceptionUtils.CONFLICT)) {
         logger.info(
             "Azure Disk {} in managed resource group {} already exists",
