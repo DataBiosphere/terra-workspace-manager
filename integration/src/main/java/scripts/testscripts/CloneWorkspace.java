@@ -633,6 +633,14 @@ public class CloneWorkspace extends WorkspaceAllocateTestScriptBase {
         StewardshipType.REFERENCED,
         bucketReferenceDetails.getStewardshipType(),
         "stewardship type preserved");
+    assertEquals(
+        sourceBucketReference.getMetadata().getName(),
+        bucketReferenceDetails.getName(),
+        "Resource name preserved");
+    assertEquals(
+        sourceBucketReference.getMetadata().getDescription(),
+        bucketReferenceDetails.getDescription(),
+        "Description preserved");
     assertNotNull(
         bucketReferenceDetails.getDestinationResourceId(), "destination resource ID populated");
     assertNull(bucketReferenceDetails.getErrorMessage(), "Error message omitted");
