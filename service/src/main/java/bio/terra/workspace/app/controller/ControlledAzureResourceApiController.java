@@ -209,7 +209,7 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
     logger.info(
         String.format(
             "user %s requesting SAS token for Azure storage container %s in workspace %s",
-            userRequest.getEmail(), workspaceUuid.toString(), storageContainerUuid.toString()));
+            userRequest.getEmail(), storageContainerUuid.toString(), workspaceUuid.toString()));
     final List<String> containerActions =
         SamRethrow.onInterrupted(
             () ->
@@ -241,14 +241,18 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
     BlobContainerSasPermission blobContainerSasPermission =
         BlobContainerSasPermission.parse(tokenPermissions.toString());
 
-    //    final ControlledAzureStorageContainerResource resource =
-    //        controlledResourceService
-    //            .getControlledResource(workspaceUuid, storageContainerUuid, userRequest)
-    //            .castByEnum(WsmResourceType.CONTROLLED_AZURE_STORAGE_CONTAINER);
+    final ControlledAzureStorageContainerResource storageContainerResource =
+        controlledResourceService
+            .getControlledResource(workspaceUuid, storageContainerUuid, userRequest)
+            .castByEnum(WsmResourceType.CONTROLLED_AZURE_STORAGE_CONTAINER);
+    final ControlledAzureStorageResource storageAccountResource =
+        controlledResourceService
+            .getControlledResource(
+                workspaceUuid, storageContainerResource.getStorageAccountId(), userRequest)
+            .castByEnum(WsmResourceType.CONTROLLED_AZURE_STORAGE_ACCOUNT);
 
-    // todo: get these from the container resource attributes
-    String storageAccountName = "";
-    String storageContainerName = "";
+    String storageAccountName = storageAccountResource.getStorageAccountName();
+    String storageContainerName = storageContainerResource.getStorageContainerName();
 
     StorageManager storageManager = crlService.getStorageManager(azureCloudContext, azureConfig);
     StorageAccount storageAccount =
