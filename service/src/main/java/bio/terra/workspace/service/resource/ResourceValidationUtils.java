@@ -66,6 +66,16 @@ public class ResourceValidationUtils {
       Pattern.compile("^[a-z0-9]{3,24}$");
 
   /**
+   * Azure Storage Container name validation. A storage container name must be between 3-63
+   * characters in length and may contain numbers, lowercase letters, and dash (-) characters only.
+   * It must start and end with a letter or number. Matching this pattern is necessary but not sufficient for a
+   * valid container name (in particular, the dash character must be immediately preceded and followed by a letter or
+   * number; consecutive dashes are not permitted).
+   */
+  public static final Pattern AZURE_STORAGE_CONTAINER_NAME_VALIDATION_PATTERN =
+      Pattern.compile("^[a-z0-9][-a-z0-9]{1,61}[a-z0-9]$");
+
+  /**
    * BigQuery datasets must be 1-1024 characters, using letters (upper or lowercase), numbers, and
    * underscores.
    */
@@ -374,6 +384,16 @@ public class ResourceValidationUtils {
       logger.warn("Invalid Storage Account name: {}", storageAccountName);
       throw new InvalidReferenceException(
           "Invalid Azure Storage Account name. The name must be 3 to 24 alphanumeric lower case characters.");
+    }
+  }
+
+  public static void validateStorageContainerName(String storageContainerName) {
+    if (!AZURE_STORAGE_CONTAINER_NAME_VALIDATION_PATTERN.matcher(storageContainerName).matches() ||
+            storageContainerName.contains("--")) {
+      logger.warn("Invalid Storage Container name: {}", storageContainerName);
+      throw new InvalidReferenceException(
+              "Invalid Azure Storage Container name. The name must be 3 to 63 alphanumeric lower case characters " +
+                      "or dashes, must start and end with a letter or number, and cannot contain consecutive dashes.");
     }
   }
 

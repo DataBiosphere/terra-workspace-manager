@@ -8,6 +8,7 @@ import bio.terra.stairway.StepResult;
 import bio.terra.stairway.StepStatus;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.app.configuration.external.AzureConfiguration;
+import bio.terra.workspace.common.utils.ManagementExceptionUtils;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import bio.terra.workspace.service.workspace.model.AzureCloudContext;
@@ -15,7 +16,6 @@ import com.azure.core.management.Region;
 import com.azure.core.management.exception.ManagementException;
 import com.azure.resourcemanager.compute.ComputeManager;
 import com.azure.resourcemanager.network.models.IpAllocationMethod;
-import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -65,9 +65,7 @@ public class CreateAzureIpStep implements Step {
     } catch (ManagementException e) {
       // Stairway steps may run multiple times, so we may already have created this resource. In all
       // other cases, surface the exception and attempt to retry.
-      // Azure error codes can be found here:
-      // https://docs.microsoft.com/en-us/azure/azure-resource-manager/templates/common-deployment-errors
-      if (StringUtils.equals(e.getValue().getCode(), "Conflict")) {
+      if (ManagementExceptionUtils.isExceptionCode(e, ManagementExceptionUtils.CONFLICT)) {
         logger.info(
             "Azure IP {} in managed resource group {} already exists",
             resource.getIpName(),
@@ -95,7 +93,7 @@ public class CreateAzureIpStep implements Step {
           .deleteByResourceGroup(azureCloudContext.getAzureResourceGroupId(), resource.getIpName());
     } catch (ManagementException e) {
       // Stairway steps may run multiple times, so we may already have deleted this resource.
-      if (StringUtils.equals(e.getValue().getCode(), "ResourceNotFound")) {
+      if (ManagementExceptionUtils.isExceptionCode(e, ManagementExceptionUtils.RESOURCE_NOT_FOUND)) {
         logger.info(
             "Azure IP {} in managed resource group {} already deleted",
             resource.getIpName(),
