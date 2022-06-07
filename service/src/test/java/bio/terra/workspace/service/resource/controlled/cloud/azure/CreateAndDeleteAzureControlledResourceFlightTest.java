@@ -286,9 +286,8 @@ public class CreateAndDeleteAzureControlledResourceFlightTest extends BaseAzureT
         azureTestUtils.getStorageManager().storageAccounts()::getByResourceGroup);
 
     // Verify containers have been deleted (Can't do this in submitControlledResourceDeletionFlight
-    // because
-    // the get function takes a different number of arguments. Also no need to sleep another 5
-    // seconds.)
+    // because the get function takes a different number of arguments. Also no need to sleep another
+    // 5 seconds.)
     com.azure.core.exception.HttpResponseException exception =
         assertThrows(
             com.azure.core.exception.HttpResponseException.class,

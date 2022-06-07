@@ -101,6 +101,11 @@ public class CreateAzureStorageContainerStep implements Step {
         crlService.getStorageManager(azureCloudContext, azureConfig);
     final String storageAccountName =
         context.getWorkingMap().get(ControlledResourceKeys.STORAGE_ACCOUNT_NAME, String.class);
+    if (storageAccountName == null) {
+      logger.warn("Deletion of the storage container is not required. " +
+              "Parent storage account was not found in the create.");
+      return StepResult.getStepResultSuccess();
+    }
 
     try {
       storageManager
@@ -119,7 +124,7 @@ public class CreateAzureStorageContainerStep implements Step {
           resource.getStorageContainerName(),
           ex.getValue().getCode(),
           ex);
-      return new StepResult(StepStatus.STEP_RESULT_FAILURE_FATAL, ex);
+      return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, ex);
     }
     try {
       storageManager
@@ -141,7 +146,7 @@ public class CreateAzureStorageContainerStep implements Step {
           resource.getStorageContainerName(),
           ex.getValue().getCode(),
           ex);
-      return new StepResult(StepStatus.STEP_RESULT_FAILURE_FATAL, ex);
+      return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, ex);
     }
 
     try {
@@ -162,7 +167,7 @@ public class CreateAzureStorageContainerStep implements Step {
       return StepResult.getStepResultSuccess();
     } catch (ManagementException ex) {
       logger.error(
-          "Attempt to delete Azure storage container failed on this try: '{}'. Error Code: {}.",
+          "Attempt to delete Azure storage container failed: '{}'. Error Code: {}.",
           resource.getStorageContainerName(),
           ex.getValue().getCode(),
           ex);
