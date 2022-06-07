@@ -153,14 +153,14 @@ public class CreateAzureVmStep implements Step {
     } catch (ManagementException e) {
       // Stairway steps may run multiple times, so we may already have created this resource. In all
       // other cases, surface the exception and attempt to retry.
-      if (ManagementExceptionUtils.isConflict(e)) {
+      if (ManagementExceptionUtils.isExceptionCode(e, ManagementExceptionUtils.CONFLICT)) {
         logger.info(
             "Azure Vm {} in managed resource group {} already exists",
             resource.getVmName(),
             azureCloudContext.getAzureResourceGroupId());
         return StepResult.getStepResultSuccess();
       }
-      if (ManagementExceptionUtils.isResourceNotFound(e)) {
+      if (ManagementExceptionUtils.isExceptionCode(e, ManagementExceptionUtils.RESOURCE_NOT_FOUND)) {
         logger.info(
             "Either the disk, ip, or network passed into this createVm does not exist "
                 + String.format(

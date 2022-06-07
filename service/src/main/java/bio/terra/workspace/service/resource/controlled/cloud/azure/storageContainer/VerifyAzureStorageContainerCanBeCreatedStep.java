@@ -62,7 +62,7 @@ public class VerifyAzureStorageContainerCanBeCreatedStep implements Step {
     catch (ResourceNotFoundException resourceNotFoundException) { // Thrown by resourceDao.getResource
       return new StepResult(StepStatus.STEP_RESULT_FAILURE_FATAL, resourceNotFoundException);
     } catch (ManagementException managementException) { // Thrown by storageManager
-      if (ManagementExceptionUtils.isResourceNotFound(managementException)) {
+      if (ManagementExceptionUtils.isExceptionCode(managementException, ManagementExceptionUtils.RESOURCE_NOT_FOUND)) {
         return new StepResult(
                 StepStatus.STEP_RESULT_FAILURE_FATAL, new ResourceNotFoundException(
                 String.format("The storage account with ID '%s' cannot be retrieved from Azure.",
@@ -85,7 +85,7 @@ public class VerifyAzureStorageContainerCanBeCreatedStep implements Step {
                               "An Azure Storage Container with name '%s' already exists in storage account '%s'",
                               resource.getStorageContainerName(), storageAccountName)));
     } catch (ManagementException e) {
-      if (ManagementExceptionUtils.isContainerNotFound(e)) {
+      if (ManagementExceptionUtils.isExceptionCode(e, ManagementExceptionUtils.CONTAINER_NOT_FOUND)) {
         return StepResult.getStepResultSuccess();
       }
       return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, e);

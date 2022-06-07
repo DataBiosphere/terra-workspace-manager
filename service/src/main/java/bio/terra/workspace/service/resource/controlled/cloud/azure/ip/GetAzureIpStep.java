@@ -50,7 +50,7 @@ public class GetAzureIpStep implements Step {
                   "An Azure IP with name %s already exists in resource group %s",
                   azureCloudContext.getAzureResourceGroupId(), resource.getIpName())));
     } catch (ManagementException e) {
-      if (ManagementExceptionUtils.isResourceNotFound(e)) {
+      if (ManagementExceptionUtils.isExceptionCode(e, ManagementExceptionUtils.RESOURCE_NOT_FOUND)) {
         return StepResult.getStepResultSuccess();
       }
       return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, e);

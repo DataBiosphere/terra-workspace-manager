@@ -66,7 +66,7 @@ public class CreateAzureDiskStep implements Step {
       // other cases, surface the exception and attempt to retry.
       // Azure error codes can be found here:
       // https://docs.microsoft.com/en-us/azure/azure-resource-manager/templates/common-deployment-errors
-      if (ManagementExceptionUtils.isConflict(e)) {
+      if (ManagementExceptionUtils.isExceptionCode(e, ManagementExceptionUtils.CONFLICT)) {
         logger.info(
             "Azure Disk {} in managed resource group {} already exists",
             resource.getDiskName(),
@@ -94,7 +94,7 @@ public class CreateAzureDiskStep implements Step {
               azureCloudContext.getAzureResourceGroupId(), resource.getDiskName());
     } catch (ManagementException e) {
       // Stairway steps may run multiple times, so we may already have deleted this resource.
-      if (ManagementExceptionUtils.isResourceNotFound(e)) {
+      if (ManagementExceptionUtils.isExceptionCode(e, ManagementExceptionUtils.RESOURCE_NOT_FOUND)) {
         logger.info(
             "Azure Disk {} in managed resource group {} already deleted",
             resource.getDiskName(),

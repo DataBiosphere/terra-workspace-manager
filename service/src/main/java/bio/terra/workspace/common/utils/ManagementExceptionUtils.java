@@ -8,36 +8,21 @@ import org.apache.commons.lang3.StringUtils;
  *
  * Azure error codes can be found here:
  *   https://docs.microsoft.com/en-us/azure/azure-resource-manager/templates/common-deployment-errors
+ * and
+ *   https://docs.microsoft.com/en-us/rest/api/storageservices/blob-service-error-codes
  */
 public class ManagementExceptionUtils {
 
-    /**
-     * Was the cause of the Azure ManagementException `ResourceNotFound`?
-     */
-    public static boolean isResourceNotFound(ManagementException ex) {
-        return StringUtils.equals(ex.getValue().getCode(), "ResourceNotFound");
-    }
+    public static final String RESOURCE_NOT_FOUND = "ResourceNotFound";
+    public static final String CONTAINER_NOT_FOUND = "ContainerNotFound";
+    public static final String CONFLICT = "Conflict";
+    public static final String SUBNETS_NOT_IN_SAME_VNET = "SubnetsNotInSameVnet";
+    public static final String NIC_RESERVED_FOR_ANOTHER_VM = "NicReservedForAnotherVm";
 
     /**
-     * Was the cause of the Azure ManagementException `ContainerNotFound`?
-     *
-     * See https://docs.microsoft.com/en-us/dotnet/api/microsoft.azure.cosmos.table.storageerrorcodestrings
+     * Returns true iff the exception's code matches the supplied value.
      */
-    public static boolean isContainerNotFound(ManagementException ex) {
-        return StringUtils.equals(ex.getValue().getCode(), "ContainerNotFound");
-    }
-
-    /**
-     * Was the cause of the Azure ManagementException `Conflict`?
-     */
-    public static boolean isConflict(ManagementException ex) {
-        return StringUtils.equals(ex.getValue().getCode(), "Conflict");
-    }
-
-    /**
-     * Was the cause of the Azure ManagementException `SubnetsNotInSameVnet`?
-     */
-    public static boolean isSubnetsNotInSameVnet(ManagementException ex) {
-        return StringUtils.equals(ex.getValue().getCode(), "SubnetsNotInSameVnet");
+    public static boolean isExceptionCode(ManagementException ex, String exceptionCode) {
+        return StringUtils.equals(ex.getValue().getCode(), exceptionCode);
     }
 }

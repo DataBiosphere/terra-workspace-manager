@@ -95,7 +95,7 @@ public class CreateAzureStorageContainerStep implements Step {
               .getByResourceGroup(
                       azureCloudContext.getAzureResourceGroupId(), storageAccountName);
     } catch (ManagementException ex) {
-      if (ManagementExceptionUtils.isResourceNotFound(ex)) {
+      if (ManagementExceptionUtils.isExceptionCode(ex, ManagementExceptionUtils.RESOURCE_NOT_FOUND)) {
         logger.warn(
                 "Deletion of the storage container is not required. Parent storage account does not exist. {}",
                 storageAccountName);
@@ -113,7 +113,7 @@ public class CreateAzureStorageContainerStep implements Step {
               storageAccountName,
               resource.getStorageContainerName());
     } catch (ManagementException ex) {
-      if (ManagementExceptionUtils.isContainerNotFound(ex)) {
+      if (ManagementExceptionUtils.isExceptionCode(ex, ManagementExceptionUtils.CONTAINER_NOT_FOUND)) {
         logger.warn(
                 "Deletion of the storage container is not required. Storage container does not exist. {}",
                 resource.getStorageContainerName());

@@ -1,10 +1,5 @@
 package bio.terra.workspace.service.resource.controlled.cloud.azure;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.junit.jupiter.api.Assertions.fail;
-
 import bio.terra.stairway.FlightState;
 import bio.terra.stairway.FlightStatus;
 import bio.terra.workspace.common.BaseAzureTest;
@@ -13,14 +8,7 @@ import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
 import bio.terra.workspace.common.utils.AzureTestUtils;
 import bio.terra.workspace.common.utils.AzureVmUtils;
 import bio.terra.workspace.connected.UserAccessUtils;
-import bio.terra.workspace.generated.model.ApiAccessScope;
-import bio.terra.workspace.generated.model.ApiAzureDiskCreationParameters;
-import bio.terra.workspace.generated.model.ApiAzureIpCreationParameters;
-import bio.terra.workspace.generated.model.ApiAzureNetworkCreationParameters;
-import bio.terra.workspace.generated.model.ApiAzureRelayNamespaceCreationParameters;
-import bio.terra.workspace.generated.model.ApiAzureStorageCreationParameters;
-import bio.terra.workspace.generated.model.ApiAzureVmCreationParameters;
-import bio.terra.workspace.generated.model.ApiManagedBy;
+import bio.terra.workspace.generated.model.*;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.resource.WsmResourceService;
@@ -30,8 +18,8 @@ import bio.terra.workspace.service.resource.controlled.cloud.azure.ip.Controlled
 import bio.terra.workspace.service.resource.controlled.cloud.azure.network.ControlledAzureNetworkResource;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.relayNamespace.ControlledAzureRelayNamespaceResource;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.storage.ControlledAzureStorageResource;
-import bio.terra.workspace.service.resource.controlled.cloud.azure.vm.AzureVmHelper;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.storageContainer.ControlledAzureStorageContainerResource;
+import bio.terra.workspace.service.resource.controlled.cloud.azure.vm.AzureVmHelper;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.vm.ControlledAzureVmResource;
 import bio.terra.workspace.service.resource.controlled.flight.create.CreateControlledResourceFlight;
 import bio.terra.workspace.service.resource.controlled.flight.delete.DeleteControlledResourceFlight;
@@ -226,78 +214,78 @@ public class CreateAndDeleteAzureControlledResourceFlightTest extends BaseAzureT
         AuthenticatedUserRequest userRequest = userAccessUtils.defaultUserAuthRequest();
         createCloudContext(workspaceUuid, userRequest);
 
-    final ApiAzureStorageCreationParameters accountCreationParameters =
-            ControlledResourceFixtures.getAzureStorageCreationParameters();
+        final ApiAzureStorageCreationParameters accountCreationParameters =
+                ControlledResourceFixtures.getAzureStorageCreationParameters();
 
-    final UUID accountResourceId = UUID.randomUUID();
-    ControlledAzureStorageResource accountResource =
-            ControlledAzureStorageResource.builder()
-                    .common(
-                            ControlledResourceFields.builder()
-                                    .workspaceUuid(workspaceUuid)
-                                    .resourceId(accountResourceId)
-                                    .name(getAzureName("rs"))
-                                    .description(getAzureName("rs-desc"))
-                                    .cloningInstructions(CloningInstructions.COPY_NOTHING)
-                                    .accessScope(AccessScopeType.fromApi(ApiAccessScope.SHARED_ACCESS))
-                                    .managedBy(ManagedByType.fromApi(ApiManagedBy.USER))
-                                    .build())
-                    .storageAccountName(accountCreationParameters.getStorageAccountName())
-                    .region(accountCreationParameters.getRegion())
-                    .build();
+        final UUID accountResourceId = UUID.randomUUID();
+        ControlledAzureStorageResource accountResource =
+                ControlledAzureStorageResource.builder()
+                        .common(
+                                ControlledResourceFields.builder()
+                                        .workspaceUuid(workspaceUuid)
+                                        .resourceId(accountResourceId)
+                                        .name(getAzureName("rs"))
+                                        .description(getAzureName("rs-desc"))
+                                        .cloningInstructions(CloningInstructions.COPY_NOTHING)
+                                        .accessScope(AccessScopeType.fromApi(ApiAccessScope.SHARED_ACCESS))
+                                        .managedBy(ManagedByType.fromApi(ApiManagedBy.USER))
+                                        .build())
+                        .storageAccountName(accountCreationParameters.getStorageAccountName())
+                        .region(accountCreationParameters.getRegion())
+                        .build();
 
-    // Submit a storage account creation flight and then verify the resource exists in the workspace.
-    createResource(workspaceUuid, userRequest, accountResource, WsmResourceType.CONTROLLED_AZURE_STORAGE_ACCOUNT);
+        // Submit a storage account creation flight and then verify the resource exists in the workspace.
+        createResource(workspaceUuid, userRequest, accountResource, WsmResourceType.CONTROLLED_AZURE_STORAGE_ACCOUNT);
 
-    // Submit a storage container creation flight and then verify the resource exists in the workspace.
-    final UUID containerResourceId = UUID.randomUUID();
-    final String containerName = ControlledResourceFixtures.uniqueBucketName();
-    ControlledAzureStorageContainerResource containerResource =
-            ControlledAzureStorageContainerResource.builder()
-                    .common(
-                            ControlledResourceFields.builder()
-                                    .workspaceUuid(workspaceUuid)
-                                    .resourceId(containerResourceId)
-                                    .name(getAzureName("rc"))
-                                    .description(getAzureName("rc-desc"))
-                                    .cloningInstructions(CloningInstructions.COPY_NOTHING)
-                                    .accessScope(AccessScopeType.fromApi(ApiAccessScope.SHARED_ACCESS))
-                                    .managedBy(ManagedByType.fromApi(ApiManagedBy.USER))
-                                    .build())
-                    .storageAccountId(accountResourceId)
-                    .storageContainerName(containerName)
-                    .build();
-    createResource(workspaceUuid, userRequest, containerResource, WsmResourceType.CONTROLLED_AZURE_STORAGE_CONTAINER);
+        // Submit a storage container creation flight and then verify the resource exists in the workspace.
+        final UUID containerResourceId = UUID.randomUUID();
+        final String containerName = ControlledResourceFixtures.uniqueBucketName();
+        ControlledAzureStorageContainerResource containerResource =
+                ControlledAzureStorageContainerResource.builder()
+                        .common(
+                                ControlledResourceFields.builder()
+                                        .workspaceUuid(workspaceUuid)
+                                        .resourceId(containerResourceId)
+                                        .name(getAzureName("rc"))
+                                        .description(getAzureName("rc-desc"))
+                                        .cloningInstructions(CloningInstructions.COPY_NOTHING)
+                                        .accessScope(AccessScopeType.fromApi(ApiAccessScope.SHARED_ACCESS))
+                                        .managedBy(ManagedByType.fromApi(ApiManagedBy.USER))
+                                        .build())
+                        .storageAccountId(accountResourceId)
+                        .storageContainerName(containerName)
+                        .build();
+        createResource(workspaceUuid, userRequest, containerResource, WsmResourceType.CONTROLLED_AZURE_STORAGE_CONTAINER);
 
-    // clean up resources - delete storage container resource
-    submitControlledResourceDeletionFlight(
-            workspaceUuid,
-            userRequest,
-            containerResource,
-            azureTestUtils.getAzureCloudContext().getAzureResourceGroupId(),
-            containerResource.getStorageContainerName(),
-            null); // Don't sleep/verify deletion yet.
+        // clean up resources - delete storage container resource
+        submitControlledResourceDeletionFlight(
+                workspaceUuid,
+                userRequest,
+                containerResource,
+                azureTestUtils.getAzureCloudContext().getAzureResourceGroupId(),
+                containerResource.getStorageContainerName(),
+                null); // Don't sleep/verify deletion yet.
 
-    // clean up resources - delete storage account resource
-    submitControlledResourceDeletionFlight(
-            workspaceUuid,
-            userRequest,
-            accountResource,
-            azureTestUtils.getAzureCloudContext().getAzureResourceGroupId(),
-            accountResource.getStorageAccountName(),
-            azureTestUtils.getStorageManager().storageAccounts()::getByResourceGroup);
+        // clean up resources - delete storage account resource
+        submitControlledResourceDeletionFlight(
+                workspaceUuid,
+                userRequest,
+                accountResource,
+                azureTestUtils.getAzureCloudContext().getAzureResourceGroupId(),
+                accountResource.getStorageAccountName(),
+                azureTestUtils.getStorageManager().storageAccounts()::getByResourceGroup);
 
-    // Verify containers have been deleted (Can't do this in submitControlledResourceDeletionFlight because
-    // the get function takes a different number of arguments. Also no need to sleep another 5 seconds.)
-    com.azure.core.exception.HttpResponseException exception =
-            assertThrows(
-                    com.azure.core.exception.HttpResponseException.class,
-                    () -> azureTestUtils.getStorageManager().blobContainers().get(
-                            azureTestUtils.getAzureCloudContext().getAzureResourceGroupId(),
-                            accountResource.getStorageAccountName(),
-                            containerName));
-    assertEquals(404, exception.getResponse().getStatusCode());
-  }
+        // Verify containers have been deleted (Can't do this in submitControlledResourceDeletionFlight because
+        // the get function takes a different number of arguments. Also no need to sleep another 5 seconds.)
+        com.azure.core.exception.HttpResponseException exception =
+                assertThrows(
+                        com.azure.core.exception.HttpResponseException.class,
+                        () -> azureTestUtils.getStorageManager().blobContainers().get(
+                                azureTestUtils.getAzureCloudContext().getAzureResourceGroupId(),
+                                accountResource.getStorageAccountName(),
+                                containerName));
+        assertEquals(404, exception.getResponse().getStatusCode());
+    }
 
     @Test
     public void createAzureDiskControlledResource() throws InterruptedException {

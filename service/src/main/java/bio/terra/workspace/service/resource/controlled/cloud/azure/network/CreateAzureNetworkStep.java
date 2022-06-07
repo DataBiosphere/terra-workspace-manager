@@ -106,14 +106,14 @@ public class CreateAzureNetworkStep implements Step {
     } catch (ManagementException e) {
       // Stairway steps may run multiple times, so we may already have created this resource. In all
       // other cases, surface the exception and attempt to retry.
-      if (ManagementExceptionUtils.isConflict(e)) {
+      if (ManagementExceptionUtils.isExceptionCode(e, ManagementExceptionUtils.CONFLICT)) {
         logger.info(
             "Azure Network {} in managed resource group {} already exists",
             resource.getNetworkName(),
             azureCloudContext.getAzureResourceGroupId());
         return StepResult.getStepResultSuccess();
       }
-      if (ManagementExceptionUtils.isSubnetsNotInSameVnet(e)) {
+      if (ManagementExceptionUtils.isExceptionCode(e, ManagementExceptionUtils.SUBNETS_NOT_IN_SAME_VNET)) {
         logger.info(
             "Azure Network {} and Subnet {} in managed resource group {} must belong to the same virtual network",
             resource.getNetworkName(),
@@ -143,7 +143,7 @@ public class CreateAzureNetworkStep implements Step {
               azureCloudContext.getAzureResourceGroupId(), resource.getNetworkName());
     } catch (ManagementException e) {
       // Stairway steps may run multiple times, so we may already have deleted this resource.
-      if (ManagementExceptionUtils.isResourceNotFound(e)) {
+      if (ManagementExceptionUtils.isExceptionCode(e, ManagementExceptionUtils.RESOURCE_NOT_FOUND)) {
         logger.info(
             "Azure Network {} in managed resource group {} already deleted",
             resource.getNetworkName(),
