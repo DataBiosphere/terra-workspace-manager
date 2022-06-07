@@ -42,8 +42,15 @@ public class CreateAzureStorageContainerStep implements Step {
             .get(ControlledResourceKeys.AZURE_CLOUD_CONTEXT, AzureCloudContext.class);
     final StorageManager storageManager =
         crlService.getStorageManager(azureCloudContext, azureConfig);
+
+    // The storage account name is stored by VerifyAzureStorageContainerCanBeCreated.
     final String storageAccountName =
         context.getWorkingMap().get(ControlledResourceKeys.STORAGE_ACCOUNT_NAME, String.class);
+    if (storageAccountName == null) {
+      logger.error("The storage account name has not been added to the working map. " +
+              "VerifyAzureStorageContainerCanBeCreated must be executed first." );
+      return new StepResult(StepStatus.STEP_RESULT_FAILURE_FATAL);
+    }
 
     try {
       storageManager

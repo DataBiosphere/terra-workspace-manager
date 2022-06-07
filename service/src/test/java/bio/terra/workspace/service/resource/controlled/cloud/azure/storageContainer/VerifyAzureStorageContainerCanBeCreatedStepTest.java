@@ -3,6 +3,7 @@ package bio.terra.workspace.service.resource.controlled.cloud.azure.storageConta
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.StepStatus;
 import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
+import bio.terra.workspace.common.utils.ManagementExceptionUtils;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.generated.model.ApiAzureStorageContainerCreationParameters;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.storage.BaseStorageStepTest;
@@ -43,7 +44,7 @@ public class VerifyAzureStorageContainerCanBeCreatedStepTest extends BaseStorage
       new ManagementException(
           "Resource was not found.",
           /*response=*/ null,
-          new ManagementError("ContainerNotFound", "Container was not found."));
+          new ManagementError(ManagementExceptionUtils.CONTAINER_NOT_FOUND, "Container was not found."));
 
   private VerifyAzureStorageContainerCanBeCreatedStep verifyCanBeCreatedStep;
 

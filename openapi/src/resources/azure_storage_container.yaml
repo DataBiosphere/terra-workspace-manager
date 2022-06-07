@@ -6,7 +6,7 @@ components:
       type: object
       properties:
         storageAccountId:
-          description: The resource ID of the storage account in which the container shoudl be created.
+          description: The resource ID of the storage account in which the container should be created.
           type: string
           format: uuid
         storageContainerName:
