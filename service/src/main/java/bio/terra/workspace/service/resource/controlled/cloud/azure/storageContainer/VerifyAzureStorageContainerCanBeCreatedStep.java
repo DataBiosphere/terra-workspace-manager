@@ -18,6 +18,8 @@ import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.Contr
 import bio.terra.workspace.service.workspace.model.AzureCloudContext;
 import com.azure.core.management.exception.ManagementException;
 import com.azure.resourcemanager.storage.StorageManager;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Verifies that the storage account exists in the workspace, and that the storage container does
@@ -26,6 +28,8 @@ import com.azure.resourcemanager.storage.StorageManager;
  */
 public class VerifyAzureStorageContainerCanBeCreatedStep implements Step {
 
+  private static final Logger logger =
+          LoggerFactory.getLogger(VerifyAzureStorageContainerCanBeCreatedStep.class);
   private final AzureConfiguration azureConfig;
   private final CrlService crlService;
   private final ResourceDao resourceDao;
@@ -69,7 +73,12 @@ public class VerifyAzureStorageContainerCanBeCreatedStep implements Step {
               azureCloudContext.getAzureResourceGroupId(), storageAccount.getStorageAccountName());
     } catch (
         ResourceNotFoundException resourceNotFoundException) { // Thrown by resourceDao.getResource
-      return new StepResult(StepStatus.STEP_RESULT_FAILURE_FATAL, resourceNotFoundException);
+      return new StepResult(
+          StepStatus.STEP_RESULT_FAILURE_FATAL,
+          new ResourceNotFoundException(
+              String.format(
+                  "The storage account with ID '%s' cannot be retrieved from the WSM resource manager.",
+                  resource.getStorageAccountId())));
     } catch (ManagementException managementException) { // Thrown by storageManager
       if (ManagementExceptionUtils.isExceptionCode(
           managementException, ManagementExceptionUtils.RESOURCE_NOT_FOUND)) {
@@ -77,9 +86,14 @@ public class VerifyAzureStorageContainerCanBeCreatedStep implements Step {
             StepStatus.STEP_RESULT_FAILURE_FATAL,
             new ResourceNotFoundException(
                 String.format(
-                    "The storage account with ID '%s' cannot be retrieved from Azure.",
+                    "The storage account with ID '%s' does not exist in Azure.",
                     resource.getStorageAccountId())));
       }
+      logger.warn(
+              "Attempt to retrieve storage account with ID '{}' from Azure failed on this try. Error Code: {}.",
+              resource.getStorageAccountId(),
+              managementException.getValue().getCode(),
+              managementException);
       return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, managementException);
     }
 
@@ -103,6 +117,11 @@ public class VerifyAzureStorageContainerCanBeCreatedStep implements Step {
           e, ManagementExceptionUtils.CONTAINER_NOT_FOUND)) {
         return StepResult.getStepResultSuccess();
       }
+      logger.warn(
+          "Attempt to retrieve storage container '{}' from Azure failed on this try. Error Code: {}.",
+          resource.getStorageContainerName(),
+          e.getValue().getCode(),
+          e);
       return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, e);
     }
   }

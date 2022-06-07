@@ -108,8 +108,9 @@ public class CreateAzureStorageContainerStep implements Step {
         return StepResult.getStepResultSuccess();
       }
       logger.error(
-          "Attempt to retrieve parent Azure Storage account before deleting container failed on this try: "
-              + resource.getStorageContainerName(),
+          "Attempt to retrieve parent Azure storage account before deleting container failed on this try: '{}'. Error Code: {}.",
+          resource.getStorageContainerName(),
+          ex.getValue().getCode(),
           ex);
       return new StepResult(StepStatus.STEP_RESULT_FAILURE_FATAL, ex);
     }
@@ -129,8 +130,9 @@ public class CreateAzureStorageContainerStep implements Step {
         return StepResult.getStepResultSuccess();
       }
       logger.error(
-          "Attempt to retrieve Azure Storage Container before deleting it failed on this try: "
-              + resource.getStorageContainerName(),
+          "Attempt to retrieve Azure storage container before deleting it failed on this try: '{}'. Error Code: {}.",
+          resource.getStorageContainerName(),
+          ex.getValue().getCode(),
           ex);
       return new StepResult(StepStatus.STEP_RESULT_FAILURE_FATAL, ex);
     }
@@ -153,8 +155,9 @@ public class CreateAzureStorageContainerStep implements Step {
       return StepResult.getStepResultSuccess();
     } catch (ManagementException ex) {
       logger.error(
-          "Attempt to delete Azure Storage Container failed on this try: "
-              + resource.getStorageContainerName(),
+          "Attempt to delete Azure storage container failed on this try: '{}'. Error Code: {}.",
+          resource.getStorageContainerName(),
+          ex.getValue().getCode(),
           ex);
       return new StepResult(StepStatus.STEP_RESULT_FAILURE_FATAL, ex);
     }

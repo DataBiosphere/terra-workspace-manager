@@ -68,11 +68,17 @@ public class DeleteAzureStorageContainerStep implements Step {
       return StepResult.getStepResultSuccess();
     } catch (
         ResourceNotFoundException resourceNotFoundException) { // Thrown by resourceDao.getResource
-      return new StepResult(StepStatus.STEP_RESULT_FAILURE_FATAL, resourceNotFoundException);
+      return new StepResult(
+          StepStatus.STEP_RESULT_FAILURE_FATAL,
+          new ResourceNotFoundException(
+              String.format(
+                  "The storage account with ID '%s' cannot be retrieved from the WSM resource manager.",
+                  resource.getStorageAccountId())));
     } catch (ManagementException ex) {
       logger.warn(
-          "Attempt to delete Azure Storage Container failed on this try: "
-              + resource.getStorageContainerName(),
+          "Attempt to delete Azure storage container failed on this try: '{}'. Error Code: {}.",
+          resource.getStorageContainerName(),
+          ex.getValue().getCode(),
           ex);
       return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, ex);
     }
