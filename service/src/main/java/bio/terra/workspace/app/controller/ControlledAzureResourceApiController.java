@@ -1,18 +1,14 @@
 package bio.terra.workspace.app.controller;
 
 import bio.terra.common.exception.ApiException;
-import bio.terra.common.exception.ForbiddenException;
-import bio.terra.workspace.app.configuration.external.AzureConfiguration;
 import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
 import bio.terra.workspace.common.utils.AzureVmUtils;
 import bio.terra.workspace.generated.controller.ControlledAzureResourceApi;
 import bio.terra.workspace.generated.model.*;
-import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequestFactory;
 import bio.terra.workspace.service.iam.SamRethrow;
 import bio.terra.workspace.service.iam.SamService;
-import bio.terra.workspace.service.iam.model.SamConstants;
 import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.resource.ResourceValidationUtils;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceService;
@@ -25,18 +21,6 @@ import bio.terra.workspace.service.resource.controlled.cloud.azure.storageContai
 import bio.terra.workspace.service.resource.controlled.cloud.azure.vm.ControlledAzureVmResource;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResourceFields;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
-import bio.terra.workspace.service.workspace.AzureCloudContextService;
-import bio.terra.workspace.service.workspace.model.AzureCloudContext;
-import com.azure.core.http.HttpClient;
-import com.azure.resourcemanager.storage.StorageManager;
-import com.azure.resourcemanager.storage.models.StorageAccount;
-import com.azure.resourcemanager.storage.models.StorageAccountKey;
-import com.azure.storage.blob.BlobContainerClient;
-import com.azure.storage.blob.BlobContainerClientBuilder;
-import com.azure.storage.blob.sas.BlobContainerSasPermission;
-import com.azure.storage.blob.sas.BlobServiceSasSignatureValues;
-import com.azure.storage.common.StorageSharedKeyCredential;
-import com.azure.storage.common.sas.SasProtocol;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -47,8 +31,6 @@ import org.springframework.stereotype.Controller;
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
 import java.time.OffsetDateTime;
-import java.util.List;
-import java.util.Locale;
 import java.util.UUID;
 
 @Controller
@@ -58,9 +40,6 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
 
   private final ControlledResourceService controlledResourceService;
   private final JobService jobService;
-  private final AzureCloudContextService azureCloudContextService;
-  private final CrlService crlService;
-  private final AzureConfiguration azureConfig;
   private final FeatureConfiguration features;
 
   @Autowired
@@ -69,17 +48,11 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
       ControlledResourceService controlledResourceService,
       SamService samService,
       JobService jobService,
-      AzureCloudContextService azureCloudContextService,
-      CrlService crlService,
-      AzureConfiguration azureConfig,
       HttpServletRequest request,
       FeatureConfiguration features) {
     super(authenticatedUserRequestFactory, request, controlledResourceService, samService);
     this.controlledResourceService = controlledResourceService;
     this.jobService = jobService;
-    this.azureCloudContextService = azureCloudContextService;
-    this.crlService = crlService;
-    this.azureConfig = azureConfig;
     this.features = features;
   }
 
@@ -203,8 +176,6 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
     features.azureEnabledCheck();
 
     final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
-    AzureCloudContext azureCloudContext =
-        azureCloudContextService.getRequiredAzureCloudContext(workspaceUuid);
     final String userEmail =
         SamRethrow.onInterrupted(
             () -> getSamService().getUserEmailFromSam(userRequest), "getUserEmailFromSam");
@@ -215,72 +186,12 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
         storageContainerUuid.toString(),
         workspaceUuid.toString());
 
-    final List<String> containerActions =
-        SamRethrow.onInterrupted(
-            () ->
-                getSamService()
-                    .listResourceActions(
-                        userRequest,
-                        SamConstants.SamResource.CONTROLLED_USER_SHARED,
-                        storageContainerUuid.toString()),
-            "listResourceActions");
-
-    StringBuilder tokenPermissions = new StringBuilder();
-    for (String action : containerActions) {
-      if (action.equals(SamConstants.SamControlledResourceActions.READ_ACTION)) {
-        tokenPermissions.append("rl");
-      } else if (action.equals(SamConstants.SamControlledResourceActions.WRITE_ACTION)) {
-        tokenPermissions.append("acwd");
-      }
-    }
-
-    if (tokenPermissions.isEmpty()) {
-      throw new ForbiddenException(
-          String.format(
-              "User %s is not authorized to get a SAS token for container %s",
-              userEmail, storageContainerUuid.toString()));
-    }
-
-    BlobContainerSasPermission blobContainerSasPermission =
-        BlobContainerSasPermission.parse(tokenPermissions.toString());
-
-    final ControlledAzureStorageContainerResource storageContainerResource =
-        controlledResourceService
-            .getControlledResource(workspaceUuid, storageContainerUuid, userRequest)
-            .castByEnum(WsmResourceType.CONTROLLED_AZURE_STORAGE_CONTAINER);
-    final ControlledAzureStorageResource storageAccountResource =
-        controlledResourceService
-            .getControlledResource(
-                workspaceUuid, storageContainerResource.getStorageAccountId(), userRequest)
-            .castByEnum(WsmResourceType.CONTROLLED_AZURE_STORAGE_ACCOUNT);
-
-    String storageAccountName = storageAccountResource.getStorageAccountName();
-    String storageContainerName = storageContainerResource.getStorageContainerName();
-
-    StorageManager storageManager = crlService.getStorageManager(azureCloudContext, azureConfig);
-    StorageAccount storageAccount =
-        storageManager
-            .storageAccounts()
-            .getByResourceGroup(azureCloudContext.getAzureResourceGroupId(), storageAccountName);
-
-    StorageAccountKey key = storageAccount.getKeys().get(0);
-    var storageKey = new StorageSharedKeyCredential(storageAccountName, key.value());
-    String endpoint =
-        String.format(Locale.ROOT, "https://%s.blob.core.windows.net", storageAccountName);
-    OffsetDateTime expiryTime = OffsetDateTime.now().plusHours(1);
     OffsetDateTime startTime = OffsetDateTime.now().minusMinutes(15);
-    BlobContainerClient blobContainerClient =
-        new BlobContainerClientBuilder()
-            .credential(storageKey)
-            .endpoint(endpoint)
-            .httpClient(HttpClient.createDefault())
-            .containerName(storageContainerName)
-            .buildClient();
-    BlobServiceSasSignatureValues sasValues =
-        new BlobServiceSasSignatureValues(expiryTime, blobContainerSasPermission)
-            .setStartTime(startTime)
-            .setProtocol(SasProtocol.HTTPS_ONLY);
-    String sas = blobContainerClient.generateSas(sasValues);
+    OffsetDateTime expiryTime = OffsetDateTime.now().plusHours(1);
+    String sas =
+        controlledResourceService.createAzureStorageContainerSasToken(
+            workspaceUuid, storageContainerUuid, startTime, expiryTime, userRequest);
+
     logger.info(
         "SAS token with expiry time of {} generated for user {} on container {} in workspace {}",
         expiryTime.toString(),

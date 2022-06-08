@@ -1,17 +1,21 @@
 package bio.terra.workspace.service.resource.controlled;
 
 import bio.terra.common.exception.BadRequestException;
+import bio.terra.common.exception.ForbiddenException;
 import bio.terra.common.exception.ServiceUnavailableException;
 import bio.terra.stairway.FlightState;
+import bio.terra.workspace.app.configuration.external.AzureConfiguration;
 import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
 import bio.terra.workspace.common.exception.InternalLogicException;
 import bio.terra.workspace.db.ApplicationDao;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.generated.model.*;
+import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamRethrow;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.iam.model.ControlledResourceIamRole;
+import bio.terra.workspace.service.iam.model.SamConstants;
 import bio.terra.workspace.service.iam.model.SamConstants.SamControlledResourceActions;
 import bio.terra.workspace.service.job.JobBuilder;
 import bio.terra.workspace.service.job.JobMapKeys;
@@ -19,6 +23,8 @@ import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.resource.ResourceValidationUtils;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceSyncMapping.SyncMapping;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.relayNamespace.ControlledAzureRelayNamespaceResource;
+import bio.terra.workspace.service.resource.controlled.cloud.azure.storage.ControlledAzureStorageResource;
+import bio.terra.workspace.service.resource.controlled.cloud.azure.storageContainer.ControlledAzureStorageContainerResource;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.vm.ControlledAzureVmResource;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.GcpPolicyBuilder;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook.ControlledAiNotebookInstanceResource;
@@ -36,26 +42,38 @@ import bio.terra.workspace.service.resource.controlled.model.ManagedByType;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.model.StewardshipType;
 import bio.terra.workspace.service.resource.model.WsmResource;
+import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.stage.StageService;
+import bio.terra.workspace.service.workspace.AzureCloudContextService;
 import bio.terra.workspace.service.workspace.GcpCloudContextService;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ResourceKeys;
-import bio.terra.workspace.service.workspace.model.CloudPlatform;
-import bio.terra.workspace.service.workspace.model.GcpCloudContext;
-import bio.terra.workspace.service.workspace.model.OperationType;
-import bio.terra.workspace.service.workspace.model.WsmApplication;
+import bio.terra.workspace.service.workspace.model.*;
+import com.azure.core.http.HttpClient;
+import com.azure.resourcemanager.storage.StorageManager;
+import com.azure.resourcemanager.storage.models.StorageAccount;
+import com.azure.resourcemanager.storage.models.StorageAccountKey;
+import com.azure.storage.blob.BlobContainerClient;
+import com.azure.storage.blob.BlobContainerClientBuilder;
+import com.azure.storage.blob.sas.BlobContainerSasPermission;
+import com.azure.storage.blob.sas.BlobServiceSasSignatureValues;
+import com.azure.storage.common.StorageSharedKeyCredential;
+import com.azure.storage.common.sas.SasProtocol;
 import com.google.cloud.Policy;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
+
+import javax.annotation.Nullable;
 import java.time.Duration;
 import java.time.Instant;
+import java.time.OffsetDateTime;
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
-import javax.annotation.Nullable;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
 
 /** CRUD methods for controlled objects. */
 @Component
@@ -73,6 +91,9 @@ public class ControlledResourceService {
   private final StageService stageService;
   private final SamService samService;
   private final GcpCloudContextService gcpCloudContextService;
+  private final AzureCloudContextService azureCloudContextService;
+  private final AzureConfiguration azureConfiguration;
+  private final CrlService crlService;
   private final ControlledResourceMetadataManager controlledResourceMetadataManager;
   private final FeatureConfiguration features;
 
@@ -85,6 +106,9 @@ public class ControlledResourceService {
       StageService stageService,
       SamService samService,
       GcpCloudContextService gcpCloudContextService,
+      AzureCloudContextService azureCloudContextService,
+      AzureConfiguration azureConfiguration,
+      CrlService crlService,
       ControlledResourceMetadataManager controlledResourceMetadataManager,
       FeatureConfiguration features) {
     this.jobService = jobService;
@@ -94,6 +118,9 @@ public class ControlledResourceService {
     this.stageService = stageService;
     this.samService = samService;
     this.gcpCloudContextService = gcpCloudContextService;
+    this.azureCloudContextService = azureCloudContextService;
+    this.azureConfiguration = azureConfiguration;
+    this.crlService = crlService;
     this.controlledResourceMetadataManager = controlledResourceMetadataManager;
     this.features = features;
   }
@@ -134,6 +161,86 @@ public class ControlledResourceService {
     String jobId = jobBuilder.submit();
     waitForResourceOrJob(resource.getWorkspaceId(), resource.getResourceId(), jobId);
     return jobId;
+  }
+
+  private BlobContainerSasPermission getSasTokenPermissions(
+      AuthenticatedUserRequest userRequest, UUID storageContainerUuid) {
+    final List<String> containerActions =
+        SamRethrow.onInterrupted(
+            () ->
+                samService.listResourceActions(
+                    userRequest,
+                    SamConstants.SamResource.CONTROLLED_USER_SHARED,
+                    storageContainerUuid.toString()),
+            "listResourceActions");
+
+    StringBuilder tokenPermissions = new StringBuilder();
+    for (String action : containerActions) {
+      if (action.equals(SamConstants.SamControlledResourceActions.READ_ACTION)) {
+        tokenPermissions.append("rl");
+      } else if (action.equals(SamConstants.SamControlledResourceActions.WRITE_ACTION)) {
+        tokenPermissions.append("acwd");
+      }
+    }
+
+    if (tokenPermissions.isEmpty()) {
+      throw new ForbiddenException(
+          String.format(
+              "User is not authorized to get a SAS token for container %s",
+              storageContainerUuid.toString()));
+    }
+
+    return BlobContainerSasPermission.parse(tokenPermissions.toString());
+  }
+
+  private StorageSharedKeyCredential getStorageAccountKey(
+      UUID workspaceUuid, String storageAccountName) {
+    AzureCloudContext azureCloudContext =
+        azureCloudContextService.getRequiredAzureCloudContext(workspaceUuid);
+    StorageManager storageManager =
+        crlService.getStorageManager(azureCloudContext, azureConfiguration);
+    StorageAccount storageAccount =
+        storageManager
+            .storageAccounts()
+            .getByResourceGroup(azureCloudContext.getAzureResourceGroupId(), storageAccountName);
+
+    StorageAccountKey key = storageAccount.getKeys().get(0);
+    return new StorageSharedKeyCredential(storageAccountName, key.value());
+  }
+
+  public String createAzureStorageContainerSasToken(
+      UUID workspaceUuid,
+      UUID storageContainerUuid,
+      OffsetDateTime startTime,
+      OffsetDateTime expiryTime,
+      AuthenticatedUserRequest userRequest) {
+    BlobContainerSasPermission blobContainerSasPermission =
+        getSasTokenPermissions(userRequest, storageContainerUuid);
+
+    final ControlledAzureStorageContainerResource storageContainerResource =
+        getControlledResource(workspaceUuid, storageContainerUuid, userRequest)
+            .castByEnum(WsmResourceType.CONTROLLED_AZURE_STORAGE_CONTAINER);
+    final ControlledAzureStorageResource storageAccountResource =
+        getControlledResource(
+                workspaceUuid, storageContainerResource.getStorageAccountId(), userRequest)
+            .castByEnum(WsmResourceType.CONTROLLED_AZURE_STORAGE_ACCOUNT);
+    String storageAccountName = storageAccountResource.getStorageAccountName();
+    String endpoint =
+        String.format(Locale.ROOT, "https://%s.blob.core.windows.net", storageAccountName);
+    StorageSharedKeyCredential storageKey = getStorageAccountKey(workspaceUuid, storageAccountName);
+
+    BlobContainerClient blobContainerClient =
+        new BlobContainerClientBuilder()
+            .credential(storageKey)
+            .endpoint(endpoint)
+            .httpClient(HttpClient.createDefault())
+            .containerName(storageContainerResource.getStorageContainerName())
+            .buildClient();
+    BlobServiceSasSignatureValues sasValues =
+        new BlobServiceSasSignatureValues(expiryTime, blobContainerSasPermission)
+            .setStartTime(startTime)
+            .setProtocol(SasProtocol.HTTPS_ONLY);
+    return blobContainerClient.generateSas(sasValues);
   }
 
   public ControlledGcsBucketResource updateGcsBucket(
