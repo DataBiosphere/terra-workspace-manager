@@ -176,7 +176,7 @@ psql -f service/local-dev/local-postgres-init.sql
 
 1. Open the repo normally (File -> Open)
 2. In project structure (the folder icon with a little tetromino over it in the upper
-   right corner), make sure the project SDK is set to Java 11. If not, IntelliJ should
+   right corner), make sure the project SDK is set to Java 17. If not, IntelliJ should
    detect it on your system in the dropdown, otherwise click "Add JDK..." and navigate to
    the folder from the last step.
 3. Set up [google-java-format](https://github.com/google/google-java-format). We use the
