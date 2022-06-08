@@ -22,7 +22,8 @@ public class CloudSyncRoleMapping {
   // See https://cloud.google.com/iam/docs/understanding-custom-roles#known_limitations
   private static final List<String> PROJECT_READER_PERMISSIONS =
       ImmutableList.of(
-          // View and get artifacts, view repository metadata.
+          // View and get artifacts, view repository metadata. See
+          // https://cloud.google.com/artifact-registry/docs/access-control.
           "artifactregistry.repositories.list",
           "artifactregistry.repositories.get",
           "artifactregistry.repositories.downloadArtifacts",
@@ -63,7 +64,8 @@ public class CloudSyncRoleMapping {
       new ImmutableList.Builder<String>()
           .addAll(PROJECT_READER_PERMISSIONS)
           .add(
-              // read and write artifacts.
+              // read and write artifacts. See
+              // https://cloud.google.com/artifact-registry/docs/access-control
               "artifactregistry.repositories.uploadArtifacts",
               "artifactregistry.tags.create",
               "artifactregistry.tags.update",
@@ -85,6 +87,7 @@ public class CloudSyncRoleMapping {
           .addAll(PROJECT_WRITER_PERMISSIONS)
           .add(
               // Create and manage repositories and artifacts.
+              // See https://cloud.google.com/artifact-registry/docs/access-control.
               "artifactregistry.repositories.deleteArtifacts",
               "artifactregistry.packages.delete",
               "artifactregistry.projectsettings.update",
