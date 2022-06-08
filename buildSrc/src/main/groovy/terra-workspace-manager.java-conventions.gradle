@@ -50,7 +50,7 @@ sourceCompatibility = JavaVersion.VERSION_17
 spotless {
     java {
         googleJavaFormat()
-        targetExclude("${buildDir}/**", "${projectDir}/generated/**")
+        targetExclude("${buildDir}/**", "**/generated/**")
     }
 }
 build.dependsOn spotlessApply
