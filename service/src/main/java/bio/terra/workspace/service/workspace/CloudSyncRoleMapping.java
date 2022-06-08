@@ -63,7 +63,7 @@ public class CloudSyncRoleMapping {
       new ImmutableList.Builder<String>()
           .addAll(PROJECT_READER_PERMISSIONS)
           .add(
-              // Create and manage repositories and artifacts.
+              // read and write artifacts.
               "artifactregistry.repositories.uploadArtifacts",
               "artifactregistry.tags.create",
               "artifactregistry.tags.update",
@@ -84,6 +84,7 @@ public class CloudSyncRoleMapping {
       new ImmutableList.Builder<String>()
           .addAll(PROJECT_WRITER_PERMISSIONS)
           .add(
+              // Create and manage repositories and artifacts.
               "artifactregistry.repositories.deleteArtifacts",
               "artifactregistry.packages.delete",
               "artifactregistry.projectsettings.update",
