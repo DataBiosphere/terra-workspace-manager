@@ -61,7 +61,7 @@ public class AwaitCreateReferenceResourceFlightStep implements Step {
             context.getWorkingMap(), ControlledResourceKeys.DESTINATION_REFERENCED_RESOURCE);
         final FlightState subflightState =
             FlightUtils.waitForFlightExponential(context.getStairway(), flightId,
-                Duration.ofMillis(10), Duration.ofMinutes(5));
+                Duration.ofMillis(50), Duration.ofMinutes(5));
         final WsmCloneResourceResult cloneResult =
             WorkspaceCloneUtils.flightStatusToCloneResult(
                 subflightState.getFlightStatus(), sourceResource);
