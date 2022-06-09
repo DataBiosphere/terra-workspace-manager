@@ -92,7 +92,8 @@ public class CreateAzureRelayNamespaceStep implements Step {
               azureCloudContext.getAzureResourceGroupId(), resource.getNamespaceName());
     } catch (ManagementException e) {
       // Stairway steps may run multiple times, so we may already have deleted this resource.
-      if (ManagementExceptionUtils.isExceptionCode(e, ManagementExceptionUtils.RESOURCE_NOT_FOUND)) {
+      if (ManagementExceptionUtils.isExceptionCode(
+          e, ManagementExceptionUtils.RESOURCE_NOT_FOUND)) {
         logger.info(
             "Azure Relay Namespace {} in managed resource group {} already deleted",
             resource.getNamespaceName(),

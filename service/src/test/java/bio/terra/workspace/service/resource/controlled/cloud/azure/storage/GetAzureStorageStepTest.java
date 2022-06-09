@@ -1,5 +1,10 @@
 package bio.terra.workspace.service.resource.controlled.cloud.azure.storage;
 
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.instanceOf;
+import static org.mockito.Mockito.when;
+
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.StepStatus;
 import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
@@ -9,11 +14,6 @@ import com.azure.resourcemanager.storage.models.CheckNameAvailabilityResult;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.springframework.test.context.ActiveProfiles;
-
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.instanceOf;
-import static org.mockito.Mockito.when;
 
 @ActiveProfiles("azure")
 public class GetAzureStorageStepTest extends BaseStorageStepTest {

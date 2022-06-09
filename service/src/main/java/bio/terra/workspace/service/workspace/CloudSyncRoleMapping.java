@@ -100,8 +100,7 @@ public class CloudSyncRoleMapping {
               "artifactregistry.repositories.getIamPolicy",
               "artifactregistry.repositories.setIamPolicy",
               "artifactregistry.repositories.update",
-              "cloudbuild.builds.approve"
-          )
+              "cloudbuild.builds.approve")
           .build();
 
   private static final CustomGcpIamRole PROJECT_READER =

@@ -28,10 +28,9 @@ import com.azure.resourcemanager.compute.models.VirtualMachineSizeTypes;
 import com.azure.resourcemanager.network.models.Network;
 import com.azure.resourcemanager.network.models.NetworkInterface;
 import com.azure.resourcemanager.network.models.PublicIpAddress;
+import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.Optional;
 
 public class CreateAzureVmStep implements Step {
   private static final Logger logger = LoggerFactory.getLogger(CreateAzureVmStep.class);
@@ -160,7 +159,8 @@ public class CreateAzureVmStep implements Step {
             azureCloudContext.getAzureResourceGroupId());
         return StepResult.getStepResultSuccess();
       }
-      if (ManagementExceptionUtils.isExceptionCode(e, ManagementExceptionUtils.RESOURCE_NOT_FOUND)) {
+      if (ManagementExceptionUtils.isExceptionCode(
+          e, ManagementExceptionUtils.RESOURCE_NOT_FOUND)) {
         logger.info(
             "Either the disk, ip, or network passed into this createVm does not exist "
                 + String.format(

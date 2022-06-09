@@ -1,5 +1,10 @@
 package bio.terra.workspace.service.resource.controlled.cloud.azure.storageContainer;
 
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.instanceOf;
+import static org.mockito.Mockito.when;
+
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.StepStatus;
 import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
@@ -20,11 +25,6 @@ import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.springframework.test.context.ActiveProfiles;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.instanceOf;
-import static org.mockito.Mockito.when;
-
 @ActiveProfiles("azure")
 public class VerifyAzureStorageContainerCanBeCreatedStepTest extends BaseStorageStepTest {
 
@@ -44,7 +44,8 @@ public class VerifyAzureStorageContainerCanBeCreatedStepTest extends BaseStorage
       new ManagementException(
           "Resource was not found.",
           /*response=*/ null,
-          new ManagementError(ManagementExceptionUtils.CONTAINER_NOT_FOUND, "Container was not found."));
+          new ManagementError(
+              ManagementExceptionUtils.CONTAINER_NOT_FOUND, "Container was not found."));
 
   private VerifyAzureStorageContainerCanBeCreatedStep verifyCanBeCreatedStep;
 
