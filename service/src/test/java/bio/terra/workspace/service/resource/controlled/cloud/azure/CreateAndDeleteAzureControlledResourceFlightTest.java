@@ -1,5 +1,7 @@
 package bio.terra.workspace.service.resource.controlled.cloud.azure;
 
+import static org.junit.jupiter.api.Assertions.*;
+
 import bio.terra.stairway.FlightState;
 import bio.terra.stairway.FlightStatus;
 import bio.terra.workspace.common.BaseAzureTest;
@@ -36,16 +38,13 @@ import bio.terra.workspace.service.workspace.model.AzureCloudContext;
 import com.azure.core.management.exception.ManagementException;
 import com.azure.resourcemanager.compute.ComputeManager;
 import com.azure.resourcemanager.compute.models.VirtualMachine;
-import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-
 import java.time.Duration;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiFunction;
-
-import static org.junit.jupiter.api.Assertions.*;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
 
 public class CreateAndDeleteAzureControlledResourceFlightTest extends BaseAzureTest {
   private static final Duration STAIRWAY_FLIGHT_TIMEOUT = Duration.ofMinutes(15);

@@ -40,17 +40,16 @@ public class DeleteControlledAzureResourcesStep implements Step {
     this.userRequest = userRequest;
   }
 
-  /**
-   * Delete all resources instances of the specified type, returning all remaining resources.
-   */
-  private List<ControlledResource> deleteResourcesOfType(List<ControlledResource> allResources, WsmResourceType type) {
-    Map<Boolean, List<ControlledResource>> partitionedResources = allResources.stream().collect(
-            Collectors.partitioningBy(cr -> cr.getResourceType() == type)
-    );
+  /** Delete all resources instances of the specified type, returning all remaining resources. */
+  private List<ControlledResource> deleteResourcesOfType(
+      List<ControlledResource> allResources, WsmResourceType type) {
+    Map<Boolean, List<ControlledResource>> partitionedResources =
+        allResources.stream()
+            .collect(Collectors.partitioningBy(cr -> cr.getResourceType() == type));
 
     for (ControlledResource vm : partitionedResources.get(true)) {
       controlledResourceService.deleteControlledResourceSync(
-              workspaceUuid, vm.getResourceId(), userRequest, false);
+          workspaceUuid, vm.getResourceId(), userRequest, false);
     }
 
     return partitionedResources.get(false);
@@ -64,11 +63,14 @@ public class DeleteControlledAzureResourcesStep implements Step {
         resourceDao.listControlledResources(workspaceUuid, CloudPlatform.AZURE);
 
     // Delete VMs first because they use other resources like disks, networks, etc.
-    controlledResourceList = deleteResourcesOfType(controlledResourceList, WsmResourceType.CONTROLLED_AZURE_VM);
+    controlledResourceList =
+        deleteResourcesOfType(controlledResourceList, WsmResourceType.CONTROLLED_AZURE_VM);
 
-    // Delete storage containers so that Sam resources are properly deleted (before storage accounts are deleted).
-    controlledResourceList = deleteResourcesOfType(controlledResourceList,
-            WsmResourceType.CONTROLLED_AZURE_STORAGE_CONTAINER);
+    // Delete storage containers so that Sam resources are properly deleted (before storage accounts
+    // are deleted).
+    controlledResourceList =
+        deleteResourcesOfType(
+            controlledResourceList, WsmResourceType.CONTROLLED_AZURE_STORAGE_CONTAINER);
 
     // Delete all remaining resources
     for (ControlledResource resource : controlledResourceList) {

@@ -56,13 +56,15 @@ public final class AzureVmHelper {
           .deleteByResourceGroup(azureCloudContext.getAzureResourceGroupId(), networkInterfaceName);
     } catch (ManagementException e) {
       // Stairway steps may run multiple times, so we may already have deleted this resource.
-      if (ManagementExceptionUtils.isExceptionCode(e, ManagementExceptionUtils.RESOURCE_NOT_FOUND)) {
+      if (ManagementExceptionUtils.isExceptionCode(
+          e, ManagementExceptionUtils.RESOURCE_NOT_FOUND)) {
         logger.info(
             "Azure Network Interface {} in managed resource group {} already deleted",
             networkInterfaceName,
             azureCloudContext.getAzureResourceGroupId());
         return StepResult.getStepResultSuccess();
-      } else if (ManagementExceptionUtils.isExceptionCode(e, ManagementExceptionUtils.NIC_RESERVED_FOR_ANOTHER_VM)) {
+      } else if (ManagementExceptionUtils.isExceptionCode(
+          e, ManagementExceptionUtils.NIC_RESERVED_FOR_ANOTHER_VM)) {
         // In case of this particular error Azure asks to wait for 180 seconds before next retry. At
         // least at the time this code was written.
         // It would be good to have retry delay as a part of details field, so we can adjust

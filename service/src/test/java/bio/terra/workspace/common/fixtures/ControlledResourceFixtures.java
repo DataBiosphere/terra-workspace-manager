@@ -124,7 +124,8 @@ public class ControlledResourceFixtures {
   }
 
   /** Construct a parameter object with a unique name to avoid unintended clashes. */
-  public static ApiAzureStorageContainerCreationParameters getAzureStorageContainerCreationParameters() {
+  public static ApiAzureStorageContainerCreationParameters
+      getAzureStorageContainerCreationParameters() {
     return new ApiAzureStorageContainerCreationParameters()
         .storageContainerName(uniqueBucketName())
         .storageAccountId(STORAGE_ACCOUNT_REFERENCE_ID);
@@ -363,7 +364,7 @@ public class ControlledResourceFixtures {
   }
 
   public static ControlledAzureStorageContainerResource getAzureStorageContainer(
-          UUID storageAccountId, String storageContainerName) {
+      UUID storageAccountId, String storageContainerName) {
     return new ControlledAzureStorageContainerResource(
         WORKSPACE_ID,
         RESOURCE_ID,

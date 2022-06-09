@@ -29,7 +29,7 @@ import org.slf4j.LoggerFactory;
 public class VerifyAzureStorageContainerCanBeCreatedStep implements Step {
 
   private static final Logger logger =
-          LoggerFactory.getLogger(VerifyAzureStorageContainerCanBeCreatedStep.class);
+      LoggerFactory.getLogger(VerifyAzureStorageContainerCanBeCreatedStep.class);
   private final AzureConfiguration azureConfig;
   private final CrlService crlService;
   private final ResourceDao resourceDao;
@@ -90,10 +90,10 @@ public class VerifyAzureStorageContainerCanBeCreatedStep implements Step {
                     resource.getStorageAccountId())));
       }
       logger.warn(
-              "Attempt to retrieve storage account with ID '{}' from Azure failed on this try. Error Code: {}.",
-              resource.getStorageAccountId(),
-              managementException.getValue().getCode(),
-              managementException);
+          "Attempt to retrieve storage account with ID '{}' from Azure failed on this try. Error Code: {}.",
+          resource.getStorageAccountId(),
+          managementException.getValue().getCode(),
+          managementException);
       return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, managementException);
     }
 

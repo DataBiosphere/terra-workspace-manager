@@ -18,10 +18,9 @@ import com.azure.core.management.exception.ManagementException;
 import com.azure.resourcemanager.compute.ComputeManager;
 import com.azure.resourcemanager.network.models.NetworkSecurityGroup;
 import com.azure.resourcemanager.network.models.SecurityRuleProtocol;
+import java.util.Collections;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.Collections;
 
 /** Creates an Azure Network address. Designed to run directly after {@link GetAzureNetworkStep}. */
 public class CreateAzureNetworkStep implements Step {
@@ -113,7 +112,8 @@ public class CreateAzureNetworkStep implements Step {
             azureCloudContext.getAzureResourceGroupId());
         return StepResult.getStepResultSuccess();
       }
-      if (ManagementExceptionUtils.isExceptionCode(e, ManagementExceptionUtils.SUBNETS_NOT_IN_SAME_VNET)) {
+      if (ManagementExceptionUtils.isExceptionCode(
+          e, ManagementExceptionUtils.SUBNETS_NOT_IN_SAME_VNET)) {
         logger.info(
             "Azure Network {} and Subnet {} in managed resource group {} must belong to the same virtual network",
             resource.getNetworkName(),
@@ -143,7 +143,8 @@ public class CreateAzureNetworkStep implements Step {
               azureCloudContext.getAzureResourceGroupId(), resource.getNetworkName());
     } catch (ManagementException e) {
       // Stairway steps may run multiple times, so we may already have deleted this resource.
-      if (ManagementExceptionUtils.isExceptionCode(e, ManagementExceptionUtils.RESOURCE_NOT_FOUND)) {
+      if (ManagementExceptionUtils.isExceptionCode(
+          e, ManagementExceptionUtils.RESOURCE_NOT_FOUND)) {
         logger.info(
             "Azure Network {} in managed resource group {} already deleted",
             resource.getNetworkName(),

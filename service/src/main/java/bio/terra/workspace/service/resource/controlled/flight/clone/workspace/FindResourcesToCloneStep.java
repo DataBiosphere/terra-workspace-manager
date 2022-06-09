@@ -54,8 +54,11 @@ public class FindResourcesToCloneStep implements Step {
     result.sort(
         Comparator.comparing(
             r -> r.getResource().getStewardshipType().toString(), Comparator.reverseOrder()));
-    logger.info("Will clone resources with stewardship types {}", result.stream().map(r -> r.getResource().getStewardshipType().toString()).collect(
-        Collectors.joining(", ")));
+    logger.info(
+        "Will clone resources with stewardship types {}",
+        result.stream()
+            .map(r -> r.getResource().getStewardshipType().toString())
+            .collect(Collectors.joining(", ")));
     context.getWorkingMap().put(ControlledResourceKeys.RESOURCES_TO_CLONE, result);
     FlightUtils.validateRequiredEntries(
         context.getWorkingMap(), ControlledResourceKeys.RESOURCES_TO_CLONE);

@@ -1,5 +1,7 @@
 package bio.terra.workspace.service.resource.controlled.cloud.azure.storage;
 
+import static org.mockito.Mockito.when;
+
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.FlightMap;
 import bio.terra.workspace.app.configuration.external.AzureConfiguration;
@@ -16,8 +18,6 @@ import com.azure.resourcemanager.storage.models.StorageAccounts;
 import org.junit.jupiter.api.BeforeEach;
 import org.mockito.Mock;
 import org.springframework.test.context.ActiveProfiles;
-
-import static org.mockito.Mockito.when;
 
 /** Base class for storage account and storage container tests. */
 @ActiveProfiles("azure")
@@ -37,7 +37,8 @@ public class BaseStorageStepTest extends BaseAzureTest {
       new ManagementException(
           "Resource was not found.",
           /*response=*/ null,
-          new ManagementError(ManagementExceptionUtils.RESOURCE_NOT_FOUND, "Resource was not found."));
+          new ManagementError(
+              ManagementExceptionUtils.RESOURCE_NOT_FOUND, "Resource was not found."));
 
   @BeforeEach
   public void setup() {

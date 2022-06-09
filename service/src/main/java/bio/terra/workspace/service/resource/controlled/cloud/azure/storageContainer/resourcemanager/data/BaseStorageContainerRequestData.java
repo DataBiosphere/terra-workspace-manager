@@ -2,7 +2,6 @@ package bio.terra.workspace.service.resource.controlled.cloud.azure.storageConta
 
 import bio.terra.cloudres.azure.resourcemanager.common.ResourceManagerRequestData;
 import com.google.gson.JsonObject;
-
 import java.util.UUID;
 
 /**
