@@ -24,28 +24,6 @@ paths:
         '500':
           $ref: '#/components/responses/ServerError'
 
-
-  /api/workspaces/v1/{workspaceId}/resources/controlled/azure/storageContainer/{resourceId}/getSasToken:
-    parameters:
-      - $ref: '#/components/parameters/WorkspaceId'
-      - $ref: '#/components/parameters/ResourceId'
-    post:
-      summary: Create a SAS token to access the storage container
-      operationId: createAzureStorageContainerSasToken
-      tags: [ControlledAzureResource]
-      responses:
-        '200':
-          description: Response to create SAS token
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/CreatedAzureStorageContainerSasToken'
-        '403':
-          $ref: '#/components/responses/PermissionDenied'
-        '500':
-          $ref: '#/components/responses/ServerError'
-
-
 components:
   schemas:
     AzureStorageCreationParameters:
@@ -83,11 +61,3 @@ components:
           format: uuid
         azureStorage:
           $ref: '#/components/schemas/AzureStorageResource'
-
-    CreatedAzureStorageContainerSasToken:
-      description: Response payload for requesting a SAS token to access an Azure storage container
-      type: object
-      properties:
-        token:
-          type: string
-
