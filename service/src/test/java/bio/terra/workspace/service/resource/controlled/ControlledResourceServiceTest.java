@@ -204,10 +204,11 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
     StairwayTestUtils.pollUntilComplete(
         "job-id-123", jobService.getStairway(), Duration.ofSeconds(30), Duration.ofSeconds(300));
 
-    ControlledAzureStorageResource storageResource =
+    UUID storageAccountId = UUID.randomUUID();
+    ControlledAzureStorageResource storageAccount =
         new ControlledAzureStorageResource(
             workspaceUuid,
-            UUID.randomUUID(),
+            storageAccountId,
             "sa-" + workspaceUuid.toString(),
             "",
             CloningInstructions.COPY_NOTHING,
@@ -216,21 +217,16 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
             AccessScopeType.ACCESS_SCOPE_SHARED,
             ManagedByType.MANAGED_BY_USER,
             null,
-            "sa1234567891",
+            "sa" + storageAccountId.toString().substring(0, 6),
             "eastus");
-    ControlledAzureStorageResource storage =
-        controlledResourceService
-            .createControlledResourceSync(
-                storageResource,
-                null,
-                user.getAuthenticatedRequest(),
-                getAzureStorageCreationParameters())
-            .castByEnum(WsmResourceType.CONTROLLED_AZURE_STORAGE_ACCOUNT);
+    controlledResourceService.createControlledResourceSync(
+        storageAccount, null, user.getAuthenticatedRequest(), getAzureStorageCreationParameters());
 
-    ControlledAzureStorageContainerResource containerResource =
+    UUID storageContainerId = UUID.randomUUID();
+    ControlledAzureStorageContainerResource storageContainer =
         new ControlledAzureStorageContainerResource(
             workspaceUuid,
-            UUID.randomUUID(),
+            storageContainerId,
             "sc-" + workspaceUuid.toString(),
             "",
             CloningInstructions.COPY_NOTHING,
@@ -239,22 +235,20 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
             AccessScopeType.ACCESS_SCOPE_SHARED,
             ManagedByType.MANAGED_BY_USER,
             null,
-            storage.getResourceId(),
-            "sc-blahblah");
-    ControlledAzureStorageContainerResource container =
-        controlledResourceService
-            .createControlledResourceSync(
-                containerResource,
-                null,
-                user.getAuthenticatedRequest(),
-                getAzureStorageContainerCreationParameters())
-            .castByEnum(WsmResourceType.CONTROLLED_AZURE_STORAGE_CONTAINER);
+            storageAccount.getResourceId(),
+            "sc-" + storageContainerId);
+    controlledResourceService.createControlledResourceSync(
+        storageContainer,
+        null,
+        user.getAuthenticatedRequest(),
+        getAzureStorageContainerCreationParameters());
+
     OffsetDateTime startTime = OffsetDateTime.now().minusMinutes(15);
     OffsetDateTime expiryTime = OffsetDateTime.now().plusHours(1);
     String sas =
         controlledResourceService.createAzureStorageContainerSasToken(
             workspaceUuid,
-            container.getResourceId(),
+            storageContainer.getResourceId(),
             startTime,
             expiryTime,
             user.getAuthenticatedRequest());
@@ -265,7 +259,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
         () ->
             controlledResourceService.createAzureStorageContainerSasToken(
                 workspaceUuid,
-                container.getResourceId(),
+                storageContainer.getResourceId(),
                 startTime,
                 expiryTime,
                 userAccessUtils.secondUserAuthRequest()));

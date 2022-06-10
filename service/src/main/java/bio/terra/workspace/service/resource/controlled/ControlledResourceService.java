@@ -214,6 +214,8 @@ public class ControlledResourceService {
       OffsetDateTime startTime,
       OffsetDateTime expiryTime,
       AuthenticatedUserRequest userRequest) {
+    features.azureEnabledCheck();
+
     BlobContainerSasPermission blobContainerSasPermission =
         getSasTokenPermissions(userRequest, storageContainerUuid);
 
