@@ -34,6 +34,7 @@ import javax.annotation.Nullable;
 import okhttp3.OkHttpClient;
 import org.broadinstitute.dsde.workbench.client.sam.ApiClient;
 import org.broadinstitute.dsde.workbench.client.sam.ApiException;
+import org.broadinstitute.dsde.workbench.client.sam.api.AzureApi;
 import org.broadinstitute.dsde.workbench.client.sam.api.GoogleApi;
 import org.broadinstitute.dsde.workbench.client.sam.api.ResourcesApi;
 import org.broadinstitute.dsde.workbench.client.sam.api.StatusApi;
@@ -43,8 +44,10 @@ import org.broadinstitute.dsde.workbench.client.sam.model.AccessPolicyResponseEn
 import org.broadinstitute.dsde.workbench.client.sam.model.AccessPolicyResponseEntryV2;
 import org.broadinstitute.dsde.workbench.client.sam.model.CreateResourceRequestV2;
 import org.broadinstitute.dsde.workbench.client.sam.model.FullyQualifiedResourceId;
+import org.broadinstitute.dsde.workbench.client.sam.model.GetOrCreatePetManagedIdentityRequest;
 import org.broadinstitute.dsde.workbench.client.sam.model.ResourceAndAccessPolicy;
 import org.broadinstitute.dsde.workbench.client.sam.model.SystemStatus;
+import org.broadinstitute.dsde.workbench.client.sam.model.UserResourcesResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -100,6 +103,11 @@ public class SamService {
   @VisibleForTesting
   public UsersApi samUsersApi(String accessToken) {
     return new UsersApi(getApiClient(accessToken));
+  }
+
+  public void foo() throws ApiException {
+    // TODO getPetManagedIdentity returns void, it should return a response
+    new AzureApi(getApiClient("foo")).getPetManagedIdentity(new GetOrCreatePetManagedIdentityRequest());
   }
 
   @VisibleForTesting
@@ -245,9 +253,9 @@ public class SamService {
     ResourcesApi resourceApi = samResourcesApi(userRequest.getRequiredToken());
     List<UUID> workspaceIds = new ArrayList<>();
     try {
-      List<ResourceAndAccessPolicy> resourceAndPolicies =
+      List<UserResourcesResponse> resourceAndPolicies =
           SamRetry.retry(
-              () -> resourceApi.listResourcesAndPolicies(SamConstants.SamResource.WORKSPACE));
+              () -> resourceApi.listResourcesAndPoliciesV2(SamConstants.SamResource.WORKSPACE));
       for (var resourceAndPolicy : resourceAndPolicies) {
         try {
           workspaceIds.add(UUID.fromString(resourceAndPolicy.getResourceId()));
@@ -271,7 +279,7 @@ public class SamService {
     ResourcesApi resourceApi = samResourcesApi(authToken);
     try {
       SamRetry.retry(
-          () -> resourceApi.deleteResource(SamConstants.SamResource.WORKSPACE, uuid.toString()));
+          () -> resourceApi.deleteResourceV2(SamConstants.SamResource.WORKSPACE, uuid.toString()));
       logger.info("Deleted Sam resource for workspace {}", uuid);
     } catch (ApiException apiException) {
       logger.info("Sam API error while deleting workspace, code is " + apiException.getCode());
@@ -406,7 +414,7 @@ public class SamService {
       // GCP always uses lowercase email identifiers, so we do the same here for consistency.
       SamRetry.retry(
           () ->
-              resourceApi.addUserToPolicy(
+              resourceApi.addUserToPolicyV2(
                   SamConstants.SamResource.WORKSPACE,
                   workspaceUuid.toString(),
                   role.toSamRole(),
@@ -440,7 +448,7 @@ public class SamService {
     try {
       SamRetry.retry(
           () ->
-              resourceApi.removeUserFromPolicy(
+              resourceApi.removeUserFromPolicyV2(
                   SamConstants.SamResource.WORKSPACE,
                   workspaceUuid.toString(),
                   role.toSamRole(),
@@ -573,10 +581,10 @@ public class SamService {
 
     ResourcesApi resourceApi = samResourcesApi(userRequest.getRequiredToken());
     try {
-      List<AccessPolicyResponseEntry> samResult =
+      List<AccessPolicyResponseEntryV2> samResult =
           SamRetry.retry(
               () ->
-                  resourceApi.listResourcePolicies(
+                  resourceApi.listResourcePoliciesV2(
                       SamConstants.SamResource.WORKSPACE, workspaceUuid.toString()));
       // Don't include WSM's SA as a manager. This is true for all workspaces and not useful to
       // callers.
