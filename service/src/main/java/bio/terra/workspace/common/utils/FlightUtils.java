@@ -173,12 +173,14 @@ public final class FlightUtils {
   /**
    * Wait with an exponential backoff. Useful for referenced resource creation/clone polling, as
    * that happens too quickly for even a 1-second fixed poll interval.
+   *
    * @param stairway
    * @param initialInterval
    * @param maxWait
    */
-  public static FlightState waitForFlightExponential(Stairway stairway, String flightId, Duration initialInterval, Duration maxWait)
-    throws InterruptedException {
+  public static FlightState waitForFlightExponential(
+      Stairway stairway, String flightId, Duration initialInterval, Duration maxWait)
+      throws InterruptedException {
     final Instant endTime = Instant.now().plus(maxWait);
     Duration sleepInterval = initialInterval;
     do {

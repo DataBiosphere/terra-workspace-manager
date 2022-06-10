@@ -1,7 +1,5 @@
 package bio.terra.workspace.service.resource.controlled.flight.clone.workspace;
 
-import static bio.terra.workspace.common.utils.FlightUtils.FLIGHT_POLL_CYCLES;
-import static bio.terra.workspace.common.utils.FlightUtils.FLIGHT_POLL_SECONDS;
 import static bio.terra.workspace.common.utils.FlightUtils.validateRequiredEntries;
 
 import bio.terra.stairway.FlightContext;
@@ -60,8 +58,8 @@ public class AwaitCreateReferenceResourceFlightStep implements Step {
         FlightUtils.validateRequiredEntries(
             context.getWorkingMap(), ControlledResourceKeys.DESTINATION_REFERENCED_RESOURCE);
         final FlightState subflightState =
-            FlightUtils.waitForFlightExponential(context.getStairway(), flightId,
-                Duration.ofMillis(50), Duration.ofMinutes(5));
+            FlightUtils.waitForFlightExponential(
+                context.getStairway(), flightId, Duration.ofMillis(50), Duration.ofMinutes(5));
         final WsmCloneResourceResult cloneResult =
             WorkspaceCloneUtils.flightStatusToCloneResult(
                 subflightState.getFlightStatus(), sourceResource);
