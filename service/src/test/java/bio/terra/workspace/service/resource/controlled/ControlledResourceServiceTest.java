@@ -8,7 +8,6 @@ import bio.terra.cloudres.google.notebooks.InstanceName;
 import bio.terra.cloudres.google.storage.BucketCow;
 import bio.terra.cloudres.google.storage.StorageCow;
 import bio.terra.common.exception.BadRequestException;
-import bio.terra.common.exception.ForbiddenException;
 import bio.terra.common.stairway.StairwayComponent;
 import bio.terra.stairway.FlightDebugInfo;
 import bio.terra.stairway.FlightState;
@@ -37,8 +36,6 @@ import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.job.exception.InvalidResultStateException;
 import bio.terra.workspace.service.petserviceaccount.PetSaService;
-import bio.terra.workspace.service.resource.controlled.cloud.azure.storage.ControlledAzureStorageResource;
-import bio.terra.workspace.service.resource.controlled.cloud.azure.storageContainer.ControlledAzureStorageContainerResource;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook.ControlledAiNotebookInstanceResource;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook.CreateAiNotebookInstanceStep;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook.DeleteAiNotebookInstanceStep;
@@ -63,19 +60,14 @@ import bio.terra.workspace.service.resource.controlled.exception.ReservedMetadat
 import bio.terra.workspace.service.resource.controlled.flight.delete.DeleteMetadataStep;
 import bio.terra.workspace.service.resource.controlled.flight.update.RetrieveControlledResourceMetadataStep;
 import bio.terra.workspace.service.resource.controlled.flight.update.UpdateControlledResourceMetadataStep;
-import bio.terra.workspace.service.resource.controlled.model.AccessScopeType;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResourceFields;
-import bio.terra.workspace.service.resource.controlled.model.ManagedByType;
-import bio.terra.workspace.service.resource.controlled.model.PrivateResourceState;
 import bio.terra.workspace.service.resource.exception.DuplicateResourceException;
 import bio.terra.workspace.service.resource.exception.ResourceNotFoundException;
-import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.workspace.Alpha1Service;
 import bio.terra.workspace.service.workspace.GcpCloudContextService;
 import bio.terra.workspace.service.workspace.WorkspaceService;
-import bio.terra.workspace.service.workspace.model.AzureCloudContext;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import com.google.api.client.googleapis.json.GoogleJsonResponseException;
 import com.google.api.services.bigquery.model.Dataset;
@@ -98,8 +90,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 
 import java.io.IOException;
-import java.time.Duration;
-import java.time.OffsetDateTime;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -108,8 +98,6 @@ import java.util.UUID;
 
 import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.AI_NOTEBOOK_PREV_PARAMETERS;
 import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.AI_NOTEBOOK_UPDATE_PARAMETERS;
-import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.getAzureStorageContainerCreationParameters;
-import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.getAzureStorageCreationParameters;
 import static bio.terra.workspace.service.resource.controlled.cloud.gcp.GcpResourceConstant.DEFAULT_REGION;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
@@ -229,84 +217,6 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
     user = userAccessUtils.defaultUser();
     workspaceService.deleteWorkspace(
         reusableWorkspace.getWorkspaceId(), user.getAuthenticatedRequest());
-  }
-
-  @Test
-  @DisabledIfEnvironmentVariable(named = "TEST_ENV", matches = BUFFER_SERVICE_DISABLED_ENVS_REG_EX)
-  void createSasToken() throws Exception {
-    UUID workspaceUuid = workspace.getWorkspaceId();
-    workspaceService.createWorkspace(workspace, user.getAuthenticatedRequest());
-    workspaceService.createAzureCloudContext(
-        workspaceUuid,
-        "job-id-123",
-        user.getAuthenticatedRequest(),
-        null,
-        new AzureCloudContext(
-            "0cb7a640-45a2-4ed6-be9f-63519f86e04b",
-            "3efc5bdf-be0e-44e7-b1d7-c08931e3c16c",
-            "mrg-terra-integration-test-20211118"));
-    StairwayTestUtils.pollUntilComplete(
-        "job-id-123", jobService.getStairway(), Duration.ofSeconds(30), Duration.ofSeconds(300));
-
-    UUID storageAccountId = UUID.randomUUID();
-    ControlledAzureStorageResource storageAccount =
-        new ControlledAzureStorageResource(
-            workspaceUuid,
-            storageAccountId,
-            "sa-" + workspaceUuid.toString(),
-            "",
-            CloningInstructions.COPY_NOTHING,
-            null,
-            PrivateResourceState.NOT_APPLICABLE,
-            AccessScopeType.ACCESS_SCOPE_SHARED,
-            ManagedByType.MANAGED_BY_USER,
-            null,
-            "sa" + storageAccountId.toString().substring(0, 6),
-            "eastus");
-    controlledResourceService.createControlledResourceSync(
-        storageAccount, null, user.getAuthenticatedRequest(), getAzureStorageCreationParameters());
-
-    UUID storageContainerId = UUID.randomUUID();
-    ControlledAzureStorageContainerResource storageContainer =
-        new ControlledAzureStorageContainerResource(
-            workspaceUuid,
-            storageContainerId,
-            "sc-" + workspaceUuid.toString(),
-            "",
-            CloningInstructions.COPY_NOTHING,
-            null,
-            PrivateResourceState.NOT_APPLICABLE,
-            AccessScopeType.ACCESS_SCOPE_SHARED,
-            ManagedByType.MANAGED_BY_USER,
-            null,
-            storageAccount.getResourceId(),
-            "sc-" + storageContainerId);
-    controlledResourceService.createControlledResourceSync(
-        storageContainer,
-        null,
-        user.getAuthenticatedRequest(),
-        getAzureStorageContainerCreationParameters());
-
-    OffsetDateTime startTime = OffsetDateTime.now().minusMinutes(15);
-    OffsetDateTime expiryTime = OffsetDateTime.now().plusHours(1);
-    String sas =
-        controlledResourceService.createAzureStorageContainerSasToken(
-            workspaceUuid,
-            storageContainer.getResourceId(),
-            startTime,
-            expiryTime,
-            user.getAuthenticatedRequest());
-    assertThat("sas is formatted correctly", sas.startsWith("sv"));
-
-    assertThrows(
-        ForbiddenException.class,
-        () ->
-            controlledResourceService.createAzureStorageContainerSasToken(
-                workspaceUuid,
-                storageContainer.getResourceId(),
-                startTime,
-                expiryTime,
-                userAccessUtils.secondUserAuthRequest()));
   }
 
   @Test
