@@ -33,8 +33,11 @@ public class BufferService {
   }
 
   private ApiClient getApiClient(String accessToken) {
-    ApiClient client = new ApiClient().setHttpClient(commonHttpClient).addDefaultHeader(
-        RequestIdFilter.REQUEST_ID_HEADER, MDC.get(RequestIdFilter.REQUEST_ID_MDC_KEY));
+    ApiClient client =
+        new ApiClient()
+            .setHttpClient(commonHttpClient)
+            .addDefaultHeader(
+                RequestIdFilter.REQUEST_ID_HEADER, MDC.get(RequestIdFilter.REQUEST_ID_MDC_KEY));
     client.setAccessToken(accessToken);
     return client;
   }
