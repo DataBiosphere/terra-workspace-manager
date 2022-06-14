@@ -64,6 +64,7 @@ public class CreateAzureVmStepTest extends BaseAzureTest {
   private static final String STUB_IP_NAME = "stub-disk-name";
   private static final String STUB_NETWORK_NAME = "stub-network-name";
   private static final String STUB_SUBNET_NAME = "stub-subnet-name";
+  private static final String STUB_NETWORK_INTERFACE_NAME = "nic-name";
 
   @Mock private FlightContext mockFlightContext;
   @Mock private CrlService mockCrlService;
@@ -117,16 +118,7 @@ public class CreateAzureVmStepTest extends BaseAzureTest {
   @Mock private NetworkSecurityGroup mockNsg;
   @Mock private NetworkSecurityGroups mockNsgs;
   @Mock private NetworkInterfaces mockNis;
-  @Mock private NetworkInterface.DefinitionStages.Blank mockNicDefine;
-  @Mock private NetworkInterface.DefinitionStages.WithGroup mockNicWithRegion;
-  @Mock private NetworkInterface.DefinitionStages.WithPrimaryNetwork mockNicWithExistingRg;
 
-  @Mock
-  private NetworkInterface.DefinitionStages.WithPrimaryNetworkSubnet
-      mockNicWithExistingPrimaryNetwork;
-
-  @Mock private NetworkInterface.DefinitionStages.WithPrimaryPrivateIP mockNicWithPrivateIp;
-  @Mock private NetworkInterface.DefinitionStages.WithCreate mockNicWithCreate;
   @Mock private NetworkInterface mockNi;
 
   @Mock private NetworkSecurityGroup.DefinitionStages.Blank mockNetworkStage1;
@@ -186,7 +178,6 @@ public class CreateAzureVmStepTest extends BaseAzureTest {
   @Mock private ControlledAzureDiskResource mockAzureDiskResource;
   @Mock private ControlledAzureNetworkResource mockAzureNetworkResource;
   @Mock private FlightMap mockWorkingMap;
-  @Mock private FlightMap mockInputParameters;
 
   private ArgumentCaptor<Context> contextCaptor = ArgumentCaptor.forClass(Context.class);
 
@@ -215,18 +206,7 @@ public class CreateAzureVmStepTest extends BaseAzureTest {
     when(mockNetworkManager.networks()).thenReturn(mockNetworks);
     when(mockNetworks.getByResourceGroup(anyString(), anyString())).thenReturn(mockNetwork);
     when(mockNetworkManager.networkInterfaces()).thenReturn(mockNis);
-    when(mockNis.define(anyString())).thenReturn(mockNicDefine);
-    when(mockNicDefine.withRegion(anyString())).thenReturn(mockNicWithRegion);
-    when(mockNicWithRegion.withExistingResourceGroup(anyString()))
-        .thenReturn(mockNicWithExistingRg);
-    when(mockNicWithExistingRg.withExistingPrimaryNetwork(mockNetwork))
-        .thenReturn(mockNicWithExistingPrimaryNetwork);
-    when(mockNicWithExistingPrimaryNetwork.withSubnet(anyString()))
-        .thenReturn(mockNicWithPrivateIp);
-    when(mockNicWithPrivateIp.withPrimaryPrivateIPAddressDynamic()).thenReturn(mockNicWithCreate);
-    when(mockNicWithCreate.withExistingPrimaryPublicIPAddress(mockPublicIpAddress))
-        .thenReturn(mockNicWithCreate);
-    when(mockNicWithCreate.create()).thenReturn(mockNi);
+    when(mockNis.getByResourceGroup(anyString(), anyString())).thenReturn(mockNi);
 
     // create network security group mocks
     when(mockNetworkManager.networkSecurityGroups()).thenReturn(mockNsgs);
@@ -306,6 +286,10 @@ public class CreateAzureVmStepTest extends BaseAzureTest {
     when(mockFlightContext.getWorkingMap()).thenReturn(mockWorkingMap);
     when(mockWorkingMap.get(ControlledResourceKeys.AZURE_CLOUD_CONTEXT, AzureCloudContext.class))
         .thenReturn(mockAzureCloudContext);
+    when(mockWorkingMap.containsKey(AzureVmHelper.WORKING_MAP_NETWORK_INTERFACE_KEY))
+        .thenReturn(true);
+    when(mockWorkingMap.get(AzureVmHelper.WORKING_MAP_NETWORK_INTERFACE_KEY, String.class))
+        .thenReturn(STUB_NETWORK_INTERFACE_NAME);
   }
 
   @Test
