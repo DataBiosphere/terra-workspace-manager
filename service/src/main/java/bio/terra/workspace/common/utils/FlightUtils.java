@@ -4,20 +4,25 @@ import bio.terra.common.stairway.TracingHook;
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.FlightState;
+import bio.terra.stairway.Stairway;
+import bio.terra.stairway.exception.FlightWaitTimedOutException;
 import bio.terra.workspace.generated.model.ApiErrorReport;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.workspace.exceptions.MissingRequiredFieldsException;
 import bio.terra.workspace.service.workspace.model.Workspace;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 import org.springframework.http.HttpStatus;
 
 /** Common methods for building flights */
 public final class FlightUtils {
 
-  public static final int FLIGHT_POLL_SECONDS = 10;
+  public static final int FLIGHT_POLL_SECONDS = 1;
   public static final int FLIGHT_POLL_CYCLES = 360;
 
   public static final Map<String, Class<?>> COMMON_FLIGHT_INPUTS =
@@ -163,5 +168,30 @@ public final class FlightUtils {
       throw new IllegalArgumentException("Missing required flight map key: " + key);
     }
     return value;
+  }
+
+  /**
+   * Wait with an exponential backoff. Useful for referenced resource creation/clone polling, as
+   * that happens too quickly for even a 1-second fixed poll interval.
+   *
+   * @param stairway
+   * @param initialInterval
+   * @param maxWait
+   */
+  public static FlightState waitForFlightExponential(
+      Stairway stairway, String flightId, Duration initialInterval, Duration maxWait)
+      throws InterruptedException {
+    final Instant endTime = Instant.now().plus(maxWait);
+    Duration sleepInterval = initialInterval;
+    do {
+      FlightState flightState = stairway.getFlightState(flightId);
+      if (flightState.getCompleted().isPresent()) {
+        return flightState;
+      }
+      TimeUnit.MILLISECONDS.sleep(sleepInterval.toMillis());
+      // double the interval
+      sleepInterval = sleepInterval.plus(sleepInterval);
+    } while (Instant.now().isBefore(endTime));
+    throw new FlightWaitTimedOutException("Timed out waiting for flight to complete.");
   }
 }
