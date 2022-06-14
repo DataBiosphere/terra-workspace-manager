@@ -35,6 +35,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import java.time.Duration;
 import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.UUID;
@@ -165,20 +166,27 @@ public class AzureControlledStorageResourceServiceTest extends BaseAzureTest {
   }
 
   private void assertValidToken(String sas, BlobContainerSasPermission expectedPermissions) {
-    System.out.println(sas);
     Pattern protocolRegex = Pattern.compile("spr=https&");
-    Pattern startTimeRegex = Pattern.compile("st=" + startTime.toLocalDate().format(DateTimeFormatter.ISO_DATE));
+    // SAS tokens start and expiry times are UTC
+    Pattern startTimeRegex =
+        Pattern.compile(
+            "st="
+                + startTime
+                    .atZoneSameInstant(ZoneOffset.UTC)
+                    .format(DateTimeFormatter.ISO_LOCAL_DATE));
     Pattern expiryTimeRegex =
-        Pattern.compile("se=" + expiryTime.toLocalDate().format(DateTimeFormatter.ISO_DATE));
+        Pattern.compile(
+            "se="
+                + expiryTime
+                    .atZoneSameInstant(ZoneOffset.UTC)
+                    .format(DateTimeFormatter.ISO_LOCAL_DATE));
     Pattern signedResourceRegex = Pattern.compile("sr=c&");
     Pattern permissionsRegex = Pattern.compile("sp=" + expectedPermissions.toString() + "&");
 
-    System.out.println(startTimeRegex.pattern());
-    System.out.println(expiryTimeRegex.pattern());
     assertThat("SAS is https", protocolRegex.matcher(sas).find());
     assertThat("SAS validity starts today", startTimeRegex.matcher(sas).find());
     assertThat("SAS validity ends today", expiryTimeRegex.matcher(sas).find());
-    assertThat("SAS is for a container", signedResourceRegex.matcher(sas).find());
+    assertThat("SAS is for a container resource", signedResourceRegex.matcher(sas).find());
     assertThat("SAS grants correct permissions", permissionsRegex.matcher(sas).find());
   }
 
