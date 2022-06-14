@@ -28,6 +28,7 @@ import bio.terra.workspace.common.StairwayTestUtils;
 import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
 import bio.terra.workspace.connected.UserAccessUtils;
 import bio.terra.workspace.connected.WorkspaceConnectedTestUtils;
+import bio.terra.workspace.db.ActivityLogDao;
 import bio.terra.workspace.generated.model.*;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.iam.SamService;
@@ -61,7 +62,10 @@ import com.google.cloud.storage.BucketInfo;
 import com.google.cloud.storage.BucketInfo.LifecycleRule;
 import com.google.common.collect.ImmutableList;
 import java.io.IOException;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.*;
@@ -96,6 +100,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
   @Autowired private UserAccessUtils userAccessUtils;
   @Autowired private WorkspaceConnectedTestUtils workspaceUtils;
   @Autowired private WorkspaceService workspaceService;
+  @Autowired private ActivityLogDao activityLogDao;
 
   private static void assertNotFound(InstanceName instanceName, AIPlatformNotebooksCow notebooks) {
     GoogleJsonResponseException exception =
@@ -207,6 +212,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
     retrySteps.put(NotebookCloudSyncStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
     jobService.setFlightDebugInfoForTest(
         FlightDebugInfo.newBuilder().doStepFailures(retrySteps).build());
+    var lastUpdateDate = activityLogDao.getLastUpdateDate(workspaceUuid.toString());
 
     String jobId =
         controlledResourceService.createAiNotebookInstance(
@@ -219,6 +225,8 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
     jobService.waitForJob(jobId);
     assertEquals(
         FlightStatus.SUCCESS, stairwayComponent.get().getFlightState(jobId).getFlightStatus());
+    assertTrue(checkLogHasNewUpdateDateWithRetries(workspaceUuid.toString(), lastUpdateDate));
+    var updateDateAfterCreate = activityLogDao.getLastUpdateDate(workspaceUuid.toString());
 
     assertEquals(
         resource,
@@ -298,6 +306,8 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
             ControlledAiNotebookInstanceResource.class,
             user.getAuthenticatedRequest());
     assertEquals(DuplicateResourceException.class, duplicateJobResult.getException().getClass());
+    var updateDateAfterException = activityLogDao.getLastUpdateDate(workspaceUuid.toString());
+    assertEquals(updateDateAfterCreate, updateDateAfterException);
   }
 
   @Test
@@ -344,6 +354,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
                     .email(serviceAccountEmail)
                     .build(),
                 userIamCow));
+    var lastUpdateDate = activityLogDao.getLastUpdateDate(workspace.getWorkspaceId().toString());
 
     String jobId =
         controlledResourceService.createAiNotebookInstance(
@@ -356,6 +367,9 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
     jobService.waitForJob(jobId);
     assertEquals(
         FlightStatus.ERROR, stairwayComponent.get().getFlightState(jobId).getFlightStatus());
+    var updateDateAfterJobError =
+        activityLogDao.getLastUpdateDate(workspace.getWorkspaceId().toString());
+    assertEquals(lastUpdateDate, updateDateAfterJobError);
 
     assertNotFound(resource.toInstanceName(projectId), crlService.getAIPlatformNotebooksCow());
     assertThrows(
@@ -430,6 +444,8 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
         UpdateAiNotebookAttributesStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
     jobService.setFlightDebugInfoForTest(
         FlightDebugInfo.newBuilder().doStepFailures(retrySteps).build());
+    var lastUpdateDate = activityLogDao.getLastUpdateDate(workspace.getWorkspaceId().toString());
+
     controlledResourceService.updateAiNotebookInstance(
         fetchedInstance,
         AI_NOTEBOOK_UPDATE_PARAMETERS,
@@ -465,6 +481,9 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
       assertEquals(
           entrySet.getValue(), updatedInstanceFromCloud.getMetadata().get(entrySet.getKey()));
     }
+    var updateDateAfterInstanceUpdate =
+        activityLogDao.getLastUpdateDate(workspace.getWorkspaceId().toString());
+    assertTrue(lastUpdateDate.isBefore(updateDateAfterInstanceUpdate));
   }
 
   @Test
@@ -586,6 +605,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
         UpdateAiNotebookAttributesStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
     jobService.setFlightDebugInfoForTest(
         FlightDebugInfo.newBuilder().undoStepFailures(retrySteps).lastStepFailure(true).build());
+    var lastUpdateDate = activityLogDao.getLastUpdateDate(workspace.getWorkspaceId().toString());
     assertThrows(
         InvalidResultStateException.class,
         () ->
@@ -620,6 +640,9 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
           prevCustomMetadata.getOrDefault(entrySet.getKey(), ""),
           currentCloudInstanceMetadata.get(entrySet.getKey()));
     }
+    var updateDateAfterUpdateInstanceFailed =
+        activityLogDao.getLastUpdateDate(workspace.getWorkspaceId().toString());
+    assertEquals(lastUpdateDate, updateDateAfterUpdateInstanceFailed);
   }
 
   @Test
@@ -732,6 +755,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
             .location(DEFAULT_NOTEBOOK_LOCATION);
     ControlledAiNotebookInstanceResource resource =
         makeNotebookTestResource(workspace.getWorkspaceId(), instanceId, instanceId);
+    var lastUpdateDate = activityLogDao.getLastUpdateDate(workspace.getWorkspaceId().toString());
 
     // Shared notebooks not yet implemented.
     // Private IAM roles must include writer role.
@@ -750,6 +774,9 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
     assertEquals(
         "A private, controlled AI Notebook instance must have the writer or editor role or else it is not useful.",
         noWriterException.getMessage());
+    var updateDateAfterInstanceUpdateFail =
+        activityLogDao.getLastUpdateDate(workspace.getWorkspaceId().toString());
+    assertEquals(lastUpdateDate, updateDateAfterInstanceUpdateFail);
   }
 
   @Test
@@ -767,9 +794,13 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
         DeleteAiNotebookInstanceStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
     jobService.setFlightDebugInfoForTest(
         FlightDebugInfo.newBuilder().doStepFailures(retrySteps).build());
+    var lastUpdateDate = activityLogDao.getLastUpdateDate(workspace.getWorkspaceId().toString());
 
     controlledResourceService.deleteControlledResourceSync(
         resource.getWorkspaceId(), resource.getResourceId(), user.getAuthenticatedRequest(), true);
+    var updateDateAfterDelete =
+        activityLogDao.getLastUpdateDate(workspace.getWorkspaceId().toString());
+    assertTrue(lastUpdateDate.isBefore(updateDateAfterDelete));
     assertNotFound(instanceName, notebooks);
     assertThrows(
         ResourceNotFoundException.class,
@@ -782,13 +813,14 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
 
   @Test
   @DisabledIfEnvironmentVariable(named = "TEST_ENV", matches = BUFFER_SERVICE_DISABLED_ENVS_REG_EX)
-  void deleteAiNotebookInstanceUndoIsDismalFailure() throws Exception {
+  void deleteAiNotebookInstanceUndoIsDismalFailure() {
     ControlledAiNotebookInstanceResource resource =
         createDefaultPrivateAiNotebookInstance("delete-ai-notebook-instance-undo", user);
 
     // Test that trying to undo a notebook deletion is a dismal failure. We cannot undo deletion.
     jobService.setFlightDebugInfoForTest(
         FlightDebugInfo.newBuilder().lastStepFailure(true).build());
+    var lastUpdateDate = activityLogDao.getLastUpdateDate(resource.getWorkspaceId().toString());
     assertThrows(
         InvalidResultStateException.class,
         () ->
@@ -797,6 +829,9 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
                 resource.getResourceId(),
                 user.getAuthenticatedRequest(),
                 true));
+    var updateDateAfterDelete =
+        activityLogDao.getLastUpdateDate(resource.getWorkspaceId().toString());
+    assertTrue(lastUpdateDate.isBefore(updateDateAfterDelete));
   }
 
   /** Create a controlled AI Notebook instance with default private settings. */
@@ -842,6 +877,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
         ControlledResourceFixtures.makeDefaultControlledBigQueryBuilder(workspace.getWorkspaceId())
             .datasetName(datasetId)
             .build();
+    var lastUpdateDate = activityLogDao.getLastUpdateDate(resource.getWorkspaceId().toString());
 
     ControlledBigQueryDatasetResource createdDataset =
         controlledResourceService
@@ -849,6 +885,9 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
                 resource, null, user.getAuthenticatedRequest(), creationParameters)
             .castByEnum(WsmResourceType.CONTROLLED_GCP_BIG_QUERY_DATASET);
     assertEquals(resource, createdDataset);
+    var updateDateAfterCreate =
+        activityLogDao.getLastUpdateDate(resource.getWorkspaceId().toString());
+    assertTrue(lastUpdateDate.isBefore(updateDateAfterCreate));
 
     ControlledBigQueryDatasetResource fetchedDataset =
         controlledResourceService
@@ -858,6 +897,9 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
                 user.getAuthenticatedRequest())
             .castByEnum(WsmResourceType.CONTROLLED_GCP_BIG_QUERY_DATASET);
     assertEquals(resource, fetchedDataset);
+    var updateDateAfterGet =
+        activityLogDao.getLastUpdateDate(workspace.getWorkspaceId().toString());
+    assertEquals(updateDateAfterCreate, updateDateAfterGet);
 
     String newName = "NEW_createGetUpdateDeleteBqDataset";
     String newDescription = "new resource description";
@@ -879,6 +921,9 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
             .castByEnum(WsmResourceType.CONTROLLED_GCP_BIG_QUERY_DATASET);
     assertEquals(newName, updatedResource.getName());
     assertEquals(newDescription, updatedResource.getDescription());
+    var updateDateAfterUpdateBqDataset =
+        activityLogDao.getLastUpdateDate(workspace.getWorkspaceId().toString());
+    assertTrue(updateDateAfterGet.isBefore(updateDateAfterUpdateBqDataset));
 
     Dataset updatedDatasetFromCloud =
         crlService.createWsmSaBigQueryCow().datasets().get(projectId, datasetId).execute();
@@ -897,9 +942,15 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
         () ->
             controlledResourceService.updateBqDataset(
                 updatedResource, updateCloningParams, user.getAuthenticatedRequest(), null, null));
+    var updateDateAfterBadRequestException =
+        activityLogDao.getLastUpdateDate(workspace.getWorkspaceId().toString());
+    assertEquals(updateDateAfterUpdateBqDataset, updateDateAfterBadRequestException);
 
     controlledResourceService.deleteControlledResourceSync(
         resource.getWorkspaceId(), resource.getResourceId(), user.getAuthenticatedRequest(), true);
+    var updateDateAfterDelete =
+        activityLogDao.getLastUpdateDate(workspace.getWorkspaceId().toString());
+    assertTrue(updateDateAfterBadRequestException.isBefore(updateDateAfterDelete));
 
     assertThrows(
         ResourceNotFoundException.class,
@@ -980,6 +1031,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
             .lastStepFailure(true)
             .undoStepFailures(retrySteps)
             .build());
+    var lastUpdateDate = activityLogDao.getLastUpdateDate(workspace.getWorkspaceId().toString());
 
     // Service methods which wait for a flight to complete will throw an
     // InvalidResultStateException when that flight fails without a cause, which occurs when a
@@ -989,6 +1041,9 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
         () ->
             controlledResourceService.createControlledResourceSync(
                 resource, null, user.getAuthenticatedRequest(), creationParameters));
+    var updateDateAfterCreateFail =
+        activityLogDao.getLastUpdateDate(workspace.getWorkspaceId().toString());
+    assertEquals(lastUpdateDate, updateDateAfterCreateFail);
 
     BigQueryCow bqCow = crlService.createWsmSaBigQueryCow();
     GoogleJsonResponseException getException =
@@ -1077,6 +1132,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
     // should expect the resource to really be deleted.
     jobService.setFlightDebugInfoForTest(
         FlightDebugInfo.newBuilder().lastStepFailure(true).build());
+    var lastUpdateDate = activityLogDao.getLastUpdateDate(workspace.getWorkspaceId().toString());
 
     assertThrows(
         InvalidResultStateException.class,
@@ -1086,6 +1142,9 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
                 resource.getResourceId(),
                 user.getAuthenticatedRequest(),
                 true));
+    var updateDateAfterDeleteException =
+        activityLogDao.getLastUpdateDate(workspace.getWorkspaceId().toString());
+    assertTrue(lastUpdateDate.isBefore(updateDateAfterDeleteException));
 
     BigQueryCow bqCow = crlService.createWsmSaBigQueryCow();
     GoogleJsonResponseException getException =
@@ -1207,6 +1266,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
         new ApiGcpBigQueryDatasetUpdateParameters()
             .defaultTableLifetime(3600)
             .defaultPartitionLifetime(3601);
+    var lastUpdateDate = activityLogDao.getLastUpdateDate(workspace.getWorkspaceId().toString());
 
     // Service methods which wait for a flight to complete will throw an
     // InvalidResultStateException when that flight fails without a cause, which occurs when a
@@ -1220,6 +1280,9 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
                 user.getAuthenticatedRequest(),
                 "NEW_updateBqDatasetUndo",
                 "new resource description"));
+    var updateDateAfterInvalidResultStateException =
+        activityLogDao.getLastUpdateDate(workspace.getWorkspaceId().toString());
+    assertEquals(lastUpdateDate, updateDateAfterInvalidResultStateException);
 
     // check the properties stored on the cloud were not updated
     validateBigQueryDatasetCloudMetadata(
@@ -1378,6 +1441,8 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
     retrySteps.put(GcsBucketCloudSyncStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
     jobService.setFlightDebugInfoForTest(
         FlightDebugInfo.newBuilder().doStepFailures(retrySteps).build());
+    var lastUpdateDate = activityLogDao.getLastUpdateDate(workspace.getWorkspaceId().toString());
+
     ControlledGcsBucketResource createdBucket =
         controlledResourceService
             .createControlledResourceSync(
@@ -1388,6 +1453,9 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
             .castByEnum(WsmResourceType.CONTROLLED_GCP_GCS_BUCKET);
     assertEquals(resource, createdBucket);
 
+    var updateDateAfterCreate =
+        activityLogDao.getLastUpdateDate(workspace.getWorkspaceId().toString());
+    assertTrue(lastUpdateDate.isBefore(updateDateAfterCreate));
     StorageCow storageCow = crlService.createStorageCow(projectId);
     BucketInfo cloudBucket = storageCow.get(resource.getBucketName()).getBucketInfo();
     assertEquals(DEFAULT_REGION, cloudBucket.getLocation().toLowerCase());
@@ -1404,6 +1472,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
         ControlledResourceFixtures.makeDefaultControlledGcsBucketBuilder(workspace.getWorkspaceId())
             .bucketName("192.168.5.4")
             .build();
+    var lastUpdateDate = activityLogDao.getLastUpdateDate(resource.getWorkspaceId().toString());
 
     assertThrows(
         BadRequestException.class,
@@ -1413,6 +1482,9 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
                 null,
                 user.getAuthenticatedRequest(),
                 ControlledResourceFixtures.getGoogleBucketCreationParameters()));
+    var updateDateAfterBadRequestException =
+        activityLogDao.getLastUpdateDate(resource.getWorkspaceId().toString());
+    assertEquals(lastUpdateDate, updateDateAfterBadRequestException);
   }
 
   @Test
@@ -1429,6 +1501,8 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
     retrySteps.put(GcsBucketCloudSyncStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
     jobService.setFlightDebugInfoForTest(
         FlightDebugInfo.newBuilder().undoStepFailures(retrySteps).lastStepFailure(true).build());
+    var lastUpdateDate = activityLogDao.getLastUpdateDate(resource.getWorkspaceId().toString());
+
     // Service methods which wait for a flight to complete will throw an
     // InvalidResultStateException when that flight fails without a cause, which occurs when a
     // flight fails via debugInfo.
@@ -1441,6 +1515,9 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
                 user.getAuthenticatedRequest(),
                 ControlledResourceFixtures.getGoogleBucketCreationParameters()));
 
+    var updateDateAfterFlightFailed =
+        activityLogDao.getLastUpdateDate(resource.getWorkspaceId().toString());
+    assertEquals(lastUpdateDate, updateDateAfterFlightFailed);
     // Validate the bucket does not exist.
     StorageCow storageCow = crlService.createStorageCow(projectId);
     assertNull(storageCow.get(resource.getBucketName()));
@@ -1539,6 +1616,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
     retrySteps.put(DeleteGcsBucketStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
     jobService.setFlightDebugInfoForTest(
         FlightDebugInfo.newBuilder().doStepFailures(retrySteps).build());
+    var lastUpdateDate = activityLogDao.getLastUpdateDate(workspace.getWorkspaceId().toString());
 
     String jobId =
         controlledResourceService.deleteControlledResourceAsync(
@@ -1555,6 +1633,9 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
     // Validate the bucket does not exist.
     StorageCow storageCow = crlService.createStorageCow(projectId);
     assertNull(storageCow.get(createdBucket.getBucketName()));
+
+    assertTrue(
+        checkLogHasNewUpdateDateWithRetries(workspace.getWorkspaceId().toString(), lastUpdateDate));
 
     assertThrows(
         ResourceNotFoundException.class,
@@ -1581,6 +1662,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
     retrySteps.put(UpdateGcsBucketStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
     jobService.setFlightDebugInfoForTest(
         FlightDebugInfo.newBuilder().doStepFailures(retrySteps).build());
+    var lastUpdateDate = activityLogDao.getLastUpdateDate(workspace.getWorkspaceId().toString());
 
     // update the bucket
     String newName = "NEW_bucketname";
@@ -1591,6 +1673,9 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
         user.getAuthenticatedRequest(),
         newName,
         newDescription);
+    var updateDateAfterUpdateBucket =
+        activityLogDao.getLastUpdateDate(workspace.getWorkspaceId().toString());
+    assertTrue(lastUpdateDate.isBefore(updateDateAfterUpdateBucket));
 
     // check the properties stored in WSM were updated
     ControlledGcsBucketResource fetchedResource =
@@ -1614,6 +1699,9 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
                 user.getAuthenticatedRequest(),
                 null,
                 null));
+    var updateDateAfterBadRequestException =
+        activityLogDao.getLastUpdateDate(workspace.getWorkspaceId().toString());
+    assertEquals(updateDateAfterUpdateBucket, updateDateAfterBadRequestException);
   }
 
   @Test
@@ -1632,6 +1720,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
     retrySteps.put(UpdateGcsBucketStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
     jobService.setFlightDebugInfoForTest(
         FlightDebugInfo.newBuilder().undoStepFailures(retrySteps).lastStepFailure(true).build());
+    var lastUpdateDate = activityLogDao.getLastUpdateDate(workspace.getWorkspaceId().toString());
 
     // update the bucket
     String newName = "NEW_bucketname";
@@ -1649,6 +1738,9 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
                 newName,
                 newDescription));
 
+    var updateDateAfterFlightFailed =
+        activityLogDao.getLastUpdateDate(workspace.getWorkspaceId().toString());
+    assertEquals(lastUpdateDate, updateDateAfterFlightFailed);
     // check the properties stored on the cloud were not updated
     BucketInfo updatedBucket =
         crlService.createStorageCow(projectId).get(createdBucket.getBucketName()).getBucketInfo();
@@ -1719,5 +1811,23 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
       assertEquals(
           defaultPartitionExpirationSec * 1000, cloudDataset.getDefaultPartitionExpirationMs());
     }
+  }
+
+  private boolean checkLogHasNewUpdateDateWithRetries(String workspaceId, Instant lastUpdateDate)
+      throws InterruptedException {
+    var numTries = 10;
+    Duration sleepDuration = Duration.ofSeconds(1);
+    while (numTries > 0) {
+      var updateDate = activityLogDao.getLastUpdateDate(workspaceId);
+      if (lastUpdateDate.isBefore(updateDate)) {
+        return true;
+      }
+      numTries--;
+      if (numTries == 0) {
+        return false;
+      }
+      TimeUnit.MILLISECONDS.sleep(sleepDuration.toMillis());
+    }
+    return false;
   }
 }

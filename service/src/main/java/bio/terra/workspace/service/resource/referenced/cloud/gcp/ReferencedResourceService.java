@@ -1,6 +1,7 @@
 package bio.terra.workspace.service.resource.referenced.cloud.gcp;
 
 import bio.terra.workspace.common.utils.FlightBeanBag;
+import bio.terra.workspace.db.ActivityLogDao;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.db.exception.InvalidMetadataException;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
@@ -34,6 +35,7 @@ public class ReferencedResourceService {
 
   private final JobService jobService;
   private final ResourceDao resourceDao;
+  private final ActivityLogDao activityLogDao;
   private final WorkspaceService workspaceService;
   private final FlightBeanBag beanBag;
 
@@ -41,10 +43,12 @@ public class ReferencedResourceService {
   public ReferencedResourceService(
       JobService jobService,
       ResourceDao resourceDao,
+      ActivityLogDao activityLogDao,
       WorkspaceService workspaceService,
       FlightBeanBag beanBag) {
     this.jobService = jobService;
     this.resourceDao = resourceDao;
+    this.activityLogDao = activityLogDao;
     this.workspaceService = workspaceService;
     this.beanBag = beanBag;
   }
@@ -79,7 +83,7 @@ public class ReferencedResourceService {
     if (!resourceIdResult.equals(resource.getResourceId())) {
       throw new InvalidMetadataException("Input and output resource ids do not match");
     }
-
+    setWorkspaceUpdateTime(resource.getWorkspaceId());
     return getReferenceResource(resource.getWorkspaceId(), resourceIdResult, userRequest);
   }
 
@@ -159,6 +163,8 @@ public class ReferencedResourceService {
     }
     if (!updated) {
       logger.warn("There's no update to the referenced resource");
+    } else {
+      setWorkspaceUpdateTime(workspaceUuid);
     }
   }
   /**
@@ -174,6 +180,7 @@ public class ReferencedResourceService {
     workspaceService.validateWorkspaceAndAction(
         userRequest, workspaceUuid, SamConstants.SamWorkspaceAction.DELETE_REFERENCE);
     resourceDao.deleteResource(workspaceUuid, resourceId);
+    setWorkspaceUpdateTime(workspaceUuid);
   }
 
   /**
@@ -193,6 +200,7 @@ public class ReferencedResourceService {
     workspaceService.validateWorkspaceAndAction(
         userRequest, workspaceUuid, SamWorkspaceAction.DELETE_REFERENCE);
     resourceDao.deleteResourceForResourceType(workspaceUuid, resourceId, resourceType);
+    setWorkspaceUpdateTime(workspaceUuid);
   }
 
   public ReferencedResource getReferenceResource(
@@ -236,5 +244,9 @@ public class ReferencedResourceService {
             sourceReferencedResource, destinationWorkspaceId, name, description);
     // launch the creation flight
     return createReferenceResource(destinationResource, userRequest);
+  }
+
+  private void setWorkspaceUpdateTime(UUID workspaceId) {
+    activityLogDao.setUpdateDate(workspaceId.toString());
   }
 }

@@ -2,6 +2,7 @@ package bio.terra.workspace.service.workspace;
 
 import bio.terra.workspace.app.configuration.external.BufferServiceConfiguration;
 import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
+import bio.terra.workspace.db.ActivityLogDao;
 import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamRethrow;
@@ -12,6 +13,7 @@ import bio.terra.workspace.service.iam.model.WsmIamRole;
 import bio.terra.workspace.service.job.JobBuilder;
 import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.job.JobService;
+import bio.terra.workspace.service.job.JobService.JobResultOrException;
 import bio.terra.workspace.service.resource.controlled.flight.clone.workspace.CloneGcpWorkspaceFlight;
 import bio.terra.workspace.service.stage.StageService;
 import bio.terra.workspace.service.workspace.exceptions.BufferServiceDisabledException;
@@ -27,6 +29,7 @@ import bio.terra.workspace.service.workspace.flight.create.azure.CreateAzureCont
 import bio.terra.workspace.service.workspace.model.AzureCloudContext;
 import bio.terra.workspace.service.workspace.model.OperationType;
 import bio.terra.workspace.service.workspace.model.Workspace;
+import com.google.common.util.concurrent.FutureCallback;
 import io.opencensus.contrib.spring.aop.Traced;
 import java.util.List;
 import java.util.Map;
@@ -54,6 +57,7 @@ public class WorkspaceService {
 
   private final JobService jobService;
   private final WorkspaceDao workspaceDao;
+  private final ActivityLogDao activityLogDao;
   private final AzureCloudContextService azureCloudContextService;
   private final GcpCloudContextService gcpCloudContextService;
   private final SamService samService;
@@ -65,6 +69,7 @@ public class WorkspaceService {
   public WorkspaceService(
       JobService jobService,
       WorkspaceDao workspaceDao,
+      ActivityLogDao activityLogDao,
       SamService samService,
       BufferServiceConfiguration bufferServiceConfiguration,
       StageService stageService,
@@ -73,6 +78,7 @@ public class WorkspaceService {
       FeatureConfiguration features) {
     this.jobService = jobService;
     this.workspaceDao = workspaceDao;
+    this.activityLogDao = activityLogDao;
     this.samService = samService;
     this.bufferServiceConfiguration = bufferServiceConfiguration;
     this.stageService = stageService;
@@ -109,7 +115,9 @@ public class WorkspaceService {
           WorkspaceFlightMapKeys.SPEND_PROFILE_ID, workspace.getSpendProfileId().get().getId());
     }
     // Skip the access check, which would fail since this workspace doesn't exist yet.
-    return createJob.submitAndWait(UUID.class, false);
+    UUID result = createJob.submitAndWait(UUID.class, false);
+    setWorkspaceUpdateDate(workspaceUuid);
+    return result;
   }
 
   /**
@@ -208,6 +216,7 @@ public class WorkspaceService {
       @Nullable Map<String, String> properties) {
     validateWorkspaceAndAction(userRequest, workspaceUuid, SamConstants.SamWorkspaceAction.WRITE);
     workspaceDao.updateWorkspace(workspaceUuid, userFacingId, name, description, properties);
+    setWorkspaceUpdateDate(workspaceUuid.toString());
     return workspaceDao.getWorkspace(workspaceUuid);
   }
 
@@ -262,7 +271,19 @@ public class WorkspaceService {
         .userRequest(userRequest)
         .addParameter(WorkspaceFlightMapKeys.WORKSPACE_ID, workspaceUuid.toString())
         .addParameter(JobMapKeys.RESULT_PATH.getKeyName(), resultPath)
-        .submit();
+        .submitWithCallback(
+            Void.class,
+            new FutureCallback<>() {
+              @Override
+              public void onSuccess(JobResultOrException<Void> result) {
+                if (result.getException() == null) {
+                  activityLogDao.setUpdateDate(workspaceUuid.toString());
+                }
+              }
+
+              @Override
+              public void onFailure(Throwable t) {}
+            });
   }
 
   /**
@@ -305,7 +326,19 @@ public class WorkspaceService {
         .operationType(OperationType.CREATE)
         .workspaceId(workspaceUuid.toString())
         .addParameter(JobMapKeys.RESULT_PATH.getKeyName(), resultPath)
-        .submit();
+        .submitWithCallback(
+            Void.class,
+            new FutureCallback<>() {
+              @Override
+              public void onSuccess(JobResultOrException<Void> result) {
+                if (result.getException() == null) {
+                  activityLogDao.setUpdateDate(workspaceUuid.toString());
+                }
+              }
+
+              @Override
+              public void onFailure(Throwable t) {}
+            });
   }
 
   public void createGcpCloudContext(
@@ -363,14 +396,21 @@ public class WorkspaceService {
             "Delete GCP cloud context for workspace: name: '%s' id: '%s'  ",
             workspaceName, workspaceUuid);
 
-    jobService
-        .newJob()
-        .description(jobDescription)
-        .flightClass(DeleteGcpContextFlight.class)
-        .userRequest(userRequest)
-        .operationType(OperationType.DELETE)
-        .workspaceId(workspaceUuid.toString())
-        .submitAndWait(null);
+    try {
+      jobService
+          .newJob()
+          .description(jobDescription)
+          .flightClass(DeleteGcpContextFlight.class)
+          .userRequest(userRequest)
+          .operationType(OperationType.DELETE)
+          .workspaceId(workspaceUuid.toString())
+          .submitAndWait(null);
+      activityLogDao.setUpdateDate(workspaceUuid.toString());
+    } catch (Exception e) {
+      // Deletion cannot be undone even if exception is thrown. So we still log an update date.
+      activityLogDao.setUpdateDate(workspaceUuid.toString());
+      throw e;
+    }
   }
 
   public void deleteAzureCloudContext(UUID workspaceUuid, AuthenticatedUserRequest userRequest) {
@@ -383,14 +423,20 @@ public class WorkspaceService {
         String.format(
             "Delete Azure cloud context for workspace: name: '%s' id: '%s'  ",
             workspaceName, workspaceUuid);
-    jobService
-        .newJob()
-        .description(jobDescription)
-        .flightClass(DeleteAzureContextFlight.class)
-        .userRequest(userRequest)
-        .operationType(OperationType.DELETE)
-        .workspaceId(workspaceUuid.toString())
-        .submitAndWait(null);
+    try {
+      jobService
+          .newJob()
+          .description(jobDescription)
+          .flightClass(DeleteAzureContextFlight.class)
+          .userRequest(userRequest)
+          .operationType(OperationType.DELETE)
+          .workspaceId(workspaceUuid.toString())
+          .submitAndWait(null);
+      activityLogDao.setUpdateDate(workspaceUuid.toString());
+    } catch (Exception e) {
+      activityLogDao.setUpdateDate(workspaceUuid.toString());
+      throw e;
+    }
   }
 
   /**
@@ -482,5 +528,9 @@ public class WorkspaceService {
         .addParameter(WorkspaceFlightMapKeys.USER_TO_REMOVE, targetUserEmail)
         .addParameter(WorkspaceFlightMapKeys.ROLE_TO_REMOVE, role)
         .submitAndWait(null);
+  }
+
+  private void setWorkspaceUpdateDate(String workspaceId) {
+    activityLogDao.setUpdateDate(workspaceId);
   }
 }

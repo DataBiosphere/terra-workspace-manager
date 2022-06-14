@@ -7,6 +7,7 @@ import bio.terra.stairway.Flight;
 import bio.terra.stairway.FlightMap;
 import bio.terra.workspace.common.utils.MdcHook;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
+import bio.terra.workspace.service.job.JobService.JobResultOrException;
 import bio.terra.workspace.service.job.exception.InvalidJobIdException;
 import bio.terra.workspace.service.job.exception.InvalidJobParameterException;
 import bio.terra.workspace.service.resource.model.StewardshipType;
@@ -15,6 +16,7 @@ import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ResourceKeys;
 import bio.terra.workspace.service.workspace.model.OperationType;
+import com.google.common.util.concurrent.FutureCallback;
 import io.opencensus.contrib.spring.aop.Traced;
 import javax.annotation.Nullable;
 import org.apache.commons.lang3.StringUtils;
@@ -121,6 +123,21 @@ public class JobBuilder {
   public String submit() {
     populateInputParams();
     return jobService.submit(flightClass, jobParameterMap, jobId);
+  }
+
+  /**
+   * Submit a job to stairway. Wait for it to complete on a separate thread and run {@code runnable}
+   * when the job succeeds.
+   *
+   * @param resultClass class of the job's result
+   * @param callback run when the job finishes
+   * @return jobId of submitted flight
+   */
+  public <T> String submitWithCallback(
+      Class<T> resultClass, FutureCallback<JobResultOrException<T>> callback) {
+    populateInputParams();
+    return jobService.submitWithCallback(
+        flightClass, jobParameterMap, resultClass, jobId, /*doAccessCheck=*/ true, callback);
   }
 
   /**

@@ -35,6 +35,13 @@ import bio.terra.workspace.service.job.exception.JobResponseException;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.util.concurrent.AsyncCallable;
+import com.google.common.util.concurrent.Callables;
+import com.google.common.util.concurrent.FutureCallback;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.ListeningExecutorService;
+import com.google.common.util.concurrent.MoreExecutors;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import io.opencensus.contrib.spring.aop.Traced;
 import java.nio.file.Path;
@@ -60,6 +67,7 @@ public class JobService {
   private final IngressConfiguration ingressConfig;
   private final StairwayDatabaseConfiguration stairwayDatabaseConfiguration;
   private final ScheduledExecutorService executor;
+  private final ListeningExecutorService listeningExecutorService;
   private final MdcHook mdcHook;
   private final StairwayComponent stairwayComponent;
   private final FlightBeanBag flightBeanBag;
@@ -80,6 +88,8 @@ public class JobService {
     this.ingressConfig = ingressConfig;
     this.stairwayDatabaseConfiguration = stairwayDatabaseConfiguration;
     this.executor = Executors.newScheduledThreadPool(jobConfig.getMaxThreads());
+    this.listeningExecutorService =
+        MoreExecutors.listeningDecorator(Executors.newCachedThreadPool());
     this.mdcHook = mdcHook;
     this.stairwayComponent = stairwayComponent;
     this.flightBeanBag = flightBeanBag;
@@ -132,6 +142,31 @@ public class JobService {
       throw resultOrException.getException();
     }
     return resultOrException.getResult();
+  }
+
+  protected <T> String submitWithCallback(
+      Class<? extends Flight> flightClass,
+      FlightMap parameterMap,
+      Class<T> resultClass,
+      String jobId,
+      boolean doAccessCheck,
+      FutureCallback<JobResultOrException<T>> callback) {
+    submit(flightClass, parameterMap, jobId);
+    AsyncCallable<JobResultOrException<T>> asyncCallable =
+        Callables.asAsyncCallable(
+            () -> {
+              waitForJob(jobId);
+              AuthenticatedUserRequest userRequest =
+                  parameterMap.get(
+                      JobMapKeys.AUTH_USER_INFO.getKeyName(), AuthenticatedUserRequest.class);
+
+              return retrieveJobResult(jobId, resultClass, userRequest, doAccessCheck);
+            },
+            listeningExecutorService);
+    ListenableFuture<JobResultOrException<T>> future =
+        Futures.submitAsync(asyncCallable, listeningExecutorService);
+    Futures.addCallback(future, callback, listeningExecutorService);
+    return jobId;
   }
 
   public void waitForJob(String jobId) {
