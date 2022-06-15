@@ -146,22 +146,20 @@ public class AzureControlledStorageResourceServiceTest extends BaseAzureTest {
   }
 
   private void resetSecondUserWorkspaceAccess(UUID workspaceUuid) throws Exception {
-    try {
-      List<RoleBinding> roles =
-          SamRethrow.onInterrupted(
-              () ->
-                  samService.listRoleBindings(
-                      workspaceUuid, userAccessUtils.secondUserAuthRequest()),
-              "listRoleBindings");
-      for (RoleBinding role : roles) {
+    List<RoleBinding> roles =
+        SamRethrow.onInterrupted(
+            () ->
+                samService.listRoleBindings(
+                    workspaceUuid, workspaceOwner.getAuthenticatedRequest()),
+            "listRoleBindings");
+    for (RoleBinding role : roles) {
+      if (role.users().contains(userAccessUtils.getSecondUserEmail())) {
         workspaceService.removeWorkspaceRoleFromUser(
             workspaceUuid,
             role.role(),
             userAccessUtils.getSecondUserEmail(),
             workspaceOwner.getAuthenticatedRequest());
       }
-    } catch (ForbiddenException ignored) {
-      // User already has no access to workspace
     }
   }
 
