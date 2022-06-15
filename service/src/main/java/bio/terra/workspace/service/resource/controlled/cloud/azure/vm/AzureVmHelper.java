@@ -7,7 +7,11 @@ import bio.terra.workspace.service.workspace.model.AzureCloudContext;
 import com.azure.core.management.exception.ManagementException;
 import com.azure.resourcemanager.compute.ComputeManager;
 import com.azure.resourcemanager.compute.models.VirtualMachine;
+import com.azure.resourcemanager.msi.MsiManager;
+import com.azure.resourcemanager.msi.models.Identity;
 import java.util.concurrent.TimeUnit;
+import java.util.Set;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -83,6 +87,73 @@ public final class AzureVmHelper {
         return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, e);
       }
       return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, e);
+    }
+    return StepResult.getStepResultSuccess();
+  }
+
+  public static StepResult removeAllUserAssignedManagedIdentitiesFromVm(
+      AzureCloudContext azureCloudContext, ComputeManager computeManager, String vmName)
+      throws InterruptedException {
+    try {
+      Set<String> userAssignedMsiIds =
+          computeManager
+              .virtualMachines()
+              .getByResourceGroup(azureCloudContext.getAzureResourceGroupId(), vmName)
+              .userAssignedManagedServiceIdentityIds();
+
+      if (userAssignedMsiIds != null) {
+        userAssignedMsiIds.forEach(
+            (String userAssignedMsiId) -> {
+              computeManager
+                  .virtualMachines()
+                  .getByResourceGroup(azureCloudContext.getAzureResourceGroupId(), vmName)
+                  .update()
+                  .withoutUserAssignedManagedServiceIdentity(userAssignedMsiId);
+            });
+      }
+    } catch (ManagementException e) {
+      handleNotFound(e, vmName, azureCloudContext.getAzureResourceGroupId());
+    }
+    return StepResult.getStepResultSuccess();
+  }
+
+  public static StepResult removePetManagedIdentitiesFromVm(
+      AzureCloudContext azureCloudContext,
+      ComputeManager computeManager,
+      String vmName,
+      String petManagedIdentityId)
+      throws InterruptedException {
+    try {
+      if (petManagedIdentityId != null) {
+        computeManager
+            .virtualMachines()
+            .getByResourceGroup(azureCloudContext.getAzureResourceGroupId(), vmName)
+            .update()
+            .withoutUserAssignedManagedServiceIdentity(petManagedIdentityId);
+      }
+    } catch (ManagementException e) {
+      handleNotFound(e, vmName, azureCloudContext.getAzureResourceGroupId());
+    }
+    return StepResult.getStepResultSuccess();
+  }
+
+  public static StepResult assignPetManagedIdentityToVm(
+      AzureCloudContext azureCloudContext,
+      ComputeManager computeManager,
+      MsiManager msiManager,
+      String vmName,
+      String petManagedIdentityId)
+      throws InterruptedException {
+    try {
+      Identity managedIdentity = msiManager.identities().getById(petManagedIdentityId);
+
+      computeManager
+          .virtualMachines()
+          .getByResourceGroup(azureCloudContext.getAzureResourceGroupId(), vmName)
+          .update()
+          .withExistingUserAssignedManagedServiceIdentity(managedIdentity);
+    } catch (ManagementException e) {
+      handleNotFound(e, vmName, azureCloudContext.getAzureResourceGroupId());
     }
     return StepResult.getStepResultSuccess();
   }
