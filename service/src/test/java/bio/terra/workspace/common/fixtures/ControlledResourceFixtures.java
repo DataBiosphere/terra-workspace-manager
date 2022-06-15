@@ -2,34 +2,13 @@ package bio.terra.workspace.common.fixtures;
 
 import bio.terra.stairway.ShortUUID;
 import bio.terra.workspace.common.utils.AzureVmUtils;
-import bio.terra.workspace.generated.model.ApiAzureDiskCreationParameters;
-import bio.terra.workspace.generated.model.ApiAzureIpCreationParameters;
-import bio.terra.workspace.generated.model.ApiAzureNetworkCreationParameters;
-import bio.terra.workspace.generated.model.ApiAzureRelayNamespaceCreationParameters;
-import bio.terra.workspace.generated.model.ApiAzureStorageCreationParameters;
-import bio.terra.workspace.generated.model.ApiAzureVmCreationParameters;
-import bio.terra.workspace.generated.model.ApiAzureVmCustomScriptExtension;
-import bio.terra.workspace.generated.model.ApiAzureVmCustomScriptExtensionSetting;
-import bio.terra.workspace.generated.model.ApiAzureVmCustomScriptExtensionTag;
-import bio.terra.workspace.generated.model.ApiAzureVmImage;
-import bio.terra.workspace.generated.model.ApiAzureVmUser;
-import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceCreationParameters;
-import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceVmImage;
-import bio.terra.workspace.generated.model.ApiGcpBigQueryDatasetCreationParameters;
-import bio.terra.workspace.generated.model.ApiGcpBigQueryDatasetUpdateParameters;
-import bio.terra.workspace.generated.model.ApiGcpGcsBucketCreationParameters;
-import bio.terra.workspace.generated.model.ApiGcpGcsBucketDefaultStorageClass;
-import bio.terra.workspace.generated.model.ApiGcpGcsBucketLifecycle;
-import bio.terra.workspace.generated.model.ApiGcpGcsBucketLifecycleRule;
-import bio.terra.workspace.generated.model.ApiGcpGcsBucketLifecycleRuleAction;
-import bio.terra.workspace.generated.model.ApiGcpGcsBucketLifecycleRuleActionType;
-import bio.terra.workspace.generated.model.ApiGcpGcsBucketLifecycleRuleCondition;
-import bio.terra.workspace.generated.model.ApiGcpGcsBucketUpdateParameters;
+import bio.terra.workspace.generated.model.*;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.disk.ControlledAzureDiskResource;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.ip.ControlledAzureIpResource;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.network.ControlledAzureNetworkResource;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.relayNamespace.ControlledAzureRelayNamespaceResource;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.storage.ControlledAzureStorageResource;
+import bio.terra.workspace.service.resource.controlled.cloud.azure.storageContainer.ControlledAzureStorageContainerResource;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.vm.ControlledAzureVmResource;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook.ControlledAiNotebookInstanceResource;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.bqdataset.ControlledBigQueryDatasetResource;
@@ -49,6 +28,7 @@ import com.google.cloud.storage.BucketInfo.LifecycleRule.LifecycleAction;
 import com.google.cloud.storage.BucketInfo.LifecycleRule.LifecycleCondition;
 import com.google.cloud.storage.StorageClass;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -63,7 +43,7 @@ public class ControlledResourceFixtures {
 
   public static final UUID WORKSPACE_ID = UUID.fromString("00000000-fcf0-4981-bb96-6b8dd634e7c0");
   public static final UUID RESOURCE_ID = UUID.fromString("11111111-fcf0-4981-bb96-6b8dd634e7c0");
-  public static final UUID DATA_REFERENCE_ID =
+  public static final UUID STORAGE_ACCOUNT_REFERENCE_ID =
       UUID.fromString("33333333-fcf0-4981-bb96-6b8dd634e7c0");
   public static final String OWNER_EMAIL = "jay@all-the-bits-thats-fit-to-blit.dev";
   public static final ApiGcpGcsBucketLifecycleRule LIFECYCLE_RULE_1 =
@@ -139,8 +119,16 @@ public class ControlledResourceFixtures {
   /** Construct a parameter object with a unique name to avoid unintended clashes. */
   public static ApiAzureStorageCreationParameters getAzureStorageCreationParameters() {
     return new ApiAzureStorageCreationParameters()
-        .name(uniqueStorageAccountName())
+        .storageAccountName(uniqueStorageAccountName())
         .region("eastus");
+  }
+
+  /** Construct a parameter object with a unique name to avoid unintended clashes. */
+  public static ApiAzureStorageContainerCreationParameters
+      getAzureStorageContainerCreationParameters() {
+    return new ApiAzureStorageContainerCreationParameters()
+        .storageContainerName(uniqueBucketName())
+        .storageAccountId(STORAGE_ACCOUNT_REFERENCE_ID);
   }
 
   /** Construct a parameter object with a unique bucket name to avoid unintended clashes. */
@@ -183,6 +171,25 @@ public class ControlledResourceFixtures {
                 .sku("1804-gen2")
                 .version("latest"))
         .vmUser(new ApiAzureVmUser().name("noname").password("StrongP@ssowrd123!!!"))
+        .ipId(UUID.randomUUID())
+        .diskId(UUID.randomUUID())
+        .networkId(UUID.randomUUID())
+        .customScriptExtension(getAzureVmCustomScriptExtension());
+  }
+
+  public static ApiAzureVmCreationParameters getInvalidAzureVmCreationParameters() {
+    // use password which is not strong enough
+    return new ApiAzureVmCreationParameters()
+        .name(uniqueAzureName(AZURE_VM_NAME_PREFIX))
+        .region("westcentralus")
+        .vmSize(VirtualMachineSizeTypes.STANDARD_D2S_V3.toString())
+        .vmImage(
+            new ApiAzureVmImage()
+                .publisher("microsoft-dsvm")
+                .offer("ubuntu-1804")
+                .sku("1804-gen2")
+                .version("latest"))
+        .vmUser(new ApiAzureVmUser().name("noname").password("noname"))
         .ipId(UUID.randomUUID())
         .diskId(UUID.randomUUID())
         .networkId(UUID.randomUUID())
@@ -356,6 +363,24 @@ public class ControlledResourceFixtures {
         region);
   }
 
+  public static ControlledAzureStorageContainerResource getAzureStorageContainer(
+      UUID storageAccountId, String storageContainerName) {
+    return new ControlledAzureStorageContainerResource(
+        WORKSPACE_ID,
+        RESOURCE_ID,
+        RESOURCE_NAME,
+        RESOURCE_DESCRIPTION,
+        CLONING_INSTRUCTIONS,
+        OWNER_EMAIL,
+        // TODO: these should be changed when we group the resources
+        PrivateResourceState.ACTIVE,
+        AccessScopeType.ACCESS_SCOPE_PRIVATE,
+        ManagedByType.MANAGED_BY_USER,
+        null,
+        storageAccountId,
+        storageContainerName);
+  }
+
   public static ControlledAzureVmResource getAzureVm(
       ApiAzureVmCreationParameters creationParameters) {
     return new ControlledAzureVmResource(
@@ -475,6 +500,13 @@ public class ControlledResourceFixtures {
         .location("us-east1-b")
         .projectId("my-project-id");
   }
+
+  public static final ApiGcpAiNotebookUpdateParameters AI_NOTEBOOK_PREV_PARAMETERS =
+      new ApiGcpAiNotebookUpdateParameters()
+          .metadata(ImmutableMap.of("sky", "blue", "rose", "red", "foo", "bar2", "count", "0"));
+
+  public static final ApiGcpAiNotebookUpdateParameters AI_NOTEBOOK_UPDATE_PARAMETERS =
+      new ApiGcpAiNotebookUpdateParameters().metadata(ImmutableMap.of("foo", "bar", "count", "3"));
 
   public static final OffsetDateTime OFFSET_DATE_TIME_1 =
       OffsetDateTime.parse("2017-12-03T10:15:30+01:00", DateTimeFormatter.ISO_OFFSET_DATE_TIME);

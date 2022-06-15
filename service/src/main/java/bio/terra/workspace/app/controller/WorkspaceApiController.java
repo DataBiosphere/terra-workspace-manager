@@ -280,6 +280,7 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
 
   @Override
   public ResponseEntity<ApiRoleBindingList> getRoles(@PathVariable("workspaceId") UUID uuid) {
+
     List<bio.terra.workspace.service.iam.model.RoleBinding> bindingList =
         SamRethrow.onInterrupted(
             () -> samService.listRoleBindings(uuid, getAuthenticatedInfo()), "listRoleBindings");
@@ -378,8 +379,7 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
         userRequest, workspaceUuid, SamConstants.SamWorkspaceAction.READ);
     String userEmail =
         SamRethrow.onInterrupted(() -> samService.getUserEmailFromSam(userRequest), "enablePet");
-    petSaService.enablePetServiceAccountImpersonation(
-        workspaceUuid, userEmail, userRequest.getRequiredToken());
+    petSaService.enablePetServiceAccountImpersonation(workspaceUuid, userEmail, userRequest);
     return new ResponseEntity<>(HttpStatus.NO_CONTENT);
   }
 

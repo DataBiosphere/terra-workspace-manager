@@ -54,12 +54,12 @@ public class PetSaService {
    * particular GCP eTag value.
    */
   public Policy enablePetServiceAccountImpersonation(
-      UUID workspaceUuid, String userToEnableEmail, String token) {
+      UUID workspaceUuid, String userToEnableEmail, AuthenticatedUserRequest userRequest) {
     // enablePetServiceAccountImpersonationWithEtag will only return an empty optional if the
     // provided eTag does not match current policy. Because we do not use eTag checking here, this
     // is always nonempty.
     return enablePetServiceAccountImpersonationWithEtag(
-            workspaceUuid, userToEnableEmail, token, null)
+            workspaceUuid, userToEnableEmail, userRequest, null)
         .orElseThrow(
             () -> new RuntimeException("Error enabling user's proxy group to impersonate pet SA"));
   }
@@ -67,7 +67,8 @@ public class PetSaService {
   /**
    * Grant a user's proxy group permission to impersonate their pet service account in a given
    * workspace. Unlike other operations, this does not run as a flight because it only requires one
-   * write operation. This operation is idempotent.
+   * write operation. If the user's pet SA does not exist, this will create it. This operation is
+   * idempotent.
    *
    * <p>The provided workspace must have a GCP context.
    *
@@ -79,27 +80,48 @@ public class PetSaService {
    *
    * @param workspaceUuid ID of the workspace to enable pet SA in
    * @param userToEnableEmail The user whose proxy group will be granted permission.
-   * @param token Token for calling SAM.
+   * @param userReq Auth info for calling SAM. Do not use userReq.getEmail() here; it will return
+   *     the caller's email, but there's no guarantee whether that will be an end-user email or a
+   *     pet SA email.
    * @param eTag GCP eTag which must match the pet SA's current policy. If null, this is ignored.
    * @return The new IAM policy on the user's pet service account, or empty if the eTag value
    *     provided is non-null and does not match current IAM policy on the pet SA.
    */
   public Optional<Policy> enablePetServiceAccountImpersonationWithEtag(
-      UUID workspaceUuid, String userToEnableEmail, String token, @Nullable String eTag) {
-    String petSaEmail =
-        SamRethrow.onInterrupted(
-            () ->
-                samService.getOrCreatePetSaEmail(
-                    gcpCloudContextService.getRequiredGcpProject(workspaceUuid), token),
-            "enablePet");
+      UUID workspaceUuid,
+      String userToEnableEmail,
+      AuthenticatedUserRequest userReq,
+      @Nullable String eTag) {
+    String projectId = gcpCloudContextService.getRequiredGcpProject(workspaceUuid);
+    Optional<ServiceAccountName> maybePetSaName =
+        getUserPetSa(projectId, userToEnableEmail, userReq);
+    // If the pet SA does not exist and no eTag is specified, create the pet SA and continue.
+    if (maybePetSaName.isEmpty()) {
+      if (eTag == null) {
+        String saEmail =
+            SamRethrow.onInterrupted(
+                () ->
+                    samService.getOrCreatePetSaEmail(
+                        gcpCloudContextService.getRequiredGcpProject(workspaceUuid),
+                        userReq.getRequiredToken()),
+                "enablePet");
+        maybePetSaName =
+            Optional.of(ServiceAccountName.builder().projectId(projectId).email(saEmail).build());
+      } else {
+        // If the pet SA does not exist but an eTag is specified, there's no way the eTag can match,
+        // so return empty optional.
+        return Optional.empty();
+      }
+    }
+    // Pet name is populated above, so it's always safe to unwrap here.
+    ServiceAccountName petSaName = maybePetSaName.get();
+
     String proxyGroupEmail =
         SamRethrow.onInterrupted(
-            () -> samService.getProxyGroupEmail(userToEnableEmail, token), "enablePet");
+            () -> samService.getProxyGroupEmail(userToEnableEmail, userReq.getRequiredToken()),
+            "enablePet");
     String targetMember = "group:" + proxyGroupEmail;
 
-    String projectId = gcpCloudContextService.getRequiredGcpProject(workspaceUuid);
-    ServiceAccountName petSaName =
-        ServiceAccountName.builder().email(petSaEmail).projectId(projectId).build();
     try {
       Policy saPolicy =
           crlService.getIamCow().projects().serviceAccounts().getIamPolicy(petSaName).execute();
@@ -118,7 +140,7 @@ public class PetSaService {
       Optional<Binding> serviceAccountUserBinding = findServiceAccountUserBinding(saPolicy);
       if (serviceAccountUserBinding.isPresent()
           && serviceAccountUserBinding.get().getMembers().contains(targetMember)) {
-        logger.info("user {} is already enabled on petSA {}", userToEnableEmail, petSaEmail);
+        logger.info("user {} is already enabled on petSA {}", userToEnableEmail, petSaName.email());
         return Optional.of(saPolicy);
       } else if (serviceAccountUserBinding.isPresent()) {
         // If a binding exists for the ServiceAccountUser role but the proxy group is not a member,

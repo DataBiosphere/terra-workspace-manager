@@ -108,6 +108,7 @@ public class GcpCloudContextService {
             .orElseThrow(
                 () -> new CloudContextRequiredException("Operation requires GCP cloud context"));
 
+    // TODO(PF-1666): Remove this once we've migrated off GcpCloudContext (V1).
     // policyOwner is a good sentinel for knowing we need to update the cloud context and
     // store the sync'd workspace policies.
     if (context.getSamPolicyOwner().isEmpty()) {
@@ -119,8 +120,8 @@ public class GcpCloudContextService {
           samService.getWorkspacePolicy(workspaceUuid, WsmIamRole.READER, userRequest));
       context.setSamPolicyApplication(
           samService.getWorkspacePolicy(workspaceUuid, WsmIamRole.APPLICATION, userRequest));
+      workspaceDao.updateCloudContext(workspaceUuid, CloudPlatform.GCP, context.serialize());
     }
-    workspaceDao.updateCloudContext(workspaceUuid, CloudPlatform.GCP, context.serialize());
     return context;
   }
 

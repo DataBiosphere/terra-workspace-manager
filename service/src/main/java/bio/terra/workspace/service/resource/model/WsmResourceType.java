@@ -11,6 +11,8 @@ import bio.terra.workspace.service.resource.controlled.cloud.azure.relayNamespac
 import bio.terra.workspace.service.resource.controlled.cloud.azure.relayNamespace.ControlledAzureRelayNamespaceResource;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.storage.ControlledAzureStorageHandler;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.storage.ControlledAzureStorageResource;
+import bio.terra.workspace.service.resource.controlled.cloud.azure.storageContainer.ControlledAzureStorageContainerHandler;
+import bio.terra.workspace.service.resource.controlled.cloud.azure.storageContainer.ControlledAzureStorageContainerResource;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.vm.ControlledAzureVmHandler;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.vm.ControlledAzureVmResource;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook.ControlledAiNotebookHandler;
@@ -152,7 +154,14 @@ public enum WsmResourceType {
       "CONTROLLED_AZURE_STORAGE_ACCOUNT",
       ApiResourceType.AZURE_STORAGE_ACCOUNT,
       ControlledAzureStorageResource.class,
-      ControlledAzureStorageHandler::getHandler);
+      ControlledAzureStorageHandler::getHandler),
+  CONTROLLED_AZURE_STORAGE_CONTAINER(
+      CloudPlatform.AZURE,
+      StewardshipType.CONTROLLED,
+      "CONTROLLED_AZURE_STORAGE_CONTAINER",
+      ApiResourceType.AZURE_STORAGE_CONTAINER,
+      ControlledAzureStorageContainerResource.class,
+      ControlledAzureStorageContainerHandler::getHandler);
 
   private final CloudPlatform cloudPlatform;
   private final StewardshipType stewardshipType;

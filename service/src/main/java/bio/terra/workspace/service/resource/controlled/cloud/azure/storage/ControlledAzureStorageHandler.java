@@ -23,9 +23,9 @@ public class ControlledAzureStorageHandler implements WsmResourceHandler {
         DbSerDes.fromJson(dbResource.getAttributes(), ControlledAzureStorageAttributes.class);
 
     return ControlledAzureStorageResource.builder()
-            .storageAccountName(attributes.getStorageAccountName())
-            .region(attributes.getRegion())
-            .common(new ControlledResourceFields(dbResource))
-            .build();
+        .storageAccountName(attributes.getStorageAccountName())
+        .region(attributes.getRegion())
+        .common(new ControlledResourceFields(dbResource))
+        .build();
   }
 }
