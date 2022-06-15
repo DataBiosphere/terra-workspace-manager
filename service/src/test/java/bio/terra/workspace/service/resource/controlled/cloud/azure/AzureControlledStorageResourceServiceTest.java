@@ -1,5 +1,10 @@
 package bio.terra.workspace.service.resource.controlled.cloud.azure;
 
+import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.getAzureStorageContainerCreationParameters;
+import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.getAzureStorageCreationParameters;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+
 import bio.terra.common.exception.ForbiddenException;
 import bio.terra.stairway.FlightDebugInfo;
 import bio.terra.workspace.app.configuration.external.AzureTestConfiguration;
@@ -26,13 +31,6 @@ import bio.terra.workspace.service.workspace.model.AzureCloudContext;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
 import com.azure.storage.blob.sas.BlobContainerSasPermission;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestInstance;
-import org.springframework.beans.factory.annotation.Autowired;
-
 import java.time.Duration;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
@@ -40,11 +38,12 @@ import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.UUID;
 import java.util.regex.Pattern;
-
-import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.getAzureStorageContainerCreationParameters;
-import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.getAzureStorageCreationParameters;
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInstance;
+import org.springframework.beans.factory.annotation.Autowired;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class AzureControlledStorageResourceServiceTest extends BaseAzureTest {

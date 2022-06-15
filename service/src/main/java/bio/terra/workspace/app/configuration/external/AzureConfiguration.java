@@ -39,13 +39,17 @@ public class AzureConfiguration {
     this.managedAppTenantId = managedAppTenantId;
   }
 
-  public Long getSasTokenStartTimeMinutesOffset() { return sasTokenStartTimeMinutesOffset; }
+  public Long getSasTokenStartTimeMinutesOffset() {
+    return sasTokenStartTimeMinutesOffset;
+  }
 
   public void setSasTokenStartTimeMinutesOffset(Long sasTokenStartTimeMinutesOffset) {
     this.sasTokenStartTimeMinutesOffset = sasTokenStartTimeMinutesOffset;
   }
 
-  public Long getSasTokenExpiryTimeMinutesOffset() { return sasTokenExpiryTimeMinutesOffset; }
+  public Long getSasTokenExpiryTimeMinutesOffset() {
+    return sasTokenExpiryTimeMinutesOffset;
+  }
 
   public void setSasTokenExpiryTimeMinutesOffset(Long sasTokenExpiryTimeMinutesOffset) {
     this.sasTokenExpiryTimeMinutesOffset = sasTokenExpiryTimeMinutesOffset;
