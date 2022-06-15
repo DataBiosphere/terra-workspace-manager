@@ -18,6 +18,7 @@ import bio.terra.workspace.service.resource.controlled.flight.clone.dataset.Clon
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ResourceKeys;
+import bio.terra.workspace.service.workspace.model.OperationType;
 import java.util.UUID;
 import javax.annotation.Nullable;
 
@@ -66,7 +67,7 @@ public class LaunchCloneControlledGcpBigQueryDatasetResourceFlightStep implement
     subflightInputParameters.put(
         JobMapKeys.DESCRIPTION.getKeyName(),
         String.format("Clone BigQuery Dataset %s", resource.getResourceId().toString()));
-
+    subflightInputParameters.put(WorkspaceFlightMapKeys.OPERATION_TYPE, OperationType.CLONE);
     // launch the flight
     try {
       context

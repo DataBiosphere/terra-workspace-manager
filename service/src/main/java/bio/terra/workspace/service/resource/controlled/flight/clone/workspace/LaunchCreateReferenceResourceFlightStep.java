@@ -19,6 +19,7 @@ import bio.terra.workspace.service.resource.referenced.flight.create.CreateRefer
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ResourceKeys;
+import bio.terra.workspace.service.workspace.model.OperationType;
 import java.util.UUID;
 
 public class LaunchCreateReferenceResourceFlightStep implements Step {
@@ -75,7 +76,7 @@ public class LaunchCreateReferenceResourceFlightStep implements Step {
     subflightInputParameters.put(
         JobMapKeys.DESCRIPTION.getKeyName(),
         String.format("Clone referenced resource %s", resource.getResourceId().toString()));
-
+    subflightInputParameters.put(WorkspaceFlightMapKeys.OPERATION_TYPE, OperationType.CLONE);
     try {
       context
           .getStairway()
