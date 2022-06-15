@@ -14,24 +14,25 @@ to compile your code as you go.
      attributes objects.
    - Edit the `resource_type.yaml` file in that directory, creating an enumeration for the
      resource and adding the appropriate resource element to the union objects.
-   - Run `gradle :openapi:buildOpenApi` to make sure your syntax and references are correct.
-1. Create your Java resource package in `service/src/main/java/bio.terra/workspace/service/resources/`
+   - Run `./gradlew :openapi:buildOpenApi` to make sure your syntax and references are correct.
+2. Create your Java resource package in `service/src/main/java/bio.terra/workspace/service/resources/`
       in the appropriate package
     - `controlled/{cloud}/{your resource}`
     - `referenced/{cloud}/{your resource}`
-1. Create classes for your resource
+3. Create classes for your resource
    - Attributes class describing the fields beyond the common metadata
    - Resource class. This is the most complex class to implement and supplies the bulk of
      your resource code
-1. If you are making a controlled resource you will also need to add:
+   - Handler class
+4. If you are making a controlled resource you will also need to add:
    - Step classes as required for object create and update. These will be needed to
      complete the resource class.
    - Handler class. Used primarily to give the `ResourceDao` a way to create resource
      objects by type.
-1. Add your new resource type to `resource/model/WsmResourceFamily` and
-   `resource/model/WsmResourceType`. At this point, you should be able to cleanly build
-   the `service` Workspace Manager sub-project.
-1. Add your REST API
+5. Add your new resource type to `resource/model/WsmResourceFamily`,
+   `resource/model/WsmResourceType` and `ApiResourceType`. At this point,
+   `./gradlew :service:compileJava` should succeed.
+6. Add your REST API
    - In the `openapi` sub-project, in the `parts` directory, create a yaml file for your
      resource API. The file should contain all resource-type-specific parameters,
      responses, and schemas as well as the endpoint paths. You can find shared components
@@ -40,12 +41,12 @@ to compile your code as you go.
        **NOTE:** *At this point in time, there is too much variation in the different
        resource APIs. Please follow the pattern in the* `??_gcp_big_query_dataset`
        *interface.*
-1. Edit the appropriate controller to implement your API. Depending on the implementation
+7. Edit the appropriate controller to implement your API. Depending on the implementation
    details, you may need to add methods to the `ControlledResourceService` or the
    `ReferencedResourceService`.
-1. Create a matching package in the `test/java/bio.terra.workspace/service/resource` package
+8. Create a matching package in the `test/java/bio.terra.workspace/service/resource` package
    for your resource tests. Add tests following the pattern of other resources.
-1. Add integration tests for your resource in the `integration` sub-project. Every
+9. Add integration tests for your resource in the `integration` sub-project. Every
    resource type should have a "lifecycle test". See
    `testscripts/ControlledBigQueryDatasetLifecycle` for an example. If you implement
    cloning, then add your resource to the `CloneWorkspace` test as well.
