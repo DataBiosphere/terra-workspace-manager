@@ -57,6 +57,7 @@ public class CopyBigQueryDatasetDefinitionStep implements Step {
   public StepResult doStep(FlightContext flightContext)
       throws InterruptedException, RetryException {
     final FlightMap inputParameters = flightContext.getInputParameters();
+    FlightUtils.validateRequiredEntries(inputParameters, ControlledResourceKeys.DESTINATION_RESOURCE_ID);
     final FlightMap workingMap = flightContext.getWorkingMap();
     final String resourceName =
         FlightUtils.getInputParameterOrWorkingValue(
@@ -85,6 +86,8 @@ public class CopyBigQueryDatasetDefinitionStep implements Step {
             String.class);
     final String destinationProjectId =
         gcpCloudContextService.getRequiredGcpProject(destinationWorkspaceId);
+    final var destinationResourceId = inputParameters.get(
+        ControlledResourceKeys.DESTINATION_RESOURCE_ID, UUID.class);
     final ControlledResourceFields commonFields =
         ControlledResourceFields.builder()
             .accessScope(sourceDataset.getAccessScope())
@@ -93,7 +96,7 @@ public class CopyBigQueryDatasetDefinitionStep implements Step {
             .description(description)
             .managedBy(sourceDataset.getManagedBy())
             .name(resourceName)
-            .resourceId(UUID.randomUUID())
+            .resourceId(destinationResourceId)
             .workspaceUuid(destinationWorkspaceId)
             .build();
     final ControlledBigQueryDatasetResource destinationResource =

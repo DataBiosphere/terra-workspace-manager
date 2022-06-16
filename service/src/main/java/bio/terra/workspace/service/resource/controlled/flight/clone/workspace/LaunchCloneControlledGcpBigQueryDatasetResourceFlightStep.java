@@ -25,11 +25,13 @@ public class LaunchCloneControlledGcpBigQueryDatasetResourceFlightStep implement
 
   private final ControlledBigQueryDatasetResource resource;
   private final String subflightId;
+  private UUID destinationResourceId;
 
   public LaunchCloneControlledGcpBigQueryDatasetResourceFlightStep(
-      ControlledBigQueryDatasetResource resource, String subflightId) {
+      ControlledBigQueryDatasetResource resource, String subflightId, UUID destinationResourceId) {
     this.resource = resource;
     this.subflightId = subflightId;
+    this.destinationResourceId = destinationResourceId;
   }
 
   @Override
@@ -66,6 +68,7 @@ public class LaunchCloneControlledGcpBigQueryDatasetResourceFlightStep implement
     subflightInputParameters.put(
         JobMapKeys.DESCRIPTION.getKeyName(),
         String.format("Clone BigQuery Dataset %s", resource.getResourceId().toString()));
+    subflightInputParameters.put(ControlledResourceKeys.DESTINATION_RESOURCE_ID, destinationResourceId);
 
     // launch the flight
     try {

@@ -27,7 +27,8 @@ public class CloneControlledGcpBigQueryDatasetResourceFlight extends Flight {
         inputParameters,
         ResourceKeys.RESOURCE,
         JobMapKeys.AUTH_USER_INFO.getKeyName(),
-        ControlledResourceKeys.CLONING_INSTRUCTIONS);
+        ControlledResourceKeys.CLONING_INSTRUCTIONS,
+        ControlledResourceKeys.DESTINATION_RESOURCE_ID);
 
     final FlightBeanBag flightBeanBag = FlightBeanBag.getFromObject(applicationContext);
     final ControlledResource sourceResource =

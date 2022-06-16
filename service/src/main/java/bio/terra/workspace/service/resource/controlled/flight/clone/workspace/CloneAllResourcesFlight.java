@@ -24,55 +24,57 @@ public class CloneAllResourcesFlight extends Flight {
     super(inputParameters, applicationContext);
     final FlightBeanBag flightBeanBag = FlightBeanBag.getFromObject(applicationContext);
 
-    final List<ResourceWithFlightId> resourcesAndIds =
+    final List<ResourceCloneInputs> resourceCloneInputsList =
         inputParameters.get(ControlledResourceKeys.RESOURCES_TO_CLONE, new TypeReference<>() {});
 
     // Each entry in the list corresponds to a new step in this flight
-    for (ResourceWithFlightId resourceWithFlightId : resourcesAndIds) {
-      addFlightLaunchStepsForResource(resourceWithFlightId, flightBeanBag);
+    for (ResourceCloneInputs resourceCloneInputs : resourceCloneInputsList) {
+      addFlightLaunchStepsForResource(resourceCloneInputs, flightBeanBag);
     }
   }
 
   private void addFlightLaunchStepsForResource(
-      ResourceWithFlightId resourceWithFlightId, FlightBeanBag flightBeanBag) {
-    final WsmResource resource = resourceWithFlightId.getResource();
+      ResourceCloneInputs resourceCloneInputs, FlightBeanBag flightBeanBag) {
+    final WsmResource resource = resourceCloneInputs.getResource();
 
     switch (resource.getStewardshipType()) {
       case REFERENCED:
         addStep(
             new LaunchCreateReferenceResourceFlightStep(
                 flightBeanBag.getReferencedResourceService(),
-                resourceWithFlightId.getResource().castToReferencedResource(),
-                resourceWithFlightId.getFlightId()));
+                resourceCloneInputs.getResource().castToReferencedResource(),
+                resourceCloneInputs.getFlightId()));
         addStep(
             new AwaitCreateReferenceResourceFlightStep(
-                resourceWithFlightId.getResource().castToReferencedResource(),
-                resourceWithFlightId.getFlightId(),
+                resourceCloneInputs.getResource().castToReferencedResource(),
+                resourceCloneInputs.getFlightId(),
                 flightBeanBag.getResourceDao()),
             RetryRules.cloudLongRunning());
         break;
       case CONTROLLED:
-        switch (resourceWithFlightId.getResource().getResourceType()) {
+        switch (resourceCloneInputs.getResource().getResourceType()) {
           case CONTROLLED_GCP_GCS_BUCKET:
             addStep(
                 new LaunchCloneGcsBucketResourceFlightStep(
                     resource.castByEnum(WsmResourceType.CONTROLLED_GCP_GCS_BUCKET),
-                    resourceWithFlightId.getFlightId()));
+                    resourceCloneInputs.getFlightId(),
+                    resourceCloneInputs.getDestinationResourceId()));
             addStep(
                 new AwaitCloneGcsBucketResourceFlightStep(
                     resource.castByEnum(WsmResourceType.CONTROLLED_GCP_GCS_BUCKET),
-                    resourceWithFlightId.getFlightId()),
+                    resourceCloneInputs.getFlightId()),
                 RetryRules.cloudLongRunning());
             break;
           case CONTROLLED_GCP_BIG_QUERY_DATASET:
             addStep(
                 new LaunchCloneControlledGcpBigQueryDatasetResourceFlightStep(
                     resource.castByEnum(WsmResourceType.CONTROLLED_GCP_BIG_QUERY_DATASET),
-                    resourceWithFlightId.getFlightId()));
+                    resourceCloneInputs.getFlightId(),
+                    resourceCloneInputs.getDestinationResourceId()));
             addStep(
                 new AwaitCloneControlledGcpBigQueryDatasetResourceFlightStep(
                     resource.castByEnum(WsmResourceType.CONTROLLED_GCP_BIG_QUERY_DATASET),
-                    resourceWithFlightId.getFlightId()),
+                    resourceCloneInputs.getFlightId()),
                 RetryRules.cloudLongRunning());
             break;
           case CONTROLLED_GCP_AI_NOTEBOOK_INSTANCE:
@@ -80,14 +82,14 @@ public class CloneAllResourcesFlight extends Flight {
             // Can't throw in a flight constructor
             logger.error(
                 "Unsupported controlled resource type {}",
-                resourceWithFlightId.getResource().getResourceType());
+                resourceCloneInputs.getResource().getResourceType());
             break;
         }
         break;
       default:
         logger.error(
             "Unsupported stewardship type {}",
-            resourceWithFlightId.getResource().getStewardshipType());
+            resourceCloneInputs.getResource().getStewardshipType());
         break;
     }
   }

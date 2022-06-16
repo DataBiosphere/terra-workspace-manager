@@ -60,6 +60,10 @@ components:
         resourceAttributes:
           description: Data specific to the type of resource and whether it is controlled or not
           $ref: '#/components/schemas/ResourceAttributesUnion'
+        destinationResourceId:
+          description: For resource clone operations, the ID of the destination resource.
+          type: string
+          format: uuid
 
     EnumerateJobsResult:
       description: result of an enumerateJobs request

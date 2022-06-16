@@ -48,7 +48,7 @@ public class LaunchCloneAllResourcesFlightStep implements Step {
             .getWorkingMap()
             .get(ControlledResourceKeys.CLONE_ALL_RESOURCES_FLIGHT_ID, String.class);
 
-    final List<ResourceWithFlightId> resourcesAndFlightIds =
+    final List<ResourceCloneInputs> resourcesAndFlightIds =
         context
             .getWorkingMap()
             .get(ControlledResourceKeys.RESOURCES_TO_CLONE, new TypeReference<>() {});
