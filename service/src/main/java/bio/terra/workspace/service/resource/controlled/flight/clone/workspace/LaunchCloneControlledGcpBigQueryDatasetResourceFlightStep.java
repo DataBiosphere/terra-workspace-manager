@@ -68,7 +68,8 @@ public class LaunchCloneControlledGcpBigQueryDatasetResourceFlightStep implement
     subflightInputParameters.put(
         JobMapKeys.DESCRIPTION.getKeyName(),
         String.format("Clone BigQuery Dataset %s", resource.getResourceId().toString()));
-    subflightInputParameters.put(ControlledResourceKeys.DESTINATION_RESOURCE_ID, destinationResourceId);
+    subflightInputParameters.put(
+        ControlledResourceKeys.DESTINATION_RESOURCE_ID, destinationResourceId);
 
     // launch the flight
     try {
