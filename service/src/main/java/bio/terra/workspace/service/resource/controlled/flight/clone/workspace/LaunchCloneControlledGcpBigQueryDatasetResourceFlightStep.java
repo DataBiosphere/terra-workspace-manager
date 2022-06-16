@@ -25,7 +25,7 @@ public class LaunchCloneControlledGcpBigQueryDatasetResourceFlightStep implement
 
   private final ControlledBigQueryDatasetResource resource;
   private final String subflightId;
-  private UUID destinationResourceId;
+  private final UUID destinationResourceId;
 
   public LaunchCloneControlledGcpBigQueryDatasetResourceFlightStep(
       ControlledBigQueryDatasetResource resource, String subflightId, UUID destinationResourceId) {

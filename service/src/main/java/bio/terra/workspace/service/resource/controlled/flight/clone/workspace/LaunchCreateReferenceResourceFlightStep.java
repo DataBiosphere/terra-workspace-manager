@@ -26,7 +26,7 @@ public class LaunchCreateReferenceResourceFlightStep implements Step {
   private final ReferencedResourceService referencedResourceService;
   private final ReferencedResource resource;
   private final String subflightId;
-  private UUID destinationResourceId;
+  private final UUID destinationResourceId;
 
   public LaunchCreateReferenceResourceFlightStep(
       ReferencedResourceService referencedResourceService,
