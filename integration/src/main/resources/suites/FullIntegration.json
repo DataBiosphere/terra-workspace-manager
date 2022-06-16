@@ -21,7 +21,7 @@
     "integration/ReferencedDataRepoSnapshotLifecycle.json",
     "integration/ReferencedGcsResourceLifecycle.json",
     "integration/ReferencedGitRepoLifecycle.json",
-    "integration/ReferencedTerraWorkspaceLifecycle",
+    "integration/ReferencedTerraWorkspaceLifecycle.json",
     "integration/RemoveUser.json",
     "integration/WorkspaceLifecycle.json"
   ]
