@@ -55,47 +55,41 @@ public final class AzureVmHelper {
   }
 
   public static StepResult removeAllUserAssignedManagedIdentitiesFromVm(
-      AzureCloudContext azureCloudContext, ComputeManager computeManager, String vmName)
-      throws InterruptedException {
+      AzureCloudContext azureCloudContext, ComputeManager computeManager, String vmName) {
     try {
-      Set<String> userAssignedMsiIds =
+      final VirtualMachine virtualMachine =
           computeManager
               .virtualMachines()
-              .getByResourceGroup(azureCloudContext.getAzureResourceGroupId(), vmName)
-              .userAssignedManagedServiceIdentityIds();
+              .getByResourceGroup(azureCloudContext.getAzureResourceGroupId(), vmName);
 
-      if (userAssignedMsiIds != null) {
-        userAssignedMsiIds.forEach(
-            (String userAssignedMsiId) -> {
-              computeManager
-                  .virtualMachines()
-                  .getByResourceGroup(azureCloudContext.getAzureResourceGroupId(), vmName)
-                  .update()
-                  .withoutUserAssignedManagedServiceIdentity(userAssignedMsiId);
-            });
-      }
-    } catch (ManagementException e) {
-      handleNotFound(e, vmName, azureCloudContext.getAzureResourceGroupId());
-    }
-    return StepResult.getStepResultSuccess();
-  }
+      Set<String> userAssignedMsiIds = virtualMachine.userAssignedManagedServiceIdentityIds();
 
-  public static StepResult removePetManagedIdentitiesFromVm(
-      AzureCloudContext azureCloudContext,
-      ComputeManager computeManager,
-      String vmName,
-      String petManagedIdentityId)
-      throws InterruptedException {
-    try {
-      if (petManagedIdentityId != null) {
-        computeManager
-            .virtualMachines()
-            .getByResourceGroup(azureCloudContext.getAzureResourceGroupId(), vmName)
-            .update()
-            .withoutUserAssignedManagedServiceIdentity(petManagedIdentityId);
+      if (userAssignedMsiIds == null || userAssignedMsiIds.isEmpty()) {
+        logger.info(
+            "Azure VM {} in managed resource group {} has no user-assigned managed identities assigned",
+            vmName,
+            azureCloudContext.getAzureResourceGroupId());
+        return StepResult.getStepResultSuccess();
       }
+
+      for (String userAssignedMsiId : userAssignedMsiIds) {
+        virtualMachine.update().withoutUserAssignedManagedServiceIdentity(userAssignedMsiId);
+      }
+      ;
     } catch (ManagementException e) {
-      handleNotFound(e, vmName, azureCloudContext.getAzureResourceGroupId());
+      if (StringUtils.equals(e.getValue().getCode(), "ResourceNotFound")) {
+        // TODO: if vm gets deleted before this process finishes, the Identity assignment still
+        // needs to be updated to remove access to vm.
+        // This is going to be a more tedious process involving traversing through all identities in
+        // managed resource group.
+        logger.info(
+            "Azure VM {} in managed resource group {} has already been deleted",
+            vmName,
+            azureCloudContext.getAzureResourceGroupId());
+        // Returning success for now.
+        return StepResult.getStepResultSuccess();
+      }
+      return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, e);
     }
     return StepResult.getStepResultSuccess();
   }
@@ -105,18 +99,34 @@ public final class AzureVmHelper {
       ComputeManager computeManager,
       MsiManager msiManager,
       String vmName,
-      String petManagedIdentityId)
-      throws InterruptedException {
-    try {
-      Identity managedIdentity = msiManager.identities().getById(petManagedIdentityId);
+      String petManagedIdentityId) {
+    Identity managedIdentity;
 
+    try {
+      managedIdentity = msiManager.identities().getById(petManagedIdentityId);
+    } catch (ManagementException e) {
+      logger.info(
+          "Error getting Azure managed identity {} in managed resource group {}.",
+          petManagedIdentityId,
+          azureCloudContext.getAzureResourceGroupId());
+      return new StepResult(StepStatus.STEP_RESULT_FAILURE_FATAL, e);
+    }
+
+    try {
       computeManager
           .virtualMachines()
           .getByResourceGroup(azureCloudContext.getAzureResourceGroupId(), vmName)
           .update()
           .withExistingUserAssignedManagedServiceIdentity(managedIdentity);
     } catch (ManagementException e) {
-      handleNotFound(e, vmName, azureCloudContext.getAzureResourceGroupId());
+      if (StringUtils.equals(e.getValue().getCode(), "Conflict")) {
+        logger.info(
+            "Azure VM {} in managed resource group {} does not exist.",
+            vmName,
+            azureCloudContext.getAzureResourceGroupId());
+        return new StepResult(StepStatus.STEP_RESULT_FAILURE_FATAL, e);
+      }
+      return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, e);
     }
     return StepResult.getStepResultSuccess();
   }

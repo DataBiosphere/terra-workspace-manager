@@ -1,6 +1,9 @@
 package bio.terra.workspace.service.resource.controlled.cloud.azure.vm;
 
-import bio.terra.stairway.*;
+import bio.terra.stairway.FlightContext;
+import bio.terra.stairway.FlightMap;
+import bio.terra.stairway.Step;
+import bio.terra.stairway.StepResult;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.app.configuration.external.AzureConfiguration;
 import bio.terra.workspace.common.utils.FlightUtils;
@@ -10,8 +13,6 @@ import bio.terra.workspace.service.iam.SamRethrow;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import bio.terra.workspace.service.workspace.model.AzureCloudContext;
-import com.azure.core.management.AzureEnvironment;
-import com.azure.core.management.profile.AzureProfile;
 import com.azure.resourcemanager.compute.ComputeManager;
 import com.azure.resourcemanager.msi.MsiManager;
 import org.slf4j.Logger;
@@ -51,14 +52,7 @@ public class AssignManagedIdentityAzureVmStep implements Step {
             .get(ControlledResourceKeys.AZURE_CLOUD_CONTEXT, AzureCloudContext.class);
 
     ComputeManager computeManager = crlService.getComputeManager(azureCloudContext, azureConfig);
-    AzureProfile profile =
-        new AzureProfile(
-            azureCloudContext.getAzureTenantId(),
-            azureCloudContext.getAzureSubscriptionId(),
-            AzureEnvironment.AZURE);
-    MsiManager msiManager =
-        MsiManager.configure()
-            .authenticate(crlService.getManagedAppCredentials(azureConfig), profile);
+    MsiManager msiManager = crlService.getMsiManager(azureCloudContext, azureConfig);
 
     String petManagedIdentityId =
         SamRethrow.onInterrupted(
@@ -82,14 +76,7 @@ public class AssignManagedIdentityAzureVmStep implements Step {
             .get(ControlledResourceKeys.AZURE_CLOUD_CONTEXT, AzureCloudContext.class);
     ComputeManager computeManager = crlService.getComputeManager(azureCloudContext, azureConfig);
 
-    String petManagedIdentityId =
-        samService.getOrCreateUserManagedIdentity(
-            userRequest,
-            azureCloudContext.getAzureSubscriptionId(),
-            azureCloudContext.getAzureTenantId(),
-            azureCloudContext.getAzureResourceGroupId());
-
-    return AzureVmHelper.removePetManagedIdentitiesFromVm(
-        azureCloudContext, computeManager, resource.getVmName(), petManagedIdentityId);
+    return AzureVmHelper.removeAllUserAssignedManagedIdentitiesFromVm(
+        azureCloudContext, computeManager, resource.getVmName());
   }
 }
