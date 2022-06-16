@@ -952,12 +952,13 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
       assertEquals(StewardshipType.REFERENCED, referencedResource.getStewardshipType());
 
       ReferencedTerraWorkspaceResource expected =
-          referencedResource.castByEnum(WsmResourceType.REFERENCED_TERRA_WORKSPACE);
+          referencedResource.castByEnum(WsmResourceType.REFERENCED_ANY_TERRA_WORKSPACE);
 
       ReferencedResource actualReferencedResourceGeneric =
           referenceResourceService.createReferenceResource(referencedResource, USER_REQUEST);
       ReferencedTerraWorkspaceResource actual =
-          actualReferencedResourceGeneric.castByEnum(WsmResourceType.REFERENCED_TERRA_WORKSPACE);
+          actualReferencedResourceGeneric.castByEnum(
+              WsmResourceType.REFERENCED_ANY_TERRA_WORKSPACE);
       assertEquals(expected, actual);
 
       assertTrue(
@@ -967,11 +968,11 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
       ReferencedTerraWorkspaceResource byIdActual =
           referenceResourceService
               .getReferenceResource(workspaceUuid, expected.getResourceId(), USER_REQUEST)
-              .castByEnum(WsmResourceType.REFERENCED_TERRA_WORKSPACE);
+              .castByEnum(WsmResourceType.REFERENCED_ANY_TERRA_WORKSPACE);
       ReferencedTerraWorkspaceResource byNameActual =
           referenceResourceService
               .getReferenceResourceByName(workspaceUuid, expected.getName(), USER_REQUEST)
-              .castByEnum(WsmResourceType.REFERENCED_TERRA_WORKSPACE);
+              .castByEnum(WsmResourceType.REFERENCED_ANY_TERRA_WORKSPACE);
       assertNotNull(byIdActual);
       assertEquals(byIdActual, byNameActual);
 
@@ -979,7 +980,7 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
           workspaceUuid,
           referencedResource.getResourceId(),
           USER_REQUEST,
-          WsmResourceType.REFERENCED_TERRA_WORKSPACE);
+          WsmResourceType.REFERENCED_ANY_TERRA_WORKSPACE);
     }
 
     @Test

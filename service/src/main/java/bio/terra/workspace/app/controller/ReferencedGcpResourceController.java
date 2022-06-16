@@ -943,7 +943,7 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
     ReferencedTerraWorkspaceResource referenceResource =
         referenceResourceService
             .createReferenceResource(resource, getAuthenticatedInfo())
-            .castByEnum(WsmResourceType.REFERENCED_TERRA_WORKSPACE);
+            .castByEnum(WsmResourceType.REFERENCED_ANY_TERRA_WORKSPACE);
     return new ResponseEntity<>(referenceResource.toApiResource(), HttpStatus.OK);
   }
 
@@ -954,7 +954,7 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
     ReferencedTerraWorkspaceResource referenceResource =
         referenceResourceService
             .getReferenceResource(workspaceUuid, resourceId, userRequest)
-            .castByEnum(WsmResourceType.REFERENCED_TERRA_WORKSPACE);
+            .castByEnum(WsmResourceType.REFERENCED_ANY_TERRA_WORKSPACE);
     return new ResponseEntity<>(referenceResource.toApiResource(), HttpStatus.OK);
   }
 
@@ -965,7 +965,7 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
     ReferencedTerraWorkspaceResource referenceResource =
         referenceResourceService
             .getReferenceResourceByName(workspaceUuid, resourceName, userRequest)
-            .castByEnum(WsmResourceType.REFERENCED_TERRA_WORKSPACE);
+            .castByEnum(WsmResourceType.REFERENCED_ANY_TERRA_WORKSPACE);
     return new ResponseEntity<>(referenceResource.toApiResource(), HttpStatus.OK);
   }
 
@@ -973,7 +973,7 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
   public ResponseEntity<Void> deleteTerraWorkspaceReference(UUID workspaceUuid, UUID resourceId) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     referenceResourceService.deleteReferenceResourceForResourceType(
-        workspaceUuid, resourceId, userRequest, WsmResourceType.REFERENCED_TERRA_WORKSPACE);
+        workspaceUuid, resourceId, userRequest, WsmResourceType.REFERENCED_ANY_TERRA_WORKSPACE);
     return new ResponseEntity<>(HttpStatus.OK);
   }
 

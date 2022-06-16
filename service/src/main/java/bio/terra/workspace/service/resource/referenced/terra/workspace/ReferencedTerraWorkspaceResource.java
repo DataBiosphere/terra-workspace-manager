@@ -56,7 +56,7 @@ public class ReferencedTerraWorkspaceResource extends ReferencedResource {
    */
   public ReferencedTerraWorkspaceResource(DbResource dbResource) {
     super(dbResource);
-    if (dbResource.getResourceType() != WsmResourceType.REFERENCED_TERRA_WORKSPACE) {
+    if (dbResource.getResourceType() != WsmResourceType.REFERENCED_ANY_TERRA_WORKSPACE) {
       throw new InvalidMetadataException("Expected REFERENCED_TERRA_WORKSPACE");
     }
 
@@ -96,7 +96,7 @@ public class ReferencedTerraWorkspaceResource extends ReferencedResource {
 
   @Override
   public WsmResourceType getResourceType() {
-    return WsmResourceType.REFERENCED_TERRA_WORKSPACE;
+    return WsmResourceType.REFERENCED_ANY_TERRA_WORKSPACE;
   }
 
   @Override

@@ -115,10 +115,10 @@ public enum WsmResourceType {
       ApiResourceType.GIT_REPO,
       ReferencedGitRepoResource.class,
       ReferencedGitRepoHandler::getHandler),
-  REFERENCED_TERRA_WORKSPACE(
+  REFERENCED_ANY_TERRA_WORKSPACE(
       CloudPlatform.ANY,
       StewardshipType.REFERENCED,
-      "REFERENCED_TERRA_WORKSPACE",
+      "REFERENCED_ANY_TERRA_WORKSPACE",
       ApiResourceType.TERRA_WORKSPACE,
       ReferencedTerraWorkspaceResource.class,
       ReferencedTerraWorkspaceHandler::getHandler),

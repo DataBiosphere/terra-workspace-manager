@@ -18,9 +18,10 @@
     "integration/PrivateControlledAiNotebookInstanceLifecycle.json",
     "integration/PrivateControlledGcsBucketLifecycle.json",
     "integration/ReferencedBigQueryResourceLifecycle.json",
+    "integration/ReferencedDataRepoSnapshotLifecycle.json",
     "integration/ReferencedGcsResourceLifecycle.json",
     "integration/ReferencedGitRepoLifecycle.json",
-    "integration/ReferencedDataRepoSnapshotLifecycle.json",
+    "integration/ReferencedTerraWorkspaceLifecycle",
     "integration/RemoveUser.json",
     "integration/WorkspaceLifecycle.json"
   ]

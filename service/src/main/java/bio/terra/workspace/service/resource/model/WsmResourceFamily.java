@@ -65,7 +65,7 @@ public enum WsmResourceFamily {
   TERRA_WORKSPACE(
       "TERRA_WORKSPACE",
       ApiResourceType.TERRA_WORKSPACE,
-      WsmResourceType.REFERENCED_TERRA_WORKSPACE,
+      WsmResourceType.REFERENCED_ANY_TERRA_WORKSPACE,
       null);
 
   private final String dbString; // serialized form of the resource type
