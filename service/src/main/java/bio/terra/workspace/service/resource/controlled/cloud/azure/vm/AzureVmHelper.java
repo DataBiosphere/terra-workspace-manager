@@ -9,10 +9,9 @@ import com.azure.resourcemanager.compute.ComputeManager;
 import com.azure.resourcemanager.compute.models.VirtualMachine;
 import com.azure.resourcemanager.msi.MsiManager;
 import com.azure.resourcemanager.msi.models.Identity;
-import java.util.concurrent.TimeUnit;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 import org.apache.commons.lang3.StringUtils;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -93,20 +92,20 @@ public final class AzureVmHelper {
   }
 
   public static StepResult removeAllUserAssignedManagedIdentitiesFromVm(
-          AzureCloudContext azureCloudContext, ComputeManager computeManager, String vmName) {
+      AzureCloudContext azureCloudContext, ComputeManager computeManager, String vmName) {
     try {
       final VirtualMachine virtualMachine =
-              computeManager
-                      .virtualMachines()
-                      .getByResourceGroup(azureCloudContext.getAzureResourceGroupId(), vmName);
+          computeManager
+              .virtualMachines()
+              .getByResourceGroup(azureCloudContext.getAzureResourceGroupId(), vmName);
 
       Set<String> userAssignedMsiIds = virtualMachine.userAssignedManagedServiceIdentityIds();
 
       if (userAssignedMsiIds == null || userAssignedMsiIds.isEmpty()) {
         logger.info(
-                "Azure VM {} in managed resource group {} has no user-assigned managed identities assigned",
-                vmName,
-                azureCloudContext.getAzureResourceGroupId());
+            "Azure VM {} in managed resource group {} has no user-assigned managed identities assigned",
+            vmName,
+            azureCloudContext.getAzureResourceGroupId());
         return StepResult.getStepResultSuccess();
       }
 
@@ -120,9 +119,9 @@ public final class AzureVmHelper {
         // This is going to be a more tedious process involving traversing through all identities in
         // managed resource group.
         logger.info(
-                "Azure VM {} in managed resource group {} has already been deleted",
-                vmName,
-                azureCloudContext.getAzureResourceGroupId());
+            "Azure VM {} in managed resource group {} has already been deleted",
+            vmName,
+            azureCloudContext.getAzureResourceGroupId());
         // Returning success for now.
         return StepResult.getStepResultSuccess();
       }
@@ -132,35 +131,35 @@ public final class AzureVmHelper {
   }
 
   public static StepResult assignPetManagedIdentityToVm(
-          AzureCloudContext azureCloudContext,
-          ComputeManager computeManager,
-          MsiManager msiManager,
-          String vmName,
-          String petManagedIdentityId) {
+      AzureCloudContext azureCloudContext,
+      ComputeManager computeManager,
+      MsiManager msiManager,
+      String vmName,
+      String petManagedIdentityId) {
     Identity managedIdentity;
 
     try {
       managedIdentity = msiManager.identities().getById(petManagedIdentityId);
     } catch (ManagementException e) {
       logger.info(
-              "Error getting Azure managed identity {} in managed resource group {}.",
-              petManagedIdentityId,
-              azureCloudContext.getAzureResourceGroupId());
+          "Error getting Azure managed identity {} in managed resource group {}.",
+          petManagedIdentityId,
+          azureCloudContext.getAzureResourceGroupId());
       return new StepResult(StepStatus.STEP_RESULT_FAILURE_FATAL, e);
     }
 
     try {
       computeManager
-              .virtualMachines()
-              .getByResourceGroup(azureCloudContext.getAzureResourceGroupId(), vmName)
-              .update()
-              .withExistingUserAssignedManagedServiceIdentity(managedIdentity);
+          .virtualMachines()
+          .getByResourceGroup(azureCloudContext.getAzureResourceGroupId(), vmName)
+          .update()
+          .withExistingUserAssignedManagedServiceIdentity(managedIdentity);
     } catch (ManagementException e) {
       if (StringUtils.equals(e.getValue().getCode(), "Conflict")) {
         logger.info(
-                "Azure VM {} in managed resource group {} does not exist.",
-                vmName,
-                azureCloudContext.getAzureResourceGroupId());
+            "Azure VM {} in managed resource group {} does not exist.",
+            vmName,
+            azureCloudContext.getAzureResourceGroupId());
         return new StepResult(StepStatus.STEP_RESULT_FAILURE_FATAL, e);
       }
       return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, e);
