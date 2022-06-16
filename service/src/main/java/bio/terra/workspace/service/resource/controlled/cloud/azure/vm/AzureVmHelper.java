@@ -9,9 +9,10 @@ import com.azure.resourcemanager.compute.ComputeManager;
 import com.azure.resourcemanager.compute.models.VirtualMachine;
 import com.azure.resourcemanager.msi.MsiManager;
 import com.azure.resourcemanager.msi.models.Identity;
-import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import java.util.Set;
 import org.apache.commons.lang3.StringUtils;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
