@@ -54,12 +54,11 @@ public class LaunchCreateReferenceResourceFlightStep implements Step {
         context
             .getInputParameters()
             .get(JobMapKeys.AUTH_USER_INFO.getKeyName(), AuthenticatedUserRequest.class);
-    final String description =
-        String.format("Clone of Referenced Resource %s", resource.getResourceId());
 
     final ReferencedResource destinationResource =
         WorkspaceCloneUtils.buildDestinationReferencedResource(
-            resource, destinationWorkspaceId, null, description);
+            resource, destinationWorkspaceId, resource.getName(), resource.getDescription());
+
     // put the destination resource in the map, because it's not communicated
     // from the flight as the response (and we need the workspace ID)
     context

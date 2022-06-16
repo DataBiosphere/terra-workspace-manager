@@ -55,8 +55,7 @@ public class GrantPetUsagePermissionStep implements Step {
     Policy modifiedPolicy;
     try {
       modifiedPolicy =
-          petSaService.enablePetServiceAccountImpersonation(
-              workspaceUuid, userEmail, userRequest.getRequiredToken());
+          petSaService.enablePetServiceAccountImpersonation(workspaceUuid, userEmail, userRequest);
     } catch (ConflictException e) {
       // There was a conflict enabling the service account. Request retry.
       return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, e);

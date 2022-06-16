@@ -133,6 +133,13 @@ public class ControlledAzureVmResource extends ControlledResource {
         new GetAzureVmStep(flightBeanBag.getAzureConfig(), flightBeanBag.getCrlService(), this),
         cloudRetry);
     flight.addStep(
+        new CreateAzureNetworkInterfaceStep(
+            flightBeanBag.getAzureConfig(),
+            flightBeanBag.getCrlService(),
+            this,
+            flightBeanBag.getResourceDao()),
+        cloudRetry);
+    flight.addStep(
         new CreateAzureVmStep(
             flightBeanBag.getAzureConfig(),
             flightBeanBag.getCrlService(),
@@ -158,6 +165,10 @@ public class ControlledAzureVmResource extends ControlledResource {
         RetryRules.cloud());
     flight.addStep(
         new DeleteAzureVmStep(flightBeanBag.getAzureConfig(), flightBeanBag.getCrlService(), this),
+        RetryRules.cloud());
+    flight.addStep(
+        new DeleteAzureNetworkInterfaceStep(
+            flightBeanBag.getAzureConfig(), flightBeanBag.getCrlService(), this),
         RetryRules.cloud());
   }
 

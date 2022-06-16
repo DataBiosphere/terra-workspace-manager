@@ -2,21 +2,19 @@ package bio.terra.workspace.service.resource.controlled.cloud.azure.vm;
 
 import bio.terra.cloudres.azure.resourcemanager.common.Defaults;
 import bio.terra.cloudres.azure.resourcemanager.compute.data.CreateVirtualMachineRequestData;
-import bio.terra.stairway.FlightContext;
-import bio.terra.stairway.FlightMap;
-import bio.terra.stairway.Step;
-import bio.terra.stairway.StepResult;
-import bio.terra.stairway.StepStatus;
+import bio.terra.stairway.*;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.app.configuration.external.AzureConfiguration;
 import bio.terra.workspace.common.utils.AzureVmUtils;
 import bio.terra.workspace.common.utils.FlightUtils;
+import bio.terra.workspace.common.utils.ManagementExceptionUtils;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.generated.model.ApiAzureVmCreationParameters;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.disk.ControlledAzureDiskResource;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.ip.ControlledAzureIpResource;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.network.ControlledAzureNetworkResource;
+import bio.terra.workspace.service.resource.controlled.exception.AzureNetworkInterfaceNameNotFoundException;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import bio.terra.workspace.service.workspace.model.AzureCloudContext;
@@ -31,12 +29,10 @@ import com.azure.resourcemanager.network.models.Network;
 import com.azure.resourcemanager.network.models.NetworkInterface;
 import com.azure.resourcemanager.network.models.PublicIpAddress;
 import java.util.Optional;
-import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class CreateAzureVmStep implements Step {
-
   private static final Logger logger = LoggerFactory.getLogger(CreateAzureVmStep.class);
   private final AzureConfiguration azureConfig;
   private final CrlService crlService;
@@ -109,18 +105,32 @@ public class CreateAzureVmStep implements Step {
               .getByResourceGroup(
                   azureCloudContext.getAzureResourceGroupId(), networkResource.getNetworkName());
 
-      var createNic =
-          createNetworkInterface(
-              computeManager,
-              azureCloudContext,
-              existingNetwork,
-              networkResource.getSubnetName(),
-              existingAzureIp);
+      if (!context.getWorkingMap().containsKey(AzureVmHelper.WORKING_MAP_NETWORK_INTERFACE_KEY)) {
+        logger.error(
+            "Azure VM creation flight couldn't be completed. "
+                + "Network interface name not found. FlightId: {}",
+            context.getFlightId());
+        return new StepResult(
+            StepStatus.STEP_RESULT_FAILURE_FATAL,
+            new AzureNetworkInterfaceNameNotFoundException(
+                String.format(
+                    "Azure network interface name not found. " + "FlightId: %s",
+                    context.getFlightId())));
+      }
+      var networkInterface =
+          computeManager
+              .networkManager()
+              .networkInterfaces()
+              .getByResourceGroup(
+                  azureCloudContext.getAzureResourceGroupId(),
+                  context
+                      .getWorkingMap()
+                      .get(AzureVmHelper.WORKING_MAP_NETWORK_INTERFACE_KEY, String.class));
 
       var virtualMachineDefinition =
           buildVmConfiguration(
               computeManager,
-              createNic,
+              networkInterface,
               existingAzureDisk,
               azureCloudContext.getAzureResourceGroupId(),
               creationParameters);
@@ -142,16 +152,15 @@ public class CreateAzureVmStep implements Step {
     } catch (ManagementException e) {
       // Stairway steps may run multiple times, so we may already have created this resource. In all
       // other cases, surface the exception and attempt to retry.
-      // Azure error codes can be found here:
-      // https://docs.microsoft.com/en-us/azure/azure-resource-manager/templates/common-deployment-errors
-      if (StringUtils.equals(e.getValue().getCode(), "Conflict")) {
+      if (ManagementExceptionUtils.isExceptionCode(e, ManagementExceptionUtils.CONFLICT)) {
         logger.info(
             "Azure Vm {} in managed resource group {} already exists",
             resource.getVmName(),
             azureCloudContext.getAzureResourceGroupId());
         return StepResult.getStepResultSuccess();
       }
-      if (StringUtils.equals(e.getValue().getCode(), "ResourceNotFound")) {
+      if (ManagementExceptionUtils.isExceptionCode(
+          e, ManagementExceptionUtils.RESOURCE_NOT_FOUND)) {
         logger.info(
             "Either the disk, ip, or network passed into this createVm does not exist "
                 + String.format(
@@ -164,7 +173,6 @@ public class CreateAzureVmStep implements Step {
       }
       return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, e);
     }
-
     return StepResult.getStepResultSuccess();
   }
 
@@ -243,27 +251,5 @@ public class CreateAzureVmStep implements Step {
       customScriptExtension.attach();
     }
     return vmConfigurationFinalStep;
-  }
-
-  private NetworkInterface createNetworkInterface(
-      ComputeManager computeManager,
-      AzureCloudContext azureCloudContext,
-      Network existingNetwork,
-      String subnetName,
-      Optional<PublicIpAddress> existingAzureIp) {
-    var createNicStep =
-        computeManager
-            .networkManager()
-            .networkInterfaces()
-            .define(String.format("nic-%s", resource.getVmName()))
-            .withRegion(resource.getRegion())
-            .withExistingResourceGroup(azureCloudContext.getAzureResourceGroupId())
-            .withExistingPrimaryNetwork(existingNetwork)
-            .withSubnet(subnetName)
-            .withPrimaryPrivateIPAddressDynamic();
-    if (existingAzureIp.isPresent()) {
-      createNicStep.withExistingPrimaryPublicIPAddress(existingAzureIp.get());
-    }
-    return createNicStep.create();
   }
 }

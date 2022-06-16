@@ -1,7 +1,5 @@
 package bio.terra.workspace.service.resource.controlled.flight.clone.workspace;
 
-import static bio.terra.workspace.common.utils.FlightUtils.FLIGHT_POLL_CYCLES;
-import static bio.terra.workspace.common.utils.FlightUtils.FLIGHT_POLL_SECONDS;
 import static bio.terra.workspace.common.utils.FlightUtils.validateRequiredEntries;
 
 import bio.terra.stairway.FlightContext;
@@ -22,6 +20,7 @@ import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.Contr
 import bio.terra.workspace.service.workspace.model.WsmCloneResourceResult;
 import bio.terra.workspace.service.workspace.model.WsmResourceCloneDetails;
 import com.fasterxml.jackson.core.type.TypeReference;
+import java.time.Duration;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -59,7 +58,8 @@ public class AwaitCreateReferenceResourceFlightStep implements Step {
         FlightUtils.validateRequiredEntries(
             context.getWorkingMap(), ControlledResourceKeys.DESTINATION_REFERENCED_RESOURCE);
         final FlightState subflightState =
-            context.getStairway().waitForFlight(flightId, FLIGHT_POLL_SECONDS, FLIGHT_POLL_CYCLES);
+            FlightUtils.waitForFlightExponential(
+                context.getStairway(), flightId, Duration.ofMillis(50), Duration.ofMinutes(5));
         final WsmCloneResourceResult cloneResult =
             WorkspaceCloneUtils.flightStatusToCloneResult(
                 subflightState.getFlightStatus(), sourceResource);

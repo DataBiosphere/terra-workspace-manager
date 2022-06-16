@@ -121,7 +121,7 @@ public class GcpCloudContext {
     } catch (SerializationException e) {
       // Deserialization of V2 failed. Try the V1 format
     }
-
+    // TODO(PF-1666): Remove this branch once all workspaces are migrated to GcpCloudContextV2
     try {
       GcpCloudContextV1 v1Context = DbSerDes.fromJson(json, GcpCloudContextV1.class);
       if (v1Context.version == GcpCloudContextV1.GCP_CLOUD_CONTEXT_DB_VERSION) {

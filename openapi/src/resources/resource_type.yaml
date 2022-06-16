@@ -17,6 +17,7 @@ components:
         - AZURE_VM
         - AZURE_RELAY_NAMESPACE
         - AZURE_STORAGE_ACCOUNT
+        - AZURE_STORAGE_CONTAINER
         - GIT_REPO
 
     ResourceAttributesUnion:
@@ -48,6 +49,8 @@ components:
           $ref: '#/components/schemas/AzureRelayNamespaceAttributes'
         azureStorage:
           $ref: '#/components/schemas/AzureStorageAttributes'
+        azureStorageContainer:
+          $ref: '#/components/schemas/AzureStorageContainerAttributes'
         azureVm:
           $ref: '#/components/schemas/AzureVmAttributes'
         gitRepo:
@@ -84,6 +87,8 @@ components:
           $ref: '#/components/schemas/AzureRelayNamespaceResource'
         azureStorageAccount:
           $ref: '#/components/schemas/AzureStorageResource'
+        azureStorageContainer:
+          $ref: '#/components/schemas/AzureStorageContainerResource'
         gitRepo:
           $ref: '#/components/schemas/GitRepoResource'
 
