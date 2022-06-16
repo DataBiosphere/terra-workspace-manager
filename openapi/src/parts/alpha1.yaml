@@ -61,7 +61,8 @@ components:
           description: Data specific to the type of resource and whether it is controlled or not
           $ref: '#/components/schemas/ResourceAttributesUnion'
         destinationResourceId:
-          description: For resource clone operations, the ID of the destination resource.
+          description: |
+            For resource clone operations, the ID of the destination resource. Null otherwise.
           type: string
           format: uuid
 

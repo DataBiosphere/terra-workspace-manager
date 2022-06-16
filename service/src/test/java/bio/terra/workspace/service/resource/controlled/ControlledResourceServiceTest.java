@@ -1477,6 +1477,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
             workspace.getWorkspaceId(),
             createdBucket.getResourceId(),
             workspace.getWorkspaceId(), // copy back into same workspace
+            UUID.randomUUID(),
             apiJobControl,
             user.getAuthenticatedRequest(),
             "cloned_bucket",
