@@ -1,6 +1,8 @@
 package bio.terra.workspace.service.resource.controlled.cloud.azure.vm;
 
-import bio.terra.stairway.*;
+import bio.terra.stairway.FlightContext;
+import bio.terra.stairway.Step;
+import bio.terra.stairway.StepResult;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.app.configuration.external.AzureConfiguration;
 import bio.terra.workspace.service.crl.CrlService;
@@ -42,7 +44,6 @@ public class RemoveManagedIdentitiesAzureVmStep implements Step {
         "Cannot undo removing of user-assigned managed identities of Azure vm resource {} in workspace {}.",
         resource.getResourceId(),
         resource.getWorkspaceId());
-    // Surface whatever error caused Stairway to begin undoing.
     return flightContext.getResult();
   }
 }
