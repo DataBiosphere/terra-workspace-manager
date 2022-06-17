@@ -115,7 +115,7 @@ public class WsmApplicationService {
             .workspaceId(workspaceUuid.toString())
             .addParameter(WorkspaceFlightMapKeys.APPLICATION_ID, applicationId)
             .addParameter(WsmApplicationKeys.APPLICATION_ABLE_ENUM, ableEnum);
-    return job.submitAndWait(WsmWorkspaceApplication.class);
+    return job.submitAndWait(WsmWorkspaceApplication.class, null);
   }
 
   public WsmWorkspaceApplication getWorkspaceApplication(

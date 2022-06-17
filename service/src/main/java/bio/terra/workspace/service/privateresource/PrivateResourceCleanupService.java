@@ -162,7 +162,7 @@ public class PrivateResourceCleanupService {
             .addParameter(WorkspaceFlightMapKeys.ROLE_TO_REMOVE, null);
     try {
       // Skip the job access check as the "manager" role does not grant read access to a workspace.
-      userCleanupJob.submitAndWait(null, /*doAccessCheck=*/ false);
+      userCleanupJob.submitAndWait(null, /*doAccessCheck=*/ false, null);
     } catch (RuntimeException e) {
       // Log the error, but don't kill this thread as it still needs to clean up other users.
       logger.error(

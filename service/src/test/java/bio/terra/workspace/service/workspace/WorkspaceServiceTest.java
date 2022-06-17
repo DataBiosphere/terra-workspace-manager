@@ -76,6 +76,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Predicate;
 import org.broadinstitute.dsde.workbench.client.sam.ApiException;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -109,7 +110,7 @@ class WorkspaceServiceTest extends BaseConnectedTest {
   @Autowired private SpendConnectedTestUtils spendUtils;
   @Autowired private WorkspaceConnectedTestUtils testUtils;
   @Autowired private WorkspaceService workspaceService;
-  @Autowired private ActivityLogDao activityLogDao;
+  @Autowired private ActivityLogDao workspaceActivityLogDao;
 
   @BeforeEach
   void setup() throws Exception {
@@ -325,11 +326,13 @@ class WorkspaceServiceTest extends BaseConnectedTest {
     propertyMap.put("foo", "bar");
     propertyMap.put("xyzzy", "plohg");
     Workspace request = defaultRequestBuilder(UUID.randomUUID()).properties(propertyMap).build();
-    var lastUpdateDate = activityLogDao.getLastUpdateDate(request.getWorkspaceId().toString());
+    var lastUpdateDate =
+        workspaceActivityLogDao.getLastChangedDate(request.getWorkspaceId().toString());
     assertNull(lastUpdateDate);
 
     workspaceService.createWorkspace(request, USER_REQUEST);
-    var updateDate = activityLogDao.getLastUpdateDate(request.getWorkspaceId().toString());
+    var updateDate =
+        workspaceActivityLogDao.getLastChangedDate(request.getWorkspaceId().toString());
     assertNotNull(updateDate);
 
     Workspace createdWorkspace =
@@ -350,7 +353,7 @@ class WorkspaceServiceTest extends BaseConnectedTest {
         workspaceService.updateWorkspace(
             USER_REQUEST, workspaceUuid, userFacingId, name, description, propertyMap2);
     var updateDateAfterUpdateWorkspace =
-        activityLogDao.getLastUpdateDate(request.getWorkspaceId().toString());
+        workspaceActivityLogDao.getLastChangedDate(request.getWorkspaceId().toString());
     assertTrue(updateDate.isBefore(updateDateAfterUpdateWorkspace));
 
     assertEquals(userFacingId, updatedWorkspace.getUserFacingId());
@@ -400,7 +403,8 @@ class WorkspaceServiceTest extends BaseConnectedTest {
     request = defaultRequestBuilder(secondWorkspaceUuid).build();
     workspaceService.createWorkspace(request, USER_REQUEST);
 
-    var lastUpdateDate = activityLogDao.getLastUpdateDate(request.getWorkspaceId().toString());
+    var lastUpdateDate =
+        workspaceActivityLogDao.getLastChangedDate(request.getWorkspaceId().toString());
     // Try to set second workspace's userFacing to first.
     DuplicateUserFacingIdException ex =
         assertThrows(
@@ -411,7 +415,7 @@ class WorkspaceServiceTest extends BaseConnectedTest {
     assertEquals(
         ex.getMessage(), String.format("Workspace with ID %s already exists", userFacingId));
     var updateDateAfterException =
-        activityLogDao.getLastUpdateDate(request.getWorkspaceId().toString());
+        workspaceActivityLogDao.getLastChangedDate(request.getWorkspaceId().toString());
     assertEquals(lastUpdateDate, updateDateAfterException);
   }
 
@@ -427,7 +431,7 @@ class WorkspaceServiceTest extends BaseConnectedTest {
             () ->
                 workspaceService.createWorkspace(
                     defaultRequestBuilder(workspaceId).build(), USER_REQUEST));
-    var lastUpdateDate = activityLogDao.getLastUpdateDate(workspaceId.toString());
+    var lastUpdateDate = workspaceActivityLogDao.getLastChangedDate(workspaceId.toString());
     assertNull(lastUpdateDate);
     assertEquals(apiErrorMsg, exception.getMessage());
   }
@@ -495,7 +499,8 @@ class WorkspaceServiceTest extends BaseConnectedTest {
     assertThrows(
         WorkspaceNotFoundException.class,
         () -> workspaceService.getWorkspace(request.getWorkspaceId(), USER_REQUEST));
-    var lastUpdateDate = activityLogDao.getLastUpdateDate(request.getWorkspaceId().toString());
+    var lastUpdateDate =
+        workspaceActivityLogDao.getLastChangedDate(request.getWorkspaceId().toString());
     assertNull(lastUpdateDate);
   }
 
@@ -596,11 +601,13 @@ class WorkspaceServiceTest extends BaseConnectedTest {
             .spendProfileId(spendUtils.defaultSpendId())
             .workspaceStage(WorkspaceStage.MC_WORKSPACE)
             .build();
-    var lastUpdateDate = activityLogDao.getLastUpdateDate(request.getWorkspaceId().toString());
+    var lastUpdateDate =
+        workspaceActivityLogDao.getLastChangedDate(request.getWorkspaceId().toString());
     assertNull(lastUpdateDate);
     workspaceService.createWorkspace(request, USER_REQUEST);
-    var firstUpdateDate = activityLogDao.getLastUpdateDate(request.getWorkspaceId().toString());
-    assertNotNull(firstUpdateDate);
+    var firstUpdateDate =
+        workspaceActivityLogDao.getLastChangedDate(request.getWorkspaceId().toString());
+    assertNull(firstUpdateDate);
 
     String jobId = UUID.randomUUID().toString();
     workspaceService.createGcpCloudContext(
@@ -610,23 +617,21 @@ class WorkspaceServiceTest extends BaseConnectedTest {
     assertTrue(
         testUtils.getAuthorizedGcpCloudContext(request.getWorkspaceId(), USER_REQUEST).isPresent());
     assertTrue(
-        checkLogHasNewUpdateDateWithRetries(request.getWorkspaceId().toString(), firstUpdateDate));
-    var secondUpdateDate = activityLogDao.getLastUpdateDate(request.getWorkspaceId().toString());
+        checkLogHasNewUpdateDateWithRetries(
+            request.getWorkspaceId().toString(), instant -> instant != null));
 
     workspaceService.deleteGcpCloudContext(request.getWorkspaceId(), USER_REQUEST);
     assertTrue(
         testUtils.getAuthorizedGcpCloudContext(request.getWorkspaceId(), USER_REQUEST).isEmpty());
-    assertTrue(
-        checkLogHasNewUpdateDateWithRetries(request.getWorkspaceId().toString(), secondUpdateDate));
   }
 
-  private boolean checkLogHasNewUpdateDateWithRetries(String workspaceId, Instant lastUpdateDate)
-      throws InterruptedException {
+  private boolean checkLogHasNewUpdateDateWithRetries(
+      String workspaceId, Predicate<Instant> condition) throws InterruptedException {
     var numTries = 10;
     Duration sleepDuration = Duration.ofSeconds(1);
     while (numTries > 0) {
-      var updateDate = activityLogDao.getLastUpdateDate(workspaceId);
-      if (lastUpdateDate.isBefore(updateDate)) {
+      var updateDate = workspaceActivityLogDao.getLastChangedDate(workspaceId);
+      if (condition.test(updateDate)) {
         return true;
       }
       numTries--;
@@ -655,7 +660,8 @@ class WorkspaceServiceTest extends BaseConnectedTest {
             .build();
     workspaceService.createWorkspace(request, USER_REQUEST);
     String jobId = UUID.randomUUID().toString();
-    var firstUpdateDate = activityLogDao.getLastUpdateDate(request.getWorkspaceId().toString());
+    var firstUpdateDate =
+        workspaceActivityLogDao.getLastChangedDate(request.getWorkspaceId().toString());
     assertNotNull(firstUpdateDate);
 
     assertThrows(
@@ -664,7 +670,7 @@ class WorkspaceServiceTest extends BaseConnectedTest {
             workspaceService.createGcpCloudContext(
                 request.getWorkspaceId(), jobId, USER_REQUEST, "/fake/value"));
     var updateDateAfterException =
-        activityLogDao.getLastUpdateDate(request.getWorkspaceId().toString());
+        workspaceActivityLogDao.getLastChangedDate(request.getWorkspaceId().toString());
     assertEquals(firstUpdateDate, updateDateAfterException);
   }
 

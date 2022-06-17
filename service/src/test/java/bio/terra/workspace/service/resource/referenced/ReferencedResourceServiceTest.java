@@ -21,7 +21,6 @@ import bio.terra.workspace.db.exception.InvalidMetadataException;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.datarepo.DataRepoService;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
-import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.job.exception.InvalidResultStateException;
 import bio.terra.workspace.service.resource.exception.DuplicateResourceException;
@@ -80,8 +79,6 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
   @Autowired private ActivityLogDao activityLogDao;
   @Autowired private ReferencedResourceService referenceResourceService;
   @Autowired private JobService jobService;
-  /** Mock SamService does nothing for all calls that would throw if unauthorized. */
-  @MockBean private SamService mockSamService;
 
   @MockBean private DataRepoService mockDataRepoService;
   @MockBean private CrlService mockCrlService;
@@ -97,7 +94,7 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
   }
 
   @AfterEach
-  void teardown() throws InterruptedException {
+  void teardown() {
     jobService.setFlightDebugInfoForTest(null);
     if (referenceResource != null) {
       try {
@@ -117,7 +114,7 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
   void updateDataRepoReferenceTarget_updateSnapshotIdOnly() {
     referenceResource = ReferenceResourceFixtures.makeDataRepoSnapshotResource(workspaceUuid);
     referenceResourceService.createReferenceResource(referenceResource, USER_REQUEST);
-    Instant lastUpdateDate = activityLogDao.getLastUpdateDate(workspaceUuid.toString());
+    Instant lastUpdateDate = activityLogDao.getLastChangedDate(workspaceUuid.toString());
 
     UUID resourceId = referenceResource.getResourceId();
     ReferencedDataRepoSnapshotResource originalResource =
@@ -141,7 +138,7 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
         updatedResource,
         null);
 
-    Instant lastUpdateDate2 = activityLogDao.getLastUpdateDate(workspaceUuid.toString());
+    Instant lastUpdateDate2 = activityLogDao.getLastChangedDate(workspaceUuid.toString());
     ReferencedDataRepoSnapshotResource result =
         referenceResourceService
             .getReferenceResource(workspaceUuid, resourceId, USER_REQUEST)
@@ -284,12 +281,12 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
       FlightDebugInfo debugInfo = FlightDebugInfo.newBuilder().doStepFailures(retrySteps).build();
       jobService.setFlightDebugInfoForTest(debugInfo);
       referenceResource = ReferenceResourceFixtures.makeDataRepoSnapshotResource(workspaceUuid);
-      var lastUpdateDate = activityLogDao.getLastUpdateDate(workspaceUuid.toString());
+      var lastUpdateDate = activityLogDao.getLastChangedDate(workspaceUuid.toString());
 
       ReferencedResource createdResource =
           referenceResourceService.createReferenceResource(referenceResource, USER_REQUEST);
 
-      var newUpdateDate = activityLogDao.getLastUpdateDate(workspaceUuid.toString());
+      var newUpdateDate = activityLogDao.getLastChangedDate(workspaceUuid.toString());
       assertEquals(referenceResource, createdResource);
       assertTrue(lastUpdateDate.isBefore(newUpdateDate));
     }
@@ -318,7 +315,7 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
               CloningInstructions.COPY_NOTHING,
               DATA_REPO_INSTANCE_NAME,
               "polaroid");
-      var lastUpdateDate = activityLogDao.getLastUpdateDate(workspaceUuid.toString());
+      var lastUpdateDate = activityLogDao.getLastChangedDate(workspaceUuid.toString());
       // Service methods which wait for a flight to complete will throw an
       // InvalidResultStateException when that flight fails without a cause, which occurs when a
       // flight fails via debugInfo.
@@ -331,7 +328,7 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
           () ->
               referenceResourceService.getReferenceResource(
                   workspaceUuid, resourceId, USER_REQUEST));
-      var newUpdateDate = activityLogDao.getLastUpdateDate(workspaceUuid.toString());
+      var newUpdateDate = activityLogDao.getLastChangedDate(workspaceUuid.toString());
       assertEquals(lastUpdateDate, newUpdateDate);
     }
   }
@@ -354,13 +351,13 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
                   CloningInstructions.COPY_NOTHING,
                   DATA_REPO_INSTANCE_NAME,
                   "polaroid"));
-      var lastUpdateDate = activityLogDao.getLastUpdateDate(uuid.toString());
+      var lastUpdateDate = activityLogDao.getLastChangedDate(uuid.toString());
       assertNull(lastUpdateDate);
     }
 
     @Test
     void testInvalidName() {
-      var lastUpdateDate = activityLogDao.getLastUpdateDate(workspaceUuid.toString());
+      var lastUpdateDate = activityLogDao.getLastChangedDate(workspaceUuid.toString());
       assertThrows(
           MissingRequiredFieldException.class,
           () ->
@@ -372,7 +369,7 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
                   CloningInstructions.COPY_NOTHING,
                   DATA_REPO_INSTANCE_NAME,
                   "polaroid"));
-      var newUpdateDate = activityLogDao.getLastUpdateDate(workspaceUuid.toString());
+      var newUpdateDate = activityLogDao.getLastChangedDate(workspaceUuid.toString());
       assertEquals(lastUpdateDate, newUpdateDate);
     }
 
@@ -422,7 +419,7 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
       ReferencedDataRepoSnapshotResource resultResource =
           resultReferenceResource.castByEnum(WsmResourceType.REFERENCED_ANY_DATA_REPO_SNAPSHOT);
       assertEquals(resource, resultResource);
-      var updateDateOnCreate = activityLogDao.getLastUpdateDate(workspaceUuid.toString());
+      var updateDateOnCreate = activityLogDao.getLastChangedDate(workspaceUuid.toString());
 
       assertTrue(
           referenceResourceService.checkAccess(
@@ -443,7 +440,7 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
           referenceResource.getResourceId(),
           USER_REQUEST,
           WsmResourceType.REFERENCED_ANY_DATA_REPO_SNAPSHOT);
-      var updateDateOnDelete = activityLogDao.getLastUpdateDate(workspaceUuid.toString());
+      var updateDateOnDelete = activityLogDao.getLastChangedDate(workspaceUuid.toString());
       assertTrue(updateDateOnCreate.isBefore(updateDateOnDelete));
     }
 
@@ -452,7 +449,7 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
       UUID resourceId = UUID.randomUUID();
       String resourceName = "testdatarepo-" + resourceId.toString();
 
-      var lastUpdateDate = activityLogDao.getLastUpdateDate(workspaceUuid.toString());
+      var lastUpdateDate = activityLogDao.getLastChangedDate(workspaceUuid.toString());
       assertThrows(
           MissingRequiredFieldException.class,
           () ->
@@ -464,7 +461,7 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
                   CloningInstructions.COPY_NOTHING,
                   null,
                   "polaroid"));
-      var newUpdateDate = activityLogDao.getLastUpdateDate(workspaceUuid.toString());
+      var newUpdateDate = activityLogDao.getLastChangedDate(workspaceUuid.toString());
       assertEquals(lastUpdateDate, newUpdateDate);
     }
 
@@ -549,7 +546,7 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
 
       @Test
       void gcsObjectReference() {
-        var lastUpdateDate = activityLogDao.getLastUpdateDate(workspaceUuid.toString());
+        var lastUpdateDate = activityLogDao.getLastChangedDate(workspaceUuid.toString());
         referenceResource = makeGcsObjectReference();
         assertEquals(referenceResource.getStewardshipType(), StewardshipType.REFERENCED);
 
@@ -561,7 +558,7 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
         ReferencedGcsObjectResource resultResource =
             resultReferenceResource.castByEnum(WsmResourceType.REFERENCED_GCP_GCS_OBJECT);
         assertEquals(resource, resultResource);
-        var updateDateOnCreate = activityLogDao.getLastUpdateDate(workspaceUuid.toString());
+        var updateDateOnCreate = activityLogDao.getLastChangedDate(workspaceUuid.toString());
         assertTrue(lastUpdateDate.isBefore(updateDateOnCreate));
         assertTrue(
             referenceResourceService.checkAccess(
@@ -583,7 +580,7 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
             referenceResource.getResourceId(),
             USER_REQUEST,
             WsmResourceType.REFERENCED_GCP_GCS_OBJECT);
-        var updateDateOnDelete = activityLogDao.getLastUpdateDate(workspaceUuid.toString());
+        var updateDateOnDelete = activityLogDao.getLastChangedDate(workspaceUuid.toString());
         assertTrue(updateDateOnCreate.isBefore(updateDateOnDelete));
       }
 
@@ -641,7 +638,7 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
       void missingObjectName_throwsException() {
         UUID resourceId = UUID.randomUUID();
         String resourceName = "testgcs-" + resourceId;
-        var lastUpdateDate = activityLogDao.getLastUpdateDate(workspaceUuid.toString());
+        var lastUpdateDate = activityLogDao.getLastChangedDate(workspaceUuid.toString());
         assertThrows(
             MissingRequiredFieldException.class,
             () ->
@@ -653,7 +650,7 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
                     CloningInstructions.COPY_REFERENCE,
                     /*bucketName=*/ "spongebob",
                     /*fileName=*/ ""));
-        var newUpdateDate = activityLogDao.getLastUpdateDate(workspaceUuid.toString());
+        var newUpdateDate = activityLogDao.getLastChangedDate(workspaceUuid.toString());
         assertEquals(lastUpdateDate, newUpdateDate);
       }
 
@@ -745,7 +742,7 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
 
       @Test
       void testBigQueryDatasetReference() {
-        var lastUpdateDate = activityLogDao.getLastUpdateDate(workspaceUuid.toString());
+        var lastUpdateDate = activityLogDao.getLastChangedDate(workspaceUuid.toString());
         referenceResource = makeBigQueryDatasetResource();
         assertEquals(referenceResource.getStewardshipType(), StewardshipType.REFERENCED);
 
@@ -758,7 +755,7 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
         ReferencedBigQueryDatasetResource resultResource =
             resultReferenceResource.castByEnum(WsmResourceType.REFERENCED_GCP_BIG_QUERY_DATASET);
         assertEquals(resource, resultResource);
-        var updateDateOnCreate = activityLogDao.getLastUpdateDate(workspaceUuid.toString());
+        var updateDateOnCreate = activityLogDao.getLastChangedDate(workspaceUuid.toString());
         assertTrue(lastUpdateDate.isBefore(updateDateOnCreate));
 
         // Mock Sam will not return real credentials for a pet SA to make this call, but we don't
@@ -782,7 +779,7 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
             referenceResource.getResourceId(),
             USER_REQUEST,
             WsmResourceType.REFERENCED_GCP_BIG_QUERY_DATASET);
-        var updateDateOnDelete = activityLogDao.getLastUpdateDate(workspaceUuid.toString());
+        var updateDateOnDelete = activityLogDao.getLastChangedDate(workspaceUuid.toString());
         assertTrue(updateDateOnCreate.isBefore(updateDateOnDelete));
       }
 
@@ -863,7 +860,7 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
       void createReferencedBigQueryDatasetResource_missesProjectId_throwsException() {
         UUID resourceId = UUID.randomUUID();
         String resourceName = "testdatarepo-" + resourceId.toString();
-        var lastUpdateDate = activityLogDao.getLastUpdateDate(workspaceUuid.toString());
+        var lastUpdateDate = activityLogDao.getLastChangedDate(workspaceUuid.toString());
 
         assertThrows(
             MissingRequiredFieldException.class,
@@ -876,7 +873,7 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
                     CloningInstructions.COPY_NOTHING,
                     null,
                     "testbq_datasetname"));
-        var newUpdateDate = activityLogDao.getLastUpdateDate(workspaceUuid.toString());
+        var newUpdateDate = activityLogDao.getLastChangedDate(workspaceUuid.toString());
         assertEquals(lastUpdateDate, newUpdateDate);
       }
 

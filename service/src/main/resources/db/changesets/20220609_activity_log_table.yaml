@@ -4,7 +4,7 @@ databaseChangeLog:
     author: yuhuyoyo
     changes:
     - createTable:
-        tableName: workspace_activity_log
+        tableName: activity_log
         remarks: |
           A table for tracking editing activities in the workspace
         columns:
@@ -16,10 +16,16 @@ databaseChangeLog:
             remarks: |
               The ID of the workspace
         - column:
-            name: update_date
+            name: change_date
             type: timestamptz
-            defaultValueComputed: now()
             constraints:
               nullable: false
             remarks: |
               Timestamp when this workspace is edited
+        - column:
+            name: change_type
+            type: text
+            constraints:
+              nullable: false
+            remarks: |
+              Type of changes at the given timestamp. e.g. CREATE, UPDATE, DELETE

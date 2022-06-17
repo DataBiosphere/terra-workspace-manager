@@ -6,6 +6,8 @@ import bio.terra.common.stairway.TracingHook;
 import bio.terra.stairway.Flight;
 import bio.terra.stairway.FlightMap;
 import bio.terra.workspace.common.utils.MdcHook;
+import bio.terra.workspace.db.ActivityLogDao;
+import bio.terra.workspace.db.model.ActivityLogChangedType;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.job.JobService.JobResultOrException;
 import bio.terra.workspace.service.job.exception.InvalidJobIdException;
@@ -26,6 +28,7 @@ public class JobBuilder {
   private final StairwayComponent stairwayComponent;
   private final MdcHook mdcHook;
   private final FlightMap jobParameterMap;
+  private final ActivityLogDao activityLogDao;
   private Class<? extends Flight> flightClass;
   @Nullable private String jobId;
   @Nullable private String description;
@@ -40,11 +43,16 @@ public class JobBuilder {
   @Nullable private StewardshipType stewardshipType;
   @Nullable private OperationType operationType;
 
-  public JobBuilder(JobService jobService, StairwayComponent stairwayComponent, MdcHook mdcHook) {
+  public JobBuilder(
+      JobService jobService,
+      StairwayComponent stairwayComponent,
+      MdcHook mdcHook,
+      ActivityLogDao activityLogDao) {
     this.jobService = jobService;
     this.stairwayComponent = stairwayComponent;
     this.mdcHook = mdcHook;
     this.jobParameterMap = new FlightMap();
+    this.activityLogDao = activityLogDao;
   }
 
   public JobBuilder flightClass(Class<? extends Flight> flightClass) {
@@ -118,44 +126,80 @@ public class JobBuilder {
   /**
    * Submit a job to stairway and return the jobID immediately.
    *
+   * @param changeType Specify the type of {@link ActivityLogChangedType} to be logged.
+   * @param resultClass type for the response of the flight. When null, nothing is returned from the
+   *     flight.
    * @return jobID of submitted flight
    */
-  public String submit() {
+  public <T> String submit(
+      @Nullable ActivityLogChangedType changeType, @Nullable Class<T> resultClass) {
     populateInputParams();
-    return jobService.submit(flightClass, jobParameterMap, jobId);
-  }
-
-  /**
-   * Submit a job to stairway. Wait for it to complete on a separate thread and run {@code runnable}
-   * when the job succeeds.
-   *
-   * @param resultClass class of the job's result
-   * @param callback run when the job finishes
-   * @return jobId of submitted flight
-   */
-  public <T> String submitWithCallback(
-      Class<T> resultClass, FutureCallback<JobResultOrException<T>> callback) {
-    populateInputParams();
+    if (changeType == null) {
+      return jobService.submit(flightClass, jobParameterMap, jobId);
+    }
     return jobService.submitWithCallback(
-        flightClass, jobParameterMap, resultClass, jobId, /*doAccessCheck=*/ true, callback);
+        flightClass,
+        resultClass,
+        jobParameterMap,
+        jobId,
+        new FutureCallback<>() {
+          @Override
+          public void onSuccess(JobResultOrException<T> result) {
+            if (changeType.equals(ActivityLogChangedType.DELETE)) {
+              activityLogDao.setChangedDate(workspaceId, changeType);
+            } else {
+              if (result.getException() == null) {
+                activityLogDao.setChangedDate(workspaceId, changeType);
+              }
+            }
+          }
+
+          @Override
+          public void onFailure(Throwable t) {}
+        });
   }
 
   /**
    * Submit a job to stairway, wait until it's complete, and return the job result.
    *
    * @param resultClass Class of the job's result
+   * @param doAccessCheck whether to check user request's access to the job.
+   * @param activityLogChangedType type of change activity to be logged when the job finishes. When
+   *     null, nothing is logged.
    * @return Result of the finished job.
    */
   @Traced
-  public <T> T submitAndWait(Class<T> resultClass, boolean doAccessCheck) {
+  public <T> T submitAndWait(
+      Class<T> resultClass,
+      boolean doAccessCheck,
+      @Nullable ActivityLogChangedType activityLogChangedType) {
     populateInputParams();
-    return jobService.submitAndWait(
-        flightClass, jobParameterMap, resultClass, jobId, doAccessCheck);
+    try {
+      T result =
+          jobService.submitAndWait(flightClass, jobParameterMap, resultClass, jobId, doAccessCheck);
+      activityLogDao.setChangedDate(workspaceId, activityLogChangedType);
+      return result;
+    } catch (Exception e) {
+      if (activityLogChangedType != null
+          && activityLogChangedType.equals(ActivityLogChangedType.DELETE)) {
+        // DELETE job cannot be undone. so even when there is failure, we need to set a changed date
+        // because the deletion still happened.
+        activityLogDao.setChangedDate(workspaceId, activityLogChangedType);
+      }
+      throw e;
+    }
   }
 
+  /**
+   * Submit the job and wait for it to finish.
+   *
+   * @param resultClass type of response to the flight
+   * @param changedType type of change to be logged. When null, nothing is logged.
+   * @return return the outcome of the flight.
+   */
   @Traced
-  public <T> T submitAndWait(Class<T> resultClass) {
-    return submitAndWait(resultClass, true);
+  public <T> T submitAndWait(Class<T> resultClass, @Nullable ActivityLogChangedType changedType) {
+    return submitAndWait(resultClass, true, changedType);
   }
 
   // Check the inputs, supply defaults and finalize the input parameter map

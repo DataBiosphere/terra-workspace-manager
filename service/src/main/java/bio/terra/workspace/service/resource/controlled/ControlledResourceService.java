@@ -5,9 +5,9 @@ import bio.terra.common.exception.ServiceUnavailableException;
 import bio.terra.stairway.FlightState;
 import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
 import bio.terra.workspace.common.exception.InternalLogicException;
-import bio.terra.workspace.db.ActivityLogDao;
 import bio.terra.workspace.db.ApplicationDao;
 import bio.terra.workspace.db.ResourceDao;
+import bio.terra.workspace.db.model.ActivityLogChangedType;
 import bio.terra.workspace.generated.model.*;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamRethrow;
@@ -17,7 +17,6 @@ import bio.terra.workspace.service.iam.model.SamConstants.SamControlledResourceA
 import bio.terra.workspace.service.job.JobBuilder;
 import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.job.JobService;
-import bio.terra.workspace.service.job.JobService.JobResultOrException;
 import bio.terra.workspace.service.resource.ResourceValidationUtils;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceSyncMapping.SyncMapping;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.relayNamespace.ControlledAzureRelayNamespaceResource;
@@ -48,7 +47,6 @@ import bio.terra.workspace.service.workspace.model.GcpCloudContext;
 import bio.terra.workspace.service.workspace.model.OperationType;
 import bio.terra.workspace.service.workspace.model.WsmApplication;
 import com.google.cloud.Policy;
-import com.google.common.util.concurrent.FutureCallback;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
@@ -73,7 +71,6 @@ public class ControlledResourceService {
   private final WorkspaceService workspaceService;
   private final ResourceDao resourceDao;
   private final ApplicationDao applicationDao;
-  private final ActivityLogDao activityLogDao;
   private final StageService stageService;
   private final SamService samService;
   private final GcpCloudContextService gcpCloudContextService;
@@ -86,7 +83,6 @@ public class ControlledResourceService {
       WorkspaceService workspaceService,
       ResourceDao resourceDao,
       ApplicationDao applicationDao,
-      ActivityLogDao activityLogDao,
       StageService stageService,
       SamService samService,
       GcpCloudContextService gcpCloudContextService,
@@ -96,7 +92,6 @@ public class ControlledResourceService {
     this.workspaceService = workspaceService;
     this.resourceDao = resourceDao;
     this.applicationDao = applicationDao;
-    this.activityLogDao = activityLogDao;
     this.stageService = stageService;
     this.samService = samService;
     this.gcpCloudContextService = gcpCloudContextService;
@@ -119,20 +114,8 @@ public class ControlledResourceService {
             .addParameter(ControlledResourceKeys.CREATION_PARAMETERS, creationParameters);
 
     String jobId =
-        jobBuilder.submitWithCallback(
-            ControlledAzureRelayNamespaceResource.class,
-            new FutureCallback<>() {
-              @Override
-              public void onSuccess(
-                  JobResultOrException<ControlledAzureRelayNamespaceResource> result) {
-                if (result.getException() == null) {
-                  activityLogDao.setUpdateDate(resource.getWorkspaceId().toString());
-                }
-              }
-
-              @Override
-              public void onFailure(Throwable t) {}
-            });
+        jobBuilder.submit(
+            ActivityLogChangedType.CREATE, ControlledAzureRelayNamespaceResource.class);
     waitForResourceOrJob(resource.getWorkspaceId(), resource.getResourceId(), jobId);
     return jobId;
   }
@@ -152,19 +135,7 @@ public class ControlledResourceService {
             .addParameter(ControlledResourceKeys.CREATION_PARAMETERS, creationParameters);
 
     String jobId =
-        jobBuilder.submitWithCallback(
-            ControlledAzureVmResource.class,
-            new FutureCallback<>() {
-              @Override
-              public void onSuccess(JobResultOrException<ControlledAzureVmResource> result) {
-                if (result.getException() == null) {
-                  activityLogDao.setUpdateDate(resource.getWorkspaceId().toString());
-                }
-              }
-
-              @Override
-              public void onFailure(Throwable t) {}
-            });
+        jobBuilder.submit(ActivityLogChangedType.CREATE, ControlledAzureVmResource.class);
     waitForResourceOrJob(resource.getWorkspaceId(), resource.getResourceId(), jobId);
     return jobId;
   }
@@ -205,8 +176,7 @@ public class ControlledResourceService {
             .addParameter(ResourceKeys.RESOURCE_NAME, resourceName)
             .addParameter(ResourceKeys.RESOURCE_DESCRIPTION, resourceDescription);
     ControlledGcsBucketResource result =
-        jobBuilder.submitAndWait(ControlledGcsBucketResource.class);
-    setUpdateDate(resource.getWorkspaceId().toString());
+        jobBuilder.submitAndWait(ControlledGcsBucketResource.class, ActivityLogChangedType.UPDATE);
     return result;
   }
 
@@ -275,7 +245,7 @@ public class ControlledResourceService {
                 Optional.ofNullable(cloningInstructionsOverride)
                     .map(CloningInstructions::fromApiModel)
                     .orElse(sourceBucketResource.getCloningInstructions()));
-    return jobBuilder.submit();
+    return jobBuilder.submit(null, ApiClonedControlledGcpGcsBucket.class);
   }
 
   public <T> ControlledResource createControlledResourceSync(
@@ -291,8 +261,8 @@ public class ControlledResourceService {
     JobBuilder jobBuilder =
         commonCreationJobBuilder(resource, privateResourceIamRole, userRequest)
             .addParameter(ControlledResourceKeys.CREATION_PARAMETERS, creationParameters);
-    ControlledResource controlledResource = jobBuilder.submitAndWait(ControlledResource.class);
-    setUpdateDate(resource.getWorkspaceId().toString());
+    ControlledResource controlledResource =
+        jobBuilder.submitAndWait(ControlledResource.class, ActivityLogChangedType.CREATE);
     return controlledResource;
   }
 
@@ -333,8 +303,8 @@ public class ControlledResourceService {
             .addParameter(ResourceKeys.RESOURCE_NAME, resourceName)
             .addParameter(ResourceKeys.RESOURCE_DESCRIPTION, resourceDescription);
     ControlledBigQueryDatasetResource result =
-        jobBuilder.submitAndWait(ControlledBigQueryDatasetResource.class);
-    setUpdateDate(resource.getWorkspaceId().toString());
+        jobBuilder.submitAndWait(
+            ControlledBigQueryDatasetResource.class, ActivityLogChangedType.UPDATE);
     return result;
   }
 
@@ -403,7 +373,7 @@ public class ControlledResourceService {
                 Optional.ofNullable(cloningInstructionsOverride)
                     .map(CloningInstructions::fromApiModel)
                     .orElse(sourceDatasetResource.getCloningInstructions()));
-    return jobBuilder.submit();
+    return jobBuilder.submit(null, ApiClonedControlledGcpBigQueryDataset.class);
   }
 
   /** Starts a create controlled AI Notebook instance resource job, returning the job id. */
@@ -433,21 +403,7 @@ public class ControlledResourceService {
             "enablePet");
     jobBuilder.addParameter(ControlledResourceKeys.CREATE_NOTEBOOK_PARAMETERS, creationParameters);
     jobBuilder.addParameter(ControlledResourceKeys.NOTEBOOK_PET_SERVICE_ACCOUNT, petSaEmail);
-    String jobId =
-        jobBuilder.submitWithCallback(
-            ControlledAiNotebookInstanceResource.class,
-            new FutureCallback<>() {
-              @Override
-              public void onSuccess(
-                  JobResultOrException<ControlledAiNotebookInstanceResource> result) {
-                if (result.getException() == null) {
-                  activityLogDao.setUpdateDate(resource.getWorkspaceId().toString());
-                }
-              }
-
-              @Override
-              public void onFailure(Throwable t) {}
-            });
+    String jobId = jobBuilder.submit(ActivityLogChangedType.CREATE, ControlledResource.class);
     waitForResourceOrJob(resource.getWorkspaceId(), resource.getResourceId(), jobId);
     return jobId;
   }
@@ -482,8 +438,8 @@ public class ControlledResourceService {
             .addParameter(ResourceKeys.RESOURCE_NAME, newName)
             .addParameter(ResourceKeys.RESOURCE_DESCRIPTION, newDescription);
     ControlledAiNotebookInstanceResource result =
-        jobBuilder.submitAndWait(ControlledAiNotebookInstanceResource.class);
-    setUpdateDate(resource.getWorkspaceId().toString());
+        jobBuilder.submitAndWait(
+            ControlledAiNotebookInstanceResource.class, ActivityLogChangedType.UPDATE);
     return result;
   }
 
@@ -584,15 +540,7 @@ public class ControlledResourceService {
             userRequest,
             withValidations);
     // Delete flight does not produce a result, so the resultClass parameter here is never used.
-    try {
-      deleteJob.submitAndWait(Void.class);
-      activityLogDao.setUpdateDate(workspaceUuid.toString());
-    } catch (Exception e) {
-      // still set the update in the log entry because deletion cannot be undone even if the flight
-      // fails.
-      activityLogDao.setUpdateDate(workspaceUuid.toString());
-      throw e;
-    }
+    deleteJob.submitAndWait(Void.class, ActivityLogChangedType.DELETE);
   }
 
   /**
@@ -615,17 +563,7 @@ public class ControlledResourceService {
             resultPath,
             userRequest,
             withValidations);
-    return deleteJob.submitWithCallback(
-        Void.class,
-        new FutureCallback<>() {
-          @Override
-          public void onSuccess(JobResultOrException<Void> result) {
-            activityLogDao.setUpdateDate(workspaceUuid.toString());
-          }
-
-          @Override
-          public void onFailure(Throwable t) {}
-        });
+    return deleteJob.submit(ActivityLogChangedType.DELETE, Void.class);
   }
 
   public Policy configureGcpPolicyForResource(
@@ -753,9 +691,5 @@ public class ControlledResourceService {
     }
 
     throw new ServiceUnavailableException("Failed to make prompt progress on resource");
-  }
-
-  private void setUpdateDate(String workspaceId) {
-    activityLogDao.setUpdateDate(workspaceId);
   }
 }

@@ -98,7 +98,7 @@ public class JobService {
 
   // Fully fluent style of JobBuilder
   public JobBuilder newJob() {
-    return new JobBuilder(this, stairwayComponent, mdcHook);
+    return new JobBuilder(this, stairwayComponent, mdcHook, flightBeanBag.getActivityLogDao());
   }
 
   // submit a new job to stairway
@@ -146,10 +146,9 @@ public class JobService {
 
   protected <T> String submitWithCallback(
       Class<? extends Flight> flightClass,
-      FlightMap parameterMap,
       Class<T> resultClass,
+      FlightMap parameterMap,
       String jobId,
-      boolean doAccessCheck,
       FutureCallback<JobResultOrException<T>> callback) {
     submit(flightClass, parameterMap, jobId);
     AsyncCallable<JobResultOrException<T>> asyncCallable =
@@ -160,7 +159,7 @@ public class JobService {
                   parameterMap.get(
                       JobMapKeys.AUTH_USER_INFO.getKeyName(), AuthenticatedUserRequest.class);
 
-              return retrieveJobResult(jobId, resultClass, userRequest, doAccessCheck);
+              return retrieveJobResult(jobId, resultClass, userRequest, /* doAccessCheck= */ false);
             },
             listeningExecutorService);
     ListenableFuture<JobResultOrException<T>> future =

@@ -2,6 +2,7 @@ package bio.terra.workspace.db;
 
 import bio.terra.common.db.ReadTransaction;
 import bio.terra.common.db.WriteTransaction;
+import bio.terra.workspace.db.model.ActivityLogChangedType;
 import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
@@ -17,8 +18,8 @@ import org.springframework.stereotype.Component;
 public class ActivityLogDao {
 
   private final NamedParameterJdbcTemplate jdbcTemplate;
-  private final RowMapper<Instant> UPDATE_DATE_ROW_MAPPER =
-      (rs, rowNum) -> rs.getObject("update_date", OffsetDateTime.class).toInstant();
+  private final RowMapper<Instant> CHANGE_DATE_ROW_MAPPER =
+      (rs, rowNum) -> rs.getObject("change_date", OffsetDateTime.class).toInstant();
 
   @Autowired
   public ActivityLogDao(NamedParameterJdbcTemplate jdbcTemplate) {
@@ -26,30 +27,32 @@ public class ActivityLogDao {
   }
 
   @WriteTransaction
-  public void setUpdateDate(String workspaceId) {
-    setUpdateDate(workspaceId, Instant.now());
-  }
-
-  @WriteTransaction
-  public void setUpdateDate(String workspaceId, Instant instant) {
+  public void setChangedDate(String workspaceId, @Nullable ActivityLogChangedType changeType) {
+    if (changeType == null) {
+      return;
+    }
     final String sql =
-        "INSERT INTO workspace_activity_log (workspace_id, update_date)"
-            + " VALUES (:workspace_id, :update_date)";
+        "INSERT INTO activity_log (workspace_id, change_date, change_type)"
+            + " VALUES (:workspace_id, :change_date, :change_type)";
     final var params =
         new MapSqlParameterSource()
             .addValue("workspace_id", workspaceId)
-            .addValue("update_date", instant.atOffset(ZoneOffset.UTC));
+            .addValue("change_date", Instant.now().atOffset(ZoneOffset.UTC))
+            .addValue("change_type", changeType.name());
     jdbcTemplate.update(sql, params);
   }
 
   @ReadTransaction
-  public @Nullable Instant getLastUpdateDate(String workspaceId) {
+  public @Nullable Instant getLastChangedDate(String workspaceId) {
+    return getLastUpdatedInstanceByTable(workspaceId);
+  }
+
+  private Instant getLastUpdatedInstanceByTable(String workspaceId) {
     final String sql =
-        "SELECT workspace_id, update_date"
-            + " FROM workspace_activity_log WHERE workspace_id = :workspace_id "
-            + " ORDER BY update_date DESC LIMIT 1";
+        "SELECT change_date FROM activity_log WHERE workspace_id = :workspace_id "
+            + " ORDER BY change_date DESC LIMIT 1";
     final var params = new MapSqlParameterSource().addValue("workspace_id", workspaceId);
 
-    return DataAccessUtils.uniqueResult(jdbcTemplate.query(sql, params, UPDATE_DATE_ROW_MAPPER));
+    return DataAccessUtils.uniqueResult(jdbcTemplate.query(sql, params, CHANGE_DATE_ROW_MAPPER));
   }
 }
