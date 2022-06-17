@@ -371,21 +371,14 @@ public class WorkspaceService {
             "Delete GCP cloud context for workspace: name: '%s' id: '%s'  ",
             workspaceName, workspaceUuid);
 
-    try {
-      jobService
-          .newJob()
-          .description(jobDescription)
-          .flightClass(DeleteGcpContextFlight.class)
-          .userRequest(userRequest)
-          .operationType(OperationType.DELETE)
-          .workspaceId(workspaceUuid.toString())
-          .submitAndWait(null, ActivityLogChangedType.DELETE);
-      activityLogDao.setChangedDate(workspaceUuid.toString(), ActivityLogChangedType.DELETE);
-    } catch (Exception e) {
-      // Deletion cannot be undone even if exception is thrown. So we still log an update date.
-      activityLogDao.setChangedDate(workspaceUuid.toString(), ActivityLogChangedType.DELETE);
-      throw e;
-    }
+    jobService
+        .newJob()
+        .description(jobDescription)
+        .flightClass(DeleteGcpContextFlight.class)
+        .userRequest(userRequest)
+        .operationType(OperationType.DELETE)
+        .workspaceId(workspaceUuid.toString())
+        .submitAndWait(null, ActivityLogChangedType.DELETE);
   }
 
   public void deleteAzureCloudContext(UUID workspaceUuid, AuthenticatedUserRequest userRequest) {

@@ -31,21 +31,8 @@ public class ActivityLogDaoTest extends BaseUnitTest {
     assertEquals(ActivityLogChangedType.CREATE.name(), changeType);
   }
 
-  private String getChangeType(String workspaceId) {
-    final String sql =
-        "SELECT change_type"
-            + " FROM activity_log WHERE workspace_id = :workspace_id"
-            + " ORDER BY change_date DESC LIMIT 1";
-    final var params =
-        new MapSqlParameterSource()
-            .addValue("workspace_id", workspaceId)
-            .addValue("change_type", ActivityLogChangedType.CREATE.name());
-    var changeType = jdbcTemplate.queryForObject(sql, params, String.class);
-    return changeType;
-  }
-
   @Test
-  public void getLatestDate() {
+  public void getLastUpdatedDate() {
     String workspaceId = UUID.randomUUID().toString();
     activityLogDao.setChangedDate(workspaceId, ActivityLogChangedType.CREATE);
     var firstUpdatedDate = activityLogDao.getLastChangedDate(workspaceId);
@@ -61,5 +48,18 @@ public class ActivityLogDaoTest extends BaseUnitTest {
 
     assertTrue(firstUpdatedDate.isBefore(secondUpdatedDate));
     assertTrue(secondUpdatedDate.isBefore(thirdUpdatedDate));
+  }
+
+  private String getChangeType(String workspaceId) {
+    final String sql =
+        "SELECT change_type"
+            + " FROM activity_log WHERE workspace_id = :workspace_id"
+            + " ORDER BY change_date DESC LIMIT 1";
+    final var params =
+        new MapSqlParameterSource()
+            .addValue("workspace_id", workspaceId)
+            .addValue("change_type", ActivityLogChangedType.CREATE.name());
+    var changeType = jdbcTemplate.queryForObject(sql, params, String.class);
+    return changeType;
   }
 }
