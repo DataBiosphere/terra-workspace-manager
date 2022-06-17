@@ -98,7 +98,7 @@ public class AzureControlledStorageResourceServiceTest extends BaseAzureTest {
                 .workspaceStage(WorkspaceStage.MC_WORKSPACE)
                 .build(),
             workspaceOwner.getAuthenticatedRequest());
-    AzureControlledStorageResourceServiceTest.workspace =
+    workspace =
         workspaceService.getWorkspace(workspaceUuid, workspaceOwner.getAuthenticatedRequest());
 
     workspaceService.createAzureCloudContext(
