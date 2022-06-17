@@ -94,7 +94,7 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
   }
 
   @AfterEach
-  void teardown() throws InterruptedException {
+  void teardown() {
     jobService.setFlightDebugInfoForTest(null);
     if (referenceResource != null) {
       try {

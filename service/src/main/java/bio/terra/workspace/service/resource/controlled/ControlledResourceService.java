@@ -261,9 +261,7 @@ public class ControlledResourceService {
     JobBuilder jobBuilder =
         commonCreationJobBuilder(resource, privateResourceIamRole, userRequest)
             .addParameter(ControlledResourceKeys.CREATION_PARAMETERS, creationParameters);
-    ControlledResource controlledResource =
-        jobBuilder.submitAndWait(ControlledResource.class, ActivityLogChangedType.CREATE);
-    return controlledResource;
+    return jobBuilder.submitAndWait(ControlledResource.class, ActivityLogChangedType.CREATE);
   }
 
   /** Starts an update controlled BigQuery dataset resource, blocking until its job is finished. */
@@ -302,10 +300,8 @@ public class ControlledResourceService {
             .addParameter(ControlledResourceKeys.UPDATE_PARAMETERS, updateParameters)
             .addParameter(ResourceKeys.RESOURCE_NAME, resourceName)
             .addParameter(ResourceKeys.RESOURCE_DESCRIPTION, resourceDescription);
-    ControlledBigQueryDatasetResource result =
-        jobBuilder.submitAndWait(
-            ControlledBigQueryDatasetResource.class, ActivityLogChangedType.UPDATE);
-    return result;
+    return jobBuilder.submitAndWait(
+        ControlledBigQueryDatasetResource.class, ActivityLogChangedType.UPDATE);
   }
 
   /**
@@ -437,10 +433,8 @@ public class ControlledResourceService {
             .addParameter(ControlledResourceKeys.UPDATE_PARAMETERS, updateParameters)
             .addParameter(ResourceKeys.RESOURCE_NAME, newName)
             .addParameter(ResourceKeys.RESOURCE_DESCRIPTION, newDescription);
-    ControlledAiNotebookInstanceResource result =
-        jobBuilder.submitAndWait(
-            ControlledAiNotebookInstanceResource.class, ActivityLogChangedType.UPDATE);
-    return result;
+    return jobBuilder.submitAndWait(
+        ControlledAiNotebookInstanceResource.class, ActivityLogChangedType.UPDATE);
   }
 
   /** Simpler interface for synchronous controlled resource creation */

@@ -115,8 +115,7 @@ public class WorkspaceService {
           WorkspaceFlightMapKeys.SPEND_PROFILE_ID, workspace.getSpendProfileId().get().getId());
     }
     // Skip the access check, which would fail since this workspace doesn't exist yet.
-    UUID result = createJob.submitAndWait(UUID.class, false, ActivityLogChangedType.CREATE);
-    return result;
+    return createJob.submitAndWait(UUID.class, false, ActivityLogChangedType.CREATE);
   }
 
   /**
@@ -391,20 +390,14 @@ public class WorkspaceService {
         String.format(
             "Delete Azure cloud context for workspace: name: '%s' id: '%s'  ",
             workspaceName, workspaceUuid);
-    try {
-      jobService
-          .newJob()
-          .description(jobDescription)
-          .flightClass(DeleteAzureContextFlight.class)
-          .userRequest(userRequest)
-          .operationType(OperationType.DELETE)
-          .workspaceId(workspaceUuid.toString())
-          .submitAndWait(null, ActivityLogChangedType.DELETE);
-      activityLogDao.setChangedDate(workspaceUuid.toString(), ActivityLogChangedType.DELETE);
-    } catch (Exception e) {
-      activityLogDao.setChangedDate(workspaceUuid.toString(), ActivityLogChangedType.DELETE);
-      throw e;
-    }
+    jobService
+        .newJob()
+        .description(jobDescription)
+        .flightClass(DeleteAzureContextFlight.class)
+        .userRequest(userRequest)
+        .operationType(OperationType.DELETE)
+        .workspaceId(workspaceUuid.toString())
+        .submitAndWait(null, ActivityLogChangedType.DELETE);
   }
 
   /**
@@ -495,6 +488,6 @@ public class WorkspaceService {
         .workspaceId(workspaceUuid.toString())
         .addParameter(WorkspaceFlightMapKeys.USER_TO_REMOVE, targetUserEmail)
         .addParameter(WorkspaceFlightMapKeys.ROLE_TO_REMOVE, role)
-        .submitAndWait(null, null);
+        .submitAndWait(/*resultClass=*/ null, /*changeType=*/ null);
   }
 }
