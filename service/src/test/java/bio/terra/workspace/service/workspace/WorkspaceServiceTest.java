@@ -628,6 +628,7 @@ class WorkspaceServiceTest extends BaseConnectedTest {
     Duration sleepDuration = Duration.ofSeconds(1);
     while (numTries > 0) {
       var updateDate = activityLogDao.getLastChangedDate(workspaceId);
+      System.out.println(updateDate);
       if (condition.test(updateDate)) {
         return true;
       }
