@@ -21,6 +21,7 @@ import bio.terra.workspace.db.exception.InvalidMetadataException;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.datarepo.DataRepoService;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
+import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.job.exception.InvalidResultStateException;
 import bio.terra.workspace.service.resource.exception.DuplicateResourceException;
@@ -80,6 +81,8 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
   @Autowired private ReferencedResourceService referenceResourceService;
   @Autowired private JobService jobService;
 
+  /** Mock SamService does nothing for all calls that would throw if unauthorized. */
+  @MockBean private SamService mockSamService;
   @MockBean private DataRepoService mockDataRepoService;
   @MockBean private CrlService mockCrlService;
 
