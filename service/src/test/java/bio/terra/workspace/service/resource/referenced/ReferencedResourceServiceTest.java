@@ -83,6 +83,7 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
 
   /** Mock SamService does nothing for all calls that would throw if unauthorized. */
   @MockBean private SamService mockSamService;
+
   @MockBean private DataRepoService mockDataRepoService;
   @MockBean private CrlService mockCrlService;
 
