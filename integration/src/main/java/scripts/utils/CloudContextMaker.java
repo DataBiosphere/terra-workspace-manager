@@ -1,6 +1,7 @@
 package scripts.utils;
 
 import bio.terra.workspace.api.WorkspaceApi;
+import bio.terra.workspace.model.AzureContext;
 import bio.terra.workspace.model.CloudPlatform;
 import bio.terra.workspace.model.CreateCloudContextRequest;
 import bio.terra.workspace.model.CreateCloudContextResult;
@@ -30,13 +31,46 @@ public class CloudContextMaker {
 
     logger.info("Creating GCP cloud context");
     CreateCloudContextResult contextResult =
+        waitForCloudContext(createContext, workspaceUuid, workspaceApi, contextJobId);
+    return contextResult.getGcpContext().getProjectId();
+  }
+
+  /**
+   * Creates an Azure cloud context for a given workspace. Returns the Azure resource group ID as a
+   * string
+   */
+  public static String createAzureCloudContext(
+      UUID workspaceUuid, WorkspaceApi workspaceApi, AzureContext context) throws Exception {
+    String contextJobId = UUID.randomUUID().toString();
+
+    var createContext =
+        new CreateCloudContextRequest()
+            .cloudPlatform(CloudPlatform.AZURE)
+            .jobControl(new JobControl().id(contextJobId))
+            .azureContext(context);
+
+    logger.info("Creating Azure cloud context");
+    CreateCloudContextResult contextResult =
+        waitForCloudContext(createContext, workspaceUuid, workspaceApi, contextJobId);
+    return contextResult.getAzureContext().getResourceGroupId();
+  }
+
+  private static CreateCloudContextResult waitForCloudContext(
+      CreateCloudContextRequest createContext,
+      UUID workspaceUuid,
+      WorkspaceApi workspaceApi,
+      String contextJobId)
+      throws Exception {
+    CreateCloudContextResult contextResult =
         workspaceApi.createCloudContext(createContext, workspaceUuid);
     while (ClientTestUtils.jobIsRunning(contextResult.getJobReport())) {
       Thread.sleep(CREATE_CONTEXT_POLL_INTERVAL.toMillis());
       contextResult = workspaceApi.getCreateCloudContextResult(workspaceUuid, contextJobId);
     }
     logger.info(
-        "Create GCP context status is {}", contextResult.getJobReport().getStatus().toString());
+        "Create {} context status is {}",
+        createContext.getCloudPlatform().equals(CloudPlatform.GCP) ? "GCP" : "Azure",
+        contextResult.getJobReport().getStatus().toString());
     if (contextResult.getJobReport().getStatus() == StatusEnum.FAILED) {
       if (contextResult.getErrorReport() == null) {
         logger.info("Create failed, but no error report found!");
@@ -51,7 +85,7 @@ public class CloudContextMaker {
 
     ClientTestUtils.assertJobSuccess(
         "Create Cloud Context", contextResult.getJobReport(), contextResult.getErrorReport());
-    return contextResult.getGcpContext().getProjectId();
+    return contextResult;
   }
 
   /**
