@@ -54,15 +54,15 @@ public class WorkspaceActivityLogDaoTest extends BaseUnitTest {
     activityLogDao.writeActivity(
         workspaceId, new DbWorkspaceActivityLog().operationType(OperationType.CLONE));
     var fourthUpdateDate = activityLogDao.getLastChangedDate(workspaceId);
-    assertEquals(thirdUpdatedDate, fourthUpdateDate);
 
     activityLogDao.writeActivity(
         workspaceId, new DbWorkspaceActivityLog().operationType(OperationType.UNKNOWN));
     var fifthUpdateDate = activityLogDao.getLastChangedDate(workspaceId);
-    assertEquals(thirdUpdatedDate, fifthUpdateDate);
+    assertEquals(fourthUpdateDate, fifthUpdateDate);
 
     assertTrue(firstUpdatedDate.isBefore(secondUpdatedDate));
     assertTrue(secondUpdatedDate.isBefore(thirdUpdatedDate));
+    assertTrue(thirdUpdatedDate.isBefore(fourthUpdateDate));
   }
 
   private String getChangedType(UUID workspaceId) {

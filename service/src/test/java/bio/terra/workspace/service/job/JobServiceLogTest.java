@@ -95,7 +95,7 @@ public class JobServiceLogTest extends BaseUnitTest {
 
     runFlight("a creation flight", workspaceUuid, OperationType.CLONE);
     var changedDate = activityLogDao.getLastChangedDate(workspaceUuid);
-    assertNull(changedDate);
+    assertNotNull(changedDate);
   }
 
   @Test

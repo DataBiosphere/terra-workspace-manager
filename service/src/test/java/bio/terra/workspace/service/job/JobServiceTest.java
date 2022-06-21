@@ -14,8 +14,8 @@ import bio.terra.workspace.generated.model.ApiJobReport;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.job.exception.InvalidJobIdException;
+import bio.terra.workspace.service.job.exception.InvalidResultStateException;
 import bio.terra.workspace.service.job.exception.JobNotFoundException;
-import bio.terra.workspace.service.workspace.model.OperationType;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
@@ -98,7 +98,7 @@ class JobServiceTest extends BaseUnitTest {
 
     List<String> jobIds = new ArrayList<>();
     for (int i = 0; i < 7; i++) {
-      String jobId = runFlight(makeDescription(i), UUID.randomUUID(), OperationType.UNKNOWN);
+      String jobId = runFlight(makeDescription(i));
       jobIds.add(jobId);
     }
 
@@ -165,6 +165,18 @@ class JobServiceTest extends BaseUnitTest {
         () -> jobService.retrieveJobResult("abcdef", Object.class, testUser));
   }
 
+  @Test
+  void setFlightDebugInfoForTest() {
+    // Set a FlightDebugInfo so that any job submission should fail on the last step.
+    jobService.setFlightDebugInfoForTest(
+        FlightDebugInfo.newBuilder().lastStepFailure(true).build());
+
+    String jobId = runFlight("fail for FlightDebugInfo");
+    assertThrows(
+        InvalidResultStateException.class,
+        () -> jobService.retrieveJobResult(jobId, String.class, testUser));
+  }
+
   private void validateJobReport(ApiJobReport jr, int index, List<String> fids) {
     assertThat(jr.getDescription(), equalTo(makeDescription(index)));
     assertThat(jr.getId(), equalTo(fids.get(index)));
@@ -174,13 +186,15 @@ class JobServiceTest extends BaseUnitTest {
 
   // Submit a flight; wait for it to finish; return the flight id
   // Use the jobId defaulting in the JobBuilder
-  private String runFlight(String description, UUID workspaceUuid, OperationType operationType) {
+  private String runFlight(String description) {
+    // workspace must exist in the Dao for authorization check to pass
+    UUID workspaceUuid = UUID.randomUUID();
     Workspace workspace =
         Workspace.builder()
             .workspaceId(workspaceUuid)
             .userFacingId("a" + workspaceUuid)
             .workspaceStage(WorkspaceStage.MC_WORKSPACE)
-            .description(description)
+            .description("Workspace for runFlight: " + description)
             .build();
     workspaceDao.createWorkspace(workspace);
     String jobId =
@@ -190,7 +204,6 @@ class JobServiceTest extends BaseUnitTest {
             .flightClass(JobServiceTestFlight.class)
             .userRequest(testUser)
             .workspaceId(workspaceUuid.toString())
-            .operationType(operationType)
             .submit();
     jobService.waitForJob(jobId);
     return jobId;
