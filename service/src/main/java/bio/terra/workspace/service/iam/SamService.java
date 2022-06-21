@@ -288,6 +288,19 @@ public class SamService {
   }
 
   @Traced
+  public List<String> listResourceActions(
+      AuthenticatedUserRequest userRequest, String resourceType, String resourceId)
+      throws InterruptedException {
+    String authToken = userRequest.getRequiredToken();
+    ResourcesApi resourceApi = samResourcesApi(authToken);
+    try {
+      return SamRetry.retry(() -> resourceApi.resourceActions(resourceType, resourceId));
+    } catch (ApiException apiException) {
+      throw SamExceptionFactory.create("Error listing resources actions in Sam", apiException);
+    }
+  }
+
+  @Traced
   public boolean isAuthorized(
       AuthenticatedUserRequest userRequest,
       String iamResourceType,
