@@ -1,0 +1,31 @@
+databaseChangeLog:
+- changeSet:
+    id: workspace activity log table
+    author: yuhuyoyo
+    changes:
+    - createTable:
+        tableName: workspace_activity_log
+        remarks: |
+          A table for logging change activities in the workspace
+        columns:
+        - column:
+            name: workspace_id
+            type: text
+            constraints:
+              nullable: false
+            remarks: |
+              The ID of the workspace
+        - column:
+            name: changed_date
+            type: timestamptz
+            constraints:
+              nullable: false
+            remarks: |
+              Timestamp when this workspace is edited
+        - column:
+            name: change_type
+            type: text
+            constraints:
+              nullable: false
+            remarks: |
+              Type of changes at the given timestamp. e.g. CREATE, UPDATE, DELETE

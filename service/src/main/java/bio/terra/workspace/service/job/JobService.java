@@ -171,6 +171,11 @@ public class JobService {
             .context(flightBeanBag)
             .addHook(mdcHook)
             .addHook(new TracingHook())
+            .addHook(
+                new ActivityLogHooks(
+                    flightBeanBag.getActivityLogDao(),
+                    flightBeanBag.getWorkspaceDao(),
+                    flightBeanBag.getResourceDao()))
             .exceptionSerializer(new StairwayExceptionSerializer(objectMapper)));
   }
 
@@ -198,7 +203,9 @@ public class JobService {
                   .orElseThrow(
                       () ->
                           new InvalidResultStateException(
-                              "Flight failed with no exception reported"));
+                              String.format(
+                                  "Flight %s failed with no exception reported",
+                                  flightState.getFlightId())));
           statusCode = HttpStatus.valueOf(errorCode);
           break;
         case SUCCEEDED:
