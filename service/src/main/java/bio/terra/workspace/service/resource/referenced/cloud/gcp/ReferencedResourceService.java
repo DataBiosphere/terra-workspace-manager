@@ -22,6 +22,7 @@ import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.Resou
 import bio.terra.workspace.service.workspace.model.OperationType;
 import io.opencensus.contrib.spring.aop.Traced;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import javax.annotation.Nullable;
 import org.slf4j.Logger;
@@ -57,6 +58,14 @@ public class ReferencedResourceService {
   @Traced
   public ReferencedResource createReferenceResource(
       ReferencedResource resource, AuthenticatedUserRequest userRequest) {
+    return createReferenceResource(resource, userRequest, /* operationType= */ null);
+  }
+
+  @Traced
+  public ReferencedResource createReferenceResource(
+      ReferencedResource resource,
+      AuthenticatedUserRequest userRequest,
+      @Nullable OperationType operationType) {
     workspaceService.validateWorkspaceAndAction(
         userRequest, resource.getWorkspaceId(), SamConstants.SamWorkspaceAction.CREATE_REFERENCE);
 
@@ -75,7 +84,7 @@ public class ReferencedResourceService {
             .flightClass(CreateReferenceResourceFlight.class)
             .resource(resource)
             .userRequest(userRequest)
-            .operationType(OperationType.CREATE)
+            .operationType(Optional.ofNullable(operationType).orElse(OperationType.CREATE))
             .workspaceId(resource.getWorkspaceId().toString())
             .resourceType(resource.getResourceType())
             .stewardshipType(StewardshipType.REFERENCED);
@@ -246,6 +255,6 @@ public class ReferencedResourceService {
         WorkspaceCloneUtils.buildDestinationReferencedResource(
             sourceReferencedResource, destinationWorkspaceId, name, description);
     // launch the creation flight
-    return createReferenceResource(destinationResource, userRequest);
+    return createReferenceResource(destinationResource, userRequest, OperationType.CLONE);
   }
 }

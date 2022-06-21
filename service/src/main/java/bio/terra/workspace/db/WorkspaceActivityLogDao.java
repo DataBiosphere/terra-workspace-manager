@@ -27,13 +27,13 @@ public class WorkspaceActivityLogDao {
   @WriteTransaction
   public void writeActivity(UUID workspaceId, DbWorkspaceActivityLog dbWorkspaceActivityLog) {
     switch (dbWorkspaceActivityLog.getOperationType()) {
-      case CLONE:
-        // fall-through
       case UNKNOWN:
         return;
       case CREATE:
         // fall-through
       case DELETE:
+        // fall-through
+      case CLONE:
         // fall-through
       case UPDATE:
         final String sql =
