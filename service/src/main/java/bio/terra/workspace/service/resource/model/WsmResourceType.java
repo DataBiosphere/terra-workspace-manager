@@ -33,6 +33,8 @@ import bio.terra.workspace.service.resource.referenced.cloud.gcp.gcsbucket.Refer
 import bio.terra.workspace.service.resource.referenced.cloud.gcp.gcsbucket.ReferencedGcsBucketResource;
 import bio.terra.workspace.service.resource.referenced.cloud.gcp.gcsobject.ReferencedGcsObjectHandler;
 import bio.terra.workspace.service.resource.referenced.cloud.gcp.gcsobject.ReferencedGcsObjectResource;
+import bio.terra.workspace.service.resource.referenced.terra.workspace.ReferencedTerraWorkspaceHandler;
+import bio.terra.workspace.service.resource.referenced.terra.workspace.ReferencedTerraWorkspaceResource;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import java.util.function.Supplier;
 import org.apache.commons.lang3.SerializationException;
@@ -113,6 +115,13 @@ public enum WsmResourceType {
       ApiResourceType.GIT_REPO,
       ReferencedGitRepoResource.class,
       ReferencedGitRepoHandler::getHandler),
+  REFERENCED_ANY_TERRA_WORKSPACE(
+      CloudPlatform.ANY,
+      StewardshipType.REFERENCED,
+      "REFERENCED_ANY_TERRA_WORKSPACE",
+      ApiResourceType.TERRA_WORKSPACE,
+      ReferencedTerraWorkspaceResource.class,
+      ReferencedTerraWorkspaceHandler::getHandler),
   CONTROLLED_AZURE_IP(
       CloudPlatform.AZURE,
       StewardshipType.CONTROLLED,
