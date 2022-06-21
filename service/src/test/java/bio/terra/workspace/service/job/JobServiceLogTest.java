@@ -6,7 +6,6 @@ import static org.mockito.ArgumentMatchers.any;
 
 import bio.terra.stairway.FlightDebugInfo;
 import bio.terra.workspace.common.BaseUnitTest;
-import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.db.WorkspaceActivityLogDao;
 import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
@@ -34,7 +33,6 @@ public class JobServiceLogTest extends BaseUnitTest {
   @Autowired private JobService jobService;
   @Autowired private WorkspaceDao workspaceDao;
   @Autowired private WorkspaceActivityLogDao activityLogDao;
-  @Autowired private ResourceDao resourceDao;
   @MockBean private SamService mockSamService;
 
   @BeforeEach

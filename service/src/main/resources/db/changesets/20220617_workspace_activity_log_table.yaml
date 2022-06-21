@@ -21,7 +21,7 @@ databaseChangeLog:
             constraints:
               nullable: false
             remarks: |
-              Timestamp when this workspace is edited
+              Timestamp when this workspace is changed
         - column:
             name: change_type
             type: text
