@@ -160,7 +160,7 @@ public class JobServiceLogTest extends BaseUnitTest {
     var emptyChangedDate = activityLogDao.getLastUpdatedDate(workspaceUuid);
     assertTrue(emptyChangedDate.isEmpty());
 
-    runFlight("failed flight with operation type unkown", workspaceUuid, OperationType.UNKNOWN);
+    runFlight("failed flight with operation type unknown", workspaceUuid, OperationType.UNKNOWN);
     var changedDateAfterFailedFlight = activityLogDao.getLastUpdatedDate(workspaceUuid);
     assertTrue(changedDateAfterFailedFlight.isEmpty());
   }
