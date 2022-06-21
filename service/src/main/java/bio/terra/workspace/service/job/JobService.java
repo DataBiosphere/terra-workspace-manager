@@ -172,7 +172,7 @@ public class JobService {
             .addHook(mdcHook)
             .addHook(new TracingHook())
             .addHook(
-                new ActivityLogHooks(
+                new WorkspaceActivityLogHooks(
                     flightBeanBag.getActivityLogDao(),
                     flightBeanBag.getWorkspaceDao(),
                     flightBeanBag.getResourceDao()))

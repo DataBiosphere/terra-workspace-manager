@@ -2,22 +2,15 @@ package bio.terra.workspace.service.job;
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 
 import bio.terra.stairway.FlightDebugInfo;
 import bio.terra.workspace.common.BaseUnitTest;
-import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
-import bio.terra.workspace.common.fixtures.WorkspaceFixtures;
-import bio.terra.workspace.db.ActivityLogDao;
 import bio.terra.workspace.db.ResourceDao;
+import bio.terra.workspace.db.WorkspaceActivityLogDao;
 import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
-import bio.terra.workspace.service.resource.controlled.cloud.gcp.bqdataset.ControlledBigQueryDatasetResource;
-import bio.terra.workspace.service.resource.exception.ResourceNotFoundException;
-import bio.terra.workspace.service.resource.model.CloningInstructions;
-import bio.terra.workspace.service.resource.referenced.cloud.gcp.bqdataset.ReferencedBigQueryDatasetResource;
 import bio.terra.workspace.service.workspace.model.OperationType;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
@@ -40,7 +33,7 @@ public class JobServiceLogTest extends BaseUnitTest {
 
   @Autowired private JobService jobService;
   @Autowired private WorkspaceDao workspaceDao;
-  @Autowired private ActivityLogDao activityLogDao;
+  @Autowired private WorkspaceActivityLogDao activityLogDao;
   @Autowired private ResourceDao resourceDao;
   @MockBean private SamService mockSamService;
 
@@ -145,190 +138,6 @@ public class JobServiceLogTest extends BaseUnitTest {
     runFlight("failed flight with operation type UPDATE", workspaceUuid, OperationType.UPDATE);
     var changedDateAfterFailedFlight = activityLogDao.getLastChangedDate(workspaceUuid);
     assertNull(changedDateAfterFailedFlight);
-  }
-
-  @Test
-  void setChangedActivityWhenFlightDeleteFailsButWorkspaceIsDeleted_set() {
-    // Set a FlightDebugInfo so that any job submission should fail on the last step.
-    jobService.setFlightDebugInfoForTest(
-        FlightDebugInfo.newBuilder().lastStepFailure(true).build());
-    UUID workspaceUuid = UUID.randomUUID();
-    var nullChangedDate = activityLogDao.getLastChangedDate(workspaceUuid);
-    assertNull(nullChangedDate);
-
-    runFlight("failed flight with operation type DELETE", workspaceUuid, OperationType.DELETE);
-    workspaceDao.deleteWorkspace(workspaceUuid);
-    var changedDateAfterFailedFlight = activityLogDao.getLastChangedDate(workspaceUuid);
-    assertNotNull(changedDateAfterFailedFlight);
-  }
-
-  @Test
-  void setChangedActivityWhenFlightDeleteFailsButControlledResourceIsDeleted_set() {
-    // Set a FlightDebugInfo so that any job submission should fail on the last step.
-    jobService.setFlightDebugInfoForTest(
-        FlightDebugInfo.newBuilder().lastStepFailure(true).build());
-    UUID workspaceUuid = UUID.randomUUID();
-    var nullChangedDate = activityLogDao.getLastChangedDate(workspaceUuid);
-    assertNull(nullChangedDate);
-
-    Workspace workspace =
-        Workspace.builder()
-            .workspaceId(workspaceUuid)
-            .userFacingId("a" + workspaceUuid)
-            .workspaceStage(WorkspaceStage.MC_WORKSPACE)
-            .description("test workspace for deleting BigQuery controlled resource flight")
-            .build();
-    workspaceDao.createWorkspace(workspace);
-    WorkspaceFixtures.createGcpCloudContextInDatabase(
-        workspaceDao, workspace.getWorkspaceId(), "my-project-id");
-    ControlledBigQueryDatasetResource resource =
-        ControlledResourceFixtures.makeDefaultControlledBigQueryBuilder(workspaceUuid).build();
-    resourceDao.createControlledResource(resource);
-    var jobId =
-        jobService
-            .newJob()
-            .description("Flight to delete resource")
-            .flightClass(JobServiceTestFlight.class)
-            .userRequest(testUser)
-            .workspaceId(workspaceUuid.toString())
-            .operationType(OperationType.DELETE)
-            .submit();
-    jobService.waitForJob(jobId);
-    resourceDao.deleteResource(workspaceUuid, resource.getResourceId());
-
-    assertThrows(
-        ResourceNotFoundException.class,
-        () -> resourceDao.getResource(workspaceUuid, resource.getResourceId()));
-    assertNotNull(activityLogDao.getLastChangedDate(workspaceUuid));
-  }
-
-  @Test
-  void setChangedActivityWhenFlightDeleteFailsButControlledResourceIsNotDeleted_notSet() {
-    // Set a FlightDebugInfo so that any job submission should fail on the last step.
-    jobService.setFlightDebugInfoForTest(
-        FlightDebugInfo.newBuilder().lastStepFailure(true).build());
-    UUID workspaceUuid = UUID.randomUUID();
-    var nullChangedDate = activityLogDao.getLastChangedDate(workspaceUuid);
-    assertNull(nullChangedDate);
-
-    Workspace workspace =
-        Workspace.builder()
-            .workspaceId(workspaceUuid)
-            .userFacingId("a" + workspaceUuid)
-            .workspaceStage(WorkspaceStage.MC_WORKSPACE)
-            .description("test workspace for deleting cloud context flight")
-            .build();
-    workspaceDao.createWorkspace(workspace);
-    WorkspaceFixtures.createGcpCloudContextInDatabase(
-        workspaceDao, workspace.getWorkspaceId(), "my-project-id");
-    ControlledBigQueryDatasetResource resource =
-        ControlledResourceFixtures.makeDefaultControlledBigQueryBuilder(workspaceUuid).build();
-    resourceDao.createControlledResource(resource);
-    var jobId =
-        jobService
-            .newJob()
-            .description("Flight to delete resource")
-            .flightClass(JobServiceTestFlight.class)
-            .userRequest(testUser)
-            .workspaceId(workspaceUuid.toString())
-            .operationType(OperationType.DELETE)
-            .resource(resource)
-            .submit();
-    jobService.waitForJob(jobId);
-
-    assertNotNull(resourceDao.getResource(workspaceUuid, resource.getResourceId()));
-    assertNull(activityLogDao.getLastChangedDate(workspaceUuid));
-  }
-
-  @Test
-  void setChangedActivityWhenFlightDeleteFailsButReferencedResourceIsDeleted_set() {
-    // Set a FlightDebugInfo so that any job submission should fail on the last step.
-    jobService.setFlightDebugInfoForTest(
-        FlightDebugInfo.newBuilder().lastStepFailure(true).build());
-    UUID workspaceUuid = UUID.randomUUID();
-    var nullChangedDate = activityLogDao.getLastChangedDate(workspaceUuid);
-    assertNull(nullChangedDate);
-
-    Workspace workspace =
-        Workspace.builder()
-            .workspaceId(workspaceUuid)
-            .userFacingId("a" + workspaceUuid)
-            .workspaceStage(WorkspaceStage.MC_WORKSPACE)
-            .description("test workspace for deleting BigQuery controlled resource flight")
-            .build();
-    workspaceDao.createWorkspace(workspace);
-    WorkspaceFixtures.createGcpCloudContextInDatabase(
-        workspaceDao, workspace.getWorkspaceId(), "my-project-id");
-    ReferencedBigQueryDatasetResource resource =
-        new ReferencedBigQueryDatasetResource(
-            workspaceUuid,
-            UUID.randomUUID(),
-            "test-referenced-bq",
-            "description of test-referenced-bq",
-            CloningInstructions.COPY_REFERENCE,
-            "my-project-id",
-            "terra-bq-dataset-reference");
-    resourceDao.createReferencedResource(resource);
-    var jobId =
-        jobService
-            .newJob()
-            .description("Flight to delete resource")
-            .flightClass(JobServiceTestFlight.class)
-            .userRequest(testUser)
-            .workspaceId(workspaceUuid.toString())
-            .operationType(OperationType.DELETE)
-            .submit();
-    jobService.waitForJob(jobId);
-    resourceDao.deleteResource(workspaceUuid, resource.getResourceId());
-
-    assertThrows(
-        ResourceNotFoundException.class,
-        () -> resourceDao.getResource(workspaceUuid, resource.getResourceId()));
-    assertNotNull(activityLogDao.getLastChangedDate(workspaceUuid));
-  }
-
-  @Test
-  void setChangedActivityWhenFlightDeleteFailsButReferencedResourceIsNotDeleted_notSet() {
-    // Set a FlightDebugInfo so that any job submission should fail on the last step.
-    jobService.setFlightDebugInfoForTest(
-        FlightDebugInfo.newBuilder().lastStepFailure(true).build());
-    UUID workspaceUuid = UUID.randomUUID();
-    var nullChangedDate = activityLogDao.getLastChangedDate(workspaceUuid);
-    assertNull(nullChangedDate);
-
-    Workspace workspace =
-        Workspace.builder()
-            .workspaceId(workspaceUuid)
-            .userFacingId("a" + workspaceUuid)
-            .workspaceStage(WorkspaceStage.MC_WORKSPACE)
-            .description("test workspace for deleting BigQuery controlled resource flight")
-            .build();
-    workspaceDao.createWorkspace(workspace);
-    WorkspaceFixtures.createGcpCloudContextInDatabase(
-        workspaceDao, workspace.getWorkspaceId(), "my-project-id");
-    ReferencedBigQueryDatasetResource resource =
-        new ReferencedBigQueryDatasetResource(
-            workspaceUuid,
-            UUID.randomUUID(),
-            "test-referenced-bq",
-            "description of test-referenced-bq",
-            CloningInstructions.COPY_REFERENCE,
-            "my-project-id",
-            "terra-bq-dataset-reference");
-    resourceDao.createReferencedResource(resource);
-    var jobId =
-        jobService
-            .newJob()
-            .description("Flight to delete resource")
-            .flightClass(JobServiceTestFlight.class)
-            .userRequest(testUser)
-            .workspaceId(workspaceUuid.toString())
-            .operationType(OperationType.DELETE)
-            .submit();
-    jobService.waitForJob(jobId);
-
-    assertNotNull(resourceDao.getResource(workspaceUuid, resource.getResourceId()));
-    assertNotNull(activityLogDao.getLastChangedDate(workspaceUuid));
   }
 
   @Test

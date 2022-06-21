@@ -1,17 +1,19 @@
 package bio.terra.workspace.service.job;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.FlightStatus;
 import bio.terra.stairway.HookAction;
 import bio.terra.stairway.StairwayHook;
-import bio.terra.workspace.db.ActivityLogDao;
 import bio.terra.workspace.db.ResourceDao;
+import bio.terra.workspace.db.WorkspaceActivityLogDao;
 import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.db.exception.WorkspaceNotFoundException;
-import bio.terra.workspace.db.model.DbActivityLog;
+import bio.terra.workspace.db.model.DbWorkspaceActivityLog;
+import bio.terra.workspace.service.resource.controlled.flight.delete.DeleteControlledResourceFlight;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import bio.terra.workspace.service.resource.exception.ResourceNotFoundException;
-import bio.terra.workspace.service.resource.referenced.cloud.gcp.ReferencedResource;
 import bio.terra.workspace.service.workspace.flight.DeleteAzureContextFlight;
 import bio.terra.workspace.service.workspace.flight.DeleteGcpContextFlight;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
@@ -23,10 +25,10 @@ import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class ActivityLogHooks implements StairwayHook {
+public class WorkspaceActivityLogHooks implements StairwayHook {
   private static final Logger logger = LoggerFactory.getLogger(StairwayHook.class);
 
-  private final ActivityLogDao activityLogDao;
+  private final WorkspaceActivityLogDao activityLogDao;
   private final WorkspaceDao workspaceDao;
   private final ResourceDao resourceDao;
 
@@ -34,8 +36,11 @@ public class ActivityLogHooks implements StairwayHook {
   private static final String DELETE_AZURE_CONTEXT_FLIGHT =
       DeleteAzureContextFlight.class.getName();
 
-  public ActivityLogHooks(
-      ActivityLogDao activityLogDao, WorkspaceDao workspaceDao, ResourceDao resourceDao) {
+  private static final String DELETE_CONTROLLED_RESOURCE_FLIGHT =
+      DeleteControlledResourceFlight.class.getName();
+
+  public WorkspaceActivityLogHooks(
+      WorkspaceActivityLogDao activityLogDao, WorkspaceDao workspaceDao, ResourceDao resourceDao) {
     this.activityLogDao = activityLogDao;
     this.workspaceDao = workspaceDao;
     this.resourceDao = resourceDao;
@@ -56,23 +61,24 @@ public class ActivityLogHooks implements StairwayHook {
     // deleted from the database and we should log that as a changed activity.
     UUID workspaceUuid = UUID.fromString(workspaceId);
     if (context.getFlightStatus() == FlightStatus.SUCCESS) {
-      activityLogDao.writeActivity(workspaceUuid, new DbActivityLog().operationType(operationType));
+      activityLogDao.writeActivity(
+          workspaceUuid, new DbWorkspaceActivityLog().operationType(operationType));
       return HookAction.CONTINUE;
     }
     if (operationType == OperationType.DELETE) {
       if (isWorkspaceDeleted(workspaceUuid)) {
         activityLogDao.writeActivity(
-            workspaceUuid, new DbActivityLog().operationType(operationType));
+            workspaceUuid, new DbWorkspaceActivityLog().operationType(operationType));
         return HookAction.CONTINUE;
       }
       if (isCloudContextDeleted(context, workspaceUuid)) {
         activityLogDao.writeActivity(
-            workspaceUuid, new DbActivityLog().operationType(operationType));
+            workspaceUuid, new DbWorkspaceActivityLog().operationType(operationType));
         return HookAction.CONTINUE;
       }
-      if (isResourceDeleted(context, workspaceUuid)) {
+      if (isControlledResourceDeleted(context, workspaceUuid)) {
         activityLogDao.writeActivity(
-            workspaceUuid, new DbActivityLog().operationType(operationType));
+            workspaceUuid, new DbWorkspaceActivityLog().operationType(operationType));
         return HookAction.CONTINUE;
       }
     }
@@ -101,23 +107,18 @@ public class ActivityLogHooks implements StairwayHook {
     return cloudContext.isEmpty();
   }
 
-  private boolean isResourceDeleted(FlightContext context, UUID workspaceUuid) {
-    var controlledResource =
-        context.getInputParameters().get(ResourceKeys.RESOURCE, ControlledResource.class);
-    var referencedResource =
-        context.getInputParameters().get(ResourceKeys.RESOURCE, ReferencedResource.class);
-    UUID resourceId = null;
-    if (controlledResource != null) {
-      resourceId = controlledResource.getResourceId();
-    } else if (referencedResource != null) {
-      resourceId = referencedResource.getResourceId();
+  private boolean isControlledResourceDeleted(FlightContext context, UUID workspaceUuid) {
+    if (!context.getFlightClassName().equals(DELETE_CONTROLLED_RESOURCE_FLIGHT)) {
+      return false;
     }
-    if (resourceId != null) {
-      try {
-        resourceDao.getResource(workspaceUuid, resourceId);
-      } catch (ResourceNotFoundException e) {
-        return true;
-      }
+    var controlledResource =
+        checkNotNull(
+            context.getInputParameters().get(ResourceKeys.RESOURCE, ControlledResource.class));
+    UUID resourceId = controlledResource.getResourceId();
+    try {
+      resourceDao.getResource(workspaceUuid, resourceId);
+    } catch (ResourceNotFoundException e) {
+      return true;
     }
     return false;
   }
