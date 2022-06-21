@@ -1,8 +1,6 @@
 package bio.terra.workspace.db;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import bio.terra.workspace.common.BaseUnitTest;
@@ -22,47 +20,45 @@ public class WorkspaceActivityLogDaoTest extends BaseUnitTest {
   @Test
   public void setWorkspaceUpdatedDateAndGet() {
     var workspaceId = UUID.randomUUID();
-    assertNull(activityLogDao.getLastChangedDate(workspaceId));
+    assertTrue(activityLogDao.getLastUpdatedDate(workspaceId).isEmpty());
 
     activityLogDao.writeActivity(
         workspaceId, new DbWorkspaceActivityLog().operationType(OperationType.CREATE));
 
-    String changeType = getChangedType(workspaceId);
-    var latestDate = activityLogDao.getLastChangedDate(workspaceId);
-    assertNotNull(latestDate);
-    assertEquals(OperationType.CREATE.name(), changeType);
+    var latestDate = activityLogDao.getLastUpdatedDate(workspaceId);
+    assertTrue(latestDate.isPresent());
   }
 
   @Test
-  public void getLastUpdatedDate() {
+  public void getLastUpdatedDate_notUpdateOnUnknownOperationType() {
     var workspaceId = UUID.randomUUID();
     activityLogDao.writeActivity(
         workspaceId, new DbWorkspaceActivityLog().operationType(OperationType.CREATE));
-    var firstUpdatedDate = activityLogDao.getLastChangedDate(workspaceId);
+    var firstUpdatedDate = activityLogDao.getLastUpdatedDate(workspaceId);
     assertEquals(OperationType.CREATE.name(), getChangedType(workspaceId));
 
     activityLogDao.writeActivity(
         workspaceId, new DbWorkspaceActivityLog().operationType(OperationType.UPDATE));
-    var secondUpdatedDate = activityLogDao.getLastChangedDate(workspaceId);
+    var secondUpdatedDate = activityLogDao.getLastUpdatedDate(workspaceId);
     assertEquals(OperationType.UPDATE.name(), getChangedType(workspaceId));
 
     activityLogDao.writeActivity(
         workspaceId, new DbWorkspaceActivityLog().operationType(OperationType.DELETE));
-    var thirdUpdatedDate = activityLogDao.getLastChangedDate(workspaceId);
+    var thirdUpdatedDate = activityLogDao.getLastUpdatedDate(workspaceId);
     assertEquals(OperationType.DELETE.name(), getChangedType(workspaceId));
 
     activityLogDao.writeActivity(
         workspaceId, new DbWorkspaceActivityLog().operationType(OperationType.CLONE));
-    var fourthUpdateDate = activityLogDao.getLastChangedDate(workspaceId);
+    var fourthUpdateDate = activityLogDao.getLastUpdatedDate(workspaceId);
 
     activityLogDao.writeActivity(
         workspaceId, new DbWorkspaceActivityLog().operationType(OperationType.UNKNOWN));
-    var fifthUpdateDate = activityLogDao.getLastChangedDate(workspaceId);
+    var fifthUpdateDate = activityLogDao.getLastUpdatedDate(workspaceId);
     assertEquals(fourthUpdateDate, fifthUpdateDate);
 
-    assertTrue(firstUpdatedDate.isBefore(secondUpdatedDate));
-    assertTrue(secondUpdatedDate.isBefore(thirdUpdatedDate));
-    assertTrue(thirdUpdatedDate.isBefore(fourthUpdateDate));
+    assertTrue(firstUpdatedDate.get().isBefore(secondUpdatedDate.get()));
+    assertTrue(secondUpdatedDate.get().isBefore(thirdUpdatedDate.get()));
+    assertTrue(thirdUpdatedDate.get().isBefore(fourthUpdateDate.get()));
   }
 
   private String getChangedType(UUID workspaceId) {

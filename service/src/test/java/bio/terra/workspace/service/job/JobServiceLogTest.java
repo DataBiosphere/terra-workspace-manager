@@ -1,7 +1,6 @@
 package bio.terra.workspace.service.job;
 
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 
 import bio.terra.stairway.FlightDebugInfo;
@@ -57,56 +56,56 @@ public class JobServiceLogTest extends BaseUnitTest {
   @Test
   void setChangedActivityWhenFlightCreateComplete() {
     UUID workspaceUuid = UUID.randomUUID();
-    var nullChangedDate = activityLogDao.getLastChangedDate(workspaceUuid);
-    assertNull(nullChangedDate);
+    var emptyChangedDate = activityLogDao.getLastUpdatedDate(workspaceUuid);
+    assertTrue(emptyChangedDate.isEmpty());
 
     runFlight("a creation flight", workspaceUuid, OperationType.CREATE);
-    var changedDate = activityLogDao.getLastChangedDate(workspaceUuid);
-    assertNotNull(changedDate);
+    var changedDate = activityLogDao.getLastUpdatedDate(workspaceUuid);
+    assertTrue(changedDate.isPresent());
   }
 
   @Test
   void setChangedActivityWhenFlightUpdateComplete() {
     UUID workspaceUuid = UUID.randomUUID();
-    var nullChangedDate = activityLogDao.getLastChangedDate(workspaceUuid);
-    assertNull(nullChangedDate);
+    var emptyChangedDate = activityLogDao.getLastUpdatedDate(workspaceUuid);
+    assertTrue(emptyChangedDate.isEmpty());
 
     runFlight("a creation flight", workspaceUuid, OperationType.UPDATE);
-    var changedDate = activityLogDao.getLastChangedDate(workspaceUuid);
-    assertNotNull(changedDate);
+    var changedDate = activityLogDao.getLastUpdatedDate(workspaceUuid);
+    assertTrue(changedDate.isPresent());
   }
 
   @Test
   void setChangedActivityWhenFlightDeleteComplete() {
     UUID workspaceUuid = UUID.randomUUID();
-    var nullChangedDate = activityLogDao.getLastChangedDate(workspaceUuid);
-    assertNull(nullChangedDate);
+    var emptyChangedDate = activityLogDao.getLastUpdatedDate(workspaceUuid);
+    assertTrue(emptyChangedDate.isEmpty());
 
     runFlight("a creation flight", workspaceUuid, OperationType.DELETE);
-    var changedDate = activityLogDao.getLastChangedDate(workspaceUuid);
-    assertNotNull(changedDate);
+    var changedDate = activityLogDao.getLastUpdatedDate(workspaceUuid);
+    assertTrue(changedDate.isPresent());
   }
 
   @Test
   void setChangedActivityWhenFlightCloneComplete_notSet() {
     UUID workspaceUuid = UUID.randomUUID();
-    var nullChangedDate = activityLogDao.getLastChangedDate(workspaceUuid);
-    assertNull(nullChangedDate);
+    var emptyChangedDate = activityLogDao.getLastUpdatedDate(workspaceUuid);
+    assertTrue(emptyChangedDate.isEmpty());
 
     runFlight("a creation flight", workspaceUuid, OperationType.CLONE);
-    var changedDate = activityLogDao.getLastChangedDate(workspaceUuid);
-    assertNotNull(changedDate);
+    var changedDate = activityLogDao.getLastUpdatedDate(workspaceUuid);
+    assertTrue(changedDate.isPresent());
   }
 
   @Test
-  void setChangedActivityWhenFlightUnknownComplete() {
+  void setChangedActivityWhenFlightUnknownComplete_notSet() {
     UUID workspaceUuid = UUID.randomUUID();
-    var nullChangedDate = activityLogDao.getLastChangedDate(workspaceUuid);
-    assertNull(nullChangedDate);
+    var emptyChangedDate = activityLogDao.getLastUpdatedDate(workspaceUuid);
+    assertTrue(emptyChangedDate.isEmpty());
 
     runFlight("a creation flight", workspaceUuid, OperationType.UNKNOWN);
-    var changedDate = activityLogDao.getLastChangedDate(workspaceUuid);
-    assertNull(changedDate);
+    var changedDate = activityLogDao.getLastUpdatedDate(workspaceUuid);
+    assertTrue(changedDate.isEmpty());
   }
 
   @Test
@@ -115,13 +114,13 @@ public class JobServiceLogTest extends BaseUnitTest {
     jobService.setFlightDebugInfoForTest(
         FlightDebugInfo.newBuilder().lastStepFailure(true).build());
     UUID workspaceUuid = UUID.randomUUID();
-    var nullChangedDate = activityLogDao.getLastChangedDate(workspaceUuid);
-    assertNull(nullChangedDate);
+    var emptyChangedDate = activityLogDao.getLastUpdatedDate(workspaceUuid);
+    assertTrue(emptyChangedDate.isEmpty());
 
     var description = "fail for FlightDebugInfo";
     runFlight(description, workspaceUuid, OperationType.CREATE);
-    var changedDateAfterFailedFlight = activityLogDao.getLastChangedDate(workspaceUuid);
-    assertNull(changedDateAfterFailedFlight);
+    var changedDateAfterFailedFlight = activityLogDao.getLastUpdatedDate(workspaceUuid);
+    assertTrue(changedDateAfterFailedFlight.isEmpty());
   }
 
   @Test
@@ -130,12 +129,12 @@ public class JobServiceLogTest extends BaseUnitTest {
     jobService.setFlightDebugInfoForTest(
         FlightDebugInfo.newBuilder().lastStepFailure(true).build());
     UUID workspaceUuid = UUID.randomUUID();
-    var nullChangedDate = activityLogDao.getLastChangedDate(workspaceUuid);
-    assertNull(nullChangedDate);
+    var emptyChangedDate = activityLogDao.getLastUpdatedDate(workspaceUuid);
+    assertTrue(emptyChangedDate.isEmpty());
 
     runFlight("failed flight with operation type UPDATE", workspaceUuid, OperationType.UPDATE);
-    var changedDateAfterFailedFlight = activityLogDao.getLastChangedDate(workspaceUuid);
-    assertNull(changedDateAfterFailedFlight);
+    var changedDateAfterFailedFlight = activityLogDao.getLastUpdatedDate(workspaceUuid);
+    assertTrue(changedDateAfterFailedFlight.isEmpty());
   }
 
   @Test
@@ -144,12 +143,12 @@ public class JobServiceLogTest extends BaseUnitTest {
     jobService.setFlightDebugInfoForTest(
         FlightDebugInfo.newBuilder().lastStepFailure(true).build());
     UUID workspaceUuid = UUID.randomUUID();
-    var nullChangedDate = activityLogDao.getLastChangedDate(workspaceUuid);
-    assertNull(nullChangedDate);
+    var emptyChangedDate = activityLogDao.getLastUpdatedDate(workspaceUuid);
+    assertTrue(emptyChangedDate.isEmpty());
 
     runFlight("failed flight with operation type CLONE", workspaceUuid, OperationType.CLONE);
-    var changedDateAfterFailedFlight = activityLogDao.getLastChangedDate(workspaceUuid);
-    assertNull(changedDateAfterFailedFlight);
+    var changedDateAfterFailedFlight = activityLogDao.getLastUpdatedDate(workspaceUuid);
+    assertTrue(changedDateAfterFailedFlight.isEmpty());
   }
 
   @Test
@@ -158,12 +157,12 @@ public class JobServiceLogTest extends BaseUnitTest {
     jobService.setFlightDebugInfoForTest(
         FlightDebugInfo.newBuilder().lastStepFailure(true).build());
     UUID workspaceUuid = UUID.randomUUID();
-    var nullChangedDate = activityLogDao.getLastChangedDate(workspaceUuid);
-    assertNull(nullChangedDate);
+    var emptyChangedDate = activityLogDao.getLastUpdatedDate(workspaceUuid);
+    assertTrue(emptyChangedDate.isEmpty());
 
     runFlight("failed flight with operation type unkown", workspaceUuid, OperationType.UNKNOWN);
-    var changedDateAfterFailedFlight = activityLogDao.getLastChangedDate(workspaceUuid);
-    assertNull(changedDateAfterFailedFlight);
+    var changedDateAfterFailedFlight = activityLogDao.getLastUpdatedDate(workspaceUuid);
+    assertTrue(changedDateAfterFailedFlight.isEmpty());
   }
 
   // Submit a flight; wait for it to finish; return the flight id

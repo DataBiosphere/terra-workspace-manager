@@ -8,7 +8,6 @@ import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.Optional;
 import java.util.UUID;
-import javax.annotation.Nullable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
@@ -49,13 +48,12 @@ public class WorkspaceActivityLogDao {
   }
 
   @ReadTransaction
-  public @Nullable Instant getLastChangedDate(UUID workspaceId) {
+  public Optional<Instant> getLastUpdatedDate(UUID workspaceId) {
     final String sql =
         "SELECT MAX(changed_date) FROM workspace_activity_log WHERE workspace_id = :workspace_id";
     final var params = new MapSqlParameterSource().addValue("workspace_id", workspaceId.toString());
 
     return Optional.ofNullable(jdbcTemplate.queryForObject(sql, params, OffsetDateTime.class))
-        .map(OffsetDateTime::toInstant)
-        .orElse(null);
+        .map(OffsetDateTime::toInstant);
   }
 }

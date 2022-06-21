@@ -16,6 +16,7 @@ import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.job.exception.InvalidJobIdException;
 import bio.terra.workspace.service.job.exception.InvalidResultStateException;
 import bio.terra.workspace.service.job.exception.JobNotFoundException;
+import bio.terra.workspace.service.workspace.model.OperationType;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
@@ -204,6 +205,7 @@ class JobServiceTest extends BaseUnitTest {
             .flightClass(JobServiceTestFlight.class)
             .userRequest(testUser)
             .workspaceId(workspaceUuid.toString())
+            .operationType(OperationType.UNKNOWN)
             .submit();
     jobService.waitForJob(jobId);
     return jobId;
