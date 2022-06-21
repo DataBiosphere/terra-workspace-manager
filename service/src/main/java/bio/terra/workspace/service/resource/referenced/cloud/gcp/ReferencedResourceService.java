@@ -2,7 +2,9 @@ package bio.terra.workspace.service.resource.referenced.cloud.gcp;
 
 import bio.terra.workspace.common.utils.FlightBeanBag;
 import bio.terra.workspace.db.ResourceDao;
+import bio.terra.workspace.db.WorkspaceActivityLogDao;
 import bio.terra.workspace.db.exception.InvalidMetadataException;
+import bio.terra.workspace.db.model.DbWorkspaceActivityLog;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.model.SamConstants;
 import bio.terra.workspace.service.iam.model.SamConstants.SamWorkspaceAction;
@@ -36,17 +38,20 @@ public class ReferencedResourceService {
   private final ResourceDao resourceDao;
   private final WorkspaceService workspaceService;
   private final FlightBeanBag beanBag;
+  private final WorkspaceActivityLogDao workspaceActivityLogDao;
 
   @Autowired
   public ReferencedResourceService(
       JobService jobService,
       ResourceDao resourceDao,
       WorkspaceService workspaceService,
-      FlightBeanBag beanBag) {
+      FlightBeanBag beanBag,
+      WorkspaceActivityLogDao workspaceActivityLogDao) {
     this.jobService = jobService;
     this.resourceDao = resourceDao;
     this.workspaceService = workspaceService;
     this.beanBag = beanBag;
+    this.workspaceActivityLogDao = workspaceActivityLogDao;
   }
 
   @Traced
@@ -173,7 +178,10 @@ public class ReferencedResourceService {
       UUID workspaceUuid, UUID resourceId, AuthenticatedUserRequest userRequest) {
     workspaceService.validateWorkspaceAndAction(
         userRequest, workspaceUuid, SamConstants.SamWorkspaceAction.DELETE_REFERENCE);
-    resourceDao.deleteResource(workspaceUuid, resourceId);
+    if (resourceDao.deleteResource(workspaceUuid, resourceId)) {
+      workspaceActivityLogDao.writeActivity(
+          workspaceUuid, new DbWorkspaceActivityLog().operationType(OperationType.DELETE));
+    }
   }
 
   /**
@@ -192,7 +200,10 @@ public class ReferencedResourceService {
       WsmResourceType resourceType) {
     workspaceService.validateWorkspaceAndAction(
         userRequest, workspaceUuid, SamWorkspaceAction.DELETE_REFERENCE);
-    resourceDao.deleteResourceForResourceType(workspaceUuid, resourceId, resourceType);
+    if (resourceDao.deleteResourceForResourceType(workspaceUuid, resourceId, resourceType)) {
+      workspaceActivityLogDao.writeActivity(
+          workspaceUuid, new DbWorkspaceActivityLog().operationType(OperationType.DELETE));
+    }
   }
 
   public ReferencedResource getReferenceResource(

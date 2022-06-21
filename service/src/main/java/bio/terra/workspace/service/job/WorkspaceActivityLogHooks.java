@@ -56,15 +56,14 @@ public class WorkspaceActivityLogHooks implements StairwayHook {
         context
             .getInputParameters()
             .get(WorkspaceFlightMapKeys.OPERATION_TYPE, OperationType.class);
-    // For DELETE flight, even if the flight failed, database deletion cannot be undone, so it's
-    // still
-    // deleted from the database and we should log that as a changed activity.
     UUID workspaceUuid = UUID.fromString(workspaceId);
     if (context.getFlightStatus() == FlightStatus.SUCCESS) {
       activityLogDao.writeActivity(
           workspaceUuid, new DbWorkspaceActivityLog().operationType(operationType));
       return HookAction.CONTINUE;
     }
+    // For DELETE flight, even if the flight failed, database deletion cannot be undone, so it's
+    // still deleted from the database and we should log that as a changed activity.
     if (operationType == OperationType.DELETE) {
       if (isWorkspaceDeleted(workspaceUuid)) {
         activityLogDao.writeActivity(
