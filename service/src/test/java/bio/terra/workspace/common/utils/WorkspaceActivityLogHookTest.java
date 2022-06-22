@@ -1,4 +1,4 @@
-package bio.terra.workspace.service.job;
+package bio.terra.workspace.common.utils;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
@@ -9,6 +9,8 @@ import bio.terra.workspace.db.WorkspaceActivityLogDao;
 import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
+import bio.terra.workspace.service.job.JobService;
+import bio.terra.workspace.service.job.JobServiceTestFlight;
 import bio.terra.workspace.service.workspace.model.OperationType;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
@@ -22,7 +24,7 @@ import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.MockBean;
 
-public class JobServiceLogTest extends BaseUnitTest {
+public class WorkspaceActivityLogHookTest extends BaseUnitTest {
   private static final AuthenticatedUserRequest testUser =
       new AuthenticatedUserRequest()
           .subjectId("StairwayUnit")
@@ -71,6 +73,7 @@ public class JobServiceLogTest extends BaseUnitTest {
     assertTrue(emptyChangedDate.isEmpty());
 
     runFlight("a creation flight", workspaceUuid, OperationType.UPDATE);
+
     var changedDate = activityLogDao.getLastUpdatedDate(workspaceUuid);
     assertTrue(changedDate.isPresent());
   }
@@ -82,6 +85,7 @@ public class JobServiceLogTest extends BaseUnitTest {
     assertTrue(emptyChangedDate.isEmpty());
 
     runFlight("a creation flight", workspaceUuid, OperationType.DELETE);
+
     var changedDate = activityLogDao.getLastUpdatedDate(workspaceUuid);
     assertTrue(changedDate.isPresent());
   }
@@ -93,6 +97,7 @@ public class JobServiceLogTest extends BaseUnitTest {
     assertTrue(emptyChangedDate.isEmpty());
 
     runFlight("a creation flight", workspaceUuid, OperationType.CLONE);
+
     var changedDate = activityLogDao.getLastUpdatedDate(workspaceUuid);
     assertTrue(changedDate.isPresent());
   }
@@ -104,6 +109,7 @@ public class JobServiceLogTest extends BaseUnitTest {
     assertTrue(emptyChangedDate.isEmpty());
 
     runFlight("a creation flight", workspaceUuid, OperationType.UNKNOWN);
+
     var changedDate = activityLogDao.getLastUpdatedDate(workspaceUuid);
     assertTrue(changedDate.isEmpty());
   }
@@ -117,8 +123,23 @@ public class JobServiceLogTest extends BaseUnitTest {
     var emptyChangedDate = activityLogDao.getLastUpdatedDate(workspaceUuid);
     assertTrue(emptyChangedDate.isEmpty());
 
-    var description = "fail for FlightDebugInfo";
-    runFlight(description, workspaceUuid, OperationType.CREATE);
+    runFlight("Failed flight with operation type CREATE", workspaceUuid, OperationType.CREATE);
+
+    var changedDateAfterFailedFlight = activityLogDao.getLastUpdatedDate(workspaceUuid);
+    assertTrue(changedDateAfterFailedFlight.isEmpty());
+  }
+
+  @Test
+  void setChangedActivityWhenFlightDeletionFails_notSet() {
+    // Set a FlightDebugInfo so that any job submission should fail on the last step.
+    jobService.setFlightDebugInfoForTest(
+        FlightDebugInfo.newBuilder().lastStepFailure(true).build());
+    UUID workspaceUuid = UUID.randomUUID();
+    var emptyChangedDate = activityLogDao.getLastUpdatedDate(workspaceUuid);
+    assertTrue(emptyChangedDate.isEmpty());
+
+    runFlight("unhandled deletion flight", workspaceUuid, OperationType.DELETE);
+
     var changedDateAfterFailedFlight = activityLogDao.getLastUpdatedDate(workspaceUuid);
     assertTrue(changedDateAfterFailedFlight.isEmpty());
   }
@@ -133,6 +154,7 @@ public class JobServiceLogTest extends BaseUnitTest {
     assertTrue(emptyChangedDate.isEmpty());
 
     runFlight("failed flight with operation type UPDATE", workspaceUuid, OperationType.UPDATE);
+
     var changedDateAfterFailedFlight = activityLogDao.getLastUpdatedDate(workspaceUuid);
     assertTrue(changedDateAfterFailedFlight.isEmpty());
   }
@@ -147,6 +169,7 @@ public class JobServiceLogTest extends BaseUnitTest {
     assertTrue(emptyChangedDate.isEmpty());
 
     runFlight("failed flight with operation type CLONE", workspaceUuid, OperationType.CLONE);
+
     var changedDateAfterFailedFlight = activityLogDao.getLastUpdatedDate(workspaceUuid);
     assertTrue(changedDateAfterFailedFlight.isEmpty());
   }
@@ -161,6 +184,7 @@ public class JobServiceLogTest extends BaseUnitTest {
     assertTrue(emptyChangedDate.isEmpty());
 
     runFlight("failed flight with operation type unknown", workspaceUuid, OperationType.UNKNOWN);
+
     var changedDateAfterFailedFlight = activityLogDao.getLastUpdatedDate(workspaceUuid);
     assertTrue(changedDateAfterFailedFlight.isEmpty());
   }

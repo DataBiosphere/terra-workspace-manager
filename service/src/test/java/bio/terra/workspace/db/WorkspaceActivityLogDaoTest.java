@@ -35,17 +35,17 @@ public class WorkspaceActivityLogDaoTest extends BaseUnitTest {
     activityLogDao.writeActivity(
         workspaceId, new DbWorkspaceActivityLog().operationType(OperationType.CREATE));
     var firstUpdatedDate = activityLogDao.getLastUpdatedDate(workspaceId);
-    assertEquals(OperationType.CREATE.name(), getChangedType(workspaceId));
+    assertEquals(OperationType.CREATE.name(), getChangeType(workspaceId));
 
     activityLogDao.writeActivity(
         workspaceId, new DbWorkspaceActivityLog().operationType(OperationType.UPDATE));
     var secondUpdatedDate = activityLogDao.getLastUpdatedDate(workspaceId);
-    assertEquals(OperationType.UPDATE.name(), getChangedType(workspaceId));
+    assertEquals(OperationType.UPDATE.name(), getChangeType(workspaceId));
 
     activityLogDao.writeActivity(
         workspaceId, new DbWorkspaceActivityLog().operationType(OperationType.DELETE));
     var thirdUpdatedDate = activityLogDao.getLastUpdatedDate(workspaceId);
-    assertEquals(OperationType.DELETE.name(), getChangedType(workspaceId));
+    assertEquals(OperationType.DELETE.name(), getChangeType(workspaceId));
 
     activityLogDao.writeActivity(
         workspaceId, new DbWorkspaceActivityLog().operationType(OperationType.CLONE));
@@ -61,11 +61,11 @@ public class WorkspaceActivityLogDaoTest extends BaseUnitTest {
     assertTrue(thirdUpdatedDate.get().isBefore(fourthUpdateDate.get()));
   }
 
-  private String getChangedType(UUID workspaceId) {
+  private String getChangeType(UUID workspaceId) {
     final String sql =
         "SELECT change_type"
             + " FROM workspace_activity_log WHERE workspace_id = :workspace_id"
-            + " ORDER BY changed_date DESC LIMIT 1";
+            + " ORDER BY change_date DESC LIMIT 1";
     final var params = new MapSqlParameterSource().addValue("workspace_id", workspaceId.toString());
     var changeType = jdbcTemplate.queryForObject(sql, params, String.class);
     return changeType;

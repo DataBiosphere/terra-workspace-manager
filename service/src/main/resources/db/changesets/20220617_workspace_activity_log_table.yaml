@@ -14,9 +14,9 @@ databaseChangeLog:
             constraints:
               nullable: false
             remarks: |
-              The ID of the workspace
+              The UUID of the workspace
         - column:
-            name: changed_date
+            name: change_date
             type: timestamptz
             constraints:
               nullable: false
