@@ -205,7 +205,7 @@ class JobServiceTest extends BaseUnitTest {
             .flightClass(JobServiceTestFlight.class)
             .userRequest(testUser)
             .workspaceId(workspaceUuid.toString())
-            .operationType(OperationType.UNKNOWN)
+            .operationType(OperationType.CREATE)
             .submit();
     jobService.waitForJob(jobId);
     return jobId;
