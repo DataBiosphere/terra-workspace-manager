@@ -1,9 +1,11 @@
 package bio.terra.workspace.db;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import bio.terra.workspace.common.BaseUnitTest;
+import bio.terra.workspace.db.exception.UnknownFlightOperationTypeException;
 import bio.terra.workspace.db.model.DbWorkspaceActivityLog;
 import bio.terra.workspace.service.workspace.model.OperationType;
 import java.util.UUID;
@@ -51,8 +53,10 @@ public class WorkspaceActivityLogDaoTest extends BaseUnitTest {
         workspaceId, new DbWorkspaceActivityLog().operationType(OperationType.CLONE));
     var fourthUpdateDate = activityLogDao.getLastUpdatedDate(workspaceId);
 
-    activityLogDao.writeActivity(
-        workspaceId, new DbWorkspaceActivityLog().operationType(OperationType.UNKNOWN));
+    assertThrows(
+        UnknownFlightOperationTypeException.class,
+        () -> activityLogDao.writeActivity(
+        workspaceId, new DbWorkspaceActivityLog().operationType(OperationType.UNKNOWN)));
     var fifthUpdateDate = activityLogDao.getLastUpdatedDate(workspaceId);
     assertEquals(fourthUpdateDate, fifthUpdateDate);
 
