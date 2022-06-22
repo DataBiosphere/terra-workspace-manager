@@ -43,6 +43,8 @@ dependencies {
   implementation group: "org.apache.commons", name: "commons-dbcp2"
   implementation group: "org.apache.commons", name: "commons-lang3"
   implementation group: "org.apache.commons", name: "commons-pool2"
+  implementation group: "org.apache.logging.log4j", name: "log4j-api"
+  implementation group: "org.apache.logging.log4j", name: "log4j-to-slf4j"
   implementation group: "commons-validator", name: "commons-validator", version: "1.7"
   implementation group: "org.springframework.boot", name: "spring-boot-starter-data-jdbc"
   implementation group: "org.springframework.boot", name: "spring-boot-starter-web"
@@ -55,7 +57,7 @@ dependencies {
   runtimeOnly group: "org.webjars.npm", name: "swagger-ui-dist", version: "3.37.2"
 
   // Spotbugs dependency
-  spotbugs 'com.github.spotbugs:spotbugs:4.2.2'
+  spotbugs 'com.github.spotbugs:spotbugs:4.7.0'
 
   // Test deps
   testImplementation group: "io.vavr", name: "vavr", version: "0.10.3"
