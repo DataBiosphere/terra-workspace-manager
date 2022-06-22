@@ -67,36 +67,12 @@ public class WorkspaceActivityLogHookTest extends BaseUnitTest {
   }
 
   @Test
-  void updateFlightSucceeds_activityLogUpdated() {
-    UUID workspaceUuid = UUID.randomUUID();
-    var emptyChangedDate = activityLogDao.getLastUpdatedDate(workspaceUuid);
-    assertTrue(emptyChangedDate.isEmpty());
-
-    runFlight("a creation flight", workspaceUuid, OperationType.UPDATE);
-
-    var changedDate = activityLogDao.getLastUpdatedDate(workspaceUuid);
-    assertTrue(changedDate.isPresent());
-  }
-
-  @Test
   void deleteFlightSucceeds_activityLogUpdated() {
     UUID workspaceUuid = UUID.randomUUID();
     var emptyChangedDate = activityLogDao.getLastUpdatedDate(workspaceUuid);
     assertTrue(emptyChangedDate.isEmpty());
 
     runFlight("a creation flight", workspaceUuid, OperationType.DELETE);
-
-    var changedDate = activityLogDao.getLastUpdatedDate(workspaceUuid);
-    assertTrue(changedDate.isPresent());
-  }
-
-  @Test
-  void cloneFlightSucceeds_activityLogUpdated() {
-    UUID workspaceUuid = UUID.randomUUID();
-    var emptyChangedDate = activityLogDao.getLastUpdatedDate(workspaceUuid);
-    assertTrue(emptyChangedDate.isEmpty());
-
-    runFlight("a creation flight", workspaceUuid, OperationType.CLONE);
 
     var changedDate = activityLogDao.getLastUpdatedDate(workspaceUuid);
     assertTrue(changedDate.isPresent());
@@ -139,36 +115,6 @@ public class WorkspaceActivityLogHookTest extends BaseUnitTest {
     assertTrue(emptyChangedDate.isEmpty());
 
     runFlight("unhandled deletion flight", workspaceUuid, OperationType.DELETE);
-
-    var changedDateAfterFailedFlight = activityLogDao.getLastUpdatedDate(workspaceUuid);
-    assertTrue(changedDateAfterFailedFlight.isEmpty());
-  }
-
-  @Test
-  void updateFlightFails_activityLogNotUpdated() {
-    // Set a FlightDebugInfo so that any job submission should fail on the last step.
-    jobService.setFlightDebugInfoForTest(
-        FlightDebugInfo.newBuilder().lastStepFailure(true).build());
-    UUID workspaceUuid = UUID.randomUUID();
-    var emptyChangedDate = activityLogDao.getLastUpdatedDate(workspaceUuid);
-    assertTrue(emptyChangedDate.isEmpty());
-
-    runFlight("failed flight with operation type UPDATE", workspaceUuid, OperationType.UPDATE);
-
-    var changedDateAfterFailedFlight = activityLogDao.getLastUpdatedDate(workspaceUuid);
-    assertTrue(changedDateAfterFailedFlight.isEmpty());
-  }
-
-  @Test
-  void cloneFlightFails_activityLogNotUpdated() {
-    // Set a FlightDebugInfo so that any job submission should fail on the last step.
-    jobService.setFlightDebugInfoForTest(
-        FlightDebugInfo.newBuilder().lastStepFailure(true).build());
-    UUID workspaceUuid = UUID.randomUUID();
-    var emptyChangedDate = activityLogDao.getLastUpdatedDate(workspaceUuid);
-    assertTrue(emptyChangedDate.isEmpty());
-
-    runFlight("failed flight with operation type CLONE", workspaceUuid, OperationType.CLONE);
 
     var changedDateAfterFailedFlight = activityLogDao.getLastUpdatedDate(workspaceUuid);
     assertTrue(changedDateAfterFailedFlight.isEmpty());
