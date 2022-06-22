@@ -55,8 +55,9 @@ public class WorkspaceActivityLogDaoTest extends BaseUnitTest {
 
     assertThrows(
         UnknownFlightOperationTypeException.class,
-        () -> activityLogDao.writeActivity(
-        workspaceId, new DbWorkspaceActivityLog().operationType(OperationType.UNKNOWN)));
+        () ->
+            activityLogDao.writeActivity(
+                workspaceId, new DbWorkspaceActivityLog().operationType(OperationType.UNKNOWN)));
     var fifthUpdateDate = activityLogDao.getLastUpdatedDate(workspaceId);
     assertEquals(fourthUpdateDate, fifthUpdateDate);
 

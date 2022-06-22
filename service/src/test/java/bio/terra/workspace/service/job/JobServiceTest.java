@@ -31,6 +31,8 @@ import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.HttpStatus;
+import org.springframework.test.annotation.DirtiesContext;
+import org.springframework.test.annotation.DirtiesContext.MethodMode;
 
 class JobServiceTest extends BaseUnitTest {
   private final AuthenticatedUserRequest testUser =
@@ -92,6 +94,9 @@ class JobServiceTest extends BaseUnitTest {
                 .workspaceId(UUID.randomUUID().toString()));
   }
 
+  // Resets the application context before retrieveTest to make sure that the job service does not
+  // have some failed jobs left over from other tests.
+  @DirtiesContext(methodMode = MethodMode.BEFORE_METHOD)
   @Test
   void retrieveTest() throws Exception {
     // We perform 7 flights and then retrieve and enumerate them.
