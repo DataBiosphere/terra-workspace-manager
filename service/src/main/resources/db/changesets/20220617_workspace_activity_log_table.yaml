@@ -28,4 +28,5 @@ databaseChangeLog:
             constraints:
               nullable: false
             remarks: |
-              Type of changes at the given timestamp. e.g. CREATE, UPDATE, DELETE
+              Type of changes at the given timestamp. e.g. CREATE, UPDATE, 
+              DELETE, CLONE
