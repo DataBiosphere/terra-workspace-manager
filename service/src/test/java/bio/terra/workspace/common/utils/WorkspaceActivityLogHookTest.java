@@ -56,7 +56,7 @@ public class WorkspaceActivityLogHookTest extends BaseUnitTest {
   }
 
   @Test
-  void setChangedActivityWhenFlightCreateComplete() {
+  void createFlightSucceeds_activityLogUpdated() {
     UUID workspaceUuid = UUID.randomUUID();
     var emptyChangedDate = activityLogDao.getLastUpdatedDate(workspaceUuid);
     assertTrue(emptyChangedDate.isEmpty());
@@ -67,7 +67,7 @@ public class WorkspaceActivityLogHookTest extends BaseUnitTest {
   }
 
   @Test
-  void setChangedActivityWhenFlightUpdateComplete() {
+  void updateFlightSucceeds_activityLogUpdated() {
     UUID workspaceUuid = UUID.randomUUID();
     var emptyChangedDate = activityLogDao.getLastUpdatedDate(workspaceUuid);
     assertTrue(emptyChangedDate.isEmpty());
@@ -79,7 +79,7 @@ public class WorkspaceActivityLogHookTest extends BaseUnitTest {
   }
 
   @Test
-  void setChangedActivityWhenFlightDeleteComplete() {
+  void deleteFlightSucceeds_activityLogUpdated() {
     UUID workspaceUuid = UUID.randomUUID();
     var emptyChangedDate = activityLogDao.getLastUpdatedDate(workspaceUuid);
     assertTrue(emptyChangedDate.isEmpty());
@@ -91,7 +91,7 @@ public class WorkspaceActivityLogHookTest extends BaseUnitTest {
   }
 
   @Test
-  void setChangedActivityWhenFlightCloneComplete_notSet() {
+  void cloneFlightSucceeds_activityLogUpdated() {
     UUID workspaceUuid = UUID.randomUUID();
     var emptyChangedDate = activityLogDao.getLastUpdatedDate(workspaceUuid);
     assertTrue(emptyChangedDate.isEmpty());
@@ -103,7 +103,7 @@ public class WorkspaceActivityLogHookTest extends BaseUnitTest {
   }
 
   @Test
-  void setChangedActivityWhenFlightUnknownComplete_notSet() {
+  void unknownFlightSucceeds_activityLogNotUpdated() {
     UUID workspaceUuid = UUID.randomUUID();
     var emptyChangedDate = activityLogDao.getLastUpdatedDate(workspaceUuid);
     assertTrue(emptyChangedDate.isEmpty());
@@ -115,7 +115,7 @@ public class WorkspaceActivityLogHookTest extends BaseUnitTest {
   }
 
   @Test
-  void setChangedActivityWhenFlightCreateFails_notSet() {
+  void createFlightFails_activityLogNotUpdated() {
     // Set a FlightDebugInfo so that any job submission should fail on the last step.
     jobService.setFlightDebugInfoForTest(
         FlightDebugInfo.newBuilder().lastStepFailure(true).build());
@@ -130,7 +130,7 @@ public class WorkspaceActivityLogHookTest extends BaseUnitTest {
   }
 
   @Test
-  void setChangedActivityWhenFlightDeletionFails_notSet() {
+  void deleteFlightFails_unknownDeleteFlight_activityLogNotUpdated() {
     // Set a FlightDebugInfo so that any job submission should fail on the last step.
     jobService.setFlightDebugInfoForTest(
         FlightDebugInfo.newBuilder().lastStepFailure(true).build());
@@ -145,7 +145,7 @@ public class WorkspaceActivityLogHookTest extends BaseUnitTest {
   }
 
   @Test
-  void setChangedActivityWhenFlightUpdateFails_notSet() {
+  void updateFlightFails_activityLogNotUpdated() {
     // Set a FlightDebugInfo so that any job submission should fail on the last step.
     jobService.setFlightDebugInfoForTest(
         FlightDebugInfo.newBuilder().lastStepFailure(true).build());
@@ -160,7 +160,7 @@ public class WorkspaceActivityLogHookTest extends BaseUnitTest {
   }
 
   @Test
-  void setChangedActivityWhenFlightCloneFails_notSet() {
+  void cloneFlightFails_activityLogNotUpdated() {
     // Set a FlightDebugInfo so that any job submission should fail on the last step.
     jobService.setFlightDebugInfoForTest(
         FlightDebugInfo.newBuilder().lastStepFailure(true).build());
@@ -175,7 +175,7 @@ public class WorkspaceActivityLogHookTest extends BaseUnitTest {
   }
 
   @Test
-  void setChangedActivityWhenFlightUnknownFails_notSet() {
+  void unknownFlightFails_activityLogNotUpdated() {
     // Set a FlightDebugInfo so that any job submission should fail on the last step.
     jobService.setFlightDebugInfoForTest(
         FlightDebugInfo.newBuilder().lastStepFailure(true).build());
