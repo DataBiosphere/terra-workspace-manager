@@ -476,6 +476,11 @@ components:
         description:
           description: A description of the workspace
           type: string
+        highestRole:
+          description: |
+            Highest role. If requester is both reader and writer, writer will be
+            returned.
+          $ref: '#/components/schemas/IamRole'
         spendProfile:
           description: ID of provided spend profile
           type: string

@@ -157,10 +157,19 @@ public class WorkspaceService {
   @Traced
   public List<Workspace> listWorkspaces(
       AuthenticatedUserRequest userRequest, int offset, int limit) {
-    List<UUID> samWorkspaceIds =
+    Map<UUID, WsmIamRole> samWorkspaceIdsAndRoles =
         SamRethrow.onInterrupted(
-            () -> samService.listWorkspaceIds(userRequest), "listWorkspaceIds");
-    return workspaceDao.getWorkspacesMatchingList(samWorkspaceIds, offset, limit);
+            () -> samService.listWorkspaceIdsAndRoles(userRequest), "listWorkspaceIds");
+    return workspaceDao
+        .getWorkspacesMatchingList(samWorkspaceIdsAndRoles.keySet(), offset, limit)
+        // For each workspace, set highest role from SAM
+        .stream()
+        .map(
+            workspace -> {
+              workspace.setHighestRole(samWorkspaceIdsAndRoles.get(workspace.getWorkspaceId()));
+              return workspace;
+            })
+        .collect(Collectors.toList());
   }
 
   /** Retrieves an existing workspace by ID */

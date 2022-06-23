@@ -172,6 +172,7 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
         .userFacingId(workspace.getUserFacingId())
         .displayName(workspace.getDisplayName().orElse(null))
         .description(workspace.getDescription().orElse(null))
+        .highestRole(workspace.getHighestRole().toApiModel())
         .properties(apiProperties)
         .spendProfile(workspace.getSpendProfileId().map(SpendProfileId::getId).orElse(null))
         .stage(workspace.getWorkspaceStage().toApiModel())

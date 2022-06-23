@@ -22,7 +22,6 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import io.opencensus.contrib.spring.aop.Traced;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -43,8 +42,8 @@ import org.broadinstitute.dsde.workbench.client.sam.model.AccessPolicyResponseEn
 import org.broadinstitute.dsde.workbench.client.sam.model.AccessPolicyResponseEntryV2;
 import org.broadinstitute.dsde.workbench.client.sam.model.CreateResourceRequestV2;
 import org.broadinstitute.dsde.workbench.client.sam.model.FullyQualifiedResourceId;
-import org.broadinstitute.dsde.workbench.client.sam.model.ResourceAndAccessPolicy;
 import org.broadinstitute.dsde.workbench.client.sam.model.SystemStatus;
+import org.broadinstitute.dsde.workbench.client.sam.model.UserResourcesResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -238,19 +237,26 @@ public class SamService {
   /**
    * List all workspace IDs in Sam this user has access to. Note that in environments shared with
    * Rawls, some of these workspaces will be Rawls managed and WSM will not know about them.
+   *
+   * @return map from workspace ID to highest SAM role
    */
   @Traced
-  public List<UUID> listWorkspaceIds(AuthenticatedUserRequest userRequest)
+  public Map<UUID, WsmIamRole> listWorkspaceIdsAndRoles(AuthenticatedUserRequest userRequest)
       throws InterruptedException {
     ResourcesApi resourceApi = samResourcesApi(userRequest.getRequiredToken());
-    List<UUID> workspaceIds = new ArrayList<>();
+    Map<UUID, WsmIamRole> workspacesAndRoles = new HashMap<>();
     try {
-      List<ResourceAndAccessPolicy> resourceAndPolicies =
+      List<UserResourcesResponse> userResourcesResponses =
           SamRetry.retry(
-              () -> resourceApi.listResourcesAndPolicies(SamConstants.SamResource.WORKSPACE));
-      for (var resourceAndPolicy : resourceAndPolicies) {
+              () -> resourceApi.listResourcesAndPoliciesV2(SamConstants.SamResource.WORKSPACE));
+      for (var userResourcesResponse : userResourcesResponses) {
         try {
-          workspaceIds.add(UUID.fromString(resourceAndPolicy.getResourceId()));
+          UUID workspaceId = UUID.fromString(userResourcesResponse.getResourceId());
+          List<WsmIamRole> roles =
+              userResourcesResponse.getDirect().getRoles().stream()
+                  .map(WsmIamRole::fromSam)
+                  .collect(Collectors.toList());
+          workspacesAndRoles.put(workspaceId, WsmIamRole.getHighestRole(workspaceId, roles));
         } catch (IllegalArgumentException e) {
           // WSM always uses UUIDs for workspace IDs, but this is not enforced in Sam and there are
           // old workspaces that don't use UUIDs. Any workspace with a non-UUID workspace ID is
@@ -261,7 +267,7 @@ public class SamService {
     } catch (ApiException apiException) {
       throw SamExceptionFactory.create("Error listing Workspace Ids in Sam", apiException);
     }
-    return workspaceIds;
+    return workspacesAndRoles;
   }
 
   @Traced

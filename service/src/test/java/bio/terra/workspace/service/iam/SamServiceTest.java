@@ -263,7 +263,7 @@ class SamServiceTest extends BaseConnectedTest {
   @Test
   void listWorkspacesIncludesWsmWorkspace() throws Exception {
     List<UUID> samWorkspaceIdList =
-        samService.listWorkspaceIds(userAccessUtils.defaultUserAuthRequest());
+        samService.listWorkspaceIdsAndRoles(userAccessUtils.defaultUserAuthRequest());
     assertTrue(samWorkspaceIdList.contains(workspaceUuid));
   }
 
