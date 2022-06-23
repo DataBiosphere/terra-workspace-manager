@@ -14,13 +14,14 @@ import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.generated.model.ApiJobReport;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
+import bio.terra.workspace.service.iam.model.WsmIamRole;
 import bio.terra.workspace.service.job.exception.InvalidJobIdException;
 import bio.terra.workspace.service.job.exception.InvalidResultStateException;
 import bio.terra.workspace.service.job.exception.JobNotFoundException;
 import bio.terra.workspace.service.workspace.model.OperationType;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import com.google.common.collect.ImmutableList;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -47,13 +48,9 @@ class JobServiceTest extends BaseUnitTest {
   @MockBean private SamService mockSamService;
 
   @BeforeEach
-  @SuppressFBWarnings(value = "DE_MIGHT_IGNORE", justification = "Mockito flakiness")
-  void setup() {
-    try {
-      Mockito.doReturn(true).when(mockSamService.isAuthorized(any(), any(), any(), any()));
-    } catch (Exception e) {
-      // How does a mock even throw an exception?
-    }
+  void setup() throws InterruptedException {
+    Mockito.when(mockSamService.listRequesterRoles(any(), any(), any()))
+        .thenReturn(ImmutableList.of(WsmIamRole.OWNER));
   }
 
   /**

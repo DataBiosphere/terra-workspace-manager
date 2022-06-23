@@ -43,6 +43,7 @@ import bio.terra.workspace.service.iam.model.ControlledResourceIamRole;
 import bio.terra.workspace.service.iam.model.SamConstants.SamResource;
 import bio.terra.workspace.service.iam.model.SamConstants.SamSpendProfileAction;
 import bio.terra.workspace.service.iam.model.SamConstants.SamWorkspaceAction;
+import bio.terra.workspace.service.iam.model.WsmIamRole;
 import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.job.JobService.JobResultOrException;
 import bio.terra.workspace.service.job.exception.InvalidResultStateException;
@@ -69,6 +70,7 @@ import bio.terra.workspace.service.workspace.flight.CreateWorkspaceStep;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
 import com.google.api.services.cloudresourcemanager.v3.model.Project;
+import com.google.common.collect.ImmutableList;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -120,6 +122,11 @@ class WorkspaceServiceTest extends BaseConnectedTest {
                 Mockito.any(),
                 eq(SamSpendProfileAction.LINK)))
         .thenReturn(true);
+
+    // By default, requester has owner role on workspace
+    Mockito.when(mockSamService.listRequesterRoles(any(), any(), any()))
+        .thenReturn(ImmutableList.of(WsmIamRole.OWNER));
+
     final String policyGroup = "terra-workspace-manager-test-group@googlegroups.com";
     // Return a valid google group for cloud sync, as Google validates groups added to GCP projects.
     Mockito.when(mockSamService.syncWorkspacePolicy(any(), any(), any())).thenReturn(policyGroup);
@@ -145,9 +152,9 @@ class WorkspaceServiceTest extends BaseConnectedTest {
     Workspace request = defaultRequestBuilder(UUID.randomUUID()).build();
     workspaceService.createWorkspace(request, USER_REQUEST);
 
-    assertEquals(
-        request.getWorkspaceId(),
-        workspaceService.getWorkspace(request.getWorkspaceId(), USER_REQUEST).getWorkspaceId());
+    Workspace gotWorkspace = workspaceService.getWorkspace(request.getWorkspaceId(), USER_REQUEST);
+    assertEquals(request.getWorkspaceId(), gotWorkspace.getWorkspaceId());
+    assertEquals(WsmIamRole.OWNER, gotWorkspace.getHighestRole());
   }
 
   @Test
@@ -186,9 +193,10 @@ class WorkspaceServiceTest extends BaseConnectedTest {
     Workspace request = defaultRequestBuilder(UUID.randomUUID()).userFacingId(userFacingId).build();
     workspaceService.createWorkspace(request, USER_REQUEST);
 
-    assertEquals(
-        request.getWorkspaceId(),
-        workspaceService.getWorkspaceByUserFacingId(userFacingId, USER_REQUEST).getWorkspaceId());
+    Workspace gotWorkspace =
+        workspaceService.getWorkspaceByUserFacingId(userFacingId, USER_REQUEST);
+    assertEquals(request.getWorkspaceId(), gotWorkspace.getWorkspaceId());
+    assertEquals(WsmIamRole.OWNER, gotWorkspace.getHighestRole());
   }
 
   @Test
@@ -345,6 +353,9 @@ class WorkspaceServiceTest extends BaseConnectedTest {
 
     var updatedDateAfterWorkspaceUpdate = workspaceActivityLogDao.getLastUpdatedDate(workspaceUuid);
     assertTrue(lastUpdatedDate.get().isBefore(updatedDateAfterWorkspaceUpdate.get()));
+
+    // Make sure returned workspace has highest role set
+    assertEquals(WsmIamRole.OWNER, updatedWorkspace.getHighestRole());
 
     assertEquals(userFacingId, updatedWorkspace.getUserFacingId());
     assertTrue(updatedWorkspace.getDisplayName().isPresent());

@@ -144,11 +144,27 @@ public class WorkspaceService {
         workspaceUuid,
         action);
     Workspace workspace = workspaceDao.getWorkspace(workspaceUuid);
+    return validateWorkspaceAndAction_inner(userRequest, workspace, action);
+  }
+
+  @Traced
+  private Workspace validateWorkspaceAndAction_inner(
+      AuthenticatedUserRequest userRequest, Workspace workspace, String action) {
+    UUID workspaceUuid = workspace.getWorkspaceId();
     SamRethrow.onInterrupted(
         () ->
             samService.checkAuthz(
                 userRequest, SamConstants.SamResource.WORKSPACE, workspaceUuid.toString(), action),
         "checkAuthz");
+
+    List<WsmIamRole> requesterRoles =
+        SamRethrow.onInterrupted(
+            () ->
+                samService.listRequesterRoles(
+                    userRequest, SamConstants.SamResource.WORKSPACE, workspaceUuid.toString()),
+            "listRequesterRoles");
+    workspace.setHighestRole(WsmIamRole.getHighestRole(workspaceUuid, requesterRoles));
+
     return workspace;
   }
 
@@ -162,10 +178,19 @@ public class WorkspaceService {
   @Traced
   public List<Workspace> listWorkspaces(
       AuthenticatedUserRequest userRequest, int offset, int limit) {
-    List<UUID> samWorkspaceIds =
+    Map<UUID, WsmIamRole> samWorkspaceIdsAndRoles =
         SamRethrow.onInterrupted(
-            () -> samService.listWorkspaceIds(userRequest), "listWorkspaceIds");
-    return workspaceDao.getWorkspacesMatchingList(samWorkspaceIds, offset, limit);
+            () -> samService.listWorkspaceIdsAndRoles(userRequest), "listWorkspaceIds");
+    return workspaceDao
+        .getWorkspacesMatchingList(samWorkspaceIdsAndRoles.keySet(), offset, limit)
+        // For each workspace, set highest role from SAM
+        .stream()
+        .map(
+            workspace -> {
+              workspace.setHighestRole(samWorkspaceIdsAndRoles.get(workspace.getWorkspaceId()));
+              return workspace;
+            })
+        .collect(Collectors.toList());
   }
 
   /** Retrieves an existing workspace by ID */
@@ -183,15 +208,8 @@ public class WorkspaceService {
         userRequest,
         userFacingId);
     Workspace workspace = workspaceDao.getWorkspaceByUserFacingId(userFacingId);
-    SamRethrow.onInterrupted(
-        () ->
-            samService.checkAuthz(
-                userRequest,
-                SamConstants.SamResource.WORKSPACE,
-                workspace.getWorkspaceId().toString(),
-                SamWorkspaceAction.READ),
-        "checkAuthz");
-    return workspace;
+    return validateWorkspaceAndAction_inner(
+        userRequest, workspace, SamConstants.SamWorkspaceAction.READ);
   }
 
   /**
