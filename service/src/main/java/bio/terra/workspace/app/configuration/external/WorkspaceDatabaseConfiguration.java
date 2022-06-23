@@ -1,6 +1,8 @@
 package bio.terra.workspace.app.configuration.external;
 
-import bio.terra.workspace.app.configuration.BaseDatabaseConfiguration;
+import bio.terra.common.db.BaseDatabaseProperties;
+import bio.terra.common.db.DataSourceInitializer;
+import javax.sql.DataSource;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
@@ -13,7 +15,7 @@ import org.springframework.transaction.annotation.EnableTransactionManagement;
 @EnableConfigurationProperties
 @EnableTransactionManagement
 @ConfigurationProperties(prefix = "workspace.workspace-database")
-public class WorkspaceDatabaseConfiguration extends BaseDatabaseConfiguration {
+public class WorkspaceDatabaseConfiguration extends BaseDatabaseProperties {
   // These properties control code in the StartupInitializer. We would not use these in production,
   // but they
   // are handy to set for development and testing. There are only three interesting states:
@@ -39,6 +41,17 @@ public class WorkspaceDatabaseConfiguration extends BaseDatabaseConfiguration {
 
   public void setUpgradeOnStart(boolean upgradeOnStart) {
     this.upgradeOnStart = upgradeOnStart;
+  }
+
+  // Not a property
+  private DataSource dataSource;
+
+  public DataSource getDataSource() {
+    // Lazy allocation of the data source
+    if (dataSource == null) {
+      dataSource = DataSourceInitializer.initializeDataSource(this);
+    }
+    return dataSource;
   }
 
   // This bean plus the @EnableTransactionManagement annotation above enables the use of the

@@ -1,10 +1,12 @@
 package bio.terra.workspace.app;
 
+import bio.terra.common.db.DataSourceInitializer;
 import bio.terra.common.migrate.LiquibaseMigrator;
 import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
 import bio.terra.workspace.app.configuration.external.WorkspaceDatabaseConfiguration;
 import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.workspace.WsmApplicationService;
+import javax.sql.DataSource;
 import org.springframework.context.ApplicationContext;
 
 public final class StartupInitializer {
@@ -24,10 +26,12 @@ public final class StartupInitializer {
     featureConfiguration.logFeatures();
 
     // Migrate the database
+    DataSource workspaceDataSource =
+        DataSourceInitializer.initializeDataSource(workspaceDatabaseConfiguration);
     if (workspaceDatabaseConfiguration.isInitializeOnStart()) {
-      migrateService.initialize(changelogPath, workspaceDatabaseConfiguration.getDataSource());
+      migrateService.initialize(changelogPath, workspaceDataSource);
     } else if (workspaceDatabaseConfiguration.isUpgradeOnStart()) {
-      migrateService.upgrade(changelogPath, workspaceDatabaseConfiguration.getDataSource());
+      migrateService.upgrade(changelogPath, workspaceDataSource);
     }
 
     // The JobService initialization also handles Stairway initialization.
