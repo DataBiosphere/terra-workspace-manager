@@ -8,6 +8,9 @@ dependencies {
   implementation group: "com.google.auto.value", name: "auto-value-annotations"
   implementation group: "com.google.guava", name:"guava"
 
+  // Azure dependencies
+  implementation 'com.azure:azure-storage-blob:12.10.0'
+
   // Terra deps
   implementation group: "bio.terra", name: "datarepo-client", version: "1.41.0-SNAPSHOT"
   // hk2 is required to use datarepo client, but not correctly exposed by the client

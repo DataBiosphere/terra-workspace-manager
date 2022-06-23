@@ -42,13 +42,13 @@
 #   ---------------------------+-------------------------------------------------------------------------
 #   stairway-db-username.txt   | Stairway database username
 #   ---------------------------+-------------------------------------------------------------------------
-#   target.txt                 | the target that generated this set of config files. Allows the script 
+#   target.txt                 | the target that generated this set of config files. Allows the script
 #                              | to skip regenerating the environment on a rerun.
 #   ---------------------------+-------------------------------------------------------------------------
 #   testrunner-sa.json         | SA for running TestRunner - this is always taken from integration/common
 #   ---------------------------+-------------------------------------------------------------------------
 #   testrunner-k8s-sa-token.txt| Credentials for TestRunner to manipulate the Kubernetes cluster under
-#   testrunner-k8s-sa-key.txt  | test. Not all environments have this SA configured. If the k8env is 
+#   testrunner-k8s-sa-key.txt  | test. Not all environments have this SA configured. If the k8env is
 #                              | integration and there is no configured SA, then the wsmtest one will be
 #                              | retrieved. It won't work for all test runner tests.
 #   ---------------------------+-------------------------------------------------------------------------
@@ -295,6 +295,8 @@ workspace:
     managed-app-client-id: ${clientid}
     managed-app-client-secret: ${clientsecret}
     managed-app-tenant-id: ${tenantid}
+    sas-token-start-time-minutes-offset: 15
+    sas-token-expiry-time-minutes-offset: 60
 EOF
 else
   cat /dev/null > "${outputdir}/local-properties.yml"

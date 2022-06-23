@@ -1,0 +1,89 @@
+paths:
+  /api/workspaces/v1/{workspaceId}/resources/controlled/azure/storageContainer:
+    parameters:
+      - $ref: '#/components/parameters/WorkspaceId'
+    post:
+      summary: Create a new controlled Azure Storage Container with private access
+      operationId: createAzureStorageContainer
+      tags: [ControlledAzureResource]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateControlledAzureStorageContainerRequestBody'
+      responses:
+        '200':
+          description: Response to create controlled azure storage
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreatedControlledAzureStorageContainer'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /api/workspaces/v1/{workspaceId}/resources/controlled/azure/storageContainer/{resourceId}/getSasToken:
+    parameters:
+      - $ref: '#/components/parameters/WorkspaceId'
+      - $ref: '#/components/parameters/ResourceId'
+    post:
+      summary: Create a SAS token to access the storage container
+      operationId: createAzureStorageContainerSasToken
+      tags: [ControlledAzureResource]
+      responses:
+        '200':
+          description: Response to create SAS token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreatedAzureStorageContainerSasToken'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+components:
+  schemas:
+    AzureStorageContainerCreationParameters:
+      description: >-
+        Storage container-specific properties to be set on creation. These are a subset of the values
+        accepted by the azure resource API (note that public access is disabled).
+      type: object
+      required: [ storageAccountId, storageContainerName ]
+      properties:
+        storageAccountId:
+          description: The resource ID of the storage account in which the container will be created.
+          type: string
+          format: uuid
+        storageContainerName:
+          description: A valid storage container name per https://docs.microsoft.com/en-us/azure/azure-resource-manager/management/resource-name-rules
+          type: string
+
+    CreateControlledAzureStorageContainerRequestBody:
+      description: Payload for requesting a new controlled Azure storage container resource.
+      type: object
+      properties:
+        common:
+          $ref: '#/components/schemas/ControlledResourceCommonFields'
+        azureStorageContainer:
+          $ref: '#/components/schemas/AzureStorageContainerCreationParameters'
+
+    CreatedControlledAzureStorageContainer:
+      description: Response payload for requesting a new Azure storage container
+      type: object
+      properties:
+        resourceId:
+          description: UUID of a newly-created resource.
+          type: string
+          format: uuid
+        azureStorageContainer:
+          $ref: '#/components/schemas/AzureStorageContainerResource'
+
+    CreatedAzureStorageContainerSasToken:
+      description: Response payload for requesting a SAS token to access an Azure storage container
+      type: object
+      properties:
+        token:
+          type: string

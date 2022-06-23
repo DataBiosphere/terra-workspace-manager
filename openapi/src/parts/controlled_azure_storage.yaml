@@ -31,9 +31,9 @@ components:
         Storage-specific properties to be set on creation. These are a subset of the values
         accepted by the azure resource API
       type: object
-      required: [ name, region ]
+      required: [ storageAccountName, region ]
       properties:
-        name:
+        storageAccountName:
           description: A valid storage account name per https://docs.microsoft.com/en-us/azure/azure-resource-manager/management/resource-name-rules
           type: string
         region:
@@ -61,4 +61,3 @@ components:
           format: uuid
         azureStorage:
           $ref: '#/components/schemas/AzureStorageResource'
-

@@ -17,7 +17,9 @@ components:
         - AZURE_VM
         - AZURE_RELAY_NAMESPACE
         - AZURE_STORAGE_ACCOUNT
+        - AZURE_STORAGE_CONTAINER
         - GIT_REPO
+        - TERRA_WORKSPACE
 
     ResourceAttributesUnion:
       type: object
@@ -48,10 +50,14 @@ components:
           $ref: '#/components/schemas/AzureRelayNamespaceAttributes'
         azureStorage:
           $ref: '#/components/schemas/AzureStorageAttributes'
+        azureStorageContainer:
+          $ref: '#/components/schemas/AzureStorageContainerAttributes'
         azureVm:
           $ref: '#/components/schemas/AzureVmAttributes'
         gitRepo:
           $ref: '#/components/schemas/GitRepoAttributes'
+        terraWorkspace:
+          $ref: '#/components/schemas/TerraWorkspaceAttributes'
 
     ResourceUnion:
       type: object
@@ -84,6 +90,10 @@ components:
           $ref: '#/components/schemas/AzureRelayNamespaceResource'
         azureStorageAccount:
           $ref: '#/components/schemas/AzureStorageResource'
+        azureStorageContainer:
+          $ref: '#/components/schemas/AzureStorageContainerResource'
         gitRepo:
           $ref: '#/components/schemas/GitRepoResource'
+        terraWorkspace:
+          $ref: '#/components/schemas/TerraWorkspaceResource'
 

@@ -11,6 +11,8 @@ import bio.terra.workspace.service.resource.controlled.cloud.azure.relayNamespac
 import bio.terra.workspace.service.resource.controlled.cloud.azure.relayNamespace.ControlledAzureRelayNamespaceResource;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.storage.ControlledAzureStorageHandler;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.storage.ControlledAzureStorageResource;
+import bio.terra.workspace.service.resource.controlled.cloud.azure.storageContainer.ControlledAzureStorageContainerHandler;
+import bio.terra.workspace.service.resource.controlled.cloud.azure.storageContainer.ControlledAzureStorageContainerResource;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.vm.ControlledAzureVmHandler;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.vm.ControlledAzureVmResource;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook.ControlledAiNotebookHandler;
@@ -31,6 +33,8 @@ import bio.terra.workspace.service.resource.referenced.cloud.gcp.gcsbucket.Refer
 import bio.terra.workspace.service.resource.referenced.cloud.gcp.gcsbucket.ReferencedGcsBucketResource;
 import bio.terra.workspace.service.resource.referenced.cloud.gcp.gcsobject.ReferencedGcsObjectHandler;
 import bio.terra.workspace.service.resource.referenced.cloud.gcp.gcsobject.ReferencedGcsObjectResource;
+import bio.terra.workspace.service.resource.referenced.terra.workspace.ReferencedTerraWorkspaceHandler;
+import bio.terra.workspace.service.resource.referenced.terra.workspace.ReferencedTerraWorkspaceResource;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import java.util.function.Supplier;
 import org.apache.commons.lang3.SerializationException;
@@ -111,6 +115,13 @@ public enum WsmResourceType {
       ApiResourceType.GIT_REPO,
       ReferencedGitRepoResource.class,
       ReferencedGitRepoHandler::getHandler),
+  REFERENCED_ANY_TERRA_WORKSPACE(
+      CloudPlatform.ANY,
+      StewardshipType.REFERENCED,
+      "REFERENCED_ANY_TERRA_WORKSPACE",
+      ApiResourceType.TERRA_WORKSPACE,
+      ReferencedTerraWorkspaceResource.class,
+      ReferencedTerraWorkspaceHandler::getHandler),
   CONTROLLED_AZURE_IP(
       CloudPlatform.AZURE,
       StewardshipType.CONTROLLED,
@@ -152,7 +163,14 @@ public enum WsmResourceType {
       "CONTROLLED_AZURE_STORAGE_ACCOUNT",
       ApiResourceType.AZURE_STORAGE_ACCOUNT,
       ControlledAzureStorageResource.class,
-      ControlledAzureStorageHandler::getHandler);
+      ControlledAzureStorageHandler::getHandler),
+  CONTROLLED_AZURE_STORAGE_CONTAINER(
+      CloudPlatform.AZURE,
+      StewardshipType.CONTROLLED,
+      "CONTROLLED_AZURE_STORAGE_CONTAINER",
+      ApiResourceType.AZURE_STORAGE_CONTAINER,
+      ControlledAzureStorageContainerResource.class,
+      ControlledAzureStorageContainerHandler::getHandler);
 
   private final CloudPlatform cloudPlatform;
   private final StewardshipType stewardshipType;

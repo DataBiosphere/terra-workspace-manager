@@ -5,6 +5,7 @@ import bio.terra.buffer.client.ApiClient;
 import bio.terra.buffer.client.ApiException;
 import bio.terra.buffer.model.HandoutRequestBody;
 import bio.terra.buffer.model.ResourceInfo;
+import bio.terra.common.logging.RequestIdFilter;
 import bio.terra.workspace.app.configuration.external.BufferServiceConfiguration;
 import bio.terra.workspace.service.buffer.exception.BufferServiceAPIException;
 import bio.terra.workspace.service.buffer.exception.BufferServiceAuthorizationException;
@@ -12,6 +13,7 @@ import java.io.IOException;
 import javax.ws.rs.client.Client;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
@@ -31,7 +33,11 @@ public class BufferService {
   }
 
   private ApiClient getApiClient(String accessToken) {
-    ApiClient client = new ApiClient().setHttpClient(commonHttpClient);
+    ApiClient client =
+        new ApiClient()
+            .setHttpClient(commonHttpClient)
+            .addDefaultHeader(
+                RequestIdFilter.REQUEST_ID_HEADER, MDC.get(RequestIdFilter.REQUEST_ID_MDC_KEY));
     client.setAccessToken(accessToken);
     return client;
   }

@@ -5,7 +5,12 @@ import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.AI_
 import static bio.terra.workspace.service.resource.controlled.cloud.gcp.GcpResourceConstant.DEFAULT_REGION;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import bio.terra.cloudres.google.bigquery.BigQueryCow;
 import bio.terra.cloudres.google.iam.IamCow;
@@ -28,7 +33,14 @@ import bio.terra.workspace.common.StairwayTestUtils;
 import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
 import bio.terra.workspace.connected.UserAccessUtils;
 import bio.terra.workspace.connected.WorkspaceConnectedTestUtils;
-import bio.terra.workspace.generated.model.*;
+import bio.terra.workspace.generated.model.ApiClonedControlledGcpGcsBucket;
+import bio.terra.workspace.generated.model.ApiCloningInstructionsEnum;
+import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceCreationParameters;
+import bio.terra.workspace.generated.model.ApiGcpAiNotebookUpdateParameters;
+import bio.terra.workspace.generated.model.ApiGcpBigQueryDatasetCreationParameters;
+import bio.terra.workspace.generated.model.ApiGcpBigQueryDatasetUpdateParameters;
+import bio.terra.workspace.generated.model.ApiGcpGcsBucketUpdateParameters;
+import bio.terra.workspace.generated.model.ApiJobControl;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.iam.model.ControlledResourceIamRole;
@@ -36,9 +48,26 @@ import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.job.exception.InvalidResultStateException;
 import bio.terra.workspace.service.petserviceaccount.PetSaService;
-import bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook.*;
-import bio.terra.workspace.service.resource.controlled.cloud.gcp.bqdataset.*;
-import bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.*;
+import bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook.ControlledAiNotebookInstanceResource;
+import bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook.CreateAiNotebookInstanceStep;
+import bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook.DeleteAiNotebookInstanceStep;
+import bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook.GrantPetUsagePermissionStep;
+import bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook.NotebookCloudSyncStep;
+import bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook.RetrieveAiNotebookResourceAttributesStep;
+import bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook.RetrieveNetworkNameStep;
+import bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook.UpdateAiNotebookAttributesStep;
+import bio.terra.workspace.service.resource.controlled.cloud.gcp.bqdataset.ControlledBigQueryDatasetResource;
+import bio.terra.workspace.service.resource.controlled.cloud.gcp.bqdataset.CreateBigQueryDatasetStep;
+import bio.terra.workspace.service.resource.controlled.cloud.gcp.bqdataset.DeleteBigQueryDatasetStep;
+import bio.terra.workspace.service.resource.controlled.cloud.gcp.bqdataset.RetrieveBigQueryDatasetCloudAttributesStep;
+import bio.terra.workspace.service.resource.controlled.cloud.gcp.bqdataset.UpdateBigQueryDatasetStep;
+import bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.ControlledGcsBucketResource;
+import bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.CreateGcsBucketStep;
+import bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.DeleteGcsBucketStep;
+import bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.GcsApiConversions;
+import bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.GcsBucketCloudSyncStep;
+import bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.RetrieveGcsBucketCloudAttributesStep;
+import bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.UpdateGcsBucketStep;
 import bio.terra.workspace.service.resource.controlled.exception.ReservedMetadataKeyException;
 import bio.terra.workspace.service.resource.controlled.flight.delete.DeleteMetadataStep;
 import bio.terra.workspace.service.resource.controlled.flight.update.RetrieveControlledResourceMetadataStep;
@@ -61,10 +90,18 @@ import com.google.cloud.storage.BucketInfo;
 import com.google.cloud.storage.BucketInfo.LifecycleRule;
 import com.google.common.collect.ImmutableList;
 import java.io.IOException;
-import java.util.*;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.hamcrest.Matchers;
-import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.TestInstance.Lifecycle;
 import org.junit.jupiter.api.condition.DisabledIfEnvironmentVariable;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -469,18 +506,19 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
 
   @Test
   @DisabledIfEnvironmentVariable(named = "TEST_ENV", matches = BUFFER_SERVICE_DISABLED_ENVS_REG_EX)
-  void updateAiNotebookResourceDo_nameAndDescriptionOnly() throws InterruptedException, IOException {
+  void updateAiNotebookResourceDo_nameAndDescriptionOnly()
+      throws InterruptedException, IOException {
     var instanceId = "update-ai-notebook-instance-do-name-and-description-only";
     var name = "update-ai-notebook-instance-do-name-and-description-only";
     var newName = "update-ai-notebook-instance-do-name-and-description-only-NEW";
-    var newDescription = "new description for update-ai-notebook-instance-do-name-and-description-only-NEW";
+    var newDescription =
+        "new description for update-ai-notebook-instance-do-name-and-description-only-NEW";
 
     var creationParameters =
         ControlledResourceFixtures.defaultNotebookCreationParameters()
             .instanceId(instanceId)
             .location(DEFAULT_NOTEBOOK_LOCATION);
-    var resource =
-        makeNotebookTestResource(workspace.getWorkspaceId(), name, instanceId);
+    var resource = makeNotebookTestResource(workspace.getWorkspaceId(), name, instanceId);
     String jobId =
         controlledResourceService.createAiNotebookInstance(
             resource,
@@ -493,9 +531,20 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
     assertEquals(
         FlightStatus.SUCCESS, stairwayComponent.get().getFlightState(jobId).getFlightStatus());
 
-    ControlledAiNotebookInstanceResource fetchedInstance = controlledResourceService.getControlledResource(workspace.getWorkspaceId(), resource.getResourceId(), user.getAuthenticatedRequest()).castByEnum(WsmResourceType.CONTROLLED_GCP_AI_NOTEBOOK_INSTANCE);
+    ControlledAiNotebookInstanceResource fetchedInstance =
+        controlledResourceService
+            .getControlledResource(
+                workspace.getWorkspaceId(),
+                resource.getResourceId(),
+                user.getAuthenticatedRequest())
+            .castByEnum(WsmResourceType.CONTROLLED_GCP_AI_NOTEBOOK_INSTANCE);
 
-    var instanceFromCloud = crlService.getAIPlatformNotebooksCow().instances().get(fetchedInstance.toInstanceName(projectId)).execute();
+    var instanceFromCloud =
+        crlService
+            .getAIPlatformNotebooksCow()
+            .instances()
+            .get(fetchedInstance.toInstanceName(projectId))
+            .execute();
     var metadata = instanceFromCloud.getMetadata();
 
     Map<String, StepStatus> retrySteps = new HashMap<>();
@@ -505,23 +554,25 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
     retrySteps.put(
         UpdateControlledResourceMetadataStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
     retrySteps.put(
-        RetrieveAiNotebookResourceAttributesStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
-    retrySteps.put(UpdateAiNotebookAttributesStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
+        RetrieveAiNotebookResourceAttributesStep.class.getName(),
+        StepStatus.STEP_RESULT_FAILURE_RETRY);
+    retrySteps.put(
+        UpdateAiNotebookAttributesStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
     jobService.setFlightDebugInfoForTest(
         FlightDebugInfo.newBuilder().doStepFailures(retrySteps).build());
     controlledResourceService.updateAiNotebookInstance(
         fetchedInstance, null, newName, newDescription, user.getAuthenticatedRequest());
 
-    ControlledAiNotebookInstanceResource updatedInstance = controlledResourceService.getControlledResource(workspace.getWorkspaceId(), resource.getResourceId(), user.getAuthenticatedRequest()).castByEnum(WsmResourceType.CONTROLLED_GCP_AI_NOTEBOOK_INSTANCE);
+    ControlledAiNotebookInstanceResource updatedInstance =
+        controlledResourceService
+            .getControlledResource(
+                workspace.getWorkspaceId(),
+                resource.getResourceId(),
+                user.getAuthenticatedRequest())
+            .castByEnum(WsmResourceType.CONTROLLED_GCP_AI_NOTEBOOK_INSTANCE);
     // resource metadata is updated.
-    assertEquals(
-        newName,
-        updatedInstance.getName()
-    );
-    assertEquals(
-        newDescription,
-        updatedInstance.getDescription()
-    );
+    assertEquals(newName, updatedInstance.getName());
+    assertEquals(newDescription, updatedInstance.getDescription());
   }
 
   @Test

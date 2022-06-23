@@ -176,7 +176,7 @@ psql -f service/local-dev/local-postgres-init.sql
 
 1. Open the repo normally (File -> Open)
 2. In project structure (the folder icon with a little tetromino over it in the upper
-   right corner), make sure the project SDK is set to Java 11. If not, IntelliJ should
+   right corner), make sure the project SDK is set to Java 17. If not, IntelliJ should
    detect it on your system in the dropdown, otherwise click "Add JDK..." and navigate to
    the folder from the last step.
 3. Set up [google-java-format](https://github.com/google/google-java-format). We use the
@@ -222,6 +222,18 @@ To run connected tests:
 To run integration tests, we use Test Runner. Learn to run the Test Runner
 integration tests by reading [Integration README](integration/README.md)
 
+### Code Coverage
+We use Jacoco to generate code coverage reports. Coverage information is written
+to `service/build/jacoco/{task_name}.exec`, and the `combinedJaCoCoReport` 
+gradle task will generate a single combined report for all test tasks run on
+the same machine. This task is run automatically after test tasks and can also
+be run manually.
+
+To get coverage from integration tests, start the server under test using
+`:service:jacocoBootRun` instead of `:service:bootRun`. See 
+[Running Workspace Manager Locally](#Running-Workspace-Manager-Locally) for
+more information.
+
 ### Running Workspace Manager Locally
 
 To run locally, you'll first need to write configs (if you haven't already)
@@ -233,6 +245,10 @@ and then launch the application:
 ```
 
 Then navigate to the Swagger: http://localhost:8080/swagger-ui.html
+
+You can also use the `:service:jacocoBootRun` task to run the server 
+instrumented with Jacoco coverage tracking. This is useful for tracking
+integration test coverage, but may incur a small performance cost.
 
 
 ## Publishing and Versioning
