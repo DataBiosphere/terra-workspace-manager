@@ -8,6 +8,8 @@ import com.google.api.client.util.Strings;
 import com.google.cloud.Identity;
 import com.google.cloud.Policy;
 import com.google.cloud.Role;
+import java.time.Duration;
+import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -15,6 +17,8 @@ import org.springframework.stereotype.Service;
 @Service
 public class BucketCloneRolesService {
 
+  private static final int MAX_RETRY_ATTEMPTS = 30;
+  private static final Duration RETRY_INTERVAL = Duration.ofSeconds(2);
   private final CrlService crlService;
 
   @Autowired
@@ -84,6 +88,19 @@ public class BucketCloneRolesService {
         case REMOVE -> policyBuilder.removeIdentity(Role.of(roleName), saIdentity);
       }
     }
-    storageCow.setIamPolicy(inputs.getBucketName(), policyBuilder.build());
+    final Policy newPolicy = policyBuilder.build();
+    storageCow.setIamPolicy(inputs.getBucketName(), newPolicy);
+
+    // verify the role changes have propagated, as we may need to work on this bucket immediately
+    Policy updatedPolicy = storageCow.getIamPolicy(inputs.getBucketName());
+    try {
+      int retryAttempts = 0;
+      while (!updatedPolicy.equals(newPolicy) && retryAttempts++ < MAX_RETRY_ATTEMPTS) {
+        TimeUnit.MILLISECONDS.sleep(RETRY_INTERVAL.toMillis());
+        updatedPolicy = storageCow.getIamPolicy(inputs.getBucketName());
+      }
+    } catch (InterruptedException e) {
+      throw new RuntimeException("Interrupted while verifying bucket policy.", e);
+    }
   }
 }
