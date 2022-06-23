@@ -27,6 +27,9 @@ dependencies {
   // Cloud Resource Library
   implementation group: 'bio.terra', name: 'terra-cloud-resource-lib', version: "1.1.1-SNAPSHOT"
 
+  // Terra Policy Service
+  implementation group: 'bio.terra', name: 'terra-policy-service', version: '0.2.0-SNAPSHOT'
+
   // Storage transfer service
   implementation group: 'com.google.apis', name: 'google-api-services-storagetransfer', version: 'v1-rev20220324-1.32.1'
   implementation group: "com.google.auth", name: "google-auth-library-oauth2-http", version: "1.6.0"

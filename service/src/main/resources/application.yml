@@ -12,6 +12,10 @@ env:
       name: ${DATABASE_NAME:wsm_db}
       pass: ${DATABASE_USER_PASSWORD:dbpwd}
       user: ${DATABASE_USER:dbuser}
+    policy:
+      name: ${POLICY_DATABASE_NAME:policy_db}
+      pass: ${POLICY_DATABASE_USER_PASSWORD:dbpwd}
+      user: ${POLICY_DATABASE_USER:dbuser}
   tracing:
     exportEnabled: ${CLOUD_TRACE_ENABLED:false}
     samplingRate: ${SAMPLING_PROBABILITY:0}
@@ -131,6 +135,15 @@ terra.common:
     stackdriverExportEnabled: ${env.tracing.exportEnabled}
     samplingRate: ${env.tracing.samplingRate}
 
+# Terra Policy Service configuration
+policy:
+  policy-database:
+    initialize-on-start: ${env.db.init}
+    password: ${env.db.policy.pass}
+    upgrade-on-start: true
+    uri: ${env.db.host}/${env.db.policy.name}
+    username: ${env.db.policy.user}
+
 # Feature flags
 # The general rule is that feature flags should be set here in their production setting
 # and overridden in non-production environments.
@@ -152,6 +165,8 @@ feature:
   azure-enabled: false
   # alpha1-enabled - Controls support of the Alpha1 experimental API and service
   alpha1-enabled: false
+  # tps-enabled - Controls whether Terra Policy Service is called. It is always built into WSM
+  tps-enabled: false
 
 reference:
   gitrepos:

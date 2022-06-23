@@ -1,0 +1,231 @@
+# Terra Policy Service API
+# This API is exposed by the WSM component, so its API definition has to be built in with WSM.
+paths:
+  # Region policy paths
+  /api/policies/v1alpha1/region-constraint:
+    put:
+      summary: Test compliance with region constraint.
+      description: |
+        The policy service looks for a region constraint attributes in the policy inputs. It resolves to
+        a single constraint. Multiple constraints is an error. No constraint is allowed. If a specific
+        location is requested, then it will be supplied to the rule evaluation. It is fine to have no
+        requested location. There are four possible results:
+        1. the request or constraint lead to a specific cloud region where resources should be allocated.
+        2. the request or constraint lead to a geographic region. Options for a compliant cloud region are returned.
+        3. the request and constraint are in conflict; the action should not be allowed
+        4. there is no request or constraint. The action is allowed; policy service provides no help choosing a cloud region.
+      operationId: policyRegionConstraint
+      tags: [Tps]
+      requestBody:
+        required: true
+        content:
+          applicaton/json:
+            schema:
+              $ref: '#/components/schemas/TpsRegionConstraintRequest'
+      responses:
+        '200':
+          description: Policy evaluted successfully; the answer still may be no
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TpsRegionConstraintResult'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  # Policy Attribute Object Interface (PAO)
+  /api/policy/v1alpha1/pao:
+    post:
+      summary: Create a policy attribute object
+      description: |
+        A policy attribute object holds the policy attributes for a Terra component object,
+        for example, a workspace or a dataset.
+      operationId: createPao
+      tags: [Tps]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TpsPaoCreateRequest'
+      responses:
+        '204':
+          description: Policy attribue created successfully
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /api/policy/v1alpha1/pao/{objectId}:
+    parameters:
+      - $ref: '#/components/parameters/TpsObjectId'
+    delete:
+      summary: delete a policy attribute object
+      operationId: deletePao
+      tags: [Tps]
+      responses:
+        '204':
+          description: Success
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+    get:
+      summary: retrieve a policy attribute object
+      operationId: getPao
+      tags: [Tps]
+      responses:
+        '200':
+          description: Policy retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TpsPaoGetResult'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+components:
+  schemas:
+    # Please keep alphabetized
+    TpsObjectId:
+      description: UUID format object id referring to an object managed by the Terra component.
+      type: string
+      format: uuid
+
+    TpsPaoCreateRequest:
+      type: object
+      required: [objectId, component, objectType]
+      properties:
+        objectId:
+          $ref: '#/components/schemas/TpsObjectId'
+        component:
+          $ref: '#/components/schemas/TpsComponent'
+        objectType:
+          $ref: '#/components/schemas/TpsObjectType'
+        attributes:
+          $ref: '#/components/schemas/TpsPolicyInputs'
+
+    TpsPaoGetResult:
+      type: object
+      required: [objectId, component, objectType]
+      properties:
+        objectId:
+          $ref: '#/components/schemas/TpsObjectId'
+        component:
+          $ref: '#/components/schemas/TpsComponent'
+        objectType:
+          $ref: '#/components/schemas/TpsObjectType'
+        attributes:
+          $ref: '#/components/schemas/TpsPolicyInputs'
+        effectiveAttributes:
+          $ref: '#/components/schemas/TpsPolicyInputs'
+        inConflict:
+          type: boolean
+        children:
+          type: array
+          items:
+            $ref: '#/components/schemas/TpsObjectId'
+
+    TpsPolicyInputs:
+      type: object
+      required: [inputs]
+      properties:
+        inputs:
+          type: array
+          items:
+            $ref: '#/components/schemas/TpsPolicyInput'
+
+    TpsPolicyInput:
+      type: object
+      required: [namespace, name]
+      properties:
+        namespace:
+          description: Namespace of the policy input; e.g., 'terra'
+          type: string
+        name:
+          description: Name of the policy input; e.g., 'region-constraint'
+          type: string
+        additionalData:
+          description: Key-value pairs of additional data
+          type: array
+          items:
+            $ref: '#/components/schemas/TpsPolicyPair'
+
+    TpsPolicyPair:
+      description: Container for key-value pairs of policy inputs
+      type: object
+      properties:
+        key:
+          type: string
+        value:
+          type: string
+
+    TpsRegionConstraintRequest:
+      type: object
+      required: [cloudPlatform]
+      properties:
+        policyInputs:
+          description: Policy attributes and other inputs that might relate to the evaluation
+          $ref: '#/components/schemas/TpsPolicyInputs'
+        regionRequest:
+          description: Region to be tested against the constraint, if any
+          type: string
+        cloudPlatform:
+          description: Cloud platform for resolving the region.
+          $ref: '#/components/schemas/CloudPlatform'
+
+    TpsRegionConstraintResult:
+      type: object
+      required: [allowed]
+      properties:
+        allowed:
+          description: Does the requested region comply with the policy constraint
+          type: boolean
+        cloudRegions:
+          description: Set of cloud platform regions available in the requested region. There may be more than one, if the requested region is geographic.
+          type: array
+          items:
+            type: string
+        reason:
+          description: If not allowed, then why?
+          type: string
+
+    TpsComponent:
+      type: string
+      description: Enum representing a policy-bearing Terra component.
+      enum: [ 'WSM' ]
+
+    TpsObjectType:
+      type: string
+      description: Enum representing an object type of a policy-bearing Terra component.
+      enum: [ 'workspace' ]
+
+  parameters:
+    TpsObjectId:
+      name: objectId
+      in: path
+      description: A UUID to used to identify a policy attribute object in the TPS
+      required: true
+      schema:
+        $ref: '#/components/schemas/TpsObjectId'
