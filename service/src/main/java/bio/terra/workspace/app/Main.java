@@ -29,6 +29,8 @@ import org.springframework.transaction.annotation.EnableTransactionManagement;
       "bio.terra.common.stairway",
       // Scan for tracing-related components & configs
       "bio.terra.common.tracing",
+      // Scan all policy service packages
+      "bio.terra.policy",
       // Scan all service-specific packages beneath the current package
       "bio.terra.workspace"
     })
