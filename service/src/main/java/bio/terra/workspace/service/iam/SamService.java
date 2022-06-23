@@ -5,6 +5,7 @@ import bio.terra.common.exception.ForbiddenException;
 import bio.terra.common.exception.InternalServerErrorException;
 import bio.terra.common.sam.SamRetry;
 import bio.terra.common.sam.exception.SamExceptionFactory;
+import bio.terra.common.tracing.OkHttpClientTracingInterceptor;
 import bio.terra.workspace.app.configuration.external.SamConfiguration;
 import bio.terra.workspace.common.exception.InternalLogicException;
 import bio.terra.workspace.common.utils.GcpUtils;
@@ -21,6 +22,7 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import io.opencensus.contrib.spring.aop.Traced;
+import io.opencensus.trace.Tracing;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -39,12 +41,11 @@ import org.broadinstitute.dsde.workbench.client.sam.api.ResourcesApi;
 import org.broadinstitute.dsde.workbench.client.sam.api.StatusApi;
 import org.broadinstitute.dsde.workbench.client.sam.api.UsersApi;
 import org.broadinstitute.dsde.workbench.client.sam.model.AccessPolicyMembershipV2;
-import org.broadinstitute.dsde.workbench.client.sam.model.AccessPolicyResponseEntry;
 import org.broadinstitute.dsde.workbench.client.sam.model.AccessPolicyResponseEntryV2;
 import org.broadinstitute.dsde.workbench.client.sam.model.CreateResourceRequestV2;
 import org.broadinstitute.dsde.workbench.client.sam.model.FullyQualifiedResourceId;
-import org.broadinstitute.dsde.workbench.client.sam.model.ResourceAndAccessPolicy;
 import org.broadinstitute.dsde.workbench.client.sam.model.SystemStatus;
+import org.broadinstitute.dsde.workbench.client.sam.model.UserResourcesResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -77,7 +78,12 @@ public class SamService {
     this.samConfig = samConfig;
     this.stageService = stageService;
     this.wsmServiceAccountInitialized = false;
-    this.commonHttpClient = new ApiClient().getHttpClient();
+    this.commonHttpClient =
+        new ApiClient()
+            .getHttpClient()
+            .newBuilder()
+            .addInterceptor(new OkHttpClientTracingInterceptor(Tracing.getTracer()))
+            .build();
   }
 
   private ApiClient getApiClient(String accessToken) {
@@ -245,9 +251,9 @@ public class SamService {
     ResourcesApi resourceApi = samResourcesApi(userRequest.getRequiredToken());
     List<UUID> workspaceIds = new ArrayList<>();
     try {
-      List<ResourceAndAccessPolicy> resourceAndPolicies =
+      List<UserResourcesResponse> resourceAndPolicies =
           SamRetry.retry(
-              () -> resourceApi.listResourcesAndPolicies(SamConstants.SamResource.WORKSPACE));
+              () -> resourceApi.listResourcesAndPoliciesV2(SamConstants.SamResource.WORKSPACE));
       for (var resourceAndPolicy : resourceAndPolicies) {
         try {
           workspaceIds.add(UUID.fromString(resourceAndPolicy.getResourceId()));
@@ -271,7 +277,7 @@ public class SamService {
     ResourcesApi resourceApi = samResourcesApi(authToken);
     try {
       SamRetry.retry(
-          () -> resourceApi.deleteResource(SamConstants.SamResource.WORKSPACE, uuid.toString()));
+          () -> resourceApi.deleteResourceV2(SamConstants.SamResource.WORKSPACE, uuid.toString()));
       logger.info("Deleted Sam resource for workspace {}", uuid);
     } catch (ApiException apiException) {
       logger.info("Sam API error while deleting workspace, code is " + apiException.getCode());
@@ -406,7 +412,7 @@ public class SamService {
       // GCP always uses lowercase email identifiers, so we do the same here for consistency.
       SamRetry.retry(
           () ->
-              resourceApi.addUserToPolicy(
+              resourceApi.addUserToPolicyV2(
                   SamConstants.SamResource.WORKSPACE,
                   workspaceUuid.toString(),
                   role.toSamRole(),
@@ -440,7 +446,7 @@ public class SamService {
     try {
       SamRetry.retry(
           () ->
-              resourceApi.removeUserFromPolicy(
+              resourceApi.removeUserFromPolicyV2(
                   SamConstants.SamResource.WORKSPACE,
                   workspaceUuid.toString(),
                   role.toSamRole(),
@@ -573,10 +579,10 @@ public class SamService {
 
     ResourcesApi resourceApi = samResourcesApi(userRequest.getRequiredToken());
     try {
-      List<AccessPolicyResponseEntry> samResult =
+      List<AccessPolicyResponseEntryV2> samResult =
           SamRetry.retry(
               () ->
-                  resourceApi.listResourcePolicies(
+                  resourceApi.listResourcePoliciesV2(
                       SamConstants.SamResource.WORKSPACE, workspaceUuid.toString()));
       // Don't include WSM's SA as a manager. This is true for all workspaces and not useful to
       // callers.
