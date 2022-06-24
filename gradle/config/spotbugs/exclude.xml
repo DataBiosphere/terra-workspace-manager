@@ -19,7 +19,12 @@
         <!-- Disabled as confusing check (very misleading description) and also not so useful -->
         <Bug pattern="NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE"/>
     </Match>
+    <Match>
+        <!-- Disable to quiet down runs until we spend some time looking at this. PF  -->
+        <Bug pattern="EI_EXPOSE_REP,EI_EXPOSE_REP2,THROWS_METHOD_THROWS_RUNTIMEEXCEPTION,THROWS_METHOD_THROWS_CLAUSE_BASIC_EXCEPTION,THROWS_METHOD_THROWS_CLAUSE_THROWABLE"/>
+    </Match>
 
+    EI_EXPOSE_REP2
 
     <!-- Do not check class -->
     <!--<Match>-->
