@@ -13,11 +13,13 @@ import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.generated.model.ApiJobReport;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
+import bio.terra.workspace.service.iam.model.WsmIamRole;
 import bio.terra.workspace.service.job.exception.InvalidJobIdException;
 import bio.terra.workspace.service.job.exception.InvalidResultStateException;
 import bio.terra.workspace.service.job.exception.JobNotFoundException;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
+import com.google.common.collect.ImmutableList;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.util.ArrayList;
 import java.util.List;
@@ -47,6 +49,8 @@ class JobServiceTest extends BaseUnitTest {
   void setup() {
     try {
       Mockito.doReturn(true).when(mockSamService.isAuthorized(any(), any(), any(), any()));
+      Mockito.when(mockSamService.listRequesterRoles(any(), any(), any()))
+          .thenReturn(ImmutableList.of(WsmIamRole.OWNER));
     } catch (Exception e) {
       // How does a mock even throw an exception?
     }

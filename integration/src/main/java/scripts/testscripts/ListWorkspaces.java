@@ -4,9 +4,11 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasItem;
 import static org.hamcrest.Matchers.hasItems;
 import static org.hamcrest.Matchers.not;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import bio.terra.testrunner.runner.config.TestUserSpecification;
 import bio.terra.workspace.api.WorkspaceApi;
+import bio.terra.workspace.model.IamRole;
 import bio.terra.workspace.model.WorkspaceDescription;
 import bio.terra.workspace.model.WorkspaceDescriptionList;
 import java.util.ArrayList;
@@ -19,7 +21,6 @@ import scripts.utils.WorkspaceAllocateTestScriptBase;
 public class ListWorkspaces extends WorkspaceAllocateTestScriptBase {
 
   private UUID workspaceId2;
-  private UUID workspaceId3;
   private WorkspaceApi secondUserApi;
 
   @Override
@@ -27,23 +28,22 @@ public class ListWorkspaces extends WorkspaceAllocateTestScriptBase {
       throws Exception {
     super.doSetup(testUsers, firstUserApi);
     assertThat("There must be two test users to run this test", testUsers.size() == 2);
-    // Primary test user (index 0) is handled in the test base.
-    TestUserSpecification nonWorkspaceUser = testUsers.get(1);
-    secondUserApi = ClientTestUtils.getWorkspaceClient(nonWorkspaceUser, server);
+    // Set up second test user. (First test user was set up in base class.)
+    TestUserSpecification secondUser = testUsers.get(1);
+    secondUserApi = ClientTestUtils.getWorkspaceClient(secondUser, server);
 
-    // Set up the test fixture workspaces. The first workspace is set up via test base instead.
+    // Have second user create second workspace. (First workspace was set up in base class.)
     workspaceId2 = UUID.randomUUID();
-    createWorkspace(workspaceId2, getSpendProfileId(), firstUserApi);
-    workspaceId3 = UUID.randomUUID();
-    createWorkspace(workspaceId3, getSpendProfileId(), firstUserApi);
+    createWorkspace(workspaceId2, getSpendProfileId(), secondUserApi);
+    // Add first user as workspace reader
+    grantRole(workspaceId2, secondUserApi, testUsers.get(0).userEmail, IamRole.READER);
   }
 
   @Override
   protected void doCleanup(List<TestUserSpecification> testUsers, WorkspaceApi workspaceApi)
       throws Exception {
     super.doCleanup(testUsers, workspaceApi);
-    workspaceApi.deleteWorkspace(workspaceId2);
-    workspaceApi.deleteWorkspace(workspaceId3);
+    secondUserApi.deleteWorkspace(workspaceId2);
   }
 
   @Override
@@ -56,14 +56,22 @@ public class ListWorkspaces extends WorkspaceAllocateTestScriptBase {
 
     // While test users should not have any permanent workspaces, they may have some entries from
     // previous failures or other tests running in parallel. We therefore cannot assume they only
-    // have 3 workspaces.
-    WorkspaceDescriptionList workspaceList =
-        firstUserApi.listWorkspaces(/*offset=*/ 0, /*limit=*/ MAX_USER_WORKSPACES);
-    List<UUID> workspaceIdList =
-        workspaceList.getWorkspaces().stream()
-            .map(WorkspaceDescription::getId)
-            .collect(Collectors.toList());
-    assertThat(workspaceIdList, hasItems(getWorkspaceId(), workspaceId2, workspaceId3));
+    // have 2 workspaces.
+    List<WorkspaceDescription> workspaces =
+        firstUserApi.listWorkspaces(/*offset=*/ 0, /*limit=*/ MAX_USER_WORKSPACES).getWorkspaces();
+    // Assert both workspaces are returned.
+    List<UUID> workspaceIds =
+        workspaces.stream().map(WorkspaceDescription::getId).collect(Collectors.toList());
+    assertThat(workspaceIds, hasItems(getWorkspaceId(), workspaceId2));
+    // Assert first user is owner on first workspace, and reader on second workspace
+    workspaces.forEach(
+        workspace -> {
+          if (workspace.getId() == getWorkspaceId()) {
+            assertEquals(IamRole.OWNER, workspace.getHighestRole());
+          } else if (workspace.getId() == workspaceId2) {
+            assertEquals(IamRole.READER, workspace.getHighestRole());
+          }
+        });
 
     // Next, cover the same set of workspaces across 3 pages.
     int pageSize = MAX_USER_WORKSPACES / 3;
@@ -80,17 +88,16 @@ public class ListWorkspaces extends WorkspaceAllocateTestScriptBase {
             .getWorkspaces());
     List<UUID> callResultIdList =
         callResults.stream().map(WorkspaceDescription::getId).collect(Collectors.toList());
-    assertThat(callResultIdList, hasItems(getWorkspaceId(), workspaceId2, workspaceId3));
+    assertThat(callResultIdList, hasItems(getWorkspaceId(), workspaceId2));
 
-    // Validate that a different user will not see any of these workspaces.
+    // Validate second user only sees second workspace.
     WorkspaceDescriptionList secondUserResult =
         secondUserApi.listWorkspaces(0, MAX_USER_WORKSPACES);
-    List<UUID> secondCallResultList =
+    List<UUID> secondCallResults =
         secondUserResult.getWorkspaces().stream()
             .map(WorkspaceDescription::getId)
             .collect(Collectors.toList());
-    assertThat(secondCallResultList, not(hasItem(getWorkspaceId())));
-    assertThat(secondCallResultList, not(hasItem(workspaceId2)));
-    assertThat(secondCallResultList, not(hasItem(workspaceId3)));
+    assertThat(secondCallResults, not(hasItem(getWorkspaceId())));
+    assertThat(secondCallResults, hasItem(workspaceId2));
   }
 }

@@ -19,6 +19,7 @@ import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.datarepo.DataRepoService;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
+import bio.terra.workspace.service.iam.model.WsmIamRole;
 import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.job.exception.InvalidResultStateException;
 import bio.terra.workspace.service.resource.exception.DuplicateResourceException;
@@ -41,6 +42,7 @@ import bio.terra.workspace.service.resource.referenced.terra.workspace.Reference
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
+import com.google.common.collect.ImmutableList;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -53,6 +55,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -88,6 +91,8 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
   @BeforeEach
   void setup() {
     doReturn(true).when(mockDataRepoService).snapshotReadable(any(), any(), any());
+    Mockito.when(mockSamService.listRequesterRoles(any(), any(), any()))
+        .thenReturn(ImmutableList.of(WsmIamRole.OWNER));
     workspaceUuid = createMcTestWorkspace();
     referencedResource = null;
   }
@@ -269,6 +274,12 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
   @Nested
   class FlightChecks {
 
+    @BeforeEach
+    void setup() throws Exception {
+      Mockito.when(mockSamService.listRequesterRoles(any(), any(), any()))
+          .thenReturn(ImmutableList.of(WsmIamRole.OWNER));
+    }
+
     // Test idempotency of stairway steps
     @Test
     void createReferencedResourceDo() {
@@ -389,6 +400,12 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
   class DataRepoReference {
     // Test that all of the WsmResource validity checks catch invalid input
 
+    @BeforeEach
+    void setup() throws Exception {
+      Mockito.when(mockSamService.listRequesterRoles(any(), any(), any()))
+          .thenReturn(ImmutableList.of(WsmIamRole.OWNER));
+    }
+
     @Test
     void testDataRepoReference() {
       referencedResource = ReferenceResourceFixtures.makeDataRepoSnapshotResource(workspaceUuid);
@@ -506,6 +523,8 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
       // Make the Verify step always succeed
       doReturn(true).when(mockCrlService).canReadGcsBucket(any(), any());
       doReturn(true).when(mockCrlService).canReadGcsObject(any(), any(), any());
+      Mockito.when(mockSamService.listRequesterRoles(any(), any(), any()))
+          .thenReturn(ImmutableList.of(WsmIamRole.OWNER));
     }
 
     private ReferencedGcsObjectResource makeGcsObjectReference() {
@@ -681,6 +700,8 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
       // Make the Verify step always succeed
       doReturn(true).when(mockCrlService).canReadBigQueryDataset(any(), any(), any());
       doReturn(true).when(mockCrlService).canReadBigQueryDataTable(any(), any(), any(), any());
+      Mockito.when(mockSamService.listRequesterRoles(any(), any(), any()))
+          .thenReturn(ImmutableList.of(WsmIamRole.OWNER));
     }
 
     private ReferencedBigQueryDatasetResource makeBigQueryDatasetResource() {
@@ -931,6 +952,8 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
     @BeforeEach
     void setup() throws Exception {
       doReturn(true).when(mockSamService).isAuthorized(any(), any(), any(), any());
+      Mockito.when(mockSamService.listRequesterRoles(any(), any(), any()))
+          .thenReturn(ImmutableList.of(WsmIamRole.OWNER));
     }
 
     private ReferencedTerraWorkspaceResource makeTerraWorkspaceReference() {
@@ -997,6 +1020,12 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
 
   @Nested
   class NegativeTests {
+
+    @BeforeEach
+    void setup() throws Exception {
+      Mockito.when(mockSamService.listRequesterRoles(any(), any(), any()))
+          .thenReturn(ImmutableList.of(WsmIamRole.OWNER));
+    }
 
     @Test
     void getResourceById() {

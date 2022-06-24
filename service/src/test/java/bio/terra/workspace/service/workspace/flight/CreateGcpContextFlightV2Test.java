@@ -42,6 +42,7 @@ import com.google.api.services.cloudresourcemanager.v3.model.GetIamPolicyRequest
 import com.google.api.services.cloudresourcemanager.v3.model.Policy;
 import com.google.api.services.cloudresourcemanager.v3.model.Project;
 import com.google.api.services.iam.v1.model.Role;
+import com.google.common.collect.ImmutableList;
 import java.io.IOException;
 import java.time.Duration;
 import java.util.Arrays;
@@ -88,6 +89,9 @@ class CreateGcpContextFlightV2Test extends BaseConnectedTest {
     // Return a valid google group for cloud sync, as Google validates groups added to GCP projects.
     Mockito.when(mockSamService.syncWorkspacePolicy(any(), any(), any()))
         .thenReturn("terra-workspace-manager-test-group@googlegroups.com");
+    // By default, requester has owner role on workspace
+    Mockito.when(mockSamService.listRequesterRoles(any(), any(), any()))
+        .thenReturn(ImmutableList.of(WsmIamRole.OWNER));
   }
 
   @Test
