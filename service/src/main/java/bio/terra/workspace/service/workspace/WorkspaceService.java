@@ -139,11 +139,27 @@ public class WorkspaceService {
         workspaceUuid,
         action);
     Workspace workspace = workspaceDao.getWorkspace(workspaceUuid);
+    return validateWorkspaceAndAction_inner(userRequest, workspace, action);
+  }
+
+  @Traced
+  private Workspace validateWorkspaceAndAction_inner(
+      AuthenticatedUserRequest userRequest, Workspace workspace, String action) {
+    UUID workspaceUuid = workspace.getWorkspaceId();
     SamRethrow.onInterrupted(
         () ->
             samService.checkAuthz(
                 userRequest, SamConstants.SamResource.WORKSPACE, workspaceUuid.toString(), action),
         "checkAuthz");
+
+    List<WsmIamRole> requesterRoles =
+        SamRethrow.onInterrupted(
+            () ->
+                samService.listRequesterRoles(
+                    userRequest, SamConstants.SamResource.WORKSPACE, workspaceUuid.toString()),
+            "listRequesterRoles");
+    workspace.setHighestRole(WsmIamRole.getHighestRole(workspaceUuid, requesterRoles));
+
     return workspace;
   }
 
@@ -187,15 +203,8 @@ public class WorkspaceService {
         userRequest,
         userFacingId);
     Workspace workspace = workspaceDao.getWorkspaceByUserFacingId(userFacingId);
-    SamRethrow.onInterrupted(
-        () ->
-            samService.checkAuthz(
-                userRequest,
-                SamConstants.SamResource.WORKSPACE,
-                workspace.getWorkspaceId().toString(),
-                SamWorkspaceAction.READ),
-        "checkAuthz");
-    return workspace;
+    return validateWorkspaceAndAction_inner(
+        userRequest, workspace, SamConstants.SamWorkspaceAction.READ);
   }
 
   /**
@@ -215,9 +224,15 @@ public class WorkspaceService {
       @Nullable String name,
       @Nullable String description,
       @Nullable Map<String, String> properties) {
-    validateWorkspaceAndAction(userRequest, workspaceUuid, SamConstants.SamWorkspaceAction.WRITE);
+    // Save highest role, which we get from SAM.
+    WsmIamRole highestRole =
+        validateWorkspaceAndAction(
+                userRequest, workspaceUuid, SamConstants.SamWorkspaceAction.WRITE)
+            .getHighestRole();
     workspaceDao.updateWorkspace(workspaceUuid, userFacingId, name, description, properties);
-    return workspaceDao.getWorkspace(workspaceUuid);
+    Workspace updatedWorkspace = workspaceDao.getWorkspace(workspaceUuid);
+    updatedWorkspace.setHighestRole(highestRole);
+    return updatedWorkspace;
   }
 
   /** Delete an existing workspace by ID. */

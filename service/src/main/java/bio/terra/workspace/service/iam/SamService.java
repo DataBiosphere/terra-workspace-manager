@@ -377,6 +377,7 @@ public class SamService {
    * @param resourceType The Sam type of the resource being checked
    * @param resourceId The ID of the resource being checked
    * @param action The action being checked on the resource
+   * @return
    */
   @Traced
   public void checkAuthz(
@@ -644,6 +645,20 @@ public class SamService {
       throw SamExceptionFactory.create("Error listing role bindings in Sam", apiException);
     } catch (InterruptedException e) {
       logger.warn("dump role binding was interrupted");
+    }
+  }
+
+  /** Wrapper around Sam client to fetch requester roles on specified resource. */
+  @Traced
+  public List<WsmIamRole> listRequesterRoles(
+      AuthenticatedUserRequest userRequest, String samResourceType, String resourceId) {
+    ResourcesApi resourcesApi = samResourcesApi(userRequest.getRequiredToken());
+    try {
+      return resourcesApi.resourceRolesV2(samResourceType, resourceId).stream()
+          .map(WsmIamRole::fromSam)
+          .collect(Collectors.toList());
+    } catch (ApiException e) {
+      throw SamExceptionFactory.create("Error retrieving requester resource roles from Sam", e);
     }
   }
 
