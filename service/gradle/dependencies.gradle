@@ -41,9 +41,6 @@ dependencies {
   implementation group: "org.webjars", name: "webjars-locator-core", version: "0.46"
   runtimeOnly group: "org.postgresql", name: "postgresql", version: "42.3.3"
 
-  // For SpotBugs annotations (still FindBugs annotations)
-  implementation 'com.google.code.findbugs:annotations:3.0.1'
-
   // Deps whose versions are controlled by Spring
   implementation group: "javax.validation", name: "validation-api"
   implementation group: "org.apache.commons", name: "commons-dbcp2"
@@ -63,7 +60,9 @@ dependencies {
   runtimeOnly group: "org.webjars.npm", name: "swagger-ui-dist", version: "3.37.2"
 
   // Spotbugs dependency
-  spotbugs 'com.github.spotbugs:spotbugs:4.7.0'
+  // For SpotBugs annotations (still FindBugs annotations)
+  compileOnly "com.github.spotbugs:spotbugs-annotations:${spotbugs.toolVersion.get()}"
+  spotbugs "com.github.spotbugs:spotbugs:${spotbugs.toolVersion.get()}"
 
   // Test deps
   testImplementation group: "io.vavr", name: "vavr", version: "0.10.3"

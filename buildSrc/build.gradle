@@ -10,6 +10,6 @@ repositories {
 
 dependencies {
     implementation group: 'com.diffplug.spotless', name: 'spotless-plugin-gradle', version: '5.14.0'
-    implementation group: 'com.github.spotbugs.snom', name: 'spotbugs-gradle-plugin', version: '5.0.6'
+    implementation group: 'com.github.spotbugs.snom', name: 'spotbugs-gradle-plugin', version: '5.0.7'
     testImplementation group: 'org.jacoco', name: 'org.jacoco.agent', version: '0.8.8'
 }
