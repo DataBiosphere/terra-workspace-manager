@@ -89,10 +89,6 @@ public class Workspace {
     return workspaceStage;
   }
 
-  /**
-   * For GetWorkspace, ListWorkspaces response, this will be set. In other cases, this may not be
-   * set -- for example UpdateWorkspace response.
-   */
   public WsmIamRole getHighestRole() {
     return highestRole;
   }

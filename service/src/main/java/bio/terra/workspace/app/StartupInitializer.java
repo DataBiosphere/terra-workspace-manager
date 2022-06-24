@@ -24,9 +24,6 @@ public final class StartupInitializer {
     featureConfiguration.logFeatures();
 
     // Migrate the database
-    System.out.println(
-        "#### workspaceDatabaseConfiguration.isInitializeOnStart() "
-            + workspaceDatabaseConfiguration.isInitializeOnStart());
     if (workspaceDatabaseConfiguration.isInitializeOnStart()) {
       migrateService.initialize(changelogPath, workspaceDatabaseConfiguration.getDataSource());
     } else if (workspaceDatabaseConfiguration.isUpgradeOnStart()) {
