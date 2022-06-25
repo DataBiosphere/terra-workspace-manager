@@ -347,6 +347,7 @@ class WorkspaceServiceTest extends BaseConnectedTest {
         workspaceService.updateWorkspace(
             USER_REQUEST, workspaceUuid, userFacingId, name, description, propertyMap2);
 
+    // Make sure returned workspace has highest role set
     assertEquals(WsmIamRole.OWNER, updatedWorkspace.getHighestRole());
 
     assertEquals(userFacingId, updatedWorkspace.getUserFacingId());
