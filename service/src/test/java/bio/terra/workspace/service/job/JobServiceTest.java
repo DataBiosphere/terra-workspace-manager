@@ -20,7 +20,6 @@ import bio.terra.workspace.service.job.exception.JobNotFoundException;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
 import com.google.common.collect.ImmutableList;
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -45,15 +44,9 @@ class JobServiceTest extends BaseUnitTest {
   @MockBean private SamService mockSamService;
 
   @BeforeEach
-  @SuppressFBWarnings(value = "DE_MIGHT_IGNORE", justification = "Mockito flakiness")
-  void setup() {
-    try {
-      Mockito.doReturn(true).when(mockSamService.isAuthorized(any(), any(), any(), any()));
-      Mockito.when(mockSamService.listRequesterRoles(any(), any(), any()))
-          .thenReturn(ImmutableList.of(WsmIamRole.OWNER));
-    } catch (Exception e) {
-      // How does a mock even throw an exception?
-    }
+  void setup() throws InterruptedException {
+    Mockito.when(mockSamService.listRequesterRoles(any(), any(), any()))
+        .thenReturn(ImmutableList.of(WsmIamRole.OWNER));
   }
 
   /**
