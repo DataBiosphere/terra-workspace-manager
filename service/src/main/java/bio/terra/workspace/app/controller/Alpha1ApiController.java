@@ -20,6 +20,7 @@ import bio.terra.workspace.service.resource.model.WsmResource;
 import bio.terra.workspace.service.resource.model.WsmResourceFamily;
 import bio.terra.workspace.service.workspace.Alpha1Service;
 import bio.terra.workspace.service.workspace.WorkspaceService;
+import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import bio.terra.workspace.service.workspace.model.EnumeratedJob;
 import bio.terra.workspace.service.workspace.model.EnumeratedJobs;
 import bio.terra.workspace.service.workspace.model.JobStateFilter;
@@ -102,6 +103,13 @@ public class Alpha1ApiController implements Alpha1Api {
           jobService.mapFlightStateToApiJobReport(enumeratedJob.getFlightState());
       Optional<WsmResource> optResource = enumeratedJob.getResource();
 
+      Optional<UUID> destinationResourceIdMaybe =
+          Optional.ofNullable(
+              enumeratedJob
+                  .getFlightState()
+                  .getInputParameters()
+                  .get(ControlledResourceKeys.DESTINATION_RESOURCE_ID, UUID.class));
+
       ApiEnumeratedJob apiJob =
           new ApiEnumeratedJob()
               .jobReport(jobReport)
@@ -115,7 +123,8 @@ public class Alpha1ApiController implements Alpha1Api {
               .operationType(enumeratedJob.getOperationType().toApiModel())
               .resourceType(optResource.map(r -> r.getResourceType().toApiModel()).orElse(null))
               .metadata(optResource.map(WsmResource::toApiMetadata).orElse(null))
-              .resourceAttributes(optResource.map(WsmResource::toApiAttributesUnion).orElse(null));
+              .resourceAttributes(optResource.map(WsmResource::toApiAttributesUnion).orElse(null))
+              .destinationResourceId(destinationResourceIdMaybe.orElse(null));
       apiJobList.add(apiJob);
     }
 

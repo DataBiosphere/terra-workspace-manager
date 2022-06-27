@@ -228,12 +228,17 @@ public class ReferencedResourceService {
   public ReferencedResource cloneReferencedResource(
       ReferencedResource sourceReferencedResource,
       UUID destinationWorkspaceId,
+      UUID destinationResourceId,
       @Nullable String name,
       @Nullable String description,
       AuthenticatedUserRequest userRequest) {
     final ReferencedResource destinationResource =
         WorkspaceCloneUtils.buildDestinationReferencedResource(
-            sourceReferencedResource, destinationWorkspaceId, name, description);
+            sourceReferencedResource,
+            destinationWorkspaceId,
+            destinationResourceId,
+            name,
+            description);
     // launch the creation flight
     return createReferenceResource(destinationResource, userRequest);
   }

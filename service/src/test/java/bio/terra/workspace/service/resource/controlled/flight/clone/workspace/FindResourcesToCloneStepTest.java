@@ -80,7 +80,7 @@ public class FindResourcesToCloneStepTest extends BaseUnitTest {
 
     final StepResult stepResult = findResourcesToCloneStep.doStep(mockFlightContext);
     assertEquals(StepResult.getStepResultSuccess(), stepResult);
-    final List<ResourceWithFlightId> result =
+    final List<ResourceCloneInputs> result =
         workingMap.get(ControlledResourceKeys.RESOURCES_TO_CLONE, new TypeReference<>() {});
     assertThat(result, hasSize(120));
     assertEquals(resource, result.get(0).getResource());
@@ -95,7 +95,7 @@ public class FindResourcesToCloneStepTest extends BaseUnitTest {
         .enumerateResources(any(UUID.class), eq(null), eq(null), eq(0), eq(100));
     final StepResult stepResult = findResourcesToCloneStep.doStep(mockFlightContext);
     assertEquals(StepResult.getStepResultSuccess(), stepResult);
-    final List<ResourceWithFlightId> result =
+    final List<ResourceCloneInputs> result =
         workingMap.get(ControlledResourceKeys.RESOURCES_TO_CLONE, new TypeReference<>() {});
     assertThat(result, hasSize(3));
     assertEquals(resource, result.get(0).getResource());
