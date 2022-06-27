@@ -82,7 +82,9 @@ public class WorkspaceActivityLogHook implements StairwayHook {
         maybeLogControlledResourceDeletion(context, workspaceUuid);
       } else {
         throw new UnhandledDeletionFlightException(
-            String.format("Deletion flight %s is unhandled", context.getFlightClassName()));
+            String.format(
+                "Activity log should be updated for deletion flight %s failures",
+                context.getFlightClassName()));
       }
     }
     return HookAction.CONTINUE;
