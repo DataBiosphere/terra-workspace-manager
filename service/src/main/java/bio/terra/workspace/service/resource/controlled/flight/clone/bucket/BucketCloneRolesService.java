@@ -17,7 +17,7 @@ import org.springframework.stereotype.Service;
 @Service
 public class BucketCloneRolesService {
 
-  private static final int MAX_RETRY_ATTEMPTS = 150;
+  private static final int MAX_RETRY_ATTEMPTS = 30;
   private static final Duration RETRY_INTERVAL = Duration.ofSeconds(2);
   private final CrlService crlService;
 
