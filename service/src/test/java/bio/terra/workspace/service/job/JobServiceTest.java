@@ -7,6 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 
+import bio.terra.common.exception.MissingRequiredFieldException;
 import bio.terra.stairway.FlightDebugInfo;
 import bio.terra.workspace.common.BaseUnitTest;
 import bio.terra.workspace.db.WorkspaceDao;
@@ -76,7 +77,8 @@ class JobServiceTest extends BaseUnitTest {
                 .jobId(testJobId)
                 .flightClass(JobServiceTestFlight.class)
                 .workspaceId(UUID.randomUUID().toString())
-                .userRequest(testUser));
+                .userRequest(testUser)
+                .operationType(OperationType.DELETE));
   }
 
   @Test
@@ -91,7 +93,23 @@ class JobServiceTest extends BaseUnitTest {
                 .jobId(testJobId)
                 .flightClass(JobServiceTestFlight.class)
                 .userRequest(testUser)
-                .workspaceId(UUID.randomUUID().toString()));
+                .workspaceId(UUID.randomUUID().toString())
+                .operationType(OperationType.DELETE));
+  }
+
+  @Test
+  void unknownJobOperationType() {
+    assertThrows(
+        MissingRequiredFieldException.class,
+        () ->
+            jobService
+                .newJob()
+                .description("description")
+                .jobId("test-job-id")
+                .flightClass(JobServiceTestFlight.class)
+                .userRequest(testUser)
+                .workspaceId(UUID.randomUUID().toString())
+                .submit());
   }
 
   // Resets the application context before retrieveTest to make sure that the job service does not

@@ -66,6 +66,43 @@ public class WorkspaceActivityLogDaoTest extends BaseUnitTest {
     assertTrue(thirdUpdatedDate.get().isBefore(fourthUpdateDate.get()));
   }
 
+  @Test
+  public void getLastUpdatedDate_systemCleanup_filterNonUpdateOperations() {
+    var workspaceId = UUID.randomUUID();
+    activityLogDao.writeActivity(
+        workspaceId, new DbWorkspaceActivityLog().operationType(OperationType.SYSTEM_CLEANUP));
+
+    assertEquals(OperationType.SYSTEM_CLEANUP.name(), getChangeType(workspaceId));
+    assertTrue(activityLogDao.getLastUpdatedDate(workspaceId).isEmpty());
+  }
+
+  @Test
+  public void getLastUpdatedDate_removeWorkspaceRole_filterNonUpdateOperations() {
+    var workspaceId = UUID.randomUUID();
+    activityLogDao.writeActivity(
+        workspaceId,
+        new DbWorkspaceActivityLog().operationType(OperationType.REMOVE_WORKSPACE_ROLE));
+
+    assertEquals(OperationType.REMOVE_WORKSPACE_ROLE.name(), getChangeType(workspaceId));
+    assertTrue(activityLogDao.getLastUpdatedDate(workspaceId).isEmpty());
+  }
+
+  @Test
+  public void getLastUpdatedDate_grantWorkspaceRole_filterNonUpdateOperations() {
+    var workspaceId = UUID.randomUUID();
+    activityLogDao.writeActivity(
+        workspaceId,
+        new DbWorkspaceActivityLog().operationType(OperationType.GRANT_WORKSPACE_ROLE));
+
+    assertEquals(OperationType.GRANT_WORKSPACE_ROLE.name(), getChangeType(workspaceId));
+    assertTrue(activityLogDao.getLastUpdatedDate(workspaceId).isEmpty());
+  }
+
+  @Test
+  public void getLastUpdatedDate_emptyTable_getEmpty() {
+    assertTrue(activityLogDao.getLastUpdatedDate(UUID.randomUUID()).isEmpty());
+  }
+
   private String getChangeType(UUID workspaceId) {
     final String sql =
         "SELECT change_type"

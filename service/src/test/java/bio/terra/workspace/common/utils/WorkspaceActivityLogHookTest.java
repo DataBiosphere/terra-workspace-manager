@@ -1,8 +1,10 @@
 package bio.terra.workspace.common.utils;
 
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 
+import bio.terra.common.exception.MissingRequiredFieldException;
 import bio.terra.stairway.FlightDebugInfo;
 import bio.terra.workspace.common.BaseUnitTest;
 import bio.terra.workspace.db.WorkspaceActivityLogDao;
@@ -84,7 +86,9 @@ public class WorkspaceActivityLogHookTest extends BaseUnitTest {
     var emptyChangedDate = activityLogDao.getLastUpdatedDate(workspaceUuid);
     assertTrue(emptyChangedDate.isEmpty());
 
-    runFlight("a creation flight", workspaceUuid, OperationType.UNKNOWN);
+    assertThrows(
+        MissingRequiredFieldException.class,
+        () -> runFlight("a creation flight", workspaceUuid, OperationType.UNKNOWN));
 
     var changedDate = activityLogDao.getLastUpdatedDate(workspaceUuid);
     assertTrue(changedDate.isEmpty());
@@ -106,7 +110,7 @@ public class WorkspaceActivityLogHookTest extends BaseUnitTest {
   }
 
   @Test
-  void deleteFlightFails_unknownDeleteFlight_activityLogNotUpdated() {
+  void deleteFlightFails_resourceNotDeleted_activityLogNotUpdated() {
     // Set a FlightDebugInfo so that any job submission should fail on the last step.
     jobService.setFlightDebugInfoForTest(
         FlightDebugInfo.newBuilder().lastStepFailure(true).build());
@@ -129,7 +133,11 @@ public class WorkspaceActivityLogHookTest extends BaseUnitTest {
     var emptyChangedDate = activityLogDao.getLastUpdatedDate(workspaceUuid);
     assertTrue(emptyChangedDate.isEmpty());
 
-    runFlight("failed flight with operation type unknown", workspaceUuid, OperationType.UNKNOWN);
+    assertThrows(
+        MissingRequiredFieldException.class,
+        () ->
+            runFlight(
+                "failed flight with operation type unknown", workspaceUuid, OperationType.UNKNOWN));
 
     var changedDateAfterFailedFlight = activityLogDao.getLastUpdatedDate(workspaceUuid);
     assertTrue(changedDateAfterFailedFlight.isEmpty());

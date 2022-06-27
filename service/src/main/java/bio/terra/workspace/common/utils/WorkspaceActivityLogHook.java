@@ -88,16 +88,16 @@ public class WorkspaceActivityLogHook implements StairwayHook {
     return HookAction.CONTINUE;
   }
 
-  private boolean isWorkspaceDeleteFlight(String className) {
+  private static boolean isWorkspaceDeleteFlight(String className) {
     return DELETE_WORKSPACE_FLIGHT.equals(className);
   }
 
-  private boolean isCloudContextDeleteFlight(String className) {
+  private static boolean isCloudContextDeleteFlight(String className) {
     return DELETE_AZURE_CONTEXT_FLIGHT.equals(className)
         || DELETE_GCP_CONTEXT_FLIGHT.equals(className);
   }
 
-  private boolean isControlledResourceDeleteFlight(String className) {
+  private static boolean isControlledResourceDeleteFlight(String className) {
     return DELETE_CONTROLLED_RESOURCE_FLIGHT.equals(className);
   }
 
@@ -105,7 +105,7 @@ public class WorkspaceActivityLogHook implements StairwayHook {
     checkArgument(isWorkspaceDeleteFlight(flightClassName));
     try {
       workspaceDao.getWorkspace(workspaceUuid);
-      logger.info(
+      logger.warn(
           String.format(
               "Workspace %s is failed to be deleted; "
                   + "not writing deletion to workspace activity log",
@@ -126,7 +126,7 @@ public class WorkspaceActivityLogHook implements StairwayHook {
       activityLogDao.writeActivity(
           workspaceUuid, new DbWorkspaceActivityLog().operationType(OperationType.DELETE));
     } else {
-      logger.info(
+      logger.warn(
           String.format(
               "CloudContext in workspace %s deletion fails; not writing deletion "
                   + "to workspace activity log",
@@ -142,7 +142,7 @@ public class WorkspaceActivityLogHook implements StairwayHook {
     UUID resourceId = controlledResource.getResourceId();
     try {
       resourceDao.getResource(workspaceUuid, resourceId);
-      logger.info(
+      logger.warn(
           String.format(
               "Controlled resource %s in workspace %s is failed to be deleted; "
                   + "not writing deletion to workspace activity log",

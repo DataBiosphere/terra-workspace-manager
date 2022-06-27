@@ -236,6 +236,7 @@ public class ControlledResourceService {
             .resource(sourceBucketResource)
             .userRequest(userRequest)
             .workspaceId(sourceWorkspaceId.toString())
+            .operationType(OperationType.CLONE)
             .addParameter(ControlledResourceKeys.DESTINATION_WORKSPACE_ID, destinationWorkspaceId)
             .addParameter(ResourceKeys.RESOURCE_NAME, destinationResourceName)
             .addParameter(ResourceKeys.RESOURCE_DESCRIPTION, destinationDescription)
