@@ -1,6 +1,7 @@
 package bio.terra.workspace.service.status;
 
 import bio.terra.workspace.app.configuration.external.StatusCheckConfiguration;
+import jakarta.annotation.PostConstruct;
 import java.time.Instant;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
@@ -8,7 +9,6 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Supplier;
-import javax.annotation.PostConstruct;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

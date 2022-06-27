@@ -39,7 +39,7 @@ dependencies {
   implementation 'com.google.code.findbugs:annotations:3.0.1'
 
   // Deps whose versions are controlled by Spring
-  implementation group: "javax.validation", name: "validation-api"
+  implementation group: 'jakarta.annotation', name: 'jakarta.annotation-api', version: '2.1.1'
   implementation group: "org.apache.commons", name: "commons-dbcp2"
   implementation group: "org.apache.commons", name: "commons-lang3"
   implementation group: "org.apache.commons", name: "commons-pool2"
