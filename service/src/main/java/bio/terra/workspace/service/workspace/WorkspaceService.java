@@ -27,6 +27,7 @@ import bio.terra.workspace.service.workspace.flight.create.azure.CreateAzureCont
 import bio.terra.workspace.service.workspace.model.AzureCloudContext;
 import bio.terra.workspace.service.workspace.model.OperationType;
 import bio.terra.workspace.service.workspace.model.Workspace;
+import bio.terra.workspace.service.workspace.model.WorkspaceConstants;
 import io.opencensus.contrib.spring.aop.Traced;
 import java.util.List;
 import java.util.Map;
@@ -178,14 +179,31 @@ public class WorkspaceService {
             () -> samService.listWorkspaceIdsAndRoles(userRequest), "listWorkspaceIds");
     return workspaceDao
         .getWorkspacesMatchingList(samWorkspaceIdsAndRoles.keySet(), offset, limit)
-        // For each workspace, set highest role from SAM
         .stream()
+        // For each workspace, set highest role from SAM
         .map(
             workspace -> {
               workspace.setHighestRole(samWorkspaceIdsAndRoles.get(workspace.getWorkspaceId()));
               return workspace;
             })
+        .filter(WorkspaceService::removeDataSourceWorkspacesIfReader)
         .collect(Collectors.toList());
+  }
+
+  // WSM stores data sources (such as AMP-PD) as workspaces. (This is an implementation detail;
+  // Terra users are not aware that data sources are workspaces.) An AMP-PD researcher would not
+  // expect to see AMP-PD workspace in their workspace list. So hide data source workspaces, only
+  // for readers. Editors and owners need to see AMP-PD workspace, so they can edit it.
+  @Traced
+  private static boolean removeDataSourceWorkspacesIfReader(Workspace workspace) {
+    boolean isDataSourceWorkspace =
+        workspace.getProperties().containsKey(WorkspaceConstants.DATA_SOURCE_KEY)
+            ? workspace
+                .getProperties()
+                .get(WorkspaceConstants.DATA_SOURCE_KEY)
+                .equals(WorkspaceConstants.DATA_SOURCE_VALUE)
+            : false;
+    return !(isDataSourceWorkspace && workspace.getHighestRole() == WsmIamRole.READER);
   }
 
   /** Retrieves an existing workspace by ID */

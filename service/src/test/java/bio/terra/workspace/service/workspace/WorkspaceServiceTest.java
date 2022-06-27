@@ -67,10 +67,12 @@ import bio.terra.workspace.service.workspace.flight.CheckSamWorkspaceAuthzStep;
 import bio.terra.workspace.service.workspace.flight.CreateWorkspaceAuthzStep;
 import bio.terra.workspace.service.workspace.flight.CreateWorkspaceStep;
 import bio.terra.workspace.service.workspace.model.Workspace;
+import bio.terra.workspace.service.workspace.model.WorkspaceConstants;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
 import com.google.api.services.cloudresourcemanager.v3.model.Project;
 import com.google.common.collect.ImmutableList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
@@ -228,6 +230,34 @@ class WorkspaceServiceTest extends BaseConnectedTest {
     assertThrows(
         ForbiddenException.class,
         () -> workspaceService.getWorkspaceByUserFacingId(userFacingId, USER_REQUEST));
+  }
+
+  @Test
+  void listWorkspaces_dataSourceWorkspaceNotReturned() throws Exception {
+    // Create 1000 Genomes data source workspace
+    UUID thousandGenomesId = UUID.randomUUID();
+    Workspace request =
+        defaultRequestBuilder(thousandGenomesId)
+            .properties(
+                Map.of(WorkspaceConstants.DATA_SOURCE_KEY, WorkspaceConstants.DATA_SOURCE_VALUE))
+            .build();
+    workspaceService.createWorkspace(request, USER_REQUEST);
+
+    // Create researcher workspace
+    UUID researcherWorkspaceId = UUID.randomUUID();
+    request = defaultRequestBuilder(researcherWorkspaceId).build();
+    workspaceService.createWorkspace(request, USER_REQUEST);
+
+    // Have SAM return READER for 1000 Genomes, OWNER for researcher workspace
+    Mockito.when(mockSamService.listWorkspaceIdsAndRoles(any()))
+        .thenReturn(
+            Map.of(thousandGenomesId, WsmIamRole.READER, researcherWorkspaceId, WsmIamRole.OWNER));
+
+    // List workspaces. Only researcher workspace returned, not 1000 Genomes
+    List<Workspace> listedWorkspaces =
+        workspaceService.listWorkspaces(USER_REQUEST, /*offset=*/ 0, /*limit=*/ 10);
+    assertThat(listedWorkspaces, hasSize(1));
+    assertEquals(researcherWorkspaceId, listedWorkspaces.get(0).getWorkspaceId());
   }
 
   @Test
