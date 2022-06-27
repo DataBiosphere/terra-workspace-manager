@@ -37,7 +37,10 @@ public class CloneControlledGcsBucketResourceFlight extends Flight {
       FlightMap inputParameters, Object applicationContext) {
     super(inputParameters, applicationContext);
     FlightUtils.validateRequiredEntries(
-        inputParameters, ResourceKeys.RESOURCE, JobMapKeys.AUTH_USER_INFO.getKeyName());
+        inputParameters,
+        ResourceKeys.RESOURCE,
+        JobMapKeys.AUTH_USER_INFO.getKeyName(),
+        ControlledResourceKeys.DESTINATION_RESOURCE_ID);
 
     final FlightBeanBag flightBeanBag = FlightBeanBag.getFromObject(applicationContext);
     final ControlledResource sourceResource =

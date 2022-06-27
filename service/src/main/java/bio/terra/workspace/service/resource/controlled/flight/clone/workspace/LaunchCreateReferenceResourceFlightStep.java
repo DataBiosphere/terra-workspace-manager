@@ -26,14 +26,17 @@ public class LaunchCreateReferenceResourceFlightStep implements Step {
   private final ReferencedResourceService referencedResourceService;
   private final ReferencedResource resource;
   private final String subflightId;
+  private final UUID destinationResourceId;
 
   public LaunchCreateReferenceResourceFlightStep(
       ReferencedResourceService referencedResourceService,
       ReferencedResource resource,
-      String subflightId) {
+      String subflightId,
+      UUID destinationResourceId) {
     this.referencedResourceService = referencedResourceService;
     this.resource = resource;
     this.subflightId = subflightId;
+    this.destinationResourceId = destinationResourceId;
   }
 
   @Override
@@ -57,7 +60,11 @@ public class LaunchCreateReferenceResourceFlightStep implements Step {
 
     final ReferencedResource destinationResource =
         WorkspaceCloneUtils.buildDestinationReferencedResource(
-            resource, destinationWorkspaceId, resource.getName(), resource.getDescription());
+            resource,
+            destinationWorkspaceId,
+            destinationResourceId,
+            resource.getName(),
+            resource.getDescription());
 
     // put the destination resource in the map, because it's not communicated
     // from the flight as the response (and we need the workspace ID)
@@ -75,7 +82,8 @@ public class LaunchCreateReferenceResourceFlightStep implements Step {
     subflightInputParameters.put(
         JobMapKeys.DESCRIPTION.getKeyName(),
         String.format("Clone referenced resource %s", resource.getResourceId().toString()));
-
+    subflightInputParameters.put(
+        ControlledResourceKeys.DESTINATION_RESOURCE_ID, destinationResourceId);
     try {
       context
           .getStairway()

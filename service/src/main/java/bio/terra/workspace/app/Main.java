@@ -21,6 +21,8 @@ import org.springframework.transaction.annotation.EnableTransactionManagement;
       "bio.terra.common.logging",
       // Scan for Liquibase migration components & configs
       "bio.terra.common.migrate",
+      // Scan for db components and configs
+      "bio.terra.common.db",
       // Transaction management and DB retry configuration
       "bio.terra.common.retry.transaction",
       // Stairway initialization and status
