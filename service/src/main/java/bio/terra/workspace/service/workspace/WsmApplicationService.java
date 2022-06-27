@@ -13,6 +13,7 @@ import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.WsmApplicationKeys;
 import bio.terra.workspace.service.workspace.flight.application.able.AbleEnum;
 import bio.terra.workspace.service.workspace.flight.application.able.ApplicationAbleFlight;
+import bio.terra.workspace.service.workspace.model.OperationType;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WsmApplication;
 import bio.terra.workspace.service.workspace.model.WsmApplicationState;
@@ -113,6 +114,10 @@ public class WsmApplicationService {
             .flightClass(ApplicationAbleFlight.class)
             .userRequest(userRequest)
             .workspaceId(workspaceUuid.toString())
+            .operationType(
+                ableEnum == AbleEnum.ENABLE
+                    ? OperationType.APPLICATION_ENABLED
+                    : OperationType.APPLICATION_DISABLED)
             .addParameter(WorkspaceFlightMapKeys.APPLICATION_ID, applicationId)
             .addParameter(WsmApplicationKeys.APPLICATION_ABLE_ENUM, ableEnum);
     return job.submitAndWait(WsmWorkspaceApplication.class);

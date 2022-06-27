@@ -6,6 +6,8 @@ import javax.annotation.Nullable;
 
 /** Operation type - corollary to the ApiOperationType. */
 public enum OperationType {
+  APPLICATION_DISABLED(ApiOperationType.APPLICATION_DISABLED),
+  APPLICATION_ENABLED(ApiOperationType.APPLICATION_ENABLED),
   CLONE(ApiOperationType.CLONE),
   CREATE(ApiOperationType.CREATE),
   DELETE(ApiOperationType.DELETE),
