@@ -25,11 +25,13 @@ public class LaunchCloneGcsBucketResourceFlightStep implements Step {
 
   private final ControlledGcsBucketResource resource;
   private final String subflightId;
+  private final UUID destinationResourceId;
 
   public LaunchCloneGcsBucketResourceFlightStep(
-      ControlledGcsBucketResource resource, String subflightId) {
+      ControlledGcsBucketResource resource, String subflightId, UUID destinationResourceId) {
     this.resource = resource;
     this.subflightId = subflightId;
+    this.destinationResourceId = destinationResourceId;
   }
 
   @Override
@@ -65,6 +67,8 @@ public class LaunchCloneGcsBucketResourceFlightStep implements Step {
     subflightInputParameters.put(
         JobMapKeys.DESCRIPTION.getKeyName(),
         String.format("Clone GCS Bucket resource %s", resource.getResourceId().toString()));
+    subflightInputParameters.put(
+        ControlledResourceKeys.DESTINATION_RESOURCE_ID, destinationResourceId);
 
     // submit flight
     try {
