@@ -17,8 +17,7 @@ dependencies {
   implementation group: "io.opencensus", name: "opencensus-contrib-http-jaxrs", version: "0.28.3"
 
   // Get stairway via TCL
-  // TODO: use published version once available.
-  implementation group: "bio.terra", name: "terra-common-lib", version: "0.0.60-ZLOERY-6"
+  implementation group: "bio.terra", name: "terra-common-lib", version: "0.0.61-SNAPSHOT"
   implementation group: "org.broadinstitute.dsde.workbench", name: "sam-client_2.13", version: "0.1-96c5f4d"
   implementation group: "bio.terra", name: "terra-resource-buffer-client", version: "0.4.3-SNAPSHOT"
 

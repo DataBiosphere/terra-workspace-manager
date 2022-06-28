@@ -32,14 +32,12 @@ public class BufferService {
   @Autowired
   public BufferService(BufferServiceConfiguration bufferServiceConfiguration) {
     this.bufferServiceConfiguration = bufferServiceConfiguration;
-    // TODO: don't merge this until buffer TCL is updated
     this.commonHttpClient =
         new ApiClient()
             .getHttpClient()
             .register(
                 new JaxrsClientFilter(
-                    new JaxrsClientExtractor(),
-                    Tracing.getPropagationComponent().getB3Format()));
+                    new JaxrsClientExtractor(), Tracing.getPropagationComponent().getB3Format()));
   }
 
   private ApiClient getApiClient(String accessToken) {
