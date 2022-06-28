@@ -61,4 +61,3 @@ components:
           format: uuid
         azureStorage:
           $ref: '#/components/schemas/AzureStorageResource'
-

@@ -1,0 +1,23 @@
+components:
+  schemas:
+    TerraWorkspaceAttributes:
+      description: >-
+        Terra workspace attributes
+      type: object
+      required: [referencedWorkspaceId]
+      properties:
+        referencedWorkspaceId:
+          description: UUID for the workspace that this resource points to
+          type: string
+          format: uuid
+
+    TerraWorkspaceResource:
+      type: object
+      description: A reference to a Terra workspace
+      required: [metadata, attributes]
+      properties:
+        metadata:
+          description: the resource metadata common to all resources
+          $ref: '#/components/schemas/ResourceMetadata'
+        attributes:
+          $ref: '#/components/schemas/TerraWorkspaceAttributes'

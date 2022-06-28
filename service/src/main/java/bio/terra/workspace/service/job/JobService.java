@@ -1,5 +1,6 @@
 package bio.terra.workspace.service.job;
 
+import bio.terra.common.db.DataSourceInitializer;
 import bio.terra.common.logging.LoggingUtils;
 import bio.terra.common.stairway.StairwayComponent;
 import bio.terra.common.stairway.TracingHook;
@@ -167,7 +168,7 @@ public class JobService {
     stairwayComponent.initialize(
         stairwayComponent
             .newStairwayOptionsBuilder()
-            .dataSource(stairwayDatabaseConfiguration.getDataSource())
+            .dataSource(DataSourceInitializer.initializeDataSource(stairwayDatabaseConfiguration))
             .context(flightBeanBag)
             .addHook(mdcHook)
             .addHook(new TracingHook())
