@@ -13,4 +13,5 @@ dependencies {
     implementation group: 'com.github.spotbugs.snom', name: 'spotbugs-gradle-plugin', version: '5.0.6'
     testImplementation group: 'org.jacoco', name: 'org.jacoco.agent', version: '0.8.8'
     implementation group: 'jakarta.ws.rs', name: 'jakarta.ws.rs-api', version: '3.1.0'
+    implementation group: 'jakarta.ws.rs', name: 'all', version: '3.1.0', ext: 'pom'
 }

@@ -10,7 +10,7 @@ import bio.terra.workspace.app.configuration.external.BufferServiceConfiguration
 import bio.terra.workspace.service.buffer.exception.BufferServiceAPIException;
 import bio.terra.workspace.service.buffer.exception.BufferServiceAuthorizationException;
 import java.io.IOException;
-import javax.ws.rs.client.Client;
+import jakarta.ws.rs.client.Client;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;

@@ -78,6 +78,7 @@ dependencies {
 
     //API Helpers
     implementation group: 'jakarta.ws.rs', name: 'jakarta.ws.rs-api', version: '3.1.0'
+    implementation group: 'jakarta.ws.rs', name: 'all', version: '3.1.0', ext: 'pom'
 
     // Force log4j version to at least 2.17.0 for security concerns.
     implementation('org.apache.logging.log4j:log4j-api') {

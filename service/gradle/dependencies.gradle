@@ -38,8 +38,12 @@ dependencies {
   // For SpotBugs annotations (still FindBugs annotations)
   implementation 'com.google.code.findbugs:annotations:3.0.1'
 
-  // Deps whose versions are controlled by Spring
   implementation group: 'jakarta.annotation', name: 'jakarta.annotation-api', version: '2.1.1'
+  implementation group: 'jakarta.ws.rs', name: 'jakarta.ws.rs-api', version: '3.1.0'
+  implementation group: 'jakarta.ws.rs', name: 'all', version: '3.1.0', ext: 'pom'
+
+  // Deps whose versions are controlled by Spring
+  implementation group: 'javax.validation', name: 'validation-api', version: '2.0.1.Final'
   implementation group: "org.apache.commons", name: "commons-dbcp2"
   implementation group: "org.apache.commons", name: "commons-lang3"
   implementation group: "org.apache.commons", name: "commons-pool2"
