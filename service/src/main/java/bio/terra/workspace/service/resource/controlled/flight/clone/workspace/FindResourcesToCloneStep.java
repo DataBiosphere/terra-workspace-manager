@@ -40,14 +40,17 @@ public class FindResourcesToCloneStep implements Step {
     int offset = 0;
     final int limit = 100;
     List<WsmResource> batch;
-    final List<ResourceWithFlightId> result = new ArrayList<>();
+    final List<ResourceCloneInputs> result = new ArrayList<>();
     do {
       batch = resourceDao.enumerateResources(sourceWorkspaceId, null, null, offset, limit);
       offset += limit;
       final List<WsmResource> cloneableResources =
           batch.stream().filter(FindResourcesToCloneStep::isCloneable).toList();
       cloneableResources.forEach(
-          r -> result.add(new ResourceWithFlightId(r, context.getStairway().createFlightId())));
+          r ->
+              result.add(
+                  new ResourceCloneInputs(
+                      r, context.getStairway().createFlightId(), UUID.randomUUID())));
     } while (batch.size() == limit);
 
     // sort the resources by stewardship type reversed, so reference types go first

@@ -23,6 +23,7 @@ test {
     includeTags "unit"
   }
   outputs.upToDateWhen { false }
+  finalizedBy tasks.combinedJaCoCoReport
 }
 
 task unitTest(type: Test) {
@@ -30,7 +31,7 @@ task unitTest(type: Test) {
     includeTags "unit"
   }
   outputs.upToDateWhen { false }
-  finalizedBy jacocoTestReport
+  finalizedBy tasks.combinedJaCoCoReport
 }
 
 task connectedTest(type: Test) {
@@ -39,6 +40,7 @@ task connectedTest(type: Test) {
     includeTags "connected"
   }
   outputs.upToDateWhen { false }
+  finalizedBy tasks.combinedJaCoCoReport
 }
 
 task azureTest(type: Test) {
@@ -46,4 +48,5 @@ task azureTest(type: Test) {
     includeTags "azure"
   }
   outputs.upToDateWhen { false }
+  finalizedBy tasks.combinedJaCoCoReport
 }
