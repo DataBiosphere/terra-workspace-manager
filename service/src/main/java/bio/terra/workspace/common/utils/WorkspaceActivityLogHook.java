@@ -38,6 +38,9 @@ public class WorkspaceActivityLogHook implements StairwayHook {
   private final WorkspaceDao workspaceDao;
   private final ResourceDao resourceDao;
 
+  // TODO(PF-1800): instead of storing the flight name here, have an ActivityFlight enum for
+  // each flight and iterate through them and log different activity change details
+  // for different Flights.
   private static final String DELETE_WORKSPACE_FLIGHT = WorkspaceDeleteFlight.class.getName();
   private static final String DELETE_GCP_CONTEXT_FLIGHT = DeleteGcpContextFlight.class.getName();
   private static final String DELETE_AZURE_CONTEXT_FLIGHT =

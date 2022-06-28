@@ -8,8 +8,6 @@ import bio.terra.common.sam.exception.SamExceptionFactory;
 import bio.terra.workspace.app.configuration.external.SamConfiguration;
 import bio.terra.workspace.common.exception.InternalLogicException;
 import bio.terra.workspace.common.utils.GcpUtils;
-import bio.terra.workspace.db.WorkspaceActivityLogDao;
-import bio.terra.workspace.db.model.DbWorkspaceActivityLog;
 import bio.terra.workspace.service.iam.model.ControlledResourceIamRole;
 import bio.terra.workspace.service.iam.model.RoleBinding;
 import bio.terra.workspace.service.iam.model.SamConstants;
@@ -18,7 +16,6 @@ import bio.terra.workspace.service.iam.model.WsmIamRole;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResourceCategory;
 import bio.terra.workspace.service.stage.StageService;
-import bio.terra.workspace.service.workspace.model.OperationType;
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
@@ -67,7 +64,6 @@ public class SamService {
   private final SamConfiguration samConfig;
   private final StageService stageService;
   private final OkHttpClient commonHttpClient;
-  private final WorkspaceActivityLogDao activityLogDao;
 
   private final Set<String> SAM_OAUTH_SCOPES = ImmutableSet.of("openid", "email", "profile");
   private final List<String> PET_SA_OAUTH_SCOPES =
@@ -77,15 +73,11 @@ public class SamService {
   private boolean wsmServiceAccountInitialized;
 
   @Autowired
-  public SamService(
-      SamConfiguration samConfig,
-      StageService stageService,
-      WorkspaceActivityLogDao activityLogDao) {
+  public SamService(SamConfiguration samConfig, StageService stageService) {
     this.samConfig = samConfig;
     this.stageService = stageService;
     this.wsmServiceAccountInitialized = false;
     this.commonHttpClient = new ApiClient().getHttpClient();
-    this.activityLogDao = activityLogDao;
   }
 
   private ApiClient getApiClient(String accessToken) {
@@ -434,9 +426,6 @@ public class SamService {
                   email.toLowerCase()));
       logger.info(
           "Granted role {} to user {} in workspace {}", role.toSamRole(), email, workspaceUuid);
-      activityLogDao.writeActivity(
-          workspaceUuid,
-          new DbWorkspaceActivityLog().operationType(OperationType.GRANT_WORKSPACE_ROLE));
     } catch (ApiException apiException) {
       throw SamExceptionFactory.create("Error granting workspace role in Sam", apiException);
     }
