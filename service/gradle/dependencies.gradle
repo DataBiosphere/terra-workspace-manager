@@ -21,7 +21,7 @@ dependencies {
 
   // Get stairway via TCL
   implementation group: "bio.terra", name: "terra-common-lib", version: "0.0.61-SNAPSHOT"
-  implementation group: "org.broadinstitute.dsde.workbench", name: "sam-client_2.13", version: "0.1-96c5f4d"
+  implementation group: "org.broadinstitute.dsde.workbench", name: "sam-client_2.12", version: "0.1-61135c7"
   implementation group: "bio.terra", name: "terra-resource-buffer-client", version: "0.4.3-SNAPSHOT"
 
   // Cloud Resource Library

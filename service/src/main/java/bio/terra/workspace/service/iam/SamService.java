@@ -41,11 +41,12 @@ import org.broadinstitute.dsde.workbench.client.sam.api.ResourcesApi;
 import org.broadinstitute.dsde.workbench.client.sam.api.StatusApi;
 import org.broadinstitute.dsde.workbench.client.sam.api.UsersApi;
 import org.broadinstitute.dsde.workbench.client.sam.model.AccessPolicyMembershipV2;
+import org.broadinstitute.dsde.workbench.client.sam.model.AccessPolicyResponseEntry;
 import org.broadinstitute.dsde.workbench.client.sam.model.AccessPolicyResponseEntryV2;
 import org.broadinstitute.dsde.workbench.client.sam.model.CreateResourceRequestV2;
 import org.broadinstitute.dsde.workbench.client.sam.model.FullyQualifiedResourceId;
+import org.broadinstitute.dsde.workbench.client.sam.model.ResourceAndAccessPolicy;
 import org.broadinstitute.dsde.workbench.client.sam.model.SystemStatus;
-import org.broadinstitute.dsde.workbench.client.sam.model.UserResourcesResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -251,9 +252,9 @@ public class SamService {
     ResourcesApi resourceApi = samResourcesApi(userRequest.getRequiredToken());
     List<UUID> workspaceIds = new ArrayList<>();
     try {
-      List<UserResourcesResponse> resourceAndPolicies =
+      List<ResourceAndAccessPolicy> resourceAndPolicies =
           SamRetry.retry(
-              () -> resourceApi.listResourcesAndPoliciesV2(SamConstants.SamResource.WORKSPACE));
+              () -> resourceApi.listResourcesAndPolicies(SamConstants.SamResource.WORKSPACE));
       for (var resourceAndPolicy : resourceAndPolicies) {
         try {
           workspaceIds.add(UUID.fromString(resourceAndPolicy.getResourceId()));
@@ -277,7 +278,7 @@ public class SamService {
     ResourcesApi resourceApi = samResourcesApi(authToken);
     try {
       SamRetry.retry(
-          () -> resourceApi.deleteResourceV2(SamConstants.SamResource.WORKSPACE, uuid.toString()));
+          () -> resourceApi.deleteResource(SamConstants.SamResource.WORKSPACE, uuid.toString()));
       logger.info("Deleted Sam resource for workspace {}", uuid);
     } catch (ApiException apiException) {
       logger.info("Sam API error while deleting workspace, code is " + apiException.getCode());
@@ -425,7 +426,7 @@ public class SamService {
       // GCP always uses lowercase email identifiers, so we do the same here for consistency.
       SamRetry.retry(
           () ->
-              resourceApi.addUserToPolicyV2(
+              resourceApi.addUserToPolicy(
                   SamConstants.SamResource.WORKSPACE,
                   workspaceUuid.toString(),
                   role.toSamRole(),
@@ -459,7 +460,7 @@ public class SamService {
     try {
       SamRetry.retry(
           () ->
-              resourceApi.removeUserFromPolicyV2(
+              resourceApi.removeUserFromPolicy(
                   SamConstants.SamResource.WORKSPACE,
                   workspaceUuid.toString(),
                   role.toSamRole(),
@@ -592,10 +593,10 @@ public class SamService {
 
     ResourcesApi resourceApi = samResourcesApi(userRequest.getRequiredToken());
     try {
-      List<AccessPolicyResponseEntryV2> samResult =
+      List<AccessPolicyResponseEntry> samResult =
           SamRetry.retry(
               () ->
-                  resourceApi.listResourcePoliciesV2(
+                  resourceApi.listResourcePolicies(
                       SamConstants.SamResource.WORKSPACE, workspaceUuid.toString()));
       // Don't include WSM's SA as a manager. This is true for all workspaces and not useful to
       // callers.
