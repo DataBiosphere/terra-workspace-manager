@@ -2,7 +2,6 @@ package bio.terra.workspace.common.utils;
 
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.ArgumentMatchers.any;
 
 import bio.terra.common.exception.MissingRequiredFieldException;
 import bio.terra.stairway.FlightDebugInfo;
@@ -16,13 +15,10 @@ import bio.terra.workspace.service.job.JobServiceTestFlight;
 import bio.terra.workspace.service.workspace.model.OperationType;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.MockBean;
 
@@ -37,16 +33,6 @@ public class WorkspaceActivityLogHookTest extends BaseUnitTest {
   @Autowired private WorkspaceDao workspaceDao;
   @Autowired private WorkspaceActivityLogDao activityLogDao;
   @MockBean private SamService mockSamService;
-
-  @BeforeEach
-  @SuppressFBWarnings(value = "DE_MIGHT_IGNORE", justification = "Mockito flakiness")
-  void setup() {
-    try {
-      Mockito.doReturn(true).when(mockSamService.isAuthorized(any(), any(), any(), any()));
-    } catch (Exception e) {
-      // How does a mock even throw an exception?
-    }
-  }
 
   /**
    * Reset the {@link JobService} {@link FlightDebugInfo} after each test so that future submissions

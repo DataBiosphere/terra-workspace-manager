@@ -22,6 +22,8 @@ public class WorkspaceActivityLogDao {
 
   private final NamedParameterJdbcTemplate jdbcTemplate;
 
+  // These fields don't update workspace "Last updated" time in UI. For example,
+  // if a workspace reader is added, UI workspace "Last updated" time doesn't change.
   private static final Set<String> NON_UPDATE_TYPE_OPERATION =
       ImmutableSet.of(
           OperationType.GRANT_WORKSPACE_ROLE.name(),
