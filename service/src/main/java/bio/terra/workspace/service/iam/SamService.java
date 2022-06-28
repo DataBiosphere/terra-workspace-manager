@@ -377,7 +377,6 @@ public class SamService {
    * @param resourceType The Sam type of the resource being checked
    * @param resourceId The ID of the resource being checked
    * @param action The action being checked on the resource
-   * @return
    */
   @Traced
   public void checkAuthz(

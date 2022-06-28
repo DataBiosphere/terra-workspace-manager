@@ -168,7 +168,6 @@ public class WorkspaceService {
             () -> samService.listWorkspaceIdsAndHighestRoles(userRequest), "listWorkspaceIds");
     return workspaceDao
         .getWorkspacesMatchingList(samWorkspaceIdsAndHighestRoles.keySet(), offset, limit)
-        // For each workspace, set highest role from SAM
         .stream()
         .map(
             workspace ->
