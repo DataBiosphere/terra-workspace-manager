@@ -8,8 +8,6 @@ import bio.terra.workspace.api.WorkspaceApi;
 import bio.terra.workspace.client.ApiException;
 import bio.terra.workspace.model.CreateWorkspaceRequestBody;
 import bio.terra.workspace.model.CreatedWorkspace;
-import bio.terra.workspace.model.GrantRoleRequestBody;
-import bio.terra.workspace.model.IamRole;
 import bio.terra.workspace.model.WorkspaceStageModel;
 import java.util.List;
 import java.util.Map;
@@ -82,13 +80,6 @@ public abstract class WorkspaceAllocateTestScriptBase extends WorkspaceApiTestSc
     final CreatedWorkspace workspace = workspaceApi.createWorkspace(requestBody);
     assertThat(workspace.getId(), equalTo(workspaceUuid));
     return workspace;
-  }
-
-  protected void grantRole(
-      UUID workspaceUuid, WorkspaceApi workspaceApi, String userEmail, IamRole role)
-      throws Exception {
-    final var requestBody = new GrantRoleRequestBody().memberEmail(userEmail);
-    workspaceApi.grantRole(requestBody, workspaceUuid, role);
   }
 
   /**

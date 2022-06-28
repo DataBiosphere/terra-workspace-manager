@@ -2,7 +2,6 @@ package bio.terra.workspace.service.iam.model;
 
 import bio.terra.common.exception.InternalServerErrorException;
 import bio.terra.workspace.generated.model.ApiIamRole;
-import com.google.common.base.Preconditions;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
@@ -49,15 +48,8 @@ public enum WsmIamRole {
     }
 
     if (roles.contains(WsmIamRole.APPLICATION)) {
-      Preconditions.checkState(
-          roles.size() == 1,
-          String.format(
-              "Workspace %s has APPLICATION with other roles: %s. APPLICATION must be only role",
-              workspaceId.toString(), roles));
       return WsmIamRole.APPLICATION;
-    }
-
-    if (roles.contains(WsmIamRole.OWNER)) {
+    } else if (roles.contains(WsmIamRole.OWNER)) {
       return WsmIamRole.OWNER;
     } else if (roles.contains(WsmIamRole.WRITER)) {
       return WsmIamRole.WRITER;

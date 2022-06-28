@@ -68,10 +68,12 @@ import bio.terra.workspace.service.workspace.flight.CheckSamWorkspaceAuthzStep;
 import bio.terra.workspace.service.workspace.flight.CreateWorkspaceAuthzStep;
 import bio.terra.workspace.service.workspace.flight.CreateWorkspaceStep;
 import bio.terra.workspace.service.workspace.model.Workspace;
+import bio.terra.workspace.service.workspace.model.WorkspaceAndHighestRole;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
 import com.google.api.services.cloudresourcemanager.v3.model.Project;
 import com.google.common.collect.ImmutableList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
@@ -122,11 +124,6 @@ class WorkspaceServiceTest extends BaseConnectedTest {
                 Mockito.any(),
                 eq(SamSpendProfileAction.LINK)))
         .thenReturn(true);
-
-    // By default, requester has owner role on workspace
-    Mockito.when(mockSamService.listRequesterRoles(any(), any(), any()))
-        .thenReturn(ImmutableList.of(WsmIamRole.OWNER));
-
     final String policyGroup = "terra-workspace-manager-test-group@googlegroups.com";
     // Return a valid google group for cloud sync, as Google validates groups added to GCP projects.
     Mockito.when(mockSamService.syncWorkspacePolicy(any(), any(), any())).thenReturn(policyGroup);
@@ -148,13 +145,29 @@ class WorkspaceServiceTest extends BaseConnectedTest {
   }
 
   @Test
+  void listWorkspacesAndHighestRoles_existing() throws Exception {
+    UUID workspaceId = UUID.randomUUID();
+    Workspace request = defaultRequestBuilder(workspaceId).build();
+    workspaceService.createWorkspace(request, USER_REQUEST);
+
+    Mockito.when(mockSamService.listWorkspaceIdsAndHighestRoles(Mockito.any()))
+        .thenReturn(Map.of(workspaceId, WsmIamRole.OWNER));
+
+    List<WorkspaceAndHighestRole> actual =
+        workspaceService.listWorkspacesAndHighestRoles(USER_REQUEST, /*offset=*/ 0, /*limit=*/ 10);
+    assertEquals(1, actual.size());
+    assertEquals(request.getWorkspaceId(), actual.get(0).workspace().getWorkspaceId());
+    assertEquals(WsmIamRole.OWNER, actual.get(0).highestRole());
+  }
+
+  @Test
   void getWorkspace_existing() {
     Workspace request = defaultRequestBuilder(UUID.randomUUID()).build();
     workspaceService.createWorkspace(request, USER_REQUEST);
 
-    Workspace gotWorkspace = workspaceService.getWorkspace(request.getWorkspaceId(), USER_REQUEST);
-    assertEquals(request.getWorkspaceId(), gotWorkspace.getWorkspaceId());
-    assertEquals(WsmIamRole.OWNER, gotWorkspace.getHighestRole());
+    assertEquals(
+        request.getWorkspaceId(),
+        workspaceService.getWorkspace(request.getWorkspaceId(), USER_REQUEST).getWorkspaceId());
   }
 
   @Test
@@ -193,10 +206,9 @@ class WorkspaceServiceTest extends BaseConnectedTest {
     Workspace request = defaultRequestBuilder(UUID.randomUUID()).userFacingId(userFacingId).build();
     workspaceService.createWorkspace(request, USER_REQUEST);
 
-    Workspace gotWorkspace =
-        workspaceService.getWorkspaceByUserFacingId(userFacingId, USER_REQUEST);
-    assertEquals(request.getWorkspaceId(), gotWorkspace.getWorkspaceId());
-    assertEquals(WsmIamRole.OWNER, gotWorkspace.getHighestRole());
+    assertEquals(
+        request.getWorkspaceId(),
+        workspaceService.getWorkspaceByUserFacingId(userFacingId, USER_REQUEST).getWorkspaceId());
   }
 
   @Test
@@ -230,6 +242,18 @@ class WorkspaceServiceTest extends BaseConnectedTest {
     assertThrows(
         ForbiddenException.class,
         () -> workspaceService.getWorkspaceByUserFacingId(userFacingId, USER_REQUEST));
+  }
+
+  @Test
+  void getHighestRole_existing() {
+    Mockito.when(mockSamService.listRequesterRoles(Mockito.any(), Mockito.any(), Mockito.any()))
+        .thenReturn(ImmutableList.of(WsmIamRole.OWNER, WsmIamRole.WRITER));
+
+    Workspace request = defaultRequestBuilder(UUID.randomUUID()).build();
+    workspaceService.createWorkspace(request, USER_REQUEST);
+
+    assertEquals(
+        WsmIamRole.OWNER, workspaceService.getHighestRole(request.getWorkspaceId(), USER_REQUEST));
   }
 
   @Test
@@ -353,9 +377,6 @@ class WorkspaceServiceTest extends BaseConnectedTest {
 
     var updatedDateAfterWorkspaceUpdate = workspaceActivityLogDao.getLastUpdatedDate(workspaceUuid);
     assertTrue(lastUpdatedDate.get().isBefore(updatedDateAfterWorkspaceUpdate.get()));
-
-    // Make sure returned workspace has highest role set
-    assertEquals(WsmIamRole.OWNER, updatedWorkspace.getHighestRole());
 
     assertEquals(userFacingId, updatedWorkspace.getUserFacingId());
     assertTrue(updatedWorkspace.getDisplayName().isPresent());

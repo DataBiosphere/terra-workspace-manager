@@ -2,25 +2,20 @@ package bio.terra.workspace.service.workspace;
 
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.ArgumentMatchers.any;
 
 import bio.terra.workspace.app.configuration.external.AzureTestConfiguration;
 import bio.terra.workspace.common.BaseAzureTest;
 import bio.terra.workspace.connected.WorkspaceConnectedTestUtils;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
-import bio.terra.workspace.service.iam.model.WsmIamRole;
 import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.spendprofile.SpendConnectedTestUtils;
 import bio.terra.workspace.service.workspace.model.AzureCloudContext;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
-import com.google.common.collect.ImmutableList;
 import java.util.Optional;
 import java.util.UUID;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.MockBean;
 
@@ -32,12 +27,6 @@ public class AzureWorkspaceTest extends BaseAzureTest {
   @Autowired private WorkspaceConnectedTestUtils testUtils;
   @Autowired private WorkspaceService workspaceService;
   @MockBean private SamService mockSamService;
-
-  @BeforeEach
-  void setup() throws InterruptedException {
-    Mockito.when(mockSamService.listRequesterRoles(any(), any(), any()))
-        .thenReturn(ImmutableList.of(WsmIamRole.OWNER));
-  }
 
   @Test
   void createGetDeleteAzureContext() {

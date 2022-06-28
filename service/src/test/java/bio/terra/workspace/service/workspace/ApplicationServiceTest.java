@@ -6,7 +6,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.ArgumentMatchers.any;
 
 import bio.terra.workspace.common.BaseUnitTest;
 import bio.terra.workspace.db.ApplicationDao;
@@ -20,7 +19,6 @@ import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.iam.model.SamConstants.SamResource;
 import bio.terra.workspace.service.iam.model.SamConstants.SamSpendProfileAction;
-import bio.terra.workspace.service.iam.model.WsmIamRole;
 import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.ControlledGcsBucketAttributes;
 import bio.terra.workspace.service.resource.controlled.model.AccessScopeType;
@@ -37,7 +35,6 @@ import bio.terra.workspace.service.workspace.model.WorkspaceStage;
 import bio.terra.workspace.service.workspace.model.WsmApplication;
 import bio.terra.workspace.service.workspace.model.WsmApplicationState;
 import bio.terra.workspace.service.workspace.model.WsmWorkspaceApplication;
-import com.google.common.collect.ImmutableList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -135,8 +132,6 @@ public class ApplicationServiceTest extends BaseUnitTest {
             mockSamService.isAuthorized(
                 Mockito.any(), Mockito.eq(SamResource.WORKSPACE), Mockito.any(), Mockito.any()))
         .thenReturn(true);
-    Mockito.when(mockSamService.listRequesterRoles(any(), any(), any()))
-        .thenReturn(ImmutableList.of(WsmIamRole.OWNER));
 
     appService.enableTestMode();
     // Populate the applications - this should be idempotent since we are

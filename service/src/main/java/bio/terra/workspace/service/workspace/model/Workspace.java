@@ -1,6 +1,5 @@
 package bio.terra.workspace.service.workspace.model;
 
-import bio.terra.workspace.service.iam.model.WsmIamRole;
 import bio.terra.workspace.service.spendprofile.SpendProfileId;
 import bio.terra.workspace.service.workspace.exceptions.MissingRequiredFieldsException;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
@@ -28,8 +27,6 @@ public class Workspace {
   private final SpendProfileId spendProfileId;
   private final Map<String, String> properties;
   private final WorkspaceStage workspaceStage;
-
-  private WsmIamRole highestRole;
 
   public Workspace(
       UUID workspaceId,
@@ -87,14 +84,6 @@ public class Workspace {
   /** Feature flag indicating whether this workspace uses MC Terra features. */
   public WorkspaceStage getWorkspaceStage() {
     return workspaceStage;
-  }
-
-  public WsmIamRole getHighestRole() {
-    return highestRole;
-  }
-
-  public void setHighestRole(WsmIamRole highestRole) {
-    this.highestRole = highestRole;
   }
 
   @Override

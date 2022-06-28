@@ -29,6 +29,7 @@ import bio.terra.workspace.service.workspace.flight.create.azure.CreateAzureCont
 import bio.terra.workspace.service.workspace.model.AzureCloudContext;
 import bio.terra.workspace.service.workspace.model.OperationType;
 import bio.terra.workspace.service.workspace.model.Workspace;
+import bio.terra.workspace.service.workspace.model.WorkspaceAndHighestRole;
 import io.opencensus.contrib.spring.aop.Traced;
 import java.util.List;
 import java.util.Map;
@@ -144,27 +145,11 @@ public class WorkspaceService {
         workspaceUuid,
         action);
     Workspace workspace = workspaceDao.getWorkspace(workspaceUuid);
-    return validateWorkspaceAndAction_inner(userRequest, workspace, action);
-  }
-
-  @Traced
-  private Workspace validateWorkspaceAndAction_inner(
-      AuthenticatedUserRequest userRequest, Workspace workspace, String action) {
-    UUID workspaceUuid = workspace.getWorkspaceId();
     SamRethrow.onInterrupted(
         () ->
             samService.checkAuthz(
                 userRequest, SamConstants.SamResource.WORKSPACE, workspaceUuid.toString(), action),
         "checkAuthz");
-
-    List<WsmIamRole> requesterRoles =
-        SamRethrow.onInterrupted(
-            () ->
-                samService.listRequesterRoles(
-                    userRequest, SamConstants.SamResource.WORKSPACE, workspaceUuid.toString()),
-            "listRequesterRoles");
-    workspace.setHighestRole(WsmIamRole.getHighestRole(workspaceUuid, requesterRoles));
-
     return workspace;
   }
 
@@ -176,21 +161,20 @@ public class WorkspaceService {
    * @param limit The maximum number of items to return.
    */
   @Traced
-  public List<Workspace> listWorkspaces(
+  public List<WorkspaceAndHighestRole> listWorkspacesAndHighestRoles(
       AuthenticatedUserRequest userRequest, int offset, int limit) {
-    Map<UUID, WsmIamRole> samWorkspaceIdsAndRoles =
+    Map<UUID, WsmIamRole> samWorkspaceIdsAndHighestRoles =
         SamRethrow.onInterrupted(
-            () -> samService.listWorkspaceIdsAndRoles(userRequest), "listWorkspaceIds");
+            () -> samService.listWorkspaceIdsAndHighestRoles(userRequest), "listWorkspaceIds");
     return workspaceDao
-        .getWorkspacesMatchingList(samWorkspaceIdsAndRoles.keySet(), offset, limit)
+        .getWorkspacesMatchingList(samWorkspaceIdsAndHighestRoles.keySet(), offset, limit)
         // For each workspace, set highest role from SAM
         .stream()
         .map(
-            workspace -> {
-              workspace.setHighestRole(samWorkspaceIdsAndRoles.get(workspace.getWorkspaceId()));
-              return workspace;
-            })
-        .collect(Collectors.toList());
+            workspace ->
+                new WorkspaceAndHighestRole(
+                    workspace, samWorkspaceIdsAndHighestRoles.get(workspace.getWorkspaceId())))
+        .toList();
   }
 
   /** Retrieves an existing workspace by ID */
@@ -208,8 +192,27 @@ public class WorkspaceService {
         userRequest,
         userFacingId);
     Workspace workspace = workspaceDao.getWorkspaceByUserFacingId(userFacingId);
-    return validateWorkspaceAndAction_inner(
-        userRequest, workspace, SamConstants.SamWorkspaceAction.READ);
+    SamRethrow.onInterrupted(
+        () ->
+            samService.checkAuthz(
+                userRequest,
+                SamConstants.SamResource.WORKSPACE,
+                workspace.getWorkspaceId().toString(),
+                SamWorkspaceAction.READ),
+        "checkAuthz");
+    return workspace;
+  }
+
+  @Traced
+  public WsmIamRole getHighestRole(UUID uuid, AuthenticatedUserRequest userRequest) {
+    logger.info("getHighestRole - userRequest: {}\nuserFacingId: {}", userRequest, uuid.toString());
+    List<WsmIamRole> requesterRoles =
+        SamRethrow.onInterrupted(
+            () ->
+                samService.listRequesterRoles(
+                    userRequest, SamConstants.SamResource.WORKSPACE, uuid.toString()),
+            "listRequesterRoles");
+    return WsmIamRole.getHighestRole(uuid, requesterRoles);
   }
 
   /**

@@ -459,7 +459,7 @@ components:
 
     WorkspaceDescription:
       type: object
-      required: [id, userFacingId]
+      required: [id, userFacingId, highestRole]
       properties:
         id:
           description: The ID of the workspace. Immutable.

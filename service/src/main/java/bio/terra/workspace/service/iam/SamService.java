@@ -241,7 +241,7 @@ public class SamService {
    * @return map from workspace ID to highest SAM role
    */
   @Traced
-  public Map<UUID, WsmIamRole> listWorkspaceIdsAndRoles(AuthenticatedUserRequest userRequest)
+  public Map<UUID, WsmIamRole> listWorkspaceIdsAndHighestRoles(AuthenticatedUserRequest userRequest)
       throws InterruptedException {
     ResourcesApi resourceApi = samResourcesApi(userRequest.getRequiredToken());
     Map<UUID, WsmIamRole> workspacesAndRoles = new HashMap<>();

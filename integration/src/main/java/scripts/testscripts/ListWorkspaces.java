@@ -8,6 +8,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import bio.terra.testrunner.runner.config.TestUserSpecification;
 import bio.terra.workspace.api.WorkspaceApi;
+import bio.terra.workspace.model.GrantRoleRequestBody;
 import bio.terra.workspace.model.IamRole;
 import bio.terra.workspace.model.WorkspaceDescription;
 import bio.terra.workspace.model.WorkspaceDescriptionList;
@@ -36,7 +37,10 @@ public class ListWorkspaces extends WorkspaceAllocateTestScriptBase {
     workspaceId2 = UUID.randomUUID();
     createWorkspace(workspaceId2, getSpendProfileId(), secondUserApi);
     // Add first user as workspace reader
-    grantRole(workspaceId2, secondUserApi, testUsers.get(0).userEmail, IamRole.READER);
+    secondUserApi.grantRole(
+        new GrantRoleRequestBody().memberEmail(testUsers.get(0).userEmail),
+        getWorkspaceId(),
+        IamRole.READER);
   }
 
   @Override
