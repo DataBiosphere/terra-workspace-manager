@@ -478,7 +478,7 @@ components:
           type: string
         highestRole:
           description: |
-            Highest role. If requester is both reader and writer, writer will be
+            Highest role of requester. If requester is both reader and writer, writer will be
             returned.
           $ref: '#/components/schemas/IamRole'
         spendProfile:
