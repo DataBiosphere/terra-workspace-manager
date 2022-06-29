@@ -14,6 +14,7 @@ import bio.terra.workspace.model.ReferenceResourceCommonFields;
 import bio.terra.workspace.model.TerraWorkspaceAttributes;
 import bio.terra.workspace.model.TerraWorkspaceResource;
 import java.util.UUID;
+import org.apache.http.HttpStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import scripts.utils.ClientTestUtils;
@@ -95,9 +96,11 @@ public class ReferencedTerraWorkspaceLifecycle extends GcpWorkspaceCloneTestScri
                     .name(resourceName))
             .referencedWorkspace(
                 new TerraWorkspaceAttributes().referencedWorkspaceId(UUID.randomUUID()));
-    assertThrows(
-        ApiException.class,
-        () -> referencedGcpResourceApi.createTerraWorkspaceReference(body, getWorkspaceId()));
+    var workspaceNotExit =
+        assertThrows(
+            ApiException.class,
+            () -> referencedGcpResourceApi.createTerraWorkspaceReference(body, getWorkspaceId()));
+    assertEquals(HttpStatus.SC_NOT_FOUND, workspaceNotExit.getCode());
   }
 
   private void testDelete(ReferencedGcpResourceApi referencedGcpResourceApi, UUID createdResourceId)
