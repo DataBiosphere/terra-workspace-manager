@@ -68,15 +68,6 @@ public class WorkspaceActivityLogDaoTest extends BaseUnitTest {
   }
 
   @Test
-  public void writeActivity_nullOperationType_throwsMissingRequiredFieldException() {
-    assertThrows(
-        MissingRequiredFieldsException.class,
-        () ->
-            activityLogDao.writeActivity(
-                UUID.randomUUID(), new DbWorkspaceActivityLog().operationType(null)));
-  }
-
-  @Test
   public void getLastUpdatedDate_systemCleanup_filterNonUpdateOperations() {
     var workspaceId = UUID.randomUUID();
     activityLogDao.writeActivity(

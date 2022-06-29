@@ -70,7 +70,7 @@ public class WorkspaceActivityLogHook implements StairwayHook {
     if (operationType == null) {
       // The operation type will only be null if the flight is launched directly through stairway
       // and skipped JobService. This should only happen to sub-flight and in test. We skip the
-      // logging in these cases.
+      // activity logging in these cases.
       logger.warn("Operation type is null, this is only OK if it's from a sub-flight");
       return HookAction.CONTINUE;
     }
