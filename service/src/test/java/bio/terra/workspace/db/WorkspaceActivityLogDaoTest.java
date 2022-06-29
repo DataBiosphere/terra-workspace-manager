@@ -7,6 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import bio.terra.workspace.common.BaseUnitTest;
 import bio.terra.workspace.db.exception.UnknownFlightOperationTypeException;
 import bio.terra.workspace.db.model.DbWorkspaceActivityLog;
+import bio.terra.workspace.service.workspace.exceptions.MissingRequiredFieldsException;
 import bio.terra.workspace.service.workspace.model.OperationType;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
@@ -64,6 +65,15 @@ public class WorkspaceActivityLogDaoTest extends BaseUnitTest {
     assertTrue(firstUpdatedDate.get().isBefore(secondUpdatedDate.get()));
     assertTrue(secondUpdatedDate.get().isBefore(thirdUpdatedDate.get()));
     assertTrue(thirdUpdatedDate.get().isBefore(fourthUpdateDate.get()));
+  }
+
+  @Test
+  public void writeActivity_nullOperationType_throwsMissingRequiredFieldException() {
+    assertThrows(
+        MissingRequiredFieldsException.class,
+        () ->
+            activityLogDao.writeActivity(
+                UUID.randomUUID(), new DbWorkspaceActivityLog().operationType(null)));
   }
 
   @Test
