@@ -35,7 +35,6 @@ import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.exceptions.MissingSpendProfileException;
 import bio.terra.workspace.service.workspace.exceptions.NoBillingAccountException;
 import bio.terra.workspace.service.workspace.model.GcpCloudContext;
-import bio.terra.workspace.service.workspace.model.OperationType;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
 import com.google.api.services.cloudresourcemanager.v3.model.Binding;
@@ -287,7 +286,6 @@ class CreateGcpContextFlightV2Test extends BaseConnectedTest {
     FlightMap inputs = new FlightMap();
     inputs.put(WorkspaceFlightMapKeys.WORKSPACE_ID, workspaceUuid.toString());
     inputs.put(JobMapKeys.AUTH_USER_INFO.getKeyName(), userRequest);
-    inputs.put(WorkspaceFlightMapKeys.OPERATION_TYPE, OperationType.CREATE);
     return inputs;
   }
 
