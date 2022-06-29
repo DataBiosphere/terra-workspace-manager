@@ -1,8 +1,6 @@
 package bio.terra.workspace.app.controller;
 
-import bio.terra.common.exception.ForbiddenException;
 import bio.terra.workspace.db.WorkspaceDao;
-import bio.terra.workspace.db.exception.WorkspaceNotFoundException;
 import bio.terra.workspace.generated.controller.ReferencedGcpResourceApi;
 import bio.terra.workspace.generated.model.ApiCloneReferencedGcpBigQueryDataTableResourceResult;
 import bio.terra.workspace.generated.model.ApiCloneReferencedGcpBigQueryDatasetResourceResult;
@@ -46,7 +44,6 @@ import bio.terra.workspace.service.resource.referenced.cloud.gcp.datareposnapsho
 import bio.terra.workspace.service.resource.referenced.cloud.gcp.gcsbucket.ReferencedGcsBucketResource;
 import bio.terra.workspace.service.resource.referenced.cloud.gcp.gcsobject.ReferencedGcsObjectResource;
 import bio.terra.workspace.service.resource.referenced.terra.workspace.ReferencedTerraWorkspaceResource;
-import bio.terra.workspace.service.workspace.WorkspaceService;
 import java.util.Optional;
 import java.util.UUID;
 import javax.servlet.http.HttpServletRequest;

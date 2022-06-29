@@ -82,7 +82,8 @@ public class ReferencedTerraWorkspaceLifecycle extends GcpWorkspaceCloneTestScri
     return createdResource.getMetadata().getResourceId();
   }
 
-  private void testAttemptToCreateReferenceToNonExistingWorkspace(ReferencedGcpResourceApi referencedGcpResourceApi) {
+  private void testAttemptToCreateReferenceToNonExistingWorkspace(
+      ReferencedGcpResourceApi referencedGcpResourceApi) {
     String resourceName = TestUtils.appendRandomNumber("terra-workspace-reference");
 
     // Create resource
@@ -96,8 +97,7 @@ public class ReferencedTerraWorkspaceLifecycle extends GcpWorkspaceCloneTestScri
                 new TerraWorkspaceAttributes().referencedWorkspaceId(UUID.randomUUID()));
     assertThrows(
         ApiException.class,
-        () ->
-        referencedGcpResourceApi.createTerraWorkspaceReference(body, getWorkspaceId()));
+        () -> referencedGcpResourceApi.createTerraWorkspaceReference(body, getWorkspaceId()));
   }
 
   private void testDelete(ReferencedGcpResourceApi referencedGcpResourceApi, UUID createdResourceId)
