@@ -24,8 +24,6 @@
         <Bug pattern="EI_EXPOSE_REP,EI_EXPOSE_REP2,THROWS_METHOD_THROWS_RUNTIMEEXCEPTION,THROWS_METHOD_THROWS_CLAUSE_BASIC_EXCEPTION,THROWS_METHOD_THROWS_CLAUSE_THROWABLE"/>
     </Match>
 
-    EI_EXPOSE_REP2
-
     <!-- Do not check class -->
     <!--<Match>-->
         <!--<Class name="com.foobar.ClassNotToBeAnalyzed" />-->
