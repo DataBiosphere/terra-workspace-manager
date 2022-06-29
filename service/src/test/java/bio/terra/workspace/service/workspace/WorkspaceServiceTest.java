@@ -22,6 +22,7 @@ import bio.terra.stairway.StepStatus;
 import bio.terra.workspace.common.BaseConnectedTest;
 import bio.terra.workspace.connected.WorkspaceConnectedTestUtils;
 import bio.terra.workspace.db.ResourceDao;
+import bio.terra.workspace.db.WorkspaceActivityLogDao;
 import bio.terra.workspace.db.exception.WorkspaceNotFoundException;
 import bio.terra.workspace.generated.model.ApiCloneResourceResult;
 import bio.terra.workspace.generated.model.ApiClonedWorkspace;
@@ -105,6 +106,7 @@ class WorkspaceServiceTest extends BaseConnectedTest {
   @Autowired private SpendConnectedTestUtils spendUtils;
   @Autowired private WorkspaceConnectedTestUtils testUtils;
   @Autowired private WorkspaceService workspaceService;
+  @Autowired private WorkspaceActivityLogDao workspaceActivityLogDao;
 
   @BeforeEach
   void setup() throws Exception {
@@ -321,13 +323,15 @@ class WorkspaceServiceTest extends BaseConnectedTest {
     propertyMap.put("xyzzy", "plohg");
     Workspace request = defaultRequestBuilder(UUID.randomUUID()).properties(propertyMap).build();
     workspaceService.createWorkspace(request, USER_REQUEST);
+    UUID workspaceUuid = request.getWorkspaceId();
+    var lastUpdatedDate = workspaceActivityLogDao.getLastUpdatedDate(workspaceUuid);
+    assertTrue(lastUpdatedDate.isPresent());
     Workspace createdWorkspace =
         workspaceService.getWorkspace(request.getWorkspaceId(), USER_REQUEST);
     assertEquals(request.getWorkspaceId(), createdWorkspace.getWorkspaceId());
     assertEquals("", createdWorkspace.getDisplayName().orElse(null));
     assertEquals("", createdWorkspace.getDescription().orElse(null));
 
-    UUID workspaceUuid = request.getWorkspaceId();
     String userFacingId = "my-user-facing-id";
     String name = "My workspace";
     String description = "The greatest workspace";
@@ -338,6 +342,9 @@ class WorkspaceServiceTest extends BaseConnectedTest {
     Workspace updatedWorkspace =
         workspaceService.updateWorkspace(
             USER_REQUEST, workspaceUuid, userFacingId, name, description, propertyMap2);
+
+    var updatedDateAfterWorkspaceUpdate = workspaceActivityLogDao.getLastUpdatedDate(workspaceUuid);
+    assertTrue(lastUpdatedDate.get().isBefore(updatedDateAfterWorkspaceUpdate.get()));
 
     assertEquals(userFacingId, updatedWorkspace.getUserFacingId());
     assertTrue(updatedWorkspace.getDisplayName().isPresent());
@@ -352,6 +359,12 @@ class WorkspaceServiceTest extends BaseConnectedTest {
         workspaceService.updateWorkspace(
             USER_REQUEST, workspaceUuid, null, null, otherDescription, null);
 
+    var secondUpdatedDateAfterWorkspaceUpdate =
+        workspaceActivityLogDao.getLastUpdatedDate(workspaceUuid);
+    assertTrue(
+        updatedDateAfterWorkspaceUpdate
+            .get()
+            .isBefore(secondUpdatedDateAfterWorkspaceUpdate.get()));
     // Since name is null, leave it alone. Description should be updated.
     assertTrue(secondUpdatedWorkspace.getDisplayName().isPresent());
     assertEquals(name, secondUpdatedWorkspace.getDisplayName().get());
@@ -364,6 +377,13 @@ class WorkspaceServiceTest extends BaseConnectedTest {
     Workspace thirdUpdatedWorkspace =
         workspaceService.updateWorkspace(
             USER_REQUEST, workspaceUuid, userFacingId, "", "", propertyMap3);
+
+    var thirdUpdatedDateAfterWorkspaceUpdate =
+        workspaceActivityLogDao.getLastUpdatedDate(workspaceUuid);
+    assertTrue(
+        secondUpdatedDateAfterWorkspaceUpdate
+            .get()
+            .isBefore(thirdUpdatedDateAfterWorkspaceUpdate.get()));
     assertTrue(thirdUpdatedWorkspace.getDisplayName().isPresent());
     assertEquals("", thirdUpdatedWorkspace.getDisplayName().get());
     assertTrue(thirdUpdatedWorkspace.getDescription().isPresent());
@@ -374,6 +394,8 @@ class WorkspaceServiceTest extends BaseConnectedTest {
         MissingRequiredFieldException.class,
         () ->
             workspaceService.updateWorkspace(USER_REQUEST, workspaceUuid, null, null, null, null));
+    var failedUpdateDate = workspaceActivityLogDao.getLastUpdatedDate(workspaceUuid);
+    assertEquals(thirdUpdatedDateAfterWorkspaceUpdate.get(), failedUpdateDate.get());
   }
 
   @Test

@@ -2,7 +2,9 @@ package bio.terra.workspace.service.workspace;
 
 import bio.terra.workspace.app.configuration.external.BufferServiceConfiguration;
 import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
+import bio.terra.workspace.db.WorkspaceActivityLogDao;
 import bio.terra.workspace.db.WorkspaceDao;
+import bio.terra.workspace.db.model.DbWorkspaceActivityLog;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamRethrow;
 import bio.terra.workspace.service.iam.SamService;
@@ -60,6 +62,7 @@ public class WorkspaceService {
   private final BufferServiceConfiguration bufferServiceConfiguration;
   private final StageService stageService;
   private final FeatureConfiguration features;
+  private final WorkspaceActivityLogDao workspaceActivityLogDao;
 
   @Autowired
   public WorkspaceService(
@@ -70,7 +73,8 @@ public class WorkspaceService {
       StageService stageService,
       AzureCloudContextService azureCloudContextService,
       GcpCloudContextService gcpCloudContextService,
-      FeatureConfiguration features) {
+      FeatureConfiguration features,
+      WorkspaceActivityLogDao workspaceActivityLogDao) {
     this.jobService = jobService;
     this.workspaceDao = workspaceDao;
     this.samService = samService;
@@ -79,6 +83,7 @@ public class WorkspaceService {
     this.azureCloudContextService = azureCloudContextService;
     this.gcpCloudContextService = gcpCloudContextService;
     this.features = features;
+    this.workspaceActivityLogDao = workspaceActivityLogDao;
   }
 
   /** Create a workspace with the specified parameters. Returns workspaceID of the new workspace. */
@@ -207,7 +212,10 @@ public class WorkspaceService {
       @Nullable String description,
       @Nullable Map<String, String> properties) {
     validateWorkspaceAndAction(userRequest, workspaceUuid, SamConstants.SamWorkspaceAction.WRITE);
-    workspaceDao.updateWorkspace(workspaceUuid, userFacingId, name, description, properties);
+    if (workspaceDao.updateWorkspace(workspaceUuid, userFacingId, name, description, properties)) {
+      workspaceActivityLogDao.writeActivity(
+          workspaceUuid, new DbWorkspaceActivityLog().operationType(OperationType.UPDATE));
+    }
     return workspaceDao.getWorkspace(workspaceUuid);
   }
 
@@ -256,6 +264,7 @@ public class WorkspaceService {
         .newJob()
         .description("Create Azure Cloud Context " + workspaceUuid)
         .jobId(jobId)
+        .operationType(OperationType.CREATE)
         .workspaceId(workspaceUuid.toString())
         .flightClass(CreateAzureContextFlight.class)
         .request(azureContext)
@@ -477,7 +486,7 @@ public class WorkspaceService {
                 role.name(), targetUserEmail, workspaceUuid))
         .flightClass(RemoveUserFromWorkspaceFlight.class)
         .userRequest(executingUserRequest)
-        .operationType(OperationType.DELETE)
+        .operationType(OperationType.REMOVE_WORKSPACE_ROLE)
         .workspaceId(workspaceUuid.toString())
         .addParameter(WorkspaceFlightMapKeys.USER_TO_REMOVE, targetUserEmail)
         .addParameter(WorkspaceFlightMapKeys.ROLE_TO_REMOVE, role)
