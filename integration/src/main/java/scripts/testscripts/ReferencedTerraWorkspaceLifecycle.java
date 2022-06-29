@@ -100,7 +100,7 @@ public class ReferencedTerraWorkspaceLifecycle extends GcpWorkspaceCloneTestScri
         assertThrows(
             ApiException.class,
             () -> referencedGcpResourceApi.createTerraWorkspaceReference(body, getWorkspaceId()));
-    assertEquals(HttpStatus.SC_NOT_FOUND, workspaceNotExit.getCode());
+    assertEquals(HttpStatus.SC_NOT_FOUND, workspaceNotExist.getCode());
   }
 
   private void testDelete(ReferencedGcpResourceApi referencedGcpResourceApi, UUID createdResourceId)
