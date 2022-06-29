@@ -39,7 +39,7 @@ public class ListWorkspaces extends WorkspaceAllocateTestScriptBase {
     // Add first user as workspace reader
     secondUserApi.grantRole(
         new GrantRoleRequestBody().memberEmail(testUsers.get(0).userEmail),
-        getWorkspaceId(),
+        workspaceId2,
         IamRole.READER);
   }
 
