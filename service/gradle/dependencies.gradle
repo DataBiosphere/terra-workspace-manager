@@ -19,6 +19,9 @@ dependencies {
   }
   implementation group: "org.broadinstitute.dsde.workbench", name: "sam-client_2.13", version: "0.1-4962144-SNAP"
   implementation group: "bio.terra", name: "terra-resource-buffer-client", version: "0.4.3-SNAPSHOT"
+  // Required by Sam client
+  implementation group: "com.squareup.okhttp3", name: "okhttp", version: "4.9.1"
+  implementation group: "com.squareup.okhttp3", name: "logging-interceptor", version: "4.9.1"
 
   // Cloud Resource Library
   implementation group: 'bio.terra', name: 'terra-cloud-resource-lib', version: "1.2.0-SNAPSHOT"
