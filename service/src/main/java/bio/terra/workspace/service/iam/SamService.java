@@ -260,7 +260,8 @@ public class SamService {
     CreateResourceRequestV2 workspaceRequest =
         new CreateResourceRequestV2()
             .resourceId(uuid.toString())
-            .policies(defaultWorkspacePolicies(humanUserEmail));
+            .policies(defaultWorkspacePolicies(humanUserEmail))
+            .authDomain(List.of());
     try {
       SamRetry.retry(
           () -> resourceApi.createResourceV2(SamConstants.SamResource.WORKSPACE, workspaceRequest));
@@ -863,7 +864,8 @@ public class SamService {
     CreateResourceRequestV2 resourceRequest =
         new CreateResourceRequestV2()
             .resourceId(resource.getResourceId().toString())
-            .parent(workspaceParentFqId);
+            .parent(workspaceParentFqId)
+            .authDomain(List.of());
 
     var builder =
         new ControlledResourceSamPolicyBuilder(
