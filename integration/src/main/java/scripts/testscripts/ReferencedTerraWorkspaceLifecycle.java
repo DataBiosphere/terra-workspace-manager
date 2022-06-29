@@ -96,7 +96,7 @@ public class ReferencedTerraWorkspaceLifecycle extends GcpWorkspaceCloneTestScri
                     .name(resourceName))
             .referencedWorkspace(
                 new TerraWorkspaceAttributes().referencedWorkspaceId(UUID.randomUUID()));
-    var workspaceNotExit =
+    var workspaceNotExist =
         assertThrows(
             ApiException.class,
             () -> referencedGcpResourceApi.createTerraWorkspaceReference(body, getWorkspaceId()));
