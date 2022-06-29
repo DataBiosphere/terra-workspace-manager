@@ -5,6 +5,7 @@ import bio.terra.common.exception.ForbiddenException;
 import bio.terra.common.exception.InternalServerErrorException;
 import bio.terra.common.sam.SamRetry;
 import bio.terra.common.sam.exception.SamExceptionFactory;
+import bio.terra.common.tracing.OkHttpClientTracingInterceptor;
 import bio.terra.workspace.app.configuration.external.SamConfiguration;
 import bio.terra.workspace.common.exception.InternalLogicException;
 import bio.terra.workspace.common.utils.GcpUtils;
@@ -21,6 +22,7 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import io.opencensus.contrib.spring.aop.Traced;
+import io.opencensus.trace.Tracing;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -77,7 +79,12 @@ public class SamService {
     this.samConfig = samConfig;
     this.stageService = stageService;
     this.wsmServiceAccountInitialized = false;
-    this.commonHttpClient = new ApiClient().getHttpClient();
+    this.commonHttpClient =
+        new ApiClient()
+            .getHttpClient()
+            .newBuilder()
+            .addInterceptor(new OkHttpClientTracingInterceptor(Tracing.getTracer()))
+            .build();
   }
 
   private ApiClient getApiClient(String accessToken) {
