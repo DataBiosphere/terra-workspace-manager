@@ -29,6 +29,7 @@ import bio.terra.workspace.service.workspace.flight.create.azure.CreateAzureCont
 import bio.terra.workspace.service.workspace.model.AzureCloudContext;
 import bio.terra.workspace.service.workspace.model.OperationType;
 import bio.terra.workspace.service.workspace.model.Workspace;
+import bio.terra.workspace.service.workspace.model.WorkspaceAndHighestRole;
 import io.opencensus.contrib.spring.aop.Traced;
 import java.util.List;
 import java.util.Map;
@@ -160,12 +161,19 @@ public class WorkspaceService {
    * @param limit The maximum number of items to return.
    */
   @Traced
-  public List<Workspace> listWorkspaces(
+  public List<WorkspaceAndHighestRole> listWorkspacesAndHighestRoles(
       AuthenticatedUserRequest userRequest, int offset, int limit) {
-    List<UUID> samWorkspaceIds =
+    Map<UUID, WsmIamRole> samWorkspaceIdsAndHighestRoles =
         SamRethrow.onInterrupted(
-            () -> samService.listWorkspaceIds(userRequest), "listWorkspaceIds");
-    return workspaceDao.getWorkspacesMatchingList(samWorkspaceIds, offset, limit);
+            () -> samService.listWorkspaceIdsAndHighestRoles(userRequest), "listWorkspaceIds");
+    return workspaceDao
+        .getWorkspacesMatchingList(samWorkspaceIdsAndHighestRoles.keySet(), offset, limit)
+        .stream()
+        .map(
+            workspace ->
+                new WorkspaceAndHighestRole(
+                    workspace, samWorkspaceIdsAndHighestRoles.get(workspace.getWorkspaceId())))
+        .toList();
   }
 
   /** Retrieves an existing workspace by ID */
@@ -192,6 +200,18 @@ public class WorkspaceService {
                 SamWorkspaceAction.READ),
         "checkAuthz");
     return workspace;
+  }
+
+  @Traced
+  public WsmIamRole getHighestRole(UUID uuid, AuthenticatedUserRequest userRequest) {
+    logger.info("getHighestRole - userRequest: {}\nuserFacingId: {}", userRequest, uuid.toString());
+    List<WsmIamRole> requesterRoles =
+        SamRethrow.onInterrupted(
+            () ->
+                samService.listRequesterRoles(
+                    userRequest, SamConstants.SamResource.WORKSPACE, uuid.toString()),
+            "listRequesterRoles");
+    return WsmIamRole.getHighestRole(uuid, requesterRoles);
   }
 
   /**

@@ -18,6 +18,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
@@ -276,7 +277,7 @@ public class WorkspaceDao {
    * @return list of Workspaces corresponding to input IDs.
    */
   @ReadTransaction
-  public List<Workspace> getWorkspacesMatchingList(List<UUID> idList, int offset, int limit) {
+  public List<Workspace> getWorkspacesMatchingList(Set<UUID> idList, int offset, int limit) {
     // If the incoming list is empty, the caller does not have permission to see any
     // workspaces, so we return an empty list.
     if (idList.isEmpty()) {
