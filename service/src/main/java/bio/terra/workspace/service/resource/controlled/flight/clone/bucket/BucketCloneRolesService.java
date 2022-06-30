@@ -26,11 +26,13 @@ public class BucketCloneRolesService {
     this.crlService = crlService;
   }
 
-  public void addBucketRoles(BucketCloneInputs inputs, String transferServiceSAEmail) {
+  public void addBucketRoles(BucketCloneInputs inputs, String transferServiceSAEmail)
+      throws InterruptedException {
     addOrRemoveBucketIdentities(BucketPolicyIdentityOperation.ADD, inputs, transferServiceSAEmail);
   }
 
-  public void removeBucketRoles(BucketCloneInputs inputs, String transferServiceSAEmail) {
+  public void removeBucketRoles(BucketCloneInputs inputs, String transferServiceSAEmail)
+      throws InterruptedException {
     addOrRemoveBucketIdentities(
         BucketPolicyIdentityOperation.REMOVE, inputs, transferServiceSAEmail);
   }
@@ -39,7 +41,7 @@ public class BucketCloneRolesService {
    * A utility method for flight steps, at least two of which need this exact implementation. Fetch
    * bucket details from the working map along with the correct project ID and remove the roles.
    */
-  public void removeAllAddedBucketRoles(FlightMap workingMap) {
+  public void removeAllAddedBucketRoles(FlightMap workingMap) throws InterruptedException {
     final @Nullable BucketCloneInputs sourceInputs =
         workingMap.get(ControlledResourceKeys.SOURCE_CLONE_INPUTS, BucketCloneInputs.class);
     final @Nullable BucketCloneInputs destinationInputs =
@@ -72,7 +74,8 @@ public class BucketCloneRolesService {
   private void addOrRemoveBucketIdentities(
       BucketPolicyIdentityOperation operation,
       BucketCloneInputs inputs,
-      String transferServiceSAEmail) {
+      String transferServiceSAEmail)
+      throws InterruptedException {
     if (inputs.getRoleNames().isEmpty()) {
       // No-op
       return;
