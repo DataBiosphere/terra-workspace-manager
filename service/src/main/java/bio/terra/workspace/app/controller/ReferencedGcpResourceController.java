@@ -1,5 +1,6 @@
 package bio.terra.workspace.app.controller;
 
+import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.generated.controller.ReferencedGcpResourceApi;
 import bio.terra.workspace.generated.model.ApiCloneReferencedGcpBigQueryDataTableResourceResult;
 import bio.terra.workspace.generated.model.ApiCloneReferencedGcpBigQueryDatasetResourceResult;
@@ -61,6 +62,7 @@ import org.springframework.stereotype.Controller;
 public class ReferencedGcpResourceController implements ReferencedGcpResourceApi {
 
   private final ReferencedResourceService referenceResourceService;
+  private final WorkspaceDao workspaceDao;
   private final AuthenticatedUserRequestFactory authenticatedUserRequestFactory;
   private final ResourceValidationUtils validationUtils;
   private final HttpServletRequest request;
@@ -70,11 +72,13 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
   @Autowired
   public ReferencedGcpResourceController(
       ReferencedResourceService referenceResourceService,
+      WorkspaceDao workspaceDao,
       AuthenticatedUserRequestFactory authenticatedUserRequestFactory,
       ResourceValidationUtils validationUtils,
       HttpServletRequest request,
       PetSaService petSaService) {
     this.referenceResourceService = referenceResourceService;
+    this.workspaceDao = workspaceDao;
     this.authenticatedUserRequestFactory = authenticatedUserRequestFactory;
     this.validationUtils = validationUtils;
     this.request = request;
@@ -934,6 +938,9 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
   public ResponseEntity<ApiTerraWorkspaceResource> createTerraWorkspaceReference(
       UUID workspaceUuid, @Valid ApiCreateTerraWorkspaceReferenceRequestBody body) {
     UUID referencedWorkspaceId = body.getReferencedWorkspace().getReferencedWorkspaceId();
+
+    // Will throw if workspace does not exist or workspace id is null.
+    workspaceDao.getWorkspace(referencedWorkspaceId);
 
     // Construct a ReferencedTerraWorkspaceResource object from the API input
     ReferencedTerraWorkspaceResource resource =

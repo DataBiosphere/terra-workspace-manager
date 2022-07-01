@@ -16,10 +16,14 @@ import java.time.Duration;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 
 /** Utilities for interacting with Google Cloud APIs within {@link Step}s. */
 public class GcpUtils {
+  private static final Logger logger = LoggerFactory.getLogger(GcpUtils.class);
+
   private GcpUtils() {}
 
   /** Try to delete the Project associated with {@code projectId}. */
@@ -90,16 +94,14 @@ public class GcpUtils {
    * @param <T> - type of expected and supplier specialization
    */
   public static <T> void pollUntilEqual(
-      T expected, Supplier<T> supplier, Duration retryInterval, int maxRetries) {
+      T expected, Supplier<T> supplier, Duration retryInterval, int maxRetries)
+      throws InterruptedException {
     T actual = supplier.get();
-    try {
-      int retryAttempts = 0;
-      while (!actual.equals(expected) && retryAttempts++ < maxRetries) {
-        TimeUnit.MILLISECONDS.sleep(retryInterval.toMillis());
-        actual = supplier.get();
-      }
-    } catch (InterruptedException e) {
-      throw new RuntimeException("Interrupted while verifying set value.", e);
+    int retryAttempts = 0;
+    while (!actual.equals(expected) && retryAttempts++ < maxRetries) {
+      TimeUnit.MILLISECONDS.sleep(retryInterval.toMillis());
+      logger.info(String.format("#pollUntilEquals retry attempts: %d", retryAttempts));
+      actual = supplier.get();
     }
   }
 
