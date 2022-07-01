@@ -442,7 +442,8 @@ public class SamService {
                   SamConstants.SamResource.WORKSPACE,
                   workspaceUuid.toString(),
                   role.toSamRole(),
-                  email.toLowerCase()));
+                  email.toLowerCase(),
+                  null));
       logger.info(
           "Granted role {} to user {} in workspace {}", role.toSamRole(), email, workspaceUuid);
     } catch (ApiException apiException) {
@@ -576,7 +577,8 @@ public class SamService {
                   resource.getCategory().getSamResourceName(),
                   resource.getResourceId().toString(),
                   role.toSamRole(),
-                  email));
+                  email,
+                  null));
       logger.info(
           "Restored role {} to user {} on resource {}",
           role.toSamRole(),
