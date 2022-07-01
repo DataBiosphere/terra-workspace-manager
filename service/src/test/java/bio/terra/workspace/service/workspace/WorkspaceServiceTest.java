@@ -637,11 +637,15 @@ class WorkspaceServiceTest extends BaseConnectedTest {
   @Test
   public void cloneGcpWorkspace() {
     // Create a workspace
+    Map<String, String> propertyMap = new HashMap<>();
+    propertyMap.put("foo", "bar");
+    propertyMap.put("xyzzy", "plohg");
     final Workspace sourceWorkspace =
         defaultRequestBuilder(UUID.randomUUID())
             .userFacingId("source-user-facing-id")
             .displayName("Source Workspace")
             .description("The original workspace.")
+            .properties(propertyMap)
             .spendProfileId(new SpendProfileId(SPEND_PROFILE_ID))
             .build();
     final UUID sourceWorkspaceId = workspaceService.createWorkspace(sourceWorkspace, USER_REQUEST);
@@ -723,6 +727,7 @@ class WorkspaceServiceTest extends BaseConnectedTest {
     // destination WS should exist
     final Workspace retrievedDestinationWorkspace =
         workspaceService.getWorkspace(destinationWorkspace.getWorkspaceId(), USER_REQUEST);
+    assertEquals(retrievedDestinationWorkspace.getProperties(), sourceWorkspace.getProperties());
     assertEquals(
         "Destination Workspace", retrievedDestinationWorkspace.getDisplayName().orElseThrow());
     assertEquals(

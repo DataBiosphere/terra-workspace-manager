@@ -424,7 +424,6 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
             .workspaceStage(WorkspaceStage.MC_WORKSPACE)
             .displayName(body.getDisplayName())
             .description(body.getDescription())
-            .properties(propertyMapFromApi(body.getProperties()))
             .build();
 
     final String jobId =

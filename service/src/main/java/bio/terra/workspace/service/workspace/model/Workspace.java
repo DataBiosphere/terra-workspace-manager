@@ -118,6 +118,23 @@ public class Workspace {
         .toHashCode();
   }
 
+  /**
+   * Make a copy of this object via a new builder. This is convenient for reusing objects with one
+   * or two fields changed.
+   *
+   * @return builder object ready for new values to replace existing ones
+   */
+  public Workspace.Builder toBuilder() {
+    return builder()
+        .workspaceId(workspaceId)
+        .userFacingId(userFacingId)
+        .displayName(displayName)
+        .description(description)
+        .spendProfileId(spendProfileId)
+        .properties(properties)
+        .workspaceStage(workspaceStage);
+  }
+
   public static Builder builder() {
     return new Builder();
   }
