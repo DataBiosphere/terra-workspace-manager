@@ -960,7 +960,7 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
             WsmResourceFamily.TERRA_WORKSPACE,
             /*stewardshipType=*/ null,
             /*offset=*/ 0,
-            /*limit=*/ 10,
+            /*limit=*/ 1,
             userRequest);
     Preconditions.checkState(
         referencedWorkspaceTerraWorkspaceResources.isEmpty(),
