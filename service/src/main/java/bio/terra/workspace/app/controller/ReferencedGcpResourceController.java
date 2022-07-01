@@ -33,7 +33,10 @@ import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequestFactory;
 import bio.terra.workspace.service.petserviceaccount.PetSaService;
 import bio.terra.workspace.service.resource.ResourceValidationUtils;
+import bio.terra.workspace.service.resource.WsmResourceService;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
+import bio.terra.workspace.service.resource.model.WsmResource;
+import bio.terra.workspace.service.resource.model.WsmResourceFamily;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.resource.referenced.cloud.any.gitrepo.ReferencedGitRepoResource;
 import bio.terra.workspace.service.resource.referenced.cloud.gcp.ReferencedResource;
@@ -44,6 +47,9 @@ import bio.terra.workspace.service.resource.referenced.cloud.gcp.datareposnapsho
 import bio.terra.workspace.service.resource.referenced.cloud.gcp.gcsbucket.ReferencedGcsBucketResource;
 import bio.terra.workspace.service.resource.referenced.cloud.gcp.gcsobject.ReferencedGcsObjectResource;
 import bio.terra.workspace.service.resource.referenced.terra.workspace.ReferencedTerraWorkspaceResource;
+import bio.terra.workspace.service.workspace.model.Workspace;
+import com.google.common.base.Preconditions;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import javax.servlet.http.HttpServletRequest;
@@ -62,6 +68,7 @@ import org.springframework.stereotype.Controller;
 public class ReferencedGcpResourceController implements ReferencedGcpResourceApi {
 
   private final ReferencedResourceService referenceResourceService;
+  private final WsmResourceService resourceService;
   private final WorkspaceDao workspaceDao;
   private final AuthenticatedUserRequestFactory authenticatedUserRequestFactory;
   private final ResourceValidationUtils validationUtils;
@@ -72,12 +79,14 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
   @Autowired
   public ReferencedGcpResourceController(
       ReferencedResourceService referenceResourceService,
+      WsmResourceService resourceService,
       WorkspaceDao workspaceDao,
       AuthenticatedUserRequestFactory authenticatedUserRequestFactory,
       ResourceValidationUtils validationUtils,
       HttpServletRequest request,
       PetSaService petSaService) {
     this.referenceResourceService = referenceResourceService;
+    this.resourceService = resourceService;
     this.workspaceDao = workspaceDao;
     this.authenticatedUserRequestFactory = authenticatedUserRequestFactory;
     this.validationUtils = validationUtils;
@@ -937,10 +946,25 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
   @Override
   public ResponseEntity<ApiTerraWorkspaceResource> createTerraWorkspaceReference(
       UUID workspaceUuid, @Valid ApiCreateTerraWorkspaceReferenceRequestBody body) {
+    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     UUID referencedWorkspaceId = body.getReferencedWorkspace().getReferencedWorkspaceId();
 
     // Will throw if workspace does not exist or workspace id is null.
-    workspaceDao.getWorkspace(referencedWorkspaceId);
+    Workspace referencedWorkspace = workspaceDao.getWorkspace(referencedWorkspaceId);
+
+    // Make sure referencedWorkspace doesn't have any TERRA_WORKSPACE resources. Current UI doesn't
+    // support more than one level of nesting.
+    List<WsmResource> referencedWorkspaceTerraWorkspaceResources =
+        resourceService.enumerateResources(
+            referencedWorkspaceId,
+            WsmResourceFamily.TERRA_WORKSPACE,
+            /*stewardshipType=*/ null,
+            /*offset=*/ 0,
+            /*limit=*/ 10,
+            userRequest);
+    Preconditions.checkState(
+        referencedWorkspaceTerraWorkspaceResources.isEmpty(),
+        "Cannot create TERRA_WORKSPACE resource pointing to workspace that has TERRA_WORKSPACE resources");
 
     // Construct a ReferencedTerraWorkspaceResource object from the API input
     ReferencedTerraWorkspaceResource resource =
