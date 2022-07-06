@@ -731,7 +731,7 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
       assertTrue(lastUpdatedDateBeforeResourceUpdate.isPresent());
       ReferencedResource resultReferenceResource =
           referenceResourceService.createReferenceResource(referencedResource);
-          referenceResourceService.createReferenceResource(referencedResource);
+      referenceResourceService.createReferenceResource(referencedResource);
 
       var updatedDateAfterCreate = workspaceActivityLogDao.getLastUpdatedDate(workspaceUuid);
       assertTrue(lastUpdatedDateBeforeResourceUpdate.get().isBefore(updatedDateAfterCreate.get()));

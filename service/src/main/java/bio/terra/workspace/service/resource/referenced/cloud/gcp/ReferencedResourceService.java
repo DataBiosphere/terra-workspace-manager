@@ -59,14 +59,12 @@ public class ReferencedResourceService {
   }
 
   @Traced
-  public ReferencedResource cloneReferenceResource(
-      ReferencedResource resource) {
+  public ReferencedResource cloneReferenceResource(ReferencedResource resource) {
     return createReferenceResource(resource, OperationType.CLONE);
   }
 
   private ReferencedResource createReferenceResource(
-      ReferencedResource resource,
-      OperationType operationType) {
+      ReferencedResource resource, OperationType operationType) {
     String jobDescription =
         String.format(
             "Create reference %s; id %s; name %s",
