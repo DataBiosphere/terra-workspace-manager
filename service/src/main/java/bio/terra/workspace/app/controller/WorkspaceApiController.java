@@ -433,10 +433,10 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
   @Override
   public ResponseEntity<ApiCloneWorkspaceResult> cloneWorkspace(
       UUID workspaceUuid, @Valid ApiCloneWorkspaceRequest body) {
-    final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    final AuthenticatedUserRequest petRequest = getCloningCredentials(workspaceUuid);
     final Workspace sourceWorkspace =
         workspaceService.validateMcWorkspaceAndAction(
-            userRequest, workspaceUuid, SamConstants.SamWorkspaceAction.READ);
+            petRequest, workspaceUuid, SamConstants.SamWorkspaceAction.READ);
     // This is creating the destination workspace so unlike other clone operations there's no
     // additional authz check for the destination. As long as the user is enabled in Sam, they can
     // create a new workspace.
@@ -466,7 +466,7 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
 
     final String jobId =
         workspaceService.cloneWorkspace(
-            sourceWorkspace, userRequest, body.getLocation(), destinationWorkspace);
+            sourceWorkspace, petRequest, body.getLocation(), destinationWorkspace);
 
     final ApiCloneWorkspaceResult result = fetchCloneWorkspaceResult(jobId);
     final ApiClonedWorkspace clonedWorkspaceStub =
