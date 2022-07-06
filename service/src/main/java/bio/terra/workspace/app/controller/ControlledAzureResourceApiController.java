@@ -220,19 +220,22 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
         OffsetDateTime.now().minusMinutes(azureConfiguration.getSasTokenStartTimeMinutesOffset());
     OffsetDateTime expiryTime =
         OffsetDateTime.now().plusMinutes(azureConfiguration.getSasTokenExpiryTimeMinutesOffset());
-    String sas =
+    var sasBundle =
         azureControlledStorageResourceService.createAzureStorageContainerSasToken(
             workspaceUuid, storageContainerUuid, startTime, expiryTime, userRequest);
 
     logger.info(
         "SAS token with expiry time of {} generated for user {} on container {} in workspace {}",
-        expiryTime.toString(),
+        expiryTime,
         userEmail,
-        storageContainerUuid.toString(),
-        workspaceUuid.toString());
+        storageContainerUuid,
+        workspaceUuid);
 
     return new ResponseEntity<>(
-        new ApiCreatedAzureStorageContainerSasToken().token(sas), HttpStatus.OK);
+        new ApiCreatedAzureStorageContainerSasToken()
+            .token(sasBundle.sasToken())
+            .url(sasBundle.sasUrl()),
+        HttpStatus.OK);
   }
 
   @Override

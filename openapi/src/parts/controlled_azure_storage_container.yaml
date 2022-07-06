@@ -87,3 +87,5 @@ components:
       properties:
         token:
           type: string
+        url:
+          type: string

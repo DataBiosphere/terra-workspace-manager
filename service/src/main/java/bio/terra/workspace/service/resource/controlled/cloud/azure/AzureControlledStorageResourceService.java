@@ -34,6 +34,8 @@ import org.springframework.stereotype.Component;
 @Component
 public class AzureControlledStorageResourceService {
 
+  public record AzureSasBundle(String sasToken, String sasUrl) {}
+
   private final SamService samService;
   private final AzureCloudContextService azureCloudContextService;
   private final CrlService crlService;
@@ -102,7 +104,7 @@ public class AzureControlledStorageResourceService {
     return new StorageSharedKeyCredential(storageAccountName, key.value());
   }
 
-  public String createAzureStorageContainerSasToken(
+  public AzureSasBundle createAzureStorageContainerSasToken(
       UUID workspaceUuid,
       UUID storageContainerUuid,
       OffsetDateTime startTime,
@@ -138,6 +140,16 @@ public class AzureControlledStorageResourceService {
         new BlobServiceSasSignatureValues(expiryTime, blobContainerSasPermission)
             .setStartTime(startTime)
             .setProtocol(SasProtocol.HTTPS_ONLY);
-    return blobContainerClient.generateSas(sasValues);
+
+    final var token = blobContainerClient.generateSas(sasValues);
+
+    return new AzureSasBundle(
+        token,
+        String.format(
+            Locale.ROOT,
+            "https://%s.blob.core.windows.net/%s?%s",
+            storageAccountName,
+            storageContainerResource.getStorageContainerName(),
+            token));
   }
 }
