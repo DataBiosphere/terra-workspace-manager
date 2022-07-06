@@ -4,7 +4,6 @@ import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamRethrow;
 import bio.terra.workspace.service.iam.SamService;
-import bio.terra.workspace.service.iam.model.SamConstants.SamControlledResourceActions;
 import bio.terra.workspace.service.resource.ResourceValidationUtils;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
@@ -46,11 +45,7 @@ public class ControlledResourceMetadataManager {
       UUID resourceId,
       @Nullable String name,
       @Nullable String description,
-      @Nullable CloningInstructions cloningInstructions,
-      AuthenticatedUserRequest userRequest) {
-    stageService.assertMcWorkspace(workspaceUuid, "updateControlledResource");
-    validateControlledResourceAndAction(
-        userRequest, workspaceUuid, resourceId, SamControlledResourceActions.EDIT_ACTION);
+      @Nullable CloningInstructions cloningInstructions) {
     // Name may be null if the user is not updating it in this request.
     if (name != null) {
       ResourceValidationUtils.validateResourceName(name);
@@ -65,7 +60,7 @@ public class ControlledResourceMetadataManager {
    * Convenience function that checks existence of a controlled resource within a workspace,
    * followed by an authorization check against that resource.
    *
-   * <p>Throws ResourceNotFound from getResource if the workspace does not exist in the specified
+   * <p>Throws ResourceNotFound from getResource if the resource does not exist in the specified
    * workspace, regardless of the user's permission.
    *
    * <p>Throws InvalidControlledResourceException if the given resource is not controlled.
@@ -80,9 +75,11 @@ public class ControlledResourceMetadataManager {
    * @return validated resource
    */
   @Traced
-  public WsmResource validateControlledResourceAndAction(
+  public ControlledResource validateControlledResourceAndAction(
       AuthenticatedUserRequest userRequest, UUID workspaceUuid, UUID resourceId, String action) {
+    stageService.assertMcWorkspace(workspaceUuid, action);
     WsmResource resource = resourceDao.getResource(workspaceUuid, resourceId);
+
     ControlledResource controlledResource = resource.castToControlledResource();
     SamRethrow.onInterrupted(
         () ->
@@ -92,6 +89,6 @@ public class ControlledResourceMetadataManager {
                 resourceId.toString(),
                 action),
         "checkAuthz");
-    return resource;
+    return controlledResource;
   }
 }

@@ -25,9 +25,9 @@ import bio.terra.workspace.service.resource.controlled.model.ManagedByType;
 import bio.terra.workspace.service.resource.exception.ResourceNotFoundException;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.spendprofile.SpendConnectedTestUtils;
+import bio.terra.workspace.service.workspace.AzureCloudContextService;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.flight.create.azure.CreateAzureContextFlight;
-import bio.terra.workspace.service.workspace.model.AzureCloudContext;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
 import java.time.Duration;
@@ -56,27 +56,28 @@ public class DeleteAzureContextFlightTest extends BaseAzureTest {
   @Autowired private JobService jobService;
   @Autowired private WorkspaceConnectedTestUtils testUtils;
   @Autowired private AzureTestUtils azureTestUtils;
+  @Autowired private AzureCloudContextService azureCloudContextService;
 
+  private Workspace workspace;
   private UUID workspaceUuid;
 
   @BeforeEach
   public void setup() {
     // Create a new workspace at the start of each test.
-    UUID uuid = UUID.randomUUID();
-    Workspace request =
+    workspaceUuid = UUID.randomUUID();
+    Workspace workspace =
         Workspace.builder()
-            .workspaceId(uuid)
-            .userFacingId("a" + uuid.toString())
+            .workspaceId(workspaceUuid)
+            .userFacingId("a" + workspaceUuid.toString())
             .workspaceStage(WorkspaceStage.MC_WORKSPACE)
             .spendProfileId(spendUtils.defaultSpendId())
             .build();
-    workspaceUuid =
-        workspaceService.createWorkspace(request, userAccessUtils.defaultUserAuthRequest());
+    workspaceService.createWorkspace(workspace, userAccessUtils.defaultUserAuthRequest());
   }
 
   @AfterEach
   public void tearDown() {
-    workspaceService.deleteWorkspace(workspaceUuid, userAccessUtils.defaultUserAuthRequest());
+    workspaceService.deleteWorkspace(workspace, userAccessUtils.defaultUserAuthRequest());
   }
 
   private void createAzureContext(UUID workspaceUuid, AuthenticatedUserRequest userRequest)
@@ -94,9 +95,8 @@ public class DeleteAzureContextFlightTest extends BaseAzureTest {
 
     assertEquals(FlightStatus.SUCCESS, flightState.getFlightStatus());
 
-    AzureCloudContext azureCloudContext =
-        workspaceService.getAuthorizedAzureCloudContext(workspaceUuid, userRequest).orElse(null);
-    assertNotNull(azureCloudContext);
+    // This call validates that an Azure cloud context is present.
+    azureCloudContextService.getRequiredAzureCloudContext(workspaceUuid);
   }
 
   private UUID createAzureIpResource(UUID workspaceUuid, AuthenticatedUserRequest userRequest)
@@ -158,7 +158,7 @@ public class DeleteAzureContextFlightTest extends BaseAzureTest {
             debugInfo);
 
     assertEquals(FlightStatus.SUCCESS, flightState.getFlightStatus());
-    assertTrue(testUtils.getAuthorizedAzureCloudContext(workspaceUuid, userRequest).isEmpty());
+    assertTrue(azureCloudContextService.getAzureCloudContext(workspace.getWorkspaceId()).isEmpty());
   }
 
   @Test
@@ -183,13 +183,13 @@ public class DeleteAzureContextFlightTest extends BaseAzureTest {
     assertEquals(FlightStatus.FATAL, flightState.getFlightStatus());
 
     // Because this flight cannot be undone, the context should still be deleted even after undoing.
-    assertTrue(testUtils.getAuthorizedAzureCloudContext(workspaceUuid, userRequest).isEmpty());
+    assertTrue(azureCloudContextService.getAzureCloudContext(workspaceUuid).isEmpty());
   }
 
   @Test
   void deleteNonExistentContextIsOk() throws Exception {
     AuthenticatedUserRequest userRequest = userAccessUtils.defaultUserAuthRequest();
-    assertTrue(testUtils.getAuthorizedAzureCloudContext(workspaceUuid, userRequest).isEmpty());
+    assertTrue(azureCloudContextService.getAzureCloudContext(workspaceUuid).isEmpty());
 
     // Delete the azure context.
     FlightMap deleteParameters = new FlightMap();
@@ -203,7 +203,7 @@ public class DeleteAzureContextFlightTest extends BaseAzureTest {
             DELETION_FLIGHT_TIMEOUT,
             null);
     assertEquals(FlightStatus.SUCCESS, flightState.getFlightStatus());
-    assertTrue(testUtils.getAuthorizedAzureCloudContext(workspaceUuid, userRequest).isEmpty());
+    assertTrue(azureCloudContextService.getAzureCloudContext(workspaceUuid).isEmpty());
   }
 
   @Test
@@ -230,10 +230,10 @@ public class DeleteAzureContextFlightTest extends BaseAzureTest {
             DELETION_FLIGHT_TIMEOUT,
             debugInfo);
     assertEquals(FlightStatus.SUCCESS, flightState.getFlightStatus());
-    assertTrue(testUtils.getAuthorizedAzureCloudContext(workspaceUuid, userRequest).isEmpty());
+    assertTrue(azureCloudContextService.getAzureCloudContext(workspaceUuid).isEmpty());
     assertThrows(
         ResourceNotFoundException.class,
-        () -> controlledResourceService.getControlledResource(workspaceUuid, ipId, userRequest));
+        () -> controlledResourceService.getControlledResource(workspaceUuid, ipId));
   }
 
   // This test would be better in the WorkspaceDeleteFlightTest, but that class extends
@@ -284,9 +284,8 @@ public class DeleteAzureContextFlightTest extends BaseAzureTest {
     // Verify the resource and workspace are not in WSM DB
     assertThrows(
         WorkspaceNotFoundException.class,
-        () -> controlledResourceService.getControlledResource(mcWorkspaceUuid, ipId, userRequest));
+        () -> controlledResourceService.getControlledResource(mcWorkspaceUuid, ipId));
     assertThrows(
-        WorkspaceNotFoundException.class,
-        () -> workspaceService.getWorkspace(mcWorkspaceUuid, userRequest));
+        WorkspaceNotFoundException.class, () -> workspaceService.getWorkspace(mcWorkspaceUuid));
   }
 }

@@ -192,9 +192,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
   public void setupUserAndWorkspace() {
     user = userAccessUtils.defaultUser();
     workspace = reusableWorkspace(user);
-    projectId =
-        workspaceService.getAuthorizedRequiredGcpProject(
-            workspace.getWorkspaceId(), user.getAuthenticatedRequest());
+    projectId = gcpCloudContextService.getRequiredGcpProject(workspace.getWorkspaceId());
   }
 
   /**
@@ -214,8 +212,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
   @AfterAll
   private void cleanUpSharedWorkspace() {
     user = userAccessUtils.defaultUser();
-    workspaceService.deleteWorkspace(
-        reusableWorkspace.getWorkspaceId(), user.getAuthenticatedRequest());
+    workspaceService.deleteWorkspace(reusableWorkspace, user.getAuthenticatedRequest());
   }
 
   @Test
@@ -259,13 +256,10 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
 
     assertEquals(
         resource,
-        controlledResourceService.getControlledResource(
-            workspaceUuid, resource.getResourceId(), user.getAuthenticatedRequest()));
+        controlledResourceService.getControlledResource(workspaceUuid, resource.getResourceId()));
 
     InstanceName instanceName =
-        resource.toInstanceName(
-            workspaceService.getAuthorizedRequiredGcpProject(
-                workspaceUuid, user.getAuthenticatedRequest()));
+        resource.toInstanceName(gcpCloudContextService.getRequiredGcpProject(workspaceUuid));
     Instance instance =
         crlService.getAIPlatformNotebooksCow().instances().get(instanceName).execute();
 
@@ -331,9 +325,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
     jobService.waitForJob(duplicateResourceJobId);
     JobService.JobResultOrException<ControlledAiNotebookInstanceResource> duplicateJobResult =
         jobService.retrieveJobResult(
-            duplicateResourceJobId,
-            ControlledAiNotebookInstanceResource.class,
-            user.getAuthenticatedRequest());
+            duplicateResourceJobId, ControlledAiNotebookInstanceResource.class);
     assertEquals(DuplicateResourceException.class, duplicateJobResult.getException().getClass());
   }
 
@@ -399,9 +391,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
         ResourceNotFoundException.class,
         () ->
             controlledResourceService.getControlledResource(
-                resource.getWorkspaceId(),
-                resource.getResourceId(),
-                user.getAuthenticatedRequest()));
+                resource.getWorkspaceId(), resource.getResourceId()));
     // This check relies on cloud IAM propagation and is sometimes delayed.
     CloudUtils.runWithRetryOnException(
         () ->
@@ -440,10 +430,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
 
     ControlledAiNotebookInstanceResource fetchedInstance =
         controlledResourceService
-            .getControlledResource(
-                workspace.getWorkspaceId(),
-                resource.getResourceId(),
-                user.getAuthenticatedRequest())
+            .getControlledResource(workspace.getWorkspaceId(), resource.getResourceId())
             .castByEnum(WsmResourceType.CONTROLLED_GCP_AI_NOTEBOOK_INSTANCE);
 
     var instanceFromCloud =
@@ -468,18 +455,11 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
     jobService.setFlightDebugInfoForTest(
         FlightDebugInfo.newBuilder().doStepFailures(retrySteps).build());
     controlledResourceService.updateAiNotebookInstance(
-        fetchedInstance,
-        AI_NOTEBOOK_UPDATE_PARAMETERS,
-        newName,
-        newDescription,
-        user.getAuthenticatedRequest());
+        fetchedInstance, AI_NOTEBOOK_UPDATE_PARAMETERS, newName, newDescription);
 
     ControlledAiNotebookInstanceResource updatedInstance =
         controlledResourceService
-            .getControlledResource(
-                workspace.getWorkspaceId(),
-                resource.getResourceId(),
-                user.getAuthenticatedRequest())
+            .getControlledResource(workspace.getWorkspaceId(), resource.getResourceId())
             .castByEnum(WsmResourceType.CONTROLLED_GCP_AI_NOTEBOOK_INSTANCE);
     // resource metadata is updated.
     assertEquals(newName, updatedInstance.getName());
@@ -533,10 +513,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
 
     ControlledAiNotebookInstanceResource fetchedInstance =
         controlledResourceService
-            .getControlledResource(
-                workspace.getWorkspaceId(),
-                resource.getResourceId(),
-                user.getAuthenticatedRequest())
+            .getControlledResource(workspace.getWorkspaceId(), resource.getResourceId())
             .castByEnum(WsmResourceType.CONTROLLED_GCP_AI_NOTEBOOK_INSTANCE);
 
     var instanceFromCloud =
@@ -561,14 +538,11 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
     jobService.setFlightDebugInfoForTest(
         FlightDebugInfo.newBuilder().doStepFailures(retrySteps).build());
     controlledResourceService.updateAiNotebookInstance(
-        fetchedInstance, null, newName, newDescription, user.getAuthenticatedRequest());
+        fetchedInstance, null, newName, newDescription);
 
     ControlledAiNotebookInstanceResource updatedInstance =
         controlledResourceService
-            .getControlledResource(
-                workspace.getWorkspaceId(),
-                resource.getResourceId(),
-                user.getAuthenticatedRequest())
+            .getControlledResource(workspace.getWorkspaceId(), resource.getResourceId())
             .castByEnum(WsmResourceType.CONTROLLED_GCP_AI_NOTEBOOK_INSTANCE);
     // resource metadata is updated.
     assertEquals(newName, updatedInstance.getName());
@@ -604,10 +578,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
 
     ControlledAiNotebookInstanceResource fetchedInstance =
         controlledResourceService
-            .getControlledResource(
-                workspace.getWorkspaceId(),
-                resource.getResourceId(),
-                user.getAuthenticatedRequest())
+            .getControlledResource(workspace.getWorkspaceId(), resource.getResourceId())
             .castByEnum(WsmResourceType.CONTROLLED_GCP_AI_NOTEBOOK_INSTANCE);
 
     Map<String, StepStatus> retrySteps = new HashMap<>();
@@ -627,18 +598,11 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
         InvalidResultStateException.class,
         () ->
             controlledResourceService.updateAiNotebookInstance(
-                fetchedInstance,
-                AI_NOTEBOOK_UPDATE_PARAMETERS,
-                newName,
-                newDescription,
-                user.getAuthenticatedRequest()));
+                fetchedInstance, AI_NOTEBOOK_UPDATE_PARAMETERS, newName, newDescription));
 
     ControlledAiNotebookInstanceResource updatedInstance =
         controlledResourceService
-            .getControlledResource(
-                workspace.getWorkspaceId(),
-                resource.getResourceId(),
-                user.getAuthenticatedRequest())
+            .getControlledResource(workspace.getWorkspaceId(), resource.getResourceId())
             .castByEnum(WsmResourceType.CONTROLLED_GCP_AI_NOTEBOOK_INSTANCE);
     // resource metadata is updated.
     assertEquals(resource.getName(), updatedInstance.getName());
@@ -688,10 +652,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
 
     ControlledAiNotebookInstanceResource fetchedInstance =
         controlledResourceService
-            .getControlledResource(
-                workspace.getWorkspaceId(),
-                resource.getResourceId(),
-                user.getAuthenticatedRequest())
+            .getControlledResource(workspace.getWorkspaceId(), resource.getResourceId())
             .castByEnum(WsmResourceType.CONTROLLED_GCP_AI_NOTEBOOK_INSTANCE);
     var prevInstanceFromCloud =
         crlService
@@ -711,15 +672,11 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
                 fetchedInstance,
                 new ApiGcpAiNotebookUpdateParameters().metadata(illegalMetadataToUpdate),
                 newName,
-                newDescription,
-                user.getAuthenticatedRequest()));
+                newDescription));
 
     ControlledAiNotebookInstanceResource updatedInstance =
         controlledResourceService
-            .getControlledResource(
-                workspace.getWorkspaceId(),
-                resource.getResourceId(),
-                user.getAuthenticatedRequest())
+            .getControlledResource(workspace.getWorkspaceId(), resource.getResourceId())
             .castByEnum(WsmResourceType.CONTROLLED_GCP_AI_NOTEBOOK_INSTANCE);
     // resource metadata is updated.
     assertEquals(resource.getName(), updatedInstance.getName());
@@ -806,15 +763,13 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
         FlightDebugInfo.newBuilder().doStepFailures(retrySteps).build());
 
     controlledResourceService.deleteControlledResourceSync(
-        resource.getWorkspaceId(), resource.getResourceId(), user.getAuthenticatedRequest(), true);
+        resource.getWorkspaceId(), resource.getResourceId(), user.getAuthenticatedRequest());
     assertNotFound(instanceName, notebooks);
     assertThrows(
         ResourceNotFoundException.class,
         () ->
             controlledResourceService.getControlledResource(
-                resource.getWorkspaceId(),
-                resource.getResourceId(),
-                user.getAuthenticatedRequest()));
+                resource.getWorkspaceId(), resource.getResourceId()));
   }
 
   @Test
@@ -832,8 +787,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
             controlledResourceService.deleteControlledResourceSync(
                 resource.getWorkspaceId(),
                 resource.getResourceId(),
-                user.getAuthenticatedRequest(),
-                true));
+                user.getAuthenticatedRequest()));
   }
 
   /** Create a controlled AI Notebook instance with default private settings. */
@@ -857,10 +811,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
             user.getAuthenticatedRequest());
     jobService.waitForJob(createJobId);
     JobService.JobResultOrException<ControlledAiNotebookInstanceResource> creationResult =
-        jobService.retrieveJobResult(
-            createJobId,
-            ControlledAiNotebookInstanceResource.class,
-            user.getAuthenticatedRequest());
+        jobService.retrieveJobResult(createJobId, ControlledAiNotebookInstanceResource.class);
     assertNull(creationResult.getException(), "Error creating controlled AI notebook instance");
     assertNotNull(
         creationResult.getResult(), "Unexpected null created controlled AI notebook instance");
@@ -889,10 +840,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
 
     ControlledBigQueryDatasetResource fetchedDataset =
         controlledResourceService
-            .getControlledResource(
-                workspace.getWorkspaceId(),
-                resource.getResourceId(),
-                user.getAuthenticatedRequest())
+            .getControlledResource(workspace.getWorkspaceId(), resource.getResourceId())
             .castByEnum(WsmResourceType.CONTROLLED_GCP_BIG_QUERY_DATASET);
     assertEquals(resource, fetchedDataset);
 
@@ -905,14 +853,11 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
             .defaultTableLifetime(newDefaultTableLifetime)
             .defaultPartitionLifetime(newDefaultPartitionLifetime);
     controlledResourceService.updateBqDataset(
-        fetchedDataset, updateParameters, user.getAuthenticatedRequest(), newName, newDescription);
+        fetchedDataset, updateParameters, newName, newDescription);
 
     ControlledBigQueryDatasetResource updatedResource =
         controlledResourceService
-            .getControlledResource(
-                workspace.getWorkspaceId(),
-                resource.getResourceId(),
-                user.getAuthenticatedRequest())
+            .getControlledResource(workspace.getWorkspaceId(), resource.getResourceId())
             .castByEnum(WsmResourceType.CONTROLLED_GCP_BIG_QUERY_DATASET);
     assertEquals(newName, updatedResource.getName());
     assertEquals(newDescription, updatedResource.getDescription());
@@ -933,18 +878,16 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
         BadRequestException.class,
         () ->
             controlledResourceService.updateBqDataset(
-                updatedResource, updateCloningParams, user.getAuthenticatedRequest(), null, null));
+                updatedResource, updateCloningParams, null, null));
 
     controlledResourceService.deleteControlledResourceSync(
-        resource.getWorkspaceId(), resource.getResourceId(), user.getAuthenticatedRequest(), true);
+        resource.getWorkspaceId(), resource.getResourceId(), user.getAuthenticatedRequest());
 
     assertThrows(
         ResourceNotFoundException.class,
         () ->
             controlledResourceService.getControlledResource(
-                workspace.getWorkspaceId(),
-                resource.getResourceId(),
-                user.getAuthenticatedRequest()));
+                workspace.getWorkspaceId(), resource.getResourceId()));
 
     features.setAlpha1Enabled(true);
     StairwayTestUtils.enumerateJobsDump(
@@ -992,7 +935,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
     assertEquals(
         resource,
         controlledResourceService.getControlledResource(
-            workspace.getWorkspaceId(), resource.getResourceId(), user.getAuthenticatedRequest()));
+            workspace.getWorkspaceId(), resource.getResourceId()));
   }
 
   @Test
@@ -1038,9 +981,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
         ResourceNotFoundException.class,
         () ->
             controlledResourceService.getControlledResource(
-                workspace.getWorkspaceId(),
-                resource.getResourceId(),
-                user.getAuthenticatedRequest()));
+                workspace.getWorkspaceId(), resource.getResourceId()));
   }
 
   @Test
@@ -1072,7 +1013,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
         FlightDebugInfo.newBuilder().doStepFailures(retrySteps).build());
 
     controlledResourceService.deleteControlledResourceSync(
-        resource.getWorkspaceId(), resource.getResourceId(), user.getAuthenticatedRequest(), true);
+        resource.getWorkspaceId(), resource.getResourceId(), user.getAuthenticatedRequest());
 
     BigQueryCow bqCow = crlService.createWsmSaBigQueryCow();
     GoogleJsonResponseException getException =
@@ -1085,9 +1026,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
         ResourceNotFoundException.class,
         () ->
             controlledResourceService.getControlledResource(
-                workspace.getWorkspaceId(),
-                resource.getResourceId(),
-                user.getAuthenticatedRequest()));
+                workspace.getWorkspaceId(), resource.getResourceId()));
   }
 
   @Test
@@ -1121,8 +1060,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
             controlledResourceService.deleteControlledResourceSync(
                 resource.getWorkspaceId(),
                 resource.getResourceId(),
-                user.getAuthenticatedRequest(),
-                true));
+                user.getAuthenticatedRequest()));
 
     BigQueryCow bqCow = crlService.createWsmSaBigQueryCow();
     GoogleJsonResponseException getException =
@@ -1135,9 +1073,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
         ResourceNotFoundException.class,
         () ->
             controlledResourceService.getControlledResource(
-                workspace.getWorkspaceId(),
-                resource.getResourceId(),
-                user.getAuthenticatedRequest()));
+                workspace.getWorkspaceId(), resource.getResourceId()));
   }
 
   @Test
@@ -1178,8 +1114,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
         new ApiGcpBigQueryDatasetUpdateParameters()
             .defaultTableLifetime(newDefaultTableLifetime)
             .defaultPartitionLifetime(newDefaultPartitionLifetime);
-    controlledResourceService.updateBqDataset(
-        resource, updateParameters, user.getAuthenticatedRequest(), newName, newDescription);
+    controlledResourceService.updateBqDataset(resource, updateParameters, newName, newDescription);
 
     // check the properties stored on the cloud were updated
     validateBigQueryDatasetCloudMetadata(
@@ -1192,10 +1127,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
     // check the properties stored in WSM were updated
     ControlledBigQueryDatasetResource fetchedResource =
         controlledResourceService
-            .getControlledResource(
-                workspace.getWorkspaceId(),
-                resource.getResourceId(),
-                user.getAuthenticatedRequest())
+            .getControlledResource(workspace.getWorkspaceId(), resource.getResourceId())
             .castByEnum(WsmResourceType.CONTROLLED_GCP_BIG_QUERY_DATASET);
     assertEquals(newName, fetchedResource.getName());
     assertEquals(newDescription, fetchedResource.getDescription());
@@ -1252,11 +1184,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
         InvalidResultStateException.class,
         () ->
             controlledResourceService.updateBqDataset(
-                resource,
-                updateParameters,
-                user.getAuthenticatedRequest(),
-                "NEW_updateBqDatasetUndo",
-                "new resource description"));
+                resource, updateParameters, "NEW_updateBqDatasetUndo", "new resource description"));
 
     // check the properties stored on the cloud were not updated
     validateBigQueryDatasetCloudMetadata(
@@ -1269,10 +1197,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
     // check the properties stored in WSM were not updated
     ControlledBigQueryDatasetResource fetchedResource =
         controlledResourceService
-            .getControlledResource(
-                workspace.getWorkspaceId(),
-                resource.getResourceId(),
-                user.getAuthenticatedRequest())
+            .getControlledResource(workspace.getWorkspaceId(), resource.getResourceId())
             .castByEnum(WsmResourceType.CONTROLLED_GCP_BIG_QUERY_DATASET);
     assertEquals(resource.getName(), fetchedResource.getName());
     assertEquals(resource.getDescription(), fetchedResource.getDescription());
@@ -1315,8 +1240,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
         new ApiGcpBigQueryDatasetUpdateParameters()
             .defaultTableLifetime(0)
             .defaultPartitionLifetime(0);
-    controlledResourceService.updateBqDataset(
-        resource, updateParameters, user.getAuthenticatedRequest(), null, null);
+    controlledResourceService.updateBqDataset(resource, updateParameters, null, null);
 
     // check the expiration times stored on the cloud are now undefined
     validateBigQueryDatasetCloudMetadata(
@@ -1326,8 +1250,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
     Integer newDefaultTableLifetime = 3600;
     updateParameters =
         new ApiGcpBigQueryDatasetUpdateParameters().defaultTableLifetime(newDefaultTableLifetime);
-    controlledResourceService.updateBqDataset(
-        resource, updateParameters, user.getAuthenticatedRequest(), null, null);
+    controlledResourceService.updateBqDataset(resource, updateParameters, null, null);
 
     // check there is one defined and one undefined expiration value
     validateBigQueryDatasetCloudMetadata(
@@ -1338,8 +1261,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
     updateParameters =
         new ApiGcpBigQueryDatasetUpdateParameters()
             .defaultPartitionLifetime(newDefaultPartitionLifetime);
-    controlledResourceService.updateBqDataset(
-        resource, updateParameters, user.getAuthenticatedRequest(), null, null);
+    controlledResourceService.updateBqDataset(resource, updateParameters, null, null);
 
     // check the expiration times stored on the cloud are both defined again
     validateBigQueryDatasetCloudMetadata(
@@ -1376,9 +1298,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
             .defaultPartitionLifetime(3601);
     assertThrows(
         BadRequestException.class,
-        () ->
-            controlledResourceService.updateBqDataset(
-                resource, updateParameters, user.getAuthenticatedRequest(), null, null));
+        () -> controlledResourceService.updateBqDataset(resource, updateParameters, null, null));
 
     // check the expiration times stored on the cloud are still undefined, because the update above
     // failed
@@ -1392,9 +1312,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
             .defaultPartitionLifetime(-2);
     assertThrows(
         BadRequestException.class,
-        () ->
-            controlledResourceService.updateBqDataset(
-                resource, updateParameters2, user.getAuthenticatedRequest(), null, null));
+        () -> controlledResourceService.updateBqDataset(resource, updateParameters2, null, null));
 
     // check the expiration times stored on the cloud are still undefined, because the update above
     // failed
@@ -1431,7 +1349,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
     assertEquals(
         resource,
         controlledResourceService.getControlledResource(
-            workspace.getWorkspaceId(), resource.getResourceId(), user.getAuthenticatedRequest()));
+            workspace.getWorkspaceId(), resource.getResourceId()));
   }
 
   @Test
@@ -1486,9 +1404,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
         ResourceNotFoundException.class,
         () ->
             controlledResourceService.getControlledResource(
-                workspace.getWorkspaceId(),
-                resource.getResourceId(),
-                user.getAuthenticatedRequest()));
+                workspace.getWorkspaceId(), resource.getResourceId()));
   }
 
   @Test
@@ -1537,8 +1453,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
         destinationBucketName, response.getBucket().getGcpBucket().getAttributes().getBucketName());
     final UUID resourceId = response.getBucket().getResourceId();
     final ControlledResource destinationControlledResource =
-        controlledResourceService.getControlledResource(
-            workspace.getWorkspaceId(), resourceId, user.getAuthenticatedRequest());
+        controlledResourceService.getControlledResource(workspace.getWorkspaceId(), resourceId);
     final ControlledGcsBucketResource destinationBucketResource =
         destinationControlledResource.castByEnum(WsmResourceType.CONTROLLED_GCP_GCS_BUCKET);
     assertNotNull(destinationBucketResource);
@@ -1583,8 +1498,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
             workspace.getWorkspaceId(),
             createdBucket.getResourceId(),
             "fake result path",
-            user.getAuthenticatedRequest(),
-            true);
+            user.getAuthenticatedRequest());
     jobService.waitForJob(jobId);
     assertEquals(
         FlightStatus.SUCCESS, stairwayComponent.get().getFlightState(jobId).getFlightStatus());
@@ -1597,9 +1511,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
         ResourceNotFoundException.class,
         () ->
             controlledResourceService.getControlledResource(
-                workspace.getWorkspaceId(),
-                createdBucket.getResourceId(),
-                user.getAuthenticatedRequest()));
+                workspace.getWorkspaceId(), createdBucket.getResourceId()));
   }
 
   @Test
@@ -1625,17 +1537,13 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
     controlledResourceService.updateGcsBucket(
         createdBucket,
         ControlledResourceFixtures.BUCKET_UPDATE_PARAMETERS_2,
-        user.getAuthenticatedRequest(),
         newName,
         newDescription);
 
     // check the properties stored in WSM were updated
     ControlledGcsBucketResource fetchedResource =
         controlledResourceService
-            .getControlledResource(
-                workspace.getWorkspaceId(),
-                createdBucket.getResourceId(),
-                user.getAuthenticatedRequest())
+            .getControlledResource(workspace.getWorkspaceId(), createdBucket.getResourceId())
             .castByEnum(WsmResourceType.CONTROLLED_GCP_GCS_BUCKET);
 
     assertEquals(newName, fetchedResource.getName());
@@ -1648,7 +1556,6 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
                 createdBucket,
                 new ApiGcpGcsBucketUpdateParameters()
                     .cloningInstructions(ApiCloningInstructionsEnum.REFERENCE),
-                user.getAuthenticatedRequest(),
                 null,
                 null));
   }
@@ -1682,7 +1589,6 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
             controlledResourceService.updateGcsBucket(
                 createdBucket,
                 ControlledResourceFixtures.BUCKET_UPDATE_PARAMETERS_2,
-                user.getAuthenticatedRequest(),
                 newName,
                 newDescription));
 
@@ -1696,10 +1602,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
     // check the properties stored in WSM were not updated
     ControlledGcsBucketResource fetchedResource =
         controlledResourceService
-            .getControlledResource(
-                workspace.getWorkspaceId(),
-                createdBucket.getResourceId(),
-                user.getAuthenticatedRequest())
+            .getControlledResource(workspace.getWorkspaceId(), createdBucket.getResourceId())
             .castByEnum(WsmResourceType.CONTROLLED_GCP_GCS_BUCKET);
     assertEquals(createdBucket.getName(), fetchedResource.getName());
     assertEquals(createdBucket.getDescription(), fetchedResource.getDescription());

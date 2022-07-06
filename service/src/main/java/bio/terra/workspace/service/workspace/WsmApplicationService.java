@@ -4,10 +4,8 @@ import bio.terra.workspace.app.configuration.external.WsmApplicationConfiguratio
 import bio.terra.workspace.app.configuration.external.WsmApplicationConfiguration.App;
 import bio.terra.workspace.db.ApplicationDao;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
-import bio.terra.workspace.service.iam.model.SamConstants;
 import bio.terra.workspace.service.job.JobBuilder;
 import bio.terra.workspace.service.job.JobService;
-import bio.terra.workspace.service.stage.StageService;
 import bio.terra.workspace.service.workspace.exceptions.InvalidApplicationConfigException;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.WsmApplicationKeys;
@@ -23,7 +21,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.UUID;
 import java.util.regex.Pattern;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.validator.routines.EmailValidator;
@@ -47,9 +44,7 @@ public class WsmApplicationService {
 
   private final ApplicationDao applicationDao;
   private final JobService jobService;
-  private final StageService stageService;
   private final WsmApplicationConfiguration wsmApplicationConfiguration;
-  private final WorkspaceService workspaceService;
 
   // -- Testing Support --
   // Unlike most code, the configuration code runs at startup time and does not have any output
@@ -64,47 +59,35 @@ public class WsmApplicationService {
   public WsmApplicationService(
       ApplicationDao applicationDao,
       JobService jobService,
-      StageService stageService,
-      WsmApplicationConfiguration wsmApplicationConfiguration,
-      WorkspaceService workspaceService) {
+      WsmApplicationConfiguration wsmApplicationConfiguration) {
     this.applicationDao = applicationDao;
     this.jobService = jobService;
-    this.stageService = stageService;
     this.wsmApplicationConfiguration = wsmApplicationConfiguration;
-    this.workspaceService = workspaceService;
   }
 
   // -- REST API Methods -- //
 
   public WsmWorkspaceApplication disableWorkspaceApplication(
-      AuthenticatedUserRequest userRequest, UUID workspaceUuid, String applicationId) {
-    return commonAbleJob(userRequest, workspaceUuid, applicationId, AbleEnum.DISABLE);
+      AuthenticatedUserRequest userRequest, Workspace workspace, String applicationId) {
+    return commonAbleJob(userRequest, workspace, applicationId, AbleEnum.DISABLE);
   }
 
   public WsmWorkspaceApplication enableWorkspaceApplication(
-      AuthenticatedUserRequest userRequest, UUID workspaceUuid, String applicationId) {
-    return commonAbleJob(userRequest, workspaceUuid, applicationId, AbleEnum.ENABLE);
+      AuthenticatedUserRequest userRequest, Workspace workspace, String applicationId) {
+    return commonAbleJob(userRequest, workspace, applicationId, AbleEnum.ENABLE);
   }
 
   // Common method to launch and wait for enable and disable flights.
   private WsmWorkspaceApplication commonAbleJob(
       AuthenticatedUserRequest userRequest,
-      UUID workspaceUuid,
+      Workspace workspace,
       String applicationId,
       AbleEnum ableEnum) {
-    Workspace workspace =
-        workspaceService.validateWorkspaceAndAction(
-            userRequest, workspaceUuid, SamConstants.SamWorkspaceAction.OWN);
-    stageService.assertMcWorkspace(
-        workspace,
-        (ableEnum == AbleEnum.ENABLE)
-            ? "enableWorkspaceApplication"
-            : "disableWorkspaceApplication");
 
     String description =
         String.format(
             "%s application %s on workspace %s",
-            ableEnum.name().toLowerCase(), applicationId, workspaceUuid.toString());
+            ableEnum.name().toLowerCase(), applicationId, workspace.getWorkspaceId().toString());
 
     JobBuilder job =
         jobService
@@ -112,28 +95,20 @@ public class WsmApplicationService {
             .description(description)
             .flightClass(ApplicationAbleFlight.class)
             .userRequest(userRequest)
-            .workspaceId(workspaceUuid.toString())
+            .workspaceId(workspace.getWorkspaceId().toString())
             .addParameter(WorkspaceFlightMapKeys.APPLICATION_ID, applicationId)
             .addParameter(WsmApplicationKeys.APPLICATION_ABLE_ENUM, ableEnum);
     return job.submitAndWait(WsmWorkspaceApplication.class);
   }
 
   public WsmWorkspaceApplication getWorkspaceApplication(
-      AuthenticatedUserRequest userRequest, UUID workspaceUuid, String applicationId) {
-    Workspace workspace =
-        workspaceService.validateWorkspaceAndAction(
-            userRequest, workspaceUuid, SamConstants.SamWorkspaceAction.READ);
-    stageService.assertMcWorkspace(workspace, "getWorkspaceApplication");
-    return applicationDao.getWorkspaceApplication(workspaceUuid, applicationId);
+      Workspace workspace, String applicationId) {
+    return applicationDao.getWorkspaceApplication(workspace.getWorkspaceId(), applicationId);
   }
 
   public List<WsmWorkspaceApplication> listWorkspaceApplications(
-      AuthenticatedUserRequest userRequest, UUID workspaceUuid, int offset, int limit) {
-    Workspace workspace =
-        workspaceService.validateWorkspaceAndAction(
-            userRequest, workspaceUuid, SamConstants.SamWorkspaceAction.READ);
-    stageService.assertMcWorkspace(workspace, "listWorkspaceApplication");
-    return applicationDao.listWorkspaceApplications(workspaceUuid, offset, limit);
+      Workspace workspace, int offset, int limit) {
+    return applicationDao.listWorkspaceApplications(workspace.getWorkspaceId(), offset, limit);
   }
 
   // -- Configuration Processing Methods -- //

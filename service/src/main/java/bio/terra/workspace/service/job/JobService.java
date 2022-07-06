@@ -48,6 +48,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
+import javax.annotation.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -120,15 +121,13 @@ public class JobService {
       Class<? extends Flight> flightClass,
       FlightMap parameterMap,
       Class<T> resultClass,
-      String jobId,
-      boolean doAccessCheck) {
+      String jobId) {
     submit(flightClass, parameterMap, jobId);
     waitForJob(jobId);
     AuthenticatedUserRequest userRequest =
         parameterMap.get(JobMapKeys.AUTH_USER_INFO.getKeyName(), AuthenticatedUserRequest.class);
 
-    JobResultOrException<T> resultOrException =
-        retrieveJobResult(jobId, resultClass, userRequest, doAccessCheck);
+    JobResultOrException<T> resultOrException = retrieveJobResult(jobId, resultClass);
     if (resultOrException.getException() != null) {
       throw resultOrException.getException();
     }
@@ -276,12 +275,13 @@ public class JobService {
   }
 
   @Traced
-  public ApiJobReport retrieveJob(String jobId, AuthenticatedUserRequest userRequest) {
-
+  public ApiJobReport retrieveJob(String jobId) {
     try {
-      verifyUserAccess(jobId, userRequest); // jobId=flightId
       FlightState flightState = stairwayComponent.get().getFlightState(jobId);
       return mapFlightStateToApiJobReport(flightState);
+    } catch (FlightNotFoundException flightNotFoundException) {
+      throw new JobNotFoundException(
+          "The flight " + jobId + " was not found", flightNotFoundException);
     } catch (StairwayException | InterruptedException stairwayEx) {
       throw new InternalStairwayException(stairwayEx);
     }
@@ -308,25 +308,15 @@ public class JobService {
    * @return object of the result class pulled from the result map
    */
   @Traced
-  public <T> JobResultOrException<T> retrieveJobResult(
-      String jobId,
-      Class<T> resultClass,
-      AuthenticatedUserRequest userRequest,
-      boolean doAccessCheck) {
-
+  public <T> JobResultOrException<T> retrieveJobResult(String jobId, Class<T> resultClass) {
     try {
-      if (doAccessCheck) {
-        verifyUserAccess(jobId, userRequest); // jobId=flightId
-      }
       return retrieveJobResultWorker(jobId, resultClass);
+    } catch (FlightNotFoundException flightNotFoundException) {
+      throw new JobNotFoundException(
+          "The flight " + jobId + " was not found", flightNotFoundException);
     } catch (StairwayException | InterruptedException stairwayEx) {
       throw new InternalStairwayException(stairwayEx);
     }
-  }
-
-  public <T> JobResultOrException<T> retrieveJobResult(
-      String jobId, Class<T> resultClass, AuthenticatedUserRequest userRequest) {
-    return retrieveJobResult(jobId, resultClass, userRequest, true);
   }
 
   /**
@@ -340,11 +330,9 @@ public class JobService {
    * <p>Unlike retrieveJobResult, this will not throw for a flight in progress. Instead, it will
    * return a ApiJobReport without a result or error.
    */
-  public <T> AsyncJobResult<T> retrieveAsyncJobResult(
-      String jobId, Class<T> resultClass, AuthenticatedUserRequest userRequest) {
+  public <T> AsyncJobResult<T> retrieveAsyncJobResult(String jobId, Class<T> resultClass) {
     try {
-      verifyUserAccess(jobId, userRequest); // jobId=flightId
-      ApiJobReport jobReport = retrieveJob(jobId, userRequest);
+      ApiJobReport jobReport = retrieveJob(jobId);
       if (jobReport.getStatus().equals(StatusEnum.RUNNING)) {
         return new AsyncJobResult<T>().jobReport(jobReport);
       }
@@ -430,12 +418,23 @@ public class JobService {
    * @param jobId - ID of running job
    * @param userRequest - original user request
    */
-  private void verifyUserAccess(String jobId, AuthenticatedUserRequest userRequest) {
+  public void verifyUserAccess(String jobId, AuthenticatedUserRequest userRequest) {
+    verifyUserAccess(jobId, userRequest, null);
+  }
+
+  /**
+   * Same assertion as {@link #verifyUserAccess(String, AuthenticatedUserRequest)} but with the
+   * additional constraint that the job must be associated with the provided workspace ID.
+   */
+  public void verifyUserAccess(
+      String jobId, AuthenticatedUserRequest userRequest, @Nullable UUID expectedWorkspaceId) {
     try {
       FlightState flightState = stairwayComponent.get().getFlightState(jobId);
       FlightMap inputParameters = flightState.getInputParameters();
       UUID workspaceUuid = inputParameters.get(WorkspaceFlightMapKeys.WORKSPACE_ID, UUID.class);
-
+      if (expectedWorkspaceId != null && !(expectedWorkspaceId.equals(workspaceUuid))) {
+        throw new JobNotFoundException("The job ID does not exist in the provided workspace.");
+      }
       flightBeanBag
           .getWorkspaceService()
           .validateWorkspaceAndAction(userRequest, workspaceUuid, SamWorkspaceAction.READ);

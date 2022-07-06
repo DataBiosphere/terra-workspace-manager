@@ -5,7 +5,6 @@ import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.db.exception.InvalidMetadataException;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.model.SamConstants;
-import bio.terra.workspace.service.iam.model.SamConstants.SamWorkspaceAction;
 import bio.terra.workspace.service.job.JobBuilder;
 import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.resource.ResourceValidationUtils;
@@ -50,11 +49,7 @@ public class ReferencedResourceService {
   }
 
   @Traced
-  public ReferencedResource createReferenceResource(
-      ReferencedResource resource, AuthenticatedUserRequest userRequest) {
-    workspaceService.validateWorkspaceAndAction(
-        userRequest, resource.getWorkspaceId(), SamConstants.SamWorkspaceAction.CREATE_REFERENCE);
-
+  public ReferencedResource createReferenceResource(ReferencedResource resource) {
     String jobDescription =
         String.format(
             "Create reference %s; id %s; name %s",
@@ -69,7 +64,6 @@ public class ReferencedResourceService {
             .description(jobDescription)
             .flightClass(CreateReferenceResourceFlight.class)
             .resource(resource)
-            .userRequest(userRequest)
             .operationType(OperationType.CREATE)
             .workspaceId(resource.getWorkspaceId().toString())
             .resourceType(resource.getResourceType())
@@ -80,7 +74,7 @@ public class ReferencedResourceService {
       throw new InvalidMetadataException("Input and output resource ids do not match");
     }
 
-    return getReferenceResource(resource.getWorkspaceId(), resourceIdResult, userRequest);
+    return getReferenceResource(resource.getWorkspaceId(), resourceIdResult);
   }
 
   /**
@@ -92,15 +86,10 @@ public class ReferencedResourceService {
    * @param description description to change - may be null
    */
   public void updateReferenceResource(
-      UUID workspaceUuid,
-      UUID resourceId,
-      AuthenticatedUserRequest userRequest,
-      @Nullable String name,
-      @Nullable String description) {
+      UUID workspaceUuid, UUID resourceId, @Nullable String name, @Nullable String description) {
     updateReferenceResource(
         workspaceUuid,
         resourceId,
-        userRequest,
         name,
         description,
         /*referencedResource=*/ null,
@@ -123,13 +112,10 @@ public class ReferencedResourceService {
   public void updateReferenceResource(
       UUID workspaceUuid,
       UUID resourceId,
-      AuthenticatedUserRequest userRequest,
       @Nullable String name,
       @Nullable String description,
       @Nullable ReferencedResource resource,
       @Nullable CloningInstructions cloningInstructions) {
-    workspaceService.validateWorkspaceAndAction(
-        userRequest, workspaceUuid, SamConstants.SamWorkspaceAction.UPDATE_REFERENCE);
     // Name may be null if the user is not updating it in this request.
     if (name != null) {
       ResourceValidationUtils.validateResourceName(name);
@@ -144,7 +130,6 @@ public class ReferencedResourceService {
               .description("Update reference target")
               .flightClass(UpdateReferenceResourceFlight.class)
               .resource(resource)
-              .userRequest(userRequest)
               .operationType(OperationType.UPDATE)
               .workspaceId(workspaceUuid.toString())
               .resourceType(resource.getResourceType())
@@ -182,30 +167,18 @@ public class ReferencedResourceService {
    *
    * @param workspaceUuid workspace of interest
    * @param resourceId resource to delete
-   * @param userRequest authenticated user
    * @param resourceType wsm resource type that the to-be-deleted resource should have
    */
   public void deleteReferenceResourceForResourceType(
-      UUID workspaceUuid,
-      UUID resourceId,
-      AuthenticatedUserRequest userRequest,
-      WsmResourceType resourceType) {
-    workspaceService.validateWorkspaceAndAction(
-        userRequest, workspaceUuid, SamWorkspaceAction.DELETE_REFERENCE);
+      UUID workspaceUuid, UUID resourceId, WsmResourceType resourceType) {
     resourceDao.deleteResourceForResourceType(workspaceUuid, resourceId, resourceType);
   }
 
-  public ReferencedResource getReferenceResource(
-      UUID workspaceUuid, UUID resourceId, AuthenticatedUserRequest userRequest) {
-    workspaceService.validateWorkspaceAndAction(
-        userRequest, workspaceUuid, SamConstants.SamWorkspaceAction.READ);
-    return resourceDao.getResource(workspaceUuid, resourceId).castToReferencedResource();
+  public ReferencedResource getReferenceResource(UUID workspaceId, UUID resourceId) {
+    return resourceDao.getResource(workspaceId, resourceId).castToReferencedResource();
   }
 
-  public ReferencedResource getReferenceResourceByName(
-      UUID workspaceUuid, String name, AuthenticatedUserRequest userRequest) {
-    workspaceService.validateWorkspaceAndAction(
-        userRequest, workspaceUuid, SamConstants.SamWorkspaceAction.READ);
+  public ReferencedResource getReferenceResourceByName(UUID workspaceUuid, String name) {
     return resourceDao.getResourceByName(workspaceUuid, name).castToReferencedResource();
   }
 
@@ -218,8 +191,6 @@ public class ReferencedResourceService {
 
   public boolean checkAccess(
       UUID workspaceUuid, UUID resourceId, AuthenticatedUserRequest userRequest) {
-    workspaceService.validateWorkspaceAndAction(
-        userRequest, workspaceUuid, SamConstants.SamWorkspaceAction.READ);
     ReferencedResource referencedResource =
         resourceDao.getResource(workspaceUuid, resourceId).castToReferencedResource();
     return referencedResource.checkAccess(beanBag, userRequest);
@@ -229,12 +200,11 @@ public class ReferencedResourceService {
       ReferencedResource sourceReferencedResource,
       UUID destinationWorkspaceId,
       @Nullable String name,
-      @Nullable String description,
-      AuthenticatedUserRequest userRequest) {
+      @Nullable String description) {
     final ReferencedResource destinationResource =
         WorkspaceCloneUtils.buildDestinationReferencedResource(
             sourceReferencedResource, destinationWorkspaceId, name, description);
     // launch the creation flight
-    return createReferenceResource(destinationResource, userRequest);
+    return createReferenceResource(destinationResource);
   }
 }

@@ -41,15 +41,16 @@ public class AzureTestUtils {
   }
 
   /** Creates a workspace, returning its workspaceUuid. */
-  public UUID createWorkspace(WorkspaceService workspaceService) {
+  public Workspace createWorkspace(WorkspaceService workspaceService) {
     UUID uuid = UUID.randomUUID();
-    Workspace request =
+    Workspace workspace =
         Workspace.builder()
             .workspaceId(uuid)
             .userFacingId("a" + uuid.toString())
             .workspaceStage(WorkspaceStage.MC_WORKSPACE)
             .build();
-    return workspaceService.createWorkspace(request, userAccessUtils.defaultUserAuthRequest());
+    workspaceService.createWorkspace(workspace, userAccessUtils.defaultUserAuthRequest());
+    return workspace;
   }
 
   public ComputeManager getComputeManager() {

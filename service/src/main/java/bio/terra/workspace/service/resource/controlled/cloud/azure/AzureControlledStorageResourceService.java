@@ -11,7 +11,6 @@ import bio.terra.workspace.service.iam.model.SamConstants;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceService;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.storage.ControlledAzureStorageResource;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.storageContainer.ControlledAzureStorageContainerResource;
-import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.workspace.AzureCloudContextService;
 import bio.terra.workspace.service.workspace.model.AzureCloudContext;
 import com.azure.core.http.HttpClient;
@@ -104,24 +103,16 @@ public class AzureControlledStorageResourceService {
 
   public String createAzureStorageContainerSasToken(
       UUID workspaceUuid,
-      UUID storageContainerUuid,
+      ControlledAzureStorageContainerResource storageContainerResource,
+      ControlledAzureStorageResource storageAccountResource,
       OffsetDateTime startTime,
       OffsetDateTime expiryTime,
       AuthenticatedUserRequest userRequest) {
     features.azureEnabledCheck();
 
     BlobContainerSasPermission blobContainerSasPermission =
-        getSasTokenPermissions(userRequest, storageContainerUuid);
+        getSasTokenPermissions(userRequest, storageContainerResource.getResourceId());
 
-    final ControlledAzureStorageContainerResource storageContainerResource =
-        controlledResourceService
-            .getControlledResource(workspaceUuid, storageContainerUuid, userRequest)
-            .castByEnum(WsmResourceType.CONTROLLED_AZURE_STORAGE_CONTAINER);
-    final ControlledAzureStorageResource storageAccountResource =
-        controlledResourceService
-            .getControlledResource(
-                workspaceUuid, storageContainerResource.getStorageAccountId(), userRequest)
-            .castByEnum(WsmResourceType.CONTROLLED_AZURE_STORAGE_ACCOUNT);
     String storageAccountName = storageAccountResource.getStorageAccountName();
     String endpoint =
         String.format(Locale.ROOT, "https://%s.blob.core.windows.net", storageAccountName);

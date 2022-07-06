@@ -153,7 +153,7 @@ public class CopyGcsBucketDefinitionStep implements Step {
                 ControlledGcsBucketResource.class);
     if (clonedBucket != null) {
       controlledResourceService.deleteControlledResourceSync(
-          clonedBucket.getWorkspaceId(), clonedBucket.getResourceId(), userRequest, true);
+          clonedBucket.getWorkspaceId(), clonedBucket.getResourceId(), userRequest);
     }
     return StepResult.getStepResultSuccess();
   }

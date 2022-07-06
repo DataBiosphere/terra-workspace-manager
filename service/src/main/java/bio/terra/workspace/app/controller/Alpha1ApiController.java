@@ -87,7 +87,6 @@ public class Alpha1ApiController implements Alpha1Api {
     EnumeratedJobs enumeratedJobs =
         alpha1Service.enumerateJobs(
             workspaceUuid,
-            userRequest,
             limit,
             pageToken,
             WsmResourceFamily.fromApiOptional(resource),

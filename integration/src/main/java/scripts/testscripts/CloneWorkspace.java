@@ -279,7 +279,9 @@ public class CloneWorkspace extends WorkspaceAllocateTestScriptBase {
     cloneResult =
         ClientTestUtils.pollWhileRunning(
             cloneResult,
-            () -> cloningUserWorkspaceApi.getCloneWorkspaceResult(getWorkspaceId(), jobId),
+            // TODO(PF-1825): unlike the individual clone resource endpoints, the clone workspace
+            //  endpoint associates the cloning job with the destination workspace ID.
+            () -> cloningUserWorkspaceApi.getCloneWorkspaceResult(destinationWorkspaceId, jobId),
             CloneWorkspaceResult::getJobReport,
             Duration.ofSeconds(10));
     logger.info("Completed clone result: {}", cloneResult);

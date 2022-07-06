@@ -9,8 +9,6 @@ import bio.terra.workspace.common.utils.FlightUtils;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.generated.model.ApiGcpBigQueryDatasetUpdateParameters;
 import bio.terra.workspace.generated.model.ApiGcpGcsBucketUpdateParameters;
-import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
-import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceMetadataManager;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
@@ -40,14 +38,11 @@ public class UpdateControlledResourceMetadataStep implements Step {
     FlightUtils.validateRequiredEntries(
         flightContext.getInputParameters(),
         ResourceKeys.RESOURCE_NAME,
-        ResourceKeys.RESOURCE_DESCRIPTION,
-        JobMapKeys.AUTH_USER_INFO.getKeyName());
+        ResourceKeys.RESOURCE_DESCRIPTION);
     final FlightMap inputParameters = flightContext.getInputParameters();
     final String resourceName = inputParameters.get(ResourceKeys.RESOURCE_NAME, String.class);
     final String resourceDescription =
         inputParameters.get(ResourceKeys.RESOURCE_DESCRIPTION, String.class);
-    final AuthenticatedUserRequest userRequest =
-        inputParameters.get(JobMapKeys.AUTH_USER_INFO.getKeyName(), AuthenticatedUserRequest.class);
 
     // Cloning storage is in different update parameters class depending on resource type.
     final CloningInstructions cloningInstructions;
@@ -79,8 +74,7 @@ public class UpdateControlledResourceMetadataStep implements Step {
         resource.getResourceId(),
         resourceName,
         resourceDescription,
-        cloningInstructions,
-        userRequest);
+        cloningInstructions);
     return StepResult.getStepResultSuccess();
   }
 

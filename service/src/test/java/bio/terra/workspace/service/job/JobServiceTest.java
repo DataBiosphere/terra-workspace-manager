@@ -122,14 +122,14 @@ class JobServiceTest extends BaseUnitTest {
   }
 
   private void testSingleRetrieval(List<String> fids) {
-    ApiJobReport response = jobService.retrieveJob(fids.get(2), testUser);
+    ApiJobReport response = jobService.retrieveJob(fids.get(2));
     assertThat(response, notNullValue());
     validateJobReport(response, 2, fids);
   }
 
   private void testResultRetrieval(List<String> fids) {
     JobService.JobResultOrException<String> resultHolder =
-        jobService.retrieveJobResult(fids.get(2), String.class, testUser);
+        jobService.retrieveJobResult(fids.get(2), String.class);
 
     assertNull(resultHolder.getException());
     assertThat(resultHolder.getResult(), equalTo(makeDescription(2)));
@@ -155,14 +155,13 @@ class JobServiceTest extends BaseUnitTest {
 
   @Test
   void testBadIdRetrieveJob() {
-    assertThrows(JobNotFoundException.class, () -> jobService.retrieveJob("abcdef", testUser));
+    assertThrows(JobNotFoundException.class, () -> jobService.retrieveJob("abcdef"));
   }
 
   @Test
   void testBadIdRetrieveResult() {
     assertThrows(
-        JobNotFoundException.class,
-        () -> jobService.retrieveJobResult("abcdef", Object.class, testUser));
+        JobNotFoundException.class, () -> jobService.retrieveJobResult("abcdef", Object.class));
   }
 
   @Test
@@ -173,8 +172,7 @@ class JobServiceTest extends BaseUnitTest {
 
     String jobId = runFlight("fail for FlightDebugInfo");
     assertThrows(
-        InvalidResultStateException.class,
-        () -> jobService.retrieveJobResult(jobId, String.class, testUser));
+        InvalidResultStateException.class, () -> jobService.retrieveJobResult(jobId, String.class));
   }
 
   private void validateJobReport(ApiJobReport jr, int index, List<String> fids) {
