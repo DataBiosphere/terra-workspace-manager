@@ -177,6 +177,7 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
             workspaceUuid,
             resourceId,
             body.getDestinationWorkspaceId(),
+            UUID.randomUUID(), // resourceId is not pre-allocated for individual clone endpoints
             body.getJobControl(),
             userRequest,
             body.getName(),
@@ -454,6 +455,7 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
             workspaceUuid,
             resourceId,
             body.getDestinationWorkspaceId(),
+            UUID.randomUUID(), // resourceId is not pre-allocated for individual clone endpoints
             body.getJobControl(),
             userRequest,
             body.getName(),

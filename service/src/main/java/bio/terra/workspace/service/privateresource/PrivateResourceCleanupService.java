@@ -17,6 +17,7 @@ import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.resource.controlled.model.PrivateResourceState;
 import bio.terra.workspace.service.workspace.flight.RemoveUserFromWorkspaceFlight;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
+import bio.terra.workspace.service.workspace.model.OperationType;
 import java.time.Duration;
 import java.util.List;
 import java.util.Optional;
@@ -154,6 +155,7 @@ public class PrivateResourceCleanupService {
             .flightClass(RemoveUserFromWorkspaceFlight.class)
             .userRequest(wsmSaRequest)
             .workspaceId(workspaceUserPair.getWorkspaceId().toString())
+            .operationType(OperationType.SYSTEM_CLEANUP)
             .addParameter(
                 WorkspaceFlightMapKeys.WORKSPACE_ID, workspaceUserPair.getWorkspaceId().toString())
             .addParameter(WorkspaceFlightMapKeys.USER_TO_REMOVE, workspaceUserPair.getUserEmail())

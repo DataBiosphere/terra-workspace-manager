@@ -638,6 +638,7 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
             .cloneReferencedResource(
                 sourceReferencedResource,
                 body.getDestinationWorkspaceId(),
+                UUID.randomUUID(), // resourceId is not pre-allocated for individual clone endpoints
                 body.getName(),
                 body.getDescription())
             .castByEnum(WsmResourceType.REFERENCED_GCP_GCS_OBJECT);
@@ -686,6 +687,7 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
             .cloneReferencedResource(
                 sourceReferencedResource,
                 body.getDestinationWorkspaceId(),
+                UUID.randomUUID(), // resourceId is not pre-allocated for individual clone endpoints
                 body.getName(),
                 body.getDescription())
             .castByEnum(WsmResourceType.REFERENCED_GCP_GCS_BUCKET);
@@ -735,6 +737,7 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
             .cloneReferencedResource(
                 sourceReferencedResource,
                 body.getDestinationWorkspaceId(),
+                UUID.randomUUID(), // resourceId is not pre-allocated for individual clone endpoints
                 body.getName(),
                 body.getDescription())
             .castByEnum(WsmResourceType.REFERENCED_GCP_BIG_QUERY_DATA_TABLE);
@@ -784,6 +787,7 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
             .cloneReferencedResource(
                 sourceReferencedResource,
                 body.getDestinationWorkspaceId(),
+                UUID.randomUUID(), // resourceId is not pre-allocated for individual clone endpoints
                 body.getName(),
                 body.getDescription())
             .castByEnum(WsmResourceType.REFERENCED_GCP_BIG_QUERY_DATASET);
@@ -834,6 +838,7 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
             .cloneReferencedResource(
                 sourceReferencedResource,
                 body.getDestinationWorkspaceId(),
+                UUID.randomUUID(), // resourceId is not pre-allocated for individual clone endpoints
                 body.getName(),
                 body.getDescription())
             .castByEnum(WsmResourceType.REFERENCED_ANY_DATA_REPO_SNAPSHOT);
@@ -979,6 +984,7 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
             .cloneReferencedResource(
                 sourceReferencedResource,
                 body.getDestinationWorkspaceId(),
+                UUID.randomUUID(), // resourceId is not pre-allocated for individual clone endpoints
                 body.getName(),
                 body.getDescription())
             .castByEnum(WsmResourceType.REFERENCED_ANY_GIT_REPO);

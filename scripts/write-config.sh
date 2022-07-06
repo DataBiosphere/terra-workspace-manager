@@ -161,7 +161,7 @@ function dovault {
     local dofilename=$2
     case $vaultenv in
         docker)
-            docker run --rm -e VAULT_TOKEN="${vaulttoken}" broadinstitute/dsde-toolbox:consul-0.20.0 \
+            docker run --rm -e VAULT_TOKEN="${vaulttoken}" broadinstitute/dsde-toolbox:dev \
                    vault read -format=json "${dovaultpath}" > "${dofilename}"
             ;;
 

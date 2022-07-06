@@ -34,7 +34,7 @@ public class BucketCloneRolesComponentTest extends BaseUnitTest {
   }
 
   @Test
-  public void testAddBucketRoles() {
+  public void testAddBucketRoles() throws InterruptedException {
     doReturn(EMPTY_POLICY).when(mockStorageCow).getIamPolicy(SOURCE_BUCKET_NAME);
     bucketCloneRolesComponent.addBucketRoles(
         SOURCE_BUCKET_CLONE_INPUTS, STORAGE_TRANSFER_SERVICE_SA_EMAIL);
@@ -42,7 +42,7 @@ public class BucketCloneRolesComponentTest extends BaseUnitTest {
   }
 
   @Test
-  public void testRemoveBucketRoles() {
+  public void testRemoveBucketRoles() throws InterruptedException {
     doReturn(SOURCE_BUCKET_POLICY).when(mockStorageCow).getIamPolicy(SOURCE_BUCKET_NAME);
     bucketCloneRolesComponent.removeBucketRoles(
         SOURCE_BUCKET_CLONE_INPUTS, STORAGE_TRANSFER_SERVICE_SA_EMAIL);
@@ -50,7 +50,7 @@ public class BucketCloneRolesComponentTest extends BaseUnitTest {
   }
 
   @Test
-  public void testRemoveAllAddedBucketRoles() {
+  public void testRemoveAllAddedBucketRoles() throws InterruptedException {
     final FlightMap flightMap = new FlightMap();
     flightMap.put(ControlledResourceKeys.SOURCE_CLONE_INPUTS, SOURCE_BUCKET_CLONE_INPUTS);
     flightMap.put(ControlledResourceKeys.DESTINATION_CLONE_INPUTS, DESTINATION_BUCKET_CLONE_INPUTS);

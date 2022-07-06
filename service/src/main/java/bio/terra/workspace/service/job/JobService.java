@@ -22,6 +22,7 @@ import bio.terra.workspace.app.configuration.external.StairwayDatabaseConfigurat
 import bio.terra.workspace.common.utils.ErrorReportUtils;
 import bio.terra.workspace.common.utils.FlightBeanBag;
 import bio.terra.workspace.common.utils.MdcHook;
+import bio.terra.workspace.common.utils.WorkspaceActivityLogHook;
 import bio.terra.workspace.generated.model.ApiErrorReport;
 import bio.terra.workspace.generated.model.ApiJobReport;
 import bio.terra.workspace.generated.model.ApiJobReport.StatusEnum;
@@ -63,6 +64,7 @@ public class JobService {
   private final StairwayDatabaseConfiguration stairwayDatabaseConfiguration;
   private final ScheduledExecutorService executor;
   private final MdcHook mdcHook;
+  private final WorkspaceActivityLogHook workspaceActivityLogHook;
   private final StairwayComponent stairwayComponent;
   private final FlightBeanBag flightBeanBag;
   private final Logger logger = LoggerFactory.getLogger(JobService.class);
@@ -75,6 +77,7 @@ public class JobService {
       IngressConfiguration ingressConfig,
       StairwayDatabaseConfiguration stairwayDatabaseConfiguration,
       MdcHook mdcHook,
+      WorkspaceActivityLogHook workspaceActivityLogHook,
       StairwayComponent stairwayComponent,
       FlightBeanBag flightBeanBag,
       ObjectMapper objectMapper) {
@@ -83,6 +86,7 @@ public class JobService {
     this.stairwayDatabaseConfiguration = stairwayDatabaseConfiguration;
     this.executor = Executors.newScheduledThreadPool(jobConfig.getMaxThreads());
     this.mdcHook = mdcHook;
+    this.workspaceActivityLogHook = workspaceActivityLogHook;
     this.stairwayComponent = stairwayComponent;
     this.flightBeanBag = flightBeanBag;
     this.objectMapper = objectMapper;
@@ -171,6 +175,7 @@ public class JobService {
             .context(flightBeanBag)
             .addHook(mdcHook)
             .addHook(new TracingHook())
+            .addHook(workspaceActivityLogHook)
             .exceptionSerializer(new StairwayExceptionSerializer(objectMapper)));
   }
 
@@ -198,7 +203,9 @@ public class JobService {
                   .orElseThrow(
                       () ->
                           new InvalidResultStateException(
-                              "Flight failed with no exception reported"));
+                              String.format(
+                                  "Flight %s failed with no exception reported",
+                                  flightState.getFlightId())));
           statusCode = HttpStatus.valueOf(errorCode);
           break;
         case SUCCEEDED:

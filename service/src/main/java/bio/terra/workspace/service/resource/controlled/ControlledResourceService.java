@@ -182,6 +182,7 @@ public class ControlledResourceService {
       UUID sourceWorkspaceId,
       UUID sourceResourceId,
       UUID destinationWorkspaceId,
+      UUID destinationResourceId,
       ApiJobControl jobControl,
       AuthenticatedUserRequest userRequest,
       @Nullable String destinationResourceName,
@@ -209,7 +210,9 @@ public class ControlledResourceService {
             .resource(sourceBucketResource)
             .userRequest(userRequest)
             .workspaceId(sourceWorkspaceId.toString())
+            .operationType(OperationType.CLONE)
             .addParameter(ControlledResourceKeys.DESTINATION_WORKSPACE_ID, destinationWorkspaceId)
+            .addParameter(ControlledResourceKeys.DESTINATION_RESOURCE_ID, destinationResourceId)
             .addParameter(ResourceKeys.RESOURCE_NAME, destinationResourceName)
             .addParameter(ResourceKeys.RESOURCE_DESCRIPTION, destinationDescription)
             .addParameter(ControlledResourceKeys.DESTINATION_BUCKET_NAME, destinationBucketName)
@@ -286,6 +289,7 @@ public class ControlledResourceService {
       UUID sourceWorkspaceId,
       UUID sourceResourceId,
       UUID destinationWorkspaceId,
+      UUID destinationResourceId,
       ApiJobControl jobControl,
       AuthenticatedUserRequest userRequest,
       @Nullable String destinationResourceName,
@@ -319,6 +323,7 @@ public class ControlledResourceService {
             .stewardshipType(sourceDatasetResource.getStewardshipType())
             .workspaceId(sourceWorkspaceId.toString())
             .addParameter(ControlledResourceKeys.DESTINATION_WORKSPACE_ID, destinationWorkspaceId)
+            .addParameter(ControlledResourceKeys.DESTINATION_RESOURCE_ID, destinationResourceId)
             .addParameter(ResourceKeys.RESOURCE_NAME, destinationResourceName)
             .addParameter(ResourceKeys.RESOURCE_DESCRIPTION, destinationDescription)
             .addParameter(ControlledResourceKeys.LOCATION, destinationLocation)

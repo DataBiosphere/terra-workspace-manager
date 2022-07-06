@@ -6,9 +6,14 @@ import javax.annotation.Nullable;
 
 /** Operation type - corollary to the ApiOperationType. */
 public enum OperationType {
+  APPLICATION_DISABLED(ApiOperationType.APPLICATION_DISABLED),
+  APPLICATION_ENABLED(ApiOperationType.APPLICATION_ENABLED),
   CLONE(ApiOperationType.CLONE),
   CREATE(ApiOperationType.CREATE),
   DELETE(ApiOperationType.DELETE),
+  GRANT_WORKSPACE_ROLE(ApiOperationType.GRANT_WORKSPACE_ROLE),
+  REMOVE_WORKSPACE_ROLE(ApiOperationType.REMOVE_WORKSPACE_ROLE),
+  SYSTEM_CLEANUP(ApiOperationType.SYSTEM_CLEANUP),
   UPDATE(ApiOperationType.UPDATE),
   UNKNOWN(ApiOperationType.UNKNOWN);
 

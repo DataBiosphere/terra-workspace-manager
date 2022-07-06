@@ -2,7 +2,9 @@ package bio.terra.workspace.service.workspace;
 
 import bio.terra.workspace.app.configuration.external.BufferServiceConfiguration;
 import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
+import bio.terra.workspace.db.WorkspaceActivityLogDao;
 import bio.terra.workspace.db.WorkspaceDao;
+import bio.terra.workspace.db.model.DbWorkspaceActivityLog;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamRethrow;
 import bio.terra.workspace.service.iam.SamService;
@@ -27,6 +29,7 @@ import bio.terra.workspace.service.workspace.flight.create.azure.CreateAzureCont
 import bio.terra.workspace.service.workspace.model.AzureCloudContext;
 import bio.terra.workspace.service.workspace.model.OperationType;
 import bio.terra.workspace.service.workspace.model.Workspace;
+import bio.terra.workspace.service.workspace.model.WorkspaceAndHighestRole;
 import io.opencensus.contrib.spring.aop.Traced;
 import java.util.List;
 import java.util.Map;
@@ -57,6 +60,7 @@ public class WorkspaceService {
   private final BufferServiceConfiguration bufferServiceConfiguration;
   private final StageService stageService;
   private final FeatureConfiguration features;
+  private final WorkspaceActivityLogDao workspaceActivityLogDao;
 
   @Autowired
   public WorkspaceService(
@@ -66,13 +70,15 @@ public class WorkspaceService {
       BufferServiceConfiguration bufferServiceConfiguration,
       StageService stageService,
       GcpCloudContextService gcpCloudContextService,
-      FeatureConfiguration features) {
+      FeatureConfiguration features,
+      WorkspaceActivityLogDao workspaceActivityLogDao) {
     this.jobService = jobService;
     this.workspaceDao = workspaceDao;
     this.samService = samService;
     this.bufferServiceConfiguration = bufferServiceConfiguration;
     this.stageService = stageService;
     this.features = features;
+    this.workspaceActivityLogDao = workspaceActivityLogDao;
   }
 
   /** Create a workspace with the specified parameters. Returns workspaceID of the new workspace. */
@@ -163,12 +169,19 @@ public class WorkspaceService {
    * @param limit The maximum number of items to return.
    */
   @Traced
-  public List<Workspace> listWorkspaces(
+  public List<WorkspaceAndHighestRole> listWorkspacesAndHighestRoles(
       AuthenticatedUserRequest userRequest, int offset, int limit) {
-    List<UUID> samWorkspaceIds =
+    Map<UUID, WsmIamRole> samWorkspaceIdsAndHighestRoles =
         SamRethrow.onInterrupted(
-            () -> samService.listWorkspaceIds(userRequest), "listWorkspaceIds");
-    return workspaceDao.getWorkspacesMatchingList(samWorkspaceIds, offset, limit);
+            () -> samService.listWorkspaceIdsAndHighestRoles(userRequest), "listWorkspaceIds");
+    return workspaceDao
+        .getWorkspacesMatchingList(samWorkspaceIdsAndHighestRoles.keySet(), offset, limit)
+        .stream()
+        .map(
+            workspace ->
+                new WorkspaceAndHighestRole(
+                    workspace, samWorkspaceIdsAndHighestRoles.get(workspace.getWorkspaceId())))
+        .toList();
   }
 
   /** Retrieves an existing workspace by ID */
@@ -197,6 +210,18 @@ public class WorkspaceService {
     return workspace;
   }
 
+  @Traced
+  public WsmIamRole getHighestRole(UUID uuid, AuthenticatedUserRequest userRequest) {
+    logger.info("getHighestRole - userRequest: {}\nuserFacingId: {}", userRequest, uuid.toString());
+    List<WsmIamRole> requesterRoles =
+        SamRethrow.onInterrupted(
+            () ->
+                samService.listRequesterRoles(
+                    userRequest, SamConstants.SamResource.WORKSPACE, uuid.toString()),
+            "listRequesterRoles");
+    return WsmIamRole.getHighestRole(uuid, requesterRoles);
+  }
+
   /**
    * Update an existing workspace. Currently, can change the workspace's display name or
    * description.
@@ -212,7 +237,10 @@ public class WorkspaceService {
       @Nullable String name,
       @Nullable String description,
       @Nullable Map<String, String> properties) {
-    workspaceDao.updateWorkspace(workspaceUuid, userFacingId, name, description, properties);
+    if (workspaceDao.updateWorkspace(workspaceUuid, userFacingId, name, description, properties)) {
+      workspaceActivityLogDao.writeActivity(
+          workspaceUuid, new DbWorkspaceActivityLog().operationType(OperationType.UPDATE));
+    }
     return workspaceDao.getWorkspace(workspaceUuid);
   }
 
@@ -256,6 +284,7 @@ public class WorkspaceService {
         .description("Create Azure Cloud Context " + workspace.getWorkspaceId())
         .jobId(jobId)
         .workspaceId(workspace.getWorkspaceId().toString())
+        .operationType(OperationType.CREATE)
         .flightClass(CreateAzureContextFlight.class)
         .request(azureContext)
         .userRequest(userRequest)
@@ -411,8 +440,8 @@ public class WorkspaceService {
                 role.name(), targetUserEmail, workspace.getWorkspaceId()))
         .flightClass(RemoveUserFromWorkspaceFlight.class)
         .userRequest(executingUserRequest)
-        .operationType(OperationType.DELETE)
         .workspaceId(workspace.getWorkspaceId().toString())
+        .operationType(OperationType.REMOVE_WORKSPACE_ROLE)
         .addParameter(WorkspaceFlightMapKeys.USER_TO_REMOVE, targetUserEmail)
         .addParameter(WorkspaceFlightMapKeys.ROLE_TO_REMOVE, role)
         .submitAndWait(null);

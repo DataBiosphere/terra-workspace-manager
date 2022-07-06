@@ -145,6 +145,10 @@ public class JobBuilder {
       throw new MissingRequiredFieldException("Missing workspace ID");
     }
 
+    if (operationType == null || operationType == OperationType.UNKNOWN) {
+      throw new MissingRequiredFieldException("Missing or unspecified operation type");
+    }
+
     // Default to a generated job id
     if (jobId == null) {
       jobId = stairwayComponent.get().createFlightId();

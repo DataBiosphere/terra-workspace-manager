@@ -47,9 +47,11 @@ import bio.terra.workspace.service.workspace.model.WorkspaceStage;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import org.apache.http.HttpStatus;
+import org.hamcrest.collection.IsMapContaining;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -324,10 +326,11 @@ class SamServiceTest extends BaseConnectedTest {
   }
 
   @Test
-  void listWorkspacesIncludesWsmWorkspace() throws Exception {
-    List<UUID> samWorkspaceIdList =
-        samService.listWorkspaceIds(userAccessUtils.defaultUserAuthRequest());
-    assertTrue(samWorkspaceIdList.contains(workspaceUuid));
+  void listWorkspaceIdsAndHighestRoles() throws Exception {
+    Map<UUID, WsmIamRole> actual =
+        samService.listWorkspaceIdsAndHighestRoles(userAccessUtils.defaultUserAuthRequest());
+
+    assertThat(actual, IsMapContaining.hasEntry(workspaceUuid, WsmIamRole.OWNER));
   }
 
   @Test

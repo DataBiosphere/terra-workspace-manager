@@ -1,6 +1,7 @@
 package scripts.testscripts;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.fail;
 
 import bio.terra.testrunner.runner.config.TestUserSpecification;
@@ -13,6 +14,7 @@ import bio.terra.workspace.model.ReferenceResourceCommonFields;
 import bio.terra.workspace.model.TerraWorkspaceAttributes;
 import bio.terra.workspace.model.TerraWorkspaceResource;
 import java.util.UUID;
+import org.apache.http.HttpStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import scripts.utils.ClientTestUtils;
@@ -32,6 +34,7 @@ public class ReferencedTerraWorkspaceLifecycle extends GcpWorkspaceCloneTestScri
         ClientTestUtils.getReferencedGcpResourceClient(testUser, server);
 
     UUID createdResourceId = testCreateAndGet(referencedGcpResourceApi);
+    testAttemptToCreateReferenceToNonExistingWorkspace(referencedGcpResourceApi);
     testDelete(referencedGcpResourceApi, createdResourceId);
   }
 
@@ -80,19 +83,36 @@ public class ReferencedTerraWorkspaceLifecycle extends GcpWorkspaceCloneTestScri
     return createdResource.getMetadata().getResourceId();
   }
 
+  private void testAttemptToCreateReferenceToNonExistingWorkspace(
+      ReferencedGcpResourceApi referencedGcpResourceApi) {
+    String resourceName = TestUtils.appendRandomNumber("terra-workspace-reference");
+
+    // Create resource
+    var body =
+        new CreateTerraWorkspaceReferenceRequestBody()
+            .metadata(
+                new ReferenceResourceCommonFields()
+                    .cloningInstructions(CloningInstructionsEnum.NOTHING)
+                    .name(resourceName))
+            .referencedWorkspace(
+                new TerraWorkspaceAttributes().referencedWorkspaceId(UUID.randomUUID()));
+    var workspaceNotExist =
+        assertThrows(
+            ApiException.class,
+            () -> referencedGcpResourceApi.createTerraWorkspaceReference(body, getWorkspaceId()));
+    assertEquals(HttpStatus.SC_NOT_FOUND, workspaceNotExist.getCode());
+  }
+
   private void testDelete(ReferencedGcpResourceApi referencedGcpResourceApi, UUID createdResourceId)
       throws Exception {
     // Delete resource
     ClientTestUtils.runWithRetryOnException(
-        new Runnable() {
-          @Override
-          public void run() {
-            try {
-              referencedGcpResourceApi.deleteTerraWorkspaceReference(
-                  getWorkspaceId(), createdResourceId);
-            } catch (ApiException e) {
-              fail("Exception when calling deleteTerraWorkspaceReference: " + e.getMessage());
-            }
+        () -> {
+          try {
+            referencedGcpResourceApi.deleteTerraWorkspaceReference(
+                getWorkspaceId(), createdResourceId);
+          } catch (ApiException e) {
+            fail("Exception when calling deleteTerraWorkspaceReference: " + e.getMessage());
           }
         });
     logger.info(
