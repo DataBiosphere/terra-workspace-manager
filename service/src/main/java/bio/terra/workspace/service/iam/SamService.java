@@ -830,7 +830,7 @@ public class SamService {
     try {
       // Sam makes no guarantees about what values are returned from the POST call, so we instead
       // fetch the group in a separate call after syncing.
-      SamRetry.retry(() -> googleApi.syncPolicy(resourceTypeName, resourceId, policyName));
+      SamRetry.retry(() -> googleApi.syncPolicy(resourceTypeName, resourceId, policyName, null));
       return SamRetry.retry(() -> googleApi.syncStatus(resourceTypeName, resourceId, policyName))
           .getEmail();
     } catch (ApiException apiException) {

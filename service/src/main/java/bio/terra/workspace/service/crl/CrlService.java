@@ -555,7 +555,8 @@ public class CrlService {
    * Get a managed service identity (MSI) manager pointed at the MRG subscription
    *
    * @param azureCloudContext target cloud context
-   * @return azure resource manager
+   * @param azureConfig target cloud configuration
+   * @return azure MSI manager
    */
   public MsiManager buildMsiManager(
       AzureCloudContext azureCloudContext, AzureConfiguration azureConfig) {
@@ -567,7 +568,6 @@ public class CrlService {
             azureCloudContext.getAzureSubscriptionId(),
             AzureEnvironment.AZURE);
 
-    // We must use FQDN because there are two `Defaults` symbols imported otherwise.
     MsiManager manager = MsiManager.configure().authenticate(azureCreds, azureProfile);
 
     return manager;
