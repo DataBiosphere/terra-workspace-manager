@@ -252,7 +252,7 @@ src/main/
 - `app/` For the top of the application, including Main and the StartupInitializer
 - `app/configuration/` For all of the bean and property definitions
 - `app/controller/` For the REST controllers. The controllers typically do very little.
-They invoke a service to do the work and package the service output into the response. The
+They perform access checks and validate input, invoke a service to do the work, and package the service output into the response. The
 controller package also defines the global exception handling.
 - `common/` For common models, exceptions, and utilities.
 shared by more than one service.
