@@ -9,6 +9,9 @@ import bio.terra.common.logging.RequestIdFilter;
 import bio.terra.workspace.app.configuration.external.BufferServiceConfiguration;
 import bio.terra.workspace.service.buffer.exception.BufferServiceAPIException;
 import bio.terra.workspace.service.buffer.exception.BufferServiceAuthorizationException;
+import io.opencensus.contrib.http.jaxrs.JaxrsClientExtractor;
+import io.opencensus.contrib.http.jaxrs.JaxrsClientFilter;
+import io.opencensus.trace.Tracing;
 import java.io.IOException;
 import javax.ws.rs.client.Client;
 import org.slf4j.Logger;
@@ -29,7 +32,12 @@ public class BufferService {
   @Autowired
   public BufferService(BufferServiceConfiguration bufferServiceConfiguration) {
     this.bufferServiceConfiguration = bufferServiceConfiguration;
-    this.commonHttpClient = new ApiClient().getHttpClient();
+    this.commonHttpClient =
+        new ApiClient()
+            .getHttpClient()
+            .register(
+                new JaxrsClientFilter(
+                    new JaxrsClientExtractor(), Tracing.getPropagationComponent().getB3Format()));
   }
 
   private ApiClient getApiClient(String accessToken) {

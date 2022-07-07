@@ -5,8 +5,8 @@ import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.ArgumentMatchers.any;
 
+import bio.terra.common.exception.MissingRequiredFieldException;
 import bio.terra.stairway.FlightDebugInfo;
 import bio.terra.workspace.common.BaseUnitTest;
 import bio.terra.workspace.db.WorkspaceDao;
@@ -16,20 +16,20 @@ import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.job.exception.InvalidJobIdException;
 import bio.terra.workspace.service.job.exception.InvalidResultStateException;
 import bio.terra.workspace.service.job.exception.JobNotFoundException;
+import bio.terra.workspace.service.workspace.model.OperationType;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.HttpStatus;
+import org.springframework.test.annotation.DirtiesContext;
+import org.springframework.test.annotation.DirtiesContext.MethodMode;
 
 class JobServiceTest extends BaseUnitTest {
   private final AuthenticatedUserRequest testUser =
@@ -41,16 +41,6 @@ class JobServiceTest extends BaseUnitTest {
   @Autowired private JobService jobService;
   @Autowired private WorkspaceDao workspaceDao;
   @MockBean private SamService mockSamService;
-
-  @BeforeEach
-  @SuppressFBWarnings(value = "DE_MIGHT_IGNORE", justification = "Mockito flakiness")
-  void setup() {
-    try {
-      Mockito.doReturn(true).when(mockSamService.isAuthorized(any(), any(), any(), any()));
-    } catch (Exception e) {
-      // How does a mock even throw an exception?
-    }
-  }
 
   /**
    * Reset the {@link JobService} {@link FlightDebugInfo} after each test so that future submissions
@@ -73,7 +63,8 @@ class JobServiceTest extends BaseUnitTest {
                 .jobId(testJobId)
                 .flightClass(JobServiceTestFlight.class)
                 .workspaceId(UUID.randomUUID().toString())
-                .userRequest(testUser));
+                .userRequest(testUser)
+                .operationType(OperationType.DELETE));
   }
 
   @Test
@@ -88,9 +79,28 @@ class JobServiceTest extends BaseUnitTest {
                 .jobId(testJobId)
                 .flightClass(JobServiceTestFlight.class)
                 .userRequest(testUser)
-                .workspaceId(UUID.randomUUID().toString()));
+                .workspaceId(UUID.randomUUID().toString())
+                .operationType(OperationType.DELETE));
   }
 
+  @Test
+  void unknownJobOperationType() {
+    assertThrows(
+        MissingRequiredFieldException.class,
+        () ->
+            jobService
+                .newJob()
+                .description("description")
+                .jobId("test-job-id")
+                .flightClass(JobServiceTestFlight.class)
+                .userRequest(testUser)
+                .workspaceId(UUID.randomUUID().toString())
+                .submit());
+  }
+
+  // Resets the application context before retrieveTest to make sure that the job service does not
+  // have some failed jobs left over from other tests.
+  @DirtiesContext(methodMode = MethodMode.BEFORE_METHOD)
   @Test
   void retrieveTest() throws Exception {
     // We perform 7 flights and then retrieve and enumerate them.
@@ -204,6 +214,7 @@ class JobServiceTest extends BaseUnitTest {
             .flightClass(JobServiceTestFlight.class)
             .userRequest(testUser)
             .workspaceId(workspaceUuid.toString())
+            .operationType(OperationType.CREATE)
             .submit();
     jobService.waitForJob(jobId);
     return jobId;

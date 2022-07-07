@@ -23,6 +23,7 @@ import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -121,7 +122,7 @@ class WorkspaceDaoTest extends BaseUnitTest {
     UUID fakeWorkspaceId = UUID.randomUUID();
     List<Workspace> workspaceList =
         workspaceDao.getWorkspacesMatchingList(
-            ImmutableList.of(realWorkspace.getWorkspaceId(), fakeWorkspaceId), 0, 1);
+            ImmutableSet.of(realWorkspace.getWorkspaceId(), fakeWorkspaceId), 0, 1);
     // The DAO should return all workspaces this user has access to, including realWorkspace but
     // not including the fake workspace id.
     assertThat(workspaceList, hasItem(equalTo(realWorkspace)));
@@ -144,7 +145,7 @@ class WorkspaceDaoTest extends BaseUnitTest {
     workspaceDao.createWorkspace(secondWorkspace);
     List<Workspace> workspaceList =
         workspaceDao.getWorkspacesMatchingList(
-            ImmutableList.of(firstWorkspace.getWorkspaceId(), secondWorkspace.getWorkspaceId()),
+            ImmutableSet.of(firstWorkspace.getWorkspaceId(), secondWorkspace.getWorkspaceId()),
             1,
             10);
     assertThat(workspaceList.size(), equalTo(1));
@@ -165,7 +166,7 @@ class WorkspaceDaoTest extends BaseUnitTest {
     workspaceDao.createWorkspace(secondWorkspace);
     List<Workspace> workspaceList =
         workspaceDao.getWorkspacesMatchingList(
-            ImmutableList.of(firstWorkspace.getWorkspaceId(), secondWorkspace.getWorkspaceId()),
+            ImmutableSet.of(firstWorkspace.getWorkspaceId(), secondWorkspace.getWorkspaceId()),
             0,
             1);
     assertThat(workspaceList.size(), equalTo(1));

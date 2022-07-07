@@ -26,6 +26,7 @@ import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ResourceKeys;
+import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -57,6 +58,7 @@ public class CopyGcsBucketDefinitionStepTest extends BaseUnitTest {
     inputParameters.put(ControlledResourceKeys.DESTINATION_BUCKET_NAME, DESTINATION_BUCKET_NAME);
     inputParameters.put(
         ControlledResourceKeys.CREATION_PARAMETERS, SOURCE_BUCKET_CREATION_PARAMETERS);
+    inputParameters.put(ControlledResourceKeys.DESTINATION_RESOURCE_ID, UUID.randomUUID());
     doReturn(inputParameters).when(mockFlightContext).getInputParameters();
 
     final var workingMap = new FlightMap();

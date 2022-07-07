@@ -5,6 +5,7 @@ import bio.terra.common.exception.ForbiddenException;
 import bio.terra.common.exception.InternalServerErrorException;
 import bio.terra.common.sam.SamRetry;
 import bio.terra.common.sam.exception.SamExceptionFactory;
+import bio.terra.common.tracing.OkHttpClientTracingInterceptor;
 import bio.terra.workspace.app.configuration.external.SamConfiguration;
 import bio.terra.workspace.common.exception.InternalLogicException;
 import bio.terra.workspace.common.utils.GcpUtils;
@@ -21,8 +22,8 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import io.opencensus.contrib.spring.aop.Traced;
+import io.opencensus.trace.Tracing;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -78,7 +79,12 @@ public class SamService {
     this.samConfig = samConfig;
     this.stageService = stageService;
     this.wsmServiceAccountInitialized = false;
-    this.commonHttpClient = new ApiClient().getHttpClient();
+    this.commonHttpClient =
+        new ApiClient()
+            .getHttpClient()
+            .newBuilder()
+            .addInterceptor(new OkHttpClientTracingInterceptor(Tracing.getTracer()))
+            .build();
   }
 
   private ApiClient getApiClient(String accessToken) {
@@ -270,19 +276,26 @@ public class SamService {
   /**
    * List all workspace IDs in Sam this user has access to. Note that in environments shared with
    * Rawls, some of these workspaces will be Rawls managed and WSM will not know about them.
+   *
+   * @return map from workspace ID to highest SAM role
    */
   @Traced
-  public List<UUID> listWorkspaceIds(AuthenticatedUserRequest userRequest)
+  public Map<UUID, WsmIamRole> listWorkspaceIdsAndHighestRoles(AuthenticatedUserRequest userRequest)
       throws InterruptedException {
     ResourcesApi resourceApi = samResourcesApi(userRequest.getRequiredToken());
-    List<UUID> workspaceIds = new ArrayList<>();
+    Map<UUID, WsmIamRole> workspacesAndRoles = new HashMap<>();
     try {
-      List<UserResourcesResponse> resourceAndPolicies =
+      List<UserResourcesResponse> userResourcesResponses =
           SamRetry.retry(
               () -> resourceApi.listResourcesAndPoliciesV2(SamConstants.SamResource.WORKSPACE));
-      for (var resourceAndPolicy : resourceAndPolicies) {
+      for (var userResourcesResponse : userResourcesResponses) {
         try {
-          workspaceIds.add(UUID.fromString(resourceAndPolicy.getResourceId()));
+          UUID workspaceId = UUID.fromString(userResourcesResponse.getResourceId());
+          List<WsmIamRole> roles =
+              userResourcesResponse.getDirect().getRoles().stream()
+                  .map(WsmIamRole::fromSam)
+                  .collect(Collectors.toList());
+          workspacesAndRoles.put(workspaceId, WsmIamRole.getHighestRole(workspaceId, roles));
         } catch (IllegalArgumentException e) {
           // WSM always uses UUIDs for workspace IDs, but this is not enforced in Sam and there are
           // old workspaces that don't use UUIDs. Any workspace with a non-UUID workspace ID is
@@ -293,7 +306,7 @@ public class SamService {
     } catch (ApiException apiException) {
       throw SamExceptionFactory.create("Error listing Workspace Ids in Sam", apiException);
     }
-    return workspaceIds;
+    return workspacesAndRoles;
   }
 
   @Traced
@@ -316,6 +329,19 @@ public class SamService {
         return;
       }
       throw SamExceptionFactory.create("Error deleting a workspace in Sam", apiException);
+    }
+  }
+
+  @Traced
+  public List<String> listResourceActions(
+      AuthenticatedUserRequest userRequest, String resourceType, String resourceId)
+      throws InterruptedException {
+    String authToken = userRequest.getRequiredToken();
+    ResourcesApi resourceApi = samResourcesApi(authToken);
+    try {
+      return SamRetry.retry(() -> resourceApi.resourceActions(resourceType, resourceId));
+    } catch (ApiException apiException) {
+      throw SamExceptionFactory.create("Error listing resources actions in Sam", apiException);
     }
   }
 
@@ -659,6 +685,20 @@ public class SamService {
       throw SamExceptionFactory.create("Error listing role bindings in Sam", apiException);
     } catch (InterruptedException e) {
       logger.warn("dump role binding was interrupted");
+    }
+  }
+
+  /** Wrapper around Sam client to fetch requester roles on specified resource. */
+  @Traced
+  public List<WsmIamRole> listRequesterRoles(
+      AuthenticatedUserRequest userRequest, String samResourceType, String resourceId) {
+    ResourcesApi resourcesApi = samResourcesApi(userRequest.getRequiredToken());
+    try {
+      return resourcesApi.resourceRolesV2(samResourceType, resourceId).stream()
+          .map(WsmIamRole::fromSam)
+          .collect(Collectors.toList());
+    } catch (ApiException e) {
+      throw SamExceptionFactory.create("Error retrieving requester resource roles from Sam", e);
     }
   }
 

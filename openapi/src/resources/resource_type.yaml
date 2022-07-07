@@ -19,6 +19,7 @@ components:
         - AZURE_STORAGE_ACCOUNT
         - AZURE_STORAGE_CONTAINER
         - GIT_REPO
+        - TERRA_WORKSPACE
 
     ResourceAttributesUnion:
       type: object
@@ -55,6 +56,8 @@ components:
           $ref: '#/components/schemas/AzureVmAttributes'
         gitRepo:
           $ref: '#/components/schemas/GitRepoAttributes'
+        terraWorkspace:
+          $ref: '#/components/schemas/TerraWorkspaceAttributes'
 
     ResourceUnion:
       type: object
@@ -91,4 +94,6 @@ components:
           $ref: '#/components/schemas/AzureStorageContainerResource'
         gitRepo:
           $ref: '#/components/schemas/GitRepoResource'
+        terraWorkspace:
+          $ref: '#/components/schemas/TerraWorkspaceResource'
 

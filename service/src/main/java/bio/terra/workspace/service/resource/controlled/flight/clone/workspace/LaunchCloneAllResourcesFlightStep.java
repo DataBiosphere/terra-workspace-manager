@@ -48,7 +48,7 @@ public class LaunchCloneAllResourcesFlightStep implements Step {
             .getWorkingMap()
             .get(ControlledResourceKeys.CLONE_ALL_RESOURCES_FLIGHT_ID, String.class);
 
-    final List<ResourceWithFlightId> resourcesAndFlightIds =
+    final List<ResourceCloneInputs> resourceCloneInputs =
         context
             .getWorkingMap()
             .get(ControlledResourceKeys.RESOURCES_TO_CLONE, new TypeReference<>() {});
@@ -59,7 +59,7 @@ public class LaunchCloneAllResourcesFlightStep implements Step {
 
     final FlightMap subflightInputParameters = new FlightMap();
     subflightInputParameters.put(JobMapKeys.AUTH_USER_INFO.getKeyName(), userRequest);
-    subflightInputParameters.put(ControlledResourceKeys.RESOURCES_TO_CLONE, resourcesAndFlightIds);
+    subflightInputParameters.put(ControlledResourceKeys.RESOURCES_TO_CLONE, resourceCloneInputs);
     subflightInputParameters.put(
         ControlledResourceKeys.DESTINATION_WORKSPACE_ID, destinationWorkspace.getWorkspaceId());
     subflightInputParameters.put(ControlledResourceKeys.LOCATION, location);

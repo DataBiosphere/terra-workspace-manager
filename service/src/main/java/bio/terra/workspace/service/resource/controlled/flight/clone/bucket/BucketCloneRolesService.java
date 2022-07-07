@@ -2,12 +2,14 @@ package bio.terra.workspace.service.resource.controlled.flight.clone.bucket;
 
 import bio.terra.cloudres.google.storage.StorageCow;
 import bio.terra.stairway.FlightMap;
+import bio.terra.workspace.common.utils.GcpUtils;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import com.google.api.client.util.Strings;
 import com.google.cloud.Identity;
 import com.google.cloud.Policy;
 import com.google.cloud.Role;
+import java.time.Duration;
 import javax.annotation.Nullable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -15,6 +17,8 @@ import org.springframework.stereotype.Service;
 @Service
 public class BucketCloneRolesService {
 
+  private static final int MAX_RETRY_ATTEMPTS = 30;
+  private static final Duration RETRY_INTERVAL = Duration.ofSeconds(2);
   private final CrlService crlService;
 
   @Autowired
@@ -22,11 +26,13 @@ public class BucketCloneRolesService {
     this.crlService = crlService;
   }
 
-  public void addBucketRoles(BucketCloneInputs inputs, String transferServiceSAEmail) {
+  public void addBucketRoles(BucketCloneInputs inputs, String transferServiceSAEmail)
+      throws InterruptedException {
     addOrRemoveBucketIdentities(BucketPolicyIdentityOperation.ADD, inputs, transferServiceSAEmail);
   }
 
-  public void removeBucketRoles(BucketCloneInputs inputs, String transferServiceSAEmail) {
+  public void removeBucketRoles(BucketCloneInputs inputs, String transferServiceSAEmail)
+      throws InterruptedException {
     addOrRemoveBucketIdentities(
         BucketPolicyIdentityOperation.REMOVE, inputs, transferServiceSAEmail);
   }
@@ -35,7 +41,7 @@ public class BucketCloneRolesService {
    * A utility method for flight steps, at least two of which need this exact implementation. Fetch
    * bucket details from the working map along with the correct project ID and remove the roles.
    */
-  public void removeAllAddedBucketRoles(FlightMap workingMap) {
+  public void removeAllAddedBucketRoles(FlightMap workingMap) throws InterruptedException {
     final @Nullable BucketCloneInputs sourceInputs =
         workingMap.get(ControlledResourceKeys.SOURCE_CLONE_INPUTS, BucketCloneInputs.class);
     final @Nullable BucketCloneInputs destinationInputs =
@@ -68,7 +74,8 @@ public class BucketCloneRolesService {
   private void addOrRemoveBucketIdentities(
       BucketPolicyIdentityOperation operation,
       BucketCloneInputs inputs,
-      String transferServiceSAEmail) {
+      String transferServiceSAEmail)
+      throws InterruptedException {
     if (inputs.getRoleNames().isEmpty()) {
       // No-op
       return;
@@ -80,14 +87,18 @@ public class BucketCloneRolesService {
         storageCow.getIamPolicy(inputs.getBucketName()).toBuilder();
     for (String roleName : inputs.getRoleNames()) {
       switch (operation) {
-        case ADD:
-          policyBuilder.addIdentity(Role.of(roleName), saIdentity);
-          break;
-        case REMOVE:
-          policyBuilder.removeIdentity(Role.of(roleName), saIdentity);
-          break;
+        case ADD -> policyBuilder.addIdentity(Role.of(roleName), saIdentity);
+        case REMOVE -> policyBuilder.removeIdentity(Role.of(roleName), saIdentity);
       }
     }
-    storageCow.setIamPolicy(inputs.getBucketName(), policyBuilder.build());
+    final Policy newPolicy = policyBuilder.build();
+    storageCow.setIamPolicy(inputs.getBucketName(), newPolicy);
+
+    // verify the role changes have propagated, as we may need to work on this bucket immediately
+    GcpUtils.pollUntilEqual(
+        newPolicy,
+        () -> storageCow.getIamPolicy(inputs.getBucketName()),
+        RETRY_INTERVAL,
+        MAX_RETRY_ATTEMPTS);
   }
 }

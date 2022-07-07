@@ -1,5 +1,6 @@
 package bio.terra.workspace.app.controller;
 
+import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.generated.controller.ReferencedGcpResourceApi;
 import bio.terra.workspace.generated.model.ApiCloneReferencedGcpBigQueryDataTableResourceResult;
 import bio.terra.workspace.generated.model.ApiCloneReferencedGcpBigQueryDatasetResourceResult;
@@ -14,12 +15,14 @@ import bio.terra.workspace.generated.model.ApiCreateGcpBigQueryDatasetReferenceR
 import bio.terra.workspace.generated.model.ApiCreateGcpGcsBucketReferenceRequestBody;
 import bio.terra.workspace.generated.model.ApiCreateGcpGcsObjectReferenceRequestBody;
 import bio.terra.workspace.generated.model.ApiCreateGitRepoReferenceRequestBody;
+import bio.terra.workspace.generated.model.ApiCreateTerraWorkspaceReferenceRequestBody;
 import bio.terra.workspace.generated.model.ApiDataRepoSnapshotResource;
 import bio.terra.workspace.generated.model.ApiGcpBigQueryDataTableResource;
 import bio.terra.workspace.generated.model.ApiGcpBigQueryDatasetResource;
 import bio.terra.workspace.generated.model.ApiGcpGcsBucketResource;
 import bio.terra.workspace.generated.model.ApiGcpGcsObjectResource;
 import bio.terra.workspace.generated.model.ApiGitRepoResource;
+import bio.terra.workspace.generated.model.ApiTerraWorkspaceResource;
 import bio.terra.workspace.generated.model.ApiUpdateBigQueryDataTableReferenceRequestBody;
 import bio.terra.workspace.generated.model.ApiUpdateBigQueryDatasetReferenceRequestBody;
 import bio.terra.workspace.generated.model.ApiUpdateDataRepoSnapshotReferenceRequestBody;
@@ -40,6 +43,7 @@ import bio.terra.workspace.service.resource.referenced.cloud.gcp.bqdatatable.Ref
 import bio.terra.workspace.service.resource.referenced.cloud.gcp.datareposnapshot.ReferencedDataRepoSnapshotResource;
 import bio.terra.workspace.service.resource.referenced.cloud.gcp.gcsbucket.ReferencedGcsBucketResource;
 import bio.terra.workspace.service.resource.referenced.cloud.gcp.gcsobject.ReferencedGcsObjectResource;
+import bio.terra.workspace.service.resource.referenced.terra.workspace.ReferencedTerraWorkspaceResource;
 import java.util.Optional;
 import java.util.UUID;
 import javax.servlet.http.HttpServletRequest;
@@ -58,6 +62,7 @@ import org.springframework.stereotype.Controller;
 public class ReferencedGcpResourceController implements ReferencedGcpResourceApi {
 
   private final ReferencedResourceService referenceResourceService;
+  private final WorkspaceDao workspaceDao;
   private final AuthenticatedUserRequestFactory authenticatedUserRequestFactory;
   private final ResourceValidationUtils validationUtils;
   private final HttpServletRequest request;
@@ -67,11 +72,13 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
   @Autowired
   public ReferencedGcpResourceController(
       ReferencedResourceService referenceResourceService,
+      WorkspaceDao workspaceDao,
       AuthenticatedUserRequestFactory authenticatedUserRequestFactory,
       ResourceValidationUtils validationUtils,
       HttpServletRequest request,
       PetSaService petSaService) {
     this.referenceResourceService = referenceResourceService;
+    this.workspaceDao = workspaceDao;
     this.authenticatedUserRequestFactory = authenticatedUserRequestFactory;
     this.validationUtils = validationUtils;
     this.request = request;
@@ -598,6 +605,7 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
             .cloneReferencedResource(
                 sourceReferencedResource,
                 body.getDestinationWorkspaceId(),
+                UUID.randomUUID(), // resourceId is not pre-allocated for individual clone endpoints
                 body.getName(),
                 body.getDescription(),
                 userRequest)
@@ -641,6 +649,7 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
             .cloneReferencedResource(
                 sourceReferencedResource,
                 body.getDestinationWorkspaceId(),
+                UUID.randomUUID(), // resourceId is not pre-allocated for individual clone endpoints
                 body.getName(),
                 body.getDescription(),
                 petRequest)
@@ -685,6 +694,7 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
             .cloneReferencedResource(
                 sourceReferencedResource,
                 body.getDestinationWorkspaceId(),
+                UUID.randomUUID(), // resourceId is not pre-allocated for individual clone endpoints
                 body.getName(),
                 body.getDescription(),
                 userRequest)
@@ -729,6 +739,7 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
             .cloneReferencedResource(
                 sourceReferencedResource,
                 body.getDestinationWorkspaceId(),
+                UUID.randomUUID(), // resourceId is not pre-allocated for individual clone endpoints
                 body.getName(),
                 body.getDescription(),
                 petRequest)
@@ -774,6 +785,7 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
             .cloneReferencedResource(
                 sourceReferencedResource,
                 body.getDestinationWorkspaceId(),
+                UUID.randomUUID(), // resourceId is not pre-allocated for individual clone endpoints
                 body.getName(),
                 body.getDescription(),
                 userRequest)
@@ -793,7 +805,7 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
   @Override
   public ResponseEntity<ApiGitRepoResource> createGitRepoReference(
       UUID workspaceUuid, @Valid ApiCreateGitRepoReferenceRequestBody body) {
-    // Construct a ReferenceGcsBucketResource object from the API input
+    // Construct a ReferencedGitRepoResource object from the API input
     validationUtils.validateGitRepoUri(body.getGitrepo().getGitRepoUrl());
     ReferencedGitRepoResource resource =
         ReferencedGitRepoResource.builder()
@@ -905,6 +917,7 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
             .cloneReferencedResource(
                 sourceReferencedResource,
                 body.getDestinationWorkspaceId(),
+                UUID.randomUUID(), // resourceId is not pre-allocated for individual clone endpoints
                 body.getName(),
                 body.getDescription(),
                 userRequest)
@@ -918,6 +931,63 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
             .sourceResourceId(sourceReferencedResource.getResourceId())
             .effectiveCloningInstructions(effectiveCloningInstructions.toApiModel());
     return new ResponseEntity<>(result, HttpStatus.OK);
+  }
+
+  // - Terra workspace referenced resource - //
+  @Override
+  public ResponseEntity<ApiTerraWorkspaceResource> createTerraWorkspaceReference(
+      UUID workspaceUuid, @Valid ApiCreateTerraWorkspaceReferenceRequestBody body) {
+    UUID referencedWorkspaceId = body.getReferencedWorkspace().getReferencedWorkspaceId();
+
+    // Will throw if workspace does not exist or workspace id is null.
+    workspaceDao.getWorkspace(referencedWorkspaceId);
+
+    // Construct a ReferencedTerraWorkspaceResource object from the API input
+    ReferencedTerraWorkspaceResource resource =
+        ReferencedTerraWorkspaceResource.builder()
+            .workspaceId(workspaceUuid)
+            .name(body.getMetadata().getName())
+            .description(body.getMetadata().getDescription())
+            .cloningInstructions(
+                CloningInstructions.fromApiModel(body.getMetadata().getCloningInstructions()))
+            .referencedWorkspaceId(referencedWorkspaceId)
+            .build();
+
+    ReferencedTerraWorkspaceResource referenceResource =
+        referenceResourceService
+            .createReferenceResource(resource, getAuthenticatedInfo())
+            .castByEnum(WsmResourceType.REFERENCED_ANY_TERRA_WORKSPACE);
+    return new ResponseEntity<>(referenceResource.toApiResource(), HttpStatus.OK);
+  }
+
+  @Override
+  public ResponseEntity<ApiTerraWorkspaceResource> getTerraWorkspaceReference(
+      UUID workspaceUuid, UUID resourceId) {
+    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    ReferencedTerraWorkspaceResource referenceResource =
+        referenceResourceService
+            .getReferenceResource(workspaceUuid, resourceId, userRequest)
+            .castByEnum(WsmResourceType.REFERENCED_ANY_TERRA_WORKSPACE);
+    return new ResponseEntity<>(referenceResource.toApiResource(), HttpStatus.OK);
+  }
+
+  @Override
+  public ResponseEntity<ApiTerraWorkspaceResource> getTerraWorkspaceReferenceByName(
+      UUID workspaceUuid, String resourceName) {
+    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    ReferencedTerraWorkspaceResource referenceResource =
+        referenceResourceService
+            .getReferenceResourceByName(workspaceUuid, resourceName, userRequest)
+            .castByEnum(WsmResourceType.REFERENCED_ANY_TERRA_WORKSPACE);
+    return new ResponseEntity<>(referenceResource.toApiResource(), HttpStatus.OK);
+  }
+
+  @Override
+  public ResponseEntity<Void> deleteTerraWorkspaceReference(UUID workspaceUuid, UUID resourceId) {
+    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    referenceResourceService.deleteReferenceResourceForResourceType(
+        workspaceUuid, resourceId, userRequest, WsmResourceType.REFERENCED_ANY_TERRA_WORKSPACE);
+    return new ResponseEntity<>(HttpStatus.OK);
   }
 
   /**

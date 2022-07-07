@@ -2,7 +2,9 @@ package bio.terra.workspace.service.resource.referenced.cloud.gcp;
 
 import bio.terra.workspace.common.utils.FlightBeanBag;
 import bio.terra.workspace.db.ResourceDao;
+import bio.terra.workspace.db.WorkspaceActivityLogDao;
 import bio.terra.workspace.db.exception.InvalidMetadataException;
+import bio.terra.workspace.db.model.DbWorkspaceActivityLog;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.model.SamConstants;
 import bio.terra.workspace.service.iam.model.SamConstants.SamWorkspaceAction;
@@ -36,22 +38,38 @@ public class ReferencedResourceService {
   private final ResourceDao resourceDao;
   private final WorkspaceService workspaceService;
   private final FlightBeanBag beanBag;
+  private final WorkspaceActivityLogDao workspaceActivityLogDao;
 
   @Autowired
   public ReferencedResourceService(
       JobService jobService,
       ResourceDao resourceDao,
       WorkspaceService workspaceService,
-      FlightBeanBag beanBag) {
+      FlightBeanBag beanBag,
+      WorkspaceActivityLogDao workspaceActivityLogDao) {
     this.jobService = jobService;
     this.resourceDao = resourceDao;
     this.workspaceService = workspaceService;
     this.beanBag = beanBag;
+    this.workspaceActivityLogDao = workspaceActivityLogDao;
   }
 
   @Traced
   public ReferencedResource createReferenceResource(
       ReferencedResource resource, AuthenticatedUserRequest userRequest) {
+    return createReferenceResource(resource, userRequest, OperationType.CREATE);
+  }
+
+  @Traced
+  public ReferencedResource cloneReferenceResource(
+      ReferencedResource resource, AuthenticatedUserRequest userRequest) {
+    return createReferenceResource(resource, userRequest, OperationType.CLONE);
+  }
+
+  private ReferencedResource createReferenceResource(
+      ReferencedResource resource,
+      AuthenticatedUserRequest userRequest,
+      OperationType operationType) {
     workspaceService.validateWorkspaceAndAction(
         userRequest, resource.getWorkspaceId(), SamConstants.SamWorkspaceAction.CREATE_REFERENCE);
 
@@ -70,7 +88,7 @@ public class ReferencedResourceService {
             .flightClass(CreateReferenceResourceFlight.class)
             .resource(resource)
             .userRequest(userRequest)
-            .operationType(OperationType.CREATE)
+            .operationType(operationType)
             .workspaceId(resource.getWorkspaceId().toString())
             .resourceType(resource.getResourceType())
             .stewardshipType(StewardshipType.REFERENCED);
@@ -156,6 +174,10 @@ public class ReferencedResourceService {
       updated =
           resourceDao.updateResource(
               workspaceUuid, resourceId, name, description, cloningInstructions);
+      if (updated) {
+        workspaceActivityLogDao.writeActivity(
+            workspaceUuid, new DbWorkspaceActivityLog().operationType(OperationType.UPDATE));
+      }
     }
     if (!updated) {
       logger.warn("There's no update to the referenced resource");
@@ -173,7 +195,10 @@ public class ReferencedResourceService {
       UUID workspaceUuid, UUID resourceId, AuthenticatedUserRequest userRequest) {
     workspaceService.validateWorkspaceAndAction(
         userRequest, workspaceUuid, SamConstants.SamWorkspaceAction.DELETE_REFERENCE);
-    resourceDao.deleteResource(workspaceUuid, resourceId);
+    if (resourceDao.deleteResource(workspaceUuid, resourceId)) {
+      workspaceActivityLogDao.writeActivity(
+          workspaceUuid, new DbWorkspaceActivityLog().operationType(OperationType.DELETE));
+    }
   }
 
   /**
@@ -192,7 +217,10 @@ public class ReferencedResourceService {
       WsmResourceType resourceType) {
     workspaceService.validateWorkspaceAndAction(
         userRequest, workspaceUuid, SamWorkspaceAction.DELETE_REFERENCE);
-    resourceDao.deleteResourceForResourceType(workspaceUuid, resourceId, resourceType);
+    if (resourceDao.deleteResourceForResourceType(workspaceUuid, resourceId, resourceType)) {
+      workspaceActivityLogDao.writeActivity(
+          workspaceUuid, new DbWorkspaceActivityLog().operationType(OperationType.DELETE));
+    }
   }
 
   public ReferencedResource getReferenceResource(
@@ -228,13 +256,18 @@ public class ReferencedResourceService {
   public ReferencedResource cloneReferencedResource(
       ReferencedResource sourceReferencedResource,
       UUID destinationWorkspaceId,
+      UUID destinationResourceId,
       @Nullable String name,
       @Nullable String description,
       AuthenticatedUserRequest userRequest) {
     final ReferencedResource destinationResource =
         WorkspaceCloneUtils.buildDestinationReferencedResource(
-            sourceReferencedResource, destinationWorkspaceId, name, description);
+            sourceReferencedResource,
+            destinationWorkspaceId,
+            destinationResourceId,
+            name,
+            description);
     // launch the creation flight
-    return createReferenceResource(destinationResource, userRequest);
+    return cloneReferenceResource(destinationResource, userRequest);
   }
 }

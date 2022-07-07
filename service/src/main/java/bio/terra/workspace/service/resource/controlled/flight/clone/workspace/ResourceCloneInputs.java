@@ -1,17 +1,20 @@
 package bio.terra.workspace.service.resource.controlled.flight.clone.workspace;
 
 import bio.terra.workspace.service.resource.model.WsmResource;
+import java.util.UUID;
 
-public class ResourceWithFlightId {
+public class ResourceCloneInputs {
 
   private WsmResource resource;
   private String flightId;
+  private UUID destinationResourceId;
 
-  public ResourceWithFlightId() {}
+  public ResourceCloneInputs() {}
 
-  public ResourceWithFlightId(WsmResource resource, String flightId) {
+  public ResourceCloneInputs(WsmResource resource, String flightId, UUID destinationResourceId) {
     this.resource = resource;
     this.flightId = flightId;
+    this.destinationResourceId = destinationResourceId;
   }
 
   public WsmResource getResource() {
@@ -28,5 +31,13 @@ public class ResourceWithFlightId {
 
   public void setFlightId(String flightId) {
     this.flightId = flightId;
+  }
+
+  public UUID getDestinationResourceId() {
+    return destinationResourceId;
+  }
+
+  public void setDestinationResourceId(UUID destinationResourceId) {
+    this.destinationResourceId = destinationResourceId;
   }
 }

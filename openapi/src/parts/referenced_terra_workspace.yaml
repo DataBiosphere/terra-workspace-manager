@@ -1,0 +1,94 @@
+paths:
+  /api/workspaces/v1/{workspaceId}/resources/referenced/terra/workspaces:
+    parameters:
+    - $ref: '#/components/parameters/WorkspaceId'
+    post:
+      summary: Creates a reference to a Terra workspace
+      operationId: createTerraWorkspaceReference
+      tags: [ReferencedGcpResource]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateTerraWorkspaceReferenceRequestBody'
+      responses:
+        '200':
+          $ref: '#/components/responses/TerraWorkspaceReferenceResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /api/workspaces/v1/{workspaceId}/resources/referenced/terra/workspaces/{resourceId}:
+    parameters:
+    - $ref: '#/components/parameters/WorkspaceId'
+    - $ref: '#/components/parameters/ResourceId'
+    get:
+      summary: Gets a reference to a Terra workspace
+      operationId: getTerraWorkspaceReference
+      tags: [ReferencedGcpResource]
+      responses:
+        '200':
+          $ref: '#/components/responses/TerraWorkspaceReferenceResponse'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+    delete:
+      summary: Deletes a referenced to a Terra workspace
+      operationId: deleteTerraWorkspaceReference
+      tags: [ReferencedGcpResource]
+      responses:
+        '204':
+          description: OK
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /api/workspaces/v1/{workspaceId}/resources/referenced/terra/workspaces/name/{name}:
+    parameters:
+    - $ref: '#/components/parameters/WorkspaceId'
+    - $ref: '#/components/parameters/Name'
+    get:
+      summary: Gets a reference to a Terra workspace by name
+      operationId: getTerraWorkspaceReferenceByName
+      tags: [ReferencedGcpResource]
+      responses:
+        '200':
+          $ref: '#/components/responses/TerraWorkspaceReferenceResponse'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+components:
+  schemas:
+    CreateTerraWorkspaceReferenceRequestBody:
+      type: object
+      description: A request to create a reference to a Terra workspace
+      required: [metadata, referencedWorkspace]
+      properties:
+        metadata:
+          $ref: '#/components/schemas/ReferenceResourceCommonFields'
+        referencedWorkspace:
+          $ref: '#/components/schemas/TerraWorkspaceAttributes'
+
+  responses:
+    TerraWorkspaceReferenceResponse:
+      description: Response containing a reference to a Terra workspace
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/TerraWorkspaceResource'
