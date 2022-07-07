@@ -71,7 +71,8 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
   @Autowired
   public ReferencedGcpResourceController(
       ReferencedResourceService referenceResourceService,
-      WorkspaceDao workspaceDao, WorkspaceService workspaceService,
+      WorkspaceDao workspaceDao,
+      WorkspaceService workspaceService,
       AuthenticatedUserRequestFactory authenticatedUserRequestFactory,
       ResourceValidationUtils validationUtils,
       HttpServletRequest request) {
