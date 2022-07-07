@@ -1,5 +1,6 @@
 package bio.terra.workspace.app.controller;
 
+import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.generated.controller.ReferencedGcpResourceApi;
 import bio.terra.workspace.generated.model.ApiCloneReferencedGcpBigQueryDataTableResourceResult;
 import bio.terra.workspace.generated.model.ApiCloneReferencedGcpBigQueryDatasetResourceResult;
@@ -56,12 +57,11 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 
-// TODO: GENERAL - add request validation
-
 @Controller
 public class ReferencedGcpResourceController implements ReferencedGcpResourceApi {
 
   private final ReferencedResourceService referenceResourceService;
+  private final WorkspaceDao workspaceDao;
   private final WorkspaceService workspaceService;
   private final AuthenticatedUserRequestFactory authenticatedUserRequestFactory;
   private final ResourceValidationUtils validationUtils;
@@ -71,11 +71,12 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
   @Autowired
   public ReferencedGcpResourceController(
       ReferencedResourceService referenceResourceService,
-      WorkspaceService workspaceService,
+      WorkspaceDao workspaceDao, WorkspaceService workspaceService,
       AuthenticatedUserRequestFactory authenticatedUserRequestFactory,
       ResourceValidationUtils validationUtils,
       HttpServletRequest request) {
     this.referenceResourceService = referenceResourceService;
+    this.workspaceDao = workspaceDao;
     this.workspaceService = workspaceService;
     this.authenticatedUserRequestFactory = authenticatedUserRequestFactory;
     this.validationUtils = validationUtils;
@@ -1007,6 +1008,10 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
     workspaceService.validateWorkspaceAndAction(
         userRequest, workspaceUuid, SamWorkspaceAction.CREATE_REFERENCE);
     UUID referencedWorkspaceId = body.getReferencedWorkspace().getReferencedWorkspaceId();
+
+    // Will throw if the referenced workspace does not exist or workspace id is null.
+    // Note that the user does not need read access in the destination workspace to reference it.
+    workspaceDao.getWorkspace(referencedWorkspaceId);
 
     // Construct a ReferencedTerraWorkspaceResource object from the API input
     ReferencedTerraWorkspaceResource resource =

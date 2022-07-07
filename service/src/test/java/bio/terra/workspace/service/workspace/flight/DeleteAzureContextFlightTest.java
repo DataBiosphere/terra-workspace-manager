@@ -65,7 +65,7 @@ public class DeleteAzureContextFlightTest extends BaseAzureTest {
   public void setup() {
     // Create a new workspace at the start of each test.
     workspaceUuid = UUID.randomUUID();
-    Workspace workspace =
+    workspace =
         Workspace.builder()
             .workspaceId(workspaceUuid)
             .userFacingId("a" + workspaceUuid.toString())
