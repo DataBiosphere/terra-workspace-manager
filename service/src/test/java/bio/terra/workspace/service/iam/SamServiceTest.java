@@ -16,13 +16,14 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import bio.terra.common.exception.ForbiddenException;
 import bio.terra.common.sam.exception.SamBadRequestException;
+import bio.terra.common.sam.exception.SamNotFoundException;
 import bio.terra.workspace.common.BaseConnectedTest;
 import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
 import bio.terra.workspace.common.fixtures.ReferenceResourceFixtures;
 import bio.terra.workspace.connected.UserAccessUtils;
-import bio.terra.workspace.db.exception.WorkspaceNotFoundException;
 import bio.terra.workspace.generated.model.ApiCreateDataRepoSnapshotReferenceRequestBody;
 import bio.terra.workspace.generated.model.ApiDataRepoSnapshotResource;
+import bio.terra.workspace.generated.model.ApiGrantRoleRequestBody;
 import bio.terra.workspace.generated.model.ApiReferenceResourceCommonFields;
 import bio.terra.workspace.service.datarepo.DataRepoService;
 import bio.terra.workspace.service.iam.model.ControlledResourceIamRole;
@@ -41,7 +42,6 @@ import bio.terra.workspace.service.resource.referenced.cloud.gcp.ReferencedResou
 import bio.terra.workspace.service.resource.referenced.cloud.gcp.ReferencedResourceService;
 import bio.terra.workspace.service.resource.referenced.cloud.gcp.datareposnapshot.ReferencedDataRepoSnapshotResource;
 import bio.terra.workspace.service.workspace.WorkspaceService;
-import bio.terra.workspace.service.workspace.exceptions.StageDisabledException;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -214,7 +214,7 @@ class SamServiceTest extends BaseConnectedTest {
     // Note that this request uses the secondary user's authentication token, when only the first
     // user is an owner.
     assertThrows(
-        ForbiddenException.class,
+        SamNotFoundException.class,
         () ->
             samService.grantWorkspaceRole(
                 workspaceUuid,
@@ -236,14 +236,19 @@ class SamServiceTest extends BaseConnectedTest {
             .workspaceStage(WorkspaceStage.RAWLS_WORKSPACE)
             .build();
     workspaceService.createWorkspace(rawlsWorkspace, defaultUserRequest());
-    assertThrows(
-        StageDisabledException.class,
-        () ->
-            samService.grantWorkspaceRole(
-                workspaceUuid,
-                defaultUserRequest(),
-                WsmIamRole.READER,
-                userAccessUtils.getSecondUserEmail()));
+    ApiGrantRoleRequestBody request =
+        new ApiGrantRoleRequestBody().memberEmail(userAccessUtils.getSecondUserEmail());
+    mockMvc
+        .perform(
+            addJsonContentType(
+                addAuth(
+                    post(String.format(
+                            ADD_USER_TO_WORKSPACE_PATH_FORMAT,
+                            workspaceUuid,
+                            WsmIamRole.READER.toSamRole()))
+                        .content(objectMapper.writeValueAsString(request)),
+                    defaultUserRequest())))
+        .andExpect(status().is(HttpStatus.SC_BAD_REQUEST));
 
     samService.deleteWorkspace(defaultUserRequest(), workspaceUuid);
   }
@@ -308,7 +313,7 @@ class SamServiceTest extends BaseConnectedTest {
   void grantRoleInMissingWorkspaceThrows() {
     UUID fakeId = UUID.randomUUID();
     assertThrows(
-        WorkspaceNotFoundException.class,
+        SamNotFoundException.class,
         () ->
             samService.grantWorkspaceRole(
                 fakeId,
@@ -321,7 +326,7 @@ class SamServiceTest extends BaseConnectedTest {
   void readRolesInMissingWorkspaceThrows() {
     UUID fakeId = UUID.randomUUID();
     assertThrows(
-        WorkspaceNotFoundException.class,
+        SamNotFoundException.class,
         () -> samService.listRoleBindings(fakeId, defaultUserRequest()));
   }
 

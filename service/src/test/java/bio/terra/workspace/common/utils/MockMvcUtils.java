@@ -23,6 +23,8 @@ public class MockMvcUtils {
   public static final String GET_WORKSPACE_PATH_FORMAT = "/api/workspaces/v1/%s";
   public static final String GET_WORKSPACE_BY_UFID_PATH_FORMAT =
       "/api/workspaces/v1/workspaceByUserFacingId/%s";
+  public static final String ADD_USER_TO_WORKSPACE_PATH_FORMAT =
+      "/api/workspaces/v1/%s/roles/%s/members";
   public static final String DELETE_WORKSPACE_PATH_FORMAT = "/api/workspaces/v1/%s";
   public static final String CREATE_SNAPSHOT_PATH_FORMAT =
       "/api/workspaces/v1/%s/resources/referenced/datarepo/snapshots";
