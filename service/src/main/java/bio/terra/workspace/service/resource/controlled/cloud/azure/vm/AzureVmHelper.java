@@ -112,7 +112,6 @@ public final class AzureVmHelper {
       for (String userAssignedMsiId : userAssignedMsiIds) {
         virtualMachine.update().withoutUserAssignedManagedServiceIdentity(userAssignedMsiId);
       }
-      ;
     } catch (ManagementException e) {
       if (StringUtils.equals(e.getValue().getCode(), "ResourceNotFound")) {
         // TODO: if vm gets deleted before this process finishes, the Identity assignment still
