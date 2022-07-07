@@ -41,8 +41,8 @@ import org.broadinstitute.dsde.workbench.client.sam.api.ResourcesApi;
 import org.broadinstitute.dsde.workbench.client.sam.api.StatusApi;
 import org.broadinstitute.dsde.workbench.client.sam.api.UsersApi;
 import org.broadinstitute.dsde.workbench.client.sam.model.AccessPolicyMembershipV2;
-import org.broadinstitute.dsde.workbench.client.sam.model.AccessPolicyResponseEntry;
 import org.broadinstitute.dsde.workbench.client.sam.model.AccessPolicyResponseEntryV2;
+import org.broadinstitute.dsde.workbench.client.sam.model.CreateResourceRequestV2;
 import org.broadinstitute.dsde.workbench.client.sam.model.FullyQualifiedResourceId;
 import org.broadinstitute.dsde.workbench.client.sam.model.GetOrCreatePetManagedIdentityRequest;
 import org.broadinstitute.dsde.workbench.client.sam.model.SystemStatus;
@@ -339,7 +339,7 @@ public class SamService {
     String authToken = userRequest.getRequiredToken();
     ResourcesApi resourceApi = samResourcesApi(authToken);
     try {
-      return SamRetry.retry(() -> resourceApi.resourceActions(resourceType, resourceId));
+      return SamRetry.retry(() -> resourceApi.resourceActionsV2(resourceType, resourceId));
     } catch (ApiException apiException) {
       throw SamExceptionFactory.create("Error listing resources actions in Sam", apiException);
     }
