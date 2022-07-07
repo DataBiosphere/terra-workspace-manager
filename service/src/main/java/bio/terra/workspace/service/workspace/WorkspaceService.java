@@ -121,9 +121,6 @@ public class WorkspaceService {
    * <p>Throws ForbiddenException if the user is not permitted to perform the specified action on
    * the workspace in question.
    *
-   * <p>Throws StageDisabledException if assertMcStage is true and this is not an MC_WORKSPACE stage
-   * workspace.
-   *
    * <p>Returns the Workspace object if it exists and the user is permitted to perform the specified
    * action.
    *
@@ -151,7 +148,8 @@ public class WorkspaceService {
 
   /**
    * Wrapper around {@link #validateWorkspaceAndAction(AuthenticatedUserRequest, UUID, String)}
-   * which additionally verifies this is an MC_WORKSPACE stage workspace.
+   * which additionally throws StageDisabledException if this is not an MC_WORKSPACE stage
+   * workspace.
    */
   @Traced
   public Workspace validateMcWorkspaceAndAction(
@@ -199,6 +197,9 @@ public class WorkspaceService {
         userRequest,
         userFacingId);
     Workspace workspace = workspaceDao.getWorkspaceByUserFacingId(userFacingId);
+    // This is one exception where we need to do an authz check inside a service instead of a
+    // controller. This is because checks with Sam require the workspace ID, but until we read from
+    // WSM's database we only have the user-facing ID.
     SamRethrow.onInterrupted(
         () ->
             samService.checkAuthz(
