@@ -283,7 +283,7 @@ public class DeleteAzureContextFlightTest extends BaseAzureTest {
 
     // Verify the resource and workspace are not in WSM DB
     assertThrows(
-        WorkspaceNotFoundException.class,
+        ResourceNotFoundException.class,
         () -> controlledResourceService.getControlledResource(mcWorkspaceUuid, ipId));
     assertThrows(
         WorkspaceNotFoundException.class, () -> workspaceService.getWorkspace(mcWorkspaceUuid));
