@@ -1,6 +1,5 @@
-package bio.terra.workspace.common.utils;
+package bio.terra.workspace.common.logging;
 
-import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import bio.terra.stairway.FlightContext;
@@ -8,6 +7,7 @@ import bio.terra.stairway.FlightStatus;
 import bio.terra.stairway.HookAction;
 import bio.terra.stairway.StairwayHook;
 import bio.terra.workspace.common.exception.UnhandledDeletionFlightException;
+import bio.terra.workspace.common.logging.model.ActivityFlight;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.db.WorkspaceActivityLogDao;
 import bio.terra.workspace.db.WorkspaceDao;
@@ -74,47 +74,34 @@ public class WorkspaceActivityLogHook implements StairwayHook {
       logger.warn("Operation type is null, this is only OK if it's from a sub-flight");
       return HookAction.CONTINUE;
     }
+    ActivityFlight af = ActivityFlight.fromFlightClassName(context.getFlightClassName());
     UUID workspaceUuid = UUID.fromString(workspaceId);
     if (context.getFlightStatus() == FlightStatus.SUCCESS) {
       activityLogDao.writeActivity(
           workspaceUuid, new DbWorkspaceActivityLog().operationType(operationType));
       return HookAction.CONTINUE;
     }
+    if (operationType != OperationType.DELETE) {
+      return HookAction.CONTINUE;
+    }
     // If DELETE flight failed, cloud resource may or may not have been deleted. Check if cloud
     // resource was deleted. If so, write to activity log.
-    if (operationType == OperationType.DELETE) {
-      var flightClassName = context.getFlightClassName();
-      if (isWorkspaceDeleteFlight(flightClassName)) {
-        maybeLogWorkspaceDeletionFlight(flightClassName, workspaceUuid);
-      } else if (isCloudContextDeleteFlight(flightClassName)) {
-        maybeLogCloudContextDeletionFlight(flightClassName, workspaceUuid);
-      } else if (isControlledResourceDeleteFlight(flightClassName)) {
-        maybeLogControlledResourceDeletion(context, workspaceUuid);
-      } else {
-        throw new UnhandledDeletionFlightException(
-            String.format(
-                "Activity log should be updated for deletion flight %s failures",
-                context.getFlightClassName()));
-      }
+    switch (af.getActivityLogChangedTarget()) {
+      case WORKSPACE -> maybeLogWorkspaceDeletionFlight(workspaceUuid);
+      case AZURE_CLOUD_CONTEXT -> maybeLogCloudContextDeletionFlight(
+          CloudPlatform.AZURE, workspaceUuid);
+      case GCP_CLOUD_CONTEXT -> maybeLogCloudContextDeletionFlight(
+          CloudPlatform.GCP, workspaceUuid);
+      case RESOURCE -> maybeLogControlledResourceDeletion(context, workspaceUuid);
+      default -> throw new UnhandledDeletionFlightException(
+          String.format(
+              "Activity log should be updated for deletion flight %s failures",
+              context.getFlightClassName()));
     }
     return HookAction.CONTINUE;
   }
 
-  private static boolean isWorkspaceDeleteFlight(String className) {
-    return DELETE_WORKSPACE_FLIGHT.equals(className);
-  }
-
-  private static boolean isCloudContextDeleteFlight(String className) {
-    return DELETE_AZURE_CONTEXT_FLIGHT.equals(className)
-        || DELETE_GCP_CONTEXT_FLIGHT.equals(className);
-  }
-
-  private static boolean isControlledResourceDeleteFlight(String className) {
-    return DELETE_CONTROLLED_RESOURCE_FLIGHT.equals(className);
-  }
-
-  private void maybeLogWorkspaceDeletionFlight(String flightClassName, UUID workspaceUuid) {
-    checkArgument(isWorkspaceDeleteFlight(flightClassName));
+  private void maybeLogWorkspaceDeletionFlight(UUID workspaceUuid) {
     try {
       workspaceDao.getWorkspace(workspaceUuid);
       logger.warn(
@@ -128,12 +115,8 @@ public class WorkspaceActivityLogHook implements StairwayHook {
     }
   }
 
-  private void maybeLogCloudContextDeletionFlight(String flightClassName, UUID workspaceUuid) {
-    checkArgument(isCloudContextDeleteFlight(flightClassName));
-    Optional<String> cloudContext =
-        flightClassName.equals(DELETE_AZURE_CONTEXT_FLIGHT)
-            ? workspaceDao.getCloudContext(workspaceUuid, CloudPlatform.AZURE)
-            : workspaceDao.getCloudContext(workspaceUuid, CloudPlatform.GCP);
+  private void maybeLogCloudContextDeletionFlight(CloudPlatform cloudPlatform, UUID workspaceUuid) {
+    Optional<String> cloudContext = workspaceDao.getCloudContext(workspaceUuid, cloudPlatform);
     if (cloudContext.isEmpty()) {
       activityLogDao.writeActivity(
           workspaceUuid, new DbWorkspaceActivityLog().operationType(OperationType.DELETE));
@@ -147,7 +130,6 @@ public class WorkspaceActivityLogHook implements StairwayHook {
   }
 
   private void maybeLogControlledResourceDeletion(FlightContext context, UUID workspaceUuid) {
-    checkArgument(isControlledResourceDeleteFlight(context.getFlightClassName()));
     var controlledResource =
         checkNotNull(
             context.getInputParameters().get(ResourceKeys.RESOURCE, ControlledResource.class));

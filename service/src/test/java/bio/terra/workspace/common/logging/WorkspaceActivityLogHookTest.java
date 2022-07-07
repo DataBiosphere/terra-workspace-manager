@@ -1,4 +1,4 @@
-package bio.terra.workspace.common.utils;
+package bio.terra.workspace.common.logging;
 
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
