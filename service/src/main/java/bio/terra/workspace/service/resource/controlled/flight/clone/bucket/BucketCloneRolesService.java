@@ -65,11 +65,6 @@ public class BucketCloneRolesService {
     }
   }
 
-  private enum BucketPolicyIdentityOperation {
-    ADD,
-    REMOVE
-  }
-
   /**
    * Add or remove roles for an Identity.
    *
@@ -132,8 +127,17 @@ public class BucketCloneRolesService {
   }
 
   private boolean isRolePresent(Policy testPolicy, String roleName, Identity saIdentity) {
+    if (testPolicy == null || testPolicy.getBindings() == null) {
+      return false;
+    }
+
     Set<Identity> identities = testPolicy.getBindings().get(Role.of(roleName));
     return (identities != null
         && identities.stream().anyMatch(identity -> identity.equals(saIdentity)));
+  }
+
+  private enum BucketPolicyIdentityOperation {
+    ADD,
+    REMOVE
   }
 }
