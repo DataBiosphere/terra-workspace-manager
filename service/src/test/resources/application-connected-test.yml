@@ -12,5 +12,5 @@ workspace:
     use-janitor: true
 
 feature:
-  # Enable azure support when running azure tests
+  # Disable azure support
   azure-enabled: false
