@@ -23,10 +23,6 @@
     "integration/ReferencedGitRepoLifecycle.json",
     "integration/ReferencedTerraWorkspaceLifecycle.json",
     "integration/RemoveUser.json",
-    "integration/WorkspaceLifecycle.json",
-    "integration/ControlledAzureVmNoPublicIpLifecycle.json",
-    "integration/ControlledAzureVmWithCustomScriptExtensionNoPublicIpLifecycle.json",
-    "integration/ControlledAzureVmWithPublicIpLifecycle.json",
-    "integration/ControlledAzureVmWithWrongCredentialsLifecycle.json"
+    "integration/WorkspaceLifecycle.json"
   ]
 }
