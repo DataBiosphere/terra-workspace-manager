@@ -1,0 +1,40 @@
+name: 'integration-test'
+description: 'Runs an integration test and uploads the results'
+author: 'dd'
+inputs:
+  test-server:
+    description: 'Test runner server specification file'
+    required: true
+    default: 'workspace-wsmtest.json'
+  test:
+    description: 'Test suite or config to run'
+    required: true
+    default: 'suites/FullIntegration.json'
+outputs:
+  results-dir:
+    description: TestRunner results directory
+    value: ${{ steps.test-run.outputs.results-dir }}
+
+runs:
+  using: "composite"
+  steps:
+  # We run the test as one script, collecting the test result
+  - name: Run the test
+    id: test-run
+    run: |
+      cd integration
+      echo "Test Runner config"
+      export TEST_RUNNER_SERVER_SPECIFICATION_FILE=${{ inputs.test-server }}
+      resultsDir=/tmp/results$RANDOM
+      echo "Running test suite ${{ inputs.test }} on ${{ inputs.test-server }}"
+      ../gradlew :integration:runTest --args="${{ inputs.test }} $resultsDir" --scan || testResult=$? # Continue the script even if tests fail
+      echo "Test result is $testResult"
+      echo "Upload test results to Google Bucket"
+      ../gradlew :integration:uploadResults --args="CompressDirectoryToTerraKernelK8S.json $resultsDir" --scan
+      echo "Upload test results to BigQuery Test Runner Dataset"
+      ../gradlew :integration:uploadResults --args="SummariesToTerraKernelK8SBigQuery.json $resultsDir" --scan
+      echo "TestRunner results written to $resultsDir"
+      ls $resultsDir
+      echo "::set-output name=results-dir::$resultsDir"
+      exit $testResult
+    shell: bash
