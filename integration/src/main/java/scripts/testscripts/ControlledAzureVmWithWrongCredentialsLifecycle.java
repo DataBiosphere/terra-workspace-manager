@@ -3,8 +3,8 @@ package scripts.testscripts;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import bio.terra.workspace.api.ControlledAzureResourceApi;
 import bio.terra.workspace.client.ApiException;
 import bio.terra.workspace.model.AzureVmCreationParameters;
 import bio.terra.workspace.model.AzureVmUser;
@@ -23,9 +23,11 @@ public class ControlledAzureVmWithWrongCredentialsLifecycle
   private static final Logger logger =
       LoggerFactory.getLogger(ControlledAzureVmWithWrongCredentialsLifecycle.class);
 
+  private static String AZURE_VM_PROVISION_ERROR_MESSAGE =
+      "The supplied password must be between 6-72 characters long and must satisfy at least 3 of password complexity requirements";
+
   @Override
   protected CreatedControlledAzureVmResult createVm(
-      ControlledAzureResourceApi azureApi,
       String resourceSuffix,
       String createVmJobId,
       CreatedControlledAzureDisk disk,
@@ -54,6 +56,14 @@ public class ControlledAzureVmWithWrongCredentialsLifecycle
   @Override
   protected void validateVm(CreatedControlledAzureVmResult vmCreateResult) {
     assertEquals(JobReport.StatusEnum.FAILED, vmCreateResult.getJobReport().getStatus());
+    assertNotNull(vmCreateResult.getErrorReport());
+    assertTrue(
+        vmCreateResult.getErrorReport().getMessage().contains(AZURE_VM_PROVISION_ERROR_MESSAGE));
+    assertTrue(
+        vmCreateResult.getErrorReport().getMessage().contains("\"code\": \"InvalidParameter\""));
+    assertTrue(
+        vmCreateResult.getErrorReport().getMessage().contains("\"target\": \"adminPassword\""));
+    assertEquals(500, vmCreateResult.getErrorReport().getStatusCode());
     assertNull(vmCreateResult.getAzureVm());
     logger.info("VM provisioning failed.");
   }

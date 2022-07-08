@@ -2,7 +2,6 @@ package scripts.testscripts;
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
-import bio.terra.workspace.api.ControlledAzureResourceApi;
 import bio.terra.workspace.client.ApiException;
 import bio.terra.workspace.model.AzureVmCreationParameters;
 import bio.terra.workspace.model.CreateControlledAzureVmRequestBody;
@@ -16,7 +15,6 @@ import scripts.utils.ControlledAzureVmTestScriptBase;
 public class ControlledAzureVmNoPublicIpLifecycle extends ControlledAzureVmTestScriptBase {
   @Override
   protected CreatedControlledAzureVmResult createVm(
-      ControlledAzureResourceApi azureApi,
       String resourceSuffix,
       String createVmJobId,
       CreatedControlledAzureDisk disk,

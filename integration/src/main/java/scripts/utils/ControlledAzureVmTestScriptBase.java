@@ -4,7 +4,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import bio.terra.testrunner.runner.config.TestUserSpecification;
-import bio.terra.workspace.api.ControlledAzureResourceApi;
 import bio.terra.workspace.api.WorkspaceApi;
 import bio.terra.workspace.client.ApiException;
 import bio.terra.workspace.model.AccessScope;
@@ -64,27 +63,25 @@ public abstract class ControlledAzureVmTestScriptBase extends ControlledAzureTes
   @Override
   protected void doUserJourney(TestUserSpecification testUser, WorkspaceApi workspaceApi)
       throws Exception {
-    wsmApiClient = ClientTestUtils.getClientForTestUser(testUser, server);
-    azureApi = new ControlledAzureResourceApi(wsmApiClient);
+    azureApi = ClientTestUtils.getControlledAzureResourceClient(testUser, server);
 
     // create public ip
     if (vmWithPublicIp) {
-      CreatedControlledAzureIp ip = createPublicIp(azureApi, suffix);
+      CreatedControlledAzureIp ip = createPublicIp(suffix);
       publicIp = Optional.of(ip);
     }
 
     // create network
-    CreatedControlledAzureNetwork network = createNetwork(azureApi, suffix);
+    CreatedControlledAzureNetwork network = createNetwork(suffix);
 
     // create disk
-    CreatedControlledAzureDisk disk = createDisk(azureApi, suffix);
+    CreatedControlledAzureDisk disk = createDisk(suffix);
 
     // create vm
     createVmJobId = UUID.randomUUID().toString();
-    CreatedControlledAzureVmResult vmCreateResult =
-        createVm(azureApi, suffix, createVmJobId, disk, network);
+    CreatedControlledAzureVmResult vmCreateResult = createVm(suffix, createVmJobId, disk, network);
 
-    vmCreateResult = waitForVmCreationCompletion(azureApi, createVmJobId, vmCreateResult);
+    vmCreateResult = waitForVmCreationCompletion(createVmJobId, vmCreateResult);
 
     validateVm(vmCreateResult);
   }
@@ -103,15 +100,13 @@ public abstract class ControlledAzureVmTestScriptBase extends ControlledAzureTes
   }
 
   protected abstract CreatedControlledAzureVmResult createVm(
-      ControlledAzureResourceApi azureApi,
       String resourceSuffix,
       String createVmJobId,
       CreatedControlledAzureDisk disk,
       CreatedControlledAzureNetwork network)
       throws ApiException;
 
-  protected CreatedControlledAzureIp createPublicIp(
-      ControlledAzureResourceApi azureApi, String resourceSuffix) throws ApiException {
+  protected CreatedControlledAzureIp createPublicIp(String resourceSuffix) throws ApiException {
     AzureIpCreationParameters ipCreationParameters =
         new AzureIpCreationParameters().name(String.format("ip-%s", suffix)).region(REGION);
     CreateControlledAzureIpRequestBody ipRequestBody =
@@ -127,8 +122,7 @@ public abstract class ControlledAzureVmTestScriptBase extends ControlledAzureTes
     return ip;
   }
 
-  protected CreatedControlledAzureNetwork createNetwork(
-      ControlledAzureResourceApi azureApi, String resourceSuffix) throws ApiException {
+  protected CreatedControlledAzureNetwork createNetwork(String resourceSuffix) throws ApiException {
     CreateControlledAzureNetworkRequestBody networkRequestBody =
         new CreateControlledAzureNetworkRequestBody()
             .common(createCommonFields("common-network", resourceSuffix));
@@ -150,8 +144,7 @@ public abstract class ControlledAzureVmTestScriptBase extends ControlledAzureTes
     return network;
   }
 
-  protected CreatedControlledAzureDisk createDisk(
-      ControlledAzureResourceApi azureApi, String resourceSuffix) throws ApiException {
+  protected CreatedControlledAzureDisk createDisk(String resourceSuffix) throws ApiException {
     CreateControlledAzureDiskRequestBody diskRequestBody =
         new CreateControlledAzureDiskRequestBody()
             .common(createCommonFields("common-disk", resourceSuffix));
@@ -171,9 +164,7 @@ public abstract class ControlledAzureVmTestScriptBase extends ControlledAzureTes
   }
 
   protected CreatedControlledAzureVmResult waitForVmCreationCompletion(
-      ControlledAzureResourceApi azureApi,
-      String createVmJobId,
-      CreatedControlledAzureVmResult vmCreateResult)
+      String createVmJobId, CreatedControlledAzureVmResult vmCreateResult)
       throws InterruptedException, ApiException {
     while (ClientTestUtils.jobIsRunning(vmCreateResult.getJobReport())) {
       TimeUnit.SECONDS.sleep(VM_CREATE_WAIT_POLL_INTERVAL_SECONDS);

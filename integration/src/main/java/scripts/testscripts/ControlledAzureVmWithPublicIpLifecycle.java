@@ -4,7 +4,6 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import bio.terra.testrunner.runner.config.TestUserSpecification;
-import bio.terra.workspace.api.ControlledAzureResourceApi;
 import bio.terra.workspace.api.WorkspaceApi;
 import bio.terra.workspace.client.ApiException;
 import bio.terra.workspace.model.AzureVmCreationParameters;
@@ -27,7 +26,6 @@ public class ControlledAzureVmWithPublicIpLifecycle extends ControlledAzureVmTes
 
   @Override
   protected CreatedControlledAzureVmResult createVm(
-      ControlledAzureResourceApi azureApi,
       String resourceSuffix,
       String createVmJobId,
       CreatedControlledAzureDisk disk,
