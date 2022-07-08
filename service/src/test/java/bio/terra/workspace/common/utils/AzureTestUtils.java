@@ -40,7 +40,6 @@ public class AzureTestUtils {
     this.userAccessUtils = userAccessUtils;
   }
 
-  /** Creates a workspace, returning its workspaceUuid. */
   public Workspace createWorkspace(WorkspaceService workspaceService) {
     UUID uuid = UUID.randomUUID();
     Workspace workspace =

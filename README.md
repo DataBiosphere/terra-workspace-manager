@@ -301,6 +301,13 @@ on a populated "config" directory containing service accounts and keys that allo
 to use dependent services such as Sam, Buffer, and TDR. The config collecting process relies on
 secrets maintained in Vault in the Broad Institute environment.
 
+In general, developers writing new endpoints should add MockMVC-based unit or
+connected tests to test their code (example: [WorkspaceApiControllerTest](service/src/test/java/bio/terra/workspace/app/configuration/external/controller/WorkspaceApiControllerTest.java)).
+These tests let us act as if we're making HTTP calls against a local server
+and validate the full request lifecycle through all
+the [layers of WSM](DEVELOPMENT.md#Layering), whereas the previous style of
+service-only tests did not cover code in the controller layer.
+
 #### Integration Tests
 Integration testing is done using
 [Test Runner](https://github.com/DataBiosphere/terra-test-runner).
