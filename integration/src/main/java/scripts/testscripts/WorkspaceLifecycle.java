@@ -3,12 +3,15 @@ package scripts.testscripts;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.equalTo;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import bio.terra.testrunner.runner.config.TestUserSpecification;
 import bio.terra.workspace.api.WorkspaceApi;
 import bio.terra.workspace.client.ApiException;
 import bio.terra.workspace.model.CreateWorkspaceRequestBody;
+import bio.terra.workspace.model.Properties;
+import bio.terra.workspace.model.Property;
 import bio.terra.workspace.model.UpdateWorkspaceRequestBody;
 import bio.terra.workspace.model.WorkspaceDescription;
 import bio.terra.workspace.model.WorkspaceStageModel;
@@ -38,11 +41,24 @@ public class WorkspaceLifecycle extends WorkspaceApiTestScriptBase {
     String validUserFacingId = "user-facing-id-" + uuidStr;
     String validUserFacingId2 = "user-facing-id-2-" + uuidStr;
 
+    Property property1 = new Property();
+    property1.setKey("foo");
+    property1.setValue("bar");
+
+    Property property2 = new Property();
+    property2.setKey("xyzzy");
+    property2.setValue("plohg");
+
+    Properties propertyMap = new Properties();
+    propertyMap.add(property1);
+    propertyMap.add(property2);
+
     CreateWorkspaceRequestBody createBody =
         new CreateWorkspaceRequestBody()
             .id(workspaceUuid)
             .userFacingId(invalidUserFacingId)
-            .stage(WorkspaceStageModel.MC_WORKSPACE);
+            .stage(WorkspaceStageModel.MC_WORKSPACE)
+            .properties(propertyMap);
 
     ApiException ex =
         assertThrows(ApiException.class, () -> workspaceApi.createWorkspace(createBody));
@@ -80,6 +96,27 @@ public class WorkspaceLifecycle extends WorkspaceApiTestScriptBase {
     assertThat(updatedDescription.getUserFacingId(), equalTo(validUserFacingId2));
     assertThat(updatedDescription.getDisplayName(), equalTo(WORKSPACE_NAME));
     assertThat(updatedDescription.getDescription(), equalTo(WORKSPACE_DESCRIPTION));
+
+    Property property3 = new Property();
+    property3.setKey("foo");
+    property3.setValue("barUpdate");
+
+    Property property4 = new Property();
+    property4.setKey("ted");
+    property4.setValue("lasso");
+
+    Properties propertyMap2 = new Properties();
+    propertyMap2.add(property3);
+    propertyMap2.add(property4);
+
+    Properties expectedPropertyMap = new Properties();
+    expectedPropertyMap.add(property2);
+    expectedPropertyMap.add(property3);
+    expectedPropertyMap.add(property4);
+
+    workspaceApi.updateWorkspaceProperties(propertyMap2, workspaceUuid);
+    WorkspaceDescription updatedWorkspaceDescription = workspaceApi.getWorkspace(workspaceUuid);
+    assertEquals(updatedWorkspaceDescription.getProperties(), expectedPropertyMap);
 
     workspaceApi.deleteWorkspace(workspaceUuid);
     ClientTestUtils.assertHttpSuccess(workspaceApi, "DELETE workspace");

@@ -231,6 +231,29 @@ paths:
         '500':
           $ref: '#/components/responses/ServerError'
 
+  /api/workspaces/v1/{workspaceId}/properties:
+    parameters:
+    - $ref: '#/components/parameters/WorkspaceId'
+    post:
+      summary: update the properties in workspace.
+      operationId: updateWorkspaceProperties
+      tags: [ Workspace ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Properties'
+      responses:
+        '204':
+          description: properties update sucessfully
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
 components:
   responses:
     CloneWorkspaceResponse:

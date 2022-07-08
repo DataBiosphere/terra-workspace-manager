@@ -42,6 +42,7 @@ import org.springframework.stereotype.Component;
  */
 @Component
 public class WorkspaceDao {
+
   /** SQL query for reading a workspace */
   private static final String WORKSPACE_SELECT_SQL =
       "SELECT workspace_id, user_facing_id, display_name, description, spend_profile, properties, workspace_stage"
@@ -260,6 +261,41 @@ public class WorkspaceDao {
       throw e;
     }
 
+    boolean updated = rowsAffected > 0;
+    logger.info(
+        "{} record for workspace {}",
+        (updated ? "Updated" : "No Update - did not find"),
+        workspaceUuid);
+    return updated;
+  }
+
+  /** Update a workspace properties */
+  @WriteTransaction
+  public boolean updateWorkspaceProperties(
+      UUID workspaceUuid, @Nullable Map<String, String> propertyMap) {
+    if (propertyMap == null) {
+      throw new MissingRequiredFieldException("Must specify property to update.");
+    }
+
+    // get current property in this workspace id
+    String selectPropertiesSql =
+        "SELECT properties " + "FROM workspace " + " WHERE workspace_id = :id";
+    MapSqlParameterSource propertiesParams =
+        new MapSqlParameterSource().addValue("id", workspaceUuid.toString());
+    String result =
+        jdbcTemplate.queryForObject(selectPropertiesSql, propertiesParams, String.class);
+    logger.info("Retrieved workspace record {}", result);
+    Map<String, String> properties = DbSerDes.jsonToProperties(result);
+    properties.putAll(propertyMap);
+    final String sql =
+        "UPDATE workspace SET properties = cast(:properties AS jsonb) WHERE workspace_id = :id";
+
+    var params = new MapSqlParameterSource();
+    params
+        .addValue("properties", DbSerDes.propertiesToJson(properties))
+        .addValue("id", workspaceUuid.toString());
+
+    int rowsAffected = jdbcTemplate.update(sql, params);
     boolean updated = rowsAffected > 0;
     logger.info(
         "{} record for workspace {}",

@@ -262,6 +262,19 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
   }
 
   @Override
+  public ResponseEntity<Void> updateWorkspaceProperties(
+      @PathVariable("workspaceId") UUID workspaceUuid, @RequestBody List<ApiProperty> properties) {
+    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    Map<String, String> propertyMap = propertyMapFromApi(properties);
+    logger.info(
+        "Updating the properties {} in workspace {}", propertyMap.toString(), workspaceUuid);
+    workspaceService.updateWorkspaceProperties(userRequest, workspaceUuid, propertyMap);
+    logger.info("Updated the properties {} in workspace {}", propertyMap.toString(), workspaceUuid);
+
+    return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+  }
+
+  @Override
   public ResponseEntity<Void> grantRole(
       @PathVariable("workspaceId") UUID uuid,
       @PathVariable("role") ApiIamRole role,
@@ -479,7 +492,7 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
   }
 
   // Convert properties list into a map
-  private Map<String, String> propertyMapFromApi(ApiProperties properties) {
+  private Map<String, String> propertyMapFromApi(List<ApiProperty> properties) {
     Map<String, String> propertyMap = new HashMap<>();
     if (properties != null) {
       for (ApiProperty property : properties) {

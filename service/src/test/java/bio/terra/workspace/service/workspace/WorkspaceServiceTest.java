@@ -452,6 +452,48 @@ class WorkspaceServiceTest extends BaseConnectedTest {
   }
 
   @Test
+  void testUpdateWorkspaceProperties() {
+    // Create one workspace with properties
+    Map<String, String> propertyMap = new HashMap<>();
+    propertyMap.put("foo", "bar");
+    propertyMap.put("xyzzy", "plohg");
+    Workspace request = defaultRequestBuilder(UUID.randomUUID()).properties(propertyMap).build();
+    workspaceService.createWorkspace(request, USER_REQUEST);
+    UUID workspaceUuid = request.getWorkspaceId();
+    var lastUpdatedDate = workspaceActivityLogDao.getLastUpdatedDate(workspaceUuid);
+    assertTrue(lastUpdatedDate.isPresent());
+
+    // Workspace update new properties and exist properties
+    Map<String, String> propertyMap2 = new HashMap<>();
+    propertyMap2.put("ted", "lasso");
+    propertyMap2.put("foo", "barUpdate");
+    workspaceService.updateWorkspaceProperties(USER_REQUEST, workspaceUuid, propertyMap2);
+    Workspace updatedWorkspace = workspaceService.getWorkspace(workspaceUuid, USER_REQUEST);
+
+    var updatedDateAfterWorkspaceUpdate = workspaceActivityLogDao.getLastUpdatedDate(workspaceUuid);
+    assertTrue(lastUpdatedDate.get().isBefore(updatedDateAfterWorkspaceUpdate.get()));
+    propertyMap.putAll(propertyMap2);
+    assertEquals(
+        propertyMap, updatedWorkspace.getProperties(), "Workspace properties update successfully");
+  }
+
+  @Test
+  void testUpdateWorkspacePropertiesNullRejected() {
+    Workspace request = defaultRequestBuilder(UUID.randomUUID()).build();
+    workspaceService.createWorkspace(request, USER_REQUEST);
+    UUID workspaceUuid = request.getWorkspaceId();
+
+    var UpdatedDateAfterWorkspaceUpdate = workspaceActivityLogDao.getLastUpdatedDate(workspaceUuid);
+
+    // Fail if request properties is null.
+    assertThrows(
+        MissingRequiredFieldException.class,
+        () -> workspaceService.updateWorkspaceProperties(USER_REQUEST, workspaceUuid, null));
+    var failedUpdateDate = workspaceActivityLogDao.getLastUpdatedDate(workspaceUuid);
+    assertEquals(UpdatedDateAfterWorkspaceUpdate.get(), failedUpdateDate.get());
+  }
+
+  @Test
   void testHandlesSamError() throws Exception {
     String apiErrorMsg = "test";
     ErrorReportException testex = new SamInternalServerErrorException(apiErrorMsg);
