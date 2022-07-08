@@ -57,17 +57,17 @@ public class WorkspaceActivityLogHookTest extends BaseUnitTest {
   @Test
   void createFlightSucceeds_activityLogUpdated() {
     UUID workspaceUuid = UUID.randomUUID();
-      var emptyChangedDate = activityLogDao.getLastUpdatedDate(workspaceUuid);
-      assertTrue(emptyChangedDate.isEmpty());
+    var emptyChangedDate = activityLogDao.getLastUpdatedDate(workspaceUuid);
+    assertTrue(emptyChangedDate.isEmpty());
 
     FlightMap inputParams = new FlightMap();
-    inputParams.put(
-        WorkspaceFlightMapKeys.OPERATION_TYPE, OperationType.CREATE);
-    inputParams.put(
-        WorkspaceFlightMapKeys.WORKSPACE_ID, workspaceUuid.toString());
-    hook.endFlight(new FakeFlightContext(WorkspaceCreateFlight.class.getName(), inputParams, FlightStatus.SUCCESS));
-      var changedDate = activityLogDao.getLastUpdatedDate(workspaceUuid);
-      assertTrue(changedDate.isPresent());
+    inputParams.put(WorkspaceFlightMapKeys.OPERATION_TYPE, OperationType.CREATE);
+    inputParams.put(WorkspaceFlightMapKeys.WORKSPACE_ID, workspaceUuid.toString());
+    hook.endFlight(
+        new FakeFlightContext(
+            WorkspaceCreateFlight.class.getName(), inputParams, FlightStatus.SUCCESS));
+    var changedDate = activityLogDao.getLastUpdatedDate(workspaceUuid);
+    assertTrue(changedDate.isPresent());
   }
 
   @Test
@@ -77,11 +77,11 @@ public class WorkspaceActivityLogHookTest extends BaseUnitTest {
     assertTrue(emptyChangedDate.isEmpty());
 
     FlightMap inputParams = new FlightMap();
-    inputParams.put(
-        WorkspaceFlightMapKeys.OPERATION_TYPE, OperationType.DELETE);
-    inputParams.put(
-        WorkspaceFlightMapKeys.WORKSPACE_ID, workspaceUuid.toString());
-    hook.endFlight(new FakeFlightContext(WorkspaceDeleteFlight.class.getName(), inputParams, FlightStatus.SUCCESS));
+    inputParams.put(WorkspaceFlightMapKeys.OPERATION_TYPE, OperationType.DELETE);
+    inputParams.put(WorkspaceFlightMapKeys.WORKSPACE_ID, workspaceUuid.toString());
+    hook.endFlight(
+        new FakeFlightContext(
+            WorkspaceDeleteFlight.class.getName(), inputParams, FlightStatus.SUCCESS));
 
     var changedDate = activityLogDao.getLastUpdatedDate(workspaceUuid);
     assertTrue(changedDate.isPresent());
@@ -179,11 +179,13 @@ public class WorkspaceActivityLogHookTest extends BaseUnitTest {
     private final String flightClassName;
     private final FlightMap inputParams;
     private final FlightStatus status;
+
     FakeFlightContext(String flightClassName, FlightMap inputMap, FlightStatus flightStatus) {
       this.flightClassName = flightClassName;
       inputParams = inputMap;
       status = flightStatus;
     }
+
     @Override
     public Object getApplicationContext() {
       return null;
