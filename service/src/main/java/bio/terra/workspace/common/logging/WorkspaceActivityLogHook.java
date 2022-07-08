@@ -59,6 +59,8 @@ public class WorkspaceActivityLogHook implements StairwayHook {
       logger.warn("Operation type is null, this is only OK if it's from a sub-flight");
       return HookAction.CONTINUE;
     }
+
+    ActivityFlight af = ActivityFlight.fromFlightClassName(context.getFlightClassName());
     UUID workspaceUuid = UUID.fromString(workspaceId);
     if (context.getFlightStatus() == FlightStatus.SUCCESS) {
       activityLogDao.writeActivity(
@@ -68,7 +70,6 @@ public class WorkspaceActivityLogHook implements StairwayHook {
     if (operationType != OperationType.DELETE) {
       return HookAction.CONTINUE;
     }
-    ActivityFlight af = ActivityFlight.fromFlightClassName(context.getFlightClassName());
     // If DELETE flight failed, cloud resource may or may not have been deleted. Check if cloud
     // resource was deleted. If so, write to activity log.
     switch (af.getActivityLogChangedTarget()) {
