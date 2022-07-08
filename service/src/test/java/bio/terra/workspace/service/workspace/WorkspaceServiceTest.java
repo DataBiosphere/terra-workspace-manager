@@ -216,7 +216,8 @@ class WorkspaceServiceTest extends BaseConnectedTest {
     workspaceService.createWorkspace(request, USER_REQUEST);
 
     WorkspaceAndAdditionalAttributes workspaceByUserFacingId =
-        workspaceService.getWorkspaceByUserFacingId(userFacingId, USER_REQUEST);
+        workspaceService.getWorkspaceAndAdditionalAttributesByUserFacingId(
+            userFacingId, USER_REQUEST);
     assertEquals(request.getWorkspaceId(), workspaceByUserFacingId.workspace().getWorkspaceId());
     assertEquals(WsmIamRole.OWNER, workspaceByUserFacingId.highestRole());
     assertNotNull(workspaceByUserFacingId.lastUpdatedDate());
@@ -226,7 +227,9 @@ class WorkspaceServiceTest extends BaseConnectedTest {
   void getWorkspaceByUserFacingId_missing() {
     assertThrows(
         WorkspaceNotFoundException.class,
-        () -> workspaceService.getWorkspaceByUserFacingId("missing-workspace", USER_REQUEST));
+        () ->
+            workspaceService.getWorkspaceAndAdditionalAttributesByUserFacingId(
+                "missing-workspace", USER_REQUEST));
   }
 
   @Test
@@ -236,7 +239,9 @@ class WorkspaceServiceTest extends BaseConnectedTest {
         .checkAuthz(any(), any(), any(), any());
     assertThrows(
         WorkspaceNotFoundException.class,
-        () -> workspaceService.getWorkspaceByUserFacingId("missing-workspace", USER_REQUEST));
+        () ->
+            workspaceService.getWorkspaceAndAdditionalAttributesByUserFacingId(
+                "missing-workspace", USER_REQUEST));
   }
 
   @Test
@@ -250,7 +255,9 @@ class WorkspaceServiceTest extends BaseConnectedTest {
         .checkAuthz(any(), any(), any(), any());
     assertThrows(
         ForbiddenException.class,
-        () -> workspaceService.getWorkspaceByUserFacingId(userFacingId, USER_REQUEST));
+        () ->
+            workspaceService.getWorkspaceAndAdditionalAttributesByUserFacingId(
+                userFacingId, USER_REQUEST));
   }
 
   @Test

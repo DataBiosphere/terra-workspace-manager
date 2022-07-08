@@ -194,7 +194,7 @@ public class WorkspaceService {
 
   /** Retrieves an existing workspace and its relative attributes by userFacingId */
   @Traced
-  public WorkspaceAndAdditionalAttributes getWorkspaceByUserFacingId(
+  public WorkspaceAndAdditionalAttributes getWorkspaceAndAdditionalAttributesByUserFacingId(
       String userFacingId, AuthenticatedUserRequest userRequest) {
     logger.info(
         "getWorkspaceByUserFacingId - userRequest: {}\nuserFacingId: {}",

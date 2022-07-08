@@ -253,7 +253,8 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     logger.info("Getting workspace {} for {}", userFacingId, userRequest.getEmail());
     var workspaceAndAdditionalAttributes =
-        workspaceService.getWorkspaceByUserFacingId(userFacingId, userRequest);
+        workspaceService.getWorkspaceAndAdditionalAttributesByUserFacingId(
+            userFacingId, userRequest);
 
     ApiWorkspaceDescription desc = buildWorkspaceDescription(workspaceAndAdditionalAttributes);
     logger.info("Got workspace {} for {}", desc, userRequest.getEmail());
