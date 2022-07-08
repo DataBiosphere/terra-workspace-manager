@@ -3,7 +3,6 @@ package scripts.utils;
 import bio.terra.testrunner.runner.config.TestUserSpecification;
 import bio.terra.workspace.api.ControlledAzureResourceApi;
 import bio.terra.workspace.api.WorkspaceApi;
-import bio.terra.workspace.client.ApiClient;
 import bio.terra.workspace.model.AzureContext;
 import java.util.List;
 import java.util.Map;
@@ -22,7 +21,6 @@ public abstract class ControlledAzureTestScriptBase extends WorkspaceAllocateTes
 
   protected static final String REGION = "westcentralus";
 
-  protected ApiClient wsmApiClient;
   protected ControlledAzureResourceApi azureApi;
   // resource suffix to easily locate resources in the resource group in case of troubleshooting
   protected String suffix;
