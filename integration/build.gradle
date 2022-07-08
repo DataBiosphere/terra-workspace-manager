@@ -73,9 +73,6 @@ dependencies {
     // Use Terra Common Library on client side to retry direct Sam calls
     implementation group: "bio.terra", name: "terra-common-lib", version: "${tclClient}"
 
-    // log4j - not sure this is needed
-    implementation group: "org.apache.logging.log4j", name: "log4j-api"
-    implementation group: "org.apache.logging.log4j", name: "log4j-to-slf4j"
 
     // Spotbugs dependency
     // For SpotBugs annotations (still FindBugs annotations)

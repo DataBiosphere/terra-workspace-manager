@@ -60,7 +60,7 @@ dependencies {
   runtimeOnly group: "org.webjars.npm", name: "swagger-ui-dist", version: "3.37.2"
 
   // Spotbugs dependency
-  // For SpotBugs annotations (still FindBugs annotations)
+  // For SpotBugs annotations
   compileOnly "com.github.spotbugs:spotbugs-annotations:${spotbugs.toolVersion.get()}"
   spotbugs "com.github.spotbugs:spotbugs:${spotbugs.toolVersion.get()}"
 

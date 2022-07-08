@@ -56,7 +56,7 @@ Your component library probably has initialization tasks, like initializing your
 Add a call to your initialization method in `app/StartupInitializer`. 
 
 ## Testing
-Component testing should all be done a test harness on your library.
+All component testing should be done using a test harness on your library.
 Basic tests to validate integration with WSM can be added to `test/java/.../amalgam/<your package>`.
 
 

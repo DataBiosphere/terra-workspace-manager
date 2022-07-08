@@ -17,8 +17,6 @@ import bio.terra.workspace.generated.model.ApiTpsPaoGetResult;
 import bio.terra.workspace.generated.model.ApiTpsPolicyInput;
 import bio.terra.workspace.generated.model.ApiTpsPolicyInputs;
 import bio.terra.workspace.generated.model.ApiTpsPolicyPair;
-import bio.terra.workspace.generated.model.ApiTpsRegionConstraintRequest;
-import bio.terra.workspace.generated.model.ApiTpsRegionConstraintResult;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -26,6 +24,7 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import javax.servlet.http.HttpServletRequest;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -47,15 +46,7 @@ public class TpsApiController implements TpsApi {
   }
 
   // -- Policy Queries --
-  @Override
-  public ResponseEntity<ApiTpsRegionConstraintResult> policyRegionConstraint(
-      ApiTpsRegionConstraintRequest body) {
-    features.tpsEnabledCheck();
-    return TpsApi.super.policyRegionConstraint(body);
-    /*
-     TODO: implementation - deferred until after group membership constraint
-    */
-  }
+  // TODO: PF-1733 Next step is to add group membership constraint
 
   // -- Policy Attribute Objects --
   @Override
@@ -97,14 +88,14 @@ public class TpsApiController implements TpsApi {
     if (apiComponent == ApiTpsComponent.WSM) {
       return PaoComponent.WSM;
     }
-    throw new EnumNotRecognizedException("invalid TpsComponent");
+    throw new EnumNotRecognizedException("Invalid TpsComponent");
   }
 
   private ApiTpsComponent componentToApi(PaoComponent component) {
     if (component == PaoComponent.WSM) {
       return ApiTpsComponent.WSM;
     }
-    throw new InternalLogicException("Invalid component");
+    throw new InternalLogicException("Invalid PaoComponent");
   }
 
   private PaoObjectType objectTypeFromApi(ApiTpsObjectType apiObjectType) {
@@ -118,13 +109,15 @@ public class TpsApiController implements TpsApi {
     if (objectType == PaoObjectType.WORKSPACE) {
       return ApiTpsObjectType.WORKSPACE;
     }
-    throw new InternalLogicException("Invalid object type");
+    throw new InternalLogicException("Invalid PaoObjectType");
   }
 
   private PolicyInput policyInputFromApi(ApiTpsPolicyInput apiInput) {
     // These nulls shouldn't happen.
-    if (apiInput == null || apiInput.getNamespace() == null || apiInput.getName() == null) {
-      throw new InvalidInputException("PolicyInput namespace and name cannot be null");
+    if (apiInput == null
+        || StringUtils.isNotEmpty(apiInput.getNamespace())
+        || StringUtils.isNotEmpty(apiInput.getName())) {
+      throw new TpsInvalidInputException("PolicyInput namespace and name cannot be null");
     }
 
     Map<String, String> data;
@@ -162,7 +155,7 @@ public class TpsApiController implements TpsApi {
       var input = policyInputFromApi(apiInput);
       String key = PolicyInputs.composeKey(input.getNamespace(), input.getName());
       if (inputs.containsKey(key)) {
-        throw new InvalidInputException("Duplicate policy attribute in policy input: " + key);
+        throw new TpsInvalidInputException("Duplicate policy attribute in policy input: " + key);
       }
       inputs.put(key, input);
     }

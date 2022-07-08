@@ -32,10 +32,8 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.context.WebApplicationContext;
 
 @ExtendWith(SpringExtension.class)
-// Shouldn't need since it is on the super class
-// @AutoConfigureMockMvc
 @WebAppConfiguration
-public class TpsBasicTest extends BaseUnitTest {
+public class TpsBasicPaoTest extends BaseUnitTest {
   private static final String TERRA = "terra";
   private static final String GROUP_CONSTRAINT = "group-constraint";
   private static final String REGION_CONSTRAINT = "region-constraint";
