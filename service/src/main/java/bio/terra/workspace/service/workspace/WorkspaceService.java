@@ -29,7 +29,8 @@ import bio.terra.workspace.service.workspace.flight.create.azure.CreateAzureCont
 import bio.terra.workspace.service.workspace.model.AzureCloudContext;
 import bio.terra.workspace.service.workspace.model.OperationType;
 import bio.terra.workspace.service.workspace.model.Workspace;
-import bio.terra.workspace.service.workspace.model.WorkspaceAndHighestRole;
+import bio.terra.workspace.service.workspace.model.WorkspaceAndAdditionalAttributes;
+import com.google.common.annotations.VisibleForTesting;
 import io.opencensus.contrib.spring.aop.Traced;
 import java.util.List;
 import java.util.Map;
@@ -161,7 +162,7 @@ public class WorkspaceService {
    * @param limit The maximum number of items to return.
    */
   @Traced
-  public List<WorkspaceAndHighestRole> listWorkspacesAndHighestRoles(
+  public List<WorkspaceAndAdditionalAttributes> listWorkspacesAndHighestRoles(
       AuthenticatedUserRequest userRequest, int offset, int limit) {
     Map<UUID, WsmIamRole> samWorkspaceIdsAndHighestRoles =
         SamRethrow.onInterrupted(
@@ -171,20 +172,29 @@ public class WorkspaceService {
         .stream()
         .map(
             workspace ->
-                new WorkspaceAndHighestRole(
-                    workspace, samWorkspaceIdsAndHighestRoles.get(workspace.getWorkspaceId())))
+                new WorkspaceAndAdditionalAttributes(
+                    workspace,
+                    samWorkspaceIdsAndHighestRoles.get(workspace.getWorkspaceId()),
+                    workspaceActivityLogDao.getLastUpdatedDate(workspace.getWorkspaceId())))
         .toList();
   }
 
-  /** Retrieves an existing workspace by ID */
+  /** Retrieves an existing workspace and its relative attributes by ID */
   @Traced
+  public WorkspaceAndAdditionalAttributes getWorkspaceAndAdditionalAttributes(
+      UUID uuid, AuthenticatedUserRequest userRequest) {
+    return computeAdditionalAttributesOfWorkspace(getWorkspace(uuid, userRequest), userRequest);
+  }
+
+  /** Test only method. Used by {@code WorkspaceConnectedTestUtil} to create a workspace. */
+  @VisibleForTesting
   public Workspace getWorkspace(UUID uuid, AuthenticatedUserRequest userRequest) {
     return validateWorkspaceAndAction(userRequest, uuid, SamConstants.SamWorkspaceAction.READ);
   }
 
-  /** Retrieves an existing workspace by userFacingId */
+  /** Retrieves an existing workspace and its relative attributes by userFacingId */
   @Traced
-  public Workspace getWorkspaceByUserFacingId(
+  public WorkspaceAndAdditionalAttributes getWorkspaceByUserFacingId(
       String userFacingId, AuthenticatedUserRequest userRequest) {
     logger.info(
         "getWorkspaceByUserFacingId - userRequest: {}\nuserFacingId: {}",
@@ -199,7 +209,7 @@ public class WorkspaceService {
                 workspace.getWorkspaceId().toString(),
                 SamWorkspaceAction.READ),
         "checkAuthz");
-    return workspace;
+    return computeAdditionalAttributesOfWorkspace(workspace, userRequest);
   }
 
   @Traced
@@ -223,8 +233,9 @@ public class WorkspaceService {
    * @param name name to change - may be null
    * @param properties optional map of key-value properties
    * @param description description to change - may be null
+   * @return the updated workspace and its relative attributes.
    */
-  public Workspace updateWorkspace(
+  public WorkspaceAndAdditionalAttributes updateWorkspace(
       AuthenticatedUserRequest userRequest,
       UUID workspaceUuid,
       @Nullable String userFacingId,
@@ -236,7 +247,21 @@ public class WorkspaceService {
       workspaceActivityLogDao.writeActivity(
           workspaceUuid, new DbWorkspaceActivityLog().operationType(OperationType.UPDATE));
     }
-    return workspaceDao.getWorkspace(workspaceUuid);
+    var workspace = workspaceDao.getWorkspace(workspaceUuid);
+    return computeAdditionalAttributesOfWorkspace(workspace, userRequest);
+  }
+
+  /**
+   * Compute the relevant attributes of a workspace that are needed in the {@link
+   * bio.terra.workspace.generated.model.ApiWorkspaceDescription} but is not stored in the Workspace
+   * data table.
+   */
+  private WorkspaceAndAdditionalAttributes computeAdditionalAttributesOfWorkspace(
+      Workspace workspace, AuthenticatedUserRequest userRequest) {
+    return new WorkspaceAndAdditionalAttributes(
+        workspace,
+        getHighestRole(workspace.getWorkspaceId(), userRequest),
+        workspaceActivityLogDao.getLastUpdatedDate(workspace.getWorkspaceId()));
   }
 
   /** Delete an existing workspace by ID. */

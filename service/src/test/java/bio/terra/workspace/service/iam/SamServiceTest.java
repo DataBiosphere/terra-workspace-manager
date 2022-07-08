@@ -84,15 +84,19 @@ class SamServiceTest extends BaseConnectedTest {
     // Before being granted permission, secondary user should be rejected.
     assertThrows(
         ForbiddenException.class,
-        () -> workspaceService.getWorkspace(workspaceUuid, secondaryUserRequest()));
+        () ->
+            workspaceService.getWorkspaceAndAdditionalAttributes(
+                workspaceUuid, secondaryUserRequest()));
     // After being granted permission, secondary user can read the workspace.
     samService.grantWorkspaceRole(
         workspaceUuid,
         defaultUserRequest(),
         WsmIamRole.READER,
         userAccessUtils.getSecondUserEmail());
-    Workspace readWorkspace = workspaceService.getWorkspace(workspaceUuid, secondaryUserRequest());
-    assertEquals(workspaceUuid, readWorkspace.getWorkspaceId());
+    var readWorkspaceAndAdditionalAttributes =
+        workspaceService.getWorkspaceAndAdditionalAttributes(workspaceUuid, secondaryUserRequest());
+    assertEquals(workspaceUuid, readWorkspaceAndAdditionalAttributes.workspace().getWorkspaceId());
+    assertEquals(WsmIamRole.READER, readWorkspaceAndAdditionalAttributes.highestRole());
   }
 
   @Test
@@ -126,14 +130,19 @@ class SamServiceTest extends BaseConnectedTest {
     // Before being granted permission, secondary user should be rejected.
     assertThrows(
         ForbiddenException.class,
-        () -> workspaceService.getWorkspace(workspaceUuid, secondaryUserRequest()));
+        () ->
+            workspaceService.getWorkspaceAndAdditionalAttributes(
+                workspaceUuid, secondaryUserRequest()));
     // After being granted permission, secondary user can read the workspace.
     samService.grantWorkspaceRole(
         workspaceUuid,
         defaultUserRequest(),
         WsmIamRole.READER,
         userAccessUtils.getSecondUserEmail());
-    Workspace readWorkspace = workspaceService.getWorkspace(workspaceUuid, secondaryUserRequest());
+    Workspace readWorkspace =
+        workspaceService
+            .getWorkspaceAndAdditionalAttributes(workspaceUuid, secondaryUserRequest())
+            .workspace();
     assertEquals(workspaceUuid, readWorkspace.getWorkspaceId());
     // After removing permission, secondary user can no longer read.
     samService.removeWorkspaceRole(
@@ -143,7 +152,9 @@ class SamServiceTest extends BaseConnectedTest {
         userAccessUtils.getSecondUserEmail());
     assertThrows(
         ForbiddenException.class,
-        () -> workspaceService.getWorkspace(workspaceUuid, secondaryUserRequest()));
+        () ->
+            workspaceService.getWorkspaceAndAdditionalAttributes(
+                workspaceUuid, secondaryUserRequest()));
   }
 
   @Test

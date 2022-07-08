@@ -68,7 +68,7 @@ import bio.terra.workspace.service.workspace.flight.CheckSamWorkspaceAuthzStep;
 import bio.terra.workspace.service.workspace.flight.CreateWorkspaceAuthzStep;
 import bio.terra.workspace.service.workspace.flight.CreateWorkspaceStep;
 import bio.terra.workspace.service.workspace.model.Workspace;
-import bio.terra.workspace.service.workspace.model.WorkspaceAndHighestRole;
+import bio.terra.workspace.service.workspace.model.WorkspaceAndAdditionalAttributes;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
 import com.google.api.services.cloudresourcemanager.v3.model.Project;
 import com.google.common.collect.ImmutableList;
@@ -134,6 +134,8 @@ class WorkspaceServiceTest extends BaseConnectedTest {
             any(ControlledResource.class),
             any(ControlledResourceIamRole.class),
             any(AuthenticatedUserRequest.class));
+    Mockito.when(mockSamService.listRequesterRoles(any(), any(), any()))
+        .thenReturn(ImmutableList.of(WsmIamRole.READER, WsmIamRole.WRITER, WsmIamRole.OWNER));
   }
 
   /**
@@ -153,7 +155,7 @@ class WorkspaceServiceTest extends BaseConnectedTest {
     Mockito.when(mockSamService.listWorkspaceIdsAndHighestRoles(Mockito.any()))
         .thenReturn(Map.of(workspaceId, WsmIamRole.OWNER));
 
-    List<WorkspaceAndHighestRole> actual =
+    List<WorkspaceAndAdditionalAttributes> actual =
         workspaceService.listWorkspacesAndHighestRoles(USER_REQUEST, /*offset=*/ 0, /*limit=*/ 10);
     assertEquals(1, actual.size());
     assertEquals(request.getWorkspaceId(), actual.get(0).workspace().getWorkspaceId());
@@ -165,16 +167,20 @@ class WorkspaceServiceTest extends BaseConnectedTest {
     Workspace request = defaultRequestBuilder(UUID.randomUUID()).build();
     workspaceService.createWorkspace(request, USER_REQUEST);
 
-    assertEquals(
-        request.getWorkspaceId(),
-        workspaceService.getWorkspace(request.getWorkspaceId(), USER_REQUEST).getWorkspaceId());
+    var workspaceAndDescription =
+        workspaceService.getWorkspaceAndAdditionalAttributes(
+            request.getWorkspaceId(), USER_REQUEST);
+    assertEquals(request.getWorkspaceId(), workspaceAndDescription.workspace().getWorkspaceId());
+    assertEquals(WsmIamRole.OWNER, workspaceAndDescription.highestRole());
+    assertNotNull(workspaceAndDescription.lastUpdatedDate());
   }
 
   @Test
   void getWorkspace_missing() {
     assertThrows(
         WorkspaceNotFoundException.class,
-        () -> workspaceService.getWorkspace(UUID.randomUUID(), USER_REQUEST));
+        () ->
+            workspaceService.getWorkspaceAndAdditionalAttributes(UUID.randomUUID(), USER_REQUEST));
   }
 
   @Test
@@ -184,7 +190,8 @@ class WorkspaceServiceTest extends BaseConnectedTest {
         .checkAuthz(any(), any(), any(), any());
     assertThrows(
         WorkspaceNotFoundException.class,
-        () -> workspaceService.getWorkspace(UUID.randomUUID(), USER_REQUEST));
+        () ->
+            workspaceService.getWorkspaceAndAdditionalAttributes(UUID.randomUUID(), USER_REQUEST));
   }
 
   @Test
@@ -197,7 +204,9 @@ class WorkspaceServiceTest extends BaseConnectedTest {
         .checkAuthz(any(), any(), any(), any());
     assertThrows(
         ForbiddenException.class,
-        () -> workspaceService.getWorkspace(request.getWorkspaceId(), USER_REQUEST));
+        () ->
+            workspaceService.getWorkspaceAndAdditionalAttributes(
+                request.getWorkspaceId(), USER_REQUEST));
   }
 
   @Test
@@ -206,9 +215,11 @@ class WorkspaceServiceTest extends BaseConnectedTest {
     Workspace request = defaultRequestBuilder(UUID.randomUUID()).userFacingId(userFacingId).build();
     workspaceService.createWorkspace(request, USER_REQUEST);
 
-    assertEquals(
-        request.getWorkspaceId(),
-        workspaceService.getWorkspaceByUserFacingId(userFacingId, USER_REQUEST).getWorkspaceId());
+    WorkspaceAndAdditionalAttributes workspaceByUserFacingId =
+        workspaceService.getWorkspaceByUserFacingId(userFacingId, USER_REQUEST);
+    assertEquals(request.getWorkspaceId(), workspaceByUserFacingId.workspace().getWorkspaceId());
+    assertEquals(WsmIamRole.OWNER, workspaceByUserFacingId.highestRole());
+    assertNotNull(workspaceByUserFacingId.lastUpdatedDate());
   }
 
   @Test
@@ -233,8 +244,6 @@ class WorkspaceServiceTest extends BaseConnectedTest {
     String userFacingId = "user-facing-id-getworkspacebyuserfacingid_forbiddenexisting";
     Workspace request = defaultRequestBuilder(UUID.randomUUID()).userFacingId(userFacingId).build();
     workspaceService.createWorkspace(request, USER_REQUEST);
-    Workspace createdWorkspace =
-        workspaceService.getWorkspace(request.getWorkspaceId(), USER_REQUEST);
 
     doThrow(new ForbiddenException("forbid!"))
         .when(mockSamService)
@@ -264,7 +273,9 @@ class WorkspaceServiceTest extends BaseConnectedTest {
             .build();
     workspaceService.createWorkspace(mcWorkspaceRequest, USER_REQUEST);
     Workspace createdWorkspace =
-        workspaceService.getWorkspace(mcWorkspaceRequest.getWorkspaceId(), USER_REQUEST);
+        workspaceService
+            .getWorkspaceAndAdditionalAttributes(mcWorkspaceRequest.getWorkspaceId(), USER_REQUEST)
+            .workspace();
     assertEquals(mcWorkspaceRequest.getWorkspaceId(), createdWorkspace.getWorkspaceId());
     assertEquals(WorkspaceStage.MC_WORKSPACE, createdWorkspace.getWorkspaceStage());
   }
@@ -327,7 +338,9 @@ class WorkspaceServiceTest extends BaseConnectedTest {
     workspaceService.createWorkspace(request, USER_REQUEST);
 
     Workspace createdWorkspace =
-        workspaceService.getWorkspace(request.getWorkspaceId(), USER_REQUEST);
+        workspaceService
+            .getWorkspaceAndAdditionalAttributes(request.getWorkspaceId(), USER_REQUEST)
+            .workspace();
     assertEquals(request.getWorkspaceId(), createdWorkspace.getWorkspaceId());
     assertEquals(spendProfileId, createdWorkspace.getSpendProfileId().orElse(null));
   }
@@ -341,7 +354,9 @@ class WorkspaceServiceTest extends BaseConnectedTest {
     workspaceService.createWorkspace(request, USER_REQUEST);
 
     Workspace createdWorkspace =
-        workspaceService.getWorkspace(request.getWorkspaceId(), USER_REQUEST);
+        workspaceService
+            .getWorkspaceAndAdditionalAttributes(request.getWorkspaceId(), USER_REQUEST)
+            .workspace();
     assertEquals(
         request.getDescription().orElse(null), createdWorkspace.getDescription().orElse(null));
     assertEquals(name, createdWorkspace.getDisplayName().orElse(null));
@@ -359,7 +374,9 @@ class WorkspaceServiceTest extends BaseConnectedTest {
     var lastUpdatedDate = workspaceActivityLogDao.getLastUpdatedDate(workspaceUuid);
     assertTrue(lastUpdatedDate.isPresent());
     Workspace createdWorkspace =
-        workspaceService.getWorkspace(request.getWorkspaceId(), USER_REQUEST);
+        workspaceService
+            .getWorkspaceAndAdditionalAttributes(request.getWorkspaceId(), USER_REQUEST)
+            .workspace();
     assertEquals(request.getWorkspaceId(), createdWorkspace.getWorkspaceId());
     assertEquals("", createdWorkspace.getDisplayName().orElse(null));
     assertEquals("", createdWorkspace.getDescription().orElse(null));
@@ -371,12 +388,17 @@ class WorkspaceServiceTest extends BaseConnectedTest {
     propertyMap.put("ted", "lasso");
     propertyMap.put("keeley", "jones");
 
-    Workspace updatedWorkspace =
+    WorkspaceAndAdditionalAttributes updatedWorkspaceAndAttributes =
         workspaceService.updateWorkspace(
             USER_REQUEST, workspaceUuid, userFacingId, name, description, propertyMap2);
+    var updatedWorkspace = updatedWorkspaceAndAttributes.workspace();
+    assertEquals(WsmIamRole.OWNER, updatedWorkspaceAndAttributes.highestRole());
+    assertTrue(updatedWorkspaceAndAttributes.lastUpdatedDate().isPresent());
 
     var updatedDateAfterWorkspaceUpdate = workspaceActivityLogDao.getLastUpdatedDate(workspaceUuid);
     assertTrue(lastUpdatedDate.get().isBefore(updatedDateAfterWorkspaceUpdate.get()));
+    assertEquals(
+        updatedWorkspaceAndAttributes.lastUpdatedDate().get(), updatedDateAfterWorkspaceUpdate);
 
     assertEquals(userFacingId, updatedWorkspace.getUserFacingId());
     assertTrue(updatedWorkspace.getDisplayName().isPresent());
@@ -387,9 +409,11 @@ class WorkspaceServiceTest extends BaseConnectedTest {
 
     String otherDescription = "The deprecated workspace";
 
-    Workspace secondUpdatedWorkspace =
+    WorkspaceAndAdditionalAttributes secondUpdatedWorkspaceAndAttributes =
         workspaceService.updateWorkspace(
             USER_REQUEST, workspaceUuid, null, null, otherDescription, null);
+    Workspace secondUpdatedWorkspace = secondUpdatedWorkspaceAndAttributes.workspace();
+    assertTrue(secondUpdatedWorkspaceAndAttributes.lastUpdatedDate().isPresent());
 
     var secondUpdatedDateAfterWorkspaceUpdate =
         workspaceActivityLogDao.getLastUpdatedDate(workspaceUuid);
@@ -397,6 +421,10 @@ class WorkspaceServiceTest extends BaseConnectedTest {
         updatedDateAfterWorkspaceUpdate
             .get()
             .isBefore(secondUpdatedDateAfterWorkspaceUpdate.get()));
+    assertEquals(
+        secondUpdatedWorkspaceAndAttributes.lastUpdatedDate().get(),
+        secondUpdatedDateAfterWorkspaceUpdate.get());
+
     // Since name is null, leave it alone. Description should be updated.
     assertTrue(secondUpdatedWorkspace.getDisplayName().isPresent());
     assertEquals(name, secondUpdatedWorkspace.getDisplayName().get());
@@ -406,9 +434,11 @@ class WorkspaceServiceTest extends BaseConnectedTest {
 
     // Sending through empty strings and an empty map clears the values.
     Map<String, String> propertyMap3 = new HashMap<>();
-    Workspace thirdUpdatedWorkspace =
+    WorkspaceAndAdditionalAttributes thirdUpdatedWorkspaceAndAttributes =
         workspaceService.updateWorkspace(
             USER_REQUEST, workspaceUuid, userFacingId, "", "", propertyMap3);
+    Workspace thirdUpdatedWorkspace = thirdUpdatedWorkspaceAndAttributes.workspace();
+    assertTrue(thirdUpdatedWorkspaceAndAttributes.lastUpdatedDate().isPresent());
 
     var thirdUpdatedDateAfterWorkspaceUpdate =
         workspaceActivityLogDao.getLastUpdatedDate(workspaceUuid);
@@ -416,6 +446,9 @@ class WorkspaceServiceTest extends BaseConnectedTest {
         secondUpdatedDateAfterWorkspaceUpdate
             .get()
             .isBefore(thirdUpdatedDateAfterWorkspaceUpdate.get()));
+    assertEquals(
+        thirdUpdatedDateAfterWorkspaceUpdate.get(),
+        thirdUpdatedWorkspaceAndAttributes.lastUpdatedDate().get());
     assertTrue(thirdUpdatedWorkspace.getDisplayName().isPresent());
     assertEquals("", thirdUpdatedWorkspace.getDisplayName().get());
     assertTrue(thirdUpdatedWorkspace.getDescription().isPresent());
@@ -473,7 +506,9 @@ class WorkspaceServiceTest extends BaseConnectedTest {
     workspaceService.deleteWorkspace(request.getWorkspaceId(), USER_REQUEST);
     assertThrows(
         WorkspaceNotFoundException.class,
-        () -> workspaceService.getWorkspace(request.getWorkspaceId(), USER_REQUEST));
+        () ->
+            workspaceService.getWorkspaceAndAdditionalAttributes(
+                request.getWorkspaceId(), USER_REQUEST));
   }
 
   @Test
@@ -527,7 +562,9 @@ class WorkspaceServiceTest extends BaseConnectedTest {
         () -> workspaceService.createWorkspace(request, USER_REQUEST));
     assertThrows(
         WorkspaceNotFoundException.class,
-        () -> workspaceService.getWorkspace(request.getWorkspaceId(), USER_REQUEST));
+        () ->
+            workspaceService.getWorkspaceAndAdditionalAttributes(
+                request.getWorkspaceId(), USER_REQUEST));
   }
 
   @Test
@@ -584,7 +621,7 @@ class WorkspaceServiceTest extends BaseConnectedTest {
     // Verify that the workspace was successfully deleted, even though it contained references
     assertThrows(
         WorkspaceNotFoundException.class,
-        () -> workspaceService.getWorkspace(workspaceUuid, USER_REQUEST));
+        () -> workspaceService.getWorkspaceAndAdditionalAttributes(workspaceUuid, USER_REQUEST));
 
     // Verify that the resource is also deleted
     assertThrows(
@@ -605,7 +642,10 @@ class WorkspaceServiceTest extends BaseConnectedTest {
         request.getWorkspaceId(), jobId, USER_REQUEST, "/fake/value");
     jobService.waitForJob(jobId);
     assertNull(jobService.retrieveJobResult(jobId, Object.class, USER_REQUEST).getException());
-    Workspace workspace = workspaceService.getWorkspace(request.getWorkspaceId(), USER_REQUEST);
+    Workspace workspace =
+        workspaceService
+            .getWorkspaceAndAdditionalAttributes(request.getWorkspaceId(), USER_REQUEST)
+            .workspace();
     String projectId =
         workspaceService.getAuthorizedRequiredGcpProject(workspace.getWorkspaceId(), USER_REQUEST);
 
@@ -754,7 +794,10 @@ class WorkspaceServiceTest extends BaseConnectedTest {
 
     // destination WS should exist
     final Workspace retrievedDestinationWorkspace =
-        workspaceService.getWorkspace(destinationWorkspace.getWorkspaceId(), USER_REQUEST);
+        workspaceService
+            .getWorkspaceAndAdditionalAttributes(
+                destinationWorkspace.getWorkspaceId(), USER_REQUEST)
+            .workspace();
     assertEquals(
         "Destination Workspace", retrievedDestinationWorkspace.getDisplayName().orElseThrow());
     assertEquals(

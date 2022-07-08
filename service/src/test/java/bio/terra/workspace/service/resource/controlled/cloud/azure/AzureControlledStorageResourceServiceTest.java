@@ -99,7 +99,10 @@ public class AzureControlledStorageResourceServiceTest extends BaseAzureTest {
                 .build(),
             workspaceOwner.getAuthenticatedRequest());
     workspace =
-        workspaceService.getWorkspace(workspaceUuid, workspaceOwner.getAuthenticatedRequest());
+        workspaceService
+            .getWorkspaceAndAdditionalAttributes(
+                workspaceUuid, workspaceOwner.getAuthenticatedRequest())
+            .workspace();
 
     workspaceService.createAzureCloudContext(
         workspaceUuid,

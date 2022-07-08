@@ -45,8 +45,9 @@ import bio.terra.workspace.service.workspace.model.CloudContextHolder;
 import bio.terra.workspace.service.workspace.model.GcpCloudContext;
 import bio.terra.workspace.service.workspace.model.OperationType;
 import bio.terra.workspace.service.workspace.model.Workspace;
-import bio.terra.workspace.service.workspace.model.WorkspaceAndHighestRole;
+import bio.terra.workspace.service.workspace.model.WorkspaceAndAdditionalAttributes;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
+import java.time.ZoneOffset;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -143,23 +144,18 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     logger.info("Listing workspaces for {}", userRequest.getEmail());
     ControllerValidationUtils.validatePaginationParams(offset, limit);
-    List<WorkspaceAndHighestRole> workspacesAndHighestRoles =
+    List<WorkspaceAndAdditionalAttributes> workspacesAndHighestRoles =
         workspaceService.listWorkspacesAndHighestRoles(userRequest, offset, limit);
     var response =
         new ApiWorkspaceDescriptionList()
             .workspaces(
-                workspacesAndHighestRoles.stream()
-                    .map(
-                        workspaceAndHighestRole ->
-                            buildWorkspaceDescription(
-                                workspaceAndHighestRole.workspace(),
-                                workspaceAndHighestRole.highestRole()))
-                    .toList());
+                workspacesAndHighestRoles.stream().map(this::buildWorkspaceDescription).toList());
     return new ResponseEntity<>(response, HttpStatus.OK);
   }
 
   private ApiWorkspaceDescription buildWorkspaceDescription(
-      Workspace workspace, WsmIamRole highestRole) {
+      WorkspaceAndAdditionalAttributes workspaceAndAdditionalAttributes) {
+    var workspace = workspaceAndAdditionalAttributes.workspace();
     ApiGcpContext gcpContext =
         gcpCloudContextService
             .getGcpCloudContext(workspace.getWorkspaceId())
@@ -184,12 +180,17 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
         .userFacingId(workspace.getUserFacingId())
         .displayName(workspace.getDisplayName().orElse(null))
         .description(workspace.getDescription().orElse(null))
-        .highestRole(highestRole.toApiModel())
+        .highestRole(workspaceAndAdditionalAttributes.highestRole().toApiModel())
         .properties(apiProperties)
         .spendProfile(workspace.getSpendProfileId().map(SpendProfileId::getId).orElse(null))
         .stage(workspace.getWorkspaceStage().toApiModel())
         .gcpContext(gcpContext)
-        .azureContext(azureContext);
+        .azureContext(azureContext)
+        .lastUpdatedDate(
+            workspaceAndAdditionalAttributes
+                .lastUpdatedDate()
+                .map(instant -> instant.atOffset(ZoneOffset.UTC))
+                .orElse(null));
   }
 
   @Override
@@ -197,9 +198,9 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
       @PathVariable("workspaceId") UUID uuid) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     logger.info("Getting workspace {} for {}", uuid, userRequest.getEmail());
-    Workspace workspace = workspaceService.getWorkspace(uuid, userRequest);
-    WsmIamRole highestRole = workspaceService.getHighestRole(uuid, userRequest);
-    ApiWorkspaceDescription desc = buildWorkspaceDescription(workspace, highestRole);
+    WorkspaceAndAdditionalAttributes workspace =
+        workspaceService.getWorkspaceAndAdditionalAttributes(uuid, userRequest);
+    ApiWorkspaceDescription desc = buildWorkspaceDescription(workspace);
     logger.info("Got workspace {} for {}", desc, userRequest.getEmail());
 
     return new ResponseEntity<>(desc, HttpStatus.OK);
@@ -221,7 +222,7 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
       ControllerValidationUtils.validateUserFacingId(body.getUserFacingId());
     }
 
-    Workspace workspace =
+    var workspaceAndAdditionalAttributes =
         workspaceService.updateWorkspace(
             userRequest,
             workspaceUuid,
@@ -230,8 +231,7 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
             body.getDescription(),
             propertyMap);
 
-    WsmIamRole highestRole = workspaceService.getHighestRole(workspaceUuid, userRequest);
-    ApiWorkspaceDescription desc = buildWorkspaceDescription(workspace, highestRole);
+    ApiWorkspaceDescription desc = buildWorkspaceDescription(workspaceAndAdditionalAttributes);
     logger.info("Updated workspace {} for {}", desc, userRequest.getEmail());
 
     return new ResponseEntity<>(desc, HttpStatus.OK);
@@ -252,10 +252,10 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
       @PathVariable("workspaceUserFacingId") String userFacingId) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     logger.info("Getting workspace {} for {}", userFacingId, userRequest.getEmail());
-    Workspace workspace = workspaceService.getWorkspaceByUserFacingId(userFacingId, userRequest);
-    WsmIamRole highestRole =
-        workspaceService.getHighestRole(workspace.getWorkspaceId(), userRequest);
-    ApiWorkspaceDescription desc = buildWorkspaceDescription(workspace, highestRole);
+    var workspaceAndAdditionalAttributes =
+        workspaceService.getWorkspaceByUserFacingId(userFacingId, userRequest);
+
+    ApiWorkspaceDescription desc = buildWorkspaceDescription(workspaceAndAdditionalAttributes);
     logger.info("Got workspace {} for {}", desc, userRequest.getEmail());
 
     return new ResponseEntity<>(desc, HttpStatus.OK);

@@ -287,6 +287,6 @@ public class DeleteAzureContextFlightTest extends BaseAzureTest {
         () -> controlledResourceService.getControlledResource(mcWorkspaceUuid, ipId, userRequest));
     assertThrows(
         WorkspaceNotFoundException.class,
-        () -> workspaceService.getWorkspace(mcWorkspaceUuid, userRequest));
+        () -> workspaceService.getWorkspaceAndAdditionalAttributes(mcWorkspaceUuid, userRequest));
   }
 }

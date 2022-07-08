@@ -98,7 +98,9 @@ public class WorkspaceDeleteFlightTest extends BaseConnectedTest {
                 dataset.getWorkspaceId(), dataset.getResourceId(), userRequest));
     assertThrows(
         WorkspaceNotFoundException.class,
-        () -> workspaceService.getWorkspace(workspace.getWorkspaceId(), userRequest));
+        () ->
+            workspaceService.getWorkspaceAndAdditionalAttributes(
+                workspace.getWorkspaceId(), userRequest));
   }
 
   @Test
@@ -150,6 +152,8 @@ public class WorkspaceDeleteFlightTest extends BaseConnectedTest {
                 dataset.getWorkspaceId(), dataset.getResourceId(), userRequest));
     assertThrows(
         WorkspaceNotFoundException.class,
-        () -> workspaceService.getWorkspace(workspace.getWorkspaceId(), userRequest));
+        () ->
+            workspaceService.getWorkspaceAndAdditionalAttributes(
+                workspace.getWorkspaceId(), userRequest));
   }
 }
