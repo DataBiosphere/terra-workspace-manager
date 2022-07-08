@@ -26,6 +26,7 @@ import bio.terra.workspace.service.workspace.flight.DeleteGcpContextFlight;
 import bio.terra.workspace.service.workspace.flight.WorkspaceCreateFlight;
 import bio.terra.workspace.service.workspace.flight.WorkspaceDeleteFlight;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
+import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ResourceKeys;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import bio.terra.workspace.service.workspace.model.OperationType;
 import bio.terra.workspace.service.workspace.model.Workspace;
@@ -209,12 +210,30 @@ public class WorkspaceActivityLogHookTest extends BaseUnitTest {
   @Test
   void deleteResourceFlightFails_resourceNotExist_logChangedDate() {
     var workspaceUuid = UUID.randomUUID();
+    var resourceUuid = UUID.randomUUID();
     var emptyChangedDate = activityLogDao.getLastUpdatedDate(workspaceUuid);
     assertTrue(emptyChangedDate.isEmpty());
 
     FlightMap inputParams = new FlightMap();
     inputParams.put(WorkspaceFlightMapKeys.OPERATION_TYPE, OperationType.DELETE);
     inputParams.put(WorkspaceFlightMapKeys.WORKSPACE_ID, workspaceUuid.toString());
+    inputParams.put(
+        ResourceKeys.RESOURCE,
+        ControlledAiNotebookInstanceResource.builder()
+            .common(
+                ControlledResourceFields.builder()
+                    .workspaceUuid(workspaceUuid)
+                    .resourceId(resourceUuid)
+                    .name("my-notebook")
+                    .accessScope(AccessScopeType.ACCESS_SCOPE_PRIVATE)
+                    .assignedUser("yuhuyoyo@google.com")
+                    .cloningInstructions(CloningInstructions.COPY_NOTHING)
+                    .managedBy(ManagedByType.MANAGED_BY_USER)
+                    .build())
+            .instanceId("my-notebook-instance")
+            .projectId("my-project")
+            .location("us-central1-a")
+            .build());
     hook.endFlight(
         new FakeFlightContext(
             DeleteControlledResourceFlight.class.getName(), inputParams, FlightStatus.ERROR));
@@ -243,7 +262,7 @@ public class WorkspaceActivityLogHookTest extends BaseUnitTest {
         CloudPlatform.GCP,
         "{\"version\": 1, \"gcpProjectId\": \"my-gcp-project-name-123\"}",
         flightId);
-    resourceDao.createControlledResource(
+    var resource =
         ControlledAiNotebookInstanceResource.builder()
             .common(
                 ControlledResourceFields.builder()
@@ -258,11 +277,13 @@ public class WorkspaceActivityLogHookTest extends BaseUnitTest {
             .instanceId("my-notebook-instance-123")
             .projectId("my-gcp-project")
             .location("us-central-1a")
-            .build());
+            .build();
+    resourceDao.createControlledResource(resource);
 
     FlightMap inputParams = new FlightMap();
     inputParams.put(WorkspaceFlightMapKeys.OPERATION_TYPE, OperationType.DELETE);
     inputParams.put(WorkspaceFlightMapKeys.WORKSPACE_ID, workspaceUuid.toString());
+    inputParams.put(ResourceKeys.RESOURCE, resource);
     hook.endFlight(
         new FakeFlightContext(
             DeleteGcpContextFlight.class.getName(), inputParams, FlightStatus.ERROR));
