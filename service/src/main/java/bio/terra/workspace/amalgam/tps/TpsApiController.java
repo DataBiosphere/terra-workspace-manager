@@ -1,48 +1,36 @@
 package bio.terra.workspace.amalgam.tps;
 
-import bio.terra.policy.common.model.PolicyInput;
-import bio.terra.policy.common.model.PolicyInputs;
-import bio.terra.policy.service.pao.PaoService;
-import bio.terra.policy.service.pao.model.Pao;
-import bio.terra.policy.service.pao.model.PaoComponent;
-import bio.terra.policy.service.pao.model.PaoObjectType;
-import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
-import bio.terra.workspace.common.exception.EnumNotRecognizedException;
-import bio.terra.workspace.common.exception.InternalLogicException;
+import bio.terra.common.iam.BearerTokenFactory;
 import bio.terra.workspace.generated.controller.TpsApi;
-import bio.terra.workspace.generated.model.ApiTpsComponent;
-import bio.terra.workspace.generated.model.ApiTpsObjectType;
 import bio.terra.workspace.generated.model.ApiTpsPaoCreateRequest;
 import bio.terra.workspace.generated.model.ApiTpsPaoGetResult;
-import bio.terra.workspace.generated.model.ApiTpsPolicyInput;
-import bio.terra.workspace.generated.model.ApiTpsPolicyInputs;
-import bio.terra.workspace.generated.model.ApiTpsPolicyPair;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 import java.util.UUID;
-import java.util.stream.Collectors;
-import javax.annotation.Nullable;
 import javax.servlet.http.HttpServletRequest;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 
+/**
+ * This controller simply extracts the bearer token from the request and calls TpsApiDispatch. That
+ * allows the rest of WSM to call TpsApiDispatch using the API classes. If/when we move TPS into its
+ * own service, we can rewrite TpsApiDispatch to make an ApiClient and call the appropriate endpoint
+ * via the REST API. The rest of WSM will not need to change.
+ */
 @Controller
 public class TpsApiController implements TpsApi {
-
-  private final FeatureConfiguration features;
+  private final BearerTokenFactory bearerTokenFactory;
   private final HttpServletRequest request;
-  private final PaoService paoService;
+  private final TpsApiDispatch tpsApiDispatch;
 
   @Autowired
   public TpsApiController(
-      FeatureConfiguration features, HttpServletRequest request, PaoService paoService) {
-    this.features = features;
+      BearerTokenFactory bearerTokenFactory,
+      HttpServletRequest request,
+      TpsApiDispatch tpsApiDispatch) {
+    this.bearerTokenFactory = bearerTokenFactory;
     this.request = request;
-    this.paoService = paoService;
+    this.tpsApiDispatch = tpsApiDispatch;
   }
 
   // -- Policy Queries --
@@ -51,130 +39,19 @@ public class TpsApiController implements TpsApi {
   // -- Policy Attribute Objects --
   @Override
   public ResponseEntity<Void> createPao(ApiTpsPaoCreateRequest body) {
-    features.tpsEnabledCheck();
-
-    // TODO: permissions
-
-    paoService.createPao(
-        body.getObjectId(),
-        componentFromApi(body.getComponent()),
-        objectTypeFromApi(body.getObjectType()),
-        policyInputsFromApi(body.getAttributes()));
-
+    tpsApiDispatch.createPao(bearerTokenFactory.from(request), body);
     return new ResponseEntity<>(HttpStatus.NO_CONTENT);
   }
 
   @Override
   public ResponseEntity<Void> deletePao(UUID objectId) {
-    features.tpsEnabledCheck();
-    paoService.deletePao(objectId);
+    tpsApiDispatch.deletePao(bearerTokenFactory.from(request), objectId);
     return new ResponseEntity<>(HttpStatus.NO_CONTENT);
   }
 
   @Override
   public ResponseEntity<ApiTpsPaoGetResult> getPao(UUID objectId) {
-    features.tpsEnabledCheck();
-    // TODO: permissions
-    Pao pao = paoService.getPao(objectId);
-    return new ResponseEntity<>(paoToApi(pao), HttpStatus.OK);
-  }
-
-  // -- Api to Tps conversion methods --
-  // Note: we need to keep the Api types out of the TPS library code. It does not build the Api so
-  // we cannot
-  // implement toApi/fromApi pattern in our internal TPS classes. Instead, we code them here.
-
-  private PaoComponent componentFromApi(ApiTpsComponent apiComponent) {
-    if (apiComponent == ApiTpsComponent.WSM) {
-      return PaoComponent.WSM;
-    }
-    throw new EnumNotRecognizedException("Invalid TpsComponent");
-  }
-
-  private ApiTpsComponent componentToApi(PaoComponent component) {
-    if (component == PaoComponent.WSM) {
-      return ApiTpsComponent.WSM;
-    }
-    throw new InternalLogicException("Invalid PaoComponent");
-  }
-
-  private PaoObjectType objectTypeFromApi(ApiTpsObjectType apiObjectType) {
-    if (apiObjectType == ApiTpsObjectType.WORKSPACE) {
-      return PaoObjectType.WORKSPACE;
-    }
-    throw new EnumNotRecognizedException("invalid TpsObjectType");
-  }
-
-  private ApiTpsObjectType objectTypeToApi(PaoObjectType objectType) {
-    if (objectType == PaoObjectType.WORKSPACE) {
-      return ApiTpsObjectType.WORKSPACE;
-    }
-    throw new InternalLogicException("Invalid PaoObjectType");
-  }
-
-  private PolicyInput policyInputFromApi(ApiTpsPolicyInput apiInput) {
-    // These nulls shouldn't happen.
-    if (apiInput == null
-        || StringUtils.isNotEmpty(apiInput.getNamespace())
-        || StringUtils.isNotEmpty(apiInput.getName())) {
-      throw new TpsInvalidInputException("PolicyInput namespace and name cannot be null");
-    }
-
-    Map<String, String> data;
-    if (apiInput.getAdditionalData() == null) {
-      // Ensure we always have a map, even if it is empty.
-      data = new HashMap<>();
-    } else {
-      data =
-          apiInput.getAdditionalData().stream()
-              .collect(Collectors.toMap(ApiTpsPolicyPair::getKey, ApiTpsPolicyPair::getValue));
-    }
-    return new PolicyInput(apiInput.getNamespace(), apiInput.getName(), data);
-  }
-
-  public ApiTpsPolicyInput policyInputToApi(PolicyInput input) {
-    List<ApiTpsPolicyPair> apiPolicyPairs =
-        input.getAdditionalData().entrySet().stream()
-            .map(e -> new ApiTpsPolicyPair().key(e.getKey()).value(e.getValue()))
-            .toList();
-
-    return new ApiTpsPolicyInput()
-        .namespace(input.getNamespace())
-        .name(input.getName())
-        .additionalData(apiPolicyPairs);
-  }
-
-  private PolicyInputs policyInputsFromApi(@Nullable ApiTpsPolicyInputs apiInputs) {
-    if (apiInputs == null || apiInputs.getInputs() == null || apiInputs.getInputs().isEmpty()) {
-      return new PolicyInputs(new HashMap<>());
-    }
-
-    var inputs = new HashMap<String, PolicyInput>();
-    for (ApiTpsPolicyInput apiInput : apiInputs.getInputs()) {
-      // Convert the input so we get any errors before we process it further
-      var input = policyInputFromApi(apiInput);
-      String key = PolicyInputs.composeKey(input.getNamespace(), input.getName());
-      if (inputs.containsKey(key)) {
-        throw new TpsInvalidInputException("Duplicate policy attribute in policy input: " + key);
-      }
-      inputs.put(key, input);
-    }
-    return new PolicyInputs(inputs);
-  }
-
-  public ApiTpsPolicyInputs policyInputsToApi(PolicyInputs inputs) {
-    return new ApiTpsPolicyInputs()
-        .inputs(inputs.getInputs().values().stream().map(this::policyInputToApi).toList());
-  }
-
-  public ApiTpsPaoGetResult paoToApi(Pao pao) {
-    return new ApiTpsPaoGetResult()
-        .objectId(pao.getObjectId())
-        .component(componentToApi(pao.getComponent()))
-        .objectType(objectTypeToApi(pao.getObjectType()))
-        .attributes(policyInputsToApi(pao.getAttributes()))
-        .effectiveAttributes(policyInputsToApi(pao.getEffectiveAttributes()))
-        .inConflict(pao.isInConflict())
-        .children(pao.getChildObjectIds());
+    ApiTpsPaoGetResult result = tpsApiDispatch.getPao(bearerTokenFactory.from(request), objectId);
+    return new ResponseEntity<>(result, HttpStatus.OK);
   }
 }
