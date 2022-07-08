@@ -85,9 +85,7 @@ public class WorkspaceLifecycle extends WorkspaceApiTestScriptBase {
     assertThat(updatedDescription.getDisplayName(), equalTo(WORKSPACE_NAME));
     assertThat(updatedDescription.getDescription(), equalTo(WORKSPACE_DESCRIPTION));
     assertNotNull(updatedDescription.getLastUpdatedDate());
-    assertTrue(
-        lastUpdatedDate.isBefore(
-            updatedDescription.getLastUpdatedDate()));
+    assertTrue(lastUpdatedDate.isBefore(updatedDescription.getLastUpdatedDate()));
 
     workspaceApi.deleteWorkspace(workspaceUuid);
     ClientTestUtils.assertHttpSuccess(workspaceApi, "DELETE workspace");
