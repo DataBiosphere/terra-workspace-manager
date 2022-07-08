@@ -4,7 +4,13 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import bio.terra.common.exception.MissingRequiredFieldException;
+import bio.terra.stairway.Direction;
+import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.FlightDebugInfo;
+import bio.terra.stairway.FlightMap;
+import bio.terra.stairway.FlightStatus;
+import bio.terra.stairway.Stairway;
+import bio.terra.stairway.StepResult;
 import bio.terra.workspace.common.BaseUnitTest;
 import bio.terra.workspace.db.WorkspaceActivityLogDao;
 import bio.terra.workspace.db.WorkspaceDao;
@@ -12,9 +18,13 @@ import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.job.JobServiceTestFlight;
+import bio.terra.workspace.service.workspace.flight.WorkspaceCreateFlight;
+import bio.terra.workspace.service.workspace.flight.WorkspaceDeleteFlight;
+import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import bio.terra.workspace.service.workspace.model.OperationType;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.AfterEach;
@@ -32,6 +42,7 @@ public class WorkspaceActivityLogHookTest extends BaseUnitTest {
   @Autowired private JobService jobService;
   @Autowired private WorkspaceDao workspaceDao;
   @Autowired private WorkspaceActivityLogDao activityLogDao;
+  @Autowired private WorkspaceActivityLogHook hook;
   @MockBean private SamService mockSamService;
 
   /**
@@ -46,12 +57,17 @@ public class WorkspaceActivityLogHookTest extends BaseUnitTest {
   @Test
   void createFlightSucceeds_activityLogUpdated() {
     UUID workspaceUuid = UUID.randomUUID();
-    var emptyChangedDate = activityLogDao.getLastUpdatedDate(workspaceUuid);
-    assertTrue(emptyChangedDate.isEmpty());
+      var emptyChangedDate = activityLogDao.getLastUpdatedDate(workspaceUuid);
+      assertTrue(emptyChangedDate.isEmpty());
 
-    runFlight("a creation flight", workspaceUuid, OperationType.CREATE);
-    var changedDate = activityLogDao.getLastUpdatedDate(workspaceUuid);
-    assertTrue(changedDate.isPresent());
+    FlightMap inputParams = new FlightMap();
+    inputParams.put(
+        WorkspaceFlightMapKeys.OPERATION_TYPE, OperationType.CREATE);
+    inputParams.put(
+        WorkspaceFlightMapKeys.WORKSPACE_ID, workspaceUuid.toString());
+    hook.endFlight(new FakeFlightContext(WorkspaceCreateFlight.class.getName(), inputParams, FlightStatus.SUCCESS));
+      var changedDate = activityLogDao.getLastUpdatedDate(workspaceUuid);
+      assertTrue(changedDate.isPresent());
   }
 
   @Test
@@ -60,7 +76,12 @@ public class WorkspaceActivityLogHookTest extends BaseUnitTest {
     var emptyChangedDate = activityLogDao.getLastUpdatedDate(workspaceUuid);
     assertTrue(emptyChangedDate.isEmpty());
 
-    runFlight("a creation flight", workspaceUuid, OperationType.DELETE);
+    FlightMap inputParams = new FlightMap();
+    inputParams.put(
+        WorkspaceFlightMapKeys.OPERATION_TYPE, OperationType.DELETE);
+    inputParams.put(
+        WorkspaceFlightMapKeys.WORKSPACE_ID, workspaceUuid.toString());
+    hook.endFlight(new FakeFlightContext(WorkspaceDeleteFlight.class.getName(), inputParams, FlightStatus.SUCCESS));
 
     var changedDate = activityLogDao.getLastUpdatedDate(workspaceUuid);
     assertTrue(changedDate.isPresent());
@@ -151,5 +172,91 @@ public class WorkspaceActivityLogHookTest extends BaseUnitTest {
             .submit();
     jobService.waitForJob(jobId);
     return jobId;
+  }
+
+  private class FakeFlightContext implements FlightContext {
+
+    private final String flightClassName;
+    private final FlightMap inputParams;
+    private final FlightStatus status;
+    FakeFlightContext(String flightClassName, FlightMap inputMap, FlightStatus flightStatus) {
+      this.flightClassName = flightClassName;
+      inputParams = inputMap;
+      status = flightStatus;
+    }
+    @Override
+    public Object getApplicationContext() {
+      return null;
+    }
+
+    @Override
+    public String getFlightId() {
+      return "flight-id";
+    }
+
+    @Override
+    public String getFlightClassName() {
+      return flightClassName;
+    }
+
+    @Override
+    public FlightMap getInputParameters() {
+      return inputParams;
+    }
+
+    @Override
+    public FlightMap getWorkingMap() {
+      return new FlightMap();
+    }
+
+    @Override
+    public int getStepIndex() {
+      return 0;
+    }
+
+    @Override
+    public FlightStatus getFlightStatus() {
+      return status;
+    }
+
+    @Override
+    public boolean isRerun() {
+      return false;
+    }
+
+    @Override
+    public Direction getDirection() {
+      return Direction.DO;
+    }
+
+    @Override
+    public StepResult getResult() {
+      return StepResult.getStepResultSuccess();
+    }
+
+    @Override
+    public Stairway getStairway() {
+      return null;
+    }
+
+    @Override
+    public List<String> getStepClassNames() {
+      return null;
+    }
+
+    @Override
+    public String getStepClassName() {
+      return null;
+    }
+
+    @Override
+    public String prettyStepState() {
+      return null;
+    }
+
+    @Override
+    public String flightDesc() {
+      return null;
+    }
   }
 }
