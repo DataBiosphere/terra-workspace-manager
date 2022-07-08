@@ -58,8 +58,6 @@ public class GcsBucketCloudSyncStep implements Step {
     Policy newPolicy =
         controlledResourceService.configureGcpPolicyForResource(
             resource, cloudContext, currentPolicy, userRequest);
-    logger.warn(String.format("yuhuyoyo debug: current policy %s", currentPolicy));
-    logger.warn(String.format("yuhuyoyo debug: new policy %s", newPolicy));
     logger.info(
         "Syncing workspace roles to GCP permissions on bucket {}", resource.getBucketName());
     try {

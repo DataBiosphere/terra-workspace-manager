@@ -63,7 +63,6 @@ public class UpdateGcsBucketStep implements Step {
   }
 
   private StepResult updateBucket(@Nullable ApiGcpGcsBucketUpdateParameters updateParameters) {
-    logger.warn("yuhuyoyo debug: updateBucket");
     if (updateParameters == null) {
       // nothing to change
       logger.info("No update parameters supplied, so no changes to make.");
