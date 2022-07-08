@@ -11,6 +11,7 @@ import static bio.terra.workspace.service.resource.controlled.flight.clone.bucke
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import bio.terra.cloudres.google.storage.StorageCow;
 import bio.terra.stairway.FlightMap;
@@ -35,7 +36,16 @@ public class BucketCloneRolesComponentTest extends BaseUnitTest {
 
   @Test
   public void testAddBucketRoles() throws InterruptedException {
-    doReturn(EMPTY_POLICY).when(mockStorageCow).getIamPolicy(SOURCE_BUCKET_NAME);
+    // This is deeply white-box testing! The call sequence in bucketCloneRoleService:
+    // - getIamPolicy - to construct the target policy; that returns EMPTY
+    // - setIamPolicy - to set the target policy; that returns EMPTY so we test the retry
+    // - getIamPolicy - to test if the target policy has been achieved. That returns
+    // SOURCE_BUCKET_POLICY
+    when(mockStorageCow.getIamPolicy(SOURCE_BUCKET_NAME))
+        .thenReturn(EMPTY_POLICY, SOURCE_BUCKET_POLICY);
+    when(mockStorageCow.setIamPolicy(SOURCE_BUCKET_NAME, SOURCE_BUCKET_POLICY))
+        .thenReturn(EMPTY_POLICY);
+
     bucketCloneRolesComponent.addBucketRoles(
         SOURCE_BUCKET_CLONE_INPUTS, STORAGE_TRANSFER_SERVICE_SA_EMAIL);
     verify(mockStorageCow).setIamPolicy(SOURCE_BUCKET_NAME, SOURCE_BUCKET_POLICY);
@@ -43,7 +53,16 @@ public class BucketCloneRolesComponentTest extends BaseUnitTest {
 
   @Test
   public void testRemoveBucketRoles() throws InterruptedException {
-    doReturn(SOURCE_BUCKET_POLICY).when(mockStorageCow).getIamPolicy(SOURCE_BUCKET_NAME);
+    // Remove reverses the returns in Add test: The call sequence in bucketCloneRoleService:
+    // - getIamPolicy - to construct the target policy; that returns SOURCE_BUCKET_POLICY
+    // - setIamPolicy - to set the target policy; that returns SOURCE_BUCKET_POLICY so we test the
+    // retry
+    // - getIamPolicy - to test if the target policy has been achieved. That returns EMPTY
+    when(mockStorageCow.getIamPolicy(SOURCE_BUCKET_NAME))
+        .thenReturn(SOURCE_BUCKET_POLICY, EMPTY_POLICY);
+    when(mockStorageCow.setIamPolicy(SOURCE_BUCKET_NAME, EMPTY_POLICY))
+        .thenReturn(SOURCE_BUCKET_POLICY);
+
     bucketCloneRolesComponent.removeBucketRoles(
         SOURCE_BUCKET_CLONE_INPUTS, STORAGE_TRANSFER_SERVICE_SA_EMAIL);
     verify(mockStorageCow).setIamPolicy(SOURCE_BUCKET_NAME, EMPTY_POLICY);
@@ -58,8 +77,14 @@ public class BucketCloneRolesComponentTest extends BaseUnitTest {
         ControlledResourceKeys.STORAGE_TRANSFER_SERVICE_SA_EMAIL,
         STORAGE_TRANSFER_SERVICE_SA_EMAIL);
 
-    doReturn(SOURCE_BUCKET_POLICY).when(mockStorageCow).getIamPolicy(SOURCE_BUCKET_NAME);
-    doReturn(DESTINATION_BUCKET_POLICY).when(mockStorageCow).getIamPolicy(DESTINATION_BUCKET_NAME);
+    // For these removes, we do not cause a retry and complete based on the setIamPolicy return
+    // See the remove test for more explanation
+    when(mockStorageCow.getIamPolicy(SOURCE_BUCKET_NAME)).thenReturn(SOURCE_BUCKET_POLICY);
+    when(mockStorageCow.setIamPolicy(SOURCE_BUCKET_NAME, EMPTY_POLICY)).thenReturn(EMPTY_POLICY);
+    when(mockStorageCow.getIamPolicy(DESTINATION_BUCKET_NAME))
+        .thenReturn(DESTINATION_BUCKET_POLICY);
+    when(mockStorageCow.setIamPolicy(DESTINATION_BUCKET_NAME, EMPTY_POLICY))
+        .thenReturn(EMPTY_POLICY);
 
     bucketCloneRolesComponent.removeAllAddedBucketRoles(flightMap);
 
