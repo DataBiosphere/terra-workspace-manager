@@ -2,7 +2,7 @@
 # Copied from Terra RBS repo
 # Publish Workspace Manager Client Package:
 VAULT_TOKEN=${1:-$(cat "$HOME"/.vault-token)}
-DSDE_TOOLBOX_DOCKER_IMAGE=broadinstitute/dsde-toolbox:consul-0.20.0
+DSDE_TOOLBOX_DOCKER_IMAGE=broadinstitute/dsde-toolbox:dev
 ARTIFACTORY_ACCOUNT_PATH=secret/dsp/accts/artifactory/dsdejenkins
 
 export ARTIFACTORY_USERNAME=$(docker run -e VAULT_TOKEN="$VAULT_TOKEN" ${DSDE_TOOLBOX_DOCKER_IMAGE} \
