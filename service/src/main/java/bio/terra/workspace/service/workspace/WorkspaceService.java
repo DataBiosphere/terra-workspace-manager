@@ -162,7 +162,7 @@ public class WorkspaceService {
    * @param limit The maximum number of items to return.
    */
   @Traced
-  public List<WorkspaceAndAdditionalAttributes> listWorkspacesAndHighestRoles(
+  public List<WorkspaceAndAdditionalAttributes> listWorkspacesAndAdditionalAttributes(
       AuthenticatedUserRequest userRequest, int offset, int limit) {
     Map<UUID, WsmIamRole> samWorkspaceIdsAndHighestRoles =
         SamRethrow.onInterrupted(

@@ -156,10 +156,12 @@ class WorkspaceServiceTest extends BaseConnectedTest {
         .thenReturn(Map.of(workspaceId, WsmIamRole.OWNER));
 
     List<WorkspaceAndAdditionalAttributes> actual =
-        workspaceService.listWorkspacesAndHighestRoles(USER_REQUEST, /*offset=*/ 0, /*limit=*/ 10);
+        workspaceService.listWorkspacesAndAdditionalAttributes(
+            USER_REQUEST, /*offset=*/ 0, /*limit=*/ 10);
     assertEquals(1, actual.size());
     assertEquals(request.getWorkspaceId(), actual.get(0).workspace().getWorkspaceId());
     assertEquals(WsmIamRole.OWNER, actual.get(0).highestRole());
+    assertTrue(actual.get(0).lastUpdatedDate().isPresent());
   }
 
   @Test
@@ -172,7 +174,7 @@ class WorkspaceServiceTest extends BaseConnectedTest {
             request.getWorkspaceId(), USER_REQUEST);
     assertEquals(request.getWorkspaceId(), workspaceAndDescription.workspace().getWorkspaceId());
     assertEquals(WsmIamRole.OWNER, workspaceAndDescription.highestRole());
-    assertNotNull(workspaceAndDescription.lastUpdatedDate());
+    assertTrue(workspaceAndDescription.lastUpdatedDate().isPresent());
   }
 
   @Test
@@ -220,7 +222,7 @@ class WorkspaceServiceTest extends BaseConnectedTest {
             userFacingId, USER_REQUEST);
     assertEquals(request.getWorkspaceId(), workspaceByUserFacingId.workspace().getWorkspaceId());
     assertEquals(WsmIamRole.OWNER, workspaceByUserFacingId.highestRole());
-    assertNotNull(workspaceByUserFacingId.lastUpdatedDate());
+    assertTrue(workspaceByUserFacingId.lastUpdatedDate().isPresent());
   }
 
   @Test

@@ -145,7 +145,7 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
     logger.info("Listing workspaces for {}", userRequest.getEmail());
     ControllerValidationUtils.validatePaginationParams(offset, limit);
     List<WorkspaceAndAdditionalAttributes> workspacesAndHighestRoles =
-        workspaceService.listWorkspacesAndHighestRoles(userRequest, offset, limit);
+        workspaceService.listWorkspacesAndAdditionalAttributes(userRequest, offset, limit);
     var response =
         new ApiWorkspaceDescriptionList()
             .workspaces(
