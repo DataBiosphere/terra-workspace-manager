@@ -42,7 +42,7 @@ public class ValidationUtilsTest extends BaseUnitTest {
   @BeforeEach
   public void setup() {
     gitRepoReferencedResourceConfiguration.setAllowListedGitRepoHostNames(
-        List.of("github.com", "gitlab.com", "bitbucket.org", "dev.azure.com","ssh.dev.azure.com"));
+        List.of("github.com", "gitlab.com", "bitbucket.org", "dev.azure.com", "ssh.dev.azure.com"));
     validationUtils = new ResourceValidationUtils(gitRepoReferencedResourceConfiguration);
   }
 
@@ -311,15 +311,19 @@ public class ValidationUtilsTest extends BaseUnitTest {
 
   @Test
   public void validateAzureDevRepoUrl() {
-    validationUtils.validateGitRepoUri("https://yuhuyoyo@dev.azure.com/yuhuyoyo/yutestdemo/_git/yutestdemo");
+    validationUtils.validateGitRepoUri(
+        "https://yuhuyoyo@dev.azure.com/yuhuyoyo/yutestdemo/_git/yutestdemo");
     validationUtils.validateGitRepoUri("git@ssh.dev.azure.com:v3/yuhuyoyo/yutestdemo/yutestdemo");
   }
 
   @Test
   public void validateAwsCodeCommitRepoUrl() {
-    validationUtils.validateGitRepoUri("https://git-codecommit.us-east-2.amazonaws.com/v1/repos/MyDemoRepo");
-    validationUtils.validateGitRepoUri("ssh://git-codecommit.us-east-2.amazonaws.com/v1/repos/MyDemoRepo");
-    validationUtils.validateGitRepoUri("ssh://your-ssh-key-id@git-codecommit.us-east-2.amazonaws.com/v1/repos/MyDemoRepo");
+    validationUtils.validateGitRepoUri(
+        "https://git-codecommit.us-east-2.amazonaws.com/v1/repos/MyDemoRepo");
+    validationUtils.validateGitRepoUri(
+        "ssh://git-codecommit.us-east-2.amazonaws.com/v1/repos/MyDemoRepo");
+    validationUtils.validateGitRepoUri(
+        "ssh://your-ssh-key-id@git-codecommit.us-east-2.amazonaws.com/v1/repos/MyDemoRepo");
   }
 
   @Test
