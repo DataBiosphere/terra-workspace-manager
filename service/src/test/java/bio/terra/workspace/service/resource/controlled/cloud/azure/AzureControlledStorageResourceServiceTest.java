@@ -3,6 +3,7 @@ package bio.terra.workspace.service.resource.controlled.cloud.azure;
 import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.getAzureStorageContainerCreationParameters;
 import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.getAzureStorageCreationParameters;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import bio.terra.common.exception.ForbiddenException;
@@ -114,11 +115,12 @@ public class AzureControlledStorageResourceServiceTest extends BaseAzureTest {
         "job-id-123", jobService.getStairway(), Duration.ofSeconds(30), Duration.ofSeconds(300));
 
     UUID storageAccountId = UUID.randomUUID();
+    String storageAccountName = "sa" + storageAccountId.toString().substring(0, 6);
     storageAccount =
         new ControlledAzureStorageResource(
             workspaceUuid,
             storageAccountId,
-            "sa-" + workspaceUuid.toString(),
+            storageAccountName,
             "",
             CloningInstructions.COPY_NOTHING,
             null,
@@ -126,7 +128,7 @@ public class AzureControlledStorageResourceServiceTest extends BaseAzureTest {
             AccessScopeType.ACCESS_SCOPE_SHARED,
             ManagedByType.MANAGED_BY_USER,
             null,
-            "sa" + storageAccountId.toString().substring(0, 6),
+            storageAccountName,
             "eastus");
     controlledResourceService.createControlledResourceSync(
         storageAccount,
@@ -191,7 +193,7 @@ public class AzureControlledStorageResourceServiceTest extends BaseAzureTest {
   void createSasTokenForOwner() throws Exception {
     UUID workspaceUuid = workspace.getWorkspaceId();
 
-    String sas =
+    AzureControlledStorageResourceService.AzureSasBundle sasBundle =
         azureControlledStorageResourceService.createAzureStorageContainerSasToken(
             workspaceUuid,
             storageContainer,
@@ -201,7 +203,14 @@ public class AzureControlledStorageResourceServiceTest extends BaseAzureTest {
             workspaceOwner.getAuthenticatedRequest());
 
     BlobContainerSasPermission ownerPermissions = BlobContainerSasPermission.parse("rlacwd");
-    assertValidToken(sas, ownerPermissions);
+    assertValidToken(sasBundle.sasToken(), ownerPermissions);
+    assertEquals(
+        sasBundle.sasUrl(),
+        String.format(
+            "https://%s.blob.core.windows.net/sc-%s?%s",
+            storageAccount.getStorageAccountName(),
+            storageContainer.getResourceId(),
+            sasBundle.sasToken()));
   }
 
   @Test
@@ -230,13 +239,15 @@ public class AzureControlledStorageResourceServiceTest extends BaseAzureTest {
         "grantWorkspaceRoles");
 
     String sas =
-        azureControlledStorageResourceService.createAzureStorageContainerSasToken(
-            workspace.getWorkspaceId(),
-            storageContainer,
-            storageAccount,
-            startTime,
-            expiryTime,
-            userAccessUtils.secondUserAuthRequest());
+        azureControlledStorageResourceService
+            .createAzureStorageContainerSasToken(
+                workspace.getWorkspaceId(),
+                storageContainer,
+                storageAccount,
+                startTime,
+                expiryTime,
+                userAccessUtils.secondUserAuthRequest())
+            .sasToken();
 
     BlobContainerSasPermission readerPermissions = BlobContainerSasPermission.parse("rl");
     assertValidToken(sas, readerPermissions);
