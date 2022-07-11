@@ -157,3 +157,7 @@ reference:
   gitrepos:
     allow-listed-git-repo-host-names:
       - github.com
+      - gitlab.com
+      - bitbucket.org
+      - dev.azure.com
+      - ssh.dev.azure.com
