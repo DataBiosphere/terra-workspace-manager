@@ -80,8 +80,7 @@ public class ResourceController implements ResourceApi {
             WsmResourceFamily.fromApiOptional(resource),
             StewardshipType.fromApiOptional(stewardship),
             offset,
-            limit,
-            userRequest);
+            limit);
 
     List<ApiResourceDescription> apiResourceDescriptionList =
         wsmResources.stream().map(this::makeApiResourceDescription).collect(Collectors.toList());
@@ -93,6 +92,8 @@ public class ResourceController implements ResourceApi {
   @Override
   public ResponseEntity<Boolean> checkReferenceAccess(UUID workspaceUuid, UUID resourceId) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    workspaceService.validateWorkspaceAndAction(
+        userRequest, workspaceUuid, SamConstants.SamWorkspaceAction.READ);
     boolean isValid = referencedResourceService.checkAccess(workspaceUuid, resourceId, userRequest);
     return new ResponseEntity<>(isValid, HttpStatus.OK);
   }

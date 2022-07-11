@@ -48,8 +48,8 @@ public class AzureControlledStorageResourceServiceTest extends BaseAzureTest {
 
   private static Workspace workspace;
   private UserAccessUtils.TestUser workspaceOwner;
-  private UUID storageContainerId;
-  private String storageAccountName;
+  private ControlledAzureStorageResource storageAccount;
+  private ControlledAzureStorageContainerResource storageContainer;
   private final OffsetDateTime startTime = OffsetDateTime.now().minusMinutes(15);
   private final OffsetDateTime expiryTime = OffsetDateTime.now().plusMinutes(60);
 
@@ -74,7 +74,7 @@ public class AzureControlledStorageResourceServiceTest extends BaseAzureTest {
     for (RoleBinding role : roles) {
       if (role.users().contains(userAccessUtils.getSecondUserEmail())) {
         workspaceService.removeWorkspaceRoleFromUser(
-            workspaceUuid,
+            workspace,
             role.role(),
             userAccessUtils.getSecondUserEmail(),
             workspaceOwner.getAuthenticatedRequest());
@@ -100,11 +100,10 @@ public class AzureControlledStorageResourceServiceTest extends BaseAzureTest {
                 .workspaceStage(WorkspaceStage.MC_WORKSPACE)
                 .build(),
             workspaceOwner.getAuthenticatedRequest());
-    workspace =
-        workspaceService.getWorkspace(workspaceUuid, workspaceOwner.getAuthenticatedRequest());
+    workspace = workspaceService.getWorkspace(workspaceUuid);
 
     workspaceService.createAzureCloudContext(
-        workspaceUuid,
+        workspace,
         "job-id-123",
         workspaceOwner.getAuthenticatedRequest(),
         null,
@@ -116,9 +115,8 @@ public class AzureControlledStorageResourceServiceTest extends BaseAzureTest {
         "job-id-123", jobService.getStairway(), Duration.ofSeconds(30), Duration.ofSeconds(300));
 
     UUID storageAccountId = UUID.randomUUID();
-    storageAccountName = "sa" + storageAccountId.toString().substring(0, 6);
-
-    ControlledAzureStorageResource storageAccount =
+    String storageAccountName = "sa" + storageAccountId.toString().substring(0, 6);
+    storageAccount =
         new ControlledAzureStorageResource(
             workspaceUuid,
             storageAccountId,
@@ -138,8 +136,8 @@ public class AzureControlledStorageResourceServiceTest extends BaseAzureTest {
         workspaceOwner.getAuthenticatedRequest(),
         getAzureStorageCreationParameters());
 
-    storageContainerId = UUID.randomUUID();
-    ControlledAzureStorageContainerResource storageContainer =
+    UUID storageContainerId = UUID.randomUUID();
+    storageContainer =
         new ControlledAzureStorageContainerResource(
             workspaceUuid,
             storageContainerId,
@@ -163,8 +161,7 @@ public class AzureControlledStorageResourceServiceTest extends BaseAzureTest {
   /** After running all tests, delete the shared workspace. */
   @AfterAll
   private void cleanUpSharedWorkspace() {
-    workspaceService.deleteWorkspace(
-        workspace.getWorkspaceId(), workspaceOwner.getAuthenticatedRequest());
+    workspaceService.deleteWorkspace(workspace, workspaceOwner.getAuthenticatedRequest());
   }
 
   private void assertValidToken(String sas, BlobContainerSasPermission expectedPermissions) {
@@ -199,7 +196,8 @@ public class AzureControlledStorageResourceServiceTest extends BaseAzureTest {
     AzureControlledStorageResourceService.AzureSasBundle sasBundle =
         azureControlledStorageResourceService.createAzureStorageContainerSasToken(
             workspaceUuid,
-            storageContainerId,
+            storageContainer,
+            storageAccount,
             startTime,
             expiryTime,
             workspaceOwner.getAuthenticatedRequest());
@@ -210,7 +208,9 @@ public class AzureControlledStorageResourceServiceTest extends BaseAzureTest {
         sasBundle.sasUrl(),
         String.format(
             "https://%s.blob.core.windows.net/sc-%s?%s",
-            storageAccountName, storageContainerId, sasBundle.sasToken()));
+            storageAccount.getStorageAccountName(),
+            storageContainer.getResourceId(),
+            sasBundle.sasToken()));
   }
 
   @Test
@@ -220,7 +220,8 @@ public class AzureControlledStorageResourceServiceTest extends BaseAzureTest {
         () ->
             azureControlledStorageResourceService.createAzureStorageContainerSasToken(
                 workspace.getWorkspaceId(),
-                storageContainerId,
+                storageContainer,
+                storageAccount,
                 startTime,
                 expiryTime,
                 userAccessUtils.secondUserAuthRequest()));
@@ -241,7 +242,8 @@ public class AzureControlledStorageResourceServiceTest extends BaseAzureTest {
         azureControlledStorageResourceService
             .createAzureStorageContainerSasToken(
                 workspace.getWorkspaceId(),
-                storageContainerId,
+                storageContainer,
+                storageAccount,
                 startTime,
                 expiryTime,
                 userAccessUtils.secondUserAuthRequest())

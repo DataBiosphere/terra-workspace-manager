@@ -112,7 +112,6 @@ public class ControlledGcsBucketResource extends ControlledResource {
             flightBeanBag.getControlledResourceService(),
             flightBeanBag.getCrlService(),
             this,
-            flightBeanBag.getGcpCloudContextService(),
             userRequest),
         cloudRetry);
   }

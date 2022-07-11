@@ -353,8 +353,10 @@ public class ControlledGcsBucketLifecycle extends GcpWorkspaceCloneTestScriptBas
         ClientTestUtils.pollWhileRunning(
             cloneResult,
             () ->
+                // TODO(PF-1825): Note that the clone job lives in the source workspace, despite
+                //  creating a resource in the destination workspace.
                 resourceApi.getCloneGcsBucketResult(
-                    cloneRequest.getDestinationWorkspaceId(), cloneRequest.getJobControl().getId()),
+                    getWorkspaceId(), cloneRequest.getJobControl().getId()),
             CloneControlledGcpGcsBucketResult::getJobReport,
             Duration.ofSeconds(5));
 

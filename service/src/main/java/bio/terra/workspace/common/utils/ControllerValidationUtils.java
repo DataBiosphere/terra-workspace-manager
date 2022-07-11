@@ -2,6 +2,8 @@ package bio.terra.workspace.common.utils;
 
 import bio.terra.common.exception.ValidationException;
 import bio.terra.workspace.generated.model.ApiCloudPlatform;
+import bio.terra.workspace.service.resource.controlled.model.ControlledResourceCategory;
+import bio.terra.workspace.service.resource.controlled.model.ControlledResourceFields;
 import bio.terra.workspace.service.workspace.exceptions.CloudPlatformNotImplementedException;
 import java.util.ArrayList;
 import java.util.List;
@@ -105,5 +107,12 @@ public final class ControllerValidationUtils {
       throw new ValidationException(
           "ID must have 3-63 characters, contain lowercase letters, numbers, dashes, or underscores, and start with lowercase letter");
     }
+  }
+
+  /** Return the appropriate IAM action for creating the specified controlled resource in Sam. */
+  public static String samCreateAction(ControlledResourceFields commonFields) {
+    return ControlledResourceCategory.get(
+            commonFields.getAccessScope(), commonFields.getManagedBy())
+        .getSamCreateResourceAction();
   }
 }

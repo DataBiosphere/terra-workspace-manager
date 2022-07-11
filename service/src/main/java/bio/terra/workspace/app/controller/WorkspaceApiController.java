@@ -31,6 +31,7 @@ import bio.terra.workspace.service.iam.SamRethrow;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.iam.exception.InvalidRoleException;
 import bio.terra.workspace.service.iam.model.SamConstants;
+import bio.terra.workspace.service.iam.model.SamConstants.SamWorkspaceAction;
 import bio.terra.workspace.service.iam.model.WsmIamRole;
 import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.job.JobService.AsyncJobResult;
@@ -104,6 +105,8 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
         body.getId(),
         userRequest.getEmail(),
         userRequest.getSubjectId());
+    // Unlike other operations, there's no Sam permission required to create a workspace. As long as
+    // a user is enabled, they can call this endpoint.
 
     // Existing client libraries should not need to know about the stage, as they won't use any of
     // the features it gates. If stage isn't specified in a create request, we default to
@@ -143,6 +146,9 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     logger.info("Listing workspaces for {}", userRequest.getEmail());
     ControllerValidationUtils.validatePaginationParams(offset, limit);
+    // Unlike other operations, there's no Sam permission required to list workspaces. As long as
+    // a user is enabled, they can call this endpoint, though they may not have any workspaces they
+    // can read.
     List<WorkspaceAndHighestRole> workspacesAndHighestRoles =
         workspaceService.listWorkspacesAndHighestRoles(userRequest, offset, limit);
     var response =
@@ -197,7 +203,9 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
       @PathVariable("workspaceId") UUID uuid) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     logger.info("Getting workspace {} for {}", uuid, userRequest.getEmail());
-    Workspace workspace = workspaceService.getWorkspace(uuid, userRequest);
+    Workspace workspace =
+        workspaceService.validateWorkspaceAndAction(
+            userRequest, uuid, SamConstants.SamWorkspaceAction.READ);
     WsmIamRole highestRole = workspaceService.getHighestRole(uuid, userRequest);
     ApiWorkspaceDescription desc = buildWorkspaceDescription(workspace, highestRole);
     logger.info("Got workspace {} for {}", desc, userRequest.getEmail());
@@ -220,10 +228,10 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
     if (body.getUserFacingId() != null) {
       ControllerValidationUtils.validateUserFacingId(body.getUserFacingId());
     }
-
+    workspaceService.validateWorkspaceAndAction(
+        userRequest, workspaceUuid, SamConstants.SamWorkspaceAction.WRITE);
     Workspace workspace =
         workspaceService.updateWorkspace(
-            userRequest,
             workspaceUuid,
             body.getUserFacingId(),
             body.getDisplayName(),
@@ -241,7 +249,9 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
   public ResponseEntity<Void> deleteWorkspace(@PathVariable("workspaceId") UUID uuid) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     logger.info("Deleting workspace {} for {}", uuid, userRequest.getEmail());
-    workspaceService.deleteWorkspace(uuid, userRequest);
+    Workspace workspace =
+        workspaceService.validateWorkspaceAndAction(userRequest, uuid, SamWorkspaceAction.DELETE);
+    workspaceService.deleteWorkspace(workspace, userRequest);
     logger.info("Deleted workspace {} for {}", uuid, userRequest.getEmail());
 
     return new ResponseEntity<>(HttpStatus.NO_CONTENT);
@@ -252,6 +262,8 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
       @PathVariable("workspaceUserFacingId") String userFacingId) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     logger.info("Getting workspace {} for {}", userFacingId, userRequest.getEmail());
+    // Authz check is inside workspaceService here as we would need the UUID to check Sam, but
+    // we only have the UFID at this point.
     Workspace workspace = workspaceService.getWorkspaceByUserFacingId(userFacingId, userRequest);
     WsmIamRole highestRole =
         workspaceService.getHighestRole(workspace.getWorkspaceId(), userRequest);
@@ -271,6 +283,7 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
       throw new InvalidRoleException(
           "Users cannot grant role APPLICATION. Use application registration instead.");
     }
+    // No additional authz check as this is just a wrapper around a Sam endpoint.
     SamRethrow.onInterrupted(
         () ->
             samService.grantWorkspaceRole(
@@ -292,14 +305,17 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
           "Users cannot remove role APPLICATION. Use application registration instead.");
     }
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    Workspace workspace =
+        workspaceService.validateMcWorkspaceAndAction(
+            userRequest, uuid, SamConstants.SamWorkspaceAction.OWN);
     workspaceService.removeWorkspaceRoleFromUser(
-        uuid, WsmIamRole.fromApiModel(role), memberEmail, userRequest);
+        workspace, WsmIamRole.fromApiModel(role), memberEmail, userRequest);
     return new ResponseEntity<>(HttpStatus.NO_CONTENT);
   }
 
   @Override
   public ResponseEntity<ApiRoleBindingList> getRoles(@PathVariable("workspaceId") UUID uuid) {
-
+    // No additional authz check as this is just a wrapper around a Sam endpoint.
     List<bio.terra.workspace.service.iam.model.RoleBinding> bindingList =
         SamRethrow.onInterrupted(
             () -> samService.listRoleBindings(uuid, getAuthenticatedInfo()), "listRoleBindings");
@@ -318,6 +334,8 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     String jobId = body.getJobControl().getId();
     String resultPath = getAsyncResultEndpoint(jobId);
+    Workspace workspace =
+        workspaceService.validateMcWorkspaceAndAction(userRequest, uuid, SamWorkspaceAction.WRITE);
 
     if (body.getCloudPlatform() == ApiCloudPlatform.AZURE) {
       ApiAzureContext azureContext =
@@ -327,12 +345,12 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
                       new CloudContextRequiredException(
                           "AzureContext is required when creating an azure cloud context for a workspace"));
       workspaceService.createAzureCloudContext(
-          uuid, jobId, userRequest, resultPath, AzureCloudContext.fromApi(azureContext));
+          workspace, jobId, userRequest, resultPath, AzureCloudContext.fromApi(azureContext));
     } else {
-      workspaceService.createGcpCloudContext(uuid, jobId, userRequest, resultPath);
+      workspaceService.createGcpCloudContext(workspace, jobId, userRequest, resultPath);
     }
 
-    ApiCreateCloudContextResult response = fetchCreateCloudContextResult(jobId, userRequest);
+    ApiCreateCloudContextResult response = fetchCreateCloudContextResult(jobId);
     return new ResponseEntity<>(response, getAsyncResponseCode(response.getJobReport()));
   }
 
@@ -340,14 +358,14 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
   public ResponseEntity<ApiCreateCloudContextResult> getCreateCloudContextResult(
       UUID uuid, String jobId) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
-    ApiCreateCloudContextResult response = fetchCreateCloudContextResult(jobId, userRequest);
+    jobService.verifyUserAccess(jobId, userRequest, uuid);
+    ApiCreateCloudContextResult response = fetchCreateCloudContextResult(jobId);
     return new ResponseEntity<>(response, getAsyncResponseCode(response.getJobReport()));
   }
 
-  private ApiCreateCloudContextResult fetchCreateCloudContextResult(
-      String jobId, AuthenticatedUserRequest userRequest) {
+  private ApiCreateCloudContextResult fetchCreateCloudContextResult(String jobId) {
     final AsyncJobResult<CloudContextHolder> jobResult =
-        jobService.retrieveAsyncJobResult(jobId, CloudContextHolder.class, userRequest);
+        jobService.retrieveAsyncJobResult(jobId, CloudContextHolder.class);
 
     ApiGcpContext gcpContext = null;
     ApiAzureContext azureContext = null;
@@ -380,10 +398,12 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
   public ResponseEntity<Void> deleteCloudContext(UUID uuid, ApiCloudPlatform cloudPlatform) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     ControllerValidationUtils.validateCloudPlatform(cloudPlatform);
+    Workspace workspace =
+        workspaceService.validateMcWorkspaceAndAction(userRequest, uuid, SamWorkspaceAction.WRITE);
     if (cloudPlatform == ApiCloudPlatform.AZURE) {
-      workspaceService.deleteAzureCloudContext(uuid, userRequest);
+      workspaceService.deleteAzureCloudContext(workspace, userRequest);
     } else {
-      workspaceService.deleteGcpCloudContext(uuid, userRequest);
+      workspaceService.deleteGcpCloudContext(workspace, userRequest);
     }
     return new ResponseEntity<>(HttpStatus.NO_CONTENT);
   }
@@ -394,7 +414,7 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
     // TODO(PF-1007): This would be a nice use for an authorized workspace ID.
     // Validate that the user is a workspace member, as enablePetServiceAccountImpersonation does
     // not authenticate.
-    workspaceService.validateWorkspaceAndAction(
+    workspaceService.validateMcWorkspaceAndAction(
         userRequest, workspaceUuid, SamConstants.SamWorkspaceAction.READ);
     String userEmail =
         SamRethrow.onInterrupted(() -> samService.getUserEmailFromSam(userRequest), "enablePet");
@@ -414,6 +434,12 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
   public ResponseEntity<ApiCloneWorkspaceResult> cloneWorkspace(
       UUID workspaceUuid, @Valid ApiCloneWorkspaceRequest body) {
     final AuthenticatedUserRequest petRequest = getCloningCredentials(workspaceUuid);
+    final Workspace sourceWorkspace =
+        workspaceService.validateMcWorkspaceAndAction(
+            petRequest, workspaceUuid, SamConstants.SamWorkspaceAction.READ);
+    // This is creating the destination workspace so unlike other clone operations there's no
+    // additional authz check for the destination. As long as the user is enabled in Sam, they can
+    // create a new workspace.
 
     Optional<SpendProfileId> spendProfileId =
         Optional.ofNullable(body.getSpendProfile()).map(SpendProfileId::new);
@@ -440,9 +466,9 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
 
     final String jobId =
         workspaceService.cloneWorkspace(
-            workspaceUuid, petRequest, body.getLocation(), destinationWorkspace);
+            sourceWorkspace, petRequest, body.getLocation(), destinationWorkspace);
 
-    final ApiCloneWorkspaceResult result = fetchCloneWorkspaceResult(jobId, getAuthenticatedInfo());
+    final ApiCloneWorkspaceResult result = fetchCloneWorkspaceResult(jobId);
     final ApiClonedWorkspace clonedWorkspaceStub =
         new ApiClonedWorkspace()
             .destinationWorkspaceId(destinationWorkspaceId)
@@ -463,15 +489,15 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
   public ResponseEntity<ApiCloneWorkspaceResult> getCloneWorkspaceResult(
       UUID workspaceUuid, String jobId) {
     final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
-    final ApiCloneWorkspaceResult result = fetchCloneWorkspaceResult(jobId, userRequest);
+    jobService.verifyUserAccess(jobId, userRequest, workspaceUuid);
+    final ApiCloneWorkspaceResult result = fetchCloneWorkspaceResult(jobId);
     return new ResponseEntity<>(result, getAsyncResponseCode(result.getJobReport()));
   }
 
   // Retrieve the async result or progress for clone workspace.
-  private ApiCloneWorkspaceResult fetchCloneWorkspaceResult(
-      String jobId, AuthenticatedUserRequest userRequest) {
+  private ApiCloneWorkspaceResult fetchCloneWorkspaceResult(String jobId) {
     final AsyncJobResult<ApiClonedWorkspace> jobResult =
-        jobService.retrieveAsyncJobResult(jobId, ApiClonedWorkspace.class, userRequest);
+        jobService.retrieveAsyncJobResult(jobId, ApiClonedWorkspace.class);
     return new ApiCloneWorkspaceResult()
         .jobReport(jobResult.getJobReport())
         .errorReport(jobResult.getApiErrorReport())

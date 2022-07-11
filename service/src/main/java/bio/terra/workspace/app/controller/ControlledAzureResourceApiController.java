@@ -4,6 +4,7 @@ import bio.terra.common.exception.ApiException;
 import bio.terra.workspace.app.configuration.external.AzureConfiguration;
 import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
 import bio.terra.workspace.common.utils.AzureVmUtils;
+import bio.terra.workspace.common.utils.ControllerValidationUtils;
 import bio.terra.workspace.generated.controller.ControlledAzureResourceApi;
 import bio.terra.workspace.generated.model.ApiAzureDiskResource;
 import bio.terra.workspace.generated.model.ApiAzureIpResource;
@@ -33,8 +34,10 @@ import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequestFactory;
 import bio.terra.workspace.service.iam.SamRethrow;
 import bio.terra.workspace.service.iam.SamService;
+import bio.terra.workspace.service.iam.model.SamConstants.SamControlledResourceActions;
 import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.resource.ResourceValidationUtils;
+import bio.terra.workspace.service.resource.controlled.ControlledResourceMetadataManager;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceService;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.AzureControlledStorageResourceService;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.disk.ControlledAzureDiskResource;
@@ -46,6 +49,7 @@ import bio.terra.workspace.service.resource.controlled.cloud.azure.storageContai
 import bio.terra.workspace.service.resource.controlled.cloud.azure.vm.ControlledAzureVmResource;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResourceFields;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
+import bio.terra.workspace.service.workspace.WorkspaceService;
 import java.time.OffsetDateTime;
 import java.util.UUID;
 import javax.servlet.http.HttpServletRequest;
@@ -67,6 +71,8 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
   private final JobService jobService;
   private final FeatureConfiguration features;
   private final AzureConfiguration azureConfiguration;
+  private final WorkspaceService workspaceService;
+  private final ControlledResourceMetadataManager controlledResourceMetadataManager;
 
   @Autowired
   public ControlledAzureResourceApiController(
@@ -77,13 +83,17 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
       JobService jobService,
       HttpServletRequest request,
       FeatureConfiguration features,
-      AzureConfiguration azureConfiguration) {
+      AzureConfiguration azureConfiguration,
+      WorkspaceService workspaceService,
+      ControlledResourceMetadataManager controlledResourceMetadataManager) {
     super(authenticatedUserRequestFactory, request, controlledResourceService, samService);
     this.controlledResourceService = controlledResourceService;
     this.azureControlledStorageResourceService = azureControlledStorageResourceService;
     this.jobService = jobService;
     this.features = features;
     this.azureConfiguration = azureConfiguration;
+    this.workspaceService = workspaceService;
+    this.controlledResourceMetadataManager = controlledResourceMetadataManager;
   }
 
   @Override
@@ -94,6 +104,8 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
     final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     ControlledResourceFields commonFields =
         toCommonFields(workspaceUuid, body.getCommon(), userRequest);
+    workspaceService.validateMcWorkspaceAndAction(
+        userRequest, workspaceUuid, ControllerValidationUtils.samCreateAction(commonFields));
 
     ControlledAzureDiskResource resource =
         ControlledAzureDiskResource.builder()
@@ -125,6 +137,8 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
     final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     ControlledResourceFields commonFields =
         toCommonFields(workspaceUuid, body.getCommon(), userRequest);
+    workspaceService.validateMcWorkspaceAndAction(
+        userRequest, workspaceUuid, ControllerValidationUtils.samCreateAction(commonFields));
 
     ControlledAzureIpResource resource =
         ControlledAzureIpResource.builder()
@@ -154,6 +168,8 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
     final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     ControlledResourceFields commonFields =
         toCommonFields(workspaceUuid, body.getCommon(), userRequest);
+    workspaceService.validateMcWorkspaceAndAction(
+        userRequest, workspaceUuid, ControllerValidationUtils.samCreateAction(commonFields));
 
     ControlledAzureRelayNamespaceResource resource =
         ControlledAzureRelayNamespaceResource.builder()
@@ -172,7 +188,7 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
             userRequest);
 
     final ApiCreateControlledAzureRelayNamespaceResult result =
-        fetchCreateControlledAzureRelayNamespaceResult(jobId, userRequest);
+        fetchCreateControlledAzureRelayNamespaceResult(jobId);
 
     return new ResponseEntity<>(result, HttpStatus.OK);
   }
@@ -181,23 +197,11 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
   public ResponseEntity<ApiCreateControlledAzureRelayNamespaceResult>
       getCreateAzureRelayNamespaceResult(UUID workspaceUuid, String jobId) throws ApiException {
     features.azureEnabledCheck();
-
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    jobService.verifyUserAccess(jobId, userRequest, workspaceUuid);
     ApiCreateControlledAzureRelayNamespaceResult result =
-        fetchCreateControlledAzureRelayNamespaceResult(jobId, userRequest);
+        fetchCreateControlledAzureRelayNamespaceResult(jobId);
     return new ResponseEntity<>(result, getAsyncResponseCode(result.getJobReport()));
-  }
-
-  @Override
-  public ResponseEntity<ApiAzureRelayNamespaceResource> getAzureRelayNamespace(
-      UUID workspaceId, UUID resourceId) {
-    final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
-    features.azureEnabledCheck();
-    final ControlledAzureRelayNamespaceResource resource =
-        controlledResourceService
-            .getControlledResource(workspaceId, resourceId, userRequest)
-            .castByEnum(WsmResourceType.CONTROLLED_AZURE_RELAY_NAMESPACE);
-    return new ResponseEntity<>(resource.toApiResource(), HttpStatus.OK);
   }
 
   @Override
@@ -206,6 +210,24 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
     features.azureEnabledCheck();
 
     final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    // Creating an AzureStorageContainerSasToken requires checking the user's access to both the
+    // storage container and storage account resources.
+    final ControlledAzureStorageContainerResource storageContainerResource =
+        controlledResourceMetadataManager
+            .validateControlledResourceAndAction(
+                userRequest,
+                workspaceUuid,
+                storageContainerUuid,
+                SamControlledResourceActions.READ_ACTION)
+            .castByEnum(WsmResourceType.CONTROLLED_AZURE_STORAGE_CONTAINER);
+    final ControlledAzureStorageResource storageAccountResource =
+        controlledResourceMetadataManager
+            .validateControlledResourceAndAction(
+                userRequest,
+                workspaceUuid,
+                storageContainerResource.getStorageAccountId(),
+                SamControlledResourceActions.READ_ACTION)
+            .castByEnum(WsmResourceType.CONTROLLED_AZURE_STORAGE_ACCOUNT);
     final String userEmail =
         SamRethrow.onInterrupted(
             () -> getSamService().getUserEmailFromSam(userRequest), "getUserEmailFromSam");
@@ -222,7 +244,12 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
         OffsetDateTime.now().plusMinutes(azureConfiguration.getSasTokenExpiryTimeMinutesOffset());
     var sasBundle =
         azureControlledStorageResourceService.createAzureStorageContainerSasToken(
-            workspaceUuid, storageContainerUuid, startTime, expiryTime, userRequest);
+            workspaceUuid,
+            storageContainerResource,
+            storageAccountResource,
+            startTime,
+            expiryTime,
+            userRequest);
 
     logger.info(
         "SAS token with expiry time of {} generated for user {} on container {} in workspace {}",
@@ -246,6 +273,8 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
     final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     final ControlledResourceFields commonFields =
         toCommonFields(workspaceUuid, body.getCommon(), userRequest);
+    workspaceService.validateMcWorkspaceAndAction(
+        userRequest, workspaceUuid, ControllerValidationUtils.samCreateAction(commonFields));
 
     ControlledAzureStorageResource resource =
         ControlledAzureStorageResource.builder()
@@ -274,6 +303,8 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
     final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     final ControlledResourceFields commonFields =
         toCommonFields(workspaceUuid, body.getCommon(), userRequest);
+    workspaceService.validateMcWorkspaceAndAction(
+        userRequest, workspaceUuid, ControllerValidationUtils.samCreateAction(commonFields));
 
     ControlledAzureStorageContainerResource resource =
         ControlledAzureStorageContainerResource.builder()
@@ -302,6 +333,8 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
     final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     final ControlledResourceFields commonFields =
         toCommonFields(workspaceUuid, body.getCommon(), userRequest);
+    workspaceService.validateMcWorkspaceAndAction(
+        userRequest, workspaceUuid, ControllerValidationUtils.samCreateAction(commonFields));
 
     ResourceValidationUtils.validateApiAzureVmCreationParameters(body.getAzureVm());
     ControlledAzureVmResource resource =
@@ -325,8 +358,7 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
             getAsyncResultEndpoint(body.getJobControl().getId(), "create-result"),
             userRequest);
 
-    final ApiCreatedControlledAzureVmResult result =
-        fetchCreateControlledAzureVmResult(jobId, userRequest);
+    final ApiCreatedControlledAzureVmResult result = fetchCreateControlledAzureVmResult(jobId);
 
     return new ResponseEntity<>(result, HttpStatus.OK);
   }
@@ -337,8 +369,8 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
     features.azureEnabledCheck();
 
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
-    ApiCreatedControlledAzureVmResult result =
-        fetchCreateControlledAzureVmResult(jobId, userRequest);
+    jobService.verifyUserAccess(jobId, userRequest, workspaceUuid);
+    ApiCreatedControlledAzureVmResult result = fetchCreateControlledAzureVmResult(jobId);
     return new ResponseEntity<>(result, getAsyncResponseCode(result.getJobReport()));
   }
 
@@ -350,6 +382,8 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
     final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     final ControlledResourceFields commonFields =
         toCommonFields(workspaceUuid, body.getCommon(), userRequest);
+    workspaceService.validateMcWorkspaceAndAction(
+        userRequest, workspaceUuid, ControllerValidationUtils.samCreateAction(commonFields));
 
     ControlledAzureNetworkResource resource =
         ControlledAzureNetworkResource.builder()
@@ -408,9 +442,23 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
     final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     features.azureEnabledCheck();
     final ControlledAzureIpResource resource =
-        controlledResourceService
-            .getControlledResource(workspaceUuid, resourceId, userRequest)
+        controlledResourceMetadataManager
+            .validateControlledResourceAndAction(
+                userRequest, workspaceUuid, resourceId, SamControlledResourceActions.READ_ACTION)
             .castByEnum(WsmResourceType.CONTROLLED_AZURE_IP);
+    return new ResponseEntity<>(resource.toApiResource(), HttpStatus.OK);
+  }
+
+  @Override
+  public ResponseEntity<ApiAzureRelayNamespaceResource> getAzureRelayNamespace(
+      UUID workspaceId, UUID resourceId) {
+    final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    features.azureEnabledCheck();
+    final ControlledAzureRelayNamespaceResource resource =
+        controlledResourceMetadataManager
+            .validateControlledResourceAndAction(
+                userRequest, workspaceId, resourceId, SamControlledResourceActions.READ_ACTION)
+            .castByEnum(WsmResourceType.CONTROLLED_AZURE_RELAY_NAMESPACE);
     return new ResponseEntity<>(resource.toApiResource(), HttpStatus.OK);
   }
 
@@ -419,8 +467,9 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
     final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     features.azureEnabledCheck();
     final ControlledAzureDiskResource resource =
-        controlledResourceService
-            .getControlledResource(workspaceUuid, resourceId, userRequest)
+        controlledResourceMetadataManager
+            .validateControlledResourceAndAction(
+                userRequest, workspaceUuid, resourceId, SamControlledResourceActions.READ_ACTION)
             .castByEnum(WsmResourceType.CONTROLLED_AZURE_DISK);
     return new ResponseEntity<>(resource.toApiResource(), HttpStatus.OK);
   }
@@ -430,8 +479,9 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
     final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     features.azureEnabledCheck();
     final ControlledAzureVmResource resource =
-        controlledResourceService
-            .getControlledResource(workspaceUuid, resourceId, userRequest)
+        controlledResourceMetadataManager
+            .validateControlledResourceAndAction(
+                userRequest, workspaceUuid, resourceId, SamControlledResourceActions.READ_ACTION)
             .castByEnum(WsmResourceType.CONTROLLED_AZURE_VM);
     return new ResponseEntity<>(resource.toApiResource(), HttpStatus.OK);
   }
@@ -442,8 +492,9 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
     final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     features.azureEnabledCheck();
     final ControlledAzureNetworkResource resource =
-        controlledResourceService
-            .getControlledResource(workspaceUuid, resourceId, userRequest)
+        controlledResourceMetadataManager
+            .validateControlledResourceAndAction(
+                userRequest, workspaceUuid, resourceId, SamControlledResourceActions.READ_ACTION)
             .castByEnum(WsmResourceType.CONTROLLED_AZURE_NETWORK);
     return new ResponseEntity<>(resource.toApiResource(), HttpStatus.OK);
   }
@@ -453,7 +504,8 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
       UUID workspaceUuid, String jobId) {
     features.azureEnabledCheck();
     final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
-    return getJobDeleteResult(jobId, userRequest);
+    jobService.verifyUserAccess(jobId, userRequest, workspaceUuid);
+    return getJobDeleteResult(jobId);
   }
 
   @Override
@@ -461,7 +513,8 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
       UUID workspaceUuid, String jobId) {
     features.azureEnabledCheck();
     final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
-    return getJobDeleteResult(jobId, userRequest);
+    jobService.verifyUserAccess(jobId, userRequest, workspaceUuid);
+    return getJobDeleteResult(jobId);
   }
 
   @Override
@@ -469,7 +522,8 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
       UUID workspaceUuid, String jobId) {
     features.azureEnabledCheck();
     final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
-    return getJobDeleteResult(jobId, userRequest);
+    jobService.verifyUserAccess(jobId, userRequest, workspaceUuid);
+    return getJobDeleteResult(jobId);
   }
 
   @Override
@@ -477,7 +531,8 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
       UUID workspaceUuid, String jobId) {
     features.azureEnabledCheck();
     final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
-    return getJobDeleteResult(jobId, userRequest);
+    jobService.verifyUserAccess(jobId, userRequest, workspaceUuid);
+    return getJobDeleteResult(jobId);
   }
 
   @Override
@@ -485,14 +540,14 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
       UUID workspaceUuid, String jobId) {
     features.azureEnabledCheck();
     final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
-    return getJobDeleteResult(jobId, userRequest);
+    jobService.verifyUserAccess(jobId, userRequest, workspaceUuid);
+    return getJobDeleteResult(jobId);
   }
 
-  private ResponseEntity<ApiDeleteControlledAzureResourceResult> getJobDeleteResult(
-      String jobId, AuthenticatedUserRequest userRequest) {
+  private ResponseEntity<ApiDeleteControlledAzureResourceResult> getJobDeleteResult(String jobId) {
 
     final JobService.AsyncJobResult<Void> jobResult =
-        jobService.retrieveAsyncJobResult(jobId, Void.class, userRequest);
+        jobService.retrieveAsyncJobResult(jobId, Void.class);
     var response =
         new ApiDeleteControlledAzureResourceResult()
             .jobReport(jobResult.getJobReport())
@@ -508,6 +563,8 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
     features.azureEnabledCheck();
 
     final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    controlledResourceMetadataManager.validateControlledResourceAndAction(
+        userRequest, workspaceUuid, resourceId, SamControlledResourceActions.DELETE_ACTION);
     final ApiJobControl jobControl = body.getJobControl();
     logger.info(
         "delete {}({}) from workspace {}",
@@ -520,15 +577,13 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
             workspaceUuid,
             resourceId,
             getAsyncResultEndpoint(jobControl.getId(), "delete-result"),
-            userRequest,
-            true);
-    return getJobDeleteResult(jobId, userRequest);
+            userRequest);
+    return getJobDeleteResult(jobId);
   }
 
-  private ApiCreatedControlledAzureVmResult fetchCreateControlledAzureVmResult(
-      String jobId, AuthenticatedUserRequest userRequest) {
+  private ApiCreatedControlledAzureVmResult fetchCreateControlledAzureVmResult(String jobId) {
     final JobService.AsyncJobResult<ControlledAzureVmResource> jobResult =
-        jobService.retrieveAsyncJobResult(jobId, ControlledAzureVmResource.class, userRequest);
+        jobService.retrieveAsyncJobResult(jobId, ControlledAzureVmResource.class);
 
     ApiAzureVmResource apiResource = null;
     if (jobResult.getJobReport().getStatus().equals(ApiJobReport.StatusEnum.SUCCEEDED)) {
@@ -542,11 +597,9 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
   }
 
   private ApiCreateControlledAzureRelayNamespaceResult
-      fetchCreateControlledAzureRelayNamespaceResult(
-          String jobId, AuthenticatedUserRequest userRequest) {
+      fetchCreateControlledAzureRelayNamespaceResult(String jobId) {
     final JobService.AsyncJobResult<ControlledAzureRelayNamespaceResource> jobResult =
-        jobService.retrieveAsyncJobResult(
-            jobId, ControlledAzureRelayNamespaceResource.class, userRequest);
+        jobService.retrieveAsyncJobResult(jobId, ControlledAzureRelayNamespaceResource.class);
 
     ApiAzureRelayNamespaceResource apiResource = null;
     if (jobResult.getJobReport().getStatus().equals(ApiJobReport.StatusEnum.SUCCEEDED)) {

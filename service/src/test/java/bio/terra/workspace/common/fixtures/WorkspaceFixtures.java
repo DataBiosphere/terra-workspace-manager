@@ -1,6 +1,9 @@
 package bio.terra.workspace.common.fixtures;
 
 import bio.terra.workspace.db.WorkspaceDao;
+import bio.terra.workspace.generated.model.ApiCreateWorkspaceRequestBody;
+import bio.terra.workspace.generated.model.ApiWorkspaceStageModel;
+import bio.terra.workspace.service.iam.model.SamConstants.SamResource;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import bio.terra.workspace.service.workspace.model.GcpCloudContext;
 import java.util.UUID;
@@ -21,5 +24,21 @@ public class WorkspaceFixtures {
     workspaceDao.createCloudContextStart(workspaceUuid, CloudPlatform.GCP, flightId);
     workspaceDao.createCloudContextFinish(
         workspaceUuid, CloudPlatform.GCP, new GcpCloudContext(projectId).serialize(), flightId);
+  }
+
+  /**
+   * Generate the request body for creating an MC_WORKSPACE stage workspace.
+   *
+   * <p>All values are mutable, and tests should change any they explicitly need.
+   */
+  public static ApiCreateWorkspaceRequestBody createWorkspaceRequestBody() {
+    UUID workspaceId = UUID.randomUUID();
+    return new ApiCreateWorkspaceRequestBody()
+        .id(workspaceId)
+        .displayName("TestWorkspace")
+        .description("A test workspace created by createWorkspaceRequestBody")
+        .userFacingId("user-facing-id-" + workspaceId)
+        .stage(ApiWorkspaceStageModel.MC_WORKSPACE)
+        .spendProfile(SamResource.SPEND_PROFILE);
   }
 }

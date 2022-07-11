@@ -252,7 +252,7 @@ src/main/
 - `app/` For the top of the application, including Main and the StartupInitializer
 - `app/configuration/` For all of the bean and property definitions
 - `app/controller/` For the REST controllers. The controllers typically do very little.
-They invoke a service to do the work and package the service output into the response. The
+They perform access checks and validate input, invoke a service to do the work, and package the service output into the response. The
 controller package also defines the global exception handling.
 - `common/` For common models, exceptions, and utilities.
 shared by more than one service.
@@ -300,6 +300,13 @@ Connected tests depend on the availability of a running Postgresql server. They 
 on a populated "config" directory containing service accounts and keys that allows the tests
 to use dependent services such as Sam, Buffer, and TDR. The config collecting process relies on
 secrets maintained in Vault in the Broad Institute environment.
+
+In general, developers writing new endpoints should add MockMVC-based unit or
+connected tests to test their code (example: [WorkspaceApiControllerTest](service/src/test/java/bio/terra/workspace/app/configuration/external/controller/WorkspaceApiControllerTest.java)).
+These tests let us act as if we're making HTTP calls against a local server
+and validate the full request lifecycle through all
+the [layers of WSM](DEVELOPMENT.md#Layering), whereas the previous style of
+service-only tests did not cover code in the controller layer.
 
 #### Integration Tests
 Integration testing is done using

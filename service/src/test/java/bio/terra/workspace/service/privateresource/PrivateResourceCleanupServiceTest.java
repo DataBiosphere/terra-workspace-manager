@@ -97,8 +97,7 @@ public class PrivateResourceCleanupServiceTest extends BaseConnectedTest {
    */
   @AfterEach
   private void cleanup() {
-    workspaceService.deleteWorkspace(
-        workspace.getWorkspaceId(), userAccessUtils.defaultUserAuthRequest());
+    workspaceService.deleteWorkspace(workspace, userAccessUtils.defaultUserAuthRequest());
     deleteGroup(groupName, ownerGroupApi);
   }
 
@@ -215,7 +214,7 @@ public class PrivateResourceCleanupServiceTest extends BaseConnectedTest {
             .token(Optional.of(saAccessToken.getTokenValue()));
 
     wsmApplicationService.enableWorkspaceApplication(
-        userAccessUtils.defaultUserAuthRequest(), workspace.getWorkspaceId(), TEST_WSM_APP);
+        userAccessUtils.defaultUserAuthRequest(), workspace, TEST_WSM_APP);
 
     // Create application private bucket assigned to second user.
     ControlledResourceFields commonFields =
