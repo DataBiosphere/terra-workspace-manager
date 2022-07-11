@@ -212,11 +212,6 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     logger.info("Updating workspace {} for {}", workspaceUuid, userRequest.getEmail());
 
-    Map<String, String> propertyMap = null;
-    if (body.getProperties() != null) {
-      propertyMap = propertyMapFromApi(body.getProperties());
-    }
-
     if (body.getUserFacingId() != null) {
       ControllerValidationUtils.validateUserFacingId(body.getUserFacingId());
     }
@@ -227,8 +222,7 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
             workspaceUuid,
             body.getUserFacingId(),
             body.getDisplayName(),
-            body.getDescription(),
-            propertyMap);
+            body.getDescription());
 
     WsmIamRole highestRole = workspaceService.getHighestRole(workspaceUuid, userRequest);
     ApiWorkspaceDescription desc = buildWorkspaceDescription(workspace, highestRole);

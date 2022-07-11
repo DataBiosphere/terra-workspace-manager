@@ -476,9 +476,6 @@ components:
         description:
           description: A description of the workspace
           type: string
-        properties:
-          description: If present, it will replace all properties with this list
-          $ref: '#/components/schemas/Properties'
 
     WorkspaceDescription:
       type: object

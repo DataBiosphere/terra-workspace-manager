@@ -221,7 +221,6 @@ public class WorkspaceService {
    * @param userRequest authenticated user
    * @param workspaceUuid workspace of interest
    * @param name name to change - may be null
-   * @param properties optional map of key-value properties
    * @param description description to change - may be null
    */
   public Workspace updateWorkspace(
@@ -229,10 +228,9 @@ public class WorkspaceService {
       UUID workspaceUuid,
       @Nullable String userFacingId,
       @Nullable String name,
-      @Nullable String description,
-      @Nullable Map<String, String> properties) {
+      @Nullable String description) {
     validateWorkspaceAndAction(userRequest, workspaceUuid, SamConstants.SamWorkspaceAction.WRITE);
-    if (workspaceDao.updateWorkspace(workspaceUuid, userFacingId, name, description, properties)) {
+    if (workspaceDao.updateWorkspace(workspaceUuid, userFacingId, name, description)) {
       workspaceActivityLogDao.writeActivity(
           workspaceUuid, new DbWorkspaceActivityLog().operationType(OperationType.UPDATE));
     }

@@ -211,9 +211,8 @@ public class WorkspaceDao {
       UUID workspaceUuid,
       @Nullable String userFacingId,
       @Nullable String name,
-      @Nullable String description,
-      @Nullable Map<String, String> propertyMap) {
-    if (userFacingId == null && name == null && description == null && propertyMap == null) {
+      @Nullable String description) {
+    if (userFacingId == null && name == null && description == null) {
       throw new MissingRequiredFieldException("Must specify field to update.");
     }
 
@@ -233,10 +232,6 @@ public class WorkspaceDao {
 
     if (description != null) {
       params.addValue("description", description);
-    }
-
-    if (propertyMap != null) {
-      params.addValue("properties", DbSerDes.propertiesToJson(propertyMap));
     }
 
     String sql =
