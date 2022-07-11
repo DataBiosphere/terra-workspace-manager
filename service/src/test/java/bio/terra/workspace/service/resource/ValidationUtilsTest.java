@@ -2,7 +2,6 @@ package bio.terra.workspace.service.resource;
 
 import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.defaultNotebookCreationParameters;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import bio.terra.common.exception.BadRequestException;
 import bio.terra.common.exception.InconsistentFieldsException;
@@ -333,8 +332,7 @@ public class ValidationUtilsTest extends BaseUnitTest {
         InvalidReferenceException.class,
         () ->
             validationUtils.validateGitRepoUri(
-                "ssh://git@github.com:DataBiosphere/terra-workspace-manager.git")
-    );
+                "ssh://git@github.com:DataBiosphere/terra-workspace-manager.git"));
   }
 
   @Test
