@@ -4,11 +4,13 @@ import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamRethrow;
 import bio.terra.workspace.service.iam.SamService;
+import bio.terra.workspace.service.iam.model.SamConstants.SamControlledResourceActions;
 import bio.terra.workspace.service.resource.ResourceValidationUtils;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.model.WsmResource;
 import bio.terra.workspace.service.stage.StageService;
+import bio.terra.workspace.service.workspace.WorkspaceService;
 import io.opencensus.contrib.spring.aop.Traced;
 import java.util.UUID;
 import javax.annotation.Nullable;
@@ -23,12 +25,17 @@ public class ControlledResourceMetadataManager {
   private final StageService stageService;
   private final ResourceDao resourceDao;
   private final SamService samService;
+  private final WorkspaceService workspaceService;
 
   public ControlledResourceMetadataManager(
-      StageService stageService, ResourceDao resourceDao, SamService samService) {
+      StageService stageService,
+      ResourceDao resourceDao,
+      SamService samService,
+      WorkspaceService workspaceService) {
     this.stageService = stageService;
     this.resourceDao = resourceDao;
     this.samService = samService;
+    this.workspaceService = workspaceService;
   }
   /**
    * Update the name and description metadata fields of a controlled resource. These are only stored
@@ -69,7 +76,7 @@ public class ControlledResourceMetadataManager {
    * the resource in question.
    *
    * @param userRequest the user's authenticated request
-   * @param workspaceUuid if of the workspace this resource exists in
+   * @param workspaceUuid id of the workspace this resource exists in
    * @param resourceId id of the resource in question
    * @param action the action to authorize against the resource
    * @return validated resource
@@ -90,5 +97,36 @@ public class ControlledResourceMetadataManager {
                 action),
         "checkAuthz");
     return controlledResource;
+  }
+
+  /**
+   * A special case of {@code validateControlledResourceAndAction} for cloning operations.
+   *
+   * <p>Unlike most operations, in order to clone we need to validate both that the user has read
+   * permission on the source resource and create-controlled-resource permission on the destination
+   * workspace.
+   *
+   * @param userRequest the user's authenticated request
+   * @param sourceWorkspaceUuid id of the workspace this resource exists in
+   * @param destinationWorkspaceUuid id of the workspace this resource is being cloned to
+   * @param resourceId id of the resource in question
+   * @return validated resource
+   */
+  @Traced
+  public ControlledResource validateCloneAction(
+      AuthenticatedUserRequest userRequest,
+      UUID sourceWorkspaceUuid,
+      UUID destinationWorkspaceUuid,
+      UUID resourceId) {
+    ControlledResource validatedResource =
+        validateControlledResourceAndAction(
+            userRequest, sourceWorkspaceUuid, resourceId, SamControlledResourceActions.READ_ACTION);
+    // validateControlledResourceAndAction validates this is an MC_WORKSPACE stage workspace, so
+    // we don't need to duplicate that here.
+    workspaceService.validateWorkspaceAndAction(
+        userRequest,
+        destinationWorkspaceUuid,
+        validatedResource.getCategory().getSamCreateResourceAction());
+    return validatedResource;
   }
 }

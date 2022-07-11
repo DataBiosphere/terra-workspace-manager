@@ -160,6 +160,29 @@ public class WorkspaceService {
   }
 
   /**
+   * A special case of {@code validateWorkspaceAndAction} for clone operations.
+   *
+   * <p>Unlike most other operations, cloning requires two authz checks: read access to the source
+   * object, plus write access to the destination object.
+   *
+   * <p>This method is only for authz checks on referenced resource clones, which do not have their
+   * own Sam object representation. To check auth for a controlled resource clone, use {@link
+   * bio.terra.workspace.service.resource.controlled.ControlledResourceMetadataManager#validateCloneAction(AuthenticatedUserRequest,
+   * UUID, UUID, UUID)}
+   *
+   * @return The source Workspace object.
+   */
+  @Traced
+  public Workspace validateCloneReferenceAction(
+      AuthenticatedUserRequest userRequest, UUID sourceWorkspaceId, UUID destinationWorkspaceId) {
+    Workspace sourceWorkspace =
+        validateWorkspaceAndAction(userRequest, sourceWorkspaceId, SamWorkspaceAction.READ);
+    validateWorkspaceAndAction(
+        userRequest, destinationWorkspaceId, SamWorkspaceAction.CREATE_REFERENCE);
+    return sourceWorkspace;
+  }
+
+  /**
    * List all workspaces a user has read access to.
    *
    * @param userRequest Authentication object for the caller

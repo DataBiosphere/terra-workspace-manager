@@ -7,7 +7,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import bio.terra.workspace.common.BaseUnitTest;
+import bio.terra.workspace.common.BaseConnectedTest;
 import bio.terra.workspace.common.fixtures.WorkspaceFixtures;
 import bio.terra.workspace.generated.model.ApiCreatedWorkspace;
 import bio.terra.workspace.generated.model.ApiWorkspaceDescription;
@@ -35,7 +35,7 @@ import org.springframework.test.web.servlet.MockMvc;
  * currently in WorkspaceServiceTest, it's intended as a proof-of-concept for future mockMvc-based
  * tests.
  */
-public class WorkspaceApiControllerTest extends BaseUnitTest {
+public class WorkspaceApiControllerTest extends BaseConnectedTest {
 
   AuthenticatedUserRequest USER_REQUEST =
       new AuthenticatedUserRequest(
@@ -60,13 +60,6 @@ public class WorkspaceApiControllerTest extends BaseUnitTest {
 
   @Test
   public void getWorkspace() throws Exception {
-    Mockito.when(
-            mockSamService.isAuthorized(
-                Mockito.any(),
-                eq(SamResource.SPEND_PROFILE),
-                Mockito.any(),
-                eq(SamSpendProfileAction.LINK)))
-        .thenReturn(true);
     ApiCreatedWorkspace workspace = createDefaultWorkspace();
     String serializedGetResponse =
         mockMvc
@@ -84,7 +77,7 @@ public class WorkspaceApiControllerTest extends BaseUnitTest {
 
   private ApiCreatedWorkspace createDefaultWorkspace() throws Exception {
     var createRequest = WorkspaceFixtures.createWorkspaceRequestBody();
-    String serialzedResponse =
+    String serializedResponse =
         mockMvc
             .perform(
                 addJsonContentType(
@@ -96,6 +89,6 @@ public class WorkspaceApiControllerTest extends BaseUnitTest {
             .andReturn()
             .getResponse()
             .getContentAsString();
-    return objectMapper.readValue(serialzedResponse, ApiCreatedWorkspace.class);
+    return objectMapper.readValue(serializedResponse, ApiCreatedWorkspace.class);
   }
 }

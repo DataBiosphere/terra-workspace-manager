@@ -4,6 +4,7 @@ import bio.terra.common.exception.ApiException;
 import bio.terra.workspace.app.configuration.external.AzureConfiguration;
 import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
 import bio.terra.workspace.common.utils.AzureVmUtils;
+import bio.terra.workspace.common.utils.ControllerValidationUtils;
 import bio.terra.workspace.generated.controller.ControlledAzureResourceApi;
 import bio.terra.workspace.generated.model.ApiAzureDiskResource;
 import bio.terra.workspace.generated.model.ApiAzureIpResource;
@@ -46,7 +47,6 @@ import bio.terra.workspace.service.resource.controlled.cloud.azure.relayNamespac
 import bio.terra.workspace.service.resource.controlled.cloud.azure.storage.ControlledAzureStorageResource;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.storageContainer.ControlledAzureStorageContainerResource;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.vm.ControlledAzureVmResource;
-import bio.terra.workspace.service.resource.controlled.model.ControlledResourceCategory;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResourceFields;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.workspace.WorkspaceService;
@@ -105,10 +105,7 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
     ControlledResourceFields commonFields =
         toCommonFields(workspaceUuid, body.getCommon(), userRequest);
     workspaceService.validateMcWorkspaceAndAction(
-        userRequest,
-        workspaceUuid,
-        ControlledResourceCategory.get(commonFields.getAccessScope(), commonFields.getManagedBy())
-            .getSamCreateResourceAction());
+        userRequest, workspaceUuid, ControllerValidationUtils.samCreateAction(commonFields));
 
     ControlledAzureDiskResource resource =
         ControlledAzureDiskResource.builder()
@@ -141,10 +138,7 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
     ControlledResourceFields commonFields =
         toCommonFields(workspaceUuid, body.getCommon(), userRequest);
     workspaceService.validateMcWorkspaceAndAction(
-        userRequest,
-        workspaceUuid,
-        ControlledResourceCategory.get(commonFields.getAccessScope(), commonFields.getManagedBy())
-            .getSamCreateResourceAction());
+        userRequest, workspaceUuid, ControllerValidationUtils.samCreateAction(commonFields));
 
     ControlledAzureIpResource resource =
         ControlledAzureIpResource.builder()
@@ -175,10 +169,7 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
     ControlledResourceFields commonFields =
         toCommonFields(workspaceUuid, body.getCommon(), userRequest);
     workspaceService.validateMcWorkspaceAndAction(
-        userRequest,
-        workspaceUuid,
-        ControlledResourceCategory.get(commonFields.getAccessScope(), commonFields.getManagedBy())
-            .getSamCreateResourceAction());
+        userRequest, workspaceUuid, ControllerValidationUtils.samCreateAction(commonFields));
 
     ControlledAzureRelayNamespaceResource resource =
         ControlledAzureRelayNamespaceResource.builder()
@@ -280,10 +271,7 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
     final ControlledResourceFields commonFields =
         toCommonFields(workspaceUuid, body.getCommon(), userRequest);
     workspaceService.validateMcWorkspaceAndAction(
-        userRequest,
-        workspaceUuid,
-        ControlledResourceCategory.get(commonFields.getAccessScope(), commonFields.getManagedBy())
-            .getSamCreateResourceAction());
+        userRequest, workspaceUuid, ControllerValidationUtils.samCreateAction(commonFields));
 
     ControlledAzureStorageResource resource =
         ControlledAzureStorageResource.builder()
@@ -313,10 +301,7 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
     final ControlledResourceFields commonFields =
         toCommonFields(workspaceUuid, body.getCommon(), userRequest);
     workspaceService.validateMcWorkspaceAndAction(
-        userRequest,
-        workspaceUuid,
-        ControlledResourceCategory.get(commonFields.getAccessScope(), commonFields.getManagedBy())
-            .getSamCreateResourceAction());
+        userRequest, workspaceUuid, ControllerValidationUtils.samCreateAction(commonFields));
 
     ControlledAzureStorageContainerResource resource =
         ControlledAzureStorageContainerResource.builder()
@@ -346,10 +331,7 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
     final ControlledResourceFields commonFields =
         toCommonFields(workspaceUuid, body.getCommon(), userRequest);
     workspaceService.validateMcWorkspaceAndAction(
-        userRequest,
-        workspaceUuid,
-        ControlledResourceCategory.get(commonFields.getAccessScope(), commonFields.getManagedBy())
-            .getSamCreateResourceAction());
+        userRequest, workspaceUuid, ControllerValidationUtils.samCreateAction(commonFields));
 
     ResourceValidationUtils.validateApiAzureVmCreationParameters(body.getAzureVm());
     ControlledAzureVmResource resource =
@@ -398,10 +380,7 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
     final ControlledResourceFields commonFields =
         toCommonFields(workspaceUuid, body.getCommon(), userRequest);
     workspaceService.validateMcWorkspaceAndAction(
-        userRequest,
-        workspaceUuid,
-        ControlledResourceCategory.get(commonFields.getAccessScope(), commonFields.getManagedBy())
-            .getSamCreateResourceAction());
+        userRequest, workspaceUuid, ControllerValidationUtils.samCreateAction(commonFields));
 
     ControlledAzureNetworkResource resource =
         ControlledAzureNetworkResource.builder()

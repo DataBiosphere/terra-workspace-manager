@@ -612,10 +612,8 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     // For cloning, we need to check that the caller has both read access to the source workspace
     // and write access to the destination workspace.
-    workspaceService.validateWorkspaceAndAction(
-        userRequest, workspaceUuid, SamWorkspaceAction.READ);
-    workspaceService.validateWorkspaceAndAction(
-        userRequest, body.getDestinationWorkspaceId(), SamWorkspaceAction.CREATE_REFERENCE);
+    workspaceService.validateCloneReferenceAction(
+        userRequest, workspaceUuid, body.getDestinationWorkspaceId());
 
     final ReferencedResource sourceReferencedResource =
         referenceResourceService.getReferenceResource(workspaceUuid, resourceId);
@@ -661,10 +659,8 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
     final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     // For cloning, we need to check that the caller has both read access to the source workspace
     // and write access to the destination workspace.
-    workspaceService.validateWorkspaceAndAction(
-        userRequest, workspaceUuid, SamWorkspaceAction.READ);
-    workspaceService.validateWorkspaceAndAction(
-        userRequest, body.getDestinationWorkspaceId(), SamWorkspaceAction.CREATE_REFERENCE);
+    workspaceService.validateCloneReferenceAction(
+        userRequest, workspaceUuid, body.getDestinationWorkspaceId());
     final ReferencedResource sourceReferencedResource =
         referenceResourceService.getReferenceResource(workspaceUuid, resourceId);
 
@@ -711,10 +707,8 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     // For cloning, we need to check that the caller has both read access to the source workspace
     // and write access to the destination workspace.
-    workspaceService.validateWorkspaceAndAction(
-        userRequest, workspaceUuid, SamWorkspaceAction.READ);
-    workspaceService.validateWorkspaceAndAction(
-        userRequest, body.getDestinationWorkspaceId(), SamWorkspaceAction.CREATE_REFERENCE);
+    workspaceService.validateCloneReferenceAction(
+        userRequest, workspaceUuid, body.getDestinationWorkspaceId());
 
     final ReferencedResource sourceReferencedResource =
         referenceResourceService.getReferenceResource(workspaceUuid, resourceId);
@@ -761,10 +755,8 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
     final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     // For cloning, we need to check that the caller has both read access to the source workspace
     // and write access to the destination workspace.
-    workspaceService.validateWorkspaceAndAction(
-        userRequest, workspaceUuid, SamWorkspaceAction.READ);
-    workspaceService.validateWorkspaceAndAction(
-        userRequest, body.getDestinationWorkspaceId(), SamWorkspaceAction.CREATE_REFERENCE);
+    workspaceService.validateCloneReferenceAction(
+        userRequest, workspaceUuid, body.getDestinationWorkspaceId());
     final ReferencedResource sourceReferencedResource =
         referenceResourceService.getReferenceResource(workspaceUuid, resourceId);
 
@@ -811,10 +803,8 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
     final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     // For cloning, we need to check that the caller has both read access to the source workspace
     // and write access to the destination workspace.
-    workspaceService.validateWorkspaceAndAction(
-        userRequest, workspaceUuid, SamWorkspaceAction.READ);
-    workspaceService.validateWorkspaceAndAction(
-        userRequest, body.getDestinationWorkspaceId(), SamWorkspaceAction.CREATE_REFERENCE);
+    workspaceService.validateCloneReferenceAction(
+        userRequest, workspaceUuid, body.getDestinationWorkspaceId());
 
     final ReferencedResource sourceReferencedResource =
         referenceResourceService.getReferenceResource(workspaceUuid, resourceId);
@@ -958,10 +948,8 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     // For cloning, we need to check that the caller has both read access to the source workspace
     // and write access to the destination workspace.
-    workspaceService.validateWorkspaceAndAction(
-        userRequest, workspaceUuid, SamWorkspaceAction.READ);
-    workspaceService.validateWorkspaceAndAction(
-        userRequest, body.getDestinationWorkspaceId(), SamWorkspaceAction.CREATE_REFERENCE);
+    workspaceService.validateCloneReferenceAction(
+        userRequest, workspaceUuid, body.getDestinationWorkspaceId());
 
     final ReferencedResource sourceReferencedResource =
         referenceResourceService.getReferenceResource(workspaceUuid, resourceId);

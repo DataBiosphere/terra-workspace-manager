@@ -1,12 +1,12 @@
 package bio.terra.workspace.app.controller;
 
+import bio.terra.workspace.common.utils.ControllerValidationUtils;
 import bio.terra.workspace.generated.controller.ControlledGcpResourceApi;
 import bio.terra.workspace.generated.model.*;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequestFactory;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.iam.model.SamConstants.SamControlledResourceActions;
-import bio.terra.workspace.service.iam.model.SamConstants.SamWorkspaceAction;
 import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.job.JobService.AsyncJobResult;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceMetadataManager;
@@ -14,7 +14,6 @@ import bio.terra.workspace.service.resource.controlled.ControlledResourceService
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook.ControlledAiNotebookInstanceResource;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.bqdataset.ControlledBigQueryDatasetResource;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.ControlledGcsBucketResource;
-import bio.terra.workspace.service.resource.controlled.model.ControlledResourceCategory;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResourceFields;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.workspace.GcpCloudContextService;
@@ -163,14 +162,8 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
     // This technically duplicates the first step of the flight as the clone flight is re-used for
     // cloneWorkspace, but this also saves us from launching and failing a flight if the user does
     // not have access to the resource.
-    controlledResourceMetadataManager.validateControlledResourceAndAction(
-        userRequest, workspaceUuid, resourceId, SamControlledResourceActions.READ_ACTION);
-    // For clone operations, we need to check both read access to the source resource and write
-    // access to the destination workspace. validateControlledResourceAndAction already validates
-    // this is an MC_WORKSPACE stage workspace, so we don't check that again here to save a DB
-    // lookup.
-    workspaceService.validateWorkspaceAndAction(
-        userRequest, body.getDestinationWorkspaceId(), SamWorkspaceAction.WRITE);
+    controlledResourceMetadataManager.validateCloneAction(
+        userRequest, workspaceUuid, body.getDestinationWorkspaceId(), resourceId);
 
     final String jobId =
         controlledResourceService.cloneGcsBucket(
@@ -246,10 +239,8 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
     ControlledResourceFields commonFields =
         toCommonFields(workspaceUuid, body.getCommon(), userRequest);
     // Check authz before reading the projectId from workspace DB.
-    String samCreateAction =
-        ControlledResourceCategory.get(commonFields.getAccessScope(), commonFields.getManagedBy())
-            .getSamCreateResourceAction();
-    workspaceService.validateWorkspaceAndAction(userRequest, workspaceUuid, samCreateAction);
+    workspaceService.validateWorkspaceAndAction(
+        userRequest, workspaceUuid, ControllerValidationUtils.samCreateAction(commonFields));
     String projectId = gcpCloudContextService.getRequiredGcpProject(workspaceUuid);
     ControlledBigQueryDatasetResource resource =
         ControlledBigQueryDatasetResource.builder()
@@ -293,10 +284,8 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
     ControlledResourceFields commonFields =
         toCommonFields(workspaceUuid, body.getCommon(), userRequest);
     // Check authz before reading the projectId from workspace DB.
-    String samCreateAction =
-        ControlledResourceCategory.get(commonFields.getAccessScope(), commonFields.getManagedBy())
-            .getSamCreateResourceAction();
-    workspaceService.validateWorkspaceAndAction(userRequest, workspaceUuid, samCreateAction);
+    workspaceService.validateWorkspaceAndAction(
+        userRequest, workspaceUuid, ControllerValidationUtils.samCreateAction(commonFields));
     String projectId = gcpCloudContextService.getRequiredGcpProject(workspaceUuid);
 
     ControlledAiNotebookInstanceResource resource =
@@ -441,14 +430,8 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
     // This technically duplicates the first step of the flight as the clone flight is re-used for
     // cloneWorkspace, but this also saves us from launching and failing a flight if the user does
     // not have access to the resource.
-    controlledResourceMetadataManager.validateControlledResourceAndAction(
-        userRequest, workspaceUuid, resourceId, SamControlledResourceActions.READ_ACTION);
-    // For clone operations, we need to check both read access to the source resource and write
-    // access to the destination workspace. validateControlledResourceAndAction already validates
-    // this is an MC_WORKSPACE stage workspace, so we don't check that again here to save a DB
-    // lookup.
-    workspaceService.validateWorkspaceAndAction(
-        userRequest, body.getDestinationWorkspaceId(), SamWorkspaceAction.WRITE);
+    controlledResourceMetadataManager.validateCloneAction(
+        userRequest, workspaceUuid, body.getDestinationWorkspaceId(), resourceId);
 
     final String jobId =
         controlledResourceService.cloneBigQueryDataset(
