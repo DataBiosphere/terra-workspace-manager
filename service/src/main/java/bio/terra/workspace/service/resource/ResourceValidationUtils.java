@@ -216,6 +216,9 @@ public class ResourceValidationUtils {
   }
 
   private boolean hasValidHostName(String hostName) {
+    if (hostName == null) {
+      return false;
+    }
     for (String allowedHost :
         gitRepoReferencedResourceConfiguration.getAllowListedGitRepoHostName()) {
       if (StringUtils.equals(hostName, allowedHost)) {
