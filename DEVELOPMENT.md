@@ -278,6 +278,16 @@ Incompatible changes require incrementing the major version number. In our curre
 of development, we are allowing for some incompatible API changes in the feature-locked
 parts of the API without releasing a version `1.0.0`.
 
+## Adding a new flight
+
+Refer to https://github.com/DataBiosphere/stairway for implementing a stairway flight. 
+When a new flight is added, add a new Enum entry in
+service/src/main/java/bio/terra/workspace/common/logging/model/ActivityFlight.java.
+
+If the flight has `OperationType` `DELETE`, a flight might fail while the target
+is still deleted from the database. Check whether the target is deleted
+in the database and log a `DELETE` activity in `WorkspaceActivityLogHook`.
+
 ## Logging During Test Runs
 
 ### Seeing Log Output
