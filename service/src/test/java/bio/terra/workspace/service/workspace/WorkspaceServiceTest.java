@@ -405,7 +405,8 @@ class WorkspaceServiceTest extends BaseConnectedTest {
     var updatedDateAfterWorkspaceUpdate = workspaceActivityLogDao.getLastUpdatedDate(workspaceUuid);
     assertTrue(lastUpdatedDate.get().isBefore(updatedDateAfterWorkspaceUpdate.get()));
     assertEquals(
-        updatedWorkspaceAndAttributes.lastUpdatedDate().get(), updatedDateAfterWorkspaceUpdate.get());
+        updatedWorkspaceAndAttributes.lastUpdatedDate().get(),
+        updatedDateAfterWorkspaceUpdate.get());
 
     assertEquals(userFacingId, updatedWorkspace.getUserFacingId());
     assertTrue(updatedWorkspace.getDisplayName().isPresent());
