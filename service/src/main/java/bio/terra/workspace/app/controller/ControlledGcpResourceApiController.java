@@ -18,13 +18,12 @@ import bio.terra.workspace.service.resource.controlled.model.ControlledResourceF
 import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.workspace.GcpCloudContextService;
 import bio.terra.workspace.service.workspace.WorkspaceService;
+import bio.terra.workspace.service.workspace.model.Workspace;
+import com.google.common.base.Strings;
 import java.util.Optional;
 import java.util.UUID;
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
-
-import bio.terra.workspace.service.workspace.model.Workspace;
-import com.google.common.base.Strings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -72,11 +71,13 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
             .bucketName(body.getGcsBucket().getName())
             .common(commonFields)
             .build();
-    Workspace workspace = workspaceService.validateMcWorkspaceAndAction(
-        userRequest, workspaceUuid, resource.getCategory().getSamCreateResourceAction());
+    Workspace workspace =
+        workspaceService.validateMcWorkspaceAndAction(
+            userRequest, workspaceUuid, resource.getCategory().getSamCreateResourceAction());
 
     if (Strings.isNullOrEmpty(body.getGcsBucket().getLocation())) {
-      body.getGcsBucket().location(workspace.getProperties().getOrDefault("terra-default-location", null));
+      body.getGcsBucket()
+          .location(workspace.getProperties().getOrDefault("terra-default-location", null));
     }
 
     final ControlledGcsBucketResource createdBucket =
@@ -246,8 +247,9 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
     ControlledResourceFields commonFields =
         toCommonFields(workspaceUuid, body.getCommon(), userRequest);
     // Check authz before reading the projectId from workspace DB.
-    Workspace workspace = workspaceService.validateWorkspaceAndAction(
-        userRequest, workspaceUuid, ControllerValidationUtils.samCreateAction(commonFields));
+    Workspace workspace =
+        workspaceService.validateWorkspaceAndAction(
+            userRequest, workspaceUuid, ControllerValidationUtils.samCreateAction(commonFields));
     String projectId = gcpCloudContextService.getRequiredGcpProject(workspaceUuid);
     ControlledBigQueryDatasetResource resource =
         ControlledBigQueryDatasetResource.builder()
@@ -259,7 +261,8 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
             .build();
 
     if (Strings.isNullOrEmpty(body.getDataset().getLocation())) {
-      body.getDataset().location(workspace.getProperties().getOrDefault("terra-default-location", null));
+      body.getDataset()
+          .location(workspace.getProperties().getOrDefault("terra-default-location", null));
     }
 
     final ControlledBigQueryDatasetResource createdDataset =
