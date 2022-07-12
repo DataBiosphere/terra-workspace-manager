@@ -246,7 +246,7 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
     ControlledResourceFields commonFields =
         toCommonFields(workspaceUuid, body.getCommon(), userRequest);
     // Check authz before reading the projectId from workspace DB.
-    workspaceService.validateWorkspaceAndAction(
+    Workspace workspace = workspaceService.validateWorkspaceAndAction(
         userRequest, workspaceUuid, ControllerValidationUtils.samCreateAction(commonFields));
     String projectId = gcpCloudContextService.getRequiredGcpProject(workspaceUuid);
     ControlledBigQueryDatasetResource resource =
@@ -257,6 +257,10 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
             .projectId(projectId)
             .common(commonFields)
             .build();
+
+    if (Strings.isNullOrEmpty(body.getDataset().getLocation())) {
+      body.getDataset().location(workspace.getProperties().getOrDefault("terra-default-location", null));
+    }
 
     final ControlledBigQueryDatasetResource createdDataset =
         controlledResourceService
