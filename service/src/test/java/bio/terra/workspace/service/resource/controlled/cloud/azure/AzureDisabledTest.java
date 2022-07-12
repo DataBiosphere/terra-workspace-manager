@@ -32,16 +32,17 @@ import bio.terra.workspace.service.workspace.model.WorkspaceStage;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.UUID;
 import org.apache.http.HttpStatus;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.annotation.DirtiesContext;
 
 // Test to make sure things properly do not work when Azure feature is not enabled
 @AutoConfigureMockMvc
-// We are modifying application context here. Need to clean up once tests are done.
+//We are modifying application context here. Need to clean up once tests are done.
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
 public class AzureDisabledTest extends BaseConnectedTest {
   @Autowired private MockMvc mockMvc;
@@ -53,7 +54,7 @@ public class AzureDisabledTest extends BaseConnectedTest {
 
   @BeforeEach
   public void setUp() {
-    // explicitly disable Azure feature regardless of the configuration files
+    //explicitly disable Azure feature regardless of the configuration files
     featureConfiguration.setAzureEnabled(false);
   }
 
