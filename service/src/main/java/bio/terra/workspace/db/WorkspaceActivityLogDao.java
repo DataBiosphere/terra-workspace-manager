@@ -66,4 +66,22 @@ public class WorkspaceActivityLogDao {
     return Optional.ofNullable(jdbcTemplate.queryForObject(sql, params, OffsetDateTime.class))
         .map(OffsetDateTime::toInstant);
   }
+
+  /**
+   * Get the first workspace activity log entry of a given workspace. 
+   * @param workspaceId
+   * @return
+   */
+  @ReadTransaction
+  public Optional<Instant> getCreatedDate(UUID workspaceId) {
+    final String sql =
+        "SELECT MIN(change_date) FROM workspace_activity_log"
+            + " WHERE workspace_id = :workspace_id";
+    final var params =
+        new MapSqlParameterSource()
+            .addValue("workspace_id", workspaceId.toString());
+
+    return Optional.ofNullable(jdbcTemplate.queryForObject(sql, params, OffsetDateTime.class))
+        .map(OffsetDateTime::toInstant);
+  }
 }
