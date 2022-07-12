@@ -22,6 +22,9 @@ import java.util.Optional;
 import java.util.UUID;
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
+
+import bio.terra.workspace.service.workspace.model.Workspace;
+import com.google.common.base.Strings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -69,8 +72,12 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
             .bucketName(body.getGcsBucket().getName())
             .common(commonFields)
             .build();
-    workspaceService.validateMcWorkspaceAndAction(
+    Workspace workspace = workspaceService.validateMcWorkspaceAndAction(
         userRequest, workspaceUuid, resource.getCategory().getSamCreateResourceAction());
+
+    if (Strings.isNullOrEmpty(body.getGcsBucket().getLocation())) {
+      body.getGcsBucket().location(workspace.getProperties().getOrDefault("terra-default-location", null));
+    }
 
     final ControlledGcsBucketResource createdBucket =
         controlledResourceService
