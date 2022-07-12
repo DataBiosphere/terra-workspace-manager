@@ -691,15 +691,11 @@ class WorkspaceServiceTest extends BaseConnectedTest {
   @Test
   public void cloneGcpWorkspace() {
     // Create a workspace
-    Map<String, String> propertyMap = new HashMap<>();
-    propertyMap.put("foo", "bar");
-    propertyMap.put("xyzzy", "plohg");
     final Workspace sourceWorkspace =
         defaultRequestBuilder(UUID.randomUUID())
             .userFacingId("source-user-facing-id")
             .displayName("Source Workspace")
             .description("The original workspace.")
-            .properties(propertyMap)
             .spendProfileId(new SpendProfileId(SPEND_PROFILE_ID))
             .build();
     final UUID sourceWorkspaceId = workspaceService.createWorkspace(sourceWorkspace, USER_REQUEST);
