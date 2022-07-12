@@ -261,7 +261,7 @@ public class WorkspaceService {
    *
    * @param userRequest authenticated user
    * @param workspaceUuid workspace of interest
-   * @param properties optional map of key-value properties
+   * @param properties map of key-value properties
    */
   public void updateWorkspaceProperties(
       AuthenticatedUserRequest userRequest, UUID workspaceUuid, Map<String, String> properties) {

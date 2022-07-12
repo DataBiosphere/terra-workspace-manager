@@ -266,12 +266,7 @@ public class WorkspaceDao {
 
   /** Update a workspace properties */
   @WriteTransaction
-  public boolean updateWorkspaceProperties(
-      UUID workspaceUuid, @Nullable Map<String, String> propertyMap) {
-    if (propertyMap == null) {
-      throw new MissingRequiredFieldException("Must specify property to update.");
-    }
-
+  public boolean updateWorkspaceProperties(UUID workspaceUuid, Map<String, String> propertyMap) {
     // get current property in this workspace id
     String selectPropertiesSql =
         "SELECT properties " + "FROM workspace " + " WHERE workspace_id = :id";
