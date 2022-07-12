@@ -392,8 +392,10 @@ public class ControlledBigQueryDatasetLifecycle extends GcpWorkspaceCloneTestScr
         ClientTestUtils.pollWhileRunning(
             cloneResult,
             () ->
+                // TODO(PF-1825): Note that the clone job lives in the source workspace, despite
+                //  creating a resource in the destination workspace.
                 cloningUserResourceApi.getCloneBigQueryDatasetResult(
-                    cloneRequest.getDestinationWorkspaceId(), cloneRequest.getJobControl().getId()),
+                    getWorkspaceId(), cloneRequest.getJobControl().getId()),
             CloneControlledGcpBigQueryDatasetResult::getJobReport,
             Duration.ofSeconds(5));
 

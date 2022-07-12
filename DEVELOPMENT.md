@@ -21,6 +21,14 @@ instances running in the Broad deployment, those are:
 
 If you can't load any of the swagger pages, check that you are on **non-split** VPN before troubleshooting further.
 
+## Layering
+
+Workspace Manager's logic for handling requests is broken into several layers. From highest to lowest:
+- Controllers (`app/controller/`): this layer performs access checks, validates input, invokes services to do the work, and packages the service output into the response. Every controller endpoint should perform an authorization check as one of the first steps, or else clearly document why it isn't doing so.
+- Services (`service/`): this layer is where most work is done. Each Service class wraps an external service or a collection of related internal functions. These functions may launch [Stairway](https://github.com/DataBiosphere/stairway) Flights to perform work as a transaction. See [README](README.md#Service Code Structure) for a more detailed description of each service.
+- Flights (`service/**/flight`): collections of [Stairway](https://github.com/DataBiosphere/stairway) individual logical steps which are performed in order as a transaction. Individual steps may call service or DAO methods.
+- Data Access Objects (DAOs) (`db/`): wrappers around the WSM database. Methods that interact with the database directly live here, and Services call DAO methods rather than the database directly.
+
 ## GitHub Interactions
 
 We currently have these workflows:

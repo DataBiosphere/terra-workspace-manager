@@ -5,7 +5,6 @@ import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.exception.RetryException;
-import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -14,13 +13,10 @@ import java.util.List;
 public class RemovePrivateResourceAccessStep implements Step {
 
   private final SamService samService;
-  private final AuthenticatedUserRequest userRequest;
   private final String userToRemove;
 
-  public RemovePrivateResourceAccessStep(
-      String userToRemove, SamService samService, AuthenticatedUserRequest userRequest) {
+  public RemovePrivateResourceAccessStep(String userToRemove, SamService samService) {
     this.samService = samService;
-    this.userRequest = userRequest;
     this.userToRemove = userToRemove;
   }
 
@@ -40,7 +36,7 @@ public class RemovePrivateResourceAccessStep implements Step {
         workingMap.get(ControlledResourceKeys.RESOURCE_ROLES_TO_REMOVE, new TypeReference<>() {});
     for (ResourceRolePair resourceRolePair : resourceRolesToRemove) {
       samService.removeResourceRole(
-          resourceRolePair.getResource(), userRequest, resourceRolePair.getRole(), userToRemove);
+          resourceRolePair.getResource(), resourceRolePair.getRole(), userToRemove);
     }
     return StepResult.getStepResultSuccess();
   }
@@ -64,7 +60,7 @@ public class RemovePrivateResourceAccessStep implements Step {
       // Sam de-duplicates policy membership, so it's safe to restore roles that may not have been
       // removed in the DO step.
       samService.restoreResourceRole(
-          resourceRolePair.getResource(), userRequest, resourceRolePair.getRole(), userToRemove);
+          resourceRolePair.getResource(), resourceRolePair.getRole(), userToRemove);
     }
     return StepResult.getStepResultSuccess();
   }

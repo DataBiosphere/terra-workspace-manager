@@ -18,8 +18,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * A step to delete all controlled Azure resources resources in a workspace. This reads the list of
- * controlled Azure resources in a workspace from the WSM database.
+ * A step to delete all controlled Azure resources in a workspace. This reads the list of controlled
+ * Azure resources in a workspace from the WSM database.
  */
 public class DeleteControlledAzureResourcesStep implements Step {
 
@@ -49,7 +49,7 @@ public class DeleteControlledAzureResourcesStep implements Step {
 
     for (ControlledResource vm : partitionedResources.get(true)) {
       controlledResourceService.deleteControlledResourceSync(
-          workspaceUuid, vm.getResourceId(), userRequest, false);
+          workspaceUuid, vm.getResourceId(), userRequest);
     }
 
     return partitionedResources.get(false);
@@ -75,7 +75,7 @@ public class DeleteControlledAzureResourcesStep implements Step {
     // Delete all remaining resources
     for (ControlledResource resource : controlledResourceList) {
       controlledResourceService.deleteControlledResourceSync(
-          workspaceUuid, resource.getResourceId(), userRequest, false);
+          workspaceUuid, resource.getResourceId(), userRequest);
     }
     return StepResult.getStepResultSuccess();
   }

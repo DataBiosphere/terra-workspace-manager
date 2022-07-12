@@ -19,6 +19,7 @@ import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceService;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.bqdataset.ControlledBigQueryDatasetResource;
+import bio.terra.workspace.service.resource.exception.ResourceNotFoundException;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.model.Workspace;
@@ -61,7 +62,7 @@ public class WorkspaceDeleteFlightTest extends BaseConnectedTest {
 
     ControlledBigQueryDatasetResource gotResource =
         controlledResourceService
-            .getControlledResource(workspace.getWorkspaceId(), dataset.getResourceId(), userRequest)
+            .getControlledResource(workspace.getWorkspaceId(), dataset.getResourceId())
             .castByEnum(WsmResourceType.CONTROLLED_GCP_BIG_QUERY_DATASET);
     assertEquals(dataset, gotResource);
 
@@ -92,10 +93,10 @@ public class WorkspaceDeleteFlightTest extends BaseConnectedTest {
 
     // Verify the resource and workspace are not in WSM DB
     assertThrows(
-        WorkspaceNotFoundException.class,
+        ResourceNotFoundException.class,
         () ->
             controlledResourceService.getControlledResource(
-                dataset.getWorkspaceId(), dataset.getResourceId(), userRequest));
+                dataset.getWorkspaceId(), dataset.getResourceId()));
     assertThrows(
         WorkspaceNotFoundException.class,
         () ->
@@ -121,7 +122,7 @@ public class WorkspaceDeleteFlightTest extends BaseConnectedTest {
 
     ControlledBigQueryDatasetResource gotResource =
         controlledResourceService
-            .getControlledResource(workspace.getWorkspaceId(), dataset.getResourceId(), userRequest)
+            .getControlledResource(workspace.getWorkspaceId(), dataset.getResourceId())
             .castByEnum(WsmResourceType.CONTROLLED_GCP_BIG_QUERY_DATASET);
     assertEquals(dataset, gotResource);
 
@@ -146,10 +147,10 @@ public class WorkspaceDeleteFlightTest extends BaseConnectedTest {
 
     // Verify the resource and workspace are still deleted, as delete steps have no undo.
     assertThrows(
-        WorkspaceNotFoundException.class,
+        ResourceNotFoundException.class,
         () ->
             controlledResourceService.getControlledResource(
-                dataset.getWorkspaceId(), dataset.getResourceId(), userRequest));
+                dataset.getWorkspaceId(), dataset.getResourceId()));
     assertThrows(
         WorkspaceNotFoundException.class,
         () ->
