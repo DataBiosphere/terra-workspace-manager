@@ -3,7 +3,9 @@ package scripts.testscripts;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.equalTo;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import bio.terra.testrunner.runner.config.TestUserSpecification;
 import bio.terra.workspace.api.WorkspaceApi;
@@ -59,6 +61,8 @@ public class WorkspaceLifecycle extends WorkspaceApiTestScriptBase {
     ClientTestUtils.assertHttpSuccess(workspaceApi, "GET workspace");
     assertThat(workspaceDescription.getId(), equalTo(workspaceUuid));
     assertThat(workspaceDescription.getStage(), equalTo(WorkspaceStageModel.MC_WORKSPACE));
+    assertNotNull(workspaceDescription.getLastUpdatedDate());
+    var firstLastUpdatedDate = workspaceDescription.getLastUpdatedDate();
 
     UpdateWorkspaceRequestBody updateBody =
         new UpdateWorkspaceRequestBody()
@@ -80,6 +84,8 @@ public class WorkspaceLifecycle extends WorkspaceApiTestScriptBase {
     assertThat(updatedDescription.getUserFacingId(), equalTo(validUserFacingId2));
     assertThat(updatedDescription.getDisplayName(), equalTo(WORKSPACE_NAME));
     assertThat(updatedDescription.getDescription(), equalTo(WORKSPACE_DESCRIPTION));
+    assertNotNull(updatedDescription.getLastUpdatedDate());
+    assertTrue(firstLastUpdatedDate.isBefore(updatedDescription.getLastUpdatedDate()));
 
     workspaceApi.deleteWorkspace(workspaceUuid);
     ClientTestUtils.assertHttpSuccess(workspaceApi, "DELETE workspace");

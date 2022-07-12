@@ -48,6 +48,7 @@ import bio.terra.workspace.service.workspace.model.OperationType;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceAndHighestRole;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
+import java.time.ZoneOffset;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -195,7 +196,12 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
         .spendProfile(workspace.getSpendProfileId().map(SpendProfileId::getId).orElse(null))
         .stage(workspace.getWorkspaceStage().toApiModel())
         .gcpContext(gcpContext)
-        .azureContext(azureContext);
+        .azureContext(azureContext)
+        .lastUpdatedDate(
+            workspaceActivityLogDao
+                .getLastUpdatedDate(workspace.getWorkspaceId())
+                .map(instant -> instant.atOffset(ZoneOffset.UTC))
+                .orElse(null));
   }
 
   @Override
