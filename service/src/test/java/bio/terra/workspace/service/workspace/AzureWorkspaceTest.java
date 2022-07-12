@@ -26,6 +26,7 @@ public class AzureWorkspaceTest extends BaseAzureTest {
   @Autowired private SpendConnectedTestUtils spendUtils;
   @Autowired private WorkspaceConnectedTestUtils testUtils;
   @Autowired private WorkspaceService workspaceService;
+  @Autowired private AzureCloudContextService azureCloudContextService;
   @MockBean private SamService mockSamService;
 
   @Test
@@ -37,7 +38,7 @@ public class AzureWorkspaceTest extends BaseAzureTest {
             .subjectId("fakeID123");
 
     UUID uuid = UUID.randomUUID();
-    Workspace request =
+    Workspace workspace =
         Workspace.builder()
             .workspaceId(uuid)
             .userFacingId("a" + uuid.toString())
@@ -45,7 +46,7 @@ public class AzureWorkspaceTest extends BaseAzureTest {
             .workspaceStage(WorkspaceStage.MC_WORKSPACE)
             .build();
 
-    workspaceService.createWorkspace(request, userRequest);
+    workspaceService.createWorkspace(workspace, userRequest);
 
     String jobId = UUID.randomUUID().toString();
     AzureCloudContext azureCloudContext =
@@ -54,16 +55,13 @@ public class AzureWorkspaceTest extends BaseAzureTest {
             azureTestConfiguration.getSubscriptionId(),
             azureTestConfiguration.getManagedResourceGroupId());
     workspaceService.createAzureCloudContext(
-        request.getWorkspaceId(), jobId, userRequest, "/fake/value", azureCloudContext);
+        workspace, jobId, userRequest, "/fake/value", azureCloudContext);
     jobService.waitForJob(jobId);
 
-    assertNull(jobService.retrieveJobResult(jobId, Object.class, userRequest).getException());
+    assertNull(jobService.retrieveJobResult(jobId, Object.class).getException());
     assertTrue(
-        testUtils
-            .getAuthorizedAzureCloudContext(request.getWorkspaceId(), userRequest)
-            .isPresent());
-    workspaceService.deleteAzureCloudContext(request.getWorkspaceId(), userRequest);
-    assertTrue(
-        testUtils.getAuthorizedAzureCloudContext(request.getWorkspaceId(), userRequest).isEmpty());
+        azureCloudContextService.getAzureCloudContext(workspace.getWorkspaceId()).isPresent());
+    workspaceService.deleteAzureCloudContext(workspace, userRequest);
+    assertTrue(azureCloudContextService.getAzureCloudContext(workspace.getWorkspaceId()).isEmpty());
   }
 }

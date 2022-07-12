@@ -14,7 +14,6 @@ import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import bio.terra.workspace.service.workspace.model.Workspace;
-import java.util.UUID;
 
 public class LaunchCreateGcpContextFlightStep implements Step {
 
@@ -57,8 +56,7 @@ public class LaunchCreateGcpContextFlightStep implements Step {
     }
     // if we already have a flight, don't launch another one
     if (!flightAlreadyExists) {
-      workspaceService.createGcpCloudContext(
-          destinationWorkspace.getWorkspaceId(), cloudContextJobId, userRequest);
+      workspaceService.createGcpCloudContext(destinationWorkspace, cloudContextJobId, userRequest);
     }
     return StepResult.getStepResultSuccess();
   }
@@ -75,11 +73,11 @@ public class LaunchCreateGcpContextFlightStep implements Step {
         context
             .getInputParameters()
             .get(JobMapKeys.AUTH_USER_INFO.getKeyName(), AuthenticatedUserRequest.class);
-    final var destinationWorkspaceId =
-        context.getWorkingMap().get(ControlledResourceKeys.DESTINATION_WORKSPACE_ID, UUID.class);
-    if (destinationWorkspaceId != null && userRequest != null) {
+    final var destinationWorkspace =
+        context.getInputParameters().get(JobMapKeys.REQUEST.getKeyName(), Workspace.class);
+    if (destinationWorkspace != null && userRequest != null) {
       // delete workspace is idempotent, so it's safe to call it more than once
-      workspaceService.deleteWorkspace(destinationWorkspaceId, userRequest);
+      workspaceService.deleteWorkspace(destinationWorkspace, userRequest);
     } // otherwise, if it never got created, that's fine too
     return StepResult.getStepResultSuccess();
   }

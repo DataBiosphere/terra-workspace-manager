@@ -1,8 +1,11 @@
 package bio.terra.workspace.service.iam.model;
 
+import bio.terra.common.exception.InternalServerErrorException;
 import bio.terra.workspace.generated.model.ApiIamRole;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 /** Internal representation of IAM roles. */
 public enum WsmIamRole {
@@ -36,6 +39,25 @@ public enum WsmIamRole {
         Arrays.stream(WsmIamRole.values()).filter(x -> x.samRole.equals(samRole)).findFirst();
     return result.orElseThrow(
         () -> new RuntimeException("No IamRole enum found corresponding to Sam role " + samRole));
+  }
+
+  public static WsmIamRole getHighestRole(UUID workspaceId, List<WsmIamRole> roles) {
+    if (roles.isEmpty()) {
+      throw new InternalServerErrorException(
+          String.format("Workspace %s missing roles", workspaceId.toString()));
+    }
+
+    if (roles.contains(WsmIamRole.APPLICATION)) {
+      return WsmIamRole.APPLICATION;
+    } else if (roles.contains(WsmIamRole.OWNER)) {
+      return WsmIamRole.OWNER;
+    } else if (roles.contains(WsmIamRole.WRITER)) {
+      return WsmIamRole.WRITER;
+    } else if (roles.contains(WsmIamRole.READER)) {
+      return WsmIamRole.READER;
+    }
+    throw new InternalServerErrorException(
+        String.format("Workspace %s has unexpected roles: %s", workspaceId.toString(), roles));
   }
 
   public ApiIamRole toApiModel() {

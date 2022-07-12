@@ -5,7 +5,6 @@ import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.ArgumentMatchers.any;
 
 import bio.terra.common.exception.MissingRequiredFieldException;
 import bio.terra.stairway.FlightDebugInfo;
@@ -20,15 +19,12 @@ import bio.terra.workspace.service.job.exception.JobNotFoundException;
 import bio.terra.workspace.service.workspace.model.OperationType;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.HttpStatus;
@@ -45,16 +41,6 @@ class JobServiceTest extends BaseUnitTest {
   @Autowired private JobService jobService;
   @Autowired private WorkspaceDao workspaceDao;
   @MockBean private SamService mockSamService;
-
-  @BeforeEach
-  @SuppressFBWarnings(value = "DE_MIGHT_IGNORE", justification = "Mockito flakiness")
-  void setup() {
-    try {
-      Mockito.doReturn(true).when(mockSamService.isAuthorized(any(), any(), any(), any()));
-    } catch (Exception e) {
-      // How does a mock even throw an exception?
-    }
-  }
 
   /**
    * Reset the {@link JobService} {@link FlightDebugInfo} after each test so that future submissions
@@ -146,14 +132,14 @@ class JobServiceTest extends BaseUnitTest {
   }
 
   private void testSingleRetrieval(List<String> fids) {
-    ApiJobReport response = jobService.retrieveJob(fids.get(2), testUser);
+    ApiJobReport response = jobService.retrieveJob(fids.get(2));
     assertThat(response, notNullValue());
     validateJobReport(response, 2, fids);
   }
 
   private void testResultRetrieval(List<String> fids) {
     JobService.JobResultOrException<String> resultHolder =
-        jobService.retrieveJobResult(fids.get(2), String.class, testUser);
+        jobService.retrieveJobResult(fids.get(2), String.class);
 
     assertNull(resultHolder.getException());
     assertThat(resultHolder.getResult(), equalTo(makeDescription(2)));
@@ -179,14 +165,13 @@ class JobServiceTest extends BaseUnitTest {
 
   @Test
   void testBadIdRetrieveJob() {
-    assertThrows(JobNotFoundException.class, () -> jobService.retrieveJob("abcdef", testUser));
+    assertThrows(JobNotFoundException.class, () -> jobService.retrieveJob("abcdef"));
   }
 
   @Test
   void testBadIdRetrieveResult() {
     assertThrows(
-        JobNotFoundException.class,
-        () -> jobService.retrieveJobResult("abcdef", Object.class, testUser));
+        JobNotFoundException.class, () -> jobService.retrieveJobResult("abcdef", Object.class));
   }
 
   @Test
@@ -197,8 +182,7 @@ class JobServiceTest extends BaseUnitTest {
 
     String jobId = runFlight("fail for FlightDebugInfo");
     assertThrows(
-        InvalidResultStateException.class,
-        () -> jobService.retrieveJobResult(jobId, String.class, testUser));
+        InvalidResultStateException.class, () -> jobService.retrieveJobResult(jobId, String.class));
   }
 
   private void validateJobReport(ApiJobReport jr, int index, List<String> fids) {

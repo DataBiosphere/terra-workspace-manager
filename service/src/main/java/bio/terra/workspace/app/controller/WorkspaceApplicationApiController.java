@@ -7,14 +7,15 @@ import bio.terra.workspace.generated.model.ApiWorkspaceApplicationDescriptionLis
 import bio.terra.workspace.generated.model.ApiWorkspaceApplicationState;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequestFactory;
+import bio.terra.workspace.service.iam.model.SamConstants;
+import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.WsmApplicationService;
+import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WsmWorkspaceApplication;
 import java.util.List;
 import java.util.UUID;
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -24,20 +25,21 @@ import org.springframework.web.bind.annotation.RequestParam;
 
 @Controller
 public class WorkspaceApplicationApiController implements WorkspaceApplicationApi {
-  private static final Logger logger =
-      LoggerFactory.getLogger(WorkspaceApplicationApiController.class);
   private final AuthenticatedUserRequestFactory authenticatedUserRequestFactory;
   private final HttpServletRequest request;
   private final WsmApplicationService appService;
+  private final WorkspaceService workspaceService;
 
   @Autowired
   public WorkspaceApplicationApiController(
       AuthenticatedUserRequestFactory authenticatedUserRequestFactory,
       HttpServletRequest request,
-      WsmApplicationService appService) {
+      WsmApplicationService appService,
+      WorkspaceService workspaceService) {
     this.authenticatedUserRequestFactory = authenticatedUserRequestFactory;
     this.request = request;
     this.appService = appService;
+    this.workspaceService = workspaceService;
   }
 
   private AuthenticatedUserRequest getAuthenticatedInfo() {
@@ -49,8 +51,11 @@ public class WorkspaceApplicationApiController implements WorkspaceApplicationAp
       @PathVariable("workspaceId") UUID workspaceUuid,
       @PathVariable("applicationId") String applicationId) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    Workspace workspace =
+        workspaceService.validateMcWorkspaceAndAction(
+            userRequest, workspaceUuid, SamConstants.SamWorkspaceAction.OWN);
     WsmWorkspaceApplication wsmApp =
-        appService.disableWorkspaceApplication(userRequest, workspaceUuid, applicationId);
+        appService.disableWorkspaceApplication(userRequest, workspace, applicationId);
     ApiWorkspaceApplicationDescription response = makeApiWorkspaceApplication(wsmApp);
     return new ResponseEntity<>(response, HttpStatus.OK);
   }
@@ -60,8 +65,11 @@ public class WorkspaceApplicationApiController implements WorkspaceApplicationAp
       @PathVariable("workspaceId") UUID workspaceUuid,
       @PathVariable("applicationId") String applicationId) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    Workspace workspace =
+        workspaceService.validateMcWorkspaceAndAction(
+            userRequest, workspaceUuid, SamConstants.SamWorkspaceAction.OWN);
     WsmWorkspaceApplication wsmApp =
-        appService.enableWorkspaceApplication(userRequest, workspaceUuid, applicationId);
+        appService.enableWorkspaceApplication(userRequest, workspace, applicationId);
     ApiWorkspaceApplicationDescription response = makeApiWorkspaceApplication(wsmApp);
     return new ResponseEntity<>(response, HttpStatus.OK);
   }
@@ -71,8 +79,10 @@ public class WorkspaceApplicationApiController implements WorkspaceApplicationAp
       @PathVariable("workspaceId") UUID workspaceUuid,
       @PathVariable("applicationId") String applicationId) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
-    WsmWorkspaceApplication wsmApp =
-        appService.getWorkspaceApplication(userRequest, workspaceUuid, applicationId);
+    Workspace workspace =
+        workspaceService.validateMcWorkspaceAndAction(
+            userRequest, workspaceUuid, SamConstants.SamWorkspaceAction.READ);
+    WsmWorkspaceApplication wsmApp = appService.getWorkspaceApplication(workspace, applicationId);
     ApiWorkspaceApplicationDescription response = makeApiWorkspaceApplication(wsmApp);
     return new ResponseEntity<>(response, HttpStatus.OK);
   }
@@ -84,9 +94,12 @@ public class WorkspaceApplicationApiController implements WorkspaceApplicationAp
       @Valid @RequestParam(value = "limit", required = false, defaultValue = "10") Integer limit) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     ControllerValidationUtils.validatePaginationParams(offset, limit);
+    Workspace workspace =
+        workspaceService.validateMcWorkspaceAndAction(
+            userRequest, workspaceUuid, SamConstants.SamWorkspaceAction.READ);
 
     List<WsmWorkspaceApplication> wsmApps =
-        appService.listWorkspaceApplications(userRequest, workspaceUuid, offset, limit);
+        appService.listWorkspaceApplications(workspace, offset, limit);
     var response = new ApiWorkspaceApplicationDescriptionList();
     for (WsmWorkspaceApplication wsmApp : wsmApps) {
       response.addApplicationsItem(makeApiWorkspaceApplication(wsmApp));

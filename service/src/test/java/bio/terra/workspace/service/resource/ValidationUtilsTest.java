@@ -42,7 +42,7 @@ public class ValidationUtilsTest extends BaseUnitTest {
   @BeforeEach
   public void setup() {
     gitRepoReferencedResourceConfiguration.setAllowListedGitRepoHostNames(
-        List.of("github.com", "gitlab.com"));
+        List.of("github.com", "gitlab.com", "bitbucket.org", "dev.azure.com", "ssh.dev.azure.com"));
     validationUtils = new ResourceValidationUtils(gitRepoReferencedResourceConfiguration);
   }
 
@@ -288,13 +288,42 @@ public class ValidationUtilsTest extends BaseUnitTest {
   }
 
   @Test
-  public void validateGitRepoUrl() {
+  public void validateGitHubRepoUrl() {
     validationUtils.validateGitRepoUri("https://github.com/path/to/project.git");
     validationUtils.validateGitRepoUri("https://github.com/yuhuyoyo/testrepo.git");
     validationUtils.validateGitRepoUri("git@github.com:DataBiosphere/terra-workspace-manager.git");
     validationUtils.validateGitRepoUri("ssh://git@github.com/path/to/project.git");
     validationUtils.validateGitRepoUri(
         "https://username:password@github.com/username/repository.git");
+  }
+
+  @Test
+  public void validateBitbucketRepoUrl() {
+    validationUtils.validateGitRepoUri("git@bitbucket.org:path/to/project.git");
+    validationUtils.validateGitRepoUri("https://yuhuyoyo-admin@bitbucket.org/path/to/project.git");
+  }
+
+  @Test
+  public void validateGitLabRepoUrl() {
+    validationUtils.validateGitRepoUri("git@gitlab.com:path/to/project.git");
+    validationUtils.validateGitRepoUri("https://gitlab.com/path/to/project.git");
+  }
+
+  @Test
+  public void validateAzureDevRepoUrl() {
+    validationUtils.validateGitRepoUri(
+        "https://yuhuyoyo@dev.azure.com/yuhuyoyo/yutestdemo/_git/yutestdemo");
+    validationUtils.validateGitRepoUri("git@ssh.dev.azure.com:v3/yuhuyoyo/yutestdemo/yutestdemo");
+  }
+
+  @Test
+  public void validateAwsCodeCommitRepoUrl() {
+    validationUtils.validateGitRepoUri(
+        "https://git-codecommit.us-east-2.amazonaws.com/v1/repos/MyDemoRepo");
+    validationUtils.validateGitRepoUri(
+        "ssh://git-codecommit.us-east-2.amazonaws.com/v1/repos/MyDemoRepo");
+    validationUtils.validateGitRepoUri(
+        "ssh://your-ssh-key-id@git-codecommit.us-east-2.amazonaws.com/v1/repos/MyDemoRepo");
   }
 
   @Test

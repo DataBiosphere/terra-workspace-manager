@@ -65,7 +65,7 @@ public class StairwayTestUtils {
   public static void enumerateJobsDump(
       Alpha1Service alpha1Service, UUID workspaceUuid, AuthenticatedUserRequest userRequest) {
     EnumeratedJobs jobs =
-        alpha1Service.enumerateJobs(workspaceUuid, userRequest, 1000, null, null, null, null, null);
+        alpha1Service.enumerateJobs(workspaceUuid, 1000, null, null, null, null, null);
 
     System.out.printf(
         "Enumerated Jobs: total=%d, pageToken=%s%n", jobs.getTotalResults(), jobs.getPageToken());

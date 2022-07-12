@@ -432,6 +432,21 @@ public class ControlledResourceFixtures {
     return builder.build();
   }
 
+  /**
+   * Returns the same fields as {@link #makeDefaultControlledResourceFields(UUID)}, but in the
+   * format required for a controller API call.
+   */
+  public static ApiControlledResourceCommonFields makeDefaultControlledResourceFieldsApi() {
+    ControlledResourceFields commonFields = makeDefaultControlledResourceFieldsBuilder().build();
+    return new ApiControlledResourceCommonFields()
+        .name(commonFields.getName())
+        .description(commonFields.getDescription())
+        .cloningInstructions(commonFields.getCloningInstructions().toApiModel())
+        .accessScope(commonFields.getAccessScope().toApiModel())
+        .managedBy(commonFields.getManagedBy().toApiModel())
+        .resourceId(commonFields.getResourceId());
+  }
+
   /** Returns a {@link ControlledGcsBucketResource.Builder} that is ready to be built. */
   public static ControlledGcsBucketResource.Builder makeDefaultControlledGcsBucketBuilder(
       @Nullable UUID workspaceUuid) {

@@ -457,7 +457,7 @@ components:
 
     WorkspaceDescription:
       type: object
-      required: [id, userFacingId]
+      required: [id, userFacingId, highestRole]
       properties:
         id:
           description: The ID of the workspace. Immutable.
@@ -474,6 +474,11 @@ components:
         description:
           description: A description of the workspace
           type: string
+        highestRole:
+          description: |
+            Highest role of requester. If requester is both reader and writer, writer will be
+            returned.
+          $ref: '#/components/schemas/IamRole'
         spendProfile:
           description: ID of provided spend profile
           type: string

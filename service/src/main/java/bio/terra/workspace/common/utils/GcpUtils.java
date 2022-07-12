@@ -14,12 +14,14 @@ import com.google.cloud.ServiceOptions;
 import java.io.IOException;
 import java.time.Duration;
 import java.util.Optional;
-import java.util.concurrent.TimeUnit;
-import java.util.function.Supplier;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 
 /** Utilities for interacting with Google Cloud APIs within {@link Step}s. */
 public class GcpUtils {
+  private static final Logger logger = LoggerFactory.getLogger(GcpUtils.class);
+
   private GcpUtils() {}
 
   /** Try to delete the Project associated with {@code projectId}. */
@@ -76,30 +78,6 @@ public class GcpUtils {
               "Error polling operation. name [%s] message [%s]",
               operation.getOperationAdapter().getName(),
               operation.getOperationAdapter().getError().getMessage()));
-    }
-  }
-
-  /**
-   * Retry a supplier method until the value supplied equals an expected value. Useful for verifying
-   * a set value has propagated cloudward and may now be relied upon.
-   *
-   * @param expected - expected (previously set on cloud) value
-   * @param supplier - function to get the value from the cloud
-   * @param retryInterval - time to sleep between retries
-   * @param maxRetries - maximum number of times to retry the supplier
-   * @param <T> - type of expected and supplier specialization
-   */
-  public static <T> void pollUntilEqual(
-      T expected, Supplier<T> supplier, Duration retryInterval, int maxRetries) {
-    T actual = supplier.get();
-    try {
-      int retryAttempts = 0;
-      while (!actual.equals(expected) && retryAttempts++ < maxRetries) {
-        TimeUnit.MILLISECONDS.sleep(retryInterval.toMillis());
-        actual = supplier.get();
-      }
-    } catch (InterruptedException e) {
-      throw new RuntimeException("Interrupted while verifying set value.", e);
     }
   }
 

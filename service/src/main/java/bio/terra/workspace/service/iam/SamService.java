@@ -12,7 +12,6 @@ import bio.terra.workspace.common.utils.GcpUtils;
 import bio.terra.workspace.service.iam.model.ControlledResourceIamRole;
 import bio.terra.workspace.service.iam.model.RoleBinding;
 import bio.terra.workspace.service.iam.model.SamConstants;
-import bio.terra.workspace.service.iam.model.SamConstants.SamWorkspaceAction;
 import bio.terra.workspace.service.iam.model.WsmIamRole;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResourceCategory;
@@ -24,7 +23,6 @@ import com.google.common.collect.ImmutableSet;
 import io.opencensus.contrib.spring.aop.Traced;
 import io.opencensus.trace.Tracing;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -45,8 +43,8 @@ import org.broadinstitute.dsde.workbench.client.sam.model.AccessPolicyResponseEn
 import org.broadinstitute.dsde.workbench.client.sam.model.AccessPolicyResponseEntryV2;
 import org.broadinstitute.dsde.workbench.client.sam.model.CreateResourceRequestV2;
 import org.broadinstitute.dsde.workbench.client.sam.model.FullyQualifiedResourceId;
-import org.broadinstitute.dsde.workbench.client.sam.model.ResourceAndAccessPolicy;
 import org.broadinstitute.dsde.workbench.client.sam.model.SystemStatus;
+import org.broadinstitute.dsde.workbench.client.sam.model.UserResourcesResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -64,7 +62,6 @@ import org.springframework.stereotype.Component;
 @Component
 public class SamService {
   private final SamConfiguration samConfig;
-  private final StageService stageService;
   private final OkHttpClient commonHttpClient;
 
   private final Set<String> SAM_OAUTH_SCOPES = ImmutableSet.of("openid", "email", "profile");
@@ -77,7 +74,6 @@ public class SamService {
   @Autowired
   public SamService(SamConfiguration samConfig, StageService stageService) {
     this.samConfig = samConfig;
-    this.stageService = stageService;
     this.wsmServiceAccountInitialized = false;
     this.commonHttpClient =
         new ApiClient()
@@ -245,19 +241,26 @@ public class SamService {
   /**
    * List all workspace IDs in Sam this user has access to. Note that in environments shared with
    * Rawls, some of these workspaces will be Rawls managed and WSM will not know about them.
+   *
+   * @return map from workspace ID to highest SAM role
    */
   @Traced
-  public List<UUID> listWorkspaceIds(AuthenticatedUserRequest userRequest)
+  public Map<UUID, WsmIamRole> listWorkspaceIdsAndHighestRoles(AuthenticatedUserRequest userRequest)
       throws InterruptedException {
     ResourcesApi resourceApi = samResourcesApi(userRequest.getRequiredToken());
-    List<UUID> workspaceIds = new ArrayList<>();
+    Map<UUID, WsmIamRole> workspacesAndRoles = new HashMap<>();
     try {
-      List<ResourceAndAccessPolicy> resourceAndPolicies =
+      List<UserResourcesResponse> userResourcesResponses =
           SamRetry.retry(
-              () -> resourceApi.listResourcesAndPolicies(SamConstants.SamResource.WORKSPACE));
-      for (var resourceAndPolicy : resourceAndPolicies) {
+              () -> resourceApi.listResourcesAndPoliciesV2(SamConstants.SamResource.WORKSPACE));
+      for (var userResourcesResponse : userResourcesResponses) {
         try {
-          workspaceIds.add(UUID.fromString(resourceAndPolicy.getResourceId()));
+          UUID workspaceId = UUID.fromString(userResourcesResponse.getResourceId());
+          List<WsmIamRole> roles =
+              userResourcesResponse.getDirect().getRoles().stream()
+                  .map(WsmIamRole::fromSam)
+                  .collect(Collectors.toList());
+          workspacesAndRoles.put(workspaceId, WsmIamRole.getHighestRole(workspaceId, roles));
         } catch (IllegalArgumentException e) {
           // WSM always uses UUIDs for workspace IDs, but this is not enforced in Sam and there are
           // old workspaces that don't use UUIDs. Any workspace with a non-UUID workspace ID is
@@ -268,7 +271,7 @@ public class SamService {
     } catch (ApiException apiException) {
       throw SamExceptionFactory.create("Error listing Workspace Ids in Sam", apiException);
     }
-    return workspaceIds;
+    return workspacesAndRoles;
   }
 
   @Traced
@@ -415,12 +418,6 @@ public class SamService {
   public void grantWorkspaceRole(
       UUID workspaceUuid, AuthenticatedUserRequest userRequest, WsmIamRole role, String email)
       throws InterruptedException {
-    stageService.assertMcWorkspace(workspaceUuid, "grantWorkspaceRole");
-    checkAuthz(
-        userRequest,
-        SamConstants.SamResource.WORKSPACE,
-        workspaceUuid.toString(),
-        samActionToModifyRole(role));
     ResourcesApi resourceApi = samResourcesApi(userRequest.getRequiredToken());
     try {
       // GCP always uses lowercase email identifiers, so we do the same here for consistency.
@@ -449,12 +446,6 @@ public class SamService {
   public void removeWorkspaceRole(
       UUID workspaceUuid, AuthenticatedUserRequest userRequest, WsmIamRole role, String email)
       throws InterruptedException {
-    stageService.assertMcWorkspace(workspaceUuid, "removeWorkspaceRole");
-    checkAuthz(
-        userRequest,
-        SamConstants.SamResource.WORKSPACE,
-        workspaceUuid.toString(),
-        samActionToModifyRole(role));
 
     ResourcesApi resourceApi = samResourcesApi(userRequest.getRequiredToken());
     try {
@@ -479,31 +470,16 @@ public class SamService {
    * necessary for private resources, as users do not have individual roles on shared resources.
    *
    * <p>This call to Sam is made as the WSM SA, as users do not have permission to directly modify
-   * IAM on resources. This method still requires user credentials to validate as a safeguard, but
-   * they are not used in the role removal call.
+   * IAM on resources.
    *
    * @param resource The resource to remove a role from
-   * @param userRequest User credentials. These are not used for the call to Sam, but must belong to
-   *     a workspace owner to ensure the WSM SA is being used on a user's behalf correctly.
    * @param role The role to remove
    * @param email Email identifier of the user whose role is being removed.
    */
   @Traced
   public void removeResourceRole(
-      ControlledResource resource,
-      AuthenticatedUserRequest userRequest,
-      ControlledResourceIamRole role,
-      String email)
+      ControlledResource resource, ControlledResourceIamRole role, String email)
       throws InterruptedException {
-    // Validate that the provided user credentials can modify the owners of the resource's
-    // workspace.
-    // Although the Sam call to revoke a resource role must use WSM SA credentials instead, this
-    // is a safeguard against accidentally invoking these credentials for unauthorized users.
-    checkAuthz(
-        userRequest,
-        SamConstants.SamResource.WORKSPACE,
-        resource.getWorkspaceId().toString(),
-        samActionToModifyRole(WsmIamRole.OWNER));
 
     try {
       ResourcesApi wsmSaResourceApi = samResourcesApi(getWsmServiceAccountToken());
@@ -530,31 +506,16 @@ public class SamService {
    * called otherwise.
    *
    * <p>This call to Sam is made as the WSM SA, as users do not have permission to directly modify
-   * IAM on resources. This method still requires user credentials to validate as a safeguard, but
-   * they are not used in the role removal call.
+   * IAM on resources.
    *
    * @param resource The resource to restore a role to
-   * @param userRequest User credentials. These are not used for the call to Sam, but must belong to
-   *     a workspace owner to ensure the WSM SA is being used on a user's behalf correctly.
    * @param role The role to restore
    * @param email Email identifier of the user whose role is being restored.
    */
   @Traced
   public void restoreResourceRole(
-      ControlledResource resource,
-      AuthenticatedUserRequest userRequest,
-      ControlledResourceIamRole role,
-      String email)
+      ControlledResource resource, ControlledResourceIamRole role, String email)
       throws InterruptedException {
-    // Validate that the provided user credentials can modify the owners of the resource's
-    // workspace.
-    // Although the Sam call to revoke a resource role must use WSM SA credentials instead, this
-    // is a safeguard against accidentally invoking these credentials for unauthorized users.
-    checkAuthz(
-        userRequest,
-        SamConstants.SamResource.WORKSPACE,
-        resource.getWorkspaceId().toString(),
-        samActionToModifyRole(WsmIamRole.OWNER));
 
     try {
       ResourcesApi wsmSaResourceApi = samResourcesApi(getWsmServiceAccountToken());
@@ -584,12 +545,6 @@ public class SamService {
   @Traced
   public List<RoleBinding> listRoleBindings(
       UUID workspaceUuid, AuthenticatedUserRequest userRequest) throws InterruptedException {
-    stageService.assertMcWorkspace(workspaceUuid, "listRoleBindings");
-    checkAuthz(
-        userRequest,
-        SamConstants.SamResource.WORKSPACE,
-        workspaceUuid.toString(),
-        SamWorkspaceAction.READ_IAM);
 
     ResourcesApi resourceApi = samResourcesApi(userRequest.getRequiredToken());
     try {
@@ -645,6 +600,20 @@ public class SamService {
       throw SamExceptionFactory.create("Error listing role bindings in Sam", apiException);
     } catch (InterruptedException e) {
       logger.warn("dump role binding was interrupted");
+    }
+  }
+
+  /** Wrapper around Sam client to fetch requester roles on specified resource. */
+  @Traced
+  public List<WsmIamRole> listRequesterRoles(
+      AuthenticatedUserRequest userRequest, String samResourceType, String resourceId) {
+    ResourcesApi resourcesApi = samResourcesApi(userRequest.getRequiredToken());
+    try {
+      return resourcesApi.resourceRolesV2(samResourceType, resourceId).stream()
+          .map(WsmIamRole::fromSam)
+          .collect(Collectors.toList());
+    } catch (ApiException e) {
+      throw SamExceptionFactory.create("Error retrieving requester resource roles from Sam", e);
     }
   }
 
@@ -919,15 +888,6 @@ public class SamService {
   public List<ControlledResourceIamRole> getUserRolesOnPrivateResource(
       ControlledResource resource, String userEmail, AuthenticatedUserRequest userRequest)
       throws InterruptedException {
-    // Validate that the provided user credentials can modify the owners of the resource's
-    // workspace.
-    // Although the Sam call to revoke a resource role must use WSM SA credentials instead, this
-    // is a safeguard against accidentally invoking these credentials for unauthorized users.
-    checkAuthz(
-        userRequest,
-        SamConstants.SamResource.WORKSPACE,
-        resource.getWorkspaceId().toString(),
-        samActionToModifyRole(WsmIamRole.OWNER));
 
     try {
       ResourcesApi wsmSaResourceApi = samResourcesApi(getWsmServiceAccountToken());
