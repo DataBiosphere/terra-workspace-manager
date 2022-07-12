@@ -11,7 +11,6 @@ import bio.terra.workspace.common.utils.FlightUtils;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceService;
-import bio.terra.workspace.service.workspace.GcpCloudContextService;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import bio.terra.workspace.service.workspace.model.GcpCloudContext;
 import com.google.cloud.Policy;
@@ -26,7 +25,6 @@ public class GcsBucketCloudSyncStep implements Step {
   private final ControlledResourceService controlledResourceService;
   private final CrlService crlService;
   private final ControlledGcsBucketResource resource;
-  private final GcpCloudContextService gcpCloudContextService;
   private final AuthenticatedUserRequest userRequest;
   private final Logger logger = LoggerFactory.getLogger(GcsBucketCloudSyncStep.class);
 
@@ -34,12 +32,10 @@ public class GcsBucketCloudSyncStep implements Step {
       ControlledResourceService controlledResourceService,
       CrlService crlService,
       ControlledGcsBucketResource resource,
-      GcpCloudContextService gcpCloudContextService,
       AuthenticatedUserRequest userRequest) {
     this.controlledResourceService = controlledResourceService;
     this.crlService = crlService;
     this.resource = resource;
-    this.gcpCloudContextService = gcpCloudContextService;
     this.userRequest = userRequest;
   }
 
@@ -58,7 +54,6 @@ public class GcsBucketCloudSyncStep implements Step {
     Policy newPolicy =
         controlledResourceService.configureGcpPolicyForResource(
             resource, cloudContext, currentPolicy, userRequest);
-
     logger.info(
         "Syncing workspace roles to GCP permissions on bucket {}", resource.getBucketName());
     try {

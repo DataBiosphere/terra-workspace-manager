@@ -14,7 +14,6 @@ import bio.terra.workspace.db.RawDaoTestFixture;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.db.exception.ApplicationNotFoundException;
 import bio.terra.workspace.db.exception.InvalidApplicationStateException;
-import bio.terra.workspace.db.exception.WorkspaceNotFoundException;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.iam.model.SamConstants.SamResource;
@@ -44,6 +43,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.annotation.DirtiesContext.MethodMode;
 
@@ -115,8 +115,8 @@ public class ApplicationServiceTest extends BaseUnitTest {
   /** Mock SamService does nothing for all calls that would throw if unauthorized. */
   @MockBean private SamService mockSamService;
 
-  private UUID workspaceUuid;
-  private UUID workspaceId2;
+  private Workspace workspace;
+  private Workspace workspace2;
 
   @BeforeEach
   void setup() throws Exception {
@@ -142,8 +142,8 @@ public class ApplicationServiceTest extends BaseUnitTest {
     appService.processApp(NORM_APP, dbAppMap);
 
     // Create two workspaces
-    workspaceUuid = UUID.randomUUID();
-    var request =
+    UUID workspaceUuid = UUID.randomUUID();
+    workspace =
         Workspace.builder()
             .workspaceId(workspaceUuid)
             .userFacingId("a" + workspaceUuid)
@@ -151,17 +151,17 @@ public class ApplicationServiceTest extends BaseUnitTest {
             .workspaceStage(WorkspaceStage.MC_WORKSPACE)
             .build();
 
-    workspaceService.createWorkspace(request, USER_REQUEST);
+    workspaceService.createWorkspace(workspace, USER_REQUEST);
 
-    workspaceId2 = UUID.randomUUID();
-    request =
+    UUID workspaceId2 = UUID.randomUUID();
+    workspace2 =
         Workspace.builder()
             .workspaceId(workspaceId2)
             .userFacingId("a" + workspaceId2)
             .spendProfileId(null)
             .workspaceStage(WorkspaceStage.MC_WORKSPACE)
             .build();
-    workspaceService.createWorkspace(request, USER_REQUEST);
+    workspaceService.createWorkspace(workspace2, USER_REQUEST);
   }
 
   @DirtiesContext(methodMode = MethodMode.BEFORE_METHOD)
@@ -171,55 +171,61 @@ public class ApplicationServiceTest extends BaseUnitTest {
     enumerateCheck(false, false, false);
 
     // enable leo - should work
-    appService.enableWorkspaceApplication(USER_REQUEST, workspaceUuid, LEO_ID);
+    appService.enableWorkspaceApplication(USER_REQUEST, workspace, LEO_ID);
 
     // enable carmen - should fail - deprecated
     assertThrows(
         InvalidApplicationStateException.class,
-        () -> appService.enableWorkspaceApplication(USER_REQUEST, workspaceUuid, CARMEN_ID));
+        () -> appService.enableWorkspaceApplication(USER_REQUEST, workspace, CARMEN_ID));
 
     // enable norm - should fail - decommissioned
     assertThrows(
         InvalidApplicationStateException.class,
-        () -> appService.enableWorkspaceApplication(USER_REQUEST, workspaceUuid, NORM_ID));
+        () -> appService.enableWorkspaceApplication(USER_REQUEST, workspace, NORM_ID));
 
     enumerateCheck(true, false, false);
 
     // Use the DAO directly and skip the check to enable carmen so we can check that state.
-    appDao.enableWorkspaceApplicationNoCheck(workspaceUuid, CARMEN_ID);
+    appDao.enableWorkspaceApplicationNoCheck(workspace.getWorkspaceId(), CARMEN_ID);
     enumerateCheck(true, true, false);
 
     // test the argument checking
     assertThrows(
         ApplicationNotFoundException.class,
-        () -> appService.enableWorkspaceApplication(USER_REQUEST, workspaceUuid, UNKNOWN_ID));
+        () -> appService.enableWorkspaceApplication(USER_REQUEST, workspace, UNKNOWN_ID));
+    Workspace fakeWorkspace =
+        Workspace.builder()
+            .workspaceId(UUID.randomUUID())
+            .workspaceStage(WorkspaceStage.MC_WORKSPACE)
+            .build();
+    // This calls a service method, rather than a controller method, so it does not hit the authz
+    // check. Instead, we validate that inserting this into the DB violates constraints.
     assertThrows(
-        WorkspaceNotFoundException.class,
-        () -> appService.enableWorkspaceApplication(USER_REQUEST, UUID.randomUUID(), LEO_ID));
+        DataIntegrityViolationException.class,
+        () -> appService.enableWorkspaceApplication(USER_REQUEST, fakeWorkspace, LEO_ID));
 
     // explicit get
-    WsmWorkspaceApplication wsmApp =
-        appService.getWorkspaceApplication(USER_REQUEST, workspaceUuid, LEO_ID);
+    WsmWorkspaceApplication wsmApp = appService.getWorkspaceApplication(workspace, LEO_ID);
     assertEquals(LEO_APP, wsmApp.getApplication());
     assertTrue(wsmApp.isEnabled());
 
     // get from workspace2
-    wsmApp = appService.getWorkspaceApplication(USER_REQUEST, workspaceId2, LEO_ID);
+    wsmApp = appService.getWorkspaceApplication(workspace2, LEO_ID);
     assertEquals(LEO_APP, wsmApp.getApplication());
     assertFalse(wsmApp.isEnabled());
 
     // enable Leo in workspace2
-    appService.enableWorkspaceApplication(USER_REQUEST, workspaceId2, LEO_ID);
+    appService.enableWorkspaceApplication(USER_REQUEST, workspace2, LEO_ID);
 
     // do the disables...
-    appService.disableWorkspaceApplication(USER_REQUEST, workspaceUuid, LEO_ID);
+    appService.disableWorkspaceApplication(USER_REQUEST, workspace, LEO_ID);
     enumerateCheck(false, true, false);
 
-    appService.disableWorkspaceApplication(USER_REQUEST, workspaceUuid, CARMEN_ID);
+    appService.disableWorkspaceApplication(USER_REQUEST, workspace, CARMEN_ID);
     enumerateCheck(false, false, false);
 
     // make sure Leo is still enabled in workspace2
-    wsmApp = appService.getWorkspaceApplication(USER_REQUEST, workspaceId2, LEO_ID);
+    wsmApp = appService.getWorkspaceApplication(workspace2, LEO_ID);
     assertEquals(LEO_APP, wsmApp.getApplication());
     assertTrue(wsmApp.isEnabled());
 
@@ -247,7 +253,7 @@ public class ApplicationServiceTest extends BaseUnitTest {
     // Register the app to be decommissioned
     appService.processApp(decommissionApp, appService.buildAppMap());
     // Enable the test application in this workspace.
-    appService.enableWorkspaceApplication(USER_REQUEST, workspaceUuid, DECOMMISSION_ID);
+    appService.enableWorkspaceApplication(USER_REQUEST, workspace, DECOMMISSION_ID);
     // Create a fake app-owned referenced resource.
     UUID resourceId = createFakeResource(DECOMMISSION_ID);
     // Try to deprecate the app, should fail because this app has an associated resource.
@@ -260,12 +266,11 @@ public class ApplicationServiceTest extends BaseUnitTest {
             .get(appService.getErrorList().size() - 1)
             .contains("associated resources"));
     // Delete the resource
-    resourceDao.deleteResource(workspaceUuid, resourceId);
+    resourceDao.deleteResource(workspace.getWorkspaceId(), resourceId);
     // try to decommission the app again, should succeed this time
     appService.processApp(decommissionApp, appService.buildAppMap());
     WsmWorkspaceApplication readApp =
-        appService.getWorkspaceApplication(
-            USER_REQUEST, workspaceUuid, decommissionApp.getApplicationId());
+        appService.getWorkspaceApplication(workspace, decommissionApp.getApplicationId());
     assertEquals(WsmApplicationState.DECOMMISSIONED, readApp.getApplication().getState());
   }
 
@@ -275,7 +280,7 @@ public class ApplicationServiceTest extends BaseUnitTest {
     ControlledGcsBucketAttributes fakeAttributes =
         new ControlledGcsBucketAttributes("fake-bucket-name");
     rawDaoTestFixture.storeResource(
-        workspaceUuid.toString(),
+        workspace.getWorkspaceId().toString(),
         CloudPlatform.GCP.toSql(),
         resourceId.toString(),
         "resource_name",
@@ -295,7 +300,7 @@ public class ApplicationServiceTest extends BaseUnitTest {
 
   private void enumerateCheck(boolean leoEnabled, boolean carmenEnabled, boolean normEnabled) {
     List<WsmWorkspaceApplication> wsmAppList =
-        appService.listWorkspaceApplications(USER_REQUEST, workspaceUuid, 0, 10);
+        appService.listWorkspaceApplications(workspace, 0, 10);
     // There may be stray applications in the DB, so we make sure that we at least have ours
     assertThat(wsmAppList.size(), greaterThanOrEqualTo(3));
     for (WsmWorkspaceApplication wsmApp : wsmAppList) {

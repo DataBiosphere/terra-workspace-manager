@@ -1,141 +1,160 @@
 package bio.terra.workspace.service.resource.controlled.cloud.azure;
 
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static bio.terra.workspace.common.utils.MockMvcUtils.CREATE_AZURE_DISK_PATH_FORMAT;
+import static bio.terra.workspace.common.utils.MockMvcUtils.CREATE_AZURE_IP_PATH_FORMAT;
+import static bio.terra.workspace.common.utils.MockMvcUtils.CREATE_AZURE_NETWORK_PATH_FORMAT;
+import static bio.terra.workspace.common.utils.MockMvcUtils.CREATE_AZURE_VM_PATH_FORMAT;
+import static bio.terra.workspace.common.utils.MockMvcUtils.CREATE_CLOUD_CONTEXT_PATH_FORMAT;
+import static bio.terra.workspace.common.utils.MockMvcUtils.GET_CLOUD_CONTEXT_PATH_FORMAT;
+import static bio.terra.workspace.common.utils.MockMvcUtils.addAuth;
+import static bio.terra.workspace.common.utils.MockMvcUtils.addJsonContentType;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
 import bio.terra.workspace.common.BaseConnectedTest;
-import bio.terra.workspace.common.exception.FeatureNotSupportedException;
 import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
-import bio.terra.workspace.common.utils.AzureVmUtils;
 import bio.terra.workspace.connected.UserAccessUtils;
-import bio.terra.workspace.generated.model.ApiAzureDiskCreationParameters;
-import bio.terra.workspace.generated.model.ApiAzureIpCreationParameters;
-import bio.terra.workspace.generated.model.ApiAzureNetworkCreationParameters;
-import bio.terra.workspace.generated.model.ApiAzureVmCreationParameters;
+import bio.terra.workspace.generated.model.ApiAzureContext;
+import bio.terra.workspace.generated.model.ApiCloudPlatform;
+import bio.terra.workspace.generated.model.ApiControlledResourceCommonFields;
+import bio.terra.workspace.generated.model.ApiCreateCloudContextRequest;
+import bio.terra.workspace.generated.model.ApiCreateControlledAzureDiskRequestBody;
+import bio.terra.workspace.generated.model.ApiCreateControlledAzureIpRequestBody;
+import bio.terra.workspace.generated.model.ApiCreateControlledAzureNetworkRequestBody;
+import bio.terra.workspace.generated.model.ApiCreateControlledAzureVmRequestBody;
+import bio.terra.workspace.generated.model.ApiJobControl;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
-import bio.terra.workspace.service.job.JobService;
-import bio.terra.workspace.service.resource.controlled.ControlledResourceService;
-import bio.terra.workspace.service.resource.controlled.cloud.azure.disk.ControlledAzureDiskResource;
-import bio.terra.workspace.service.resource.controlled.cloud.azure.ip.ControlledAzureIpResource;
-import bio.terra.workspace.service.resource.controlled.cloud.azure.network.ControlledAzureNetworkResource;
-import bio.terra.workspace.service.resource.controlled.cloud.azure.vm.ControlledAzureVmResource;
-import bio.terra.workspace.service.resource.controlled.model.ControlledResourceFields;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.UUID;
+import org.apache.http.HttpStatus;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.test.annotation.DirtiesContext;
+import org.springframework.test.web.servlet.MockMvc;
 
 // Test to make sure things properly do not work when Azure feature is not enabled
+@AutoConfigureMockMvc
+// We are modifying application context here. Need to clean up once tests are done.
+@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
 public class AzureDisabledTest extends BaseConnectedTest {
-  @Autowired private WorkspaceService workspaceService;
-  @Autowired private JobService jobService;
-  @Autowired private UserAccessUtils userAccessUtils;
-  @Autowired private ControlledResourceService controlledResourceService;
+  @Autowired private MockMvc mockMvc;
 
-  private static String getAzureName(String tag) {
-    final String id = UUID.randomUUID().toString().substring(0, 6);
-    return String.format("wsm-integ-%s-%s", tag, id);
+  @Autowired private WorkspaceService workspaceService;
+  @Autowired private UserAccessUtils userAccessUtils;
+  @Autowired private ObjectMapper objectMapper;
+  @Autowired private FeatureConfiguration featureConfiguration;
+
+  @BeforeEach
+  public void setUp() {
+    // explicitly disable Azure feature regardless of the configuration files
+    featureConfiguration.setAzureEnabled(false);
   }
 
   @Test
-  public void azureDisabledTest() throws InterruptedException {
-    Workspace request =
+  public void azureDisabledTest() throws Exception {
+    Workspace workspace =
         Workspace.builder()
             .workspaceId(UUID.randomUUID())
             .userFacingId("a" + UUID.randomUUID())
             .workspaceStage(WorkspaceStage.MC_WORKSPACE)
             .build();
     UUID workspaceUuid =
-        workspaceService.createWorkspace(request, userAccessUtils.defaultUserAuthRequest());
+        workspaceService.createWorkspace(workspace, userAccessUtils.defaultUserAuthRequest());
 
     AuthenticatedUserRequest userRequest = userAccessUtils.defaultUserAuthRequest();
-    final UUID uuid = UUID.randomUUID();
+    String fakeJobId = "a pretend job ID";
+    ApiCreateCloudContextRequest request =
+        new ApiCreateCloudContextRequest()
+            .cloudPlatform(ApiCloudPlatform.AZURE)
+            .azureContext(
+                new ApiAzureContext()
+                    .resourceGroupId("fake")
+                    .subscriptionId("also fake")
+                    .tenantId("still fake"))
+            .jobControl(new ApiJobControl().id(fakeJobId));
+    mockMvc
+        .perform(
+            addJsonContentType(
+                addAuth(
+                    post(String.format(CREATE_CLOUD_CONTEXT_PATH_FORMAT, workspaceUuid))
+                        .content(objectMapper.writeValueAsString(request)),
+                    userRequest)))
+        .andExpect(status().is(HttpStatus.SC_NOT_IMPLEMENTED));
+    // There should not be a job to create this context
+    mockMvc
+        .perform(
+            (addAuth(
+                get(String.format(GET_CLOUD_CONTEXT_PATH_FORMAT, workspaceUuid, fakeJobId)),
+                userRequest)))
+        .andExpect(status().is(HttpStatus.SC_NOT_FOUND));
 
-    assertThrows(
-        FeatureNotSupportedException.class,
-        () ->
-            workspaceService.createAzureCloudContext(
-                workspaceUuid, uuid.toString(), userRequest, null, null));
+    // We're re-using these common fields for multiple requests. Normally this would be a problem
+    // because the resource ID would be duplicated, but we expect all "create resource" calls
+    // to fail, so this is fine.
+    final ApiControlledResourceCommonFields commonFields =
+        ControlledResourceFixtures.makeDefaultControlledResourceFieldsApi();
 
-    assertThrows(
-        FeatureNotSupportedException.class,
-        () -> workspaceService.getAuthorizedAzureCloudContext(workspaceUuid, userRequest));
-
-    final ApiAzureIpCreationParameters ipCreationParameters =
-        ControlledResourceFixtures.getAzureIpCreationParameters();
-
-    ControlledResourceFields commonFields =
-        ControlledResourceFixtures.makeDefaultControlledResourceFields(workspaceUuid);
-
-    ControlledAzureIpResource ipResource =
-        ControlledAzureIpResource.builder()
+    // Create IP
+    final ApiCreateControlledAzureIpRequestBody ipRequest =
+        new ApiCreateControlledAzureIpRequestBody()
             .common(commonFields)
-            .ipName(ipCreationParameters.getName())
-            .region(ipCreationParameters.getRegion())
-            .build();
+            .azureIp(ControlledResourceFixtures.getAzureIpCreationParameters());
+    mockMvc
+        .perform(
+            addJsonContentType(
+                addAuth(
+                    post(String.format(CREATE_AZURE_IP_PATH_FORMAT, workspaceUuid))
+                        .content(objectMapper.writeValueAsString(ipRequest)),
+                    userRequest)))
+        .andExpect(status().is(HttpStatus.SC_NOT_IMPLEMENTED));
 
-    assertThrows(
-        FeatureNotSupportedException.class,
-        () ->
-            controlledResourceService.createControlledResourceSync(
-                ipResource, null, userRequest, ipCreationParameters));
-
-    final ApiAzureDiskCreationParameters diskCreationParameters =
-        ControlledResourceFixtures.getAzureDiskCreationParameters();
-
-    ControlledAzureDiskResource diskResource =
-        ControlledAzureDiskResource.builder()
+    // Create disk
+    final ApiCreateControlledAzureDiskRequestBody diskRequest =
+        new ApiCreateControlledAzureDiskRequestBody()
             .common(commonFields)
-            .diskName(diskCreationParameters.getName())
-            .region(diskCreationParameters.getRegion())
-            .size(diskCreationParameters.getSize())
-            .build();
+            .azureDisk(ControlledResourceFixtures.getAzureDiskCreationParameters());
+    mockMvc
+        .perform(
+            addJsonContentType(
+                addAuth(
+                    post(String.format(CREATE_AZURE_DISK_PATH_FORMAT, workspaceUuid))
+                        .content(objectMapper.writeValueAsString(diskRequest)),
+                    userRequest)))
+        .andExpect(status().is(HttpStatus.SC_NOT_IMPLEMENTED));
 
-    assertThrows(
-        FeatureNotSupportedException.class,
-        () ->
-            controlledResourceService.createControlledResourceSync(
-                diskResource, null, userRequest, diskCreationParameters));
-
-    final ApiAzureNetworkCreationParameters networkCreationParameters =
-        ControlledResourceFixtures.getAzureNetworkCreationParameters();
-
-    ControlledAzureNetworkResource networkResource =
-        ControlledAzureNetworkResource.builder()
+    // Create network
+    final ApiCreateControlledAzureNetworkRequestBody networkRequest =
+        new ApiCreateControlledAzureNetworkRequestBody()
             .common(commonFields)
-            .networkName(networkCreationParameters.getName())
-            .region(networkCreationParameters.getRegion())
-            .subnetName(networkCreationParameters.getSubnetName())
-            .addressSpaceCidr(networkCreationParameters.getAddressSpaceCidr())
-            .subnetAddressCidr(networkCreationParameters.getSubnetAddressCidr())
-            .build();
+            .azureNetwork(ControlledResourceFixtures.getAzureNetworkCreationParameters());
+    mockMvc
+        .perform(
+            addJsonContentType(
+                addAuth(
+                    post(String.format(CREATE_AZURE_NETWORK_PATH_FORMAT, workspaceUuid))
+                        .content(objectMapper.writeValueAsString(networkRequest)),
+                    userRequest)))
+        .andExpect(status().is(HttpStatus.SC_NOT_IMPLEMENTED));
 
-    assertThrows(
-        FeatureNotSupportedException.class,
-        () ->
-            controlledResourceService.createControlledResourceSync(
-                networkResource, null, userRequest, networkCreationParameters));
-
-    final ApiAzureVmCreationParameters vmCreationParameters =
-        ControlledResourceFixtures.getAzureVmCreationParameters();
-
-    ControlledAzureVmResource vmResource =
-        ControlledAzureVmResource.builder()
+    // Create VM
+    final ApiCreateControlledAzureVmRequestBody vmRequest =
+        new ApiCreateControlledAzureVmRequestBody()
             .common(commonFields)
-            .vmName(vmCreationParameters.getName())
-            .vmSize(vmCreationParameters.getVmSize())
-            .vmImage(AzureVmUtils.getImageData(vmCreationParameters.getVmImage()))
-            .region(vmCreationParameters.getRegion())
-            .ipId(ipResource.getResourceId())
-            .diskId(diskResource.getResourceId())
-            .networkId(networkResource.getResourceId())
-            .build();
-
-    assertThrows(
-        FeatureNotSupportedException.class,
-        () ->
-            controlledResourceService.createAzureVm(
-                vmResource, vmCreationParameters, null, null, null, userRequest));
+            .azureVm(ControlledResourceFixtures.getAzureVmCreationParameters());
+    mockMvc
+        .perform(
+            addJsonContentType(
+                addAuth(
+                    post(String.format(CREATE_AZURE_VM_PATH_FORMAT, workspaceUuid))
+                        .content(objectMapper.writeValueAsString(vmRequest)),
+                    userRequest)))
+        .andExpect(status().is(HttpStatus.SC_NOT_IMPLEMENTED));
   }
 }

@@ -32,9 +32,11 @@ import bio.terra.workspace.service.resource.controlled.model.ManagedByType;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.model.WsmResource;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
+import bio.terra.workspace.service.workspace.AzureCloudContextService;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.flight.create.azure.CreateAzureContextFlight;
 import bio.terra.workspace.service.workspace.model.AzureCloudContext;
+import bio.terra.workspace.service.workspace.model.Workspace;
 import com.azure.core.management.exception.ManagementException;
 import com.azure.resourcemanager.compute.ComputeManager;
 import com.azure.resourcemanager.compute.models.VirtualMachine;
@@ -55,6 +57,7 @@ public class CreateAndDeleteAzureControlledResourceFlightTest extends BaseAzureT
   @Autowired private UserAccessUtils userAccessUtils;
   @Autowired private ControlledResourceService controlledResourceService;
   @Autowired private WsmResourceService wsmResourceService;
+  @Autowired private AzureCloudContextService azureCloudContextService;
 
   private void createCloudContext(UUID workspaceUuid, AuthenticatedUserRequest userRequest)
       throws InterruptedException {
@@ -67,8 +70,7 @@ public class CreateAndDeleteAzureControlledResourceFlightTest extends BaseAzureT
             null);
 
     assertEquals(FlightStatus.SUCCESS, createAzureContextFlightState.getFlightStatus());
-    assertTrue(
-        workspaceService.getAuthorizedAzureCloudContext(workspaceUuid, userRequest).isPresent());
+    assertTrue(azureCloudContextService.getAzureCloudContext(workspaceUuid).isPresent());
   }
 
   private void createVMResource(
@@ -115,8 +117,7 @@ public class CreateAndDeleteAzureControlledResourceFlightTest extends BaseAzureT
 
     // Verify controlled resource exists in the workspace.
     ControlledResource res =
-        controlledResourceService.getControlledResource(
-            workspaceUuid, resource.getResourceId(), userRequest);
+        controlledResourceService.getControlledResource(workspaceUuid, resource.getResourceId());
 
     try {
       var castResource = res.castByEnum(resourceType);
@@ -128,7 +129,8 @@ public class CreateAndDeleteAzureControlledResourceFlightTest extends BaseAzureT
 
   @Test
   public void createAzureIpControlledResource() throws InterruptedException {
-    UUID workspaceUuid = azureTestUtils.createWorkspace(workspaceService);
+    Workspace workspace = azureTestUtils.createWorkspace(workspaceService);
+    UUID workspaceUuid = workspace.getWorkspaceId();
     AuthenticatedUserRequest userRequest = userAccessUtils.defaultUserAuthRequest();
     createCloudContext(workspaceUuid, userRequest);
 
@@ -169,7 +171,8 @@ public class CreateAndDeleteAzureControlledResourceFlightTest extends BaseAzureT
 
   @Test
   public void createAndDeleteAzureRelayNamespaceControlledResource() throws InterruptedException {
-    UUID workspaceUuid = azureTestUtils.createWorkspace(workspaceService);
+    Workspace workspace = azureTestUtils.createWorkspace(workspaceService);
+    UUID workspaceUuid = workspace.getWorkspaceId();
     AuthenticatedUserRequest userRequest = userAccessUtils.defaultUserAuthRequest();
     createCloudContext(workspaceUuid, userRequest);
 
@@ -209,7 +212,8 @@ public class CreateAndDeleteAzureControlledResourceFlightTest extends BaseAzureT
 
   @Test
   public void createAndDeleteAzureStorageResource() throws InterruptedException {
-    UUID workspaceUuid = azureTestUtils.createWorkspace(workspaceService);
+    Workspace workspace = azureTestUtils.createWorkspace(workspaceService);
+    UUID workspaceUuid = workspace.getWorkspaceId();
     AuthenticatedUserRequest userRequest = userAccessUtils.defaultUserAuthRequest();
     createCloudContext(workspaceUuid, userRequest);
 
@@ -303,7 +307,8 @@ public class CreateAndDeleteAzureControlledResourceFlightTest extends BaseAzureT
 
   @Test
   public void createAzureDiskControlledResource() throws InterruptedException {
-    UUID workspaceUuid = azureTestUtils.createWorkspace(workspaceService);
+    Workspace workspace = azureTestUtils.createWorkspace(workspaceService);
+    UUID workspaceUuid = workspace.getWorkspaceId();
     AuthenticatedUserRequest userRequest = userAccessUtils.defaultUserAuthRequest();
     createCloudContext(workspaceUuid, userRequest);
 
@@ -345,7 +350,8 @@ public class CreateAndDeleteAzureControlledResourceFlightTest extends BaseAzureT
   @Test
   public void createAndDeleteAzureVmControlledResource() throws InterruptedException {
     // Setup workspace and cloud context
-    UUID workspaceUuid = azureTestUtils.createWorkspace(workspaceService);
+    Workspace workspace = azureTestUtils.createWorkspace(workspaceService);
+    UUID workspaceUuid = workspace.getWorkspaceId();
     AuthenticatedUserRequest userRequest = userAccessUtils.defaultUserAuthRequest();
     createCloudContext(workspaceUuid, userRequest);
 
@@ -390,7 +396,7 @@ public class CreateAndDeleteAzureControlledResourceFlightTest extends BaseAzureT
     // Exercise resource enumeration for the underlying resources.
     // Verify that the resources we created are in the enumeration.
     List<WsmResource> resourceList =
-        wsmResourceService.enumerateResources(workspaceUuid, null, null, 0, 100, userRequest);
+        wsmResourceService.enumerateResources(workspaceUuid, null, null, 0, 100);
     checkForResource(resourceList, ipResource);
     checkForResource(resourceList, diskResource);
     checkForResource(resourceList, networkResource);
@@ -456,7 +462,8 @@ public class CreateAndDeleteAzureControlledResourceFlightTest extends BaseAzureT
   public void createAndDeleteAzureVmControlledResourceWithCustomScriptExtension()
       throws InterruptedException {
     // Setup workspace and cloud context
-    UUID workspaceUuid = azureTestUtils.createWorkspace(workspaceService);
+    Workspace workspace = azureTestUtils.createWorkspace(workspaceService);
+    UUID workspaceUuid = workspace.getWorkspaceId();
     AuthenticatedUserRequest userRequest = userAccessUtils.defaultUserAuthRequest();
     createCloudContext(workspaceUuid, userRequest);
 
@@ -501,7 +508,7 @@ public class CreateAndDeleteAzureControlledResourceFlightTest extends BaseAzureT
     // Exercise resource enumeration for the underlying resources.
     // Verify that the resources we created are in the enumeration.
     List<WsmResource> resourceList =
-        wsmResourceService.enumerateResources(workspaceUuid, null, null, 0, 100, userRequest);
+        wsmResourceService.enumerateResources(workspaceUuid, null, null, 0, 100);
     checkForResource(resourceList, ipResource);
     checkForResource(resourceList, diskResource);
     checkForResource(resourceList, networkResource);
@@ -567,7 +574,8 @@ public class CreateAndDeleteAzureControlledResourceFlightTest extends BaseAzureT
   public void createVmWithFailureMakeSureNetworkInterfaceIsNotAbandoned()
       throws InterruptedException {
     // Setup workspace and cloud context
-    UUID workspaceUuid = azureTestUtils.createWorkspace(workspaceService);
+    Workspace workspace = azureTestUtils.createWorkspace(workspaceService);
+    UUID workspaceUuid = workspace.getWorkspaceId();
     AuthenticatedUserRequest userRequest = userAccessUtils.defaultUserAuthRequest();
 
     // Cloud context needs to be created first
@@ -580,8 +588,7 @@ public class CreateAndDeleteAzureControlledResourceFlightTest extends BaseAzureT
             null);
 
     assertEquals(FlightStatus.SUCCESS, createAzureContextFlightState.getFlightStatus());
-    assertTrue(
-        workspaceService.getAuthorizedAzureCloudContext(workspaceUuid, userRequest).isPresent());
+    assertTrue(azureCloudContextService.getAzureCloudContext(workspaceUuid).isPresent());
 
     // Create disk
     ControlledAzureDiskResource diskResource = createDisk(workspaceUuid, userRequest);
@@ -628,9 +635,7 @@ public class CreateAndDeleteAzureControlledResourceFlightTest extends BaseAzureT
     assertEquals(FlightStatus.ERROR, vmCreationFlightState.getFlightStatus());
     assertThrows(
         bio.terra.workspace.service.resource.exception.ResourceNotFoundException.class,
-        () ->
-            controlledResourceService.getControlledResource(
-                workspaceUuid, resourceId, userRequest));
+        () -> controlledResourceService.getControlledResource(workspaceUuid, resourceId));
 
     ComputeManager computeManager = azureTestUtils.getComputeManager();
     AzureCloudContext azureCloudContext =
@@ -715,7 +720,8 @@ public class CreateAndDeleteAzureControlledResourceFlightTest extends BaseAzureT
   public void createAndDeleteAzureVmControlledResourceWithCustomScriptExtensionWithNoPublicIp()
       throws InterruptedException {
     // Setup workspace and cloud context
-    UUID workspaceUuid = azureTestUtils.createWorkspace(workspaceService);
+    Workspace workspace = azureTestUtils.createWorkspace(workspaceService);
+    UUID workspaceUuid = workspace.getWorkspaceId();
     AuthenticatedUserRequest userRequest = userAccessUtils.defaultUserAuthRequest();
     createCloudContext(workspaceUuid, userRequest);
 
@@ -757,7 +763,7 @@ public class CreateAndDeleteAzureControlledResourceFlightTest extends BaseAzureT
     // Exercise resource enumeration for the underlying resources.
     // Verify that the resources we created are in the enumeration.
     List<WsmResource> resourceList =
-        wsmResourceService.enumerateResources(workspaceUuid, null, null, 0, 100, userRequest);
+        wsmResourceService.enumerateResources(workspaceUuid, null, null, 0, 100);
     // checkForResource(resourceList, ipResource);
     checkForResource(resourceList, diskResource);
     checkForResource(resourceList, networkResource);
@@ -971,7 +977,8 @@ public class CreateAndDeleteAzureControlledResourceFlightTest extends BaseAzureT
 
   @Test
   public void createAzureNetworkControlledResource() throws InterruptedException {
-    UUID workspaceUuid = azureTestUtils.createWorkspace(workspaceService);
+    Workspace workspace = azureTestUtils.createWorkspace(workspaceService);
+    UUID workspaceUuid = workspace.getWorkspaceId();
     AuthenticatedUserRequest userRequest = userAccessUtils.defaultUserAuthRequest();
     createCloudContext(workspaceUuid, userRequest);
 

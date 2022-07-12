@@ -19,7 +19,6 @@ import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamRethrow;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.iam.model.ControlledResourceIamRole;
-import bio.terra.workspace.service.iam.model.SamConstants.SamControlledResourceActions;
 import bio.terra.workspace.service.job.JobBuilder;
 import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.job.JobService;
@@ -43,12 +42,9 @@ import bio.terra.workspace.service.resource.controlled.model.ManagedByType;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.model.StewardshipType;
 import bio.terra.workspace.service.resource.model.WsmResource;
-import bio.terra.workspace.service.stage.StageService;
 import bio.terra.workspace.service.workspace.GcpCloudContextService;
-import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ResourceKeys;
-import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import bio.terra.workspace.service.workspace.model.GcpCloudContext;
 import bio.terra.workspace.service.workspace.model.OperationType;
 import bio.terra.workspace.service.workspace.model.WsmApplication;
@@ -74,34 +70,25 @@ public class ControlledResourceService {
   private static final Duration RESOURCE_ROW_MAX_WAIT_TIME = Duration.ofSeconds(28);
 
   private final JobService jobService;
-  private final WorkspaceService workspaceService;
   private final ResourceDao resourceDao;
   private final ApplicationDao applicationDao;
-  private final StageService stageService;
   private final SamService samService;
   private final GcpCloudContextService gcpCloudContextService;
-  private final ControlledResourceMetadataManager controlledResourceMetadataManager;
   private final FeatureConfiguration features;
 
   @Autowired
   public ControlledResourceService(
       JobService jobService,
-      WorkspaceService workspaceService,
       ResourceDao resourceDao,
       ApplicationDao applicationDao,
-      StageService stageService,
       SamService samService,
       GcpCloudContextService gcpCloudContextService,
-      ControlledResourceMetadataManager controlledResourceMetadataManager,
       FeatureConfiguration features) {
     this.jobService = jobService;
-    this.workspaceService = workspaceService;
     this.resourceDao = resourceDao;
     this.applicationDao = applicationDao;
-    this.stageService = stageService;
     this.samService = samService;
     this.gcpCloudContextService = gcpCloudContextService;
-    this.controlledResourceMetadataManager = controlledResourceMetadataManager;
     this.features = features;
   }
 
@@ -112,7 +99,6 @@ public class ControlledResourceService {
       ApiJobControl jobControl,
       String resultPath,
       AuthenticatedUserRequest userRequest) {
-    features.azureEnabledCheck();
 
     JobBuilder jobBuilder =
         commonCreationJobBuilder(
@@ -131,8 +117,6 @@ public class ControlledResourceService {
       ApiJobControl jobControl,
       String resultPath,
       AuthenticatedUserRequest userRequest) {
-    features.azureEnabledCheck();
-
     JobBuilder jobBuilder =
         commonCreationJobBuilder(
                 resource, privateResourceIamRole, jobControl, resultPath, userRequest)
@@ -146,14 +130,8 @@ public class ControlledResourceService {
   public ControlledGcsBucketResource updateGcsBucket(
       ControlledGcsBucketResource resource,
       @Nullable ApiGcpGcsBucketUpdateParameters updateParameters,
-      AuthenticatedUserRequest userRequest,
       @Nullable String resourceName,
       @Nullable String resourceDescription) {
-    controlledResourceMetadataManager.validateControlledResourceAndAction(
-        userRequest,
-        resource.getWorkspaceId(),
-        resource.getResourceId(),
-        SamControlledResourceActions.EDIT_ACTION);
     if (null != updateParameters && null != updateParameters.getCloningInstructions()) {
       ResourceValidationUtils.validateCloningInstructions(
           StewardshipType.CONTROLLED,
@@ -169,7 +147,6 @@ public class ControlledResourceService {
             .description(jobDescription)
             .flightClass(UpdateControlledGcsBucketResourceFlight.class)
             .resource(resource)
-            .userRequest(userRequest)
             .operationType(OperationType.UPDATE)
             .workspaceId(resource.getWorkspaceId().toString())
             // TODO: [PF-1282] need to disambiguate the RESOURCE and RESOURCE_NAME usage
@@ -213,12 +190,8 @@ public class ControlledResourceService {
       @Nullable String destinationBucketName,
       @Nullable String destinationLocation,
       @Nullable ApiCloningInstructionsEnum cloningInstructionsOverride) {
-    stageService.assertMcWorkspace(destinationWorkspaceId, "cloneGcsBucket");
-    // Authorization check is handled as the first flight step rather than before the flight, as
-    // this flight is re-used for cloneWorkspace.
-
     final ControlledResource sourceBucketResource =
-        getControlledResource(sourceWorkspaceId, sourceResourceId, userRequest);
+        getControlledResource(sourceWorkspaceId, sourceResourceId);
 
     // Write access to the target workspace will be established in the create flight
     final String jobDescription =
@@ -257,11 +230,6 @@ public class ControlledResourceService {
       ControlledResourceIamRole privateResourceIamRole,
       AuthenticatedUserRequest userRequest,
       T creationParameters) {
-
-    if (resource.getResourceType().getCloudPlatform() == CloudPlatform.AZURE) {
-      features.azureEnabledCheck();
-    }
-
     JobBuilder jobBuilder =
         commonCreationJobBuilder(resource, privateResourceIamRole, userRequest)
             .addParameter(ControlledResourceKeys.CREATION_PARAMETERS, creationParameters);
@@ -272,14 +240,8 @@ public class ControlledResourceService {
   public ControlledBigQueryDatasetResource updateBqDataset(
       ControlledBigQueryDatasetResource resource,
       @Nullable ApiGcpBigQueryDatasetUpdateParameters updateParameters,
-      AuthenticatedUserRequest userRequest,
       @Nullable String resourceName,
       @Nullable String resourceDescription) {
-    controlledResourceMetadataManager.validateControlledResourceAndAction(
-        userRequest,
-        resource.getWorkspaceId(),
-        resource.getResourceId(),
-        SamControlledResourceActions.EDIT_ACTION);
     if (null != updateParameters && null != updateParameters.getCloningInstructions()) {
       ResourceValidationUtils.validateCloningInstructions(
           StewardshipType.CONTROLLED,
@@ -295,7 +257,6 @@ public class ControlledResourceService {
             .description(jobDescription)
             .flightClass(UpdateControlledBigQueryDatasetResourceFlight.class)
             .resource(resource)
-            .userRequest(userRequest)
             .operationType(OperationType.UPDATE)
             .resourceType(resource.getResourceType())
             .resourceName(resource.getName())
@@ -336,9 +297,8 @@ public class ControlledResourceService {
       @Nullable String destinationDatasetName,
       @Nullable String destinationLocation,
       @Nullable ApiCloningInstructionsEnum cloningInstructionsOverride) {
-    stageService.assertMcWorkspace(destinationWorkspaceId, "cloneGcpBigQueryDataset");
     final ControlledResource sourceDatasetResource =
-        getControlledResource(sourceWorkspaceId, sourceResourceId, userRequest);
+        getControlledResource(sourceWorkspaceId, sourceResourceId);
     // Authorization check is handled as the first flight step rather than before the flight, as
     // this flight is re-used for cloneWorkspace.
 
@@ -413,13 +373,7 @@ public class ControlledResourceService {
       ControlledAiNotebookInstanceResource resource,
       @Nullable ApiGcpAiNotebookUpdateParameters updateParameters,
       @Nullable String newName,
-      @Nullable String newDescription,
-      AuthenticatedUserRequest userRequest) {
-    controlledResourceMetadataManager.validateControlledResourceAndAction(
-        userRequest,
-        resource.getWorkspaceId(),
-        resource.getResourceId(),
-        SamControlledResourceActions.EDIT_ACTION);
+      @Nullable String newDescription) {
     final String jobDescription =
         String.format(
             "Update controlled AI notebook resource %s; id %s; name %s",
@@ -430,7 +384,6 @@ public class ControlledResourceService {
             .description(jobDescription)
             .flightClass(UpdateControlledAiNotebookResourceFlight.class)
             .resource(resource)
-            .userRequest(userRequest)
             .operationType(OperationType.UPDATE)
             .workspaceId(resource.getWorkspaceId().toString())
             .resourceType(resource.getResourceType())
@@ -457,9 +410,6 @@ public class ControlledResourceService {
       @Nullable String resultPath,
       AuthenticatedUserRequest userRequest) {
 
-    // Pre-flight assertions performs the access control
-    validateCreateFlightPrerequisites(resource, userRequest);
-
     final String jobDescription =
         String.format(
             "Create controlled resource %s; id %s; name %s",
@@ -479,15 +429,6 @@ public class ControlledResourceService {
         .stewardshipType(resource.getStewardshipType())
         .addParameter(ControlledResourceKeys.PRIVATE_RESOURCE_IAM_ROLE, privateResourceIamRole)
         .addParameter(JobMapKeys.RESULT_PATH.getKeyName(), resultPath);
-  }
-
-  private void validateCreateFlightPrerequisites(
-      ControlledResource resource, AuthenticatedUserRequest userRequest) {
-    stageService.assertMcWorkspace(resource.getWorkspaceId(), "createControlledResource");
-    workspaceService.validateWorkspaceAndAction(
-        userRequest,
-        resource.getWorkspaceId(),
-        resource.getCategory().getSamCreateResourceAction());
   }
 
   /**
@@ -515,28 +456,16 @@ public class ControlledResourceService {
     return application.getApplicationId();
   }
 
-  public ControlledResource getControlledResource(
-      UUID workspaceUuid, UUID resourceId, AuthenticatedUserRequest userRequest) {
-    stageService.assertMcWorkspace(workspaceUuid, "getControlledResource");
-    controlledResourceMetadataManager.validateControlledResourceAndAction(
-        userRequest, workspaceUuid, resourceId, SamControlledResourceActions.READ_ACTION);
+  public ControlledResource getControlledResource(UUID workspaceUuid, UUID resourceId) {
     return resourceDao.getResource(workspaceUuid, resourceId).castToControlledResource();
   }
 
   /** Synchronously delete a controlled resource. */
   public void deleteControlledResourceSync(
-      UUID workspaceUuid,
-      UUID resourceId,
-      AuthenticatedUserRequest userRequest,
-      Boolean withValidations) {
+      UUID workspaceUuid, UUID resourceId, AuthenticatedUserRequest userRequest) {
     JobBuilder deleteJob =
         commonDeletionJobBuilder(
-            UUID.randomUUID().toString(),
-            workspaceUuid,
-            resourceId,
-            null,
-            userRequest,
-            withValidations);
+            UUID.randomUUID().toString(), workspaceUuid, resourceId, null, userRequest);
     // Delete flight does not produce a result, so the resultClass parameter here is never used.
     deleteJob.submitAndWait(Void.class);
   }
@@ -550,17 +479,11 @@ public class ControlledResourceService {
       UUID workspaceUuid,
       UUID resourceId,
       String resultPath,
-      AuthenticatedUserRequest userRequest,
-      Boolean withValidations) {
+      AuthenticatedUserRequest userRequest) {
 
     JobBuilder deleteJob =
         commonDeletionJobBuilder(
-            jobControl.getId(),
-            workspaceUuid,
-            resourceId,
-            resultPath,
-            userRequest,
-            withValidations);
+            jobControl.getId(), workspaceUuid, resourceId, resultPath, userRequest);
     return deleteJob.submit();
   }
 
@@ -625,18 +548,8 @@ public class ControlledResourceService {
       UUID workspaceUuid,
       UUID resourceId,
       String resultPath,
-      AuthenticatedUserRequest userRequest,
-      Boolean withValidations) {
-    WsmResource resource;
-    if (withValidations) {
-      stageService.assertMcWorkspace(workspaceUuid, "deleteControlledResource");
-      resource =
-          controlledResourceMetadataManager.validateControlledResourceAndAction(
-              userRequest, workspaceUuid, resourceId, SamControlledResourceActions.DELETE_ACTION);
-    } else {
-      resource = resourceDao.getResource(workspaceUuid, resourceId);
-    }
-
+      AuthenticatedUserRequest userRequest) {
+    WsmResource resource = resourceDao.getResource(workspaceUuid, resourceId);
     final String jobDescription = "Delete controlled resource; id: " + resourceId.toString();
 
     return jobService

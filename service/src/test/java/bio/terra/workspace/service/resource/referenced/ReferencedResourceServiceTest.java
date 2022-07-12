@@ -102,7 +102,6 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
         referenceResourceService.deleteReferenceResourceForResourceType(
             referencedResource.getWorkspaceId(),
             referencedResource.getResourceId(),
-            USER_REQUEST,
             referencedResource.getResourceType());
       } catch (Exception ex) {
         logger.warn("Failed to delete reference resource " + referencedResource.getResourceId());
@@ -114,12 +113,12 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
   @Test
   void updateDataRepoReferenceTarget_updateSnapshotIdOnly() {
     referencedResource = ReferenceResourceFixtures.makeDataRepoSnapshotResource(workspaceUuid);
-    referenceResourceService.createReferenceResource(referencedResource, USER_REQUEST);
+    referenceResourceService.createReferenceResource(referencedResource);
 
     UUID resourceId = referencedResource.getResourceId();
     ReferencedDataRepoSnapshotResource originalResource =
         referenceResourceService
-            .getReferenceResource(workspaceUuid, resourceId, USER_REQUEST)
+            .getReferenceResource(workspaceUuid, resourceId)
             .castByEnum(WsmResourceType.REFERENCED_ANY_DATA_REPO_SNAPSHOT);
     String originalName = referencedResource.getName();
     String originalDescription = referencedResource.getDescription();
@@ -134,17 +133,11 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
     assertTrue(lastUpdatedDateBeforeResourceUpdate.isPresent());
 
     referenceResourceService.updateReferenceResource(
-        workspaceUuid,
-        referencedResource.getResourceId(),
-        USER_REQUEST,
-        null,
-        null,
-        updatedResource,
-        null);
+        workspaceUuid, referencedResource.getResourceId(), null, null, updatedResource, null);
 
     ReferencedDataRepoSnapshotResource result =
         referenceResourceService
-            .getReferenceResource(workspaceUuid, resourceId, USER_REQUEST)
+            .getReferenceResource(workspaceUuid, resourceId)
             .castByEnum(WsmResourceType.REFERENCED_ANY_DATA_REPO_SNAPSHOT);
     var lastUpdatedDateAfterResourceUpdate =
         workspaceActivityLogDao.getLastUpdatedDate(workspaceUuid);
@@ -161,12 +154,12 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
   @Test
   void updateDataRepoReferenceTarget_updateSnapshotIdAndInstanceName() {
     referencedResource = ReferenceResourceFixtures.makeDataRepoSnapshotResource(workspaceUuid);
-    referenceResourceService.createReferenceResource(referencedResource, USER_REQUEST);
+    referenceResourceService.createReferenceResource(referencedResource);
 
     UUID resourceId = referencedResource.getResourceId();
     ReferencedDataRepoSnapshotResource originalResource =
         referenceResourceService
-            .getReferenceResource(workspaceUuid, resourceId, USER_REQUEST)
+            .getReferenceResource(workspaceUuid, resourceId)
             .castByEnum(WsmResourceType.REFERENCED_ANY_DATA_REPO_SNAPSHOT);
     String originalName = referencedResource.getName();
     String originalDescription = referencedResource.getDescription();
@@ -180,17 +173,11 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
             .build();
 
     referenceResourceService.updateReferenceResource(
-        workspaceUuid,
-        referencedResource.getResourceId(),
-        USER_REQUEST,
-        null,
-        null,
-        updatedResource,
-        null);
+        workspaceUuid, referencedResource.getResourceId(), null, null, updatedResource, null);
 
     ReferencedDataRepoSnapshotResource result =
         referenceResourceService
-            .getReferenceResource(workspaceUuid, resourceId, USER_REQUEST)
+            .getReferenceResource(workspaceUuid, resourceId)
             .castByEnum(WsmResourceType.REFERENCED_ANY_DATA_REPO_SNAPSHOT);
     assertEquals(originalName, result.getName());
     assertEquals(originalDescription, result.getDescription());
@@ -201,7 +188,7 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
   @Test
   void updateNameDescriptionAndCloningInstructions() {
     referencedResource = ReferenceResourceFixtures.makeDataRepoSnapshotResource(workspaceUuid);
-    referenceResourceService.createReferenceResource(referencedResource, USER_REQUEST);
+    referenceResourceService.createReferenceResource(referencedResource);
 
     // Change the name & cloning instructions
     String updatedName = "renamed-" + referencedResource.getName();
@@ -210,14 +197,12 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
     referenceResourceService.updateReferenceResource(
         workspaceUuid,
         referencedResource.getResourceId(),
-        USER_REQUEST,
         updatedName,
         null,
         null,
         updatedCloningInstructions);
     referencedResource =
-        referenceResourceService.getReferenceResourceByName(
-            workspaceUuid, updatedName, USER_REQUEST);
+        referenceResourceService.getReferenceResourceByName(workspaceUuid, updatedName);
     assertEquals(referencedResource.getName(), updatedName);
     assertEquals(referencedResource.getDescription(), originalDescription);
     assertEquals(updatedCloningInstructions, referencedResource.getCloningInstructions());
@@ -228,10 +213,10 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
     var lastUpdatedDateBeforeResourceUpdate =
         workspaceActivityLogDao.getLastUpdatedDate(workspaceUuid);
     referenceResourceService.updateReferenceResource(
-        workspaceUuid, referencedResource.getResourceId(), USER_REQUEST, null, updatedDescription);
+        workspaceUuid, referencedResource.getResourceId(), null, updatedDescription);
     referencedResource =
         referenceResourceService.getReferenceResource(
-            workspaceUuid, referencedResource.getResourceId(), USER_REQUEST);
+            workspaceUuid, referencedResource.getResourceId());
     var updatedDateAfterResourceUpdate = workspaceActivityLogDao.getLastUpdatedDate(workspaceUuid);
     assertTrue(
         lastUpdatedDateBeforeResourceUpdate.get().isBefore(updatedDateAfterResourceUpdate.get()));
@@ -242,14 +227,10 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
     String updatedName2 = "2" + updatedName;
     String updatedDescription2 = "2" + updatedDescription;
     referenceResourceService.updateReferenceResource(
-        workspaceUuid,
-        referencedResource.getResourceId(),
-        USER_REQUEST,
-        updatedName2,
-        updatedDescription2);
+        workspaceUuid, referencedResource.getResourceId(), updatedName2, updatedDescription2);
     referencedResource =
         referenceResourceService.getReferenceResource(
-            workspaceUuid, referencedResource.getResourceId(), USER_REQUEST);
+            workspaceUuid, referencedResource.getResourceId());
     assertEquals(referencedResource.getName(), updatedName2);
     assertEquals(referencedResource.getDescription(), updatedDescription2);
 
@@ -259,11 +240,7 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
         InvalidNameException.class,
         () ->
             referenceResourceService.updateReferenceResource(
-                workspaceUuid,
-                referencedResource.getResourceId(),
-                USER_REQUEST,
-                invalidName,
-                null));
+                workspaceUuid, referencedResource.getResourceId(), invalidName, null));
     // Update to invalid description
   }
 
@@ -296,7 +273,7 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
       jobService.setFlightDebugInfoForTest(debugInfo);
       referencedResource = ReferenceResourceFixtures.makeDataRepoSnapshotResource(workspaceUuid);
       ReferencedResource createdResource =
-          referenceResourceService.createReferenceResource(referencedResource, USER_REQUEST);
+          referenceResourceService.createReferenceResource(referencedResource);
       assertEquals(referencedResource, createdResource);
     }
 
@@ -329,13 +306,11 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
       // flight fails via debugInfo.
       assertThrows(
           InvalidResultStateException.class,
-          () -> referenceResourceService.createReferenceResource(referencedResource, USER_REQUEST));
+          () -> referenceResourceService.createReferenceResource(referencedResource));
       // The flight should be undone, so the resource should not exist.
       assertThrows(
           ResourceNotFoundException.class,
-          () ->
-              referenceResourceService.getReferenceResource(
-                  workspaceUuid, resourceId, USER_REQUEST));
+          () -> referenceResourceService.getReferenceResource(workspaceUuid, resourceId));
     }
   }
 
@@ -417,7 +392,7 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
           workspaceActivityLogDao.getLastUpdatedDate(workspaceUuid);
       assertTrue(lastUpdatedDateBeforeResourceUpdate.isPresent());
       ReferencedResource resultReferenceResource =
-          referenceResourceService.createReferenceResource(referencedResource, USER_REQUEST);
+          referenceResourceService.createReferenceResource(referencedResource);
 
       var updatedDateAfterCreate = workspaceActivityLogDao.getLastUpdatedDate(workspaceUuid);
       assertTrue(lastUpdatedDateBeforeResourceUpdate.get().isBefore(updatedDateAfterCreate.get()));
@@ -432,18 +407,17 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
 
       ReferencedDataRepoSnapshotResource byid =
           referenceResourceService
-              .getReferenceResource(workspaceUuid, resource.getResourceId(), USER_REQUEST)
+              .getReferenceResource(workspaceUuid, resource.getResourceId())
               .castByEnum(WsmResourceType.REFERENCED_ANY_DATA_REPO_SNAPSHOT);
       ReferencedDataRepoSnapshotResource byname =
           referenceResourceService
-              .getReferenceResourceByName(workspaceUuid, resource.getName(), USER_REQUEST)
+              .getReferenceResourceByName(workspaceUuid, resource.getName())
               .castByEnum(WsmResourceType.REFERENCED_ANY_DATA_REPO_SNAPSHOT);
       assertEquals(byid, byname);
 
       referenceResourceService.deleteReferenceResourceForResourceType(
           workspaceUuid,
           referencedResource.getResourceId(),
-          USER_REQUEST,
           WsmResourceType.REFERENCED_ANY_DATA_REPO_SNAPSHOT);
       var updatedDateAfterDelete = workspaceActivityLogDao.getLastUpdatedDate(workspaceUuid);
       assertTrue(updatedDateAfterCreate.get().isBefore(updatedDateAfterDelete.get()));
@@ -504,7 +478,7 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
         logger.info("testEnumerate - create resource {}", i);
         ReferencedResource resource =
             ReferenceResourceFixtures.makeDataRepoSnapshotResource(workspaceUuid);
-        referenceResourceService.createReferenceResource(resource, USER_REQUEST);
+        referenceResourceService.createReferenceResource(resource);
         resources.add(resource);
       }
 
@@ -517,7 +491,7 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
       } finally {
         for (var resource : resources) {
           referenceResourceService.deleteReferenceResourceForResourceType(
-              workspaceUuid, resource.getResourceId(), USER_REQUEST, resource.getResourceType());
+              workspaceUuid, resource.getResourceId(), resource.getResourceType());
         }
       }
     }
@@ -559,7 +533,7 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
           workspaceActivityLogDao.getLastUpdatedDate(workspaceUuid);
       assertTrue(lastUpdatedDateBeforeResourceUpdate.isPresent());
       ReferencedResource resultReferenceResource =
-          referenceResourceService.createReferenceResource(referencedResource, USER_REQUEST);
+          referenceResourceService.createReferenceResource(referencedResource);
 
       var updatedDateAfterCreate = workspaceActivityLogDao.getLastUpdatedDate(workspaceUuid);
       assertTrue(lastUpdatedDateBeforeResourceUpdate.get().isBefore(updatedDateAfterCreate.get()));
@@ -574,11 +548,11 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
 
       ReferencedGcsObjectResource byid =
           referenceResourceService
-              .getReferenceResource(workspaceUuid, resource.getResourceId(), USER_REQUEST)
+              .getReferenceResource(workspaceUuid, resource.getResourceId())
               .castByEnum(WsmResourceType.REFERENCED_GCP_GCS_OBJECT);
       ReferencedGcsObjectResource byname =
           referenceResourceService
-              .getReferenceResourceByName(workspaceUuid, resource.getName(), USER_REQUEST)
+              .getReferenceResourceByName(workspaceUuid, resource.getName())
               .castByEnum(WsmResourceType.REFERENCED_GCP_GCS_OBJECT);
       assertNotNull(byid);
       assertEquals(byid, byname);
@@ -586,7 +560,6 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
       referenceResourceService.deleteReferenceResourceForResourceType(
           workspaceUuid,
           referencedResource.getResourceId(),
-          USER_REQUEST,
           WsmResourceType.REFERENCED_GCP_GCS_OBJECT);
       var updatedDateAfterDelete = workspaceActivityLogDao.getLastUpdatedDate(workspaceUuid);
       assertTrue(updatedDateAfterCreate.get().isBefore(updatedDateAfterDelete.get()));
@@ -614,7 +587,7 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
           referencedResource.castByEnum(WsmResourceType.REFERENCED_GCP_GCS_BUCKET);
 
       ReferencedResource resultReferenceResource =
-          referenceResourceService.createReferenceResource(referencedResource, USER_REQUEST);
+          referenceResourceService.createReferenceResource(referencedResource);
       ReferencedGcsBucketResource resultResource =
           resultReferenceResource.castByEnum(WsmResourceType.REFERENCED_GCP_GCS_BUCKET);
       assertEquals(resource, resultResource);
@@ -627,18 +600,17 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
 
       ReferencedGcsBucketResource byid =
           referenceResourceService
-              .getReferenceResource(workspaceUuid, resource.getResourceId(), USER_REQUEST)
+              .getReferenceResource(workspaceUuid, resource.getResourceId())
               .castByEnum(WsmResourceType.REFERENCED_GCP_GCS_BUCKET);
       ReferencedGcsBucketResource byname =
           referenceResourceService
-              .getReferenceResourceByName(workspaceUuid, resource.getName(), USER_REQUEST)
+              .getReferenceResourceByName(workspaceUuid, resource.getName())
               .castByEnum(WsmResourceType.REFERENCED_GCP_GCS_BUCKET);
       assertEquals(byid, byname);
 
       referenceResourceService.deleteReferenceResourceForResourceType(
           workspaceUuid,
           referencedResource.getResourceId(),
-          USER_REQUEST,
           WsmResourceType.REFERENCED_GCP_GCS_BUCKET);
     }
 
@@ -758,7 +730,8 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
           workspaceActivityLogDao.getLastUpdatedDate(workspaceUuid);
       assertTrue(lastUpdatedDateBeforeResourceUpdate.isPresent());
       ReferencedResource resultReferenceResource =
-          referenceResourceService.createReferenceResource(referencedResource, USER_REQUEST);
+          referenceResourceService.createReferenceResource(referencedResource);
+      referenceResourceService.createReferenceResource(referencedResource);
 
       var updatedDateAfterCreate = workspaceActivityLogDao.getLastUpdatedDate(workspaceUuid);
       assertTrue(lastUpdatedDateBeforeResourceUpdate.get().isBefore(updatedDateAfterCreate.get()));
@@ -775,18 +748,17 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
 
       ReferencedBigQueryDatasetResource byid =
           referenceResourceService
-              .getReferenceResource(workspaceUuid, resource.getResourceId(), USER_REQUEST)
+              .getReferenceResource(workspaceUuid, resource.getResourceId())
               .castByEnum(WsmResourceType.REFERENCED_GCP_BIG_QUERY_DATASET);
       ReferencedBigQueryDatasetResource byname =
           referenceResourceService
-              .getReferenceResourceByName(workspaceUuid, resource.getName(), USER_REQUEST)
+              .getReferenceResourceByName(workspaceUuid, resource.getName())
               .castByEnum(WsmResourceType.REFERENCED_GCP_BIG_QUERY_DATASET);
       assertEquals(byid, byname);
 
       referenceResourceService.deleteReferenceResourceForResourceType(
           workspaceUuid,
           referencedResource.getResourceId(),
-          USER_REQUEST,
           WsmResourceType.REFERENCED_GCP_BIG_QUERY_DATASET);
       var updatedDateAfterDelete = workspaceActivityLogDao.getLastUpdatedDate(workspaceUuid);
       assertTrue(updatedDateAfterCreate.get().isBefore(updatedDateAfterDelete.get()));
@@ -806,7 +778,7 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
           workspaceActivityLogDao.getLastUpdatedDate(workspaceUuid);
       assertTrue(lastUpdatedDateBeforeResourceUpdate.isPresent());
       ReferencedResource resultReferenceResource =
-          referenceResourceService.createReferenceResource(referencedResource, USER_REQUEST);
+          referenceResourceService.createReferenceResource(referencedResource);
 
       var updatedDateAfterCreate = workspaceActivityLogDao.getLastUpdatedDate(workspaceUuid);
       assertTrue(lastUpdatedDateBeforeResourceUpdate.get().isBefore(updatedDateAfterCreate.get()));
@@ -819,18 +791,17 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
               workspaceUuid, referencedResource.getResourceId(), USER_REQUEST));
       ReferencedBigQueryDataTableResource byid =
           referenceResourceService
-              .getReferenceResource(workspaceUuid, resource.getResourceId(), USER_REQUEST)
+              .getReferenceResource(workspaceUuid, resource.getResourceId())
               .castByEnum(WsmResourceType.REFERENCED_GCP_BIG_QUERY_DATA_TABLE);
       ReferencedBigQueryDataTableResource byname =
           referenceResourceService
-              .getReferenceResourceByName(workspaceUuid, resource.getName(), USER_REQUEST)
+              .getReferenceResourceByName(workspaceUuid, resource.getName())
               .castByEnum(WsmResourceType.REFERENCED_GCP_BIG_QUERY_DATA_TABLE);
       assertEquals(byid, byname);
 
       referenceResourceService.deleteReferenceResourceForResourceType(
           workspaceUuid,
           referencedResource.getResourceId(),
-          USER_REQUEST,
           WsmResourceType.REFERENCED_GCP_BIG_QUERY_DATA_TABLE);
 
       var updatedDateAfterDelete = workspaceActivityLogDao.getLastUpdatedDate(workspaceUuid);
@@ -842,13 +813,12 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
       referencedResource = makeBigQueryDataTableResource();
 
       referenceResourceService
-          .createReferenceResource(referencedResource, USER_REQUEST)
+          .createReferenceResource(referencedResource)
           .castByEnum(WsmResourceType.REFERENCED_GCP_BIG_QUERY_DATA_TABLE);
 
       referenceResourceService.deleteReferenceResourceForResourceType(
           workspaceUuid,
           referencedResource.getResourceId(),
-          USER_REQUEST,
           WsmResourceType.REFERENCED_GCP_BIG_QUERY_DATASET);
 
       var lastUpdatedDateBeforeResourceUpdate =
@@ -856,7 +826,7 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
       // Fail to delete the resource the first time with the wrong resource type.
       ReferencedBigQueryDataTableResource resource =
           referenceResourceService
-              .getReferenceResource(workspaceUuid, referencedResource.getResourceId(), USER_REQUEST)
+              .getReferenceResource(workspaceUuid, referencedResource.getResourceId())
               .castByEnum(WsmResourceType.REFERENCED_GCP_BIG_QUERY_DATA_TABLE);
       assertEquals(
           referencedResource.castByEnum(WsmResourceType.REFERENCED_GCP_BIG_QUERY_DATA_TABLE),
@@ -869,14 +839,13 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
       referenceResourceService.deleteReferenceResourceForResourceType(
           workspaceUuid,
           referencedResource.getResourceId(),
-          USER_REQUEST,
           WsmResourceType.REFERENCED_GCP_BIG_QUERY_DATA_TABLE);
       // BQ data table is successfully deleted.
       assertThrows(
           ResourceNotFoundException.class,
           () ->
               referenceResourceService.getReferenceResource(
-                  workspaceUuid, referencedResource.getResourceId(), USER_REQUEST));
+                  workspaceUuid, referencedResource.getResourceId()));
 
       var updatedDateAfterSuccessfulDeletion =
           workspaceActivityLogDao.getLastUpdatedDate(workspaceUuid);
@@ -1021,7 +990,7 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
           workspaceActivityLogDao.getLastUpdatedDate(workspaceUuid);
       assertTrue(lastUpdatedDateBeforeResourceUpdate.isPresent());
       ReferencedResource actualReferencedResourceGeneric =
-          referenceResourceService.createReferenceResource(referencedResource, USER_REQUEST);
+          referenceResourceService.createReferenceResource(referencedResource);
       var updatedDateAfterCreate = workspaceActivityLogDao.getLastUpdatedDate(workspaceUuid);
       assertTrue(lastUpdatedDateBeforeResourceUpdate.get().isBefore(updatedDateAfterCreate.get()));
       ReferencedTerraWorkspaceResource actual =
@@ -1035,11 +1004,11 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
 
       ReferencedTerraWorkspaceResource byIdActual =
           referenceResourceService
-              .getReferenceResource(workspaceUuid, expected.getResourceId(), USER_REQUEST)
+              .getReferenceResource(workspaceUuid, expected.getResourceId())
               .castByEnum(WsmResourceType.REFERENCED_ANY_TERRA_WORKSPACE);
       ReferencedTerraWorkspaceResource byNameActual =
           referenceResourceService
-              .getReferenceResourceByName(workspaceUuid, expected.getName(), USER_REQUEST)
+              .getReferenceResourceByName(workspaceUuid, expected.getName())
               .castByEnum(WsmResourceType.REFERENCED_ANY_TERRA_WORKSPACE);
       assertNotNull(byIdActual);
       assertEquals(byIdActual, byNameActual);
@@ -1047,7 +1016,6 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
       referenceResourceService.deleteReferenceResourceForResourceType(
           workspaceUuid,
           referencedResource.getResourceId(),
-          USER_REQUEST,
           WsmResourceType.REFERENCED_ANY_TERRA_WORKSPACE);
       var updatedDateAfterDeletion = workspaceActivityLogDao.getLastUpdatedDate(workspaceUuid);
       assertTrue(updatedDateAfterCreate.get().isBefore(updatedDateAfterDeletion.get()));
@@ -1072,9 +1040,7 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
     void getResourceById() {
       assertThrows(
           ResourceNotFoundException.class,
-          () ->
-              referenceResourceService.getReferenceResource(
-                  workspaceUuid, UUID.randomUUID(), USER_REQUEST));
+          () -> referenceResourceService.getReferenceResource(workspaceUuid, UUID.randomUUID()));
     }
 
     @Test
@@ -1083,7 +1049,7 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
           ResourceNotFoundException.class,
           () ->
               referenceResourceService.getReferenceResourceByName(
-                  workspaceUuid, UUID.randomUUID().toString(), USER_REQUEST));
+                  workspaceUuid, UUID.randomUUID().toString()));
     }
 
     @Test
@@ -1097,7 +1063,7 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
       referencedResource = ReferenceResourceFixtures.makeDataRepoSnapshotResource(workspaceUuid);
       assertEquals(referencedResource.getStewardshipType(), StewardshipType.REFERENCED);
 
-      referenceResourceService.createReferenceResource(referencedResource, USER_REQUEST);
+      referenceResourceService.createReferenceResource(referencedResource);
 
       UUID resourceId = UUID.randomUUID();
       ReferencedDataRepoSnapshotResource duplicateNameResource =
@@ -1112,9 +1078,7 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
 
       assertThrows(
           DuplicateResourceException.class,
-          () ->
-              referenceResourceService.createReferenceResource(
-                  duplicateNameResource, USER_REQUEST));
+          () -> referenceResourceService.createReferenceResource(duplicateNameResource));
     }
   }
 }

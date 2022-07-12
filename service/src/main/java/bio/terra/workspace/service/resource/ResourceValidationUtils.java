@@ -109,7 +109,8 @@ public class ResourceValidationUtils {
   // An object named "." or ".." is nearly impossible for a user to delete.
   private static final ImmutableList<String> DISALLOWED_OBJECT_NAMES = ImmutableList.of(".", "..");
 
-  private static final Pattern GIT_SSH_URI_PATTERN = Pattern.compile("git@(.*?)\\:(.*\\.git)$");
+  // Pattern for Git SSH URL. It often but doesn't have to have the .git extension.
+  private static final Pattern GIT_SSH_URI_PATTERN = Pattern.compile("git@(.*?)\\:(.*)$");
   /**
    * Magic prefix for ACME HTTP challenge.
    *
@@ -216,11 +217,19 @@ public class ResourceValidationUtils {
   }
 
   private boolean hasValidHostName(String hostName) {
+    if (hostName == null) {
+      return false;
+    }
     for (String allowedHost :
         gitRepoReferencedResourceConfiguration.getAllowListedGitRepoHostName()) {
       if (StringUtils.equals(hostName, allowedHost)) {
         return true;
       }
+    }
+    // AWS Code commit host server is region specific. Here are the list of all the valid git
+    // connection endpoint: https://docs.aws.amazon.com/codecommit/latest/userguide/regions.html.
+    if (hostName.startsWith("git-codecommit.") && hostName.endsWith(".amazonaws.com")) {
+      return true;
     }
     return false;
   }

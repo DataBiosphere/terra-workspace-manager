@@ -76,7 +76,7 @@ public class RemoveUserFromWorkspaceFlightTest extends BaseConnectedTest {
   void removeUserFromWorkspaceFlightDoUndo() throws Exception {
     // Create a workspace as the default test user
     UUID uuid = UUID.randomUUID();
-    Workspace request =
+    Workspace workspace =
         Workspace.builder()
             .workspaceId(uuid)
             .userFacingId("a" + uuid.toString())
@@ -84,7 +84,7 @@ public class RemoveUserFromWorkspaceFlightTest extends BaseConnectedTest {
             .spendProfileId(spendUtils.defaultSpendId())
             .build();
     UUID workspaceUuid =
-        workspaceService.createWorkspace(request, userAccessUtils.defaultUserAuthRequest());
+        workspaceService.createWorkspace(workspace, userAccessUtils.defaultUserAuthRequest());
     // Add the secondary test user as a writer
     samService.grantWorkspaceRole(
         workspaceUuid,
@@ -100,11 +100,10 @@ public class RemoveUserFromWorkspaceFlightTest extends BaseConnectedTest {
     // Create a GCP context as default user
     String makeContextJobId = UUID.randomUUID().toString();
     workspaceService.createGcpCloudContext(
-        workspaceUuid, makeContextJobId, userAccessUtils.defaultUserAuthRequest());
+        workspace, makeContextJobId, userAccessUtils.defaultUserAuthRequest());
     jobService.waitForJob(makeContextJobId);
     AsyncJobResult<CloudContextHolder> createContextJobResult =
-        jobService.retrieveAsyncJobResult(
-            makeContextJobId, CloudContextHolder.class, userAccessUtils.defaultUserAuthRequest());
+        jobService.retrieveAsyncJobResult(makeContextJobId, CloudContextHolder.class);
     assertEquals(StatusEnum.SUCCEEDED, createContextJobResult.getJobReport().getStatus());
     GcpCloudContext cloudContext = createContextJobResult.getResult().getGcpCloudContext();
 
@@ -233,7 +232,7 @@ public class RemoveUserFromWorkspaceFlightTest extends BaseConnectedTest {
                     secondaryUserPetServiceEmail)));
 
     // Cleanup
-    workspaceService.deleteWorkspace(workspaceUuid, userAccessUtils.defaultUserAuthRequest());
+    workspaceService.deleteWorkspace(workspace, userAccessUtils.defaultUserAuthRequest());
   }
 
   private ControlledBigQueryDatasetResource buildPrivateDataset(

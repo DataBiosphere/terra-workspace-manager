@@ -8,8 +8,6 @@ import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.FlightState;
 import bio.terra.stairway.exception.StairwayException;
 import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
-import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
-import bio.terra.workspace.service.iam.model.SamConstants;
 import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.job.exception.InternalStairwayException;
 import bio.terra.workspace.service.resource.model.StewardshipType;
@@ -56,7 +54,6 @@ public class Alpha1Service {
    * jobs are ordered by submit time.
    *
    * @param workspaceUuid workspace we are listing in
-   * @param userRequest authenticated user
    * @param limit max number of jobs to return
    * @param pageToken optional starting place in the result set; start at beginning if missing
    * @param cloudResourceType optional filter by cloud resource type
@@ -67,19 +64,12 @@ public class Alpha1Service {
    */
   public EnumeratedJobs enumerateJobs(
       UUID workspaceUuid,
-      AuthenticatedUserRequest userRequest,
       int limit,
       @Nullable String pageToken,
       @Nullable WsmResourceFamily cloudResourceType,
       @Nullable StewardshipType stewardshipType,
       @Nullable String resourceName,
       @Nullable JobStateFilter jobStateFilter) {
-    features.alpha1EnabledCheck();
-
-    // Readers can see the workspace jobs list
-    workspaceService.validateWorkspaceAndAction(
-        userRequest, workspaceUuid, SamConstants.SamWorkspaceAction.READ);
-
     FlightEnumeration flightEnumeration;
     try {
       FlightFilter filter =

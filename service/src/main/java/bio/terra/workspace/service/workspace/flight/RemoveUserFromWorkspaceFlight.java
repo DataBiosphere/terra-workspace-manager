@@ -63,8 +63,7 @@ public class RemoveUserFromWorkspaceFlight extends Flight {
             userRequest),
         samRetry);
     addStep(
-        new RemovePrivateResourceAccessStep(userToRemove, appContext.getSamService(), userRequest),
-        samRetry);
+        new RemovePrivateResourceAccessStep(userToRemove, appContext.getSamService()), samRetry);
     addStep(
         new MarkPrivateResourcesAbandonedStep(
             workspaceUuid, userToRemove, appContext.getResourceDao()),
