@@ -2,6 +2,7 @@ package bio.terra.workspace.service.resource.controlled.cloud.azure;
 
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
+import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
 import bio.terra.workspace.common.BaseConnectedTest;
 import bio.terra.workspace.common.exception.FeatureNotSupportedException;
 import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
@@ -23,19 +24,31 @@ import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
 import java.util.UUID;
+
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.test.annotation.DirtiesContext;
 
 // Test to make sure things properly do not work when Azure feature is not enabled
+//We are modifying application context here. Need to clean up once tests are done.
+@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
 public class AzureDisabledTest extends BaseConnectedTest {
   @Autowired private WorkspaceService workspaceService;
   @Autowired private JobService jobService;
   @Autowired private UserAccessUtils userAccessUtils;
   @Autowired private ControlledResourceService controlledResourceService;
+  @Autowired private FeatureConfiguration featureConfiguration;
 
   private static String getAzureName(String tag) {
     final String id = UUID.randomUUID().toString().substring(0, 6);
     return String.format("wsm-integ-%s-%s", tag, id);
+  }
+
+  @BeforeEach
+  public void setUp() {
+    //explicitly disable Azure feature regardless of the configuration files
+    featureConfiguration.setAzureEnabled(false);
   }
 
   @Test
