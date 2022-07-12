@@ -110,13 +110,13 @@ public class WorkspaceLifecycle extends WorkspaceApiTestScriptBase {
     propertyMap2.add(property4);
 
     Properties expectedPropertyMap = new Properties();
-    expectedPropertyMap.add(property2);
     expectedPropertyMap.add(property3);
     expectedPropertyMap.add(property4);
+    expectedPropertyMap.add(property2);
 
     workspaceApi.updateWorkspaceProperties(propertyMap2, workspaceUuid);
     WorkspaceDescription updatedWorkspaceDescription = workspaceApi.getWorkspace(workspaceUuid);
-    assertEquals(updatedWorkspaceDescription.getProperties(), expectedPropertyMap);
+    assertEquals(expectedPropertyMap, updatedWorkspaceDescription.getProperties());
 
     workspaceApi.deleteWorkspace(workspaceUuid);
     ClientTestUtils.assertHttpSuccess(workspaceApi, "DELETE workspace");
