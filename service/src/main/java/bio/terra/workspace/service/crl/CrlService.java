@@ -551,16 +551,9 @@ public class CrlService {
     return manager;
   }
 
-  /**
-   * Get a managed service identity (MSI) manager pointed at the MRG subscription
-   *
-   * @param azureCloudContext target cloud context
-   * @param azureConfig target cloud configuration
-   * @return azure MSI manager
-   */
-  public MsiManager buildMsiManager(
+  private MsiManager buildMsiManager(
       AzureCloudContext azureCloudContext, AzureConfiguration azureConfig) {
-    TokenCredential azureCreds = getManagedAppCredentials(azureConfig);
+    TokenCredential credential = getManagedAppCredentials(azureConfig);
 
     AzureProfile azureProfile =
         new AzureProfile(
@@ -568,7 +561,11 @@ public class CrlService {
             azureCloudContext.getAzureSubscriptionId(),
             AzureEnvironment.AZURE);
 
-    MsiManager manager = MsiManager.configure().authenticate(azureCreds, azureProfile);
+    // We must use FQDN because there are two `Defaults` symbols imported otherwise.
+    MsiManager manager =
+        bio.terra.cloudres.azure.resourcemanager.common.Defaults.crlConfigure(
+                clientConfig, MsiManager.configure())
+            .authenticate(credential, azureProfile);
 
     return manager;
   }
