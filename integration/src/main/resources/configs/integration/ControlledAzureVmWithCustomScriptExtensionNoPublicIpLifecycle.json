@@ -1,0 +1,23 @@
+{
+  "name": "ControlledAzureVmWithCustomScriptExtensionNoPublicIpLifecycle",
+  "description": "Create controlled Azure VM (with custom script extension and NO public IP) resource test.",
+  "serverSpecificationFile": "workspace-local.json",
+  "kubernetes": {},
+  "application": {},
+  "testScripts": [
+    {
+      "name": "ControlledAzureVmWithCustomScriptExtensionNoPublicIpLifecycle",
+      "numberOfUserJourneyThreadsToRun": 1,
+      "userJourneyThreadPoolSize": 1,
+      "expectedTimeForEach": 10,
+      "expectedTimeForEachUnit": "MINUTES",
+      "parametersMap": {
+        "spend-profile-id": "wm-default-spend-profile",
+        "subscriptionId": "3efc5bdf-be0e-44e7-b1d7-c08931e3c16c",
+        "resourceGroupId": "mrg-terra-integration-test-20211118",
+        "tenantId": "0cb7a640-45a2-4ed6-be9f-63519f86e04b"
+      }
+    }
+  ],
+  "testUserFiles": ["bella.json"]
+}
