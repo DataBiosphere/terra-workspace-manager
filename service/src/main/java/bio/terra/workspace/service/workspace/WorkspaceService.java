@@ -370,9 +370,6 @@ public class WorkspaceService {
     String jobDescription =
         String.format("Clone workspace: name: '%s' id: '%s'  ", workspaceName, workspaceUuid);
 
-    destinationWorkspace =
-        destinationWorkspace.toBuilder().properties(sourceWorkspace.getProperties()).build();
-
     // Create the destination workspace synchronously first.
     createWorkspace(destinationWorkspace, userRequest);
 

@@ -30,13 +30,6 @@ public abstract class WorkspaceAllocateTestScriptBase extends WorkspaceApiTestSc
   private UUID workspaceUuid;
   private String spendProfileId;
 
-  public static void makeProperties(Properties properties) {
-    Property property1 = new Property().key("foo").value("bar");
-    Property property2 = new Property().key("xyzzy").value("plohg");
-    properties.add(property1);
-    properties.add(property2);
-  }
-
   /**
    * Allow inheriting classes to obtain the workspace ID for the fixture.
    *
@@ -82,7 +75,10 @@ public abstract class WorkspaceAllocateTestScriptBase extends WorkspaceApiTestSc
   protected CreatedWorkspace createWorkspace(
       UUID workspaceUuid, String spendProfileId, WorkspaceApi workspaceApi) throws Exception {
     Properties properties = new Properties();
-    makeProperties(properties);
+    Property property1 = new Property().key("foo").value("bar");
+    Property property2 = new Property().key("xyzzy").value("plohg");
+    properties.add(property1);
+    properties.add(property2);
 
     final var requestBody =
         new CreateWorkspaceRequestBody()
