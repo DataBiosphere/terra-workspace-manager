@@ -10,7 +10,3 @@ workspace:
   crl:
     use-crl: true
     use-janitor: true
-
-feature:
-  # Disable azure support
-  azure-enabled: false
