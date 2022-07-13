@@ -53,7 +53,7 @@ public class WorkspaceActivityLogDao {
   }
 
   @ReadTransaction
-  public Optional<Instant> getLastUpdatedDate(UUID workspaceId) {
+  public Optional<OffsetDateTime> getLastUpdatedDate(UUID workspaceId) {
     final String sql =
         "SELECT MAX(change_date) FROM workspace_activity_log"
             + " WHERE workspace_id = :workspace_id"
@@ -63,7 +63,6 @@ public class WorkspaceActivityLogDao {
             .addValue("workspace_id", workspaceId.toString())
             .addValue("change_type", NON_UPDATE_TYPE_OPERATION);
 
-    return Optional.ofNullable(jdbcTemplate.queryForObject(sql, params, OffsetDateTime.class))
-        .map(OffsetDateTime::toInstant);
+    return Optional.ofNullable(jdbcTemplate.queryForObject(sql, params, OffsetDateTime.class));
   }
 }
