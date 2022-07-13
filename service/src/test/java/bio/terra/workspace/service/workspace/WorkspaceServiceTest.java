@@ -197,7 +197,9 @@ class WorkspaceServiceTest extends BaseConnectedTest {
         .checkAuthz(any(), any(), any(), any());
     mockMvc
         .perform(
-            addAuth(get(String.format(GET_WORKSPACE_PATH_FORMAT, UUID.randomUUID())), USER_REQUEST))
+            addAuth(
+                get(String.format(WORKSPACES_V1_BY_UUID_PATH_FORMAT, UUID.randomUUID())),
+                USER_REQUEST))
         .andExpect(status().is(HttpStatus.SC_NOT_FOUND));
   }
 
@@ -212,7 +214,7 @@ class WorkspaceServiceTest extends BaseConnectedTest {
     mockMvc
         .perform(
             addAuth(
-                get(String.format(GET_WORKSPACE_PATH_FORMAT, request.getWorkspaceId())),
+                get(String.format(WORKSPACES_V1_BY_UUID_PATH_FORMAT, request.getWorkspaceId())),
                 USER_REQUEST))
         .andExpect(status().is(HttpStatus.SC_FORBIDDEN));
   }
@@ -243,7 +245,7 @@ class WorkspaceServiceTest extends BaseConnectedTest {
     mockMvc
         .perform(
             addAuth(
-                get(String.format(GET_WORKSPACE_BY_UFID_PATH_FORMAT, "missing-workspace")),
+                get(String.format(WORKSPACES_V1_BY_UFID_PATH_FORMAT, "missing-workspace")),
                 USER_REQUEST))
         .andExpect(status().is(HttpStatus.SC_NOT_FOUND));
   }
@@ -261,7 +263,7 @@ class WorkspaceServiceTest extends BaseConnectedTest {
     mockMvc
         .perform(
             addAuth(
-                get(String.format(GET_WORKSPACE_BY_UFID_PATH_FORMAT, userFacingId)), USER_REQUEST))
+                get(String.format(WORKSPACES_V1_BY_UFID_PATH_FORMAT, userFacingId)), USER_REQUEST))
         .andExpect(status().is(HttpStatus.SC_FORBIDDEN));
     assertThrows(
         ForbiddenException.class,
@@ -585,7 +587,7 @@ class WorkspaceServiceTest extends BaseConnectedTest {
     mockMvc
         .perform(
             addAuth(
-                delete(String.format(DELETE_WORKSPACE_PATH_FORMAT, UUID.randomUUID())),
+                delete(String.format(WORKSPACES_V1_BY_UUID_PATH_FORMAT, UUID.randomUUID())),
                 USER_REQUEST))
         .andExpect(status().is(HttpStatus.SC_NOT_FOUND));
   }
@@ -602,7 +604,7 @@ class WorkspaceServiceTest extends BaseConnectedTest {
     mockMvc
         .perform(
             addAuth(
-                delete(String.format(DELETE_WORKSPACE_PATH_FORMAT, request.getWorkspaceId())),
+                delete(String.format(WORKSPACES_V1_BY_UUID_PATH_FORMAT, request.getWorkspaceId())),
                 USER_REQUEST))
         .andExpect(status().is(HttpStatus.SC_FORBIDDEN));
   }

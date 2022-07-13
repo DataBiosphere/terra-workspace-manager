@@ -514,6 +514,10 @@ components:
           $ref: '#/components/schemas/AzureContext'
         properties:
           $ref: '#/components/schemas/Properties'
+        lastUpdatedDate:
+          description: Timestamp of the latest workspace change
+          type: string
+          format: date-time
 
     WorkspaceDescriptionList:
       type: object

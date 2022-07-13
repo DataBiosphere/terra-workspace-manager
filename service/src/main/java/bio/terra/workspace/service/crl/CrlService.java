@@ -25,6 +25,7 @@ import com.azure.core.management.AzureEnvironment;
 import com.azure.core.management.profile.AzureProfile;
 import com.azure.identity.ClientSecretCredentialBuilder;
 import com.azure.resourcemanager.compute.ComputeManager;
+import com.azure.resourcemanager.msi.MsiManager;
 import com.azure.resourcemanager.relay.RelayManager;
 import com.azure.resourcemanager.resources.ResourceManager;
 import com.azure.resourcemanager.storage.StorageManager;
@@ -173,6 +174,13 @@ public class CrlService {
       AzureCloudContext azureCloudContext, AzureConfiguration azureConfig) {
     assertCrlInUse();
     return buildResourceManager(azureCloudContext, azureConfig);
+  }
+
+  /** Returns an Azure {@link MsiManager} configured for use with CRL. */
+  public MsiManager getMsiManager(
+      AzureCloudContext azureCloudContext, AzureConfiguration azureConfig) {
+    assertCrlInUse();
+    return buildMsiManager(azureCloudContext, azureConfig);
   }
 
   /** @return CRL {@link BigQueryCow} which wraps Google BigQuery API */
@@ -539,6 +547,25 @@ public class CrlService {
         bio.terra.cloudres.azure.resourcemanager.common.Defaults.crlConfigure(
                 clientConfig, StorageManager.configure())
             .authenticate(azureCreds, azureProfile);
+
+    return manager;
+  }
+
+  private MsiManager buildMsiManager(
+      AzureCloudContext azureCloudContext, AzureConfiguration azureConfig) {
+    TokenCredential credential = getManagedAppCredentials(azureConfig);
+
+    AzureProfile azureProfile =
+        new AzureProfile(
+            azureCloudContext.getAzureTenantId(),
+            azureCloudContext.getAzureSubscriptionId(),
+            AzureEnvironment.AZURE);
+
+    // We must use FQDN because there are two `Defaults` symbols imported otherwise.
+    MsiManager manager =
+        bio.terra.cloudres.azure.resourcemanager.common.Defaults.crlConfigure(
+                clientConfig, MsiManager.configure())
+            .authenticate(credential, azureProfile);
 
     return manager;
   }

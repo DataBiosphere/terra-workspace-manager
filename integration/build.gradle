@@ -30,7 +30,7 @@ dependencies {
 
         datarepoClient = "1.0.155-SNAPSHOT"
         testRunnerVersion = "0.1.3-SNAPSHOT"
-        samClient = "0.1-61135c7"
+        samClient = "0.1-3081228"
         tclClient = "0.0.51-SNAPSHOT"
     }
     implementation group: 'org.apache.commons', name: 'commons-math3', version: "${apacheMath}"
@@ -65,7 +65,7 @@ dependencies {
     implementation project(":client")
 
     // Sam client library
-    implementation "org.broadinstitute.dsde.workbench:sam-client_2.12:${samClient}"
+    implementation "org.broadinstitute.dsde.workbench:sam-client_2.13:${samClient}"
 
     // Terra Test Runner Library
     implementation "bio.terra:terra-test-runner:${testRunnerVersion}"
@@ -73,16 +73,9 @@ dependencies {
     // Use Terra Common Library on client side to retry direct Sam calls
     implementation group: "bio.terra", name: "terra-common-lib", version: "${tclClient}"
 
-    // Force log4j version to at least 2.17.0 for security concerns.
-    implementation('org.apache.logging.log4j:log4j-api') {
-        version {
-            require "2.17.0"
-        }
-    }
-    implementation('org.apache.logging.log4j:log4j-to-slf4j') {
-        version {
-            require "2.17.0"
-        }
-    }
 
+    // Spotbugs dependency
+    // For SpotBugs annotations (still FindBugs annotations)
+    compileOnly "com.github.spotbugs:spotbugs-annotations:${spotbugs.toolVersion.get()}"
+    spotbugs "com.github.spotbugs:spotbugs:${spotbugs.toolVersion.get()}"
 }
