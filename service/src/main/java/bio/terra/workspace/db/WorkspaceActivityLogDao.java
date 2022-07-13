@@ -52,20 +52,6 @@ public class WorkspaceActivityLogDao {
     jdbcTemplate.update(sql, params);
   }
 
-  @ReadTransaction
-  public Optional<OffsetDateTime> getLastUpdatedDate(UUID workspaceId) {
-    final String sql =
-        "SELECT MAX(change_date) FROM workspace_activity_log"
-            + " WHERE workspace_id = :workspace_id"
-            + " AND change_type NOT IN (:change_type)";
-    final var params =
-        new MapSqlParameterSource()
-            .addValue("workspace_id", workspaceId.toString())
-            .addValue("change_type", NON_UPDATE_TYPE_OPERATION);
-
-    return Optional.ofNullable(jdbcTemplate.queryForObject(sql, params, OffsetDateTime.class));
-  }
-
   /**
    * Get the creation time of the given workspace.
    *
@@ -78,6 +64,20 @@ public class WorkspaceActivityLogDao {
         "SELECT MIN(change_date) FROM workspace_activity_log"
             + " WHERE workspace_id = :workspace_id";
     final var params = new MapSqlParameterSource().addValue("workspace_id", workspaceId.toString());
+
+    return Optional.ofNullable(jdbcTemplate.queryForObject(sql, params, OffsetDateTime.class));
+  }
+
+  @ReadTransaction
+  public Optional<OffsetDateTime> getLastUpdatedDate(UUID workspaceId) {
+    final String sql =
+        "SELECT MAX(change_date) FROM workspace_activity_log"
+            + " WHERE workspace_id = :workspace_id"
+            + " AND change_type NOT IN (:change_type)";
+    final var params =
+        new MapSqlParameterSource()
+            .addValue("workspace_id", workspaceId.toString())
+            .addValue("change_type", NON_UPDATE_TYPE_OPERATION);
 
     return Optional.ofNullable(jdbcTemplate.queryForObject(sql, params, OffsetDateTime.class));
   }

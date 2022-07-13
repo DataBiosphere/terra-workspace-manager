@@ -197,8 +197,8 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
         .stage(workspace.getWorkspaceStage().toApiModel())
         .gcpContext(gcpContext)
         .azureContext(azureContext)
-        .lastUpdatedDate(workspaceActivityLogDao.getLastUpdatedDate(workspaceUuid).orElse(null))
-        .createdDate(workspaceActivityLogDao.getCreatedDate(workspaceUuid).orElse(null));
+        .createdDate(workspaceActivityLogDao.getCreatedDate(workspaceUuid).orElse(null))
+        .lastUpdatedDate(workspaceActivityLogDao.getLastUpdatedDate(workspaceUuid).orElse(null));
   }
 
   @Override
