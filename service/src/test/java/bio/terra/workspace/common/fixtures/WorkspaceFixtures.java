@@ -51,9 +51,13 @@ public class WorkspaceFixtures {
         .id(workspaceId)
         .displayName("TestWorkspace")
         .description("A test workspace created by createWorkspaceRequestBody")
-        .userFacingId("user-facing-id-" + workspaceId)
+        .userFacingId(getUserFacingId(workspaceId))
         .stage(ApiWorkspaceStageModel.MC_WORKSPACE)
         .spendProfile(SamResource.SPEND_PROFILE)
         .properties(properties);
+  }
+
+  public static String getUserFacingId(UUID workspaceId) {
+    return String.format("user-facing-id-%s", workspaceId);
   }
 }
