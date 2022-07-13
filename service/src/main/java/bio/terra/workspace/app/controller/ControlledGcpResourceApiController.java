@@ -19,6 +19,7 @@ import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.workspace.GcpCloudContextService;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.model.Workspace;
+import bio.terra.workspace.service.workspace.model.WorkspaceConstants;
 import com.google.common.base.Strings;
 import java.util.Optional;
 import java.util.UUID;
@@ -77,7 +78,10 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
 
     if (Strings.isNullOrEmpty(body.getGcsBucket().getLocation())) {
       body.getGcsBucket()
-          .location(workspace.getProperties().getOrDefault("terra-default-location", null));
+          .location(
+              workspace
+                  .getProperties()
+                  .getOrDefault(WorkspaceConstants.Properties.DEFAULT_RESOURCE_LOCATION, null));
     }
 
     final ControlledGcsBucketResource createdBucket =
@@ -262,7 +266,10 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
 
     if (Strings.isNullOrEmpty(body.getDataset().getLocation())) {
       body.getDataset()
-          .location(workspace.getProperties().getOrDefault("terra-default-location", null));
+          .location(
+              workspace
+                  .getProperties()
+                  .getOrDefault(WorkspaceConstants.Properties.DEFAULT_RESOURCE_LOCATION, null));
     }
 
     final ControlledBigQueryDatasetResource createdDataset =
