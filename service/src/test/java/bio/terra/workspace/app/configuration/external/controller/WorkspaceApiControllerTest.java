@@ -73,20 +73,7 @@ public class WorkspaceApiControllerTest extends BaseConnectedTest {
   @Test
   public void getWorkspace() throws Exception {
     ApiCreatedWorkspace workspace = createDefaultWorkspace();
-
-    String serializedGetResponse =
-        mockMvc
-            .perform(
-                addAuth(
-                    get(String.format(WORKSPACES_V1_BY_UUID_PATH_FORMAT, workspace.getId())),
-                    USER_REQUEST))
-            .andExpect(status().is(HttpStatus.SC_OK))
-            .andReturn()
-            .getResponse()
-            .getContentAsString();
-    ApiWorkspaceDescription fetchedWorkspace =
-        objectMapper.readValue(serializedGetResponse, ApiWorkspaceDescription.class);
-
+    ApiWorkspaceDescription fetchedWorkspace = getWorkspaceDescription(workspace.getId());
     assertEquals(workspace.getId(), fetchedWorkspace.getId());
     assertNotNull(fetchedWorkspace.getLastUpdatedDate());
   }
@@ -233,7 +220,8 @@ public class WorkspaceApiControllerTest extends BaseConnectedTest {
   private ApiWorkspaceDescription getWorkspaceDescription(UUID id) throws Exception {
     String WorkspaceGetResponse =
         mockMvc
-            .perform(addAuth(get(String.format(GET_WORKSPACE_PATH_FORMAT, id)), USER_REQUEST))
+            .perform(
+                addAuth(get(String.format(WORKSPACES_V1_BY_UUID_PATH_FORMAT, id)), USER_REQUEST))
             .andExpect(status().is(HttpStatus.SC_OK))
             .andReturn()
             .getResponse()
