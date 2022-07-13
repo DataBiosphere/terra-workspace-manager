@@ -17,7 +17,7 @@ public class ServiceStatus extends TestScript {
   private static final Logger logger = LoggerFactory.getLogger(ServiceStatus.class);
   private Duration delay = Duration.ZERO;
   private ThreadLocal<Integer> counter = ThreadLocal.withInitial(() -> 0);
-  private ThreadLocal<Integer> flakiness = ThreadLocal.withInitial(() -> 3);
+  private ThreadLocal<Integer> flakiness = ThreadLocal.withInitial(() -> 4);
 
   @Override
   public void setParametersMap(Map<String, String> parametersMap) {
