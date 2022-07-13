@@ -254,7 +254,6 @@ paths:
         '500':
           $ref: '#/components/responses/ServerError'
 
-
 components:
   responses:
     CloneWorkspaceResponse:

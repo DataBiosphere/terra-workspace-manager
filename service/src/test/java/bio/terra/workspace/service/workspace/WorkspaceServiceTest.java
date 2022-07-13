@@ -79,6 +79,7 @@ import bio.terra.workspace.service.workspace.model.WorkspaceStage;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.api.services.cloudresourcemanager.v3.model.Project;
 import com.google.common.collect.ImmutableList;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -544,6 +545,36 @@ class WorkspaceServiceTest extends BaseConnectedTest {
     assertThrows(
         WorkspaceNotFoundException.class,
         () -> workspaceService.getWorkspace(request.getWorkspaceId()));
+  }
+
+  @Test
+  void testDeleteWorkspaceProperties() {
+    // Create one workspace with properties
+    Map<String, String> propertyMap = new HashMap<>();
+    propertyMap.put("foo", "bar");
+    propertyMap.put("xyzzy", "plohg");
+
+    Workspace request = defaultRequestBuilder(UUID.randomUUID()).properties(propertyMap).build();
+    workspaceService.createWorkspace(request, USER_REQUEST);
+    UUID workspaceUuid = request.getWorkspaceId();
+    var lastUpdatedDate = workspaceActivityLogDao.getLastUpdatedDate(workspaceUuid);
+    assertTrue(lastUpdatedDate.isPresent());
+
+    List<String> propertyKeys = new ArrayList<>();
+    propertyKeys.add("foo");
+    propertyKeys.add("foo1");
+
+    workspaceService.deleteWorkspaceProperties(USER_REQUEST, workspaceUuid, propertyKeys);
+    Workspace deletedWorkspace = workspaceService.getWorkspace(workspaceUuid);
+
+    var updatedDateAfterWorkspaceUpdate = workspaceActivityLogDao.getLastUpdatedDate(workspaceUuid);
+    assertTrue(lastUpdatedDate.get().isBefore(updatedDateAfterWorkspaceUpdate.get()));
+    Map<String, String> expectedPropertyMap = new HashMap<>();
+    expectedPropertyMap.put("xyzzy", "plohg");
+    assertEquals(
+        expectedPropertyMap,
+        deletedWorkspace.getProperties(),
+        "Workspace properties update successfully");
   }
 
   @Test
