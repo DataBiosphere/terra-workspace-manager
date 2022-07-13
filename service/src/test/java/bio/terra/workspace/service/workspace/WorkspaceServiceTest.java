@@ -485,22 +485,6 @@ class WorkspaceServiceTest extends BaseConnectedTest {
   }
 
   @Test
-  void testUpdateWorkspacePropertiesNullRejected() {
-    Workspace request = defaultRequestBuilder(UUID.randomUUID()).build();
-    workspaceService.createWorkspace(request, USER_REQUEST);
-    UUID workspaceUuid = request.getWorkspaceId();
-
-    var UpdatedDateAfterWorkspaceUpdate = workspaceActivityLogDao.getLastUpdatedDate(workspaceUuid);
-
-    // Fail if request properties is null.
-    assertThrows(
-        MissingRequiredFieldException.class,
-        () -> workspaceService.updateWorkspaceProperties(USER_REQUEST, workspaceUuid, null));
-    var failedUpdateDate = workspaceActivityLogDao.getLastUpdatedDate(workspaceUuid);
-    assertEquals(UpdatedDateAfterWorkspaceUpdate.get(), failedUpdateDate.get());
-  }
-
-  @Test
   void testHandlesSamError() throws Exception {
     String apiErrorMsg = "test";
     ErrorReportException testex = new SamInternalServerErrorException(apiErrorMsg);
