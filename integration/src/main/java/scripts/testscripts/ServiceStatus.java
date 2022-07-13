@@ -17,7 +17,7 @@ public class ServiceStatus extends TestScript {
   private static final Logger logger = LoggerFactory.getLogger(ServiceStatus.class);
   private Duration delay = Duration.ZERO;
   private ThreadLocal<Integer> counter = ThreadLocal.withInitial(() -> 0);
-  private ThreadLocal<Integer> flakiness = ThreadLocal.withInitial(() -> 2);
+  private ThreadLocal<Integer> flakiness = ThreadLocal.withInitial(() -> 3);
 
   @Override
   public void setParametersMap(Map<String, String> parametersMap) {
@@ -40,7 +40,6 @@ public class ServiceStatus extends TestScript {
     logger.info("Count={}", counter.get());
     logger.info("Flakiness={}", flakiness.get());
     if (counter.get() <= flakiness.get()) {
-      TimeUnit.MICROSECONDS.sleep(1000);
       throw new Exception("Service endpoint timeout");
     }
 
