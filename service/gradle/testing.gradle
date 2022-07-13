@@ -7,9 +7,8 @@ bootRun {
   environment.put("GOOGLE_APPLICATION_CREDENTIALS", "${googleCredentialsFile}")
 }
 
-tasks.withType(Test).configureEach {
+tasks.withType(Test) {
   environment.put("GOOGLE_APPLICATION_CREDENTIALS", "${googleCredentialsFile}")
-  systemProperty 'spring.profiles.include', 'human-readable-logging'
   testLogging {
     if (System.getenv('PRINT_STANDARD_STREAMS') == null) {
       events = ["passed", "failed", "skipped", "started"]
