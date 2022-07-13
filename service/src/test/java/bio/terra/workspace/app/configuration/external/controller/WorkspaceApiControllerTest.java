@@ -86,6 +86,7 @@ public class WorkspaceApiControllerTest extends BaseConnectedTest {
 
     assertEquals(workspace.getId(), fetchedWorkspace.getId());
     assertNotNull(fetchedWorkspace.getLastUpdatedDate());
+    assertEquals(fetchedWorkspace.getLastUpdatedDate(), fetchedWorkspace.getCreatedDate());
   }
 
   @Test
@@ -109,6 +110,7 @@ public class WorkspaceApiControllerTest extends BaseConnectedTest {
     assertEquals(workspace.getId(), fetchedWorkspace.getId());
     assertEquals(userFacingId, fetchedWorkspace.getUserFacingId());
     assertNotNull(fetchedWorkspace.getLastUpdatedDate());
+    assertEquals(fetchedWorkspace.getLastUpdatedDate(), fetchedWorkspace.getCreatedDate());
   }
 
   @Test
@@ -142,6 +144,9 @@ public class WorkspaceApiControllerTest extends BaseConnectedTest {
     assertEquals(newUserFacingId, updatedWorkspaceDescription.getUserFacingId());
     OffsetDateTime firstLastUpdatedDate = updatedWorkspaceDescription.getLastUpdatedDate();
     assertNotNull(firstLastUpdatedDate);
+    OffsetDateTime createdDate = updatedWorkspaceDescription.getCreatedDate();
+    assertNotNull(createdDate);
+    assertTrue(firstLastUpdatedDate.isAfter(createdDate));
 
     var secondNewDescription = "This is yet another description";
     String serializedSecondUpdateResponse =
@@ -166,6 +171,8 @@ public class WorkspaceApiControllerTest extends BaseConnectedTest {
     assertEquals(secondNewDescription, secondUpdatedWorkspaceDescription.getDescription());
     var secondLastUpdatedDate = secondUpdatedWorkspaceDescription.getLastUpdatedDate();
     assertTrue(firstLastUpdatedDate.isBefore(secondLastUpdatedDate));
+    assertNotNull(secondUpdatedWorkspaceDescription.getCreatedDate());
+    assertEquals(createdDate, secondUpdatedWorkspaceDescription.getCreatedDate());
   }
 
   private String getUpdateRequestInJson(
