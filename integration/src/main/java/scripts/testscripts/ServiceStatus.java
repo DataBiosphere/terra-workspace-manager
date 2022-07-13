@@ -17,6 +17,8 @@ public class ServiceStatus extends TestScript {
   private static final Logger logger = LoggerFactory.getLogger(ServiceStatus.class);
   private Duration delay = Duration.ZERO;
   private ThreadLocal<Boolean> flaky = ThreadLocal.withInitial(() -> true);
+  private ThreadLocal<Integer> flaky2 = ThreadLocal.withInitial(() -> 0);
+  private ThreadLocal<Integer> maxAttempts = ThreadLocal.withInitial(() -> 2);
 
   @Override
   public void setParametersMap(Map<String, String> parametersMap) {
@@ -35,7 +37,10 @@ public class ServiceStatus extends TestScript {
     ApiClient apiClient = ClientTestUtils.getClientWithoutAccessToken(server);
     UnauthenticatedApi unauthenticatedApi = new UnauthenticatedApi(apiClient);
     unauthenticatedApi.serviceStatus();
-    logger.debug("Flaky=" + flaky.get());
+    flaky2.set(flaky2.get()+1);
+    logger.info("Flaky=" + flaky.get());
+    logger.info("Flaky2=" + flaky2.get());
+    logger.info("exceeded: {}", flaky2.get()>maxAttempts.get());
     if (flaky.get()) {
       TimeUnit.MICROSECONDS.sleep(1000);
       flaky.set(!flaky.get());
