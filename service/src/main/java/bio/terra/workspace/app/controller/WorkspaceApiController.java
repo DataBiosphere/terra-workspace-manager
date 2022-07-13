@@ -195,7 +195,9 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
         .spendProfile(workspace.getSpendProfileId().map(SpendProfileId::getId).orElse(null))
         .stage(workspace.getWorkspaceStage().toApiModel())
         .gcpContext(gcpContext)
-        .azureContext(azureContext);
+        .azureContext(azureContext)
+        .lastUpdatedDate(
+            workspaceActivityLogDao.getLastUpdatedDate(workspace.getWorkspaceId()).orElse(null));
   }
 
   @Override

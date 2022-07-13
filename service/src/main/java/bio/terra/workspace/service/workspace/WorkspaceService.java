@@ -192,6 +192,7 @@ public class WorkspaceService {
   @Traced
   public List<WorkspaceAndHighestRole> listWorkspacesAndHighestRoles(
       AuthenticatedUserRequest userRequest, int offset, int limit) {
+    // In general, highest SAM role should be fetched in controller. Fetch here to save a SAM call.
     Map<UUID, WsmIamRole> samWorkspaceIdsAndHighestRoles =
         SamRethrow.onInterrupted(
             () -> samService.listWorkspaceIdsAndHighestRoles(userRequest), "listWorkspaceIds");
