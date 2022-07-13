@@ -8,7 +8,7 @@
     {
       "name": "ServiceStatus",
       "numberOfUserJourneyThreadsToRun": 10,
-      "userJourneyThreadPoolSize": 2,
+      "userJourneyThreadPoolSize": 10,
       "expectedTimeForEach": 5,
       "expectedTimeForEachUnit": "SECONDS",
       "parametersMap": {
