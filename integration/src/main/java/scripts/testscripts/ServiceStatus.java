@@ -16,7 +16,7 @@ import scripts.utils.ParameterUtils;
 public class ServiceStatus extends TestScript {
   private static final Logger logger = LoggerFactory.getLogger(ServiceStatus.class);
   private Duration delay = Duration.ZERO;
-  private boolean flaky = true;
+  private ThreadLocal<Boolean> flaky = ThreadLocal.withInitial(() -> true);
 
   @Override
   public void setParametersMap(Map<String, String> parametersMap) {
@@ -35,9 +35,10 @@ public class ServiceStatus extends TestScript {
     ApiClient apiClient = ClientTestUtils.getClientWithoutAccessToken(server);
     UnauthenticatedApi unauthenticatedApi = new UnauthenticatedApi(apiClient);
     unauthenticatedApi.serviceStatus();
-    if (flaky) {
+    logger.debug("Flaky=" + flaky.get());
+    if (flaky.get()) {
       TimeUnit.MICROSECONDS.sleep(1000);
-      flaky = !flaky;
+      flaky.set(!flaky.get());
       throw new Exception("Service endpoint timeout");
     }
 
