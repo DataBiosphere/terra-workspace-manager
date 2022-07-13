@@ -498,6 +498,10 @@ components:
           description: Timestamp of the latest workspace change
           type: string
           format: date-time
+        createdDate:
+          description: Timestamp when the workspace is created
+          type: string
+          format: date-time
 
     WorkspaceDescriptionList:
       type: object
