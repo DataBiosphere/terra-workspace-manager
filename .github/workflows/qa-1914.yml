@@ -1,18 +1,24 @@
-# QA-1914
-
-name: QA-1914 Tests
-
+name: QA-1914
 on:
   push
 
 jobs:
-  QA-1914:
+  qa-1914-job:
 
     runs-on: ubuntu-latest
 
-    permissions:
-      contents: 'read'
-      id-token: 'write'
+    services:
+      postgres:
+        image: postgres:13.1
+        env:
+          POSTGRES_PASSWORD: postgres
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
 
     steps:
       - uses: actions/checkout@v2
@@ -25,29 +31,10 @@ jobs:
           token: ${{ secrets.BROADBOT_TOKEN }}
           path: integration/terra-helmfile
 
-      - id: 'auth'
-        name: 'Authenticate to Google Cloud'
-        uses: 'google-github-actions/auth@v0'
-        with:
-          # Centralized in dsp-tools-k8s; ask in #dsp-devops-champions for help troubleshooting
-          workload_identity_provider: 'projects/1038484894585/locations/global/workloadIdentityPools/github-wi-pool/providers/github-wi-provider'
-          service_account: 'dsp-tools-iap-access@dsp-tools-k8s.iam.gserviceaccount.com'
-          # Create `steps.auth.outputs.id_token` that can access Identity Aware Proxy
-          token_format: 'id_token'
-          id_token_audience: '${{ secrets.IAP_ID_TOKEN_AUDIENCE }}'
-          id_token_include_email: true
-
-      # Install postgres:
-      # - Create the file repository configuration.
-      # - Import the repository signing key.
-      # - Update the package lists.
-      # - Install the latest version of PostgreSQL. If you want a specific version, use 'postgresql-12' or similar instead of 'postgresql':
-      - name: Install the latest postgres
-        run: |
-          sudo sh -c 'echo "deb http://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" > /etc/apt/sources.list.d/pgdg.list'
-          sudo sh -c 'curl https://www.postgresql.org/media/keys/ACCC4CF8.asc | apt-key add - '
-          sudo apt-get update
-          sudo apt-get -y install postgresql
+      - name: Initialize Postgres DB for local server test run
+        env:
+          PGPASSWORD: postgres
+        run: psql -h 127.0.0.1 -U postgres -f ./service/local-dev/local-postgres-init.sql
 
       - name: Set up JDK
         uses: actions/setup-java@v2
@@ -86,44 +73,15 @@ jobs:
         uses: ./.github/actions/write-config
         with:
           vault-token: ${{ steps.vault-token-step.outputs.vault-token }}
-          target: wsmtest
+          target: local
 
-      # The ArgoCD sync triggers the synchronization of the wsmtest cluster. The ArgoCD CLI
-      # will wait for the initial sync to complete, but it won't necessarily wait for WSM's
-      # new version to actually come fully online--which could take minutes or hours in rare
-      # cases. We sleep for two minutes to try to allow WSM to come online.
-      # The sync is bracketed by /version probes so we have the pre and post sync versions
-      # in the log.
-      - name: Download ArgoCD CLI
-        run: |
-          curl -sSL -o ./argocd https://github.com/argoproj/argo-cd/releases/latest/download/argocd-linux-amd64
-          chmod +x ./argocd
-      - name: ArgoCD sync
-        run: |
-          version=$(curl https://workspace.wsmtest.integ.envs.broadinstitute.org/version)
-          echo "$(date "+%Y-%m-%dT%H:%M:%S") pre-sync wsmtest version: $version"
-          ./argocd --grpc-web --server ap-argocd.dsp-devops.broadinstitute.org:443 \
-            --auth-token '${{ secrets.WSMTEST_SYNC_ARGOCD_TOKEN }}' \
-            --header 'Proxy-Authorization: Bearer ${{ steps.auth.outputs.id_token }}' \
-            app sync workspacemanager-wsmtest
-          sleep 120
-          version=$(curl https://workspace.wsmtest.integ.envs.broadinstitute.org/version)
-          echo "$(date "+%Y-%m-%dT%H:%M:%S") post-sync wsmtest version: $version"
-      - name: Remove ArgoCD CLI
-        if: always()
-        run: |
-          rm -f ./argocd
-
-      - name: clean databases before perf suite
-        if: always()
-        uses: ./.github/actions/clean-databases
+      - name: Launch local server
+        uses: ./.github/actions/start-local-server
 
       - name: Run the perf test suite
-        id: perf-test
-        if: always()
+        id: integration-test
         uses: ./.github/actions/integration-test
         with:
-          test-server: workspace-wsmtest.json
+          test-server: workspace-local.json
           test: suites/BasicPerf.json
-
 
