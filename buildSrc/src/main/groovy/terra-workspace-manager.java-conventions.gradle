@@ -81,15 +81,17 @@ if (hasProperty("buildScan")) {
 
 // Spotbugs configuration
 spotbugs {
-    toolVersion = '4.7.0'
+    toolVersion = '4.2.2'
     effort = 'max'
-    excludeFilter = file("$rootDir/gradle/config/spotbugs/exclude.xml")
+    // This makes the "html" reports come out in plain text so you can just open the file in IntelliJ
+    // and look at your bugs instead of having to switch to a browser.
+    extraArgs = [ '-emacs']
 }
 spotbugsMain {
     reports {
         html {
             enabled = true
-            destination = file("$buildDir/reports/spotbugs/main.html")
+            destination = file("$buildDir/reports/spotbugs/main.txt")
             stylesheet = 'fancy.xsl'
         }
     }
@@ -98,7 +100,7 @@ spotbugsTest {
     reports {
         html {
             enabled = true
-            destination = file("$buildDir/reports/spotbugs/test.html")
+            destination = file("$buildDir/reports/spotbugs/test.txt")
             stylesheet = 'fancy.xsl'
         }
     }
