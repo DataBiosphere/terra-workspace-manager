@@ -12,6 +12,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import bio.terra.workspace.common.BaseConnectedTest;
 import bio.terra.workspace.common.fixtures.WorkspaceFixtures;
+import bio.terra.workspace.generated.model.ApiCloneWorkspaceRequest;
+import bio.terra.workspace.generated.model.ApiCloneWorkspaceResult;
 import bio.terra.workspace.generated.model.ApiCreatedWorkspace;
 import bio.terra.workspace.generated.model.ApiUpdateWorkspaceRequestBody;
 import bio.terra.workspace.generated.model.ApiWorkspaceDescription;
@@ -25,6 +27,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 import org.apache.http.HttpStatus;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -70,20 +73,7 @@ public class WorkspaceApiControllerTest extends BaseConnectedTest {
   @Test
   public void getWorkspace() throws Exception {
     ApiCreatedWorkspace workspace = createDefaultWorkspace();
-
-    String serializedGetResponse =
-        mockMvc
-            .perform(
-                addAuth(
-                    get(String.format(WORKSPACES_V1_BY_UUID_PATH_FORMAT, workspace.getId())),
-                    USER_REQUEST))
-            .andExpect(status().is(HttpStatus.SC_OK))
-            .andReturn()
-            .getResponse()
-            .getContentAsString();
-    ApiWorkspaceDescription fetchedWorkspace =
-        objectMapper.readValue(serializedGetResponse, ApiWorkspaceDescription.class);
-
+    ApiWorkspaceDescription fetchedWorkspace = getWorkspaceDescription(workspace.getId());
     assertEquals(workspace.getId(), fetchedWorkspace.getId());
     assertNotNull(fetchedWorkspace.getLastUpdatedDate());
     assertEquals(fetchedWorkspace.getLastUpdatedDate(), fetchedWorkspace.getCreatedDate());
@@ -201,5 +191,51 @@ public class WorkspaceApiControllerTest extends BaseConnectedTest {
             .getResponse()
             .getContentAsString();
     return objectMapper.readValue(serializedResponse, ApiCreatedWorkspace.class);
+  }
+
+  @Test
+  public void cloneWorkspace() throws Exception {
+    UUID workspaceId = createDefaultWorkspace().getId();
+    ApiWorkspaceDescription sourceWorkspace = getWorkspaceDescription(workspaceId);
+
+    String serializedGetResponse =
+        mockMvc
+            .perform(
+                addAuth(
+                    post(String.format(CLONE_WORKSPACE_PATH_FORMAT, workspaceId))
+                        .contentType(MediaType.APPLICATION_JSON_VALUE)
+                        .accept(MediaType.APPLICATION_JSON)
+                        .characterEncoding("UTF-8")
+                        .content(
+                            objectMapper.writeValueAsString(
+                                new ApiCloneWorkspaceRequest()
+                                    .spendProfile(SamResource.SPEND_PROFILE))),
+                    USER_REQUEST))
+            .andExpect(status().is(HttpStatus.SC_ACCEPTED))
+            .andReturn()
+            .getResponse()
+            .getContentAsString();
+    ApiCloneWorkspaceResult cloneWorkspace =
+        objectMapper.readValue(serializedGetResponse, ApiCloneWorkspaceResult.class);
+
+    UUID destinationWorkspaceId = cloneWorkspace.getWorkspace().getDestinationWorkspaceId();
+    ApiWorkspaceDescription destinationWorkspace = getWorkspaceDescription(destinationWorkspaceId);
+
+    assertEquals(sourceWorkspace.getProperties(), destinationWorkspace.getProperties());
+  }
+
+  private ApiWorkspaceDescription getWorkspaceDescription(UUID id) throws Exception {
+    String WorkspaceGetResponse =
+        mockMvc
+            .perform(
+                addAuth(get(String.format(WORKSPACES_V1_BY_UUID_PATH_FORMAT, id)), USER_REQUEST))
+            .andExpect(status().is(HttpStatus.SC_OK))
+            .andReturn()
+            .getResponse()
+            .getContentAsString();
+    ApiWorkspaceDescription resultWorkspace =
+        objectMapper.readValue(WorkspaceGetResponse, ApiWorkspaceDescription.class);
+
+    return resultWorkspace;
   }
 }
