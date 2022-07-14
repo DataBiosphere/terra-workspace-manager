@@ -13,6 +13,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import bio.terra.workspace.common.BaseConnectedTest;
 import bio.terra.workspace.common.fixtures.WorkspaceFixtures;
 import bio.terra.workspace.generated.model.ApiCreatedWorkspace;
+import bio.terra.workspace.generated.model.ApiProperties;
+import bio.terra.workspace.generated.model.ApiProperty;
 import bio.terra.workspace.generated.model.ApiUpdateWorkspaceRequestBody;
 import bio.terra.workspace.generated.model.ApiWorkspaceDescription;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
@@ -24,7 +26,9 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.time.OffsetDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.UUID;
 import org.apache.http.HttpStatus;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -179,6 +183,29 @@ public class WorkspaceApiControllerTest extends BaseConnectedTest {
     return objectMapper.writeValueAsString(requestBody);
   }
 
+  @Test
+  public void updateWorkspaceProperties() throws Exception {
+    UUID workspaceId = createDefaultWorkspace().getId();
+    ApiWorkspaceDescription sourceWorkspace = getWorkspaceDescription(workspaceId);
+    Map<String, String> properties = Map.of("foo", "bar");
+
+    mockMvc
+        .perform(
+            addAuth(
+                post(String.format(UPDATE_WORKSPACES_V1_PROPERTIES_PATH_FORMAT, workspaceId))
+                    .contentType(MediaType.APPLICATION_JSON_VALUE)
+                    .accept(MediaType.APPLICATION_JSON)
+                    .characterEncoding("UTF-8")
+                    .content(objectMapper.writeValueAsString(buildProperties(properties))),
+                USER_REQUEST))
+        .andExpect(status().is(HttpStatus.SC_NO_CONTENT))
+        .andReturn()
+        .getResponse()
+        .getContentAsString();
+
+    assertEquals(sourceWorkspace.getProperties(), buildProperties(properties));
+  }
+
   private ApiCreatedWorkspace createDefaultWorkspace() throws Exception {
     var createRequest = WorkspaceFixtures.createWorkspaceRequestBody();
     String serializedResponse =
@@ -195,4 +222,33 @@ public class WorkspaceApiControllerTest extends BaseConnectedTest {
             .getContentAsString();
     return objectMapper.readValue(serializedResponse, ApiCreatedWorkspace.class);
   }
+
+  private ApiWorkspaceDescription getWorkspaceDescription(UUID id) throws Exception {
+    String WorkspaceGetResponse =
+        mockMvc
+            .perform(
+                addAuth(get(String.format(WORKSPACES_V1_BY_UUID_PATH_FORMAT, id)), USER_REQUEST))
+            .andExpect(status().is(HttpStatus.SC_OK))
+            .andReturn()
+            .getResponse()
+            .getContentAsString();
+    ApiWorkspaceDescription resultWorkspace =
+        objectMapper.readValue(WorkspaceGetResponse, ApiWorkspaceDescription.class);
+
+    return resultWorkspace;
+  }
+
+  public ApiProperties buildProperties(Map<String, String> propertyMap) {
+    ApiProperties properties = new ApiProperties();
+    ApiProperty property = new ApiProperty();
+
+    for (Map.Entry<String, String> entry : propertyMap.entrySet()) {
+      property.setKey(entry.getKey());
+      property.setValue(entry.getValue());
+      properties.add(property);
+    }
+
+    return properties;
+  }
+  ;
 }

@@ -461,9 +461,7 @@ class WorkspaceServiceTest extends BaseConnectedTest {
   @Test
   void testUpdateWorkspaceProperties() {
     // Create one workspace with properties
-    Map<String, String> propertyMap = new HashMap<>();
-    propertyMap.put("foo", "bar");
-    propertyMap.put("xyzzy", "plohg");
+    Map<String, String> propertyMap = Map.of("foo", "bar", "xyzzy", "plohg");
     Workspace request = defaultRequestBuilder(UUID.randomUUID()).properties(propertyMap).build();
     workspaceService.createWorkspace(request, USER_REQUEST);
     UUID workspaceUuid = request.getWorkspaceId();
@@ -471,9 +469,7 @@ class WorkspaceServiceTest extends BaseConnectedTest {
     assertTrue(lastUpdatedDate.isPresent());
 
     // Workspace update new properties and exist properties
-    Map<String, String> propertyMap2 = new HashMap<>();
-    propertyMap2.put("ted", "lasso");
-    propertyMap2.put("foo", "barUpdate");
+    Map<String, String> propertyMap2 = Map.of("ted", "lasso", "foo", "barUpdate");
     workspaceService.updateWorkspaceProperties(USER_REQUEST, workspaceUuid, propertyMap2);
     Workspace updatedWorkspace = workspaceService.getWorkspace(workspaceUuid);
 

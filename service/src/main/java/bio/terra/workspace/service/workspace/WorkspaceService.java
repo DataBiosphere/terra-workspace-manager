@@ -285,7 +285,7 @@ public class WorkspaceService {
   }
 
   /**
-   * Update an existing workspace properties.
+   * Update workspace properties.
    *
    * @param userRequest authenticated user
    * @param workspaceUuid workspace of interest

@@ -173,6 +173,27 @@ class WorkspaceDaoTest extends BaseUnitTest {
     assertThat(workspaceList.get(0), in(ImmutableList.of(firstWorkspace, secondWorkspace)));
   }
 
+  @Test
+  void updateWorkspaceProperties() {
+    Map<String, String> propertyGenerate = Map.of("foo", "bar", "xyz", "pqn");
+    Workspace initalWorkspace =
+        Workspace.builder()
+            .workspaceId(workspaceUuid)
+            .userFacingId("a" + workspaceUuid)
+            .workspaceStage(WorkspaceStage.RAWLS_WORKSPACE)
+            .properties(propertyGenerate)
+            .build();
+    workspaceDao.createWorkspace(initalWorkspace);
+
+    Map<String, String> propertyUpdate = Map.of("foo", "updateBar", "tal", "lass");
+    workspaceDao.updateWorkspaceProperties(workspaceUuid, propertyUpdate);
+    propertyGenerate.putAll(propertyUpdate);
+
+    assertEquals(propertyGenerate, initalWorkspace.getProperties());
+
+    assertTrue(workspaceDao.deleteWorkspace(workspaceUuid));
+  }
+
   @Nested
   class McWorkspace {
 

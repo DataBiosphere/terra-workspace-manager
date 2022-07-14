@@ -17,6 +17,7 @@ import bio.terra.workspace.model.Property;
 import bio.terra.workspace.model.UpdateWorkspaceRequestBody;
 import bio.terra.workspace.model.WorkspaceDescription;
 import bio.terra.workspace.model.WorkspaceStageModel;
+import java.util.Map;
 import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -43,24 +44,15 @@ public class WorkspaceLifecycle extends WorkspaceApiTestScriptBase {
     String validUserFacingId = "user-facing-id-" + uuidStr;
     String validUserFacingId2 = "user-facing-id-2-" + uuidStr;
 
-    Property property1 = new Property();
-    property1.setKey("foo");
-    property1.setValue("bar");
-
-    Property property2 = new Property();
-    property2.setKey("xyzzy");
-    property2.setValue("plohg");
-
-    Properties propertyMap = new Properties();
-    propertyMap.add(property1);
-    propertyMap.add(property2);
+    Map<String, String> properties = Map.of("foo", "bar", "xyzzy", "plohg");
+    Properties initialProperties = buildProperties(properties);
 
     CreateWorkspaceRequestBody createBody =
         new CreateWorkspaceRequestBody()
             .id(workspaceUuid)
             .userFacingId(invalidUserFacingId)
             .stage(WorkspaceStageModel.MC_WORKSPACE)
-            .properties(propertyMap);
+            .properties(initialProperties);
 
     ApiException ex =
         assertThrows(ApiException.class, () -> workspaceApi.createWorkspace(createBody));
@@ -103,28 +95,31 @@ public class WorkspaceLifecycle extends WorkspaceApiTestScriptBase {
     assertNotNull(updatedDescription.getLastUpdatedDate());
     assertTrue(firstLastUpdatedDate.isBefore(updatedDescription.getLastUpdatedDate()));
 
-    Property property3 = new Property();
-    property3.setKey("foo");
-    property3.setValue("barUpdate");
+    Map<String, String> properties2 = Map.of("foo", "barUpdate", "ted", "lasso");
+    Properties updateProperties = buildProperties(properties2);
 
-    Property property4 = new Property();
-    property4.setKey("ted");
-    property4.setValue("lasso");
+    properties.putAll(properties2);
+    Properties expectedPropertyMap = buildProperties(properties);
 
-    Properties propertyMap2 = new Properties();
-    propertyMap2.add(property3);
-    propertyMap2.add(property4);
-
-    Properties expectedPropertyMap = new Properties();
-    expectedPropertyMap.add(property3);
-    expectedPropertyMap.add(property4);
-    expectedPropertyMap.add(property2);
-
-    workspaceApi.updateWorkspaceProperties(propertyMap2, workspaceUuid);
+    workspaceApi.updateWorkspaceProperties(updateProperties, workspaceUuid);
     WorkspaceDescription updatedWorkspaceDescription = workspaceApi.getWorkspace(workspaceUuid);
     assertEquals(expectedPropertyMap, updatedWorkspaceDescription.getProperties());
 
     workspaceApi.deleteWorkspace(workspaceUuid);
     ClientTestUtils.assertHttpSuccess(workspaceApi, "DELETE workspace");
   }
+
+  public Properties buildProperties(Map<String, String> propertyMap) {
+    Properties properties = new Properties();
+    Property property = new Property();
+
+    for (Map.Entry<String, String> entry : propertyMap.entrySet()) {
+      property.setKey(entry.getKey());
+      property.setValue(entry.getValue());
+      properties.add(property);
+    }
+
+    return properties;
+  }
+  ;
 }

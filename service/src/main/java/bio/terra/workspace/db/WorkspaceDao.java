@@ -268,8 +268,7 @@ public class WorkspaceDao {
   @WriteTransaction
   public boolean updateWorkspaceProperties(UUID workspaceUuid, Map<String, String> propertyMap) {
     // get current property in this workspace id
-    String selectPropertiesSql =
-        "SELECT properties " + "FROM workspace " + " WHERE workspace_id = :id";
+    String selectPropertiesSql = "SELECT properties FROM workspace WHERE workspace_id = :id";
     MapSqlParameterSource propertiesParams =
         new MapSqlParameterSource().addValue("id", workspaceUuid.toString());
     String result =
@@ -288,7 +287,7 @@ public class WorkspaceDao {
     int rowsAffected = jdbcTemplate.update(sql, params);
     boolean updated = rowsAffected > 0;
     logger.info(
-        "{} record for workspace {}",
+        "{} properties for workspace {}",
         (updated ? "Updated" : "No Update - did not find"),
         workspaceUuid);
     return updated;
