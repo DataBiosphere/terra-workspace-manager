@@ -80,6 +80,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.api.services.cloudresourcemanager.v3.model.Project;
 import com.google.common.collect.ImmutableList;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -562,17 +563,14 @@ class WorkspaceServiceTest extends BaseConnectedTest {
     var lastUpdatedDate = workspaceActivityLogDao.getLastUpdatedDate(workspaceUuid);
     assertTrue(lastUpdatedDate.isPresent());
 
-    List<String> propertyKeys = new ArrayList<>();
-    propertyKeys.add("foo");
-    propertyKeys.add("foo1");
+    List<String> propertyKeys = new ArrayList<>(Arrays.asList("foo", "foo1"));
 
     workspaceService.deleteWorkspaceProperties(USER_REQUEST, workspaceUuid, propertyKeys);
     Workspace deletedWorkspace = workspaceService.getWorkspace(workspaceUuid);
 
     var updatedDateAfterWorkspaceUpdate = workspaceActivityLogDao.getLastUpdatedDate(workspaceUuid);
     assertTrue(lastUpdatedDate.get().isBefore(updatedDateAfterWorkspaceUpdate.get()));
-    Map<String, String> expectedPropertyMap = new HashMap<>();
-    expectedPropertyMap.put("xyzzy", "plohg");
+    Map<String, String> expectedPropertyMap = Map.of("xyzzy", "plohg");
     assertEquals(
         expectedPropertyMap,
         deletedWorkspace.getProperties(),

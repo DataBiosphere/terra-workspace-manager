@@ -271,33 +271,34 @@ public class WorkspaceDao {
   @WriteTransaction
   public boolean deleteWorkspaceProperties(UUID workspaceUuid, List<String> propertyKeys) {
     // get current property in this workspace id
-    String selectPropertiesSql =
-        "SELECT properties " + "FROM workspace " + " WHERE workspace_id = :id";
+    String selectPropertiesSql = "SELECT properties FROM workspace WHERE workspace_id = :id";
     MapSqlParameterSource propertiesParams =
         new MapSqlParameterSource().addValue("id", workspaceUuid.toString());
-    String result =
-        jdbcTemplate.queryForObject(selectPropertiesSql, propertiesParams, String.class);
-    logger.info("Retrieved workspace record {}", result);
-    Map<String, String> properties = DbSerDes.jsonToProperties(result);
-    List<String> existPropertyKeys = DbSerDes.jsonToProperties(result).keySet().stream().toList();
-    for (String key : propertyKeys) {
-      if (existPropertyKeys.contains(key)) {
+    int rowsAffected;
+    try {
+      String result =
+          jdbcTemplate.queryForObject(selectPropertiesSql, propertiesParams, String.class);
+      logger.info("retrieved workspace properties {}", result);
+      Map<String, String> properties = DbSerDes.jsonToProperties(result);
+      for (String key : propertyKeys) {
         properties.remove(key);
       }
+      final String sql =
+          "UPDATE workspace SET properties = cast(:properties AS jsonb) WHERE workspace_id = :id";
+
+      var params = new MapSqlParameterSource();
+      params
+          .addValue("properties", DbSerDes.propertiesToJson(properties))
+          .addValue("id", workspaceUuid.toString());
+
+      rowsAffected = jdbcTemplate.update(sql, params);
+    } catch (EmptyResultDataAccessException e) {
+      throw new WorkspaceNotFoundException(String.format("Workspace %s not found.", workspaceUuid));
     }
-    final String sql =
-        "UPDATE workspace SET properties = cast(:properties AS jsonb) WHERE workspace_id = :id";
-
-    var params = new MapSqlParameterSource();
-    params
-        .addValue("properties", DbSerDes.propertiesToJson(properties))
-        .addValue("id", workspaceUuid.toString());
-
-    int rowsAffected = jdbcTemplate.update(sql, params);
     boolean updated = rowsAffected > 0;
     logger.info(
-        "{} record for workspace {}",
-        (updated ? "Updated" : "No Update - did not find"),
+        "{} properties for workspace {}",
+        (updated ? "Delete" : "No Delete - did not find"),
         workspaceUuid);
     return updated;
   }
