@@ -175,7 +175,7 @@ public class SamService {
             .tenantId(tenantId)
             .managedResourceGroupName(managedResourceGroupId);
     try {
-      return SamRetry.retry(() -> azureApi.getPetManagedIdentityForUser(userEmail, request));
+      return SamRetry.retry(() -> azureApi.getPetManagedIdentityForUser(userEmail.toLowerCase(), request));
     } catch (ApiException apiException) {
       throw SamExceptionFactory.create(
           "Error getting user assigned managed identity from Sam", apiException);
