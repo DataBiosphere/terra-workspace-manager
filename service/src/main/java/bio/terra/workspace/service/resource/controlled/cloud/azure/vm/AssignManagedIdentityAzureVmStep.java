@@ -51,12 +51,21 @@ public class AssignManagedIdentityAzureVmStep implements Step {
 
     String petManagedIdentityId =
         SamRethrow.onInterrupted(
-            () ->
-                samService.getOrCreateUserManagedIdentity(
+            () -> {
+              if (resource.getAssignedUser().isPresent()) {
+                return samService.getOrCreateUserManagedIdentityForUser(
+                    resource.getAssignedUser().get(),
+                    azureCloudContext.getAzureSubscriptionId(),
+                    azureCloudContext.getAzureTenantId(),
+                    azureCloudContext.getAzureResourceGroupId());
+              } else {
+                return samService.getOrCreateUserManagedIdentity(
                     userRequest,
                     azureCloudContext.getAzureSubscriptionId(),
                     azureCloudContext.getAzureTenantId(),
-                    azureCloudContext.getAzureResourceGroupId()),
+                    azureCloudContext.getAzureResourceGroupId());
+              }
+            },
             "getPetManagedIdentity");
 
     return AzureVmHelper.assignPetManagedIdentityToVm(

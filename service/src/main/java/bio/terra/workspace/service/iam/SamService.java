@@ -164,6 +164,24 @@ public class SamService {
     }
   }
 
+  public String getOrCreateUserManagedIdentityForUser(
+      String userEmail, String subscriptionId, String tenantId, String managedResourceGroupId)
+      throws InterruptedException {
+    AzureApi azureApi = samAzureApi(getWsmServiceAccountToken());
+
+    GetOrCreatePetManagedIdentityRequest request =
+        new GetOrCreatePetManagedIdentityRequest()
+            .subscriptionId(subscriptionId)
+            .tenantId(tenantId)
+            .managedResourceGroupName(managedResourceGroupId);
+    try {
+      return SamRetry.retry(() -> azureApi.getPetManagedIdentityForUser(userEmail, request));
+    } catch (ApiException apiException) {
+      throw SamExceptionFactory.create(
+          "Error getting user assigned managed identity from Sam", apiException);
+    }
+  }
+
   /**
    * Gets proxy group email.
    *
