@@ -11,6 +11,7 @@ import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.job.JobService.AsyncJobResult;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceMetadataManager;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceService;
+import bio.terra.workspace.service.resource.controlled.cloud.gcp.GcpResourceConstant;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook.ControlledAiNotebookInstanceResource;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.bqdataset.ControlledBigQueryDatasetResource;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.ControlledGcsBucketResource;
@@ -76,13 +77,7 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
         workspaceService.validateMcWorkspaceAndAction(
             userRequest, workspaceUuid, resource.getCategory().getSamCreateResourceAction());
 
-    if (Strings.isNullOrEmpty(body.getGcsBucket().getLocation())) {
-      body.getGcsBucket()
-          .location(
-              workspace
-                  .getProperties()
-                  .getOrDefault(WorkspaceConstants.Properties.DEFAULT_RESOURCE_LOCATION, null));
-    }
+    body.getGcsBucket().location(getResourceLocation(workspace, body.getGcsBucket().getLocation()));
 
     final ControlledGcsBucketResource createdBucket =
         controlledResourceService
@@ -95,6 +90,16 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
             .resourceId(createdBucket.getResourceId())
             .gcpBucket(createdBucket.toApiResource());
     return new ResponseEntity<>(response, HttpStatus.OK);
+  }
+
+  private String getResourceLocation(Workspace workspace, String requestedLocation) {
+    return Strings.isNullOrEmpty(requestedLocation)
+        ? workspace
+            .getProperties()
+            .getOrDefault(
+                WorkspaceConstants.Properties.DEFAULT_RESOURCE_LOCATION,
+                GcpResourceConstant.DEFAULT_REGION)
+        : requestedLocation;
   }
 
   @Override
@@ -264,13 +269,7 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
             .common(commonFields)
             .build();
 
-    if (Strings.isNullOrEmpty(body.getDataset().getLocation())) {
-      body.getDataset()
-          .location(
-              workspace
-                  .getProperties()
-                  .getOrDefault(WorkspaceConstants.Properties.DEFAULT_RESOURCE_LOCATION, null));
-    }
+    body.getDataset().location(getResourceLocation(workspace, body.getDataset().getLocation()));
 
     final ControlledBigQueryDatasetResource createdDataset =
         controlledResourceService
