@@ -166,15 +166,16 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
 
   private ApiWorkspaceDescription buildWorkspaceDescription(
       Workspace workspace, WsmIamRole highestRole) {
+    UUID workspaceUuid = workspace.getWorkspaceId();
     ApiGcpContext gcpContext =
         gcpCloudContextService
-            .getGcpCloudContext(workspace.getWorkspaceId())
+            .getGcpCloudContext(workspaceUuid)
             .map(GcpCloudContext::toApi)
             .orElse(null);
 
     ApiAzureContext azureContext =
         azureCloudContextService
-            .getAzureCloudContext(workspace.getWorkspaceId())
+            .getAzureCloudContext(workspaceUuid)
             .map(AzureCloudContext::toApi)
             .orElse(null);
 
@@ -186,7 +187,7 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
 
     // When we have another cloud context, we will need to do a similar retrieval for it.
     return new ApiWorkspaceDescription()
-        .id(workspace.getWorkspaceId())
+        .id(workspaceUuid)
         .userFacingId(workspace.getUserFacingId())
         .displayName(workspace.getDisplayName().orElse(null))
         .description(workspace.getDescription().orElse(null))
@@ -196,8 +197,8 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
         .stage(workspace.getWorkspaceStage().toApiModel())
         .gcpContext(gcpContext)
         .azureContext(azureContext)
-        .lastUpdatedDate(
-            workspaceActivityLogDao.getLastUpdatedDate(workspace.getWorkspaceId()).orElse(null));
+        .createdDate(workspaceActivityLogDao.getCreatedDate(workspaceUuid).orElse(null))
+        .lastUpdatedDate(workspaceActivityLogDao.getLastUpdatedDate(workspaceUuid).orElse(null));
   }
 
   @Override
@@ -480,7 +481,7 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
             .workspaceStage(WorkspaceStage.MC_WORKSPACE)
             .displayName(body.getDisplayName())
             .description(body.getDescription())
-            .properties(propertyMapFromApi(body.getProperties()))
+            .properties(sourceWorkspace.getProperties())
             .build();
 
     final String jobId =

@@ -298,6 +298,10 @@ public class CloneWorkspace extends WorkspaceAllocateTestScriptBase {
         getWorkspaceId(),
         cloneResult.getWorkspace().getSourceWorkspaceId(),
         "Source workspace ID reported accurately.");
+    assertEquals(
+        destinationWorkspaceDescription.getProperties(),
+        sourceOwnerWorkspaceApi.getWorkspace(getWorkspaceId()).getProperties(),
+        "Properties cloned successfully");
 
     // Verify shared GCS bucket succeeds and is populated
     final ResourceCloneDetails sharedBucketCloneDetails =
