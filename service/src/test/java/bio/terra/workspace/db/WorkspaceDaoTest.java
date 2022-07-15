@@ -24,6 +24,7 @@ import bio.terra.workspace.service.workspace.model.WorkspaceStage;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -175,7 +176,14 @@ class WorkspaceDaoTest extends BaseUnitTest {
 
   @Test
   void updateWorkspaceProperties() {
-    Map<String, String> propertyGenerate = Map.of("foo", "bar", "xyz", "pqn");
+    Map<String, String> propertyGenerate =
+        new HashMap<String, String>() {
+          {
+            put("foo", "bar");
+            put("xyz", "pqn");
+          }
+        };
+
     Workspace initalWorkspace =
         Workspace.builder()
             .workspaceId(workspaceUuid)

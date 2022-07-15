@@ -293,7 +293,6 @@ public class WorkspaceService {
    */
   public void updateWorkspaceProperties(
       AuthenticatedUserRequest userRequest, UUID workspaceUuid, Map<String, String> properties) {
-    validateWorkspaceAndAction(userRequest, workspaceUuid, SamConstants.SamWorkspaceAction.WRITE);
     if (workspaceDao.updateWorkspaceProperties(workspaceUuid, properties)) {
       workspaceActivityLogDao.writeActivity(
           workspaceUuid, new DbWorkspaceActivityLog().operationType(OperationType.UPDATE));

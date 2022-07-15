@@ -17,6 +17,7 @@ import bio.terra.workspace.model.Property;
 import bio.terra.workspace.model.UpdateWorkspaceRequestBody;
 import bio.terra.workspace.model.WorkspaceDescription;
 import bio.terra.workspace.model.WorkspaceStageModel;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 import org.slf4j.Logger;
@@ -44,7 +45,13 @@ public class WorkspaceLifecycle extends WorkspaceApiTestScriptBase {
     String validUserFacingId = "user-facing-id-" + uuidStr;
     String validUserFacingId2 = "user-facing-id-2-" + uuidStr;
 
-    Map<String, String> properties = Map.of("foo", "bar", "xyzzy", "plohg");
+    Map<String, String> properties =
+        new HashMap<>() {
+          {
+            put("foo", "bar");
+            put("xyzzy", "plohg");
+          }
+        };
     Properties initialProperties = buildProperties(properties);
 
     CreateWorkspaceRequestBody createBody =

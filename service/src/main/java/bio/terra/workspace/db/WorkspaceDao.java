@@ -271,20 +271,25 @@ public class WorkspaceDao {
     String selectPropertiesSql = "SELECT properties FROM workspace WHERE workspace_id = :id";
     MapSqlParameterSource propertiesParams =
         new MapSqlParameterSource().addValue("id", workspaceUuid.toString());
-    String result =
-        jdbcTemplate.queryForObject(selectPropertiesSql, propertiesParams, String.class);
-    logger.info("Retrieved workspace record {}", result);
-    Map<String, String> properties = DbSerDes.jsonToProperties(result);
-    properties.putAll(propertyMap);
-    final String sql =
-        "UPDATE workspace SET properties = cast(:properties AS jsonb) WHERE workspace_id = :id";
+    int rowsAffected;
+    try {
+      String result =
+          jdbcTemplate.queryForObject(selectPropertiesSql, propertiesParams, String.class);
+      logger.info("Retrieved workspace record {}", result);
+      Map<String, String> properties = DbSerDes.jsonToProperties(result);
+      properties.putAll(propertyMap);
+      final String sql =
+          "UPDATE workspace SET properties = cast(:properties AS jsonb) WHERE workspace_id = :id";
 
-    var params = new MapSqlParameterSource();
-    params
-        .addValue("properties", DbSerDes.propertiesToJson(properties))
-        .addValue("id", workspaceUuid.toString());
+      var params = new MapSqlParameterSource();
+      params
+          .addValue("properties", DbSerDes.propertiesToJson(properties))
+          .addValue("id", workspaceUuid.toString());
 
-    int rowsAffected = jdbcTemplate.update(sql, params);
+      rowsAffected = jdbcTemplate.update(sql, params);
+    } catch (EmptyResultDataAccessException e) {
+      throw new WorkspaceNotFoundException(String.format("Workspace %s not found.", workspaceUuid));
+    }
     boolean updated = rowsAffected > 0;
     logger.info(
         "{} properties for workspace {}",

@@ -461,7 +461,13 @@ class WorkspaceServiceTest extends BaseConnectedTest {
   @Test
   void testUpdateWorkspaceProperties() {
     // Create one workspace with properties
-    Map<String, String> propertyMap = Map.of("foo", "bar", "xyzzy", "plohg");
+    Map<String, String> propertyMap =
+        new HashMap<>() {
+          {
+            put("foo", "bar");
+            put("xyzzy", "plohg");
+          }
+        };
     Workspace request = defaultRequestBuilder(UUID.randomUUID()).properties(propertyMap).build();
     workspaceService.createWorkspace(request, USER_REQUEST);
     UUID workspaceUuid = request.getWorkspaceId();
