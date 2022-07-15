@@ -468,20 +468,18 @@ class WorkspaceServiceTest extends BaseConnectedTest {
             put("xyzzy", "plohg");
           }
         };
-    Workspace request = defaultRequestBuilder(UUID.randomUUID()).properties(propertyMap).build();
+    Workspace request = defaultRequestBuilder(UUID.randomUUID()).build();
     workspaceService.createWorkspace(request, USER_REQUEST);
     UUID workspaceUuid = request.getWorkspaceId();
     var lastUpdatedDate = workspaceActivityLogDao.getLastUpdatedDate(workspaceUuid);
     assertTrue(lastUpdatedDate.isPresent());
 
-    // Workspace update new properties and exist properties
-    Map<String, String> propertyMap2 = Map.of("ted", "lasso", "foo", "barUpdate");
-    workspaceService.updateWorkspaceProperties(USER_REQUEST, workspaceUuid, propertyMap2);
+    // Workspace update new properties
+    workspaceService.updateWorkspaceProperties(USER_REQUEST, workspaceUuid, propertyMap);
     Workspace updatedWorkspace = workspaceService.getWorkspace(workspaceUuid);
 
     var updatedDateAfterWorkspaceUpdate = workspaceActivityLogDao.getLastUpdatedDate(workspaceUuid);
     assertTrue(lastUpdatedDate.get().isBefore(updatedDateAfterWorkspaceUpdate.get()));
-    propertyMap.putAll(propertyMap2);
     assertEquals(
         propertyMap, updatedWorkspace.getProperties(), "Workspace properties update successfully");
   }
