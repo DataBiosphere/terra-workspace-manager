@@ -280,8 +280,7 @@ public class WorkspaceDao {
       logger.info("Retrieved workspace record {}", result);
 
     } catch (EmptyResultDataAccessException e) {
-      throw new WorkspaceNotFoundException(
-          String.format("Workspace %s not found.", workspaceUuid));
+      throw new WorkspaceNotFoundException(String.format("Workspace %s not found.", workspaceUuid));
     }
 
     Map<String, String> properties =
