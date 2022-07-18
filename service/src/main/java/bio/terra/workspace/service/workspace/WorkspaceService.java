@@ -295,7 +295,6 @@ public class WorkspaceService {
    */
   public void deleteWorkspaceProperties(
       AuthenticatedUserRequest userRequest, UUID workspaceUuid, List<String> propertyKeys) {
-    validateWorkspaceAndAction(userRequest, workspaceUuid, SamWorkspaceAction.DELETE);
     if (workspaceDao.deleteWorkspaceProperties(workspaceUuid, propertyKeys)) {
       workspaceActivityLogDao.writeActivity(
           workspaceUuid, new DbWorkspaceActivityLog().operationType(OperationType.UPDATE));
