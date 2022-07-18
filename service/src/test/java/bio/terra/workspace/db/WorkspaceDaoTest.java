@@ -197,7 +197,7 @@ class WorkspaceDaoTest extends BaseUnitTest {
     workspaceDao.updateWorkspaceProperties(workspaceUuid, propertyUpdate);
     propertyGenerate.putAll(propertyUpdate);
 
-    assertEquals(propertyGenerate, initalWorkspace.getProperties());
+    assertEquals(propertyGenerate, workspaceDao.getWorkspace(workspaceUuid).getProperties());
 
     assertTrue(workspaceDao.deleteWorkspace(workspaceUuid));
   }

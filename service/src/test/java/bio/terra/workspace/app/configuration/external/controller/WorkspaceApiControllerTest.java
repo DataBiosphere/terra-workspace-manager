@@ -277,5 +277,4 @@ public class WorkspaceApiControllerTest extends BaseConnectedTest {
 
     return properties;
   }
-  ;
 }

@@ -128,5 +128,4 @@ public class WorkspaceLifecycle extends WorkspaceApiTestScriptBase {
 
     return properties;
   }
-  ;
 }
