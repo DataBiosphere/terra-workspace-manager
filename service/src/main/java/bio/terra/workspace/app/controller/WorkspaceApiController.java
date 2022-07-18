@@ -288,7 +288,7 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
         workspaceUuid);
     workspaceService.deleteWorkspaceProperties(userRequest, workspaceUuid, propertyKeys);
     logger.info(
-        "Deleting the properties with the key {} in workspace {}",
+        "Deleted the properties with the key {} in workspace {}",
         propertyKeys.toString(),
         workspaceUuid);
 

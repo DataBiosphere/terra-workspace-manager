@@ -19,6 +19,7 @@ import bio.terra.workspace.model.WorkspaceDescription;
 import bio.terra.workspace.model.WorkspaceStageModel;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -45,17 +46,7 @@ public class WorkspaceLifecycle extends WorkspaceApiTestScriptBase {
     String validUserFacingId = "user-facing-id-" + uuidStr;
     String validUserFacingId2 = "user-facing-id-2-" + uuidStr;
 
-    Property property1 = new Property();
-    property1.setKey("foo");
-    property1.setValue("bar");
-
-    Property property2 = new Property();
-    property2.setKey("xyzzy");
-    property2.setValue("plohg");
-
-    Properties propertyMap = new Properties();
-    propertyMap.add(property1);
-    propertyMap.add(property2);
+    Properties propertyMap = buildProperties(Map.of("foo", "bar", "xyzzy", "plohg"));
 
     CreateWorkspaceRequestBody createBody =
         new CreateWorkspaceRequestBody()
@@ -110,9 +101,22 @@ public class WorkspaceLifecycle extends WorkspaceApiTestScriptBase {
     workspaceApi.deleteWorkspaceProperties(propertykey, workspaceUuid);
     Properties updatedWorkspaceDescription =
         workspaceApi.getWorkspace(workspaceUuid).getProperties();
-    assertFalse(updatedWorkspaceDescription.contains(property2));
+    assertFalse(updatedWorkspaceDescription.contains(buildProperties(Map.of("xyzzy", "plohg"))));
 
     workspaceApi.deleteWorkspace(workspaceUuid);
     ClientTestUtils.assertHttpSuccess(workspaceApi, "DELETE workspace");
+  }
+
+  public Properties buildProperties(Map<String, String> propertyMap) {
+    Properties properties = new Properties();
+    Property property = new Property();
+
+    for (Map.Entry<String, String> entry : propertyMap.entrySet()) {
+      property.setKey(entry.getKey());
+      property.setValue(entry.getValue());
+      properties.add(property);
+    }
+
+    return properties;
   }
 }
