@@ -239,12 +239,12 @@ class WorkspaceDaoTest extends BaseUnitTest {
             .build();
     workspaceDao.createWorkspace(initalWorkspace);
 
-    ArrayList propertyUpdate = new ArrayList<>(Arrays.asList("foo", "foo1"));
+    List<String> propertyUpdate = new ArrayList<>(Arrays.asList("foo", "foo1"));
     workspaceDao.deleteWorkspaceProperties(workspaceUuid, propertyUpdate);
 
     Map<String, String> updatedProperty = Map.of("xyz", "pqn");
 
-    assertEquals(updatedProperty, initalWorkspace.getProperties());
+    assertEquals(updatedProperty, workspaceDao.getWorkspace(workspaceUuid).getProperties());
 
     assertTrue(workspaceDao.deleteWorkspace(workspaceUuid));
   }

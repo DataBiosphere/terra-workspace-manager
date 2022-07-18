@@ -251,6 +251,8 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
   @Override
   public ResponseEntity<Void> deleteWorkspace(@PathVariable("workspaceId") UUID uuid) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    workspaceService.validateWorkspaceAndAction(
+        userRequest, uuid, SamConstants.SamWorkspaceAction.DELETE);
     logger.info("Deleting workspace {} for {}", uuid, userRequest.getEmail());
     Workspace workspace =
         workspaceService.validateWorkspaceAndAction(userRequest, uuid, SamWorkspaceAction.DELETE);
