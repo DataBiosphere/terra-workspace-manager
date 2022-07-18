@@ -1,6 +1,5 @@
 package bio.terra.workspace.service.resource.controlled.cloud.gcp.bqdataset;
 
-import static bio.terra.workspace.service.resource.controlled.cloud.gcp.GcpResourceConstant.DEFAULT_REGION;
 import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.CREATION_PARAMETERS;
 
 import bio.terra.cloudres.google.bigquery.BigQueryCow;
@@ -27,7 +26,6 @@ import com.google.cloud.Policy;
 import com.google.common.base.Preconditions;
 import java.io.IOException;
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 import org.apache.http.HttpStatus;
 import org.slf4j.Logger;
@@ -85,8 +83,7 @@ public class CreateBigQueryDatasetStep implements Step {
     Dataset datasetToCreate =
         new Dataset()
             .setDatasetReference(datasetId)
-            .setLocation(
-                Optional.ofNullable(creationParameters.getLocation()).orElse(DEFAULT_REGION))
+            .setLocation(creationParameters.getLocation())
             .setDefaultTableExpirationMs(
                 BigQueryApiConversions.toBqExpirationTime(
                     creationParameters.getDefaultTableLifetime()))
