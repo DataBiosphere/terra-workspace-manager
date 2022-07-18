@@ -188,7 +188,7 @@ public class WorkspaceApiControllerTest extends BaseConnectedTest {
     mockMvc
         .perform(
             addAuth(
-                post(String.format(UPDATE_WORKSPACES_V1_PROPERTIES_PATH_FORMAT, workspaceId))
+                post(String.format(WORKSPACES_V1_PROPERTIES_PATH_FORMAT, workspaceId))
                     .contentType(MediaType.APPLICATION_JSON_VALUE)
                     .accept(MediaType.APPLICATION_JSON)
                     .characterEncoding("UTF-8")

@@ -15,6 +15,7 @@ import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -272,24 +273,29 @@ public class WorkspaceDao {
     MapSqlParameterSource propertiesParams =
         new MapSqlParameterSource().addValue("id", workspaceUuid.toString());
     int rowsAffected;
+    String result;
+
     try {
-      String result =
-          jdbcTemplate.queryForObject(selectPropertiesSql, propertiesParams, String.class);
+      result = jdbcTemplate.queryForObject(selectPropertiesSql, propertiesParams, String.class);
       logger.info("Retrieved workspace record {}", result);
-      Map<String, String> properties = DbSerDes.jsonToProperties(result);
-      properties.putAll(propertyMap);
-      final String sql =
-          "UPDATE workspace SET properties = cast(:properties AS jsonb) WHERE workspace_id = :id";
 
-      var params = new MapSqlParameterSource();
-      params
-          .addValue("properties", DbSerDes.propertiesToJson(properties))
-          .addValue("id", workspaceUuid.toString());
-
-      rowsAffected = jdbcTemplate.update(sql, params);
     } catch (EmptyResultDataAccessException e) {
-      throw new WorkspaceNotFoundException(String.format("Workspace %s not found.", workspaceUuid));
+      throw new WorkspaceNotFoundException(
+          String.format("Workspace %s not found.", workspaceUuid));
     }
+
+    Map<String, String> properties =
+        result == null ? new HashMap<>() : DbSerDes.jsonToProperties(result);
+    properties.putAll(propertyMap);
+    final String sql =
+        "UPDATE workspace SET properties = cast(:properties AS jsonb) WHERE workspace_id = :id";
+
+    var params = new MapSqlParameterSource();
+    params
+        .addValue("properties", DbSerDes.propertiesToJson(properties))
+        .addValue("id", workspaceUuid.toString());
+
+    rowsAffected = jdbcTemplate.update(sql, params);
     boolean updated = rowsAffected > 0;
     logger.info(
         "{} properties for workspace {}",
