@@ -45,7 +45,7 @@ public class AzureTestUtils {
     Workspace workspace =
         Workspace.builder()
             .workspaceId(uuid)
-            .userFacingId("a" + uuid.toString())
+            .userFacingId(uuid.toString())
             .workspaceStage(WorkspaceStage.MC_WORKSPACE)
             .build();
     workspaceService.createWorkspace(workspace, userAccessUtils.defaultUserAuthRequest());

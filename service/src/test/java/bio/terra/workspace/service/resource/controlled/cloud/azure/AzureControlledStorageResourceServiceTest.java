@@ -95,7 +95,7 @@ public class AzureControlledStorageResourceServiceTest extends BaseAzureTest {
         workspaceService.createWorkspace(
             Workspace.builder()
                 .workspaceId(UUID.randomUUID())
-                .userFacingId("a" + UUID.randomUUID().toString())
+                .userFacingId(UUID.randomUUID().toString())
                 .spendProfileId(spendUtils.defaultSpendId())
                 .workspaceStage(WorkspaceStage.MC_WORKSPACE)
                 .build(),
