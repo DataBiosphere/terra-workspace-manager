@@ -172,13 +172,13 @@ components:
       type: object
   # TODO: PF-1218 - when CLI and UI are no longer passing this, disallow it for user-private
   #  resources, make the role List into a single role, and require both fields to be present.
-  #      required: [ userName, privateResourceIamRoles ]
+  #      required: [ userName, privateResourceIamRole ]
       properties:
         userName:
           description: email of the workspace user to grant access
           type: string
-        privateResourceIamRoles:
-          $ref: '#/components/schemas/PrivateResourceIamRoles'
+        privateResourceIamRole:
+          $ref: '#/components/schemas/ControlledResourceIamRole'
   
     PrivateResourceState:
       description: >-

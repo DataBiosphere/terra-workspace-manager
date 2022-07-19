@@ -145,10 +145,9 @@ public class ControlledApplicationPrivateGcsBucketLifecycle
 
   private void testAssignedReader(ControlledGcpResourceApi resourceApi, String projectId)
       throws Exception {
-    PrivateResourceIamRoles iamRoles = new PrivateResourceIamRoles();
-    iamRoles.add(ControlledResourceIamRole.READER);
+    ControlledResourceIamRole iamRole = ControlledResourceIamRole.READER;
     PrivateResourceUser privateUser =
-        new PrivateResourceUser().privateResourceIamRoles(iamRoles).userName(writer.userEmail);
+        new PrivateResourceUser().privateResourceIamRole(iamRole).userName(writer.userEmail);
 
     String bucketResourceName = RandomStringUtils.random(6, true, false);
     CreatedControlledGcpGcsBucket createdBucket =
@@ -172,10 +171,9 @@ public class ControlledApplicationPrivateGcsBucketLifecycle
 
   private void testAssignedWriter(ControlledGcpResourceApi resourceApi, String projectId)
       throws Exception {
-    PrivateResourceIamRoles iamRoles = new PrivateResourceIamRoles();
-    iamRoles.add(ControlledResourceIamRole.WRITER);
+    ControlledResourceIamRole iamRole = ControlledResourceIamRole.WRITER;
     PrivateResourceUser privateUser =
-        new PrivateResourceUser().privateResourceIamRoles(iamRoles).userName(reader.userEmail);
+        new PrivateResourceUser().privateResourceIamRole(iamRole).userName(reader.userEmail);
 
     String bucketResourceName = RandomStringUtils.random(6, true, false);
     CreatedControlledGcpGcsBucket createdBucket =

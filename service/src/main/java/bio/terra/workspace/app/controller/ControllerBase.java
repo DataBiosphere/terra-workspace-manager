@@ -16,6 +16,8 @@ import bio.terra.workspace.service.iam.model.SamConstants;
 import bio.terra.workspace.service.resource.controlled.model.AccessScopeType;
 import bio.terra.workspace.service.resource.controlled.model.ManagedByType;
 import bio.terra.workspace.service.resource.controlled.model.PrivateUserRole;
+
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -143,12 +145,11 @@ public class ControllerBase {
                       userRequest),
               "validate private user is workspace member");
 
-          // Translate the incoming role list into our internal model form
+          // Translate the incoming role into our internal model form
           // This also validates that the incoming API model values are correct.
-          List<ControlledResourceIamRole> roles =
-              commonFields.getPrivateResourceUser().getPrivateResourceIamRoles().stream()
-                  .map(ControlledResourceIamRole::fromApiModel)
-                  .collect(Collectors.toList());
+          List<ControlledResourceIamRole> roles = new ArrayList<ControlledResourceIamRole>();
+          roles.add(ControlledResourceIamRole.fromApiModel(commonFields.getPrivateResourceUser().getPrivateResourceIamRole()));
+
           if (roles.isEmpty()) {
             throw new ValidationException(
                 "You must specify at least one role when you specify PrivateResourceIamRoles");

@@ -154,17 +154,11 @@ public class PrivateControlledGcsBucketLifecycle extends WorkspaceAllocateTestSc
     Bucket maybeBucket = ownerStorageClient.get(bucketName);
     assertNull(maybeBucket);
 
-    // TODO: PF-1218 - change these to negative tests - should error - when
-    //  the ticket is complete. These exercise two create cases with currently
-    //  valid combinations of private user.
-    PrivateResourceIamRoles roles = new PrivateResourceIamRoles();
-    roles.add(ControlledResourceIamRole.READER);
-
     // Supply all private user parameters
     PrivateResourceUser privateUserFull =
         new PrivateResourceUser()
             .userName(privateResourceUser.userEmail)
-            .privateResourceIamRoles(roles);
+            .privateResourceIamRole(ControlledResourceIamRole.READER);
 
     var ex =
         assertThrows(
@@ -187,7 +181,7 @@ public class PrivateControlledGcsBucketLifecycle extends WorkspaceAllocateTestSc
 
     // Supply just the roles, but no email
     PrivateResourceUser privateUserNoEmail =
-        new PrivateResourceUser().userName(null).privateResourceIamRoles(roles);
+        new PrivateResourceUser().userName(null).privateResourceIamRole(ControlledResourceIamRole.READER);
 
     ex =
         assertThrows(
