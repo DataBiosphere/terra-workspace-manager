@@ -10,6 +10,7 @@ import bio.terra.workspace.service.resource.controlled.cloud.azure.relayNamespac
 import bio.terra.workspace.service.resource.controlled.cloud.azure.storage.ControlledAzureStorageResource;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.storageContainer.ControlledAzureStorageContainerResource;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.vm.ControlledAzureVmResource;
+import bio.terra.workspace.service.resource.controlled.cloud.gcp.GcpResourceConstant;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook.ControlledAiNotebookInstanceResource;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.bqdataset.ControlledBigQueryDatasetResource;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.bqdataset.ControlledBigQueryDatasetResource.Builder;
@@ -83,13 +84,16 @@ public class ControlledResourceFixtures {
   public static final String AZURE_VM_NAME_PREFIX = "vm";
 
   public static final ApiGcpGcsBucketCreationParameters GOOGLE_BUCKET_CREATION_PARAMETERS_MINIMAL =
-      new ApiGcpGcsBucketCreationParameters().name(uniqueName(BUCKET_NAME_PREFIX));
+      new ApiGcpGcsBucketCreationParameters()
+          .name(uniqueName(BUCKET_NAME_PREFIX))
+          .location(GcpResourceConstant.DEFAULT_REGION);
 
   /** Construct a parameter object with a unique bucket name to avoid unintended clashes. */
   public static ApiGcpGcsBucketCreationParameters getGoogleBucketCreationParameters() {
     return new ApiGcpGcsBucketCreationParameters()
         .name(uniqueBucketName())
         .defaultStorageClass(ApiGcpGcsBucketDefaultStorageClass.STANDARD)
+        .location(GcpResourceConstant.DEFAULT_REGION)
         .lifecycle(new ApiGcpGcsBucketLifecycle().rules(LIFECYCLE_RULES));
   }
 
