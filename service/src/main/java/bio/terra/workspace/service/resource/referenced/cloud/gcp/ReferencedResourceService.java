@@ -6,6 +6,8 @@ import bio.terra.workspace.db.WorkspaceActivityLogDao;
 import bio.terra.workspace.db.exception.InvalidMetadataException;
 import bio.terra.workspace.db.model.DbWorkspaceActivityLog;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
+import bio.terra.workspace.service.iam.SamRethrow;
+import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.iam.model.SamConstants;
 import bio.terra.workspace.service.job.JobBuilder;
 import bio.terra.workspace.service.job.JobService;
@@ -19,6 +21,7 @@ import bio.terra.workspace.service.resource.referenced.flight.update.UpdateRefer
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ResourceKeys;
 import bio.terra.workspace.service.workspace.model.OperationType;
+import com.google.rpc.context.AttributeContext.Auth;
 import io.opencensus.contrib.spring.aop.Traced;
 import java.util.List;
 import java.util.UUID;
@@ -38,6 +41,7 @@ public class ReferencedResourceService {
   private final WorkspaceService workspaceService;
   private final FlightBeanBag beanBag;
   private final WorkspaceActivityLogDao workspaceActivityLogDao;
+  private final SamService samService;
 
   @Autowired
   public ReferencedResourceService(
@@ -45,12 +49,14 @@ public class ReferencedResourceService {
       ResourceDao resourceDao,
       WorkspaceService workspaceService,
       FlightBeanBag beanBag,
-      WorkspaceActivityLogDao workspaceActivityLogDao) {
+      WorkspaceActivityLogDao workspaceActivityLogDao,
+      SamService samService) {
     this.jobService = jobService;
     this.resourceDao = resourceDao;
     this.workspaceService = workspaceService;
     this.beanBag = beanBag;
     this.workspaceActivityLogDao = workspaceActivityLogDao;
+    this.samService = samService;
   }
 
   @Traced
@@ -101,14 +107,16 @@ public class ReferencedResourceService {
    * @param description description to change - may be null
    */
   public void updateReferenceResource(
-      UUID workspaceUuid, UUID resourceId, @Nullable String name, @Nullable String description) {
+      UUID workspaceUuid, UUID resourceId, @Nullable String name, @Nullable String description,
+      AuthenticatedUserRequest userRequest) {
     updateReferenceResource(
         workspaceUuid,
         resourceId,
         name,
         description,
         /*referencedResource=*/ null,
-        /*cloningInstructions=*/ null);
+        /*cloningInstructions=*/ null,
+        userRequest);
   }
 
   /**
@@ -130,7 +138,8 @@ public class ReferencedResourceService {
       @Nullable String name,
       @Nullable String description,
       @Nullable ReferencedResource resource,
-      @Nullable CloningInstructions cloningInstructions) {
+      @Nullable CloningInstructions cloningInstructions,
+      AuthenticatedUserRequest userRequest) {
     // Name may be null if the user is not updating it in this request.
     if (name != null) {
       ResourceValidationUtils.validateResourceName(name);
@@ -146,6 +155,7 @@ public class ReferencedResourceService {
               .flightClass(UpdateReferenceResourceFlight.class)
               .resource(resource)
               .operationType(OperationType.UPDATE)
+              .userRequest(userRequest)
               .workspaceId(workspaceUuid.toString())
               .resourceType(resource.getResourceType())
               .resourceName(name)
@@ -157,8 +167,12 @@ public class ReferencedResourceService {
           resourceDao.updateResource(
               workspaceUuid, resourceId, name, description, cloningInstructions);
       if (updated) {
+        String userEmail = SamRethrow.onInterrupted(
+            () -> samService.getUserEmailFromSam(userRequest),
+            "Get user email from Sam"
+        );
         workspaceActivityLogDao.writeActivity(
-            workspaceUuid, new DbWorkspaceActivityLog().operationType(OperationType.UPDATE));
+            workspaceUuid, new DbWorkspaceActivityLog().operationType(OperationType.UPDATE).userEmail(userEmail));
       }
     }
     if (!updated) {

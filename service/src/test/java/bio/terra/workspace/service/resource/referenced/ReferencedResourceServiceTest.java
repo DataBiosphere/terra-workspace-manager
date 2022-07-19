@@ -95,7 +95,7 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
   }
 
   @AfterEach
-  void teardown() throws InterruptedException {
+  void teardown() {
     jobService.setFlightDebugInfoForTest(null);
     if (referencedResource != null) {
       try {
@@ -133,7 +133,8 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
     assertTrue(lastUpdatedDateBeforeResourceUpdate.isPresent());
 
     referenceResourceService.updateReferenceResource(
-        workspaceUuid, referencedResource.getResourceId(), null, null, updatedResource, null);
+        workspaceUuid, referencedResource.getResourceId(), null, null, updatedResource, null,
+        USER_REQUEST);
 
     ReferencedDataRepoSnapshotResource result =
         referenceResourceService
@@ -173,7 +174,8 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
             .build();
 
     referenceResourceService.updateReferenceResource(
-        workspaceUuid, referencedResource.getResourceId(), null, null, updatedResource, null);
+        workspaceUuid, referencedResource.getResourceId(), null, null, updatedResource, null,
+        USER_REQUEST);
 
     ReferencedDataRepoSnapshotResource result =
         referenceResourceService
@@ -200,7 +202,8 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
         updatedName,
         null,
         null,
-        updatedCloningInstructions);
+        updatedCloningInstructions,
+        USER_REQUEST);
     referencedResource =
         referenceResourceService.getReferenceResourceByName(workspaceUuid, updatedName);
     assertEquals(referencedResource.getName(), updatedName);
@@ -213,7 +216,8 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
     var lastUpdatedDateBeforeResourceUpdate =
         workspaceActivityLogDao.getLastUpdatedDate(workspaceUuid);
     referenceResourceService.updateReferenceResource(
-        workspaceUuid, referencedResource.getResourceId(), null, updatedDescription);
+        workspaceUuid, referencedResource.getResourceId(), null, updatedDescription,
+        USER_REQUEST);
     referencedResource =
         referenceResourceService.getReferenceResource(
             workspaceUuid, referencedResource.getResourceId());
@@ -227,7 +231,8 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
     String updatedName2 = "2" + updatedName;
     String updatedDescription2 = "2" + updatedDescription;
     referenceResourceService.updateReferenceResource(
-        workspaceUuid, referencedResource.getResourceId(), updatedName2, updatedDescription2);
+        workspaceUuid, referencedResource.getResourceId(), updatedName2, updatedDescription2,
+        USER_REQUEST);
     referencedResource =
         referenceResourceService.getReferenceResource(
             workspaceUuid, referencedResource.getResourceId());
@@ -240,7 +245,8 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
         InvalidNameException.class,
         () ->
             referenceResourceService.updateReferenceResource(
-                workspaceUuid, referencedResource.getResourceId(), invalidName, null));
+                workspaceUuid, referencedResource.getResourceId(), invalidName, null,
+                USER_REQUEST));
     // Update to invalid description
   }
 

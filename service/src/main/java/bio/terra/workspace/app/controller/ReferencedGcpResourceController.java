@@ -156,7 +156,8 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
           body.getName(),
           body.getDescription(),
           null,
-          cloningInstructions);
+          cloningInstructions,
+          userRequest);
     } else {
       ReferencedGcsObjectResource referencedResource =
           referenceResourceService
@@ -179,7 +180,8 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
           body.getName(),
           body.getDescription(),
           updateBucketObjectResourceBuilder.build(),
-          null); // included in resource arg
+          null,
+          userRequest); // included in resource arg
     }
     return new ResponseEntity<>(HttpStatus.NO_CONTENT);
   }
@@ -257,7 +259,8 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
           body.getName(),
           body.getDescription(),
           null,
-          cloningInstructions);
+          cloningInstructions,
+          userRequest);
     } else {
       ReferencedGcsBucketResource referencedResource =
           referenceResourceService
@@ -275,7 +278,8 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
           body.getName(),
           body.getDescription(),
           updateBucketResourceBuilder.build(),
-          null); // passed in via resource argument
+          null,
+          userRequest); // passed in via resource argument
     }
     return new ResponseEntity<>(HttpStatus.NO_CONTENT);
   }
@@ -359,7 +363,8 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
           body.getName(),
           body.getDescription(),
           null,
-          cloningInstructions);
+          cloningInstructions,
+          userRequest);
     } else {
       ReferencedBigQueryDataTableResource referencedResource =
           referenceResourceService
@@ -382,7 +387,8 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
           body.getName(),
           body.getDescription(),
           updateBqTableResource.build(),
-          cloningInstructions);
+          cloningInstructions,
+          userRequest);
     }
 
     return new ResponseEntity<>(HttpStatus.NO_CONTENT);
@@ -469,7 +475,8 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
           body.getName(),
           body.getDescription(),
           null,
-          cloningInstructions);
+          cloningInstructions,
+          userRequest);
     } else {
       // build new one from scratch
       ReferencedBigQueryDatasetResource referenceResource =
@@ -490,7 +497,8 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
           body.getName(),
           body.getDescription(),
           updatedBqDatasetResourceBuilder.build(),
-          cloningInstructions);
+          cloningInstructions,
+          userRequest);
     }
     return new ResponseEntity<>(HttpStatus.NO_CONTENT);
   }
@@ -571,7 +579,8 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
           body.getName(),
           body.getDescription(),
           null,
-          CloningInstructions.fromApiModel(body.getCloningInstructions()));
+          CloningInstructions.fromApiModel(body.getCloningInstructions()),
+          userRequest);
     } else {
       ReferencedDataRepoSnapshotResource referencedResource =
           referenceResourceService
@@ -591,7 +600,8 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
           body.getName(),
           body.getDescription(),
           updatedResourceBuilder.build(),
-          CloningInstructions.fromApiModel(body.getCloningInstructions()));
+          CloningInstructions.fromApiModel(body.getCloningInstructions()),
+          userRequest);
     }
     return new ResponseEntity<>(HttpStatus.NO_CONTENT);
   }
@@ -911,7 +921,8 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
           body.getName(),
           body.getDescription(),
           null,
-          CloningInstructions.fromApiModel(body.getCloningInstructions()));
+          CloningInstructions.fromApiModel(body.getCloningInstructions()),
+          userRequest);
     } else {
       ReferencedGitRepoResource referencedResource =
           referenceResourceService
@@ -928,7 +939,8 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
           body.getName(),
           body.getDescription(),
           updateGitRepoResource.build(),
-          CloningInstructions.fromApiModel(body.getCloningInstructions()));
+          CloningInstructions.fromApiModel(body.getCloningInstructions()),
+          userRequest);
     }
     return new ResponseEntity<>(HttpStatus.OK);
   }

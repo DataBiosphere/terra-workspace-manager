@@ -131,7 +131,8 @@ public class ControlledResourceService {
       ControlledGcsBucketResource resource,
       @Nullable ApiGcpGcsBucketUpdateParameters updateParameters,
       @Nullable String resourceName,
-      @Nullable String resourceDescription) {
+      @Nullable String resourceDescription,
+      AuthenticatedUserRequest userRequest) {
     if (null != updateParameters && null != updateParameters.getCloningInstructions()) {
       ResourceValidationUtils.validateCloningInstructions(
           StewardshipType.CONTROLLED,
@@ -148,6 +149,7 @@ public class ControlledResourceService {
             .flightClass(UpdateControlledGcsBucketResourceFlight.class)
             .resource(resource)
             .operationType(OperationType.UPDATE)
+            .userRequest(userRequest)
             .workspaceId(resource.getWorkspaceId().toString())
             // TODO: [PF-1282] need to disambiguate the RESOURCE and RESOURCE_NAME usage
             .resourceType(resource.getResourceType())
@@ -373,7 +375,8 @@ public class ControlledResourceService {
       ControlledAiNotebookInstanceResource resource,
       @Nullable ApiGcpAiNotebookUpdateParameters updateParameters,
       @Nullable String newName,
-      @Nullable String newDescription) {
+      @Nullable String newDescription,
+      AuthenticatedUserRequest userRequest) {
     final String jobDescription =
         String.format(
             "Update controlled AI notebook resource %s; id %s; name %s",
@@ -385,6 +388,7 @@ public class ControlledResourceService {
             .flightClass(UpdateControlledAiNotebookResourceFlight.class)
             .resource(resource)
             .operationType(OperationType.UPDATE)
+            .userRequest(userRequest)
             .workspaceId(resource.getWorkspaceId().toString())
             .resourceType(resource.getResourceType())
             .stewardshipType(resource.getStewardshipType())

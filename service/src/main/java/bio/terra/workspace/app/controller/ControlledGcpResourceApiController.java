@@ -143,7 +143,7 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
                 userRequest, workspaceUuid, resourceId, SamControlledResourceActions.EDIT_ACTION)
             .castByEnum(WsmResourceType.CONTROLLED_GCP_GCS_BUCKET);
     controlledResourceService.updateGcsBucket(
-        bucketResource, body.getUpdateParameters(), body.getName(), body.getDescription());
+        bucketResource, body.getUpdateParameters(), body.getName(), body.getDescription(), userRequest);
 
     // Retrieve and cast response to ApiGcpGcsBucketResource
     final ControlledGcsBucketResource updatedResource =
@@ -330,7 +330,8 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
         resource,
         requestBody.getUpdateParameters(),
         requestBody.getName(),
-        requestBody.getDescription());
+        requestBody.getDescription(),
+        userRequest);
 
     final ControlledAiNotebookInstanceResource updatedResource =
         controlledResourceService

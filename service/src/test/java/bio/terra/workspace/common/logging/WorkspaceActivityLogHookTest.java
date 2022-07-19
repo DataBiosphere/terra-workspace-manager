@@ -46,7 +46,7 @@ public class WorkspaceActivityLogHookTest extends BaseUnitTest {
   @MockBean private SamService mockSamService;
 
   @Test
-  void createFlightSucceeds_activityLogUpdated() {
+  void createFlightSucceeds_activityLogUpdated() throws InterruptedException {
     var workspaceUuid = UUID.randomUUID();
     var emptyChangedDate = activityLogDao.getLastUpdatedDate(workspaceUuid);
     assertTrue(emptyChangedDate.isEmpty());
@@ -62,7 +62,7 @@ public class WorkspaceActivityLogHookTest extends BaseUnitTest {
   }
 
   @Test
-  void deleteFlightSucceeds_activityLogUpdated() {
+  void deleteFlightSucceeds_activityLogUpdated() throws InterruptedException {
     var workspaceUuid = UUID.randomUUID();
     var emptyChangedDate = activityLogDao.getLastUpdatedDate(workspaceUuid);
     assertTrue(emptyChangedDate.isEmpty());
@@ -98,7 +98,7 @@ public class WorkspaceActivityLogHookTest extends BaseUnitTest {
   }
 
   @Test
-  void createFlightFails_activityLogNotUpdated() {
+  void createFlightFails_activityLogNotUpdated() throws InterruptedException {
     var workspaceUuid = UUID.randomUUID();
     var emptyChangedDate = activityLogDao.getLastUpdatedDate(workspaceUuid);
     assertTrue(emptyChangedDate.isEmpty());
@@ -116,7 +116,7 @@ public class WorkspaceActivityLogHookTest extends BaseUnitTest {
   }
 
   @Test
-  void deleteWorkspaceFlightFails_workspaceNotExist_logChangedDate() {
+  void deleteWorkspaceFlightFails_workspaceNotExist_logChangedDate() throws InterruptedException {
     var workspaceUuid = UUID.randomUUID();
     var emptyChangedDate = activityLogDao.getLastUpdatedDate(workspaceUuid);
     assertTrue(emptyChangedDate.isEmpty());
@@ -134,7 +134,8 @@ public class WorkspaceActivityLogHookTest extends BaseUnitTest {
   }
 
   @Test
-  void deleteWorkspaceFlightFails_workspaceStillExist_NotLogChangedDate() {
+  void deleteWorkspaceFlightFails_workspaceStillExist_NotLogChangedDate()
+      throws InterruptedException {
     var workspaceUuid = UUID.randomUUID();
     var emptyChangedDate = activityLogDao.getLastUpdatedDate(workspaceUuid);
     assertTrue(emptyChangedDate.isEmpty());
@@ -158,7 +159,8 @@ public class WorkspaceActivityLogHookTest extends BaseUnitTest {
   }
 
   @Test
-  void deleteCloudContextFlightFails_cloudContextNotExist_logChangedDate() {
+  void deleteCloudContextFlightFails_cloudContextNotExist_logChangedDate()
+      throws InterruptedException {
     var workspaceUuid = UUID.randomUUID();
     var emptyChangedDate = activityLogDao.getLastUpdatedDate(workspaceUuid);
     assertTrue(emptyChangedDate.isEmpty());
@@ -176,7 +178,8 @@ public class WorkspaceActivityLogHookTest extends BaseUnitTest {
   }
 
   @Test
-  void deleteGcpCloudContextFlightFails_cloudContextStillExist_notLogChangedDate() {
+  void deleteGcpCloudContextFlightFails_cloudContextStillExist_notLogChangedDate()
+      throws InterruptedException {
     var workspaceUuid = UUID.randomUUID();
     var emptyChangedDate = activityLogDao.getLastUpdatedDate(workspaceUuid);
     assertTrue(emptyChangedDate.isEmpty());
@@ -208,7 +211,7 @@ public class WorkspaceActivityLogHookTest extends BaseUnitTest {
   }
 
   @Test
-  void deleteResourceFlightFails_resourceNotExist_logChangedDate() {
+  void deleteResourceFlightFails_resourceNotExist_logChangedDate() throws InterruptedException {
     var workspaceUuid = UUID.randomUUID();
     var resourceUuid = UUID.randomUUID();
     var emptyChangedDate = activityLogDao.getLastUpdatedDate(workspaceUuid);
@@ -243,7 +246,8 @@ public class WorkspaceActivityLogHookTest extends BaseUnitTest {
   }
 
   @Test
-  void deleteResourceFlightFails_resourceStillExist_notLogChangedDate() {
+  void deleteResourceFlightFails_resourceStillExist_notLogChangedDate()
+      throws InterruptedException {
     var workspaceUuid = UUID.randomUUID();
     var resourceUuid = UUID.randomUUID();
     var emptyChangedDate = activityLogDao.getLastUpdatedDate(workspaceUuid);
