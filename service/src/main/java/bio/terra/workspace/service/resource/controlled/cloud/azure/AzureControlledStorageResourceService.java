@@ -22,6 +22,7 @@ import com.azure.storage.blob.BlobContainerClientBuilder;
 import com.azure.storage.blob.sas.BlobContainerSasPermission;
 import com.azure.storage.blob.sas.BlobServiceSasSignatureValues;
 import com.azure.storage.common.StorageSharedKeyCredential;
+import com.azure.storage.common.sas.SasIpRange;
 import com.azure.storage.common.sas.SasProtocol;
 import java.time.OffsetDateTime;
 import java.util.List;
@@ -109,7 +110,8 @@ public class AzureControlledStorageResourceService {
       ControlledAzureStorageResource storageAccountResource,
       OffsetDateTime startTime,
       OffsetDateTime expiryTime,
-      AuthenticatedUserRequest userRequest) {
+      AuthenticatedUserRequest userRequest,
+      String sasIPRange) {
     features.azureEnabledCheck();
 
     BlobContainerSasPermission blobContainerSasPermission =
@@ -132,6 +134,10 @@ public class AzureControlledStorageResourceService {
             .setStartTime(startTime)
             .setProtocol(SasProtocol.HTTPS_ONLY);
 
+    if (sasIPRange != null) {
+      sasValues.setSasIpRange(SasIpRange.parse(sasIPRange));
+    }
+    // sasValues.setSasIpRange();
     final var token = blobContainerClient.generateSas(sasValues);
 
     return new AzureSasBundle(

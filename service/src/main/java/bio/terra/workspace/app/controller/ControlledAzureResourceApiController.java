@@ -52,8 +52,10 @@ import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import java.time.OffsetDateTime;
 import java.util.UUID;
+import javax.annotation.Nullable;
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
+import org.apache.commons.validator.routines.InetAddressValidator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -206,8 +208,11 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
 
   @Override
   public ResponseEntity<ApiCreatedAzureStorageContainerSasToken>
-      createAzureStorageContainerSasToken(UUID workspaceUuid, UUID storageContainerUuid) {
+      createAzureStorageContainerSasToken(
+          UUID workspaceUuid, UUID storageContainerUuid, String sasIPRange) {
     features.azureEnabledCheck();
+
+    ControllerValidationUtils.validateIpAddressRange(sasIPRange);
 
     final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     // Creating an AzureStorageContainerSasToken requires checking the user's access to both the
@@ -249,7 +254,8 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
             storageAccountResource,
             startTime,
             expiryTime,
-            userRequest);
+            userRequest,
+            sasIPRange);
 
     logger.info(
         "SAS token with expiry time of {} generated for user {} on container {} in workspace {}",

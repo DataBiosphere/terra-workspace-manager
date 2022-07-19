@@ -200,7 +200,8 @@ public class AzureControlledStorageResourceServiceTest extends BaseAzureTest {
             storageAccount,
             startTime,
             expiryTime,
-            workspaceOwner.getAuthenticatedRequest());
+            workspaceOwner.getAuthenticatedRequest(),
+            null);
 
     BlobContainerSasPermission ownerPermissions = BlobContainerSasPermission.parse("rlacwd");
     assertValidToken(sasBundle.sasToken(), ownerPermissions);
@@ -224,7 +225,8 @@ public class AzureControlledStorageResourceServiceTest extends BaseAzureTest {
                 storageAccount,
                 startTime,
                 expiryTime,
-                userAccessUtils.secondUserAuthRequest()));
+                userAccessUtils.secondUserAuthRequest(),
+                null));
   }
 
   @Test
@@ -246,10 +248,36 @@ public class AzureControlledStorageResourceServiceTest extends BaseAzureTest {
                 storageAccount,
                 startTime,
                 expiryTime,
-                userAccessUtils.secondUserAuthRequest())
+                userAccessUtils.secondUserAuthRequest(),
+                null)
             .sasToken();
 
     BlobContainerSasPermission readerPermissions = BlobContainerSasPermission.parse("rl");
     assertValidToken(sas, readerPermissions);
+  }
+
+  @Test
+  void createSasTokenWithIpRange() throws Exception {
+    UUID workspaceUuid = workspace.getWorkspaceId();
+
+    AzureControlledStorageResourceService.AzureSasBundle sasBundle =
+        azureControlledStorageResourceService.createAzureStorageContainerSasToken(
+            workspaceUuid,
+            storageContainer,
+            storageAccount,
+            startTime,
+            expiryTime,
+            workspaceOwner.getAuthenticatedRequest(),
+            "168.1.5.60-168.1.5.70");
+
+    BlobContainerSasPermission ownerPermissions = BlobContainerSasPermission.parse("rlacwd");
+    assertValidToken(sasBundle.sasToken(), ownerPermissions);
+    assertEquals(
+        sasBundle.sasUrl(),
+        String.format(
+            "https://%s.blob.core.windows.net/sc-%s?%s",
+            storageAccount.getStorageAccountName(),
+            storageContainer.getResourceId(),
+            sasBundle.sasToken()));
   }
 }
