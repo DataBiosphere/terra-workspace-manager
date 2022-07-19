@@ -255,8 +255,8 @@ components:
           format: uuid
         destinationUserFacingId:
           description: |
-            Human-settable, mutable id. Must have 3-63 characters, contain lowercase letters, numbers, dashes, or
-            underscores, and start with lowercase letter.
+            Human-settable, mutable id. Must have 3-63 characters, and contain lowercase letters, numbers, dashes, or
+            underscores.
           type: string
         resources:
           type: array
