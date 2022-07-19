@@ -23,7 +23,6 @@ import bio.terra.workspace.model.GrantRoleRequestBody;
 import bio.terra.workspace.model.IamRole;
 import bio.terra.workspace.model.JobControl;
 import bio.terra.workspace.model.ManagedBy;
-import bio.terra.workspace.model.PrivateResourceIamRoles;
 import bio.terra.workspace.model.PrivateResourceUser;
 import bio.terra.workspace.model.ResourceList;
 import bio.terra.workspace.model.ResourceType;
@@ -181,7 +180,9 @@ public class PrivateControlledGcsBucketLifecycle extends WorkspaceAllocateTestSc
 
     // Supply just the roles, but no email
     PrivateResourceUser privateUserNoEmail =
-        new PrivateResourceUser().userName(null).privateResourceIamRole(ControlledResourceIamRole.READER);
+        new PrivateResourceUser()
+            .userName(null)
+            .privateResourceIamRole(ControlledResourceIamRole.READER);
 
     ex =
         assertThrows(

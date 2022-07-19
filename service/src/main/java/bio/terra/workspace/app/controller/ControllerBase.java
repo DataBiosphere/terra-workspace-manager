@@ -16,11 +16,9 @@ import bio.terra.workspace.service.iam.model.SamConstants;
 import bio.terra.workspace.service.resource.controlled.model.AccessScopeType;
 import bio.terra.workspace.service.resource.controlled.model.ManagedByType;
 import bio.terra.workspace.service.resource.controlled.model.PrivateUserRole;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
-import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import javax.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpStatus;
@@ -148,7 +146,9 @@ public class ControllerBase {
           // Translate the incoming role into our internal model form
           // This also validates that the incoming API model values are correct.
           List<ControlledResourceIamRole> roles = new ArrayList<ControlledResourceIamRole>();
-          roles.add(ControlledResourceIamRole.fromApiModel(commonFields.getPrivateResourceUser().getPrivateResourceIamRole()));
+          roles.add(
+              ControlledResourceIamRole.fromApiModel(
+                  commonFields.getPrivateResourceUser().getPrivateResourceIamRole()));
 
           if (roles.isEmpty()) {
             throw new ValidationException(
