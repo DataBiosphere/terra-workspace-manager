@@ -51,7 +51,7 @@ public class WorkspaceLifecycle extends WorkspaceApiTestScriptBase {
     assertThat(
         ex.getMessage(),
         containsString(
-            "ID must have 3-63 characters, contain lowercase letters, numbers, dashes, or underscores, and start with lowercase letter"));
+            "ID must have 3-63 characters, and contain lowercase letters, numbers, dashes, or underscores"));
 
     createBody.userFacingId(validUserFacingId);
     workspaceApi.createWorkspace(createBody);
