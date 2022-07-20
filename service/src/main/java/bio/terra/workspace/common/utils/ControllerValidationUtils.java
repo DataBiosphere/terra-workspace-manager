@@ -29,10 +29,10 @@ public final class ControllerValidationUtils {
 
   /**
    * userFacingId must be 3-63 characters, use lower-case letters, numbers, dashes, or underscores
-   * and must start with a letter.
+   * and must start with a lower-case letter or number.
    */
   public static final Pattern USER_FACING_ID_VALIDATION_PATTERN =
-      Pattern.compile("^[-_a-z0-9]{3,63}$");
+      Pattern.compile("^[a-z0-9][-_a-z0-9]{2,62}$");
 
   /**
    * Utility to validate limit/offset parameters used in pagination.
@@ -105,7 +105,7 @@ public final class ControllerValidationUtils {
       logger.warn("User provided invalid userFacingId: " + userFacingId);
       // "ID" instead of "userFacingId" because user sees this.
       throw new ValidationException(
-          "ID must have 3-63 characters, and contain lowercase letters, numbers, dashes, or underscores");
+          "ID must have 3-63 characters, contain lowercase letters, numbers, dashes, or underscores, and start with lowercase letter or number");
     }
   }
 

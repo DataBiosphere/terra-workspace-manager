@@ -101,8 +101,8 @@ components:
       name: workspaceUserFacingId
       in: path
       description: |
-        Human-settable, mutable id. Must have 3-63 characters, and contain lowercase letters, numbers, dashes, or
-        underscores.
+        Human-settable, mutable id. ID must have 3-63 characters, contain lowercase letters, numbers,
+        dashes, or underscores, and start with lowercase letter or number
       required: true
       schema:
         type: string
