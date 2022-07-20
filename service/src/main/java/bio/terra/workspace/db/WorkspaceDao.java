@@ -6,12 +6,14 @@ import bio.terra.common.exception.MissingRequiredFieldException;
 import bio.terra.workspace.common.exception.InternalLogicException;
 import bio.terra.workspace.common.utils.ControllerValidationUtils;
 import bio.terra.workspace.db.exception.WorkspaceNotFoundException;
+import bio.terra.workspace.db.model.DbWorkspaceActivityLog;
 import bio.terra.workspace.service.resource.controlled.model.PrivateResourceState;
 import bio.terra.workspace.service.spendprofile.SpendProfileId;
 import bio.terra.workspace.service.workspace.exceptions.DuplicateCloudContextException;
 import bio.terra.workspace.service.workspace.exceptions.DuplicateUserFacingIdException;
 import bio.terra.workspace.service.workspace.exceptions.DuplicateWorkspaceException;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
+import bio.terra.workspace.service.workspace.model.OperationType;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
 import java.util.Collections;
@@ -43,6 +45,7 @@ import org.springframework.stereotype.Component;
  */
 @Component
 public class WorkspaceDao {
+  private final WorkspaceActivityLogDao workspaceActivityLogDao;
 
   /** SQL query for reading a workspace */
   private static final String WORKSPACE_SELECT_SQL =
@@ -70,7 +73,9 @@ public class WorkspaceDao {
   private final NamedParameterJdbcTemplate jdbcTemplate;
 
   @Autowired
-  public WorkspaceDao(NamedParameterJdbcTemplate jdbcTemplate) {
+  public WorkspaceDao(
+      WorkspaceActivityLogDao workspaceActivityLogDao, NamedParameterJdbcTemplate jdbcTemplate) {
+    this.workspaceActivityLogDao = workspaceActivityLogDao;
     this.jdbcTemplate = jdbcTemplate;
   }
 
@@ -267,12 +272,11 @@ public class WorkspaceDao {
 
   /** Update a workspace properties */
   @WriteTransaction
-  public boolean updateWorkspaceProperties(UUID workspaceUuid, Map<String, String> propertyMap) {
+  public void updateWorkspaceProperties(UUID workspaceUuid, Map<String, String> propertyMap) {
     // get current property in this workspace id
     String selectPropertiesSql = "SELECT properties FROM workspace WHERE workspace_id = :id";
     MapSqlParameterSource propertiesParams =
         new MapSqlParameterSource().addValue("id", workspaceUuid.toString());
-    int rowsAffected;
     String result;
 
     try {
@@ -293,14 +297,9 @@ public class WorkspaceDao {
     params
         .addValue("properties", DbSerDes.propertiesToJson(properties))
         .addValue("id", workspaceUuid.toString());
-
-    rowsAffected = jdbcTemplate.update(sql, params);
-    boolean updated = rowsAffected > 0;
-    logger.info(
-        "{} properties for workspace {}",
-        (updated ? "Updated" : "No Update - did not find"),
-        workspaceUuid);
-    return updated;
+    jdbcTemplate.update(sql, params);
+    workspaceActivityLogDao.writeActivity(
+        workspaceUuid, new DbWorkspaceActivityLog().operationType(OperationType.UPDATE));
   }
 
   /**

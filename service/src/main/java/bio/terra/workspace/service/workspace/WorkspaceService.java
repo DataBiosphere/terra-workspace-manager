@@ -285,21 +285,6 @@ public class WorkspaceService {
   }
 
   /**
-   * Update workspace properties.
-   *
-   * @param userRequest authenticated user
-   * @param workspaceUuid workspace of interest
-   * @param properties map of key-value properties
-   */
-  public void updateWorkspaceProperties(
-      AuthenticatedUserRequest userRequest, UUID workspaceUuid, Map<String, String> properties) {
-    if (workspaceDao.updateWorkspaceProperties(workspaceUuid, properties)) {
-      workspaceActivityLogDao.writeActivity(
-          workspaceUuid, new DbWorkspaceActivityLog().operationType(OperationType.UPDATE));
-    }
-  }
-
-  /**
    * Process the request to create a Azure cloud context
    *
    * @param workspace workspace in which to create the context
