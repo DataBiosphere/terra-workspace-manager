@@ -102,7 +102,8 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
         referenceResourceService.deleteReferenceResourceForResourceType(
             referencedResource.getWorkspaceId(),
             referencedResource.getResourceId(),
-            referencedResource.getResourceType());
+            referencedResource.getResourceType(),
+            USER_REQUEST.getEmail());
       } catch (Exception ex) {
         logger.warn("Failed to delete reference resource " + referencedResource.getResourceId());
       }
@@ -424,7 +425,8 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
       referenceResourceService.deleteReferenceResourceForResourceType(
           workspaceUuid,
           referencedResource.getResourceId(),
-          WsmResourceType.REFERENCED_ANY_DATA_REPO_SNAPSHOT);
+          WsmResourceType.REFERENCED_ANY_DATA_REPO_SNAPSHOT,
+          USER_REQUEST.getEmail());
       var updatedDateAfterDelete = workspaceActivityLogDao.getLastUpdatedDate(workspaceUuid);
       assertTrue(updatedDateAfterCreate.get().isBefore(updatedDateAfterDelete.get()));
     }
@@ -497,7 +499,8 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
       } finally {
         for (var resource : resources) {
           referenceResourceService.deleteReferenceResourceForResourceType(
-              workspaceUuid, resource.getResourceId(), resource.getResourceType());
+              workspaceUuid, resource.getResourceId(), resource.getResourceType(),
+              USER_REQUEST.getEmail());
         }
       }
     }
@@ -566,7 +569,8 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
       referenceResourceService.deleteReferenceResourceForResourceType(
           workspaceUuid,
           referencedResource.getResourceId(),
-          WsmResourceType.REFERENCED_GCP_GCS_OBJECT);
+          WsmResourceType.REFERENCED_GCP_GCS_OBJECT,
+          USER_REQUEST.getEmail());
       var updatedDateAfterDelete = workspaceActivityLogDao.getLastUpdatedDate(workspaceUuid);
       assertTrue(updatedDateAfterCreate.get().isBefore(updatedDateAfterDelete.get()));
     }
@@ -617,7 +621,8 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
       referenceResourceService.deleteReferenceResourceForResourceType(
           workspaceUuid,
           referencedResource.getResourceId(),
-          WsmResourceType.REFERENCED_GCP_GCS_BUCKET);
+          WsmResourceType.REFERENCED_GCP_GCS_BUCKET,
+          USER_REQUEST.getEmail());
     }
 
     @Test
@@ -765,7 +770,8 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
       referenceResourceService.deleteReferenceResourceForResourceType(
           workspaceUuid,
           referencedResource.getResourceId(),
-          WsmResourceType.REFERENCED_GCP_BIG_QUERY_DATASET);
+          WsmResourceType.REFERENCED_GCP_BIG_QUERY_DATASET,
+          USER_REQUEST.getEmail());
       var updatedDateAfterDelete = workspaceActivityLogDao.getLastUpdatedDate(workspaceUuid);
       assertTrue(updatedDateAfterCreate.get().isBefore(updatedDateAfterDelete.get()));
     }
@@ -808,7 +814,8 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
       referenceResourceService.deleteReferenceResourceForResourceType(
           workspaceUuid,
           referencedResource.getResourceId(),
-          WsmResourceType.REFERENCED_GCP_BIG_QUERY_DATA_TABLE);
+          WsmResourceType.REFERENCED_GCP_BIG_QUERY_DATA_TABLE,
+          USER_REQUEST.getEmail());
 
       var updatedDateAfterDelete = workspaceActivityLogDao.getLastUpdatedDate(workspaceUuid);
       assertTrue(updatedDateAfterCreate.get().isBefore(updatedDateAfterDelete.get()));
@@ -825,7 +832,8 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
       referenceResourceService.deleteReferenceResourceForResourceType(
           workspaceUuid,
           referencedResource.getResourceId(),
-          WsmResourceType.REFERENCED_GCP_BIG_QUERY_DATASET);
+          WsmResourceType.REFERENCED_GCP_BIG_QUERY_DATASET,
+          USER_REQUEST.getEmail());
 
       var lastUpdatedDateBeforeResourceUpdate =
           workspaceActivityLogDao.getLastUpdatedDate(workspaceUuid);
@@ -845,7 +853,8 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
       referenceResourceService.deleteReferenceResourceForResourceType(
           workspaceUuid,
           referencedResource.getResourceId(),
-          WsmResourceType.REFERENCED_GCP_BIG_QUERY_DATA_TABLE);
+          WsmResourceType.REFERENCED_GCP_BIG_QUERY_DATA_TABLE,
+          USER_REQUEST.getEmail());
       // BQ data table is successfully deleted.
       assertThrows(
           ResourceNotFoundException.class,
@@ -1022,7 +1031,8 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
       referenceResourceService.deleteReferenceResourceForResourceType(
           workspaceUuid,
           referencedResource.getResourceId(),
-          WsmResourceType.REFERENCED_ANY_TERRA_WORKSPACE);
+          WsmResourceType.REFERENCED_ANY_TERRA_WORKSPACE,
+          USER_REQUEST.getEmail());
       var updatedDateAfterDeletion = workspaceActivityLogDao.getLastUpdatedDate(workspaceUuid);
       assertTrue(updatedDateAfterCreate.get().isBefore(updatedDateAfterDeletion.get()));
     }
@@ -1056,12 +1066,6 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
           () ->
               referenceResourceService.getReferenceResourceByName(
                   workspaceUuid, UUID.randomUUID().toString()));
-    }
-
-    @Test
-    void deleteResource() {
-      referenceResourceService.deleteReferenceResource(
-          workspaceUuid, UUID.randomUUID(), USER_REQUEST);
     }
 
     @Test

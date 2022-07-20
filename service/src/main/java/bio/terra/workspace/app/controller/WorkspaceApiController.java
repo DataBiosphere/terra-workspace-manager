@@ -233,13 +233,18 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
     }
     workspaceService.validateWorkspaceAndAction(
         userRequest, workspaceUuid, SamConstants.SamWorkspaceAction.WRITE);
+    String userEmail = SamRethrow.onInterrupted(
+        () -> samService.getUserEmailFromSam(userRequest),
+        "#updateWorkspace: get user email from SAM"
+    );
     Workspace workspace =
         workspaceService.updateWorkspace(
             workspaceUuid,
             body.getUserFacingId(),
             body.getDisplayName(),
             body.getDescription(),
-            propertyMap);
+            propertyMap,
+            userEmail);
 
     WsmIamRole highestRole = workspaceService.getHighestRole(workspaceUuid, userRequest);
     ApiWorkspaceDescription desc = buildWorkspaceDescription(workspace, highestRole);
@@ -292,8 +297,13 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
             samService.grantWorkspaceRole(
                 uuid, getAuthenticatedInfo(), WsmIamRole.fromApiModel(role), body.getMemberEmail()),
         "grantWorkspaceRole");
+    String userEmail =
+        SamRethrow.onInterrupted(
+            () -> samService.getUserEmailFromSam(getAuthenticatedInfo()),
+            "#grantRole: get user email from SAM"
+        );
     workspaceActivityLogDao.writeActivity(
-        uuid, new DbWorkspaceActivityLog().operationType(OperationType.GRANT_WORKSPACE_ROLE));
+        uuid, new DbWorkspaceActivityLog().operationType(OperationType.GRANT_WORKSPACE_ROLE).userEmail(userEmail));
     return new ResponseEntity<>(HttpStatus.NO_CONTENT);
   }
 

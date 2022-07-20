@@ -20,6 +20,12 @@ import org.springframework.stereotype.Component;
 @Component
 public class WorkspaceActivityLogDao {
 
+  private static final String WORKSPACE_CREATED_DATE_SQL = "SELECT MIN(change_date) FROM workspace_activity_log"
+      + " WHERE workspace_id = :workspace_id";
+  private static final String WORKSPACE_LAST_UPDATED_SQL =
+      "SELECT MAX(change_date) FROM workspace_activity_log"
+          + " WHERE workspace_id = :workspace_id"
+          + " AND change_type NOT IN (:change_type)";
   private final NamedParameterJdbcTemplate jdbcTemplate;
 
   // These fields don't update workspace "Last updated" time in UI. For example,
@@ -42,13 +48,14 @@ public class WorkspaceActivityLogDao {
           String.format("Flight operation type is unknown in workspace %s", workspaceId));
     }
     final String sql =
-        "INSERT INTO workspace_activity_log (workspace_id, change_date, change_type)"
-            + " VALUES (:workspace_id, :change_date, :change_type)";
+        "INSERT INTO workspace_activity_log (workspace_id, change_date, change_type, change_agent_email)"
+            + " VALUES (:workspace_id, :change_date, :change_type, :change_agent_email)";
     final var params =
         new MapSqlParameterSource()
             .addValue("workspace_id", workspaceId.toString())
             .addValue("change_date", Instant.now().atOffset(ZoneOffset.UTC))
-            .addValue("change_type", dbWorkspaceActivityLog.getOperationType().name());
+            .addValue("change_type", dbWorkspaceActivityLog.getOperationType().name())
+            .addValue("change_agent_email", dbWorkspaceActivityLog.getUserEmail());
     jdbcTemplate.update(sql, params);
   }
 
@@ -60,25 +67,38 @@ public class WorkspaceActivityLogDao {
    */
   @ReadTransaction
   public Optional<OffsetDateTime> getCreatedDate(UUID workspaceId) {
-    final String sql =
-        "SELECT MIN(change_date) FROM workspace_activity_log"
-            + " WHERE workspace_id = :workspace_id";
     final var params = new MapSqlParameterSource().addValue("workspace_id", workspaceId.toString());
+    return Optional.ofNullable(jdbcTemplate.queryForObject(WORKSPACE_CREATED_DATE_SQL, params, OffsetDateTime.class));
+  }
 
-    return Optional.ofNullable(jdbcTemplate.queryForObject(sql, params, OffsetDateTime.class));
+  @ReadTransaction
+  public Optional<String> getCreatedBy(UUID workspaceId) {
+    final String sql =
+        "SELECT change_agent_email FROM workspace_activity_log WHERE change_date = (" + WORKSPACE_CREATED_DATE_SQL + ")"
+            + " AND workspace_id = :workspace_id";
+    final var params = new MapSqlParameterSource().addValue("workspace_id", workspaceId.toString());
+    return Optional.ofNullable(jdbcTemplate.queryForObject(sql, params, String.class));
   }
 
   @ReadTransaction
   public Optional<OffsetDateTime> getLastUpdatedDate(UUID workspaceId) {
-    final String sql =
-        "SELECT MAX(change_date) FROM workspace_activity_log"
-            + " WHERE workspace_id = :workspace_id"
-            + " AND change_type NOT IN (:change_type)";
     final var params =
         new MapSqlParameterSource()
             .addValue("workspace_id", workspaceId.toString())
             .addValue("change_type", NON_UPDATE_TYPE_OPERATION);
-
-    return Optional.ofNullable(jdbcTemplate.queryForObject(sql, params, OffsetDateTime.class));
+    return Optional.ofNullable(jdbcTemplate.queryForObject(WORKSPACE_LAST_UPDATED_SQL, params, OffsetDateTime.class));
   }
+
+  public Optional<String> getLastUpdatedBy(UUID workspaceId) {
+    final String sql =
+        "SELECT change_agent_email FROM workspace_activity_log WHERE change_date = (" + WORKSPACE_LAST_UPDATED_SQL + ")"
+            + " AND workspace_id = :workspace_id";
+    final var params =
+        new MapSqlParameterSource()
+            .addValue("workspace_id", workspaceId.toString())
+            .addValue("change_type", NON_UPDATE_TYPE_OPERATION);
+    return Optional.ofNullable(jdbcTemplate.queryForObject(sql, params, String.class));
+  }
+
+
 }

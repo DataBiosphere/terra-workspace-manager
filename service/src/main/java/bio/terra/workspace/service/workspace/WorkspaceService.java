@@ -261,10 +261,11 @@ public class WorkspaceService {
       @Nullable String userFacingId,
       @Nullable String name,
       @Nullable String description,
-      @Nullable Map<String, String> properties) {
+      @Nullable Map<String, String> properties,
+      String userEmail) {
     if (workspaceDao.updateWorkspace(workspaceUuid, userFacingId, name, description, properties)) {
       workspaceActivityLogDao.writeActivity(
-          workspaceUuid, new DbWorkspaceActivityLog().operationType(OperationType.UPDATE));
+          workspaceUuid, new DbWorkspaceActivityLog().operationType(OperationType.UPDATE).userEmail(userEmail));
     }
     return workspaceDao.getWorkspace(workspaceUuid);
   }

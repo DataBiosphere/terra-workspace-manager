@@ -31,6 +31,8 @@ import bio.terra.workspace.generated.model.ApiUpdateGcsBucketReferenceRequestBod
 import bio.terra.workspace.generated.model.ApiUpdateGitRepoReferenceRequestBody;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequestFactory;
+import bio.terra.workspace.service.iam.SamRethrow;
+import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.iam.model.SamConstants.SamWorkspaceAction;
 import bio.terra.workspace.service.resource.ResourceValidationUtils;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
@@ -63,6 +65,7 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
   private final ReferencedResourceService referenceResourceService;
   private final WorkspaceDao workspaceDao;
   private final WorkspaceService workspaceService;
+  private final SamService samService;
   private final AuthenticatedUserRequestFactory authenticatedUserRequestFactory;
   private final ResourceValidationUtils validationUtils;
   private final HttpServletRequest request;
@@ -73,12 +76,14 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
       ReferencedResourceService referenceResourceService,
       WorkspaceDao workspaceDao,
       WorkspaceService workspaceService,
+      SamService samService,
       AuthenticatedUserRequestFactory authenticatedUserRequestFactory,
       ResourceValidationUtils validationUtils,
       HttpServletRequest request) {
     this.referenceResourceService = referenceResourceService;
     this.workspaceDao = workspaceDao;
     this.workspaceService = workspaceService;
+    this.samService = samService;
     this.authenticatedUserRequestFactory = authenticatedUserRequestFactory;
     this.validationUtils = validationUtils;
     this.request = request;
@@ -191,8 +196,13 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     workspaceService.validateWorkspaceAndAction(
         userRequest, workspaceUuid, SamWorkspaceAction.DELETE_REFERENCE);
+    String userEmail =
+        SamRethrow.onInterrupted(
+            () -> samService.getUserEmailFromSam(userRequest),
+            "#deleteGcsObjectReference: get user email from SAM"
+        );
     referenceResourceService.deleteReferenceResourceForResourceType(
-        workspaceUuid, resourceId, WsmResourceType.REFERENCED_GCP_GCS_OBJECT);
+        workspaceUuid, resourceId, WsmResourceType.REFERENCED_GCP_GCS_OBJECT, userEmail);
     return new ResponseEntity<>(HttpStatus.NO_CONTENT);
   }
 
@@ -289,8 +299,13 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     workspaceService.validateWorkspaceAndAction(
         userRequest, workspaceUuid, SamWorkspaceAction.DELETE_REFERENCE);
+    String userEmail =
+        SamRethrow.onInterrupted(
+            () -> samService.getUserEmailFromSam(userRequest),
+            "#deleteBucketReference: get user email from SAM"
+        );
     referenceResourceService.deleteReferenceResourceForResourceType(
-        workspaceUuid, resourceId, WsmResourceType.REFERENCED_GCP_GCS_BUCKET);
+        workspaceUuid, resourceId, WsmResourceType.REFERENCED_GCP_GCS_BUCKET, userEmail);
     return new ResponseEntity<>(HttpStatus.NO_CONTENT);
   }
 
@@ -400,8 +415,13 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     workspaceService.validateWorkspaceAndAction(
         userRequest, workspaceUuid, SamWorkspaceAction.DELETE_REFERENCE);
+    String userEmail =
+        SamRethrow.onInterrupted(
+            () -> samService.getUserEmailFromSam(userRequest),
+            "#deleteBigQueryDataTableReference: Get the user email from Sam"
+        );
     referenceResourceService.deleteReferenceResourceForResourceType(
-        workspaceUuid, resourceId, WsmResourceType.REFERENCED_GCP_BIG_QUERY_DATA_TABLE);
+        workspaceUuid, resourceId, WsmResourceType.REFERENCED_GCP_BIG_QUERY_DATA_TABLE, userEmail);
     return new ResponseEntity<>(HttpStatus.NO_CONTENT);
   }
 
@@ -508,8 +528,13 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     workspaceService.validateWorkspaceAndAction(
         userRequest, workspaceUuid, SamWorkspaceAction.DELETE_REFERENCE);
+    String userEmail =
+        SamRethrow.onInterrupted(
+            () -> samService.getUserEmailFromSam(userRequest),
+            "#deleteBigQueryDatasetReference: get user email from SAM"
+        );
     referenceResourceService.deleteReferenceResourceForResourceType(
-        workspaceUuid, resourceId, WsmResourceType.REFERENCED_GCP_BIG_QUERY_DATASET);
+        workspaceUuid, resourceId, WsmResourceType.REFERENCED_GCP_BIG_QUERY_DATASET, userEmail);
     return new ResponseEntity<>(HttpStatus.NO_CONTENT);
   }
 
@@ -611,8 +636,14 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     workspaceService.validateWorkspaceAndAction(
         userRequest, workspaceUuid, SamWorkspaceAction.DELETE_REFERENCE);
+    String userEmail =
+        SamRethrow.onInterrupted(
+            () ->
+                samService.getUserEmailFromSam(userRequest),
+            "#deleteDataRepoSnapshotReference: get user email from SAM"
+        );
     referenceResourceService.deleteReferenceResourceForResourceType(
-        workspaceUuid, resourceId, WsmResourceType.REFERENCED_ANY_DATA_REPO_SNAPSHOT);
+        workspaceUuid, resourceId, WsmResourceType.REFERENCED_ANY_DATA_REPO_SNAPSHOT, userEmail);
     return new ResponseEntity<>(HttpStatus.NO_CONTENT);
   }
 
@@ -950,8 +981,12 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     workspaceService.validateWorkspaceAndAction(
         userRequest, workspaceUuid, SamWorkspaceAction.DELETE_REFERENCE);
+    String userEmail = SamRethrow.onInterrupted(
+        () -> samService.getUserEmailFromSam(userRequest),
+        "#deleteGitRepoReference: getUserEmailFromSam"
+    );
     referenceResourceService.deleteReferenceResourceForResourceType(
-        workspaceUuid, resourceId, WsmResourceType.REFERENCED_ANY_GIT_REPO);
+        workspaceUuid, resourceId, WsmResourceType.REFERENCED_ANY_GIT_REPO, userEmail);
     return new ResponseEntity<>(HttpStatus.OK);
   }
 
@@ -1063,8 +1098,13 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     workspaceService.validateWorkspaceAndAction(
         userRequest, workspaceUuid, SamWorkspaceAction.DELETE_REFERENCE);
+    String userEmail =
+        SamRethrow.onInterrupted(
+            () -> samService.getUserEmailFromSam(userRequest),
+            "#deleteTerraWorkspaceReference: get user email from SAM"
+        );
     referenceResourceService.deleteReferenceResourceForResourceType(
-        workspaceUuid, resourceId, WsmResourceType.REFERENCED_ANY_TERRA_WORKSPACE);
+        workspaceUuid, resourceId, WsmResourceType.REFERENCED_ANY_TERRA_WORKSPACE, userEmail);
     return new ResponseEntity<>(HttpStatus.OK);
   }
 }

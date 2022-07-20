@@ -179,23 +179,6 @@ public class ReferencedResourceService {
       logger.warn("There's no update to the referenced resource");
     }
   }
-  /**
-   * Delete a reference. The only state we hold for a reference is in the metadata database so we
-   * directly delete that.
-   *
-   * @param workspaceUuid workspace of interest
-   * @param resourceId resource to delete
-   * @param userRequest authenticated user
-   */
-  public void deleteReferenceResource(
-      UUID workspaceUuid, UUID resourceId, AuthenticatedUserRequest userRequest) {
-    workspaceService.validateWorkspaceAndAction(
-        userRequest, workspaceUuid, SamConstants.SamWorkspaceAction.DELETE_REFERENCE);
-    if (resourceDao.deleteResource(workspaceUuid, resourceId)) {
-      workspaceActivityLogDao.writeActivity(
-          workspaceUuid, new DbWorkspaceActivityLog().operationType(OperationType.DELETE));
-    }
-  }
 
   /**
    * Delete a reference for the specified resource type. If the resource type stored in the metadata
@@ -206,10 +189,11 @@ public class ReferencedResourceService {
    * @param resourceType wsm resource type that the to-be-deleted resource should have
    */
   public void deleteReferenceResourceForResourceType(
-      UUID workspaceUuid, UUID resourceId, WsmResourceType resourceType) {
+      UUID workspaceUuid, UUID resourceId, WsmResourceType resourceType,
+      String userEmail) {
     if (resourceDao.deleteResourceForResourceType(workspaceUuid, resourceId, resourceType)) {
       workspaceActivityLogDao.writeActivity(
-          workspaceUuid, new DbWorkspaceActivityLog().operationType(OperationType.DELETE));
+          workspaceUuid, new DbWorkspaceActivityLog().operationType(OperationType.DELETE).userEmail(userEmail));
     }
   }
 
