@@ -267,6 +267,18 @@ public class WorkspaceService {
     return workspaceDao.getWorkspace(workspaceUuid);
   }
 
+  /**
+   * Update an existing workspace properties.
+   *
+   * @param workspaceUuid workspace of interest
+   * @param properties list of keys in properties
+   */
+  public void updateWorkspaceProperties(UUID workspaceUuid, Map<String, String> properties) {
+    workspaceDao.updateWorkspaceProperties(workspaceUuid, properties);
+    workspaceActivityLogDao.writeActivity(workspaceUuid, new DbWorkspaceActivityLog().operationType(OperationType.UPDATE));
+  }
+
+
   /** Delete an existing workspace by ID. */
   @Traced
   public void deleteWorkspace(Workspace workspace, AuthenticatedUserRequest userRequest) {

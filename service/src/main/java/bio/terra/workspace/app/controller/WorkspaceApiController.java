@@ -2,6 +2,7 @@ package bio.terra.workspace.app.controller;
 
 import bio.terra.workspace.common.utils.ControllerValidationUtils;
 import bio.terra.workspace.db.WorkspaceActivityLogDao;
+import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.db.model.DbWorkspaceActivityLog;
 import bio.terra.workspace.generated.controller.WorkspaceApi;
 import bio.terra.workspace.generated.model.ApiAzureContext;
@@ -270,11 +271,10 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
   @Override
   public ResponseEntity<Void> updateWorkspaceProperties(
       @PathVariable("workspaceId") UUID workspaceUuid, @RequestBody List<ApiProperty> properties) {
-    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     Map<String, String> propertyMap = propertyMapFromApi(properties);
     logger.info(
         "Updating the properties {} in workspace {}", propertyMap.toString(), workspaceUuid);
-    workspaceService.updateWorkspaceProperties(userRequest, workspaceUuid, propertyMap);
+    workspaceService.updateWorkspaceProperties(workspaceUuid, propertyMap);
     logger.info("Updated the properties {} in workspace {}", propertyMap.toString(), workspaceUuid);
 
     return new ResponseEntity<>(HttpStatus.NO_CONTENT);

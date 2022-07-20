@@ -475,7 +475,7 @@ class WorkspaceServiceTest extends BaseConnectedTest {
     assertTrue(lastUpdatedDate.isPresent());
 
     // Workspace update new properties
-    workspaceService.updateWorkspaceProperties(USER_REQUEST, workspaceUuid, propertyMap);
+    workspaceService.updateWorkspaceProperties(workspaceUuid, propertyMap);
     Workspace updatedWorkspace = workspaceService.getWorkspace(workspaceUuid);
 
     var updatedDateAfterWorkspaceUpdate = workspaceActivityLogDao.getLastUpdatedDate(workspaceUuid);

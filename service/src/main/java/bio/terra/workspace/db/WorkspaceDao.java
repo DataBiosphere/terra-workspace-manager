@@ -45,8 +45,6 @@ import org.springframework.stereotype.Component;
  */
 @Component
 public class WorkspaceDao {
-  private final WorkspaceActivityLogDao workspaceActivityLogDao;
-
   /** SQL query for reading a workspace */
   private static final String WORKSPACE_SELECT_SQL =
       "SELECT workspace_id, user_facing_id, display_name, description, spend_profile, properties, workspace_stage"
@@ -75,7 +73,6 @@ public class WorkspaceDao {
   @Autowired
   public WorkspaceDao(
       WorkspaceActivityLogDao workspaceActivityLogDao, NamedParameterJdbcTemplate jdbcTemplate) {
-    this.workspaceActivityLogDao = workspaceActivityLogDao;
     this.jdbcTemplate = jdbcTemplate;
   }
 
@@ -298,8 +295,6 @@ public class WorkspaceDao {
         .addValue("properties", DbSerDes.propertiesToJson(properties))
         .addValue("id", workspaceUuid.toString());
     jdbcTemplate.update(sql, params);
-    workspaceActivityLogDao.writeActivity(
-        workspaceUuid, new DbWorkspaceActivityLog().operationType(OperationType.UPDATE));
   }
 
   /**
