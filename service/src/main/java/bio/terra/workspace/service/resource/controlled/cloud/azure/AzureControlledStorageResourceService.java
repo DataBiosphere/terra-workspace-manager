@@ -137,7 +137,7 @@ public class AzureControlledStorageResourceService {
     if (sasIPRange != null) {
       sasValues.setSasIpRange(SasIpRange.parse(sasIPRange));
     }
-    // sasValues.setSasIpRange();
+
     final var token = blobContainerClient.generateSas(sasValues);
 
     return new AzureSasBundle(
