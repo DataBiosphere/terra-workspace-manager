@@ -275,9 +275,9 @@ public class WorkspaceService {
    */
   public void updateWorkspaceProperties(UUID workspaceUuid, Map<String, String> properties) {
     workspaceDao.updateWorkspaceProperties(workspaceUuid, properties);
-    workspaceActivityLogDao.writeActivity(workspaceUuid, new DbWorkspaceActivityLog().operationType(OperationType.UPDATE));
+    workspaceActivityLogDao.writeActivity(
+        workspaceUuid, new DbWorkspaceActivityLog().operationType(OperationType.UPDATE));
   }
-
 
   /** Delete an existing workspace by ID. */
   @Traced
