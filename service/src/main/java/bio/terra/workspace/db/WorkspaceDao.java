@@ -270,12 +270,11 @@ public class WorkspaceDao {
   }
 
   @WriteTransaction
-  public boolean deleteWorkspaceProperties(UUID workspaceUuid, List<String> propertyKeys) {
+  public void deleteWorkspaceProperties(UUID workspaceUuid, List<String> propertyKeys) {
     // get current property in this workspace id
     String selectPropertiesSql = "SELECT properties FROM workspace WHERE workspace_id = :id";
     MapSqlParameterSource propertiesParams =
         new MapSqlParameterSource().addValue("id", workspaceUuid.toString());
-    int rowsAffected;
     String result;
 
     try {
@@ -297,13 +296,7 @@ public class WorkspaceDao {
         .addValue("properties", DbSerDes.propertiesToJson(properties))
         .addValue("id", workspaceUuid.toString());
 
-    rowsAffected = jdbcTemplate.update(sql, params);
-    boolean updated = rowsAffected > 0;
-    logger.info(
-        "{} properties for workspace {}",
-        (updated ? "Delete" : "No Delete - did not find"),
-        workspaceUuid);
-    return updated;
+    jdbcTemplate.update(sql, params);
   }
 
   /**

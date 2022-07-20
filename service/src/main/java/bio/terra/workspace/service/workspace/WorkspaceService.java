@@ -289,16 +289,13 @@ public class WorkspaceService {
   /**
    * Update an existing workspace properties.
    *
-   * @param userRequest authenticated user
    * @param workspaceUuid workspace of interest
    * @param propertyKeys list of keys in properties
    */
-  public void deleteWorkspaceProperties(
-      AuthenticatedUserRequest userRequest, UUID workspaceUuid, List<String> propertyKeys) {
-    if (workspaceDao.deleteWorkspaceProperties(workspaceUuid, propertyKeys)) {
-      workspaceActivityLogDao.writeActivity(
-          workspaceUuid, new DbWorkspaceActivityLog().operationType(OperationType.UPDATE));
-    }
+  public void deleteWorkspaceProperties(UUID workspaceUuid, List<String> propertyKeys) {
+    workspaceDao.deleteWorkspaceProperties(workspaceUuid, propertyKeys);
+    workspaceActivityLogDao.writeActivity(
+        workspaceUuid, new DbWorkspaceActivityLog().operationType(OperationType.UPDATE));
   }
 
   /**

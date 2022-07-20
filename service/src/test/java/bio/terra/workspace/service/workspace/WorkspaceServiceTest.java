@@ -565,7 +565,7 @@ class WorkspaceServiceTest extends BaseConnectedTest {
 
     List<String> propertyKeys = new ArrayList<>(Arrays.asList("foo", "foo1"));
 
-    workspaceService.deleteWorkspaceProperties(USER_REQUEST, workspaceUuid, propertyKeys);
+    workspaceService.deleteWorkspaceProperties(workspaceUuid, propertyKeys);
     Workspace deletedWorkspace = workspaceService.getWorkspace(workspaceUuid);
 
     var updatedDateAfterWorkspaceUpdate = workspaceActivityLogDao.getLastUpdatedDate(workspaceUuid);
