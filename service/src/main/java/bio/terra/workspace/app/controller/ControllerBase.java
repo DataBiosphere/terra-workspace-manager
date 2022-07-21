@@ -17,8 +17,6 @@ import bio.terra.workspace.service.iam.model.SamConstants;
 import bio.terra.workspace.service.resource.controlled.model.AccessScopeType;
 import bio.terra.workspace.service.resource.controlled.model.ManagedByType;
 import bio.terra.workspace.service.resource.controlled.model.PrivateUserRole;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.UUID;
 import javax.annotation.Nullable;
 import javax.servlet.http.HttpServletRequest;
@@ -154,7 +152,8 @@ public class ControllerBase {
                 "You must specify at least one role when you specify PrivateResourceIamRoles");
           }
 
-          ControlledResourceIamRole role = ControlledResourceIamRole.fromApiModel(apiControlledResourceIamRole);
+          ControlledResourceIamRole role =
+              ControlledResourceIamRole.fromApiModel(apiControlledResourceIamRole);
 
           // The legal options for the assigned user of an application is READER
           // or WRITER. EDITOR is not allowed. We take the "max" of READER and WRITER.
