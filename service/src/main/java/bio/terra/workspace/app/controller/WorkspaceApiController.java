@@ -1,5 +1,6 @@
 package bio.terra.workspace.app.controller;
 
+import bio.terra.datarepo.model.UserStatusInfo;
 import bio.terra.workspace.common.utils.ControllerValidationUtils;
 import bio.terra.workspace.db.WorkspaceActivityLogDao;
 import bio.terra.workspace.db.model.DbWorkspaceActivityLog;
@@ -22,6 +23,7 @@ import bio.terra.workspace.generated.model.ApiProperty;
 import bio.terra.workspace.generated.model.ApiRoleBinding;
 import bio.terra.workspace.generated.model.ApiRoleBindingList;
 import bio.terra.workspace.generated.model.ApiUpdateWorkspaceRequestBody;
+import bio.terra.workspace.generated.model.ApiWorkspaceActivityChangeAgent;
 import bio.terra.workspace.generated.model.ApiWorkspaceDescription;
 import bio.terra.workspace.generated.model.ApiWorkspaceDescriptionList;
 import bio.terra.workspace.generated.model.ApiWorkspaceStageModel;
@@ -186,6 +188,8 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
         .forEach((k, v) -> apiProperties.add(new ApiProperty().key(k).value(v)));
 
     // When we have another cloud context, we will need to do a similar retrieval for it.
+    var createdBy = workspaceActivityLogDao.getCreatedBy(workspaceUuid);
+    var lastUpdatedBy = workspaceActivityLogDao.getLastUpdatedBy(workspaceUuid);
     return new ApiWorkspaceDescription()
         .id(workspaceUuid)
         .userFacingId(workspace.getUserFacingId())
@@ -198,7 +202,17 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
         .gcpContext(gcpContext)
         .azureContext(azureContext)
         .createdDate(workspaceActivityLogDao.getCreatedDate(workspaceUuid).orElse(null))
-        .lastUpdatedDate(workspaceActivityLogDao.getLastUpdatedDate(workspaceUuid).orElse(null));
+        .createdBy(
+            new ApiWorkspaceActivityChangeAgent()
+                .userEmail(createdBy.map(UserStatusInfo::getUserEmail).orElse(null))
+                .subjectId(createdBy.map(UserStatusInfo::getUserSubjectId).orElse(null))
+        )
+        .lastUpdatedDate(workspaceActivityLogDao.getLastUpdatedDate(workspaceUuid).orElse(null))
+        .lastUpdatedBy(
+            new ApiWorkspaceActivityChangeAgent()
+                .userEmail(lastUpdatedBy.map(UserStatusInfo::getUserEmail).orElse(null))
+                .subjectId(lastUpdatedBy.map(UserStatusInfo::getUserSubjectId).orElse(null))
+        );
   }
 
   @Override
@@ -233,8 +247,8 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
     }
     workspaceService.validateWorkspaceAndAction(
         userRequest, workspaceUuid, SamConstants.SamWorkspaceAction.WRITE);
-    String userEmail = SamRethrow.onInterrupted(
-        () -> samService.getUserEmailFromSam(userRequest),
+    var userStatusInfo = SamRethrow.onInterrupted(
+        () -> samService.getUserStatusInfo(userRequest),
         "#updateWorkspace: get user email from SAM"
     );
     Workspace workspace =
@@ -244,7 +258,8 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
             body.getDisplayName(),
             body.getDescription(),
             propertyMap,
-            userEmail);
+            userStatusInfo.getUserEmail(),
+            userStatusInfo.getUserSubjectId());
 
     WsmIamRole highestRole = workspaceService.getHighestRole(workspaceUuid, userRequest);
     ApiWorkspaceDescription desc = buildWorkspaceDescription(workspace, highestRole);
@@ -303,7 +318,7 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
             "#grantRole: get user email from SAM"
         );
     workspaceActivityLogDao.writeActivity(
-        uuid, new DbWorkspaceActivityLog().operationType(OperationType.GRANT_WORKSPACE_ROLE).userEmail(userEmail));
+        uuid, new DbWorkspaceActivityLog().operationType(OperationType.GRANT_WORKSPACE_ROLE).changeAgentEmail(userEmail));
     return new ResponseEntity<>(HttpStatus.NO_CONTENT);
   }
 

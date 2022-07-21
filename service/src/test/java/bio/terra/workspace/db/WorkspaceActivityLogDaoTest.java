@@ -1,6 +1,7 @@
 package bio.terra.workspace.db;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -16,6 +17,9 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 
 public class WorkspaceActivityLogDaoTest extends BaseUnitTest {
 
+  private static final String USER_EMAIL = "foo@gmail.com";
+  private static final String SUBJECT_ID = "foo";
+
   @Autowired WorkspaceActivityLogDao activityLogDao;
   @Autowired private NamedParameterJdbcTemplate jdbcTemplate;
 
@@ -25,42 +29,52 @@ public class WorkspaceActivityLogDaoTest extends BaseUnitTest {
     assertTrue(activityLogDao.getLastUpdatedDate(workspaceId).isEmpty());
 
     activityLogDao.writeActivity(
-        workspaceId, new DbWorkspaceActivityLog().operationType(OperationType.CREATE));
+        workspaceId, getDbWorkspaceActivityLog(OperationType.CREATE));
 
     var latestDate = activityLogDao.getLastUpdatedDate(workspaceId);
     var createdDate = activityLogDao.getCreatedDate(workspaceId);
+    var createdBy = activityLogDao.getCreatedBy(workspaceId);
+    var lastUpdatedBy = activityLogDao.getLastUpdatedBy(workspaceId);
     assertTrue(latestDate.isPresent());
     assertTrue(createdDate.isPresent());
     assertEquals(latestDate.get(), createdDate.get());
+    assertEquals(USER_EMAIL, createdBy.get().getUserEmail());
+    assertEquals(SUBJECT_ID, createdBy.get().getUserSubjectId());
+    assertEquals(USER_EMAIL, lastUpdatedBy.get().getUserEmail());
+    assertEquals(SUBJECT_ID, lastUpdatedBy.get().getUserSubjectId());
+  }
+
+  private DbWorkspaceActivityLog getDbWorkspaceActivityLog(OperationType create) {
+    return new DbWorkspaceActivityLog().operationType(create).changeAgentEmail(USER_EMAIL).changeAgentSubjectId(SUBJECT_ID);
   }
 
   @Test
   public void getLastUpdatedDate_notUpdateOnUnknownOperationType() {
     var workspaceId = UUID.randomUUID();
     activityLogDao.writeActivity(
-        workspaceId, new DbWorkspaceActivityLog().operationType(OperationType.CREATE));
+        workspaceId, getDbWorkspaceActivityLog(OperationType.CREATE));
     var firstUpdatedDate = activityLogDao.getLastUpdatedDate(workspaceId);
     assertEquals(OperationType.CREATE.name(), getChangeType(workspaceId));
 
     activityLogDao.writeActivity(
-        workspaceId, new DbWorkspaceActivityLog().operationType(OperationType.UPDATE));
+        workspaceId, getDbWorkspaceActivityLog(OperationType.UPDATE));
     var secondUpdatedDate = activityLogDao.getLastUpdatedDate(workspaceId);
     assertEquals(OperationType.UPDATE.name(), getChangeType(workspaceId));
 
     activityLogDao.writeActivity(
-        workspaceId, new DbWorkspaceActivityLog().operationType(OperationType.DELETE));
+        workspaceId, getDbWorkspaceActivityLog(OperationType.DELETE));
     var thirdUpdatedDate = activityLogDao.getLastUpdatedDate(workspaceId);
     assertEquals(OperationType.DELETE.name(), getChangeType(workspaceId));
 
     activityLogDao.writeActivity(
-        workspaceId, new DbWorkspaceActivityLog().operationType(OperationType.CLONE));
+        workspaceId, getDbWorkspaceActivityLog(OperationType.CLONE));
     var fourthUpdateDate = activityLogDao.getLastUpdatedDate(workspaceId);
 
     assertThrows(
         UnknownFlightOperationTypeException.class,
         () ->
             activityLogDao.writeActivity(
-                workspaceId, new DbWorkspaceActivityLog().operationType(OperationType.UNKNOWN)));
+                workspaceId, getDbWorkspaceActivityLog(OperationType.UNKNOWN)));
     var fifthUpdateDate = activityLogDao.getLastUpdatedDate(workspaceId);
     assertEquals(fourthUpdateDate, fifthUpdateDate);
 
@@ -76,10 +90,11 @@ public class WorkspaceActivityLogDaoTest extends BaseUnitTest {
   public void getLastUpdatedDate_systemCleanup_filterNonUpdateOperations() {
     var workspaceId = UUID.randomUUID();
     activityLogDao.writeActivity(
-        workspaceId, new DbWorkspaceActivityLog().operationType(OperationType.SYSTEM_CLEANUP));
+        workspaceId, getDbWorkspaceActivityLog(OperationType.SYSTEM_CLEANUP).changeAgentEmail("bar@gmail.com").changeAgentSubjectId(null));
 
     assertEquals(OperationType.SYSTEM_CLEANUP.name(), getChangeType(workspaceId));
     assertTrue(activityLogDao.getLastUpdatedDate(workspaceId).isEmpty());
+    assertTrue(activityLogDao.getLastUpdatedBy(workspaceId).isEmpty());
   }
 
   @Test
@@ -87,7 +102,7 @@ public class WorkspaceActivityLogDaoTest extends BaseUnitTest {
     var workspaceId = UUID.randomUUID();
     activityLogDao.writeActivity(
         workspaceId,
-        new DbWorkspaceActivityLog().operationType(OperationType.REMOVE_WORKSPACE_ROLE));
+        getDbWorkspaceActivityLog(OperationType.REMOVE_WORKSPACE_ROLE));
 
     assertEquals(OperationType.REMOVE_WORKSPACE_ROLE.name(), getChangeType(workspaceId));
     assertTrue(activityLogDao.getLastUpdatedDate(workspaceId).isEmpty());
@@ -98,7 +113,7 @@ public class WorkspaceActivityLogDaoTest extends BaseUnitTest {
     var workspaceId = UUID.randomUUID();
     activityLogDao.writeActivity(
         workspaceId,
-        new DbWorkspaceActivityLog().operationType(OperationType.GRANT_WORKSPACE_ROLE));
+        getDbWorkspaceActivityLog(OperationType.GRANT_WORKSPACE_ROLE));
 
     assertEquals(OperationType.GRANT_WORKSPACE_ROLE.name(), getChangeType(workspaceId));
     assertTrue(activityLogDao.getLastUpdatedDate(workspaceId).isEmpty());
@@ -112,6 +127,17 @@ public class WorkspaceActivityLogDaoTest extends BaseUnitTest {
   @Test
   public void getCreatedDate_emptyTable_getEmpty() {
     assertTrue(activityLogDao.getCreatedDate(UUID.randomUUID()).isEmpty());
+  }
+
+  @Test
+  public void getLastUpdatedBy_emptyTable_getEmpty() {
+    assertTrue(activityLogDao.getLastUpdatedBy(UUID.randomUUID()).isEmpty());
+  }
+
+  @Test
+  public void getCreatedByEmail_emptyTable_getEmpty() {
+    assertTrue(
+        activityLogDao.getCreatedBy(UUID.randomUUID()).isEmpty());
   }
 
   private String getChangeType(UUID workspaceId) {

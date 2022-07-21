@@ -9,4 +9,5 @@
     <include file="changesets/20220418_workspace_user_facing_id.yaml" relativeToChangelogFile="true"/>
     <include file="changesets/20220516_workspace_user_facing_id_required.yaml" relativeToChangelogFile="true"/>
     <include file="changesets/20220617_workspace_activity_log_table.yaml" relativeToChangelogFile="true"/>
+    <include file="changesets/20220721_change_agent_email_and_subject_id_columns.yaml" relativeToChangelogFile="true"/>
 </databaseChangeLog>

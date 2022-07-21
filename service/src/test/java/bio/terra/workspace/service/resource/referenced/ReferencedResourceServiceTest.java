@@ -103,7 +103,8 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
             referencedResource.getWorkspaceId(),
             referencedResource.getResourceId(),
             referencedResource.getResourceType(),
-            USER_REQUEST.getEmail());
+            USER_REQUEST.getEmail(),
+            USER_REQUEST.getSubjectId());
       } catch (Exception ex) {
         logger.warn("Failed to delete reference resource " + referencedResource.getResourceId());
       }
@@ -426,7 +427,8 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
           workspaceUuid,
           referencedResource.getResourceId(),
           WsmResourceType.REFERENCED_ANY_DATA_REPO_SNAPSHOT,
-          USER_REQUEST.getEmail());
+          USER_REQUEST.getEmail(),
+          USER_REQUEST.getSubjectId());
       var updatedDateAfterDelete = workspaceActivityLogDao.getLastUpdatedDate(workspaceUuid);
       assertTrue(updatedDateAfterCreate.get().isBefore(updatedDateAfterDelete.get()));
     }
@@ -500,7 +502,7 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
         for (var resource : resources) {
           referenceResourceService.deleteReferenceResourceForResourceType(
               workspaceUuid, resource.getResourceId(), resource.getResourceType(),
-              USER_REQUEST.getEmail());
+              USER_REQUEST.getEmail(),USER_REQUEST.getSubjectId());
         }
       }
     }
@@ -570,7 +572,7 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
           workspaceUuid,
           referencedResource.getResourceId(),
           WsmResourceType.REFERENCED_GCP_GCS_OBJECT,
-          USER_REQUEST.getEmail());
+          USER_REQUEST.getEmail(), USER_REQUEST.getSubjectId());
       var updatedDateAfterDelete = workspaceActivityLogDao.getLastUpdatedDate(workspaceUuid);
       assertTrue(updatedDateAfterCreate.get().isBefore(updatedDateAfterDelete.get()));
     }
@@ -622,7 +624,8 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
           workspaceUuid,
           referencedResource.getResourceId(),
           WsmResourceType.REFERENCED_GCP_GCS_BUCKET,
-          USER_REQUEST.getEmail());
+          USER_REQUEST.getEmail(),
+          USER_REQUEST.getSubjectId());
     }
 
     @Test
@@ -771,7 +774,8 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
           workspaceUuid,
           referencedResource.getResourceId(),
           WsmResourceType.REFERENCED_GCP_BIG_QUERY_DATASET,
-          USER_REQUEST.getEmail());
+          USER_REQUEST.getEmail(),
+          USER_REQUEST.getSubjectId());
       var updatedDateAfterDelete = workspaceActivityLogDao.getLastUpdatedDate(workspaceUuid);
       assertTrue(updatedDateAfterCreate.get().isBefore(updatedDateAfterDelete.get()));
     }
@@ -815,7 +819,8 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
           workspaceUuid,
           referencedResource.getResourceId(),
           WsmResourceType.REFERENCED_GCP_BIG_QUERY_DATA_TABLE,
-          USER_REQUEST.getEmail());
+          USER_REQUEST.getEmail(),
+          USER_REQUEST.getSubjectId());
 
       var updatedDateAfterDelete = workspaceActivityLogDao.getLastUpdatedDate(workspaceUuid);
       assertTrue(updatedDateAfterCreate.get().isBefore(updatedDateAfterDelete.get()));
@@ -833,7 +838,8 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
           workspaceUuid,
           referencedResource.getResourceId(),
           WsmResourceType.REFERENCED_GCP_BIG_QUERY_DATASET,
-          USER_REQUEST.getEmail());
+          USER_REQUEST.getEmail(),
+          USER_REQUEST.getSubjectId());
 
       var lastUpdatedDateBeforeResourceUpdate =
           workspaceActivityLogDao.getLastUpdatedDate(workspaceUuid);
@@ -854,7 +860,8 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
           workspaceUuid,
           referencedResource.getResourceId(),
           WsmResourceType.REFERENCED_GCP_BIG_QUERY_DATA_TABLE,
-          USER_REQUEST.getEmail());
+          USER_REQUEST.getEmail(),
+          USER_REQUEST.getSubjectId());
       // BQ data table is successfully deleted.
       assertThrows(
           ResourceNotFoundException.class,
@@ -1032,7 +1039,8 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
           workspaceUuid,
           referencedResource.getResourceId(),
           WsmResourceType.REFERENCED_ANY_TERRA_WORKSPACE,
-          USER_REQUEST.getEmail());
+          USER_REQUEST.getEmail(),
+          USER_REQUEST.getSubjectId());
       var updatedDateAfterDeletion = workspaceActivityLogDao.getLastUpdatedDate(workspaceUuid);
       assertTrue(updatedDateAfterCreate.get().isBefore(updatedDateAfterDeletion.get()));
     }

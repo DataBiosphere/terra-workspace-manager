@@ -21,11 +21,11 @@ import bio.terra.workspace.service.resource.referenced.flight.update.UpdateRefer
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ResourceKeys;
 import bio.terra.workspace.service.workspace.model.OperationType;
-import com.google.rpc.context.AttributeContext.Auth;
 import io.opencensus.contrib.spring.aop.Traced;
 import java.util.List;
 import java.util.UUID;
 import javax.annotation.Nullable;
+import org.broadinstitute.dsde.workbench.client.sam.model.UserStatusInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -167,12 +167,14 @@ public class ReferencedResourceService {
           resourceDao.updateResource(
               workspaceUuid, resourceId, name, description, cloningInstructions);
       if (updated) {
-        String userEmail = SamRethrow.onInterrupted(
-            () -> samService.getUserEmailFromSam(userRequest),
+        var userStatusInfo = SamRethrow.onInterrupted(
+            () -> samService.getUserStatusInfo(userRequest),
             "Get user email from Sam"
         );
         workspaceActivityLogDao.writeActivity(
-            workspaceUuid, new DbWorkspaceActivityLog().operationType(OperationType.UPDATE).userEmail(userEmail));
+            workspaceUuid,
+            getDbWorkspaceActivityLog(OperationType.UPDATE, userStatusInfo.getUserEmail(),
+                userStatusInfo.getUserSubjectId()));
       }
     }
     if (!updated) {
@@ -190,10 +192,10 @@ public class ReferencedResourceService {
    */
   public void deleteReferenceResourceForResourceType(
       UUID workspaceUuid, UUID resourceId, WsmResourceType resourceType,
-      String userEmail) {
+      String userEmail, String subjectId) {
     if (resourceDao.deleteResourceForResourceType(workspaceUuid, resourceId, resourceType)) {
       workspaceActivityLogDao.writeActivity(
-          workspaceUuid, new DbWorkspaceActivityLog().operationType(OperationType.DELETE).userEmail(userEmail));
+          workspaceUuid, getDbWorkspaceActivityLog(OperationType.DELETE, userEmail, subjectId));
     }
   }
 
@@ -234,5 +236,11 @@ public class ReferencedResourceService {
             description);
     // launch the creation flight
     return createReferenceResource(destinationResource);
+  }
+
+  private DbWorkspaceActivityLog getDbWorkspaceActivityLog(OperationType update,
+      String userEmail, String subjectId) {
+    return new DbWorkspaceActivityLog().operationType(update).changeAgentEmail(userEmail)
+        .changeAgentSubjectId(subjectId);
   }
 }

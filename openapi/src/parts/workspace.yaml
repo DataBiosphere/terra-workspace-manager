@@ -496,10 +496,14 @@ components:
           description: Timestamp when the workspace is created
           type: string
           format: date-time
+        createdBy:
+          $ref: '#/components/schemas/WorkspaceActivityChangeAgent'
         lastUpdatedDate:
           description: Timestamp of the latest workspace change
           type: string
           format: date-time
+        lastUpdatedBy:
+          $ref: '#/components/schemas/WorkspaceActivityChangeAgent'
 
     WorkspaceDescriptionList:
       type: object
@@ -516,3 +520,12 @@ components:
       type: string
       enum: ['RAWLS_WORKSPACE', 'MC_WORKSPACE']
 
+    WorkspaceActivityChangeAgent:
+      description: Info for workspace activity change agent
+      required: [userEmail]
+      properties:
+        userEmail:
+          type: string
+          description: user email of the change agent
+        subjectId:
+          type: string

@@ -1,0 +1,20 @@
+databaseChangeLog:
+- changeSet:
+    id: add change agent email and subject id column
+    author: yuhuyoyo
+    changes:
+    - addColumn:
+        tableName: workspace_activity_log
+        columns:
+        - column:
+            name: change_agent_email
+            type: text
+            constraints:
+                nullable: false
+            remarks: |
+                User email of the change agent.
+        - column:
+            name: change_agent_subject_id
+            type: text
+            remarks: |
+                Sam subject id of the change agent.
