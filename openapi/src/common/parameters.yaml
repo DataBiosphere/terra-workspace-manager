@@ -83,7 +83,7 @@ components:
     SasIpRange:
       name: sasIpRange
       in: query
-      description: An IP address or range of addresses to restrict a SAS token to
+      description: A single IP address or range of addresses separated by a dash to restrict a SAS token to
       required: false
       schema:
         type: string

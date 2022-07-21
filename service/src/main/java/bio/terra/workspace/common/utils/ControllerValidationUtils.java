@@ -126,13 +126,14 @@ public final class ControllerValidationUtils {
    * @param ipRange a single ip address, or a range of ip addresses separated by a dash ('-')
    */
   public static void validateIpAddressRange(@Nullable String ipRange) {
-    if (ipRange != null) {
-      var addresses = ipRange.split("-");
-      var validator = InetAddressValidator.getInstance();
-      for (var address : addresses) {
-        if (!validator.isValid(address)) {
-          throw new ValidationException("Invalid ip address or ip address range");
-        }
+    if (ipRange == null) {
+      return;
+    }
+    var addresses = ipRange.split("-");
+    var validator = InetAddressValidator.getInstance();
+    for (var address : addresses) {
+      if (!validator.isValid(address)) {
+        throw new ValidationException("Invalid ip address or ip address range: " + ipRange);
       }
     }
   }

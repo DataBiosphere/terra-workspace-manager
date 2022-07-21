@@ -5,6 +5,7 @@ import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.get
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import bio.terra.common.exception.ForbiddenException;
 import bio.terra.workspace.app.configuration.external.AzureTestConfiguration;
@@ -259,6 +260,7 @@ public class AzureControlledStorageResourceServiceTest extends BaseAzureTest {
   @Test
   void createSasTokenWithIpRange() throws Exception {
     UUID workspaceUuid = workspace.getWorkspaceId();
+    var ipRange = "168.1.5.60-168.1.5.70";
 
     AzureControlledStorageResourceService.AzureSasBundle sasBundle =
         azureControlledStorageResourceService.createAzureStorageContainerSasToken(
@@ -268,10 +270,14 @@ public class AzureControlledStorageResourceServiceTest extends BaseAzureTest {
             startTime,
             expiryTime,
             workspaceOwner.getAuthenticatedRequest(),
-            "168.1.5.60-168.1.5.70");
+            ipRange);
 
     BlobContainerSasPermission ownerPermissions = BlobContainerSasPermission.parse("rlacwd");
     assertValidToken(sasBundle.sasToken(), ownerPermissions);
+    assertTrue(
+        sasBundle.sasToken().contains("sip=" + ipRange),
+        "the SignedIP was added to the query parameters");
+
     assertEquals(
         sasBundle.sasUrl(),
         String.format(
