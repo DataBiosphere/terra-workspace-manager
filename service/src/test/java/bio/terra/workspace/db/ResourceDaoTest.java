@@ -43,7 +43,7 @@ public class ResourceDaoTest extends BaseUnitTest {
     Workspace workspace =
         Workspace.builder()
             .workspaceId(uuid)
-            .userFacingId("a" + uuid.toString())
+            .userFacingId(uuid.toString())
             .workspaceStage(WorkspaceStage.MC_WORKSPACE)
             .build();
     workspaceDao.createWorkspace(workspace);

@@ -118,9 +118,9 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
         Optional.ofNullable(body.getSpendProfile()).map(SpendProfileId::new);
 
     // ET uses userFacingId; CWB doesn't. Schema enforces that userFacingId must be set. CWB doesn't
-    // pass userFacingId in request, so use id. Prefix with "a" because userFacingId must start with
-    // a letter.
-    String userFacingId = Optional.ofNullable(body.getUserFacingId()).orElse("a-" + body.getId());
+    // pass userFacingId in request, so use id.
+    String userFacingId =
+        Optional.ofNullable(body.getUserFacingId()).orElse(body.getId().toString());
     ControllerValidationUtils.validateUserFacingId(userFacingId);
 
     Workspace workspace =
@@ -449,10 +449,9 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
     final UUID destinationWorkspaceId = UUID.randomUUID();
 
     // ET uses userFacingId; CWB doesn't. Schema enforces that userFacingId must be set. CWB doesn't
-    // pass userFacingId in request, so use id. Prefix with "a" because userFacingId must start with
-    // letter.
+    // pass userFacingId in request, so use id.
     String destinationUserFacingId =
-        Optional.ofNullable(body.getUserFacingId()).orElse("a-" + destinationWorkspaceId);
+        Optional.ofNullable(body.getUserFacingId()).orElse(destinationWorkspaceId.toString());
     ControllerValidationUtils.validateUserFacingId(destinationUserFacingId);
 
     // Construct the target workspace object from the inputs
