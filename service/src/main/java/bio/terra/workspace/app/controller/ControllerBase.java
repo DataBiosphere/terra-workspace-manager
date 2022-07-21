@@ -4,6 +4,7 @@ import bio.terra.common.exception.ValidationException;
 import bio.terra.workspace.common.exception.InternalLogicException;
 import bio.terra.workspace.common.utils.ControllerValidationUtils;
 import bio.terra.workspace.generated.model.ApiControlledResourceCommonFields;
+import bio.terra.workspace.generated.model.ApiControlledResourceIamRole;
 import bio.terra.workspace.generated.model.ApiJobReport;
 import bio.terra.workspace.generated.model.ApiJobReport.StatusEnum;
 import bio.terra.workspace.generated.model.ApiPrivateResourceUser;
@@ -145,30 +146,29 @@ public class ControllerBase {
 
           // Translate the incoming role into our internal model form
           // This also validates that the incoming API model values are correct.
-          List<ControlledResourceIamRole> roles = new ArrayList<ControlledResourceIamRole>();
-          roles.add(
-              ControlledResourceIamRole.fromApiModel(
-                  commonFields.getPrivateResourceUser().getPrivateResourceIamRole()));
+          ApiControlledResourceIamRole apiControlledResourceIamRole =
+              commonFields.getPrivateResourceUser().getPrivateResourceIamRole();
 
-          if (roles.isEmpty()) {
+          if (apiControlledResourceIamRole == null) {
             throw new ValidationException(
                 "You must specify at least one role when you specify PrivateResourceIamRoles");
           }
 
+          ControlledResourceIamRole role = ControlledResourceIamRole.fromApiModel(apiControlledResourceIamRole);
+
           // The legal options for the assigned user of an application is READER
           // or WRITER. EDITOR is not allowed. We take the "max" of READER and WRITER.
           var maxRole = ControlledResourceIamRole.READER;
-          for (ControlledResourceIamRole role : roles) {
-            if (role == ControlledResourceIamRole.WRITER) {
-              if (maxRole == ControlledResourceIamRole.READER) {
-                maxRole = role;
-              }
-            } else if (role != ControlledResourceIamRole.READER) {
-              throw new ValidationException(
-                  "For application private controlled resources, only READER and WRITER roles are allowed. Found "
-                      + role.toApiModel());
+          if (role == ControlledResourceIamRole.WRITER) {
+            if (maxRole == ControlledResourceIamRole.READER) {
+              maxRole = role;
             }
+          } else if (role != ControlledResourceIamRole.READER) {
+            throw new ValidationException(
+                "For application private controlled resources, only READER and WRITER roles are allowed. Found "
+                    + role.toApiModel());
           }
+
           return new PrivateUserRole.Builder()
               .present(true)
               .userEmail(userEmail)
