@@ -63,5 +63,4 @@ public class ControllerValidationUtilsTest extends BaseUnitTest {
   void userFacingIdCanStartWithNumber() throws Exception {
     ControllerValidationUtils.validateUserFacingId("1000-genomes");
   }
-  
 }
