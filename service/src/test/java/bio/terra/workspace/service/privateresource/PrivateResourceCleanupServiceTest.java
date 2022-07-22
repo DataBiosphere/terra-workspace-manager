@@ -308,7 +308,7 @@ public class PrivateResourceCleanupServiceTest extends BaseConnectedTest {
    */
   private static String createGroup(String groupName, GroupApi groupApi) {
     try {
-      groupApi.postGroup(groupName, null);
+      groupApi.postGroup(groupName);
       return groupApi.getGroup(groupName);
     } catch (ApiException e) {
       throw SamExceptionFactory.create("Error creating group in Sam", e);
@@ -325,7 +325,7 @@ public class PrivateResourceCleanupServiceTest extends BaseConnectedTest {
 
   private static void addUserToGroup(String groupName, String userEmail, GroupApi groupApi) {
     try {
-      groupApi.addEmailToGroup(groupName, SAM_GROUP_MEMBER_POLICY, userEmail, null);
+      groupApi.addEmailToGroup(groupName, SAM_GROUP_MEMBER_POLICY, userEmail);
     } catch (ApiException e) {
       throw SamExceptionFactory.create("Error adding user to group in Sam", e);
     }
