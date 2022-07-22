@@ -142,7 +142,7 @@ public class WorkspaceActivityLogHookTest extends BaseUnitTest {
     workspaceDao.createWorkspace(
         Workspace.builder()
             .workspaceId(workspaceUuid)
-            .userFacingId("a" + workspaceUuid)
+            .userFacingId(workspaceUuid.toString())
             .workspaceStage(WorkspaceStage.MC_WORKSPACE)
             .build());
     FlightMap inputParams = new FlightMap();
@@ -184,7 +184,7 @@ public class WorkspaceActivityLogHookTest extends BaseUnitTest {
     workspaceDao.createWorkspace(
         Workspace.builder()
             .workspaceId(workspaceUuid)
-            .userFacingId("a" + workspaceUuid)
+            .userFacingId(workspaceUuid.toString())
             .workspaceStage(WorkspaceStage.MC_WORKSPACE)
             .build());
     var flightId = UUID.randomUUID().toString();
@@ -252,7 +252,7 @@ public class WorkspaceActivityLogHookTest extends BaseUnitTest {
     workspaceDao.createWorkspace(
         Workspace.builder()
             .workspaceId(workspaceUuid)
-            .userFacingId("a" + workspaceUuid)
+            .userFacingId(workspaceUuid.toString())
             .workspaceStage(WorkspaceStage.MC_WORKSPACE)
             .build());
     var flightId = UUID.randomUUID().toString();
