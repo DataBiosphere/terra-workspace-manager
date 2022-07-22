@@ -54,8 +54,6 @@ else
   sudo apt-get -y install openjdk-11-jdk
 fi
 
-sudo apt-get -y install mailutils
-
 sudo -u "${JUPYTER_USER}" sh -c "curl -s https://get.nextflow.io | bash"
 sudo mv nextflow /usr/bin/nextflow
 
@@ -66,6 +64,7 @@ sudo -u "${JUPYTER_USER}" sh -c "curl -LO https://github.com/broadinstitute/crom
 mv cromwell-${CROMWELL_LATEST_VERSION}.jar /home/${JUPYTER_USER}/cromwell/
 
 #Install cromshell
+sudo apt-get -y install mailutils
 sudo -u "${JUPYTER_USER}" sh -c "curl -s https://raw.githubusercontent.com/broadinstitute/cromshell/master/cromshell > cromshell"
 sudo -u "${JUPYTER_USER}" sh -c "chmod +x cromshell"
 sudo mv cromshell /usr/bin/cromshell
