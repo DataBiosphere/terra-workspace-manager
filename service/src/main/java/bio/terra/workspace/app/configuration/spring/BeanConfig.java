@@ -68,6 +68,7 @@ public class BeanConfig {
             .registerModule(new ParameterNamesModule())
             .registerModule(new Jdk8Module())
             .registerModule(new JavaTimeModule())
+            .configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false)
             .setDefaultPropertyInclusion(Include.NON_ABSENT);
     objectMapper.getFactory().setCharacterEscapes(new HTMLCharacterEscapes());
     return objectMapper;

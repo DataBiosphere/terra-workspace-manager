@@ -15,7 +15,9 @@ import bio.terra.workspace.common.exception.UnknownFlightClassNameException;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.db.WorkspaceActivityLogDao;
 import bio.terra.workspace.db.WorkspaceDao;
+import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
+import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook.ControlledAiNotebookInstanceResource;
 import bio.terra.workspace.service.resource.controlled.flight.delete.DeleteControlledResourceFlight;
 import bio.terra.workspace.service.resource.controlled.model.AccessScopeType;
@@ -33,7 +35,9 @@ import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
 import java.util.List;
 import java.util.UUID;
+import org.broadinstitute.dsde.workbench.client.sam.model.UserStatusInfo;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.MockBean;
 
@@ -48,12 +52,15 @@ public class WorkspaceActivityLogHookTest extends BaseUnitTest {
   @Test
   void createFlightSucceeds_activityLogUpdated() throws InterruptedException {
     var workspaceUuid = UUID.randomUUID();
+    var userEmail = "foo@gmail.com";
+    Mockito.when(mockSamService.getUserStatusInfo(Mockito.any())).thenReturn(new UserStatusInfo().userEmail(userEmail));
     var emptyChangedDate = activityLogDao.getLastUpdatedDate(workspaceUuid);
     assertTrue(emptyChangedDate.isEmpty());
 
     FlightMap inputParams = new FlightMap();
     inputParams.put(WorkspaceFlightMapKeys.OPERATION_TYPE, OperationType.CREATE);
     inputParams.put(WorkspaceFlightMapKeys.WORKSPACE_ID, workspaceUuid.toString());
+    inputParams.put(JobMapKeys.AUTH_USER_INFO.getKeyName(), new AuthenticatedUserRequest().email(userEmail));
     hook.endFlight(
         new FakeFlightContext(
             WorkspaceCreateFlight.class.getName(), inputParams, FlightStatus.SUCCESS));

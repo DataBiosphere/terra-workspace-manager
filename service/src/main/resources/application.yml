@@ -45,7 +45,6 @@ spring:
           must-revalidate: true
         use-last-modified: false
       static-locations: classpath:/api/
-
 workspace:
   datarepo.instances:
     terra: ${env.urls.terra-datarepo}
@@ -161,3 +160,4 @@ reference:
       - bitbucket.org
       - dev.azure.com
       - ssh.dev.azure.com
+

@@ -71,15 +71,16 @@ public class WorkspaceActivityLogHook implements StairwayHook {
         checkNotNull(context
             .getInputParameters()
             .get(JobMapKeys.AUTH_USER_INFO.getKeyName(), AuthenticatedUserRequest.class));
-    var subjectId =
-        context.getInputParameters().get(JobMapKeys.SUBJECT_ID.getKeyName(), String.class);
-    var email = samService.getUserEmailFromSam(userRequest);
+    var userStatusInfo = samService.getUserStatusInfo(userRequest);
+    var userEmail = userStatusInfo.getUserEmail();
+    var subjectId = userStatusInfo.getUserSubjectId();
 
     ActivityFlight af = ActivityFlight.fromFlightClassName(context.getFlightClassName());
     UUID workspaceUuid = UUID.fromString(workspaceId);
     if (context.getFlightStatus() == FlightStatus.SUCCESS) {
       activityLogDao.writeActivity(
-          workspaceUuid, getDbWorkspaceActivityLog(operationType, email, subjectId));
+          workspaceUuid, getDbWorkspaceActivityLog(operationType, userEmail,
+              subjectId));
       return HookAction.CONTINUE;
     }
     if (operationType != OperationType.DELETE) {
@@ -88,12 +89,12 @@ public class WorkspaceActivityLogHook implements StairwayHook {
     // If DELETE flight failed, cloud resource may or may not have been deleted. Check if cloud
     // resource was deleted. If so, write to activity log.
     switch (af.getActivityLogChangedTarget()) {
-      case WORKSPACE -> maybeLogWorkspaceDeletionFlight(workspaceUuid, email, subjectId);
+      case WORKSPACE -> maybeLogWorkspaceDeletionFlight(workspaceUuid, userEmail, subjectId);
       case AZURE_CLOUD_CONTEXT -> maybeLogCloudContextDeletionFlight(
-          CloudPlatform.AZURE, workspaceUuid, email, subjectId);
+          CloudPlatform.AZURE, workspaceUuid, userEmail, subjectId);
       case GCP_CLOUD_CONTEXT -> maybeLogCloudContextDeletionFlight(
-          CloudPlatform.GCP, workspaceUuid, email, subjectId);
-      case RESOURCE -> maybeLogControlledResourceDeletion(context, workspaceUuid, email, subjectId);
+          CloudPlatform.GCP, workspaceUuid, userEmail, subjectId);
+      case RESOURCE -> maybeLogControlledResourceDeletion(context, workspaceUuid, userEmail, subjectId);
       default -> throw new UnhandledDeletionFlightException(
           String.format(
               "Activity log should be updated for deletion flight %s failures",
