@@ -25,7 +25,7 @@ public class WorkspaceConnectedTestUtils {
     Workspace workspace =
         Workspace.builder()
             .workspaceId(workspaceUuid)
-            .userFacingId("a" + UUID.randomUUID().toString())
+            .userFacingId(UUID.randomUUID().toString())
             .spendProfileId(spendUtils.defaultSpendId())
             .workspaceStage(WorkspaceStage.MC_WORKSPACE)
             .build();

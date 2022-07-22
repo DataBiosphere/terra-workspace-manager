@@ -200,7 +200,7 @@ class JobServiceTest extends BaseUnitTest {
     Workspace workspace =
         Workspace.builder()
             .workspaceId(workspaceUuid)
-            .userFacingId("a" + workspaceUuid)
+            .userFacingId(workspaceUuid.toString())
             .workspaceStage(WorkspaceStage.MC_WORKSPACE)
             .description("Workspace for runFlight: " + description)
             .build();

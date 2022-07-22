@@ -146,23 +146,11 @@ public class ControlledAzureVmResource extends ControlledResource {
             this,
             flightBeanBag.getResourceDao()),
         cloudRetry);
-    flight.addStep(
-        new AssignManagedIdentityAzureVmStep(
-            flightBeanBag.getAzureConfig(),
-            flightBeanBag.getCrlService(),
-            flightBeanBag.getSamService(),
-            userRequest,
-            this),
-        cloudRetry);
   }
 
   /** {@inheritDoc} */
   @Override
   public void addDeleteSteps(DeleteControlledResourceFlight flight, FlightBeanBag flightBeanBag) {
-    flight.addStep(
-        new RemoveManagedIdentitiesAzureVmStep(
-            flightBeanBag.getAzureConfig(), flightBeanBag.getCrlService(), this),
-        RetryRules.cloud());
     flight.addStep(
         new DeleteAzureVmStep(flightBeanBag.getAzureConfig(), flightBeanBag.getCrlService(), this),
         RetryRules.cloud());

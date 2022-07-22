@@ -34,16 +34,15 @@ import javax.annotation.Nullable;
 import okhttp3.OkHttpClient;
 import org.broadinstitute.dsde.workbench.client.sam.ApiClient;
 import org.broadinstitute.dsde.workbench.client.sam.ApiException;
-import org.broadinstitute.dsde.workbench.client.sam.api.AzureApi;
 import org.broadinstitute.dsde.workbench.client.sam.api.GoogleApi;
 import org.broadinstitute.dsde.workbench.client.sam.api.ResourcesApi;
 import org.broadinstitute.dsde.workbench.client.sam.api.StatusApi;
 import org.broadinstitute.dsde.workbench.client.sam.api.UsersApi;
 import org.broadinstitute.dsde.workbench.client.sam.model.AccessPolicyMembershipV2;
+import org.broadinstitute.dsde.workbench.client.sam.model.AccessPolicyResponseEntry;
 import org.broadinstitute.dsde.workbench.client.sam.model.AccessPolicyResponseEntryV2;
 import org.broadinstitute.dsde.workbench.client.sam.model.CreateResourceRequestV2;
 import org.broadinstitute.dsde.workbench.client.sam.model.FullyQualifiedResourceId;
-import org.broadinstitute.dsde.workbench.client.sam.model.GetOrCreatePetManagedIdentityRequest;
 import org.broadinstitute.dsde.workbench.client.sam.model.SystemStatus;
 import org.broadinstitute.dsde.workbench.client.sam.model.UserResourcesResponse;
 import org.slf4j.Logger;
@@ -107,11 +106,6 @@ public class SamService {
   }
 
   @VisibleForTesting
-  public AzureApi samAzureApi(String accessToken) {
-    return new AzureApi(getApiClient(accessToken));
-  }
-
-  @VisibleForTesting
   public String getWsmServiceAccountToken() {
     try {
       GoogleCredentials creds =
@@ -136,31 +130,6 @@ public class SamService {
       return SamRetry.retry(() -> usersApi.getUserStatusInfo().getUserEmail());
     } catch (ApiException apiException) {
       throw SamExceptionFactory.create("Error getting user email from Sam", apiException);
-    }
-  }
-
-  /**
-   * Fetch a user-assigned managed identity that was created for a user, with user credentials,
-   * directly from Sam.
-   */
-  public String getOrCreateUserManagedIdentity(
-      AuthenticatedUserRequest userRequest,
-      String subscriptionId,
-      String tenantId,
-      String managedResourceGroupId)
-      throws InterruptedException {
-    AzureApi azureApi = samAzureApi(userRequest.getRequiredToken());
-
-    GetOrCreatePetManagedIdentityRequest request =
-        new GetOrCreatePetManagedIdentityRequest()
-            .subscriptionId(subscriptionId)
-            .tenantId(tenantId)
-            .managedResourceGroupName(managedResourceGroupId);
-    try {
-      return SamRetry.retry(() -> azureApi.getPetManagedIdentity(request));
-    } catch (ApiException apiException) {
-      throw SamExceptionFactory.create(
-          "Error getting user assigned managed identity from Sam", apiException);
     }
   }
 
@@ -257,8 +226,7 @@ public class SamService {
     CreateResourceRequestV2 workspaceRequest =
         new CreateResourceRequestV2()
             .resourceId(uuid.toString())
-            .policies(defaultWorkspacePolicies(humanUserEmail))
-            .authDomain(List.of());
+            .policies(defaultWorkspacePolicies(humanUserEmail));
     try {
       SamRetry.retry(
           () -> resourceApi.createResourceV2(SamConstants.SamResource.WORKSPACE, workspaceRequest));
@@ -313,7 +281,7 @@ public class SamService {
     ResourcesApi resourceApi = samResourcesApi(authToken);
     try {
       SamRetry.retry(
-          () -> resourceApi.deleteResourceV2(SamConstants.SamResource.WORKSPACE, uuid.toString()));
+          () -> resourceApi.deleteResource(SamConstants.SamResource.WORKSPACE, uuid.toString()));
       logger.info("Deleted Sam resource for workspace {}", uuid);
     } catch (ApiException apiException) {
       logger.info("Sam API error while deleting workspace, code is " + apiException.getCode());
@@ -336,7 +304,7 @@ public class SamService {
     String authToken = userRequest.getRequiredToken();
     ResourcesApi resourceApi = samResourcesApi(authToken);
     try {
-      return SamRetry.retry(() -> resourceApi.resourceActionsV2(resourceType, resourceId));
+      return SamRetry.retry(() -> resourceApi.resourceActions(resourceType, resourceId));
     } catch (ApiException apiException) {
       throw SamExceptionFactory.create("Error listing resources actions in Sam", apiException);
     }
@@ -455,12 +423,11 @@ public class SamService {
       // GCP always uses lowercase email identifiers, so we do the same here for consistency.
       SamRetry.retry(
           () ->
-              resourceApi.addUserToPolicyV2(
+              resourceApi.addUserToPolicy(
                   SamConstants.SamResource.WORKSPACE,
                   workspaceUuid.toString(),
                   role.toSamRole(),
-                  email.toLowerCase(),
-                  null));
+                  email.toLowerCase()));
       logger.info(
           "Granted role {} to user {} in workspace {}", role.toSamRole(), email, workspaceUuid);
     } catch (ApiException apiException) {
@@ -484,7 +451,7 @@ public class SamService {
     try {
       SamRetry.retry(
           () ->
-              resourceApi.removeUserFromPolicyV2(
+              resourceApi.removeUserFromPolicy(
                   SamConstants.SamResource.WORKSPACE,
                   workspaceUuid.toString(),
                   role.toSamRole(),
@@ -558,8 +525,7 @@ public class SamService {
                   resource.getCategory().getSamResourceName(),
                   resource.getResourceId().toString(),
                   role.toSamRole(),
-                  email,
-                  null));
+                  email));
       logger.info(
           "Restored role {} to user {} on resource {}",
           role.toSamRole(),
@@ -582,10 +548,10 @@ public class SamService {
 
     ResourcesApi resourceApi = samResourcesApi(userRequest.getRequiredToken());
     try {
-      List<AccessPolicyResponseEntryV2> samResult =
+      List<AccessPolicyResponseEntry> samResult =
           SamRetry.retry(
               () ->
-                  resourceApi.listResourcePoliciesV2(
+                  resourceApi.listResourcePolicies(
                       SamConstants.SamResource.WORKSPACE, workspaceUuid.toString()));
       // Don't include WSM's SA as a manager. This is true for all workspaces and not useful to
       // callers.
@@ -779,7 +745,7 @@ public class SamService {
     try {
       // Sam makes no guarantees about what values are returned from the POST call, so we instead
       // fetch the group in a separate call after syncing.
-      SamRetry.retry(() -> googleApi.syncPolicy(resourceTypeName, resourceId, policyName, null));
+      SamRetry.retry(() -> googleApi.syncPolicy(resourceTypeName, resourceId, policyName));
       return SamRetry.retry(() -> googleApi.syncStatus(resourceTypeName, resourceId, policyName))
           .getEmail();
     } catch (ApiException apiException) {
@@ -815,8 +781,7 @@ public class SamService {
     CreateResourceRequestV2 resourceRequest =
         new CreateResourceRequestV2()
             .resourceId(resource.getResourceId().toString())
-            .parent(workspaceParentFqId)
-            .authDomain(List.of());
+            .parent(workspaceParentFqId);
 
     var builder =
         new ControlledResourceSamPolicyBuilder(

@@ -1,8 +1,8 @@
 package scripts.testscripts;
 
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.containsString;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static scripts.utils.GcsBucketUtils.makeControlledGcsBucketUserPrivate;
@@ -166,35 +166,47 @@ public class PrivateControlledGcsBucketLifecycle extends WorkspaceAllocateTestSc
             .userName(privateResourceUser.userEmail)
             .privateResourceIamRoles(roles);
 
-    CreatedControlledGcpGcsBucket userFullBucket =
-        GcsBucketUtils.makeControlledGcsBucket(
-            privateUserResourceApi,
-            getWorkspaceId(),
-            RESOURCE_PREFIX + UUID.randomUUID().toString(),
-            /*bucketName=*/ null,
-            AccessScope.PRIVATE_ACCESS,
-            ManagedBy.USER,
-            CloningInstructionsEnum.NOTHING,
-            privateUserFull);
-    assertNotNull(userFullBucket.getGcpBucket().getAttributes().getBucketName());
-    deleteBucket(workspaceOwnerResourceApi, userFullBucket.getResourceId());
+    var ex =
+        assertThrows(
+            ApiException.class,
+            () ->
+                GcsBucketUtils.makeControlledGcsBucket(
+                    privateUserResourceApi,
+                    getWorkspaceId(),
+                    RESOURCE_PREFIX + UUID.randomUUID().toString(),
+                    /*bucketName=*/ null,
+                    AccessScope.PRIVATE_ACCESS,
+                    ManagedBy.USER,
+                    CloningInstructionsEnum.NOTHING,
+                    privateUserFull));
+    assertThat(
+        ex.getMessage(),
+        containsString(
+            "PrivateResourceUser can only be specified by applications for private resources"));
+    assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, ex.getCode());
 
     // Supply just the roles, but no email
     PrivateResourceUser privateUserNoEmail =
         new PrivateResourceUser().userName(null).privateResourceIamRoles(roles);
 
-    CreatedControlledGcpGcsBucket userNoEmailBucket =
-        GcsBucketUtils.makeControlledGcsBucket(
-            privateUserResourceApi,
-            getWorkspaceId(),
-            RESOURCE_PREFIX + UUID.randomUUID().toString(),
-            /*bucketName=*/ null,
-            AccessScope.PRIVATE_ACCESS,
-            ManagedBy.USER,
-            CloningInstructionsEnum.NOTHING,
-            privateUserNoEmail);
-    assertNotNull(userNoEmailBucket.getGcpBucket().getAttributes().getBucketName());
-    deleteBucket(workspaceOwnerResourceApi, userNoEmailBucket.getResourceId());
+    ex =
+        assertThrows(
+            ApiException.class,
+            () ->
+                GcsBucketUtils.makeControlledGcsBucket(
+                    privateUserResourceApi,
+                    getWorkspaceId(),
+                    RESOURCE_PREFIX + UUID.randomUUID().toString(),
+                    /*bucketName=*/ null,
+                    AccessScope.PRIVATE_ACCESS,
+                    ManagedBy.USER,
+                    CloningInstructionsEnum.NOTHING,
+                    privateUserNoEmail));
+    assertThat(
+        ex.getMessage(),
+        containsString(
+            "PrivateResourceUser can only be specified by applications for private resources"));
+    assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, ex.getCode());
 
     String uniqueBucketName = String.format("terra-%s-bucket", UUID.randomUUID().toString());
     CreatedControlledGcpGcsBucket bucketWithBucketNameSpecified =
@@ -206,7 +218,7 @@ public class PrivateControlledGcsBucketLifecycle extends WorkspaceAllocateTestSc
             AccessScope.PRIVATE_ACCESS,
             ManagedBy.USER,
             CloningInstructionsEnum.NOTHING,
-            privateUserFull);
+            null);
     assertEquals(
         uniqueBucketName,
         bucketWithBucketNameSpecified.getGcpBucket().getAttributes().getBucketName());

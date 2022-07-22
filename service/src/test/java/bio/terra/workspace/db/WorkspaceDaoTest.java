@@ -68,7 +68,7 @@ class WorkspaceDaoTest extends BaseUnitTest {
     Workspace workspace =
         Workspace.builder()
             .workspaceId(workspaceUuid)
-            .userFacingId("a" + workspaceUuid)
+            .userFacingId(workspaceUuid.toString())
             .spendProfileId(spendProfileId)
             .workspaceStage(WorkspaceStage.RAWLS_WORKSPACE)
             .build();
@@ -139,7 +139,7 @@ class WorkspaceDaoTest extends BaseUnitTest {
     Workspace secondWorkspace =
         Workspace.builder()
             .workspaceId(uuid)
-            .userFacingId("a" + uuid)
+            .userFacingId(uuid.toString())
             .workspaceStage(WorkspaceStage.RAWLS_WORKSPACE)
             .build();
     workspaceDao.createWorkspace(secondWorkspace);
@@ -160,7 +160,7 @@ class WorkspaceDaoTest extends BaseUnitTest {
     Workspace secondWorkspace =
         Workspace.builder()
             .workspaceId(uuid)
-            .userFacingId("a" + uuid.toString())
+            .userFacingId(uuid.toString())
             .workspaceStage(WorkspaceStage.RAWLS_WORKSPACE)
             .build();
     workspaceDao.createWorkspace(secondWorkspace);
@@ -185,7 +185,7 @@ class WorkspaceDaoTest extends BaseUnitTest {
       mcWorkspace =
           Workspace.builder()
               .workspaceId(mcWorkspaceId)
-              .userFacingId("a" + mcWorkspaceId)
+              .userFacingId(mcWorkspaceId.toString())
               .workspaceStage(WorkspaceStage.MC_WORKSPACE)
               .build();
       workspaceDao.createWorkspace(mcWorkspace);
@@ -292,7 +292,7 @@ class WorkspaceDaoTest extends BaseUnitTest {
   private Workspace defaultWorkspace() {
     return Workspace.builder()
         .workspaceId(workspaceUuid)
-        .userFacingId("a" + workspaceUuid)
+        .userFacingId(workspaceUuid.toString())
         .workspaceStage(WorkspaceStage.RAWLS_WORKSPACE)
         .build();
   }
