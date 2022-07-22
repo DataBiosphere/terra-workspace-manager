@@ -102,15 +102,13 @@ public class WorkspaceLifecycle extends WorkspaceApiTestScriptBase {
     assertNotNull(updatedDescription.getLastUpdatedDate());
     assertTrue(firstLastUpdatedDate.isBefore(updatedDescription.getLastUpdatedDate()));
 
-    Map<String, String> properties2 = Map.of("foo", "barUpdate", "ted", "lasso");
-    Properties updateProperties = buildProperties(properties2);
-
-    properties.putAll(properties2);
-    Properties expectedPropertyMap = buildProperties(properties);
+    Properties updateProperties = buildProperties(Map.of("foo", "barUpdate", "ted", "lasso"));
+    Properties updatedProperties =
+        buildProperties(Map.of("foo", "barUpdate", "ted", "lasso", "xyzzy", "plohg"));
 
     workspaceApi.updateWorkspaceProperties(updateProperties, workspaceUuid);
     WorkspaceDescription updatedWorkspaceDescription = workspaceApi.getWorkspace(workspaceUuid);
-    assertEquals(expectedPropertyMap, updatedWorkspaceDescription.getProperties());
+    assertEquals(updatedProperties, updatedWorkspaceDescription.getProperties());
 
     workspaceApi.deleteWorkspace(workspaceUuid);
     ClientTestUtils.assertHttpSuccess(workspaceApi, "DELETE workspace");
