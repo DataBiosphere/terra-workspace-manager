@@ -19,7 +19,7 @@ import org.springframework.stereotype.Component;
 
 @Component
 public class WorkspaceActivityLogDao {
-  
+
   private final NamedParameterJdbcTemplate jdbcTemplate;
 
   // These fields don't update workspace "Last updated" time in UI. For example,
