@@ -38,6 +38,7 @@ function get_metadata_value() {
 
 # Install common packages in conda environment
 /opt/conda/bin/conda install -y pre-commit nbdime nbstripout pylint pytest dsub pandas_gbq
+
 # Install nbstripout for the jupyter user in all git repositories.
 sudo -u "${JUPYTER_USER}" sh -c "/opt/conda/bin/nbstripout --install --global"
 
