@@ -27,7 +27,7 @@ import java.util.Arrays;
  * corresponding flight. When a new flight is added in WSM, a new entry should be added here.
  */
 public enum ActivityFlight {
-  APPLICATION_ENABLED_FLIGHT(
+  APPLICATION_ABLE_FLIGHT(
       ApplicationAbleFlight.class.getName(), ActivityLogChangedTarget.APPLICATION),
   WORKSPACE_CREATE_FLIGHT(
       WorkspaceCreateFlight.class.getName(), ActivityLogChangedTarget.WORKSPACE),

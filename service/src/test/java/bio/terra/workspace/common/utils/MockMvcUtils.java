@@ -15,13 +15,13 @@ public class MockMvcUtils {
 
   public static final String AUTH_HEADER = "Authorization";
 
-  public static final String CREATE_WORKSPACE_PATH_FORMAT = "/api/workspaces/v1";
-  public static final String GET_WORKSPACE_PATH_FORMAT = "/api/workspaces/v1/%s";
-  public static final String GET_WORKSPACE_BY_UFID_PATH_FORMAT =
+  public static final String WORKSPACES_V1_PATH = "/api/workspaces/v1";
+  public static final String WORKSPACES_V1_BY_UUID_PATH_FORMAT = "/api/workspaces/v1/%s";
+  public static final String WORKSPACES_V1_BY_UFID_PATH_FORMAT =
       "/api/workspaces/v1/workspaceByUserFacingId/%s";
   public static final String ADD_USER_TO_WORKSPACE_PATH_FORMAT =
       "/api/workspaces/v1/%s/roles/%s/members";
-  public static final String DELETE_WORKSPACE_PATH_FORMAT = "/api/workspaces/v1/%s";
+  public static final String CLONE_WORKSPACE_PATH_FORMAT = "/api/workspaces/v1/%s/clone";
   public static final String CREATE_SNAPSHOT_PATH_FORMAT =
       "/api/workspaces/v1/%s/resources/referenced/datarepo/snapshots";
   public static final String CREATE_CLOUD_CONTEXT_PATH_FORMAT =

@@ -28,7 +28,10 @@ public class WorkspaceActivityLogDaoTest extends BaseUnitTest {
         workspaceId, new DbWorkspaceActivityLog().operationType(OperationType.CREATE));
 
     var latestDate = activityLogDao.getLastUpdatedDate(workspaceId);
+    var createdDate = activityLogDao.getCreatedDate(workspaceId);
     assertTrue(latestDate.isPresent());
+    assertTrue(createdDate.isPresent());
+    assertEquals(latestDate.get(), createdDate.get());
   }
 
   @Test
@@ -64,6 +67,9 @@ public class WorkspaceActivityLogDaoTest extends BaseUnitTest {
     assertTrue(firstUpdatedDate.get().isBefore(secondUpdatedDate.get()));
     assertTrue(secondUpdatedDate.get().isBefore(thirdUpdatedDate.get()));
     assertTrue(thirdUpdatedDate.get().isBefore(fourthUpdateDate.get()));
+
+    var createdDate = activityLogDao.getCreatedDate(workspaceId);
+    assertEquals(firstUpdatedDate.get(), createdDate.get());
   }
 
   @Test
@@ -101,6 +107,11 @@ public class WorkspaceActivityLogDaoTest extends BaseUnitTest {
   @Test
   public void getLastUpdatedDate_emptyTable_getEmpty() {
     assertTrue(activityLogDao.getLastUpdatedDate(UUID.randomUUID()).isEmpty());
+  }
+
+  @Test
+  public void getCreatedDate_emptyTable_getEmpty() {
+    assertTrue(activityLogDao.getCreatedDate(UUID.randomUUID()).isEmpty());
   }
 
   private String getChangeType(UUID workspaceId) {

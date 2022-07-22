@@ -105,7 +105,7 @@ class SamServiceTest extends BaseConnectedTest {
     mockMvc
         .perform(
             addAuth(
-                get(String.format(GET_WORKSPACE_PATH_FORMAT, workspaceUuid)),
+                get(String.format(WORKSPACES_V1_BY_UUID_PATH_FORMAT, workspaceUuid)),
                 secondaryUserRequest()))
         .andExpect(status().is(HttpStatus.SC_FORBIDDEN));
     samService.grantWorkspaceRole(
@@ -117,7 +117,7 @@ class SamServiceTest extends BaseConnectedTest {
     mockMvc
         .perform(
             addAuth(
-                get(String.format(GET_WORKSPACE_PATH_FORMAT, workspaceUuid)),
+                get(String.format(WORKSPACES_V1_BY_UUID_PATH_FORMAT, workspaceUuid)),
                 secondaryUserRequest()))
         .andExpect(status().is(HttpStatus.SC_OK));
   }
@@ -180,7 +180,7 @@ class SamServiceTest extends BaseConnectedTest {
     mockMvc
         .perform(
             addAuth(
-                get(String.format(GET_WORKSPACE_PATH_FORMAT, workspaceUuid)),
+                get(String.format(WORKSPACES_V1_BY_UUID_PATH_FORMAT, workspaceUuid)),
                 secondaryUserRequest()))
         .andExpect(status().is(HttpStatus.SC_FORBIDDEN));
     // After being granted permission, secondary user can read the workspace.
@@ -192,7 +192,7 @@ class SamServiceTest extends BaseConnectedTest {
     mockMvc
         .perform(
             addAuth(
-                get(String.format(GET_WORKSPACE_PATH_FORMAT, workspaceUuid)),
+                get(String.format(WORKSPACES_V1_BY_UUID_PATH_FORMAT, workspaceUuid)),
                 secondaryUserRequest()))
         .andExpect(status().is(HttpStatus.SC_OK));
     // After removing permission, secondary user can no longer read.
@@ -204,7 +204,7 @@ class SamServiceTest extends BaseConnectedTest {
     mockMvc
         .perform(
             addAuth(
-                get(String.format(GET_WORKSPACE_PATH_FORMAT, workspaceUuid)),
+                get(String.format(WORKSPACES_V1_BY_UUID_PATH_FORMAT, workspaceUuid)),
                 secondaryUserRequest()))
         .andExpect(status().is(HttpStatus.SC_FORBIDDEN));
   }
@@ -232,7 +232,7 @@ class SamServiceTest extends BaseConnectedTest {
     Workspace rawlsWorkspace =
         Workspace.builder()
             .workspaceId(workspaceUuid)
-            .userFacingId("a" + workspaceUuid.toString())
+            .userFacingId(workspaceUuid.toString())
             .workspaceStage(WorkspaceStage.RAWLS_WORKSPACE)
             .build();
     workspaceService.createWorkspace(rawlsWorkspace, defaultUserRequest());
@@ -461,7 +461,7 @@ class SamServiceTest extends BaseConnectedTest {
     Workspace workspace =
         Workspace.builder()
             .workspaceId(uuid)
-            .userFacingId("a" + uuid.toString())
+            .userFacingId(uuid.toString())
             .workspaceStage(WorkspaceStage.MC_WORKSPACE)
             .build();
     workspaceService.createWorkspace(workspace, userRequest);

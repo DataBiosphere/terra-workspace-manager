@@ -3,10 +3,10 @@ package bio.terra.workspace.common.utils;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import bio.terra.common.exception.ValidationException;
-import bio.terra.workspace.common.BaseTest;
+import bio.terra.workspace.common.BaseUnitTest;
 import org.junit.jupiter.api.Test;
 
-public class ControllerValidationUtilsTest extends BaseTest {
+public class ControllerValidationUtilsTest extends BaseUnitTest {
 
   @Test
   void validatingANullIpAddress() {
@@ -58,4 +58,10 @@ public class ControllerValidationUtilsTest extends BaseTest {
     ControllerValidationUtils.validateIpAddressRange(
         "2001:0db8:85a3:0000:0000:8a2e:0370:7334-2001:0db8:85a3:0000:0000:8a2e:0370:7336");
   }
+
+  @Test
+  void userFacingIdCanStartWithNumber() throws Exception {
+    ControllerValidationUtils.validateUserFacingId("1000-genomes");
+  }
+  
 }

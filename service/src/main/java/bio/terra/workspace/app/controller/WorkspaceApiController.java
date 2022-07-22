@@ -118,9 +118,9 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
         Optional.ofNullable(body.getSpendProfile()).map(SpendProfileId::new);
 
     // ET uses userFacingId; CWB doesn't. Schema enforces that userFacingId must be set. CWB doesn't
-    // pass userFacingId in request, so use id. Prefix with "a" because userFacingId must start with
-    // a letter.
-    String userFacingId = Optional.ofNullable(body.getUserFacingId()).orElse("a-" + body.getId());
+    // pass userFacingId in request, so use id.
+    String userFacingId =
+        Optional.ofNullable(body.getUserFacingId()).orElse(body.getId().toString());
     ControllerValidationUtils.validateUserFacingId(userFacingId);
 
     Workspace workspace =
@@ -166,15 +166,16 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
 
   private ApiWorkspaceDescription buildWorkspaceDescription(
       Workspace workspace, WsmIamRole highestRole) {
+    UUID workspaceUuid = workspace.getWorkspaceId();
     ApiGcpContext gcpContext =
         gcpCloudContextService
-            .getGcpCloudContext(workspace.getWorkspaceId())
+            .getGcpCloudContext(workspaceUuid)
             .map(GcpCloudContext::toApi)
             .orElse(null);
 
     ApiAzureContext azureContext =
         azureCloudContextService
-            .getAzureCloudContext(workspace.getWorkspaceId())
+            .getAzureCloudContext(workspaceUuid)
             .map(AzureCloudContext::toApi)
             .orElse(null);
 
@@ -186,7 +187,7 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
 
     // When we have another cloud context, we will need to do a similar retrieval for it.
     return new ApiWorkspaceDescription()
-        .id(workspace.getWorkspaceId())
+        .id(workspaceUuid)
         .userFacingId(workspace.getUserFacingId())
         .displayName(workspace.getDisplayName().orElse(null))
         .description(workspace.getDescription().orElse(null))
@@ -195,7 +196,9 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
         .spendProfile(workspace.getSpendProfileId().map(SpendProfileId::getId).orElse(null))
         .stage(workspace.getWorkspaceStage().toApiModel())
         .gcpContext(gcpContext)
-        .azureContext(azureContext);
+        .azureContext(azureContext)
+        .createdDate(workspaceActivityLogDao.getCreatedDate(workspaceUuid).orElse(null))
+        .lastUpdatedDate(workspaceActivityLogDao.getLastUpdatedDate(workspaceUuid).orElse(null));
   }
 
   @Override
@@ -446,10 +449,9 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
     final UUID destinationWorkspaceId = UUID.randomUUID();
 
     // ET uses userFacingId; CWB doesn't. Schema enforces that userFacingId must be set. CWB doesn't
-    // pass userFacingId in request, so use id. Prefix with "a" because userFacingId must start with
-    // letter.
+    // pass userFacingId in request, so use id.
     String destinationUserFacingId =
-        Optional.ofNullable(body.getUserFacingId()).orElse("a-" + destinationWorkspaceId);
+        Optional.ofNullable(body.getUserFacingId()).orElse(destinationWorkspaceId.toString());
     ControllerValidationUtils.validateUserFacingId(destinationUserFacingId);
 
     // Construct the target workspace object from the inputs
@@ -461,7 +463,7 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
             .workspaceStage(WorkspaceStage.MC_WORKSPACE)
             .displayName(body.getDisplayName())
             .description(body.getDescription())
-            .properties(propertyMapFromApi(body.getProperties()))
+            .properties(sourceWorkspace.getProperties())
             .build();
 
     final String jobId =

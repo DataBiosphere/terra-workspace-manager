@@ -8,6 +8,8 @@ import bio.terra.workspace.api.WorkspaceApi;
 import bio.terra.workspace.client.ApiException;
 import bio.terra.workspace.model.CreateWorkspaceRequestBody;
 import bio.terra.workspace.model.CreatedWorkspace;
+import bio.terra.workspace.model.Properties;
+import bio.terra.workspace.model.Property;
 import bio.terra.workspace.model.WorkspaceStageModel;
 import java.util.List;
 import java.util.Map;
@@ -72,11 +74,18 @@ public abstract class WorkspaceAllocateTestScriptBase extends WorkspaceApiTestSc
    */
   protected CreatedWorkspace createWorkspace(
       UUID workspaceUuid, String spendProfileId, WorkspaceApi workspaceApi) throws Exception {
+    Properties properties = new Properties();
+    Property property1 = new Property().key("foo").value("bar");
+    Property property2 = new Property().key("xyzzy").value("plohg");
+    properties.add(property1);
+    properties.add(property2);
+
     final var requestBody =
         new CreateWorkspaceRequestBody()
             .id(workspaceUuid)
             .spendProfile(spendProfileId)
-            .stage(getStageModel());
+            .stage(getStageModel())
+            .properties(properties);
     final CreatedWorkspace workspace = workspaceApi.createWorkspace(requestBody);
     assertThat(workspace.getId(), equalTo(workspaceUuid));
     return workspace;

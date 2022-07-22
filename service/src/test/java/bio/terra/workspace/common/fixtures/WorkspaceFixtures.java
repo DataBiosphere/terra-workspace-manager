@@ -2,6 +2,8 @@ package bio.terra.workspace.common.fixtures;
 
 import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.generated.model.ApiCreateWorkspaceRequestBody;
+import bio.terra.workspace.generated.model.ApiProperties;
+import bio.terra.workspace.generated.model.ApiProperty;
 import bio.terra.workspace.generated.model.ApiWorkspaceStageModel;
 import bio.terra.workspace.service.iam.model.SamConstants.SamResource;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
@@ -33,12 +35,29 @@ public class WorkspaceFixtures {
    */
   public static ApiCreateWorkspaceRequestBody createWorkspaceRequestBody() {
     UUID workspaceId = UUID.randomUUID();
+    ApiProperties properties = new ApiProperties();
+    ApiProperty property1 = new ApiProperty();
+    property1.setKey("foo");
+    property1.setValue("bar");
+
+    ApiProperty property2 = new ApiProperty();
+    property2.setKey("xyzzy");
+    property2.setValue("plohg");
+
+    properties.add(property1);
+    properties.add(property2);
+
     return new ApiCreateWorkspaceRequestBody()
         .id(workspaceId)
         .displayName("TestWorkspace")
         .description("A test workspace created by createWorkspaceRequestBody")
-        .userFacingId("user-facing-id-" + workspaceId)
+        .userFacingId(getUserFacingId(workspaceId))
         .stage(ApiWorkspaceStageModel.MC_WORKSPACE)
-        .spendProfile(SamResource.SPEND_PROFILE);
+        .spendProfile(SamResource.SPEND_PROFILE)
+        .properties(properties);
+  }
+
+  public static String getUserFacingId(UUID workspaceId) {
+    return String.format("user-facing-id-%s", workspaceId);
   }
 }

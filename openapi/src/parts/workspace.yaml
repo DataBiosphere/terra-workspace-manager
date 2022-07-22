@@ -255,8 +255,8 @@ components:
           format: uuid
         destinationUserFacingId:
           description: |
-            Human-settable, mutable id. Must have 3-63 characters, contain lowercase letters, numbers, dashes, or
-            underscores, and start with lowercase letter.
+            Human-settable, mutable id. Must have 3-63 characters, contain lowercase letters, numbers,
+            dashes, or underscores, and start with lowercase letter or number.
           type: string
         resources:
           type: array
@@ -280,8 +280,8 @@ components:
       properties:
         userFacingId:
           description: |
-            Human-settable, mutable id for cloned workspace. ID must have 3-63 characters, contain lowercase letters,
-            numbers, dashes, or underscores, and start with lowercase letter. Optional. If this isn't set, one will be
+            Human-settable, mutable id for cloned workspace. Must have 3-63 characters, contain lowercase letters, numbers,
+            dashes, or underscores, and start with lowercase letter or number. Optional. If this isn't set, one will be
             generated.
           type: string
         displayName:
@@ -298,8 +298,6 @@ components:
             GCP Location to use for cloud-based resources. If omitted, the location of the source
             resource will be used.
           type: string
-        properties:
-          $ref: '#/components/schemas/Properties'
 
     ResourceCloneDetails:
       description: >-
@@ -365,7 +363,7 @@ components:
         userFacingId:
           description: |
             Human-settable, mutable id. Must have 3-63 characters, contain lowercase letters, numbers, dashes, or
-            underscores, and start with lowercase letter. Optional. If this isn't set, one will be generated based on
+            underscores, and start with lowercase letter or number. Optional. If this isn't set, one will be generated based on
             id (uuid).
           type: string
         displayName:
@@ -445,7 +443,7 @@ components:
         userFacingId:
           description: |
             Human-settable, mutable id. Must have 3-63 characters, contain lowercase letters, numbers, dashes, or
-            underscores, and start with lowercase letter.
+            underscores, and start with lowercase letter or number.
           type: string
         displayName:
           description: The human readable name of the workspace
@@ -468,7 +466,7 @@ components:
         userFacingId:
           description: |
             Human-settable, mutable id. Must have 3-63 characters, contain lowercase letters, numbers, dashes, or
-            underscores, and start with lowercase letter.
+            underscores, and start with lowercase letter or number.
           type: string
         displayName:
           description: The human readable name of the workspace
@@ -494,6 +492,14 @@ components:
           $ref: '#/components/schemas/AzureContext'
         properties:
           $ref: '#/components/schemas/Properties'
+        createdDate:
+          description: Timestamp when the workspace is created
+          type: string
+          format: date-time
+        lastUpdatedDate:
+          description: Timestamp of the latest workspace change
+          type: string
+          format: date-time
 
     WorkspaceDescriptionList:
       type: object
