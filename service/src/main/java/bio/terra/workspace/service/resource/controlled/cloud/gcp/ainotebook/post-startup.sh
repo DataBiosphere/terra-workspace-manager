@@ -45,12 +45,16 @@ sudo -u "${JUPYTER_USER}" sh -c "/opt/conda/bin/nbstripout --install --global"
 export NXF_VER=21.05.0-edge
 export NXF_MODE=google
 
+sudo apt-get update
+
 if [[ -n "$(which java)" ]];
 then
   echo "java is installed"
 else
   sudo apt-get -y install openjdk-11-jdk
 fi
+
+sudo apt-get -y install mailutils
 
 sudo -u "${JUPYTER_USER}" sh -c "curl -s https://get.nextflow.io | bash"
 sudo mv nextflow /usr/bin/nextflow
