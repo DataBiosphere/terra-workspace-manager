@@ -59,17 +59,15 @@ public class ReferencedResourceService {
   }
 
   @Traced
-  public ReferencedResource createReferenceResource(ReferencedResource resource) {
-    return createReferenceResource(resource, OperationType.CREATE);
-  }
-
-  @Traced
-  public ReferencedResource cloneReferenceResource(ReferencedResource resource) {
-    return createReferenceResource(resource, OperationType.CLONE);
+  public ReferencedResource createReferenceResource(
+      ReferencedResource resource, AuthenticatedUserRequest userRequest) {
+    return createReferenceResource(resource, OperationType.CREATE, userRequest);
   }
 
   private ReferencedResource createReferenceResource(
-      ReferencedResource resource, OperationType operationType) {
+      ReferencedResource resource,
+      OperationType operationType,
+      AuthenticatedUserRequest userRequest) {
     String jobDescription =
         String.format(
             "Create reference %s; id %s; name %s",
@@ -83,6 +81,7 @@ public class ReferencedResourceService {
             .newJob()
             .description(jobDescription)
             .flightClass(CreateReferenceResourceFlight.class)
+            .userRequest(userRequest)
             .resource(resource)
             .operationType(operationType)
             .workspaceId(resource.getWorkspaceId().toString())
@@ -232,7 +231,8 @@ public class ReferencedResourceService {
       UUID destinationWorkspaceId,
       UUID destinationResourceId,
       @Nullable String name,
-      @Nullable String description) {
+      @Nullable String description,
+      AuthenticatedUserRequest userRequest) {
     final ReferencedResource destinationResource =
         WorkspaceCloneUtils.buildDestinationReferencedResource(
             sourceReferencedResource,
@@ -241,7 +241,7 @@ public class ReferencedResourceService {
             name,
             description);
     // launch the creation flight
-    return createReferenceResource(destinationResource);
+    return createReferenceResource(destinationResource, userRequest);
   }
 
   private DbWorkspaceActivityLog getDbWorkspaceActivityLog(

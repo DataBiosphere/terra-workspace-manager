@@ -12,6 +12,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -86,11 +87,11 @@ import java.util.Optional;
 import java.util.UUID;
 import org.apache.http.HttpStatus;
 import org.broadinstitute.dsde.workbench.client.sam.ApiException;
+import org.broadinstitute.dsde.workbench.client.sam.model.UserStatusInfo;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.DisabledIfEnvironmentVariable;
-import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.mock.mockito.MockBean;
@@ -131,16 +132,12 @@ class WorkspaceServiceTest extends BaseConnectedTest {
     doReturn(true).when(mockDataRepoService).snapshotReadable(any(), any(), any());
     // By default, allow all spend link calls as authorized. (All other isAuthorized calls return
     // false by Mockito default).
-    Mockito.when(
-            mockSamService.isAuthorized(
-                Mockito.any(),
-                eq(SamResource.SPEND_PROFILE),
-                Mockito.any(),
-                eq(SamSpendProfileAction.LINK)))
+    when(mockSamService.isAuthorized(
+            any(), eq(SamResource.SPEND_PROFILE), any(), eq(SamSpendProfileAction.LINK)))
         .thenReturn(true);
     final String policyGroup = "terra-workspace-manager-test-group@googlegroups.com";
     // Return a valid google group for cloud sync, as Google validates groups added to GCP projects.
-    Mockito.when(mockSamService.syncWorkspacePolicy(any(), any(), any())).thenReturn(policyGroup);
+    when(mockSamService.syncWorkspacePolicy(any(), any(), any())).thenReturn(policyGroup);
 
     doReturn(policyGroup)
         .when(mockSamService)
@@ -148,6 +145,11 @@ class WorkspaceServiceTest extends BaseConnectedTest {
             any(ControlledResource.class),
             any(ControlledResourceIamRole.class),
             any(AuthenticatedUserRequest.class));
+    when(mockSamService.getUserStatusInfo(any()))
+        .thenReturn(
+            new UserStatusInfo()
+                .userEmail(USER_REQUEST.getEmail())
+                .userSubjectId(USER_REQUEST.getSubjectId()));
   }
 
   /**
@@ -164,7 +166,7 @@ class WorkspaceServiceTest extends BaseConnectedTest {
     Workspace request = defaultRequestBuilder(workspaceId).build();
     workspaceService.createWorkspace(request, USER_REQUEST);
 
-    Mockito.when(mockSamService.listWorkspaceIdsAndHighestRoles(Mockito.any()))
+    when(mockSamService.listWorkspaceIdsAndHighestRoles(any()))
         .thenReturn(Map.of(workspaceId, WsmIamRole.OWNER));
 
     List<WorkspaceAndHighestRole> actual =
@@ -272,7 +274,7 @@ class WorkspaceServiceTest extends BaseConnectedTest {
 
   @Test
   void getHighestRole_existing() {
-    Mockito.when(mockSamService.listRequesterRoles(Mockito.any(), Mockito.any(), Mockito.any()))
+    when(mockSamService.listRequesterRoles(any(), any(), any()))
         .thenReturn(ImmutableList.of(WsmIamRole.OWNER, WsmIamRole.WRITER));
 
     Workspace request = defaultRequestBuilder(UUID.randomUUID()).build();
@@ -409,6 +411,8 @@ class WorkspaceServiceTest extends BaseConnectedTest {
             .get()
             .getDateTime()
             .isBefore(workspaceUpdateChangeDetails.get().getDateTime()));
+    assertEquals(USER_REQUEST.getEmail(), workspaceUpdateChangeDetails.get().getUserEmail());
+    assertEquals(USER_REQUEST.getSubjectId(), workspaceUpdateChangeDetails.get().getSubjectId());
 
     assertEquals(userFacingId, updatedWorkspace.getUserFacingId());
     assertTrue(updatedWorkspace.getDisplayName().isPresent());
@@ -435,6 +439,8 @@ class WorkspaceServiceTest extends BaseConnectedTest {
             .get()
             .getDateTime()
             .isBefore(secondUpdateChangeDetails.get().getDateTime()));
+    assertEquals(USER_REQUEST.getEmail(), secondUpdateChangeDetails.get().getUserEmail());
+    assertEquals(USER_REQUEST.getSubjectId(), secondUpdateChangeDetails.get().getSubjectId());
     // Since name is null, leave it alone. Description should be updated.
     assertTrue(secondUpdatedWorkspace.getDisplayName().isPresent());
     assertEquals(name, secondUpdatedWorkspace.getDisplayName().get());
@@ -478,7 +484,9 @@ class WorkspaceServiceTest extends BaseConnectedTest {
                 USER_REQUEST.getEmail(),
                 USER_REQUEST.getSubjectId()));
     var failedUpdateDate = workspaceActivityLogDao.getLastUpdateDetails(workspaceUuid);
-    assertEquals(thirdUpdatedDateAfterWorkspaceUpdate.get(), failedUpdateDate.get());
+    assertEquals(
+        thirdUpdatedDateAfterWorkspaceUpdate.get().getDateTime(),
+        failedUpdateDate.get().getDateTime());
   }
 
   @Test
@@ -635,7 +643,7 @@ class WorkspaceServiceTest extends BaseConnectedTest {
             CloningInstructions.COPY_NOTHING,
             "fakeinstance",
             "fakesnapshot");
-    referenceResourceService.createReferenceResource(snapshot);
+    referenceResourceService.createReferenceResource(snapshot, USER_REQUEST);
 
     // Validate that the reference exists.
     referenceResourceService.getReferenceResource(workspaceUuid, resourceId);
@@ -701,12 +709,8 @@ class WorkspaceServiceTest extends BaseConnectedTest {
   void createGoogleContextRawlsStageThrows() throws Exception {
     // RAWLS_WORKSPACE stage workspaces use existing Sam resources instead of owning them, so the
     // mock pretends our user has access to any workspace we ask about.
-    Mockito.when(
-            mockSamService.isAuthorized(
-                Mockito.any(),
-                eq(SamResource.WORKSPACE),
-                Mockito.any(),
-                eq(SamWorkspaceAction.READ)))
+    when(mockSamService.isAuthorized(
+            any(), eq(SamResource.WORKSPACE), any(), eq(SamWorkspaceAction.READ)))
         .thenReturn(true);
     UUID workspaceId = UUID.randomUUID();
     Workspace request =

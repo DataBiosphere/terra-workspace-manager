@@ -115,7 +115,7 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
 
     ReferencedGcsObjectResource referencedResource =
         referenceResourceService
-            .createReferenceResource(resource)
+            .createReferenceResource(resource, userRequest)
             .castByEnum(WsmResourceType.REFERENCED_GCP_GCS_OBJECT);
     return new ResponseEntity<>(referencedResource.toApiResource(), HttpStatus.OK);
   }
@@ -228,7 +228,7 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
 
     ReferencedGcsBucketResource referenceResource =
         referenceResourceService
-            .createReferenceResource(resource)
+            .createReferenceResource(resource, userRequest)
             .castByEnum(WsmResourceType.REFERENCED_GCP_GCS_BUCKET);
     return new ResponseEntity<>(referenceResource.toApiResource(), HttpStatus.OK);
   }
@@ -333,7 +333,7 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
             .build();
     ReferencedBigQueryDataTableResource referenceResource =
         referenceResourceService
-            .createReferenceResource(resource)
+            .createReferenceResource(resource, userRequest)
             .castByEnum(WsmResourceType.REFERENCED_GCP_BIG_QUERY_DATA_TABLE);
     return new ResponseEntity<>(referenceResource.toApiResource(), HttpStatus.OK);
   }
@@ -454,7 +454,7 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
 
     ReferencedBigQueryDatasetResource referenceResource =
         referenceResourceService
-            .createReferenceResource(resource)
+            .createReferenceResource(resource, userRequest)
             .castByEnum(WsmResourceType.REFERENCED_GCP_BIG_QUERY_DATASET);
     return new ResponseEntity<>(referenceResource.toApiResource(), HttpStatus.OK);
   }
@@ -568,7 +568,7 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
 
     ReferencedDataRepoSnapshotResource referenceResource =
         referenceResourceService
-            .createReferenceResource(resource)
+            .createReferenceResource(resource, userRequest)
             .castByEnum(WsmResourceType.REFERENCED_ANY_DATA_REPO_SNAPSHOT);
     return new ResponseEntity<>(referenceResource.toApiResource(), HttpStatus.OK);
   }
@@ -690,7 +690,8 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
                 body.getDestinationWorkspaceId(),
                 UUID.randomUUID(), // resourceId is not pre-allocated for individual clone endpoints
                 body.getName(),
-                body.getDescription())
+                body.getDescription(),
+                userRequest)
             .castByEnum(WsmResourceType.REFERENCED_GCP_GCS_OBJECT);
 
     // Build the correct response type
@@ -737,7 +738,8 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
                 body.getDestinationWorkspaceId(),
                 UUID.randomUUID(), // resourceId is not pre-allocated for individual clone endpoints
                 body.getName(),
-                body.getDescription())
+                body.getDescription(),
+                userRequest)
             .castByEnum(WsmResourceType.REFERENCED_GCP_GCS_BUCKET);
 
     // Build the correct response type
@@ -785,7 +787,8 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
                 body.getDestinationWorkspaceId(),
                 UUID.randomUUID(), // resourceId is not pre-allocated for individual clone endpoints
                 body.getName(),
-                body.getDescription())
+                body.getDescription(),
+                userRequest)
             .castByEnum(WsmResourceType.REFERENCED_GCP_BIG_QUERY_DATA_TABLE);
 
     // Build the correct response type
@@ -833,7 +836,8 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
                 body.getDestinationWorkspaceId(),
                 UUID.randomUUID(), // resourceId is not pre-allocated for individual clone endpoints
                 body.getName(),
-                body.getDescription())
+                body.getDescription(),
+                userRequest)
             .castByEnum(WsmResourceType.REFERENCED_GCP_BIG_QUERY_DATASET);
 
     // Build the correct response type
@@ -882,7 +886,8 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
                 body.getDestinationWorkspaceId(),
                 UUID.randomUUID(), // resourceId is not pre-allocated for individual clone endpoints
                 body.getName(),
-                body.getDescription())
+                body.getDescription(),
+                userRequest)
             .castByEnum(WsmResourceType.REFERENCED_ANY_DATA_REPO_SNAPSHOT);
 
     // Build the correct response type
@@ -916,7 +921,7 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
 
     ReferencedGitRepoResource referenceResource =
         referenceResourceService
-            .createReferenceResource(resource)
+            .createReferenceResource(resource, userRequest)
             .castByEnum(WsmResourceType.REFERENCED_ANY_GIT_REPO);
     return new ResponseEntity<>(referenceResource.toApiResource(), HttpStatus.OK);
   }
@@ -1035,7 +1040,8 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
                 body.getDestinationWorkspaceId(),
                 UUID.randomUUID(), // resourceId is not pre-allocated for individual clone endpoints
                 body.getName(),
-                body.getDescription())
+                body.getDescription(),
+                userRequest)
             .castByEnum(WsmResourceType.REFERENCED_ANY_GIT_REPO);
 
     // Build the correct response type
@@ -1074,7 +1080,7 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
 
     ReferencedTerraWorkspaceResource referenceResource =
         referenceResourceService
-            .createReferenceResource(resource)
+            .createReferenceResource(resource, userRequest)
             .castByEnum(WsmResourceType.REFERENCED_ANY_TERRA_WORKSPACE);
     return new ResponseEntity<>(referenceResource.toApiResource(), HttpStatus.OK);
   }

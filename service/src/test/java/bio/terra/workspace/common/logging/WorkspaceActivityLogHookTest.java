@@ -1,8 +1,11 @@
 package bio.terra.workspace.common.logging;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.when;
 
 import bio.terra.stairway.Direction;
 import bio.terra.stairway.FlightContext;
@@ -12,6 +15,7 @@ import bio.terra.stairway.Stairway;
 import bio.terra.stairway.StepResult;
 import bio.terra.workspace.common.BaseUnitTest;
 import bio.terra.workspace.common.exception.UnknownFlightClassNameException;
+import bio.terra.workspace.common.logging.model.ActivityLogChangeDetails;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.db.WorkspaceActivityLogDao;
 import bio.terra.workspace.db.WorkspaceDao;
@@ -34,120 +38,122 @@ import bio.terra.workspace.service.workspace.model.OperationType;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import org.broadinstitute.dsde.workbench.client.sam.model.UserStatusInfo;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.MockBean;
 
 public class WorkspaceActivityLogHookTest extends BaseUnitTest {
 
+  /** A fake authenticated user request. */
+  private static final AuthenticatedUserRequest USER_REQUEST =
+      new AuthenticatedUserRequest()
+          .token(Optional.of("fake-token"))
+          .email("fake@email.com")
+          .subjectId("fakeID123");
+
+  private static final UserStatusInfo USER_STATUS_INFO =
+      new UserStatusInfo()
+          .userEmail(USER_REQUEST.getEmail())
+          .userSubjectId(USER_REQUEST.getSubjectId());
   @Autowired private WorkspaceDao workspaceDao;
   @Autowired private WorkspaceActivityLogDao activityLogDao;
   @Autowired private ResourceDao resourceDao;
   @Autowired private WorkspaceActivityLogHook hook;
   @MockBean private SamService mockSamService;
 
+  @BeforeEach
+  void setUpOnce() throws InterruptedException {
+    when(mockSamService.getUserStatusInfo(any())).thenReturn(USER_STATUS_INFO);
+  }
+
   @Test
   void createFlightSucceeds_activityLogUpdated() throws InterruptedException {
     var workspaceUuid = UUID.randomUUID();
-    var userEmail = "foo@gmail.com";
-    Mockito.when(mockSamService.getUserStatusInfo(Mockito.any()))
-        .thenReturn(new UserStatusInfo().userEmail(userEmail));
-    var emptyChangedDate = activityLogDao.getLastUpdateDetails(workspaceUuid);
-    assertTrue(emptyChangedDate.isEmpty());
+    var emptyChangeDetails = activityLogDao.getLastUpdateDetails(workspaceUuid);
+    assertTrue(emptyChangeDetails.isEmpty());
 
-    FlightMap inputParams = new FlightMap();
-    inputParams.put(WorkspaceFlightMapKeys.OPERATION_TYPE, OperationType.CREATE);
-    inputParams.put(WorkspaceFlightMapKeys.WORKSPACE_ID, workspaceUuid.toString());
-    inputParams.put(
-        JobMapKeys.AUTH_USER_INFO.getKeyName(), new AuthenticatedUserRequest().email(userEmail));
+    FlightMap inputParams = buildInputParams(workspaceUuid, OperationType.CREATE);
     hook.endFlight(
         new FakeFlightContext(
             WorkspaceCreateFlight.class.getName(), inputParams, FlightStatus.SUCCESS));
-    var changedDate = activityLogDao.getLastUpdateDetails(workspaceUuid);
-    assertTrue(changedDate.isPresent());
+    var changeDetails = activityLogDao.getLastUpdateDetails(workspaceUuid);
+    assertChangeDetails(changeDetails);
   }
 
   @Test
   void deleteFlightSucceeds_activityLogUpdated() throws InterruptedException {
     var workspaceUuid = UUID.randomUUID();
-    var emptyChangedDate = activityLogDao.getLastUpdateDetails(workspaceUuid);
-    assertTrue(emptyChangedDate.isEmpty());
+    var emptyChangeDetails = activityLogDao.getLastUpdateDetails(workspaceUuid);
+    assertTrue(emptyChangeDetails.isEmpty());
 
-    FlightMap inputParams = new FlightMap();
-    inputParams.put(WorkspaceFlightMapKeys.OPERATION_TYPE, OperationType.DELETE);
-    inputParams.put(WorkspaceFlightMapKeys.WORKSPACE_ID, workspaceUuid.toString());
+    FlightMap inputParams = buildInputParams(workspaceUuid, OperationType.DELETE);
     hook.endFlight(
         new FakeFlightContext(
             WorkspaceDeleteFlight.class.getName(), inputParams, FlightStatus.SUCCESS));
 
-    var changedDate = activityLogDao.getLastUpdateDetails(workspaceUuid);
-    assertTrue(changedDate.isPresent());
+    var changeDetails = activityLogDao.getLastUpdateDetails(workspaceUuid);
+    assertChangeDetails(changeDetails);
   }
 
   @Test
   void unknownFlightSucceeds_activityLogNotUpdated() {
     var workspaceUuid = UUID.randomUUID();
-    var emptyChangedDate = activityLogDao.getLastUpdateDetails(workspaceUuid);
-    assertTrue(emptyChangedDate.isEmpty());
+    var emptyChangeDetails = activityLogDao.getLastUpdateDetails(workspaceUuid);
+    assertTrue(emptyChangeDetails.isEmpty());
 
-    FlightMap inputParams = new FlightMap();
-    inputParams.put(WorkspaceFlightMapKeys.OPERATION_TYPE, OperationType.DELETE);
-    inputParams.put(WorkspaceFlightMapKeys.WORKSPACE_ID, workspaceUuid.toString());
+    FlightMap inputParams = buildInputParams(workspaceUuid, OperationType.DELETE);
 
     assertThrows(
         UnknownFlightClassNameException.class,
         () ->
             hook.endFlight(new FakeFlightContext("TestFlight", inputParams, FlightStatus.SUCCESS)));
 
-    var changedDate = activityLogDao.getLastUpdateDetails(workspaceUuid);
-    assertTrue(changedDate.isEmpty());
+    var changeDetails = activityLogDao.getLastUpdateDetails(workspaceUuid);
+    assertTrue(changeDetails.isEmpty());
   }
 
   @Test
   void createFlightFails_activityLogNotUpdated() throws InterruptedException {
     var workspaceUuid = UUID.randomUUID();
-    var emptyChangedDate = activityLogDao.getLastUpdateDetails(workspaceUuid);
-    assertTrue(emptyChangedDate.isEmpty());
+    var emptyChangeDetails = activityLogDao.getLastUpdateDetails(workspaceUuid);
+    assertTrue(emptyChangeDetails.isEmpty());
 
-    FlightMap inputParams = new FlightMap();
-    inputParams.put(WorkspaceFlightMapKeys.OPERATION_TYPE, OperationType.CREATE);
-    inputParams.put(WorkspaceFlightMapKeys.WORKSPACE_ID, workspaceUuid.toString());
+    FlightMap inputParams = buildInputParams(workspaceUuid, OperationType.CREATE);
 
     hook.endFlight(
         new FakeFlightContext(
             WorkspaceCreateFlight.class.getName(), inputParams, FlightStatus.ERROR));
 
-    var changedDateAfterFailedFlight = activityLogDao.getLastUpdateDetails(workspaceUuid);
-    assertTrue(changedDateAfterFailedFlight.isEmpty());
+    var changeDetailsAfterFailedFlight = activityLogDao.getLastUpdateDetails(workspaceUuid);
+    assertTrue(changeDetailsAfterFailedFlight.isEmpty());
   }
 
   @Test
-  void deleteWorkspaceFlightFails_workspaceNotExist_logChangedDate() throws InterruptedException {
+  void deleteWorkspaceFlightFails_workspaceNotExist_logChangeDetails() throws InterruptedException {
     var workspaceUuid = UUID.randomUUID();
-    var emptyChangedDate = activityLogDao.getLastUpdateDetails(workspaceUuid);
-    assertTrue(emptyChangedDate.isEmpty());
+    var emptyChangeDetails = activityLogDao.getLastUpdateDetails(workspaceUuid);
+    assertTrue(emptyChangeDetails.isEmpty());
 
-    FlightMap inputParams = new FlightMap();
-    inputParams.put(WorkspaceFlightMapKeys.OPERATION_TYPE, OperationType.DELETE);
-    inputParams.put(WorkspaceFlightMapKeys.WORKSPACE_ID, workspaceUuid.toString());
+    FlightMap inputParams = buildInputParams(workspaceUuid, OperationType.DELETE);
     hook.endFlight(
         new FakeFlightContext(
             WorkspaceDeleteFlight.class.getName(), inputParams, FlightStatus.ERROR));
 
     assertTrue(workspaceDao.getWorkspaceIfExists(workspaceUuid).isEmpty());
-    var changedDateAfterFailedFlight = activityLogDao.getLastUpdateDetails(workspaceUuid);
-    assertTrue(changedDateAfterFailedFlight.isPresent());
+    var changeDetailsAfterFailedFlight = activityLogDao.getLastUpdateDetails(workspaceUuid);
+    assertChangeDetails(changeDetailsAfterFailedFlight);
   }
 
   @Test
-  void deleteWorkspaceFlightFails_workspaceStillExist_NotLogChangedDate()
+  void deleteWorkspaceFlightFails_workspaceStillExist_NotLogChangeDetails()
       throws InterruptedException {
     var workspaceUuid = UUID.randomUUID();
-    var emptyChangedDate = activityLogDao.getLastUpdateDetails(workspaceUuid);
-    assertTrue(emptyChangedDate.isEmpty());
+    var emptyChangeDetails = activityLogDao.getLastUpdateDetails(workspaceUuid);
+    assertTrue(emptyChangeDetails.isEmpty());
 
     workspaceDao.createWorkspace(
         Workspace.builder()
@@ -155,43 +161,39 @@ public class WorkspaceActivityLogHookTest extends BaseUnitTest {
             .userFacingId(workspaceUuid.toString())
             .workspaceStage(WorkspaceStage.MC_WORKSPACE)
             .build());
-    FlightMap inputParams = new FlightMap();
-    inputParams.put(WorkspaceFlightMapKeys.OPERATION_TYPE, OperationType.DELETE);
-    inputParams.put(WorkspaceFlightMapKeys.WORKSPACE_ID, workspaceUuid.toString());
+    FlightMap inputParams = buildInputParams(workspaceUuid, OperationType.DELETE);
     hook.endFlight(
         new FakeFlightContext(
             WorkspaceDeleteFlight.class.getName(), inputParams, FlightStatus.ERROR));
 
     assertTrue(workspaceDao.getWorkspaceIfExists(workspaceUuid).isPresent());
-    var changedDateAfterFailedFlight = activityLogDao.getLastUpdateDetails(workspaceUuid);
-    assertTrue(changedDateAfterFailedFlight.isEmpty());
+    var changeDetailsAfterFailedFlight = activityLogDao.getLastUpdateDetails(workspaceUuid);
+    assertTrue(changeDetailsAfterFailedFlight.isEmpty());
   }
 
   @Test
-  void deleteCloudContextFlightFails_cloudContextNotExist_logChangedDate()
+  void deleteCloudContextFlightFails_cloudContextNotExist_logChangeDetails()
       throws InterruptedException {
     var workspaceUuid = UUID.randomUUID();
-    var emptyChangedDate = activityLogDao.getLastUpdateDetails(workspaceUuid);
-    assertTrue(emptyChangedDate.isEmpty());
+    var emptychangeDetails = activityLogDao.getLastUpdateDetails(workspaceUuid);
+    assertTrue(emptychangeDetails.isEmpty());
 
-    FlightMap inputParams = new FlightMap();
-    inputParams.put(WorkspaceFlightMapKeys.OPERATION_TYPE, OperationType.DELETE);
-    inputParams.put(WorkspaceFlightMapKeys.WORKSPACE_ID, workspaceUuid.toString());
+    FlightMap inputParams = buildInputParams(workspaceUuid, OperationType.DELETE);
     hook.endFlight(
         new FakeFlightContext(
             DeleteGcpContextFlight.class.getName(), inputParams, FlightStatus.ERROR));
 
     assertTrue(workspaceDao.getCloudContext(workspaceUuid, CloudPlatform.GCP).isEmpty());
-    var changedDateAfterFailedFlight = activityLogDao.getLastUpdateDetails(workspaceUuid);
-    assertTrue(changedDateAfterFailedFlight.isPresent());
+    var changeDetailsAfterFailedFlight = activityLogDao.getLastUpdateDetails(workspaceUuid);
+    assertChangeDetails(changeDetailsAfterFailedFlight);
   }
 
   @Test
-  void deleteGcpCloudContextFlightFails_cloudContextStillExist_notLogChangedDate()
+  void deleteGcpCloudContextFlightFails_cloudContextStillExist_notLogChangeDetails()
       throws InterruptedException {
     var workspaceUuid = UUID.randomUUID();
-    var emptyChangedDate = activityLogDao.getLastUpdateDetails(workspaceUuid);
-    assertTrue(emptyChangedDate.isEmpty());
+    var emptyChangeDetails = activityLogDao.getLastUpdateDetails(workspaceUuid);
+    assertTrue(emptyChangeDetails.isEmpty());
 
     workspaceDao.createWorkspace(
         Workspace.builder()
@@ -207,28 +209,24 @@ public class WorkspaceActivityLogHookTest extends BaseUnitTest {
         "{\"version\": 1, \"gcpProjectId\": \"my-gcp-project-name-123\"}",
         flightId);
 
-    FlightMap inputParams = new FlightMap();
-    inputParams.put(WorkspaceFlightMapKeys.OPERATION_TYPE, OperationType.DELETE);
-    inputParams.put(WorkspaceFlightMapKeys.WORKSPACE_ID, workspaceUuid.toString());
+    FlightMap inputParams = buildInputParams(workspaceUuid, OperationType.DELETE);
     hook.endFlight(
         new FakeFlightContext(
             DeleteGcpContextFlight.class.getName(), inputParams, FlightStatus.ERROR));
 
     assertTrue(workspaceDao.getCloudContext(workspaceUuid, CloudPlatform.GCP).isPresent());
-    var changedDateAfterFailedFlight = activityLogDao.getLastUpdateDetails(workspaceUuid);
-    assertTrue(changedDateAfterFailedFlight.isEmpty());
+    var changeDetailsAfterFailedFlight = activityLogDao.getLastUpdateDetails(workspaceUuid);
+    assertTrue(changeDetailsAfterFailedFlight.isEmpty());
   }
 
   @Test
-  void deleteResourceFlightFails_resourceNotExist_logChangedDate() throws InterruptedException {
+  void deleteResourceFlightFails_resourceNotExist_logChangeDetails() throws InterruptedException {
     var workspaceUuid = UUID.randomUUID();
     var resourceUuid = UUID.randomUUID();
-    var emptyChangedDate = activityLogDao.getLastUpdateDetails(workspaceUuid);
-    assertTrue(emptyChangedDate.isEmpty());
+    var emptyChangeDetails = activityLogDao.getLastUpdateDetails(workspaceUuid);
+    assertTrue(emptyChangeDetails.isEmpty());
 
-    FlightMap inputParams = new FlightMap();
-    inputParams.put(WorkspaceFlightMapKeys.OPERATION_TYPE, OperationType.DELETE);
-    inputParams.put(WorkspaceFlightMapKeys.WORKSPACE_ID, workspaceUuid.toString());
+    FlightMap inputParams = buildInputParams(workspaceUuid, OperationType.DELETE);
     inputParams.put(
         ResourceKeys.RESOURCE,
         ControlledAiNotebookInstanceResource.builder()
@@ -250,17 +248,17 @@ public class WorkspaceActivityLogHookTest extends BaseUnitTest {
         new FakeFlightContext(
             DeleteControlledResourceFlight.class.getName(), inputParams, FlightStatus.ERROR));
 
-    var changedDateAfterFailedFlight = activityLogDao.getLastUpdateDetails(workspaceUuid);
-    assertTrue(changedDateAfterFailedFlight.isPresent());
+    var changeDetailsAfterFailedFlight = activityLogDao.getLastUpdateDetails(workspaceUuid);
+    assertChangeDetails(changeDetailsAfterFailedFlight);
   }
 
   @Test
-  void deleteResourceFlightFails_resourceStillExist_notLogChangedDate()
+  void deleteResourceFlightFails_resourceStillExist_notLogChangeDetails()
       throws InterruptedException {
     var workspaceUuid = UUID.randomUUID();
     var resourceUuid = UUID.randomUUID();
-    var emptyChangedDate = activityLogDao.getLastUpdateDetails(workspaceUuid);
-    assertTrue(emptyChangedDate.isEmpty());
+    var emptyChangeDetails = activityLogDao.getLastUpdateDetails(workspaceUuid);
+    assertTrue(emptyChangeDetails.isEmpty());
 
     workspaceDao.createWorkspace(
         Workspace.builder()
@@ -293,28 +291,24 @@ public class WorkspaceActivityLogHookTest extends BaseUnitTest {
             .build();
     resourceDao.createControlledResource(resource);
 
-    FlightMap inputParams = new FlightMap();
-    inputParams.put(WorkspaceFlightMapKeys.OPERATION_TYPE, OperationType.DELETE);
-    inputParams.put(WorkspaceFlightMapKeys.WORKSPACE_ID, workspaceUuid.toString());
+    FlightMap inputParams = buildInputParams(workspaceUuid, OperationType.DELETE);
     inputParams.put(ResourceKeys.RESOURCE, resource);
     hook.endFlight(
         new FakeFlightContext(
             DeleteGcpContextFlight.class.getName(), inputParams, FlightStatus.ERROR));
 
     assertNotNull(resourceDao.getResource(workspaceUuid, resourceUuid));
-    var changedDateAfterFailedFlight = activityLogDao.getLastUpdateDetails(workspaceUuid);
-    assertTrue(changedDateAfterFailedFlight.isEmpty());
+    var changeDetailsAfterFailedFlight = activityLogDao.getLastUpdateDetails(workspaceUuid);
+    assertTrue(changeDetailsAfterFailedFlight.isEmpty());
   }
 
   @Test
   void unknownFlightFails_activityLogNotUpdated() {
     UUID workspaceUuid = UUID.randomUUID();
-    var emptyChangedDate = activityLogDao.getLastUpdateDetails(workspaceUuid);
-    assertTrue(emptyChangedDate.isEmpty());
+    var emptyChangeDetails = activityLogDao.getLastUpdateDetails(workspaceUuid);
+    assertTrue(emptyChangeDetails.isEmpty());
 
-    FlightMap inputParams = new FlightMap();
-    inputParams.put(WorkspaceFlightMapKeys.OPERATION_TYPE, OperationType.DELETE);
-    inputParams.put(WorkspaceFlightMapKeys.WORKSPACE_ID, workspaceUuid.toString());
+    FlightMap inputParams = buildInputParams(workspaceUuid, OperationType.DELETE);
 
     assertThrows(
         UnknownFlightClassNameException.class,
@@ -322,8 +316,23 @@ public class WorkspaceActivityLogHookTest extends BaseUnitTest {
             hook.endFlight(
                 new FakeFlightContext("TestDeleteFlight", inputParams, FlightStatus.ERROR)));
 
-    var changedDateAfterFailedFlight = activityLogDao.getLastUpdateDetails(workspaceUuid);
-    assertTrue(changedDateAfterFailedFlight.isEmpty());
+    var changeDetailsAfterFailedFlight = activityLogDao.getLastUpdateDetails(workspaceUuid);
+    assertTrue(changeDetailsAfterFailedFlight.isEmpty());
+  }
+
+  private FlightMap buildInputParams(UUID workspaceUuid, OperationType operationType) {
+    FlightMap inputParams = new FlightMap();
+    inputParams.put(WorkspaceFlightMapKeys.OPERATION_TYPE, operationType);
+    inputParams.put(WorkspaceFlightMapKeys.WORKSPACE_ID, workspaceUuid.toString());
+    inputParams.put(JobMapKeys.AUTH_USER_INFO.getKeyName(), USER_REQUEST);
+    return inputParams;
+  }
+
+  private void assertChangeDetails(Optional<ActivityLogChangeDetails> changeDetails) {
+    assertTrue(changeDetails.isPresent());
+    assertEquals(USER_REQUEST.getEmail(), changeDetails.get().getUserEmail());
+    assertEquals(USER_REQUEST.getSubjectId(), changeDetails.get().getSubjectId());
+    assertNotNull(changeDetails.get().getDateTime());
   }
 
   /**

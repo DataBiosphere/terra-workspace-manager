@@ -106,14 +106,6 @@ public class WorkspaceActivityLogHook implements StairwayHook {
     return HookAction.CONTINUE;
   }
 
-  private DbWorkspaceActivityLog getDbWorkspaceActivityLog(
-      OperationType operationType, String email, String subjectId) {
-    return new DbWorkspaceActivityLog()
-        .operationType(operationType)
-        .changeAgentEmail(email)
-        .changeAgentSubjectId(subjectId);
-  }
-
   private void maybeLogWorkspaceDeletionFlight(
       UUID workspaceUuid, String userEmail, String subjectId) {
     try {
@@ -161,5 +153,13 @@ public class WorkspaceActivityLogHook implements StairwayHook {
       activityLogDao.writeActivity(
           workspaceUuid, getDbWorkspaceActivityLog(OperationType.DELETE, userEmail, subjectId));
     }
+  }
+
+  private DbWorkspaceActivityLog getDbWorkspaceActivityLog(
+      OperationType operationType, String email, String subjectId) {
+    return new DbWorkspaceActivityLog()
+        .operationType(operationType)
+        .changeAgentEmail(email)
+        .changeAgentSubjectId(subjectId);
   }
 }

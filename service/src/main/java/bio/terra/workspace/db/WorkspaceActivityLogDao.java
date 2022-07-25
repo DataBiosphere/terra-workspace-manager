@@ -14,6 +14,8 @@ import java.time.ZoneOffset;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.support.DataAccessUtils;
 import org.springframework.jdbc.core.RowMapper;
@@ -23,13 +25,7 @@ import org.springframework.stereotype.Component;
 
 @Component
 public class WorkspaceActivityLogDao {
-
-  private static final String WORKSPACE_CREATED_DATE_SQL =
-      "SELECT MIN(change_date) FROM workspace_activity_log" + " WHERE workspace_id = :workspace_id";
-  private static final String WORKSPACE_LAST_UPDATED_SQL =
-      "SELECT MAX(change_date) FROM workspace_activity_log"
-          + " WHERE workspace_id = :workspace_id"
-          + " AND change_type NOT IN (:change_type)";
+  private static final Logger logger = LoggerFactory.getLogger(WorkspaceActivityLogDao.class);
   private static final RowMapper<ActivityLogChangeDetails> ACTIVITY_LOG_CHANGE_DETAILS_ROW_MAPPER =
       (rs, rowNum) ->
           new ActivityLogChangeDetails()
@@ -55,6 +51,13 @@ public class WorkspaceActivityLogDao {
 
   @WriteTransaction
   public void writeActivity(UUID workspaceId, DbWorkspaceActivityLog dbWorkspaceActivityLog) {
+    logger.info(
+        String.format(
+            "#writeActivity: workspaceId=%s, operationType=%s, changeAgentEmail=%s, changeAgentSubjectId=%s",
+            workspaceId,
+            dbWorkspaceActivityLog.getOperationType(),
+            dbWorkspaceActivityLog.getChangeAgentEmail(),
+            dbWorkspaceActivityLog.getChangeAgentSubjectId()));
     if (dbWorkspaceActivityLog.getOperationType() == OperationType.UNKNOWN) {
       throw new UnknownFlightOperationTypeException(
           String.format("Flight operation type is unknown in workspace %s", workspaceId));
@@ -81,12 +84,11 @@ public class WorkspaceActivityLogDao {
   @ReadTransaction
   public Optional<ActivityLogChangeDetails> getCreateDetails(UUID workspaceId) {
     final String sql =
-        "SELECT m.change_agent_email, m.change_agent_subject_id, t.change_date FROM"
-            + " (SELECT change_agent_email, MIN(change_date) AS change_date"
-            + " FROM workspace_activity_log WHERE workspace_id = :workspace_id"
-            + " GROUP BY change_agent_email) t"
-            + " JOIN workspace_activity_log m"
-            + " ON m.change_agent_email = t.change_agent_email AND t.change_date = m.change_date";
+        "SELECT w.change_agent_email, w.change_agent_subject_id, w.change_date FROM workspace_activity_log w"
+            + " JOIN (SELECT MIN(change_date) AS min_date FROM workspace_activity_log"
+            + " WHERE workspace_id = :workspace_id"
+            + " GROUP BY change_agent_email) m"
+            + " ON w.change_date = m.min_date";
 
     final var params = new MapSqlParameterSource().addValue("workspace_id", workspaceId.toString());
     return Optional.ofNullable(
@@ -97,13 +99,12 @@ public class WorkspaceActivityLogDao {
   @ReadTransaction
   public Optional<ActivityLogChangeDetails> getLastUpdateDetails(UUID workspaceId) {
     final String sql =
-        "SELECT m.change_agent_email, m.change_agent_subject_id, t.change_date FROM"
-            + " (SELECT change_agent_email, MAX(change_date) AS change_date"
-            + " FROM workspace_activity_log"
+        "SELECT w.change_agent_email, w.change_agent_subject_id, w.change_date FROM workspace_activity_log w"
+            + " JOIN (SELECT MAX(change_date) AS max_date FROM workspace_activity_log"
             + " WHERE workspace_id = :workspace_id AND change_type NOT IN (:change_type)"
-            + " GROUP BY change_agent_email) t"
-            + " JOIN workspace_activity_log m"
-            + " ON m.change_agent_email = t.change_agent_email AND t.change_date = m.change_date";
+            + " GROUP BY change_agent_email) m"
+            + " ON w.change_date = m.max_date";
+
     final var params =
         new MapSqlParameterSource()
             .addValue("workspace_id", workspaceId.toString())
