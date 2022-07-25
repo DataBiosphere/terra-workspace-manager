@@ -91,4 +91,6 @@ fi
 
 # Attempt to clone all the git repo references in the workspace. If the user's ssh key does not exist or doesn't have access
 # to the git references, the corresponding git repo cloning will be skipped.
+# Keep this as last thing in script. There will be integration test for git cloning (PF-1660). If this is last thing, then
+# integration test will ensure that everything in script worked.
 sudo -u "$JUPYTER_USER" sh -c 'terra git clone --all'
