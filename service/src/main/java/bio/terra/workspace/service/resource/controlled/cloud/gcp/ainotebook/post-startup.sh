@@ -45,6 +45,8 @@ sudo -u "${JUPYTER_USER}" sh -c "/opt/conda/bin/nbstripout --install --global"
 export NXF_VER=21.05.0-edge
 export NXF_MODE=google
 
+sudo apt-get update
+
 if [[ -n "$(which java)" ]];
 then
   echo "java is installed"
@@ -54,6 +56,18 @@ fi
 
 sudo -u "${JUPYTER_USER}" sh -c "curl -s https://get.nextflow.io | bash"
 sudo mv nextflow /usr/bin/nextflow
+
+# Install cromwell
+readonly CROMWELL_LATEST_VERSION="81"
+sudo -u "${JUPYTER_USER}" sh -c "mkdir -p /home/${JUPYTER_USER}/cromwell"
+sudo -u "${JUPYTER_USER}" sh -c "curl -LO https://github.com/broadinstitute/cromwell/releases/download/${CROMWELL_LATEST_VERSION}/cromwell-${CROMWELL_LATEST_VERSION}.jar"
+mv cromwell-${CROMWELL_LATEST_VERSION}.jar /home/${JUPYTER_USER}/cromwell/
+
+#Install cromshell
+sudo apt-get -y install mailutils
+sudo -u "${JUPYTER_USER}" sh -c "curl -s https://raw.githubusercontent.com/broadinstitute/cromshell/master/cromshell > cromshell"
+sudo -u "${JUPYTER_USER}" sh -c "chmod +x cromshell"
+sudo mv cromshell /usr/bin/cromshell
 
 # Install & configure the Terra CLI
 sudo -u "${JUPYTER_USER}" sh -c "curl -L https://github.com/DataBiosphere/terra-cli/releases/latest/download/download-install.sh | bash"
