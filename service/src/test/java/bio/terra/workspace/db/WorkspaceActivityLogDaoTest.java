@@ -78,11 +78,13 @@ public class WorkspaceActivityLogDaoTest extends BaseUnitTest {
     assertEquals(SUBJECT_ID, createDetails.get().getUserSubjectId());
 
     var newUserEmail = "foo@gmail.com";
+    var subjectId = "foo";
     activityLogDao.writeActivity(
         workspaceId,
         new DbWorkspaceActivityLog()
             .operationType(OperationType.UPDATE)
-            .changeAgentEmail(newUserEmail));
+            .changeAgentEmail(newUserEmail)
+            .changeAgentSubjectId(subjectId));
 
     var createDetailsAfterUpdate = activityLogDao.getCreateDetails(workspaceId);
     assertEquals(USER_EMAIL, createDetailsAfterUpdate.get().getUserEmail());
@@ -143,7 +145,7 @@ public class WorkspaceActivityLogDaoTest extends BaseUnitTest {
         workspaceId,
         getDbWorkspaceActivityLog(OperationType.SYSTEM_CLEANUP)
             .changeAgentEmail("bar@gmail.com")
-            .changeAgentSubjectId(null));
+            .changeAgentSubjectId("bar"));
 
     assertEquals(OperationType.SYSTEM_CLEANUP.name(), getChangeType(workspaceId));
     assertTrue(activityLogDao.getLastUpdateDetails(workspaceId).isEmpty());

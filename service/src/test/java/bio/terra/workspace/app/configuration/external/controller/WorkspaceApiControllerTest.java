@@ -20,7 +20,6 @@ import bio.terra.workspace.generated.model.ApiCreatedWorkspace;
 import bio.terra.workspace.generated.model.ApiProperties;
 import bio.terra.workspace.generated.model.ApiProperty;
 import bio.terra.workspace.generated.model.ApiUpdateWorkspaceRequestBody;
-import bio.terra.workspace.generated.model.ApiWorkspaceActivityChangeAgent;
 import bio.terra.workspace.generated.model.ApiWorkspaceDescription;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
@@ -110,8 +109,8 @@ public class WorkspaceApiControllerTest extends BaseConnectedTest {
     assertEquals(userFacingId, fetchedWorkspace.getUserFacingId());
     assertNotNull(fetchedWorkspace.getLastUpdatedDate());
     assertEquals(fetchedWorkspace.getLastUpdatedDate(), fetchedWorkspace.getCreatedDate());
-    assertWorkspaceActivityChangeAgent(fetchedWorkspace.getCreatedBy());
-    assertWorkspaceActivityChangeAgent(fetchedWorkspace.getLastUpdatedBy());
+    assertEquals(USER_REQUEST.getEmail(), fetchedWorkspace.getCreatedBy());
+    assertEquals(USER_REQUEST.getEmail(), fetchedWorkspace.getLastUpdatedBy());
   }
 
   @Test
@@ -148,8 +147,8 @@ public class WorkspaceApiControllerTest extends BaseConnectedTest {
     OffsetDateTime createdDate = updatedWorkspaceDescription.getCreatedDate();
     assertNotNull(createdDate);
     assertTrue(firstLastUpdatedDate.isAfter(createdDate));
-    assertWorkspaceActivityChangeAgent(updatedWorkspaceDescription.getCreatedBy());
-    assertWorkspaceActivityChangeAgent(updatedWorkspaceDescription.getLastUpdatedBy());
+    assertEquals(USER_REQUEST.getEmail(), updatedWorkspaceDescription.getCreatedBy());
+    assertEquals(USER_REQUEST.getEmail(), updatedWorkspaceDescription.getLastUpdatedBy());
 
     var newUser = new UserStatusInfo().userEmail("foo@gmail.com").userSubjectId("foo");
     when(mockSamService.getUserStatusInfo(any())).thenReturn(newUser);
@@ -178,12 +177,7 @@ public class WorkspaceApiControllerTest extends BaseConnectedTest {
     assertTrue(firstLastUpdatedDate.isBefore(secondLastUpdatedDate));
     assertNotNull(secondUpdatedWorkspaceDescription.getCreatedDate());
     assertEquals(createdDate, secondUpdatedWorkspaceDescription.getCreatedDate());
-    assertEquals(
-        newUser.getUserEmail(),
-        secondUpdatedWorkspaceDescription.getLastUpdatedBy().getUserEmail());
-    assertEquals(
-        newUser.getUserSubjectId(),
-        secondUpdatedWorkspaceDescription.getLastUpdatedBy().getSubjectId());
+    assertEquals(newUser.getUserEmail(), secondUpdatedWorkspaceDescription.getLastUpdatedBy());
   }
 
   private String getUpdateRequestInJson(
@@ -281,11 +275,6 @@ public class WorkspaceApiControllerTest extends BaseConnectedTest {
         objectMapper.readValue(WorkspaceGetResponse, ApiWorkspaceDescription.class);
 
     return resultWorkspace;
-  }
-
-  private void assertWorkspaceActivityChangeAgent(ApiWorkspaceActivityChangeAgent changeAgent) {
-    assertEquals(USER_REQUEST.getEmail(), changeAgent.getUserEmail());
-    assertEquals(USER_REQUEST.getSubjectId(), changeAgent.getSubjectId());
   }
 
   public ApiProperties buildProperties(Map<String, String> propertyMap) {

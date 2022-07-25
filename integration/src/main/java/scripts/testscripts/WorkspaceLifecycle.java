@@ -16,7 +16,6 @@ import bio.terra.workspace.model.CreateWorkspaceRequestBody;
 import bio.terra.workspace.model.Properties;
 import bio.terra.workspace.model.Property;
 import bio.terra.workspace.model.UpdateWorkspaceRequestBody;
-import bio.terra.workspace.model.WorkspaceActivityChangeAgent;
 import bio.terra.workspace.model.WorkspaceDescription;
 import bio.terra.workspace.model.WorkspaceStageModel;
 import java.util.ArrayList;
@@ -77,13 +76,11 @@ public class WorkspaceLifecycle extends WorkspaceApiTestScriptBase {
     var createdDate = workspaceDescription.getCreatedDate();
     assertEquals(firstLastUpdatedDate, createdDate);
 
-    WorkspaceActivityChangeAgent lastUpdatedBy = workspaceDescription.getLastUpdatedBy();
-    assertEquals(USER_EMAIL, lastUpdatedBy.getUserEmail());
+    var lastUpdatedBy = workspaceDescription.getLastUpdatedBy();
+    assertEquals(USER_EMAIL, lastUpdatedBy);
 
-    WorkspaceActivityChangeAgent createdBy = workspaceDescription.getCreatedBy();
-    assertEquals(USER_EMAIL, createdBy.getUserEmail());
-    assertNotNull(lastUpdatedBy.getSubjectId());
-    assertEquals(lastUpdatedBy.getSubjectId(), createdBy.getSubjectId());
+    var createdBy = workspaceDescription.getCreatedBy();
+    assertEquals(USER_EMAIL, createdBy);
 
     // Update workspace
     UpdateWorkspaceRequestBody updateBody =

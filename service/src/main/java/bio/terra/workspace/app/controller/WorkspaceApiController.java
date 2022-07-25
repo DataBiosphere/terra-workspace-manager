@@ -23,7 +23,6 @@ import bio.terra.workspace.generated.model.ApiProperty;
 import bio.terra.workspace.generated.model.ApiRoleBinding;
 import bio.terra.workspace.generated.model.ApiRoleBindingList;
 import bio.terra.workspace.generated.model.ApiUpdateWorkspaceRequestBody;
-import bio.terra.workspace.generated.model.ApiWorkspaceActivityChangeAgent;
 import bio.terra.workspace.generated.model.ApiWorkspaceDescription;
 import bio.terra.workspace.generated.model.ApiWorkspaceDescriptionList;
 import bio.terra.workspace.generated.model.ApiWorkspaceStageModel;
@@ -203,21 +202,11 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
         .azureContext(azureContext)
         .createdDate(
             createDetailsOptional.map(ActivityLogChangeDetails::getChangedDate).orElse(null))
-        .createdBy(buildWorkspaceActivityChangeAgent(createDetailsOptional))
+        .createdBy(createDetailsOptional.map(ActivityLogChangeDetails::getUserEmail).orElse(null))
         .lastUpdatedDate(
             lastChangeDetailsOptional.map(ActivityLogChangeDetails::getChangedDate).orElse(null))
-        .lastUpdatedBy(buildWorkspaceActivityChangeAgent(lastChangeDetailsOptional));
-  }
-
-  private ApiWorkspaceActivityChangeAgent buildWorkspaceActivityChangeAgent(
-      Optional<ActivityLogChangeDetails> changeDetailsOptional) {
-    return changeDetailsOptional
-        .map(
-            activityLogChangeDetails ->
-                new ApiWorkspaceActivityChangeAgent()
-                    .userEmail(activityLogChangeDetails.getUserEmail())
-                    .subjectId(activityLogChangeDetails.getUserSubjectId()))
-        .orElse(null);
+        .lastUpdatedBy(
+            lastChangeDetailsOptional.map(ActivityLogChangeDetails::getUserEmail).orElse(null));
   }
 
   @Override
