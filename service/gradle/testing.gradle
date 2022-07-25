@@ -1,5 +1,9 @@
 // Testing config
 
+plugins {
+    id 'org.gradle.test-retry' version '1.4.0'
+}
+
 // The path to the default Google service account for the Workspace Manager to run as.
 // Created by scripts/write_config.sh
 def googleCredentialsFile = "${rootDir}/config/wsm-sa.json"
