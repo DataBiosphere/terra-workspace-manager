@@ -42,7 +42,7 @@ public class ActivityLogChangeDetails {
     return Optional.ofNullable(userEmail).orElseThrow(MISSING_REQUIRED_FIELD);
   }
 
-  public @Nullable String getUserSubjectId() {
-    return userSubjectId;
+  public String getUserSubjectId() {
+    return Optional.ofNullable(userSubjectId).orElseThrow(MISSING_REQUIRED_FIELD);
   }
 }

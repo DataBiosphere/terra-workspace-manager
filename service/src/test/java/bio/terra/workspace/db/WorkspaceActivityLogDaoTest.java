@@ -1,7 +1,6 @@
 package bio.terra.workspace.db;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -52,15 +51,17 @@ public class WorkspaceActivityLogDaoTest extends BaseUnitTest {
     var lastUpdateDetails = activityLogDao.getLastUpdateDetails(workspaceId);
 
     var newUserEmail = "foo@gmail.com";
+    var newUserSubjectId = "foo";
     activityLogDao.writeActivity(
         workspaceId,
         new DbWorkspaceActivityLog()
             .operationType(OperationType.UPDATE)
-            .changeAgentEmail(newUserEmail));
+            .changeAgentEmail(newUserEmail)
+            .changeAgentSubjectId(newUserSubjectId));
 
     var secondLastUpdateDetails = activityLogDao.getLastUpdateDetails(workspaceId);
     assertEquals(newUserEmail, secondLastUpdateDetails.get().getUserEmail());
-    assertNull(secondLastUpdateDetails.get().getUserSubjectId());
+    assertEquals(newUserSubjectId, secondLastUpdateDetails.get().getUserSubjectId());
     var secondLastUpdatedDate = secondLastUpdateDetails.get().getChangedDate();
     assertTrue(secondLastUpdatedDate.isAfter(lastUpdateDetails.get().getChangedDate()));
   }

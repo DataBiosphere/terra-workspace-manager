@@ -551,10 +551,13 @@ components:
 
     WorkspaceActivityChangeAgent:
       description: Info for workspace activity change agent
-      required: [userEmail]
+      required: [userEmail, subjectId]
       properties:
         userEmail:
           type: string
-          description: user email of the change agent
+          description: User email of the change agent
         subjectId:
           type: string
+          description: |
+            User's SAM subject id, it can be either a google or azure id.
+          

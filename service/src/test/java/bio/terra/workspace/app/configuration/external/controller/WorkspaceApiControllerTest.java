@@ -3,7 +3,6 @@ package bio.terra.workspace.app.configuration.external.controller;
 import static bio.terra.workspace.common.utils.MockMvcUtils.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -152,7 +151,7 @@ public class WorkspaceApiControllerTest extends BaseConnectedTest {
     assertWorkspaceActivityChangeAgent(updatedWorkspaceDescription.getCreatedBy());
     assertWorkspaceActivityChangeAgent(updatedWorkspaceDescription.getLastUpdatedBy());
 
-    var newUser = new UserStatusInfo().userEmail("foo@gmail.com");
+    var newUser = new UserStatusInfo().userEmail("foo@gmail.com").userSubjectId("foo");
     when(mockSamService.getUserStatusInfo(any())).thenReturn(newUser);
     var secondNewDescription = "This is yet another description";
     String serializedSecondUpdateResponse =
@@ -182,7 +181,9 @@ public class WorkspaceApiControllerTest extends BaseConnectedTest {
     assertEquals(
         newUser.getUserEmail(),
         secondUpdatedWorkspaceDescription.getLastUpdatedBy().getUserEmail());
-    assertNull(secondUpdatedWorkspaceDescription.getLastUpdatedBy().getSubjectId());
+    assertEquals(
+        newUser.getUserSubjectId(),
+        secondUpdatedWorkspaceDescription.getLastUpdatedBy().getSubjectId());
   }
 
   private String getUpdateRequestInJson(

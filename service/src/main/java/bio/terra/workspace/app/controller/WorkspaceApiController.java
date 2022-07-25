@@ -203,26 +203,21 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
         .azureContext(azureContext)
         .createdDate(
             createDetailsOptional.map(ActivityLogChangeDetails::getChangedDate).orElse(null))
-        .createdBy(
-            new ApiWorkspaceActivityChangeAgent()
-                .userEmail(
-                    createDetailsOptional.map(ActivityLogChangeDetails::getUserEmail).orElse(null))
-                .subjectId(
-                    createDetailsOptional
-                        .map(ActivityLogChangeDetails::getUserSubjectId)
-                        .orElse(null)))
+        .createdBy(buildWorkspaceActivityChangeAgent(createDetailsOptional))
         .lastUpdatedDate(
             lastChangeDetailsOptional.map(ActivityLogChangeDetails::getChangedDate).orElse(null))
-        .lastUpdatedBy(
-            new ApiWorkspaceActivityChangeAgent()
-                .userEmail(
-                    lastChangeDetailsOptional
-                        .map(ActivityLogChangeDetails::getUserEmail)
-                        .orElse(null))
-                .subjectId(
-                    lastChangeDetailsOptional
-                        .map(ActivityLogChangeDetails::getUserSubjectId)
-                        .orElse(null)));
+        .lastUpdatedBy(buildWorkspaceActivityChangeAgent(lastChangeDetailsOptional));
+  }
+
+  private ApiWorkspaceActivityChangeAgent buildWorkspaceActivityChangeAgent(
+      Optional<ActivityLogChangeDetails> changeDetailsOptional) {
+    return changeDetailsOptional
+        .map(
+            activityLogChangeDetails ->
+                new ApiWorkspaceActivityChangeAgent()
+                    .userEmail(activityLogChangeDetails.getUserEmail())
+                    .subjectId(activityLogChangeDetails.getUserSubjectId()))
+        .orElse(null);
   }
 
   @Override
@@ -260,7 +255,7 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
     var userStatusInfo =
         SamRethrow.onInterrupted(
             () -> samService.getUserStatusInfo(userRequest),
-            "#updateWorkspace: get user email from SAM");
+            "#updateWorkspace: get user status from SAM");
     Workspace workspace =
         workspaceService.updateWorkspace(
             workspaceUuid,
@@ -270,7 +265,6 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
             propertyMap,
             userStatusInfo.getUserEmail(),
             userStatusInfo.getUserSubjectId());
-
     WsmIamRole highestRole = workspaceService.getHighestRole(workspaceUuid, userRequest);
     ApiWorkspaceDescription desc = buildWorkspaceDescription(workspace, highestRole);
     logger.info("Updated workspace {} for {}", desc, userRequest.getEmail());

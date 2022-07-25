@@ -16,5 +16,7 @@ databaseChangeLog:
         - column:
             name: change_agent_subject_id
             type: text
+            constraints:
+                nullable: false
             remarks: |
                 Sam subject id of the change agent.
