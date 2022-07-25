@@ -154,6 +154,14 @@ components:
       type: string
       pattern: '^[a-zA-Z0-9][-_a-zA-Z0-9]{0,1023}$'
 
+    PrivateResourceIamRoles:
+      description: >-
+        List of role(s) granted to the user of a private resource. In the current permission model
+        EDITOR includes WRITER includes READER by definition. We only grant the maximum role listed.
+      type: array
+      items:
+        $ref: '#/components/schemas/ControlledResourceIamRole'
+
     PrivateResourceUser:
       description: >-
         This text describes the target state:
@@ -162,13 +170,18 @@ components:
         users will have no direct access to the associated cloud resource. If this element
         is specified both fields are required.
       type: object
-      required: [userName, privateResourceIamRole]
+      # TODO: PF-1218 - This is disallowed for user private resources. Both the single role and role list are
+      # accepted as an interim step. Once the CLI and UI are updated, we should only accept the single role
+      # and require both fields to be present.
+      #      required: [ userName, privateResourceIamRole ]
       properties:
         userName:
           description: email of the workspace user to grant access
           type: string
         privateResourceIamRole:
           $ref: '#/components/schemas/ControlledResourceIamRole'
+        privateResourceIamRoles:
+          $ref: '#/components/schemas/PrivateResourceIamRoles'
   
     PrivateResourceState:
       description: >-

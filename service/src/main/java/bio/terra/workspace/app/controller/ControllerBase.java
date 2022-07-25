@@ -17,7 +17,10 @@ import bio.terra.workspace.service.iam.model.SamConstants;
 import bio.terra.workspace.service.resource.controlled.model.AccessScopeType;
 import bio.terra.workspace.service.resource.controlled.model.ManagedByType;
 import bio.terra.workspace.service.resource.controlled.model.PrivateUserRole;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import javax.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpStatus;
@@ -142,30 +145,43 @@ public class ControllerBase {
                       userRequest),
               "validate private user is workspace member");
 
-          // Translate the incoming role into our internal model form
+          // Translate the incoming role list into our internal model form
           // This also validates that the incoming API model values are correct.
+          List<ControlledResourceIamRole> roles;
           ApiControlledResourceIamRole apiControlledResourceIamRole =
               commonFields.getPrivateResourceUser().getPrivateResourceIamRole();
 
-          if (apiControlledResourceIamRole == null) {
-            throw new ValidationException(
-                "You must specify at least one role when you specify PrivateResourceIamRoles");
+          if (apiControlledResourceIamRole != null) {
+            roles = new ArrayList<ControlledResourceIamRole>();
+            roles.add(
+                ControlledResourceIamRole.fromApiModel(
+                    commonFields.getPrivateResourceUser().getPrivateResourceIamRole()));
+          } else {
+            // PF-1218 - Once UI & CLI are no longer sending this for application managed resources,
+            // remove this block.
+            roles =
+                commonFields.getPrivateResourceUser().getPrivateResourceIamRoles().stream()
+                    .map(ControlledResourceIamRole::fromApiModel)
+                    .collect(Collectors.toList());
+            if (roles.isEmpty()) {
+              throw new ValidationException(
+                  "You must specify at least one role when you specify PrivateResourceIamRoles");
+            }
           }
-
-          ControlledResourceIamRole role =
-              ControlledResourceIamRole.fromApiModel(apiControlledResourceIamRole);
 
           // The legal options for the assigned user of an application is READER
           // or WRITER. EDITOR is not allowed. We take the "max" of READER and WRITER.
           var maxRole = ControlledResourceIamRole.READER;
-          if (role == ControlledResourceIamRole.WRITER) {
-            if (maxRole == ControlledResourceIamRole.READER) {
-              maxRole = role;
+          for (ControlledResourceIamRole role : roles) {
+            if (role == ControlledResourceIamRole.WRITER) {
+              if (maxRole == ControlledResourceIamRole.READER) {
+                maxRole = role;
+              }
+            } else if (role != ControlledResourceIamRole.READER) {
+              throw new ValidationException(
+                  "For application private controlled resources, only READER and WRITER roles are allowed. Found "
+                      + role.toApiModel());
             }
-          } else if (role != ControlledResourceIamRole.READER) {
-            throw new ValidationException(
-                "For application private controlled resources, only READER and WRITER roles are allowed. Found "
-                    + role.toApiModel());
           }
 
           return new PrivateUserRole.Builder()
