@@ -88,13 +88,6 @@ public class WorkspaceActivityLogDaoTest extends BaseUnitTest {
     assertEquals(SUBJECT_ID, createDetailsAfterUpdate.get().getUserSubjectId());
   }
 
-  private DbWorkspaceActivityLog getDbWorkspaceActivityLog(OperationType operationType) {
-    return new DbWorkspaceActivityLog()
-        .operationType(operationType)
-        .changeAgentEmail(USER_EMAIL)
-        .changeAgentSubjectId(SUBJECT_ID);
-  }
-
   @Test
   public void getLastUpdatedDate_notUpdateOnUnknownOperationType() {
     var workspaceId = UUID.randomUUID();
@@ -193,5 +186,12 @@ public class WorkspaceActivityLogDaoTest extends BaseUnitTest {
     final var params = new MapSqlParameterSource().addValue("workspace_id", workspaceId.toString());
     var changeType = jdbcTemplate.queryForObject(sql, params, String.class);
     return changeType;
+  }
+
+  private DbWorkspaceActivityLog getDbWorkspaceActivityLog(OperationType operationType) {
+    return new DbWorkspaceActivityLog()
+        .operationType(operationType)
+        .changeAgentEmail(USER_EMAIL)
+        .changeAgentSubjectId(SUBJECT_ID);
   }
 }

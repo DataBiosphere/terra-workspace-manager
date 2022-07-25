@@ -126,23 +126,20 @@ public class SamService {
    */
   public String getUserEmailFromSam(AuthenticatedUserRequest userRequest)
       throws InterruptedException {
-    UsersApi usersApi = samUsersApi(userRequest.getRequiredToken());
-    try {
-      return SamRetry.retry(() -> usersApi.getUserStatusInfo().getUserEmail());
-    } catch (ApiException apiException) {
-      throw SamExceptionFactory.create("Error getting user email from Sam", apiException);
-    }
+    return getUserStatusInfo(userRequest).getUserEmail();
   }
 
+  /** Fetch the user status info associated with the user credentials directly from Sam. */
   public UserStatusInfo getUserStatusInfo(AuthenticatedUserRequest userRequest)
       throws InterruptedException {
     UsersApi usersApi = samUsersApi(userRequest.getRequiredToken());
     try {
-      return SamRetry.retry(() -> usersApi.getUserStatusInfo());
+      return SamRetry.retry(usersApi::getUserStatusInfo);
     } catch (ApiException apiException) {
-      throw SamExceptionFactory.create("Error getting user email from Sam", apiException);
+      throw SamExceptionFactory.create("Error getting user status info from Sam", apiException);
     }
   }
+
   /**
    * Gets proxy group email.
    *

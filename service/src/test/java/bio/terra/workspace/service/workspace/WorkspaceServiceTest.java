@@ -613,11 +613,17 @@ class WorkspaceServiceTest extends BaseConnectedTest {
 
     List<String> propertyKeys = new ArrayList<>(Arrays.asList("foo", "foo1"));
 
-    workspaceService.deleteWorkspaceProperties(workspaceUuid, propertyKeys, USER_REQUEST.getEmail(), USER_REQUEST.getSubjectId());
+    workspaceService.deleteWorkspaceProperties(
+        workspaceUuid, propertyKeys, USER_REQUEST.getEmail(), USER_REQUEST.getSubjectId());
     Workspace deletedWorkspace = workspaceService.getWorkspace(workspaceUuid);
 
-    var updateDetailsAfterWorkspaceUpdate = workspaceActivityLogDao.getLastUpdateDetails(workspaceUuid);
-    assertTrue(lastUpdateDetails.get().getChangedDate().isBefore(updateDetailsAfterWorkspaceUpdate.get().getChangedDate()));
+    var updateDetailsAfterWorkspaceUpdate =
+        workspaceActivityLogDao.getLastUpdateDetails(workspaceUuid);
+    assertTrue(
+        lastUpdateDetails
+            .get()
+            .getChangedDate()
+            .isBefore(updateDetailsAfterWorkspaceUpdate.get().getChangedDate()));
     Map<String, String> expectedPropertyMap = Map.of("xyzzy", "plohg");
     assertEquals(
         expectedPropertyMap,

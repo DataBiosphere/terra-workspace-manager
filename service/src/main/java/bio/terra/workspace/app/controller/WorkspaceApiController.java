@@ -320,12 +320,13 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
         SamRethrow.onInterrupted(
             () -> samService.getUserStatusInfo(getAuthenticatedInfo()),
             "#deleteWorkspaceProperties: get user status info from SAM");
-    workspaceService.deleteWorkspaceProperties(workspaceUuid, propertyKeys,
-        userStatusInfo.getUserEmail(), userStatusInfo.getUserSubjectId());
-    logger.info(
-        "Deleted the properties with the key {} in workspace {}",
+    workspaceService.deleteWorkspaceProperties(
+        workspaceUuid,
         propertyKeys,
-        workspaceUuid);
+        userStatusInfo.getUserEmail(),
+        userStatusInfo.getUserSubjectId());
+    logger.info(
+        "Deleted the properties with the key {} in workspace {}", propertyKeys, workspaceUuid);
 
     return new ResponseEntity<>(HttpStatus.NO_CONTENT);
   }

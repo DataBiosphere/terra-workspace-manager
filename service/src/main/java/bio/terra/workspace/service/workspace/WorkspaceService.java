@@ -266,11 +266,7 @@ public class WorkspaceService {
       String subjectId) {
     if (workspaceDao.updateWorkspace(workspaceUuid, userFacingId, name, description, properties)) {
       workspaceActivityLogDao.writeActivity(
-          workspaceUuid,
-          new DbWorkspaceActivityLog()
-              .operationType(OperationType.UPDATE)
-              .changeAgentEmail(userEmail)
-              .changeAgentSubjectId(subjectId));
+          workspaceUuid, getDbWorkspaceActivityLog(OperationType.UPDATE, userEmail, subjectId));
     }
     return workspaceDao.getWorkspace(workspaceUuid);
   }
@@ -300,13 +296,19 @@ public class WorkspaceService {
    * @param userEmail user email fetched from SAM based on the {@link AuthenticatedUserRequest}
    * @param subjectId subject id fetched from SAM based on the {@link AuthenticatedUserRequest}
    */
-  public void deleteWorkspaceProperties(UUID workspaceUuid, List<String> propertyKeys,
-      String userEmail, String subjectId) {
+  public void deleteWorkspaceProperties(
+      UUID workspaceUuid, List<String> propertyKeys, String userEmail, String subjectId) {
     workspaceDao.deleteWorkspaceProperties(workspaceUuid, propertyKeys);
     workspaceActivityLogDao.writeActivity(
-        workspaceUuid, new DbWorkspaceActivityLog().operationType(OperationType.UPDATE)
-            .changeAgentEmail(userEmail)
-            .changeAgentSubjectId(subjectId));
+        workspaceUuid, getDbWorkspaceActivityLog(OperationType.DELETE, userEmail, subjectId));
+  }
+
+  private DbWorkspaceActivityLog getDbWorkspaceActivityLog(
+      OperationType operationType, String userEmail, String subjectId) {
+    return new DbWorkspaceActivityLog()
+        .operationType(operationType)
+        .changeAgentEmail(userEmail)
+        .changeAgentSubjectId(subjectId);
   }
 
   /**

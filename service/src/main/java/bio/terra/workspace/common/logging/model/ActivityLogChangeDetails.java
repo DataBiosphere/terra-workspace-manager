@@ -7,8 +7,8 @@ import java.util.function.Supplier;
 import javax.annotation.Nullable;
 
 /**
- * This class hold the change details of an activity log. Currently, it contains the who and when of
- * an activity log change.
+ * This class holds the change details of an activity log. Currently, it contains the `who` and
+ * `when` of an activity log change.
  */
 public class ActivityLogChangeDetails {
 
