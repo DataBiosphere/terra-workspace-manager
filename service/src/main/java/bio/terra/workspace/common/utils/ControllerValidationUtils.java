@@ -8,6 +8,8 @@ import bio.terra.workspace.service.workspace.exceptions.CloudPlatformNotImplemen
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Pattern;
+import javax.annotation.Nullable;
+import org.apache.commons.validator.routines.InetAddressValidator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -114,5 +116,25 @@ public final class ControllerValidationUtils {
     return ControlledResourceCategory.get(
             commonFields.getAccessScope(), commonFields.getManagedBy())
         .getSamCreateResourceAction();
+  }
+
+  /**
+   * Validate the format of an ipAddress or range of addresses for Azure SAS tokens. We can't do
+   * this directly in the generated spring code yet, because the swagger codegen plugin doesn't
+   * support the use of oneOf in schema generation.
+   *
+   * @param ipRange a single ip address, or a range of ip addresses separated by a dash ('-')
+   */
+  public static void validateIpAddressRange(@Nullable String ipRange) {
+    if (ipRange == null) {
+      return;
+    }
+    var addresses = ipRange.split("-");
+    var validator = InetAddressValidator.getInstance();
+    for (var address : addresses) {
+      if (!validator.isValid(address)) {
+        throw new ValidationException("Invalid ip address or ip address range: " + ipRange);
+      }
+    }
   }
 }

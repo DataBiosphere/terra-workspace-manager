@@ -15,6 +15,7 @@ import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -266,6 +267,36 @@ public class WorkspaceDao {
         (updated ? "Updated" : "No Update - did not find"),
         workspaceUuid);
     return updated;
+  }
+
+  @WriteTransaction
+  public void deleteWorkspaceProperties(UUID workspaceUuid, List<String> propertyKeys) {
+    // get current property in this workspace id
+    String selectPropertiesSql = "SELECT properties FROM workspace WHERE workspace_id = :id";
+    MapSqlParameterSource propertiesParams =
+        new MapSqlParameterSource().addValue("id", workspaceUuid.toString());
+    String result;
+
+    try {
+      result = jdbcTemplate.queryForObject(selectPropertiesSql, propertiesParams, String.class);
+      logger.info("retrieved workspace properties {}", result);
+    } catch (EmptyResultDataAccessException e) {
+      throw new WorkspaceNotFoundException(String.format("Workspace %s not found.", workspaceUuid));
+    }
+    Map<String, String> properties =
+        result == null ? new HashMap<>() : DbSerDes.jsonToProperties(result);
+    for (String key : propertyKeys) {
+      properties.remove(key);
+    }
+    final String sql =
+        "UPDATE workspace SET properties = cast(:properties AS jsonb) WHERE workspace_id = :id";
+
+    var params = new MapSqlParameterSource();
+    params
+        .addValue("properties", DbSerDes.propertiesToJson(properties))
+        .addValue("id", workspaceUuid.toString());
+
+    jdbcTemplate.update(sql, params);
   }
 
   /**

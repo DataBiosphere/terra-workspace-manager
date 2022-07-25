@@ -18,6 +18,8 @@ import bio.terra.workspace.common.fixtures.WorkspaceFixtures;
 import bio.terra.workspace.generated.model.ApiCloneWorkspaceRequest;
 import bio.terra.workspace.generated.model.ApiCloneWorkspaceResult;
 import bio.terra.workspace.generated.model.ApiCreatedWorkspace;
+import bio.terra.workspace.generated.model.ApiProperties;
+import bio.terra.workspace.generated.model.ApiProperty;
 import bio.terra.workspace.generated.model.ApiUpdateWorkspaceRequestBody;
 import bio.terra.workspace.generated.model.ApiWorkspaceActivityChangeAgent;
 import bio.terra.workspace.generated.model.ApiWorkspaceDescription;
@@ -29,7 +31,10 @@ import bio.terra.workspace.service.iam.model.WsmIamRole;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.time.OffsetDateTime;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import org.apache.http.HttpStatus;
@@ -191,6 +196,29 @@ public class WorkspaceApiControllerTest extends BaseConnectedTest {
     return objectMapper.writeValueAsString(requestBody);
   }
 
+  @Test
+  public void deleteWorkspaceProperties() throws Exception {
+    UUID workspaceId = createDefaultWorkspace().getId();
+    ApiWorkspaceDescription sourceWorkspace = getWorkspaceDescription(workspaceId);
+    ArrayList propertyUpdate = new ArrayList<>(Arrays.asList("foo", "foo1"));
+
+    mockMvc
+        .perform(
+            addAuth(
+                patch(String.format(UPDATE_WORKSPACES_V1_PROPERTIES_PATH_FORMAT, workspaceId))
+                    .contentType(MediaType.APPLICATION_JSON_VALUE)
+                    .accept(MediaType.APPLICATION_JSON)
+                    .characterEncoding("UTF-8")
+                    .content(objectMapper.writeValueAsString(propertyUpdate)),
+                USER_REQUEST))
+        .andExpect(status().is(HttpStatus.SC_NO_CONTENT))
+        .andReturn()
+        .getResponse()
+        .getContentAsString();
+
+    assertEquals(sourceWorkspace.getProperties(), buildProperties(Map.of("xyzzy", "plohg")));
+  }
+
   private ApiCreatedWorkspace createDefaultWorkspace() throws Exception {
     var createRequest = WorkspaceFixtures.createWorkspaceRequestBody();
     String serializedResponse =
@@ -257,5 +285,18 @@ public class WorkspaceApiControllerTest extends BaseConnectedTest {
   private void assertWorkspaceActivityChangeAgent(ApiWorkspaceActivityChangeAgent changeAgent) {
     assertEquals(USER_REQUEST.getEmail(), changeAgent.getUserEmail());
     assertEquals(USER_REQUEST.getSubjectId(), changeAgent.getSubjectId());
+  }
+
+  public ApiProperties buildProperties(Map<String, String> propertyMap) {
+    ApiProperties properties = new ApiProperties();
+    ApiProperty property = new ApiProperty();
+
+    for (Map.Entry<String, String> entry : propertyMap.entrySet()) {
+      property.setKey(entry.getKey());
+      property.setValue(entry.getValue());
+      properties.add(property);
+    }
+
+    return properties;
   }
 }

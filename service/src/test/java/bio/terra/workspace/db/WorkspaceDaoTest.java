@@ -24,6 +24,8 @@ import bio.terra.workspace.service.workspace.model.WorkspaceStage;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -222,6 +224,29 @@ class WorkspaceDaoTest extends BaseUnitTest {
     workspaceDao.createWorkspace(workspace);
 
     assertThrows(DuplicateWorkspaceException.class, () -> workspaceDao.createWorkspace(workspace));
+  }
+
+  @Test
+  void deleteWorkspaceProperties() {
+    Map<String, String> propertyGenerate = Map.of("foo", "bar", "xyz", "pqn");
+
+    Workspace initalWorkspace =
+        Workspace.builder()
+            .workspaceId(workspaceUuid)
+            .userFacingId("a" + workspaceUuid)
+            .workspaceStage(WorkspaceStage.RAWLS_WORKSPACE)
+            .properties(propertyGenerate)
+            .build();
+    workspaceDao.createWorkspace(initalWorkspace);
+
+    List<String> propertyUpdate = new ArrayList<>(Arrays.asList("foo", "foo1"));
+    workspaceDao.deleteWorkspaceProperties(workspaceUuid, propertyUpdate);
+
+    Map<String, String> updatedProperty = Map.of("xyz", "pqn");
+
+    assertEquals(updatedProperty, workspaceDao.getWorkspace(workspaceUuid).getProperties());
+
+    assertTrue(workspaceDao.deleteWorkspace(workspaceUuid));
   }
 
   @Nested

@@ -4,6 +4,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.equalTo;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -12,10 +13,15 @@ import bio.terra.testrunner.runner.config.TestUserSpecification;
 import bio.terra.workspace.api.WorkspaceApi;
 import bio.terra.workspace.client.ApiException;
 import bio.terra.workspace.model.CreateWorkspaceRequestBody;
+import bio.terra.workspace.model.Properties;
+import bio.terra.workspace.model.Property;
 import bio.terra.workspace.model.UpdateWorkspaceRequestBody;
 import bio.terra.workspace.model.WorkspaceActivityChangeAgent;
 import bio.terra.workspace.model.WorkspaceDescription;
 import bio.terra.workspace.model.WorkspaceStageModel;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import scripts.utils.ClientTestUtils;
 import scripts.utils.WorkspaceApiTestScriptBase;
@@ -41,11 +47,13 @@ public class WorkspaceLifecycle extends WorkspaceApiTestScriptBase {
     String validUserFacingId2 = "user-facing-id-2-" + uuidStr;
 
     // Create workspace
+    Properties propertyMap = buildProperties(Map.of("foo", "bar", "xyzzy", "plohg"));
     CreateWorkspaceRequestBody createBody =
         new CreateWorkspaceRequestBody()
             .id(workspaceUuid)
             .userFacingId(invalidUserFacingId)
-            .stage(WorkspaceStageModel.MC_WORKSPACE);
+            .stage(WorkspaceStageModel.MC_WORKSPACE)
+            .properties(propertyMap);
 
     ApiException ex =
         assertThrows(ApiException.class, () -> workspaceApi.createWorkspace(createBody));
@@ -101,7 +109,27 @@ public class WorkspaceLifecycle extends WorkspaceApiTestScriptBase {
     assertNotNull(updatedDescription.getLastUpdatedDate());
     assertTrue(firstLastUpdatedDate.isBefore(updatedDescription.getLastUpdatedDate()));
 
+    List<String> propertykey = new ArrayList<>();
+    propertykey.add("xyzzy");
+    workspaceApi.deleteWorkspaceProperties(propertykey, workspaceUuid);
+    Properties updatedWorkspaceDescription =
+        workspaceApi.getWorkspace(workspaceUuid).getProperties();
+    assertFalse(updatedWorkspaceDescription.contains(buildProperties(Map.of("xyzzy", "plohg"))));
+
     workspaceApi.deleteWorkspace(workspaceUuid);
     ClientTestUtils.assertHttpSuccess(workspaceApi, "DELETE workspace");
+  }
+
+  public Properties buildProperties(Map<String, String> propertyMap) {
+    Properties properties = new Properties();
+    Property property = new Property();
+
+    for (Map.Entry<String, String> entry : propertyMap.entrySet()) {
+      property.setKey(entry.getKey());
+      property.setValue(entry.getValue());
+      properties.add(property);
+    }
+
+    return properties;
   }
 }

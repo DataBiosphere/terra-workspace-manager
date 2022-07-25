@@ -307,6 +307,25 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
   }
 
   @Override
+  public ResponseEntity<Void> deleteWorkspaceProperties(
+      @PathVariable("workspaceId") UUID workspaceUuid, @RequestBody List<String> propertyKeys) {
+    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    workspaceService.validateWorkspaceAndAction(
+        userRequest, workspaceUuid, SamConstants.SamWorkspaceAction.DELETE);
+    logger.info(
+        "Deleting the properties with the key {} in workspace {}",
+        propertyKeys.toString(),
+        workspaceUuid);
+    workspaceService.deleteWorkspaceProperties(workspaceUuid, propertyKeys);
+    logger.info(
+        "Deleted the properties with the key {} in workspace {}",
+        propertyKeys.toString(),
+        workspaceUuid);
+
+    return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+  }
+
+  @Override
   public ResponseEntity<Void> grantRole(
       @PathVariable("workspaceId") UUID uuid,
       @PathVariable("role") ApiIamRole role,
