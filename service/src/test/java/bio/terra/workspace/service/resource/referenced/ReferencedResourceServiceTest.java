@@ -135,7 +135,12 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
     assertTrue(lastUpdatedDateBeforeResourceUpdate.isPresent());
 
     referenceResourceService.updateReferenceResource(
-        workspaceUuid, referencedResource.getResourceId(), null, null, updatedResource, null,
+        workspaceUuid,
+        referencedResource.getResourceId(),
+        null,
+        null,
+        updatedResource,
+        null,
         USER_REQUEST);
 
     ReferencedDataRepoSnapshotResource result =
@@ -176,7 +181,12 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
             .build();
 
     referenceResourceService.updateReferenceResource(
-        workspaceUuid, referencedResource.getResourceId(), null, null, updatedResource, null,
+        workspaceUuid,
+        referencedResource.getResourceId(),
+        null,
+        null,
+        updatedResource,
+        null,
         USER_REQUEST);
 
     ReferencedDataRepoSnapshotResource result =
@@ -218,8 +228,7 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
     var lastUpdatedDateBeforeResourceUpdate =
         workspaceActivityLogDao.getLastUpdatedDate(workspaceUuid);
     referenceResourceService.updateReferenceResource(
-        workspaceUuid, referencedResource.getResourceId(), null, updatedDescription,
-        USER_REQUEST);
+        workspaceUuid, referencedResource.getResourceId(), null, updatedDescription, USER_REQUEST);
     referencedResource =
         referenceResourceService.getReferenceResource(
             workspaceUuid, referencedResource.getResourceId());
@@ -233,7 +242,10 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
     String updatedName2 = "2" + updatedName;
     String updatedDescription2 = "2" + updatedDescription;
     referenceResourceService.updateReferenceResource(
-        workspaceUuid, referencedResource.getResourceId(), updatedName2, updatedDescription2,
+        workspaceUuid,
+        referencedResource.getResourceId(),
+        updatedName2,
+        updatedDescription2,
         USER_REQUEST);
     referencedResource =
         referenceResourceService.getReferenceResource(
@@ -247,7 +259,10 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
         InvalidNameException.class,
         () ->
             referenceResourceService.updateReferenceResource(
-                workspaceUuid, referencedResource.getResourceId(), invalidName, null,
+                workspaceUuid,
+                referencedResource.getResourceId(),
+                invalidName,
+                null,
                 USER_REQUEST));
     // Update to invalid description
   }
@@ -501,8 +516,11 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
       } finally {
         for (var resource : resources) {
           referenceResourceService.deleteReferenceResourceForResourceType(
-              workspaceUuid, resource.getResourceId(), resource.getResourceType(),
-              USER_REQUEST.getEmail(),USER_REQUEST.getSubjectId());
+              workspaceUuid,
+              resource.getResourceId(),
+              resource.getResourceType(),
+              USER_REQUEST.getEmail(),
+              USER_REQUEST.getSubjectId());
         }
       }
     }
@@ -572,7 +590,8 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
           workspaceUuid,
           referencedResource.getResourceId(),
           WsmResourceType.REFERENCED_GCP_GCS_OBJECT,
-          USER_REQUEST.getEmail(), USER_REQUEST.getSubjectId());
+          USER_REQUEST.getEmail(),
+          USER_REQUEST.getSubjectId());
       var updatedDateAfterDelete = workspaceActivityLogDao.getLastUpdatedDate(workspaceUuid);
       assertTrue(updatedDateAfterCreate.get().isBefore(updatedDateAfterDelete.get()));
     }

@@ -205,14 +205,12 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
         .createdBy(
             new ApiWorkspaceActivityChangeAgent()
                 .userEmail(createdBy.map(UserStatusInfo::getUserEmail).orElse(null))
-                .subjectId(createdBy.map(UserStatusInfo::getUserSubjectId).orElse(null))
-        )
+                .subjectId(createdBy.map(UserStatusInfo::getUserSubjectId).orElse(null)))
         .lastUpdatedDate(workspaceActivityLogDao.getLastUpdatedDate(workspaceUuid).orElse(null))
         .lastUpdatedBy(
             new ApiWorkspaceActivityChangeAgent()
                 .userEmail(lastUpdatedBy.map(UserStatusInfo::getUserEmail).orElse(null))
-                .subjectId(lastUpdatedBy.map(UserStatusInfo::getUserSubjectId).orElse(null))
-        );
+                .subjectId(lastUpdatedBy.map(UserStatusInfo::getUserSubjectId).orElse(null)));
   }
 
   @Override
@@ -247,10 +245,10 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
     }
     workspaceService.validateWorkspaceAndAction(
         userRequest, workspaceUuid, SamConstants.SamWorkspaceAction.WRITE);
-    var userStatusInfo = SamRethrow.onInterrupted(
-        () -> samService.getUserStatusInfo(userRequest),
-        "#updateWorkspace: get user email from SAM"
-    );
+    var userStatusInfo =
+        SamRethrow.onInterrupted(
+            () -> samService.getUserStatusInfo(userRequest),
+            "#updateWorkspace: get user email from SAM");
     Workspace workspace =
         workspaceService.updateWorkspace(
             workspaceUuid,
@@ -315,10 +313,12 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
     String userEmail =
         SamRethrow.onInterrupted(
             () -> samService.getUserEmailFromSam(getAuthenticatedInfo()),
-            "#grantRole: get user email from SAM"
-        );
+            "#grantRole: get user email from SAM");
     workspaceActivityLogDao.writeActivity(
-        uuid, new DbWorkspaceActivityLog().operationType(OperationType.GRANT_WORKSPACE_ROLE).changeAgentEmail(userEmail));
+        uuid,
+        new DbWorkspaceActivityLog()
+            .operationType(OperationType.GRANT_WORKSPACE_ROLE)
+            .changeAgentEmail(userEmail));
     return new ResponseEntity<>(HttpStatus.NO_CONTENT);
   }
 

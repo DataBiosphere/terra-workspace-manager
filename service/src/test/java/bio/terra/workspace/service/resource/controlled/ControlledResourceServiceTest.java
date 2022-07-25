@@ -455,7 +455,11 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
     jobService.setFlightDebugInfoForTest(
         FlightDebugInfo.newBuilder().doStepFailures(retrySteps).build());
     controlledResourceService.updateAiNotebookInstance(
-        fetchedInstance, AI_NOTEBOOK_UPDATE_PARAMETERS, newName, newDescription, user.getAuthenticatedRequest());
+        fetchedInstance,
+        AI_NOTEBOOK_UPDATE_PARAMETERS,
+        newName,
+        newDescription,
+        user.getAuthenticatedRequest());
 
     ControlledAiNotebookInstanceResource updatedInstance =
         controlledResourceService
@@ -598,7 +602,11 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
         InvalidResultStateException.class,
         () ->
             controlledResourceService.updateAiNotebookInstance(
-                fetchedInstance, AI_NOTEBOOK_UPDATE_PARAMETERS, newName, newDescription, user.getAuthenticatedRequest()));
+                fetchedInstance,
+                AI_NOTEBOOK_UPDATE_PARAMETERS,
+                newName,
+                newDescription,
+                user.getAuthenticatedRequest()));
 
     ControlledAiNotebookInstanceResource updatedInstance =
         controlledResourceService

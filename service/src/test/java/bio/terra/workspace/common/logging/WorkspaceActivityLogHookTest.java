@@ -53,14 +53,16 @@ public class WorkspaceActivityLogHookTest extends BaseUnitTest {
   void createFlightSucceeds_activityLogUpdated() throws InterruptedException {
     var workspaceUuid = UUID.randomUUID();
     var userEmail = "foo@gmail.com";
-    Mockito.when(mockSamService.getUserStatusInfo(Mockito.any())).thenReturn(new UserStatusInfo().userEmail(userEmail));
+    Mockito.when(mockSamService.getUserStatusInfo(Mockito.any()))
+        .thenReturn(new UserStatusInfo().userEmail(userEmail));
     var emptyChangedDate = activityLogDao.getLastUpdatedDate(workspaceUuid);
     assertTrue(emptyChangedDate.isEmpty());
 
     FlightMap inputParams = new FlightMap();
     inputParams.put(WorkspaceFlightMapKeys.OPERATION_TYPE, OperationType.CREATE);
     inputParams.put(WorkspaceFlightMapKeys.WORKSPACE_ID, workspaceUuid.toString());
-    inputParams.put(JobMapKeys.AUTH_USER_INFO.getKeyName(), new AuthenticatedUserRequest().email(userEmail));
+    inputParams.put(
+        JobMapKeys.AUTH_USER_INFO.getKeyName(), new AuthenticatedUserRequest().email(userEmail));
     hook.endFlight(
         new FakeFlightContext(
             WorkspaceCreateFlight.class.getName(), inputParams, FlightStatus.SUCCESS));

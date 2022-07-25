@@ -25,7 +25,6 @@ import io.opencensus.contrib.spring.aop.Traced;
 import java.util.List;
 import java.util.UUID;
 import javax.annotation.Nullable;
-import org.broadinstitute.dsde.workbench.client.sam.model.UserStatusInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -107,7 +106,10 @@ public class ReferencedResourceService {
    * @param description description to change - may be null
    */
   public void updateReferenceResource(
-      UUID workspaceUuid, UUID resourceId, @Nullable String name, @Nullable String description,
+      UUID workspaceUuid,
+      UUID resourceId,
+      @Nullable String name,
+      @Nullable String description,
       AuthenticatedUserRequest userRequest) {
     updateReferenceResource(
         workspaceUuid,
@@ -167,13 +169,14 @@ public class ReferencedResourceService {
           resourceDao.updateResource(
               workspaceUuid, resourceId, name, description, cloningInstructions);
       if (updated) {
-        var userStatusInfo = SamRethrow.onInterrupted(
-            () -> samService.getUserStatusInfo(userRequest),
-            "Get user email from Sam"
-        );
+        var userStatusInfo =
+            SamRethrow.onInterrupted(
+                () -> samService.getUserStatusInfo(userRequest), "Get user email from Sam");
         workspaceActivityLogDao.writeActivity(
             workspaceUuid,
-            getDbWorkspaceActivityLog(OperationType.UPDATE, userStatusInfo.getUserEmail(),
+            getDbWorkspaceActivityLog(
+                OperationType.UPDATE,
+                userStatusInfo.getUserEmail(),
                 userStatusInfo.getUserSubjectId()));
       }
     }
@@ -191,8 +194,11 @@ public class ReferencedResourceService {
    * @param resourceType wsm resource type that the to-be-deleted resource should have
    */
   public void deleteReferenceResourceForResourceType(
-      UUID workspaceUuid, UUID resourceId, WsmResourceType resourceType,
-      String userEmail, String subjectId) {
+      UUID workspaceUuid,
+      UUID resourceId,
+      WsmResourceType resourceType,
+      String userEmail,
+      String subjectId) {
     if (resourceDao.deleteResourceForResourceType(workspaceUuid, resourceId, resourceType)) {
       workspaceActivityLogDao.writeActivity(
           workspaceUuid, getDbWorkspaceActivityLog(OperationType.DELETE, userEmail, subjectId));
@@ -238,9 +244,11 @@ public class ReferencedResourceService {
     return createReferenceResource(destinationResource);
   }
 
-  private DbWorkspaceActivityLog getDbWorkspaceActivityLog(OperationType update,
-      String userEmail, String subjectId) {
-    return new DbWorkspaceActivityLog().operationType(update).changeAgentEmail(userEmail)
+  private DbWorkspaceActivityLog getDbWorkspaceActivityLog(
+      OperationType update, String userEmail, String subjectId) {
+    return new DbWorkspaceActivityLog()
+        .operationType(update)
+        .changeAgentEmail(userEmail)
         .changeAgentSubjectId(subjectId);
   }
 }

@@ -198,12 +198,13 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
         userRequest, workspaceUuid, SamWorkspaceAction.DELETE_REFERENCE);
     var userStatusInfo =
         SamRethrow.onInterrupted(
-            () -> samService.getUserStatusInfo(userRequest),
-            "get user status info from SAM"
-        );
+            () -> samService.getUserStatusInfo(userRequest), "get user status info from SAM");
     referenceResourceService.deleteReferenceResourceForResourceType(
-        workspaceUuid, resourceId, WsmResourceType.REFERENCED_GCP_GCS_OBJECT,
-        userStatusInfo.getUserEmail(), userRequest.getSubjectId());
+        workspaceUuid,
+        resourceId,
+        WsmResourceType.REFERENCED_GCP_GCS_OBJECT,
+        userStatusInfo.getUserEmail(),
+        userRequest.getSubjectId());
     return new ResponseEntity<>(HttpStatus.NO_CONTENT);
   }
 
@@ -302,11 +303,12 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
         userRequest, workspaceUuid, SamWorkspaceAction.DELETE_REFERENCE);
     var userStatusInfo =
         SamRethrow.onInterrupted(
-            () -> samService.getUserStatusInfo(userRequest),
-            "get user status info from SAM"
-        );
+            () -> samService.getUserStatusInfo(userRequest), "get user status info from SAM");
     referenceResourceService.deleteReferenceResourceForResourceType(
-        workspaceUuid, resourceId, WsmResourceType.REFERENCED_GCP_GCS_BUCKET, userStatusInfo.getUserEmail(),
+        workspaceUuid,
+        resourceId,
+        WsmResourceType.REFERENCED_GCP_GCS_BUCKET,
+        userStatusInfo.getUserEmail(),
         userRequest.getSubjectId());
     return new ResponseEntity<>(HttpStatus.NO_CONTENT);
   }
@@ -419,12 +421,13 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
         userRequest, workspaceUuid, SamWorkspaceAction.DELETE_REFERENCE);
     var userStatusInfo =
         SamRethrow.onInterrupted(
-            () -> samService.getUserStatusInfo(userRequest),
-            "get user status info from Sam"
-        );
+            () -> samService.getUserStatusInfo(userRequest), "get user status info from Sam");
     referenceResourceService.deleteReferenceResourceForResourceType(
-        workspaceUuid, resourceId, WsmResourceType.REFERENCED_GCP_BIG_QUERY_DATA_TABLE,
-        userStatusInfo.getUserEmail(), userRequest.getSubjectId());
+        workspaceUuid,
+        resourceId,
+        WsmResourceType.REFERENCED_GCP_BIG_QUERY_DATA_TABLE,
+        userStatusInfo.getUserEmail(),
+        userRequest.getSubjectId());
     return new ResponseEntity<>(HttpStatus.NO_CONTENT);
   }
 
@@ -533,12 +536,13 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
         userRequest, workspaceUuid, SamWorkspaceAction.DELETE_REFERENCE);
     var userStatusInfo =
         SamRethrow.onInterrupted(
-            () -> samService.getUserStatusInfo(userRequest),
-            "get user status info from SAM"
-        );
+            () -> samService.getUserStatusInfo(userRequest), "get user status info from SAM");
     referenceResourceService.deleteReferenceResourceForResourceType(
-        workspaceUuid, resourceId, WsmResourceType.REFERENCED_GCP_BIG_QUERY_DATASET,
-        userStatusInfo.getUserEmail(), userRequest.getSubjectId());
+        workspaceUuid,
+        resourceId,
+        WsmResourceType.REFERENCED_GCP_BIG_QUERY_DATASET,
+        userStatusInfo.getUserEmail(),
+        userRequest.getSubjectId());
     return new ResponseEntity<>(HttpStatus.NO_CONTENT);
   }
 
@@ -642,13 +646,13 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
         userRequest, workspaceUuid, SamWorkspaceAction.DELETE_REFERENCE);
     var userStatusInfo =
         SamRethrow.onInterrupted(
-            () ->
-                samService.getUserStatusInfo(userRequest),
-            "get user status info from SAM"
-        );
+            () -> samService.getUserStatusInfo(userRequest), "get user status info from SAM");
     referenceResourceService.deleteReferenceResourceForResourceType(
-        workspaceUuid, resourceId, WsmResourceType.REFERENCED_ANY_DATA_REPO_SNAPSHOT,
-        userStatusInfo.getUserEmail(), userRequest.getSubjectId());
+        workspaceUuid,
+        resourceId,
+        WsmResourceType.REFERENCED_ANY_DATA_REPO_SNAPSHOT,
+        userStatusInfo.getUserEmail(),
+        userRequest.getSubjectId());
     return new ResponseEntity<>(HttpStatus.NO_CONTENT);
   }
 
@@ -986,13 +990,15 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     workspaceService.validateWorkspaceAndAction(
         userRequest, workspaceUuid, SamWorkspaceAction.DELETE_REFERENCE);
-    var userStatusInfo = SamRethrow.onInterrupted(
-        () -> samService.getUserStatusInfo(userRequest),
-        "get user status info from SAM"
-    );
+    var userStatusInfo =
+        SamRethrow.onInterrupted(
+            () -> samService.getUserStatusInfo(userRequest), "get user status info from SAM");
     referenceResourceService.deleteReferenceResourceForResourceType(
-        workspaceUuid, resourceId, WsmResourceType.REFERENCED_ANY_GIT_REPO,
-        userStatusInfo.getUserEmail(), userRequest.getSubjectId());
+        workspaceUuid,
+        resourceId,
+        WsmResourceType.REFERENCED_ANY_GIT_REPO,
+        userStatusInfo.getUserEmail(),
+        userRequest.getSubjectId());
     return new ResponseEntity<>(HttpStatus.OK);
   }
 
@@ -1106,12 +1112,13 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
         userRequest, workspaceUuid, SamWorkspaceAction.DELETE_REFERENCE);
     var userStatusInfo =
         SamRethrow.onInterrupted(
-            () -> samService.getUserStatusInfo(userRequest),
-            "get user status info from SAM"
-        );
+            () -> samService.getUserStatusInfo(userRequest), "get user status info from SAM");
     referenceResourceService.deleteReferenceResourceForResourceType(
-        workspaceUuid, resourceId, WsmResourceType.REFERENCED_ANY_TERRA_WORKSPACE,
-        userStatusInfo.getUserEmail(), userRequest.getSubjectId());
+        workspaceUuid,
+        resourceId,
+        WsmResourceType.REFERENCED_ANY_TERRA_WORKSPACE,
+        userStatusInfo.getUserEmail(),
+        userRequest.getSubjectId());
     return new ResponseEntity<>(HttpStatus.OK);
   }
 }

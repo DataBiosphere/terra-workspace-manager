@@ -40,7 +40,9 @@ public class WorkspaceActivityLogHook implements StairwayHook {
 
   @Autowired
   public WorkspaceActivityLogHook(
-      WorkspaceActivityLogDao activityLogDao, WorkspaceDao workspaceDao, ResourceDao resourceDao,
+      WorkspaceActivityLogDao activityLogDao,
+      WorkspaceDao workspaceDao,
+      ResourceDao resourceDao,
       SamService samService) {
     this.activityLogDao = activityLogDao;
     this.workspaceDao = workspaceDao;
@@ -68,9 +70,10 @@ public class WorkspaceActivityLogHook implements StairwayHook {
     }
 
     var userRequest =
-        checkNotNull(context
-            .getInputParameters()
-            .get(JobMapKeys.AUTH_USER_INFO.getKeyName(), AuthenticatedUserRequest.class));
+        checkNotNull(
+            context
+                .getInputParameters()
+                .get(JobMapKeys.AUTH_USER_INFO.getKeyName(), AuthenticatedUserRequest.class));
     var userStatusInfo = samService.getUserStatusInfo(userRequest);
     var userEmail = userStatusInfo.getUserEmail();
     var subjectId = userStatusInfo.getUserSubjectId();
@@ -79,8 +82,7 @@ public class WorkspaceActivityLogHook implements StairwayHook {
     UUID workspaceUuid = UUID.fromString(workspaceId);
     if (context.getFlightStatus() == FlightStatus.SUCCESS) {
       activityLogDao.writeActivity(
-          workspaceUuid, getDbWorkspaceActivityLog(operationType, userEmail,
-              subjectId));
+          workspaceUuid, getDbWorkspaceActivityLog(operationType, userEmail, subjectId));
       return HookAction.CONTINUE;
     }
     if (operationType != OperationType.DELETE) {
@@ -94,7 +96,8 @@ public class WorkspaceActivityLogHook implements StairwayHook {
           CloudPlatform.AZURE, workspaceUuid, userEmail, subjectId);
       case GCP_CLOUD_CONTEXT -> maybeLogCloudContextDeletionFlight(
           CloudPlatform.GCP, workspaceUuid, userEmail, subjectId);
-      case RESOURCE -> maybeLogControlledResourceDeletion(context, workspaceUuid, userEmail, subjectId);
+      case RESOURCE -> maybeLogControlledResourceDeletion(
+          context, workspaceUuid, userEmail, subjectId);
       default -> throw new UnhandledDeletionFlightException(
           String.format(
               "Activity log should be updated for deletion flight %s failures",
@@ -103,12 +106,16 @@ public class WorkspaceActivityLogHook implements StairwayHook {
     return HookAction.CONTINUE;
   }
 
-  private DbWorkspaceActivityLog getDbWorkspaceActivityLog(OperationType operationType,
-      String email, String subjectId) {
-    return new DbWorkspaceActivityLog().operationType(operationType).changeAgentEmail(email).changeAgentSubjectId(subjectId);
+  private DbWorkspaceActivityLog getDbWorkspaceActivityLog(
+      OperationType operationType, String email, String subjectId) {
+    return new DbWorkspaceActivityLog()
+        .operationType(operationType)
+        .changeAgentEmail(email)
+        .changeAgentSubjectId(subjectId);
   }
 
-  private void maybeLogWorkspaceDeletionFlight(UUID workspaceUuid, String userEmail, String subjectId) {
+  private void maybeLogWorkspaceDeletionFlight(
+      UUID workspaceUuid, String userEmail, String subjectId) {
     try {
       workspaceDao.getWorkspace(workspaceUuid);
       logger.warn(
@@ -122,7 +129,8 @@ public class WorkspaceActivityLogHook implements StairwayHook {
     }
   }
 
-  private void maybeLogCloudContextDeletionFlight(CloudPlatform cloudPlatform, UUID workspaceUuid, String userEmail, String subjectId) {
+  private void maybeLogCloudContextDeletionFlight(
+      CloudPlatform cloudPlatform, UUID workspaceUuid, String userEmail, String subjectId) {
     Optional<String> cloudContext = workspaceDao.getCloudContext(workspaceUuid, cloudPlatform);
     if (cloudContext.isEmpty()) {
       activityLogDao.writeActivity(
@@ -136,7 +144,8 @@ public class WorkspaceActivityLogHook implements StairwayHook {
     }
   }
 
-  private void maybeLogControlledResourceDeletion(FlightContext context, UUID workspaceUuid, String userEmail, String subjectId) {
+  private void maybeLogControlledResourceDeletion(
+      FlightContext context, UUID workspaceUuid, String userEmail, String subjectId) {
     var controlledResource =
         checkNotNull(
             context.getInputParameters().get(ResourceKeys.RESOURCE, ControlledResource.class));

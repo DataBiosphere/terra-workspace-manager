@@ -266,7 +266,11 @@ public class WorkspaceService {
       String subjectId) {
     if (workspaceDao.updateWorkspace(workspaceUuid, userFacingId, name, description, properties)) {
       workspaceActivityLogDao.writeActivity(
-          workspaceUuid, new DbWorkspaceActivityLog().operationType(OperationType.UPDATE).changeAgentEmail(userEmail).changeAgentSubjectId(subjectId));
+          workspaceUuid,
+          new DbWorkspaceActivityLog()
+              .operationType(OperationType.UPDATE)
+              .changeAgentEmail(userEmail)
+              .changeAgentSubjectId(subjectId));
     }
     return workspaceDao.getWorkspace(workspaceUuid);
   }
