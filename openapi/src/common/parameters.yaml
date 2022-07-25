@@ -80,6 +80,14 @@ components:
       schema:
         $ref: '#/components/schemas/IamRole'
 
+    SasIpRange:
+      name: sasIpRange
+      in: query
+      description: A single IP address or range of addresses separated by a dash to restrict a SAS token to
+      required: false
+      schema:
+        type: string
+
     StewardshipType:
       name: stewardship
       in: query
