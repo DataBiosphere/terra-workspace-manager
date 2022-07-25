@@ -201,15 +201,18 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
         .stage(workspace.getWorkspaceStage().toApiModel())
         .gcpContext(gcpContext)
         .azureContext(azureContext)
-        .createdDate(createDetailsOptional.map(ActivityLogChangeDetails::getDateTime).orElse(null))
+        .createdDate(
+            createDetailsOptional.map(ActivityLogChangeDetails::getChangedDate).orElse(null))
         .createdBy(
             new ApiWorkspaceActivityChangeAgent()
                 .userEmail(
                     createDetailsOptional.map(ActivityLogChangeDetails::getUserEmail).orElse(null))
                 .subjectId(
-                    createDetailsOptional.map(ActivityLogChangeDetails::getSubjectId).orElse(null)))
+                    createDetailsOptional
+                        .map(ActivityLogChangeDetails::getUserSubjectId)
+                        .orElse(null)))
         .lastUpdatedDate(
-            lastChangeDetailsOptional.map(ActivityLogChangeDetails::getDateTime).orElse(null))
+            lastChangeDetailsOptional.map(ActivityLogChangeDetails::getChangedDate).orElse(null))
         .lastUpdatedBy(
             new ApiWorkspaceActivityChangeAgent()
                 .userEmail(
@@ -218,7 +221,7 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
                         .orElse(null))
                 .subjectId(
                     lastChangeDetailsOptional
-                        .map(ActivityLogChangeDetails::getSubjectId)
+                        .map(ActivityLogChangeDetails::getUserSubjectId)
                         .orElse(null)));
   }
 

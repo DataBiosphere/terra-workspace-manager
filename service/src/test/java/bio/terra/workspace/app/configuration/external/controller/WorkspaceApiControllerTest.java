@@ -3,8 +3,11 @@ package bio.terra.workspace.app.configuration.external.controller;
 import static bio.terra.workspace.common.utils.MockMvcUtils.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -16,6 +19,7 @@ import bio.terra.workspace.generated.model.ApiCloneWorkspaceRequest;
 import bio.terra.workspace.generated.model.ApiCloneWorkspaceResult;
 import bio.terra.workspace.generated.model.ApiCreatedWorkspace;
 import bio.terra.workspace.generated.model.ApiUpdateWorkspaceRequestBody;
+import bio.terra.workspace.generated.model.ApiWorkspaceActivityChangeAgent;
 import bio.terra.workspace.generated.model.ApiWorkspaceDescription;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
@@ -29,9 +33,9 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import org.apache.http.HttpStatus;
+import org.broadinstitute.dsde.workbench.client.sam.model.UserStatusInfo;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.mock.mockito.MockBean;
@@ -59,15 +63,16 @@ public class WorkspaceApiControllerTest extends BaseConnectedTest {
 
   @BeforeEach
   public void setup() throws InterruptedException {
-    Mockito.when(
-            mockSamService.isAuthorized(
-                Mockito.any(),
-                eq(SamResource.SPEND_PROFILE),
-                Mockito.any(),
-                eq(SamSpendProfileAction.LINK)))
+    when(mockSamService.isAuthorized(
+            any(), eq(SamResource.SPEND_PROFILE), any(), eq(SamSpendProfileAction.LINK)))
         .thenReturn(true);
-    Mockito.when(mockSamService.listRequesterRoles(Mockito.any(), Mockito.any(), Mockito.any()))
+    when(mockSamService.listRequesterRoles(any(), any(), any()))
         .thenReturn(List.of(WsmIamRole.OWNER));
+    when(mockSamService.getUserStatusInfo(any()))
+        .thenReturn(
+            new UserStatusInfo()
+                .userEmail(USER_REQUEST.getEmail())
+                .userSubjectId(USER_REQUEST.getSubjectId()));
   }
 
   @Test
@@ -101,6 +106,8 @@ public class WorkspaceApiControllerTest extends BaseConnectedTest {
     assertEquals(userFacingId, fetchedWorkspace.getUserFacingId());
     assertNotNull(fetchedWorkspace.getLastUpdatedDate());
     assertEquals(fetchedWorkspace.getLastUpdatedDate(), fetchedWorkspace.getCreatedDate());
+    assertWorkspaceActivityChangeAgent(fetchedWorkspace.getCreatedBy());
+    assertWorkspaceActivityChangeAgent(fetchedWorkspace.getLastUpdatedBy());
   }
 
   @Test
@@ -137,7 +144,11 @@ public class WorkspaceApiControllerTest extends BaseConnectedTest {
     OffsetDateTime createdDate = updatedWorkspaceDescription.getCreatedDate();
     assertNotNull(createdDate);
     assertTrue(firstLastUpdatedDate.isAfter(createdDate));
+    assertWorkspaceActivityChangeAgent(updatedWorkspaceDescription.getCreatedBy());
+    assertWorkspaceActivityChangeAgent(updatedWorkspaceDescription.getLastUpdatedBy());
 
+    var newUser = new UserStatusInfo().userEmail("foo@gmail.com");
+    when(mockSamService.getUserStatusInfo(any())).thenReturn(newUser);
     var secondNewDescription = "This is yet another description";
     String serializedSecondUpdateResponse =
         mockMvc
@@ -163,6 +174,10 @@ public class WorkspaceApiControllerTest extends BaseConnectedTest {
     assertTrue(firstLastUpdatedDate.isBefore(secondLastUpdatedDate));
     assertNotNull(secondUpdatedWorkspaceDescription.getCreatedDate());
     assertEquals(createdDate, secondUpdatedWorkspaceDescription.getCreatedDate());
+    assertEquals(
+        newUser.getUserEmail(),
+        secondUpdatedWorkspaceDescription.getLastUpdatedBy().getUserEmail());
+    assertNull(secondUpdatedWorkspaceDescription.getLastUpdatedBy().getSubjectId());
   }
 
   private String getUpdateRequestInJson(
@@ -237,5 +252,10 @@ public class WorkspaceApiControllerTest extends BaseConnectedTest {
         objectMapper.readValue(WorkspaceGetResponse, ApiWorkspaceDescription.class);
 
     return resultWorkspace;
+  }
+
+  private void assertWorkspaceActivityChangeAgent(ApiWorkspaceActivityChangeAgent changeAgent) {
+    assertEquals(USER_REQUEST.getEmail(), changeAgent.getUserEmail());
+    assertEquals(USER_REQUEST.getSubjectId(), changeAgent.getSubjectId());
   }
 }

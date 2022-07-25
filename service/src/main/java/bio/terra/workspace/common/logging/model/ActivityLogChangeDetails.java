@@ -15,17 +15,17 @@ public class ActivityLogChangeDetails {
   private static final Supplier<RuntimeException> MISSING_REQUIRED_FIELD =
       () -> new MissingRequiredFieldsException("Missing required field");
 
-  private @Nullable OffsetDateTime dateTime;
-  private @Nullable String subjectId;
+  private @Nullable OffsetDateTime changedDate;
+  private @Nullable String userSubjectId;
   private @Nullable String userEmail;
 
-  public ActivityLogChangeDetails dateTime(OffsetDateTime dateTime) {
-    this.dateTime = dateTime;
+  public ActivityLogChangeDetails dateTime(OffsetDateTime changedDate) {
+    this.changedDate = changedDate;
     return this;
   }
 
-  public ActivityLogChangeDetails subjectId(String subjectId) {
-    this.subjectId = subjectId;
+  public ActivityLogChangeDetails userSubjectId(String subjectId) {
+    this.userSubjectId = subjectId;
     return this;
   }
 
@@ -34,15 +34,15 @@ public class ActivityLogChangeDetails {
     return this;
   }
 
-  public OffsetDateTime getDateTime() {
-    return Optional.ofNullable(dateTime).orElseThrow(MISSING_REQUIRED_FIELD);
+  public OffsetDateTime getChangedDate() {
+    return Optional.ofNullable(changedDate).orElseThrow(MISSING_REQUIRED_FIELD);
   }
 
   public String getUserEmail() {
     return Optional.ofNullable(userEmail).orElseThrow(MISSING_REQUIRED_FIELD);
   }
 
-  public @Nullable String getSubjectId() {
-    return subjectId;
+  public @Nullable String getUserSubjectId() {
+    return userSubjectId;
   }
 }

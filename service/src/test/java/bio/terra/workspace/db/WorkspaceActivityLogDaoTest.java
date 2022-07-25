@@ -1,6 +1,7 @@
 package bio.terra.workspace.db;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -34,16 +35,62 @@ public class WorkspaceActivityLogDaoTest extends BaseUnitTest {
 
     assertTrue(lastUpdateDetails.isPresent());
     assertTrue(createDetails.isPresent());
-    assertEquals(lastUpdateDetails.get().getDateTime(), createDetails.get().getDateTime());
+    assertEquals(lastUpdateDetails.get().getChangedDate(), createDetails.get().getChangedDate());
     assertEquals(USER_EMAIL, createDetails.get().getUserEmail());
-    assertEquals(SUBJECT_ID, createDetails.get().getSubjectId());
+    assertEquals(SUBJECT_ID, createDetails.get().getUserSubjectId());
     assertEquals(USER_EMAIL, lastUpdateDetails.get().getUserEmail());
-    assertEquals(SUBJECT_ID, lastUpdateDetails.get().getSubjectId());
+    assertEquals(SUBJECT_ID, lastUpdateDetails.get().getUserSubjectId());
   }
 
-  private DbWorkspaceActivityLog getDbWorkspaceActivityLog(OperationType create) {
+  @Test
+  public void getLastUpdateDetails() {
+    var workspaceId = UUID.randomUUID();
+    assertTrue(activityLogDao.getLastUpdateDetails(workspaceId).isEmpty());
+
+    activityLogDao.writeActivity(workspaceId, getDbWorkspaceActivityLog(OperationType.CREATE));
+
+    var lastUpdateDetails = activityLogDao.getLastUpdateDetails(workspaceId);
+
+    var newUserEmail = "foo@gmail.com";
+    activityLogDao.writeActivity(
+        workspaceId,
+        new DbWorkspaceActivityLog()
+            .operationType(OperationType.UPDATE)
+            .changeAgentEmail(newUserEmail));
+
+    var secondLastUpdateDetails = activityLogDao.getLastUpdateDetails(workspaceId);
+    assertEquals(newUserEmail, secondLastUpdateDetails.get().getUserEmail());
+    assertNull(secondLastUpdateDetails.get().getUserSubjectId());
+    var secondLastUpdatedDate = secondLastUpdateDetails.get().getChangedDate();
+    assertTrue(secondLastUpdatedDate.isAfter(lastUpdateDetails.get().getChangedDate()));
+  }
+
+  @Test
+  public void getCreateDetails() {
+    var workspaceId = UUID.randomUUID();
+    assertTrue(activityLogDao.getCreateDetails(workspaceId).isEmpty());
+
+    activityLogDao.writeActivity(workspaceId, getDbWorkspaceActivityLog(OperationType.CREATE));
+
+    var createDetails = activityLogDao.getCreateDetails(workspaceId);
+    assertEquals(USER_EMAIL, createDetails.get().getUserEmail());
+    assertEquals(SUBJECT_ID, createDetails.get().getUserSubjectId());
+
+    var newUserEmail = "foo@gmail.com";
+    activityLogDao.writeActivity(
+        workspaceId,
+        new DbWorkspaceActivityLog()
+            .operationType(OperationType.UPDATE)
+            .changeAgentEmail(newUserEmail));
+
+    var createDetailsAfterUpdate = activityLogDao.getCreateDetails(workspaceId);
+    assertEquals(USER_EMAIL, createDetailsAfterUpdate.get().getUserEmail());
+    assertEquals(SUBJECT_ID, createDetailsAfterUpdate.get().getUserSubjectId());
+  }
+
+  private DbWorkspaceActivityLog getDbWorkspaceActivityLog(OperationType operationType) {
     return new DbWorkspaceActivityLog()
-        .operationType(create)
+        .operationType(operationType)
         .changeAgentEmail(USER_EMAIL)
         .changeAgentSubjectId(SUBJECT_ID);
   }
@@ -72,17 +119,27 @@ public class WorkspaceActivityLogDaoTest extends BaseUnitTest {
             activityLogDao.writeActivity(
                 workspaceId, getDbWorkspaceActivityLog(OperationType.UNKNOWN)));
     var fifthUpdateDate = activityLogDao.getLastUpdateDetails(workspaceId);
-    assertEquals(fourthUpdateDetails.get().getDateTime(), fifthUpdateDate.get().getDateTime());
+    assertEquals(
+        fourthUpdateDetails.get().getChangedDate(), fifthUpdateDate.get().getChangedDate());
 
     assertTrue(
-        firstUpdateDetails.get().getDateTime().isBefore(secondUpdateDetails.get().getDateTime()));
+        firstUpdateDetails
+            .get()
+            .getChangedDate()
+            .isBefore(secondUpdateDetails.get().getChangedDate()));
     assertTrue(
-        secondUpdateDetails.get().getDateTime().isBefore(thirdUpdateDetails.get().getDateTime()));
+        secondUpdateDetails
+            .get()
+            .getChangedDate()
+            .isBefore(thirdUpdateDetails.get().getChangedDate()));
     assertTrue(
-        thirdUpdateDetails.get().getDateTime().isBefore(fourthUpdateDetails.get().getDateTime()));
+        thirdUpdateDetails
+            .get()
+            .getChangedDate()
+            .isBefore(fourthUpdateDetails.get().getChangedDate()));
 
     var createDetails = activityLogDao.getCreateDetails(workspaceId);
-    assertEquals(firstUpdateDetails.get().getDateTime(), createDetails.get().getDateTime());
+    assertEquals(firstUpdateDetails.get().getChangedDate(), createDetails.get().getChangedDate());
   }
 
   @Test

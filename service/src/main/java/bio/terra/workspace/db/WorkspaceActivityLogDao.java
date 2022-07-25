@@ -33,7 +33,7 @@ public class WorkspaceActivityLogDao {
                   OffsetDateTime.ofInstant(
                       rs.getTimestamp("change_date").toInstant(), ZoneId.of("UTC")))
               .userEmail(rs.getString("change_agent_email"))
-              .subjectId(rs.getString("change_agent_subject_id"));
+              .userSubjectId(rs.getString("change_agent_subject_id"));
   private final NamedParameterJdbcTemplate jdbcTemplate;
 
   // These fields don't update workspace "Last updated" time in UI. For example,
@@ -84,10 +84,9 @@ public class WorkspaceActivityLogDao {
   @ReadTransaction
   public Optional<ActivityLogChangeDetails> getCreateDetails(UUID workspaceId) {
     final String sql =
-        "SELECT w.change_agent_email, w.change_agent_subject_id, w.change_date FROM workspace_activity_log w"
+        "SELECT w.change_date, w.change_agent_email, w.change_agent_subject_id FROM workspace_activity_log w"
             + " JOIN (SELECT MIN(change_date) AS min_date FROM workspace_activity_log"
-            + " WHERE workspace_id = :workspace_id"
-            + " GROUP BY change_agent_email) m"
+            + " WHERE workspace_id = :workspace_id) m"
             + " ON w.change_date = m.min_date";
 
     final var params = new MapSqlParameterSource().addValue("workspace_id", workspaceId.toString());
@@ -101,8 +100,7 @@ public class WorkspaceActivityLogDao {
     final String sql =
         "SELECT w.change_agent_email, w.change_agent_subject_id, w.change_date FROM workspace_activity_log w"
             + " JOIN (SELECT MAX(change_date) AS max_date FROM workspace_activity_log"
-            + " WHERE workspace_id = :workspace_id AND change_type NOT IN (:change_type)"
-            + " GROUP BY change_agent_email) m"
+            + " WHERE workspace_id = :workspace_id AND change_type NOT IN (:change_type)) m"
             + " ON w.change_date = m.max_date";
 
     final var params =

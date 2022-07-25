@@ -159,8 +159,8 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
     assertTrue(
         updateDetailsBeforeResourceUpdate
             .get()
-            .getDateTime()
-            .isBefore(lastUpdateDetailsAfterResourceUpdate.get().getDateTime()));
+            .getChangedDate()
+            .isBefore(lastUpdateDetailsAfterResourceUpdate.get().getChangedDate()));
     assertEquals(originalName, result.getName());
     assertEquals(originalDescription, result.getDescription());
     assertEquals(originalInstanceName, result.getInstanceName());
@@ -245,8 +245,8 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
     assertTrue(
         lastUpdateDetailsBeforeResourceUpdate
             .get()
-            .getDateTime()
-            .isBefore(lastUpdateDetailsAfterResourceUpdate.get().getDateTime()));
+            .getChangedDate()
+            .isBefore(lastUpdateDetailsAfterResourceUpdate.get().getChangedDate()));
     assertEquals(updatedName, referencedResource.getName());
     assertEquals(updatedDescription, referencedResource.getDescription());
 
@@ -434,8 +434,8 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
       assertTrue(
           lastUpdateDetailsBeforeResourceCreate
               .get()
-              .getDateTime()
-              .isBefore(lastUpdateDetailsAfterCreate.get().getDateTime()));
+              .getChangedDate()
+              .isBefore(lastUpdateDetailsAfterCreate.get().getChangedDate()));
 
       ReferencedDataRepoSnapshotResource resultResource =
           resultReferenceResource.castByEnum(WsmResourceType.REFERENCED_ANY_DATA_REPO_SNAPSHOT);
@@ -466,8 +466,8 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
       assertTrue(
           lastUpdateDetailsAfterCreate
               .get()
-              .getDateTime()
-              .isBefore(lastUpdateDetailsAfterDelete.get().getDateTime()));
+              .getChangedDate()
+              .isBefore(lastUpdateDetailsAfterDelete.get().getChangedDate()));
     }
 
     @Test
@@ -591,8 +591,8 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
       assertTrue(
           lastUpdateDetailsBeforeResourceCreate
               .get()
-              .getDateTime()
-              .isBefore(lastUpdateDetailsAfterCreate.get().getDateTime()));
+              .getChangedDate()
+              .isBefore(lastUpdateDetailsAfterCreate.get().getChangedDate()));
 
       ReferencedGcsObjectResource resultResource =
           resultReferenceResource.castByEnum(WsmResourceType.REFERENCED_GCP_GCS_OBJECT);
@@ -624,8 +624,8 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
       assertTrue(
           lastUpdateDetailsAfterCreate
               .get()
-              .getDateTime()
-              .isBefore(lastUpdateDetailsAfterDelete.get().getDateTime()));
+              .getChangedDate()
+              .isBefore(lastUpdateDetailsAfterDelete.get().getChangedDate()));
     }
 
     private ReferencedGcsBucketResource makeGcsBucketResource() {
@@ -803,8 +803,8 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
       assertTrue(
           lastUpdateDetailsBeforeCreate
               .get()
-              .getDateTime()
-              .isBefore(lastUpdateDetailsAfterCreate.get().getDateTime()));
+              .getChangedDate()
+              .isBefore(lastUpdateDetailsAfterCreate.get().getChangedDate()));
 
       ReferencedBigQueryDatasetResource resultResource =
           resultReferenceResource.castByEnum(WsmResourceType.REFERENCED_GCP_BIG_QUERY_DATASET);
@@ -837,8 +837,8 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
       assertTrue(
           lastUpdateDetailsAfterCreate
               .get()
-              .getDateTime()
-              .isBefore(lastUpdateDetailsAfterDelete.get().getDateTime()));
+              .getChangedDate()
+              .isBefore(lastUpdateDetailsAfterDelete.get().getChangedDate()));
     }
 
     @Test
@@ -862,8 +862,8 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
       assertTrue(
           lastUpdateDetailsBeforeCreate
               .get()
-              .getDateTime()
-              .isBefore(lastUpdateDetailsAfterCreate.get().getDateTime()));
+              .getChangedDate()
+              .isBefore(lastUpdateDetailsAfterCreate.get().getChangedDate()));
 
       ReferencedBigQueryDataTableResource resultResource =
           resultReferenceResource.castByEnum(WsmResourceType.REFERENCED_GCP_BIG_QUERY_DATA_TABLE);
@@ -893,8 +893,8 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
       assertTrue(
           lastUpdateDetailsAfterCreate
               .get()
-              .getDateTime()
-              .isBefore(lastUpdateDetailsAfterDelete.get().getDateTime()));
+              .getChangedDate()
+              .isBefore(lastUpdateDetailsAfterDelete.get().getChangedDate()));
     }
 
     @Test
@@ -926,8 +926,8 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
           workspaceActivityLogDao.getLastUpdateDetails(workspaceUuid);
       assertTrue(lastUpdateDetailsAfterFailedDeletion.isPresent());
       assertEquals(
-          lastUpdateDetailsBeforeCreate.get().getDateTime(),
-          lastUpdateDetailsAfterFailedDeletion.get().getDateTime());
+          lastUpdateDetailsBeforeCreate.get().getChangedDate(),
+          lastUpdateDetailsAfterFailedDeletion.get().getChangedDate());
 
       referenceResourceService.deleteReferenceResourceForResourceType(
           workspaceUuid,
@@ -947,8 +947,8 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
       assertTrue(
           lastUpdateDetailsAfterFailedDeletion
               .get()
-              .getDateTime()
-              .isBefore(lastUpdateDetailsAfterSuccessfulDeletion.get().getDateTime()));
+              .getChangedDate()
+              .isBefore(lastUpdateDetailsAfterSuccessfulDeletion.get().getChangedDate()));
     }
 
     @Test
@@ -1094,8 +1094,8 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
       assertTrue(
           lastUpdateDetailsBeforeCreate
               .get()
-              .getDateTime()
-              .isBefore(lastUpdateDetailsAfterCreate.get().getDateTime()));
+              .getChangedDate()
+              .isBefore(lastUpdateDetailsAfterCreate.get().getChangedDate()));
       ReferencedTerraWorkspaceResource actual =
           actualReferencedResourceGeneric.castByEnum(
               WsmResourceType.REFERENCED_ANY_TERRA_WORKSPACE);
@@ -1127,8 +1127,8 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
       assertTrue(
           lastUpdateDetailsAfterCreate
               .get()
-              .getDateTime()
-              .isBefore(lastUpdateDetailsAfterDelete.get().getDateTime()));
+              .getChangedDate()
+              .isBefore(lastUpdateDetailsAfterDelete.get().getChangedDate()));
     }
 
     @Test
