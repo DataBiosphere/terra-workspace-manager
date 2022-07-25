@@ -287,6 +287,18 @@ public class WorkspaceService {
   }
 
   /**
+   * Update an existing workspace properties.
+   *
+   * @param workspaceUuid workspace of interest
+   * @param propertyKeys list of keys in properties
+   */
+  public void deleteWorkspaceProperties(UUID workspaceUuid, List<String> propertyKeys) {
+    workspaceDao.deleteWorkspaceProperties(workspaceUuid, propertyKeys);
+    workspaceActivityLogDao.writeActivity(
+        workspaceUuid, new DbWorkspaceActivityLog().operationType(OperationType.UPDATE));
+  }
+
+  /**
    * Process the request to create a Azure cloud context
    *
    * @param workspace workspace in which to create the context

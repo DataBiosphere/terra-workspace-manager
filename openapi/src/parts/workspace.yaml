@@ -231,6 +231,29 @@ paths:
         '500':
           $ref: '#/components/responses/ServerError'
 
+  /api/workspaces/v1/{workspaceId}/properties:
+    parameters:
+    - $ref: '#/components/parameters/WorkspaceId'
+    patch:
+      summary: delete existing Workspace properties.
+      operationId: deleteWorkspaceProperties
+      tags: [ Workspace ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PropertyKeys'
+      responses:
+        '204':
+          description: properties delete sucessfully
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
 components:
   responses:
     CloneWorkspaceResponse:
@@ -417,6 +440,12 @@ components:
         value:
           description: Arbitrary string value
           type: string
+
+    PropertyKeys:
+      description: A list of property keys that in the properties
+      type: array
+      items:
+        type: string
 
     RoleBinding:
       description: A binding between an IAM role and users with that role
