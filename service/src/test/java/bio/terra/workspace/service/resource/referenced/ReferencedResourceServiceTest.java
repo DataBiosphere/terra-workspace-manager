@@ -130,9 +130,9 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
     ReferencedResource updatedResource =
         originalResource.toBuilder().snapshotId(newSnapshotId).build();
 
-    var lastUpdatedDateBeforeResourceUpdate =
-        workspaceActivityLogDao.getLastUpdatedDate(workspaceUuid);
-    assertTrue(lastUpdatedDateBeforeResourceUpdate.isPresent());
+    var updateDetailsBeforeResourceUpdate =
+        workspaceActivityLogDao.getLastUpdateDetails(workspaceUuid);
+    assertTrue(updateDetailsBeforeResourceUpdate.isPresent());
 
     referenceResourceService.updateReferenceResource(
         workspaceUuid,
@@ -147,12 +147,13 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
         referenceResourceService
             .getReferenceResource(workspaceUuid, resourceId)
             .castByEnum(WsmResourceType.REFERENCED_ANY_DATA_REPO_SNAPSHOT);
-    var lastUpdatedDateAfterResourceUpdate =
-        workspaceActivityLogDao.getLastUpdatedDate(workspaceUuid);
+    var lastUpdateDetailsAfterResourceUpdate =
+        workspaceActivityLogDao.getLastUpdateDetails(workspaceUuid);
     assertTrue(
-        lastUpdatedDateBeforeResourceUpdate
+        updateDetailsBeforeResourceUpdate
             .get()
-            .isBefore(lastUpdatedDateAfterResourceUpdate.get()));
+            .getDateTime()
+            .isBefore(lastUpdateDetailsAfterResourceUpdate.get().getDateTime()));
     assertEquals(originalName, result.getName());
     assertEquals(originalDescription, result.getDescription());
     assertEquals(originalInstanceName, result.getInstanceName());
@@ -225,16 +226,20 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
     // Change the description
     String updatedDescription = "updated " + referencedResource.getDescription();
 
-    var lastUpdatedDateBeforeResourceUpdate =
-        workspaceActivityLogDao.getLastUpdatedDate(workspaceUuid);
+    var lastUpdateDetailsBeforeResourceUpdate =
+        workspaceActivityLogDao.getLastUpdateDetails(workspaceUuid);
     referenceResourceService.updateReferenceResource(
         workspaceUuid, referencedResource.getResourceId(), null, updatedDescription, USER_REQUEST);
     referencedResource =
         referenceResourceService.getReferenceResource(
             workspaceUuid, referencedResource.getResourceId());
-    var updatedDateAfterResourceUpdate = workspaceActivityLogDao.getLastUpdatedDate(workspaceUuid);
+    var lastUpdateDetailsAfterResourceUpdate =
+        workspaceActivityLogDao.getLastUpdateDetails(workspaceUuid);
     assertTrue(
-        lastUpdatedDateBeforeResourceUpdate.get().isBefore(updatedDateAfterResourceUpdate.get()));
+        lastUpdateDetailsBeforeResourceUpdate
+            .get()
+            .getDateTime()
+            .isBefore(lastUpdateDetailsAfterResourceUpdate.get().getDateTime()));
     assertEquals(updatedName, referencedResource.getName());
     assertEquals(updatedDescription, referencedResource.getDescription());
 
@@ -411,14 +416,19 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
 
       ReferencedDataRepoSnapshotResource resource =
           referencedResource.castByEnum(WsmResourceType.REFERENCED_ANY_DATA_REPO_SNAPSHOT);
-      var lastUpdatedDateBeforeResourceUpdate =
-          workspaceActivityLogDao.getLastUpdatedDate(workspaceUuid);
-      assertTrue(lastUpdatedDateBeforeResourceUpdate.isPresent());
+      var lastUpdateDetailsBeforeResourceCreate =
+          workspaceActivityLogDao.getLastUpdateDetails(workspaceUuid);
+      assertTrue(lastUpdateDetailsBeforeResourceCreate.isPresent());
       ReferencedResource resultReferenceResource =
           referenceResourceService.createReferenceResource(referencedResource);
 
-      var updatedDateAfterCreate = workspaceActivityLogDao.getLastUpdatedDate(workspaceUuid);
-      assertTrue(lastUpdatedDateBeforeResourceUpdate.get().isBefore(updatedDateAfterCreate.get()));
+      var lastUpdateDetailsAfterCreate =
+          workspaceActivityLogDao.getLastUpdateDetails(workspaceUuid);
+      assertTrue(
+          lastUpdateDetailsBeforeResourceCreate
+              .get()
+              .getDateTime()
+              .isBefore(lastUpdateDetailsAfterCreate.get().getDateTime()));
 
       ReferencedDataRepoSnapshotResource resultResource =
           resultReferenceResource.castByEnum(WsmResourceType.REFERENCED_ANY_DATA_REPO_SNAPSHOT);
@@ -444,8 +454,13 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
           WsmResourceType.REFERENCED_ANY_DATA_REPO_SNAPSHOT,
           USER_REQUEST.getEmail(),
           USER_REQUEST.getSubjectId());
-      var updatedDateAfterDelete = workspaceActivityLogDao.getLastUpdatedDate(workspaceUuid);
-      assertTrue(updatedDateAfterCreate.get().isBefore(updatedDateAfterDelete.get()));
+      var lastUpdateDetailsAfterDelete =
+          workspaceActivityLogDao.getLastUpdateDetails(workspaceUuid);
+      assertTrue(
+          lastUpdateDetailsAfterCreate
+              .get()
+              .getDateTime()
+              .isBefore(lastUpdateDetailsAfterDelete.get().getDateTime()));
     }
 
     @Test
@@ -558,14 +573,19 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
       ReferencedGcsObjectResource resource =
           referencedResource.castByEnum(WsmResourceType.REFERENCED_GCP_GCS_OBJECT);
 
-      var lastUpdatedDateBeforeResourceUpdate =
-          workspaceActivityLogDao.getLastUpdatedDate(workspaceUuid);
-      assertTrue(lastUpdatedDateBeforeResourceUpdate.isPresent());
+      var lastUpdateDetailsBeforeResourceCreate =
+          workspaceActivityLogDao.getLastUpdateDetails(workspaceUuid);
+      assertTrue(lastUpdateDetailsBeforeResourceCreate.isPresent());
       ReferencedResource resultReferenceResource =
           referenceResourceService.createReferenceResource(referencedResource);
 
-      var updatedDateAfterCreate = workspaceActivityLogDao.getLastUpdatedDate(workspaceUuid);
-      assertTrue(lastUpdatedDateBeforeResourceUpdate.get().isBefore(updatedDateAfterCreate.get()));
+      var lastUpdateDetailsAfterCreate =
+          workspaceActivityLogDao.getLastUpdateDetails(workspaceUuid);
+      assertTrue(
+          lastUpdateDetailsBeforeResourceCreate
+              .get()
+              .getDateTime()
+              .isBefore(lastUpdateDetailsAfterCreate.get().getDateTime()));
 
       ReferencedGcsObjectResource resultResource =
           resultReferenceResource.castByEnum(WsmResourceType.REFERENCED_GCP_GCS_OBJECT);
@@ -592,8 +612,13 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
           WsmResourceType.REFERENCED_GCP_GCS_OBJECT,
           USER_REQUEST.getEmail(),
           USER_REQUEST.getSubjectId());
-      var updatedDateAfterDelete = workspaceActivityLogDao.getLastUpdatedDate(workspaceUuid);
-      assertTrue(updatedDateAfterCreate.get().isBefore(updatedDateAfterDelete.get()));
+      var lastUpdateDetailsAfterDelete =
+          workspaceActivityLogDao.getLastUpdateDetails(workspaceUuid);
+      assertTrue(
+          lastUpdateDetailsAfterCreate
+              .get()
+              .getDateTime()
+              .isBefore(lastUpdateDetailsAfterDelete.get().getDateTime()));
     }
 
     private ReferencedGcsBucketResource makeGcsBucketResource() {
@@ -759,15 +784,20 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
           referencedResource.castByEnum(WsmResourceType.REFERENCED_GCP_BIG_QUERY_DATASET);
       assertEquals(resource.getResourceType(), WsmResourceType.REFERENCED_GCP_BIG_QUERY_DATASET);
 
-      var lastUpdatedDateBeforeResourceUpdate =
-          workspaceActivityLogDao.getLastUpdatedDate(workspaceUuid);
-      assertTrue(lastUpdatedDateBeforeResourceUpdate.isPresent());
+      var lastUpdateDetailsBeforeCreate =
+          workspaceActivityLogDao.getLastUpdateDetails(workspaceUuid);
+      assertTrue(lastUpdateDetailsBeforeCreate.isPresent());
       ReferencedResource resultReferenceResource =
           referenceResourceService.createReferenceResource(referencedResource);
       referenceResourceService.createReferenceResource(referencedResource);
 
-      var updatedDateAfterCreate = workspaceActivityLogDao.getLastUpdatedDate(workspaceUuid);
-      assertTrue(lastUpdatedDateBeforeResourceUpdate.get().isBefore(updatedDateAfterCreate.get()));
+      var lastUpdateDetailsAfterCreate =
+          workspaceActivityLogDao.getLastUpdateDetails(workspaceUuid);
+      assertTrue(
+          lastUpdateDetailsBeforeCreate
+              .get()
+              .getDateTime()
+              .isBefore(lastUpdateDetailsAfterCreate.get().getDateTime()));
 
       ReferencedBigQueryDatasetResource resultResource =
           resultReferenceResource.castByEnum(WsmResourceType.REFERENCED_GCP_BIG_QUERY_DATASET);
@@ -795,8 +825,13 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
           WsmResourceType.REFERENCED_GCP_BIG_QUERY_DATASET,
           USER_REQUEST.getEmail(),
           USER_REQUEST.getSubjectId());
-      var updatedDateAfterDelete = workspaceActivityLogDao.getLastUpdatedDate(workspaceUuid);
-      assertTrue(updatedDateAfterCreate.get().isBefore(updatedDateAfterDelete.get()));
+      var lastUpdateDetailsAfterDelete =
+          workspaceActivityLogDao.getLastUpdateDetails(workspaceUuid);
+      assertTrue(
+          lastUpdateDetailsAfterCreate
+              .get()
+              .getDateTime()
+              .isBefore(lastUpdateDetailsAfterDelete.get().getDateTime()));
     }
 
     @Test
@@ -809,14 +844,19 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
       assertEquals(resource.getDataTableId(), DATA_TABLE_NAME);
       assertEquals(resource.getDatasetId(), DATASET_NAME);
 
-      var lastUpdatedDateBeforeResourceUpdate =
-          workspaceActivityLogDao.getLastUpdatedDate(workspaceUuid);
-      assertTrue(lastUpdatedDateBeforeResourceUpdate.isPresent());
+      var lastUpdateDetailsBeforeCreate =
+          workspaceActivityLogDao.getLastUpdateDetails(workspaceUuid);
+      assertTrue(lastUpdateDetailsBeforeCreate.isPresent());
       ReferencedResource resultReferenceResource =
           referenceResourceService.createReferenceResource(referencedResource);
 
-      var updatedDateAfterCreate = workspaceActivityLogDao.getLastUpdatedDate(workspaceUuid);
-      assertTrue(lastUpdatedDateBeforeResourceUpdate.get().isBefore(updatedDateAfterCreate.get()));
+      var lastUpdateDetailsAfterCreate =
+          workspaceActivityLogDao.getLastUpdateDetails(workspaceUuid);
+      assertTrue(
+          lastUpdateDetailsBeforeCreate
+              .get()
+              .getDateTime()
+              .isBefore(lastUpdateDetailsAfterCreate.get().getDateTime()));
 
       ReferencedBigQueryDataTableResource resultResource =
           resultReferenceResource.castByEnum(WsmResourceType.REFERENCED_GCP_BIG_QUERY_DATA_TABLE);
@@ -841,8 +881,13 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
           USER_REQUEST.getEmail(),
           USER_REQUEST.getSubjectId());
 
-      var updatedDateAfterDelete = workspaceActivityLogDao.getLastUpdatedDate(workspaceUuid);
-      assertTrue(updatedDateAfterCreate.get().isBefore(updatedDateAfterDelete.get()));
+      var lastUpdateDetailsAfterDelete =
+          workspaceActivityLogDao.getLastUpdateDetails(workspaceUuid);
+      assertTrue(
+          lastUpdateDetailsAfterCreate
+              .get()
+              .getDateTime()
+              .isBefore(lastUpdateDetailsAfterDelete.get().getDateTime()));
     }
 
     @Test
@@ -860,8 +905,8 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
           USER_REQUEST.getEmail(),
           USER_REQUEST.getSubjectId());
 
-      var lastUpdatedDateBeforeResourceUpdate =
-          workspaceActivityLogDao.getLastUpdatedDate(workspaceUuid);
+      var lastUpdateDetailsBeforeCreate =
+          workspaceActivityLogDao.getLastUpdateDetails(workspaceUuid);
       // Fail to delete the resource the first time with the wrong resource type.
       ReferencedBigQueryDataTableResource resource =
           referenceResourceService
@@ -870,10 +915,10 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
       assertEquals(
           referencedResource.castByEnum(WsmResourceType.REFERENCED_GCP_BIG_QUERY_DATA_TABLE),
           resource);
-      var updatedDateAfterFailedDeletion =
-          workspaceActivityLogDao.getLastUpdatedDate(workspaceUuid);
-      assertTrue(updatedDateAfterFailedDeletion.isPresent());
-      assertEquals(lastUpdatedDateBeforeResourceUpdate.get(), updatedDateAfterFailedDeletion.get());
+      var lastUpdateDetailsAfterFailedDeletion =
+          workspaceActivityLogDao.getLastUpdateDetails(workspaceUuid);
+      assertTrue(lastUpdateDetailsAfterFailedDeletion.isPresent());
+      assertEquals(lastUpdateDetailsBeforeCreate.get(), lastUpdateDetailsAfterFailedDeletion.get());
 
       referenceResourceService.deleteReferenceResourceForResourceType(
           workspaceUuid,
@@ -888,10 +933,13 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
               referenceResourceService.getReferenceResource(
                   workspaceUuid, referencedResource.getResourceId()));
 
-      var updatedDateAfterSuccessfulDeletion =
-          workspaceActivityLogDao.getLastUpdatedDate(workspaceUuid);
+      var lastUpdateDetailsAfterSuccessfulDeletion =
+          workspaceActivityLogDao.getLastUpdateDetails(workspaceUuid);
       assertTrue(
-          updatedDateAfterFailedDeletion.get().isBefore(updatedDateAfterSuccessfulDeletion.get()));
+          lastUpdateDetailsAfterFailedDeletion
+              .get()
+              .getDateTime()
+              .isBefore(lastUpdateDetailsAfterSuccessfulDeletion.get().getDateTime()));
     }
 
     @Test
@@ -1027,13 +1075,18 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
       ReferencedTerraWorkspaceResource expected =
           referencedResource.castByEnum(WsmResourceType.REFERENCED_ANY_TERRA_WORKSPACE);
 
-      var lastUpdatedDateBeforeResourceUpdate =
-          workspaceActivityLogDao.getLastUpdatedDate(workspaceUuid);
-      assertTrue(lastUpdatedDateBeforeResourceUpdate.isPresent());
+      var lastUpdateDetailsBeforeCreate =
+          workspaceActivityLogDao.getLastUpdateDetails(workspaceUuid);
+      assertTrue(lastUpdateDetailsBeforeCreate.isPresent());
       ReferencedResource actualReferencedResourceGeneric =
           referenceResourceService.createReferenceResource(referencedResource);
-      var updatedDateAfterCreate = workspaceActivityLogDao.getLastUpdatedDate(workspaceUuid);
-      assertTrue(lastUpdatedDateBeforeResourceUpdate.get().isBefore(updatedDateAfterCreate.get()));
+      var lastUpdateDetailsAfterCreate =
+          workspaceActivityLogDao.getLastUpdateDetails(workspaceUuid);
+      assertTrue(
+          lastUpdateDetailsBeforeCreate
+              .get()
+              .getDateTime()
+              .isBefore(lastUpdateDetailsAfterCreate.get().getDateTime()));
       ReferencedTerraWorkspaceResource actual =
           actualReferencedResourceGeneric.castByEnum(
               WsmResourceType.REFERENCED_ANY_TERRA_WORKSPACE);
@@ -1060,8 +1113,13 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
           WsmResourceType.REFERENCED_ANY_TERRA_WORKSPACE,
           USER_REQUEST.getEmail(),
           USER_REQUEST.getSubjectId());
-      var updatedDateAfterDeletion = workspaceActivityLogDao.getLastUpdatedDate(workspaceUuid);
-      assertTrue(updatedDateAfterCreate.get().isBefore(updatedDateAfterDeletion.get()));
+      var lastUpdateDetailsAfterDelete =
+          workspaceActivityLogDao.getLastUpdateDetails(workspaceUuid);
+      assertTrue(
+          lastUpdateDetailsAfterCreate
+              .get()
+              .getDateTime()
+              .isBefore(lastUpdateDetailsAfterDelete.get().getDateTime()));
     }
 
     @Test

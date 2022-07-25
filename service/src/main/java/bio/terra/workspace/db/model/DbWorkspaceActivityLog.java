@@ -40,7 +40,7 @@ public class DbWorkspaceActivityLog {
     return Optional.ofNullable(changeAgentEmail).orElseThrow(MISSING_REQUIRED_FIELD);
   }
 
-  public Optional<String> getChangeAgentSubjectId() {
-    return Optional.ofNullable(changeAgentSubjectId);
+  public @Nullable String getChangeAgentSubjectId() {
+    return changeAgentSubjectId;
   }
 }

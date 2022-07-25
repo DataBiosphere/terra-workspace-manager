@@ -1,6 +1,6 @@
 package bio.terra.workspace.app.controller;
 
-import bio.terra.datarepo.model.UserStatusInfo;
+import bio.terra.workspace.common.logging.model.ActivityLogChangeDetails;
 import bio.terra.workspace.common.utils.ControllerValidationUtils;
 import bio.terra.workspace.db.WorkspaceActivityLogDao;
 import bio.terra.workspace.db.model.DbWorkspaceActivityLog;
@@ -188,8 +188,8 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
         .forEach((k, v) -> apiProperties.add(new ApiProperty().key(k).value(v)));
 
     // When we have another cloud context, we will need to do a similar retrieval for it.
-    var createdBy = workspaceActivityLogDao.getCreatedBy(workspaceUuid);
-    var lastUpdatedBy = workspaceActivityLogDao.getLastUpdatedBy(workspaceUuid);
+    var createDetailsOptional = workspaceActivityLogDao.getCreateDetails(workspaceUuid);
+    var lastChangeDetailsOptional = workspaceActivityLogDao.getLastUpdateDetails(workspaceUuid);
     return new ApiWorkspaceDescription()
         .id(workspaceUuid)
         .userFacingId(workspace.getUserFacingId())
@@ -201,16 +201,25 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
         .stage(workspace.getWorkspaceStage().toApiModel())
         .gcpContext(gcpContext)
         .azureContext(azureContext)
-        .createdDate(workspaceActivityLogDao.getCreatedDate(workspaceUuid).orElse(null))
+        .createdDate(createDetailsOptional.map(ActivityLogChangeDetails::getDateTime).orElse(null))
         .createdBy(
             new ApiWorkspaceActivityChangeAgent()
-                .userEmail(createdBy.map(UserStatusInfo::getUserEmail).orElse(null))
-                .subjectId(createdBy.map(UserStatusInfo::getUserSubjectId).orElse(null)))
-        .lastUpdatedDate(workspaceActivityLogDao.getLastUpdatedDate(workspaceUuid).orElse(null))
+                .userEmail(
+                    createDetailsOptional.map(ActivityLogChangeDetails::getUserEmail).orElse(null))
+                .subjectId(
+                    createDetailsOptional.map(ActivityLogChangeDetails::getSubjectId).orElse(null)))
+        .lastUpdatedDate(
+            lastChangeDetailsOptional.map(ActivityLogChangeDetails::getDateTime).orElse(null))
         .lastUpdatedBy(
             new ApiWorkspaceActivityChangeAgent()
-                .userEmail(lastUpdatedBy.map(UserStatusInfo::getUserEmail).orElse(null))
-                .subjectId(lastUpdatedBy.map(UserStatusInfo::getUserSubjectId).orElse(null)));
+                .userEmail(
+                    lastChangeDetailsOptional
+                        .map(ActivityLogChangeDetails::getUserEmail)
+                        .orElse(null))
+                .subjectId(
+                    lastChangeDetailsOptional
+                        .map(ActivityLogChangeDetails::getSubjectId)
+                        .orElse(null)));
   }
 
   @Override

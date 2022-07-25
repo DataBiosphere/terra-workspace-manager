@@ -2,13 +2,14 @@ package bio.terra.workspace.db;
 
 import bio.terra.common.db.ReadTransaction;
 import bio.terra.common.db.WriteTransaction;
-import bio.terra.datarepo.model.UserStatusInfo;
+import bio.terra.workspace.common.logging.model.ActivityLogChangeDetails;
 import bio.terra.workspace.db.exception.UnknownFlightOperationTypeException;
 import bio.terra.workspace.db.model.DbWorkspaceActivityLog;
 import bio.terra.workspace.service.workspace.model.OperationType;
 import com.google.common.collect.ImmutableSet;
 import java.time.Instant;
 import java.time.OffsetDateTime;
+import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.util.Optional;
 import java.util.Set;
@@ -29,11 +30,14 @@ public class WorkspaceActivityLogDao {
       "SELECT MAX(change_date) FROM workspace_activity_log"
           + " WHERE workspace_id = :workspace_id"
           + " AND change_type NOT IN (:change_type)";
-  private static final RowMapper<UserStatusInfo> USER_STATUS_INFO_ROW_MAPPER =
+  private static final RowMapper<ActivityLogChangeDetails> ACTIVITY_LOG_CHANGE_DETAILS_ROW_MAPPER =
       (rs, rowNum) ->
-          new UserStatusInfo()
+          new ActivityLogChangeDetails()
+              .dateTime(
+                  OffsetDateTime.ofInstant(
+                      rs.getTimestamp("change_date").toInstant(), ZoneId.of("UTC")))
               .userEmail(rs.getString("change_agent_email"))
-              .userSubjectId(rs.getString("change_agent_subject_id"));
+              .subjectId(rs.getString("change_agent_subject_id"));
   private final NamedParameterJdbcTemplate jdbcTemplate;
 
   // These fields don't update workspace "Last updated" time in UI. For example,
@@ -64,9 +68,7 @@ public class WorkspaceActivityLogDao {
             .addValue("change_date", Instant.now().atOffset(ZoneOffset.UTC))
             .addValue("change_type", dbWorkspaceActivityLog.getOperationType().name())
             .addValue("change_agent_email", dbWorkspaceActivityLog.getChangeAgentEmail())
-            .addValue(
-                "change_agent_subject_id",
-                dbWorkspaceActivityLog.getChangeAgentSubjectId().orElse(null));
+            .addValue("change_agent_subject_id", dbWorkspaceActivityLog.getChangeAgentSubjectId());
     jdbcTemplate.update(sql, params);
   }
 
@@ -77,46 +79,37 @@ public class WorkspaceActivityLogDao {
    * return empty or the first change activity logged since {@code #writeActivity} is implemented.
    */
   @ReadTransaction
-  public Optional<OffsetDateTime> getCreatedDate(UUID workspaceId) {
-    final var params = new MapSqlParameterSource().addValue("workspace_id", workspaceId.toString());
-    return Optional.ofNullable(
-        jdbcTemplate.queryForObject(WORKSPACE_CREATED_DATE_SQL, params, OffsetDateTime.class));
-  }
-
-  @ReadTransaction
-  public Optional<UserStatusInfo> getCreatedBy(UUID workspaceId) {
+  public Optional<ActivityLogChangeDetails> getCreateDetails(UUID workspaceId) {
     final String sql =
-        "SELECT change_agent_email, change_agent_subject_id FROM workspace_activity_log WHERE change_date = ("
-            + WORKSPACE_CREATED_DATE_SQL
-            + ")"
-            + " AND workspace_id = :workspace_id";
+        "SELECT m.change_agent_email, m.change_agent_subject_id, t.change_date FROM"
+            + " (SELECT change_agent_email, MIN(change_date) AS change_date"
+            + " FROM workspace_activity_log WHERE workspace_id = :workspace_id"
+            + " GROUP BY change_agent_email) t"
+            + " JOIN workspace_activity_log m"
+            + " ON m.change_agent_email = t.change_agent_email AND t.change_date = m.change_date";
+
     final var params = new MapSqlParameterSource().addValue("workspace_id", workspaceId.toString());
     return Optional.ofNullable(
-        DataAccessUtils.singleResult(jdbcTemplate.query(sql, params, USER_STATUS_INFO_ROW_MAPPER)));
+        DataAccessUtils.singleResult(
+            jdbcTemplate.query(sql, params, ACTIVITY_LOG_CHANGE_DETAILS_ROW_MAPPER)));
   }
 
   @ReadTransaction
-  public Optional<OffsetDateTime> getLastUpdatedDate(UUID workspaceId) {
+  public Optional<ActivityLogChangeDetails> getLastUpdateDetails(UUID workspaceId) {
+    final String sql =
+        "SELECT m.change_agent_email, m.change_agent_subject_id, t.change_date FROM"
+            + " (SELECT change_agent_email, MAX(change_date) AS change_date"
+            + " FROM workspace_activity_log"
+            + " WHERE workspace_id = :workspace_id AND change_type NOT IN (:change_type)"
+            + " GROUP BY change_agent_email) t"
+            + " JOIN workspace_activity_log m"
+            + " ON m.change_agent_email = t.change_agent_email AND t.change_date = m.change_date";
     final var params =
         new MapSqlParameterSource()
             .addValue("workspace_id", workspaceId.toString())
             .addValue("change_type", NON_UPDATE_TYPE_OPERATION);
     return Optional.ofNullable(
-        jdbcTemplate.queryForObject(WORKSPACE_LAST_UPDATED_SQL, params, OffsetDateTime.class));
-  }
-
-  @ReadTransaction
-  public Optional<UserStatusInfo> getLastUpdatedBy(UUID workspaceId) {
-    final String sql =
-        "SELECT change_agent_email, change_agent_subject_id FROM workspace_activity_log WHERE change_date = ("
-            + WORKSPACE_LAST_UPDATED_SQL
-            + ")"
-            + " AND workspace_id = :workspace_id";
-    final var params =
-        new MapSqlParameterSource()
-            .addValue("workspace_id", workspaceId.toString())
-            .addValue("change_type", NON_UPDATE_TYPE_OPERATION);
-    return Optional.ofNullable(
-        DataAccessUtils.singleResult(jdbcTemplate.query(sql, params, USER_STATUS_INFO_ROW_MAPPER)));
+        DataAccessUtils.singleResult(
+            jdbcTemplate.query(sql, params, ACTIVITY_LOG_CHANGE_DETAILS_ROW_MAPPER)));
   }
 }
