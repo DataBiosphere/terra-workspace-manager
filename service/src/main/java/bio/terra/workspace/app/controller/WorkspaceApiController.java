@@ -316,10 +316,15 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
         "Deleting the properties with the key {} in workspace {}",
         propertyKeys.toString(),
         workspaceUuid);
-    workspaceService.deleteWorkspaceProperties(workspaceUuid, propertyKeys);
+    var userStatusInfo =
+        SamRethrow.onInterrupted(
+            () -> samService.getUserStatusInfo(getAuthenticatedInfo()),
+            "#deleteWorkspaceProperties: get user status info from SAM");
+    workspaceService.deleteWorkspaceProperties(workspaceUuid, propertyKeys,
+        userStatusInfo.getUserEmail(), userStatusInfo.getUserSubjectId());
     logger.info(
         "Deleted the properties with the key {} in workspace {}",
-        propertyKeys.toString(),
+        propertyKeys,
         workspaceUuid);
 
     return new ResponseEntity<>(HttpStatus.NO_CONTENT);
@@ -341,15 +346,16 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
             samService.grantWorkspaceRole(
                 uuid, getAuthenticatedInfo(), WsmIamRole.fromApiModel(role), body.getMemberEmail()),
         "grantWorkspaceRole");
-    String userEmail =
+    var userStatusInfo =
         SamRethrow.onInterrupted(
-            () -> samService.getUserEmailFromSam(getAuthenticatedInfo()),
-            "#grantRole: get user email from SAM");
+            () -> samService.getUserStatusInfo(getAuthenticatedInfo()),
+            "#grantRole: get user status info from SAM");
     workspaceActivityLogDao.writeActivity(
         uuid,
         new DbWorkspaceActivityLog()
             .operationType(OperationType.GRANT_WORKSPACE_ROLE)
-            .changeAgentEmail(userEmail));
+            .changeAgentEmail(userStatusInfo.getUserEmail())
+            .changeAgentSubjectId(userStatusInfo.getUserSubjectId()));
     return new ResponseEntity<>(HttpStatus.NO_CONTENT);
   }
 

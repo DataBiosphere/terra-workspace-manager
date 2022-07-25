@@ -608,16 +608,16 @@ class WorkspaceServiceTest extends BaseConnectedTest {
     Workspace request = defaultRequestBuilder(UUID.randomUUID()).properties(propertyMap).build();
     workspaceService.createWorkspace(request, USER_REQUEST);
     UUID workspaceUuid = request.getWorkspaceId();
-    var lastUpdatedDate = workspaceActivityLogDao.getLastUpdatedDate(workspaceUuid);
-    assertTrue(lastUpdatedDate.isPresent());
+    var lastUpdateDetails = workspaceActivityLogDao.getLastUpdateDetails(workspaceUuid);
+    assertTrue(lastUpdateDetails.isPresent());
 
     List<String> propertyKeys = new ArrayList<>(Arrays.asList("foo", "foo1"));
 
-    workspaceService.deleteWorkspaceProperties(workspaceUuid, propertyKeys);
+    workspaceService.deleteWorkspaceProperties(workspaceUuid, propertyKeys, USER_REQUEST.getEmail(), USER_REQUEST.getSubjectId());
     Workspace deletedWorkspace = workspaceService.getWorkspace(workspaceUuid);
 
-    var updatedDateAfterWorkspaceUpdate = workspaceActivityLogDao.getLastUpdatedDate(workspaceUuid);
-    assertTrue(lastUpdatedDate.get().isBefore(updatedDateAfterWorkspaceUpdate.get()));
+    var updateDetailsAfterWorkspaceUpdate = workspaceActivityLogDao.getLastUpdateDetails(workspaceUuid);
+    assertTrue(lastUpdateDetails.get().getChangedDate().isBefore(updateDetailsAfterWorkspaceUpdate.get().getChangedDate()));
     Map<String, String> expectedPropertyMap = Map.of("xyzzy", "plohg");
     assertEquals(
         expectedPropertyMap,

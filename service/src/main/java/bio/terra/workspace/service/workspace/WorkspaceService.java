@@ -297,11 +297,16 @@ public class WorkspaceService {
    *
    * @param workspaceUuid workspace of interest
    * @param propertyKeys list of keys in properties
+   * @param userEmail user email fetched from SAM based on the {@link AuthenticatedUserRequest}
+   * @param subjectId subject id fetched from SAM based on the {@link AuthenticatedUserRequest}
    */
-  public void deleteWorkspaceProperties(UUID workspaceUuid, List<String> propertyKeys) {
+  public void deleteWorkspaceProperties(UUID workspaceUuid, List<String> propertyKeys,
+      String userEmail, String subjectId) {
     workspaceDao.deleteWorkspaceProperties(workspaceUuid, propertyKeys);
     workspaceActivityLogDao.writeActivity(
-        workspaceUuid, new DbWorkspaceActivityLog().operationType(OperationType.UPDATE));
+        workspaceUuid, new DbWorkspaceActivityLog().operationType(OperationType.UPDATE)
+            .changeAgentEmail(userEmail)
+            .changeAgentSubjectId(subjectId));
   }
 
   /**
