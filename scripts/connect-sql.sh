@@ -31,6 +31,11 @@ case $1 in
     dbuser=$(<"${configdir}/stairway-db-username.txt")
     dbpw=$(<"${configdir}/stairway-db-password.txt")
     ;;
+  landingzone)
+    db=$(<"${configdir}/landingzone-db-name.txt")
+    dbuser=$(<"${configdir}/landingzone-db-username.txt")
+    dbpw=$(<"${configdir}/landingzone-db-password.txt")
+    ;;
   *)
     echo "Specify wsm or stairway to choose which database to connect to"
     exit 1

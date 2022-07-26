@@ -30,6 +30,12 @@
 #   janitor-client-sa.json     | Creds to access Janitor service. These are only available in the
 #                              | integration environment and are not retrieved in other environments.
 #   ---------------------------+-------------------------------------------------------------------------
+#   landingzone-db-name.txt    | Landingzone database name
+#   ---------------------------+-------------------------------------------------------------------------
+#   landingzone-db-password.txt| Landingzone database password
+#   ---------------------------+-------------------------------------------------------------------------
+#   landingzone-db-username.txt| Landingzone database username
+#   ---------------------------+-------------------------------------------------------------------------
 #   local-properties.yml       | Additional property file optionally loaded by application.yml. It is
 #                              | populated with the test application configuration when the target is
 #                              | "local". Otherwise, it is empty.

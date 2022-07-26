@@ -1,0 +1,51 @@
+# The schema for a landing zone
+databaseChangeLog:
+- changeSet:
+    id: creating schema
+    author: myazykov
+    changes:
+    - createTable:
+        tableName: landingzone
+        remarks: |
+          There is one row in the landingzone table for each landing zone deployed.
+        columns:
+          - column:
+              name: landingzone_id
+              type: text
+              constraints:
+                primaryKey: true
+                nullable: false
+          - column:
+              name: resourcegroup
+              type: text
+              constraints:
+                nullable: false
+                unique: false
+              remarks: |
+                A resource group full qualified ID where the landing zone resources reside. Required for Azure landing zones.
+          - column:
+              name: template_id
+              type: text
+              remarks: |
+                The template (definition) used to create a landing zone.
+          - column:
+              name: template_version_id
+              type: text
+              remarks: |
+                The template (definition) version ID used to create a landing zone.
+          - column:
+              name: display_name
+              type: text
+              remarks: |
+                A user-friendly name for the landing zone. There is no guarantee of uniqueness across landing zones.
+                Can be null.
+          - column:
+              name: description
+              type: text
+              remarks: |
+                Free-form text describing the landing zone. Can be null.
+          - column:
+              name: properties
+              type: jsonb
+              remarks: |
+                Key-value map to allow applications to store additional properties for the landing zone deployment.

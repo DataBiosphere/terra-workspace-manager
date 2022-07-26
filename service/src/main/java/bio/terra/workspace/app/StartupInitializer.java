@@ -3,6 +3,7 @@ package bio.terra.workspace.app;
 import bio.terra.common.db.DataSourceInitializer;
 import bio.terra.common.migrate.LiquibaseMigrator;
 import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
+import bio.terra.workspace.app.configuration.external.LandingZoneDatabaseConfiguration;
 import bio.terra.workspace.app.configuration.external.WorkspaceDatabaseConfiguration;
 import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.workspace.WsmApplicationService;
@@ -11,12 +12,15 @@ import org.springframework.context.ApplicationContext;
 
 public final class StartupInitializer {
   private static final String changelogPath = "db/changelog.xml";
+  private static final String changelogPathLandingZone = "landingzone.db/changelog.xml";
 
   public static void initialize(ApplicationContext applicationContext) {
     // Initialize or upgrade the database depending on the configuration
     LiquibaseMigrator migrateService = applicationContext.getBean(LiquibaseMigrator.class);
     WorkspaceDatabaseConfiguration workspaceDatabaseConfiguration =
         applicationContext.getBean(WorkspaceDatabaseConfiguration.class);
+    LandingZoneDatabaseConfiguration landingZoneDatabaseConfiguration =
+        applicationContext.getBean(LandingZoneDatabaseConfiguration.class);
     JobService jobService = applicationContext.getBean(JobService.class);
     WsmApplicationService appService = applicationContext.getBean(WsmApplicationService.class);
     FeatureConfiguration featureConfiguration =
@@ -32,6 +36,14 @@ public final class StartupInitializer {
       migrateService.initialize(changelogPath, workspaceDataSource);
     } else if (workspaceDatabaseConfiguration.isUpgradeOnStart()) {
       migrateService.upgrade(changelogPath, workspaceDataSource);
+    }
+
+    DataSource landingZoneDataSource =
+        DataSourceInitializer.initializeDataSource(landingZoneDatabaseConfiguration);
+    if (landingZoneDatabaseConfiguration.isInitializeOnStart()) {
+      migrateService.initialize(changelogPathLandingZone, landingZoneDataSource);
+    } else if (landingZoneDatabaseConfiguration.isUpgradeOnStart()) {
+      migrateService.upgrade(changelogPathLandingZone, landingZoneDataSource);
     }
 
     // The JobService initialization also handles Stairway initialization.
