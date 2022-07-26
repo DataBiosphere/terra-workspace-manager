@@ -375,10 +375,7 @@ class WorkspaceServiceTest extends BaseConnectedTest {
 
   @Test
   void testUpdateWorkspace() {
-    Map<String, String> propertyMap = new HashMap<>();
-    propertyMap.put("foo", "bar");
-    propertyMap.put("xyzzy", "plohg");
-    Workspace request = defaultRequestBuilder(UUID.randomUUID()).properties(propertyMap).build();
+    Workspace request = defaultRequestBuilder(UUID.randomUUID()).build();
     workspaceService.createWorkspace(request, USER_REQUEST);
     UUID workspaceUuid = request.getWorkspaceId();
     var lastUpdatedDate = workspaceActivityLogDao.getLastUpdatedDate(workspaceUuid);
@@ -391,13 +388,9 @@ class WorkspaceServiceTest extends BaseConnectedTest {
     String userFacingId = "my-user-facing-id";
     String name = "My workspace";
     String description = "The greatest workspace";
-    Map<String, String> propertyMap2 = new HashMap<>();
-    propertyMap.put("ted", "lasso");
-    propertyMap.put("keeley", "jones");
 
     Workspace updatedWorkspace =
-        workspaceService.updateWorkspace(
-            workspaceUuid, userFacingId, name, description, propertyMap2);
+        workspaceService.updateWorkspace(workspaceUuid, userFacingId, name, description);
 
     var updatedDateAfterWorkspaceUpdate = workspaceActivityLogDao.getLastUpdatedDate(workspaceUuid);
     assertTrue(lastUpdatedDate.get().isBefore(updatedDateAfterWorkspaceUpdate.get()));
@@ -407,12 +400,11 @@ class WorkspaceServiceTest extends BaseConnectedTest {
     assertEquals(name, updatedWorkspace.getDisplayName().get());
     assertTrue(updatedWorkspace.getDescription().isPresent());
     assertEquals(description, updatedWorkspace.getDescription().get());
-    assertEquals(propertyMap2, updatedWorkspace.getProperties());
 
     String otherDescription = "The deprecated workspace";
 
     Workspace secondUpdatedWorkspace =
-        workspaceService.updateWorkspace(workspaceUuid, null, null, otherDescription, null);
+        workspaceService.updateWorkspace(workspaceUuid, null, null, otherDescription);
 
     var secondUpdatedDateAfterWorkspaceUpdate =
         workspaceActivityLogDao.getLastUpdatedDate(workspaceUuid);
@@ -425,12 +417,11 @@ class WorkspaceServiceTest extends BaseConnectedTest {
     assertEquals(name, secondUpdatedWorkspace.getDisplayName().get());
     assertTrue(secondUpdatedWorkspace.getDescription().isPresent());
     assertEquals(otherDescription, secondUpdatedWorkspace.getDescription().get());
-    assertEquals(propertyMap2, updatedWorkspace.getProperties());
 
     // Sending through empty strings and an empty map clears the values.
     Map<String, String> propertyMap3 = new HashMap<>();
     Workspace thirdUpdatedWorkspace =
-        workspaceService.updateWorkspace(workspaceUuid, userFacingId, "", "", propertyMap3);
+        workspaceService.updateWorkspace(workspaceUuid, userFacingId, "", "");
     var thirdUpdatedDateAfterWorkspaceUpdate =
         workspaceActivityLogDao.getLastUpdatedDate(workspaceUuid);
     assertTrue(
@@ -445,7 +436,7 @@ class WorkspaceServiceTest extends BaseConnectedTest {
     // Fail if request doesn't contain any updated fields.
     assertThrows(
         MissingRequiredFieldException.class,
-        () -> workspaceService.updateWorkspace(workspaceUuid, null, null, null, null));
+        () -> workspaceService.updateWorkspace(workspaceUuid, null, null, null));
     var failedUpdateDate = workspaceActivityLogDao.getLastUpdatedDate(workspaceUuid);
     assertEquals(thirdUpdatedDateAfterWorkspaceUpdate.get(), failedUpdateDate.get());
   }
@@ -464,11 +455,35 @@ class WorkspaceServiceTest extends BaseConnectedTest {
     DuplicateUserFacingIdException ex =
         assertThrows(
             DuplicateUserFacingIdException.class,
-            () ->
-                workspaceService.updateWorkspace(
-                    secondWorkspaceUuid, userFacingId, null, null, null));
+            () -> workspaceService.updateWorkspace(secondWorkspaceUuid, userFacingId, null, null));
     assertEquals(
         ex.getMessage(), String.format("Workspace with ID %s already exists", userFacingId));
+  }
+
+  @Test
+  void testUpdateWorkspaceProperties() {
+    // Create one workspace with properties
+    Map<String, String> propertyMap =
+        new HashMap<>() {
+          {
+            put("foo", "bar");
+            put("xyzzy", "plohg");
+          }
+        };
+    Workspace request = defaultRequestBuilder(UUID.randomUUID()).build();
+    workspaceService.createWorkspace(request, USER_REQUEST);
+    UUID workspaceUuid = request.getWorkspaceId();
+    var lastUpdatedDate = workspaceActivityLogDao.getLastUpdatedDate(workspaceUuid);
+    assertTrue(lastUpdatedDate.isPresent());
+
+    // Workspace update new properties
+    workspaceService.updateWorkspaceProperties(workspaceUuid, propertyMap);
+    Workspace updatedWorkspace = workspaceService.getWorkspace(workspaceUuid);
+
+    var updatedDateAfterWorkspaceUpdate = workspaceActivityLogDao.getLastUpdatedDate(workspaceUuid);
+    assertTrue(lastUpdatedDate.get().isBefore(updatedDateAfterWorkspaceUpdate.get()));
+    assertEquals(
+        propertyMap, updatedWorkspace.getProperties(), "Workspace properties update successfully");
   }
 
   @Test

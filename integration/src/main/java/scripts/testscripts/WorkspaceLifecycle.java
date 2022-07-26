@@ -3,6 +3,7 @@ package scripts.testscripts;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.equalTo;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -96,12 +97,25 @@ public class WorkspaceLifecycle extends WorkspaceApiTestScriptBase {
     assertNotNull(updatedDescription.getLastUpdatedDate());
     assertTrue(firstLastUpdatedDate.isBefore(updatedDescription.getLastUpdatedDate()));
 
+    Properties updateProperties = buildProperties(Map.of("foo", "barUpdate", "ted", "lasso"));
+
+    workspaceApi.updateWorkspaceProperties(updateProperties, workspaceUuid);
+    WorkspaceDescription updatedWorkspaceDescription = workspaceApi.getWorkspace(workspaceUuid);
+    assertTrue(
+        updatedWorkspaceDescription.getProperties().contains(buildProperty("xyzzy", "plohg")));
+    assertTrue(
+        updatedWorkspaceDescription.getProperties().contains(buildProperty("foo", "barUpdate")));
+    assertTrue(updatedWorkspaceDescription.getProperties().contains(buildProperty("ted", "lasso")));
+    assertEquals(3, updatedWorkspaceDescription.getProperties().size());
+    System.out.println(updatedWorkspaceDescription.getProperties());
+
     List<String> propertykey = new ArrayList<>();
     propertykey.add("xyzzy");
     workspaceApi.deleteWorkspaceProperties(propertykey, workspaceUuid);
-    Properties updatedWorkspaceDescription =
+    Properties deletedWorkspaceDescription =
         workspaceApi.getWorkspace(workspaceUuid).getProperties();
-    assertFalse(updatedWorkspaceDescription.contains(buildProperties(Map.of("xyzzy", "plohg"))));
+    assertFalse(deletedWorkspaceDescription.contains(buildProperty("xyzzy", "plohg")));
+    System.out.println(deletedWorkspaceDescription);
 
     workspaceApi.deleteWorkspace(workspaceUuid);
     ClientTestUtils.assertHttpSuccess(workspaceApi, "DELETE workspace");
@@ -109,14 +123,16 @@ public class WorkspaceLifecycle extends WorkspaceApiTestScriptBase {
 
   public Properties buildProperties(Map<String, String> propertyMap) {
     Properties properties = new Properties();
-    Property property = new Property();
-
     for (Map.Entry<String, String> entry : propertyMap.entrySet()) {
-      property.setKey(entry.getKey());
-      property.setValue(entry.getValue());
-      properties.add(property);
+      properties.add(buildProperty(entry.getKey(), entry.getValue()));
     }
-
     return properties;
+  }
+
+  public Property buildProperty(String key, String value) {
+    Property property = new Property();
+    property.setKey(key);
+    property.setValue(value);
+    return property;
   }
 }

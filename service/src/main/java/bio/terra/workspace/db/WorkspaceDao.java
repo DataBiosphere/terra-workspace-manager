@@ -69,7 +69,8 @@ public class WorkspaceDao {
   private final NamedParameterJdbcTemplate jdbcTemplate;
 
   @Autowired
-  public WorkspaceDao(NamedParameterJdbcTemplate jdbcTemplate) {
+  public WorkspaceDao(
+      WorkspaceActivityLogDao workspaceActivityLogDao, NamedParameterJdbcTemplate jdbcTemplate) {
     this.jdbcTemplate = jdbcTemplate;
   }
 
@@ -211,9 +212,8 @@ public class WorkspaceDao {
       UUID workspaceUuid,
       @Nullable String userFacingId,
       @Nullable String name,
-      @Nullable String description,
-      @Nullable Map<String, String> propertyMap) {
-    if (userFacingId == null && name == null && description == null && propertyMap == null) {
+      @Nullable String description) {
+    if (userFacingId == null && name == null && description == null) {
       throw new MissingRequiredFieldException("Must specify field to update.");
     }
 
@@ -233,10 +233,6 @@ public class WorkspaceDao {
 
     if (description != null) {
       params.addValue("description", description);
-    }
-
-    if (propertyMap != null) {
-      params.addValue("properties", DbSerDes.propertiesToJson(propertyMap));
     }
 
     String sql =
@@ -296,6 +292,36 @@ public class WorkspaceDao {
         .addValue("properties", DbSerDes.propertiesToJson(properties))
         .addValue("id", workspaceUuid.toString());
 
+    jdbcTemplate.update(sql, params);
+  }
+
+  /** Update a workspace properties */
+  @WriteTransaction
+  public void updateWorkspaceProperties(UUID workspaceUuid, Map<String, String> propertyMap) {
+    // get current property in this workspace id
+    String selectPropertiesSql = "SELECT properties FROM workspace WHERE workspace_id = :id";
+    MapSqlParameterSource propertiesParams =
+        new MapSqlParameterSource().addValue("id", workspaceUuid.toString());
+    String result;
+
+    try {
+      result = jdbcTemplate.queryForObject(selectPropertiesSql, propertiesParams, String.class);
+      logger.info("Retrieved workspace record {}", result);
+
+    } catch (EmptyResultDataAccessException e) {
+      throw new WorkspaceNotFoundException(String.format("Workspace %s not found.", workspaceUuid));
+    }
+
+    Map<String, String> properties =
+        result == null ? new HashMap<>() : DbSerDes.jsonToProperties(result);
+    properties.putAll(propertyMap);
+    final String sql =
+        "UPDATE workspace SET properties = cast(:properties AS jsonb) WHERE workspace_id = :id";
+
+    var params = new MapSqlParameterSource();
+    params
+        .addValue("properties", DbSerDes.propertiesToJson(properties))
+        .addValue("id", workspaceUuid.toString());
     jdbcTemplate.update(sql, params);
   }
 
