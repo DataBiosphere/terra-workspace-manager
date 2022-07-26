@@ -98,19 +98,24 @@ public class WorkspaceLifecycle extends WorkspaceApiTestScriptBase {
     assertTrue(firstLastUpdatedDate.isBefore(updatedDescription.getLastUpdatedDate()));
 
     Properties updateProperties = buildProperties(Map.of("foo", "barUpdate", "ted", "lasso"));
-    Properties updatedProperties =
-        buildProperties(Map.of("foo", "barUpdate", "ted", "lasso", "xyzzy", "plohg"));
 
     workspaceApi.updateWorkspaceProperties(updateProperties, workspaceUuid);
     WorkspaceDescription updatedWorkspaceDescription = workspaceApi.getWorkspace(workspaceUuid);
-    assertEquals(updatedProperties, updatedWorkspaceDescription.getProperties());
+    assertTrue(
+        updatedWorkspaceDescription.getProperties().contains(buildProperty("xyzzy", "plohg")));
+    assertTrue(
+        updatedWorkspaceDescription.getProperties().contains(buildProperty("foo", "barUpdate")));
+    assertTrue(updatedWorkspaceDescription.getProperties().contains(buildProperty("ted", "lasso")));
+    assertEquals(3, updatedWorkspaceDescription.getProperties().size());
+    System.out.println(updatedWorkspaceDescription.getProperties());
 
     List<String> propertykey = new ArrayList<>();
     propertykey.add("xyzzy");
     workspaceApi.deleteWorkspaceProperties(propertykey, workspaceUuid);
     Properties deletedWorkspaceDescription =
         workspaceApi.getWorkspace(workspaceUuid).getProperties();
-    assertFalse(deletedWorkspaceDescription.contains(buildProperties(Map.of("xyzzy", "plohg"))));
+    assertFalse(deletedWorkspaceDescription.contains(buildProperty("xyzzy", "plohg")));
+    System.out.println(deletedWorkspaceDescription);
 
     workspaceApi.deleteWorkspace(workspaceUuid);
     ClientTestUtils.assertHttpSuccess(workspaceApi, "DELETE workspace");
@@ -118,14 +123,21 @@ public class WorkspaceLifecycle extends WorkspaceApiTestScriptBase {
 
   public Properties buildProperties(Map<String, String> propertyMap) {
     Properties properties = new Properties();
-    Property property = new Property();
 
     for (Map.Entry<String, String> entry : propertyMap.entrySet()) {
+      Property property = new Property();
       property.setKey(entry.getKey());
       property.setValue(entry.getValue());
       properties.add(property);
     }
 
     return properties;
+  }
+
+  public Property buildProperty(String key, String value) {
+    Property property = new Property();
+    property.setKey(key);
+    property.setValue(value);
+    return property;
   }
 }
