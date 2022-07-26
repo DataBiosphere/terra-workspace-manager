@@ -204,7 +204,7 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
         resourceId,
         WsmResourceType.REFERENCED_GCP_GCS_OBJECT,
         userStatusInfo.getUserEmail(),
-        userRequest.getSubjectId());
+        userStatusInfo.getUserSubjectId());
     return new ResponseEntity<>(HttpStatus.NO_CONTENT);
   }
 
@@ -309,7 +309,7 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
         resourceId,
         WsmResourceType.REFERENCED_GCP_GCS_BUCKET,
         userStatusInfo.getUserEmail(),
-        userRequest.getSubjectId());
+        userStatusInfo.getUserSubjectId());
     return new ResponseEntity<>(HttpStatus.NO_CONTENT);
   }
 
@@ -427,7 +427,7 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
         resourceId,
         WsmResourceType.REFERENCED_GCP_BIG_QUERY_DATA_TABLE,
         userStatusInfo.getUserEmail(),
-        userRequest.getSubjectId());
+        userStatusInfo.getUserSubjectId());
     return new ResponseEntity<>(HttpStatus.NO_CONTENT);
   }
 
@@ -542,7 +542,7 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
         resourceId,
         WsmResourceType.REFERENCED_GCP_BIG_QUERY_DATASET,
         userStatusInfo.getUserEmail(),
-        userRequest.getSubjectId());
+        userStatusInfo.getUserSubjectId());
     return new ResponseEntity<>(HttpStatus.NO_CONTENT);
   }
 
@@ -652,7 +652,7 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
         resourceId,
         WsmResourceType.REFERENCED_ANY_DATA_REPO_SNAPSHOT,
         userStatusInfo.getUserEmail(),
-        userRequest.getSubjectId());
+        userStatusInfo.getUserSubjectId());
     return new ResponseEntity<>(HttpStatus.NO_CONTENT);
   }
 
@@ -1003,7 +1003,7 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
         resourceId,
         WsmResourceType.REFERENCED_ANY_GIT_REPO,
         userStatusInfo.getUserEmail(),
-        userRequest.getSubjectId());
+        userStatusInfo.getUserSubjectId());
     return new ResponseEntity<>(HttpStatus.OK);
   }
 
@@ -1124,7 +1124,7 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
         resourceId,
         WsmResourceType.REFERENCED_ANY_TERRA_WORKSPACE,
         userStatusInfo.getUserEmail(),
-        userRequest.getSubjectId());
+        userStatusInfo.getUserSubjectId());
     return new ResponseEntity<>(HttpStatus.OK);
   }
 }

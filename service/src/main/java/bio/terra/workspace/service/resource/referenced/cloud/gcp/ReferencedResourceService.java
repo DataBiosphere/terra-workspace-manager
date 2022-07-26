@@ -61,13 +61,6 @@ public class ReferencedResourceService {
   @Traced
   public ReferencedResource createReferenceResource(
       ReferencedResource resource, AuthenticatedUserRequest userRequest) {
-    return createReferenceResource(resource, OperationType.CREATE, userRequest);
-  }
-
-  private ReferencedResource createReferenceResource(
-      ReferencedResource resource,
-      OperationType operationType,
-      AuthenticatedUserRequest userRequest) {
     String jobDescription =
         String.format(
             "Create reference %s; id %s; name %s",
@@ -83,7 +76,7 @@ public class ReferencedResourceService {
             .flightClass(CreateReferenceResourceFlight.class)
             .userRequest(userRequest)
             .resource(resource)
-            .operationType(operationType)
+            .operationType(OperationType.CREATE)
             .workspaceId(resource.getWorkspaceId().toString())
             .resourceType(resource.getResourceType())
             .stewardshipType(StewardshipType.REFERENCED);
