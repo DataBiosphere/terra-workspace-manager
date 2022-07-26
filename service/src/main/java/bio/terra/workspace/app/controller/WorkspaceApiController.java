@@ -529,7 +529,7 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
   }
 
   // Convert properties list into a map
-  private Map<String, String> propertyMapFromApi(ApiProperties properties) {
+  private Map<String, String> propertyMapFromApi(List<ApiProperty> properties) {
     Map<String, String> propertyMap = new HashMap<>();
     if (properties != null) {
       for (ApiProperty property : properties) {
