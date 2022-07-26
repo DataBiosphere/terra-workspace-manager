@@ -265,6 +265,36 @@ public class WorkspaceDao {
     return updated;
   }
 
+  @WriteTransaction
+  public void deleteWorkspaceProperties(UUID workspaceUuid, List<String> propertyKeys) {
+    // get current property in this workspace id
+    String selectPropertiesSql = "SELECT properties FROM workspace WHERE workspace_id = :id";
+    MapSqlParameterSource propertiesParams =
+        new MapSqlParameterSource().addValue("id", workspaceUuid.toString());
+    String result;
+
+    try {
+      result = jdbcTemplate.queryForObject(selectPropertiesSql, propertiesParams, String.class);
+      logger.info("retrieved workspace properties {}", result);
+    } catch (EmptyResultDataAccessException e) {
+      throw new WorkspaceNotFoundException(String.format("Workspace %s not found.", workspaceUuid));
+    }
+    Map<String, String> properties =
+        result == null ? new HashMap<>() : DbSerDes.jsonToProperties(result);
+    for (String key : propertyKeys) {
+      properties.remove(key);
+    }
+    final String sql =
+        "UPDATE workspace SET properties = cast(:properties AS jsonb) WHERE workspace_id = :id";
+
+    var params = new MapSqlParameterSource();
+    params
+        .addValue("properties", DbSerDes.propertiesToJson(properties))
+        .addValue("id", workspaceUuid.toString());
+
+    jdbcTemplate.update(sql, params);
+  }
+
   /** Update a workspace properties */
   @WriteTransaction
   public void updateWorkspaceProperties(UUID workspaceUuid, Map<String, String> propertyMap) {

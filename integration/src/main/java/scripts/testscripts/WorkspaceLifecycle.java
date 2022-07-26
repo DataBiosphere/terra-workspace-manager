@@ -3,6 +3,7 @@ package scripts.testscripts;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.equalTo;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -17,8 +18,10 @@ import bio.terra.workspace.model.Property;
 import bio.terra.workspace.model.UpdateWorkspaceRequestBody;
 import bio.terra.workspace.model.WorkspaceDescription;
 import bio.terra.workspace.model.WorkspaceStageModel;
-import java.util.HashMap;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
+import java.util.HashMap;
 import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -45,28 +48,21 @@ public class WorkspaceLifecycle extends WorkspaceApiTestScriptBase {
     String validUserFacingId = "user-facing-id-" + uuidStr;
     String validUserFacingId2 = "user-facing-id-2-" + uuidStr;
 
-    Map<String, String> properties =
-        new HashMap<>() {
-          {
-            put("foo", "bar");
-            put("xyzzy", "plohg");
-          }
-        };
-    Properties initialProperties = buildProperties(properties);
+    Properties propertyMap = buildProperties(Map.of("foo", "bar", "xyzzy", "plohg"));
 
     CreateWorkspaceRequestBody createBody =
         new CreateWorkspaceRequestBody()
             .id(workspaceUuid)
             .userFacingId(invalidUserFacingId)
             .stage(WorkspaceStageModel.MC_WORKSPACE)
-            .properties(initialProperties);
+            .properties(propertyMap);
 
     ApiException ex =
         assertThrows(ApiException.class, () -> workspaceApi.createWorkspace(createBody));
     assertThat(
         ex.getMessage(),
         containsString(
-            "ID must have 3-63 characters, contain lowercase letters, numbers, dashes, or underscores, and start with lowercase letter"));
+            "ID must have 3-63 characters, contain lowercase letters, numbers, dashes, or underscores, and start with lowercase letter or number"));
 
     createBody.userFacingId(validUserFacingId);
     workspaceApi.createWorkspace(createBody);
@@ -90,7 +86,7 @@ public class WorkspaceLifecycle extends WorkspaceApiTestScriptBase {
     assertThat(
         ex.getMessage(),
         containsString(
-            "ID must have 3-63 characters, contain lowercase letters, numbers, dashes, or underscores, and start with lowercase letter"));
+            "ID must have 3-63 characters, contain lowercase letters, numbers, dashes, or underscores, and start with lowercase letter or number"));
 
     updateBody.userFacingId(validUserFacingId2);
     WorkspaceDescription updatedDescription =
@@ -101,6 +97,13 @@ public class WorkspaceLifecycle extends WorkspaceApiTestScriptBase {
     assertThat(updatedDescription.getDescription(), equalTo(WORKSPACE_DESCRIPTION));
     assertNotNull(updatedDescription.getLastUpdatedDate());
     assertTrue(firstLastUpdatedDate.isBefore(updatedDescription.getLastUpdatedDate()));
+
+    List<String> propertykey = new ArrayList<>();
+    propertykey.add("xyzzy");
+    workspaceApi.deleteWorkspaceProperties(propertykey, workspaceUuid);
+    Properties updatedWorkspaceDescription =
+        workspaceApi.getWorkspace(workspaceUuid).getProperties();
+    assertFalse(updatedWorkspaceDescription.contains(buildProperties(Map.of("xyzzy", "plohg"))));
 
     Properties updateProperties = buildProperties(Map.of("foo", "barUpdate", "ted", "lasso"));
     Properties updatedProperties =

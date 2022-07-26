@@ -1,10 +1,10 @@
 package bio.terra.workspace.app.controller;
 
-import bio.terra.common.exception.BadRequestException;
 import bio.terra.common.exception.ValidationException;
 import bio.terra.workspace.common.exception.InternalLogicException;
 import bio.terra.workspace.common.utils.ControllerValidationUtils;
 import bio.terra.workspace.generated.model.ApiControlledResourceCommonFields;
+import bio.terra.workspace.generated.model.ApiControlledResourceIamRole;
 import bio.terra.workspace.generated.model.ApiJobReport;
 import bio.terra.workspace.generated.model.ApiJobReport.StatusEnum;
 import bio.terra.workspace.generated.model.ApiPrivateResourceUser;
@@ -17,12 +17,12 @@ import bio.terra.workspace.service.iam.model.SamConstants;
 import bio.terra.workspace.service.resource.controlled.model.AccessScopeType;
 import bio.terra.workspace.service.resource.controlled.model.ManagedByType;
 import bio.terra.workspace.service.resource.controlled.model.PrivateUserRole;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import javax.servlet.http.HttpServletRequest;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.http.HttpStatus;
 
 /**
@@ -147,13 +147,26 @@ public class ControllerBase {
 
           // Translate the incoming role list into our internal model form
           // This also validates that the incoming API model values are correct.
-          List<ControlledResourceIamRole> roles =
-              commonFields.getPrivateResourceUser().getPrivateResourceIamRoles().stream()
-                  .map(ControlledResourceIamRole::fromApiModel)
-                  .collect(Collectors.toList());
-          if (roles.isEmpty()) {
-            throw new ValidationException(
-                "You must specify at least one role when you specify PrivateResourceIamRoles");
+          List<ControlledResourceIamRole> roles;
+          ApiControlledResourceIamRole apiControlledResourceIamRole =
+              commonFields.getPrivateResourceUser().getPrivateResourceIamRole();
+
+          if (apiControlledResourceIamRole != null) {
+            roles = new ArrayList<ControlledResourceIamRole>();
+            roles.add(
+                ControlledResourceIamRole.fromApiModel(
+                    commonFields.getPrivateResourceUser().getPrivateResourceIamRole()));
+          } else {
+            // PF-1218 - Once UI & CLI are no longer sending this for application managed resources,
+            // remove this block.
+            roles =
+                commonFields.getPrivateResourceUser().getPrivateResourceIamRoles().stream()
+                    .map(ControlledResourceIamRole::fromApiModel)
+                    .collect(Collectors.toList());
+            if (roles.isEmpty()) {
+              throw new ValidationException(
+                  "You must specify at least one role when you specify PrivateResourceIamRoles");
+            }
           }
 
           // The legal options for the assigned user of an application is READER
@@ -170,6 +183,7 @@ public class ControllerBase {
                       + role.toApiModel());
             }
           }
+
           return new PrivateUserRole.Builder()
               .present(true)
               .userEmail(userEmail)
@@ -179,30 +193,12 @@ public class ControllerBase {
 
       case MANAGED_BY_USER:
         {
-          // TODO: PF-1218 The target state is that supplying a user is not allowed.
-          //  However, current CLI and maybe UI are supplying all or part of the structure,
-          //  so tolerate all states: no-input, only roles, roles and user
-          /* Target state:
-          // Supplying a user is not allowed. The creating user is always the assigned user.
           validateNoInputUser(inputUser);
-          */
 
           // Fill in the user role for the creating user
           String userEmail =
               SamRethrow.onInterrupted(
                   () -> samService.getUserEmailFromSam(userRequest), "getUserEmailFromSam");
-
-          // TODO: PF-1218 temporarily allow user spec and make sure it matches the requesting
-          //  user. Ignore the role list. If the user name is specified, then make sure it
-          //  matches the requesting name.
-          if (inputUser != null && inputUser.getUserName() != null) {
-            if (!StringUtils.equalsIgnoreCase(userEmail, inputUser.getUserName())) {
-              throw new BadRequestException(
-                  "User ("
-                      + userEmail
-                      + ") may only assign a private controlled resource to themselves");
-            }
-          }
 
           // At this time, all private resources grant EDITOR permission to the resource user.
           // This could be parameterized if we ever have reason to grant different permissions

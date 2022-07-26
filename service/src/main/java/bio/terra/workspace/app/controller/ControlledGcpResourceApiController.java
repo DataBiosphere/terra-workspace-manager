@@ -11,6 +11,7 @@ import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.job.JobService.AsyncJobResult;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceMetadataManager;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceService;
+import bio.terra.workspace.service.resource.controlled.cloud.gcp.GcpResourceConstant;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook.ControlledAiNotebookInstanceResource;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.bqdataset.ControlledBigQueryDatasetResource;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.ControlledGcsBucketResource;
@@ -18,6 +19,9 @@ import bio.terra.workspace.service.resource.controlled.model.ControlledResourceF
 import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.workspace.GcpCloudContextService;
 import bio.terra.workspace.service.workspace.WorkspaceService;
+import bio.terra.workspace.service.workspace.model.Workspace;
+import bio.terra.workspace.service.workspace.model.WorkspaceConstants;
+import com.google.common.base.Strings;
 import java.util.Optional;
 import java.util.UUID;
 import javax.servlet.http.HttpServletRequest;
@@ -69,8 +73,11 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
             .bucketName(body.getGcsBucket().getName())
             .common(commonFields)
             .build();
-    workspaceService.validateMcWorkspaceAndAction(
-        userRequest, workspaceUuid, resource.getCategory().getSamCreateResourceAction());
+    Workspace workspace =
+        workspaceService.validateMcWorkspaceAndAction(
+            userRequest, workspaceUuid, resource.getCategory().getSamCreateResourceAction());
+
+    body.getGcsBucket().location(getResourceLocation(workspace, body.getGcsBucket().getLocation()));
 
     final ControlledGcsBucketResource createdBucket =
         controlledResourceService
@@ -83,6 +90,16 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
             .resourceId(createdBucket.getResourceId())
             .gcpBucket(createdBucket.toApiResource());
     return new ResponseEntity<>(response, HttpStatus.OK);
+  }
+
+  private String getResourceLocation(Workspace workspace, String requestedLocation) {
+    return Strings.isNullOrEmpty(requestedLocation)
+        ? workspace
+            .getProperties()
+            .getOrDefault(
+                WorkspaceConstants.Properties.DEFAULT_RESOURCE_LOCATION,
+                GcpResourceConstant.DEFAULT_REGION)
+        : requestedLocation;
   }
 
   @Override
@@ -239,8 +256,9 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
     ControlledResourceFields commonFields =
         toCommonFields(workspaceUuid, body.getCommon(), userRequest);
     // Check authz before reading the projectId from workspace DB.
-    workspaceService.validateWorkspaceAndAction(
-        userRequest, workspaceUuid, ControllerValidationUtils.samCreateAction(commonFields));
+    Workspace workspace =
+        workspaceService.validateWorkspaceAndAction(
+            userRequest, workspaceUuid, ControllerValidationUtils.samCreateAction(commonFields));
     String projectId = gcpCloudContextService.getRequiredGcpProject(workspaceUuid);
     ControlledBigQueryDatasetResource resource =
         ControlledBigQueryDatasetResource.builder()
@@ -250,6 +268,8 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
             .projectId(projectId)
             .common(commonFields)
             .build();
+
+    body.getDataset().location(getResourceLocation(workspace, body.getDataset().getLocation()));
 
     final ControlledBigQueryDatasetResource createdDataset =
         controlledResourceService

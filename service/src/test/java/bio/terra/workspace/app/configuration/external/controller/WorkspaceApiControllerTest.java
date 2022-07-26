@@ -27,6 +27,8 @@ import bio.terra.workspace.service.iam.model.WsmIamRole;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.time.OffsetDateTime;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -180,6 +182,29 @@ public class WorkspaceApiControllerTest extends BaseConnectedTest {
   }
 
   @Test
+  public void deleteWorkspaceProperties() throws Exception {
+    UUID workspaceId = createDefaultWorkspace().getId();
+    ApiWorkspaceDescription sourceWorkspace = getWorkspaceDescription(workspaceId);
+    ArrayList propertyUpdate = new ArrayList<>(Arrays.asList("foo", "foo1"));
+
+    mockMvc
+        .perform(
+            addAuth(
+                patch(String.format(UPDATE_WORKSPACES_V1_PROPERTIES_PATH_FORMAT, workspaceId))
+                    .contentType(MediaType.APPLICATION_JSON_VALUE)
+                    .accept(MediaType.APPLICATION_JSON)
+                    .characterEncoding("UTF-8")
+                    .content(objectMapper.writeValueAsString(propertyUpdate)),
+                USER_REQUEST))
+        .andExpect(status().is(HttpStatus.SC_NO_CONTENT))
+        .andReturn()
+        .getResponse()
+        .getContentAsString();
+
+    assertEquals(sourceWorkspace.getProperties(), buildProperties(Map.of("xyzzy", "plohg")));
+  }
+
+  @Test
   public void updateWorkspaceProperties() throws Exception {
     UUID workspaceId = createDefaultWorkspace().getId();
     ApiWorkspaceDescription sourceWorkspace = getWorkspaceDescription(workspaceId);
@@ -188,7 +213,7 @@ public class WorkspaceApiControllerTest extends BaseConnectedTest {
     mockMvc
         .perform(
             addAuth(
-                post(String.format(WORKSPACES_V1_PROPERTIES_PATH_FORMAT, workspaceId))
+                post(String.format(UPDATE_WORKSPACES_V1_PROPERTIES_PATH_FORMAT, workspaceId))
                     .contentType(MediaType.APPLICATION_JSON_VALUE)
                     .accept(MediaType.APPLICATION_JSON)
                     .characterEncoding("UTF-8")

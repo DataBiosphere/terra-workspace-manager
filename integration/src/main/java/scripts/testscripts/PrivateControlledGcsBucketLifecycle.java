@@ -1,8 +1,8 @@
 package scripts.testscripts;
 
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.containsString;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static scripts.utils.GcsBucketUtils.makeControlledGcsBucketUserPrivate;
@@ -23,7 +23,6 @@ import bio.terra.workspace.model.GrantRoleRequestBody;
 import bio.terra.workspace.model.IamRole;
 import bio.terra.workspace.model.JobControl;
 import bio.terra.workspace.model.ManagedBy;
-import bio.terra.workspace.model.PrivateResourceIamRoles;
 import bio.terra.workspace.model.PrivateResourceUser;
 import bio.terra.workspace.model.ResourceList;
 import bio.terra.workspace.model.ResourceType;
@@ -154,47 +153,55 @@ public class PrivateControlledGcsBucketLifecycle extends WorkspaceAllocateTestSc
     Bucket maybeBucket = ownerStorageClient.get(bucketName);
     assertNull(maybeBucket);
 
-    // TODO: PF-1218 - change these to negative tests - should error - when
-    //  the ticket is complete. These exercise two create cases with currently
-    //  valid combinations of private user.
-    PrivateResourceIamRoles roles = new PrivateResourceIamRoles();
-    roles.add(ControlledResourceIamRole.READER);
-
     // Supply all private user parameters
     PrivateResourceUser privateUserFull =
         new PrivateResourceUser()
             .userName(privateResourceUser.userEmail)
-            .privateResourceIamRoles(roles);
+            .privateResourceIamRole(ControlledResourceIamRole.READER);
 
-    CreatedControlledGcpGcsBucket userFullBucket =
-        GcsBucketUtils.makeControlledGcsBucket(
-            privateUserResourceApi,
-            getWorkspaceId(),
-            RESOURCE_PREFIX + UUID.randomUUID().toString(),
-            /*bucketName=*/ null,
-            AccessScope.PRIVATE_ACCESS,
-            ManagedBy.USER,
-            CloningInstructionsEnum.NOTHING,
-            privateUserFull);
-    assertNotNull(userFullBucket.getGcpBucket().getAttributes().getBucketName());
-    deleteBucket(workspaceOwnerResourceApi, userFullBucket.getResourceId());
+    var ex =
+        assertThrows(
+            ApiException.class,
+            () ->
+                GcsBucketUtils.makeControlledGcsBucket(
+                    privateUserResourceApi,
+                    getWorkspaceId(),
+                    RESOURCE_PREFIX + UUID.randomUUID().toString(),
+                    /*bucketName=*/ null,
+                    AccessScope.PRIVATE_ACCESS,
+                    ManagedBy.USER,
+                    CloningInstructionsEnum.NOTHING,
+                    privateUserFull));
+    assertThat(
+        ex.getMessage(),
+        containsString(
+            "PrivateResourceUser can only be specified by applications for private resources"));
+    assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, ex.getCode());
 
     // Supply just the roles, but no email
     PrivateResourceUser privateUserNoEmail =
-        new PrivateResourceUser().userName(null).privateResourceIamRoles(roles);
+        new PrivateResourceUser()
+            .userName(null)
+            .privateResourceIamRole(ControlledResourceIamRole.READER);
 
-    CreatedControlledGcpGcsBucket userNoEmailBucket =
-        GcsBucketUtils.makeControlledGcsBucket(
-            privateUserResourceApi,
-            getWorkspaceId(),
-            RESOURCE_PREFIX + UUID.randomUUID().toString(),
-            /*bucketName=*/ null,
-            AccessScope.PRIVATE_ACCESS,
-            ManagedBy.USER,
-            CloningInstructionsEnum.NOTHING,
-            privateUserNoEmail);
-    assertNotNull(userNoEmailBucket.getGcpBucket().getAttributes().getBucketName());
-    deleteBucket(workspaceOwnerResourceApi, userNoEmailBucket.getResourceId());
+    ex =
+        assertThrows(
+            ApiException.class,
+            () ->
+                GcsBucketUtils.makeControlledGcsBucket(
+                    privateUserResourceApi,
+                    getWorkspaceId(),
+                    RESOURCE_PREFIX + UUID.randomUUID().toString(),
+                    /*bucketName=*/ null,
+                    AccessScope.PRIVATE_ACCESS,
+                    ManagedBy.USER,
+                    CloningInstructionsEnum.NOTHING,
+                    privateUserNoEmail));
+    assertThat(
+        ex.getMessage(),
+        containsString(
+            "PrivateResourceUser can only be specified by applications for private resources"));
+    assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, ex.getCode());
 
     String uniqueBucketName = String.format("terra-%s-bucket", UUID.randomUUID().toString());
     CreatedControlledGcpGcsBucket bucketWithBucketNameSpecified =
@@ -206,7 +213,7 @@ public class PrivateControlledGcsBucketLifecycle extends WorkspaceAllocateTestSc
             AccessScope.PRIVATE_ACCESS,
             ManagedBy.USER,
             CloningInstructionsEnum.NOTHING,
-            privateUserFull);
+            null);
     assertEquals(
         uniqueBucketName,
         bucketWithBucketNameSpecified.getGcpBucket().getAttributes().getBucketName());

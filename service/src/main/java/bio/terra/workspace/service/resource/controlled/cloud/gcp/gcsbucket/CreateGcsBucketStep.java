@@ -1,7 +1,5 @@
 package bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket;
 
-import static bio.terra.workspace.service.resource.controlled.cloud.gcp.GcpResourceConstant.DEFAULT_REGION;
-
 import bio.terra.cloudres.google.storage.StorageCow;
 import bio.terra.common.exception.BadRequestException;
 import bio.terra.stairway.FlightContext;
@@ -56,8 +54,7 @@ public class CreateGcsBucketStep implements Step {
 
     BucketInfo.Builder bucketInfoBuilder =
         BucketInfo.newBuilder(resource.getBucketName())
-            .setLocation(
-                Optional.ofNullable(creationParameters.getLocation()).orElse(DEFAULT_REGION));
+            .setLocation(creationParameters.getLocation());
 
     // Remaining creation parameters are optional
     Optional.ofNullable(creationParameters.getDefaultStorageClass())

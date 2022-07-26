@@ -118,9 +118,9 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
         Optional.ofNullable(body.getSpendProfile()).map(SpendProfileId::new);
 
     // ET uses userFacingId; CWB doesn't. Schema enforces that userFacingId must be set. CWB doesn't
-    // pass userFacingId in request, so use id. Prefix with "a" because userFacingId must start with
-    // a letter.
-    String userFacingId = Optional.ofNullable(body.getUserFacingId()).orElse("a-" + body.getId());
+    // pass userFacingId in request, so use id.
+    String userFacingId =
+        Optional.ofNullable(body.getUserFacingId()).orElse(body.getId().toString());
     ControllerValidationUtils.validateUserFacingId(userFacingId);
 
     Workspace workspace =
@@ -265,6 +265,25 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
     logger.info("Got workspace {} for {}", desc, userRequest.getEmail());
 
     return new ResponseEntity<>(desc, HttpStatus.OK);
+  }
+
+  @Override
+  public ResponseEntity<Void> deleteWorkspaceProperties(
+      @PathVariable("workspaceId") UUID workspaceUuid, @RequestBody List<String> propertyKeys) {
+    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    workspaceService.validateWorkspaceAndAction(
+        userRequest, workspaceUuid, SamConstants.SamWorkspaceAction.DELETE);
+    logger.info(
+        "Deleting the properties with the key {} in workspace {}",
+        propertyKeys.toString(),
+        workspaceUuid);
+    workspaceService.deleteWorkspaceProperties(workspaceUuid, propertyKeys);
+    logger.info(
+        "Deleted the properties with the key {} in workspace {}",
+        propertyKeys.toString(),
+        workspaceUuid);
+
+    return new ResponseEntity<>(HttpStatus.NO_CONTENT);
   }
 
   @Override
@@ -452,10 +471,9 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
     final UUID destinationWorkspaceId = UUID.randomUUID();
 
     // ET uses userFacingId; CWB doesn't. Schema enforces that userFacingId must be set. CWB doesn't
-    // pass userFacingId in request, so use id. Prefix with "a" because userFacingId must start with
-    // letter.
+    // pass userFacingId in request, so use id.
     String destinationUserFacingId =
-        Optional.ofNullable(body.getUserFacingId()).orElse("a-" + destinationWorkspaceId);
+        Optional.ofNullable(body.getUserFacingId()).orElse(destinationWorkspaceId.toString());
     ControllerValidationUtils.validateUserFacingId(destinationUserFacingId);
 
     // Construct the target workspace object from the inputs
@@ -511,7 +529,7 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
   }
 
   // Convert properties list into a map
-  private Map<String, String> propertyMapFromApi(List<ApiProperty> properties) {
+  private Map<String, String> propertyMapFromApi(ApiProperties properties) {
     Map<String, String> propertyMap = new HashMap<>();
     if (properties != null) {
       for (ApiProperty property : properties) {

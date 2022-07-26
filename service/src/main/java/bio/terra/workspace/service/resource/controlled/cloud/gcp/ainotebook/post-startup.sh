@@ -37,13 +37,16 @@ function get_metadata_value() {
 }
 
 # Install common packages in conda environment
-/opt/conda/bin/conda install -y pre-commit nbdime nbstripout pylint pytest dsub
+/opt/conda/bin/conda install -y pre-commit nbdime nbstripout pylint pytest dsub pandas_gbq
+
 # Install nbstripout for the jupyter user in all git repositories.
 sudo -u "${JUPYTER_USER}" sh -c "/opt/conda/bin/nbstripout --install --global"
 
 # Install Nextflow. Use an edge release that allows overriding the default compute engine SA and VPC network
 export NXF_VER=21.05.0-edge
 export NXF_MODE=google
+
+sudo apt-get update
 
 if [[ -n "$(which java)" ]];
 then
@@ -54,6 +57,18 @@ fi
 
 sudo -u "${JUPYTER_USER}" sh -c "curl -s https://get.nextflow.io | bash"
 sudo mv nextflow /usr/bin/nextflow
+
+# Install cromwell
+readonly CROMWELL_LATEST_VERSION="81"
+sudo -u "${JUPYTER_USER}" sh -c "mkdir -p /home/${JUPYTER_USER}/cromwell"
+sudo -u "${JUPYTER_USER}" sh -c "curl -LO https://github.com/broadinstitute/cromwell/releases/download/${CROMWELL_LATEST_VERSION}/cromwell-${CROMWELL_LATEST_VERSION}.jar"
+mv cromwell-${CROMWELL_LATEST_VERSION}.jar /home/${JUPYTER_USER}/cromwell/
+
+#Install cromshell
+sudo apt-get -y install mailutils
+sudo -u "${JUPYTER_USER}" sh -c "curl -s https://raw.githubusercontent.com/broadinstitute/cromshell/master/cromshell > cromshell"
+sudo -u "${JUPYTER_USER}" sh -c "chmod +x cromshell"
+sudo mv cromshell /usr/bin/cromshell
 
 # Install & configure the Terra CLI
 sudo -u "${JUPYTER_USER}" sh -c "curl -L https://github.com/DataBiosphere/terra-cli/releases/latest/download/download-install.sh | bash"
@@ -90,5 +105,6 @@ fi
 
 # Attempt to clone all the git repo references in the workspace. If the user's ssh key does not exist or doesn't have access
 # to the git references, the corresponding git repo cloning will be skipped.
+# Keep this as last thing in script. There will be integration test for git cloning (PF-1660). If this is last thing, then
+# integration test will ensure that everything in script worked.
 sudo -u "$JUPYTER_USER" sh -c 'terra git clone --all'
-

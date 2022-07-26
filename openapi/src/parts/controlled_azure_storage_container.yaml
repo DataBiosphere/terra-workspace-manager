@@ -28,6 +28,7 @@ paths:
     parameters:
       - $ref: '#/components/parameters/WorkspaceId'
       - $ref: '#/components/parameters/ResourceId'
+      - $ref: '#/components/parameters/SasIpRange'
     post:
       summary: Create a SAS token to access the storage container
       operationId: createAzureStorageContainerSasToken
