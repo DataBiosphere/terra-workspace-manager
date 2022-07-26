@@ -123,14 +123,9 @@ public class WorkspaceLifecycle extends WorkspaceApiTestScriptBase {
 
   public Properties buildProperties(Map<String, String> propertyMap) {
     Properties properties = new Properties();
-
     for (Map.Entry<String, String> entry : propertyMap.entrySet()) {
-      Property property = new Property();
-      property.setKey(entry.getKey());
-      property.setValue(entry.getValue());
-      properties.add(property);
+      properties.add(buildProperty(entry.getKey(), entry.getValue()));
     }
-
     return properties;
   }
 
