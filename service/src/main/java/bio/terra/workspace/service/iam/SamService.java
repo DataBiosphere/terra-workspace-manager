@@ -139,17 +139,11 @@ public class SamService {
     }
   }
 
-  /**
-   * Fetch a user-assigned managed identity that was created for a user, with user credentials,
-   * directly from Sam.
-   */
-  public String getOrCreateUserManagedIdentity(
-      AuthenticatedUserRequest userRequest,
-      String subscriptionId,
-      String tenantId,
-      String managedResourceGroupId)
+  /** Fetch a user-assigned managed identity from Sam by user email with WSM credentials. */
+  public String getOrCreateUserManagedIdentityForUser(
+      String userEmail, String subscriptionId, String tenantId, String managedResourceGroupId)
       throws InterruptedException {
-    AzureApi azureApi = samAzureApi(userRequest.getRequiredToken());
+    AzureApi azureApi = samAzureApi(getWsmServiceAccountToken());
 
     GetOrCreatePetManagedIdentityRequest request =
         new GetOrCreatePetManagedIdentityRequest()
@@ -157,7 +151,8 @@ public class SamService {
             .tenantId(tenantId)
             .managedResourceGroupName(managedResourceGroupId);
     try {
-      return SamRetry.retry(() -> azureApi.getPetManagedIdentity(request));
+      return SamRetry.retry(
+          () -> azureApi.getPetManagedIdentityForUser(userEmail.toLowerCase(), request));
     } catch (ApiException apiException) {
       throw SamExceptionFactory.create(
           "Error getting user assigned managed identity from Sam", apiException);
