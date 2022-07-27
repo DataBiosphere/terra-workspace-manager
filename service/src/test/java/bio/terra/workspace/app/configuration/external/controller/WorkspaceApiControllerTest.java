@@ -214,6 +214,29 @@ public class WorkspaceApiControllerTest extends BaseConnectedTest {
     assertEquals(sourceWorkspace.getProperties(), buildProperties(Map.of("xyzzy", "plohg")));
   }
 
+  @Test
+  public void updateWorkspaceProperties() throws Exception {
+    UUID workspaceId = createDefaultWorkspace().getId();
+    ApiWorkspaceDescription sourceWorkspace = getWorkspaceDescription(workspaceId);
+    Map<String, String> properties = Map.of("foo", "bar");
+
+    mockMvc
+        .perform(
+            addAuth(
+                post(String.format(UPDATE_WORKSPACES_V1_PROPERTIES_PATH_FORMAT, workspaceId))
+                    .contentType(MediaType.APPLICATION_JSON_VALUE)
+                    .accept(MediaType.APPLICATION_JSON)
+                    .characterEncoding("UTF-8")
+                    .content(objectMapper.writeValueAsString(buildProperties(properties))),
+                USER_REQUEST))
+        .andExpect(status().is(HttpStatus.SC_NO_CONTENT))
+        .andReturn()
+        .getResponse()
+        .getContentAsString();
+
+    assertEquals(sourceWorkspace.getProperties(), buildProperties(properties));
+  }
+
   private ApiCreatedWorkspace createDefaultWorkspace() throws Exception {
     var createRequest = WorkspaceFixtures.createWorkspaceRequestBody();
     String serializedResponse =

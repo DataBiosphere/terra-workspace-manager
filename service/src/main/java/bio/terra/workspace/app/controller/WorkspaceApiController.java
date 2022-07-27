@@ -231,11 +231,6 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     logger.info("Updating workspace {} for {}", workspaceUuid, userRequest.getEmail());
 
-    Map<String, String> propertyMap = null;
-    if (body.getProperties() != null) {
-      propertyMap = propertyMapFromApi(body.getProperties());
-    }
-
     if (body.getUserFacingId() != null) {
       ControllerValidationUtils.validateUserFacingId(body.getUserFacingId());
     }
@@ -251,7 +246,6 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
             body.getUserFacingId(),
             body.getDisplayName(),
             body.getDescription(),
-            propertyMap,
             userStatusInfo.getUserEmail(),
             userStatusInfo.getUserSubjectId());
     WsmIamRole highestRole = workspaceService.getHighestRole(workspaceUuid, userRequest);
@@ -310,6 +304,18 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
         userStatusInfo.getUserSubjectId());
     logger.info(
         "Deleted the properties with the key {} in workspace {}", propertyKeys, workspaceUuid);
+
+    return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+  }
+
+  @Override
+  public ResponseEntity<Void> updateWorkspaceProperties(
+      @PathVariable("workspaceId") UUID workspaceUuid, @RequestBody List<ApiProperty> properties) {
+    Map<String, String> propertyMap = propertyMapFromApi(properties);
+    logger.info(
+        "Updating the properties {} in workspace {}", propertyMap.toString(), workspaceUuid);
+    workspaceService.updateWorkspaceProperties(workspaceUuid, propertyMap);
+    logger.info("Updated the properties {} in workspace {}", propertyMap.toString(), workspaceUuid);
 
     return new ResponseEntity<>(HttpStatus.NO_CONTENT);
   }
@@ -553,7 +559,7 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
   }
 
   // Convert properties list into a map
-  private Map<String, String> propertyMapFromApi(ApiProperties properties) {
+  private Map<String, String> propertyMapFromApi(List<ApiProperty> properties) {
     Map<String, String> propertyMap = new HashMap<>();
     if (properties != null) {
       for (ApiProperty property : properties) {

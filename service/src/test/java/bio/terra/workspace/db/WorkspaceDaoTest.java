@@ -26,6 +26,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -173,6 +174,34 @@ class WorkspaceDaoTest extends BaseUnitTest {
             1);
     assertThat(workspaceList.size(), equalTo(1));
     assertThat(workspaceList.get(0), in(ImmutableList.of(firstWorkspace, secondWorkspace)));
+  }
+
+  @Test
+  void updateWorkspaceProperties() {
+    Map<String, String> propertyGenerate =
+        new HashMap<String, String>() {
+          {
+            put("foo", "bar");
+            put("xyz", "pqn");
+          }
+        };
+
+    Workspace initalWorkspace =
+        Workspace.builder()
+            .workspaceId(workspaceUuid)
+            .userFacingId("a" + workspaceUuid)
+            .workspaceStage(WorkspaceStage.RAWLS_WORKSPACE)
+            .properties(propertyGenerate)
+            .build();
+    workspaceDao.createWorkspace(initalWorkspace);
+
+    Map<String, String> propertyUpdate = Map.of("foo", "updateBar", "tal", "lass");
+    workspaceDao.updateWorkspaceProperties(workspaceUuid, propertyUpdate);
+    propertyGenerate.putAll(propertyUpdate);
+
+    assertEquals(propertyGenerate, workspaceDao.getWorkspace(workspaceUuid).getProperties());
+
+    assertTrue(workspaceDao.deleteWorkspace(workspaceUuid));
   }
 
   @Nested

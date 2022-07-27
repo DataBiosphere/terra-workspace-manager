@@ -234,6 +234,25 @@ paths:
   /api/workspaces/v1/{workspaceId}/properties:
     parameters:
     - $ref: '#/components/parameters/WorkspaceId'
+    post:
+      summary: update the properties in workspace.
+      operationId: updateWorkspaceProperties
+      tags: [ Workspace ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Properties'
+      responses:
+        '204':
+          description: properties update sucessfully
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
     patch:
       summary: delete existing Workspace properties.
       operationId: deleteWorkspaceProperties
@@ -480,9 +499,6 @@ components:
         description:
           description: A description of the workspace
           type: string
-        properties:
-          description: If present, it will replace all properties with this list
-          $ref: '#/components/schemas/Properties'
 
     WorkspaceDescription:
       type: object

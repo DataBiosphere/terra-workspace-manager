@@ -253,7 +253,6 @@ public class WorkspaceService {
    *
    * @param workspaceUuid workspace of interest
    * @param name name to change - may be null
-   * @param properties optional map of key-value properties
    * @param description description to change - may be null
    */
   public Workspace updateWorkspace(
@@ -261,14 +260,25 @@ public class WorkspaceService {
       @Nullable String userFacingId,
       @Nullable String name,
       @Nullable String description,
-      @Nullable Map<String, String> properties,
       String userEmail,
       String subjectId) {
-    if (workspaceDao.updateWorkspace(workspaceUuid, userFacingId, name, description, properties)) {
+    if (workspaceDao.updateWorkspace(workspaceUuid, userFacingId, name, description)) {
       workspaceActivityLogDao.writeActivity(
           workspaceUuid, getDbWorkspaceActivityLog(OperationType.UPDATE, userEmail, subjectId));
     }
     return workspaceDao.getWorkspace(workspaceUuid);
+  }
+
+  /**
+   * Update an existing workspace properties.
+   *
+   * @param workspaceUuid workspace of interest
+   * @param properties list of keys in properties
+   */
+  public void updateWorkspaceProperties(UUID workspaceUuid, Map<String, String> properties) {
+    workspaceDao.updateWorkspaceProperties(workspaceUuid, properties);
+    workspaceActivityLogDao.writeActivity(
+        workspaceUuid, new DbWorkspaceActivityLog().operationType(OperationType.UPDATE));
   }
 
   /** Delete an existing workspace by ID. */
