@@ -275,10 +275,11 @@ public class WorkspaceService {
    * @param workspaceUuid workspace of interest
    * @param properties list of keys in properties
    */
-  public void updateWorkspaceProperties(UUID workspaceUuid, Map<String, String> properties) {
+  public void updateWorkspaceProperties(
+      UUID workspaceUuid, Map<String, String> properties, String userEmail, String subjectId) {
     workspaceDao.updateWorkspaceProperties(workspaceUuid, properties);
     workspaceActivityLogDao.writeActivity(
-        workspaceUuid, new DbWorkspaceActivityLog().operationType(OperationType.UPDATE));
+        workspaceUuid, getDbWorkspaceActivityLog(OperationType.UPDATE, userEmail, subjectId));
   }
 
   /** Delete an existing workspace by ID. */

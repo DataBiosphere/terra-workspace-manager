@@ -312,10 +312,17 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
   public ResponseEntity<Void> updateWorkspaceProperties(
       @PathVariable("workspaceId") UUID workspaceUuid, @RequestBody List<ApiProperty> properties) {
     Map<String, String> propertyMap = propertyMapFromApi(properties);
-    logger.info(
-        "Updating the properties {} in workspace {}", propertyMap.toString(), workspaceUuid);
-    workspaceService.updateWorkspaceProperties(workspaceUuid, propertyMap);
-    logger.info("Updated the properties {} in workspace {}", propertyMap.toString(), workspaceUuid);
+    logger.info("Updating the properties {} in workspace {}", propertyMap, workspaceUuid);
+    var userStatusInfo =
+        SamRethrow.onInterrupted(
+            () -> samService.getUserStatusInfo(getAuthenticatedInfo()),
+            "#updateWorkspaceProperties: get user status info from SAM");
+    workspaceService.updateWorkspaceProperties(
+        workspaceUuid,
+        propertyMap,
+        userStatusInfo.getUserEmail(),
+        userStatusInfo.getUserSubjectId());
+    logger.info("Updated the properties {} in workspace {}", propertyMap, workspaceUuid);
 
     return new ResponseEntity<>(HttpStatus.NO_CONTENT);
   }

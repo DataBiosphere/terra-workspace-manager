@@ -80,6 +80,7 @@ import bio.terra.workspace.service.workspace.model.WorkspaceStage;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.api.services.cloudresourcemanager.v3.model.Project;
 import com.google.common.collect.ImmutableList;
+import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -520,17 +521,23 @@ class WorkspaceServiceTest extends BaseConnectedTest {
     Workspace request = defaultRequestBuilder(UUID.randomUUID()).build();
     workspaceService.createWorkspace(request, USER_REQUEST);
     UUID workspaceUuid = request.getWorkspaceId();
-    var lastUpdatedDate = workspaceActivityLogDao.getLastUpdatedDate(workspaceUuid);
-    assertTrue(lastUpdatedDate.isPresent());
+    var lastUpdateDetails = workspaceActivityLogDao.getLastUpdateDetails(workspaceUuid);
+    OffsetDateTime lastUpdatedDate = lastUpdateDetails.get().getChangedDate();
+    assertNotNull(lastUpdatedDate);
 
     // Workspace update new properties
-    workspaceService.updateWorkspaceProperties(workspaceUuid, propertyMap);
+    workspaceService.updateWorkspaceProperties(
+        workspaceUuid, propertyMap, USER_REQUEST.getEmail(), USER_REQUEST.getSubjectId());
     Workspace updatedWorkspace = workspaceService.getWorkspace(workspaceUuid);
 
-    var updatedDateAfterWorkspaceUpdate = workspaceActivityLogDao.getLastUpdatedDate(workspaceUuid);
-    assertTrue(lastUpdatedDate.get().isBefore(updatedDateAfterWorkspaceUpdate.get()));
+    var updateDetailsAfterWorkspaceUpdate =
+        workspaceActivityLogDao.getLastUpdateDetails(workspaceUuid);
+    assertTrue(lastUpdatedDate.isBefore(updateDetailsAfterWorkspaceUpdate.get().getChangedDate()));
     assertEquals(
         propertyMap, updatedWorkspace.getProperties(), "Workspace properties update successfully");
+    assertEquals(USER_REQUEST.getEmail(), updateDetailsAfterWorkspaceUpdate.get().getUserEmail());
+    assertEquals(
+        USER_REQUEST.getSubjectId(), updateDetailsAfterWorkspaceUpdate.get().getUserSubjectId());
   }
 
   @Test
