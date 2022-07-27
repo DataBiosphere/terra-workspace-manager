@@ -2,6 +2,7 @@ package bio.terra.workspace.app;
 
 import bio.terra.common.db.DataSourceInitializer;
 import bio.terra.common.migrate.LiquibaseMigrator;
+import bio.terra.policy.library.TpsMain;
 import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
 import bio.terra.workspace.app.configuration.external.WorkspaceDatabaseConfiguration;
 import bio.terra.workspace.service.job.JobService;
@@ -40,9 +41,12 @@ public final class StartupInitializer {
     // Process the WSM application configuration
     appService.configure();
 
-    // TODO: Fill in this method with any other initialization that needs to happen
-    //  between the point of having the entire application initialized and
-    //  the point of opening the port to start accepting REST requests.
+    // Initialize Terra Policy Service library
+    TpsMain.initialize(applicationContext, migrateService);
 
+    // NOTE:
+    // Fill in this method with any other initialization that needs to happen
+    // between the point of having the entire application initialized and
+    // the point of opening the port to start accepting REST requests.
   }
 }
