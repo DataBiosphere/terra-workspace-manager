@@ -86,10 +86,6 @@ public class CreateAzureRelayNamespaceStepTest extends BaseAzureTest {
     // Exception mock
     when(mockException.getValue())
         .thenReturn(new ManagementError("Conflict", "Resource already exists."));
-
-    when(mockFlightContext.getWorkingMap()).thenReturn(mockWorkingMap);
-    when(mockWorkingMap.get(ControlledResourceKeys.AZURE_CLOUD_CONTEXT, AzureCloudContext.class))
-        .thenReturn(dummyAzureCloudContext);
   }
 
   @Test
