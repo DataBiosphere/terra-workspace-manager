@@ -31,7 +31,6 @@ import bio.terra.workspace.generated.model.ApiUpdateGcsBucketReferenceRequestBod
 import bio.terra.workspace.generated.model.ApiUpdateGitRepoReferenceRequestBody;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequestFactory;
-import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.iam.model.SamConstants.SamWorkspaceAction;
 import bio.terra.workspace.service.resource.ResourceValidationUtils;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
@@ -51,8 +50,6 @@ import java.util.UUID;
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
 import org.apache.commons.lang3.StringUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -64,25 +61,21 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
   private final ReferencedResourceService referenceResourceService;
   private final WorkspaceDao workspaceDao;
   private final WorkspaceService workspaceService;
-  private final SamService samService;
   private final AuthenticatedUserRequestFactory authenticatedUserRequestFactory;
   private final ResourceValidationUtils validationUtils;
   private final HttpServletRequest request;
-  private final Logger logger = LoggerFactory.getLogger(ReferencedGcpResourceController.class);
 
   @Autowired
   public ReferencedGcpResourceController(
       ReferencedResourceService referenceResourceService,
       WorkspaceDao workspaceDao,
       WorkspaceService workspaceService,
-      SamService samService,
       AuthenticatedUserRequestFactory authenticatedUserRequestFactory,
       ResourceValidationUtils validationUtils,
       HttpServletRequest request) {
     this.referenceResourceService = referenceResourceService;
     this.workspaceDao = workspaceDao;
     this.workspaceService = workspaceService;
-    this.samService = samService;
     this.authenticatedUserRequestFactory = authenticatedUserRequestFactory;
     this.validationUtils = validationUtils;
     this.request = request;
