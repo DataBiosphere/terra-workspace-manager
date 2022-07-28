@@ -24,7 +24,7 @@ import org.springframework.stereotype.Component;
 public class LandingZoneDao {
   /** SQL query for reading landing zone records. */
   private static final String LANDINGZONE_SELECT_SQL =
-      "SELECT landingzone_id, spend_profile, template_id, template_version, properties"
+      "SELECT landingzone_id, resource_group, definition_id, definition_version_id, display_name, description, properties"
           + " FROM landingzone";
 
   private final Logger logger = LoggerFactory.getLogger(LandingZoneDao.class);
@@ -44,8 +44,8 @@ public class LandingZoneDao {
   @WriteTransaction
   public UUID createLandingZone(LandingZone landingzone) {
     final String sql =
-        "INSERT INTO landingzone (landingzone_id, spend_profile, template_id, template_version, properties) "
-            + "values (:landingzone_id, :spend_profile, :template_id, :template_version"
+        "INSERT INTO landingzone (landingzone_id, resource_group, definition_id, definition_version_id, display_name, description, properties) "
+            + "values (:landingzone_id, :resource_group, :definition_id, :definition_version_id, :display_name, :description"
             + " cast(:properties AS jsonb))";
 
     final String landingZoneUuid = landingzone.getLandingZoneId().toString();
@@ -53,9 +53,9 @@ public class LandingZoneDao {
     MapSqlParameterSource params =
         new MapSqlParameterSource()
             .addValue("landingzone_id", landingZoneUuid)
-            .addValue("resource_group_id", landingzone.getResourceGroupId())
-            .addValue("template_id", landingzone.getTemplate().orElse(null))
-            .addValue("template_version", landingzone.getVersion().orElse(null))
+            .addValue("resource_group", landingzone.getResourceGroupId())
+            .addValue("definition_id", landingzone.getDefinition().orElse(null))
+            .addValue("definition_version_id", landingzone.getVersion().orElse(null))
             .addValue("display_name", landingzone.getDisplayName().orElse(null))
             .addValue("description", landingzone.getDescription().orElse(null))
             .addValue("properties", DbSerDes.propertiesToJson(landingzone.getProperties()));
@@ -68,10 +68,10 @@ public class LandingZoneDao {
         // Landing Zone record with landingzone_id already exists.
         throw new DuplicateLandingZoneException(
             String.format(
-                "Landing Zone with id %s already exists - display name %s template %s version %s",
+                "Landing Zone with id %s already exists - display name %s definition %s version %s",
                 landingZoneUuid,
                 landingzone.getDisplayName().toString(),
-                landingzone.getTemplate().toString(),
+                landingzone.getDefinition().toString(),
                 landingzone.getVersion().toString()),
             e);
       } else {
@@ -139,9 +139,9 @@ public class LandingZoneDao {
       (rs, rowNum) ->
           LandingZone.builder()
               .landingZoneId(UUID.fromString(rs.getString("landingzone_id")))
-              .resourceGroupId(rs.getString("resource_group_id"))
-              .template(rs.getString("template_id"))
-              .version(rs.getString("template_version"))
+              .resourceGroupId(rs.getString("resource_group"))
+              .definition(rs.getString("definition_id"))
+              .version(rs.getString("definition_version_id"))
               .displayName(rs.getString("display_name"))
               .description(rs.getString("description"))
               .properties(

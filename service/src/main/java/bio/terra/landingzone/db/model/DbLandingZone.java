@@ -8,18 +8,18 @@ import java.util.function.Supplier;
 public class DbLandingZone {
   private UUID LandingZoneUuid;
   private String resourceGroup;
-  private String template;
+  private String definition;
   private String version;
   private String attributes;
 
   private static final Supplier<RuntimeException> MISSING_REQUIRED_FIELD =
       () -> new MissingRequiredFieldsException("Missing required field");
 
-  public UUID getWorkspaceLandingZoneUuid() {
+  public UUID getLandingZoneUuid() {
     return LandingZoneUuid;
   }
 
-  public DbLandingZone workspaceLandingZoneId(UUID workspaceLandingZoneUuid) {
+  public DbLandingZone LandingZoneId(UUID workspaceLandingZoneUuid) {
     this.LandingZoneUuid = workspaceLandingZoneUuid;
     return this;
   }

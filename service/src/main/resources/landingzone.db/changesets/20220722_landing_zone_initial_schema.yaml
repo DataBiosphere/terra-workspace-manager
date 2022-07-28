@@ -16,7 +16,7 @@ databaseChangeLog:
                 primaryKey: true
                 nullable: false
           - column:
-              name: resourcegroup
+              name: resource_group
               type: text
               constraints:
                 nullable: false
@@ -24,15 +24,15 @@ databaseChangeLog:
               remarks: |
                 A resource group full qualified ID where the landing zone resources reside. Required for Azure landing zones.
           - column:
-              name: template_id
+              name: definition_id
               type: text
               remarks: |
-                The template (definition) used to create a landing zone.
+                The ID of definition used to create a landing zone.
           - column:
-              name: template_version_id
+              name: definition_version_id
               type: text
               remarks: |
-                The template (definition) version ID used to create a landing zone.
+                The definition version ID used to create a landing zone.
           - column:
               name: display_name
               type: text

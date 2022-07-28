@@ -17,21 +17,21 @@ public class LandingZone {
   private final String resourceGroupId;
   private final String description;
   private final String displayName;
-  private final String template;
+  private final String definition;
   private final String version;
   private final Map<String, String> properties;
 
   public LandingZone(
       UUID landingZoneId,
       String resourceGroupId,
-      String template,
+      String definition,
       String version,
       String displayName,
       String description,
       Map<String, String> properties) {
     this.landingZoneId = landingZoneId;
     this.resourceGroupId = resourceGroupId;
-    this.template = template;
+    this.definition = definition;
     this.version = version;
     this.displayName = displayName;
     this.description = description;
@@ -47,8 +47,8 @@ public class LandingZone {
     return resourceGroupId;
   }
 
-  public Optional<String> getTemplate() {
-    return Optional.ofNullable(template);
+  public Optional<String> getDefinition() {
+    return Optional.ofNullable(definition);
   }
 
   public Optional<String> getVersion() {
@@ -81,7 +81,7 @@ public class LandingZone {
     return new EqualsBuilder()
         .append(landingZoneId, landingZone.landingZoneId)
         .append(resourceGroupId, landingZone.resourceGroupId)
-        .append(template, landingZone.template)
+        .append(definition, landingZone.definition)
         .append(version, landingZone.version)
         .append(displayName, landingZone.displayName)
         .append(description, landingZone.description)
@@ -94,7 +94,7 @@ public class LandingZone {
     return new HashCodeBuilder(17, 37)
         .append(landingZoneId)
         .append(resourceGroupId)
-        .append(template)
+        .append(definition)
         .append(version)
         .append(displayName)
         .append(description)
@@ -110,7 +110,7 @@ public class LandingZone {
   public static class Builder {
     private UUID landingZoneId;
     private String resourceGroupId;
-    private String template;
+    private String definition;
     private String version;
     private String displayName;
     private String description;
@@ -141,8 +141,8 @@ public class LandingZone {
       return this;
     }
 
-    public Builder template(String template) {
-      this.template = template;
+    public Builder definition(String definition) {
+      this.definition = definition;
       return this;
     }
 
@@ -166,7 +166,13 @@ public class LandingZone {
         throw new MissingRequiredFieldsException("Landing zone requires id");
       }
       return new LandingZone(
-          landingZoneId, resourceGroupId, template, version, displayName, description, properties);
+          landingZoneId,
+          resourceGroupId,
+          definition,
+          version,
+          displayName,
+          description,
+          properties);
     }
   }
 }
