@@ -181,7 +181,7 @@ public class SamService {
    */
   private void initializeWsmServiceAccount() throws InterruptedException {
     if (!wsmServiceAccountInitialized) {
-      String wsmAccessToken = null;
+      final String wsmAccessToken;
       try {
         wsmAccessToken = getWsmServiceAccountToken();
       } catch (InternalServerErrorException e) {
@@ -455,7 +455,7 @@ public class SamService {
                   workspaceUuid.toString(),
                   role.toSamRole(),
                   email.toLowerCase(),
-                  null));
+                  /* body = */ null));
       logger.info(
           "Granted role {} to user {} in workspace {}", role.toSamRole(), email, workspaceUuid);
     } catch (ApiException apiException) {
@@ -554,7 +554,7 @@ public class SamService {
                   resource.getResourceId().toString(),
                   role.toSamRole(),
                   email,
-                  null));
+                  /* body = */ null));
       logger.info(
           "Restored role {} to user {} on resource {}",
           role.toSamRole(),
@@ -774,7 +774,8 @@ public class SamService {
     try {
       // Sam makes no guarantees about what values are returned from the POST call, so we instead
       // fetch the group in a separate call after syncing.
-      SamRetry.retry(() -> googleApi.syncPolicy(resourceTypeName, resourceId, policyName, null));
+      SamRetry.retry(
+          () -> googleApi.syncPolicy(resourceTypeName, resourceId, policyName, /* body = */ null));
       return SamRetry.retry(() -> googleApi.syncStatus(resourceTypeName, resourceId, policyName))
           .getEmail();
     } catch (ApiException apiException) {
