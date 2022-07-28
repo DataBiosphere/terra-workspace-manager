@@ -33,7 +33,9 @@ dependencies {
   implementation group: 'bio.terra', name: 'terra-cloud-resource-lib', version: "1.2.0-SNAPSHOT"
 
   // Terra Policy Service
-  implementation group: 'bio.terra', name: 'terra-policy-service', version: '0.2.0-SNAPSHOT'
+  implementation('bio.terra:terra-policy-service:0.2.0-SNAPSHOT') {
+    exclude group: "org.broadinstitute.dsde.workbench", module: "sam-client_2.12"
+  }
 
   // Storage transfer service
   implementation group: 'com.google.apis', name: 'google-api-services-storagetransfer', version: 'v1-rev20220324-1.32.1'
