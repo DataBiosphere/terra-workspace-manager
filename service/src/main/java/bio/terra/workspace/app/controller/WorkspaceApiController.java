@@ -201,10 +201,10 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
         .gcpContext(gcpContext)
         .azureContext(azureContext)
         .createdDate(
-            createDetailsOptional.map(ActivityLogChangeDetails::getChangedDate).orElse(null))
+            createDetailsOptional.map(ActivityLogChangeDetails::getChangeDate).orElse(null))
         .createdBy(createDetailsOptional.map(ActivityLogChangeDetails::getUserEmail).orElse(null))
         .lastUpdatedDate(
-            lastChangeDetailsOptional.map(ActivityLogChangeDetails::getChangedDate).orElse(null))
+            lastChangeDetailsOptional.map(ActivityLogChangeDetails::getChangeDate).orElse(null))
         .lastUpdatedBy(
             lastChangeDetailsOptional.map(ActivityLogChangeDetails::getUserEmail).orElse(null));
   }
@@ -236,10 +236,7 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
     }
     workspaceService.validateWorkspaceAndAction(
         userRequest, workspaceUuid, SamConstants.SamWorkspaceAction.WRITE);
-    var userStatusInfo =
-        SamRethrow.onInterrupted(
-            () -> samService.getUserStatusInfo(userRequest),
-            "#updateWorkspace: get user status from SAM");
+    var userStatusInfo = samService.getUserStatusInfoWithRethrow(userRequest);
     Workspace workspace =
         workspaceService.updateWorkspace(
             workspaceUuid,
@@ -293,10 +290,10 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
         "Deleting the properties with the key {} in workspace {}",
         propertyKeys.toString(),
         workspaceUuid);
-    var userStatusInfo =
-        SamRethrow.onInterrupted(
-            () -> samService.getUserStatusInfo(getAuthenticatedInfo()),
-            "#deleteWorkspaceProperties: get user status info from SAM");
+    Workspace workspace =
+        workspaceService.validateWorkspaceAndAction(
+            userRequest, workspaceUuid, SamWorkspaceAction.DELETE);
+    var userStatusInfo = samService.getUserStatusInfoWithRethrow(userRequest);
     workspaceService.deleteWorkspaceProperties(
         workspaceUuid,
         propertyKeys,
@@ -311,12 +308,12 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
   @Override
   public ResponseEntity<Void> updateWorkspaceProperties(
       @PathVariable("workspaceId") UUID workspaceUuid, @RequestBody List<ApiProperty> properties) {
+    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    workspaceService.validateWorkspaceAndAction(
+        userRequest, workspaceUuid, SamWorkspaceAction.WRITE);
     Map<String, String> propertyMap = propertyMapFromApi(properties);
     logger.info("Updating the properties {} in workspace {}", propertyMap, workspaceUuid);
-    var userStatusInfo =
-        SamRethrow.onInterrupted(
-            () -> samService.getUserStatusInfo(getAuthenticatedInfo()),
-            "#updateWorkspaceProperties: get user status info from SAM");
+    var userStatusInfo = samService.getUserStatusInfoWithRethrow(userRequest);
     workspaceService.updateWorkspaceProperties(
         workspaceUuid,
         propertyMap,
@@ -343,16 +340,13 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
             samService.grantWorkspaceRole(
                 uuid, getAuthenticatedInfo(), WsmIamRole.fromApiModel(role), body.getMemberEmail()),
         "grantWorkspaceRole");
-    var userStatusInfo =
-        SamRethrow.onInterrupted(
-            () -> samService.getUserStatusInfo(getAuthenticatedInfo()),
-            "#grantRole: get user status info from SAM");
+    var userStatusInfo = samService.getUserStatusInfoWithRethrow(new AuthenticatedUserRequest());
     workspaceActivityLogDao.writeActivity(
         uuid,
         new DbWorkspaceActivityLog()
             .operationType(OperationType.GRANT_WORKSPACE_ROLE)
-            .changeAgentEmail(userStatusInfo.getUserEmail())
-            .changeAgentSubjectId(userStatusInfo.getUserSubjectId()));
+            .userEmail(userStatusInfo.getUserEmail())
+            .subjectId(userStatusInfo.getUserSubjectId()));
     return new ResponseEntity<>(HttpStatus.NO_CONTENT);
   }
 

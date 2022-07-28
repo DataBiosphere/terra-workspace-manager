@@ -542,14 +542,14 @@ components:
           type: string
           format: date-time
         createdBy:
-          description: user email of whom created the workspace
+          description: User email of whom created the workspace
           type: string
         lastUpdatedDate:
           description: Timestamp of the latest workspace change
           type: string
           format: date-time
         lastUpdatedBy:
-          description: user email of whom made the last update to the workspace
+          description: User email of whom made the last update to the workspace
           type: string
 
     WorkspaceDescriptionList:

@@ -10,9 +10,9 @@ public class DbWorkspaceActivityLog {
 
   private @Nullable OperationType operationType;
 
-  private @Nullable String changeAgentEmail;
+  private @Nullable String userEmail;
 
-  private @Nullable String changeAgentSubjectId;
+  private @Nullable String subjectId;
 
   private static final Supplier<RuntimeException> MISSING_REQUIRED_FIELD =
       () -> new MissingRequiredFieldsException("Missing required field");
@@ -22,13 +22,13 @@ public class DbWorkspaceActivityLog {
     return this;
   }
 
-  public DbWorkspaceActivityLog changeAgentEmail(String changeAgentEmail) {
-    this.changeAgentEmail = changeAgentEmail;
+  public DbWorkspaceActivityLog userEmail(String userEmail) {
+    this.userEmail = userEmail;
     return this;
   }
 
-  public DbWorkspaceActivityLog changeAgentSubjectId(String changeAgentSubjectId) {
-    this.changeAgentSubjectId = changeAgentSubjectId;
+  public DbWorkspaceActivityLog subjectId(String subjectId) {
+    this.subjectId = subjectId;
     return this;
   }
 
@@ -36,11 +36,19 @@ public class DbWorkspaceActivityLog {
     return Optional.ofNullable(operationType).orElseThrow(MISSING_REQUIRED_FIELD);
   }
 
-  public String getChangeAgentEmail() {
-    return Optional.ofNullable(changeAgentEmail).orElseThrow(MISSING_REQUIRED_FIELD);
+  public String getUserEmail() {
+    return Optional.ofNullable(userEmail).orElseThrow(MISSING_REQUIRED_FIELD);
   }
 
-  public @Nullable String getChangeAgentSubjectId() {
-    return changeAgentSubjectId;
+  public @Nullable String getSubjectId() {
+    return subjectId;
+  }
+
+  public static DbWorkspaceActivityLog getDbWorkspaceActivityLog(
+      OperationType operationType, String userEmail, String subjectId) {
+    return new DbWorkspaceActivityLog()
+        .operationType(operationType)
+        .userEmail(userEmail)
+        .subjectId(subjectId);
   }
 }

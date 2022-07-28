@@ -1,10 +1,11 @@
 package bio.terra.workspace.service.workspace;
 
+import static bio.terra.workspace.db.model.DbWorkspaceActivityLog.getDbWorkspaceActivityLog;
+
 import bio.terra.workspace.app.configuration.external.BufferServiceConfiguration;
 import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
 import bio.terra.workspace.db.WorkspaceActivityLogDao;
 import bio.terra.workspace.db.WorkspaceDao;
-import bio.terra.workspace.db.model.DbWorkspaceActivityLog;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamRethrow;
 import bio.terra.workspace.service.iam.SamService;
@@ -312,14 +313,6 @@ public class WorkspaceService {
     workspaceDao.deleteWorkspaceProperties(workspaceUuid, propertyKeys);
     workspaceActivityLogDao.writeActivity(
         workspaceUuid, getDbWorkspaceActivityLog(OperationType.DELETE, userEmail, subjectId));
-  }
-
-  private DbWorkspaceActivityLog getDbWorkspaceActivityLog(
-      OperationType operationType, String userEmail, String subjectId) {
-    return new DbWorkspaceActivityLog()
-        .operationType(operationType)
-        .changeAgentEmail(userEmail)
-        .changeAgentSubjectId(subjectId);
   }
 
   /**

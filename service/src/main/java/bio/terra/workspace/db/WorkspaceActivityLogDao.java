@@ -32,8 +32,8 @@ public class WorkspaceActivityLogDao {
               .dateTime(
                   OffsetDateTime.ofInstant(
                       rs.getTimestamp("change_date").toInstant(), ZoneId.of("UTC")))
-              .userEmail(rs.getString("change_agent_email"))
-              .userSubjectId(rs.getString("change_agent_subject_id"));
+              .userEmail(rs.getString("user_email"))
+              .userSubjectId(rs.getString("subject_id"));
   private final NamedParameterJdbcTemplate jdbcTemplate;
 
   // These fields don't update workspace "Last updated" time in UI. For example,
@@ -56,22 +56,22 @@ public class WorkspaceActivityLogDao {
             "#writeActivity: workspaceId=%s, operationType=%s, changeAgentEmail=%s, changeAgentSubjectId=%s",
             workspaceId,
             dbWorkspaceActivityLog.getOperationType(),
-            dbWorkspaceActivityLog.getChangeAgentEmail(),
-            dbWorkspaceActivityLog.getChangeAgentSubjectId()));
+            dbWorkspaceActivityLog.getUserEmail(),
+            dbWorkspaceActivityLog.getSubjectId()));
     if (dbWorkspaceActivityLog.getOperationType() == OperationType.UNKNOWN) {
       throw new UnknownFlightOperationTypeException(
           String.format("Flight operation type is unknown in workspace %s", workspaceId));
     }
     final String sql =
-        "INSERT INTO workspace_activity_log (workspace_id, change_date, change_type, change_agent_email, change_agent_subject_id)"
-            + " VALUES (:workspace_id, :change_date, :change_type, :change_agent_email, :change_agent_subject_id)";
+        "INSERT INTO workspace_activity_log (workspace_id, change_date, change_type, user_email, subject_id)"
+            + " VALUES (:workspace_id, :change_date, :change_type, :user_email, :subject_id)";
     final var params =
         new MapSqlParameterSource()
             .addValue("workspace_id", workspaceId.toString())
             .addValue("change_date", Instant.now().atOffset(ZoneOffset.UTC))
             .addValue("change_type", dbWorkspaceActivityLog.getOperationType().name())
-            .addValue("change_agent_email", dbWorkspaceActivityLog.getChangeAgentEmail())
-            .addValue("change_agent_subject_id", dbWorkspaceActivityLog.getChangeAgentSubjectId());
+            .addValue("user_email", dbWorkspaceActivityLog.getUserEmail())
+            .addValue("subject_id", dbWorkspaceActivityLog.getSubjectId());
     jdbcTemplate.update(sql, params);
   }
 
@@ -84,7 +84,7 @@ public class WorkspaceActivityLogDao {
   @ReadTransaction
   public Optional<ActivityLogChangeDetails> getCreateDetails(UUID workspaceId) {
     final String sql =
-        "SELECT w.change_date, w.change_agent_email, w.change_agent_subject_id FROM workspace_activity_log w"
+        "SELECT w.change_date, w.user_email, w.subject_id FROM workspace_activity_log w"
             + " JOIN (SELECT MIN(change_date) AS min_date FROM workspace_activity_log"
             + " WHERE workspace_id = :workspace_id) m"
             + " ON w.change_date = m.min_date";
@@ -98,7 +98,7 @@ public class WorkspaceActivityLogDao {
   @ReadTransaction
   public Optional<ActivityLogChangeDetails> getLastUpdateDetails(UUID workspaceId) {
     final String sql =
-        "SELECT w.change_agent_email, w.change_agent_subject_id, w.change_date FROM workspace_activity_log w"
+        "SELECT w.user_email, w.subject_id, w.change_date FROM workspace_activity_log w"
             + " JOIN (SELECT MAX(change_date) AS max_date FROM workspace_activity_log"
             + " WHERE workspace_id = :workspace_id AND change_type NOT IN (:change_type)) m"
             + " ON w.change_date = m.max_date";

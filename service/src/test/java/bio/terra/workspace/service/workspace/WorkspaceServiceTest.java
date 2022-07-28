@@ -405,8 +405,8 @@ class WorkspaceServiceTest extends BaseConnectedTest {
     assertTrue(
         lastUpdateDetails
             .get()
-            .getChangedDate()
-            .isBefore(workspaceUpdateChangeDetails.get().getChangedDate()));
+            .getChangeDate()
+            .isBefore(workspaceUpdateChangeDetails.get().getChangeDate()));
     assertEquals(USER_REQUEST.getEmail(), workspaceUpdateChangeDetails.get().getUserEmail());
     assertEquals(
         USER_REQUEST.getSubjectId(), workspaceUpdateChangeDetails.get().getUserSubjectId());
@@ -432,8 +432,8 @@ class WorkspaceServiceTest extends BaseConnectedTest {
     assertTrue(
         workspaceUpdateChangeDetails
             .get()
-            .getChangedDate()
-            .isBefore(secondUpdateChangeDetails.get().getChangedDate()));
+            .getChangeDate()
+            .isBefore(secondUpdateChangeDetails.get().getChangeDate()));
     assertEquals(USER_REQUEST.getEmail(), secondUpdateChangeDetails.get().getUserEmail());
     assertEquals(USER_REQUEST.getSubjectId(), secondUpdateChangeDetails.get().getUserSubjectId());
     // Since name is null, leave it alone. Description should be updated.
@@ -458,8 +458,8 @@ class WorkspaceServiceTest extends BaseConnectedTest {
     assertTrue(
         secondUpdateChangeDetails
             .get()
-            .getChangedDate()
-            .isBefore(thirdUpdatedDateAfterWorkspaceUpdate.get().getChangedDate()));
+            .getChangeDate()
+            .isBefore(thirdUpdatedDateAfterWorkspaceUpdate.get().getChangeDate()));
     assertTrue(thirdUpdatedWorkspace.getDisplayName().isPresent());
     assertEquals("", thirdUpdatedWorkspace.getDisplayName().get());
     assertTrue(thirdUpdatedWorkspace.getDescription().isPresent());
@@ -478,8 +478,8 @@ class WorkspaceServiceTest extends BaseConnectedTest {
                 USER_REQUEST.getSubjectId()));
     var failedUpdateDate = workspaceActivityLogDao.getLastUpdateDetails(workspaceUuid);
     assertEquals(
-        thirdUpdatedDateAfterWorkspaceUpdate.get().getChangedDate(),
-        failedUpdateDate.get().getChangedDate());
+        thirdUpdatedDateAfterWorkspaceUpdate.get().getChangeDate(),
+        failedUpdateDate.get().getChangeDate());
   }
 
   @Test
@@ -522,7 +522,7 @@ class WorkspaceServiceTest extends BaseConnectedTest {
     workspaceService.createWorkspace(request, USER_REQUEST);
     UUID workspaceUuid = request.getWorkspaceId();
     var lastUpdateDetails = workspaceActivityLogDao.getLastUpdateDetails(workspaceUuid);
-    OffsetDateTime lastUpdatedDate = lastUpdateDetails.get().getChangedDate();
+    OffsetDateTime lastUpdatedDate = lastUpdateDetails.get().getChangeDate();
     assertNotNull(lastUpdatedDate);
 
     // Workspace update new properties
@@ -532,7 +532,7 @@ class WorkspaceServiceTest extends BaseConnectedTest {
 
     var updateDetailsAfterWorkspaceUpdate =
         workspaceActivityLogDao.getLastUpdateDetails(workspaceUuid);
-    assertTrue(lastUpdatedDate.isBefore(updateDetailsAfterWorkspaceUpdate.get().getChangedDate()));
+    assertTrue(lastUpdatedDate.isBefore(updateDetailsAfterWorkspaceUpdate.get().getChangeDate()));
     assertEquals(
         propertyMap, updatedWorkspace.getProperties(), "Workspace properties update successfully");
     assertEquals(USER_REQUEST.getEmail(), updateDetailsAfterWorkspaceUpdate.get().getUserEmail());
@@ -643,8 +643,8 @@ class WorkspaceServiceTest extends BaseConnectedTest {
     assertTrue(
         lastUpdateDetails
             .get()
-            .getChangedDate()
-            .isBefore(updateDetailsAfterWorkspaceUpdate.get().getChangedDate()));
+            .getChangeDate()
+            .isBefore(updateDetailsAfterWorkspaceUpdate.get().getChangeDate()));
     Map<String, String> expectedPropertyMap = Map.of("xyzzy", "plohg");
     assertEquals(
         expectedPropertyMap,

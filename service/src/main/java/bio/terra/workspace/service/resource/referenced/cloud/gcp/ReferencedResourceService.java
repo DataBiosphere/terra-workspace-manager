@@ -1,12 +1,12 @@
 package bio.terra.workspace.service.resource.referenced.cloud.gcp;
 
+import static bio.terra.workspace.db.model.DbWorkspaceActivityLog.getDbWorkspaceActivityLog;
+
 import bio.terra.workspace.common.utils.FlightBeanBag;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.db.WorkspaceActivityLogDao;
 import bio.terra.workspace.db.exception.InvalidMetadataException;
-import bio.terra.workspace.db.model.DbWorkspaceActivityLog;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
-import bio.terra.workspace.service.iam.SamRethrow;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.iam.model.SamConstants;
 import bio.terra.workspace.service.job.JobBuilder;
@@ -161,9 +161,7 @@ public class ReferencedResourceService {
           resourceDao.updateResource(
               workspaceUuid, resourceId, name, description, cloningInstructions);
       if (updated) {
-        var userStatusInfo =
-            SamRethrow.onInterrupted(
-                () -> samService.getUserStatusInfo(userRequest), "Get user email from Sam");
+        var userStatusInfo = samService.getUserStatusInfoWithRethrow(userRequest);
         workspaceActivityLogDao.writeActivity(
             workspaceUuid,
             getDbWorkspaceActivityLog(
@@ -189,11 +187,15 @@ public class ReferencedResourceService {
       UUID workspaceUuid,
       UUID resourceId,
       WsmResourceType resourceType,
-      String userEmail,
-      String subjectId) {
+      AuthenticatedUserRequest userRequest) {
     if (resourceDao.deleteResourceForResourceType(workspaceUuid, resourceId, resourceType)) {
+      var userStatusInfo = samService.getUserStatusInfoWithRethrow(userRequest);
       workspaceActivityLogDao.writeActivity(
-          workspaceUuid, getDbWorkspaceActivityLog(OperationType.DELETE, userEmail, subjectId));
+          workspaceUuid,
+          getDbWorkspaceActivityLog(
+              OperationType.DELETE,
+              userStatusInfo.getUserEmail(),
+              userStatusInfo.getUserSubjectId()));
     }
   }
 
@@ -235,13 +237,5 @@ public class ReferencedResourceService {
             description);
     // launch the creation flight
     return createReferenceResource(destinationResource, userRequest);
-  }
-
-  private DbWorkspaceActivityLog getDbWorkspaceActivityLog(
-      OperationType update, String userEmail, String subjectId) {
-    return new DbWorkspaceActivityLog()
-        .operationType(update)
-        .changeAgentEmail(userEmail)
-        .changeAgentSubjectId(subjectId);
   }
 }

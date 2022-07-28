@@ -1,5 +1,6 @@
 package bio.terra.workspace.common.logging;
 
+import static bio.terra.workspace.db.model.DbWorkspaceActivityLog.getDbWorkspaceActivityLog;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import bio.terra.stairway.FlightContext;
@@ -12,7 +13,6 @@ import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.db.WorkspaceActivityLogDao;
 import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.db.exception.WorkspaceNotFoundException;
-import bio.terra.workspace.db.model.DbWorkspaceActivityLog;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.job.JobMapKeys;
@@ -75,6 +75,8 @@ public class WorkspaceActivityLogHook implements StairwayHook {
                 .getInputParameters()
                 .get(JobMapKeys.AUTH_USER_INFO.getKeyName(), AuthenticatedUserRequest.class));
     var userStatusInfo = samService.getUserStatusInfo(userRequest);
+    // Use email from userStatusInfo instead of AuthenticatedUserRequest, because
+    // AuthenticatedUserRequest might have pet SA email
     var userEmail = userStatusInfo.getUserEmail();
     var subjectId = userStatusInfo.getUserSubjectId();
 
@@ -153,13 +155,5 @@ public class WorkspaceActivityLogHook implements StairwayHook {
       activityLogDao.writeActivity(
           workspaceUuid, getDbWorkspaceActivityLog(OperationType.DELETE, userEmail, subjectId));
     }
-  }
-
-  private DbWorkspaceActivityLog getDbWorkspaceActivityLog(
-      OperationType operationType, String email, String subjectId) {
-    return new DbWorkspaceActivityLog()
-        .operationType(operationType)
-        .changeAgentEmail(email)
-        .changeAgentSubjectId(subjectId);
   }
 }

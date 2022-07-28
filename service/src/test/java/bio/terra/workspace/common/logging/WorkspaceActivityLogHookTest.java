@@ -175,8 +175,8 @@ public class WorkspaceActivityLogHookTest extends BaseUnitTest {
   void deleteCloudContextFlightFails_cloudContextNotExist_logChangeDetails()
       throws InterruptedException {
     var workspaceUuid = UUID.randomUUID();
-    var emptychangeDetails = activityLogDao.getLastUpdateDetails(workspaceUuid);
-    assertTrue(emptychangeDetails.isEmpty());
+    var emptyChangeDetails = activityLogDao.getLastUpdateDetails(workspaceUuid);
+    assertTrue(emptyChangeDetails.isEmpty());
 
     FlightMap inputParams = buildInputParams(workspaceUuid, OperationType.DELETE);
     hook.endFlight(
@@ -332,7 +332,7 @@ public class WorkspaceActivityLogHookTest extends BaseUnitTest {
     assertTrue(changeDetails.isPresent());
     assertEquals(USER_REQUEST.getEmail(), changeDetails.get().getUserEmail());
     assertEquals(USER_REQUEST.getSubjectId(), changeDetails.get().getUserSubjectId());
-    assertNotNull(changeDetails.get().getChangedDate());
+    assertNotNull(changeDetails.get().getChangeDate());
   }
 
   /**
