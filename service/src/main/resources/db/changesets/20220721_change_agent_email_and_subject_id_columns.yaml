@@ -14,7 +14,7 @@ databaseChangeLog:
             remarks: |
                 User email of the change agent (i.e. who made the change).
         - column:
-            name: subject_id
+            name: user_subject_id
             type: text
             constraints:
                 nullable: false

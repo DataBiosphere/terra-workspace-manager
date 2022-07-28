@@ -394,12 +394,7 @@ class WorkspaceServiceTest extends BaseConnectedTest {
 
     Workspace updatedWorkspace =
         workspaceService.updateWorkspace(
-            workspaceUuid,
-            userFacingId,
-            name,
-            description,
-            USER_REQUEST.getEmail(),
-            USER_REQUEST.getSubjectId());
+            workspaceUuid, userFacingId, name, description, USER_REQUEST);
 
     var workspaceUpdateChangeDetails = workspaceActivityLogDao.getLastUpdateDetails(workspaceUuid);
     assertTrue(
@@ -420,13 +415,7 @@ class WorkspaceServiceTest extends BaseConnectedTest {
     String otherDescription = "The deprecated workspace";
 
     Workspace secondUpdatedWorkspace =
-        workspaceService.updateWorkspace(
-            workspaceUuid,
-            null,
-            null,
-            otherDescription,
-            USER_REQUEST.getEmail(),
-            USER_REQUEST.getSubjectId());
+        workspaceService.updateWorkspace(workspaceUuid, null, null, otherDescription, USER_REQUEST);
 
     var secondUpdateChangeDetails = workspaceActivityLogDao.getLastUpdateDetails(workspaceUuid);
     assertTrue(
@@ -445,13 +434,7 @@ class WorkspaceServiceTest extends BaseConnectedTest {
     // Sending through empty strings and an empty map clears the values.
     Map<String, String> propertyMap3 = new HashMap<>();
     Workspace thirdUpdatedWorkspace =
-        workspaceService.updateWorkspace(
-            workspaceUuid,
-            userFacingId,
-            "",
-            "",
-            USER_REQUEST.getEmail(),
-            USER_REQUEST.getSubjectId());
+        workspaceService.updateWorkspace(workspaceUuid, userFacingId, "", "", USER_REQUEST);
 
     var thirdUpdatedDateAfterWorkspaceUpdate =
         workspaceActivityLogDao.getLastUpdateDetails(workspaceUuid);
@@ -468,14 +451,7 @@ class WorkspaceServiceTest extends BaseConnectedTest {
     // Fail if request doesn't contain any updated fields.
     assertThrows(
         MissingRequiredFieldException.class,
-        () ->
-            workspaceService.updateWorkspace(
-                workspaceUuid,
-                null,
-                null,
-                null,
-                USER_REQUEST.getEmail(),
-                USER_REQUEST.getSubjectId()));
+        () -> workspaceService.updateWorkspace(workspaceUuid, null, null, null, USER_REQUEST));
     var failedUpdateDate = workspaceActivityLogDao.getLastUpdateDetails(workspaceUuid);
     assertEquals(
         thirdUpdatedDateAfterWorkspaceUpdate.get().getChangeDate(),
@@ -498,12 +474,7 @@ class WorkspaceServiceTest extends BaseConnectedTest {
             DuplicateUserFacingIdException.class,
             () ->
                 workspaceService.updateWorkspace(
-                    secondWorkspaceUuid,
-                    userFacingId,
-                    null,
-                    null,
-                    USER_REQUEST.getEmail(),
-                    USER_REQUEST.getSubjectId()));
+                    secondWorkspaceUuid, userFacingId, null, null, USER_REQUEST));
     assertEquals(
         ex.getMessage(), String.format("Workspace with ID %s already exists", userFacingId));
   }
@@ -526,8 +497,7 @@ class WorkspaceServiceTest extends BaseConnectedTest {
     assertNotNull(lastUpdatedDate);
 
     // Workspace update new properties
-    workspaceService.updateWorkspaceProperties(
-        workspaceUuid, propertyMap, USER_REQUEST.getEmail(), USER_REQUEST.getSubjectId());
+    workspaceService.updateWorkspaceProperties(workspaceUuid, propertyMap, USER_REQUEST);
     Workspace updatedWorkspace = workspaceService.getWorkspace(workspaceUuid);
 
     var updateDetailsAfterWorkspaceUpdate =
@@ -634,8 +604,7 @@ class WorkspaceServiceTest extends BaseConnectedTest {
 
     List<String> propertyKeys = new ArrayList<>(Arrays.asList("foo", "foo1"));
 
-    workspaceService.deleteWorkspaceProperties(
-        workspaceUuid, propertyKeys, USER_REQUEST.getEmail(), USER_REQUEST.getSubjectId());
+    workspaceService.deleteWorkspaceProperties(workspaceUuid, propertyKeys, USER_REQUEST);
     Workspace deletedWorkspace = workspaceService.getWorkspace(workspaceUuid);
 
     var updateDetailsAfterWorkspaceUpdate =

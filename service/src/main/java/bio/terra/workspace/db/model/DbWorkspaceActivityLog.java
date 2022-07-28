@@ -12,7 +12,7 @@ public class DbWorkspaceActivityLog {
 
   private @Nullable String userEmail;
 
-  private @Nullable String subjectId;
+  private @Nullable String userSubjectId;
 
   private static final Supplier<RuntimeException> MISSING_REQUIRED_FIELD =
       () -> new MissingRequiredFieldsException("Missing required field");
@@ -27,8 +27,8 @@ public class DbWorkspaceActivityLog {
     return this;
   }
 
-  public DbWorkspaceActivityLog subjectId(String subjectId) {
-    this.subjectId = subjectId;
+  public DbWorkspaceActivityLog userSubjectId(String userSubjectId) {
+    this.userSubjectId = userSubjectId;
     return this;
   }
 
@@ -40,8 +40,8 @@ public class DbWorkspaceActivityLog {
     return Optional.ofNullable(userEmail).orElseThrow(MISSING_REQUIRED_FIELD);
   }
 
-  public @Nullable String getSubjectId() {
-    return subjectId;
+  public @Nullable String getUserSubjectId() {
+    return userSubjectId;
   }
 
   public static DbWorkspaceActivityLog getDbWorkspaceActivityLog(
@@ -49,6 +49,6 @@ public class DbWorkspaceActivityLog {
     return new DbWorkspaceActivityLog()
         .operationType(operationType)
         .userEmail(userEmail)
-        .subjectId(subjectId);
+        .userSubjectId(subjectId);
   }
 }

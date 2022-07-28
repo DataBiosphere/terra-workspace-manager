@@ -141,15 +141,6 @@ public class SamService {
   }
 
   /**
-   * Fetch the user status info and throw on interrupt during SamRetry. This method should only be
-   * called outside flight where SamRetry shouldn't be interrupted.
-   */
-  public UserStatusInfo getUserStatusInfoWithRethrow(AuthenticatedUserRequest userRequest) {
-    return SamRethrow.onInterrupted(
-        () -> getUserStatusInfo(userRequest), "Get user status info from SAM");
-  }
-
-  /**
    * Gets proxy group email.
    *
    * <p>This takes in userEmail instead of AuthenticatedUserRequest because of

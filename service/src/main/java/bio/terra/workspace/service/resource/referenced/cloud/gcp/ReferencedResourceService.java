@@ -1,16 +1,13 @@
 package bio.terra.workspace.service.resource.referenced.cloud.gcp;
 
-import static bio.terra.workspace.db.model.DbWorkspaceActivityLog.getDbWorkspaceActivityLog;
-
 import bio.terra.workspace.common.utils.FlightBeanBag;
 import bio.terra.workspace.db.ResourceDao;
-import bio.terra.workspace.db.WorkspaceActivityLogDao;
 import bio.terra.workspace.db.exception.InvalidMetadataException;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
-import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.iam.model.SamConstants;
 import bio.terra.workspace.service.job.JobBuilder;
 import bio.terra.workspace.service.job.JobService;
+import bio.terra.workspace.service.logging.WorkspaceActivityLogService;
 import bio.terra.workspace.service.resource.ResourceValidationUtils;
 import bio.terra.workspace.service.resource.controlled.flight.clone.workspace.WorkspaceCloneUtils;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
@@ -39,8 +36,7 @@ public class ReferencedResourceService {
   private final ResourceDao resourceDao;
   private final WorkspaceService workspaceService;
   private final FlightBeanBag beanBag;
-  private final WorkspaceActivityLogDao workspaceActivityLogDao;
-  private final SamService samService;
+  private final WorkspaceActivityLogService workspaceActivityLogService;
 
   @Autowired
   public ReferencedResourceService(
@@ -48,14 +44,12 @@ public class ReferencedResourceService {
       ResourceDao resourceDao,
       WorkspaceService workspaceService,
       FlightBeanBag beanBag,
-      WorkspaceActivityLogDao workspaceActivityLogDao,
-      SamService samService) {
+      WorkspaceActivityLogService workspaceActivityLogService) {
     this.jobService = jobService;
     this.resourceDao = resourceDao;
     this.workspaceService = workspaceService;
     this.beanBag = beanBag;
-    this.workspaceActivityLogDao = workspaceActivityLogDao;
-    this.samService = samService;
+    this.workspaceActivityLogService = workspaceActivityLogService;
   }
 
   @Traced
@@ -161,13 +155,7 @@ public class ReferencedResourceService {
           resourceDao.updateResource(
               workspaceUuid, resourceId, name, description, cloningInstructions);
       if (updated) {
-        var userStatusInfo = samService.getUserStatusInfoWithRethrow(userRequest);
-        workspaceActivityLogDao.writeActivity(
-            workspaceUuid,
-            getDbWorkspaceActivityLog(
-                OperationType.UPDATE,
-                userStatusInfo.getUserEmail(),
-                userStatusInfo.getUserSubjectId()));
+        workspaceActivityLogService.writeActivity(userRequest, workspaceUuid, OperationType.UPDATE);
       }
     }
     if (!updated) {
@@ -189,13 +177,7 @@ public class ReferencedResourceService {
       WsmResourceType resourceType,
       AuthenticatedUserRequest userRequest) {
     if (resourceDao.deleteResourceForResourceType(workspaceUuid, resourceId, resourceType)) {
-      var userStatusInfo = samService.getUserStatusInfoWithRethrow(userRequest);
-      workspaceActivityLogDao.writeActivity(
-          workspaceUuid,
-          getDbWorkspaceActivityLog(
-              OperationType.DELETE,
-              userStatusInfo.getUserEmail(),
-              userStatusInfo.getUserSubjectId()));
+      workspaceActivityLogService.writeActivity(userRequest, workspaceUuid, OperationType.DELETE);
     }
   }
 

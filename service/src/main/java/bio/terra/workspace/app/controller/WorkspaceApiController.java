@@ -3,7 +3,6 @@ package bio.terra.workspace.app.controller;
 import bio.terra.workspace.common.logging.model.ActivityLogChangeDetails;
 import bio.terra.workspace.common.utils.ControllerValidationUtils;
 import bio.terra.workspace.db.WorkspaceActivityLogDao;
-import bio.terra.workspace.db.model.DbWorkspaceActivityLog;
 import bio.terra.workspace.generated.controller.WorkspaceApi;
 import bio.terra.workspace.generated.model.ApiAzureContext;
 import bio.terra.workspace.generated.model.ApiCloneWorkspaceRequest;
@@ -36,6 +35,7 @@ import bio.terra.workspace.service.iam.model.SamConstants.SamWorkspaceAction;
 import bio.terra.workspace.service.iam.model.WsmIamRole;
 import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.job.JobService.AsyncJobResult;
+import bio.terra.workspace.service.logging.WorkspaceActivityLogService;
 import bio.terra.workspace.service.petserviceaccount.PetSaService;
 import bio.terra.workspace.service.spendprofile.SpendProfileId;
 import bio.terra.workspace.service.workspace.AzureCloudContextService;
@@ -75,6 +75,7 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
   private final GcpCloudContextService gcpCloudContextService;
   private final PetSaService petSaService;
   private final WorkspaceActivityLogDao workspaceActivityLogDao;
+  private final WorkspaceActivityLogService workspaceActivityLogService;
 
   @Autowired
   public WorkspaceApiController(
@@ -86,7 +87,8 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
       GcpCloudContextService gcpCloudContextService,
       PetSaService petSaService,
       AzureCloudContextService azureCloudContextService,
-      WorkspaceActivityLogDao workspaceActivityLogDao) {
+      WorkspaceActivityLogDao workspaceActivityLogDao,
+      WorkspaceActivityLogService workspaceActivityLogService) {
     super(authenticatedUserRequestFactory, request, samService);
     this.workspaceService = workspaceService;
     this.jobService = jobService;
@@ -95,6 +97,7 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
     this.gcpCloudContextService = gcpCloudContextService;
     this.petSaService = petSaService;
     this.workspaceActivityLogDao = workspaceActivityLogDao;
+    this.workspaceActivityLogService = workspaceActivityLogService;
   }
 
   @Override
@@ -236,15 +239,13 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
     }
     workspaceService.validateWorkspaceAndAction(
         userRequest, workspaceUuid, SamConstants.SamWorkspaceAction.WRITE);
-    var userStatusInfo = samService.getUserStatusInfoWithRethrow(userRequest);
     Workspace workspace =
         workspaceService.updateWorkspace(
             workspaceUuid,
             body.getUserFacingId(),
             body.getDisplayName(),
             body.getDescription(),
-            userStatusInfo.getUserEmail(),
-            userStatusInfo.getUserSubjectId());
+            userRequest);
     WsmIamRole highestRole = workspaceService.getHighestRole(workspaceUuid, userRequest);
     ApiWorkspaceDescription desc = buildWorkspaceDescription(workspace, highestRole);
     logger.info("Updated workspace {} for {}", desc, userRequest.getEmail());
@@ -293,12 +294,7 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
     Workspace workspace =
         workspaceService.validateWorkspaceAndAction(
             userRequest, workspaceUuid, SamWorkspaceAction.DELETE);
-    var userStatusInfo = samService.getUserStatusInfoWithRethrow(userRequest);
-    workspaceService.deleteWorkspaceProperties(
-        workspaceUuid,
-        propertyKeys,
-        userStatusInfo.getUserEmail(),
-        userStatusInfo.getUserSubjectId());
+    workspaceService.deleteWorkspaceProperties(workspaceUuid, propertyKeys, userRequest);
     logger.info(
         "Deleted the properties with the key {} in workspace {}", propertyKeys, workspaceUuid);
 
@@ -313,12 +309,7 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
         userRequest, workspaceUuid, SamWorkspaceAction.WRITE);
     Map<String, String> propertyMap = propertyMapFromApi(properties);
     logger.info("Updating the properties {} in workspace {}", propertyMap, workspaceUuid);
-    var userStatusInfo = samService.getUserStatusInfoWithRethrow(userRequest);
-    workspaceService.updateWorkspaceProperties(
-        workspaceUuid,
-        propertyMap,
-        userStatusInfo.getUserEmail(),
-        userStatusInfo.getUserSubjectId());
+    workspaceService.updateWorkspaceProperties(workspaceUuid, propertyMap, userRequest);
     logger.info("Updated the properties {} in workspace {}", propertyMap, workspaceUuid);
 
     return new ResponseEntity<>(HttpStatus.NO_CONTENT);
@@ -340,13 +331,8 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
             samService.grantWorkspaceRole(
                 uuid, getAuthenticatedInfo(), WsmIamRole.fromApiModel(role), body.getMemberEmail()),
         "grantWorkspaceRole");
-    var userStatusInfo = samService.getUserStatusInfoWithRethrow(new AuthenticatedUserRequest());
-    workspaceActivityLogDao.writeActivity(
-        uuid,
-        new DbWorkspaceActivityLog()
-            .operationType(OperationType.GRANT_WORKSPACE_ROLE)
-            .userEmail(userStatusInfo.getUserEmail())
-            .subjectId(userStatusInfo.getUserSubjectId()));
+    workspaceActivityLogService.writeActivity(
+        new AuthenticatedUserRequest(), uuid, OperationType.GRANT_WORKSPACE_ROLE);
     return new ResponseEntity<>(HttpStatus.NO_CONTENT);
   }
 
