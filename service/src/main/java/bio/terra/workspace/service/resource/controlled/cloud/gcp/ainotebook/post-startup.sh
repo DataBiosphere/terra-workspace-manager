@@ -2,6 +2,13 @@
 #
 # Default post startup script for GCP notebooks.
 # GCP Notebook post startup scrips are run only when the instance is first created.
+#
+# How to test changes to this file:
+# - gsutil cp service/src/main/java/bio/terra/workspace/service/resource/controlled/cloud/gcp/ainotebook/post-startup.sh gs://MYBUCKET
+# - terra resource create gcp-notebook --post-startup-script=gs://MYBUCKET/post-startup.sh --name="test_post_startup"
+#
+# To test a single line, run with "sudo" in notebook. Post-startup script runs
+# as root.
 
 set -o errexit
 set -o nounset
@@ -36,8 +43,8 @@ function get_metadata_value() {
     "http://metadata/computeMetadata/v1/$1"
 }
 
-# Install common packages in conda environment
-/opt/conda/bin/conda install -y pre-commit nbdime nbstripout pylint pytest dsub pandas_gbq
+# Install common packages. Use pip instead of conda because conda is slow.
+/opt/conda/bin/pip install pre-commit nbdime nbstripout pylint pytest dsub pandas_gbq
 
 # Install nbstripout for the jupyter user in all git repositories.
 sudo -u "${JUPYTER_USER}" sh -c "/opt/conda/bin/nbstripout --install --global"
