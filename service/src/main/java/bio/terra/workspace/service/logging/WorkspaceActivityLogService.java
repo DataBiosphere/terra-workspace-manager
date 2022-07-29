@@ -10,6 +10,7 @@ import java.util.UUID;
 import org.broadinstitute.dsde.workbench.client.sam.model.UserStatusInfo;
 import org.springframework.stereotype.Component;
 
+/** This component is a service for logging workspace activities. */
 @Component
 public class WorkspaceActivityLogService {
 
@@ -22,16 +23,18 @@ public class WorkspaceActivityLogService {
     this.workspaceActivityLogDao = workspaceActivityLogDao;
   }
 
+  /** Writes the change activity. */
   public void writeActivity(
       AuthenticatedUserRequest userRequest, UUID workspaceUuid, OperationType operationType) {
     UserStatusInfo userStatusInfo =
         SamRethrow.onInterrupted(
             () -> samService.getUserStatusInfo(userRequest), "Get user status info from SAM");
-    ;
     workspaceActivityLogDao.writeActivity(
         workspaceUuid,
         new DbWorkspaceActivityLog()
             .operationType(operationType)
+            // Use the userEmail from UserStatusInfo instead of userRequest because the email
+            // in userRequest could be the pet SA email.
             .actorEmail(userStatusInfo.getUserEmail())
             .actorSubjectId(userStatusInfo.getUserSubjectId()));
   }
