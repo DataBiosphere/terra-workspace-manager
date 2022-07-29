@@ -5,6 +5,7 @@ import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
 import bio.terra.workspace.db.WorkspaceActivityLogDao;
 import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.db.model.DbWorkspaceActivityLog;
+import bio.terra.workspace.generated.model.ApiTpsPolicyInputs;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamRethrow;
 import bio.terra.workspace.service.iam.SamService;
@@ -17,6 +18,7 @@ import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.resource.controlled.flight.clone.workspace.CloneGcpWorkspaceFlight;
 import bio.terra.workspace.service.stage.StageService;
 import bio.terra.workspace.service.workspace.exceptions.BufferServiceDisabledException;
+import bio.terra.workspace.service.workspace.exceptions.DuplicateWorkspaceException;
 import bio.terra.workspace.service.workspace.flight.CreateGcpContextFlightV2;
 import bio.terra.workspace.service.workspace.flight.DeleteAzureContextFlight;
 import bio.terra.workspace.service.workspace.flight.DeleteGcpContextFlight;
@@ -83,11 +85,21 @@ public class WorkspaceService {
 
   /** Create a workspace with the specified parameters. Returns workspaceID of the new workspace. */
   @Traced
-  public UUID createWorkspace(Workspace workspace, AuthenticatedUserRequest userRequest) {
+  public UUID createWorkspace(
+      Workspace workspace,
+      @Nullable ApiTpsPolicyInputs policies,
+      AuthenticatedUserRequest userRequest) {
     String workspaceName = workspace.getDisplayName().orElse("");
     String workspaceUuid = workspace.getWorkspaceId().toString();
     String jobDescription =
         String.format("Create workspace: name: '%s' id: '%s'  ", workspaceName, workspaceUuid);
+
+    // Before launching the flight, confirm the workspace does not already exist. This isn't perfect
+    // if two requests come in at nearly the same time, but it prevents launching a flight when a
+    // workspace already exists.
+    if (workspaceDao.getWorkspaceIfExists(workspace.getWorkspaceId()).isPresent()) {
+      throw new DuplicateWorkspaceException("Provided workspace ID is already in use");
+    }
 
     JobBuilder createJob =
         jobService
@@ -101,8 +113,8 @@ public class WorkspaceService {
             .addParameter(
                 WorkspaceFlightMapKeys.WORKSPACE_STAGE, workspace.getWorkspaceStage().name())
             .addParameter(WorkspaceFlightMapKeys.DISPLAY_NAME, workspaceName)
-            .addParameter(
-                WorkspaceFlightMapKeys.DESCRIPTION, workspace.getDescription().orElse(""));
+            .addParameter(WorkspaceFlightMapKeys.DESCRIPTION, workspace.getDescription().orElse(""))
+            .addParameter(WorkspaceFlightMapKeys.POLICIES, policies);
 
     if (workspace.getSpendProfileId().isPresent()) {
       createJob.addParameter(
@@ -394,7 +406,8 @@ public class WorkspaceService {
         String.format("Clone workspace: name: '%s' id: '%s'  ", workspaceName, workspaceUuid);
 
     // Create the destination workspace synchronously first.
-    createWorkspace(destinationWorkspace, userRequest);
+    // TODO(PF-1871) copy policy on workspace clone
+    createWorkspace(destinationWorkspace, null, userRequest);
 
     // Remaining steps are an async flight.
     return jobService

@@ -32,7 +32,8 @@ public class WorkspaceDeleteFlight extends Flight {
     // 2. Notify all registered applications of deletion, once applications are supported
     // 3. Delete policy objects in Policy Manager, once it exists.
 
-    RetryRule retryRule = RetryRules.cloudLongRunning();
+    RetryRule cloudRetryRule = RetryRules.cloudLongRunning();
+    RetryRule terraRetryRule = RetryRules.shortExponential();
 
     // In Azure, we need to explicitly delete the controlled resources as there is no containing
     // object (like a GCP project) that we can delete which will also delete all resources
@@ -52,21 +53,25 @@ public class WorkspaceDeleteFlight extends Flight {
             appContext.getResourceDao(),
             workspaceUuid,
             /* cloudPlatform= */ null),
-        retryRule);
+        terraRetryRule);
     addStep(
         new DeleteGcpProjectStep(
             appContext.getCrlService(), appContext.getGcpCloudContextService()),
-        retryRule);
+        cloudRetryRule);
     addStep(
         new DeleteAzureContextStep(appContext.getAzureCloudContextService(), workspaceUuid),
-        retryRule);
+        cloudRetryRule);
     // Workspace authz is handled differently depending on whether WSM owns the underlying Sam
     // resource or not, as indicated by the workspace stage enum.
     switch (workspaceStage) {
       case MC_WORKSPACE:
         addStep(
+            new DeleteWorkspacePoliciesStep(
+                appContext.getTpsApiDispatch(), userRequest, workspaceUuid),
+            terraRetryRule);
+        addStep(
             new DeleteWorkspaceAuthzStep(appContext.getSamService(), userRequest, workspaceUuid),
-            retryRule);
+            terraRetryRule);
         break;
       case RAWLS_WORKSPACE:
         // Do nothing, since WSM does not own the Sam resource.
@@ -75,6 +80,7 @@ public class WorkspaceDeleteFlight extends Flight {
         throw new InternalLogicException(
             "Unknown workspace stage during deletion: " + workspaceStage.name());
     }
-    addStep(new DeleteWorkspaceStateStep(appContext.getWorkspaceDao(), workspaceUuid), retryRule);
+    addStep(
+        new DeleteWorkspaceStateStep(appContext.getWorkspaceDao(), workspaceUuid), terraRetryRule);
   }
 }

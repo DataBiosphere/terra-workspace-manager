@@ -1,7 +1,14 @@
 package bio.terra.workspace.app.controller;
 
+import bio.terra.common.iam.BearerToken;
+import bio.terra.policy.common.exception.PolicyObjectNotFoundException;
+import bio.terra.policy.service.pao.model.Pao;
+import bio.terra.workspace.amalgam.tps.TpsApiDispatch;
+import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
+import bio.terra.workspace.common.exception.FeatureNotSupportedException;
 import bio.terra.workspace.common.utils.ControllerValidationUtils;
 import bio.terra.workspace.db.WorkspaceActivityLogDao;
+import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.db.model.DbWorkspaceActivityLog;
 import bio.terra.workspace.generated.controller.WorkspaceApi;
 import bio.terra.workspace.generated.model.ApiAzureContext;
@@ -21,6 +28,8 @@ import bio.terra.workspace.generated.model.ApiProperties;
 import bio.terra.workspace.generated.model.ApiProperty;
 import bio.terra.workspace.generated.model.ApiRoleBinding;
 import bio.terra.workspace.generated.model.ApiRoleBindingList;
+import bio.terra.workspace.generated.model.ApiTpsPolicyInput;
+import bio.terra.workspace.generated.model.ApiTpsPolicyInputs;
 import bio.terra.workspace.generated.model.ApiUpdateWorkspaceRequestBody;
 import bio.terra.workspace.generated.model.ApiWorkspaceDescription;
 import bio.terra.workspace.generated.model.ApiWorkspaceDescriptionList;
@@ -41,6 +50,7 @@ import bio.terra.workspace.service.workspace.AzureCloudContextService;
 import bio.terra.workspace.service.workspace.GcpCloudContextService;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.exceptions.CloudContextRequiredException;
+import bio.terra.workspace.service.workspace.exceptions.StageDisabledException;
 import bio.terra.workspace.service.workspace.model.AzureCloudContext;
 import bio.terra.workspace.service.workspace.model.CloudContextHolder;
 import bio.terra.workspace.service.workspace.model.GcpCloudContext;
@@ -73,7 +83,10 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
   private final AzureCloudContextService azureCloudContextService;
   private final GcpCloudContextService gcpCloudContextService;
   private final PetSaService petSaService;
+  private final TpsApiDispatch tpsApiDispatch;
   private final WorkspaceActivityLogDao workspaceActivityLogDao;
+  private final WorkspaceDao workspaceDao;
+  private final FeatureConfiguration featureConfiguration;
 
   @Autowired
   public WorkspaceApiController(
@@ -85,7 +98,10 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
       GcpCloudContextService gcpCloudContextService,
       PetSaService petSaService,
       AzureCloudContextService azureCloudContextService,
-      WorkspaceActivityLogDao workspaceActivityLogDao) {
+      TpsApiDispatch tpsApiDispatch,
+      WorkspaceActivityLogDao workspaceActivityLogDao,
+      WorkspaceDao workspaceDao,
+      FeatureConfiguration featureConfiguration) {
     super(authenticatedUserRequestFactory, request, samService);
     this.workspaceService = workspaceService;
     this.jobService = jobService;
@@ -93,7 +109,10 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
     this.azureCloudContextService = azureCloudContextService;
     this.gcpCloudContextService = gcpCloudContextService;
     this.petSaService = petSaService;
+    this.tpsApiDispatch = tpsApiDispatch;
     this.workspaceActivityLogDao = workspaceActivityLogDao;
+    this.workspaceDao = workspaceDao;
+    this.featureConfiguration = featureConfiguration;
   }
 
   @Override
@@ -123,6 +142,27 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
         Optional.ofNullable(body.getUserFacingId()).orElse(body.getId().toString());
     ControllerValidationUtils.validateUserFacingId(userFacingId);
 
+    // Create PAO objects from the user's specifications
+    ApiTpsPolicyInputs policies = null;
+    if (featureConfiguration.isTpsEnabled()) {
+      // TODO(zloery): Can rawls workspaces have policies?
+      if (body.getStage() == ApiWorkspaceStageModel.RAWLS_WORKSPACE && body.getPolicies() != null) {
+        throw new StageDisabledException(
+            "Cannot apply policies to a RAWLS_WORKSPACE stage workspace");
+      }
+      // TODO(zloery): Do we need this validation?
+      for (ApiTpsPolicyInput inputPolicy : body.getPolicies().getInputs()) {
+        ControllerValidationUtils.validatePolicyName(
+            inputPolicy.getNamespace(), inputPolicy.getName());
+      }
+      policies = body.getPolicies();
+    } else {
+      if (body.getPolicies() != null) {
+        throw new FeatureNotSupportedException(
+            "TPS is not enabled on this instance of Workspace Manager, do not specify the policy field of a CreateWorkspace request.");
+      }
+    }
+
     Workspace workspace =
         Workspace.builder()
             .workspaceId(body.getId())
@@ -133,7 +173,7 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
             .workspaceStage(internalStage)
             .properties(propertyMapFromApi(body.getProperties()))
             .build();
-    UUID createdId = workspaceService.createWorkspace(workspace, userRequest);
+    UUID createdId = workspaceService.createWorkspace(workspace, policies, userRequest);
 
     ApiCreatedWorkspace responseWorkspace = new ApiCreatedWorkspace().id(createdId);
     logger.info("Created workspace {} for {}", responseWorkspace, userRequest.getEmail());
@@ -159,13 +199,14 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
                         workspaceAndHighestRole ->
                             buildWorkspaceDescription(
                                 workspaceAndHighestRole.workspace(),
-                                workspaceAndHighestRole.highestRole()))
+                                workspaceAndHighestRole.highestRole(),
+                                userRequest))
                     .toList());
     return new ResponseEntity<>(response, HttpStatus.OK);
   }
 
   private ApiWorkspaceDescription buildWorkspaceDescription(
-      Workspace workspace, WsmIamRole highestRole) {
+      Workspace workspace, WsmIamRole highestRole, AuthenticatedUserRequest userRequest) {
     UUID workspaceUuid = workspace.getWorkspaceId();
     ApiGcpContext gcpContext =
         gcpCloudContextService
@@ -178,6 +219,20 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
             .getAzureCloudContext(workspaceUuid)
             .map(AzureCloudContext::toApi)
             .orElse(null);
+
+    List<ApiTpsPolicyInput> workspacePolicies = null;
+    if (featureConfiguration.isTpsEnabled()) {
+      try {
+        Pao workspacePolicy =
+            TpsApiDispatch.paoFromApi(
+                tpsApiDispatch.getPao(
+                    new BearerToken(userRequest.getRequiredToken()), workspaceUuid));
+        workspacePolicies =
+            TpsApiDispatch.policyInputsToApi(workspacePolicy.getEffectiveAttributes()).getInputs();
+      } catch (PolicyObjectNotFoundException e) {
+        // TODO(zloery): this is a terrible pattern. Add a DAO method which returns an Optional?
+      }
+    }
 
     // Convert the property map to API format
     ApiProperties apiProperties = new ApiProperties();
@@ -198,7 +253,8 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
         .gcpContext(gcpContext)
         .azureContext(azureContext)
         .createdDate(workspaceActivityLogDao.getCreatedDate(workspaceUuid).orElse(null))
-        .lastUpdatedDate(workspaceActivityLogDao.getLastUpdatedDate(workspaceUuid).orElse(null));
+        .lastUpdatedDate(workspaceActivityLogDao.getLastUpdatedDate(workspaceUuid).orElse(null))
+        .policies(workspacePolicies);
   }
 
   @Override
@@ -210,7 +266,7 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
         workspaceService.validateWorkspaceAndAction(
             userRequest, uuid, SamConstants.SamWorkspaceAction.READ);
     WsmIamRole highestRole = workspaceService.getHighestRole(uuid, userRequest);
-    ApiWorkspaceDescription desc = buildWorkspaceDescription(workspace, highestRole);
+    ApiWorkspaceDescription desc = buildWorkspaceDescription(workspace, highestRole, userRequest);
     logger.info("Got workspace {} for {}", desc, userRequest.getEmail());
 
     return new ResponseEntity<>(desc, HttpStatus.OK);
@@ -233,7 +289,7 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
             workspaceUuid, body.getUserFacingId(), body.getDisplayName(), body.getDescription());
 
     WsmIamRole highestRole = workspaceService.getHighestRole(workspaceUuid, userRequest);
-    ApiWorkspaceDescription desc = buildWorkspaceDescription(workspace, highestRole);
+    ApiWorkspaceDescription desc = buildWorkspaceDescription(workspace, highestRole, userRequest);
     logger.info("Updated workspace {} for {}", desc, userRequest.getEmail());
 
     return new ResponseEntity<>(desc, HttpStatus.OK);
@@ -261,7 +317,7 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
     Workspace workspace = workspaceService.getWorkspaceByUserFacingId(userFacingId, userRequest);
     WsmIamRole highestRole =
         workspaceService.getHighestRole(workspace.getWorkspaceId(), userRequest);
-    ApiWorkspaceDescription desc = buildWorkspaceDescription(workspace, highestRole);
+    ApiWorkspaceDescription desc = buildWorkspaceDescription(workspace, highestRole, userRequest);
     logger.info("Got workspace {} for {}", desc, userRequest.getEmail());
 
     return new ResponseEntity<>(desc, HttpStatus.OK);

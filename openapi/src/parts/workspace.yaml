@@ -418,11 +418,7 @@ components:
           description: ID of provided spend profile
           type: string
         policies:
-          description: Policies provided by the containing folder; NOT IMPLEMENTED
-          type: array
-          items:
-            type: string
-            format: uuid
+          $ref: '#/components/schemas/TpsPolicyInputs'
         stage:
           $ref: '#/components/schemas/WorkspaceStageModel'
         properties:
@@ -545,6 +541,10 @@ components:
           description: Timestamp of the latest workspace change
           type: string
           format: date-time
+        policies:
+          type: array
+          items:
+            $ref: '#/components/schemas/TpsPolicyInput'
 
     WorkspaceDescriptionList:
       type: object

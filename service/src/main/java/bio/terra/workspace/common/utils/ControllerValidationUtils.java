@@ -5,8 +5,10 @@ import bio.terra.workspace.generated.model.ApiCloudPlatform;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResourceCategory;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResourceFields;
 import bio.terra.workspace.service.workspace.exceptions.CloudPlatformNotImplementedException;
+import com.google.common.collect.ImmutableMap;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.regex.Pattern;
 import javax.annotation.Nullable;
 import org.apache.commons.validator.routines.InetAddressValidator;
@@ -35,6 +37,12 @@ public final class ControllerValidationUtils {
    */
   public static final Pattern USER_FACING_ID_VALIDATION_PATTERN =
       Pattern.compile("^[a-z0-9][-_a-z0-9]{2,62}$");
+
+  // TODO(zloery): Will WSM always know all valid policy names? Or at some point will we want to
+  //   accept something like "thirdpartypolicyengine:myrandompolicyname" and just leave validation
+  //   to the external policy engine?
+  public static final Map<String, String> SUPPORTED_POLICY_NAMES =
+      ImmutableMap.of("terra", "group-constraint");
 
   /**
    * Utility to validate limit/offset parameters used in pagination.
@@ -135,6 +143,14 @@ public final class ControllerValidationUtils {
       if (!validator.isValid(address)) {
         throw new ValidationException("Invalid ip address or ip address range: " + ipRange);
       }
+    }
+  }
+
+  /** Validate that the specified namespace/name pair is a valid policy that WSM understands. */
+  public static void validatePolicyName(String namespace, String name) {
+    if (!SUPPORTED_POLICY_NAMES.containsKey(namespace)
+        || !SUPPORTED_POLICY_NAMES.get(namespace).equals(name)) {
+      throw new ValidationException("Invalid policy namespace or name provided");
     }
   }
 }

@@ -133,7 +133,8 @@ public class GcpCloudContextUnitTest extends BaseUnitTest {
             "cloud context description",
             new SpendProfileId("spend-profile"),
             Collections.emptyMap(),
-            WorkspaceStage.MC_WORKSPACE);
+            WorkspaceStage.MC_WORKSPACE,
+            null);
     workspaceDao.createWorkspace(workspace);
 
     // Create a cloud context in the database with a V1 format
