@@ -7,16 +7,16 @@ databaseChangeLog:
         tableName: workspace_activity_log
         columns:
         - column:
-            name: user_email
+            name: actor_email
             type: text
             constraints:
                 nullable: false
             remarks: |
-                User email of the change agent (i.e. who made the change).
+                User email of the change actor (i.e. who made the change).
         - column:
-            name: user_subject_id
+            name: actor_subject_id
             type: text
             constraints:
                 nullable: false
             remarks: |
-                Sam subject id of the change agent (i.e. who made the change).
+                Sam subject id of the change actor (i.e. who made the change).
