@@ -32,7 +32,7 @@ public class WorkspaceActivityLogService {
         workspaceUuid,
         new DbWorkspaceActivityLog()
             .operationType(operationType)
-            .userEmail(userStatusInfo.getUserEmail())
-            .userSubjectId(userStatusInfo.getUserSubjectId()));
+            .actorEmail(userStatusInfo.getUserEmail())
+            .actorSubjectId(userStatusInfo.getUserSubjectId()));
   }
 }
