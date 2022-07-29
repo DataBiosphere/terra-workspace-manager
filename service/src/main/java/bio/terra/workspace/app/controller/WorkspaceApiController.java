@@ -332,7 +332,7 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
                 uuid, getAuthenticatedInfo(), WsmIamRole.fromApiModel(role), body.getMemberEmail()),
         "grantWorkspaceRole");
     workspaceActivityLogService.writeActivity(
-        new AuthenticatedUserRequest(), uuid, OperationType.GRANT_WORKSPACE_ROLE);
+        getAuthenticatedInfo(), uuid, OperationType.GRANT_WORKSPACE_ROLE);
     return new ResponseEntity<>(HttpStatus.NO_CONTENT);
   }
 
