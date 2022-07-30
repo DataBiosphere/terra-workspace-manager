@@ -4,30 +4,29 @@ import bio.terra.workspace.service.workspace.exceptions.MissingRequiredFieldsExc
 import bio.terra.workspace.service.workspace.model.OperationType;
 import java.util.Optional;
 import java.util.function.Supplier;
-import javax.annotation.Nullable;
 
 public class DbWorkspaceActivityLog {
 
-  private @Nullable OperationType operationType;
+  private OperationType operationType;
 
-  private @Nullable String actorEmail;
+  private String actorEmail;
 
-  private @Nullable String actorSubjectId;
+  private String actorSubjectId;
 
   private static final Supplier<RuntimeException> MISSING_REQUIRED_FIELD =
       () -> new MissingRequiredFieldsException("Missing required field");
 
-  public DbWorkspaceActivityLog operationType(OperationType operationType) {
+  private DbWorkspaceActivityLog operationType(OperationType operationType) {
     this.operationType = operationType;
     return this;
   }
 
-  public DbWorkspaceActivityLog actorEmail(String actorEmail) {
+  private DbWorkspaceActivityLog actorEmail(String actorEmail) {
     this.actorEmail = actorEmail;
     return this;
   }
 
-  public DbWorkspaceActivityLog actorSubjectId(String actorSubjectId) {
+  private DbWorkspaceActivityLog actorSubjectId(String actorSubjectId) {
     this.actorSubjectId = actorSubjectId;
     return this;
   }

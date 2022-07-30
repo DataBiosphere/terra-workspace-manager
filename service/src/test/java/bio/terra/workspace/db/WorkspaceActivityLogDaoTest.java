@@ -7,7 +7,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import bio.terra.workspace.common.BaseUnitTest;
 import bio.terra.workspace.db.exception.UnknownFlightOperationTypeException;
-import bio.terra.workspace.db.model.DbWorkspaceActivityLog;
 import bio.terra.workspace.service.workspace.model.OperationType;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
@@ -57,10 +56,7 @@ public class WorkspaceActivityLogDaoTest extends BaseUnitTest {
     var newUserSubjectId = "foo";
     activityLogDao.writeActivity(
         workspaceId,
-        new DbWorkspaceActivityLog()
-            .operationType(OperationType.UPDATE)
-            .actorEmail(newUserEmail)
-            .actorSubjectId(newUserSubjectId));
+        getDbWorkspaceActivityLog(OperationType.UPDATE, newUserEmail, newUserSubjectId));
 
     var secondLastUpdateDetails = activityLogDao.getLastUpdateDetails(workspaceId);
     assertEquals(newUserEmail, secondLastUpdateDetails.get().getActorEmail());
@@ -84,11 +80,7 @@ public class WorkspaceActivityLogDaoTest extends BaseUnitTest {
     var newUserEmail = "foo@gmail.com";
     var subjectId = "foo";
     activityLogDao.writeActivity(
-        workspaceId,
-        new DbWorkspaceActivityLog()
-            .operationType(OperationType.UPDATE)
-            .actorEmail(newUserEmail)
-            .actorSubjectId(subjectId));
+        workspaceId, getDbWorkspaceActivityLog(OperationType.UPDATE, newUserEmail, subjectId));
 
     var createDetailsAfterUpdate = activityLogDao.getCreateDetails(workspaceId);
     assertEquals(USER_EMAIL, createDetailsAfterUpdate.get().getActorEmail());
@@ -151,9 +143,7 @@ public class WorkspaceActivityLogDaoTest extends BaseUnitTest {
     var workspaceId = UUID.randomUUID();
     activityLogDao.writeActivity(
         workspaceId,
-        getDbWorkspaceActivityLog(OperationType.SYSTEM_CLEANUP, USER_EMAIL, SUBJECT_ID)
-            .actorEmail("bar@gmail.com")
-            .actorSubjectId("bar"));
+        getDbWorkspaceActivityLog(OperationType.SYSTEM_CLEANUP, "bar@gmail.com", "bar"));
 
     assertEquals(OperationType.SYSTEM_CLEANUP.name(), getChangeType(workspaceId));
     assertTrue(activityLogDao.getLastUpdateDetails(workspaceId).isEmpty());

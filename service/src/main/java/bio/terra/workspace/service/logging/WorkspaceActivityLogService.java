@@ -31,11 +31,11 @@ public class WorkspaceActivityLogService {
             () -> samService.getUserStatusInfo(userRequest), "Get user status info from SAM");
     workspaceActivityLogDao.writeActivity(
         workspaceUuid,
-        new DbWorkspaceActivityLog()
-            .operationType(operationType)
+        DbWorkspaceActivityLog.getDbWorkspaceActivityLog(
+            operationType,
             // Use the userEmail from UserStatusInfo instead of userRequest because the email
             // in userRequest could be the pet SA email.
-            .actorEmail(userStatusInfo.getUserEmail())
-            .actorSubjectId(userStatusInfo.getUserSubjectId()));
+            userStatusInfo.getUserEmail(),
+            userStatusInfo.getUserSubjectId()));
   }
 }
