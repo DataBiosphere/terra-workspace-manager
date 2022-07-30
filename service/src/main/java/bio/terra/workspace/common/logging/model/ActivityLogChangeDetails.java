@@ -16,21 +16,21 @@ public class ActivityLogChangeDetails {
       () -> new MissingRequiredFieldsException("Missing required field");
 
   private @Nullable OffsetDateTime changeDate;
-  private @Nullable String userSubjectId;
-  private @Nullable String userEmail;
+  private @Nullable String actorSubjectId;
+  private @Nullable String actorEmail;
 
-  public ActivityLogChangeDetails dateTime(OffsetDateTime changedDate) {
+  public ActivityLogChangeDetails changeDate(OffsetDateTime changedDate) {
     this.changeDate = changedDate;
     return this;
   }
 
-  public ActivityLogChangeDetails userSubjectId(String subjectId) {
-    this.userSubjectId = subjectId;
+  public ActivityLogChangeDetails actorSubjectId(String actorSubjectId) {
+    this.actorSubjectId = actorSubjectId;
     return this;
   }
 
-  public ActivityLogChangeDetails userEmail(String userEmail) {
-    this.userEmail = userEmail;
+  public ActivityLogChangeDetails actorEmail(String actorEmail) {
+    this.actorEmail = actorEmail;
     return this;
   }
 
@@ -38,11 +38,11 @@ public class ActivityLogChangeDetails {
     return Optional.ofNullable(changeDate).orElseThrow(MISSING_REQUIRED_FIELD);
   }
 
-  public String getUserEmail() {
-    return Optional.ofNullable(userEmail).orElseThrow(MISSING_REQUIRED_FIELD);
+  public String getActorEmail() {
+    return Optional.ofNullable(actorEmail).orElseThrow(MISSING_REQUIRED_FIELD);
   }
 
-  public String getUserSubjectId() {
-    return Optional.ofNullable(userSubjectId).orElseThrow(MISSING_REQUIRED_FIELD);
+  public String getActorSubjectId() {
+    return Optional.ofNullable(actorSubjectId).orElseThrow(MISSING_REQUIRED_FIELD);
   }
 }

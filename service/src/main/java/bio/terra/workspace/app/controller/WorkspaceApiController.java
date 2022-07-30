@@ -205,11 +205,11 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
         .azureContext(azureContext)
         .createdDate(
             createDetailsOptional.map(ActivityLogChangeDetails::getChangeDate).orElse(null))
-        .createdBy(createDetailsOptional.map(ActivityLogChangeDetails::getUserEmail).orElse(null))
+        .createdBy(createDetailsOptional.map(ActivityLogChangeDetails::getActorEmail).orElse(null))
         .lastUpdatedDate(
             lastChangeDetailsOptional.map(ActivityLogChangeDetails::getChangeDate).orElse(null))
         .lastUpdatedBy(
-            lastChangeDetailsOptional.map(ActivityLogChangeDetails::getUserEmail).orElse(null));
+            lastChangeDetailsOptional.map(ActivityLogChangeDetails::getActorEmail).orElse(null));
   }
 
   @Override

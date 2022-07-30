@@ -29,11 +29,11 @@ public class WorkspaceActivityLogDao {
   private static final RowMapper<ActivityLogChangeDetails> ACTIVITY_LOG_CHANGE_DETAILS_ROW_MAPPER =
       (rs, rowNum) ->
           new ActivityLogChangeDetails()
-              .dateTime(
+              .changeDate(
                   OffsetDateTime.ofInstant(
                       rs.getTimestamp("change_date").toInstant(), ZoneId.of("UTC")))
-              .userEmail(rs.getString("actor_email"))
-              .userSubjectId(rs.getString("actor_subject_id"));
+              .actorEmail(rs.getString("actor_email"))
+              .actorSubjectId(rs.getString("actor_subject_id"));
   private final NamedParameterJdbcTemplate jdbcTemplate;
 
   // These fields don't update workspace "Last updated" time in UI. For example,

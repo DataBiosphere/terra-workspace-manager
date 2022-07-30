@@ -402,9 +402,9 @@ class WorkspaceServiceTest extends BaseConnectedTest {
             .get()
             .getChangeDate()
             .isBefore(workspaceUpdateChangeDetails.get().getChangeDate()));
-    assertEquals(USER_REQUEST.getEmail(), workspaceUpdateChangeDetails.get().getUserEmail());
+    assertEquals(USER_REQUEST.getEmail(), workspaceUpdateChangeDetails.get().getActorEmail());
     assertEquals(
-        USER_REQUEST.getSubjectId(), workspaceUpdateChangeDetails.get().getUserSubjectId());
+        USER_REQUEST.getSubjectId(), workspaceUpdateChangeDetails.get().getActorSubjectId());
 
     assertEquals(userFacingId, updatedWorkspace.getUserFacingId());
     assertTrue(updatedWorkspace.getDisplayName().isPresent());
@@ -423,8 +423,8 @@ class WorkspaceServiceTest extends BaseConnectedTest {
             .get()
             .getChangeDate()
             .isBefore(secondUpdateChangeDetails.get().getChangeDate()));
-    assertEquals(USER_REQUEST.getEmail(), secondUpdateChangeDetails.get().getUserEmail());
-    assertEquals(USER_REQUEST.getSubjectId(), secondUpdateChangeDetails.get().getUserSubjectId());
+    assertEquals(USER_REQUEST.getEmail(), secondUpdateChangeDetails.get().getActorEmail());
+    assertEquals(USER_REQUEST.getSubjectId(), secondUpdateChangeDetails.get().getActorSubjectId());
     // Since name is null, leave it alone. Description should be updated.
     assertTrue(secondUpdatedWorkspace.getDisplayName().isPresent());
     assertEquals(name, secondUpdatedWorkspace.getDisplayName().get());
@@ -505,9 +505,9 @@ class WorkspaceServiceTest extends BaseConnectedTest {
     assertTrue(lastUpdatedDate.isBefore(updateDetailsAfterWorkspaceUpdate.get().getChangeDate()));
     assertEquals(
         propertyMap, updatedWorkspace.getProperties(), "Workspace properties update successfully");
-    assertEquals(USER_REQUEST.getEmail(), updateDetailsAfterWorkspaceUpdate.get().getUserEmail());
+    assertEquals(USER_REQUEST.getEmail(), updateDetailsAfterWorkspaceUpdate.get().getActorEmail());
     assertEquals(
-        USER_REQUEST.getSubjectId(), updateDetailsAfterWorkspaceUpdate.get().getUserSubjectId());
+        USER_REQUEST.getSubjectId(), updateDetailsAfterWorkspaceUpdate.get().getActorSubjectId());
   }
 
   @Test

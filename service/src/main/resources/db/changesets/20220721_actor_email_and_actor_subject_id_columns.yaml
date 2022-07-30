@@ -1,6 +1,6 @@
 databaseChangeLog:
 - changeSet:
-    id: add change agent email and subject id column
+    id: add change actor email and actor subject id column
     author: yuhuyoyo
     changes:
     - addColumn:

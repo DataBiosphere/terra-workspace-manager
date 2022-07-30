@@ -40,8 +40,8 @@ public class DbWorkspaceActivityLog {
     return Optional.ofNullable(actorEmail).orElseThrow(MISSING_REQUIRED_FIELD);
   }
 
-  public @Nullable String getActorSubjectId() {
-    return actorSubjectId;
+  public String getActorSubjectId() {
+    return Optional.ofNullable(actorSubjectId).orElseThrow(MISSING_REQUIRED_FIELD);
   }
 
   public static DbWorkspaceActivityLog getDbWorkspaceActivityLog(

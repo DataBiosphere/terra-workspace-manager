@@ -24,7 +24,7 @@ public class WorkspaceActivityLogDaoTest extends BaseUnitTest {
   @Autowired private NamedParameterJdbcTemplate jdbcTemplate;
 
   @Test
-  public void setWorkspaceUpdatedDateAndGet() {
+  public void writeActivityAndGet() {
     var workspaceId = UUID.randomUUID();
     assertTrue(activityLogDao.getLastUpdateDetails(workspaceId).isEmpty());
 
@@ -37,10 +37,10 @@ public class WorkspaceActivityLogDaoTest extends BaseUnitTest {
     assertTrue(lastUpdateDetails.isPresent());
     assertTrue(createDetails.isPresent());
     assertEquals(lastUpdateDetails.get().getChangeDate(), createDetails.get().getChangeDate());
-    assertEquals(USER_EMAIL, createDetails.get().getUserEmail());
-    assertEquals(SUBJECT_ID, createDetails.get().getUserSubjectId());
-    assertEquals(USER_EMAIL, lastUpdateDetails.get().getUserEmail());
-    assertEquals(SUBJECT_ID, lastUpdateDetails.get().getUserSubjectId());
+    assertEquals(USER_EMAIL, createDetails.get().getActorEmail());
+    assertEquals(SUBJECT_ID, createDetails.get().getActorSubjectId());
+    assertEquals(USER_EMAIL, lastUpdateDetails.get().getActorEmail());
+    assertEquals(SUBJECT_ID, lastUpdateDetails.get().getActorSubjectId());
   }
 
   @Test
@@ -63,8 +63,8 @@ public class WorkspaceActivityLogDaoTest extends BaseUnitTest {
             .actorSubjectId(newUserSubjectId));
 
     var secondLastUpdateDetails = activityLogDao.getLastUpdateDetails(workspaceId);
-    assertEquals(newUserEmail, secondLastUpdateDetails.get().getUserEmail());
-    assertEquals(newUserSubjectId, secondLastUpdateDetails.get().getUserSubjectId());
+    assertEquals(newUserEmail, secondLastUpdateDetails.get().getActorEmail());
+    assertEquals(newUserSubjectId, secondLastUpdateDetails.get().getActorSubjectId());
     var secondLastUpdatedDate = secondLastUpdateDetails.get().getChangeDate();
     assertTrue(secondLastUpdatedDate.isAfter(lastUpdateDetails.get().getChangeDate()));
   }
@@ -78,8 +78,8 @@ public class WorkspaceActivityLogDaoTest extends BaseUnitTest {
         workspaceId, getDbWorkspaceActivityLog(OperationType.CREATE, USER_EMAIL, SUBJECT_ID));
 
     var createDetails = activityLogDao.getCreateDetails(workspaceId);
-    assertEquals(USER_EMAIL, createDetails.get().getUserEmail());
-    assertEquals(SUBJECT_ID, createDetails.get().getUserSubjectId());
+    assertEquals(USER_EMAIL, createDetails.get().getActorEmail());
+    assertEquals(SUBJECT_ID, createDetails.get().getActorSubjectId());
 
     var newUserEmail = "foo@gmail.com";
     var subjectId = "foo";
@@ -91,8 +91,8 @@ public class WorkspaceActivityLogDaoTest extends BaseUnitTest {
             .actorSubjectId(subjectId));
 
     var createDetailsAfterUpdate = activityLogDao.getCreateDetails(workspaceId);
-    assertEquals(USER_EMAIL, createDetailsAfterUpdate.get().getUserEmail());
-    assertEquals(SUBJECT_ID, createDetailsAfterUpdate.get().getUserSubjectId());
+    assertEquals(USER_EMAIL, createDetailsAfterUpdate.get().getActorEmail());
+    assertEquals(SUBJECT_ID, createDetailsAfterUpdate.get().getActorSubjectId());
   }
 
   @Test

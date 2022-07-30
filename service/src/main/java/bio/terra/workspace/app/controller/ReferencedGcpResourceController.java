@@ -177,8 +177,8 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
           body.getName(),
           body.getDescription(),
           updateBucketObjectResourceBuilder.build(),
-          null,
-          userRequest); // included in resource arg
+          null, // included in resource arg
+          userRequest);
     }
     return new ResponseEntity<>(HttpStatus.NO_CONTENT);
   }
