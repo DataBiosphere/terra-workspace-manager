@@ -65,10 +65,12 @@ public class WorkspaceDeleteFlight extends Flight {
     // resource or not, as indicated by the workspace stage enum.
     switch (workspaceStage) {
       case MC_WORKSPACE:
-        addStep(
-            new DeleteWorkspacePoliciesStep(
-                appContext.getTpsApiDispatch(), userRequest, workspaceUuid),
-            terraRetryRule);
+        if (appContext.getFeatureConfiguration().isTpsEnabled()) {
+          addStep(
+              new DeleteWorkspacePoliciesStep(
+                  appContext.getTpsApiDispatch(), userRequest, workspaceUuid),
+              terraRetryRule);
+        }
         addStep(
             new DeleteWorkspaceAuthzStep(appContext.getSamService(), userRequest, workspaceUuid),
             terraRetryRule);

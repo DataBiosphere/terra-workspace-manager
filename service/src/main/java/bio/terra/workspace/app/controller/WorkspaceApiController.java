@@ -144,9 +144,13 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
 
     // Create PAO objects from the user's specifications
     ApiTpsPolicyInputs policies = null;
-    if (featureConfiguration.isTpsEnabled()) {
+    if (body.getPolicies() != null) {
+      if (!featureConfiguration.isTpsEnabled()) {
+        throw new FeatureNotSupportedException(
+            "TPS is not enabled on this instance of Workspace Manager, do not specify the policy field of a CreateWorkspace request.");
+      }
       // TODO(zloery): Can rawls workspaces have policies?
-      if (body.getStage() == ApiWorkspaceStageModel.RAWLS_WORKSPACE && body.getPolicies() != null) {
+      if (body.getStage() == ApiWorkspaceStageModel.RAWLS_WORKSPACE) {
         throw new StageDisabledException(
             "Cannot apply policies to a RAWLS_WORKSPACE stage workspace");
       }
@@ -156,11 +160,6 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
             inputPolicy.getNamespace(), inputPolicy.getName());
       }
       policies = body.getPolicies();
-    } else {
-      if (body.getPolicies() != null) {
-        throw new FeatureNotSupportedException(
-            "TPS is not enabled on this instance of Workspace Manager, do not specify the policy field of a CreateWorkspace request.");
-      }
     }
 
     Workspace workspace =

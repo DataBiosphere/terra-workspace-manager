@@ -27,13 +27,14 @@ public class DeleteWorkspacePoliciesStep implements Step {
 
   @Override
   public StepResult doStep(FlightContext context) throws InterruptedException, RetryException {
+    // deletePao does not throw if the policy object is missing, so this operation is idempotent.
     tpsApiDispatch.deletePao(new BearerToken(userRequest.getRequiredToken()), workspaceId);
     return StepResult.getStepResultSuccess();
   }
 
   @Override
   public StepResult undoStep(FlightContext context) throws InterruptedException {
-    // We can't un-delete the PAO, so just surface the error.
+    // We can't un-delete the PAO, so just surface the error that caused the flight to fail.
     logger.error("Unable to undo deletion of policies on workspace {} in WSM DB", workspaceId);
     return context.getResult();
   }

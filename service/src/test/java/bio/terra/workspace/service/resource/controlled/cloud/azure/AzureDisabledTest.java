@@ -66,7 +66,7 @@ public class AzureDisabledTest extends BaseConnectedTest {
             .workspaceStage(WorkspaceStage.MC_WORKSPACE)
             .build();
     UUID workspaceUuid =
-        workspaceService.createWorkspace(workspace, userAccessUtils.defaultUserAuthRequest());
+        workspaceService.createWorkspace(workspace, null, userAccessUtils.defaultUserAuthRequest());
 
     AuthenticatedUserRequest userRequest = userAccessUtils.defaultUserAuthRequest();
     String fakeJobId = "a pretend job ID";
