@@ -8,7 +8,6 @@
     "integration/CloneWorkspace.json",
     "integration/ControlledBigQueryDatasetLifecycle.json",
     "integration/ControlledGcsBucketLifecycle.json",
-    "integration/DeleteGcpContextWithControlledResource.json",
     "integration/DeleteWorkspaceWithControlledResource.json",
     "integration/EnablePet.json",
     "integration/EnumerateResources.json",
