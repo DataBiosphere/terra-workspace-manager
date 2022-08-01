@@ -22,13 +22,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import scripts.utils.ClientTestUtils;
 import scripts.utils.WorkspaceApiTestScriptBase;
 
 public class WorkspaceLifecycle extends WorkspaceApiTestScriptBase {
-  private static final Logger logger = LoggerFactory.getLogger(WorkspaceLifecycle.class);
+  private static final String USER_EMAIL = "liam.dragonmaw@test.firecloud.org";
 
   private static final String WORKSPACE_NAME = "name";
   private static final String WORKSPACE_DESCRIPTION = "description";
@@ -47,8 +45,8 @@ public class WorkspaceLifecycle extends WorkspaceApiTestScriptBase {
     String validUserFacingId = "user-facing-id-" + uuidStr;
     String validUserFacingId2 = "user-facing-id-2-" + uuidStr;
 
+    // Create workspace
     Properties propertyMap = buildProperties(Map.of("foo", "bar", "xyzzy", "plohg"));
-
     CreateWorkspaceRequestBody createBody =
         new CreateWorkspaceRequestBody()
             .id(workspaceUuid)
@@ -67,13 +65,24 @@ public class WorkspaceLifecycle extends WorkspaceApiTestScriptBase {
     workspaceApi.createWorkspace(createBody);
     ClientTestUtils.assertHttpSuccess(workspaceApi, "CREATE workspace");
 
+    // assert workspace descriptions attributes after workspace creation.
     WorkspaceDescription workspaceDescription = workspaceApi.getWorkspace(workspaceUuid);
     ClientTestUtils.assertHttpSuccess(workspaceApi, "GET workspace");
     assertThat(workspaceDescription.getId(), equalTo(workspaceUuid));
     assertThat(workspaceDescription.getStage(), equalTo(WorkspaceStageModel.MC_WORKSPACE));
     assertNotNull(workspaceDescription.getLastUpdatedDate());
-    var firstLastUpdatedDate = workspaceDescription.getLastUpdatedDate();
 
+    var firstLastUpdatedDate = workspaceDescription.getLastUpdatedDate();
+    var createdDate = workspaceDescription.getCreatedDate();
+    assertEquals(firstLastUpdatedDate, createdDate);
+
+    var lastUpdatedBy = workspaceDescription.getLastUpdatedBy();
+    assertEquals(USER_EMAIL, lastUpdatedBy);
+
+    var createdBy = workspaceDescription.getCreatedBy();
+    assertEquals(USER_EMAIL, createdBy);
+
+    // Update workspace
     UpdateWorkspaceRequestBody updateBody =
         new UpdateWorkspaceRequestBody()
             .userFacingId(invalidUserFacingId)

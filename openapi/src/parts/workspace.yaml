@@ -541,10 +541,16 @@ components:
           description: Timestamp when the workspace is created
           type: string
           format: date-time
+        createdBy:
+          description: User email of whom created the workspace
+          type: string
         lastUpdatedDate:
           description: Timestamp of the latest workspace change
           type: string
           format: date-time
+        lastUpdatedBy:
+          description: User email of whom made the last update to the workspace
+          type: string
 
     WorkspaceDescriptionList:
       type: object
@@ -560,4 +566,3 @@ components:
       description: Enum for possible stages of a workspace along the Rawls migration path
       type: string
       enum: ['RAWLS_WORKSPACE', 'MC_WORKSPACE']
-

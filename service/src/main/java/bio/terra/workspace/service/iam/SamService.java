@@ -46,6 +46,7 @@ import org.broadinstitute.dsde.workbench.client.sam.model.FullyQualifiedResource
 import org.broadinstitute.dsde.workbench.client.sam.model.GetOrCreatePetManagedIdentityRequest;
 import org.broadinstitute.dsde.workbench.client.sam.model.SystemStatus;
 import org.broadinstitute.dsde.workbench.client.sam.model.UserResourcesResponse;
+import org.broadinstitute.dsde.workbench.client.sam.model.UserStatusInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -131,11 +132,17 @@ public class SamService {
    */
   public String getUserEmailFromSam(AuthenticatedUserRequest userRequest)
       throws InterruptedException {
+    return getUserStatusInfo(userRequest).getUserEmail();
+  }
+
+  /** Fetch the user status info associated with the user credentials directly from Sam. */
+  public UserStatusInfo getUserStatusInfo(AuthenticatedUserRequest userRequest)
+      throws InterruptedException {
     UsersApi usersApi = samUsersApi(userRequest.getRequiredToken());
     try {
-      return SamRetry.retry(() -> usersApi.getUserStatusInfo().getUserEmail());
+      return SamRetry.retry(usersApi::getUserStatusInfo);
     } catch (ApiException apiException) {
-      throw SamExceptionFactory.create("Error getting user email from Sam", apiException);
+      throw SamExceptionFactory.create("Error getting user status info from Sam", apiException);
     }
   }
 

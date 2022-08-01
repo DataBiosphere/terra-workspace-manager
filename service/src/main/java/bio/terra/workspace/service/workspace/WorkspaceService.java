@@ -2,9 +2,7 @@ package bio.terra.workspace.service.workspace;
 
 import bio.terra.workspace.app.configuration.external.BufferServiceConfiguration;
 import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
-import bio.terra.workspace.db.WorkspaceActivityLogDao;
 import bio.terra.workspace.db.WorkspaceDao;
-import bio.terra.workspace.db.model.DbWorkspaceActivityLog;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamRethrow;
 import bio.terra.workspace.service.iam.SamService;
@@ -14,6 +12,7 @@ import bio.terra.workspace.service.iam.model.WsmIamRole;
 import bio.terra.workspace.service.job.JobBuilder;
 import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.job.JobService;
+import bio.terra.workspace.service.logging.WorkspaceActivityLogService;
 import bio.terra.workspace.service.resource.controlled.flight.clone.workspace.CloneGcpWorkspaceFlight;
 import bio.terra.workspace.service.stage.StageService;
 import bio.terra.workspace.service.workspace.exceptions.BufferServiceDisabledException;
@@ -60,7 +59,7 @@ public class WorkspaceService {
   private final BufferServiceConfiguration bufferServiceConfiguration;
   private final StageService stageService;
   private final FeatureConfiguration features;
-  private final WorkspaceActivityLogDao workspaceActivityLogDao;
+  private final WorkspaceActivityLogService workspaceActivityLogService;
 
   @Autowired
   public WorkspaceService(
@@ -69,16 +68,15 @@ public class WorkspaceService {
       SamService samService,
       BufferServiceConfiguration bufferServiceConfiguration,
       StageService stageService,
-      GcpCloudContextService gcpCloudContextService,
       FeatureConfiguration features,
-      WorkspaceActivityLogDao workspaceActivityLogDao) {
+      WorkspaceActivityLogService workspaceActivityLogService) {
     this.jobService = jobService;
     this.workspaceDao = workspaceDao;
     this.samService = samService;
     this.bufferServiceConfiguration = bufferServiceConfiguration;
     this.stageService = stageService;
     this.features = features;
-    this.workspaceActivityLogDao = workspaceActivityLogDao;
+    this.workspaceActivityLogService = workspaceActivityLogService;
   }
 
   /** Create a workspace with the specified parameters. Returns workspaceID of the new workspace. */
@@ -259,10 +257,10 @@ public class WorkspaceService {
       UUID workspaceUuid,
       @Nullable String userFacingId,
       @Nullable String name,
-      @Nullable String description) {
+      @Nullable String description,
+      AuthenticatedUserRequest userRequest) {
     if (workspaceDao.updateWorkspace(workspaceUuid, userFacingId, name, description)) {
-      workspaceActivityLogDao.writeActivity(
-          workspaceUuid, new DbWorkspaceActivityLog().operationType(OperationType.UPDATE));
+      workspaceActivityLogService.writeActivity(userRequest, workspaceUuid, OperationType.UPDATE);
     }
     return workspaceDao.getWorkspace(workspaceUuid);
   }
@@ -273,10 +271,10 @@ public class WorkspaceService {
    * @param workspaceUuid workspace of interest
    * @param properties list of keys in properties
    */
-  public void updateWorkspaceProperties(UUID workspaceUuid, Map<String, String> properties) {
+  public void updateWorkspaceProperties(
+      UUID workspaceUuid, Map<String, String> properties, AuthenticatedUserRequest userRequest) {
     workspaceDao.updateWorkspaceProperties(workspaceUuid, properties);
-    workspaceActivityLogDao.writeActivity(
-        workspaceUuid, new DbWorkspaceActivityLog().operationType(OperationType.UPDATE));
+    workspaceActivityLogService.writeActivity(userRequest, workspaceUuid, OperationType.UPDATE);
   }
 
   /** Delete an existing workspace by ID. */
@@ -302,10 +300,10 @@ public class WorkspaceService {
    * @param workspaceUuid workspace of interest
    * @param propertyKeys list of keys in properties
    */
-  public void deleteWorkspaceProperties(UUID workspaceUuid, List<String> propertyKeys) {
+  public void deleteWorkspaceProperties(
+      UUID workspaceUuid, List<String> propertyKeys, AuthenticatedUserRequest userRequest) {
     workspaceDao.deleteWorkspaceProperties(workspaceUuid, propertyKeys);
-    workspaceActivityLogDao.writeActivity(
-        workspaceUuid, new DbWorkspaceActivityLog().operationType(OperationType.UPDATE));
+    workspaceActivityLogService.writeActivity(userRequest, workspaceUuid, OperationType.DELETE);
   }
 
   /**
