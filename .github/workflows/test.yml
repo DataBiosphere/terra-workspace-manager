@@ -158,7 +158,7 @@ jobs:
         path: service/build/reports/tests
 
     - name: "Notify QA Slack"
-      if: always() && (steps.set-env-step.outputs.test-env == 'alpha' || steps.set-env-step.outputs.test-env == 'staging')
+      if: failure() && (steps.set-env-step.outputs.test-env == 'alpha' || steps.set-env-step.outputs.test-env == 'staging')
       uses: broadinstitute/action-slack@v3.8.0
       # see https://github.com/broadinstitute/action-slack
       env:
@@ -173,7 +173,7 @@ jobs:
 
     - name: "Notify WSM Slack"
       # post to WSM Slack when a regular push (i.e. non-bumper push) is made to main branch
-      if: always() && github.event_name == 'push' && steps.skiptest.outputs.is-bump == 'no'
+      if: failure() && github.event_name == 'push' && steps.skiptest.outputs.is-bump == 'no'
       uses: broadinstitute/action-slack@v3.8.0
       # see https://github.com/broadinstitute/action-slack
       env:
