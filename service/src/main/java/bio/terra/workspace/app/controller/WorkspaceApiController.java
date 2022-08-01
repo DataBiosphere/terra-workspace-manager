@@ -3,6 +3,7 @@ package bio.terra.workspace.app.controller;
 import bio.terra.workspace.common.logging.model.ActivityLogChangeDetails;
 import bio.terra.workspace.common.utils.ControllerValidationUtils;
 import bio.terra.workspace.db.WorkspaceActivityLogDao;
+import bio.terra.workspace.db.exception.WorkspaceNotFoundException;
 import bio.terra.workspace.generated.controller.WorkspaceApi;
 import bio.terra.workspace.generated.model.ApiAzureContext;
 import bio.terra.workspace.generated.model.ApiCloneWorkspaceRequest;
@@ -104,11 +105,18 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
   public ResponseEntity<ApiCreatedWorkspace> createWorkspace(
       @RequestBody ApiCreateWorkspaceRequestBody body) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
-    logger.info(
-        "Creating workspace {} for {} subject {}",
-        body.getId(),
-        userRequest.getEmail(),
-        userRequest.getSubjectId());
+
+    try {
+      workspaceService.getWorkspace(body.getId());
+      return new ResponseEntity<>(HttpStatus.CONFLICT);
+    } catch (WorkspaceNotFoundException ex) {
+      logger.info(
+          "Creating workspace {} for {} subject {}",
+          body.getId(),
+          userRequest.getEmail(),
+          userRequest.getSubjectId());
+    }
+
     // Unlike other operations, there's no Sam permission required to create a workspace. As long as
     // a user is enabled, they can call this endpoint.
 
