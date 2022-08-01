@@ -43,6 +43,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
+import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.test.web.servlet.MockMvc;
 
 /**
@@ -85,6 +86,37 @@ public class WorkspaceApiControllerTest extends BaseConnectedTest {
     assertEquals(workspace.getId(), fetchedWorkspace.getId());
     assertNotNull(fetchedWorkspace.getLastUpdatedDate());
     assertEquals(fetchedWorkspace.getLastUpdatedDate(), fetchedWorkspace.getCreatedDate());
+  }
+
+  @Test
+  public void createDuplicateWorkspace() throws Exception {
+    var createRequest = WorkspaceFixtures.createWorkspaceRequestBody();
+    MockHttpServletResponse createResponse =
+        mockMvc
+            .perform(
+                addJsonContentType(
+                    addAuth(
+                        post(WORKSPACES_V1_PATH)
+                            .content(objectMapper.writeValueAsString(createRequest)),
+                        USER_REQUEST)))
+            .andExpect(status().is(HttpStatus.SC_OK))
+            .andReturn()
+            .getResponse();
+
+    int duplicateCreateResponseStatus =
+        mockMvc
+            .perform(
+                addJsonContentType(
+                    addAuth(
+                        post(WORKSPACES_V1_PATH)
+                            .content(objectMapper.writeValueAsString(createRequest)),
+                        USER_REQUEST)))
+            .andExpect(status().is(HttpStatus.SC_CONFLICT))
+            .andReturn()
+            .getResponse()
+            .getStatus();
+
+    assertEquals(HttpStatus.SC_CONFLICT, duplicateCreateResponseStatus);
   }
 
   @Test
