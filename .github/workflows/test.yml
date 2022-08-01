@@ -158,7 +158,7 @@ jobs:
         path: service/build/reports/tests
 
     - name: "Notify QA Slack"
-      if: failure() && (steps.set-env-step.outputs.test-env == 'alpha' || steps.set-env-step.outputs.test-env == 'staging')
+      if: always() && (steps.set-env-step.outputs.test-env == 'alpha' || steps.set-env-step.outputs.test-env == 'staging')
       uses: broadinstitute/action-slack@v3.8.0
       # see https://github.com/broadinstitute/action-slack
       env:
