@@ -9,8 +9,10 @@ import bio.terra.workspace.service.workspace.exceptions.CloudPlatformNotImplemen
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.regex.Pattern;
 import javax.annotation.Nullable;
@@ -155,9 +157,15 @@ public final class ControllerValidationUtils {
    */
   public static void validateAdditonalPolicyInformation(ApiTpsPolicyInput policyInput) {
     String nameAndNamespace = policyInput.getNamespace() + ":" + policyInput.getName();
-    for (String requiredKey : REQUIRED_POLICY_INFORMATION.get(nameAndNamespace)) {
-      if (policyInput.getAdditionalData().stream()
-          .noneMatch(p -> p.getKey().equals(requiredKey) && StringUtils.isNotEmpty(p.getValue()))) {
+    Set<String> requiredKeys =
+        Optional.ofNullable(REQUIRED_POLICY_INFORMATION.get(nameAndNamespace))
+            .orElse(Collections.emptySet());
+    for (String requiredKey : requiredKeys) {
+      // For each required key, there must be a non-empty value in additionalData.
+      if (policyInput.getAdditionalData() == null
+          || policyInput.getAdditionalData().stream()
+              .noneMatch(
+                  p -> p.getKey().equals(requiredKey) && StringUtils.isNotEmpty(p.getValue()))) {
         throw new ValidationException(
             String.format(
                 "The following keys are required for policy %s: %s",

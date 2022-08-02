@@ -372,12 +372,13 @@ public class WorkspaceApiControllerTest extends BaseConnectedTest {
   }
 
   @Test
-  public void invalidPolicyNameRejected() throws Exception {
+  public void invalidPolicyRejected() throws Exception {
     var createRequest = WorkspaceFixtures.createWorkspaceRequestBody();
+    // The terra:group-constraint policy requires having an additional data field with "group-name",
+    // so this should fail policy validation.
     createRequest.policies(
         new ApiTpsPolicyInputs()
-            .addInputsItem(
-                new ApiTpsPolicyInput().namespace("BAD NAMESPACE").name("INVALID POLICY")));
+            .addInputsItem(new ApiTpsPolicyInput().namespace("terra").name("group-constraint")));
     String serializedError =
         mockMvc
             .perform(
@@ -392,7 +393,7 @@ public class WorkspaceApiControllerTest extends BaseConnectedTest {
             .getContentAsString();
     ApiErrorReport errorReport = objectMapper.readValue(serializedError, ApiErrorReport.class);
     assertEquals(HttpStatus.SC_BAD_REQUEST, errorReport.getStatusCode());
-    assertTrue(errorReport.getMessage().contains("name"));
+    assertTrue(errorReport.getMessage().contains("group-name"));
   }
 
   @Test
