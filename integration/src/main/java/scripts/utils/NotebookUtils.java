@@ -23,7 +23,9 @@ import com.google.api.services.notebooks.v1.model.Instance;
 import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.time.Duration;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import javax.annotation.Nullable;
@@ -41,7 +43,8 @@ public class NotebookUtils {
       UUID workspaceUuid,
       @Nullable String instanceId,
       @Nullable String location,
-      ControlledGcpResourceApi resourceApi)
+      ControlledGcpResourceApi resourceApi,
+      Map<String, String> metadata)
       throws ApiException, InterruptedException {
     // Fill out the minimum required fields to arbitrary values.
     var creationParameters =
@@ -52,11 +55,12 @@ public class NotebookUtils {
             .vmImage(
                 new GcpAiNotebookInstanceVmImage()
                     .projectId("deeplearning-platform-release")
-                    .imageFamily("r-latest-cpu-experimental"));
+                    .imageFamily("r-latest-cpu-experimental"))
+            .metadata(metadata);
 
     var commonParameters =
         new ControlledResourceCommonFields()
-            .name(RandomStringUtils.randomAlphabetic(6))
+            .name(metadata.containsKey("terra-gcp-notebook-resource-name")? metadata.get("terra-gcp-notebook-resource-name"): RandomStringUtils.randomAlphabetic(6))
             .cloningInstructions(CloningInstructionsEnum.NOTHING)
             .accessScope(AccessScope.PRIVATE_ACCESS)
             .managedBy(ManagedBy.USER)

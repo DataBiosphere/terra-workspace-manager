@@ -22,6 +22,7 @@ import com.google.cloud.bigquery.BigQueryException;
 import com.google.cloud.storage.StorageException;
 import java.io.IOException;
 import java.security.GeneralSecurityException;
+import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 import org.apache.commons.lang3.RandomStringUtils;
@@ -111,7 +112,7 @@ public class RemoveUser extends WorkspaceAllocateTestScriptBase {
     String notebookInstanceId = RandomStringUtils.randomAlphabetic(8).toLowerCase();
     privateNotebook =
         NotebookUtils.makeControlledNotebookUserPrivate(
-            getWorkspaceId(), notebookInstanceId, /*location=*/ null, privateUserResourceApi);
+            getWorkspaceId(), notebookInstanceId, /*location=*/ null, privateUserResourceApi, Collections.emptyMap());
   }
 
   @Override

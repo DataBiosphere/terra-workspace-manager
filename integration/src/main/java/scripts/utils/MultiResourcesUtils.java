@@ -12,6 +12,7 @@ import bio.terra.workspace.model.ResourceList;
 import bio.terra.workspace.model.ResourceMetadata;
 import bio.terra.workspace.model.ResourceType;
 import bio.terra.workspace.model.StewardshipType;
+import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 import org.apache.commons.lang3.RandomStringUtils;
@@ -74,7 +75,8 @@ public class MultiResourcesUtils {
             CloningInstructionsEnum.NOTHING);
     GcpAiNotebookInstanceResource notebook =
         NotebookUtils.makeControlledNotebookUserPrivate(
-                workspaceUuid, /*instanceId=*/ null, /*location=*/ null, controlledGcpResourceApi)
+                workspaceUuid, /*instanceId=*/ null, /*location=*/ null, controlledGcpResourceApi,
+                Collections.emptyMap())
             .getAiNotebookInstance();
     // Create references to the above buckets and datasets
     GcpGcsBucketResource sharedBucketReference =

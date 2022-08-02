@@ -33,7 +33,10 @@ import com.google.api.services.notebooks.v1.model.StopInstanceRequest;
 import com.google.common.collect.ImmutableMap;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.time.Duration;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.http.HttpStatus;
@@ -88,9 +91,10 @@ public class PrivateControlledAiNotebookInstanceLifecycle extends WorkspaceAlloc
 
     ControlledGcpResourceApi resourceUserApi =
         ClientTestUtils.getControlledGcpResourceClient(resourceUser, server);
+    String testResultValue = RandomStringUtils.randomAlphabetic(10);
     CreatedControlledGcpAiNotebookInstanceResult creationResult =
         NotebookUtils.makeControlledNotebookUserPrivate(
-            getWorkspaceId(), instanceId, /*location=*/ null, resourceUserApi);
+            getWorkspaceId(), instanceId, /*location=*/ null, resourceUserApi, new HashMap<>(Map.of("terra-test-value", testResultValue, "terra-gcp-notebook-resource-name", RandomStringUtils.randomAlphabetic(6))));
 
     UUID resourceId = creationResult.getAiNotebookInstance().getMetadata().getResourceId();
 
@@ -147,6 +151,21 @@ public class PrivateControlledAiNotebookInstanceLifecycle extends WorkspaceAlloc
         NotebookUtils.userHasProxyAccess(
             creationResult, otherWorkspaceUser, resource.getAttributes().getProjectId()),
         "Other workspace user does not have access to a private notebook");
+
+    String proxyUri = ClientTestUtils.getWithRetryOnException(
+        () -> {
+          String p = userNotebooks.projects().locations().instances().get(instanceName).execute().getProxyUri();
+          if (p == null) {
+            throw new NullPointerException();
+          }
+          return p;
+        });
+    Duration sleepDuration = Duration.ofMinutes(3);
+    var testValue = ClientTestUtils.getWithRetryOnException(
+        () -> userNotebooks.projects().locations().instances().get(instanceName).execute().getMetadata().get("terra-test-result")
+    );
+    assertEquals(testResultValue, testValue);
+
 
     // The user should be able to stop their notebook.
     userNotebooks.projects().locations().instances().stop(instanceName, new StopInstanceRequest());
@@ -226,7 +245,7 @@ public class PrivateControlledAiNotebookInstanceLifecycle extends WorkspaceAlloc
           ControlledGcpResourceApi resourceUserApi) throws ApiException, InterruptedException {
     CreatedControlledGcpAiNotebookInstanceResult resourceWithNotebookInstanceIdNotSpecified =
         NotebookUtils.makeControlledNotebookUserPrivate(
-            getWorkspaceId(), /*instanceId=*/ null, /*location=*/ null, resourceUserApi);
+            getWorkspaceId(), /*instanceId=*/ null, /*location=*/ null, resourceUserApi, Collections.emptyMap());
     assertNotNull(
         resourceWithNotebookInstanceIdNotSpecified
             .getAiNotebookInstance()
@@ -247,7 +266,7 @@ public class PrivateControlledAiNotebookInstanceLifecycle extends WorkspaceAlloc
     String location = "us-east1-b";
     CreatedControlledGcpAiNotebookInstanceResult resourceWithNotebookInstanceIdNotSpecified =
         NotebookUtils.makeControlledNotebookUserPrivate(
-            getWorkspaceId(), /*instanceId=*/ null, /*location=*/ location, resourceUserApi);
+            getWorkspaceId(), /*instanceId=*/ null, /*location=*/ location, resourceUserApi, Collections.emptyMap());
     assertEquals(
         location,
         resourceWithNotebookInstanceIdNotSpecified
