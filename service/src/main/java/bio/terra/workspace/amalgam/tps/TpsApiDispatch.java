@@ -1,6 +1,7 @@
 package bio.terra.workspace.amalgam.tps;
 
 import bio.terra.common.iam.BearerToken;
+import bio.terra.policy.common.exception.PolicyObjectNotFoundException;
 import bio.terra.policy.common.model.PolicyInput;
 import bio.terra.policy.common.model.PolicyInputs;
 import bio.terra.policy.service.pao.PaoService;
@@ -20,6 +21,7 @@ import bio.terra.workspace.generated.model.ApiTpsPolicyPair;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
@@ -55,10 +57,14 @@ public class TpsApiDispatch {
     paoService.deletePao(objectId);
   }
 
-  public ApiTpsPaoGetResult getPao(BearerToken bearerToken, UUID objectId) {
+  public Optional<ApiTpsPaoGetResult> getPao(BearerToken bearerToken, UUID objectId) {
     features.tpsEnabledCheck();
-    Pao pao = paoService.getPao(objectId);
-    return paoToApi(pao);
+    try {
+      Pao pao = paoService.getPao(objectId);
+      return Optional.of(paoToApi(pao));
+    } catch (PolicyObjectNotFoundException e) {
+      return Optional.empty();
+    }
   }
 
   // -- Api to Tps conversion methods --

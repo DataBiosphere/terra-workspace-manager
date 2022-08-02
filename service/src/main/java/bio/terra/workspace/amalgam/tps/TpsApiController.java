@@ -1,6 +1,7 @@
 package bio.terra.workspace.amalgam.tps;
 
 import bio.terra.common.iam.BearerTokenFactory;
+import bio.terra.policy.common.exception.PolicyObjectNotFoundException;
 import bio.terra.workspace.generated.controller.TpsApi;
 import bio.terra.workspace.generated.model.ApiTpsPaoCreateRequest;
 import bio.terra.workspace.generated.model.ApiTpsPaoGetResult;
@@ -51,7 +52,11 @@ public class TpsApiController implements TpsApi {
 
   @Override
   public ResponseEntity<ApiTpsPaoGetResult> getPao(UUID objectId) {
-    ApiTpsPaoGetResult result = tpsApiDispatch.getPao(bearerTokenFactory.from(request), objectId);
+    ApiTpsPaoGetResult result =
+        tpsApiDispatch
+            .getPao(bearerTokenFactory.from(request), objectId)
+            .orElseThrow(
+                () -> new PolicyObjectNotFoundException("Policy object not found: " + objectId));
     return new ResponseEntity<>(result, HttpStatus.OK);
   }
 }

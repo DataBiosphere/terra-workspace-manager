@@ -49,7 +49,6 @@ public class CreateWorkspacePoliciesStep implements Step {
     try {
       tpsApiDispatch.createPao(new BearerToken(userRequest.getRequiredToken()), request);
     } catch (DuplicateObjectException e) {
-      // TODO(zloery): catching unchecked exception seems bad
       // Before the flight we check that the workspace does not exist, so it's safe to assume that
       // any policy on this workspace object was created by this flight, and we can ignore conflicts
       logger.info(

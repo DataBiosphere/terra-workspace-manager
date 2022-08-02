@@ -52,9 +52,7 @@ import java.util.UUID;
 import org.apache.http.HttpStatus;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
-import org.mockito.stubbing.Answer;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.mock.mockito.MockBean;
@@ -312,11 +310,9 @@ public class WorkspaceApiControllerTest extends BaseConnectedTest {
     Mockito.when(mockFeatureConfiguration.isTpsEnabled()).thenReturn(false);
 
     var createRequest = WorkspaceFixtures.createWorkspaceRequestBody();
-    createRequest
-        .policies(
-            new ApiTpsPolicyInputs()
-                .addInputsItem(
-                    new ApiTpsPolicyInput().namespace("terra").name("group-constraint")));
+    createRequest.policies(
+        new ApiTpsPolicyInputs()
+            .addInputsItem(new ApiTpsPolicyInput().namespace("terra").name("group-constraint")));
     String serializedError =
         mockMvc
             .perform(
@@ -337,11 +333,10 @@ public class WorkspaceApiControllerTest extends BaseConnectedTest {
   @Test
   public void invalidPolicyNameRejected() throws Exception {
     var createRequest = WorkspaceFixtures.createWorkspaceRequestBody();
-    createRequest
-        .policies(
-            new ApiTpsPolicyInputs()
-                .addInputsItem(
-                    new ApiTpsPolicyInput().namespace("BAD NAMESPACE").name("INVALID POLICY")));
+    createRequest.policies(
+        new ApiTpsPolicyInputs()
+            .addInputsItem(
+                new ApiTpsPolicyInput().namespace("BAD NAMESPACE").name("INVALID POLICY")));
     String serializedError =
         mockMvc
             .perform(
@@ -364,7 +359,8 @@ public class WorkspaceApiControllerTest extends BaseConnectedTest {
     // No need to actually pass policy inputs because TPS is mocked.
     ApiCreatedWorkspace workspace = createDefaultWorkspace();
 
-    ApiTpsPaoGetResult getPolicyResult = emptyWorkspacePao()
+    ApiTpsPaoGetResult getPolicyResult =
+        emptyWorkspacePao()
             .objectId(workspace.getId())
             .attributes(new ApiTpsPolicyInputs().addInputsItem(GROUP_POLICY))
             .effectiveAttributes(new ApiTpsPolicyInputs().addInputsItem(GROUP_POLICY));
@@ -388,7 +384,8 @@ public class WorkspaceApiControllerTest extends BaseConnectedTest {
   public void listWorkspaceIncludesPolicy() throws Exception {
     // No need to actually pass policy inputs because TPS is mocked.
     ApiCreatedWorkspace workspace = createDefaultWorkspace();
-    when(mockSamService.listWorkspaceIdsAndHighestRoles(any())).thenReturn(ImmutableMap.of(workspace.getId(), WsmIamRole.OWNER));
+    when(mockSamService.listWorkspaceIdsAndHighestRoles(any()))
+        .thenReturn(ImmutableMap.of(workspace.getId(), WsmIamRole.OWNER));
 
     ApiTpsPaoGetResult getPolicyResult =
         new ApiTpsPaoGetResult()
@@ -410,7 +407,8 @@ public class WorkspaceApiControllerTest extends BaseConnectedTest {
   public void tpsDisabledListWorkspaceExcludesPolicy() throws Exception {
     when(mockFeatureConfiguration.isTpsEnabled()).thenReturn(false);
     ApiCreatedWorkspace workspace = createDefaultWorkspace();
-    when(mockSamService.listWorkspaceIdsAndHighestRoles(any())).thenReturn(ImmutableMap.of(workspace.getId(), WsmIamRole.OWNER));
+    when(mockSamService.listWorkspaceIdsAndHighestRoles(any()))
+        .thenReturn(ImmutableMap.of(workspace.getId(), WsmIamRole.OWNER));
 
     ApiWorkspaceDescription gotWorkspace = getWorkspaceDescriptionFromList(workspace.getId());
     assertNull(gotWorkspace.getPolicies());
@@ -466,9 +464,7 @@ public class WorkspaceApiControllerTest extends BaseConnectedTest {
   private ApiWorkspaceDescription getWorkspaceDescriptionFromList(UUID id) throws Exception {
     String serializedResponse =
         mockMvc
-            .perform(
-                addJsonContentType(
-                    addAuth(get(WORKSPACES_V1_PATH), USER_REQUEST)))
+            .perform(addJsonContentType(addAuth(get(WORKSPACES_V1_PATH), USER_REQUEST)))
             .andExpect(status().is(HttpStatus.SC_OK))
             .andReturn()
             .getResponse()
@@ -482,7 +478,14 @@ public class WorkspaceApiControllerTest extends BaseConnectedTest {
   }
 
   private static ApiTpsPaoGetResult emptyWorkspacePao() {
-    return new ApiTpsPaoGetResult().component(ApiTpsComponent.WSM).objectType(ApiTpsObjectType.WORKSPACE).objectId(UUID.randomUUID()).children(Collections.emptyList()).inConflict(false).attributes(new ApiTpsPolicyInputs()).effectiveAttributes(new ApiTpsPolicyInputs());
+    return new ApiTpsPaoGetResult()
+        .component(ApiTpsComponent.WSM)
+        .objectType(ApiTpsObjectType.WORKSPACE)
+        .objectId(UUID.randomUUID())
+        .children(Collections.emptyList())
+        .inConflict(false)
+        .attributes(new ApiTpsPolicyInputs())
+        .effectiveAttributes(new ApiTpsPolicyInputs());
   }
 
   public ApiProperties buildProperties(Map<String, String> propertyMap) {

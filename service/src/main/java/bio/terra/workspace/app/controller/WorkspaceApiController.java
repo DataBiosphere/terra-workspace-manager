@@ -1,8 +1,6 @@
 package bio.terra.workspace.app.controller;
 
 import bio.terra.common.iam.BearerToken;
-import bio.terra.policy.common.exception.PolicyObjectNotFoundException;
-import bio.terra.policy.service.pao.model.Pao;
 import bio.terra.workspace.amalgam.tps.TpsApiDispatch;
 import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
 import bio.terra.workspace.common.exception.FeatureNotSupportedException;
@@ -28,6 +26,7 @@ import bio.terra.workspace.generated.model.ApiProperties;
 import bio.terra.workspace.generated.model.ApiProperty;
 import bio.terra.workspace.generated.model.ApiRoleBinding;
 import bio.terra.workspace.generated.model.ApiRoleBindingList;
+import bio.terra.workspace.generated.model.ApiTpsPaoGetResult;
 import bio.terra.workspace.generated.model.ApiTpsPolicyInput;
 import bio.terra.workspace.generated.model.ApiTpsPolicyInputs;
 import bio.terra.workspace.generated.model.ApiUpdateWorkspaceRequestBody;
@@ -149,15 +148,12 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
         throw new FeatureNotSupportedException(
             "TPS is not enabled on this instance of Workspace Manager, do not specify the policy field of a CreateWorkspace request.");
       }
-      // TODO(zloery): Can rawls workspaces have policies?
       if (body.getStage() == ApiWorkspaceStageModel.RAWLS_WORKSPACE) {
         throw new StageDisabledException(
             "Cannot apply policies to a RAWLS_WORKSPACE stage workspace");
       }
-      // TODO(zloery): Do we need this validation?
       for (ApiTpsPolicyInput inputPolicy : body.getPolicies().getInputs()) {
-        ControllerValidationUtils.validatePolicyName(
-            inputPolicy.getNamespace(), inputPolicy.getName());
+        ControllerValidationUtils.validateAdditonalPolicyInformation(inputPolicy);
       }
       policies = body.getPolicies();
     }
@@ -221,16 +217,13 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
 
     List<ApiTpsPolicyInput> workspacePolicies = null;
     if (featureConfiguration.isTpsEnabled()) {
-      try {
-        Pao workspacePolicy =
-            TpsApiDispatch.paoFromApi(
-                tpsApiDispatch.getPao(
-                    new BearerToken(userRequest.getRequiredToken()), workspaceUuid));
-        workspacePolicies =
-            TpsApiDispatch.policyInputsToApi(workspacePolicy.getEffectiveAttributes()).getInputs();
-      } catch (PolicyObjectNotFoundException e) {
-        // TODO(zloery): this is a terrible pattern. Add a DAO method which returns an Optional?
-      }
+      Optional<ApiTpsPaoGetResult> workspacePao =
+          tpsApiDispatch.getPao(new BearerToken(userRequest.getRequiredToken()), workspaceUuid);
+      workspacePolicies =
+          workspacePao
+              .map(ApiTpsPaoGetResult::getEffectiveAttributes)
+              .map(ApiTpsPolicyInputs::getInputs)
+              .orElse(null);
     }
 
     // Convert the property map to API format

@@ -2,15 +2,19 @@ package bio.terra.workspace.common.utils;
 
 import bio.terra.common.exception.ValidationException;
 import bio.terra.workspace.generated.model.ApiCloudPlatform;
+import bio.terra.workspace.generated.model.ApiTpsPolicyInput;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResourceCategory;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResourceFields;
 import bio.terra.workspace.service.workspace.exceptions.CloudPlatformNotImplementedException;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.regex.Pattern;
 import javax.annotation.Nullable;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.validator.routines.InetAddressValidator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -38,11 +42,8 @@ public final class ControllerValidationUtils {
   public static final Pattern USER_FACING_ID_VALIDATION_PATTERN =
       Pattern.compile("^[a-z0-9][-_a-z0-9]{2,62}$");
 
-  // TODO(zloery): Will WSM always know all valid policy names? Or at some point will we want to
-  //   accept something like "thirdpartypolicyengine:myrandompolicyname" and just leave validation
-  //   to the external policy engine?
-  public static final Map<String, String> SUPPORTED_POLICY_NAMES =
-      ImmutableMap.of("terra", "group-constraint");
+  public static final Map<String, Set<String>> REQUIRED_POLICY_INFORMATION =
+      ImmutableMap.of("terra:group-constraint", ImmutableSet.of("group-name"));
 
   /**
    * Utility to validate limit/offset parameters used in pagination.
@@ -146,11 +147,22 @@ public final class ControllerValidationUtils {
     }
   }
 
-  /** Validate that the specified namespace/name pair is a valid policy that WSM understands. */
-  public static void validatePolicyName(String namespace, String name) {
-    if (!SUPPORTED_POLICY_NAMES.containsKey(namespace)
-        || !SUPPORTED_POLICY_NAMES.get(namespace).equals(name)) {
-      throw new ValidationException("Invalid policy namespace or name provided");
+  /**
+   * Validate that the specified policy namespace/name pair has the required additional information.
+   *
+   * <p>TOOD(zloery): I'm less sure about other types of validation (e.g. a known set of
+   * namespace/name pairs). How much should WSM know about the space of possible policies?
+   */
+  public static void validateAdditonalPolicyInformation(ApiTpsPolicyInput policyInput) {
+    String nameAndNamespace = policyInput.getNamespace() + ":" + policyInput.getName();
+    for (String requiredKey : REQUIRED_POLICY_INFORMATION.get(nameAndNamespace)) {
+      if (policyInput.getAdditionalData().stream()
+          .noneMatch(p -> p.getKey().equals(requiredKey) && StringUtils.isNotEmpty(p.getValue()))) {
+        throw new ValidationException(
+            String.format(
+                "The following keys are required for policy %s: %s",
+                nameAndNamespace, REQUIRED_POLICY_INFORMATION.get(nameAndNamespace)));
+      }
     }
   }
 }
