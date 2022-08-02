@@ -57,6 +57,7 @@ import bio.terra.workspace.service.workspace.model.OperationType;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceAndHighestRole;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -223,7 +224,7 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
           workspacePao
               .map(ApiTpsPaoGetResult::getEffectiveAttributes)
               .map(ApiTpsPolicyInputs::getInputs)
-              .orElse(null);
+              .orElse(Collections.emptyList());
     }
 
     // Convert the property map to API format

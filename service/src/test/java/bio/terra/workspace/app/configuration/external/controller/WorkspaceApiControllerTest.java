@@ -102,7 +102,7 @@ public class WorkspaceApiControllerTest extends BaseConnectedTest {
 
     // Pretend every workspace has an empty policy. The ID on the PAO will not match the workspace
     // ID, but that doesn't matter for tests which don't care about policy.
-    Mockito.when(mockTpsApiDispatch.getPao(any(), any())).thenReturn(emptyWorkspacePao());
+    Mockito.when(mockTpsApiDispatch.getPao(any(), any())).thenReturn(Optional.of(emptyWorkspacePao()));
   }
 
   @Test
@@ -364,7 +364,7 @@ public class WorkspaceApiControllerTest extends BaseConnectedTest {
             .objectId(workspace.getId())
             .attributes(new ApiTpsPolicyInputs().addInputsItem(GROUP_POLICY))
             .effectiveAttributes(new ApiTpsPolicyInputs().addInputsItem(GROUP_POLICY));
-    when(mockTpsApiDispatch.getPao(any(), eq(workspace.getId()))).thenReturn(getPolicyResult);
+    when(mockTpsApiDispatch.getPao(any(), eq(workspace.getId()))).thenReturn(Optional.of(getPolicyResult));
 
     ApiWorkspaceDescription gotWorkspace = getWorkspaceDescription(workspace.getId());
     assertEquals(1, gotWorkspace.getPolicies().size());
@@ -384,8 +384,9 @@ public class WorkspaceApiControllerTest extends BaseConnectedTest {
   public void listWorkspaceIncludesPolicy() throws Exception {
     // No need to actually pass policy inputs because TPS is mocked.
     ApiCreatedWorkspace workspace = createDefaultWorkspace();
+    ApiCreatedWorkspace noPolicyWorkspace = createDefaultWorkspace();
     when(mockSamService.listWorkspaceIdsAndHighestRoles(any()))
-        .thenReturn(ImmutableMap.of(workspace.getId(), WsmIamRole.OWNER));
+        .thenReturn(ImmutableMap.of(workspace.getId(), WsmIamRole.OWNER, noPolicyWorkspace.getId(), WsmIamRole.OWNER));
 
     ApiTpsPaoGetResult getPolicyResult =
         new ApiTpsPaoGetResult()
@@ -396,11 +397,16 @@ public class WorkspaceApiControllerTest extends BaseConnectedTest {
             .objectId(workspace.getId())
             .children(Collections.emptyList())
             .inConflict(false);
-    when(mockTpsApiDispatch.getPao(any(), eq(workspace.getId()))).thenReturn(getPolicyResult);
+    // Return a policy object for the first workspace
+    when(mockTpsApiDispatch.getPao(any(), eq(workspace.getId()))).thenReturn(Optional.of(getPolicyResult));
+    // Treat the second workspace like it was created before policy existed and doesn't have a PAO
+    when(mockTpsApiDispatch.getPao(any(), eq(noPolicyWorkspace.getId()))).thenReturn(Optional.empty());
 
     ApiWorkspaceDescription gotWorkspace = getWorkspaceDescriptionFromList(workspace.getId());
     assertEquals(1, gotWorkspace.getPolicies().size());
     assertEquals(GROUP_POLICY, gotWorkspace.getPolicies().get(0));
+    ApiWorkspaceDescription gotNoPolicyWorkspace = getWorkspaceDescriptionFromList(noPolicyWorkspace.getId());
+    assertTrue(gotNoPolicyWorkspace.getPolicies().isEmpty());
   }
 
   @Test
