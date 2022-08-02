@@ -76,11 +76,12 @@ public class WorkspaceLifecycle extends WorkspaceApiTestScriptBase {
     var createdDate = workspaceDescription.getCreatedDate();
     assertEquals(firstLastUpdatedDate, createdDate);
 
-    var lastUpdatedBy = workspaceDescription.getLastUpdatedBy();
-    assertEquals(USER_EMAIL, lastUpdatedBy);
-
-    var createdBy = workspaceDescription.getCreatedBy();
-    assertEquals(USER_EMAIL, createdBy);
+    // TODO(PF-1752): Change to assert lastUpdatedBy equals to user email once the code changes 735
+    //  is deployed to all environments.
+    // var lastUpdatedBy = workspaceDescription.getLastUpdatedBy();
+    // assertEquals(USER_EMAIL, lastUpdatedBy);
+    // var createdBy = workspaceDescription.getCreatedBy();
+    // assertEquals(USER_EMAIL, createdBy);
 
     // Update workspace
     UpdateWorkspaceRequestBody updateBody =
