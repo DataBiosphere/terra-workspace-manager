@@ -1,0 +1,13 @@
+databaseChangeLog:
+- changeSet:
+    id: set default value to actor email and actor subject id column
+    author: yuhuyoyo
+    changes:
+    - addDefaultValue:
+        tableName: workspace_activity_log
+        columnName: actor_email
+        defaultValue: "Unknown"
+    - addDefaultValue:
+        tableName: workspace_activity_log
+        columnName: actor_subject_id
+        defaultValue: "Unknown"
