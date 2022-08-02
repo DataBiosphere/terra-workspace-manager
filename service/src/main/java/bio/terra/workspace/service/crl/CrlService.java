@@ -25,6 +25,7 @@ import com.azure.core.management.AzureEnvironment;
 import com.azure.core.management.profile.AzureProfile;
 import com.azure.identity.ClientSecretCredentialBuilder;
 import com.azure.resourcemanager.compute.ComputeManager;
+import com.azure.resourcemanager.msi.MsiManager;
 import com.azure.resourcemanager.relay.RelayManager;
 import com.azure.resourcemanager.resources.ResourceManager;
 import com.azure.resourcemanager.storage.StorageManager;
@@ -151,28 +152,58 @@ public class CrlService {
   public ComputeManager getComputeManager(
       AzureCloudContext azureCloudContext, AzureConfiguration azureConfig) {
     assertCrlInUse();
-    return buildComputeManager(azureCloudContext, azureConfig);
+    final var azureCreds = getManagedAppCredentials(azureConfig);
+    final var azureProfile = getAzureProfile(azureCloudContext);
+
+    // We must use FQDN because there are two `Defaults` symbols imported otherwise.
+    return bio.terra.cloudres.azure.resourcemanager.common.Defaults.crlConfigure(
+            clientConfig, ComputeManager.configure())
+        .authenticate(azureCreds, azureProfile);
   }
 
   /** Returns an Azure {@link ComputeManager} configured for use with CRL. */
   public RelayManager getRelayManager(
       AzureCloudContext azureCloudContext, AzureConfiguration azureConfig) {
     assertCrlInUse();
-    return buildRelayManager(azureCloudContext, azureConfig);
+    final var azureCreds = getManagedAppCredentials(azureConfig);
+    final var azureProfile = getAzureProfile(azureCloudContext);
+    return bio.terra.cloudres.azure.resourcemanager.relay.Defaults.crlConfigure(
+            clientConfig, RelayManager.configure())
+        .authenticate(azureCreds, azureProfile);
   }
 
   /** Returns an Azure {@link StorageManager} configured for use with CRL. */
   public StorageManager getStorageManager(
       AzureCloudContext azureCloudContext, AzureConfiguration azureConfig) {
     assertCrlInUse();
-    return buildStorageManager(azureCloudContext, azureConfig);
+    final var azureCreds = getManagedAppCredentials(azureConfig);
+    final var azureProfile = getAzureProfile(azureCloudContext);
+    return bio.terra.cloudres.azure.resourcemanager.common.Defaults.crlConfigure(
+            clientConfig, StorageManager.configure())
+        .authenticate(azureCreds, azureProfile);
   }
 
   /** Returns an Azure {@link ResourceManager} configured for use with CRL. */
   public ResourceManager getResourceManager(
       AzureCloudContext azureCloudContext, AzureConfiguration azureConfig) {
     assertCrlInUse();
-    return buildResourceManager(azureCloudContext, azureConfig);
+    final var azureCreds = getManagedAppCredentials(azureConfig);
+    final var azureProfile = getAzureProfile(azureCloudContext);
+    return bio.terra.cloudres.azure.resourcemanager.common.Defaults.crlConfigure(
+            clientConfig, ResourceManager.configure())
+        .authenticate(azureCreds, azureProfile)
+        .withSubscription(azureCloudContext.getAzureSubscriptionId());
+  }
+
+  /** Returns an Azure {@link MsiManager} configured for use with CRL. */
+  public MsiManager getMsiManager(
+      AzureCloudContext azureCloudContext, AzureConfiguration azureConfig) {
+    assertCrlInUse();
+    final var azureCreds = getManagedAppCredentials(azureConfig);
+    final var azureProfile = getAzureProfile(azureCloudContext);
+    return bio.terra.cloudres.azure.resourcemanager.common.Defaults.crlConfigure(
+            clientConfig, MsiManager.configure())
+        .authenticate(azureCreds, azureProfile);
   }
 
   /** @return CRL {@link BigQueryCow} which wraps Google BigQuery API */
@@ -453,7 +484,7 @@ public class CrlService {
 
   //  Azure Support
 
-  public TokenCredential getManagedAppCredentials(AzureConfiguration azureConfig) {
+  private TokenCredential getManagedAppCredentials(AzureConfiguration azureConfig) {
     return new ClientSecretCredentialBuilder()
         .clientId(azureConfig.getManagedAppClientId())
         .clientSecret(azureConfig.getManagedAppClientSecret())
@@ -461,86 +492,11 @@ public class CrlService {
         .build();
   }
 
-  /**
-   * Get a resource manager pointed at the MRG subscription
-   *
-   * @param azureCloudContext target cloud context
-   * @return azure resource manager
-   */
-  public ResourceManager buildResourceManager(
-      AzureCloudContext azureCloudContext, AzureConfiguration azureConfig) {
-    TokenCredential azureCreds = getManagedAppCredentials(azureConfig);
-
-    AzureProfile azureProfile =
-        new AzureProfile(
-            azureCloudContext.getAzureTenantId(),
-            azureCloudContext.getAzureSubscriptionId(),
-            AzureEnvironment.AZURE);
-
-    // We must use FQDN because there are two `Defaults` symbols imported otherwise.
-    ResourceManager manager =
-        bio.terra.cloudres.azure.resourcemanager.common.Defaults.crlConfigure(
-                clientConfig, ResourceManager.configure())
-            .authenticate(azureCreds, azureProfile)
-            .withSubscription(azureCloudContext.getAzureSubscriptionId());
-
-    return manager;
-  }
-
-  private ComputeManager buildComputeManager(
-      AzureCloudContext azureCloudContext, AzureConfiguration azureConfig) {
-    TokenCredential azureCreds = getManagedAppCredentials(azureConfig);
-
-    AzureProfile azureProfile =
-        new AzureProfile(
-            azureCloudContext.getAzureTenantId(),
-            azureCloudContext.getAzureSubscriptionId(),
-            AzureEnvironment.AZURE);
-
-    // We must use FQDN because there are two `Defaults` symbols imported otherwise.
-    ComputeManager manager =
-        bio.terra.cloudres.azure.resourcemanager.common.Defaults.crlConfigure(
-                clientConfig, ComputeManager.configure())
-            .authenticate(azureCreds, azureProfile);
-
-    return manager;
-  }
-
-  private RelayManager buildRelayManager(
-      AzureCloudContext azureCloudContext, AzureConfiguration azureConfig) {
-    TokenCredential azureCreds = getManagedAppCredentials(azureConfig);
-
-    AzureProfile azureProfile =
-        new AzureProfile(
-            azureCloudContext.getAzureTenantId(),
-            azureCloudContext.getAzureSubscriptionId(),
-            AzureEnvironment.AZURE);
-
-    // We must use FQDN because there are two `Defaults` symbols imported otherwise.
-    RelayManager manager =
-        bio.terra.cloudres.azure.resourcemanager.relay.Defaults.crlConfigure(
-                clientConfig, RelayManager.configure())
-            .authenticate(azureCreds, azureProfile);
-    return manager;
-  }
-
-  private StorageManager buildStorageManager(
-      AzureCloudContext azureCloudContext, AzureConfiguration azureConfig) {
-    TokenCredential azureCreds = getManagedAppCredentials(azureConfig);
-
-    AzureProfile azureProfile =
-        new AzureProfile(
-            azureCloudContext.getAzureTenantId(),
-            azureCloudContext.getAzureSubscriptionId(),
-            AzureEnvironment.AZURE);
-
-    // We must use FQDN because there are two `Defaults` symbols imported otherwise.
-    StorageManager manager =
-        bio.terra.cloudres.azure.resourcemanager.common.Defaults.crlConfigure(
-                clientConfig, StorageManager.configure())
-            .authenticate(azureCreds, azureProfile);
-
-    return manager;
+  private AzureProfile getAzureProfile(AzureCloudContext azureCloudContext) {
+    return new AzureProfile(
+        azureCloudContext.getAzureTenantId(),
+        azureCloudContext.getAzureSubscriptionId(),
+        AzureEnvironment.AZURE);
   }
 
   @VisibleForTesting

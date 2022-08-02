@@ -4,10 +4,11 @@ import bio.terra.common.iam.BearerToken;
 import bio.terra.workspace.amalgam.tps.TpsApiDispatch;
 import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
 import bio.terra.workspace.common.exception.FeatureNotSupportedException;
+import bio.terra.workspace.common.logging.model.ActivityLogChangeDetails;
 import bio.terra.workspace.common.utils.ControllerValidationUtils;
 import bio.terra.workspace.db.WorkspaceActivityLogDao;
 import bio.terra.workspace.db.WorkspaceDao;
-import bio.terra.workspace.db.model.DbWorkspaceActivityLog;
+import bio.terra.workspace.db.exception.WorkspaceNotFoundException;
 import bio.terra.workspace.generated.controller.WorkspaceApi;
 import bio.terra.workspace.generated.model.ApiAzureContext;
 import bio.terra.workspace.generated.model.ApiCloneWorkspaceRequest;
@@ -43,6 +44,7 @@ import bio.terra.workspace.service.iam.model.SamConstants.SamWorkspaceAction;
 import bio.terra.workspace.service.iam.model.WsmIamRole;
 import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.job.JobService.AsyncJobResult;
+import bio.terra.workspace.service.logging.WorkspaceActivityLogService;
 import bio.terra.workspace.service.petserviceaccount.PetSaService;
 import bio.terra.workspace.service.spendprofile.SpendProfileId;
 import bio.terra.workspace.service.workspace.AzureCloudContextService;
@@ -87,6 +89,7 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
   private final WorkspaceActivityLogDao workspaceActivityLogDao;
   private final WorkspaceDao workspaceDao;
   private final FeatureConfiguration featureConfiguration;
+  private final WorkspaceActivityLogService workspaceActivityLogService;
 
   @Autowired
   public WorkspaceApiController(
@@ -101,7 +104,8 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
       TpsApiDispatch tpsApiDispatch,
       WorkspaceActivityLogDao workspaceActivityLogDao,
       WorkspaceDao workspaceDao,
-      FeatureConfiguration featureConfiguration) {
+      FeatureConfiguration featureConfiguration,
+      WorkspaceActivityLogService workspaceActivityLogService) {
     super(authenticatedUserRequestFactory, request, samService);
     this.workspaceService = workspaceService;
     this.jobService = jobService;
@@ -113,17 +117,25 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
     this.workspaceActivityLogDao = workspaceActivityLogDao;
     this.workspaceDao = workspaceDao;
     this.featureConfiguration = featureConfiguration;
+    this.workspaceActivityLogService = workspaceActivityLogService;
   }
 
   @Override
   public ResponseEntity<ApiCreatedWorkspace> createWorkspace(
       @RequestBody ApiCreateWorkspaceRequestBody body) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
-    logger.info(
-        "Creating workspace {} for {} subject {}",
-        body.getId(),
-        userRequest.getEmail(),
-        userRequest.getSubjectId());
+
+    try {
+      workspaceService.getWorkspace(body.getId());
+      return new ResponseEntity<>(HttpStatus.CONFLICT);
+    } catch (WorkspaceNotFoundException ex) {
+      logger.info(
+          "Creating workspace {} for {} subject {}",
+          body.getId(),
+          userRequest.getEmail(),
+          userRequest.getSubjectId());
+    }
+
     // Unlike other operations, there's no Sam permission required to create a workspace. As long as
     // a user is enabled, they can call this endpoint.
 
@@ -234,6 +246,8 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
         .forEach((k, v) -> apiProperties.add(new ApiProperty().key(k).value(v)));
 
     // When we have another cloud context, we will need to do a similar retrieval for it.
+    var createDetailsOptional = workspaceActivityLogDao.getCreateDetails(workspaceUuid);
+    var lastChangeDetailsOptional = workspaceActivityLogDao.getLastUpdateDetails(workspaceUuid);
     return new ApiWorkspaceDescription()
         .id(workspaceUuid)
         .userFacingId(workspace.getUserFacingId())
@@ -245,8 +259,13 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
         .stage(workspace.getWorkspaceStage().toApiModel())
         .gcpContext(gcpContext)
         .azureContext(azureContext)
-        .createdDate(workspaceActivityLogDao.getCreatedDate(workspaceUuid).orElse(null))
-        .lastUpdatedDate(workspaceActivityLogDao.getLastUpdatedDate(workspaceUuid).orElse(null))
+        .createdDate(
+            createDetailsOptional.map(ActivityLogChangeDetails::getChangeDate).orElse(null))
+        .createdBy(createDetailsOptional.map(ActivityLogChangeDetails::getActorEmail).orElse(null))
+        .lastUpdatedDate(
+            lastChangeDetailsOptional.map(ActivityLogChangeDetails::getChangeDate).orElse(null))
+        .lastUpdatedBy(
+            lastChangeDetailsOptional.map(ActivityLogChangeDetails::getActorEmail).orElse(null))
         .policies(workspacePolicies);
   }
 
@@ -279,8 +298,11 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
         userRequest, workspaceUuid, SamConstants.SamWorkspaceAction.WRITE);
     Workspace workspace =
         workspaceService.updateWorkspace(
-            workspaceUuid, body.getUserFacingId(), body.getDisplayName(), body.getDescription());
-
+            workspaceUuid,
+            body.getUserFacingId(),
+            body.getDisplayName(),
+            body.getDescription(),
+            userRequest);
     WsmIamRole highestRole = workspaceService.getHighestRole(workspaceUuid, userRequest);
     ApiWorkspaceDescription desc = buildWorkspaceDescription(workspace, highestRole, userRequest);
     logger.info("Updated workspace {} for {}", desc, userRequest.getEmail());
@@ -326,11 +348,12 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
         "Deleting the properties with the key {} in workspace {}",
         propertyKeys.toString(),
         workspaceUuid);
-    workspaceService.deleteWorkspaceProperties(workspaceUuid, propertyKeys);
+    Workspace workspace =
+        workspaceService.validateWorkspaceAndAction(
+            userRequest, workspaceUuid, SamWorkspaceAction.DELETE);
+    workspaceService.deleteWorkspaceProperties(workspaceUuid, propertyKeys, userRequest);
     logger.info(
-        "Deleted the properties with the key {} in workspace {}",
-        propertyKeys.toString(),
-        workspaceUuid);
+        "Deleted the properties with the key {} in workspace {}", propertyKeys, workspaceUuid);
 
     return new ResponseEntity<>(HttpStatus.NO_CONTENT);
   }
@@ -338,11 +361,13 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
   @Override
   public ResponseEntity<Void> updateWorkspaceProperties(
       @PathVariable("workspaceId") UUID workspaceUuid, @RequestBody List<ApiProperty> properties) {
+    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    workspaceService.validateWorkspaceAndAction(
+        userRequest, workspaceUuid, SamWorkspaceAction.WRITE);
     Map<String, String> propertyMap = propertyMapFromApi(properties);
-    logger.info(
-        "Updating the properties {} in workspace {}", propertyMap.toString(), workspaceUuid);
-    workspaceService.updateWorkspaceProperties(workspaceUuid, propertyMap);
-    logger.info("Updated the properties {} in workspace {}", propertyMap.toString(), workspaceUuid);
+    logger.info("Updating the properties {} in workspace {}", propertyMap, workspaceUuid);
+    workspaceService.updateWorkspaceProperties(workspaceUuid, propertyMap, userRequest);
+    logger.info("Updated the properties {} in workspace {}", propertyMap, workspaceUuid);
 
     return new ResponseEntity<>(HttpStatus.NO_CONTENT);
   }
@@ -363,8 +388,8 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
             samService.grantWorkspaceRole(
                 uuid, getAuthenticatedInfo(), WsmIamRole.fromApiModel(role), body.getMemberEmail()),
         "grantWorkspaceRole");
-    workspaceActivityLogDao.writeActivity(
-        uuid, new DbWorkspaceActivityLog().operationType(OperationType.GRANT_WORKSPACE_ROLE));
+    workspaceActivityLogService.writeActivity(
+        getAuthenticatedInfo(), uuid, OperationType.GRANT_WORKSPACE_ROLE);
     return new ResponseEntity<>(HttpStatus.NO_CONTENT);
   }
 

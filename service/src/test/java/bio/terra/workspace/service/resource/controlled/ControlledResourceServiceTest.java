@@ -455,7 +455,11 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
     jobService.setFlightDebugInfoForTest(
         FlightDebugInfo.newBuilder().doStepFailures(retrySteps).build());
     controlledResourceService.updateAiNotebookInstance(
-        fetchedInstance, AI_NOTEBOOK_UPDATE_PARAMETERS, newName, newDescription);
+        fetchedInstance,
+        AI_NOTEBOOK_UPDATE_PARAMETERS,
+        newName,
+        newDescription,
+        user.getAuthenticatedRequest());
 
     ControlledAiNotebookInstanceResource updatedInstance =
         controlledResourceService
@@ -538,7 +542,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
     jobService.setFlightDebugInfoForTest(
         FlightDebugInfo.newBuilder().doStepFailures(retrySteps).build());
     controlledResourceService.updateAiNotebookInstance(
-        fetchedInstance, null, newName, newDescription);
+        fetchedInstance, null, newName, newDescription, user.getAuthenticatedRequest());
 
     ControlledAiNotebookInstanceResource updatedInstance =
         controlledResourceService
@@ -598,7 +602,11 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
         InvalidResultStateException.class,
         () ->
             controlledResourceService.updateAiNotebookInstance(
-                fetchedInstance, AI_NOTEBOOK_UPDATE_PARAMETERS, newName, newDescription));
+                fetchedInstance,
+                AI_NOTEBOOK_UPDATE_PARAMETERS,
+                newName,
+                newDescription,
+                user.getAuthenticatedRequest()));
 
     ControlledAiNotebookInstanceResource updatedInstance =
         controlledResourceService
@@ -672,7 +680,8 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
                 fetchedInstance,
                 new ApiGcpAiNotebookUpdateParameters().metadata(illegalMetadataToUpdate),
                 newName,
-                newDescription));
+                newDescription,
+                user.getAuthenticatedRequest()));
 
     ControlledAiNotebookInstanceResource updatedInstance =
         controlledResourceService
@@ -1539,7 +1548,8 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
         createdBucket,
         ControlledResourceFixtures.BUCKET_UPDATE_PARAMETERS_2,
         newName,
-        newDescription);
+        newDescription,
+        user.getAuthenticatedRequest());
 
     // check the properties stored in WSM were updated
     ControlledGcsBucketResource fetchedResource =
@@ -1558,7 +1568,8 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
                 new ApiGcpGcsBucketUpdateParameters()
                     .cloningInstructions(ApiCloningInstructionsEnum.REFERENCE),
                 null,
-                null));
+                null,
+                user.getAuthenticatedRequest()));
   }
 
   @Test
@@ -1591,7 +1602,8 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
                 createdBucket,
                 ControlledResourceFixtures.BUCKET_UPDATE_PARAMETERS_2,
                 newName,
-                newDescription));
+                newDescription,
+                user.getAuthenticatedRequest()));
 
     // check the properties stored on the cloud were not updated
     BucketInfo updatedBucket =

@@ -50,13 +50,14 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import org.apache.http.HttpStatus;
+import org.broadinstitute.dsde.workbench.client.sam.model.UserStatusInfo;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
+import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.test.web.servlet.MockMvc;
 
 /**
@@ -88,21 +89,23 @@ public class WorkspaceApiControllerTest extends BaseConnectedTest {
 
   @BeforeEach
   public void setup() throws InterruptedException {
-    Mockito.when(
-            mockSamService.isAuthorized(
-                Mockito.any(),
-                eq(SamResource.SPEND_PROFILE),
-                Mockito.any(),
-                eq(SamSpendProfileAction.LINK)))
+    when(mockSamService.isAuthorized(
+            any(), eq(SamResource.SPEND_PROFILE), any(), eq(SamSpendProfileAction.LINK)))
         .thenReturn(true);
-    Mockito.when(mockSamService.listRequesterRoles(Mockito.any(), Mockito.any(), Mockito.any()))
+    when(mockSamService.listRequesterRoles(any(), any(), any()))
         .thenReturn(List.of(WsmIamRole.OWNER));
-    Mockito.when(mockFeatureConfiguration.isTpsEnabled()).thenReturn(true);
+    when(mockSamService.getUserStatusInfo(any()))
+        .thenReturn(
+            new UserStatusInfo()
+                .userEmail(USER_REQUEST.getEmail())
+                .userSubjectId(USER_REQUEST.getSubjectId()));
+
+    when(mockFeatureConfiguration.isTpsEnabled()).thenReturn(true);
     // We don't need to mock tpsCheck() because Mockito will already do nothing by default.
 
     // Pretend every workspace has an empty policy. The ID on the PAO will not match the workspace
     // ID, but that doesn't matter for tests which don't care about policy.
-    Mockito.when(mockTpsApiDispatch.getPao(any(), any())).thenReturn(Optional.of(emptyWorkspacePao()));
+    when(mockTpsApiDispatch.getPao(any(), any())).thenReturn(Optional.of(emptyWorkspacePao()));
   }
 
   @Test
@@ -112,6 +115,37 @@ public class WorkspaceApiControllerTest extends BaseConnectedTest {
     assertEquals(workspace.getId(), fetchedWorkspace.getId());
     assertNotNull(fetchedWorkspace.getLastUpdatedDate());
     assertEquals(fetchedWorkspace.getLastUpdatedDate(), fetchedWorkspace.getCreatedDate());
+  }
+
+  @Test
+  public void createDuplicateWorkspace() throws Exception {
+    var createRequest = WorkspaceFixtures.createWorkspaceRequestBody();
+    MockHttpServletResponse createResponse =
+        mockMvc
+            .perform(
+                addJsonContentType(
+                    addAuth(
+                        post(WORKSPACES_V1_PATH)
+                            .content(objectMapper.writeValueAsString(createRequest)),
+                        USER_REQUEST)))
+            .andExpect(status().is(HttpStatus.SC_OK))
+            .andReturn()
+            .getResponse();
+
+    int duplicateCreateResponseStatus =
+        mockMvc
+            .perform(
+                addJsonContentType(
+                    addAuth(
+                        post(WORKSPACES_V1_PATH)
+                            .content(objectMapper.writeValueAsString(createRequest)),
+                        USER_REQUEST)))
+            .andExpect(status().is(HttpStatus.SC_CONFLICT))
+            .andReturn()
+            .getResponse()
+            .getStatus();
+
+    assertEquals(HttpStatus.SC_CONFLICT, duplicateCreateResponseStatus);
   }
 
   @Test
@@ -136,6 +170,8 @@ public class WorkspaceApiControllerTest extends BaseConnectedTest {
     assertEquals(userFacingId, fetchedWorkspace.getUserFacingId());
     assertNotNull(fetchedWorkspace.getLastUpdatedDate());
     assertEquals(fetchedWorkspace.getLastUpdatedDate(), fetchedWorkspace.getCreatedDate());
+    assertEquals(USER_REQUEST.getEmail(), fetchedWorkspace.getCreatedBy());
+    assertEquals(USER_REQUEST.getEmail(), fetchedWorkspace.getLastUpdatedBy());
   }
 
   @Test
@@ -172,7 +208,11 @@ public class WorkspaceApiControllerTest extends BaseConnectedTest {
     OffsetDateTime createdDate = updatedWorkspaceDescription.getCreatedDate();
     assertNotNull(createdDate);
     assertTrue(firstLastUpdatedDate.isAfter(createdDate));
+    assertEquals(USER_REQUEST.getEmail(), updatedWorkspaceDescription.getCreatedBy());
+    assertEquals(USER_REQUEST.getEmail(), updatedWorkspaceDescription.getLastUpdatedBy());
 
+    var newUser = new UserStatusInfo().userEmail("foo@gmail.com").userSubjectId("foo");
+    when(mockSamService.getUserStatusInfo(any())).thenReturn(newUser);
     var secondNewDescription = "This is yet another description";
     String serializedSecondUpdateResponse =
         mockMvc
@@ -198,6 +238,7 @@ public class WorkspaceApiControllerTest extends BaseConnectedTest {
     assertTrue(firstLastUpdatedDate.isBefore(secondLastUpdatedDate));
     assertNotNull(secondUpdatedWorkspaceDescription.getCreatedDate());
     assertEquals(createdDate, secondUpdatedWorkspaceDescription.getCreatedDate());
+    assertEquals(newUser.getUserEmail(), secondUpdatedWorkspaceDescription.getLastUpdatedBy());
   }
 
   @Test
@@ -307,7 +348,7 @@ public class WorkspaceApiControllerTest extends BaseConnectedTest {
   @Test
   public void policyRejectedIfTpsDisabled() throws Exception {
     // Disable TPS feature flag for this test only
-    Mockito.when(mockFeatureConfiguration.isTpsEnabled()).thenReturn(false);
+    when(mockFeatureConfiguration.isTpsEnabled()).thenReturn(false);
 
     var createRequest = WorkspaceFixtures.createWorkspaceRequestBody();
     createRequest.policies(
@@ -364,7 +405,8 @@ public class WorkspaceApiControllerTest extends BaseConnectedTest {
             .objectId(workspace.getId())
             .attributes(new ApiTpsPolicyInputs().addInputsItem(GROUP_POLICY))
             .effectiveAttributes(new ApiTpsPolicyInputs().addInputsItem(GROUP_POLICY));
-    when(mockTpsApiDispatch.getPao(any(), eq(workspace.getId()))).thenReturn(Optional.of(getPolicyResult));
+    when(mockTpsApiDispatch.getPao(any(), eq(workspace.getId())))
+        .thenReturn(Optional.of(getPolicyResult));
 
     ApiWorkspaceDescription gotWorkspace = getWorkspaceDescription(workspace.getId());
     assertEquals(1, gotWorkspace.getPolicies().size());
@@ -386,7 +428,9 @@ public class WorkspaceApiControllerTest extends BaseConnectedTest {
     ApiCreatedWorkspace workspace = createDefaultWorkspace();
     ApiCreatedWorkspace noPolicyWorkspace = createDefaultWorkspace();
     when(mockSamService.listWorkspaceIdsAndHighestRoles(any()))
-        .thenReturn(ImmutableMap.of(workspace.getId(), WsmIamRole.OWNER, noPolicyWorkspace.getId(), WsmIamRole.OWNER));
+        .thenReturn(
+            ImmutableMap.of(
+                workspace.getId(), WsmIamRole.OWNER, noPolicyWorkspace.getId(), WsmIamRole.OWNER));
 
     ApiTpsPaoGetResult getPolicyResult =
         new ApiTpsPaoGetResult()
@@ -398,14 +442,17 @@ public class WorkspaceApiControllerTest extends BaseConnectedTest {
             .children(Collections.emptyList())
             .inConflict(false);
     // Return a policy object for the first workspace
-    when(mockTpsApiDispatch.getPao(any(), eq(workspace.getId()))).thenReturn(Optional.of(getPolicyResult));
+    when(mockTpsApiDispatch.getPao(any(), eq(workspace.getId())))
+        .thenReturn(Optional.of(getPolicyResult));
     // Treat the second workspace like it was created before policy existed and doesn't have a PAO
-    when(mockTpsApiDispatch.getPao(any(), eq(noPolicyWorkspace.getId()))).thenReturn(Optional.empty());
+    when(mockTpsApiDispatch.getPao(any(), eq(noPolicyWorkspace.getId())))
+        .thenReturn(Optional.empty());
 
     ApiWorkspaceDescription gotWorkspace = getWorkspaceDescriptionFromList(workspace.getId());
     assertEquals(1, gotWorkspace.getPolicies().size());
     assertEquals(GROUP_POLICY, gotWorkspace.getPolicies().get(0));
-    ApiWorkspaceDescription gotNoPolicyWorkspace = getWorkspaceDescriptionFromList(noPolicyWorkspace.getId());
+    ApiWorkspaceDescription gotNoPolicyWorkspace =
+        getWorkspaceDescriptionFromList(noPolicyWorkspace.getId());
     assertTrue(gotNoPolicyWorkspace.getPolicies().isEmpty());
   }
 
