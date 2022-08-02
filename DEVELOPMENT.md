@@ -369,3 +369,13 @@ Spring auto-magically searches for properties files for the active profiles.
       reloading, you still have to refresh the browser, but at least you don't have to
       restart the server.
 ![Main Run Configuration Dialog](docs/images/main_run_config.png)
+
+## Gotcha
+### Adding a new columns with non-null values to an existing table.
+
+  You must either backfill the existing rows or (if that's not possible) set a default value to the existing
+  row. According to [liquibase documentation](https://docs.liquibase.com/change-types/add-column.html) under
+  Nested properties section, you must set `value` instead of `defaultValue`. Setting the `value` attributes
+  sets all rows existing to the specified value without modifying the column default. Example fix 
+  [PR](https://github.com/DataBiosphere/terra-workspace-manager/pull/745), 
+  Breaking [culprit](https://github.com/DataBiosphere/terra-workspace-manager/pull/744)
