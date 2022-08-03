@@ -373,31 +373,6 @@ public class WorkspaceApiControllerTest extends BaseConnectedTest {
   }
 
   @Test
-  public void invalidPolicyRejected() throws Exception {
-    var createRequest = WorkspaceFixtures.createWorkspaceRequestBody();
-    // The terra:group-constraint policy requires having an additional data field with "group-name",
-    // so this should fail policy validation.
-    createRequest.policies(
-        new ApiTpsPolicyInputs()
-            .addInputsItem(new ApiTpsPolicyInput().namespace("terra").name("group-constraint")));
-    String serializedError =
-        mockMvc
-            .perform(
-                addJsonContentType(
-                    addAuth(
-                        post(WORKSPACES_V1_PATH)
-                            .content(objectMapper.writeValueAsString(createRequest)),
-                        USER_REQUEST)))
-            .andExpect(status().is(HttpStatus.SC_BAD_REQUEST))
-            .andReturn()
-            .getResponse()
-            .getContentAsString();
-    ApiErrorReport errorReport = objectMapper.readValue(serializedError, ApiErrorReport.class);
-    assertEquals(HttpStatus.SC_BAD_REQUEST, errorReport.getStatusCode());
-    assertTrue(errorReport.getMessage().contains("group-name"));
-  }
-
-  @Test
   public void getWorkspaceIncludesPolicy() throws Exception {
     // No need to actually pass policy inputs because TPS is mocked.
     ApiCreatedWorkspace workspace = createDefaultWorkspace();
