@@ -57,7 +57,7 @@ public class TpsApiDispatch {
     paoService.deletePao(objectId);
   }
 
-  public Optional<ApiTpsPaoGetResult> getPao(BearerToken bearerToken, UUID objectId) {
+  public Optional<ApiTpsPaoGetResult> getPaoIfExists(BearerToken bearerToken, UUID objectId) {
     features.tpsEnabledCheck();
     try {
       Pao pao = paoService.getPao(objectId);
@@ -65,6 +65,12 @@ public class TpsApiDispatch {
     } catch (PolicyObjectNotFoundException e) {
       return Optional.empty();
     }
+  }
+
+  public ApiTpsPaoGetResult getPao(BearerToken bearerToken, UUID objectId) {
+    return getPaoIfExists(bearerToken, objectId)
+        .orElseThrow(
+            () -> new PolicyObjectNotFoundException("Policy object not found: " + objectId));
   }
 
   // -- Api to Tps conversion methods --

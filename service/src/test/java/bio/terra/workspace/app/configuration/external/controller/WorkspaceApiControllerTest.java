@@ -105,7 +105,8 @@ public class WorkspaceApiControllerTest extends BaseConnectedTest {
 
     // Pretend every workspace has an empty policy. The ID on the PAO will not match the workspace
     // ID, but that doesn't matter for tests which don't care about policy.
-    when(mockTpsApiDispatch.getPao(any(), any())).thenReturn(Optional.of(emptyWorkspacePao()));
+    when(mockTpsApiDispatch.getPaoIfExists(any(), any()))
+        .thenReturn(Optional.of(emptyWorkspacePao()));
   }
 
   @Test
@@ -406,7 +407,7 @@ public class WorkspaceApiControllerTest extends BaseConnectedTest {
             .objectId(workspace.getId())
             .attributes(new ApiTpsPolicyInputs().addInputsItem(GROUP_POLICY))
             .effectiveAttributes(new ApiTpsPolicyInputs().addInputsItem(GROUP_POLICY));
-    when(mockTpsApiDispatch.getPao(any(), eq(workspace.getId())))
+    when(mockTpsApiDispatch.getPaoIfExists(any(), eq(workspace.getId())))
         .thenReturn(Optional.of(getPolicyResult));
 
     ApiWorkspaceDescription gotWorkspace = getWorkspaceDescription(workspace.getId());
@@ -443,10 +444,10 @@ public class WorkspaceApiControllerTest extends BaseConnectedTest {
             .children(Collections.emptyList())
             .inConflict(false);
     // Return a policy object for the first workspace
-    when(mockTpsApiDispatch.getPao(any(), eq(workspace.getId())))
+    when(mockTpsApiDispatch.getPaoIfExists(any(), eq(workspace.getId())))
         .thenReturn(Optional.of(getPolicyResult));
     // Treat the second workspace like it was created before policy existed and doesn't have a PAO
-    when(mockTpsApiDispatch.getPao(any(), eq(noPolicyWorkspace.getId())))
+    when(mockTpsApiDispatch.getPaoIfExists(any(), eq(noPolicyWorkspace.getId())))
         .thenReturn(Optional.empty());
 
     ApiWorkspaceDescription gotWorkspace = getWorkspaceDescriptionFromList(workspace.getId());

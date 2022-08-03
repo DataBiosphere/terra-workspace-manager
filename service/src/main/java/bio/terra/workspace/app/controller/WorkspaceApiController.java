@@ -7,7 +7,6 @@ import bio.terra.workspace.common.exception.FeatureNotSupportedException;
 import bio.terra.workspace.common.logging.model.ActivityLogChangeDetails;
 import bio.terra.workspace.common.utils.ControllerValidationUtils;
 import bio.terra.workspace.db.WorkspaceActivityLogDao;
-import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.db.exception.WorkspaceNotFoundException;
 import bio.terra.workspace.generated.controller.WorkspaceApi;
 import bio.terra.workspace.generated.model.ApiAzureContext;
@@ -87,7 +86,6 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
   private final PetSaService petSaService;
   private final TpsApiDispatch tpsApiDispatch;
   private final WorkspaceActivityLogDao workspaceActivityLogDao;
-  private final WorkspaceDao workspaceDao;
   private final FeatureConfiguration featureConfiguration;
   private final WorkspaceActivityLogService workspaceActivityLogService;
 
@@ -103,7 +101,6 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
       AzureCloudContextService azureCloudContextService,
       TpsApiDispatch tpsApiDispatch,
       WorkspaceActivityLogDao workspaceActivityLogDao,
-      WorkspaceDao workspaceDao,
       FeatureConfiguration featureConfiguration,
       WorkspaceActivityLogService workspaceActivityLogService) {
     super(authenticatedUserRequestFactory, request, samService);
@@ -115,7 +112,6 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
     this.petSaService = petSaService;
     this.tpsApiDispatch = tpsApiDispatch;
     this.workspaceActivityLogDao = workspaceActivityLogDao;
-    this.workspaceDao = workspaceDao;
     this.featureConfiguration = featureConfiguration;
     this.workspaceActivityLogService = workspaceActivityLogService;
   }
@@ -154,7 +150,7 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
         Optional.ofNullable(body.getUserFacingId()).orElse(body.getId().toString());
     ControllerValidationUtils.validateUserFacingId(userFacingId);
 
-    // Create PAO objects from the user's specifications
+    // Validate that this workspace can have policies attached, if necessary.
     ApiTpsPolicyInputs policies = null;
     if (body.getPolicies() != null) {
       if (!featureConfiguration.isTpsEnabled()) {
@@ -164,9 +160,6 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
       if (body.getStage() == ApiWorkspaceStageModel.RAWLS_WORKSPACE) {
         throw new StageDisabledException(
             "Cannot apply policies to a RAWLS_WORKSPACE stage workspace");
-      }
-      for (ApiTpsPolicyInput inputPolicy : body.getPolicies().getInputs()) {
-        ControllerValidationUtils.validateAdditonalPolicyInformation(inputPolicy);
       }
       policies = body.getPolicies();
     }
@@ -230,8 +223,11 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
 
     List<ApiTpsPolicyInput> workspacePolicies = null;
     if (featureConfiguration.isTpsEnabled()) {
+      // New workspaces will always be created with empty policies, but some workspaces predate
+      // policy and so will not have associated PAOs.
       Optional<ApiTpsPaoGetResult> workspacePao =
-          tpsApiDispatch.getPao(new BearerToken(userRequest.getRequiredToken()), workspaceUuid);
+          tpsApiDispatch.getPaoIfExists(
+              new BearerToken(userRequest.getRequiredToken()), workspaceUuid);
       workspacePolicies =
           workspacePao
               .map(ApiTpsPaoGetResult::getEffectiveAttributes)

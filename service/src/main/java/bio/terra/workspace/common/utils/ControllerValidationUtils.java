@@ -2,21 +2,13 @@ package bio.terra.workspace.common.utils;
 
 import bio.terra.common.exception.ValidationException;
 import bio.terra.workspace.generated.model.ApiCloudPlatform;
-import bio.terra.workspace.generated.model.ApiTpsPolicyInput;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResourceCategory;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResourceFields;
 import bio.terra.workspace.service.workspace.exceptions.CloudPlatformNotImplementedException;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableSet;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
 import java.util.regex.Pattern;
 import javax.annotation.Nullable;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.validator.routines.InetAddressValidator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -43,9 +35,6 @@ public final class ControllerValidationUtils {
    */
   public static final Pattern USER_FACING_ID_VALIDATION_PATTERN =
       Pattern.compile("^[a-z0-9][-_a-z0-9]{2,62}$");
-
-  public static final Map<String, Set<String>> REQUIRED_POLICY_INFORMATION =
-      ImmutableMap.of("terra:group-constraint", ImmutableSet.of("group-name"));
 
   /**
    * Utility to validate limit/offset parameters used in pagination.
@@ -145,31 +134,6 @@ public final class ControllerValidationUtils {
     for (var address : addresses) {
       if (!validator.isValid(address)) {
         throw new ValidationException("Invalid ip address or ip address range: " + ipRange);
-      }
-    }
-  }
-
-  /**
-   * Validate that the specified policy namespace/name pair has the required additional information.
-   *
-   * <p>TOOD(zloery): I'm less sure about other types of validation (e.g. a known set of
-   * namespace/name pairs). How much should WSM know about the space of possible policies?
-   */
-  public static void validateAdditonalPolicyInformation(ApiTpsPolicyInput policyInput) {
-    String nameAndNamespace = policyInput.getNamespace() + ":" + policyInput.getName();
-    Set<String> requiredKeys =
-        Optional.ofNullable(REQUIRED_POLICY_INFORMATION.get(nameAndNamespace))
-            .orElse(Collections.emptySet());
-    for (String requiredKey : requiredKeys) {
-      // For each required key, there must be a non-empty value in additionalData.
-      if (policyInput.getAdditionalData() == null
-          || policyInput.getAdditionalData().stream()
-              .noneMatch(
-                  p -> p.getKey().equals(requiredKey) && StringUtils.isNotEmpty(p.getValue()))) {
-        throw new ValidationException(
-            String.format(
-                "The following keys are required for policy %s: %s",
-                nameAndNamespace, REQUIRED_POLICY_INFORMATION.get(nameAndNamespace)));
       }
     }
   }
