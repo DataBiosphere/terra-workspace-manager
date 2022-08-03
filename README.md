@@ -43,12 +43,6 @@ access, then it can create application-owned resources. The goal is to allow app
 to create constellations of resources that support the application, and not let them be
 messed with by workspace READERS and WRITERS.
 
-WSM also supports `RAWLS_WORKSPACE` stage workspaces for interoperability with other Terra services.
-These workspaces have intentionally limited functionality: they cannot have cloud contexts,
-controlled resources, applications, or modify IAM, and can only have referenced resources.
-There are no features exclusive to `RAWLS_WORKSPACES`. They do not manage their own `workspace` 
-resources in Sam, and use a Rawls-managed `workspace` object with the same workspace ID instead.
-
 ## WSM Client
 Workspace Manager publishes an API client library generated from its OpenAPI Spec v3
 interface definition.
