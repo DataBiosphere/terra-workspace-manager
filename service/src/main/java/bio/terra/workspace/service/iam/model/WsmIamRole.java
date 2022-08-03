@@ -34,11 +34,16 @@ public enum WsmIamRole {
                 "No IamRole enum found corresponding to model role " + apiModel.toString()));
   }
 
+  /**
+   * Return the WsmIamRole corresponding to the provided Sam role, or null if the Sam role does not
+   * match a Wsm role. There are valid roles on workspaces in Sam which do not map to WsmIam roles,
+   * in general WSM should ignore these roles.
+   */
   public static WsmIamRole fromSam(String samRole) {
-    Optional<WsmIamRole> result =
-        Arrays.stream(WsmIamRole.values()).filter(x -> x.samRole.equals(samRole)).findFirst();
-    return result.orElseThrow(
-        () -> new RuntimeException("No IamRole enum found corresponding to Sam role " + samRole));
+    return Arrays.stream(WsmIamRole.values())
+        .filter(x -> x.samRole.equals(samRole))
+        .findFirst()
+        .orElse(null);
   }
 
   public static WsmIamRole getHighestRole(UUID workspaceId, List<WsmIamRole> roles) {
