@@ -52,9 +52,7 @@ public enum WsmIamRole {
 
   public static Optional<WsmIamRole> getHighestRole(UUID workspaceId, List<WsmIamRole> roles) {
     if (roles.isEmpty()) {
-      // This should be extremely rare. This only happens when a WSM role has been added to SAM,
-      // but WSM doesn't know about it yet (eg a local WSM created a workspace with this role, but
-      // broad-dev WSM doesn't know about role yet).
+      // This workspace had a role that this WSM doesn't know about.
       logger.warn("Workspace %s missing roles", workspaceId.toString());
       return Optional.empty();
     }

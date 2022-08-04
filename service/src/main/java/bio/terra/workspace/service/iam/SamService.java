@@ -300,8 +300,7 @@ public class SamService {
                   .filter(Objects::nonNull)
                   .collect(Collectors.toList());
           Optional<WsmIamRole> highestRole = WsmIamRole.getHighestRole(workspaceId, roles);
-          // Skip workspaces with no roles. (That means there's a role this WSM doesn't know about
-          // yet.)
+          // Skip workspaces with no roles. (That means there's a role this WSM doesn't know about.)
           if (highestRole.isPresent()) {
             workspacesAndRoles.put(workspaceId, highestRole.get());
           }
