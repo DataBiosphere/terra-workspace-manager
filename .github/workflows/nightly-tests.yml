@@ -191,8 +191,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v2
         with:
-          name: wsm-and-testrunner-logs
-          path: |
-            wsm.log
-            ${{ steps.integration-test.outputs.results-dir }}
+          # We're not running WSM locally, so there's no wsm.log
+          name: testrunner-logs
+          path: ${{ steps.integration-test.outputs.results-dir }}
 

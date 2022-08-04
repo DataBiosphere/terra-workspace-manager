@@ -6,6 +6,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /** Internal representation of IAM roles. */
 public enum WsmIamRole {
@@ -16,6 +18,8 @@ public enum WsmIamRole {
   // The manager role is given to WSM's SA on all Sam workspace objects for admin control. Users
   // are never given this role.
   MANAGER("manager", null);
+
+  private static final Logger logger = LoggerFactory.getLogger(WsmIamRole.class);
 
   private final String samRole;
   private final ApiIamRole apiRole;
@@ -46,20 +50,21 @@ public enum WsmIamRole {
         .orElse(null);
   }
 
-  public static WsmIamRole getHighestRole(UUID workspaceId, List<WsmIamRole> roles) {
+  public static Optional<WsmIamRole> getHighestRole(UUID workspaceId, List<WsmIamRole> roles) {
     if (roles.isEmpty()) {
-      throw new InternalServerErrorException(
-          String.format("Workspace %s missing roles", workspaceId.toString()));
+      // This workspace had a role that this WSM doesn't know about.
+      logger.warn("Workspace %s missing roles", workspaceId.toString());
+      return Optional.empty();
     }
 
     if (roles.contains(WsmIamRole.APPLICATION)) {
-      return WsmIamRole.APPLICATION;
+      return Optional.of(WsmIamRole.APPLICATION);
     } else if (roles.contains(WsmIamRole.OWNER)) {
-      return WsmIamRole.OWNER;
+      return Optional.of(WsmIamRole.OWNER);
     } else if (roles.contains(WsmIamRole.WRITER)) {
-      return WsmIamRole.WRITER;
+      return Optional.of(WsmIamRole.WRITER);
     } else if (roles.contains(WsmIamRole.READER)) {
-      return WsmIamRole.READER;
+      return Optional.of(WsmIamRole.READER);
     }
     throw new InternalServerErrorException(
         String.format("Workspace %s has unexpected roles: %s", workspaceId.toString(), roles));
