@@ -20,7 +20,7 @@ HELP.md
 *.iml
 *.ipr
 out/
-.run
+.run/**
 
 ### NetBeans ###
 /nbproject/private/

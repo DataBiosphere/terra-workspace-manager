@@ -299,7 +299,10 @@ public class SamService {
                   .map(WsmIamRole::fromSam)
                   .filter(Objects::nonNull)
                   .collect(Collectors.toList());
-          workspacesAndRoles.put(workspaceId, WsmIamRole.getHighestRole(workspaceId, roles));
+          Optional<WsmIamRole> highestRole = WsmIamRole.getHighestRole(workspaceId, roles);
+          if (highestRole.isPresent()) {
+            workspacesAndRoles.put(workspaceId, highestRole.get());
+          }
         } catch (IllegalArgumentException e) {
           // WSM always uses UUIDs for workspace IDs, but this is not enforced in Sam and there are
           // old workspaces that don't use UUIDs. Any workspace with a non-UUID workspace ID is

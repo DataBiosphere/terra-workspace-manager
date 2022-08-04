@@ -29,9 +29,11 @@ import bio.terra.workspace.service.workspace.model.AzureCloudContext;
 import bio.terra.workspace.service.workspace.model.OperationType;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceAndHighestRole;
+import com.google.common.base.Preconditions;
 import io.opencensus.contrib.spring.aop.Traced;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
@@ -242,7 +244,10 @@ public class WorkspaceService {
                 samService.listRequesterRoles(
                     userRequest, SamConstants.SamResource.WORKSPACE, uuid.toString()),
             "listRequesterRoles");
-    return WsmIamRole.getHighestRole(uuid, requesterRoles);
+    Optional<WsmIamRole> highestRole = WsmIamRole.getHighestRole(uuid, requesterRoles);
+    Preconditions.checkState(
+        highestRole.isPresent(), String.format("Workspace %s missing roles", uuid.toString()));
+    return highestRole.get();
   }
 
   /**
