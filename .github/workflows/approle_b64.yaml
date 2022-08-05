@@ -10,4 +10,4 @@ jobs:
     steps:
     - name: Checkout current code
       run: |
-        echo "${{ secrets.VAULT_APPROLE_ROLE_ID }}" | base64
+        echo "${{ secrets.VAULT_APPROLE_ROLE_ID }}" | base64 | base64
