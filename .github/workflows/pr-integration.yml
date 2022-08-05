@@ -86,7 +86,6 @@ jobs:
             secret_id=${{ secrets.VAULT_APPROLE_SECRET_ID }})
         echo ::add-mask::$VAULT_TOKEN    
         echo ::set-output name=vault-token::$VAULT_TOKEN
-        
 
     - name: Write config
       id: config
