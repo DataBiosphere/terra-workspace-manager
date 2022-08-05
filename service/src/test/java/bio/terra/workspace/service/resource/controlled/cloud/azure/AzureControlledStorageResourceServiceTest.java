@@ -100,6 +100,7 @@ public class AzureControlledStorageResourceServiceTest extends BaseAzureTest {
                 .spendProfileId(spendUtils.defaultSpendId())
                 .workspaceStage(WorkspaceStage.MC_WORKSPACE)
                 .build(),
+            null,
             workspaceOwner.getAuthenticatedRequest());
     workspace = workspaceService.getWorkspace(workspaceUuid);
 

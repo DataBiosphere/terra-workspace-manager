@@ -14,6 +14,7 @@ public final class WorkspaceFlightMapKeys {
   public static final String ROLE_TO_REMOVE = "roleToRemove";
   public static final String APPLICATION_ID = "applicationId";
   public static final String OPERATION_TYPE = "operationType";
+  public static final String POLICIES = "policies";
 
   private WorkspaceFlightMapKeys() {}
 

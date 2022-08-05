@@ -151,7 +151,7 @@ public class ApplicationServiceTest extends BaseUnitTest {
             .workspaceStage(WorkspaceStage.MC_WORKSPACE)
             .build();
 
-    workspaceService.createWorkspace(workspace, USER_REQUEST);
+    workspaceService.createWorkspace(workspace, null, USER_REQUEST);
 
     UUID workspaceId2 = UUID.randomUUID();
     workspace2 =
@@ -161,7 +161,7 @@ public class ApplicationServiceTest extends BaseUnitTest {
             .spendProfileId(null)
             .workspaceStage(WorkspaceStage.MC_WORKSPACE)
             .build();
-    workspaceService.createWorkspace(workspace2, USER_REQUEST);
+    workspaceService.createWorkspace(workspace2, null, USER_REQUEST);
   }
 
   @DirtiesContext(methodMode = MethodMode.BEFORE_METHOD)

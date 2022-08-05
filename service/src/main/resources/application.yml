@@ -29,6 +29,8 @@ env:
 # contains the configuration of the WSM test application. We can use that application in our
 # integration testing to make sure the application code paths are working. However, we do not
 # want it to appear in production environments.
+# Imports are treated as additional documents inserted below this one, so the
+# properties in local-properties are guaranteed to override values here in application.yml
 spring.config.import: optional:file:../config/local-properties.yml
 
 logging.pattern.level: '%X{requestId} %5p'
