@@ -199,8 +199,7 @@ public class PrivateControlledGcsBucketLifecycle extends WorkspaceAllocateTestSc
                     privateUserNoEmail));
     assertThat(
         ex.getMessage(),
-        containsString(
-            "Request could not be parsed or was invalid: MethodArgumentNotValidException. Ensure that all types are correct and that enums have valid values."));
+        containsString("MethodArgumentNotValidException"));
     assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, ex.getCode());
 
     String uniqueBucketName = String.format("terra-%s-bucket", UUID.randomUUID().toString());
