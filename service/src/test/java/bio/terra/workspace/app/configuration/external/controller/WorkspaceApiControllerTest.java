@@ -16,6 +16,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import bio.terra.workspace.amalgam.tps.TpsApiDispatch;
 import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
 import bio.terra.workspace.common.BaseConnectedTest;
+import bio.terra.workspace.common.BaseUnitTest;
 import bio.terra.workspace.common.fixtures.WorkspaceFixtures;
 import bio.terra.workspace.generated.model.ApiCloneWorkspaceRequest;
 import bio.terra.workspace.generated.model.ApiCloneWorkspaceResult;
@@ -69,7 +70,7 @@ import org.springframework.test.web.servlet.MockMvc;
  * tests.
  */
 @AutoConfigureMockMvc
-public class WorkspaceApiControllerTest extends BaseConnectedTest {
+public class WorkspaceApiControllerTest extends BaseUnitTest {
 
   AuthenticatedUserRequest USER_REQUEST =
       new AuthenticatedUserRequest(
@@ -79,7 +80,7 @@ public class WorkspaceApiControllerTest extends BaseConnectedTest {
       new ApiTpsPolicyInput()
           .namespace("terra")
           .name("group-constraint")
-          .addAdditionalDataItem(new ApiTpsPolicyPair().key("group-name").value("my_fake_group"));
+          .addAdditionalDataItem(new ApiTpsPolicyPair().key("group").value("my_fake_group"));
 
   @Autowired MockMvc mockMvc;
   @Autowired ObjectMapper objectMapper;

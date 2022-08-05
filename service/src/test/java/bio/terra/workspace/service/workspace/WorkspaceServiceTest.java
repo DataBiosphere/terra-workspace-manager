@@ -123,7 +123,7 @@ class WorkspaceServiceTest extends BaseConnectedTest {
       new ApiTpsPolicyInput()
           .namespace("terra")
           .name("group-constraint")
-          .addAdditionalDataItem(new ApiTpsPolicyPair().key("group-name").value("my_fake_group"));
+          .addAdditionalDataItem(new ApiTpsPolicyPair().key("group").value("my_fake_group"));
 
   public static final String SPEND_PROFILE_ID = "wm-default-spend-profile";
 
