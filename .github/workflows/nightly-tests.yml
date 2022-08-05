@@ -81,8 +81,8 @@ jobs:
             vault write -field token \
               auth/approle/login role_id=${{ secrets.VAULT_APPROLE_ROLE_ID }} \
               secret_id=${{ secrets.VAULT_APPROLE_SECRET_ID }})
+          echo ::add-mask::$VAULT_TOKEN    
           echo ::set-output name=vault-token::$VAULT_TOKEN
-          echo ::add-mask::$VAULT_TOKEN
 
       - name: Write config
         id: config
