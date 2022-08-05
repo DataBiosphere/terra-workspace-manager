@@ -69,7 +69,6 @@ import org.springframework.test.web.servlet.MockMvc;
  * currently in WorkspaceServiceTest, it's intended as a proof-of-concept for future mockMvc-based
  * tests.
  */
-@AutoConfigureMockMvc
 public class WorkspaceApiControllerTest extends BaseUnitTest {
 
   AuthenticatedUserRequest USER_REQUEST =
