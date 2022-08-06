@@ -1,6 +1,7 @@
 package bio.terra.workspace.common.utils;
 
 import bio.terra.common.exception.ValidationException;
+import bio.terra.landingzone.service.landingzone.azure.model.AzureLandingZoneRequest;
 import bio.terra.workspace.generated.model.ApiCloudPlatform;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResourceCategory;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResourceFields;
@@ -9,6 +10,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Pattern;
 import javax.annotation.Nullable;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.validator.routines.InetAddressValidator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -135,6 +137,12 @@ public final class ControllerValidationUtils {
       if (!validator.isValid(address)) {
         throw new ValidationException("Invalid ip address or ip address range: " + ipRange);
       }
+    }
+  }
+
+  public static void validateAzureLandingZone(AzureLandingZoneRequest azureLandingZone) {
+    if (StringUtils.isEmpty(azureLandingZone.getDefinition())) {
+      throw new ValidationException("Definition must be set");
     }
   }
 }
