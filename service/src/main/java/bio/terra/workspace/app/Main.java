@@ -35,7 +35,9 @@ import org.springframework.transaction.annotation.EnableTransactionManagement;
       // Scan all policy service packages
       "bio.terra.policy",
       // Scan all service-specific packages beneath the current package
-      "bio.terra.workspace"
+      "bio.terra.workspace",
+      // Scan all landing zone service packages
+      "bio.terra.landingzone"
     },
     // WSM has its own version of AuthenticatedUserRequest, AuthenticatedUserRequestFactory,
     // and ProxiedAuthenticatedUserRequest. So we need to exclude them

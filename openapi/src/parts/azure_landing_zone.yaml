@@ -1,0 +1,160 @@
+# Azure Landing Zones paths
+paths:
+  /api/azure/landingzones/v1:
+    post:
+      summary: Create Azure landing zone
+      operationId: createAzureLandingZone
+      tags: [ LandingZones ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateAzureLandingZoneRequestBody'
+      responses:
+        '201':
+          $ref: '#/components/responses/CreateAzureLandingZoneResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /api/azure/landingzones/definitions/v1:
+    get:
+      summary: List all Azure landing zones definitions
+      operationId: listAzureLandingZonesDefinitions
+      tags: [ LandingZones ]
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AzureLandingZoneDefinitionList'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /api/azure/landingzones/v1/{landingZoneId}:
+    parameters:
+      - $ref: '#/components/parameters/LandingZoneId'
+    delete:
+      summary: Delete an existing Azure landing zone
+      operationId: deleteAzureLandingZone
+      tags: [ LandingZones ]
+      responses:
+        '204':
+          description: Success
+        '400':
+          $ref: '#components/responses/BadRequest'
+        '403':
+          $ref: '#components/responses/PermissionDenied'
+        '404':
+          $ref: '#components/responses/NotFound'
+        '500':
+          $ref: '#components/responses/ServerError'
+
+components:
+  schemas:
+    CreateAzureLandingZoneRequestBody:
+      description: Payload for requesting a new Azure landing zone.
+      type: object
+      required: [definition, azureContext]
+      properties:
+        definition:
+          description: A definition to create an Azure landing zone from
+          type: string
+        version:
+          description: A version of the landing zone
+          type: string
+        parameters:
+          description: List of Azure landing zone parameters
+          type: array
+          items:
+            $ref: '#/components/schemas/AzureLandingZoneParameter'
+        azureContext:
+          $ref: '#/components/schemas/AzureContext'
+
+    CreatedAzureLandingZoneResult:
+      description: Result of creating Azure landing zone
+      type: object
+      properties:
+        id:
+          description: An identifier of created Azure landing zone
+          type: string
+        resources:
+          description: List of Azure landing zone deployed resources
+          type: array
+          items:
+            $ref: '#/components/schemas/AzureLandingZoneDeployedResource'
+
+    AzureLandingZoneDeployedResource:
+      description: Details of an Azure resource
+      type: object
+      properties:
+        resourceId:
+          description: Unique Azure resource identifier
+          type: string
+        resourceType:
+          description: Azure resource type
+          type: string
+        region:
+          description: A region where an Azure resource deployed
+          type: string
+
+    AzureLandingZoneDefinitionList:
+      type: object
+      required: [landingzones]
+      properties:
+        landingzones:
+          description: A list of Azure landing zones definitions
+          type: array
+          items:
+            $ref: '#/components/schemas/AzureLandingZoneDefinition'
+
+    AzureLandingZoneDefinition:
+      type: object
+      required: [definition, name, description, version]
+      properties:
+        definition:
+          description: The name of the corresponding landing zone definition
+          type: string
+        name:
+          description: User friendly name of the definition
+          type: string
+        description:
+          description: Description of the definition
+          type: string
+        version:
+          description: The version of the definition
+          type: string
+
+    AzureLandingZoneParameter:
+      description: List of parameters for Azure landing zone
+      type: object
+      required: [ key, value ]
+      properties:
+        key:
+          description: Name of the parameter
+          type: string
+        value:
+          description: Value of the parameter
+          type: string
+
+  responses:
+    CreateAzureLandingZoneResponse:
+      description: Response to create Azure landing zone
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/CreatedAzureLandingZoneResult'
+
+  parameters:
+    LandingZoneId:
+      name: landingZoneId
+      in: path
+      description: An string to identify an Azure landing zone
+      required: true
+      schema:
+        type: string

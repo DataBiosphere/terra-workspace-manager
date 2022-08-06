@@ -16,6 +16,10 @@ env:
       name: ${POLICY_DATABASE_NAME:policy_db}
       pass: ${POLICY_DATABASE_USER_PASSWORD:dbpwd}
       user: ${POLICY_DATABASE_USER:dbuser}
+    landingzone:
+      name: ${LANDINGZONE_DATABASE_NAME:landingzone_db}
+      pass: ${LANDINGZONE_DATABASE_USER_PASSWORD:landingzonepwd}
+      user: ${LANDINGZONE_DATABASE_USER:landingzoneuser}
   tracing:
     exportEnabled: ${CLOUD_TRACE_ENABLED:false}
     samplingRate: ${SAMPLING_PROBABILITY:0}
@@ -144,6 +148,16 @@ policy:
     upgrade-on-start: true
     uri: ${env.db.host}/${env.db.policy.name}
     username: ${env.db.policy.user}
+
+#Terra Landing Zone Service configuration
+landingzone:
+  landingzone-database:
+    initialize-on-start: ${env.db.init}
+    password: ${env.db.landingzone.pass}
+    upgrade-on-start: true
+    uri: ${env.db.host}/${env.db.landingzone.name}
+    username: ${env.db.landingzone.user}
+
 
 # Feature flags
 # The general rule is that feature flags should be set here in their production setting
