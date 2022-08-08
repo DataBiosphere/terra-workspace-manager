@@ -15,7 +15,6 @@ import com.google.api.services.iam.v1.model.CreateRoleRequest;
 import com.google.api.services.iam.v1.model.Role;
 import com.google.common.collect.ImmutableSet;
 import java.io.IOException;
-import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -43,8 +42,6 @@ public class CreateCustomGcpRolesStep implements Step {
     // which would lead to unnecessary CONFLICT responses from GCP.
     ImmutableSet<CustomGcpIamRole> customProjectRoles =
         CloudSyncRoleMapping.CUSTOM_GCP_PROJECT_IAM_ROLES.values().stream()
-            .filter(roleOptional -> roleOptional.isPresent())
-            .map(Optional::get)
             .collect(ImmutableSet.toImmutableSet());
     for (CustomGcpIamRole customProjectRole : customProjectRoles) {
       createCustomRole(customProjectRole, projectId);

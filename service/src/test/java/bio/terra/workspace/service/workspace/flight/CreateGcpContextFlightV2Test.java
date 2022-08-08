@@ -353,7 +353,6 @@ class CreateGcpContextFlightV2Test extends BaseConnectedTest {
     String expectedGcpRoleName =
         CloudSyncRoleMapping.CUSTOM_GCP_PROJECT_IAM_ROLES
             .get(role)
-            .get()
             .getFullyQualifiedRoleName(projectId);
     List<Binding> actualGcpBindingList = gcpPolicy.getBindings();
     List<String> actualGcpRoleList =

@@ -44,7 +44,6 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
 
   @Autowired private MockMvc mockMvc;
   @Autowired private ObjectMapper objectMapper;
-  // @Autowired private SamService samService;
   @Autowired private UserAccessUtils userAccessUtils;
 
   @Test

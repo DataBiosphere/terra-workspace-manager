@@ -18,13 +18,11 @@ public class CloudSyncRoleMappingTest extends BaseUnitTest {
     assertThat(
         CloudSyncRoleMapping.CUSTOM_GCP_PROJECT_IAM_ROLES
             .get(WsmIamRole.READER)
-            .get()
             .getIncludedPermissions(),
         everyItem(
             in(
                 (CloudSyncRoleMapping.CUSTOM_GCP_PROJECT_IAM_ROLES
                     .get(WsmIamRole.WRITER)
-                    .get()
                     .getIncludedPermissions()))));
   }
 
@@ -33,13 +31,11 @@ public class CloudSyncRoleMappingTest extends BaseUnitTest {
     assertThat(
         CloudSyncRoleMapping.CUSTOM_GCP_PROJECT_IAM_ROLES
             .get(WsmIamRole.WRITER)
-            .get()
             .getIncludedPermissions(),
         everyItem(
             in(
                 (CloudSyncRoleMapping.CUSTOM_GCP_PROJECT_IAM_ROLES
                     .get(WsmIamRole.APPLICATION)
-                    .get()
                     .getIncludedPermissions()))));
   }
 
@@ -48,13 +44,11 @@ public class CloudSyncRoleMappingTest extends BaseUnitTest {
     assertThat(
         CloudSyncRoleMapping.CUSTOM_GCP_PROJECT_IAM_ROLES
             .get(WsmIamRole.WRITER)
-            .get()
             .getIncludedPermissions(),
         everyItem(
             in(
                 (CloudSyncRoleMapping.CUSTOM_GCP_PROJECT_IAM_ROLES
                     .get(WsmIamRole.OWNER)
-                    .get()
                     .getIncludedPermissions()))));
   }
 }

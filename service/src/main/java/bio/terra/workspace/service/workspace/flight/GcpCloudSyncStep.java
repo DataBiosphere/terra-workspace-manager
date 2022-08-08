@@ -23,7 +23,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -73,10 +72,9 @@ public class GcpCloudSyncStep implements Step {
       newBindings.addAll(currentPolicy.getBindings());
       // Add appropriate project-level roles for each WSM IAM role.
       workspaceRoleGroupsMap.forEach(
-          (role, email) -> {
-            Optional<CustomGcpIamRole> customRoleOptional = CUSTOM_GCP_PROJECT_IAM_ROLES.get(role);
-            if (customRoleOptional.isPresent()) {
-              newBindings.add(bindingForRole(customRoleOptional.get(), email, gcpProjectId));
+          (wsmRole, email) -> {
+            if (CUSTOM_GCP_PROJECT_IAM_ROLES.containsKey(wsmRole)) {
+              newBindings.add(bindingForRole(wsmRole, email, gcpProjectId));
             }
           });
 
@@ -104,11 +102,12 @@ public class GcpCloudSyncStep implements Step {
   /**
    * Build the project-level role binding for a given group, using CloudSyncRoleMapping.
    *
-   * @param customRole GCP custom role
+   * @param role The role granted to this user. Translated to GCP roles using CloudSyncRoleMapping.
    * @param email The email of the Google group being granted a role.
    * @param gcpProjectId The ID of the project the custom role is defined in.
    */
-  private Binding bindingForRole(CustomGcpIamRole customRole, String email, String gcpProjectId) {
+  private Binding bindingForRole(WsmIamRole role, String email, String gcpProjectId) {
+    CustomGcpIamRole customRole = CloudSyncRoleMapping.CUSTOM_GCP_PROJECT_IAM_ROLES.get(role);
     return new Binding()
         .setRole(customRole.getFullyQualifiedRoleName(gcpProjectId))
         .setMembers(Collections.singletonList(toMemberIdentifier(email)));
