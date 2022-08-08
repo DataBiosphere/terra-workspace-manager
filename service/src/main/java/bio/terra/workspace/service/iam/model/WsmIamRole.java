@@ -73,6 +73,22 @@ public enum WsmIamRole {
         String.format("Workspace %s has unexpected roles: %s", workspaceId.toString(), roles));
   }
 
+  public static boolean roleAtLeastAsHighAs(WsmIamRole minimumRole, WsmIamRole roleToCheck) {
+    return switch (minimumRole) {
+      case APPLICATION -> roleToCheck == WsmIamRole.APPLICATION;
+      case OWNER -> roleToCheck == WsmIamRole.APPLICATION || roleToCheck == WsmIamRole.OWNER;
+      case WRITER -> roleToCheck == WsmIamRole.APPLICATION
+          || roleToCheck == WsmIamRole.OWNER
+          || roleToCheck == WsmIamRole.WRITER;
+      case READER -> roleToCheck == WsmIamRole.APPLICATION
+          || roleToCheck == WsmIamRole.OWNER
+          || roleToCheck == WsmIamRole.WRITER
+          || roleToCheck == WsmIamRole.READER;
+      case DISCOVERER -> true;
+      case MANAGER -> throw new InternalServerErrorException("Unexpected workspace MANAGER role");
+    };
+  }
+
   public ApiIamRole toApiModel() {
     return apiRole;
   }

@@ -4,5 +4,8 @@ public class WorkspaceConstants {
 
   public static class Properties {
     public static final String DEFAULT_RESOURCE_LOCATION = "terra-default-location";
+    public static final String TYPE = "terra-type";
+    public static final String SHORT_DESCRIPTION = "terra-workspace-short-description";
+    public static final String VERSION = "terra-workspace-version";
   }
 }

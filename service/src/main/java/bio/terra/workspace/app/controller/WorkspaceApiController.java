@@ -183,15 +183,22 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
   }
 
   @Override
-  public ResponseEntity<ApiWorkspaceDescriptionList> listWorkspaces(Integer offset, Integer limit) {
+  public ResponseEntity<ApiWorkspaceDescriptionList> listWorkspaces(
+      Integer offset, Integer limit, ApiIamRole minimumHighestRole) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     logger.info("Listing workspaces for {}", userRequest.getEmail());
     ControllerValidationUtils.validatePaginationParams(offset, limit);
+    // Can't set default in yaml (https://stackoverflow.com/a/68542868/6447189), so set here.
+    if (minimumHighestRole == null) {
+      minimumHighestRole = ApiIamRole.READER;
+    }
+
     // Unlike other operations, there's no Sam permission required to list workspaces. As long as
     // a user is enabled, they can call this endpoint, though they may not have any workspaces they
     // can read.
     List<WorkspaceAndHighestRole> workspacesAndHighestRoles =
-        workspaceService.listWorkspacesAndHighestRoles(userRequest, offset, limit);
+        workspaceService.listWorkspacesAndHighestRoles(
+            userRequest, offset, limit, WsmIamRole.fromApiModel(minimumHighestRole));
     var response =
         new ApiWorkspaceDescriptionList()
             .workspaces(

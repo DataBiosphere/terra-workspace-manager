@@ -336,7 +336,8 @@ class SamServiceTest extends BaseConnectedTest {
   @Test
   void listWorkspaceIdsAndHighestRoles() throws Exception {
     Map<UUID, WsmIamRole> actual =
-        samService.listWorkspaceIdsAndHighestRoles(userAccessUtils.defaultUserAuthRequest());
+        samService.listWorkspaceIdsAndHighestRoles(
+            userAccessUtils.defaultUserAuthRequest(), WsmIamRole.READER);
 
     assertThat(actual, IsMapContaining.hasEntry(workspaceUuid, WsmIamRole.OWNER));
   }
