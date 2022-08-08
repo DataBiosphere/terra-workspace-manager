@@ -269,7 +269,7 @@ public class CloneWorkspace extends WorkspaceAllocateWithPolicyTestScriptBase {
     assertNotNull(destinationWorkspaceId, "Destination workspace ID available immediately.");
     assertEquals(destinationUserFacingId, cloneResult.getWorkspace().getDestinationUserFacingId());
     final WorkspaceDescription destinationWorkspaceDescription =
-        cloningUserWorkspaceApi.getWorkspace(destinationWorkspaceId);
+        cloningUserWorkspaceApi.getWorkspace(destinationWorkspaceId, /*minimumHighestRole=*/ null);
     assertNotNull(
         destinationWorkspaceDescription,
         "Destination workspace is available in DB immediately after return from cloneWorkspace().");
@@ -300,7 +300,9 @@ public class CloneWorkspace extends WorkspaceAllocateWithPolicyTestScriptBase {
         "Source workspace ID reported accurately.");
     assertEquals(
         destinationWorkspaceDescription.getProperties(),
-        sourceOwnerWorkspaceApi.getWorkspace(getWorkspaceId()).getProperties(),
+        sourceOwnerWorkspaceApi
+            .getWorkspace(getWorkspaceId(), /*minimumHighestRole=*/ null)
+            .getProperties(),
         "Properties cloned successfully");
 
     // Verify shared GCS bucket succeeds and is populated
@@ -343,7 +345,7 @@ public class CloneWorkspace extends WorkspaceAllocateWithPolicyTestScriptBase {
 
     // We need to get the destination bucket name and project ID
     final WorkspaceDescription destinationWorkspace =
-        cloningUserWorkspaceApi.getWorkspace(destinationWorkspaceId);
+        cloningUserWorkspaceApi.getWorkspace(destinationWorkspaceId, /*minimumHighestRole=*/ null);
     assertEquals(destinationUserFacingId, destinationWorkspace.getUserFacingId());
     final String destinationProjectId = destinationWorkspace.getGcpContext().getProjectId();
     final var clonedSharedBucket =
