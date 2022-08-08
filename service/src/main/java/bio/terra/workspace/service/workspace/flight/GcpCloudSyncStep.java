@@ -1,5 +1,6 @@
 package bio.terra.workspace.service.workspace.flight;
 
+import static bio.terra.workspace.service.workspace.CloudSyncRoleMapping.CUSTOM_GCP_PROJECT_IAM_ROLES;
 import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.GCP_PROJECT_ID;
 
 import bio.terra.cloudres.google.cloudresourcemanager.CloudResourceManagerCow;
@@ -22,6 +23,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -71,7 +73,12 @@ public class GcpCloudSyncStep implements Step {
       newBindings.addAll(currentPolicy.getBindings());
       // Add appropriate project-level roles for each WSM IAM role.
       workspaceRoleGroupsMap.forEach(
-          (role, email) -> newBindings.add(bindingForRole(role, email, gcpProjectId)));
+          (role, email) -> {
+            Optional<CustomGcpIamRole> customRoleOptional = CUSTOM_GCP_PROJECT_IAM_ROLES.get(role);
+            if (customRoleOptional.isPresent()) {
+              newBindings.add(bindingForRole(customRoleOptional.get(), email, gcpProjectId));
+            }
+          });
 
       Policy newPolicy =
           new Policy()
@@ -97,12 +104,11 @@ public class GcpCloudSyncStep implements Step {
   /**
    * Build the project-level role binding for a given group, using CloudSyncRoleMapping.
    *
-   * @param role The role granted to this user. Translated to GCP roles using CloudSyncRoleMapping.
+   * @param customRole GCP custom role
    * @param email The email of the Google group being granted a role.
    * @param gcpProjectId The ID of the project the custom role is defined in.
    */
-  private Binding bindingForRole(WsmIamRole role, String email, String gcpProjectId) {
-    CustomGcpIamRole customRole = CloudSyncRoleMapping.CUSTOM_GCP_PROJECT_IAM_ROLES.get(role);
+  private Binding bindingForRole(CustomGcpIamRole customRole, String email, String gcpProjectId) {
     return new Binding()
         .setRole(customRole.getFullyQualifiedRoleName(gcpProjectId))
         .setMembers(Collections.singletonList(toMemberIdentifier(email)));

@@ -5,6 +5,7 @@ import bio.terra.workspace.service.resource.controlled.cloud.gcp.CustomGcpIamRol
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * This mapping describes the project-level GCP roles granted to members of a workspace.
@@ -111,11 +112,18 @@ public class CloudSyncRoleMapping {
       CustomGcpIamRole.of("PROJECT_OWNER", PROJECT_OWNER_PERMISSIONS);
   // Currently, workspace editors, applications and owners have the same cloud permissions as
   // writers. If that changes, create a new CustomGcpIamRole and modify the map below.
-  public static final ImmutableMap<WsmIamRole, CustomGcpIamRole> CUSTOM_GCP_PROJECT_IAM_ROLES =
-      ImmutableMap.of(
-          WsmIamRole.OWNER, PROJECT_OWNER,
-          // TODO: this should map to PROJECT_APPLICATION if that's created.
-          WsmIamRole.APPLICATION, PROJECT_WRITER,
-          WsmIamRole.WRITER, PROJECT_WRITER,
-          WsmIamRole.READER, PROJECT_READER);
+  public static final ImmutableMap<WsmIamRole, Optional<CustomGcpIamRole>>
+      CUSTOM_GCP_PROJECT_IAM_ROLES =
+          ImmutableMap.of(
+              WsmIamRole.OWNER,
+              Optional.of(PROJECT_OWNER),
+              // TODO: this should map to PROJECT_APPLICATION if that's created.
+              WsmIamRole.APPLICATION,
+              Optional.of(PROJECT_WRITER),
+              WsmIamRole.WRITER,
+              Optional.of(PROJECT_WRITER),
+              WsmIamRole.READER,
+              Optional.of(PROJECT_READER),
+              WsmIamRole.DISCOVERER,
+              Optional.empty());
 }
