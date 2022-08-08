@@ -6,7 +6,6 @@ import bio.terra.stairway.StepResult;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.app.configuration.external.AzureConfiguration;
 import bio.terra.workspace.service.crl.CrlService;
-import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamRethrow;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
@@ -23,44 +22,51 @@ public class AssignManagedIdentityAzureVmStep implements Step {
   private final AzureConfiguration azureConfig;
   private final CrlService crlService;
   private final SamService samService;
-  private final AuthenticatedUserRequest userRequest;
   private final ControlledAzureVmResource resource;
 
   public AssignManagedIdentityAzureVmStep(
       AzureConfiguration azureConfig,
       CrlService crlService,
       SamService samService,
-      AuthenticatedUserRequest userRequest,
       ControlledAzureVmResource resource) {
     this.azureConfig = azureConfig;
     this.crlService = crlService;
     this.samService = samService;
-    this.userRequest = userRequest;
     this.resource = resource;
   }
 
   @Override
   public StepResult doStep(FlightContext context) throws InterruptedException, RetryException {
-    final AzureCloudContext azureCloudContext =
-        context
-            .getWorkingMap()
-            .get(ControlledResourceKeys.AZURE_CLOUD_CONTEXT, AzureCloudContext.class);
+    // Note we only assign the VM to a managed identity if the resource has an assigned user.
+    // This step is a no-op otherwise.
+    if (resource.getAssignedUser().isPresent()) {
+      final AzureCloudContext azureCloudContext =
+          context
+              .getWorkingMap()
+              .get(ControlledResourceKeys.AZURE_CLOUD_CONTEXT, AzureCloudContext.class);
 
-    ComputeManager computeManager = crlService.getComputeManager(azureCloudContext, azureConfig);
-    MsiManager msiManager = crlService.getMsiManager(azureCloudContext, azureConfig);
+      ComputeManager computeManager = crlService.getComputeManager(azureCloudContext, azureConfig);
+      MsiManager msiManager = crlService.getMsiManager(azureCloudContext, azureConfig);
 
-    String petManagedIdentityId =
-        SamRethrow.onInterrupted(
-            () ->
-                samService.getOrCreateUserManagedIdentity(
-                    userRequest,
-                    azureCloudContext.getAzureSubscriptionId(),
-                    azureCloudContext.getAzureTenantId(),
-                    azureCloudContext.getAzureResourceGroupId()),
-            "getPetManagedIdentity");
+      String petManagedIdentityId =
+          SamRethrow.onInterrupted(
+              () ->
+                  samService.getOrCreateUserManagedIdentityForUser(
+                      resource.getAssignedUser().get(),
+                      azureCloudContext.getAzureSubscriptionId(),
+                      azureCloudContext.getAzureTenantId(),
+                      azureCloudContext.getAzureResourceGroupId()),
+              "getPetManagedIdentity");
 
-    return AzureVmHelper.assignPetManagedIdentityToVm(
-        azureCloudContext, computeManager, msiManager, resource.getVmName(), petManagedIdentityId);
+      return AzureVmHelper.assignPetManagedIdentityToVm(
+          azureCloudContext,
+          computeManager,
+          msiManager,
+          resource.getVmName(),
+          petManagedIdentityId);
+    }
+
+    return StepResult.getStepResultSuccess();
   }
 
   @Override

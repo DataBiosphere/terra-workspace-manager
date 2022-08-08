@@ -25,11 +25,11 @@ public class WorkspaceConnectedTestUtils {
     Workspace workspace =
         Workspace.builder()
             .workspaceId(workspaceUuid)
-            .userFacingId("a" + UUID.randomUUID().toString())
+            .userFacingId(UUID.randomUUID().toString())
             .spendProfileId(spendUtils.defaultSpendId())
             .workspaceStage(WorkspaceStage.MC_WORKSPACE)
             .build();
-    workspaceService.createWorkspace(workspace, userRequest);
+    workspaceService.createWorkspace(workspace, null, userRequest);
     String gcpContextJobId = UUID.randomUUID().toString();
     workspaceService.createGcpCloudContext(
         workspace, gcpContextJobId, userRequest, "fakeResultPath");

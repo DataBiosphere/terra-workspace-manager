@@ -47,3 +47,5 @@ reference:
   gitrepos:
     allow-listed-git-repo-host-names:
     - github.com
+feature:
+  tps-enabled: true

@@ -161,7 +161,7 @@ components:
       type: array
       items:
         $ref: '#/components/schemas/ControlledResourceIamRole'
-  
+
     PrivateResourceUser:
       description: >-
         This text describes the target state:
@@ -170,13 +170,16 @@ components:
         users will have no direct access to the associated cloud resource. If this element
         is specified both fields are required.
       type: object
-  # TODO: PF-1218 - when CLI and UI are no longer passing this, disallow it for user-private
-  #  resources, make the role List into a single role, and require both fields to be present.
-  #      required: [ userName, privateResourceIamRoles ]
+      # TODO: PF-1218 - This is disallowed for user private resources. Both the single role and role list are
+      # accepted as an interim step. Once the CLI and UI are updated, we should only accept the single role
+      # and require both fields to be present.
+      #      required: [ userName, privateResourceIamRole ]
       properties:
         userName:
           description: email of the workspace user to grant access
           type: string
+        privateResourceIamRole:
+          $ref: '#/components/schemas/ControlledResourceIamRole'
         privateResourceIamRoles:
           $ref: '#/components/schemas/PrivateResourceIamRoles'
   

@@ -2,9 +2,8 @@ package bio.terra.workspace.service.workspace;
 
 import bio.terra.workspace.app.configuration.external.BufferServiceConfiguration;
 import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
-import bio.terra.workspace.db.WorkspaceActivityLogDao;
 import bio.terra.workspace.db.WorkspaceDao;
-import bio.terra.workspace.db.model.DbWorkspaceActivityLog;
+import bio.terra.workspace.generated.model.ApiTpsPolicyInputs;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamRethrow;
 import bio.terra.workspace.service.iam.SamService;
@@ -14,9 +13,11 @@ import bio.terra.workspace.service.iam.model.WsmIamRole;
 import bio.terra.workspace.service.job.JobBuilder;
 import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.job.JobService;
+import bio.terra.workspace.service.logging.WorkspaceActivityLogService;
 import bio.terra.workspace.service.resource.controlled.flight.clone.workspace.CloneGcpWorkspaceFlight;
 import bio.terra.workspace.service.stage.StageService;
 import bio.terra.workspace.service.workspace.exceptions.BufferServiceDisabledException;
+import bio.terra.workspace.service.workspace.exceptions.DuplicateWorkspaceException;
 import bio.terra.workspace.service.workspace.flight.CreateGcpContextFlightV2;
 import bio.terra.workspace.service.workspace.flight.DeleteAzureContextFlight;
 import bio.terra.workspace.service.workspace.flight.DeleteGcpContextFlight;
@@ -30,9 +31,11 @@ import bio.terra.workspace.service.workspace.model.AzureCloudContext;
 import bio.terra.workspace.service.workspace.model.OperationType;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceAndHighestRole;
+import com.google.common.base.Preconditions;
 import io.opencensus.contrib.spring.aop.Traced;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
@@ -60,7 +63,7 @@ public class WorkspaceService {
   private final BufferServiceConfiguration bufferServiceConfiguration;
   private final StageService stageService;
   private final FeatureConfiguration features;
-  private final WorkspaceActivityLogDao workspaceActivityLogDao;
+  private final WorkspaceActivityLogService workspaceActivityLogService;
 
   @Autowired
   public WorkspaceService(
@@ -69,25 +72,34 @@ public class WorkspaceService {
       SamService samService,
       BufferServiceConfiguration bufferServiceConfiguration,
       StageService stageService,
-      GcpCloudContextService gcpCloudContextService,
       FeatureConfiguration features,
-      WorkspaceActivityLogDao workspaceActivityLogDao) {
+      WorkspaceActivityLogService workspaceActivityLogService) {
     this.jobService = jobService;
     this.workspaceDao = workspaceDao;
     this.samService = samService;
     this.bufferServiceConfiguration = bufferServiceConfiguration;
     this.stageService = stageService;
     this.features = features;
-    this.workspaceActivityLogDao = workspaceActivityLogDao;
+    this.workspaceActivityLogService = workspaceActivityLogService;
   }
 
   /** Create a workspace with the specified parameters. Returns workspaceID of the new workspace. */
   @Traced
-  public UUID createWorkspace(Workspace workspace, AuthenticatedUserRequest userRequest) {
+  public UUID createWorkspace(
+      Workspace workspace,
+      @Nullable ApiTpsPolicyInputs policies,
+      AuthenticatedUserRequest userRequest) {
     String workspaceName = workspace.getDisplayName().orElse("");
     String workspaceUuid = workspace.getWorkspaceId().toString();
     String jobDescription =
         String.format("Create workspace: name: '%s' id: '%s'  ", workspaceName, workspaceUuid);
+
+    // Before launching the flight, confirm the workspace does not already exist. This isn't perfect
+    // if two requests come in at nearly the same time, but it prevents launching a flight when a
+    // workspace already exists.
+    if (workspaceDao.getWorkspaceIfExists(workspace.getWorkspaceId()).isPresent()) {
+      throw new DuplicateWorkspaceException("Provided workspace ID is already in use");
+    }
 
     JobBuilder createJob =
         jobService
@@ -101,8 +113,8 @@ public class WorkspaceService {
             .addParameter(
                 WorkspaceFlightMapKeys.WORKSPACE_STAGE, workspace.getWorkspaceStage().name())
             .addParameter(WorkspaceFlightMapKeys.DISPLAY_NAME, workspaceName)
-            .addParameter(
-                WorkspaceFlightMapKeys.DESCRIPTION, workspace.getDescription().orElse(""));
+            .addParameter(WorkspaceFlightMapKeys.DESCRIPTION, workspace.getDescription().orElse(""))
+            .addParameter(WorkspaceFlightMapKeys.POLICIES, policies);
 
     if (workspace.getSpendProfileId().isPresent()) {
       createJob.addParameter(
@@ -244,7 +256,10 @@ public class WorkspaceService {
                 samService.listRequesterRoles(
                     userRequest, SamConstants.SamResource.WORKSPACE, uuid.toString()),
             "listRequesterRoles");
-    return WsmIamRole.getHighestRole(uuid, requesterRoles);
+    Optional<WsmIamRole> highestRole = WsmIamRole.getHighestRole(uuid, requesterRoles);
+    Preconditions.checkState(
+        highestRole.isPresent(), String.format("Workspace %s missing roles", uuid.toString()));
+    return highestRole.get();
   }
 
   /**
@@ -253,7 +268,6 @@ public class WorkspaceService {
    *
    * @param workspaceUuid workspace of interest
    * @param name name to change - may be null
-   * @param properties optional map of key-value properties
    * @param description description to change - may be null
    */
   public Workspace updateWorkspace(
@@ -261,12 +275,23 @@ public class WorkspaceService {
       @Nullable String userFacingId,
       @Nullable String name,
       @Nullable String description,
-      @Nullable Map<String, String> properties) {
-    if (workspaceDao.updateWorkspace(workspaceUuid, userFacingId, name, description, properties)) {
-      workspaceActivityLogDao.writeActivity(
-          workspaceUuid, new DbWorkspaceActivityLog().operationType(OperationType.UPDATE));
+      AuthenticatedUserRequest userRequest) {
+    if (workspaceDao.updateWorkspace(workspaceUuid, userFacingId, name, description)) {
+      workspaceActivityLogService.writeActivity(userRequest, workspaceUuid, OperationType.UPDATE);
     }
     return workspaceDao.getWorkspace(workspaceUuid);
+  }
+
+  /**
+   * Update an existing workspace properties.
+   *
+   * @param workspaceUuid workspace of interest
+   * @param properties list of keys in properties
+   */
+  public void updateWorkspaceProperties(
+      UUID workspaceUuid, Map<String, String> properties, AuthenticatedUserRequest userRequest) {
+    workspaceDao.updateWorkspaceProperties(workspaceUuid, properties);
+    workspaceActivityLogService.writeActivity(userRequest, workspaceUuid, OperationType.UPDATE);
   }
 
   /** Delete an existing workspace by ID. */
@@ -284,6 +309,18 @@ public class WorkspaceService {
             .addParameter(
                 WorkspaceFlightMapKeys.WORKSPACE_STAGE, workspace.getWorkspaceStage().name());
     deleteJob.submitAndWait(null);
+  }
+
+  /**
+   * Update an existing workspace properties.
+   *
+   * @param workspaceUuid workspace of interest
+   * @param propertyKeys list of keys in properties
+   */
+  public void deleteWorkspaceProperties(
+      UUID workspaceUuid, List<String> propertyKeys, AuthenticatedUserRequest userRequest) {
+    workspaceDao.deleteWorkspaceProperties(workspaceUuid, propertyKeys);
+    workspaceActivityLogService.writeActivity(userRequest, workspaceUuid, OperationType.DELETE);
   }
 
   /**
@@ -372,7 +409,8 @@ public class WorkspaceService {
         String.format("Clone workspace: name: '%s' id: '%s'  ", workspaceName, workspaceUuid);
 
     // Create the destination workspace synchronously first.
-    createWorkspace(destinationWorkspace, userRequest);
+    // TODO(PF-1871) copy policy on workspace clone
+    createWorkspace(destinationWorkspace, null, userRequest);
 
     // Remaining steps are an async flight.
     return jobService

@@ -13,6 +13,7 @@ paths:
               $ref: '#/components/schemas/CreateAzureLandingZoneRequestBody'
       responses:
         '200':
+        '201':
           $ref: '#/components/responses/CreateAzureLandingZoneResponse'
         '400':
           $ref: '#/components/responses/BadRequest'
@@ -26,6 +27,11 @@ paths:
         - $ref: '#/components/parameters/Limit'
       summary: List all Azure landing zones
       operationId: listAzureLandingZones
+
+  /api/azure/landingzones/definitions/v1:
+    get:
+      summary: List all Azure landing zones definitions
+      operationId: listAzureLandingZonesDefinitions
       tags: [ LandingZones ]
       responses:
         '200':
@@ -33,7 +39,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/AzureLandingZoneDescriptionList'
+                $ref: '#/components/schemas/AzureLandingZoneDefinitionList'
         '500':
           $ref: '#/components/responses/ServerError'
 
@@ -61,13 +67,21 @@ components:
     CreateAzureLandingZoneRequestBody:
       description: Payload for requesting a new Azure landing zone.
       type: object
+      required: [definition, azureContext]
       properties:
-        factory:
-          description: A factory (is template more user friendly name, factory shows implementation) to create an Azure landing zone from <- TBD
+        definition:
+          description: A definition to create an Azure landing zone from
           type: string
         version:
           description: A version of the landing zone
           type: string
+        parameters:
+          description: List of Azure landing zone parameters
+          type: array
+          items:
+            $ref: '#/components/schemas/AzureLandingZoneParameter'
+        azureContext:
+          $ref: '#/components/schemas/AzureContext'
 
     CreatedAzureLandingZoneResult:
       description: Result of creating Azure landing zone
@@ -76,23 +90,63 @@ components:
         id:
           description: An identifier of created Azure landing zone
           type: string
+        resources:
+          description: List of Azure landing zone deployed resources
+          type: array
+          items:
+            $ref: '#/components/schemas/AzureLandingZoneDeployedResource'
 
-    AzureLandingZoneDescriptionList:
+    AzureLandingZoneDeployedResource:
+      description: Details of an Azure resource
+      type: object
+      properties:
+        resourceId:
+          description: Unique Azure resource identifier
+          type: string
+        resourceType:
+          description: Azure resource type
+          type: string
+        region:
+          description: A region where an Azure resource deployed
+          type: string
+
+    AzureLandingZoneDefinitionList:
       type: object
       required: [landingzones]
       properties:
         landingzones:
-          description: A list of Azure landing zones
+          description: A list of Azure landing zones definitions
           type: array
           items:
-            $ref: '#/components/schemas/AzureLandingZoneDescription'
+            $ref: '#/components/schemas/AzureLandingZoneDefinition'
 
-    AzureLandingZoneDescription:
+    AzureLandingZoneDefinition:
       type: object
-      required: [id]
+      required: [definition, name, description, version]
       properties:
-        id:
-          description: The ID of the Azure landing zone
+        definition:
+          description: The name of the corresponding landing zone definition
+          type: string
+        name:
+          description: User friendly name of the definition
+          type: string
+        description:
+          description: Description of the definition
+          type: string
+        version:
+          description: The version of the definition
+          type: string
+
+    AzureLandingZoneParameter:
+      description: List of parameters for Azure landing zone
+      type: object
+      required: [ key, value ]
+      properties:
+        key:
+          description: Name of the parameter
+          type: string
+        value:
+          description: Value of the parameter
           type: string
 
   responses:

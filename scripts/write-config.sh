@@ -303,6 +303,8 @@ workspace:
     managed-app-tenant-id: ${tenantid}
     sas-token-start-time-minutes-offset: 15
     sas-token-expiry-time-minutes-offset: 60
+feature:
+  tps-enabled: true
 EOF
 else
   cat /dev/null > "${outputdir}/local-properties.yml"

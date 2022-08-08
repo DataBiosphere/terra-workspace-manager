@@ -1,7 +1,9 @@
 package bio.terra.workspace.common.utils;
 
+import bio.terra.workspace.amalgam.tps.TpsApiDispatch;
 import bio.terra.workspace.app.configuration.external.AzureConfiguration;
 import bio.terra.workspace.app.configuration.external.CliConfiguration;
+import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
 import bio.terra.workspace.db.ApplicationDao;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.db.WorkspaceDao;
@@ -42,6 +44,7 @@ public class FlightBeanBag {
   private final ControlledResourceService controlledResourceService;
   private final CrlService crlService;
   private final DataRepoService dataRepoService;
+  private final FeatureConfiguration featureConfiguration;
   private final GcpCloudContextService gcpCloudContextService;
   private final PetSaService petSaService;
   private final ReferencedResourceService referencedResourceService;
@@ -49,6 +52,7 @@ public class FlightBeanBag {
   private final SamService samService;
   private final SpendProfileService spendProfileService;
   private final Storagetransfer storagetransfer;
+  private final TpsApiDispatch tpsApiDispatch;
   private final WorkspaceDao workspaceDao;
   private final WorkspaceService workspaceService;
 
@@ -65,8 +69,10 @@ public class FlightBeanBag {
       ControlledResourceService controlledResourceService,
       CrlService crlService,
       DataRepoService dataRepoService,
+      FeatureConfiguration featureConfiguration,
       GcpCloudContextService gcpCloudContextService,
       PetSaService petSaService,
+      TpsApiDispatch tpsApiDispatch,
       ReferencedResourceService referencedResourceService,
       ResourceDao resourceDao,
       SamService samService,
@@ -84,6 +90,7 @@ public class FlightBeanBag {
     this.controlledResourceService = controlledResourceService;
     this.crlService = crlService;
     this.dataRepoService = dataRepoService;
+    this.featureConfiguration = featureConfiguration;
     this.gcpCloudContextService = gcpCloudContextService;
     this.petSaService = petSaService;
     this.referencedResourceService = referencedResourceService;
@@ -91,6 +98,7 @@ public class FlightBeanBag {
     this.samService = samService;
     this.spendProfileService = spendProfileService;
     this.storagetransfer = storagetransfer;
+    this.tpsApiDispatch = tpsApiDispatch;
     this.workspaceDao = workspaceDao;
     this.workspaceService = workspaceService;
   }
@@ -131,6 +139,10 @@ public class FlightBeanBag {
     return dataRepoService;
   }
 
+  public FeatureConfiguration getFeatureConfiguration() {
+    return featureConfiguration;
+  }
+
   public GcpCloudContextService getGcpCloudContextService() {
     return gcpCloudContextService;
   }
@@ -153,6 +165,10 @@ public class FlightBeanBag {
 
   public Storagetransfer getStoragetransfer() {
     return storagetransfer;
+  }
+
+  public TpsApiDispatch getTpsApiDispatch() {
+    return tpsApiDispatch;
   }
 
   public WorkspaceDao getWorkspaceDao() {

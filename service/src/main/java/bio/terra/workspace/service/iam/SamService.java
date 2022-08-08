@@ -26,6 +26,7 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
@@ -46,6 +47,7 @@ import org.broadinstitute.dsde.workbench.client.sam.model.FullyQualifiedResource
 import org.broadinstitute.dsde.workbench.client.sam.model.GetOrCreatePetManagedIdentityRequest;
 import org.broadinstitute.dsde.workbench.client.sam.model.SystemStatus;
 import org.broadinstitute.dsde.workbench.client.sam.model.UserResourcesResponse;
+import org.broadinstitute.dsde.workbench.client.sam.model.UserStatusInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -131,25 +133,25 @@ public class SamService {
    */
   public String getUserEmailFromSam(AuthenticatedUserRequest userRequest)
       throws InterruptedException {
+    return getUserStatusInfo(userRequest).getUserEmail();
+  }
+
+  /** Fetch the user status info associated with the user credentials directly from Sam. */
+  public UserStatusInfo getUserStatusInfo(AuthenticatedUserRequest userRequest)
+      throws InterruptedException {
     UsersApi usersApi = samUsersApi(userRequest.getRequiredToken());
     try {
-      return SamRetry.retry(() -> usersApi.getUserStatusInfo().getUserEmail());
+      return SamRetry.retry(usersApi::getUserStatusInfo);
     } catch (ApiException apiException) {
-      throw SamExceptionFactory.create("Error getting user email from Sam", apiException);
+      throw SamExceptionFactory.create("Error getting user status info from Sam", apiException);
     }
   }
 
-  /**
-   * Fetch a user-assigned managed identity that was created for a user, with user credentials,
-   * directly from Sam.
-   */
-  public String getOrCreateUserManagedIdentity(
-      AuthenticatedUserRequest userRequest,
-      String subscriptionId,
-      String tenantId,
-      String managedResourceGroupId)
+  /** Fetch a user-assigned managed identity from Sam by user email with WSM credentials. */
+  public String getOrCreateUserManagedIdentityForUser(
+      String userEmail, String subscriptionId, String tenantId, String managedResourceGroupId)
       throws InterruptedException {
-    AzureApi azureApi = samAzureApi(userRequest.getRequiredToken());
+    AzureApi azureApi = samAzureApi(getWsmServiceAccountToken());
 
     GetOrCreatePetManagedIdentityRequest request =
         new GetOrCreatePetManagedIdentityRequest()
@@ -157,7 +159,8 @@ public class SamService {
             .tenantId(tenantId)
             .managedResourceGroupName(managedResourceGroupId);
     try {
-      return SamRetry.retry(() -> azureApi.getPetManagedIdentity(request));
+      return SamRetry.retry(
+          () -> azureApi.getPetManagedIdentityForUser(userEmail.toLowerCase(), request));
     } catch (ApiException apiException) {
       throw SamExceptionFactory.create(
           "Error getting user assigned managed identity from Sam", apiException);
@@ -186,7 +189,7 @@ public class SamService {
    */
   private void initializeWsmServiceAccount() throws InterruptedException {
     if (!wsmServiceAccountInitialized) {
-      String wsmAccessToken = null;
+      final String wsmAccessToken;
       try {
         wsmAccessToken = getWsmServiceAccountToken();
       } catch (InternalServerErrorException e) {
@@ -274,6 +277,9 @@ public class SamService {
    * List all workspace IDs in Sam this user has access to. Note that in environments shared with
    * Rawls, some of these workspaces will be Rawls managed and WSM will not know about them.
    *
+   * <p>Additionally, Rawls may create additional roles that WSM does not know about. Those roles
+   * will be ignored here.
+   *
    * @return map from workspace ID to highest SAM role
    */
   @Traced
@@ -291,8 +297,13 @@ public class SamService {
           List<WsmIamRole> roles =
               userResourcesResponse.getDirect().getRoles().stream()
                   .map(WsmIamRole::fromSam)
+                  .filter(Objects::nonNull)
                   .collect(Collectors.toList());
-          workspacesAndRoles.put(workspaceId, WsmIamRole.getHighestRole(workspaceId, roles));
+          Optional<WsmIamRole> highestRole = WsmIamRole.getHighestRole(workspaceId, roles);
+          // Skip workspaces with no roles. (That means there's a role this WSM doesn't know about.)
+          if (highestRole.isPresent()) {
+            workspacesAndRoles.put(workspaceId, highestRole.get());
+          }
         } catch (IllegalArgumentException e) {
           // WSM always uses UUIDs for workspace IDs, but this is not enforced in Sam and there are
           // old workspaces that don't use UUIDs. Any workspace with a non-UUID workspace ID is
@@ -460,7 +471,7 @@ public class SamService {
                   workspaceUuid.toString(),
                   role.toSamRole(),
                   email.toLowerCase(),
-                  null));
+                  /* body = */ null));
       logger.info(
           "Granted role {} to user {} in workspace {}", role.toSamRole(), email, workspaceUuid);
     } catch (ApiException apiException) {
@@ -559,7 +570,7 @@ public class SamService {
                   resource.getResourceId().toString(),
                   role.toSamRole(),
                   email,
-                  null));
+                  /* body = */ null));
       logger.info(
           "Restored role {} to user {} on resource {}",
           role.toSamRole(),
@@ -587,10 +598,13 @@ public class SamService {
               () ->
                   resourceApi.listResourcePoliciesV2(
                       SamConstants.SamResource.WORKSPACE, workspaceUuid.toString()));
-      // Don't include WSM's SA as a manager. This is true for all workspaces and not useful to
-      // callers.
       return samResult.stream()
+          // Don't include WSM's SA as a manager. This is true for all workspaces and not useful to
+          // callers.
           .filter(entry -> !entry.getPolicyName().equals(WsmIamRole.MANAGER.toSamRole()))
+          // RAWLS_WORKSPACE stage workspaces may have additional roles set by Rawls that WSM
+          // doesn't understand, ignore those.
+          .filter(entry -> WsmIamRole.fromSam(entry.getPolicyName()) != null)
           .map(
               entry ->
                   RoleBinding.builder()
@@ -645,6 +659,9 @@ public class SamService {
     try {
       return resourcesApi.resourceRolesV2(samResourceType, resourceId).stream()
           .map(WsmIamRole::fromSam)
+          // RAWLS_WORKSPACE stage workspaces may have additional roles set by Rawls that WSM
+          // doesn't understand, ignore those.
+          .filter(Objects::nonNull)
           .collect(Collectors.toList());
     } catch (ApiException e) {
       throw SamExceptionFactory.create("Error retrieving requester resource roles from Sam", e);
@@ -779,7 +796,8 @@ public class SamService {
     try {
       // Sam makes no guarantees about what values are returned from the POST call, so we instead
       // fetch the group in a separate call after syncing.
-      SamRetry.retry(() -> googleApi.syncPolicy(resourceTypeName, resourceId, policyName, null));
+      SamRetry.retry(
+          () -> googleApi.syncPolicy(resourceTypeName, resourceId, policyName, /* body = */ null));
       return SamRetry.retry(() -> googleApi.syncStatus(resourceTypeName, resourceId, policyName))
           .getEmail();
     } catch (ApiException apiException) {

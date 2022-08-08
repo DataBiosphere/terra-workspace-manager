@@ -7,8 +7,9 @@ bootRun {
   environment.put("GOOGLE_APPLICATION_CREDENTIALS", "${googleCredentialsFile}")
 }
 
-tasks.withType(Test) {
+tasks.withType(Test).configureEach {
   environment.put("GOOGLE_APPLICATION_CREDENTIALS", "${googleCredentialsFile}")
+  systemProperty 'spring.profiles.include', 'human-readable-logging'
   testLogging {
     if (System.getenv('PRINT_STANDARD_STREAMS') == null) {
       events = ["passed", "failed", "skipped", "started"]
@@ -24,6 +25,24 @@ test {
   }
   outputs.upToDateWhen { false }
   finalizedBy tasks.combinedJaCoCoReport
+
+  // For GHA runs, retry failing tests. If 2nd time passes, workflow will still
+  // fail and oncall will still be notified. This way, oncall dosen't have to
+  // rerun workflow in GHA.
+  retry {
+    // This is set automatically on Github Actions runners, and never set
+    // otherwise.
+    if (System.getenv().containsKey("CI")) {
+      // Max retries per test.
+      maxRetries = 1
+      // Max total test failures.
+      // This is an estimate based on current failure rates, but if more
+      // than 5 tests fail in a run it's likely a real source of failure
+      // and we should stop retrying.
+      maxFailures = 5
+    }
+    failOnPassedAfterRetry = true
+  }
 }
 
 task unitTest(type: Test) {
@@ -41,6 +60,24 @@ task connectedTest(type: Test) {
   }
   outputs.upToDateWhen { false }
   finalizedBy tasks.combinedJaCoCoReport
+
+  // For GHA runs, retry failing tests. If 2nd time passes, workflow will still
+  // fail and oncall will still be notified. This way, oncall dosen't have to
+  // rerun workflow in GHA.
+  retry {
+    // This is set automatically on Github Actions runners, and never set
+    // otherwise.
+    if (System.getenv().containsKey("CI")) {
+      // Max retries per test.
+      maxRetries = 1
+      // Max total test failures.
+      // This is an estimate based on current failure rates, but if more
+      // than 5 tests fail in a run it's likely a real source of failure
+      // and we should stop retrying.
+      maxFailures = 5
+    }
+    failOnPassedAfterRetry = true
+  }
 }
 
 task azureTest(type: Test) {
@@ -49,4 +86,22 @@ task azureTest(type: Test) {
   }
   outputs.upToDateWhen { false }
   finalizedBy tasks.combinedJaCoCoReport
+
+  // For GHA runs, retry failing tests. If 2nd time passes, workflow will still
+  // fail and oncall will still be notified. This way, oncall dosen't have to
+  // rerun workflow in GHA.
+  retry {
+    // This is set automatically on Github Actions runners, and never set
+    // otherwise.
+    if (System.getenv().containsKey("CI")) {
+      // Max retries per test.
+      maxRetries = 1
+      // Max total test failures.
+      // This is an estimate based on current failure rates, but if more
+      // than 5 tests fail in a run it's likely a real source of failure
+      // and we should stop retrying.
+      maxFailures = 5
+    }
+    failOnPassedAfterRetry = true
+  }
 }

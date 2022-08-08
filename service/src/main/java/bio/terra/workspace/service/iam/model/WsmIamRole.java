@@ -6,6 +6,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /** Internal representation of IAM roles. */
 public enum WsmIamRole {
@@ -16,6 +18,8 @@ public enum WsmIamRole {
   // The manager role is given to WSM's SA on all Sam workspace objects for admin control. Users
   // are never given this role.
   MANAGER("manager", null);
+
+  private static final Logger logger = LoggerFactory.getLogger(WsmIamRole.class);
 
   private final String samRole;
   private final ApiIamRole apiRole;
@@ -34,27 +38,33 @@ public enum WsmIamRole {
                 "No IamRole enum found corresponding to model role " + apiModel.toString()));
   }
 
+  /**
+   * Return the WsmIamRole corresponding to the provided Sam role, or null if the Sam role does not
+   * match a Wsm role. There are valid roles on workspaces in Sam which do not map to WsmIam roles,
+   * in general WSM should ignore these roles.
+   */
   public static WsmIamRole fromSam(String samRole) {
-    Optional<WsmIamRole> result =
-        Arrays.stream(WsmIamRole.values()).filter(x -> x.samRole.equals(samRole)).findFirst();
-    return result.orElseThrow(
-        () -> new RuntimeException("No IamRole enum found corresponding to Sam role " + samRole));
+    return Arrays.stream(WsmIamRole.values())
+        .filter(x -> x.samRole.equals(samRole))
+        .findFirst()
+        .orElse(null);
   }
 
-  public static WsmIamRole getHighestRole(UUID workspaceId, List<WsmIamRole> roles) {
+  public static Optional<WsmIamRole> getHighestRole(UUID workspaceId, List<WsmIamRole> roles) {
     if (roles.isEmpty()) {
-      throw new InternalServerErrorException(
-          String.format("Workspace %s missing roles", workspaceId.toString()));
+      // This workspace had a role that this WSM doesn't know about.
+      logger.warn("Workspace %s missing roles", workspaceId.toString());
+      return Optional.empty();
     }
 
     if (roles.contains(WsmIamRole.APPLICATION)) {
-      return WsmIamRole.APPLICATION;
+      return Optional.of(WsmIamRole.APPLICATION);
     } else if (roles.contains(WsmIamRole.OWNER)) {
-      return WsmIamRole.OWNER;
+      return Optional.of(WsmIamRole.OWNER);
     } else if (roles.contains(WsmIamRole.WRITER)) {
-      return WsmIamRole.WRITER;
+      return Optional.of(WsmIamRole.WRITER);
     } else if (roles.contains(WsmIamRole.READER)) {
-      return WsmIamRole.READER;
+      return Optional.of(WsmIamRole.READER);
     }
     throw new InternalServerErrorException(
         String.format("Workspace %s has unexpected roles: %s", workspaceId.toString(), roles));

@@ -5,6 +5,7 @@ import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.get
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import bio.terra.common.exception.ForbiddenException;
 import bio.terra.workspace.app.configuration.external.AzureTestConfiguration;
@@ -95,10 +96,11 @@ public class AzureControlledStorageResourceServiceTest extends BaseAzureTest {
         workspaceService.createWorkspace(
             Workspace.builder()
                 .workspaceId(UUID.randomUUID())
-                .userFacingId("a" + UUID.randomUUID().toString())
+                .userFacingId(UUID.randomUUID().toString())
                 .spendProfileId(spendUtils.defaultSpendId())
                 .workspaceStage(WorkspaceStage.MC_WORKSPACE)
                 .build(),
+            null,
             workspaceOwner.getAuthenticatedRequest());
     workspace = workspaceService.getWorkspace(workspaceUuid);
 
@@ -200,7 +202,8 @@ public class AzureControlledStorageResourceServiceTest extends BaseAzureTest {
             storageAccount,
             startTime,
             expiryTime,
-            workspaceOwner.getAuthenticatedRequest());
+            workspaceOwner.getAuthenticatedRequest(),
+            null);
 
     BlobContainerSasPermission ownerPermissions = BlobContainerSasPermission.parse("rlacwd");
     assertValidToken(sasBundle.sasToken(), ownerPermissions);
@@ -224,7 +227,8 @@ public class AzureControlledStorageResourceServiceTest extends BaseAzureTest {
                 storageAccount,
                 startTime,
                 expiryTime,
-                userAccessUtils.secondUserAuthRequest()));
+                userAccessUtils.secondUserAuthRequest(),
+                null));
   }
 
   @Test
@@ -246,10 +250,41 @@ public class AzureControlledStorageResourceServiceTest extends BaseAzureTest {
                 storageAccount,
                 startTime,
                 expiryTime,
-                userAccessUtils.secondUserAuthRequest())
+                userAccessUtils.secondUserAuthRequest(),
+                null)
             .sasToken();
 
     BlobContainerSasPermission readerPermissions = BlobContainerSasPermission.parse("rl");
     assertValidToken(sas, readerPermissions);
+  }
+
+  @Test
+  void createSasTokenWithIpRange() throws Exception {
+    UUID workspaceUuid = workspace.getWorkspaceId();
+    var ipRange = "168.1.5.60-168.1.5.70";
+
+    AzureControlledStorageResourceService.AzureSasBundle sasBundle =
+        azureControlledStorageResourceService.createAzureStorageContainerSasToken(
+            workspaceUuid,
+            storageContainer,
+            storageAccount,
+            startTime,
+            expiryTime,
+            workspaceOwner.getAuthenticatedRequest(),
+            ipRange);
+
+    BlobContainerSasPermission ownerPermissions = BlobContainerSasPermission.parse("rlacwd");
+    assertValidToken(sasBundle.sasToken(), ownerPermissions);
+    assertTrue(
+        sasBundle.sasToken().contains("sip=" + ipRange),
+        "the SignedIP was added to the query parameters");
+
+    assertEquals(
+        sasBundle.sasUrl(),
+        String.format(
+            "https://%s.blob.core.windows.net/sc-%s?%s",
+            storageAccount.getStorageAccountName(),
+            storageContainer.getResourceId(),
+            sasBundle.sasToken()));
   }
 }

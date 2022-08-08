@@ -72,7 +72,7 @@ public class DeleteAzureContextFlightTest extends BaseAzureTest {
             .workspaceStage(WorkspaceStage.MC_WORKSPACE)
             .spendProfileId(spendUtils.defaultSpendId())
             .build();
-    workspaceService.createWorkspace(workspace, userAccessUtils.defaultUserAuthRequest());
+    workspaceService.createWorkspace(workspace, null, userAccessUtils.defaultUserAuthRequest());
   }
 
   @AfterEach
@@ -252,7 +252,7 @@ public class DeleteAzureContextFlightTest extends BaseAzureTest {
             .workspaceStage(WorkspaceStage.MC_WORKSPACE)
             .spendProfileId(spendUtils.defaultSpendId())
             .build();
-    UUID mcWorkspaceUuid = workspaceService.createWorkspace(request, userRequest);
+    UUID mcWorkspaceUuid = workspaceService.createWorkspace(request, null, userRequest);
 
     createAzureContext(mcWorkspaceUuid, userRequest);
     UUID ipId = createAzureIpResource(mcWorkspaceUuid, userRequest);

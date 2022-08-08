@@ -231,6 +231,48 @@ paths:
         '500':
           $ref: '#/components/responses/ServerError'
 
+  /api/workspaces/v1/{workspaceId}/properties:
+    parameters:
+    - $ref: '#/components/parameters/WorkspaceId'
+    post:
+      summary: update the properties in workspace.
+      operationId: updateWorkspaceProperties
+      tags: [ Workspace ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Properties'
+      responses:
+        '204':
+          description: properties update sucessfully
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+    patch:
+      summary: delete existing Workspace properties.
+      operationId: deleteWorkspaceProperties
+      tags: [ Workspace ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PropertyKeys'
+      responses:
+        '204':
+          description: properties delete sucessfully
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
 components:
   responses:
     CloneWorkspaceResponse:
@@ -255,8 +297,8 @@ components:
           format: uuid
         destinationUserFacingId:
           description: |
-            Human-settable, mutable id. Must have 3-63 characters, contain lowercase letters, numbers, dashes, or
-            underscores, and start with lowercase letter.
+            Human-settable, mutable id. Must have 3-63 characters, contain lowercase letters, numbers,
+            dashes, or underscores, and start with lowercase letter or number.
           type: string
         resources:
           type: array
@@ -280,8 +322,8 @@ components:
       properties:
         userFacingId:
           description: |
-            Human-settable, mutable id for cloned workspace. ID must have 3-63 characters, contain lowercase letters,
-            numbers, dashes, or underscores, and start with lowercase letter. Optional. If this isn't set, one will be
+            Human-settable, mutable id for cloned workspace. Must have 3-63 characters, contain lowercase letters, numbers,
+            dashes, or underscores, and start with lowercase letter or number. Optional. If this isn't set, one will be
             generated.
           type: string
         displayName:
@@ -363,7 +405,7 @@ components:
         userFacingId:
           description: |
             Human-settable, mutable id. Must have 3-63 characters, contain lowercase letters, numbers, dashes, or
-            underscores, and start with lowercase letter. Optional. If this isn't set, one will be generated based on
+            underscores, and start with lowercase letter or number. Optional. If this isn't set, one will be generated based on
             id (uuid).
           type: string
         displayName:
@@ -376,11 +418,7 @@ components:
           description: ID of provided spend profile
           type: string
         policies:
-          description: Policies provided by the containing folder; NOT IMPLEMENTED
-          type: array
-          items:
-            type: string
-            format: uuid
+          $ref: '#/components/schemas/TpsPolicyInputs'
         stage:
           $ref: '#/components/schemas/WorkspaceStageModel'
         properties:
@@ -418,6 +456,12 @@ components:
           description: Arbitrary string value
           type: string
 
+    PropertyKeys:
+      description: A list of property keys that in the properties
+      type: array
+      items:
+        type: string
+
     RoleBinding:
       description: A binding between an IAM role and users with that role
       type: object
@@ -443,7 +487,7 @@ components:
         userFacingId:
           description: |
             Human-settable, mutable id. Must have 3-63 characters, contain lowercase letters, numbers, dashes, or
-            underscores, and start with lowercase letter.
+            underscores, and start with lowercase letter or number.
           type: string
         displayName:
           description: The human readable name of the workspace
@@ -451,9 +495,6 @@ components:
         description:
           description: A description of the workspace
           type: string
-        properties:
-          description: If present, it will replace all properties with this list
-          $ref: '#/components/schemas/Properties'
 
     WorkspaceDescription:
       type: object
@@ -466,7 +507,7 @@ components:
         userFacingId:
           description: |
             Human-settable, mutable id. Must have 3-63 characters, contain lowercase letters, numbers, dashes, or
-            underscores, and start with lowercase letter.
+            underscores, and start with lowercase letter or number.
           type: string
         displayName:
           description: The human readable name of the workspace
@@ -496,10 +537,20 @@ components:
           description: Timestamp when the workspace is created
           type: string
           format: date-time
+        createdBy:
+          description: User email of whom created the workspace
+          type: string
         lastUpdatedDate:
           description: Timestamp of the latest workspace change
           type: string
           format: date-time
+        lastUpdatedBy:
+          description: User email of whom made the last update to the workspace
+          type: string
+        policies:
+          type: array
+          items:
+            $ref: '#/components/schemas/TpsPolicyInput'
 
     WorkspaceDescriptionList:
       type: object
@@ -515,4 +566,3 @@ components:
       description: Enum for possible stages of a workspace along the Rawls migration path
       type: string
       enum: ['RAWLS_WORKSPACE', 'MC_WORKSPACE']
-

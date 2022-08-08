@@ -11,4 +11,8 @@ public class StageDisabledException extends BadRequestException {
         String.format(
             "'%s' not allowed for workspace %s in stage %s.", operationName, workspaceUuid, stage));
   }
+
+  public StageDisabledException(String message) {
+    super(message);
+  }
 }

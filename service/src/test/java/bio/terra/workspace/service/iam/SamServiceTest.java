@@ -232,10 +232,10 @@ class SamServiceTest extends BaseConnectedTest {
     Workspace rawlsWorkspace =
         Workspace.builder()
             .workspaceId(workspaceUuid)
-            .userFacingId("a" + workspaceUuid.toString())
+            .userFacingId(workspaceUuid.toString())
             .workspaceStage(WorkspaceStage.RAWLS_WORKSPACE)
             .build();
-    workspaceService.createWorkspace(rawlsWorkspace, defaultUserRequest());
+    workspaceService.createWorkspace(rawlsWorkspace, null, defaultUserRequest());
     ApiGrantRoleRequestBody request =
         new ApiGrantRoleRequestBody().memberEmail(userAccessUtils.getSecondUserEmail());
     mockMvc
@@ -461,10 +461,10 @@ class SamServiceTest extends BaseConnectedTest {
     Workspace workspace =
         Workspace.builder()
             .workspaceId(uuid)
-            .userFacingId("a" + uuid.toString())
+            .userFacingId(uuid.toString())
             .workspaceStage(WorkspaceStage.MC_WORKSPACE)
             .build();
-    workspaceService.createWorkspace(workspace, userRequest);
+    workspaceService.createWorkspace(workspace, null, userRequest);
     return workspace;
   }
 }
