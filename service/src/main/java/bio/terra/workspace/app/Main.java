@@ -30,7 +30,9 @@ import org.springframework.transaction.annotation.EnableTransactionManagement;
       // Scan for tracing-related components & configs
       "bio.terra.common.tracing",
       // Scan all service-specific packages beneath the current package
-      "bio.terra.workspace"
+      "bio.terra.workspace",
+      // Dependencies for Landing Zone
+      "bio.terra.landingzone"
     })
 @EnableRetry
 @EnableTransactionManagement

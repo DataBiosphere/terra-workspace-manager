@@ -1,6 +1,7 @@
 package bio.terra.workspace.app.configuration.spring;
 
 import bio.terra.workspace.app.StartupInitializer;
+import bio.terra.workspace.app.configuration.external.LandingZoneDatabaseConfiguration;
 import bio.terra.workspace.app.configuration.external.WorkspaceDatabaseConfiguration;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.core.SerializableString;
@@ -14,14 +15,22 @@ import org.springframework.beans.factory.SmartInitializingSingleton;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Primary;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 
 @Configuration
 public class BeanConfig {
 
   @Bean("jdbcTemplate")
+  @Primary
   public NamedParameterJdbcTemplate getNamedParameterJdbcTemplate(
       WorkspaceDatabaseConfiguration config) {
+    return new NamedParameterJdbcTemplate(config.getDataSource());
+  }
+
+  @Bean("jdbcLandingZoneTemplate")
+  public NamedParameterJdbcTemplate getNamedParameterJdbcTemplate(
+      LandingZoneDatabaseConfiguration config) {
     return new NamedParameterJdbcTemplate(config.getDataSource());
   }
 

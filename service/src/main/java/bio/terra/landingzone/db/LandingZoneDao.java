@@ -11,6 +11,7 @@ import java.util.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.dao.support.DataAccessUtils;
@@ -28,11 +29,12 @@ public class LandingZoneDao {
           + " FROM landingzone";
 
   private final Logger logger = LoggerFactory.getLogger(LandingZoneDao.class);
-  private final NamedParameterJdbcTemplate jdbcTemplate;
+  private final NamedParameterJdbcTemplate jdbcLandingZoneTemplate;
 
   @Autowired
-  public LandingZoneDao(NamedParameterJdbcTemplate jdbcTemplate) {
-    this.jdbcTemplate = jdbcTemplate;
+  public LandingZoneDao(
+      @Qualifier("jdbcLandingZoneTemplate") NamedParameterJdbcTemplate jdbcLandingZoneTemplate) {
+    this.jdbcLandingZoneTemplate = jdbcLandingZoneTemplate;
   }
 
   /**
@@ -45,7 +47,7 @@ public class LandingZoneDao {
   public UUID createLandingZone(LandingZone landingzone) {
     final String sql =
         "INSERT INTO landingzone (landingzone_id, resource_group, definition_id, definition_version_id, display_name, description, properties) "
-            + "values (:landingzone_id, :resource_group, :definition_id, :definition_version_id, :display_name, :description"
+            + "values (:landingzone_id, :resource_group, :definition_id, :definition_version_id, :display_name, :description,"
             + " cast(:properties AS jsonb))";
 
     final String landingZoneUuid = landingzone.getLandingZoneId().toString();
@@ -60,7 +62,7 @@ public class LandingZoneDao {
             .addValue("description", landingzone.getDescription().orElse(null))
             .addValue("properties", DbSerDes.propertiesToJson(landingzone.getProperties()));
     try {
-      jdbcTemplate.update(sql, params);
+      jdbcLandingZoneTemplate.update(sql, params);
       logger.info("Inserted record for landing zone {}", landingZoneUuid);
     } catch (DuplicateKeyException e) {
       if (e.getMessage()
@@ -91,7 +93,7 @@ public class LandingZoneDao {
 
     MapSqlParameterSource params =
         new MapSqlParameterSource().addValue("id", landingZoneUuid.toString());
-    int rowsAffected = jdbcTemplate.update(sql, params);
+    int rowsAffected = jdbcLandingZoneTemplate.update(sql, params);
     boolean deleted = rowsAffected > 0;
 
     if (deleted) {
@@ -127,7 +129,7 @@ public class LandingZoneDao {
     try {
       LandingZone result =
           DataAccessUtils.requiredSingleResult(
-              jdbcTemplate.query(sql, params, LANDINGZONE_ROW_MAPPER));
+              jdbcLandingZoneTemplate.query(sql, params, LANDINGZONE_ROW_MAPPER));
       logger.info("Retrieved landing zone record {}", result);
       return Optional.of(result);
     } catch (EmptyResultDataAccessException e) {

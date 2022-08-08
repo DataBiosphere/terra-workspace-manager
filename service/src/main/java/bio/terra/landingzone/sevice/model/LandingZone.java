@@ -7,6 +7,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import javax.annotation.Nullable;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 
@@ -113,7 +114,7 @@ public class LandingZone {
     private String definition;
     private String version;
     private String displayName;
-    private String description;
+    private @Nullable String description;
     private Map<String, String> properties;
 
     public Builder landingZoneId(UUID landingZoneUuid) {
