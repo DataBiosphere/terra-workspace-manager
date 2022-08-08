@@ -47,6 +47,9 @@ public class SyncSamGroupsStep implements Step {
     workspaceRoleGroupMap.put(
         WsmIamRole.READER,
         samService.syncWorkspacePolicy(workspaceUuid, WsmIamRole.READER, userRequest));
+    workspaceRoleGroupMap.put(
+        WsmIamRole.DISCOVERER,
+        samService.syncWorkspacePolicy(workspaceUuid, WsmIamRole.DISCOVERER, userRequest));
 
     FlightMap workingMap = flightContext.getWorkingMap();
     workingMap.put(WorkspaceFlightMapKeys.IAM_GROUP_EMAIL_MAP, workspaceRoleGroupMap);

@@ -11,6 +11,7 @@ import org.slf4j.LoggerFactory;
 
 /** Internal representation of IAM roles. */
 public enum WsmIamRole {
+  DISCOVERER("discoverer", ApiIamRole.DISCOVERER),
   READER("reader", ApiIamRole.READER),
   WRITER("writer", ApiIamRole.WRITER),
   APPLICATION("application", ApiIamRole.APPLICATION),
@@ -40,8 +41,8 @@ public enum WsmIamRole {
 
   /**
    * Return the WsmIamRole corresponding to the provided Sam role, or null if the Sam role does not
-   * match a Wsm role. There are valid roles on workspaces in Sam which do not map to WsmIam roles,
-   * in general WSM should ignore these roles.
+   * match a Wsm role. There are roles on workspaces in Sam that are used by Rawls and not WSM -- in
+   * general WSM should ignore these roles.
    */
   public static WsmIamRole fromSam(String samRole) {
     return Arrays.stream(WsmIamRole.values())
@@ -65,6 +66,8 @@ public enum WsmIamRole {
       return Optional.of(WsmIamRole.WRITER);
     } else if (roles.contains(WsmIamRole.READER)) {
       return Optional.of(WsmIamRole.READER);
+    } else if (roles.contains(WsmIamRole.DISCOVERER)) {
+      return Optional.of(WsmIamRole.DISCOVERER);
     }
     throw new InternalServerErrorException(
         String.format("Workspace %s has unexpected roles: %s", workspaceId.toString(), roles));
