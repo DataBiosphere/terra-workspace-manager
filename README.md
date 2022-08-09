@@ -319,8 +319,11 @@ process of migrating them to Test Runner.
 
 #### Cleaning up workspaces in tests
 
+For integration tests, don't need to delete workspaces because it's taken care of
+by janitor.
+
 For connected tests that use real SamService/Broad dev SAM, delete workspaces at
 the end of test, so Broad dev SAM isn't cluttered with test workspaces.
+(Connected tests can't use janitor because the WSM is ephemeral.)
 
-For integration tests, don't need to delete workspace because it's taken care of
-by janitor.
+
