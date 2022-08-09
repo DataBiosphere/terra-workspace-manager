@@ -6,6 +6,7 @@ import static bio.terra.workspace.common.utils.MockMvcUtils.WORKSPACES_V1_PATH;
 import static bio.terra.workspace.common.utils.MockMvcUtils.addAuth;
 import static bio.terra.workspace.common.utils.MockMvcUtils.addJsonContentType;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -23,6 +24,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.List;
 import java.util.UUID;
 import org.apache.http.HttpStatus;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -46,10 +49,21 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
   @Autowired private ObjectMapper objectMapper;
   @Autowired private UserAccessUtils userAccessUtils;
 
+  private ApiCreatedWorkspace workspace;
+
+  @BeforeEach
+  public void setup() throws Exception {
+    workspace = createWorkspace();
+  }
+
+  /** Clean up workspaces from Broad dev SAM. */
+  @AfterEach
+  public void cleanup() throws Exception {
+    deleteWorkspace(workspace.getId());
+  }
+
   @Test
   public void getWorkspace_doesNotReturnWorkspaceWithOnlyDiscovererRole() throws Exception {
-    ApiCreatedWorkspace workspace = createWorkspace();
-
     grantRole(workspace.getId(), WsmIamRole.DISCOVERER, userAccessUtils.getSecondUserEmail());
 
     getWorkspaceDescriptionExpectingError(
@@ -58,8 +72,6 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
 
   @Test
   public void listWorkspaces_doesNotReturnWorkspaceWithOnlyDiscovererRole() throws Exception {
-    ApiCreatedWorkspace workspace = createWorkspace();
-
     grantRole(workspace.getId(), WsmIamRole.DISCOVERER, userAccessUtils.getSecondUserEmail());
 
     List<ApiWorkspaceDescription> listedWorkspaces =
@@ -118,5 +130,14 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
         .andReturn()
         .getResponse()
         .getContentAsString();
+  }
+
+  private void deleteWorkspace(UUID workspaceId) throws Exception {
+    mockMvc
+        .perform(
+            addAuth(
+                delete(String.format(WORKSPACES_V1_BY_UUID_PATH_FORMAT, workspaceId)),
+                userAccessUtils.defaultUserAuthRequest()))
+        .andExpect(status().is(HttpStatus.SC_NO_CONTENT));
   }
 }

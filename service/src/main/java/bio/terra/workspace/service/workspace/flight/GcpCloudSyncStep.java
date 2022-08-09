@@ -107,7 +107,7 @@ public class GcpCloudSyncStep implements Step {
    * @param gcpProjectId The ID of the project the custom role is defined in.
    */
   private Binding bindingForRole(WsmIamRole role, String email, String gcpProjectId) {
-    CustomGcpIamRole customRole = CloudSyncRoleMapping.CUSTOM_GCP_PROJECT_IAM_ROLES.get(role);
+    CustomGcpIamRole customRole = CUSTOM_GCP_PROJECT_IAM_ROLES.get(role);
     return new Binding()
         .setRole(customRole.getFullyQualifiedRoleName(gcpProjectId))
         .setMembers(Collections.singletonList(toMemberIdentifier(email)));

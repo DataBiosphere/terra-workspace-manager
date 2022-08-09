@@ -316,3 +316,11 @@ The integration tests live in the `integration` project. Consult the integration
 
 In the early days of the project, there were JUnit-based integration tests. We are in
 process of migrating them to Test Runner.
+
+#### Cleaning up workspaces in tests
+
+For connected tests that use real SamService/Broad dev SAM, delete workspaces at
+the end of test, so Broad dev SAM isn't cluttered with test workspaces.
+
+For integration tests, don't need to delete workspace because it's taken care of
+by janitor.
