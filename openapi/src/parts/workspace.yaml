@@ -548,9 +548,7 @@ components:
           description: User email of whom made the last update to the workspace
           type: string
         policies:
-          type: array
-          items:
-            $ref: '#/components/schemas/TpsPolicyInput'
+          $ref: '#/components/schemas/TpsPolicyInputs'
 
     WorkspaceDescriptionList:
       type: object
