@@ -394,7 +394,7 @@ public class WorkspaceApiControllerTest extends BaseUnitTest {
     ApiCreatedWorkspace workspace = createDefaultWorkspace();
 
     ApiWorkspaceDescription gotWorkspace = getWorkspaceDescription(workspace.getId());
-    assertNull(gotWorkspace.getPolicies());
+    assertNull(gotWorkspace.getPolicies().getInputs());
   }
 
   @Test
@@ -439,7 +439,7 @@ public class WorkspaceApiControllerTest extends BaseUnitTest {
         .thenReturn(ImmutableMap.of(workspace.getId(), WsmIamRole.OWNER));
 
     ApiWorkspaceDescription gotWorkspace = getWorkspaceDescriptionFromList(workspace.getId());
-    assertNull(gotWorkspace.getPolicies());
+    assertNull(gotWorkspace.getPolicies().getInputs());
   }
 
   private String getUpdateRequestInJson(
