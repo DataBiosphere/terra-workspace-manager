@@ -197,10 +197,7 @@ public class PrivateControlledGcsBucketLifecycle extends WorkspaceAllocateTestSc
                     ManagedBy.USER,
                     CloningInstructionsEnum.NOTHING,
                     privateUserNoEmail));
-    assertThat(
-        ex.getMessage(),
-        containsString(
-            "PrivateResourceUser can only be specified by applications for private resources"));
+    assertThat(ex.getMessage(), containsString("MethodArgumentNotValidException"));
     assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, ex.getCode());
 
     String uniqueBucketName = String.format("terra-%s-bucket", UUID.randomUUID().toString());
