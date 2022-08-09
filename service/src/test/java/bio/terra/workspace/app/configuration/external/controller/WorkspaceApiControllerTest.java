@@ -384,8 +384,8 @@ public class WorkspaceApiControllerTest extends BaseUnitTest {
         .thenReturn(Optional.of(getPolicyResult));
 
     ApiWorkspaceDescription gotWorkspace = getWorkspaceDescription(workspace.getId());
-    assertEquals(1, gotWorkspace.getPolicies().size());
-    assertEquals(GROUP_POLICY, gotWorkspace.getPolicies().get(0));
+    assertEquals(1, gotWorkspace.getPolicies().getInputs().size());
+    assertEquals(GROUP_POLICY, gotWorkspace.getPolicies().getInputs().get(0));
   }
 
   @Test
@@ -424,11 +424,11 @@ public class WorkspaceApiControllerTest extends BaseUnitTest {
         .thenReturn(Optional.empty());
 
     ApiWorkspaceDescription gotWorkspace = getWorkspaceDescriptionFromList(workspace.getId());
-    assertEquals(1, gotWorkspace.getPolicies().size());
-    assertEquals(GROUP_POLICY, gotWorkspace.getPolicies().get(0));
+    assertEquals(1, gotWorkspace.getPolicies().getInputs().size());
+    assertEquals(GROUP_POLICY, gotWorkspace.getPolicies().getInputs().get(0));
     ApiWorkspaceDescription gotNoPolicyWorkspace =
         getWorkspaceDescriptionFromList(noPolicyWorkspace.getId());
-    assertTrue(gotNoPolicyWorkspace.getPolicies().isEmpty());
+    assertTrue(gotNoPolicyWorkspace.getPolicies().getInputs().isEmpty());
   }
 
   @Test
