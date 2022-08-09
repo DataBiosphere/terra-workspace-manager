@@ -262,7 +262,7 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
             lastChangeDetailsOptional.map(ActivityLogChangeDetails::getChangeDate).orElse(null))
         .lastUpdatedBy(
             lastChangeDetailsOptional.map(ActivityLogChangeDetails::getActorEmail).orElse(null))
-        .policies(workspacePolicies);
+        .policies(new ApiTpsPolicyInputs().inputs(workspacePolicies));
   }
 
   @Override
