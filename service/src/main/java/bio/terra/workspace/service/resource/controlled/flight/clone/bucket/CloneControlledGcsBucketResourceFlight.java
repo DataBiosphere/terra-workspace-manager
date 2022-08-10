@@ -2,6 +2,7 @@ package bio.terra.workspace.service.resource.controlled.flight.clone.bucket;
 
 import bio.terra.stairway.Flight;
 import bio.terra.stairway.FlightMap;
+import bio.terra.stairway.RetryRule;
 import bio.terra.workspace.common.utils.FlightBeanBag;
 import bio.terra.workspace.common.utils.FlightUtils;
 import bio.terra.workspace.common.utils.RetryRules;
@@ -54,6 +55,7 @@ public class CloneControlledGcsBucketResourceFlight extends Flight {
                 inputParameters.get(
                     ControlledResourceKeys.CLONING_INSTRUCTIONS, CloningInstructions.class))
             .orElse(sourceBucket.getCloningInstructions());
+    RetryRule cloudRetry = RetryRules.cloud();
     // We can't put the cloning instructions into the working map, because it's not available
     // from within a flight constructor. Instead, pass it in to the constructors of the steps
     // that need it.
@@ -68,13 +70,15 @@ public class CloneControlledGcsBucketResourceFlight extends Flight {
           new RetrieveControlledResourceMetadataStep(
               flightBeanBag.getResourceDao(),
               sourceResource.getWorkspaceId(),
-              sourceResource.getResourceId()));
+              sourceResource.getResourceId()),
+          RetryRules.shortDatabase());
       addStep(
           new RetrieveGcsBucketCloudAttributesStep(
               sourceBucket,
               flightBeanBag.getCrlService(),
               flightBeanBag.getGcpCloudContextService(),
-              RetrievalMode.CREATION_PARAMETERS));
+              RetrievalMode.CREATION_PARAMETERS),
+          cloudRetry);
       addStep(
           new CopyGcsBucketDefinitionStep(
               userRequest,
@@ -88,11 +92,16 @@ public class CloneControlledGcsBucketResourceFlight extends Flight {
                 sourceBucket,
                 flightBeanBag.getGcpCloudContextService(),
                 flightBeanBag.getBucketCloneRolesService(),
-                flightBeanBag.getStoragetransfer()));
-        addStep(new CreateStorageTransferServiceJobStep(flightBeanBag.getStoragetransfer()));
-        addStep(new CompleteTransferOperationStep(flightBeanBag.getStoragetransfer()));
-        addStep(new DeleteStorageTransferServiceJobStep(flightBeanBag.getStoragetransfer()));
-        addStep(new RemoveBucketRolesStep(flightBeanBag.getBucketCloneRolesService()));
+                flightBeanBag.getStoragetransfer()),
+            cloudRetry);
+        addStep(
+            new CreateStorageTransferServiceJobStep(flightBeanBag.getStoragetransfer()),
+            cloudRetry);
+        addStep(new CompleteTransferOperationStep(flightBeanBag.getStoragetransfer()), cloudRetry);
+        addStep(
+            new DeleteStorageTransferServiceJobStep(flightBeanBag.getStoragetransfer()),
+            cloudRetry);
+        addStep(new RemoveBucketRolesStep(flightBeanBag.getBucketCloneRolesService()), cloudRetry);
       }
     }
   }
