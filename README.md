@@ -335,4 +335,5 @@ to clean up SAM workspaces. Why not just call `deleteWorkspace()` and not use
 janitor? Janitor is useful in case test fails (or `deleteWorkspace()` fails).
 
 Integration tests: Tests should call `deleteWorkspace()` because integration
-tests don't use janitor.
+tests don't use janitor. Most tests don't need to worry about this because
+`WorkspaceAllocateTestScriptBase.java` deletes the workspace it creates.
