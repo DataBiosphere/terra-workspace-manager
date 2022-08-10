@@ -14,6 +14,7 @@ import bio.terra.workspace.service.resource.controlled.ControlledResourceService
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.GcpResourceConstant;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook.ControlledAiNotebookInstanceResource;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.bqdataset.ControlledBigQueryDatasetResource;
+import bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.ControlledGcsBucketHandler;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.ControlledGcsBucketResource;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResourceFields;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
@@ -147,6 +148,13 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
                 userRequest, workspaceUuid, resourceId, SamControlledResourceActions.READ_ACTION)
             .castByEnum(WsmResourceType.CONTROLLED_GCP_GCS_BUCKET);
     return new ResponseEntity<>(resource.toApiResource(), HttpStatus.OK);
+  }
+
+  @Override
+  public ResponseEntity<String> getCloudNameFromGcsBucketName(UUID workspaceUuid, String name) {
+    String generatedBucketName =
+        ControlledGcsBucketHandler.getHandler().generateCloudName(workspaceUuid, name);
+    return new ResponseEntity<>(generatedBucketName, HttpStatus.OK);
   }
 
   @Override

@@ -80,6 +80,27 @@ paths:
         '500':
           $ref: '#/components/responses/ServerError'
 
+  /api/workspaces/v1/{workspaceId}/resources/controlled/gcp/buckets/generateName:
+    parameters:
+      - $ref: '#/components/parameters/WorkspaceId'
+    post:
+      summary: Generate a cloud native controlled Gcp bucket name
+      operationId: getCloudNameFromGcsBucketName
+      tags: [ControlledGcpResource]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Name'
+      responses:
+        '200':
+          $ref: '#/components/responses/CloudBucketNameResponse'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
   /api/workspaces/v1/{workspaceId}/resources/controlled/gcp/buckets/{resourceId}/clone:
     parameters:
       - $ref: '#/components/parameters/WorkspaceId'
@@ -409,6 +430,10 @@ components:
         updateParameters:
           $ref: '#/components/schemas/GcpGcsBucketUpdateParameters'
 
+    CloudBucketName:
+      description: Cloud native Bucket Name
+      type: string
+
   responses:
     CreatedControlledGcpGcsBucketResponse:
       description: Response to Create controlled Gcs bucket
@@ -444,3 +469,10 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/GcpGcsBucketResource'
+
+    CloudBucketNameResponse:
+      description: A valid bucket name per https://cloud.google.com/storage/docs/naming-buckets.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/CloudBucketName'

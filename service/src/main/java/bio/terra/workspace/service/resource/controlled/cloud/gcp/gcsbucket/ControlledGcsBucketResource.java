@@ -123,10 +123,6 @@ public class ControlledGcsBucketResource extends ControlledResource {
         new DeleteGcsBucketStep(this, flightBeanBag.getCrlService()), RetryRules.cloud());
   }
 
-  private static String generateBucketName() {
-    return String.format("terra-%s-bucket", UUID.randomUUID());
-  }
-
   public String getBucketName() {
     return bucketName;
   }
@@ -214,7 +210,9 @@ public class ControlledGcsBucketResource extends ControlledResource {
     }
 
     public ControlledGcsBucketResource.Builder bucketName(@Nullable String bucketName) {
-      this.bucketName = Optional.ofNullable(bucketName).orElse(generateBucketName());
+      this.bucketName =
+          ControlledGcsBucketHandler.getHandler()
+              .generateCloudName(this.common.getWorkspaceId(), bucketName);
       return this;
     }
 
