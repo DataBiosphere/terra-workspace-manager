@@ -82,7 +82,6 @@ import bio.terra.workspace.service.workspace.flight.CreateWorkspaceAuthzStep;
 import bio.terra.workspace.service.workspace.flight.CreateWorkspacePoliciesStep;
 import bio.terra.workspace.service.workspace.flight.CreateWorkspaceStep;
 import bio.terra.workspace.service.workspace.model.Workspace;
-import bio.terra.workspace.service.workspace.model.WorkspaceAndHighestRole;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.api.services.cloudresourcemanager.v3.model.Project;
@@ -181,22 +180,6 @@ class WorkspaceServiceTest extends BaseConnectedTest {
   @AfterEach
   public void resetFlightDebugInfo() {
     jobService.setFlightDebugInfoForTest(null);
-  }
-
-  @Test
-  void listWorkspacesAndHighestRoles_existing() throws Exception {
-    UUID workspaceId = UUID.randomUUID();
-    Workspace request = defaultRequestBuilder(workspaceId).build();
-    workspaceService.createWorkspace(request, null, USER_REQUEST);
-
-    when(mockSamService.listWorkspaceIdsAndHighestRoles(any()))
-        .thenReturn(Map.of(workspaceId, WsmIamRole.OWNER));
-
-    List<WorkspaceAndHighestRole> actual =
-        workspaceService.listWorkspacesAndHighestRoles(USER_REQUEST, /*offset=*/ 0, /*limit=*/ 10);
-    assertEquals(1, actual.size());
-    assertEquals(request.getWorkspaceId(), actual.get(0).workspace().getWorkspaceId());
-    assertEquals(WsmIamRole.OWNER, actual.get(0).highestRole());
   }
 
   @Test

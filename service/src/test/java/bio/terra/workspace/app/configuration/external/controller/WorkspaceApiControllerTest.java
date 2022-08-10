@@ -402,7 +402,7 @@ public class WorkspaceApiControllerTest extends BaseUnitTest {
     // No need to actually pass policy inputs because TPS is mocked.
     ApiCreatedWorkspace workspace = createDefaultWorkspace();
     ApiCreatedWorkspace noPolicyWorkspace = createDefaultWorkspace();
-    when(mockSamService.listWorkspaceIdsAndHighestRoles(any()))
+    when(mockSamService.listWorkspaceIdsAndHighestRoles(any(), any()))
         .thenReturn(
             ImmutableMap.of(
                 workspace.getId(), WsmIamRole.OWNER, noPolicyWorkspace.getId(), WsmIamRole.OWNER));
@@ -435,7 +435,7 @@ public class WorkspaceApiControllerTest extends BaseUnitTest {
   public void tpsDisabledListWorkspaceExcludesPolicy() throws Exception {
     when(mockFeatureConfiguration.isTpsEnabled()).thenReturn(false);
     ApiCreatedWorkspace workspace = createDefaultWorkspace();
-    when(mockSamService.listWorkspaceIdsAndHighestRoles(any()))
+    when(mockSamService.listWorkspaceIdsAndHighestRoles(any(), any()))
         .thenReturn(ImmutableMap.of(workspace.getId(), WsmIamRole.OWNER));
 
     ApiWorkspaceDescription gotWorkspace = getWorkspaceDescriptionFromList(workspace.getId());

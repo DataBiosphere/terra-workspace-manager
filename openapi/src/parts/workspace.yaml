@@ -28,6 +28,7 @@ paths:
       parameters:
         - $ref: '#/components/parameters/Offset'
         - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/MinimumHighestRole'
       summary: List all workspaces a user can read.
       operationId: listWorkspaces
       tags: [ Workspace ]

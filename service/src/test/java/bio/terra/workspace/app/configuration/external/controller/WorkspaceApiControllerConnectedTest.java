@@ -1,10 +1,20 @@
 package bio.terra.workspace.app.configuration.external.controller;
 
+import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.SHORT_DESCRIPTION_PROPERTY;
+import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.TYPE_PROPERTY;
+import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.USER_SET_PROPERTY;
+import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.VERSION_PROPERTY;
 import static bio.terra.workspace.common.utils.MockMvcUtils.GRANT_ROLE_PATH_FORMAT;
 import static bio.terra.workspace.common.utils.MockMvcUtils.WORKSPACES_V1_BY_UUID_PATH_FORMAT;
 import static bio.terra.workspace.common.utils.MockMvcUtils.WORKSPACES_V1_PATH;
 import static bio.terra.workspace.common.utils.MockMvcUtils.addAuth;
 import static bio.terra.workspace.common.utils.MockMvcUtils.addJsonContentType;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.containsInAnyOrder;
+import static org.hamcrest.Matchers.emptyString;
+import static org.hamcrest.Matchers.hasSize;
+import static org.hamcrest.Matchers.not;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -16,12 +26,14 @@ import bio.terra.workspace.common.fixtures.WorkspaceFixtures;
 import bio.terra.workspace.connected.UserAccessUtils;
 import bio.terra.workspace.generated.model.ApiCreatedWorkspace;
 import bio.terra.workspace.generated.model.ApiGrantRoleRequestBody;
+import bio.terra.workspace.generated.model.ApiIamRole;
 import bio.terra.workspace.generated.model.ApiWorkspaceDescription;
 import bio.terra.workspace.generated.model.ApiWorkspaceDescriptionList;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.model.WsmIamRole;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import org.apache.http.HttpStatus;
 import org.junit.jupiter.api.AfterEach;
@@ -30,6 +42,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 
 /**
  * Connected tests for WorkspaceApiController.
@@ -63,7 +76,7 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
   }
 
   @Test
-  public void getWorkspace_doesNotReturnWorkspaceWithOnlyDiscovererRole() throws Exception {
+  public void getWorkspace_requesterIsDiscoverer_noWorkspaceReturned() throws Exception {
     grantRole(workspace.getId(), WsmIamRole.DISCOVERER, userAccessUtils.getSecondUserEmail());
 
     getWorkspaceDescriptionExpectingError(
@@ -71,12 +84,47 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
   }
 
   @Test
-  public void listWorkspaces_doesNotReturnWorkspaceWithOnlyDiscovererRole() throws Exception {
+  public void listWorkspaces_requesterIsOwner_fullWorkspaceReturned() throws Exception {
+    List<ApiWorkspaceDescription> listedWorkspaces =
+        listWorkspaces(userAccessUtils.defaultUserAuthRequest());
+
+    assertThat(listedWorkspaces, hasSize(1));
+    assertFullWorkspace(listedWorkspaces.get(0));
+  }
+
+  @Test
+  public void listWorkspaces_requesterIsDiscoverer_requestMinHighestRoleNotSet_noWorkspaceReturned()
+      throws Exception {
     grantRole(workspace.getId(), WsmIamRole.DISCOVERER, userAccessUtils.getSecondUserEmail());
 
     List<ApiWorkspaceDescription> listedWorkspaces =
         listWorkspaces(userAccessUtils.secondUserAuthRequest());
     assertTrue(listedWorkspaces.isEmpty());
+  }
+
+  @Test
+  public void
+      listWorkspaces_requesterIsDiscoverer_requestMinHighestRoleSetToReader_noWorkspaceReturned()
+          throws Exception {
+    grantRole(workspace.getId(), WsmIamRole.DISCOVERER, userAccessUtils.getSecondUserEmail());
+
+    List<ApiWorkspaceDescription> listedWorkspaces =
+        listWorkspaces(userAccessUtils.secondUserAuthRequest(), Optional.of(ApiIamRole.READER));
+
+    assertTrue(listedWorkspaces.isEmpty());
+  }
+
+  @Test
+  public void
+      listWorkspaces_requesterIsDiscoverer_requestMinHighestRoleSetToDiscoverer_strippedWorkspaceReturned()
+          throws Exception {
+    grantRole(workspace.getId(), WsmIamRole.DISCOVERER, userAccessUtils.getSecondUserEmail());
+
+    List<ApiWorkspaceDescription> listedWorkspaces =
+        listWorkspaces(userAccessUtils.secondUserAuthRequest(), Optional.of(ApiIamRole.DISCOVERER));
+
+    assertThat(listedWorkspaces, hasSize(1));
+    assertStrippedWorkspace(listedWorkspaces.get(0));
   }
 
   private ApiCreatedWorkspace createWorkspace() throws Exception {
@@ -105,9 +153,18 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
 
   private List<ApiWorkspaceDescription> listWorkspaces(AuthenticatedUserRequest request)
       throws Exception {
+    return listWorkspaces(request, /*minimumHighestRole=*/ Optional.empty());
+  }
+
+  private List<ApiWorkspaceDescription> listWorkspaces(
+      AuthenticatedUserRequest request, Optional<ApiIamRole> minimumHighestRole) throws Exception {
+    MockHttpServletRequestBuilder requestBuilder = get(WORKSPACES_V1_PATH);
+    if (minimumHighestRole.isPresent()) {
+      requestBuilder.param("minimumHighestRole", minimumHighestRole.get().name());
+    }
     String serializedResponse =
         mockMvc
-            .perform(addAuth(get(WORKSPACES_V1_PATH), request))
+            .perform(addAuth(requestBuilder, request))
             .andExpect(status().is(HttpStatus.SC_OK))
             .andReturn()
             .getResponse()
@@ -126,10 +183,7 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
                     post(String.format(GRANT_ROLE_PATH_FORMAT, workspaceId, role.name()))
                         .content(objectMapper.writeValueAsString(requestBody)),
                     userAccessUtils.defaultUserAuthRequest())))
-        .andExpect(status().is(HttpStatus.SC_NO_CONTENT))
-        .andReturn()
-        .getResponse()
-        .getContentAsString();
+        .andExpect(status().is(HttpStatus.SC_NO_CONTENT));
   }
 
   private void deleteWorkspace(UUID workspaceId) throws Exception {
@@ -139,5 +193,42 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
                 delete(String.format(WORKSPACES_V1_BY_UUID_PATH_FORMAT, workspaceId)),
                 userAccessUtils.defaultUserAuthRequest()))
         .andExpect(status().is(HttpStatus.SC_NO_CONTENT));
+  }
+
+  /** Assert all workspace fields are set, when requester has at least READER role. */
+  private void assertFullWorkspace(ApiWorkspaceDescription workspace) {
+    assertNotNull(workspace.getId());
+    assertThat(workspace.getUserFacingId(), not(emptyString()));
+    assertThat(workspace.getDisplayName(), not(emptyString()));
+    assertThat(workspace.getDescription(), not(emptyString()));
+    assertNotNull(workspace.getHighestRole());
+    assertNotNull(workspace.getStage());
+    assertThat(
+        workspace.getProperties(),
+        containsInAnyOrder(
+            TYPE_PROPERTY, SHORT_DESCRIPTION_PROPERTY, VERSION_PROPERTY, USER_SET_PROPERTY));
+    assertNotNull(workspace.getCreatedDate());
+    assertThat(workspace.getCreatedBy(), not(emptyString()));
+    assertNotNull(workspace.getLastUpdatedDate());
+    assertThat(workspace.getLastUpdatedBy(), not(emptyString()));
+  }
+
+  /** Assert subset of workspace fields are set, when requester only has DISCOVERER role. */
+  private void assertStrippedWorkspace(ApiWorkspaceDescription workspace) {
+    assertNotNull(workspace.getId());
+    assertThat(workspace.getUserFacingId(), not(emptyString()));
+    assertThat(workspace.getDisplayName(), not(emptyString()));
+    // Description not returned
+    assertThat(workspace.getDescription(), emptyString());
+    assertNotNull(workspace.getHighestRole());
+    assertNotNull(workspace.getStage());
+    // Only type, short description and version properties are returned, not properties set by user
+    assertThat(
+        workspace.getProperties(),
+        containsInAnyOrder(TYPE_PROPERTY, SHORT_DESCRIPTION_PROPERTY, VERSION_PROPERTY));
+    assertNotNull(workspace.getCreatedDate());
+    assertThat(workspace.getCreatedBy(), not(emptyString()));
+    assertNotNull(workspace.getLastUpdatedDate());
+    assertThat(workspace.getLastUpdatedBy(), not(emptyString()));
   }
 }
