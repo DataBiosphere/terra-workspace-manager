@@ -47,9 +47,9 @@ public class SyncSamGroupsStep implements Step {
     workspaceRoleGroupMap.put(
         WsmIamRole.READER,
         samService.syncWorkspacePolicy(workspaceUuid, WsmIamRole.READER, userRequest));
-    workspaceRoleGroupMap.put(
-        WsmIamRole.DISCOVERER,
-        samService.syncWorkspacePolicy(workspaceUuid, WsmIamRole.DISCOVERER, userRequest));
+
+    // Do not sync discoverer policy. Discoverer roles are not attached to GCP resources; they are
+    // only used by WSM internally.
 
     FlightMap workingMap = flightContext.getWorkingMap();
     workingMap.put(WorkspaceFlightMapKeys.IAM_GROUP_EMAIL_MAP, workspaceRoleGroupMap);
