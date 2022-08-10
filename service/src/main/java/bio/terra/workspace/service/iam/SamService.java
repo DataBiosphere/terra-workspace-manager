@@ -1047,14 +1047,17 @@ public class SamService {
    * {@code getOrCreatePetSaEmail}, this will not create the underlying service account. It may
    * return the email of a service account which does not exist.
    */
-  public ServiceAccountName constructUserPetSaEmail(
+  public Optional<ServiceAccountName> constructUserPetSaEmail(
       String projectId, String userEmail, AuthenticatedUserRequest userRequest)
       throws InterruptedException {
     UsersApi usersApi = samUsersApi(userRequest.getRequiredToken());
     try {
       String subjectId = SamRetry.retry(() -> usersApi.getUserIds(userEmail).getUserSubjectId());
       String saEmail = String.format("pet-%s@%s.iam.gserviceaccount.com", subjectId, projectId);
-      return ServiceAccountName.builder().email(saEmail).projectId(projectId).build();
+      if (subjectId.isEmpty()) {
+        return Optional.empty();
+      }
+      return Optional.of(ServiceAccountName.builder().email(saEmail).projectId(projectId).build());
     } catch (ApiException apiException) {
       throw SamExceptionFactory.create("Error getting user subject ID from Sam", apiException);
     }
