@@ -319,11 +319,20 @@ process of migrating them to Test Runner.
 
 #### Cleaning up workspaces in tests
 
-For integration tests, don't need to delete workspaces because it's taken care of
-by janitor.
+We have 2 ways of cleaning up resources (WSM workspace, SAM workspace, GCP project):
 
-For connected tests that use real SamService/Broad dev SAM, delete workspaces at
-the end of test, so Broad dev SAM isn't cluttered with test workspaces.
-(Connected tests can't use janitor because the WSM is ephemeral.)
+1. Connected tests use Janitor. Janitor deletes GCP project and not SAM
+   workspace (see
+   [here](https://github.com/DataBiosphere/terra-workspace-manager/pull/755#discussion_r942717257) for details).
+2. Tests call WSM `deleteWorkspace()`. This deletes WSM workspace + SAM workspace +
+   GCP project.
 
+Connected tests that use mock SamService: Tests don't need to call
+`deleteWorkspace()` because there is no SAM workspace to clean up.
 
+Connected tests that use real SamService: Tests should call `deleteWorkspace()`
+to clean up SAM workspaces. Why not just call `deleteWorkspace()` and not use
+janitor? Janitor is useful in case test fails (or `deleteWorkspace()` fails).
+
+Integration tests: Tests should call `deleteWorkspace()` because integration
+tests don't use janitor.
