@@ -34,7 +34,19 @@ components:
 
     CloningInstructionsEnum:
       type: string
-      description: Instructions for copying this reference when cloning the workspace
+      description: >-
+        How to clone resource:
+          * COPY_NOTHING: Don't clone resource.
+          * COPY_DEFINITION: Only used for controlled resources. Create new controlled resource
+            and new cloud resource with same metadata, but don't copy any data. For example
+            for GCS bucket, create new GCS bucket with same region/lifecycle rules as source
+            bucket. Files will not be copied over.
+          * COPY_RESOURCE: Only used for controlled resources. Create new controlled resource
+            and new cloud resource, with data copied over.  For example for GCS bucket,
+            create new GCS bucket with same region/lifecycle rules as source bucket. Copy files
+            from source bucket to new bucket.
+          * COPY_REFERENCE: Only used for referenced resources. Create new referenced resource
+            that points to same cloud resource as source referenced resource.
       enum: ['COPY_NOTHING', 'COPY_DEFINITION', 'COPY_RESOURCE', 'COPY_REFERENCE']
   
     ControlledResourceIamRole:
