@@ -279,13 +279,15 @@ class SamServiceTest extends BaseConnectedTest {
             .role(WsmIamRole.OWNER)
             .users(Collections.singletonList(userAccessUtils.getDefaultUserEmail()))
             .build();
+    RoleBinding expectedWriterBinding =
+        RoleBinding.builder().role(WsmIamRole.WRITER).users(Collections.emptyList()).build();
     RoleBinding expectedReaderBinding =
         RoleBinding.builder()
             .role(WsmIamRole.READER)
             .users(Collections.singletonList(userAccessUtils.getSecondUserEmail()))
             .build();
-    RoleBinding expectedWriterBinding =
-        RoleBinding.builder().role(WsmIamRole.WRITER).users(Collections.emptyList()).build();
+    RoleBinding expectedDiscovererBinding =
+        RoleBinding.builder().role(WsmIamRole.DISCOVERER).users(Collections.emptyList()).build();
     RoleBinding expectedApplicationBinding =
         RoleBinding.builder().role(WsmIamRole.APPLICATION).users(Collections.emptyList()).build();
     assertThat(
@@ -294,6 +296,7 @@ class SamServiceTest extends BaseConnectedTest {
             equalTo(expectedOwnerBinding),
             equalTo(expectedWriterBinding),
             equalTo(expectedReaderBinding),
+            equalTo(expectedDiscovererBinding),
             equalTo(expectedApplicationBinding)));
   }
 

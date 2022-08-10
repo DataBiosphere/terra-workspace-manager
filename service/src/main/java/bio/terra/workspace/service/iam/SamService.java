@@ -300,8 +300,14 @@ public class SamService {
                   .filter(Objects::nonNull)
                   .collect(Collectors.toList());
           Optional<WsmIamRole> highestRole = WsmIamRole.getHighestRole(workspaceId, roles);
-          // Skip workspaces with no roles. (That means there's a role this WSM doesn't know about.)
+          // Skip workspaces with no roles. (That means there's a role this WSM doesn't know
+          // about.)
           if (highestRole.isPresent()) {
+            // TODO(PF-1875): Support requesting discoverer workspaces in ListWorkspaces.
+            // For now, don't return discoverer workspaces.
+            if (highestRole.get().equals(WsmIamRole.DISCOVERER)) {
+              continue;
+            }
             workspacesAndRoles.put(workspaceId, highestRole.get());
           }
         } catch (IllegalArgumentException e) {
