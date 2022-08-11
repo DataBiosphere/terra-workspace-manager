@@ -10,14 +10,18 @@ import javax.annotation.Nullable;
  * Enum describing how to treat a resource when its containing workspace is cloned. The values
  * stored with the resources may be overridden at clone time.
  *
- * <p>COPY_NOTHING - do not clone anything for this resource
+ * <p>COPY_NOTHING: Don't clone resource.
  *
- * <p>COPY_DEFINITION - copy the resource definition, but no data
+ * <p>COPY_DEFINITION: Only used for controlled resources. Create new controlled resource and new
+ * cloud resource with same metadata, but don't copy any data. For example for GCS bucket, create
+ * new GCS bucket with same region/lifecycle rules as source bucket. Files will not be copied over.
  *
- * <p>COPY_RESOURCE - copy the resource, including its data
+ * <p>COPY_RESOURCE: Only used for controlled resources. Create new controlled resource and new
+ * cloud resource, with data copied over. For example for GCS bucket, create new GCS bucket with
+ * same region/lifecycle rules as source bucket. Copy files from source bucket to new bucket.
  *
- * <p>COPY_REFERENCE - create a referenced resource pointing to this resource, or to the resource it
- * references (for referenced resources)
+ * <p>COPY_REFERENCE: Only used for referenced resources. Create new referenced resource that points
+ * to same cloud resource as source referenced resource.
  */
 public enum CloningInstructions {
   COPY_NOTHING,
