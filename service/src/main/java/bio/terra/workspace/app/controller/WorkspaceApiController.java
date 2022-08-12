@@ -553,15 +553,9 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
             .properties(sourceWorkspace.getProperties())
             .build();
 
-    final var policies = getWorkspacePolicies(petRequest, workspaceUuid);
-
     final String jobId =
         workspaceService.cloneWorkspace(
-            sourceWorkspace,
-            petRequest,
-            body.getLocation(),
-            new ApiTpsPolicyInputs().inputs(policies),
-            destinationWorkspace);
+            sourceWorkspace, petRequest, body.getLocation(), destinationWorkspace);
 
     final ApiCloneWorkspaceResult result = fetchCloneWorkspaceResult(jobId);
     final ApiClonedWorkspace clonedWorkspaceStub =

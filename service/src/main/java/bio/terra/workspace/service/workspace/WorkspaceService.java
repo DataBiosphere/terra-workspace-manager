@@ -1,8 +1,12 @@
 package bio.terra.workspace.service.workspace;
 
+import bio.terra.common.iam.BearerToken;
+import bio.terra.workspace.amalgam.tps.TpsApiDispatch;
 import bio.terra.workspace.app.configuration.external.BufferServiceConfiguration;
 import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
 import bio.terra.workspace.db.WorkspaceDao;
+import bio.terra.workspace.generated.model.ApiTpsPaoCreateRequest;
+import bio.terra.workspace.generated.model.ApiTpsPaoGetResult;
 import bio.terra.workspace.generated.model.ApiTpsPolicyInputs;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamRethrow;
@@ -34,11 +38,7 @@ import bio.terra.workspace.service.workspace.model.WorkspaceAndHighestRole;
 import bio.terra.workspace.service.workspace.model.WorkspaceConstants.Properties;
 import com.google.common.base.Preconditions;
 import io.opencensus.contrib.spring.aop.Traced;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import org.slf4j.Logger;
@@ -65,6 +65,7 @@ public class WorkspaceService {
   private final BufferServiceConfiguration bufferServiceConfiguration;
   private final StageService stageService;
   private final FeatureConfiguration features;
+  private final TpsApiDispatch tpsApiDispatch;
   private final WorkspaceActivityLogService workspaceActivityLogService;
 
   @Autowired
@@ -75,6 +76,7 @@ public class WorkspaceService {
       BufferServiceConfiguration bufferServiceConfiguration,
       StageService stageService,
       FeatureConfiguration features,
+      TpsApiDispatch tpsApiDispatch,
       WorkspaceActivityLogService workspaceActivityLogService) {
     this.jobService = jobService;
     this.workspaceDao = workspaceDao;
@@ -82,6 +84,7 @@ public class WorkspaceService {
     this.bufferServiceConfiguration = bufferServiceConfiguration;
     this.stageService = stageService;
     this.features = features;
+    this.tpsApiDispatch = tpsApiDispatch;
     this.workspaceActivityLogService = workspaceActivityLogService;
   }
 
@@ -441,7 +444,6 @@ public class WorkspaceService {
       Workspace sourceWorkspace,
       AuthenticatedUserRequest userRequest,
       @Nullable String location,
-      @Nullable ApiTpsPolicyInputs policies,
       Workspace destinationWorkspace) {
     String workspaceName = sourceWorkspace.getDisplayName().orElse("");
     String workspaceUuid = sourceWorkspace.getWorkspaceId().toString();
@@ -449,8 +451,26 @@ public class WorkspaceService {
         String.format("Clone workspace: name: '%s' id: '%s'  ", workspaceName, workspaceUuid);
 
     // Create the destination workspace synchronously first.
-    // TODO(PF-1871) copy policy on workspace clone
-    createWorkspace(destinationWorkspace, policies, userRequest);
+    if (features.isTpsEnabled()) {
+      // New workspaces will always be created with empty policies, but some workspaces predate
+      // policy and so will not have associated PAOs.
+      Optional<ApiTpsPaoGetResult> workspacePao =
+          tpsApiDispatch.getPaoIfExists(
+              new BearerToken(userRequest.getRequiredToken()), sourceWorkspace.getWorkspaceId());
+
+      if (workspacePao.isPresent()) {
+        var sourcePao = workspacePao.get();
+        var newPaoRequest = new ApiTpsPaoCreateRequest();
+        newPaoRequest.setObjectId(destinationWorkspace.getWorkspaceId());
+        newPaoRequest.setObjectType(sourcePao.getObjectType());
+        newPaoRequest.setAttributes(sourcePao.getAttributes());
+        newPaoRequest.setComponent(sourcePao.getComponent());
+
+        tpsApiDispatch.createPao(new BearerToken(userRequest.getRequiredToken()), newPaoRequest);
+      }
+    }
+
+    createWorkspace(destinationWorkspace, null, userRequest);
 
     // Remaining steps are an async flight.
     return jobService
