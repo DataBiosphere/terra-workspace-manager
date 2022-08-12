@@ -228,19 +228,7 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
             .map(AzureCloudContext::toApi)
             .orElse(null);
 
-    List<ApiTpsPolicyInput> workspacePolicies = null;
-    if (featureConfiguration.isTpsEnabled()) {
-      // New workspaces will always be created with empty policies, but some workspaces predate
-      // policy and so will not have associated PAOs.
-      Optional<ApiTpsPaoGetResult> workspacePao =
-          tpsApiDispatch.getPaoIfExists(
-              new BearerToken(userRequest.getRequiredToken()), workspaceUuid);
-      workspacePolicies =
-          workspacePao
-              .map(ApiTpsPaoGetResult::getEffectiveAttributes)
-              .map(ApiTpsPolicyInputs::getInputs)
-              .orElse(Collections.emptyList());
-    }
+    List<ApiTpsPolicyInput> workspacePolicies = getWorkspacePolicies(userRequest, workspaceUuid);
 
     // Convert the property map to API format
     ApiProperties apiProperties = new ApiProperties();
@@ -565,9 +553,15 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
             .properties(sourceWorkspace.getProperties())
             .build();
 
+    final var policies = getWorkspacePolicies(petRequest, workspaceUuid);
+
     final String jobId =
         workspaceService.cloneWorkspace(
-            sourceWorkspace, petRequest, body.getLocation(), destinationWorkspace);
+            sourceWorkspace,
+            petRequest,
+            body.getLocation(),
+            new ApiTpsPolicyInputs().inputs(policies),
+            destinationWorkspace);
 
     final ApiCloneWorkspaceResult result = fetchCloneWorkspaceResult(jobId);
     final ApiClonedWorkspace clonedWorkspaceStub =
@@ -628,5 +622,24 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
   private AuthenticatedUserRequest getCloningCredentials(UUID workspaceUuid) {
     final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     return petSaService.getWorkspacePetCredentials(workspaceUuid, userRequest).orElse(userRequest);
+  }
+
+  private List<ApiTpsPolicyInput> getWorkspacePolicies(
+      AuthenticatedUserRequest userRequest, UUID workspaceUuid) {
+    List<ApiTpsPolicyInput> workspacePolicies = null;
+    if (featureConfiguration.isTpsEnabled()) {
+      // New workspaces will always be created with empty policies, but some workspaces predate
+      // policy and so will not have associated PAOs.
+      Optional<ApiTpsPaoGetResult> workspacePao =
+          tpsApiDispatch.getPaoIfExists(
+              new BearerToken(userRequest.getRequiredToken()), workspaceUuid);
+      workspacePolicies =
+          workspacePao
+              .map(ApiTpsPaoGetResult::getEffectiveAttributes)
+              .map(ApiTpsPolicyInputs::getInputs)
+              .orElse(Collections.emptyList());
+    }
+
+    return workspacePolicies;
   }
 }

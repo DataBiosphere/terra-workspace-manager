@@ -441,6 +441,7 @@ public class WorkspaceService {
       Workspace sourceWorkspace,
       AuthenticatedUserRequest userRequest,
       @Nullable String location,
+      @Nullable ApiTpsPolicyInputs policies,
       Workspace destinationWorkspace) {
     String workspaceName = sourceWorkspace.getDisplayName().orElse("");
     String workspaceUuid = sourceWorkspace.getWorkspaceId().toString();
@@ -449,7 +450,7 @@ public class WorkspaceService {
 
     // Create the destination workspace synchronously first.
     // TODO(PF-1871) copy policy on workspace clone
-    createWorkspace(destinationWorkspace, null, userRequest);
+    createWorkspace(destinationWorkspace, policies, userRequest);
 
     // Remaining steps are an async flight.
     return jobService
