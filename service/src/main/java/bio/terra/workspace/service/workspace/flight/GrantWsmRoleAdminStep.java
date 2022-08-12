@@ -1,6 +1,5 @@
 package bio.terra.workspace.service.workspace.flight;
 
-import bio.terra.common.exception.InternalServerErrorException;
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
