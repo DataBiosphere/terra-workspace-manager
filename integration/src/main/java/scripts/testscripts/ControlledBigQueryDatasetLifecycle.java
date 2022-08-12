@@ -112,6 +112,8 @@ public class ControlledBigQueryDatasetLifecycle extends GcpWorkspaceCloneTestScr
             CloningInstructionsEnum.NOTHING);
     assertEquals(DATASET_RESOURCE_NAME, createdDataset.getAttributes().getDatasetId());
     UUID resourceId = createdDataset.getMetadata().getResourceId();
+    String cloudBqDatasetName =
+        ownerResourceApi.getCloudNameFromBigQueryDatasetName(DATASET_RESOURCE_NAME, resourceId);
 
     // Retrieve the dataset resource
     logger.info("Retrieving dataset resource id {}", resourceId.toString());
@@ -119,6 +121,7 @@ public class ControlledBigQueryDatasetLifecycle extends GcpWorkspaceCloneTestScr
         ownerResourceApi.getBigQueryDataset(getWorkspaceId(), resourceId);
     assertEquals(createdDataset, fetchedResource);
     assertEquals(DATASET_RESOURCE_NAME, fetchedResource.getAttributes().getDatasetId());
+    assertEquals(cloudBqDatasetName, createdDataset.getAttributes().getDatasetId());
 
     createControlledDatasetWithBothResourceNameAndDatasetIdSpecified(ownerResourceApi);
 

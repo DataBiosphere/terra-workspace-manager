@@ -210,8 +210,7 @@ public class ControlledGcsBucketResource extends ControlledResource {
     }
 
     public ControlledGcsBucketResource.Builder bucketName(@Nullable String bucketName) {
-      this.bucketName =
-          ControlledGcsBucketHandler.getHandler().generateCloudName(UUID.randomUUID(), bucketName);
+      this.bucketName = bucketName;
       return this;
     }
 

@@ -74,7 +74,7 @@ public class ControlledResourceFixtures {
   // list must not be immutable if deserialization is to work
   static final List<ApiGcpGcsBucketLifecycleRule> LIFECYCLE_RULES =
       new ArrayList<>(List.of(LIFECYCLE_RULE_1, LIFECYCLE_RULE_2));
-  public static final String BUCKET_NAME_PREFIX = "my-bucket";
+  public static final String BUCKET_NAME_PREFIX = "bucket";
   public static final String AZURE_NAME_PREFIX = "az";
   public static final String AZURE_IP_NAME_PREFIX = "ip";
   public static final String AZURE_RELAY_NAMESPACE_NAME_PREFIX = "relay-ns";
@@ -85,7 +85,7 @@ public class ControlledResourceFixtures {
 
   public static final ApiGcpGcsBucketCreationParameters GOOGLE_BUCKET_CREATION_PARAMETERS_MINIMAL =
       new ApiGcpGcsBucketCreationParameters()
-          .name(uniqueName(BUCKET_NAME_PREFIX))
+          .name(uniqueBucketName(BUCKET_NAME_PREFIX))
           .location(GcpResourceConstant.DEFAULT_REGION);
 
   /** Construct a parameter object with a unique bucket name to avoid unintended clashes. */
@@ -229,7 +229,7 @@ public class ControlledResourceFixtures {
   }
 
   public static String uniqueBucketName() {
-    return uniqueName(BUCKET_NAME_PREFIX);
+    return uniqueBucketName(BUCKET_NAME_PREFIX);
   }
 
   public static String uniqueAzureName(String resourcePrefix) {
@@ -485,6 +485,10 @@ public class ControlledResourceFixtures {
           .setDefaultTableExpirationMs(Long.valueOf(5900000))
           .setDefaultPartitionExpirationMs(Long.valueOf(5901000));
   public static final Dataset BQ_DATASET_WITHOUT_EXPIRATION = new Dataset();
+
+  public static String uniqueBucketName(String prefix) {
+    return prefix + "-" + ShortUUID.get().toLowerCase().replace("_", "-");
+  }
 
   public static String uniqueName(String prefix) {
     return prefix + "-" + UUID.randomUUID().toString();

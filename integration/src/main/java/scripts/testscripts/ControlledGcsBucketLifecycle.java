@@ -132,6 +132,7 @@ public class ControlledGcsBucketLifecycle extends GcpWorkspaceCloneTestScriptBas
     assertEquals(
         bucket.getGcpBucket().getAttributes().getBucketName(),
         gotBucket.getAttributes().getBucketName());
+    assertEquals(bucketName, gotBucket.getMetadata().getName());
     assertEquals(cloudBucketName, gotBucket.getAttributes().getBucketName());
 
     try (GcsBucketAccessTester tester =

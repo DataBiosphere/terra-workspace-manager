@@ -257,7 +257,7 @@ public class ControlledAiNotebookInstanceResource extends ControlledResource {
   }
 
   public static String generateInstanceId(String instanceId) {
-    return ControlledAiNotebookHandler.getHandler().generateCloudName(null, instanceId);
+    return instanceId;
   }
 
   private static <T> void checkFieldNonNull(@Nullable T fieldValue, String fieldName) {

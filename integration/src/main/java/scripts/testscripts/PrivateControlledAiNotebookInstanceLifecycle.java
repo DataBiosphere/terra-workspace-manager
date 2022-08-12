@@ -93,6 +93,8 @@ public class PrivateControlledAiNotebookInstanceLifecycle extends WorkspaceAlloc
             getWorkspaceId(), instanceId, /*location=*/ null, resourceUserApi);
 
     UUID resourceId = creationResult.getAiNotebookInstance().getMetadata().getResourceId();
+    String cloudAiNotebookName =
+        resourceUserApi.getCloudNameFromAiNotebookInstanceName(instanceId, resourceId);
 
     GcpAiNotebookInstanceResource resource =
         resourceUserApi.getAiNotebookInstance(getWorkspaceId(), resourceId);
@@ -112,6 +114,7 @@ public class PrivateControlledAiNotebookInstanceLifecycle extends WorkspaceAlloc
             .getPrivateResourceUser()
             .getUserName(),
         "User is the private user of the notebook");
+    assertEquals(cloudAiNotebookName, resource.getAttributes().getInstanceId());
     assertEquals(
         "us-central1-a",
         resource.getAttributes().getLocation(),
