@@ -1,11 +1,8 @@
 package bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook;
 
 import static bio.terra.workspace.service.resource.controlled.cloud.gcp.GcpResourceConstant.DEFAULT_ZONE;
-import static bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook.ControlledAiNotebookInstanceResource.AUTO_NAME_DATE_FORMAT;
-import static bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook.ControlledAiNotebookInstanceResource.MAX_INSTANCE_NAME_LENGTH;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import bio.terra.common.exception.BadRequestException;
 import bio.terra.stairway.FlightMap;
@@ -66,51 +63,10 @@ public class ControlledAiNotebookInstanceResourceTest extends BaseUnitTest {
 
   @Test
   public void generateInstanceId() {
-    String userEmail = "yuhuyoyo@google.com";
-    String instanceId = ControlledAiNotebookInstanceResource.generateInstanceId(userEmail);
+    String instanceName = "test-generation_name";
+    String instanceId = ControlledAiNotebookInstanceResource.generateInstanceId(instanceName);
 
-    assertTrue(instanceId.startsWith("yuhuyoyo-"));
-  }
-
-  @Test
-  public void generateInstanceId_userIdHasDash_removeDashes() {
-    String userEmail = "yu_hu_yo_yo@google.com";
-    String instanceId = ControlledAiNotebookInstanceResource.generateInstanceId(userEmail);
-
-    assertTrue(instanceId.startsWith("yuhuyoyo-"));
-  }
-
-  @Test
-  public void generateInstanceId_userIdIsNull_prefixWithNotebook() {
-    String instanceId = ControlledAiNotebookInstanceResource.generateInstanceId(null);
-
-    assertTrue(instanceId.startsWith("notebook"));
-  }
-
-  @Test
-  public void generateInstanceId_userIdIsEmpty_prefixWithNotebook() {
-    String instanceId = ControlledAiNotebookInstanceResource.generateInstanceId("");
-
-    assertTrue(instanceId.startsWith("notebook"));
-  }
-
-  @Test
-  public void generateInstanceId_userIdHasUppercase_toLowerCase() {
-    String userEmail = "YUHUYOYO@google.com";
-    String instanceId = ControlledAiNotebookInstanceResource.generateInstanceId(userEmail);
-
-    assertTrue(instanceId.startsWith("yuhuyoyo-"));
-  }
-
-  @Test
-  public void generateInstanceId_userIdTooLong_trim() {
-    String userEmail =
-        "yuhuyoyoyoyoyoyoyoyoyoyoyoyoyoyoyoyoyoyoyoyoyoyoyoyoyoyoyoyoyoyoyoyoyoyoyoyo@google.com";
-    String instanceId = ControlledAiNotebookInstanceResource.generateInstanceId(userEmail);
-
-    int maxNameLength = MAX_INSTANCE_NAME_LENGTH - AUTO_NAME_DATE_FORMAT.length();
-
-    assertTrue(instanceId.startsWith(instanceId.substring(0, maxNameLength)));
+    assertEquals(instanceName, instanceId);
   }
 
   @Test

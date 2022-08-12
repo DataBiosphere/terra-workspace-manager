@@ -12,7 +12,9 @@ import bio.terra.workspace.service.job.JobService.AsyncJobResult;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceMetadataManager;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceService;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.GcpResourceConstant;
+import bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook.ControlledAiNotebookHandler;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook.ControlledAiNotebookInstanceResource;
+import bio.terra.workspace.service.resource.controlled.cloud.gcp.bqdataset.ControlledBigQueryDatasetHandler;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.bqdataset.ControlledBigQueryDatasetResource;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.ControlledGcsBucketHandler;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.ControlledGcsBucketResource;
@@ -242,6 +244,14 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
   }
 
   @Override
+  public ResponseEntity<String> getCloudNameFromBigQueryDatasetName(
+      UUID workspaceUuid, String name) {
+    String generatedBigQueryDatasetName =
+        ControlledBigQueryDatasetHandler.getHandler().generateCloudName(workspaceUuid, name);
+    return new ResponseEntity<>(generatedBigQueryDatasetName, HttpStatus.OK);
+  }
+
+  @Override
   public ResponseEntity<ApiGcpBigQueryDatasetResource> updateBigQueryDataset(
       UUID workspaceUuid, UUID resourceId, ApiUpdateControlledGcpBigQueryDatasetRequestBody body) {
     logger.info("Updating dataset resourceId {} workspaceUuid {}", resourceId, workspaceUuid);
@@ -329,7 +339,7 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
                 Optional.ofNullable(body.getAiNotebookInstance().getInstanceId())
                     .orElse(
                         ControlledAiNotebookInstanceResource.generateInstanceId(
-                            commonFields.getAssignedUser())))
+                            commonFields.getName())))
             .build();
 
     String jobId =
@@ -344,6 +354,14 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
     ApiCreatedControlledGcpAiNotebookInstanceResult result =
         fetchNotebookInstanceCreateResult(jobId);
     return new ResponseEntity<>(result, getAsyncResponseCode((result.getJobReport())));
+  }
+
+  @Override
+  public ResponseEntity<String> getCloudNameFromAiNotebookInstanceName(
+      UUID workspaceUuid, String name) {
+    String generatedAiNotebookInstanceName =
+        ControlledAiNotebookHandler.getHandler().generateCloudName(workspaceUuid, name);
+    return new ResponseEntity<>(generatedAiNotebookInstanceName, HttpStatus.OK);
   }
 
   @Override

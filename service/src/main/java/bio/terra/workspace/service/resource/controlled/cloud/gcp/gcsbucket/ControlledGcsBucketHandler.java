@@ -9,7 +9,9 @@ import bio.terra.workspace.service.workspace.GcpCloudContextService;
 import java.util.UUID;
 import javax.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
+@Component
 public class ControlledGcsBucketHandler implements WsmResourceHandler {
   private static ControlledGcsBucketHandler theHandler;
   private final GcpCloudContextService gcpCloudContextService;
@@ -28,11 +30,6 @@ public class ControlledGcsBucketHandler implements WsmResourceHandler {
     theHandler = this;
   }
 
-  public String generateCloudName(UUID workspaceUuid, String bucketName) {
-    String projectId = gcpCloudContextService.getRequiredGcpProject(workspaceUuid);
-    return String.format("%s-%s", projectId, bucketName);
-  }
-
   /** {@inheritDoc} */
   @Override
   public WsmResource makeResourceFromDb(DbResource dbResource) {
@@ -44,5 +41,10 @@ public class ControlledGcsBucketHandler implements WsmResourceHandler {
             .common(new ControlledResourceFields(dbResource))
             .build();
     return resource;
+  }
+
+  public String generateCloudName(UUID workspaceUuid, String bucketName) {
+    String projectId = gcpCloudContextService.getRequiredGcpProject(workspaceUuid);
+    return String.format("%s-%s", bucketName, projectId);
   }
 }

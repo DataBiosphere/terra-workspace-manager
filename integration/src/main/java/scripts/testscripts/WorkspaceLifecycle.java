@@ -117,7 +117,6 @@ public class WorkspaceLifecycle extends WorkspaceApiTestScriptBase {
         updatedWorkspaceDescription.getProperties().contains(buildProperty("foo", "barUpdate")));
     assertTrue(updatedWorkspaceDescription.getProperties().contains(buildProperty("ted", "lasso")));
     assertEquals(3, updatedWorkspaceDescription.getProperties().size());
-    System.out.println(updatedWorkspaceDescription.getProperties());
 
     List<String> propertykey = new ArrayList<>();
     propertykey.add("xyzzy");
@@ -125,7 +124,6 @@ public class WorkspaceLifecycle extends WorkspaceApiTestScriptBase {
     Properties deletedWorkspaceDescription =
         workspaceApi.getWorkspace(workspaceUuid).getProperties();
     assertFalse(deletedWorkspaceDescription.contains(buildProperty("xyzzy", "plohg")));
-    System.out.println(deletedWorkspaceDescription);
 
     workspaceApi.deleteWorkspace(workspaceUuid);
     ClientTestUtils.assertHttpSuccess(workspaceApi, "DELETE workspace");

@@ -8,6 +8,8 @@ import bio.terra.workspace.service.resource.model.WsmResourceHandler;
 import bio.terra.workspace.service.workspace.GcpCloudContextService;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.util.Optional;
+import java.util.UUID;
+import javax.annotation.Nullable;
 import javax.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -51,5 +53,9 @@ public class ControlledBigQueryDatasetHandler implements WsmResourceHandler {
             .common(new ControlledResourceFields(dbResource))
             .build();
     return resource;
+  }
+
+  public String generateCloudName(@Nullable UUID workspaceUuid, String bucketName) {
+    return bucketName.replace("-", "_");
   }
 }

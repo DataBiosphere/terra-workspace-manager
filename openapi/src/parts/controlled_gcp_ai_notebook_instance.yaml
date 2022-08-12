@@ -130,6 +130,27 @@ paths:
         '500':
           $ref: '#/components/responses/ServerError'
 
+  /api/workspaces/v1/{workspaceId}/resources/controlled/gcp/ai-notebook-instances/generateName:
+    parameters:
+    - $ref: '#/components/parameters/WorkspaceId'
+    post:
+      summary: Generate a cloud native controlled Gcp bucket name
+      operationId: getCloudNameFromAiNotebookInstanceName
+      tags: [ ControlledGcpResource ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Name'
+      responses:
+        '200':
+          $ref: '#/components/responses/CloudAiNotebookNameResponse'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
 components:
   schemas:
     CreateControlledGcpAiNotebookInstanceRequestBody:
@@ -330,6 +351,10 @@ components:
         updateParameters:
           $ref: '#/components/schemas/GcpAiNotebookUpdateParameters'
 
+    CloudAiNotebookName:
+      description: Cloud native Ai notebook Name
+      type: string
+
   responses:    
     CreatedControlledGcpAiNotebookInstanceResponse:
       description: Response to Create controlled resource
@@ -344,3 +369,10 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/DeleteControlledGcpAiNotebookInstanceResult'
+
+    CloudAiNotebookNameResponse:
+      description: A valid AI notebook name per https://cloud.google.com/bigquery/docs/datasets#dataset-naming.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/CloudAiNotebookName'

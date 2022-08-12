@@ -5,6 +5,7 @@ import bio.terra.workspace.db.model.DbResource;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResourceFields;
 import bio.terra.workspace.service.resource.model.WsmResource;
 import bio.terra.workspace.service.resource.model.WsmResourceHandler;
+import java.util.UUID;
 
 public class ControlledAzureStorageContainerHandler implements WsmResourceHandler {
   private static ControlledAzureStorageContainerHandler theHandler;
@@ -28,5 +29,9 @@ public class ControlledAzureStorageContainerHandler implements WsmResourceHandle
         .storageContainerName(attributes.getStorageContainerName())
         .common(new ControlledResourceFields(dbResource))
         .build();
+  }
+
+  public String generateCloudName(UUID workspaceUuid, String bucketName) {
+    return "";
   }
 }

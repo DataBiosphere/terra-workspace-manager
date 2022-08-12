@@ -221,10 +221,6 @@ public class ControlledBigQueryDatasetResource extends ControlledResource {
         .toHashCode();
   }
 
-  private static String generateUniqueDatasetId() {
-    return "terra_" + UUID.randomUUID() + "_dataset".replace("-", "_");
-  }
-
   public static class Builder {
     private ControlledResourceFields common;
     private String datasetName;
@@ -243,7 +239,9 @@ public class ControlledBigQueryDatasetResource extends ControlledResource {
         ResourceValidationUtils.validateBqDatasetName(datasetName);
         this.datasetName = datasetName;
       } catch (InvalidReferenceException e) {
-        this.datasetName = generateUniqueDatasetId();
+        this.datasetName =
+            ControlledBigQueryDatasetHandler.getHandler()
+                .generateCloudName(UUID.randomUUID(), datasetName);
       }
       return this;
     }

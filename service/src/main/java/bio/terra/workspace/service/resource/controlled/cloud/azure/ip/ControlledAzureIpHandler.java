@@ -5,6 +5,7 @@ import bio.terra.workspace.db.model.DbResource;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResourceFields;
 import bio.terra.workspace.service.resource.model.WsmResource;
 import bio.terra.workspace.service.resource.model.WsmResourceHandler;
+import java.util.UUID;
 
 public class ControlledAzureIpHandler implements WsmResourceHandler {
   private static ControlledAzureIpHandler theHandler;
@@ -29,5 +30,9 @@ public class ControlledAzureIpHandler implements WsmResourceHandler {
             .common(new ControlledResourceFields(dbResource))
             .build();
     return resource;
+  }
+
+  public String generateCloudName(UUID workspaceUuid, String bucketName) {
+    return "";
   }
 }

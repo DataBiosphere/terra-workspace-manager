@@ -5,6 +5,7 @@ import bio.terra.workspace.db.model.DbResource;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResourceFields;
 import bio.terra.workspace.service.resource.model.WsmResource;
 import bio.terra.workspace.service.resource.model.WsmResourceHandler;
+import java.util.UUID;
 
 public class ControlledAzureNetworkHandler implements WsmResourceHandler {
   private static ControlledAzureNetworkHandler theHandler;
@@ -32,5 +33,9 @@ public class ControlledAzureNetworkHandler implements WsmResourceHandler {
             .region(attributes.getRegion())
             .build();
     return resource;
+  }
+
+  public String generateCloudName(UUID workspaceUuid, String bucketName) {
+    return "";
   }
 }

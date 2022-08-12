@@ -118,6 +118,7 @@ public class ControlledGcsBucketLifecycle extends GcpWorkspaceCloneTestScriptBas
     // Create the bucket - should work this time
     CreatedControlledGcpGcsBucket bucket = createBucketAttempt(resourceApi, bucketName);
     UUID resourceId = bucket.getResourceId();
+    String cloudBucketName = resourceApi.getCloudNameFromGcsBucketName(bucketName, resourceId);
 
     // Try creating another bucket with the same name. This should fail and should not affect the
     // existing resource.
@@ -131,7 +132,7 @@ public class ControlledGcsBucketLifecycle extends GcpWorkspaceCloneTestScriptBas
     assertEquals(
         bucket.getGcpBucket().getAttributes().getBucketName(),
         gotBucket.getAttributes().getBucketName());
-    assertEquals(bucketName, gotBucket.getAttributes().getBucketName());
+    assertEquals(cloudBucketName, gotBucket.getAttributes().getBucketName());
 
     try (GcsBucketAccessTester tester =
         new GcsBucketAccessTester(testUser, bucketName, getSourceProjectId())) {

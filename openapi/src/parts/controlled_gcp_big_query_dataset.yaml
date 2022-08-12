@@ -73,6 +73,28 @@ paths:
           $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/ServerError'
+
+  /api/workspaces/v1/{workspaceId}/resources/controlled/gcp/bqdatasets/generateName:
+    parameters:
+    - $ref: '#/components/parameters/WorkspaceId'
+    post:
+      summary: Generate a cloud native controlled Gcp bucket name
+      operationId: getCloudNameFromBigQueryDatasetName
+      tags: [ ControlledGcpResource ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Name'
+      responses:
+        '200':
+          $ref: '#/components/responses/CloudBqDatasetNameResponse'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
   /api/workspaces/v1/{workspaceId}/resources/controlled/gcp/bqdatasets/{resourceId}/clone:
     parameters:
       - $ref: '#/components/parameters/WorkspaceId'
@@ -250,6 +272,10 @@ components:
         updateParameters:
           $ref: '#/components/schemas/GcpBigQueryDatasetUpdateParameters'
 
+    CloudBqDatasetName:
+      description: Cloud native Big query dataset Name
+      type: string
+
   responses:
     CloneControlledGcpBigQueryDatasetResponse:
       description: response to clone BigQuery dataset operation.
@@ -264,3 +290,10 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/GcpBigQueryDatasetResource'
+
+    CloudBqDatasetNameResponse:
+      description: A valid Big query Dataset name per https://cloud.google.com/vertex-ai/docs/workbench/user-managed/create-new.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/CloudBqDatasetName'
