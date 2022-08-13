@@ -99,15 +99,16 @@ public class PrivateControlledGcsBucketLifecycle extends WorkspaceAllocateTestSc
     CreatedControlledGcpGcsBucket bucket =
         ClientTestUtils.getWithRetryOnException(() -> createPrivateBucket(privateUserResourceApi));
     UUID resourceId = bucket.getResourceId();
-    String cloudBucketName =
-        privateUserResourceApi.getCloudNameFromGcsBucketName(resourceName, resourceId);
 
     // Retrieve the bucket resource from WSM
     logger.info("Retrieving bucket resource id {}", resourceId.toString());
     GcpGcsBucketResource gotBucket = privateUserResourceApi.getBucket(getWorkspaceId(), resourceId);
     String bucketName = gotBucket.getAttributes().getBucketName();
     assertEquals(bucket.getGcpBucket().getAttributes().getBucketName(), bucketName);
-    assertEquals(cloudBucketName, bucketName);
+
+    String cloudBucketName =
+        privateUserResourceApi.getCloudNameFromGcsBucketName(resourceName, resourceId);
+    assertEquals(cloudBucketName, bucketName + "-" + projectId);
 
     // Assert the bucket is assigned to privateResourceUser, even though resource user was
     // not specified
