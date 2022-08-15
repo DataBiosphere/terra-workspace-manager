@@ -126,8 +126,10 @@ public class ControlledBigQueryDatasetLifecycle extends GcpWorkspaceCloneTestScr
         new GcpBigQueryDatasetGenerateCloudNameRequestBody()
             .bigQueryDatasetName(DATASET_RESOURCE_NAME);
     CloudBqDatasetName cloudBqDatasetName =
-        ownerResourceApi.getCloudNameFromBigQueryDatasetName(bqDatasetNameRequest, null);
-    assertEquals(cloudBqDatasetName, DATASET_RESOURCE_NAME.replace("-", "_"));
+        ownerResourceApi.getCloudNameFromBigQueryDatasetName(
+            bqDatasetNameRequest, getWorkspaceId());
+    assertEquals(
+        cloudBqDatasetName.getGeneratedCloudDatasetName(), DATASET_RESOURCE_NAME.replace("-", "_"));
 
     createControlledDatasetWithBothResourceNameAndDatasetIdSpecified(ownerResourceApi);
 

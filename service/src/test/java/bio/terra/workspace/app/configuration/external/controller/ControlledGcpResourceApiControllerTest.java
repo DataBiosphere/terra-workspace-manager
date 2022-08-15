@@ -114,8 +114,8 @@ public class ControlledGcpResourceApiControllerTest extends BaseUnitTest {
     ApiCloudBucketName generatedGcsBucketName =
         objectMapper.readValue(serializedGetResponse, ApiCloudBucketName.class);
     assertEquals(
-        bucketNameRequest.getBucketName() + "-" + projectId,
-        generatedGcsBucketName.getGeneratedCloudBucketName());
+        generatedGcsBucketName.getGeneratedCloudBucketName(),
+        bucketNameRequest.getBucketName() + "-" + projectId);
   }
 
   @Test
@@ -144,8 +144,8 @@ public class ControlledGcpResourceApiControllerTest extends BaseUnitTest {
     ApiCloudBqDatasetName generatedBqDatasetName =
         objectMapper.readValue(serializedGetResponse, ApiCloudBqDatasetName.class);
     assertEquals(
-        bqDatasetNameRequest.getBigQueryDatasetName().replace("-", "_"),
-        generatedBqDatasetName.getGeneratedCloudDatasetName());
+        generatedBqDatasetName.getGeneratedCloudDatasetName(),
+        bqDatasetNameRequest.getBigQueryDatasetName().replace("-", "_"));
   }
 
   @Test
@@ -174,8 +174,8 @@ public class ControlledGcpResourceApiControllerTest extends BaseUnitTest {
     ApiCloudAiNotebookName generatedAiNotebookName =
         objectMapper.readValue(serializedGetResponse, ApiCloudAiNotebookName.class);
     assertEquals(
-        aiNotebookNameRequest.getAiNotebookName(),
-        generatedAiNotebookName.getGeneratedCloudAiNotebookName());
+        generatedAiNotebookName.getGeneratedCloudAiNotebookName(),
+        aiNotebookNameRequest.getAiNotebookName());
   }
 
   private ApiCreatedWorkspace createDefaultWorkspace() throws Exception {

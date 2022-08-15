@@ -112,7 +112,7 @@ public class PrivateControlledGcsBucketLifecycle extends WorkspaceAllocateTestSc
         new GcpGcsBucketGenerateCloudNameRequestBody().bucketName(bucketName);
     CloudBucketName cloudBucketName =
         privateUserResourceApi.getCloudNameFromGcsBucketName(bucketNameRequest, resourceId);
-    assertEquals(cloudBucketName, bucketName + "-" + projectId);
+    assertEquals(cloudBucketName.getGeneratedCloudBucketName(), bucketName + "-" + projectId);
 
     // Assert the bucket is assigned to privateResourceUser, even though resource user was
     // not specified

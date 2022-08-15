@@ -257,7 +257,7 @@ public class ControlledAiNotebookInstanceResource extends ControlledResource {
   }
 
   public static String generateInstanceId(String instanceId) {
-    return instanceId;
+    return instanceId.replaceAll("[^a-zA-Z0-9-]", "").toLowerCase();
   }
 
   private static <T> void checkFieldNonNull(@Nullable T fieldValue, String fieldName) {
