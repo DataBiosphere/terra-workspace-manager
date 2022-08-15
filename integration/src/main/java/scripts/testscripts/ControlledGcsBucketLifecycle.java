@@ -33,6 +33,7 @@ import bio.terra.workspace.model.CloneControlledGcpGcsBucketRequest;
 import bio.terra.workspace.model.CloneControlledGcpGcsBucketResult;
 import bio.terra.workspace.model.ClonedControlledGcpGcsBucket;
 import bio.terra.workspace.model.CloningInstructionsEnum;
+import bio.terra.workspace.model.CloudBucketName;
 import bio.terra.workspace.model.CloudPlatform;
 import bio.terra.workspace.model.ControlledResourceCommonFields;
 import bio.terra.workspace.model.ControlledResourceIamRole;
@@ -40,6 +41,7 @@ import bio.terra.workspace.model.CreateControlledGcpGcsBucketRequestBody;
 import bio.terra.workspace.model.CreatedControlledGcpGcsBucket;
 import bio.terra.workspace.model.GcpGcsBucketCreationParameters;
 import bio.terra.workspace.model.GcpGcsBucketDefaultStorageClass;
+import bio.terra.workspace.model.GcpGcsBucketGenerateCloudNameRequestBody;
 import bio.terra.workspace.model.GcpGcsBucketLifecycle;
 import bio.terra.workspace.model.GcpGcsBucketResource;
 import bio.terra.workspace.model.GcpGcsBucketUpdateParameters;
@@ -132,8 +134,12 @@ public class ControlledGcsBucketLifecycle extends GcpWorkspaceCloneTestScriptBas
         bucket.getGcpBucket().getAttributes().getBucketName(),
         gotBucket.getAttributes().getBucketName());
     assertEquals(bucketName, gotBucket.getAttributes().getBucketName());
-    String cloudBucketName =
-        resourceApi.getCloudNameFromGcsBucketName(bucketName, getWorkspaceId());
+
+    GcpGcsBucketGenerateCloudNameRequestBody bucketNameRequest =
+        new GcpGcsBucketGenerateCloudNameRequestBody().bucketName(bucketName);
+    CloudBucketName cloudBucketName =
+        resourceApi.getCloudNameFromGcsBucketName(bucketNameRequest, getWorkspaceId());
+
     assertEquals(cloudBucketName, bucketName + "-" + getSourceProjectId());
 
     try (GcsBucketAccessTester tester =

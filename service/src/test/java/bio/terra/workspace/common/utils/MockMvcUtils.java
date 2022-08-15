@@ -40,6 +40,13 @@ public class MockMvcUtils {
   public static final String CREATE_AZURE_VM_PATH_FORMAT =
       "/api/workspaces/v1/%s/resources/controlled/azure/vm";
 
+  public static final String GENERATE_GCP_GCS_BUCKET_NAME_PATH_FORMAT =
+      "/api/workspaces/v1/%s/resources/controlled/gcp/buckets/generateName";
+  public static final String GENERATE_GCP_BQ_DATASET_NAME_PATH_FORMAT =
+      "/api/workspaces/v1/%s/resources/controlled/gcp/bqdatasets/generateName";
+  public static final String GENERATE_GCP_AI_NOTEBOOK_NAME_PATH_FORMAT =
+      "/api/workspaces/v1/%s/resources/controlled/gcp/ai-notebook-instances/generateName";
+
   public static MockHttpServletRequestBuilder addAuth(
       MockHttpServletRequestBuilder request, AuthenticatedUserRequest userRequest) {
     return request.header(AUTH_HEADER, "Bearer " + userRequest.getRequiredToken());

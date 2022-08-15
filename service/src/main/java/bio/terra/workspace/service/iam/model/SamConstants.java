@@ -11,7 +11,7 @@ public class SamConstants {
         "controlled-application-shared-workspace-resource";
     public static final String CONTROLLED_APPLICATION_PRIVATE =
         "controlled-application-private-workspace-resource";
-    public static final String SPEND_PROFILE = "spend-profile";
+    public static final String SPEND_PROFILE = "wm-default-spend-profile";
 
     private SamResource() {}
   }

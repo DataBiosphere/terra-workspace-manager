@@ -14,10 +14,12 @@ import bio.terra.workspace.api.WorkspaceApi;
 import bio.terra.workspace.client.ApiException;
 import bio.terra.workspace.model.AccessScope;
 import bio.terra.workspace.model.CloningInstructionsEnum;
+import bio.terra.workspace.model.CloudBucketName;
 import bio.terra.workspace.model.ControlledResourceIamRole;
 import bio.terra.workspace.model.CreatedControlledGcpGcsBucket;
 import bio.terra.workspace.model.DeleteControlledGcpGcsBucketRequest;
 import bio.terra.workspace.model.DeleteControlledGcpGcsBucketResult;
+import bio.terra.workspace.model.GcpGcsBucketGenerateCloudNameRequestBody;
 import bio.terra.workspace.model.GcpGcsBucketResource;
 import bio.terra.workspace.model.GrantRoleRequestBody;
 import bio.terra.workspace.model.IamRole;
@@ -106,8 +108,10 @@ public class PrivateControlledGcsBucketLifecycle extends WorkspaceAllocateTestSc
     String bucketName = gotBucket.getAttributes().getBucketName();
     assertEquals(bucket.getGcpBucket().getAttributes().getBucketName(), bucketName);
 
-    String cloudBucketName =
-        privateUserResourceApi.getCloudNameFromGcsBucketName(resourceName, resourceId);
+    GcpGcsBucketGenerateCloudNameRequestBody bucketNameRequest =
+        new GcpGcsBucketGenerateCloudNameRequestBody().bucketName(bucketName);
+    CloudBucketName cloudBucketName =
+        privateUserResourceApi.getCloudNameFromGcsBucketName(bucketNameRequest, resourceId);
     assertEquals(cloudBucketName, bucketName + "-" + projectId);
 
     // Assert the bucket is assigned to privateResourceUser, even though resource user was

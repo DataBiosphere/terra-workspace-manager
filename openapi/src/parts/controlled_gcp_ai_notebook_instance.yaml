@@ -142,7 +142,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/Name'
+              $ref: '#/components/schemas/GcpAiNotebookGenerateCloudNameRequestBody'
       responses:
         '200':
           $ref: '#/components/responses/CloudAiNotebookNameResponse'
@@ -353,7 +353,19 @@ components:
 
     CloudAiNotebookName:
       description: Cloud native Ai notebook Name
-      type: string
+      type: object
+      required: [ generatedCloudAiNotebookName ]
+      properties:
+        generatedCloudAiNotebookName:
+          type: string
+
+    GcpAiNotebookGenerateCloudNameRequestBody:
+      description: The body for a request to grant a role to a single user.
+      type: object
+      required: [ AiNotebookName ]
+      properties:
+        AiNotebookName:
+          type: string
 
   responses:    
     CreatedControlledGcpAiNotebookInstanceResponse:

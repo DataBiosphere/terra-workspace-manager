@@ -86,7 +86,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/Name'
+              $ref: '#/components/schemas/GcpBigQueryDatasetGenerateCloudNameRequestBody'
       responses:
         '200':
           $ref: '#/components/responses/CloudBqDatasetNameResponse'
@@ -273,8 +273,19 @@ components:
           $ref: '#/components/schemas/GcpBigQueryDatasetUpdateParameters'
 
     CloudBqDatasetName:
-      description: Cloud native Big query dataset Name
-      type: string
+      type: object
+      required: [ generatedCloudDatasetName ]
+      properties:
+        generatedCloudDatasetName:
+          type: string
+
+    GcpBigQueryDatasetGenerateCloudNameRequestBody:
+      description: The body for a request to grant a role to a single user.
+      type: object
+      required: [ bigQueryDatasetName ]
+      properties:
+        bigQueryDatasetName:
+          type: string
 
   responses:
     CloneControlledGcpBigQueryDatasetResponse:

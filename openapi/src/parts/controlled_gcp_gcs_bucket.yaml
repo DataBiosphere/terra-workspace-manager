@@ -92,7 +92,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/Name'
+              $ref: '#/components/schemas/GcpGcsBucketGenerateCloudNameRequestBody'
       responses:
         '200':
           $ref: '#/components/responses/CloudBucketNameResponse'
@@ -215,6 +215,14 @@ components:
           $ref: '#/components/schemas/GcpGcsBucketLifecycle'
         cloningInstructions:
           $ref: '#/components/schemas/CloningInstructionsEnum'
+
+    GcpGcsBucketGenerateCloudNameRequestBody:
+      description: The body for a request to grant a role to a single user.
+      type: object
+      required: [ bucketName ]
+      properties:
+        bucketName:
+          type: string
 
     GcpGcsBucketDefaultStorageClass:
       description: >-
@@ -431,8 +439,12 @@ components:
           $ref: '#/components/schemas/GcpGcsBucketUpdateParameters'
 
     CloudBucketName:
-      description: Cloud native Bucket Name
-      type: string
+      type: object
+      required: [ generatedCloudBucketName ]
+      properties:
+        generatedCloudBucketName:
+          type: string
+
 
   responses:
     CreatedControlledGcpGcsBucketResponse:
