@@ -362,9 +362,9 @@ components:
     GcpAiNotebookGenerateCloudNameRequestBody:
       description: The body for a request to grant a role to a single user.
       type: object
-      required: [ AiNotebookName ]
+      required: [ aiNotebookName ]
       properties:
-        AiNotebookName:
+        aiNotebookName:
           type: string
 
   responses:    

@@ -219,9 +219,9 @@ components:
     GcpGcsBucketGenerateCloudNameRequestBody:
       description: The body for a request to grant a role to a single user.
       type: object
-      required: [ bucketName ]
+      required: [ gcsBucketName ]
       properties:
-        bucketName:
+        gcsBucketName:
           type: string
 
     GcpGcsBucketDefaultStorageClass:

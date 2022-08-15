@@ -136,7 +136,7 @@ public class ControlledGcsBucketLifecycle extends GcpWorkspaceCloneTestScriptBas
     assertEquals(bucketName, gotBucket.getAttributes().getBucketName());
 
     GcpGcsBucketGenerateCloudNameRequestBody bucketNameRequest =
-        new GcpGcsBucketGenerateCloudNameRequestBody().bucketName(bucketName);
+        new GcpGcsBucketGenerateCloudNameRequestBody().gcsBucketName(bucketName);
     CloudBucketName cloudBucketName =
         resourceApi.getCloudNameFromGcsBucketName(bucketNameRequest, getWorkspaceId());
 

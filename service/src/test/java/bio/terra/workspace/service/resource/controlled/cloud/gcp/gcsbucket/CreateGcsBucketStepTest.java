@@ -1,7 +1,7 @@
 package bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket;
 
 import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.getGoogleBucketCreationParameters;
-import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.uniqueBucketName;
+import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.uniqueName;
 import static bio.terra.workspace.service.resource.controlled.cloud.gcp.GcpResourceConstant.DEFAULT_REGION;
 import static bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.GcsApiConversions.toGoogleDateTime;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -140,7 +140,7 @@ public class CreateGcsBucketStepTest extends BaseUnitTest {
 
   @Test
   public void testCreatesBucketWithoutAllParameters() throws RetryException, InterruptedException {
-    final String bucketName = uniqueBucketName("pedro");
+    final String bucketName = uniqueName("pedro");
     final CreateGcsBucketStep createGcsBucketStep =
         new CreateGcsBucketStep(
             mockCrlService,
@@ -171,7 +171,7 @@ public class CreateGcsBucketStepTest extends BaseUnitTest {
         .create(bucketInfoCaptor.capture());
 
     // A bad bucket name that fails to be caught by the WSM validation.
-    final String bucketName = uniqueBucketName("bad-bucket-name");
+    final String bucketName = uniqueName("bad-bucket-name");
 
     final CreateGcsBucketStep createGcsBucketStep =
         new CreateGcsBucketStep(

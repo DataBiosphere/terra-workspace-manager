@@ -37,8 +37,8 @@ public class ControlledGcsBucketHandler implements WsmResourceHandler {
         DbSerDes.fromJson(dbResource.getAttributes(), ControlledGcsBucketAttributes.class);
     var resource =
         ControlledGcsBucketResource.builder()
-            .common(new ControlledResourceFields(dbResource))
             .bucketName(attributes.getBucketName())
+            .common(new ControlledResourceFields(dbResource))
             .build();
     return resource;
   }

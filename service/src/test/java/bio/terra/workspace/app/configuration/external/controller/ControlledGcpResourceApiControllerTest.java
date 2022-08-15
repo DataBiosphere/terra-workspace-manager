@@ -1,18 +1,14 @@
 package bio.terra.workspace.app.configuration.external.controller;
 
-import static bio.terra.workspace.common.utils.MockMvcUtils.CREATE_CLOUD_CONTEXT_PATH_FORMAT;
 import static bio.terra.workspace.common.utils.MockMvcUtils.GENERATE_GCP_AI_NOTEBOOK_NAME_PATH_FORMAT;
 import static bio.terra.workspace.common.utils.MockMvcUtils.GENERATE_GCP_BQ_DATASET_NAME_PATH_FORMAT;
 import static bio.terra.workspace.common.utils.MockMvcUtils.GENERATE_GCP_GCS_BUCKET_NAME_PATH_FORMAT;
-import static bio.terra.workspace.common.utils.MockMvcUtils.GET_CLOUD_CONTEXT_PATH_FORMAT;
 import static bio.terra.workspace.common.utils.MockMvcUtils.WORKSPACES_V1_PATH;
 import static bio.terra.workspace.common.utils.MockMvcUtils.addAuth;
 import static bio.terra.workspace.common.utils.MockMvcUtils.addJsonContentType;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -23,27 +19,19 @@ import bio.terra.workspace.common.fixtures.WorkspaceFixtures;
 import bio.terra.workspace.generated.model.ApiCloudAiNotebookName;
 import bio.terra.workspace.generated.model.ApiCloudBqDatasetName;
 import bio.terra.workspace.generated.model.ApiCloudBucketName;
-import bio.terra.workspace.generated.model.ApiCloudPlatform;
-import bio.terra.workspace.generated.model.ApiCreateCloudContextRequest;
 import bio.terra.workspace.generated.model.ApiCreatedWorkspace;
 import bio.terra.workspace.generated.model.ApiGcpAiNotebookGenerateCloudNameRequestBody;
 import bio.terra.workspace.generated.model.ApiGcpBigQueryDatasetGenerateCloudNameRequestBody;
 import bio.terra.workspace.generated.model.ApiGcpGcsBucketGenerateCloudNameRequestBody;
-import bio.terra.workspace.generated.model.ApiJobControl;
 import bio.terra.workspace.generated.model.ApiTpsPolicyInput;
 import bio.terra.workspace.generated.model.ApiTpsPolicyPair;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
-import bio.terra.workspace.service.iam.model.SamConstants.SamResource;
-import bio.terra.workspace.service.iam.model.SamConstants.SamSpendProfileAction;
-import bio.terra.workspace.service.iam.model.WsmIamRole;
 import bio.terra.workspace.service.workspace.GcpCloudContextService;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import org.apache.http.HttpStatus;
-import org.broadinstitute.dsde.workbench.client.sam.model.UserStatusInfo;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -65,36 +53,21 @@ public class ControlledGcpResourceApiControllerTest extends BaseUnitTest {
 
   @Autowired MockMvc mockMvc;
   @Autowired ObjectMapper objectMapper;
-  @Autowired GcpCloudContextService gcpCloudContextService;
+  @MockBean GcpCloudContextService mockGcpCloudContextService;
   @MockBean FeatureConfiguration mockFeatureConfiguration;
   @MockBean TpsApiDispatch mockTpsApiDispatch;
   @MockBean SamService mockSamService;
 
   @BeforeEach
   public void setup() throws InterruptedException {
-    when(mockSamService.isAuthorized(
-            any(), eq(SamResource.SPEND_PROFILE), any(), eq(SamSpendProfileAction.LINK)))
-        .thenReturn(true);
-    when(mockSamService.listRequesterRoles(any(), any(), any()))
-        .thenReturn(List.of(WsmIamRole.OWNER));
-    when(mockSamService.getUserStatusInfo(any()))
-        .thenReturn(
-            new UserStatusInfo()
-                .userEmail(USER_REQUEST.getEmail())
-                .userSubjectId(USER_REQUEST.getSubjectId()));
-
-    when(mockFeatureConfiguration.isTpsEnabled()).thenReturn(true);
-    // We don't need to mock tpsCheck() because Mockito will already do nothing by default.
+    when(mockGcpCloudContextService.getRequiredGcpProject(any())).thenReturn("fake-project-id");
   }
 
   @Test
   public void getCloudNameFromGcsBucketName() throws Exception {
     UUID workspaceId = createDefaultWorkspace().getId();
-    createWorkspaceAndCloudContext(workspaceId);
-
-    String projectId = gcpCloudContextService.getRequiredGcpProject(workspaceId);
     ApiGcpGcsBucketGenerateCloudNameRequestBody bucketNameRequest =
-        new ApiGcpGcsBucketGenerateCloudNameRequestBody().bucketName("my-bucket");
+        new ApiGcpGcsBucketGenerateCloudNameRequestBody().gcsBucketName("my-bucket");
 
     String serializedGetResponse =
         mockMvc
@@ -113,16 +86,16 @@ public class ControlledGcpResourceApiControllerTest extends BaseUnitTest {
 
     ApiCloudBucketName generatedGcsBucketName =
         objectMapper.readValue(serializedGetResponse, ApiCloudBucketName.class);
+
+    String projectId = mockGcpCloudContextService.getRequiredGcpProject(workspaceId);
     assertEquals(
         generatedGcsBucketName.getGeneratedCloudBucketName(),
-        bucketNameRequest.getBucketName() + "-" + projectId);
+        bucketNameRequest.getGcsBucketName() + "-" + projectId);
   }
 
   @Test
   public void getCloudNameFromBigQueryDatasetName() throws Exception {
     UUID workspaceId = createDefaultWorkspace().getId();
-    createWorkspaceAndCloudContext(workspaceId);
-
     ApiGcpBigQueryDatasetGenerateCloudNameRequestBody bqDatasetNameRequest =
         new ApiGcpBigQueryDatasetGenerateCloudNameRequestBody().bigQueryDatasetName("bq-dataset");
 
@@ -151,8 +124,6 @@ public class ControlledGcpResourceApiControllerTest extends BaseUnitTest {
   @Test
   public void getCloudNameFromAiNotebookInstanceName() throws Exception {
     UUID workspaceId = createDefaultWorkspace().getId();
-    createWorkspaceAndCloudContext(workspaceId);
-
     ApiGcpAiNotebookGenerateCloudNameRequestBody aiNotebookNameRequest =
         new ApiGcpAiNotebookGenerateCloudNameRequestBody().aiNotebookName("ai-notebook");
 
@@ -193,40 +164,5 @@ public class ControlledGcpResourceApiControllerTest extends BaseUnitTest {
             .getResponse()
             .getContentAsString();
     return objectMapper.readValue(serializedResponse, ApiCreatedWorkspace.class);
-  }
-
-  private void createWorkspaceAndCloudContext(UUID workspaceId) throws Exception {
-
-    String fakeJobId = workspaceId.toString();
-
-    ApiCreateCloudContextRequest request =
-        new ApiCreateCloudContextRequest()
-            .cloudPlatform(ApiCloudPlatform.GCP)
-            .jobControl(new ApiJobControl().id(fakeJobId));
-    mockMvc
-        .perform(
-            addJsonContentType(
-                addAuth(
-                    post(String.format(CREATE_CLOUD_CONTEXT_PATH_FORMAT, workspaceId))
-                        .contentType(MediaType.APPLICATION_JSON_VALUE)
-                        .content(objectMapper.writeValueAsString(request)),
-                    USER_REQUEST)))
-        .andExpect(status().is(HttpStatus.SC_ACCEPTED));
-
-    for (int i = 0; i < 20; i++) {
-      try {
-        mockMvc
-            .perform(
-                (addAuth(
-                    get(String.format(GET_CLOUD_CONTEXT_PATH_FORMAT, workspaceId, fakeJobId)),
-                    USER_REQUEST)))
-            .andExpect(status().is(HttpStatus.SC_OK));
-      } catch (AssertionError e) {
-        System.out.println("Try it again.");
-        Thread.sleep(1000);
-        continue;
-      }
-      break;
-    }
   }
 }

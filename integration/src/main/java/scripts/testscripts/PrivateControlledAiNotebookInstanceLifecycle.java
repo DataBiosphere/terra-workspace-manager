@@ -124,7 +124,7 @@ public class PrivateControlledAiNotebookInstanceLifecycle extends WorkspaceAlloc
     CloudAiNotebookName cloudAiNotebookName =
         resourceUserApi.getCloudNameFromAiNotebookInstanceName(
             aiNotebookNameRequest, getWorkspaceId());
-    assertEquals(instanceId.toLowerCase(), cloudAiNotebookName.getGeneratedCloudAiNotebookName());
+    assertEquals(cloudAiNotebookName.getGeneratedCloudAiNotebookName(), instanceId.toLowerCase());
 
     // Any workspace user should be able to enumerate notebooks, even though they can't
     // read or write them.

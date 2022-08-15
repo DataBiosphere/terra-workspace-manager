@@ -157,7 +157,7 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
       UUID workspaceUuid, ApiGcpGcsBucketGenerateCloudNameRequestBody name) {
     String generatedBucketName =
         ControlledGcsBucketHandler.getHandler()
-            .generateCloudName(workspaceUuid, name.getBucketName());
+            .generateCloudName(workspaceUuid, name.getGcsBucketName());
     var response = new ApiCloudBucketName().generatedCloudBucketName(generatedBucketName);
     return new ResponseEntity<>(response, HttpStatus.OK);
   }
