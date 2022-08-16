@@ -14,13 +14,13 @@ import bio.terra.workspace.api.WorkspaceApi;
 import bio.terra.workspace.client.ApiException;
 import bio.terra.workspace.model.AccessScope;
 import bio.terra.workspace.model.CloningInstructionsEnum;
-import bio.terra.workspace.model.CloudBucketName;
 import bio.terra.workspace.model.ControlledResourceIamRole;
 import bio.terra.workspace.model.CreatedControlledGcpGcsBucket;
 import bio.terra.workspace.model.DeleteControlledGcpGcsBucketRequest;
 import bio.terra.workspace.model.DeleteControlledGcpGcsBucketResult;
-import bio.terra.workspace.model.GcpGcsBucketGenerateCloudNameRequestBody;
 import bio.terra.workspace.model.GcpGcsBucketResource;
+import bio.terra.workspace.model.GcsBucketCloudName;
+import bio.terra.workspace.model.GenerateGcpGcsBucketCloudNameRequestBody;
 import bio.terra.workspace.model.GrantRoleRequestBody;
 import bio.terra.workspace.model.IamRole;
 import bio.terra.workspace.model.JobControl;
@@ -108,12 +108,12 @@ public class PrivateControlledGcsBucketLifecycle extends WorkspaceAllocateTestSc
     String bucketName = gotBucket.getAttributes().getBucketName();
     assertEquals(bucket.getGcpBucket().getAttributes().getBucketName(), bucketName);
 
-    GcpGcsBucketGenerateCloudNameRequestBody bucketNameRequest =
-        new GcpGcsBucketGenerateCloudNameRequestBody().gcsBucketName(bucketName);
+    GenerateGcpGcsBucketCloudNameRequestBody bucketNameRequest =
+        new GenerateGcpGcsBucketCloudNameRequestBody().gcsBucketName(bucketName);
 
-    CloudBucketName cloudBucketName =
-        privateUserResourceApi.getCloudNameFromGcsBucketName(bucketNameRequest, getWorkspaceId());
-    assertEquals(cloudBucketName.getGeneratedCloudBucketName(), bucketName + "-" + projectId);
+    GcsBucketCloudName BucketcloudName =
+        privateUserResourceApi.generateGcsGcsBucketCloudName(bucketNameRequest, getWorkspaceId());
+    assertEquals(BucketcloudName.getGeneratedBucketCloudName(), bucketName + "-" + projectId);
 
     // Assert the bucket is assigned to privateResourceUser, even though resource user was
     // not specified

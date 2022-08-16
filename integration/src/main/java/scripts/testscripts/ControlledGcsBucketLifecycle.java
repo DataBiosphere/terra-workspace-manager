@@ -33,7 +33,6 @@ import bio.terra.workspace.model.CloneControlledGcpGcsBucketRequest;
 import bio.terra.workspace.model.CloneControlledGcpGcsBucketResult;
 import bio.terra.workspace.model.ClonedControlledGcpGcsBucket;
 import bio.terra.workspace.model.CloningInstructionsEnum;
-import bio.terra.workspace.model.CloudBucketName;
 import bio.terra.workspace.model.CloudPlatform;
 import bio.terra.workspace.model.ControlledResourceCommonFields;
 import bio.terra.workspace.model.ControlledResourceIamRole;
@@ -41,10 +40,11 @@ import bio.terra.workspace.model.CreateControlledGcpGcsBucketRequestBody;
 import bio.terra.workspace.model.CreatedControlledGcpGcsBucket;
 import bio.terra.workspace.model.GcpGcsBucketCreationParameters;
 import bio.terra.workspace.model.GcpGcsBucketDefaultStorageClass;
-import bio.terra.workspace.model.GcpGcsBucketGenerateCloudNameRequestBody;
 import bio.terra.workspace.model.GcpGcsBucketLifecycle;
 import bio.terra.workspace.model.GcpGcsBucketResource;
 import bio.terra.workspace.model.GcpGcsBucketUpdateParameters;
+import bio.terra.workspace.model.GcsBucketCloudName;
+import bio.terra.workspace.model.GenerateGcpGcsBucketCloudNameRequestBody;
 import bio.terra.workspace.model.JobControl;
 import bio.terra.workspace.model.ManagedBy;
 import bio.terra.workspace.model.ResourceList;
@@ -135,13 +135,13 @@ public class ControlledGcsBucketLifecycle extends GcpWorkspaceCloneTestScriptBas
         gotBucket.getAttributes().getBucketName());
     assertEquals(bucketName, gotBucket.getAttributes().getBucketName());
 
-    GcpGcsBucketGenerateCloudNameRequestBody bucketNameRequest =
-        new GcpGcsBucketGenerateCloudNameRequestBody().gcsBucketName(bucketName);
-    CloudBucketName cloudBucketName =
-        resourceApi.getCloudNameFromGcsBucketName(bucketNameRequest, getWorkspaceId());
+    GenerateGcpGcsBucketCloudNameRequestBody bucketNameRequest =
+        new GenerateGcpGcsBucketCloudNameRequestBody().gcsBucketName(bucketName);
+    GcsBucketCloudName BucketcloudName =
+        resourceApi.generateGcsGcsBucketCloudName(bucketNameRequest, getWorkspaceId());
 
     assertEquals(
-        cloudBucketName.getGeneratedCloudBucketName(), bucketName + "-" + getSourceProjectId());
+        BucketcloudName.getGeneratedBucketCloudName(), bucketName + "-" + getSourceProjectId());
 
     try (GcsBucketAccessTester tester =
         new GcsBucketAccessTester(testUser, bucketName, getSourceProjectId())) {

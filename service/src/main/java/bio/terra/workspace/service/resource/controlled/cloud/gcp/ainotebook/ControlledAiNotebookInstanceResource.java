@@ -32,9 +32,6 @@ import bio.terra.workspace.service.resource.model.WsmResourceFamily;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import java.time.Instant;
-import java.time.ZoneId;
-import java.time.format.DateTimeFormatter;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
@@ -262,10 +259,7 @@ public class ControlledAiNotebookInstanceResource extends ControlledResource {
   /** Returns an auto generated instance name with the username and date time. */
   public static String generateInstanceId(String resourceName) {
     String mangledUsername = mangledInstanceName(resourceName);
-    String localDateTimeSuffix =
-        DateTimeFormatter.ofPattern(AUTO_NAME_DATE_FORMAT)
-            .format(Instant.now().atZone(ZoneId.systemDefault()));
-    return mangledUsername + localDateTimeSuffix;
+    return mangledUsername;
   }
 
   /**

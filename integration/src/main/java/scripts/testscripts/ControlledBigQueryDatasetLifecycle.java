@@ -14,14 +14,14 @@ import bio.terra.workspace.api.ControlledGcpResourceApi;
 import bio.terra.workspace.api.ResourceApi;
 import bio.terra.workspace.api.WorkspaceApi;
 import bio.terra.workspace.client.ApiException;
+import bio.terra.workspace.model.BqDatasetCloudId;
 import bio.terra.workspace.model.CloneControlledGcpBigQueryDatasetRequest;
 import bio.terra.workspace.model.CloneControlledGcpBigQueryDatasetResult;
 import bio.terra.workspace.model.ClonedControlledGcpBigQueryDataset;
 import bio.terra.workspace.model.CloningInstructionsEnum;
-import bio.terra.workspace.model.CloudBqDatasetName;
-import bio.terra.workspace.model.GcpBigQueryDatasetGenerateCloudNameRequestBody;
 import bio.terra.workspace.model.GcpBigQueryDatasetResource;
 import bio.terra.workspace.model.GcpBigQueryDatasetUpdateParameters;
+import bio.terra.workspace.model.GenerateGcpBigQueryDatasetCloudIDRequestBody;
 import bio.terra.workspace.model.GrantRoleRequestBody;
 import bio.terra.workspace.model.IamRole;
 import bio.terra.workspace.model.JobControl;
@@ -122,14 +122,13 @@ public class ControlledBigQueryDatasetLifecycle extends GcpWorkspaceCloneTestScr
     assertEquals(createdDataset, fetchedResource);
     assertEquals(DATASET_RESOURCE_NAME, fetchedResource.getAttributes().getDatasetId());
 
-    GcpBigQueryDatasetGenerateCloudNameRequestBody bqDatasetNameRequest =
-        new GcpBigQueryDatasetGenerateCloudNameRequestBody()
+    GenerateGcpBigQueryDatasetCloudIDRequestBody bqDatasetNameRequest =
+        new GenerateGcpBigQueryDatasetCloudIDRequestBody()
             .bigQueryDatasetName(DATASET_RESOURCE_NAME);
-    CloudBqDatasetName cloudBqDatasetName =
-        ownerResourceApi.getCloudNameFromBigQueryDatasetName(
-            bqDatasetNameRequest, getWorkspaceId());
+    BqDatasetCloudId cloudBqDatasetName =
+        ownerResourceApi.generateBigQueryDatasetCloudId(bqDatasetNameRequest, getWorkspaceId());
     assertEquals(
-        cloudBqDatasetName.getGeneratedCloudDatasetName(), DATASET_RESOURCE_NAME.replace("-", "_"));
+        cloudBqDatasetName.getGeneratedDatasetCloudId(), DATASET_RESOURCE_NAME.replace("-", "_"));
 
     createControlledDatasetWithBothResourceNameAndDatasetIdSpecified(ownerResourceApi);
 

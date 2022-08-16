@@ -69,7 +69,7 @@ public class ControlledAiNotebookInstanceResourceTest extends BaseUnitTest {
     String instanceName = "yuhuyoyo";
     String instanceId = ControlledAiNotebookInstanceResource.generateInstanceId(instanceName);
 
-    assertTrue(instanceId.startsWith("yuhuyoyo-"));
+    assertTrue(instanceId.startsWith("yuhuyoyo"));
   }
 
   @Test
@@ -77,14 +77,7 @@ public class ControlledAiNotebookInstanceResourceTest extends BaseUnitTest {
     String instanceName = "yu_hu_yo_yo";
     String instanceId = ControlledAiNotebookInstanceResource.generateInstanceId(instanceName);
 
-    assertTrue(instanceId.startsWith("yuhuyoyo-"));
-  }
-
-  @Test
-  public void generateInstanceId_userIdIsNull_prefixWithNotebook() {
-    String instanceId = ControlledAiNotebookInstanceResource.generateInstanceId(null);
-
-    assertTrue(instanceId.startsWith("notebook"));
+    assertTrue(instanceId.startsWith("yuhuyoyo"));
   }
 
   @Test
@@ -99,7 +92,7 @@ public class ControlledAiNotebookInstanceResourceTest extends BaseUnitTest {
     String instanceName = "YUHUYOYO";
     String instanceId = ControlledAiNotebookInstanceResource.generateInstanceId(instanceName);
 
-    assertTrue(instanceId.startsWith("yuhuyoyo-"));
+    assertTrue(instanceId.startsWith("yuhuyoyo"));
   }
 
   @Test
