@@ -31,7 +31,7 @@ public class ControlledAzureStorageContainerHandler implements WsmResourceHandle
         .build();
   }
 
-  public String generateCloudName(UUID workspaceUuid, String bucketName) {
+  public String generateCloudName(UUID workspaceUuid, String resourceName) {
     return "";
   }
 }

@@ -21,7 +21,7 @@ public class ReferencedTerraWorkspaceHandler implements WsmResourceHandler {
     return new ReferencedTerraWorkspaceResource(dbResource);
   }
 
-  public String generateCloudName(UUID workspaceUuid, String bucketName) {
+  public String generateCloudName(UUID workspaceUuid, String resourceName) {
     return "";
   }
 }

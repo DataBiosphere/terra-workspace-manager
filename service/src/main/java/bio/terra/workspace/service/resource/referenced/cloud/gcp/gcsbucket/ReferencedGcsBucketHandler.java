@@ -21,7 +21,7 @@ public class ReferencedGcsBucketHandler implements WsmResourceHandler {
     return new ReferencedGcsBucketResource(dbResource);
   }
 
-  public String generateCloudName(UUID workspaceUuid, String bucketName) {
+  public String generateCloudName(UUID workspaceUuid, String resourceName) {
     return "";
   }
 }

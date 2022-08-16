@@ -33,7 +33,7 @@ public class ControlledAzureRelayNamespaceHandler implements WsmResourceHandler 
     return resource;
   }
 
-  public String generateCloudName(UUID workspaceUuid, String bucketName) {
+  public String generateCloudName(UUID workspaceUuid, String resourceName) {
     return "";
   }
 }

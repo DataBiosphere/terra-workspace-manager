@@ -21,7 +21,7 @@ public class ReferencedGitRepoHandler implements WsmResourceHandler {
     return new ReferencedGitRepoResource(dbResource);
   }
 
-  public String generateCloudName(UUID workspaceUuid, String bucketName) {
+  public String generateCloudName(UUID workspaceUuid, String resourceName) {
     return "";
   }
 }

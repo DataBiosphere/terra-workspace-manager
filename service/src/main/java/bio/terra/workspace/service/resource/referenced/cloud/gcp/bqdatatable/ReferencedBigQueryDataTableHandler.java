@@ -21,7 +21,7 @@ public class ReferencedBigQueryDataTableHandler implements WsmResourceHandler {
     return new ReferencedBigQueryDataTableResource(dbResource);
   }
 
-  public String generateCloudName(UUID workspaceUuid, String bucketName) {
+  public String generateCloudName(UUID workspaceUuid, String resourceName) {
     return "";
   }
 }

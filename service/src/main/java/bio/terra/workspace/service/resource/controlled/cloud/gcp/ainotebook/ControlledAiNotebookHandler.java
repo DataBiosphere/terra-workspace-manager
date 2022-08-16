@@ -56,7 +56,7 @@ public class ControlledAiNotebookHandler implements WsmResourceHandler {
     return resource;
   }
 
-  public String generateCloudName(@Nullable UUID workspaceUuid, String bucketName) {
-    return bucketName;
+  public String generateCloudName(@Nullable UUID workspaceUuid, String aiNotebookName) {
+    return aiNotebookName;
   }
 }

@@ -55,7 +55,7 @@ public class ControlledBigQueryDatasetHandler implements WsmResourceHandler {
     return resource;
   }
 
-  public String generateCloudName(@Nullable UUID workspaceUuid, String bucketName) {
-    return bucketName.replace("-", "_");
+  public String generateCloudName(@Nullable UUID workspaceUuid, String bqDatasetName) {
+    return bqDatasetName.replace("-", "_");
   }
 }
