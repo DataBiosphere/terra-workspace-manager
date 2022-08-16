@@ -20,5 +20,12 @@ public interface WsmResourceHandler {
    */
   WsmResource makeResourceFromDb(DbResource dbResource);
 
+  /**
+   * Generate the resource cloud-native name for resource
+   *
+   * @param workspaceUuid workspace UUID
+   * @param resourceName resource name
+   * @return cloud-native name
+   */
   String generateCloudName(@Nullable UUID workspaceUuid, String resourceName);
 }

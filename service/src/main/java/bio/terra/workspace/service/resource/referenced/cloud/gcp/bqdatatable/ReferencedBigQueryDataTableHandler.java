@@ -4,6 +4,7 @@ import bio.terra.workspace.db.model.DbResource;
 import bio.terra.workspace.service.resource.model.WsmResource;
 import bio.terra.workspace.service.resource.model.WsmResourceHandler;
 import java.util.UUID;
+import javax.annotation.Nullable;
 
 public class ReferencedBigQueryDataTableHandler implements WsmResourceHandler {
   private static ReferencedBigQueryDataTableHandler theHandler;
@@ -21,7 +22,7 @@ public class ReferencedBigQueryDataTableHandler implements WsmResourceHandler {
     return new ReferencedBigQueryDataTableResource(dbResource);
   }
 
-  public String generateCloudName(UUID workspaceUuid, String resourceName) {
+  public String generateCloudName(@Nullable UUID workspaceUuid, String resourceName) {
     return "";
   }
 }

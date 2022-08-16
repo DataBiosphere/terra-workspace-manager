@@ -6,6 +6,7 @@ import bio.terra.workspace.service.resource.controlled.model.ControlledResourceF
 import bio.terra.workspace.service.resource.model.WsmResource;
 import bio.terra.workspace.service.resource.model.WsmResourceHandler;
 import java.util.UUID;
+import javax.annotation.Nullable;
 
 public class ControlledAzureStorageHandler implements WsmResourceHandler {
   private static ControlledAzureStorageHandler theHandler;
@@ -30,7 +31,7 @@ public class ControlledAzureStorageHandler implements WsmResourceHandler {
         .build();
   }
 
-  public String generateCloudName(UUID workspaceUuid, String resourceName) {
+  public String generateCloudName(@Nullable UUID workspaceUuid, String resourceName) {
     return "";
   }
 }

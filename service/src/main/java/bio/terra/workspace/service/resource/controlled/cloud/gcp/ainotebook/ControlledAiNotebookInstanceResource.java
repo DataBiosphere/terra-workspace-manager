@@ -39,7 +39,6 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import javax.annotation.Nullable;
-import org.apache.commons.lang3.StringUtils;
 
 /** A {@link ControlledResource} for a Google AI Platform Notebook instance. */
 public class ControlledAiNotebookInstanceResource extends ControlledResource {
@@ -261,8 +260,8 @@ public class ControlledAiNotebookInstanceResource extends ControlledResource {
   }
 
   /** Returns an auto generated instance name with the username and date time. */
-  public static String generateInstanceId(@Nullable String instanceName) {
-    String mangledUsername = mangleInstanceName(extractInstanceName(instanceName));
+  public static String generateInstanceId(String resourceName) {
+    String mangledUsername = mangledInstanceName(resourceName);
     String localDateTimeSuffix =
         DateTimeFormatter.ofPattern(AUTO_NAME_DATE_FORMAT)
             .format(Instant.now().atZone(ZoneId.systemDefault()));
@@ -276,7 +275,7 @@ public class ControlledAiNotebookInstanceResource extends ControlledResource {
    * with a lowercase alpha character, only alphanumerics and '-' of max length 63. I don't have a
    * documentation link, but gcloud will complain otherwise.
    */
-  private static String mangleInstanceName(String instanceName) {
+  private static String mangledInstanceName(String instanceName) {
     // Strip non alpha-numeric or '-' characters.
     String mangledName = instanceName.replaceAll("[^a-zA-Z0-9-]", "");
     if (mangledName.isEmpty()) {
@@ -289,13 +288,6 @@ public class ControlledAiNotebookInstanceResource extends ControlledResource {
       mangledName = mangledName.substring(0, maxNameLength);
     }
     return mangledName;
-  }
-
-  private static String extractInstanceName(@Nullable String validName) {
-    if (StringUtils.isEmpty(validName)) {
-      return "";
-    }
-    return validName;
   }
 
   private static <T> void checkFieldNonNull(@Nullable T fieldValue, String fieldName) {

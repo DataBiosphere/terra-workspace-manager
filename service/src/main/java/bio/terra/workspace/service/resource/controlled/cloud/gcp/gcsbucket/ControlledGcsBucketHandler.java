@@ -7,6 +7,7 @@ import bio.terra.workspace.service.resource.model.WsmResource;
 import bio.terra.workspace.service.resource.model.WsmResourceHandler;
 import bio.terra.workspace.service.workspace.GcpCloudContextService;
 import java.util.UUID;
+import javax.annotation.Nullable;
 import javax.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -43,7 +44,10 @@ public class ControlledGcsBucketHandler implements WsmResourceHandler {
     return resource;
   }
 
-  public String generateCloudName(UUID workspaceUuid, String bucketName) {
+  public String generateCloudName(@Nullable UUID workspaceUuid, String bucketName) {
+    if (workspaceUuid == null) {
+      return bucketName;
+    }
     String projectId = gcpCloudContextService.getRequiredGcpProject(workspaceUuid);
     return String.format("%s-%s", bucketName, projectId);
   }

@@ -78,18 +78,18 @@ paths:
     parameters:
     - $ref: '#/components/parameters/WorkspaceId'
     post:
-      summary: Generate a cloud native controlled Gcp bucket name
-      operationId: getCloudNameFromBigQueryDatasetName
+      summary: Generate a cloud native controlled big query dataset id
+      operationId: generateBigQueryDatasetCloudId
       tags: [ ControlledGcpResource ]
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/GcpBigQueryDatasetGenerateCloudNameRequestBody'
+              $ref: '#/components/schemas/GenerateGcpBigQueryDatasetCloudIDRequestBody'
       responses:
         '200':
-          $ref: '#/components/responses/CloudBqDatasetNameResponse'
+          $ref: '#/components/responses/BqDatasetCloudIdResponse'
         '403':
           $ref: '#/components/responses/PermissionDenied'
         '500':
@@ -272,15 +272,15 @@ components:
         updateParameters:
           $ref: '#/components/schemas/GcpBigQueryDatasetUpdateParameters'
 
-    CloudBqDatasetName:
+    BqDatasetCloudId:
       type: object
-      required: [ generatedCloudDatasetName ]
+      required: [ generatedDatasetCloudId ]
       properties:
-        generatedCloudDatasetName:
+        generatedDatasetCloudId:
           type: string
 
-    GcpBigQueryDatasetGenerateCloudNameRequestBody:
-      description: The body for a request to grant a role to a single user.
+    GenerateGcpBigQueryDatasetCloudIDRequestBody:
+      description: The body for a request of big query dataset cloud-native name.
       type: object
       required: [ bigQueryDatasetName ]
       properties:
@@ -302,9 +302,9 @@ components:
           schema:
             $ref: '#/components/schemas/GcpBigQueryDatasetResource'
 
-    CloudBqDatasetNameResponse:
+    BqDatasetCloudIdResponse:
       description: A valid Big query Dataset name per https://cloud.google.com/vertex-ai/docs/workbench/user-managed/create-new.
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/CloudBqDatasetName'
+            $ref: '#/components/schemas/BqDatasetCloudId'

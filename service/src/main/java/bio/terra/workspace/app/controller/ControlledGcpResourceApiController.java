@@ -153,12 +153,12 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
   }
 
   @Override
-  public ResponseEntity<ApiCloudBucketName> getCloudNameFromGcsBucketName(
-      UUID workspaceUuid, ApiGcpGcsBucketGenerateCloudNameRequestBody name) {
+  public ResponseEntity<ApiGcsBucketCloudName> generateGcsGcsBucketCloudName(
+      UUID workspaceUuid, ApiGenerateGcpGcsBucketCloudNameRequestBody name) {
     String generatedBucketName =
         ControlledGcsBucketHandler.getHandler()
             .generateCloudName(workspaceUuid, name.getGcsBucketName());
-    var response = new ApiCloudBucketName().generatedCloudBucketName(generatedBucketName);
+    var response = new ApiGcsBucketCloudName().generatedBucketCloudName(generatedBucketName);
     return new ResponseEntity<>(response, HttpStatus.OK);
   }
 
@@ -247,13 +247,12 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
   }
 
   @Override
-  public ResponseEntity<ApiCloudBqDatasetName> getCloudNameFromBigQueryDatasetName(
-      UUID workspaceUuid, ApiGcpBigQueryDatasetGenerateCloudNameRequestBody name) {
+  public ResponseEntity<ApiBqDatasetCloudId> generateBigQueryDatasetCloudId(
+      UUID workspaceUuid, ApiGenerateGcpBigQueryDatasetCloudIDRequestBody name) {
     String generatedCloudBqDatasetName =
         ControlledBigQueryDatasetHandler.getHandler()
             .generateCloudName(workspaceUuid, name.getBigQueryDatasetName());
-    var response =
-        new ApiCloudBqDatasetName().generatedCloudDatasetName(generatedCloudBqDatasetName);
+    var response = new ApiBqDatasetCloudId().generatedDatasetCloudId(generatedCloudBqDatasetName);
     return new ResponseEntity<>(response, HttpStatus.OK);
   }
 
@@ -363,13 +362,13 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
   }
 
   @Override
-  public ResponseEntity<ApiCloudAiNotebookName> getCloudNameFromAiNotebookInstanceName(
-      UUID workspaceUuid, ApiGcpAiNotebookGenerateCloudNameRequestBody name) {
+  public ResponseEntity<ApiAiNotebookCloudId> generateAiNotebookCloudInstanceId(
+      UUID workspaceUuid, ApiGenerateGcpAiNotebookCloudIdRequestBody name) {
     String generatedAiNotebookName =
         ControlledAiNotebookHandler.getHandler()
             .generateCloudName(workspaceUuid, name.getAiNotebookName());
     var response =
-        new ApiCloudAiNotebookName().generatedCloudAiNotebookName(generatedAiNotebookName);
+        new ApiAiNotebookCloudId().generatedAiNotebookAiNotebookCloudId(generatedAiNotebookName);
     return new ResponseEntity<>(response, HttpStatus.OK);
   }
 

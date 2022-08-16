@@ -134,18 +134,18 @@ paths:
     parameters:
     - $ref: '#/components/parameters/WorkspaceId'
     post:
-      summary: Generate a cloud native controlled Gcp bucket name
-      operationId: getCloudNameFromAiNotebookInstanceName
+      summary: Generate a cloud native controlled AI notebook instance name
+      operationId: generateAiNotebookCloudInstanceId
       tags: [ ControlledGcpResource ]
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/GcpAiNotebookGenerateCloudNameRequestBody'
+              $ref: '#/components/schemas/GenerateGcpAiNotebookCloudIdRequestBody'
       responses:
         '200':
-          $ref: '#/components/responses/CloudAiNotebookNameResponse'
+          $ref: '#/components/responses/CloudAiNotebookIdResponse'
         '403':
           $ref: '#/components/responses/PermissionDenied'
         '500':
@@ -351,16 +351,16 @@ components:
         updateParameters:
           $ref: '#/components/schemas/GcpAiNotebookUpdateParameters'
 
-    CloudAiNotebookName:
-      description: Cloud native Ai notebook Name
+    AiNotebookCloudId:
+      description: Ai notebook Cloud native ID
       type: object
-      required: [ generatedCloudAiNotebookName ]
+      required: [ generatedAiNotebookAiNotebookCloudId ]
       properties:
-        generatedCloudAiNotebookName:
+        generatedAiNotebookAiNotebookCloudId:
           type: string
 
-    GcpAiNotebookGenerateCloudNameRequestBody:
-      description: The body for a request to grant a role to a single user.
+    GenerateGcpAiNotebookCloudIdRequestBody:
+      description: The body for request of the ai notebook cloud instance id.
       type: object
       required: [ aiNotebookName ]
       properties:
@@ -382,9 +382,9 @@ components:
           schema:
             $ref: '#/components/schemas/DeleteControlledGcpAiNotebookInstanceResult'
 
-    CloudAiNotebookNameResponse:
-      description: A valid AI notebook name per https://cloud.google.com/bigquery/docs/datasets#dataset-naming.
+    CloudAiNotebookIdResponse:
+      description: A valid AI notebook name, there is no reference.
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/CloudAiNotebookName'
+            $ref: '#/components/schemas/AiNotebookCloudId'

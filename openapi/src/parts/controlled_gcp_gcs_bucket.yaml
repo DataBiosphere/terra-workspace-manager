@@ -85,17 +85,17 @@ paths:
       - $ref: '#/components/parameters/WorkspaceId'
     post:
       summary: Generate a cloud native controlled Gcp bucket name
-      operationId: getCloudNameFromGcsBucketName
+      operationId: generateGcsGcsBucketCloudName
       tags: [ControlledGcpResource]
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/GcpGcsBucketGenerateCloudNameRequestBody'
+              $ref: '#/components/schemas/GenerateGcpGcsBucketCloudNameRequestBody'
       responses:
         '200':
-          $ref: '#/components/responses/CloudBucketNameResponse'
+          $ref: '#/components/responses/GcsBucketCloudNameResponse'
         '403':
           $ref: '#/components/responses/PermissionDenied'
         '500':
@@ -216,8 +216,8 @@ components:
         cloningInstructions:
           $ref: '#/components/schemas/CloningInstructionsEnum'
 
-    GcpGcsBucketGenerateCloudNameRequestBody:
-      description: The body for a request to grant a role to a single user.
+    GenerateGcpGcsBucketCloudNameRequestBody:
+      description: The body for a request of gcs bucket cloud name.
       type: object
       required: [ gcsBucketName ]
       properties:
@@ -438,11 +438,11 @@ components:
         updateParameters:
           $ref: '#/components/schemas/GcpGcsBucketUpdateParameters'
 
-    CloudBucketName:
+    GcsBucketCloudName:
       type: object
-      required: [ generatedCloudBucketName ]
+      required: [ generatedBucketCloudName ]
       properties:
-        generatedCloudBucketName:
+        generatedBucketCloudName:
           type: string
 
 
@@ -482,9 +482,9 @@ components:
           schema:
             $ref: '#/components/schemas/GcpGcsBucketResource'
 
-    CloudBucketNameResponse:
+    GcsBucketCloudNameResponse:
       description: A valid bucket name per https://cloud.google.com/storage/docs/naming-buckets.
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/CloudBucketName'
+            $ref: '#/components/schemas/GcsBucketCloudName'
