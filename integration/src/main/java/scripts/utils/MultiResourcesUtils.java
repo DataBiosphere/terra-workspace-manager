@@ -74,7 +74,11 @@ public class MultiResourcesUtils {
             CloningInstructionsEnum.NOTHING);
     GcpAiNotebookInstanceResource notebook =
         NotebookUtils.makeControlledNotebookUserPrivate(
-                workspaceUuid, /*instanceId=*/ null, /*location=*/ null, controlledGcpResourceApi)
+                workspaceUuid,
+                /*instanceId=*/ null,
+                /*location=*/ null,
+                controlledGcpResourceApi,
+                /*testValue=*/ null)
             .getAiNotebookInstance();
     // Create references to the above buckets and datasets
     GcpGcsBucketResource sharedBucketReference =

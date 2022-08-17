@@ -115,3 +115,11 @@ fi
 # Keep this as last thing in script. There will be integration test for git cloning (PF-1660). If this is last thing, then
 # integration test will ensure that everything in script worked.
 sudo -u "$JUPYTER_USER" sh -c 'terra git clone --all'
+
+# This block is for test only. If the notebook execute successfully down to
+# here, we knows that the script executed successfully.
+readonly TERRA_TEST_VALUE=$(get_metadata_value "instance/attributes/terra-test-value")
+readonly TERRA_GCP_NOTEBOOK_RESOURCE_NAME=$(get_metadata_value "instance/attributes/terra-gcp-notebook-resource-name")
+if [[ -n "${TERRA_TEST_VALUE}" ]]; then
+  sudo -u "${JUPYTER_USER}" sh -c "terra resource update gcp-notebook --name=${TERRA_GCP_NOTEBOOK_RESOURCE_NAME} --new-metadata=terra-test-result=${TERRA_TEST_VALUE}"
+fi
