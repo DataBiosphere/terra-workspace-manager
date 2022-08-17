@@ -61,8 +61,7 @@ public class NotebookUtils {
                     "terra-test-value",
                     Optional.ofNullable(testValue).orElse(""),
                     "terra-gcp-notebook-resource-name",
-                    resourceName))
-            .postStartupScript("https://raw.githubusercontent.com/DataBiosphere/terra-workspace-manager/265208353cd12e5f2128dba21b3ea0bffb084dfe/service/src/main/java/bio/terra/workspace/service/resource/controlled/cloud/gcp/ainotebook/post-startup.sh");
+                    resourceName));
 
     var commonParameters =
         new ControlledResourceCommonFields()

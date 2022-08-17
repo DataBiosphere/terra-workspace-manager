@@ -18,6 +18,7 @@ import bio.terra.stairway.StepResult;
 import bio.terra.stairway.StepStatus;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.app.configuration.external.CliConfiguration;
+import bio.terra.workspace.app.configuration.external.VersionConfiguration;
 import bio.terra.workspace.common.utils.GcpUtils;
 import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceAcceleratorConfig;
 import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceContainerImage;
@@ -55,7 +56,7 @@ public class CreateAiNotebookInstanceStep implements Step {
 
   /** Default post-startup-script when starting a notebook instance. */
   protected static final String DEFAULT_POST_STARTUP_SCRIPT =
-      "https://raw.githubusercontent.com/DataBiosphere/terra-workspace-manager/main/service/src/main/java/bio/terra/workspace/service/resource/controlled/cloud/gcp/ainotebook/post-startup.sh";
+      "https://raw.githubusercontent.com/DataBiosphere/terra-workspace-manager/%s/service/src/main/java/bio/terra/workspace/service/resource/controlled/cloud/gcp/ainotebook/post-startup.sh";
   /** The Notebook instance metadata value used to set the service account proxy mode. */
   // git secrets gets a false positive if 'service_account' is double quoted.
   private static final String PROXY_MODE_SA_VALUE = "service_" + "account";
@@ -75,18 +76,21 @@ public class CreateAiNotebookInstanceStep implements Step {
   private final String workspaceUserFacingId;
   private final CrlService crlService;
   private final CliConfiguration cliConfiguration;
+  private final VersionConfiguration versionConfiguration;
 
   public CreateAiNotebookInstanceStep(
       ControlledAiNotebookInstanceResource resource,
       String petEmail,
       String workspaceUserFacingId,
       CrlService crlService,
-      CliConfiguration cliConfiguration) {
+      CliConfiguration cliConfiguration,
+      VersionConfiguration versionConfiguration) {
     this.petEmail = petEmail;
     this.resource = resource;
     this.workspaceUserFacingId = workspaceUserFacingId;
     this.crlService = crlService;
     this.cliConfiguration = cliConfiguration;
+    this.versionConfiguration = versionConfiguration;
   }
 
   @Override
@@ -105,7 +109,8 @@ public class CreateAiNotebookInstanceStep implements Step {
             projectId,
             petEmail,
             workspaceUserFacingId,
-            cliConfiguration.getServerName());
+            cliConfiguration.getServerName(),
+            versionConfiguration.getGitHash());
 
     AIPlatformNotebooksCow notebooks = crlService.getAIPlatformNotebooksCow();
     try {
@@ -140,13 +145,14 @@ public class CreateAiNotebookInstanceStep implements Step {
       String projectId,
       String serviceAccountEmail,
       String workspaceUserFacingId,
-      String cliServer) {
+      String cliServer,
+      String gitHash) {
     Instance instance = new Instance();
     ApiGcpAiNotebookInstanceCreationParameters creationParameters =
         flightContext
             .getInputParameters()
             .get(CREATE_NOTEBOOK_PARAMETERS, ApiGcpAiNotebookInstanceCreationParameters.class);
-    setFields(creationParameters, serviceAccountEmail, workspaceUserFacingId, cliServer, instance);
+    setFields(creationParameters, serviceAccountEmail, workspaceUserFacingId, cliServer, instance, gitHash);
     setNetworks(instance, projectId, flightContext.getWorkingMap());
     return instance;
   }
@@ -157,11 +163,13 @@ public class CreateAiNotebookInstanceStep implements Step {
       String serviceAccountEmail,
       String workspaceUserFacingId,
       String cliServer,
-      Instance instance) {
+      Instance instance,
+      String gitHash) {
+    var gitHashOrDefault = StringUtils.isEmpty(gitHash) ? "main" : gitHash;
     instance
         .setPostStartupScript(
             Optional.ofNullable(creationParameters.getPostStartupScript())
-                .orElse(DEFAULT_POST_STARTUP_SCRIPT))
+                .orElse(String.format(DEFAULT_POST_STARTUP_SCRIPT, gitHashOrDefault)))
         .setMachineType(creationParameters.getMachineType())
         .setInstallGpuDriver(creationParameters.isInstallGpuDriver())
         .setCustomGpuDriverPath(creationParameters.getCustomGpuDriverPath())
@@ -222,6 +230,8 @@ public class CreateAiNotebookInstanceStep implements Step {
     metadata.put(WORKSPACE_ID_METADATA_KEY, workspaceUserFacingId);
     if (!StringUtils.isEmpty(cliServer)) {
       metadata.put(SERVER_ID_METADATA_KEY, cliServer);
+    } else {
+      metadata.put(SERVER_ID_METADATA_KEY, "broad-dev");
     }
     // Create the AI Notebook instance in the service account proxy mode to control proxy access by
     // means of IAM permissions on the service account.

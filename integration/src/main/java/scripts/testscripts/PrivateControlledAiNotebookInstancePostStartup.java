@@ -15,6 +15,7 @@ import com.google.api.services.notebooks.v1.AIPlatformNotebooks;
 import java.io.IOException;
 import java.time.Duration;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import org.apache.commons.lang3.RandomStringUtils;
@@ -39,8 +40,8 @@ public class PrivateControlledAiNotebookInstancePostStartup
   @Override
   protected void doUserJourney(TestUserSpecification testUser, WorkspaceApi workspaceApi)
       throws Exception {
-    CloudContextMaker.createGcpCloudContext(getWorkspaceId(), workspaceApi);
-
+    String projectId = CloudContextMaker.createGcpCloudContext(getWorkspaceId(), workspaceApi);
+    System.out.println(projectId);
     workspaceApi.grantRole(
         new GrantRoleRequestBody().memberEmail(resourceUser.userEmail),
         getWorkspaceId(),
@@ -53,7 +54,8 @@ public class PrivateControlledAiNotebookInstancePostStartup
             getWorkspaceId(), INSTANCE_ID, /*location=*/ null, resourceUserApi, testValue);
 
     AIPlatformNotebooks userNotebooks = ClientTestUtils.getAIPlatformNotebooksClient(resourceUser);
-    var instanceName = composeInstanceName(resourceUserApi, creationResult);
+    var resource = getNotebookResource(resourceUserApi, creationResult);
+    var instanceName = composeInstanceName(resource);
     Duration sleepDuration = Duration.ofMinutes(3);
     // Wait for notebook to startup.
     TimeUnit.MILLISECONDS.sleep(sleepDuration.toMillis());
@@ -79,30 +81,40 @@ public class PrivateControlledAiNotebookInstancePostStartup
               return null;
             });
     assertNotNull(proxyUrl);
+    Map<String, String> metadata = userNotebooks.projects().locations().instances().get(instanceName).execute().getMetadata();
+    assertEquals(testValue, metadata.get("terra-test-value"));
+    assertEquals(resource.getMetadata().getName(), metadata.get("terra-gcp-notebook-resource-name"));
+    System.out.println(userNotebooks.projects().locations().instances().get(instanceName).execute().getPostStartupScript());
     // Wait for the post-startup.sh to finish executing.
     TimeUnit.MILLISECONDS.sleep(sleepDuration.toMillis());
     var testResultValue =
         ClientTestUtils.getWithRetryOnException(
-            () ->
-                userNotebooks
-                    .projects()
-                    .locations()
-                    .instances()
-                    .get(instanceName)
-                    .execute()
-                    .getMetadata()
-                    .get("terra-test-result"));
+            () -> {
+              String result = userNotebooks
+                  .projects()
+                  .locations()
+                  .instances()
+                  .get(instanceName)
+                  .execute()
+                  .getMetadata()
+                  .get("terra-test-result");
+              if (result == null) {
+                throw new NullPointerException();
+              }
+              return result;
+            });
     assertEquals(testValue, testResultValue);
   }
 
-  private String composeInstanceName(
-      ControlledGcpResourceApi resourceUserApi,
-      CreatedControlledGcpAiNotebookInstanceResult creationResult)
-      throws ApiException {
+  private GcpAiNotebookInstanceResource getNotebookResource(ControlledGcpResourceApi resourceUserApi,
+      CreatedControlledGcpAiNotebookInstanceResult creationResult) throws ApiException {
     UUID resourceId = creationResult.getAiNotebookInstance().getMetadata().getResourceId();
 
-    GcpAiNotebookInstanceResource resource =
-        resourceUserApi.getAiNotebookInstance(getWorkspaceId(), resourceId);
+    return resourceUserApi.getAiNotebookInstance(getWorkspaceId(), resourceId);
+  }
+
+  private String composeInstanceName(
+      GcpAiNotebookInstanceResource resource) {
     String instanceName =
         String.format(
             "projects/%s/locations/%s/instances/%s",

@@ -56,7 +56,7 @@ public class CreateAiNotebookInstanceStepTest extends BaseUnitTest {
 
     Instance instance =
         CreateAiNotebookInstanceStep.setFields(
-            creationParameters, "foo@bar.com", WORKSPACE_ID, SERVER_ID, new Instance());
+            creationParameters, "foo@bar.com", WORKSPACE_ID, SERVER_ID, new Instance(), "main");
     assertEquals("script.sh", instance.getPostStartupScript());
     assertTrue(instance.getInstallGpuDriver());
     assertEquals("custom-path", instance.getCustomGpuDriverPath());
@@ -86,7 +86,8 @@ public class CreateAiNotebookInstanceStepTest extends BaseUnitTest {
             "foo@bar.com",
             WORKSPACE_ID,
             SERVER_ID,
-            new Instance());
+            new Instance(),
+            "main");
     assertThat(instance.getMetadata(), Matchers.aMapWithSize(3));
     assertDefaultMetadata(instance);
     assertEquals("foo@bar.com", instance.getServiceAccount());
@@ -113,7 +114,8 @@ public class CreateAiNotebookInstanceStepTest extends BaseUnitTest {
                 "foo@bar.com",
                 "workspaceId",
                 "server-id",
-                new Instance()));
+                new Instance(),
+                "main"));
     assertThrows(
         ReservedMetadataKeyException.class,
         () ->
@@ -124,7 +126,8 @@ public class CreateAiNotebookInstanceStepTest extends BaseUnitTest {
                 "foo@bar.com",
                 "workspaceId",
                 "server-id",
-                new Instance()));
+                new Instance(),
+                "main"));
     assertThrows(
         ReservedMetadataKeyException.class,
         () ->
@@ -135,6 +138,7 @@ public class CreateAiNotebookInstanceStepTest extends BaseUnitTest {
                 "foo@bar.com",
                 "workspaceId",
                 "server-id",
-                new Instance()));
+                new Instance(),
+                "main"));
   }
 }
