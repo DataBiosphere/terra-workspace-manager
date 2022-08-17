@@ -241,7 +241,8 @@ public class ControlledBigQueryDatasetResource extends ControlledResource {
         // But if the resource name is not a valid dataset name, we will need to generate a unique
         // dataset id.
         ResourceValidationUtils.validateBqDatasetName(datasetName);
-        this.datasetName = datasetName;
+        this.datasetName =
+            ControlledBigQueryDatasetHandler.getHandler().generateCloudName(null, datasetName);
       } catch (InvalidReferenceException e) {
         this.datasetName = generateUniqueDatasetId();
       }

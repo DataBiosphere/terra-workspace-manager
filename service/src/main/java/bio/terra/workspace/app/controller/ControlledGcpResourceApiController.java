@@ -73,8 +73,8 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
         toCommonFields(workspaceUuid, body.getCommon(), userRequest);
     ControlledGcsBucketResource resource =
         ControlledGcsBucketResource.builder()
-            .bucketName(body.getGcsBucket().getName())
             .common(commonFields)
+            .bucketName(body.getGcsBucket().getName())
             .build();
     Workspace workspace =
         workspaceService.validateMcWorkspaceAndAction(
@@ -153,7 +153,7 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
   }
 
   @Override
-  public ResponseEntity<ApiGcsBucketCloudName> generateGcsGcsBucketCloudName(
+  public ResponseEntity<ApiGcsBucketCloudName> generateGcpGcsBucketCloudName(
       UUID workspaceUuid, ApiGenerateGcpGcsBucketCloudNameRequestBody name) {
     String generatedBucketName =
         ControlledGcsBucketHandler.getHandler()

@@ -19,8 +19,6 @@ import bio.terra.workspace.model.CreatedControlledGcpGcsBucket;
 import bio.terra.workspace.model.DeleteControlledGcpGcsBucketRequest;
 import bio.terra.workspace.model.DeleteControlledGcpGcsBucketResult;
 import bio.terra.workspace.model.GcpGcsBucketResource;
-import bio.terra.workspace.model.GcsBucketCloudName;
-import bio.terra.workspace.model.GenerateGcpGcsBucketCloudNameRequestBody;
 import bio.terra.workspace.model.GrantRoleRequestBody;
 import bio.terra.workspace.model.IamRole;
 import bio.terra.workspace.model.JobControl;
@@ -52,6 +50,7 @@ public class PrivateControlledGcsBucketLifecycle extends WorkspaceAllocateTestSc
 
   private static final String BUCKET_PREFIX = "wsmtestbucket-";
   private static final String RESOURCE_PREFIX = "wsmtestresource-";
+  private static final int MAX_BUCKET_NAME_LENGTH = 63;
 
   private TestUserSpecification privateResourceUser;
   private TestUserSpecification workspaceReader;
@@ -107,13 +106,16 @@ public class PrivateControlledGcsBucketLifecycle extends WorkspaceAllocateTestSc
     GcpGcsBucketResource gotBucket = privateUserResourceApi.getBucket(getWorkspaceId(), resourceId);
     String bucketName = gotBucket.getAttributes().getBucketName();
     assertEquals(bucket.getGcpBucket().getAttributes().getBucketName(), bucketName);
-
-    GenerateGcpGcsBucketCloudNameRequestBody bucketNameRequest =
-        new GenerateGcpGcsBucketCloudNameRequestBody().gcsBucketName(bucketName);
-
-    GcsBucketCloudName BucketcloudName =
-        privateUserResourceApi.generateGcsGcsBucketCloudName(bucketNameRequest, getWorkspaceId());
-    assertEquals(BucketcloudName.getGeneratedBucketCloudName(), bucketName + "-" + projectId);
+    String expectedBucketName = resourceName + "-" + projectId;
+    expectedBucketName =
+        expectedBucketName.length() > MAX_BUCKET_NAME_LENGTH
+            ? expectedBucketName.substring(0, MAX_BUCKET_NAME_LENGTH)
+            : expectedBucketName;
+    expectedBucketName =
+        expectedBucketName.endsWith("-")
+            ? expectedBucketName.substring(0, expectedBucketName.length() - 1)
+            : expectedBucketName;
+    assertEquals(expectedBucketName, bucketName);
 
     // Assert the bucket is assigned to privateResourceUser, even though resource user was
     // not specified

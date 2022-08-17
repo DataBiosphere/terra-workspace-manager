@@ -43,8 +43,6 @@ import bio.terra.workspace.model.GcpGcsBucketDefaultStorageClass;
 import bio.terra.workspace.model.GcpGcsBucketLifecycle;
 import bio.terra.workspace.model.GcpGcsBucketResource;
 import bio.terra.workspace.model.GcpGcsBucketUpdateParameters;
-import bio.terra.workspace.model.GcsBucketCloudName;
-import bio.terra.workspace.model.GenerateGcpGcsBucketCloudNameRequestBody;
 import bio.terra.workspace.model.JobControl;
 import bio.terra.workspace.model.ManagedBy;
 import bio.terra.workspace.model.ResourceList;
@@ -87,6 +85,7 @@ public class ControlledGcsBucketLifecycle extends GcpWorkspaceCloneTestScriptBas
 
   // This is a publicly accessible bucket provided by GCP.
   private static final String PUBLIC_GCP_BUCKET_NAME = "gcp-public-data-landsat";
+  private static final int MAX_BUCKET_NAME_LENGTH = 63;
 
   private String bucketName;
   private String resourceName;
@@ -117,6 +116,28 @@ public class ControlledGcsBucketLifecycle extends GcpWorkspaceCloneTestScriptBas
     assertEquals(HttpStatus.SC_CONFLICT, publicDuplicateNameFails.getCode());
     logger.info("Failed to create bucket with duplicate name of public bucket, as expected");
 
+    // Create the bucket without the cloud name specified. Cloud name will be auto generated.
+    CreatedControlledGcpGcsBucket bucketNoCloudName = createBucketAttempt(resourceApi, null);
+    GcpGcsBucketResource gotBucketNoCloudName =
+        resourceApi.getBucket(getWorkspaceId(), bucketNoCloudName.getResourceId());
+    assertEquals(
+        bucketNoCloudName.getGcpBucket().getAttributes().getBucketName(),
+        gotBucketNoCloudName.getAttributes().getBucketName());
+    String projectId = CloudContextMaker.createGcpCloudContext(getWorkspaceId(), workspaceApi);
+    String expectedBucketName = resourceName + "-" + projectId;
+    expectedBucketName =
+        expectedBucketName.length() > MAX_BUCKET_NAME_LENGTH
+            ? expectedBucketName.substring(0, MAX_BUCKET_NAME_LENGTH)
+            : expectedBucketName;
+    expectedBucketName =
+        expectedBucketName.endsWith("-")
+            ? expectedBucketName.substring(0, expectedBucketName.length() - 1)
+            : expectedBucketName;
+    assertEquals(expectedBucketName, gotBucketNoCloudName.getAttributes().getBucketName());
+
+    GcsBucketUtils.deleteControlledGcsBucket(
+        bucketNoCloudName.getResourceId(), getWorkspaceId(), resourceApi);
+
     // Create the bucket - should work this time
     CreatedControlledGcpGcsBucket bucket = createBucketAttempt(resourceApi, bucketName);
     UUID resourceId = bucket.getResourceId();
@@ -134,14 +155,6 @@ public class ControlledGcsBucketLifecycle extends GcpWorkspaceCloneTestScriptBas
         bucket.getGcpBucket().getAttributes().getBucketName(),
         gotBucket.getAttributes().getBucketName());
     assertEquals(bucketName, gotBucket.getAttributes().getBucketName());
-
-    GenerateGcpGcsBucketCloudNameRequestBody bucketNameRequest =
-        new GenerateGcpGcsBucketCloudNameRequestBody().gcsBucketName(bucketName);
-    GcsBucketCloudName BucketcloudName =
-        resourceApi.generateGcsGcsBucketCloudName(bucketNameRequest, getWorkspaceId());
-
-    assertEquals(
-        BucketcloudName.getGeneratedBucketCloudName(), bucketName + "-" + getSourceProjectId());
 
     try (GcsBucketAccessTester tester =
         new GcsBucketAccessTester(testUser, bucketName, getSourceProjectId())) {
@@ -302,6 +315,7 @@ public class ControlledGcsBucketLifecycle extends GcpWorkspaceCloneTestScriptBas
             .common(commonParameters);
 
     logger.info("Attempting to create bucket {} workspace {}", bucketName, getWorkspaceId());
+    logger.info(body.toString());
     return resourceApi.createBucket(body, getWorkspaceId());
   }
 

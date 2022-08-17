@@ -96,7 +96,6 @@ public class CopyGcsBucketDefinitionStep implements Step {
     // bucket resource for create flight
     ControlledGcsBucketResource destinationBucketResource =
         ControlledGcsBucketResource.builder()
-            .bucketName(bucketName)
             .common(
                 ControlledResourceFields.builder()
                     .workspaceUuid(destinationWorkspaceId)
@@ -110,6 +109,7 @@ public class CopyGcsBucketDefinitionStep implements Step {
                     .applicationId(sourceBucket.getApplicationId())
                     .privateResourceState(privateResourceState)
                     .build())
+            .bucketName(bucketName)
             .build();
 
     final ApiGcpGcsBucketCreationParameters destinationCreationParameters =

@@ -81,13 +81,6 @@ public class ControlledAiNotebookInstanceResourceTest extends BaseUnitTest {
   }
 
   @Test
-  public void generateInstanceId_userIdIsEmpty_prefixWithNotebook() {
-    String instanceId = ControlledAiNotebookInstanceResource.generateInstanceId("");
-
-    assertTrue(instanceId.startsWith("notebook"));
-  }
-
-  @Test
   public void generateInstanceId_userIdHasUppercase_toLowerCase() {
     String instanceName = "YUHUYOYO";
     String instanceId = ControlledAiNotebookInstanceResource.generateInstanceId(instanceName);

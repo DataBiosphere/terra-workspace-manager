@@ -19,6 +19,8 @@ import org.springframework.stereotype.Component;
     justification = "Enable both injection and static lookup")
 @Component
 public class ControlledAiNotebookHandler implements WsmResourceHandler {
+
+  private static final int MAX_INSTANCE_NAME_LENGTH = 63;
   private static ControlledAiNotebookHandler theHandler;
   private final GcpCloudContextService gcpCloudContextService;
 
@@ -56,7 +58,19 @@ public class ControlledAiNotebookHandler implements WsmResourceHandler {
     return resource;
   }
 
+  /**
+   * Generate Ai notebook cloud instance id that meets the requirements for a valid instance id.
+   *
+   * <p>Instance name id must match the regex '(?:[a-z](?:[-a-z0-9]{0,63}[a-z0-9])?)', i.e. starting
+   * with a lowercase alpha character, only alphanumerics and '-' of max length 63. I don't have a
+   * documentation link, but gcloud will complain otherwise.
+   */
   public String generateCloudName(@Nullable UUID workspaceUuid, String aiNotebookName) {
-    return aiNotebookName;
+    String generatedCloudName = aiNotebookName.replaceAll("[^a-zA-Z0-9-]", "").toLowerCase();
+    generatedCloudName =
+        generatedCloudName.length() > MAX_INSTANCE_NAME_LENGTH
+            ? generatedCloudName.substring(0, MAX_INSTANCE_NAME_LENGTH)
+            : generatedCloudName;
+    return generatedCloudName;
   }
 }

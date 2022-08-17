@@ -14,6 +14,8 @@ import org.springframework.stereotype.Component;
 
 @Component
 public class ControlledGcsBucketHandler implements WsmResourceHandler {
+
+  private static final int MAX_BUCKET_NAME_LENGTH = 63;
   private static ControlledGcsBucketHandler theHandler;
   private final GcpCloudContextService gcpCloudContextService;
 
@@ -38,8 +40,8 @@ public class ControlledGcsBucketHandler implements WsmResourceHandler {
         DbSerDes.fromJson(dbResource.getAttributes(), ControlledGcsBucketAttributes.class);
     var resource =
         ControlledGcsBucketResource.builder()
-            .bucketName(attributes.getBucketName())
             .common(new ControlledResourceFields(dbResource))
+            .bucketName(attributes.getBucketName())
             .build();
     return resource;
   }
@@ -49,6 +51,19 @@ public class ControlledGcsBucketHandler implements WsmResourceHandler {
       return bucketName;
     }
     String projectId = gcpCloudContextService.getRequiredGcpProject(workspaceUuid);
-    return String.format("%s-%s", bucketName, projectId);
+    String generatedbucketCloudName = String.format("%s-%s", bucketName, projectId).toLowerCase();
+    generatedbucketCloudName =
+        generatedbucketCloudName.length() > MAX_BUCKET_NAME_LENGTH
+            ? generatedbucketCloudName.substring(0, MAX_BUCKET_NAME_LENGTH)
+            : generatedbucketCloudName;
+    generatedbucketCloudName =
+        generatedbucketCloudName.endsWith("-")
+            ? generatedbucketCloudName.substring(0, generatedbucketCloudName.length() - 1)
+            : generatedbucketCloudName;
+    generatedbucketCloudName =
+        generatedbucketCloudName.startsWith("-")
+            ? generatedbucketCloudName.substring(1)
+            : generatedbucketCloudName;
+    return generatedbucketCloudName;
   }
 }

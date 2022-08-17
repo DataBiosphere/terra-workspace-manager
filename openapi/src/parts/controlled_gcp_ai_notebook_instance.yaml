@@ -360,7 +360,6 @@ components:
           type: string
 
     GenerateGcpAiNotebookCloudIdRequestBody:
-      description: The body for request of the ai notebook cloud instance id.
       type: object
       required: [ aiNotebookName ]
       properties:
@@ -383,7 +382,7 @@ components:
             $ref: '#/components/schemas/DeleteControlledGcpAiNotebookInstanceResult'
 
     CloudAiNotebookIdResponse:
-      description: A valid AI notebook name, there is no reference.
+      description: A valid AI notebook name per https://cloud.google.com/vertex-ai/docs/workbench/user-managed/create-new.
       content:
         application/json:
           schema:

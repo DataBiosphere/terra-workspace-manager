@@ -258,30 +258,7 @@ public class ControlledAiNotebookInstanceResource extends ControlledResource {
 
   /** Returns an auto generated instance name with the username and date time. */
   public static String generateInstanceId(String resourceName) {
-    String mangledUsername = mangledInstanceName(resourceName);
-    return mangledUsername;
-  }
-
-  /**
-   * Best effort mangle the user's name so that it meets the requirements for a valid instance name.
-   *
-   * <p>Instance name id must match the regex '(?:[a-z](?:[-a-z0-9]{0,63}[a-z0-9])?)', i.e. starting
-   * with a lowercase alpha character, only alphanumerics and '-' of max length 63. I don't have a
-   * documentation link, but gcloud will complain otherwise.
-   */
-  private static String mangledInstanceName(String instanceName) {
-    // Strip non alpha-numeric or '-' characters.
-    String mangledName = instanceName.replaceAll("[^a-zA-Z0-9-]", "");
-    if (mangledName.isEmpty()) {
-      mangledName = "notebook";
-    }
-    mangledName = mangledName.toLowerCase();
-    // Make sure the returned name isn't too long to not have the date time suffix.
-    int maxNameLength = MAX_INSTANCE_NAME_LENGTH - AUTO_NAME_DATE_FORMAT.length();
-    if (mangledName.length() > maxNameLength) {
-      mangledName = mangledName.substring(0, maxNameLength);
-    }
-    return mangledName;
+    return ControlledAiNotebookHandler.getHandler().generateCloudName(null, resourceName);
   }
 
   private static <T> void checkFieldNonNull(@Nullable T fieldValue, String fieldName) {

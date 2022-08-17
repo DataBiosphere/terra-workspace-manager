@@ -280,7 +280,6 @@ components:
           type: string
 
     GenerateGcpBigQueryDatasetCloudIDRequestBody:
-      description: The body for a request of big query dataset cloud-native name.
       type: object
       required: [ bigQueryDatasetName ]
       properties:
@@ -303,7 +302,7 @@ components:
             $ref: '#/components/schemas/GcpBigQueryDatasetResource'
 
     BqDatasetCloudIdResponse:
-      description: A valid Big query Dataset name per https://cloud.google.com/vertex-ai/docs/workbench/user-managed/create-new.
+      description: A valid Big query Dataset name per https://cloud.google.com/bigquery/docs/datasets#dataset-naming.
       content:
         application/json:
           schema:

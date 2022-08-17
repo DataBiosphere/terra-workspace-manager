@@ -85,7 +85,7 @@ paths:
       - $ref: '#/components/parameters/WorkspaceId'
     post:
       summary: Generate a cloud native controlled Gcp bucket name
-      operationId: generateGcsGcsBucketCloudName
+      operationId: generateGcpGcsBucketCloudName
       tags: [ControlledGcpResource]
       requestBody:
         required: true
@@ -217,7 +217,6 @@ components:
           $ref: '#/components/schemas/CloningInstructionsEnum'
 
     GenerateGcpGcsBucketCloudNameRequestBody:
-      description: The body for a request of gcs bucket cloud name.
       type: object
       required: [ gcsBucketName ]
       properties:
