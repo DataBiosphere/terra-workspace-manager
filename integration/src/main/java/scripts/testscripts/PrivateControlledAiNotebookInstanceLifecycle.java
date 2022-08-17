@@ -94,7 +94,16 @@ public class PrivateControlledAiNotebookInstanceLifecycle extends WorkspaceAlloc
     String testResultValue = RandomStringUtils.randomAlphabetic(10);
     CreatedControlledGcpAiNotebookInstanceResult creationResult =
         NotebookUtils.makeControlledNotebookUserPrivate(
-            getWorkspaceId(), instanceId, /*location=*/ null, resourceUserApi, new HashMap<>(Map.of("terra-test-value", testResultValue, "terra-gcp-notebook-resource-name", RandomStringUtils.randomAlphabetic(6))));
+            getWorkspaceId(),
+            instanceId,
+            /*location=*/ null,
+            resourceUserApi,
+            new HashMap<>(
+                Map.of(
+                    "terra-test-value",
+                    testResultValue,
+                    "terra-gcp-notebook-resource-name",
+                    RandomStringUtils.randomAlphabetic(6))));
 
     UUID resourceId = creationResult.getAiNotebookInstance().getMetadata().getResourceId();
 
@@ -152,20 +161,35 @@ public class PrivateControlledAiNotebookInstanceLifecycle extends WorkspaceAlloc
             creationResult, otherWorkspaceUser, resource.getAttributes().getProjectId()),
         "Other workspace user does not have access to a private notebook");
 
-    String proxyUri = ClientTestUtils.getWithRetryOnException(
-        () -> {
-          String p = userNotebooks.projects().locations().instances().get(instanceName).execute().getProxyUri();
-          if (p == null) {
-            throw new NullPointerException();
-          }
-          return p;
-        });
+    String proxyUri =
+        ClientTestUtils.getWithRetryOnException(
+            () -> {
+              String p =
+                  userNotebooks
+                      .projects()
+                      .locations()
+                      .instances()
+                      .get(instanceName)
+                      .execute()
+                      .getProxyUri();
+              if (p == null) {
+                throw new NullPointerException();
+              }
+              return p;
+            });
     Duration sleepDuration = Duration.ofMinutes(3);
-    var testValue = ClientTestUtils.getWithRetryOnException(
-        () -> userNotebooks.projects().locations().instances().get(instanceName).execute().getMetadata().get("terra-test-result")
-    );
+    var testValue =
+        ClientTestUtils.getWithRetryOnException(
+            () ->
+                userNotebooks
+                    .projects()
+                    .locations()
+                    .instances()
+                    .get(instanceName)
+                    .execute()
+                    .getMetadata()
+                    .get("terra-test-result"));
     assertEquals(testResultValue, testValue);
-
 
     // The user should be able to stop their notebook.
     userNotebooks.projects().locations().instances().stop(instanceName, new StopInstanceRequest());
@@ -245,7 +269,11 @@ public class PrivateControlledAiNotebookInstanceLifecycle extends WorkspaceAlloc
           ControlledGcpResourceApi resourceUserApi) throws ApiException, InterruptedException {
     CreatedControlledGcpAiNotebookInstanceResult resourceWithNotebookInstanceIdNotSpecified =
         NotebookUtils.makeControlledNotebookUserPrivate(
-            getWorkspaceId(), /*instanceId=*/ null, /*location=*/ null, resourceUserApi, Collections.emptyMap());
+            getWorkspaceId(),
+            /*instanceId=*/ null,
+            /*location=*/ null,
+            resourceUserApi,
+            Collections.emptyMap());
     assertNotNull(
         resourceWithNotebookInstanceIdNotSpecified
             .getAiNotebookInstance()
@@ -266,7 +294,11 @@ public class PrivateControlledAiNotebookInstanceLifecycle extends WorkspaceAlloc
     String location = "us-east1-b";
     CreatedControlledGcpAiNotebookInstanceResult resourceWithNotebookInstanceIdNotSpecified =
         NotebookUtils.makeControlledNotebookUserPrivate(
-            getWorkspaceId(), /*instanceId=*/ null, /*location=*/ location, resourceUserApi, Collections.emptyMap());
+            getWorkspaceId(),
+            /*instanceId=*/ null,
+            /*location=*/ location,
+            resourceUserApi,
+            Collections.emptyMap());
     assertEquals(
         location,
         resourceWithNotebookInstanceIdNotSpecified

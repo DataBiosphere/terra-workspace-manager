@@ -23,7 +23,6 @@ import com.google.api.services.notebooks.v1.model.Instance;
 import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.time.Duration;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -60,7 +59,10 @@ public class NotebookUtils {
 
     var commonParameters =
         new ControlledResourceCommonFields()
-            .name(metadata.containsKey("terra-gcp-notebook-resource-name")? metadata.get("terra-gcp-notebook-resource-name"): RandomStringUtils.randomAlphabetic(6))
+            .name(
+                metadata.containsKey("terra-gcp-notebook-resource-name")
+                    ? metadata.get("terra-gcp-notebook-resource-name")
+                    : RandomStringUtils.randomAlphabetic(6))
             .cloningInstructions(CloningInstructionsEnum.NOTHING)
             .accessScope(AccessScope.PRIVATE_ACCESS)
             .managedBy(ManagedBy.USER)
