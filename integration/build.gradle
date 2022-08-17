@@ -5,7 +5,7 @@ plugins {
     id 'application'
 
     // Terra Test Runner Plugin.
-    id 'bio.terra.test-runner-plugin' version '0.1.3-SNAPSHOT'
+    id 'bio.terra.test-runner-plugin' version '0.1.7-SNAPSHOT'
 }
 
 dependencies {
@@ -15,7 +15,7 @@ dependencies {
         guava = "29.0-jre"
         jackson = "2.10.2"
         jersey = "2.32"
-        kubernetesClient = "16.0.0"
+        kubernetesClient = "10.0.0"
         logback = "1.2.3"
         slf4j = "1.7.25"
         hamcrest = "2.2"
@@ -29,7 +29,7 @@ dependencies {
         googleNotebook = "v1-rev20201110-1.30.10"
 
         datarepoClient = "1.0.155-SNAPSHOT"
-        testRunnerVersion = "0.1.4-SNAPSHOT"
+        testRunnerVersion = "0.1.7-SNAPSHOT"
         samClient = "0.1-e826d4d"
         tclClient = "0.0.66-SNAPSHOT"
     }

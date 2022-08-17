@@ -30,12 +30,12 @@ Perf Test
 
 #### Run a test suite
 To run a test suite, specify the path of the test configuration under the `suites` directory as shown in the following example.
-NB: The `BasicIntegration.json` and `BasicNightlyPerf.json` are sample test suite configurations for Integration and Perf tests.
+NB: The `FullIntegration.json` and `BasicNightlyPerf.json` are sample test suite configurations for Integration and Perf tests.
 See `test-runner-integration.yml` and `test-runner-nightly-perf.yml` in `.github/workflows` for use cases.
 
 Integration Test
 ```
-./gradlew runTest --args="suites/BasicIntegration.json /tmp/TR"
+./gradlew runTest --args="suites/FullIntegration.json /tmp/TR"
 ```
 
 Perf Test

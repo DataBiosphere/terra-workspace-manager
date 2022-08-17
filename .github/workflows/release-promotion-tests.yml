@@ -57,7 +57,7 @@ jobs:
           echo ::set-output name=test::$TEST
 
       - name: Set up JDK
-        uses: actions/setup-java@v2
+        uses: actions/setup-java@v3
         with:
           distribution: 'temurin'
           java-version: 17

@@ -8,9 +8,21 @@ import bio.terra.workspace.generated.model.ApiWorkspaceStageModel;
 import bio.terra.workspace.service.iam.model.SamConstants.SamResource;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import bio.terra.workspace.service.workspace.model.GcpCloudContext;
+import bio.terra.workspace.service.workspace.model.WorkspaceConstants.Properties;
+import com.google.common.collect.ImmutableList;
 import java.util.UUID;
 
 public class WorkspaceFixtures {
+
+  public static final String WORKSPACE_NAME = "TestWorkspace";
+  public static final ApiProperty TYPE_PROPERTY =
+      new ApiProperty().key(Properties.TYPE).value("type");
+  public static final ApiProperty SHORT_DESCRIPTION_PROPERTY =
+      new ApiProperty().key(Properties.SHORT_DESCRIPTION).value("short description");
+  public static final ApiProperty VERSION_PROPERTY =
+      new ApiProperty().key(Properties.VERSION).value("version 3");
+  public static final ApiProperty USER_SET_PROPERTY =
+      new ApiProperty().key("userkey").value("uservalue");
 
   /**
    * This method creates the database artifact for a cloud context without actually creating
@@ -36,20 +48,12 @@ public class WorkspaceFixtures {
   public static ApiCreateWorkspaceRequestBody createWorkspaceRequestBody() {
     UUID workspaceId = UUID.randomUUID();
     ApiProperties properties = new ApiProperties();
-    ApiProperty property1 = new ApiProperty();
-    property1.setKey("foo");
-    property1.setValue("bar");
-
-    ApiProperty property2 = new ApiProperty();
-    property2.setKey("xyzzy");
-    property2.setValue("plohg");
-
-    properties.add(property1);
-    properties.add(property2);
-
+    properties.addAll(
+        ImmutableList.of(
+            TYPE_PROPERTY, SHORT_DESCRIPTION_PROPERTY, VERSION_PROPERTY, USER_SET_PROPERTY));
     return new ApiCreateWorkspaceRequestBody()
         .id(workspaceId)
-        .displayName("TestWorkspace")
+        .displayName(WORKSPACE_NAME)
         .description("A test workspace created by createWorkspaceRequestBody")
         .userFacingId(getUserFacingId(workspaceId))
         .stage(ApiWorkspaceStageModel.MC_WORKSPACE)

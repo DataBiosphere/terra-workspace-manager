@@ -1,6 +1,5 @@
 package bio.terra.workspace.service.workspace.flight;
 
-import bio.terra.common.exception.InternalServerErrorException;
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
@@ -54,7 +53,8 @@ public class GrantWsmRoleAdminStep implements Step {
           .setIamPolicy(projectId, iamPolicyRequest)
           .execute();
     } catch (IOException e) {
-      throw new InternalServerErrorException("Error while granting WSM SA the Role Admin role", e);
+      // Errors here are unexpected and likely transient, WSM should always retry.
+      throw new RetryException("Error while granting WSM SA the Role Admin role", e);
     }
     return StepResult.getStepResultSuccess();
   }
