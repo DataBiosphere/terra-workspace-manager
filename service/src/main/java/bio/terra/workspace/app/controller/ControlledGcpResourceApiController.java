@@ -7,6 +7,7 @@ import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequestFactory;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.iam.model.SamConstants.SamControlledResourceActions;
+import bio.terra.workspace.service.iam.model.SamConstants.SamWorkspaceAction;
 import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.job.JobService.AsyncJobResult;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceMetadataManager;
@@ -155,6 +156,9 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
   @Override
   public ResponseEntity<ApiGcsBucketCloudName> generateGcpGcsBucketCloudName(
       UUID workspaceUuid, ApiGenerateGcpGcsBucketCloudNameRequestBody name) {
+    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    workspaceService.validateWorkspaceAndAction(
+        userRequest, workspaceUuid, SamWorkspaceAction.READ);
     String generatedBucketName =
         ControlledGcsBucketHandler.getHandler()
             .generateCloudName(workspaceUuid, name.getGcsBucketName());
@@ -249,6 +253,9 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
   @Override
   public ResponseEntity<ApiBqDatasetCloudId> generateBigQueryDatasetCloudId(
       UUID workspaceUuid, ApiGenerateGcpBigQueryDatasetCloudIDRequestBody name) {
+    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    workspaceService.validateWorkspaceAndAction(
+        userRequest, workspaceUuid, SamWorkspaceAction.READ);
     String generatedCloudBqDatasetName =
         ControlledBigQueryDatasetHandler.getHandler()
             .generateCloudName(workspaceUuid, name.getBigQueryDatasetName());
@@ -364,6 +371,9 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
   @Override
   public ResponseEntity<ApiAiNotebookCloudId> generateAiNotebookCloudInstanceId(
       UUID workspaceUuid, ApiGenerateGcpAiNotebookCloudIdRequestBody name) {
+    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    workspaceService.validateWorkspaceAndAction(
+        userRequest, workspaceUuid, SamWorkspaceAction.READ);
     String generatedAiNotebookName =
         ControlledAiNotebookHandler.getHandler()
             .generateCloudName(workspaceUuid, name.getAiNotebookName());
