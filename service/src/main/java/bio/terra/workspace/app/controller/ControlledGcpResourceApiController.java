@@ -350,8 +350,8 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
             .instanceId(
                 Optional.ofNullable(body.getAiNotebookInstance().getInstanceId())
                     .orElse(
-                        ControlledAiNotebookInstanceResource.generateInstanceId(
-                            commonFields.getName())))
+                        ControlledAiNotebookHandler.getHandler()
+                            .generateCloudName(null, commonFields.getName())))
             .build();
 
     String jobId =

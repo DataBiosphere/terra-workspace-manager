@@ -6,6 +6,7 @@ import bio.terra.workspace.service.resource.controlled.model.ControlledResourceF
 import bio.terra.workspace.service.resource.model.WsmResource;
 import bio.terra.workspace.service.resource.model.WsmResourceHandler;
 import bio.terra.workspace.service.workspace.GcpCloudContextService;
+import com.google.common.base.Preconditions;
 import java.util.UUID;
 import javax.annotation.Nullable;
 import javax.annotation.PostConstruct;
@@ -15,7 +16,7 @@ import org.springframework.stereotype.Component;
 @Component
 public class ControlledGcsBucketHandler implements WsmResourceHandler {
 
-  private static final int MAX_BUCKET_NAME_LENGTH = 63;
+  protected static final int MAX_BUCKET_NAME_LENGTH = 63;
   private static ControlledGcsBucketHandler theHandler;
   private final GcpCloudContextService gcpCloudContextService;
 
@@ -47,23 +48,16 @@ public class ControlledGcsBucketHandler implements WsmResourceHandler {
   }
 
   public String generateCloudName(@Nullable UUID workspaceUuid, String bucketName) {
-    if (workspaceUuid == null) {
-      return bucketName;
-    }
+    Preconditions.checkNotNull(workspaceUuid);
+
     String projectId = gcpCloudContextService.getRequiredGcpProject(workspaceUuid);
-    String generatedbucketCloudName = String.format("%s-%s", bucketName, projectId).toLowerCase();
-    generatedbucketCloudName =
-        generatedbucketCloudName.length() > MAX_BUCKET_NAME_LENGTH
-            ? generatedbucketCloudName.substring(0, MAX_BUCKET_NAME_LENGTH)
-            : generatedbucketCloudName;
-    generatedbucketCloudName =
-        generatedbucketCloudName.endsWith("-")
-            ? generatedbucketCloudName.substring(0, generatedbucketCloudName.length() - 1)
-            : generatedbucketCloudName;
-    generatedbucketCloudName =
-        generatedbucketCloudName.startsWith("-")
-            ? generatedbucketCloudName.substring(1)
-            : generatedbucketCloudName;
-    return generatedbucketCloudName;
+    String generatedName = String.format("%s-%s", bucketName, projectId).toLowerCase();
+    generatedName =
+        generatedName.length() > MAX_BUCKET_NAME_LENGTH
+            ? generatedName.substring(0, MAX_BUCKET_NAME_LENGTH)
+            : generatedName;
+    generatedName = generatedName.replaceAll("[^a-zA-Z0-9-]+|^[^a-zA-Z0-9]+|[^a-zA-Z0-9]+$", "");
+
+    return generatedName;
   }
 }

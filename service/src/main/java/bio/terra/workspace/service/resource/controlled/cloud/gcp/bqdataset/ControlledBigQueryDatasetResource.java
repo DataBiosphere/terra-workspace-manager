@@ -26,7 +26,6 @@ import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.model.StewardshipType;
 import bio.terra.workspace.service.resource.model.WsmResourceFamily;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
-import bio.terra.workspace.service.resource.referenced.exception.InvalidReferenceException;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.Optional;
@@ -236,16 +235,8 @@ public class ControlledBigQueryDatasetResource extends ControlledResource {
     }
 
     public ControlledBigQueryDatasetResource.Builder datasetName(String datasetName) {
-      try {
-        // If the user doesn't specify a dataset name, we will use the resource name by default.
-        // But if the resource name is not a valid dataset name, we will need to generate a unique
-        // dataset id.
-        ResourceValidationUtils.validateBqDatasetName(datasetName);
-        this.datasetName =
-            ControlledBigQueryDatasetHandler.getHandler().generateCloudName(null, datasetName);
-      } catch (InvalidReferenceException e) {
-        this.datasetName = generateUniqueDatasetId();
-      }
+      this.datasetName =
+          ControlledBigQueryDatasetHandler.getHandler().generateCloudName(null, datasetName);
       return this;
     }
 

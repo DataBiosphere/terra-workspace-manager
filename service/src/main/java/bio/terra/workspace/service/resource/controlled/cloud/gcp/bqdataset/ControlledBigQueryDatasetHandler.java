@@ -19,6 +19,8 @@ import org.springframework.stereotype.Component;
     justification = "Enable both injection and static lookup")
 @Component
 public class ControlledBigQueryDatasetHandler implements WsmResourceHandler {
+
+  protected static final int MAX_DATASET_NAME_LENGTH = 1024;
   private static ControlledBigQueryDatasetHandler theHandler;
   private final GcpCloudContextService gcpCloudContextService;
 
@@ -56,6 +58,13 @@ public class ControlledBigQueryDatasetHandler implements WsmResourceHandler {
   }
 
   public String generateCloudName(@Nullable UUID workspaceUuid, String bqDatasetName) {
-    return bqDatasetName.replace("-", "_");
+    String generatedName = bqDatasetName.replace("-", "_");
+    generatedName =
+        generatedName.length() > MAX_DATASET_NAME_LENGTH
+            ? generatedName.substring(0, MAX_DATASET_NAME_LENGTH)
+            : generatedName;
+    generatedName = generatedName.replaceAll("[^a-zA-Z0-9_]+|^[^a-zA-Z0-9]+|[^a-zA-Z0-9]+$", "");
+
+    return generatedName;
   }
 }

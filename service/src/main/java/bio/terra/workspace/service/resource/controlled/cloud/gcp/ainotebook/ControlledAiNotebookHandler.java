@@ -66,11 +66,12 @@ public class ControlledAiNotebookHandler implements WsmResourceHandler {
    * documentation link, but gcloud will complain otherwise.
    */
   public String generateCloudName(@Nullable UUID workspaceUuid, String aiNotebookName) {
-    String generatedCloudName = aiNotebookName.replaceAll("[^a-zA-Z0-9-]", "").toLowerCase();
-    generatedCloudName =
-        generatedCloudName.length() > MAX_INSTANCE_NAME_LENGTH
-            ? generatedCloudName.substring(0, MAX_INSTANCE_NAME_LENGTH)
-            : generatedCloudName;
-    return generatedCloudName;
+    String generatedName = aiNotebookName.toLowerCase();
+    generatedName =
+        generatedName.length() > MAX_INSTANCE_NAME_LENGTH
+            ? generatedName.substring(0, MAX_INSTANCE_NAME_LENGTH)
+            : generatedName;
+    generatedName = generatedName.replaceAll("[^a-zA-Z0-9-]+|^[^a-zA-Z0-9]+|[^a-zA-Z0-9]+$", "");
+    return generatedName;
   }
 }

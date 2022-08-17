@@ -256,11 +256,6 @@ public class ControlledAiNotebookInstanceResource extends ControlledResource {
     ResourceValidationUtils.validateAiNotebookInstanceId(getInstanceId());
   }
 
-  /** Returns an auto generated instance name with the username and date time. */
-  public static String generateInstanceId(String resourceName) {
-    return ControlledAiNotebookHandler.getHandler().generateCloudName(null, resourceName);
-  }
-
   private static <T> void checkFieldNonNull(@Nullable T fieldValue, String fieldName) {
     if (fieldValue == null) {
       throw new MissingRequiredFieldException(
