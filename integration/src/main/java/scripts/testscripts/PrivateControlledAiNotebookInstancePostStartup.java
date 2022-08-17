@@ -81,23 +81,33 @@ public class PrivateControlledAiNotebookInstancePostStartup
               return null;
             });
     assertNotNull(proxyUrl);
-    Map<String, String> metadata = userNotebooks.projects().locations().instances().get(instanceName).execute().getMetadata();
+    Map<String, String> metadata =
+        userNotebooks.projects().locations().instances().get(instanceName).execute().getMetadata();
     assertEquals(testValue, metadata.get("terra-test-value"));
-    assertEquals(resource.getMetadata().getName(), metadata.get("terra-gcp-notebook-resource-name"));
-    System.out.println(userNotebooks.projects().locations().instances().get(instanceName).execute().getPostStartupScript());
+    assertEquals(
+        resource.getMetadata().getName(), metadata.get("terra-gcp-notebook-resource-name"));
+    System.out.println(
+        userNotebooks
+            .projects()
+            .locations()
+            .instances()
+            .get(instanceName)
+            .execute()
+            .getPostStartupScript());
     // Wait for the post-startup.sh to finish executing.
     TimeUnit.MILLISECONDS.sleep(sleepDuration.toMillis());
     var testResultValue =
         ClientTestUtils.getWithRetryOnException(
             () -> {
-              String result = userNotebooks
-                  .projects()
-                  .locations()
-                  .instances()
-                  .get(instanceName)
-                  .execute()
-                  .getMetadata()
-                  .get("terra-test-result");
+              String result =
+                  userNotebooks
+                      .projects()
+                      .locations()
+                      .instances()
+                      .get(instanceName)
+                      .execute()
+                      .getMetadata()
+                      .get("terra-test-result");
               if (result == null) {
                 throw new NullPointerException();
               }
@@ -106,15 +116,16 @@ public class PrivateControlledAiNotebookInstancePostStartup
     assertEquals(testValue, testResultValue);
   }
 
-  private GcpAiNotebookInstanceResource getNotebookResource(ControlledGcpResourceApi resourceUserApi,
-      CreatedControlledGcpAiNotebookInstanceResult creationResult) throws ApiException {
+  private GcpAiNotebookInstanceResource getNotebookResource(
+      ControlledGcpResourceApi resourceUserApi,
+      CreatedControlledGcpAiNotebookInstanceResult creationResult)
+      throws ApiException {
     UUID resourceId = creationResult.getAiNotebookInstance().getMetadata().getResourceId();
 
     return resourceUserApi.getAiNotebookInstance(getWorkspaceId(), resourceId);
   }
 
-  private String composeInstanceName(
-      GcpAiNotebookInstanceResource resource) {
+  private String composeInstanceName(GcpAiNotebookInstanceResource resource) {
     String instanceName =
         String.format(
             "projects/%s/locations/%s/instances/%s",

@@ -152,7 +152,13 @@ public class CreateAiNotebookInstanceStep implements Step {
         flightContext
             .getInputParameters()
             .get(CREATE_NOTEBOOK_PARAMETERS, ApiGcpAiNotebookInstanceCreationParameters.class);
-    setFields(creationParameters, serviceAccountEmail, workspaceUserFacingId, cliServer, instance, gitHash);
+    setFields(
+        creationParameters,
+        serviceAccountEmail,
+        workspaceUserFacingId,
+        cliServer,
+        instance,
+        gitHash);
     setNetworks(instance, projectId, flightContext.getWorkingMap());
     return instance;
   }
