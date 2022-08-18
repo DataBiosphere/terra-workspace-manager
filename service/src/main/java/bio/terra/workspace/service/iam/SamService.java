@@ -283,7 +283,8 @@ public class SamService {
    * @return map from workspace ID to highest SAM role
    */
   @Traced
-  public Map<UUID, WsmIamRole> listWorkspaceIdsAndHighestRoles(AuthenticatedUserRequest userRequest)
+  public Map<UUID, WsmIamRole> listWorkspaceIdsAndHighestRoles(
+      AuthenticatedUserRequest userRequest, WsmIamRole minimumHighestRoleFromRequest)
       throws InterruptedException {
     ResourcesApi resourceApi = samResourcesApi(userRequest.getRequiredToken());
     Map<UUID, WsmIamRole> workspacesAndRoles = new HashMap<>();
@@ -300,9 +301,12 @@ public class SamService {
                   .filter(Objects::nonNull)
                   .collect(Collectors.toList());
           Optional<WsmIamRole> highestRole = WsmIamRole.getHighestRole(workspaceId, roles);
-          // Skip workspaces with no roles. (That means there's a role this WSM doesn't know about.)
+          // Skip workspaces with no roles. (That means there's a role this WSM doesn't know
+          // about.)
           if (highestRole.isPresent()) {
-            workspacesAndRoles.put(workspaceId, highestRole.get());
+            if (WsmIamRole.roleAtLeastAsHighAs(minimumHighestRoleFromRequest, highestRole.get())) {
+              workspacesAndRoles.put(workspaceId, highestRole.get());
+            }
           }
         } catch (IllegalArgumentException e) {
           // WSM always uses UUIDs for workspace IDs, but this is not enforced in Sam and there are

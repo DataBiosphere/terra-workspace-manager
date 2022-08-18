@@ -31,8 +31,10 @@ import bio.terra.workspace.service.workspace.model.AzureCloudContext;
 import bio.terra.workspace.service.workspace.model.OperationType;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceAndHighestRole;
+import bio.terra.workspace.service.workspace.model.WorkspaceConstants.Properties;
 import com.google.common.base.Preconditions;
 import io.opencensus.contrib.spring.aop.Traced;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -203,18 +205,25 @@ public class WorkspaceService {
    */
   @Traced
   public List<WorkspaceAndHighestRole> listWorkspacesAndHighestRoles(
-      AuthenticatedUserRequest userRequest, int offset, int limit) {
+      AuthenticatedUserRequest userRequest, int offset, int limit, WsmIamRole minimumHighestRole) {
     // In general, highest SAM role should be fetched in controller. Fetch here to save a SAM call.
     Map<UUID, WsmIamRole> samWorkspaceIdsAndHighestRoles =
         SamRethrow.onInterrupted(
-            () -> samService.listWorkspaceIdsAndHighestRoles(userRequest), "listWorkspaceIds");
+            () -> samService.listWorkspaceIdsAndHighestRoles(userRequest, minimumHighestRole),
+            "listWorkspaceIds");
     return workspaceDao
         .getWorkspacesMatchingList(samWorkspaceIdsAndHighestRoles.keySet(), offset, limit)
         .stream()
         .map(
-            workspace ->
-                new WorkspaceAndHighestRole(
-                    workspace, samWorkspaceIdsAndHighestRoles.get(workspace.getWorkspaceId())))
+            workspace -> {
+              WsmIamRole highestRole =
+                  samWorkspaceIdsAndHighestRoles.get(workspace.getWorkspaceId());
+              Workspace workspaceToReturn =
+                  highestRole == WsmIamRole.DISCOVERER
+                      ? stripWorkspaceForRequesterWithOnlyDiscovererRole(workspace)
+                      : workspace;
+              return new WorkspaceAndHighestRole(workspaceToReturn, highestRole);
+            })
         .toList();
   }
 
@@ -260,6 +269,36 @@ public class WorkspaceService {
     Preconditions.checkState(
         highestRole.isPresent(), String.format("Workspace %s missing roles", uuid.toString()));
     return highestRole.get();
+  }
+
+  // If requester only has discoverer role, they can only see a subset of workspace. For example,
+  // they can see workspace name but not description.
+  private Workspace stripWorkspaceForRequesterWithOnlyDiscovererRole(Workspace fullWorkspace) {
+    Workspace.Builder strippedWorkspace =
+        new Workspace.Builder()
+            .workspaceId(fullWorkspace.getWorkspaceId())
+            .userFacingId(fullWorkspace.getUserFacingId())
+            .workspaceStage(fullWorkspace.getWorkspaceStage());
+    if (fullWorkspace.getDisplayName().isPresent()) {
+      strippedWorkspace.displayName(fullWorkspace.getDisplayName().get());
+    }
+    Map<String, String> strippedProperties = new HashMap<>();
+    if (fullWorkspace.getProperties().containsKey(Properties.TYPE)) {
+      strippedProperties.put(Properties.TYPE, fullWorkspace.getProperties().get(Properties.TYPE));
+    }
+    if (fullWorkspace.getProperties().containsKey(Properties.SHORT_DESCRIPTION)) {
+      strippedProperties.put(
+          Properties.SHORT_DESCRIPTION,
+          fullWorkspace.getProperties().get(Properties.SHORT_DESCRIPTION));
+    }
+    if (fullWorkspace.getProperties().containsKey(Properties.VERSION)) {
+      strippedProperties.put(
+          Properties.VERSION, fullWorkspace.getProperties().get(Properties.VERSION));
+    }
+    if (strippedProperties.size() > 0) {
+      strippedWorkspace.properties(strippedProperties);
+    }
+    return strippedWorkspace.build();
   }
 
   /**

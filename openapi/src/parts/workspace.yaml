@@ -28,6 +28,7 @@ paths:
       parameters:
         - $ref: '#/components/parameters/Offset'
         - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/MinimumHighestRole'
       summary: List all workspaces a user can read.
       operationId: listWorkspaces
       tags: [ Workspace ]
@@ -435,7 +436,7 @@ components:
     IamRole:
       description: Enum containing all valid IAM roles on a Workspace
       type: string
-      enum: ['READER', 'WRITER', 'APPLICATION', 'OWNER']
+      enum: ['DISCOVERER', 'READER', 'WRITER', 'APPLICATION', 'OWNER']
 
     Properties:
       description: Optional list of key-value pairs of strings
