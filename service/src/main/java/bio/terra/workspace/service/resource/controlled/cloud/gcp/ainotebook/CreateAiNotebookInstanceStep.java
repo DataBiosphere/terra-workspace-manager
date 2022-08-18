@@ -236,8 +236,6 @@ public class CreateAiNotebookInstanceStep implements Step {
     metadata.put(WORKSPACE_ID_METADATA_KEY, workspaceUserFacingId);
     if (!StringUtils.isEmpty(cliServer)) {
       metadata.put(SERVER_ID_METADATA_KEY, cliServer);
-    } else {
-      metadata.put(SERVER_ID_METADATA_KEY, "broad-dev");
     }
     // Create the AI Notebook instance in the service account proxy mode to control proxy access by
     // means of IAM permissions on the service account.

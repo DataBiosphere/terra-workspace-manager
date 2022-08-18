@@ -168,6 +168,25 @@ export TEST_RUNNER_SERVER_SPECIFICATION_FILE="workspace-local.json"
 ./gradlew runTest --args="configs/integration/BasicAuthenticated.json /tmp/TR"
 ```
 
+If setting the server file to `workspace-dev.json`, `workspace-alpha.json`, `workspace-staging.json`, you are pointing the test
+to run in the broad dev/alpha/staging environment. You need to run `git clone git@github.com:broadinstitute/terra-helmfile.git` under
+terra-workspace-manager/integration so that TestRunner is able to find the
+WSM version for that enviornment from the yaml file in the terra-helmfile repo.
+
 All current WSM configurations are stored in the [`servers` dir](src/main/resources/servers).
 See [TestRunner repo README](https://github.com/DataBiosphere/terra-test-runner/blob/main/README.md#Override-the-server-from-the-command-line)
  for more information about this and other available env vars.
+
+### Run `PrivateControlledAiNotebookInstancePostStartup` locally.
+This test is to make sure that changes to the post-startup.sh does not break.
+This test can only be run on nightly against real WSM environment and cannot be run
+and not on local server. This is because in the script, we point Terra CLI to
+a server. Processes inside the notebook won't be able to talk to the local
+server.
+
+To run this test locally:
+1. change TEST_RUNNER_SERVER_SPECIFICATION_FILE to workspace-dev.json (see `Use a local Workspace Manager server` section for details) or 
+change it to `workspace-verily-dev.json` (you do not need to clone BroadInstitutes/terra-helmfile.git in this case.)
+2. In `PrivateControlledAiNotebookInstancePostStartup.java`, change LOCAL_BRANCH to your branch name.
+3. Commit and push your PR so the raw github url for the notebook is available.
+4. `./gradlew runTest --args="configs/integration/PrivateControlledAiNotebookInstancePostStartup.json /tmp/TR"`

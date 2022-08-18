@@ -115,7 +115,8 @@ public class RemoveUser extends WorkspaceAllocateTestScriptBase {
             notebookInstanceId,
             /*location=*/ null,
             privateUserResourceApi,
-            /*testValue=*/ null);
+            /*testValue=*/ null,
+            /*postStartupScript=*/ null);
   }
 
   @Override

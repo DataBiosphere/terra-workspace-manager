@@ -78,7 +78,8 @@ public class MultiResourcesUtils {
                 /*instanceId=*/ null,
                 /*location=*/ null,
                 controlledGcpResourceApi,
-                /*testValue=*/ null)
+                /*testValue=*/ null,
+                /*postStartupScript=*/ null)
             .getAiNotebookInstance();
     // Create references to the above buckets and datasets
     GcpGcsBucketResource sharedBucketReference =

@@ -90,7 +90,12 @@ public class PrivateControlledAiNotebookInstanceLifecycle extends WorkspaceAlloc
         ClientTestUtils.getControlledGcpResourceClient(resourceUser, server);
     CreatedControlledGcpAiNotebookInstanceResult creationResult =
         NotebookUtils.makeControlledNotebookUserPrivate(
-            getWorkspaceId(), instanceId, /*location=*/ null, resourceUserApi, /*testValue=*/ null);
+            getWorkspaceId(),
+            instanceId,
+            /*location=*/ null,
+            resourceUserApi,
+            /*testValue=*/ null,
+            /*postStartupScript=*/ null);
 
     UUID resourceId = creationResult.getAiNotebookInstance().getMetadata().getResourceId();
 
@@ -230,7 +235,8 @@ public class PrivateControlledAiNotebookInstanceLifecycle extends WorkspaceAlloc
             /*instanceId=*/ null,
             /*location=*/ null,
             resourceUserApi,
-            /*testValue=*/ null);
+            /*testValue=*/ null,
+            /*postStartupScript=*/ null);
     assertNotNull(
         resourceWithNotebookInstanceIdNotSpecified
             .getAiNotebookInstance()
@@ -255,7 +261,8 @@ public class PrivateControlledAiNotebookInstanceLifecycle extends WorkspaceAlloc
             /*instanceId=*/ null,
             /*location=*/ location,
             resourceUserApi,
-            /*testValue=*/ null);
+            /*testValue=*/ null,
+            /*postStartupScript=*/ null);
     assertEquals(
         location,
         resourceWithNotebookInstanceIdNotSpecified

@@ -29,6 +29,7 @@ import java.util.Optional;
 import java.util.UUID;
 import javax.annotation.Nullable;
 import org.apache.commons.lang3.RandomStringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpStatus;
 import org.hamcrest.Matchers;
 
@@ -43,7 +44,8 @@ public class NotebookUtils {
       @Nullable String instanceId,
       @Nullable String location,
       ControlledGcpResourceApi resourceApi,
-      @Nullable String testValue)
+      @Nullable String testValue,
+      @Nullable String postStartupScript)
       throws ApiException, InterruptedException {
     var resourceName = RandomStringUtils.randomAlphabetic(6);
     // Fill out the minimum required fields to arbitrary values.
@@ -62,6 +64,9 @@ public class NotebookUtils {
                     Optional.ofNullable(testValue).orElse(""),
                     "terra-gcp-notebook-resource-name",
                     resourceName));
+    if (!StringUtils.isEmpty(postStartupScript)) {
+      creationParameters.postStartupScript(postStartupScript);
+    }
 
     var commonParameters =
         new ControlledResourceCommonFields()

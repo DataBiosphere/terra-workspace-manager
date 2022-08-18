@@ -23,7 +23,6 @@
     "integration/ReferencedGitRepoLifecycle.json",
     "integration/ReferencedTerraWorkspaceLifecycle.json",
     "integration/RemoveUser.json",
-    "integration/WorkspaceLifecycle.json",
-    "integration/PrivateControlledAiNotebookInstancePostStartup.json"
+    "integration/WorkspaceLifecycle.json"
   ]
 }

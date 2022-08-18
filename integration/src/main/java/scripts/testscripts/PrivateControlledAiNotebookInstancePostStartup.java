@@ -13,12 +13,11 @@ import bio.terra.workspace.model.GrantRoleRequestBody;
 import bio.terra.workspace.model.IamRole;
 import com.google.api.services.notebooks.v1.AIPlatformNotebooks;
 import java.io.IOException;
-import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import java.util.concurrent.TimeUnit;
 import org.apache.commons.lang3.RandomStringUtils;
+import org.apache.commons.lang3.StringUtils;
 import scripts.utils.ClientTestUtils;
 import scripts.utils.CloudContextMaker;
 import scripts.utils.NotebookUtils;
@@ -27,7 +26,8 @@ import scripts.utils.WorkspaceAllocateTestScriptBase;
 public class PrivateControlledAiNotebookInstancePostStartup
     extends WorkspaceAllocateTestScriptBase {
   private static final String INSTANCE_ID = RandomStringUtils.randomAlphabetic(8).toLowerCase();
-
+  // NOTE: ONLY set this to your branch name for local testing purpose.
+  private static final String LOCAL_BRANCH = "";
   private TestUserSpecification resourceUser;
 
   @Override
@@ -51,14 +51,20 @@ public class PrivateControlledAiNotebookInstancePostStartup
     String testValue = RandomStringUtils.random(5, /*letters=*/ true, /*numbers=*/ true);
     CreatedControlledGcpAiNotebookInstanceResult creationResult =
         NotebookUtils.makeControlledNotebookUserPrivate(
-            getWorkspaceId(), INSTANCE_ID, /*location=*/ null, resourceUserApi, testValue);
+            getWorkspaceId(),
+            INSTANCE_ID,
+            /*location=*/ null,
+            resourceUserApi,
+            testValue,
+            /*postStartupScript=*/ StringUtils.isEmpty(LOCAL_BRANCH)
+                ? null
+                : String.format(
+                    "https://raw.githubusercontent.com/DataBiosphere/terra-workspace-manager/%s/service/src/main/java/bio/terra/workspace/service/resource/controlled/cloud/gcp/ainotebook/post-startup.sh",
+                    LOCAL_BRANCH));
 
     AIPlatformNotebooks userNotebooks = ClientTestUtils.getAIPlatformNotebooksClient(resourceUser);
     var resource = getNotebookResource(resourceUserApi, creationResult);
     var instanceName = composeInstanceName(resource);
-    Duration sleepDuration = Duration.ofMinutes(3);
-    // Wait for notebook to startup.
-    TimeUnit.MILLISECONDS.sleep(sleepDuration.toMillis());
     String proxyUrl =
         ClientTestUtils.getWithRetryOnException(
             () -> {
@@ -94,8 +100,6 @@ public class PrivateControlledAiNotebookInstancePostStartup
             .get(instanceName)
             .execute()
             .getPostStartupScript());
-    // Wait for the post-startup.sh to finish executing.
-    TimeUnit.MILLISECONDS.sleep(sleepDuration.toMillis());
     var testResultValue =
         ClientTestUtils.getWithRetryOnException(
             () -> {
