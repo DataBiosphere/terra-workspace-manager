@@ -27,8 +27,7 @@ public class PrivateControlledAiNotebookInstancePostStartup
     extends WorkspaceAllocateTestScriptBase {
   private static final String INSTANCE_ID = RandomStringUtils.randomAlphabetic(8).toLowerCase();
   // NOTE: ONLY set this to your branch name for local testing purpose.
-  // DO NOT SUBMIT if the value is override.
-  private static final String LOCAL_BRANCH = "yuhuyoyo/testpoststartup";
+  private static final String LOCAL_BRANCH = "";
   private TestUserSpecification resourceUser;
 
   @Override
