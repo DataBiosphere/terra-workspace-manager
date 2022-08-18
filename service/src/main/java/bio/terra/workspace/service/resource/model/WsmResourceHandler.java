@@ -23,7 +23,7 @@ public interface WsmResourceHandler {
   /**
    * Generate the resource cloud-native name for resource
    *
-   * @param workspaceUuid workspace UUID
+   * @param workspaceUuid workspace UUID.
    * @param resourceName resource name
    * @return cloud-native name
    */

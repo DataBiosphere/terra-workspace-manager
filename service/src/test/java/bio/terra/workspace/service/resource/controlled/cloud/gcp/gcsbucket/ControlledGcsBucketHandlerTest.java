@@ -31,7 +31,7 @@ public class ControlledGcsBucketHandlerTest extends BaseUnitTest {
     String generateCloudName =
         ControlledGcsBucketHandler.getHandler().generateCloudName(fakeWorkSpaceId, bucketName);
 
-    assertTrue(generateCloudName.startsWith("yuhuyoyo-" + FAKE_PROJECT_ID));
+    assertTrue(generateCloudName.equals("yuhuyoyo-" + FAKE_PROJECT_ID));
   }
 
   @Test
@@ -40,7 +40,7 @@ public class ControlledGcsBucketHandlerTest extends BaseUnitTest {
     String generateCloudName =
         ControlledGcsBucketHandler.getHandler().generateCloudName(fakeWorkSpaceId, bucketName);
 
-    assertTrue(generateCloudName.startsWith("yu-hu-yo-yo-" + FAKE_PROJECT_ID));
+    assertTrue(generateCloudName.equals("yu-hu-yo-yo-" + FAKE_PROJECT_ID));
   }
 
   @Test
@@ -49,7 +49,7 @@ public class ControlledGcsBucketHandlerTest extends BaseUnitTest {
     String generateCloudName =
         ControlledGcsBucketHandler.getHandler().generateCloudName(fakeWorkSpaceId, bucketName);
 
-    assertTrue(generateCloudName.startsWith("yuhuyoyo-" + FAKE_PROJECT_ID));
+    assertTrue(generateCloudName.equals("yuhuyoyo-" + FAKE_PROJECT_ID));
   }
 
   @Test
@@ -58,7 +58,7 @@ public class ControlledGcsBucketHandlerTest extends BaseUnitTest {
     String generateCloudName =
         ControlledGcsBucketHandler.getHandler().generateCloudName(fakeWorkSpaceId, bucketName);
 
-    assertTrue(generateCloudName.startsWith("yuhuyoyo-" + FAKE_PROJECT_ID));
+    assertTrue(generateCloudName.equals("yuhuyoyo-" + FAKE_PROJECT_ID));
   }
 
   @Test
@@ -71,6 +71,15 @@ public class ControlledGcsBucketHandlerTest extends BaseUnitTest {
     int maxNameLength = MAX_BUCKET_NAME_LENGTH;
 
     assertEquals(maxNameLength, generateCloudName.length());
-    assertTrue(generateCloudName.startsWith(generateCloudName.substring(0, maxNameLength)));
+    assertTrue(generateCloudName.equals(generateCloudName.substring(0, maxNameLength)));
+  }
+
+  @Test
+  public void generateBucketName_bucketNameWithUnsupportedCharacters_removeUnsupportedcharacter() {
+    String bucketName = "yuh%uyoy*o";
+    String generateCloudName =
+        ControlledGcsBucketHandler.getHandler().generateCloudName(fakeWorkSpaceId, bucketName);
+
+    assertTrue(generateCloudName.equals("yuhuyoyo-" + FAKE_PROJECT_ID));
   }
 }

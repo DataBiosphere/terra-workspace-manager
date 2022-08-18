@@ -17,7 +17,7 @@ public class ControlledBigQueryDatasetHandlerTest extends BaseUnitTest {
     String generatedCloudName =
         ControlledBigQueryDatasetHandler.getHandler().generateCloudName(null, datasetName);
 
-    assertTrue(generatedCloudName.startsWith("yuhuyoyo"));
+    assertTrue(generatedCloudName.equals("yuhuyoyo"));
   }
 
   @Test
@@ -26,7 +26,7 @@ public class ControlledBigQueryDatasetHandlerTest extends BaseUnitTest {
     String generatedCloudName =
         ControlledBigQueryDatasetHandler.getHandler().generateCloudName(null, datasetName);
 
-    assertTrue(generatedCloudName.startsWith("yu_hu_yo_yo"));
+    assertTrue(generatedCloudName.equals("yu_hu_yo_yo"));
   }
 
   @Test
@@ -35,7 +35,7 @@ public class ControlledBigQueryDatasetHandlerTest extends BaseUnitTest {
     String generatedCloudName =
         ControlledBigQueryDatasetHandler.getHandler().generateCloudName(null, datasetName);
 
-    assertTrue(generatedCloudName.startsWith("yu_hu_yo_yo"));
+    assertTrue(generatedCloudName.equals("yu_hu_yo_yo"));
   }
 
   @Test
@@ -44,7 +44,7 @@ public class ControlledBigQueryDatasetHandlerTest extends BaseUnitTest {
     String generatedCloudName =
         ControlledBigQueryDatasetHandler.getHandler().generateCloudName(null, datasetName);
 
-    assertTrue(generatedCloudName.startsWith("yu_hu_yo_yo"));
+    assertTrue(generatedCloudName.equals("yu_hu_yo_yo"));
   }
 
   @Test

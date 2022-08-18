@@ -220,10 +220,6 @@ public class ControlledBigQueryDatasetResource extends ControlledResource {
         .toHashCode();
   }
 
-  private static String generateUniqueDatasetId() {
-    return "terra_" + UUID.randomUUID() + "_dataset".replace("-", "_");
-  }
-
   public static class Builder {
     private ControlledResourceFields common;
     private String datasetName;

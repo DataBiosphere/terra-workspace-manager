@@ -15,7 +15,7 @@ public class ControlledAiNotebookHandlerTest extends BaseUnitTest {
     String instanceId =
         ControlledAiNotebookHandler.getHandler().generateCloudName(null, instanceName);
 
-    assertTrue(instanceId.startsWith("yuhuyoyo"));
+    assertTrue(instanceId.equals("yuhuyoyo"));
   }
 
   @Test
@@ -24,7 +24,7 @@ public class ControlledAiNotebookHandlerTest extends BaseUnitTest {
     String instanceId =
         ControlledAiNotebookHandler.getHandler().generateCloudName(null, instanceName);
 
-    assertTrue(instanceId.startsWith("yuhuyoyo"));
+    assertTrue(instanceId.equals("yuhuyoyo"));
   }
 
   @Test
@@ -33,7 +33,7 @@ public class ControlledAiNotebookHandlerTest extends BaseUnitTest {
     String instanceId =
         ControlledAiNotebookHandler.getHandler().generateCloudName(null, instanceName);
 
-    assertTrue(instanceId.startsWith("yuhuyoyo"));
+    assertTrue(instanceId.equals("yuhuyoyo"));
   }
 
   @Test
@@ -42,7 +42,7 @@ public class ControlledAiNotebookHandlerTest extends BaseUnitTest {
     String instanceId =
         ControlledAiNotebookHandler.getHandler().generateCloudName(null, instanceName);
 
-    assertTrue(instanceId.startsWith("yuhuyoyo"));
+    assertTrue(instanceId.equals("yuhuyoyo"));
   }
 
   @Test
@@ -51,7 +51,7 @@ public class ControlledAiNotebookHandlerTest extends BaseUnitTest {
     String instanceId =
         ControlledAiNotebookHandler.getHandler().generateCloudName(null, instanceName);
 
-    assertTrue(instanceId.startsWith("yuhuyoyo"));
+    assertTrue(instanceId.equals("yuhuyoyo"));
   }
 
   @Test
@@ -64,6 +64,6 @@ public class ControlledAiNotebookHandlerTest extends BaseUnitTest {
     int maxNameLength = MAX_INSTANCE_NAME_LENGTH;
 
     assertEquals(maxNameLength, instanceId.length());
-    assertTrue(instanceId.startsWith(instanceId.substring(0, maxNameLength)));
+    assertTrue(instanceId.equals(instanceId.substring(0, maxNameLength)));
   }
 }
