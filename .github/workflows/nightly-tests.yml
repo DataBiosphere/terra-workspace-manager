@@ -129,6 +129,14 @@ jobs:
           test-server: workspace-wsmtest.json
           test: suites/FullIntegration.json
 
+      - name: Run nightly only integration test.
+        id: nightly-only-integration-test
+        if: always()
+        uses: ./.github/actions/integration-test
+        with:
+          test-server: workspace-wsmtest.json
+          test: suites/NightlyOnlyIntegration.json
+
       - name: clean databases before perf suite
         if: always()
         uses: ./.github/actions/clean-databases
