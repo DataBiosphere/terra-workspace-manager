@@ -5,7 +5,6 @@ import bio.terra.workspace.amalgam.tps.TpsApiDispatch;
 import bio.terra.workspace.app.configuration.external.BufferServiceConfiguration;
 import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
 import bio.terra.workspace.db.WorkspaceDao;
-import bio.terra.workspace.generated.model.ApiTpsPaoCreateRequest;
 import bio.terra.workspace.generated.model.ApiTpsPaoGetResult;
 import bio.terra.workspace.generated.model.ApiTpsPolicyInputs;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
@@ -459,6 +458,11 @@ public class WorkspaceService {
               new BearerToken(userRequest.getRequiredToken()), sourceWorkspace.getWorkspaceId());
 
       if (workspacePao.isPresent()) {
+        tpsApiDispatch.clonePao(
+            new BearerToken(userRequest.getRequiredToken()),
+            sourceWorkspace.getWorkspaceId(),
+            destinationWorkspace.getWorkspaceId());
+        /*
         var sourcePao = workspacePao.get();
         var newPaoRequest = new ApiTpsPaoCreateRequest();
         newPaoRequest.setObjectId(destinationWorkspace.getWorkspaceId());
@@ -467,6 +471,7 @@ public class WorkspaceService {
         newPaoRequest.setComponent(sourcePao.getComponent());
 
         tpsApiDispatch.createPao(new BearerToken(userRequest.getRequiredToken()), newPaoRequest);
+         */
       }
     }
 

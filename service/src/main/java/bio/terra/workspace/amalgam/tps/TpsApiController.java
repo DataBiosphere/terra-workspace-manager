@@ -54,4 +54,10 @@ public class TpsApiController implements TpsApi {
     ApiTpsPaoGetResult result = tpsApiDispatch.getPao(bearerTokenFactory.from(request), objectId);
     return new ResponseEntity<>(result, HttpStatus.OK);
   }
+
+  @Override
+  public ResponseEntity<Void> clonePao(UUID objectId, UUID cloneObjectId)  {
+    tpsApiDispatch.clonePao(bearerTokenFactory.from(request), objectId, cloneObjectId);
+    return new ResponseEntity<>(HttpStatus.CREATED);
+  }
 }

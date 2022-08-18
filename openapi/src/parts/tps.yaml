@@ -53,6 +53,27 @@ paths:
           $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/ServerError'
+    post:
+      summary: clone a policy attribute object
+      operationId: clonePao
+      tags: [Tps]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TpsObjectId'
+      responses:
+        '201':
+          description: Policy attribute created successfully
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
     get:
       summary: retrieve a policy attribute object
       operationId: getPao
@@ -121,10 +142,11 @@ components:
           $ref: '#/components/schemas/TpsPolicyInputs'
         effectiveAttributes:
           $ref: '#/components/schemas/TpsPolicyInputs'
-        inConflict:
-          type: boolean
-        children:
+        predecessorId:
+          $ref: '#/components/schemas/TpsObjectId'
+        sourcesObjectIds:
           type: array
+          uniqueItems: true
           items:
             $ref: '#/components/schemas/TpsObjectId'
 
