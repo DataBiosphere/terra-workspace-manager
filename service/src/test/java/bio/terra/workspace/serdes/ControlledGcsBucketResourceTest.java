@@ -27,11 +27,11 @@ public class ControlledGcsBucketResourceTest extends BaseUnitTest {
         MissingRequiredFieldException.class,
         () ->
             ControlledGcsBucketResource.builder()
+                .bucketName(ControlledResourceFixtures.uniqueBucketName())
                 .common(
                     ControlledResourceFixtures.makeDefaultControlledResourceFieldsBuilder()
                         .workspaceUuid(null)
                         .build())
-                .bucketName(ControlledResourceFixtures.uniqueBucketName())
                 .build());
   }
 
@@ -55,6 +55,7 @@ public class ControlledGcsBucketResourceTest extends BaseUnitTest {
         BadRequestException.class,
         () ->
             ControlledGcsBucketResource.builder()
+                .bucketName(ControlledResourceFixtures.uniqueBucketName())
                 .common(
                     ControlledResourceFixtures.makeDefaultControlledResourceFieldsBuilder()
                         .workspaceUuid(UUID.randomUUID())
@@ -67,7 +68,6 @@ public class ControlledGcsBucketResourceTest extends BaseUnitTest {
                         .accessScope(AccessScopeType.ACCESS_SCOPE_SHARED)
                         .managedBy(ManagedByType.MANAGED_BY_USER)
                         .build())
-                .bucketName(ControlledResourceFixtures.uniqueBucketName())
                 .build());
   }
 }

@@ -30,6 +30,7 @@ import java.util.Optional;
 import java.util.UUID;
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -74,8 +75,12 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
         toCommonFields(workspaceUuid, body.getCommon(), userRequest);
     ControlledGcsBucketResource resource =
         ControlledGcsBucketResource.builder()
+            .bucketName(
+                StringUtils.isEmpty(body.getGcsBucket().getName())
+                    ? ControlledGcsBucketHandler.getHandler()
+                        .generateCloudName(commonFields.getWorkspaceId(), commonFields.getName())
+                    : body.getGcsBucket().getName())
             .common(commonFields)
-            .bucketName(body.getGcsBucket().getName())
             .build();
     Workspace workspace =
         workspaceService.validateMcWorkspaceAndAction(
@@ -297,8 +302,11 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
     ControlledBigQueryDatasetResource resource =
         ControlledBigQueryDatasetResource.builder()
             .datasetName(
-                Optional.ofNullable(body.getDataset().getDatasetId())
-                    .orElse(body.getCommon().getName()))
+                ControlledBigQueryDatasetHandler.getHandler()
+                    .generateCloudName(
+                        null,
+                        Optional.ofNullable(body.getDataset().getDatasetId())
+                            .orElse(body.getCommon().getName())))
             .projectId(projectId)
             .common(commonFields)
             .build();

@@ -45,6 +45,7 @@ public class GcsBucketCloneTestFixtures {
           .location("us-west1");
   public static final ControlledGcsBucketResource SOURCE_BUCKET_RESOURCE =
       ControlledGcsBucketResource.builder()
+          .bucketName(SOURCE_BUCKET_NAME)
           .common(
               ControlledResourceFields.builder()
                   .accessScope(AccessScopeType.ACCESS_SCOPE_PRIVATE)
@@ -59,10 +60,10 @@ public class GcsBucketCloneTestFixtures {
                   .resourceId(UUID.randomUUID())
                   .workspaceUuid(SOURCE_WORKSPACE_ID)
                   .build())
-          .bucketName(SOURCE_BUCKET_NAME)
           .build();
   public static final ControlledGcsBucketResource CREATED_BUCKET_RESOURCE =
       ControlledGcsBucketResource.builder()
+          .bucketName(DESTINATION_BUCKET_NAME)
           .common(
               ControlledResourceFields.builder()
                   .accessScope(AccessScopeType.ACCESS_SCOPE_PRIVATE)
@@ -77,7 +78,6 @@ public class GcsBucketCloneTestFixtures {
                   .resourceId(UUID.randomUUID())
                   .workspaceUuid(DESTINATION_WORKSPACE_ID)
                   .build())
-          .bucketName(DESTINATION_BUCKET_NAME)
           .build();
   // Stairway ser/des doesn't handle unmodifiable lists
   public static final List<String> SOURCE_ROLE_NAMES =

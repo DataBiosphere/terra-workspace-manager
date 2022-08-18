@@ -386,8 +386,8 @@ class SamServiceTest extends BaseConnectedTest {
 
     ControlledResource bucketResource =
         ControlledGcsBucketResource.builder()
-            .common(commonFields)
             .bucketName(ControlledResourceFixtures.uniqueBucketName())
+            .common(commonFields)
             .build();
 
     samService.createControlledResource(

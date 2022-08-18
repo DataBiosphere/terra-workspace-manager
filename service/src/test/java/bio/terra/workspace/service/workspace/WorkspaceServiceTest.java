@@ -788,6 +788,7 @@ class WorkspaceServiceTest extends BaseConnectedTest {
     // add a bucket resource
     final ControlledGcsBucketResource bucketResource =
         ControlledGcsBucketResource.builder()
+            .bucketName("terra-test-" + UUID.randomUUID().toString().toLowerCase())
             .common(
                 ControlledResourceFields.builder()
                     .name("bucket_1")
@@ -802,7 +803,6 @@ class WorkspaceServiceTest extends BaseConnectedTest {
                     .iamRole(ControlledResourceIamRole.OWNER)
                     .assignedUser(USER_REQUEST.getEmail())
                     .build())
-            .bucketName("terra-test-" + UUID.randomUUID().toString().toLowerCase())
             .build();
     final ApiGcpGcsBucketCreationParameters creationParameters =
         new ApiGcpGcsBucketCreationParameters()

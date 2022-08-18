@@ -10,6 +10,7 @@ import com.google.common.base.Preconditions;
 import java.util.UUID;
 import javax.annotation.Nullable;
 import javax.annotation.PostConstruct;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -39,10 +40,15 @@ public class ControlledGcsBucketHandler implements WsmResourceHandler {
   public WsmResource makeResourceFromDb(DbResource dbResource) {
     ControlledGcsBucketAttributes attributes =
         DbSerDes.fromJson(dbResource.getAttributes(), ControlledGcsBucketAttributes.class);
+    ControlledResourceFields commonFields = new ControlledResourceFields(dbResource);
     var resource =
         ControlledGcsBucketResource.builder()
-            .common(new ControlledResourceFields(dbResource))
-            .bucketName(attributes.getBucketName())
+            .bucketName(
+                StringUtils.isEmpty(attributes.getBucketName())
+                    ? ControlledGcsBucketHandler.getHandler()
+                        .generateCloudName(commonFields.getWorkspaceId(), commonFields.getName())
+                    : attributes.getBucketName())
+            .common(commonFields)
             .build();
     return resource;
   }

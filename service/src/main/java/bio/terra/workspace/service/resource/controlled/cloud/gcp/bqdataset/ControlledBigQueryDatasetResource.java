@@ -231,8 +231,7 @@ public class ControlledBigQueryDatasetResource extends ControlledResource {
     }
 
     public ControlledBigQueryDatasetResource.Builder datasetName(String datasetName) {
-      this.datasetName =
-          ControlledBigQueryDatasetHandler.getHandler().generateCloudName(null, datasetName);
+      this.datasetName = datasetName;
       return this;
     }
 

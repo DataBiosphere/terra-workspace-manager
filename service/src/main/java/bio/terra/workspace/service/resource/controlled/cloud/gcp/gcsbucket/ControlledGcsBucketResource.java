@@ -30,8 +30,6 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.Optional;
 import java.util.UUID;
-import javax.annotation.Nullable;
-import org.apache.commons.lang3.StringUtils;
 
 public class ControlledGcsBucketResource extends ControlledResource {
 
@@ -214,14 +212,8 @@ public class ControlledGcsBucketResource extends ControlledResource {
       return this;
     }
 
-    public ControlledGcsBucketResource.Builder bucketName(@Nullable String bucketName) {
-      if (StringUtils.isEmpty(bucketName)) {
-        this.bucketName =
-            ControlledGcsBucketHandler.getHandler()
-                .generateCloudName(common.getWorkspaceId(), common.getName());
-      } else {
-        this.bucketName = bucketName;
-      }
+    public ControlledGcsBucketResource.Builder bucketName(String bucketName) {
+      this.bucketName = bucketName;
       return this;
     }
 
