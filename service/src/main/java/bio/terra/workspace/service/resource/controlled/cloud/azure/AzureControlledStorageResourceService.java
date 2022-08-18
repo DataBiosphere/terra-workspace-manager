@@ -60,14 +60,12 @@ public class AzureControlledStorageResourceService {
   }
 
   private BlobContainerSasPermission getSasTokenPermissions(
-      AuthenticatedUserRequest userRequest, UUID storageContainerUuid) {
+      AuthenticatedUserRequest userRequest, UUID storageContainerUuid, String samResourceName) {
     final List<String> containerActions =
         SamRethrow.onInterrupted(
             () ->
                 samService.listResourceActions(
-                    userRequest,
-                    SamConstants.SamResource.CONTROLLED_USER_SHARED,
-                    storageContainerUuid.toString()),
+                    userRequest, samResourceName, storageContainerUuid.toString()),
             "listResourceActions");
 
     String tokenPermissions = "";
@@ -115,7 +113,10 @@ public class AzureControlledStorageResourceService {
     features.azureEnabledCheck();
 
     BlobContainerSasPermission blobContainerSasPermission =
-        getSasTokenPermissions(userRequest, storageContainerResource.getResourceId());
+        getSasTokenPermissions(
+            userRequest,
+            storageContainerResource.getResourceId(),
+            storageContainerResource.getCategory().getSamResourceName());
 
     String storageAccountName = storageAccountResource.getStorageAccountName();
     String endpoint =
