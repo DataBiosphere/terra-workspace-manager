@@ -80,6 +80,7 @@ public class CreateAiNotebookInstanceStepTest extends BaseUnitTest {
 
   @Test
   public void setFieldsNoFields() {
+    var localBranch = "monkey";
     Instance instance =
         CreateAiNotebookInstanceStep.setFields(
             new ApiGcpAiNotebookInstanceCreationParameters(),
@@ -87,12 +88,12 @@ public class CreateAiNotebookInstanceStepTest extends BaseUnitTest {
             WORKSPACE_ID,
             SERVER_ID,
             new Instance(),
-            "main");
+            localBranch);
     assertThat(instance.getMetadata(), Matchers.aMapWithSize(3));
     assertDefaultMetadata(instance);
     assertEquals("foo@bar.com", instance.getServiceAccount());
     assertEquals(SA_SCOPES, instance.getServiceAccountScopes());
-    assertEquals(DEFAULT_POST_STARTUP_SCRIPT, instance.getPostStartupScript());
+    assertEquals(String.format(DEFAULT_POST_STARTUP_SCRIPT, localBranch), instance.getPostStartupScript());
   }
 
   private void assertDefaultMetadata(Instance instance) {

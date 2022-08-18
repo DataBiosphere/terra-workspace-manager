@@ -9,6 +9,10 @@
 #
 # To test a single line, run with "sudo" in notebook. Post-startup script runs
 # as root.
+#
+# Please also make sure integration test `PrivateControlledAiNotebookInstancePostStartup` passes. Refer to
+# https://github.com/DataBiosphere/terra-workspace-manager/tree/main/integration#Run-nightly-only-test-suite-locally
+# for instruction on how to run the test.
 
 set -o errexit
 set -o nounset

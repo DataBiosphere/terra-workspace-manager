@@ -27,7 +27,8 @@ public class PrivateControlledAiNotebookInstancePostStartup
     extends WorkspaceAllocateTestScriptBase {
   private static final String INSTANCE_ID = RandomStringUtils.randomAlphabetic(8).toLowerCase();
   // NOTE: ONLY set this to your branch name for local testing purpose.
-  private static final String LOCAL_BRANCH = "";
+  // DO NOT SUBMIT if the value is override.
+  private static final String LOCAL_BRANCH = "yuhuyoyo/testpoststartup";
   private TestUserSpecification resourceUser;
 
   @Override
@@ -41,7 +42,6 @@ public class PrivateControlledAiNotebookInstancePostStartup
   protected void doUserJourney(TestUserSpecification testUser, WorkspaceApi workspaceApi)
       throws Exception {
     String projectId = CloudContextMaker.createGcpCloudContext(getWorkspaceId(), workspaceApi);
-    System.out.println(projectId);
     workspaceApi.grantRole(
         new GrantRoleRequestBody().memberEmail(resourceUser.userEmail),
         getWorkspaceId(),
@@ -92,14 +92,6 @@ public class PrivateControlledAiNotebookInstancePostStartup
     assertEquals(testValue, metadata.get("terra-test-value"));
     assertEquals(
         resource.getMetadata().getName(), metadata.get("terra-gcp-notebook-resource-name"));
-    System.out.println(
-        userNotebooks
-            .projects()
-            .locations()
-            .instances()
-            .get(instanceName)
-            .execute()
-            .getPostStartupScript());
     var testResultValue =
         ClientTestUtils.getWithRetryOnException(
             () -> {

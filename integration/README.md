@@ -177,10 +177,11 @@ All current WSM configurations are stored in the [`servers` dir](src/main/resour
 See [TestRunner repo README](https://github.com/DataBiosphere/terra-test-runner/blob/main/README.md#Override-the-server-from-the-command-line)
  for more information about this and other available env vars.
 
-### Run `PrivateControlledAiNotebookInstancePostStartup` locally.
+### Run nightly-only test suite locally
+`PrivateControlledAiNotebookInstancePostStartup` cannot be run on local server. 
 This test is to make sure that changes to the post-startup.sh does not break.
-This test can only be run on nightly against real WSM environment and cannot be run
-and not on local server. This is because in the script, we point Terra CLI to
+This test can only be run on nightly against real WSM environment and cannot be
+run on local server. This is because in the script, we point Terra CLI to
 a server. Processes inside the notebook won't be able to talk to the local
 server.
 
