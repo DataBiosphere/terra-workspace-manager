@@ -46,6 +46,7 @@ import org.broadinstitute.dsde.workbench.client.sam.model.CreateResourceRequestV
 import org.broadinstitute.dsde.workbench.client.sam.model.FullyQualifiedResourceId;
 import org.broadinstitute.dsde.workbench.client.sam.model.GetOrCreatePetManagedIdentityRequest;
 import org.broadinstitute.dsde.workbench.client.sam.model.SystemStatus;
+import org.broadinstitute.dsde.workbench.client.sam.model.UserIdInfo;
 import org.broadinstitute.dsde.workbench.client.sam.model.UserResourcesResponse;
 import org.broadinstitute.dsde.workbench.client.sam.model.UserStatusInfo;
 import org.slf4j.Logger;
@@ -1056,11 +1057,13 @@ public class SamService {
       throws InterruptedException {
     UsersApi usersApi = samUsersApi(userRequest.getRequiredToken());
     try {
-      String subjectId = SamRetry.retry(() -> usersApi.getUserIds(userEmail).getUserSubjectId());
-      String saEmail = String.format("pet-%s@%s.iam.gserviceaccount.com", subjectId, projectId);
-      if (subjectId.isEmpty()) {
+      UserIdInfo userId = SamRetry.retry(() -> usersApi.getUserIds(userEmail));
+      if (userId == null) {
         return Optional.empty();
       }
+      String subjectId = userId.getUserSubjectId();
+      String saEmail = String.format("pet-%s@%s.iam.gserviceaccount.com", subjectId, projectId);
+
       return Optional.of(ServiceAccountName.builder().email(saEmail).projectId(projectId).build());
     } catch (ApiException apiException) {
       throw SamExceptionFactory.create("Error getting user subject ID from Sam", apiException);

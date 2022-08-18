@@ -59,6 +59,12 @@ public class RemoveUser extends WorkspaceAllocateTestScriptBase {
         sharedResourceUser.userEmail,
         "The two test users are distinct");
 
+    // Add one group as a reader
+    ownerWorkspaceApi.grantRole(
+        new GrantRoleRequestBody().memberEmail("cli-test-users@verily-bvdp.com"),
+        getWorkspaceId(),
+        IamRole.READER);
+
     // Add one user as a reader, and one as both a reader and writer.
     ownerWorkspaceApi.grantRole(
         new GrantRoleRequestBody().memberEmail(privateResourceUser.userEmail),
@@ -122,6 +128,10 @@ public class RemoveUser extends WorkspaceAllocateTestScriptBase {
     // Validate that setup ran correctly and users have appropriate resource access.
     GcsBucketObjectUtils.retrieveBucketFile(sharedBucketName, projectId, sharedResourceUser);
     GcsBucketObjectUtils.retrieveBucketFile(privateBucketName, projectId, privateResourceUser);
+
+    // Remove READER role which is a group email.
+    ownerWorkspaceApi.removeRole(
+        getWorkspaceId(), IamRole.READER, "cli-test-users@verily-bvdp.com");
 
     // Remove WRITER role from sharedResourceUser. This is their only role, so they are no longer
     // a member of this workspace.
