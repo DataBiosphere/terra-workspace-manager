@@ -1,5 +1,6 @@
 package bio.terra.workspace.service.resource.controlled.cloud.azure.network;
 
+import bio.terra.workspace.common.exception.FeatureNotSupportedException;
 import bio.terra.workspace.db.DbSerDes;
 import bio.terra.workspace.db.model.DbResource;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResourceFields;
@@ -37,6 +38,6 @@ public class ControlledAzureNetworkHandler implements WsmResourceHandler {
   }
 
   public String generateCloudName(@Nullable UUID workspaceUuid, String resourceName) {
-    return "";
+    throw new FeatureNotSupportedException("This generate cloud name feature is not implement yet");
   }
 }

@@ -17,7 +17,7 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 public class ControlledGcsBucketHandlerTest extends BaseUnitTest {
   @MockBean GcpCloudContextService mockGcpCloudContextService;
 
-  private static final UUID fakeWorkSpaceId = UUID.randomUUID();
+  private static final UUID fakeWorkspaceId = UUID.randomUUID();
   private static final String FAKE_PROJECT_ID = "fakeprojectid";
 
   @BeforeEach
@@ -29,7 +29,7 @@ public class ControlledGcsBucketHandlerTest extends BaseUnitTest {
   public void generateBucketName() {
     String bucketName = "yuhuyoyo";
     String generateCloudName =
-        ControlledGcsBucketHandler.getHandler().generateCloudName(fakeWorkSpaceId, bucketName);
+        ControlledGcsBucketHandler.getHandler().generateCloudName(fakeWorkspaceId, bucketName);
 
     assertTrue(generateCloudName.equals("yuhuyoyo-" + FAKE_PROJECT_ID));
   }
@@ -38,7 +38,7 @@ public class ControlledGcsBucketHandlerTest extends BaseUnitTest {
   public void generateBucketName_bucketNameHasStartingDash_removeStartingDash() {
     String bucketName = "-yu-hu-yo-yo";
     String generateCloudName =
-        ControlledGcsBucketHandler.getHandler().generateCloudName(fakeWorkSpaceId, bucketName);
+        ControlledGcsBucketHandler.getHandler().generateCloudName(fakeWorkspaceId, bucketName);
 
     assertTrue(generateCloudName.equals("yu-hu-yo-yo-" + FAKE_PROJECT_ID));
   }
@@ -47,7 +47,7 @@ public class ControlledGcsBucketHandlerTest extends BaseUnitTest {
   public void generateBucketName_bucketNameHasUnderscores_removeUnderscores() {
     String bucketName = "yu_hu_yo_yo";
     String generateCloudName =
-        ControlledGcsBucketHandler.getHandler().generateCloudName(fakeWorkSpaceId, bucketName);
+        ControlledGcsBucketHandler.getHandler().generateCloudName(fakeWorkspaceId, bucketName);
 
     assertTrue(generateCloudName.equals("yuhuyoyo-" + FAKE_PROJECT_ID));
   }
@@ -56,7 +56,7 @@ public class ControlledGcsBucketHandlerTest extends BaseUnitTest {
   public void generateBucketName_bucketNameHasUppercase_toLowerCase() {
     String bucketName = "YUHUYOYO";
     String generateCloudName =
-        ControlledGcsBucketHandler.getHandler().generateCloudName(fakeWorkSpaceId, bucketName);
+        ControlledGcsBucketHandler.getHandler().generateCloudName(fakeWorkspaceId, bucketName);
 
     assertTrue(generateCloudName.equals("yuhuyoyo-" + FAKE_PROJECT_ID));
   }
@@ -66,7 +66,7 @@ public class ControlledGcsBucketHandlerTest extends BaseUnitTest {
     String bucketName =
         "yuhuyoyoyoyoyoyoyoyoyoyoyoyoyoyoyoyoyoyoyoyoyoyoyoyoyoyoyoyoyoyoyoyoyoyoyoyo";
     String generateCloudName =
-        ControlledGcsBucketHandler.getHandler().generateCloudName(fakeWorkSpaceId, bucketName);
+        ControlledGcsBucketHandler.getHandler().generateCloudName(fakeWorkspaceId, bucketName);
 
     int maxNameLength = MAX_BUCKET_NAME_LENGTH;
 
@@ -78,7 +78,7 @@ public class ControlledGcsBucketHandlerTest extends BaseUnitTest {
   public void generateBucketName_bucketNameWithUnsupportedCharacters_removeUnsupportedcharacter() {
     String bucketName = "yuh%uyoy*o";
     String generateCloudName =
-        ControlledGcsBucketHandler.getHandler().generateCloudName(fakeWorkSpaceId, bucketName);
+        ControlledGcsBucketHandler.getHandler().generateCloudName(fakeWorkspaceId, bucketName);
 
     assertTrue(generateCloudName.equals("yuhuyoyo-" + FAKE_PROJECT_ID));
   }

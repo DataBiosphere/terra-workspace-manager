@@ -52,7 +52,7 @@ public class ControlledBigQueryDatasetHandler implements WsmResourceHandler {
         ControlledBigQueryDatasetResource.builder()
             .datasetName(
                 ControlledBigQueryDatasetHandler.getHandler()
-                    .generateCloudName(null, attributes.getDatasetName()))
+                    .generateCloudName(dbResource.getWorkspaceId(), attributes.getDatasetName()))
             .projectId(projectId)
             .common(new ControlledResourceFields(dbResource))
             .build();

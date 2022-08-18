@@ -304,7 +304,7 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
             .datasetName(
                 ControlledBigQueryDatasetHandler.getHandler()
                     .generateCloudName(
-                        null,
+                        workspaceUuid,
                         Optional.ofNullable(body.getDataset().getDatasetId())
                             .orElse(body.getCommon().getName())))
             .projectId(projectId)
@@ -359,7 +359,7 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
                 Optional.ofNullable(body.getAiNotebookInstance().getInstanceId())
                     .orElse(
                         ControlledAiNotebookHandler.getHandler()
-                            .generateCloudName(null, commonFields.getName())))
+                            .generateCloudName(workspaceUuid, commonFields.getName())))
             .build();
 
     String jobId =

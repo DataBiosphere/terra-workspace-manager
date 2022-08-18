@@ -105,7 +105,8 @@ public class CopyBigQueryDatasetDefinitionStep implements Step {
         ControlledBigQueryDatasetResource.builder()
             .projectId(destinationProjectId)
             .datasetName(
-                ControlledBigQueryDatasetHandler.getHandler().generateCloudName(null, datasetName))
+                ControlledBigQueryDatasetHandler.getHandler()
+                    .generateCloudName(destinationWorkspaceId, datasetName))
             .common(commonFields)
             .build();
 

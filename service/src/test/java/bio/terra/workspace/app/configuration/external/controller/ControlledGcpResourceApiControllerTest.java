@@ -12,8 +12,6 @@ import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import bio.terra.workspace.amalgam.tps.TpsApiDispatch;
-import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
 import bio.terra.workspace.common.BaseUnitTest;
 import bio.terra.workspace.common.fixtures.WorkspaceFixtures;
 import bio.terra.workspace.generated.model.ApiAiNotebookCloudId;
@@ -23,8 +21,6 @@ import bio.terra.workspace.generated.model.ApiGcsBucketCloudName;
 import bio.terra.workspace.generated.model.ApiGenerateGcpAiNotebookCloudIdRequestBody;
 import bio.terra.workspace.generated.model.ApiGenerateGcpBigQueryDatasetCloudIDRequestBody;
 import bio.terra.workspace.generated.model.ApiGenerateGcpGcsBucketCloudNameRequestBody;
-import bio.terra.workspace.generated.model.ApiTpsPolicyInput;
-import bio.terra.workspace.generated.model.ApiTpsPolicyPair;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.workspace.GcpCloudContextService;
@@ -44,18 +40,10 @@ public class ControlledGcpResourceApiControllerTest extends BaseUnitTest {
   AuthenticatedUserRequest USER_REQUEST =
       new AuthenticatedUserRequest(
           "fake@email.com", "subjectId123456", Optional.of("ThisIsNotARealBearerToken"));
-  /** A fake group-constraint policy for a workspace. */
-  private static final ApiTpsPolicyInput GROUP_POLICY =
-      new ApiTpsPolicyInput()
-          .namespace("terra")
-          .name("group-constraint")
-          .addAdditionalDataItem(new ApiTpsPolicyPair().key("group").value("my_fake_group"));
 
   @Autowired MockMvc mockMvc;
   @Autowired ObjectMapper objectMapper;
   @MockBean GcpCloudContextService mockGcpCloudContextService;
-  @MockBean FeatureConfiguration mockFeatureConfiguration;
-  @MockBean TpsApiDispatch mockTpsApiDispatch;
   @MockBean SamService mockSamService;
 
   @BeforeEach
