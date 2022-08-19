@@ -124,7 +124,7 @@ jobs:
       - name: Set branch name as environment variable
         id: set_env
         if: ${{ github.event_name == 'workflow_dispatch' }}
-        run: echo "TEST_LOCAL_BRANCH=${{ github.event.inputs.branch }}" >> $GITHUB_ENV
+        run: echo "TEST_LOCAL_BRANCH=$(echo ${GITHUB_REF#refs/heads/})" >> $GITHUB_ENV
 
       - name: Run nightly only integration test.
         id: nightly-only-integration-test
