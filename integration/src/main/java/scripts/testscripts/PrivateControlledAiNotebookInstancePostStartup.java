@@ -26,8 +26,6 @@ import scripts.utils.WorkspaceAllocateTestScriptBase;
 public class PrivateControlledAiNotebookInstancePostStartup
     extends WorkspaceAllocateTestScriptBase {
   private static final String INSTANCE_ID = RandomStringUtils.randomAlphabetic(8).toLowerCase();
-  // NOTE: ONLY set this to your branch name for local testing purpose.
-  private static final String LOCAL_BRANCH = "";
   private TestUserSpecification resourceUser;
 
   @Override
@@ -48,6 +46,7 @@ public class PrivateControlledAiNotebookInstancePostStartup
     ControlledGcpResourceApi resourceUserApi =
         ClientTestUtils.getControlledGcpResourceClient(resourceUser, server);
     String testValue = RandomStringUtils.random(5, /*letters=*/ true, /*numbers=*/ true);
+    String localBranch = System.getenv("TEST_LOCAL_BRANCH");
     CreatedControlledGcpAiNotebookInstanceResult creationResult =
         NotebookUtils.makeControlledNotebookUserPrivate(
             getWorkspaceId(),
@@ -55,14 +54,14 @@ public class PrivateControlledAiNotebookInstancePostStartup
             /*location=*/ null,
             resourceUserApi,
             testValue,
-            /*postStartupScript=*/ StringUtils.isEmpty(LOCAL_BRANCH)
+            /*postStartupScript=*/ StringUtils.isEmpty(localBranch)
                 ? null
                 : String.format(
                     "https://raw.githubusercontent.com/DataBiosphere/terra-workspace-manager/%s/service/src/main/java/bio/terra/workspace/service/resource/controlled/cloud/gcp/ainotebook/post-startup.sh",
-                    LOCAL_BRANCH));
+                    localBranch));
 
     AIPlatformNotebooks userNotebooks = ClientTestUtils.getAIPlatformNotebooksClient(resourceUser);
-    var resource = getNotebookResource(resourceUserApi, creationResult);
+    GcpAiNotebookInstanceResource resource = getNotebookResource(resourceUserApi, creationResult);
     var instanceName = composeInstanceName(resource);
     String proxyUrl =
         ClientTestUtils.getWithRetryOnException(
