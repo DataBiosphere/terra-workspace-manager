@@ -12,6 +12,7 @@ import bio.terra.workspace.generated.model.ApiGcpBigQueryDatasetCreationParamete
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.model.ControlledResourceIamRole;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceService;
+import bio.terra.workspace.service.resource.controlled.cloud.gcp.bqdataset.ControlledBigQueryDatasetHandler;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.bqdataset.ControlledBigQueryDatasetResource;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResourceFields;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
@@ -103,7 +104,9 @@ public class CopyBigQueryDatasetDefinitionStep implements Step {
     final ControlledBigQueryDatasetResource destinationResource =
         ControlledBigQueryDatasetResource.builder()
             .projectId(destinationProjectId)
-            .datasetName(datasetName)
+            .datasetName(
+                ControlledBigQueryDatasetHandler.getHandler()
+                    .generateCloudName(destinationWorkspaceId, datasetName))
             .common(commonFields)
             .build();
 

@@ -130,6 +130,27 @@ paths:
         '500':
           $ref: '#/components/responses/ServerError'
 
+  /api/workspaces/v1/{workspaceId}/resources/controlled/gcp/ai-notebook-instances/generateName:
+    parameters:
+    - $ref: '#/components/parameters/WorkspaceId'
+    post:
+      summary: Generate a cloud native controlled AI notebook instance name
+      operationId: generateAiNotebookCloudInstanceId
+      tags: [ ControlledGcpResource ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GenerateGcpAiNotebookCloudIdRequestBody'
+      responses:
+        '200':
+          $ref: '#/components/responses/CloudAiNotebookIdResponse'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
 components:
   schemas:
     CreateControlledGcpAiNotebookInstanceRequestBody:
@@ -330,6 +351,21 @@ components:
         updateParameters:
           $ref: '#/components/schemas/GcpAiNotebookUpdateParameters'
 
+    AiNotebookCloudId:
+      description: Ai notebook Cloud native ID
+      type: object
+      required: [ generatedAiNotebookAiNotebookCloudId ]
+      properties:
+        generatedAiNotebookAiNotebookCloudId:
+          type: string
+
+    GenerateGcpAiNotebookCloudIdRequestBody:
+      type: object
+      required: [ aiNotebookName ]
+      properties:
+        aiNotebookName:
+          type: string
+
   responses:    
     CreatedControlledGcpAiNotebookInstanceResponse:
       description: Response to Create controlled resource
@@ -344,3 +380,10 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/DeleteControlledGcpAiNotebookInstanceResult'
+
+    CloudAiNotebookIdResponse:
+      description: A valid AI notebook name per https://cloud.google.com/vertex-ai/docs/workbench/user-managed/create-new.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/AiNotebookCloudId'
