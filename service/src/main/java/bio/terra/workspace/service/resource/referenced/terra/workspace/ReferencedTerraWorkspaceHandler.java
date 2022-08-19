@@ -25,6 +25,6 @@ public class ReferencedTerraWorkspaceHandler implements WsmResourceHandler {
 
   public String generateCloudName(@Nullable UUID workspaceUuid, String resourceName) {
     throw new FeatureNotSupportedException(
-        "This generate cloud name feature is not supported in reference resource");
+        "generateCloudName not supported for referenced resource.");
   }
 }
