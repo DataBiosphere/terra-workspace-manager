@@ -1,11 +1,11 @@
 package bio.terra.workspace.service.resource.referenced.terra.workspace;
 
-import bio.terra.workspace.common.exception.FeatureNotSupportedException;
 import bio.terra.workspace.db.model.DbResource;
 import bio.terra.workspace.service.resource.model.WsmResource;
 import bio.terra.workspace.service.resource.model.WsmResourceHandler;
 import java.util.UUID;
 import javax.annotation.Nullable;
+import javax.ws.rs.BadRequestException;
 
 public class ReferencedTerraWorkspaceHandler implements WsmResourceHandler {
   private static ReferencedTerraWorkspaceHandler theHandler;
@@ -24,7 +24,6 @@ public class ReferencedTerraWorkspaceHandler implements WsmResourceHandler {
   }
 
   public String generateCloudName(@Nullable UUID workspaceUuid, String resourceName) {
-    throw new FeatureNotSupportedException(
-        "generateCloudName not supported for referenced resource.");
+    throw new BadRequestException("generateCloudName not supported for referenced resource.");
   }
 }
