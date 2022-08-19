@@ -7,7 +7,6 @@
     "integration/BasicUnauthenticated.json",
     "integration/GetRoles.json",
     "integration/ListWorkspaces.json",
-    "integration/WorkspaceLifecycle.json",
-    "integration/PrivateControlledAiNotebookInstancePostStartup.json"
+    "integration/WorkspaceLifecycle.json"
   ]
 }
