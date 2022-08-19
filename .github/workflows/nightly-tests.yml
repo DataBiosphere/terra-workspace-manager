@@ -19,7 +19,7 @@ jobs:
 
     steps:
       - name: 'extract github branch'
-        id: 'extract branch'
+        id: 'extract_branch'
         run: |
           CHECKOUT_BRANCH="$GITHUB_REF"
           if ${{ github.event_name == 'workflow_dispatch' }}; then
@@ -139,8 +139,9 @@ jobs:
           test-server: workspace-wsmtest.json
           test: suites/FullIntegration.json
 
-      - name: Extract branch name
-        id: extract_branch
+      - name: Set branch name as environment variable
+        id: set_env
+        if: ${{ github.event_name == 'workflow_dispatch' }}
         run: echo "TEST_LOCAL_BRANCH=${{ steps.controls.outputs.checkout-branch }}" >> $GITHUB_ENV
 
       - name: Run nightly only integration test.
