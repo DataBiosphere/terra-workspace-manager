@@ -18,17 +18,7 @@ jobs:
       id-token: 'write'
 
     steps:
-      - name: 'extract github branch'
-        id: 'extract_branch'
-        run: |
-          CHECKOUT_BRANCH="$GITHUB_REF"
-          if ${{ github.event_name == 'workflow_dispatch' }}; then
-            CHECKOUT_BRANCH=${{ github.event.inputs.branch }}
-          fi
-          echo ::set-output name=checkout-branch::$CHECKOUT_BRANCH
       - uses: actions/checkout@v3
-        with:
-          ref: ${{ steps.controls.outputs.checkout-branch }}
 
       # Sparse check out terra-helmfile repo version directories
       - uses: ./.github/actions/checkout-helm-versions
@@ -127,6 +117,23 @@ jobs:
         run: |
           rm -f ./argocd
 
+      - name: clean databases before nightly-only integration suite
+        if: always()
+        uses: ./.github/actions/clean-databases
+
+      - name: Set branch name as environment variable
+        id: set_env
+        if: ${{ github.event_name == 'workflow_dispatch' }}
+        run: echo "TEST_LOCAL_BRANCH=${{ github.event.inputs.branch }}" >> $GITHUB_ENV
+
+      - name: Run nightly only integration test.
+        id: nightly-only-integration-test
+        if: always()
+        uses: ./.github/actions/integration-test
+        with:
+          test-server: workspace-wsmtest.json
+          test: suites/NightlyOnlyIntegration.json
+          
       - name: clean databases before integration suite
         if: always()
         uses: ./.github/actions/clean-databases
@@ -138,19 +145,6 @@ jobs:
         with:
           test-server: workspace-wsmtest.json
           test: suites/FullIntegration.json
-
-      - name: Set branch name as environment variable
-        id: set_env
-        if: ${{ github.event_name == 'workflow_dispatch' }}
-        run: echo "TEST_LOCAL_BRANCH=${{ steps.controls.outputs.checkout-branch }}" >> $GITHUB_ENV
-
-      - name: Run nightly only integration test.
-        id: nightly-only-integration-test
-        if: always()
-        uses: ./.github/actions/integration-test
-        with:
-          test-server: workspace-wsmtest.json
-          test: suites/NightlyOnlyIntegration.json
 
       - name: clean databases before perf suite
         if: always()
