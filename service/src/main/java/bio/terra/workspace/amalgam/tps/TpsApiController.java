@@ -56,7 +56,7 @@ public class TpsApiController implements TpsApi {
   }
 
   @Override
-  public ResponseEntity<Void> clonePao(UUID objectId, UUID cloneObjectId)  {
+  public ResponseEntity<Void> clonePao(UUID objectId, UUID cloneObjectId) {
     tpsApiDispatch.clonePao(bearerTokenFactory.from(request), objectId, cloneObjectId);
     return new ResponseEntity<>(HttpStatus.CREATED);
   }
