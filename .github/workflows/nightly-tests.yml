@@ -18,7 +18,17 @@ jobs:
       id-token: 'write'
 
     steps:
-      - uses: actions/checkout@v2
+      - name: 'extract github branch'
+        id: 'extract branch'
+        run: |
+          CHECKOUT_BRANCH="$GITHUB_REF"
+          if ${{ github.event_name == 'workflow_dispatch' }}; then
+            CHECKOUT_BRANCH=${{ github.event.inputs.branch }}
+          fi
+          echo ::set-output name=checkout-branch::$CHECKOUT_BRANCH
+      - uses: actions/checkout@v3
+        with:
+          ref: ${{ steps.controls.outputs.checkout-branch }}
 
       # Sparse check out terra-helmfile repo version directories
       - uses: ./.github/actions/checkout-helm-versions
@@ -131,7 +141,7 @@ jobs:
 
       - name: Extract branch name
         id: extract_branch
-        run: echo "TEST_LOCAL_BRANCH=$(echo ${GITHUB_REF#refs/heads/})" >> $GITHUB_ENV
+        run: echo "TEST_LOCAL_BRANCH=${{ steps.controls.outputs.checkout-branch }}" >> $GITHUB_ENV
 
       - name: Run nightly only integration test.
         id: nightly-only-integration-test
