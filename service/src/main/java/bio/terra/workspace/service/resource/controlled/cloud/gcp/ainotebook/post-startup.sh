@@ -67,7 +67,7 @@ function install_java() {
 
 if [[ -n "$(which java)" ]];
 then
-  CUR_JAVA_VERSION=`java -version 2>&1 | grep 'version' 2>&1 | awk -F\" '{ split($2,a,"."); print a[1]}'`
+  readonly CUR_JAVA_VERSION=$(java -version 2>&1 | grep 'version' 2>&1 | awk -F\" '{ split($2,a,"."); print a[1]}')
   if [[ "${CUR_JAVA_VERSION}" -lt 17 ]];
   then
     echo "current java version is ${CUR_JAVA_VERSION}, installing java 17"
