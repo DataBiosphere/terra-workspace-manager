@@ -185,9 +185,5 @@ run on local server. This is because in the script, we point Terra CLI to
 a server. Processes inside the notebook won't be able to talk to the local
 server.
 
-To run this test locally:
-1. `export TEST_RUNNER_SERVER_SPECIFICATION_FILE="workspace-dev.json"` (see [this section](#Use-a-local-Workspace-Manager-server) for details) or 
-change it to `workspace-verily-dev.json` (you do not need to clone BroadInstitutes/terra-helmfile.git in this case.)
-2. In `PrivateControlledAiNotebookInstancePostStartup.java`, change `LOCAL_BRANCH` to your branch name.
-3. Commit and push your PR so the raw github url for the notebook is available.
-4. Run `./gradlew runTest --args="configs/integration/PrivateControlledAiNotebookInstancePostStartup.json /tmp/TR"`
+You can manually trigger nightly test with your local branch to verify that the
+test pass with your change to the post-startup script. 
