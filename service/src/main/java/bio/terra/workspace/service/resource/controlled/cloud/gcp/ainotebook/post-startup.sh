@@ -116,9 +116,7 @@ fi
 # integration test will ensure that everything in script worked.
 sudo -u "$JUPYTER_USER" sh -c 'terra git clone --all'
 
-# Setup gitignore to avoid accidental checkin of data on AoU. Ideally this would be
-# configured on the image, per https://github.com/DataBiosphere/terra-docker/pull/234
-# but that's no longer possible as the home directory is mounted at runtime.
+# Setup gitignore to avoid accidental checkin of data.
 readonly GIT_IGNORE=/home/jupyter/gitignore_global
 
 cat <<EOF | sudo -E -u jupyter tee ${GIT_IGNORE}
