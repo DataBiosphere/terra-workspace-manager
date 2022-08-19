@@ -40,8 +40,7 @@ public class PrivateControlledAiNotebookInstancePostStartup
   @Override
   protected void doUserJourney(TestUserSpecification testUser, WorkspaceApi workspaceApi)
       throws Exception {
-    String projectId = CloudContextMaker.createGcpCloudContext(getWorkspaceId(), workspaceApi);
-    System.out.println(projectId);
+    CloudContextMaker.createGcpCloudContext(getWorkspaceId(), workspaceApi);
     workspaceApi.grantRole(
         new GrantRoleRequestBody().memberEmail(resourceUser.userEmail),
         getWorkspaceId(),
@@ -92,14 +91,6 @@ public class PrivateControlledAiNotebookInstancePostStartup
     assertEquals(testValue, metadata.get("terra-test-value"));
     assertEquals(
         resource.getMetadata().getName(), metadata.get("terra-gcp-notebook-resource-name"));
-    System.out.println(
-        userNotebooks
-            .projects()
-            .locations()
-            .instances()
-            .get(instanceName)
-            .execute()
-            .getPostStartupScript());
     var testResultValue =
         ClientTestUtils.getWithRetryOnException(
             () -> {

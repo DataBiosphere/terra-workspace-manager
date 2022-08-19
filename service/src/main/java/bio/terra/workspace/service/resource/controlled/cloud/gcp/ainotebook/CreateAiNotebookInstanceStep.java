@@ -57,6 +57,8 @@ public class CreateAiNotebookInstanceStep implements Step {
   /** Default post-startup-script when starting a notebook instance. */
   protected static final String DEFAULT_POST_STARTUP_SCRIPT =
       "https://raw.githubusercontent.com/DataBiosphere/terra-workspace-manager/%s/service/src/main/java/bio/terra/workspace/service/resource/controlled/cloud/gcp/ainotebook/post-startup.sh";
+
+  private static final String MAIN_BRANCH = "main";
   /** The Notebook instance metadata value used to set the service account proxy mode. */
   // git secrets gets a false positive if 'service_account' is double quoted.
   private static final String PROXY_MODE_SA_VALUE = "service_" + "account";
@@ -171,7 +173,7 @@ public class CreateAiNotebookInstanceStep implements Step {
       String cliServer,
       Instance instance,
       String gitHash) {
-    var gitHashOrDefault = StringUtils.isEmpty(gitHash) ? "main" : gitHash;
+    var gitHashOrDefault = StringUtils.isEmpty(gitHash) ? MAIN_BRANCH : gitHash;
     instance
         .setPostStartupScript(
             Optional.ofNullable(creationParameters.getPostStartupScript())

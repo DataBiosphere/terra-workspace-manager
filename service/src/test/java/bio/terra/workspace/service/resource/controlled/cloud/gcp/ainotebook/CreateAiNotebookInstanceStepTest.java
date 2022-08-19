@@ -92,7 +92,8 @@ public class CreateAiNotebookInstanceStepTest extends BaseUnitTest {
     assertDefaultMetadata(instance);
     assertEquals("foo@bar.com", instance.getServiceAccount());
     assertEquals(SA_SCOPES, instance.getServiceAccountScopes());
-    assertEquals(DEFAULT_POST_STARTUP_SCRIPT, instance.getPostStartupScript());
+    assertEquals(
+        String.format(DEFAULT_POST_STARTUP_SCRIPT, "main"), instance.getPostStartupScript());
   }
 
   private void assertDefaultMetadata(Instance instance) {

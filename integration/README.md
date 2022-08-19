@@ -185,8 +185,8 @@ a server. Processes inside the notebook won't be able to talk to the local
 server.
 
 To run this test locally:
-1. change TEST_RUNNER_SERVER_SPECIFICATION_FILE to workspace-dev.json (see `Use a local Workspace Manager server` section for details) or 
+1. `export TEST_RUNNER_SERVER_SPECIFICATION_FILE="workspace-dev.json"` (see [this section](#Use-a-local-Workspace-Manager-server) for details) or 
 change it to `workspace-verily-dev.json` (you do not need to clone BroadInstitutes/terra-helmfile.git in this case.)
-2. In `PrivateControlledAiNotebookInstancePostStartup.java`, change LOCAL_BRANCH to your branch name.
+2. In `PrivateControlledAiNotebookInstancePostStartup.java`, change `LOCAL_BRANCH` to your branch name.
 3. Commit and push your PR so the raw github url for the notebook is available.
-4. `./gradlew runTest --args="configs/integration/PrivateControlledAiNotebookInstancePostStartup.json /tmp/TR"`
+4. Run `./gradlew runTest --args="configs/integration/PrivateControlledAiNotebookInstancePostStartup.json /tmp/TR"`
