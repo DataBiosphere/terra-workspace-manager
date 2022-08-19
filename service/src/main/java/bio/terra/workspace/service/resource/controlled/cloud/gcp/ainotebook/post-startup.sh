@@ -116,7 +116,8 @@ fi
 # integration test will ensure that everything in script worked.
 sudo -u "$JUPYTER_USER" sh -c 'terra git clone --all'
 
-# Setup gitignore to avoid accidental checkin of data.
+
+# Setup gitignore to avoid accidental checkin of data. 
 readonly GIT_IGNORE=/home/jupyter/gitignore_global
 
 cat <<EOF | sudo -E -u jupyter tee ${GIT_IGNORE}
