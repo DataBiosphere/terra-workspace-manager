@@ -11,13 +11,13 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import bio.terra.cloudres.azure.landingzones.management.LandingZoneManager;
+import bio.terra.landingzone.library.AzureLandingZoneManagerProvider;
+import bio.terra.landingzone.library.landingzones.management.LandingZoneManager;
 import bio.terra.landingzone.service.landingzone.azure.AzureLandingZoneService;
 import bio.terra.landingzone.service.landingzone.azure.exception.AzureLandingZoneDeleteNotImplemented;
 import bio.terra.landingzone.service.landingzone.azure.model.AzureLandingZone;
 import bio.terra.landingzone.service.landingzone.azure.model.AzureLandingZoneDefinition;
 import bio.terra.landingzone.service.landingzone.azure.model.AzureLandingZoneResource;
-import bio.terra.workspace.amalgam.landingzone.azure.AzureLandingZoneManagerProvider;
 import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
 import bio.terra.workspace.common.BaseConnectedTest;
 import bio.terra.workspace.generated.model.ApiAzureContext;
@@ -61,8 +61,7 @@ public class AzureLandingZoneApiControllerTest extends BaseConnectedTest {
                         .tags(Map.of("param1", "value1"))
                         .build()))
             .build();
-    when(azureLandingZoneService.createLandingZone(any(), any(), any()))
-        .thenReturn(azureLandingZone);
+    when(azureLandingZoneService.createLandingZone(any(), any())).thenReturn(azureLandingZone);
     when(featureConfiguration.isAzureEnabled()).thenReturn(true);
 
     var requestBody =
@@ -109,7 +108,7 @@ public class AzureLandingZoneApiControllerTest extends BaseConnectedTest {
                 .build());
     var mockLandingZoneManager = mock(LandingZoneManager.class);
     when(azureLandingZoneService.listLandingZoneDefinitions()).thenReturn(definitions);
-    when(azureLandingZoneManagerProvider.createLandingZoneManager(any()))
+    when(azureLandingZoneManagerProvider.createLandingZoneManager(any(), any()))
         .thenReturn(mockLandingZoneManager);
     when(featureConfiguration.isAzureEnabled()).thenReturn(true);
 

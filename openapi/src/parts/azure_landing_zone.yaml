@@ -12,7 +12,28 @@ paths:
             schema:
               $ref: '#/components/schemas/CreateAzureLandingZoneRequestBody'
       responses:
-        '201':
+        '200':
+          $ref: '#/components/responses/CreateAzureLandingZoneResponse'
+        '202':
+          $ref: '#/components/responses/CreateAzureLandingZoneResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /api/azure/landingzones/v1/create-result/{jobId}:
+    parameters:
+      - $ref: '#/components/parameters/JobId'
+    get:
+      summary: Get the result of a async job to create an Azure Landing Zone
+      operationId: getCreateAzureLandingZoneResult
+      tags: [ LandingZones ]
+      responses:
+        '200':
+          $ref: '#/components/responses/CreateAzureLandingZoneResponse'
+        '202':
           $ref: '#/components/responses/CreateAzureLandingZoneResponse'
         '400':
           $ref: '#/components/responses/BadRequest'
@@ -60,13 +81,21 @@ components:
     CreateAzureLandingZoneRequestBody:
       description: Payload for requesting a new Azure landing zone.
       type: object
-      required: [definition, azureContext]
+      required: [definition, name, azureContext]
       properties:
         definition:
           description: A definition to create an Azure landing zone from
           type: string
         version:
-          description: A version of the landing zone
+          description: |
+            A version of the landing zone. If not set the most recent will be used.
+            If two versions available - 'v1' and 'v2' then 'v2' will be selected.
+          type: string
+        name:
+          description: A user friendly name
+          type: string
+        description:
+          description: A user friendly description
           type: string
         parameters:
           description: List of Azure landing zone parameters
@@ -75,9 +104,22 @@ components:
             $ref: '#/components/schemas/AzureLandingZoneParameter'
         azureContext:
           $ref: '#/components/schemas/AzureContext'
+        jobControl:
+          $ref: '#/components/schemas/JobControl'
 
     CreatedAzureLandingZoneResult:
       description: Result of creating Azure landing zone
+      type: object
+      properties:
+        landingZone:
+          $ref: '#/components/schemas/AzureLandingZone'
+        jobReport:
+          $ref: '#/components/schemas/JobReport'
+        errorReport:
+          $ref: '#/components/schemas/ErrorReport'
+
+    AzureLandingZone:
+      description: Created Azure Landing Zone details
       type: object
       properties:
         id:

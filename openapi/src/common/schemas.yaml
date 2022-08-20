@@ -234,4 +234,4 @@ components:
     StewardshipType:
       description: Enum containing valid stewardship types. Used for enumeration
       type: string
-      enum: ['REFERENCED', 'CONTROLLED']
+      enum: ['REFERENCED', 'CONTROLLED', 'EXTERNAL']

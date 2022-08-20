@@ -20,6 +20,10 @@ env:
       name: ${LANDINGZONE_DATABASE_NAME:landingzone_db}
       pass: ${LANDINGZONE_DATABASE_USER_PASSWORD:landingzonepwd}
       user: ${LANDINGZONE_DATABASE_USER:landingzoneuser}
+    landingzonestairway:
+      name: ${LANDINGZONE_STAIRWAY_DATABASE_NAME:landingzone_stairway_db}
+      pass: ${LANDINGZONE_STAIRWAY_DATABASE_USER_PASSWORD:landingzonestairwaypwd}
+      user: ${LANDINGZONE_STAIRWAY_DATABASE_USER:landingzonestairwayuser}
   tracing:
     exportEnabled: ${CLOUD_TRACE_ENABLED:false}
     samplingRate: ${SAMPLING_PROBABILITY:0}
@@ -157,6 +161,22 @@ landingzone:
     upgrade-on-start: true
     uri: ${env.db.host}/${env.db.landingzone.name}
     username: ${env.db.landingzone.user}
+  landingzone-stairway-database:
+    initialize-on-start: ${env.db.init}
+    password: ${env.db.landingzonestairway.pass}
+    upgrade-on-start: true
+    uri: ${env.db.host}/${env.db.landingzonestairway.name}
+    username: ${env.db.landingzonestairway.user}
+  stairway:
+    cluster-name-suffix: workspace-stairway
+    force-clean-start: false # ${env.db.init}
+    max-parallel-flights: 50
+    migrate-upgrade: true
+    quiet-down-timeout: 30s
+    terminate-timeout: 30s
+    tracing-enabled: true
+    retention-check-interval: 1d
+    completed-flight-retention: 7d
 
 
 # Feature flags

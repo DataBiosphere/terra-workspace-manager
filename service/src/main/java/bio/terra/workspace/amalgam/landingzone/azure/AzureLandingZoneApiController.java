@@ -1,26 +1,33 @@
 package bio.terra.workspace.amalgam.landingzone.azure;
 
+import bio.terra.landingzone.job.AzureLandingZoneJobService;
+import bio.terra.landingzone.job.model.JobReport;
+import bio.terra.landingzone.resource.ExternalResourceService;
+import bio.terra.landingzone.resource.landingzone.ExternalLandingZoneResource;
 import bio.terra.landingzone.service.landingzone.azure.AzureLandingZoneService;
 import bio.terra.landingzone.service.landingzone.azure.exception.AzureLandingZoneDeleteNotImplemented;
 import bio.terra.landingzone.service.landingzone.azure.model.AzureLandingZone;
 import bio.terra.landingzone.service.landingzone.azure.model.AzureLandingZoneDefinition;
-import bio.terra.landingzone.service.landingzone.azure.model.AzureLandingZoneRequest;
+import bio.terra.workspace.amalgam.landingzone.azure.utils.MapperUtils;
+import bio.terra.workspace.app.configuration.external.AzureConfiguration;
 import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
 import bio.terra.workspace.app.controller.ControllerBase;
-import bio.terra.workspace.common.utils.AzureVmUtils;
-import bio.terra.workspace.common.utils.ControllerValidationUtils;
 import bio.terra.workspace.generated.controller.LandingZonesApi;
 import bio.terra.workspace.generated.model.ApiAzureContext;
+import bio.terra.workspace.generated.model.ApiAzureLandingZone;
 import bio.terra.workspace.generated.model.ApiAzureLandingZoneDefinition;
 import bio.terra.workspace.generated.model.ApiAzureLandingZoneDefinitionList;
 import bio.terra.workspace.generated.model.ApiAzureLandingZoneDeployedResource;
 import bio.terra.workspace.generated.model.ApiCreateAzureLandingZoneRequestBody;
 import bio.terra.workspace.generated.model.ApiCreatedAzureLandingZoneResult;
+import bio.terra.workspace.service.crl.CrlService;
+import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequestFactory;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.workspace.exceptions.CloudContextRequiredException;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.stream.Collectors;
 import javax.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
@@ -36,8 +43,11 @@ import org.springframework.web.bind.annotation.RequestBody;
 public class AzureLandingZoneApiController extends ControllerBase implements LandingZonesApi {
   private static final Logger logger = LoggerFactory.getLogger(AzureLandingZoneApiController.class);
   private final AzureLandingZoneService azureLandingZoneService;
+  private final AzureLandingZoneJobService azureLandingZoneJobService;
+  private final ExternalResourceService externalResourceService;
   private final FeatureConfiguration features;
-  private final AzureLandingZoneManagerProvider azureLandingZoneManagerProvider;
+  private final CrlService crlService;
+  private final AzureConfiguration azureConfiguration;
 
   @Autowired
   public AzureLandingZoneApiController(
@@ -45,23 +55,34 @@ public class AzureLandingZoneApiController extends ControllerBase implements Lan
       HttpServletRequest request,
       SamService samService,
       AzureLandingZoneService azureLandingZoneService,
-      FeatureConfiguration features,
-      AzureLandingZoneManagerProvider azureLandingZoneManagerProvider) {
+      AzureLandingZoneJobService azureLandingZoneJobService,
+      ExternalResourceService externalResourceService,
+      CrlService crlService,
+      AzureConfiguration azureConfiguration,
+      FeatureConfiguration features) {
     super(authenticatedUserRequestFactory, request, samService);
     this.azureLandingZoneService = azureLandingZoneService;
+    this.azureLandingZoneJobService = azureLandingZoneJobService;
+    this.externalResourceService = externalResourceService;
+    this.crlService = crlService;
+    this.azureConfiguration = azureConfiguration;
     this.features = features;
-    this.azureLandingZoneManagerProvider = azureLandingZoneManagerProvider;
   }
 
   @Override
   public ResponseEntity<ApiCreatedAzureLandingZoneResult> createAzureLandingZone(
       @RequestBody ApiCreateAzureLandingZoneRequestBody body) {
     features.isAzureEnabled();
-    // AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    String landingZoneDetails = "definition='%s', version='%s', name='%s', description='%s'";
     logger.info(
-        "Requesting new Azure landing zone definition={}, version={}",
-        body.getDefinition(),
-        body.getVersion());
+        "Requesting new Azure landing zone with the following parameters: {}",
+        String.format(
+            landingZoneDetails,
+            body.getDefinition(),
+            body.getVersion(),
+            body.getName(),
+            Optional.ofNullable(body.getDefinition()).orElse("Not defined")));
 
     ApiAzureContext azureContext =
         Optional.ofNullable(body.getAzureContext())
@@ -70,34 +91,66 @@ public class AzureLandingZoneApiController extends ControllerBase implements Lan
                     new CloudContextRequiredException(
                         "AzureContext is required when creating an Azure landing zone"));
 
-    AzureLandingZoneRequest azureLandingZoneDefinition =
-        AzureLandingZoneRequest.builder()
+    ExternalLandingZoneResource resource =
+        ExternalLandingZoneResource.builder()
+            .resourceId(UUID.randomUUID())
             .definition(body.getDefinition())
             .version(body.getVersion())
-            .parameters(AzureVmUtils.landingZoneFrom(body.getParameters()))
+            .parameters(
+                MapperUtils.LandingZoneMapper.landingZoneParametersFrom(body.getParameters()))
+            .name(body.getName())
+            .description(body.getDescription())
+            .azureCloudContext(MapperUtils.AzureCloudContextMapper.from(azureContext))
             .build();
+    String jobId =
+        externalResourceService.createAzureLandingZone(
+            body.getJobControl().getId(),
+            resource,
+            MapperUtils.AuthenticatedUserRequestMapper.from(userRequest),
+            MapperUtils.AzureConfigurationMapper.from(azureConfiguration),
+            getAsyncResultEndpoint(body.getJobControl().getId(), "create-result"));
 
-    ControllerValidationUtils.validateAzureLandingZone(azureLandingZoneDefinition);
+    ApiCreatedAzureLandingZoneResult result = fetchCreateAzureLandingZoneResult(jobId);
+    return new ResponseEntity<>(result, getAsyncResponseCode(result.getJobReport()));
+  }
 
-    AzureLandingZone azureLandingZone =
-        azureLandingZoneService.createLandingZone(
-            azureLandingZoneDefinition,
-            azureLandingZoneManagerProvider.createLandingZoneManager(azureContext),
-            azureContext.getResourceGroupId());
+  @Override
+  public ResponseEntity<ApiCreatedAzureLandingZoneResult> getCreateAzureLandingZoneResult(
+      String jobId) {
+    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    // jobService.verifyUserAccess(jobId, userRequest, uuid);
+    ApiCreatedAzureLandingZoneResult response = fetchCreateAzureLandingZoneResult(jobId);
+    return new ResponseEntity<>(response, getAsyncResponseCode(response.getJobReport()));
+  }
 
-    ApiCreatedAzureLandingZoneResult result =
-        new ApiCreatedAzureLandingZoneResult()
-            .id(azureLandingZone.getId())
-            .resources(
-                azureLandingZone.getDeployedResources().stream()
-                    .map(
-                        dr ->
-                            new ApiAzureLandingZoneDeployedResource()
-                                .resourceId(dr.getResourceId())
-                                .resourceType(dr.getResourceType())
-                                .region(dr.getRegion()))
-                    .toList());
-    return new ResponseEntity<>(result, HttpStatus.CREATED);
+  private ApiCreatedAzureLandingZoneResult fetchCreateAzureLandingZoneResult(String jobId) {
+    final AzureLandingZoneJobService.AsyncJobResult<AzureLandingZone> jobResult =
+        azureLandingZoneJobService.retrieveAsyncJobResult(jobId, AzureLandingZone.class);
+
+    ApiAzureLandingZone azureLandingZone = null;
+    if (jobResult.getJobReport().getStatus().equals(JobReport.StatusEnum.SUCCEEDED)) {
+      azureLandingZone =
+          Optional.ofNullable(jobResult.getResult())
+              .map(
+                  lz ->
+                      new ApiAzureLandingZone()
+                          .id(lz.getId())
+                          .resources(
+                              lz.getDeployedResources().stream()
+                                  .map(
+                                      resource ->
+                                          new ApiAzureLandingZoneDeployedResource()
+                                              .region(resource.getRegion())
+                                              .resourceType(resource.getResourceType())
+                                              .resourceId(resource.getResourceId()))
+                                  .collect(Collectors.toList())))
+              .orElse(null);
+    }
+
+    return new ApiCreatedAzureLandingZoneResult()
+        .jobReport(MapperUtils.JobReportMapper.from(jobResult.getJobReport()))
+        .errorReport(MapperUtils.ErrorReportMapper.from(jobResult.getApiErrorReport()))
+        .landingZone(azureLandingZone);
   }
 
   @Override
