@@ -1,6 +1,8 @@
 package bio.terra.workspace.service.resource.model;
 
 import bio.terra.workspace.db.model.DbResource;
+import java.util.UUID;
+import javax.annotation.Nullable;
 
 /**
  * Interface defining the common methods for processing per-resource handlers. Each resource type
@@ -17,4 +19,14 @@ public interface WsmResourceHandler {
    * @return resource object
    */
   WsmResource makeResourceFromDb(DbResource dbResource);
+
+  /**
+   * Generate the resource cloud-native name for resource
+   *
+   * @param workspaceUuid workspace UUID, when it is not null, the generated name will attach
+   *     workspace project id.
+   * @param resourceName resource name
+   * @return cloud-native name
+   */
+  String generateCloudName(@Nullable UUID workspaceUuid, String resourceName);
 }

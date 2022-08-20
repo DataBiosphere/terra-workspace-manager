@@ -120,6 +120,28 @@ fi
 # integration test will ensure that everything in script worked.
 sudo -u "$JUPYTER_USER" sh -c 'terra git clone --all'
 
+# Setup gitignore to avoid accidental checkin of data. 
+readonly GIT_IGNORE=/home/jupyter/gitignore_global
+
+cat <<EOF | sudo -E -u jupyter tee ${GIT_IGNORE}
+# By default, all files should be ignored by git.
+# We want to be sure to exclude files containing data such as CSVs and images such as PNGs.
+*.*
+# Now, allow the file types that we do want to track via source control.
+!*.ipynb
+!*.py
+!*.r
+!*.R
+!*.wdl
+!*.sh
+# Allow documentation files.
+!*.md
+!*.rst
+!LICENSE*
+EOF
+
+sudo -u "$JUPYTER_USER" sh -c "git config --global core.excludesfile ${GIT_IGNORE}"
+
 # This block is for test only. If the notebook execute successfully down to
 # here, we knows that the script executed successfully.
 readonly TERRA_TEST_VALUE=$(get_metadata_value "instance/attributes/terra-test-value")

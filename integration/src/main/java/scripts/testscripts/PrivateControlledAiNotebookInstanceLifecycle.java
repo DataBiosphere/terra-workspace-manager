@@ -15,11 +15,13 @@ import bio.terra.workspace.api.ControlledGcpResourceApi;
 import bio.terra.workspace.api.ResourceApi;
 import bio.terra.workspace.api.WorkspaceApi;
 import bio.terra.workspace.client.ApiException;
+import bio.terra.workspace.model.AiNotebookCloudId;
 import bio.terra.workspace.model.CreatedControlledGcpAiNotebookInstanceResult;
 import bio.terra.workspace.model.DeleteControlledGcpAiNotebookInstanceRequest;
 import bio.terra.workspace.model.DeleteControlledGcpAiNotebookInstanceResult;
 import bio.terra.workspace.model.GcpAiNotebookInstanceResource;
 import bio.terra.workspace.model.GcpAiNotebookUpdateParameters;
+import bio.terra.workspace.model.GenerateGcpAiNotebookCloudIdRequestBody;
 import bio.terra.workspace.model.GrantRoleRequestBody;
 import bio.terra.workspace.model.IamRole;
 import bio.terra.workspace.model.JobControl;
@@ -121,6 +123,13 @@ public class PrivateControlledAiNotebookInstanceLifecycle extends WorkspaceAlloc
         "us-central1-a",
         resource.getAttributes().getLocation(),
         "The notebook uses the default location because location is not specified.");
+
+    GenerateGcpAiNotebookCloudIdRequestBody aiNotebookNameRequest =
+        new GenerateGcpAiNotebookCloudIdRequestBody().aiNotebookName(instanceId);
+    AiNotebookCloudId cloudAiNotebookName =
+        resourceUserApi.generateAiNotebookCloudInstanceId(aiNotebookNameRequest, getWorkspaceId());
+    assertEquals(
+        cloudAiNotebookName.getGeneratedAiNotebookAiNotebookCloudId(), instanceId.toLowerCase());
 
     // Any workspace user should be able to enumerate notebooks, even though they can't
     // read or write them.
