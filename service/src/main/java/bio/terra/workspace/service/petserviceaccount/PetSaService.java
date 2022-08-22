@@ -300,7 +300,10 @@ public class PetSaService {
         SamRethrow.onInterrupted(
             () -> samService.constructUserPetSaEmail(projectId, userEmail, userRequest),
             "getUserPetSa");
-    return serviceAccountExists(constructedSa) ? constructedSa : Optional.empty();
+    if (constructedSa.isPresent()) {
+      return serviceAccountExists(constructedSa.get()) ? constructedSa : Optional.empty();
+    }
+    return Optional.empty();
   }
 
   /**
@@ -327,9 +330,10 @@ public class PetSaService {
    * Returns whether the service account specified by a {@code ServiceAccountName} actually exists
    * on GCP.
    */
-  private boolean serviceAccountExists(Optional<ServiceAccountName> saName) {
+  private boolean serviceAccountExists(ServiceAccountName saName) {
     try {
-      crlService.getIamCow().projects().serviceAccounts().get(String.valueOf(saName)).execute();
+
+      crlService.getIamCow().projects().serviceAccounts().get(saName).execute();
       return true;
     } catch (GoogleJsonResponseException googleException) {
       // If a service account does not exist, GCP will throw a 404. Any other error is unexpected
