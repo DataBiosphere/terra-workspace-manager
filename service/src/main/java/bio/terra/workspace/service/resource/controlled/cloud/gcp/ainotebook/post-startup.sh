@@ -59,11 +59,30 @@ export NXF_MODE=google
 
 sudo apt-get update
 
+#######################################
+# Install required JDK and set it as default (debian)
+#######################################
+function install_java() {
+  curl -Os https://download.oracle.com/java/17/latest/jdk-17_linux-x64_bin.deb
+  sudo apt-get install -y ./jdk-17_linux-x64_bin.deb
+  sudo update-alternatives --install /usr/bin/java java /usr/lib/jvm/jdk-17/bin/java 1
+  sudo update-alternatives --set java /usr/lib/jvm/jdk-17/bin/java
+}
+
 if [[ -n "$(which java)" ]];
 then
-  echo "java is installed"
+  # Get the current major version of Java: "11.0.12" => "11"
+  readonly CUR_JAVA_VERSION=$(java -version 2>&1 | awk -F\" '{ split($2,a,"."); print a[1]}')
+  if [[ "${CUR_JAVA_VERSION}" -lt 17 ]];
+  then
+    echo "Current Java version is ${CUR_JAVA_VERSION}, installing Java 17"
+    install_java
+  else
+    echo "Java 17 is installed"
+  fi
 else
-  sudo apt-get -y install openjdk-11-jdk
+  echo "Installing Java 17"
+  install_java
 fi
 
 sudo -u "${JUPYTER_USER}" sh -c "curl -s https://get.nextflow.io | bash"
