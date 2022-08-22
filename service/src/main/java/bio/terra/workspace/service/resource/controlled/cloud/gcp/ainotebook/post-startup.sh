@@ -115,3 +115,26 @@ fi
 # Keep this as last thing in script. There will be integration test for git cloning (PF-1660). If this is last thing, then
 # integration test will ensure that everything in script worked.
 sudo -u "$JUPYTER_USER" sh -c 'terra git clone --all'
+
+
+# Setup gitignore to avoid accidental checkin of data. 
+readonly GIT_IGNORE=/home/jupyter/gitignore_global
+
+cat <<EOF | sudo -E -u jupyter tee ${GIT_IGNORE}
+# By default, all files should be ignored by git.
+# We want to be sure to exclude files containing data such as CSVs and images such as PNGs.
+*.*
+# Now, allow the file types that we do want to track via source control.
+!*.ipynb
+!*.py
+!*.r
+!*.R
+!*.wdl
+!*.sh
+# Allow documentation files.
+!*.md
+!*.rst
+!LICENSE*
+EOF
+
+sudo -u "$JUPYTER_USER" sh -c "git config --global core.excludesfile ${GIT_IGNORE}"
