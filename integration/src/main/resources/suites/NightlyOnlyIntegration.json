@@ -1,0 +1,8 @@
+{
+  "name": "NightlyOnlyIntegration",
+  "description": "Integration tests that cannot be run on local server.",
+  "serverSpecificationFile": "workspace-dev.json",
+  "testConfigurationFiles": [
+    "integration/PrivateControlledAiNotebookInstancePostStartup.json"
+  ]
+}

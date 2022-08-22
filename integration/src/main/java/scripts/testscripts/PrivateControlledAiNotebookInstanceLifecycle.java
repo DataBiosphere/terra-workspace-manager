@@ -92,7 +92,12 @@ public class PrivateControlledAiNotebookInstanceLifecycle extends WorkspaceAlloc
         ClientTestUtils.getControlledGcpResourceClient(resourceUser, server);
     CreatedControlledGcpAiNotebookInstanceResult creationResult =
         NotebookUtils.makeControlledNotebookUserPrivate(
-            getWorkspaceId(), instanceId, /*location=*/ null, resourceUserApi);
+            getWorkspaceId(),
+            instanceId,
+            /*location=*/ null,
+            resourceUserApi,
+            /*testValue=*/ null,
+            /*postStartupScript=*/ null);
 
     UUID resourceId = creationResult.getAiNotebookInstance().getMetadata().getResourceId();
 
@@ -235,7 +240,12 @@ public class PrivateControlledAiNotebookInstanceLifecycle extends WorkspaceAlloc
           ControlledGcpResourceApi resourceUserApi) throws ApiException, InterruptedException {
     CreatedControlledGcpAiNotebookInstanceResult resourceWithNotebookInstanceIdNotSpecified =
         NotebookUtils.makeControlledNotebookUserPrivate(
-            getWorkspaceId(), /*instanceId=*/ null, /*location=*/ null, resourceUserApi);
+            getWorkspaceId(),
+            /*instanceId=*/ null,
+            /*location=*/ null,
+            resourceUserApi,
+            /*testValue=*/ null,
+            /*postStartupScript=*/ null);
     assertNotNull(
         resourceWithNotebookInstanceIdNotSpecified
             .getAiNotebookInstance()
@@ -256,7 +266,12 @@ public class PrivateControlledAiNotebookInstanceLifecycle extends WorkspaceAlloc
     String location = "us-east1-b";
     CreatedControlledGcpAiNotebookInstanceResult resourceWithNotebookInstanceIdNotSpecified =
         NotebookUtils.makeControlledNotebookUserPrivate(
-            getWorkspaceId(), /*instanceId=*/ null, /*location=*/ location, resourceUserApi);
+            getWorkspaceId(),
+            /*instanceId=*/ null,
+            /*location=*/ location,
+            resourceUserApi,
+            /*testValue=*/ null,
+            /*postStartupScript=*/ null);
     assertEquals(
         location,
         resourceWithNotebookInstanceIdNotSpecified

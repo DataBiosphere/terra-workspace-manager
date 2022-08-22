@@ -24,10 +24,12 @@ import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.time.Duration;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import javax.annotation.Nullable;
 import org.apache.commons.lang3.RandomStringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpStatus;
 import org.hamcrest.Matchers;
 
@@ -41,8 +43,11 @@ public class NotebookUtils {
       UUID workspaceUuid,
       @Nullable String instanceId,
       @Nullable String location,
-      ControlledGcpResourceApi resourceApi)
+      ControlledGcpResourceApi resourceApi,
+      @Nullable String testValue,
+      @Nullable String postStartupScript)
       throws ApiException, InterruptedException {
+    var resourceName = RandomStringUtils.randomAlphabetic(6);
     // Fill out the minimum required fields to arbitrary values.
     var creationParameters =
         new GcpAiNotebookInstanceCreationParameters()
@@ -52,11 +57,20 @@ public class NotebookUtils {
             .vmImage(
                 new GcpAiNotebookInstanceVmImage()
                     .projectId("deeplearning-platform-release")
-                    .imageFamily("r-latest-cpu-experimental"));
+                    .imageFamily("r-latest-cpu-experimental"))
+            .metadata(
+                Map.of(
+                    "terra-test-value",
+                    Optional.ofNullable(testValue).orElse(""),
+                    "terra-gcp-notebook-resource-name",
+                    resourceName));
+    if (!StringUtils.isEmpty(postStartupScript)) {
+      creationParameters.postStartupScript(postStartupScript);
+    }
 
     var commonParameters =
         new ControlledResourceCommonFields()
-            .name(RandomStringUtils.randomAlphabetic(6))
+            .name(resourceName)
             .cloningInstructions(CloningInstructionsEnum.NOTHING)
             .accessScope(AccessScope.PRIVATE_ACCESS)
             .managedBy(ManagedBy.USER)
