@@ -97,12 +97,11 @@ jobs:
     - name: Launch local server
       uses: ./.github/actions/start-local-server
 
-    - name: Run the integration test suite
-      id: integration-test
+    - name: Run spotlessApply
+      id: spotlessApply
       uses: ./.github/actions/integration-test
       with:
-        test-server: workspace-local.json
-        test: suites/FullIntegration.json
+        test-server: ${{ env.PR_REVIEWERS }}
 
     - name: Skip version bump merges
       id: bump-check
