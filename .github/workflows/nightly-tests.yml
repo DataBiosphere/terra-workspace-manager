@@ -189,7 +189,7 @@ jobs:
           L2="Int: ${{ steps.integration-test.outcome }} "
           L3="Perf: ${{ steps.perf-test.outcome }} "
           L4="Res: ${{ steps.resiliency-test.outcome }}"
-          L5="Lint: ${{ steps.spotless-apply.outputs.spotlesscheck }}
+          L5="Lint: ${{ steps.spotless-apply.outputs.spotlesscheck }} "
           text="Link to <https://github.com/DataBiosphere/terra-workspace-manager/actions/runs/$GITHUB_RUN_ID|test run>"
           bold="$L2 | $L3 | $L4 | $L5"
           if [ "${{ job.status }}" == "success" ]; then
