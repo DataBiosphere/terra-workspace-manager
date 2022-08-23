@@ -29,7 +29,7 @@ runs:
   - name: create PR
     id: create-pr
     uses: peter-evans/create-pull-request@v4
-    if: steps.spotless-apply.outcome == 'success'
+    if: failure() && steps.spotless-apply.outcome == 'success'
     with:
       token: ${{ inputs.token }}
       commit-message: "Terra CLI spotless apply"
