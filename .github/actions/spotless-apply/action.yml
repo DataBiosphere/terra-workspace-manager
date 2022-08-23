@@ -29,10 +29,9 @@ runs:
   - name: create PR
     id: create-pr
     uses: peter-evans/create-pull-request@v4
-    if: success()
+    if: steps.spotless-apply.outcome == 'success'
     with:
       token: ${{ inputs.token }}
-      path: terra-helmfile
       commit-message: "Terra CLI spotless apply"
       committer: terracli-bot <noreply@github.com>
       author: ${{ github.actor }} <${{ github.actor }}@users.noreply.github.com>
