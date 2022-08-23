@@ -32,10 +32,10 @@ runs:
     if: failure() && steps.spotless-apply.outcome == 'success'
     with:
       token: ${{ inputs.token }}
-      commit-message: "Terra CLI spotless apply"
-      committer: terracli-bot <noreply@github.com>
+      commit-message: "Terra Workspace Manager spotless apply"
+      committer: terrawsm-bot <noreply@github.com>
       author: ${{ github.actor }} <${{ github.actor }}@users.noreply.github.com>
-      title: "Terra CLI spotless apply"
+      title: "Terra Workspace Manager spotless apply"
       branch: "actions/spotlessApply"
       delete-branch: true
       body: |
