@@ -462,16 +462,6 @@ public class WorkspaceService {
             new BearerToken(userRequest.getRequiredToken()),
             sourceWorkspace.getWorkspaceId(),
             destinationWorkspace.getWorkspaceId());
-        /*
-        var sourcePao = workspacePao.get();
-        var newPaoRequest = new ApiTpsPaoCreateRequest();
-        newPaoRequest.setObjectId(destinationWorkspace.getWorkspaceId());
-        newPaoRequest.setObjectType(sourcePao.getObjectType());
-        newPaoRequest.setAttributes(sourcePao.getAttributes());
-        newPaoRequest.setComponent(sourcePao.getComponent());
-
-        tpsApiDispatch.createPao(new BearerToken(userRequest.getRequiredToken()), newPaoRequest);
-         */
       }
     }
 
