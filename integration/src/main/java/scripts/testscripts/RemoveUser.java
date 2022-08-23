@@ -72,6 +72,7 @@ public class RemoveUser extends WorkspaceAllocateTestScriptBase {
         sharedResourceUser.userEmail,
         "The two test users are distinct");
 
+    // Create a group with group email.
     groupName = "groupremovetest";
     ApiClient apiClient = new ApiClient();
 
@@ -83,19 +84,21 @@ public class RemoveUser extends WorkspaceAllocateTestScriptBase {
         AuthenticationUtils.getDelegatedUserCredential(
             testUsers.get(1), ClientTestUtils.TEST_USER_SCOPES);
     userCredential.refreshIfExpired();
+
     // build the client object
     apiClient.setBasePath(server.samUri);
     AccessToken accessToken = AuthenticationUtils.getAccessToken(userCredential);
     apiClient.setAccessToken(accessToken.getTokenValue());
 
     groupApi = new GroupApi(apiClient);
-    if (groupApi.getGroup(groupName) == null) {
+    try {
       groupEmail = createGroup(groupName, groupApi);
-    } else {
+    } catch (Exception e) {
+      // A previous failed test may leave a non-deleted group in the Sam
       groupEmail = groupApi.getGroup(groupName);
     }
 
-    // Add one group as a reader
+    // Add one group as a reader.
     ownerWorkspaceApi.grantRole(
         new GrantRoleRequestBody().memberEmail(groupEmail), getWorkspaceId(), IamRole.READER);
 
@@ -164,8 +167,11 @@ public class RemoveUser extends WorkspaceAllocateTestScriptBase {
     GcsBucketObjectUtils.retrieveBucketFile(privateBucketName, projectId, privateResourceUser);
 
     // Remove READER role which is a group email.
-    ownerWorkspaceApi.removeRole(getWorkspaceId(), IamRole.READER, groupEmail);
-    deleteGroup(groupName, groupApi);
+    try {
+      ownerWorkspaceApi.removeRole(getWorkspaceId(), IamRole.READER, groupEmail);
+    } finally {
+      deleteGroup(groupName, groupApi);
+    }
 
     // Remove WRITER role from sharedResourceUser. This is their only role, so they are no longer
     // a member of this workspace.
