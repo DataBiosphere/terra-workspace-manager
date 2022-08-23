@@ -125,6 +125,7 @@ jobs:
         uses: ./.github/actions/spotless-apply
         with:
           reviewers: ${{ env.PR_REVIEWERS }}
+          token: ${{ secrets.BROADBOT_TOKEN }}
 
       - name: clean databases before nightly-only integration suite
         if: always()
