@@ -8,7 +8,7 @@ inputs:
     required: true
 outputs:
   spotlesscheck:
-    description: 'yes if the code base is spotless and no further action needed'
+    description: 'success if the code base is spotless and no further action needed'
     value: ${{ steps.spotless-check.outcome }}
 runs:
   using: "composite"
