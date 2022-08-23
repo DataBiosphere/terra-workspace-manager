@@ -34,7 +34,7 @@ public class WorkspaceLifecycle extends WorkspaceApiTestScriptBase {
   @Override
   public void doUserJourney(TestUserSpecification testUser, WorkspaceApi workspaceApi)
       throws ApiException {
-        UUID workspaceUuid = UUID.randomUUID();
+    UUID workspaceUuid = UUID.randomUUID();
 
     // Perf tests run this test repeatedly. userFacingId needs to be unique for each invocation.
     // Note: These userFacingIds can't be static because UUID.randomUUID() can't be set in a static

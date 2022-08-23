@@ -8,7 +8,7 @@ on:
   schedule:
     - cron: '0 7 * * *' # run at 7 AM UTC, 2 AM ET.
 env:
-  PR_REVIEWERS: "ddietterich,yuhuyoyo,zloery,mikenev"
+  PR_REVIEWERS: "ddietterich,yuhuyoyo,zloery,mikenev,melissachang"
 
 jobs:
   nightly-tests:
@@ -116,16 +116,7 @@ jobs:
           echo "$(date "+%Y-%m-%dT%H:%M:%S") post-sync wsmtest version: $version"
       - name: Remove ArgoCD CLI
         if: always()
-        run: |
-          rm -f ./argocd
-
-      - name: Run spotlessApply
-        id: spotless-apply
-        if: always()
-        uses: ./.github/actions/spotless-apply
-        with:
-          reviewers: ${{ env.PR_REVIEWERS }}
-          token: ${{ secrets.BROADBOT_TOKEN }}
+        run: rm -f ./argocd
 
       - name: clean databases before nightly-only integration suite
         if: always()
@@ -180,6 +171,17 @@ jobs:
           test-server: workspace-wsmtest.json
           test: suites/BasicResiliency.json
 
+      - name: remove terra-helmfile
+        id: remove-helmfile
+        if: always()
+        run: rm -rf ./integration/terra-helmfile
+      - name: Run spotlessApply
+        id: spotless-apply
+        if: always()
+        uses: ./.github/actions/spotless-apply
+        with:
+          reviewers: ${{ env.PR_REVIEWERS }}
+          token: ${{ secrets.BROADBOT_TOKEN }}
       - name: Compose status message
         if: always()
         id: status-message
