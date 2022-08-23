@@ -29,6 +29,7 @@ runs:
   - name: create PR
     id: create-pr
     uses: peter-evans/create-pull-request@v4
+    if: success()
     with:
       token: ${{ inputs.token }}
       path: terra-helmfile
