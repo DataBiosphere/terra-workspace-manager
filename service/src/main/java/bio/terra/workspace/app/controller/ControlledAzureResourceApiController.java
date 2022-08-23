@@ -330,13 +330,6 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
   }
 
   @Override
-  public ResponseEntity<ApiDeleteControlledAzureResourceResult> deleteAzureStorageContainer(
-      UUID workspaceId, UUID resourceId, @Valid ApiDeleteControlledAzureResourceRequest body) {
-    features.azureEnabledCheck();
-    return deleteHelper(workspaceId, resourceId, body, "Azure Storage Container");
-  }
-
-  @Override
   public ResponseEntity<ApiCreatedControlledAzureVmResult> createAzureVm(
       UUID workspaceUuid, @Valid ApiCreateControlledAzureVmRequestBody body) {
     features.azureEnabledCheck();
@@ -416,6 +409,12 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
             .resourceId(createdNetwork.getResourceId())
             .azureNetwork(createdNetwork.toApiResource());
     return new ResponseEntity<>(response, HttpStatus.OK);
+  }
+
+  @Override
+  public ResponseEntity<ApiDeleteControlledAzureResourceResult> deleteAzureStorageContainer(
+          UUID workspaceId, UUID resourceId, @Valid ApiDeleteControlledAzureResourceRequest body) {
+    return deleteHelper(workspaceId, resourceId, body, "Azure Storage Container");
   }
 
   @Override
