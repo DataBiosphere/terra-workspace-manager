@@ -9,6 +9,8 @@ import static scripts.utils.GcsBucketUtils.BUCKET_PREFIX;
 import static scripts.utils.GcsBucketUtils.makeControlledGcsBucketUserPrivate;
 import static scripts.utils.GcsBucketUtils.makeControlledGcsBucketUserShared;
 
+import bio.terra.common.sam.exception.SamExceptionFactory;
+import bio.terra.testrunner.common.utils.AuthenticationUtils;
 import bio.terra.testrunner.runner.config.TestUserSpecification;
 import bio.terra.workspace.api.ControlledGcpResourceApi;
 import bio.terra.workspace.api.WorkspaceApi;
@@ -18,13 +20,19 @@ import bio.terra.workspace.model.CreatedControlledGcpGcsBucket;
 import bio.terra.workspace.model.GcpBigQueryDatasetResource;
 import bio.terra.workspace.model.GrantRoleRequestBody;
 import bio.terra.workspace.model.IamRole;
+import com.google.auth.oauth2.AccessToken;
+import com.google.auth.oauth2.GoogleCredentials;
 import com.google.cloud.bigquery.BigQueryException;
 import com.google.cloud.storage.StorageException;
+import com.google.common.base.Strings;
 import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.util.List;
 import java.util.UUID;
 import org.apache.commons.lang3.RandomStringUtils;
+import org.broadinstitute.dsde.workbench.client.sam.ApiClient;
+import org.broadinstitute.dsde.workbench.client.sam.ApiException;
+import org.broadinstitute.dsde.workbench.client.sam.api.GroupApi;
 import scripts.utils.BqDataTableUtils;
 import scripts.utils.BqDatasetUtils;
 import scripts.utils.ClientTestUtils;
@@ -39,10 +47,15 @@ public class RemoveUser extends WorkspaceAllocateTestScriptBase {
   private TestUserSpecification privateResourceUser;
   private TestUserSpecification sharedResourceUser;
   private String projectId;
+  private String groupEmail;
+  private String groupName;
   private CreatedControlledGcpGcsBucket sharedBucket;
   private CreatedControlledGcpGcsBucket privateBucket;
   private GcpBigQueryDatasetResource privateDataset;
   private CreatedControlledGcpAiNotebookInstanceResult privateNotebook;
+  private GroupApi groupApi;
+
+  // @Autowired SamConfiguration samConfiguration;
 
   @Override
   protected void doSetup(List<TestUserSpecification> testUsers, WorkspaceApi ownerWorkspaceApi)
@@ -59,11 +72,32 @@ public class RemoveUser extends WorkspaceAllocateTestScriptBase {
         sharedResourceUser.userEmail,
         "The two test users are distinct");
 
+    groupName = "groupremovetest";
+    ApiClient apiClient = new ApiClient();
+
+    if (Strings.isNullOrEmpty(server.samUri)) {
+      throw new IllegalArgumentException("Sam URI cannot be empty");
+    }
+
+    GoogleCredentials userCredential =
+        AuthenticationUtils.getDelegatedUserCredential(
+            testUsers.get(1), ClientTestUtils.TEST_USER_SCOPES);
+    userCredential.refreshIfExpired();
+    // build the client object
+    apiClient.setBasePath(server.samUri);
+    AccessToken accessToken = AuthenticationUtils.getAccessToken(userCredential);
+    apiClient.setAccessToken(accessToken.getTokenValue());
+
+    groupApi = new GroupApi(apiClient);
+    if (groupApi.getGroup(groupName) == null) {
+      groupEmail = createGroup(groupName, groupApi);
+    } else {
+      groupEmail = groupApi.getGroup(groupName);
+    }
+
     // Add one group as a reader
     ownerWorkspaceApi.grantRole(
-        new GrantRoleRequestBody().memberEmail("cli-test-users@verily-bvdp.com"),
-        getWorkspaceId(),
-        IamRole.READER);
+        new GrantRoleRequestBody().memberEmail(groupEmail), getWorkspaceId(), IamRole.READER);
 
     // Add one user as a reader, and one as both a reader and writer.
     ownerWorkspaceApi.grantRole(
@@ -130,8 +164,8 @@ public class RemoveUser extends WorkspaceAllocateTestScriptBase {
     GcsBucketObjectUtils.retrieveBucketFile(privateBucketName, projectId, privateResourceUser);
 
     // Remove READER role which is a group email.
-    ownerWorkspaceApi.removeRole(
-        getWorkspaceId(), IamRole.READER, "cli-test-users@verily-bvdp.com");
+    ownerWorkspaceApi.removeRole(getWorkspaceId(), IamRole.READER, groupEmail);
+    deleteGroup(groupName, groupApi);
 
     // Remove WRITER role from sharedResourceUser. This is their only role, so they are no longer
     // a member of this workspace.
@@ -229,6 +263,27 @@ public class RemoveUser extends WorkspaceAllocateTestScriptBase {
       }
     } catch (GeneralSecurityException | IOException e) {
       throw new RuntimeException("Error checking notebook access", e);
+    }
+  }
+
+  /**
+   * Create a Sam managed group and return its email. This functionality is only used by tests, so
+   * it lives here instead of in SamService.
+   */
+  private static String createGroup(String groupName, GroupApi groupApi) {
+    try {
+      groupApi.postGroup(groupName, null);
+      return groupApi.getGroup(groupName);
+    } catch (ApiException e) {
+      throw SamExceptionFactory.create("Error creating group in Sam", e);
+    }
+  }
+
+  private static void deleteGroup(String groupName, GroupApi groupApi) {
+    try {
+      groupApi.deleteGroup(groupName);
+    } catch (ApiException e) {
+      throw SamExceptionFactory.create("Error deleting group in Sam", e);
     }
   }
 }
