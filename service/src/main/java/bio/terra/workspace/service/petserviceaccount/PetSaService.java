@@ -291,8 +291,8 @@ public class PetSaService {
   }
 
   /**
-   * Returns the pet service account of a provided user in a provided project if it exists in GCP,
-   * or an empty Optional if it does not.
+   * Returns the pet service account of a provided user in a provided project if it exists in GCP.
+   * Returns empty Optional if pet SA doesn't exist, or if userEmail is a group instead of user.
    */
   public Optional<ServiceAccountName> getUserPetSa(
       String projectId, String userEmail, AuthenticatedUserRequest userRequest) {

@@ -1050,7 +1050,7 @@ public class SamService {
   /**
    * Construct the email of an arbitrary user's pet service account in a given project. Unlike
    * {@code getOrCreatePetSaEmail}, this will not create the underlying service account. It may
-   * return the email of a service account which does not exist.
+   * return pet SA email if userEmail is a user. If userEmail is a group, returns Optional.empty().
    */
   public Optional<ServiceAccountName> constructUserPetSaEmail(
       String projectId, String userEmail, AuthenticatedUserRequest userRequest)
@@ -1058,6 +1058,9 @@ public class SamService {
     UsersApi usersApi = samUsersApi(userRequest.getRequiredToken());
     try {
       UserIdInfo userId = SamRetry.retry(() -> usersApi.getUserIds(userEmail));
+
+      // If userId is null, userEmail is a group, not a user. (getUserIds returns 204 with no
+      // response body, which translates to userID = null.)
       if (userId == null) {
         return Optional.empty();
       }
