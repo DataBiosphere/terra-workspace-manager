@@ -37,7 +37,7 @@ dependencies {
     exclude group: "org.broadinstitute.dsde.workbench", module: "sam-client_2.12"
   }
 
-  //Terra Landing Zone Service (use different version of CRL above)
+  //Terra Landing Zone Service
   implementation group: 'bio.terra', name: 'terra-landing-zone-service', version: "0.0.1-ALPHA-4-SNAPSHOT"
 
   // Storage transfer service

@@ -81,7 +81,7 @@ components:
     CreateAzureLandingZoneRequestBody:
       description: Payload for requesting a new Azure landing zone.
       type: object
-      required: [definition, name, azureContext]
+      required: [definition, azureContext]
       properties:
         definition:
           description: A definition to create an Azure landing zone from
@@ -90,12 +90,6 @@ components:
           description: |
             A version of the landing zone. If not set the most recent will be used.
             If two versions available - 'v1' and 'v2' then 'v2' will be selected.
-          type: string
-        name:
-          description: A user friendly name
-          type: string
-        description:
-          description: A user friendly description
           type: string
         parameters:
           description: List of Azure landing zone parameters

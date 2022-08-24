@@ -20,7 +20,6 @@ import bio.terra.workspace.generated.model.ApiAzureLandingZoneDeployedResource;
 import bio.terra.workspace.generated.model.ApiCreateAzureLandingZoneRequestBody;
 import bio.terra.workspace.generated.model.ApiCreatedAzureLandingZoneResult;
 import bio.terra.workspace.service.crl.CrlService;
-import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequestFactory;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.workspace.exceptions.CloudContextRequiredException;
@@ -65,16 +64,10 @@ public class AzureLandingZoneApiController extends ControllerBase implements Lan
   public ResponseEntity<ApiCreatedAzureLandingZoneResult> createAzureLandingZone(
       @RequestBody ApiCreateAzureLandingZoneRequestBody body) {
     features.isAzureEnabled();
-    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
-    String landingZoneDetails = "definition='%s', version='%s', name='%s', description='%s'";
+    String landingZoneDetails = "definition='%s', version='%s'";
     logger.info(
         "Requesting new Azure landing zone with the following parameters: {}",
-        String.format(
-            landingZoneDetails,
-            body.getDefinition(),
-            body.getVersion(),
-            body.getName(),
-            Optional.ofNullable(body.getDefinition()).orElse("Not defined")));
+        String.format(landingZoneDetails, body.getDefinition(), body.getVersion()));
 
     ApiAzureContext azureContext =
         Optional.ofNullable(body.getAzureContext())
@@ -104,10 +97,42 @@ public class AzureLandingZoneApiController extends ControllerBase implements Lan
   @Override
   public ResponseEntity<ApiCreatedAzureLandingZoneResult> getCreateAzureLandingZoneResult(
       String jobId) {
-    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
-    // jobService.verifyUserAccess(jobId, userRequest, uuid);
     ApiCreatedAzureLandingZoneResult response = fetchCreateAzureLandingZoneResult(jobId);
     return new ResponseEntity<>(response, getAsyncResponseCode(response.getJobReport()));
+  }
+
+  @Override
+  public ResponseEntity<ApiAzureLandingZoneDefinitionList> listAzureLandingZonesDefinitions() {
+    features.isAzureEnabled();
+    List<LandingZoneDefinition> templates = landingZoneService.listLandingZoneDefinitions();
+
+    ApiAzureLandingZoneDefinitionList result =
+        new ApiAzureLandingZoneDefinitionList()
+            .landingzones(
+                templates.stream()
+                    .map(
+                        t ->
+                            new ApiAzureLandingZoneDefinition()
+                                .definition(t.definition())
+                                .name(t.name())
+                                .description(t.description())
+                                .version(t.version()))
+                    .collect(Collectors.toList()));
+    return new ResponseEntity<>(result, HttpStatus.OK);
+  }
+
+  @Override
+  public ResponseEntity<Void> deleteAzureLandingZone(
+      @PathVariable("landingZoneId") String landingZoneId) {
+    features.isAzureEnabled();
+    try {
+      landingZoneService.deleteLandingZone(landingZoneId);
+    } catch (LandingZoneDeleteNotImplemented ex) {
+      logger.info("Request to delete landing zone. Operation is not supported.");
+      return new ResponseEntity<>(HttpStatus.NOT_IMPLEMENTED);
+    }
+
+    return new ResponseEntity<>(HttpStatus.NO_CONTENT);
   }
 
   private ApiCreatedAzureLandingZoneResult fetchCreateAzureLandingZoneResult(String jobId) {
@@ -138,42 +163,5 @@ public class AzureLandingZoneApiController extends ControllerBase implements Lan
         .jobReport(MapperUtils.JobReportMapper.from(jobResult.getJobReport()))
         .errorReport(MapperUtils.ErrorReportMapper.from(jobResult.getApiErrorReport()))
         .landingZone(azureLandingZone);
-  }
-
-  @Override
-  public ResponseEntity<ApiAzureLandingZoneDefinitionList> listAzureLandingZonesDefinitions() {
-    features.isAzureEnabled();
-    // AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
-
-    List<LandingZoneDefinition> templates = landingZoneService.listLandingZoneDefinitions();
-
-    ApiAzureLandingZoneDefinitionList result =
-        new ApiAzureLandingZoneDefinitionList()
-            .landingzones(
-                templates.stream()
-                    .map(
-                        t ->
-                            new ApiAzureLandingZoneDefinition()
-                                .definition(t.definition())
-                                .name(t.name())
-                                .description(t.description())
-                                .version(t.version()))
-                    .collect(Collectors.toList()));
-    return new ResponseEntity<>(result, HttpStatus.OK);
-  }
-
-  @Override
-  public ResponseEntity<Void> deleteAzureLandingZone(
-      @PathVariable("landingZoneId") String landingZoneId) {
-    features.isAzureEnabled();
-    // AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
-    try {
-      landingZoneService.deleteLandingZone(landingZoneId);
-    } catch (LandingZoneDeleteNotImplemented ex) {
-      logger.info("Request to delete landing zone. Operation is not supported.");
-      return new ResponseEntity<>(HttpStatus.NOT_IMPLEMENTED);
-    }
-
-    return new ResponseEntity<>(HttpStatus.NO_CONTENT);
   }
 }
