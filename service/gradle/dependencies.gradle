@@ -38,11 +38,7 @@ dependencies {
   }
 
   //Terra Landing Zone Service (use different version of CRL above)
-  implementation group: 'bio.terra', name: 'terra-landing-zone-service', version: "0.0.1-ALPHA-3-SNAPSHOT"
-  //implementation files('../../terra-landing-zone-service/service/build/libs/service-0.0.1-ALPHA-7-SNAPSHOT-plain.jar')
-  runtimeOnly group: 'com.azure.resourcemanager', name: 'azure-resourcemanager', version: '2.15.0'
-  runtimeOnly group: 'com.azure.resourcemanager', name: 'azure-resourcemanager-batch', version: '1.0.0'
-  runtimeOnly group: 'com.azure.resourcemanager', name: 'azure-resourcemanager-postgresql', version: '1.0.2'
+  implementation group: 'bio.terra', name: 'terra-landing-zone-service', version: "0.0.1-ALPHA-4-SNAPSHOT"
 
   // Storage transfer service
   implementation group: 'com.google.apis', name: 'google-api-services-storagetransfer', version: 'v1-rev20220324-1.32.1'

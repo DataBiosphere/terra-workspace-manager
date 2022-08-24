@@ -4,27 +4,31 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import bio.terra.landingzone.library.AzureLandingZoneManagerProvider;
-import bio.terra.landingzone.library.landingzones.management.LandingZoneManager;
-import bio.terra.landingzone.service.landingzone.azure.AzureLandingZoneService;
-import bio.terra.landingzone.service.landingzone.azure.exception.AzureLandingZoneDeleteNotImplemented;
-import bio.terra.landingzone.service.landingzone.azure.model.AzureLandingZone;
-import bio.terra.landingzone.service.landingzone.azure.model.AzureLandingZoneDefinition;
-import bio.terra.landingzone.service.landingzone.azure.model.AzureLandingZoneResource;
+import bio.terra.landingzone.job.LandingZoneJobService;
+import bio.terra.landingzone.job.model.JobReport;
+import bio.terra.landingzone.library.LandingZoneManagerProvider;
+import bio.terra.landingzone.service.landingzone.azure.LandingZoneService;
+import bio.terra.landingzone.service.landingzone.azure.exception.LandingZoneDeleteNotImplemented;
+import bio.terra.landingzone.service.landingzone.azure.model.DeployedLandingZone;
+import bio.terra.landingzone.service.landingzone.azure.model.LandingZoneDefinition;
+import bio.terra.landingzone.service.landingzone.azure.model.LandingZoneResource;
 import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
 import bio.terra.workspace.common.BaseConnectedTest;
 import bio.terra.workspace.generated.model.ApiAzureContext;
 import bio.terra.workspace.generated.model.ApiCreateAzureLandingZoneRequestBody;
+import bio.terra.workspace.generated.model.ApiJobControl;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.time.Instant;
+import java.util.Collections;
 import java.util.List;
-import java.util.Map;
+import org.apache.http.HttpStatus;
+import org.hamcrest.Matchers;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -43,27 +47,29 @@ public class AzureLandingZoneApiControllerTest extends BaseConnectedTest {
   @Autowired private MockMvc mockMvc;
   @Autowired ObjectMapper objectMapper;
 
-  @MockBean private AzureLandingZoneService azureLandingZoneService;
-  @MockBean private AzureLandingZoneManagerProvider azureLandingZoneManagerProvider;
+  @MockBean private LandingZoneService landingZoneService;
+  @MockBean private LandingZoneManagerProvider landingZoneManagerProvider;
   @MockBean private FeatureConfiguration featureConfiguration;
 
   @Test
-  public void createAzureLandingZoneSuccess() throws Exception {
-    var azureLandingZone =
-        AzureLandingZone.builder()
-            .id("lz-123")
-            .deployedResources(
-                List.of(
-                    AzureLandingZoneResource.builder()
-                        .resourceId("resourceId")
-                        .resourceType("resourceType")
-                        .region("westus")
-                        .tags(Map.of("param1", "value1"))
-                        .build()))
-            .build();
-    when(azureLandingZoneService.createLandingZone(any(), any())).thenReturn(azureLandingZone);
+  public void createAzureLandingZoneJobRunning() throws Exception {
+    var jobId = "newJobId";
+    LandingZoneJobService.AsyncJobResult<DeployedLandingZone> asyncJobResult =
+        new LandingZoneJobService.AsyncJobResult<>();
+    asyncJobResult.jobReport(
+        new JobReport()
+            .id(jobId)
+            .description("description")
+            .status(JobReport.StatusEnum.RUNNING)
+            .statusCode(HttpStatus.SC_ACCEPTED)
+            .submitted(Instant.now().toString())
+            .resultURL("create-result/"));
+
+    when(landingZoneService.startLandingZoneCreationJob(any(), any(), any())).thenReturn(jobId);
+    when(landingZoneService.getAsyncJobResult(any())).thenReturn(asyncJobResult);
     when(featureConfiguration.isAzureEnabled()).thenReturn(true);
 
+    // TODO SG: check if we need name and description??
     var requestBody =
         new ApiCreateAzureLandingZoneRequestBody()
             .azureContext(
@@ -71,56 +77,107 @@ public class AzureLandingZoneApiControllerTest extends BaseConnectedTest {
                     .resourceGroupId("resourceGroup")
                     .subscriptionId("subscriptionId")
                     .tenantId("tenantId"))
+            .jobControl(new ApiJobControl().id(jobId))
             .definition("azureLandingZoneDefinition")
-            .version("v1");
+            .version("v1")
+            .name("test");
     mockMvc
         .perform(
             post(CREATE_AZURE_LANDING_ZONE)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(requestBody))
                 .characterEncoding("utf-8"))
-        .andExpect(status().isCreated())
-        .andExpect(MockMvcResultMatchers.jsonPath("$.id").exists())
-        .andExpect(MockMvcResultMatchers.jsonPath("$.resources").exists());
+        .andExpect(status().is(HttpStatus.SC_ACCEPTED))
+        .andExpect(MockMvcResultMatchers.jsonPath("$.jobReport").exists())
+        .andExpect(MockMvcResultMatchers.jsonPath("$.jobReport.id").exists())
+        .andExpect(MockMvcResultMatchers.jsonPath("$.jobReport.id", Matchers.is(jobId)))
+        .andExpect(MockMvcResultMatchers.jsonPath("$.landingZone").doesNotExist());
+  }
+
+  @Test
+  public void createAzureLandingZoneJobSucceeded() throws Exception {
+    var jobId = "newJobId";
+    LandingZoneJobService.AsyncJobResult<DeployedLandingZone> asyncJobResult =
+        new LandingZoneJobService.AsyncJobResult<>();
+    asyncJobResult.jobReport(
+        new JobReport()
+            .id(jobId)
+            .description("description")
+            .status(JobReport.StatusEnum.SUCCEEDED)
+            .statusCode(HttpStatus.SC_OK)
+            .submitted(Instant.now().toString())
+            .resultURL("create-result/"));
+    asyncJobResult.result(
+        new DeployedLandingZone(
+            "lzId",
+            Collections.singletonList(
+                new LandingZoneResource("resId", "resourceType", null, "westus"))));
+
+    when(landingZoneService.startLandingZoneCreationJob(any(), any(), any())).thenReturn(jobId);
+    when(landingZoneService.getAsyncJobResult(any())).thenReturn(asyncJobResult);
+    when(featureConfiguration.isAzureEnabled()).thenReturn(true);
+
+    // TODO SG: check if we need name and description??
+    var requestBody =
+        new ApiCreateAzureLandingZoneRequestBody()
+            .azureContext(
+                new ApiAzureContext()
+                    .resourceGroupId("resourceGroup")
+                    .subscriptionId("subscriptionId")
+                    .tenantId("tenantId"))
+            .jobControl(new ApiJobControl().id("jobId"))
+            .definition("azureLandingZoneDefinition")
+            .version("v1")
+            .name("test");
+    mockMvc
+        .perform(
+            post(CREATE_AZURE_LANDING_ZONE)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(requestBody))
+                .characterEncoding("utf-8"))
+        .andExpect(status().is(HttpStatus.SC_OK))
+        .andExpect(MockMvcResultMatchers.jsonPath("$.jobReport").exists())
+        .andExpect(MockMvcResultMatchers.jsonPath("$.jobReport.id").exists())
+        .andExpect(MockMvcResultMatchers.jsonPath("$.landingZone").exists())
+        .andExpect(MockMvcResultMatchers.jsonPath("$.landingZone.id").exists())
+        .andExpect(MockMvcResultMatchers.jsonPath("$.landingZone.id", Matchers.is("lzId")));
   }
 
   @Test
   public void listAzureLandingZoneDefinitionsSuccess() throws Exception {
     var definitions =
         List.of(
-            AzureLandingZoneDefinition.builder()
+            LandingZoneDefinition.builder()
                 .definition("fooDefinition")
                 .name("fooName")
                 .description("fooDescription")
                 .version("v1")
                 .build(),
-            AzureLandingZoneDefinition.builder()
+            LandingZoneDefinition.builder()
                 .definition("fooDefinition")
                 .name("fooName")
                 .description("fooDescription")
                 .version("v2")
                 .build(),
-            AzureLandingZoneDefinition.builder()
+            LandingZoneDefinition.builder()
                 .definition("barDefinition")
                 .name("barName")
                 .description("barDescription")
                 .version("v1")
                 .build());
-    var mockLandingZoneManager = mock(LandingZoneManager.class);
-    when(azureLandingZoneService.listLandingZoneDefinitions()).thenReturn(definitions);
-    when(azureLandingZoneManagerProvider.createLandingZoneManager(any(), any()))
-        .thenReturn(mockLandingZoneManager);
+    when(landingZoneService.listLandingZoneDefinitions()).thenReturn(definitions);
     when(featureConfiguration.isAzureEnabled()).thenReturn(true);
 
     mockMvc
         .perform(get(LIST_AZURE_LANDING_ZONES_DEFINITIONS_PATH))
         .andExpect(status().isOk())
-        .andExpect(MockMvcResultMatchers.jsonPath("$.landingzones").exists());
+        .andExpect(MockMvcResultMatchers.jsonPath("$.landingzones").exists())
+        .andExpect(MockMvcResultMatchers.jsonPath("$.landingzones").isArray());
   }
 
   @Test
   public void deleteAzureLandingZoneSuccess() throws Exception {
-    doNothing().when(azureLandingZoneService).deleteLandingZone(anyString());
+    doNothing().when(landingZoneService).deleteLandingZone(anyString());
     mockMvc
         .perform(delete(DELETE_AZURE_LANDING_ZONE_PATH + "/{landingZoneId}", "lz-1"))
         .andExpect(status().isNoContent());
@@ -128,8 +185,8 @@ public class AzureLandingZoneApiControllerTest extends BaseConnectedTest {
 
   @Test
   public void deleteAzureLandingZoneNotImplemented() throws Exception {
-    doThrow(AzureLandingZoneDeleteNotImplemented.class)
-        .when(azureLandingZoneService)
+    doThrow(LandingZoneDeleteNotImplemented.class)
+        .when(landingZoneService)
         .deleteLandingZone(anyString());
     mockMvc
         .perform(delete(DELETE_AZURE_LANDING_ZONE_PATH + "/{landingZoneId}", "lz-0"))

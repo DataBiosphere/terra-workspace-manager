@@ -1,13 +1,12 @@
 package bio.terra.workspace.amalgam.landingzone.azure;
 
-import bio.terra.landingzone.job.AzureLandingZoneJobService;
+import bio.terra.landingzone.job.LandingZoneJobService;
 import bio.terra.landingzone.job.model.JobReport;
-import bio.terra.landingzone.resource.ExternalResourceService;
-import bio.terra.landingzone.resource.landingzone.ExternalLandingZoneResource;
-import bio.terra.landingzone.service.landingzone.azure.AzureLandingZoneService;
-import bio.terra.landingzone.service.landingzone.azure.exception.AzureLandingZoneDeleteNotImplemented;
-import bio.terra.landingzone.service.landingzone.azure.model.AzureLandingZone;
-import bio.terra.landingzone.service.landingzone.azure.model.AzureLandingZoneDefinition;
+import bio.terra.landingzone.service.landingzone.azure.LandingZoneService;
+import bio.terra.landingzone.service.landingzone.azure.exception.LandingZoneDeleteNotImplemented;
+import bio.terra.landingzone.service.landingzone.azure.model.DeployedLandingZone;
+import bio.terra.landingzone.service.landingzone.azure.model.LandingZoneDefinition;
+import bio.terra.landingzone.service.landingzone.azure.model.LandingZoneRequest;
 import bio.terra.workspace.amalgam.landingzone.azure.utils.MapperUtils;
 import bio.terra.workspace.app.configuration.external.AzureConfiguration;
 import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
@@ -27,7 +26,6 @@ import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.workspace.exceptions.CloudContextRequiredException;
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
 import java.util.stream.Collectors;
 import javax.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
@@ -42,9 +40,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 @Controller
 public class AzureLandingZoneApiController extends ControllerBase implements LandingZonesApi {
   private static final Logger logger = LoggerFactory.getLogger(AzureLandingZoneApiController.class);
-  private final AzureLandingZoneService azureLandingZoneService;
-  private final AzureLandingZoneJobService azureLandingZoneJobService;
-  private final ExternalResourceService externalResourceService;
+  private final LandingZoneService landingZoneService;
   private final FeatureConfiguration features;
   private final CrlService crlService;
   private final AzureConfiguration azureConfiguration;
@@ -54,16 +50,12 @@ public class AzureLandingZoneApiController extends ControllerBase implements Lan
       AuthenticatedUserRequestFactory authenticatedUserRequestFactory,
       HttpServletRequest request,
       SamService samService,
-      AzureLandingZoneService azureLandingZoneService,
-      AzureLandingZoneJobService azureLandingZoneJobService,
-      ExternalResourceService externalResourceService,
+      LandingZoneService landingZoneService,
       CrlService crlService,
       AzureConfiguration azureConfiguration,
       FeatureConfiguration features) {
     super(authenticatedUserRequestFactory, request, samService);
-    this.azureLandingZoneService = azureLandingZoneService;
-    this.azureLandingZoneJobService = azureLandingZoneJobService;
-    this.externalResourceService = externalResourceService;
+    this.landingZoneService = landingZoneService;
     this.crlService = crlService;
     this.azureConfiguration = azureConfiguration;
     this.features = features;
@@ -91,23 +83,18 @@ public class AzureLandingZoneApiController extends ControllerBase implements Lan
                     new CloudContextRequiredException(
                         "AzureContext is required when creating an Azure landing zone"));
 
-    ExternalLandingZoneResource resource =
-        ExternalLandingZoneResource.builder()
-            .resourceId(UUID.randomUUID())
+    LandingZoneRequest landingZoneRequest =
+        LandingZoneRequest.builder()
             .definition(body.getDefinition())
             .version(body.getVersion())
             .parameters(
                 MapperUtils.LandingZoneMapper.landingZoneParametersFrom(body.getParameters()))
-            .name(body.getName())
-            .description(body.getDescription())
             .azureCloudContext(MapperUtils.AzureCloudContextMapper.from(azureContext))
             .build();
     String jobId =
-        externalResourceService.createAzureLandingZone(
+        landingZoneService.startLandingZoneCreationJob(
             body.getJobControl().getId(),
-            resource,
-            MapperUtils.AuthenticatedUserRequestMapper.from(userRequest),
-            MapperUtils.AzureConfigurationMapper.from(azureConfiguration),
+            landingZoneRequest,
             getAsyncResultEndpoint(body.getJobControl().getId(), "create-result"));
 
     ApiCreatedAzureLandingZoneResult result = fetchCreateAzureLandingZoneResult(jobId);
@@ -124,8 +111,8 @@ public class AzureLandingZoneApiController extends ControllerBase implements Lan
   }
 
   private ApiCreatedAzureLandingZoneResult fetchCreateAzureLandingZoneResult(String jobId) {
-    final AzureLandingZoneJobService.AsyncJobResult<AzureLandingZone> jobResult =
-        azureLandingZoneJobService.retrieveAsyncJobResult(jobId, AzureLandingZone.class);
+    final LandingZoneJobService.AsyncJobResult<DeployedLandingZone> jobResult =
+        landingZoneService.getAsyncJobResult(jobId);
 
     ApiAzureLandingZone azureLandingZone = null;
     if (jobResult.getJobReport().getStatus().equals(JobReport.StatusEnum.SUCCEEDED)) {
@@ -134,15 +121,15 @@ public class AzureLandingZoneApiController extends ControllerBase implements Lan
               .map(
                   lz ->
                       new ApiAzureLandingZone()
-                          .id(lz.getId())
+                          .id(lz.id())
                           .resources(
-                              lz.getDeployedResources().stream()
+                              lz.deployedResources().stream()
                                   .map(
                                       resource ->
                                           new ApiAzureLandingZoneDeployedResource()
-                                              .region(resource.getRegion())
-                                              .resourceType(resource.getResourceType())
-                                              .resourceId(resource.getResourceId()))
+                                              .region(resource.region())
+                                              .resourceType(resource.resourceType())
+                                              .resourceId(resource.resourceId()))
                                   .collect(Collectors.toList())))
               .orElse(null);
     }
@@ -158,8 +145,7 @@ public class AzureLandingZoneApiController extends ControllerBase implements Lan
     features.isAzureEnabled();
     // AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
 
-    List<AzureLandingZoneDefinition> templates =
-        azureLandingZoneService.listLandingZoneDefinitions();
+    List<LandingZoneDefinition> templates = landingZoneService.listLandingZoneDefinitions();
 
     ApiAzureLandingZoneDefinitionList result =
         new ApiAzureLandingZoneDefinitionList()
@@ -168,10 +154,10 @@ public class AzureLandingZoneApiController extends ControllerBase implements Lan
                     .map(
                         t ->
                             new ApiAzureLandingZoneDefinition()
-                                .definition(t.getDefinition())
-                                .name(t.getName())
-                                .description(t.getDescription())
-                                .version(t.getVersion()))
+                                .definition(t.definition())
+                                .name(t.name())
+                                .description(t.description())
+                                .version(t.version()))
                     .collect(Collectors.toList()));
     return new ResponseEntity<>(result, HttpStatus.OK);
   }
@@ -182,8 +168,8 @@ public class AzureLandingZoneApiController extends ControllerBase implements Lan
     features.isAzureEnabled();
     // AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     try {
-      azureLandingZoneService.deleteLandingZone(landingZoneId);
-    } catch (AzureLandingZoneDeleteNotImplemented ex) {
+      landingZoneService.deleteLandingZone(landingZoneId);
+    } catch (LandingZoneDeleteNotImplemented ex) {
       logger.info("Request to delete landing zone. Operation is not supported.");
       return new ResponseEntity<>(HttpStatus.NOT_IMPLEMENTED);
     }
