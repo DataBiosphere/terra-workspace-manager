@@ -39,7 +39,7 @@ paths:
     parameters:
       - $ref: '#/components/parameters/TpsObjectId'
     delete:
-      summary: delete a policy attribute object
+      summary: Delete a Policy Attribute Object
       operationId: deletePao
       tags: [Tps]
       responses:
@@ -54,7 +54,7 @@ paths:
         '500':
           $ref: '#/components/responses/ServerError'
     post:
-      summary: clone a policy attribute object
+      summary: Clone a Policy Attribute Object
       operationId: clonePao
       tags: [Tps]
       requestBody:
@@ -62,7 +62,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/TpsObjectId'
+              $ref: '#/components/schemas/TpsPaoCloneRequest'
       responses:
         '201':
           description: Policy attribute created successfully
@@ -75,7 +75,7 @@ paths:
         '500':
           $ref: '#/components/responses/ServerError'
     get:
-      summary: retrieve a policy attribute object
+      summary: Retrieve a Policy Attribute Object
       operationId: getPao
       tags: [Tps]
       responses:
@@ -114,6 +114,13 @@ components:
       type: string
       description: Enum representing an object type of a policy-bearing Terra component.
       enum: [ 'workspace' ]
+
+    TpsPaoCloneRequest:
+      type: object
+      required: [destinationObjectId]
+      properties:
+        destinationObjectId:
+          $ref: '#/components/schemas/TpsObjectId'
 
     TpsPaoCreateRequest:
       type: object

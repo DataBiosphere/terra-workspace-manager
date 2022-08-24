@@ -1,11 +1,9 @@
 package bio.terra.workspace.service.workspace;
 
-import bio.terra.common.iam.BearerToken;
 import bio.terra.workspace.amalgam.tps.TpsApiDispatch;
 import bio.terra.workspace.app.configuration.external.BufferServiceConfiguration;
 import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
 import bio.terra.workspace.db.WorkspaceDao;
-import bio.terra.workspace.generated.model.ApiTpsPaoGetResult;
 import bio.terra.workspace.generated.model.ApiTpsPolicyInputs;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamRethrow;
@@ -37,7 +35,11 @@ import bio.terra.workspace.service.workspace.model.WorkspaceAndHighestRole;
 import bio.terra.workspace.service.workspace.model.WorkspaceConstants.Properties;
 import com.google.common.base.Preconditions;
 import io.opencensus.contrib.spring.aop.Traced;
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.UUID;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import org.slf4j.Logger;
@@ -450,21 +452,6 @@ public class WorkspaceService {
         String.format("Clone workspace: name: '%s' id: '%s'  ", workspaceName, workspaceUuid);
 
     // Create the destination workspace synchronously first.
-    if (features.isTpsEnabled()) {
-      // New workspaces will always be created with empty policies, but some workspaces predate
-      // policy and so will not have associated PAOs.
-      Optional<ApiTpsPaoGetResult> workspacePao =
-          tpsApiDispatch.getPaoIfExists(
-              new BearerToken(userRequest.getRequiredToken()), sourceWorkspace.getWorkspaceId());
-
-      if (workspacePao.isPresent()) {
-        tpsApiDispatch.clonePao(
-            new BearerToken(userRequest.getRequiredToken()),
-            sourceWorkspace.getWorkspaceId(),
-            destinationWorkspace.getWorkspaceId());
-      }
-    }
-
     createWorkspace(destinationWorkspace, null, userRequest);
 
     // Remaining steps are an async flight.
