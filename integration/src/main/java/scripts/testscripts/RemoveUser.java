@@ -4,6 +4,7 @@ import static org.apache.http.HttpStatus.SC_FORBIDDEN;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static scripts.utils.GcsBucketUtils.BUCKET_PREFIX;
 import static scripts.utils.GcsBucketUtils.makeControlledGcsBucketUserPrivate;
@@ -24,7 +25,6 @@ import com.google.auth.oauth2.AccessToken;
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.cloud.bigquery.BigQueryException;
 import com.google.cloud.storage.StorageException;
-import com.google.common.base.Strings;
 import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.util.List;
@@ -76,9 +76,7 @@ public class RemoveUser extends WorkspaceAllocateTestScriptBase {
     groupName = "groupremovetest";
     ApiClient apiClient = new ApiClient();
 
-    if (Strings.isNullOrEmpty(server.samUri)) {
-      throw new IllegalArgumentException("Sam URI cannot be empty");
-    }
+    assertNotNull(server.samUri);
 
     GoogleCredentials userCredential =
         AuthenticationUtils.getDelegatedUserCredential(

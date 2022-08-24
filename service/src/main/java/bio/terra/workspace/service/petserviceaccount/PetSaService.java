@@ -300,10 +300,8 @@ public class PetSaService {
         SamRethrow.onInterrupted(
             () -> samService.constructUserPetSaEmail(projectId, userEmail, userRequest),
             "getUserPetSa");
-    if (constructedSa.isPresent()) {
-      return serviceAccountExists(constructedSa.get()) ? constructedSa : Optional.empty();
-    }
-    return Optional.empty();
+
+    return constructedSa.filter(sa -> serviceAccountExists(sa));
   }
 
   /**
@@ -332,7 +330,6 @@ public class PetSaService {
    */
   private boolean serviceAccountExists(ServiceAccountName saName) {
     try {
-
       crlService.getIamCow().projects().serviceAccounts().get(saName).execute();
       return true;
     } catch (GoogleJsonResponseException googleException) {
