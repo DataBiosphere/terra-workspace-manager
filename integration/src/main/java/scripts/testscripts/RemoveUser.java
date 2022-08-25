@@ -9,6 +9,7 @@ import static scripts.utils.GcsBucketUtils.BUCKET_PREFIX;
 import static scripts.utils.GcsBucketUtils.makeControlledGcsBucketUserPrivate;
 import static scripts.utils.GcsBucketUtils.makeControlledGcsBucketUserShared;
 
+import bio.terra.common.sam.SamRetry;
 import bio.terra.testrunner.runner.config.TestUserSpecification;
 import bio.terra.workspace.api.ControlledGcpResourceApi;
 import bio.terra.workspace.api.WorkspaceApi;
@@ -25,6 +26,7 @@ import java.security.GeneralSecurityException;
 import java.util.List;
 import java.util.UUID;
 import org.apache.commons.lang3.RandomStringUtils;
+import org.broadinstitute.dsde.workbench.client.sam.api.GroupApi;
 import scripts.utils.BqDataTableUtils;
 import scripts.utils.BqDatasetUtils;
 import scripts.utils.ClientTestUtils;
@@ -32,6 +34,8 @@ import scripts.utils.CloudContextMaker;
 import scripts.utils.GcsBucketObjectUtils;
 import scripts.utils.GcsBucketUtils;
 import scripts.utils.NotebookUtils;
+import scripts.utils.SamClientUtils;
+import scripts.utils.TestUtils;
 import scripts.utils.WorkspaceAllocateTestScriptBase;
 
 public class RemoveUser extends WorkspaceAllocateTestScriptBase {
@@ -39,10 +43,13 @@ public class RemoveUser extends WorkspaceAllocateTestScriptBase {
   private TestUserSpecification privateResourceUser;
   private TestUserSpecification sharedResourceUser;
   private String projectId;
+  private String groupEmail;
+  private String groupName;
   private CreatedControlledGcpGcsBucket sharedBucket;
   private CreatedControlledGcpGcsBucket privateBucket;
   private GcpBigQueryDatasetResource privateDataset;
   private CreatedControlledGcpAiNotebookInstanceResult privateNotebook;
+  private GroupApi samGroupApi;
 
   @Override
   protected void doSetup(List<TestUserSpecification> testUsers, WorkspaceApi ownerWorkspaceApi)
@@ -58,6 +65,16 @@ public class RemoveUser extends WorkspaceAllocateTestScriptBase {
         privateResourceUser.userEmail,
         sharedResourceUser.userEmail,
         "The two test users are distinct");
+
+    // Create a group
+    groupName = TestUtils.appendRandomNumber("groupremovetest");
+    samGroupApi = SamClientUtils.samGroupApi(testUsers.get(1), server);
+    SamRetry.retry(() -> samGroupApi.postGroup(groupName, null));
+    groupEmail = samGroupApi.getGroup(groupName);
+
+    // Add one group as a reader.
+    ownerWorkspaceApi.grantRole(
+        new GrantRoleRequestBody().memberEmail(groupEmail), getWorkspaceId(), IamRole.READER);
 
     // Add one user as a reader, and one as both a reader and writer.
     ownerWorkspaceApi.grantRole(
@@ -127,6 +144,13 @@ public class RemoveUser extends WorkspaceAllocateTestScriptBase {
     // Validate that setup ran correctly and users have appropriate resource access.
     GcsBucketObjectUtils.retrieveBucketFile(sharedBucketName, projectId, sharedResourceUser);
     GcsBucketObjectUtils.retrieveBucketFile(privateBucketName, projectId, privateResourceUser);
+
+    // Remove group from READER role
+    try {
+      ownerWorkspaceApi.removeRole(getWorkspaceId(), IamRole.READER, groupEmail);
+    } finally {
+      SamRetry.retry(() -> samGroupApi.deleteGroup(groupName));
+    }
 
     // Remove WRITER role from sharedResourceUser. This is their only role, so they are no longer
     // a member of this workspace.
