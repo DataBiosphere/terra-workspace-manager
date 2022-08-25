@@ -32,14 +32,10 @@ import bio.terra.workspace.service.resource.model.WsmResourceFamily;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import java.time.Instant;
-import java.time.ZoneId;
-import java.time.format.DateTimeFormatter;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import javax.annotation.Nullable;
-import org.apache.commons.lang3.StringUtils;
 
 /** A {@link ControlledResource} for a Google AI Platform Notebook instance. */
 public class ControlledAiNotebookInstanceResource extends ControlledResource {
@@ -159,7 +155,8 @@ public class ControlledAiNotebookInstanceResource extends ControlledResource {
             petSaEmail,
             workspaceUserFacingId,
             flightBeanBag.getCrlService(),
-            flightBeanBag.getCliConfiguration()),
+            flightBeanBag.getCliConfiguration(),
+            flightBeanBag.getVersionConfiguration()),
         gcpRetryRule);
     flight.addStep(
         new NotebookCloudSyncStep(
@@ -258,44 +255,6 @@ public class ControlledAiNotebookInstanceResource extends ControlledResource {
     checkFieldNonNull(getLocation(), "location");
     checkFieldNonNull(getProjectId(), "projectId");
     ResourceValidationUtils.validateAiNotebookInstanceId(getInstanceId());
-  }
-
-  /** Returns an auto generated instance name with the username and date time. */
-  public static String generateInstanceId(@Nullable String email) {
-    String mangledUsername = mangleUsername(extractUsername(email));
-    String localDateTimeSuffix =
-        DateTimeFormatter.ofPattern(AUTO_NAME_DATE_FORMAT)
-            .format(Instant.now().atZone(ZoneId.systemDefault()));
-    return mangledUsername + localDateTimeSuffix;
-  }
-
-  /**
-   * Best effort mangle the user's name so that it meets the requirements for a valid instance name.
-   *
-   * <p>Instance name id must match the regex '(?:[a-z](?:[-a-z0-9]{0,63}[a-z0-9])?)', i.e. starting
-   * with a lowercase alpha character, only alphanumerics and '-' of max length 63. I don't have a
-   * documentation link, but gcloud will complain otherwise.
-   */
-  private static String mangleUsername(String username) {
-    // Strip non alpha-numeric or '-' characters.
-    String mangledName = username.replaceAll("[^a-zA-Z0-9-]", "");
-    if (mangledName.isEmpty()) {
-      mangledName = "notebook";
-    }
-    mangledName = mangledName.toLowerCase();
-    // Make sure the returned name isn't too long to not have the date time suffix.
-    int maxNameLength = MAX_INSTANCE_NAME_LENGTH - AUTO_NAME_DATE_FORMAT.length();
-    if (mangledName.length() > maxNameLength) {
-      mangledName = mangledName.substring(0, maxNameLength);
-    }
-    return mangledName;
-  }
-
-  private static String extractUsername(@Nullable String validEmail) {
-    if (StringUtils.isEmpty(validEmail)) {
-      return "";
-    }
-    return validEmail.substring(0, validEmail.indexOf('@'));
   }
 
   private static <T> void checkFieldNonNull(@Nullable T fieldValue, String fieldName) {

@@ -4,6 +4,7 @@ import bio.terra.common.iam.BearerToken;
 import bio.terra.policy.common.exception.PolicyObjectNotFoundException;
 import bio.terra.policy.common.model.PolicyInput;
 import bio.terra.policy.common.model.PolicyInputs;
+import bio.terra.policy.common.model.PolicyName;
 import bio.terra.policy.service.pao.PaoService;
 import bio.terra.policy.service.pao.model.Pao;
 import bio.terra.policy.service.pao.model.PaoComponent;
@@ -18,12 +19,13 @@ import bio.terra.workspace.generated.model.ApiTpsPaoGetResult;
 import bio.terra.workspace.generated.model.ApiTpsPolicyInput;
 import bio.terra.workspace.generated.model.ApiTpsPolicyInputs;
 import bio.terra.workspace.generated.model.ApiTpsPolicyPair;
+import com.google.common.collect.ArrayListMultimap;
+import com.google.common.collect.Multimap;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -73,6 +75,11 @@ public class TpsApiDispatch {
             () -> new PolicyObjectNotFoundException("Policy object not found: " + objectId));
   }
 
+  public void clonePao(BearerToken bearerToken, UUID sourceObjectId, UUID destinationObjectId) {
+    features.tpsEnabledCheck();
+    paoService.clonePao(sourceObjectId, destinationObjectId);
+  }
+
   // -- Api to Tps conversion methods --
   // Note: we need to keep the Api types out of the TPS library code. It does not build the Api so
   // we cannot
@@ -114,27 +121,24 @@ public class TpsApiDispatch {
       throw new TpsInvalidInputException("PolicyInput namespace and name cannot be null");
     }
 
-    Map<String, String> data;
-    if (apiInput.getAdditionalData() == null) {
-      // Ensure we always have a map, even if it is empty.
-      data = new HashMap<>();
-    } else {
-      data =
-          apiInput.getAdditionalData().stream()
-              .collect(Collectors.toMap(ApiTpsPolicyPair::getKey, ApiTpsPolicyPair::getValue));
+    Multimap<String, String> data = ArrayListMultimap.create();
+    if (apiInput.getAdditionalData() != null) {
+      apiInput.getAdditionalData().forEach(item -> data.put(item.getKey(), item.getValue()));
     }
-    return new PolicyInput(apiInput.getNamespace(), apiInput.getName(), data);
+
+    return new PolicyInput(new PolicyName(apiInput.getNamespace(), apiInput.getName()), data);
   }
 
   public static ApiTpsPolicyInput policyInputToApi(PolicyInput input) {
     List<ApiTpsPolicyPair> apiPolicyPairs =
-        input.getAdditionalData().entrySet().stream()
+        input.getAdditionalData().entries().stream()
             .map(e -> new ApiTpsPolicyPair().key(e.getKey()).value(e.getValue()))
             .toList();
 
+    final PolicyName policyName = input.getPolicyName();
     return new ApiTpsPolicyInput()
-        .namespace(input.getNamespace())
-        .name(input.getName())
+        .namespace(policyName.getNamespace())
+        .name(policyName.getName())
         .additionalData(apiPolicyPairs);
   }
 
@@ -147,7 +151,7 @@ public class TpsApiDispatch {
     for (ApiTpsPolicyInput apiInput : apiInputs.getInputs()) {
       // Convert the input so we get any errors before we process it further
       var input = policyInputFromApi(apiInput);
-      String key = PolicyInputs.composeKey(input.getNamespace(), input.getName());
+      String key = input.getKey();
       if (inputs.containsKey(key)) {
         throw new TpsInvalidInputException("Duplicate policy attribute in policy input: " + key);
       }
@@ -157,6 +161,12 @@ public class TpsApiDispatch {
   }
 
   public static ApiTpsPolicyInputs policyInputsToApi(PolicyInputs inputs) {
+
+    // old policies could have been created with a null list.
+    if (inputs == null) {
+      return new ApiTpsPolicyInputs();
+    }
+
     return new ApiTpsPolicyInputs()
         .inputs(
             inputs.getInputs().values().stream().map(TpsApiDispatch::policyInputToApi).toList());
@@ -169,8 +179,8 @@ public class TpsApiDispatch {
         .objectType(objectTypeToApi(pao.getObjectType()))
         .attributes(policyInputsToApi(pao.getAttributes()))
         .effectiveAttributes(policyInputsToApi(pao.getEffectiveAttributes()))
-        .inConflict(pao.isInConflict())
-        .children(pao.getChildObjectIds());
+        .sourcesObjectIds(pao.getSourceObjectIds().stream().toList())
+        .predecessorId(pao.getPredecessorId());
   }
 
   public static Pao paoFromApi(@Nullable ApiTpsPaoGetResult api) {
@@ -183,7 +193,7 @@ public class TpsApiDispatch {
         objectTypeFromApi(api.getObjectType()),
         policyInputsFromApi(api.getAttributes()),
         policyInputsFromApi(api.getEffectiveAttributes()),
-        api.isInConflict(),
-        api.getChildren());
+        new HashSet<>(api.getSourcesObjectIds()),
+        api.getPredecessorId());
   }
 }

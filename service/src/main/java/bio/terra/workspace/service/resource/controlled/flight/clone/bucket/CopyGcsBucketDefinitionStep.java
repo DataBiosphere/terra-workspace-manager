@@ -13,6 +13,7 @@ import bio.terra.workspace.generated.model.ApiGcpGcsBucketCreationParameters;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.model.ControlledResourceIamRole;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceService;
+import bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.ControlledGcsBucketHandler;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.ControlledGcsBucketResource;
 import bio.terra.workspace.service.resource.controlled.model.AccessScopeType;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResourceFields;
@@ -24,6 +25,7 @@ import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.Resou
 import java.util.Optional;
 import java.util.UUID;
 import javax.annotation.Nullable;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.http.HttpStatus;
 
 /**
@@ -96,7 +98,11 @@ public class CopyGcsBucketDefinitionStep implements Step {
     // bucket resource for create flight
     ControlledGcsBucketResource destinationBucketResource =
         ControlledGcsBucketResource.builder()
-            .bucketName(bucketName)
+            .bucketName(
+                StringUtils.isEmpty(bucketName)
+                    ? ControlledGcsBucketHandler.getHandler()
+                        .generateCloudName(destinationWorkspaceId, resourceName)
+                    : bucketName)
             .common(
                 ControlledResourceFields.builder()
                     .workspaceUuid(destinationWorkspaceId)

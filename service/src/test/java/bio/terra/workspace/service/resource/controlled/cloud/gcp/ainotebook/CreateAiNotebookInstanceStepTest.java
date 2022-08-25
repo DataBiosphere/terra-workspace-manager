@@ -56,7 +56,7 @@ public class CreateAiNotebookInstanceStepTest extends BaseUnitTest {
 
     Instance instance =
         CreateAiNotebookInstanceStep.setFields(
-            creationParameters, "foo@bar.com", WORKSPACE_ID, SERVER_ID, new Instance());
+            creationParameters, "foo@bar.com", WORKSPACE_ID, SERVER_ID, new Instance(), "main");
     assertEquals("script.sh", instance.getPostStartupScript());
     assertTrue(instance.getInstallGpuDriver());
     assertEquals("custom-path", instance.getCustomGpuDriverPath());
@@ -80,18 +80,21 @@ public class CreateAiNotebookInstanceStepTest extends BaseUnitTest {
 
   @Test
   public void setFieldsNoFields() {
+    var localBranch = "monkey";
     Instance instance =
         CreateAiNotebookInstanceStep.setFields(
             new ApiGcpAiNotebookInstanceCreationParameters(),
             "foo@bar.com",
             WORKSPACE_ID,
             SERVER_ID,
-            new Instance());
+            new Instance(),
+            localBranch);
     assertThat(instance.getMetadata(), Matchers.aMapWithSize(3));
     assertDefaultMetadata(instance);
     assertEquals("foo@bar.com", instance.getServiceAccount());
     assertEquals(SA_SCOPES, instance.getServiceAccountScopes());
-    assertEquals(DEFAULT_POST_STARTUP_SCRIPT, instance.getPostStartupScript());
+    assertEquals(
+        String.format(DEFAULT_POST_STARTUP_SCRIPT, localBranch), instance.getPostStartupScript());
   }
 
   private void assertDefaultMetadata(Instance instance) {
@@ -113,7 +116,8 @@ public class CreateAiNotebookInstanceStepTest extends BaseUnitTest {
                 "foo@bar.com",
                 "workspaceId",
                 "server-id",
-                new Instance()));
+                new Instance(),
+                "main"));
     assertThrows(
         ReservedMetadataKeyException.class,
         () ->
@@ -124,7 +128,8 @@ public class CreateAiNotebookInstanceStepTest extends BaseUnitTest {
                 "foo@bar.com",
                 "workspaceId",
                 "server-id",
-                new Instance()));
+                new Instance(),
+                "main"));
     assertThrows(
         ReservedMetadataKeyException.class,
         () ->
@@ -135,6 +140,7 @@ public class CreateAiNotebookInstanceStepTest extends BaseUnitTest {
                 "foo@bar.com",
                 "workspaceId",
                 "server-id",
-                new Instance()));
+                new Instance(),
+                "main"));
   }
 }

@@ -1,10 +1,13 @@
 package bio.terra.workspace.service.resource.controlled.cloud.azure.storage;
 
+import bio.terra.workspace.common.exception.FeatureNotSupportedException;
 import bio.terra.workspace.db.DbSerDes;
 import bio.terra.workspace.db.model.DbResource;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResourceFields;
 import bio.terra.workspace.service.resource.model.WsmResource;
 import bio.terra.workspace.service.resource.model.WsmResourceHandler;
+import java.util.UUID;
+import javax.annotation.Nullable;
 
 public class ControlledAzureStorageHandler implements WsmResourceHandler {
   private static ControlledAzureStorageHandler theHandler;
@@ -27,5 +30,9 @@ public class ControlledAzureStorageHandler implements WsmResourceHandler {
         .region(attributes.getRegion())
         .common(new ControlledResourceFields(dbResource))
         .build();
+  }
+
+  public String generateCloudName(@Nullable UUID workspaceUuid, String resourceName) {
+    throw new FeatureNotSupportedException("This generate cloud name feature is not implement yet");
   }
 }

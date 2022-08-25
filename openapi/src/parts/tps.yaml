@@ -39,7 +39,7 @@ paths:
     parameters:
       - $ref: '#/components/parameters/TpsObjectId'
     delete:
-      summary: delete a policy attribute object
+      summary: Delete a Policy Attribute Object
       operationId: deletePao
       tags: [Tps]
       responses:
@@ -53,8 +53,29 @@ paths:
           $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/ServerError'
+    post:
+      summary: Clone a Policy Attribute Object
+      operationId: clonePao
+      tags: [Tps]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TpsPaoCloneRequest'
+      responses:
+        '201':
+          description: Policy attribute created successfully
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
     get:
-      summary: retrieve a policy attribute object
+      summary: Retrieve a Policy Attribute Object
       operationId: getPao
       tags: [Tps]
       responses:
@@ -94,6 +115,13 @@ components:
       description: Enum representing an object type of a policy-bearing Terra component.
       enum: [ 'workspace' ]
 
+    TpsPaoCloneRequest:
+      type: object
+      required: [destinationObjectId]
+      properties:
+        destinationObjectId:
+          $ref: '#/components/schemas/TpsObjectId'
+
     TpsPaoCreateRequest:
       type: object
       required: [objectId, component, objectType]
@@ -121,10 +149,11 @@ components:
           $ref: '#/components/schemas/TpsPolicyInputs'
         effectiveAttributes:
           $ref: '#/components/schemas/TpsPolicyInputs'
-        inConflict:
-          type: boolean
-        children:
+        predecessorId:
+          $ref: '#/components/schemas/TpsObjectId'
+        sourcesObjectIds:
           type: array
+          uniqueItems: true
           items:
             $ref: '#/components/schemas/TpsObjectId'
 

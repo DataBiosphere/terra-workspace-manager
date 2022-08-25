@@ -80,6 +80,27 @@ paths:
         '500':
           $ref: '#/components/responses/ServerError'
 
+  /api/workspaces/v1/{workspaceId}/resources/controlled/gcp/buckets/generateName:
+    parameters:
+      - $ref: '#/components/parameters/WorkspaceId'
+    post:
+      summary: Generate a cloud native controlled Gcp bucket name
+      operationId: generateGcpGcsBucketCloudName
+      tags: [ControlledGcpResource]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GenerateGcpGcsBucketCloudNameRequestBody'
+      responses:
+        '200':
+          $ref: '#/components/responses/GcsBucketCloudNameResponse'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
   /api/workspaces/v1/{workspaceId}/resources/controlled/gcp/buckets/{resourceId}/clone:
     parameters:
       - $ref: '#/components/parameters/WorkspaceId'
@@ -194,6 +215,13 @@ components:
           $ref: '#/components/schemas/GcpGcsBucketLifecycle'
         cloningInstructions:
           $ref: '#/components/schemas/CloningInstructionsEnum'
+
+    GenerateGcpGcsBucketCloudNameRequestBody:
+      type: object
+      required: [ gcsBucketName ]
+      properties:
+        gcsBucketName:
+          type: string
 
     GcpGcsBucketDefaultStorageClass:
       description: >-
@@ -409,6 +437,14 @@ components:
         updateParameters:
           $ref: '#/components/schemas/GcpGcsBucketUpdateParameters'
 
+    GcsBucketCloudName:
+      type: object
+      required: [ generatedBucketCloudName ]
+      properties:
+        generatedBucketCloudName:
+          type: string
+
+
   responses:
     CreatedControlledGcpGcsBucketResponse:
       description: Response to Create controlled Gcs bucket
@@ -444,3 +480,10 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/GcpGcsBucketResource'
+
+    GcsBucketCloudNameResponse:
+      description: A valid bucket name per https://cloud.google.com/storage/docs/naming-buckets.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/GcsBucketCloudName'

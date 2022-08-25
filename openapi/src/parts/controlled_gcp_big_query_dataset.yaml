@@ -73,6 +73,28 @@ paths:
           $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/ServerError'
+
+  /api/workspaces/v1/{workspaceId}/resources/controlled/gcp/bqdatasets/generateName:
+    parameters:
+    - $ref: '#/components/parameters/WorkspaceId'
+    post:
+      summary: Generate a cloud native controlled big query dataset id
+      operationId: generateBigQueryDatasetCloudId
+      tags: [ ControlledGcpResource ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GenerateGcpBigQueryDatasetCloudIDRequestBody'
+      responses:
+        '200':
+          $ref: '#/components/responses/BqDatasetCloudIdResponse'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
   /api/workspaces/v1/{workspaceId}/resources/controlled/gcp/bqdatasets/{resourceId}/clone:
     parameters:
       - $ref: '#/components/parameters/WorkspaceId'
@@ -250,6 +272,20 @@ components:
         updateParameters:
           $ref: '#/components/schemas/GcpBigQueryDatasetUpdateParameters'
 
+    BqDatasetCloudId:
+      type: object
+      required: [ generatedDatasetCloudId ]
+      properties:
+        generatedDatasetCloudId:
+          type: string
+
+    GenerateGcpBigQueryDatasetCloudIDRequestBody:
+      type: object
+      required: [ bigQueryDatasetName ]
+      properties:
+        bigQueryDatasetName:
+          type: string
+
   responses:
     CloneControlledGcpBigQueryDatasetResponse:
       description: response to clone BigQuery dataset operation.
@@ -264,3 +300,10 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/GcpBigQueryDatasetResource'
+
+    BqDatasetCloudIdResponse:
+      description: A valid Big query Dataset name per https://cloud.google.com/bigquery/docs/datasets#dataset-naming.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/BqDatasetCloudId'

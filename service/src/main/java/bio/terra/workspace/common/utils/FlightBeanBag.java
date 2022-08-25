@@ -4,6 +4,7 @@ import bio.terra.workspace.amalgam.tps.TpsApiDispatch;
 import bio.terra.workspace.app.configuration.external.AzureConfiguration;
 import bio.terra.workspace.app.configuration.external.CliConfiguration;
 import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
+import bio.terra.workspace.app.configuration.external.VersionConfiguration;
 import bio.terra.workspace.db.ApplicationDao;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.db.WorkspaceDao;
@@ -55,6 +56,7 @@ public class FlightBeanBag {
   private final TpsApiDispatch tpsApiDispatch;
   private final WorkspaceDao workspaceDao;
   private final WorkspaceService workspaceService;
+  private final VersionConfiguration versionConfiguration;
 
   @Lazy
   @Autowired
@@ -79,7 +81,8 @@ public class FlightBeanBag {
       SpendProfileService spendProfileService,
       Storagetransfer storagetransfer,
       WorkspaceDao workspaceDao,
-      WorkspaceService workspaceService) {
+      WorkspaceService workspaceService,
+      VersionConfiguration versionConfiguration) {
     this.applicationDao = applicationDao;
     this.azureCloudContextService = azureCloudContextService;
     this.azureConfig = azureConfig;
@@ -101,6 +104,7 @@ public class FlightBeanBag {
     this.tpsApiDispatch = tpsApiDispatch;
     this.workspaceDao = workspaceDao;
     this.workspaceService = workspaceService;
+    this.versionConfiguration = versionConfiguration;
   }
 
   public static FlightBeanBag getFromObject(Object object) {
@@ -189,5 +193,9 @@ public class FlightBeanBag {
 
   public CliConfiguration getCliConfiguration() {
     return cliConfiguration;
+  }
+
+  public VersionConfiguration getVersionConfiguration() {
+    return versionConfiguration;
   }
 }
