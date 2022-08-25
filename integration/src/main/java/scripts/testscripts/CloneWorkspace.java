@@ -58,9 +58,9 @@ import scripts.utils.ClientTestUtils;
 import scripts.utils.CloudContextMaker;
 import scripts.utils.GcsBucketObjectUtils;
 import scripts.utils.GcsBucketUtils;
-import scripts.utils.WorkspaceAllocateTestScriptBase;
+import scripts.utils.WorkspaceAllocateWithPolicyTestScriptBase;
 
-public class CloneWorkspace extends WorkspaceAllocateTestScriptBase {
+public class CloneWorkspace extends WorkspaceAllocateWithPolicyTestScriptBase {
   private static final Logger logger = LoggerFactory.getLogger(CloneWorkspace.class);
   private ControlledGcpResourceApi cloningUserResourceApi;
   private CreatedControlledGcpGcsBucket copyDefinitionSourceBucket;
