@@ -414,8 +414,8 @@ public class WorkspaceApiControllerTest extends BaseUnitTest {
             .component(ApiTpsComponent.WSM)
             .objectType(ApiTpsObjectType.WORKSPACE)
             .objectId(workspace.getId())
-            .children(Collections.emptyList())
-            .inConflict(false);
+            .sourcesObjectIds(Collections.emptyList());
+
     // Return a policy object for the first workspace
     when(mockTpsApiDispatch.getPaoIfExists(any(), eq(workspace.getId())))
         .thenReturn(Optional.of(getPolicyResult));
@@ -510,8 +510,7 @@ public class WorkspaceApiControllerTest extends BaseUnitTest {
         .component(ApiTpsComponent.WSM)
         .objectType(ApiTpsObjectType.WORKSPACE)
         .objectId(UUID.randomUUID())
-        .children(Collections.emptyList())
-        .inConflict(false)
+        .sourcesObjectIds(Collections.emptyList())
         .attributes(new ApiTpsPolicyInputs())
         .effectiveAttributes(new ApiTpsPolicyInputs());
   }

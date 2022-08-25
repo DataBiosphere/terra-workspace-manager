@@ -10,6 +10,9 @@ import bio.terra.workspace.model.CreateWorkspaceRequestBody;
 import bio.terra.workspace.model.CreatedWorkspace;
 import bio.terra.workspace.model.Properties;
 import bio.terra.workspace.model.Property;
+import bio.terra.workspace.model.TpsPolicyInput;
+import bio.terra.workspace.model.TpsPolicyInputs;
+import bio.terra.workspace.model.TpsPolicyPair;
 import bio.terra.workspace.model.WorkspaceStageModel;
 import java.util.List;
 import java.util.Map;
@@ -80,12 +83,22 @@ public abstract class WorkspaceAllocateTestScriptBase extends WorkspaceApiTestSc
     properties.add(property1);
     properties.add(property2);
 
+    TpsPolicyInputs policies =
+        new TpsPolicyInputs()
+            .addInputsItem(
+                new TpsPolicyInput()
+                    .name("region-constraint")
+                    .namespace("terra")
+                    .addAdditionalDataItem(
+                        new TpsPolicyPair().key("region-name").value("us-central1")));
+
     final var requestBody =
         new CreateWorkspaceRequestBody()
             .id(workspaceUuid)
             .spendProfile(spendProfileId)
             .stage(getStageModel())
-            .properties(properties);
+            .properties(properties)
+            .policies(policies);
     final CreatedWorkspace workspace = workspaceApi.createWorkspace(requestBody);
     assertThat(workspace.getId(), equalTo(workspaceUuid));
     return workspace;

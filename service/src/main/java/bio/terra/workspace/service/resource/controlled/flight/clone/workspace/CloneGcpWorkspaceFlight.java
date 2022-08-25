@@ -15,8 +15,9 @@ public class CloneGcpWorkspaceFlight extends Flight {
     // 1. Create job IDs for future sub-flights and a couple other things
     // 3. Launch a flight to create the GCP cloud context
     // 3a. Await the context flight
-    // 4. Launch a flight to clone all resources on the list
-    // 4a. Await the clone all resources flight and build a response
+    // 4. Clone Policy Attributes
+    // 5. Launch a flight to clone all resources on the list
+    // 5a. Await the clone all resources flight and build a response
     final var flightBeanBag = FlightBeanBag.getFromObject(applicationContext);
     addStep(new FindResourcesToCloneStep(flightBeanBag.getResourceDao()), RetryRules.cloud());
 
@@ -26,6 +27,8 @@ public class CloneGcpWorkspaceFlight extends Flight {
         new LaunchCreateGcpContextFlightStep(flightBeanBag.getWorkspaceService()),
         RetryRules.cloud());
     addStep(new AwaitCreateGcpContextFlightStep(), RetryRules.cloudLongRunning());
+
+    addStep(new ClonePolicyAttributesStep(flightBeanBag.getTpsApiDispatch()), RetryRules.cloud());
 
     addStep(new LaunchCloneAllResourcesFlightStep(), RetryRules.cloud());
     addStep(new AwaitCloneAllResourcesFlightStep(), RetryRules.cloudLongRunning());
