@@ -27,8 +27,7 @@ public class LandingZoneStairwayConfiguration {
     return new StairwayComponent(kubeService, kubeProperties, stairwayProperties);
   }
 
-  @Bean("landingZoneAzureConfiguration")
-  @ConfigurationProperties(prefix = "workspace.azure")
+  @Bean
   public LandingZoneAzureConfiguration getAzureConfiguration(
       bio.terra.workspace.app.configuration.external.AzureConfiguration azureConfiguration) {
     var configuration = new LandingZoneAzureConfiguration();
