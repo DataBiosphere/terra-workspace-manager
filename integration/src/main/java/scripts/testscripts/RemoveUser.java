@@ -27,7 +27,16 @@ import java.util.List;
 import java.util.UUID;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.broadinstitute.dsde.workbench.client.sam.api.GroupApi;
-import scripts.utils.*;
+import scripts.utils.BqDataTableUtils;
+import scripts.utils.BqDatasetUtils;
+import scripts.utils.ClientTestUtils;
+import scripts.utils.CloudContextMaker;
+import scripts.utils.GcsBucketObjectUtils;
+import scripts.utils.GcsBucketUtils;
+import scripts.utils.NotebookUtils;
+import scripts.utils.SamClientUtils;
+import scripts.utils.TestUtils;
+import scripts.utils.WorkspaceAllocateTestScriptBase;
 
 public class RemoveUser extends WorkspaceAllocateTestScriptBase {
 
@@ -41,8 +50,6 @@ public class RemoveUser extends WorkspaceAllocateTestScriptBase {
   private GcpBigQueryDatasetResource privateDataset;
   private CreatedControlledGcpAiNotebookInstanceResult privateNotebook;
   private GroupApi samGroupApi;
-
-  // @Autowired SamConfiguration samConfiguration;
 
   @Override
   protected void doSetup(List<TestUserSpecification> testUsers, WorkspaceApi ownerWorkspaceApi)
