@@ -1,0 +1,14 @@
+databaseChangeLog:
+- changeSet:
+    id: Add resource_lineage column
+    author: melchang
+    changes:
+    - addColumn:
+        tableName: resource
+        columns:
+        - column:
+            name: resource_lineage
+            type: jsonb
+            remarks: |
+              Serialized list of ResourceLineageEntry. A list of
+              workspaces/resources this resource has been cloned from.

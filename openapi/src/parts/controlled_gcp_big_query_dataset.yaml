@@ -228,7 +228,9 @@ components:
       type: object
       properties:
         datasetId:
-          description: A valid dataset name per https://cloud.google.com/bigquery/docs/datasets#dataset-naming
+          description: >-
+            A valid dataset name per https://cloud.google.com/bigquery/docs/datasets#dataset-naming.
+            Optional. If not set, resource name is used.
           type: string
         location:
           description: A valid dataset location per https://cloud.google.com/bigquery/docs/locations.

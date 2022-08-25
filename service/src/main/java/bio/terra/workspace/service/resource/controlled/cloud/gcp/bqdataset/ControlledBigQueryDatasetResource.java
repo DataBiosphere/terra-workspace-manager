@@ -23,11 +23,13 @@ import bio.terra.workspace.service.resource.controlled.model.ControlledResourceF
 import bio.terra.workspace.service.resource.controlled.model.ManagedByType;
 import bio.terra.workspace.service.resource.controlled.model.PrivateResourceState;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
+import bio.terra.workspace.service.resource.model.ResourceLineageEntry;
 import bio.terra.workspace.service.resource.model.StewardshipType;
 import bio.terra.workspace.service.resource.model.WsmResourceFamily;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import org.apache.commons.lang3.builder.EqualsBuilder;
@@ -50,7 +52,8 @@ public class ControlledBigQueryDatasetResource extends ControlledResource {
       @JsonProperty("managedBy") ManagedByType managedBy,
       @JsonProperty("applicationId") String applicationId,
       @JsonProperty("datasetName") String datasetName,
-      @JsonProperty("projectId") String projectId) {
+      @JsonProperty("projectId") String projectId,
+      @JsonProperty("resourceLineage") List<ResourceLineageEntry> resourceLineage) {
 
     super(
         workspaceId,
@@ -62,7 +65,8 @@ public class ControlledBigQueryDatasetResource extends ControlledResource {
         accessScope,
         managedBy,
         applicationId,
-        privateResourceState);
+        privateResourceState,
+        resourceLineage);
     this.datasetName = datasetName;
     this.projectId = projectId;
     validate();

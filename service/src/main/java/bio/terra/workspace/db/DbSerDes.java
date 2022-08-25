@@ -39,6 +39,18 @@ public class DbSerDes {
     }
   }
 
+  /**
+   * Use this when you want to deserialize an array or list of objects. See
+   * https://stackoverflow.com/a/6349488/6447189
+   */
+  public static <T> T fromJson(String json, TypeReference<T> typeReference) {
+    try {
+      return serdesMapper.readValue(json, typeReference);
+    } catch (JsonProcessingException e) {
+      throw new SerializationException("Failed fromJson", e);
+    }
+  }
+
   // Specific mappers for key-value properties
   public static String propertiesToJson(Map<String, String> kvmap) {
     return toJson(kvmap);

@@ -23,11 +23,13 @@ import bio.terra.workspace.service.resource.controlled.model.ControlledResourceF
 import bio.terra.workspace.service.resource.controlled.model.ManagedByType;
 import bio.terra.workspace.service.resource.controlled.model.PrivateResourceState;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
+import bio.terra.workspace.service.resource.model.ResourceLineageEntry;
 import bio.terra.workspace.service.resource.model.StewardshipType;
 import bio.terra.workspace.service.resource.model.WsmResourceFamily;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -54,7 +56,8 @@ public class ControlledAzureNetworkResource extends ControlledResource {
       @JsonProperty("subnetName") String subnetName,
       @JsonProperty("addressSpaceCidr") String addressSpaceCidr,
       @JsonProperty("subnetAddressCidr") String subnetAddressCidr,
-      @JsonProperty("region") String region) {
+      @JsonProperty("region") String region,
+      @JsonProperty("resourceLineage") List<ResourceLineageEntry> resourceLineage) {
 
     super(
         workspaceId,
@@ -66,7 +69,8 @@ public class ControlledAzureNetworkResource extends ControlledResource {
         accessScope,
         managedBy,
         applicationId,
-        privateResourceState);
+        privateResourceState,
+        resourceLineage);
     this.networkName = networkName;
     this.subnetName = subnetName;
     this.addressSpaceCidr = addressSpaceCidr;

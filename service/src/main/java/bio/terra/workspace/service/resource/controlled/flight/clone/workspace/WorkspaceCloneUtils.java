@@ -3,6 +3,7 @@ package bio.terra.workspace.service.resource.controlled.flight.clone.workspace;
 import bio.terra.common.exception.BadRequestException;
 import bio.terra.stairway.FlightStatus;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
+import bio.terra.workspace.service.resource.model.ResourceLineageEntry;
 import bio.terra.workspace.service.resource.model.WsmResource;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.resource.referenced.cloud.any.gitrepo.ReferencedGitRepoResource;
@@ -13,6 +14,8 @@ import bio.terra.workspace.service.resource.referenced.cloud.gcp.datareposnapsho
 import bio.terra.workspace.service.resource.referenced.cloud.gcp.gcsbucket.ReferencedGcsBucketResource;
 import bio.terra.workspace.service.resource.referenced.cloud.gcp.gcsobject.ReferencedGcsObjectResource;
 import bio.terra.workspace.service.workspace.model.WsmCloneResourceResult;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import javax.annotation.Nullable;
@@ -50,6 +53,8 @@ public class WorkspaceCloneUtils {
       UUID destinationResourceId,
       String name,
       String description) {
+    // ReferenceResource doesn't have Builder, only leaf resources like ReferencedGcsBucketResource
+    // have Builder. So each resource type must be built separately.
     final ReferencedResource destinationResource;
     switch (sourceReferencedResource.getResourceType()) {
       case REFERENCED_GCP_GCS_BUCKET:
@@ -136,13 +141,21 @@ public class WorkspaceCloneUtils {
       @Nullable String name,
       @Nullable String description) {
 
+    List<ResourceLineageEntry> destinationResourceLineage =
+        createDestinationResourceLineage(
+            sourceBucketResource.getResourceLineage(),
+            sourceBucketResource.getWorkspaceId(),
+            sourceBucketResource.getResourceId());
     final ReferencedGcsBucketResource.Builder resultBuilder =
         sourceBucketResource.toBuilder()
             .workspaceId(destinationWorkspaceId)
-            .resourceId(destinationResourceId);
+            .resourceId(destinationResourceId)
+            .resourceLineage(destinationResourceLineage);
+
     // apply optional override variables
     Optional.ofNullable(name).ifPresent(resultBuilder::name);
     Optional.ofNullable(description).ifPresent(resultBuilder::description);
+
     return resultBuilder.build();
   }
 
@@ -152,10 +165,17 @@ public class WorkspaceCloneUtils {
       UUID destinationResourceId,
       @Nullable String name,
       @Nullable String description) {
+    List<ResourceLineageEntry> destinationResourceLineage =
+        createDestinationResourceLineage(
+            sourceBucketFileResource.getResourceLineage(),
+            sourceBucketFileResource.getWorkspaceId(),
+            sourceBucketFileResource.getResourceId());
     final ReferencedGcsObjectResource.Builder resultBuilder =
         sourceBucketFileResource.toBuilder()
             .workspaceId(destinationWorkspaceId)
-            .resourceId(destinationResourceId);
+            .resourceId(destinationResourceId)
+            .resourceLineage(destinationResourceLineage);
+
     // apply optional override variables
     Optional.ofNullable(name).ifPresent(resultBuilder::name);
     Optional.ofNullable(description).ifPresent(resultBuilder::description);
@@ -169,10 +189,17 @@ public class WorkspaceCloneUtils {
       @Nullable String name,
       @Nullable String description) {
     // keep projectId and dataset name the same since they are for the referent
+    List<ResourceLineageEntry> destinationResourceLineage =
+        createDestinationResourceLineage(
+            sourceBigQueryResource.getResourceLineage(),
+            sourceBigQueryResource.getWorkspaceId(),
+            sourceBigQueryResource.getResourceId());
     final ReferencedBigQueryDatasetResource.Builder resultBuilder =
         sourceBigQueryResource.toBuilder()
             .workspaceId(destinationWorkspaceId)
-            .resourceId(destinationResourceId);
+            .resourceId(destinationResourceId)
+            .resourceLineage(destinationResourceLineage);
+
     Optional.ofNullable(name).ifPresent(resultBuilder::name);
     Optional.ofNullable(description).ifPresent(resultBuilder::description);
     return resultBuilder.build();
@@ -185,10 +212,17 @@ public class WorkspaceCloneUtils {
       @Nullable String name,
       @Nullable String description) {
     // keep projectId, dataset name and data table name the same since they are for the referent
+    List<ResourceLineageEntry> destinationResourceLineage =
+        createDestinationResourceLineage(
+            sourceBigQueryResource.getResourceLineage(),
+            sourceBigQueryResource.getWorkspaceId(),
+            sourceBigQueryResource.getResourceId());
     final ReferencedBigQueryDataTableResource.Builder resultBuilder =
         sourceBigQueryResource.toBuilder()
             .workspaceId(destinationWorkspaceId)
-            .resourceId(destinationResourceId);
+            .resourceId(destinationResourceId)
+            .resourceLineage(destinationResourceLineage);
+
     Optional.ofNullable(name).ifPresent(resultBuilder::name);
     Optional.ofNullable(description).ifPresent(resultBuilder::description);
     return resultBuilder.build();
@@ -200,10 +234,17 @@ public class WorkspaceCloneUtils {
       UUID destinationResourceId,
       @Nullable String name,
       @Nullable String description) {
+    List<ResourceLineageEntry> destinationResourceLineage =
+        createDestinationResourceLineage(
+            sourceReferencedDataRepoSnapshotResource.getResourceLineage(),
+            sourceReferencedDataRepoSnapshotResource.getWorkspaceId(),
+            sourceReferencedDataRepoSnapshotResource.getResourceId());
     final ReferencedDataRepoSnapshotResource.Builder resultBuilder =
         sourceReferencedDataRepoSnapshotResource.toBuilder()
             .workspaceId(destinationWorkspaceId)
-            .resourceId(destinationResourceId);
+            .resourceId(destinationResourceId)
+            .resourceLineage(destinationResourceLineage);
+
     Optional.ofNullable(name).ifPresent(resultBuilder::name);
     Optional.ofNullable(description).ifPresent(resultBuilder::description);
     return resultBuilder.build();
@@ -215,12 +256,30 @@ public class WorkspaceCloneUtils {
       UUID destinationResourceId,
       @Nullable String name,
       @Nullable String description) {
+    List<ResourceLineageEntry> destinationResourceLineage =
+        createDestinationResourceLineage(
+            gitHubRepoResource.getResourceLineage(),
+            gitHubRepoResource.getWorkspaceId(),
+            gitHubRepoResource.getResourceId());
     ReferencedGitRepoResource.Builder resultBuilder =
         gitHubRepoResource.toBuilder()
             .workspaceId(destinationWorkspaceId)
-            .resourceId(destinationResourceId);
+            .resourceId(destinationResourceId)
+            .resourceLineage(destinationResourceLineage);
+
     Optional.ofNullable(name).ifPresent(resultBuilder::name);
     Optional.ofNullable(description).ifPresent(resultBuilder::description);
     return resultBuilder.build();
+  }
+
+  private static List<ResourceLineageEntry> createDestinationResourceLineage(
+      List<ResourceLineageEntry> sourceResourceLineage,
+      UUID sourceWorkspaceId,
+      UUID sourceResourceId) {
+    // First, if source has resource lineage, copy it over
+    List<ResourceLineageEntry> destinationResourceLineage =
+        sourceResourceLineage != null ? sourceResourceLineage : new ArrayList<>();
+    destinationResourceLineage.add(new ResourceLineageEntry(sourceWorkspaceId, sourceResourceId));
+    return destinationResourceLineage;
   }
 }

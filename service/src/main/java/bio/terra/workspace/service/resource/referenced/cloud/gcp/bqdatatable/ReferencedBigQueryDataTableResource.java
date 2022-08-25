@@ -15,12 +15,14 @@ import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.petserviceaccount.PetSaService;
 import bio.terra.workspace.service.resource.ResourceValidationUtils;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
+import bio.terra.workspace.service.resource.model.ResourceLineageEntry;
 import bio.terra.workspace.service.resource.model.WsmResourceFamily;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.resource.referenced.cloud.gcp.ReferencedResource;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Strings;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import javax.annotation.Nullable;
@@ -34,7 +36,7 @@ public class ReferencedBigQueryDataTableResource extends ReferencedResource {
   /**
    * Constructor for serialized form for Stairway use
    *
-   * @param workspaceUuid workspace unique identifier
+   * @param workspaceId workspace unique identifier
    * @param resourceId resource unique identifier
    * @param name name resource name; unique within a workspace
    * @param description description - may be null
@@ -42,6 +44,7 @@ public class ReferencedBigQueryDataTableResource extends ReferencedResource {
    * @param projectId google project id
    * @param datasetId BigQuery dataset name
    * @param dataTableId BigQuery dataset's data table name
+   * @param resourceLineage resource lineage
    */
   @JsonCreator
   public ReferencedBigQueryDataTableResource(
@@ -52,8 +55,9 @@ public class ReferencedBigQueryDataTableResource extends ReferencedResource {
       @JsonProperty("cloningInstructions") CloningInstructions cloningInstructions,
       @JsonProperty("projectId") String projectId,
       @JsonProperty("datasetId") String datasetId,
-      @JsonProperty("dataTableId") String dataTableId) {
-    super(workspaceId, resourceId, name, description, cloningInstructions);
+      @JsonProperty("dataTableId") String dataTableId,
+      @JsonProperty("resourceLineage") List<ResourceLineageEntry> resourceLineage) {
+    super(workspaceId, resourceId, name, description, cloningInstructions, resourceLineage);
     this.projectId = projectId;
     this.datasetId = datasetId;
     this.dataTableId = dataTableId;
@@ -183,7 +187,8 @@ public class ReferencedBigQueryDataTableResource extends ReferencedResource {
         .name(getName())
         .projectId(getProjectId())
         .resourceId(getResourceId())
-        .workspaceId(getWorkspaceId());
+        .workspaceId(getWorkspaceId())
+        .resourceLineage(getResourceLineage());
   }
 
   public static class Builder {
@@ -196,6 +201,7 @@ public class ReferencedBigQueryDataTableResource extends ReferencedResource {
     private String projectId;
     private String datasetId;
     private String dataTableId;
+    private List<ResourceLineageEntry> resourceLineage;
 
     public ReferencedBigQueryDataTableResource.Builder workspaceId(UUID workspaceId) {
       this.workspaceId = workspaceId;
@@ -238,6 +244,11 @@ public class ReferencedBigQueryDataTableResource extends ReferencedResource {
       return this;
     }
 
+    public Builder resourceLineage(List<ResourceLineageEntry> resourceLineage) {
+      this.resourceLineage = resourceLineage;
+      return this;
+    }
+
     public ReferencedBigQueryDataTableResource build() {
       // On the create path, we can omit the resourceId and have it filled in by the builder.
       return new ReferencedBigQueryDataTableResource(
@@ -248,7 +259,8 @@ public class ReferencedBigQueryDataTableResource extends ReferencedResource {
           cloningInstructions,
           projectId,
           datasetId,
-          dataTableId);
+          dataTableId,
+          resourceLineage);
     }
   }
 }

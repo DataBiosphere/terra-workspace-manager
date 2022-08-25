@@ -1,0 +1,20 @@
+{
+  "name": "ResourceLineage",
+  "description": "Resource lineage test",
+  "serverSpecificationFile": "workspace-local.json",
+  "kubernetes": {},
+  "application": {},
+  "testScripts": [
+    {
+      "name": "ResourceLineage",
+      "numberOfUserJourneyThreadsToRun": 1,
+      "userJourneyThreadPoolSize": 1,
+      "expectedTimeForEach": 15,
+      "expectedTimeForEachUnit": "MINUTES",
+      "parametersMap": {
+        "spend-profile-id": "wm-default-spend-profile"
+      }
+    }
+  ],
+  "testUserFiles": ["bella.json"]
+}

@@ -14,12 +14,14 @@ import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.iam.model.SamConstants;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
+import bio.terra.workspace.service.resource.model.ResourceLineageEntry;
 import bio.terra.workspace.service.resource.model.WsmResourceFamily;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.resource.referenced.cloud.gcp.ReferencedResource;
 import bio.terra.workspace.service.resource.referenced.exception.InvalidReferenceException;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -35,6 +37,7 @@ public class ReferencedTerraWorkspaceResource extends ReferencedResource {
    * @param description description - may be null
    * @param cloningInstructions cloning instructions
    * @param referencedWorkspaceId workspace uuid that this referenced resource points to
+   * @param resourceLineage resource lineage
    */
   @JsonCreator
   public ReferencedTerraWorkspaceResource(
@@ -43,8 +46,9 @@ public class ReferencedTerraWorkspaceResource extends ReferencedResource {
       @JsonProperty("name") String name,
       @JsonProperty("description") String description,
       @JsonProperty("cloningInstructions") CloningInstructions cloningInstructions,
-      @JsonProperty("referencedWorkspaceId") UUID referencedWorkspaceId) {
-    super(workspaceId, resourceId, name, description, cloningInstructions);
+      @JsonProperty("referencedWorkspaceId") UUID referencedWorkspaceId,
+      @JsonProperty("resourceLineage") List<ResourceLineageEntry> resourceLineage) {
+    super(workspaceId, resourceId, name, description, cloningInstructions, resourceLineage);
     this.referencedWorkspaceId = referencedWorkspaceId;
     validate();
   }
@@ -157,7 +161,8 @@ public class ReferencedTerraWorkspaceResource extends ReferencedResource {
         .name(getName())
         .referencedWorkspaceId(getReferencedWorkspaceId())
         .resourceId(getResourceId())
-        .workspaceId(getWorkspaceId());
+        .workspaceId(getWorkspaceId())
+        .resourceLineage(getResourceLineage());
   }
 
   public static class Builder {
@@ -167,6 +172,7 @@ public class ReferencedTerraWorkspaceResource extends ReferencedResource {
     private String description;
     private CloningInstructions cloningInstructions;
     private UUID referencedWorkspaceId;
+    private List<ResourceLineageEntry> resourceLineage;
 
     public Builder workspaceId(UUID workspaceUuid) {
       this.workspaceId = workspaceUuid;
@@ -198,6 +204,11 @@ public class ReferencedTerraWorkspaceResource extends ReferencedResource {
       return this;
     }
 
+    public Builder resourceLineage(List<ResourceLineageEntry> resourceLineage) {
+      this.resourceLineage = resourceLineage;
+      return this;
+    }
+
     public ReferencedTerraWorkspaceResource build() {
       // On the create path, we can omit the resourceId and have it filled in by the builder.
       return new ReferencedTerraWorkspaceResource(
@@ -206,7 +217,8 @@ public class ReferencedTerraWorkspaceResource extends ReferencedResource {
           name,
           description,
           cloningInstructions,
-          referencedWorkspaceId);
+          referencedWorkspaceId,
+          resourceLineage);
     }
   }
 }
