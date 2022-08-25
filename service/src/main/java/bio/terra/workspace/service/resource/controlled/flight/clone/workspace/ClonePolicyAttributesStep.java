@@ -70,6 +70,7 @@ public class ClonePolicyAttributesStep implements Step {
             .getInputParameters()
             .get(JobMapKeys.AUTH_USER_INFO.getKeyName(), AuthenticatedUserRequest.class);
 
+    // Delete PAO doesn't throw on repeated invocations or if the object is missing.
     tpsApiDispatch.deletePao(
         new BearerToken(userRequest.getRequiredToken()), destinationWorkspace.getWorkspaceId());
     return StepResult.getStepResultSuccess();
