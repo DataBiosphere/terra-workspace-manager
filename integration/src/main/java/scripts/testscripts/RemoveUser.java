@@ -10,7 +10,6 @@ import static scripts.utils.GcsBucketUtils.makeControlledGcsBucketUserPrivate;
 import static scripts.utils.GcsBucketUtils.makeControlledGcsBucketUserShared;
 
 import bio.terra.common.sam.SamRetry;
-import bio.terra.common.sam.exception.SamExceptionFactory;
 import bio.terra.testrunner.runner.config.TestUserSpecification;
 import bio.terra.workspace.api.ControlledGcpResourceApi;
 import bio.terra.workspace.api.WorkspaceApi;
@@ -27,7 +26,6 @@ import java.security.GeneralSecurityException;
 import java.util.List;
 import java.util.UUID;
 import org.apache.commons.lang3.RandomStringUtils;
-import org.broadinstitute.dsde.workbench.client.sam.ApiException;
 import org.broadinstitute.dsde.workbench.client.sam.api.GroupApi;
 import scripts.utils.*;
 
@@ -139,7 +137,7 @@ public class RemoveUser extends WorkspaceAllocateTestScriptBase {
     try {
       ownerWorkspaceApi.removeRole(getWorkspaceId(), IamRole.READER, groupEmail);
     } finally {
-      deleteGroup(groupName, samGroupApi);
+      SamRetry.retry(() -> samGroupApi.deleteGroup(groupName));
     }
 
     // Remove WRITER role from sharedResourceUser. This is their only role, so they are no longer
@@ -238,14 +236,6 @@ public class RemoveUser extends WorkspaceAllocateTestScriptBase {
       }
     } catch (GeneralSecurityException | IOException e) {
       throw new RuntimeException("Error checking notebook access", e);
-    }
-  }
-
-  private static void deleteGroup(String groupName, GroupApi groupApi) {
-    try {
-      groupApi.deleteGroup(groupName);
-    } catch (ApiException e) {
-      throw SamExceptionFactory.create("Error deleting group in Sam", e);
     }
   }
 }
