@@ -100,6 +100,27 @@ public class AzureLandingZoneApiControllerTest extends BaseConnectedTest {
   }
 
   @Test
+  public void createAzureLandingZoneValidationFailed() throws Exception {
+    LandingZoneJobService.AsyncJobResult<DeployedLandingZone> asyncJobResult =
+        AzureLandingZoneFixtures.createJobResultWithSucceededState(JOB_ID, "lzId");
+
+    when(landingZoneService.startLandingZoneCreationJob(any(), any(), any())).thenReturn(JOB_ID);
+    when(landingZoneService.getAsyncJobResult(any())).thenReturn(asyncJobResult);
+    when(featureConfiguration.isAzureEnabled()).thenReturn(true);
+
+    var requestBody =
+        AzureLandingZoneFixtures.buildCreateAzureLandingZoneRequestWithoutDefinition(JOB_ID);
+
+    mockMvc
+        .perform(
+            post(CREATE_AZURE_LANDING_ZONE)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(requestBody))
+                .characterEncoding("utf-8"))
+        .andExpect(status().is(HttpStatus.SC_BAD_REQUEST));
+  }
+
+  @Test
   public void getCreateAzureLandingZoneResultJobRunning() throws Exception {
     LandingZoneJobService.AsyncJobResult<DeployedLandingZone> asyncJobResult =
         AzureLandingZoneFixtures.createJobResultWithRunningState(JOB_ID);

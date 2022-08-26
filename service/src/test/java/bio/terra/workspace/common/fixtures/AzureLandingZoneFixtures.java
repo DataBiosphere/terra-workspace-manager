@@ -60,4 +60,16 @@ public class AzureLandingZoneFixtures {
         .definition("azureLandingZoneDefinition")
         .version("v1");
   }
+
+  public static ApiCreateAzureLandingZoneRequestBody
+      buildCreateAzureLandingZoneRequestWithoutDefinition(String jobId) {
+    return new ApiCreateAzureLandingZoneRequestBody()
+        .azureContext(
+            new ApiAzureContext()
+                .resourceGroupId("resourceGroup")
+                .subscriptionId("subscriptionId")
+                .tenantId("tenantId"))
+        .jobControl(new ApiJobControl().id(jobId))
+        .version("v1");
+  }
 }
