@@ -24,6 +24,7 @@ import bio.terra.workspace.service.resource.model.WsmResourceFamily;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import java.util.Locale;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -138,6 +139,12 @@ public class ControlledAzureStorageResource extends ControlledResource {
     return new ApiAzureStorageResource()
         .metadata(super.toApiMetadata())
         .attributes(toApiAttributes());
+  }
+
+  public String getStorageAccountEndpoint() {
+    String endpoint =
+        String.format(Locale.ROOT, "https://%s.blob.core.windows.net", storageAccountName);
+    return endpoint;
   }
 
   @Override
