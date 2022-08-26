@@ -1,12 +1,5 @@
 package bio.terra.workspace.service.resource.controlled.cloud.azure;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
 import bio.terra.common.exception.ForbiddenException;
 import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
 import bio.terra.workspace.common.BaseUnitTest;
@@ -22,6 +15,9 @@ import bio.terra.workspace.service.resource.controlled.model.PrivateResourceStat
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import com.azure.storage.blob.sas.BlobContainerSasPermission;
 import com.azure.storage.common.StorageSharedKeyCredential;
+import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentMatchers;
+
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
@@ -29,8 +25,14 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.regex.Pattern;
-import org.junit.jupiter.api.Test;
-import org.mockito.ArgumentMatchers;
+
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 public class AzureStorageAccessServiceUnitTest extends BaseUnitTest {
 
@@ -120,6 +122,7 @@ public class AzureStorageAccessServiceUnitTest extends BaseUnitTest {
         .thenReturn(List.of(SamConstants.SamControlledResourceActions.READ_ACTION));
     AzureStorageAccessService az =
         new AzureStorageAccessService(mockSam, keyProvider, featureConfig);
+    var ipRange = "168.1.5.60-168.1.5.70";
 
     var result =
         az.createAzureStorageContainerSasToken(
@@ -129,9 +132,12 @@ public class AzureStorageAccessServiceUnitTest extends BaseUnitTest {
             startTime,
             expiryTime,
             userRequest,
-            "127.0.0.1");
+            ipRange);
 
     assertValidToken(result.sasToken(), BlobContainerSasPermission.parse("rl"));
+    assertTrue(
+        result.sasToken().contains("sip=" + ipRange),
+        "the SignedIP was added to the query parameters");
   }
 
   @Test
