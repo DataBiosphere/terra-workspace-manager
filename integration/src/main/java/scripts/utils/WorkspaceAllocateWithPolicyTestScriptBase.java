@@ -13,9 +13,9 @@ import bio.terra.workspace.model.TpsPolicyInputs;
 import bio.terra.workspace.model.TpsPolicyPair;
 import java.util.UUID;
 
-// TODO: This script only exists because environments above dev do not support policies being
-//   included on workspaces yet. Once these environments support TPS, this class should be deleted
-//   and its policy functionality should be merged into WorkspaceAllocateTestScriptBase.
+// TODO(PF-1948): This script only exists because environments above dev do not support policies
+//  being included on workspaces yet. Once these environments support TPS, this class should be
+//  deleted and its policy functionality should be merged into WorkspaceAllocateTestScriptBase.
 public abstract class WorkspaceAllocateWithPolicyTestScriptBase
     extends WorkspaceAllocateTestScriptBase {
 
