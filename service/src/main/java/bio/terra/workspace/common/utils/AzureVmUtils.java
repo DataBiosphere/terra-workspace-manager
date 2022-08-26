@@ -1,6 +1,5 @@
 package bio.terra.workspace.common.utils;
 
-import bio.terra.workspace.generated.model.ApiAzureLandingZoneParameter;
 import bio.terra.workspace.generated.model.ApiAzureVmCustomScriptExtensionSetting;
 import bio.terra.workspace.generated.model.ApiAzureVmCustomScriptExtensionTag;
 import bio.terra.workspace.generated.model.ApiAzureVmImage;
@@ -34,18 +33,6 @@ public class AzureVmUtils {
             Collectors.toMap(
                 ApiAzureVmCustomScriptExtensionTag::getKey,
                 ApiAzureVmCustomScriptExtensionTag::getValue,
-                (prev, next) -> prev,
-                HashMap::new));
-  }
-
-  public static HashMap<String, String> landingZoneFrom(
-      List<ApiAzureLandingZoneParameter> parametersList) {
-    return nullSafeListToStream(parametersList)
-        .flatMap(Stream::ofNullable)
-        .collect(
-            Collectors.toMap(
-                ApiAzureLandingZoneParameter::getKey,
-                ApiAzureLandingZoneParameter::getValue,
                 (prev, next) -> prev,
                 HashMap::new));
   }
