@@ -28,7 +28,10 @@ public class CloneGcpWorkspaceFlight extends Flight {
         RetryRules.cloud());
     addStep(new AwaitCreateGcpContextFlightStep(), RetryRules.cloudLongRunning());
 
-    addStep(new ClonePolicyAttributesStep(flightBeanBag.getTpsApiDispatch()), RetryRules.cloud());
+    addStep(
+        new ClonePolicyAttributesStep(
+            flightBeanBag.getTpsApiDispatch(), flightBeanBag.getFeatureConfiguration()),
+        RetryRules.cloud());
 
     addStep(new LaunchCloneAllResourcesFlightStep(), RetryRules.cloud());
     addStep(new AwaitCloneAllResourcesFlightStep(), RetryRules.cloudLongRunning());

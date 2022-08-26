@@ -7,6 +7,7 @@ import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.amalgam.tps.TpsApiDispatch;
+import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
 import bio.terra.workspace.common.utils.FlightUtils;
 import bio.terra.workspace.generated.model.ApiTpsPaoGetResult;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
@@ -18,13 +19,19 @@ import java.util.UUID;
 
 public class ClonePolicyAttributesStep implements Step {
   TpsApiDispatch tpsApiDispatch;
+  FeatureConfiguration features;
 
-  public ClonePolicyAttributesStep(TpsApiDispatch tpsApiDispatch) {
+  public ClonePolicyAttributesStep(TpsApiDispatch tpsApiDispatch, FeatureConfiguration features) {
     this.tpsApiDispatch = tpsApiDispatch;
+    this.features = features;
   }
 
   @Override
   public StepResult doStep(FlightContext context) throws InterruptedException, RetryException {
+    if (!features.isTpsEnabled()) {
+      return StepResult.getStepResultSuccess();
+    }
+
     final FlightMap inputParameters = context.getInputParameters();
     FlightUtils.validateRequiredEntries(
         inputParameters,
@@ -63,6 +70,10 @@ public class ClonePolicyAttributesStep implements Step {
 
   @Override
   public StepResult undoStep(FlightContext context) throws InterruptedException {
+    if (!features.isTpsEnabled()) {
+      return StepResult.getStepResultSuccess();
+    }
+
     final var destinationWorkspace =
         context.getInputParameters().get(JobMapKeys.REQUEST.getKeyName(), Workspace.class);
     final var userRequest =
