@@ -1,5 +1,13 @@
 package bio.terra.workspace.service.resource.controlled.cloud.azure;
 
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
 import bio.terra.common.exception.ForbiddenException;
 import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
 import bio.terra.workspace.common.BaseUnitTest;
@@ -15,9 +23,6 @@ import bio.terra.workspace.service.resource.controlled.model.PrivateResourceStat
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import com.azure.storage.blob.sas.BlobContainerSasPermission;
 import com.azure.storage.common.StorageSharedKeyCredential;
-import org.junit.jupiter.api.Test;
-import org.mockito.ArgumentMatchers;
-
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
@@ -25,19 +30,18 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.regex.Pattern;
-
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentMatchers;
+import org.springframework.boot.test.mock.mockito.MockBean;
 
 public class AzureStorageAccessServiceUnitTest extends BaseUnitTest {
 
   private final OffsetDateTime startTime = OffsetDateTime.now().minusMinutes(15);
   private final OffsetDateTime expiryTime = OffsetDateTime.now().plusMinutes(60);
+  private final AuthenticatedUserRequest userRequest =
+      new AuthenticatedUserRequest("foo@example.com", "sub", Optional.of("token"));
+  @MockBean private SamService samService;
+  @MockBean private FeatureConfiguration featureConfig;
 
   private ControlledAzureStorageResource buildStorageAccount() {
     return new ControlledAzureStorageResource(
@@ -101,28 +105,25 @@ public class AzureStorageAccessServiceUnitTest extends BaseUnitTest {
 
   @Test
   public void createAzureStorageContainerSasToken_readonly() throws InterruptedException {
-    var mockSam = mock(SamService.class);
-    var featureConfig = new FeatureConfiguration();
-    featureConfig.setAzureEnabled(true);
     var keyProvider = mock(StorageAccountKeyProvider.class);
     var cred = new StorageSharedKeyCredential("fake", "fake");
     when(keyProvider.getStorageAccountKey(any(), any())).thenReturn(cred);
+
     var storageAccountResource = buildStorageAccount();
     var storageContainerResource =
         buildStorageContainerResource(
             PrivateResourceState.NOT_APPLICABLE,
             AccessScopeType.ACCESS_SCOPE_SHARED,
             ManagedByType.MANAGED_BY_USER);
-    AuthenticatedUserRequest userRequest =
-        new AuthenticatedUserRequest("foo@example.com", "sub", Optional.of("token"));
-    when(mockSam.listResourceActions(
+
+    AzureStorageAccessService az =
+        new AzureStorageAccessService(samService, keyProvider, featureConfig);
+    var ipRange = "168.1.5.60-168.1.5.70";
+    when(samService.listResourceActions(
             ArgumentMatchers.eq(userRequest),
             ArgumentMatchers.eq(storageAccountResource.getCategory().getSamResourceName()),
             ArgumentMatchers.eq(storageContainerResource.getResourceId().toString())))
         .thenReturn(List.of(SamConstants.SamControlledResourceActions.READ_ACTION));
-    AzureStorageAccessService az =
-        new AzureStorageAccessService(mockSam, keyProvider, featureConfig);
-    var ipRange = "168.1.5.60-168.1.5.70";
 
     var result =
         az.createAzureStorageContainerSasToken(
@@ -142,21 +143,18 @@ public class AzureStorageAccessServiceUnitTest extends BaseUnitTest {
 
   @Test
   public void createAzureStorageContainerSasToken_readwrite() throws InterruptedException {
-    var mockSam = mock(SamService.class);
-    var featureConfig = new FeatureConfiguration();
-    featureConfig.setAzureEnabled(true);
     var keyProvider = mock(StorageAccountKeyProvider.class);
     var cred = new StorageSharedKeyCredential("fake", "fake");
     when(keyProvider.getStorageAccountKey(any(), any())).thenReturn(cred);
+
     var storageAccountResource = buildStorageAccount();
     var storageContainerResource =
         buildStorageContainerResource(
             PrivateResourceState.NOT_APPLICABLE,
             AccessScopeType.ACCESS_SCOPE_SHARED,
             ManagedByType.MANAGED_BY_USER);
-    AuthenticatedUserRequest userRequest =
-        new AuthenticatedUserRequest("foo@example.com", "sub", Optional.of("token"));
-    when(mockSam.listResourceActions(
+
+    when(samService.listResourceActions(
             ArgumentMatchers.eq(userRequest),
             ArgumentMatchers.eq(storageContainerResource.getCategory().getSamResourceName()),
             ArgumentMatchers.eq(storageContainerResource.getResourceId().toString())))
@@ -166,7 +164,7 @@ public class AzureStorageAccessServiceUnitTest extends BaseUnitTest {
                 SamConstants.SamControlledResourceActions.READ_ACTION));
 
     AzureStorageAccessService az =
-        new AzureStorageAccessService(mockSam, keyProvider, featureConfig);
+        new AzureStorageAccessService(samService, keyProvider, featureConfig);
 
     var result =
         az.createAzureStorageContainerSasToken(
@@ -179,7 +177,7 @@ public class AzureStorageAccessServiceUnitTest extends BaseUnitTest {
             null);
 
     assertValidToken(result.sasToken(), BlobContainerSasPermission.parse("racwdl"));
-    verify(mockSam)
+    verify(samService)
         .listResourceActions(
             ArgumentMatchers.eq(userRequest),
             ArgumentMatchers.eq(SamConstants.SamResource.CONTROLLED_USER_SHARED),
@@ -188,9 +186,6 @@ public class AzureStorageAccessServiceUnitTest extends BaseUnitTest {
 
   @Test
   public void createAzureStorageContainerSasToken_notAuthorized() throws InterruptedException {
-    var mockSam = mock(SamService.class);
-    var featureConfig = new FeatureConfiguration();
-    featureConfig.setAzureEnabled(true);
     var keyProvider = mock(StorageAccountKeyProvider.class);
     var storageAccountResource = buildStorageAccount();
     var storageContainerResource =
@@ -198,16 +193,14 @@ public class AzureStorageAccessServiceUnitTest extends BaseUnitTest {
             PrivateResourceState.NOT_APPLICABLE,
             AccessScopeType.ACCESS_SCOPE_SHARED,
             ManagedByType.MANAGED_BY_USER);
-    AuthenticatedUserRequest userRequest =
-        new AuthenticatedUserRequest("foo@example.com", "sub", Optional.of("token"));
-    when(mockSam.listResourceActions(
+    when(samService.listResourceActions(
             ArgumentMatchers.eq(userRequest),
             ArgumentMatchers.eq(storageContainerResource.getCategory().getSamResourceName()),
             ArgumentMatchers.eq(storageContainerResource.getResourceId().toString())))
         .thenReturn(List.of());
 
     AzureStorageAccessService az =
-        new AzureStorageAccessService(mockSam, keyProvider, featureConfig);
+        new AzureStorageAccessService(samService, keyProvider, featureConfig);
 
     assertThrows(
         ForbiddenException.class,
@@ -221,7 +214,7 @@ public class AzureStorageAccessServiceUnitTest extends BaseUnitTest {
                 userRequest,
                 null));
 
-    verify(mockSam)
+    verify(samService)
         .listResourceActions(
             ArgumentMatchers.eq(userRequest),
             ArgumentMatchers.eq(SamConstants.SamResource.CONTROLLED_USER_SHARED),
@@ -231,21 +224,17 @@ public class AzureStorageAccessServiceUnitTest extends BaseUnitTest {
   @Test
   public void createAzureStorageContainerSasToken_privateAccessContainer()
       throws InterruptedException {
-    var mockSam = mock(SamService.class);
-    var featureConfig = new FeatureConfiguration();
-    featureConfig.setAzureEnabled(true);
     var keyProvider = mock(StorageAccountKeyProvider.class);
     var cred = new StorageSharedKeyCredential("fake", "fake");
     when(keyProvider.getStorageAccountKey(any(), any())).thenReturn(cred);
+
     var storageAccountResource = buildStorageAccount();
     var storageContainerResource =
         buildStorageContainerResource(
             PrivateResourceState.ACTIVE,
             AccessScopeType.ACCESS_SCOPE_PRIVATE,
             ManagedByType.MANAGED_BY_APPLICATION);
-    AuthenticatedUserRequest userRequest =
-        new AuthenticatedUserRequest("foo@example.com", "sub", Optional.of("token"));
-    when(mockSam.listResourceActions(
+    when(samService.listResourceActions(
             ArgumentMatchers.eq(userRequest),
             ArgumentMatchers.eq(storageContainerResource.getCategory().getSamResourceName()),
             ArgumentMatchers.eq(storageContainerResource.getResourceId().toString())))
@@ -255,7 +244,7 @@ public class AzureStorageAccessServiceUnitTest extends BaseUnitTest {
                 SamConstants.SamControlledResourceActions.READ_ACTION));
 
     AzureStorageAccessService az =
-        new AzureStorageAccessService(mockSam, keyProvider, featureConfig);
+        new AzureStorageAccessService(samService, keyProvider, featureConfig);
 
     var result =
         az.createAzureStorageContainerSasToken(
@@ -269,7 +258,7 @@ public class AzureStorageAccessServiceUnitTest extends BaseUnitTest {
 
     assertValidToken(result.sasToken(), BlobContainerSasPermission.parse("racwdl"));
 
-    verify(mockSam)
+    verify(samService)
         .listResourceActions(
             ArgumentMatchers.eq(userRequest),
             ArgumentMatchers.eq(SamConstants.SamResource.CONTROLLED_APPLICATION_PRIVATE),
