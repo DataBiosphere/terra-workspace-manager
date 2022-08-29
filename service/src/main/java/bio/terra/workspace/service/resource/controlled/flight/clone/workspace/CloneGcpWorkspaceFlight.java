@@ -29,5 +29,8 @@ public class CloneGcpWorkspaceFlight extends Flight {
 
     addStep(new LaunchCloneAllResourcesFlightStep(), RetryRules.cloud());
     addStep(new AwaitCloneAllResourcesFlightStep(), RetryRules.cloudLongRunning());
+
+    addStep(new FindEnabledApplicationStep(flightBeanBag.getApplicationDao()), RetryRules.cloud());
+    addStep(new LaunchEnableApplicationFlightStep(), RetryRules.cloud());
   }
 }

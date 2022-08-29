@@ -4,10 +4,7 @@ import static bio.terra.workspace.common.utils.MockMvcUtils.*;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hibernate.validator.internal.util.Contracts.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doReturn;
@@ -81,8 +78,7 @@ import bio.terra.workspace.service.workspace.flight.CheckSamWorkspaceAuthzStep;
 import bio.terra.workspace.service.workspace.flight.CreateWorkspaceAuthzStep;
 import bio.terra.workspace.service.workspace.flight.CreateWorkspacePoliciesStep;
 import bio.terra.workspace.service.workspace.flight.CreateWorkspaceStep;
-import bio.terra.workspace.service.workspace.model.Workspace;
-import bio.terra.workspace.service.workspace.model.WorkspaceStage;
+import bio.terra.workspace.service.workspace.model.*;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.api.services.cloudresourcemanager.v3.model.Project;
 import com.google.common.collect.ImmutableList;
@@ -146,6 +142,7 @@ class WorkspaceServiceTest extends BaseConnectedTest {
   @Autowired private WorkspaceService workspaceService;
   @Autowired private ObjectMapper objectMapper;
   @Autowired private WorkspaceActivityLogDao workspaceActivityLogDao;
+  @Autowired private WsmApplicationService appService;
 
   @BeforeEach
   void setup() throws Exception {
@@ -822,6 +819,15 @@ class WorkspaceServiceTest extends BaseConnectedTest {
         controlledResourceService.createControlledResourceSync(
             bucketResource, ControlledResourceIamRole.OWNER, USER_REQUEST, creationParameters);
 
+    // Create 2 applications and enable one application.
+    new WsmApplication()
+        .applicationId("leo")
+        .displayName("Leo")
+        .description("application execution framework")
+        .serviceAccount("leo@terra-dev.iam.gserviceaccount.com")
+        .state(WsmApplicationState.OPERATING);
+    appService.enableWorkspaceApplication(USER_REQUEST, sourceWorkspace, "leo");
+
     final ControlledGcsBucketResource createdBucketResource =
         createdResource.castByEnum(WsmResourceType.CONTROLLED_GCP_GCS_BUCKET);
     final Workspace destinationWorkspace =
@@ -863,6 +869,9 @@ class WorkspaceServiceTest extends BaseConnectedTest {
         gcpCloudContextService
             .getGcpCloudContext(destinationWorkspace.getWorkspaceId())
             .orElseThrow());
+
+    // Destination workspace should have an enabled application
+    assertTrue(appService.getWorkspaceApplication(destinationWorkspace, "leo").isEnabled());
 
     // clean up
     workspaceService.deleteWorkspace(sourceWorkspace, USER_REQUEST);
