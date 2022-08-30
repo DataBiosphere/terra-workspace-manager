@@ -5,8 +5,10 @@ import bio.terra.workspace.db.exception.InvalidMetadataException;
 import bio.terra.workspace.db.model.DbResource;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
+import bio.terra.workspace.service.resource.model.ResourceLineageEntry;
 import bio.terra.workspace.service.resource.model.StewardshipType;
 import bio.terra.workspace.service.resource.model.WsmResource;
+import java.util.List;
 import java.util.UUID;
 import javax.annotation.Nullable;
 
@@ -16,8 +18,9 @@ public abstract class ReferencedResource extends WsmResource {
       UUID resourceId,
       String name,
       @Nullable String description,
-      CloningInstructions cloningInstructions) {
-    super(workspaceUuid, resourceId, name, description, cloningInstructions);
+      CloningInstructions cloningInstructions,
+      @Nullable List<ResourceLineageEntry> resourceLineage) {
+    super(workspaceUuid, resourceId, name, description, cloningInstructions, resourceLineage);
   }
 
   public ReferencedResource(DbResource dbResource) {

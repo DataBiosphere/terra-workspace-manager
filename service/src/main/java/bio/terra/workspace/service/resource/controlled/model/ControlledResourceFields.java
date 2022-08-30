@@ -4,6 +4,8 @@ import bio.terra.workspace.db.model.DbResource;
 import bio.terra.workspace.service.iam.model.ControlledResourceIamRole;
 import bio.terra.workspace.service.resource.ResourceValidationUtils;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
+import bio.terra.workspace.service.resource.model.ResourceLineageEntry;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import javax.annotation.Nullable;
@@ -34,6 +36,7 @@ public class ControlledResourceFields {
   private final AccessScopeType accessScope;
   private final ManagedByType managedBy;
   @Nullable private final String applicationId;
+  @Nullable private final List<ResourceLineageEntry> resourceLineage;
 
   /** construct from database resource */
   public ControlledResourceFields(DbResource dbResource) {
@@ -49,6 +52,7 @@ public class ControlledResourceFields {
     accessScope = dbResource.getAccessScope();
     managedBy = dbResource.getManagedBy();
     applicationId = dbResource.getApplicationId().orElse(null);
+    resourceLineage = dbResource.getResourceLineage().orElse(null);
   }
 
   // constructor for the builder
@@ -63,7 +67,8 @@ public class ControlledResourceFields {
       @Nullable PrivateResourceState privateResourceState,
       AccessScopeType accessScope,
       ManagedByType managedBy,
-      @Nullable String applicationId) {
+      @Nullable String applicationId,
+      @Nullable List<ResourceLineageEntry> resourceLineage) {
     this.workspaceUuid = workspaceUuid;
     this.resourceId = resourceId;
     this.name = name;
@@ -75,6 +80,7 @@ public class ControlledResourceFields {
     this.accessScope = accessScope;
     this.managedBy = managedBy;
     this.applicationId = applicationId;
+    this.resourceLineage = resourceLineage;
   }
 
   public static Builder builder() {
@@ -135,6 +141,11 @@ public class ControlledResourceFields {
     return applicationId;
   }
 
+  @Nullable
+  public List<ResourceLineageEntry> getResourceLineage() {
+    return resourceLineage;
+  }
+
   public static class Builder {
     private UUID workspaceUuid;
     private UUID resourceId;
@@ -150,6 +161,7 @@ public class ControlledResourceFields {
     private AccessScopeType accessScope;
     private ManagedByType managedBy;
     @Nullable private String applicationId;
+    @Nullable private List<ResourceLineageEntry> resourceLineage;
 
     public ControlledResourceFields build() {
       ResourceValidationUtils.checkFieldNonNull(workspaceUuid, "workspaceId");
@@ -170,7 +182,8 @@ public class ControlledResourceFields {
           privateResourceState,
           accessScope,
           managedBy,
-          applicationId);
+          applicationId,
+          resourceLineage);
     }
 
     public Builder workspaceUuid(UUID workspaceUuid) {
@@ -229,6 +242,11 @@ public class ControlledResourceFields {
 
     public Builder applicationId(@Nullable String applicationId) {
       this.applicationId = applicationId;
+      return this;
+    }
+
+    public Builder resourceLineage(@Nullable List<ResourceLineageEntry> resourceLineage) {
+      this.resourceLineage = resourceLineage;
       return this;
     }
   }

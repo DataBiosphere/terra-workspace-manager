@@ -68,7 +68,8 @@ public class AzureStorageAccessServiceUnitTest extends BaseUnitTest {
         ManagedByType.MANAGED_BY_USER,
         null,
         "fake",
-        "us-east1");
+        "us-east1",
+        /*resourceLineage=*/ null);
   }
 
   private ControlledAzureStorageContainerResource buildStorageContainerResource(
@@ -87,7 +88,8 @@ public class AzureStorageAccessServiceUnitTest extends BaseUnitTest {
         managedByType,
         null,
         UUID.randomUUID(),
-        "fake");
+        "fake",
+        /*resourceLineage=*/ null);
   }
 
   private void assertValidToken(String sas, BlobContainerSasPermission expectedPermissions) {

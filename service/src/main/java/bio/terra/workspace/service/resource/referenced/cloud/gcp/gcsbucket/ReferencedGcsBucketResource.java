@@ -15,12 +15,14 @@ import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.petserviceaccount.PetSaService;
 import bio.terra.workspace.service.resource.ResourceValidationUtils;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
+import bio.terra.workspace.service.resource.model.ResourceLineageEntry;
 import bio.terra.workspace.service.resource.model.WsmResourceFamily;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.resource.referenced.cloud.gcp.ReferencedResource;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Strings;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -36,6 +38,7 @@ public class ReferencedGcsBucketResource extends ReferencedResource {
    * @param description description - may be null
    * @param cloningInstructions cloning instructions
    * @param bucketName bucket name
+   * @param resourceLineage resource lineage
    */
   @JsonCreator
   public ReferencedGcsBucketResource(
@@ -44,8 +47,9 @@ public class ReferencedGcsBucketResource extends ReferencedResource {
       @JsonProperty("name") String name,
       @JsonProperty("description") String description,
       @JsonProperty("cloningInstructions") CloningInstructions cloningInstructions,
-      @JsonProperty("bucketName") String bucketName) {
-    super(workspaceId, resourceId, name, description, cloningInstructions);
+      @JsonProperty("bucketName") String bucketName,
+      @JsonProperty("resourceLineage") List<ResourceLineageEntry> resourceLineage) {
+    super(workspaceId, resourceId, name, description, cloningInstructions, resourceLineage);
     this.bucketName = bucketName;
     validate();
   }
@@ -151,7 +155,8 @@ public class ReferencedGcsBucketResource extends ReferencedResource {
         .description(getDescription())
         .name(getName())
         .resourceId(getResourceId())
-        .workspaceId(getWorkspaceId());
+        .workspaceId(getWorkspaceId())
+        .resourceLineage(getResourceLineage());
   }
 
   public static Builder builder() {
@@ -165,6 +170,7 @@ public class ReferencedGcsBucketResource extends ReferencedResource {
     private String name;
     private UUID resourceId;
     private UUID workspaceId;
+    private List<ResourceLineageEntry> resourceLineage;
 
     public Builder workspaceId(UUID workspaceId) {
       this.workspaceId = workspaceId;
@@ -196,6 +202,11 @@ public class ReferencedGcsBucketResource extends ReferencedResource {
       return this;
     }
 
+    public Builder resourceLineage(List<ResourceLineageEntry> resourceLineage) {
+      this.resourceLineage = resourceLineage;
+      return this;
+    }
+
     public ReferencedGcsBucketResource build() {
       // On the create path, we can omit the resourceId and have it filled in by the builder.
       return new ReferencedGcsBucketResource(
@@ -204,7 +215,8 @@ public class ReferencedGcsBucketResource extends ReferencedResource {
           name,
           description,
           cloningInstructions,
-          bucketName);
+          bucketName,
+          resourceLineage);
     }
   }
 }

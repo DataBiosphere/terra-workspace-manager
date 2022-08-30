@@ -27,11 +27,13 @@ import bio.terra.workspace.service.resource.controlled.model.ControlledResourceF
 import bio.terra.workspace.service.resource.controlled.model.ManagedByType;
 import bio.terra.workspace.service.resource.controlled.model.PrivateResourceState;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
+import bio.terra.workspace.service.resource.model.ResourceLineageEntry;
 import bio.terra.workspace.service.resource.model.StewardshipType;
 import bio.terra.workspace.service.resource.model.WsmResourceFamily;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
@@ -74,7 +76,8 @@ public class ControlledAiNotebookInstanceResource extends ControlledResource {
       @JsonProperty("application") String applicationId,
       @JsonProperty("instanceId") String instanceId,
       @JsonProperty("location") String location,
-      @JsonProperty("projectId") String projectId) {
+      @JsonProperty("projectId") String projectId,
+      @JsonProperty("resourceLineage") List<ResourceLineageEntry> resourceLineage) {
     super(
         workspaceId,
         resourceId,
@@ -85,7 +88,8 @@ public class ControlledAiNotebookInstanceResource extends ControlledResource {
         accessScope,
         managedBy,
         applicationId,
-        privateResourceState);
+        privateResourceState,
+        resourceLineage);
     this.instanceId = instanceId;
     this.location = location;
     this.projectId = projectId;

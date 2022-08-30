@@ -18,6 +18,7 @@ import bio.terra.workspace.service.resource.controlled.model.PrivateResourceStat
 import bio.terra.workspace.service.resource.exception.DuplicateResourceException;
 import bio.terra.workspace.service.resource.exception.ResourceNotFoundException;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
+import bio.terra.workspace.service.resource.model.ResourceLineageEntry;
 import bio.terra.workspace.service.resource.model.StewardshipType;
 import bio.terra.workspace.service.resource.model.WsmResource;
 import bio.terra.workspace.service.resource.model.WsmResourceFamily;
@@ -26,6 +27,7 @@ import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.resource.referenced.cloud.gcp.ReferencedResource;
 import bio.terra.workspace.service.workspace.exceptions.CloudContextRequiredException;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
+import com.fasterxml.jackson.core.type.TypeReference;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -51,10 +53,13 @@ public class ResourceDao {
 
   /** SQL query for reading all columns from the resource table */
   private static final String RESOURCE_SELECT_SQL =
-      "SELECT workspace_id, cloud_platform, resource_id, name, description, "
-          + "stewardship_type, resource_type, exact_resource_type, cloning_instructions, attributes,"
-          + " access_scope, managed_by, associated_app, assigned_user, private_resource_state"
-          + " FROM resource WHERE workspace_id = :workspace_id ";
+      """
+      SELECT workspace_id, cloud_platform, resource_id, name, description, stewardship_type,
+        resource_type, exact_resource_type, cloning_instructions, attributes,
+        access_scope, managed_by, associated_app, assigned_user, private_resource_state,
+        resource_lineage
+      FROM resource WHERE workspace_id = :workspace_id
+      """;
 
   private static final RowMapper<DbResource> DB_RESOURCE_ROW_MAPPER =
       (rs, rowNum) -> {
@@ -82,6 +87,14 @@ public class ResourceDao {
             .privateResourceState(
                 Optional.ofNullable(rs.getString("private_resource_state"))
                     .map(PrivateResourceState::fromSql)
+                    .orElse(null))
+            .resourceLineage(
+                Optional.ofNullable(rs.getString("resource_lineage"))
+                    .map(
+                        resourceLineage ->
+                            DbSerDes.fromJson(
+                                resourceLineage,
+                                new TypeReference<List<ResourceLineageEntry>>() {}))
                     .orElse(null));
       };
 
@@ -633,12 +646,16 @@ public class ResourceDao {
     }
 
     final String sql =
-        "INSERT INTO resource (workspace_id, cloud_platform, resource_id, name, description, stewardship_type,"
-            + " exact_resource_type, resource_type, cloning_instructions, attributes,"
-            + " access_scope, managed_by, associated_app, assigned_user, private_resource_state)"
-            + " VALUES (:workspace_id, :cloud_platform, :resource_id, :name, :description, :stewardship_type,"
-            + " :exact_resource_type, :resource_type, :cloning_instructions, cast(:attributes AS jsonb),"
-            + " :access_scope, :managed_by, :associated_app, :assigned_user, :private_resource_state)";
+        """
+        INSERT INTO resource (workspace_id, cloud_platform, resource_id, name, description,
+          stewardship_type, exact_resource_type, resource_type, cloning_instructions, attributes,
+          access_scope, managed_by, associated_app, assigned_user, private_resource_state,
+          resource_lineage)
+        VALUES (:workspace_id, :cloud_platform, :resource_id, :name, :description,
+          :stewardship_type, :exact_resource_type, :resource_type, :cloning_instructions,
+          cast(:attributes AS jsonb), :access_scope, :managed_by, :associated_app, :assigned_user,
+          :private_resource_state, :resource_lineage::jsonb);
+        """;
 
     final var params =
         new MapSqlParameterSource()
@@ -651,7 +668,8 @@ public class ResourceDao {
             .addValue("exact_resource_type", resource.getResourceType().toSql())
             .addValue("resource_type", resource.getResourceFamily().toSql())
             .addValue("cloning_instructions", resource.getCloningInstructions().toSql())
-            .addValue("attributes", resource.attributesToJson());
+            .addValue("attributes", resource.attributesToJson())
+            .addValue("resource_lineage", DbSerDes.toJson(resource.getResourceLineage()));
     if (resource.getStewardshipType().equals(CONTROLLED)) {
       ControlledResource controlledResource = resource.castToControlledResource();
       //noinspection deprecation
