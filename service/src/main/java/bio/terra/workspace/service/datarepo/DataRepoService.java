@@ -9,7 +9,7 @@ import bio.terra.workspace.service.datarepo.exception.DataRepoInternalServerErro
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import io.opencensus.contrib.spring.aop.Traced;
 import java.util.HashMap;
-import javax.ws.rs.client.Client;
+import jakarta.ws.rs.client.Client;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
