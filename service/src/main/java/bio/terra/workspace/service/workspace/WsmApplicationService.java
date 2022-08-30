@@ -70,29 +70,29 @@ public class WsmApplicationService {
 
   public WsmWorkspaceApplication disableWorkspaceApplication(
       AuthenticatedUserRequest userRequest, Workspace workspace, String applicationId) {
-    return commonAbleJob(userRequest, workspace, List.of(applicationId), AbleEnum.DISABLE);
+    return commonAbleJob(
+        userRequest, workspace, new ArrayList<String>(List.of(applicationId)), AbleEnum.DISABLE);
   }
 
   public WsmWorkspaceApplication enableWorkspaceApplication(
       AuthenticatedUserRequest userRequest, Workspace workspace, String applicationId) {
-    return commonAbleJob(userRequest, workspace, List.of(applicationId), AbleEnum.ENABLE);
+    return commonAbleJob(
+        userRequest, workspace, new ArrayList<String>(List.of(applicationId)), AbleEnum.ENABLE);
   }
 
   // Common method to launch and wait for enable and disable flights.
   private WsmWorkspaceApplication commonAbleJob(
       AuthenticatedUserRequest userRequest,
       Workspace workspace,
-      List<String> applicationId,
+      List<String> applicationIdList,
       AbleEnum ableEnum) {
 
     String description =
         String.format(
             "%s application %s on workspace %s",
             ableEnum.name().toLowerCase(),
-            applicationId.toString(),
+            applicationIdList.toString(),
             workspace.getWorkspaceId().toString());
-
-    List<String> applicationIdList = new ArrayList<String>(applicationId);
 
     JobBuilder job =
         jobService

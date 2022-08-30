@@ -819,13 +819,7 @@ class WorkspaceServiceTest extends BaseConnectedTest {
         controlledResourceService.createControlledResourceSync(
             bucketResource, ControlledResourceIamRole.OWNER, USER_REQUEST, creationParameters);
 
-    // Create 2 applications and enable one application.
-    new WsmApplication()
-        .applicationId("leo")
-        .displayName("Leo")
-        .description("application execution framework")
-        .serviceAccount("leo@terra-dev.iam.gserviceaccount.com")
-        .state(WsmApplicationState.OPERATING);
+    // Enable an application.
     appService.enableWorkspaceApplication(USER_REQUEST, sourceWorkspace, "leo");
 
     final ControlledGcsBucketResource createdBucketResource =
