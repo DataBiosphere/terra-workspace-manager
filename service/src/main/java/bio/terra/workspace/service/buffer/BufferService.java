@@ -13,7 +13,7 @@ import io.opencensus.contrib.http.jaxrs.JaxrsClientExtractor;
 import io.opencensus.contrib.http.jaxrs.JaxrsClientFilter;
 import io.opencensus.trace.Tracing;
 import java.io.IOException;
-import javax.ws.rs.client.Client;
+import jakarta.ws.rs.client.Client;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;

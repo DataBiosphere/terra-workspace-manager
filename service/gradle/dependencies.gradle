@@ -4,7 +4,7 @@ dependencies {
   constraints {
     implementation 'com.google.guava:guava:31.1-jre' // "-jre" for Java 8 or higher
   }
-  implementation platform('com.google.cloud:libraries-bom:25.1.0')
+  implementation platform('com.google.cloud:libraries-bom:25.4.0')
   implementation group: "com.google.auto.value", name: "auto-value-annotations"
   implementation group: "com.google.guava", name:"guava"
 
@@ -14,7 +14,11 @@ dependencies {
   // Terra deps
   implementation group: "bio.terra", name: "datarepo-client", version: "1.41.0-SNAPSHOT"
   // hk2 is required to use datarepo client, but not correctly exposed by the client
-  implementation group: "org.glassfish.jersey.inject", name: "jersey-hk2", version: "2.32"
+  implementation group: "org.glassfish.jersey.inject", name: "jersey-hk2", version: "3.0.5"
+
+  implementation group: 'jakarta.annotation', name: 'jakarta.annotation-api', version: '2.1.1'
+  implementation group: 'jakarta.ws.rs', name: 'jakarta.ws.rs-api', version: '3.1.0'
+  implementation group: 'jakarta.ws.rs', name: 'all', version: '3.1.0', ext: 'pom'
 
   // Opencensus utilities for various HTTP clients
   implementation group: "io.opencensus", name: "opencensus-contrib-http-jaxrs", version: "0.28.3"
@@ -23,6 +27,7 @@ dependencies {
   implementation("bio.terra:terra-common-lib:0.0.66-SNAPSHOT") {
     exclude group: "org.broadinstitute.dsde.workbench", module: "sam-client_2.12"
   }
+  
   implementation group: "org.broadinstitute.dsde.workbench", name: "sam-client_2.13", version: "0.1-e826d4d"
   implementation group: "bio.terra", name: "terra-resource-buffer-client", version: "0.4.3-SNAPSHOT"
   // Required by Sam client
@@ -49,7 +54,7 @@ dependencies {
   runtimeOnly group: "org.postgresql", name: "postgresql", version: "42.3.3"
 
   // Deps whose versions are controlled by Spring
-  implementation group: "javax.validation", name: "validation-api"
+  implementation group: "javax.validation", name: "validation-api", version: "2.0.1.Final"
   implementation group: "org.apache.commons", name: "commons-dbcp2"
   implementation group: "org.apache.commons", name: "commons-lang3"
   implementation group: "org.apache.commons", name: "commons-pool2"

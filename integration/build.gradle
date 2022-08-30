@@ -14,7 +14,7 @@ dependencies {
         findbugsAnnotations = "3.0.1"
         guava = "29.0-jre"
         jackson = "2.10.2"
-        jersey = "2.32"
+        jersey = "3.0.5"
         kubernetesClient = "10.0.0"
         logback = "1.2.3"
         slf4j = "1.7.25"
@@ -75,6 +75,12 @@ dependencies {
         exclude group: "org.broadinstitute.dsde.workbench", module: "sam-client_2.12"
     }
 
+     //Annotations
+    implementation group: 'javax.annotation', name: 'javax.annotation-api', version: '1.3.2'
+
+    //API Helpers
+    implementation group: 'jakarta.ws.rs', name: 'jakarta.ws.rs-api', version: '3.1.0'
+    implementation group: 'jakarta.ws.rs', name: 'all', version: '3.1.0', ext: 'pom'
 
     // Spotbugs dependency
     // For SpotBugs annotations (still FindBugs annotations)
