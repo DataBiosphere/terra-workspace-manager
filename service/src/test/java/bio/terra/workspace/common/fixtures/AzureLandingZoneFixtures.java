@@ -4,9 +4,9 @@ import bio.terra.landingzone.job.LandingZoneJobService;
 import bio.terra.landingzone.job.model.JobReport;
 import bio.terra.landingzone.service.landingzone.azure.model.DeployedLandingZone;
 import bio.terra.landingzone.service.landingzone.azure.model.LandingZoneResource;
-import bio.terra.workspace.generated.model.ApiAzureContext;
 import bio.terra.workspace.generated.model.ApiCreateAzureLandingZoneRequestBody;
 import bio.terra.workspace.generated.model.ApiJobControl;
+import bio.terra.workspace.generated.model.ApiLandingZoneTarget;
 import java.time.Instant;
 import java.util.Collections;
 import org.apache.http.HttpStatus;
@@ -51,8 +51,8 @@ public class AzureLandingZoneFixtures {
   public static ApiCreateAzureLandingZoneRequestBody buildCreateAzureLandingZoneRequest(
       String jobId) {
     return new ApiCreateAzureLandingZoneRequestBody()
-        .azureContext(
-            new ApiAzureContext()
+        .landingZoneTarget(
+            new ApiLandingZoneTarget()
                 .resourceGroupId("resourceGroup")
                 .subscriptionId("subscriptionId")
                 .tenantId("tenantId"))
@@ -64,12 +64,20 @@ public class AzureLandingZoneFixtures {
   public static ApiCreateAzureLandingZoneRequestBody
       buildCreateAzureLandingZoneRequestWithoutDefinition(String jobId) {
     return new ApiCreateAzureLandingZoneRequestBody()
-        .azureContext(
-            new ApiAzureContext()
+        .landingZoneTarget(
+            new ApiLandingZoneTarget()
                 .resourceGroupId("resourceGroup")
                 .subscriptionId("subscriptionId")
                 .tenantId("tenantId"))
         .jobControl(new ApiJobControl().id(jobId))
+        .version("v1");
+  }
+
+  public static ApiCreateAzureLandingZoneRequestBody
+      buildCreateAzureLandingZoneRequestWithoutTarget(String jobId) {
+    return new ApiCreateAzureLandingZoneRequestBody()
+        .jobControl(new ApiJobControl().id(jobId))
+        .definition("azureLandingZoneDefinition")
         .version("v1");
   }
 }

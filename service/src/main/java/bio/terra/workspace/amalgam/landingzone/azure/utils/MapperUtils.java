@@ -3,10 +3,10 @@ package bio.terra.workspace.amalgam.landingzone.azure.utils;
 import bio.terra.landingzone.job.model.ErrorReport;
 import bio.terra.landingzone.job.model.JobReport;
 import bio.terra.landingzone.model.AzureCloudContext;
-import bio.terra.workspace.generated.model.ApiAzureContext;
 import bio.terra.workspace.generated.model.ApiAzureLandingZoneParameter;
 import bio.terra.workspace.generated.model.ApiErrorReport;
 import bio.terra.workspace.generated.model.ApiJobReport;
+import bio.terra.workspace.generated.model.ApiLandingZoneTarget;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
@@ -68,11 +68,11 @@ public class MapperUtils {
   public class AzureCloudContextMapper {
     private AzureCloudContextMapper() {}
 
-    public static AzureCloudContext from(ApiAzureContext azureCloudContext) {
+    public static AzureCloudContext from(ApiLandingZoneTarget apiLandingZoneTarget) {
       return new AzureCloudContext(
-          azureCloudContext.getTenantId(),
-          azureCloudContext.getSubscriptionId(),
-          azureCloudContext.getResourceGroupId());
+          apiLandingZoneTarget.getTenantId(),
+          apiLandingZoneTarget.getSubscriptionId(),
+          apiLandingZoneTarget.getResourceGroupId());
     }
   }
 }
