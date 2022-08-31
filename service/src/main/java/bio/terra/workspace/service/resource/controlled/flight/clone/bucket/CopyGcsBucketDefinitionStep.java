@@ -81,26 +81,25 @@ public class CopyGcsBucketDefinitionStep implements Step {
             ResourceKeys.RESOURCE_DESCRIPTION,
             ResourceKeys.PREVIOUS_RESOURCE_DESCRIPTION,
             String.class);
-    final String bucketName =
-        inputParameters.get(ControlledResourceKeys.DESTINATION_BUCKET_NAME, String.class);
+
     final PrivateResourceState privateResourceState =
         sourceBucket.getAccessScope() == AccessScopeType.ACCESS_SCOPE_PRIVATE
             ? PrivateResourceState.INITIALIZING
             : PrivateResourceState.NOT_APPLICABLE;
-    // Store effective bucket name for destination
-    workingMap.put(ControlledResourceKeys.DESTINATION_BUCKET_NAME, bucketName);
     final UUID destinationWorkspaceId =
         inputParameters.get(ControlledResourceKeys.DESTINATION_WORKSPACE_ID, UUID.class);
+    final String bucketName =
+        Optional.ofNullable(inputParameters.get(ControlledResourceKeys.DESTINATION_BUCKET_NAME, String.class))
+            .orElse(ControlledGcsBucketHandler.getHandler()
+                .generateCloudName(destinationWorkspaceId, resourceName));
+    // Store effective bucket name for destination
+    workingMap.put(ControlledResourceKeys.DESTINATION_BUCKET_NAME, bucketName);
     final var destinationResourceId =
         inputParameters.get(ControlledResourceKeys.DESTINATION_RESOURCE_ID, UUID.class);
     // bucket resource for create flight
     ControlledGcsBucketResource destinationBucketResource =
         ControlledGcsBucketResource.builder()
-            .bucketName(
-                StringUtils.isEmpty(bucketName)
-                    ? ControlledGcsBucketHandler.getHandler()
-                        .generateCloudName(destinationWorkspaceId, resourceName)
-                    : bucketName)
+            .bucketName(bucketName)
             .common(
                 ControlledResourceFields.builder()
                     .workspaceUuid(destinationWorkspaceId)
