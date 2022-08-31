@@ -5,7 +5,7 @@ import static org.hamcrest.Matchers.hasSize;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.when;
 
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.FlightMap;
@@ -33,8 +33,10 @@ public class FindEnabledApplicationStepTest extends BaseUnitTest {
   @Mock private Stairway mockStairway;
   private FindEnabledApplicationStep findEnabledApplicationStep;
   private FlightMap workingMap;
-  private WsmApplication enabledApplication, disabledApplication;
-  private WsmWorkspaceApplication enabledWorkspaceApplication, disabledWorkspaceApplication;
+  private WsmApplication enabledApplication;
+  private WsmApplication disabledApplication;
+  private WsmWorkspaceApplication enabledWorkspaceApplication;
+  private WsmWorkspaceApplication disabledWorkspaceApplication;
 
   @BeforeEach
   void setup() throws Exception {
@@ -59,16 +61,16 @@ public class FindEnabledApplicationStepTest extends BaseUnitTest {
         new WsmWorkspaceApplication().application(disabledApplication).enabled(false);
 
     findEnabledApplicationStep = new FindEnabledApplicationStep(mockApplicationDao);
-    doReturn(mockStairway).when(mockFlightContext).getStairway();
-    doReturn(FLIGHT_ID).when(mockStairway).createFlightId();
+    when((mockFlightContext).getStairway()).thenReturn(mockStairway);
+    when((mockStairway).createFlightId()).thenReturn(FLIGHT_ID);
 
     final FlightMap inputParameters = new FlightMap();
     inputParameters.put(
         WorkspaceFlightMapKeys.ControlledResourceKeys.SOURCE_WORKSPACE_ID, UUID.randomUUID());
-    doReturn(inputParameters).when(mockFlightContext).getInputParameters();
+    when((mockFlightContext).getInputParameters()).thenReturn(inputParameters);
 
     workingMap = new FlightMap();
-    doReturn(workingMap).when(mockFlightContext).getWorkingMap();
+    when((mockFlightContext).getWorkingMap()).thenReturn(workingMap);
   }
 
   @Test
@@ -77,10 +79,12 @@ public class FindEnabledApplicationStepTest extends BaseUnitTest {
         ListUtils.union(
             Collections.nCopies(3, enabledWorkspaceApplication),
             Collections.nCopies(3, disabledWorkspaceApplication));
-    doReturn(batch1)
-        .when(mockApplicationDao)
-        .listWorkspaceApplications(any(UUID.class), eq(0), eq(100));
+
+    when((mockApplicationDao).listWorkspaceApplications(any(UUID.class), eq(0), eq(100)))
+        .thenReturn(batch1);
+
     final StepResult stepResult = findEnabledApplicationStep.doStep(mockFlightContext);
+
     assertEquals(StepResult.getStepResultSuccess(), stepResult);
     final List<String> result = workingMap.get(WorkspaceFlightMapKeys.APPLICATION_ID, List.class);
     final AbleEnum able =

@@ -38,7 +38,7 @@ public class ApplicationAbleFlight extends Flight {
     AbleEnum ableEnum =
         inputParameters.get(WsmApplicationKeys.APPLICATION_ABLE_ENUM, AbleEnum.class);
 
-    for (int i = 0; i < applicationIdList.size(); i++) {
+    for (String applicationId : applicationIdList) {
       // ApplicationAblePrecheckStep
       // - make sure the application is in a valid state for the enable/disable
       // - check if the application is in the correct state the database
@@ -52,7 +52,7 @@ public class ApplicationAbleFlight extends Flight {
               beanBag.getSamService(),
               userRequest,
               workspaceUuid,
-              applicationIdList.get(i),
+              applicationId,
               ableEnum));
 
       // ApplicationEnableIamStep - On do, if application did not already have the role, add it.
@@ -61,14 +61,12 @@ public class ApplicationAbleFlight extends Flight {
           new ApplicationAbleIamStep(
               beanBag.getSamService(), userRequest, workspaceUuid, ableEnum));
 
-      // ApplicationEnableDaoStep - On do, if application did not already have the application
-      // enabled,
-      // enable it. On undo, if application did not already have the application enabled, disable
-      // it.
+      // ApplicationEnableDaoStep - On do, if application did not have the application enabled,
+      // enable it. On undo, if application did not have the application enabled, disable it.
       // set the result
       addStep(
           new ApplicationAbleDaoStep(
-              beanBag.getApplicationDao(), workspaceUuid, applicationIdList.get(i), ableEnum));
+              beanBag.getApplicationDao(), workspaceUuid, applicationId, ableEnum));
     }
   }
 }

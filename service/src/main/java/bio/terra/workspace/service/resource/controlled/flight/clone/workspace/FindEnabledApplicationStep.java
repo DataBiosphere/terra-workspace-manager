@@ -12,7 +12,6 @@ import bio.terra.workspace.service.workspace.model.WsmWorkspaceApplication;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
-import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -41,25 +40,18 @@ public class FindEnabledApplicationStep implements Step {
     do {
       batch = applicationDao.listWorkspaceApplications(sourceWorkspaceId, offset, limit);
       offset += limit;
-      final List<WsmWorkspaceApplication> enabledApplication =
+      final List<WsmWorkspaceApplication> enabledApplications =
           batch.stream().filter(WsmWorkspaceApplication::isEnabled).toList();
-      enabledApplication.forEach(r -> result.add(r.getApplication().getApplicationId()));
+      enabledApplications.forEach(r -> result.add(r.getApplication().getApplicationId()));
     } while (batch.size() == limit);
 
-    logger.info(
-        "Will enable applications {} in workspace {}",
-        result.stream().collect(Collectors.joining(", ")),
-        sourceWorkspaceId);
+    logger.info("Will enable applications {} in workspace {}", result, sourceWorkspaceId);
 
-    context.getWorkingMap().put(WorkspaceFlightMapKeys.APPLICATION_ID, result);
+    context.getWorkingMap().put(WorkspaceFlightMapKeys.APPLICATION_IDS, result);
     context
         .getWorkingMap()
         .put(WorkspaceFlightMapKeys.WsmApplicationKeys.APPLICATION_ABLE_ENUM, AbleEnum.ENABLE);
 
-    FlightUtils.validateRequiredEntries(
-        context.getWorkingMap(),
-        WorkspaceFlightMapKeys.APPLICATION_ID,
-        WorkspaceFlightMapKeys.WsmApplicationKeys.APPLICATION_ABLE_ENUM);
     return StepResult.getStepResultSuccess();
   }
 

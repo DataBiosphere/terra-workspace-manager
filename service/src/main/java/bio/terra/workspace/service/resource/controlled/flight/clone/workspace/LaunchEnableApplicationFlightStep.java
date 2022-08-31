@@ -14,7 +14,6 @@ import bio.terra.workspace.service.workspace.flight.application.able.AbleEnum;
 import bio.terra.workspace.service.workspace.flight.application.able.ApplicationAbleFlight;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import java.util.List;
-import javax.annotation.Nullable;
 
 public class LaunchEnableApplicationFlightStep implements Step {
   @Override
@@ -31,7 +30,6 @@ public class LaunchEnableApplicationFlightStep implements Step {
         context
             .getInputParameters()
             .get(JobMapKeys.AUTH_USER_INFO.getKeyName(), AuthenticatedUserRequest.class);
-    @Nullable
     final List<String> applicationIdList =
         context.getWorkingMap().get(WorkspaceFlightMapKeys.APPLICATION_ID, List.class);
     final AbleEnum ableEnum =
@@ -53,8 +51,8 @@ public class LaunchEnableApplicationFlightStep implements Step {
     subflightInputParameters.put(
         JobMapKeys.DESCRIPTION.getKeyName(),
         String.format(
-            "Enable application %s in workspace %s",
-            applicationIdList.toString(), destinationWorkspace.getWorkspaceId().toString()));
+            "Enable applications %s in workspace %s",
+            applicationIdList, destinationWorkspace.getWorkspaceId()));
 
     // Build a ApplicationAbleFlight
     try {
