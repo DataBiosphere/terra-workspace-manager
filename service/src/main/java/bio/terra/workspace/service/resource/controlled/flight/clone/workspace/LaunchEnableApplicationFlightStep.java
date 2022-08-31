@@ -24,14 +24,14 @@ public class LaunchEnableApplicationFlightStep implements Step {
         JobMapKeys.REQUEST.getKeyName());
     validateRequiredEntries(
         context.getWorkingMap(),
-        WorkspaceFlightMapKeys.APPLICATION_ID,
+        WorkspaceFlightMapKeys.APPLICATION_IDS,
         WorkspaceFlightMapKeys.WsmApplicationKeys.APPLICATION_ABLE_ENUM);
     final var userRequest =
         context
             .getInputParameters()
             .get(JobMapKeys.AUTH_USER_INFO.getKeyName(), AuthenticatedUserRequest.class);
-    final List<String> applicationIdList =
-        context.getWorkingMap().get(WorkspaceFlightMapKeys.APPLICATION_ID, List.class);
+    final List<String> applicationIds =
+        context.getWorkingMap().get(WorkspaceFlightMapKeys.APPLICATION_IDS, List.class);
     final AbleEnum ableEnum =
         context.getWorkingMap().get(WsmApplicationKeys.APPLICATION_ABLE_ENUM, AbleEnum.class);
 
@@ -42,7 +42,7 @@ public class LaunchEnableApplicationFlightStep implements Step {
 
     final FlightMap subflightInputParameters = new FlightMap();
     subflightInputParameters.put(JobMapKeys.AUTH_USER_INFO.getKeyName(), userRequest);
-    subflightInputParameters.put(WorkspaceFlightMapKeys.APPLICATION_ID, applicationIdList);
+    subflightInputParameters.put(WorkspaceFlightMapKeys.APPLICATION_IDS, applicationIds);
     subflightInputParameters.put(WsmApplicationKeys.APPLICATION_ABLE_ENUM, ableEnum);
 
     // fields normally set by JobBuilder for identifying jobs
@@ -52,7 +52,7 @@ public class LaunchEnableApplicationFlightStep implements Step {
         JobMapKeys.DESCRIPTION.getKeyName(),
         String.format(
             "Enable applications %s in workspace %s",
-            applicationIdList, destinationWorkspace.getWorkspaceId()));
+            applicationIds, destinationWorkspace.getWorkspaceId()));
 
     // Build a ApplicationAbleFlight
     try {

@@ -105,7 +105,7 @@ public class WsmApplicationService {
                 ableEnum == AbleEnum.ENABLE
                     ? OperationType.APPLICATION_ENABLED
                     : OperationType.APPLICATION_DISABLED)
-            .addParameter(WorkspaceFlightMapKeys.APPLICATION_ID, applicationIdList)
+            .addParameter(WorkspaceFlightMapKeys.APPLICATION_IDS, applicationIdList)
             .addParameter(WsmApplicationKeys.APPLICATION_ABLE_ENUM, ableEnum);
     return job.submitAndWait(WsmWorkspaceApplication.class);
   }

@@ -26,7 +26,7 @@ public class ApplicationAbleFlight extends Flight {
     FlightUtils.validateRequiredEntries(
         inputParameters,
         WorkspaceFlightMapKeys.WORKSPACE_ID,
-        WorkspaceFlightMapKeys.APPLICATION_ID,
+        WorkspaceFlightMapKeys.APPLICATION_IDS,
         WsmApplicationKeys.APPLICATION_ABLE_ENUM);
 
     // get data from inputs that steps need
@@ -34,7 +34,7 @@ public class ApplicationAbleFlight extends Flight {
         inputParameters.get(JobMapKeys.AUTH_USER_INFO.getKeyName(), AuthenticatedUserRequest.class);
     UUID workspaceUuid = inputParameters.get(WorkspaceFlightMapKeys.WORKSPACE_ID, UUID.class);
     List<String> applicationIdList =
-        inputParameters.get(WorkspaceFlightMapKeys.APPLICATION_ID, List.class);
+        inputParameters.get(WorkspaceFlightMapKeys.APPLICATION_IDS, List.class);
     AbleEnum ableEnum =
         inputParameters.get(WsmApplicationKeys.APPLICATION_ABLE_ENUM, AbleEnum.class);
 

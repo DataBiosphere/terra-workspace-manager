@@ -86,7 +86,7 @@ public class FindEnabledApplicationStepTest extends BaseUnitTest {
     final StepResult stepResult = findEnabledApplicationStep.doStep(mockFlightContext);
 
     assertEquals(StepResult.getStepResultSuccess(), stepResult);
-    final List<String> result = workingMap.get(WorkspaceFlightMapKeys.APPLICATION_ID, List.class);
+    final List<String> result = workingMap.get(WorkspaceFlightMapKeys.APPLICATION_IDS, List.class);
     final AbleEnum able =
         workingMap.get(
             WorkspaceFlightMapKeys.WsmApplicationKeys.APPLICATION_ABLE_ENUM, AbleEnum.class);
