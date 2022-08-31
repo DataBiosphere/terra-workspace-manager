@@ -71,6 +71,7 @@ public class WsmApplicationService {
   public WsmWorkspaceApplication disableWorkspaceApplication(
       AuthenticatedUserRequest userRequest, Workspace workspace, String applicationId) {
     return commonAbleJob(
+        // Wrap in arraylist for JSON serialization
         userRequest, workspace, new ArrayList<String>(List.of(applicationId)), AbleEnum.DISABLE);
   }
 
