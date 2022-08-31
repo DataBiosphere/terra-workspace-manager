@@ -25,7 +25,6 @@ import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.Resou
 import java.util.Optional;
 import java.util.UUID;
 import javax.annotation.Nullable;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.http.HttpStatus;
 
 /**
@@ -89,9 +88,11 @@ public class CopyGcsBucketDefinitionStep implements Step {
     final UUID destinationWorkspaceId =
         inputParameters.get(ControlledResourceKeys.DESTINATION_WORKSPACE_ID, UUID.class);
     final String bucketName =
-        Optional.ofNullable(inputParameters.get(ControlledResourceKeys.DESTINATION_BUCKET_NAME, String.class))
-            .orElse(ControlledGcsBucketHandler.getHandler()
-                .generateCloudName(destinationWorkspaceId, resourceName));
+        Optional.ofNullable(
+                inputParameters.get(ControlledResourceKeys.DESTINATION_BUCKET_NAME, String.class))
+            .orElse(
+                ControlledGcsBucketHandler.getHandler()
+                    .generateCloudName(destinationWorkspaceId, resourceName));
     // Store effective bucket name for destination
     workingMap.put(ControlledResourceKeys.DESTINATION_BUCKET_NAME, bucketName);
     final var destinationResourceId =
