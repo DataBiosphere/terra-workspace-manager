@@ -428,12 +428,8 @@ components:
       type: object
       description: Update a GCS bucket's metadata and lifecycle rules.
       properties:
-        name:
-          description: Optional. New name to give to this resource. The resource name will not be updated if this is omitted.
-          type: string
-        description:
-          description: Optional. New description to give to this resource. The resource description will not be updated if this is omitted.
-          type: string
+        updateCommonFields:
+          $ref: '#/components/schemas/ResourceUpdateCommonField'
         updateParameters:
           $ref: '#/components/schemas/GcpGcsBucketUpdateParameters'
 

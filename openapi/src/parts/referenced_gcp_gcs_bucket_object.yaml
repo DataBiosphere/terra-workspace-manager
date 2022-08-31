@@ -138,10 +138,8 @@ components:
     UpdateGcsBucketObjectReferenceRequestBody:
       type: object
       properties:
-        name:
-          $ref: "#/components/schemas/Name"
-        description:
-          type: string
+        updateCommonFields:
+          $ref: '#/components/schemas/ResourceUpdateCommonField'
         bucketName:
           description: Name of created bucket (not the resource name).
           type: string

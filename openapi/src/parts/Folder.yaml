@@ -1,0 +1,170 @@
+# Workspace paths
+paths:
+  /api/workspaces/v1/{workspaceId}/folders:
+    parameters:
+    - $ref: '#/components/parameters/WorkspaceId'
+    get:
+      summary: Get all folders in a hierarchy view in a given workspace
+      operationId: listFolders
+      tags: [ Folder ]
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FoldersHierarchyDescription'
+        '500':
+          $ref: '#/components/responses/ServerError'
+    post:
+      summary: Create a new folder in a given workspace under given folder
+      operationId: createFolder
+      tags: [ Folder ]
+      requestBody:
+        description: Details of workspce clone operation
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateFolderRequestBody'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FolderDescription'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '500':
+          $ref: '#/components/responses/NotFound'
+  /api/workspaces/v1/{workspaceId}/folders/{folderId}:
+    parameters:
+    - $ref: '#/components/parameters/WorkspaceId'
+    - $ref: '#/components/parameters/FolderId'
+    get:
+      summary: Get an existing Folder.
+      operationId: getFolder
+      tags: [Folder]
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FolderDescription'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+    patch:
+      summary: Update an existing folder.
+      operationId: updateFolder
+      tags: [Folder]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateFolderRequestBody'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FolderDescription'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+    delete:
+      summary: Delete a folder.
+      operationId: deleteFolder
+      tags: [Folder]
+      responses:
+        '204':
+          description: Success
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+components:
+  schemas:
+    FoldersHierarchyDescription:
+      type: object
+      required: [ id, displayName ]
+      properties:
+        id:
+          description: The ID of the folder. Immutable.
+          type: integer
+        displayName:
+          description: The human readable name of the folder
+          type: string
+        description:
+          description: A description of the folder
+          type: string
+        childFolders:
+          description: Id of the parent folder
+          type: array
+          items:
+            $ref: '#/components/schemas/FoldersHierarchyDescription'
+    FolderDescription:
+      type: object
+      required: [id, displayName]
+      properties:
+        id:
+          description: The ID of the folder. Immutable.
+          type: string
+          format: uuid
+        displayName:
+          description: The human readable name of the folder.
+          type: string
+        description:
+          description: A description of the workspace
+          type: string
+        parentFolderId:
+          type: string
+          format: uuid
+    CreateFolderRequestBody:
+      type: object
+      required: [displayName]
+      properties:
+        folderId:
+          type: string
+          format: uuid
+        displayName:
+          description: |
+            The human readable name of the folder. The folder name must be
+            unique within its parent folder directories.
+          type: string
+        description:
+          description: A description of the folder
+          type: string
+        parentFolderId:
+          type: string
+          format: uuid
+
+    UpdateFolderRequestBody:
+      type: object
+      properties:
+        displayName:
+          description: The human readable name of the folder
+          type: string
+        description:
+          description: A description of the folder
+          type: string
+        parentFolderId:
+          type: string
+          format: uuid

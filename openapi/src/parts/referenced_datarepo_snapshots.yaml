@@ -139,10 +139,8 @@ components:
     UpdateDataRepoSnapshotReferenceRequestBody:
       type: object
       properties:
-        name:
-          $ref: "#/components/schemas/Name"
-        description:
-          type: string
+        updateCommonFields:
+          $ref: '#/components/schemas/ResourceUpdateCommonField'
         instanceName:
           description: The name of the Data Repo instance
           type: string

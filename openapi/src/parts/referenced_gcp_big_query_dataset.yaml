@@ -131,10 +131,8 @@ components:
     UpdateBigQueryDatasetReferenceRequestBody:
       type: object
       properties:
-        name:
-          $ref: "#/components/schemas/Name"
-        description:
-          type: string
+        updateCommonFields:
+          $ref: '#/components/schemas/ResourceUpdateCommonField'
         projectId:
           type: string
         datasetId:

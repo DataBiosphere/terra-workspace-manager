@@ -22,6 +22,7 @@ import bio.terra.workspace.generated.model.ApiGcpBigQueryDatasetResource;
 import bio.terra.workspace.generated.model.ApiGcpGcsBucketResource;
 import bio.terra.workspace.generated.model.ApiGcpGcsObjectResource;
 import bio.terra.workspace.generated.model.ApiGitRepoResource;
+import bio.terra.workspace.generated.model.ApiResourceUpdateCommonField;
 import bio.terra.workspace.generated.model.ApiTerraWorkspaceResource;
 import bio.terra.workspace.generated.model.ApiUpdateBigQueryDataTableReferenceRequestBody;
 import bio.terra.workspace.generated.model.ApiUpdateBigQueryDatasetReferenceRequestBody;
@@ -29,6 +30,7 @@ import bio.terra.workspace.generated.model.ApiUpdateDataRepoSnapshotReferenceReq
 import bio.terra.workspace.generated.model.ApiUpdateGcsBucketObjectReferenceRequestBody;
 import bio.terra.workspace.generated.model.ApiUpdateGcsBucketReferenceRequestBody;
 import bio.terra.workspace.generated.model.ApiUpdateGitRepoReferenceRequestBody;
+import bio.terra.workspace.service.folder.FolderService;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequestFactory;
 import bio.terra.workspace.service.iam.model.SamConstants.SamWorkspaceAction;
@@ -58,6 +60,7 @@ import org.springframework.stereotype.Controller;
 @Controller
 public class ReferencedGcpResourceController implements ReferencedGcpResourceApi {
 
+  private final FolderService folderService;
   private final ReferencedResourceService referenceResourceService;
   private final WorkspaceDao workspaceDao;
   private final WorkspaceService workspaceService;
@@ -67,12 +70,14 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
 
   @Autowired
   public ReferencedGcpResourceController(
+      FolderService folderService,
       ReferencedResourceService referenceResourceService,
       WorkspaceDao workspaceDao,
       WorkspaceService workspaceService,
       AuthenticatedUserRequestFactory authenticatedUserRequestFactory,
       ResourceValidationUtils validationUtils,
       HttpServletRequest request) {
+    this.folderService = folderService;
     this.referenceResourceService = referenceResourceService;
     this.workspaceDao = workspaceDao;
     this.workspaceService = workspaceService;
@@ -146,12 +151,13 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
     String objectName = body.getObjectName();
     CloningInstructions cloningInstructions =
         CloningInstructions.fromApiModel(body.getCloningInstructions());
+    ApiResourceUpdateCommonField commonField = body.getUpdateCommonFields();
     if (StringUtils.isEmpty(bucketName) && StringUtils.isEmpty(objectName)) {
       referenceResourceService.updateReferenceResource(
           workspaceUuid,
           referenceId,
-          body.getName(),
-          body.getDescription(),
+          commonField.getName(),
+          commonField.getDescription(),
           null,
           cloningInstructions,
           userRequest);
@@ -174,11 +180,14 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
       referenceResourceService.updateReferenceResource(
           workspaceUuid,
           referenceId,
-          body.getName(),
-          body.getDescription(),
+          commonField.getName(),
+          commonField.getDescription(),
           updateBucketObjectResourceBuilder.build(),
           null, // included in resource arg
           userRequest);
+    }
+    if (commonField.getFolderId() != null) {
+      folderService.addResourceToFolder(referenceId, commonField.getFolderId());
     }
     return new ResponseEntity<>(HttpStatus.NO_CONTENT);
   }
@@ -247,14 +256,15 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
     workspaceService.validateWorkspaceAndAction(
         userRequest, workspaceUuid, SamWorkspaceAction.UPDATE_REFERENCE);
     String bucketName = body.getBucketName();
+    ApiResourceUpdateCommonField commonField = body.getUpdateCommonFields();
     CloningInstructions cloningInstructions =
         CloningInstructions.fromApiModel(body.getCloningInstructions());
     if (StringUtils.isEmpty(bucketName)) {
       referenceResourceService.updateReferenceResource(
           workspaceUuid,
           referenceId,
-          body.getName(),
-          body.getDescription(),
+          commonField.getName(),
+          commonField.getDescription(),
           null,
           cloningInstructions,
           userRequest);
@@ -272,11 +282,14 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
       referenceResourceService.updateReferenceResource(
           workspaceUuid,
           referenceId,
-          body.getName(),
-          body.getDescription(),
+          commonField.getName(),
+          commonField.getDescription(),
           updateBucketResourceBuilder.build(),
           null, // passed in via resource argument
           userRequest);
+    }
+    if (commonField.getFolderId() != null) {
+      folderService.addResourceToFolder(referenceId, commonField.getFolderId());
     }
     return new ResponseEntity<>(HttpStatus.NO_CONTENT);
   }
@@ -349,6 +362,7 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
     String updatedProjectId = body.getProjectId();
     String updatedDatasetId = body.getDatasetId();
     String updatedDataTableId = body.getDataTableId();
+    ApiResourceUpdateCommonField commonField = body.getUpdateCommonFields();
     CloningInstructions cloningInstructions =
         CloningInstructions.fromApiModel(body.getCloningInstructions());
     if (StringUtils.isEmpty(updatedProjectId)
@@ -357,8 +371,8 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
       referenceResourceService.updateReferenceResource(
           workspaceUuid,
           referenceId,
-          body.getName(),
-          body.getDescription(),
+          commonField.getName(),
+          commonField.getDescription(),
           null,
           cloningInstructions,
           userRequest);
@@ -381,13 +395,15 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
       referenceResourceService.updateReferenceResource(
           workspaceUuid,
           referenceId,
-          body.getName(),
-          body.getDescription(),
+          commonField.getName(),
+          commonField.getDescription(),
           updateBqTableResource.build(),
           cloningInstructions,
           userRequest);
     }
-
+    if (commonField.getFolderId() != null) {
+      folderService.addResourceToFolder(referenceId, commonField.getFolderId());
+    }
     return new ResponseEntity<>(HttpStatus.NO_CONTENT);
   }
 
@@ -465,6 +481,7 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
         userRequest, workspaceUuid, SamWorkspaceAction.UPDATE_REFERENCE);
     String updatedDatasetId = body.getDatasetId();
     String updatedProjectId = body.getProjectId();
+    ApiResourceUpdateCommonField commonField = body.getUpdateCommonFields();
     CloningInstructions cloningInstructions =
         CloningInstructions.fromApiModel(body.getCloningInstructions());
     if (StringUtils.isEmpty(updatedDatasetId) && StringUtils.isEmpty(updatedProjectId)) {
@@ -472,8 +489,8 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
       referenceResourceService.updateReferenceResource(
           workspaceUuid,
           resourceId,
-          body.getName(),
-          body.getDescription(),
+          commonField.getName(),
+          commonField.getDescription(),
           null,
           cloningInstructions,
           userRequest);
@@ -494,11 +511,14 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
       referenceResourceService.updateReferenceResource(
           workspaceUuid,
           resourceId,
-          body.getName(),
-          body.getDescription(),
+          commonField.getName(),
+          commonField.getDescription(),
           updatedBqDatasetResourceBuilder.build(),
           cloningInstructions,
           userRequest);
+    }
+    if (commonField.getFolderId() != null) {
+      folderService.addResourceToFolder(resourceId, commonField.getFolderId());
     }
     return new ResponseEntity<>(HttpStatus.NO_CONTENT);
   }
@@ -572,12 +592,13 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
         userRequest, workspaceUuid, SamWorkspaceAction.UPDATE_REFERENCE);
     String updatedSnapshot = body.getSnapshot();
     String updatedInstanceName = body.getInstanceName();
+    ApiResourceUpdateCommonField commonField = body.getUpdateCommonFields();
     if (StringUtils.isEmpty(updatedSnapshot) && StringUtils.isEmpty(updatedInstanceName)) {
       referenceResourceService.updateReferenceResource(
           workspaceUuid,
           resourceId,
-          body.getName(),
-          body.getDescription(),
+          commonField.getName(),
+          commonField.getDescription(),
           null,
           CloningInstructions.fromApiModel(body.getCloningInstructions()),
           userRequest);
@@ -597,11 +618,14 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
       referenceResourceService.updateReferenceResource(
           workspaceUuid,
           resourceId,
-          body.getName(),
-          body.getDescription(),
+          commonField.getName(),
+          commonField.getDescription(),
           updatedResourceBuilder.build(),
           CloningInstructions.fromApiModel(body.getCloningInstructions()),
           userRequest);
+    }
+    if (commonField.getFolderId() != null) {
+      folderService.addResourceToFolder(resourceId, commonField.getFolderId());
     }
     return new ResponseEntity<>(HttpStatus.NO_CONTENT);
   }
@@ -919,12 +943,13 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
     workspaceService.validateWorkspaceAndAction(
         userRequest, workspaceUuid, SamWorkspaceAction.UPDATE_REFERENCE);
     String gitRepoUrl = body.getGitRepoUrl();
+    ApiResourceUpdateCommonField commonField = body.getUpdateCommonFields();
     if (StringUtils.isEmpty(gitRepoUrl)) {
       referenceResourceService.updateReferenceResource(
           workspaceUuid,
           referenceId,
-          body.getName(),
-          body.getDescription(),
+          commonField.getName(),
+          commonField.getDescription(),
           null,
           CloningInstructions.fromApiModel(body.getCloningInstructions()),
           userRequest);
@@ -941,11 +966,14 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
       referenceResourceService.updateReferenceResource(
           workspaceUuid,
           referenceId,
-          body.getName(),
-          body.getDescription(),
+          commonField.getName(),
+          commonField.getDescription(),
           updateGitRepoResource.build(),
           CloningInstructions.fromApiModel(body.getCloningInstructions()),
           userRequest);
+    }
+    if (commonField.getFolderId() != null) {
+      folderService.addResourceToFolder(referenceId, commonField.getFolderId());
     }
     return new ResponseEntity<>(HttpStatus.OK);
   }

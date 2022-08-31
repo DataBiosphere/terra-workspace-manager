@@ -3,6 +3,7 @@ package bio.terra.workspace.app.controller;
 import bio.terra.workspace.common.utils.ControllerValidationUtils;
 import bio.terra.workspace.generated.controller.ControlledGcpResourceApi;
 import bio.terra.workspace.generated.model.*;
+import bio.terra.workspace.service.folder.FolderService;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequestFactory;
 import bio.terra.workspace.service.iam.SamService;
@@ -44,6 +45,7 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
   private final Logger logger = LoggerFactory.getLogger(ControlledGcpResourceApiController.class);
 
   private final ControlledResourceService controlledResourceService;
+  private final FolderService folderService;
   private final WorkspaceService workspaceService;
   private final JobService jobService;
   private final GcpCloudContextService gcpCloudContextService;
@@ -54,6 +56,7 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
       AuthenticatedUserRequestFactory authenticatedUserRequestFactory,
       HttpServletRequest request,
       ControlledResourceService controlledResourceService,
+      FolderService folderService,
       SamService samService,
       WorkspaceService workspaceService,
       JobService jobService,
@@ -61,6 +64,7 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
       ControlledResourceMetadataManager controlledResourceMetadataManager) {
     super(authenticatedUserRequestFactory, request, controlledResourceService, samService);
     this.controlledResourceService = controlledResourceService;
+    this.folderService = folderService;
     this.workspaceService = workspaceService;
     this.jobService = jobService;
     this.gcpCloudContextService = gcpCloudContextService;
@@ -181,11 +185,12 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
             .validateControlledResourceAndAction(
                 userRequest, workspaceUuid, resourceId, SamControlledResourceActions.EDIT_ACTION)
             .castByEnum(WsmResourceType.CONTROLLED_GCP_GCS_BUCKET);
+    ApiResourceUpdateCommonField commonField = body.getUpdateCommonFields();
     controlledResourceService.updateGcsBucket(
         bucketResource,
         body.getUpdateParameters(),
-        body.getName(),
-        body.getDescription(),
+        commonField.getName(),
+        commonField.getDescription(),
         userRequest);
 
     // Retrieve and cast response to ApiGcpGcsBucketResource
@@ -193,8 +198,15 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
         controlledResourceService
             .getControlledResource(workspaceUuid, resourceId)
             .castByEnum(WsmResourceType.CONTROLLED_GCP_GCS_BUCKET);
-    return new ResponseEntity<>(updatedResource.toApiResource(), HttpStatus.OK);
+    if (commonField.getFolderId() != null) {
+      folderService.addResourceToFolder(resourceId, commonField.getFolderId());
+    }
+    var folder = folderService.getFolder(workspaceUuid, resourceId);
+
+    return new ResponseEntity<>(updatedResource.toApiResource(),
+        HttpStatus.OK);
   }
+
 
   @Override
   public ResponseEntity<ApiCloneControlledGcpGcsBucketResult> cloneGcsBucket(
@@ -278,14 +290,20 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
             .validateControlledResourceAndAction(
                 userRequest, workspaceUuid, resourceId, SamControlledResourceActions.EDIT_ACTION)
             .castByEnum(WsmResourceType.CONTROLLED_GCP_BIG_QUERY_DATASET);
+    ApiResourceUpdateCommonField commonField = body.getUpdateCommonFields();
     controlledResourceService.updateBqDataset(
-        resource, body.getUpdateParameters(), body.getName(), body.getDescription());
+        resource, body.getUpdateParameters(), commonField.getName(), commonField.getDescription());
 
     final ControlledBigQueryDatasetResource updatedResource =
         controlledResourceService
             .getControlledResource(workspaceUuid, resourceId)
             .castByEnum(WsmResourceType.CONTROLLED_GCP_BIG_QUERY_DATASET);
-    return new ResponseEntity<>(updatedResource.toApiResource(), HttpStatus.OK);
+    if (commonField.getFolderId() != null) {
+      folderService.addResourceToFolder(resourceId, commonField.getFolderId());
+    }
+    var folder = folderService.getFolder(workspaceUuid, resourceId);
+
+    return new ResponseEntity<>(updatedResource.toApiResource().metadata(updatedResource.toApiMetadata().folderId(folder.getId())), HttpStatus.OK);
   }
 
   @Override
@@ -401,20 +419,23 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
             .validateControlledResourceAndAction(
                 userRequest, workspaceUuid, resourceId, SamControlledResourceActions.EDIT_ACTION)
             .castByEnum(WsmResourceType.CONTROLLED_GCP_AI_NOTEBOOK_INSTANCE);
-
+    ApiResourceUpdateCommonField commonField = requestBody.getUpdateCommonFields();
     controlledResourceService.updateAiNotebookInstance(
         resource,
         requestBody.getUpdateParameters(),
-        requestBody.getName(),
-        requestBody.getDescription(),
+        commonField.getName(),
+        commonField.getDescription(),
         userRequest);
 
     final ControlledAiNotebookInstanceResource updatedResource =
         controlledResourceService
             .getControlledResource(workspaceUuid, resourceId)
             .castByEnum(WsmResourceType.CONTROLLED_GCP_AI_NOTEBOOK_INSTANCE);
-
-    return new ResponseEntity<>(updatedResource.toApiResource(), HttpStatus.OK);
+    if (commonField.getFolderId() != null) {
+      folderService.addResourceToFolder(resourceId, commonField.getFolderId());
+    }
+    var folder = folderService.getFolder(workspaceUuid, resourceId);
+    return new ResponseEntity<>(updatedResource.toApiResource().metadata(updatedResource.toApiMetadata().folderId(folder.getId())), HttpStatus.OK);
   }
 
   @Override

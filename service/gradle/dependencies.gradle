@@ -80,6 +80,9 @@ dependencies {
   // Allows us to mock final classes
   testImplementation 'org.mockito:mockito-inline:2.13.0'
 
+  annotationProcessor "org.immutables:value:2.9.1"
+  compileOnly "org.immutables:value:2.9.1"
+
   annotationProcessor group: "com.google.auto.value", name: "auto-value", version: "1.7.4"
   annotationProcessor group: "org.springframework.boot", name: "spring-boot-configuration-processor", version: "2.6.6"
 }
