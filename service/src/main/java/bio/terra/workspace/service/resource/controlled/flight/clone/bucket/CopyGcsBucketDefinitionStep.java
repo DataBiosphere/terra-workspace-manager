@@ -82,9 +82,7 @@ public class CopyGcsBucketDefinitionStep implements Step {
             ResourceKeys.PREVIOUS_RESOURCE_DESCRIPTION,
             String.class);
     final String bucketName =
-        Optional.ofNullable(
-                inputParameters.get(ControlledResourceKeys.DESTINATION_BUCKET_NAME, String.class))
-            .orElseGet(this::randomBucketName);
+        inputParameters.get(ControlledResourceKeys.DESTINATION_BUCKET_NAME, String.class);
     final PrivateResourceState privateResourceState =
         sourceBucket.getAccessScope() == AccessScopeType.ACCESS_SCOPE_PRIVATE
             ? PrivateResourceState.INITIALIZING
@@ -187,9 +185,5 @@ public class CopyGcsBucketDefinitionStep implements Step {
     } else {
       return sourceCreationParameters;
     }
-  }
-
-  private String randomBucketName() {
-    return "terra-wsm-" + UUID.randomUUID().toString().toLowerCase();
   }
 }
