@@ -2,6 +2,14 @@ package bio.terra.workspace.service.resource.controlled.flight.clone.workspace;
 
 import bio.terra.common.exception.BadRequestException;
 import bio.terra.stairway.FlightStatus;
+import bio.terra.workspace.service.resource.controlled.cloud.gcp.bqdataset.ControlledBigQueryDatasetHandler;
+import bio.terra.workspace.service.resource.controlled.cloud.gcp.bqdataset.ControlledBigQueryDatasetResource;
+import bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.ControlledGcsBucketHandler;
+import bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.ControlledGcsBucketResource;
+import bio.terra.workspace.service.resource.controlled.model.AccessScopeType;
+import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
+import bio.terra.workspace.service.resource.controlled.model.ControlledResourceFields;
+import bio.terra.workspace.service.resource.controlled.model.PrivateResourceState;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.model.ResourceLineageEntry;
 import bio.terra.workspace.service.resource.model.WsmResource;
@@ -19,6 +27,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import javax.annotation.Nullable;
+import org.apache.commons.lang3.StringUtils;
 
 public class WorkspaceCloneUtils {
 
@@ -121,6 +130,67 @@ public class WorkspaceCloneUtils {
                 sourceReferencedResource.getResourceType().toString()));
     }
     return destinationResource;
+  }
+
+  public static ControlledResource buildDestinationControlledBigQueryDataset(
+      ControlledBigQueryDatasetResource sourceDataset,
+      UUID destinationWorkspaceId,
+      UUID destinationResourceId,
+      String name,
+      @Nullable String description,
+      String destinationProjectId
+  ) {
+    final ControlledResourceFields commonFields =
+        ControlledResourceFields.builder()
+            .accessScope(sourceDataset.getAccessScope())
+            .assignedUser(sourceDataset.getAssignedUser().orElse(null))
+            .cloningInstructions(sourceDataset.getCloningInstructions())
+            .description(description)
+            .managedBy(sourceDataset.getManagedBy())
+            .name(name)
+            .resourceId(destinationResourceId)
+            .workspaceUuid(destinationWorkspaceId)
+            .build();
+    return ControlledBigQueryDatasetResource.builder()
+            .projectId(destinationProjectId)
+            .datasetName(
+                ControlledBigQueryDatasetHandler.getHandler()
+                    .generateCloudName(destinationWorkspaceId, name))
+            .common(commonFields)
+            .build();
+  }
+
+  public static ControlledResource buildDestinationControlledGcsBucket(
+      ControlledGcsBucketResource sourceBucket,
+      UUID destinationWorkspaceId,
+      UUID destinationResourceId,
+      String name,
+      @Nullable String description) {
+    List<ResourceLineageEntry> destinationResourceLineage =
+        createDestinationResourceLineage(
+            sourceBucket.getResourceLineage(),
+            sourceBucket.getWorkspaceId(),
+            sourceBucket.getResourceId());
+    var privateResourceState =
+        sourceBucket.getAccessScope() == AccessScopeType.ACCESS_SCOPE_PRIVATE
+            ? PrivateResourceState.INITIALIZING
+            : PrivateResourceState.NOT_APPLICABLE;
+    return ControlledGcsBucketResource.builder()
+        .bucketName(cloudInstanceName)
+        .common(
+            ControlledResourceFields.builder()
+                .workspaceUuid(destinationWorkspaceId)
+                .resourceId(destinationResourceId)
+                .name(name)
+                .description(description)
+                .cloningInstructions(sourceBucket.getCloningInstructions())
+                .assignedUser(sourceBucket.getAssignedUser().orElse(null))
+                .accessScope(sourceBucket.getAccessScope())
+                .managedBy(sourceBucket.getManagedBy())
+                .applicationId(sourceBucket.getApplicationId())
+                .privateResourceState(privateResourceState)
+                .resourceLineage(destinationResourceLineage)
+                .build()).build();
   }
 
   /**

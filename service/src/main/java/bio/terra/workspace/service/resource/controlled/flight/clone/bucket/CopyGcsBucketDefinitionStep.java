@@ -15,6 +15,7 @@ import bio.terra.workspace.service.iam.model.ControlledResourceIamRole;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceService;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.ControlledGcsBucketHandler;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.ControlledGcsBucketResource;
+import bio.terra.workspace.service.resource.controlled.flight.clone.workspace.WorkspaceCloneUtils;
 import bio.terra.workspace.service.resource.controlled.model.AccessScopeType;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResourceFields;
 import bio.terra.workspace.service.resource.controlled.model.PrivateResourceState;
@@ -85,10 +86,6 @@ public class CopyGcsBucketDefinitionStep implements Step {
         Optional.ofNullable(
                 inputParameters.get(ControlledResourceKeys.DESTINATION_BUCKET_NAME, String.class))
             .orElseGet(this::randomBucketName);
-    final PrivateResourceState privateResourceState =
-        sourceBucket.getAccessScope() == AccessScopeType.ACCESS_SCOPE_PRIVATE
-            ? PrivateResourceState.INITIALIZING
-            : PrivateResourceState.NOT_APPLICABLE;
     // Store effective bucket name for destination
     workingMap.put(ControlledResourceKeys.DESTINATION_BUCKET_NAME, bucketName);
     final UUID destinationWorkspaceId =
@@ -96,27 +93,9 @@ public class CopyGcsBucketDefinitionStep implements Step {
     final var destinationResourceId =
         inputParameters.get(ControlledResourceKeys.DESTINATION_RESOURCE_ID, UUID.class);
     // bucket resource for create flight
-    ControlledGcsBucketResource destinationBucketResource =
-        ControlledGcsBucketResource.builder()
-            .bucketName(
-                StringUtils.isEmpty(bucketName)
-                    ? ControlledGcsBucketHandler.getHandler()
-                        .generateCloudName(destinationWorkspaceId, resourceName)
-                    : bucketName)
-            .common(
-                ControlledResourceFields.builder()
-                    .workspaceUuid(destinationWorkspaceId)
-                    .resourceId(destinationResourceId)
-                    .name(resourceName)
-                    .description(description)
-                    .cloningInstructions(sourceBucket.getCloningInstructions())
-                    .assignedUser(sourceBucket.getAssignedUser().orElse(null))
-                    .accessScope(sourceBucket.getAccessScope())
-                    .managedBy(sourceBucket.getManagedBy())
-                    .applicationId(sourceBucket.getApplicationId())
-                    .privateResourceState(privateResourceState)
-                    .build())
-            .build();
+    var destinationBucketResource =
+        WorkspaceCloneUtils.buildDestinationControlledGcsBucket(sourceBucket,
+            destinationWorkspaceId, destinationResourceId, resourceName, description, bucketName);
 
     final ApiGcpGcsBucketCreationParameters destinationCreationParameters =
         getDestinationCreationParameters(inputParameters, workingMap);
