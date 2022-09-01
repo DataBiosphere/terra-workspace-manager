@@ -202,6 +202,8 @@ feature:
   alpha1-enabled: false
   # tps-enabled - Controls whether Terra Policy Service is called. It is always built into WSM
   tps-enabled: false
+  # azure-landing-zone-enabled - Controls whether Terra Azure Landing Zone is called.
+  azure-landing-zone-enabled: false
 
 reference:
   gitrepos:

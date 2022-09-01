@@ -21,7 +21,6 @@ import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
-import org.springframework.web.bind.annotation.RequestBody;
 
 @Component
 public class LandingZoneApiDispatch {
@@ -37,8 +36,8 @@ public class LandingZoneApiDispatch {
   }
 
   public ApiAzureLandingZoneResult createAzureLandingZone(
-      @RequestBody ApiCreateAzureLandingZoneRequestBody body, String asyncResultEndpoint) {
-    features.azureEnabledCheck();
+      ApiCreateAzureLandingZoneRequestBody body, String asyncResultEndpoint) {
+    features.azureLandingZoneEnabledCheck();
     String landingZoneDetails = "definition='%s', version='%s'";
     logger.info(
         "Requesting new Azure landing zone with the following parameters: {}",
@@ -67,12 +66,12 @@ public class LandingZoneApiDispatch {
   }
 
   public ApiAzureLandingZoneResult getCreateAzureLandingZoneResult(String jobId) {
-    features.azureEnabledCheck();
+    features.azureLandingZoneEnabledCheck();
     return fetchCreateAzureLandingZoneResult(jobId);
   }
 
   public ApiAzureLandingZoneDefinitionList listAzureLandingZonesDefinitions() {
-    features.azureEnabledCheck();
+    features.azureLandingZoneEnabledCheck();
     List<LandingZoneDefinition> templates = landingZoneService.listLandingZoneDefinitions();
 
     return new ApiAzureLandingZoneDefinitionList()
@@ -89,7 +88,7 @@ public class LandingZoneApiDispatch {
   }
 
   public void deleteLandingZone(String landingZoneId) {
-    features.azureEnabledCheck();
+    features.azureLandingZoneEnabledCheck();
     landingZoneService.deleteLandingZone(landingZoneId);
   }
 

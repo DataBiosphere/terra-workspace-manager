@@ -9,6 +9,7 @@ import bio.terra.workspace.generated.model.ApiJobControl;
 import bio.terra.workspace.generated.model.ApiLandingZoneTarget;
 import java.time.Instant;
 import java.util.Collections;
+import java.util.Optional;
 import org.apache.http.HttpStatus;
 
 public class AzureLandingZoneFixtures {
@@ -44,7 +45,13 @@ public class AzureLandingZoneFixtures {
         new DeployedLandingZone(
             landingZoneId,
             Collections.singletonList(
-                new LandingZoneResource("resId", "resourceType", null, "westus"))));
+                new LandingZoneResource(
+                    "resId",
+                    "resourceType",
+                    null,
+                    "westus",
+                    Optional.of("resName"),
+                    Optional.empty()))));
     return asyncJobResult;
   }
 
