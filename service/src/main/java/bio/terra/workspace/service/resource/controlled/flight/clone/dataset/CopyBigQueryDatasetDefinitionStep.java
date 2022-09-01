@@ -104,9 +104,7 @@ public class CopyBigQueryDatasetDefinitionStep implements Step {
     final ControlledBigQueryDatasetResource destinationResource =
         ControlledBigQueryDatasetResource.builder()
             .projectId(destinationProjectId)
-            .datasetName(
-                ControlledBigQueryDatasetHandler.getHandler()
-                    .generateCloudName(destinationWorkspaceId, datasetName))
+            .datasetName(datasetName)
             .common(commonFields)
             .build();
 
@@ -151,9 +149,5 @@ public class CopyBigQueryDatasetDefinitionStep implements Step {
           clonedDataset.getWorkspaceId(), clonedDataset.getResourceId(), userRequest);
     }
     return StepResult.getStepResultSuccess();
-  }
-
-  private String randomDatasetName() {
-    return ("terra_wsm_" + UUID.randomUUID().toString().toLowerCase()).replace('-', '_');
   }
 }
