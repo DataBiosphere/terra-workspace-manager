@@ -1,5 +1,6 @@
 package bio.terra.workspace.service.workspace;
 
+import bio.terra.workspace.amalgam.tps.TpsApiDispatch;
 import bio.terra.workspace.app.configuration.external.BufferServiceConfiguration;
 import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
 import bio.terra.workspace.db.WorkspaceDao;
@@ -65,6 +66,7 @@ public class WorkspaceService {
   private final BufferServiceConfiguration bufferServiceConfiguration;
   private final StageService stageService;
   private final FeatureConfiguration features;
+  private final TpsApiDispatch tpsApiDispatch;
   private final WorkspaceActivityLogService workspaceActivityLogService;
 
   @Autowired
@@ -75,6 +77,7 @@ public class WorkspaceService {
       BufferServiceConfiguration bufferServiceConfiguration,
       StageService stageService,
       FeatureConfiguration features,
+      TpsApiDispatch tpsApiDispatch,
       WorkspaceActivityLogService workspaceActivityLogService) {
     this.jobService = jobService;
     this.workspaceDao = workspaceDao;
@@ -82,6 +85,7 @@ public class WorkspaceService {
     this.bufferServiceConfiguration = bufferServiceConfiguration;
     this.stageService = stageService;
     this.features = features;
+    this.tpsApiDispatch = tpsApiDispatch;
     this.workspaceActivityLogService = workspaceActivityLogService;
   }
 
@@ -448,7 +452,6 @@ public class WorkspaceService {
         String.format("Clone workspace: name: '%s' id: '%s'  ", workspaceName, workspaceUuid);
 
     // Create the destination workspace synchronously first.
-    // TODO(PF-1871) copy policy on workspace clone
     createWorkspace(destinationWorkspace, null, userRequest);
 
     // Remaining steps are an async flight.

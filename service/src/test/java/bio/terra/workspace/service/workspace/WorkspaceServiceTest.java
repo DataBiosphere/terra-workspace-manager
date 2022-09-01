@@ -672,7 +672,8 @@ class WorkspaceServiceTest extends BaseConnectedTest {
             null,
             CloningInstructions.COPY_NOTHING,
             "fakeinstance",
-            "fakesnapshot");
+            "fakesnapshot",
+            /*resourceLineage=*/ null);
     referenceResourceService.createReferenceResource(snapshot, USER_REQUEST);
 
     // Validate that the reference exists.

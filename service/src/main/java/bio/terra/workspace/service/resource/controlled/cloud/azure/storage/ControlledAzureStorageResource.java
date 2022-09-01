@@ -19,11 +19,14 @@ import bio.terra.workspace.service.resource.controlled.flight.create.CreateContr
 import bio.terra.workspace.service.resource.controlled.flight.delete.DeleteControlledResourceFlight;
 import bio.terra.workspace.service.resource.controlled.model.*;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
+import bio.terra.workspace.service.resource.model.ResourceLineageEntry;
 import bio.terra.workspace.service.resource.model.StewardshipType;
 import bio.terra.workspace.service.resource.model.WsmResourceFamily;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -44,7 +47,8 @@ public class ControlledAzureStorageResource extends ControlledResource {
       @JsonProperty("managedBy") ManagedByType managedBy,
       @JsonProperty("applicationId") String applicationId,
       @JsonProperty("storageAccountName") String storageAccountName,
-      @JsonProperty("region") String region) {
+      @JsonProperty("region") String region,
+      @JsonProperty("resourceLineage") List<ResourceLineageEntry> resourceLineage) {
 
     super(
         workspaceId,
@@ -56,7 +60,8 @@ public class ControlledAzureStorageResource extends ControlledResource {
         accessScope,
         managedBy,
         applicationId,
-        privateResourceState);
+        privateResourceState,
+        resourceLineage);
     this.storageAccountName = storageAccountName;
     this.region = region;
     validate();
@@ -138,6 +143,12 @@ public class ControlledAzureStorageResource extends ControlledResource {
     return new ApiAzureStorageResource()
         .metadata(super.toApiMetadata())
         .attributes(toApiAttributes());
+  }
+
+  public String getStorageAccountEndpoint() {
+    String endpoint =
+        String.format(Locale.ROOT, "https://%s.blob.core.windows.net", storageAccountName);
+    return endpoint;
   }
 
   @Override

@@ -4,11 +4,13 @@ import bio.terra.workspace.service.resource.controlled.model.AccessScopeType;
 import bio.terra.workspace.service.resource.controlled.model.ManagedByType;
 import bio.terra.workspace.service.resource.controlled.model.PrivateResourceState;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
+import bio.terra.workspace.service.resource.model.ResourceLineageEntry;
 import bio.terra.workspace.service.resource.model.StewardshipType;
 import bio.terra.workspace.service.resource.model.WsmResourceFamily;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.workspace.exceptions.MissingRequiredFieldsException;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Supplier;
@@ -30,6 +32,7 @@ public class DbResource {
   private WsmResourceType resourceType;
   private CloningInstructions cloningInstructions;
   private String attributes;
+  @Nullable List<ResourceLineageEntry> resourceLineage;
   // controlled resource fields
   @Nullable private AccessScopeType accessScope;
   @Nullable private ManagedByType managedBy;
@@ -172,6 +175,15 @@ public class DbResource {
 
   public DbResource privateResourceState(PrivateResourceState privateResourceState) {
     this.privateResourceState = privateResourceState;
+    return this;
+  }
+
+  public Optional<List<ResourceLineageEntry>> getResourceLineage() {
+    return Optional.ofNullable(resourceLineage);
+  }
+
+  public DbResource resourceLineage(List<ResourceLineageEntry> resourceLineage) {
+    this.resourceLineage = resourceLineage;
     return this;
   }
 }

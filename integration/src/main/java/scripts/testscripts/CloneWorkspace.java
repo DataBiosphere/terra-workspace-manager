@@ -43,9 +43,9 @@ import scripts.utils.ClientTestUtils;
 import scripts.utils.CloudContextMaker;
 import scripts.utils.GcsBucketObjectUtils;
 import scripts.utils.GcsBucketUtils;
-import scripts.utils.WorkspaceAllocateTestScriptBase;
+import scripts.utils.WorkspaceAllocateWithPolicyTestScriptBase;
 
-public class CloneWorkspace extends WorkspaceAllocateTestScriptBase {
+public class CloneWorkspace extends WorkspaceAllocateWithPolicyTestScriptBase {
   private static final Logger logger = LoggerFactory.getLogger(CloneWorkspace.class);
   private ControlledGcpResourceApi cloningUserResourceApi;
   private CreatedControlledGcpGcsBucket copyDefinitionSourceBucket;
@@ -343,6 +343,11 @@ public class CloneWorkspace extends WorkspaceAllocateTestScriptBase {
     logger.info("Cloned Shared Bucket: {}", clonedSharedBucket);
     GcsBucketObjectUtils.retrieveBucketFile(
         clonedSharedBucket.getAttributes().getBucketName(), destinationProjectId, cloningUser);
+
+    // Verify Policies cloned successfully
+    assertNotNull(destinationWorkspace.getPolicies());
+    assertEquals(1, destinationWorkspace.getPolicies().stream().count());
+    assertEquals("terra", destinationWorkspace.getPolicies().get(0).getNamespace());
 
     // Verify clone of private bucket fails
     final ResourceCloneDetails privateBucketCloneDetails =

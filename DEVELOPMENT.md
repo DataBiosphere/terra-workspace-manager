@@ -325,9 +325,11 @@ export spring_profiles_include=human-readable-logging
 ### Controlling Log Level
 By default logging at INFO level and above are displayed. You can change the logging level
 by setting yet another Spring property. For example, you can set all things terra to log
-at debug level by adding this to a property YAML file:
+at debug level by adding this to a property YAML file (such as application.yaml):
 ```
 logging.level.bio.terra: debug
+# Use this to print SQL queries
+logging.level.org.springframework.jdbc.core: trace
 ```
 You can be more precise by putting more of the path in. You can use YAML syntax to include
 multiple entries, something like (but I did not test this):

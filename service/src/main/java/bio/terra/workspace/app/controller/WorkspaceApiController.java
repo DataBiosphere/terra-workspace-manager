@@ -554,6 +554,8 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
     ControllerValidationUtils.validateUserFacingId(destinationUserFacingId);
 
     // Construct the target workspace object from the inputs
+    // Policies are cloned in the flight instead of here so that they get cleaned appropriately if
+    // the flight fails.
     final Workspace destinationWorkspace =
         Workspace.builder()
             .workspaceId(destinationWorkspaceId)

@@ -11,6 +11,7 @@ import java.util.List;
 import javax.annotation.Nullable;
 import org.broadinstitute.dsde.workbench.client.sam.ApiClient;
 import org.broadinstitute.dsde.workbench.client.sam.api.GoogleApi;
+import org.broadinstitute.dsde.workbench.client.sam.api.GroupApi;
 import org.broadinstitute.dsde.workbench.client.sam.api.ResourcesApi;
 import org.broadinstitute.dsde.workbench.client.sam.model.AccessPolicyResponseEntryV2;
 import org.slf4j.Logger;
@@ -63,6 +64,11 @@ public class SamClientUtils {
   public static GoogleApi samGoogleApi(TestUserSpecification testUser, ServerSpecification server)
       throws Exception {
     return new GoogleApi(getSamApiClient(testUser, server));
+  }
+
+  public static GroupApi samGroupApi(TestUserSpecification testUser, ServerSpecification server)
+      throws Exception {
+    return new GroupApi(getSamApiClient(testUser, server));
   }
 
   // dump the Sam policy on a resource - assuming you have permission

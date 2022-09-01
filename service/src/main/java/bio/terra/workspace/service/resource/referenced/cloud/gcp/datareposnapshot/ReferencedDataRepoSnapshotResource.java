@@ -13,12 +13,14 @@ import bio.terra.workspace.generated.model.ApiResourceUnion;
 import bio.terra.workspace.service.datarepo.DataRepoService;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
+import bio.terra.workspace.service.resource.model.ResourceLineageEntry;
 import bio.terra.workspace.service.resource.model.WsmResourceFamily;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.resource.referenced.cloud.gcp.ReferencedResource;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Strings;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -36,6 +38,7 @@ public class ReferencedDataRepoSnapshotResource extends ReferencedResource {
    * @param cloningInstructions cloning instructions
    * @param instanceName name of the data repository instance (e.g., "terra")
    * @param snapshotId name of the snapshot
+   * @param resourceLineage resource lineage
    */
   @JsonCreator
   public ReferencedDataRepoSnapshotResource(
@@ -45,8 +48,9 @@ public class ReferencedDataRepoSnapshotResource extends ReferencedResource {
       @JsonProperty("description") String description,
       @JsonProperty("cloningInstructions") CloningInstructions cloningInstructions,
       @JsonProperty("instanceName") String instanceName,
-      @JsonProperty("snapshotId") String snapshotId) {
-    super(workspaceId, resourceId, name, description, cloningInstructions);
+      @JsonProperty("snapshotId") String snapshotId,
+      @JsonProperty("resourceLineage") List<ResourceLineageEntry> resourceLineage) {
+    super(workspaceId, resourceId, name, description, cloningInstructions, resourceLineage);
     this.instanceName = instanceName;
     this.snapshotId = snapshotId;
     validate();
@@ -152,7 +156,8 @@ public class ReferencedDataRepoSnapshotResource extends ReferencedResource {
         .name(getName())
         .snapshotId(getSnapshotId())
         .resourceId(getResourceId())
-        .workspaceId(getWorkspaceId());
+        .workspaceId(getWorkspaceId())
+        .resourceLineage(getResourceLineage());
   }
 
   public static class Builder {
@@ -163,6 +168,7 @@ public class ReferencedDataRepoSnapshotResource extends ReferencedResource {
     private String snapshotId;
     private UUID resourceId;
     private UUID workspaceId;
+    private List<ResourceLineageEntry> resourceLineage;
 
     public ReferencedDataRepoSnapshotResource.Builder workspaceId(UUID workspaceUuid) {
       this.workspaceId = workspaceUuid;
@@ -200,6 +206,11 @@ public class ReferencedDataRepoSnapshotResource extends ReferencedResource {
       return this;
     }
 
+    public Builder resourceLineage(List<ResourceLineageEntry> resourceLineage) {
+      this.resourceLineage = resourceLineage;
+      return this;
+    }
+
     public ReferencedDataRepoSnapshotResource build() {
       // On the create path, we can omit the resourceId and have it filled in by the builder.
       return new ReferencedDataRepoSnapshotResource(
@@ -209,7 +220,8 @@ public class ReferencedDataRepoSnapshotResource extends ReferencedResource {
           description,
           cloningInstructions,
           instanceName,
-          snapshotId);
+          snapshotId,
+          resourceLineage);
     }
   }
 }

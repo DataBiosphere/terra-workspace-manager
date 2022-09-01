@@ -53,7 +53,8 @@ public class FindResourcesToCloneStepTest extends BaseUnitTest {
             AccessScopeType.ACCESS_SCOPE_SHARED,
             ManagedByType.MANAGED_BY_USER,
             null,
-            "bucket-with-hole-in-it-dear-liza");
+            "bucket-with-hole-in-it-dear-liza",
+            /*resourceLineage=*/ null);
 
     findResourcesToCloneStep = new FindResourcesToCloneStep(mockResourceDao);
     doReturn(mockStairway).when(mockFlightContext).getStairway();

@@ -39,7 +39,7 @@ import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.resource.ResourceValidationUtils;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceMetadataManager;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceService;
-import bio.terra.workspace.service.resource.controlled.cloud.azure.AzureControlledStorageResourceService;
+import bio.terra.workspace.service.resource.controlled.cloud.azure.AzureStorageAccessService;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.disk.ControlledAzureDiskResource;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.ip.ControlledAzureIpResource;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.network.ControlledAzureNetworkResource;
@@ -67,7 +67,7 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
   private final Logger logger = LoggerFactory.getLogger(ControlledGcpResourceApiController.class);
 
   private final ControlledResourceService controlledResourceService;
-  private final AzureControlledStorageResourceService azureControlledStorageResourceService;
+  private final AzureStorageAccessService azureControlledStorageResourceService;
   private final JobService jobService;
   private final FeatureConfiguration features;
   private final AzureConfiguration azureConfiguration;
@@ -78,7 +78,7 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
   public ControlledAzureResourceApiController(
       AuthenticatedUserRequestFactory authenticatedUserRequestFactory,
       ControlledResourceService controlledResourceService,
-      AzureControlledStorageResourceService azureControlledStorageResourceService,
+      AzureStorageAccessService azureControlledStorageResourceService,
       SamService samService,
       JobService jobService,
       HttpServletRequest request,
