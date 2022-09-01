@@ -91,17 +91,6 @@ public class CopyBigQueryDatasetDefinitionStep implements Step {
         gcpCloudContextService.getRequiredGcpProject(destinationWorkspaceId);
     final var destinationResourceId =
         inputParameters.get(ControlledResourceKeys.DESTINATION_RESOURCE_ID, UUID.class);
-    final ControlledResourceFields commonFields =
-        ControlledResourceFields.builder()
-            .accessScope(sourceDataset.getAccessScope())
-            .assignedUser(sourceDataset.getAssignedUser().orElse(null))
-            .cloningInstructions(sourceDataset.getCloningInstructions())
-            .description(description)
-            .managedBy(sourceDataset.getManagedBy())
-            .name(resourceName)
-            .resourceId(destinationResourceId)
-            .workspaceUuid(destinationWorkspaceId)
-            .build();
     var destinationResource =
         buildDestinationControlledBigQueryDataset(
             sourceDataset,
@@ -153,9 +142,5 @@ public class CopyBigQueryDatasetDefinitionStep implements Step {
           clonedDataset.getWorkspaceId(), clonedDataset.getResourceId(), userRequest);
     }
     return StepResult.getStepResultSuccess();
-  }
-
-  private String randomDatasetName() {
-    return ("terra_wsm_" + UUID.randomUUID().toString().toLowerCase()).replace('-', '_');
   }
 }
