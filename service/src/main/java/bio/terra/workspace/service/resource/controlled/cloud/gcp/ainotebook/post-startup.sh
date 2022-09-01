@@ -128,20 +128,43 @@ fi
 # Set variables into the .bash_profile such that they are available
 # to terminals, notebooks, and other tools
 
-readonly GOOGLE_PROJECT="$(
-  sudo -u "${JUPYTER_USER}" sh -c "terra workspace describe --format=json" | \
-  jq --raw-output ".googleProjectId")"
-echo "export GOOGLE_PROJECT='${GOOGLE_PROJECT}'" >> "/home/${JUPYTER_USER}/.bash_profile"
+# These are environment variables that are set by Leonardo for
+# Cloud Environments (https://github.com/DataBiosphere/leonardo)
+
+# OWNER_EMAIL is really the Terra user account email address
 
 readonly OWNER_EMAIL="$(
   sudo -u "${JUPYTER_USER}" sh -c "terra workspace describe --format=json" | \
   jq --raw-output ".userEmail")"
 echo "export OWNER_EMAIL='${OWNER_EMAIL}'" >> "/home/${JUPYTER_USER}/.bash_profile"
 
+# GOOGLE_PROJECT is the project id for the GCP project backing the workspace
+
+readonly GOOGLE_PROJECT="$(
+  sudo -u "${JUPYTER_USER}" sh -c "terra workspace describe --format=json" | \
+  jq --raw-output ".googleProjectId")"
+echo "export GOOGLE_PROJECT='${GOOGLE_PROJECT}'" >> "/home/${JUPYTER_USER}/.bash_profile"
+
+# PET_SA_EMAIL is the pet service account for the Terra user and
+# is specific to the GCP project backing the workspace
+
 readonly PET_SA_EMAIL="$(
   sudo -u "${JUPYTER_USER}" sh -c "terra auth status --format=json" | \
   jq --raw-output ".serviceAccountEmail")"
 echo "export PET_SA_EMAIL='${PET_SA_EMAIL}'" >> "/home/${JUPYTER_USER}/.bash_profile"
+
+# These are equivalent environment variables which are set for a
+# command when calling "terra app execute <command>".
+
+# GOOGLE_CLOUD_PROJECT is the project id for the GCP project backing the
+# workspace.
+
+echo "export GOOGLE_CLOUD_PROJECT='${GOOGLE_PROJECT}'" >> "/home/${JUPYTER_USER}/.bash_profile"
+
+# GOOGLE_SERVICE_ACCOUNT_EMAIL is the pet service account for the Terra user
+# and is specific to the GCP project backing the workspace.
+
+echo "export GOOGLE_SERVICE_ACCOUNT_EMAIL='${PET_SA_EMAIL}'" >> "/home/${JUPYTER_USER}/.bash_profile"
 
 ###############
 # git setup
