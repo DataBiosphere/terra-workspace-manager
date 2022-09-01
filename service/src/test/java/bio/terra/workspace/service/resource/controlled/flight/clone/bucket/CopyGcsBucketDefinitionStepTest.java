@@ -6,6 +6,7 @@ import static bio.terra.workspace.service.resource.controlled.flight.clone.bucke
 import static bio.terra.workspace.service.resource.controlled.flight.clone.bucket.GcsBucketCloneTestFixtures.SOURCE_BUCKET_CREATION_PARAMETERS;
 import static bio.terra.workspace.service.resource.controlled.flight.clone.bucket.GcsBucketCloneTestFixtures.SOURCE_BUCKET_RESOURCE;
 import static bio.terra.workspace.service.resource.controlled.flight.clone.bucket.GcsBucketCloneTestFixtures.SOURCE_RESOURCE_NAME;
+import static bio.terra.workspace.service.resource.controlled.flight.clone.bucket.GcsBucketCloneTestFixtures.SOURCE_WORKSPACE_ID;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.ArgumentMatchers.any;
@@ -111,6 +112,10 @@ public class CopyGcsBucketDefinitionStepTest extends BaseUnitTest {
     assertEquals(
         SOURCE_BUCKET_RESOURCE.getPrivateResourceState(),
         destinationBucketResource.getPrivateResourceState());
+    var lineage = destinationBucketResource.getResourceLineage();
+    assertEquals(1, lineage.size());
+    assertEquals(SOURCE_WORKSPACE_ID, lineage.get(0).getSourceWorkspaceId());
+    assertEquals(SOURCE_BUCKET_RESOURCE.getResourceId(), lineage.get(0).getSourceResourceId());
 
     final ControlledResourceIamRole controlledResourceIamRole = iamRoleCaptor.getValue();
     assertEquals(ControlledResourceIamRole.EDITOR, controlledResourceIamRole);

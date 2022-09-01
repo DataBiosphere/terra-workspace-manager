@@ -1,5 +1,7 @@
 package bio.terra.workspace.service.resource.controlled.flight.clone.dataset;
 
+import static bio.terra.workspace.service.resource.controlled.flight.clone.workspace.WorkspaceCloneUtils.buildDestinationControlledBigQueryDataset;
+
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.Step;
@@ -12,7 +14,6 @@ import bio.terra.workspace.generated.model.ApiGcpBigQueryDatasetCreationParamete
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.model.ControlledResourceIamRole;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceService;
-import bio.terra.workspace.service.resource.controlled.cloud.gcp.bqdataset.ControlledBigQueryDatasetHandler;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.bqdataset.ControlledBigQueryDatasetResource;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResourceFields;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
@@ -101,14 +102,15 @@ public class CopyBigQueryDatasetDefinitionStep implements Step {
             .resourceId(destinationResourceId)
             .workspaceUuid(destinationWorkspaceId)
             .build();
-    final ControlledBigQueryDatasetResource destinationResource =
-        ControlledBigQueryDatasetResource.builder()
-            .projectId(destinationProjectId)
-            .datasetName(
-                ControlledBigQueryDatasetHandler.getHandler()
-                    .generateCloudName(destinationWorkspaceId, datasetName))
-            .common(commonFields)
-            .build();
+    var destinationResource =
+        buildDestinationControlledBigQueryDataset(
+            sourceDataset,
+            destinationWorkspaceId,
+            destinationResourceId,
+            resourceName,
+            description,
+            datasetName,
+            destinationProjectId);
 
     final ApiGcpBigQueryDatasetCreationParameters creationParameters =
         new ApiGcpBigQueryDatasetCreationParameters().datasetId(datasetName).location(location);
