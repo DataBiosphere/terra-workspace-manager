@@ -81,7 +81,9 @@ jobs:
       if: steps.skiptest.outputs.is-bump == 'no'
       env:
         PGPASSWORD: postgres
-      run: psql -h 127.0.0.1 -U postgres -f ./service/local-dev/local-postgres-init.sql
+      run: >\
+        psql -h 127.0.0.1 -U postgres -f ./service/local-dev/local-postgres-init.sql
+        docker restart postgres
 
     - name: Set up JDK
       if: steps.skiptest.outputs.is-bump == 'no'
