@@ -225,9 +225,7 @@ public class Workspace {
       strippedProperties.put(
           Properties.VERSION, fullWorkspace.getProperties().get(Properties.VERSION));
     }
-    if (strippedProperties.size() > 0) {
-      strippedWorkspace.properties(strippedProperties);
-    }
+    strippedWorkspace.properties(strippedProperties);
 
     return strippedWorkspace.build();
   }
