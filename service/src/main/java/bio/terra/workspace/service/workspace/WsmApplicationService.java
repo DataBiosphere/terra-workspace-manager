@@ -85,14 +85,14 @@ public class WsmApplicationService {
   private WsmWorkspaceApplication commonAbleJob(
       AuthenticatedUserRequest userRequest,
       Workspace workspace,
-      List<String> applicationIdList,
+      List<String> applicationIds,
       AbleEnum ableEnum) {
 
     String description =
         String.format(
             "%s application %s on workspace %s",
             ableEnum.name().toLowerCase(),
-            applicationIdList.toString(),
+            applicationIds.toString(),
             workspace.getWorkspaceId().toString());
 
     JobBuilder job =
@@ -106,7 +106,7 @@ public class WsmApplicationService {
                 ableEnum == AbleEnum.ENABLE
                     ? OperationType.APPLICATION_ENABLED
                     : OperationType.APPLICATION_DISABLED)
-            .addParameter(WorkspaceFlightMapKeys.APPLICATION_IDS, applicationIdList)
+            .addParameter(WorkspaceFlightMapKeys.APPLICATION_IDS, applicationIds)
             .addParameter(WsmApplicationKeys.APPLICATION_ABLE_ENUM, ableEnum);
     return job.submitAndWait(WsmWorkspaceApplication.class);
   }

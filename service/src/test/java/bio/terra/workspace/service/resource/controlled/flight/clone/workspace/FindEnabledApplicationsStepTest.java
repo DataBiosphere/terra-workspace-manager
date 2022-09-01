@@ -23,7 +23,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 
-public class FindEnabledApplicationStepTest extends BaseUnitTest {
+public class FindEnabledApplicationsStepTest extends BaseUnitTest {
 
   private static final String FLIGHT_ID = "asdfjkl-qwerty";
   private static final String LEO_ID = "leo";
@@ -31,7 +31,7 @@ public class FindEnabledApplicationStepTest extends BaseUnitTest {
   @Mock private ApplicationDao mockApplicationDao;
   @Mock private FlightContext mockFlightContext;
   @Mock private Stairway mockStairway;
-  private FindEnabledApplicationStep findEnabledApplicationStep;
+  private FindEnabledApplicationsStep findEnabledApplicationsStep;
   private FlightMap workingMap;
   private WsmApplication enabledApplication;
   private WsmApplication disabledApplication;
@@ -60,7 +60,7 @@ public class FindEnabledApplicationStepTest extends BaseUnitTest {
     disabledWorkspaceApplication =
         new WsmWorkspaceApplication().application(disabledApplication).enabled(false);
 
-    findEnabledApplicationStep = new FindEnabledApplicationStep(mockApplicationDao);
+    findEnabledApplicationsStep = new FindEnabledApplicationsStep(mockApplicationDao);
     when((mockFlightContext).getStairway()).thenReturn(mockStairway);
     when((mockStairway).createFlightId()).thenReturn(FLIGHT_ID);
 
@@ -83,7 +83,7 @@ public class FindEnabledApplicationStepTest extends BaseUnitTest {
     when((mockApplicationDao).listWorkspaceApplications(any(UUID.class), eq(0), eq(100)))
         .thenReturn(batch1);
 
-    final StepResult stepResult = findEnabledApplicationStep.doStep(mockFlightContext);
+    final StepResult stepResult = findEnabledApplicationsStep.doStep(mockFlightContext);
 
     assertEquals(StepResult.getStepResultSuccess(), stepResult);
     final List<String> result = workingMap.get(WorkspaceFlightMapKeys.APPLICATION_IDS, List.class);

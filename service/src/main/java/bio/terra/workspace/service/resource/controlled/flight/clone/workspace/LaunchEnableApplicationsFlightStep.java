@@ -15,7 +15,7 @@ import bio.terra.workspace.service.workspace.flight.application.able.Application
 import bio.terra.workspace.service.workspace.model.Workspace;
 import java.util.List;
 
-public class LaunchEnableApplicationFlightStep implements Step {
+public class LaunchEnableApplicationsFlightStep implements Step {
   @Override
   public StepResult doStep(FlightContext context) throws InterruptedException, RetryException {
     validateRequiredEntries(
@@ -54,7 +54,7 @@ public class LaunchEnableApplicationFlightStep implements Step {
             "Enable applications %s in workspace %s",
             applicationIds, destinationWorkspace.getWorkspaceId()));
 
-    // Build a ApplicationAbleFlight
+    // Enable applications in destination workspace
     try {
       stairway.submit(
           context.getStairway().createFlightId(),

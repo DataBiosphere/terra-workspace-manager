@@ -15,12 +15,12 @@ import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class FindEnabledApplicationStep implements Step {
+public class FindEnabledApplicationsStep implements Step {
 
-  private static final Logger logger = LoggerFactory.getLogger(FindEnabledApplicationStep.class);
+  private static final Logger logger = LoggerFactory.getLogger(FindEnabledApplicationsStep.class);
   private final ApplicationDao applicationDao;
 
-  public FindEnabledApplicationStep(ApplicationDao applicationDao) {
+  public FindEnabledApplicationsStep(ApplicationDao applicationDao) {
     this.applicationDao = applicationDao;
   }
 
