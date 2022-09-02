@@ -128,6 +128,9 @@ fi
 # Set variables into the .bash_profile such that they are available
 # to terminals, notebooks, and other tools
 
+# Keep in sync with terra CLI environment variables:
+# https://github.com/DataBiosphere/terra-cli/blob/main/src/main/java/bio/terra/cli/app/CommandRunner.java#L88
+
 # These are environment variables that are set by Leonardo for
 # Cloud Environments (https://github.com/DataBiosphere/leonardo)
 
