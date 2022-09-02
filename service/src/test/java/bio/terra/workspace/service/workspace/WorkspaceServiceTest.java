@@ -121,6 +121,7 @@ class WorkspaceServiceTest extends BaseConnectedTest {
           .addAdditionalDataItem(new ApiTpsPolicyPair().key("group").value("my_fake_group"));
 
   public static final String SPEND_PROFILE_ID = "wm-default-spend-profile";
+  private static final String APPLICATION_ID = "leo";
 
   @MockBean private DataRepoService mockDataRepoService;
   /** Mock SamService does nothing for all calls that would throw if unauthorized. */
@@ -777,13 +778,13 @@ class WorkspaceServiceTest extends BaseConnectedTest {
     final UUID sourceWorkspaceId =
         workspaceService.createWorkspace(sourceWorkspace, null, USER_REQUEST);
 
-    // create a cloud context
+    // Create a cloud context
     final String createCloudContextJobId = UUID.randomUUID().toString();
     workspaceService.createGcpCloudContext(sourceWorkspace, createCloudContextJobId, USER_REQUEST);
     jobService.waitForJob(createCloudContextJobId);
     assertNull(jobService.retrieveJobResult(createCloudContextJobId, Object.class).getException());
 
-    // add a bucket resource
+    // Add a bucket resource
     final ControlledGcsBucketResource bucketResource =
         ControlledGcsBucketResource.builder()
             .bucketName("terra-test-" + UUID.randomUUID().toString().toLowerCase())
@@ -821,7 +822,7 @@ class WorkspaceServiceTest extends BaseConnectedTest {
             bucketResource, ControlledResourceIamRole.OWNER, USER_REQUEST, creationParameters);
 
     // Enable an application.
-    appService.enableWorkspaceApplication(USER_REQUEST, sourceWorkspace, "leo");
+    appService.enableWorkspaceApplication(USER_REQUEST, sourceWorkspace, APPLICATION_ID);
 
     final ControlledGcsBucketResource createdBucketResource =
         createdResource.castByEnum(WsmResourceType.CONTROLLED_GCP_GCS_BUCKET);
@@ -866,9 +867,10 @@ class WorkspaceServiceTest extends BaseConnectedTest {
             .orElseThrow());
 
     // Destination workspace should have an enabled application
-    assertTrue(appService.getWorkspaceApplication(destinationWorkspace, "leo").isEnabled());
+    assertTrue(
+        appService.getWorkspaceApplication(destinationWorkspace, APPLICATION_ID).isEnabled());
 
-    // clean up
+    // Clean up
     workspaceService.deleteWorkspace(sourceWorkspace, USER_REQUEST);
     workspaceService.deleteWorkspace(destinationWorkspace, USER_REQUEST);
   }
@@ -884,17 +886,16 @@ class WorkspaceServiceTest extends BaseConnectedTest {
             .spendProfileId(new SpendProfileId(SPEND_PROFILE_ID))
             .build();
 
-    final UUID sourceWorkspaceId =
-        workspaceService.createWorkspace(sourceWorkspace, null, USER_REQUEST);
+    workspaceService.createWorkspace(sourceWorkspace, null, USER_REQUEST);
 
-    // create a cloud context
+    // Create a cloud context
     final String createCloudContextJobId = UUID.randomUUID().toString();
     workspaceService.createGcpCloudContext(sourceWorkspace, createCloudContextJobId, USER_REQUEST);
     jobService.waitForJob(createCloudContextJobId);
     assertNull(jobService.retrieveJobResult(createCloudContextJobId, Object.class).getException());
 
     // Enable an application.
-    appService.enableWorkspaceApplication(USER_REQUEST, sourceWorkspace, "leo");
+    appService.enableWorkspaceApplication(USER_REQUEST, sourceWorkspace, APPLICATION_ID);
 
     final Workspace destinationWorkspace =
         defaultRequestBuilder(UUID.randomUUID())
@@ -920,9 +921,10 @@ class WorkspaceServiceTest extends BaseConnectedTest {
     assertTrue(
         gcpCloudContextService.getGcpCloudContext(destinationWorkspace.getWorkspaceId()).isEmpty());
 
-    // clean up
+    // Remove the effect of lastStepFailure, and clean up the created workspace
     jobService.setFlightDebugInfoForTest(null);
     workspaceService.deleteWorkspace(sourceWorkspace, USER_REQUEST);
+    workspaceService.deleteWorkspace(destinationWorkspace, USER_REQUEST);
   }
 
   @Test

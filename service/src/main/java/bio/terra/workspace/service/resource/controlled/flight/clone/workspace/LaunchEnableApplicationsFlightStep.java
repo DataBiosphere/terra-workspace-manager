@@ -71,6 +71,8 @@ public class LaunchEnableApplicationsFlightStep implements Step {
 
   @Override
   public StepResult undoStep(FlightContext context) throws InterruptedException {
+    // Don't need to disable applications, since an earlier step's undo will delete destination
+    // workspace.
     return StepResult.getStepResultSuccess();
   }
 }

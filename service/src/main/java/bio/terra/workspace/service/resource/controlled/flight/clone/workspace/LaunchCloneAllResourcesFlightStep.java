@@ -18,7 +18,6 @@ import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.Contr
 import bio.terra.workspace.service.workspace.model.Workspace;
 import com.fasterxml.jackson.core.type.TypeReference;
 import java.util.List;
-import javax.annotation.Nullable;
 
 /**
  * Given a list of resources to be cloned, build a flight with one step for each, run it, and wait.
@@ -36,28 +35,26 @@ public class LaunchCloneAllResourcesFlightStep implements Step {
         context.getWorkingMap(),
         ControlledResourceKeys.RESOURCES_TO_CLONE,
         ControlledResourceKeys.CLONE_ALL_RESOURCES_FLIGHT_ID);
-    final var userRequest =
+    var userRequest =
         context
             .getInputParameters()
             .get(JobMapKeys.AUTH_USER_INFO.getKeyName(), AuthenticatedUserRequest.class);
-    @Nullable
-    final var location =
-        context.getInputParameters().get(ControlledResourceKeys.LOCATION, String.class);
-    final var cloneAllResourcesFlightId =
+    var location = context.getInputParameters().get(ControlledResourceKeys.LOCATION, String.class);
+    var cloneAllResourcesFlightId =
         context
             .getWorkingMap()
             .get(ControlledResourceKeys.CLONE_ALL_RESOURCES_FLIGHT_ID, String.class);
 
-    final List<ResourceCloneInputs> resourceCloneInputs =
+    List<ResourceCloneInputs> resourceCloneInputs =
         context
             .getWorkingMap()
             .get(ControlledResourceKeys.RESOURCES_TO_CLONE, new TypeReference<>() {});
 
-    final var destinationWorkspace =
+    var destinationWorkspace =
         context.getInputParameters().get(JobMapKeys.REQUEST.getKeyName(), Workspace.class);
-    final Stairway stairway = context.getStairway();
+    Stairway stairway = context.getStairway();
 
-    final FlightMap subflightInputParameters = new FlightMap();
+    FlightMap subflightInputParameters = new FlightMap();
     subflightInputParameters.put(JobMapKeys.AUTH_USER_INFO.getKeyName(), userRequest);
     subflightInputParameters.put(ControlledResourceKeys.RESOURCES_TO_CLONE, resourceCloneInputs);
     subflightInputParameters.put(

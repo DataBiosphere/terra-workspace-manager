@@ -29,18 +29,18 @@ public class FindEnabledApplicationsStep implements Step {
     FlightUtils.validateRequiredEntries(
         context.getInputParameters(),
         WorkspaceFlightMapKeys.ControlledResourceKeys.SOURCE_WORKSPACE_ID);
-    final var sourceWorkspaceId =
+    var sourceWorkspaceId =
         context
             .getInputParameters()
             .get(WorkspaceFlightMapKeys.ControlledResourceKeys.SOURCE_WORKSPACE_ID, UUID.class);
     int offset = 0;
-    final int limit = 100;
+    int limit = 100;
     List<WsmWorkspaceApplication> batch;
-    final List<String> result = new ArrayList<>();
+    List<String> result = new ArrayList<>();
     do {
       batch = applicationDao.listWorkspaceApplications(sourceWorkspaceId, offset, limit);
       offset += limit;
-      final List<WsmWorkspaceApplication> enabledApplications =
+      List<WsmWorkspaceApplication> enabledApplications =
           batch.stream().filter(WsmWorkspaceApplication::isEnabled).toList();
       enabledApplications.forEach(r -> result.add(r.getApplication().getApplicationId()));
     } while (batch.size() == limit);

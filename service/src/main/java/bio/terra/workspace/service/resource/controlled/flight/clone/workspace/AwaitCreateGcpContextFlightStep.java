@@ -23,12 +23,12 @@ public class AwaitCreateGcpContextFlightStep implements Step {
   public StepResult doStep(FlightContext context) throws InterruptedException, RetryException {
     FlightUtils.validateRequiredEntries(
         context.getWorkingMap(), ControlledResourceKeys.CREATE_CLOUD_CONTEXT_FLIGHT_ID);
-    final var jobId =
+    var jobId =
         context
             .getWorkingMap()
             .get(ControlledResourceKeys.CREATE_CLOUD_CONTEXT_FLIGHT_ID, String.class);
     try {
-      final FlightState subflightState =
+      FlightState subflightState =
           context.getStairway().waitForFlight(jobId, FLIGHT_POLL_SECONDS, FLIGHT_POLL_CYCLES);
       if (FlightStatus.SUCCESS != subflightState.getFlightStatus()) {
         // no point in retrying the await step
