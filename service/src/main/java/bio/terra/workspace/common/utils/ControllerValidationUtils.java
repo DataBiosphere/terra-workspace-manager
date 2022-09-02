@@ -1,7 +1,7 @@
 package bio.terra.workspace.common.utils;
 
 import bio.terra.common.exception.ValidationException;
-import bio.terra.landingzone.service.landingzone.azure.model.AzureLandingZoneRequest;
+import bio.terra.landingzone.service.landingzone.azure.model.LandingZoneRequest;
 import bio.terra.workspace.generated.model.ApiCloudPlatform;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResourceCategory;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResourceFields;
@@ -140,8 +140,8 @@ public final class ControllerValidationUtils {
     }
   }
 
-  public static void validateAzureLandingZone(AzureLandingZoneRequest azureLandingZone) {
-    if (StringUtils.isEmpty(azureLandingZone.getDefinition())) {
+  public static void validateAzureLandingZone(LandingZoneRequest azureLandingZone) {
+    if (StringUtils.isEmpty(azureLandingZone.definition())) {
       throw new ValidationException("Definition must be set");
     }
   }

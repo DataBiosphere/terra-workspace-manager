@@ -76,6 +76,23 @@ paths:
         '500':
           $ref: '#components/responses/ServerError'
 
+  /api/landingzones/v1/azure/{landingZoneId}/resources:
+    parameters:
+      - $ref: '#/components/parameters/LandingZoneId'
+    get:
+      summary: List all Azure landing zones resources
+      operationId: listAzureLandingZonesResources
+      tags: [ LandingZones ]
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AzureLandingZoneResourcesList'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
 components:
   schemas:
     CreateAzureLandingZoneRequestBody:
@@ -140,6 +157,12 @@ components:
         resourceType:
           description: Azure resource type
           type: string
+        resourceName:
+          description: Azure resource name
+          type: string
+        resourceParentId:
+          description: Azure resource Id of a resource parent
+          type: string
         region:
           description: A region where an Azure resource deployed
           type: string
@@ -199,6 +222,29 @@ components:
         resourceGroupId:
           description: The ID of Azure resource group associated with the landing zone.
           type: string
+
+    AzureLandingZoneResourcesList:
+      type: object
+      required: [resources]
+      properties:
+        resources:
+          description: A list of Azure landing zones deployed resources.
+          type: array
+          items:
+            $ref: '#/components/schemas/AzureLandingZoneResourcesPurposeGroup'
+
+    AzureLandingZoneResourcesPurposeGroup:
+      type: object
+      required: [purpose,deployedresources]
+      properties:
+        purpose:
+          description: Purpose tag value string
+          type: string
+        deployedresources:
+          description: A list of Azure landing zones deployed resources
+          type: array
+          items:
+            $ref: '#/components/schemas/AzureLandingZoneDeployedResource'
 
   responses:
     AzureLandingZoneResponse:

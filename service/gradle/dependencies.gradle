@@ -3,7 +3,6 @@ dependencies {
   // Google dependencies
   constraints {
     implementation 'com.google.guava:guava:31.1-jre' // "-jre" for Java 8 or higher
-    implementation 'bio.terra:terra-cloud-resource-lib:2.0.1-J17-SNAPSHOT'
   }
   implementation platform('com.google.cloud:libraries-bom:25.1.0')
   implementation group: "com.google.auto.value", name: "auto-value-annotations"
@@ -21,9 +20,8 @@ dependencies {
   implementation group: "io.opencensus", name: "opencensus-contrib-http-jaxrs", version: "0.28.3"
 
   // Get stairway via TCL
-  implementation("bio.terra:terra-common-lib:0.0.66-SNAPSHOT") {
-    exclude group: "org.broadinstitute.dsde.workbench", module: "sam-client_2.12"
-  }
+  implementation group: "bio.terra", name: "terra-common-lib", version: "0.0.66-SNAPSHOT"
+
   implementation group: "org.broadinstitute.dsde.workbench", name: "sam-client_2.13", version: "0.1-e826d4d"
   implementation group: "bio.terra", name: "terra-resource-buffer-client", version: "0.4.3-SNAPSHOT"
   // Required by Sam client
@@ -31,20 +29,13 @@ dependencies {
   implementation group: "com.squareup.okhttp3", name: "logging-interceptor", version: "4.9.1"
 
   // Cloud Resource Library
-  implementation group: 'bio.terra', name: 'terra-cloud-resource-lib'
+  implementation group: 'bio.terra', name: 'terra-cloud-resource-lib', version: "1.2.0-SNAPSHOT"
 
   // Terra Policy Service
-  implementation('bio.terra:terra-policy-service:0.2.4-SNAPSHOT') {
-    exclude group: "org.broadinstitute.dsde.workbench", module: "sam-client_2.12"
-  }
+  implementation group: 'bio.terra', name: 'terra-policy-service', version: '0.2.4-SNAPSHOT'
 
   //Terra Landing Zone Service
-  implementation ('bio.terra:terra-landing-zone-service:0.0.3-SNAPSHOT') {
-    exclude group: "org.broadinstitute.dsde.workbench", module: "sam-client_2.12"
-  }
-
-  //Terra Landing Zone Service (use different version of CRL above)
-  implementation group: 'bio.terra', name: 'terra-landing-zone-service', version: "0.0.1-ALPHA-2-SNAPSHOT"
+  implementation group: 'bio.terra', name: 'terra-landing-zone-service', version: "0.0.3-SNAPSHOT"
 
   // Storage transfer service
   implementation group: 'com.google.apis', name: 'google-api-services-storagetransfer', version: 'v1-rev20220324-1.32.1'
