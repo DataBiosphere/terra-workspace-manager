@@ -21,7 +21,6 @@ import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
-import org.springframework.web.bind.annotation.RequestBody;
 
 @Component
 public class LandingZoneApiDispatch {
@@ -37,7 +36,7 @@ public class LandingZoneApiDispatch {
   }
 
   public ApiAzureLandingZoneResult createAzureLandingZone(
-      @RequestBody ApiCreateAzureLandingZoneRequestBody body, String asyncResultEndpoint) {
+      ApiCreateAzureLandingZoneRequestBody body, String asyncResultEndpoint) {
     features.azureEnabledCheck();
     String landingZoneDetails = "definition='%s', version='%s'";
     logger.info(
