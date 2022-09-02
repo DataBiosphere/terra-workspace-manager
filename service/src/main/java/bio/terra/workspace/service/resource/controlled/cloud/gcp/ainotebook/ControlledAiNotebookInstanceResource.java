@@ -57,7 +57,6 @@ public class ControlledAiNotebookInstanceResource extends ControlledResource {
       Set.of(PROXY_MODE_METADATA_KEY, WORKSPACE_ID_METADATA_KEY, SERVER_ID_METADATA_KEY);
 
   protected static final int MAX_INSTANCE_NAME_LENGTH = 63;
-  protected static final String AUTO_NAME_DATE_FORMAT = "-yyyyMMdd-HHmmss";
   private final String instanceId;
   private final String location;
   private final String projectId;
