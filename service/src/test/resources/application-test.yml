@@ -18,6 +18,7 @@ workspace:
     uri: jdbc:postgresql://127.0.0.1:5432/wsm_stairway
     username: stairwayuser
     poolMaxIdle: 1
+    jmxEnabled: false
   status-check:
     # Disable the periodic status check. We mock the Sam service, which is periodically called by
     # this status check. Mockito does not like it's mocks being modified and called concurrently.
@@ -29,6 +30,7 @@ workspace:
     uri: jdbc:postgresql://127.0.0.1:5432/wsm_db
     username: dbuser
     poolMaxIdle: 1
+    jmxEnabled: false
 
 terra.common:
   kubernetes:
@@ -49,10 +51,13 @@ feature:
 policy:
   policy-database:
     poolMaxIdle: 1
+    jmxEnabled: false
 
 #Terra Landing Zone Service configuration
 landingzone:
   landingzone-database:
     poolMaxIdle: 1
+    jmxEnabled: false
   landingzone-stairway-database:
     poolMaxIdle: 1
+    jmxEnabled: false

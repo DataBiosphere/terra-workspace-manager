@@ -6,6 +6,7 @@ import static org.mockito.Mockito.doReturn;
 
 import bio.terra.workspace.app.configuration.external.StatusCheckConfiguration;
 import bio.terra.workspace.common.BaseUnitTest;
+import bio.terra.workspace.common.MockBeanUnitTest;
 import bio.terra.workspace.service.iam.SamService;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -13,10 +14,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.MockBean;
 
-public class WorkspaceManagerStatusServiceTest extends BaseUnitTest {
-
-  @MockBean private SamService mockSamService;
-
+public class WorkspaceManagerStatusServiceTest extends MockBeanUnitTest {
   @Autowired private WorkspaceManagerStatusService statusService;
   @Autowired private StatusCheckConfiguration configuration;
 

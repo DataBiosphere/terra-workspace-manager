@@ -13,6 +13,7 @@ import bio.terra.common.exception.MissingRequiredFieldException;
 import bio.terra.stairway.FlightDebugInfo;
 import bio.terra.stairway.StepStatus;
 import bio.terra.workspace.common.BaseUnitTest;
+import bio.terra.workspace.common.MockBeanUnitTest;
 import bio.terra.workspace.common.fixtures.ReferenceResourceFixtures;
 import bio.terra.workspace.db.WorkspaceActivityLogDao;
 import bio.terra.workspace.db.WorkspaceDao;
@@ -62,7 +63,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.MockBean;
 
 @Tag("unit")
-class ReferencedResourceServiceTest extends BaseUnitTest {
+class ReferencedResourceServiceTest extends MockBeanUnitTest {
 
   private static final Logger logger = LoggerFactory.getLogger(ReferencedResourceServiceTest.class);
   private static final String DATA_REPO_INSTANCE_NAME = "terra";
@@ -80,19 +81,14 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
   @Autowired private ReferencedResourceService referenceResourceService;
   @Autowired private JobService jobService;
   @Autowired private WorkspaceActivityLogDao workspaceActivityLogDao;
-  /** Mock SamService does nothing for all calls that would throw if unauthorized. */
-  @MockBean private SamService mockSamService;
-
-  @MockBean private DataRepoService mockDataRepoService;
-  @MockBean private CrlService mockCrlService;
 
   private UUID workspaceUuid;
   private ReferencedResource referencedResource;
 
   @BeforeEach
   void setup() throws InterruptedException {
-    doReturn(true).when(mockDataRepoService).snapshotReadable(any(), any(), any());
-    when(mockSamService.getUserStatusInfo(any()))
+    doReturn(true).when(getMockDataRepoService()).snapshotReadable(any(), any(), any());
+    when(getMockSamService().getUserStatusInfo(any()))
         .thenReturn(
             new UserStatusInfo()
                 .userEmail(USER_REQUEST.getEmail())

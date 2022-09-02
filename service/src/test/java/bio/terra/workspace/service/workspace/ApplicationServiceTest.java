@@ -59,8 +59,6 @@ import org.springframework.test.annotation.DirtiesContext.MethodMode;
 // disable deprecated
 // disable operating
 // Enumerate/get
-
-@Disabled("Until we get the postgres connection leaks addressed")
 public class ApplicationServiceTest extends BaseUnitTest {
   private static final String LEO_ID = "4BD1D59D-5827-4375-A41D-BBC65919F269";
   private static final String CARMEN_ID = "Carmen";

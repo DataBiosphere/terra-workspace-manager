@@ -52,6 +52,7 @@ import java.util.UUID;
 import org.apache.http.HttpStatus;
 import org.broadinstitute.dsde.workbench.client.sam.model.UserStatusInfo;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.MockBean;
@@ -67,6 +68,7 @@ import org.springframework.test.web.servlet.MockMvc;
  * currently in WorkspaceServiceTest, it's intended as a proof-of-concept for future mockMvc-based
  * tests.
  */
+@Disabled("PF-1962 This test needs to be rewritten as a connected test since it makes a real GCP cloud context")
 public class WorkspaceApiControllerTest extends BaseUnitTest {
 
   AuthenticatedUserRequest USER_REQUEST =

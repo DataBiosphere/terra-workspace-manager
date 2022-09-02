@@ -7,6 +7,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
 import bio.terra.workspace.common.BaseUnitTest;
+import bio.terra.workspace.common.MockBeanUnitTest;
 import bio.terra.workspace.service.workspace.GcpCloudContextService;
 import java.io.IOException;
 import java.util.UUID;
@@ -14,15 +15,21 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.mock.mockito.MockBean;
 
-public class ControlledGcsBucketHandlerTest extends BaseUnitTest {
-  @MockBean GcpCloudContextService mockGcpCloudContextService;
+public class ControlledGcsBucketHandlerTest extends MockBeanUnitTest {
 
   private static final UUID fakeWorkspaceId = UUID.randomUUID();
   private static final String FAKE_PROJECT_ID = "fakeprojectid";
 
+  // This extra mock is shared in two tests, but not shared in other unit tests
+  // so we will end up with another app context; shared with ControlledGcpResourceApiControllerTest
+  @MockBean GcpCloudContextService mockGcpCloudContextService;
+  private GcpCloudContextService getMockGcpCloudContextService() {
+    return mockGcpCloudContextService;
+  }
+
   @BeforeEach
   public void setup() throws IOException {
-    when(mockGcpCloudContextService.getRequiredGcpProject(any())).thenReturn(FAKE_PROJECT_ID);
+    when(getMockGcpCloudContextService().getRequiredGcpProject(any())).thenReturn(FAKE_PROJECT_ID);
   }
 
   @Test

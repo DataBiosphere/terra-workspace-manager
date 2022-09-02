@@ -14,6 +14,7 @@ import bio.terra.stairway.FlightStatus;
 import bio.terra.stairway.Stairway;
 import bio.terra.stairway.StepResult;
 import bio.terra.workspace.common.BaseUnitTest;
+import bio.terra.workspace.common.MockBeanUnitTest;
 import bio.terra.workspace.common.exception.UnknownFlightClassNameException;
 import bio.terra.workspace.common.logging.model.ActivityLogChangeDetails;
 import bio.terra.workspace.db.ResourceDao;
@@ -46,7 +47,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.MockBean;
 
-public class WorkspaceActivityLogHookTest extends BaseUnitTest {
+public class WorkspaceActivityLogHookTest extends MockBeanUnitTest {
 
   /** A fake authenticated user request. */
   private static final AuthenticatedUserRequest USER_REQUEST =
@@ -63,11 +64,10 @@ public class WorkspaceActivityLogHookTest extends BaseUnitTest {
   @Autowired private WorkspaceActivityLogDao activityLogDao;
   @Autowired private ResourceDao resourceDao;
   @Autowired private WorkspaceActivityLogHook hook;
-  @MockBean private SamService mockSamService;
 
   @BeforeEach
   void setUpOnce() throws InterruptedException {
-    when(mockSamService.getUserStatusInfo(any())).thenReturn(USER_STATUS_INFO);
+    when(getMockSamService().getUserStatusInfo(any())).thenReturn(USER_STATUS_INFO);
   }
 
   @Test

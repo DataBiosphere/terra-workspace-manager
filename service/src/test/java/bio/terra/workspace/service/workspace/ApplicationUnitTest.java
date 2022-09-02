@@ -23,7 +23,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.annotation.DirtiesContext.MethodMode;
 
-@Disabled("Until we get the postgres connection leaks addressed")
 public class ApplicationUnitTest extends BaseUnitTest {
 
   @Autowired WsmApplicationService appService;

@@ -32,31 +32,34 @@ import bio.terra.workspace.service.workspace.model.WorkspaceStage;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.UUID;
 import org.apache.http.HttpStatus;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.web.servlet.MockMvc;
 
 // Test to make sure things properly do not work when Azure feature is not enabled
 @AutoConfigureMockMvc
-// We are modifying application context here. Need to clean up once tests are done.
-@Disabled("Until we get the postgres connection leaks addressed")
-@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
 public class AzureDisabledTest extends BaseConnectedTest {
   @Autowired private MockMvc mockMvc;
-
   @Autowired private WorkspaceService workspaceService;
   @Autowired private UserAccessUtils userAccessUtils;
   @Autowired private ObjectMapper objectMapper;
   @Autowired private FeatureConfiguration featureConfiguration;
 
+  private boolean originalAzureEnabled;
+
   @BeforeEach
   public void setUp() {
     // explicitly disable Azure feature regardless of the configuration files
+    originalAzureEnabled = featureConfiguration.isAzureEnabled();
     featureConfiguration.setAzureEnabled(false);
+  }
+
+  @AfterEach
+  public void reset() {
+    featureConfiguration.setAzureEnabled(originalAzureEnabled);
   }
 
   @Test

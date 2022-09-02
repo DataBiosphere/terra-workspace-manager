@@ -1,6 +1,6 @@
 package bio.terra.workspace.service.job;
 
-import bio.terra.common.db.DataSourceInitializer;
+import bio.terra.workspace.app.DataSourceManager;
 import bio.terra.common.logging.LoggingUtils;
 import bio.terra.common.stairway.StairwayComponent;
 import bio.terra.common.stairway.TracingHook;
@@ -50,6 +50,9 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
+import javax.annotation.PreDestroy;
+
+import liquibase.pro.packaged.P;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -69,6 +72,7 @@ public class JobService {
   private final FlightBeanBag flightBeanBag;
   private final Logger logger = LoggerFactory.getLogger(JobService.class);
   private final ObjectMapper objectMapper;
+  private final DataSourceManager dataSourceManager;
   private FlightDebugInfo flightDebugInfo;
 
   @Autowired
@@ -80,7 +84,8 @@ public class JobService {
       WorkspaceActivityLogHook workspaceActivityLogHook,
       StairwayComponent stairwayComponent,
       FlightBeanBag flightBeanBag,
-      ObjectMapper objectMapper) {
+      ObjectMapper objectMapper,
+      DataSourceManager dataSourceManager) {
     this.jobConfig = jobConfig;
     this.ingressConfig = ingressConfig;
     this.stairwayDatabaseConfiguration = stairwayDatabaseConfiguration;
@@ -90,6 +95,7 @@ public class JobService {
     this.stairwayComponent = stairwayComponent;
     this.flightBeanBag = flightBeanBag;
     this.objectMapper = objectMapper;
+    this.dataSourceManager = dataSourceManager;
   }
 
   // Fully fluent style of JobBuilder
@@ -171,7 +177,7 @@ public class JobService {
     stairwayComponent.initialize(
         stairwayComponent
             .newStairwayOptionsBuilder()
-            .dataSource(DataSourceInitializer.initializeDataSource(stairwayDatabaseConfiguration))
+            .dataSource(dataSourceManager.initializeDataSource(stairwayDatabaseConfiguration))
             .context(flightBeanBag)
             .addHook(mdcHook)
             .addHook(new TracingHook())

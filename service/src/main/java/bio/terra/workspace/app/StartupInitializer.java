@@ -1,6 +1,6 @@
 package bio.terra.workspace.app;
 
-import bio.terra.common.db.DataSourceInitializer;
+import bio.terra.workspace.app.DataSourceManager;
 import bio.terra.common.migrate.LiquibaseMigrator;
 import bio.terra.landingzone.library.LandingZoneMain;
 import bio.terra.policy.library.TpsMain;
@@ -23,13 +23,14 @@ public final class StartupInitializer {
     WsmApplicationService appService = applicationContext.getBean(WsmApplicationService.class);
     FeatureConfiguration featureConfiguration =
         applicationContext.getBean(FeatureConfiguration.class);
+    DataSourceManager dataSourceManager = applicationContext.getBean(DataSourceManager.class);
 
     // Log the state of the feature flags
     featureConfiguration.logFeatures();
 
     // Migrate the database
     DataSource workspaceDataSource =
-        DataSourceInitializer.initializeDataSource(workspaceDatabaseConfiguration);
+        dataSourceManager.initializeDataSource(workspaceDatabaseConfiguration);
     if (workspaceDatabaseConfiguration.isInitializeOnStart()) {
       migrateService.initialize(changelogPath, workspaceDataSource);
     } else if (workspaceDatabaseConfiguration.isUpgradeOnStart()) {
