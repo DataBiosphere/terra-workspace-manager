@@ -127,12 +127,18 @@ fi
 
 # Set variables into the .bash_profile such that they are available
 # to terminals, notebooks, and other tools
+#
+# We have new-style variables (eg GOOGLE_CLOUD_PROJECT) which are set here
+# and CLI (terra app execute env).
+# We also support a few variables set by Leonardo (eg GOOGLE_PROJECT).
+# Those are only set here and NOT in the CLI as they are intended just
+# to make porting existing notebooks easier.
 
 # Keep in sync with terra CLI environment variables:
-# https://github.com/DataBiosphere/terra-cli/blob/main/src/main/java/bio/terra/cli/app/CommandRunner.java#L88
+# https://github.com/DataBiosphere/terra-cli/blob/14cf51dd809573c7ae9a3ef10ddd427fa057cb8f/src/main/java/bio/terra/cli/app/CommandRunner.java#L88
 
-# These are environment variables that are set by Leonardo for
-# Cloud Environments (https://github.com/DataBiosphere/leonardo)
+# *** Variables that are set by Leonardo for Cloud Environments
+# (https://github.com/DataBiosphere/leonardo)
 
 # OWNER_EMAIL is really the Terra user account email address
 
