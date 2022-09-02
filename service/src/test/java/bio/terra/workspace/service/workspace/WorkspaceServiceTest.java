@@ -874,6 +874,56 @@ class WorkspaceServiceTest extends BaseConnectedTest {
   }
 
   @Test
+  public void cloneGcpWorkspaceUndoSteps() {
+    // Create a workspace
+    final Workspace sourceWorkspace =
+        defaultRequestBuilder(UUID.randomUUID())
+            .userFacingId("source-user-facing-id")
+            .displayName("Source Workspace")
+            .description("The original workspace.")
+            .spendProfileId(new SpendProfileId(SPEND_PROFILE_ID))
+            .build();
+
+    // create a cloud context
+    final String createCloudContextJobId = UUID.randomUUID().toString();
+    workspaceService.createGcpCloudContext(sourceWorkspace, createCloudContextJobId, USER_REQUEST);
+    jobService.waitForJob(createCloudContextJobId);
+    assertNull(jobService.retrieveJobResult(createCloudContextJobId, Object.class).getException());
+
+    // Enable an application.
+    appService.enableWorkspaceApplication(USER_REQUEST, sourceWorkspace, "leo");
+
+    final Workspace destinationWorkspace =
+        defaultRequestBuilder(UUID.randomUUID())
+            .userFacingId("dest-user-facing-id")
+            .displayName("Destination Workspace")
+            .description("Copied from source")
+            .spendProfileId(new SpendProfileId(SPEND_PROFILE_ID))
+            .build();
+    final String destinationLocation = "us-east1";
+    FlightDebugInfo debugInfo = FlightDebugInfo.newBuilder().lastStepFailure(true).build();
+    jobService.setFlightDebugInfoForTest(debugInfo);
+
+    assertThrows(
+        InvalidResultStateException.class,
+        () ->
+            workspaceService.cloneWorkspace(
+                sourceWorkspace, USER_REQUEST, destinationLocation, destinationWorkspace));
+    assertThrows(
+        WorkspaceNotFoundException.class,
+        () -> workspaceService.getWorkspace(destinationWorkspace.getWorkspaceId()));
+
+    // Destination Workspace should have a GCP context
+    assertTrue(
+        gcpCloudContextService.getGcpCloudContext(destinationWorkspace.getWorkspaceId()).isEmpty());
+
+    // clean up
+    jobService.setFlightDebugInfoForTest(null);
+    workspaceService.deleteWorkspace(sourceWorkspace, USER_REQUEST);
+    workspaceService.deleteWorkspace(destinationWorkspace, USER_REQUEST);
+  }
+
+  @Test
   public void tpsCalledForWorkspaceWithGroupPolicy() {
     // Create a workspace with policy
     ApiTpsPolicyInputs policyInputs = new ApiTpsPolicyInputs().inputs(List.of(GROUP_POLICY));
