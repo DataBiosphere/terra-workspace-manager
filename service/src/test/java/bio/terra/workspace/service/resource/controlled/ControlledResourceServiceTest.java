@@ -91,6 +91,7 @@ import com.google.cloud.storage.BucketInfo;
 import com.google.cloud.storage.BucketInfo.LifecycleRule;
 import com.google.common.collect.ImmutableList;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -1470,8 +1471,6 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
     assertNotNull(destinationBucketResource);
     assertEquals("cloned_bucket", destinationBucketResource.getName());
     assertEquals(1, destinationBucketResource.getResourceLineage().size());
-    var lineage = destinationBucketResource.getResourceLineage().get(0);
-    assertResourceLineageEntry(lineage, workspace.getWorkspaceId(), createdBucket.getResourceId());
 
     // check creation parameters on cloud (not stored by WSM). Source project is same as destination
     // in this case.
@@ -1497,10 +1496,12 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
 
   @Test
   void cloneGcsBucketTwice() throws InterruptedException {
-    final ControlledGcsBucketResource resource =
+    ControlledGcsBucketResource resource =
         ControlledResourceFixtures.makeDefaultControlledGcsBucketBuilder(workspace.getWorkspaceId())
             .build();
-    final ControlledGcsBucketResource createdBucket =
+    List<ResourceLineageEntry> expectedLineage = new ArrayList<>();
+    // original bucket
+    ControlledGcsBucketResource createdBucket =
         controlledResourceService
             .createControlledResourceSync(
                 resource,
@@ -1508,45 +1509,49 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
                 user.getAuthenticatedRequest(),
                 ControlledResourceFixtures.getGoogleBucketCreationParameters())
             .castByEnum(WsmResourceType.CONTROLLED_GCP_GCS_BUCKET);
-    final ApiJobControl apiJobControl = new ApiJobControl().id(UUID.randomUUID().toString());
-    final String destinationLocation = "US-EAST1";
-    final String jobId =
+
+    var destinationLocation = "US-EAST1";
+    // clone bucket once
+    String jobId =
         controlledResourceService.cloneGcsBucket(
             workspace.getWorkspaceId(),
             createdBucket.getResourceId(),
             workspace.getWorkspaceId(), // copy back into same workspace
             UUID.randomUUID(),
-            apiJobControl,
+            new ApiJobControl().id(UUID.randomUUID().toString()),
             user.getAuthenticatedRequest(),
-            "cloned_bucket",
+            "first_cloned_bucket",
             "A bucket cloned individually into the same workspace.",
             "cloned-bucket-" + UUID.randomUUID().toString().toLowerCase(),
             destinationLocation,
             ApiCloningInstructionsEnum.RESOURCE);
 
     jobService.waitForJob(jobId);
-    final FlightState flightState = stairwayComponent.get().getFlightState(jobId);
+    FlightState flightState = stairwayComponent.get().getFlightState(jobId);
     assertEquals(FlightStatus.SUCCESS, flightState.getFlightStatus());
     var response =
         flightState
             .getResultMap()
             .get()
             .get(JobMapKeys.RESPONSE.getKeyName(), ApiClonedControlledGcpGcsBucket.class);
-    final UUID firstClonedBucketResourceId = response.getBucket().getResourceId();
-    final ControlledGcsBucketResource firstClonedBucket =
+    UUID firstClonedBucketResourceId = response.getBucket().getResourceId();
+    ControlledGcsBucketResource firstClonedBucket =
         controlledResourceService
             .getControlledResource(workspace.getWorkspaceId(), firstClonedBucketResourceId)
             .castByEnum(WsmResourceType.CONTROLLED_GCP_GCS_BUCKET);
 
-    var lineage = firstClonedBucket.getResourceLineage();
+    expectedLineage.add(
+        new ResourceLineageEntry(workspace.getWorkspaceId(), createdBucket.getResourceId()));
+    assertEquals(expectedLineage, firstClonedBucket.getResourceLineage());
 
-    final String jobId2 =
+    // clone twice.
+    String jobId2 =
         controlledResourceService.cloneGcsBucket(
             workspace.getWorkspaceId(),
             firstClonedBucketResourceId,
             workspace.getWorkspaceId(), // copy back into same workspace
             UUID.randomUUID(),
-            apiJobControl,
+            new ApiJobControl().id(UUID.randomUUID().toString()),
             user.getAuthenticatedRequest(),
             "second_cloned_bucket",
             "A bucket cloned individually into the same workspace.",
@@ -1555,29 +1560,22 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
             ApiCloningInstructionsEnum.RESOURCE);
 
     jobService.waitForJob(jobId2);
-    final FlightState flightState2 = stairwayComponent.get().getFlightState(jobId);
+    FlightState flightState2 = stairwayComponent.get().getFlightState(jobId2);
     assertEquals(FlightStatus.SUCCESS, flightState2.getFlightStatus());
     var response2 =
         flightState2
             .getResultMap()
             .get()
             .get(JobMapKeys.RESPONSE.getKeyName(), ApiClonedControlledGcpGcsBucket.class);
-    final UUID secondCloneResourceId = response2.getBucket().getResourceId();
-    final ControlledGcsBucketResource secondClonedBucket =
+    UUID secondCloneResourceId = response2.getBucket().getResourceId();
+    ControlledGcsBucketResource secondClonedBucket =
         controlledResourceService
             .getControlledResource(workspace.getWorkspaceId(), secondCloneResourceId)
             .castByEnum(WsmResourceType.CONTROLLED_GCP_GCS_BUCKET);
 
-    var lineage2 = secondClonedBucket.getResourceLineage();
-
-    assertEquals(1, lineage.size());
-    assertResourceLineageEntry(
-        lineage.get(0), workspace.getWorkspaceId(), createdBucket.getResourceId());
-    assertEquals(2, lineage2.size());
-    assertResourceLineageEntry(
-        lineage2.get(0), workspace.getWorkspaceId(), createdBucket.getResourceId());
-    assertResourceLineageEntry(
-        lineage2.get(1), workspace.getWorkspaceId(), firstClonedBucketResourceId);
+    expectedLineage.add(
+        new ResourceLineageEntry(workspace.getWorkspaceId(), firstClonedBucketResourceId));
+    assertEquals(expectedLineage, secondClonedBucket.getResourceLineage());
   }
 
   private static void assertResourceLineageEntry(

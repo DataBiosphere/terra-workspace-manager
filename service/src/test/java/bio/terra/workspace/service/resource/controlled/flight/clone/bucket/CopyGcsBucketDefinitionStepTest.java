@@ -25,8 +25,11 @@ import bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.Contr
 import bio.terra.workspace.service.resource.controlled.model.AccessScopeType;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
+import bio.terra.workspace.service.resource.model.ResourceLineageEntry;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ResourceKeys;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -113,9 +116,10 @@ public class CopyGcsBucketDefinitionStepTest extends BaseUnitTest {
         SOURCE_BUCKET_RESOURCE.getPrivateResourceState(),
         destinationBucketResource.getPrivateResourceState());
     var lineage = destinationBucketResource.getResourceLineage();
-    assertEquals(1, lineage.size());
-    assertEquals(SOURCE_WORKSPACE_ID, lineage.get(0).getSourceWorkspaceId());
-    assertEquals(SOURCE_BUCKET_RESOURCE.getResourceId(), lineage.get(0).getSourceResourceId());
+    List<ResourceLineageEntry> expectedLineage = new ArrayList<>();
+    expectedLineage.add(
+        new ResourceLineageEntry(SOURCE_WORKSPACE_ID, SOURCE_BUCKET_RESOURCE.getResourceId()));
+    assertEquals(expectedLineage, lineage);
 
     final ControlledResourceIamRole controlledResourceIamRole = iamRoleCaptor.getValue();
     assertEquals(ControlledResourceIamRole.EDITOR, controlledResourceIamRole);

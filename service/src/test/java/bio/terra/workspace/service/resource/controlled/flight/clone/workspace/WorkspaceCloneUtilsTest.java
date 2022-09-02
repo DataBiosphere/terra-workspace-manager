@@ -112,10 +112,10 @@ public class WorkspaceCloneUtilsTest extends BaseUnitTest {
 
     assertEquals(sourceResource.getCloningInstructions(), sourceResource.getCloningInstructions());
     assertEquals(1, resourceToClone.getResourceLineage().size());
-    assertResourceLineageEntry(
-        resourceToClone.getResourceLineage().get(0),
-        sourceResource.getWorkspaceId(),
-        sourceResource.getResourceId());
+    List<ResourceLineageEntry> expectedLineage = new ArrayList<>();
+    expectedLineage.add(
+        new ResourceLineageEntry(sourceResource.getWorkspaceId(), sourceResource.getResourceId()));
+    assertEquals(expectedLineage, resourceToClone.getResourceLineage());
   }
 
   private void assertControlledResourceCommonField(
@@ -133,9 +133,9 @@ public class WorkspaceCloneUtilsTest extends BaseUnitTest {
         WorkspaceCloneUtils.createDestinationResourceLineage(
             null, sourceWorkspaceUuid, sourceResourceUuid);
 
-    assertEquals(1, destinationResourceLineage.size());
-    assertResourceLineageEntry(
-        destinationResourceLineage.get(0), sourceWorkspaceUuid, sourceResourceUuid);
+    List<ResourceLineageEntry> expectedLineage = new ArrayList<>();
+    expectedLineage.add(new ResourceLineageEntry(sourceWorkspaceUuid, sourceResourceUuid));
+    assertEquals(expectedLineage, destinationResourceLineage);
   }
 
   @Test
@@ -143,24 +143,13 @@ public class WorkspaceCloneUtilsTest extends BaseUnitTest {
     var sourceWorkspaceUuid = UUID.randomUUID();
     var sourceResourceUuid = UUID.randomUUID();
     var sourceResourceLineageEntry = new ResourceLineageEntry(UUID.randomUUID(), UUID.randomUUID());
-    var sourceResourceLineage = new ArrayList<>(List.of(sourceResourceLineageEntry));
+    var resourceLineage = new ArrayList<>(List.of(sourceResourceLineageEntry));
 
     var destinationResourceLineage =
         WorkspaceCloneUtils.createDestinationResourceLineage(
-            sourceResourceLineage, sourceWorkspaceUuid, sourceResourceUuid);
+            resourceLineage, sourceWorkspaceUuid, sourceResourceUuid);
 
-    assertEquals(2, destinationResourceLineage.size());
-    assertResourceLineageEntry(
-        destinationResourceLineage.get(0),
-        sourceResourceLineageEntry.getSourceWorkspaceId(),
-        sourceResourceLineageEntry.getSourceResourceId());
-    assertResourceLineageEntry(
-        destinationResourceLineage.get(1), sourceWorkspaceUuid, sourceResourceUuid);
-  }
-
-  private static void assertResourceLineageEntry(
-      ResourceLineageEntry entry, UUID workspaceId, UUID resourceId) {
-    assertEquals(workspaceId, entry.getSourceWorkspaceId());
-    assertEquals(resourceId, entry.getSourceResourceId());
+    resourceLineage.add(new ResourceLineageEntry(sourceWorkspaceUuid, sourceResourceUuid));
+    assertEquals(resourceLineage, destinationResourceLineage);
   }
 }
