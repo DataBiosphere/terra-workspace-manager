@@ -2,6 +2,7 @@ package bio.terra.workspace.service.workspace.model;
 
 import bio.terra.workspace.service.spendprofile.SpendProfileId;
 import bio.terra.workspace.service.workspace.exceptions.MissingRequiredFieldsException;
+import bio.terra.workspace.service.workspace.model.WorkspaceConstants.Properties;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonPOJOBuilder;
 import java.util.HashMap;
@@ -190,5 +191,42 @@ public class Workspace {
           properties,
           workspaceStage);
     }
+  }
+
+  /**
+   * If requester only has discoverer role, they can only see a subset of workspace. They cannot
+   * see:
+   *
+   * <ul>
+   *   <li>Workspace description
+   *   <li>Spend profile
+   *   <li>Can see special type, short description and version properties, and no other properties
+   * </ul>
+   */
+  public static Workspace stripWorkspaceForRequesterWithOnlyDiscovererRole(
+      Workspace fullWorkspace) {
+    Workspace.Builder strippedWorkspace =
+        new Builder()
+            .workspaceId(fullWorkspace.getWorkspaceId())
+            .userFacingId(fullWorkspace.getUserFacingId())
+            .workspaceStage(fullWorkspace.getWorkspaceStage())
+            .displayName(fullWorkspace.getDisplayName().orElse(""));
+
+    Map<String, String> strippedProperties = new HashMap<>();
+    if (fullWorkspace.getProperties().containsKey(Properties.TYPE)) {
+      strippedProperties.put(Properties.TYPE, fullWorkspace.getProperties().get(Properties.TYPE));
+    }
+    if (fullWorkspace.getProperties().containsKey(Properties.SHORT_DESCRIPTION)) {
+      strippedProperties.put(
+          Properties.SHORT_DESCRIPTION,
+          fullWorkspace.getProperties().get(Properties.SHORT_DESCRIPTION));
+    }
+    if (fullWorkspace.getProperties().containsKey(Properties.VERSION)) {
+      strippedProperties.put(
+          Properties.VERSION, fullWorkspace.getProperties().get(Properties.VERSION));
+    }
+    strippedWorkspace.properties(strippedProperties);
+
+    return strippedWorkspace.build();
   }
 }

@@ -17,6 +17,7 @@ public class SamConstants {
   }
 
   public static class SamWorkspaceAction {
+    public static final String DISCOVER = "discover";
     public static final String READ = "read";
     public static final String WRITE = "write";
     public static final String OWN = "own";
