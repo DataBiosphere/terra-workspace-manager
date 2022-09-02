@@ -26,21 +26,21 @@ public class LaunchEnableApplicationsFlightStep implements Step {
         context.getWorkingMap(),
         WorkspaceFlightMapKeys.APPLICATION_IDS,
         WorkspaceFlightMapKeys.WsmApplicationKeys.APPLICATION_ABLE_ENUM);
-    final var userRequest =
+    var userRequest =
         context
             .getInputParameters()
             .get(JobMapKeys.AUTH_USER_INFO.getKeyName(), AuthenticatedUserRequest.class);
-    final List<String> applicationIds =
+    var applicationIds =
         context.getWorkingMap().get(WorkspaceFlightMapKeys.APPLICATION_IDS, List.class);
-    final AbleEnum ableEnum =
+    var ableEnum =
         context.getWorkingMap().get(WsmApplicationKeys.APPLICATION_ABLE_ENUM, AbleEnum.class);
 
-    final var destinationWorkspace =
+    var destinationWorkspace =
         context.getInputParameters().get(JobMapKeys.REQUEST.getKeyName(), Workspace.class);
 
-    final Stairway stairway = context.getStairway();
+    Stairway stairway = context.getStairway();
 
-    final FlightMap subflightInputParameters = new FlightMap();
+    FlightMap subflightInputParameters = new FlightMap();
     subflightInputParameters.put(JobMapKeys.AUTH_USER_INFO.getKeyName(), userRequest);
     subflightInputParameters.put(WorkspaceFlightMapKeys.APPLICATION_IDS, applicationIds);
     subflightInputParameters.put(WsmApplicationKeys.APPLICATION_ABLE_ENUM, ableEnum);

@@ -884,6 +884,9 @@ class WorkspaceServiceTest extends BaseConnectedTest {
             .spendProfileId(new SpendProfileId(SPEND_PROFILE_ID))
             .build();
 
+    final UUID sourceWorkspaceId =
+        workspaceService.createWorkspace(sourceWorkspace, null, USER_REQUEST);
+
     // create a cloud context
     final String createCloudContextJobId = UUID.randomUUID().toString();
     workspaceService.createGcpCloudContext(sourceWorkspace, createCloudContextJobId, USER_REQUEST);
@@ -913,14 +916,13 @@ class WorkspaceServiceTest extends BaseConnectedTest {
         WorkspaceNotFoundException.class,
         () -> workspaceService.getWorkspace(destinationWorkspace.getWorkspaceId()));
 
-    // Destination Workspace should have a GCP context
+    // Destination Workspace should not have a GCP context
     assertTrue(
         gcpCloudContextService.getGcpCloudContext(destinationWorkspace.getWorkspaceId()).isEmpty());
 
     // clean up
     jobService.setFlightDebugInfoForTest(null);
     workspaceService.deleteWorkspace(sourceWorkspace, USER_REQUEST);
-    workspaceService.deleteWorkspace(destinationWorkspace, USER_REQUEST);
   }
 
   @Test
