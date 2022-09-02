@@ -91,8 +91,12 @@ public class CopyGcsBucketDefinitionStep implements Step {
         Optional.ofNullable(
                 inputParameters.get(ControlledResourceKeys.DESTINATION_BUCKET_NAME, String.class))
             .orElse(
+                // If the source bucket uses the auto-generated cloud name and the destination
+                // bucket attempt to do the same, the name will crash as the bucket name must be
+                // globally unique. Thus we add cloned- as prefix to the resource name to prevent
+                // crashing.
                 ControlledGcsBucketHandler.getHandler()
-                    .generateCloudName(destinationWorkspaceId, resourceName));
+                    .generateCloudName(destinationWorkspaceId, "cloned-" + resourceName));
     // Store effective bucket name for destination
     workingMap.put(ControlledResourceKeys.DESTINATION_BUCKET_NAME, bucketName);
     final var destinationResourceId =
