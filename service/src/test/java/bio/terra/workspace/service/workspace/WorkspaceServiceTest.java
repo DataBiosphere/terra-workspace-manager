@@ -235,14 +235,21 @@ class WorkspaceServiceTest extends BaseConnectedTest {
 
     assertEquals(
         request.getWorkspaceId(),
-        workspaceService.getWorkspaceByUserFacingId(userFacingId, USER_REQUEST).getWorkspaceId());
+        workspaceService
+            .getWorkspaceByUserFacingId(
+                userFacingId, USER_REQUEST, /*minimumHighestRoleFromRequest=*/ WsmIamRole.READER)
+            .getWorkspaceId());
   }
 
   @Test
   void getWorkspaceByUserFacingId_missing() {
     assertThrows(
         WorkspaceNotFoundException.class,
-        () -> workspaceService.getWorkspaceByUserFacingId("missing-workspace", USER_REQUEST));
+        () ->
+            workspaceService.getWorkspaceByUserFacingId(
+                "missing-workspace",
+                USER_REQUEST,
+                /*minimumHighestRoleFromRequest=*/ WsmIamRole.READER));
   }
 
   @Test
@@ -275,7 +282,9 @@ class WorkspaceServiceTest extends BaseConnectedTest {
         .andExpect(status().is(HttpStatus.SC_FORBIDDEN));
     assertThrows(
         ForbiddenException.class,
-        () -> workspaceService.getWorkspaceByUserFacingId(userFacingId, USER_REQUEST));
+        () ->
+            workspaceService.getWorkspaceByUserFacingId(
+                userFacingId, USER_REQUEST, /*minimumHighestRoleFromRequest=*/ WsmIamRole.READER));
   }
 
   @Test

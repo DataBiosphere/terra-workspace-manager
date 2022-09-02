@@ -224,7 +224,7 @@ public class WorkspaceService {
                   samWorkspaceIdsAndHighestRoles.get(workspace.getWorkspaceId());
               Workspace workspaceToReturn =
                   highestRole == WsmIamRole.DISCOVERER
-                      ? stripWorkspaceForRequesterWithOnlyDiscovererRole(workspace)
+                      ? Workspace.stripWorkspaceForRequesterWithOnlyDiscovererRole(workspace)
                       : workspace;
               return new WorkspaceAndHighestRole(workspaceToReturn, highestRole);
             })
@@ -240,7 +240,9 @@ public class WorkspaceService {
   /** Retrieves an existing workspace by userFacingId */
   @Traced
   public Workspace getWorkspaceByUserFacingId(
-      String userFacingId, AuthenticatedUserRequest userRequest) {
+      String userFacingId,
+      AuthenticatedUserRequest userRequest,
+      WsmIamRole minimumHighestRoleFromRequest) {
     logger.info(
         "getWorkspaceByUserFacingId - userRequest: {}\nuserFacingId: {}",
         userRequest,
@@ -255,7 +257,7 @@ public class WorkspaceService {
                 userRequest,
                 SamConstants.SamResource.WORKSPACE,
                 workspace.getWorkspaceId().toString(),
-                SamWorkspaceAction.READ),
+                minimumHighestRoleFromRequest.toSamAction()),
         "checkAuthz");
     return workspace;
   }
