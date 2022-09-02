@@ -25,18 +25,18 @@ public class ClonePolicyAttributesStep implements Step {
 
   @Override
   public StepResult doStep(FlightContext context) throws InterruptedException, RetryException {
-    final FlightMap inputParameters = context.getInputParameters();
+    FlightMap inputParameters = context.getInputParameters();
     FlightUtils.validateRequiredEntries(
         inputParameters,
         ControlledResourceKeys.SOURCE_WORKSPACE_ID,
         JobMapKeys.REQUEST.getKeyName(),
         JobMapKeys.AUTH_USER_INFO.getKeyName());
 
-    final var sourceWorkspaceId =
+    var sourceWorkspaceId =
         context.getInputParameters().get(ControlledResourceKeys.SOURCE_WORKSPACE_ID, UUID.class);
-    final var destinationWorkspace =
+    var destinationWorkspace =
         context.getInputParameters().get(JobMapKeys.REQUEST.getKeyName(), Workspace.class);
-    final var userRequest =
+    var userRequest =
         context
             .getInputParameters()
             .get(JobMapKeys.AUTH_USER_INFO.getKeyName(), AuthenticatedUserRequest.class);
@@ -63,9 +63,9 @@ public class ClonePolicyAttributesStep implements Step {
 
   @Override
   public StepResult undoStep(FlightContext context) throws InterruptedException {
-    final var destinationWorkspace =
+    var destinationWorkspace =
         context.getInputParameters().get(JobMapKeys.REQUEST.getKeyName(), Workspace.class);
-    final var userRequest =
+    var userRequest =
         context
             .getInputParameters()
             .get(JobMapKeys.AUTH_USER_INFO.getKeyName(), AuthenticatedUserRequest.class);
