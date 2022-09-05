@@ -57,38 +57,38 @@ public class CopyBigQueryDatasetDefinitionStep implements Step {
   @Override
   public StepResult doStep(FlightContext flightContext)
       throws InterruptedException, RetryException {
-    final FlightMap inputParameters = flightContext.getInputParameters();
+    FlightMap inputParameters = flightContext.getInputParameters();
     FlightUtils.validateRequiredEntries(
         inputParameters, ControlledResourceKeys.DESTINATION_RESOURCE_ID);
-    final FlightMap workingMap = flightContext.getWorkingMap();
-    final String resourceName =
+    FlightMap workingMap = flightContext.getWorkingMap();
+    var resourceName =
         FlightUtils.getInputParameterOrWorkingValue(
             flightContext,
             ResourceKeys.RESOURCE_NAME,
             ResourceKeys.PREVIOUS_RESOURCE_NAME,
             String.class);
-    final String description =
+    var description =
         FlightUtils.getInputParameterOrWorkingValue(
             flightContext,
             ResourceKeys.RESOURCE_DESCRIPTION,
             ResourceKeys.PREVIOUS_RESOURCE_DESCRIPTION,
             String.class);
-    final String datasetName =
+    var datasetName =
         Optional.ofNullable(
                 inputParameters.get(ControlledResourceKeys.DESTINATION_DATASET_NAME, String.class))
             .orElse(sourceDataset.getDatasetName());
     workingMap.put(ControlledResourceKeys.DESTINATION_DATASET_NAME, datasetName);
-    final UUID destinationWorkspaceId =
+    var destinationWorkspaceId =
         inputParameters.get(ControlledResourceKeys.DESTINATION_WORKSPACE_ID, UUID.class);
-    final String location =
+    var location =
         FlightUtils.getInputParameterOrWorkingValue(
             flightContext,
             ControlledResourceKeys.LOCATION,
             ControlledResourceKeys.LOCATION,
             String.class);
-    final String destinationProjectId =
+    String destinationProjectId =
         gcpCloudContextService.getRequiredGcpProject(destinationWorkspaceId);
-    final var destinationResourceId =
+    var destinationResourceId =
         inputParameters.get(ControlledResourceKeys.DESTINATION_RESOURCE_ID, UUID.class);
     var destinationResource =
         buildDestinationControlledBigQueryDataset(
@@ -100,19 +100,19 @@ public class CopyBigQueryDatasetDefinitionStep implements Step {
             datasetName,
             destinationProjectId);
 
-    final ApiGcpBigQueryDatasetCreationParameters creationParameters =
+    var creationParameters =
         new ApiGcpBigQueryDatasetCreationParameters().datasetId(datasetName).location(location);
-    final ControlledResourceIamRole iamRole =
+    ControlledResourceIamRole iamRole =
         IamRoleUtils.getIamRoleForAccessScope(destinationResource.getAccessScope());
 
-    final ControlledBigQueryDatasetResource clonedResource =
+    ControlledBigQueryDatasetResource clonedResource =
         controlledResourceService
             .createControlledResourceSync(
                 destinationResource, iamRole, userRequest, creationParameters)
             .castByEnum(WsmResourceType.CONTROLLED_GCP_BIG_QUERY_DATASET);
 
     workingMap.put(ControlledResourceKeys.CLONED_RESOURCE_DEFINITION, clonedResource);
-    final ApiClonedControlledGcpBigQueryDataset apiResult =
+    var apiResult =
         new ApiClonedControlledGcpBigQueryDataset()
             .dataset(clonedResource.toApiResource())
             .effectiveCloningInstructions(resolvedCloningInstructions.toApiModel())
@@ -130,7 +130,7 @@ public class CopyBigQueryDatasetDefinitionStep implements Step {
   // Delete the dataset and its resource entry, i.e. remove the controlled resource
   @Override
   public StepResult undoStep(FlightContext flightContext) throws InterruptedException {
-    final ControlledBigQueryDatasetResource clonedDataset =
+    ControlledBigQueryDatasetResource clonedDataset =
         flightContext
             .getWorkingMap()
             .get(

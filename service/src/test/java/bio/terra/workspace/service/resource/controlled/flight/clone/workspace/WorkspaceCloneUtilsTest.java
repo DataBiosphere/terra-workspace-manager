@@ -48,6 +48,10 @@ public class WorkspaceCloneUtilsTest extends BaseUnitTest {
     assertEquals(sourceDataset.getPrivateResourceState(), datasetToClone.getPrivateResourceState());
     assertEquals(cloneDatasetName, datasetToClone.getDatasetName());
     assertEquals(cloneProjectName, datasetToClone.getProjectId());
+    List<ResourceLineageEntry> expectedLineage = new ArrayList<>();
+    expectedLineage.add(
+        new ResourceLineageEntry(sourceDataset.getWorkspaceId(), sourceDataset.getResourceId()));
+    assertEquals(expectedLineage, datasetToClone.getResourceLineage());
   }
 
   @Test
@@ -100,6 +104,10 @@ public class WorkspaceCloneUtilsTest extends BaseUnitTest {
     assertControlledResourceCommonField(sourceBucket, bucketToClone);
     assertEquals(sourceBucket.getPrivateResourceState(), bucketToClone.getPrivateResourceState());
     assertEquals(cloneBucketName, bucketToClone.getBucketName());
+    List<ResourceLineageEntry> expectedLineage = new ArrayList<>();
+    expectedLineage.add(
+        new ResourceLineageEntry(sourceBucket.getWorkspaceId(), sourceBucket.getResourceId()));
+    assertEquals(expectedLineage, bucketToClone.getResourceLineage());
   }
 
   private void assertResourceCommonFields(

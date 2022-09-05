@@ -1470,7 +1470,6 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
         destinationControlledResource.castByEnum(WsmResourceType.CONTROLLED_GCP_GCS_BUCKET);
     assertNotNull(destinationBucketResource);
     assertEquals("cloned_bucket", destinationBucketResource.getName());
-    assertEquals(1, destinationBucketResource.getResourceLineage().size());
 
     // check creation parameters on cloud (not stored by WSM). Source project is same as destination
     // in this case.
@@ -1576,12 +1575,6 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
     expectedLineage.add(
         new ResourceLineageEntry(workspace.getWorkspaceId(), firstClonedBucketResourceId));
     assertEquals(expectedLineage, secondClonedBucket.getResourceLineage());
-  }
-
-  private static void assertResourceLineageEntry(
-      ResourceLineageEntry lineageEntry, UUID workspaceId, UUID resourceId) {
-    assertEquals(resourceId, lineageEntry.getSourceResourceId());
-    assertEquals(workspaceId, lineageEntry.getSourceWorkspaceId());
   }
 
   @Test
