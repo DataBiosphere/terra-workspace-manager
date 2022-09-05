@@ -44,16 +44,16 @@ public class AwaitCloneAllResourcesFlightStep implements Step {
     validateRequiredEntries(
         context.getWorkingMap(), ControlledResourceKeys.CLONE_ALL_RESOURCES_FLIGHT_ID);
 
-    final var cloneAllResourcesFlightId =
+    var cloneAllResourcesFlightId =
         context
             .getWorkingMap()
             .get(ControlledResourceKeys.CLONE_ALL_RESOURCES_FLIGHT_ID, String.class);
-    final var destinationWorkspace =
+    var destinationWorkspace =
         context.getInputParameters().get(JobMapKeys.REQUEST.getKeyName(), Workspace.class);
 
     try {
       //noinspection deprecation
-      final FlightState subflightState =
+      FlightState subflightState =
           context
               .getStairway()
               .waitForFlight(cloneAllResourcesFlightId, FLIGHT_POLL_SECONDS, FLIGHT_POLL_CYCLES);
@@ -70,22 +70,22 @@ public class AwaitCloneAllResourcesFlightStep implements Step {
                                 "Subflight had unexpected status %s. No exception for subflight found.",
                                 subflightState.getFlightStatus()))));
       }
-      final FlightMap subflightResultMap = FlightUtils.getResultMapRequired(subflightState);
+      FlightMap subflightResultMap = FlightUtils.getResultMapRequired(subflightState);
       // Build the response object from the resource ID to details map. The map won't have been
       // instantiated if there are no resources in the workspace, so just use an empty map in that
       // case.
-      final var resourceIdToDetails =
+      var resourceIdToDetails =
           Optional.ofNullable(
                   subflightResultMap.get(
                       ControlledResourceKeys.RESOURCE_ID_TO_CLONE_RESULT,
                       new TypeReference<Map<UUID, WsmResourceCloneDetails>>() {}))
               .orElse(Collections.emptyMap());
-      final var apiClonedWorkspace = new ApiClonedWorkspace();
+      var apiClonedWorkspace = new ApiClonedWorkspace();
       apiClonedWorkspace.setDestinationWorkspaceId(destinationWorkspace.getWorkspaceId());
-      final var sourceWorkspaceId =
+      var sourceWorkspaceId =
           context.getInputParameters().get(ControlledResourceKeys.SOURCE_WORKSPACE_ID, UUID.class);
       apiClonedWorkspace.setSourceWorkspaceId(sourceWorkspaceId);
-      final List<ApiResourceCloneDetails> resources =
+      List<ApiResourceCloneDetails> resources =
           resourceIdToDetails.values().stream()
               .map(WsmResourceCloneDetails::toApiModel)
               .collect(Collectors.toList());
