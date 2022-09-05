@@ -19,7 +19,6 @@ import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ResourceKeys;
 import java.util.UUID;
-import javax.annotation.Nullable;
 
 public class LaunchCloneControlledGcpBigQueryDatasetResourceFlightStep implements Step {
 
@@ -41,21 +40,19 @@ public class LaunchCloneControlledGcpBigQueryDatasetResourceFlightStep implement
         JobMapKeys.AUTH_USER_INFO.getKeyName(),
         ControlledResourceKeys.DESTINATION_WORKSPACE_ID);
 
-    final var userRequest =
+    var userRequest =
         context
             .getInputParameters()
             .get(JobMapKeys.AUTH_USER_INFO.getKeyName(), AuthenticatedUserRequest.class);
-    final var destinationWorkspaceId =
+    var destinationWorkspaceId =
         context
             .getInputParameters()
             .get(ControlledResourceKeys.DESTINATION_WORKSPACE_ID, UUID.class);
-    @Nullable
-    final var location =
-        context.getInputParameters().get(ControlledResourceKeys.LOCATION, String.class);
+    var location = context.getInputParameters().get(ControlledResourceKeys.LOCATION, String.class);
 
     // build input parameter map. Leave out resource name, description, and dataset name so that
     // they will take values from the source dataset.
-    final var subflightInputParameters = new FlightMap();
+    var subflightInputParameters = new FlightMap();
     subflightInputParameters.put(JobMapKeys.AUTH_USER_INFO.getKeyName(), userRequest);
     subflightInputParameters.put(
         ControlledResourceKeys.DESTINATION_WORKSPACE_ID, destinationWorkspaceId);

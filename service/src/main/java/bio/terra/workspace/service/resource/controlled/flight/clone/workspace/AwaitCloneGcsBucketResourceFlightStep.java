@@ -45,16 +45,16 @@ public class AwaitCloneGcsBucketResourceFlightStep implements Step {
   public StepResult doStep(FlightContext context) throws InterruptedException, RetryException {
     // wait for the flight
     try {
-      final FlightState subflightState =
+      FlightState subflightState =
           context.getStairway().waitForFlight(subflightId, FLIGHT_POLL_SECONDS, FLIGHT_POLL_CYCLES);
-      final FlightStatus subflightStatus = subflightState.getFlightStatus();
-      final WsmCloneResourceResult cloneResult =
+      FlightStatus subflightStatus = subflightState.getFlightStatus();
+      WsmCloneResourceResult cloneResult =
           WorkspaceCloneUtils.flightStatusToCloneResult(subflightStatus, resource);
 
-      final var cloneDetails = new WsmResourceCloneDetails();
+      var cloneDetails = new WsmResourceCloneDetails();
       cloneDetails.setResult(cloneResult);
-      final FlightMap resultMap = FlightUtils.getResultMapRequired(subflightState);
-      final var clonedBucket =
+      FlightMap resultMap = FlightUtils.getResultMapRequired(subflightState);
+      var clonedBucket =
           resultMap.get(JobMapKeys.RESPONSE.getKeyName(), ApiClonedControlledGcpGcsBucket.class);
       cloneDetails.setStewardshipType(StewardshipType.CONTROLLED);
       cloneDetails.setResourceType(WsmResourceType.CONTROLLED_GCP_GCS_BUCKET);
@@ -69,7 +69,7 @@ public class AwaitCloneGcsBucketResourceFlightStep implements Step {
       cloneDetails.setName(resource.getName());
       cloneDetails.setDescription(resource.getDescription());
       // add to the map
-      final var resourceIdToResult =
+      var resourceIdToResult =
           Optional.ofNullable(
                   context
                       .getWorkingMap()
