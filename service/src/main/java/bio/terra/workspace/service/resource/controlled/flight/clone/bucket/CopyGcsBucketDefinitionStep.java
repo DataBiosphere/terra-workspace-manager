@@ -15,6 +15,7 @@ import bio.terra.workspace.generated.model.ApiGcpGcsBucketCreationParameters;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.model.ControlledResourceIamRole;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceService;
+import bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.ControlledGcsBucketHandler;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.ControlledGcsBucketResource;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
@@ -87,7 +88,7 @@ public class CopyGcsBucketDefinitionStep implements Step {
             .orElse(
                 // If the source bucket uses the auto-generated cloud name and the destination
                 // bucket attempt to do the same, the name will crash as the bucket name must be
-                // globally unique. Thus we add cloned- as prefix to the resource name to prevent
+                // globally unique. Thus, we add cloned- as prefix to the resource name to prevent
                 // crashing.
                 ControlledGcsBucketHandler.getHandler()
                     .generateCloudName(destinationWorkspaceId, "cloned-" + resourceName));

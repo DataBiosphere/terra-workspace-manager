@@ -3,12 +3,12 @@ package scripts.testscripts;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static scripts.utils.BqDatasetUtils.makeBigQueryDatasetReference;
 import static scripts.utils.BqDatasetUtils.makeControlledBigQueryDatasetUserShared;
-import static scripts.utils.GcsBucketUtils.makeControlledGcsBucketUserShared;
+import static scripts.utils.ClientTestUtils.assertJobSuccess;
 import static scripts.utils.ClientTestUtils.getControlledGcpResourceClient;
 import static scripts.utils.ClientTestUtils.getReferencedGcpResourceClient;
-import static scripts.utils.ClientTestUtils.assertJobSuccess;
-import static scripts.utils.TestUtils.appendRandomNumber;
 import static scripts.utils.CloudContextMaker.createGcpCloudContext;
+import static scripts.utils.GcsBucketUtils.makeControlledGcsBucketUserShared;
+import static scripts.utils.TestUtils.appendRandomNumber;
 
 import bio.terra.testrunner.runner.config.TestUserSpecification;
 import bio.terra.workspace.api.ControlledGcpResourceApi;
@@ -33,6 +33,7 @@ import org.apache.commons.lang3.RandomStringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import scripts.utils.ClientTestUtils;
+import scripts.utils.TestUtils;
 import scripts.utils.WorkspaceAllocateTestScriptBase;
 
 public class ResourceLineage extends WorkspaceAllocateTestScriptBase {
@@ -162,16 +163,16 @@ public class ResourceLineage extends WorkspaceAllocateTestScriptBase {
 
   private void cloneControlledBqDataset() throws ApiException, InterruptedException {
     // Clone controlled bq dataset 1 into second workspace
-    var cloneRequest = new CloneControlledGcpBigQueryDatasetRequest()
-        .name("myClonedDataset2")
-        .jobControl(new JobControl().id(UUID.randomUUID().toString()))
-        .cloningInstructions(CloningInstructionsEnum.DEFINITION)
-        .destinationWorkspaceId(workspaceId2);
+    var cloneRequest =
+        new CloneControlledGcpBigQueryDatasetRequest()
+            .name("clonedControlledDataset2")
+            .jobControl(new JobControl().id(UUID.randomUUID().toString()))
+            .destinationDatasetName("cloned_controlled_dataset2")
+            .cloningInstructions(CloningInstructionsEnum.DEFINITION)
+            .destinationWorkspaceId(workspaceId2);
     CloneControlledGcpBigQueryDatasetResult resource2CloneResult =
         controlledGcpResourceApi.cloneBigQueryDataset(
-            cloneRequest,
-            getWorkspaceId(),
-            controlledBqDatasetWorkspace1ResourceId);
+            cloneRequest, getWorkspaceId(), controlledBqDatasetWorkspace1ResourceId);
     resource2CloneResult =
         ClientTestUtils.pollWhileRunning(
             resource2CloneResult,
@@ -181,7 +182,9 @@ public class ResourceLineage extends WorkspaceAllocateTestScriptBase {
             CloneControlledGcpBigQueryDatasetResult::getJobReport,
             Duration.ofSeconds(5));
     assertJobSuccess(
-        "clone BigQuery dataset", resource2CloneResult.getJobReport(), resource2CloneResult.getErrorReport());
+        "clone controlled BigQuery dataset",
+        resource2CloneResult.getJobReport(),
+        resource2CloneResult.getErrorReport());
     var cloneControlledBqDataset2ResourceId =
         resource2CloneResult.getDataset().getDataset().getMetadata().getResourceId();
     expectedControlledBqDatasetLineage.add(
@@ -197,15 +200,13 @@ public class ResourceLineage extends WorkspaceAllocateTestScriptBase {
         new CloneControlledGcpBigQueryDatasetRequest()
             .cloningInstructions(CloningInstructionsEnum.DEFINITION)
             .destinationWorkspaceId(workspaceId2)
-            .name("myClonedDataset3")
+            .name("clonedControlledDataset3")
             // Specify the dataset name because there is already a cloned dataset in workspace 2.
-            .destinationDatasetName("myClonedDataset3")
+            .destinationDatasetName("cloned_controlled_dataset3")
             .jobControl(new JobControl().id(UUID.randomUUID().toString()));
     CloneControlledGcpBigQueryDatasetResult resource3CloneResult =
         controlledGcpResourceApi.cloneBigQueryDataset(
-            cloneRequest2,
-            workspaceId2,
-            cloneControlledBqDataset2ResourceId);
+            cloneRequest2, workspaceId2, cloneControlledBqDataset2ResourceId);
     System.out.println(resource3CloneResult.getJobReport().getStatus());
     resource3CloneResult =
         ClientTestUtils.pollWhileRunning(
@@ -222,7 +223,9 @@ public class ResourceLineage extends WorkspaceAllocateTestScriptBase {
             .sourceWorkspaceId(workspaceId2)
             .sourceResourceId(cloneControlledBqDataset2ResourceId));
     assertJobSuccess(
-        "clone BigQuery dataset", resource3CloneResult.getJobReport(), resource3CloneResult.getErrorReport());
+        "clone BigQuery dataset",
+        resource3CloneResult.getJobReport(),
+        resource3CloneResult.getErrorReport());
     assertEquals(
         expectedControlledBqDatasetLineage,
         resource3CloneResult.getDataset().getDataset().getMetadata().getResourceLineage());
@@ -234,21 +237,23 @@ public class ResourceLineage extends WorkspaceAllocateTestScriptBase {
         new CloneControlledGcpGcsBucketRequest()
             .cloningInstructions(CloningInstructionsEnum.DEFINITION)
             .destinationWorkspaceId(workspaceId2)
-            .name("myClonedBucket2")
+            .name("clonedControlledGcsBucket2")
+            .bucketName(TestUtils.appendRandomNumber("cloned-controlled-bucket2"))
             .jobControl(new JobControl().id(UUID.randomUUID().toString()));
     CloneControlledGcpGcsBucketResult resource2CloneResult =
         controlledGcpResourceApi.cloneGcsBucket(
-            cloneRequest1,
-            workspaceId2,
-            controlledGcsBucketWorkspace1ResourceId);
+            cloneRequest1, workspaceId2, controlledGcsBucketWorkspace1ResourceId);
     ClientTestUtils.pollWhileRunning(
         resource2CloneResult,
-        () -> controlledGcpResourceApi.getCloneGcsBucketResult(getWorkspaceId(),
-              cloneRequest1.getJobControl().getId()),
+        () ->
+            controlledGcpResourceApi.getCloneGcsBucketResult(
+                getWorkspaceId(), cloneRequest1.getJobControl().getId()),
         CloneControlledGcpGcsBucketResult::getJobReport,
         Duration.ofSeconds(5));
     assertJobSuccess(
-        "clone bucket", resource2CloneResult.getJobReport(), resource2CloneResult.getErrorReport());
+        "clone controlled gcs bucket",
+        resource2CloneResult.getJobReport(),
+        resource2CloneResult.getErrorReport());
     var cloneControlledBqDataset2ResourceId =
         resource2CloneResult.getBucket().getBucket().getGcpBucket().getMetadata().getResourceId();
     expectedControlledGcsBucketLineage.add(
@@ -265,28 +270,26 @@ public class ResourceLineage extends WorkspaceAllocateTestScriptBase {
             .getResourceLineage());
 
     // Clone resource 2 to resource 3, still in second workspace.
-    var cloneRequest2 = new CloneControlledGcpGcsBucketRequest()
-        .cloningInstructions(CloningInstructionsEnum.DEFINITION)
-        .destinationWorkspaceId(workspaceId2)
-        .name("myClonedBucket3")
-        .bucketName("myClonedBucket3")
-        .jobControl(new JobControl().id(UUID.randomUUID().toString()));
+    var cloneRequest2 =
+        new CloneControlledGcpGcsBucketRequest()
+            .cloningInstructions(CloningInstructionsEnum.DEFINITION)
+            .destinationWorkspaceId(workspaceId2)
+            .name("myClonedBucket3")
+            .bucketName(TestUtils.appendRandomNumber("cloned-controlled-bucket3"))
+            .jobControl(new JobControl().id(UUID.randomUUID().toString()));
     CloneControlledGcpGcsBucketResult resource3CloneResult =
         controlledGcpResourceApi.cloneGcsBucket(
-            cloneRequest2,
-            workspaceId2,
-            cloneControlledBqDataset2ResourceId);
+            cloneRequest2, workspaceId2, cloneControlledBqDataset2ResourceId);
     ClientTestUtils.pollWhileRunning(
         resource3CloneResult,
         () ->
-            controlledGcpResourceApi.getCloneGcsBucketResult(getWorkspaceId(),
-                cloneRequest2.getJobControl().getId()),
+            controlledGcpResourceApi.getCloneGcsBucketResult(
+                getWorkspaceId(), cloneRequest2.getJobControl().getId()),
         CloneControlledGcpGcsBucketResult::getJobReport,
-        Duration.ofSeconds(5)
-    );
+        Duration.ofSeconds(5));
 
-    assertJobSuccess("Clone bucket", resource3CloneResult.getJobReport(),
-        resource3CloneResult.getErrorReport());
+    assertJobSuccess(
+        "Clone bucket", resource3CloneResult.getJobReport(), resource3CloneResult.getErrorReport());
     // Assert resource lineage on resource 3.
     // Now there are two entries. Add second entry for second clone.
     expectedControlledGcsBucketLineage.add(
