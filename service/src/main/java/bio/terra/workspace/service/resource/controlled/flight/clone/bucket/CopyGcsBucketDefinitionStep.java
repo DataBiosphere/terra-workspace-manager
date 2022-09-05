@@ -61,28 +61,28 @@ public class CopyGcsBucketDefinitionStep implements Step {
   @Override
   public StepResult doStep(FlightContext flightContext)
       throws InterruptedException, RetryException {
-    final FlightMap inputParameters = flightContext.getInputParameters();
-    final FlightMap workingMap = flightContext.getWorkingMap();
+    FlightMap inputParameters = flightContext.getInputParameters();
+    FlightMap workingMap = flightContext.getWorkingMap();
     FlightUtils.validateRequiredEntries(
         inputParameters,
         ControlledResourceKeys.DESTINATION_WORKSPACE_ID,
         ControlledResourceKeys.DESTINATION_RESOURCE_ID);
-    final String resourceName =
+    var resourceName =
         FlightUtils.getInputParameterOrWorkingValue(
             flightContext,
             ResourceKeys.RESOURCE_NAME,
             ResourceKeys.PREVIOUS_RESOURCE_NAME,
             String.class);
-    final String description =
+    var description =
         FlightUtils.getInputParameterOrWorkingValue(
             flightContext,
             ResourceKeys.RESOURCE_DESCRIPTION,
             ResourceKeys.PREVIOUS_RESOURCE_DESCRIPTION,
             String.class);
 
-    final UUID destinationWorkspaceId =
+    var destinationWorkspaceId =
         inputParameters.get(ControlledResourceKeys.DESTINATION_WORKSPACE_ID, UUID.class);
-    final String bucketName =
+    var bucketName =
         Optional.ofNullable(
                 inputParameters.get(ControlledResourceKeys.DESTINATION_BUCKET_NAME, String.class))
             .orElse(
@@ -94,7 +94,7 @@ public class CopyGcsBucketDefinitionStep implements Step {
                     .generateCloudName(destinationWorkspaceId, "cloned-" + resourceName));
     // Store effective bucket name for destination
     workingMap.put(ControlledResourceKeys.DESTINATION_BUCKET_NAME, bucketName);
-    final var destinationResourceId =
+    var destinationResourceId =
         inputParameters.get(ControlledResourceKeys.DESTINATION_RESOURCE_ID, UUID.class);
     // bucket resource for create flight
     var destinationBucketResource =
@@ -106,27 +106,26 @@ public class CopyGcsBucketDefinitionStep implements Step {
             description,
             bucketName);
 
-    final ApiGcpGcsBucketCreationParameters destinationCreationParameters =
+    ApiGcpGcsBucketCreationParameters destinationCreationParameters =
         getDestinationCreationParameters(inputParameters, workingMap);
 
-    @Nullable
-    final ControlledResourceIamRole iamRole =
+    ControlledResourceIamRole iamRole =
         IamRoleUtils.getIamRoleForAccessScope(sourceBucket.getAccessScope());
 
     // Launch a CreateControlledResourcesFlight to make the destination bucket
-    final ControlledGcsBucketResource clonedBucket =
+    ControlledGcsBucketResource clonedBucket =
         controlledResourceService
             .createControlledResourceSync(
                 destinationBucketResource, iamRole, userRequest, destinationCreationParameters)
             .castByEnum(WsmResourceType.CONTROLLED_GCP_GCS_BUCKET);
     workingMap.put(ControlledResourceKeys.CLONED_RESOURCE_DEFINITION, clonedBucket);
 
-    final ApiCreatedControlledGcpGcsBucket apiCreatedBucket =
+    var apiCreatedBucket =
         new ApiCreatedControlledGcpGcsBucket()
             .gcpBucket(clonedBucket.toApiResource())
             .resourceId(destinationBucketResource.getResourceId());
 
-    final ApiClonedControlledGcpGcsBucket apiBucketResult =
+    var apiBucketResult =
         new ApiClonedControlledGcpGcsBucket()
             .effectiveCloningInstructions(resolvedCloningInstructions.toApiModel())
             .bucket(apiCreatedBucket)
@@ -142,7 +141,7 @@ public class CopyGcsBucketDefinitionStep implements Step {
   // Delete the bucket and its row in the resource table
   @Override
   public StepResult undoStep(FlightContext flightContext) throws InterruptedException {
-    final ControlledGcsBucketResource clonedBucket =
+    var clonedBucket =
         flightContext
             .getWorkingMap()
             .get(
@@ -158,11 +157,10 @@ public class CopyGcsBucketDefinitionStep implements Step {
   @Nullable
   private ApiGcpGcsBucketCreationParameters getDestinationCreationParameters(
       FlightMap inputParameters, FlightMap workingMap) {
-    @Nullable
-    final ApiGcpGcsBucketCreationParameters sourceCreationParameters =
+    var sourceCreationParameters =
         workingMap.get(
             ControlledResourceKeys.CREATION_PARAMETERS, ApiGcpGcsBucketCreationParameters.class);
-    final Optional<String> suppliedLocation =
+    Optional<String> suppliedLocation =
         Optional.ofNullable(inputParameters.get(ControlledResourceKeys.LOCATION, String.class));
 
     // Override the location parameter if it was specified
