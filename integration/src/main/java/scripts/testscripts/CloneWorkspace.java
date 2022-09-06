@@ -4,11 +4,12 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.greaterThanOrEqualTo;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static scripts.utils.BqDatasetUtils.BQ_RESULT_TABLE_NAME;
 import static scripts.utils.BqDatasetUtils.makeControlledBigQueryDatasetUserPrivate;
 import static scripts.utils.BqDatasetUtils.makeControlledBigQueryDatasetUserShared;
-import static scripts.utils.ClientTestUtils.TEST_WSM_APP;
 import static scripts.utils.ClientTestUtils.assertPresent;
 import static scripts.utils.GcsBucketObjectUtils.makeGcsObjectReference;
 import static scripts.utils.GcsBucketUtils.BUCKET_RESOURCE_PREFIX;
@@ -20,9 +21,23 @@ import bio.terra.testrunner.runner.config.TestUserSpecification;
 import bio.terra.workspace.api.ControlledGcpResourceApi;
 import bio.terra.workspace.api.ReferencedGcpResourceApi;
 import bio.terra.workspace.api.WorkspaceApi;
-import bio.terra.workspace.api.WorkspaceApplicationApi;
-import bio.terra.workspace.client.ApiClient;
-import bio.terra.workspace.model.*;
+import bio.terra.workspace.model.CloneResourceResult;
+import bio.terra.workspace.model.CloneWorkspaceRequest;
+import bio.terra.workspace.model.CloneWorkspaceResult;
+import bio.terra.workspace.model.CloningInstructionsEnum;
+import bio.terra.workspace.model.CreatedControlledGcpGcsBucket;
+import bio.terra.workspace.model.GcpBigQueryDataTableAttributes;
+import bio.terra.workspace.model.GcpBigQueryDataTableResource;
+import bio.terra.workspace.model.GcpBigQueryDatasetResource;
+import bio.terra.workspace.model.GcpGcsBucketResource;
+import bio.terra.workspace.model.GcpGcsObjectAttributes;
+import bio.terra.workspace.model.GcpGcsObjectResource;
+import bio.terra.workspace.model.GrantRoleRequestBody;
+import bio.terra.workspace.model.IamRole;
+import bio.terra.workspace.model.ResourceCloneDetails;
+import bio.terra.workspace.model.ResourceType;
+import bio.terra.workspace.model.StewardshipType;
+import bio.terra.workspace.model.WorkspaceDescription;
 import com.google.cloud.bigquery.BigQuery;
 import com.google.cloud.bigquery.JobInfo.WriteDisposition;
 import com.google.cloud.bigquery.QueryJobConfiguration;
@@ -77,11 +92,11 @@ public class CloneWorkspace extends WorkspaceAllocateWithPolicyTestScriptBase {
       throws Exception {
     logger.info("Begin setup");
     super.doSetup(testUsers, sourceOwnerWorkspaceApi);
-    // Set up 2 users
+    // set up 2 users
     assertThat(testUsers, hasSize(2));
-    // User creating the source resources
+    // user creating the source resources
     final TestUserSpecification sourceOwnerUser = testUsers.get(0);
-    // User cloning the workspace
+    // user cloning the workspace
     cloningUser = testUsers.get(1);
     logger.info(
         "Owning user: {}, Cloning user: {}", sourceOwnerUser.userEmail, cloningUser.userEmail);
@@ -90,7 +105,7 @@ public class CloneWorkspace extends WorkspaceAllocateWithPolicyTestScriptBase {
         CloudContextMaker.createGcpCloudContext(getWorkspaceId(), sourceOwnerWorkspaceApi);
     logger.info("Created source project {} in workspace {}", sourceProjectId, getWorkspaceId());
 
-    // Add cloning user as reader on the workspace
+    // add cloning user as reader on the workspace
     sourceOwnerWorkspaceApi.grantRole(
         new GrantRoleRequestBody().memberEmail(cloningUser.userEmail),
         getWorkspaceId(),
@@ -101,7 +116,7 @@ public class CloneWorkspace extends WorkspaceAllocateWithPolicyTestScriptBase {
         cloningUser.userEmail,
         getWorkspaceId());
 
-    // Give users resource APIs
+    // give users resource APIs
     final ControlledGcpResourceApi sourceOwnerResourceApi =
         ClientTestUtils.getControlledGcpResourceClient(sourceOwnerUser, server);
     cloningUserResourceApi = ClientTestUtils.getControlledGcpResourceClient(cloningUser, server);
@@ -120,7 +135,7 @@ public class CloneWorkspace extends WorkspaceAllocateWithPolicyTestScriptBase {
 
     GcsBucketUtils.addFileToBucket(sharedSourceBucket, sourceOwnerUser, sourceProjectId);
 
-    // Create a private GCS bucket, which the non-creating user can't clone
+    // create a private GCS bucket, which the non-creating user can't clone
     privateSourceBucket =
         makeControlledGcsBucketUserPrivate(
             sourceOwnerResourceApi,
@@ -138,7 +153,7 @@ public class CloneWorkspace extends WorkspaceAllocateWithPolicyTestScriptBase {
             CloningInstructionsEnum.NOTHING);
     GcsBucketUtils.addFileToBucket(sharedCopyNothingSourceBucket, sourceOwnerUser, sourceProjectId);
 
-    // Create a GCS bucket with data and COPY_DEFINITION
+    // create a GCS bucket with data and COPY_DEFINITION
     copyDefinitionSourceBucket =
         makeControlledGcsBucketUserShared(
             sourceOwnerResourceApi,
@@ -204,7 +219,7 @@ public class CloneWorkspace extends WorkspaceAllocateWithPolicyTestScriptBase {
             "a_reference_to_wsmtestblob",
             CloningInstructionsEnum.REFERENCE);
 
-    // Create reference to the shared BQ dataset with COPY_DEFINITION
+    // create reference to the shared BQ dataset with COPY_DEFINITION
     sourceDatasetReference =
         BqDatasetUtils.makeBigQueryDatasetReference(
             copyDefinitionDataset.getAttributes(),
@@ -222,12 +237,6 @@ public class CloneWorkspace extends WorkspaceAllocateWithPolicyTestScriptBase {
             referencedGcpResourceApi,
             getWorkspaceId(),
             "datatable_resource_1");
-
-    // Enable the application
-    ApiClient ownerApiClient = ClientTestUtils.getClientForTestUser(sourceOwnerUser, server);
-    WorkspaceApplicationApi ownerWsmAppApi = new WorkspaceApplicationApi(ownerApiClient);
-    ownerWsmAppApi.enableWorkspaceApplication(getWorkspaceId(), TEST_WSM_APP);
-
     logger.info("End setup");
   }
 
@@ -746,17 +755,6 @@ public class CloneWorkspace extends WorkspaceAllocateWithPolicyTestScriptBase {
         dataTableReferenceDetails.getDestinationResourceId(),
         "Destination resource ID omitted for skipped resource");
     assertNull(dataTableReferenceDetails.getErrorMessage(), "No error message for successful skip");
-
-    // Destination workspace should have an enabled application
-    ApiClient cloningApiClient = ClientTestUtils.getClientForTestUser(cloningUser, server);
-    WorkspaceApplicationApi cloningWsmAppApi = new WorkspaceApplicationApi(cloningApiClient);
-    assertEquals(
-        ApplicationState.OPERATING,
-        cloningWsmAppApi
-            .getWorkspaceApplication(destinationWorkspaceId, TEST_WSM_APP)
-            .getApplicationState(),
-        "The enabled application is cloned successfully");
-
     logger.info("End User Journey");
   }
 
