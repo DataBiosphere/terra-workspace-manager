@@ -1,5 +1,7 @@
 package bio.terra.workspace.service.resource.controlled.flight.clone.workspace;
 
+import static bio.terra.workspace.service.resource.controlled.flight.clone.workspace.WorkspaceCloneUtils.buildDestinationControlledBigQueryDataset;
+import static bio.terra.workspace.service.resource.controlled.flight.clone.workspace.WorkspaceCloneUtils.buildDestinationControlledGcsBucket;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import bio.terra.workspace.common.BaseUnitTest;
@@ -24,7 +26,7 @@ public class WorkspaceCloneUtilsTest extends BaseUnitTest {
   private static final UUID DESTINATION_RESOURCE_ID = UUID.randomUUID();
 
   @Test
-  public void buildDestinationControlledBigQueryDataset() {
+  public void buildDestinationControlledBigQueryDataset_cloneSucceeds() {
     var sourceDataset =
         ControlledResourceFixtures.makeDefaultControlledBigQueryBuilder(WORKSPACE_ID).build();
     var cloneResourceName = RandomStringUtils.randomAlphabetic(5);
@@ -32,32 +34,27 @@ public class WorkspaceCloneUtilsTest extends BaseUnitTest {
     var cloneDatasetName = RandomStringUtils.randomAlphabetic(5);
     var cloneProjectName = "my-cloned-gcp-project";
 
-    var datasetToClone =
-        (ControlledBigQueryDatasetResource)
-            WorkspaceCloneUtils.buildDestinationControlledBigQueryDataset(
-                sourceDataset,
-                DESTINATION_WORKSPACE_ID,
-                DESTINATION_RESOURCE_ID,
-                cloneResourceName,
-                cloneDescription,
-                cloneDatasetName,
-                cloneProjectName);
+    ControlledBigQueryDatasetResource datasetToClone =
+        buildDestinationControlledBigQueryDataset(
+            sourceDataset,
+            DESTINATION_WORKSPACE_ID,
+            DESTINATION_RESOURCE_ID,
+            cloneResourceName,
+            cloneDescription,
+            cloneDatasetName,
+            cloneProjectName);
 
     assertResourceCommonFields(sourceDataset, cloneResourceName, cloneDescription, datasetToClone);
     assertControlledResourceCommonField(sourceDataset, datasetToClone);
     assertEquals(sourceDataset.getPrivateResourceState(), datasetToClone.getPrivateResourceState());
     assertEquals(cloneDatasetName, datasetToClone.getDatasetName());
     assertEquals(cloneProjectName, datasetToClone.getProjectId());
-    List<ResourceLineageEntry> expectedLineage = new ArrayList<>();
-    expectedLineage.add(
-        new ResourceLineageEntry(sourceDataset.getWorkspaceId(), sourceDataset.getResourceId()));
-    assertEquals(expectedLineage, datasetToClone.getResourceLineage());
   }
 
   @Test
   public void
       buildDestinationControlledBigQueryDataset_private_setPrivateResourceStateToInitializing() {
-    var sourceDataset =
+    ControlledBigQueryDatasetResource sourceDataset =
         ControlledResourceFixtures.makeDefaultControlledBigQueryBuilder(WORKSPACE_ID)
             .common(
                 ControlledResourceFixtures.makeDefaultControlledResourceFieldsBuilder()
@@ -67,48 +64,42 @@ public class WorkspaceCloneUtilsTest extends BaseUnitTest {
                     .build())
             .build();
 
-    var datasetToClone =
-        (ControlledBigQueryDatasetResource)
-            WorkspaceCloneUtils.buildDestinationControlledBigQueryDataset(
-                sourceDataset,
-                DESTINATION_WORKSPACE_ID,
-                DESTINATION_RESOURCE_ID,
-                RandomStringUtils.randomAlphabetic(5),
-                /*description=*/ null,
-                RandomStringUtils.randomAlphabetic(5),
-                "my-cloned-gcp-project");
+    ControlledBigQueryDatasetResource datasetToClone =
+        buildDestinationControlledBigQueryDataset(
+            sourceDataset,
+            DESTINATION_WORKSPACE_ID,
+            DESTINATION_RESOURCE_ID,
+            RandomStringUtils.randomAlphabetic(5),
+            /*description=*/ null,
+            RandomStringUtils.randomAlphabetic(5),
+            "my-cloned-gcp-project");
 
     assertEquals(PrivateResourceState.INITIALIZING, datasetToClone.getPrivateResourceState().get());
     assertControlledResourceCommonField(sourceDataset, datasetToClone);
   }
 
   @Test
-  public void buildDestinationControlledGcsBucket() {
-    var sourceBucket =
+  public void buildDestinationControlledGcsBucket_cloneSucceeds() {
+    ControlledGcsBucketResource sourceBucket =
         ControlledResourceFixtures.makeDefaultControlledGcsBucketBuilder(WORKSPACE_ID).build();
     var cloneResourceName = RandomStringUtils.randomAlphabetic(5);
     var cloneDescription = "This is a cloned bucket";
     // Gcs bucket cloud instance id must be lower-case.
     var cloneBucketName = RandomStringUtils.randomAlphabetic(5).toLowerCase(Locale.ROOT);
 
-    var bucketToClone =
-        (ControlledGcsBucketResource)
-            WorkspaceCloneUtils.buildDestinationControlledGcsBucket(
-                sourceBucket,
-                DESTINATION_WORKSPACE_ID,
-                DESTINATION_RESOURCE_ID,
-                cloneResourceName,
-                cloneDescription,
-                cloneBucketName);
+    ControlledGcsBucketResource bucketToClone =
+        buildDestinationControlledGcsBucket(
+            sourceBucket,
+            DESTINATION_WORKSPACE_ID,
+            DESTINATION_RESOURCE_ID,
+            cloneResourceName,
+            cloneDescription,
+            cloneBucketName);
 
     assertResourceCommonFields(sourceBucket, cloneResourceName, cloneDescription, bucketToClone);
     assertControlledResourceCommonField(sourceBucket, bucketToClone);
     assertEquals(sourceBucket.getPrivateResourceState(), bucketToClone.getPrivateResourceState());
     assertEquals(cloneBucketName, bucketToClone.getBucketName());
-    List<ResourceLineageEntry> expectedLineage = new ArrayList<>();
-    expectedLineage.add(
-        new ResourceLineageEntry(sourceBucket.getWorkspaceId(), sourceBucket.getResourceId()));
-    assertEquals(expectedLineage, bucketToClone.getResourceLineage());
   }
 
   @Test
@@ -123,16 +114,15 @@ public class WorkspaceCloneUtilsTest extends BaseUnitTest {
                     .build())
             .build();
 
-    var bucketToClone =
-        (ControlledGcsBucketResource)
-            WorkspaceCloneUtils.buildDestinationControlledGcsBucket(
-                sourceBucket,
-                DESTINATION_WORKSPACE_ID,
-                DESTINATION_RESOURCE_ID,
-                RandomStringUtils.randomAlphabetic(5),
-                "This is a cloned private bucket",
-                // Gcs bucket cloud instance id must be lower-case.
-                RandomStringUtils.randomAlphabetic(5).toLowerCase(Locale.ROOT));
+    ControlledGcsBucketResource bucketToClone =
+        buildDestinationControlledGcsBucket(
+            sourceBucket,
+            DESTINATION_WORKSPACE_ID,
+            DESTINATION_RESOURCE_ID,
+            RandomStringUtils.randomAlphabetic(5),
+            "This is a cloned private bucket",
+            // Gcs bucket cloud instance id must be lower-case.
+            RandomStringUtils.randomAlphabetic(5).toLowerCase(Locale.ROOT));
 
     assertEquals(PrivateResourceState.INITIALIZING, bucketToClone.getPrivateResourceState().get());
     assertControlledResourceCommonField(sourceBucket, bucketToClone);

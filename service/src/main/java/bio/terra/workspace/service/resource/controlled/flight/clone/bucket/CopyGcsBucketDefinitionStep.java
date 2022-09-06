@@ -67,13 +67,13 @@ public class CopyGcsBucketDefinitionStep implements Step {
         inputParameters,
         ControlledResourceKeys.DESTINATION_WORKSPACE_ID,
         ControlledResourceKeys.DESTINATION_RESOURCE_ID);
-    var resourceName =
+    String resourceName =
         FlightUtils.getInputParameterOrWorkingValue(
             flightContext,
             ResourceKeys.RESOURCE_NAME,
             ResourceKeys.PREVIOUS_RESOURCE_NAME,
             String.class);
-    var description =
+    String description =
         FlightUtils.getInputParameterOrWorkingValue(
             flightContext,
             ResourceKeys.RESOURCE_DESCRIPTION,
@@ -97,7 +97,7 @@ public class CopyGcsBucketDefinitionStep implements Step {
     var destinationResourceId =
         inputParameters.get(ControlledResourceKeys.DESTINATION_RESOURCE_ID, UUID.class);
     // bucket resource for create flight
-    var destinationBucketResource =
+    ControlledGcsBucketResource destinationBucketResource =
         buildDestinationControlledGcsBucket(
             sourceBucket,
             destinationWorkspaceId,

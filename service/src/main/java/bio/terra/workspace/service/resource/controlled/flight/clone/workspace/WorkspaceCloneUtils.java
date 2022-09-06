@@ -130,7 +130,7 @@ public class WorkspaceCloneUtils {
     return destinationResource;
   }
 
-  public static ControlledResource buildDestinationControlledBigQueryDataset(
+  public static ControlledBigQueryDatasetResource buildDestinationControlledBigQueryDataset(
       ControlledBigQueryDatasetResource sourceDataset,
       UUID destinationWorkspaceId,
       UUID destinationResourceId,
@@ -157,7 +157,7 @@ public class WorkspaceCloneUtils {
         .build();
   }
 
-  public static ControlledResource buildDestinationControlledGcsBucket(
+  public static ControlledGcsBucketResource buildDestinationControlledGcsBucket(
       ControlledGcsBucketResource sourceBucket,
       UUID destinationWorkspaceId,
       UUID destinationResourceId,

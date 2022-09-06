@@ -61,13 +61,13 @@ public class CopyBigQueryDatasetDefinitionStep implements Step {
     FlightUtils.validateRequiredEntries(
         inputParameters, ControlledResourceKeys.DESTINATION_RESOURCE_ID);
     FlightMap workingMap = flightContext.getWorkingMap();
-    var resourceName =
+    String resourceName =
         FlightUtils.getInputParameterOrWorkingValue(
             flightContext,
             ResourceKeys.RESOURCE_NAME,
             ResourceKeys.PREVIOUS_RESOURCE_NAME,
             String.class);
-    var description =
+    String description =
         FlightUtils.getInputParameterOrWorkingValue(
             flightContext,
             ResourceKeys.RESOURCE_DESCRIPTION,
@@ -80,7 +80,7 @@ public class CopyBigQueryDatasetDefinitionStep implements Step {
     workingMap.put(ControlledResourceKeys.DESTINATION_DATASET_NAME, datasetName);
     var destinationWorkspaceId =
         inputParameters.get(ControlledResourceKeys.DESTINATION_WORKSPACE_ID, UUID.class);
-    var location =
+    String location =
         FlightUtils.getInputParameterOrWorkingValue(
             flightContext,
             ControlledResourceKeys.LOCATION,
@@ -90,7 +90,7 @@ public class CopyBigQueryDatasetDefinitionStep implements Step {
         gcpCloudContextService.getRequiredGcpProject(destinationWorkspaceId);
     var destinationResourceId =
         inputParameters.get(ControlledResourceKeys.DESTINATION_RESOURCE_ID, UUID.class);
-    var destinationResource =
+    ControlledBigQueryDatasetResource destinationResource =
         buildDestinationControlledBigQueryDataset(
             sourceDataset,
             destinationWorkspaceId,
