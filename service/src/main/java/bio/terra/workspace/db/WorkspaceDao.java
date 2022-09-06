@@ -15,6 +15,7 @@ import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
 import com.fasterxml.jackson.core.type.TypeReference;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -46,8 +47,11 @@ import org.springframework.stereotype.Component;
 public class WorkspaceDao {
   /** SQL query for reading a workspace */
   private static final String WORKSPACE_SELECT_SQL =
-      "SELECT workspace_id, user_facing_id, display_name, description, spend_profile, properties, workspace_stage, workspace_lineage"
-          + " FROM workspace";
+      """
+          SELECT workspace_id, user_facing_id, display_name, description, spend_profile, properties,
+          workspace_stage, workspace_lineage
+          FROM workspace
+      """;
 
   private static final RowMapper<Workspace> WORKSPACE_ROW_MAPPER =
       (rs, rowNum) ->
@@ -69,7 +73,7 @@ public class WorkspaceDao {
                   Optional.ofNullable(rs.getString("workspace_lineage"))
                       .map(
                           lineage -> DbSerDes.fromJson(lineage, new TypeReference<List<UUID>>() {}))
-                      .orElse(null))
+                      .orElse(new ArrayList<>()))
               .build();
   private final Logger logger = LoggerFactory.getLogger(WorkspaceDao.class);
   private final NamedParameterJdbcTemplate jdbcTemplate;
