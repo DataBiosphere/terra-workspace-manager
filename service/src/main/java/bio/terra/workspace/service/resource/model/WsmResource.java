@@ -175,9 +175,9 @@ public abstract class WsmResource {
             .cloudPlatform(getResourceType().getCloudPlatform().toApiModel())
             .cloningInstructions(cloningInstructions.toApiModel());
     ApiResourceLineage apiResourceLineage = new ApiResourceLineage();
-      apiResourceLineage.addAll(
-          resourceLineage.stream().map(ResourceLineageEntry::toApiModel).toList());
-      apiResourceMetadata.resourceLineage(apiResourceLineage);
+    apiResourceLineage.addAll(
+        resourceLineage.stream().map(ResourceLineageEntry::toApiModel).toList());
+    apiResourceMetadata.resourceLineage(apiResourceLineage);
 
     return apiResourceMetadata;
   }

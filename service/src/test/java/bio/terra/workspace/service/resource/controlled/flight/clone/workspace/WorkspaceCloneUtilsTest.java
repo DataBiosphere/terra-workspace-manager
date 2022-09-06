@@ -120,7 +120,8 @@ public class WorkspaceCloneUtilsTest extends BaseUnitTest {
                     .privateResourceState(PrivateResourceState.ACTIVE)
                     .accessScope(AccessScopeType.ACCESS_SCOPE_PRIVATE)
                     .assignedUser("yuhuyoyo")
-                    .build()).build();
+                    .build())
+            .build();
 
     var bucketToClone =
         (ControlledGcsBucketResource)
