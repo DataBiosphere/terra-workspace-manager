@@ -5,6 +5,7 @@ import bio.terra.workspace.service.workspace.exceptions.MissingRequiredFieldsExc
 import bio.terra.workspace.service.workspace.model.WorkspaceConstants.Properties;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonPOJOBuilder;
+import com.google.common.collect.ImmutableList;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -94,8 +95,8 @@ public class Workspace {
   }
 
   /** Get the list of workspace IDs that the workspace is cloned from. */
-  public List<UUID> getWorkspaceLineage() {
-    return workspaceLineage;
+  public ImmutableList<UUID> getWorkspaceLineage() {
+    return ImmutableList.copyOf(workspaceLineage);
   }
 
   @Override

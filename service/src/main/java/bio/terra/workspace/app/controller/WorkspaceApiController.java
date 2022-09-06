@@ -58,6 +58,7 @@ import bio.terra.workspace.service.workspace.model.OperationType;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceAndHighestRole;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -573,7 +574,7 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
     // Construct the target workspace object from the inputs
     // Policies are cloned in the flight instead of here so that they get cleaned appropriately if
     // the flight fails.
-    List<UUID> workspaceLineage = sourceWorkspace.getWorkspaceLineage();
+    List<UUID> workspaceLineage = new ArrayList<>(sourceWorkspace.getWorkspaceLineage());
     workspaceLineage.add(sourceWorkspace.getWorkspaceId());
     final Workspace destinationWorkspace =
         Workspace.builder()

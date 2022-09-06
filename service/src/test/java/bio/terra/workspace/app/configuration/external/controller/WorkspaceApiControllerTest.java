@@ -283,6 +283,7 @@ public class WorkspaceApiControllerTest extends BaseUnitTest {
     var expectedLineage = sourceWorkspace.getWorkspaceLineage();
     expectedLineage.add(workspaceId);
     assertEquals(expectedLineage, destinationWorkspace.getWorkspaceLineage());
+    assertEquals(0, getWorkspaceDescription(workspaceId).getWorkspaceLineage().size());
 
     // clone workspace from 2 -> 3
     String serializedGetResponse2 =
@@ -311,6 +312,7 @@ public class WorkspaceApiControllerTest extends BaseUnitTest {
 
     expectedLineage.add(destinationWorkspaceId);
     assertEquals(expectedLineage, destinationWorkspace2.getWorkspaceLineage());
+    assertEquals(0, getWorkspaceDescription(workspaceId).getWorkspaceLineage().size());
   }
 
   @Test
