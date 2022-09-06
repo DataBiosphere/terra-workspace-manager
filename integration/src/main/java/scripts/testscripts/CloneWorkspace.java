@@ -32,6 +32,7 @@ import com.google.cloud.storage.BlobId;
 import com.google.cloud.storage.Storage;
 import java.io.IOException;
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.StreamSupport;
@@ -267,6 +268,9 @@ public class CloneWorkspace extends WorkspaceAllocateWithPolicyTestScriptBase {
     assertEquals(
         destinationWorkspaceId, destinationWorkspaceDescription.getId(), "Destination IDs match");
 
+    assertEquals(
+        new ArrayList<>(List.of(getWorkspaceId())),
+        destinationWorkspaceDescription.getWorkspaceLineage());
     cloneResult =
         ClientTestUtils.pollWhileRunning(
             cloneResult,

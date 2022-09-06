@@ -14,6 +14,7 @@ import bio.terra.workspace.service.workspace.exceptions.DuplicateWorkspaceExcept
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
+import com.fasterxml.jackson.core.type.TypeReference;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -45,7 +46,7 @@ import org.springframework.stereotype.Component;
 public class WorkspaceDao {
   /** SQL query for reading a workspace */
   private static final String WORKSPACE_SELECT_SQL =
-      "SELECT workspace_id, user_facing_id, display_name, description, spend_profile, properties, workspace_stage"
+      "SELECT workspace_id, user_facing_id, display_name, description, spend_profile, properties, workspace_stage, workspace_lineage"
           + " FROM workspace";
 
   private static final RowMapper<Workspace> WORKSPACE_ROW_MAPPER =
@@ -64,13 +65,17 @@ public class WorkspaceDao {
                       .map(DbSerDes::jsonToProperties)
                       .orElse(null))
               .workspaceStage(WorkspaceStage.valueOf(rs.getString("workspace_stage")))
+              .workspaceLineage(
+                  Optional.ofNullable(rs.getString("workspace_lineage"))
+                      .map(
+                          lineage -> DbSerDes.fromJson(lineage, new TypeReference<List<UUID>>() {}))
+                      .orElse(null))
               .build();
   private final Logger logger = LoggerFactory.getLogger(WorkspaceDao.class);
   private final NamedParameterJdbcTemplate jdbcTemplate;
 
   @Autowired
-  public WorkspaceDao(
-      WorkspaceActivityLogDao workspaceActivityLogDao, NamedParameterJdbcTemplate jdbcTemplate) {
+  public WorkspaceDao(NamedParameterJdbcTemplate jdbcTemplate) {
     this.jdbcTemplate = jdbcTemplate;
   }
 
@@ -83,9 +88,9 @@ public class WorkspaceDao {
   @WriteTransaction
   public UUID createWorkspace(Workspace workspace) {
     final String sql =
-        "INSERT INTO workspace (workspace_id, user_facing_id, display_name, description, spend_profile, properties, workspace_stage) "
+        "INSERT INTO workspace (workspace_id, user_facing_id, display_name, description, spend_profile, properties, workspace_stage, workspace_lineage) "
             + "values (:workspace_id, :user_facing_id, :display_name, :description, :spend_profile,"
-            + " cast(:properties AS jsonb), :workspace_stage)";
+            + " cast(:properties AS jsonb), :workspace_stage, cast(:workspace_lineage AS jsonb))";
 
     final String workspaceUuid = workspace.getWorkspaceId().toString();
     // validateUserFacingId() is called in controller. Also call here to be safe (eg see bug
@@ -102,7 +107,8 @@ public class WorkspaceDao {
                 "spend_profile",
                 workspace.getSpendProfileId().map(SpendProfileId::getId).orElse(null))
             .addValue("properties", DbSerDes.propertiesToJson(workspace.getProperties()))
-            .addValue("workspace_stage", workspace.getWorkspaceStage().toString());
+            .addValue("workspace_stage", workspace.getWorkspaceStage().toString())
+            .addValue("workspace_lineage", DbSerDes.toJson(workspace.getWorkspaceLineage()));
     try {
       jdbcTemplate.update(sql, params);
       logger.info("Inserted record for workspace {}", workspaceUuid);

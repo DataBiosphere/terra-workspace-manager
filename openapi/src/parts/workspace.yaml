@@ -555,6 +555,12 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/TpsPolicyInput'
+        workspaceLineage:
+          description: List of workspace ids that the workspace is cloned from.
+          type: array
+          items:
+            type: string
+            format: uuid
 
     WorkspaceDescriptionList:
       type: object

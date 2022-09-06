@@ -265,6 +265,7 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
         .properties(apiProperties)
         .spendProfile(workspace.getSpendProfileId().map(SpendProfileId::getId).orElse(null))
         .stage(workspace.getWorkspaceStage().toApiModel())
+        .workspaceLineage(workspace.getWorkspaceLineage())
         .gcpContext(gcpContext)
         .azureContext(azureContext)
         .createdDate(
@@ -572,6 +573,8 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
     // Construct the target workspace object from the inputs
     // Policies are cloned in the flight instead of here so that they get cleaned appropriately if
     // the flight fails.
+    List<UUID> workspaceLineage = sourceWorkspace.getWorkspaceLineage();
+    workspaceLineage.add(sourceWorkspace.getWorkspaceId());
     final Workspace destinationWorkspace =
         Workspace.builder()
             .workspaceId(destinationWorkspaceId)
@@ -581,6 +584,7 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
             .displayName(body.getDisplayName())
             .description(body.getDescription())
             .properties(sourceWorkspace.getProperties())
+            .workspaceLineage(workspaceLineage)
             .build();
 
     final String jobId =

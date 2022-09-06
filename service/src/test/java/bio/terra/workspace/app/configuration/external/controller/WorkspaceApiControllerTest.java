@@ -252,10 +252,10 @@ public class WorkspaceApiControllerTest extends BaseUnitTest {
   }
 
   @Test
-  public void cloneWorkspace() throws Exception {
+  public void cloneWorkspaceTwice_appendLineage() throws Exception {
     UUID workspaceId = createDefaultWorkspace().getId();
     ApiWorkspaceDescription sourceWorkspace = getWorkspaceDescription(workspaceId);
-
+    // clone workspace from 1 -> 2.
     String serializedGetResponse =
         mockMvc
             .perform(
@@ -280,6 +280,37 @@ public class WorkspaceApiControllerTest extends BaseUnitTest {
     ApiWorkspaceDescription destinationWorkspace = getWorkspaceDescription(destinationWorkspaceId);
 
     assertEquals(sourceWorkspace.getProperties(), destinationWorkspace.getProperties());
+    var expectedLineage = sourceWorkspace.getWorkspaceLineage();
+    expectedLineage.add(workspaceId);
+    assertEquals(expectedLineage, destinationWorkspace.getWorkspaceLineage());
+
+    // clone workspace from 2 -> 3
+    String serializedGetResponse2 =
+        mockMvc
+            .perform(
+                addAuth(
+                    post(String.format(CLONE_WORKSPACE_PATH_FORMAT, destinationWorkspaceId))
+                        .contentType(MediaType.APPLICATION_JSON_VALUE)
+                        .accept(MediaType.APPLICATION_JSON)
+                        .characterEncoding("UTF-8")
+                        .content(
+                            objectMapper.writeValueAsString(
+                                new ApiCloneWorkspaceRequest()
+                                    .spendProfile(SamResource.SPEND_PROFILE))),
+                    USER_REQUEST))
+            .andExpect(status().is(HttpStatus.SC_ACCEPTED))
+            .andReturn()
+            .getResponse()
+            .getContentAsString();
+    ApiCloneWorkspaceResult cloneWorkspace2 =
+        objectMapper.readValue(serializedGetResponse2, ApiCloneWorkspaceResult.class);
+
+    UUID destinationWorkspaceId2 = cloneWorkspace2.getWorkspace().getDestinationWorkspaceId();
+    ApiWorkspaceDescription destinationWorkspace2 =
+        getWorkspaceDescription(destinationWorkspaceId2);
+
+    expectedLineage.add(destinationWorkspaceId);
+    assertEquals(expectedLineage, destinationWorkspace2.getWorkspaceLineage());
   }
 
   @Test

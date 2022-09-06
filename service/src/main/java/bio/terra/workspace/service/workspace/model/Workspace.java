@@ -5,10 +5,13 @@ import bio.terra.workspace.service.workspace.exceptions.MissingRequiredFieldsExc
 import bio.terra.workspace.service.workspace.model.WorkspaceConstants.Properties;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonPOJOBuilder;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import javax.annotation.Nullable;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 
@@ -28,6 +31,7 @@ public class Workspace {
   private final SpendProfileId spendProfileId;
   private final Map<String, String> properties;
   private final WorkspaceStage workspaceStage;
+  private final List<UUID> workspaceLineage;
 
   public Workspace(
       UUID workspaceId,
@@ -36,7 +40,8 @@ public class Workspace {
       String description,
       SpendProfileId spendProfileId,
       Map<String, String> properties,
-      WorkspaceStage workspaceStage) {
+      WorkspaceStage workspaceStage,
+      List<UUID> workspaceLineage) {
     this.workspaceId = workspaceId;
     this.userFacingId = userFacingId;
     this.displayName = displayName;
@@ -44,6 +49,7 @@ public class Workspace {
     this.spendProfileId = spendProfileId;
     this.properties = properties;
     this.workspaceStage = workspaceStage;
+    this.workspaceLineage = workspaceLineage;
   }
 
   /** The globally unique identifier of this workspace */
@@ -87,6 +93,11 @@ public class Workspace {
     return workspaceStage;
   }
 
+  /** Get the list of workspace IDs that the workspace is cloned from. */
+  public List<UUID> getWorkspaceLineage() {
+    return workspaceLineage;
+  }
+
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
@@ -103,6 +114,7 @@ public class Workspace {
         .append(spendProfileId, workspace.spendProfileId)
         .append(properties, workspace.properties)
         .append(workspaceStage, workspace.workspaceStage)
+        .append(workspaceLineage, workspace.workspaceLineage)
         .isEquals();
   }
 
@@ -116,6 +128,7 @@ public class Workspace {
         .append(spendProfileId)
         .append(properties)
         .append(workspaceStage)
+        .append(workspaceLineage)
         .toHashCode();
   }
 
@@ -132,6 +145,7 @@ public class Workspace {
     private SpendProfileId spendProfileId;
     private Map<String, String> properties;
     private WorkspaceStage workspaceStage;
+    private List<UUID> workspaceLineage;
 
     public Builder workspaceId(UUID workspaceUuid) {
       this.workspaceId = workspaceUuid;
@@ -168,10 +182,18 @@ public class Workspace {
       return this;
     }
 
+    public Builder workspaceLineage(@Nullable List<UUID> lineage) {
+      this.workspaceLineage = lineage;
+      return this;
+    }
+
     public Workspace build() {
       // Always have a map, even if it is empty
       if (properties == null) {
         properties = new HashMap<>();
+      }
+      if (workspaceLineage == null) {
+        workspaceLineage = new ArrayList<>();
       }
       if (displayName == null) {
         displayName = "";
@@ -189,7 +211,8 @@ public class Workspace {
           description,
           spendProfileId,
           properties,
-          workspaceStage);
+          workspaceStage,
+          workspaceLineage);
     }
   }
 

@@ -10,18 +10,15 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import bio.terra.workspace.app.configuration.external.WorkspaceDatabaseConfiguration;
 import bio.terra.workspace.common.BaseUnitTest;
 import bio.terra.workspace.db.exception.WorkspaceNotFoundException;
 import bio.terra.workspace.service.spendprofile.SpendProfileId;
 import bio.terra.workspace.service.workspace.GcpCloudContextService;
-import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.exceptions.DuplicateWorkspaceException;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import bio.terra.workspace.service.workspace.model.GcpCloudContext;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import java.util.ArrayList;
@@ -48,12 +45,9 @@ class WorkspaceDaoTest extends BaseUnitTest {
   private static final String POLICY_READER = "policy-reader";
   private static final String POLICY_APPLICATION = "policy-application";
 
-  @Autowired private WorkspaceDatabaseConfiguration workspaceDatabaseConfiguration;
   @Autowired private NamedParameterJdbcTemplate jdbcTemplate;
   @Autowired private WorkspaceDao workspaceDao;
   @Autowired private GcpCloudContextService gcpCloudContextService;
-  @Autowired private WorkspaceService workspaceService;
-  @Autowired private ObjectMapper persistenceObjectMapper;
 
   private UUID workspaceUuid;
   @Nullable private SpendProfileId spendProfileId;
@@ -81,9 +75,8 @@ class WorkspaceDaoTest extends BaseUnitTest {
         new MapSqlParameterSource().addValue("id", workspaceUuid.toString());
     Map<String, Object> queryOutput = jdbcTemplate.queryForMap(READ_SQL, params);
 
-    assertThat(queryOutput.get("workspace_id"), equalTo(workspaceUuid.toString()));
-    assertThat(queryOutput.get("spend_profile"), equalTo(spendProfileId.getId()));
-
+    assertEquals(workspaceUuid.toString(), queryOutput.get("workspace_id"));
+    assertEquals(spendProfileId.getId(), queryOutput.get("spend_profile"));
     // This test doesn't clean up after itself - be sure it only runs on unit test DBs, which
     // are always re-created for tests.
     // TODO: Why does this test not clean up after itself?

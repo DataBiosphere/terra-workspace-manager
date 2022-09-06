@@ -17,6 +17,7 @@ import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import bio.terra.workspace.service.workspace.model.GcpCloudContext;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Optional;
 import java.util.UUID;
@@ -133,7 +134,8 @@ public class GcpCloudContextUnitTest extends BaseUnitTest {
             "cloud context description",
             new SpendProfileId("spend-profile"),
             Collections.emptyMap(),
-            WorkspaceStage.MC_WORKSPACE);
+            WorkspaceStage.MC_WORKSPACE,
+            new ArrayList<>());
     workspaceDao.createWorkspace(workspace);
 
     // Create a cloud context in the database with a V1 format

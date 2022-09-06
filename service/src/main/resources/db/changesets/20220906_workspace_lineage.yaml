@@ -1,0 +1,14 @@
+databaseChangeLog:
+- changeSet:
+    id: Add workspace_lineage column
+    author: yuhuyoyo
+    changes:
+    - addColumn:
+        tableName: workspace
+        columns:
+        - column:
+            name: workspace_lineage
+            type: jsonb
+            remarks: |
+              Serialized list of Workspace ids this workspace has been cloned
+              from.
