@@ -20,16 +20,16 @@ public enum WsmIamRole {
   READER("reader", SamWorkspaceAction.READ, ApiIamRole.READER) {
     public boolean roleAtLeastAsHighAs(WsmIamRole roleToCheck) {
       return roleToCheck == WsmIamRole.APPLICATION
-              || roleToCheck == WsmIamRole.OWNER
-              || roleToCheck == WsmIamRole.WRITER
-              || roleToCheck == WsmIamRole.READER;
+          || roleToCheck == WsmIamRole.OWNER
+          || roleToCheck == WsmIamRole.WRITER
+          || roleToCheck == WsmIamRole.READER;
     }
   },
   WRITER("writer", SamWorkspaceAction.WRITE, ApiIamRole.WRITER) {
     public boolean roleAtLeastAsHighAs(WsmIamRole roleToCheck) {
       return roleToCheck == WsmIamRole.APPLICATION
-              || roleToCheck == WsmIamRole.OWNER
-              || roleToCheck == WsmIamRole.WRITER;
+          || roleToCheck == WsmIamRole.OWNER
+          || roleToCheck == WsmIamRole.WRITER;
     }
   },
   APPLICATION("application", null, ApiIamRole.APPLICATION) {
@@ -67,8 +67,7 @@ public enum WsmIamRole {
         Arrays.stream(WsmIamRole.values()).filter(x -> x.apiRole.equals(apiModel)).findFirst();
     return result.orElseThrow(
         () ->
-            new RuntimeException(
-                "No IamRole enum found corresponding to model role " + apiModel));
+            new RuntimeException("No IamRole enum found corresponding to model role " + apiModel));
   }
 
   /**
