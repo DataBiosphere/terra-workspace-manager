@@ -88,6 +88,7 @@ public class WorkspaceCloneUtilsTest extends BaseUnitTest {
         ControlledResourceFixtures.makeDefaultControlledGcsBucketBuilder(WORKSPACE_ID).build();
     var cloneResourceName = RandomStringUtils.randomAlphabetic(5);
     var cloneDescription = "This is a cloned bucket";
+    // Gcs bucket cloud instance id must be lower-case.
     var cloneBucketName = RandomStringUtils.randomAlphabetic(5).toLowerCase(Locale.ROOT);
 
     var bucketToClone =
@@ -110,7 +111,33 @@ public class WorkspaceCloneUtilsTest extends BaseUnitTest {
     assertEquals(expectedLineage, bucketToClone.getResourceLineage());
   }
 
-  private void assertResourceCommonFields(
+  @Test
+  public void buildDestinationControlledGcsBucket_private_setPrivateResourceStateToInitializing() {
+    var sourceBucket =
+        ControlledResourceFixtures.makeDefaultControlledGcsBucketBuilder(WORKSPACE_ID)
+            .common(
+                ControlledResourceFixtures.makeDefaultControlledResourceFieldsBuilder()
+                    .privateResourceState(PrivateResourceState.ACTIVE)
+                    .accessScope(AccessScopeType.ACCESS_SCOPE_PRIVATE)
+                    .assignedUser("yuhuyoyo")
+                    .build()).build();
+
+    var bucketToClone =
+        (ControlledGcsBucketResource)
+            WorkspaceCloneUtils.buildDestinationControlledGcsBucket(
+                sourceBucket,
+                DESTINATION_WORKSPACE_ID,
+                DESTINATION_RESOURCE_ID,
+                RandomStringUtils.randomAlphabetic(5),
+                "This is a cloned private bucket",
+                // Gcs bucket cloud instance id must be lower-case.
+                RandomStringUtils.randomAlphabetic(5).toLowerCase(Locale.ROOT));
+
+    assertEquals(PrivateResourceState.INITIALIZING, bucketToClone.getPrivateResourceState().get());
+    assertControlledResourceCommonField(sourceBucket, bucketToClone);
+  }
+
+  private static void assertResourceCommonFields(
       WsmResource sourceResource,
       String cloneResourceName,
       String cloneDescription,
@@ -120,13 +147,13 @@ public class WorkspaceCloneUtilsTest extends BaseUnitTest {
 
     assertEquals(sourceResource.getCloningInstructions(), sourceResource.getCloningInstructions());
     assertEquals(1, resourceToClone.getResourceLineage().size());
-    List<ResourceLineageEntry> expectedLineage = new ArrayList<>();
+    List<ResourceLineageEntry> expectedLineage = sourceResource.getResourceLineage();
     expectedLineage.add(
         new ResourceLineageEntry(sourceResource.getWorkspaceId(), sourceResource.getResourceId()));
     assertEquals(expectedLineage, resourceToClone.getResourceLineage());
   }
 
-  private void assertControlledResourceCommonField(
+  private static void assertControlledResourceCommonField(
       ControlledResource sourceResource, ControlledResource resourceToClone) {
     assertEquals(sourceResource.getAccessScope(), resourceToClone.getAccessScope());
     assertEquals(sourceResource.getAssignedUser(), resourceToClone.getAssignedUser());

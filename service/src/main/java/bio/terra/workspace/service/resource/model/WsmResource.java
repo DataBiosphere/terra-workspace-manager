@@ -11,9 +11,12 @@ import bio.terra.workspace.service.resource.ResourceValidationUtils;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import bio.terra.workspace.service.resource.referenced.cloud.gcp.ReferencedResource;
 import com.google.common.base.Strings;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 import javax.annotation.Nullable;
+import org.apache.commons.lang3.StringUtils;
 
 /**
  * Top-level class for a Resource. Children of this class can be controlled resources, references,
@@ -25,7 +28,7 @@ public abstract class WsmResource {
   private final String name;
   private @Nullable final String description;
   private final CloningInstructions cloningInstructions;
-  private @Nullable final List<ResourceLineageEntry> resourceLineage;
+  private final List<ResourceLineageEntry> resourceLineage;
 
   /**
    * construct from individual fields
@@ -61,7 +64,7 @@ public abstract class WsmResource {
         dbResource.getName(),
         dbResource.getDescription(),
         dbResource.getCloningInstructions(),
-        dbResource.getResourceLineage().orElse(null));
+        dbResource.getResourceLineage().orElse(new ArrayList<>()));
   }
 
   public UUID getWorkspaceId() {
@@ -171,12 +174,11 @@ public abstract class WsmResource {
             .stewardshipType(getStewardshipType().toApiModel())
             .cloudPlatform(getResourceType().getCloudPlatform().toApiModel())
             .cloningInstructions(cloningInstructions.toApiModel());
-    if (resourceLineage != null) {
-      ApiResourceLineage apiResourceLineage = new ApiResourceLineage();
+    ApiResourceLineage apiResourceLineage = new ApiResourceLineage();
       apiResourceLineage.addAll(
           resourceLineage.stream().map(ResourceLineageEntry::toApiModel).toList());
       apiResourceMetadata.resourceLineage(apiResourceLineage);
-    }
+
     return apiResourceMetadata;
   }
 
@@ -222,15 +224,11 @@ public abstract class WsmResource {
 
     WsmResource that = (WsmResource) o;
 
-    if (workspaceUuid != null
-        ? !workspaceUuid.equals(that.workspaceUuid)
-        : that.workspaceUuid != null) return false;
-    if (resourceId != null ? !resourceId.equals(that.resourceId) : that.resourceId != null)
-      return false;
-    if (name != null ? !name.equals(that.name) : that.name != null) return false;
-    if (description != null ? !description.equals(that.description) : that.description != null)
-      return false;
-    return cloningInstructions == that.cloningInstructions;
+    return Objects.equals(workspaceUuid, that.workspaceUuid)
+        && Objects.equals(resourceId, that.resourceId)
+        && StringUtils.equals(name, that.name)
+        && StringUtils.equals(description, that.description)
+        && cloningInstructions == that.cloningInstructions;
   }
 
   @Override
