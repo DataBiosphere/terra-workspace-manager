@@ -2,7 +2,6 @@ package bio.terra.workspace.app;
 
 import bio.terra.common.db.DataSourceInitializer;
 import bio.terra.common.migrate.LiquibaseMigrator;
-import bio.terra.landingzone.library.LandingZoneMain;
 import bio.terra.policy.library.TpsMain;
 import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
 import bio.terra.workspace.app.configuration.external.WorkspaceDatabaseConfiguration;
@@ -44,9 +43,6 @@ public final class StartupInitializer {
 
     // Initialize Terra Policy Service library
     TpsMain.initialize(applicationContext, migrateService);
-
-    // Initialize Terra Landing Zone library
-    LandingZoneMain.initialize(applicationContext, migrateService);
 
     // NOTE:
     // Fill in this method with any other initialization that needs to happen
