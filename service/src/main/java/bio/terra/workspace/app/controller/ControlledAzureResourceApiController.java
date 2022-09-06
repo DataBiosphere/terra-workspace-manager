@@ -49,11 +49,14 @@ import bio.terra.workspace.service.resource.controlled.cloud.azure.storageContai
 import bio.terra.workspace.service.resource.controlled.cloud.azure.vm.ControlledAzureVmResource;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResourceFields;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
+import bio.terra.workspace.service.workspace.AzureCloudContextService;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import java.time.OffsetDateTime;
 import java.util.UUID;
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
+
+import bio.terra.workspace.service.workspace.model.AzureCloudContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -73,6 +76,7 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
   private final AzureConfiguration azureConfiguration;
   private final WorkspaceService workspaceService;
   private final ControlledResourceMetadataManager controlledResourceMetadataManager;
+  private final AzureCloudContextService azureCloudContextService;
 
   @Autowired
   public ControlledAzureResourceApiController(
@@ -85,7 +89,8 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
       FeatureConfiguration features,
       AzureConfiguration azureConfiguration,
       WorkspaceService workspaceService,
-      ControlledResourceMetadataManager controlledResourceMetadataManager) {
+      ControlledResourceMetadataManager controlledResourceMetadataManager,
+      AzureCloudContextService azureCloudContextService) {
     super(authenticatedUserRequestFactory, request, controlledResourceService, samService);
     this.controlledResourceService = controlledResourceService;
     this.azureControlledStorageResourceService = azureControlledStorageResourceService;
@@ -94,6 +99,7 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
     this.azureConfiguration = azureConfiguration;
     this.workspaceService = workspaceService;
     this.controlledResourceMetadataManager = controlledResourceMetadataManager;
+    this.azureCloudContextService = azureCloudContextService;
   }
 
   @Override
@@ -459,11 +465,19 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
     return new ResponseEntity<>(resource.toApiResource(), HttpStatus.OK);
   }
 
-  @Override
+  @Override // TODO get from LZ if it exists
   public ResponseEntity<ApiAzureRelayNamespaceResource> getAzureRelayNamespace(
       UUID workspaceId, UUID resourceId) {
     final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     features.azureEnabledCheck();
+
+    if (features.isLZEnabled()) {
+      // TODO take resource-id into consideration resourceId if there are multiple azure Relay instances
+      //  in the landing zone (no plan for this currently)
+      final AzureCloudContext cloudContext = azureCloudContextService.getRequiredAzureCloudContext(workspaceId);
+      final 
+
+    }
     final ControlledAzureRelayNamespaceResource resource =
         controlledResourceMetadataManager
             .validateControlledResourceAndAction(
