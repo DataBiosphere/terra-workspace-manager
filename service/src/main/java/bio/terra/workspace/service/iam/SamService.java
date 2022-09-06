@@ -305,7 +305,7 @@ public class SamService {
           // Skip workspaces with no roles. (That means there's a role this WSM doesn't know
           // about.)
           if (highestRole.isPresent()) {
-            if (WsmIamRole.roleAtLeastAsHighAs(minimumHighestRoleFromRequest, highestRole.get())) {
+            if (minimumHighestRoleFromRequest.roleAtLeastAsHighAs(highestRole.get())) {
               workspacesAndRoles.put(workspaceId, highestRole.get());
             }
           }
