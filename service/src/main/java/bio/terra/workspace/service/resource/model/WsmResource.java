@@ -14,6 +14,7 @@ import com.google.common.base.Strings;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.UUID;
 import javax.annotation.Nullable;
 import org.apache.commons.lang3.StringUtils;
@@ -47,13 +48,13 @@ public abstract class WsmResource {
       String name,
       @Nullable String description,
       CloningInstructions cloningInstructions,
-      List<ResourceLineageEntry> resourceLineage) {
+      @Nullable List<ResourceLineageEntry> resourceLineage) {
     this.workspaceUuid = workspaceUuid;
     this.resourceId = resourceId;
     this.name = name;
     this.description = description;
     this.cloningInstructions = cloningInstructions;
-    this.resourceLineage = resourceLineage;
+    this.resourceLineage = Optional.ofNullable(resourceLineage).orElse(new ArrayList<>());
   }
 
   /** construct from database data */
