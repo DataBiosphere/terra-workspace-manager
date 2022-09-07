@@ -53,6 +53,14 @@ public class ControlledGcsBucketHandler implements WsmResourceHandler {
     return resource;
   }
 
+  /**
+   * Generate GCS bucket cloud name that meets the requirements for a valid name.
+   *
+   * <p>Bucket names can only contain lowercase letters, numeric characters, dashes (-), underscores
+   * (_), and dots (.). Spaces are not allowed. and bucket names must start and end with a number or
+   * letter and contain 3-63 characters. In addition, bucket names cannot begin with the "goog"
+   * prefix. For details, see https://cloud.google.com/storage/docs/naming-buckets.
+   */
   public String generateCloudName(@Nullable UUID workspaceUuid, String bucketName) {
     Preconditions.checkNotNull(workspaceUuid);
 
@@ -62,7 +70,8 @@ public class ControlledGcsBucketHandler implements WsmResourceHandler {
         generatedName.length() > MAX_BUCKET_NAME_LENGTH
             ? generatedName.substring(0, MAX_BUCKET_NAME_LENGTH)
             : generatedName;
-    generatedName = generatedName.replaceAll("[^a-zA-Z0-9-]+|^[^a-zA-Z0-9]+|[^a-zA-Z0-9]+$", "");
+    generatedName =
+        generatedName.replaceAll("google|^goog|[^a-z0-9-_.]+|^[^a-z0-9]+|[^a-z0-9]+$", "");
 
     return generatedName;
   }

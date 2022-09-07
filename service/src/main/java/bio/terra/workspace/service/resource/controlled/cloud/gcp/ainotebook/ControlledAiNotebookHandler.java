@@ -71,7 +71,7 @@ public class ControlledAiNotebookHandler implements WsmResourceHandler {
         generatedName.length() > MAX_INSTANCE_NAME_LENGTH
             ? generatedName.substring(0, MAX_INSTANCE_NAME_LENGTH)
             : generatedName;
-    generatedName = generatedName.replaceAll("[^a-zA-Z0-9-]+|^[^a-zA-Z0-9]+|[^a-zA-Z0-9]+$", "");
+    generatedName = generatedName.replaceAll("[^a-z0-9-]+|^[^a-z]+|[^a-z0-9]+$", "");
     return generatedName;
   }
 }

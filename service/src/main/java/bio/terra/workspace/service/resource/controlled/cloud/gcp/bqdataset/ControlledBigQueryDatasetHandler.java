@@ -59,6 +59,13 @@ public class ControlledBigQueryDatasetHandler implements WsmResourceHandler {
     return resource;
   }
 
+  /**
+   * Generate big query dataset cloud name that meets the requirements for a valid name.
+   *
+   * <p>Big query dataset names can only contain letters, numeric characters, and underscores (_) up
+   * to 1024 characters. Spaces are not allowed. For details, see
+   * https://cloud.google.com/bigquery/docs/datasets#dataset-naming.
+   */
   public String generateCloudName(@Nullable UUID workspaceUuid, String bqDatasetName) {
     String generatedName = bqDatasetName.replace("-", "_");
     generatedName =
