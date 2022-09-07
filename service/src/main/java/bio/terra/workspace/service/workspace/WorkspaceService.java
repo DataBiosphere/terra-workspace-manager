@@ -1,5 +1,6 @@
 package bio.terra.workspace.service.workspace;
 
+import bio.terra.workspace.amalgam.tps.TpsApiDispatch;
 import bio.terra.workspace.app.configuration.external.BufferServiceConfiguration;
 import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
 import bio.terra.workspace.db.WorkspaceDao;
@@ -65,6 +66,7 @@ public class WorkspaceService {
   private final BufferServiceConfiguration bufferServiceConfiguration;
   private final StageService stageService;
   private final FeatureConfiguration features;
+  private final TpsApiDispatch tpsApiDispatch;
   private final WorkspaceActivityLogService workspaceActivityLogService;
 
   @Autowired
@@ -75,6 +77,7 @@ public class WorkspaceService {
       BufferServiceConfiguration bufferServiceConfiguration,
       StageService stageService,
       FeatureConfiguration features,
+      TpsApiDispatch tpsApiDispatch,
       WorkspaceActivityLogService workspaceActivityLogService) {
     this.jobService = jobService;
     this.workspaceDao = workspaceDao;
@@ -82,6 +85,7 @@ public class WorkspaceService {
     this.bufferServiceConfiguration = bufferServiceConfiguration;
     this.stageService = stageService;
     this.features = features;
+    this.tpsApiDispatch = tpsApiDispatch;
     this.workspaceActivityLogService = workspaceActivityLogService;
   }
 
@@ -220,7 +224,7 @@ public class WorkspaceService {
                   samWorkspaceIdsAndHighestRoles.get(workspace.getWorkspaceId());
               Workspace workspaceToReturn =
                   highestRole == WsmIamRole.DISCOVERER
-                      ? stripWorkspaceForRequesterWithOnlyDiscovererRole(workspace)
+                      ? Workspace.stripWorkspaceForRequesterWithOnlyDiscovererRole(workspace)
                       : workspace;
               return new WorkspaceAndHighestRole(workspaceToReturn, highestRole);
             })
@@ -236,7 +240,9 @@ public class WorkspaceService {
   /** Retrieves an existing workspace by userFacingId */
   @Traced
   public Workspace getWorkspaceByUserFacingId(
-      String userFacingId, AuthenticatedUserRequest userRequest) {
+      String userFacingId,
+      AuthenticatedUserRequest userRequest,
+      WsmIamRole minimumHighestRoleFromRequest) {
     logger.info(
         "getWorkspaceByUserFacingId - userRequest: {}\nuserFacingId: {}",
         userRequest,
@@ -251,7 +257,7 @@ public class WorkspaceService {
                 userRequest,
                 SamConstants.SamResource.WORKSPACE,
                 workspace.getWorkspaceId().toString(),
-                SamWorkspaceAction.READ),
+                minimumHighestRoleFromRequest.toSamAction()),
         "checkAuthz");
     return workspace;
   }
@@ -448,7 +454,6 @@ public class WorkspaceService {
         String.format("Clone workspace: name: '%s' id: '%s'  ", workspaceName, workspaceUuid);
 
     // Create the destination workspace synchronously first.
-    // TODO(PF-1871) copy policy on workspace clone
     createWorkspace(destinationWorkspace, null, userRequest);
 
     // Remaining steps are an async flight.

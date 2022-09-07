@@ -10,5 +10,6 @@
     <include file="changesets/20220516_workspace_user_facing_id_required.yaml" relativeToChangelogFile="true"/>
     <include file="changesets/20220617_workspace_activity_log_table.yaml" relativeToChangelogFile="true"/>
     <include file="changesets/20220721_actor_email_and_actor_subject_id_columns.yaml" relativeToChangelogFile="true"/>
-    <include file="changesets/20220824_folder_table_and_add_folder_id_column_to_resource_table.yaml" relativeToChangelogFile="true"/>
+    <include file="changesets/20220810_resource_lineage.yaml" relativeToChangelogFile="true"/>
+    <include file="changesets/20220824_folder_table.yaml" relativeToChangelogFile="true"/>
 </databaseChangeLog>

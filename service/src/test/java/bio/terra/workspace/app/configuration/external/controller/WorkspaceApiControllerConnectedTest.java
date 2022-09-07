@@ -5,6 +5,7 @@ import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.TYPE_PROPERT
 import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.USER_SET_PROPERTY;
 import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.VERSION_PROPERTY;
 import static bio.terra.workspace.common.utils.MockMvcUtils.GRANT_ROLE_PATH_FORMAT;
+import static bio.terra.workspace.common.utils.MockMvcUtils.WORKSPACES_V1_BY_UFID_PATH_FORMAT;
 import static bio.terra.workspace.common.utils.MockMvcUtils.WORKSPACES_V1_BY_UUID_PATH_FORMAT;
 import static bio.terra.workspace.common.utils.MockMvcUtils.WORKSPACES_V1_PATH;
 import static bio.terra.workspace.common.utils.MockMvcUtils.addAuth;
@@ -24,6 +25,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import bio.terra.workspace.common.BaseConnectedTest;
 import bio.terra.workspace.common.fixtures.WorkspaceFixtures;
 import bio.terra.workspace.connected.UserAccessUtils;
+import bio.terra.workspace.generated.model.ApiCreateWorkspaceRequestBody;
 import bio.terra.workspace.generated.model.ApiCreatedWorkspace;
 import bio.terra.workspace.generated.model.ApiGrantRoleRequestBody;
 import bio.terra.workspace.generated.model.ApiIamRole;
@@ -62,7 +64,7 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
   @Autowired private ObjectMapper objectMapper;
   @Autowired private UserAccessUtils userAccessUtils;
 
-  private ApiCreatedWorkspace workspace;
+  private ApiWorkspaceDescription workspace;
 
   @BeforeEach
   public void setup() throws Exception {
@@ -75,16 +77,103 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
     deleteWorkspace(workspace.getId());
   }
 
-  @Test
-  public void getWorkspace_requesterIsDiscoverer_noWorkspaceReturned() throws Exception {
-    grantRole(workspace.getId(), WsmIamRole.DISCOVERER, userAccessUtils.getSecondUserEmail());
+  public void getWorkspace_requesterIsOwner_returnsFullWorkspace() throws Exception {
+    ApiWorkspaceDescription gotWorkspace =
+        getWorkspace(userAccessUtils.defaultUserAuthRequest(), workspace.getId());
 
-    getWorkspaceDescriptionExpectingError(
-        userAccessUtils.secondUserAuthRequest(), workspace.getId(), HttpStatus.SC_FORBIDDEN);
+    assertFullWorkspace(gotWorkspace);
   }
 
   @Test
-  public void listWorkspaces_requesterIsOwner_fullWorkspaceReturned() throws Exception {
+  public void getWorkspace_requesterIsDiscoverer_requestMinHighestRoleNotSet_throws()
+      throws Exception {
+    grantRole(workspace.getId(), WsmIamRole.DISCOVERER, userAccessUtils.getSecondUserEmail());
+
+    getWorkspaceExpectingError(
+        userAccessUtils.secondUserAuthRequest(),
+        workspace.getId(),
+        /*minimumHighestRole=*/ Optional.empty(),
+        HttpStatus.SC_FORBIDDEN);
+  }
+
+  @Test
+  public void getWorkspace_requesterIsDiscoverer_requestMinHighestRoleSetToReader_throws()
+      throws Exception {
+    grantRole(workspace.getId(), WsmIamRole.DISCOVERER, userAccessUtils.getSecondUserEmail());
+
+    getWorkspaceExpectingError(
+        userAccessUtils.secondUserAuthRequest(),
+        workspace.getId(),
+        /*minimumHighestRole=*/ Optional.of(ApiIamRole.READER),
+        HttpStatus.SC_FORBIDDEN);
+  }
+
+  @Test
+  public void
+      getWorkspace_requesterIsDiscoverer_requestMinHighestRoleSetToDiscoverer_returnsStrippedWorkspace()
+          throws Exception {
+    grantRole(workspace.getId(), WsmIamRole.DISCOVERER, userAccessUtils.getSecondUserEmail());
+
+    ApiWorkspaceDescription gotWorkspace =
+        getWorkspace(
+            userAccessUtils.secondUserAuthRequest(),
+            workspace.getId(),
+            /*minimumHighestRole=*/ Optional.of(ApiIamRole.DISCOVERER));
+
+    assertStrippedWorkspace(gotWorkspace);
+  }
+
+  @Test
+  public void getWorkspaceByUserFacingId_requesterIsOwner_returnsFullWorkspace() throws Exception {
+    ApiWorkspaceDescription gotWorkspace =
+        getWorkspaceByUserFacingId(
+            userAccessUtils.defaultUserAuthRequest(), workspace.getUserFacingId());
+
+    assertFullWorkspace(gotWorkspace);
+  }
+
+  @Test
+  public void getWorkspaceByUserFacingId_requesterIsDiscoverer_requestMinHighestRoleNotSet_throws()
+      throws Exception {
+    grantRole(workspace.getId(), WsmIamRole.DISCOVERER, userAccessUtils.getSecondUserEmail());
+
+    getWorkspaceByUserFacingIdExpectingError(
+        userAccessUtils.secondUserAuthRequest(),
+        workspace.getUserFacingId(),
+        /*minimumHighestRole=*/ Optional.empty(),
+        HttpStatus.SC_FORBIDDEN);
+  }
+
+  @Test
+  public void
+      getWorkspaceByUserFacingId_requesterIsDiscoverer_requestMinHighestRoleSetToReader_throws()
+          throws Exception {
+    grantRole(workspace.getId(), WsmIamRole.DISCOVERER, userAccessUtils.getSecondUserEmail());
+
+    getWorkspaceByUserFacingIdExpectingError(
+        userAccessUtils.secondUserAuthRequest(),
+        workspace.getUserFacingId(),
+        /*minimumHighestRole=*/ Optional.of(ApiIamRole.READER),
+        HttpStatus.SC_FORBIDDEN);
+  }
+
+  @Test
+  public void
+      getWorkspaceByUserFacingId_requesterIsDiscoverer_requestMinHighestRoleSetToDiscoverer_returnsStrippedWorkspace()
+          throws Exception {
+    grantRole(workspace.getId(), WsmIamRole.DISCOVERER, userAccessUtils.getSecondUserEmail());
+
+    ApiWorkspaceDescription gotWorkspace =
+        getWorkspaceByUserFacingId(
+            userAccessUtils.secondUserAuthRequest(),
+            workspace.getUserFacingId(),
+            /*minimumHighestRole=*/ Optional.of(ApiIamRole.DISCOVERER));
+
+    assertStrippedWorkspace(gotWorkspace);
+  }
+
+  @Test
+  public void listWorkspaces_requesterIsOwner_returnsFullWorkspace() throws Exception {
     List<ApiWorkspaceDescription> listedWorkspaces =
         listWorkspaces(userAccessUtils.defaultUserAuthRequest());
 
@@ -93,7 +182,7 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
   }
 
   @Test
-  public void listWorkspaces_requesterIsDiscoverer_requestMinHighestRoleNotSet_noWorkspaceReturned()
+  public void listWorkspaces_requesterIsDiscoverer_requestMinHighestRoleNotSet_returnsNoWorkspaces()
       throws Exception {
     grantRole(workspace.getId(), WsmIamRole.DISCOVERER, userAccessUtils.getSecondUserEmail());
 
@@ -104,7 +193,7 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
 
   @Test
   public void
-      listWorkspaces_requesterIsDiscoverer_requestMinHighestRoleSetToReader_noWorkspaceReturned()
+      listWorkspaces_requesterIsDiscoverer_requestMinHighestRoleSetToReader_returnsNoWorkspaces()
           throws Exception {
     grantRole(workspace.getId(), WsmIamRole.DISCOVERER, userAccessUtils.getSecondUserEmail());
 
@@ -116,7 +205,7 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
 
   @Test
   public void
-      listWorkspaces_requesterIsDiscoverer_requestMinHighestRoleSetToDiscoverer_strippedWorkspaceReturned()
+      listWorkspaces_requesterIsDiscoverer_requestMinHighestRoleSetToDiscoverer_returnsStrippedWorkspace()
           throws Exception {
     grantRole(workspace.getId(), WsmIamRole.DISCOVERER, userAccessUtils.getSecondUserEmail());
 
@@ -127,8 +216,8 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
     assertStrippedWorkspace(listedWorkspaces.get(0));
   }
 
-  private ApiCreatedWorkspace createWorkspace() throws Exception {
-    var createRequest = WorkspaceFixtures.createWorkspaceRequestBody();
+  private ApiWorkspaceDescription createWorkspace() throws Exception {
+    ApiCreateWorkspaceRequestBody createRequest = WorkspaceFixtures.createWorkspaceRequestBody();
     String serializedResponse =
         mockMvc
             .perform(
@@ -141,14 +230,89 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
             .andReturn()
             .getResponse()
             .getContentAsString();
-    return objectMapper.readValue(serializedResponse, ApiCreatedWorkspace.class);
+    ApiCreatedWorkspace createdWorkspace =
+        objectMapper.readValue(serializedResponse, ApiCreatedWorkspace.class);
+
+    // Return ApiWorkspaceDescription instead of ApiCreatedWorkspace. Former has more fields
+    // (such as userFacingId).
+    return getWorkspace(userAccessUtils.defaultUserAuthRequest(), createdWorkspace.getId());
   }
 
-  private void getWorkspaceDescriptionExpectingError(
-      AuthenticatedUserRequest userRequest, UUID id, int statusCode) throws Exception {
-    mockMvc
-        .perform(addAuth(get(String.format(WORKSPACES_V1_BY_UUID_PATH_FORMAT, id)), userRequest))
-        .andExpect(status().is(statusCode));
+  private ApiWorkspaceDescription getWorkspace(AuthenticatedUserRequest request, UUID id)
+      throws Exception {
+    return getWorkspace(request, id, /*minimumHighestRole=*/ Optional.empty());
+  }
+
+  private ApiWorkspaceDescription getWorkspace(
+      AuthenticatedUserRequest request, UUID id, Optional<ApiIamRole> minimumHighestRole)
+      throws Exception {
+    MockHttpServletRequestBuilder requestBuilder =
+        get(String.format(WORKSPACES_V1_BY_UUID_PATH_FORMAT, id));
+    if (minimumHighestRole.isPresent()) {
+      requestBuilder.param("minimumHighestRole", minimumHighestRole.get().name());
+    }
+    String serializedResponse =
+        mockMvc
+            .perform(addAuth(requestBuilder, request))
+            .andExpect(status().is(HttpStatus.SC_OK))
+            .andReturn()
+            .getResponse()
+            .getContentAsString();
+    return objectMapper.readValue(serializedResponse, ApiWorkspaceDescription.class);
+  }
+
+  private void getWorkspaceExpectingError(
+      AuthenticatedUserRequest userRequest,
+      UUID id,
+      Optional<ApiIamRole> minimumHighestRole,
+      int statusCode)
+      throws Exception {
+    MockHttpServletRequestBuilder requestBuilder =
+        get(String.format(WORKSPACES_V1_BY_UUID_PATH_FORMAT, id));
+    if (minimumHighestRole.isPresent()) {
+      requestBuilder.param("minimumHighestRole", minimumHighestRole.get().name());
+    }
+    mockMvc.perform(addAuth(requestBuilder, userRequest)).andExpect(status().is(statusCode));
+  }
+
+  private ApiWorkspaceDescription getWorkspaceByUserFacingId(
+      AuthenticatedUserRequest request, String userFacingId) throws Exception {
+    return getWorkspaceByUserFacingId(
+        request, userFacingId, /*minimumHighestRole=*/ Optional.empty());
+  }
+
+  private ApiWorkspaceDescription getWorkspaceByUserFacingId(
+      AuthenticatedUserRequest request,
+      String userFacingId,
+      Optional<ApiIamRole> minimumHighestRole)
+      throws Exception {
+    MockHttpServletRequestBuilder requestBuilder =
+        get(String.format(WORKSPACES_V1_BY_UFID_PATH_FORMAT, userFacingId));
+    if (minimumHighestRole.isPresent()) {
+      requestBuilder.param("minimumHighestRole", minimumHighestRole.get().name());
+    }
+    String serializedResponse =
+        mockMvc
+            .perform(addAuth(requestBuilder, request))
+            .andExpect(status().is(HttpStatus.SC_OK))
+            .andReturn()
+            .getResponse()
+            .getContentAsString();
+    return objectMapper.readValue(serializedResponse, ApiWorkspaceDescription.class);
+  }
+
+  private void getWorkspaceByUserFacingIdExpectingError(
+      AuthenticatedUserRequest userRequest,
+      String userFacingId,
+      Optional<ApiIamRole> minimumHighestRole,
+      int statusCode)
+      throws Exception {
+    MockHttpServletRequestBuilder requestBuilder =
+        get(String.format(WORKSPACES_V1_BY_UFID_PATH_FORMAT, userFacingId));
+    if (minimumHighestRole.isPresent()) {
+      requestBuilder.param("minimumHighestRole", minimumHighestRole.get().name());
+    }
+    mockMvc.perform(addAuth(requestBuilder, userRequest)).andExpect(status().is(statusCode));
   }
 
   private List<ApiWorkspaceDescription> listWorkspaces(AuthenticatedUserRequest request)

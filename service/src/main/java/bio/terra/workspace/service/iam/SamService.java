@@ -46,6 +46,7 @@ import org.broadinstitute.dsde.workbench.client.sam.model.CreateResourceRequestV
 import org.broadinstitute.dsde.workbench.client.sam.model.FullyQualifiedResourceId;
 import org.broadinstitute.dsde.workbench.client.sam.model.GetOrCreatePetManagedIdentityRequest;
 import org.broadinstitute.dsde.workbench.client.sam.model.SystemStatus;
+import org.broadinstitute.dsde.workbench.client.sam.model.UserIdInfo;
 import org.broadinstitute.dsde.workbench.client.sam.model.UserResourcesResponse;
 import org.broadinstitute.dsde.workbench.client.sam.model.UserStatusInfo;
 import org.slf4j.Logger;
@@ -1049,16 +1050,24 @@ public class SamService {
   /**
    * Construct the email of an arbitrary user's pet service account in a given project. Unlike
    * {@code getOrCreatePetSaEmail}, this will not create the underlying service account. It may
-   * return the email of a service account which does not exist.
+   * return pet SA email if userEmail is a user. If userEmail is a group, returns Optional.empty().
    */
-  public ServiceAccountName constructUserPetSaEmail(
+  public Optional<ServiceAccountName> constructUserPetSaEmail(
       String projectId, String userEmail, AuthenticatedUserRequest userRequest)
       throws InterruptedException {
     UsersApi usersApi = samUsersApi(userRequest.getRequiredToken());
     try {
-      String subjectId = SamRetry.retry(() -> usersApi.getUserIds(userEmail).getUserSubjectId());
+      UserIdInfo userId = SamRetry.retry(() -> usersApi.getUserIds(userEmail));
+
+      // If userId is null, userEmail is a group, not a user. (getUserIds returns 204 with no
+      // response body, which translates to userID = null.)
+      if (userId == null) {
+        return Optional.empty();
+      }
+      String subjectId = userId.getUserSubjectId();
       String saEmail = String.format("pet-%s@%s.iam.gserviceaccount.com", subjectId, projectId);
-      return ServiceAccountName.builder().email(saEmail).projectId(projectId).build();
+
+      return Optional.of(ServiceAccountName.builder().email(saEmail).projectId(projectId).build());
     } catch (ApiException apiException) {
       throw SamExceptionFactory.create("Error getting user subject ID from Sam", apiException);
     }

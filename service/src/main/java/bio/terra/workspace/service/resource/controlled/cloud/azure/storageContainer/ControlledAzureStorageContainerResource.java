@@ -19,11 +19,13 @@ import bio.terra.workspace.service.resource.controlled.flight.create.CreateContr
 import bio.terra.workspace.service.resource.controlled.flight.delete.DeleteControlledResourceFlight;
 import bio.terra.workspace.service.resource.controlled.model.*;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
+import bio.terra.workspace.service.resource.model.ResourceLineageEntry;
 import bio.terra.workspace.service.resource.model.StewardshipType;
 import bio.terra.workspace.service.resource.model.WsmResourceFamily;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -44,7 +46,8 @@ public class ControlledAzureStorageContainerResource extends ControlledResource 
       @JsonProperty("managedBy") ManagedByType managedBy,
       @JsonProperty("applicationId") String applicationId,
       @JsonProperty("storageAccountId") UUID storageAccountId,
-      @JsonProperty("storageContainerName") String storageContainerName) {
+      @JsonProperty("storageContainerName") String storageContainerName,
+      @JsonProperty("resourceLineage") List<ResourceLineageEntry> resourceLineage) {
     super(
         workspaceId,
         resourceId,
@@ -55,7 +58,8 @@ public class ControlledAzureStorageContainerResource extends ControlledResource 
         accessScope,
         managedBy,
         applicationId,
-        privateResourceState);
+        privateResourceState,
+        resourceLineage);
     this.storageAccountId = storageAccountId;
     this.storageContainerName = storageContainerName;
     validate();

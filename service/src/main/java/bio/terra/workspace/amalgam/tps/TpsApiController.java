@@ -2,6 +2,7 @@ package bio.terra.workspace.amalgam.tps;
 
 import bio.terra.common.iam.BearerTokenFactory;
 import bio.terra.workspace.generated.controller.TpsApi;
+import bio.terra.workspace.generated.model.ApiTpsPaoCloneRequest;
 import bio.terra.workspace.generated.model.ApiTpsPaoCreateRequest;
 import bio.terra.workspace.generated.model.ApiTpsPaoGetResult;
 import java.util.UUID;
@@ -53,5 +54,12 @@ public class TpsApiController implements TpsApi {
   public ResponseEntity<ApiTpsPaoGetResult> getPao(UUID objectId) {
     ApiTpsPaoGetResult result = tpsApiDispatch.getPao(bearerTokenFactory.from(request), objectId);
     return new ResponseEntity<>(result, HttpStatus.OK);
+  }
+
+  @Override
+  public ResponseEntity<Void> clonePao(UUID sourceObjectId, ApiTpsPaoCloneRequest body) {
+    tpsApiDispatch.clonePao(
+        bearerTokenFactory.from(request), sourceObjectId, body.getDestinationObjectId());
+    return new ResponseEntity<>(HttpStatus.CREATED);
   }
 }

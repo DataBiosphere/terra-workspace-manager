@@ -41,30 +41,3 @@ databaseChangeLog:
         tableName: folder
         # display name must be unique at the same folder level.
         columnNames: display_name, parent_folder_id, workspace_id
-    - createTable:
-        tableName: folder_and_resource
-        remarks: |
-            a table to store the relation between folder and resource. A folder
-            can have multiple resources. A resource can belong to multiple
-            folders.
-        columns:
-        - column:
-              name: folder_id
-              type: text
-              constraints:
-                  nullable: false
-                  references: folder(id)
-                  foreignKeyName: fk_folder_id
-                  deleteCascade: true
-        - column:
-              name: resource_id
-              type: text
-              constraints:
-                  nullable: false
-                  references: resource(resource_id)
-                  foreignKeyName: fk_resource_rid
-                  deleteCascade: true
-
-        - addUniqueConstraint:
-              tableName: folder_and_resourc
-              columnNames: folder_id, resource_id

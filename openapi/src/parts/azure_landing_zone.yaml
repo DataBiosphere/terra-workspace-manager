@@ -1,0 +1,218 @@
+# Azure Landing Zones paths
+paths:
+  /api/landingzones/v1/azure:
+    post:
+      summary: Create Azure landing zone
+      operationId: createAzureLandingZone
+      tags: [ LandingZones ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateAzureLandingZoneRequestBody'
+      responses:
+        '200':
+          $ref: '#/components/responses/AzureLandingZoneResponse'
+        '202':
+          $ref: '#/components/responses/AzureLandingZoneResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /api/landingzones/v1/azure/create-result/{jobId}:
+    parameters:
+      - $ref: '#/components/parameters/JobId'
+    get:
+      summary: Get the result of a async job to create an Azure Landing Zone
+      operationId: getCreateAzureLandingZoneResult
+      tags: [ LandingZones ]
+      responses:
+        '200':
+          $ref: '#/components/responses/AzureLandingZoneResponse'
+        '202':
+          $ref: '#/components/responses/AzureLandingZoneResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /api/landingzones/definitions/v1/azure:
+    get:
+      summary: List all Azure landing zones definitions
+      operationId: listAzureLandingZonesDefinitions
+      tags: [ LandingZones ]
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AzureLandingZoneDefinitionList'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /api/landingzones/v1/azure/{landingZoneId}:
+    parameters:
+      - $ref: '#/components/parameters/LandingZoneId'
+    delete:
+      summary: Delete an existing Azure landing zone
+      operationId: deleteAzureLandingZone
+      tags: [ LandingZones ]
+      responses:
+        '204':
+          description: Success
+        '400':
+          $ref: '#components/responses/BadRequest'
+        '403':
+          $ref: '#components/responses/PermissionDenied'
+        '404':
+          $ref: '#components/responses/NotFound'
+        '500':
+          $ref: '#components/responses/ServerError'
+
+components:
+  schemas:
+    CreateAzureLandingZoneRequestBody:
+      description: Payload for requesting a new Azure landing zone.
+      type: object
+      required: [definition, landingZoneTarget]
+      properties:
+        definition:
+          description: A definition to create an Azure landing zone from
+          type: string
+        version:
+          description: |
+            A version of the landing zone. If not set the most recent will be used.
+            If two versions available - 'v1' and 'v2' then 'v2' will be selected.
+          type: string
+        parameters:
+          description: List of Azure landing zone parameters
+          type: array
+          items:
+            description: |
+              Parameters to set user defined properties for resources in a landing zone.
+              The parameters vary per landing zone definition.
+              Here is a list of some parameters - POSTGRES_SERVER_SKU, POSTGRESQL_SUBNET, VNET_ADDRESS_SPACE.
+              These are example of assigned values - POSTGRES_SERVER_SKU=GP_Gen5_2, POSTGRESQL_SUBNET=10.1.0.16/29
+            $ref: '#/components/schemas/AzureLandingZoneParameter'
+        landingZoneTarget:
+          $ref: '#/components/schemas/LandingZoneTarget'
+        jobControl:
+          $ref: '#/components/schemas/JobControl'
+
+    AzureLandingZoneResult:
+      description: Result of creating Azure landing zone
+      type: object
+      properties:
+        landingZone:
+          $ref: '#/components/schemas/AzureLandingZone'
+        jobReport:
+          $ref: '#/components/schemas/JobReport'
+        errorReport:
+          $ref: '#/components/schemas/ErrorReport'
+
+    AzureLandingZone:
+      description: Created Azure Landing Zone details
+      type: object
+      properties:
+        id:
+          description: An identifier of created Azure landing zone
+          type: string
+        resources:
+          description: List of Azure landing zone deployed resources
+          type: array
+          items:
+            $ref: '#/components/schemas/AzureLandingZoneDeployedResource'
+
+    AzureLandingZoneDeployedResource:
+      description: Details of an Azure resource
+      type: object
+      properties:
+        resourceId:
+          description: Unique Azure resource identifier
+          type: string
+        resourceType:
+          description: Azure resource type
+          type: string
+        region:
+          description: A region where an Azure resource deployed
+          type: string
+
+    AzureLandingZoneDefinitionList:
+      type: object
+      required: [landingzones]
+      properties:
+        landingzones:
+          description: A list of Azure landing zones definitions
+          type: array
+          items:
+            $ref: '#/components/schemas/AzureLandingZoneDefinition'
+
+    AzureLandingZoneDefinition:
+      type: object
+      required: [definition, name, description, version]
+      properties:
+        definition:
+          description: The name of the corresponding landing zone definition
+          type: string
+        name:
+          description: User friendly name of the definition
+          type: string
+        description:
+          description: Description of the definition
+          type: string
+        version:
+          description: The version of the definition
+          type: string
+
+    AzureLandingZoneParameter:
+      description: Parameters to set user defined properties for resources in a landing zone
+      type: object
+      required: [ key, value ]
+      properties:
+        key:
+          description: Name of the parameter
+          type: string
+        value:
+          description: Value of the parameter
+          type: string
+
+    LandingZoneTarget:
+      description: |
+        The azure configuration associated with a landing zone deployment.
+        This configuration defines where landing zone would be deployed.
+      type: object
+      required: [tenantId, subscriptionId, resourceGroupId]
+      properties:
+        tenantId:
+          description: The ID of Azure tenant associated with the landing zone.
+          type: string
+        subscriptionId:
+          description: The ID of Azure subscription associated with the landing zone.
+          type: string
+        resourceGroupId:
+          description: The ID of Azure resource group associated with the landing zone.
+          type: string
+
+  responses:
+    AzureLandingZoneResponse:
+      description: Response to create Azure landing zone
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/AzureLandingZoneResult'
+
+  parameters:
+    LandingZoneId:
+      name: landingZoneId
+      in: path
+      description: An string to identify an Azure landing zone
+      required: true
+      schema:
+        type: string

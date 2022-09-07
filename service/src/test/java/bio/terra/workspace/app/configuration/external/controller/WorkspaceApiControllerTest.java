@@ -108,15 +108,6 @@ public class WorkspaceApiControllerTest extends BaseUnitTest {
   }
 
   @Test
-  public void getWorkspace() throws Exception {
-    ApiCreatedWorkspace workspace = createDefaultWorkspace();
-    ApiWorkspaceDescription fetchedWorkspace = getWorkspaceDescription(workspace.getId());
-    assertEquals(workspace.getId(), fetchedWorkspace.getId());
-    assertNotNull(fetchedWorkspace.getLastUpdatedDate());
-    assertEquals(fetchedWorkspace.getLastUpdatedDate(), fetchedWorkspace.getCreatedDate());
-  }
-
-  @Test
   public void createDuplicateWorkspace() throws Exception {
     var createRequest = WorkspaceFixtures.createWorkspaceRequestBody();
     MockHttpServletResponse createResponse =
@@ -145,32 +136,6 @@ public class WorkspaceApiControllerTest extends BaseUnitTest {
             .getStatus();
 
     assertEquals(HttpStatus.SC_CONFLICT, duplicateCreateResponseStatus);
-  }
-
-  @Test
-  public void getWorkspaceByUserFacingId() throws Exception {
-    ApiCreatedWorkspace workspace = createDefaultWorkspace();
-    String userFacingId = WorkspaceFixtures.getUserFacingId(workspace.getId());
-
-    String serializedGetResponse =
-        mockMvc
-            .perform(
-                addAuth(
-                    get(String.format(WORKSPACES_V1_BY_UFID_PATH_FORMAT, userFacingId)),
-                    USER_REQUEST))
-            .andExpect(status().is(HttpStatus.SC_OK))
-            .andReturn()
-            .getResponse()
-            .getContentAsString();
-    ApiWorkspaceDescription fetchedWorkspace =
-        objectMapper.readValue(serializedGetResponse, ApiWorkspaceDescription.class);
-
-    assertEquals(workspace.getId(), fetchedWorkspace.getId());
-    assertEquals(userFacingId, fetchedWorkspace.getUserFacingId());
-    assertNotNull(fetchedWorkspace.getLastUpdatedDate());
-    assertEquals(fetchedWorkspace.getLastUpdatedDate(), fetchedWorkspace.getCreatedDate());
-    assertEquals(USER_REQUEST.getEmail(), fetchedWorkspace.getCreatedBy());
-    assertEquals(USER_REQUEST.getEmail(), fetchedWorkspace.getLastUpdatedBy());
   }
 
   @Test
@@ -414,8 +379,8 @@ public class WorkspaceApiControllerTest extends BaseUnitTest {
             .component(ApiTpsComponent.WSM)
             .objectType(ApiTpsObjectType.WORKSPACE)
             .objectId(workspace.getId())
-            .children(Collections.emptyList())
-            .inConflict(false);
+            .sourcesObjectIds(Collections.emptyList());
+
     // Return a policy object for the first workspace
     when(mockTpsApiDispatch.getPaoIfExists(any(), eq(workspace.getId())))
         .thenReturn(Optional.of(getPolicyResult));
@@ -510,8 +475,7 @@ public class WorkspaceApiControllerTest extends BaseUnitTest {
         .component(ApiTpsComponent.WSM)
         .objectType(ApiTpsObjectType.WORKSPACE)
         .objectId(UUID.randomUUID())
-        .children(Collections.emptyList())
-        .inConflict(false)
+        .sourcesObjectIds(Collections.emptyList())
         .attributes(new ApiTpsPolicyInputs())
         .effectiveAttributes(new ApiTpsPolicyInputs());
   }

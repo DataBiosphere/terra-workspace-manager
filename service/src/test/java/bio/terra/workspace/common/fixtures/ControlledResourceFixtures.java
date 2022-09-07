@@ -273,7 +273,8 @@ public class ControlledResourceFixtures {
         AccessScopeType.ACCESS_SCOPE_PRIVATE,
         ManagedByType.MANAGED_BY_USER,
         null,
-        bucketName);
+        bucketName,
+        /*resourceLineage=*/ null);
   }
 
   public static ControlledAzureIpResource getAzureIp(String ipName, String region) {
@@ -290,7 +291,8 @@ public class ControlledResourceFixtures {
         ManagedByType.MANAGED_BY_USER,
         null,
         ipName,
-        region);
+        region,
+        /*resourceLineage=*/ null);
   }
 
   public static ControlledAzureRelayNamespaceResource getAzureRelayNamespace(
@@ -307,7 +309,8 @@ public class ControlledResourceFixtures {
         ManagedByType.MANAGED_BY_APPLICATION,
         null,
         namespaceName,
-        region);
+        region,
+        /*resourceLineage=*/ null);
   }
 
   public static ControlledAzureDiskResource getAzureDisk(String diskName, String region, int size) {
@@ -325,7 +328,8 @@ public class ControlledResourceFixtures {
         null,
         diskName,
         region,
-        size);
+        size,
+        /*resourceLineage=*/ null);
   }
 
   public static ControlledAzureNetworkResource getAzureNetwork(
@@ -346,7 +350,8 @@ public class ControlledResourceFixtures {
         creationParameters.getSubnetName(),
         creationParameters.getAddressSpaceCidr(),
         creationParameters.getSubnetAddressCidr(),
-        creationParameters.getRegion());
+        creationParameters.getRegion(),
+        /*resourceLineage=*/ null);
   }
 
   public static ControlledAzureStorageResource getAzureStorage(
@@ -364,7 +369,8 @@ public class ControlledResourceFixtures {
         ManagedByType.MANAGED_BY_USER,
         null,
         storageAccountName,
-        region);
+        region,
+        /*resourceLineage=*/ null);
   }
 
   public static ControlledAzureStorageContainerResource getAzureStorageContainer(
@@ -382,7 +388,8 @@ public class ControlledResourceFixtures {
         ManagedByType.MANAGED_BY_USER,
         null,
         storageAccountId,
-        storageContainerName);
+        storageContainerName,
+        /*resourceLineage=*/ null);
   }
 
   public static ControlledAzureVmResource getAzureVm(
@@ -405,7 +412,8 @@ public class ControlledResourceFixtures {
         AzureVmUtils.getImageData(creationParameters.getVmImage()),
         creationParameters.getIpId(),
         creationParameters.getNetworkId(),
-        creationParameters.getDiskId());
+        creationParameters.getDiskId(),
+        /*resourceLineage=*/ null);
   }
 
   private ControlledResourceFixtures() {}

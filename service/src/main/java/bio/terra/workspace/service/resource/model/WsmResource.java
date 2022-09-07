@@ -4,12 +4,14 @@ import bio.terra.common.exception.MissingRequiredFieldException;
 import bio.terra.workspace.db.exception.InvalidMetadataException;
 import bio.terra.workspace.db.model.DbResource;
 import bio.terra.workspace.generated.model.ApiResourceAttributesUnion;
+import bio.terra.workspace.generated.model.ApiResourceLineage;
 import bio.terra.workspace.generated.model.ApiResourceMetadata;
 import bio.terra.workspace.generated.model.ApiResourceUnion;
 import bio.terra.workspace.service.resource.ResourceValidationUtils;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import bio.terra.workspace.service.resource.referenced.cloud.gcp.ReferencedResource;
 import com.google.common.base.Strings;
+import java.util.List;
 import java.util.UUID;
 import javax.annotation.Nullable;
 
@@ -23,6 +25,7 @@ public abstract class WsmResource {
   private final String name;
   private @Nullable final String description;
   private final CloningInstructions cloningInstructions;
+  private @Nullable final List<ResourceLineageEntry> resourceLineage;
 
   /**
    * construct from individual fields
@@ -33,18 +36,21 @@ public abstract class WsmResource {
    * @param name resource name; unique within a workspace
    * @param description free-form text description of the resource
    * @param cloningInstructions how to treat the resource when cloning the workspace
+   * @param resourceLineage resource lineage
    */
   public WsmResource(
       UUID workspaceUuid,
       UUID resourceId,
       String name,
       @Nullable String description,
-      CloningInstructions cloningInstructions) {
+      CloningInstructions cloningInstructions,
+      List<ResourceLineageEntry> resourceLineage) {
     this.workspaceUuid = workspaceUuid;
     this.resourceId = resourceId;
     this.name = name;
     this.description = description;
     this.cloningInstructions = cloningInstructions;
+    this.resourceLineage = resourceLineage;
   }
 
   /** construct from database data */
@@ -54,7 +60,8 @@ public abstract class WsmResource {
         dbResource.getResourceId(),
         dbResource.getName(),
         dbResource.getDescription(),
-        dbResource.getCloningInstructions());
+        dbResource.getCloningInstructions(),
+        dbResource.getResourceLineage().orElse(null));
   }
 
   public UUID getWorkspaceId() {
@@ -75,6 +82,10 @@ public abstract class WsmResource {
 
   public CloningInstructions getCloningInstructions() {
     return cloningInstructions;
+  }
+
+  public List<ResourceLineageEntry> getResourceLineage() {
+    return resourceLineage;
   }
 
   /**
@@ -150,15 +161,23 @@ public abstract class WsmResource {
    * @return partially constructed Api Model common resource description
    */
   public ApiResourceMetadata toApiMetadata() {
-    return new ApiResourceMetadata()
-        .workspaceId(workspaceUuid)
-        .resourceId(resourceId)
-        .name(name)
-        .description(description)
-        .resourceType(getResourceType().toApiModel())
-        .stewardshipType(getStewardshipType().toApiModel())
-        .cloudPlatform(getResourceType().getCloudPlatform().toApiModel())
-        .cloningInstructions(cloningInstructions.toApiModel());
+    ApiResourceMetadata apiResourceMetadata =
+        new ApiResourceMetadata()
+            .workspaceId(workspaceUuid)
+            .resourceId(resourceId)
+            .name(name)
+            .description(description)
+            .resourceType(getResourceType().toApiModel())
+            .stewardshipType(getStewardshipType().toApiModel())
+            .cloudPlatform(getResourceType().getCloudPlatform().toApiModel())
+            .cloningInstructions(cloningInstructions.toApiModel());
+    if (resourceLineage != null) {
+      ApiResourceLineage apiResourceLineage = new ApiResourceLineage();
+      apiResourceLineage.addAll(
+          resourceLineage.stream().map(ResourceLineageEntry::toApiModel).toList());
+      apiResourceMetadata.resourceLineage(apiResourceLineage);
+    }
+    return apiResourceMetadata;
   }
 
   /**

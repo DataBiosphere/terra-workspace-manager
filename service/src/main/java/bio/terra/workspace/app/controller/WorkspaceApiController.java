@@ -242,15 +242,20 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
               .orElse(Collections.emptyList());
     }
 
+    // When we have another cloud context, we will need to do a similar retrieval for it.
+    var createDetailsOptional = workspaceActivityLogDao.getCreateDetails(workspaceUuid);
+    var lastChangeDetailsOptional = workspaceActivityLogDao.getLastUpdateDetails(workspaceUuid);
+
+    if (highestRole == WsmIamRole.DISCOVERER) {
+      workspace = Workspace.stripWorkspaceForRequesterWithOnlyDiscovererRole(workspace);
+    }
+
     // Convert the property map to API format
     ApiProperties apiProperties = new ApiProperties();
     workspace
         .getProperties()
         .forEach((k, v) -> apiProperties.add(new ApiProperty().key(k).value(v)));
 
-    // When we have another cloud context, we will need to do a similar retrieval for it.
-    var createDetailsOptional = workspaceActivityLogDao.getCreateDetails(workspaceUuid);
-    var lastChangeDetailsOptional = workspaceActivityLogDao.getLastUpdateDetails(workspaceUuid);
     return new ApiWorkspaceDescription()
         .id(workspaceUuid)
         .userFacingId(workspace.getUserFacingId())
@@ -274,13 +279,40 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
 
   @Override
   public ResponseEntity<ApiWorkspaceDescription> getWorkspace(
-      @PathVariable("workspaceId") UUID uuid) {
+      @PathVariable("workspaceId") UUID uuid, ApiIamRole minimumHighestRole) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     logger.info("Getting workspace {} for {}", uuid, userRequest.getEmail());
-    Workspace workspace =
-        workspaceService.validateWorkspaceAndAction(
-            userRequest, uuid, SamConstants.SamWorkspaceAction.READ);
+    // Can't set default in yaml (https://stackoverflow.com/a/68542868/6447189), so set here.
+    if (minimumHighestRole == null) {
+      minimumHighestRole = ApiIamRole.READER;
+    }
+    String samAction = WsmIamRole.fromApiModel(minimumHighestRole).toSamAction();
+    Workspace workspace = workspaceService.validateWorkspaceAndAction(userRequest, uuid, samAction);
+
     WsmIamRole highestRole = workspaceService.getHighestRole(uuid, userRequest);
+    ApiWorkspaceDescription desc = buildWorkspaceDescription(workspace, highestRole, userRequest);
+    logger.info("Got workspace {} for {}", desc, userRequest.getEmail());
+
+    return new ResponseEntity<>(desc, HttpStatus.OK);
+  }
+
+  @Override
+  public ResponseEntity<ApiWorkspaceDescription> getWorkspaceByUserFacingId(
+      @PathVariable("workspaceUserFacingId") String userFacingId, ApiIamRole minimumHighestRole) {
+    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    logger.info("Getting workspace {} for {}", userFacingId, userRequest.getEmail());
+    // Can't set default in yaml (https://stackoverflow.com/a/68542868/6447189), so set here.
+    if (minimumHighestRole == null) {
+      minimumHighestRole = ApiIamRole.READER;
+    }
+    // Authz check is inside workspaceService here as we would need the UUID to check Sam, but
+    // we only have the UFID at this point.
+
+    Workspace workspace =
+        workspaceService.getWorkspaceByUserFacingId(
+            userFacingId, userRequest, WsmIamRole.fromApiModel(minimumHighestRole));
+    WsmIamRole highestRole =
+        workspaceService.getHighestRole(workspace.getWorkspaceId(), userRequest);
     ApiWorkspaceDescription desc = buildWorkspaceDescription(workspace, highestRole, userRequest);
     logger.info("Got workspace {} for {}", desc, userRequest.getEmail());
 
@@ -323,22 +355,6 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
     logger.info("Deleted workspace {} for {}", uuid, userRequest.getEmail());
 
     return new ResponseEntity<>(HttpStatus.NO_CONTENT);
-  }
-
-  @Override
-  public ResponseEntity<ApiWorkspaceDescription> getWorkspaceByUserFacingId(
-      @PathVariable("workspaceUserFacingId") String userFacingId) {
-    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
-    logger.info("Getting workspace {} for {}", userFacingId, userRequest.getEmail());
-    // Authz check is inside workspaceService here as we would need the UUID to check Sam, but
-    // we only have the UFID at this point.
-    Workspace workspace = workspaceService.getWorkspaceByUserFacingId(userFacingId, userRequest);
-    WsmIamRole highestRole =
-        workspaceService.getHighestRole(workspace.getWorkspaceId(), userRequest);
-    ApiWorkspaceDescription desc = buildWorkspaceDescription(workspace, highestRole, userRequest);
-    logger.info("Got workspace {} for {}", desc, userRequest.getEmail());
-
-    return new ResponseEntity<>(desc, HttpStatus.OK);
   }
 
   @Override
@@ -554,6 +570,8 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
     ControllerValidationUtils.validateUserFacingId(destinationUserFacingId);
 
     // Construct the target workspace object from the inputs
+    // Policies are cloned in the flight instead of here so that they get cleaned appropriately if
+    // the flight fails.
     final Workspace destinationWorkspace =
         Workspace.builder()
             .workspaceId(destinationWorkspaceId)

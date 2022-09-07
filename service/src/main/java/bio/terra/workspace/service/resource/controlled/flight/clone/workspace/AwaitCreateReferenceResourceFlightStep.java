@@ -44,7 +44,7 @@ public class AwaitCreateReferenceResourceFlightStep implements Step {
     try {
 
       // add to the result map
-      final var resourceIdToResult =
+      var resourceIdToResult =
           Optional.ofNullable(
                   context
                       .getWorkingMap()
@@ -52,28 +52,28 @@ public class AwaitCreateReferenceResourceFlightStep implements Step {
                           ControlledResourceKeys.RESOURCE_ID_TO_CLONE_RESULT,
                           new TypeReference<Map<UUID, WsmResourceCloneDetails>>() {}))
               .orElseGet(HashMap::new);
-      final WsmResourceCloneDetails cloneDetails = new WsmResourceCloneDetails();
+      WsmResourceCloneDetails cloneDetails = new WsmResourceCloneDetails();
 
       if (CloningInstructions.COPY_REFERENCE == sourceResource.getCloningInstructions()) {
         FlightUtils.validateRequiredEntries(
             context.getWorkingMap(), ControlledResourceKeys.DESTINATION_REFERENCED_RESOURCE);
-        final FlightState subflightState =
+        FlightState subflightState =
             FlightUtils.waitForFlightExponential(
                 context.getStairway(), flightId, Duration.ofMillis(50), Duration.ofMinutes(5));
-        final WsmCloneResourceResult cloneResult =
+        WsmCloneResourceResult cloneResult =
             WorkspaceCloneUtils.flightStatusToCloneResult(
                 subflightState.getFlightStatus(), sourceResource);
         cloneDetails.setResult(cloneResult);
-        final FlightMap resultMap = FlightUtils.getResultMapRequired(subflightState);
+        FlightMap resultMap = FlightUtils.getResultMapRequired(subflightState);
 
         // Input to the create flight
-        final var destinationReferencedResource =
+        var destinationReferencedResource =
             context
                 .getWorkingMap()
                 .get(
                     ControlledResourceKeys.DESTINATION_REFERENCED_RESOURCE,
                     ReferencedResource.class);
-        final var clonedReferencedResourceId =
+        var clonedReferencedResourceId =
             resultMap.get(JobMapKeys.RESPONSE.getKeyName(), UUID.class);
 
         // Use the destination referenced resource for things that are fixed over

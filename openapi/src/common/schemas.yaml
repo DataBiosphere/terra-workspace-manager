@@ -204,7 +204,24 @@ components:
           type: string
         cloningInstructions:
           $ref: '#/components/schemas/CloningInstructionsEnum'
-  
+
+    ResourceLineage:
+      type: array
+      items:
+        $ref: '#/components/schemas/ResourceLineageEntry'
+
+    ResourceLineageEntry:
+      type: object
+      required: [sourceWorkspaceId, sourceResourceId]
+      description: Resource lineage entry describing a single clone operation
+      properties:
+        sourceWorkspaceId:
+          type: string
+          format: uuid
+        sourceResourceId:
+          type: string
+          format: uuid
+
     # All resource objects include this resource metadata object and call it 'metadata'
     ResourceMetadata:
       type: object
@@ -230,10 +247,15 @@ components:
         controlledResourceMetadata:
           description: Present if stewardship type is CONTROLLED
           $ref: '#/components/schemas/ControlledResourceMetadata'
+<<<<<<< HEAD
         folderId:
           description: Present if the resource is in a folder.
           type: string
           format: uuid
+=======
+        resourceLineage:
+          $ref: '#/components/schemas/ResourceLineage'
+>>>>>>> main
 
     StewardshipType:
       description: Enum containing valid stewardship types. Used for enumeration

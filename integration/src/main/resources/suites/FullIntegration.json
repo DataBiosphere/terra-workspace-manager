@@ -23,6 +23,7 @@
     "integration/ReferencedGitRepoLifecycle.json",
     "integration/ReferencedTerraWorkspaceLifecycle.json",
     "integration/RemoveUser.json",
+    "integration/ResourceLineage.json",
     "integration/WorkspaceLifecycle.json"
   ]
 }

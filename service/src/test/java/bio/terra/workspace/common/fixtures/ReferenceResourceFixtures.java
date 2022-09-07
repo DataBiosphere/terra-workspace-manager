@@ -17,6 +17,7 @@ public class ReferenceResourceFixtures {
         "description of " + resourceName,
         CloningInstructions.COPY_NOTHING,
         "terra",
-        "polaroid");
+        "polaroid",
+        /*resourceLineage=*/ null);
   }
 }
