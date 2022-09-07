@@ -36,6 +36,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import javax.annotation.Nullable;
 
@@ -274,7 +275,8 @@ public class ControlledResourceFixtures {
         ManagedByType.MANAGED_BY_USER,
         null,
         bucketName,
-        /*resourceLineage=*/ null);
+        /*resourceLineage=*/ null,
+        Map.of());
   }
 
   public static ControlledAzureIpResource getAzureIp(String ipName, String region) {
@@ -292,7 +294,8 @@ public class ControlledResourceFixtures {
         null,
         ipName,
         region,
-        /*resourceLineage=*/ null);
+        /*resourceLineage=*/ null,
+        /*properties=*/ Map.of());
   }
 
   public static ControlledAzureRelayNamespaceResource getAzureRelayNamespace(
@@ -310,7 +313,8 @@ public class ControlledResourceFixtures {
         null,
         namespaceName,
         region,
-        /*resourceLineage=*/ null);
+        /*resourceLineage=*/ null,
+        /*properties=*/ Map.of());
   }
 
   public static ControlledAzureDiskResource getAzureDisk(String diskName, String region, int size) {
@@ -329,7 +333,8 @@ public class ControlledResourceFixtures {
         diskName,
         region,
         size,
-        /*resourceLineage=*/ null);
+        /*resourceLineage=*/ null,
+        /*properties=*/ Map.of());
   }
 
   public static ControlledAzureNetworkResource getAzureNetwork(
@@ -351,7 +356,8 @@ public class ControlledResourceFixtures {
         creationParameters.getAddressSpaceCidr(),
         creationParameters.getSubnetAddressCidr(),
         creationParameters.getRegion(),
-        /*resourceLineage=*/ null);
+        /*resourceLineage=*/ null,
+        /*properties=*/ Map.of());
   }
 
   public static ControlledAzureStorageResource getAzureStorage(
@@ -370,7 +376,8 @@ public class ControlledResourceFixtures {
         null,
         storageAccountName,
         region,
-        /*resourceLineage=*/ null);
+        /*resourceLineage=*/ null,
+        /*properties=*/ Map.of());
   }
 
   public static ControlledAzureStorageContainerResource getAzureStorageContainer(
@@ -389,7 +396,8 @@ public class ControlledResourceFixtures {
         null,
         storageAccountId,
         storageContainerName,
-        /*resourceLineage=*/ null);
+        /*resourceLineage=*/ null,
+        /*properties=*/ Map.of());
   }
 
   public static ControlledAzureVmResource getAzureVm(
@@ -413,7 +421,8 @@ public class ControlledResourceFixtures {
         creationParameters.getIpId(),
         creationParameters.getNetworkId(),
         creationParameters.getDiskId(),
-        /*resourceLineage=*/ null);
+        /*resourceLineage=*/ null,
+        /*properties=*/ Map.of());
   }
 
   private ControlledResourceFixtures() {}

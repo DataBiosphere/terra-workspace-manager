@@ -441,31 +441,6 @@ components:
       type: string
       enum: ['DISCOVERER', 'READER', 'WRITER', 'APPLICATION', 'OWNER']
 
-    Properties:
-      description: Optional list of key-value pairs of strings
-      type: array
-      items:
-        $ref: '#/components/schemas/Property'
-
-    Property:
-      type: object
-      required: [key, value]
-      properties:
-        key:
-          description: |
-            String to identify the key. Keys must be 1-1024 characters, using letters,
-            numbers, dashes, and underscores and must not start with a dash or underscore.
-          type: string
-        value:
-          description: Arbitrary string value
-          type: string
-
-    PropertyKeys:
-      description: A list of property keys that in the properties
-      type: array
-      items:
-        type: string
-
     RoleBinding:
       description: A binding between an IAM role and users with that role
       type: object

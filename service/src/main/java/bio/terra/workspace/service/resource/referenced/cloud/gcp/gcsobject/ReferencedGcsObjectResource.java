@@ -17,12 +17,14 @@ import bio.terra.workspace.service.resource.ResourceValidationUtils;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.model.ResourceLineageEntry;
 import bio.terra.workspace.service.resource.model.WsmResourceFamily;
+import bio.terra.workspace.service.resource.model.WsmResourceFields;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.resource.referenced.cloud.gcp.ReferencedResource;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Strings;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import javax.annotation.Nullable;
@@ -52,10 +54,25 @@ public class ReferencedGcsObjectResource extends ReferencedResource {
       @JsonProperty("cloningInstructions") CloningInstructions cloningInstructions,
       @JsonProperty("bucketName") String bucketName,
       @JsonProperty("objectName") String objectName,
-      @JsonProperty("resourceLineage") List<ResourceLineageEntry> resourceLineage) {
-    super(workspaceId, resourceId, name, description, cloningInstructions, resourceLineage);
+      @JsonProperty("resourceLineage") List<ResourceLineageEntry> resourceLineage,
+      @JsonProperty("properties") Map<String, String> properties) {
+    super(
+        workspaceId,
+        resourceId,
+        name,
+        description,
+        cloningInstructions,
+        resourceLineage,
+        properties);
     this.bucketName = bucketName;
     this.objectName = objectName;
+    validate();
+  }
+
+  private ReferencedGcsObjectResource(Builder builder) {
+    super(builder.resourceCommonFields);
+    this.bucketName = builder.bucketName;
+    this.objectName = builder.objectName;
     validate();
   }
 
@@ -162,12 +179,7 @@ public class ReferencedGcsObjectResource extends ReferencedResource {
     return builder()
         .bucketName(getBucketName())
         .fileName(getObjectName())
-        .cloningInstructions(getCloningInstructions())
-        .description(getDescription())
-        .name(getName())
-        .resourceId(getResourceId())
-        .workspaceId(getWorkspaceId())
-        .resourceLineage(getResourceLineage());
+        .resourceCommonFields(getWsmResourceFields());
   }
 
   public static Builder builder() {
@@ -175,37 +187,12 @@ public class ReferencedGcsObjectResource extends ReferencedResource {
   }
 
   public static class Builder {
-    private CloningInstructions cloningInstructions;
+    private WsmResourceFields resourceCommonFields;
     private String bucketName;
-    private String fileName;
-    private String description;
-    private String name;
-    private UUID resourceId;
-    private UUID workspaceId;
-    private List<ResourceLineageEntry> resourceLineage;
+    private String objectName;
 
-    public Builder workspaceId(UUID workspaceId) {
-      this.workspaceId = workspaceId;
-      return this;
-    }
-
-    public Builder resourceId(UUID resourceId) {
-      this.resourceId = resourceId;
-      return this;
-    }
-
-    public Builder name(String name) {
-      this.name = name;
-      return this;
-    }
-
-    public Builder description(String description) {
-      this.description = description;
-      return this;
-    }
-
-    public Builder cloningInstructions(CloningInstructions cloningInstructions) {
-      this.cloningInstructions = cloningInstructions;
+    public Builder resourceCommonFields(WsmResourceFields resourceFields) {
+      this.resourceCommonFields = resourceFields;
       return this;
     }
 
@@ -215,26 +202,13 @@ public class ReferencedGcsObjectResource extends ReferencedResource {
     }
 
     public Builder fileName(String fileName) {
-      this.fileName = fileName;
-      return this;
-    }
-
-    public Builder resourceLineage(List<ResourceLineageEntry> resourceLineage) {
-      this.resourceLineage = resourceLineage;
+      this.objectName = fileName;
       return this;
     }
 
     public ReferencedGcsObjectResource build() {
       // On the create path, we can omit the resourceId and have it filled in by the builder.
-      return new ReferencedGcsObjectResource(
-          workspaceId,
-          Optional.ofNullable(resourceId).orElse(UUID.randomUUID()),
-          name,
-          description,
-          cloningInstructions,
-          bucketName,
-          fileName,
-          resourceLineage);
+      return new ReferencedGcsObjectResource(this);
     }
   }
 }

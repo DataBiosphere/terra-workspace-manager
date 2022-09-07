@@ -200,6 +200,7 @@ public class WorkspaceCloneUtils {
         .workspaceUuid(destinationWorkspaceId)
         .resourceId(destinationResourceId)
         .resourceLineage(destinationResourceLineage)
+        .properties(sourceResource.getProperties())
         .build();
   }
 

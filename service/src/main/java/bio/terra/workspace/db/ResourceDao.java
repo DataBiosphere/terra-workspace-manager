@@ -57,7 +57,7 @@ public class ResourceDao {
       SELECT workspace_id, cloud_platform, resource_id, name, description, stewardship_type,
         resource_type, exact_resource_type, cloning_instructions, attributes,
         access_scope, managed_by, associated_app, assigned_user, private_resource_state,
-        resource_lineage
+        resource_lineage, properties
       FROM resource WHERE workspace_id = :workspace_id
       """;
 
@@ -95,7 +95,8 @@ public class ResourceDao {
                             DbSerDes.fromJson(
                                 resourceLineage,
                                 new TypeReference<List<ResourceLineageEntry>>() {}))
-                    .orElse(null));
+                    .orElse(null))
+            .properties(DbSerDes.jsonToProperties(rs.getString("properties")));
       };
 
   private final NamedParameterJdbcTemplate jdbcTemplate;
@@ -650,11 +651,11 @@ public class ResourceDao {
         INSERT INTO resource (workspace_id, cloud_platform, resource_id, name, description,
           stewardship_type, exact_resource_type, resource_type, cloning_instructions, attributes,
           access_scope, managed_by, associated_app, assigned_user, private_resource_state,
-          resource_lineage)
+          resource_lineage, properties)
         VALUES (:workspace_id, :cloud_platform, :resource_id, :name, :description,
           :stewardship_type, :exact_resource_type, :resource_type, :cloning_instructions,
           cast(:attributes AS jsonb), :access_scope, :managed_by, :associated_app, :assigned_user,
-          :private_resource_state, :resource_lineage::jsonb);
+          :private_resource_state, :resource_lineage::jsonb, :properties::jsonb);
         """;
 
     final var params =
@@ -669,7 +670,8 @@ public class ResourceDao {
             .addValue("resource_type", resource.getResourceFamily().toSql())
             .addValue("cloning_instructions", resource.getCloningInstructions().toSql())
             .addValue("attributes", resource.attributesToJson())
-            .addValue("resource_lineage", DbSerDes.toJson(resource.getResourceLineage()));
+            .addValue("resource_lineage", DbSerDes.toJson(resource.getResourceLineage()))
+            .addValue("properties", DbSerDes.propertiesToJson(resource.getProperties()));
     if (resource.getStewardshipType().equals(CONTROLLED)) {
       ControlledResource controlledResource = resource.castToControlledResource();
       //noinspection deprecation

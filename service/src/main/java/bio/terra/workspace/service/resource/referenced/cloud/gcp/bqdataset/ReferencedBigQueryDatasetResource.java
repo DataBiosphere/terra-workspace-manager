@@ -17,14 +17,17 @@ import bio.terra.workspace.service.resource.ResourceValidationUtils;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.model.ResourceLineageEntry;
 import bio.terra.workspace.service.resource.model.WsmResourceFamily;
+import bio.terra.workspace.service.resource.model.WsmResourceFields;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.resource.referenced.cloud.gcp.ReferencedResource;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Strings;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import javax.annotation.Nullable;
 
 public class ReferencedBigQueryDatasetResource extends ReferencedResource {
   private final String projectId;
@@ -46,14 +49,29 @@ public class ReferencedBigQueryDatasetResource extends ReferencedResource {
       @JsonProperty("workspaceId") UUID workspaceId,
       @JsonProperty("resourceId") UUID resourceId,
       @JsonProperty("name") String name,
-      @JsonProperty("description") String description,
+      @JsonProperty("description") @Nullable String description,
       @JsonProperty("cloningInstructions") CloningInstructions cloningInstructions,
       @JsonProperty("projectId") String projectId,
       @JsonProperty("datasetName") String datasetName,
-      @JsonProperty("resourceLineage") List<ResourceLineageEntry> resourceLineage) {
-    super(workspaceId, resourceId, name, description, cloningInstructions, resourceLineage);
+      @JsonProperty("resourceLineage") @Nullable List<ResourceLineageEntry> resourceLineage,
+      @JsonProperty("properties") Map<String, String> properties) {
+    super(
+        workspaceId,
+        resourceId,
+        name,
+        description,
+        cloningInstructions,
+        resourceLineage,
+        properties);
     this.projectId = projectId;
     this.datasetName = datasetName;
+    validate();
+  }
+
+  private ReferencedBigQueryDatasetResource(Builder builder) {
+    super(builder.resourceFields);
+    this.projectId = builder.projectId;
+    this.datasetName = builder.datasetName;
     validate();
   }
 
@@ -166,51 +184,15 @@ public class ReferencedBigQueryDatasetResource extends ReferencedResource {
    */
   public Builder toBuilder() {
     return builder()
-        .cloningInstructions(getCloningInstructions())
+        .resourceCommonFields(getWsmResourceFields())
         .datasetName(getDatasetName())
-        .description(getDescription())
-        .name(getName())
-        .projectId(getProjectId())
-        .resourceId(getResourceId())
-        .workspaceId(getWorkspaceId())
-        .resourceLineage(getResourceLineage());
+        .projectId(getProjectId());
   }
 
   public static class Builder {
-    private UUID workspaceId;
-    private UUID resourceId;
-    private String name;
-    private String description;
-    private CloningInstructions cloningInstructions;
     private String projectId;
     private String datasetName;
-    private List<ResourceLineageEntry> resourceLineage;
-
-    public ReferencedBigQueryDatasetResource.Builder workspaceId(UUID workspaceUuid) {
-      this.workspaceId = workspaceUuid;
-      return this;
-    }
-
-    public ReferencedBigQueryDatasetResource.Builder resourceId(UUID resourceId) {
-      this.resourceId = resourceId;
-      return this;
-    }
-
-    public ReferencedBigQueryDatasetResource.Builder name(String name) {
-      this.name = name;
-      return this;
-    }
-
-    public ReferencedBigQueryDatasetResource.Builder description(String description) {
-      this.description = description;
-      return this;
-    }
-
-    public ReferencedBigQueryDatasetResource.Builder cloningInstructions(
-        CloningInstructions cloningInstructions) {
-      this.cloningInstructions = cloningInstructions;
-      return this;
-    }
+    private WsmResourceFields resourceFields;
 
     public Builder projectId(String projectId) {
       this.projectId = projectId;
@@ -222,22 +204,14 @@ public class ReferencedBigQueryDatasetResource extends ReferencedResource {
       return this;
     }
 
-    public Builder resourceLineage(List<ResourceLineageEntry> resourceLineage) {
-      this.resourceLineage = resourceLineage;
+    public Builder resourceCommonFields(WsmResourceFields resourceFields) {
+      this.resourceFields = resourceFields;
       return this;
     }
 
     public ReferencedBigQueryDatasetResource build() {
       // On the create path, we can omit the resourceId and have it filled in by the builder.
-      return new ReferencedBigQueryDatasetResource(
-          workspaceId,
-          Optional.ofNullable(resourceId).orElse(UUID.randomUUID()),
-          name,
-          description,
-          cloningInstructions,
-          projectId,
-          datasetName,
-          resourceLineage);
+      return new ReferencedBigQueryDatasetResource(this);
     }
   }
 }
