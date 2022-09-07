@@ -13,7 +13,6 @@ import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.FlightStatus;
 import bio.terra.stairway.Stairway;
 import bio.terra.stairway.StepResult;
-import bio.terra.workspace.common.BaseUnitTest;
 import bio.terra.workspace.common.MockBeanUnitTest;
 import bio.terra.workspace.common.exception.UnknownFlightClassNameException;
 import bio.terra.workspace.common.logging.model.ActivityLogChangeDetails;
@@ -21,7 +20,6 @@ import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.db.WorkspaceActivityLogDao;
 import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
-import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook.ControlledAiNotebookInstanceResource;
 import bio.terra.workspace.service.resource.controlled.flight.delete.DeleteControlledResourceFlight;
@@ -45,7 +43,6 @@ import org.broadinstitute.dsde.workbench.client.sam.model.UserStatusInfo;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.mock.mockito.MockBean;
 
 public class WorkspaceActivityLogHookTest extends MockBeanUnitTest {
 

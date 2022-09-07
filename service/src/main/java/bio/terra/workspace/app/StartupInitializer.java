@@ -1,6 +1,5 @@
 package bio.terra.workspace.app;
 
-import bio.terra.workspace.app.DataSourceManager;
 import bio.terra.common.migrate.LiquibaseMigrator;
 import bio.terra.landingzone.library.LandingZoneMain;
 import bio.terra.policy.library.TpsMain;

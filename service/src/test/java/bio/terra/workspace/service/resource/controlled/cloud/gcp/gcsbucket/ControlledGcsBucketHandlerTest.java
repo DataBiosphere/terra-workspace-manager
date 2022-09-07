@@ -6,7 +6,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
-import bio.terra.workspace.common.BaseUnitTest;
 import bio.terra.workspace.common.MockBeanUnitTest;
 import bio.terra.workspace.service.workspace.GcpCloudContextService;
 import java.io.IOException;
@@ -23,6 +22,7 @@ public class ControlledGcsBucketHandlerTest extends MockBeanUnitTest {
   // This extra mock is shared in two tests, but not shared in other unit tests
   // so we will end up with another app context; shared with ControlledGcpResourceApiControllerTest
   @MockBean GcpCloudContextService mockGcpCloudContextService;
+
   private GcpCloudContextService getMockGcpCloudContextService() {
     return mockGcpCloudContextService;
   }

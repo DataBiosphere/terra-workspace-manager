@@ -1,29 +1,5 @@
 package bio.terra.workspace.app.configuration.external.controller;
 
-import bio.terra.workspace.common.MockBeanUnitTest;
-import bio.terra.workspace.common.fixtures.WorkspaceFixtures;
-import bio.terra.workspace.generated.model.ApiAiNotebookCloudId;
-import bio.terra.workspace.generated.model.ApiBqDatasetCloudId;
-import bio.terra.workspace.generated.model.ApiCreatedWorkspace;
-import bio.terra.workspace.generated.model.ApiGcsBucketCloudName;
-import bio.terra.workspace.generated.model.ApiGenerateGcpAiNotebookCloudIdRequestBody;
-import bio.terra.workspace.generated.model.ApiGenerateGcpBigQueryDatasetCloudIDRequestBody;
-import bio.terra.workspace.generated.model.ApiGenerateGcpGcsBucketCloudNameRequestBody;
-import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
-import bio.terra.workspace.service.workspace.GcpCloudContextService;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import org.apache.http.HttpStatus;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
-import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.http.MediaType;
-import org.springframework.test.web.servlet.MockMvc;
-
-import java.util.Optional;
-import java.util.UUID;
-
 import static bio.terra.workspace.common.utils.MockMvcUtils.GENERATE_GCP_AI_NOTEBOOK_NAME_PATH_FORMAT;
 import static bio.terra.workspace.common.utils.MockMvcUtils.GENERATE_GCP_BQ_DATASET_NAME_PATH_FORMAT;
 import static bio.terra.workspace.common.utils.MockMvcUtils.GENERATE_GCP_GCS_BUCKET_NAME_PATH_FORMAT;
@@ -36,7 +12,30 @@ import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@Disabled("PF-1962 This test needs to be rewritten as a connected test since it makes a real GCP cloud context")
+import bio.terra.workspace.common.MockBeanUnitTest;
+import bio.terra.workspace.common.fixtures.WorkspaceFixtures;
+import bio.terra.workspace.generated.model.ApiAiNotebookCloudId;
+import bio.terra.workspace.generated.model.ApiBqDatasetCloudId;
+import bio.terra.workspace.generated.model.ApiCreatedWorkspace;
+import bio.terra.workspace.generated.model.ApiGcsBucketCloudName;
+import bio.terra.workspace.generated.model.ApiGenerateGcpAiNotebookCloudIdRequestBody;
+import bio.terra.workspace.generated.model.ApiGenerateGcpBigQueryDatasetCloudIDRequestBody;
+import bio.terra.workspace.generated.model.ApiGenerateGcpGcsBucketCloudNameRequestBody;
+import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
+import bio.terra.workspace.service.workspace.GcpCloudContextService;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import java.util.Optional;
+import java.util.UUID;
+import org.apache.http.HttpStatus;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.http.MediaType;
+import org.springframework.test.web.servlet.MockMvc;
+
+@Disabled("PF-1962 This test needs to mock Sam to be a proper unit test")
 public class ControlledGcpResourceApiControllerTest extends MockBeanUnitTest {
 
   AuthenticatedUserRequest USER_REQUEST =
@@ -49,13 +48,15 @@ public class ControlledGcpResourceApiControllerTest extends MockBeanUnitTest {
   // This extra mock is shared in two tests, but not shared in other unit tests
   // so we will end up with another app context. Shared with ControlledGcsBucketHandlerTest.
   @MockBean GcpCloudContextService mockGcpCloudContextService;
+
   private GcpCloudContextService getMockGcpCloudContextService() {
     return mockGcpCloudContextService;
   }
 
   @BeforeEach
   public void setup() throws InterruptedException {
-    when(getMockGcpCloudContextService().getRequiredGcpProject(any())).thenReturn("fake-project-id");
+    when(getMockGcpCloudContextService().getRequiredGcpProject(any()))
+        .thenReturn("fake-project-id");
   }
 
   @Test

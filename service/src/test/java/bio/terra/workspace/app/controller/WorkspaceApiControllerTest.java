@@ -68,7 +68,7 @@ import org.springframework.test.web.servlet.MockMvc;
  * currently in WorkspaceServiceTest, it's intended as a proof-of-concept for future mockMvc-based
  * tests.
  */
-@Disabled("PF-1962 This test needs to be rewritten as a connected test since it makes a real GCP cloud context")
+@Disabled("PF-1962 This test needs to mock Sam to be a proper unit test")
 public class WorkspaceApiControllerTest extends BaseUnitTest {
 
   AuthenticatedUserRequest USER_REQUEST =

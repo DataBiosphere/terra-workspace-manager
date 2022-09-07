@@ -14,7 +14,6 @@ import bio.terra.landingzone.job.LandingZoneJobService;
 import bio.terra.landingzone.service.landingzone.azure.exception.LandingZoneDeleteNotImplemented;
 import bio.terra.landingzone.service.landingzone.azure.model.DeployedLandingZone;
 import bio.terra.landingzone.service.landingzone.azure.model.LandingZoneDefinition;
-import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
 import bio.terra.workspace.common.MockBeanUnitTest;
 import bio.terra.workspace.common.fixtures.AzureLandingZoneFixtures;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -23,8 +22,6 @@ import org.apache.http.HttpStatus;
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
@@ -46,7 +43,8 @@ public class LandingZoneApiControllerTest extends MockBeanUnitTest {
     LandingZoneJobService.AsyncJobResult<DeployedLandingZone> asyncJobResult =
         AzureLandingZoneFixtures.createJobResultWithRunningState(JOB_ID);
 
-    when(getMockLandingZoneService().startLandingZoneCreationJob(any(), any(), any())).thenReturn(JOB_ID);
+    when(getMockLandingZoneService().startLandingZoneCreationJob(any(), any(), any()))
+        .thenReturn(JOB_ID);
     when(getMockLandingZoneService().getAsyncJobResult(any())).thenReturn(asyncJobResult);
     when(getMockFeatureConfiguration().isAzureEnabled()).thenReturn(true);
 
@@ -70,7 +68,8 @@ public class LandingZoneApiControllerTest extends MockBeanUnitTest {
     LandingZoneJobService.AsyncJobResult<DeployedLandingZone> asyncJobResult =
         AzureLandingZoneFixtures.createJobResultWithSucceededState(JOB_ID, "lzId");
 
-    when(getMockLandingZoneService().startLandingZoneCreationJob(any(), any(), any())).thenReturn(JOB_ID);
+    when(getMockLandingZoneService().startLandingZoneCreationJob(any(), any(), any()))
+        .thenReturn(JOB_ID);
     when(getMockLandingZoneService().getAsyncJobResult(any())).thenReturn(asyncJobResult);
     when(getMockFeatureConfiguration().isAzureEnabled()).thenReturn(true);
 
@@ -96,7 +95,8 @@ public class LandingZoneApiControllerTest extends MockBeanUnitTest {
     LandingZoneJobService.AsyncJobResult<DeployedLandingZone> asyncJobResult =
         AzureLandingZoneFixtures.createJobResultWithSucceededState(JOB_ID, "lzId");
 
-    when(getMockLandingZoneService().startLandingZoneCreationJob(any(), any(), any())).thenReturn(JOB_ID);
+    when(getMockLandingZoneService().startLandingZoneCreationJob(any(), any(), any()))
+        .thenReturn(JOB_ID);
     when(getMockLandingZoneService().getAsyncJobResult(any())).thenReturn(asyncJobResult);
     when(getMockFeatureConfiguration().isAzureEnabled()).thenReturn(true);
 
@@ -117,7 +117,8 @@ public class LandingZoneApiControllerTest extends MockBeanUnitTest {
     LandingZoneJobService.AsyncJobResult<DeployedLandingZone> asyncJobResult =
         AzureLandingZoneFixtures.createJobResultWithSucceededState(JOB_ID, "lzId");
 
-    when(getMockLandingZoneService().startLandingZoneCreationJob(any(), any(), any())).thenReturn(JOB_ID);
+    when(getMockLandingZoneService().startLandingZoneCreationJob(any(), any(), any()))
+        .thenReturn(JOB_ID);
     when(getMockLandingZoneService().getAsyncJobResult(any())).thenReturn(asyncJobResult);
     when(getMockFeatureConfiguration().isAzureEnabled()).thenReturn(true);
 

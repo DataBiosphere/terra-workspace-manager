@@ -3,7 +3,6 @@ package bio.terra.workspace.app.configuration.external;
 import bio.terra.common.db.BaseDatabaseProperties;
 import bio.terra.workspace.app.DataSourceManager;
 import javax.sql.DataSource;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;

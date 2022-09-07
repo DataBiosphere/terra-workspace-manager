@@ -5,11 +5,9 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 
-import bio.terra.workspace.common.BaseUnitTest;
 import bio.terra.workspace.common.MockBeanUnitTest;
 import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
-import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.iam.model.SamConstants.SamSpendProfileAction;
 import bio.terra.workspace.service.iam.model.WsmIamRole;
 import bio.terra.workspace.service.spendprofile.SpendProfileId;
@@ -24,7 +22,6 @@ import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.mock.mockito.MockBean;
 
 public class GcpCloudContextUnitTest extends MockBeanUnitTest {
   private static final String GCP_PROJECT_ID = "terra-wsm-t-clean-berry-5152";
@@ -105,22 +102,26 @@ public class GcpCloudContextUnitTest extends MockBeanUnitTest {
     // By default, allow all spend link calls as authorized. (All other isAuthorized calls return
     // false by Mockito default.
     Mockito.when(
-            getMockSamService().isAuthorized(
-                Mockito.any(),
-                Mockito.any(),
-                Mockito.any(),
-                Mockito.eq(SamSpendProfileAction.LINK)))
+            getMockSamService()
+                .isAuthorized(
+                    Mockito.any(),
+                    Mockito.any(),
+                    Mockito.any(),
+                    Mockito.eq(SamSpendProfileAction.LINK)))
         .thenReturn(true);
 
     // Fake groups
-    Mockito.when(getMockSamService().getWorkspacePolicy(any(), Mockito.eq(WsmIamRole.READER), any()))
+    Mockito.when(
+            getMockSamService().getWorkspacePolicy(any(), Mockito.eq(WsmIamRole.READER), any()))
         .thenReturn(POLICY_READER);
-    Mockito.when(getMockSamService().getWorkspacePolicy(any(), Mockito.eq(WsmIamRole.WRITER), any()))
+    Mockito.when(
+            getMockSamService().getWorkspacePolicy(any(), Mockito.eq(WsmIamRole.WRITER), any()))
         .thenReturn(POLICY_WRITER);
     Mockito.when(getMockSamService().getWorkspacePolicy(any(), Mockito.eq(WsmIamRole.OWNER), any()))
         .thenReturn(POLICY_OWNER);
     Mockito.when(
-            getMockSamService().getWorkspacePolicy(any(), Mockito.eq(WsmIamRole.APPLICATION), any()))
+            getMockSamService()
+                .getWorkspacePolicy(any(), Mockito.eq(WsmIamRole.APPLICATION), any()))
         .thenReturn(POLICY_APPLICATION);
 
     // Create a workspace record
