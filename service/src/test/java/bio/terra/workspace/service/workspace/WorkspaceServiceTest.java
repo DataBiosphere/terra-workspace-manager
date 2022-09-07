@@ -882,8 +882,7 @@ class WorkspaceServiceTest extends BaseConnectedTest {
             .orElseThrow());
 
     // Destination workspace should have an enabled application
-    assertTrue(
-        appService.getWorkspaceApplication(destinationWorkspace, TEST_WSM_APP).isEnabled());
+    assertTrue(appService.getWorkspaceApplication(destinationWorkspace, TEST_WSM_APP).isEnabled());
 
     // Clean up
     workspaceService.deleteWorkspace(sourceWorkspace, USER_REQUEST);
