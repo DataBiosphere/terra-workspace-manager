@@ -10,18 +10,15 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import bio.terra.workspace.app.configuration.external.WorkspaceDatabaseConfiguration;
 import bio.terra.workspace.common.BaseUnitTest;
 import bio.terra.workspace.db.exception.WorkspaceNotFoundException;
 import bio.terra.workspace.service.spendprofile.SpendProfileId;
 import bio.terra.workspace.service.workspace.GcpCloudContextService;
-import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.exceptions.DuplicateWorkspaceException;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import bio.terra.workspace.service.workspace.model.GcpCloudContext;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import java.util.ArrayList;
@@ -33,6 +30,7 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -48,12 +46,9 @@ class WorkspaceDaoTest extends BaseUnitTest {
   private static final String POLICY_READER = "policy-reader";
   private static final String POLICY_APPLICATION = "policy-application";
 
-  @Autowired private WorkspaceDatabaseConfiguration workspaceDatabaseConfiguration;
   @Autowired private NamedParameterJdbcTemplate jdbcTemplate;
   @Autowired private WorkspaceDao workspaceDao;
   @Autowired private GcpCloudContextService gcpCloudContextService;
-  @Autowired private WorkspaceService workspaceService;
-  @Autowired private ObjectMapper persistenceObjectMapper;
 
   private UUID workspaceUuid;
   @Nullable private SpendProfileId spendProfileId;
@@ -64,6 +59,11 @@ class WorkspaceDaoTest extends BaseUnitTest {
   void setup() {
     workspaceUuid = UUID.randomUUID();
     spendProfileId = new SpendProfileId("foo");
+  }
+
+  @AfterEach
+  void tearDown() {
+    workspaceDao.deleteWorkspace(workspaceUuid);
   }
 
   @Test
@@ -81,12 +81,8 @@ class WorkspaceDaoTest extends BaseUnitTest {
         new MapSqlParameterSource().addValue("id", workspaceUuid.toString());
     Map<String, Object> queryOutput = jdbcTemplate.queryForMap(READ_SQL, params);
 
-    assertThat(queryOutput.get("workspace_id"), equalTo(workspaceUuid.toString()));
-    assertThat(queryOutput.get("spend_profile"), equalTo(spendProfileId.getId()));
-
-    // This test doesn't clean up after itself - be sure it only runs on unit test DBs, which
-    // are always re-created for tests.
-    // TODO: Why does this test not clean up after itself?
+    assertEquals(workspaceUuid.toString(), queryOutput.get("workspace_id"));
+    assertEquals(spendProfileId.getId(), queryOutput.get("spend_profile"));
   }
 
   @Test
@@ -97,7 +93,7 @@ class WorkspaceDaoTest extends BaseUnitTest {
         new MapSqlParameterSource().addValue("id", workspaceUuid.toString());
     Map<String, Object> queryOutput = jdbcTemplate.queryForMap(READ_SQL, params);
 
-    assertThat(queryOutput.get("workspace_id"), equalTo(workspaceUuid.toString()));
+    assertEquals(workspaceUuid.toString(), queryOutput.get("workspace_id"));
 
     assertTrue(workspaceDao.deleteWorkspace(workspaceUuid));
 
@@ -113,9 +109,7 @@ class WorkspaceDaoTest extends BaseUnitTest {
 
     Workspace workspace = workspaceDao.getWorkspace(workspaceUuid);
 
-    assertEquals(createdWorkspace, workspace);
-
-    assertTrue(workspaceDao.deleteWorkspace(workspaceUuid));
+    assertEquals(workspace, createdWorkspace);
   }
 
   @Test
@@ -151,7 +145,7 @@ class WorkspaceDaoTest extends BaseUnitTest {
             ImmutableSet.of(firstWorkspace.getWorkspaceId(), secondWorkspace.getWorkspaceId()),
             1,
             10);
-    assertThat(workspaceList.size(), equalTo(1));
+    assertEquals(1, workspaceList.size());
     assertThat(workspaceList.get(0), in(ImmutableList.of(firstWorkspace, secondWorkspace)));
   }
 
@@ -172,7 +166,7 @@ class WorkspaceDaoTest extends BaseUnitTest {
             ImmutableSet.of(firstWorkspace.getWorkspaceId(), secondWorkspace.getWorkspaceId()),
             0,
             1);
-    assertThat(workspaceList.size(), equalTo(1));
+    assertEquals(1, workspaceList.size());
     assertThat(workspaceList.get(0), in(ImmutableList.of(firstWorkspace, secondWorkspace)));
   }
 
@@ -200,8 +194,6 @@ class WorkspaceDaoTest extends BaseUnitTest {
     propertyGenerate.putAll(propertyUpdate);
 
     assertEquals(propertyGenerate, workspaceDao.getWorkspace(workspaceUuid).getProperties());
-
-    assertTrue(workspaceDao.deleteWorkspace(workspaceUuid));
   }
 
   @Nested
@@ -227,13 +219,12 @@ class WorkspaceDaoTest extends BaseUnitTest {
       Workspace workspace = workspaceDao.getWorkspace(mcWorkspaceId);
 
       assertEquals(mcWorkspace, workspace);
-      assertTrue(workspaceDao.deleteWorkspace(mcWorkspaceId));
     }
 
     @Test
     void getStageMatchesWorkspace() {
       Workspace workspace = workspaceDao.getWorkspace(mcWorkspaceId);
-      assertThat(workspace.getWorkspaceStage(), equalTo(WorkspaceStage.MC_WORKSPACE));
+      assertEquals(WorkspaceStage.MC_WORKSPACE, workspace.getWorkspaceStage());
     }
   }
 
@@ -274,8 +265,6 @@ class WorkspaceDaoTest extends BaseUnitTest {
     Map<String, String> updatedProperty = Map.of("xyz", "pqn");
 
     assertEquals(updatedProperty, workspaceDao.getWorkspace(workspaceUuid).getProperties());
-
-    assertTrue(workspaceDao.deleteWorkspace(workspaceUuid));
   }
 
   @Nested
@@ -359,14 +348,14 @@ class WorkspaceDaoTest extends BaseUnitTest {
   private void checkCloudContext(Optional<GcpCloudContext> optionalContext) {
     assertTrue(optionalContext.isPresent());
     GcpCloudContext context = optionalContext.get();
-    assertEquals(context.getGcpProjectId(), PROJECT_ID);
+    assertEquals(PROJECT_ID, context.getGcpProjectId());
     assertTrue(context.getSamPolicyOwner().isPresent());
-    assertEquals(context.getSamPolicyOwner().get(), POLICY_OWNER);
+    assertEquals(POLICY_OWNER, context.getSamPolicyOwner().get());
     assertTrue(context.getSamPolicyWriter().isPresent());
-    assertEquals(context.getSamPolicyWriter().get(), POLICY_WRITER);
+    assertEquals(POLICY_WRITER, context.getSamPolicyWriter().get());
     assertTrue(context.getSamPolicyReader().isPresent());
-    assertEquals(context.getSamPolicyReader().get(), POLICY_READER);
+    assertEquals(POLICY_READER, context.getSamPolicyReader().get());
     assertTrue(context.getSamPolicyApplication().isPresent());
-    assertEquals(context.getSamPolicyApplication().get(), POLICY_APPLICATION);
+    assertEquals(POLICY_APPLICATION, context.getSamPolicyApplication().get());
   }
 }
