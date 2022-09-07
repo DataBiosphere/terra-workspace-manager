@@ -247,15 +247,8 @@ components:
         controlledResourceMetadata:
           description: Present if stewardship type is CONTROLLED
           $ref: '#/components/schemas/ControlledResourceMetadata'
-<<<<<<< HEAD
-        folderId:
-          description: Present if the resource is in a folder.
-          type: string
-          format: uuid
-=======
         resourceLineage:
           $ref: '#/components/schemas/ResourceLineage'
->>>>>>> main
 
     StewardshipType:
       description: Enum containing valid stewardship types. Used for enumeration

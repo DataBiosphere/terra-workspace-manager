@@ -1,6 +1,5 @@
 package bio.terra.workspace.service.folder;
 
-import bio.terra.workspace.db.FolderAndResourceDao;
 import bio.terra.workspace.db.FolderDao;
 import bio.terra.workspace.service.folder.model.Folder;
 import java.util.UUID;
@@ -11,12 +10,9 @@ import org.springframework.stereotype.Component;
 public class FolderService {
 
   private final FolderDao folderDao;
-  private final FolderAndResourceDao folderAndResourceDao;
 
-  public FolderService(FolderDao folderDao,
-      FolderAndResourceDao folderAndResourceDao) {
+  public FolderService(FolderDao folderDao) {
     this.folderDao = folderDao;
-    this.folderAndResourceDao = folderAndResourceDao;
   }
 
   public Folder createFolder(Folder folder) {
@@ -42,6 +38,6 @@ public class FolderService {
   }
 
   public void addResourceToFolder(UUID resourceId, UUID folderId) {
-    folderAndResourceDao.addResourceToFolder(resourceId, folderId);
+
   }
 }
