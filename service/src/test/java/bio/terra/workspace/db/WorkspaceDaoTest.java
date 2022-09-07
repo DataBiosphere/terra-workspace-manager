@@ -30,6 +30,7 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -60,6 +61,11 @@ class WorkspaceDaoTest extends BaseUnitTest {
     spendProfileId = new SpendProfileId("foo");
   }
 
+  @AfterEach
+  void tearDown() {
+    workspaceDao.deleteWorkspace(workspaceUuid);
+  }
+
   @Test
   void verifyCreatedWorkspaceExists() {
     Workspace workspace =
@@ -77,8 +83,6 @@ class WorkspaceDaoTest extends BaseUnitTest {
 
     assertEquals(workspaceUuid.toString(), queryOutput.get("workspace_id"));
     assertEquals(spendProfileId.getId(), queryOutput.get("spend_profile"));
-
-    workspaceDao.deleteWorkspace(workspaceUuid);
   }
 
   @Test
@@ -106,8 +110,6 @@ class WorkspaceDaoTest extends BaseUnitTest {
     Workspace workspace = workspaceDao.getWorkspace(workspaceUuid);
 
     assertEquals(workspace, createdWorkspace);
-
-    assertTrue(workspaceDao.deleteWorkspace(workspaceUuid));
   }
 
   @Test
@@ -192,8 +194,6 @@ class WorkspaceDaoTest extends BaseUnitTest {
     propertyGenerate.putAll(propertyUpdate);
 
     assertEquals(propertyGenerate, workspaceDao.getWorkspace(workspaceUuid).getProperties());
-
-    assertTrue(workspaceDao.deleteWorkspace(workspaceUuid));
   }
 
   @Nested
@@ -219,7 +219,6 @@ class WorkspaceDaoTest extends BaseUnitTest {
       Workspace workspace = workspaceDao.getWorkspace(mcWorkspaceId);
 
       assertEquals(mcWorkspace, workspace);
-      assertTrue(workspaceDao.deleteWorkspace(mcWorkspaceId));
     }
 
     @Test
@@ -266,8 +265,6 @@ class WorkspaceDaoTest extends BaseUnitTest {
     Map<String, String> updatedProperty = Map.of("xyz", "pqn");
 
     assertEquals(updatedProperty, workspaceDao.getWorkspace(workspaceUuid).getProperties());
-
-    assertTrue(workspaceDao.deleteWorkspace(workspaceUuid));
   }
 
   @Nested
