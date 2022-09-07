@@ -225,6 +225,7 @@ public abstract class WsmResource {
 
     WsmResource that = (WsmResource) o;
 
+    // Resource lineage is not compared.
     return Objects.equals(workspaceUuid, that.workspaceUuid)
         && Objects.equals(resourceId, that.resourceId)
         && StringUtils.equals(name, that.name)

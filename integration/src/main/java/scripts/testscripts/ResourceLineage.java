@@ -130,6 +130,7 @@ public class ResourceLineage extends WorkspaceAllocateTestScriptBase {
             referencedBqDatasetWorkspace1ResourceId);
     var cloneReferencedBqDataset2ResourceId =
         resource2CloneResult.getResource().getMetadata().getResourceId();
+
     // Assert resource lineage on resource 2 in second workspace. There is one entry.
     expectedReferencedBqDatasetLineage.add(
         new ResourceLineageEntry()
@@ -187,6 +188,8 @@ public class ResourceLineage extends WorkspaceAllocateTestScriptBase {
         resource2CloneResult.getErrorReport());
     var cloneControlledBqDataset2ResourceId =
         resource2CloneResult.getDataset().getDataset().getMetadata().getResourceId();
+
+    // Assert resource lineage on resource 2 in second workspace. There is one entry.
     expectedControlledBqDatasetLineage.add(
         new ResourceLineageEntry()
             .sourceResourceId(controlledBqDatasetWorkspace1ResourceId)
@@ -215,6 +218,7 @@ public class ResourceLineage extends WorkspaceAllocateTestScriptBase {
                     workspaceId2, cloneRequest2.getJobControl().getId()),
             CloneControlledGcpBigQueryDatasetResult::getJobReport,
             Duration.ofSeconds(5));
+
     // Assert resource lineage on resource 3.
     // Now there are two entries. Add second entry for second clone.
     expectedControlledBqDatasetLineage.add(
@@ -261,8 +265,9 @@ public class ResourceLineage extends WorkspaceAllocateTestScriptBase {
         "clone bucket 2",
         resource2CloneResult.getJobReport(),
         resource2CloneResult.getErrorReport());
-
     ClonedControlledGcpGcsBucket clonedControlledBucket2 = resource2CloneResult.getBucket();
+
+    // Assert resource lineage on resource 2 in second workspace. There is one entry.
     expectedControlledGcsBucketLineage.add(
         new ResourceLineageEntry()
             .sourceResourceId(controlledGcsBucketWorkspace1ResourceId)
@@ -301,8 +306,10 @@ public class ResourceLineage extends WorkspaceAllocateTestScriptBase {
         "clone bucket 3",
         resource3CloneResult.getJobReport(),
         resource3CloneResult.getErrorReport());
-
     ClonedControlledGcpGcsBucket clonedBucket3 = resource3CloneResult.getBucket();
+
+    // Assert resource lineage on resource 3.
+    // Now there are two entries. Add second entry for second clone.
     expectedControlledGcsBucketLineage.add(
         new ResourceLineageEntry()
             .sourceResourceId(cloneControlledBucket2ResourceId)

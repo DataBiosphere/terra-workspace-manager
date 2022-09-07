@@ -1494,7 +1494,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
   }
 
   @Test
-  void cloneGcsBucketTwice() throws InterruptedException {
+  void cloneGcsBucketTwice_lineageAppends() throws InterruptedException {
     ControlledGcsBucketResource resource =
         ControlledResourceFixtures.makeDefaultControlledGcsBucketBuilder(workspace.getWorkspaceId())
             .build();
