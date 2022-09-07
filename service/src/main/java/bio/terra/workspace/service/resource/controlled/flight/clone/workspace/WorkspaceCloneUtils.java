@@ -2,6 +2,12 @@ package bio.terra.workspace.service.resource.controlled.flight.clone.workspace;
 
 import bio.terra.common.exception.BadRequestException;
 import bio.terra.stairway.FlightStatus;
+import bio.terra.workspace.service.resource.controlled.cloud.gcp.bqdataset.ControlledBigQueryDatasetResource;
+import bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.ControlledGcsBucketResource;
+import bio.terra.workspace.service.resource.controlled.model.AccessScopeType;
+import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
+import bio.terra.workspace.service.resource.controlled.model.ControlledResourceFields;
+import bio.terra.workspace.service.resource.controlled.model.PrivateResourceState;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.model.ResourceLineageEntry;
 import bio.terra.workspace.service.resource.model.WsmResource;
@@ -14,6 +20,7 @@ import bio.terra.workspace.service.resource.referenced.cloud.gcp.datareposnapsho
 import bio.terra.workspace.service.resource.referenced.cloud.gcp.gcsbucket.ReferencedGcsBucketResource;
 import bio.terra.workspace.service.resource.referenced.cloud.gcp.gcsobject.ReferencedGcsObjectResource;
 import bio.terra.workspace.service.workspace.model.WsmCloneResourceResult;
+import com.google.common.annotations.VisibleForTesting;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -121,6 +128,87 @@ public class WorkspaceCloneUtils {
                 sourceReferencedResource.getResourceType().toString()));
     }
     return destinationResource;
+  }
+
+  public static ControlledBigQueryDatasetResource buildDestinationControlledBigQueryDataset(
+      ControlledBigQueryDatasetResource sourceDataset,
+      UUID destinationWorkspaceId,
+      UUID destinationResourceId,
+      String name,
+      @Nullable String description,
+      String cloudInstanceName,
+      String destinationProjectId) {
+    List<ResourceLineageEntry> destinationResourceLineage =
+        createDestinationResourceLineage(
+            sourceDataset.getResourceLineage(),
+            sourceDataset.getWorkspaceId(),
+            sourceDataset.getResourceId());
+    return ControlledBigQueryDatasetResource.builder()
+        .projectId(destinationProjectId)
+        .datasetName(cloudInstanceName)
+        .common(
+            getControlledResourceCommonFields(
+                sourceDataset,
+                destinationWorkspaceId,
+                destinationResourceId,
+                name,
+                description,
+                destinationResourceLineage))
+        .build();
+  }
+
+  public static ControlledGcsBucketResource buildDestinationControlledGcsBucket(
+      ControlledGcsBucketResource sourceBucket,
+      UUID destinationWorkspaceId,
+      UUID destinationResourceId,
+      String name,
+      @Nullable String description,
+      String cloudInstanceName) {
+    List<ResourceLineageEntry> destinationResourceLineage =
+        createDestinationResourceLineage(
+            sourceBucket.getResourceLineage(),
+            sourceBucket.getWorkspaceId(),
+            sourceBucket.getResourceId());
+    return ControlledGcsBucketResource.builder()
+        .bucketName(cloudInstanceName)
+        .common(
+            getControlledResourceCommonFields(
+                sourceBucket,
+                destinationWorkspaceId,
+                destinationResourceId,
+                name,
+                description,
+                destinationResourceLineage))
+        .build();
+  }
+
+  private static ControlledResourceFields getControlledResourceCommonFields(
+      ControlledResource sourceResource,
+      UUID destinationWorkspaceId,
+      UUID destinationResourceId,
+      String name,
+      String description,
+      List<ResourceLineageEntry> destinationResourceLineage) {
+    return ControlledResourceFields.builder()
+        .accessScope(sourceResource.getAccessScope())
+        .assignedUser(sourceResource.getAssignedUser().orElse(null))
+        .cloningInstructions(sourceResource.getCloningInstructions())
+        .managedBy(sourceResource.getManagedBy())
+        .privateResourceState(getPrivateResourceState(sourceResource))
+        .name(name)
+        .description(description)
+        .workspaceUuid(destinationWorkspaceId)
+        .resourceId(destinationResourceId)
+        .resourceLineage(destinationResourceLineage)
+        .build();
+  }
+
+  private static PrivateResourceState getPrivateResourceState(ControlledResource sourceBucket) {
+    var privateResourceState =
+        sourceBucket.getAccessScope() == AccessScopeType.ACCESS_SCOPE_PRIVATE
+            ? PrivateResourceState.INITIALIZING
+            : PrivateResourceState.NOT_APPLICABLE;
+    return privateResourceState;
   }
 
   /**
@@ -272,7 +360,8 @@ public class WorkspaceCloneUtils {
     return resultBuilder.build();
   }
 
-  private static List<ResourceLineageEntry> createDestinationResourceLineage(
+  @VisibleForTesting
+  protected static List<ResourceLineageEntry> createDestinationResourceLineage(
       List<ResourceLineageEntry> sourceResourceLineage,
       UUID sourceWorkspaceId,
       UUID sourceResourceId) {
