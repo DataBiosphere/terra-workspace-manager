@@ -101,8 +101,12 @@ import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 
+// Use application configuration profile in addition to the standard connected test profile
+// inherited from the base class.
+@ActiveProfiles({"app-test"})
 @AutoConfigureMockMvc
 class WorkspaceServiceTest extends BaseConnectedTest {
 
@@ -121,7 +125,9 @@ class WorkspaceServiceTest extends BaseConnectedTest {
           .addAdditionalDataItem(new ApiTpsPolicyPair().key("group").value("my_fake_group"));
 
   public static final String SPEND_PROFILE_ID = "wm-default-spend-profile";
-  private static final String APPLICATION_ID = "leo";
+  // Name of the test WSM application. This must match the identifier in the
+  // application-app-test.yml file.
+  private static final String TEST_WSM_APP = "TestWsmApp";
 
   @MockBean private DataRepoService mockDataRepoService;
   /** Mock SamService does nothing for all calls that would throw if unauthorized. */
@@ -831,7 +837,7 @@ class WorkspaceServiceTest extends BaseConnectedTest {
             bucketResource, ControlledResourceIamRole.OWNER, USER_REQUEST, creationParameters);
 
     // Enable an application.
-    appService.enableWorkspaceApplication(USER_REQUEST, sourceWorkspace, APPLICATION_ID);
+    appService.enableWorkspaceApplication(USER_REQUEST, sourceWorkspace, TEST_WSM_APP);
 
     final ControlledGcsBucketResource createdBucketResource =
         createdResource.castByEnum(WsmResourceType.CONTROLLED_GCP_GCS_BUCKET);
@@ -877,7 +883,7 @@ class WorkspaceServiceTest extends BaseConnectedTest {
 
     // Destination workspace should have an enabled application
     assertTrue(
-        appService.getWorkspaceApplication(destinationWorkspace, APPLICATION_ID).isEnabled());
+        appService.getWorkspaceApplication(destinationWorkspace, TEST_WSM_APP).isEnabled());
 
     // Clean up
     workspaceService.deleteWorkspace(sourceWorkspace, USER_REQUEST);
@@ -904,7 +910,7 @@ class WorkspaceServiceTest extends BaseConnectedTest {
     assertNull(jobService.retrieveJobResult(createCloudContextJobId, Object.class).getException());
 
     // Enable an application.
-    appService.enableWorkspaceApplication(USER_REQUEST, sourceWorkspace, APPLICATION_ID);
+    appService.enableWorkspaceApplication(USER_REQUEST, sourceWorkspace, TEST_WSM_APP);
 
     final Workspace destinationWorkspace =
         defaultRequestBuilder(UUID.randomUUID())
