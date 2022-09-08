@@ -27,6 +27,7 @@ import bio.terra.workspace.model.JobReport;
 import bio.terra.workspace.model.ManagedBy;
 import bio.terra.workspace.model.PrivateResourceUser;
 import bio.terra.workspace.model.ReferenceResourceCommonFields;
+import bio.terra.workspace.model.ResourceUpdateCommonField;
 import bio.terra.workspace.model.UpdateGcsBucketObjectReferenceRequestBody;
 import bio.terra.workspace.model.UpdateGcsBucketReferenceRequestBody;
 import com.google.cloud.storage.Blob;
@@ -45,6 +46,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import javax.annotation.Nullable;
+import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -133,12 +135,9 @@ public class GcsBucketUtils {
       @Nullable CloningInstructionsEnum cloningInstructions)
       throws ApiException {
     UpdateGcsBucketReferenceRequestBody body = new UpdateGcsBucketReferenceRequestBody();
-    if (name != null) {
-      body.setName(name);
-    }
-    if (description != null) {
-      body.setDescription(description);
-    }
+    ResourceUpdateCommonField commonField = getResourceUpdateCommonField(name,
+        description);
+    body.setUpdateCommonFields(commonField);
     if (bucketName != null) {
       body.setBucketName(bucketName);
     }
@@ -321,12 +320,8 @@ public class GcsBucketUtils {
       throws ApiException {
     UpdateGcsBucketObjectReferenceRequestBody body =
         new UpdateGcsBucketObjectReferenceRequestBody();
-    if (name != null) {
-      body.setName(name);
-    }
-    if (description != null) {
-      body.setDescription(description);
-    }
+    ResourceUpdateCommonField commonFields = getResourceUpdateCommonField(name, description);
+    body.setUpdateCommonFields(commonFields);
     if (bucketName != null) {
       body.setBucketName(bucketName);
     }
@@ -337,6 +332,19 @@ public class GcsBucketUtils {
       body.setCloningInstructions(cloningInstructions);
     }
     resourceApi.updateBucketObjectReferenceResource(body, workspaceUuid, resourceId);
+  }
+
+  private static ResourceUpdateCommonField getResourceUpdateCommonField(
+      @Nullable String name,
+      @Nullable String description) {
+    var commonField = new ResourceUpdateCommonField();
+    if (name != null) {
+      commonField.setName(name);
+    }
+    if (description != null) {
+      commonField.setDescription(description);
+    }
+    return commonField;
   }
 
   /**

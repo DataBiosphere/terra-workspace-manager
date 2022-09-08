@@ -7,6 +7,7 @@ import bio.terra.workspace.model.CreateGitRepoReferenceRequestBody;
 import bio.terra.workspace.model.GitRepoAttributes;
 import bio.terra.workspace.model.GitRepoResource;
 import bio.terra.workspace.model.ReferenceResourceCommonFields;
+import bio.terra.workspace.model.ResourceUpdateCommonField;
 import bio.terra.workspace.model.UpdateGitRepoReferenceRequestBody;
 import java.util.UUID;
 import javax.annotation.Nullable;
@@ -26,12 +27,14 @@ public class GitRepoUtils {
       @Nullable CloningInstructionsEnum cloningInstructions)
       throws ApiException {
     UpdateGitRepoReferenceRequestBody body = new UpdateGitRepoReferenceRequestBody();
+    var commonFields = new ResourceUpdateCommonField();
     if (name != null) {
-      body.setName(name);
+      commonFields.setName(name);
     }
     if (description != null) {
-      body.setDescription(description);
+      commonFields.setDescription(description);
     }
+    body.setUpdateCommonFields(commonFields);
     if (gitRepoUrl != null) {
       body.setGitRepoUrl(gitRepoUrl);
     }

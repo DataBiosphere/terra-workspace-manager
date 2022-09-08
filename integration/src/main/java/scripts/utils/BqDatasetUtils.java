@@ -22,6 +22,7 @@ import bio.terra.workspace.model.GcpBigQueryDatasetResource;
 import bio.terra.workspace.model.ManagedBy;
 import bio.terra.workspace.model.PrivateResourceUser;
 import bio.terra.workspace.model.ReferenceResourceCommonFields;
+import bio.terra.workspace.model.ResourceUpdateCommonField;
 import bio.terra.workspace.model.UpdateBigQueryDatasetReferenceRequestBody;
 import com.google.cloud.bigquery.BigQuery;
 import com.google.cloud.bigquery.Field;
@@ -112,12 +113,14 @@ public class BqDatasetUtils {
       throws ApiException {
     UpdateBigQueryDatasetReferenceRequestBody body =
         new UpdateBigQueryDatasetReferenceRequestBody();
+    var commonFields = new ResourceUpdateCommonField();
     if (name != null) {
-      body.setName(name);
+      commonFields.setName(name);
     }
     if (description != null) {
-      body.setDescription(description);
+      commonFields.setDescription(description);
     }
+    body.updateCommonFields(commonFields);
     if (projectId != null) {
       body.setProjectId(projectId);
     }

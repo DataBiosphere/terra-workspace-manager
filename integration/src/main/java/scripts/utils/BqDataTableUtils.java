@@ -10,6 +10,7 @@ import bio.terra.workspace.client.ApiException;
 import bio.terra.workspace.model.CloningInstructionsEnum;
 import bio.terra.workspace.model.GcpBigQueryDataTableAttributes;
 import bio.terra.workspace.model.GcpBigQueryDatasetResource;
+import bio.terra.workspace.model.ResourceUpdateCommonField;
 import bio.terra.workspace.model.UpdateBigQueryDataTableReferenceRequestBody;
 import com.google.cloud.bigquery.BigQuery;
 import com.google.cloud.bigquery.JobInfo.WriteDisposition;
@@ -42,12 +43,14 @@ public class BqDataTableUtils {
       throws ApiException {
     UpdateBigQueryDataTableReferenceRequestBody body =
         new UpdateBigQueryDataTableReferenceRequestBody();
+    var commonFields = new ResourceUpdateCommonField();
     if (name != null) {
-      body.setName(name);
+      commonFields.setName(name);
     }
     if (description != null) {
-      body.setDescription(description);
+      commonFields.setDescription(description);
     }
+    body.setUpdateCommonFields(commonFields);
     if (projectId != null) {
       body.setProjectId(projectId);
     }

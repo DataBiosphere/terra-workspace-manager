@@ -27,6 +27,7 @@ import bio.terra.workspace.model.IamRole;
 import bio.terra.workspace.model.JobControl;
 import bio.terra.workspace.model.ResourceList;
 import bio.terra.workspace.model.ResourceType;
+import bio.terra.workspace.model.ResourceUpdateCommonField;
 import bio.terra.workspace.model.StewardshipType;
 import bio.terra.workspace.model.UpdateControlledGcpAiNotebookInstanceRequestBody;
 import com.google.api.client.googleapis.json.GoogleJsonResponseException;
@@ -182,8 +183,10 @@ public class PrivateControlledAiNotebookInstanceLifecycle extends WorkspaceAlloc
     GcpAiNotebookInstanceResource updatedResource =
         resourceUserApi.updateAiNotebookInstance(
             new UpdateControlledGcpAiNotebookInstanceRequestBody()
-                .description(newDescription)
-                .name(newName)
+                .updateCommonFields(
+                    new ResourceUpdateCommonField()
+                        .description(newDescription)
+                        .name(newName))
                 .updateParameters(new GcpAiNotebookUpdateParameters().metadata(newMetadata)),
             getWorkspaceId(),
             resourceId);
