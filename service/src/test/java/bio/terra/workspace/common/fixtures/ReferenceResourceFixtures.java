@@ -2,6 +2,7 @@ package bio.terra.workspace.common.fixtures;
 
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.referenced.cloud.gcp.datareposnapshot.ReferencedDataRepoSnapshotResource;
+import java.util.Map;
 import java.util.UUID;
 
 public class ReferenceResourceFixtures {
@@ -18,6 +19,7 @@ public class ReferenceResourceFixtures {
         CloningInstructions.COPY_NOTHING,
         "terra",
         "polaroid",
-        /*resourceLineage=*/ null);
+        /*resourceLineage=*/ null,
+        /*properties*/ Map.of());
   }
 }
