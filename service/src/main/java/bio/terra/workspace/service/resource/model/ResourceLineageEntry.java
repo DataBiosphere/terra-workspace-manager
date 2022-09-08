@@ -39,4 +39,17 @@ public class ResourceLineageEntry {
         .sourceWorkspaceId(sourceWorkspaceId)
         .sourceResourceId(sourceResourceId);
   }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (!(o instanceof ResourceLineageEntry)) {
+      return false;
+    }
+    ResourceLineageEntry entry = (ResourceLineageEntry) o;
+    return sourceWorkspaceId.equals(entry.sourceWorkspaceId)
+        && sourceResourceId.equals(entry.sourceResourceId);
+  }
 }

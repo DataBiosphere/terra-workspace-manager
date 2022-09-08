@@ -76,6 +76,7 @@ import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResourceFields;
 import bio.terra.workspace.service.resource.exception.DuplicateResourceException;
 import bio.terra.workspace.service.resource.exception.ResourceNotFoundException;
+import bio.terra.workspace.service.resource.model.ResourceLineageEntry;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.workspace.Alpha1Service;
 import bio.terra.workspace.service.workspace.GcpCloudContextService;
@@ -90,6 +91,7 @@ import com.google.cloud.storage.BucketInfo;
 import com.google.cloud.storage.BucketInfo.LifecycleRule;
 import com.google.common.collect.ImmutableList;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -1489,6 +1491,90 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
                 .getRules());
     assertThat(
         expectedLifecycleRules, containsInAnyOrder(bucketInfo.getLifecycleRules().toArray()));
+  }
+
+  @Test
+  void cloneGcsBucketTwice_lineageAppends() throws InterruptedException {
+    ControlledGcsBucketResource resource =
+        ControlledResourceFixtures.makeDefaultControlledGcsBucketBuilder(workspace.getWorkspaceId())
+            .build();
+    List<ResourceLineageEntry> expectedLineage = new ArrayList<>();
+    // original bucket
+    ControlledGcsBucketResource createdBucket =
+        controlledResourceService
+            .createControlledResourceSync(
+                resource,
+                null,
+                user.getAuthenticatedRequest(),
+                ControlledResourceFixtures.getGoogleBucketCreationParameters())
+            .castByEnum(WsmResourceType.CONTROLLED_GCP_GCS_BUCKET);
+
+    var destinationLocation = "US-EAST1";
+    // clone bucket once
+    String jobId =
+        controlledResourceService.cloneGcsBucket(
+            workspace.getWorkspaceId(),
+            createdBucket.getResourceId(),
+            workspace.getWorkspaceId(), // copy back into same workspace
+            UUID.randomUUID(),
+            new ApiJobControl().id(UUID.randomUUID().toString()),
+            user.getAuthenticatedRequest(),
+            "first_cloned_bucket",
+            "A bucket cloned individually into the same workspace.",
+            "cloned-bucket-" + UUID.randomUUID().toString().toLowerCase(),
+            destinationLocation,
+            ApiCloningInstructionsEnum.RESOURCE);
+
+    jobService.waitForJob(jobId);
+    FlightState flightState = stairwayComponent.get().getFlightState(jobId);
+    assertEquals(FlightStatus.SUCCESS, flightState.getFlightStatus());
+    var response =
+        flightState
+            .getResultMap()
+            .get()
+            .get(JobMapKeys.RESPONSE.getKeyName(), ApiClonedControlledGcpGcsBucket.class);
+    UUID firstClonedBucketResourceId = response.getBucket().getResourceId();
+    ControlledGcsBucketResource firstClonedBucket =
+        controlledResourceService
+            .getControlledResource(workspace.getWorkspaceId(), firstClonedBucketResourceId)
+            .castByEnum(WsmResourceType.CONTROLLED_GCP_GCS_BUCKET);
+
+    expectedLineage.add(
+        new ResourceLineageEntry(workspace.getWorkspaceId(), createdBucket.getResourceId()));
+    assertEquals(expectedLineage, firstClonedBucket.getResourceLineage());
+
+    // clone twice.
+    String jobId2 =
+        controlledResourceService.cloneGcsBucket(
+            workspace.getWorkspaceId(),
+            firstClonedBucketResourceId,
+            workspace.getWorkspaceId(), // copy back into same workspace
+            UUID.randomUUID(),
+            new ApiJobControl().id(UUID.randomUUID().toString()),
+            user.getAuthenticatedRequest(),
+            "second_cloned_bucket",
+            "A bucket cloned individually into the same workspace.",
+            "second-cloned-bucket-" + UUID.randomUUID().toString().toLowerCase(),
+            destinationLocation,
+            ApiCloningInstructionsEnum.RESOURCE);
+
+    jobService.waitForJob(jobId2);
+    FlightState flightState2 = stairwayComponent.get().getFlightState(jobId2);
+    assertEquals(FlightStatus.SUCCESS, flightState2.getFlightStatus());
+    var response2 =
+        flightState2
+            .getResultMap()
+            .get()
+            .get(JobMapKeys.RESPONSE.getKeyName(), ApiClonedControlledGcpGcsBucket.class);
+    UUID secondCloneResourceId = response2.getBucket().getResourceId();
+    ControlledGcsBucketResource secondClonedBucket =
+        controlledResourceService
+            .getControlledResource(workspace.getWorkspaceId(), secondCloneResourceId)
+            .castByEnum(WsmResourceType.CONTROLLED_GCP_GCS_BUCKET);
+
+    expectedLineage.add(
+        new ResourceLineageEntry(workspace.getWorkspaceId(), firstClonedBucketResourceId));
+    assertEquals(expectedLineage, secondClonedBucket.getResourceLineage());
   }
 
   @Test
