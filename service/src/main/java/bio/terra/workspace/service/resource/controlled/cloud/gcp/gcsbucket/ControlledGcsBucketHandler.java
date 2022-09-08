@@ -73,6 +73,12 @@ public class ControlledGcsBucketHandler implements WsmResourceHandler {
         generatedName.length() > MAX_BUCKET_NAME_LENGTH
             ? generatedName.substring(0, MAX_BUCKET_NAME_LENGTH)
             : generatedName;
+
+    /**
+     * The regular expression only allow legal character combinations which start with alphanumeric
+     * letter, but not start with "google" or "goog", dash("-") in the string, and alphanumeric
+     * letter at the end of the string. It trims any other combinations.
+     */
     generatedName =
         generatedName.replaceAll("google|^goog|[^a-z0-9-.]+|^[^a-z0-9]+|[^a-z0-9]+$", "");
 
