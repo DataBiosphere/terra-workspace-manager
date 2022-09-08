@@ -8,6 +8,7 @@ import static java.util.stream.Collectors.toList;
 import bio.terra.common.db.ReadTransaction;
 import bio.terra.common.db.WriteTransaction;
 import bio.terra.workspace.common.exception.InternalLogicException;
+import bio.terra.workspace.db.exception.WorkspaceNotFoundException;
 import bio.terra.workspace.db.model.DbResource;
 import bio.terra.workspace.db.model.UniquenessCheckAttributes;
 import bio.terra.workspace.db.model.UniquenessCheckAttributes.UniquenessScope;
@@ -29,7 +30,9 @@ import bio.terra.workspace.service.workspace.exceptions.CloudContextRequiredExce
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import com.fasterxml.jackson.core.type.TypeReference;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -62,42 +65,42 @@ public class ResourceDao {
       """;
 
   private static final RowMapper<DbResource> DB_RESOURCE_ROW_MAPPER =
-      (rs, rowNum) -> {
-        return new DbResource()
-            .workspaceUuid(UUID.fromString(rs.getString("workspace_id")))
-            .cloudPlatform(CloudPlatform.fromSql(rs.getString("cloud_platform")))
-            .resourceId(UUID.fromString(rs.getString("resource_id")))
-            .name(rs.getString("name"))
-            .description(rs.getString("description"))
-            .stewardshipType(fromSql(rs.getString("stewardship_type")))
-            .cloudResourceType(WsmResourceFamily.fromSql(rs.getString("resource_type")))
-            .resourceType(WsmResourceType.fromSql(rs.getString("exact_resource_type")))
-            .cloningInstructions(CloningInstructions.fromSql(rs.getString("cloning_instructions")))
-            .attributes(rs.getString("attributes"))
-            .accessScope(
-                Optional.ofNullable(rs.getString("access_scope"))
-                    .map(AccessScopeType::fromSql)
-                    .orElse(null))
-            .managedBy(
-                Optional.ofNullable(rs.getString("managed_by"))
-                    .map(ManagedByType::fromSql)
-                    .orElse(null))
-            .applicationId(Optional.ofNullable(rs.getString("associated_app")).orElse(null))
-            .assignedUser(rs.getString("assigned_user"))
-            .privateResourceState(
-                Optional.ofNullable(rs.getString("private_resource_state"))
-                    .map(PrivateResourceState::fromSql)
-                    .orElse(null))
-            .resourceLineage(
-                Optional.ofNullable(rs.getString("resource_lineage"))
-                    .map(
-                        resourceLineage ->
-                            DbSerDes.fromJson(
-                                resourceLineage,
-                                new TypeReference<List<ResourceLineageEntry>>() {}))
-                    .orElse(null))
-            .properties(DbSerDes.jsonToProperties(rs.getString("properties")));
-      };
+      (rs, rowNum) ->
+          new DbResource()
+              .workspaceUuid(UUID.fromString(rs.getString("workspace_id")))
+              .cloudPlatform(CloudPlatform.fromSql(rs.getString("cloud_platform")))
+              .resourceId(UUID.fromString(rs.getString("resource_id")))
+              .name(rs.getString("name"))
+              .description(rs.getString("description"))
+              .stewardshipType(fromSql(rs.getString("stewardship_type")))
+              .cloudResourceType(WsmResourceFamily.fromSql(rs.getString("resource_type")))
+              .resourceType(WsmResourceType.fromSql(rs.getString("exact_resource_type")))
+              .cloningInstructions(
+                  CloningInstructions.fromSql(rs.getString("cloning_instructions")))
+              .attributes(rs.getString("attributes"))
+              .accessScope(
+                  Optional.ofNullable(rs.getString("access_scope"))
+                      .map(AccessScopeType::fromSql)
+                      .orElse(null))
+              .managedBy(
+                  Optional.ofNullable(rs.getString("managed_by"))
+                      .map(ManagedByType::fromSql)
+                      .orElse(null))
+              .applicationId(Optional.ofNullable(rs.getString("associated_app")).orElse(null))
+              .assignedUser(rs.getString("assigned_user"))
+              .privateResourceState(
+                  Optional.ofNullable(rs.getString("private_resource_state"))
+                      .map(PrivateResourceState::fromSql)
+                      .orElse(null))
+              .resourceLineage(
+                  Optional.ofNullable(rs.getString("resource_lineage"))
+                      .map(
+                          resourceLineage ->
+                              DbSerDes.fromJson(
+                                  resourceLineage,
+                                  new TypeReference<List<ResourceLineageEntry>>() {}))
+                      .orElse(null))
+              .properties(DbSerDes.jsonToProperties(rs.getString("properties")));
 
   private final NamedParameterJdbcTemplate jdbcTemplate;
 
@@ -626,6 +629,77 @@ public class ResourceDao {
 
     Integer count = jdbcTemplate.queryForObject(sql, params, Integer.class);
     return (count != null && count > 0);
+  }
+
+  @WriteTransaction
+  public boolean deleteResourceProperties(
+      UUID workspaceUuid, UUID resourceId, List<String> propertyKeys) {
+    Map<String, String> properties = getResourceProperties(workspaceUuid, resourceId);
+    for (String key : propertyKeys) {
+      properties.remove(key);
+    }
+    return setProperties(workspaceUuid, resourceId, properties);
+  }
+
+  /** Update a workspace properties */
+  @WriteTransaction
+  public boolean updateResourceProperties(
+      UUID workspaceUuid, UUID resourceUuid, Map<String, String> newProperties) {
+    Map<String, String> properties = getResourceProperties(workspaceUuid, resourceUuid);
+    HashMap<String, String> combinedProperties = new HashMap<>();
+    combinedProperties.putAll(properties);
+    // add new properties after the original so that the new properties value will override
+    // the old if there are conflicted keys.
+    combinedProperties.putAll(newProperties);
+    return setProperties(workspaceUuid, resourceUuid, combinedProperties);
+  }
+
+  private Map<String, String> getResourceProperties(UUID workspaceUuid, UUID resourceUuid) {
+    // get current property in this workspace id
+    String selectPropertiesSql =
+        """
+      SELECT properties FROM resource
+      WHERE workspace_id = :workspace_id AND resource_id = :resource_id
+    """;
+    MapSqlParameterSource propertiesParams =
+        new MapSqlParameterSource()
+            .addValue("workspace_id", workspaceUuid.toString())
+            .addValue("resource_id", resourceUuid.toString());
+    String result;
+
+    try {
+      result = jdbcTemplate.queryForObject(selectPropertiesSql, propertiesParams, String.class);
+
+    } catch (EmptyResultDataAccessException e) {
+      throw new WorkspaceNotFoundException(
+          String.format("Resource %s not found in workspace %s.", resourceUuid, workspaceUuid));
+    }
+
+    Map<String, String> properties =
+        result == null ? new HashMap<>() : DbSerDes.jsonToProperties(result);
+    return properties;
+  }
+
+  /**
+   * Set the properties column to the new values given workspaceId and resourceId
+   *
+   * @return true if at least a row is updated.
+   */
+  private boolean setProperties(
+      UUID workspaceUuid, UUID resourceUuid, Map<String, String> properties) {
+    final String sql =
+        """
+          UPDATE resource SET properties = cast(:properties AS jsonb)
+          WHERE workspace_id = :workspace_id AND resource_id = :resource_id
+        """;
+
+    var params = new MapSqlParameterSource();
+    params
+        .addValue("properties", DbSerDes.propertiesToJson(properties))
+        .addValue("workspace_id", workspaceUuid.toString())
+        .addValue("resource_id", resourceUuid.toString());
+
+    return jdbcTemplate.update(sql, params) > 0;
   }
 
   private void storeResource(WsmResource resource) {

@@ -17,11 +17,14 @@ import bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.Contr
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResourceFields;
 import bio.terra.workspace.service.resource.exception.DuplicateResourceException;
+import bio.terra.workspace.service.resource.model.WsmResource;
 import bio.terra.workspace.service.workspace.GcpCloudContextService;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -91,6 +94,79 @@ public class ResourceDaoTest extends BaseUnitTest {
         resource, resourceDao.getResource(resource.getWorkspaceId(), resource.getResourceId()));
 
     resourceDao.deleteResource(resource.getWorkspaceId(), resource.getResourceId());
+  }
+
+  @Test
+  public void updateResourceProperties_workspaceWithNoProperties_propertiesAdded() {
+    UUID workspaceUuid = createGcpWorkspace();
+    ControlledAiNotebookInstanceResource resource =
+        ControlledResourceFixtures.makeDefaultAiNotebookInstance()
+            .common(
+                ControlledResourceFixtures.makeNotebookCommonFieldsBuilder()
+                    .workspaceUuid(workspaceUuid)
+                    .build())
+            .build();
+    resourceDao.createControlledResource(resource);
+
+    var properties = Map.of("roses", "red", "violets", "blue");
+    resourceDao.updateResourceProperties(workspaceUuid, resource.getResourceId(), properties);
+
+    WsmResource updatedResource =
+        resourceDao.getResource(resource.getWorkspaceId(), resource.getResourceId());
+    assertEquals(properties, updatedResource.getProperties());
+  }
+
+  @Test
+  public void updateResourceProperties_workspaceWithProperty_propertiesCombined() {
+    UUID workspaceUuid = createGcpWorkspace();
+    var originalProperties = Map.of("sugar", "sweet", "roses", "green");
+    ControlledAiNotebookInstanceResource resource =
+        ControlledResourceFixtures.makeDefaultAiNotebookInstance()
+            .common(
+                ControlledResourceFixtures.makeNotebookCommonFieldsBuilder()
+                    .workspaceUuid(workspaceUuid)
+                    .properties(originalProperties)
+                    .build())
+            .build();
+    resourceDao.createControlledResource(resource);
+
+    var newProperties = Map.of("roses", "red", "violets", "blue");
+    resourceDao.updateResourceProperties(workspaceUuid, resource.getResourceId(), newProperties);
+
+    WsmResource updatedResource =
+        resourceDao.getResource(resource.getWorkspaceId(), resource.getResourceId());
+    HashMap<String, String> combinedProperties = new HashMap<>();
+    combinedProperties.putAll(originalProperties);
+    // add the new properties after because it should override the original properties
+    // if there are duplicated keys.
+    combinedProperties.putAll(newProperties);
+    assertEquals(combinedProperties, updatedResource.getProperties());
+  }
+
+  @Test
+  public void deleteResourceProperties_workspaceWithProperty_propertiesDeleted() {
+    UUID workspaceUuid = createGcpWorkspace();
+    var originalProperties = Map.of("roses", "red", "violets", "blue", "sugar", "sweet");
+    ControlledAiNotebookInstanceResource resource =
+        ControlledResourceFixtures.makeDefaultAiNotebookInstance()
+            .common(
+                ControlledResourceFixtures.makeNotebookCommonFieldsBuilder()
+                    .workspaceUuid(workspaceUuid)
+                    .properties(originalProperties)
+                    .build())
+            .build();
+    resourceDao.createControlledResource(resource);
+
+    var keysToDelete = List.of("roses", "foo");
+    resourceDao.deleteResourceProperties(workspaceUuid, resource.getResourceId(), keysToDelete);
+
+    WsmResource updatedResource =
+        resourceDao.getResource(resource.getWorkspaceId(), resource.getResourceId());
+    HashMap<String, String> updatedProperties = new HashMap<>(originalProperties);
+    for (var key : keysToDelete) {
+      updatedProperties.remove(key);
+    }
+    assertEquals(updatedProperties, updatedResource.getProperties());
   }
 
   @Test
