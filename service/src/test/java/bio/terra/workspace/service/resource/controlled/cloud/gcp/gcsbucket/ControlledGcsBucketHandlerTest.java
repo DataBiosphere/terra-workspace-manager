@@ -53,6 +53,24 @@ public class ControlledGcsBucketHandlerTest extends BaseUnitTest {
   }
 
   @Test
+  public void generateBucketName_bucketNameHasGoogPrefix_removeGoogPrefix() {
+    String bucketName = "googyu_hu_yo_yo";
+    String generateCloudName =
+        ControlledGcsBucketHandler.getHandler().generateCloudName(fakeWorkspaceId, bucketName);
+
+    assertTrue(generateCloudName.equals("yuhuyoyo-" + FAKE_PROJECT_ID));
+  }
+
+  @Test
+  public void generateBucketName_bucketNameHasGoogle_removeGoogle() {
+    String bucketName = "gooyu_hu_googleyo_yo";
+    String generateCloudName =
+        ControlledGcsBucketHandler.getHandler().generateCloudName(fakeWorkspaceId, bucketName);
+
+    assertTrue(generateCloudName.equals("gooyuhuyoyo-" + FAKE_PROJECT_ID));
+  }
+
+  @Test
   public void generateBucketName_bucketNameHasUppercase_toLowerCase() {
     String bucketName = "YUHUYOYO";
     String generateCloudName =
