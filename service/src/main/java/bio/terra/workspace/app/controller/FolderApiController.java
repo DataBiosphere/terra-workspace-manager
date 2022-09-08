@@ -46,6 +46,7 @@ public class FolderApiController extends ControllerBase implements FolderApi {
     Folder folder =
         folderService.createFolder(
             new Folder.Builder()
+                .id(UUID.randomUUID())
                 .workspaceId(workspaceId)
                 .parentFolderId(body.getParentFolderId())
                 .displayName(body.getDisplayName())

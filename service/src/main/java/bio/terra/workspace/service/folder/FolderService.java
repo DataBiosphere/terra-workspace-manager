@@ -35,9 +35,6 @@ public class FolderService {
 
   public void deleteFolder(UUID workspaceUuid, UUID folderId) {
     folderDao.deleteFolder(workspaceUuid, folderId);
-  }
-
-  public void addResourceToFolder(UUID resourceId, UUID folderId) {
-
+    // TODO: update resource properties
   }
 }

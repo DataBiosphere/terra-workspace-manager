@@ -9,7 +9,6 @@ import bio.terra.workspace.common.utils.FlightUtils;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.generated.model.ApiGcpBigQueryDatasetUpdateParameters;
 import bio.terra.workspace.generated.model.ApiGcpGcsBucketUpdateParameters;
-import bio.terra.workspace.generated.model.ApiResourceUpdateCommonField;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceMetadataManager;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import bio.terra.workspace.service.resource.model.CloningInstructions;

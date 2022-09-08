@@ -44,11 +44,12 @@ public class FolderDao {
         """;
     var params =
         new MapSqlParameterSource()
-            .addValue("id", folder.getId())
-            .addValue("workspace_id", folder.getWorkspaceId())
+            .addValue("id", folder.getId().toString())
+            .addValue("workspace_id", folder.getWorkspaceId().toString())
             .addValue("display_name", folder.getDisplayName())
             .addValue("description", folder.getDescription().orElse(null))
-            .addValue("parentFolderId", folder.getParentFolderId().orElse(null));
+            .addValue(
+                "parentFolderId", folder.getParentFolderId().map(UUID::toString).orElse(null));
 
     try {
       jdbcTemplate.update(sql, params);

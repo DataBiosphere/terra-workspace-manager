@@ -186,9 +186,6 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
           null, // included in resource arg
           userRequest);
     }
-    if (commonField.getFolderId() != null) {
-      folderService.addResourceToFolder(referenceId, commonField.getFolderId());
-    }
     return new ResponseEntity<>(HttpStatus.NO_CONTENT);
   }
 
@@ -287,9 +284,6 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
           updateBucketResourceBuilder.build(),
           null, // passed in via resource argument
           userRequest);
-    }
-    if (commonField.getFolderId() != null) {
-      folderService.addResourceToFolder(referenceId, commonField.getFolderId());
     }
     return new ResponseEntity<>(HttpStatus.NO_CONTENT);
   }
@@ -400,9 +394,6 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
           updateBqTableResource.build(),
           cloningInstructions,
           userRequest);
-    }
-    if (commonField.getFolderId() != null) {
-      folderService.addResourceToFolder(referenceId, commonField.getFolderId());
     }
     return new ResponseEntity<>(HttpStatus.NO_CONTENT);
   }
@@ -517,9 +508,6 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
           cloningInstructions,
           userRequest);
     }
-    if (commonField.getFolderId() != null) {
-      folderService.addResourceToFolder(resourceId, commonField.getFolderId());
-    }
     return new ResponseEntity<>(HttpStatus.NO_CONTENT);
   }
 
@@ -623,9 +611,6 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
           updatedResourceBuilder.build(),
           CloningInstructions.fromApiModel(body.getCloningInstructions()),
           userRequest);
-    }
-    if (commonField.getFolderId() != null) {
-      folderService.addResourceToFolder(resourceId, commonField.getFolderId());
     }
     return new ResponseEntity<>(HttpStatus.NO_CONTENT);
   }
@@ -971,9 +956,6 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
           updateGitRepoResource.build(),
           CloningInstructions.fromApiModel(body.getCloningInstructions()),
           userRequest);
-    }
-    if (commonField.getFolderId() != null) {
-      folderService.addResourceToFolder(referenceId, commonField.getFolderId());
     }
     return new ResponseEntity<>(HttpStatus.OK);
   }

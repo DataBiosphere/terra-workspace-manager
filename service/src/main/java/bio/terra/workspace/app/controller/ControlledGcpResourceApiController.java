@@ -3,7 +3,6 @@ package bio.terra.workspace.app.controller;
 import bio.terra.workspace.common.utils.ControllerValidationUtils;
 import bio.terra.workspace.generated.controller.ControlledGcpResourceApi;
 import bio.terra.workspace.generated.model.*;
-import bio.terra.workspace.service.folder.FolderService;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequestFactory;
 import bio.terra.workspace.service.iam.SamService;
@@ -45,7 +44,6 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
   private final Logger logger = LoggerFactory.getLogger(ControlledGcpResourceApiController.class);
 
   private final ControlledResourceService controlledResourceService;
-  private final FolderService folderService;
   private final WorkspaceService workspaceService;
   private final JobService jobService;
   private final GcpCloudContextService gcpCloudContextService;
@@ -56,7 +54,6 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
       AuthenticatedUserRequestFactory authenticatedUserRequestFactory,
       HttpServletRequest request,
       ControlledResourceService controlledResourceService,
-      FolderService folderService,
       SamService samService,
       WorkspaceService workspaceService,
       JobService jobService,
@@ -64,7 +61,6 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
       ControlledResourceMetadataManager controlledResourceMetadataManager) {
     super(authenticatedUserRequestFactory, request, controlledResourceService, samService);
     this.controlledResourceService = controlledResourceService;
-    this.folderService = folderService;
     this.workspaceService = workspaceService;
     this.jobService = jobService;
     this.gcpCloudContextService = gcpCloudContextService;
@@ -198,15 +194,9 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
         controlledResourceService
             .getControlledResource(workspaceUuid, resourceId)
             .castByEnum(WsmResourceType.CONTROLLED_GCP_GCS_BUCKET);
-    if (commonField.getFolderId() != null) {
-      folderService.addResourceToFolder(resourceId, commonField.getFolderId());
-    }
-    var folder = folderService.getFolder(workspaceUuid, resourceId);
 
-    return new ResponseEntity<>(updatedResource.toApiResource(),
-        HttpStatus.OK);
+    return new ResponseEntity<>(updatedResource.toApiResource(), HttpStatus.OK);
   }
-
 
   @Override
   public ResponseEntity<ApiCloneControlledGcpGcsBucketResult> cloneGcsBucket(
@@ -298,12 +288,9 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
         controlledResourceService
             .getControlledResource(workspaceUuid, resourceId)
             .castByEnum(WsmResourceType.CONTROLLED_GCP_BIG_QUERY_DATASET);
-    if (commonField.getFolderId() != null) {
-      folderService.addResourceToFolder(resourceId, commonField.getFolderId());
-    }
-    var folder = folderService.getFolder(workspaceUuid, resourceId);
 
-    return new ResponseEntity<>(updatedResource.toApiResource().metadata(updatedResource.toApiMetadata().folderId(folder.getId())), HttpStatus.OK);
+    return new ResponseEntity<>(
+        updatedResource.toApiResource().metadata(updatedResource.toApiMetadata()), HttpStatus.OK);
   }
 
   @Override
@@ -431,11 +418,8 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
         controlledResourceService
             .getControlledResource(workspaceUuid, resourceId)
             .castByEnum(WsmResourceType.CONTROLLED_GCP_AI_NOTEBOOK_INSTANCE);
-    if (commonField.getFolderId() != null) {
-      folderService.addResourceToFolder(resourceId, commonField.getFolderId());
-    }
-    var folder = folderService.getFolder(workspaceUuid, resourceId);
-    return new ResponseEntity<>(updatedResource.toApiResource().metadata(updatedResource.toApiMetadata().folderId(folder.getId())), HttpStatus.OK);
+    return new ResponseEntity<>(
+        updatedResource.toApiResource().metadata(updatedResource.toApiMetadata()), HttpStatus.OK);
   }
 
   @Override
