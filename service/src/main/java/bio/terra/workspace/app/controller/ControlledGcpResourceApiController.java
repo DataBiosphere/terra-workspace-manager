@@ -289,8 +289,7 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
             .getControlledResource(workspaceUuid, resourceId)
             .castByEnum(WsmResourceType.CONTROLLED_GCP_BIG_QUERY_DATASET);
 
-    return new ResponseEntity<>(
-        updatedResource.toApiResource(), HttpStatus.OK);
+    return new ResponseEntity<>(updatedResource.toApiResource(), HttpStatus.OK);
   }
 
   @Override
@@ -418,8 +417,7 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
         controlledResourceService
             .getControlledResource(workspaceUuid, resourceId)
             .castByEnum(WsmResourceType.CONTROLLED_GCP_AI_NOTEBOOK_INSTANCE);
-    return new ResponseEntity<>(
-        updatedResource.toApiResource(), HttpStatus.OK);
+    return new ResponseEntity<>(updatedResource.toApiResource(), HttpStatus.OK);
   }
 
   @Override
