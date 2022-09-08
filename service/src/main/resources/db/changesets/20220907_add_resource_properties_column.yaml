@@ -12,5 +12,5 @@ databaseChangeLog:
             remarks: |
               Serialized key-value map of resource properties.
             defaultValue: "{}"
-            constraint:
+            constraints:
                 nullable: false
