@@ -55,6 +55,9 @@ import bio.terra.workspace.service.resource.controlled.model.ControlledResourceF
 import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.workspace.AzureCloudContextService;
 import bio.terra.workspace.service.workspace.WorkspaceService;
+import bio.terra.workspace.service.workspace.model.AzureCloudContext;
+import com.azure.resourcemanager.relay.RelayManager;
+import com.azure.resourcemanager.relay.models.RelayNamespace;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Objects;
@@ -62,10 +65,6 @@ import java.util.Optional;
 import java.util.UUID;
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
-
-import bio.terra.workspace.service.workspace.model.AzureCloudContext;
-import com.azure.resourcemanager.relay.RelayManager;
-import com.azure.resourcemanager.relay.models.RelayNamespace;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -486,19 +485,24 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
     final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     features.azureEnabledCheck();
 
-    // TODO take resource-id into consideration resourceId if there are multiple azure Relay instances
+    // TODO take resource-id into consideration resourceId if there are multiple azure Relay
+    // instances
     //  in the landing zone (no plan for this currently)
-    final AzureCloudContext azureCloudContext = azureCloudContextService.getRequiredAzureCloudContext(workspaceId);
+    final AzureCloudContext azureCloudContext =
+        azureCloudContextService.getRequiredAzureCloudContext(workspaceId);
     final bio.terra.landingzone.model.AzureCloudContext lzAzureCloudContext =
         new bio.terra.landingzone.model.AzureCloudContext(
             azureCloudContext.getAzureTenantId(),
             azureCloudContext.getAzureSubscriptionId(),
-            azureCloudContext.getAzureResourceGroupId()
-        );
-    List<LandingZoneResource> resources = landingZoneService.listResourcesByPurpose(ResourcePurpose.SHARED_RESOURCE, lzAzureCloudContext);
-    Optional<LandingZoneResource> azureRelayOptional = resources.stream()
-        .filter(resource -> Objects.equals(resource.resourceType(), "Microsoft.Relay/Namespaces"))
-        .findFirst();
+            azureCloudContext.getAzureResourceGroupId());
+    List<LandingZoneResource> resources =
+        landingZoneService.listResourcesByPurpose(
+            ResourcePurpose.SHARED_RESOURCE, lzAzureCloudContext);
+    Optional<LandingZoneResource> azureRelayOptional =
+        resources.stream()
+            .filter(
+                resource -> Objects.equals(resource.resourceType(), "Microsoft.Relay/Namespaces"))
+            .findFirst();
 
     if (azureRelayOptional.isPresent()) {
       // get namespace for relayId
@@ -507,10 +511,11 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
       RelayManager manager = crlService.getRelayManager(azureCloudContext, azureConfiguration);
       RelayNamespace namespace = manager.namespaces().getById(azureRelayResource.resourceId());
 
-      ControlledAzureRelayNamespaceResource resource = ControlledAzureRelayNamespaceResource.builder()
-          .region(namespace.regionName())
-          .namespaceName(namespace.name())
-          .build();
+      ControlledAzureRelayNamespaceResource resource =
+          ControlledAzureRelayNamespaceResource.builder()
+              .region(namespace.regionName())
+              .namespaceName(namespace.name())
+              .build();
       return new ResponseEntity<>(resource.toApiResource(), HttpStatus.OK);
     }
 
