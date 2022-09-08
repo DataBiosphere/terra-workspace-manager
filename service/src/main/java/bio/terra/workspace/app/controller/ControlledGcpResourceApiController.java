@@ -181,12 +181,11 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
             .validateControlledResourceAndAction(
                 userRequest, workspaceUuid, resourceId, SamControlledResourceActions.EDIT_ACTION)
             .castByEnum(WsmResourceType.CONTROLLED_GCP_GCS_BUCKET);
-    ApiResourceUpdateCommonField commonField = body.getUpdateCommonFields();
     controlledResourceService.updateGcsBucket(
         bucketResource,
         body.getUpdateParameters(),
-        commonField.getName(),
-        commonField.getDescription(),
+        body.getName(),
+        body.getDescription(),
         userRequest);
 
     // Retrieve and cast response to ApiGcpGcsBucketResource
@@ -194,7 +193,6 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
         controlledResourceService
             .getControlledResource(workspaceUuid, resourceId)
             .castByEnum(WsmResourceType.CONTROLLED_GCP_GCS_BUCKET);
-
     return new ResponseEntity<>(updatedResource.toApiResource(), HttpStatus.OK);
   }
 
@@ -280,15 +278,13 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
             .validateControlledResourceAndAction(
                 userRequest, workspaceUuid, resourceId, SamControlledResourceActions.EDIT_ACTION)
             .castByEnum(WsmResourceType.CONTROLLED_GCP_BIG_QUERY_DATASET);
-    ApiResourceUpdateCommonField commonField = body.getUpdateCommonFields();
     controlledResourceService.updateBqDataset(
-        resource, body.getUpdateParameters(), commonField.getName(), commonField.getDescription());
+        resource, body.getUpdateParameters(), body.getName(), body.getDescription());
 
     final ControlledBigQueryDatasetResource updatedResource =
         controlledResourceService
             .getControlledResource(workspaceUuid, resourceId)
             .castByEnum(WsmResourceType.CONTROLLED_GCP_BIG_QUERY_DATASET);
-
     return new ResponseEntity<>(updatedResource.toApiResource(), HttpStatus.OK);
   }
 
@@ -405,18 +401,19 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
             .validateControlledResourceAndAction(
                 userRequest, workspaceUuid, resourceId, SamControlledResourceActions.EDIT_ACTION)
             .castByEnum(WsmResourceType.CONTROLLED_GCP_AI_NOTEBOOK_INSTANCE);
-    ApiResourceUpdateCommonField commonField = requestBody.getUpdateCommonFields();
+
     controlledResourceService.updateAiNotebookInstance(
         resource,
         requestBody.getUpdateParameters(),
-        commonField.getName(),
-        commonField.getDescription(),
+        requestBody.getName(),
+        requestBody.getDescription(),
         userRequest);
 
     final ControlledAiNotebookInstanceResource updatedResource =
         controlledResourceService
             .getControlledResource(workspaceUuid, resourceId)
             .castByEnum(WsmResourceType.CONTROLLED_GCP_AI_NOTEBOOK_INSTANCE);
+
     return new ResponseEntity<>(updatedResource.toApiResource(), HttpStatus.OK);
   }
 
