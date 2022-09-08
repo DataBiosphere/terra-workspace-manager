@@ -8,7 +8,11 @@ import bio.terra.stairway.StepResult;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.amalgam.tps.TpsApiDispatch;
 import bio.terra.workspace.common.utils.FlightUtils;
+import bio.terra.workspace.generated.model.ApiTpsComponent;
+import bio.terra.workspace.generated.model.ApiTpsObjectType;
+import bio.terra.workspace.generated.model.ApiTpsPaoCreateRequest;
 import bio.terra.workspace.generated.model.ApiTpsPaoGetResult;
+import bio.terra.workspace.generated.model.ApiTpsPolicyInputs;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
@@ -41,11 +45,26 @@ public class ClonePolicyAttributesStep implements Step {
             .getInputParameters()
             .get(JobMapKeys.AUTH_USER_INFO.getKeyName(), AuthenticatedUserRequest.class);
 
-    Optional<ApiTpsPaoGetResult> workspacePao =
+    Optional<ApiTpsPaoGetResult> sourcePao =
         tpsApiDispatch.getPaoIfExists(
             new BearerToken(userRequest.getRequiredToken()), sourceWorkspaceId);
 
-    if (workspacePao.isPresent()) {
+    if (!sourcePao.isPresent()) {
+      // Source workspace doesn't have a PAO, so create one for it.
+      ApiTpsPaoCreateRequest request =
+          new ApiTpsPaoCreateRequest()
+              .objectId(sourceWorkspaceId)
+              .component(ApiTpsComponent.WSM)
+              .objectType(ApiTpsObjectType.WORKSPACE)
+              .attributes(new ApiTpsPolicyInputs());
+      tpsApiDispatch.createPao(new BearerToken(userRequest.getRequiredToken()), request);
+    }
+
+    Optional<ApiTpsPaoGetResult> destinationPao =
+        tpsApiDispatch.getPaoIfExists(
+            new BearerToken(userRequest.getRequiredToken()), destinationWorkspace.getWorkspaceId());
+
+    if (destinationPao.isPresent()) {
       // If this is our first attempt, a default PAO would have been created with the workspace.
       // If this is a retry, then our previous attempt at saving a PAO might exist.
       // In either case, remove the existing PAO so we can clone from the source.
