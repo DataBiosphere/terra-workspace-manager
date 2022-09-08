@@ -1,4 +1,4 @@
-package bio.terra.workspace.app.configuration.external.controller;
+package bio.terra.workspace.app.controller;
 
 import static bio.terra.workspace.common.utils.MockMvcUtils.GENERATE_GCP_AI_NOTEBOOK_NAME_PATH_FORMAT;
 import static bio.terra.workspace.common.utils.MockMvcUtils.GENERATE_GCP_BQ_DATASET_NAME_PATH_FORMAT;
@@ -27,6 +27,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.Optional;
 import java.util.UUID;
 import org.apache.http.HttpStatus;
+import org.broadinstitute.dsde.workbench.client.sam.model.UserStatusInfo;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
@@ -35,7 +36,6 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
-@Disabled("PF-1962 This test needs to mock Sam to be a proper unit test")
 public class ControlledGcpResourceApiControllerTest extends MockBeanUnitTest {
 
   AuthenticatedUserRequest USER_REQUEST =
@@ -57,6 +57,11 @@ public class ControlledGcpResourceApiControllerTest extends MockBeanUnitTest {
   public void setup() throws InterruptedException {
     when(getMockGcpCloudContextService().getRequiredGcpProject(any()))
         .thenReturn("fake-project-id");
+    when(getMockSamService().getUserStatusInfo(any()))
+        .thenReturn(
+            new UserStatusInfo()
+                .userEmail(USER_REQUEST.getEmail())
+                .userSubjectId(USER_REQUEST.getSubjectId()));
   }
 
   @Test

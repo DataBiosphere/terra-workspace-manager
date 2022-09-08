@@ -1,4 +1,4 @@
-package bio.terra.workspace.app.configuration.external.controller;
+package bio.terra.workspace.app.controller;
 
 import static bio.terra.workspace.common.utils.MockMvcUtils.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -68,7 +68,6 @@ import org.springframework.test.web.servlet.MockMvc;
  * currently in WorkspaceServiceTest, it's intended as a proof-of-concept for future mockMvc-based
  * tests.
  */
-@Disabled("PF-1962 This test needs to mock Sam to be a proper unit test")
 public class WorkspaceApiControllerTest extends BaseUnitTest {
 
   AuthenticatedUserRequest USER_REQUEST =

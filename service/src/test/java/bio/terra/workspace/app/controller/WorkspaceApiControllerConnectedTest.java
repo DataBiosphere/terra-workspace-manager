@@ -1,4 +1,4 @@
-package bio.terra.workspace.app.configuration.external.controller;
+package bio.terra.workspace.app.controller;
 
 import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.SHORT_DESCRIPTION_PROPERTY;
 import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.TYPE_PROPERTY;
