@@ -50,7 +50,7 @@ public class AzureLandingZoneFixtures {
                     "resourceType",
                     null,
                     "westus",
-                    Optional.of("resName"),
+                    Optional.of("resourceName"),
                     Optional.empty()))));
     return asyncJobResult;
   }

@@ -33,14 +33,14 @@ public class LaunchCreateGcpContextFlightStep implements Step {
     validateRequiredEntries(
         context.getWorkingMap(), ControlledResourceKeys.CREATE_CLOUD_CONTEXT_FLIGHT_ID);
 
-    final var userRequest =
+    var userRequest =
         context
             .getInputParameters()
             .get(JobMapKeys.AUTH_USER_INFO.getKeyName(), AuthenticatedUserRequest.class);
-    final var destinationWorkspace =
+    var destinationWorkspace =
         context.getInputParameters().get(JobMapKeys.REQUEST.getKeyName(), Workspace.class);
 
-    final var cloudContextJobId =
+    var cloudContextJobId =
         context
             .getWorkingMap()
             .get(ControlledResourceKeys.CREATE_CLOUD_CONTEXT_FLIGHT_ID, String.class);
@@ -69,11 +69,11 @@ public class LaunchCreateGcpContextFlightStep implements Step {
    */
   @Override
   public StepResult undoStep(FlightContext context) throws InterruptedException {
-    final var userRequest =
+    var userRequest =
         context
             .getInputParameters()
             .get(JobMapKeys.AUTH_USER_INFO.getKeyName(), AuthenticatedUserRequest.class);
-    final var destinationWorkspace =
+    var destinationWorkspace =
         context.getInputParameters().get(JobMapKeys.REQUEST.getKeyName(), Workspace.class);
     if (destinationWorkspace != null && userRequest != null) {
       // delete workspace is idempotent, so it's safe to call it more than once

@@ -46,6 +46,15 @@ public class ControlledAiNotebookHandlerTest extends BaseUnitTest {
   }
 
   @Test
+  public void generateInstanceId_userIdHasStartingNumbers_removeStartingNumbers() {
+    String instanceName = "1234_yuhuyoyo";
+    String instanceId =
+        ControlledAiNotebookHandler.getHandler().generateCloudName(null, instanceName);
+
+    assertTrue(instanceId.equals("yuhuyoyo"));
+  }
+
+  @Test
   public void generateInstanceId_userIdHasUppercase_toLowerCase() {
     String instanceName = "YUHUYOYO";
     String instanceId =

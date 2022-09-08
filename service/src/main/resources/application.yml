@@ -168,7 +168,7 @@ landingzone:
     uri: ${env.db.host}/${env.db.landingzonestairway.name}
     username: ${env.db.landingzonestairway.user}
   stairway:
-    cluster-name-suffix: workspace-stairway
+    cluster-name-suffix: landingzone-stairway
     force-clean-start: false # ${env.db.init}
     max-parallel-flights: 50
     migrate-upgrade: true

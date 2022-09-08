@@ -18,7 +18,9 @@ public class CloneGcpWorkspaceFlight extends Flight {
     // 4. Clone Policy Attributes
     // 5. Launch a flight to clone all resources on the list
     // 5a. Await the clone all resources flight and build a response
-    final var flightBeanBag = FlightBeanBag.getFromObject(applicationContext);
+    // 6. Build a list of enabled applications
+    // 6a. Launch a flight to enable those applications in destination workspace
+    var flightBeanBag = FlightBeanBag.getFromObject(applicationContext);
     addStep(new FindResourcesToCloneStep(flightBeanBag.getResourceDao()), RetryRules.cloud());
 
     addStep(new CreateIdsForFutureStepsStep());
@@ -34,5 +36,8 @@ public class CloneGcpWorkspaceFlight extends Flight {
 
     addStep(new LaunchCloneAllResourcesFlightStep(), RetryRules.cloud());
     addStep(new AwaitCloneAllResourcesFlightStep(), RetryRules.cloudLongRunning());
+
+    addStep(new FindEnabledApplicationsStep(flightBeanBag.getApplicationDao()), RetryRules.cloud());
+    addStep(new LaunchEnableApplicationsFlightStep(), RetryRules.cloud());
   }
 }

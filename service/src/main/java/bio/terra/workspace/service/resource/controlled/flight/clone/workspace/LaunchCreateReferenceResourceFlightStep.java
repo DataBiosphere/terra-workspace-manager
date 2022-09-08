@@ -49,16 +49,16 @@ public class LaunchCreateReferenceResourceFlightStep implements Step {
         context.getInputParameters(),
         ControlledResourceKeys.DESTINATION_WORKSPACE_ID,
         JobMapKeys.AUTH_USER_INFO.getKeyName());
-    final var destinationWorkspaceId =
+    var destinationWorkspaceId =
         context
             .getInputParameters()
             .get(ControlledResourceKeys.DESTINATION_WORKSPACE_ID, UUID.class);
-    final var userRequest =
+    var userRequest =
         context
             .getInputParameters()
             .get(JobMapKeys.AUTH_USER_INFO.getKeyName(), AuthenticatedUserRequest.class);
 
-    final ReferencedResource destinationResource =
+    ReferencedResource destinationResource =
         WorkspaceCloneUtils.buildDestinationReferencedResource(
             resource,
             destinationWorkspaceId,
@@ -72,7 +72,7 @@ public class LaunchCreateReferenceResourceFlightStep implements Step {
         .getWorkingMap()
         .put(ControlledResourceKeys.DESTINATION_REFERENCED_RESOURCE, destinationResource);
 
-    final FlightMap subflightInputParameters = new FlightMap();
+    FlightMap subflightInputParameters = new FlightMap();
     subflightInputParameters.put(ResourceKeys.RESOURCE, destinationResource);
     subflightInputParameters.put(JobMapKeys.AUTH_USER_INFO.getKeyName(), userRequest);
     subflightInputParameters.put(

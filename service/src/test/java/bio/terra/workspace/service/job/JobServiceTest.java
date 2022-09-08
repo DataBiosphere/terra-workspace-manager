@@ -24,6 +24,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.MockBean;
@@ -100,6 +101,8 @@ class JobServiceTest extends BaseUnitTest {
 
   // Resets the application context before retrieveTest to make sure that the job service does not
   // have some failed jobs left over from other tests.
+
+  @Disabled("Until we get the postgres connection leaks addressed")
   @DirtiesContext(methodMode = MethodMode.BEFORE_METHOD)
   @Test
   void retrieveTest() throws Exception {

@@ -4,10 +4,7 @@ import static bio.terra.workspace.common.utils.MockMvcUtils.*;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hibernate.validator.internal.util.Contracts.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doReturn;
@@ -81,8 +78,7 @@ import bio.terra.workspace.service.workspace.flight.CheckSamWorkspaceAuthzStep;
 import bio.terra.workspace.service.workspace.flight.CreateWorkspaceAuthzStep;
 import bio.terra.workspace.service.workspace.flight.CreateWorkspacePoliciesStep;
 import bio.terra.workspace.service.workspace.flight.CreateWorkspaceStep;
-import bio.terra.workspace.service.workspace.model.Workspace;
-import bio.terra.workspace.service.workspace.model.WorkspaceStage;
+import bio.terra.workspace.service.workspace.model.*;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.api.services.cloudresourcemanager.v3.model.Project;
 import com.google.common.collect.ImmutableList;
@@ -105,8 +101,12 @@ import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 
+// Use application configuration profile in addition to the standard connected test profile
+// inherited from the base class.
+@ActiveProfiles({"app-test"})
 @AutoConfigureMockMvc
 class WorkspaceServiceTest extends BaseConnectedTest {
 
@@ -125,6 +125,9 @@ class WorkspaceServiceTest extends BaseConnectedTest {
           .addAdditionalDataItem(new ApiTpsPolicyPair().key("group").value("my_fake_group"));
 
   public static final String SPEND_PROFILE_ID = "wm-default-spend-profile";
+  // Name of the test WSM application. This must match the identifier in the
+  // application-app-test.yml file.
+  private static final String TEST_WSM_APP = "TestWsmApp";
 
   @MockBean private DataRepoService mockDataRepoService;
   /** Mock SamService does nothing for all calls that would throw if unauthorized. */
@@ -146,6 +149,7 @@ class WorkspaceServiceTest extends BaseConnectedTest {
   @Autowired private WorkspaceService workspaceService;
   @Autowired private ObjectMapper objectMapper;
   @Autowired private WorkspaceActivityLogDao workspaceActivityLogDao;
+  @Autowired private WsmApplicationService appService;
 
   @BeforeEach
   void setup() throws Exception {
@@ -235,14 +239,21 @@ class WorkspaceServiceTest extends BaseConnectedTest {
 
     assertEquals(
         request.getWorkspaceId(),
-        workspaceService.getWorkspaceByUserFacingId(userFacingId, USER_REQUEST).getWorkspaceId());
+        workspaceService
+            .getWorkspaceByUserFacingId(
+                userFacingId, USER_REQUEST, /*minimumHighestRoleFromRequest=*/ WsmIamRole.READER)
+            .getWorkspaceId());
   }
 
   @Test
   void getWorkspaceByUserFacingId_missing() {
     assertThrows(
         WorkspaceNotFoundException.class,
-        () -> workspaceService.getWorkspaceByUserFacingId("missing-workspace", USER_REQUEST));
+        () ->
+            workspaceService.getWorkspaceByUserFacingId(
+                "missing-workspace",
+                USER_REQUEST,
+                /*minimumHighestRoleFromRequest=*/ WsmIamRole.READER));
   }
 
   @Test
@@ -275,7 +286,9 @@ class WorkspaceServiceTest extends BaseConnectedTest {
         .andExpect(status().is(HttpStatus.SC_FORBIDDEN));
     assertThrows(
         ForbiddenException.class,
-        () -> workspaceService.getWorkspaceByUserFacingId(userFacingId, USER_REQUEST));
+        () ->
+            workspaceService.getWorkspaceByUserFacingId(
+                userFacingId, USER_REQUEST, /*minimumHighestRoleFromRequest=*/ WsmIamRole.READER));
   }
 
   @Test
@@ -780,13 +793,13 @@ class WorkspaceServiceTest extends BaseConnectedTest {
     final UUID sourceWorkspaceId =
         workspaceService.createWorkspace(sourceWorkspace, null, USER_REQUEST);
 
-    // create a cloud context
+    // Create a cloud context
     final String createCloudContextJobId = UUID.randomUUID().toString();
     workspaceService.createGcpCloudContext(sourceWorkspace, createCloudContextJobId, USER_REQUEST);
     jobService.waitForJob(createCloudContextJobId);
     assertNull(jobService.retrieveJobResult(createCloudContextJobId, Object.class).getException());
 
-    // add a bucket resource
+    // Add a bucket resource
     final ControlledGcsBucketResource bucketResource =
         ControlledGcsBucketResource.builder()
             .bucketName("terra-test-" + UUID.randomUUID().toString().toLowerCase())
@@ -822,6 +835,9 @@ class WorkspaceServiceTest extends BaseConnectedTest {
     final ControlledResource createdResource =
         controlledResourceService.createControlledResourceSync(
             bucketResource, ControlledResourceIamRole.OWNER, USER_REQUEST, creationParameters);
+
+    // Enable an application.
+    appService.enableWorkspaceApplication(USER_REQUEST, sourceWorkspace, TEST_WSM_APP);
 
     final ControlledGcsBucketResource createdBucketResource =
         createdResource.castByEnum(WsmResourceType.CONTROLLED_GCP_GCS_BUCKET);
@@ -865,7 +881,62 @@ class WorkspaceServiceTest extends BaseConnectedTest {
             .getGcpCloudContext(destinationWorkspace.getWorkspaceId())
             .orElseThrow());
 
-    // clean up
+    // Destination workspace should have an enabled application
+    assertTrue(appService.getWorkspaceApplication(destinationWorkspace, TEST_WSM_APP).isEnabled());
+
+    // Clean up
+    workspaceService.deleteWorkspace(sourceWorkspace, USER_REQUEST);
+    workspaceService.deleteWorkspace(destinationWorkspace, USER_REQUEST);
+  }
+
+  @Test
+  public void cloneGcpWorkspaceUndoSteps() {
+    // Create a workspace
+    final Workspace sourceWorkspace =
+        defaultRequestBuilder(UUID.randomUUID())
+            .userFacingId("source-user-facing-id")
+            .displayName("Source Workspace")
+            .description("The original workspace.")
+            .spendProfileId(new SpendProfileId(SPEND_PROFILE_ID))
+            .build();
+
+    workspaceService.createWorkspace(sourceWorkspace, null, USER_REQUEST);
+
+    // Create a cloud context
+    final String createCloudContextJobId = UUID.randomUUID().toString();
+    workspaceService.createGcpCloudContext(sourceWorkspace, createCloudContextJobId, USER_REQUEST);
+    jobService.waitForJob(createCloudContextJobId);
+    assertNull(jobService.retrieveJobResult(createCloudContextJobId, Object.class).getException());
+
+    // Enable an application.
+    appService.enableWorkspaceApplication(USER_REQUEST, sourceWorkspace, TEST_WSM_APP);
+
+    final Workspace destinationWorkspace =
+        defaultRequestBuilder(UUID.randomUUID())
+            .userFacingId("dest-user-facing-id")
+            .displayName("Destination Workspace")
+            .description("Copied from source")
+            .spendProfileId(new SpendProfileId(SPEND_PROFILE_ID))
+            .build();
+    final String destinationLocation = "us-east1";
+    FlightDebugInfo debugInfo = FlightDebugInfo.newBuilder().lastStepFailure(true).build();
+    jobService.setFlightDebugInfoForTest(debugInfo);
+
+    assertThrows(
+        InvalidResultStateException.class,
+        () ->
+            workspaceService.cloneWorkspace(
+                sourceWorkspace, USER_REQUEST, destinationLocation, destinationWorkspace));
+    assertThrows(
+        WorkspaceNotFoundException.class,
+        () -> workspaceService.getWorkspace(destinationWorkspace.getWorkspaceId()));
+
+    // Destination Workspace should not have a GCP context
+    assertTrue(
+        gcpCloudContextService.getGcpCloudContext(destinationWorkspace.getWorkspaceId()).isEmpty());
+
+    // Remove the effect of lastStepFailure, and clean up the created workspace
+    jobService.setFlightDebugInfoForTest(null);
     workspaceService.deleteWorkspace(sourceWorkspace, USER_REQUEST);
     workspaceService.deleteWorkspace(destinationWorkspace, USER_REQUEST);
   }

@@ -17,11 +17,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import org.apache.commons.lang3.StringUtils;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.annotation.DirtiesContext.MethodMode;
 
+@Disabled("Until we get the postgres connection leaks addressed")
 public class ApplicationUnitTest extends BaseUnitTest {
 
   @Autowired WsmApplicationService appService;

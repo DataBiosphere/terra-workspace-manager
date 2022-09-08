@@ -22,9 +22,9 @@ public class CloneAllResourcesFlight extends Flight {
 
   public CloneAllResourcesFlight(FlightMap inputParameters, Object applicationContext) {
     super(inputParameters, applicationContext);
-    final FlightBeanBag flightBeanBag = FlightBeanBag.getFromObject(applicationContext);
+    FlightBeanBag flightBeanBag = FlightBeanBag.getFromObject(applicationContext);
 
-    final List<ResourceCloneInputs> resourceCloneInputsList =
+    List<ResourceCloneInputs> resourceCloneInputsList =
         inputParameters.get(ControlledResourceKeys.RESOURCES_TO_CLONE, new TypeReference<>() {});
 
     // Each entry in the list corresponds to a new step in this flight
@@ -35,7 +35,7 @@ public class CloneAllResourcesFlight extends Flight {
 
   private void addFlightLaunchStepsForResource(
       ResourceCloneInputs resourceCloneInputs, FlightBeanBag flightBeanBag) {
-    final WsmResource resource = resourceCloneInputs.getResource();
+    WsmResource resource = resourceCloneInputs.getResource();
 
     switch (resource.getStewardshipType()) {
       case REFERENCED:

@@ -35,7 +35,7 @@ dependencies {
   implementation group: 'bio.terra', name: 'terra-policy-service', version: '0.2.4-SNAPSHOT'
 
   //Terra Landing Zone Service
-  implementation group: 'bio.terra', name: 'terra-landing-zone-service', version: "0.0.3-SNAPSHOT"
+  implementation group: 'bio.terra', name: 'terra-landing-zone-service', version: "0.0.3-MY-SNAPSHOT"
 
   // Storage transfer service
   implementation group: 'com.google.apis', name: 'google-api-services-storagetransfer', version: 'v1-rev20220324-1.32.1'
