@@ -1,6 +1,9 @@
 package bio.terra.workspace.app.controller;
 
 import bio.terra.common.exception.ApiException;
+import bio.terra.landingzone.library.landingzones.deployment.ResourcePurpose;
+import bio.terra.landingzone.service.landingzone.azure.LandingZoneService;
+import bio.terra.landingzone.service.landingzone.azure.model.LandingZoneResource;
 import bio.terra.workspace.app.configuration.external.AzureConfiguration;
 import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
 import bio.terra.workspace.common.utils.AzureVmUtils;
@@ -30,6 +33,7 @@ import bio.terra.workspace.generated.model.ApiDeleteControlledAzureResourceReque
 import bio.terra.workspace.generated.model.ApiDeleteControlledAzureResourceResult;
 import bio.terra.workspace.generated.model.ApiJobControl;
 import bio.terra.workspace.generated.model.ApiJobReport;
+import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequestFactory;
 import bio.terra.workspace.service.iam.SamRethrow;
@@ -52,11 +56,16 @@ import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.workspace.AzureCloudContextService;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import java.time.OffsetDateTime;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.UUID;
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
 
 import bio.terra.workspace.service.workspace.model.AzureCloudContext;
+import com.azure.resourcemanager.relay.RelayManager;
+import com.azure.resourcemanager.relay.models.RelayNamespace;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -77,6 +86,8 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
   private final WorkspaceService workspaceService;
   private final ControlledResourceMetadataManager controlledResourceMetadataManager;
   private final AzureCloudContextService azureCloudContextService;
+  private final LandingZoneService landingZoneService;
+  private final CrlService crlService;
 
   @Autowired
   public ControlledAzureResourceApiController(
@@ -90,7 +101,9 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
       AzureConfiguration azureConfiguration,
       WorkspaceService workspaceService,
       ControlledResourceMetadataManager controlledResourceMetadataManager,
-      AzureCloudContextService azureCloudContextService) {
+      AzureCloudContextService azureCloudContextService,
+      LandingZoneService landingZoneService,
+      CrlService crlService) {
     super(authenticatedUserRequestFactory, request, controlledResourceService, samService);
     this.controlledResourceService = controlledResourceService;
     this.azureControlledStorageResourceService = azureControlledStorageResourceService;
@@ -100,6 +113,8 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
     this.workspaceService = workspaceService;
     this.controlledResourceMetadataManager = controlledResourceMetadataManager;
     this.azureCloudContextService = azureCloudContextService;
+    this.landingZoneService = landingZoneService;
+    this.crlService = crlService;
   }
 
   @Override
@@ -471,13 +486,35 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
     final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     features.azureEnabledCheck();
 
-    if (features.isLZEnabled()) {
-      // TODO take resource-id into consideration resourceId if there are multiple azure Relay instances
-      //  in the landing zone (no plan for this currently)
-      final AzureCloudContext cloudContext = azureCloudContextService.getRequiredAzureCloudContext(workspaceId);
-      final 
+    // TODO take resource-id into consideration resourceId if there are multiple azure Relay instances
+    //  in the landing zone (no plan for this currently)
+    final AzureCloudContext azureCloudContext = azureCloudContextService.getRequiredAzureCloudContext(workspaceId);
+    final bio.terra.landingzone.model.AzureCloudContext lzAzureCloudContext =
+        new bio.terra.landingzone.model.AzureCloudContext(
+            azureCloudContext.getAzureTenantId(),
+            azureCloudContext.getAzureSubscriptionId(),
+            azureCloudContext.getAzureResourceGroupId()
+        );
+    List<LandingZoneResource> resources = landingZoneService.listResourcesByPurpose(ResourcePurpose.SHARED_RESOURCE, lzAzureCloudContext);
+    Optional<LandingZoneResource> azureRelayOptional = resources.stream()
+        .filter(resource -> Objects.equals(resource.resourceType(), "Microsoft.Relay/Namespaces"))
+        .findFirst();
 
+    if (azureRelayOptional.isPresent()) {
+      // get namespace for relayId
+      LandingZoneResource azureRelayResource = azureRelayOptional.get();
+
+      RelayManager manager = crlService.getRelayManager(azureCloudContext, azureConfiguration);
+      RelayNamespace namespace = manager.namespaces().getById(azureRelayResource.resourceId());
+
+      ControlledAzureRelayNamespaceResource resource = ControlledAzureRelayNamespaceResource.builder()
+          .region(namespace.regionName())
+          .namespaceName(namespace.name())
+          .build();
+      return new ResponseEntity<>(resource.toApiResource(), HttpStatus.OK);
     }
+
+    // If the LandingZone doesn't contain an azure relay instance, fall back to WSM resource manager
     final ControlledAzureRelayNamespaceResource resource =
         controlledResourceMetadataManager
             .validateControlledResourceAndAction(
