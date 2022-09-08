@@ -30,7 +30,6 @@ import bio.terra.workspace.generated.model.ApiUpdateDataRepoSnapshotReferenceReq
 import bio.terra.workspace.generated.model.ApiUpdateGcsBucketObjectReferenceRequestBody;
 import bio.terra.workspace.generated.model.ApiUpdateGcsBucketReferenceRequestBody;
 import bio.terra.workspace.generated.model.ApiUpdateGitRepoReferenceRequestBody;
-import bio.terra.workspace.service.folder.FolderService;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequestFactory;
 import bio.terra.workspace.service.iam.model.SamConstants.SamWorkspaceAction;
@@ -60,7 +59,6 @@ import org.springframework.stereotype.Controller;
 @Controller
 public class ReferencedGcpResourceController implements ReferencedGcpResourceApi {
 
-  private final FolderService folderService;
   private final ReferencedResourceService referenceResourceService;
   private final WorkspaceDao workspaceDao;
   private final WorkspaceService workspaceService;
@@ -70,14 +68,12 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
 
   @Autowired
   public ReferencedGcpResourceController(
-      FolderService folderService,
       ReferencedResourceService referenceResourceService,
       WorkspaceDao workspaceDao,
       WorkspaceService workspaceService,
       AuthenticatedUserRequestFactory authenticatedUserRequestFactory,
       ResourceValidationUtils validationUtils,
       HttpServletRequest request) {
-    this.folderService = folderService;
     this.referenceResourceService = referenceResourceService;
     this.workspaceDao = workspaceDao;
     this.workspaceService = workspaceService;
