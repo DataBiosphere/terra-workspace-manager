@@ -66,7 +66,6 @@ public class ControlledResourceFields extends WsmResourceFields {
     return assignedUser;
   }
 
-  @Nullable
   public PrivateResourceState getPrivateResourceState() {
     return Optional.ofNullable(privateResourceState)
         .orElseGet(
@@ -104,10 +103,15 @@ public class ControlledResourceFields extends WsmResourceFields {
     public Builder() {}
 
     public ControlledResourceFields build() {
+      validate();
+      return new ControlledResourceFields(this);
+    }
+
+    @Override
+    public void validate() {
+      super.validate();
       ResourceValidationUtils.checkFieldNonNull(accessScope, "accessScope");
       ResourceValidationUtils.checkFieldNonNull(managedBy, "managedBy");
-
-      return new ControlledResourceFields(this);
     }
 
     public Builder assignedUser(@Nullable String assignedUser) {
@@ -128,10 +132,6 @@ public class ControlledResourceFields extends WsmResourceFields {
     public Builder accessScope(AccessScopeType accessScope) {
       this.accessScope = accessScope;
       return this;
-    }
-
-    public ManagedByType getManagedBy() {
-      return managedBy;
     }
 
     public Builder managedBy(ManagedByType managedBy) {

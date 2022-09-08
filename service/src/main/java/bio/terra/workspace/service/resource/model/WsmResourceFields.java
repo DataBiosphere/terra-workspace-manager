@@ -5,7 +5,6 @@ import bio.terra.workspace.service.resource.ResourceValidationUtils;
 import com.google.common.collect.ImmutableMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.UUID;
 import javax.annotation.Nullable;
 
@@ -91,7 +90,7 @@ public class WsmResourceFields {
     return resourceLineage;
   }
 
-  public @Nullable ImmutableMap<String, String> getProperties() {
+  public ImmutableMap<String, String> getProperties() {
     return properties;
   }
 
@@ -101,19 +100,21 @@ public class WsmResourceFields {
     private String name;
     private String description;
     private CloningInstructions cloningInstructions;
-    private @Nullable List<ResourceLineageEntry> resourceLineage;
-    private @Nullable ImmutableMap<String, String> properties;
+    private List<ResourceLineageEntry> resourceLineage;
+    private ImmutableMap<String, String> properties = ImmutableMap.of();
 
     public Builder() {}
 
-    public WsmResourceFields build() {
+    public void validate() {
       ResourceValidationUtils.checkFieldNonNull(workspaceUuid, "workspaceId");
       ResourceValidationUtils.checkFieldNonNull(resourceId, "resourceId");
       ResourceValidationUtils.checkFieldNonNull(name, "name");
       ResourceValidationUtils.checkFieldNonNull(cloningInstructions, "cloningInstructions");
+      ResourceValidationUtils.checkFieldNonNull(properties, "properties");
+    }
 
-      this.properties = Optional.ofNullable(properties).orElse(ImmutableMap.of());
-
+    public WsmResourceFields build() {
+      validate();
       return new WsmResourceFields(this);
     }
 
@@ -154,9 +155,8 @@ public class WsmResourceFields {
     }
 
     @SuppressWarnings("unchecked")
-    public T properties(@Nullable Map<String, String> properties) {
-      this.properties =
-          Optional.ofNullable(properties).map(ImmutableMap::copyOf).orElse(ImmutableMap.of());
+    public T properties(Map<String, String> properties) {
+      this.properties = ImmutableMap.copyOf(properties);
       return (T) this;
     }
   }

@@ -232,7 +232,8 @@ public abstract class WsmResource {
         || getWorkspaceId() == null
         || getCloningInstructions() == null
         || getStewardshipType() == null
-        || getResourceId() == null) {
+        || getResourceId() == null
+        || getProperties() == null) {
       throw new MissingRequiredFieldException("Missing required field for WsmResource.");
     }
     ResourceValidationUtils.validateResourceName(getName());
