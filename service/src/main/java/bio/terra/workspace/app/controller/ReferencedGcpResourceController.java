@@ -108,7 +108,7 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
                             body.getMetadata().getCloningInstructions()))
                     .build())
             .bucketName(body.getFile().getBucketName())
-            .fileName(body.getFile().getFileName())
+            .objectName(body.getFile().getFileName())
             .build();
 
     ReferencedGcsObjectResource referencedResource =
@@ -172,7 +172,7 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
         updateBucketObjectResourceBuilder.bucketName(bucketName);
       }
       if (!StringUtils.isEmpty(objectName)) {
-        updateBucketObjectResourceBuilder.fileName(objectName);
+        updateBucketObjectResourceBuilder.objectName(objectName);
       }
       if (cloningInstructions != null) {
         updateBucketObjectResourceBuilder.resourceCommonFields(

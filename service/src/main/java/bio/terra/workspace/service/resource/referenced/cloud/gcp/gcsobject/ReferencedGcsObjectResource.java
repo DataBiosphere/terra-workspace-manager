@@ -178,7 +178,7 @@ public class ReferencedGcsObjectResource extends ReferencedResource {
   public Builder toBuilder() {
     return builder()
         .bucketName(getBucketName())
-        .fileName(getObjectName())
+        .objectName(getObjectName())
         .resourceCommonFields(getWsmResourceFields());
   }
 
@@ -201,8 +201,8 @@ public class ReferencedGcsObjectResource extends ReferencedResource {
       return this;
     }
 
-    public Builder fileName(String fileName) {
-      this.objectName = fileName;
+    public Builder objectName(String objectName) {
+      this.objectName = objectName;
       return this;
     }
 

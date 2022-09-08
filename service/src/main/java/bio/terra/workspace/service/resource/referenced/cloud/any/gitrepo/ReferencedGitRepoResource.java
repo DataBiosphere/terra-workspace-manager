@@ -53,7 +53,7 @@ public class ReferencedGitRepoResource extends ReferencedResource {
 
   private ReferencedGitRepoResource(Builder builder) {
     super(builder.resourceFields);
-    this.gitRepoUrl = getGitRepoUrl();
+    this.gitRepoUrl = builder.gitRepoUrl;
     validate();
   }
 
