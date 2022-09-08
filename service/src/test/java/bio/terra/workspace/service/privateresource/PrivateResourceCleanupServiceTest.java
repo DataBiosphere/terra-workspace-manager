@@ -47,8 +47,9 @@ import org.junit.jupiter.api.condition.DisabledIfEnvironmentVariable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.ActiveProfiles;
 
-// Use application configuration profile in addition to the standard connected test profile.
-@ActiveProfiles({"connected-test", "app-test"})
+// Use application configuration profile in addition to the standard connected test profile
+// inherited from the base class.
+@ActiveProfiles({"app-test"})
 public class PrivateResourceCleanupServiceTest extends BaseConnectedTest {
 
   // The name of the "member" policy created by default for groups. If this is ever used for
