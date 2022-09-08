@@ -342,8 +342,12 @@ components:
       type: object
       description: Update an AI notebook's metadata
       properties:
-        updateCommonFields:
-          $ref: '#/components/schemas/ResourceUpdateCommonField'
+        name:
+          description: Optional. New name to give to this resource. The resource name will not be updated if this is omitted.
+          type: string
+        description:
+          description: Optional. New description to give to this resource. The resource description will not be updated if this is omitted.
+          type: string
         updateParameters:
           $ref: '#/components/schemas/GcpAiNotebookUpdateParameters'
 

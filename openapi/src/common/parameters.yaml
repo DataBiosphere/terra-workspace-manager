@@ -127,12 +127,3 @@ components:
       required: true
       schema:
         type: string
-
-    FolderId:
-      name: folderId
-      in: path
-      description: An id to identify a folder in a workspace.
-      required: true
-      schema:
-        type: string
-        format: uuid

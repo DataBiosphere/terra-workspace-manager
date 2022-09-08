@@ -154,8 +154,10 @@ components:
     UpdateBigQueryDataTableReferenceRequestBody:
       type: object
       properties:
-        updateCommonFields:
-          $ref: '#/components/schemas/ResourceUpdateCommonField'
+        name:
+          $ref: "#/components/schemas/Name"
+        description:
+          type: string
         projectId:
           type: string
         datasetId:

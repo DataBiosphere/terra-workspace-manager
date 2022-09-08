@@ -134,8 +134,10 @@ components:
       type: object
       description: Fields updatable on a GCS bucket. Leave properties null to keep them the same.
       properties:
-        updateCommonFields:
-          $ref: '#/components/schemas/ResourceUpdateCommonField'
+        name:
+          $ref: "#/components/schemas/Name"
+        description:
+          type: string
         bucketName:
           description: Name of created bucket (not the resource name).
           type: string

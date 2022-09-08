@@ -254,13 +254,3 @@ components:
       description: Enum containing valid stewardship types. Used for enumeration
       type: string
       enum: ['REFERENCED', 'CONTROLLED']
-
-    ResourceUpdateCommonField:
-      type: object
-      properties:
-        name:
-          description: Optional. New name to give to this resource. The resource name will not be updated if this is omitted.
-          $ref: "#/components/schemas/Name"
-        description:
-          description: Optional. New description to give to this resource. The resource description will not be updated if this is omitted.
-          type: string

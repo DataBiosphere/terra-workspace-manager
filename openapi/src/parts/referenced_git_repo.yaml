@@ -153,8 +153,10 @@ components:
     UpdateGitRepoReferenceRequestBody:
       type: object
       properties:
-        updateCommonFields:
-          $ref: '#/components/schemas/ResourceUpdateCommonField'
+        name:
+          $ref: "#/components/schemas/Name"
+        description:
+          type: string
         gitRepoUrl:
           description: the url for cloning the corresponding git repository
           type: string
