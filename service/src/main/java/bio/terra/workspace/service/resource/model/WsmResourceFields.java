@@ -117,36 +117,43 @@ public class WsmResourceFields {
       return new WsmResourceFields(this);
     }
 
+    @SuppressWarnings("unchecked")
     public T workspaceUuid(UUID workspaceUuid) {
       this.workspaceUuid = workspaceUuid;
       return (T) this;
     }
 
+    @SuppressWarnings("unchecked")
     public T resourceId(UUID resourceId) {
       this.resourceId = resourceId;
       return (T) this;
     }
 
+    @SuppressWarnings("unchecked")
     public T name(String name) {
       this.name = name;
       return (T) this;
     }
 
+    @SuppressWarnings("unchecked")
     public T description(String description) {
       this.description = description;
       return (T) this;
     }
 
+    @SuppressWarnings("unchecked")
     public T cloningInstructions(CloningInstructions cloningInstructions) {
       this.cloningInstructions = cloningInstructions;
       return (T) this;
     }
 
+    @SuppressWarnings("unchecked")
     public T resourceLineage(@Nullable List<ResourceLineageEntry> resourceLineage) {
       this.resourceLineage = resourceLineage;
       return (T) this;
     }
 
+    @SuppressWarnings("unchecked")
     public T properties(@Nullable Map<String, String> properties) {
       this.properties =
           Optional.ofNullable(properties).map(ImmutableMap::copyOf).orElse(ImmutableMap.of());
