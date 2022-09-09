@@ -245,7 +245,8 @@ public class WorkspaceCloneUtils {
             destinationResourceLineage,
             sourceBucketResource);
     final ReferencedGcsBucketResource.Builder resultBuilder =
-        sourceBucketResource.toBuilder().resourceCommonFields(destinationResourceCommonFieldsBuilder.build());
+        sourceBucketResource.toBuilder()
+            .resourceCommonFields(destinationResourceCommonFieldsBuilder.build());
 
     return resultBuilder.build();
   }
@@ -315,7 +316,8 @@ public class WorkspaceCloneUtils {
             destinationResourceLineage,
             sourceBigQueryResource);
     final ReferencedBigQueryDatasetResource.Builder resultBuilder =
-        sourceBigQueryResource.toBuilder().resourceCommonFields(destinationResourceCommonFieldsBuilder.build());
+        sourceBigQueryResource.toBuilder()
+            .resourceCommonFields(destinationResourceCommonFieldsBuilder.build());
     return resultBuilder.build();
   }
 
@@ -340,7 +342,8 @@ public class WorkspaceCloneUtils {
             destinationResourceLineage,
             sourceBigQueryResource);
     final ReferencedBigQueryDataTableResource.Builder resultBuilder =
-        sourceBigQueryResource.toBuilder().resourceCommonFields(destinationResourceCommonFieldsBuilder.build());
+        sourceBigQueryResource.toBuilder()
+            .resourceCommonFields(destinationResourceCommonFieldsBuilder.build());
     return resultBuilder.build();
   }
 
@@ -388,7 +391,8 @@ public class WorkspaceCloneUtils {
     Optional.ofNullable(name).ifPresent(destinationResourceCommonFieldsBuilder::name);
     Optional.ofNullable(description).ifPresent(destinationResourceCommonFieldsBuilder::description);
     ReferencedGitRepoResource.Builder resultBuilder =
-        gitHubRepoResource.toBuilder().resourceCommonFields(destinationResourceCommonFieldsBuilder.build());
+        gitHubRepoResource.toBuilder()
+            .resourceCommonFields(destinationResourceCommonFieldsBuilder.build());
     return resultBuilder.build();
   }
 
