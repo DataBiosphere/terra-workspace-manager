@@ -122,8 +122,18 @@ components:
       name: workspaceUserFacingId
       in: path
       description: |
-        Human-settable, mutable id. ID must have 3-63 characters, contain lowercase letters, numbers,
-        dashes, or underscores, and start with lowercase letter or number
+        Human-settable, mutable id. ID must have 3-63 characters, contain
+        lowercase letters, numbers, dashes, or underscores, and start with
+        lowercase letter or number.
       required: true
       schema:
         type: string
+
+    FolderId:
+      name: folderId
+      in: path
+      description: An UUID to identify a folder in a workspace.
+      required: true
+      schema:
+        type: string
+        format: uuid
