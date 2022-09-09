@@ -44,7 +44,7 @@ public class LandingZoneApiDispatch {
 
   public ApiAzureLandingZoneResult createAzureLandingZone(
       ApiCreateAzureLandingZoneRequestBody body, String asyncResultEndpoint) {
-    features.azureLandingZoneEnabledCheck();
+    features.azureEnabledCheck();
     String landingZoneDetails = "definition='%s', version='%s'";
     logger.info(
         "Requesting new Azure landing zone with the following parameters: {}",
@@ -73,12 +73,12 @@ public class LandingZoneApiDispatch {
   }
 
   public ApiAzureLandingZoneResult getCreateAzureLandingZoneResult(String jobId) {
-    features.azureLandingZoneEnabledCheck();
+    features.azureEnabledCheck();
     return fetchCreateAzureLandingZoneResult(jobId);
   }
 
   public ApiAzureLandingZoneDefinitionList listAzureLandingZonesDefinitions() {
-    features.azureLandingZoneEnabledCheck();
+    features.azureEnabledCheck();
     List<LandingZoneDefinition> templates = landingZoneService.listLandingZoneDefinitions();
 
     return new ApiAzureLandingZoneDefinitionList()
@@ -95,12 +95,12 @@ public class LandingZoneApiDispatch {
   }
 
   public void deleteLandingZone(String landingZoneId) {
-    features.azureLandingZoneEnabledCheck();
+    features.azureEnabledCheck();
     landingZoneService.deleteLandingZone(landingZoneId);
   }
 
   public ApiAzureLandingZoneResourcesList listAzureLandingZoneResources(String landingZoneId) {
-    features.azureLandingZoneEnabledCheck();
+    features.azureEnabledCheck();
     LandingZoneResourcesByPurpose groupedResources =
         landingZoneService.listResourcesWithPurposes(landingZoneId);
 

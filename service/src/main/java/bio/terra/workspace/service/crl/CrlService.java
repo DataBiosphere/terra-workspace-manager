@@ -484,7 +484,7 @@ public class CrlService {
 
   //  Azure Support
 
-  public TokenCredential getManagedAppCredentials(AzureConfiguration azureConfig) {
+  private TokenCredential getManagedAppCredentials(AzureConfiguration azureConfig) {
     return new ClientSecretCredentialBuilder()
         .clientId(azureConfig.getManagedAppClientId())
         .clientSecret(azureConfig.getManagedAppClientSecret())

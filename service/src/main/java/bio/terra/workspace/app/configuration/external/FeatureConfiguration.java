@@ -16,7 +16,6 @@ public class FeatureConfiguration {
   private boolean azureEnabled;
   private boolean alpha1Enabled;
   private boolean tpsEnabled;
-  private boolean azureLandingZoneEnabled;
 
   public boolean isAzureEnabled() {
     return azureEnabled;
@@ -42,14 +41,6 @@ public class FeatureConfiguration {
     this.tpsEnabled = tpsEnabled;
   }
 
-  public boolean isAzureLandingZoneEnabled() {
-    return azureLandingZoneEnabled;
-  }
-
-  public void setAzureLandingZoneEnabled(boolean azureLandingZoneEnabled) {
-    this.azureLandingZoneEnabled = azureLandingZoneEnabled;
-  }
-
   public void azureEnabledCheck() {
     if (!isAzureEnabled()) {
       throw new FeatureNotSupportedException("Azure features are not enabled");
@@ -65,12 +56,6 @@ public class FeatureConfiguration {
   public void tpsEnabledCheck() {
     if (!isTpsEnabled()) {
       throw new FeatureNotSupportedException("Terra Policy Service is not enabled");
-    }
-  }
-
-  public void azureLandingZoneEnabledCheck() {
-    if (!isAzureLandingZoneEnabled()) {
-      throw new FeatureNotSupportedException("Azure Landing Zone Service is not enabled");
     }
   }
 

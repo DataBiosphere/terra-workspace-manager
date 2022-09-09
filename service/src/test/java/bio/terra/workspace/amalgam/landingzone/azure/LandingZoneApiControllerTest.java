@@ -60,7 +60,7 @@ public class LandingZoneApiControllerTest extends BaseUnitTest {
 
     when(landingZoneService.startLandingZoneCreationJob(any(), any(), any())).thenReturn(JOB_ID);
     when(landingZoneService.getAsyncJobResult(any())).thenReturn(asyncJobResult);
-    when(featureConfiguration.isAzureLandingZoneEnabled()).thenReturn(true);
+    when(featureConfiguration.isAzureEnabled()).thenReturn(true);
 
     var requestBody = AzureLandingZoneFixtures.buildCreateAzureLandingZoneRequest(JOB_ID);
 
@@ -84,7 +84,7 @@ public class LandingZoneApiControllerTest extends BaseUnitTest {
 
     when(landingZoneService.startLandingZoneCreationJob(any(), any(), any())).thenReturn(JOB_ID);
     when(landingZoneService.getAsyncJobResult(any())).thenReturn(asyncJobResult);
-    when(featureConfiguration.isAzureLandingZoneEnabled()).thenReturn(true);
+    when(featureConfiguration.isAzureEnabled()).thenReturn(true);
 
     // TODO SG: check if we need name and description??
     var requestBody = AzureLandingZoneFixtures.buildCreateAzureLandingZoneRequest(JOB_ID);
@@ -110,7 +110,7 @@ public class LandingZoneApiControllerTest extends BaseUnitTest {
 
     when(landingZoneService.startLandingZoneCreationJob(any(), any(), any())).thenReturn(JOB_ID);
     when(landingZoneService.getAsyncJobResult(any())).thenReturn(asyncJobResult);
-    when(featureConfiguration.isAzureLandingZoneEnabled()).thenReturn(true);
+    when(featureConfiguration.isAzureEnabled()).thenReturn(true);
 
     var requestBody =
         AzureLandingZoneFixtures.buildCreateAzureLandingZoneRequestWithoutDefinition(JOB_ID);
@@ -131,7 +131,7 @@ public class LandingZoneApiControllerTest extends BaseUnitTest {
 
     when(landingZoneService.startLandingZoneCreationJob(any(), any(), any())).thenReturn(JOB_ID);
     when(landingZoneService.getAsyncJobResult(any())).thenReturn(asyncJobResult);
-    when(featureConfiguration.isAzureLandingZoneEnabled()).thenReturn(true);
+    when(featureConfiguration.isAzureEnabled()).thenReturn(true);
 
     var requestBody =
         AzureLandingZoneFixtures.buildCreateAzureLandingZoneRequestWithoutTarget(JOB_ID);
@@ -201,7 +201,7 @@ public class LandingZoneApiControllerTest extends BaseUnitTest {
                 .version("v1")
                 .build());
     when(landingZoneService.listLandingZoneDefinitions()).thenReturn(definitions);
-    when(featureConfiguration.isAzureLandingZoneEnabled()).thenReturn(true);
+    when(featureConfiguration.isAzureEnabled()).thenReturn(true);
 
     mockMvc
         .perform(get(LIST_AZURE_LANDING_ZONES_DEFINITIONS_PATH))
@@ -299,7 +299,7 @@ public class LandingZoneApiControllerTest extends BaseUnitTest {
                 listSubnets2));
 
     when(landingZoneService.listResourcesWithPurposes(anyString())).thenReturn(groupedResources);
-    when(featureConfiguration.isAzureLandingZoneEnabled()).thenReturn(true);
+    when(featureConfiguration.isAzureEnabled()).thenReturn(true);
 
     mockMvc
         .perform(
