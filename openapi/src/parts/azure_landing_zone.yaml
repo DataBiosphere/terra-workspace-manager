@@ -81,7 +81,7 @@ paths:
       - $ref: '#/components/parameters/LandingZoneId'
     get:
       summary: List all Azure landing zones resources
-      operationId: listAzureLandingZonesResources
+      operationId: listAzureLandingZoneResources
       tags: [ LandingZones ]
       responses:
         '200':
@@ -135,36 +135,36 @@ components:
           $ref: '#/components/schemas/ErrorReport'
 
     AzureLandingZone:
-      description: Created Azure Landing Zone details
+      description: Created Azure Landing Zone details.
       type: object
       properties:
         id:
-          description: An identifier of created Azure landing zone
+          description: An identifier of created Azure landing zone.
           type: string
         resources:
-          description: List of Azure landing zone deployed resources
+          description: List of Azure landing zone deployed resources.
           type: array
           items:
             $ref: '#/components/schemas/AzureLandingZoneDeployedResource'
 
     AzureLandingZoneDeployedResource:
-      description: Details of an Azure resource
+      description: Details of an Azure resource.
       type: object
       properties:
         resourceId:
-          description: Unique Azure resource identifier
+          description: Unique Azure resource identifier.
           type: string
         resourceType:
-          description: Azure resource type
+          description: Azure resource type.
           type: string
         resourceName:
-          description: Azure resource name
+          description: Azure resource name.
           type: string
         resourceParentId:
-          description: Azure resource Id of a resource parent
+          description: Azure resource Id of a resource parent.
           type: string
         region:
-          description: A region where an Azure resource deployed
+          description: A region where an Azure resource deployed.
           type: string
 
     AzureLandingZoneDefinitionList:
@@ -227,28 +227,31 @@ components:
       type: object
       required: [resources]
       properties:
+        id:
+          description: An identifier of a Azure landing zone.
+          type: string
         resources:
-          description: A list of Azure landing zones deployed resources.
+          description: A list of deployed resources in a landing zone, grouped by purpose.
           type: array
           items:
             $ref: '#/components/schemas/AzureLandingZoneResourcesPurposeGroup'
 
     AzureLandingZoneResourcesPurposeGroup:
       type: object
-      required: [purpose,deployedresources]
+      required: [purpose,deployedResources]
       properties:
         purpose:
-          description: Purpose tag value string
+          description: Purpose tag value string.
           type: string
-        deployedresources:
-          description: A list of Azure landing zones deployed resources
+        deployedResources:
+          description: A list of Azure landing zones deployed resources.
           type: array
           items:
             $ref: '#/components/schemas/AzureLandingZoneDeployedResource'
 
   responses:
     AzureLandingZoneResponse:
-      description: Response to create Azure landing zone
+      description: Response to create Azure landing zone.
       content:
         application/json:
           schema:
@@ -258,7 +261,7 @@ components:
     LandingZoneId:
       name: landingZoneId
       in: path
-      description: An string to identify an Azure landing zone
+      description: An string to identify an Azure landing zone.
       required: true
       schema:
         type: string

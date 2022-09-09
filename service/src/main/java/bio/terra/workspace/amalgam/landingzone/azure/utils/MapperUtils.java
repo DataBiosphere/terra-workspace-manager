@@ -2,7 +2,7 @@ package bio.terra.workspace.amalgam.landingzone.azure.utils;
 
 import bio.terra.landingzone.job.model.ErrorReport;
 import bio.terra.landingzone.job.model.JobReport;
-import bio.terra.landingzone.model.AzureCloudContext;
+import bio.terra.landingzone.model.LandingZoneTarget;
 import bio.terra.workspace.generated.model.ApiAzureLandingZoneParameter;
 import bio.terra.workspace.generated.model.ApiErrorReport;
 import bio.terra.workspace.generated.model.ApiJobReport;
@@ -68,8 +68,8 @@ public class MapperUtils {
   public class AzureCloudContextMapper {
     private AzureCloudContextMapper() {}
 
-    public static AzureCloudContext from(ApiLandingZoneTarget apiLandingZoneTarget) {
-      return new AzureCloudContext(
+    public static LandingZoneTarget from(ApiLandingZoneTarget apiLandingZoneTarget) {
+      return new LandingZoneTarget(
           apiLandingZoneTarget.getTenantId(),
           apiLandingZoneTarget.getSubscriptionId(),
           apiLandingZoneTarget.getResourceGroupId());

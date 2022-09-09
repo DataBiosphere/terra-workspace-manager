@@ -2,16 +2,23 @@ package bio.terra.workspace.amalgam.landingzone.azure;
 
 import bio.terra.landingzone.job.LandingZoneJobService;
 import bio.terra.landingzone.job.model.JobReport;
+import bio.terra.landingzone.library.landingzones.deployment.LandingZonePurpose;
+import bio.terra.landingzone.library.landingzones.deployment.ResourcePurpose;
+import bio.terra.landingzone.library.landingzones.deployment.SubnetResourcePurpose;
 import bio.terra.landingzone.service.landingzone.azure.LandingZoneService;
 import bio.terra.landingzone.service.landingzone.azure.model.DeployedLandingZone;
 import bio.terra.landingzone.service.landingzone.azure.model.LandingZoneDefinition;
 import bio.terra.landingzone.service.landingzone.azure.model.LandingZoneRequest;
+import bio.terra.landingzone.service.landingzone.azure.model.LandingZoneResource;
+import bio.terra.landingzone.service.landingzone.azure.model.LandingZoneResourcesByPurpose;
 import bio.terra.workspace.amalgam.landingzone.azure.utils.MapperUtils;
 import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
 import bio.terra.workspace.generated.model.ApiAzureLandingZone;
 import bio.terra.workspace.generated.model.ApiAzureLandingZoneDefinition;
 import bio.terra.workspace.generated.model.ApiAzureLandingZoneDefinitionList;
 import bio.terra.workspace.generated.model.ApiAzureLandingZoneDeployedResource;
+import bio.terra.workspace.generated.model.ApiAzureLandingZoneResourcesList;
+import bio.terra.workspace.generated.model.ApiAzureLandingZoneResourcesPurposeGroup;
 import bio.terra.workspace.generated.model.ApiAzureLandingZoneResult;
 import bio.terra.workspace.generated.model.ApiCreateAzureLandingZoneRequestBody;
 import bio.terra.workspace.generated.model.ApiLandingZoneTarget;
@@ -56,7 +63,7 @@ public class LandingZoneApiDispatch {
             .version(body.getVersion())
             .parameters(
                 MapperUtils.LandingZoneMapper.landingZoneParametersFrom(body.getParameters()))
-            .azureCloudContext(MapperUtils.AzureCloudContextMapper.from(apiLandingZoneTarget))
+            .landingZoneTarget(MapperUtils.AzureCloudContextMapper.from(apiLandingZoneTarget))
             .build();
     String jobId =
         landingZoneService.startLandingZoneCreationJob(
@@ -90,6 +97,46 @@ public class LandingZoneApiDispatch {
   public void deleteLandingZone(String landingZoneId) {
     features.azureLandingZoneEnabledCheck();
     landingZoneService.deleteLandingZone(landingZoneId);
+  }
+
+  public ApiAzureLandingZoneResourcesList listAzureLandingZoneResources(String landingZoneId) {
+    features.azureLandingZoneEnabledCheck();
+    LandingZoneResourcesByPurpose groupedResources =
+        landingZoneService.listResourcesWithPurposes(landingZoneId);
+
+    var result = new ApiAzureLandingZoneResourcesList().id(landingZoneId);
+
+    groupedResources
+        .deployedResources()
+        .forEach(
+            (p, dp) ->
+                result.addResourcesItem(
+                    new ApiAzureLandingZoneResourcesPurposeGroup()
+                        .purpose(p.getClass().getSimpleName())
+                        .deployedResources(
+                            dp.stream()
+                                .map(r -> toApiAzureLandingZoneDeployedResource(r, p))
+                                .toList())));
+    return result;
+  }
+
+  private ApiAzureLandingZoneDeployedResource toApiAzureLandingZoneDeployedResource(
+      LandingZoneResource resource, LandingZonePurpose purpose) {
+    if (purpose.getClass().equals(ResourcePurpose.class)) {
+      return new ApiAzureLandingZoneDeployedResource()
+          .resourceId(resource.resourceId())
+          .resourceType(resource.resourceType())
+          .region(resource.region());
+    }
+    if (purpose.getClass().equals(SubnetResourcePurpose.class)) {
+      return new ApiAzureLandingZoneDeployedResource()
+          .resourceParentId(resource.resourceParentId().get()) // Only available for subnets
+          .resourceName(resource.resourceName().get()) // Only available for subnets
+          .resourceType(resource.resourceType())
+          .region(resource.region());
+    }
+    throw new LandingZoneUnsupportedPurposeException(
+        String.format("Purpose type %s is not supported", purpose.getClass().getSimpleName()));
   }
 
   private ApiAzureLandingZoneResult fetchCreateAzureLandingZoneResult(String jobId) {
