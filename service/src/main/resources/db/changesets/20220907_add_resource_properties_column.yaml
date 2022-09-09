@@ -1,6 +1,6 @@
 databaseChangeLog:
 - changeSet:
-    id: Add resource_properties column
+    id: Add resource properties column
     author: yuhuyoyo
     changes:
     - addColumn:

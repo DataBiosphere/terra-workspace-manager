@@ -31,9 +31,10 @@ public abstract class WsmResource {
   private final UUID workspaceUuid;
   private final UUID resourceId;
   private final String name;
-  private @Nullable final String description;
+  private final @Nullable String description;
   private final CloningInstructions cloningInstructions;
-  private final List<ResourceLineageEntry> resourceLineage;
+  private final @Nullable List<ResourceLineageEntry> resourceLineage;
+  // Properties map will be empty if there's no properties set on the resource.
   private final ImmutableMap<String, String> properties;
 
   /**

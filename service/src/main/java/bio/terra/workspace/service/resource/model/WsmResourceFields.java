@@ -9,9 +9,9 @@ import java.util.UUID;
 import javax.annotation.Nullable;
 
 /**
- * ControlledResourceFields is used as a way to collect common resources for a controlled resource.
- * That way, we can more easily add common resource parameters to all resources without visiting
- * each implementation. Although for safe serialization, we still have to visit each @JsonCreator
+ * WsmResourceFields is used as a way to collect common resources for a controlled resource. That
+ * way, we can more easily add common resource parameters to all resources without visiting each
+ * implementation. Although for safe serialization, we still have to visit each @JsonCreator
  * resource constructor and add the parameters.
  *
  * <p>This allows us to make controller code that processes the common parts of the API input and

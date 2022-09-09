@@ -236,7 +236,7 @@ public class WorkspaceCloneUtils {
             sourceBucketResource.getResourceLineage(),
             sourceBucketResource.getWorkspaceId(),
             sourceBucketResource.getResourceId());
-    WsmResourceFields.Builder<?> sourceCommonFieldsBuilder =
+    WsmResourceFields.Builder<?> destinationResourceCommonFieldsBuilder =
         buildDestinationResourceCommonFields(
             destinationWorkspaceId,
             destinationResourceId,
@@ -245,7 +245,7 @@ public class WorkspaceCloneUtils {
             destinationResourceLineage,
             sourceBucketResource);
     final ReferencedGcsBucketResource.Builder resultBuilder =
-        sourceBucketResource.toBuilder().resourceCommonFields(sourceCommonFieldsBuilder.build());
+        sourceBucketResource.toBuilder().resourceCommonFields(destinationResourceCommonFieldsBuilder.build());
 
     return resultBuilder.build();
   }
@@ -261,7 +261,7 @@ public class WorkspaceCloneUtils {
             sourceBucketFileResource.getResourceLineage(),
             sourceBucketFileResource.getWorkspaceId(),
             sourceBucketFileResource.getResourceId());
-    WsmResourceFields.Builder<?> sourceCommonFieldsBuilder =
+    WsmResourceFields.Builder<?> destinationResourceCommonFieldsBuilder =
         buildDestinationResourceCommonFields(
             destinationWorkspaceId,
             destinationResourceId,
@@ -271,7 +271,7 @@ public class WorkspaceCloneUtils {
             sourceBucketFileResource);
     final ReferencedGcsObjectResource.Builder resultBuilder =
         sourceBucketFileResource.toBuilder()
-            .resourceCommonFields(sourceCommonFieldsBuilder.build());
+            .resourceCommonFields(destinationResourceCommonFieldsBuilder.build());
     return resultBuilder.build();
   }
 
@@ -282,16 +282,16 @@ public class WorkspaceCloneUtils {
       @Nullable String description,
       List<ResourceLineageEntry> destinationResourceLineage,
       WsmResource wsmResource) {
-    WsmResourceFields.Builder<?> sourceCommonFieldsBuilder =
+    WsmResourceFields.Builder<?> destinationResourceCommonFieldsBuilder =
         wsmResource.getWsmResourceFields().toBuilder();
-    sourceCommonFieldsBuilder
+    destinationResourceCommonFieldsBuilder
         .workspaceUuid(destinationWorkspaceId)
         .resourceId(destinationResourceId)
         .resourceLineage(destinationResourceLineage);
     // apply optional override variables
-    Optional.ofNullable(name).ifPresent(sourceCommonFieldsBuilder::name);
-    Optional.ofNullable(description).ifPresent(sourceCommonFieldsBuilder::description);
-    return sourceCommonFieldsBuilder;
+    Optional.ofNullable(name).ifPresent(destinationResourceCommonFieldsBuilder::name);
+    Optional.ofNullable(description).ifPresent(destinationResourceCommonFieldsBuilder::description);
+    return destinationResourceCommonFieldsBuilder;
   }
 
   private static ReferencedResource buildDestinationBigQueryDatasetReference(
@@ -306,7 +306,7 @@ public class WorkspaceCloneUtils {
             sourceBigQueryResource.getResourceLineage(),
             sourceBigQueryResource.getWorkspaceId(),
             sourceBigQueryResource.getResourceId());
-    WsmResourceFields.Builder<?> sourceCommonFieldsBuilder =
+    WsmResourceFields.Builder<?> destinationResourceCommonFieldsBuilder =
         buildDestinationResourceCommonFields(
             destinationWorkspaceId,
             destinationResourceId,
@@ -315,7 +315,7 @@ public class WorkspaceCloneUtils {
             destinationResourceLineage,
             sourceBigQueryResource);
     final ReferencedBigQueryDatasetResource.Builder resultBuilder =
-        sourceBigQueryResource.toBuilder().resourceCommonFields(sourceCommonFieldsBuilder.build());
+        sourceBigQueryResource.toBuilder().resourceCommonFields(destinationResourceCommonFieldsBuilder.build());
     return resultBuilder.build();
   }
 
@@ -331,7 +331,7 @@ public class WorkspaceCloneUtils {
             sourceBigQueryResource.getResourceLineage(),
             sourceBigQueryResource.getWorkspaceId(),
             sourceBigQueryResource.getResourceId());
-    WsmResourceFields.Builder<?> sourceCommonFieldsBuilder =
+    WsmResourceFields.Builder<?> destinationResourceCommonFieldsBuilder =
         buildDestinationResourceCommonFields(
             destinationWorkspaceId,
             destinationResourceId,
@@ -340,7 +340,7 @@ public class WorkspaceCloneUtils {
             destinationResourceLineage,
             sourceBigQueryResource);
     final ReferencedBigQueryDataTableResource.Builder resultBuilder =
-        sourceBigQueryResource.toBuilder().resourceCommonFields(sourceCommonFieldsBuilder.build());
+        sourceBigQueryResource.toBuilder().resourceCommonFields(destinationResourceCommonFieldsBuilder.build());
     return resultBuilder.build();
   }
 
@@ -355,7 +355,7 @@ public class WorkspaceCloneUtils {
             sourceReferencedDataRepoSnapshotResource.getResourceLineage(),
             sourceReferencedDataRepoSnapshotResource.getWorkspaceId(),
             sourceReferencedDataRepoSnapshotResource.getResourceId());
-    WsmResourceFields.Builder<?> sourceCommonFieldsBuilder =
+    WsmResourceFields.Builder<?> destinationResourceCommonFieldsBuilder =
         buildDestinationResourceCommonFields(
             destinationWorkspaceId,
             destinationResourceId,
@@ -365,7 +365,7 @@ public class WorkspaceCloneUtils {
             sourceReferencedDataRepoSnapshotResource);
     final ReferencedDataRepoSnapshotResource.Builder resultBuilder =
         sourceReferencedDataRepoSnapshotResource.toBuilder()
-            .resourceCommonFields(sourceCommonFieldsBuilder.build());
+            .resourceCommonFields(destinationResourceCommonFieldsBuilder.build());
     return resultBuilder.build();
   }
 
@@ -380,16 +380,15 @@ public class WorkspaceCloneUtils {
             gitHubRepoResource.getResourceLineage(),
             gitHubRepoResource.getWorkspaceId(),
             gitHubRepoResource.getResourceId());
-    WsmResourceFields.Builder<?> sourceCommonFieldsBuilder =
-        gitHubRepoResource.getWsmResourceFields().toBuilder();
-    sourceCommonFieldsBuilder
-        .workspaceUuid(destinationWorkspaceId)
-        .resourceId(destinationResourceId)
-        .resourceLineage(destinationResourceLineage);
-    Optional.ofNullable(name).ifPresent(sourceCommonFieldsBuilder::name);
-    Optional.ofNullable(description).ifPresent(sourceCommonFieldsBuilder::description);
+    WsmResourceFields.Builder<?> destinationResourceCommonFieldsBuilder =
+        gitHubRepoResource.getWsmResourceFields().toBuilder()
+            .workspaceUuid(destinationWorkspaceId)
+            .resourceId(destinationResourceId)
+            .resourceLineage(destinationResourceLineage);
+    Optional.ofNullable(name).ifPresent(destinationResourceCommonFieldsBuilder::name);
+    Optional.ofNullable(description).ifPresent(destinationResourceCommonFieldsBuilder::description);
     ReferencedGitRepoResource.Builder resultBuilder =
-        gitHubRepoResource.toBuilder().resourceCommonFields(sourceCommonFieldsBuilder.build());
+        gitHubRepoResource.toBuilder().resourceCommonFields(destinationResourceCommonFieldsBuilder.build());
     return resultBuilder.build();
   }
 
