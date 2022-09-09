@@ -66,7 +66,7 @@ public class ReferencedDataRepoSnapshotResource extends ReferencedResource {
   }
 
   private ReferencedDataRepoSnapshotResource(Builder builder) {
-    super(builder.resourceCommonFields);
+    super(builder.wsmResourceFields);
     this.instanceName = builder.instanceName;
     this.snapshotId = builder.snapshotId;
   }
@@ -167,13 +167,13 @@ public class ReferencedDataRepoSnapshotResource extends ReferencedResource {
     return builder()
         .instanceName(getInstanceName())
         .snapshotId(getSnapshotId())
-        .resourceCommonFields(getWsmResourceFields());
+        .wsmResourceFields(getWsmResourceFields());
   }
 
   public static class Builder {
     private String instanceName;
     private String snapshotId;
-    private WsmResourceFields resourceCommonFields;
+    private WsmResourceFields wsmResourceFields;
 
     public Builder instanceName(String instanceName) {
       this.instanceName = instanceName;
@@ -185,8 +185,8 @@ public class ReferencedDataRepoSnapshotResource extends ReferencedResource {
       return this;
     }
 
-    public Builder resourceCommonFields(WsmResourceFields resourceFields) {
-      this.resourceCommonFields = resourceFields;
+    public Builder wsmResourceFields(WsmResourceFields resourceFields) {
+      this.wsmResourceFields = resourceFields;
       return this;
     }
 
