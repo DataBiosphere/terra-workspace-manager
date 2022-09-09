@@ -8,7 +8,6 @@ import static java.util.stream.Collectors.toList;
 import bio.terra.common.db.ReadTransaction;
 import bio.terra.common.db.WriteTransaction;
 import bio.terra.workspace.common.exception.InternalLogicException;
-import bio.terra.workspace.db.exception.WorkspaceNotFoundException;
 import bio.terra.workspace.db.model.DbResource;
 import bio.terra.workspace.db.model.UniquenessCheckAttributes;
 import bio.terra.workspace.db.model.UniquenessCheckAttributes.UniquenessScope;
@@ -30,9 +29,7 @@ import bio.terra.workspace.service.workspace.exceptions.CloudContextRequiredExce
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import com.fasterxml.jackson.core.type.TypeReference;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -297,11 +294,13 @@ public class ResourceDao {
   public List<ControlledResource> claimCleanupForWorkspacePrivateResources(
       UUID workspaceUuid, String userEmail, String flightId) {
     String filterClause =
-        " AND stewardship_type = :controlled_resource"
-            + " AND access_scope = :access_scope"
-            + " AND assigned_user = :user_email"
-            + " AND (cleanup_flight_id IS NULL"
-            + " OR cleanup_flight_id = :flight_id)";
+        """
+            AND stewardship_type = :controlled_resource
+            AND access_scope = :access_scope
+            AND assigned_user = :user_email
+            AND (cleanup_flight_id IS NULL
+            OR cleanup_flight_id = :flight_id)
+        """;
     String readSql = RESOURCE_SELECT_SQL + filterClause;
     String writeSql =
         "UPDATE resource SET cleanup_flight_id = :flight_id WHERE workspace_id = :workspace_id"
@@ -330,7 +329,14 @@ public class ResourceDao {
   public void releasePrivateResourceCleanupClaims(
       UUID workspaceUuid, String userEmail, String flightId) {
     String writeSql =
-        "UPDATE resource SET cleanup_flight_id = NULL WHERE workspace_id = :workspace_id AND stewardship_type = :controlled_resource AND access_scope = :access_scope AND assigned_user = :user_email AND cleanup_flight_id = :flight_id";
+        """
+          UPDATE resource SET cleanup_flight_id = NULL
+          WHERE workspace_id = :workspace_id
+          AND stewardship_type = :controlled_resource
+          AND access_scope = :access_scope
+          AND assigned_user = :user_email
+          AND cleanup_flight_id = :flight_id
+        """;
     MapSqlParameterSource params =
         new MapSqlParameterSource()
             .addValue("workspace_id", workspaceUuid.toString())
@@ -581,7 +587,12 @@ public class ResourceDao {
   public void setPrivateResourceState(
       ControlledResource resource, PrivateResourceState privateResourceState) {
     final String sql =
-        "UPDATE resource SET private_resource_state = :private_resource_state WHERE workspace_id = :workspace_id AND resource_id = :resource_id AND access_scope = :private_access_scope";
+        """
+          UPDATE resource SET private_resource_state = :private_resource_state
+          WHERE workspace_id = :workspace_id
+          AND resource_id = :resource_id
+          AND access_scope = :private_access_scope
+        """;
     MapSqlParameterSource params =
         new MapSqlParameterSource()
             .addValue("private_resource_state", privateResourceState.toSql())
@@ -600,7 +611,10 @@ public class ResourceDao {
   public void setPrivateResourcesStateForWorkspaceUser(
       UUID workspaceUuid, String userEmail, PrivateResourceState state) {
     final String sql =
-        "UPDATE resource SET private_resource_state = :private_resource_state WHERE workspace_id = :workspace_id AND assigned_user = :user_email";
+        """
+          UPDATE resource SET private_resource_state = :private_resource_state
+          WHERE workspace_id = :workspace_id AND assigned_user = :user_email
+         """;
     MapSqlParameterSource params =
         new MapSqlParameterSource()
             .addValue("private_resource_state", state.toSql())
@@ -629,77 +643,6 @@ public class ResourceDao {
 
     Integer count = jdbcTemplate.queryForObject(sql, params, Integer.class);
     return (count != null && count > 0);
-  }
-
-  @WriteTransaction
-  public boolean deleteResourceProperties(
-      UUID workspaceUuid, UUID resourceId, List<String> propertyKeys) {
-    Map<String, String> properties = getResourceProperties(workspaceUuid, resourceId);
-    for (String key : propertyKeys) {
-      properties.remove(key);
-    }
-    return setProperties(workspaceUuid, resourceId, properties);
-  }
-
-  /** Update a workspace properties */
-  @WriteTransaction
-  public boolean updateResourceProperties(
-      UUID workspaceUuid, UUID resourceUuid, Map<String, String> newProperties) {
-    Map<String, String> properties = getResourceProperties(workspaceUuid, resourceUuid);
-    HashMap<String, String> combinedProperties = new HashMap<>();
-    combinedProperties.putAll(properties);
-    // add new properties after the original so that the new properties value will override
-    // the old if there are conflicted keys.
-    combinedProperties.putAll(newProperties);
-    return setProperties(workspaceUuid, resourceUuid, combinedProperties);
-  }
-
-  private Map<String, String> getResourceProperties(UUID workspaceUuid, UUID resourceUuid) {
-    // get current property in this workspace id
-    String selectPropertiesSql =
-        """
-      SELECT properties FROM resource
-      WHERE workspace_id = :workspace_id AND resource_id = :resource_id
-    """;
-    MapSqlParameterSource propertiesParams =
-        new MapSqlParameterSource()
-            .addValue("workspace_id", workspaceUuid.toString())
-            .addValue("resource_id", resourceUuid.toString());
-    String result;
-
-    try {
-      result = jdbcTemplate.queryForObject(selectPropertiesSql, propertiesParams, String.class);
-
-    } catch (EmptyResultDataAccessException e) {
-      throw new WorkspaceNotFoundException(
-          String.format("Resource %s not found in workspace %s.", resourceUuid, workspaceUuid));
-    }
-
-    Map<String, String> properties =
-        result == null ? new HashMap<>() : DbSerDes.jsonToProperties(result);
-    return properties;
-  }
-
-  /**
-   * Set the properties column to the new values given workspaceId and resourceId
-   *
-   * @return true if at least a row is updated.
-   */
-  private boolean setProperties(
-      UUID workspaceUuid, UUID resourceUuid, Map<String, String> properties) {
-    final String sql =
-        """
-          UPDATE resource SET properties = cast(:properties AS jsonb)
-          WHERE workspace_id = :workspace_id AND resource_id = :resource_id
-        """;
-
-    var params = new MapSqlParameterSource();
-    params
-        .addValue("properties", DbSerDes.propertiesToJson(properties))
-        .addValue("workspace_id", workspaceUuid.toString())
-        .addValue("resource_id", resourceUuid.toString());
-
-    return jdbcTemplate.update(sql, params) > 0;
   }
 
   private void storeResource(WsmResource resource) {
