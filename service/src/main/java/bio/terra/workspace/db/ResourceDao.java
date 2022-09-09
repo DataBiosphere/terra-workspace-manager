@@ -57,46 +57,47 @@ public class ResourceDao {
       SELECT workspace_id, cloud_platform, resource_id, name, description, stewardship_type,
         resource_type, exact_resource_type, cloning_instructions, attributes,
         access_scope, managed_by, associated_app, assigned_user, private_resource_state,
-        resource_lineage
+        resource_lineage, properties
       FROM resource WHERE workspace_id = :workspace_id
       """;
 
   private static final RowMapper<DbResource> DB_RESOURCE_ROW_MAPPER =
-      (rs, rowNum) -> {
-        return new DbResource()
-            .workspaceUuid(UUID.fromString(rs.getString("workspace_id")))
-            .cloudPlatform(CloudPlatform.fromSql(rs.getString("cloud_platform")))
-            .resourceId(UUID.fromString(rs.getString("resource_id")))
-            .name(rs.getString("name"))
-            .description(rs.getString("description"))
-            .stewardshipType(fromSql(rs.getString("stewardship_type")))
-            .cloudResourceType(WsmResourceFamily.fromSql(rs.getString("resource_type")))
-            .resourceType(WsmResourceType.fromSql(rs.getString("exact_resource_type")))
-            .cloningInstructions(CloningInstructions.fromSql(rs.getString("cloning_instructions")))
-            .attributes(rs.getString("attributes"))
-            .accessScope(
-                Optional.ofNullable(rs.getString("access_scope"))
-                    .map(AccessScopeType::fromSql)
-                    .orElse(null))
-            .managedBy(
-                Optional.ofNullable(rs.getString("managed_by"))
-                    .map(ManagedByType::fromSql)
-                    .orElse(null))
-            .applicationId(Optional.ofNullable(rs.getString("associated_app")).orElse(null))
-            .assignedUser(rs.getString("assigned_user"))
-            .privateResourceState(
-                Optional.ofNullable(rs.getString("private_resource_state"))
-                    .map(PrivateResourceState::fromSql)
-                    .orElse(null))
-            .resourceLineage(
-                Optional.ofNullable(rs.getString("resource_lineage"))
-                    .map(
-                        resourceLineage ->
-                            DbSerDes.fromJson(
-                                resourceLineage,
-                                new TypeReference<List<ResourceLineageEntry>>() {}))
-                    .orElse(null));
-      };
+      (rs, rowNum) ->
+          new DbResource()
+              .workspaceUuid(UUID.fromString(rs.getString("workspace_id")))
+              .cloudPlatform(CloudPlatform.fromSql(rs.getString("cloud_platform")))
+              .resourceId(UUID.fromString(rs.getString("resource_id")))
+              .name(rs.getString("name"))
+              .description(rs.getString("description"))
+              .stewardshipType(fromSql(rs.getString("stewardship_type")))
+              .cloudResourceType(WsmResourceFamily.fromSql(rs.getString("resource_type")))
+              .resourceType(WsmResourceType.fromSql(rs.getString("exact_resource_type")))
+              .cloningInstructions(
+                  CloningInstructions.fromSql(rs.getString("cloning_instructions")))
+              .attributes(rs.getString("attributes"))
+              .accessScope(
+                  Optional.ofNullable(rs.getString("access_scope"))
+                      .map(AccessScopeType::fromSql)
+                      .orElse(null))
+              .managedBy(
+                  Optional.ofNullable(rs.getString("managed_by"))
+                      .map(ManagedByType::fromSql)
+                      .orElse(null))
+              .applicationId(Optional.ofNullable(rs.getString("associated_app")).orElse(null))
+              .assignedUser(rs.getString("assigned_user"))
+              .privateResourceState(
+                  Optional.ofNullable(rs.getString("private_resource_state"))
+                      .map(PrivateResourceState::fromSql)
+                      .orElse(null))
+              .resourceLineage(
+                  Optional.ofNullable(rs.getString("resource_lineage"))
+                      .map(
+                          resourceLineage ->
+                              DbSerDes.fromJson(
+                                  resourceLineage,
+                                  new TypeReference<List<ResourceLineageEntry>>() {}))
+                      .orElse(null))
+              .properties(DbSerDes.jsonToProperties(rs.getString("properties")));
 
   private final NamedParameterJdbcTemplate jdbcTemplate;
 
@@ -293,11 +294,13 @@ public class ResourceDao {
   public List<ControlledResource> claimCleanupForWorkspacePrivateResources(
       UUID workspaceUuid, String userEmail, String flightId) {
     String filterClause =
-        " AND stewardship_type = :controlled_resource"
-            + " AND access_scope = :access_scope"
-            + " AND assigned_user = :user_email"
-            + " AND (cleanup_flight_id IS NULL"
-            + " OR cleanup_flight_id = :flight_id)";
+        """
+            AND stewardship_type = :controlled_resource
+            AND access_scope = :access_scope
+            AND assigned_user = :user_email
+            AND (cleanup_flight_id IS NULL
+            OR cleanup_flight_id = :flight_id)
+        """;
     String readSql = RESOURCE_SELECT_SQL + filterClause;
     String writeSql =
         "UPDATE resource SET cleanup_flight_id = :flight_id WHERE workspace_id = :workspace_id"
@@ -326,7 +329,14 @@ public class ResourceDao {
   public void releasePrivateResourceCleanupClaims(
       UUID workspaceUuid, String userEmail, String flightId) {
     String writeSql =
-        "UPDATE resource SET cleanup_flight_id = NULL WHERE workspace_id = :workspace_id AND stewardship_type = :controlled_resource AND access_scope = :access_scope AND assigned_user = :user_email AND cleanup_flight_id = :flight_id";
+        """
+          UPDATE resource SET cleanup_flight_id = NULL
+          WHERE workspace_id = :workspace_id
+          AND stewardship_type = :controlled_resource
+          AND access_scope = :access_scope
+          AND assigned_user = :user_email
+          AND cleanup_flight_id = :flight_id
+        """;
     MapSqlParameterSource params =
         new MapSqlParameterSource()
             .addValue("workspace_id", workspaceUuid.toString())
@@ -577,7 +587,12 @@ public class ResourceDao {
   public void setPrivateResourceState(
       ControlledResource resource, PrivateResourceState privateResourceState) {
     final String sql =
-        "UPDATE resource SET private_resource_state = :private_resource_state WHERE workspace_id = :workspace_id AND resource_id = :resource_id AND access_scope = :private_access_scope";
+        """
+          UPDATE resource SET private_resource_state = :private_resource_state
+          WHERE workspace_id = :workspace_id
+          AND resource_id = :resource_id
+          AND access_scope = :private_access_scope
+        """;
     MapSqlParameterSource params =
         new MapSqlParameterSource()
             .addValue("private_resource_state", privateResourceState.toSql())
@@ -596,7 +611,10 @@ public class ResourceDao {
   public void setPrivateResourcesStateForWorkspaceUser(
       UUID workspaceUuid, String userEmail, PrivateResourceState state) {
     final String sql =
-        "UPDATE resource SET private_resource_state = :private_resource_state WHERE workspace_id = :workspace_id AND assigned_user = :user_email";
+        """
+          UPDATE resource SET private_resource_state = :private_resource_state
+          WHERE workspace_id = :workspace_id AND assigned_user = :user_email
+         """;
     MapSqlParameterSource params =
         new MapSqlParameterSource()
             .addValue("private_resource_state", state.toSql())
@@ -616,8 +634,10 @@ public class ResourceDao {
   @ReadTransaction
   public boolean resourceExists(UUID workspaceUuid, UUID resourceId) {
     final String sql =
-        "SELECT COUNT(1) FROM resource"
-            + " WHERE workspace_id = :workspace_id AND resource_id = :resource_id";
+        """
+            SELECT COUNT(1) FROM resource
+            WHERE workspace_id = :workspace_id AND resource_id = :resource_id
+            """;
     MapSqlParameterSource params =
         new MapSqlParameterSource()
             .addValue("workspace_id", workspaceUuid.toString())
@@ -650,11 +670,11 @@ public class ResourceDao {
         INSERT INTO resource (workspace_id, cloud_platform, resource_id, name, description,
           stewardship_type, exact_resource_type, resource_type, cloning_instructions, attributes,
           access_scope, managed_by, associated_app, assigned_user, private_resource_state,
-          resource_lineage)
+          resource_lineage, properties)
         VALUES (:workspace_id, :cloud_platform, :resource_id, :name, :description,
           :stewardship_type, :exact_resource_type, :resource_type, :cloning_instructions,
           cast(:attributes AS jsonb), :access_scope, :managed_by, :associated_app, :assigned_user,
-          :private_resource_state, :resource_lineage::jsonb);
+          :private_resource_state, :resource_lineage::jsonb, :properties::jsonb);
         """;
 
     final var params =
@@ -669,7 +689,8 @@ public class ResourceDao {
             .addValue("resource_type", resource.getResourceFamily().toSql())
             .addValue("cloning_instructions", resource.getCloningInstructions().toSql())
             .addValue("attributes", resource.attributesToJson())
-            .addValue("resource_lineage", DbSerDes.toJson(resource.getResourceLineage()));
+            .addValue("resource_lineage", DbSerDes.toJson(resource.getResourceLineage()))
+            .addValue("properties", DbSerDes.propertiesToJson(resource.getProperties()));
     if (resource.getStewardshipType().equals(CONTROLLED)) {
       ControlledResource controlledResource = resource.castToControlledResource();
       //noinspection deprecation

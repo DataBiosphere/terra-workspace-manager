@@ -30,6 +30,7 @@ import bio.terra.workspace.service.resource.referenced.cloud.gcp.bqdataset.Refer
 import bio.terra.workspace.service.resource.referenced.cloud.gcp.bqdatatable.ReferencedBigQueryDataTableResource;
 import bio.terra.workspace.service.resource.referenced.cloud.gcp.datareposnapshot.ReferencedDataRepoSnapshotResource;
 import bio.terra.workspace.service.resource.referenced.cloud.gcp.gcsbucket.ReferencedGcsBucketResource;
+import java.util.Map;
 import java.util.UUID;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.jupiter.api.BeforeEach;
@@ -70,7 +71,8 @@ public class MakeApiResourceDescriptionTest extends BaseUnitTest {
             cloning,
             projectId,
             datasetName,
-            /*resourceLineage=*/ null);
+            /*resourceLineage=*/ null,
+            Map.of());
 
     ApiResourceDescription resourceDescription =
         resourceController.makeApiResourceDescription(resource);
@@ -98,7 +100,8 @@ public class MakeApiResourceDescriptionTest extends BaseUnitTest {
             projectId,
             datasetName,
             datatableName,
-            /*resourceLineage=*/ null);
+            /*resourceLineage=*/ null,
+            /*properties=*/ Map.of());
 
     ApiResourceDescription resourceDescription =
         resourceController.makeApiResourceDescription(resource);
@@ -125,7 +128,8 @@ public class MakeApiResourceDescriptionTest extends BaseUnitTest {
             cloning,
             instanceName,
             snapshotId,
-            /*resourceLineage=*/ null);
+            /*resourceLineage=*/ null,
+            /*properties=*/ Map.of());
 
     ApiResourceDescription resourceDescription =
         resourceController.makeApiResourceDescription(resource);
@@ -149,7 +153,8 @@ public class MakeApiResourceDescriptionTest extends BaseUnitTest {
             description,
             cloning,
             bucketName,
-            /*resourceLineage=*/ null);
+            /*resourceLineage=*/ null,
+            /*properties=*/ Map.of());
 
     ApiResourceDescription resourceDescription =
         resourceController.makeApiResourceDescription(resource);
@@ -200,7 +205,8 @@ public class MakeApiResourceDescriptionTest extends BaseUnitTest {
               managedByType,
               null,
               bucketName,
-              /*resourceLineage=*/ null);
+              /*resourceLineage=*/ null,
+              /*properties=*/ Map.of());
 
       ApiResourceDescription resourceDescription =
           resourceController.makeApiResourceDescription(resource);
@@ -230,7 +236,8 @@ public class MakeApiResourceDescriptionTest extends BaseUnitTest {
               null,
               datasetName,
               projectId,
-              /*resourceLineage=*/ null);
+              /*resourceLineage=*/ null,
+              /*properties=*/ Map.of());
 
       ApiResourceDescription resourceDescription =
           resourceController.makeApiResourceDescription(resource);
