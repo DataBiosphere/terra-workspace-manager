@@ -83,6 +83,7 @@ public class ControlledResourceFixtures {
   public static final String AZURE_NETWORK_NAME_PREFIX = "network";
   public static final String AZURE_SUBNET_NAME_PREFIX = "subnet";
   public static final String AZURE_VM_NAME_PREFIX = "vm";
+  public static final Map<String, String> DEFAULT_RESOURCE_PROPERTIES = Map.of("foo", "bar");
 
   public static final ApiGcpGcsBucketCreationParameters GOOGLE_BUCKET_CREATION_PARAMETERS_MINIMAL =
       new ApiGcpGcsBucketCreationParameters()
@@ -437,7 +438,8 @@ public class ControlledResourceFixtures {
         .cloningInstructions(CloningInstructions.COPY_DEFINITION)
         .assignedUser(null)
         .accessScope(AccessScopeType.ACCESS_SCOPE_SHARED)
-        .managedBy(ManagedByType.MANAGED_BY_USER);
+        .managedBy(ManagedByType.MANAGED_BY_USER)
+        .properties(DEFAULT_RESOURCE_PROPERTIES);
   }
 
   /**

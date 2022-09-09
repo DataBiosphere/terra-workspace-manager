@@ -6,6 +6,8 @@ import java.util.Map;
 import java.util.UUID;
 
 public class ReferenceResourceFixtures {
+  private static final Map<String, String> DEFAULT_RESOURCE_PROPERTIES = Map.of("foo", "bar");
+
   public static ReferencedDataRepoSnapshotResource makeDataRepoSnapshotResource(
       UUID workspaceUuid) {
     UUID resourceId = UUID.randomUUID();
@@ -20,6 +22,6 @@ public class ReferenceResourceFixtures {
         "terra",
         "polaroid",
         /*resourceLineage=*/ null,
-        /*properties*/ Map.of());
+        /*properties*/ DEFAULT_RESOURCE_PROPERTIES);
   }
 }
