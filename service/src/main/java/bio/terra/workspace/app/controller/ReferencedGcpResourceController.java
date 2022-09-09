@@ -97,7 +97,7 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
     // Construct a ReferenceGcsBucketResource object from the API input
     var resource =
         ReferencedGcsObjectResource.builder()
-            .wsmResourceFieldsBuilder(
+            .resourceCommonFields(
                 WsmResourceFields.builder()
                     .workspaceUuid(workspaceUuid)
                     .resourceId(UUID.randomUUID())
@@ -105,7 +105,8 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
                     .description(body.getMetadata().getDescription())
                     .cloningInstructions(
                         CloningInstructions.fromApiModel(
-                            body.getMetadata().getCloningInstructions())))
+                            body.getMetadata().getCloningInstructions()))
+                    .build())
             .bucketName(body.getFile().getBucketName())
             .objectName(body.getFile().getFileName())
             .build();
@@ -174,10 +175,10 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
         updateBucketObjectResourceBuilder.objectName(objectName);
       }
       if (cloningInstructions != null) {
-        updateBucketObjectResourceBuilder.wsmResourceFieldsBuilder(
-            referencedResource
-                .getWsmResourceFieldsBuilder()
-                .cloningInstructions(cloningInstructions));
+        updateBucketObjectResourceBuilder.resourceCommonFields(
+            referencedResource.getWsmResourceFields().toBuilder()
+                .cloningInstructions(cloningInstructions)
+                .build());
       }
       referenceResourceService.updateReferenceResource(
           workspaceUuid,
@@ -211,7 +212,7 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
     // Construct a ReferenceGcsBucketResource object from the API input
     var resource =
         ReferencedGcsBucketResource.builder()
-            .wsmResourceFieldsBuilder(
+            .resourceCommonFields(
                 WsmResourceFields.builder()
                     .workspaceUuid(workspaceUuid)
                     .resourceId(UUID.randomUUID())
@@ -219,7 +220,8 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
                     .description(body.getMetadata().getDescription())
                     .cloningInstructions(
                         CloningInstructions.fromApiModel(
-                            body.getMetadata().getCloningInstructions())))
+                            body.getMetadata().getCloningInstructions()))
+                    .build())
             .bucketName(body.getBucket().getBucketName())
             .build();
 
@@ -279,10 +281,10 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
           referencedResource.toBuilder().bucketName(bucketName);
       if (cloningInstructions != null) {
         // only overwrite if non-null
-        updateBucketResourceBuilder.wsmResourceFieldsBuilder(
-            referencedResource
-                .getWsmResourceFieldsBuilder()
-                .cloningInstructions(cloningInstructions));
+        updateBucketResourceBuilder.resourceCommonFields(
+            referencedResource.getWsmResourceFields().toBuilder()
+                .cloningInstructions(cloningInstructions)
+                .build());
       }
       referenceResourceService.updateReferenceResource(
           workspaceUuid,
@@ -315,7 +317,7 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
         userRequest, workspaceUuid, SamWorkspaceAction.CREATE_REFERENCE);
     var resource =
         ReferencedBigQueryDataTableResource.builder()
-            .wsmResourceFieldsBuilder(
+            .resourceCommonFields(
                 WsmResourceFields.builder()
                     .workspaceUuid(workspaceUuid)
                     .resourceId(UUID.randomUUID())
@@ -323,7 +325,8 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
                     .description(body.getMetadata().getDescription())
                     .cloningInstructions(
                         CloningInstructions.fromApiModel(
-                            body.getMetadata().getCloningInstructions())))
+                            body.getMetadata().getCloningInstructions()))
+                    .build())
             .projectId(body.getDataTable().getProjectId())
             .datasetId(body.getDataTable().getDatasetId())
             .dataTableId(body.getDataTable().getDataTableId())
@@ -436,7 +439,7 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
     // Construct a ReferenceBigQueryResource object from the API input
     var resource =
         ReferencedBigQueryDatasetResource.builder()
-            .wsmResourceFieldsBuilder(
+            .resourceCommonFields(
                 WsmResourceFields.builder()
                     .workspaceUuid(uuid)
                     .resourceId(UUID.randomUUID())
@@ -444,7 +447,8 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
                     .description(body.getMetadata().getDescription())
                     .cloningInstructions(
                         CloningInstructions.fromApiModel(
-                            body.getMetadata().getCloningInstructions())))
+                            body.getMetadata().getCloningInstructions()))
+                    .build())
             .projectId(body.getDataset().getProjectId())
             .datasetName(body.getDataset().getDatasetId())
             .build();
@@ -547,7 +551,7 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
 
     var resource =
         ReferencedDataRepoSnapshotResource.builder()
-            .wsmResourceFieldsBuilder(
+            .resourceCommonFields(
                 WsmResourceFields.builder()
                     .workspaceUuid(uuid)
                     .resourceId(UUID.randomUUID())
@@ -555,7 +559,8 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
                     .description(body.getMetadata().getDescription())
                     .cloningInstructions(
                         CloningInstructions.fromApiModel(
-                            body.getMetadata().getCloningInstructions())))
+                            body.getMetadata().getCloningInstructions()))
+                    .build())
             .instanceName(body.getSnapshot().getInstanceName())
             .snapshotId(body.getSnapshot().getSnapshot())
             .build();
@@ -898,7 +903,7 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
         userRequest, workspaceUuid, SamWorkspaceAction.CREATE_REFERENCE);
     ReferencedGitRepoResource resource =
         ReferencedGitRepoResource.builder()
-            .wsmResourceFieldsBuilder(
+            .resourceCommonFields(
                 WsmResourceFields.builder()
                     .workspaceUuid(workspaceUuid)
                     .resourceId(UUID.randomUUID())
@@ -906,7 +911,8 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
                     .description(body.getMetadata().getDescription())
                     .cloningInstructions(
                         CloningInstructions.fromApiModel(
-                            body.getMetadata().getCloningInstructions())))
+                            body.getMetadata().getCloningInstructions()))
+                    .build())
             .gitRepoUrl(body.getGitrepo().getGitRepoUrl())
             .build();
 
@@ -1054,7 +1060,7 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
     // Construct a ReferencedTerraWorkspaceResource object from the API input
     ReferencedTerraWorkspaceResource resource =
         ReferencedTerraWorkspaceResource.builder()
-            .wsmResourceFieldsBuilder(
+            .resourceCommonFields(
                 WsmResourceFields.builder()
                     .workspaceUuid(workspaceUuid)
                     .resourceId(UUID.randomUUID())
@@ -1062,7 +1068,8 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
                     .description(body.getMetadata().getDescription())
                     .cloningInstructions(
                         CloningInstructions.fromApiModel(
-                            body.getMetadata().getCloningInstructions())))
+                            body.getMetadata().getCloningInstructions()))
+                    .build())
             .referencedWorkspaceId(referencedWorkspaceId)
             .build();
 

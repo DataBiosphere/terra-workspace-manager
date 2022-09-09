@@ -52,7 +52,7 @@ public class ReferencedGitRepoResource extends ReferencedResource {
   }
 
   private ReferencedGitRepoResource(Builder builder) {
-    super(builder.wsmResourceFieldsBuilder);
+    super(builder.resourceFields);
     this.gitRepoUrl = builder.gitRepoUrl;
     validate();
   }
@@ -144,9 +144,7 @@ public class ReferencedGitRepoResource extends ReferencedResource {
    * @return builder object ready for new values to replace existing ones
    */
   public ReferencedGitRepoResource.Builder toBuilder() {
-    return builder()
-        .gitRepoUrl(getGitRepoUrl())
-        .wsmResourceFieldsBuilder(getWsmResourceFieldsBuilder());
+    return builder().gitRepoUrl(getGitRepoUrl()).resourceCommonFields(getWsmResourceFields());
   }
 
   public static ReferencedGitRepoResource.Builder builder() {
@@ -155,12 +153,12 @@ public class ReferencedGitRepoResource extends ReferencedResource {
 
   public static class Builder {
 
-    private WsmResourceFields.Builder wsmResourceFieldsBuilder;
+    private WsmResourceFields resourceFields;
     private String gitRepoUrl;
 
-    public ReferencedGitRepoResource.Builder wsmResourceFieldsBuilder(
-        WsmResourceFields.Builder wsmResourceFields) {
-      this.wsmResourceFieldsBuilder = wsmResourceFields;
+    public ReferencedGitRepoResource.Builder resourceCommonFields(
+        WsmResourceFields resourceFields) {
+      this.resourceFields = resourceFields;
       return this;
     }
 

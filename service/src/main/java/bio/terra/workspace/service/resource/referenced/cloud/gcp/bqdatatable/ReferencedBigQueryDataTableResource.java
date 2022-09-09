@@ -94,7 +94,7 @@ public class ReferencedBigQueryDataTableResource extends ReferencedResource {
   }
 
   private ReferencedBigQueryDataTableResource(Builder builder) {
-    super(builder.wsmResourceFieldsBuilder);
+    super(builder.resourceCommonFields);
     this.projectId = builder.projectId;
     this.datasetId = builder.datasetId;
     this.dataTableId = builder.dataTableId;
@@ -197,7 +197,7 @@ public class ReferencedBigQueryDataTableResource extends ReferencedResource {
    */
   public Builder toBuilder() {
     return builder()
-        .wsmResourceFieldsBuilder(getWsmResourceFieldsBuilder())
+        .resourceCommonFields(getWsmResourceFields())
         .datasetId(getDatasetId())
         .dataTableId(getDataTableId())
         .projectId(getProjectId());
@@ -208,7 +208,7 @@ public class ReferencedBigQueryDataTableResource extends ReferencedResource {
     private String projectId;
     private String datasetId;
     private String dataTableId;
-    private WsmResourceFields.Builder<?> wsmResourceFieldsBuilder;
+    private WsmResourceFields resourceCommonFields;
 
     public Builder projectId(String projectId) {
       this.projectId = projectId;
@@ -225,8 +225,8 @@ public class ReferencedBigQueryDataTableResource extends ReferencedResource {
       return this;
     }
 
-    public Builder wsmResourceFieldsBuilder(WsmResourceFields.Builder<?> wsmResourceFieldsBuilder) {
-      this.wsmResourceFieldsBuilder = wsmResourceFieldsBuilder;
+    public Builder resourceCommonFields(WsmResourceFields resourceFields) {
+      this.resourceCommonFields = resourceFields;
       return this;
     }
 

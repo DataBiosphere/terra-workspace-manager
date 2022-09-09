@@ -80,7 +80,7 @@ public class ReferencedTerraWorkspaceResource extends ReferencedResource {
   }
 
   private ReferencedTerraWorkspaceResource(Builder builder) {
-    super(builder.wsmResourceFieldsBuilder);
+    super(builder.resourceCommonFields);
     this.referencedWorkspaceId = builder.referencedWorkspaceId;
     validate();
   }
@@ -171,21 +171,21 @@ public class ReferencedTerraWorkspaceResource extends ReferencedResource {
    */
   public Builder toBuilder() {
     return builder()
-        .wsmResourceFieldsBuilder(getWsmResourceFieldsBuilder())
+        .resourceCommonFields(getWsmResourceFields())
         .referencedWorkspaceId(getReferencedWorkspaceId());
   }
 
   public static class Builder {
     private UUID referencedWorkspaceId;
-    private WsmResourceFields.Builder<?> wsmResourceFieldsBuilder;
+    private WsmResourceFields resourceCommonFields;
 
     public Builder referencedWorkspaceId(UUID referencedWorkspaceId) {
       this.referencedWorkspaceId = referencedWorkspaceId;
       return this;
     }
 
-    public Builder wsmResourceFieldsBuilder(WsmResourceFields.Builder<?> wsmResourceFieldsBuilder) {
-      this.wsmResourceFieldsBuilder = wsmResourceFieldsBuilder;
+    public Builder resourceCommonFields(WsmResourceFields resourceFields) {
+      this.resourceCommonFields = resourceFields;
       return this;
     }
 

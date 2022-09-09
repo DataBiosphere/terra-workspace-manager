@@ -33,8 +33,8 @@ public abstract class ReferencedResource extends WsmResource {
         properties);
   }
 
-  public ReferencedResource(WsmResourceFields.Builder resourceFields) {
-    super(resourceFields.build());
+  public ReferencedResource(WsmResourceFields resourceFields) {
+    super(resourceFields);
   }
 
   public ReferencedResource(DbResource dbResource) {
