@@ -634,8 +634,10 @@ public class ResourceDao {
   @ReadTransaction
   public boolean resourceExists(UUID workspaceUuid, UUID resourceId) {
     final String sql =
-        "SELECT COUNT(1) FROM resource"
-            + " WHERE workspace_id = :workspace_id AND resource_id = :resource_id";
+        """
+            SELECT COUNT(1) FROM resource
+            WHERE workspace_id = :workspace_id AND resource_id = :resource_id
+            """;
     MapSqlParameterSource params =
         new MapSqlParameterSource()
             .addValue("workspace_id", workspaceUuid.toString())
