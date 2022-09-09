@@ -479,15 +479,12 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
     return new ResponseEntity<>(resource.toApiResource(), HttpStatus.OK);
   }
 
-  @Override // TODO get from LZ if it exists
+  @Override
   public ResponseEntity<ApiAzureRelayNamespaceResource> getAzureRelayNamespace(
       UUID workspaceId, UUID resourceId) {
     final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     features.azureEnabledCheck();
-
-    // TODO take resource-id into consideration resourceId if there are multiple azure Relay
-    // instances
-    //  in the landing zone (no plan for this currently)
+    
     final AzureCloudContext azureCloudContext =
         azureCloudContextService.getRequiredAzureCloudContext(workspaceId);
     final bio.terra.landingzone.model.AzureCloudContext lzAzureCloudContext =
