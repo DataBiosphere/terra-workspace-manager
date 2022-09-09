@@ -69,7 +69,7 @@ public class ReferencedBigQueryDatasetResource extends ReferencedResource {
   }
 
   private ReferencedBigQueryDatasetResource(Builder builder) {
-    super(builder.resourceFields);
+    super(builder.wsmResourceFieldsBuilder);
     this.projectId = builder.projectId;
     this.datasetName = builder.datasetName;
     validate();
@@ -184,7 +184,7 @@ public class ReferencedBigQueryDatasetResource extends ReferencedResource {
    */
   public Builder toBuilder() {
     return builder()
-        .resourceCommonFields(getWsmResourceFields())
+        .wsmResourceFieldsBuilder(getWsmResourceFieldsBuilder())
         .datasetName(getDatasetName())
         .projectId(getProjectId());
   }
@@ -192,7 +192,7 @@ public class ReferencedBigQueryDatasetResource extends ReferencedResource {
   public static class Builder {
     private String projectId;
     private String datasetName;
-    private WsmResourceFields resourceFields;
+    private WsmResourceFields.Builder<?> wsmResourceFieldsBuilder;
 
     public Builder projectId(String projectId) {
       this.projectId = projectId;
@@ -204,8 +204,8 @@ public class ReferencedBigQueryDatasetResource extends ReferencedResource {
       return this;
     }
 
-    public Builder resourceCommonFields(WsmResourceFields resourceFields) {
-      this.resourceFields = resourceFields;
+    public Builder wsmResourceFieldsBuilder(WsmResourceFields.Builder<?> wsmResourceFieldsBuilder) {
+      this.wsmResourceFieldsBuilder = wsmResourceFieldsBuilder;
       return this;
     }
 

@@ -104,7 +104,7 @@ public abstract class WsmResource {
     return description;
   }
 
-  public WsmResourceFields getWsmResourceFields() {
+  public WsmResourceFields.Builder<?> getWsmResourceFieldsBuilder() {
     return WsmResourceFields.builder()
         .name(name)
         .description(description)
@@ -112,8 +112,7 @@ public abstract class WsmResource {
         .resourceId(resourceId)
         .cloningInstructions(cloningInstructions)
         .resourceLineage(resourceLineage)
-        .properties(properties)
-        .build();
+        .properties(properties);
   }
 
   public CloningInstructions getCloningInstructions() {

@@ -78,7 +78,7 @@ public class ReferencedGcsBucketResource extends ReferencedResource {
   }
 
   private ReferencedGcsBucketResource(Builder builder) {
-    super(builder.resourceCommonFields);
+    super(builder.wsmResourceFieldsBuilder);
     this.bucketName = builder.bucketName;
     validate();
   }
@@ -165,7 +165,9 @@ public class ReferencedGcsBucketResource extends ReferencedResource {
    * @return builder object ready for new values to replace existing ones
    */
   public Builder toBuilder() {
-    return builder().bucketName(getBucketName()).resourceCommonFields(getWsmResourceFields());
+    return builder()
+        .bucketName(getBucketName())
+        .wsmResourceFieldsBuilder(getWsmResourceFieldsBuilder());
   }
 
   public static Builder builder() {
@@ -174,15 +176,15 @@ public class ReferencedGcsBucketResource extends ReferencedResource {
 
   public static class Builder {
     private String bucketName;
-    private WsmResourceFields resourceCommonFields;
+    private WsmResourceFields.Builder<?> wsmResourceFieldsBuilder;
 
     public Builder bucketName(String bucketName) {
       this.bucketName = bucketName;
       return this;
     }
 
-    public Builder resourceCommonFields(WsmResourceFields resourceFields) {
-      this.resourceCommonFields = resourceFields;
+    public Builder wsmResourceFieldsBuilder(WsmResourceFields.Builder<?> resourceFields) {
+      this.wsmResourceFieldsBuilder = resourceFields;
       return this;
     }
 
