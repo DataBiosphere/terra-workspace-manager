@@ -28,7 +28,6 @@ import bio.terra.workspace.model.JobControl;
 import bio.terra.workspace.model.ResourceList;
 import bio.terra.workspace.model.ResourceMetadata;
 import bio.terra.workspace.model.ResourceType;
-import bio.terra.workspace.model.ResourceUpdateCommonField;
 import bio.terra.workspace.model.StewardshipType;
 import bio.terra.workspace.model.UpdateControlledGcpBigQueryDatasetRequestBody;
 import com.google.api.client.http.HttpStatusCodes;
@@ -208,10 +207,7 @@ public class ControlledBigQueryDatasetLifecycle extends GcpWorkspaceCloneTestScr
     Integer defaultTableLifetimeSec = 5400;
     var updateDatasetRequest =
         new UpdateControlledGcpBigQueryDatasetRequestBody()
-            .updateCommonFields(
-                new ResourceUpdateCommonField()
-                    .description(resourceDescription)
-            )
+            .description(resourceDescription)
             .updateParameters(
                 new GcpBigQueryDatasetUpdateParameters()
                     .defaultTableLifetime(defaultTableLifetimeSec)
@@ -227,9 +223,7 @@ public class ControlledBigQueryDatasetLifecycle extends GcpWorkspaceCloneTestScr
     // However, invalid updates are rejected.
     String invalidName = "!!!invalid_name!!!";
     var invalidUpdateDatasetRequest =
-        new UpdateControlledGcpBigQueryDatasetRequestBody()
-            .updateCommonFields(
-                new ResourceUpdateCommonField().name(invalidName));
+        new UpdateControlledGcpBigQueryDatasetRequestBody().name(invalidName);
     ApiException invalidUpdateEx =
         assertThrows(
             ApiException.class,

@@ -48,7 +48,6 @@ import bio.terra.workspace.model.ManagedBy;
 import bio.terra.workspace.model.ResourceList;
 import bio.terra.workspace.model.ResourceMetadata;
 import bio.terra.workspace.model.ResourceType;
-import bio.terra.workspace.model.ResourceUpdateCommonField;
 import bio.terra.workspace.model.StewardshipType;
 import bio.terra.workspace.model.UpdateControlledGcpGcsBucketRequestBody;
 import com.google.api.client.http.HttpStatusCodes;
@@ -329,11 +328,8 @@ public class ControlledGcsBucketLifecycle extends GcpWorkspaceCloneTestScriptBas
       throws ApiException {
     var body =
         new UpdateControlledGcpGcsBucketRequestBody()
-            .updateCommonFields(
-                new ResourceUpdateCommonField()
-                    .name(updatedResourceName)
-                    .description(updatedDescription)
-            )
+            .name(updatedResourceName)
+            .description(updatedDescription)
             .updateParameters(updateParameters);
     logger.info(
         "Attempting to update bucket {} resource ID {} workspace {}",

@@ -7,7 +7,6 @@ import bio.terra.workspace.model.CreateDataRepoSnapshotReferenceRequestBody;
 import bio.terra.workspace.model.DataRepoSnapshotAttributes;
 import bio.terra.workspace.model.DataRepoSnapshotResource;
 import bio.terra.workspace.model.ReferenceResourceCommonFields;
-import bio.terra.workspace.model.ResourceUpdateCommonField;
 import bio.terra.workspace.model.UpdateDataRepoSnapshotReferenceRequestBody;
 import java.util.UUID;
 import javax.annotation.Nullable;
@@ -51,14 +50,12 @@ public class DataRepoUtils {
       throws ApiException {
     UpdateDataRepoSnapshotReferenceRequestBody body =
         new UpdateDataRepoSnapshotReferenceRequestBody();
-    var commonFields = new ResourceUpdateCommonField();
     if (name != null) {
-      commonFields.setName(name);
+      body.setName(name);
     }
     if (description != null) {
-      commonFields.setDescription(description);
+      body.setDescription(description);
     }
-    body.setUpdateCommonFields(commonFields);
     if (instanceId != null) {
       body.setInstanceName(instanceId);
     }
