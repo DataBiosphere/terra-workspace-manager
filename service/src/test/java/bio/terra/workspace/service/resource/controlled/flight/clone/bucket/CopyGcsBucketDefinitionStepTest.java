@@ -12,6 +12,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.FlightMap;
@@ -26,6 +27,7 @@ import bio.terra.workspace.service.resource.controlled.model.AccessScopeType;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.model.ResourceLineageEntry;
+import bio.terra.workspace.service.workspace.GcpCloudContextService;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ResourceKeys;
 import java.util.ArrayList;
@@ -34,23 +36,26 @@ import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
-import org.mockito.Mock;
+import org.springframework.boot.test.mock.mockito.MockBean;
 
 public class CopyGcsBucketDefinitionStepTest extends BaseUnitTest {
 
-  @Mock private FlightContext mockFlightContext;
-  @Mock private AuthenticatedUserRequest mockUserRequest;
-  @Mock private ControlledResourceService mockControlledResourceService;
+  @MockBean private FlightContext mockFlightContext;
+  @MockBean private AuthenticatedUserRequest mockUserRequest;
+  @MockBean private ControlledResourceService mockControlledResourceService;
+  @MockBean private GcpCloudContextService gcpCloudContextService;
   private CopyGcsBucketDefinitionStep copyGcsBucketDefinitionStep;
 
   @BeforeEach
-  public void setup() {
+  public void setup() throws InterruptedException {
     copyGcsBucketDefinitionStep =
         new CopyGcsBucketDefinitionStep(
             mockUserRequest,
             SOURCE_BUCKET_RESOURCE,
             mockControlledResourceService,
             CloningInstructions.COPY_DEFINITION);
+    when(gcpCloudContextService.getRequiredGcpProject(any(UUID.class)))
+        .thenReturn("my-fake-project");
   }
 
   @Test

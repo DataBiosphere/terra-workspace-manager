@@ -1,0 +1,16 @@
+databaseChangeLog:
+- changeSet:
+    id: Add resource properties column
+    author: yuhuyoyo
+    changes:
+    - addColumn:
+        tableName: resource
+        columns:
+        - column:
+            name: properties
+            type: jsonb
+            remarks: |
+              Serialized key-value map of resource properties.
+            defaultValue: "{}"
+            constraints:
+                nullable: false

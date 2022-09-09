@@ -30,6 +30,7 @@ import bio.terra.workspace.service.resource.model.WsmResourceType;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -62,7 +63,8 @@ public class ControlledAzureVmResource extends ControlledResource {
       @JsonProperty("ipId") UUID ipId,
       @JsonProperty("networkId") UUID networkId,
       @JsonProperty("diskId") UUID diskId,
-      @JsonProperty("resourceLineage") List<ResourceLineageEntry> resourceLineage) {
+      @JsonProperty("resourceLineage") List<ResourceLineageEntry> resourceLineage,
+      @JsonProperty("properties") Map<String, String> properties) {
 
     super(
         workspaceId,
@@ -75,7 +77,8 @@ public class ControlledAzureVmResource extends ControlledResource {
         managedBy,
         applicationId,
         privateResourceState,
-        resourceLineage);
+        resourceLineage,
+        properties);
     this.vmName = vmName;
     this.region = region;
     this.vmSize = vmSize;
