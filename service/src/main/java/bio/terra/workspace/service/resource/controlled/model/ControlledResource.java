@@ -17,6 +17,7 @@ import bio.terra.workspace.service.resource.model.ResourceLineageEntry;
 import bio.terra.workspace.service.resource.model.StewardshipType;
 import bio.terra.workspace.service.resource.model.WsmResource;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
@@ -44,8 +45,16 @@ public abstract class ControlledResource extends WsmResource {
       ManagedByType managedBy,
       String applicationId,
       PrivateResourceState privateResourceState,
-      List<ResourceLineageEntry> resourceLineage) {
-    super(workspaceUuid, resourceId, name, description, cloningInstructions, resourceLineage);
+      List<ResourceLineageEntry> resourceLineage,
+      Map<String, String> properties) {
+    super(
+        workspaceUuid,
+        resourceId,
+        name,
+        description,
+        cloningInstructions,
+        resourceLineage,
+        properties);
     this.assignedUser = assignedUser;
     this.accessScope = accessScope;
     this.managedBy = managedBy;
@@ -72,7 +81,8 @@ public abstract class ControlledResource extends WsmResource {
         builder.getName(),
         builder.getDescription(),
         builder.getCloningInstructions(),
-        builder.getResourceLineage());
+        builder.getResourceLineage(),
+        builder.getProperties());
     this.assignedUser = builder.getAssignedUser();
     this.accessScope = builder.getAccessScope();
     this.managedBy = builder.getManagedBy();
@@ -170,8 +180,7 @@ public abstract class ControlledResource extends WsmResource {
     if (getResourceType() == null
         || attributesToJson() == null
         || getAccessScope() == null
-        || getManagedBy() == null
-        || getResourceId() == null) {
+        || getManagedBy() == null) {
       throw new MissingRequiredFieldException("Missing required field for ControlledResource.");
     }
     if (getAssignedUser().isPresent() && getAccessScope() == AccessScopeType.ACCESS_SCOPE_SHARED) {

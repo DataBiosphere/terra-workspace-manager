@@ -14,13 +14,14 @@ import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.model.ResourceLineageEntry;
 import bio.terra.workspace.service.resource.model.WsmResourceFamily;
+import bio.terra.workspace.service.resource.model.WsmResourceFields;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.resource.referenced.cloud.gcp.ReferencedResource;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Strings;
 import java.util.List;
-import java.util.Optional;
+import java.util.Map;
 import java.util.UUID;
 import javax.annotation.Nullable;
 
@@ -36,9 +37,23 @@ public class ReferencedGitRepoResource extends ReferencedResource {
       @JsonProperty("description") @Nullable String description,
       @JsonProperty("cloningInstructions") CloningInstructions cloningInstructions,
       @JsonProperty("gitRepoUrl") String gitRepoUrl,
-      @JsonProperty("resourceLineage") List<ResourceLineageEntry> resourceLineage) {
-    super(workspaceId, resourceId, name, description, cloningInstructions, resourceLineage);
+      @JsonProperty("resourceLineage") @Nullable List<ResourceLineageEntry> resourceLineage,
+      @JsonProperty("properties") Map<String, String> properties) {
+    super(
+        workspaceId,
+        resourceId,
+        name,
+        description,
+        cloningInstructions,
+        resourceLineage,
+        properties);
     this.gitRepoUrl = gitRepoUrl;
+    validate();
+  }
+
+  private ReferencedGitRepoResource(Builder builder) {
+    super(builder.wsmResourceFields);
+    this.gitRepoUrl = builder.gitRepoUrl;
     validate();
   }
 
@@ -129,14 +144,7 @@ public class ReferencedGitRepoResource extends ReferencedResource {
    * @return builder object ready for new values to replace existing ones
    */
   public ReferencedGitRepoResource.Builder toBuilder() {
-    return builder()
-        .gitRepoUrl(getGitRepoUrl())
-        .cloningInstructions(getCloningInstructions())
-        .description(getDescription())
-        .name(getName())
-        .resourceId(getResourceId())
-        .workspaceId(getWorkspaceId())
-        .resourceLineage(getResourceLineage());
+    return builder().gitRepoUrl(getGitRepoUrl()).wsmResourceFields(getWsmResourceFields());
   }
 
   public static ReferencedGitRepoResource.Builder builder() {
@@ -145,37 +153,11 @@ public class ReferencedGitRepoResource extends ReferencedResource {
 
   public static class Builder {
 
-    private CloningInstructions cloningInstructions;
+    private WsmResourceFields wsmResourceFields;
     private String gitRepoUrl;
-    private String description;
-    private String name;
-    private UUID resourceId;
-    private UUID workspaceId;
-    private List<ResourceLineageEntry> resourceLineage;
 
-    public ReferencedGitRepoResource.Builder workspaceId(UUID workspaceUuid) {
-      this.workspaceId = workspaceUuid;
-      return this;
-    }
-
-    public ReferencedGitRepoResource.Builder resourceId(UUID resourceId) {
-      this.resourceId = resourceId;
-      return this;
-    }
-
-    public ReferencedGitRepoResource.Builder name(String name) {
-      this.name = name;
-      return this;
-    }
-
-    public ReferencedGitRepoResource.Builder description(String description) {
-      this.description = description;
-      return this;
-    }
-
-    public ReferencedGitRepoResource.Builder cloningInstructions(
-        CloningInstructions cloningInstructions) {
-      this.cloningInstructions = cloningInstructions;
+    public ReferencedGitRepoResource.Builder wsmResourceFields(WsmResourceFields resourceFields) {
+      this.wsmResourceFields = resourceFields;
       return this;
     }
 
@@ -184,21 +166,8 @@ public class ReferencedGitRepoResource extends ReferencedResource {
       return this;
     }
 
-    public Builder resourceLineage(List<ResourceLineageEntry> resourceLineage) {
-      this.resourceLineage = resourceLineage;
-      return this;
-    }
-
     public ReferencedGitRepoResource build() {
-      // On the create path, we can omit the resourceId and have it filled in by the builder.
-      return new ReferencedGitRepoResource(
-          workspaceId,
-          Optional.ofNullable(resourceId).orElse(UUID.randomUUID()),
-          name,
-          description,
-          cloningInstructions,
-          gitRepoUrl,
-          resourceLineage);
+      return new ReferencedGitRepoResource(this);
     }
   }
 }

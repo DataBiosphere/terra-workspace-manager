@@ -30,6 +30,7 @@ import bio.terra.workspace.service.resource.model.WsmResourceType;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import org.apache.commons.lang3.builder.EqualsBuilder;
@@ -53,8 +54,8 @@ public class ControlledBigQueryDatasetResource extends ControlledResource {
       @JsonProperty("applicationId") String applicationId,
       @JsonProperty("datasetName") String datasetName,
       @JsonProperty("projectId") String projectId,
-      @JsonProperty("resourceLineage") List<ResourceLineageEntry> resourceLineage) {
-
+      @JsonProperty("resourceLineage") List<ResourceLineageEntry> resourceLineage,
+      @JsonProperty("properties") Map<String, String> properties) {
     super(
         workspaceId,
         resourceId,
@@ -66,7 +67,8 @@ public class ControlledBigQueryDatasetResource extends ControlledResource {
         managedBy,
         applicationId,
         privateResourceState,
-        resourceLineage);
+        resourceLineage,
+        properties);
     this.datasetName = datasetName;
     this.projectId = projectId;
     validate();

@@ -335,7 +335,8 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
               CloningInstructions.COPY_NOTHING,
               DATA_REPO_INSTANCE_NAME,
               "polaroid",
-              /*resourceLineage=*/ null);
+              /*resourceLineage=*/ null,
+              /*properties=*/ Map.of());
       // Service methods which wait for a flight to complete will throw an
       // InvalidResultStateException when that flight fails without a cause, which occurs when a
       // flight fails via debugInfo.
@@ -366,7 +367,8 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
                   CloningInstructions.COPY_NOTHING,
                   DATA_REPO_INSTANCE_NAME,
                   "polaroid",
-                  /*resourceLineage=*/ null));
+                  /*resourceLineage=*/ null,
+                  /*properties=*/ Map.of()));
     }
 
     @Test
@@ -382,7 +384,8 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
                   CloningInstructions.COPY_NOTHING,
                   DATA_REPO_INSTANCE_NAME,
                   "polaroid",
-                  /*resourceLineage=*/ null));
+                  /*resourceLineage=*/ null,
+                  /*properties=*/ Map.of()));
     }
 
     @Test
@@ -398,7 +401,8 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
                   null,
                   DATA_REPO_INSTANCE_NAME,
                   "polaroid",
-                  /*resourceLineage=*/ null));
+                  /*resourceLineage=*/ null,
+                  /*properties=*/ Map.of()));
     }
 
     @Test
@@ -414,7 +418,8 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
                   null,
                   DATA_REPO_INSTANCE_NAME,
                   "polaroid",
-                  /*resourceLineage=*/ null));
+                  /*resourceLineage=*/ null,
+                  /*properties=*/ Map.of()));
     }
   }
 
@@ -495,7 +500,8 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
                   CloningInstructions.COPY_NOTHING,
                   null,
                   "polaroid",
-                  /*resourceLineage=*/ null));
+                  /*resourceLineage=*/ null,
+                  /*properties=*/ Map.of()));
     }
 
     @Test
@@ -514,7 +520,8 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
                   CloningInstructions.COPY_NOTHING,
                   DATA_REPO_INSTANCE_NAME,
                   null,
-                  /*resourceLineage=*/ null));
+                  /*resourceLineage=*/ null,
+                  /*properties=*/ Map.of()));
     }
 
     @Test
@@ -577,7 +584,8 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
           CloningInstructions.COPY_REFERENCE,
           /*bucketName=*/ "theres-a-hole-in-the-bottom-of-the",
           /*objectName=*/ "balloon",
-          /*resourceLineage=*/ null);
+          /*resourceLineage=*/ null,
+          /*properties=*/ Map.of());
     }
 
     @Test
@@ -646,7 +654,8 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
           "description of " + resourceName,
           CloningInstructions.COPY_REFERENCE,
           "theres-a-hole-in-the-bottom-of-the",
-          /*resourceLineage=*/ null);
+          /*resourceLineage=*/ null,
+          /*properties=*/ Map.of());
     }
 
     @Test
@@ -701,7 +710,8 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
                   CloningInstructions.COPY_REFERENCE,
                   /*bucketName=*/ "spongebob",
                   /*fileName=*/ "",
-                  /*resourceLineage=*/ null));
+                  /*resourceLineage=*/ null,
+                  /*properties=*/ Map.of()));
     }
 
     @Test
@@ -718,7 +728,8 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
                   "description of " + resourceName,
                   CloningInstructions.COPY_REFERENCE,
                   null,
-                  /*resourceLineage=*/ null));
+                  /*resourceLineage=*/ null,
+                  /*properties=*/ Map.of()));
     }
 
     @Test
@@ -736,7 +747,8 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
                   "description of " + resourceName,
                   CloningInstructions.COPY_REFERENCE,
                   "Buckets don't accept * in the names, either",
-                  /*resourceLineage=*/ null));
+                  /*resourceLineage=*/ null,
+                  /*properties=*/ Map.of()));
     }
 
     @Test
@@ -776,7 +788,8 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
           CloningInstructions.COPY_REFERENCE,
           FAKE_PROJECT_ID,
           DATASET_NAME,
-          /*resourceLineage=*/ null);
+          /*resourceLineage=*/ null,
+          /*properties=*/ Map.of());
     }
 
     private ReferencedBigQueryDataTableResource makeBigQueryDataTableResource() {
@@ -791,7 +804,8 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
           FAKE_PROJECT_ID,
           DATASET_NAME,
           DATA_TABLE_NAME,
-          /*resourceLineage=*/ null);
+          /*resourceLineage=*/ null,
+          /*properties=*/ Map.of());
     }
 
     @Test
@@ -975,7 +989,8 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
                   CloningInstructions.COPY_NOTHING,
                   null,
                   "testbq_datasetname",
-                  /*resourceLineage=*/ null));
+                  /*resourceLineage=*/ null,
+                  /*properties=*/ Map.of()));
     }
 
     @Test
@@ -995,7 +1010,8 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
                   "testbq-projectid",
                   "testbq-datasetname",
                   "",
-                  /*resourceLineage=*/ null));
+                  /*resourceLineage=*/ null,
+                  /*properties=*/ Map.of()));
     }
 
     @Test
@@ -1014,7 +1030,8 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
                   CloningInstructions.COPY_NOTHING,
                   "testbq-projectid",
                   "",
-                  /*resourceLineage=*/ null));
+                  /*resourceLineage=*/ null,
+                  /*properties=*/ Map.of()));
     }
 
     @Test
@@ -1034,7 +1051,8 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
                   "testbq-projectid",
                   DATASET_NAME,
                   "*&%@#",
-                  /*resourceLineage=*/ null));
+                  /*resourceLineage=*/ null,
+                  /*Properties=*/ Map.of()));
     }
 
     @Test
@@ -1053,7 +1071,8 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
                   CloningInstructions.COPY_NOTHING,
                   "testbq-projectid",
                   "Nor do datasets; neither ' nor *",
-                  /*resourceLineage=*/ null));
+                  /*resourceLineage=*/ null,
+                  /*properties=*/ Map.of()));
     }
 
     @Test
@@ -1087,7 +1106,8 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
           "description of " + resourceName,
           CloningInstructions.COPY_NOTHING,
           /*referencedWorkspaceId=*/ referencedWorkspaceId,
-          /*resourceLineage=*/ null);
+          /*resourceLineage=*/ null,
+          /*properties=*/ Map.of());
     }
 
     @Test
@@ -1192,7 +1212,8 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
               CloningInstructions.COPY_NOTHING,
               DATA_REPO_INSTANCE_NAME,
               "polaroid",
-              /*resourceLineage=*/ null);
+              /*resourceLineage=*/ null,
+              /*properties=*/ Map.of());
 
       assertThrows(
           DuplicateResourceException.class,

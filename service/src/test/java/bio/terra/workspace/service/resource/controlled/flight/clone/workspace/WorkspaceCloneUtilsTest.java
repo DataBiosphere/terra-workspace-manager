@@ -2,10 +2,12 @@ package bio.terra.workspace.service.resource.controlled.flight.clone.workspace;
 
 import static bio.terra.workspace.service.resource.controlled.flight.clone.workspace.WorkspaceCloneUtils.buildDestinationControlledBigQueryDataset;
 import static bio.terra.workspace.service.resource.controlled.flight.clone.workspace.WorkspaceCloneUtils.buildDestinationControlledGcsBucket;
+import static bio.terra.workspace.service.resource.controlled.flight.clone.workspace.WorkspaceCloneUtils.buildDestinationReferencedResource;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import bio.terra.workspace.common.BaseUnitTest;
 import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
+import bio.terra.workspace.common.fixtures.ReferenceResourceFixtures;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.bqdataset.ControlledBigQueryDatasetResource;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.ControlledGcsBucketResource;
 import bio.terra.workspace.service.resource.controlled.model.AccessScopeType;
@@ -13,6 +15,7 @@ import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import bio.terra.workspace.service.resource.controlled.model.PrivateResourceState;
 import bio.terra.workspace.service.resource.model.ResourceLineageEntry;
 import bio.terra.workspace.service.resource.model.WsmResource;
+import bio.terra.workspace.service.resource.referenced.cloud.gcp.datareposnapshot.ReferencedDataRepoSnapshotResource;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -128,6 +131,28 @@ public class WorkspaceCloneUtilsTest extends BaseUnitTest {
     assertControlledResourceCommonField(sourceBucket, bucketToClone);
   }
 
+  @Test
+  public void buildDestinationReferencedResource_attributesCopied() {
+    ReferencedDataRepoSnapshotResource referencedResource =
+        ReferenceResourceFixtures.makeDataRepoSnapshotResource(WORKSPACE_ID);
+    var cloneResourceName = RandomStringUtils.randomAlphabetic(5);
+    var cloneDescription = "This is a cloned data repo snapshot referenced resource";
+
+    var snapshotToClone =
+        (ReferencedDataRepoSnapshotResource)
+            buildDestinationReferencedResource(
+                referencedResource,
+                DESTINATION_WORKSPACE_ID,
+                DESTINATION_RESOURCE_ID,
+                cloneResourceName,
+                cloneDescription);
+
+    assertResourceCommonFields(
+        referencedResource, cloneResourceName, cloneDescription, snapshotToClone);
+    assertEquals(referencedResource.getSnapshotId(), snapshotToClone.getSnapshotId());
+    assertEquals(referencedResource.getInstanceName(), snapshotToClone.getInstanceName());
+  }
+
   private static void assertResourceCommonFields(
       WsmResource sourceResource,
       String cloneResourceName,
@@ -136,7 +161,8 @@ public class WorkspaceCloneUtilsTest extends BaseUnitTest {
     assertEquals(cloneResourceName, resourceToClone.getName());
     assertEquals(cloneDescription, resourceToClone.getDescription());
 
-    assertEquals(sourceResource.getCloningInstructions(), sourceResource.getCloningInstructions());
+    assertEquals(sourceResource.getCloningInstructions(), resourceToClone.getCloningInstructions());
+    assertEquals(sourceResource.getProperties(), resourceToClone.getProperties());
     assertEquals(1, resourceToClone.getResourceLineage().size());
     List<ResourceLineageEntry> expectedLineage = sourceResource.getResourceLineage();
     expectedLineage.add(

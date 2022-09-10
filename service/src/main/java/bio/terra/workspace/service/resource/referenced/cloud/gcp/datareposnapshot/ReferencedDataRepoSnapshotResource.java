@@ -15,13 +15,14 @@ import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.model.ResourceLineageEntry;
 import bio.terra.workspace.service.resource.model.WsmResourceFamily;
+import bio.terra.workspace.service.resource.model.WsmResourceFields;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.resource.referenced.cloud.gcp.ReferencedResource;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Strings;
 import java.util.List;
-import java.util.Optional;
+import java.util.Map;
 import java.util.UUID;
 
 public class ReferencedDataRepoSnapshotResource extends ReferencedResource {
@@ -49,11 +50,25 @@ public class ReferencedDataRepoSnapshotResource extends ReferencedResource {
       @JsonProperty("cloningInstructions") CloningInstructions cloningInstructions,
       @JsonProperty("instanceName") String instanceName,
       @JsonProperty("snapshotId") String snapshotId,
-      @JsonProperty("resourceLineage") List<ResourceLineageEntry> resourceLineage) {
-    super(workspaceId, resourceId, name, description, cloningInstructions, resourceLineage);
+      @JsonProperty("resourceLineage") List<ResourceLineageEntry> resourceLineage,
+      @JsonProperty("properties") Map<String, String> properties) {
+    super(
+        workspaceId,
+        resourceId,
+        name,
+        description,
+        cloningInstructions,
+        resourceLineage,
+        properties);
     this.instanceName = instanceName;
     this.snapshotId = snapshotId;
     validate();
+  }
+
+  private ReferencedDataRepoSnapshotResource(Builder builder) {
+    super(builder.wsmResourceFields);
+    this.instanceName = builder.instanceName;
+    this.snapshotId = builder.snapshotId;
   }
 
   /**
@@ -150,51 +165,15 @@ public class ReferencedDataRepoSnapshotResource extends ReferencedResource {
 
   public Builder toBuilder() {
     return builder()
-        .cloningInstructions(getCloningInstructions())
-        .description(getDescription())
         .instanceName(getInstanceName())
-        .name(getName())
         .snapshotId(getSnapshotId())
-        .resourceId(getResourceId())
-        .workspaceId(getWorkspaceId())
-        .resourceLineage(getResourceLineage());
+        .wsmResourceFields(getWsmResourceFields());
   }
 
   public static class Builder {
-    private CloningInstructions cloningInstructions;
-    private String description;
     private String instanceName;
-    private String name;
     private String snapshotId;
-    private UUID resourceId;
-    private UUID workspaceId;
-    private List<ResourceLineageEntry> resourceLineage;
-
-    public ReferencedDataRepoSnapshotResource.Builder workspaceId(UUID workspaceUuid) {
-      this.workspaceId = workspaceUuid;
-      return this;
-    }
-
-    public ReferencedDataRepoSnapshotResource.Builder resourceId(UUID resourceId) {
-      this.resourceId = resourceId;
-      return this;
-    }
-
-    public ReferencedDataRepoSnapshotResource.Builder name(String name) {
-      this.name = name;
-      return this;
-    }
-
-    public ReferencedDataRepoSnapshotResource.Builder description(String description) {
-      this.description = description;
-      return this;
-    }
-
-    public ReferencedDataRepoSnapshotResource.Builder cloningInstructions(
-        CloningInstructions cloningInstructions) {
-      this.cloningInstructions = cloningInstructions;
-      return this;
-    }
+    private WsmResourceFields wsmResourceFields;
 
     public Builder instanceName(String instanceName) {
       this.instanceName = instanceName;
@@ -206,22 +185,14 @@ public class ReferencedDataRepoSnapshotResource extends ReferencedResource {
       return this;
     }
 
-    public Builder resourceLineage(List<ResourceLineageEntry> resourceLineage) {
-      this.resourceLineage = resourceLineage;
+    public Builder wsmResourceFields(WsmResourceFields resourceFields) {
+      this.wsmResourceFields = resourceFields;
       return this;
     }
 
     public ReferencedDataRepoSnapshotResource build() {
       // On the create path, we can omit the resourceId and have it filled in by the builder.
-      return new ReferencedDataRepoSnapshotResource(
-          workspaceId,
-          Optional.ofNullable(resourceId).orElse(UUID.randomUUID()),
-          name,
-          description,
-          cloningInstructions,
-          instanceName,
-          snapshotId,
-          resourceLineage);
+      return new ReferencedDataRepoSnapshotResource(this);
     }
   }
 }

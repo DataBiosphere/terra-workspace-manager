@@ -27,6 +27,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -48,7 +49,8 @@ public class ControlledAzureStorageResource extends ControlledResource {
       @JsonProperty("applicationId") String applicationId,
       @JsonProperty("storageAccountName") String storageAccountName,
       @JsonProperty("region") String region,
-      @JsonProperty("resourceLineage") List<ResourceLineageEntry> resourceLineage) {
+      @JsonProperty("resourceLineage") List<ResourceLineageEntry> resourceLineage,
+      @JsonProperty("properties") Map<String, String> properties) {
 
     super(
         workspaceId,
@@ -61,7 +63,8 @@ public class ControlledAzureStorageResource extends ControlledResource {
         managedBy,
         applicationId,
         privateResourceState,
-        resourceLineage);
+        resourceLineage,
+        properties);
     this.storageAccountName = storageAccountName;
     this.region = region;
     validate();

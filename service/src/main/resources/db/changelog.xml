@@ -12,4 +12,5 @@
     <include file="changesets/20220721_actor_email_and_actor_subject_id_columns.yaml" relativeToChangelogFile="true"/>
     <include file="changesets/20220810_resource_lineage.yaml" relativeToChangelogFile="true"/>
     <include file="changesets/20220824_folder_table.yaml" relativeToChangelogFile="true"/>
+    <include file="changesets/20220907_add_resource_properties_column.yaml" relativeToChangelogFile="true" />
 </databaseChangeLog>

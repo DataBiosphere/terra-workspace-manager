@@ -27,6 +27,7 @@ import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.regex.Pattern;
@@ -69,7 +70,8 @@ public class AzureStorageAccessServiceUnitTest extends BaseUnitTest {
         null,
         "fake",
         "us-east1",
-        /*resourceLineage=*/ null);
+        /*resourceLineage=*/ null,
+        /*properties*/ Map.of());
   }
 
   private ControlledAzureStorageContainerResource buildStorageContainerResource(
@@ -89,7 +91,8 @@ public class AzureStorageAccessServiceUnitTest extends BaseUnitTest {
         null,
         UUID.randomUUID(),
         "fake",
-        /*resourceLineage=*/ null);
+        /*resourceLineage=*/ null,
+        /*properties*/ Map.of());
   }
 
   private void assertValidToken(String sas, BlobContainerSasPermission expectedPermissions) {
