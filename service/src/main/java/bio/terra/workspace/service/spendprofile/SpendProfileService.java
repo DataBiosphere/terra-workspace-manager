@@ -1,15 +1,21 @@
 package bio.terra.workspace.service.spendprofile;
 
+import bio.terra.common.exception.ValidationException;
+import bio.terra.profile.api.ProfileApi;
+import bio.terra.profile.client.ApiClient;
+import bio.terra.profile.client.ApiException;
 import bio.terra.workspace.app.configuration.external.SpendProfileConfiguration;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamRethrow;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.iam.model.SamConstants;
 import bio.terra.workspace.service.spendprofile.exceptions.SpendUnauthorizedException;
-import com.google.common.collect.Maps;
-import java.util.List;
+
+import java.util.HashMap;
 import java.util.Map;
+import java.util.function.Function;
 import java.util.stream.Collectors;
+import javax.ws.rs.client.Client;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,17 +31,44 @@ import org.springframework.stereotype.Component;
 public class SpendProfileService {
   private final Logger logger = LoggerFactory.getLogger(SpendProfileService.class);
   private final SamService samService;
-  private final Map<SpendProfileId, SpendProfile> spendProfiles;
+  // private final Map<SpendProfileId, SpendProfile> spendProfiles;
+  private final SpendProfileConfiguration spendProfileConfiguration;
+  private final Client commonHttpClient;
 
   @Autowired
-  public SpendProfileService(
-      SamService samService, SpendProfileConfiguration spendProfileConfiguration) {
-    this(samService, parse(spendProfileConfiguration.getSpendProfiles()));
+  public SpendProfileService(SamService samService, SpendProfileConfiguration spendProfileConfiguration) {
+    this.samService = samService;
+    this.spendProfileConfiguration = spendProfileConfiguration;
+    commonHttpClient = new bio.terra.datarepo.client.ApiClient().getHttpClient();
   }
 
-  public SpendProfileService(SamService samService, List<SpendProfile> spendProfiles) {
-    this.samService = samService;
-    this.spendProfiles = Maps.uniqueIndex(spendProfiles, SpendProfile::id);
+
+  private ApiClient getApiClient(String accessToken) {
+    var client = new ApiClient().setHttpClient(commonHttpClient);
+    client.setAccessToken(accessToken);
+    client.setBasePath(spendProfileConfiguration.getBasePath());
+    return client;
+  }
+
+  private ProfileApi getProfileApi(AuthenticatedUserRequest userRequest) {
+    return new ProfileApi(getApiClient(userRequest.getRequiredToken()));
+  }
+
+  private Map<SpendProfileId, SpendProfile> getProfiles(AuthenticatedUserRequest userRequest) {
+    var profileApi = getProfileApi(userRequest);
+    try {
+      return profileApi.listProfiles(0, 1000).getItems().stream()
+          .map(
+              profile ->
+                  SpendProfile.builder()
+                      .billingAccountId(profile.getBillingAccountId())
+                      .id(new SpendProfileId(profile.getId().toString()))
+                      .build())
+          .collect(Collectors.toMap(SpendProfile::id, Function.identity()));
+
+    } catch (ApiException e) {
+      throw new RuntimeException("whoops", e);
+    }
   }
 
   /**
@@ -45,6 +78,7 @@ public class SpendProfileService {
    */
   public SpendProfile authorizeLinking(
       SpendProfileId spendProfileId, AuthenticatedUserRequest userRequest) {
+    // TODO factor this into a BPM call.
     if (!SamRethrow.onInterrupted(
         () ->
             samService.isAuthorized(
@@ -55,7 +89,8 @@ public class SpendProfileService {
         "isAuthorized")) {
       throw SpendUnauthorizedException.linkUnauthorized(spendProfileId);
     }
-    SpendProfile spend = spendProfiles.get(spendProfileId);
+
+    SpendProfile spend = getProfiles(userRequest).get(spendProfileId);
     if (spend == null) {
       // We throw an unauthorized exception when we do not know about the Spend Profile to match
       // Sam's behavior. Sam authz check does not reveal if the resource does not exist vs the user
@@ -66,17 +101,5 @@ public class SpendProfileService {
       throw SpendUnauthorizedException.linkUnauthorized(spendProfileId);
     }
     return spend;
-  }
-
-  private static List<SpendProfile> parse(
-      List<SpendProfileConfiguration.SpendProfileModel> spendModels) {
-    return spendModels.stream()
-        .map(
-            spendModel ->
-                SpendProfile.builder()
-                    .id(new SpendProfileId(spendModel.getId()))
-                    .billingAccountId(spendModel.getBillingAccountId())
-                    .build())
-        .collect(Collectors.toList());
   }
 }

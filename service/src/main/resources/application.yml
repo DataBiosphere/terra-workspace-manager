@@ -106,6 +106,8 @@ workspace:
     poolId: workspace_manager_v9
 
   spend:
+    base-path: https://bpm.dsde-dev.broadinstitute.org
+
     spend-profiles:
     - # A default spend profile available in dev Sam.
       id: wm-default-spend-profile

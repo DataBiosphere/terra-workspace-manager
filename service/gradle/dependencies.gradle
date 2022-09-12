@@ -25,6 +25,8 @@ dependencies {
   }
   implementation group: "org.broadinstitute.dsde.workbench", name: "sam-client_2.13", version: "0.1-e826d4d"
   implementation group: "bio.terra", name: "terra-resource-buffer-client", version: "0.4.3-SNAPSHOT"
+  implementation group: "bio.terra", name: "billing-profile-manager-client", version: "0.1.20-SNAPSHOT"
+
   // Required by Sam client
   implementation group: "com.squareup.okhttp3", name: "okhttp", version: "4.9.1"
   implementation group: "com.squareup.okhttp3", name: "logging-interceptor", version: "4.9.1"

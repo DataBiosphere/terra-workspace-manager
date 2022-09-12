@@ -46,6 +46,8 @@ public class CheckSpendProfileStep implements Step {
             .orElseThrow(() -> MissingSpendProfileException.forWorkspace(workspaceUuid));
 
     SpendProfile spendProfile = spendProfileService.authorizeLinking(spendProfileId, userRequest);
+    // TODO we should only check this for GCP contexts
+    // TODO need to add a check for azure contexts
     if (spendProfile.billingAccountId().isEmpty()) {
       throw NoBillingAccountException.forSpendProfile(spendProfileId);
     }

@@ -19,6 +19,7 @@ import org.springframework.context.annotation.Configuration;
 public class SpendProfileConfiguration {
   /** The Spend Profiles known to Workspace Manager. */
   private List<SpendProfileModel> spendProfiles = new ArrayList<>();
+  private String basePath;
 
   public List<SpendProfileModel> getSpendProfiles() {
     return ImmutableList.copyOf(spendProfiles);
@@ -26,6 +27,14 @@ public class SpendProfileConfiguration {
 
   public void setSpendProfiles(List<SpendProfileModel> spendProfiles) {
     this.spendProfiles = spendProfiles;
+  }
+
+  public void setBasePath(String basePath) {
+    this.basePath = basePath;
+  }
+
+  public String getBasePath() {
+    return this.basePath;
   }
 
   /** Configuration class for specifying a Spend Profile. */

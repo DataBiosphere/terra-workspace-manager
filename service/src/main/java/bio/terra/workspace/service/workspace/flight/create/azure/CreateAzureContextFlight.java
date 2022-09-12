@@ -5,6 +5,9 @@ import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.RetryRule;
 import bio.terra.workspace.common.utils.FlightBeanBag;
 import bio.terra.workspace.common.utils.RetryRules;
+import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
+import bio.terra.workspace.service.job.JobMapKeys;
+import bio.terra.workspace.service.workspace.flight.CheckSpendProfileStep;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import java.util.UUID;
 
@@ -30,9 +33,23 @@ public class CreateAzureContextFlight extends Flight {
             workspaceUuid, appContext.getAzureCloudContextService()),
         dbRetry);
 
+    AuthenticatedUserRequest userRequest =
+        inputParameters.get(JobMapKeys.AUTH_USER_INFO.getKeyName(), AuthenticatedUserRequest.class);
+
+
+    // Check that we are allowed to spend money. No point doing anything else unless that
+    // is true.
+    addStep(
+            new CheckSpendProfileStep(
+                    appContext.getWorkspaceDao(),
+                    appContext.getSpendProfileService(),
+                    workspaceUuid,
+                    userRequest));
+
     // 1. validate the MRG
     // TODO: retry?
     addStep(new ValidateMRGStep(appContext.getCrlService(), appContext.getAzureConfig()));
+
 
     // 2. Update the DB row filling in the cloud context
     addStep(

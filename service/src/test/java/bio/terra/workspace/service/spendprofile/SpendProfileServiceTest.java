@@ -8,7 +8,6 @@ import bio.terra.workspace.common.BaseConnectedTest;
 import bio.terra.workspace.connected.UserAccessUtils;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.spendprofile.exceptions.SpendUnauthorizedException;
-import com.google.common.collect.ImmutableList;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -22,7 +21,7 @@ class SpendProfileServiceTest extends BaseConnectedTest {
   void authorizeLinkingSuccess() {
     SpendProfileId id = spendUtils.defaultSpendId();
     SpendProfile profile = SpendProfile.builder().id(id).build();
-    SpendProfileService service = new SpendProfileService(samService, ImmutableList.of(profile));
+    SpendProfileService service = new SpendProfileService(samService, null);
 
     assertEquals(profile, service.authorizeLinking(id, userAccessUtils.defaultUserAuthRequest()));
   }
@@ -31,7 +30,7 @@ class SpendProfileServiceTest extends BaseConnectedTest {
   void authorizeLinkingSamUnauthorizedThrowsUnauthorized() {
     SpendProfileId id = spendUtils.defaultSpendId();
     SpendProfile profile = SpendProfile.builder().id(id).build();
-    SpendProfileService service = new SpendProfileService(samService, ImmutableList.of(profile));
+    SpendProfileService service = new SpendProfileService(samService, null);
 
     assertThrows(
         SpendUnauthorizedException.class,
@@ -40,7 +39,7 @@ class SpendProfileServiceTest extends BaseConnectedTest {
 
   @Test
   void authorizeLinkingUnknownIdThrowsUnauthorized() {
-    SpendProfileService service = new SpendProfileService(samService, ImmutableList.of());
+    SpendProfileService service = new SpendProfileService(samService, null);
     assertThrows(
         SpendUnauthorizedException.class,
         () ->
