@@ -3,6 +3,8 @@ package bio.terra.workspace.service.resource.model;
 import bio.terra.common.exception.MissingRequiredFieldException;
 import bio.terra.workspace.db.exception.InvalidMetadataException;
 import bio.terra.workspace.db.model.DbResource;
+import bio.terra.workspace.generated.model.ApiProperties;
+import bio.terra.workspace.generated.model.ApiProperty;
 import bio.terra.workspace.generated.model.ApiResourceAttributesUnion;
 import bio.terra.workspace.generated.model.ApiResourceLineage;
 import bio.terra.workspace.generated.model.ApiResourceMetadata;
@@ -11,8 +13,10 @@ import bio.terra.workspace.service.resource.ResourceValidationUtils;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import bio.terra.workspace.service.resource.referenced.cloud.gcp.ReferencedResource;
 import com.google.common.base.Strings;
+import com.google.common.collect.ImmutableMap;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
@@ -27,9 +31,11 @@ public abstract class WsmResource {
   private final UUID workspaceUuid;
   private final UUID resourceId;
   private final String name;
-  private @Nullable final String description;
+  private final @Nullable String description;
   private final CloningInstructions cloningInstructions;
-  private final List<ResourceLineageEntry> resourceLineage;
+  private final @Nullable List<ResourceLineageEntry> resourceLineage;
+  // Properties map will be empty if there's no properties set on the resource.
+  private final ImmutableMap<String, String> properties;
 
   /**
    * construct from individual fields
@@ -48,13 +54,15 @@ public abstract class WsmResource {
       String name,
       @Nullable String description,
       CloningInstructions cloningInstructions,
-      @Nullable List<ResourceLineageEntry> resourceLineage) {
+      @Nullable List<ResourceLineageEntry> resourceLineage,
+      Map<String, String> properties) {
     this.workspaceUuid = workspaceUuid;
     this.resourceId = resourceId;
     this.name = name;
     this.description = description;
     this.cloningInstructions = cloningInstructions;
     this.resourceLineage = Optional.ofNullable(resourceLineage).orElse(new ArrayList<>());
+    this.properties = ImmutableMap.copyOf(properties);
   }
 
   /** construct from database data */
@@ -65,7 +73,19 @@ public abstract class WsmResource {
         dbResource.getName(),
         dbResource.getDescription(),
         dbResource.getCloningInstructions(),
-        dbResource.getResourceLineage().orElse(new ArrayList<>()));
+        dbResource.getResourceLineage().orElse(new ArrayList<>()),
+        dbResource.getProperties());
+  }
+
+  public WsmResource(WsmResourceFields resourceFields) {
+    this(
+        resourceFields.getWorkspaceId(),
+        resourceFields.getResourceId(),
+        resourceFields.getName(),
+        resourceFields.getDescription(),
+        resourceFields.getCloningInstructions(),
+        resourceFields.getResourceLineage(),
+        resourceFields.getProperties());
   }
 
   public UUID getWorkspaceId() {
@@ -84,12 +104,28 @@ public abstract class WsmResource {
     return description;
   }
 
+  public WsmResourceFields getWsmResourceFields() {
+    return WsmResourceFields.builder()
+        .name(name)
+        .description(description)
+        .workspaceUuid(workspaceUuid)
+        .resourceId(resourceId)
+        .cloningInstructions(cloningInstructions)
+        .resourceLineage(resourceLineage)
+        .properties(properties)
+        .build();
+  }
+
   public CloningInstructions getCloningInstructions() {
     return cloningInstructions;
   }
 
   public List<ResourceLineageEntry> getResourceLineage() {
     return resourceLineage;
+  }
+
+  public ImmutableMap<String, String> getProperties() {
+    return properties;
   }
 
   /**
@@ -165,6 +201,9 @@ public abstract class WsmResource {
    * @return partially constructed Api Model common resource description
    */
   public ApiResourceMetadata toApiMetadata() {
+    var apiProperties = new ApiProperties();
+    properties.forEach((key, value) -> apiProperties.add(new ApiProperty().key(key).value(value)));
+
     ApiResourceMetadata apiResourceMetadata =
         new ApiResourceMetadata()
             .workspaceId(workspaceUuid)
@@ -174,7 +213,8 @@ public abstract class WsmResource {
             .resourceType(getResourceType().toApiModel())
             .stewardshipType(getStewardshipType().toApiModel())
             .cloudPlatform(getResourceType().getCloudPlatform().toApiModel())
-            .cloningInstructions(cloningInstructions.toApiModel());
+            .cloningInstructions(cloningInstructions.toApiModel())
+            .properties(apiProperties);
     ApiResourceLineage apiResourceLineage = new ApiResourceLineage();
     apiResourceLineage.addAll(
         resourceLineage.stream().map(ResourceLineageEntry::toApiModel).toList());
@@ -193,7 +233,8 @@ public abstract class WsmResource {
         || getWorkspaceId() == null
         || getCloningInstructions() == null
         || getStewardshipType() == null
-        || getResourceId() == null) {
+        || getResourceId() == null
+        || getProperties() == null) {
       throw new MissingRequiredFieldException("Missing required field for WsmResource.");
     }
     ResourceValidationUtils.validateResourceName(getName());

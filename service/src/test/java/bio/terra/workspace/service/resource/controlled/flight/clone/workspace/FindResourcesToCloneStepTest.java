@@ -24,6 +24,7 @@ import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.Contr
 import com.fasterxml.jackson.core.type.TypeReference;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -54,7 +55,8 @@ public class FindResourcesToCloneStepTest extends BaseUnitTest {
             ManagedByType.MANAGED_BY_USER,
             null,
             "bucket-with-hole-in-it-dear-liza",
-            /*resourceLineage=*/ null);
+            /*resourceLineage=*/ null,
+            /*properties*/ Map.of());
 
     findResourcesToCloneStep = new FindResourcesToCloneStep(mockResourceDao);
     doReturn(mockStairway).when(mockFlightContext).getStairway();

@@ -10,7 +10,9 @@ import bio.terra.workspace.service.resource.model.WsmResourceFamily;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.workspace.exceptions.MissingRequiredFieldsException;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
+import com.google.common.collect.ImmutableMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Supplier;
@@ -39,6 +41,7 @@ public class DbResource {
   @Nullable private String applicationId;
   @Nullable private String assignedUser;
   @Nullable private PrivateResourceState privateResourceState;
+  @Nullable private ImmutableMap<String, String> properties;
 
   private static final Supplier<RuntimeException> MISSING_REQUIRED_FIELD =
       () -> new MissingRequiredFieldsException("Missing required field");
@@ -182,8 +185,17 @@ public class DbResource {
     return Optional.ofNullable(resourceLineage);
   }
 
-  public DbResource resourceLineage(List<ResourceLineageEntry> resourceLineage) {
+  public DbResource resourceLineage(@Nullable List<ResourceLineageEntry> resourceLineage) {
     this.resourceLineage = resourceLineage;
+    return this;
+  }
+
+  public ImmutableMap<String, String> getProperties() {
+    return Optional.ofNullable(properties).orElseThrow(MISSING_REQUIRED_FIELD);
+  }
+
+  public DbResource properties(Map<String, String> properties) {
+    this.properties = ImmutableMap.copyOf(properties);
     return this;
   }
 }
