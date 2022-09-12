@@ -1,6 +1,7 @@
 package bio.terra.workspace.service.folder;
 
 import bio.terra.workspace.db.FolderDao;
+import bio.terra.workspace.db.exception.FolderNotFoundException;
 import bio.terra.workspace.service.folder.model.Folder;
 import java.util.UUID;
 import javax.annotation.Nullable;
@@ -30,7 +31,9 @@ public class FolderService {
   }
 
   public Folder getFolder(UUID workspaceUuid, UUID folderId) {
-    return folderDao.getFolder(workspaceUuid, folderId);
+    return folderDao.getFolderIfExists(workspaceUuid, folderId)
+        .orElseThrow(
+            () -> new FolderNotFoundException(String.format("Failed to find folder %s in workspace %s", folderId, workspaceUuid)));
   }
 
   public void deleteFolder(UUID workspaceUuid, UUID folderId) {

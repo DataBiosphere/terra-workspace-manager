@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import bio.terra.workspace.common.BaseUnitTest;
 import bio.terra.workspace.db.exception.DuplicateFolderDisplayNameException;
+import bio.terra.workspace.db.exception.FolderNotFoundException;
 import bio.terra.workspace.service.folder.model.Folder;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
@@ -43,7 +44,7 @@ public class FolderDaoTest extends BaseUnitTest {
   }
 
   @Test
-  public void createFolder_duplicateName_fails() {
+  public void createFolder_duplicateId_fails() {
     var workspaceUuid = UUID.randomUUID();
     createWorkspace(workspaceUuid);
     var folder = getFolder("foo", workspaceUuid, /*parentFolderId=*/ null);
@@ -53,11 +54,22 @@ public class FolderDaoTest extends BaseUnitTest {
   }
 
   @Test
+  public void createFolder_duplicateName_fails() {
+    var workspaceUuid = UUID.randomUUID();
+    createWorkspace(workspaceUuid);
+    var folder = getFolder("foo", workspaceUuid, /*parentFolderId=*/ null);
+    folderDao.createFolder(folder);
+
+    assertThrows(DuplicateFolderDisplayNameException.class, () -> folderDao.createFolder(folder));
+  }
+
+
+  @Test
   public void createFolder_multipleFolders() {
     var workspaceUuid = UUID.randomUUID();
     createWorkspace(workspaceUuid);
     var folder = getFolder("foo", workspaceUuid, /*parentFolderId=*/ null);
-    var secondFolder = getFolder("foo", workspaceUuid, /*parentFolderId=*/ null);
+    var secondFolder = getFolder("bar", workspaceUuid, /*parentFolderId=*/ null);
 
     var createdFolder = folderDao.createFolder(folder);
     var createdSecondFolder = folderDao.createFolder(secondFolder);
@@ -74,6 +86,15 @@ public class FolderDaoTest extends BaseUnitTest {
   public void createFolder_workspaceNotExist() {
     var folder = getFolder("foo", /*workspaceUuid=*/ UUID.randomUUID(), /*parentFolderId=*/ null);
     assertThrows(DataIntegrityViolationException.class, () -> folderDao.createFolder(folder));
+  }
+
+  @Test
+  public void createFolder_parentFolderNotExist() {
+    var workspaceId = UUID.randomUUID();
+    createWorkspace(workspaceId);
+    var folder = getFolder("foo", workspaceId, UUID.randomUUID());
+
+    assertThrows(FolderNotFoundException.class, () -> folderDao.createFolder(folder));
   }
 
   @Test

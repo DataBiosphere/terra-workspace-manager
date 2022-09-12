@@ -3,13 +3,16 @@ package bio.terra.workspace.db;
 import bio.terra.common.db.ReadTransaction;
 import bio.terra.common.db.WriteTransaction;
 import bio.terra.workspace.db.exception.DuplicateFolderDisplayNameException;
+import bio.terra.workspace.db.exception.FolderNotFoundException;
 import bio.terra.workspace.service.folder.model.Folder;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 import javax.annotation.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.dao.DuplicateKeyException;
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.dao.support.DataAccessUtils;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
@@ -18,15 +21,21 @@ import org.springframework.stereotype.Component;
 
 @Component
 public class FolderDao {
+  private static final String DEFAULT_ROOT = "0";
   private static final RowMapper<Folder> FOLDER_ROW_MAPPER =
-      (rs, rowNum) ->
-          new Folder.Builder()
-              .id(UUID.fromString(rs.getString("id")))
-              .displayName(rs.getString("display_name"))
-              .workspaceId(UUID.fromString(rs.getString("workspace_id")))
-              .description(rs.getString("description"))
-              .parentFolderId(UUID.fromString(rs.getString("parent_folder_id")))
-              .build();
+      (rs, rowNum) -> {
+    var parentFolderId = rs.getString("parent_folder_id");
+    Optional<UUID> folderUuidOptional =
+        DEFAULT_ROOT.equals(parentFolderId)? Optional.empty() : Optional.of(UUID.fromString(
+            Objects.requireNonNull(parentFolderId)));
+        return new Folder.Builder()
+            .id(UUID.fromString(Objects.requireNonNull(rs.getString("id"))))
+            .displayName(Objects.requireNonNull(rs.getString("display_name")))
+            .workspaceId(Objects.requireNonNull(UUID.fromString(rs.getString("workspace_id"))))
+            .description(Optional.ofNullable(rs.getString("description")))
+            .parentFolderId(folderUuidOptional)
+            .build();
+      };
 
   private final NamedParameterJdbcTemplate jdbcTemplate;
   private final Logger logger = LoggerFactory.getLogger(FolderDao.class);
@@ -42,6 +51,15 @@ public class FolderDao {
           INSERT INTO folder (workspace_id, id, display_name, description, parent_folder_id)
           values (:workspace_id, :id, :display_name, :description, :parentFolderId)
         """;
+    if (folder.getParentFolderId().isPresent()) {
+      Optional<Folder> parentFolder =
+          getFolderIfExists(folder.getWorkspaceId(), folder.getParentFolderId().get());
+      if (parentFolder.isEmpty()) {
+        throw new FolderNotFoundException(
+            String.format("Failed to find parent folder %s in workspace %s",
+                folder.getParentFolderId(), folder.getWorkspaceId()));
+      }
+    }
     var params =
         new MapSqlParameterSource()
             .addValue("id", folder.getId().toString())
@@ -49,7 +67,7 @@ public class FolderDao {
             .addValue("display_name", folder.getDisplayName())
             .addValue("description", folder.getDescription().orElse(null))
             .addValue(
-                "parentFolderId", folder.getParentFolderId().map(UUID::toString).orElse(null));
+                "parentFolderId", folder.getParentFolderId().map(UUID::toString).orElse(DEFAULT_ROOT));
 
     try {
       jdbcTemplate.update(sql, params);
@@ -67,6 +85,11 @@ public class FolderDao {
       @Nullable String displayName,
       @Nullable String description,
       @Nullable UUID parentFolderId) {
+    if (parentFolderId != null) {
+      if (getFolderIfExists(workspaceId, folderId).isEmpty()) {
+        throw new FolderNotFoundException(String.format("Cannot update parent folder to %s because it is not found in workspace %s", parentFolderId, workspaceId));
+      }
+    }
     var params = new MapSqlParameterSource();
     Optional.ofNullable(displayName).ifPresent(name -> params.addValue("display_name", name));
     Optional.ofNullable(description).ifPresent(d -> params.addValue("description", d));
@@ -82,6 +105,15 @@ public class FolderDao {
         .addValue("folder_id", folderId.toString());
     int rowsAffected = jdbcTemplate.update(sb.toString(), params);
     return rowsAffected > 0;
+  }
+
+  @ReadTransaction
+  public Optional<Folder> getFolderIfExists(UUID workspaceId, UUID folderId) {
+    try {
+      return Optional.of(getFolder(workspaceId, folderId));
+    } catch (EmptyResultDataAccessException e) {
+      return Optional.empty();
+    }
   }
 
   @ReadTransaction

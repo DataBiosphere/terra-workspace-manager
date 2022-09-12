@@ -33,10 +33,7 @@ databaseChangeLog:
             name: parent_folder_id
             type: text
             constraints:
-                nullable: true
-                references: folder(id)
-                foreignKeyName: fk_folder_id
-                deleteCascade: true
+                nullable: false
     - addUniqueConstraint:
         tableName: folder
         # display name must be unique at the same folder level.
