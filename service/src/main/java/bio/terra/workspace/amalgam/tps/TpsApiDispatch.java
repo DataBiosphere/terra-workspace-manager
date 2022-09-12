@@ -75,11 +75,6 @@ public class TpsApiDispatch {
             () -> new PolicyObjectNotFoundException("Policy object not found: " + objectId));
   }
 
-  public void clonePao(BearerToken bearerToken, UUID sourceObjectId, UUID destinationObjectId) {
-    features.tpsEnabledCheck();
-    paoService.clonePao(sourceObjectId, destinationObjectId);
-  }
-
   // -- Api to Tps conversion methods --
   // Note: we need to keep the Api types out of the TPS library code. It does not build the Api so
   // we cannot

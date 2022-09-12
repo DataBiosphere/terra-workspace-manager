@@ -15,7 +15,7 @@ public class CloneGcpWorkspaceFlight extends Flight {
     // 1. Create job IDs for future sub-flights and a couple other things
     // 3. Launch a flight to create the GCP cloud context
     // 3a. Await the context flight
-    // 4. Clone Policy Attributes
+    // TODO: [PF-1972] 4. Merge Policy Attributes
     // 5. Launch a flight to clone all resources on the list
     // 5a. Await the clone all resources flight and build a response
     // 6. Build a list of enabled applications
@@ -29,10 +29,6 @@ public class CloneGcpWorkspaceFlight extends Flight {
         new LaunchCreateGcpContextFlightStep(flightBeanBag.getWorkspaceService()),
         RetryRules.cloud());
     addStep(new AwaitCreateGcpContextFlightStep(), RetryRules.cloudLongRunning());
-
-    if (flightBeanBag.getFeatureConfiguration().isTpsEnabled()) {
-      addStep(new ClonePolicyAttributesStep(flightBeanBag.getTpsApiDispatch()), RetryRules.cloud());
-    }
 
     addStep(new LaunchCloneAllResourcesFlightStep(), RetryRules.cloud());
     addStep(new AwaitCloneAllResourcesFlightStep(), RetryRules.cloudLongRunning());
