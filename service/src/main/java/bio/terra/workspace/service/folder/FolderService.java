@@ -49,6 +49,6 @@ public class FolderService {
 
   public void deleteFolder(UUID workspaceUuid, UUID folderId) {
     folderDao.deleteFolder(workspaceUuid, folderId);
-    // TODO: start a flight to update resource properties
+    // TODO (PF-1984): start a flight to update resource properties
   }
 }

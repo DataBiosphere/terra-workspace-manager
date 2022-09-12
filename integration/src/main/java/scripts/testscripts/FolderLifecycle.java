@@ -2,14 +2,17 @@ package scripts.testscripts;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import bio.terra.testrunner.runner.config.TestUserSpecification;
 import bio.terra.workspace.api.FolderApi;
 import bio.terra.workspace.api.WorkspaceApi;
 import bio.terra.workspace.client.ApiClient;
+import bio.terra.workspace.client.ApiException;
 import bio.terra.workspace.model.CreateFolderRequestBody;
 import bio.terra.workspace.model.FolderDescription;
 import bio.terra.workspace.model.UpdateFolderRequestBody;
+import com.google.api.client.http.HttpStatusCodes;
 import java.util.List;
 import scripts.utils.ClientTestUtils;
 import scripts.utils.TestUtils;
@@ -83,5 +86,13 @@ public class FolderLifecycle extends WorkspaceAllocateTestScriptBase {
     FolderDescription retrievedFolder2 =
         folderApi.getFolder(getWorkspaceId(), folderBarDescription.getId());
     assertEquals(updatedFolder2, retrievedFolder2);
+
+    folderApi.deleteFolder(getWorkspaceId(), folderBarDescription.getId());
+
+    var ex =
+        assertThrows(
+            ApiException.class,
+            () -> folderApi.getFolder(getWorkspaceId(), folderBarDescription.getId()));
+    assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, ex.getCode());
   }
 }

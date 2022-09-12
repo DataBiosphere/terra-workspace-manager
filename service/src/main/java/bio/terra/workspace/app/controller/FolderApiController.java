@@ -11,6 +11,7 @@ import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequestFactory;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.iam.model.SamConstants;
+import bio.terra.workspace.service.iam.model.SamConstants.SamWorkspaceAction;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import java.util.List;
 import java.util.Optional;
@@ -101,6 +102,14 @@ public class FolderApiController extends ControllerBase implements FolderApi {
                     .map(folder -> buildFolderDescription(folder))
                     .collect(Collectors.toList()));
     return new ResponseEntity<>(response, HttpStatus.OK);
+  }
+
+  @Override
+  public ResponseEntity<Void> deleteFolder(UUID workspaceId, UUID folderId) {
+    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    workspaceService.validateWorkspaceAndAction(userRequest, workspaceId, SamWorkspaceAction.WRITE);
+    folderService.deleteFolder(workspaceId, folderId);
+    return new ResponseEntity<>(HttpStatus.NO_CONTENT);
   }
 
   private static ApiFolderDescription buildFolderDescription(Folder folder) {
