@@ -13,7 +13,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/FoldersHierarchyDescription'
+                $ref: '#/components/schemas/FolderDescriptionsList'
         '500':
           $ref: '#/components/responses/ServerError'
     post:
@@ -102,32 +102,22 @@ paths:
 
 components:
   schemas:
-    FoldersHierarchyDescription:
+    FolderDescriptionsList:
       type: object
-      required: [ id, displayName ]
+      required: [ folders ]
       properties:
-        id:
-          description: The ID of the folder. Immutable.
-          type: integer
-        displayName:
-          description: The human readable name of the folder
-          type: string
-        description:
-          description: A description of the folder
-          type: string
-        childFolders:
+        folders:
           description: Id of the parent folder
           type: array
           items:
-            $ref: '#/components/schemas/FoldersHierarchyDescription'
+            $ref: '#/components/schemas/FolderDescription'
     FolderDescription:
       type: object
       required: [id, displayName]
       properties:
         id:
           description: The ID of the folder. Immutable.
-          type: string
-          format: uuid
+          $ref: '#/components/schemas/FolderId'
         displayName:
           description: The human readable name of the folder.
           type: string
@@ -135,15 +125,11 @@ components:
           description: A description of the workspace
           type: string
         parentFolderId:
-          type: string
-          format: uuid
+          $ref: '#/components/schemas/FolderId'
     CreateFolderRequestBody:
       type: object
       required: [displayName]
       properties:
-        folderId:
-          type: string
-          format: uuid
         displayName:
           description: |
             The human readable name of the folder. The folder name must be
@@ -153,8 +139,7 @@ components:
           description: A description of the folder
           type: string
         parentFolderId:
-          type: string
-          format: uuid
+         $ref: '#/components/schemas/FolderId'
 
     UpdateFolderRequestBody:
       type: object
@@ -166,5 +151,14 @@ components:
           description: A description of the folder
           type: string
         parentFolderId:
-          type: string
-          format: uuid
+          description: |
+            The parent folder id to update this folder to. When null and 
+            moveToTopLevel is false, do not update. When null and
+            moveToTopLevel is true, move the folder to be the top-level.
+          $ref: '#/components/schemas/FolderId'
+        moveToTopLevel:
+          description: |
+            Whether to move the folder to top-level. If true, parentFolderId 
+            should be null.
+          type: boolean
+          default: false

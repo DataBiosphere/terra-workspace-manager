@@ -1,11 +1,10 @@
 package bio.terra.workspace.app.configuration.external.controller;
 
+import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.createDefaultWorkspace;
 import static bio.terra.workspace.common.utils.MockMvcUtils.GENERATE_GCP_AI_NOTEBOOK_NAME_PATH_FORMAT;
 import static bio.terra.workspace.common.utils.MockMvcUtils.GENERATE_GCP_BQ_DATASET_NAME_PATH_FORMAT;
 import static bio.terra.workspace.common.utils.MockMvcUtils.GENERATE_GCP_GCS_BUCKET_NAME_PATH_FORMAT;
-import static bio.terra.workspace.common.utils.MockMvcUtils.WORKSPACES_V1_PATH;
 import static bio.terra.workspace.common.utils.MockMvcUtils.addAuth;
-import static bio.terra.workspace.common.utils.MockMvcUtils.addJsonContentType;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
@@ -13,10 +12,8 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import bio.terra.workspace.common.BaseUnitTest;
-import bio.terra.workspace.common.fixtures.WorkspaceFixtures;
 import bio.terra.workspace.generated.model.ApiAiNotebookCloudId;
 import bio.terra.workspace.generated.model.ApiBqDatasetCloudId;
-import bio.terra.workspace.generated.model.ApiCreatedWorkspace;
 import bio.terra.workspace.generated.model.ApiGcsBucketCloudName;
 import bio.terra.workspace.generated.model.ApiGenerateGcpAiNotebookCloudIdRequestBody;
 import bio.terra.workspace.generated.model.ApiGenerateGcpBigQueryDatasetCloudIDRequestBody;
@@ -53,7 +50,7 @@ public class ControlledGcpResourceApiControllerTest extends BaseUnitTest {
 
   @Test
   public void getCloudNameFromGcsBucketName() throws Exception {
-    UUID workspaceId = createDefaultWorkspace().getId();
+    UUID workspaceId = createDefaultWorkspace(mockMvc, objectMapper).getId();
     ApiGenerateGcpGcsBucketCloudNameRequestBody bucketNameRequest =
         new ApiGenerateGcpGcsBucketCloudNameRequestBody().gcsBucketName("my-bucket");
 
@@ -83,7 +80,7 @@ public class ControlledGcpResourceApiControllerTest extends BaseUnitTest {
 
   @Test
   public void getCloudNameFromBigQueryDatasetName() throws Exception {
-    UUID workspaceId = createDefaultWorkspace().getId();
+    UUID workspaceId = createDefaultWorkspace(mockMvc, objectMapper).getId();
     ApiGenerateGcpBigQueryDatasetCloudIDRequestBody bqDatasetNameRequest =
         new ApiGenerateGcpBigQueryDatasetCloudIDRequestBody().bigQueryDatasetName("bq-dataset");
 
@@ -111,7 +108,7 @@ public class ControlledGcpResourceApiControllerTest extends BaseUnitTest {
 
   @Test
   public void getCloudNameFromAiNotebookInstanceName() throws Exception {
-    UUID workspaceId = createDefaultWorkspace().getId();
+    UUID workspaceId = createDefaultWorkspace(mockMvc, objectMapper).getId();
     ApiGenerateGcpAiNotebookCloudIdRequestBody aiNotebookNameRequest =
         new ApiGenerateGcpAiNotebookCloudIdRequestBody().aiNotebookName("ai-notebook");
 
@@ -135,22 +132,5 @@ public class ControlledGcpResourceApiControllerTest extends BaseUnitTest {
     assertEquals(
         generatedAiNotebookName.getGeneratedAiNotebookAiNotebookCloudId(),
         aiNotebookNameRequest.getAiNotebookName());
-  }
-
-  private ApiCreatedWorkspace createDefaultWorkspace() throws Exception {
-    var createRequest = WorkspaceFixtures.createWorkspaceRequestBody();
-    String serializedResponse =
-        mockMvc
-            .perform(
-                addJsonContentType(
-                    addAuth(
-                        post(WORKSPACES_V1_PATH)
-                            .content(objectMapper.writeValueAsString(createRequest)),
-                        USER_REQUEST)))
-            .andExpect(status().is(HttpStatus.SC_OK))
-            .andReturn()
-            .getResponse()
-            .getContentAsString();
-    return objectMapper.readValue(serializedResponse, ApiCreatedWorkspace.class);
   }
 }

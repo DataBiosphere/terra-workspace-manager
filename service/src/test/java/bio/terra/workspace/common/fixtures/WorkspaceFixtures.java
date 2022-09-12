@@ -1,16 +1,28 @@
 package bio.terra.workspace.common.fixtures;
 
+import static bio.terra.workspace.common.utils.MockMvcUtils.WORKSPACES_V1_PATH;
+import static bio.terra.workspace.common.utils.MockMvcUtils.addAuth;
+import static bio.terra.workspace.common.utils.MockMvcUtils.addJsonContentType;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
 import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.generated.model.ApiCreateWorkspaceRequestBody;
+import bio.terra.workspace.generated.model.ApiCreatedWorkspace;
 import bio.terra.workspace.generated.model.ApiProperties;
 import bio.terra.workspace.generated.model.ApiProperty;
 import bio.terra.workspace.generated.model.ApiWorkspaceStageModel;
+import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.model.SamConstants.SamResource;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import bio.terra.workspace.service.workspace.model.GcpCloudContext;
 import bio.terra.workspace.service.workspace.model.WorkspaceConstants.Properties;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableList;
+import java.util.Optional;
 import java.util.UUID;
+import org.apache.http.HttpStatus;
+import org.springframework.test.web.servlet.MockMvc;
 
 public class WorkspaceFixtures {
 
@@ -23,6 +35,9 @@ public class WorkspaceFixtures {
       new ApiProperty().key(Properties.VERSION).value("version 3");
   public static final ApiProperty USER_SET_PROPERTY =
       new ApiProperty().key("userkey").value("uservalue");
+  public static final AuthenticatedUserRequest USER_REQUEST =
+      new AuthenticatedUserRequest(
+          "fake@email.com", "subjectId123456", Optional.of("ThisIsNotARealBearerToken"));
 
   /**
    * This method creates the database artifact for a cloud context without actually creating
@@ -63,5 +78,23 @@ public class WorkspaceFixtures {
 
   public static String getUserFacingId(UUID workspaceId) {
     return String.format("user-facing-id-%s", workspaceId);
+  }
+
+  public static ApiCreatedWorkspace createDefaultWorkspace(
+      MockMvc mockMvc, ObjectMapper objectMapper) throws Exception {
+    var createRequest = WorkspaceFixtures.createWorkspaceRequestBody();
+    String serializedResponse =
+        mockMvc
+            .perform(
+                addJsonContentType(
+                    addAuth(
+                        post(WORKSPACES_V1_PATH)
+                            .content(objectMapper.writeValueAsString(createRequest)),
+                        USER_REQUEST)))
+            .andExpect(status().is(HttpStatus.SC_OK))
+            .andReturn()
+            .getResponse()
+            .getContentAsString();
+    return objectMapper.readValue(serializedResponse, ApiCreatedWorkspace.class);
   }
 }

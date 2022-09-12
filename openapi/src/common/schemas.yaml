@@ -254,3 +254,8 @@ components:
       description: Enum containing valid stewardship types. Used for enumeration
       type: string
       enum: ['REFERENCED', 'CONTROLLED']
+
+    FolderId:
+      description: Id of a given folder. Unique and immutable within a workspace.
+      type: string
+      format: uuid

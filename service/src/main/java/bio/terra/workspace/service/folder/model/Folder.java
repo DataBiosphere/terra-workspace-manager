@@ -1,7 +1,5 @@
 package bio.terra.workspace.service.folder.model;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import java.util.Optional;
 import java.util.UUID;
@@ -17,7 +15,6 @@ public interface Folder extends WithFolder {
 
   String getDisplayName();
 
-  @JsonInclude(Include.NON_EMPTY)
   Optional<String> getDescription();
 
   Optional<UUID> getParentFolderId();
