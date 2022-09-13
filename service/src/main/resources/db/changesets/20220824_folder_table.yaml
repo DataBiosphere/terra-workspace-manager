@@ -33,6 +33,8 @@ databaseChangeLog:
             name: parent_folder_id
             type: text
             constraints:
+                # parent folder id must be non-null even for top-level folder to
+                # guarantee display_name uniqueness at the same folder level.
                 nullable: false
     - addUniqueConstraint:
         tableName: folder
