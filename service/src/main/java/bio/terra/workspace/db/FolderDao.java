@@ -185,31 +185,30 @@ public class FolderDao {
 
   @ReadTransaction
   public Optional<Folder> getFolderIfExists(UUID workspaceId, UUID folderId) {
+    String sql =
+        """
+           SELECT workspace_id, id, display_name, description, parent_folder_id
+           FROM folder
+           WHERE id = :id AND workspace_id = :workspace_id
+         """;
+    var params = new MapSqlParameterSource();
+    params.addValue("id", folderId.toString());
+    params.addValue("workspace_id", workspaceId.toString());
     try {
-      return Optional.of(getFolder(workspaceId, folderId));
-    } catch (FolderNotFoundException e) {
+      return Optional.of(
+          DataAccessUtils.requiredSingleResult(jdbcTemplate.query(sql, params, FOLDER_ROW_MAPPER)));
+    } catch (EmptyResultDataAccessException e) {
       return Optional.empty();
     }
   }
 
   @ReadTransaction
   public Folder getFolder(UUID workspaceId, UUID folderId) {
-    String sql =
-        """
-         SELECT workspace_id, id, display_name, description, parent_folder_id
-         FROM folder
-         WHERE id = :id AND workspace_id = :workspace_id
-       """;
-    var params = new MapSqlParameterSource();
-    params.addValue("id", folderId.toString());
-    params.addValue("workspace_id", workspaceId.toString());
-    try {
-      return DataAccessUtils.requiredSingleResult(
-          jdbcTemplate.query(sql, params, FOLDER_ROW_MAPPER));
-    } catch (EmptyResultDataAccessException e) {
-      throw new FolderNotFoundException(
-          String.format("Cannot find folder %s in workspace %s", folderId, workspaceId));
-    }
+    return getFolderIfExists(workspaceId, folderId)
+        .orElseThrow(
+            () ->
+                new FolderNotFoundException(
+                    String.format("Cannot find folder %s in workspace %s", folderId, workspaceId)));
   }
 
   /**

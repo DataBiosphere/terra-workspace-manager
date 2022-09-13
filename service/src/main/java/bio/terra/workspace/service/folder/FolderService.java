@@ -34,13 +34,7 @@ public class FolderService {
   }
 
   public Folder getFolder(UUID workspaceUuid, UUID folderId) {
-    return folderDao
-        .getFolderIfExists(workspaceUuid, folderId)
-        .orElseThrow(
-            () ->
-                new FolderNotFoundException(
-                    String.format(
-                        "Failed to find folder %s in workspace %s", folderId, workspaceUuid)));
+    return folderDao.getFolder(workspaceUuid, folderId);
   }
 
   public ImmutableList<Folder> listFolders(UUID workspaceId) {
