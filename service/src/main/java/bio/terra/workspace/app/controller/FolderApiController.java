@@ -73,7 +73,7 @@ public class FolderApiController extends ControllerBase implements FolderApi {
             body.getDisplayName(),
             body.getDescription(),
             body.getParentFolderId(),
-            body.isMoveToTopLevel());
+            body.isUpdateParent());
     return new ResponseEntity<>(buildFolderDescription(folder), HttpStatus.OK);
   }
 

@@ -186,7 +186,7 @@ public class FolderDaoTest extends BaseUnitTest {
             newName,
             newDescription,
             secondCreatedFolder.getId(),
-            /*moveToTop=*/ false);
+            /*updateParent=*/ true);
 
     assertTrue(updated);
     Folder updatedFolder = folderDao.getFolder(workspaceUuid, createdFolder.getId());
@@ -196,7 +196,7 @@ public class FolderDaoTest extends BaseUnitTest {
 
     boolean secondUpdate =
         folderDao.updateFolder(
-            workspaceUuid, createdFolder.getId(), null, null, null, /*moveToTop=*/ true);
+            workspaceUuid, createdFolder.getId(), null, null, null, /*updateParent=*/ true);
 
     assertTrue(secondUpdate);
     Folder secondUpdatedFolder = folderDao.getFolder(workspaceUuid, createdFolder.getId());
@@ -279,7 +279,7 @@ public class FolderDaoTest extends BaseUnitTest {
                 "bar", /*description*/
                 null,
                 /*parentFolderId=*/ null,
-                /*moveToTop=*/ false));
+                /*updateParent=*/ false));
 
     var updatedFolder = folderDao.getFolder(workspaceUuid, createdFolder.getId());
     assertEquals(createdFolder.getDisplayName(), updatedFolder.getDisplayName());
@@ -302,7 +302,7 @@ public class FolderDaoTest extends BaseUnitTest {
                 null, /*description*/
                 null,
                 /*parentFolderId=*/ null,
-                /*moveToTop=*/ false));
+                /*updateParent=*/ false));
   }
 
   @Test

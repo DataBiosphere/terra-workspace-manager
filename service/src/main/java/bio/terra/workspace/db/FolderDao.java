@@ -114,12 +114,12 @@ public class FolderDao {
       @Nullable String displayName,
       @Nullable String description,
       @Nullable UUID parentFolderId,
-      @Nullable Boolean moveToTop) {
-    if (displayName == null && description == null && parentFolderId == null && moveToTop == null) {
+      @Nullable Boolean updateParent) {
+    if (displayName == null
+        && description == null
+        && parentFolderId == null
+        && updateParent == null) {
       throw new MissingRequiredFieldException("Must specified fields to update");
-    }
-    if (Boolean.TRUE.equals(moveToTop) && parentFolderId != null) {
-      throw new BadRequestException("Conflicted folder update request.");
     }
     if (parentFolderId != null) {
       if (getFolderIfExists(workspaceId, folderId).isEmpty()) {
@@ -137,11 +137,10 @@ public class FolderDao {
     var params = new MapSqlParameterSource();
     Optional.ofNullable(displayName).ifPresent(name -> params.addValue("display_name", name));
     Optional.ofNullable(description).ifPresent(d -> params.addValue("description", d));
-    if (Boolean.TRUE.equals(moveToTop)) {
-      params.addValue("parent_folder_id", DEFAULT_ROOT);
-    } else {
-      Optional.ofNullable(parentFolderId)
-          .ifPresent(pfId -> params.addValue("parent_folder_id", pfId.toString()));
+    if (Boolean.TRUE.equals(updateParent)) {
+      params.addValue(
+          "parent_folder_id",
+          Optional.ofNullable(parentFolderId).map(UUID::toString).orElse(DEFAULT_ROOT));
     }
     StringBuilder sb = new StringBuilder("UPDATE folder SET ");
 
@@ -160,7 +159,8 @@ public class FolderDao {
               .contains(
                   "duplicate key value violates unique constraint \"folder_display_name_parent_folder_id_workspace_id_key\"")) {
         throw new DuplicateFolderDisplayNameException(
-            String.format("Folder with display name %s already exists", displayName));
+            String.format(
+                "Fails to update due to duplicate display name at the same folder level"));
       }
       throw e;
     }

@@ -27,9 +27,9 @@ public class FolderService {
       @Nullable String displayName,
       @Nullable String description,
       @Nullable UUID parentFolderId,
-      @Nullable boolean moveToTopLevel) {
+      @Nullable boolean updateParent) {
     folderDao.updateFolder(
-        workspaceUuid, folderId, displayName, description, parentFolderId, moveToTopLevel);
+        workspaceUuid, folderId, displayName, description, parentFolderId, updateParent);
     return folderDao.getFolder(workspaceUuid, folderId);
   }
 
@@ -48,7 +48,13 @@ public class FolderService {
   }
 
   public void deleteFolder(UUID workspaceUuid, UUID folderId) {
-    folderDao.deleteFolder(workspaceUuid, folderId);
+    boolean deleted = folderDao.deleteFolder(workspaceUuid, folderId);
+    if (!deleted) {
+      throw new FolderNotFoundException(
+          String.format(
+              "Fail to delete folder %s which is not found in workspace %s",
+              folderId, workspaceUuid));
+    }
     // TODO (PF-1984): start a flight to update resource properties
   }
 }

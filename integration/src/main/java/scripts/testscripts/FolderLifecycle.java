@@ -76,7 +76,7 @@ public class FolderLifecycle extends WorkspaceAllocateTestScriptBase {
 
     FolderDescription updatedFolder2 =
         folderApi.updateFolder(
-            new UpdateFolderRequestBody().moveToTopLevel(true),
+            new UpdateFolderRequestBody().parentFolderId(null).updateParent(true),
             getWorkspaceId(),
             folderBarDescription.getId());
     assertNull(updatedFolder2.getParentFolderId());
