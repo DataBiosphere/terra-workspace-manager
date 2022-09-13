@@ -9,6 +9,12 @@ databaseChangeLog:
           A table for folders in a workspace.
         columns:
         - column:
+              name: id
+              type: text
+              constraints:
+                  nullable: false
+                  primaryKey: true
+        - column:
             name: workspace_id
             type: text
             constraints:
@@ -17,12 +23,6 @@ databaseChangeLog:
                 foreignKeyName: fk_folder_wid
                 deleteCascade: true
             remarks: The UUID of the workspace
-        - column:
-            name: id
-            type: text
-            constraints:
-              nullable: false
-              primaryKey: true
         - column:
             name: display_name
             type: text

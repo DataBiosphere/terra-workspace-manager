@@ -89,14 +89,17 @@ public class FolderDao {
       if (e.getMessage() != null
           && e.getMessage()
               .contains("duplicate key value violates unique constraint \"folder_pkey\"")) {
-        throw new DuplicateFolderIdException("Folder id is duplicated");
+        throw new DuplicateFolderIdException(
+            String.format("Folder id %s already exists", folder.id()));
       }
       if (e.getMessage() != null
           && e.getMessage()
               .contains(
                   "duplicate key value violates unique constraint \"folder_display_name_parent_folder_id_workspace_id_key\"")) {
         throw new DuplicateFolderDisplayNameException(
-            String.format("Folder with display name %s already exists", folder.displayName()));
+            String.format(
+                "Folder with display name %s already exists in parent folder %s",
+                folder.displayName(), folder.parentFolderId()));
       }
       throw e;
     } catch (DataIntegrityViolationException e) {
