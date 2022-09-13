@@ -277,7 +277,7 @@ public class CloneWorkspace extends WorkspaceAllocateWithPolicyTestScriptBase {
     assertEquals(
         sourceOwnerWorkspaceApi
                 .getWorkspace(getWorkspaceId(), /*minimumHighestRole=*/ null)
-                .getDisplayName()
+                .getUserFacingId()
             + " (Copy)",
         destinationWorkspaceDescription.getDisplayName(),
         "Destination displayName matches");
