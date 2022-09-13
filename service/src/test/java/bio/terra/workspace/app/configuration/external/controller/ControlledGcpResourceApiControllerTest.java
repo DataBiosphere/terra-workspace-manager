@@ -1,10 +1,10 @@
 package bio.terra.workspace.app.configuration.external.controller;
 
-import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.createDefaultWorkspace;
 import static bio.terra.workspace.common.utils.MockMvcUtils.GENERATE_GCP_AI_NOTEBOOK_NAME_PATH_FORMAT;
 import static bio.terra.workspace.common.utils.MockMvcUtils.GENERATE_GCP_BQ_DATASET_NAME_PATH_FORMAT;
 import static bio.terra.workspace.common.utils.MockMvcUtils.GENERATE_GCP_GCS_BUCKET_NAME_PATH_FORMAT;
 import static bio.terra.workspace.common.utils.MockMvcUtils.addAuth;
+import static bio.terra.workspace.common.utils.MockMvcUtils.createWorkspace;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
@@ -50,7 +50,7 @@ public class ControlledGcpResourceApiControllerTest extends BaseUnitTest {
 
   @Test
   public void getCloudNameFromGcsBucketName() throws Exception {
-    UUID workspaceId = createDefaultWorkspace(mockMvc, objectMapper).getId();
+    UUID workspaceId = createWorkspace(mockMvc, objectMapper).getId();
     ApiGenerateGcpGcsBucketCloudNameRequestBody bucketNameRequest =
         new ApiGenerateGcpGcsBucketCloudNameRequestBody().gcsBucketName("my-bucket");
 
@@ -80,7 +80,7 @@ public class ControlledGcpResourceApiControllerTest extends BaseUnitTest {
 
   @Test
   public void getCloudNameFromBigQueryDatasetName() throws Exception {
-    UUID workspaceId = createDefaultWorkspace(mockMvc, objectMapper).getId();
+    UUID workspaceId = createWorkspace(mockMvc, objectMapper).getId();
     ApiGenerateGcpBigQueryDatasetCloudIDRequestBody bqDatasetNameRequest =
         new ApiGenerateGcpBigQueryDatasetCloudIDRequestBody().bigQueryDatasetName("bq-dataset");
 
@@ -108,7 +108,7 @@ public class ControlledGcpResourceApiControllerTest extends BaseUnitTest {
 
   @Test
   public void getCloudNameFromAiNotebookInstanceName() throws Exception {
-    UUID workspaceId = createDefaultWorkspace(mockMvc, objectMapper).getId();
+    UUID workspaceId = createWorkspace(mockMvc, objectMapper).getId();
     ApiGenerateGcpAiNotebookCloudIdRequestBody aiNotebookNameRequest =
         new ApiGenerateGcpAiNotebookCloudIdRequestBody().aiNotebookName("ai-notebook");
 

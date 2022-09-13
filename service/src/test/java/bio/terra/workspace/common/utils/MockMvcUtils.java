@@ -1,6 +1,15 @@
 package bio.terra.workspace.common.utils;
 
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+import bio.terra.workspace.common.fixtures.WorkspaceFixtures;
+import bio.terra.workspace.generated.model.ApiCreatedWorkspace;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import java.util.Optional;
+import org.apache.http.HttpStatus;
+import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 
 /**
@@ -49,6 +58,9 @@ public class MockMvcUtils {
       "/api/workspaces/v1/%s/resources/controlled/gcp/ai-notebook-instances/generateName";
   public static final String FOLDERS_V1_PATH_FORMAT = "/api/workspaces/v1/%s/folders";
   public static final String FOLDER_V1_PATH_FORMAT = "/api/workspaces/v1/%s/folders/%s";
+  public static final AuthenticatedUserRequest USER_REQUEST =
+      new AuthenticatedUserRequest(
+          "fake@email.com", "subjectId123456", Optional.of("ThisIsNotARealBearerToken"));
 
   public static MockHttpServletRequestBuilder addAuth(
       MockHttpServletRequestBuilder request, AuthenticatedUserRequest userRequest) {
@@ -58,5 +70,23 @@ public class MockMvcUtils {
   public static MockHttpServletRequestBuilder addJsonContentType(
       MockHttpServletRequestBuilder request) {
     return request.contentType("application/json");
+  }
+
+  public static ApiCreatedWorkspace createWorkspace(MockMvc mockMvc, ObjectMapper objectMapper)
+      throws Exception {
+    var createRequest = WorkspaceFixtures.createWorkspaceRequestBody();
+    String serializedResponse =
+        mockMvc
+            .perform(
+                addJsonContentType(
+                    addAuth(
+                        post(WORKSPACES_V1_PATH)
+                            .content(objectMapper.writeValueAsString(createRequest)),
+                        USER_REQUEST)))
+            .andExpect(status().is(HttpStatus.SC_OK))
+            .andReturn()
+            .getResponse()
+            .getContentAsString();
+    return objectMapper.readValue(serializedResponse, ApiCreatedWorkspace.class);
   }
 }
