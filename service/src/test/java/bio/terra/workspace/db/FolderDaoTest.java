@@ -2,6 +2,7 @@ package bio.terra.workspace.db;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -17,7 +18,6 @@ import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
 import com.google.common.collect.ImmutableList;
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 import javax.annotation.Nullable;
 import org.junit.jupiter.api.Test;
@@ -94,12 +94,12 @@ public class FolderDaoTest extends BaseUnitTest {
     var createdFolder = folderDao.createFolder(folder);
     var createdSecondFolder = folderDao.createFolder(secondFolder);
 
-    var thirdFolder = getFolder("foo", workspaceUuid, createdFolder.getId());
+    var thirdFolder = getFolder("foo", workspaceUuid, createdFolder.id());
     var createdThirdFolder = folderDao.createFolder(thirdFolder);
 
-    assertEquals(folder.withId(createdFolder.getId()), createdFolder);
-    assertEquals(secondFolder.withId(createdSecondFolder.getId()), createdSecondFolder);
-    assertEquals(thirdFolder.withId(createdThirdFolder.getId()), createdThirdFolder);
+    assertEquals(folder, createdFolder);
+    assertEquals(secondFolder, createdSecondFolder);
+    assertEquals(thirdFolder, createdThirdFolder);
   }
 
   @Test
@@ -132,14 +132,14 @@ public class FolderDaoTest extends BaseUnitTest {
     createWorkspace(workspaceUuid);
     var folder = getFolder("foo", workspaceUuid, /*parentFolderId=*/ null);
     // second and third folders are under folder foo.
-    var secondFolder = getFolder("bar", workspaceUuid, folder.getId());
-    var thirdFolder = getFolder("garrr", workspaceUuid, folder.getId());
+    var secondFolder = getFolder("bar", workspaceUuid, folder.id());
+    var thirdFolder = getFolder("garrr", workspaceUuid, folder.id());
 
     var unused = folderDao.createFolder(folder);
     var createdSecondFolder = folderDao.createFolder(secondFolder);
     var createdThirdFolder = folderDao.createFolder(thirdFolder);
 
-    List<Folder> retrievedFolders = folderDao.listFolders(workspaceUuid, folder.getId());
+    List<Folder> retrievedFolders = folderDao.listFolders(workspaceUuid, folder.id());
     var expectedFolders = List.of(createdSecondFolder, createdThirdFolder);
     assertEquals(expectedFolders, retrievedFolders);
   }
@@ -182,28 +182,28 @@ public class FolderDaoTest extends BaseUnitTest {
     boolean updated =
         folderDao.updateFolder(
             workspaceUuid,
-            createdFolder.getId(),
+            createdFolder.id(),
             newName,
             newDescription,
-            secondCreatedFolder.getId(),
+            secondCreatedFolder.id(),
             /*updateParent=*/ true);
 
     assertTrue(updated);
-    Folder updatedFolder = folderDao.getFolder(workspaceUuid, createdFolder.getId());
-    assertEquals(newName, updatedFolder.getDisplayName());
-    assertEquals(newDescription, updatedFolder.getDescription().get());
-    assertEquals(secondCreatedFolder.getId(), updatedFolder.getParentFolderId().get());
+    Folder updatedFolder = folderDao.getFolder(workspaceUuid, createdFolder.id());
+    assertEquals(newName, updatedFolder.displayName());
+    assertEquals(newDescription, updatedFolder.description());
+    assertEquals(secondCreatedFolder.id(), updatedFolder.parentFolderId());
 
     boolean secondUpdate =
         folderDao.updateFolder(
-            workspaceUuid, createdFolder.getId(), null, null, null, /*updateParent=*/ true);
+            workspaceUuid, createdFolder.id(), null, null, null, /*updateParent=*/ true);
 
     assertTrue(secondUpdate);
-    Folder secondUpdatedFolder = folderDao.getFolder(workspaceUuid, createdFolder.getId());
-    assertTrue(secondUpdatedFolder.getParentFolderId().isEmpty());
+    Folder secondUpdatedFolder = folderDao.getFolder(workspaceUuid, createdFolder.id());
+    assertNull(secondUpdatedFolder.parentFolderId());
     // name and description not change.
-    assertEquals(newName, secondUpdatedFolder.getDisplayName());
-    assertEquals(newDescription, secondUpdatedFolder.getDescription().get());
+    assertEquals(newName, secondUpdatedFolder.displayName());
+    assertEquals(newDescription, secondUpdatedFolder.description());
   }
 
   @Test
@@ -211,8 +211,8 @@ public class FolderDaoTest extends BaseUnitTest {
     var workspaceUuid = UUID.randomUUID();
     createWorkspace(workspaceUuid);
     Folder folder = getFolder("foo", workspaceUuid, /*parentFolderId=*/ null);
-    Folder secondFolder = getFolder("bar", workspaceUuid, /*parentFolderId=*/ folder.getId());
-    Folder thirdFolder = getFolder("garr", workspaceUuid, /*parentFolderId=*/ secondFolder.getId());
+    Folder secondFolder = getFolder("bar", workspaceUuid, /*parentFolderId=*/ folder.id());
+    Folder thirdFolder = getFolder("garr", workspaceUuid, /*parentFolderId=*/ secondFolder.id());
     Folder createdFolder = folderDao.createFolder(folder);
     Folder secondCreatedFolder = folderDao.createFolder(secondFolder);
     Folder thirdCreatedFolder = folderDao.createFolder(thirdFolder);
@@ -222,31 +222,21 @@ public class FolderDaoTest extends BaseUnitTest {
         BadRequestException.class,
         () ->
             folderDao.updateFolder(
-                workspaceUuid,
-                createdFolder.getId(),
-                null,
-                null,
-                thirdCreatedFolder.getId(),
-                null));
+                workspaceUuid, createdFolder.id(), null, null, thirdCreatedFolder.id(), null));
 
     // foo -> bar -> foo
     assertThrows(
         BadRequestException.class,
         () ->
             folderDao.updateFolder(
-                workspaceUuid,
-                createdFolder.getId(),
-                null,
-                null,
-                secondCreatedFolder.getId(),
-                null));
+                workspaceUuid, createdFolder.id(), null, null, secondCreatedFolder.id(), null));
 
     // foo -> foo
     assertThrows(
         BadRequestException.class,
         () ->
             folderDao.updateFolder(
-                workspaceUuid, createdFolder.getId(), null, null, createdFolder.getId(), null));
+                workspaceUuid, createdFolder.id(), null, null, createdFolder.id(), null));
 
     // bar -> garr -> bar
     assertThrows(
@@ -254,10 +244,10 @@ public class FolderDaoTest extends BaseUnitTest {
         () ->
             folderDao.updateFolder(
                 workspaceUuid,
-                secondCreatedFolder.getId(),
+                secondCreatedFolder.id(),
                 null,
                 null,
-                thirdCreatedFolder.getId(),
+                thirdCreatedFolder.id(),
                 null));
   }
 
@@ -275,15 +265,15 @@ public class FolderDaoTest extends BaseUnitTest {
         () ->
             folderDao.updateFolder(
                 workspaceUuid,
-                createdFolder.getId(),
+                createdFolder.id(),
                 "bar", /*description*/
                 null,
                 /*parentFolderId=*/ null,
                 /*updateParent=*/ false));
 
-    var updatedFolder = folderDao.getFolder(workspaceUuid, createdFolder.getId());
-    assertEquals(createdFolder.getDisplayName(), updatedFolder.getDisplayName());
-    assertEquals(createdFolder.getDescription().get(), updatedFolder.getDescription().get());
+    var updatedFolder = folderDao.getFolder(workspaceUuid, createdFolder.id());
+    assertEquals(createdFolder.displayName(), updatedFolder.displayName());
+    assertEquals(createdFolder.description(), updatedFolder.description());
   }
 
   @Test
@@ -298,7 +288,7 @@ public class FolderDaoTest extends BaseUnitTest {
         () ->
             folderDao.updateFolder(
                 workspaceUuid,
-                createdFolder.getId(),
+                createdFolder.id(),
                 null, /*description*/
                 null,
                 /*parentFolderId=*/ null,
@@ -323,18 +313,18 @@ public class FolderDaoTest extends BaseUnitTest {
     createWorkspace(workspaceUuid);
     var folder = getFolder("foo", workspaceUuid, /*parentFolderId=*/ null);
     // second and third folders are under folder foo.
-    var secondFolder = getFolder("bar", workspaceUuid, folder.getId());
-    var thirdFolder = getFolder("garrr", workspaceUuid, folder.getId());
+    var secondFolder = getFolder("bar", workspaceUuid, folder.id());
+    var thirdFolder = getFolder("garrr", workspaceUuid, folder.id());
     var createdFolder = folderDao.createFolder(folder);
     var createdSecondFolder = folderDao.createFolder(secondFolder);
     var createdThirdFolder = folderDao.createFolder(thirdFolder);
 
-    boolean deleted = folderDao.deleteFolder(workspaceUuid, createdFolder.getId());
+    boolean deleted = folderDao.deleteFolder(workspaceUuid, createdFolder.id());
 
     assertTrue(deleted);
-    assertTrue(folderDao.getFolderIfExists(workspaceUuid, createdFolder.getId()).isEmpty());
-    assertTrue(folderDao.getFolderIfExists(workspaceUuid, createdSecondFolder.getId()).isEmpty());
-    assertTrue(folderDao.getFolderIfExists(workspaceUuid, createdThirdFolder.getId()).isEmpty());
+    assertTrue(folderDao.getFolderIfExists(workspaceUuid, createdFolder.id()).isEmpty());
+    assertTrue(folderDao.getFolderIfExists(workspaceUuid, createdSecondFolder.id()).isEmpty());
+    assertTrue(folderDao.getFolderIfExists(workspaceUuid, createdThirdFolder.id()).isEmpty());
   }
 
   @Test
@@ -347,12 +337,11 @@ public class FolderDaoTest extends BaseUnitTest {
 
   private static Folder getFolder(
       String displayName, UUID workspaceUuid, @Nullable UUID parentFolderId) {
-    return new Folder.Builder()
-        .id(UUID.randomUUID())
-        .displayName(displayName)
-        .description(String.format("This is %s folder", displayName))
-        .workspaceId(workspaceUuid)
-        .parentFolderId(Optional.ofNullable(parentFolderId))
-        .build();
+    return new Folder(
+        UUID.randomUUID(),
+        workspaceUuid,
+        displayName,
+        String.format("This is %s folder", displayName),
+        parentFolderId);
   }
 }

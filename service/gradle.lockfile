@@ -280,7 +280,6 @@ org.glassfish.jersey.media:jersey-media-multipart:2.35=productionRuntimeClasspat
 org.hamcrest:hamcrest:2.2=testCompileClasspath,testRuntimeClasspath
 org.hashids:hashids:1.0.3=compileClasspath,productionRuntimeClasspath,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
 org.hibernate.validator:hibernate-validator:6.2.3.Final=compileClasspath,productionRuntimeClasspath,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
-org.immutables:value:2.9.1=annotationProcessor,compileClasspath
 org.jacoco:org.jacoco.agent:0.8.8=jacocoAgent,jacocoAnt
 org.jacoco:org.jacoco.ant:0.8.8=jacocoAnt
 org.jacoco:org.jacoco.core:0.8.8=jacocoAnt

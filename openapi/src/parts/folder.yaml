@@ -13,7 +13,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/FolderDescriptionsList'
+                $ref: '#/components/schemas/FoldersList'
         '500':
           $ref: '#/components/responses/ServerError'
     post:
@@ -32,7 +32,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/FolderDescription'
+                $ref: '#/components/schemas/Folder'
         '400':
           $ref: '#/components/responses/BadRequest'
         '403':
@@ -53,7 +53,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/FolderDescription'
+                $ref: '#/components/schemas/Folder'
         '403':
           $ref: '#/components/responses/PermissionDenied'
         '404':
@@ -76,7 +76,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/FolderDescription'
+                $ref: '#/components/schemas/Folder'
         '403':
           $ref: '#/components/responses/PermissionDenied'
         '404':
@@ -101,15 +101,15 @@ paths:
 
 components:
   schemas:
-    FolderDescriptionsList:
+    FoldersList:
       type: object
       required: [ folders ]
       properties:
         folders:
           type: array
           items:
-            $ref: '#/components/schemas/FolderDescription'
-    FolderDescription:
+            $ref: '#/components/schemas/Folder'
+    Folder:
       type: object
       required: [id, displayName]
       properties:

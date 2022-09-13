@@ -18,8 +18,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import bio.terra.workspace.common.BaseUnitTest;
 import bio.terra.workspace.generated.model.ApiCreateFolderRequestBody;
-import bio.terra.workspace.generated.model.ApiFolderDescription;
-import bio.terra.workspace.generated.model.ApiFolderDescriptionsList;
+import bio.terra.workspace.generated.model.ApiFolder;
+import bio.terra.workspace.generated.model.ApiFoldersList;
 import bio.terra.workspace.generated.model.ApiUpdateFolderRequestBody;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
@@ -66,13 +66,12 @@ public class FolderApiControllerTest extends BaseUnitTest {
     var displayName = "foo";
     var description = String.format("This is folder %s", displayName);
 
-    ApiFolderDescription folderDescription =
-        createFolder(workspaceId, displayName, description, null);
+    ApiFolder folder = createFolder(workspaceId, displayName, description, null);
 
-    assertEquals(displayName, folderDescription.getDisplayName());
-    assertEquals(description, folderDescription.getDescription());
-    assertNotNull(folderDescription.getId());
-    assertNull(folderDescription.getParentFolderId());
+    assertEquals(displayName, folder.getDisplayName());
+    assertEquals(description, folder.getDescription());
+    assertNotNull(folder.getId());
+    assertNull(folder.getParentFolderId());
   }
 
   @Test
@@ -92,7 +91,7 @@ public class FolderApiControllerTest extends BaseUnitTest {
     var description = String.format("This is folder %s", displayName);
 
     // create a top-level folder foo.
-    ApiFolderDescription firstFolder =
+    ApiFolder firstFolder =
         createFolder(workspaceId, displayName, description, /*parentFolderId=*/ null);
     // create another top-level folder foo is not allowed
     createFolderExpectCode(
@@ -112,10 +111,10 @@ public class FolderApiControllerTest extends BaseUnitTest {
     var description = String.format("This is folder %s", displayName);
 
     // create folder foo
-    ApiFolderDescription firstFolder =
+    ApiFolder firstFolder =
         createFolder(workspaceId, displayName, description, /*parentFolderId=*/ null);
     // create folder foo under foo is allowed.
-    ApiFolderDescription secondFolder =
+    ApiFolder secondFolder =
         createFolder(workspaceId, displayName, description, firstFolder.getId());
 
     assertEquals(displayName, secondFolder.getDisplayName());
@@ -127,19 +126,19 @@ public class FolderApiControllerTest extends BaseUnitTest {
   @Test
   public void createFolder_duplicateNameUnderDifferentParent_succeeds() throws Exception {
     UUID workspaceId = createDefaultWorkspace(mockMvc, objectMapper).getId();
-    ApiFolderDescription firstFolder =
+    ApiFolder firstFolder =
         createFolder(workspaceId, "foo", /*description=*/ null, /*parentFolderId=*/ null);
-    ApiFolderDescription secondFolder =
+    ApiFolder secondFolder =
         createFolder(workspaceId, "bar", /*description=*/ null, /*parentFolderId=*/ null);
 
     var duplicateDisplayName = "copycat";
-    ApiFolderDescription thirdFolder =
+    ApiFolder thirdFolder =
         createFolder(
             workspaceId,
             duplicateDisplayName,
             /*description=*/ null,
             /*parentFolderId=*/ firstFolder.getId());
-    ApiFolderDescription fourthFolder =
+    ApiFolder fourthFolder =
         createFolder(
             workspaceId,
             duplicateDisplayName,
@@ -151,14 +150,14 @@ public class FolderApiControllerTest extends BaseUnitTest {
   }
 
   @Test
-  public void getFolder_returnsFolderDescription() throws Exception {
+  public void getFolder_returnsFolder() throws Exception {
     UUID workspaceId = createDefaultWorkspace(mockMvc, objectMapper).getId();
     var displayName = "foo";
     var description = String.format("This is folder %s", displayName);
-    ApiFolderDescription firstFolder =
+    ApiFolder firstFolder =
         createFolder(workspaceId, displayName, description, /*parentFolderId=*/ null);
 
-    ApiFolderDescription retrievedFolder = getFolder(workspaceId, firstFolder.getId());
+    ApiFolder retrievedFolder = getFolder(workspaceId, firstFolder.getId());
 
     assertEquals(firstFolder, retrievedFolder);
   }
@@ -180,16 +179,16 @@ public class FolderApiControllerTest extends BaseUnitTest {
     var displayName = "foo";
     var description = String.format("This is folder %s", displayName);
 
-    ApiFolderDescription firstFolder =
+    ApiFolder firstFolder =
         createFolder(workspaceId, displayName, description, /*parentFolderId=*/ null);
-    ApiFolderDescription secondFolder =
+    ApiFolder secondFolder =
         createFolder(
             workspaceId, displayName, description, /*parentFolderId=*/ firstFolder.getId());
 
-    ApiFolderDescriptionsList retrievedFolders = listFolders(workspaceId);
+    ApiFoldersList retrievedFolders = listFolders(workspaceId);
 
     var expectedFolders =
-        new ApiFolderDescriptionsList().addFoldersItem(firstFolder).addFoldersItem(secondFolder);
+        new ApiFoldersList().addFoldersItem(firstFolder).addFoldersItem(secondFolder);
     assertEquals(expectedFolders, retrievedFolders);
   }
 
@@ -211,12 +210,12 @@ public class FolderApiControllerTest extends BaseUnitTest {
   public void deleteFolders_deleteTopLevelFolder_folderAndSubFoldersAllDeleted() throws Exception {
     UUID workspaceId = createDefaultWorkspace(mockMvc, objectMapper).getId();
 
-    ApiFolderDescription firstFolder =
+    ApiFolder firstFolder =
         createFolder(workspaceId, "foo", /*description*/ null, /*parentFolderId=*/ null);
-    ApiFolderDescription secondFolder =
+    ApiFolder secondFolder =
         createFolder(
             workspaceId, "foo", /*description*/ null, /*parentFolderId=*/ firstFolder.getId());
-    ApiFolderDescription thirdFolder =
+    ApiFolder thirdFolder =
         createFolder(
             workspaceId, "foo", /*description*/ null, /*parentFolderId=*/ secondFolder.getId());
 
@@ -233,21 +232,21 @@ public class FolderApiControllerTest extends BaseUnitTest {
     UUID workspaceId = createDefaultWorkspace(mockMvc, objectMapper).getId();
     var displayName = "foo";
     var description = String.format("This is folder %s", displayName);
-    ApiFolderDescription firstFolder =
+    ApiFolder firstFolder =
         createFolder(workspaceId, displayName, description, /*parentFolderId=*/ null);
-    ApiFolderDescription secondFolder =
+    ApiFolder secondFolder =
         createFolder(
             workspaceId, displayName, description, /*parentFolderId=*/ firstFolder.getId());
 
     var newDisplayName = "sofoo";
     var newDescription = "This is a very foo folder";
-    ApiFolderDescription updatedFolderDescription =
+    ApiFolder updatedFolder =
         updateFolder(
             workspaceId, secondFolder.getId(), newDisplayName, newDescription, null, false);
 
-    assertEquals(newDisplayName, updatedFolderDescription.getDisplayName());
-    assertEquals(newDescription, updatedFolderDescription.getDescription());
-    assertEquals(secondFolder.getParentFolderId(), updatedFolderDescription.getParentFolderId());
+    assertEquals(newDisplayName, updatedFolder.getDisplayName());
+    assertEquals(newDescription, updatedFolder.getDescription());
+    assertEquals(secondFolder.getParentFolderId(), updatedFolder.getParentFolderId());
   }
 
   @Test
@@ -255,13 +254,13 @@ public class FolderApiControllerTest extends BaseUnitTest {
     UUID workspaceId = createDefaultWorkspace(mockMvc, objectMapper).getId();
     var displayName = "foo";
     var description = String.format("This is folder %s", displayName);
-    ApiFolderDescription firstFolder =
+    ApiFolder firstFolder =
         createFolder(workspaceId, displayName, description, /*parentFolderId=*/ null);
-    ApiFolderDescription secondFolder =
+    ApiFolder secondFolder =
         createFolder(
             workspaceId, displayName, description, /*parentFolderId=*/ firstFolder.getId());
 
-    ApiFolderDescription updatedFolderDescription =
+    ApiFolder updatedFolder =
         updateFolder(
             workspaceId,
             secondFolder.getId(),
@@ -270,7 +269,7 @@ public class FolderApiControllerTest extends BaseUnitTest {
             /*parentFolderId=*/ null,
             /*updateParent=*/ true);
 
-    assertNull(updatedFolderDescription.getParentFolderId());
+    assertNull(updatedFolder.getParentFolderId());
   }
 
   @Test
@@ -279,7 +278,7 @@ public class FolderApiControllerTest extends BaseUnitTest {
     var displayName = "foo";
     var description = String.format("This is folder %s", displayName);
 
-    ApiFolderDescription folder =
+    ApiFolder folder =
         createFolder(workspaceId, displayName, description, /*parentFolderId=*/ null);
 
     var newDisplayName = "sofoo";
@@ -294,7 +293,7 @@ public class FolderApiControllerTest extends BaseUnitTest {
         HttpStatus.SC_NOT_FOUND);
   }
 
-  private ApiFolderDescription createFolder(
+  private ApiFolder createFolder(
       UUID workspaceId,
       String displayName,
       @Nullable String description,
@@ -306,7 +305,7 @@ public class FolderApiControllerTest extends BaseUnitTest {
             .andReturn()
             .getResponse()
             .getContentAsString();
-    return objectMapper.readValue(createResponse, ApiFolderDescription.class);
+    return objectMapper.readValue(createResponse, ApiFolder.class);
   }
 
   private ResultActions createFolderExpectCode(
@@ -336,7 +335,7 @@ public class FolderApiControllerTest extends BaseUnitTest {
         .parentFolderId(parentFolderId);
   }
 
-  private ApiFolderDescription updateFolder(
+  private ApiFolder updateFolder(
       UUID workspaceId,
       UUID folderId,
       @Nullable String newDisplayName,
@@ -356,7 +355,7 @@ public class FolderApiControllerTest extends BaseUnitTest {
             .andReturn()
             .getResponse()
             .getContentAsString();
-    return objectMapper.readValue(serializedUpdateResponse, ApiFolderDescription.class);
+    return objectMapper.readValue(serializedUpdateResponse, ApiFolder.class);
   }
 
   private ResultActions updateFolderExpectCode(
@@ -397,13 +396,13 @@ public class FolderApiControllerTest extends BaseUnitTest {
     return objectMapper.writeValueAsString(requestBody);
   }
 
-  private ApiFolderDescription getFolder(UUID workspaceId, UUID folderId) throws Exception {
+  private ApiFolder getFolder(UUID workspaceId, UUID folderId) throws Exception {
     String folderGetResponse =
         getFolderExpectCode(workspaceId, folderId, HttpStatus.SC_OK)
             .andReturn()
             .getResponse()
             .getContentAsString();
-    return objectMapper.readValue(folderGetResponse, ApiFolderDescription.class);
+    return objectMapper.readValue(folderGetResponse, ApiFolder.class);
   }
 
   private ResultActions getFolderExpectCode(UUID workspaceId, UUID folderId, int code)
@@ -414,14 +413,13 @@ public class FolderApiControllerTest extends BaseUnitTest {
         .andExpect(status().is(code));
   }
 
-  private ApiFolderDescriptionsList listFolders(UUID workspaceId) throws Exception {
+  private ApiFoldersList listFolders(UUID workspaceId) throws Exception {
     String foldersGetResponse =
         listFoldersExpectCode(workspaceId, HttpStatus.SC_OK)
             .andReturn()
             .getResponse()
             .getContentAsString();
-    var retrievedFolders =
-        objectMapper.readValue(foldersGetResponse, ApiFolderDescriptionsList.class);
+    var retrievedFolders = objectMapper.readValue(foldersGetResponse, ApiFoldersList.class);
     return retrievedFolders;
   }
 

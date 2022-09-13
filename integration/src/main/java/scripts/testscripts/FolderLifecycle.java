@@ -10,7 +10,7 @@ import bio.terra.workspace.api.WorkspaceApi;
 import bio.terra.workspace.client.ApiClient;
 import bio.terra.workspace.client.ApiException;
 import bio.terra.workspace.model.CreateFolderRequestBody;
-import bio.terra.workspace.model.FolderDescription;
+import bio.terra.workspace.model.Folder;
 import bio.terra.workspace.model.UpdateFolderRequestBody;
 import com.google.api.client.http.HttpStatusCodes;
 import java.util.List;
@@ -40,59 +40,57 @@ public class FolderLifecycle extends WorkspaceAllocateTestScriptBase {
       throws Exception {
     var displayName = TestUtils.appendRandomNumber("foo");
     var description = String.format("This is a top-level folder %s", displayName);
-    FolderDescription folderDescription =
+    Folder folderFoo =
         folderApi.createFolder(
             new CreateFolderRequestBody().displayName(displayName).description(description),
             getWorkspaceId());
 
-    assertEquals(displayName, folderDescription.getDisplayName());
-    assertEquals(description, folderDescription.getDescription());
-    assertNull(folderDescription.getParentFolderId());
+    assertEquals(displayName, folderFoo.getDisplayName());
+    assertEquals(description, folderFoo.getDescription());
+    assertNull(folderFoo.getParentFolderId());
 
     var displayNameBar = TestUtils.appendRandomNumber("bar");
     var descriptionBar = String.format("This is a second-level folder %s", displayNameBar);
-    FolderDescription folderBarDescription =
+    Folder folderBar =
         folderApi.createFolder(
             new CreateFolderRequestBody()
                 .displayName(displayNameBar)
                 .description(descriptionBar)
-                .parentFolderId(folderDescription.getId()),
+                .parentFolderId(folderFoo.getId()),
             getWorkspaceId());
 
-    assertEquals(displayNameBar, folderBarDescription.getDisplayName());
-    assertEquals(descriptionBar, folderBarDescription.getDescription());
-    assertEquals(folderDescription.getId(), folderBarDescription.getParentFolderId());
+    assertEquals(displayNameBar, folderBar.getDisplayName());
+    assertEquals(descriptionBar, folderBar.getDescription());
+    assertEquals(folderFoo.getId(), folderBar.getParentFolderId());
 
     var newDisplayName = TestUtils.appendRandomNumber("newBar");
     var newDescription = "This is an updated bar folder";
 
-    FolderDescription updatedFolder =
+    Folder updatedFolder =
         folderApi.updateFolder(
             new UpdateFolderRequestBody().description(newDescription).displayName(newDisplayName),
             getWorkspaceId(),
-            folderBarDescription.getId());
+            folderBar.getId());
     assertEquals(newDisplayName, updatedFolder.getDisplayName());
     assertEquals(newDescription, updatedFolder.getDescription());
 
-    FolderDescription updatedFolder2 =
+    Folder updatedFolder2 =
         folderApi.updateFolder(
             new UpdateFolderRequestBody().parentFolderId(null).updateParent(true),
             getWorkspaceId(),
-            folderBarDescription.getId());
+            folderBar.getId());
     assertNull(updatedFolder2.getParentFolderId());
     assertEquals(newDisplayName, updatedFolder2.getDisplayName());
     assertEquals(newDescription, updatedFolder2.getDescription());
 
-    FolderDescription retrievedFolder2 =
-        folderApi.getFolder(getWorkspaceId(), folderBarDescription.getId());
+    Folder retrievedFolder2 = folderApi.getFolder(getWorkspaceId(), folderBar.getId());
     assertEquals(updatedFolder2, retrievedFolder2);
 
-    folderApi.deleteFolder(getWorkspaceId(), folderBarDescription.getId());
+    folderApi.deleteFolder(getWorkspaceId(), folderBar.getId());
 
     var ex =
         assertThrows(
-            ApiException.class,
-            () -> folderApi.getFolder(getWorkspaceId(), folderBarDescription.getId()));
+            ApiException.class, () -> folderApi.getFolder(getWorkspaceId(), folderBar.getId()));
     assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, ex.getCode());
   }
 }

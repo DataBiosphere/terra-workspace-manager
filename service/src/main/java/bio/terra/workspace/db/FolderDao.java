@@ -30,18 +30,17 @@ public class FolderDao {
   private static final String DEFAULT_ROOT = "0";
   private static final RowMapper<Folder> FOLDER_ROW_MAPPER =
       (rs, rowNum) -> {
-        var parentFolderId = rs.getString("parent_folder_id");
-        Optional<UUID> folderUuidOptional =
-            DEFAULT_ROOT.equals(parentFolderId)
-                ? Optional.empty()
-                : Optional.of(UUID.fromString(Objects.requireNonNull(parentFolderId)));
-        return new Folder.Builder()
-            .id(UUID.fromString(Objects.requireNonNull(rs.getString("id"))))
-            .displayName(Objects.requireNonNull(rs.getString("display_name")))
-            .workspaceId(Objects.requireNonNull(UUID.fromString(rs.getString("workspace_id"))))
-            .description(Optional.ofNullable(rs.getString("description")))
-            .parentFolderId(folderUuidOptional)
-            .build();
+        var parentFolderIdString = rs.getString("parent_folder_id");
+        UUID parentFolderId =
+            DEFAULT_ROOT.equals(parentFolderIdString)
+                ? null
+                : UUID.fromString(parentFolderIdString);
+        return new Folder(
+            UUID.fromString(Objects.requireNonNull(rs.getString("id"))),
+            Objects.requireNonNull(UUID.fromString(rs.getString("workspace_id"))),
+            Objects.requireNonNull(rs.getString("display_name")),
+            rs.getString("description"),
+            parentFolderId);
       };
 
   private final NamedParameterJdbcTemplate jdbcTemplate;
@@ -58,25 +57,27 @@ public class FolderDao {
           INSERT INTO folder (workspace_id, id, display_name, description, parent_folder_id)
           values (:workspace_id, :id, :display_name, :description, :parent_folder_id)
         """;
-    if (folder.getParentFolderId().isPresent()) {
+    if (folder.parentFolderId() != null) {
       Optional<Folder> parentFolder =
-          getFolderIfExists(folder.getWorkspaceId(), folder.getParentFolderId().get());
+          getFolderIfExists(folder.workspaceId(), folder.parentFolderId());
       if (parentFolder.isEmpty()) {
         throw new FolderNotFoundException(
             String.format(
                 "Failed to find parent folder %s in workspace %s",
-                folder.getParentFolderId(), folder.getWorkspaceId()));
+                folder.parentFolderId(), folder.workspaceId()));
       }
     }
     var params =
         new MapSqlParameterSource()
-            .addValue("workspace_id", folder.getWorkspaceId().toString())
-            .addValue("id", folder.getId().toString())
-            .addValue("display_name", folder.getDisplayName())
-            .addValue("description", folder.getDescription().orElse(null))
+            .addValue("workspace_id", folder.workspaceId().toString())
+            .addValue("id", folder.id().toString())
+            .addValue("display_name", folder.displayName())
+            .addValue("description", folder.description())
             .addValue(
                 "parent_folder_id",
-                folder.getParentFolderId().map(UUID::toString).orElse(DEFAULT_ROOT));
+                Optional.ofNullable(folder.parentFolderId())
+                    .map(UUID::toString)
+                    .orElse(DEFAULT_ROOT));
 
     try {
       jdbcTemplate.update(sql, params);
@@ -92,7 +93,7 @@ public class FolderDao {
               .contains(
                   "duplicate key value violates unique constraint \"folder_display_name_parent_folder_id_workspace_id_key\"")) {
         throw new DuplicateFolderDisplayNameException(
-            String.format("Folder with display name %s already exists", folder.getDisplayName()));
+            String.format("Folder with display name %s already exists", folder.displayName()));
       }
       throw e;
     } catch (DataIntegrityViolationException e) {
@@ -100,8 +101,7 @@ public class FolderDao {
           && e.getMessage().contains("violates foreign key constraint \"fk_folder_wid\"")) {
         throw new WorkspaceNotFoundException(
             String.format(
-                "Failed to find workspace %s in which to create the folder",
-                folder.getWorkspaceId()));
+                "Failed to find workspace %s in which to create the folder", folder.workspaceId()));
       }
       throw e;
     }
@@ -174,7 +174,7 @@ public class FolderDao {
       return true;
     }
     Folder firstFolder = getFolder(workspaceId, folder1);
-    return canFormCyclicCycle(workspaceId, firstFolder.getParentFolderId().orElse(null), folder2);
+    return canFormCyclicCycle(workspaceId, firstFolder.parentFolderId(), folder2);
   }
 
   @ReadTransaction
@@ -233,7 +233,7 @@ public class FolderDao {
     ImmutableList<Folder> subFolders = listFolders(workspaceUuid, folderId);
     boolean deleted = false;
     for (Folder folder : subFolders) {
-      deleted |= deleteFolder(workspaceUuid, folder.getId());
+      deleted |= deleteFolder(workspaceUuid, folder.id());
     }
     final String sql = "DELETE FROM folder WHERE workspace_id = :workspaceId AND id = :id";
 
