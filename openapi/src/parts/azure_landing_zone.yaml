@@ -155,7 +155,10 @@ components:
           description: Unique Azure resource identifier.
           type: string
         resourceType:
-          description: Azure resource type.
+          description: |
+            The azure deployed resource type. The deployed resource type definition is located in ARM template documentation, 
+            under the Reference node. Resource type examples include "Microsoft.Compute/virtualMachines"
+            and "Microsoft.Network/virtualNetworks/subnets".
           type: string
         resourceName:
           description: Azure resource name.
@@ -237,6 +240,9 @@ components:
             $ref: '#/components/schemas/AzureLandingZoneResourcesPurposeGroup'
 
     AzureLandingZoneResourcesPurposeGroup:
+      description: |
+        The structure contains one landing zone purpose and a list of Azure deployed resources that 
+        are tagged with this purpose.
       type: object
       required: [purpose,deployedResources]
       properties:

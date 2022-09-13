@@ -41,7 +41,7 @@ dependencies {
   implementation ('bio.terra:terra-landing-zone-service:0.0.5-SNAPSHOT') {
     exclude group: "org.broadinstitute.dsde.workbench", module: "sam-client_2.12"
   }
-  
+
   // Storage transfer service
   implementation group: 'com.google.apis', name: 'google-api-services-storagetransfer', version: 'v1-rev20220324-1.32.1'
   implementation group: "com.google.auth", name: "google-auth-library-oauth2-http", version: "1.6.0"

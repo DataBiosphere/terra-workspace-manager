@@ -112,7 +112,7 @@ public class LandingZoneApiDispatch {
             (p, dp) ->
                 result.addResourcesItem(
                     new ApiAzureLandingZoneResourcesPurposeGroup()
-                        .purpose(p.getClass().getSimpleName())
+                        .purpose(p.toString())
                         .deployedResources(
                             dp.stream()
                                 .map(r -> toApiAzureLandingZoneDeployedResource(r, p))
@@ -136,7 +136,8 @@ public class LandingZoneApiDispatch {
           .region(resource.region());
     }
     throw new LandingZoneUnsupportedPurposeException(
-        String.format("Purpose type %s is not supported", purpose.getClass().getSimpleName()));
+        String.format(
+            "Support for purpose type %s is not implemented.", purpose.getClass().getSimpleName()));
   }
 
   private ApiAzureLandingZoneResult fetchCreateAzureLandingZoneResult(String jobId) {

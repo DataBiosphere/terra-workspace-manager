@@ -24,6 +24,7 @@ import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
 import bio.terra.workspace.common.BaseUnitTest;
 import bio.terra.workspace.common.fixtures.AzureLandingZoneFixtures;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import org.apache.http.HttpStatus;
@@ -38,14 +39,12 @@ import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
 
 @AutoConfigureMockMvc
 public class LandingZoneApiControllerTest extends BaseUnitTest {
-  private static final String CREATE_AZURE_LANDING_ZONE = "/api/landingzones/v1/azure";
+  private static final String AZURE_LANDING_ZONE_PATH = "/api/landingzones/v1/azure";
   private static final String GET_CREATE_AZURE_LANDING_ZONE_RESULT =
       "/api/landingzones/v1/azure/create-result";
   private static final String LIST_AZURE_LANDING_ZONES_DEFINITIONS_PATH =
       "/api/landingzones/definitions/v1/azure";
-  private static final String DELETE_AZURE_LANDING_ZONE_PATH = "/api/landingzones/v1/azure";
   private static final String JOB_ID = "newJobId";
-  private static final String LIST_AZURE_LANDING_ZONE_RESOURCES_PATH = "/api/landingzones/v1/azure";
   private static final String LANDING_ZONE_ID = "testLandingZoneId";
   @Autowired private MockMvc mockMvc;
   @Autowired ObjectMapper objectMapper;
@@ -66,7 +65,7 @@ public class LandingZoneApiControllerTest extends BaseUnitTest {
 
     mockMvc
         .perform(
-            post(CREATE_AZURE_LANDING_ZONE)
+            post(AZURE_LANDING_ZONE_PATH)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(requestBody))
                 .characterEncoding("utf-8"))
@@ -91,7 +90,7 @@ public class LandingZoneApiControllerTest extends BaseUnitTest {
 
     mockMvc
         .perform(
-            post(CREATE_AZURE_LANDING_ZONE)
+            post(AZURE_LANDING_ZONE_PATH)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(requestBody))
                 .characterEncoding("utf-8"))
@@ -117,7 +116,7 @@ public class LandingZoneApiControllerTest extends BaseUnitTest {
 
     mockMvc
         .perform(
-            post(CREATE_AZURE_LANDING_ZONE)
+            post(AZURE_LANDING_ZONE_PATH)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(requestBody))
                 .characterEncoding("utf-8"))
@@ -138,7 +137,7 @@ public class LandingZoneApiControllerTest extends BaseUnitTest {
 
     mockMvc
         .perform(
-            post(CREATE_AZURE_LANDING_ZONE)
+            post(AZURE_LANDING_ZONE_PATH)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(requestBody))
                 .characterEncoding("utf-8"))
@@ -214,7 +213,7 @@ public class LandingZoneApiControllerTest extends BaseUnitTest {
   public void deleteAzureLandingZoneSuccess() throws Exception {
     doNothing().when(landingZoneService).deleteLandingZone(anyString());
     mockMvc
-        .perform(delete(DELETE_AZURE_LANDING_ZONE_PATH + "/{landingZoneId}", "lz-1"))
+        .perform(delete(AZURE_LANDING_ZONE_PATH + "/{landingZoneId}", "lz-1"))
         .andExpect(status().isNoContent());
   }
 
@@ -224,7 +223,7 @@ public class LandingZoneApiControllerTest extends BaseUnitTest {
         .when(landingZoneService)
         .deleteLandingZone(anyString());
     mockMvc
-        .perform(delete(DELETE_AZURE_LANDING_ZONE_PATH + "/{landingZoneId}", "lz-0"))
+        .perform(delete(AZURE_LANDING_ZONE_PATH + "/{landingZoneId}", "lz-0"))
         .andExpect(status().isNotImplemented());
   }
 
@@ -302,10 +301,33 @@ public class LandingZoneApiControllerTest extends BaseUnitTest {
     when(featureConfiguration.isAzureEnabled()).thenReturn(true);
 
     mockMvc
-        .perform(
-            get(
-                LIST_AZURE_LANDING_ZONE_RESOURCES_PATH + "/{landingZoneId}/resources",
-                LANDING_ZONE_ID))
+        .perform(get(AZURE_LANDING_ZONE_PATH + "/{landingZoneId}/resources", LANDING_ZONE_ID))
+        .andExpect(status().isOk())
+        .andExpect(MockMvcResultMatchers.jsonPath("$.id").exists())
+        .andExpect(MockMvcResultMatchers.jsonPath("$.id", Matchers.is(LANDING_ZONE_ID)))
+        .andExpect(MockMvcResultMatchers.jsonPath("$.resources").exists())
+        .andExpect(MockMvcResultMatchers.jsonPath("$.resources").isArray())
+        .andExpect(
+            MockMvcResultMatchers.jsonPath(
+                "$.resources[0].purpose",
+                Matchers.in(
+                    List.of(
+                        purposeSubnets1.toString(), purposeSubnets2.toString(),
+                        purposeSubnets3.toString(), purposeSubnets4.toString()))))
+        .andExpect(MockMvcResultMatchers.jsonPath("$.resources[0].deployedResources").exists())
+        .andExpect(MockMvcResultMatchers.jsonPath("$.resources[0].deployedResources").isArray());
+  }
+
+  @Test
+  public void listAzureLandingZoneResources_NoResources() throws Exception {
+    LandingZoneResourcesByPurpose groupedResources =
+        new LandingZoneResourcesByPurpose(Collections.emptyMap());
+
+    when(landingZoneService.listResourcesWithPurposes(anyString())).thenReturn(groupedResources);
+    when(featureConfiguration.isAzureEnabled()).thenReturn(true);
+
+    mockMvc
+        .perform(get(AZURE_LANDING_ZONE_PATH + "/{landingZoneId}/resources", LANDING_ZONE_ID))
         .andExpect(status().isOk())
         .andExpect(MockMvcResultMatchers.jsonPath("$.id").exists())
         .andExpect(MockMvcResultMatchers.jsonPath("$.resources").exists())
