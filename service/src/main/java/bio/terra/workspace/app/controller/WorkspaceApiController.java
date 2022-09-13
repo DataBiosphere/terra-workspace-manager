@@ -367,9 +367,8 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
         "Deleting the properties with the key {} in workspace {}",
         propertyKeys.toString(),
         workspaceUuid);
-    Workspace workspace =
-        workspaceService.validateWorkspaceAndAction(
-            userRequest, workspaceUuid, SamWorkspaceAction.DELETE);
+    workspaceService.validateWorkspaceAndAction(
+        userRequest, workspaceUuid, SamWorkspaceAction.DELETE);
     workspaceService.deleteWorkspaceProperties(workspaceUuid, propertyKeys, userRequest);
     logger.info(
         "Deleted the properties with the key {} in workspace {}", propertyKeys, workspaceUuid);
@@ -569,6 +568,15 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
         Optional.ofNullable(body.getUserFacingId()).orElse(destinationWorkspaceId.toString());
     ControllerValidationUtils.validateUserFacingId(destinationUserFacingId);
 
+    // If user does not specify the destinationWorkspace's displayName, then we will generate the
+    // name followed the sourceWorkspace's displayName, if sourceWorkspace's displayName is null, we
+    // will generate the name based on the sourceWorkspace's userFacingId
+    String alterDisplayName =
+        (sourceWorkspace.getDisplayName().isPresent()
+                && !sourceWorkspace.getDisplayName().get().isEmpty())
+            ? sourceWorkspace.getDisplayName().get() + " (Copy)"
+            : sourceWorkspace.getUserFacingId() + " (Copy)";
+
     // Construct the target workspace object from the inputs
     // Policies are cloned in the flight instead of here so that they get cleaned appropriately if
     // the flight fails.
@@ -578,7 +586,7 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
             .userFacingId(destinationUserFacingId)
             .spendProfileId(spendProfileId.orElse(null))
             .workspaceStage(WorkspaceStage.MC_WORKSPACE)
-            .displayName(body.getDisplayName())
+            .displayName(Optional.ofNullable(body.getDisplayName()).orElse(alterDisplayName))
             .description(body.getDescription())
             .properties(sourceWorkspace.getProperties())
             .build();

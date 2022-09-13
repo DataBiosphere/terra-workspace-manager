@@ -280,6 +280,8 @@ public class WorkspaceApiControllerTest extends BaseUnitTest {
     ApiWorkspaceDescription destinationWorkspace = getWorkspaceDescription(destinationWorkspaceId);
 
     assertEquals(sourceWorkspace.getProperties(), destinationWorkspace.getProperties());
+    assertEquals(
+        sourceWorkspace.getDisplayName() + " (Copy)", destinationWorkspace.getDisplayName());
   }
 
   @Test
