@@ -13,7 +13,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/FoldersList'
+                $ref: '#/components/schemas/FolderList'
         '500':
           $ref: '#/components/responses/ServerError'
     post:
@@ -101,7 +101,7 @@ paths:
 
 components:
   schemas:
-    FoldersList:
+    FolderList:
       type: object
       required: [ folders ]
       properties:

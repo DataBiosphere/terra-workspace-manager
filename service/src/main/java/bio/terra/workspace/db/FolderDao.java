@@ -27,12 +27,15 @@ import org.springframework.stereotype.Component;
 
 @Component
 public class FolderDao {
-  private static final String DEFAULT_ROOT = "0";
+  // Despite there's no default root folder entry in the `folder` table,
+  // parent folder id must be non-null even for top-level folder to
+  // guarantee display_name uniqueness at the same folder level.
+  private static final String DEFAULT_ROOT_FOLDER_ID = "0";
   private static final RowMapper<Folder> FOLDER_ROW_MAPPER =
       (rs, rowNum) -> {
-        var parentFolderIdString = rs.getString("parent_folder_id");
+        var parentFolderIdString = Objects.requireNonNull(rs.getString("parent_folder_id"));
         UUID parentFolderId =
-            DEFAULT_ROOT.equals(parentFolderIdString)
+            DEFAULT_ROOT_FOLDER_ID.equals(parentFolderIdString)
                 ? null
                 : UUID.fromString(parentFolderIdString);
         return new Folder(
@@ -77,7 +80,7 @@ public class FolderDao {
                 "parent_folder_id",
                 Optional.ofNullable(folder.parentFolderId())
                     .map(UUID::toString)
-                    .orElse(DEFAULT_ROOT));
+                    .orElse(DEFAULT_ROOT_FOLDER_ID));
 
     try {
       jdbcTemplate.update(sql, params);
@@ -140,7 +143,7 @@ public class FolderDao {
     if (Boolean.TRUE.equals(updateParent)) {
       params.addValue(
           "parent_folder_id",
-          Optional.ofNullable(parentFolderId).map(UUID::toString).orElse(DEFAULT_ROOT));
+          Optional.ofNullable(parentFolderId).map(UUID::toString).orElse(DEFAULT_ROOT_FOLDER_ID));
     }
     StringBuilder sb = new StringBuilder("UPDATE folder SET ");
 

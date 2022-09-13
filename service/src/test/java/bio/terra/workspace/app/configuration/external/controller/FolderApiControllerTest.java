@@ -23,7 +23,7 @@ import bio.terra.common.exception.ForbiddenException;
 import bio.terra.workspace.common.BaseUnitTest;
 import bio.terra.workspace.generated.model.ApiCreateFolderRequestBody;
 import bio.terra.workspace.generated.model.ApiFolder;
-import bio.terra.workspace.generated.model.ApiFoldersList;
+import bio.terra.workspace.generated.model.ApiFolderList;
 import bio.terra.workspace.generated.model.ApiUpdateFolderRequestBody;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
@@ -90,12 +90,7 @@ public class FolderApiControllerTest extends BaseUnitTest {
             anyString(),
             eq(SamConstants.SamWorkspaceAction.WRITE));
 
-    createFolderExpectCode(
-        workspaceId,
-        "foo",
-        /*description=*/ null,
-        /*parentFolderId=*/ null,
-        HttpStatus.SC_FORBIDDEN);
+    createFolderExpectCode(workspaceId, "foo", HttpStatus.SC_FORBIDDEN);
   }
 
   @Test
@@ -116,12 +111,7 @@ public class FolderApiControllerTest extends BaseUnitTest {
     ApiFolder firstFolder =
         createFolder(workspaceId, displayName, /*description=*/ null, /*parentFolderId=*/ null);
     // create another top-level folder foo is not allowed
-    createFolderExpectCode(
-        workspaceId,
-        displayName,
-        /*description=*/ null,
-        /*parentFolderId=*/ null,
-        HttpStatus.SC_BAD_REQUEST);
+    createFolderExpectCode(workspaceId, displayName, HttpStatus.SC_BAD_REQUEST);
 
     // create a second level folder under foo.
     createFolderExpectCode(
@@ -156,10 +146,8 @@ public class FolderApiControllerTest extends BaseUnitTest {
   @Test
   public void createFolder_duplicateNameUnderDifferentParent_succeeds() throws Exception {
     UUID workspaceId = createDefaultWorkspace(mockMvc, objectMapper).getId();
-    ApiFolder firstFolder =
-        createFolder(workspaceId, "foo", /*description=*/ null, /*parentFolderId=*/ null);
-    ApiFolder secondFolder =
-        createFolder(workspaceId, "bar", /*description=*/ null, /*parentFolderId=*/ null);
+    ApiFolder firstFolder = createFolder(workspaceId, "foo");
+    ApiFolder secondFolder = createFolder(workspaceId, "bar");
 
     var duplicateDisplayName = "copycat";
     ApiFolder thirdFolder =
@@ -209,13 +197,17 @@ public class FolderApiControllerTest extends BaseUnitTest {
   }
 
   @Test
-  public void getFolder_invalidWorkspaceAndFolder_throws404() throws Exception {
+  public void getFolder_workspaceDoNotExist_throws404() throws Exception {
     getFolderExpectCode(
         /*workspaceId=*/ UUID.randomUUID(),
         /*folderId=*/ UUID.randomUUID(),
         HttpStatus.SC_NOT_FOUND);
+  }
 
+  @Test
+  public void getFolder_folderDoNotExist_throws404() throws Exception {
     UUID workspaceId = createDefaultWorkspace(mockMvc, objectMapper).getId();
+
     getFolderExpectCode(workspaceId, /*folderId=*/ UUID.randomUUID(), HttpStatus.SC_NOT_FOUND);
   }
 
@@ -231,18 +223,17 @@ public class FolderApiControllerTest extends BaseUnitTest {
         createFolder(
             workspaceId, displayName, description, /*parentFolderId=*/ firstFolder.getId());
 
-    ApiFoldersList retrievedFolders = listFolders(workspaceId);
+    ApiFolderList retrievedFolders = listFolders(workspaceId);
 
     var expectedFolders =
-        new ApiFoldersList().addFoldersItem(firstFolder).addFoldersItem(secondFolder);
+        new ApiFolderList().addFoldersItem(firstFolder).addFoldersItem(secondFolder);
     assertEquals(expectedFolders, retrievedFolders);
   }
 
   @Test
   public void listFolders_doesNotHaveReadAccess_throws403() throws Exception {
     UUID workspaceId = createDefaultWorkspace(mockMvc, objectMapper).getId();
-    createFolderExpectCode(
-        workspaceId, "foo", /*description=*/ null, /*parentFolderId=*/ null, HttpStatus.SC_OK);
+    createFolderExpectCode(workspaceId, "foo", HttpStatus.SC_OK);
     doThrow(new ForbiddenException("User has no write access"))
         .when(mockSamService)
         .checkAuthz(
@@ -288,8 +279,7 @@ public class FolderApiControllerTest extends BaseUnitTest {
   public void deleteFolders_deleteTopLevelFolder_folderAndSubFoldersAllDeleted() throws Exception {
     UUID workspaceId = createDefaultWorkspace(mockMvc, objectMapper).getId();
 
-    ApiFolder firstFolder =
-        createFolder(workspaceId, "foo", /*description*/ null, /*parentFolderId=*/ null);
+    ApiFolder firstFolder = createFolder(workspaceId, "foo");
     ApiFolder secondFolder =
         createFolder(
             workspaceId, "foo", /*description*/ null, /*parentFolderId=*/ firstFolder.getId());
@@ -398,19 +388,43 @@ public class FolderApiControllerTest extends BaseUnitTest {
         HttpStatus.SC_NOT_FOUND);
   }
 
+  private ApiFolder createFolder(UUID workspaceId, String displayName) throws Exception {
+    String serializedResponse =
+        createFolderExpectCode(workspaceId, displayName, HttpStatus.SC_OK)
+            .andReturn()
+            .getResponse()
+            .getContentAsString();
+    return objectMapper.readValue(serializedResponse, ApiFolder.class);
+  }
+
   private ApiFolder createFolder(
       UUID workspaceId,
       String displayName,
       @Nullable String description,
       @Nullable UUID parentFolderId)
       throws Exception {
-    String createResponse =
+    String serializedResponse =
         createFolderExpectCode(
                 workspaceId, displayName, description, parentFolderId, HttpStatus.SC_OK)
             .andReturn()
             .getResponse()
             .getContentAsString();
-    return objectMapper.readValue(createResponse, ApiFolder.class);
+    return objectMapper.readValue(serializedResponse, ApiFolder.class);
+  }
+
+  private ResultActions createFolderExpectCode(UUID workspaceId, String displayName, int code)
+      throws Exception {
+    return mockMvc
+        .perform(
+            addJsonContentType(
+                addAuth(
+                    post(String.format(FOLDERS_V1_PATH_FORMAT, workspaceId))
+                        .content(
+                            objectMapper.writeValueAsString(
+                                createFolderRequestBody(
+                                    displayName, /*description=*/ null, /*parentFolderId=*/ null))),
+                    USER_REQUEST)))
+        .andExpect(status().is(code));
   }
 
   private ResultActions createFolderExpectCode(
@@ -448,7 +462,7 @@ public class FolderApiControllerTest extends BaseUnitTest {
       @Nullable UUID parentFolderId,
       boolean updateParent)
       throws Exception {
-    String serializedUpdateResponse =
+    String serializedResponse =
         updateFolderExpectCode(
                 workspaceId,
                 folderId,
@@ -460,7 +474,7 @@ public class FolderApiControllerTest extends BaseUnitTest {
             .andReturn()
             .getResponse()
             .getContentAsString();
-    return objectMapper.readValue(serializedUpdateResponse, ApiFolder.class);
+    return objectMapper.readValue(serializedResponse, ApiFolder.class);
   }
 
   private ResultActions updateFolderExpectCode(
@@ -502,12 +516,12 @@ public class FolderApiControllerTest extends BaseUnitTest {
   }
 
   private ApiFolder getFolder(UUID workspaceId, UUID folderId) throws Exception {
-    String folderGetResponse =
+    String serializedResponse =
         getFolderExpectCode(workspaceId, folderId, HttpStatus.SC_OK)
             .andReturn()
             .getResponse()
             .getContentAsString();
-    return objectMapper.readValue(folderGetResponse, ApiFolder.class);
+    return objectMapper.readValue(serializedResponse, ApiFolder.class);
   }
 
   private ResultActions getFolderExpectCode(UUID workspaceId, UUID folderId, int code)
@@ -518,14 +532,13 @@ public class FolderApiControllerTest extends BaseUnitTest {
         .andExpect(status().is(code));
   }
 
-  private ApiFoldersList listFolders(UUID workspaceId) throws Exception {
-    String foldersGetResponse =
+  private ApiFolderList listFolders(UUID workspaceId) throws Exception {
+    String serializedResponse =
         listFoldersExpectCode(workspaceId, HttpStatus.SC_OK)
             .andReturn()
             .getResponse()
             .getContentAsString();
-    var retrievedFolders = objectMapper.readValue(foldersGetResponse, ApiFoldersList.class);
-    return retrievedFolders;
+    return objectMapper.readValue(serializedResponse, ApiFolderList.class);
   }
 
   private ResultActions listFoldersExpectCode(UUID workspaceId, int code) throws Exception {

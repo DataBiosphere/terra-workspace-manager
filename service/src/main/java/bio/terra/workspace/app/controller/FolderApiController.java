@@ -3,7 +3,7 @@ package bio.terra.workspace.app.controller;
 import bio.terra.workspace.generated.controller.FolderApi;
 import bio.terra.workspace.generated.model.ApiCreateFolderRequestBody;
 import bio.terra.workspace.generated.model.ApiFolder;
-import bio.terra.workspace.generated.model.ApiFoldersList;
+import bio.terra.workspace.generated.model.ApiFolderList;
 import bio.terra.workspace.generated.model.ApiUpdateFolderRequestBody;
 import bio.terra.workspace.service.folder.FolderService;
 import bio.terra.workspace.service.folder.model.Folder;
@@ -85,7 +85,7 @@ public class FolderApiController extends ControllerBase implements FolderApi {
   }
 
   @Override
-  public ResponseEntity<ApiFoldersList> listFolders(UUID workspaceId) {
+  public ResponseEntity<ApiFolderList> listFolders(UUID workspaceId) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     workspaceService.validateWorkspaceAndAction(
         userRequest, workspaceId, SamConstants.SamWorkspaceAction.READ);
@@ -93,7 +93,7 @@ public class FolderApiController extends ControllerBase implements FolderApi {
     List<Folder> folders = folderService.listFolders(workspaceId);
 
     var response =
-        new ApiFoldersList()
+        new ApiFolderList()
             .folders(
                 folders.stream().map(folder -> buildFolder(folder)).collect(Collectors.toList()));
     return new ResponseEntity<>(response, HttpStatus.OK);
