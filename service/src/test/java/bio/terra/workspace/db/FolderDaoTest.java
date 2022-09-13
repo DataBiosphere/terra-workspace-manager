@@ -266,8 +266,8 @@ public class FolderDaoTest extends BaseUnitTest {
             folderDao.updateFolder(
                 workspaceUuid,
                 createdFolder.id(),
-                "bar", /*description*/
-                null,
+                "bar",
+                /*description=*/ null,
                 /*parentFolderId=*/ null,
                 /*updateParent=*/ false));
 
@@ -289,8 +289,8 @@ public class FolderDaoTest extends BaseUnitTest {
             folderDao.updateFolder(
                 workspaceUuid,
                 createdFolder.id(),
-                null, /*description*/
-                null,
+                /*displayName=*/ null,
+                /*description=*/ null,
                 /*parentFolderId=*/ null,
                 /*updateParent=*/ false));
   }
