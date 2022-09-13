@@ -9,6 +9,9 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -16,6 +19,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import bio.terra.common.exception.ForbiddenException;
 import bio.terra.workspace.common.BaseUnitTest;
 import bio.terra.workspace.generated.model.ApiCreateFolderRequestBody;
 import bio.terra.workspace.generated.model.ApiFolder;
@@ -23,6 +27,7 @@ import bio.terra.workspace.generated.model.ApiFoldersList;
 import bio.terra.workspace.generated.model.ApiUpdateFolderRequestBody;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
+import bio.terra.workspace.service.iam.model.SamConstants;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.Optional;
@@ -75,33 +80,40 @@ public class FolderApiControllerTest extends BaseUnitTest {
   }
 
   @Test
+  public void createFolder_doesNotHaveWriteAccess_throws403() throws Exception {
+    UUID workspaceId = createDefaultWorkspace(mockMvc, objectMapper).getId();
+    doThrow(new ForbiddenException("User has no write access")).when(mockSamService).checkAuthz(any(AuthenticatedUserRequest.class), eq(SamConstants.SamResource.WORKSPACE), anyString(), eq(SamConstants.SamWorkspaceAction.WRITE));
+
+    createFolderExpectCode(
+        workspaceId, "foo", /*description=*/ null, /*parentFolderId=*/ null, HttpStatus.SC_FORBIDDEN);
+  }
+
+  @Test
   public void createFolder_parentFolderDoesNotExist_throws404() throws Exception {
     UUID workspaceId = createDefaultWorkspace(mockMvc, objectMapper).getId();
     var displayName = "foo";
-    var description = String.format("This is folder %s", displayName);
 
     createFolderExpectCode(
-        workspaceId, displayName, description, UUID.randomUUID(), HttpStatus.SC_NOT_FOUND);
+        workspaceId, "foo", /*description=*/null, UUID.randomUUID(), HttpStatus.SC_NOT_FOUND);
   }
 
   @Test
   public void createFolder_duplicateDisplayName_throws400() throws Exception {
     UUID workspaceId = createDefaultWorkspace(mockMvc, objectMapper).getId();
     var displayName = "foo";
-    var description = String.format("This is folder %s", displayName);
 
     // create a top-level folder foo.
     ApiFolder firstFolder =
-        createFolder(workspaceId, displayName, description, /*parentFolderId=*/ null);
+        createFolder(workspaceId, displayName, /*description=*/null, /*parentFolderId=*/ null);
     // create another top-level folder foo is not allowed
     createFolderExpectCode(
-        workspaceId, displayName, description, /*parentFolderId=*/ null, HttpStatus.SC_BAD_REQUEST);
+        workspaceId, displayName, /*description=*/null, /*parentFolderId=*/ null, HttpStatus.SC_BAD_REQUEST);
 
     // create a second level folder under foo.
     createFolderExpectCode(
-        workspaceId, displayName, description, firstFolder.getId(), HttpStatus.SC_OK);
+        workspaceId, displayName, /*description=*/null, firstFolder.getId(), HttpStatus.SC_OK);
     createFolderExpectCode(
-        workspaceId, displayName, description, firstFolder.getId(), HttpStatus.SC_BAD_REQUEST);
+        workspaceId, displayName, /*description=*/null, firstFolder.getId(), HttpStatus.SC_BAD_REQUEST);
   }
 
   @Test
@@ -163,6 +175,16 @@ public class FolderApiControllerTest extends BaseUnitTest {
   }
 
   @Test
+  public void getFolder_doesNotHaveReadAccess_throws403() throws Exception {
+    UUID workspaceId = createDefaultWorkspace(mockMvc, objectMapper).getId();
+    ApiFolder folder = createFolder(workspaceId, "foo", /*description=*/null, /*parentFolderId=*/null);
+    doThrow(new ForbiddenException("User has no write access")).when(mockSamService).checkAuthz(any(AuthenticatedUserRequest.class), eq(SamConstants.SamResource.WORKSPACE), anyString(), eq(SamConstants.SamWorkspaceAction.READ));
+
+    getFolderExpectCode(
+        workspaceId, folder.getId(), HttpStatus.SC_FORBIDDEN);
+  }
+
+  @Test
   public void getFolder_invalidWorkspaceAndFolder_throws404() throws Exception {
     getFolderExpectCode(
         /*workspaceId=*/ UUID.randomUUID(),
@@ -193,8 +215,28 @@ public class FolderApiControllerTest extends BaseUnitTest {
   }
 
   @Test
+  public void listFolders_doesNotHaveReadAccess_throws403() throws Exception {
+    UUID workspaceId = createDefaultWorkspace(mockMvc, objectMapper).getId();
+    createFolderExpectCode(workspaceId, "foo", /*description=*/null, /*parentFolderId=*/null, HttpStatus.SC_OK);
+    doThrow(new ForbiddenException("User has no write access")).when(mockSamService).checkAuthz(any(AuthenticatedUserRequest.class), eq(SamConstants.SamResource.WORKSPACE), anyString(), eq(SamConstants.SamWorkspaceAction.READ));
+
+    listFoldersExpectCode(
+        workspaceId, HttpStatus.SC_FORBIDDEN);
+  }
+
+  @Test
   public void listFolders_workspaceNotFound_throws404() throws Exception {
     listFoldersExpectCode(UUID.randomUUID(), HttpStatus.SC_NOT_FOUND);
+  }
+
+  @Test
+  public void deleteFolder_doesNotHaveWriteAccess_throws403() throws Exception {
+    UUID workspaceId = createDefaultWorkspace(mockMvc, objectMapper).getId();
+    ApiFolder folder = createFolder(workspaceId, "foo", /*description=*/null, /*parentFolderId=*/null);
+    doThrow(new ForbiddenException("User has no write access")).when(mockSamService).checkAuthz(any(AuthenticatedUserRequest.class), eq(SamConstants.SamResource.WORKSPACE), anyString(), eq(SamConstants.SamWorkspaceAction.WRITE));
+
+    deleteFolderExpectCode(
+        workspaceId, folder.getId(), HttpStatus.SC_FORBIDDEN);
   }
 
   @Test
@@ -227,7 +269,7 @@ public class FolderApiControllerTest extends BaseUnitTest {
   }
 
   @Test
-  public void updateFolders_onlyUpdateNameAndDescription_folderParentIdNotUpdated()
+  public void updateFolders_updateParentFalse_onlyUpdateNameAndDescription()
       throws Exception {
     UUID workspaceId = createDefaultWorkspace(mockMvc, objectMapper).getId();
     var displayName = "foo";
@@ -242,7 +284,7 @@ public class FolderApiControllerTest extends BaseUnitTest {
     var newDescription = "This is a very foo folder";
     ApiFolder updatedFolder =
         updateFolder(
-            workspaceId, secondFolder.getId(), newDisplayName, newDescription, null, false);
+            workspaceId, secondFolder.getId(), newDisplayName, newDescription, /*parentFolderId=*/null, /*updateParent=*/false);
 
     assertEquals(newDisplayName, updatedFolder.getDisplayName());
     assertEquals(newDescription, updatedFolder.getDescription());
@@ -250,7 +292,7 @@ public class FolderApiControllerTest extends BaseUnitTest {
   }
 
   @Test
-  public void updateFolders_updateParent_folderParentIdNull() throws Exception {
+  public void updateFolders_updateParentTrue_folderMovedToTopLevel() throws Exception {
     UUID workspaceId = createDefaultWorkspace(mockMvc, objectMapper).getId();
     var displayName = "foo";
     var description = String.format("This is folder %s", displayName);
@@ -273,7 +315,17 @@ public class FolderApiControllerTest extends BaseUnitTest {
   }
 
   @Test
-  public void updateFolders_invalidParentFolder_throws404() throws Exception {
+  public void updateFolder_doesNotHaveWriteAccess_throws403() throws Exception {
+    UUID workspaceId = createDefaultWorkspace(mockMvc, objectMapper).getId();
+    ApiFolder folder = createFolder(workspaceId, "foo", /*description=*/null, /*parentFolderId=*/null);
+    doThrow(new ForbiddenException("User has no write access")).when(mockSamService).checkAuthz(any(AuthenticatedUserRequest.class), eq(SamConstants.SamResource.WORKSPACE), anyString(), eq(SamConstants.SamWorkspaceAction.WRITE));
+
+    updateFolderExpectCode(
+        workspaceId, folder.getId(), /*newDisplayName=*/null, /*newDescription=*/null, /*parentFolderId=*/null, true, HttpStatus.SC_FORBIDDEN);
+  }
+
+  @Test
+  public void updateFolders_parentFolderNotExists_throws404() throws Exception {
     UUID workspaceId = createDefaultWorkspace(mockMvc, objectMapper).getId();
     var displayName = "foo";
     var description = String.format("This is folder %s", displayName);
