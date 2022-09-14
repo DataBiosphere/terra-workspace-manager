@@ -255,7 +255,6 @@ public class CloneWorkspace extends WorkspaceAllocateWithPolicyTestScriptBase {
     final CloneWorkspaceRequest cloneWorkspaceRequest =
         new CloneWorkspaceRequest()
             .userFacingId(destinationUserFacingId)
-            .displayName("Cloned Workspace")
             .description("A clone of workspace " + getWorkspaceId().toString())
             .spendProfile(getSpendProfileId()) // TODO- use a different one if available
             .location("us-central1");
@@ -275,6 +274,13 @@ public class CloneWorkspace extends WorkspaceAllocateWithPolicyTestScriptBase {
         "Destination workspace is available in DB immediately after return from cloneWorkspace().");
     assertEquals(
         destinationWorkspaceId, destinationWorkspaceDescription.getId(), "Destination IDs match");
+    assertEquals(
+        sourceOwnerWorkspaceApi
+                .getWorkspace(getWorkspaceId(), /*minimumHighestRole=*/ null)
+                .getUserFacingId()
+            + " (Copy)",
+        destinationWorkspaceDescription.getDisplayName(),
+        "Destination displayName matches");
 
     cloneResult =
         ClientTestUtils.pollWhileRunning(
@@ -354,11 +360,6 @@ public class CloneWorkspace extends WorkspaceAllocateWithPolicyTestScriptBase {
     logger.info("Cloned Shared Bucket: {}", clonedSharedBucket);
     GcsBucketObjectUtils.retrieveBucketFile(
         clonedSharedBucket.getAttributes().getBucketName(), destinationProjectId, cloningUser);
-
-    // Verify Policies cloned successfully
-    assertNotNull(destinationWorkspace.getPolicies());
-    assertEquals(1, destinationWorkspace.getPolicies().stream().count());
-    assertEquals("terra", destinationWorkspace.getPolicies().get(0).getNamespace());
 
     // Verify clone of private bucket fails
     final ResourceCloneDetails privateBucketCloneDetails =

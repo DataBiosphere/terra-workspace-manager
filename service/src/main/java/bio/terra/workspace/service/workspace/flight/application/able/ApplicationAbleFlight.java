@@ -8,6 +8,7 @@ import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.WsmApplicationKeys;
+import com.fasterxml.jackson.core.type.TypeReference;
 import java.util.List;
 import java.util.UUID;
 
@@ -34,7 +35,7 @@ public class ApplicationAbleFlight extends Flight {
         inputParameters.get(JobMapKeys.AUTH_USER_INFO.getKeyName(), AuthenticatedUserRequest.class);
     UUID workspaceUuid = inputParameters.get(WorkspaceFlightMapKeys.WORKSPACE_ID, UUID.class);
     List<String> applicationIdList =
-        inputParameters.get(WorkspaceFlightMapKeys.APPLICATION_IDS, List.class);
+        inputParameters.get(WorkspaceFlightMapKeys.APPLICATION_IDS, new TypeReference<>() {});
     AbleEnum ableEnum =
         inputParameters.get(WsmApplicationKeys.APPLICATION_ABLE_ENUM, AbleEnum.class);
 

@@ -76,6 +76,23 @@ paths:
         '500':
           $ref: '#components/responses/ServerError'
 
+  /api/landingzones/v1/azure/{landingZoneId}/resources:
+    parameters:
+      - $ref: '#/components/parameters/LandingZoneId'
+    get:
+      summary: List all Azure landing zones resources
+      operationId: listAzureLandingZoneResources
+      tags: [ LandingZones ]
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AzureLandingZoneResourcesList'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
 components:
   schemas:
     CreateAzureLandingZoneRequestBody:
@@ -118,30 +135,38 @@ components:
           $ref: '#/components/schemas/ErrorReport'
 
     AzureLandingZone:
-      description: Created Azure Landing Zone details
+      description: Created Azure Landing Zone details.
       type: object
       properties:
         id:
-          description: An identifier of created Azure landing zone
+          description: An identifier of created Azure landing zone.
           type: string
         resources:
-          description: List of Azure landing zone deployed resources
+          description: List of Azure landing zone deployed resources.
           type: array
           items:
             $ref: '#/components/schemas/AzureLandingZoneDeployedResource'
 
     AzureLandingZoneDeployedResource:
-      description: Details of an Azure resource
+      description: Details of an Azure resource.
       type: object
       properties:
         resourceId:
-          description: Unique Azure resource identifier
+          description: Unique Azure resource identifier.
           type: string
         resourceType:
-          description: Azure resource type
+          description: |
+            The azure deployed resource type; e.g., 'Microsoft.Compute/virtualMachines'.
+            The deployed resource type definition is located in ARM template documentation, under the Reference node.
+          type: string
+        resourceName:
+          description: Azure resource name. Present for a subnet resource.
+          type: string
+        resourceParentId:
+          description: Azure resource Id of a resource parent. Present for a subnet resource.
           type: string
         region:
-          description: A region where an Azure resource deployed
+          description: A region where an Azure resource deployed.
           type: string
 
     AzureLandingZoneDefinitionList:
@@ -200,9 +225,38 @@ components:
           description: The ID of Azure resource group associated with the landing zone.
           type: string
 
+    AzureLandingZoneResourcesList:
+      type: object
+      required: [resources]
+      properties:
+        id:
+          description: An identifier of a Azure landing zone.
+          type: string
+        resources:
+          description: A list of deployed resources in a landing zone, grouped by purpose.
+          type: array
+          items:
+            $ref: '#/components/schemas/AzureLandingZoneResourcesPurposeGroup'
+
+    AzureLandingZoneResourcesPurposeGroup:
+      description: |
+        The structure contains one landing zone purpose and a list of Azure deployed resources that 
+        are tagged with this purpose.
+      type: object
+      required: [purpose,deployedResources]
+      properties:
+        purpose:
+          description: Purpose tag value string.
+          type: string
+        deployedResources:
+          description: A list of Azure landing zones deployed resources.
+          type: array
+          items:
+            $ref: '#/components/schemas/AzureLandingZoneDeployedResource'
+
   responses:
     AzureLandingZoneResponse:
-      description: Response to create Azure landing zone
+      description: Response to create Azure landing zone.
       content:
         application/json:
           schema:
@@ -212,7 +266,7 @@ components:
     LandingZoneId:
       name: landingZoneId
       in: path
-      description: An string to identify an Azure landing zone
+      description: A string to identify an Azure landing zone.
       required: true
       schema:
         type: string

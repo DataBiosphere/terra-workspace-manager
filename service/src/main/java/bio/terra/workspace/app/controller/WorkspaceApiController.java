@@ -67,6 +67,7 @@ import java.util.Optional;
 import java.util.UUID;
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
+import liquibase.util.StringUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -569,6 +570,14 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
         Optional.ofNullable(body.getUserFacingId()).orElse(destinationWorkspaceId.toString());
     ControllerValidationUtils.validateUserFacingId(destinationUserFacingId);
 
+    // If user does not specify the destinationWorkspace's displayName, then we will generate the
+    // name followed the sourceWorkspace's displayName, if sourceWorkspace's displayName is null, we
+    // will generate the name based on the sourceWorkspace's userFacingId.
+    String generatedDisplayName =
+        (StringUtil.isEmpty(sourceWorkspace.getDisplayName().get()))
+            ? sourceWorkspace.getUserFacingId() + " (Copy)"
+            : sourceWorkspace.getDisplayName().get() + " (Copy)";
+
     // Construct the target workspace object from the inputs
     // Policies are cloned in the flight instead of here so that they get cleaned appropriately if
     // the flight fails.
@@ -578,7 +587,7 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
             .userFacingId(destinationUserFacingId)
             .spendProfileId(spendProfileId.orElse(null))
             .workspaceStage(WorkspaceStage.MC_WORKSPACE)
-            .displayName(body.getDisplayName())
+            .displayName(Optional.ofNullable(body.getDisplayName()).orElse(generatedDisplayName))
             .description(body.getDescription())
             .properties(sourceWorkspace.getProperties())
             .build();
