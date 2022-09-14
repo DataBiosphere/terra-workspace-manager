@@ -114,7 +114,7 @@ public class WorkspaceDao {
             String.format(
                 "Workspace with id %s already exists - display name %s stage %s",
                 workspaceUuid,
-                workspace.getDisplayName().toString(),
+                workspace.getDisplayName().orElse(null),
                 workspace.getWorkspaceStage().toString()),
             e);
       } else if (e.getMessage()

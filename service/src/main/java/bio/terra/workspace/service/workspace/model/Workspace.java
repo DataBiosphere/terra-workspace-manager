@@ -9,6 +9,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import javax.annotation.Nullable;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 
@@ -23,7 +24,7 @@ import org.apache.commons.lang3.builder.HashCodeBuilder;
 public class Workspace {
   private final UUID workspaceId;
   private final String userFacingId;
-  private final String displayName;
+  private final @Nullable String displayName;
   private final String description;
   private final SpendProfileId spendProfileId;
   private final Map<String, String> properties;
@@ -56,7 +57,7 @@ public class Workspace {
     return userFacingId;
   }
 
-  /** Optional display name for the workspace. */
+  /** display name for the workspace. */
   public Optional<String> getDisplayName() {
     return Optional.ofNullable(displayName);
   }
@@ -127,7 +128,7 @@ public class Workspace {
   public static class Builder {
     private UUID workspaceId;
     private String userFacingId;
-    private String displayName;
+    private @Nullable String displayName;
     private String description;
     private SpendProfileId spendProfileId;
     private Map<String, String> properties;
@@ -143,7 +144,7 @@ public class Workspace {
       return this;
     }
 
-    public Builder displayName(String displayName) {
+    public Builder displayName(@Nullable String displayName) {
       this.displayName = displayName;
       return this;
     }
@@ -172,9 +173,6 @@ public class Workspace {
       // Always have a map, even if it is empty
       if (properties == null) {
         properties = new HashMap<>();
-      }
-      if (displayName == null) {
-        displayName = "";
       }
       if (description == null) {
         description = "";
@@ -210,7 +208,7 @@ public class Workspace {
             .workspaceId(fullWorkspace.getWorkspaceId())
             .userFacingId(fullWorkspace.getUserFacingId())
             .workspaceStage(fullWorkspace.getWorkspaceStage())
-            .displayName(fullWorkspace.getDisplayName().orElse(""));
+            .displayName(fullWorkspace.getDisplayName().orElse(null));
 
     Map<String, String> strippedProperties = new HashMap<>();
     if (fullWorkspace.getProperties().containsKey(Properties.TYPE)) {
