@@ -57,7 +57,7 @@ public class Workspace {
     return userFacingId;
   }
 
-  /** display name for the workspace. */
+  /** Optional display name for the workspace. */
   public Optional<String> getDisplayName() {
     return Optional.ofNullable(displayName);
   }
