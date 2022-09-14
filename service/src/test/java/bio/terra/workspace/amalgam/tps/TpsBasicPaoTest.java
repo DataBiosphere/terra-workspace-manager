@@ -106,41 +106,7 @@ public class TpsBasicPaoTest extends BaseUnitTest {
     var destinationObjectId = UUID.randomUUID();
     var cloneRequest = new ApiTpsPaoCloneRequest().destinationObjectId(destinationObjectId);
     String cloneJson = objectMapper.writeValueAsString(cloneRequest);
-    /*
-        // Clone request
-        result =
-            mockMvc
-                .perform(
-                    addAuth(
-                        addJsonContentType(
-                            post("/api/policy/v1alpha1/pao/" + objectId).content(cloneJson)),
-                        USER_REQUEST))
-                .andReturn();
-        response = result.getResponse();
-        status = HttpStatus.valueOf(response.getStatus());
-        assertEquals(HttpStatus.CREATED, status);
 
-        // retrieve the clone
-        result =
-            mockMvc
-                .perform(
-                    addAuth(
-                        addJsonContentType(get("/api/policy/v1alpha1/pao/" + destinationObjectId)),
-                        USER_REQUEST))
-                .andReturn();
-        response = result.getResponse();
-        status = HttpStatus.valueOf(response.getStatus());
-        assertEquals(HttpStatus.OK, status);
-
-        // validate clone
-        apiPao = objectMapper.readValue(response.getContentAsString(), ApiTpsPaoGetResult.class);
-        assertEquals(destinationObjectId, apiPao.getObjectId());
-        assertEquals(objectId, apiPao.getPredecessorId());
-        assertEquals(ApiTpsComponent.WSM, apiPao.getComponent());
-        assertEquals(ApiTpsObjectType.WORKSPACE, apiPao.getObjectType());
-        checkAttributeSet(apiPao.getAttributes());
-        checkAttributeSet(apiPao.getEffectiveAttributes());
-    */
     // Delete a PAO
     result =
         mockMvc
