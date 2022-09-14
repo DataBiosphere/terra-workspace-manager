@@ -1,6 +1,12 @@
 package bio.terra.workspace.app.configuration.external.controller;
 
-import static bio.terra.workspace.common.utils.MockMvcUtils.*;
+import static bio.terra.workspace.common.utils.MockMvcUtils.CLONE_WORKSPACE_PATH_FORMAT;
+import static bio.terra.workspace.common.utils.MockMvcUtils.UPDATE_WORKSPACES_V1_PROPERTIES_PATH_FORMAT;
+import static bio.terra.workspace.common.utils.MockMvcUtils.WORKSPACES_V1_BY_UUID_PATH_FORMAT;
+import static bio.terra.workspace.common.utils.MockMvcUtils.WORKSPACES_V1_PATH;
+import static bio.terra.workspace.common.utils.MockMvcUtils.addAuth;
+import static bio.terra.workspace.common.utils.MockMvcUtils.addJsonContentType;
+import static bio.terra.workspace.common.utils.MockMvcUtils.createWorkspace;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -140,7 +146,7 @@ public class WorkspaceApiControllerTest extends BaseUnitTest {
 
   @Test
   public void updateWorkspace() throws Exception {
-    ApiCreatedWorkspace workspace = createDefaultWorkspace();
+    ApiCreatedWorkspace workspace = createWorkspace(mockMvc, objectMapper);
     String newDisplayName = "new workspace display name";
     String newUserFacingId = "new-ufid";
     String newDescription = "new description for the workspace";
@@ -207,7 +213,7 @@ public class WorkspaceApiControllerTest extends BaseUnitTest {
 
   @Test
   public void deleteWorkspaceProperties() throws Exception {
-    UUID workspaceId = createDefaultWorkspace().getId();
+    UUID workspaceId = createWorkspace(mockMvc, objectMapper).getId();
     ApiWorkspaceDescription sourceWorkspace = getWorkspaceDescription(workspaceId);
     ArrayList propertyUpdate = new ArrayList<>(Arrays.asList("foo", "foo1"));
 
@@ -230,7 +236,7 @@ public class WorkspaceApiControllerTest extends BaseUnitTest {
 
   @Test
   public void updateWorkspaceProperties() throws Exception {
-    UUID workspaceId = createDefaultWorkspace().getId();
+    UUID workspaceId = createWorkspace(mockMvc, objectMapper).getId();
     ApiWorkspaceDescription sourceWorkspace = getWorkspaceDescription(workspaceId);
     Map<String, String> properties = Map.of("foo", "bar");
 
@@ -253,7 +259,7 @@ public class WorkspaceApiControllerTest extends BaseUnitTest {
 
   @Test
   public void cloneWorkspace() throws Exception {
-    UUID workspaceId = createDefaultWorkspace().getId();
+    UUID workspaceId = createWorkspace(mockMvc, objectMapper).getId();
     ApiWorkspaceDescription sourceWorkspace = getWorkspaceDescription(workspaceId);
 
     String serializedGetResponse =
@@ -340,7 +346,7 @@ public class WorkspaceApiControllerTest extends BaseUnitTest {
   @Test
   public void getWorkspaceIncludesPolicy() throws Exception {
     // No need to actually pass policy inputs because TPS is mocked.
-    ApiCreatedWorkspace workspace = createDefaultWorkspace();
+    ApiCreatedWorkspace workspace = createWorkspace(mockMvc, objectMapper);
 
     ApiTpsPaoGetResult getPolicyResult =
         emptyWorkspacePao()
@@ -358,7 +364,7 @@ public class WorkspaceApiControllerTest extends BaseUnitTest {
   @Test
   public void tpsDisabledGetWorkspaceExcludesPolicy() throws Exception {
     when(mockFeatureConfiguration.isTpsEnabled()).thenReturn(false);
-    ApiCreatedWorkspace workspace = createDefaultWorkspace();
+    ApiCreatedWorkspace workspace = createWorkspace(mockMvc, objectMapper);
 
     ApiWorkspaceDescription gotWorkspace = getWorkspaceDescription(workspace.getId());
     assertNull(gotWorkspace.getPolicies());
@@ -367,8 +373,8 @@ public class WorkspaceApiControllerTest extends BaseUnitTest {
   @Test
   public void listWorkspaceIncludesPolicy() throws Exception {
     // No need to actually pass policy inputs because TPS is mocked.
-    ApiCreatedWorkspace workspace = createDefaultWorkspace();
-    ApiCreatedWorkspace noPolicyWorkspace = createDefaultWorkspace();
+    ApiCreatedWorkspace workspace = createWorkspace(mockMvc, objectMapper);
+    ApiCreatedWorkspace noPolicyWorkspace = createWorkspace(mockMvc, objectMapper);
     when(mockSamService.listWorkspaceIdsAndHighestRoles(any(), any()))
         .thenReturn(
             ImmutableMap.of(
@@ -401,7 +407,7 @@ public class WorkspaceApiControllerTest extends BaseUnitTest {
   @Test
   public void tpsDisabledListWorkspaceExcludesPolicy() throws Exception {
     when(mockFeatureConfiguration.isTpsEnabled()).thenReturn(false);
-    ApiCreatedWorkspace workspace = createDefaultWorkspace();
+    ApiCreatedWorkspace workspace = createWorkspace(mockMvc, objectMapper);
     when(mockSamService.listWorkspaceIdsAndHighestRoles(any(), any()))
         .thenReturn(ImmutableMap.of(workspace.getId(), WsmIamRole.OWNER));
 
@@ -418,23 +424,6 @@ public class WorkspaceApiControllerTest extends BaseUnitTest {
             .displayName(newDisplayName)
             .userFacingId(newUserFacingId);
     return objectMapper.writeValueAsString(requestBody);
-  }
-
-  private ApiCreatedWorkspace createDefaultWorkspace() throws Exception {
-    var createRequest = WorkspaceFixtures.createWorkspaceRequestBody();
-    String serializedResponse =
-        mockMvc
-            .perform(
-                addJsonContentType(
-                    addAuth(
-                        post(WORKSPACES_V1_PATH)
-                            .content(objectMapper.writeValueAsString(createRequest)),
-                        USER_REQUEST)))
-            .andExpect(status().is(HttpStatus.SC_OK))
-            .andReturn()
-            .getResponse()
-            .getContentAsString();
-    return objectMapper.readValue(serializedResponse, ApiCreatedWorkspace.class);
   }
 
   private ApiWorkspaceDescription getWorkspaceDescription(UUID id) throws Exception {
