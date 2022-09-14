@@ -66,7 +66,8 @@ public class WorkspaceLifecycle extends WorkspaceApiTestScriptBase {
     ClientTestUtils.assertHttpSuccess(workspaceApi, "CREATE workspace");
 
     // assert workspace descriptions attributes after workspace creation.
-    WorkspaceDescription workspaceDescription = workspaceApi.getWorkspace(workspaceUuid);
+    WorkspaceDescription workspaceDescription =
+        workspaceApi.getWorkspace(workspaceUuid, /*minimumHighestRole=*/ null);
     ClientTestUtils.assertHttpSuccess(workspaceApi, "GET workspace");
     assertThat(workspaceDescription.getId(), equalTo(workspaceUuid));
     assertThat(workspaceDescription.getStage(), equalTo(WorkspaceStageModel.MC_WORKSPACE));
@@ -110,7 +111,8 @@ public class WorkspaceLifecycle extends WorkspaceApiTestScriptBase {
     Properties updateProperties = buildProperties(Map.of("foo", "barUpdate", "ted", "lasso"));
 
     workspaceApi.updateWorkspaceProperties(updateProperties, workspaceUuid);
-    WorkspaceDescription updatedWorkspaceDescription = workspaceApi.getWorkspace(workspaceUuid);
+    WorkspaceDescription updatedWorkspaceDescription =
+        workspaceApi.getWorkspace(workspaceUuid, /*minimumHighestRole=*/ null);
     assertTrue(
         updatedWorkspaceDescription.getProperties().contains(buildProperty("xyzzy", "plohg")));
     assertTrue(
@@ -122,7 +124,7 @@ public class WorkspaceLifecycle extends WorkspaceApiTestScriptBase {
     propertykey.add("xyzzy");
     workspaceApi.deleteWorkspaceProperties(propertykey, workspaceUuid);
     Properties deletedWorkspaceDescription =
-        workspaceApi.getWorkspace(workspaceUuid).getProperties();
+        workspaceApi.getWorkspace(workspaceUuid, /*minimumHighestRole=*/ null).getProperties();
     assertFalse(deletedWorkspaceDescription.contains(buildProperty("xyzzy", "plohg")));
 
     workspaceApi.deleteWorkspace(workspaceUuid);

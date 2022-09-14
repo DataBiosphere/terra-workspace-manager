@@ -26,6 +26,7 @@ import bio.terra.workspace.service.resource.model.WsmResourceType;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -47,7 +48,8 @@ public class ControlledAzureStorageContainerResource extends ControlledResource 
       @JsonProperty("applicationId") String applicationId,
       @JsonProperty("storageAccountId") UUID storageAccountId,
       @JsonProperty("storageContainerName") String storageContainerName,
-      @JsonProperty("resourceLineage") List<ResourceLineageEntry> resourceLineage) {
+      @JsonProperty("resourceLineage") List<ResourceLineageEntry> resourceLineage,
+      @JsonProperty("properties") Map<String, String> properties) {
     super(
         workspaceId,
         resourceId,
@@ -59,7 +61,8 @@ public class ControlledAzureStorageContainerResource extends ControlledResource 
         managedBy,
         applicationId,
         privateResourceState,
-        resourceLineage);
+        resourceLineage,
+        properties);
     this.storageAccountId = storageAccountId;
     this.storageContainerName = storageContainerName;
     validate();

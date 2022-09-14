@@ -2,6 +2,7 @@ package bio.terra.workspace.service.iam.model;
 
 import bio.terra.common.exception.InternalServerErrorException;
 import bio.terra.workspace.generated.model.ApiIamRole;
+import bio.terra.workspace.service.iam.model.SamConstants.SamWorkspaceAction;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
@@ -11,22 +12,24 @@ import org.slf4j.LoggerFactory;
 
 /** Internal representation of IAM roles. */
 public enum WsmIamRole {
-  DISCOVERER("discoverer", ApiIamRole.DISCOVERER),
-  READER("reader", ApiIamRole.READER),
-  WRITER("writer", ApiIamRole.WRITER),
-  APPLICATION("application", ApiIamRole.APPLICATION),
-  OWNER("owner", ApiIamRole.OWNER),
+  DISCOVERER("discoverer", SamWorkspaceAction.DISCOVER, ApiIamRole.DISCOVERER),
+  READER("reader", SamWorkspaceAction.READ, ApiIamRole.READER),
+  WRITER("writer", SamWorkspaceAction.WRITE, ApiIamRole.WRITER),
+  APPLICATION("application", null, ApiIamRole.APPLICATION),
+  OWNER("owner", SamWorkspaceAction.OWN, ApiIamRole.OWNER),
   // The manager role is given to WSM's SA on all Sam workspace objects for admin control. Users
   // are never given this role.
-  MANAGER("manager", null);
+  MANAGER("manager", null, null);
 
   private static final Logger logger = LoggerFactory.getLogger(WsmIamRole.class);
 
   private final String samRole;
+  private final String samAction;
   private final ApiIamRole apiRole;
 
-  WsmIamRole(String samRole, ApiIamRole apiRole) {
+  WsmIamRole(String samRole, String samAction, ApiIamRole apiRole) {
     this.samRole = samRole;
+    this.samAction = samAction;
     this.apiRole = apiRole;
   }
 
@@ -95,5 +98,12 @@ public enum WsmIamRole {
 
   public String toSamRole() {
     return samRole;
+  }
+
+  public String toSamAction() {
+    if (samAction == null) {
+      throw new InternalServerErrorException("toSamAction called for " + name());
+    }
+    return samAction;
   }
 }

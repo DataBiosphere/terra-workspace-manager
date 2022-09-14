@@ -34,6 +34,7 @@ import bio.terra.workspace.service.resource.model.WsmResourceType;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
@@ -57,7 +58,6 @@ public class ControlledAiNotebookInstanceResource extends ControlledResource {
       Set.of(PROXY_MODE_METADATA_KEY, WORKSPACE_ID_METADATA_KEY, SERVER_ID_METADATA_KEY);
 
   protected static final int MAX_INSTANCE_NAME_LENGTH = 63;
-  protected static final String AUTO_NAME_DATE_FORMAT = "-yyyyMMdd-HHmmss";
   private final String instanceId;
   private final String location;
   private final String projectId;
@@ -77,7 +77,8 @@ public class ControlledAiNotebookInstanceResource extends ControlledResource {
       @JsonProperty("instanceId") String instanceId,
       @JsonProperty("location") String location,
       @JsonProperty("projectId") String projectId,
-      @JsonProperty("resourceLineage") List<ResourceLineageEntry> resourceLineage) {
+      @JsonProperty("resourceLineage") List<ResourceLineageEntry> resourceLineage,
+      @JsonProperty("properties") Map<String, String> properties) {
     super(
         workspaceId,
         resourceId,
@@ -89,7 +90,8 @@ public class ControlledAiNotebookInstanceResource extends ControlledResource {
         managedBy,
         applicationId,
         privateResourceState,
-        resourceLineage);
+        resourceLineage,
+        properties);
     this.instanceId = instanceId;
     this.location = location;
     this.projectId = projectId;

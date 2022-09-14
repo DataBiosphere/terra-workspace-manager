@@ -66,6 +66,7 @@ import java.util.Optional;
 import java.util.UUID;
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
+import liquibase.util.StringUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -242,15 +243,20 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
               .orElse(Collections.emptyList());
     }
 
+    // When we have another cloud context, we will need to do a similar retrieval for it.
+    var createDetailsOptional = workspaceActivityLogDao.getCreateDetails(workspaceUuid);
+    var lastChangeDetailsOptional = workspaceActivityLogDao.getLastUpdateDetails(workspaceUuid);
+
+    if (highestRole == WsmIamRole.DISCOVERER) {
+      workspace = Workspace.stripWorkspaceForRequesterWithOnlyDiscovererRole(workspace);
+    }
+
     // Convert the property map to API format
     ApiProperties apiProperties = new ApiProperties();
     workspace
         .getProperties()
         .forEach((k, v) -> apiProperties.add(new ApiProperty().key(k).value(v)));
 
-    // When we have another cloud context, we will need to do a similar retrieval for it.
-    var createDetailsOptional = workspaceActivityLogDao.getCreateDetails(workspaceUuid);
-    var lastChangeDetailsOptional = workspaceActivityLogDao.getLastUpdateDetails(workspaceUuid);
     return new ApiWorkspaceDescription()
         .id(workspaceUuid)
         .userFacingId(workspace.getUserFacingId())
@@ -274,13 +280,40 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
 
   @Override
   public ResponseEntity<ApiWorkspaceDescription> getWorkspace(
-      @PathVariable("workspaceId") UUID uuid) {
+      @PathVariable("workspaceId") UUID uuid, ApiIamRole minimumHighestRole) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     logger.info("Getting workspace {} for {}", uuid, userRequest.getEmail());
-    Workspace workspace =
-        workspaceService.validateWorkspaceAndAction(
-            userRequest, uuid, SamConstants.SamWorkspaceAction.READ);
+    // Can't set default in yaml (https://stackoverflow.com/a/68542868/6447189), so set here.
+    if (minimumHighestRole == null) {
+      minimumHighestRole = ApiIamRole.READER;
+    }
+    String samAction = WsmIamRole.fromApiModel(minimumHighestRole).toSamAction();
+    Workspace workspace = workspaceService.validateWorkspaceAndAction(userRequest, uuid, samAction);
+
     WsmIamRole highestRole = workspaceService.getHighestRole(uuid, userRequest);
+    ApiWorkspaceDescription desc = buildWorkspaceDescription(workspace, highestRole, userRequest);
+    logger.info("Got workspace {} for {}", desc, userRequest.getEmail());
+
+    return new ResponseEntity<>(desc, HttpStatus.OK);
+  }
+
+  @Override
+  public ResponseEntity<ApiWorkspaceDescription> getWorkspaceByUserFacingId(
+      @PathVariable("workspaceUserFacingId") String userFacingId, ApiIamRole minimumHighestRole) {
+    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    logger.info("Getting workspace {} for {}", userFacingId, userRequest.getEmail());
+    // Can't set default in yaml (https://stackoverflow.com/a/68542868/6447189), so set here.
+    if (minimumHighestRole == null) {
+      minimumHighestRole = ApiIamRole.READER;
+    }
+    // Authz check is inside workspaceService here as we would need the UUID to check Sam, but
+    // we only have the UFID at this point.
+
+    Workspace workspace =
+        workspaceService.getWorkspaceByUserFacingId(
+            userFacingId, userRequest, WsmIamRole.fromApiModel(minimumHighestRole));
+    WsmIamRole highestRole =
+        workspaceService.getHighestRole(workspace.getWorkspaceId(), userRequest);
     ApiWorkspaceDescription desc = buildWorkspaceDescription(workspace, highestRole, userRequest);
     logger.info("Got workspace {} for {}", desc, userRequest.getEmail());
 
@@ -326,22 +359,6 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
   }
 
   @Override
-  public ResponseEntity<ApiWorkspaceDescription> getWorkspaceByUserFacingId(
-      @PathVariable("workspaceUserFacingId") String userFacingId) {
-    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
-    logger.info("Getting workspace {} for {}", userFacingId, userRequest.getEmail());
-    // Authz check is inside workspaceService here as we would need the UUID to check Sam, but
-    // we only have the UFID at this point.
-    Workspace workspace = workspaceService.getWorkspaceByUserFacingId(userFacingId, userRequest);
-    WsmIamRole highestRole =
-        workspaceService.getHighestRole(workspace.getWorkspaceId(), userRequest);
-    ApiWorkspaceDescription desc = buildWorkspaceDescription(workspace, highestRole, userRequest);
-    logger.info("Got workspace {} for {}", desc, userRequest.getEmail());
-
-    return new ResponseEntity<>(desc, HttpStatus.OK);
-  }
-
-  @Override
   public ResponseEntity<Void> deleteWorkspaceProperties(
       @PathVariable("workspaceId") UUID workspaceUuid, @RequestBody List<String> propertyKeys) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
@@ -351,9 +368,8 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
         "Deleting the properties with the key {} in workspace {}",
         propertyKeys.toString(),
         workspaceUuid);
-    Workspace workspace =
-        workspaceService.validateWorkspaceAndAction(
-            userRequest, workspaceUuid, SamWorkspaceAction.DELETE);
+    workspaceService.validateWorkspaceAndAction(
+        userRequest, workspaceUuid, SamWorkspaceAction.DELETE);
     workspaceService.deleteWorkspaceProperties(workspaceUuid, propertyKeys, userRequest);
     logger.info(
         "Deleted the properties with the key {} in workspace {}", propertyKeys, workspaceUuid);
@@ -553,6 +569,14 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
         Optional.ofNullable(body.getUserFacingId()).orElse(destinationWorkspaceId.toString());
     ControllerValidationUtils.validateUserFacingId(destinationUserFacingId);
 
+    // If user does not specify the destinationWorkspace's displayName, then we will generate the
+    // name followed the sourceWorkspace's displayName, if sourceWorkspace's displayName is null, we
+    // will generate the name based on the sourceWorkspace's userFacingId.
+    String generatedDisplayName =
+        (StringUtil.isEmpty(sourceWorkspace.getDisplayName().get()))
+            ? sourceWorkspace.getUserFacingId() + " (Copy)"
+            : sourceWorkspace.getDisplayName().get() + " (Copy)";
+
     // Construct the target workspace object from the inputs
     // Policies are cloned in the flight instead of here so that they get cleaned appropriately if
     // the flight fails.
@@ -562,7 +586,7 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
             .userFacingId(destinationUserFacingId)
             .spendProfileId(spendProfileId.orElse(null))
             .workspaceStage(WorkspaceStage.MC_WORKSPACE)
-            .displayName(body.getDisplayName())
+            .displayName(Optional.ofNullable(body.getDisplayName()).orElse(generatedDisplayName))
             .description(body.getDescription())
             .properties(sourceWorkspace.getProperties())
             .build();

@@ -30,6 +30,7 @@ import bio.terra.workspace.service.resource.model.WsmResourceType;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -50,7 +51,8 @@ public class ControlledGcsBucketResource extends ControlledResource {
       @JsonProperty("managedBy") ManagedByType managedBy,
       @JsonProperty("applicationId") String applicationId,
       @JsonProperty("bucketName") String bucketName,
-      @JsonProperty("resourceLineage") List<ResourceLineageEntry> resourceLineage) {
+      @JsonProperty("resourceLineage") List<ResourceLineageEntry> resourceLineage,
+      @JsonProperty("properties") Map<String, String> properties) {
 
     super(
         workspaceId,
@@ -63,7 +65,8 @@ public class ControlledGcsBucketResource extends ControlledResource {
         managedBy,
         applicationId,
         privateResourceState,
-        resourceLineage);
+        resourceLineage,
+        properties);
     this.bucketName = bucketName;
     validate();
   }

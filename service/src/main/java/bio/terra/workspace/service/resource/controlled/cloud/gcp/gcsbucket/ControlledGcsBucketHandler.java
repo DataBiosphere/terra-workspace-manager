@@ -53,6 +53,17 @@ public class ControlledGcsBucketHandler implements WsmResourceHandler {
     return resource;
   }
 
+  /**
+   * Generate controlled GCS bucket cloud name that meets the requirements for a valid name.
+   *
+   * <p>Bucket names can only contain lowercase letters, numeric characters, dashes (-), and dots
+   * (.). underscores are prohibited for controlled GCS bucket. GCP recommends against underscores
+   * in bucket names because DNS hostnames can't have underscores. In particular, Nextflow fails if
+   * bucket name has underscore (because bucket name isn't valid DNS hostname.) Spaces are also not
+   * allowed. Bucket names must start and end with a number or letter and contain 3-63 characters.
+   * In addition, bucket names cannot begin with the "goog" prefix. For details, see
+   * https://cloud.google.com/storage/docs/naming-buckets.
+   */
   public String generateCloudName(@Nullable UUID workspaceUuid, String bucketName) {
     Preconditions.checkNotNull(workspaceUuid);
 
@@ -62,7 +73,14 @@ public class ControlledGcsBucketHandler implements WsmResourceHandler {
         generatedName.length() > MAX_BUCKET_NAME_LENGTH
             ? generatedName.substring(0, MAX_BUCKET_NAME_LENGTH)
             : generatedName;
-    generatedName = generatedName.replaceAll("[^a-zA-Z0-9-]+|^[^a-zA-Z0-9]+|[^a-zA-Z0-9]+$", "");
+
+    /**
+     * The regular expression only allow legal character combinations which start with alphanumeric
+     * letter, but not start with "google" or "goog", dash("-") in the string, and alphanumeric
+     * letter at the end of the string. It trims any other combinations.
+     */
+    generatedName =
+        generatedName.replaceAll("google|^goog|[^a-z0-9-.]+|^[^a-z0-9]+|[^a-z0-9]+$", "");
 
     return generatedName;
   }

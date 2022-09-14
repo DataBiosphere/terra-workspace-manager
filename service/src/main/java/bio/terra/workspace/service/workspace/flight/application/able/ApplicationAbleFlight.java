@@ -8,6 +8,7 @@ import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.WsmApplicationKeys;
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -25,44 +26,47 @@ public class ApplicationAbleFlight extends Flight {
     FlightUtils.validateRequiredEntries(
         inputParameters,
         WorkspaceFlightMapKeys.WORKSPACE_ID,
-        WorkspaceFlightMapKeys.APPLICATION_ID,
+        WorkspaceFlightMapKeys.APPLICATION_IDS,
         WsmApplicationKeys.APPLICATION_ABLE_ENUM);
 
     // get data from inputs that steps need
     AuthenticatedUserRequest userRequest =
         inputParameters.get(JobMapKeys.AUTH_USER_INFO.getKeyName(), AuthenticatedUserRequest.class);
     UUID workspaceUuid = inputParameters.get(WorkspaceFlightMapKeys.WORKSPACE_ID, UUID.class);
-    String applicationId = inputParameters.get(WorkspaceFlightMapKeys.APPLICATION_ID, String.class);
+    List<String> applicationIdList =
+        inputParameters.get(WorkspaceFlightMapKeys.APPLICATION_IDS, List.class);
     AbleEnum ableEnum =
         inputParameters.get(WsmApplicationKeys.APPLICATION_ABLE_ENUM, AbleEnum.class);
 
-    // ApplicationAblePrecheckStep
-    // - make sure the application is in a valid state for the enable/disable
-    // - check if the application is in the correct state the database
-    // - check if the application is in the correct state in Sam
-    // - remember the answers in the working map. For example, a value of 'true' in the
-    //   APPLICATION_ABLE_DAO item means that the application is already in the correct state
-    //   vis a vis the workspace. It does NOT mean the application is enabled.
-    addStep(
-        new ApplicationAblePrecheckStep(
-            beanBag.getApplicationDao(),
-            beanBag.getSamService(),
-            userRequest,
-            workspaceUuid,
-            applicationId,
-            ableEnum));
+    for (String applicationId : applicationIdList) {
+      // ApplicationAblePrecheckStep
+      // - make sure the application is in a valid state for the enable/disable
+      // - check if the application is in the correct state the database
+      // - check if the application is in the correct state in Sam
+      // - remember the answers in the working map. For example, a value of 'true' in the
+      //   APPLICATION_ABLE_DAO item means that the application is already in the correct state
+      //   vis a vis the workspace. It does NOT mean the application is enabled.
+      addStep(
+          new ApplicationAblePrecheckStep(
+              beanBag.getApplicationDao(),
+              beanBag.getSamService(),
+              userRequest,
+              workspaceUuid,
+              applicationId,
+              ableEnum));
 
-    // ApplicationEnableIamStep - On do, if application did not already have the role, add it.
-    // On undo, if application did not already have the role, remove it.
-    addStep(
-        new ApplicationAbleIamStep(beanBag.getSamService(), userRequest, workspaceUuid, ableEnum));
+      // ApplicationEnableIamStep - On do, if application did not already have the role, add it.
+      // On undo, if application did not already have the role, remove it.
+      addStep(
+          new ApplicationAbleIamStep(
+              beanBag.getSamService(), userRequest, workspaceUuid, ableEnum));
 
-    // ApplicationEnableDaoStep - On do, if application did not already have the application
-    // enabled,
-    // enable it. On undo, if application did not already have the application enabled, disable it.
-    // set the result
-    addStep(
-        new ApplicationAbleDaoStep(
-            beanBag.getApplicationDao(), workspaceUuid, applicationId, ableEnum));
+      // ApplicationEnableDaoStep - On do, if application did not have the application enabled,
+      // enable it. On undo, if application did not have the application enabled, disable it.
+      // set the result
+      addStep(
+          new ApplicationAbleDaoStep(
+              beanBag.getApplicationDao(), workspaceUuid, applicationId, ableEnum));
+    }
   }
 }

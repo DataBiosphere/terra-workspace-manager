@@ -30,6 +30,7 @@ import bio.terra.workspace.service.resource.model.WsmResourceType;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -54,7 +55,8 @@ public class ControlledAzureDiskResource extends ControlledResource {
       @JsonProperty("diskName") String diskName,
       @JsonProperty("region") String region,
       @JsonProperty("size") int size,
-      @JsonProperty("resourceLineage") List<ResourceLineageEntry> resourceLineage) {
+      @JsonProperty("resourceLineage") List<ResourceLineageEntry> resourceLineage,
+      @JsonProperty("properties") Map<String, String> properties) {
 
     super(
         workspaceId,
@@ -67,7 +69,8 @@ public class ControlledAzureDiskResource extends ControlledResource {
         managedBy,
         applicationId,
         privateResourceState,
-        resourceLineage);
+        resourceLineage,
+        properties);
     this.diskName = diskName;
     this.region = region;
     this.size = size;

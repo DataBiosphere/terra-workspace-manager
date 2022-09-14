@@ -108,15 +108,6 @@ public class WorkspaceApiControllerTest extends BaseUnitTest {
   }
 
   @Test
-  public void getWorkspace() throws Exception {
-    ApiCreatedWorkspace workspace = createDefaultWorkspace();
-    ApiWorkspaceDescription fetchedWorkspace = getWorkspaceDescription(workspace.getId());
-    assertEquals(workspace.getId(), fetchedWorkspace.getId());
-    assertNotNull(fetchedWorkspace.getLastUpdatedDate());
-    assertEquals(fetchedWorkspace.getLastUpdatedDate(), fetchedWorkspace.getCreatedDate());
-  }
-
-  @Test
   public void createDuplicateWorkspace() throws Exception {
     var createRequest = WorkspaceFixtures.createWorkspaceRequestBody();
     MockHttpServletResponse createResponse =
@@ -145,32 +136,6 @@ public class WorkspaceApiControllerTest extends BaseUnitTest {
             .getStatus();
 
     assertEquals(HttpStatus.SC_CONFLICT, duplicateCreateResponseStatus);
-  }
-
-  @Test
-  public void getWorkspaceByUserFacingId() throws Exception {
-    ApiCreatedWorkspace workspace = createDefaultWorkspace();
-    String userFacingId = WorkspaceFixtures.getUserFacingId(workspace.getId());
-
-    String serializedGetResponse =
-        mockMvc
-            .perform(
-                addAuth(
-                    get(String.format(WORKSPACES_V1_BY_UFID_PATH_FORMAT, userFacingId)),
-                    USER_REQUEST))
-            .andExpect(status().is(HttpStatus.SC_OK))
-            .andReturn()
-            .getResponse()
-            .getContentAsString();
-    ApiWorkspaceDescription fetchedWorkspace =
-        objectMapper.readValue(serializedGetResponse, ApiWorkspaceDescription.class);
-
-    assertEquals(workspace.getId(), fetchedWorkspace.getId());
-    assertEquals(userFacingId, fetchedWorkspace.getUserFacingId());
-    assertNotNull(fetchedWorkspace.getLastUpdatedDate());
-    assertEquals(fetchedWorkspace.getLastUpdatedDate(), fetchedWorkspace.getCreatedDate());
-    assertEquals(USER_REQUEST.getEmail(), fetchedWorkspace.getCreatedBy());
-    assertEquals(USER_REQUEST.getEmail(), fetchedWorkspace.getLastUpdatedBy());
   }
 
   @Test
@@ -315,6 +280,8 @@ public class WorkspaceApiControllerTest extends BaseUnitTest {
     ApiWorkspaceDescription destinationWorkspace = getWorkspaceDescription(destinationWorkspaceId);
 
     assertEquals(sourceWorkspace.getProperties(), destinationWorkspace.getProperties());
+    assertEquals(
+        sourceWorkspace.getDisplayName() + " (Copy)", destinationWorkspace.getDisplayName());
   }
 
   @Test
