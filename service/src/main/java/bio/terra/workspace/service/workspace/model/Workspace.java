@@ -25,7 +25,7 @@ public class Workspace {
   private final UUID workspaceId;
   private final String userFacingId;
   private final @Nullable String displayName;
-  private final String description;
+  private final @Nullable String description;
   private final SpendProfileId spendProfileId;
   private final Map<String, String> properties;
   private final WorkspaceStage workspaceStage;
@@ -33,8 +33,8 @@ public class Workspace {
   public Workspace(
       UUID workspaceId,
       String userFacingId,
-      String displayName,
-      String description,
+      @Nullable String displayName,
+      @Nullable String description,
       SpendProfileId spendProfileId,
       Map<String, String> properties,
       WorkspaceStage workspaceStage) {
@@ -149,7 +149,7 @@ public class Workspace {
       return this;
     }
 
-    public Builder description(String description) {
+    public Builder description(@Nullable String description) {
       this.description = description;
       return this;
     }
@@ -173,9 +173,6 @@ public class Workspace {
       // Always have a map, even if it is empty
       if (properties == null) {
         properties = new HashMap<>();
-      }
-      if (description == null) {
-        description = "";
       }
       if (workspaceId == null || workspaceStage == null) {
         throw new MissingRequiredFieldsException("Workspace requires id and stage");

@@ -401,8 +401,8 @@ class WorkspaceServiceTest extends BaseConnectedTest {
     assertTrue(lastUpdateDetails.isPresent());
     Workspace createdWorkspace = workspaceService.getWorkspace(request.getWorkspaceId());
     assertEquals(request.getWorkspaceId(), createdWorkspace.getWorkspaceId());
-    assertEquals("", createdWorkspace.getDisplayName().orElse(null));
-    assertEquals("", createdWorkspace.getDescription().orElse(null));
+    assertTrue(createdWorkspace.getDisplayName().isEmpty());
+    assertTrue(createdWorkspace.getDescription().isEmpty());
 
     String userFacingId = "my-user-facing-id";
     String name = "My workspace";
