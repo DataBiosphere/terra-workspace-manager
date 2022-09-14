@@ -105,7 +105,7 @@ components:
         Vm-specific properties to be set on creation. These are a subset of the values
         accepted by the azure resource API
       type: object
-      required: [name, region, diskId, networkId, vmSize, vmImage]
+      required: [name, region, networkId, vmSize, vmImage]
       properties:
         name:
           description: A valid vm name per https://docs.microsoft.com/en-us/azure/azure-resource-manager/management/resource-name-rules
@@ -139,6 +139,14 @@ components:
         customScriptExtension:
           description: A custom script extension
           $ref: '#/components/schemas/AzureVmCustomScriptExtension'
+        ephemeralOSDisk:
+          description: Whether or not to use an ephemeral OS disk and where to place it. https://docs.microsoft.com/en-us/azure/virtual-machines/ephemeral-os-disks
+          type: string
+          enum: ['NONE', 'OS_CACHE', 'TMP_DISK']
+        customData:
+          description: Supply base64 encoded custom data for vm. https://docs.microsoft.com/en-us/azure/virtual-machines/custom-data
+          type: string
+          format: base64
 
     AzureVmImage:
       description: >-
