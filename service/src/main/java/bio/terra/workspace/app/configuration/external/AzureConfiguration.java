@@ -14,6 +14,7 @@ public class AzureConfiguration {
   private String managedAppTenantId;
   private Long sasTokenStartTimeMinutesOffset;
   private Long sasTokenExpiryTimeMinutesOffset;
+  private String corsOrigins;
 
   public String getManagedAppClientId() {
     return managedAppClientId;
@@ -53,5 +54,13 @@ public class AzureConfiguration {
 
   public void setSasTokenExpiryTimeMinutesOffset(Long sasTokenExpiryTimeMinutesOffset) {
     this.sasTokenExpiryTimeMinutesOffset = sasTokenExpiryTimeMinutesOffset;
+  }
+
+  public String getCorsOrigins() {
+    return corsOrigins;
+  }
+
+  public void setCorsOrigins(String corsOrigins) {
+    this.corsOrigins = corsOrigins;
   }
 }

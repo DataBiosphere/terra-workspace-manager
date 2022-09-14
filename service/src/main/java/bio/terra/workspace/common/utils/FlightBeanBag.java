@@ -15,6 +15,7 @@ import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.petserviceaccount.PetSaService;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceMetadataManager;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceService;
+import bio.terra.workspace.service.resource.controlled.cloud.azure.storage.StorageAccountKeyProvider;
 import bio.terra.workspace.service.resource.controlled.flight.clone.bucket.BucketCloneRolesService;
 import bio.terra.workspace.service.resource.referenced.cloud.gcp.ReferencedResourceService;
 import bio.terra.workspace.service.spendprofile.SpendProfileService;
@@ -57,6 +58,7 @@ public class FlightBeanBag {
   private final WorkspaceDao workspaceDao;
   private final WorkspaceService workspaceService;
   private final VersionConfiguration versionConfiguration;
+  private final StorageAccountKeyProvider storageAccountKeyProvider;
 
   @Lazy
   @Autowired
@@ -82,7 +84,8 @@ public class FlightBeanBag {
       Storagetransfer storagetransfer,
       WorkspaceDao workspaceDao,
       WorkspaceService workspaceService,
-      VersionConfiguration versionConfiguration) {
+      VersionConfiguration versionConfiguration,
+      StorageAccountKeyProvider storageAccountKeyProvider) {
     this.applicationDao = applicationDao;
     this.azureCloudContextService = azureCloudContextService;
     this.azureConfig = azureConfig;
@@ -105,6 +108,7 @@ public class FlightBeanBag {
     this.workspaceDao = workspaceDao;
     this.workspaceService = workspaceService;
     this.versionConfiguration = versionConfiguration;
+    this.storageAccountKeyProvider = storageAccountKeyProvider;
   }
 
   public static FlightBeanBag getFromObject(Object object) {
@@ -197,5 +201,9 @@ public class FlightBeanBag {
 
   public VersionConfiguration getVersionConfiguration() {
     return versionConfiguration;
+  }
+
+  public StorageAccountKeyProvider getStorageAccountKeyProvider() {
+    return storageAccountKeyProvider;
   }
 }
