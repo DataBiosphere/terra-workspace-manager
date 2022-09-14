@@ -46,27 +46,18 @@ public class CreateAzureStorageStep implements Step {
         context
             .getWorkingMap()
             .get(ControlledResourceKeys.AZURE_CLOUD_CONTEXT, AzureCloudContext.class);
+    if (azureCloudContext == null) {
+      logger.error(
+          "Azure cloud context is null for storage account creation. workspace_id = {}",
+          resource.getWorkspaceId());
+      return new StepResult(StepStatus.STEP_RESULT_FAILURE_FATAL);
+    }
+
     StorageManager storageManager = crlService.getStorageManager(azureCloudContext, azureConfig);
 
     try {
-      var acct =
-          storageManager
-              .storageAccounts()
-              .define(resource.getStorageAccountName())
-              .withRegion(resource.getRegion())
-              .withExistingResourceGroup(azureCloudContext.getAzureResourceGroupId())
-              .withHnsEnabled(true)
-              .withTag("workspaceId", resource.getWorkspaceId().toString())
-              .withTag("resourceId", resource.getResourceId().toString())
-              .create(
-                  Defaults.buildContext(
-                      CreateStorageAccountRequestData.builder()
-                          .setName(resource.getStorageAccountName())
-                          .setRegion(Region.fromName(resource.getRegion()))
-                          .setResourceGroupName(azureCloudContext.getAzureResourceGroupId())
-                          .build()));
-
-      setupCors(acct);
+      var createdStorageAccount = createAccount(azureCloudContext, storageManager);
+      setupCors(createdStorageAccount);
 
     } catch (ManagementException e) {
       logger.error(
@@ -79,32 +70,6 @@ public class CreateAzureStorageStep implements Step {
     }
 
     return StepResult.getStepResultSuccess();
-  }
-
-  private void setupCors(StorageAccount acct) {
-    var allowedOrigins = azureConfig.getCorsOrigins();
-    if (allowedOrigins == null || allowedOrigins.isBlank()) {
-      logger.debug("No CORS allowed origins setup, skipping adding for Azure storage account");
-      return;
-    }
-
-    var storageAccountKey =
-        storageAccountKeyProvider.getStorageAccountKey(
-            resource.getWorkspaceId(), resource.getStorageAccountName());
-    BlobServiceClient svcClient =
-        new BlobServiceClientBuilder()
-            .credential(storageAccountKey)
-            .endpoint(acct.endPoints().primary().blob())
-            .httpClient(HttpClient.createDefault())
-            .buildClient();
-    var props = svcClient.getProperties();
-
-    var corsRules = props.getCors();
-    var corsRule = new BlobCorsRule().setAllowedOrigins(azureConfig.getCorsOrigins()).setAllowedMethods("GET");
-    corsRules.add(corsRule);
-
-    props.setCors(corsRules);
-    svcClient.setProperties(props);
   }
 
   /**
@@ -149,5 +114,51 @@ public class CreateAzureStorageStep implements Step {
     }
 
     return StepResult.getStepResultSuccess();
+  }
+
+  private StorageAccount createAccount(
+      AzureCloudContext azureCloudContext, StorageManager storageManager) {
+    return storageManager
+        .storageAccounts()
+        .define(resource.getStorageAccountName())
+        .withRegion(resource.getRegion())
+        .withExistingResourceGroup(azureCloudContext.getAzureResourceGroupId())
+        .withHnsEnabled(true)
+        .withTag("workspaceId", resource.getWorkspaceId().toString())
+        .withTag("resourceId", resource.getResourceId().toString())
+        .create(
+            Defaults.buildContext(
+                CreateStorageAccountRequestData.builder()
+                    .setName(resource.getStorageAccountName())
+                    .setRegion(Region.fromName(resource.getRegion()))
+                    .setResourceGroupName(azureCloudContext.getAzureResourceGroupId())
+                    .build()));
+  }
+
+  private void setupCors(StorageAccount acct) {
+    var allowedOrigins = azureConfig.getCorsOrigins();
+    if (allowedOrigins == null || allowedOrigins.isBlank()) {
+      logger.debug("No CORS allowed origins setup, skipping adding for Azure storage account");
+      return;
+    }
+
+    var storageAccountKey =
+        storageAccountKeyProvider.getStorageAccountKey(
+            resource.getWorkspaceId(), resource.getStorageAccountName());
+    BlobServiceClient svcClient =
+        new BlobServiceClientBuilder()
+            .credential(storageAccountKey)
+            .endpoint(acct.endPoints().primary().blob())
+            .httpClient(HttpClient.createDefault())
+            .buildClient();
+    var props = svcClient.getProperties();
+
+    var corsRules = props.getCors();
+    var corsRule =
+        new BlobCorsRule().setAllowedOrigins(azureConfig.getCorsOrigins()).setAllowedMethods("GET");
+    corsRules.add(corsRule);
+
+    props.setCors(corsRules);
+    svcClient.setProperties(props);
   }
 }
