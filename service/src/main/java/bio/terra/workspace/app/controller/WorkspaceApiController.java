@@ -1,5 +1,7 @@
 package bio.terra.workspace.app.controller;
 
+import static bio.terra.workspace.app.controller.shared.ControllerUtils.convertApiPropertyToMap;
+
 import bio.terra.common.iam.BearerToken;
 import bio.terra.workspace.amalgam.tps.TpsApiDispatch;
 import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
@@ -59,7 +61,6 @@ import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceAndHighestRole;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -172,7 +173,7 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
             .description(body.getDescription())
             .spendProfileId(spendProfileId.orElse(null))
             .workspaceStage(internalStage)
-            .properties(propertyMapFromApi(body.getProperties()))
+            .properties(convertApiPropertyToMap(body.getProperties()))
             .build();
     UUID createdId = workspaceService.createWorkspace(workspace, policies, userRequest);
 
@@ -367,9 +368,8 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
         "Deleting the properties with the key {} in workspace {}",
         propertyKeys.toString(),
         workspaceUuid);
-    Workspace workspace =
-        workspaceService.validateWorkspaceAndAction(
-            userRequest, workspaceUuid, SamWorkspaceAction.DELETE);
+    workspaceService.validateWorkspaceAndAction(
+        userRequest, workspaceUuid, SamWorkspaceAction.DELETE);
     workspaceService.deleteWorkspaceProperties(workspaceUuid, propertyKeys, userRequest);
     logger.info(
         "Deleted the properties with the key {} in workspace {}", propertyKeys, workspaceUuid);
@@ -383,7 +383,7 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     workspaceService.validateWorkspaceAndAction(
         userRequest, workspaceUuid, SamWorkspaceAction.WRITE);
-    Map<String, String> propertyMap = propertyMapFromApi(properties);
+    Map<String, String> propertyMap = convertApiPropertyToMap(properties);
     logger.info("Updating the properties {} in workspace {}", propertyMap, workspaceUuid);
     workspaceService.updateWorkspaceProperties(workspaceUuid, propertyMap, userRequest);
     logger.info("Updated the properties {} in workspace {}", propertyMap, workspaceUuid);
@@ -621,18 +621,6 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
         .jobReport(jobResult.getJobReport())
         .errorReport(jobResult.getApiErrorReport())
         .workspace(jobResult.getResult());
-  }
-
-  // Convert properties list into a map
-  private Map<String, String> propertyMapFromApi(List<ApiProperty> properties) {
-    Map<String, String> propertyMap = new HashMap<>();
-    if (properties != null) {
-      for (ApiProperty property : properties) {
-        ControllerValidationUtils.validatePropertyKey(property.getKey());
-        propertyMap.put(property.getKey(), property.getValue());
-      }
-    }
-    return propertyMap;
   }
 
   /**

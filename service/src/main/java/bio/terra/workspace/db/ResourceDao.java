@@ -26,10 +26,14 @@ import bio.terra.workspace.service.resource.model.WsmResourceHandler;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.resource.referenced.cloud.gcp.ReferencedResource;
 import bio.terra.workspace.service.workspace.exceptions.CloudContextRequiredException;
+import bio.terra.workspace.service.workspace.exceptions.MissingRequiredFieldsException;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.google.common.collect.ImmutableMap;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -726,6 +730,76 @@ public class ResourceDao {
               "A resource already exists in the workspace that has the same name (%s) or the same id (%s)",
               resource.getName(), resource.getResourceId().toString()));
     }
+  }
+
+  @WriteTransaction
+  public boolean deleteResourceProperties(
+      UUID workspaceUuid, UUID resourceUuid, List<String> propertyKeys) {
+    if (propertyKeys.isEmpty()) {
+      throw new MissingRequiredFieldsException("No resource property is specified to delete");
+    }
+    Map<String, String> properties =
+        new HashMap(getResourceProperties(workspaceUuid, resourceUuid));
+    for (String key : propertyKeys) {
+      properties.remove(key);
+    }
+    return storeResourceProperties(properties, workspaceUuid, resourceUuid);
+  }
+
+  /** Update a workspace properties */
+  @WriteTransaction
+  public boolean updateResourceProperties(
+      UUID workspaceUuid, UUID resourceUuid, Map<String, String> properties) {
+    if (properties.isEmpty()) {
+      throw new MissingRequiredFieldsException("No resource property is specified to update");
+    }
+    Map<String, String> updatedProperties =
+        new HashMap(getResourceProperties(workspaceUuid, resourceUuid));
+    updatedProperties.putAll(properties);
+    return storeResourceProperties(updatedProperties, workspaceUuid, resourceUuid);
+  }
+
+  private boolean storeResourceProperties(
+      Map<String, String> properties, UUID workspaceUuid, UUID resourceUuid) {
+    final String sql =
+        """
+     UPDATE resource SET properties = cast(:properties AS jsonb)
+     WHERE workspace_id = :workspace_id AND resource_id = :resource_id
+    """;
+
+    var params = new MapSqlParameterSource();
+    params
+        .addValue("properties", DbSerDes.propertiesToJson(properties))
+        .addValue("workspace_id", workspaceUuid.toString())
+        .addValue("resource_id", resourceUuid.toString());
+    // If false, no row is updated.
+    return jdbcTemplate.update(sql, params) > 0;
+  }
+
+  private ImmutableMap<String, String> getResourceProperties(
+      UUID workspaceUuid, UUID resourceUuid) {
+    String selectPropertiesSql =
+        """
+    SELECT properties FROM resource
+    WHERE workspace_id = :workspace_id AND resource_id = :resource_id
+    """;
+    MapSqlParameterSource propertiesParams =
+        new MapSqlParameterSource()
+            .addValue("workspace_id", workspaceUuid.toString())
+            .addValue("resource_id", resourceUuid.toString());
+    String result;
+
+    try {
+      result = jdbcTemplate.queryForObject(selectPropertiesSql, propertiesParams, String.class);
+    } catch (EmptyResultDataAccessException e) {
+      throw new ResourceNotFoundException(
+          String.format(
+              "Cannot find resource %s in workspace %s. Please check if the workspace and the resource exist",
+              resourceUuid, workspaceUuid));
+    }
+    return result == null
+        ? ImmutableMap.of()
+        : ImmutableMap.copyOf(DbSerDes.jsonToProperties(result));
   }
 
   /**
