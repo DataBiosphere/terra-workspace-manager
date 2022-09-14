@@ -84,7 +84,6 @@ public class ResourceDaoTest extends BaseUnitTest {
 
     assertEquals(
         resource, resourceDao.getResource(resource.getWorkspaceId(), resource.getResourceId()));
-    // resourceDao.deleteResource(resource.getWorkspaceId(), resource.getResourceId());
   }
 
   @Test
@@ -95,7 +94,6 @@ public class ResourceDaoTest extends BaseUnitTest {
 
     assertEquals(
         resource, resourceDao.getResource(resource.getWorkspaceId(), resource.getResourceId()));
-    // resourceDao.deleteResource(resource.getWorkspaceId(), resource.getResourceId());
   }
 
   @Test
@@ -110,8 +108,6 @@ public class ResourceDaoTest extends BaseUnitTest {
 
     assertEquals(
         resource, resourceDao.getResource(resource.getWorkspaceId(), resource.getResourceId()));
-
-    // resourceDao.deleteResource(resource.getWorkspaceId(), resource.getResourceId());
   }
 
   @Test
@@ -160,25 +156,24 @@ public class ResourceDaoTest extends BaseUnitTest {
     assertThrows(
         DuplicateResourceException.class,
         () -> resourceDao.createControlledResource(duplicatingResource));
-
-    // clean up
-    // resourceDao.deleteResource(initialResource.getWorkspaceId(),
-    // initialResource.getResourceId());
-    // resourceDao.deleteResource(
-    // duplicatingResource.getWorkspaceId(), duplicatingResource.getResourceId());
   }
 
   // AI Notebooks are unique on the tuple {instanceId, location, projectId } in addition
   // to the underlying requirement that resource ID and resource names are unique within a
   // workspace.
   @Test
-  public void duplicateNotebookIsRejected() {
+  public void
+      createAiNotebook_duplicateCloudInstanceId_rejectedWhenInSameCloudProjectAndLocation() {
+    var cloudInstanceId = ControlledResourceFixtures.uniqueName("my-cloud-instance-id");
     ControlledResourceFields commonFields1 =
         ControlledResourceFixtures.makeNotebookCommonFieldsBuilder()
             .workspaceUuid(workspaceUuid)
             .build();
     ControlledAiNotebookInstanceResource initialResource =
-        ControlledResourceFixtures.makeDefaultAiNotebookInstance().common(commonFields1).build();
+        ControlledResourceFixtures.makeDefaultAiNotebookInstance()
+            .common(commonFields1)
+            .instanceId(cloudInstanceId)
+            .build();
     resourceDao.createControlledResource(initialResource);
     assertEquals(
         initialResource,
@@ -190,7 +185,10 @@ public class ResourceDaoTest extends BaseUnitTest {
             .name("resource-2")
             .build();
     final ControlledResource duplicatingResource =
-        ControlledResourceFixtures.makeDefaultAiNotebookInstance().common(commonFields2).build();
+        ControlledResourceFixtures.makeDefaultAiNotebookInstance()
+            .common(commonFields2)
+            .instanceId(cloudInstanceId)
+            .build();
     assertThrows(
         DuplicateResourceException.class,
         () -> resourceDao.createControlledResource(duplicatingResource));
@@ -201,7 +199,10 @@ public class ResourceDaoTest extends BaseUnitTest {
             .name("resource-3")
             .build();
     final ControlledResource resourceWithDifferentWorkspaceId =
-        ControlledResourceFixtures.makeDefaultAiNotebookInstance().common(commonFields3).build();
+        ControlledResourceFixtures.makeDefaultAiNotebookInstance()
+            .common(commonFields3)
+            .instanceId(cloudInstanceId)
+            .build();
 
     // should be fine: separate workspaces implies separate gcp projects
     resourceDao.createControlledResource(resourceWithDifferentWorkspaceId);
@@ -220,6 +221,7 @@ public class ResourceDaoTest extends BaseUnitTest {
     final ControlledResource resourceWithDifferentLocation =
         ControlledResourceFixtures.makeDefaultAiNotebookInstance()
             .common(commonFields4)
+            .instanceId(cloudInstanceId)
             .location("somewhere-else")
             .build();
 
@@ -239,6 +241,7 @@ public class ResourceDaoTest extends BaseUnitTest {
     final ControlledAiNotebookInstanceResource resourceWithDefaultLocation =
         ControlledResourceFixtures.makeDefaultAiNotebookInstance()
             .common(commonFields5)
+            .instanceId(cloudInstanceId)
             .location(null)
             .build();
 
@@ -250,20 +253,6 @@ public class ResourceDaoTest extends BaseUnitTest {
             resourceWithDefaultLocation.getResourceId()));
 
     assertEquals(DEFAULT_ZONE, resourceWithDefaultLocation.getLocation());
-
-    // // clean up
-    // resourceDao.deleteResource(initialResource.getWorkspaceId(),
-    // initialResource.getResourceId());
-    // // resource2 never got created
-    // resourceDao.deleteResource(
-    //     resourceWithDifferentWorkspaceId.getWorkspaceId(),
-    //     resourceWithDifferentWorkspaceId.getResourceId());
-    // resourceDao.deleteResource(
-    //     resourceWithDifferentLocation.getWorkspaceId(),
-    //     resourceWithDifferentLocation.getResourceId());
-    // resourceDao.deleteResource(
-    //     resourceWithDefaultLocation.getWorkspaceId(),
-    // resourceWithDefaultLocation.getResourceId());
   }
 
   @Test
@@ -301,13 +290,6 @@ public class ResourceDaoTest extends BaseUnitTest {
     assertThrows(
         DuplicateResourceException.class,
         () -> resourceDao.createControlledResource(duplicatingResource));
-
-    // clean up
-    // resourceDao.deleteResource(initialResource.getWorkspaceId(),
-    // initialResource.getResourceId());
-    // resourceDao.deleteResource(uniqueResource.getWorkspaceId(), uniqueResource.getResourceId());
-    // resourceDao.deleteResource(
-    //     duplicatingResource.getWorkspaceId(), duplicatingResource.getResourceId());
   }
 
   @Test
@@ -327,8 +309,6 @@ public class ResourceDaoTest extends BaseUnitTest {
         resourceDao
             .getResource(resource.getWorkspaceId(), resource.getResourceId())
             .getProperties());
-    // clean up
-    // resourceDao.deleteResource(resource.getWorkspaceId(), resource.getResourceId());
   }
 
   @Test
@@ -352,19 +332,6 @@ public class ResourceDaoTest extends BaseUnitTest {
         () ->
             resourceDao.updateResourceProperties(
                 workspaceUuid, resource.getResourceId(), Map.of()));
-    // resourceDao.deleteResource(workspaceUuid, resource.getResourceId());
-  }
-
-  @Test
-  public void updateResourceProperties_nothingIsUpdated_returnsFalse() {
-    ControlledBigQueryDatasetResource resource =
-        ControlledResourceFixtures.makeDefaultControlledBigQueryBuilder(workspaceUuid).build();
-    resourceDao.createControlledResource(resource);
-
-    assertFalse(
-        resourceDao.updateResourceProperties(
-            workspaceUuid, resource.getResourceId(), DEFAULT_RESOURCE_PROPERTIES));
-    // resourceDao.deleteResource(workspaceUuid, resource.getResourceId());
   }
 
   @Test
@@ -380,8 +347,6 @@ public class ResourceDaoTest extends BaseUnitTest {
             DEFAULT_RESOURCE_PROPERTIES.keySet().stream().toList()));
     assertTrue(
         resourceDao.getResource(workspaceUuid, resource.getResourceId()).getProperties().isEmpty());
-    // clean up
-    // resourceDao.deleteResource(workspaceUuid, resource.getResourceId());
   }
 
   @Test
@@ -397,8 +362,6 @@ public class ResourceDaoTest extends BaseUnitTest {
     assertEquals(
         resource.getProperties(),
         resourceDao.getResource(workspaceUuid, resource.getResourceId()).getProperties());
-    // clean up
-    // resourceDao.deleteResource(workspaceUuid, resource.getResourceId());
   }
 
   @Test
@@ -413,6 +376,5 @@ public class ResourceDaoTest extends BaseUnitTest {
         () ->
             resourceDao.deleteResourceProperties(
                 workspaceUuid, resource.getResourceId(), List.of()));
-    // resourceDao.deleteResource(workspaceUuid, resource.getResourceId());
   }
 }

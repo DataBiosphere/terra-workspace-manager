@@ -506,7 +506,7 @@ public class ControlledResourceFixtures {
   public static final Dataset BQ_DATASET_WITHOUT_EXPIRATION = new Dataset();
 
   public static String uniqueName(String prefix) {
-    return prefix + "-" + UUID.randomUUID().toString();
+    return prefix + "-" + UUID.randomUUID();
   }
 
   public static String uniqueDatasetId() {
@@ -523,7 +523,7 @@ public class ControlledResourceFixtures {
     return ControlledResourceFields.builder()
         .workspaceUuid(UUID.randomUUID())
         .resourceId(UUID.randomUUID())
-        .name("my-notebook")
+        .name(uniqueName("my-instance"))
         .description("my notebook description")
         .cloningInstructions(CloningInstructions.COPY_NOTHING)
         .assignedUser("myusername@mydomain.mine")
@@ -534,7 +534,7 @@ public class ControlledResourceFixtures {
   public static ControlledAiNotebookInstanceResource.Builder makeDefaultAiNotebookInstance() {
     return ControlledAiNotebookInstanceResource.builder()
         .common(makeNotebookCommonFieldsBuilder().build())
-        .instanceId("my-instance-id")
+        .instanceId(uniqueName("my-cloud-id"))
         .location("us-east1-b")
         .projectId("my-project-id");
   }
