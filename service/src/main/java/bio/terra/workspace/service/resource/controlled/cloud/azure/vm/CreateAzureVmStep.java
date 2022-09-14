@@ -26,7 +26,6 @@ import com.azure.resourcemanager.network.models.Network;
 import com.azure.resourcemanager.network.models.NetworkInterface;
 import com.azure.resourcemanager.network.models.PublicIpAddress;
 import java.util.Optional;
-
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -71,10 +70,12 @@ public class CreateAzureVmStep implements Step {
                         .getResource(resource.getWorkspaceId(), ipId)
                         .castByEnum(WsmResourceType.CONTROLLED_AZURE_IP));
 
-    final ControlledAzureDiskResource diskResource = resource.getDiskId() == null ? null :
-        resourceDao
-            .getResource(resource.getWorkspaceId(), resource.getDiskId())
-            .castByEnum(WsmResourceType.CONTROLLED_AZURE_DISK);
+    final ControlledAzureDiskResource diskResource =
+        resource.getDiskId() == null
+            ? null
+            : resourceDao
+                .getResource(resource.getWorkspaceId(), resource.getDiskId())
+                .castByEnum(WsmResourceType.CONTROLLED_AZURE_DISK);
 
     final ControlledAzureNetworkResource networkResource =
         resourceDao
@@ -82,11 +83,13 @@ public class CreateAzureVmStep implements Step {
             .castByEnum(WsmResourceType.CONTROLLED_AZURE_NETWORK);
 
     try {
-      Disk existingAzureDisk = diskResource == null ? null :
-          computeManager
-              .disks()
-              .getByResourceGroup(
-                  azureCloudContext.getAzureResourceGroupId(), diskResource.getDiskName());
+      Disk existingAzureDisk =
+          diskResource == null
+              ? null
+              : computeManager
+                  .disks()
+                  .getByResourceGroup(
+                      azureCloudContext.getAzureResourceGroupId(), diskResource.getDiskName());
 
       Optional<PublicIpAddress> existingAzureIp =
           ipResource.map(
@@ -134,16 +137,17 @@ public class CreateAzureVmStep implements Step {
               azureCloudContext.getAzureResourceGroupId(),
               creationParameters);
 
-      var requestDataBuilder = CreateVirtualMachineRequestData.builder()
-          .setName(resource.getVmName())
-          .setRegion(Region.fromName(resource.getRegion()))
-          .setTenantId(azureCloudContext.getAzureTenantId())
-          .setSubscriptionId(azureCloudContext.getAzureSubscriptionId())
-          .setResourceGroupName(azureCloudContext.getAzureResourceGroupId())
-          .setNetwork(existingNetwork)
-          .setSubnetName(networkResource.getSubnetName())
-          .setPublicIpAddress(existingAzureIp.orElse(null))
-          .setImage(AzureVmUtils.getImageData(creationParameters.getVmImage()));
+      var requestDataBuilder =
+          CreateVirtualMachineRequestData.builder()
+              .setName(resource.getVmName())
+              .setRegion(Region.fromName(resource.getRegion()))
+              .setTenantId(azureCloudContext.getAzureTenantId())
+              .setSubscriptionId(azureCloudContext.getAzureSubscriptionId())
+              .setResourceGroupName(azureCloudContext.getAzureResourceGroupId())
+              .setNetwork(existingNetwork)
+              .setSubnetName(networkResource.getSubnetName())
+              .setPublicIpAddress(existingAzureIp.orElse(null))
+              .setImage(AzureVmUtils.getImageData(creationParameters.getVmImage()));
 
       Optional.ofNullable(existingAzureDisk).ifPresent(requestDataBuilder::setDisk);
 
@@ -237,27 +241,35 @@ public class CreateAzureVmStep implements Step {
     return vmConfigurationFinalStep;
   }
 
-  private VirtualMachine.DefinitionStages.WithManagedCreate maybeAddEphemeralDiskStep(VirtualMachine.DefinitionStages.WithManagedCreate priorSteps, ApiAzureVmCreationParameters creationParameters) {
-    var maybePlacement = Optional.ofNullable(creationParameters.getEphemeralOSDisk()).flatMap((ephemeralOSDisk) -> {
-      final Optional<DiffDiskPlacement> diskPlacement;
-      switch (ephemeralOSDisk) {
-        case OS_CACHE:
-          diskPlacement = Optional.of(DiffDiskPlacement.CACHE_DISK);
-          break;
-        case TMP_DISK:
-          diskPlacement = Optional.of(DiffDiskPlacement.RESOURCE_DISK);
-          break;
-        default:
-          diskPlacement = Optional.empty();
-          break;
-      }
-      return diskPlacement;
-    });
+  private VirtualMachine.DefinitionStages.WithManagedCreate maybeAddEphemeralDiskStep(
+      VirtualMachine.DefinitionStages.WithManagedCreate priorSteps,
+      ApiAzureVmCreationParameters creationParameters) {
+    var maybePlacement =
+        Optional.ofNullable(creationParameters.getEphemeralOSDisk())
+            .flatMap(
+                (ephemeralOSDisk) -> {
+                  final Optional<DiffDiskPlacement> diskPlacement;
+                  switch (ephemeralOSDisk) {
+                    case OS_CACHE:
+                      diskPlacement = Optional.of(DiffDiskPlacement.CACHE_DISK);
+                      break;
+                    case TMP_DISK:
+                      diskPlacement = Optional.of(DiffDiskPlacement.RESOURCE_DISK);
+                      break;
+                    default:
+                      diskPlacement = Optional.empty();
+                      break;
+                  }
+                  return diskPlacement;
+                });
 
-    return maybePlacement.map(diskPlacement -> priorSteps.withEphemeralOSDisk().withPlacement(diskPlacement)).orElse(priorSteps);
+    return maybePlacement
+        .map(diskPlacement -> priorSteps.withEphemeralOSDisk().withPlacement(diskPlacement))
+        .orElse(priorSteps);
   }
 
-  private VirtualMachine.DefinitionStages.WithManagedCreate maybeAddExistingDiskStep(VirtualMachine.DefinitionStages.WithFromImageCreateOptionsManaged priorSteps, Disk disk) {
+  private VirtualMachine.DefinitionStages.WithManagedCreate maybeAddExistingDiskStep(
+      VirtualMachine.DefinitionStages.WithFromImageCreateOptionsManaged priorSteps, Disk disk) {
     if (disk == null) {
       return priorSteps;
     } else {
@@ -265,7 +277,9 @@ public class CreateAzureVmStep implements Step {
     }
   }
 
-  private VirtualMachine.DefinitionStages.WithFromImageCreateOptionsManaged maybeAddCustomDataStep(VirtualMachine.DefinitionStages.WithFromImageCreateOptionsManaged priorSteps, ApiAzureVmCreationParameters creationParameters) {
+  private VirtualMachine.DefinitionStages.WithFromImageCreateOptionsManaged maybeAddCustomDataStep(
+      VirtualMachine.DefinitionStages.WithFromImageCreateOptionsManaged priorSteps,
+      ApiAzureVmCreationParameters creationParameters) {
     if (StringUtils.isEmpty(creationParameters.getCustomData())) {
       return priorSteps;
     } else {
@@ -273,10 +287,11 @@ public class CreateAzureVmStep implements Step {
     }
   }
 
-  private VirtualMachine.DefinitionStages.WithFromImageCreateOptionsManaged addImageStep(VirtualMachine.DefinitionStages.WithProximityPlacementGroup priorSteps, ApiAzureVmCreationParameters creationParameters) {
+  private VirtualMachine.DefinitionStages.WithFromImageCreateOptionsManaged addImageStep(
+      VirtualMachine.DefinitionStages.WithProximityPlacementGroup priorSteps,
+      ApiAzureVmCreationParameters creationParameters) {
     if (creationParameters.getVmImage().getUri() != null) {
-      return priorSteps
-          .withSpecializedLinuxCustomImage(creationParameters.getVmImage().getUri());
+      return priorSteps.withSpecializedLinuxCustomImage(creationParameters.getVmImage().getUri());
     } else {
       return priorSteps
           .withSpecificLinuxImageVersion(
