@@ -12,14 +12,12 @@ import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.test.context.ActiveProfiles;
 
 // This is a special test to make sure the application configuration works.
 // We use a special profile to pick up a test application configuration.
 @Disabled
 @Tag("unit")
-@AutoConfigureMockMvc
 @ActiveProfiles({"unit-test", "configuration-test"})
 public class ApplicationConfigurationTest extends BaseTest {
 

@@ -4,7 +4,6 @@ import static bio.terra.workspace.common.utils.MockMvcUtils.FOLDERS_V1_PATH_FORM
 import static bio.terra.workspace.common.utils.MockMvcUtils.FOLDER_V1_PATH_FORMAT;
 import static bio.terra.workspace.common.utils.MockMvcUtils.addAuth;
 import static bio.terra.workspace.common.utils.MockMvcUtils.addJsonContentType;
-import static bio.terra.workspace.common.utils.MockMvcUtils.createWorkspace;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -21,6 +20,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import bio.terra.common.exception.ForbiddenException;
 import bio.terra.workspace.common.BaseUnitTest;
+import bio.terra.workspace.common.utils.MockMvcUtils;
 import bio.terra.workspace.generated.model.ApiCreateFolderRequestBody;
 import bio.terra.workspace.generated.model.ApiFolder;
 import bio.terra.workspace.generated.model.ApiFolderList;
@@ -28,8 +28,10 @@ import bio.terra.workspace.generated.model.ApiUpdateFolderRequestBody;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.iam.model.SamConstants;
+import bio.terra.workspace.service.iam.model.WsmIamRole;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import javax.annotation.Nullable;
@@ -49,6 +51,7 @@ public class FolderApiControllerTest extends BaseUnitTest {
           "fake@email.com", "subjectId123456", Optional.of("ThisIsNotARealBearerToken"));
 
   @Autowired MockMvc mockMvc;
+  @Autowired MockMvcUtils mockMvcUtils;
   @Autowired ObjectMapper objectMapper;
 
   @MockBean SamService mockSamService;
@@ -63,11 +66,15 @@ public class FolderApiControllerTest extends BaseUnitTest {
             new UserStatusInfo()
                 .userEmail(USER_REQUEST.getEmail())
                 .userSubjectId(USER_REQUEST.getSubjectId()));
+
+    // Needed for assertion that requester has role on workspace.
+    when(mockSamService.listRequesterRoles(any(), any(), any()))
+        .thenReturn(List.of(WsmIamRole.OWNER));
   }
 
   @Test
   public void createFolder_parentFolderIdIsNull_topLevelFolderCreated() throws Exception {
-    UUID workspaceId = createWorkspace(mockMvc, objectMapper).getId();
+    UUID workspaceId = mockMvcUtils.createWorkspaceWithoutCloudContext(USER_REQUEST).getId();
     var displayName = "foo";
     var description = String.format("This is folder %s", displayName);
 
@@ -81,7 +88,7 @@ public class FolderApiControllerTest extends BaseUnitTest {
 
   @Test
   public void createFolder_doesNotHaveWriteAccess_throws403() throws Exception {
-    UUID workspaceId = createWorkspace(mockMvc, objectMapper).getId();
+    UUID workspaceId = mockMvcUtils.createWorkspaceWithoutCloudContext(USER_REQUEST).getId();
     doThrow(new ForbiddenException("User has no write access"))
         .when(mockSamService)
         .checkAuthz(
@@ -95,7 +102,7 @@ public class FolderApiControllerTest extends BaseUnitTest {
 
   @Test
   public void createFolder_parentFolderDoesNotExist_throws404() throws Exception {
-    UUID workspaceId = createWorkspace(mockMvc, objectMapper).getId();
+    UUID workspaceId = mockMvcUtils.createWorkspaceWithoutCloudContext(USER_REQUEST).getId();
 
     createFolderExpectCode(
         workspaceId, "foo", /*description=*/ null, UUID.randomUUID(), HttpStatus.SC_NOT_FOUND);
@@ -108,7 +115,7 @@ public class FolderApiControllerTest extends BaseUnitTest {
 
   @Test
   public void createFolder_duplicateDisplayName_throws400() throws Exception {
-    UUID workspaceId = createWorkspace(mockMvc, objectMapper).getId();
+    UUID workspaceId = mockMvcUtils.createWorkspaceWithoutCloudContext(USER_REQUEST).getId();
     var displayName = "foo";
 
     // create a top-level folder foo.
@@ -130,7 +137,7 @@ public class FolderApiControllerTest extends BaseUnitTest {
 
   @Test
   public void createFolder_duplicateNameUnderDifferentParent_succeeds() throws Exception {
-    UUID workspaceId = createWorkspace(mockMvc, objectMapper).getId();
+    UUID workspaceId = mockMvcUtils.createWorkspaceWithoutCloudContext(USER_REQUEST).getId();
     ApiFolder firstFolder = createFolder(workspaceId, /*displayName=*/ "foo");
     ApiFolder secondFolder = createFolder(workspaceId, /*displayName=*/ "bar");
 
@@ -154,7 +161,7 @@ public class FolderApiControllerTest extends BaseUnitTest {
 
   @Test
   public void getFolder_returnsFolder() throws Exception {
-    UUID workspaceId = createWorkspace(mockMvc, objectMapper).getId();
+    UUID workspaceId = mockMvcUtils.createWorkspaceWithoutCloudContext(USER_REQUEST).getId();
     var displayName = "foo";
     var description = String.format("This is folder %s", displayName);
     ApiFolder firstFolder =
@@ -167,7 +174,7 @@ public class FolderApiControllerTest extends BaseUnitTest {
 
   @Test
   public void getFolder_doesNotHaveReadAccess_throws403() throws Exception {
-    UUID workspaceId = createWorkspace(mockMvc, objectMapper).getId();
+    UUID workspaceId = mockMvcUtils.createWorkspaceWithoutCloudContext(USER_REQUEST).getId();
     ApiFolder folder =
         createFolder(
             workspaceId, /*displayName=*/ "foo", /*description=*/ null, /*parentFolderId=*/ null);
@@ -192,14 +199,14 @@ public class FolderApiControllerTest extends BaseUnitTest {
 
   @Test
   public void getFolder_folderDoNotExist_throws404() throws Exception {
-    UUID workspaceId = createWorkspace(mockMvc, objectMapper).getId();
+    UUID workspaceId = mockMvcUtils.createWorkspaceWithoutCloudContext(USER_REQUEST).getId();
 
     getFolderExpectCode(workspaceId, /*folderId=*/ UUID.randomUUID(), HttpStatus.SC_NOT_FOUND);
   }
 
   @Test
   public void listFolders_listAllFoldersInAWorkspace() throws Exception {
-    UUID workspaceId = createWorkspace(mockMvc, objectMapper).getId();
+    UUID workspaceId = mockMvcUtils.createWorkspaceWithoutCloudContext(USER_REQUEST).getId();
     var displayName = "foo";
     var description = String.format("This is folder %s", displayName);
 
@@ -218,7 +225,7 @@ public class FolderApiControllerTest extends BaseUnitTest {
 
   @Test
   public void listFolders_doesNotHaveReadAccess_throws403() throws Exception {
-    UUID workspaceId = createWorkspace(mockMvc, objectMapper).getId();
+    UUID workspaceId = mockMvcUtils.createWorkspaceWithoutCloudContext(USER_REQUEST).getId();
     createFolderExpectCode(workspaceId, /*displayName=*/ "foo", HttpStatus.SC_OK);
     doThrow(new ForbiddenException("User has no write access"))
         .when(mockSamService)
@@ -238,7 +245,7 @@ public class FolderApiControllerTest extends BaseUnitTest {
 
   @Test
   public void deleteFolder_doesNotHaveWriteAccess_throws403() throws Exception {
-    UUID workspaceId = createWorkspace(mockMvc, objectMapper).getId();
+    UUID workspaceId = mockMvcUtils.createWorkspaceWithoutCloudContext(USER_REQUEST).getId();
     ApiFolder folder = createFolder(workspaceId, /*displayName=*/ "foo");
     doThrow(new ForbiddenException("User has no write access"))
         .when(mockSamService)
@@ -255,14 +262,14 @@ public class FolderApiControllerTest extends BaseUnitTest {
   public void deleteFolders_workspaceAndFolderNotExist_throws404() throws Exception {
     deleteFolderExpectCode(UUID.randomUUID(), UUID.randomUUID(), HttpStatus.SC_NOT_FOUND);
 
-    UUID workspaceId = createWorkspace(mockMvc, objectMapper).getId();
+    UUID workspaceId = mockMvcUtils.createWorkspaceWithoutCloudContext(USER_REQUEST).getId();
 
     deleteFolderExpectCode(workspaceId, UUID.randomUUID(), HttpStatus.SC_NOT_FOUND);
   }
 
   @Test
   public void deleteFolders_deleteTopLevelFolder_folderAndSubFoldersAllDeleted() throws Exception {
-    UUID workspaceId = createWorkspace(mockMvc, objectMapper).getId();
+    UUID workspaceId = mockMvcUtils.createWorkspaceWithoutCloudContext(USER_REQUEST).getId();
 
     ApiFolder firstFolder = createFolder(workspaceId, /*displayName=*/ "foo");
     ApiFolder secondFolder =
@@ -287,7 +294,7 @@ public class FolderApiControllerTest extends BaseUnitTest {
 
   @Test
   public void updateFolders_updateParentFalse_onlyUpdateNameAndDescription() throws Exception {
-    UUID workspaceId = createWorkspace(mockMvc, objectMapper).getId();
+    UUID workspaceId = mockMvcUtils.createWorkspaceWithoutCloudContext(USER_REQUEST).getId();
     var displayName = "foo";
     var description = String.format("This is folder %s", displayName);
     ApiFolder firstFolder =
@@ -314,7 +321,7 @@ public class FolderApiControllerTest extends BaseUnitTest {
 
   @Test
   public void updateFolders_updateParentTrue_folderMovedToTopLevel() throws Exception {
-    UUID workspaceId = createWorkspace(mockMvc, objectMapper).getId();
+    UUID workspaceId = mockMvcUtils.createWorkspaceWithoutCloudContext(USER_REQUEST).getId();
     var displayName = "foo";
     var description = String.format("This is folder %s", displayName);
     ApiFolder firstFolder =
@@ -337,7 +344,7 @@ public class FolderApiControllerTest extends BaseUnitTest {
 
   @Test
   public void updateFolder_doesNotHaveWriteAccess_throws403() throws Exception {
-    UUID workspaceId = createWorkspace(mockMvc, objectMapper).getId();
+    UUID workspaceId = mockMvcUtils.createWorkspaceWithoutCloudContext(USER_REQUEST).getId();
     ApiFolder folder = createFolder(workspaceId, /*displayName=*/ "foo");
     doThrow(new ForbiddenException("User has no write access"))
         .when(mockSamService)
@@ -359,7 +366,7 @@ public class FolderApiControllerTest extends BaseUnitTest {
 
   @Test
   public void updateFolders_parentFolderNotExists_throws404() throws Exception {
-    UUID workspaceId = createWorkspace(mockMvc, objectMapper).getId();
+    UUID workspaceId = mockMvcUtils.createWorkspaceWithoutCloudContext(USER_REQUEST).getId();
     var displayName = "foo";
     var description = String.format("This is folder %s", displayName);
 
