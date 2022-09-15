@@ -1,0 +1,160 @@
+# Workspace paths
+paths:
+  /api/workspaces/v1/{workspaceId}/folders:
+    parameters:
+    - $ref: '#/components/parameters/WorkspaceId'
+    get:
+      summary: Get all folders in a given workspace
+      operationId: listFolders
+      tags: [ Folder ]
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FolderList'
+        '500':
+          $ref: '#/components/responses/ServerError'
+    post:
+      summary: Create a new folder in a given workspace under given folder
+      operationId: createFolder
+      tags: [ Folder ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateFolderRequestBody'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Folder'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '500':
+          $ref: '#/components/responses/NotFound'
+  /api/workspaces/v1/{workspaceId}/folders/{folderId}:
+    parameters:
+    - $ref: '#/components/parameters/WorkspaceId'
+    - $ref: '#/components/parameters/FolderId'
+    get:
+      summary: Get an existing Folder.
+      operationId: getFolder
+      tags: [Folder]
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Folder'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+    patch:
+      summary: Update an existing folder.
+      operationId: updateFolder
+      tags: [Folder]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateFolderRequestBody'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Folder'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+    delete:
+      summary: Delete a folder.
+      operationId: deleteFolder
+      tags: [Folder]
+      responses:
+        '204':
+          description: Success
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+components:
+  schemas:
+    FolderList:
+      type: object
+      required: [ folders ]
+      properties:
+        folders:
+          type: array
+          items:
+            $ref: '#/components/schemas/Folder'
+    Folder:
+      type: object
+      required: [id, displayName]
+      properties:
+        id:
+          description: The ID of the folder. Immutable.
+          $ref: '#/components/schemas/FolderId'
+        displayName:
+          description: The human readable name of the folder.
+          type: string
+        description:
+          type: string
+        parentFolderId:
+          $ref: '#/components/schemas/FolderId'
+    CreateFolderRequestBody:
+      type: object
+      required: [displayName]
+      properties:
+        displayName:
+          description: |
+            The human readable name of the folder. The folder name must be
+            unique within its parent folder directories.
+          type: string
+        description:
+          description: A description of the folder
+          type: string
+        parentFolderId:
+         $ref: '#/components/schemas/FolderId'
+
+    UpdateFolderRequestBody:
+      type: object
+      properties:
+        displayName:
+          description: The human readable name of the folder
+          type: string
+        description:
+          description: A description of the folder
+          type: string
+        parentFolderId:
+          description: |
+            The parent folder id to update this folder to. When null and 
+            updateParent is false, do not update. When null and
+            updateParent is true, move the folder to be the top-level.
+          $ref: '#/components/schemas/FolderId'
+        updateParent:
+          description: |
+            Whether to update parent folder id.
+          type: boolean
+          default: false

@@ -361,11 +361,6 @@ public class CloneWorkspace extends WorkspaceAllocateWithPolicyTestScriptBase {
     GcsBucketObjectUtils.retrieveBucketFile(
         clonedSharedBucket.getAttributes().getBucketName(), destinationProjectId, cloningUser);
 
-    // Verify Policies cloned successfully
-    assertNotNull(destinationWorkspace.getPolicies());
-    assertEquals(1, destinationWorkspace.getPolicies().stream().count());
-    assertEquals("terra", destinationWorkspace.getPolicies().get(0).getNamespace());
-
     // Verify clone of private bucket fails
     final ResourceCloneDetails privateBucketCloneDetails =
         assertPresent(

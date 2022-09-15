@@ -4,6 +4,7 @@ import bio.terra.landingzone.service.landingzone.azure.exception.LandingZoneDele
 import bio.terra.workspace.app.controller.ControllerBase;
 import bio.terra.workspace.generated.controller.LandingZonesApi;
 import bio.terra.workspace.generated.model.ApiAzureLandingZoneDefinitionList;
+import bio.terra.workspace.generated.model.ApiAzureLandingZoneResourcesList;
 import bio.terra.workspace.generated.model.ApiAzureLandingZoneResult;
 import bio.terra.workspace.generated.model.ApiCreateAzureLandingZoneRequestBody;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequestFactory;
@@ -53,6 +54,14 @@ public class LandingZoneApiController extends ControllerBase implements LandingZ
   public ResponseEntity<ApiAzureLandingZoneDefinitionList> listAzureLandingZonesDefinitions() {
     ApiAzureLandingZoneDefinitionList result =
         landingZoneApiDispatch.listAzureLandingZonesDefinitions();
+    return new ResponseEntity<>(result, HttpStatus.OK);
+  }
+
+  @Override
+  public ResponseEntity<ApiAzureLandingZoneResourcesList> listAzureLandingZoneResources(
+      @PathVariable("landingZoneId") String landingZoneId) {
+    ApiAzureLandingZoneResourcesList result =
+        landingZoneApiDispatch.listAzureLandingZoneResources(landingZoneId);
     return new ResponseEntity<>(result, HttpStatus.OK);
   }
 

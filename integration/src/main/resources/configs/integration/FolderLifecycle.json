@@ -1,0 +1,20 @@
+{
+  "name": "FolderLifecycle",
+  "description": "CRUD for folder in WSM",
+  "serverSpecificationFile": "workspace-local.json",
+  "kubernetes": {},
+  "application": {},
+  "testScripts": [
+    {
+      "name": "FolderLifecycle",
+      "numberOfUserJourneyThreadsToRun": 1,
+      "userJourneyThreadPoolSize": 1,
+      "expectedTimeForEach": 5,
+      "expectedTimeForEachUnit": "SECONDS",
+      "parametersMap": {
+        "spend-profile-id": "wm-default-spend-profile"
+      }
+    }
+  ],
+  "testUserFiles": ["liam.json"]
+}

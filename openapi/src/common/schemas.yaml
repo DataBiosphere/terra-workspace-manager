@@ -257,6 +257,11 @@ components:
       type: string
       enum: ['REFERENCED', 'CONTROLLED']
 
+    FolderId:
+      description: Id of a given folder. Unique and immutable within a workspace.
+      type: string
+      format: uuid
+
     Properties:
       description: Optional list of key-value pairs of strings
       type: array
