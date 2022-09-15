@@ -1,4 +1,4 @@
-package bio.terra.workspace.app.configuration.external.controller;
+package bio.terra.workspace.app.controller;
 
 import static bio.terra.workspace.app.controller.shared.PropertiesUtils.convertMapToApiProperties;
 import static bio.terra.workspace.common.utils.MockMvcUtils.CLONE_WORKSPACE_PATH_FORMAT;
