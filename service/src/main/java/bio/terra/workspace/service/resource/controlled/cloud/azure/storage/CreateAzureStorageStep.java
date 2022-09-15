@@ -24,6 +24,10 @@ import org.slf4j.LoggerFactory;
 
 public class CreateAzureStorageStep implements Step {
   private static final Logger logger = LoggerFactory.getLogger(CreateAzureStorageStep.class);
+  private static final String CORS_ALLOWED_METHODS = "GET,HEAD,OPTIONS,PUT,PATCH,POST,MERGE,DELETE";
+  private static final String CORS_ALLOWED_HEADERS =
+      "authorization,content-type,x-app-id,Referer,x-ms-blob-type,x-ms-copy-source,content-length";
+
   private final AzureConfiguration azureConfig;
   private final CrlService crlService;
   private final ControlledAzureStorageResource resource;
@@ -138,7 +142,7 @@ public class CreateAzureStorageStep implements Step {
   private void setupCors(StorageAccount acct) {
     var allowedOrigins = azureConfig.getCorsOrigins();
     if (allowedOrigins == null || allowedOrigins.isBlank()) {
-      logger.debug("No CORS allowed origins setup, skipping adding for Azure storage account");
+      logger.info("No CORS allowed origins setup, skipping adding for Azure storage account {}", resource.getWorkspaceId());
       return;
     }
 
@@ -155,7 +159,10 @@ public class CreateAzureStorageStep implements Step {
 
     var corsRules = props.getCors();
     var corsRule =
-        new BlobCorsRule().setAllowedOrigins(azureConfig.getCorsOrigins()).setAllowedMethods("GET");
+        new BlobCorsRule()
+            .setAllowedOrigins(azureConfig.getCorsOrigins())
+            .setAllowedMethods(CORS_ALLOWED_METHODS)
+            .setAllowedHeaders(CORS_ALLOWED_HEADERS);
     corsRules.add(corsRule);
 
     props.setCors(corsRules);
