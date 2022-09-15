@@ -16,6 +16,7 @@ import static org.hamcrest.Matchers.emptyString;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.not;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -77,6 +78,7 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
     deleteWorkspace(workspace.getId());
   }
 
+  @Test
   public void getWorkspace_requesterIsOwner_returnsFullWorkspace() throws Exception {
     ApiWorkspaceDescription gotWorkspace =
         getWorkspace(userAccessUtils.defaultUserAuthRequest(), workspace.getId());
@@ -383,7 +385,7 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
     assertThat(workspace.getUserFacingId(), not(emptyString()));
     assertThat(workspace.getDisplayName(), not(emptyString()));
     // Description not returned
-    assertThat(workspace.getDescription(), emptyString());
+    assertNull(workspace.getDescription());
     assertNotNull(workspace.getHighestRole());
     assertNotNull(workspace.getStage());
     // Only type, short description and version properties are returned, not properties set by user
