@@ -107,24 +107,6 @@ public class MockMvcUtils {
     return objectMapper.readValue(serializedResponse, ApiCreatedWorkspace.class);
   }
 
-  public static ApiCreatedWorkspace createWorkspaceWithGcpContext(
-      MockMvc mockMvc, ObjectMapper objectMapper) throws Exception {
-    var createRequest = WorkspaceFixtures.createWorkspaceRequestBody();
-    String serializedResponse =
-        mockMvc
-            .perform(
-                addJsonContentType(
-                    addAuth(
-                        post(WORKSPACES_V1_PATH)
-                            .content(objectMapper.writeValueAsString(createRequest)),
-                        USER_REQUEST)))
-            .andExpect(status().is(HttpStatus.SC_OK))
-            .andReturn()
-            .getResponse()
-            .getContentAsString();
-    return objectMapper.readValue(serializedResponse, ApiCreatedWorkspace.class);
-  }
-
   public static ApiCreatedControlledGcpBigQueryDataset createDefaultBigQueryDataset(
       MockMvc mockMvc,
       ObjectMapper objectMapper,
