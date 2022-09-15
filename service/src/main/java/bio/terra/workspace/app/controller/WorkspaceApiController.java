@@ -1,6 +1,7 @@
 package bio.terra.workspace.app.controller;
 
-import static bio.terra.workspace.app.controller.shared.ControllerUtils.convertApiPropertyToMap;
+import static bio.terra.workspace.app.controller.shared.PropertiesUtils.convertApiPropertyToMap;
+import static bio.terra.workspace.app.controller.shared.PropertiesUtils.convertMapToApiProperties;
 
 import bio.terra.common.iam.BearerToken;
 import bio.terra.workspace.amalgam.tps.TpsApiDispatch;
@@ -253,10 +254,7 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
     }
 
     // Convert the property map to API format
-    ApiProperties apiProperties = new ApiProperties();
-    workspace
-        .getProperties()
-        .forEach((k, v) -> apiProperties.add(new ApiProperty().key(k).value(v)));
+    ApiProperties apiProperties = convertMapToApiProperties(workspace.getProperties());
 
     return new ApiWorkspaceDescription()
         .id(workspaceUuid)

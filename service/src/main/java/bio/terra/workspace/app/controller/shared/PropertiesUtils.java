@@ -1,13 +1,14 @@
 package bio.terra.workspace.app.controller.shared;
 
 import bio.terra.workspace.common.utils.ControllerValidationUtils;
+import bio.terra.workspace.generated.model.ApiProperties;
 import bio.terra.workspace.generated.model.ApiProperty;
 import com.google.common.collect.ImmutableMap;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class ControllerUtils {
+public class PropertiesUtils {
 
   // Convert properties list into a map
   public static ImmutableMap<String, String> convertApiPropertyToMap(List<ApiProperty> properties) {
@@ -19,5 +20,11 @@ public class ControllerUtils {
       }
     }
     return ImmutableMap.copyOf(propertyMap);
+  }
+
+  public static ApiProperties convertMapToApiProperties(Map<String, String> properties) {
+    var apiProperties = new ApiProperties();
+    properties.forEach((key, value) -> apiProperties.add(new ApiProperty().key(key).value(value)));
+    return apiProperties;
   }
 }

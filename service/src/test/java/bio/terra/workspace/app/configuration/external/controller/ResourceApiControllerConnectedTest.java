@@ -1,0 +1,323 @@
+package bio.terra.workspace.app.configuration.external.controller;
+
+import static bio.terra.workspace.app.controller.shared.PropertiesUtils.convertApiPropertyToMap;
+import static bio.terra.workspace.app.controller.shared.PropertiesUtils.convertMapToApiProperties;
+import static bio.terra.workspace.common.utils.MockMvcUtils.RESOURCE_PROPERTIES_V1_PATH_FORMAT;
+import static bio.terra.workspace.common.utils.MockMvcUtils.addAuth;
+import static bio.terra.workspace.common.utils.MockMvcUtils.addJsonContentType;
+import static bio.terra.workspace.common.utils.MockMvcUtils.createDefaultBigQueryDataset;
+import static bio.terra.workspace.common.utils.MockMvcUtils.deleteWorkspace;
+import static bio.terra.workspace.common.utils.MockMvcUtils.getBigQueryDataset;
+import static bio.terra.workspace.common.utils.MockMvcUtils.grantRole;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+import bio.terra.workspace.common.BaseConnectedTest;
+import bio.terra.workspace.connected.UserAccessUtils;
+import bio.terra.workspace.connected.WorkspaceConnectedTestUtils;
+import bio.terra.workspace.generated.model.ApiCreatedControlledGcpBigQueryDataset;
+import bio.terra.workspace.generated.model.ApiGcpBigQueryDatasetResource;
+import bio.terra.workspace.generated.model.ApiProperties;
+import bio.terra.workspace.generated.model.ApiPropertyKeys;
+import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
+import bio.terra.workspace.service.iam.model.WsmIamRole;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+import org.apache.http.HttpStatus;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInstance;
+import org.junit.jupiter.api.TestInstance.Lifecycle;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.http.MediaType;
+import org.springframework.test.web.servlet.MockMvc;
+
+@AutoConfigureMockMvc
+@TestInstance(Lifecycle.PER_CLASS)
+public class ResourceApiControllerConnectedTest extends BaseConnectedTest {
+
+  @Autowired MockMvc mockMvc;
+  @Autowired ObjectMapper objectMapper;
+  @Autowired UserAccessUtils userAccessUtils;
+  @Autowired WorkspaceConnectedTestUtils connectedTestUtils;
+
+  private UUID workspaceId;
+
+  @BeforeAll
+  public void setUp() throws Exception {
+    workspaceId =
+        connectedTestUtils
+            .createWorkspaceWithGcpContext(userAccessUtils.defaultUserAuthRequest())
+            .getWorkspaceId();
+  }
+
+  @AfterAll
+  public void cleanup() throws Exception {
+    deleteWorkspace(workspaceId, mockMvc, userAccessUtils.defaultUserAuthRequest());
+  }
+
+  @Nested
+  class UpdateResourceProperties {
+    @Test
+    public void updateResourceProperties_newPropertiesAdded() throws Exception {
+      ApiCreatedControlledGcpBigQueryDataset resource =
+          createDefaultBigQueryDataset(
+              mockMvc, objectMapper, workspaceId, userAccessUtils.defaultUserAuthRequest());
+      UUID resourceId = resource.getResourceId();
+      ApiGcpBigQueryDatasetResource retrievedResource =
+          getBigQueryDataset(
+              mockMvc,
+              objectMapper,
+              workspaceId,
+              resourceId,
+              userAccessUtils.defaultUserAuthRequest());
+      Map<String, String> originalProperties =
+          convertApiPropertyToMap(retrievedResource.getMetadata().getProperties());
+      var folderIdKey = "terra_workspace_folder_id";
+      Map<String, String> newProperties =
+          Map.of(
+              "terra_workspace_folder_id",
+              UUID.randomUUID().toString(),
+              "data_type",
+              "workflow_output");
+      Map<String, String> expectedProperties = new HashMap(originalProperties);
+      expectedProperties.putAll(newProperties);
+
+      // update once.
+      updateResourcePropertiesExpectCode(
+          workspaceId, resourceId, newProperties, HttpStatus.SC_NO_CONTENT);
+
+      ApiGcpBigQueryDatasetResource updatedResource =
+          getBigQueryDataset(
+              mockMvc,
+              objectMapper,
+              workspaceId,
+              resourceId,
+              userAccessUtils.defaultUserAuthRequest());
+      assertEquals(
+          expectedProperties,
+          convertApiPropertyToMap(updatedResource.getMetadata().getProperties()));
+
+      var newFolderId = UUID.randomUUID();
+      // update twice.
+      updateResourcePropertiesExpectCode(
+          workspaceId,
+          resourceId,
+          Map.of(folderIdKey, newFolderId.toString()),
+          HttpStatus.SC_NO_CONTENT);
+
+      ApiGcpBigQueryDatasetResource updatedResource2 =
+          getBigQueryDataset(
+              mockMvc,
+              objectMapper,
+              workspaceId,
+              resourceId,
+              userAccessUtils.defaultUserAuthRequest());
+      assertEquals(
+          newFolderId,
+          convertApiPropertyToMap(updatedResource2.getMetadata().getProperties()).get(folderIdKey));
+    }
+
+    @Test
+    public void updateResourceProperties_resourceDoesNotExist_throws404() throws Exception {
+      updateResourcePropertiesExpectCode(
+          workspaceId,
+          /*resourceId=*/ UUID.randomUUID(),
+          Map.of("foo1", "bar1"),
+          HttpStatus.SC_NOT_FOUND);
+    }
+
+    @Test
+    public void updateResourceProperties_propertiesIsEmpty_throws400() throws Exception {
+      ApiCreatedControlledGcpBigQueryDataset resource =
+          createDefaultBigQueryDataset(
+              mockMvc, objectMapper, workspaceId, userAccessUtils.defaultUserAuthRequest());
+      UUID resourceId = resource.getResourceId();
+
+      updateResourcePropertiesExpectCode(
+          workspaceId, resourceId, Map.of(), HttpStatus.SC_INTERNAL_SERVER_ERROR);
+    }
+
+    @Test
+    public void updateResourceProperties_readOnlyPermission_throws403() throws Exception {
+      ApiCreatedControlledGcpBigQueryDataset resource =
+          createDefaultBigQueryDataset(
+              mockMvc, objectMapper, workspaceId, userAccessUtils.defaultUserAuthRequest());
+      UUID resourceId = resource.getResourceId();
+      grantRole(
+          workspaceId,
+          WsmIamRole.READER,
+          userAccessUtils.getSecondUserEmail(),
+          mockMvc,
+          objectMapper,
+          userAccessUtils.defaultUserAuthRequest());
+
+      updateResourcePropertiesExpectCode(
+          workspaceId,
+          resourceId,
+          Map.of("foo", "bar"),
+          userAccessUtils.secondUserAuthRequest(),
+          HttpStatus.SC_FORBIDDEN);
+    }
+  }
+
+  @Nested
+  class DeleteResourceProperties {
+
+    @Test
+    public void deleteResourceProperties_propertiesDeleted() throws Exception {
+      ApiCreatedControlledGcpBigQueryDataset resource =
+          createDefaultBigQueryDataset(
+              mockMvc, objectMapper, workspaceId, userAccessUtils.defaultUserAuthRequest());
+      UUID resourceId = resource.getResourceId();
+      updateResourcePropertiesExpectCode(
+          workspaceId,
+          resourceId,
+          Map.of("foo", "bar", "sweet", "cake", "cute", "puppy"),
+          HttpStatus.SC_NO_CONTENT);
+
+      deleteResourcePropertiesExpectCode(
+          workspaceId, resourceId, List.of("foo", "sweet", "cute"), HttpStatus.SC_NO_CONTENT);
+
+      ApiGcpBigQueryDatasetResource updatedResource =
+          getBigQueryDataset(
+              mockMvc,
+              objectMapper,
+              workspaceId,
+              resourceId,
+              userAccessUtils.defaultUserAuthRequest());
+      assertTrue(convertApiPropertyToMap(updatedResource.getMetadata().getProperties()).isEmpty());
+    }
+
+    @Test
+    public void deleteResourceProperties_resourceDoesNotExist_throws404() throws Exception {
+      deleteResourcePropertiesExpectCode(
+          workspaceId, /*resourceId=*/ UUID.randomUUID(), List.of("foo"), HttpStatus.SC_NOT_FOUND);
+    }
+
+    @Test
+    public void deleteResourceProperties_propertiesIsEmpty_throws400() throws Exception {
+      ApiCreatedControlledGcpBigQueryDataset resource =
+          createDefaultBigQueryDataset(
+              mockMvc, objectMapper, workspaceId, userAccessUtils.defaultUserAuthRequest());
+      UUID resourceId = resource.getResourceId();
+
+      deleteResourcePropertiesExpectCode(
+          workspaceId, resourceId, List.of(), HttpStatus.SC_INTERNAL_SERVER_ERROR);
+    }
+
+    @Test
+    public void deleteResourceProperties_readOnlyPermission_throws403() throws Exception {
+      UUID workspaceId =
+          connectedTestUtils
+              .createWorkspaceWithGcpContext(userAccessUtils.defaultUserAuthRequest())
+              .getWorkspaceId();
+      ApiCreatedControlledGcpBigQueryDataset resource =
+          createDefaultBigQueryDataset(
+              mockMvc, objectMapper, workspaceId, userAccessUtils.defaultUserAuthRequest());
+      UUID resourceId = resource.getResourceId();
+      updateResourcePropertiesExpectCode(
+          workspaceId,
+          resourceId,
+          Map.of("foo", "bar", "sweet", "cake", "cute", "puppy"),
+          HttpStatus.SC_NO_CONTENT);
+      grantRole(
+          workspaceId,
+          WsmIamRole.READER,
+          userAccessUtils.getSecondUserEmail(),
+          mockMvc,
+          objectMapper,
+          userAccessUtils.defaultUserAuthRequest());
+
+      deleteResourcePropertiesExpectCode(
+          workspaceId,
+          resourceId,
+          List.of("foo"),
+          userAccessUtils.secondUserAuthRequest(),
+          HttpStatus.SC_FORBIDDEN);
+    }
+
+    private void deleteResourcePropertiesExpectCode(
+        UUID workspaceId, UUID resourceId, List<String> propertyKeysToDelete, int code)
+        throws Exception {
+      deleteResourcePropertiesExpectCode(
+          workspaceId,
+          resourceId,
+          propertyKeysToDelete,
+          userAccessUtils.defaultUserAuthRequest(),
+          code);
+    }
+
+    private void deleteResourcePropertiesExpectCode(
+        UUID workspaceId,
+        UUID resourceId,
+        List<String> propertyKeysToDelete,
+        AuthenticatedUserRequest userRequest,
+        int code)
+        throws Exception {
+      mockMvc
+          .perform(
+              addJsonContentType(
+                  addAuth(
+                      patch(
+                              String.format(
+                                  RESOURCE_PROPERTIES_V1_PATH_FORMAT, workspaceId, resourceId))
+                          .contentType(MediaType.APPLICATION_JSON_VALUE)
+                          .accept(MediaType.APPLICATION_JSON)
+                          .characterEncoding("UTF-8")
+                          .content(getDeleteResourcePropertiesInJson(propertyKeysToDelete)),
+                      userRequest)))
+          .andExpect(status().is(code));
+    }
+
+    private String getDeleteResourcePropertiesInJson(List<String> properties)
+        throws JsonProcessingException {
+      ApiPropertyKeys apiPropertyKeys = new ApiPropertyKeys();
+      apiPropertyKeys.addAll(properties);
+      return objectMapper.writeValueAsString(apiPropertyKeys);
+    }
+  }
+
+  private void updateResourcePropertiesExpectCode(
+      UUID workspaceId, UUID resourceId, Map<String, String> newProperties, int code)
+      throws Exception {
+    updateResourcePropertiesExpectCode(
+        workspaceId, resourceId, newProperties, userAccessUtils.defaultUserAuthRequest(), code);
+  }
+
+  private void updateResourcePropertiesExpectCode(
+      UUID workspaceId,
+      UUID resourceId,
+      Map<String, String> newProperties,
+      AuthenticatedUserRequest userRequest,
+      int code)
+      throws Exception {
+    mockMvc
+        .perform(
+            addJsonContentType(
+                addAuth(
+                    post(String.format(RESOURCE_PROPERTIES_V1_PATH_FORMAT, workspaceId, resourceId))
+                        .contentType(MediaType.APPLICATION_JSON_VALUE)
+                        .accept(MediaType.APPLICATION_JSON)
+                        .characterEncoding("UTF-8")
+                        .content(updateResourcePropertiesRequestInJson(newProperties)),
+                    userRequest)))
+        .andExpect(status().is(code));
+  }
+
+  private String updateResourcePropertiesRequestInJson(Map<String, String> properties)
+      throws JsonProcessingException {
+    ApiProperties apiProperties = convertMapToApiProperties(properties);
+    return objectMapper.writeValueAsString(apiProperties);
+  }
+}

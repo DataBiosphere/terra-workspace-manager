@@ -1,14 +1,25 @@
 package bio.terra.workspace.common.utils;
 
+import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.defaultBigQueryDatasetCreationParameters;
+import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.makeDefaultControlledResourceFieldsApi;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import bio.terra.workspace.common.fixtures.WorkspaceFixtures;
+import bio.terra.workspace.generated.model.ApiCreateControlledGcpBigQueryDatasetRequestBody;
+import bio.terra.workspace.generated.model.ApiCreatedControlledGcpBigQueryDataset;
 import bio.terra.workspace.generated.model.ApiCreatedWorkspace;
+import bio.terra.workspace.generated.model.ApiGcpBigQueryDatasetResource;
+import bio.terra.workspace.generated.model.ApiGrantRoleRequestBody;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
+import bio.terra.workspace.service.iam.model.WsmIamRole;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.Optional;
+import java.util.UUID;
 import org.apache.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 
@@ -58,6 +69,12 @@ public class MockMvcUtils {
       "/api/workspaces/v1/%s/resources/controlled/gcp/ai-notebook-instances/generateName";
   public static final String FOLDERS_V1_PATH_FORMAT = "/api/workspaces/v1/%s/folders";
   public static final String FOLDER_V1_PATH_FORMAT = "/api/workspaces/v1/%s/folders/%s";
+  public static final String RESOURCE_PROPERTIES_V1_PATH_FORMAT =
+      "/api/workspaces/v1/%s/resources/%s/properties";
+  public static final String CONTROLLED_GCP_BIG_QUERY_DATASETS_V1_PATH_FORMAT =
+      "/api/workspaces/v1/%s/resources/controlled/gcp/bqdatasets";
+  public static final String CONTROLLED_GCP_BIG_QUERY_DATASET_V1_PATH_FORMAT =
+      "/api/workspaces/v1/%s/resources/controlled/gcp/bqdatasets/%s";
   public static final AuthenticatedUserRequest USER_REQUEST =
       new AuthenticatedUserRequest(
           "fake@email.com", "subjectId123456", Optional.of("ThisIsNotARealBearerToken"));
@@ -88,5 +105,108 @@ public class MockMvcUtils {
             .getResponse()
             .getContentAsString();
     return objectMapper.readValue(serializedResponse, ApiCreatedWorkspace.class);
+  }
+
+  public static ApiCreatedWorkspace createWorkspaceWithGcpContext(
+      MockMvc mockMvc, ObjectMapper objectMapper) throws Exception {
+    var createRequest = WorkspaceFixtures.createWorkspaceRequestBody();
+    String serializedResponse =
+        mockMvc
+            .perform(
+                addJsonContentType(
+                    addAuth(
+                        post(WORKSPACES_V1_PATH)
+                            .content(objectMapper.writeValueAsString(createRequest)),
+                        USER_REQUEST)))
+            .andExpect(status().is(HttpStatus.SC_OK))
+            .andReturn()
+            .getResponse()
+            .getContentAsString();
+    return objectMapper.readValue(serializedResponse, ApiCreatedWorkspace.class);
+  }
+
+  public static ApiCreatedControlledGcpBigQueryDataset createDefaultBigQueryDataset(
+      MockMvc mockMvc,
+      ObjectMapper objectMapper,
+      UUID workspaceId,
+      AuthenticatedUserRequest userRequest)
+      throws Exception {
+    ApiCreateControlledGcpBigQueryDatasetRequestBody datasetCreationRequest =
+        new ApiCreateControlledGcpBigQueryDatasetRequestBody()
+            .common(makeDefaultControlledResourceFieldsApi())
+            .dataset(defaultBigQueryDatasetCreationParameters());
+
+    String serializedGetResponse =
+        mockMvc
+            .perform(
+                addAuth(
+                    post(String.format(
+                            CONTROLLED_GCP_BIG_QUERY_DATASETS_V1_PATH_FORMAT,
+                            workspaceId.toString()))
+                        .contentType(MediaType.APPLICATION_JSON_VALUE)
+                        .accept(MediaType.APPLICATION_JSON)
+                        .characterEncoding("UTF-8")
+                        .content(objectMapper.writeValueAsString(datasetCreationRequest)),
+                    userRequest))
+            .andExpect(status().is(HttpStatus.SC_OK))
+            .andReturn()
+            .getResponse()
+            .getContentAsString();
+
+    return objectMapper.readValue(
+        serializedGetResponse, ApiCreatedControlledGcpBigQueryDataset.class);
+  }
+
+  public static ApiGcpBigQueryDatasetResource getBigQueryDataset(
+      MockMvc mockMvc,
+      ObjectMapper objectMapper,
+      UUID workspaceId,
+      UUID resourceId,
+      AuthenticatedUserRequest userRequest)
+      throws Exception {
+    String serializedGetResponse =
+        mockMvc
+            .perform(
+                addAuth(
+                    get(
+                        String.format(
+                            CONTROLLED_GCP_BIG_QUERY_DATASET_V1_PATH_FORMAT,
+                            workspaceId.toString(),
+                            resourceId.toString())),
+                    userRequest))
+            .andExpect(status().is(HttpStatus.SC_OK))
+            .andReturn()
+            .getResponse()
+            .getContentAsString();
+
+    return objectMapper.readValue(serializedGetResponse, ApiGcpBigQueryDatasetResource.class);
+  }
+
+  public static void grantRole(
+      UUID workspaceId,
+      WsmIamRole role,
+      String memberEmail,
+      MockMvc mockMvc,
+      ObjectMapper objectMapper,
+      AuthenticatedUserRequest userRequest)
+      throws Exception {
+    var requestBody = new ApiGrantRoleRequestBody().memberEmail(memberEmail);
+    mockMvc
+        .perform(
+            addJsonContentType(
+                addAuth(
+                    post(String.format(GRANT_ROLE_PATH_FORMAT, workspaceId, role.name()))
+                        .content(objectMapper.writeValueAsString(requestBody)),
+                    userRequest)))
+        .andExpect(status().is(HttpStatus.SC_NO_CONTENT));
+  }
+
+  public static void deleteWorkspace(
+      UUID workspaceId, MockMvc mockMvc, AuthenticatedUserRequest userRequest) throws Exception {
+    mockMvc
+        .perform(
+            addAuth(
+                delete(String.format(WORKSPACES_V1_BY_UUID_PATH_FORMAT, workspaceId)), userRequest))
+        .andExpect(status().is(HttpStatus.SC_NO_CONTENT));
   }
 }
