@@ -739,7 +739,7 @@ public class ResourceDao {
       throw new MissingRequiredFieldsException("No resource property is specified to delete");
     }
     Map<String, String> properties =
-        new HashMap(getResourceProperties(workspaceUuid, resourceUuid));
+        new HashMap<>(getResourceProperties(workspaceUuid, resourceUuid));
     for (String key : propertyKeys) {
       properties.remove(key);
     }
@@ -754,7 +754,7 @@ public class ResourceDao {
       throw new MissingRequiredFieldsException("No resource property is specified to update");
     }
     Map<String, String> updatedProperties =
-        new HashMap(getResourceProperties(workspaceUuid, resourceUuid));
+        new HashMap<>(getResourceProperties(workspaceUuid, resourceUuid));
     updatedProperties.putAll(properties);
     return storeResourceProperties(updatedProperties, workspaceUuid, resourceUuid);
   }
@@ -763,9 +763,9 @@ public class ResourceDao {
       Map<String, String> properties, UUID workspaceUuid, UUID resourceUuid) {
     final String sql =
         """
-     UPDATE resource SET properties = cast(:properties AS jsonb)
-     WHERE workspace_id = :workspace_id AND resource_id = :resource_id
-    """;
+          UPDATE resource SET properties = cast(:properties AS jsonb)
+          WHERE workspace_id = :workspace_id AND resource_id = :resource_id
+        """;
 
     var params = new MapSqlParameterSource();
     params
@@ -780,9 +780,9 @@ public class ResourceDao {
       UUID workspaceUuid, UUID resourceUuid) {
     String selectPropertiesSql =
         """
-    SELECT properties FROM resource
-    WHERE workspace_id = :workspace_id AND resource_id = :resource_id
-    """;
+          SELECT properties FROM resource
+          WHERE workspace_id = :workspace_id AND resource_id = :resource_id
+        """;
     MapSqlParameterSource propertiesParams =
         new MapSqlParameterSource()
             .addValue("workspace_id", workspaceUuid.toString())

@@ -190,5 +190,10 @@ public class MockMvcUtils {
             addAuth(
                 delete(String.format(WORKSPACES_V1_BY_UUID_PATH_FORMAT, workspaceId)), userRequest))
         .andExpect(status().is(HttpStatus.SC_NO_CONTENT));
+    mockMvc
+        .perform(
+            addAuth(
+                get(String.format(WORKSPACES_V1_BY_UUID_PATH_FORMAT, workspaceId)), userRequest))
+        .andExpect(status().is(HttpStatus.SC_NOT_FOUND));
   }
 }
