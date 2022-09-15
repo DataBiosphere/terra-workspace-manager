@@ -500,9 +500,7 @@ public class ControlledResourceFixtures {
           .defaultTableLifetime(4800)
           .defaultPartitionLifetime(4801);
   public static final Dataset BQ_DATASET_WITH_EXPIRATION =
-      new Dataset()
-          .setDefaultTableExpirationMs(Long.valueOf(5900000))
-          .setDefaultPartitionExpirationMs(Long.valueOf(5901000));
+      new Dataset().setDefaultTableExpirationMs(5900000L).setDefaultPartitionExpirationMs(5901000L);
   public static final Dataset BQ_DATASET_WITHOUT_EXPIRATION = new Dataset();
 
   public static String uniqueName(String prefix) {
