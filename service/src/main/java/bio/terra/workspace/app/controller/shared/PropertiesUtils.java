@@ -8,6 +8,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Utils for properties that are key value pairs in WSM workspace and resources.
+ */
 public class PropertiesUtils {
 
   // Convert properties list into a map
