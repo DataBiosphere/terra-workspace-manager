@@ -772,6 +772,7 @@ public class ResourceDao {
         .addValue("properties", DbSerDes.propertiesToJson(properties))
         .addValue("workspace_id", workspaceUuid.toString())
         .addValue("resource_id", resourceUuid.toString());
+    jdbcTemplate.update(sql, params);
   }
 
   private ImmutableMap<String, String> getResourceProperties(

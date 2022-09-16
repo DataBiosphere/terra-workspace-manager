@@ -67,19 +67,11 @@ public class ResourceApiControllerConnectedTest extends BaseConnectedTest {
   class UpdateResourceProperties {
     @Test
     public void updateResourceProperties_newPropertiesAdded() throws Exception {
+      // Create resource with no properties.
       ApiCreatedControlledGcpBigQueryDataset resource =
           createBigQueryDataset(
               mockMvc, objectMapper, workspaceId, userAccessUtils.defaultUserAuthRequest());
       UUID resourceId = resource.getResourceId();
-      ApiGcpBigQueryDatasetResource retrievedResource =
-          getBigQueryDataset(
-              mockMvc,
-              objectMapper,
-              workspaceId,
-              resourceId,
-              userAccessUtils.defaultUserAuthRequest());
-      Map<String, String> originalProperties =
-          convertApiPropertyToMap(retrievedResource.getMetadata().getProperties());
       var folderIdKey = "terra_workspace_folder_id";
       Map<String, String> newProperties =
           Map.of(
@@ -87,13 +79,14 @@ public class ResourceApiControllerConnectedTest extends BaseConnectedTest {
               UUID.randomUUID().toString(),
               "data_type",
               "workflow_output");
-      Map<String, String> expectedProperties = new HashMap(originalProperties);
+      Map<String, String> expectedProperties = new HashMap();
       expectedProperties.putAll(newProperties);
 
-      // update once.
+      // Add two more properties with key terra_workspace_folder_id and data_type.
       updateResourcePropertiesExpectCode(
           workspaceId, resourceId, newProperties, HttpStatus.SC_NO_CONTENT);
 
+      // Get the updated resource and assert that the new properties are added.
       ApiGcpBigQueryDatasetResource updatedResource =
           getBigQueryDataset(
               mockMvc,
@@ -106,13 +99,14 @@ public class ResourceApiControllerConnectedTest extends BaseConnectedTest {
           convertApiPropertyToMap(updatedResource.getMetadata().getProperties()));
 
       var newFolderId = UUID.randomUUID();
-      // update twice.
+      // Change property terra_workspace_folder_id to new UUID.
       updateResourcePropertiesExpectCode(
           workspaceId,
           resourceId,
           Map.of(folderIdKey, newFolderId.toString()),
           HttpStatus.SC_NO_CONTENT);
 
+      // Get the updated resource and assert terra_workspace_folder_id has new UUID.
       ApiGcpBigQueryDatasetResource updatedResource2 =
           getBigQueryDataset(
               mockMvc,
