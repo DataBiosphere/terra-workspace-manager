@@ -7,8 +7,10 @@ import bio.terra.workspace.db.exception.UnknownFlightOperationTypeException;
 import bio.terra.workspace.db.model.DbWorkspaceActivityLog;
 import bio.terra.workspace.service.workspace.model.OperationType;
 import com.google.common.collect.ImmutableSet;
+import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
+import java.time.ZoneOffset;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
@@ -61,11 +63,12 @@ public class WorkspaceActivityLogDao {
           String.format("Flight operation type is unknown in workspace %s", workspaceId));
     }
     final String sql =
-        "INSERT INTO workspace_activity_log (workspace_id, change_type, actor_email, actor_subject_id)"
-            + " VALUES (:workspace_id, :change_type, :actor_email, :actor_subject_id)";
+        "INSERT INTO workspace_activity_log (workspace_id, change_date, change_type, actor_email, actor_subject_id)"
+            + " VALUES (:workspace_id, :change_date, :change_type, :actor_email, :actor_subject_id)";
     final var params =
         new MapSqlParameterSource()
             .addValue("workspace_id", workspaceId.toString())
+            .addValue("change_date", Instant.now().atOffset(ZoneOffset.UTC))
             .addValue("change_type", dbWorkspaceActivityLog.getOperationType().name())
             .addValue("actor_email", dbWorkspaceActivityLog.getActorEmail())
             .addValue("actor_subject_id", dbWorkspaceActivityLog.getActorSubjectId());
