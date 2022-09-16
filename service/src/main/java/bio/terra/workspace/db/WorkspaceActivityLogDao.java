@@ -7,10 +7,8 @@ import bio.terra.workspace.db.exception.UnknownFlightOperationTypeException;
 import bio.terra.workspace.db.model.DbWorkspaceActivityLog;
 import bio.terra.workspace.service.workspace.model.OperationType;
 import com.google.common.collect.ImmutableSet;
-import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
-import java.time.ZoneOffset;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
@@ -63,12 +61,11 @@ public class WorkspaceActivityLogDao {
           String.format("Flight operation type is unknown in workspace %s", workspaceId));
     }
     final String sql =
-        "INSERT INTO workspace_activity_log (workspace_id, change_date, change_type, actor_email, actor_subject_id)"
-            + " VALUES (:workspace_id, :change_date, :change_type, :actor_email, :actor_subject_id)";
+        "INSERT INTO workspace_activity_log (workspace_id, change_type, actor_email, actor_subject_id)"
+            + " VALUES (:workspace_id, :change_type, :actor_email, :actor_subject_id)";
     final var params =
         new MapSqlParameterSource()
             .addValue("workspace_id", workspaceId.toString())
-            .addValue("change_date", Instant.now().atOffset(ZoneOffset.UTC))
             .addValue("change_type", dbWorkspaceActivityLog.getOperationType().name())
             .addValue("actor_email", dbWorkspaceActivityLog.getActorEmail())
             .addValue("actor_subject_id", dbWorkspaceActivityLog.getActorSubjectId());
@@ -84,10 +81,14 @@ public class WorkspaceActivityLogDao {
   @ReadTransaction
   public Optional<ActivityLogChangeDetails> getCreateDetails(UUID workspaceId) {
     final String sql =
-        "SELECT w.change_date, w.actor_email, w.actor_subject_id FROM workspace_activity_log w"
-            + " JOIN (SELECT MIN(change_date) AS min_date FROM workspace_activity_log"
-            + " WHERE workspace_id = :workspace_id) m"
-            + " ON w.change_date = m.min_date";
+        """
+            SELECT w.change_date, w.actor_email, w.actor_subject_id FROM workspace_activity_log w
+            JOIN (SELECT MIN(change_date) AS min_date FROM workspace_activity_log
+            WHERE workspace_id = :workspace_id) m
+            ON w.change_date = m.min_date
+            ORDER BY w.actor_email ASC
+            LIMIT 1
+        """;
 
     final var params = new MapSqlParameterSource().addValue("workspace_id", workspaceId.toString());
     return Optional.ofNullable(
@@ -97,11 +98,17 @@ public class WorkspaceActivityLogDao {
 
   @ReadTransaction
   public Optional<ActivityLogChangeDetails> getLastUpdateDetails(UUID workspaceId) {
+    // In rare cases when there are more than one rows with the same max change date,
+    // sort the actor_email by alphabetical order and returns the first one.
     final String sql =
-        "SELECT w.actor_email, w.actor_subject_id, w.change_date FROM workspace_activity_log w"
-            + " JOIN (SELECT MAX(change_date) AS max_date FROM workspace_activity_log"
-            + " WHERE workspace_id = :workspace_id AND change_type NOT IN (:change_type)) m"
-            + " ON w.change_date = m.max_date";
+        """
+            SELECT w.change_date, w.actor_email, w.actor_subject_id FROM workspace_activity_log w
+            INNER JOIN (SELECT MAX(change_date) AS max_date FROM workspace_activity_log
+            WHERE workspace_id = :workspace_id AND change_type NOT IN (:change_type)) m
+            ON w.change_date = m.max_date
+            ORDER BY w.actor_email ASC
+            LIMIT 1
+        """;
 
     final var params =
         new MapSqlParameterSource()

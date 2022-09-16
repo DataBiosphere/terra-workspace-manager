@@ -13,4 +13,5 @@
     <include file="changesets/20220810_resource_lineage.yaml" relativeToChangelogFile="true"/>
     <include file="changesets/20220824_folder_table.yaml" relativeToChangelogFile="true"/>
     <include file="changesets/20220907_add_resource_properties_column.yaml" relativeToChangelogFile="true" />
+    <include file="changesets/20220916_add_default_value_to_change_date.yaml" relativeToChangelogFile="true" />
 </databaseChangeLog>

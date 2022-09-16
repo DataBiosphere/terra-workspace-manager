@@ -1,0 +1,10 @@
+databaseChangeLog:
+- changeSet:
+    id: Add default value computed to column change date
+    author: yuhuyoyo
+    changes:
+    - addDefaultValue:
+        tableName: workspace_activity_log
+        columnName: change_date
+        defaultValueComputed: now()
+        columnDataType: timestamptz
