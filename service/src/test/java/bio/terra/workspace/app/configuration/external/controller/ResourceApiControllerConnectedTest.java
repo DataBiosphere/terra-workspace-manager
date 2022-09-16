@@ -136,7 +136,7 @@ public class ResourceApiControllerConnectedTest extends BaseConnectedTest {
       UUID resourceId = resource.getResourceId();
 
       updateResourcePropertiesExpectCode(
-          workspaceId, resourceId, Map.of(), HttpStatus.SC_INTERNAL_SERVER_ERROR);
+          workspaceId, resourceId, Map.of(), HttpStatus.SC_BAD_REQUEST);
     }
 
     @Test
@@ -204,7 +204,7 @@ public class ResourceApiControllerConnectedTest extends BaseConnectedTest {
       UUID resourceId = resource.getResourceId();
 
       deleteResourcePropertiesExpectCode(
-          workspaceId, resourceId, List.of(), HttpStatus.SC_INTERNAL_SERVER_ERROR);
+          workspaceId, resourceId, List.of(), HttpStatus.SC_BAD_REQUEST);
     }
 
     @Test

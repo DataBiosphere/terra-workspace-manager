@@ -2,6 +2,7 @@ package bio.terra.workspace.common.utils;
 
 import bio.terra.common.exception.ValidationException;
 import bio.terra.workspace.generated.model.ApiCloudPlatform;
+import bio.terra.workspace.generated.model.ApiProperty;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResourceCategory;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResourceFields;
 import bio.terra.workspace.service.workspace.exceptions.CloudPlatformNotImplementedException;
@@ -135,6 +136,18 @@ public final class ControllerValidationUtils {
       if (!validator.isValid(address)) {
         throw new ValidationException("Invalid ip address or ip address range: " + ipRange);
       }
+    }
+  }
+
+  public static void validatePropertiesUpdateRequestBody(List<ApiProperty> properties) {
+    if (properties.isEmpty()) {
+      throw new ValidationException("Must specify at least one property to update");
+    }
+  }
+
+  public static void validatePropertiesDeleteRequestBody(List<String> propertyKeys) {
+    if (propertyKeys.isEmpty()) {
+      throw new ValidationException("Must specify at least one property to delete");
     }
   }
 }

@@ -1,6 +1,8 @@
 package bio.terra.workspace.app.controller;
 
 import static bio.terra.workspace.app.controller.shared.PropertiesUtils.convertApiPropertyToMap;
+import static bio.terra.workspace.common.utils.ControllerValidationUtils.validatePropertiesDeleteRequestBody;
+import static bio.terra.workspace.common.utils.ControllerValidationUtils.validatePropertiesUpdateRequestBody;
 
 import bio.terra.workspace.common.utils.ControllerValidationUtils;
 import bio.terra.workspace.generated.controller.ResourceApi;
@@ -102,6 +104,9 @@ public class ResourceApiController implements ResourceApi {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     workspaceService.validateWorkspaceAndAction(
         userRequest, workspaceUuid, SamConstants.SamWorkspaceAction.WRITE);
+
+    validatePropertiesUpdateRequestBody(properties);
+
     resourceService.updateResourceProperties(
         workspaceUuid, resourceUuid, convertApiPropertyToMap(properties));
     return new ResponseEntity<>(HttpStatus.NO_CONTENT);
@@ -111,6 +116,7 @@ public class ResourceApiController implements ResourceApi {
   public ResponseEntity<Void> deleteResourceProperties(
       UUID workspaceUuid, UUID resourceUuid, List<String> propertyKeys) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    validatePropertiesDeleteRequestBody(propertyKeys);
     workspaceService.validateWorkspaceAndAction(
         userRequest, workspaceUuid, SamConstants.SamWorkspaceAction.WRITE);
     resourceService.deleteResourceProperties(workspaceUuid, resourceUuid, propertyKeys);
