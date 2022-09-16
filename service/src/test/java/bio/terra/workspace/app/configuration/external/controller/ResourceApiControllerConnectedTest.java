@@ -209,10 +209,6 @@ public class ResourceApiControllerConnectedTest extends BaseConnectedTest {
 
     @Test
     public void deleteResourceProperties_readOnlyPermission_throws403() throws Exception {
-      UUID workspaceId =
-          connectedTestUtils
-              .createWorkspaceWithGcpContext(userAccessUtils.defaultUserAuthRequest())
-              .getWorkspaceId();
       ApiCreatedControlledGcpBigQueryDataset resource =
           createBigQueryDataset(
               mockMvc, objectMapper, workspaceId, userAccessUtils.defaultUserAuthRequest());
