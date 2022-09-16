@@ -6,30 +6,7 @@ import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
 import bio.terra.workspace.common.utils.AzureVmUtils;
 import bio.terra.workspace.common.utils.ControllerValidationUtils;
 import bio.terra.workspace.generated.controller.ControlledAzureResourceApi;
-import bio.terra.workspace.generated.model.ApiAzureDiskResource;
-import bio.terra.workspace.generated.model.ApiAzureIpResource;
-import bio.terra.workspace.generated.model.ApiAzureNetworkResource;
-import bio.terra.workspace.generated.model.ApiAzureRelayNamespaceResource;
-import bio.terra.workspace.generated.model.ApiAzureVmResource;
-import bio.terra.workspace.generated.model.ApiCreateControlledAzureDiskRequestBody;
-import bio.terra.workspace.generated.model.ApiCreateControlledAzureIpRequestBody;
-import bio.terra.workspace.generated.model.ApiCreateControlledAzureNetworkRequestBody;
-import bio.terra.workspace.generated.model.ApiCreateControlledAzureRelayNamespaceRequestBody;
-import bio.terra.workspace.generated.model.ApiCreateControlledAzureRelayNamespaceResult;
-import bio.terra.workspace.generated.model.ApiCreateControlledAzureStorageContainerRequestBody;
-import bio.terra.workspace.generated.model.ApiCreateControlledAzureStorageRequestBody;
-import bio.terra.workspace.generated.model.ApiCreateControlledAzureVmRequestBody;
-import bio.terra.workspace.generated.model.ApiCreatedAzureStorageContainerSasToken;
-import bio.terra.workspace.generated.model.ApiCreatedControlledAzureDisk;
-import bio.terra.workspace.generated.model.ApiCreatedControlledAzureIp;
-import bio.terra.workspace.generated.model.ApiCreatedControlledAzureNetwork;
-import bio.terra.workspace.generated.model.ApiCreatedControlledAzureStorage;
-import bio.terra.workspace.generated.model.ApiCreatedControlledAzureStorageContainer;
-import bio.terra.workspace.generated.model.ApiCreatedControlledAzureVmResult;
-import bio.terra.workspace.generated.model.ApiDeleteControlledAzureResourceRequest;
-import bio.terra.workspace.generated.model.ApiDeleteControlledAzureResourceResult;
-import bio.terra.workspace.generated.model.ApiJobControl;
-import bio.terra.workspace.generated.model.ApiJobReport;
+import bio.terra.workspace.generated.model.*;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequestFactory;
 import bio.terra.workspace.service.iam.SamRethrow;
@@ -50,6 +27,7 @@ import bio.terra.workspace.service.resource.controlled.cloud.azure.vm.Controlled
 import bio.terra.workspace.service.resource.controlled.model.ControlledResourceFields;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.workspace.WorkspaceService;
+import com.google.common.annotations.VisibleForTesting;
 import java.time.OffsetDateTime;
 import java.util.UUID;
 import javax.servlet.http.HttpServletRequest;
@@ -342,16 +320,7 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
 
     ResourceValidationUtils.validateApiAzureVmCreationParameters(body.getAzureVm());
     ControlledAzureVmResource resource =
-        ControlledAzureVmResource.builder()
-            .common(commonFields)
-            .vmName(body.getAzureVm().getName())
-            .region(body.getAzureVm().getRegion())
-            .vmSize(body.getAzureVm().getVmSize())
-            .vmImage(AzureVmUtils.getImageData(body.getAzureVm().getVmImage()))
-            .ipId(body.getAzureVm().getIpId())
-            .networkId(body.getAzureVm().getNetworkId())
-            .diskId(body.getAzureVm().getDiskId())
-            .build();
+        buildControlledAzureVmResource(body.getAzureVm(), commonFields);
 
     final String jobId =
         controlledResourceService.createAzureVm(
@@ -365,6 +334,23 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
     final ApiCreatedControlledAzureVmResult result = fetchCreateControlledAzureVmResult(jobId);
 
     return new ResponseEntity<>(result, HttpStatus.OK);
+  }
+
+  @VisibleForTesting
+  ControlledAzureVmResource buildControlledAzureVmResource(
+      ApiAzureVmCreationParameters creationParameters, ControlledResourceFields commonFields) {
+    ControlledAzureVmResource resource =
+        ControlledAzureVmResource.builder()
+            .common(commonFields)
+            .vmName(creationParameters.getName())
+            .region(creationParameters.getRegion())
+            .vmSize(creationParameters.getVmSize())
+            .vmImage(AzureVmUtils.getImageData(creationParameters.getVmImage()))
+            .ipId(creationParameters.getIpId())
+            .networkId(creationParameters.getNetworkId())
+            .diskId(creationParameters.getDiskId())
+            .build();
+    return resource;
   }
 
   @Override

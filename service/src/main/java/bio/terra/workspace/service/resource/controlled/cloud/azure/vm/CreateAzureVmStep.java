@@ -70,12 +70,13 @@ public class CreateAzureVmStep implements Step {
                         .getResource(resource.getWorkspaceId(), ipId)
                         .castByEnum(WsmResourceType.CONTROLLED_AZURE_IP));
 
-    final ControlledAzureDiskResource diskResource =
-        resource.getDiskId() == null
-            ? null
-            : resourceDao
-                .getResource(resource.getWorkspaceId(), resource.getDiskId())
-                .castByEnum(WsmResourceType.CONTROLLED_AZURE_DISK);
+    final Optional<ControlledAzureDiskResource> diskResource =
+        Optional.ofNullable(resource.getDiskId())
+            .map(
+                diskId ->
+                    resourceDao
+                        .getResource(resource.getWorkspaceId(), diskId)
+                        .castByEnum(WsmResourceType.CONTROLLED_AZURE_DISK));
 
     final ControlledAzureNetworkResource networkResource =
         resourceDao
@@ -83,13 +84,13 @@ public class CreateAzureVmStep implements Step {
             .castByEnum(WsmResourceType.CONTROLLED_AZURE_NETWORK);
 
     try {
-      Disk existingAzureDisk =
-          diskResource == null
-              ? null
-              : computeManager
-                  .disks()
-                  .getByResourceGroup(
-                      azureCloudContext.getAzureResourceGroupId(), diskResource.getDiskName());
+      Optional<Disk> existingAzureDisk =
+          diskResource.map(
+              diskRes ->
+                  computeManager
+                      .disks()
+                      .getByResourceGroup(
+                          azureCloudContext.getAzureResourceGroupId(), diskRes.getDiskName()));
 
       Optional<PublicIpAddress> existingAzureIp =
           ipResource.map(
@@ -137,21 +138,21 @@ public class CreateAzureVmStep implements Step {
               azureCloudContext.getAzureResourceGroupId(),
               creationParameters);
 
-      var requestDataBuilder =
-          CreateVirtualMachineRequestData.builder()
-              .setName(resource.getVmName())
-              .setRegion(Region.fromName(resource.getRegion()))
-              .setTenantId(azureCloudContext.getAzureTenantId())
-              .setSubscriptionId(azureCloudContext.getAzureSubscriptionId())
-              .setResourceGroupName(azureCloudContext.getAzureResourceGroupId())
-              .setNetwork(existingNetwork)
-              .setSubnetName(networkResource.getSubnetName())
-              .setPublicIpAddress(existingAzureIp.orElse(null))
-              .setImage(AzureVmUtils.getImageData(creationParameters.getVmImage()));
+      virtualMachineDefinition.create(
+          Defaults.buildContext(
+              CreateVirtualMachineRequestData.builder()
+                  .setName(resource.getVmName())
+                  .setRegion(Region.fromName(resource.getRegion()))
+                  .setTenantId(azureCloudContext.getAzureTenantId())
+                  .setSubscriptionId(azureCloudContext.getAzureSubscriptionId())
+                  .setResourceGroupName(azureCloudContext.getAzureResourceGroupId())
+                  .setNetwork(existingNetwork)
+                  .setSubnetName(networkResource.getSubnetName())
+                  .setPublicIpAddress(existingAzureIp.orElse(null))
+                  .setDisk(existingAzureDisk.orElse(null))
+                  .setImage(AzureVmUtils.getImageData(creationParameters.getVmImage()))
+                  .build()));
 
-      Optional.ofNullable(existingAzureDisk).ifPresent(requestDataBuilder::setDisk);
-
-      virtualMachineDefinition.create(Defaults.buildContext(requestDataBuilder.build()));
     } catch (ManagementException e) {
       // Stairway steps may run multiple times, so we may already have created this resource. In all
       // other cases, surface the exception and attempt to retry.
@@ -169,9 +170,11 @@ public class CreateAzureVmStep implements Step {
                 + String.format(
                     "%nResource Group: %s%n\tIp Name: %s%n\tNetwork Name: %s%n\tDisk Name: %s",
                     azureCloudContext.getAzureResourceGroupId(),
-                    ipResource.isPresent() ? ipResource.get().getIpName() : "NoPublicIp",
-                    "TODO",
-                    diskResource == null ? "<no disk>" : diskResource.getDiskName()));
+                    ipResource.map(ControlledAzureIpResource::getIpName).orElse("<no public ip>"),
+                    networkResource.getNetworkName(),
+                    diskResource
+                        .map(ControlledAzureDiskResource::getDiskName)
+                        .orElse("<no disk>")));
         return new StepResult(StepStatus.STEP_RESULT_FAILURE_FATAL, e);
       }
       return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, e);
@@ -193,7 +196,7 @@ public class CreateAzureVmStep implements Step {
   private VirtualMachine.DefinitionStages.WithCreate buildVmConfiguration(
       ComputeManager computeManager,
       NetworkInterface networkInterface,
-      Disk disk,
+      Optional<Disk> disk,
       String azureResourceGroupId,
       ApiAzureVmCreationParameters creationParameters) {
     var vmConfigurationCommonStep =
@@ -269,12 +272,9 @@ public class CreateAzureVmStep implements Step {
   }
 
   private VirtualMachine.DefinitionStages.WithManagedCreate maybeAddExistingDiskStep(
-      VirtualMachine.DefinitionStages.WithFromImageCreateOptionsManaged priorSteps, Disk disk) {
-    if (disk == null) {
-      return priorSteps;
-    } else {
-      return priorSteps.withExistingDataDisk(disk);
-    }
+      VirtualMachine.DefinitionStages.WithFromImageCreateOptionsManaged priorSteps,
+      Optional<Disk> disk) {
+    return disk.map(priorSteps::withExistingDataDisk).orElse(priorSteps);
   }
 
   private VirtualMachine.DefinitionStages.WithFromImageCreateOptionsManaged maybeAddCustomDataStep(

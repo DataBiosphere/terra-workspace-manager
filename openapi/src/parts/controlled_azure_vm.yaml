@@ -250,6 +250,7 @@ components:
     CreateControlledAzureVmRequestBody:
       description: Payload for requesting a new controlled Azure VM resource.
       type: object
+      required: ["common", "azureVm", "jobControl"]
       properties:
         common:
           $ref: '#/components/schemas/ControlledResourceCommonFields'
