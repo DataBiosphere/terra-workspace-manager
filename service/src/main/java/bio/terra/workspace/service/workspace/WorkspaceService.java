@@ -95,10 +95,11 @@ public class WorkspaceService {
       Workspace workspace,
       @Nullable ApiTpsPolicyInputs policies,
       AuthenticatedUserRequest userRequest) {
-    String workspaceName = workspace.getDisplayName().orElse("");
     String workspaceUuid = workspace.getWorkspaceId().toString();
     String jobDescription =
-        String.format("Create workspace: name: '%s' id: '%s'  ", workspaceName, workspaceUuid);
+        String.format(
+            "Create workspace: name: '%s' id: '%s'  ",
+            workspace.getDisplayName().orElse(""), workspaceUuid);
 
     // Before launching the flight, confirm the workspace does not already exist. This isn't perfect
     // if two requests come in at nearly the same time, but it prevents launching a flight when a
@@ -118,8 +119,6 @@ public class WorkspaceService {
             .operationType(OperationType.CREATE)
             .addParameter(
                 WorkspaceFlightMapKeys.WORKSPACE_STAGE, workspace.getWorkspaceStage().name())
-            .addParameter(WorkspaceFlightMapKeys.DISPLAY_NAME, workspaceName)
-            .addParameter(WorkspaceFlightMapKeys.DESCRIPTION, workspace.getDescription().orElse(""))
             .addParameter(WorkspaceFlightMapKeys.POLICIES, policies);
 
     if (workspace.getSpendProfileId().isPresent()) {
@@ -285,9 +284,8 @@ public class WorkspaceService {
             .workspaceId(fullWorkspace.getWorkspaceId())
             .userFacingId(fullWorkspace.getUserFacingId())
             .workspaceStage(fullWorkspace.getWorkspaceStage());
-    if (fullWorkspace.getDisplayName().isPresent()) {
-      strippedWorkspace.displayName(fullWorkspace.getDisplayName().get());
-    }
+    strippedWorkspace.displayName(fullWorkspace.getDisplayName().orElse(null));
+
     Map<String, String> strippedProperties = new HashMap<>();
     if (fullWorkspace.getProperties().containsKey(Properties.TYPE)) {
       strippedProperties.put(Properties.TYPE, fullWorkspace.getProperties().get(Properties.TYPE));
@@ -420,11 +418,10 @@ public class WorkspaceService {
           "Cannot create a GCP context in an environment where buffer service is disabled or not configured.");
     }
 
-    String workspaceName = workspace.getDisplayName().orElse("");
     String jobDescription =
         String.format(
             "Create GCP cloud context for workspace: name: '%s' id: '%s'  ",
-            workspaceName, workspace.getWorkspaceId());
+            workspace.getDisplayName().orElse(""), workspace.getWorkspaceId());
 
     jobService
         .newJob()
@@ -448,10 +445,11 @@ public class WorkspaceService {
       AuthenticatedUserRequest userRequest,
       @Nullable String location,
       Workspace destinationWorkspace) {
-    String workspaceName = sourceWorkspace.getDisplayName().orElse("");
     String workspaceUuid = sourceWorkspace.getWorkspaceId().toString();
     String jobDescription =
-        String.format("Clone workspace: name: '%s' id: '%s'  ", workspaceName, workspaceUuid);
+        String.format(
+            "Clone workspace: name: '%s' id: '%s'  ",
+            sourceWorkspace.getDisplayName().orElse(""), workspaceUuid);
 
     // Create the destination workspace synchronously first.
     createWorkspace(destinationWorkspace, null, userRequest);
@@ -476,11 +474,10 @@ public class WorkspaceService {
   /** Delete the GCP cloud context for the workspace. */
   @Traced
   public void deleteGcpCloudContext(Workspace workspace, AuthenticatedUserRequest userRequest) {
-    String workspaceName = workspace.getDisplayName().orElse("");
     String jobDescription =
         String.format(
             "Delete GCP cloud context for workspace: name: '%s' id: '%s'  ",
-            workspaceName, workspace.getWorkspaceId());
+            workspace.getDisplayName().orElse(""), workspace.getWorkspaceId());
 
     jobService
         .newJob()
@@ -493,11 +490,10 @@ public class WorkspaceService {
   }
 
   public void deleteAzureCloudContext(Workspace workspace, AuthenticatedUserRequest userRequest) {
-    String workspaceName = workspace.getDisplayName().orElse("");
     String jobDescription =
         String.format(
             "Delete Azure cloud context for workspace: name: '%s' id: '%s'  ",
-            workspaceName, workspace.getWorkspaceId());
+            workspace.getDisplayName().orElse(""), workspace.getWorkspaceId());
     jobService
         .newJob()
         .description(jobDescription)
