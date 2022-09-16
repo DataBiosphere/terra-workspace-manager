@@ -59,6 +59,9 @@ paths:
     - $ref: '#/components/parameters/ResourceId'
     post:
       operationId: updateResourceProperties
+      summary: |
+       Update resource properties. Only properties with keys in request are
+       updated. Properties with keys not in request are not updated.
       tags: [ Resource ]
       requestBody:
         required: true
@@ -68,7 +71,7 @@ paths:
               $ref: '#/components/schemas/Properties'
       responses:
         '204':
-          description: properties update sucessfully
+          description: Properties update sucessfully
         '403':
           $ref: '#/components/responses/PermissionDenied'
         '404':
@@ -78,6 +81,9 @@ paths:
     patch:
       operationId: deleteResourceProperties
       tags: [ Resource ]
+      summary: |
+        Delete resource properties. Only properties with keys in request are
+        deleted. Properties with keys not in request are not deleted.
       requestBody:
         required: true
         content:
@@ -86,7 +92,7 @@ paths:
               $ref: '#/components/schemas/PropertyKeys'
       responses:
         '204':
-          description: properties delete sucessfully
+          description: Properties delete sucessfully
         '403':
           $ref: '#/components/responses/PermissionDenied'
         '404':

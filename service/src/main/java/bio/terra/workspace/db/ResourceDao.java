@@ -733,7 +733,19 @@ public class ResourceDao {
   }
 
   @WriteTransaction
-  public boolean deleteResourceProperties(
+  public void updateResourceProperties(
+      UUID workspaceUuid, UUID resourceUuid, Map<String, String> properties) {
+    if (properties.isEmpty()) {
+      throw new MissingRequiredFieldsException("No resource property is specified to update");
+    }
+    Map<String, String> updatedProperties =
+        new HashMap<>(getResourceProperties(workspaceUuid, resourceUuid));
+    updatedProperties.putAll(properties);
+    storeResourceProperties(updatedProperties, workspaceUuid, resourceUuid);
+  }
+
+  @WriteTransaction
+  public void deleteResourceProperties(
       UUID workspaceUuid, UUID resourceUuid, List<String> propertyKeys) {
     if (propertyKeys.isEmpty()) {
       throw new MissingRequiredFieldsException("No resource property is specified to delete");
@@ -743,23 +755,11 @@ public class ResourceDao {
     for (String key : propertyKeys) {
       properties.remove(key);
     }
-    return storeResourceProperties(properties, workspaceUuid, resourceUuid);
+    storeResourceProperties(properties, workspaceUuid, resourceUuid);
   }
 
-  /** Update a workspace properties */
-  @WriteTransaction
-  public boolean updateResourceProperties(
-      UUID workspaceUuid, UUID resourceUuid, Map<String, String> properties) {
-    if (properties.isEmpty()) {
-      throw new MissingRequiredFieldsException("No resource property is specified to update");
-    }
-    Map<String, String> updatedProperties =
-        new HashMap<>(getResourceProperties(workspaceUuid, resourceUuid));
-    updatedProperties.putAll(properties);
-    return storeResourceProperties(updatedProperties, workspaceUuid, resourceUuid);
-  }
-
-  private boolean storeResourceProperties(
+  /** Update the properties column of a given resource in a given workspace. */
+  private void storeResourceProperties(
       Map<String, String> properties, UUID workspaceUuid, UUID resourceUuid) {
     final String sql =
         """
@@ -772,8 +772,6 @@ public class ResourceDao {
         .addValue("properties", DbSerDes.propertiesToJson(properties))
         .addValue("workspace_id", workspaceUuid.toString())
         .addValue("resource_id", resourceUuid.toString());
-    // If false, no row is updated.
-    return jdbcTemplate.update(sql, params) > 0;
   }
 
   private ImmutableMap<String, String> getResourceProperties(
@@ -793,9 +791,7 @@ public class ResourceDao {
       result = jdbcTemplate.queryForObject(selectPropertiesSql, propertiesParams, String.class);
     } catch (EmptyResultDataAccessException e) {
       throw new ResourceNotFoundException(
-          String.format(
-              "Cannot find resource %s in workspace %s. Please check if the workspace and the resource exist",
-              resourceUuid, workspaceUuid));
+          String.format("Cannot find resource %s in workspace %s.", resourceUuid, workspaceUuid));
     }
     return result == null
         ? ImmutableMap.of()

@@ -107,7 +107,7 @@ public class MockMvcUtils {
     return objectMapper.readValue(serializedResponse, ApiCreatedWorkspace.class);
   }
 
-  public static ApiCreatedControlledGcpBigQueryDataset createDefaultBigQueryDataset(
+  public static ApiCreatedControlledGcpBigQueryDataset createBigQueryDataset(
       MockMvc mockMvc,
       ObjectMapper objectMapper,
       UUID workspaceId,

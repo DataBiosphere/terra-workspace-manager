@@ -5,7 +5,7 @@ import static bio.terra.workspace.app.controller.shared.PropertiesUtils.convertM
 import static bio.terra.workspace.common.utils.MockMvcUtils.RESOURCE_PROPERTIES_V1_PATH_FORMAT;
 import static bio.terra.workspace.common.utils.MockMvcUtils.addAuth;
 import static bio.terra.workspace.common.utils.MockMvcUtils.addJsonContentType;
-import static bio.terra.workspace.common.utils.MockMvcUtils.createDefaultBigQueryDataset;
+import static bio.terra.workspace.common.utils.MockMvcUtils.createBigQueryDataset;
 import static bio.terra.workspace.common.utils.MockMvcUtils.deleteWorkspace;
 import static bio.terra.workspace.common.utils.MockMvcUtils.getBigQueryDataset;
 import static bio.terra.workspace.common.utils.MockMvcUtils.grantRole;
@@ -68,7 +68,7 @@ public class ResourceApiControllerConnectedTest extends BaseConnectedTest {
     @Test
     public void updateResourceProperties_newPropertiesAdded() throws Exception {
       ApiCreatedControlledGcpBigQueryDataset resource =
-          createDefaultBigQueryDataset(
+          createBigQueryDataset(
               mockMvc, objectMapper, workspaceId, userAccessUtils.defaultUserAuthRequest());
       UUID resourceId = resource.getResourceId();
       ApiGcpBigQueryDatasetResource retrievedResource =
@@ -137,7 +137,7 @@ public class ResourceApiControllerConnectedTest extends BaseConnectedTest {
     @Test
     public void updateResourceProperties_propertiesIsEmpty_throws400() throws Exception {
       ApiCreatedControlledGcpBigQueryDataset resource =
-          createDefaultBigQueryDataset(
+          createBigQueryDataset(
               mockMvc, objectMapper, workspaceId, userAccessUtils.defaultUserAuthRequest());
       UUID resourceId = resource.getResourceId();
 
@@ -148,7 +148,7 @@ public class ResourceApiControllerConnectedTest extends BaseConnectedTest {
     @Test
     public void updateResourceProperties_readOnlyPermission_throws403() throws Exception {
       ApiCreatedControlledGcpBigQueryDataset resource =
-          createDefaultBigQueryDataset(
+          createBigQueryDataset(
               mockMvc, objectMapper, workspaceId, userAccessUtils.defaultUserAuthRequest());
       UUID resourceId = resource.getResourceId();
       grantRole(
@@ -174,7 +174,7 @@ public class ResourceApiControllerConnectedTest extends BaseConnectedTest {
     @Test
     public void deleteResourceProperties_propertiesDeleted() throws Exception {
       ApiCreatedControlledGcpBigQueryDataset resource =
-          createDefaultBigQueryDataset(
+          createBigQueryDataset(
               mockMvc, objectMapper, workspaceId, userAccessUtils.defaultUserAuthRequest());
       UUID resourceId = resource.getResourceId();
       updateResourcePropertiesExpectCode(
@@ -205,7 +205,7 @@ public class ResourceApiControllerConnectedTest extends BaseConnectedTest {
     @Test
     public void deleteResourceProperties_propertiesIsEmpty_throws400() throws Exception {
       ApiCreatedControlledGcpBigQueryDataset resource =
-          createDefaultBigQueryDataset(
+          createBigQueryDataset(
               mockMvc, objectMapper, workspaceId, userAccessUtils.defaultUserAuthRequest());
       UUID resourceId = resource.getResourceId();
 
@@ -220,7 +220,7 @@ public class ResourceApiControllerConnectedTest extends BaseConnectedTest {
               .createWorkspaceWithGcpContext(userAccessUtils.defaultUserAuthRequest())
               .getWorkspaceId();
       ApiCreatedControlledGcpBigQueryDataset resource =
-          createDefaultBigQueryDataset(
+          createBigQueryDataset(
               mockMvc, objectMapper, workspaceId, userAccessUtils.defaultUserAuthRequest());
       UUID resourceId = resource.getResourceId();
       updateResourcePropertiesExpectCode(

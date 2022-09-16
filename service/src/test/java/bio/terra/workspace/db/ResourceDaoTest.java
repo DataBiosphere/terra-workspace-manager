@@ -340,11 +340,10 @@ public class ResourceDaoTest extends BaseUnitTest {
         ControlledResourceFixtures.makeDefaultControlledBigQueryBuilder(workspaceUuid).build();
     resourceDao.createControlledResource(resource);
 
-    assertTrue(
-        resourceDao.deleteResourceProperties(
-            workspaceUuid,
-            resource.getResourceId(),
-            DEFAULT_RESOURCE_PROPERTIES.keySet().stream().toList()));
+    resourceDao.deleteResourceProperties(
+        workspaceUuid,
+        resource.getResourceId(),
+        DEFAULT_RESOURCE_PROPERTIES.keySet().stream().toList());
     assertTrue(
         resourceDao.getResource(workspaceUuid, resource.getResourceId()).getProperties().isEmpty());
   }
