@@ -1,5 +1,6 @@
 package bio.terra.workspace.service.status;
 
+import bio.terra.common.logging.LoggingUtils;
 import bio.terra.workspace.app.configuration.external.StatusCheckConfiguration;
 import java.time.Instant;
 import java.util.concurrent.ConcurrentHashMap;
@@ -93,7 +94,11 @@ public class BaseStatusService {
       if (lastStatusUpdate
           .plusSeconds(configuration.getStalenessThresholdSeconds())
           .isBefore(Instant.now())) {
-        logger.warn("Status has not been updated since {}", lastStatusUpdate);
+        LoggingUtils.logAlert(
+            logger,
+            String.format(
+                "Status has not been updated since %s. This might mean that the status cronjob has failed, or that requests to downstream services are timing out.",
+                lastStatusUpdate));
         statusOk.set(false);
       }
       return statusOk.get();
