@@ -1,7 +1,12 @@
 package bio.terra.workspace.app.controller;
 
+import static bio.terra.workspace.app.controller.shared.PropertiesUtils.convertApiPropertyToMap;
+import static bio.terra.workspace.common.utils.ControllerValidationUtils.validatePropertiesDeleteRequestBody;
+import static bio.terra.workspace.common.utils.ControllerValidationUtils.validatePropertiesUpdateRequestBody;
+
 import bio.terra.workspace.common.utils.ControllerValidationUtils;
 import bio.terra.workspace.generated.controller.ResourceApi;
+import bio.terra.workspace.generated.model.ApiProperty;
 import bio.terra.workspace.generated.model.ApiResourceAttributesUnion;
 import bio.terra.workspace.generated.model.ApiResourceDescription;
 import bio.terra.workspace.generated.model.ApiResourceList;
@@ -23,18 +28,14 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestParam;
 
-// TODO: GENERAL - add request validation
-
 @Controller
-public class ResourceController implements ResourceApi {
+public class ResourceApiController implements ResourceApi {
 
   private final WsmResourceService resourceService;
   private final WorkspaceService workspaceService;
@@ -42,10 +43,9 @@ public class ResourceController implements ResourceApi {
 
   private final AuthenticatedUserRequestFactory authenticatedUserRequestFactory;
   private final HttpServletRequest request;
-  private final Logger logger = LoggerFactory.getLogger(ResourceController.class);
 
   @Autowired
-  public ResourceController(
+  public ResourceApiController(
       WsmResourceService resourceService,
       WorkspaceService workspaceService,
       ReferencedResourceService referencedResourceService,
@@ -96,6 +96,31 @@ public class ResourceController implements ResourceApi {
         userRequest, workspaceUuid, SamConstants.SamWorkspaceAction.READ);
     boolean isValid = referencedResourceService.checkAccess(workspaceUuid, resourceId, userRequest);
     return new ResponseEntity<>(isValid, HttpStatus.OK);
+  }
+
+  @Override
+  public ResponseEntity<Void> updateResourceProperties(
+      UUID workspaceUuid, UUID resourceUuid, List<ApiProperty> properties) {
+    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    workspaceService.validateWorkspaceAndAction(
+        userRequest, workspaceUuid, SamConstants.SamWorkspaceAction.WRITE);
+
+    validatePropertiesUpdateRequestBody(properties);
+
+    resourceService.updateResourceProperties(
+        workspaceUuid, resourceUuid, convertApiPropertyToMap(properties));
+    return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+  }
+
+  @Override
+  public ResponseEntity<Void> deleteResourceProperties(
+      UUID workspaceUuid, UUID resourceUuid, List<String> propertyKeys) {
+    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    validatePropertiesDeleteRequestBody(propertyKeys);
+    workspaceService.validateWorkspaceAndAction(
+        userRequest, workspaceUuid, SamConstants.SamWorkspaceAction.WRITE);
+    resourceService.deleteResourceProperties(workspaceUuid, resourceUuid, propertyKeys);
+    return new ResponseEntity<>(HttpStatus.NO_CONTENT);
   }
 
   // Convert a WsmResource into the API format for enumeration

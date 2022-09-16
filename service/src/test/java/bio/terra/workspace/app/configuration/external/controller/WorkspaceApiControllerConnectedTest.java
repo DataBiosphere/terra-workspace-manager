@@ -4,12 +4,13 @@ import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.SHORT_DESCRI
 import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.TYPE_PROPERTY;
 import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.USER_SET_PROPERTY;
 import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.VERSION_PROPERTY;
-import static bio.terra.workspace.common.utils.MockMvcUtils.GRANT_ROLE_PATH_FORMAT;
 import static bio.terra.workspace.common.utils.MockMvcUtils.WORKSPACES_V1_BY_UFID_PATH_FORMAT;
 import static bio.terra.workspace.common.utils.MockMvcUtils.WORKSPACES_V1_BY_UUID_PATH_FORMAT;
 import static bio.terra.workspace.common.utils.MockMvcUtils.WORKSPACES_V1_PATH;
 import static bio.terra.workspace.common.utils.MockMvcUtils.addAuth;
 import static bio.terra.workspace.common.utils.MockMvcUtils.addJsonContentType;
+import static bio.terra.workspace.common.utils.MockMvcUtils.deleteWorkspace;
+import static bio.terra.workspace.common.utils.MockMvcUtils.grantRole;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.emptyString;
@@ -18,7 +19,6 @@ import static org.hamcrest.Matchers.not;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -28,7 +28,6 @@ import bio.terra.workspace.common.fixtures.WorkspaceFixtures;
 import bio.terra.workspace.connected.UserAccessUtils;
 import bio.terra.workspace.generated.model.ApiCreateWorkspaceRequestBody;
 import bio.terra.workspace.generated.model.ApiCreatedWorkspace;
-import bio.terra.workspace.generated.model.ApiGrantRoleRequestBody;
 import bio.terra.workspace.generated.model.ApiIamRole;
 import bio.terra.workspace.generated.model.ApiWorkspaceDescription;
 import bio.terra.workspace.generated.model.ApiWorkspaceDescriptionList;
@@ -75,7 +74,7 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
   /** Clean up workspaces from Broad dev SAM. */
   @AfterEach
   public void cleanup() throws Exception {
-    deleteWorkspace(workspace.getId());
+    deleteWorkspace(workspace.getId(), mockMvc, userAccessUtils.defaultUserAuthRequest());
   }
 
   @Test
@@ -89,7 +88,13 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
   @Test
   public void getWorkspace_requesterIsDiscoverer_requestMinHighestRoleNotSet_throws()
       throws Exception {
-    grantRole(workspace.getId(), WsmIamRole.DISCOVERER, userAccessUtils.getSecondUserEmail());
+    grantRole(
+        workspace.getId(),
+        WsmIamRole.DISCOVERER,
+        userAccessUtils.getSecondUserEmail(),
+        mockMvc,
+        objectMapper,
+        userAccessUtils.defaultUserAuthRequest());
 
     getWorkspaceExpectingError(
         userAccessUtils.secondUserAuthRequest(),
@@ -101,7 +106,13 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
   @Test
   public void getWorkspace_requesterIsDiscoverer_requestMinHighestRoleSetToReader_throws()
       throws Exception {
-    grantRole(workspace.getId(), WsmIamRole.DISCOVERER, userAccessUtils.getSecondUserEmail());
+    grantRole(
+        workspace.getId(),
+        WsmIamRole.DISCOVERER,
+        userAccessUtils.getSecondUserEmail(),
+        mockMvc,
+        objectMapper,
+        userAccessUtils.defaultUserAuthRequest());
 
     getWorkspaceExpectingError(
         userAccessUtils.secondUserAuthRequest(),
@@ -114,7 +125,13 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
   public void
       getWorkspace_requesterIsDiscoverer_requestMinHighestRoleSetToDiscoverer_returnsStrippedWorkspace()
           throws Exception {
-    grantRole(workspace.getId(), WsmIamRole.DISCOVERER, userAccessUtils.getSecondUserEmail());
+    grantRole(
+        workspace.getId(),
+        WsmIamRole.DISCOVERER,
+        userAccessUtils.getSecondUserEmail(),
+        mockMvc,
+        objectMapper,
+        userAccessUtils.defaultUserAuthRequest());
 
     ApiWorkspaceDescription gotWorkspace =
         getWorkspace(
@@ -137,7 +154,13 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
   @Test
   public void getWorkspaceByUserFacingId_requesterIsDiscoverer_requestMinHighestRoleNotSet_throws()
       throws Exception {
-    grantRole(workspace.getId(), WsmIamRole.DISCOVERER, userAccessUtils.getSecondUserEmail());
+    grantRole(
+        workspace.getId(),
+        WsmIamRole.DISCOVERER,
+        userAccessUtils.getSecondUserEmail(),
+        mockMvc,
+        objectMapper,
+        userAccessUtils.defaultUserAuthRequest());
 
     getWorkspaceByUserFacingIdExpectingError(
         userAccessUtils.secondUserAuthRequest(),
@@ -150,7 +173,13 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
   public void
       getWorkspaceByUserFacingId_requesterIsDiscoverer_requestMinHighestRoleSetToReader_throws()
           throws Exception {
-    grantRole(workspace.getId(), WsmIamRole.DISCOVERER, userAccessUtils.getSecondUserEmail());
+    grantRole(
+        workspace.getId(),
+        WsmIamRole.DISCOVERER,
+        userAccessUtils.getSecondUserEmail(),
+        mockMvc,
+        objectMapper,
+        userAccessUtils.defaultUserAuthRequest());
 
     getWorkspaceByUserFacingIdExpectingError(
         userAccessUtils.secondUserAuthRequest(),
@@ -163,7 +192,13 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
   public void
       getWorkspaceByUserFacingId_requesterIsDiscoverer_requestMinHighestRoleSetToDiscoverer_returnsStrippedWorkspace()
           throws Exception {
-    grantRole(workspace.getId(), WsmIamRole.DISCOVERER, userAccessUtils.getSecondUserEmail());
+    grantRole(
+        workspace.getId(),
+        WsmIamRole.DISCOVERER,
+        userAccessUtils.getSecondUserEmail(),
+        mockMvc,
+        objectMapper,
+        userAccessUtils.defaultUserAuthRequest());
 
     ApiWorkspaceDescription gotWorkspace =
         getWorkspaceByUserFacingId(
@@ -186,7 +221,13 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
   @Test
   public void listWorkspaces_requesterIsDiscoverer_requestMinHighestRoleNotSet_returnsNoWorkspaces()
       throws Exception {
-    grantRole(workspace.getId(), WsmIamRole.DISCOVERER, userAccessUtils.getSecondUserEmail());
+    grantRole(
+        workspace.getId(),
+        WsmIamRole.DISCOVERER,
+        userAccessUtils.getSecondUserEmail(),
+        mockMvc,
+        objectMapper,
+        userAccessUtils.defaultUserAuthRequest());
 
     List<ApiWorkspaceDescription> listedWorkspaces =
         listWorkspaces(userAccessUtils.secondUserAuthRequest());
@@ -197,7 +238,13 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
   public void
       listWorkspaces_requesterIsDiscoverer_requestMinHighestRoleSetToReader_returnsNoWorkspaces()
           throws Exception {
-    grantRole(workspace.getId(), WsmIamRole.DISCOVERER, userAccessUtils.getSecondUserEmail());
+    grantRole(
+        workspace.getId(),
+        WsmIamRole.DISCOVERER,
+        userAccessUtils.getSecondUserEmail(),
+        mockMvc,
+        objectMapper,
+        userAccessUtils.defaultUserAuthRequest());
 
     List<ApiWorkspaceDescription> listedWorkspaces =
         listWorkspaces(userAccessUtils.secondUserAuthRequest(), Optional.of(ApiIamRole.READER));
@@ -209,7 +256,13 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
   public void
       listWorkspaces_requesterIsDiscoverer_requestMinHighestRoleSetToDiscoverer_returnsStrippedWorkspace()
           throws Exception {
-    grantRole(workspace.getId(), WsmIamRole.DISCOVERER, userAccessUtils.getSecondUserEmail());
+    grantRole(
+        workspace.getId(),
+        WsmIamRole.DISCOVERER,
+        userAccessUtils.getSecondUserEmail(),
+        mockMvc,
+        objectMapper,
+        userAccessUtils.defaultUserAuthRequest());
 
     List<ApiWorkspaceDescription> listedWorkspaces =
         listWorkspaces(userAccessUtils.secondUserAuthRequest(), Optional.of(ApiIamRole.DISCOVERER));
@@ -338,27 +391,6 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
     return objectMapper
         .readValue(serializedResponse, ApiWorkspaceDescriptionList.class)
         .getWorkspaces();
-  }
-
-  private void grantRole(UUID workspaceId, WsmIamRole role, String memberEmail) throws Exception {
-    var requestBody = new ApiGrantRoleRequestBody().memberEmail(memberEmail);
-    mockMvc
-        .perform(
-            addJsonContentType(
-                addAuth(
-                    post(String.format(GRANT_ROLE_PATH_FORMAT, workspaceId, role.name()))
-                        .content(objectMapper.writeValueAsString(requestBody)),
-                    userAccessUtils.defaultUserAuthRequest())))
-        .andExpect(status().is(HttpStatus.SC_NO_CONTENT));
-  }
-
-  private void deleteWorkspace(UUID workspaceId) throws Exception {
-    mockMvc
-        .perform(
-            addAuth(
-                delete(String.format(WORKSPACES_V1_BY_UUID_PATH_FORMAT, workspaceId)),
-                userAccessUtils.defaultUserAuthRequest()))
-        .andExpect(status().is(HttpStatus.SC_NO_CONTENT));
   }
 
   /** Assert all workspace fields are set, when requester has at least READER role. */

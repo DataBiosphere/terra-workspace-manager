@@ -379,12 +379,7 @@ public class FolderApiControllerTest extends BaseUnitTest {
   }
 
   private ApiFolder createFolder(UUID workspaceId, String displayName) throws Exception {
-    String serializedResponse =
-        createFolderExpectCode(workspaceId, displayName, HttpStatus.SC_OK)
-            .andReturn()
-            .getResponse()
-            .getContentAsString();
-    return objectMapper.readValue(serializedResponse, ApiFolder.class);
+    return createFolder(workspaceId, displayName, /*description=*/ null, /*parentFolderId=*/ null);
   }
 
   private ApiFolder createFolder(
@@ -404,17 +399,8 @@ public class FolderApiControllerTest extends BaseUnitTest {
 
   private ResultActions createFolderExpectCode(UUID workspaceId, String displayName, int code)
       throws Exception {
-    return mockMvc
-        .perform(
-            addJsonContentType(
-                addAuth(
-                    post(String.format(FOLDERS_V1_PATH_FORMAT, workspaceId))
-                        .content(
-                            objectMapper.writeValueAsString(
-                                createFolderRequestBody(
-                                    displayName, /*description=*/ null, /*parentFolderId=*/ null))),
-                    USER_REQUEST)))
-        .andExpect(status().is(code));
+    return createFolderExpectCode(
+        workspaceId, displayName, /*description=*/ null, /*parentFolderId=*/ null, code);
   }
 
   /** Returns ResultActions because this is called by createFolder(). */
