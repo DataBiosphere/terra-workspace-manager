@@ -12,6 +12,7 @@ import bio.terra.workspace.service.workspace.model.OperationType;
 import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
+import java.time.temporal.ChronoUnit;
 import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
@@ -85,7 +86,10 @@ public class WorkspaceActivityLogDaoTest extends BaseUnitTest {
         activityLogDao.getLastUpdateDetails(workspaceId);
 
     assertEquals("anne@gmail.com", updateDetails.get().getActorEmail());
-    assertTrue(now.isEqual(updateDetails.get().getChangeDate()));
+    // The two offset date time can have different granularity, resulting flakiness.
+    assertTrue(
+        now.truncatedTo(ChronoUnit.MILLIS)
+            .isEqual(updateDetails.get().getChangeDate().truncatedTo(ChronoUnit.MILLIS)));
   }
 
   @Test
@@ -101,7 +105,10 @@ public class WorkspaceActivityLogDaoTest extends BaseUnitTest {
     Optional<ActivityLogChangeDetails> updateDetails = activityLogDao.getCreateDetails(workspaceId);
 
     assertEquals("anne@gmail.com", updateDetails.get().getActorEmail());
-    assertTrue(now.isEqual(updateDetails.get().getChangeDate()));
+    // The two offset date time can have different granularity, resulting flakiness.
+    assertTrue(
+        now.truncatedTo(ChronoUnit.MILLIS)
+            .isEqual(updateDetails.get().getChangeDate().truncatedTo(ChronoUnit.MILLIS)));
   }
 
   @Test
