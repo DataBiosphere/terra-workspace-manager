@@ -28,7 +28,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.springframework.test.context.ActiveProfiles;
 
-@ActiveProfiles("azure")
+
 public class GetAzureIpStepTest extends BaseAzureTest {
 
   private static final String STUB_STRING_RETURN = "stubbed-return";

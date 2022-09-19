@@ -39,7 +39,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.springframework.test.context.ActiveProfiles;
 
-@ActiveProfiles("azure")
+
 public class CreateAzureNetworkStepTest extends BaseAzureTest {
 
   private static final String STUB_STRING_RETURN = "stubbed-return";
