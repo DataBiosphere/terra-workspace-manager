@@ -78,10 +78,10 @@ public class CreateAzureVmStep implements Step {
                         .getResource(resource.getWorkspaceId(), diskId)
                         .castByEnum(WsmResourceType.CONTROLLED_AZURE_DISK));
 
-    final ControlledAzureNetworkResource networkResource =
-        resourceDao
-            .getResource(resource.getWorkspaceId(), resource.getNetworkId())
-            .castByEnum(WsmResourceType.CONTROLLED_AZURE_NETWORK);
+    final NetworkSubnetPair networkSubnetPair =
+            context
+                    .getWorkingMap()
+                    .get(AzureVmHelper.WORKING_MAP_NETWORK_SUBNET_PAIR_KEY, NetworkSubnetPair.class);
 
     try {
       Optional<Disk> existingAzureDisk =
@@ -101,12 +101,6 @@ public class CreateAzureVmStep implements Step {
                       .getByResourceGroup(
                           azureCloudContext.getAzureResourceGroupId(), ipRes.getIpName()));
 
-      Network existingNetwork =
-          computeManager
-              .networkManager()
-              .networks()
-              .getByResourceGroup(
-                  azureCloudContext.getAzureResourceGroupId(), networkResource.getNetworkName());
 
       if (!context.getWorkingMap().containsKey(AzureVmHelper.WORKING_MAP_NETWORK_INTERFACE_KEY)) {
         logger.error(
@@ -146,8 +140,8 @@ public class CreateAzureVmStep implements Step {
                   .setTenantId(azureCloudContext.getAzureTenantId())
                   .setSubscriptionId(azureCloudContext.getAzureSubscriptionId())
                   .setResourceGroupName(azureCloudContext.getAzureResourceGroupId())
-                  .setNetwork(existingNetwork)
-                  .setSubnetName(networkResource.getSubnetName())
+                      .setNetwork(networkSubnetPair.network())
+                      .setSubnetName(networkSubnetPair.subnet().name())
                   .setPublicIpAddress(existingAzureIp.orElse(null))
                   .setDisk(existingAzureDisk.orElse(null))
                   .setImage(AzureVmUtils.getImageData(creationParameters.getVmImage()))
