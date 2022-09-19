@@ -30,14 +30,10 @@ import com.google.cloud.storage.BucketInfo.LifecycleRule.LifecycleCondition;
 import com.google.cloud.storage.StorageClass;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import java.nio.charset.StandardCharsets;
 import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 import javax.annotation.Nullable;
 
 /** A series of static objects useful for testing controlled resources. */
@@ -181,6 +177,27 @@ public class ControlledResourceFixtures {
         .diskId(UUID.randomUUID())
         .networkId(UUID.randomUUID())
         .customScriptExtension(getAzureVmCustomScriptExtension());
+  }
+
+  public static ApiAzureVmCreationParameters
+      getAzureVmCreationParametersWithEphemeralOsDiskAndCustomData() {
+    return new ApiAzureVmCreationParameters()
+        .name(uniqueAzureName(AZURE_VM_NAME_PREFIX))
+        .region("westcentralus")
+        .vmSize(VirtualMachineSizeTypes.STANDARD_D8S_V3.toString())
+        .vmImage(
+            new ApiAzureVmImage()
+                .publisher("microsoft-dsvm")
+                .offer("ubuntu-1804")
+                .sku("1804-gen2")
+                .version("latest"))
+        .vmUser(new ApiAzureVmUser().name("noname").password("StrongP@ssowrd123!!!"))
+        .ipId(UUID.randomUUID())
+        .networkId(UUID.randomUUID())
+        .ephemeralOSDisk(ApiAzureVmCreationParameters.EphemeralOSDiskEnum.OS_CACHE)
+        .customData(
+            Base64.getEncoder()
+                .encodeToString(UUID.randomUUID().toString().getBytes(StandardCharsets.UTF_8)));
   }
 
   public static ApiAzureVmCreationParameters getInvalidAzureVmCreationParameters() {
