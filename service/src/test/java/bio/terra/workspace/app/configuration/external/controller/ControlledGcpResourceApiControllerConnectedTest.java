@@ -36,6 +36,7 @@ import java.util.UUID;
 import org.apache.http.HttpStatus;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -100,28 +101,26 @@ public class ControlledGcpResourceApiControllerConnectedTest extends BaseConnect
     assertBucket(gotBucket, ApiStewardshipType.CONTROLLED, cloneBucketName);
   }
 
-  // TODO(PF-1930): Implement feature and uncomment test
-  // @Test
-  // public void cloneControlledGcsBucket_copyReference() throws Exception {
-  //   ApiCloneControlledGcpGcsBucketResult cloneResult =
-  //       cloneControlledGcsBucket(
-  //           /*sourceWorkspaceId=*/ workspace.getId(),
-  //           originalControlledBucket.getResourceId(),
-  //           /*destWorkspaceId=*/ workspace.getId(),
-  //           ApiCloningInstructionsEnum.REFERENCE);
-  //
-  //   // Assert bucket in clone result
-  //   ApiGcpGcsBucketResource cloneResultBucket =
-  // cloneResult.getBucket().getBucket().getGcpBucket();
-  //   String cloneBucketName = cloneResultBucket.getAttributes().getBucketName();
-  //   assertBucket(cloneResultBucket, ApiStewardshipType.REFERENCED, cloneBucketName);
-  //
-  //   // Assert bucket returned by calling ControlledGcpResource.getBucket
-  //   ApiGcpGcsBucketResource gotBucket =
-  //       getControlledGcsBucket(workspace.getId(),
-  // cloneResultBucket.getMetadata().getResourceId());
-  //   assertBucket(gotBucket, ApiStewardshipType.REFERENCED, cloneBucketName);
-  // }
+  @Disabled("PF-1930: Enable when feature is implemented")
+  @Test
+  public void cloneControlledGcsBucket_copyReference() throws Exception {
+    ApiCloneControlledGcpGcsBucketResult cloneResult =
+        cloneControlledGcsBucket(
+            /*sourceWorkspaceId=*/ workspace.getId(),
+            originalControlledBucket.getResourceId(),
+            /*destWorkspaceId=*/ workspace.getId(),
+            ApiCloningInstructionsEnum.REFERENCE);
+
+    // Assert bucket in clone result
+    ApiGcpGcsBucketResource cloneResultBucket = cloneResult.getBucket().getBucket().getGcpBucket();
+    String cloneBucketName = cloneResultBucket.getAttributes().getBucketName();
+    assertBucket(cloneResultBucket, ApiStewardshipType.REFERENCED, cloneBucketName);
+
+    // Assert bucket returned by calling ControlledGcpResource.getBucket
+    ApiGcpGcsBucketResource gotBucket =
+        getControlledGcsBucket(workspace.getId(), cloneResultBucket.getMetadata().getResourceId());
+    assertBucket(gotBucket, ApiStewardshipType.REFERENCED, cloneBucketName);
+  }
 
   private ApiCreatedControlledGcpGcsBucket createControlledGcsBucket() throws Exception {
     ApiCreateControlledGcpGcsBucketRequestBody request =
@@ -188,7 +187,7 @@ public class ControlledGcpResourceApiControllerConnectedTest extends BaseConnect
       ApiCloningInstructionsEnum cloningInstructions)
       throws Exception {
     ApiCloneControlledGcpGcsBucketResult result =
-        cloneControlledGcsBucket_inner(
+        startCloneControlledGcsBucketFlight(
             sourceWorkspaceId, sourceResourceId, destWorkspaceId, cloningInstructions);
     UUID jobId = UUID.fromString(result.getJobReport().getId());
     while (StairwayTestUtils.jobIsRunning(result.getJobReport())) {
@@ -201,7 +200,7 @@ public class ControlledGcpResourceApiControllerConnectedTest extends BaseConnect
     return result;
   }
 
-  private ApiCloneControlledGcpGcsBucketResult cloneControlledGcsBucket_inner(
+  private ApiCloneControlledGcpGcsBucketResult startCloneControlledGcsBucketFlight(
       UUID sourceWorkspaceId,
       UUID sourceResourceId,
       UUID destWorkspaceId,
@@ -240,6 +239,7 @@ public class ControlledGcpResourceApiControllerConnectedTest extends BaseConnect
                             CLONE_RESULT_CONTROLLED_GCP_GCS_BUCKET_FORMAT.formatted(
                                 workspaceId.toString(), jobId.toString())),
                         userAccessUtils.defaultUserAuthRequest())))
+            // Returns 200 if flight is done, 202 if flight is running.
             .andExpect(status().is2xxSuccessful())
             .andReturn()
             .getResponse()
