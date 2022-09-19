@@ -1,10 +1,11 @@
 package bio.terra.workspace.common.utils;
 
-import java.util.UUID;
+import java.util.Random;
 
 public class TestUtils {
+  private static final Random RANDOM = new Random();
 
-  public static String uniqueName(String prefix) {
-    return prefix + "-" + UUID.randomUUID();
+  public static String appendRandomNumber(String string) {
+    return string + "-" + RANDOM.nextInt(100000);
   }
 }

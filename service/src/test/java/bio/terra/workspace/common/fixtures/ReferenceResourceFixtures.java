@@ -1,7 +1,7 @@
 package bio.terra.workspace.common.fixtures;
 
 import static bio.terra.workspace.app.controller.shared.PropertiesUtils.convertMapToApiProperties;
-import static bio.terra.workspace.common.utils.TestUtils.uniqueName;
+import static bio.terra.workspace.common.utils.TestUtils.appendRandomNumber;
 
 import bio.terra.workspace.generated.model.ApiCloningInstructionsEnum;
 import bio.terra.workspace.generated.model.ApiCreateDataRepoSnapshotReferenceRequestBody;
@@ -65,7 +65,7 @@ public class ReferenceResourceFixtures {
     return new ApiCreateGcpGcsObjectReferenceRequestBody()
         .file(
             new ApiGcpGcsObjectAttributes()
-                .bucketName(RandomStringUtils.randomAlphabetic(10))
+                .bucketName(appendRandomNumber("gcsbucket"))
                 .fileName("foo/bar"))
         .metadata(makeDefaultReferencedResourceFieldsApi());
   }
@@ -75,8 +75,8 @@ public class ReferenceResourceFixtures {
     return new ApiCreateGcpBigQueryDatasetReferenceRequestBody()
         .dataset(
             new ApiGcpBigQueryDatasetAttributes()
-                .datasetId(RandomStringUtils.randomAlphabetic(10).toLowerCase())
-                .projectId(RandomStringUtils.randomAlphabetic(10)))
+                .datasetId(appendRandomNumber("dataset").replace("-", "_"))
+                .projectId(appendRandomNumber("my-gcp-project")))
         .metadata(makeDefaultReferencedResourceFieldsApi());
   }
 
@@ -85,9 +85,9 @@ public class ReferenceResourceFixtures {
     return new ApiCreateGcpBigQueryDataTableReferenceRequestBody()
         .dataTable(
             new ApiGcpBigQueryDataTableAttributes()
-                .dataTableId(RandomStringUtils.randomAlphabetic(10))
-                .datasetId(RandomStringUtils.randomAlphabetic(10).toLowerCase())
-                .projectId(RandomStringUtils.randomAlphabetic(10)))
+                .dataTableId(appendRandomNumber("datatable"))
+                .datasetId(appendRandomNumber("dataset").replace("-", "_"))
+                .projectId(appendRandomNumber("my-project-id")))
         .metadata(makeDefaultReferencedResourceFieldsApi());
   }
 
@@ -99,7 +99,7 @@ public class ReferenceResourceFixtures {
 
   public static ApiReferenceResourceCommonFields makeDefaultReferencedResourceFieldsApi() {
     return new ApiReferenceResourceCommonFields()
-        .name(uniqueName("test_resource").replace("-", "_"))
+        .name(appendRandomNumber("test_resource").replace("-", "_"))
         .description("This is a referenced resource")
         .cloningInstructions(ApiCloningInstructionsEnum.NOTHING)
         .properties(convertMapToApiProperties(DEFAULT_RESOURCE_PROPERTIES));
