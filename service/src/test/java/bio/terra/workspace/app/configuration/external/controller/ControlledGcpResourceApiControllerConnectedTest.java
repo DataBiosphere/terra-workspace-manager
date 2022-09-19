@@ -1,9 +1,9 @@
 package bio.terra.workspace.app.configuration.external.controller;
 
 import static bio.terra.workspace.common.utils.MockMvcUtils.createBigQueryDataset;
+import static bio.terra.workspace.common.utils.MockMvcUtils.createGcsBucket;
 import static bio.terra.workspace.common.utils.MockMvcUtils.deleteWorkspace;
 import static bio.terra.workspace.common.utils.MockMvcUtils.getBigQueryDataset;
-import static bio.terra.workspace.common.utils.MockMvcUtils.createGcsBucket;
 import static bio.terra.workspace.common.utils.MockMvcUtils.getGcsBucket;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -52,7 +52,13 @@ public class ControlledGcpResourceApiControllerConnectedTest extends BaseConnect
         createBigQueryDataset(
             mockMvc, objectMapper, workspaceId, userAccessUtils.defaultUserAuthRequest());
 
-    ApiGcpBigQueryDatasetResource retrievedResource = getBigQueryDataset(mockMvc, objectMapper, workspaceId, resource.getResourceId(),  userAccessUtils.defaultUserAuthRequest());
+    ApiGcpBigQueryDatasetResource retrievedResource =
+        getBigQueryDataset(
+            mockMvc,
+            objectMapper,
+            workspaceId,
+            resource.getResourceId(),
+            userAccessUtils.defaultUserAuthRequest());
 
     assertEquals(resource.getBigQueryDataset(), retrievedResource);
   }
@@ -63,7 +69,13 @@ public class ControlledGcpResourceApiControllerConnectedTest extends BaseConnect
         createGcsBucket(
             mockMvc, objectMapper, workspaceId, userAccessUtils.defaultUserAuthRequest());
 
-    ApiGcpGcsBucketResource retrievedResource = getGcsBucket(mockMvc, objectMapper, workspaceId, resource.getResourceId(),  userAccessUtils.defaultUserAuthRequest());
+    ApiGcpGcsBucketResource retrievedResource =
+        getGcsBucket(
+            mockMvc,
+            objectMapper,
+            workspaceId,
+            resource.getResourceId(),
+            userAccessUtils.defaultUserAuthRequest());
 
     assertEquals(resource.getGcpBucket(), retrievedResource);
   }

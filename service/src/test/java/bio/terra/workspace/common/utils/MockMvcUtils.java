@@ -83,6 +83,18 @@ public class MockMvcUtils {
       "/api/workspaces/v1/%s/resources/controlled/gcp/buckets";
   public static final String CONTROLLED_GCP_GCS_BUCKET_V1_PATH_FORMAT =
       "/api/workspaces/v1/%s/resources/controlled/gcp/buckets/%s";
+  public static final String REFERENCED_DATA_REPO_SNAPSHOTS_V1_PATH_FORMAT =
+      "/api/workspaces/v1/%s/resources/referenced/datarepo/snapshots";
+  public static final String REFERENCED_GCP_GCS_BUCKETS_V1_PATH_FORMAT =
+      "/api/workspaces/v1/%s/resources/referenced/gcp/buckets";
+  public static final String REFERENCED_GCP_GCS_OBJECTS_V1_PATH_FORMAT =
+      "/api/workspaces/v1/%s/resources/referenced/gcp/bucket/objects";
+  public static final String REFERENCED_GCP_BIG_QUERY_DATASET_V1_PATH_FORMAT =
+      "/api/workspaces/v1/%s/resources/referenced/gcp/bigquerydatasets";
+  public static final String REFERENCED_GCP_BIG_QUERY_DATA_TABLE_V1_PATH_FORMAT =
+      "/api/workspaces/v1/%s/resources/referenced/gcp/bigquerydatatables";
+  public static final String REFERENCED_GIT_REPO_V1_PATH_FORMAT =
+      "/api/workspaces/v1/%s/resources/referenced/gitrepos";
   public static final AuthenticatedUserRequest USER_REQUEST =
       new AuthenticatedUserRequest(
           "fake@email.com", "subjectId123456", Optional.of("ThisIsNotARealBearerToken"));
@@ -188,7 +200,7 @@ public class MockMvcUtils {
             .perform(
                 addAuth(
                     post(String.format(
-                        CONTROLLED_GCP_GCS_BUCKETS_V1_PATH_FORMAT, workspaceId.toString()))
+                            CONTROLLED_GCP_GCS_BUCKETS_V1_PATH_FORMAT, workspaceId.toString()))
                         .contentType(MediaType.APPLICATION_JSON_VALUE)
                         .accept(MediaType.APPLICATION_JSON)
                         .characterEncoding("UTF-8")
@@ -199,8 +211,7 @@ public class MockMvcUtils {
             .getResponse()
             .getContentAsString();
 
-    return objectMapper.readValue(
-        serializedGetResponse, ApiCreatedControlledGcpGcsBucket.class);
+    return objectMapper.readValue(serializedGetResponse, ApiCreatedControlledGcpGcsBucket.class);
   }
 
   public static ApiGcpGcsBucketResource getGcsBucket(

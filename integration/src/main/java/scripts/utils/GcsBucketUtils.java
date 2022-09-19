@@ -1,12 +1,13 @@
 package scripts.utils;
 
+import static scripts.utils.CommonResourceFieldsUtil.makeControlledResourceCommonFields;
+
 import bio.terra.testrunner.runner.config.TestUserSpecification;
 import bio.terra.workspace.api.ControlledGcpResourceApi;
 import bio.terra.workspace.api.ReferencedGcpResourceApi;
 import bio.terra.workspace.client.ApiException;
 import bio.terra.workspace.model.AccessScope;
 import bio.terra.workspace.model.CloningInstructionsEnum;
-import bio.terra.workspace.model.ControlledResourceCommonFields;
 import bio.terra.workspace.model.CreateControlledGcpGcsBucketRequestBody;
 import bio.terra.workspace.model.CreateGcpGcsBucketReferenceRequestBody;
 import bio.terra.workspace.model.CreatedControlledGcpGcsBucket;
@@ -26,8 +27,6 @@ import bio.terra.workspace.model.JobControl;
 import bio.terra.workspace.model.JobReport;
 import bio.terra.workspace.model.ManagedBy;
 import bio.terra.workspace.model.PrivateResourceUser;
-import bio.terra.workspace.model.Properties;
-import bio.terra.workspace.model.Property;
 import bio.terra.workspace.model.ReferenceResourceCommonFields;
 import bio.terra.workspace.model.UpdateGcsBucketObjectReferenceRequestBody;
 import bio.terra.workspace.model.UpdateGcsBucketReferenceRequestBody;
@@ -41,7 +40,6 @@ import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
@@ -79,7 +77,6 @@ public class GcsBucketUtils {
               new GcpGcsBucketLifecycleRuleCondition()
                   .createdBefore(OffsetDateTime.parse("2007-01-03T00:00:00.00Z"))
                   .addMatchesStorageClassItem(GcpGcsBucketDefaultStorageClass.STANDARD));
-  public static Map<String, String> DEFAULT_PROPERTIES = Map.of("foo", "bar");
 
   @SuppressFBWarnings(
       value = "MS_MUTABLE_COLLECTION",
@@ -163,20 +160,12 @@ public class GcsBucketUtils {
       CloningInstructionsEnum cloningInstructions,
       @Nullable PrivateResourceUser privateUser)
       throws Exception {
-    Properties properties = new Properties();
 
     var body =
         new CreateControlledGcpGcsBucketRequestBody()
             .common(
-                new ControlledResourceCommonFields()
-                    .accessScope(accessScope)
-                    .managedBy(managedBy)
-                    .cloningInstructions(cloningInstructions)
-                    .description("Description of " + name)
-                    .name(name)
-                    .privateResourceUser(privateUser)
-                    // TODO.
-                    .properties()
+                makeControlledResourceCommonFields(
+                    name, privateUser, cloningInstructions, managedBy, accessScope))
             .gcsBucket(
                 new GcpGcsBucketCreationParameters()
                     .name(bucketName)

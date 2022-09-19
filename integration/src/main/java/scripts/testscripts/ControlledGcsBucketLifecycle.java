@@ -8,6 +8,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static scripts.utils.CommonResourceFieldsUtil.getResourceDefaultProperties;
 import static scripts.utils.GcsBucketUtils.BUCKET_LIFECYCLE_RULES;
 import static scripts.utils.GcsBucketUtils.BUCKET_LIFECYCLE_RULE_1_CONDITION_AGE;
 import static scripts.utils.GcsBucketUtils.BUCKET_LIFECYCLE_RULE_1_CONDITION_LIVE;
@@ -134,6 +135,8 @@ public class ControlledGcsBucketLifecycle extends GcpWorkspaceCloneTestScriptBas
             ? expectedBucketName.substring(0, expectedBucketName.length() - 1)
             : expectedBucketName;
     assertEquals(expectedBucketName, gotBucketNoCloudName.getAttributes().getBucketName());
+    assertEquals(
+        getResourceDefaultProperties(), gotBucketNoCloudName.getMetadata().getProperties());
 
     GcsBucketUtils.deleteControlledGcsBucket(
         bucketNoCloudName.getResourceId(), getWorkspaceId(), resourceApi);

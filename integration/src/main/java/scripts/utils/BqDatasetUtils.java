@@ -3,6 +3,7 @@ package scripts.utils;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.greaterThanOrEqualTo;
 import static org.hamcrest.Matchers.is;
+import static scripts.utils.CommonResourceFieldsUtil.makeReferencedResourceCommonFields;
 
 import bio.terra.testrunner.runner.config.TestUserSpecification;
 import bio.terra.workspace.api.ControlledGcpResourceApi;
@@ -80,11 +81,7 @@ public class BqDatasetUtils {
 
     var body =
         new CreateGcpBigQueryDatasetReferenceRequestBody()
-            .metadata(
-                new ReferenceResourceCommonFields()
-                    .cloningInstructions(cloningInstructions)
-                    .description("Description of " + name)
-                    .name(name))
+            .metadata(makeReferencedResourceCommonFields(name, cloningInstructions))
             .dataset(dataset);
 
     GcpBigQueryDatasetResource result =

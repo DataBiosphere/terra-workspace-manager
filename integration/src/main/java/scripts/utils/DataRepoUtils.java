@@ -1,12 +1,13 @@
 package scripts.utils;
 
+import static scripts.utils.CommonResourceFieldsUtil.makeReferencedResourceCommonFields;
+
 import bio.terra.workspace.api.ReferencedGcpResourceApi;
 import bio.terra.workspace.client.ApiException;
 import bio.terra.workspace.model.CloningInstructionsEnum;
 import bio.terra.workspace.model.CreateDataRepoSnapshotReferenceRequestBody;
 import bio.terra.workspace.model.DataRepoSnapshotAttributes;
 import bio.terra.workspace.model.DataRepoSnapshotResource;
-import bio.terra.workspace.model.ReferenceResourceCommonFields;
 import bio.terra.workspace.model.UpdateDataRepoSnapshotReferenceRequestBody;
 import java.util.UUID;
 import javax.annotation.Nullable;
@@ -24,11 +25,7 @@ public class DataRepoUtils {
 
     var body =
         new CreateDataRepoSnapshotReferenceRequestBody()
-            .metadata(
-                new ReferenceResourceCommonFields()
-                    .cloningInstructions(CloningInstructionsEnum.NOTHING)
-                    .description("Description of " + name)
-                    .name(name))
+            .metadata(makeReferencedResourceCommonFields(name, CloningInstructionsEnum.NOTHING))
             .snapshot(
                 new DataRepoSnapshotAttributes()
                     .snapshot(dataRepoSnapshotId)

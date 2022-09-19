@@ -37,6 +37,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import scripts.utils.ClientTestUtils;
 import scripts.utils.CloudContextMaker;
+import scripts.utils.CommonResourceFieldsUtil;
 import scripts.utils.GcsBucketAccessTester;
 import scripts.utils.GcsBucketUtils;
 import scripts.utils.MultiResourcesUtils;
@@ -100,6 +101,9 @@ public class PrivateControlledGcsBucketLifecycle extends WorkspaceAllocateTestSc
     CreatedControlledGcpGcsBucket bucket =
         ClientTestUtils.getWithRetryOnException(() -> createPrivateBucket(privateUserResourceApi));
     UUID resourceId = bucket.getResourceId();
+    assertEquals(
+        CommonResourceFieldsUtil.getResourceDefaultProperties(),
+        bucket.getGcpBucket().getMetadata().getProperties());
 
     // Retrieve the bucket resource from WSM
     logger.info("Retrieving bucket resource id {}", resourceId.toString());
