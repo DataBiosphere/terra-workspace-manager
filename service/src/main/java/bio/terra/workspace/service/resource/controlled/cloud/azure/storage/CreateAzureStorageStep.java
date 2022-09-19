@@ -142,7 +142,9 @@ public class CreateAzureStorageStep implements Step {
   private void setupCors(StorageAccount acct) {
     var allowedOrigins = azureConfig.getCorsOrigins();
     if (allowedOrigins == null || allowedOrigins.isBlank()) {
-      logger.info("No CORS allowed origins setup, skipping adding for Azure storage account {}", resource.getWorkspaceId());
+      logger.info(
+          "No CORS allowed origins setup, skipping adding for Azure storage account [workspace_id={}]",
+          resource.getWorkspaceId());
       return;
     }
 
