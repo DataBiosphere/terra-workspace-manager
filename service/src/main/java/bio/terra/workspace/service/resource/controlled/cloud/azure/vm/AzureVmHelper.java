@@ -15,7 +15,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public final class AzureVmHelper {
-  public static final String WORKING_MAP_SUBNET_NAME = "NetworkSubnetPair";
+  public static final String WORKING_MAP_NETWORK_SUBNET_PAIR_KEY = "NetworkSubnetPair";
   public static final String WORKING_MAP_NETWORK_INTERFACE_KEY = "NetworkInterfaceName";
   private static int NIC_RESERVED_FOR_ANOTHER_VM_ERROR_RETRY_SECONDS = 180;
   private static final Logger logger = LoggerFactory.getLogger(AzureVmHelper.class);

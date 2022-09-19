@@ -144,8 +144,8 @@ public class ControlledAzureVmResource extends ControlledResource {
             flightBeanBag.getAzureConfig(),
             flightBeanBag.getCrlService(),
             this,
-            flightBeanBag.getResourceDao(),
-            flightBeanBag.getLandingZoneApiDispatch()),
+                flightBeanBag.getResourceDao(),
+                flightBeanBag.getLandingZoneApiDispatch()),
         cloudRetry);
     flight.addStep(
         new CreateAzureVmStep(
