@@ -5,7 +5,6 @@ import bio.terra.workspace.generated.model.ApiCreateWorkspaceRequestBody;
 import bio.terra.workspace.generated.model.ApiProperties;
 import bio.terra.workspace.generated.model.ApiProperty;
 import bio.terra.workspace.generated.model.ApiWorkspaceStageModel;
-import bio.terra.workspace.service.iam.model.SamConstants.SamResource;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import bio.terra.workspace.service.workspace.model.GcpCloudContext;
 import bio.terra.workspace.service.workspace.model.WorkspaceConstants.Properties;
@@ -57,7 +56,7 @@ public class WorkspaceFixtures {
         .description("A test workspace created by createWorkspaceRequestBody")
         .userFacingId(getUserFacingId(workspaceId))
         .stage(ApiWorkspaceStageModel.MC_WORKSPACE)
-        .spendProfile(SamResource.SPEND_PROFILE)
+        .spendProfile("wm-default-spend-profile")
         .properties(properties);
   }
 

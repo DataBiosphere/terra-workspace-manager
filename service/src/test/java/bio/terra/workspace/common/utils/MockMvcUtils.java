@@ -24,7 +24,6 @@ import bio.terra.workspace.generated.model.ApiJobReport.StatusEnum;
 import bio.terra.workspace.generated.model.ApiWorkspaceDescription;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.model.WsmIamRole;
-import bio.terra.workspace.service.spendprofile.SpendConnectedTestUtils;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.Optional;
 import java.util.UUID;
@@ -53,7 +52,6 @@ public class MockMvcUtils {
   // (since unit tests don't use real SAM). Instead, each method must take in userRequest.
   @Autowired private MockMvc mockMvc;
   @Autowired private ObjectMapper objectMapper;
-  @Autowired private SpendConnectedTestUtils spendUtils;
 
   public static final String AUTH_HEADER = "Authorization";
 
