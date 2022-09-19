@@ -27,7 +27,7 @@ components:
           format: uuid
           # Null for original name
         name:
-          $ref: '#/components/schemas/Name'
+          $ref: "#/components/schemas/Name"
         description:
           description: Description for the referenced resource clone, or null to use original.
           type: string
@@ -47,14 +47,13 @@ components:
             from source bucket to new bucket.
           * COPY_REFERENCE: Only used for referenced resources. Create new referenced resource
             that points to same cloud resource as source referenced resource.
-      enum:
-        ['COPY_NOTHING', 'COPY_DEFINITION', 'COPY_RESOURCE', 'COPY_REFERENCE']
-
+      enum: ['COPY_NOTHING', 'COPY_DEFINITION', 'COPY_RESOURCE', 'COPY_REFERENCE']
+  
     ControlledResourceIamRole:
       description: Enum containing all IAM roles on controlled resources available to users
       type: string
-      enum: ['READER', 'WRITER', 'EDITOR']
-
+      enum: [ 'READER', 'WRITER', 'EDITOR']
+  
     ControlledResourceMetadata:
       type: object
       properties:
@@ -66,13 +65,13 @@ components:
           $ref: '#/components/schemas/PrivateResourceUser'
         privateResourceState:
           $ref: '#/components/schemas/PrivateResourceState'
-
+  
     ControlledResourceCommonFields:
       type: object
-      required: [name, cloningInstructions, accessScope, managedBy]
+      required: [ name, cloningInstructions, accessScope, managedBy ]
       properties:
         name:
-          $ref: '#/components/schemas/Name'
+          $ref: "#/components/schemas/Name"
         description:
           type: string
         cloningInstructions:
@@ -86,10 +85,10 @@ components:
         resourceId:
           type: string
           format: uuid
-
+  
     DeleteControlledAzureResourceRequest:
       type: object
-      required: [jobControl]
+      required: [ jobControl ]
       properties:
         jobControl:
           $ref: '#/components/schemas/JobControl'
@@ -145,7 +144,7 @@ components:
             URL where the result of the job can be retrieved. Equivalent to a
             Location header in HTTP.
           type: string
-
+  
     JobControl:
       type: object
       required: [id]
@@ -156,12 +155,13 @@ components:
             a ShortUUID, or other globally unique identifier.
           type: string
         # TODO: In the future, notification configuration will also be part of JobControl.
-
+  
+      
     ManagedBy:
       type: string
       description: Specifies the controller of the resource, workspace users or an application
-      enum: ['USER', 'APPLICATION']
-
+      enum: [ 'USER', 'APPLICATION' ]
+  
     Name:
       type: string
       pattern: '^[a-zA-Z0-9][-_a-zA-Z0-9]{0,1023}$'
@@ -181,25 +181,25 @@ components:
           type: string
         privateResourceIamRole:
           $ref: '#/components/schemas/ControlledResourceIamRole'
-
+  
     PrivateResourceState:
       description: >-
         The possible states of ownership of a private resource. When a resource is abandoned, the
         assigned user loses permission to access it.
       type: string
       enum:
-        - ABANDONED
-        - ACTIVE
-        - INITIALIZING
-        - NOT_APPLICABLE
-
+      - ABANDONED
+      - ACTIVE
+      - INITIALIZING
+      - NOT_APPLICABLE
+  
     ReferenceResourceCommonFields:
       type: object
       required: [name, cloningInstructions]
       description: Common information used in all reference requests
       properties:
         name:
-          $ref: '#/components/schemas/Name'
+          $ref: "#/components/schemas/Name"
         description:
           type: string
         cloningInstructions:
@@ -234,7 +234,7 @@ components:
           type: string
           format: uuid
         name:
-          $ref: '#/components/schemas/Name'
+          $ref: "#/components/schemas/Name"
         description:
           type: string
         resourceType:
@@ -271,7 +271,7 @@ components:
 
     Property:
       type: object
-      required: [key, value]
+      required: [ key, value ]
       properties:
         key:
           description: |
