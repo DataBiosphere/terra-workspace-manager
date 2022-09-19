@@ -1,5 +1,6 @@
 package bio.terra.workspace.app.configuration.external.controller;
 
+import static bio.terra.workspace.app.controller.shared.PropertiesUtils.convertMapToApiProperties;
 import static bio.terra.workspace.common.utils.MockMvcUtils.CLONE_WORKSPACE_PATH_FORMAT;
 import static bio.terra.workspace.common.utils.MockMvcUtils.UPDATE_WORKSPACES_V1_PROPERTIES_PATH_FORMAT;
 import static bio.terra.workspace.common.utils.MockMvcUtils.WORKSPACES_V1_BY_UUID_PATH_FORMAT;
@@ -27,8 +28,6 @@ import bio.terra.workspace.generated.model.ApiCloneWorkspaceRequest;
 import bio.terra.workspace.generated.model.ApiCloneWorkspaceResult;
 import bio.terra.workspace.generated.model.ApiCreatedWorkspace;
 import bio.terra.workspace.generated.model.ApiErrorReport;
-import bio.terra.workspace.generated.model.ApiProperties;
-import bio.terra.workspace.generated.model.ApiProperty;
 import bio.terra.workspace.generated.model.ApiTpsComponent;
 import bio.terra.workspace.generated.model.ApiTpsObjectType;
 import bio.terra.workspace.generated.model.ApiTpsPaoGetResult;
@@ -231,7 +230,8 @@ public class WorkspaceApiControllerTest extends BaseUnitTest {
         .getResponse()
         .getContentAsString();
 
-    assertEquals(sourceWorkspace.getProperties(), buildProperties(Map.of("xyzzy", "plohg")));
+    assertEquals(
+        sourceWorkspace.getProperties(), convertMapToApiProperties(Map.of("xyzzy", "plohg")));
   }
 
   @Test
@@ -247,14 +247,15 @@ public class WorkspaceApiControllerTest extends BaseUnitTest {
                     .contentType(MediaType.APPLICATION_JSON_VALUE)
                     .accept(MediaType.APPLICATION_JSON)
                     .characterEncoding("UTF-8")
-                    .content(objectMapper.writeValueAsString(buildProperties(properties))),
+                    .content(
+                        objectMapper.writeValueAsString(convertMapToApiProperties(properties))),
                 USER_REQUEST))
         .andExpect(status().is(HttpStatus.SC_NO_CONTENT))
         .andReturn()
         .getResponse()
         .getContentAsString();
 
-    assertEquals(sourceWorkspace.getProperties(), buildProperties(properties));
+    assertEquals(sourceWorkspace.getProperties(), convertMapToApiProperties(properties));
   }
 
   @Test
@@ -469,18 +470,5 @@ public class WorkspaceApiControllerTest extends BaseUnitTest {
         .sourcesObjectIds(Collections.emptyList())
         .attributes(new ApiTpsPolicyInputs())
         .effectiveAttributes(new ApiTpsPolicyInputs());
-  }
-
-  public ApiProperties buildProperties(Map<String, String> propertyMap) {
-    ApiProperties properties = new ApiProperties();
-    ApiProperty property = new ApiProperty();
-
-    for (Map.Entry<String, String> entry : propertyMap.entrySet()) {
-      property.setKey(entry.getKey());
-      property.setValue(entry.getValue());
-      properties.add(property);
-    }
-
-    return properties;
   }
 }
