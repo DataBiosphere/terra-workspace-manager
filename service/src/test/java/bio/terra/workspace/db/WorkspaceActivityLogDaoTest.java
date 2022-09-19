@@ -85,7 +85,7 @@ public class WorkspaceActivityLogDaoTest extends BaseUnitTest {
         activityLogDao.getLastUpdateDetails(workspaceId);
 
     assertEquals("anne@gmail.com", updateDetails.get().getActorEmail());
-    assertEquals(now, updateDetails.get().getChangeDate());
+    assertTrue(now.isEqual(updateDetails.get().getChangeDate()));
   }
 
   @Test
@@ -101,7 +101,7 @@ public class WorkspaceActivityLogDaoTest extends BaseUnitTest {
     Optional<ActivityLogChangeDetails> updateDetails = activityLogDao.getCreateDetails(workspaceId);
 
     assertEquals("anne@gmail.com", updateDetails.get().getActorEmail());
-    assertEquals(now, updateDetails.get().getChangeDate());
+    assertTrue(now.isEqual(updateDetails.get().getChangeDate()));
   }
 
   @Test
