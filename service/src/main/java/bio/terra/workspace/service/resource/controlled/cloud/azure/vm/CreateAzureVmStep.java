@@ -250,21 +250,12 @@ public class CreateAzureVmStep implements Step {
     var maybePlacement =
         Optional.ofNullable(creationParameters.getEphemeralOSDisk())
             .flatMap(
-                (ephemeralOSDisk) -> {
-                  final Optional<DiffDiskPlacement> diskPlacement;
-                  switch (ephemeralOSDisk) {
-                    case OS_CACHE:
-                      diskPlacement = Optional.of(DiffDiskPlacement.CACHE_DISK);
-                      break;
-                    case TMP_DISK:
-                      diskPlacement = Optional.of(DiffDiskPlacement.RESOURCE_DISK);
-                      break;
-                    default:
-                      diskPlacement = Optional.empty();
-                      break;
-                  }
-                  return diskPlacement;
-                });
+                ephemeralOSDisk ->
+                    switch (ephemeralOSDisk) {
+                      case OS_CACHE -> Optional.of(DiffDiskPlacement.CACHE_DISK);
+                      case TMP_DISK -> Optional.of(DiffDiskPlacement.RESOURCE_DISK);
+                      default -> Optional.empty();
+                    });
 
     return maybePlacement
         .map(diskPlacement -> priorSteps.withEphemeralOSDisk().withPlacement(diskPlacement))
