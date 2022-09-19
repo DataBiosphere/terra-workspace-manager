@@ -5,10 +5,10 @@ import com.azure.resourcemanager.network.models.Network;
 import com.azure.resourcemanager.network.models.Subnet;
 
 public record NetworkSubnetPair(Network network, Subnet subnet) {
-    static NetworkSubnetPair createNetworkSubnetPair(
-            NetworkManager networkManager, String vNetArmId, String subnetName) {
-        Network vNet = networkManager.networks().getById(vNetArmId);
-        Subnet subnet = vNet.subnets().get(subnetName);
+  static NetworkSubnetPair createNetworkSubnetPair(
+      NetworkManager networkManager, String vNetArmId, String subnetName) {
+    Network vNet = networkManager.networks().getById(vNetArmId);
+    Subnet subnet = vNet.subnets().get(subnetName);
 
     return new NetworkSubnetPair(vNet, subnet);
   }
