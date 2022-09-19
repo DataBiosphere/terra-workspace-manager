@@ -6,12 +6,12 @@ components:
     AccessScope:
       type: string
       description: Specifies the resource as shared or private
-      enum: ['SHARED_ACCESS', 'PRIVATE_ACCESS']
+      enum: ["SHARED_ACCESS", "PRIVATE_ACCESS"]
 
     CloudPlatform:
       type: string
       description: Enum representing a cloud platform type.
-      enum: ['AZURE', 'GCP']
+      enum: ["AZURE", "GCP"]
 
     CloneReferencedResourceRequestBody:
       description: >-
@@ -21,7 +21,7 @@ components:
       required: [destinationWorkspaceId]
       properties:
         cloningInstructions:
-          $ref: '#/components/schemas/CloningInstructionsEnum'
+          $ref: "#/components/schemas/CloningInstructionsEnum"
         destinationWorkspaceId:
           type: string
           format: uuid
@@ -47,59 +47,60 @@ components:
             from source bucket to new bucket.
           * COPY_REFERENCE: Only used for referenced resources. Create new referenced resource
             that points to same cloud resource as source referenced resource.
-      enum: ['COPY_NOTHING', 'COPY_DEFINITION', 'COPY_RESOURCE', 'COPY_REFERENCE']
-  
+      enum:
+        ["COPY_NOTHING", "COPY_DEFINITION", "COPY_RESOURCE", "COPY_REFERENCE"]
+
     ControlledResourceIamRole:
       description: Enum containing all IAM roles on controlled resources available to users
       type: string
-      enum: [ 'READER', 'WRITER', 'EDITOR']
-  
+      enum: ["READER", "WRITER", "EDITOR"]
+
     ControlledResourceMetadata:
       type: object
       properties:
         accessScope:
-          $ref: '#/components/schemas/AccessScope'
+          $ref: "#/components/schemas/AccessScope"
         managedBy:
-          $ref: '#/components/schemas/ManagedBy'
+          $ref: "#/components/schemas/ManagedBy"
         privateResourceUser:
-          $ref: '#/components/schemas/PrivateResourceUser'
+          $ref: "#/components/schemas/PrivateResourceUser"
         privateResourceState:
-          $ref: '#/components/schemas/PrivateResourceState'
-  
+          $ref: "#/components/schemas/PrivateResourceState"
+
     ControlledResourceCommonFields:
       type: object
-      required: [ name, cloningInstructions, accessScope, managedBy ]
+      required: [name, cloningInstructions, accessScope, managedBy]
       properties:
         name:
           $ref: "#/components/schemas/Name"
         description:
           type: string
         cloningInstructions:
-          $ref: '#/components/schemas/CloningInstructionsEnum'
+          $ref: "#/components/schemas/CloningInstructionsEnum"
         accessScope:
-          $ref: '#/components/schemas/AccessScope'
+          $ref: "#/components/schemas/AccessScope"
         managedBy:
-          $ref: '#/components/schemas/ManagedBy'
+          $ref: "#/components/schemas/ManagedBy"
         privateResourceUser:
-          $ref: '#/components/schemas/PrivateResourceUser'
+          $ref: "#/components/schemas/PrivateResourceUser"
         resourceId:
           type: string
           format: uuid
-  
+
     DeleteControlledAzureResourceRequest:
       type: object
-      required: [ jobControl ]
+      required: [jobControl]
       properties:
         jobControl:
-          $ref: '#/components/schemas/JobControl'
+          $ref: "#/components/schemas/JobControl"
 
     DeleteControlledAzureResourceResult:
       type: object
       properties:
         jobReport:
-          $ref: '#/components/schemas/JobReport'
+          $ref: "#/components/schemas/JobReport"
         errorReport:
-          $ref: '#/components/schemas/ErrorReport'
+          $ref: "#/components/schemas/ErrorReport"
 
     ErrorReport:
       type: object
@@ -144,7 +145,7 @@ components:
             URL where the result of the job can be retrieved. Equivalent to a
             Location header in HTTP.
           type: string
-  
+
     JobControl:
       type: object
       required: [id]
@@ -155,16 +156,15 @@ components:
             a ShortUUID, or other globally unique identifier.
           type: string
         # TODO: In the future, notification configuration will also be part of JobControl.
-  
-      
+
     ManagedBy:
       type: string
       description: Specifies the controller of the resource, workspace users or an application
-      enum: [ 'USER', 'APPLICATION' ]
-  
+      enum: ["USER", "APPLICATION"]
+
     Name:
       type: string
-      pattern: '^[a-zA-Z0-9][-_a-zA-Z0-9]{0,1023}$'
+      pattern: "^[a-zA-Z0-9][-_a-zA-Z0-9]{0,1023}$"
 
     PrivateResourceUser:
       description: >-
@@ -180,19 +180,19 @@ components:
           description: email of the workspace user to grant access
           type: string
         privateResourceIamRole:
-          $ref: '#/components/schemas/ControlledResourceIamRole'
-  
+          $ref: "#/components/schemas/ControlledResourceIamRole"
+
     PrivateResourceState:
       description: >-
         The possible states of ownership of a private resource. When a resource is abandoned, the
         assigned user loses permission to access it.
       type: string
       enum:
-      - ABANDONED
-      - ACTIVE
-      - INITIALIZING
-      - NOT_APPLICABLE
-  
+        - ABANDONED
+        - ACTIVE
+        - INITIALIZING
+        - NOT_APPLICABLE
+
     ReferenceResourceCommonFields:
       type: object
       required: [name, cloningInstructions]
@@ -203,12 +203,12 @@ components:
         description:
           type: string
         cloningInstructions:
-          $ref: '#/components/schemas/CloningInstructionsEnum'
+          $ref: "#/components/schemas/CloningInstructionsEnum"
 
     ResourceLineage:
       type: array
       items:
-        $ref: '#/components/schemas/ResourceLineageEntry'
+        $ref: "#/components/schemas/ResourceLineageEntry"
 
     ResourceLineageEntry:
       type: object
@@ -225,6 +225,7 @@ components:
     # All resource objects include this resource metadata object and call it 'metadata'
     ResourceMetadata:
       type: object
+      required: [workspaceId, resourceId, name, resourceType, stewardshipType]
       properties:
         workspaceId:
           type: string
@@ -237,25 +238,25 @@ components:
         description:
           type: string
         resourceType:
-          $ref: '#/components/schemas/ResourceType'
+          $ref: "#/components/schemas/ResourceType"
         stewardshipType:
-          $ref: '#/components/schemas/StewardshipType'
+          $ref: "#/components/schemas/StewardshipType"
         cloudPlatform:
-          $ref: '#/components/schemas/CloudPlatform'
+          $ref: "#/components/schemas/CloudPlatform"
         cloningInstructions:
-          $ref: '#/components/schemas/CloningInstructionsEnum'
+          $ref: "#/components/schemas/CloningInstructionsEnum"
         controlledResourceMetadata:
           description: Present if stewardship type is CONTROLLED
-          $ref: '#/components/schemas/ControlledResourceMetadata'
+          $ref: "#/components/schemas/ControlledResourceMetadata"
         resourceLineage:
-          $ref: '#/components/schemas/ResourceLineage'
+          $ref: "#/components/schemas/ResourceLineage"
         properties:
-          $ref: '#/components/schemas/Properties'
+          $ref: "#/components/schemas/Properties"
 
     StewardshipType:
       description: Enum containing valid stewardship types. Used for enumeration
       type: string
-      enum: ['REFERENCED', 'CONTROLLED']
+      enum: ["REFERENCED", "CONTROLLED"]
 
     FolderId:
       description: Id of a given folder. Unique and immutable within a workspace.
@@ -266,11 +267,11 @@ components:
       description: Optional list of key-value pairs of strings
       type: array
       items:
-        $ref: '#/components/schemas/Property'
+        $ref: "#/components/schemas/Property"
 
     Property:
       type: object
-      required: [ key, value ]
+      required: [key, value]
       properties:
         key:
           description: |
