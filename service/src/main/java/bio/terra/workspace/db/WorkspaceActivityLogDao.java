@@ -83,6 +83,8 @@ public class WorkspaceActivityLogDao {
    */
   @ReadTransaction
   public Optional<ActivityLogChangeDetails> getCreateDetails(UUID workspaceId) {
+    // In rare cases when there are more than one rows with the same max change date,
+    // sort the actor_email by alphabetical order and returns the first one.
     final String sql =
         """
             SELECT w.change_date, w.actor_email, w.actor_subject_id FROM workspace_activity_log w

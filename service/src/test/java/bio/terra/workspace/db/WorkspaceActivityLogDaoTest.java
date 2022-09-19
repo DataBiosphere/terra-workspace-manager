@@ -78,7 +78,7 @@ public class WorkspaceActivityLogDaoTest extends BaseUnitTest {
     rawDaoTestFixture.writeActivityLogWithTimestamp(workspaceId, "anne@gmail.com", now);
     now = Instant.now().atOffset(ZoneOffset.UTC);
     rawDaoTestFixture.writeActivityLogWithTimestamp(workspaceId, "anne@gmail.com", now);
-    rawDaoTestFixture.writeActivityLogWithTimestamp(workspaceId, "annebella@gmail.com", now);
+    rawDaoTestFixture.writeActivityLogWithTimestamp(workspaceId, "cathy@gmail.com", now);
     rawDaoTestFixture.writeActivityLogWithTimestamp(workspaceId, "bella@gmail.com", now);
 
     Optional<ActivityLogChangeDetails> updateDetails =
@@ -93,12 +93,10 @@ public class WorkspaceActivityLogDaoTest extends BaseUnitTest {
     var workspaceId = UUID.randomUUID();
     OffsetDateTime now = Instant.now().atOffset(ZoneOffset.UTC);
     rawDaoTestFixture.writeActivityLogWithTimestamp(workspaceId, "anne@gmail.com", now);
-    rawDaoTestFixture.writeActivityLogWithTimestamp(workspaceId, "annebella@gmail.com", now);
+    rawDaoTestFixture.writeActivityLogWithTimestamp(workspaceId, "cathy@gmail.com", now);
     rawDaoTestFixture.writeActivityLogWithTimestamp(workspaceId, "bella@gmail.com", now);
     OffsetDateTime later = Instant.now().atOffset(ZoneOffset.UTC);
     rawDaoTestFixture.writeActivityLogWithTimestamp(workspaceId, "anne@gmail.com", later);
-    rawDaoTestFixture.writeActivityLogWithTimestamp(workspaceId, "annebella@gmail.com", later);
-    rawDaoTestFixture.writeActivityLogWithTimestamp(workspaceId, "bella@gmail.com", later);
 
     Optional<ActivityLogChangeDetails> updateDetails = activityLogDao.getCreateDetails(workspaceId);
 
