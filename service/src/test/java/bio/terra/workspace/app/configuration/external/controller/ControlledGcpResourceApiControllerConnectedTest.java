@@ -64,7 +64,7 @@ public class ControlledGcpResourceApiControllerConnectedTest extends BaseConnect
 
   @AfterEach
   public void cleanup() throws Exception {
-    mockMvcUtils.deleteWorkspace(workspace.getId());
+    mockMvcUtils.deleteWorkspace(userAccessUtils.defaultUserAuthRequest(), workspace.getId());
   }
 
   @Test
