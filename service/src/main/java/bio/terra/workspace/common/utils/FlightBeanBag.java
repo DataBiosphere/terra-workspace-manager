@@ -1,5 +1,6 @@
 package bio.terra.workspace.common.utils;
 
+import bio.terra.workspace.amalgam.landingzone.azure.LandingZoneApiDispatch;
 import bio.terra.workspace.amalgam.tps.TpsApiDispatch;
 import bio.terra.workspace.app.configuration.external.AzureConfiguration;
 import bio.terra.workspace.app.configuration.external.CliConfiguration;
@@ -59,6 +60,7 @@ public class FlightBeanBag {
   private final WorkspaceService workspaceService;
   private final VersionConfiguration versionConfiguration;
   private final StorageAccountKeyProvider storageAccountKeyProvider;
+  private final LandingZoneApiDispatch landingZoneApiDispatch;
 
   @Lazy
   @Autowired
@@ -85,7 +87,8 @@ public class FlightBeanBag {
       WorkspaceDao workspaceDao,
       WorkspaceService workspaceService,
       VersionConfiguration versionConfiguration,
-      StorageAccountKeyProvider storageAccountKeyProvider) {
+      StorageAccountKeyProvider storageAccountKeyProvider,
+      LandingZoneApiDispatch landingZoneApiDispatch) {
     this.applicationDao = applicationDao;
     this.azureCloudContextService = azureCloudContextService;
     this.azureConfig = azureConfig;
@@ -109,6 +112,7 @@ public class FlightBeanBag {
     this.workspaceService = workspaceService;
     this.versionConfiguration = versionConfiguration;
     this.storageAccountKeyProvider = storageAccountKeyProvider;
+    this.landingZoneApiDispatch = landingZoneApiDispatch;
   }
 
   public static FlightBeanBag getFromObject(Object object) {
@@ -201,6 +205,10 @@ public class FlightBeanBag {
 
   public VersionConfiguration getVersionConfiguration() {
     return versionConfiguration;
+  }
+
+  public LandingZoneApiDispatch getLandingZoneApiDispatch() {
+    return landingZoneApiDispatch;
   }
 
   public StorageAccountKeyProvider getStorageAccountKeyProvider() {

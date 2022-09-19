@@ -5,6 +5,7 @@ import bio.terra.landingzone.job.model.JobReport;
 import bio.terra.landingzone.library.landingzones.deployment.LandingZonePurpose;
 import bio.terra.landingzone.library.landingzones.deployment.ResourcePurpose;
 import bio.terra.landingzone.library.landingzones.deployment.SubnetResourcePurpose;
+import bio.terra.landingzone.model.LandingZoneTarget;
 import bio.terra.landingzone.service.landingzone.azure.LandingZoneService;
 import bio.terra.landingzone.service.landingzone.azure.model.DeployedLandingZone;
 import bio.terra.landingzone.service.landingzone.azure.model.LandingZoneDefinition;
@@ -22,9 +23,11 @@ import bio.terra.workspace.generated.model.ApiAzureLandingZoneResourcesPurposeGr
 import bio.terra.workspace.generated.model.ApiAzureLandingZoneResult;
 import bio.terra.workspace.generated.model.ApiCreateAzureLandingZoneRequestBody;
 import bio.terra.workspace.generated.model.ApiLandingZoneTarget;
+import bio.terra.workspace.service.workspace.model.AzureCloudContext;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
@@ -57,13 +60,23 @@ public class LandingZoneApiDispatch {
                     new LandingZoneInvalidInputException(
                         "LandingZoneTarget is required when creating an Azure landing zone"));
 
+    final LandingZoneTarget target = MapperUtils.LandingZoneTargetMapper.from(apiLandingZoneTarget);
+
+    // TODO: this check could be removed once WSM maintains the LZ id in the cloud context.
+    getFirstLandingZoneId(target)
+        .ifPresent(
+            t -> {
+              throw new LandingZoneInvalidInputException(
+                  "A Landing Zone already exists in the requested target");
+            });
+
     LandingZoneRequest landingZoneRequest =
         LandingZoneRequest.builder()
             .definition(body.getDefinition())
             .version(body.getVersion())
             .parameters(
                 MapperUtils.LandingZoneMapper.landingZoneParametersFrom(body.getParameters()))
-            .landingZoneTarget(MapperUtils.AzureCloudContextMapper.from(apiLandingZoneTarget))
+            .landingZoneTarget(target)
             .build();
     String jobId =
         landingZoneService.startLandingZoneCreationJob(
@@ -120,6 +133,19 @@ public class LandingZoneApiDispatch {
     return result;
   }
 
+  public List<ApiAzureLandingZoneDeployedResource> listSubnetsWithParentVNetByPurpose(
+      String landingZoneId, LandingZonePurpose purpose) {
+
+    if (StringUtils.isBlank(landingZoneId)) {
+      throw new LandingZoneInvalidInputException("The landing zone id can't be null or empty");
+    }
+
+    return listAzureLandingZoneResources(landingZoneId).getResources().stream()
+        .filter(r -> r.getPurpose().equals(purpose.toString()))
+        .flatMap(r -> r.getDeployedResources().stream())
+        .collect(Collectors.toList());
+  }
+
   private ApiAzureLandingZoneDeployedResource toApiAzureLandingZoneDeployedResource(
       LandingZoneResource resource, LandingZonePurpose purpose) {
     if (purpose.getClass().equals(ResourcePurpose.class)) {
@@ -168,5 +194,23 @@ public class LandingZoneApiDispatch {
         .jobReport(MapperUtils.JobReportMapper.from(jobResult.getJobReport()))
         .errorReport(MapperUtils.ErrorReportMapper.from(jobResult.getApiErrorReport()))
         .landingZone(azureLandingZone);
+  }
+
+  /*
+   * Note: This method is an initial implementation that must be revised,
+   * and likely be refactored once WSM stores the LZ id in the azure context.
+   * The initial assumption is that the cardinality of 1:1 between the cloud context and the LZ
+   * is enforced in the create operation, therefore more than one LZ per azure context is not allowed.
+   */
+  public String getLandingZoneId(AzureCloudContext azureCloudContext) {
+    return getFirstLandingZoneId(MapperUtils.LandingZoneTargetMapper.from(azureCloudContext))
+        .orElseThrow(
+            () ->
+                new IllegalStateException(
+                    "Could not find a landing zone id for the given Azure context."));
+  }
+
+  private Optional<String> getFirstLandingZoneId(LandingZoneTarget landingZoneTarget) {
+    return landingZoneService.listLandingZoneIds(landingZoneTarget).stream().findFirst();
   }
 }
