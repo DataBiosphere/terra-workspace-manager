@@ -13,7 +13,6 @@ import bio.terra.workspace.generated.model.ApiAzureVmCreationParameters;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.disk.ControlledAzureDiskResource;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.ip.ControlledAzureIpResource;
-import bio.terra.workspace.service.resource.controlled.cloud.azure.network.ControlledAzureNetworkResource;
 import bio.terra.workspace.service.resource.controlled.exception.AzureNetworkInterfaceNameNotFoundException;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
@@ -22,7 +21,6 @@ import com.azure.core.management.Region;
 import com.azure.core.management.exception.ManagementException;
 import com.azure.resourcemanager.compute.ComputeManager;
 import com.azure.resourcemanager.compute.models.*;
-import com.azure.resourcemanager.network.models.Network;
 import com.azure.resourcemanager.network.models.NetworkInterface;
 import com.azure.resourcemanager.network.models.PublicIpAddress;
 import java.util.Optional;
@@ -79,9 +77,9 @@ public class CreateAzureVmStep implements Step {
                         .castByEnum(WsmResourceType.CONTROLLED_AZURE_DISK));
 
     final NetworkSubnetPair networkSubnetPair =
-            context
-                    .getWorkingMap()
-                    .get(AzureVmHelper.WORKING_MAP_NETWORK_SUBNET_PAIR_KEY, NetworkSubnetPair.class);
+        context
+            .getWorkingMap()
+            .get(AzureVmHelper.WORKING_MAP_NETWORK_SUBNET_PAIR_KEY, NetworkSubnetPair.class);
 
     try {
       Optional<Disk> existingAzureDisk =
@@ -100,7 +98,6 @@ public class CreateAzureVmStep implements Step {
                       .publicIpAddresses()
                       .getByResourceGroup(
                           azureCloudContext.getAzureResourceGroupId(), ipRes.getIpName()));
-
 
       if (!context.getWorkingMap().containsKey(AzureVmHelper.WORKING_MAP_NETWORK_INTERFACE_KEY)) {
         logger.error(
@@ -140,8 +137,8 @@ public class CreateAzureVmStep implements Step {
                   .setTenantId(azureCloudContext.getAzureTenantId())
                   .setSubscriptionId(azureCloudContext.getAzureSubscriptionId())
                   .setResourceGroupName(azureCloudContext.getAzureResourceGroupId())
-                      .setNetwork(networkSubnetPair.network())
-                      .setSubnetName(networkSubnetPair.subnet().name())
+                  .setNetwork(networkSubnetPair.network())
+                  .setSubnetName(networkSubnetPair.subnet().name())
                   .setPublicIpAddress(existingAzureIp.orElse(null))
                   .setDisk(existingAzureDisk.orElse(null))
                   .setImage(AzureVmUtils.getImageData(creationParameters.getVmImage()))
