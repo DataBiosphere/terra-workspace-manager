@@ -2,6 +2,10 @@ package bio.terra.workspace.db;
 
 import bio.terra.common.db.WriteTransaction;
 import bio.terra.workspace.service.resource.exception.DuplicateResourceException;
+import bio.terra.workspace.service.workspace.model.OperationType;
+import java.time.OffsetDateTime;
+import java.util.UUID;
+import org.apache.commons.lang3.RandomStringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -74,5 +78,20 @@ public class RawDaoTestFixture {
               "A resource already exists in the workspace that has the same name (%s) or the same id (%s)",
               name, resourceId));
     }
+  }
+
+  public void writeActivityLogWithTimestamp(
+      UUID workspaceId, String actorEmail, OffsetDateTime timestamp) {
+    final String sql =
+        "INSERT INTO workspace_activity_log (workspace_id, change_date, change_type, actor_email, actor_subject_id)"
+            + " VALUES (:workspace_id, :change_date, :change_type, :actor_email, :actor_subject_id)";
+    final var params =
+        new MapSqlParameterSource()
+            .addValue("workspace_id", workspaceId.toString())
+            .addValue("change_date", timestamp)
+            .addValue("change_type", OperationType.CREATE.name())
+            .addValue("actor_email", actorEmail)
+            .addValue("actor_subject_id", RandomStringUtils.randomAlphabetic(5));
+    jdbcTemplate.update(sql, params);
   }
 }
