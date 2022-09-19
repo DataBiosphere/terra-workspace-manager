@@ -10,8 +10,10 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import bio.terra.workspace.common.fixtures.WorkspaceFixtures;
 import bio.terra.workspace.generated.model.ApiCreateControlledGcpBigQueryDatasetRequestBody;
 import bio.terra.workspace.generated.model.ApiCreatedControlledGcpBigQueryDataset;
+import bio.terra.workspace.generated.model.ApiCreatedControlledGcpGcsBucket;
 import bio.terra.workspace.generated.model.ApiCreatedWorkspace;
 import bio.terra.workspace.generated.model.ApiGcpBigQueryDatasetResource;
+import bio.terra.workspace.generated.model.ApiGcpGcsBucketResource;
 import bio.terra.workspace.generated.model.ApiGrantRoleRequestBody;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.model.WsmIamRole;
@@ -75,6 +77,10 @@ public class MockMvcUtils {
       "/api/workspaces/v1/%s/resources/controlled/gcp/bqdatasets";
   public static final String CONTROLLED_GCP_BIG_QUERY_DATASET_V1_PATH_FORMAT =
       "/api/workspaces/v1/%s/resources/controlled/gcp/bqdatasets/%s";
+  public static final String CONTROLLED_GCP_GCS_BUCKETS_V1_PATH_FORMAT =
+      "/api/workspaces/v1/%s/resources/controlled/gcp/gcsbuckets";
+  public static final String CONTROLLED_GCP_GCS_BUCKET_V1_PATH_FORMAT =
+      "/api/workspaces/v1/%s/resources/controlled/gcp/gcsbucket/%s";
   public static final AuthenticatedUserRequest USER_REQUEST =
       new AuthenticatedUserRequest(
           "fake@email.com", "subjectId123456", Optional.of("ThisIsNotARealBearerToken"));
@@ -162,6 +168,63 @@ public class MockMvcUtils {
             .getContentAsString();
 
     return objectMapper.readValue(serializedGetResponse, ApiGcpBigQueryDatasetResource.class);
+  }
+
+  public static ApiCreatedControlledGcpGcsBucket createGcsBucket(
+      MockMvc mockMvc,
+      ObjectMapper objectMapper,
+      UUID workspaceId,
+      AuthenticatedUserRequest userRequest)
+      throws Exception {
+    ApiCreateControlledGcpBigQueryDatasetRequestBody datasetCreationRequest =
+        new ApiCreateControlledGcpBigQueryDatasetRequestBody()
+            .common(makeDefaultControlledResourceFieldsApi())
+            .dataset(defaultBigQueryDatasetCreationParameters());
+
+    String serializedGetResponse =
+        mockMvc
+            .perform(
+                addAuth(
+                    post(String.format(
+                        CONTROLLED_GCP_GCS_BUCKETS_V1_PATH_FORMAT,
+                        workspaceId.toString()))
+                        .contentType(MediaType.APPLICATION_JSON_VALUE)
+                        .accept(MediaType.APPLICATION_JSON)
+                        .characterEncoding("UTF-8")
+                        .content(objectMapper.writeValueAsString(datasetCreationRequest)),
+                    userRequest))
+            .andExpect(status().is(HttpStatus.SC_OK))
+            .andReturn()
+            .getResponse()
+            .getContentAsString();
+
+    return objectMapper.readValue(
+        serializedGetResponse, ApiCreatedControlledGcpGcsBucket.class);
+  }
+
+  public static ApiGcpGcsBucketResource getGcsBucket(
+      MockMvc mockMvc,
+      ObjectMapper objectMapper,
+      UUID workspaceId,
+      UUID resourceId,
+      AuthenticatedUserRequest userRequest)
+      throws Exception {
+    String serializedGetResponse =
+        mockMvc
+            .perform(
+                addAuth(
+                    get(
+                        String.format(
+                            CONTROLLED_GCP_GCS_BUCKET_V1_PATH_FORMAT,
+                            workspaceId.toString(),
+                            resourceId.toString())),
+                    userRequest))
+            .andExpect(status().is(HttpStatus.SC_OK))
+            .andReturn()
+            .getResponse()
+            .getContentAsString();
+
+    return objectMapper.readValue(serializedGetResponse, ApiGcpGcsBucketResource.class);
   }
 
   public static void grantRole(

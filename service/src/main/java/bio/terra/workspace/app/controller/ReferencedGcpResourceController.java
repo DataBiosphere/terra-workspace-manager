@@ -1,5 +1,6 @@
 package bio.terra.workspace.app.controller;
 
+import bio.terra.workspace.app.controller.shared.PropertiesUtils;
 import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.generated.controller.ReferencedGcpResourceApi;
 import bio.terra.workspace.generated.model.ApiCloneReferencedGcpBigQueryDataTableResourceResult;
@@ -103,6 +104,7 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
                     .resourceId(UUID.randomUUID())
                     .name(body.getMetadata().getName())
                     .description(body.getMetadata().getDescription())
+                    .properties(PropertiesUtils.convertApiPropertyToMap(body.getMetadata().getProperties()))
                     .cloningInstructions(
                         CloningInstructions.fromApiModel(
                             body.getMetadata().getCloningInstructions()))
@@ -218,6 +220,7 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
                     .resourceId(UUID.randomUUID())
                     .name(body.getMetadata().getName())
                     .description(body.getMetadata().getDescription())
+                    .properties(PropertiesUtils.convertApiPropertyToMap(body.getMetadata().getProperties()))
                     .cloningInstructions(
                         CloningInstructions.fromApiModel(
                             body.getMetadata().getCloningInstructions()))
@@ -323,6 +326,7 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
                     .resourceId(UUID.randomUUID())
                     .name(body.getMetadata().getName())
                     .description(body.getMetadata().getDescription())
+                    .properties(PropertiesUtils.convertApiPropertyToMap(body.getMetadata().getProperties()))
                     .cloningInstructions(
                         CloningInstructions.fromApiModel(
                             body.getMetadata().getCloningInstructions()))
@@ -445,6 +449,7 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
                     .resourceId(UUID.randomUUID())
                     .name(body.getMetadata().getName())
                     .description(body.getMetadata().getDescription())
+                    .properties(PropertiesUtils.convertApiPropertyToMap(body.getMetadata().getProperties()))
                     .cloningInstructions(
                         CloningInstructions.fromApiModel(
                             body.getMetadata().getCloningInstructions()))
@@ -557,6 +562,7 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
                     .resourceId(UUID.randomUUID())
                     .name(body.getMetadata().getName())
                     .description(body.getMetadata().getDescription())
+                    .properties(PropertiesUtils.convertApiPropertyToMap(body.getMetadata().getProperties()))
                     .cloningInstructions(
                         CloningInstructions.fromApiModel(
                             body.getMetadata().getCloningInstructions()))
@@ -909,6 +915,7 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
                     .resourceId(UUID.randomUUID())
                     .name(body.getMetadata().getName())
                     .description(body.getMetadata().getDescription())
+                    .properties(PropertiesUtils.convertApiPropertyToMap(body.getMetadata().getProperties()))
                     .cloningInstructions(
                         CloningInstructions.fromApiModel(
                             body.getMetadata().getCloningInstructions()))
@@ -1066,6 +1073,7 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
                     .resourceId(UUID.randomUUID())
                     .name(body.getMetadata().getName())
                     .description(body.getMetadata().getDescription())
+                    .properties(PropertiesUtils.convertApiPropertyToMap(body.getMetadata().getProperties()))
                     .cloningInstructions(
                         CloningInstructions.fromApiModel(
                             body.getMetadata().getCloningInstructions()))

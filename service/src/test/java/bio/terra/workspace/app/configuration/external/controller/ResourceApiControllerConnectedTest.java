@@ -2,6 +2,7 @@ package bio.terra.workspace.app.configuration.external.controller;
 
 import static bio.terra.workspace.app.controller.shared.PropertiesUtils.convertApiPropertyToMap;
 import static bio.terra.workspace.app.controller.shared.PropertiesUtils.convertMapToApiProperties;
+import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.DEFAULT_RESOURCE_PROPERTIES;
 import static bio.terra.workspace.common.utils.MockMvcUtils.RESOURCE_PROPERTIES_V1_PATH_FORMAT;
 import static bio.terra.workspace.common.utils.MockMvcUtils.addAuth;
 import static bio.terra.workspace.common.utils.MockMvcUtils.addJsonContentType;
@@ -67,7 +68,7 @@ public class ResourceApiControllerConnectedTest extends BaseConnectedTest {
   class UpdateResourceProperties {
     @Test
     public void updateResourceProperties_newPropertiesAdded() throws Exception {
-      // Create resource with no properties.
+      // Create resource with properties foo -> bar.
       ApiCreatedControlledGcpBigQueryDataset resource =
           createBigQueryDataset(
               mockMvc, objectMapper, workspaceId, userAccessUtils.defaultUserAuthRequest());
@@ -79,7 +80,7 @@ public class ResourceApiControllerConnectedTest extends BaseConnectedTest {
               UUID.randomUUID().toString(),
               "data_type",
               "workflow_output");
-      Map<String, String> expectedProperties = new HashMap();
+      Map<String, String> expectedProperties = new HashMap<>(DEFAULT_RESOURCE_PROPERTIES);
       expectedProperties.putAll(newProperties);
 
       // Add two more properties with key terra_workspace_folder_id and data_type.

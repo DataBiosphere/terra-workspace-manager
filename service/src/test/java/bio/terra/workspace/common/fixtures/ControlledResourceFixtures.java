@@ -1,6 +1,7 @@
 package bio.terra.workspace.common.fixtures;
 
 import bio.terra.stairway.ShortUUID;
+import bio.terra.workspace.app.controller.shared.PropertiesUtils;
 import bio.terra.workspace.common.utils.AzureVmUtils;
 import bio.terra.workspace.generated.model.*;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.disk.ControlledAzureDiskResource;
@@ -467,7 +468,8 @@ public class ControlledResourceFixtures {
         .cloningInstructions(commonFields.getCloningInstructions().toApiModel())
         .accessScope(commonFields.getAccessScope().toApiModel())
         .managedBy(commonFields.getManagedBy().toApiModel())
-        .resourceId(commonFields.getResourceId());
+        .resourceId(commonFields.getResourceId())
+        .properties(PropertiesUtils.convertMapToApiProperties(commonFields.getProperties()));
   }
 
   /** Returns a {@link ControlledGcsBucketResource.Builder} that is ready to be built. */
