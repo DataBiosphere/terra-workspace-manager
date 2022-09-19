@@ -280,11 +280,9 @@ public class CreateAzureVmStep implements Step {
   private VirtualMachine.DefinitionStages.WithFromImageCreateOptionsManaged maybeAddCustomDataStep(
       VirtualMachine.DefinitionStages.WithFromImageCreateOptionsManaged priorSteps,
       ApiAzureVmCreationParameters creationParameters) {
-    if (StringUtils.isEmpty(creationParameters.getCustomData())) {
-      return priorSteps;
-    } else {
-      return priorSteps.withCustomData(creationParameters.getCustomData());
-    }
+    return StringUtils.isEmpty(creationParameters.getCustomData())
+        ? priorSteps
+        : priorSteps.withCustomData(creationParameters.getCustomData());
   }
 
   private VirtualMachine.DefinitionStages.WithFromImageCreateOptionsManaged addImageStep(

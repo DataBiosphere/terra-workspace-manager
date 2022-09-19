@@ -6,7 +6,31 @@ import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
 import bio.terra.workspace.common.utils.AzureVmUtils;
 import bio.terra.workspace.common.utils.ControllerValidationUtils;
 import bio.terra.workspace.generated.controller.ControlledAzureResourceApi;
-import bio.terra.workspace.generated.model.*;
+import bio.terra.workspace.generated.model.ApiAzureDiskResource;
+import bio.terra.workspace.generated.model.ApiAzureIpResource;
+import bio.terra.workspace.generated.model.ApiAzureNetworkResource;
+import bio.terra.workspace.generated.model.ApiAzureRelayNamespaceResource;
+import bio.terra.workspace.generated.model.ApiAzureVmCreationParameters;
+import bio.terra.workspace.generated.model.ApiAzureVmResource;
+import bio.terra.workspace.generated.model.ApiCreateControlledAzureDiskRequestBody;
+import bio.terra.workspace.generated.model.ApiCreateControlledAzureIpRequestBody;
+import bio.terra.workspace.generated.model.ApiCreateControlledAzureNetworkRequestBody;
+import bio.terra.workspace.generated.model.ApiCreateControlledAzureRelayNamespaceRequestBody;
+import bio.terra.workspace.generated.model.ApiCreateControlledAzureRelayNamespaceResult;
+import bio.terra.workspace.generated.model.ApiCreateControlledAzureStorageContainerRequestBody;
+import bio.terra.workspace.generated.model.ApiCreateControlledAzureStorageRequestBody;
+import bio.terra.workspace.generated.model.ApiCreateControlledAzureVmRequestBody;
+import bio.terra.workspace.generated.model.ApiCreatedAzureStorageContainerSasToken;
+import bio.terra.workspace.generated.model.ApiCreatedControlledAzureDisk;
+import bio.terra.workspace.generated.model.ApiCreatedControlledAzureIp;
+import bio.terra.workspace.generated.model.ApiCreatedControlledAzureNetwork;
+import bio.terra.workspace.generated.model.ApiCreatedControlledAzureStorage;
+import bio.terra.workspace.generated.model.ApiCreatedControlledAzureStorageContainer;
+import bio.terra.workspace.generated.model.ApiCreatedControlledAzureVmResult;
+import bio.terra.workspace.generated.model.ApiDeleteControlledAzureResourceRequest;
+import bio.terra.workspace.generated.model.ApiDeleteControlledAzureResourceResult;
+import bio.terra.workspace.generated.model.ApiJobControl;
+import bio.terra.workspace.generated.model.ApiJobReport;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequestFactory;
 import bio.terra.workspace.service.iam.SamRethrow;
@@ -339,18 +363,16 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
   @VisibleForTesting
   ControlledAzureVmResource buildControlledAzureVmResource(
       ApiAzureVmCreationParameters creationParameters, ControlledResourceFields commonFields) {
-    ControlledAzureVmResource resource =
-        ControlledAzureVmResource.builder()
-            .common(commonFields)
-            .vmName(creationParameters.getName())
-            .region(creationParameters.getRegion())
-            .vmSize(creationParameters.getVmSize())
-            .vmImage(AzureVmUtils.getImageData(creationParameters.getVmImage()))
-            .ipId(creationParameters.getIpId())
-            .networkId(creationParameters.getNetworkId())
-            .diskId(creationParameters.getDiskId())
-            .build();
-    return resource;
+    return ControlledAzureVmResource.builder()
+        .common(commonFields)
+        .vmName(creationParameters.getName())
+        .region(creationParameters.getRegion())
+        .vmSize(creationParameters.getVmSize())
+        .vmImage(AzureVmUtils.getImageData(creationParameters.getVmImage()))
+        .ipId(creationParameters.getIpId())
+        .networkId(creationParameters.getNetworkId())
+        .diskId(creationParameters.getDiskId())
+        .build();
   }
 
   @Override
