@@ -221,14 +221,15 @@ public class MockMvcUtils {
             addAuth(
                 delete(String.format(WORKSPACES_V1_BY_UUID_PATH_FORMAT, workspaceId)), userRequest))
         .andExpect(status().is(HttpStatus.SC_NO_CONTENT));
+    mockMvc
+        .perform(
+            addAuth(
+                get(String.format(WORKSPACES_V1_BY_UUID_PATH_FORMAT, workspaceId)), userRequest))
+        .andExpect(status().is(HttpStatus.SC_NOT_FOUND));
   }
 
-  public static ApiCreatedControlledGcpBigQueryDataset createBigQueryDataset(
-      MockMvc mockMvc,
-      ObjectMapper objectMapper,
-      UUID workspaceId,
-      AuthenticatedUserRequest userRequest)
-      throws Exception {
+  public ApiCreatedControlledGcpBigQueryDataset createBigQueryDataset(
+      AuthenticatedUserRequest userRequest, UUID workspaceId) throws Exception {
     ApiCreateControlledGcpBigQueryDatasetRequestBody datasetCreationRequest =
         new ApiCreateControlledGcpBigQueryDatasetRequestBody()
             .common(makeDefaultControlledResourceFieldsApi())
@@ -255,13 +256,8 @@ public class MockMvcUtils {
         serializedGetResponse, ApiCreatedControlledGcpBigQueryDataset.class);
   }
 
-  public static ApiGcpBigQueryDatasetResource getBigQueryDataset(
-      MockMvc mockMvc,
-      ObjectMapper objectMapper,
-      UUID workspaceId,
-      UUID resourceId,
-      AuthenticatedUserRequest userRequest)
-      throws Exception {
+  public ApiGcpBigQueryDatasetResource getBigQueryDataset(
+      AuthenticatedUserRequest userRequest, UUID workspaceId, UUID resourceId) throws Exception {
     String serializedGetResponse =
         mockMvc
             .perform(
@@ -280,13 +276,8 @@ public class MockMvcUtils {
     return objectMapper.readValue(serializedGetResponse, ApiGcpBigQueryDatasetResource.class);
   }
 
-  public static void grantRole(
-      UUID workspaceId,
-      WsmIamRole role,
-      String memberEmail,
-      MockMvc mockMvc,
-      ObjectMapper objectMapper,
-      AuthenticatedUserRequest userRequest)
+  public void grantRole(
+      AuthenticatedUserRequest userRequest, UUID workspaceId, WsmIamRole role, String memberEmail)
       throws Exception {
     var requestBody = new ApiGrantRoleRequestBody().memberEmail(memberEmail);
     mockMvc
@@ -297,19 +288,5 @@ public class MockMvcUtils {
                         .content(objectMapper.writeValueAsString(requestBody)),
                     userRequest)))
         .andExpect(status().is(HttpStatus.SC_NO_CONTENT));
-  }
-
-  public static void deleteWorkspace(
-      UUID workspaceId, MockMvc mockMvc, AuthenticatedUserRequest userRequest) throws Exception {
-    mockMvc
-        .perform(
-            addAuth(
-                delete(String.format(WORKSPACES_V1_BY_UUID_PATH_FORMAT, workspaceId)), userRequest))
-        .andExpect(status().is(HttpStatus.SC_NO_CONTENT));
-    mockMvc
-        .perform(
-            addAuth(
-                get(String.format(WORKSPACES_V1_BY_UUID_PATH_FORMAT, workspaceId)), userRequest))
-        .andExpect(status().is(HttpStatus.SC_NOT_FOUND));
   }
 }
