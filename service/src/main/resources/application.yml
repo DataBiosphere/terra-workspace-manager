@@ -125,7 +125,7 @@ workspace:
   azure:
     sas-token-start-time-minutes-offset: 15
     sas-token-expiry-time-minutes-offset: 60
-    cors-origins:
+    cors-allowed-origins:
 
 terra.common:
   kubernetes:
