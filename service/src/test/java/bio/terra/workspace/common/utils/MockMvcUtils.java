@@ -1,6 +1,7 @@
 package bio.terra.workspace.common.utils;
 
 import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.defaultBigQueryDatasetCreationParameters;
+import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.defaultGcsBucketCreationParameters;
 import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.makeDefaultControlledResourceFieldsApi;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -9,6 +10,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import bio.terra.workspace.common.fixtures.WorkspaceFixtures;
 import bio.terra.workspace.generated.model.ApiCreateControlledGcpBigQueryDatasetRequestBody;
+import bio.terra.workspace.generated.model.ApiCreateControlledGcpGcsBucketRequestBody;
 import bio.terra.workspace.generated.model.ApiCreatedControlledGcpBigQueryDataset;
 import bio.terra.workspace.generated.model.ApiCreatedControlledGcpGcsBucket;
 import bio.terra.workspace.generated.model.ApiCreatedWorkspace;
@@ -78,9 +80,9 @@ public class MockMvcUtils {
   public static final String CONTROLLED_GCP_BIG_QUERY_DATASET_V1_PATH_FORMAT =
       "/api/workspaces/v1/%s/resources/controlled/gcp/bqdatasets/%s";
   public static final String CONTROLLED_GCP_GCS_BUCKETS_V1_PATH_FORMAT =
-      "/api/workspaces/v1/%s/resources/controlled/gcp/gcsbuckets";
+      "/api/workspaces/v1/%s/resources/controlled/gcp/buckets";
   public static final String CONTROLLED_GCP_GCS_BUCKET_V1_PATH_FORMAT =
-      "/api/workspaces/v1/%s/resources/controlled/gcp/gcsbucket/%s";
+      "/api/workspaces/v1/%s/resources/controlled/gcp/buckets/%s";
   public static final AuthenticatedUserRequest USER_REQUEST =
       new AuthenticatedUserRequest(
           "fake@email.com", "subjectId123456", Optional.of("ThisIsNotARealBearerToken"));
@@ -176,22 +178,21 @@ public class MockMvcUtils {
       UUID workspaceId,
       AuthenticatedUserRequest userRequest)
       throws Exception {
-    ApiCreateControlledGcpBigQueryDatasetRequestBody datasetCreationRequest =
-        new ApiCreateControlledGcpBigQueryDatasetRequestBody()
+    ApiCreateControlledGcpGcsBucketRequestBody gcsBucketCreationRequest =
+        new ApiCreateControlledGcpGcsBucketRequestBody()
             .common(makeDefaultControlledResourceFieldsApi())
-            .dataset(defaultBigQueryDatasetCreationParameters());
+            .gcsBucket(defaultGcsBucketCreationParameters());
 
     String serializedGetResponse =
         mockMvc
             .perform(
                 addAuth(
                     post(String.format(
-                        CONTROLLED_GCP_GCS_BUCKETS_V1_PATH_FORMAT,
-                        workspaceId.toString()))
+                        CONTROLLED_GCP_GCS_BUCKETS_V1_PATH_FORMAT, workspaceId.toString()))
                         .contentType(MediaType.APPLICATION_JSON_VALUE)
                         .accept(MediaType.APPLICATION_JSON)
                         .characterEncoding("UTF-8")
-                        .content(objectMapper.writeValueAsString(datasetCreationRequest)),
+                        .content(objectMapper.writeValueAsString(gcsBucketCreationRequest)),
                     userRequest))
             .andExpect(status().is(HttpStatus.SC_OK))
             .andReturn()

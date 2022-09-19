@@ -255,7 +255,12 @@ public class ControlledResourceFixtures {
   }
 
   public static ApiGcpBigQueryDatasetCreationParameters defaultBigQueryDatasetCreationParameters() {
-    return new ApiGcpBigQueryDatasetCreationParameters().datasetId(uniqueDatasetId());
+    return new ApiGcpBigQueryDatasetCreationParameters()
+        .datasetId(uniqueDatasetId());
+  }
+
+  public static ApiGcpGcsBucketCreationParameters defaultGcsBucketCreationParameters() {
+    return new ApiGcpGcsBucketCreationParameters().name(uniqueBucketName());
   }
 
   public static final String RESOURCE_NAME = "my_first_bucket";
