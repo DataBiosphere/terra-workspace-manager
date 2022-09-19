@@ -214,12 +214,7 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
     List<ApiWorkspaceDescription> listedWorkspaces =
         listWorkspaces(userAccessUtils.defaultUserAuthRequest());
 
-    assertThat(
-        String.format(
-            "Expected 1 workspace. Instead of %s: ",
-            listedWorkspaces.size(), listedWorkspaces.stream().map(ApiWorkspaceDescription::getId)),
-        listedWorkspaces,
-        hasSize(1));
+    assertThat(listedWorkspaces, hasSize(1));
     assertFullWorkspace(listedWorkspaces.get(0));
   }
 
