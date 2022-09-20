@@ -1,6 +1,8 @@
 package bio.terra.workspace.service.resource.controlled.flight.clone.workspace;
 
 import static bio.terra.workspace.app.controller.shared.PropertiesUtils.ResourcePropertiesKey.FOLDER_ID_KEY;
+import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.makeControlledResourceFieldsBuilder;
+import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.uniqueDatasetId;
 import static bio.terra.workspace.service.resource.controlled.flight.clone.workspace.WorkspaceCloneUtils.buildDestinationControlledBigQueryDataset;
 import static bio.terra.workspace.service.resource.controlled.flight.clone.workspace.WorkspaceCloneUtils.buildDestinationControlledGcsBucket;
 import static bio.terra.workspace.service.resource.controlled.flight.clone.workspace.WorkspaceCloneUtils.buildDestinationReferencedResource;
@@ -14,10 +16,12 @@ import bio.terra.workspace.service.resource.controlled.cloud.gcp.bqdataset.Contr
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.ControlledGcsBucketResource;
 import bio.terra.workspace.service.resource.controlled.model.AccessScopeType;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
+import bio.terra.workspace.service.resource.controlled.model.ControlledResourceFields;
 import bio.terra.workspace.service.resource.controlled.model.PrivateResourceState;
 import bio.terra.workspace.service.resource.model.ResourceLineageEntry;
 import bio.terra.workspace.service.resource.model.WsmResource;
 import bio.terra.workspace.service.resource.referenced.cloud.gcp.datareposnapshot.ReferencedDataRepoSnapshotResource;
+import com.google.common.collect.ImmutableMap;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -87,27 +91,25 @@ public class WorkspaceCloneUtilsTest extends BaseUnitTest {
   @Test
   public void buildDestinationControlledBigQueryDataset_clearSomeProperty() {
     var sourceDataset =
-        ControlledResourceFixtures.makeDefaultControlledBigQueryBuilder(WORKSPACE_ID).build();
-    var cloneResourceName = RandomStringUtils.randomAlphabetic(5);
-    var cloneDescription = "This is a cloned dataset";
-    var cloneDatasetName = RandomStringUtils.randomAlphabetic(5);
-    var cloneProjectName = "my-cloned-gcp-project";
+        ControlledBigQueryDatasetResource.builder()
+            .common(makeControlledResourceFieldsWithCustomProperties())
+            .datasetName(uniqueDatasetId())
+            .projectId("my-gcp-project")
+            .build();
 
     ControlledBigQueryDatasetResource datasetToClone =
         buildDestinationControlledBigQueryDataset(
             sourceDataset,
             DESTINATION_WORKSPACE_ID,
             DESTINATION_RESOURCE_ID,
-            cloneResourceName,
-            cloneDescription,
-            cloneDatasetName,
-            cloneProjectName);
+            RandomStringUtils.randomAlphabetic(5),
+            "This is a cloned dataset",
+            RandomStringUtils.randomAlphabetic(5),
+            "my-cloned-gcp-project");
 
-    assertResourceCommonFields(sourceDataset, cloneResourceName, cloneDescription, datasetToClone);
-    assertControlledResourceCommonField(sourceDataset, datasetToClone);
-    assertEquals(sourceDataset.getPrivateResourceState(), datasetToClone.getPrivateResourceState());
-    assertEquals(cloneDatasetName, datasetToClone.getDatasetName());
-    assertEquals(cloneProjectName, datasetToClone.getProjectId());
+    ImmutableMap<String, String> properties = datasetToClone.getProperties();
+    assertFalse(properties.containsKey(FOLDER_ID_KEY));
+    assertEquals("bar", properties.get("foo"));
   }
 
   @Test
@@ -161,6 +163,33 @@ public class WorkspaceCloneUtilsTest extends BaseUnitTest {
   }
 
   @Test
+  public void buildDestinationControlledGcsBucket_clearSomeProperties() {
+    ControlledGcsBucketResource sourceBucket =
+        ControlledResourceFixtures.makeDefaultControlledGcsBucketBuilder(WORKSPACE_ID)
+            .common(makeControlledResourceFieldsWithCustomProperties())
+            .build();
+    ControlledGcsBucketResource bucketToClone =
+        buildDestinationControlledGcsBucket(
+            sourceBucket,
+            DESTINATION_WORKSPACE_ID,
+            DESTINATION_RESOURCE_ID,
+            /*name=*/ RandomStringUtils.randomAlphabetic(5),
+            /*description=*/ "This is a cloned bucket",
+            // Gcs bucket cloud instance id must be lower-case.
+            /*cloudInstanceName=*/ RandomStringUtils.randomAlphabetic(5).toLowerCase(Locale.ROOT));
+
+    ImmutableMap<String, String> properties = bucketToClone.getProperties();
+    assertFalse(properties.containsKey(FOLDER_ID_KEY));
+    assertEquals("bar", properties.get("foo"));
+  }
+
+  private static ControlledResourceFields makeControlledResourceFieldsWithCustomProperties() {
+    return makeControlledResourceFieldsBuilder(WORKSPACE_ID)
+        .properties(Map.of(FOLDER_ID_KEY, UUID.randomUUID().toString(), "foo", "bar"))
+        .build();
+  }
+
+  @Test
   public void buildDestinationReferencedResource_attributesCopied() {
     ReferencedDataRepoSnapshotResource referencedResource =
         ReferenceResourceFixtures.makeDataRepoSnapshotResource(WORKSPACE_ID);
@@ -202,8 +231,9 @@ public class WorkspaceCloneUtilsTest extends BaseUnitTest {
                 /*name=*/ RandomStringUtils.randomAlphabetic(5),
                 /*description=*/ "This is a cloned data repo snapshot referenced resource");
 
-    assertFalse(snapshotToClone.getProperties().containsKey(FOLDER_ID_KEY));
-    assertEquals("bar", snapshotToClone.getProperties().get("foo"));
+    ImmutableMap<String, String> properties = snapshotToClone.getProperties();
+    assertFalse(properties.containsKey(FOLDER_ID_KEY));
+    assertEquals("bar", properties.get("foo"));
   }
 
   private static void assertResourceCommonFields(

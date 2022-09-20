@@ -465,11 +465,20 @@ public class ControlledResourceFixtures {
    */
   public static ControlledResourceFields makeDefaultControlledResourceFields(
       @Nullable UUID inWorkspaceId) {
+    return makeControlledResourceFieldsBuilder(inWorkspaceId).build();
+  }
+
+  /**
+   * Returns a {@link ControlledResourceFields.Builder} with default values. This builder can be
+   * modified for particular fields before being included in a controlled resource builder.
+   */
+  public static ControlledResourceFields.Builder makeControlledResourceFieldsBuilder(
+      @Nullable UUID inWorkspaceId) {
     ControlledResourceFields.Builder builder = makeDefaultControlledResourceFieldsBuilder();
     if (inWorkspaceId != null) {
       builder.workspaceUuid(inWorkspaceId);
     }
-    return builder.build();
+    return builder;
   }
 
   /**
