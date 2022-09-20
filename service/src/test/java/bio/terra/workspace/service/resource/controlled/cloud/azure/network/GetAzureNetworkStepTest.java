@@ -26,8 +26,6 @@ import com.azure.resourcemanager.network.models.Networks;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
-import org.springframework.test.context.ActiveProfiles;
-
 
 public class GetAzureNetworkStepTest extends BaseAzureTest {
   private static final String STUB_STRING_RETURN = "stubbed-return";

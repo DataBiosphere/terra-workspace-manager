@@ -18,8 +18,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
-import org.springframework.test.context.ActiveProfiles;
-
 
 public class CreateAzureStorageStepTest extends BaseStorageStepTest {
 

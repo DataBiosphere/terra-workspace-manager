@@ -27,8 +27,6 @@ import com.azure.resourcemanager.relay.models.RelayNamespace;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
-import org.springframework.test.context.ActiveProfiles;
-
 
 public class GetAzureRelayNamespaceStepTest extends BaseAzureTest {
 
