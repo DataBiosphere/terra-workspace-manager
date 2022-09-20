@@ -7,6 +7,7 @@ import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
 import bio.terra.workspace.common.exception.InternalLogicException;
 import bio.terra.workspace.db.ApplicationDao;
 import bio.terra.workspace.db.ResourceDao;
+import bio.terra.workspace.generated.model.ApiAzureHybridConnectionCreationParameters;
 import bio.terra.workspace.generated.model.ApiAzureRelayNamespaceCreationParameters;
 import bio.terra.workspace.generated.model.ApiAzureVmCreationParameters;
 import bio.terra.workspace.generated.model.ApiCloningInstructionsEnum;
@@ -24,6 +25,7 @@ import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.resource.ResourceValidationUtils;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceSyncMapping.SyncMapping;
+import bio.terra.workspace.service.resource.controlled.cloud.azure.hybridConnection.ControlledAzureHybridConnectionResource;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.relayNamespace.ControlledAzureRelayNamespaceResource;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.vm.ControlledAzureVmResource;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.GcpPolicyBuilder;
@@ -95,6 +97,24 @@ public class ControlledResourceService {
   public String createAzureRelayNamespace(
       ControlledAzureRelayNamespaceResource resource,
       ApiAzureRelayNamespaceCreationParameters creationParameters,
+      ControlledResourceIamRole privateResourceIamRole,
+      ApiJobControl jobControl,
+      String resultPath,
+      AuthenticatedUserRequest userRequest) {
+
+    JobBuilder jobBuilder =
+        commonCreationJobBuilder(
+                resource, privateResourceIamRole, jobControl, resultPath, userRequest)
+            .addParameter(ControlledResourceKeys.CREATION_PARAMETERS, creationParameters);
+
+    String jobId = jobBuilder.submit();
+    waitForResourceOrJob(resource.getWorkspaceId(), resource.getResourceId(), jobId);
+    return jobId;
+  }
+
+  public String createAzureHybridConnection(
+      ControlledAzureHybridConnectionResource resource,
+      ApiAzureHybridConnectionCreationParameters creationParameters,
       ControlledResourceIamRole privateResourceIamRole,
       ApiJobControl jobControl,
       String resultPath,

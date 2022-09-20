@@ -1,0 +1,148 @@
+paths:
+  /api/workspaces/v1/{workspaceId}/resources/controlled/azure/hybridConnection:
+    parameters:
+      - $ref: '#/components/parameters/WorkspaceId'
+    post:
+      summary: Asynchronously create a new controlled Azure Hybrid Connection
+      operationId: createAzureHybridConnnection
+      tags: [ControlledAzureResource]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateControlledAzureHybridConnectionRequestBody'
+      responses:
+        '202':
+          $ref: '#/components/responses/CreateControlledAzureHybridConnectionResponse'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /api/workspaces/v1/{workspaceId}/resources/controlled/azure/hybridConnection/create-result/{jobId}:
+    parameters:
+      - $ref: '#/components/parameters/WorkspaceId'
+      - $ref: '#/components/parameters/JobId'
+    get:
+      summary: Retrieve information about an Azure Hybrid Connection create job.
+      operationId: getCreateAzureHybridConnectionResult
+      tags: [ ControlledAzureResource ]
+      responses:
+        '200':
+          $ref: '#/components/responses/CreateControlledAzureHybridConnectionResponse'
+        '202':
+          $ref: '#/components/responses/CreateControlledAzureHybridConnectionResponse'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /api/workspaces/v1/{workspaceId}/resources/controlled/azure/hybridConnection/{resourceId}:
+    parameters:
+      - $ref: '#/components/parameters/WorkspaceId'
+      - $ref: '#/components/parameters/ResourceId'
+    get:
+      summary: Get a controlled Azure Hybrid Connection resource
+      operationId: getAzureHybridConnection
+      tags: [ControlledAzureResource]
+      responses:
+        '200':
+          $ref: '#/components/responses/GetControlledAzureHybridConnectionResponse'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+    post:
+      summary: |
+        Delete an Azure Hybrid Connection
+      operationId: deleteAzureHybridConnection
+      tags: [ControlledAzureResource]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeleteControlledAzureResourceRequest'
+      responses:
+        '200':
+          $ref: '#/components/responses/DeleteControlledAzureResourceResponse'
+        '202':
+          $ref: '#/components/responses/DeleteControlledAzureResourceResponse'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /api/workspaces/v1/{workspaceId}/resources/controlled/azure/hybridConnection/delete-result/{jobId}:
+    parameters:
+      - $ref: '#/components/parameters/WorkspaceId'
+      - $ref: '#/components/parameters/JobId'
+    get:
+      summary: Retrieve information about an azure hybrid connection deletion job.
+      operationId: getDeleteAzureHybridConnectionResult
+      tags: [ControlledAzureResource]
+      responses:
+        '200':
+          $ref: '#/components/responses/DeleteControlledAzureResourceResponse'
+        '202':
+          $ref: '#/components/responses/DeleteControlledAzureResourceResponse'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+components:
+  schemas:
+    AzureHybridConnectionCreationParameters:
+      description: >-
+        Hybrid connection specific properties to be set on creation. These are a subset of the values
+        accepted by the azure resource API
+      type: object
+      required: [region]
+      properties:
+        region:
+          description: |
+            A valid region string representation per https://docs.microsoft.com/en-us/dotnet/api/microsoft.azure.management.resourcemanager.fluent.core.region.
+            It is best to look at the Region class definition for valid strings (e.g. 'eastus' == Region.US_EAST.toString())
+          type: string
+
+    CreateControlledAzureHybridConnectionRequestBody:
+      description: Payload for requesting a new controlled Azure IP resource.
+      type: object
+      properties:
+        common:
+          $ref: '#/components/schemas/ControlledResourceCommonFields'
+        azureRelayNamespace:
+          $ref: '#/components/schemas/AzureHybridConnectionCreationParameters'
+        jobControl:
+          $ref: '#/components/schemas/JobControl'
+
+    CreateControlledAzureHybridConnectionResult:
+      description: Response payload for requesting a new Azure Hybrid Connection
+      type: object
+      properties:
+        azureHybridConnectionSpace:
+          $ref: '#/components/schemas/AzureHybridConnectionResource'
+        jobReport:
+          $ref: '#/components/schemas/JobReport'
+        errorReport:
+          $ref: '#/components/schemas/ErrorReport'
+
+  responses:
+    CreateControlledAzureHybridConnectionResponse:
+      description: Response to create controlled azure hybrid connection
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/CreateControlledAzureHybridConnectionResult'
+
+
+    GetControlledAzureHybridConnectionResponse:
+      description: Response to get Hybrid connection
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/AzureHybridConnectionResource'

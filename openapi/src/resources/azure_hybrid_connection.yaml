@@ -1,0 +1,24 @@
+components:
+  schemas:
+    AzureHybridConnectionAttributes:
+      description: >-
+        Azure Hybrid Connecction properties included in post-creation get. Others must be retrieved from Azure using the name.
+      type: object
+      properties:
+        namespaceName:
+          description: Name of created hybrid connection (not the resource name).
+          type: string
+        region:
+          description: Azure region of created resource
+          type: string
+
+    AzureHybridConnectionResource:
+      type: object
+      description: Description of an Azure Hybrid Connection
+      required: [metadata, attributes]
+      properties:
+        metadata:
+          description: the resource metadata common to all resources
+          $ref: '#/components/schemas/ResourceMetadata'
+        attributes:
+          $ref: '#/components/schemas/AzureHybridConnectionAttributes'

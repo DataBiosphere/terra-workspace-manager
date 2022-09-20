@@ -3,6 +3,8 @@ package bio.terra.workspace.service.resource.model;
 import bio.terra.workspace.generated.model.ApiResourceType;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.disk.ControlledAzureDiskHandler;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.disk.ControlledAzureDiskResource;
+import bio.terra.workspace.service.resource.controlled.cloud.azure.hybridConnection.ControlledAzureHybridConnectionHandler;
+import bio.terra.workspace.service.resource.controlled.cloud.azure.hybridConnection.ControlledAzureHybridConnectionResource;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.ip.ControlledAzureIpHandler;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.ip.ControlledAzureIpResource;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.network.ControlledAzureNetworkHandler;
@@ -136,6 +138,13 @@ public enum WsmResourceType {
       ApiResourceType.AZURE_RELAY_NAMESPACE,
       ControlledAzureRelayNamespaceResource.class,
       ControlledAzureRelayNamespaceHandler::getHandler),
+  CONTROLLED_AZURE_HYBRID_CONNECTION(
+      CloudPlatform.AZURE,
+      StewardshipType.CONTROLLED,
+      "CONTROLLED_AZURE_HYBRID_CONNECTION",
+      ApiResourceType.AZURE_HYBRID_CONNECTION,
+      ControlledAzureHybridConnectionResource.class,
+      ControlledAzureHybridConnectionHandler::getHandler),
   CONTROLLED_AZURE_DISK(
       CloudPlatform.AZURE,
       StewardshipType.CONTROLLED,

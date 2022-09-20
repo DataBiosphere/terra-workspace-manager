@@ -39,6 +39,11 @@ public enum WsmResourceFamily {
       WsmResourceType.REFERENCED_GCP_BIG_QUERY_DATA_TABLE,
       null), // no controlled type for BQ data table
   AZURE_IP("AZURE_IP", ApiResourceType.AZURE_IP, null, WsmResourceType.CONTROLLED_AZURE_IP),
+  AZURE_HYBRID_CONNECTION(
+      "AZURE_HYBRID_CONNECTION",
+      ApiResourceType.AZURE_HYBRID_CONNECTION,
+      null,
+      WsmResourceType.CONTROLLED_AZURE_HYBRID_CONNECTION),
   AZURE_RELAY_NAMESPACE(
       "AZURE_RELAY_NAMESPACE",
       ApiResourceType.AZURE_RELAY_NAMESPACE,
