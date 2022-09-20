@@ -30,15 +30,14 @@ import bio.terra.workspace.generated.model.ApiTpsPolicyPair;
 import bio.terra.workspace.generated.model.ApiTpsUpdateMode;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
-import org.apache.commons.lang3.StringUtils;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
-
-import javax.annotation.Nullable;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import javax.annotation.Nullable;
+import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
 @Component
 public class TpsApiDispatch {
@@ -158,9 +157,15 @@ public class TpsApiDispatch {
 
   private static PaoUpdateMode updateModeFromApi(ApiTpsUpdateMode apiUpdateMode) {
     switch (apiUpdateMode) {
-      case DRY_RUN -> { return PaoUpdateMode.DRY_RUN; }
-      case FAIL_ON_CONFLICT -> { return PaoUpdateMode.FAIL_ON_CONFLICT; }
-      case ENFORCE_CONFLICT -> { return PaoUpdateMode.ENFORCE_CONFLICTS; }
+      case DRY_RUN -> {
+        return PaoUpdateMode.DRY_RUN;
+      }
+      case FAIL_ON_CONFLICT -> {
+        return PaoUpdateMode.FAIL_ON_CONFLICT;
+      }
+      case ENFORCE_CONFLICT -> {
+        return PaoUpdateMode.ENFORCE_CONFLICTS;
+      }
     }
     throw new TpsInvalidInputException("Invalid update mode: " + apiUpdateMode);
   }
@@ -171,11 +176,12 @@ public class TpsApiDispatch {
         .resultingPao(paoToApi(result.computedPao()));
 
     for (PolicyConflict conflict : result.conflicts()) {
-      var apiConflict = new ApiTpsPaoConflict()
-          .namespace(conflict.policyName().getNamespace())
-          .name(conflict.policyName().getName())
-          .targetPao(paoToApiPaoDescription(conflict.pao()))
-          .conflictPao(paoToApiPaoDescription(conflict.conflictPao()));
+      var apiConflict =
+          new ApiTpsPaoConflict()
+              .namespace(conflict.policyName().getNamespace())
+              .name(conflict.policyName().getName())
+              .targetPao(paoToApiPaoDescription(conflict.pao()))
+              .conflictPao(paoToApiPaoDescription(conflict.conflictPao()));
       apiResult.addConflictsItem(apiConflict);
     }
 
@@ -224,32 +230,34 @@ public class TpsApiDispatch {
             () -> new PolicyObjectNotFoundException("Policy object not found: " + objectId));
   }
 
-  public ApiTpsPaoUpdateResult linkPao(BearerToken bearerToken, UUID objectId, ApiTpsPaoSourceRequest body) {
-    PolicyUpdateResult result = paoService.linkSourcePao(
-        objectId,
-        body.getSourceObjectId(),
-        updateModeFromApi(body.getUpdateMode()));
+  public ApiTpsPaoUpdateResult linkPao(
+      BearerToken bearerToken, UUID objectId, ApiTpsPaoSourceRequest body) {
+    PolicyUpdateResult result =
+        paoService.linkSourcePao(
+            objectId, body.getSourceObjectId(), updateModeFromApi(body.getUpdateMode()));
 
     return updateResultToApi(result);
   }
 
-  public ApiTpsPaoUpdateResult mergePao(BearerToken bearerToken, UUID objectId, ApiTpsPaoSourceRequest body) {
-    PolicyUpdateResult result = paoService.mergeFromPao(
-        objectId,
-        body.getSourceObjectId(),
-        updateModeFromApi(body.getUpdateMode()));
+  public ApiTpsPaoUpdateResult mergePao(
+      BearerToken bearerToken, UUID objectId, ApiTpsPaoSourceRequest body) {
+    PolicyUpdateResult result =
+        paoService.mergeFromPao(
+            objectId, body.getSourceObjectId(), updateModeFromApi(body.getUpdateMode()));
 
     return updateResultToApi(result);
   }
 
-  public ApiTpsPaoUpdateResult updatePao(BearerToken bearerToken, UUID objectId, ApiTpsPaoUpdateRequest body) {
+  public ApiTpsPaoUpdateResult updatePao(
+      BearerToken bearerToken, UUID objectId, ApiTpsPaoUpdateRequest body) {
 
-    PolicyUpdateResult result = paoService.updatePao(objectId,
-        policyInputsFromApi(body.getAddAttributes()),
-        policyInputsFromApi(body.getRemoveAttributes()),
-        updateModeFromApi(body.getUpdateMode()));
+    PolicyUpdateResult result =
+        paoService.updatePao(
+            objectId,
+            policyInputsFromApi(body.getAddAttributes()),
+            policyInputsFromApi(body.getRemoveAttributes()),
+            updateModeFromApi(body.getUpdateMode()));
 
     return updateResultToApi(result);
   }
-
 }

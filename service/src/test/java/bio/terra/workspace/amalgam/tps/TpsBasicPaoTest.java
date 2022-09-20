@@ -1,5 +1,15 @@
 package bio.terra.workspace.amalgam.tps;
 
+import static bio.terra.workspace.common.utils.MockMvcUtils.addAuth;
+import static bio.terra.workspace.common.utils.MockMvcUtils.addJsonContentType;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+
 import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
 import bio.terra.workspace.common.BaseUnitTest;
 import bio.terra.workspace.generated.model.ApiTpsComponent;
@@ -15,25 +25,14 @@ import bio.terra.workspace.generated.model.ApiTpsPolicyPair;
 import bio.terra.workspace.generated.model.ApiTpsUpdateMode;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.util.Optional;
+import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
-
-import java.util.Optional;
-import java.util.UUID;
-
-import static bio.terra.workspace.common.utils.MockMvcUtils.addAuth;
-import static bio.terra.workspace.common.utils.MockMvcUtils.addJsonContentType;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.junit.jupiter.api.Assertions.fail;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 
 public class TpsBasicPaoTest extends BaseUnitTest {
   private static final String TERRA = "terra";

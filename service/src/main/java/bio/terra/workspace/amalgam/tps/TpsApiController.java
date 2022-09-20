@@ -7,13 +7,12 @@ import bio.terra.workspace.generated.model.ApiTpsPaoGetResult;
 import bio.terra.workspace.generated.model.ApiTpsPaoSourceRequest;
 import bio.terra.workspace.generated.model.ApiTpsPaoUpdateRequest;
 import bio.terra.workspace.generated.model.ApiTpsPaoUpdateResult;
+import java.util.UUID;
+import javax.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
-
-import javax.servlet.http.HttpServletRequest;
-import java.util.UUID;
 
 /**
  * This controller simply extracts the bearer token from the request and calls TpsApiDispatch. That

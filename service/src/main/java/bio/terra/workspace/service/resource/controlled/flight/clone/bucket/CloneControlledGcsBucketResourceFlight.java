@@ -47,16 +47,16 @@ public class CloneControlledGcsBucketResourceFlight extends Flight {
         ControlledResourceKeys.DESTINATION_RESOURCE_ID);
 
     FlightBeanBag flightBeanBag = FlightBeanBag.getFromObject(applicationContext);
-    var sourceResource =
-        inputParameters.get(ResourceKeys.RESOURCE, ControlledResource.class);
+    var sourceResource = inputParameters.get(ResourceKeys.RESOURCE, ControlledResource.class);
     var userRequest =
         inputParameters.get(JobMapKeys.AUTH_USER_INFO.getKeyName(), AuthenticatedUserRequest.class);
     var destinationWorkspaceId =
         inputParameters.get(ControlledResourceKeys.DESTINATION_WORKSPACE_ID, UUID.class);
 
     boolean mergePolicies =
-        Optional.ofNullable(inputParameters.get(
-            WorkspaceFlightMapKeys.MERGE_POLICIES, Boolean.class)).orElse(false);
+        Optional.ofNullable(
+                inputParameters.get(WorkspaceFlightMapKeys.MERGE_POLICIES, Boolean.class))
+            .orElse(false);
     ControlledGcsBucketResource sourceBucket =
         sourceResource.castByEnum(WsmResourceType.CONTROLLED_GCP_GCS_BUCKET);
     CloningInstructions resolvedCloningInstructions =
@@ -77,11 +77,12 @@ public class CloneControlledGcsBucketResourceFlight extends Flight {
               sourceResource, flightBeanBag.getControlledResourceMetadataManager(), userRequest),
           RetryRules.shortExponential());
       if (mergePolicies) {
-        addStep(new ClonePolicyAttributesStep(
-            sourceResource.getWorkspaceId(),
-            destinationWorkspaceId,
-            userRequest,
-            flightBeanBag.getTpsApiDispatch()));
+        addStep(
+            new ClonePolicyAttributesStep(
+                sourceResource.getWorkspaceId(),
+                destinationWorkspaceId,
+                userRequest,
+                flightBeanBag.getTpsApiDispatch()));
       }
       addStep(
           new RetrieveControlledResourceMetadataStep(

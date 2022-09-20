@@ -1,7 +1,6 @@
 package bio.terra.workspace.service.resource.exception;
 
 import bio.terra.common.exception.ConflictException;
-
 import java.util.List;
 
 public class PolicyConflictException extends ConflictException {
