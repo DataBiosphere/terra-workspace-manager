@@ -143,7 +143,7 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
   }
 
   @Override
-  public ResponseEntity<Void> updateBucketObjectReferenceResource(
+  public ResponseEntity<ApiGcpGcsObjectResource> updateBucketObjectReferenceResource(
       UUID workspaceUuid, UUID referenceId, ApiUpdateGcsBucketObjectReferenceRequestBody body) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     workspaceService.validateWorkspaceAndAction(
@@ -189,7 +189,12 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
           null, // included in resource arg
           userRequest);
     }
-    return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+
+    final ReferencedGcsObjectResource updatedResource =
+        referenceResourceService
+            .getReferenceResource(workspaceUuid, referenceId)
+            .castByEnum(WsmResourceType.REFERENCED_GCP_GCS_OBJECT);
+    return new ResponseEntity<>(updatedResource.toApiResource(), HttpStatus.OK);
   }
 
   @Override
@@ -255,7 +260,7 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
   }
 
   @Override
-  public ResponseEntity<Void> updateBucketReferenceResource(
+  public ResponseEntity<ApiGcpGcsBucketResource> updateBucketReferenceResource(
       UUID workspaceUuid, UUID referenceId, ApiUpdateGcsBucketReferenceRequestBody body) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     workspaceService.validateWorkspaceAndAction(
@@ -295,7 +300,12 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
           null, // passed in via resource argument
           userRequest);
     }
-    return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+
+    final ReferencedGcsBucketResource updatedResource =
+        referenceResourceService
+            .getReferenceResource(workspaceUuid, referenceId)
+            .castByEnum(WsmResourceType.REFERENCED_GCP_GCS_BUCKET);
+    return new ResponseEntity<>(updatedResource.toApiResource(), HttpStatus.OK);
   }
 
   @Override
@@ -363,7 +373,7 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
   }
 
   @Override
-  public ResponseEntity<Void> updateBigQueryDataTableReferenceResource(
+  public ResponseEntity<ApiGcpBigQueryDataTableResource> updateBigQueryDataTableReferenceResource(
       UUID workspaceUuid, UUID referenceId, ApiUpdateBigQueryDataTableReferenceRequestBody body) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     workspaceService.validateWorkspaceAndAction(
@@ -410,7 +420,11 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
           userRequest);
     }
 
-    return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+    final ReferencedBigQueryDataTableResource updatedResource =
+        referenceResourceService
+            .getReferenceResource(workspaceUuid, referenceId)
+            .castByEnum(WsmResourceType.REFERENCED_GCP_BIG_QUERY_DATA_TABLE);
+    return new ResponseEntity<>(updatedResource.toApiResource(), HttpStatus.OK);
   }
 
   @Override
@@ -485,7 +499,7 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
   }
 
   @Override
-  public ResponseEntity<Void> updateBigQueryDatasetReferenceResource(
+  public ResponseEntity<ApiGcpBigQueryDatasetResource> updateBigQueryDatasetReferenceResource(
       UUID workspaceUuid, UUID resourceId, ApiUpdateBigQueryDatasetReferenceRequestBody body) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     workspaceService.validateWorkspaceAndAction(
@@ -527,7 +541,12 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
           cloningInstructions,
           userRequest);
     }
-    return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+
+    final ReferencedBigQueryDatasetResource updatedResource =
+        referenceResourceService
+            .getReferenceResource(workspaceUuid, resourceId)
+            .castByEnum(WsmResourceType.REFERENCED_GCP_BIG_QUERY_DATASET);
+    return new ResponseEntity<>(updatedResource.toApiResource(), HttpStatus.OK);
   }
 
   @Override
@@ -950,7 +969,7 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
   }
 
   @Override
-  public ResponseEntity<Void> updateGitRepoReference(
+  public ResponseEntity<ApiGitRepoResource> updateGitRepoReference(
       UUID workspaceUuid, UUID referenceId, ApiUpdateGitRepoReferenceRequestBody body) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     workspaceService.validateWorkspaceAndAction(
@@ -984,7 +1003,12 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
           CloningInstructions.fromApiModel(body.getCloningInstructions()),
           userRequest);
     }
-    return new ResponseEntity<>(HttpStatus.OK);
+
+    final ReferencedGitRepoResource updatedResource =
+        referenceResourceService
+            .getReferenceResource(workspaceUuid, referenceId)
+            .castByEnum(WsmResourceType.REFERENCED_ANY_GIT_REPO);
+    return new ResponseEntity<>(updatedResource.toApiResource(), HttpStatus.OK);
   }
 
   @Override

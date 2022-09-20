@@ -52,8 +52,8 @@ paths:
             schema:
               $ref: '#/components/schemas/UpdateGcsBucketReferenceRequestBody'
       responses:
-        '204':
-          description: OK
+        '200':
+          $ref: '#/components/responses/GcpGcsBucketReferenceResponse'
         '403':
           $ref: '#/components/responses/PermissionDenied'
         '404':

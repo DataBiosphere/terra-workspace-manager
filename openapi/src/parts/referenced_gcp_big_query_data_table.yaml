@@ -55,8 +55,8 @@ paths:
             schema:
               $ref: '#/components/schemas/UpdateBigQueryDataTableReferenceRequestBody'
       responses:
-        '204':
-          description: OK
+        '200':
+          $ref: '#/components/responses/GcpBigQueryDataTableReferenceResponse'
         '403':
           $ref: '#/components/responses/PermissionDenied'
         '404':
