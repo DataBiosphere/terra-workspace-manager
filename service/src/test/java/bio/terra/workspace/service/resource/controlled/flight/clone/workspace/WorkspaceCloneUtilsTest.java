@@ -1,9 +1,11 @@
 package bio.terra.workspace.service.resource.controlled.flight.clone.workspace;
 
+import static bio.terra.workspace.app.controller.shared.PropertiesUtils.ResourcePropertiesKey.FOLDER_ID_KEY;
 import static bio.terra.workspace.service.resource.controlled.flight.clone.workspace.WorkspaceCloneUtils.buildDestinationControlledBigQueryDataset;
 import static bio.terra.workspace.service.resource.controlled.flight.clone.workspace.WorkspaceCloneUtils.buildDestinationControlledGcsBucket;
 import static bio.terra.workspace.service.resource.controlled.flight.clone.workspace.WorkspaceCloneUtils.buildDestinationReferencedResource;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 
 import bio.terra.workspace.common.BaseUnitTest;
 import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
@@ -19,6 +21,7 @@ import bio.terra.workspace.service.resource.referenced.cloud.gcp.datareposnapsho
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.UUID;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.jupiter.api.Test;
@@ -151,6 +154,30 @@ public class WorkspaceCloneUtilsTest extends BaseUnitTest {
         referencedResource, cloneResourceName, cloneDescription, snapshotToClone);
     assertEquals(referencedResource.getSnapshotId(), snapshotToClone.getSnapshotId());
     assertEquals(referencedResource.getInstanceName(), snapshotToClone.getInstanceName());
+  }
+
+  @Test
+  public void buildDestinationReferencedResource_clearSomeProperties() {
+    ReferencedDataRepoSnapshotResource referencedResource =
+        ReferenceResourceFixtures.makeDataRepoSnapshotResource(WORKSPACE_ID);
+    referencedResource.toBuilder()
+        .wsmResourceFields(
+            referencedResource.getWsmResourceFields().toBuilder()
+                .properties(Map.of(FOLDER_ID_KEY, UUID.randomUUID().toString(), "foo", "bar"))
+                .build())
+        .build();
+
+    var snapshotToClone =
+        (ReferencedDataRepoSnapshotResource)
+            buildDestinationReferencedResource(
+                referencedResource,
+                DESTINATION_WORKSPACE_ID,
+                DESTINATION_RESOURCE_ID,
+                /*name=*/ RandomStringUtils.randomAlphabetic(5),
+                /*description=*/ "This is a cloned data repo snapshot referenced resource");
+
+    assertFalse(snapshotToClone.getProperties().containsKey(FOLDER_ID_KEY));
+    assertEquals("bar", snapshotToClone.getProperties().get("foo"));
   }
 
   private static void assertResourceCommonFields(
