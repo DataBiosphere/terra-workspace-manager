@@ -85,10 +85,15 @@ public class MockMvcUtils {
       "/api/workspaces/v1/%s/resources/controlled/azure/network";
   public static final String CREATE_AZURE_VM_PATH_FORMAT =
       "/api/workspaces/v1/%s/resources/controlled/azure/vm";
+
+  public static final String CREATE_CONTROLLED_GCP_GCS_BUCKET_FORMAT =
+      "/api/workspaces/v1/%s/resources/controlled/gcp/buckets";
+  public static final String GET_CONTROLLED_GCP_GCS_BUCKET_FORMAT =
+      "/api/workspaces/v1/%s/resources/controlled/gcp/buckets/%s";
+  public static final String GET_REFERENCED_GCP_GCS_BUCKET_FORMAT =
+      "/api/workspaces/v1/%s/resources/referenced/gcp/buckets/%s";
   public static final String CLONE_CONTROLLED_GCP_GCS_BUCKET_FORMAT =
       "/api/workspaces/v1/%s/resources/controlled/gcp/buckets/%s/clone";
-  public static final String CLONE_RESULT_CONTROLLED_GCP_GCS_BUCKET_FORMAT =
-      "/api/workspaces/v1/%s/resources/controlled/gcp/buckets/clone-result/%s";
   public static final String GENERATE_GCP_GCS_BUCKET_NAME_PATH_FORMAT =
       "/api/workspaces/v1/%s/resources/controlled/gcp/buckets/generateName";
   public static final String GENERATE_GCP_BQ_DATASET_NAME_PATH_FORMAT =
@@ -292,7 +297,7 @@ public class MockMvcUtils {
     return objectMapper.readValue(serializedGetResponse, ApiGcpBigQueryDatasetResource.class);
   }
 
-  public ApiCreatedControlledGcpGcsBucket createGcsBucket(
+  public ApiCreatedControlledGcpGcsBucket createControlledGcsBucket(
       AuthenticatedUserRequest userRequest, UUID workspaceId) throws Exception {
     ApiCreateControlledGcpGcsBucketRequestBody gcsBucketCreationRequest =
         new ApiCreateControlledGcpGcsBucketRequestBody()
@@ -318,7 +323,7 @@ public class MockMvcUtils {
     return objectMapper.readValue(serializedGetResponse, ApiCreatedControlledGcpGcsBucket.class);
   }
 
-  public ApiGcpGcsBucketResource getGcsBucket(
+  public ApiGcpGcsBucketResource getControlledGcsBucket(
       AuthenticatedUserRequest userRequest, UUID workspaceId, UUID resourceId) throws Exception {
     String serializedGetResponse =
         mockMvc
@@ -336,6 +341,24 @@ public class MockMvcUtils {
             .getContentAsString();
 
     return objectMapper.readValue(serializedGetResponse, ApiGcpGcsBucketResource.class);
+  }
+
+  public ApiGcpGcsBucketResource getReferencedGcsBucket(AuthenticatedUserRequest userRequest, UUID workspaceId, UUID resourceId)
+      throws Exception {
+    String serializedResponse =
+        mockMvc
+            .perform(
+                addJsonContentType(
+                    addAuth(
+                        get(
+                            GET_REFERENCED_GCP_GCS_BUCKET_FORMAT.formatted(
+                                workspaceId.toString(), resourceId.toString())),
+                        userRequest)))
+            .andExpect(status().is(HttpStatus.SC_OK))
+            .andReturn()
+            .getResponse()
+            .getContentAsString();
+    return objectMapper.readValue(serializedResponse, ApiGcpGcsBucketResource.class);
   }
 
   public void grantRole(

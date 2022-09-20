@@ -38,18 +38,18 @@ import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.springframework.boot.test.mock.mockito.MockBean;
 
-public class CopyGcsBucketDefinitionStepTest extends BaseUnitTest {
+public class CopyGcsBucketDefinitionToControlledStepTest extends BaseUnitTest {
 
   @MockBean private FlightContext mockFlightContext;
   @MockBean private AuthenticatedUserRequest mockUserRequest;
   @MockBean private ControlledResourceService mockControlledResourceService;
   @MockBean private GcpCloudContextService gcpCloudContextService;
-  private CopyGcsBucketDefinitionStep copyGcsBucketDefinitionStep;
+  private CopyGcsBucketDefinitionToControlledStep copyGcsBucketDefinitionStep;
 
   @BeforeEach
   public void setup() throws InterruptedException {
     copyGcsBucketDefinitionStep =
-        new CopyGcsBucketDefinitionStep(
+        new CopyGcsBucketDefinitionToControlledStep(
             mockUserRequest,
             SOURCE_BUCKET_RESOURCE,
             mockControlledResourceService,

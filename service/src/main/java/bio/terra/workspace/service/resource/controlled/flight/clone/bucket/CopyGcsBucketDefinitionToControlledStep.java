@@ -27,10 +27,12 @@ import javax.annotation.Nullable;
 import org.springframework.http.HttpStatus;
 
 /**
- * Copy the definition of a GCS bucket (i.e. everything but the data) into a destionation bucket.
+ * Copy the definition of a GCS bucket (i.e. everything but the data) into a destination controlled
+ * bucket.
  *
- * <p>Preconditions: Source bucket exists in GCS. Cloning insitructions are either COPY_RESOURCE or
- * COPY_DEFINITION. DESTINATION_WORKSPACE_ID has been created and is in the input parameters map.
+ * <p>Preconditions: Source controlled bucket exists in GCS. Cloning instructions are either
+ * COPY_RESOURCE or COPY_DEFINITION. DESTINATION_WORKSPACE_ID has been created and is in the input
+ * parameters map.
  *
  * <p>Post conditions: A controlled GCS bucket resource is created for the destination. Its
  * RESOURCE_NAME is taken either from the input parameters or the source resource name, if not in
@@ -39,15 +41,17 @@ import org.springframework.http.HttpStatus;
  * CLONED_RESOURCE_DEFINITION is put into the working map for future steps. A
  * CLONE_DEFINITION_RESULT object is put into the working map, and if the cloning instructions are
  * COPY_DEFINITION, the response is set on the flight.
+ *
+ * <p>Keep in sync with CopyGcsBucketDefinitionToReferencedStep.
  */
-public class CopyGcsBucketDefinitionStep implements Step {
+public class CopyGcsBucketDefinitionToControlledStep implements Step {
 
   private final AuthenticatedUserRequest userRequest;
   private final ControlledGcsBucketResource sourceBucket;
   private final ControlledResourceService controlledResourceService;
   private final CloningInstructions resolvedCloningInstructions;
 
-  public CopyGcsBucketDefinitionStep(
+  public CopyGcsBucketDefinitionToControlledStep(
       AuthenticatedUserRequest userRequest,
       ControlledGcsBucketResource sourceBucket,
       ControlledResourceService controlledResourceService,
@@ -113,16 +117,16 @@ public class CopyGcsBucketDefinitionStep implements Step {
         IamRoleUtils.getIamRoleForAccessScope(sourceBucket.getAccessScope());
 
     // Launch a CreateControlledResourcesFlight to make the destination bucket
-    ControlledGcsBucketResource clonedBucket =
+    ControlledGcsBucketResource createdBucket =
         controlledResourceService
             .createControlledResourceSync(
                 destinationBucketResource, iamRole, userRequest, destinationCreationParameters)
             .castByEnum(WsmResourceType.CONTROLLED_GCP_GCS_BUCKET);
-    workingMap.put(ControlledResourceKeys.CLONED_RESOURCE_DEFINITION, clonedBucket);
+    workingMap.put(ControlledResourceKeys.CLONED_RESOURCE_DEFINITION, createdBucket);
 
     var apiCreatedBucket =
         new ApiCreatedControlledGcpGcsBucket()
-            .gcpBucket(clonedBucket.toApiResource())
+            .gcpBucket(createdBucket.toApiResource())
             .resourceId(destinationBucketResource.getResourceId());
 
     var apiBucketResult =

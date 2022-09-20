@@ -18,12 +18,15 @@ import bio.terra.workspace.service.resource.controlled.ControlledResourceService
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import bio.terra.workspace.service.resource.exception.ResourceNotFoundException;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
+import bio.terra.workspace.service.resource.referenced.cloud.gcp.ReferencedResourceService;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ResourceKeys;
 import java.time.Duration;
 import java.util.UUID;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.TestInstance.Lifecycle;
@@ -46,12 +49,13 @@ public class CloneControlledGcsBucketResourceFlightTest extends BaseConnectedTes
   @Autowired WorkspaceConnectedTestUtils workspaceUtils;
   @Autowired ResourceConnectedTestUtils resourceUtils;
   @Autowired ControlledResourceService controlledResourceService;
+  @Autowired ReferencedResourceService referencedResourceService;
 
   private UUID workspaceId;
   private ControlledResource sourceResource;
   private UUID destResourceId;
 
-  @BeforeEach
+  @BeforeAll
   public void setup() throws Exception {
     workspaceId =
         workspaceUtils
@@ -65,6 +69,12 @@ public class CloneControlledGcsBucketResourceFlightTest extends BaseConnectedTes
   }
 
   @AfterEach
+    sourceResource =
+        resourceUtils.createControlledBucket(userAccessUtils.defaultUserAuthRequest(), workspaceId);
+    destResourceId = UUID.randomUUID();
+  }
+
+  @AfterAll
   public void cleanup() throws Exception {
     workspaceUtils.deleteWorkspaceAndGcpContext(
         userAccessUtils.defaultUserAuthRequest(), workspaceId);
@@ -73,6 +83,11 @@ public class CloneControlledGcsBucketResourceFlightTest extends BaseConnectedTes
   @Test
   void cloneBucket_copyResource_undo() throws Exception {
     testCloneBucket_undo(CloningInstructions.COPY_RESOURCE);
+  }
+
+  @Test
+  void cloneBucket_copyReference_undo() throws Exception {
+    testCloneBucket_undo(CloningInstructions.COPY_REFERENCE);
   }
 
   /**
@@ -107,7 +122,7 @@ public class CloneControlledGcsBucketResourceFlightTest extends BaseConnectedTes
     ResourceNotFoundException exception =
         assertThrows(
             ResourceNotFoundException.class,
-            () -> controlledResourceService.getControlledResource(workspaceId, destResourceId));
+            () -> referencedResourceService.getReferenceResource(workspaceId, destResourceId));
     assertEquals(HttpStatus.NOT_FOUND, exception.getStatusCode());
   }
 }
