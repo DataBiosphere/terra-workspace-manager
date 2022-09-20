@@ -9,13 +9,16 @@ import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.bqdataset.ControlledBigQueryDatasetResource;
 import bio.terra.workspace.service.resource.controlled.flight.clone.CheckControlledResourceAuthStep;
+import bio.terra.workspace.service.resource.controlled.flight.clone.ClonePolicyAttributesStep;
 import bio.terra.workspace.service.resource.controlled.flight.update.RetrieveControlledResourceMetadataStep;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
+import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ResourceKeys;
 import java.util.Optional;
+import java.util.UUID;
 
 public class CloneControlledGcpBigQueryDatasetResourceFlight extends Flight {
 
@@ -28,15 +31,21 @@ public class CloneControlledGcpBigQueryDatasetResourceFlight extends Flight {
         ResourceKeys.RESOURCE,
         JobMapKeys.AUTH_USER_INFO.getKeyName(),
         ControlledResourceKeys.CLONING_INSTRUCTIONS,
-        ControlledResourceKeys.DESTINATION_RESOURCE_ID);
+        ControlledResourceKeys.DESTINATION_RESOURCE_ID,
+        ControlledResourceKeys.DESTINATION_WORKSPACE_ID);
 
-    final FlightBeanBag flightBeanBag = FlightBeanBag.getFromObject(applicationContext);
-    final ControlledResource sourceResource =
+    FlightBeanBag flightBeanBag = FlightBeanBag.getFromObject(applicationContext);
+    var sourceResource =
         inputParameters.get(ResourceKeys.RESOURCE, ControlledResource.class);
-    final AuthenticatedUserRequest userRequest =
+    var userRequest =
         inputParameters.get(JobMapKeys.AUTH_USER_INFO.getKeyName(), AuthenticatedUserRequest.class);
+    var destinationWorkspaceId =
+        inputParameters.get(ControlledResourceKeys.DESTINATION_WORKSPACE_ID, UUID.class);
 
-    final CloningInstructions resolvedCloningInstructions =
+    boolean mergePolicies =
+        Optional.ofNullable(inputParameters.get(
+            WorkspaceFlightMapKeys.MERGE_POLICIES, Boolean.class)).orElse(false);
+    CloningInstructions resolvedCloningInstructions =
         Optional.ofNullable(
                 inputParameters.get(
                     ControlledResourceKeys.CLONING_INSTRUCTIONS, CloningInstructions.class))
@@ -57,6 +66,13 @@ public class CloneControlledGcpBigQueryDatasetResourceFlight extends Flight {
           new CheckControlledResourceAuthStep(
               sourceResource, flightBeanBag.getControlledResourceMetadataManager(), userRequest),
           RetryRules.shortExponential());
+      if (mergePolicies) {
+        addStep(new ClonePolicyAttributesStep(
+            sourceResource.getWorkspaceId(),
+            destinationWorkspaceId,
+            userRequest,
+            flightBeanBag.getTpsApiDispatch()));
+      }
       addStep(
           new RetrieveControlledResourceMetadataStep(
               flightBeanBag.getResourceDao(),

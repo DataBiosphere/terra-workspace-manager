@@ -4,6 +4,13 @@ import bio.terra.stairway.Flight;
 import bio.terra.stairway.FlightMap;
 import bio.terra.workspace.common.utils.FlightBeanBag;
 import bio.terra.workspace.common.utils.RetryRules;
+import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
+import bio.terra.workspace.service.job.JobMapKeys;
+import bio.terra.workspace.service.resource.controlled.flight.clone.ClonePolicyAttributesStep;
+import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
+import bio.terra.workspace.service.workspace.model.Workspace;
+
+import java.util.UUID;
 
 /** Top-most flight for cloning a GCP workspace. Launches sub-flights for most of the work. */
 public class CloneGcpWorkspaceFlight extends Flight {
@@ -29,6 +36,17 @@ public class CloneGcpWorkspaceFlight extends Flight {
         new LaunchCreateGcpContextFlightStep(flightBeanBag.getWorkspaceService()),
         RetryRules.cloud());
     addStep(new AwaitCreateGcpContextFlightStep(), RetryRules.cloudLongRunning());
+
+    if (flightBeanBag.getFeatureConfiguration().isTpsEnabled()) {
+      var destinationWorkspace = inputParameters.get(JobMapKeys.REQUEST.getKeyName(), Workspace.class);
+      var sourceWorkspaceId = inputParameters.get(WorkspaceFlightMapKeys.ControlledResourceKeys.SOURCE_WORKSPACE_ID, UUID.class);
+      var userRequest = inputParameters.get(JobMapKeys.AUTH_USER_INFO.getKeyName(), AuthenticatedUserRequest.class);
+      addStep(new ClonePolicyAttributesStep(
+          sourceWorkspaceId,
+          destinationWorkspace.getWorkspaceId(),
+          userRequest,
+          flightBeanBag.getTpsApiDispatch()));
+    }
 
     addStep(new LaunchCloneAllResourcesFlightStep(), RetryRules.cloud());
     addStep(new AwaitCloneAllResourcesFlightStep(), RetryRules.cloudLongRunning());

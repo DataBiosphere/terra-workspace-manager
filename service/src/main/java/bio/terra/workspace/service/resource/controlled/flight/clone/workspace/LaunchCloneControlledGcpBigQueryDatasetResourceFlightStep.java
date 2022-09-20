@@ -67,6 +67,8 @@ public class LaunchCloneControlledGcpBigQueryDatasetResourceFlightStep implement
         String.format("Clone BigQuery Dataset %s", resource.getResourceId().toString()));
     subflightInputParameters.put(
         ControlledResourceKeys.DESTINATION_RESOURCE_ID, destinationResourceId);
+    // Do not do the policy merge on the sub-object clone
+    subflightInputParameters.put(WorkspaceFlightMapKeys.MERGE_POLICIES, false);
 
     // launch the flight
     try {

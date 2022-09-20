@@ -21,6 +21,7 @@ import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ResourceKeys;
 import java.util.Optional;
+import java.util.UUID;
 
 // Flight Plan
 // 0. If cloning instructions resolve to COPY_NOTHING, exit without any further steps.
@@ -50,6 +51,9 @@ public class CloneControlledGcsBucketResourceFlight extends Flight {
         inputParameters.get(ResourceKeys.RESOURCE, ControlledResource.class);
     var userRequest =
         inputParameters.get(JobMapKeys.AUTH_USER_INFO.getKeyName(), AuthenticatedUserRequest.class);
+    var destinationWorkspaceId =
+        inputParameters.get(ControlledResourceKeys.DESTINATION_WORKSPACE_ID, UUID.class);
+
     boolean mergePolicies =
         Optional.ofNullable(inputParameters.get(
             WorkspaceFlightMapKeys.MERGE_POLICIES, Boolean.class)).orElse(false);
@@ -73,7 +77,11 @@ public class CloneControlledGcsBucketResourceFlight extends Flight {
               sourceResource, flightBeanBag.getControlledResourceMetadataManager(), userRequest),
           RetryRules.shortExponential());
       if (mergePolicies) {
-        addStep(new ClonePolicyAttributesStep(flightBeanBag.getTpsApiDispatch()));
+        addStep(new ClonePolicyAttributesStep(
+            sourceResource.getWorkspaceId(),
+            destinationWorkspaceId,
+            userRequest,
+            flightBeanBag.getTpsApiDispatch()));
       }
       addStep(
           new RetrieveControlledResourceMetadataStep(
