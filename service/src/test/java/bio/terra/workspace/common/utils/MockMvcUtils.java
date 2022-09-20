@@ -15,8 +15,8 @@ import bio.terra.workspace.generated.model.ApiCloudPlatform;
 import bio.terra.workspace.generated.model.ApiCreateCloudContextRequest;
 import bio.terra.workspace.generated.model.ApiCreateCloudContextResult;
 import bio.terra.workspace.generated.model.ApiCreateControlledGcpBigQueryDatasetRequestBody;
-import bio.terra.workspace.generated.model.ApiCreateWorkspaceRequestBody;
 import bio.terra.workspace.generated.model.ApiCreateControlledGcpGcsBucketRequestBody;
+import bio.terra.workspace.generated.model.ApiCreateWorkspaceRequestBody;
 import bio.terra.workspace.generated.model.ApiCreatedControlledGcpBigQueryDataset;
 import bio.terra.workspace.generated.model.ApiCreatedControlledGcpGcsBucket;
 import bio.terra.workspace.generated.model.ApiCreatedWorkspace;
@@ -31,6 +31,7 @@ import bio.terra.workspace.service.iam.model.WsmIamRole;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.Optional;
 import java.util.UUID;
+import javax.annotation.Nullable;
 import org.apache.http.HttpStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -159,7 +160,7 @@ public class MockMvcUtils {
   }
 
   public ApiWorkspaceDescription createWorkspaceWithoutCloudContext(
-      AuthenticatedUserRequest userRequest) throws Exception {
+      @Nullable AuthenticatedUserRequest userRequest) throws Exception {
     ApiCreateWorkspaceRequestBody request = WorkspaceFixtures.createWorkspaceRequestBody();
     String serializedResponse =
         mockMvc
@@ -167,7 +168,7 @@ public class MockMvcUtils {
                 addJsonContentType(
                     addAuth(
                         post(WORKSPACES_V1_PATH).content(objectMapper.writeValueAsString(request)),
-                        userRequest)))
+                        Optional.ofNullable(userRequest).orElse(USER_REQUEST))))
             .andExpect(status().is(HttpStatus.SC_OK))
             .andReturn()
             .getResponse()
@@ -296,12 +297,8 @@ public class MockMvcUtils {
     return objectMapper.readValue(serializedGetResponse, ApiGcpBigQueryDatasetResource.class);
   }
 
-  public static ApiCreatedControlledGcpGcsBucket createGcsBucket(
-      MockMvc mockMvc,
-      ObjectMapper objectMapper,
-      UUID workspaceId,
-      AuthenticatedUserRequest userRequest)
-      throws Exception {
+  public ApiCreatedControlledGcpGcsBucket createGcsBucket(
+      AuthenticatedUserRequest userRequest, UUID workspaceId) throws Exception {
     ApiCreateControlledGcpGcsBucketRequestBody gcsBucketCreationRequest =
         new ApiCreateControlledGcpGcsBucketRequestBody()
             .common(makeDefaultControlledResourceFieldsApi())
@@ -326,13 +323,8 @@ public class MockMvcUtils {
     return objectMapper.readValue(serializedGetResponse, ApiCreatedControlledGcpGcsBucket.class);
   }
 
-  public static ApiGcpGcsBucketResource getGcsBucket(
-      MockMvc mockMvc,
-      ObjectMapper objectMapper,
-      UUID workspaceId,
-      UUID resourceId,
-      AuthenticatedUserRequest userRequest)
-      throws Exception {
+  public ApiGcpGcsBucketResource getGcsBucket(
+      AuthenticatedUserRequest userRequest, UUID workspaceId, UUID resourceId) throws Exception {
     String serializedGetResponse =
         mockMvc
             .perform(

@@ -25,7 +25,7 @@ public class DataRepoUtils {
 
     var body =
         new CreateDataRepoSnapshotReferenceRequestBody()
-            .metadata(makeReferencedResourceCommonFields(name, CloningInstructionsEnum.NOTHING))
+            .metadata(makeReferencedResourceCommonFields(name, null))
             .snapshot(
                 new DataRepoSnapshotAttributes()
                     .snapshot(dataRepoSnapshotId)

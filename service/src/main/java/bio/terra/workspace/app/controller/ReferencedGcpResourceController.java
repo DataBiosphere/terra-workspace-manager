@@ -1056,9 +1056,9 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
   }
 
   private static WsmResourceFields getWsmResourceFields(
-      UUID uuid, ApiReferenceResourceCommonFields metadata) {
+      UUID workspaceUuid, ApiReferenceResourceCommonFields metadata) {
     return WsmResourceFields.builder()
-        .workspaceUuid(uuid)
+        .workspaceUuid(workspaceUuid)
         .resourceId(UUID.randomUUID())
         .name(metadata.getName())
         .description(metadata.getDescription())

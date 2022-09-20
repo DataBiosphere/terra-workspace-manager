@@ -14,7 +14,6 @@ import static bio.terra.workspace.common.utils.MockMvcUtils.REFERENCED_GCP_GCS_O
 import static bio.terra.workspace.common.utils.MockMvcUtils.REFERENCED_GIT_REPO_V1_PATH_FORMAT;
 import static bio.terra.workspace.common.utils.MockMvcUtils.USER_REQUEST;
 import static bio.terra.workspace.common.utils.MockMvcUtils.addAuth;
-import static bio.terra.workspace.common.utils.MockMvcUtils.createWorkspace;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
@@ -22,6 +21,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import bio.terra.workspace.common.BaseUnitTest;
+import bio.terra.workspace.common.utils.MockMvcUtils;
 import bio.terra.workspace.generated.model.ApiCreateDataRepoSnapshotReferenceRequestBody;
 import bio.terra.workspace.generated.model.ApiCreateGcpBigQueryDataTableReferenceRequestBody;
 import bio.terra.workspace.generated.model.ApiCreateGcpBigQueryDatasetReferenceRequestBody;
@@ -37,7 +37,9 @@ import bio.terra.workspace.generated.model.ApiGitRepoResource;
 import bio.terra.workspace.generated.model.ApiReferenceResourceCommonFields;
 import bio.terra.workspace.generated.model.ApiResourceMetadata;
 import bio.terra.workspace.service.iam.SamService;
+import bio.terra.workspace.service.iam.model.WsmIamRole;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.util.List;
 import java.util.UUID;
 import org.apache.http.HttpStatus;
 import org.broadinstitute.dsde.workbench.client.sam.model.UserStatusInfo;
@@ -53,6 +55,7 @@ import org.springframework.test.web.servlet.MockMvc;
 public class ReferencedGcpResourceControllerTest extends BaseUnitTest {
 
   @Autowired MockMvc mockMvc;
+  @Autowired MockMvcUtils mockMvcUtils;
   @Autowired ObjectMapper objectMapper;
 
   @MockBean SamService mockSamService;
@@ -67,144 +70,193 @@ public class ReferencedGcpResourceControllerTest extends BaseUnitTest {
             new UserStatusInfo()
                 .userEmail(USER_REQUEST.getEmail())
                 .userSubjectId(USER_REQUEST.getSubjectId()));
+    // Needed for assertion that requester has role on workspace.
+    when(mockSamService.listRequesterRoles(any(), any(), any()))
+        .thenReturn(List.of(WsmIamRole.OWNER));
   }
 
   @Test
-  public void createDataRepoReferencedResource() throws Exception {
-    UUID workspaceId = createWorkspace(mockMvc, objectMapper).getId();
+  public void createReferencedDataRepoResource_commonFieldsAndAttributesCorrectlyPopulated()
+      throws Exception {
+    UUID workspaceId = mockMvcUtils.createWorkspaceWithoutCloudContext(USER_REQUEST).getId();
     ApiCreateDataRepoSnapshotReferenceRequestBody requestBody =
         makeDataRepoSnapshotReferenceRequestBody();
+
+    ApiDataRepoSnapshotResource createdResource =
+        createReferencedDataRepoSnapshotResource(workspaceId, requestBody);
+
+    assertReferenceResourceCommonFields(requestBody.getMetadata(), createdResource.getMetadata());
+    assertEquals(
+        requestBody.getSnapshot().getSnapshot(), createdResource.getAttributes().getSnapshot());
+    assertEquals(
+        requestBody.getSnapshot().getInstanceName(),
+        createdResource.getAttributes().getInstanceName());
+  }
+
+  @Test
+  public void createReferencedGcsBucketResource_commonFieldsAndAttributesCorrectlyPopulated()
+      throws Exception {
+    UUID workspaceId = mockMvcUtils.createWorkspaceWithoutCloudContext(USER_REQUEST).getId();
+    ApiCreateGcpGcsBucketReferenceRequestBody requestBody = makeGcsBucketReferenceRequestBody();
+
+    ApiGcpGcsBucketResource createdResource =
+        createReferencedGcsBucketResource(workspaceId, requestBody);
+
+    assertReferenceResourceCommonFields(requestBody.getMetadata(), createdResource.getMetadata());
+    assertEquals(
+        requestBody.getBucket().getBucketName(), createdResource.getAttributes().getBucketName());
+  }
+
+  @Test
+  public void createReferencedGcsObjectResource_commonFieldsAndAttributesCorrectlyPopulated()
+      throws Exception {
+    UUID workspaceId = mockMvcUtils.createWorkspaceWithoutCloudContext(USER_REQUEST).getId();
+    ApiCreateGcpGcsObjectReferenceRequestBody requestBody = makeGcsObjectReferenceRequestBody();
+
+    ApiGcpGcsObjectResource createdResource =
+        createReferencedGcsObjectResource(workspaceId, requestBody);
+
+    assertReferenceResourceCommonFields(requestBody.getMetadata(), createdResource.getMetadata());
+    assertEquals(
+        requestBody.getFile().getBucketName(), createdResource.getAttributes().getBucketName());
+    assertEquals(
+        requestBody.getFile().getFileName(), createdResource.getAttributes().getFileName());
+  }
+
+  @Test
+  public void createReferencedBqDatasetResource_commonFieldsAndAttributesCorrectlyPopulated()
+      throws Exception {
+    UUID workspaceId = mockMvcUtils.createWorkspaceWithoutCloudContext(USER_REQUEST).getId();
+    ApiCreateGcpBigQueryDatasetReferenceRequestBody requestBody =
+        makeGcpBqDatasetReferenceRequestBody();
+
+    ApiGcpBigQueryDatasetResource createdResource =
+        createReferencedBigQueryDatasetResource(workspaceId, requestBody);
+
+    assertReferenceResourceCommonFields(requestBody.getMetadata(), createdResource.getMetadata());
+    assertEquals(
+        requestBody.getDataset().getDatasetId(), createdResource.getAttributes().getDatasetId());
+    assertEquals(
+        requestBody.getDataset().getProjectId(), createdResource.getAttributes().getProjectId());
+  }
+
+  @Test
+  public void createReferencedBqDatatableResource_commonFieldsAndAttributesCorrectlyPopulated()
+      throws Exception {
+    UUID workspaceId = mockMvcUtils.createWorkspaceWithoutCloudContext(USER_REQUEST).getId();
+    ApiCreateGcpBigQueryDataTableReferenceRequestBody requestBody =
+        makeBqDataTableReferenceRequestBody();
+
+    ApiGcpBigQueryDataTableResource createdResource =
+        createReferencedBigQueryDataTableResource(workspaceId, requestBody);
+
+    assertReferenceResourceCommonFields(requestBody.getMetadata(), createdResource.getMetadata());
+    assertEquals(
+        requestBody.getDataTable().getDataTableId(),
+        createdResource.getAttributes().getDataTableId());
+    assertEquals(
+        requestBody.getDataTable().getDatasetId(), createdResource.getAttributes().getDatasetId());
+    assertEquals(
+        requestBody.getDataTable().getProjectId(), createdResource.getAttributes().getProjectId());
+  }
+
+  @Test
+  public void createReferencedGitRepoResource_commonFieldsAndAttributesCorrectlyPopulated()
+      throws Exception {
+    UUID workspaceId = mockMvcUtils.createWorkspaceWithoutCloudContext(USER_REQUEST).getId();
+    ApiCreateGitRepoReferenceRequestBody requestBody = makeGitRepoReferenceRequestBody();
+
+    ApiGitRepoResource createdResource = createReferencedGitRepoResource(workspaceId, requestBody);
+
+    assertReferenceResourceCommonFields(requestBody.getMetadata(), createdResource.getMetadata());
+    assertEquals(
+        requestBody.getGitrepo().getGitRepoUrl(), createdResource.getAttributes().getGitRepoUrl());
+  }
+
+  public ApiDataRepoSnapshotResource createReferencedDataRepoSnapshotResource(
+      UUID workspaceId, ApiCreateDataRepoSnapshotReferenceRequestBody requestBody)
+      throws Exception {
     var request = objectMapper.writeValueAsString(requestBody);
 
     String serializedResponse =
         createReferencedResourceAndGetSerializedResponse(
             workspaceId, request, REFERENCED_DATA_REPO_SNAPSHOTS_V1_PATH_FORMAT);
 
-    var retrievedResource =
-        objectMapper.readValue(serializedResponse, ApiDataRepoSnapshotResource.class);
-    assertReferenceResourceCommonFields(requestBody.getMetadata(), retrievedResource.getMetadata());
-    assertEquals(
-        requestBody.getSnapshot().getSnapshot(), retrievedResource.getAttributes().getSnapshot());
-    assertEquals(
-        requestBody.getSnapshot().getInstanceName(),
-        retrievedResource.getAttributes().getInstanceName());
+    return objectMapper.readValue(serializedResponse, ApiDataRepoSnapshotResource.class);
   }
 
-  @Test
-  public void createGcsBucketReferencedResource() throws Exception {
-    UUID workspaceId = createWorkspace(mockMvc, objectMapper).getId();
-    ApiCreateGcpGcsBucketReferenceRequestBody requestBody = makeGcsBucketReferenceRequestBody();
+  private ApiGcpGcsBucketResource createReferencedGcsBucketResource(
+      UUID workspaceId, ApiCreateGcpGcsBucketReferenceRequestBody requestBody) throws Exception {
     var request = objectMapper.writeValueAsString(requestBody);
 
     String serializedResponse =
         createReferencedResourceAndGetSerializedResponse(
             workspaceId, request, REFERENCED_GCP_GCS_BUCKETS_V1_PATH_FORMAT);
 
-    var retrievedResource =
-        objectMapper.readValue(serializedResponse, ApiGcpGcsBucketResource.class);
-    assertReferenceResourceCommonFields(requestBody.getMetadata(), retrievedResource.getMetadata());
-    assertEquals(
-        requestBody.getBucket().getBucketName(), retrievedResource.getAttributes().getBucketName());
+    return objectMapper.readValue(serializedResponse, ApiGcpGcsBucketResource.class);
   }
 
-  @Test
-  public void createGcsObjectReferencedResource() throws Exception {
-    UUID workspaceId = createWorkspace(mockMvc, objectMapper).getId();
-    ApiCreateGcpGcsObjectReferenceRequestBody requestBody = makeGcsObjectReferenceRequestBody();
+  private ApiGcpGcsObjectResource createReferencedGcsObjectResource(
+      UUID workspaceId, ApiCreateGcpGcsObjectReferenceRequestBody requestBody) throws Exception {
     var request = objectMapper.writeValueAsString(requestBody);
 
     String serializedResponse =
         createReferencedResourceAndGetSerializedResponse(
             workspaceId, request, REFERENCED_GCP_GCS_OBJECTS_V1_PATH_FORMAT);
 
-    var retrievedResource =
-        objectMapper.readValue(serializedResponse, ApiGcpGcsObjectResource.class);
-    assertReferenceResourceCommonFields(requestBody.getMetadata(), retrievedResource.getMetadata());
-    assertEquals(
-        requestBody.getFile().getBucketName(), retrievedResource.getAttributes().getBucketName());
-    assertEquals(
-        requestBody.getFile().getFileName(), retrievedResource.getAttributes().getFileName());
+    return objectMapper.readValue(serializedResponse, ApiGcpGcsObjectResource.class);
   }
 
-  @Test
-  public void createBqDatasetReferencedResource() throws Exception {
-    UUID workspaceId = createWorkspace(mockMvc, objectMapper).getId();
-    ApiCreateGcpBigQueryDatasetReferenceRequestBody requestBody =
-        makeGcpBqDatasetReferenceRequestBody();
+  private ApiGcpBigQueryDatasetResource createReferencedBigQueryDatasetResource(
+      UUID workspaceId, ApiCreateGcpBigQueryDatasetReferenceRequestBody requestBody)
+      throws Exception {
     var request = objectMapper.writeValueAsString(requestBody);
 
     String serializedResponse =
         createReferencedResourceAndGetSerializedResponse(
             workspaceId, request, REFERENCED_GCP_BIG_QUERY_DATASET_V1_PATH_FORMAT);
 
-    var retrievedResource =
-        objectMapper.readValue(serializedResponse, ApiGcpBigQueryDatasetResource.class);
-    assertReferenceResourceCommonFields(requestBody.getMetadata(), retrievedResource.getMetadata());
-    assertEquals(
-        requestBody.getDataset().getDatasetId(), retrievedResource.getAttributes().getDatasetId());
-    assertEquals(
-        requestBody.getDataset().getProjectId(), retrievedResource.getAttributes().getProjectId());
+    return objectMapper.readValue(serializedResponse, ApiGcpBigQueryDatasetResource.class);
   }
 
-  @Test
-  public void createBqDatatableReferencedResource() throws Exception {
-    UUID workspaceId = createWorkspace(mockMvc, objectMapper).getId();
-    ApiCreateGcpBigQueryDataTableReferenceRequestBody requestBody =
-        makeBqDataTableReferenceRequestBody();
+  private ApiGcpBigQueryDataTableResource createReferencedBigQueryDataTableResource(
+      UUID workspaceId, ApiCreateGcpBigQueryDataTableReferenceRequestBody requestBody)
+      throws Exception {
     var request = objectMapper.writeValueAsString(requestBody);
 
     String serializedResponse =
         createReferencedResourceAndGetSerializedResponse(
             workspaceId, request, REFERENCED_GCP_BIG_QUERY_DATA_TABLE_V1_PATH_FORMAT);
 
-    var retrievedResource =
-        objectMapper.readValue(serializedResponse, ApiGcpBigQueryDataTableResource.class);
-    assertReferenceResourceCommonFields(requestBody.getMetadata(), retrievedResource.getMetadata());
-    assertEquals(
-        requestBody.getDataTable().getDataTableId(),
-        retrievedResource.getAttributes().getDataTableId());
-    assertEquals(
-        requestBody.getDataTable().getDatasetId(),
-        retrievedResource.getAttributes().getDatasetId());
-    assertEquals(
-        requestBody.getDataTable().getProjectId(),
-        retrievedResource.getAttributes().getProjectId());
+    return objectMapper.readValue(serializedResponse, ApiGcpBigQueryDataTableResource.class);
   }
 
-  @Test
-  public void createGitRepoReferencedResource() throws Exception {
-    UUID workspaceId = createWorkspace(mockMvc, objectMapper).getId();
-    ApiCreateGitRepoReferenceRequestBody requestBody = makeGitRepoReferenceRequestBody();
+  private ApiGitRepoResource createReferencedGitRepoResource(
+      UUID workspaceId, ApiCreateGitRepoReferenceRequestBody requestBody) throws Exception {
     var request = objectMapper.writeValueAsString(requestBody);
 
     String serializedResponse =
         createReferencedResourceAndGetSerializedResponse(
             workspaceId, request, REFERENCED_GIT_REPO_V1_PATH_FORMAT);
 
-    var retrievedResource = objectMapper.readValue(serializedResponse, ApiGitRepoResource.class);
-    assertReferenceResourceCommonFields(requestBody.getMetadata(), retrievedResource.getMetadata());
-    assertEquals(
-        requestBody.getGitrepo().getGitRepoUrl(),
-        retrievedResource.getAttributes().getGitRepoUrl());
+    return objectMapper.readValue(serializedResponse, ApiGitRepoResource.class);
   }
 
   private String createReferencedResourceAndGetSerializedResponse(
       UUID workspaceId, String request, String apiFormat) throws Exception {
-    String serializedResponse =
-        mockMvc
-            .perform(
-                addAuth(
-                    post(String.format(apiFormat, workspaceId.toString()))
-                        .contentType(MediaType.APPLICATION_JSON_VALUE)
-                        .accept(MediaType.APPLICATION_JSON)
-                        .characterEncoding("UTF-8")
-                        .content(request),
-                    USER_REQUEST))
-            .andExpect(status().is(HttpStatus.SC_OK))
-            .andReturn()
-            .getResponse()
-            .getContentAsString();
-    return serializedResponse;
+    return mockMvc
+        .perform(
+            addAuth(
+                post(String.format(apiFormat, workspaceId.toString()))
+                    .contentType(MediaType.APPLICATION_JSON_VALUE)
+                    .accept(MediaType.APPLICATION_JSON)
+                    .characterEncoding("UTF-8")
+                    .content(request),
+                USER_REQUEST))
+        .andExpect(status().is(HttpStatus.SC_OK))
+        .andReturn()
+        .getResponse()
+        .getContentAsString();
   }
 
   private void assertReferenceResourceCommonFields(

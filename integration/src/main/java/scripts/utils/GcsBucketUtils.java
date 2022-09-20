@@ -236,8 +236,7 @@ public class GcsBucketUtils {
             .metadata(
                 CommonResourceFieldsUtil.makeReferencedResourceCommonFields(
                     name,
-                    Optional.ofNullable(cloningInstructions)
-                        .orElse(CloningInstructionsEnum.NOTHING)))
+                    cloningInstructions))
             .bucket(bucket);
 
     GcpGcsBucketResource result =

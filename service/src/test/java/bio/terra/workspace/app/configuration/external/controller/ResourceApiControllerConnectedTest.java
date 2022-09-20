@@ -29,16 +29,19 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import org.apache.http.HttpStatus;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInstance;
+import org.junit.jupiter.api.TestInstance.Lifecycle;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
 @AutoConfigureMockMvc
+@TestInstance(Lifecycle.PER_CLASS)
 public class ResourceApiControllerConnectedTest extends BaseConnectedTest {
 
   @Autowired MockMvc mockMvc;
@@ -49,7 +52,7 @@ public class ResourceApiControllerConnectedTest extends BaseConnectedTest {
 
   private UUID workspaceId;
 
-  @BeforeEach
+  @BeforeAll
   public void setUp() throws Exception {
     workspaceId =
         connectedTestUtils
@@ -57,7 +60,7 @@ public class ResourceApiControllerConnectedTest extends BaseConnectedTest {
             .getWorkspaceId();
   }
 
-  @AfterEach
+  @AfterAll
   public void cleanup() throws Exception {
     mockMvcUtils.deleteWorkspace(userAccessUtils.defaultUserAuthRequest(), workspaceId);
   }
