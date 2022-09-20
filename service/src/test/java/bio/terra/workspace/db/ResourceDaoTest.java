@@ -12,6 +12,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import bio.terra.workspace.common.BaseUnitTest;
 import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
 import bio.terra.workspace.common.fixtures.WorkspaceFixtures;
+import bio.terra.workspace.common.utils.TestUtils;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook.ControlledAiNotebookInstanceResource;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.bqdataset.ControlledBigQueryDatasetResource;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.ControlledGcsBucketResource;
@@ -164,7 +165,7 @@ public class ResourceDaoTest extends BaseUnitTest {
   @Test
   public void
       createAiNotebook_duplicateCloudInstanceId_rejectedWhenInSameCloudProjectAndLocation() {
-    var cloudInstanceId = ControlledResourceFixtures.uniqueName("my-cloud-instance-id");
+    var cloudInstanceId = TestUtils.appendRandomNumber("my-cloud-instance-id");
     ControlledResourceFields commonFields1 =
         ControlledResourceFixtures.makeNotebookCommonFieldsBuilder()
             .workspaceUuid(workspaceUuid)

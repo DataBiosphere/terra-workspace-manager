@@ -99,7 +99,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.DisabledIfEnvironmentVariable;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
@@ -107,7 +106,6 @@ import org.springframework.test.web.servlet.MockMvc;
 // Use application configuration profile in addition to the standard connected test profile
 // inherited from the base class.
 @ActiveProfiles({"app-test"})
-@AutoConfigureMockMvc
 class WorkspaceServiceTest extends BaseConnectedTest {
 
   /** A fake authenticated user request. */
@@ -136,9 +134,7 @@ class WorkspaceServiceTest extends BaseConnectedTest {
   @MockBean private TpsApiDispatch mockTpsApiDispatch;
   @MockBean private FeatureConfiguration mockFeatureConfiguration;
 
-  // Populated because this test is annotated with @AutoConfigureMockMvc
   @Autowired private MockMvc mockMvc;
-
   @Autowired private ControlledResourceService controlledResourceService;
   @Autowired private CrlService crl;
   @Autowired private GcpCloudContextService gcpCloudContextService;
