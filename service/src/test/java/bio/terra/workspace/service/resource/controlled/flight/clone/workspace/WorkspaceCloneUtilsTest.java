@@ -85,6 +85,32 @@ public class WorkspaceCloneUtilsTest extends BaseUnitTest {
   }
 
   @Test
+  public void buildDestinationControlledBigQueryDataset_clearSomeProperty() {
+    var sourceDataset =
+        ControlledResourceFixtures.makeDefaultControlledBigQueryBuilder(WORKSPACE_ID).build();
+    var cloneResourceName = RandomStringUtils.randomAlphabetic(5);
+    var cloneDescription = "This is a cloned dataset";
+    var cloneDatasetName = RandomStringUtils.randomAlphabetic(5);
+    var cloneProjectName = "my-cloned-gcp-project";
+
+    ControlledBigQueryDatasetResource datasetToClone =
+        buildDestinationControlledBigQueryDataset(
+            sourceDataset,
+            DESTINATION_WORKSPACE_ID,
+            DESTINATION_RESOURCE_ID,
+            cloneResourceName,
+            cloneDescription,
+            cloneDatasetName,
+            cloneProjectName);
+
+    assertResourceCommonFields(sourceDataset, cloneResourceName, cloneDescription, datasetToClone);
+    assertControlledResourceCommonField(sourceDataset, datasetToClone);
+    assertEquals(sourceDataset.getPrivateResourceState(), datasetToClone.getPrivateResourceState());
+    assertEquals(cloneDatasetName, datasetToClone.getDatasetName());
+    assertEquals(cloneProjectName, datasetToClone.getProjectId());
+  }
+
+  @Test
   public void buildDestinationControlledGcsBucket_cloneSucceeds() {
     ControlledGcsBucketResource sourceBucket =
         ControlledResourceFixtures.makeDefaultControlledGcsBucketBuilder(WORKSPACE_ID).build();
