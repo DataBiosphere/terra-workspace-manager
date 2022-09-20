@@ -4,6 +4,7 @@ import static bio.terra.workspace.app.controller.shared.PropertiesUtils.convertM
 
 import bio.terra.stairway.ShortUUID;
 import bio.terra.workspace.common.utils.AzureVmUtils;
+import bio.terra.workspace.common.utils.TestUtils;
 import bio.terra.workspace.generated.model.*;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.disk.ControlledAzureDiskResource;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.ip.ControlledAzureIpResource;
@@ -85,7 +86,7 @@ public class ControlledResourceFixtures {
 
   public static final ApiGcpGcsBucketCreationParameters GOOGLE_BUCKET_CREATION_PARAMETERS_MINIMAL =
       new ApiGcpGcsBucketCreationParameters()
-          .name(uniqueName(BUCKET_NAME_PREFIX))
+          .name(TestUtils.appendRandomNumber(BUCKET_NAME_PREFIX))
           .location(GcpResourceConstant.DEFAULT_REGION);
 
   /** Construct a parameter object with a unique bucket name to avoid unintended clashes. */
@@ -250,11 +251,11 @@ public class ControlledResourceFixtures {
   }
 
   public static String uniqueBucketName() {
-    return uniqueName(BUCKET_NAME_PREFIX);
+    return TestUtils.appendRandomNumber(BUCKET_NAME_PREFIX);
   }
 
   public static String uniqueAzureName(String resourcePrefix) {
-    return uniqueName(AZURE_NAME_PREFIX + "-" + resourcePrefix);
+    return TestUtils.appendRandomNumber(AZURE_NAME_PREFIX + "-" + resourcePrefix);
   }
 
   public static String uniqueStorageAccountName() {
@@ -456,7 +457,7 @@ public class ControlledResourceFixtures {
     return ControlledResourceFields.builder()
         .workspaceUuid(UUID.randomUUID())
         .resourceId(UUID.randomUUID())
-        .name(uniqueName("test_resource").replace("-", "_"))
+        .name(TestUtils.appendRandomNumber("test_resource").replace("-", "_"))
         .description("how much data could a dataset set if a dataset could set data?")
         .cloningInstructions(CloningInstructions.COPY_DEFINITION)
         .assignedUser(null)
@@ -527,10 +528,6 @@ public class ControlledResourceFixtures {
       new Dataset().setDefaultTableExpirationMs(5900000L).setDefaultPartitionExpirationMs(5901000L);
   public static final Dataset BQ_DATASET_WITHOUT_EXPIRATION = new Dataset();
 
-  public static String uniqueName(String prefix) {
-    return prefix + "-" + UUID.randomUUID();
-  }
-
   public static String uniqueDatasetId() {
     return "my_test_dataset_" + ShortUUID.get().replace("-", "_");
   }
@@ -545,7 +542,7 @@ public class ControlledResourceFixtures {
     return ControlledResourceFields.builder()
         .workspaceUuid(UUID.randomUUID())
         .resourceId(UUID.randomUUID())
-        .name(uniqueName("my-instance"))
+        .name(TestUtils.appendRandomNumber("my-instance"))
         .description("my notebook description")
         .cloningInstructions(CloningInstructions.COPY_NOTHING)
         .assignedUser("myusername@mydomain.mine")
@@ -556,7 +553,7 @@ public class ControlledResourceFixtures {
   public static ControlledAiNotebookInstanceResource.Builder makeDefaultAiNotebookInstance() {
     return ControlledAiNotebookInstanceResource.builder()
         .common(makeNotebookCommonFieldsBuilder().build())
-        .instanceId(uniqueName("my-cloud-id"))
+        .instanceId(TestUtils.appendRandomNumber("my-cloud-id"))
         .location("us-east1-b")
         .projectId("my-project-id");
   }

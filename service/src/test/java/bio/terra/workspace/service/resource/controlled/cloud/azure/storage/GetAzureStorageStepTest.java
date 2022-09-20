@@ -13,9 +13,7 @@ import bio.terra.workspace.service.resource.exception.DuplicateResourceException
 import com.azure.resourcemanager.storage.models.CheckNameAvailabilityResult;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
-import org.springframework.test.context.ActiveProfiles;
 
-@ActiveProfiles("azure")
 public class GetAzureStorageStepTest extends BaseStorageStepTest {
 
   @Mock private CheckNameAvailabilityResult mockNameAvailabilityResult;

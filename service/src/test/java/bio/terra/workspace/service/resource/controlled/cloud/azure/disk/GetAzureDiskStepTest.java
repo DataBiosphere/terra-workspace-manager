@@ -25,9 +25,7 @@ import com.azure.resourcemanager.compute.models.Disks;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
-import org.springframework.test.context.ActiveProfiles;
 
-@ActiveProfiles("azure")
 public class GetAzureDiskStepTest extends BaseAzureTest {
 
   private static final String STUB_STRING_RETURN = "stubbed-return";

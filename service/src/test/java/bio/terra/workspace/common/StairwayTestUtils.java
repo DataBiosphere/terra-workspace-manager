@@ -12,6 +12,7 @@ import bio.terra.stairway.StepStatus;
 import bio.terra.stairway.exception.DatabaseOperationException;
 import bio.terra.stairway.exception.DuplicateFlightIdException;
 import bio.terra.stairway.exception.StairwayExecutionException;
+import bio.terra.workspace.generated.model.ApiJobReport;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.resource.model.WsmResource;
 import bio.terra.workspace.service.workspace.Alpha1Service;
@@ -107,5 +108,9 @@ public class StairwayTestUtils {
     public StepResult undoStep(FlightContext flightContext) {
       return StepResult.getStepResultSuccess();
     }
+  }
+
+  public static boolean jobIsRunning(ApiJobReport jobReport) {
+    return jobReport.getStatus().equals(ApiJobReport.StatusEnum.RUNNING);
   }
 }

@@ -4,7 +4,6 @@ import static bio.terra.workspace.common.utils.MockMvcUtils.GENERATE_GCP_AI_NOTE
 import static bio.terra.workspace.common.utils.MockMvcUtils.GENERATE_GCP_BQ_DATASET_NAME_PATH_FORMAT;
 import static bio.terra.workspace.common.utils.MockMvcUtils.GENERATE_GCP_GCS_BUCKET_NAME_PATH_FORMAT;
 import static bio.terra.workspace.common.utils.MockMvcUtils.addAuth;
-import static bio.terra.workspace.common.utils.MockMvcUtils.createWorkspace;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
@@ -12,6 +11,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import bio.terra.workspace.common.BaseUnitTest;
+import bio.terra.workspace.common.utils.MockMvcUtils;
 import bio.terra.workspace.generated.model.ApiAiNotebookCloudId;
 import bio.terra.workspace.generated.model.ApiBqDatasetCloudId;
 import bio.terra.workspace.generated.model.ApiGcsBucketCloudName;
@@ -20,8 +20,10 @@ import bio.terra.workspace.generated.model.ApiGenerateGcpBigQueryDatasetCloudIDR
 import bio.terra.workspace.generated.model.ApiGenerateGcpGcsBucketCloudNameRequestBody;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
+import bio.terra.workspace.service.iam.model.WsmIamRole;
 import bio.terra.workspace.service.workspace.GcpCloudContextService;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import org.apache.http.HttpStatus;
@@ -32,6 +34,10 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
+/**
+ * Use this instead of ControlledGcpResourceApiControllerConnectedTest if you don't want to talk to
+ * real GCP.
+ */
 public class ControlledGcpResourceApiControllerTest extends BaseUnitTest {
 
   AuthenticatedUserRequest USER_REQUEST =
@@ -39,18 +45,24 @@ public class ControlledGcpResourceApiControllerTest extends BaseUnitTest {
           "fake@email.com", "subjectId123456", Optional.of("ThisIsNotARealBearerToken"));
 
   @Autowired MockMvc mockMvc;
+  @Autowired MockMvcUtils mockMvcUtils;
   @Autowired ObjectMapper objectMapper;
+
   @MockBean GcpCloudContextService mockGcpCloudContextService;
   @MockBean SamService mockSamService;
 
   @BeforeEach
   public void setup() throws InterruptedException {
     when(mockGcpCloudContextService.getRequiredGcpProject(any())).thenReturn("fake-project-id");
+
+    // Needed for assertion that requester has role on workspace.
+    when(mockSamService.listRequesterRoles(any(), any(), any()))
+        .thenReturn(List.of(WsmIamRole.OWNER));
   }
 
   @Test
   public void getCloudNameFromGcsBucketName() throws Exception {
-    UUID workspaceId = createWorkspace(mockMvc, objectMapper).getId();
+    UUID workspaceId = mockMvcUtils.createWorkspaceWithoutCloudContext(USER_REQUEST).getId();
     ApiGenerateGcpGcsBucketCloudNameRequestBody bucketNameRequest =
         new ApiGenerateGcpGcsBucketCloudNameRequestBody().gcsBucketName("my-bucket");
 
@@ -80,7 +92,7 @@ public class ControlledGcpResourceApiControllerTest extends BaseUnitTest {
 
   @Test
   public void getCloudNameFromBigQueryDatasetName() throws Exception {
-    UUID workspaceId = createWorkspace(mockMvc, objectMapper).getId();
+    UUID workspaceId = mockMvcUtils.createWorkspaceWithoutCloudContext(USER_REQUEST).getId();
     ApiGenerateGcpBigQueryDatasetCloudIDRequestBody bqDatasetNameRequest =
         new ApiGenerateGcpBigQueryDatasetCloudIDRequestBody().bigQueryDatasetName("bq-dataset");
 
@@ -108,7 +120,7 @@ public class ControlledGcpResourceApiControllerTest extends BaseUnitTest {
 
   @Test
   public void getCloudNameFromAiNotebookInstanceName() throws Exception {
-    UUID workspaceId = createWorkspace(mockMvc, objectMapper).getId();
+    UUID workspaceId = mockMvcUtils.createWorkspaceWithoutCloudContext(USER_REQUEST).getId();
     ApiGenerateGcpAiNotebookCloudIdRequestBody aiNotebookNameRequest =
         new ApiGenerateGcpAiNotebookCloudIdRequestBody().aiNotebookName("ai-notebook");
 
