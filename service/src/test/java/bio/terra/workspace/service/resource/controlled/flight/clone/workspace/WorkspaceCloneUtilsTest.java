@@ -102,10 +102,10 @@ public class WorkspaceCloneUtilsTest extends BaseUnitTest {
             sourceDataset,
             DESTINATION_WORKSPACE_ID,
             DESTINATION_RESOURCE_ID,
-            RandomStringUtils.randomAlphabetic(5),
-            "This is a cloned dataset",
-            RandomStringUtils.randomAlphabetic(5),
-            "my-cloned-gcp-project");
+            /*name=*/ RandomStringUtils.randomAlphabetic(5),
+            /*description=*/ "This is a cloned dataset",
+            /*cloudInstanceName=*/ RandomStringUtils.randomAlphabetic(5),
+            /*destinationProjectId=*/ "my-cloned-gcp-project");
 
     ImmutableMap<String, String> properties = datasetToClone.getProperties();
     assertFalse(properties.containsKey(FOLDER_ID_KEY));
