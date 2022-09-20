@@ -131,7 +131,7 @@ public class MockMvcUtils {
     return objectMapper.readValue(serializedResponse, ApiWorkspaceDescription.class);
   }
 
-  public ApiWorkspaceDescription createWorkspaceAndCloudContext(
+  public ApiWorkspaceDescription createWorkspaceWithCloudContext(
       AuthenticatedUserRequest userRequest) throws Exception {
     ApiWorkspaceDescription createdWorkspace = createWorkspaceWithoutCloudContext(userRequest);
     createGcpCloudContextAndWait(userRequest, createdWorkspace.getId());

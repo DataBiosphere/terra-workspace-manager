@@ -38,12 +38,17 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInstance;
+import org.junit.jupiter.api.TestInstance.Lifecycle;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.web.servlet.MockMvc;
 
 /** Use this instead of ControlledGcpResourceApiTest, if you want to talk to real GCP. */
+// Per-class lifecycle on this test to allow a shared workspace object across tests, which saves
+// time creating and deleting GCP contexts.
+@TestInstance(Lifecycle.PER_CLASS)
 public class ControlledGcpResourceApiControllerConnectedTest extends BaseConnectedTest {
   private static final Logger logger =
       LoggerFactory.getLogger(ControlledGcpResourceApiControllerConnectedTest.class);
@@ -59,7 +64,7 @@ public class ControlledGcpResourceApiControllerConnectedTest extends BaseConnect
   @BeforeEach
   public void setup() throws Exception {
     workspace =
-        mockMvcUtils.createWorkspaceAndCloudContext(userAccessUtils.defaultUserAuthRequest());
+        mockMvcUtils.createWorkspaceWithCloudContext(userAccessUtils.defaultUserAuthRequest());
     originalControlledBucket = createControlledGcsBucket();
   }
 
