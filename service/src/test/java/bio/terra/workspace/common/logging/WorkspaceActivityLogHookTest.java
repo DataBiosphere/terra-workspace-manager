@@ -11,6 +11,7 @@ import bio.terra.stairway.Direction;
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.FlightStatus;
+import bio.terra.stairway.ProgressMeter;
 import bio.terra.stairway.Stairway;
 import bio.terra.stairway.StepResult;
 import bio.terra.workspace.common.BaseUnitTest;
@@ -428,5 +429,13 @@ public class WorkspaceActivityLogHookTest extends BaseUnitTest {
     public String flightDesc() {
       return null;
     }
+
+    @Override
+    public ProgressMeter getProgressMeter(String name) {
+      return null;
+    }
+
+    @Override
+    public void setProgressMeter(String name, long v1, long v2) throws InterruptedException {}
   }
 }
