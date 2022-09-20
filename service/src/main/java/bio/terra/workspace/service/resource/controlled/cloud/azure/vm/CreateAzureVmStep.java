@@ -21,14 +21,12 @@ import bio.terra.workspace.service.workspace.model.AzureCloudContext;
 import com.azure.core.management.Region;
 import com.azure.core.management.exception.ManagementException;
 import com.azure.resourcemanager.compute.ComputeManager;
-import com.azure.resourcemanager.compute.models.Disk;
-import com.azure.resourcemanager.compute.models.ImageReference;
-import com.azure.resourcemanager.compute.models.VirtualMachine;
-import com.azure.resourcemanager.compute.models.VirtualMachineSizeTypes;
+import com.azure.resourcemanager.compute.models.*;
 import com.azure.resourcemanager.network.models.Network;
 import com.azure.resourcemanager.network.models.NetworkInterface;
 import com.azure.resourcemanager.network.models.PublicIpAddress;
 import java.util.Optional;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -72,10 +70,13 @@ public class CreateAzureVmStep implements Step {
                         .getResource(resource.getWorkspaceId(), ipId)
                         .castByEnum(WsmResourceType.CONTROLLED_AZURE_IP));
 
-    final ControlledAzureDiskResource diskResource =
-        resourceDao
-            .getResource(resource.getWorkspaceId(), resource.getDiskId())
-            .castByEnum(WsmResourceType.CONTROLLED_AZURE_DISK);
+    final Optional<ControlledAzureDiskResource> diskResource =
+        Optional.ofNullable(resource.getDiskId())
+            .map(
+                diskId ->
+                    resourceDao
+                        .getResource(resource.getWorkspaceId(), diskId)
+                        .castByEnum(WsmResourceType.CONTROLLED_AZURE_DISK));
 
     final ControlledAzureNetworkResource networkResource =
         resourceDao
@@ -83,11 +84,13 @@ public class CreateAzureVmStep implements Step {
             .castByEnum(WsmResourceType.CONTROLLED_AZURE_NETWORK);
 
     try {
-      Disk existingAzureDisk =
-          computeManager
-              .disks()
-              .getByResourceGroup(
-                  azureCloudContext.getAzureResourceGroupId(), diskResource.getDiskName());
+      Optional<Disk> existingAzureDisk =
+          diskResource.map(
+              diskRes ->
+                  computeManager
+                      .disks()
+                      .getByResourceGroup(
+                          azureCloudContext.getAzureResourceGroupId(), diskRes.getDiskName()));
 
       Optional<PublicIpAddress> existingAzureIp =
           ipResource.map(
@@ -145,10 +148,11 @@ public class CreateAzureVmStep implements Step {
                   .setResourceGroupName(azureCloudContext.getAzureResourceGroupId())
                   .setNetwork(existingNetwork)
                   .setSubnetName(networkResource.getSubnetName())
-                  .setDisk(existingAzureDisk)
                   .setPublicIpAddress(existingAzureIp.orElse(null))
+                  .setDisk(existingAzureDisk.orElse(null))
                   .setImage(AzureVmUtils.getImageData(creationParameters.getVmImage()))
                   .build()));
+
     } catch (ManagementException e) {
       // Stairway steps may run multiple times, so we may already have created this resource. In all
       // other cases, surface the exception and attempt to retry.
@@ -166,9 +170,11 @@ public class CreateAzureVmStep implements Step {
                 + String.format(
                     "%nResource Group: %s%n\tIp Name: %s%n\tNetwork Name: %s%n\tDisk Name: %s",
                     azureCloudContext.getAzureResourceGroupId(),
-                    ipResource.isPresent() ? ipResource.get().getIpName() : "NoPublicIp",
-                    "TODO",
-                    diskResource.getDiskName()));
+                    ipResource.map(ControlledAzureIpResource::getIpName).orElse("<no public ip>"),
+                    networkResource.getNetworkName(),
+                    diskResource
+                        .map(ControlledAzureDiskResource::getDiskName)
+                        .orElse("<no disk>")));
         return new StepResult(StepStatus.STEP_RESULT_FAILURE_FATAL, e);
       }
       return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, e);
@@ -190,7 +196,7 @@ public class CreateAzureVmStep implements Step {
   private VirtualMachine.DefinitionStages.WithCreate buildVmConfiguration(
       ComputeManager computeManager,
       NetworkInterface networkInterface,
-      Disk disk,
+      Optional<Disk> disk,
       String azureResourceGroupId,
       ApiAzureVmCreationParameters creationParameters) {
     var vmConfigurationCommonStep =
@@ -201,31 +207,16 @@ public class CreateAzureVmStep implements Step {
             .withExistingResourceGroup(azureResourceGroupId)
             .withExistingPrimaryNetworkInterface(networkInterface);
 
-    VirtualMachine.DefinitionStages.WithCreate vmConfigurationFinalStep;
-    if (creationParameters.getVmImage().getUri() != null) {
-      vmConfigurationFinalStep =
-          vmConfigurationCommonStep
-              .withSpecializedLinuxCustomImage(creationParameters.getVmImage().getUri())
-              .withExistingDataDisk(disk)
-              .withTag("workspaceId", resource.getWorkspaceId().toString())
-              .withTag("resourceId", resource.getResourceId().toString())
-              .withSize(VirtualMachineSizeTypes.fromString(resource.getVmSize()));
-    } else {
-      vmConfigurationFinalStep =
-          vmConfigurationCommonStep
-              .withSpecificLinuxImageVersion(
-                  new ImageReference()
-                      .withPublisher(creationParameters.getVmImage().getPublisher())
-                      .withOffer(creationParameters.getVmImage().getOffer())
-                      .withSku(creationParameters.getVmImage().getSku())
-                      .withVersion(creationParameters.getVmImage().getVersion()))
-              .withRootUsername(creationParameters.getVmUser().getName())
-              .withRootPassword(creationParameters.getVmUser().getPassword())
-              .withExistingDataDisk(disk)
-              .withTag("workspaceId", resource.getWorkspaceId().toString())
-              .withTag("resourceId", resource.getResourceId().toString())
-              .withSize(VirtualMachineSizeTypes.fromString(resource.getVmSize()));
-    }
+    var withImage = addImageStep(vmConfigurationCommonStep, creationParameters);
+    var withCustomData = maybeAddCustomDataStep(withImage, creationParameters);
+    var withExistingDisk = maybeAddExistingDiskStep(withCustomData, disk);
+    var withEphemeralDisk = maybeAddEphemeralDiskStep(withExistingDisk, creationParameters);
+
+    var vmConfigurationFinalStep =
+        withEphemeralDisk
+            .withTag("workspaceId", resource.getWorkspaceId().toString())
+            .withTag("resourceId", resource.getResourceId().toString())
+            .withSize(VirtualMachineSizeTypes.fromString(resource.getVmSize()));
 
     if (creationParameters.getCustomScriptExtension() != null) {
       var customScriptExtension =
@@ -251,5 +242,55 @@ public class CreateAzureVmStep implements Step {
       customScriptExtension.attach();
     }
     return vmConfigurationFinalStep;
+  }
+
+  private VirtualMachine.DefinitionStages.WithManagedCreate maybeAddEphemeralDiskStep(
+      VirtualMachine.DefinitionStages.WithManagedCreate priorSteps,
+      ApiAzureVmCreationParameters creationParameters) {
+    var maybePlacement =
+        Optional.ofNullable(creationParameters.getEphemeralOSDisk())
+            .flatMap(
+                ephemeralOSDisk ->
+                    switch (ephemeralOSDisk) {
+                      case OS_CACHE -> Optional.of(DiffDiskPlacement.CACHE_DISK);
+                      case TMP_DISK -> Optional.of(DiffDiskPlacement.RESOURCE_DISK);
+                      default -> Optional.empty();
+                    });
+
+    return maybePlacement
+        .map(diskPlacement -> priorSteps.withEphemeralOSDisk().withPlacement(diskPlacement))
+        .orElse(priorSteps);
+  }
+
+  private VirtualMachine.DefinitionStages.WithManagedCreate maybeAddExistingDiskStep(
+      VirtualMachine.DefinitionStages.WithFromImageCreateOptionsManaged priorSteps,
+      Optional<Disk> disk) {
+    return disk.map(priorSteps::withExistingDataDisk).orElse(priorSteps);
+  }
+
+  private VirtualMachine.DefinitionStages.WithFromImageCreateOptionsManaged maybeAddCustomDataStep(
+      VirtualMachine.DefinitionStages.WithFromImageCreateOptionsManaged priorSteps,
+      ApiAzureVmCreationParameters creationParameters) {
+    return StringUtils.isEmpty(creationParameters.getCustomData())
+        ? priorSteps
+        : priorSteps.withCustomData(creationParameters.getCustomData());
+  }
+
+  private VirtualMachine.DefinitionStages.WithFromImageCreateOptionsManaged addImageStep(
+      VirtualMachine.DefinitionStages.WithProximityPlacementGroup priorSteps,
+      ApiAzureVmCreationParameters creationParameters) {
+    if (creationParameters.getVmImage().getUri() != null) {
+      return priorSteps.withSpecializedLinuxCustomImage(creationParameters.getVmImage().getUri());
+    } else {
+      return priorSteps
+          .withSpecificLinuxImageVersion(
+              new ImageReference()
+                  .withPublisher(creationParameters.getVmImage().getPublisher())
+                  .withOffer(creationParameters.getVmImage().getOffer())
+                  .withSku(creationParameters.getVmImage().getSku())
+                  .withVersion(creationParameters.getVmImage().getVersion()))
+          .withRootUsername(creationParameters.getVmUser().getName())
+          .withRootPassword(creationParameters.getVmUser().getPassword());
+    }
   }
 }

@@ -229,6 +229,7 @@ components:
     # All resource objects include this resource metadata object and call it 'metadata'
     ResourceMetadata:
       type: object
+      required: [workspaceId, resourceId, name, resourceType, stewardshipType]
       properties:
         workspaceId:
           type: string
