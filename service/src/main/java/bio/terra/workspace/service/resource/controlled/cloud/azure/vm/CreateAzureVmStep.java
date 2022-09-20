@@ -162,7 +162,7 @@ public class CreateAzureVmStep implements Step {
                     "%nResource Group: %s%n\tIp Name: %s%n\tNetwork Name: %s%n\tDisk Name: %s",
                     azureCloudContext.getAzureResourceGroupId(),
                     ipResource.map(ControlledAzureIpResource::getIpName).orElse("<no public ip>"),
-                    networkResource.getNetworkName(),
+                    resource.getNetworkId(),
                     diskResource
                         .map(ControlledAzureDiskResource::getDiskName)
                         .orElse("<no disk>")));
