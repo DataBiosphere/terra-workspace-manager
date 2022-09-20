@@ -9,7 +9,6 @@ import bio.terra.workspace.model.CloningInstructionsEnum;
 import bio.terra.workspace.model.CreateGcpGcsObjectReferenceRequestBody;
 import bio.terra.workspace.model.GcpGcsObjectAttributes;
 import bio.terra.workspace.model.GcpGcsObjectResource;
-import bio.terra.workspace.model.ReferenceResourceCommonFields;
 import com.google.cloud.storage.Blob;
 import com.google.cloud.storage.BlobId;
 import com.google.cloud.storage.Storage;
@@ -57,12 +56,10 @@ public class GcsBucketObjectUtils {
     var body =
         new CreateGcpGcsObjectReferenceRequestBody()
             .metadata(
-                new ReferenceResourceCommonFields()
-                    .cloningInstructions(
-                        Optional.ofNullable(cloningInstructionsEnum)
-                            .orElse(CloningInstructionsEnum.NOTHING))
-                    .description("Description of " + name)
-                    .name(name))
+                CommonResourceFieldsUtil.makeReferencedResourceCommonFields(
+                    name,
+                    Optional.ofNullable(cloningInstructionsEnum)
+                        .orElse(CloningInstructionsEnum.NOTHING)))
             .file(file);
 
     logger.info("Making reference to a gcs bucket file");

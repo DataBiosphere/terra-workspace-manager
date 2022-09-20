@@ -27,7 +27,6 @@ import bio.terra.workspace.model.JobControl;
 import bio.terra.workspace.model.JobReport;
 import bio.terra.workspace.model.ManagedBy;
 import bio.terra.workspace.model.PrivateResourceUser;
-import bio.terra.workspace.model.ReferenceResourceCommonFields;
 import bio.terra.workspace.model.UpdateGcsBucketObjectReferenceRequestBody;
 import bio.terra.workspace.model.UpdateGcsBucketReferenceRequestBody;
 import com.google.cloud.storage.Blob;
@@ -235,12 +234,10 @@ public class GcsBucketUtils {
     var body =
         new CreateGcpGcsBucketReferenceRequestBody()
             .metadata(
-                new ReferenceResourceCommonFields()
-                    .cloningInstructions(
-                        Optional.ofNullable(cloningInstructions)
-                            .orElse(CloningInstructionsEnum.NOTHING))
-                    .description("Description of " + name)
-                    .name(name))
+                CommonResourceFieldsUtil.makeReferencedResourceCommonFields(
+                    name,
+                    Optional.ofNullable(cloningInstructions)
+                        .orElse(CloningInstructionsEnum.NOTHING)))
             .bucket(bucket);
 
     GcpGcsBucketResource result =
