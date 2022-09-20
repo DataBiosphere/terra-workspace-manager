@@ -41,7 +41,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.UUID;
 import org.apache.http.HttpStatus;
 import org.broadinstitute.dsde.workbench.client.sam.model.UserStatusInfo;
-import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -189,7 +188,6 @@ public class ReferencedGcpResourceControllerTest extends BaseUnitTest {
         retrievedResource.getAttributes().getGitRepoUrl());
   }
 
-  @NotNull
   private String createReferencedResourceAndGetSerializedResponse(
       UUID workspaceId, String request, String apiFormat) throws Exception {
     String serializedResponse =
