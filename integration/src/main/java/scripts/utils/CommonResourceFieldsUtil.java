@@ -13,7 +13,7 @@ import com.google.common.collect.ImmutableMap;
 /** Utils to build common resource fields for both referenced resources and controlled resources. */
 public class CommonResourceFieldsUtil {
 
-  public static ImmutableMap<String, String> DEFAULT_RESOURCE_PROPERTIES =
+  public static final ImmutableMap<String, String> DEFAULT_RESOURCE_PROPERTIES =
       ImmutableMap.of("foo", "bar");
 
   public static ReferenceResourceCommonFields makeReferencedResourceCommonFields(
