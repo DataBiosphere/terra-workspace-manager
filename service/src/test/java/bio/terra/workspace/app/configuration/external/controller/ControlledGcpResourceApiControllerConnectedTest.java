@@ -24,6 +24,7 @@ import bio.terra.workspace.generated.model.ApiGcpBigQueryDatasetResource;
 import bio.terra.workspace.generated.model.ApiGcpGcsBucketResource;
 import bio.terra.workspace.generated.model.ApiJobControl;
 import bio.terra.workspace.generated.model.ApiJobReport.StatusEnum;
+import bio.terra.workspace.generated.model.ApiResourceMetadata;
 import bio.terra.workspace.generated.model.ApiStewardshipType;
 import bio.terra.workspace.generated.model.ApiWorkspaceDescription;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -75,10 +76,18 @@ public class ControlledGcpResourceApiControllerConnectedTest extends BaseConnect
         mockMvcUtils.createBigQueryDataset(
             userAccessUtils.defaultUserAuthRequest(), workspace.getId());
 
-    ApiGcpBigQueryDatasetResource retrievedResource =
+    ApiGcpBigQueryDatasetResource actualBqDataset =
         mockMvcUtils.getBigQueryDataset(
             userAccessUtils.defaultUserAuthRequest(), workspace.getId(), bqDataset.getResourceId());
-    assertEquals(bqDataset.getBigQueryDataset(), retrievedResource);
+    ApiGcpBigQueryDatasetResource expectedBqDataset = bqDataset.getBigQueryDataset();
+
+    assertResourceMetadata(expectedBqDataset.getMetadata(), actualBqDataset.getMetadata());
+    assertEquals(
+        expectedBqDataset.getAttributes().getDatasetId(),
+        actualBqDataset.getAttributes().getDatasetId());
+    assertEquals(
+        expectedBqDataset.getAttributes().getProjectId(),
+        actualBqDataset.getAttributes().getProjectId());
   }
 
   @Test
@@ -88,7 +97,12 @@ public class ControlledGcpResourceApiControllerConnectedTest extends BaseConnect
             userAccessUtils.defaultUserAuthRequest(),
             workspace.getId(),
             originalControlledBucket.getResourceId());
-    assertEquals(originalControlledBucket.getGcpBucket(), retrievedResource);
+    ApiGcpGcsBucketResource expectedBucket = originalControlledBucket.getGcpBucket();
+
+    assertResourceMetadata(expectedBucket.getMetadata(), retrievedResource.getMetadata());
+    assertEquals(
+        expectedBucket.getAttributes().getBucketName(),
+        retrievedResource.getAttributes().getBucketName());
   }
 
   @Test
@@ -225,5 +239,16 @@ public class ControlledGcpResourceApiControllerConnectedTest extends BaseConnect
       String expectedBucketName) {
     assertEquals(expectedStewardshipType, actualBucket.getMetadata().getStewardshipType());
     assertEquals(expectedBucketName, actualBucket.getAttributes().getBucketName());
+  }
+
+  private static void assertResourceMetadata(
+      ApiResourceMetadata expectedMetadata, ApiResourceMetadata actualMetadata) {
+    assertEquals(expectedMetadata.getName(), actualMetadata.getName());
+    assertEquals(expectedMetadata.getDescription(), actualMetadata.getDescription());
+    assertEquals(
+        expectedMetadata.getCloningInstructions(), actualMetadata.getCloningInstructions());
+    assertEquals(expectedMetadata.getStewardshipType(), actualMetadata.getStewardshipType());
+    assertEquals(expectedMetadata.getResourceType(), actualMetadata.getResourceType());
+    assertEquals(expectedMetadata.getProperties(), actualMetadata.getProperties());
   }
 }

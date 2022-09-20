@@ -85,11 +85,6 @@ public class MockMvcUtils {
       "/api/workspaces/v1/%s/resources/controlled/azure/network";
   public static final String CREATE_AZURE_VM_PATH_FORMAT =
       "/api/workspaces/v1/%s/resources/controlled/azure/vm";
-
-  public static final String CREATE_CONTROLLED_GCP_GCS_BUCKET_FORMAT =
-      "/api/workspaces/v1/%s/resources/controlled/gcp/buckets";
-  public static final String GET_CONTROLLED_GCP_GCS_BUCKET_FORMAT =
-      "/api/workspaces/v1/%s/resources/controlled/gcp/buckets/%s";
   public static final String CLONE_CONTROLLED_GCP_GCS_BUCKET_FORMAT =
       "/api/workspaces/v1/%s/resources/controlled/gcp/buckets/%s/clone";
   public static final String CLONE_RESULT_CONTROLLED_GCP_GCS_BUCKET_FORMAT =
