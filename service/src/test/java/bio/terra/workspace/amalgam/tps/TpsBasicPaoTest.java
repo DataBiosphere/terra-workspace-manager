@@ -42,9 +42,7 @@ public class TpsBasicPaoTest extends BaseUnitTest {
   private static final String GROUP = "group";
   private static final String REGION = "region";
   private static final String DDGROUP = "ddgroup";
-  private static final String YUGROUP = "yugroup";
   private static final String US_REGION = "US";
-  private static final String EU_REGION = "EU";
   AuthenticatedUserRequest USER_REQUEST =
       new AuthenticatedUserRequest(
           "fake@email.com", "subjectId123456", Optional.of("ThisIsNotARealBearerToken"));

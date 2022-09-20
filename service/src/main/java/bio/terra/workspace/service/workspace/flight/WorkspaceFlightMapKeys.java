@@ -15,6 +15,7 @@ public final class WorkspaceFlightMapKeys {
   public static final String OPERATION_TYPE = "operationType";
   public static final String POLICIES = "policies";
   public static final String FOLDER_ID = "folderId";
+  public static final String MERGE_POLICIES = "mergePolicies";
 
   private WorkspaceFlightMapKeys() {}
 

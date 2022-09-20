@@ -45,6 +45,7 @@ import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.model.StewardshipType;
 import bio.terra.workspace.service.resource.model.WsmResource;
 import bio.terra.workspace.service.workspace.GcpCloudContextService;
+import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ResourceKeys;
 import bio.terra.workspace.service.workspace.model.GcpCloudContext;
@@ -206,6 +207,9 @@ public class ControlledResourceService {
             sourceBucketResource.getResourceId(),
             sourceBucketResource.getName());
 
+    // If TPS is enabled, then we want to merge policies when cloning a bucket
+    boolean mergePolicies = features.isTpsEnabled();
+
     final JobBuilder jobBuilder =
         jobService
             .newJob()
@@ -222,6 +226,7 @@ public class ControlledResourceService {
             .addParameter(ResourceKeys.RESOURCE_DESCRIPTION, destinationDescription)
             .addParameter(ControlledResourceKeys.DESTINATION_BUCKET_NAME, destinationBucketName)
             .addParameter(ControlledResourceKeys.LOCATION, destinationLocation)
+            .addParameter(WorkspaceFlightMapKeys.MERGE_POLICIES, mergePolicies)
             .addParameter(
                 ControlledResourceKeys.CLONING_INSTRUCTIONS,
                 Optional.ofNullable(cloningInstructionsOverride)
