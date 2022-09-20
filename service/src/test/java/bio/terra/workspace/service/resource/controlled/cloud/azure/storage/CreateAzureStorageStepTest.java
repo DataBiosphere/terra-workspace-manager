@@ -18,9 +18,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
-import org.springframework.test.context.ActiveProfiles;
 
-@ActiveProfiles("azure")
 public class CreateAzureStorageStepTest extends BaseStorageStepTest {
 
   @Mock private CheckNameAvailabilityResult mockNameAvailabilityResult;

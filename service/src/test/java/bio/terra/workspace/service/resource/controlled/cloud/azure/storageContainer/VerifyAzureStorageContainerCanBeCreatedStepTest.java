@@ -23,9 +23,7 @@ import com.azure.resourcemanager.storage.models.BlobContainers;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
-import org.springframework.test.context.ActiveProfiles;
 
-@ActiveProfiles("azure")
 public class VerifyAzureStorageContainerCanBeCreatedStepTest extends BaseStorageStepTest {
 
   @Mock private BlobContainers mockBlobContainers;

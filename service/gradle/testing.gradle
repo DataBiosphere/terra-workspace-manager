@@ -105,3 +105,11 @@ task azureTest(type: Test) {
     failOnPassedAfterRetry = true
   }
 }
+
+task azureUnitTest(type: Test) {
+  useJUnitPlatform {
+    includeTags "azure-unit"
+  }
+  outputs.upToDateWhen { false }
+  finalizedBy tasks.combinedJaCoCoReport
+}

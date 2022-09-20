@@ -1,15 +1,20 @@
 package bio.terra.workspace.app.controller;
 
-import static bio.terra.workspace.common.utils.MockMvcUtils.*;
+import static bio.terra.workspace.common.utils.MockMvcUtils.CREATE_AZURE_VM_PATH_FORMAT;
+import static bio.terra.workspace.common.utils.MockMvcUtils.addAuth;
+import static bio.terra.workspace.common.utils.MockMvcUtils.addJsonContentType;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import bio.terra.workspace.common.BaseUnitTest;
+import bio.terra.workspace.common.BaseAzureUnitTest;
 import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
-import bio.terra.workspace.generated.model.*;
+import bio.terra.workspace.generated.model.ApiControlledResourceCommonFields;
+import bio.terra.workspace.generated.model.ApiCreateControlledAzureVmRequestBody;
+import bio.terra.workspace.generated.model.ApiJobControl;
+import bio.terra.workspace.generated.model.ApiJobReport;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceService;
@@ -25,7 +30,7 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
-public class ControlledAzureResourceApiControllerTest extends BaseUnitTest {
+public class ControlledAzureResourceApiControllerTest extends BaseAzureUnitTest {
   AuthenticatedUserRequest USER_REQUEST =
       new AuthenticatedUserRequest(
           "fake@email.com", "subjectId123456", Optional.of("ThisIsNotARealBearerToken"));
