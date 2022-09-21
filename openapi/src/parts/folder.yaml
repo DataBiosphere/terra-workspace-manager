@@ -99,6 +99,52 @@ paths:
         '500':
           $ref: '#/components/responses/ServerError'
 
+  /api/workspaces/v1/{workspaceId}/folders/{folderId}/properties:
+    parameters:
+    - $ref: '#/components/parameters/WorkspaceId'
+    - $ref: '#/components/parameters/FolderId'
+    post:
+      operationId: updateFolderProperties
+      summary: |
+        Update folder properties. Only properties with keys in request are
+        updated. Properties with keys not in request are not updated.
+      tags: [ Folder ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Properties'
+      responses:
+        '204':
+          description: Properties update sucessfully
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+    patch:
+      operationId: deleteFolderProperties
+      tags: [ Folder ]
+      summary: |
+        Delete folder properties. Only properties with keys in request are
+        deleted. Properties with keys not in request are not deleted.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PropertyKeys'
+      responses:
+        '204':
+          description: Properties delete sucessfully
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
 components:
   schemas:
     FolderList:
@@ -123,6 +169,8 @@ components:
           type: string
         parentFolderId:
           $ref: '#/components/schemas/FolderId'
+        properties:
+          $ref: '#/components/schemas/Properties'
     CreateFolderRequestBody:
       type: object
       required: [displayName]
@@ -136,7 +184,9 @@ components:
           description: A description of the folder
           type: string
         parentFolderId:
-         $ref: '#/components/schemas/FolderId'
+          $ref: '#/components/schemas/FolderId'
+        properties:
+          $ref: '#/components/schemas/Properties'
 
     UpdateFolderRequestBody:
       type: object
