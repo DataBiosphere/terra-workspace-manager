@@ -130,12 +130,8 @@ public class ControlledAzureHybridConnectionResource extends ControlledResource 
     return hybridConnectionName;
   }
 
-  public String getNamespaceName() {
-    return namespaceName;
-  }
-
   public ApiAzureHybridConnectionAttributes toApiAttributes() {
-    return new ApiAzureHybridConnectionAttributes().namespaceName(namespaceName).hybridConnectionName(hybridConnectionName);
+    return new ApiAzureHybridConnectionAttributes().hybridConnectionName(hybridConnectionName);
   }
 
   public ApiAzureHybridConnectionResource toApiResource() {
