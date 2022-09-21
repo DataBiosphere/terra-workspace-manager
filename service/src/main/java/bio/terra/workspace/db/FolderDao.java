@@ -130,7 +130,7 @@ public class FolderDao {
     if (displayName == null
         && description == null
         && parentFolderId == null
-        && updateParent == null) {
+        && (updateParent == null || !updateParent)) {
       throw new MissingRequiredFieldsException("Must specified fields to update");
     }
     if (parentFolderId != null) {

@@ -102,7 +102,9 @@ public class FolderApiController extends ControllerBase implements FolderApi {
     var response =
         new ApiFolderList()
             .folders(
-                folders.stream().map(folder -> buildFolder(folder)).collect(Collectors.toList()));
+                folders.stream()
+                    .map(FolderApiController::buildFolder)
+                    .collect(Collectors.toList()));
     return new ResponseEntity<>(response, HttpStatus.OK);
   }
 
