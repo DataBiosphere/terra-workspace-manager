@@ -44,6 +44,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import scripts.utils.ClientTestUtils;
 import scripts.utils.CloudContextMaker;
+import scripts.utils.CommonResourceFieldsUtil;
 import scripts.utils.MultiResourcesUtils;
 import scripts.utils.NotebookUtils;
 import scripts.utils.WorkspaceAllocateTestScriptBase;
@@ -100,6 +101,9 @@ public class PrivateControlledAiNotebookInstanceLifecycle extends WorkspaceAlloc
             /*postStartupScript=*/ null);
 
     UUID resourceId = creationResult.getAiNotebookInstance().getMetadata().getResourceId();
+    assertEquals(
+        CommonResourceFieldsUtil.getResourceDefaultProperties(),
+        creationResult.getAiNotebookInstance().getMetadata().getProperties());
 
     GcpAiNotebookInstanceResource resource =
         resourceUserApi.getAiNotebookInstance(getWorkspaceId(), resourceId);

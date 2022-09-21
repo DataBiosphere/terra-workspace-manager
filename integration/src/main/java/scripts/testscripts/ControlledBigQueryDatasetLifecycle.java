@@ -8,6 +8,7 @@ import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static scripts.utils.CommonResourceFieldsUtil.getResourceDefaultProperties;
 
 import bio.terra.testrunner.runner.config.TestUserSpecification;
 import bio.terra.workspace.api.ControlledGcpResourceApi;
@@ -113,6 +114,7 @@ public class ControlledBigQueryDatasetLifecycle extends GcpWorkspaceCloneTestScr
             /*datasetId=*/ null,
             CloningInstructionsEnum.NOTHING);
     assertEquals(DATASET_RESOURCE_NAME, createdDataset.getAttributes().getDatasetId());
+    assertEquals(getResourceDefaultProperties(), createdDataset.getMetadata().getProperties());
     UUID resourceId = createdDataset.getMetadata().getResourceId();
 
     // Retrieve the dataset resource

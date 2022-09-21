@@ -8,7 +8,6 @@ import bio.terra.workspace.service.resource.model.WsmResourceHandler;
 import bio.terra.workspace.service.workspace.GcpCloudContextService;
 import com.google.common.base.Preconditions;
 import java.util.UUID;
-import javax.annotation.Nullable;
 import javax.annotation.PostConstruct;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -64,7 +63,7 @@ public class ControlledGcsBucketHandler implements WsmResourceHandler {
    * In addition, bucket names cannot begin with the "goog" prefix. For details, see
    * https://cloud.google.com/storage/docs/naming-buckets.
    */
-  public String generateCloudName(@Nullable UUID workspaceUuid, String bucketName) {
+  public String generateCloudName(UUID workspaceUuid, String bucketName) {
     Preconditions.checkNotNull(workspaceUuid);
 
     String projectId = gcpCloudContextService.getRequiredGcpProject(workspaceUuid);

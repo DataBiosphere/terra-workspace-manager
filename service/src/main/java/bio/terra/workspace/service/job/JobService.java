@@ -128,8 +128,6 @@ public class JobService {
       String jobId) {
     submit(flightClass, parameterMap, jobId);
     waitForJob(jobId);
-    AuthenticatedUserRequest userRequest =
-        parameterMap.get(JobMapKeys.AUTH_USER_INFO.getKeyName(), AuthenticatedUserRequest.class);
 
     JobResultOrException<T> resultOrException = retrieveJobResult(jobId, resultClass);
     if (resultOrException.getException() != null) {

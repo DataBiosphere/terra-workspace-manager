@@ -1,5 +1,7 @@
 package bio.terra.workspace.common.fixtures;
 
+import static bio.terra.workspace.app.controller.shared.PropertiesUtils.convertMapToApiProperties;
+
 import bio.terra.stairway.ShortUUID;
 import bio.terra.workspace.common.utils.AzureVmUtils;
 import bio.terra.workspace.common.utils.TestUtils;
@@ -275,6 +277,10 @@ public class ControlledResourceFixtures {
     return new ApiGcpBigQueryDatasetCreationParameters().datasetId(uniqueDatasetId());
   }
 
+  public static ApiGcpGcsBucketCreationParameters defaultGcsBucketCreationParameters() {
+    return new ApiGcpGcsBucketCreationParameters().name(uniqueBucketName());
+  }
+
   public static final String RESOURCE_NAME = "my_first_bucket";
 
   public static final String RESOURCE_DESCRIPTION =
@@ -485,7 +491,8 @@ public class ControlledResourceFixtures {
         .cloningInstructions(commonFields.getCloningInstructions().toApiModel())
         .accessScope(commonFields.getAccessScope().toApiModel())
         .managedBy(commonFields.getManagedBy().toApiModel())
-        .resourceId(commonFields.getResourceId());
+        .resourceId(commonFields.getResourceId())
+        .properties(convertMapToApiProperties(commonFields.getProperties()));
   }
 
   /** Returns a {@link ControlledGcsBucketResource.Builder} that is ready to be built. */

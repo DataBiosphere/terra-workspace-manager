@@ -191,7 +191,6 @@ public class ReferencedDataRepoSnapshotResource extends ReferencedResource {
     }
 
     public ReferencedDataRepoSnapshotResource build() {
-      // On the create path, we can omit the resourceId and have it filled in by the builder.
       return new ReferencedDataRepoSnapshotResource(this);
     }
   }

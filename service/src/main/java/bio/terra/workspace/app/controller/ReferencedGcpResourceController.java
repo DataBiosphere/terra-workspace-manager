@@ -1,5 +1,6 @@
 package bio.terra.workspace.app.controller;
 
+import bio.terra.workspace.app.controller.shared.PropertiesUtils;
 import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.generated.controller.ReferencedGcpResourceApi;
 import bio.terra.workspace.generated.model.ApiCloneReferencedGcpBigQueryDataTableResourceResult;
@@ -22,6 +23,7 @@ import bio.terra.workspace.generated.model.ApiGcpBigQueryDatasetResource;
 import bio.terra.workspace.generated.model.ApiGcpGcsBucketResource;
 import bio.terra.workspace.generated.model.ApiGcpGcsObjectResource;
 import bio.terra.workspace.generated.model.ApiGitRepoResource;
+import bio.terra.workspace.generated.model.ApiReferenceResourceCommonFields;
 import bio.terra.workspace.generated.model.ApiTerraWorkspaceResource;
 import bio.terra.workspace.generated.model.ApiUpdateBigQueryDataTableReferenceRequestBody;
 import bio.terra.workspace.generated.model.ApiUpdateBigQueryDatasetReferenceRequestBody;
@@ -97,16 +99,7 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
     // Construct a ReferenceGcsBucketResource object from the API input
     var resource =
         ReferencedGcsObjectResource.builder()
-            .wsmResourceFields(
-                WsmResourceFields.builder()
-                    .workspaceUuid(workspaceUuid)
-                    .resourceId(UUID.randomUUID())
-                    .name(body.getMetadata().getName())
-                    .description(body.getMetadata().getDescription())
-                    .cloningInstructions(
-                        CloningInstructions.fromApiModel(
-                            body.getMetadata().getCloningInstructions()))
-                    .build())
+            .wsmResourceFields(getWsmResourceFields(workspaceUuid, body.getMetadata()))
             .bucketName(body.getFile().getBucketName())
             .objectName(body.getFile().getFileName())
             .build();
@@ -212,16 +205,7 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
     // Construct a ReferenceGcsBucketResource object from the API input
     var resource =
         ReferencedGcsBucketResource.builder()
-            .wsmResourceFields(
-                WsmResourceFields.builder()
-                    .workspaceUuid(workspaceUuid)
-                    .resourceId(UUID.randomUUID())
-                    .name(body.getMetadata().getName())
-                    .description(body.getMetadata().getDescription())
-                    .cloningInstructions(
-                        CloningInstructions.fromApiModel(
-                            body.getMetadata().getCloningInstructions()))
-                    .build())
+            .wsmResourceFields(getWsmResourceFields(workspaceUuid, body.getMetadata()))
             .bucketName(body.getBucket().getBucketName())
             .build();
 
@@ -317,16 +301,7 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
         userRequest, workspaceUuid, SamWorkspaceAction.CREATE_REFERENCE);
     var resource =
         ReferencedBigQueryDataTableResource.builder()
-            .wsmResourceFields(
-                WsmResourceFields.builder()
-                    .workspaceUuid(workspaceUuid)
-                    .resourceId(UUID.randomUUID())
-                    .name(body.getMetadata().getName())
-                    .description(body.getMetadata().getDescription())
-                    .cloningInstructions(
-                        CloningInstructions.fromApiModel(
-                            body.getMetadata().getCloningInstructions()))
-                    .build())
+            .wsmResourceFields(getWsmResourceFields(workspaceUuid, body.getMetadata()))
             .projectId(body.getDataTable().getProjectId())
             .datasetId(body.getDataTable().getDatasetId())
             .dataTableId(body.getDataTable().getDataTableId())
@@ -439,16 +414,7 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
     // Construct a ReferenceBigQueryResource object from the API input
     var resource =
         ReferencedBigQueryDatasetResource.builder()
-            .wsmResourceFields(
-                WsmResourceFields.builder()
-                    .workspaceUuid(uuid)
-                    .resourceId(UUID.randomUUID())
-                    .name(body.getMetadata().getName())
-                    .description(body.getMetadata().getDescription())
-                    .cloningInstructions(
-                        CloningInstructions.fromApiModel(
-                            body.getMetadata().getCloningInstructions()))
-                    .build())
+            .wsmResourceFields(getWsmResourceFields(uuid, body.getMetadata()))
             .projectId(body.getDataset().getProjectId())
             .datasetName(body.getDataset().getDatasetId())
             .build();
@@ -551,16 +517,7 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
 
     var resource =
         ReferencedDataRepoSnapshotResource.builder()
-            .wsmResourceFields(
-                WsmResourceFields.builder()
-                    .workspaceUuid(uuid)
-                    .resourceId(UUID.randomUUID())
-                    .name(body.getMetadata().getName())
-                    .description(body.getMetadata().getDescription())
-                    .cloningInstructions(
-                        CloningInstructions.fromApiModel(
-                            body.getMetadata().getCloningInstructions()))
-                    .build())
+            .wsmResourceFields(getWsmResourceFields(uuid, body.getMetadata()))
             .instanceName(body.getSnapshot().getInstanceName())
             .snapshotId(body.getSnapshot().getSnapshot())
             .build();
@@ -903,16 +860,7 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
         userRequest, workspaceUuid, SamWorkspaceAction.CREATE_REFERENCE);
     ReferencedGitRepoResource resource =
         ReferencedGitRepoResource.builder()
-            .wsmResourceFields(
-                WsmResourceFields.builder()
-                    .workspaceUuid(workspaceUuid)
-                    .resourceId(UUID.randomUUID())
-                    .name(body.getMetadata().getName())
-                    .description(body.getMetadata().getDescription())
-                    .cloningInstructions(
-                        CloningInstructions.fromApiModel(
-                            body.getMetadata().getCloningInstructions()))
-                    .build())
+            .wsmResourceFields(getWsmResourceFields(workspaceUuid, body.getMetadata()))
             .gitRepoUrl(body.getGitrepo().getGitRepoUrl())
             .build();
 
@@ -1060,16 +1008,7 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
     // Construct a ReferencedTerraWorkspaceResource object from the API input
     ReferencedTerraWorkspaceResource resource =
         ReferencedTerraWorkspaceResource.builder()
-            .resourceCommonFields(
-                WsmResourceFields.builder()
-                    .workspaceUuid(workspaceUuid)
-                    .resourceId(UUID.randomUUID())
-                    .name(body.getMetadata().getName())
-                    .description(body.getMetadata().getDescription())
-                    .cloningInstructions(
-                        CloningInstructions.fromApiModel(
-                            body.getMetadata().getCloningInstructions()))
-                    .build())
+            .resourceCommonFields(getWsmResourceFields(workspaceUuid, body.getMetadata()))
             .referencedWorkspaceId(referencedWorkspaceId)
             .build();
 
@@ -1114,5 +1053,17 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
     referenceResourceService.deleteReferenceResourceForResourceType(
         workspaceUuid, resourceId, WsmResourceType.REFERENCED_ANY_TERRA_WORKSPACE, userRequest);
     return new ResponseEntity<>(HttpStatus.OK);
+  }
+
+  private static WsmResourceFields getWsmResourceFields(
+      UUID workspaceUuid, ApiReferenceResourceCommonFields metadata) {
+    return WsmResourceFields.builder()
+        .workspaceUuid(workspaceUuid)
+        .resourceId(UUID.randomUUID())
+        .name(metadata.getName())
+        .description(metadata.getDescription())
+        .properties(PropertiesUtils.convertApiPropertyToMap(metadata.getProperties()))
+        .cloningInstructions(CloningInstructions.fromApiModel(metadata.getCloningInstructions()))
+        .build();
   }
 }
