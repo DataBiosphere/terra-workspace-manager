@@ -32,10 +32,8 @@ import bio.terra.workspace.service.workspace.model.AzureCloudContext;
 import bio.terra.workspace.service.workspace.model.OperationType;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceAndHighestRole;
-import bio.terra.workspace.service.workspace.model.WorkspaceConstants.Properties;
 import com.google.common.base.Preconditions;
 import io.opencensus.contrib.spring.aop.Traced;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -274,35 +272,6 @@ public class WorkspaceService {
     Preconditions.checkState(
         highestRole.isPresent(), String.format("Workspace %s missing roles", uuid.toString()));
     return highestRole.get();
-  }
-
-  // If requester only has discoverer role, they can only see a subset of workspace. For example,
-  // they can see workspace name but not description.
-  private Workspace stripWorkspaceForRequesterWithOnlyDiscovererRole(Workspace fullWorkspace) {
-    Workspace.Builder strippedWorkspace =
-        new Workspace.Builder()
-            .workspaceId(fullWorkspace.getWorkspaceId())
-            .userFacingId(fullWorkspace.getUserFacingId())
-            .workspaceStage(fullWorkspace.getWorkspaceStage());
-    strippedWorkspace.displayName(fullWorkspace.getDisplayName().orElse(null));
-
-    Map<String, String> strippedProperties = new HashMap<>();
-    if (fullWorkspace.getProperties().containsKey(Properties.TYPE)) {
-      strippedProperties.put(Properties.TYPE, fullWorkspace.getProperties().get(Properties.TYPE));
-    }
-    if (fullWorkspace.getProperties().containsKey(Properties.SHORT_DESCRIPTION)) {
-      strippedProperties.put(
-          Properties.SHORT_DESCRIPTION,
-          fullWorkspace.getProperties().get(Properties.SHORT_DESCRIPTION));
-    }
-    if (fullWorkspace.getProperties().containsKey(Properties.VERSION)) {
-      strippedProperties.put(
-          Properties.VERSION, fullWorkspace.getProperties().get(Properties.VERSION));
-    }
-    if (strippedProperties.size() > 0) {
-      strippedWorkspace.properties(strippedProperties);
-    }
-    return strippedWorkspace.build();
   }
 
   /**
