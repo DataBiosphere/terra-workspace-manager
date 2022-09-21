@@ -1,5 +1,6 @@
 package bio.terra.workspace.common.utils;
 
+import bio.terra.workspace.amalgam.landingzone.azure.LandingZoneApiDispatch;
 import bio.terra.workspace.amalgam.tps.TpsApiDispatch;
 import bio.terra.workspace.app.configuration.external.AzureConfiguration;
 import bio.terra.workspace.app.configuration.external.CliConfiguration;
@@ -47,6 +48,7 @@ public class FlightBeanBag {
   private final DataRepoService dataRepoService;
   private final FeatureConfiguration featureConfiguration;
   private final GcpCloudContextService gcpCloudContextService;
+  private final LandingZoneApiDispatch landingZoneApiDispatch;
   private final PetSaService petSaService;
   private final ReferencedResourceService referencedResourceService;
   private final ResourceDao resourceDao;
@@ -73,6 +75,7 @@ public class FlightBeanBag {
       DataRepoService dataRepoService,
       FeatureConfiguration featureConfiguration,
       GcpCloudContextService gcpCloudContextService,
+      LandingZoneApiDispatch landingZoneApiDispatch,
       PetSaService petSaService,
       TpsApiDispatch tpsApiDispatch,
       ReferencedResourceService referencedResourceService,
@@ -95,6 +98,7 @@ public class FlightBeanBag {
     this.dataRepoService = dataRepoService;
     this.featureConfiguration = featureConfiguration;
     this.gcpCloudContextService = gcpCloudContextService;
+    this.landingZoneApiDispatch = landingZoneApiDispatch;
     this.petSaService = petSaService;
     this.referencedResourceService = referencedResourceService;
     this.resourceDao = resourceDao;
@@ -149,6 +153,10 @@ public class FlightBeanBag {
 
   public GcpCloudContextService getGcpCloudContextService() {
     return gcpCloudContextService;
+  }
+
+  public LandingZoneApiDispatch getLandingZoneApiDispatch() {
+    return landingZoneApiDispatch;
   }
 
   public PetSaService getPetSaService() {

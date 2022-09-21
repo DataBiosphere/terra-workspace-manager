@@ -36,7 +36,6 @@ import java.util.UUID;
 
 public class ControlledAzureHybridConnectionResource extends ControlledResource {
   private final String hybridConnectionName;
-  private final String namespaceName;
 
   @JsonCreator
   public ControlledAzureHybridConnectionResource(
@@ -51,7 +50,6 @@ public class ControlledAzureHybridConnectionResource extends ControlledResource 
       @JsonProperty("managedBy") ManagedByType managedBy,
       @JsonProperty("applicationId") String applicationId,
       @JsonProperty("hybridConnectionName") String hybridConnectionName,
-      @JsonProperty("namespaceName") String namespaceName,
       @JsonProperty("resourceLineage") List<ResourceLineageEntry> resourceLineage,
       @JsonProperty("properties") Map<String, String> properties) {
 
@@ -69,14 +67,12 @@ public class ControlledAzureHybridConnectionResource extends ControlledResource 
         resourceLineage,
         properties);
     this.hybridConnectionName = hybridConnectionName;
-    this.namespaceName = namespaceName;
     validate();
   }
 
-  public ControlledAzureHybridConnectionResource(ControlledResourceFields common, String hybridConnectionName, String namespaceName) {
+  public ControlledAzureHybridConnectionResource(ControlledResourceFields common, String hybridConnectionName) {
     super(common);
     this.hybridConnectionName = hybridConnectionName;
-    this.namespaceName = namespaceName;
     validate();
   }
 
@@ -99,7 +95,7 @@ public class ControlledAzureHybridConnectionResource extends ControlledResource 
   public Optional<UniquenessCheckAttributes> getUniquenessCheckAttributes() {
     return Optional.of(
         new UniquenessCheckAttributes()
-            .uniquenessScope(UniquenessScope.WORKSPACE)
+            .uniquenessScope(UniquenessScope.GLOBAL)
             .addParameter("Name", getName()));
   }
 
@@ -113,11 +109,11 @@ public class ControlledAzureHybridConnectionResource extends ControlledResource 
     RetryRule cloudRetry = RetryRules.cloud();
     flight.addStep(
         new GetAzureHybridConnectionStep(
-            flightBeanBag.getAzureConfig(), flightBeanBag.getCrlService(), this),
+            flightBeanBag.getAzureConfig(), flightBeanBag.getCrlService(), flightBeanBag.getLandingZoneApiDispatch(), this),
         cloudRetry);
     flight.addStep(
         new CreateAzureHybridConnectionStep(
-            flightBeanBag.getAzureConfig(), flightBeanBag.getCrlService(), this),
+            flightBeanBag.getAzureConfig(), flightBeanBag.getCrlService(), flightBeanBag.getLandingZoneApiDispatch(), this),
         cloudRetry);
   }
 
@@ -126,7 +122,7 @@ public class ControlledAzureHybridConnectionResource extends ControlledResource 
   public void addDeleteSteps(DeleteControlledResourceFlight flight, FlightBeanBag flightBeanBag) {
     flight.addStep(
         new DeleteAzureHybridConnectionStep(
-            flightBeanBag.getAzureConfig(), flightBeanBag.getCrlService(), this),
+            flightBeanBag.getAzureConfig(), flightBeanBag.getCrlService(), flightBeanBag.getLandingZoneApiDispatch(), this),
         RetryRules.cloud());
   }
 
@@ -205,7 +201,7 @@ public class ControlledAzureHybridConnectionResource extends ControlledResource 
 
     ControlledAzureHybridConnectionResource that = (ControlledAzureHybridConnectionResource) o;
 
-    return hybridConnectionName.equals(that.hybridConnectionName); // TODO include namespace
+    return hybridConnectionName.equals(that.hybridConnectionName);
   }
 
   @Override
@@ -217,21 +213,20 @@ public class ControlledAzureHybridConnectionResource extends ControlledResource 
 
   public static class Builder {
     private ControlledResourceFields common;
-    private String namespaceName;
-    private String region;
+    private String hybridConnectionName;
 
     public ControlledAzureHybridConnectionResource.Builder common(ControlledResourceFields common) {
       this.common = common;
       return this;
     }
 
-    public Builder region(String hybridConnectionName, String namespaceName) {
-      this. = region; // TODO
+    public Builder hybridConnection(String hybridConnectionName) {
+      this.hybridConnectionName = hybridConnectionName;
       return this;
     }
 
     public ControlledAzureHybridConnectionResource build() {
-      return new ControlledAzureHybridConnectionResource(common, region);
+      return new ControlledAzureHybridConnectionResource(common, hybridConnectionName);
     }
   }
 }

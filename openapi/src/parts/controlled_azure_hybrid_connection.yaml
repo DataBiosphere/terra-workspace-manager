@@ -107,10 +107,6 @@ components:
           description: |
             A valid name for the hybrid connection
           type: string
-        namespaceName:
-          description: |
-            A valid relay namespace name
-          type: string
 
     CreateControlledAzureHybridConnectionRequestBody:
       description: Payload for requesting a new controlled Azure Hybrid Connection resource.

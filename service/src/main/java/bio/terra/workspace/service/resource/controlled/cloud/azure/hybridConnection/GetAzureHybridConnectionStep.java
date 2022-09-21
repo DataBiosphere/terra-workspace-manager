@@ -5,6 +5,7 @@ import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.StepStatus;
 import bio.terra.stairway.exception.RetryException;
+import bio.terra.workspace.amalgam.landingzone.azure.LandingZoneApiDispatch;
 import bio.terra.workspace.app.configuration.external.AzureConfiguration;
 import bio.terra.workspace.common.utils.ManagementExceptionUtils;
 import bio.terra.workspace.service.crl.CrlService;
@@ -23,14 +24,17 @@ public class GetAzureHybridConnectionStep implements Step {
 
   private final AzureConfiguration azureConfig;
   private final CrlService crlService;
+  private final LandingZoneApiDispatch landingZoneApiDispatch;
   private final ControlledAzureHybridConnectionResource resource;
 
   public GetAzureHybridConnectionStep(
       AzureConfiguration azureConfig,
       CrlService crlService,
+      LandingZoneApiDispatch landingZoneApiDispatch,
       ControlledAzureHybridConnectionResource resource) {
     this.azureConfig = azureConfig;
     this.crlService = crlService;
+    this.landingZoneApiDispatch = landingZoneApiDispatch;
     this.resource = resource;
   }
 
@@ -42,9 +46,11 @@ public class GetAzureHybridConnectionStep implements Step {
             .get(ControlledResourceKeys.AZURE_CLOUD_CONTEXT, AzureCloudContext.class);
     RelayManager manager = crlService.getRelayManager(azureCloudContext, azureConfig);
     try {
+      landingZoneApiDispatch.
+
       manager // TODO get hcName
           .hybridConnections()
-          .get(azureCloudContext.getAzureResourceGroupId(), "namespaceTODO", "hcName");
+          .get(azureCloudContext.getAzureResourceGroupId(), "namespaceTODO", resource.getHybridConnectionName());
       return new StepResult(
           StepStatus.STEP_RESULT_FAILURE_FATAL,
           new DuplicateResourceException(
