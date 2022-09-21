@@ -61,7 +61,6 @@ public class FlightBeanBag {
   private final WorkspaceService workspaceService;
   private final VersionConfiguration versionConfiguration;
   private final StorageAccountKeyProvider storageAccountKeyProvider;
-  private final LandingZoneApiDispatch landingZoneApiDispatch;
 
   @Lazy
   @Autowired
@@ -89,8 +88,7 @@ public class FlightBeanBag {
       WorkspaceDao workspaceDao,
       WorkspaceService workspaceService,
       VersionConfiguration versionConfiguration,
-      StorageAccountKeyProvider storageAccountKeyProvider,
-      LandingZoneApiDispatch landingZoneApiDispatch) {
+      StorageAccountKeyProvider storageAccountKeyProvider) {
     this.applicationDao = applicationDao;
     this.azureCloudContextService = azureCloudContextService;
     this.azureConfig = azureConfig;
@@ -115,7 +113,6 @@ public class FlightBeanBag {
     this.workspaceService = workspaceService;
     this.versionConfiguration = versionConfiguration;
     this.storageAccountKeyProvider = storageAccountKeyProvider;
-    this.landingZoneApiDispatch = landingZoneApiDispatch;
   }
 
   public static FlightBeanBag getFromObject(Object object) {
@@ -160,10 +157,6 @@ public class FlightBeanBag {
 
   public GcpCloudContextService getGcpCloudContextService() {
     return gcpCloudContextService;
-  }
-
-  public LandingZoneApiDispatch getLandingZoneApiDispatch() {
-    return landingZoneApiDispatch;
   }
 
   public PetSaService getPetSaService() {

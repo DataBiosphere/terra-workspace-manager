@@ -28,13 +28,14 @@ public class ControlledAzureHybridConnectionHandler implements WsmResourceHandle
 
     var resource =
         ControlledAzureHybridConnectionResource.builder()
-            .region(attributes.getRegion())
+            .hybridConnectionName(attributes.getHybridConnectionName())
             .common(new ControlledResourceFields(dbResource))
             .build();
     return resource;
   }
 
   public String generateCloudName(@Nullable UUID workspaceUuid, String resourceName) {
-    throw new FeatureNotSupportedException("This generate cloud name feature is not implement yet");
+    throw new FeatureNotSupportedException(
+        "This generate cloud name feature is not implemented yet");
   }
 }

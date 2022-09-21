@@ -70,7 +70,8 @@ public class ControlledAzureHybridConnectionResource extends ControlledResource 
     validate();
   }
 
-  public ControlledAzureHybridConnectionResource(ControlledResourceFields common, String hybridConnectionName) {
+  public ControlledAzureHybridConnectionResource(
+      ControlledResourceFields common, String hybridConnectionName) {
     super(common);
     this.hybridConnectionName = hybridConnectionName;
     validate();
@@ -109,11 +110,17 @@ public class ControlledAzureHybridConnectionResource extends ControlledResource 
     RetryRule cloudRetry = RetryRules.cloud();
     flight.addStep(
         new GetAzureHybridConnectionStep(
-            flightBeanBag.getAzureConfig(), flightBeanBag.getCrlService(), flightBeanBag.getLandingZoneApiDispatch(), this),
+            flightBeanBag.getAzureConfig(),
+            flightBeanBag.getCrlService(),
+            flightBeanBag.getLandingZoneApiDispatch(),
+            this),
         cloudRetry);
     flight.addStep(
         new CreateAzureHybridConnectionStep(
-            flightBeanBag.getAzureConfig(), flightBeanBag.getCrlService(), flightBeanBag.getLandingZoneApiDispatch(), this),
+            flightBeanBag.getAzureConfig(),
+            flightBeanBag.getCrlService(),
+            flightBeanBag.getLandingZoneApiDispatch(),
+            this),
         cloudRetry);
   }
 
@@ -122,7 +129,10 @@ public class ControlledAzureHybridConnectionResource extends ControlledResource 
   public void addDeleteSteps(DeleteControlledResourceFlight flight, FlightBeanBag flightBeanBag) {
     flight.addStep(
         new DeleteAzureHybridConnectionStep(
-            flightBeanBag.getAzureConfig(), flightBeanBag.getCrlService(), flightBeanBag.getLandingZoneApiDispatch(), this),
+            flightBeanBag.getAzureConfig(),
+            flightBeanBag.getCrlService(),
+            flightBeanBag.getLandingZoneApiDispatch(),
+            this),
         RetryRules.cloud());
   }
 
@@ -151,8 +161,9 @@ public class ControlledAzureHybridConnectionResource extends ControlledResource 
   }
 
   @Override
-  public String attributesToJson() { // TODO
-    return DbSerDes.toJson(new ControlledAzureHybridConnectionAttributes(getHybridConnectionName()));
+  public String attributesToJson() {
+    return DbSerDes.toJson(
+        new ControlledAzureHybridConnectionAttributes(getHybridConnectionName()));
   }
 
   @Override
@@ -183,10 +194,9 @@ public class ControlledAzureHybridConnectionResource extends ControlledResource 
     }
     if (getHybridConnectionName() == null) {
       throw new MissingRequiredFieldException(
-          "Missing required region field for ControlledAzureRelayNamespace.");
+          "Missing required hybrid connection field for ControlledAzureRelayNamespace.");
     }
     ResourceValidationUtils.validateAzureHybridConnectionName(getHybridConnectionName());
-    ResourceValidationUtils.validateAzureNamespace(namespaceName);
   }
 
   @Override
@@ -203,7 +213,7 @@ public class ControlledAzureHybridConnectionResource extends ControlledResource 
   @Override
   public int hashCode() {
     int result = super.hashCode();
-    result = 31 * result + hybridConnectionName.hashCode(); // TODO include namespace
+    result = 31 * result + hybridConnectionName.hashCode();
     return result;
   }
 
@@ -216,7 +226,7 @@ public class ControlledAzureHybridConnectionResource extends ControlledResource 
       return this;
     }
 
-    public Builder hybridConnection(String hybridConnectionName) {
+    public Builder hybridConnectionName(String hybridConnectionName) {
       this.hybridConnectionName = hybridConnectionName;
       return this;
     }

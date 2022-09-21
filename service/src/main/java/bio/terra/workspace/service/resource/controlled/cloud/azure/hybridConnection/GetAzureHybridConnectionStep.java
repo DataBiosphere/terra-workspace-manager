@@ -16,7 +16,6 @@ import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.Contr
 import bio.terra.workspace.service.workspace.model.AzureCloudContext;
 import com.azure.core.management.exception.ManagementException;
 import com.azure.resourcemanager.relay.RelayManager;
-
 import java.util.Optional;
 
 /**
@@ -51,23 +50,33 @@ public class GetAzureHybridConnectionStep implements Step {
     RelayManager manager = crlService.getRelayManager(azureCloudContext, azureConfig);
     try {
       String landingZoneId = landingZoneApiDispatch.getLandingZoneId(azureCloudContext);
-      Optional<ApiAzureLandingZoneDeployedResource> azureRelayResource = landingZoneApiDispatch
-          .listAzureLandingZoneResources(landingZoneId)
-          .getResources()
-          .stream()
-          .filter(purposeGroup -> purposeGroup.getPurpose().equals(ResourcePurpose.SHARED_RESOURCE.toString()))
-          .findFirst()
-          .flatMap(purposeGroup -> purposeGroup
-              .getDeployedResources()
+      Optional<ApiAzureLandingZoneDeployedResource> azureRelayResource =
+          landingZoneApiDispatch
+              .listAzureLandingZoneResources(landingZoneId)
+              .getResources()
               .stream()
-              .filter(deployedResource -> deployedResource.getResourceType().equals("Azure Relay Type")) // TODO
-              .findFirst());
+              .filter(
+                  purposeGroup ->
+                      purposeGroup.getPurpose().equals(ResourcePurpose.SHARED_RESOURCE.toString()))
+              .findFirst()
+              .flatMap(
+                  purposeGroup ->
+                      purposeGroup.getDeployedResources().stream()
+                          .filter(
+                              deployedResource ->
+                                  deployedResource
+                                      .getResourceType()
+                                      .equals("Microsoft.Relay/Namespaces"))
+                          .findFirst());
 
       String relayNamespaceName = azureRelayResource.get().getResourceName();
 
-      manager // TODO get hcName
+      manager
           .hybridConnections()
-          .get(azureCloudContext.getAzureResourceGroupId(), relayNamespaceName, resource.getHybridConnectionName());
+          .get(
+              azureCloudContext.getAzureResourceGroupId(),
+              relayNamespaceName,
+              resource.getHybridConnectionName());
       return new StepResult(
           StepStatus.STEP_RESULT_FAILURE_FATAL,
           new DuplicateResourceException(

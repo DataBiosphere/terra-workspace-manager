@@ -15,10 +15,9 @@ import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.Contr
 import bio.terra.workspace.service.workspace.model.AzureCloudContext;
 import com.azure.core.management.exception.ManagementException;
 import com.azure.resourcemanager.relay.RelayManager;
+import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.Optional;
 
 /**
  * Creates an Azure RelayNamespace address. Designed to run directly after {@link
@@ -55,17 +54,24 @@ public class CreateAzureHybridConnectionStep implements Step {
     try {
       // TODO this logic for getting azure relay is duplicated across multiple steps
       String landingZoneId = landingZoneApiDispatch.getLandingZoneId(azureCloudContext);
-      Optional<ApiAzureLandingZoneDeployedResource> azureRelayResource = landingZoneApiDispatch
-          .listAzureLandingZoneResources(landingZoneId)
-          .getResources()
-          .stream()
-          .filter(purposeGroup -> purposeGroup.getPurpose().equals(ResourcePurpose.SHARED_RESOURCE.toString()))
-          .findFirst()
-          .flatMap(purposeGroup -> purposeGroup
-              .getDeployedResources()
+      Optional<ApiAzureLandingZoneDeployedResource> azureRelayResource =
+          landingZoneApiDispatch
+              .listAzureLandingZoneResources(landingZoneId)
+              .getResources()
               .stream()
-              .filter(deployedResource -> deployedResource.getResourceType().equals("Azure Relay Type")) // TODO
-              .findFirst());
+              .filter(
+                  purposeGroup ->
+                      purposeGroup.getPurpose().equals(ResourcePurpose.SHARED_RESOURCE.toString()))
+              .findFirst()
+              .flatMap(
+                  purposeGroup ->
+                      purposeGroup.getDeployedResources().stream()
+                          .filter(
+                              deployedResource ->
+                                  deployedResource
+                                      .getResourceType()
+                                      .equals("Microsoft.Relay/Namespaces"))
+                          .findFirst());
 
       String relayNamespaceName = azureRelayResource.get().getResourceName();
 

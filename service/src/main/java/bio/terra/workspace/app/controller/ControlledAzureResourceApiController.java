@@ -224,7 +224,7 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
     ControlledAzureHybridConnectionResource resource =
         ControlledAzureHybridConnectionResource.builder()
             .common(commonFields)
-            .hybridConnection(body.getAzureHybridConnection().getHybridConnectionName())
+            .hybridConnectionName(body.getAzureHybridConnection().getHybridConnectionName())
             .build();
 
     final String jobId =

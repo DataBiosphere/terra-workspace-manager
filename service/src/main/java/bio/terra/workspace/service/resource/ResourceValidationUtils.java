@@ -286,6 +286,9 @@ public class ResourceValidationUtils {
     }
   }
 
+  // TODO look up valid HybridConnection name rules
+  public static void validateAzureHybridConnectionName(String name) {}
+
   public static void validateAzureNetworkName(String name) {
     Pattern pattern = Pattern.compile("^[a-zA-Z0-9][a-zA-Z0-9-_.]{2,62}[a-zA-Z0-9_]$");
 

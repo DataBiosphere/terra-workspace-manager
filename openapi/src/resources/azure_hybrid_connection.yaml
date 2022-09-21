@@ -5,11 +5,8 @@ components:
         Azure Hybrid Connecction properties included in post-creation get. Others must be retrieved from Azure using the name.
       type: object
       properties:
-        namespaceName:
+        hybridConnectionName:
           description: Name of created hybrid connection (not the resource name).
-          type: string
-        region:
-          description: Azure region of created resource
           type: string
 
     AzureHybridConnectionResource:

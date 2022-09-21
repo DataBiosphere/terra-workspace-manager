@@ -1,14 +1,18 @@
 package bio.terra.workspace.service.resource.controlled.cloud.azure.hybridConnection;
 
+import bio.terra.landingzone.library.landingzones.deployment.ResourcePurpose;
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.StepStatus;
+import bio.terra.workspace.amalgam.landingzone.azure.LandingZoneApiDispatch;
 import bio.terra.workspace.app.configuration.external.AzureConfiguration;
+import bio.terra.workspace.generated.model.ApiAzureLandingZoneDeployedResource;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import bio.terra.workspace.service.workspace.model.AzureCloudContext;
 import com.azure.resourcemanager.relay.RelayManager;
+import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -21,14 +25,17 @@ public class DeleteAzureHybridConnectionStep implements Step {
       LoggerFactory.getLogger(DeleteAzureHybridConnectionStep.class);
   private final AzureConfiguration azureConfig;
   private final CrlService crlService;
+  private final LandingZoneApiDispatch landingZoneApiDispatch;
   private final ControlledAzureHybridConnectionResource resource;
 
   public DeleteAzureHybridConnectionStep(
       AzureConfiguration azureConfig,
       CrlService crlService,
+      LandingZoneApiDispatch landingZoneApiDispatch,
       ControlledAzureHybridConnectionResource resource) {
-    this.crlService = crlService;
     this.azureConfig = azureConfig;
+    this.crlService = crlService;
+    this.landingZoneApiDispatch = landingZoneApiDispatch;
     this.resource = resource;
   }
 
@@ -48,8 +55,37 @@ public class DeleteAzureHybridConnectionStep implements Step {
             "resource id");
 
     try {
+      // TODO this logic for getting azure relay is duplicated across multiple steps
+      String landingZoneId = landingZoneApiDispatch.getLandingZoneId(azureCloudContext);
+      Optional<ApiAzureLandingZoneDeployedResource> azureRelayResource =
+          landingZoneApiDispatch
+              .listAzureLandingZoneResources(landingZoneId)
+              .getResources()
+              .stream()
+              .filter(
+                  purposeGroup ->
+                      purposeGroup.getPurpose().equals(ResourcePurpose.SHARED_RESOURCE.toString()))
+              .findFirst()
+              .flatMap(
+                  purposeGroup ->
+                      purposeGroup.getDeployedResources().stream()
+                          .filter(
+                              deployedResource ->
+                                  deployedResource
+                                      .getResourceType()
+                                      .equals("Microsoft.Relay/Namespaces"))
+                          .findFirst());
+
+      String relayNamespaceName = azureRelayResource.get().getResourceName();
+
       logger.info("Attempting to delete Relay Namespace " + azureResourceId);
       manager.hybridConnections().deleteById(azureResourceId);
+      manager
+          .hybridConnections()
+          .delete(
+              azureCloudContext.getAzureResourceGroupId(),
+              relayNamespaceName,
+              resource.getHybridConnectionName());
       return StepResult.getStepResultSuccess();
     } catch (Exception ex) {
       logger.info(

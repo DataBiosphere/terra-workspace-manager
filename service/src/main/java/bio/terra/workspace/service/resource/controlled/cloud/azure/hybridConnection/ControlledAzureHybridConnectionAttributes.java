@@ -4,14 +4,15 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class ControlledAzureHybridConnectionAttributes {
-  private final String region;
+  private final String hybridConnectionName;
 
   @JsonCreator
-  public ControlledAzureHybridConnectionAttributes(@JsonProperty("region") String region) {
-    this.region = region;
+  public ControlledAzureHybridConnectionAttributes(
+      @JsonProperty("region") String hybridConnectionName) {
+    this.hybridConnectionName = hybridConnectionName;
   }
 
-  public String getRegion() {
-    return region;
+  public String getHybridConnectionName() {
+    return hybridConnectionName;
   }
 }
