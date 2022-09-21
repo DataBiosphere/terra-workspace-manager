@@ -8,6 +8,7 @@ import static bio.terra.workspace.service.resource.controlled.flight.clone.works
 import static bio.terra.workspace.service.workspace.model.WorkspaceConstants.ResourceProperties.FOLDER_ID_KEY;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import bio.terra.workspace.common.BaseUnitTest;
 import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
@@ -113,6 +114,28 @@ public class WorkspaceCloneUtilsTest extends BaseUnitTest {
   }
 
   @Test
+  public void buildDestinationControlledBigQueryDataset_cloneToTheSameWorkspace_notClearProperty() {
+    var sourceDataset =
+        ControlledBigQueryDatasetResource.builder()
+            .common(makeControlledResourceFieldsWithCustomProperties())
+            .datasetName(uniqueDatasetId())
+            .projectId("my-gcp-project")
+            .build();
+
+    ControlledBigQueryDatasetResource datasetToClone =
+        buildDestinationControlledBigQueryDataset(
+            sourceDataset,
+            sourceDataset.getWorkspaceId(),
+            DESTINATION_RESOURCE_ID,
+            /*name=*/ RandomStringUtils.randomAlphabetic(5),
+            /*description=*/ "This is a cloned dataset",
+            /*cloudInstanceName=*/ RandomStringUtils.randomAlphabetic(5),
+            /*destinationProjectId=*/ "my-gcp-project");
+
+    assertTrue(datasetToClone.getProperties().containsKey(FOLDER_ID_KEY));
+  }
+
+  @Test
   public void buildDestinationControlledGcsBucket_cloneSucceeds() {
     ControlledGcsBucketResource sourceBucket =
         ControlledResourceFixtures.makeDefaultControlledGcsBucketBuilder(WORKSPACE_ID).build();
@@ -215,12 +238,13 @@ public class WorkspaceCloneUtilsTest extends BaseUnitTest {
   public void buildDestinationReferencedResource_clearSomeProperties() {
     ReferencedDataRepoSnapshotResource referencedResource =
         ReferenceResourceFixtures.makeDataRepoSnapshotResource(WORKSPACE_ID);
-    referencedResource.toBuilder()
-        .wsmResourceFields(
-            referencedResource.getWsmResourceFields().toBuilder()
-                .properties(Map.of(FOLDER_ID_KEY, UUID.randomUUID().toString(), "foo", "bar"))
-                .build())
-        .build();
+    referencedResource =
+        referencedResource.toBuilder()
+            .wsmResourceFields(
+                referencedResource.getWsmResourceFields().toBuilder()
+                    .properties(Map.of(FOLDER_ID_KEY, UUID.randomUUID().toString(), "foo", "bar"))
+                    .build())
+            .build();
 
     var snapshotToClone =
         (ReferencedDataRepoSnapshotResource)
@@ -234,6 +258,30 @@ public class WorkspaceCloneUtilsTest extends BaseUnitTest {
     ImmutableMap<String, String> properties = snapshotToClone.getProperties();
     assertFalse(properties.containsKey(FOLDER_ID_KEY));
     assertEquals("bar", properties.get("foo"));
+  }
+
+  @Test
+  public void buildDestinationReferencedResource_cloneToSameWorkspace_notClearProperties() {
+    ReferencedDataRepoSnapshotResource referencedResource =
+        ReferenceResourceFixtures.makeDataRepoSnapshotResource(WORKSPACE_ID);
+    referencedResource =
+        referencedResource.toBuilder()
+            .wsmResourceFields(
+                referencedResource.getWsmResourceFields().toBuilder()
+                    .properties(Map.of(FOLDER_ID_KEY, UUID.randomUUID().toString(), "foo", "bar"))
+                    .build())
+            .build();
+
+    var snapshotToClone =
+        (ReferencedDataRepoSnapshotResource)
+            buildDestinationReferencedResource(
+                referencedResource,
+                referencedResource.getWorkspaceId(),
+                DESTINATION_RESOURCE_ID,
+                /*name=*/ RandomStringUtils.randomAlphabetic(5),
+                /*description=*/ "This is a cloned data repo snapshot referenced resource");
+
+    assertTrue(snapshotToClone.getProperties().containsKey(FOLDER_ID_KEY));
   }
 
   private static void assertResourceCommonFields(

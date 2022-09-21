@@ -1,6 +1,6 @@
 package bio.terra.workspace.service.resource.controlled.flight.clone.workspace;
 
-import static bio.terra.workspace.app.controller.shared.PropertiesUtils.clearSomePropertiesForResourceCloning;
+import static bio.terra.workspace.app.controller.shared.PropertiesUtils.clearSomePropertiesForResourceCloningToDifferentWorkspace;
 
 import bio.terra.common.exception.BadRequestException;
 import bio.terra.stairway.FlightStatus;
@@ -26,6 +26,7 @@ import bio.terra.workspace.service.workspace.model.WsmCloneResourceResult;
 import com.google.common.annotations.VisibleForTesting;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import javax.annotation.Nullable;
@@ -179,7 +180,8 @@ public class WorkspaceCloneUtils {
         .workspaceUuid(destinationWorkspaceId)
         .resourceId(destinationResourceId)
         .resourceLineage(destinationResourceLineage)
-        .properties(clearSomePropertiesForResourceCloning(sourceResource.getProperties()))
+        .properties(
+            maybeClearSomeResourcePropertiesBeforeCloning(sourceResource, destinationWorkspaceId))
         .build();
   }
 
@@ -360,7 +362,8 @@ public class WorkspaceCloneUtils {
     destinationResourceCommonFieldsBuilder
         .workspaceUuid(destinationWorkspaceId)
         .resourceId(destinationResourceId)
-        .properties(clearSomePropertiesForResourceCloning(wsmResource.getProperties()))
+        .properties(
+            maybeClearSomeResourcePropertiesBeforeCloning(wsmResource, destinationWorkspaceId))
         .resourceLineage(destinationResourceLineage);
     // apply optional override variables
     Optional.ofNullable(name).ifPresent(destinationResourceCommonFieldsBuilder::name);
@@ -378,5 +381,15 @@ public class WorkspaceCloneUtils {
         sourceResourceLineage != null ? sourceResourceLineage : new ArrayList<>();
     destinationResourceLineage.add(new ResourceLineageEntry(sourceWorkspaceId, sourceResourceId));
     return destinationResourceLineage;
+  }
+
+  private static Map<String, String> maybeClearSomeResourcePropertiesBeforeCloning(
+      WsmResource sourceResource, UUID destinationWorkspaceId) {
+    Map<String, String> destinationResourceProperties = sourceResource.getProperties();
+    if (!destinationWorkspaceId.equals(sourceResource.getWorkspaceId())) {
+      destinationResourceProperties =
+          clearSomePropertiesForResourceCloningToDifferentWorkspace(destinationResourceProperties);
+    }
+    return destinationResourceProperties;
   }
 }
