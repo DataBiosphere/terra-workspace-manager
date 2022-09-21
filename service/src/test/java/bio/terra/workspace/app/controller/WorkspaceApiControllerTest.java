@@ -1,6 +1,12 @@
-package bio.terra.workspace.app.configuration.external.controller;
+package bio.terra.workspace.app.controller;
 
-import static bio.terra.workspace.common.utils.MockMvcUtils.*;
+import static bio.terra.workspace.app.controller.shared.PropertiesUtils.convertMapToApiProperties;
+import static bio.terra.workspace.common.utils.MockMvcUtils.CLONE_WORKSPACE_PATH_FORMAT;
+import static bio.terra.workspace.common.utils.MockMvcUtils.UPDATE_WORKSPACES_V1_PROPERTIES_PATH_FORMAT;
+import static bio.terra.workspace.common.utils.MockMvcUtils.WORKSPACES_V1_BY_UUID_PATH_FORMAT;
+import static bio.terra.workspace.common.utils.MockMvcUtils.WORKSPACES_V1_PATH;
+import static bio.terra.workspace.common.utils.MockMvcUtils.addAuth;
+import static bio.terra.workspace.common.utils.MockMvcUtils.addJsonContentType;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -17,12 +23,10 @@ import bio.terra.workspace.amalgam.tps.TpsApiDispatch;
 import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
 import bio.terra.workspace.common.BaseUnitTest;
 import bio.terra.workspace.common.fixtures.WorkspaceFixtures;
+import bio.terra.workspace.common.utils.MockMvcUtils;
 import bio.terra.workspace.generated.model.ApiCloneWorkspaceRequest;
 import bio.terra.workspace.generated.model.ApiCloneWorkspaceResult;
-import bio.terra.workspace.generated.model.ApiCreatedWorkspace;
 import bio.terra.workspace.generated.model.ApiErrorReport;
-import bio.terra.workspace.generated.model.ApiProperties;
-import bio.terra.workspace.generated.model.ApiProperty;
 import bio.terra.workspace.generated.model.ApiTpsComponent;
 import bio.terra.workspace.generated.model.ApiTpsObjectType;
 import bio.terra.workspace.generated.model.ApiTpsPaoGetResult;
@@ -80,6 +84,7 @@ public class WorkspaceApiControllerTest extends BaseUnitTest {
           .addAdditionalDataItem(new ApiTpsPolicyPair().key("group").value("my_fake_group"));
 
   @Autowired MockMvc mockMvc;
+  @Autowired MockMvcUtils mockMvcUtils;
   @Autowired ObjectMapper objectMapper;
   @MockBean FeatureConfiguration mockFeatureConfiguration;
   @MockBean TpsApiDispatch mockTpsApiDispatch;
@@ -140,7 +145,8 @@ public class WorkspaceApiControllerTest extends BaseUnitTest {
 
   @Test
   public void updateWorkspace() throws Exception {
-    ApiCreatedWorkspace workspace = createDefaultWorkspace();
+    ApiWorkspaceDescription workspace =
+        mockMvcUtils.createWorkspaceWithoutCloudContext(USER_REQUEST);
     String newDisplayName = "new workspace display name";
     String newUserFacingId = "new-ufid";
     String newDescription = "new description for the workspace";
@@ -207,7 +213,7 @@ public class WorkspaceApiControllerTest extends BaseUnitTest {
 
   @Test
   public void deleteWorkspaceProperties() throws Exception {
-    UUID workspaceId = createDefaultWorkspace().getId();
+    UUID workspaceId = mockMvcUtils.createWorkspaceWithoutCloudContext(USER_REQUEST).getId();
     ApiWorkspaceDescription sourceWorkspace = getWorkspaceDescription(workspaceId);
     ArrayList propertyUpdate = new ArrayList<>(Arrays.asList("foo", "foo1"));
 
@@ -225,12 +231,13 @@ public class WorkspaceApiControllerTest extends BaseUnitTest {
         .getResponse()
         .getContentAsString();
 
-    assertEquals(sourceWorkspace.getProperties(), buildProperties(Map.of("xyzzy", "plohg")));
+    assertEquals(
+        sourceWorkspace.getProperties(), convertMapToApiProperties(Map.of("xyzzy", "plohg")));
   }
 
   @Test
   public void updateWorkspaceProperties() throws Exception {
-    UUID workspaceId = createDefaultWorkspace().getId();
+    UUID workspaceId = mockMvcUtils.createWorkspaceWithoutCloudContext(USER_REQUEST).getId();
     ApiWorkspaceDescription sourceWorkspace = getWorkspaceDescription(workspaceId);
     Map<String, String> properties = Map.of("foo", "bar");
 
@@ -241,19 +248,20 @@ public class WorkspaceApiControllerTest extends BaseUnitTest {
                     .contentType(MediaType.APPLICATION_JSON_VALUE)
                     .accept(MediaType.APPLICATION_JSON)
                     .characterEncoding("UTF-8")
-                    .content(objectMapper.writeValueAsString(buildProperties(properties))),
+                    .content(
+                        objectMapper.writeValueAsString(convertMapToApiProperties(properties))),
                 USER_REQUEST))
         .andExpect(status().is(HttpStatus.SC_NO_CONTENT))
         .andReturn()
         .getResponse()
         .getContentAsString();
 
-    assertEquals(sourceWorkspace.getProperties(), buildProperties(properties));
+    assertEquals(sourceWorkspace.getProperties(), convertMapToApiProperties(properties));
   }
 
   @Test
   public void cloneWorkspace() throws Exception {
-    UUID workspaceId = createDefaultWorkspace().getId();
+    UUID workspaceId = mockMvcUtils.createWorkspaceWithoutCloudContext(USER_REQUEST).getId();
     ApiWorkspaceDescription sourceWorkspace = getWorkspaceDescription(workspaceId);
 
     String serializedGetResponse =
@@ -280,6 +288,8 @@ public class WorkspaceApiControllerTest extends BaseUnitTest {
     ApiWorkspaceDescription destinationWorkspace = getWorkspaceDescription(destinationWorkspaceId);
 
     assertEquals(sourceWorkspace.getProperties(), destinationWorkspace.getProperties());
+    assertEquals(
+        sourceWorkspace.getDisplayName() + " (Copy)", destinationWorkspace.getDisplayName());
   }
 
   @Test
@@ -338,7 +348,8 @@ public class WorkspaceApiControllerTest extends BaseUnitTest {
   @Test
   public void getWorkspaceIncludesPolicy() throws Exception {
     // No need to actually pass policy inputs because TPS is mocked.
-    ApiCreatedWorkspace workspace = createDefaultWorkspace();
+    ApiWorkspaceDescription workspace =
+        mockMvcUtils.createWorkspaceWithoutCloudContext(USER_REQUEST);
 
     ApiTpsPaoGetResult getPolicyResult =
         emptyWorkspacePao()
@@ -356,7 +367,8 @@ public class WorkspaceApiControllerTest extends BaseUnitTest {
   @Test
   public void tpsDisabledGetWorkspaceExcludesPolicy() throws Exception {
     when(mockFeatureConfiguration.isTpsEnabled()).thenReturn(false);
-    ApiCreatedWorkspace workspace = createDefaultWorkspace();
+    ApiWorkspaceDescription workspace =
+        mockMvcUtils.createWorkspaceWithoutCloudContext(USER_REQUEST);
 
     ApiWorkspaceDescription gotWorkspace = getWorkspaceDescription(workspace.getId());
     assertNull(gotWorkspace.getPolicies());
@@ -365,8 +377,10 @@ public class WorkspaceApiControllerTest extends BaseUnitTest {
   @Test
   public void listWorkspaceIncludesPolicy() throws Exception {
     // No need to actually pass policy inputs because TPS is mocked.
-    ApiCreatedWorkspace workspace = createDefaultWorkspace();
-    ApiCreatedWorkspace noPolicyWorkspace = createDefaultWorkspace();
+    ApiWorkspaceDescription workspace =
+        mockMvcUtils.createWorkspaceWithoutCloudContext(USER_REQUEST);
+    ApiWorkspaceDescription noPolicyWorkspace =
+        mockMvcUtils.createWorkspaceWithoutCloudContext(USER_REQUEST);
     when(mockSamService.listWorkspaceIdsAndHighestRoles(any(), any()))
         .thenReturn(
             ImmutableMap.of(
@@ -399,7 +413,8 @@ public class WorkspaceApiControllerTest extends BaseUnitTest {
   @Test
   public void tpsDisabledListWorkspaceExcludesPolicy() throws Exception {
     when(mockFeatureConfiguration.isTpsEnabled()).thenReturn(false);
-    ApiCreatedWorkspace workspace = createDefaultWorkspace();
+    ApiWorkspaceDescription workspace =
+        mockMvcUtils.createWorkspaceWithoutCloudContext(USER_REQUEST);
     when(mockSamService.listWorkspaceIdsAndHighestRoles(any(), any()))
         .thenReturn(ImmutableMap.of(workspace.getId(), WsmIamRole.OWNER));
 
@@ -416,23 +431,6 @@ public class WorkspaceApiControllerTest extends BaseUnitTest {
             .displayName(newDisplayName)
             .userFacingId(newUserFacingId);
     return objectMapper.writeValueAsString(requestBody);
-  }
-
-  private ApiCreatedWorkspace createDefaultWorkspace() throws Exception {
-    var createRequest = WorkspaceFixtures.createWorkspaceRequestBody();
-    String serializedResponse =
-        mockMvc
-            .perform(
-                addJsonContentType(
-                    addAuth(
-                        post(WORKSPACES_V1_PATH)
-                            .content(objectMapper.writeValueAsString(createRequest)),
-                        USER_REQUEST)))
-            .andExpect(status().is(HttpStatus.SC_OK))
-            .andReturn()
-            .getResponse()
-            .getContentAsString();
-    return objectMapper.readValue(serializedResponse, ApiCreatedWorkspace.class);
   }
 
   private ApiWorkspaceDescription getWorkspaceDescription(UUID id) throws Exception {
@@ -478,18 +476,5 @@ public class WorkspaceApiControllerTest extends BaseUnitTest {
         .sourcesObjectIds(Collections.emptyList())
         .attributes(new ApiTpsPolicyInputs())
         .effectiveAttributes(new ApiTpsPolicyInputs());
-  }
-
-  public ApiProperties buildProperties(Map<String, String> propertyMap) {
-    ApiProperties properties = new ApiProperties();
-    ApiProperty property = new ApiProperty();
-
-    for (Map.Entry<String, String> entry : propertyMap.entrySet()) {
-      property.setKey(entry.getKey());
-      property.setValue(entry.getValue());
-      properties.add(property);
-    }
-
-    return properties;
   }
 }

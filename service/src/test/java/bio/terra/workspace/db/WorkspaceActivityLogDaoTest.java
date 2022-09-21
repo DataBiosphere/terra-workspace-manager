@@ -6,8 +6,14 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import bio.terra.workspace.common.BaseUnitTest;
+import bio.terra.workspace.common.logging.model.ActivityLogChangeDetails;
 import bio.terra.workspace.db.exception.UnknownFlightOperationTypeException;
 import bio.terra.workspace.service.workspace.model.OperationType;
+import java.time.Instant;
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
+import java.time.temporal.ChronoUnit;
+import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,8 +25,9 @@ public class WorkspaceActivityLogDaoTest extends BaseUnitTest {
   private static final String USER_EMAIL = "foo@gmail.com";
   private static final String SUBJECT_ID = "foo";
 
-  @Autowired WorkspaceActivityLogDao activityLogDao;
+  @Autowired private WorkspaceActivityLogDao activityLogDao;
   @Autowired private NamedParameterJdbcTemplate jdbcTemplate;
+  @Autowired private RawDaoTestFixture rawDaoTestFixture;
 
   @Test
   public void writeActivityAndGet() {
@@ -63,6 +70,45 @@ public class WorkspaceActivityLogDaoTest extends BaseUnitTest {
     assertEquals(newUserSubjectId, secondLastUpdateDetails.get().getActorSubjectId());
     var secondLastUpdatedDate = secondLastUpdateDetails.get().getChangeDate();
     assertTrue(secondLastUpdatedDate.isAfter(lastUpdateDetails.get().getChangeDate()));
+  }
+
+  @Test
+  public void getLastUpdatedDate_multipleEntryWithSameTimestamp() {
+    var workspaceId = UUID.randomUUID();
+    OffsetDateTime now = Instant.now().atOffset(ZoneOffset.UTC);
+    rawDaoTestFixture.writeActivityLogWithTimestamp(workspaceId, "anne@gmail.com", now);
+    now = Instant.now().atOffset(ZoneOffset.UTC);
+    rawDaoTestFixture.writeActivityLogWithTimestamp(workspaceId, "anne@gmail.com", now);
+    rawDaoTestFixture.writeActivityLogWithTimestamp(workspaceId, "cathy@gmail.com", now);
+    rawDaoTestFixture.writeActivityLogWithTimestamp(workspaceId, "bella@gmail.com", now);
+
+    Optional<ActivityLogChangeDetails> updateDetails =
+        activityLogDao.getLastUpdateDetails(workspaceId);
+
+    assertEquals("anne@gmail.com", updateDetails.get().getActorEmail());
+    // The two offset date time can have different granularity, resulting flakiness.
+    assertTrue(
+        now.truncatedTo(ChronoUnit.MILLIS)
+            .isEqual(updateDetails.get().getChangeDate().truncatedTo(ChronoUnit.MILLIS)));
+  }
+
+  @Test
+  public void getCreateDetails_multipleEntryWithSameTimestamp() {
+    var workspaceId = UUID.randomUUID();
+    OffsetDateTime now = Instant.now().atOffset(ZoneOffset.UTC);
+    rawDaoTestFixture.writeActivityLogWithTimestamp(workspaceId, "anne@gmail.com", now);
+    rawDaoTestFixture.writeActivityLogWithTimestamp(workspaceId, "cathy@gmail.com", now);
+    rawDaoTestFixture.writeActivityLogWithTimestamp(workspaceId, "bella@gmail.com", now);
+    OffsetDateTime later = Instant.now().atOffset(ZoneOffset.UTC);
+    rawDaoTestFixture.writeActivityLogWithTimestamp(workspaceId, "anne@gmail.com", later);
+
+    Optional<ActivityLogChangeDetails> updateDetails = activityLogDao.getCreateDetails(workspaceId);
+
+    assertEquals("anne@gmail.com", updateDetails.get().getActorEmail());
+    // The two offset date time can have different granularity, resulting flakiness.
+    assertTrue(
+        now.truncatedTo(ChronoUnit.MILLIS)
+            .isEqual(updateDetails.get().getChangeDate().truncatedTo(ChronoUnit.MILLIS)));
   }
 
   @Test

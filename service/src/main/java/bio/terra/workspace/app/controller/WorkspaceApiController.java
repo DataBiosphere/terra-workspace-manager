@@ -1,5 +1,10 @@
 package bio.terra.workspace.app.controller;
 
+import static bio.terra.workspace.app.controller.shared.PropertiesUtils.convertApiPropertyToMap;
+import static bio.terra.workspace.app.controller.shared.PropertiesUtils.convertMapToApiProperties;
+import static bio.terra.workspace.common.utils.ControllerValidationUtils.validatePropertiesDeleteRequestBody;
+import static bio.terra.workspace.common.utils.ControllerValidationUtils.validatePropertiesUpdateRequestBody;
+
 import bio.terra.common.iam.BearerToken;
 import bio.terra.workspace.amalgam.tps.TpsApiDispatch;
 import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
@@ -59,7 +64,6 @@ import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceAndHighestRole;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -172,7 +176,7 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
             .description(body.getDescription())
             .spendProfileId(spendProfileId.orElse(null))
             .workspaceStage(internalStage)
-            .properties(propertyMapFromApi(body.getProperties()))
+            .properties(convertApiPropertyToMap(body.getProperties()))
             .build();
     UUID createdId = workspaceService.createWorkspace(workspace, policies, userRequest);
 
@@ -251,10 +255,7 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
     }
 
     // Convert the property map to API format
-    ApiProperties apiProperties = new ApiProperties();
-    workspace
-        .getProperties()
-        .forEach((k, v) -> apiProperties.add(new ApiProperty().key(k).value(v)));
+    ApiProperties apiProperties = convertMapToApiProperties(workspace.getProperties());
 
     return new ApiWorkspaceDescription()
         .id(workspaceUuid)
@@ -363,13 +364,13 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     workspaceService.validateWorkspaceAndAction(
         userRequest, workspaceUuid, SamConstants.SamWorkspaceAction.DELETE);
+    validatePropertiesDeleteRequestBody(propertyKeys);
     logger.info(
         "Deleting the properties with the key {} in workspace {}",
         propertyKeys.toString(),
         workspaceUuid);
-    Workspace workspace =
-        workspaceService.validateWorkspaceAndAction(
-            userRequest, workspaceUuid, SamWorkspaceAction.DELETE);
+    workspaceService.validateWorkspaceAndAction(
+        userRequest, workspaceUuid, SamWorkspaceAction.DELETE);
     workspaceService.deleteWorkspaceProperties(workspaceUuid, propertyKeys, userRequest);
     logger.info(
         "Deleted the properties with the key {} in workspace {}", propertyKeys, workspaceUuid);
@@ -383,7 +384,8 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     workspaceService.validateWorkspaceAndAction(
         userRequest, workspaceUuid, SamWorkspaceAction.WRITE);
-    Map<String, String> propertyMap = propertyMapFromApi(properties);
+    validatePropertiesUpdateRequestBody(properties);
+    Map<String, String> propertyMap = convertApiPropertyToMap(properties);
     logger.info("Updating the properties {} in workspace {}", propertyMap, workspaceUuid);
     workspaceService.updateWorkspaceProperties(workspaceUuid, propertyMap, userRequest);
     logger.info("Updated the properties {} in workspace {}", propertyMap, workspaceUuid);
@@ -569,6 +571,12 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
         Optional.ofNullable(body.getUserFacingId()).orElse(destinationWorkspaceId.toString());
     ControllerValidationUtils.validateUserFacingId(destinationUserFacingId);
 
+    // If user does not specify the destinationWorkspace's displayName, then we will generate the
+    // name followed the sourceWorkspace's displayName, if sourceWorkspace's displayName is null, we
+    // will generate the name based on the sourceWorkspace's userFacingId.
+    String generatedDisplayName =
+        sourceWorkspace.getDisplayName().orElse(sourceWorkspace.getUserFacingId()) + " (Copy)";
+
     // Construct the target workspace object from the inputs
     // Policies are cloned in the flight instead of here so that they get cleaned appropriately if
     // the flight fails.
@@ -578,7 +586,7 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
             .userFacingId(destinationUserFacingId)
             .spendProfileId(spendProfileId.orElse(null))
             .workspaceStage(WorkspaceStage.MC_WORKSPACE)
-            .displayName(body.getDisplayName())
+            .displayName(Optional.ofNullable(body.getDisplayName()).orElse(generatedDisplayName))
             .description(body.getDescription())
             .properties(sourceWorkspace.getProperties())
             .build();
@@ -621,18 +629,6 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
         .jobReport(jobResult.getJobReport())
         .errorReport(jobResult.getApiErrorReport())
         .workspace(jobResult.getResult());
-  }
-
-  // Convert properties list into a map
-  private Map<String, String> propertyMapFromApi(List<ApiProperty> properties) {
-    Map<String, String> propertyMap = new HashMap<>();
-    if (properties != null) {
-      for (ApiProperty property : properties) {
-        ControllerValidationUtils.validatePropertyKey(property.getKey());
-        propertyMap.put(property.getKey(), property.getValue());
-      }
-    }
-    return propertyMap;
   }
 
   /**

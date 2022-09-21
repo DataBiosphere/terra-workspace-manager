@@ -11,6 +11,7 @@ import bio.terra.workspace.generated.model.ApiAzureHybridConnectionResource;
 import bio.terra.workspace.generated.model.ApiAzureIpResource;
 import bio.terra.workspace.generated.model.ApiAzureNetworkResource;
 import bio.terra.workspace.generated.model.ApiAzureRelayNamespaceResource;
+import bio.terra.workspace.generated.model.ApiAzureVmCreationParameters;
 import bio.terra.workspace.generated.model.ApiAzureVmResource;
 import bio.terra.workspace.generated.model.ApiCreateControlledAzureDiskRequestBody;
 import bio.terra.workspace.generated.model.ApiCreateControlledAzureHybridConnectionRequestBody;
@@ -54,6 +55,7 @@ import bio.terra.workspace.service.resource.controlled.cloud.azure.vm.Controlled
 import bio.terra.workspace.service.resource.controlled.model.ControlledResourceFields;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.workspace.WorkspaceService;
+import com.google.common.annotations.VisibleForTesting;
 import java.time.OffsetDateTime;
 import java.util.UUID;
 import javax.servlet.http.HttpServletRequest;
@@ -389,16 +391,7 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
 
     ResourceValidationUtils.validateApiAzureVmCreationParameters(body.getAzureVm());
     ControlledAzureVmResource resource =
-        ControlledAzureVmResource.builder()
-            .common(commonFields)
-            .vmName(body.getAzureVm().getName())
-            .region(body.getAzureVm().getRegion())
-            .vmSize(body.getAzureVm().getVmSize())
-            .vmImage(AzureVmUtils.getImageData(body.getAzureVm().getVmImage()))
-            .ipId(body.getAzureVm().getIpId())
-            .networkId(body.getAzureVm().getNetworkId())
-            .diskId(body.getAzureVm().getDiskId())
-            .build();
+        buildControlledAzureVmResource(body.getAzureVm(), commonFields);
 
     final String jobId =
         controlledResourceService.createAzureVm(
@@ -412,6 +405,21 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
     final ApiCreatedControlledAzureVmResult result = fetchCreateControlledAzureVmResult(jobId);
 
     return new ResponseEntity<>(result, HttpStatus.OK);
+  }
+
+  @VisibleForTesting
+  ControlledAzureVmResource buildControlledAzureVmResource(
+      ApiAzureVmCreationParameters creationParameters, ControlledResourceFields commonFields) {
+    return ControlledAzureVmResource.builder()
+        .common(commonFields)
+        .vmName(creationParameters.getName())
+        .region(creationParameters.getRegion())
+        .vmSize(creationParameters.getVmSize())
+        .vmImage(AzureVmUtils.getImageData(creationParameters.getVmImage()))
+        .ipId(creationParameters.getIpId())
+        .networkId(creationParameters.getNetworkId())
+        .diskId(creationParameters.getDiskId())
+        .build();
   }
 
   @Override

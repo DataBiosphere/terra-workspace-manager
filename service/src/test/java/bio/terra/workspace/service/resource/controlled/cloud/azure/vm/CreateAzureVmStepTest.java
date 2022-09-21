@@ -44,6 +44,7 @@ import com.azure.resourcemanager.network.models.NetworkSecurityGroup;
 import com.azure.resourcemanager.network.models.NetworkSecurityGroups;
 import com.azure.resourcemanager.network.models.NetworkSecurityRule;
 import com.azure.resourcemanager.network.models.Networks;
+import com.azure.resourcemanager.network.models.NicIpConfiguration;
 import com.azure.resourcemanager.network.models.PublicIpAddress;
 import com.azure.resourcemanager.network.models.PublicIpAddresses;
 import com.azure.resourcemanager.network.models.SecurityRuleProtocol;
@@ -54,9 +55,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
-import org.springframework.test.context.ActiveProfiles;
 
-@ActiveProfiles("azure")
 public class CreateAzureVmStepTest extends BaseAzureTest {
 
   private static final String STUB_STRING_RETURN = "stubbed-return";
@@ -65,6 +64,8 @@ public class CreateAzureVmStepTest extends BaseAzureTest {
   private static final String STUB_NETWORK_NAME = "stub-network-name";
   private static final String STUB_SUBNET_NAME = "stub-subnet-name";
   private static final String STUB_NETWORK_INTERFACE_NAME = "nic-name";
+
+  private static final String STUB_NETWORK_REGION_NAME = "westcentralus";
 
   @Mock private FlightContext mockFlightContext;
   @Mock private CrlService mockCrlService;
@@ -181,6 +182,8 @@ public class CreateAzureVmStepTest extends BaseAzureTest {
 
   private ArgumentCaptor<Context> contextCaptor = ArgumentCaptor.forClass(Context.class);
 
+  @Mock private NicIpConfiguration mockIpConfiguration;
+
   @BeforeEach
   public void setup() {
     when(mockCrlService.getComputeManager(
@@ -207,6 +210,8 @@ public class CreateAzureVmStepTest extends BaseAzureTest {
     when(mockNetworks.getByResourceGroup(anyString(), anyString())).thenReturn(mockNetwork);
     when(mockNetworkManager.networkInterfaces()).thenReturn(mockNis);
     when(mockNis.getByResourceGroup(anyString(), anyString())).thenReturn(mockNi);
+    when(mockNi.primaryIPConfiguration()).thenReturn(mockIpConfiguration);
+    when(mockIpConfiguration.getNetwork()).thenReturn(mockNetwork);
 
     // create network security group mocks
     when(mockNetworkManager.networkSecurityGroups()).thenReturn(mockNsgs);
@@ -245,7 +250,7 @@ public class CreateAzureVmStepTest extends BaseAzureTest {
 
     // Creation vm stages mocks
     when(mockVms.define(anyString())).thenReturn(mockVmStage1);
-    when(mockVmStage1.withRegion(anyString())).thenReturn(mockVmStage2);
+    when(mockVmStage1.withRegion(any(Region.class))).thenReturn(mockVmStage2);
     when(mockVmStage2.withExistingResourceGroup(anyString())).thenReturn(mockVmStage3);
     when(mockVmStage3.withExistingPrimaryNetworkInterface(mockNi)).thenReturn(mockVmStage7);
     when(mockVmStage7.withSpecializedLinuxCustomImage(anyString())).thenReturn(mockVmStage10);
@@ -290,6 +295,10 @@ public class CreateAzureVmStepTest extends BaseAzureTest {
         .thenReturn(true);
     when(mockWorkingMap.get(AzureVmHelper.WORKING_MAP_NETWORK_INTERFACE_KEY, String.class))
         .thenReturn(STUB_NETWORK_INTERFACE_NAME);
+    when(mockWorkingMap.get(AzureVmHelper.WORKING_MAP_SUBNET_NAME, String.class))
+        .thenReturn(STUB_SUBNET_NAME);
+    when(mockWorkingMap.get(AzureVmHelper.WORKING_MAP_NETWORK_REGION, String.class))
+        .thenReturn(STUB_NETWORK_REGION_NAME);
   }
 
   @Test

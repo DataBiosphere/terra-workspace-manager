@@ -9,6 +9,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import javax.annotation.Nullable;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 
@@ -23,8 +24,8 @@ import org.apache.commons.lang3.builder.HashCodeBuilder;
 public class Workspace {
   private final UUID workspaceId;
   private final String userFacingId;
-  private final String displayName;
-  private final String description;
+  private final @Nullable String displayName;
+  private final @Nullable String description;
   private final SpendProfileId spendProfileId;
   private final Map<String, String> properties;
   private final WorkspaceStage workspaceStage;
@@ -32,8 +33,8 @@ public class Workspace {
   public Workspace(
       UUID workspaceId,
       String userFacingId,
-      String displayName,
-      String description,
+      @Nullable String displayName,
+      @Nullable String description,
       SpendProfileId spendProfileId,
       Map<String, String> properties,
       WorkspaceStage workspaceStage) {
@@ -127,7 +128,7 @@ public class Workspace {
   public static class Builder {
     private UUID workspaceId;
     private String userFacingId;
-    private String displayName;
+    private @Nullable String displayName;
     private String description;
     private SpendProfileId spendProfileId;
     private Map<String, String> properties;
@@ -143,12 +144,12 @@ public class Workspace {
       return this;
     }
 
-    public Builder displayName(String displayName) {
+    public Builder displayName(@Nullable String displayName) {
       this.displayName = displayName;
       return this;
     }
 
-    public Builder description(String description) {
+    public Builder description(@Nullable String description) {
       this.description = description;
       return this;
     }
@@ -172,12 +173,6 @@ public class Workspace {
       // Always have a map, even if it is empty
       if (properties == null) {
         properties = new HashMap<>();
-      }
-      if (displayName == null) {
-        displayName = "";
-      }
-      if (description == null) {
-        description = "";
       }
       if (workspaceId == null || workspaceStage == null) {
         throw new MissingRequiredFieldsException("Workspace requires id and stage");
@@ -210,7 +205,7 @@ public class Workspace {
             .workspaceId(fullWorkspace.getWorkspaceId())
             .userFacingId(fullWorkspace.getUserFacingId())
             .workspaceStage(fullWorkspace.getWorkspaceStage())
-            .displayName(fullWorkspace.getDisplayName().orElse(""));
+            .displayName(fullWorkspace.getDisplayName().orElse(null));
 
     Map<String, String> strippedProperties = new HashMap<>();
     if (fullWorkspace.getProperties().containsKey(Properties.TYPE)) {

@@ -5,6 +5,7 @@ import bio.terra.workspace.service.resource.model.StewardshipType;
 import bio.terra.workspace.service.resource.model.WsmResource;
 import bio.terra.workspace.service.resource.model.WsmResourceFamily;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import javax.annotation.Nullable;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,5 +30,15 @@ public class WsmResourceService {
       int limit) {
     return resourceDao.enumerateResources(
         workspaceUuid, cloudResourceType, stewardshipType, offset, limit);
+  }
+
+  public void updateResourceProperties(
+      UUID workspaceUuid, UUID resourceUuid, Map<String, String> properties) {
+    resourceDao.updateResourceProperties(workspaceUuid, resourceUuid, properties);
+  }
+
+  public void deleteResourceProperties(
+      UUID workspaceUuid, UUID resourceUuid, List<String> propertyKeys) {
+    resourceDao.deleteResourceProperties(workspaceUuid, resourceUuid, propertyKeys);
   }
 }

@@ -17,8 +17,8 @@ import bio.terra.workspace.db.ApplicationDao;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import bio.terra.workspace.service.workspace.flight.application.able.AbleEnum;
 import bio.terra.workspace.service.workspace.model.*;
+import com.fasterxml.jackson.core.type.TypeReference;
 import java.util.*;
-import org.apache.commons.collections.ListUtils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
@@ -76,9 +76,8 @@ public class FindEnabledApplicationsStepTest extends BaseUnitTest {
   @Test
   public void testDoStep() throws InterruptedException, RetryException {
     final List<WsmWorkspaceApplication> batch1 =
-        ListUtils.union(
-            Collections.nCopies(3, enabledWorkspaceApplication),
-            Collections.nCopies(3, disabledWorkspaceApplication));
+        new ArrayList<>(Collections.nCopies(3, enabledWorkspaceApplication));
+    batch1.addAll(Collections.nCopies(3, disabledWorkspaceApplication));
 
     when((mockApplicationDao).listWorkspaceApplications(any(UUID.class), eq(0), eq(100)))
         .thenReturn(batch1);
@@ -86,7 +85,8 @@ public class FindEnabledApplicationsStepTest extends BaseUnitTest {
     final StepResult stepResult = findEnabledApplicationsStep.doStep(mockFlightContext);
 
     assertEquals(StepResult.getStepResultSuccess(), stepResult);
-    final List<String> result = workingMap.get(WorkspaceFlightMapKeys.APPLICATION_IDS, List.class);
+    final List<String> result =
+        workingMap.get(WorkspaceFlightMapKeys.APPLICATION_IDS, new TypeReference<>() {});
     final AbleEnum able =
         workingMap.get(
             WorkspaceFlightMapKeys.WsmApplicationKeys.APPLICATION_ABLE_ENUM, AbleEnum.class);

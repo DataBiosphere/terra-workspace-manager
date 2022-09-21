@@ -1,10 +1,11 @@
 package bio.terra.workspace.service.resource.model;
 
+import static bio.terra.workspace.app.controller.shared.PropertiesUtils.convertMapToApiProperties;
+
 import bio.terra.common.exception.MissingRequiredFieldException;
 import bio.terra.workspace.db.exception.InvalidMetadataException;
 import bio.terra.workspace.db.model.DbResource;
 import bio.terra.workspace.generated.model.ApiProperties;
-import bio.terra.workspace.generated.model.ApiProperty;
 import bio.terra.workspace.generated.model.ApiResourceAttributesUnion;
 import bio.terra.workspace.generated.model.ApiResourceLineage;
 import bio.terra.workspace.generated.model.ApiResourceMetadata;
@@ -201,8 +202,7 @@ public abstract class WsmResource {
    * @return partially constructed Api Model common resource description
    */
   public ApiResourceMetadata toApiMetadata() {
-    var apiProperties = new ApiProperties();
-    properties.forEach((key, value) -> apiProperties.add(new ApiProperty().key(key).value(value)));
+    ApiProperties apiProperties = convertMapToApiProperties(properties);
 
     ApiResourceMetadata apiResourceMetadata =
         new ApiResourceMetadata()

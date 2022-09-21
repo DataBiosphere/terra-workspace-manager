@@ -115,7 +115,10 @@ public class ControlledAzureStorageResource extends ControlledResource {
         cloudRetry);
     flight.addStep(
         new CreateAzureStorageStep(
-            flightBeanBag.getAzureConfig(), flightBeanBag.getCrlService(), this),
+            flightBeanBag.getAzureConfig(),
+            flightBeanBag.getCrlService(),
+            this,
+            flightBeanBag.getStorageAccountKeyProvider()),
         cloudRetry);
   }
 

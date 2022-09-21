@@ -2,11 +2,12 @@ package bio.terra.workspace.amalgam.landingzone.azure.utils;
 
 import bio.terra.landingzone.job.model.ErrorReport;
 import bio.terra.landingzone.job.model.JobReport;
-import bio.terra.landingzone.model.AzureCloudContext;
+import bio.terra.landingzone.model.LandingZoneTarget;
 import bio.terra.workspace.generated.model.ApiAzureLandingZoneParameter;
 import bio.terra.workspace.generated.model.ApiErrorReport;
 import bio.terra.workspace.generated.model.ApiJobReport;
 import bio.terra.workspace.generated.model.ApiLandingZoneTarget;
+import bio.terra.workspace.service.workspace.model.AzureCloudContext;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
@@ -65,14 +66,28 @@ public class MapperUtils {
     }
   }
 
-  public class AzureCloudContextMapper {
-    private AzureCloudContextMapper() {}
+  public class LandingZoneTargetMapper {
+    private LandingZoneTargetMapper() {}
 
-    public static AzureCloudContext from(ApiLandingZoneTarget apiLandingZoneTarget) {
-      return new AzureCloudContext(
+    public static LandingZoneTarget from(ApiLandingZoneTarget apiLandingZoneTarget) {
+      return new LandingZoneTarget(
           apiLandingZoneTarget.getTenantId(),
           apiLandingZoneTarget.getSubscriptionId(),
           apiLandingZoneTarget.getResourceGroupId());
+    }
+
+    public static LandingZoneTarget from(AzureCloudContext azureCloudContext) {
+      return new LandingZoneTarget(
+          azureCloudContext.getAzureTenantId(),
+          azureCloudContext.getAzureSubscriptionId(),
+          azureCloudContext.getAzureResourceGroupId());
+    }
+
+    public static AzureCloudContext to(LandingZoneTarget landingZoneTarget) {
+      return new AzureCloudContext(
+          landingZoneTarget.azureTenantId(),
+          landingZoneTarget.azureSubscriptionId(),
+          landingZoneTarget.azureResourceGroupId());
     }
   }
 }

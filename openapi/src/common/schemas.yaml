@@ -225,6 +225,7 @@ components:
     # All resource objects include this resource metadata object and call it 'metadata'
     ResourceMetadata:
       type: object
+      required: [workspaceId, resourceId, name, resourceType, stewardshipType]
       properties:
         workspaceId:
           type: string
@@ -256,6 +257,11 @@ components:
       description: Enum containing valid stewardship types. Used for enumeration
       type: string
       enum: ['REFERENCED', 'CONTROLLED']
+
+    FolderId:
+      description: Id of a given folder. Unique and immutable within a workspace.
+      type: string
+      format: uuid
 
     Properties:
       description: Optional list of key-value pairs of strings
