@@ -283,10 +283,6 @@ public class ControlledAzureVmResource extends ControlledResource {
       throw new MissingRequiredFieldException(
           "Missing required valid vmImage field for ControlledAzureVm.");
     }
-    if (getNetworkId() == null) {
-      throw new MissingRequiredFieldException(
-          "Missing required networkId field for ControlledAzureVm.");
-    }
     ResourceValidationUtils.validateAzureIPorSubnetName(getVmName());
     ResourceValidationUtils.validateAzureVmSize(getVmSize());
     ResourceValidationUtils.validateRegion(getRegion());
