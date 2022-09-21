@@ -21,7 +21,7 @@ import org.slf4j.LoggerFactory;
 
 /**
  * Creates an Azure RelayNamespace address. Designed to run directly after {@link
- * bio.terra.workspace.service.resource.controlled.cloud.azure.relayNamespace.GetAzureHybridConnectionStep}.
+ * bio.terra.workspace.service.resource.controlled.cloud.azure.hybridConnection.GetAzureHybridConnectionStep}.
  */
 public class CreateAzureHybridConnectionStep implements Step {
 
@@ -52,33 +52,11 @@ public class CreateAzureHybridConnectionStep implements Step {
     RelayManager manager = crlService.getRelayManager(azureCloudContext, azureConfig);
 
     try {
-      // TODO this logic for getting azure relay is duplicated across multiple steps
-      String landingZoneId = landingZoneApiDispatch.getLandingZoneId(azureCloudContext);
-      Optional<ApiAzureLandingZoneDeployedResource> azureRelayResource =
-          landingZoneApiDispatch
-              .listAzureLandingZoneResources(landingZoneId)
-              .getResources()
-              .stream()
-              .filter(
-                  purposeGroup ->
-                      purposeGroup.getPurpose().equals(ResourcePurpose.SHARED_RESOURCE.toString()))
-              .findFirst()
-              .flatMap(
-                  purposeGroup ->
-                      purposeGroup.getDeployedResources().stream()
-                          .filter(
-                              deployedResource ->
-                                  deployedResource
-                                      .getResourceType()
-                                      .equals("Microsoft.Relay/Namespaces"))
-                          .findFirst());
-
-      String relayNamespaceName = azureRelayResource.get().getResourceName();
-
       manager
           .hybridConnections()
           .define(resource.getHybridConnectionName())
-          .withExistingNamespace(azureCloudContext.getAzureResourceGroupId(), relayNamespaceName)
+          .withExistingNamespace(azureCloudContext.getAzureResourceGroupId(),
+              getAzureRelayNamespaceName(azureCloudContext))
           .create();
     } catch (ManagementException e) {
       // Stairway steps may run multiple times, so we may already have created this resource. In all
@@ -105,7 +83,8 @@ public class CreateAzureHybridConnectionStep implements Step {
     RelayManager manager = crlService.getRelayManager(azureCloudContext, azureConfig);
 
     try {
-      manager.hybridConnections().deleteById("TODO get the id"); // TODO get id
+      manager.hybridConnections()
+          .delete(azureCloudContext.getAzureResourceGroupId(), getAzureRelayNamespaceName(azureCloudContext), resource.getHybridConnectionName());
     } catch (ManagementException e) {
       // Stairway steps may run multiple times, so we may already have deleted this resource.
       if (ManagementExceptionUtils.isExceptionCode(
@@ -119,5 +98,30 @@ public class CreateAzureHybridConnectionStep implements Step {
       return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, e);
     }
     return StepResult.getStepResultSuccess();
+  }
+
+  // TODO this logic for getting azure relay is duplicated across multiple steps
+  private String getAzureRelayNamespaceName(AzureCloudContext azureCloudContext) {
+    String landingZoneId = landingZoneApiDispatch.getLandingZoneId(azureCloudContext);
+    Optional<ApiAzureLandingZoneDeployedResource> azureRelayResource =
+        landingZoneApiDispatch
+            .listAzureLandingZoneResources(landingZoneId)
+            .getResources()
+            .stream()
+            .filter(
+                purposeGroup ->
+                    purposeGroup.getPurpose().equals(ResourcePurpose.SHARED_RESOURCE.toString()))
+            .findFirst()
+            .flatMap(
+                purposeGroup ->
+                    purposeGroup.getDeployedResources().stream()
+                        .filter(
+                            deployedResource ->
+                                deployedResource
+                                    .getResourceType()
+                                    .equals("Microsoft.Relay/Namespaces"))
+                        .findFirst());
+
+    return azureRelayResource.get().getResourceName();
   }
 }
