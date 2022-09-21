@@ -371,3 +371,5 @@ Spring auto-magically searches for properties files for the active profiles.
       reloading, you still have to refresh the browser, but at least you don't have to
       restart the server.
 ![Main Run Configuration Dialog](docs/images/main_run_config.png)
+- For local development of connected tests, [comment out these lines](https://cs.github.com/DataBiosphere/terra-workspace-manager/blob/05dba30e7f597690c46c95a974d31bde532bcbbd/service/src/main/java/bio/terra/workspace/app/StartupInitializer.java?q=startupinitializer#L33-L37)
+  to preserve workspace/cloud context between runs.
