@@ -152,7 +152,7 @@ public class BqDatasetUtils {
     var body =
         new CreateGcpBigQueryDataTableReferenceRequestBody()
             .metadata(
-                CommonResourceFieldsUtil.makeReferencedResourceCommonFields(
+                makeReferencedResourceCommonFields(
                     name, cloningInstructions))
             .dataTable(dataTable);
 

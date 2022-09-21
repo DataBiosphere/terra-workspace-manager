@@ -39,7 +39,6 @@ import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
@@ -235,8 +234,7 @@ public class GcsBucketUtils {
         new CreateGcpGcsBucketReferenceRequestBody()
             .metadata(
                 CommonResourceFieldsUtil.makeReferencedResourceCommonFields(
-                    name,
-                    cloningInstructions))
+                    name, cloningInstructions))
             .bucket(bucket);
 
     GcpGcsBucketResource result =

@@ -20,22 +20,21 @@ public class CommonResourceFieldsUtil {
 
   /**
    * Makes common fields for referenced resources. Sets properties to foo -> bar.
+   *
    * @param name name of the referenced resource.
    * @param cloningInstructions when null, set to NOTHING.
    */
   public static ReferenceResourceCommonFields makeReferencedResourceCommonFields(
       String name, @Nullable CloningInstructionsEnum cloningInstructions) {
     return new ReferenceResourceCommonFields()
-        .cloningInstructions(Optional.ofNullable(cloningInstructions)
-            .orElse(CloningInstructionsEnum.NOTHING))
+        .cloningInstructions(
+            Optional.ofNullable(cloningInstructions).orElse(CloningInstructionsEnum.NOTHING))
         .description("Description of " + name)
         .name(name)
         .properties(getResourceDefaultProperties());
   }
 
-  /**
-   * Makes common fields for Controlled resource. Sets resource properties to foo->bar.
-   */
+  /** Makes common fields for Controlled resource. Sets resource properties to foo->bar. */
   public static ControlledResourceCommonFields makeControlledResourceCommonFields(
       String name,
       PrivateResourceUser privateUser,
