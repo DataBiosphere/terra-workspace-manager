@@ -21,7 +21,6 @@ import bio.terra.workspace.service.iam.model.SamConstants.SamWorkspaceAction;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import java.util.List;
 import java.util.UUID;
-import java.util.stream.Collectors;
 import javax.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -101,10 +100,7 @@ public class FolderApiController extends ControllerBase implements FolderApi {
 
     var response =
         new ApiFolderList()
-            .folders(
-                folders.stream()
-                    .map(FolderApiController::buildFolder)
-                    .collect(Collectors.toList()));
+            .folders(folders.stream().map(FolderApiController::buildFolder).toList());
     return new ResponseEntity<>(response, HttpStatus.OK);
   }
 

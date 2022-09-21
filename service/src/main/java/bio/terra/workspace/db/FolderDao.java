@@ -131,7 +131,7 @@ public class FolderDao {
         && description == null
         && parentFolderId == null
         && (updateParent == null || !updateParent)) {
-      throw new MissingRequiredFieldsException("Must specified fields to update");
+      throw new MissingRequiredFieldsException("Must specify at least one field to update.");
     }
     if (parentFolderId != null) {
       if (getFolderIfExists(workspaceId, folderId).isEmpty()) {

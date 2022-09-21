@@ -92,6 +92,7 @@ public class FolderApiControllerTest extends BaseUnitTest {
     assertEquals(displayName, folder.getDisplayName());
     assertEquals(description, folder.getDescription());
     assertEquals("bar", convertApiPropertyToMap(folder.getProperties()).get("foo"));
+    assertEquals(1, folder.getProperties().size());
     assertNotNull(folder.getId());
     assertNull(folder.getParentFolderId());
   }
@@ -377,10 +378,12 @@ public class FolderApiControllerTest extends BaseUnitTest {
   }
 
   @Test
-  public void updateFolderProperties_updateSuccessfully() throws Exception {
+  public void updateFolderProperties_success() throws Exception {
     UUID workspaceId = mockMvcUtils.createWorkspaceWithoutCloudContext(USER_REQUEST).getId();
+    // create folder with foo=bar
     ApiFolder folder = createFolder(workspaceId);
 
+    // Add property cake=lava
     updateFolderPropertiesExpectCode(
         workspaceId,
         folder.getId(),
@@ -389,7 +392,22 @@ public class FolderApiControllerTest extends BaseUnitTest {
         HttpStatus.SC_NO_CONTENT);
 
     ApiFolder gotFolder = getFolder(workspaceId, folder.getId());
-    assertEquals("lava", convertApiPropertyToMap(gotFolder.getProperties()).get("cake"));
+    Map<String, String> properties = convertApiPropertyToMap(gotFolder.getProperties());
+    assertEquals("lava", properties.get("cake"));
+    assertEquals("bar", properties.get("foo"));
+
+    // update cake=lava to cake=chocolate
+    updateFolderPropertiesExpectCode(
+        workspaceId,
+        folder.getId(),
+        Map.of("cake", "chocolate"),
+        USER_REQUEST,
+        HttpStatus.SC_NO_CONTENT);
+
+    ApiFolder gotFolder2 = getFolder(workspaceId, folder.getId());
+    properties = convertApiPropertyToMap(gotFolder2.getProperties());
+    assertEquals("chocolate", properties.get("cake"));
+    assertEquals("bar", properties.get("foo"));
   }
 
   @Test
