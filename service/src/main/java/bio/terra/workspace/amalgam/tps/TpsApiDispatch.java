@@ -225,13 +225,14 @@ public class TpsApiDispatch {
   }
 
   public ApiTpsPaoGetResult getPao(BearerToken bearerToken, UUID objectId) {
-    return getPaoIfExists(bearerToken, objectId)
-        .orElseThrow(
-            () -> new PolicyObjectNotFoundException("Policy object not found: " + objectId));
+    features.tpsEnabledCheck();
+    Pao pao = paoService.getPao(objectId);
+    return paoToApi(pao);
   }
 
   public ApiTpsPaoUpdateResult linkPao(
       BearerToken bearerToken, UUID objectId, ApiTpsPaoSourceRequest body) {
+    features.tpsEnabledCheck();
     PolicyUpdateResult result =
         paoService.linkSourcePao(
             objectId, body.getSourceObjectId(), updateModeFromApi(body.getUpdateMode()));
@@ -241,6 +242,7 @@ public class TpsApiDispatch {
 
   public ApiTpsPaoUpdateResult mergePao(
       BearerToken bearerToken, UUID objectId, ApiTpsPaoSourceRequest body) {
+    features.tpsEnabledCheck();
     PolicyUpdateResult result =
         paoService.mergeFromPao(
             objectId, body.getSourceObjectId(), updateModeFromApi(body.getUpdateMode()));
@@ -250,7 +252,7 @@ public class TpsApiDispatch {
 
   public ApiTpsPaoUpdateResult updatePao(
       BearerToken bearerToken, UUID objectId, ApiTpsPaoUpdateRequest body) {
-
+    features.tpsEnabledCheck();
     PolicyUpdateResult result =
         paoService.updatePao(
             objectId,
