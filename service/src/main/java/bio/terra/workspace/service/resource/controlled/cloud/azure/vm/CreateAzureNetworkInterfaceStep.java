@@ -99,6 +99,9 @@ public class CreateAzureNetworkInterfaceStep implements Step {
       context
           .getWorkingMap()
           .put(AzureVmHelper.WORKING_MAP_SUBNET_NAME, existingNetwork.subnet().name());
+      context
+          .getWorkingMap()
+          .put(AzureVmHelper.WORKING_MAP_NETWORK_REGION, existingNetwork.network().region());
 
     } catch (ManagementException e) {
       if (StringUtils.equals(e.getValue().getCode(), "Conflict")) {

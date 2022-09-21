@@ -7,7 +7,7 @@ import static org.mockito.Mockito.when;
 import bio.terra.landingzone.library.landingzones.deployment.SubnetResourcePurpose;
 import bio.terra.workspace.amalgam.landingzone.azure.LandingZoneApiDispatch;
 import bio.terra.workspace.app.configuration.external.AzureConfiguration;
-import bio.terra.workspace.common.BaseUnitTest;
+import bio.terra.workspace.common.BaseAzureUnitTest;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.generated.model.ApiAzureLandingZoneDeployedResource;
 import bio.terra.workspace.service.crl.CrlService;
@@ -23,11 +23,12 @@ import java.util.HashMap;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.springframework.test.context.ActiveProfiles;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-@ActiveProfiles("unit")
-public class CreateAzureNetworkInterfaceStepTest extends BaseUnitTest {
+@ExtendWith(MockitoExtension.class)
+public class CreateAzureNetworkInterfaceStepTest extends BaseAzureUnitTest {
 
   @Mock private NetworkManager networkManager;
 

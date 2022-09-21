@@ -17,6 +17,7 @@ import bio.terra.workspace.service.resource.controlled.exception.AzureNetworkInt
 import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import bio.terra.workspace.service.workspace.model.AzureCloudContext;
+import com.azure.core.management.Region;
 import com.azure.core.management.exception.ManagementException;
 import com.azure.resourcemanager.compute.ComputeManager;
 import com.azure.resourcemanager.compute.models.*;
@@ -118,22 +119,31 @@ public class CreateAzureVmStep implements Step {
                       .getWorkingMap()
                       .get(AzureVmHelper.WORKING_MAP_NETWORK_INTERFACE_KEY, String.class));
 
+      // TODO:
+      // The VM region is now determined by the network instead of the request.
+      // As we can't have a VM and a NIC in different regions.
+      // This also means we are ignoring the region parameter, and we will have
+      // to remove it. Please note that keeping the region as option, requires
+      // validation that the user provided region is the same as network region,
+      // therefore rendering the flexibility of the option moot.
+      var region =
+          Region.fromName(
+              context.getWorkingMap().get(AzureVmHelper.WORKING_MAP_NETWORK_REGION, String.class));
+
       var virtualMachineDefinition =
           buildVmConfiguration(
               computeManager,
               networkInterface,
               existingAzureDisk,
               azureCloudContext.getAzureResourceGroupId(),
-              creationParameters);
+              creationParameters,
+              region);
 
       virtualMachineDefinition.create(
           Defaults.buildContext(
               CreateVirtualMachineRequestData.builder()
                   .setName(resource.getVmName())
-                  .setRegion(
-                      networkInterface
-                          .region()) // the region must be determined by the network interface as it
-                  // is not possible to have a VM and a NIC in different regions
+                  .setRegion(region)
                   .setTenantId(azureCloudContext.getAzureTenantId())
                   .setSubscriptionId(azureCloudContext.getAzureSubscriptionId())
                   .setResourceGroupName(azureCloudContext.getAzureResourceGroupId())
@@ -189,15 +199,13 @@ public class CreateAzureVmStep implements Step {
       NetworkInterface networkInterface,
       Optional<Disk> disk,
       String azureResourceGroupId,
-      ApiAzureVmCreationParameters creationParameters) {
+      ApiAzureVmCreationParameters creationParameters,
+      Region region) {
     var vmConfigurationCommonStep =
         computeManager
             .virtualMachines()
             .define(resource.getVmName())
-            .withRegion(
-                networkInterface
-                    .regionName()) // the region must be determined by the network interface as it
-            // is not possible to have a VM and a NIC in different regions
+            .withRegion(region)
             .withExistingResourceGroup(azureResourceGroupId)
             .withExistingPrimaryNetworkInterface(networkInterface);
 
