@@ -150,7 +150,7 @@ public class CreateAzureNetworkInterfaceStep implements Step {
             .orElseThrow(
                 () ->
                     new IllegalStateException(
-                        "The landing zone does not contain the requested resource."));
+                        "The landing zone does not contain the requested resource. Please check that the landing zone deployment is complete."));
 
     return NetworkSubnetPair.createNetworkSubnetPair(
         networkManager, lzResource.getResourceParentId(), lzResource.getResourceName());
