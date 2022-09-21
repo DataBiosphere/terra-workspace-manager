@@ -1,5 +1,6 @@
 package bio.terra.workspace.app.controller;
 
+import static bio.terra.workspace.common.utils.MockMvcUtils.FAKE_AUTH_USER_REQUEST;
 import static bio.terra.workspace.common.utils.MockMvcUtils.GENERATE_GCP_AI_NOTEBOOK_NAME_PATH_FORMAT;
 import static bio.terra.workspace.common.utils.MockMvcUtils.GENERATE_GCP_BQ_DATASET_NAME_PATH_FORMAT;
 import static bio.terra.workspace.common.utils.MockMvcUtils.GENERATE_GCP_GCS_BUCKET_NAME_PATH_FORMAT;
@@ -72,7 +73,8 @@ public class ControlledGcpResourceApiControllerTest extends BaseUnitTestMockGcpC
 
   @Test
   public void getCloudNameFromGcsBucketName() throws Exception {
-    UUID workspaceId = mockMvcUtils.createWorkspaceWithoutCloudContext(USER_REQUEST).getId();
+    UUID workspaceId =
+        mockMvcUtils.createWorkspaceWithoutCloudContext(FAKE_AUTH_USER_REQUEST).getId();
     ApiGenerateGcpGcsBucketCloudNameRequestBody bucketNameRequest =
         new ApiGenerateGcpGcsBucketCloudNameRequestBody().gcsBucketName("my-bucket");
 
@@ -85,7 +87,7 @@ public class ControlledGcpResourceApiControllerTest extends BaseUnitTestMockGcpC
                         .accept(MediaType.APPLICATION_JSON)
                         .characterEncoding("UTF-8")
                         .content(objectMapper.writeValueAsString(bucketNameRequest)),
-                    USER_REQUEST))
+                    FAKE_AUTH_USER_REQUEST))
             .andExpect(status().is(HttpStatus.SC_OK))
             .andReturn()
             .getResponse()
@@ -102,7 +104,8 @@ public class ControlledGcpResourceApiControllerTest extends BaseUnitTestMockGcpC
 
   @Test
   public void getCloudNameFromBigQueryDatasetName() throws Exception {
-    UUID workspaceId = mockMvcUtils.createWorkspaceWithoutCloudContext(USER_REQUEST).getId();
+    UUID workspaceId =
+        mockMvcUtils.createWorkspaceWithoutCloudContext(FAKE_AUTH_USER_REQUEST).getId();
     ApiGenerateGcpBigQueryDatasetCloudIDRequestBody bqDatasetNameRequest =
         new ApiGenerateGcpBigQueryDatasetCloudIDRequestBody().bigQueryDatasetName("bq-dataset");
 
@@ -115,7 +118,7 @@ public class ControlledGcpResourceApiControllerTest extends BaseUnitTestMockGcpC
                         .accept(MediaType.APPLICATION_JSON)
                         .characterEncoding("UTF-8")
                         .content(objectMapper.writeValueAsString(bqDatasetNameRequest)),
-                    USER_REQUEST))
+                    FAKE_AUTH_USER_REQUEST))
             .andExpect(status().is(HttpStatus.SC_OK))
             .andReturn()
             .getResponse()
@@ -130,7 +133,8 @@ public class ControlledGcpResourceApiControllerTest extends BaseUnitTestMockGcpC
 
   @Test
   public void getCloudNameFromAiNotebookInstanceName() throws Exception {
-    UUID workspaceId = mockMvcUtils.createWorkspaceWithoutCloudContext(USER_REQUEST).getId();
+    UUID workspaceId =
+        mockMvcUtils.createWorkspaceWithoutCloudContext(FAKE_AUTH_USER_REQUEST).getId();
     ApiGenerateGcpAiNotebookCloudIdRequestBody aiNotebookNameRequest =
         new ApiGenerateGcpAiNotebookCloudIdRequestBody().aiNotebookName("ai-notebook");
 
@@ -143,7 +147,7 @@ public class ControlledGcpResourceApiControllerTest extends BaseUnitTestMockGcpC
                         .accept(MediaType.APPLICATION_JSON)
                         .characterEncoding("UTF-8")
                         .content(objectMapper.writeValueAsString(aiNotebookNameRequest)),
-                    USER_REQUEST))
+                    FAKE_AUTH_USER_REQUEST))
             .andExpect(status().is(HttpStatus.SC_OK))
             .andReturn()
             .getResponse()
