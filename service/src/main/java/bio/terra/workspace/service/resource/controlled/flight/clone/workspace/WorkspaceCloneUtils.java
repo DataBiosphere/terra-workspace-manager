@@ -1,6 +1,6 @@
 package bio.terra.workspace.service.resource.controlled.flight.clone.workspace;
 
-import static bio.terra.workspace.app.controller.shared.PropertiesUtils.clearSomeProperties;
+import static bio.terra.workspace.app.controller.shared.PropertiesUtils.clearSomePropertiesForResourceCloning;
 
 import bio.terra.common.exception.BadRequestException;
 import bio.terra.stairway.FlightStatus;
@@ -179,7 +179,7 @@ public class WorkspaceCloneUtils {
         .workspaceUuid(destinationWorkspaceId)
         .resourceId(destinationResourceId)
         .resourceLineage(destinationResourceLineage)
-        .properties(clearSomeProperties(sourceResource.getProperties()))
+        .properties(clearSomePropertiesForResourceCloning(sourceResource.getProperties()))
         .build();
   }
 
@@ -360,7 +360,7 @@ public class WorkspaceCloneUtils {
     destinationResourceCommonFieldsBuilder
         .workspaceUuid(destinationWorkspaceId)
         .resourceId(destinationResourceId)
-        .properties(clearSomeProperties(wsmResource.getProperties()))
+        .properties(clearSomePropertiesForResourceCloning(wsmResource.getProperties()))
         .resourceLineage(destinationResourceLineage);
     // apply optional override variables
     Optional.ofNullable(name).ifPresent(destinationResourceCommonFieldsBuilder::name);

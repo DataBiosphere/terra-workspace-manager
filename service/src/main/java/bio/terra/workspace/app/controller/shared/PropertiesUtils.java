@@ -1,6 +1,6 @@
 package bio.terra.workspace.app.controller.shared;
 
-import static bio.terra.workspace.app.controller.shared.PropertiesUtils.ResourcePropertiesKey.FOLDER_ID_KEY;
+import static bio.terra.workspace.service.workspace.model.WorkspaceConstants.ResourceProperties.FOLDER_ID_KEY;
 
 import bio.terra.workspace.common.utils.ControllerValidationUtils;
 import bio.terra.workspace.generated.model.ApiProperties;
@@ -12,10 +12,6 @@ import java.util.Map;
 
 /** Utils for properties that are key value pairs in WSM workspace and resources. */
 public class PropertiesUtils {
-
-  public static class ResourcePropertiesKey {
-    public static final String FOLDER_ID_KEY = "TERRA_WORKSPACE_FOLDER_ID";
-  }
 
   // Convert properties list into a map
   public static ImmutableMap<String, String> convertApiPropertyToMap(List<ApiProperty> properties) {
@@ -36,12 +32,13 @@ public class PropertiesUtils {
   }
 
   /**
-   * Clear certain properties in the hashmap before making a clone.
+   * Clear certain properties in the hashmap before making a clone of a resource.
    *
    * <p>For example, TERRA_WORKSPACE_FOLDER_ID is a workspace specific properties. It needs to be
    * cleared because it is meaningless in a new workspace.
    */
-  public static ImmutableMap<String, String> clearSomeProperties(Map<String, String> properties) {
+  public static ImmutableMap<String, String> clearSomePropertiesForResourceCloning(
+      Map<String, String> properties) {
     HashMap<String, String> result = new HashMap<>(properties);
     result.remove(FOLDER_ID_KEY);
     return ImmutableMap.copyOf(result);
