@@ -19,10 +19,7 @@ import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.Contr
 import bio.terra.workspace.service.workspace.model.AzureCloudContext;
 import com.azure.core.management.exception.ManagementException;
 import com.azure.resourcemanager.compute.ComputeManager;
-import com.azure.resourcemanager.compute.models.Disk;
-import com.azure.resourcemanager.compute.models.ImageReference;
-import com.azure.resourcemanager.compute.models.VirtualMachine;
-import com.azure.resourcemanager.compute.models.VirtualMachineSizeTypes;
+import com.azure.resourcemanager.compute.models.*;
 import com.azure.resourcemanager.network.models.NetworkInterface;
 import com.azure.resourcemanager.network.models.PublicIpAddress;
 import java.util.Optional;
@@ -79,9 +76,7 @@ public class CreateAzureVmStep implements Step {
                         .castByEnum(WsmResourceType.CONTROLLED_AZURE_DISK));
 
     final String subnetName =
-        context
-            .getWorkingMap()
-            .get(AzureVmHelper.WORKING_MAP_SUBNET_NAME, String.class);
+        context.getWorkingMap().get(AzureVmHelper.WORKING_MAP_SUBNET_NAME, String.class);
 
     try {
       Optional<Disk> existingAzureDisk =
@@ -167,7 +162,7 @@ public class CreateAzureVmStep implements Step {
                     "%nResource Group: %s%n\tIp Name: %s%n\tNetwork Name: %s%n\tDisk Name: %s",
                     azureCloudContext.getAzureResourceGroupId(),
                     ipResource.map(ControlledAzureIpResource::getIpName).orElse("<no public ip>"),
-                    networkResource.getNetworkName(),
+                    resource.getNetworkId(),
                     diskResource
                         .map(ControlledAzureDiskResource::getDiskName)
                         .orElse("<no disk>")));
