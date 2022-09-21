@@ -45,8 +45,8 @@ components:
             and new cloud resource, with data copied over.  For example for GCS bucket,
             create new GCS bucket with same region/lifecycle rules as source bucket. Copy files
             from source bucket to new bucket.
-          * COPY_REFERENCE: Only used for referenced resources. Create new referenced resource
-            that points to same cloud resource as source referenced resource.
+          * COPY_REFERENCE: Used for controlled and referenced resources. Create new referenced resource
+            that points to same cloud resource as source resource.
       enum: ['COPY_NOTHING', 'COPY_DEFINITION', 'COPY_RESOURCE', 'COPY_REFERENCE']
   
     ControlledResourceIamRole:

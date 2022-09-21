@@ -15,6 +15,7 @@ import bio.terra.workspace.common.BaseUnitTestMockGcpCloudContextService;
 import bio.terra.workspace.common.utils.MockMvcUtils;
 import bio.terra.workspace.generated.model.ApiAiNotebookCloudId;
 import bio.terra.workspace.generated.model.ApiBqDatasetCloudId;
+import bio.terra.workspace.generated.model.ApiCloningInstructionsEnum;
 import bio.terra.workspace.generated.model.ApiGcsBucketCloudName;
 import bio.terra.workspace.generated.model.ApiGenerateGcpAiNotebookCloudIdRequestBody;
 import bio.terra.workspace.generated.model.ApiGenerateGcpBigQueryDatasetCloudIDRequestBody;
@@ -24,6 +25,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.List;
 import java.util.UUID;
 import org.apache.http.HttpStatus;
+import org.broadinstitute.dsde.workbench.client.sam.model.UserStatusInfo;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -35,6 +37,7 @@ import org.springframework.test.web.servlet.MockMvc;
  * real GCP.
  */
 public class ControlledGcpResourceApiControllerTest extends BaseUnitTestMockGcpCloudContextService {
+
   @Autowired MockMvc mockMvc;
   @Autowired MockMvcUtils mockMvcUtils;
   @Autowired ObjectMapper objectMapper;
@@ -46,6 +49,25 @@ public class ControlledGcpResourceApiControllerTest extends BaseUnitTestMockGcpC
     // Needed for assertion that requester has role on workspace.
     when(mockSamService().listRequesterRoles(any(), any(), any()))
         .thenReturn(List.of(WsmIamRole.OWNER));
+
+    when(mockSamService().getUserStatusInfo(any()))
+        .thenReturn(
+            new UserStatusInfo()
+                .userEmail(USER_REQUEST.getEmail())
+                .userSubjectId(USER_REQUEST.getSubjectId()));
+  }
+
+  @Test
+  public void cloneGcsBucket_badRequest_throws400() throws Exception {
+    // Cannot set bucketName for COPY_REFERENCE clone
+    mockMvcUtils.cloneControlledGcsBucketAsync(
+        USER_REQUEST,
+        /*sourceWorkspaceId=*/ UUID.randomUUID(),
+        /*sourceResourceId=*/ UUID.randomUUID(),
+        /*destWorkspaceId=*/ UUID.randomUUID(),
+        ApiCloningInstructionsEnum.REFERENCE,
+        "bucketName",
+        HttpStatus.SC_BAD_REQUEST);
   }
 
   @Test
