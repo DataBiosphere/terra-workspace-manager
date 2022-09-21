@@ -99,7 +99,7 @@ public class CreateAzureNetworkInterfaceStep implements Step {
           .put(AzureVmHelper.WORKING_MAP_NETWORK_INTERFACE_KEY, networkInterface.name());
       context
           .getWorkingMap()
-          .put(AzureVmHelper.WORKING_MAP_NETWORK_SUBNET_PAIR_KEY, existingNetwork);
+          .put(AzureVmHelper.WORKING_MAP_SUBNET_NAME, existingNetwork.subnet().name());
 
     } catch (ManagementException e) {
       if (StringUtils.equals(e.getValue().getCode(), "Conflict")) {
@@ -181,7 +181,7 @@ public class CreateAzureNetworkInterfaceStep implements Step {
             .networkManager()
             .networkInterfaces()
             .define(networkInterfaceName)
-            .withRegion(resource.getRegion())
+            .withRegion(existingNetwork.regionName())
             .withExistingResourceGroup(azureCloudContext.getAzureResourceGroupId())
             .withExistingPrimaryNetwork(existingNetwork)
             .withSubnet(subnetName)
