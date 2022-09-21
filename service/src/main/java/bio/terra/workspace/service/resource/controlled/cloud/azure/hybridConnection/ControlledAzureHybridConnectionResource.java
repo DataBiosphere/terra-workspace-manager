@@ -35,7 +35,8 @@ import java.util.Optional;
 import java.util.UUID;
 
 public class ControlledAzureHybridConnectionResource extends ControlledResource {
-  private final String region;
+  private final String hybridConnectionName;
+  private final String namespaceName;
 
   @JsonCreator
   public ControlledAzureHybridConnectionResource(
@@ -49,7 +50,8 @@ public class ControlledAzureHybridConnectionResource extends ControlledResource 
       @JsonProperty("accessScope") AccessScopeType accessScope,
       @JsonProperty("managedBy") ManagedByType managedBy,
       @JsonProperty("applicationId") String applicationId,
-      @JsonProperty("region") String region,
+      @JsonProperty("hybridConnectionName") String hybridConnectionName,
+      @JsonProperty("namespaceName") String namespaceName,
       @JsonProperty("resourceLineage") List<ResourceLineageEntry> resourceLineage,
       @JsonProperty("properties") Map<String, String> properties) {
 
@@ -66,14 +68,15 @@ public class ControlledAzureHybridConnectionResource extends ControlledResource 
         privateResourceState,
         resourceLineage,
         properties);
-    this.region = region;
+    this.hybridConnectionName = hybridConnectionName;
+    this.namespaceName = namespaceName;
     validate();
   }
 
-  public ControlledAzureHybridConnectionResource(
-      ControlledResourceFields common, String region) {
+  public ControlledAzureHybridConnectionResource(ControlledResourceFields common, String hybridConnectionName, String namespaceName) {
     super(common);
-    this.region = region;
+    this.hybridConnectionName = hybridConnectionName;
+    this.namespaceName = namespaceName;
     validate();
   }
 
@@ -127,12 +130,16 @@ public class ControlledAzureHybridConnectionResource extends ControlledResource 
         RetryRules.cloud());
   }
 
-  public String getRegion() {
-    return region;
+  public String getHybridConnectionName() {
+    return hybridConnectionName;
+  }
+
+  public String getNamespaceName() {
+    return namespaceName;
   }
 
   public ApiAzureHybridConnectionAttributes toApiAttributes() {
-    return new ApiAzureHybridConnectionAttributes().region(region);
+    return new ApiAzureHybridConnectionAttributes().namespaceName(namespaceName).hybridConnectionName(hybridConnectionName);
   }
 
   public ApiAzureHybridConnectionResource toApiResource() {
@@ -152,9 +159,8 @@ public class ControlledAzureHybridConnectionResource extends ControlledResource 
   }
 
   @Override
-  public String attributesToJson() {
-    return DbSerDes.toJson(
-        new ControlledAzureHybridConnectionAttributes(getRegion()));
+  public String attributesToJson() { // TODO
+    return DbSerDes.toJson(new ControlledAzureHybridConnectionAttributes(getHybridConnectionName()));
   }
 
   @Override
@@ -183,11 +189,12 @@ public class ControlledAzureHybridConnectionResource extends ControlledResource 
       throw new MissingRequiredFieldException(
           "Missing required Name field for ControlledAzureRelayNamespace.");
     }
-    if (getRegion() == null) {
+    if (getHybridConnectionName() == null) {
       throw new MissingRequiredFieldException(
           "Missing required region field for ControlledAzureRelayNamespace.");
     }
-    ResourceValidationUtils.validateRegion(getRegion());
+    ResourceValidationUtils.validateAzureHybridConnectionName(getHybridConnectionName());
+    ResourceValidationUtils.validateAzureNamespace(namespaceName);
   }
 
   @Override
@@ -198,13 +205,13 @@ public class ControlledAzureHybridConnectionResource extends ControlledResource 
 
     ControlledAzureHybridConnectionResource that = (ControlledAzureHybridConnectionResource) o;
 
-    return region.equals(that.getRegion());
+    return hybridConnectionName.equals(that.hybridConnectionName); // TODO include namespace
   }
 
   @Override
   public int hashCode() {
     int result = super.hashCode();
-    result = 31 * result + region.hashCode();
+    result = 31 * result + hybridConnectionName.hashCode(); // TODO include namespace
     return result;
   }
 
@@ -218,8 +225,8 @@ public class ControlledAzureHybridConnectionResource extends ControlledResource 
       return this;
     }
 
-    public Builder region(String region) {
-      this.region = region;
+    public Builder region(String hybridConnectionName, String namespaceName) {
+      this. = region; // TODO
       return this;
     }
 

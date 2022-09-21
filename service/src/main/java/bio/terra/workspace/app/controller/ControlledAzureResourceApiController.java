@@ -7,11 +7,14 @@ import bio.terra.workspace.common.utils.AzureVmUtils;
 import bio.terra.workspace.common.utils.ControllerValidationUtils;
 import bio.terra.workspace.generated.controller.ControlledAzureResourceApi;
 import bio.terra.workspace.generated.model.ApiAzureDiskResource;
+import bio.terra.workspace.generated.model.ApiAzureHybridConnectionResource;
 import bio.terra.workspace.generated.model.ApiAzureIpResource;
 import bio.terra.workspace.generated.model.ApiAzureNetworkResource;
 import bio.terra.workspace.generated.model.ApiAzureRelayNamespaceResource;
 import bio.terra.workspace.generated.model.ApiAzureVmResource;
 import bio.terra.workspace.generated.model.ApiCreateControlledAzureDiskRequestBody;
+import bio.terra.workspace.generated.model.ApiCreateControlledAzureHybridConnectionRequestBody;
+import bio.terra.workspace.generated.model.ApiCreateControlledAzureHybridConnectionResult;
 import bio.terra.workspace.generated.model.ApiCreateControlledAzureIpRequestBody;
 import bio.terra.workspace.generated.model.ApiCreateControlledAzureNetworkRequestBody;
 import bio.terra.workspace.generated.model.ApiCreateControlledAzureRelayNamespaceRequestBody;
@@ -41,6 +44,7 @@ import bio.terra.workspace.service.resource.controlled.ControlledResourceMetadat
 import bio.terra.workspace.service.resource.controlled.ControlledResourceService;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.AzureStorageAccessService;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.disk.ControlledAzureDiskResource;
+import bio.terra.workspace.service.resource.controlled.cloud.azure.hybridConnection.ControlledAzureHybridConnectionResource;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.ip.ControlledAzureIpResource;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.network.ControlledAzureNetworkResource;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.relayNamespace.ControlledAzureRelayNamespaceResource;
@@ -201,6 +205,49 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
     jobService.verifyUserAccess(jobId, userRequest, workspaceUuid);
     ApiCreateControlledAzureRelayNamespaceResult result =
         fetchCreateControlledAzureRelayNamespaceResult(jobId);
+    return new ResponseEntity<>(result, getAsyncResponseCode(result.getJobReport()));
+  }
+
+  @Override
+  public ResponseEntity<ApiCreateControlledAzureHybridConnectionResult> createAzureHybridConnection(
+      UUID workspaceUuid, @Valid ApiCreateControlledAzureHybridConnectionRequestBody body) {
+    features.azureEnabledCheck();
+
+    final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    ControlledResourceFields commonFields =
+        toCommonFields(workspaceUuid, body.getCommon(), userRequest);
+    workspaceService.validateMcWorkspaceAndAction(
+        userRequest, workspaceUuid, ControllerValidationUtils.samCreateAction(commonFields));
+
+    ControlledAzureHybridConnectionResource resource =
+        ControlledAzureHybridConnectionResource.builder()
+            .common(commonFields)
+            .region(body.getAzureHybridConnection().getRegion())
+            .build();
+
+    final String jobId =
+        controlledResourceService.createAzureHybridConnection(
+            resource,
+            body.getAzureHybridConnection(),
+            commonFields.getIamRole(),
+            body.getJobControl(),
+            getAsyncResultEndpoint(body.getJobControl().getId(), "create-result"),
+            userRequest);
+
+    final ApiCreateControlledAzureHybridConnectionResult result =
+        fetchCreateControlledAzureHybridConnectionResult(jobId);
+
+    return new ResponseEntity<>(result, HttpStatus.OK);
+  }
+
+  @Override
+  public ResponseEntity<ApiCreateControlledAzureHybridConnectionResult>
+      getCreateAzureHybridConnectionResult(UUID workspaceUuid, String jobId) throws ApiException {
+    features.azureEnabledCheck();
+    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    jobService.verifyUserAccess(jobId, userRequest, workspaceUuid);
+    ApiCreateControlledAzureHybridConnectionResult result =
+        fetchCreateControlledAzureHybridConnectionResult(jobId);
     return new ResponseEntity<>(result, getAsyncResponseCode(result.getJobReport()));
   }
 
@@ -430,6 +477,12 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
   }
 
   @Override
+  public ResponseEntity<ApiDeleteControlledAzureResourceResult> deleteAzureHybridConnection(
+      UUID workspaceUuid, UUID resourceId, @Valid ApiDeleteControlledAzureResourceRequest body) {
+    return deleteHelper(workspaceUuid, resourceId, body, "Azure Hybrid Connection");
+  }
+
+  @Override
   public ResponseEntity<ApiDeleteControlledAzureResourceResult> deleteAzureDisk(
       UUID workspaceUuid, UUID resourceId, @Valid ApiDeleteControlledAzureResourceRequest body) {
     return deleteHelper(workspaceUuid, resourceId, body, "Azure Disk");
@@ -469,6 +522,19 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
             .validateControlledResourceAndAction(
                 userRequest, workspaceId, resourceId, SamControlledResourceActions.READ_ACTION)
             .castByEnum(WsmResourceType.CONTROLLED_AZURE_RELAY_NAMESPACE);
+    return new ResponseEntity<>(resource.toApiResource(), HttpStatus.OK);
+  }
+
+  @Override
+  public ResponseEntity<ApiAzureHybridConnectionResource> getAzureHybridConnection(
+      UUID workspaceId, UUID resourceId) {
+    final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    features.azureEnabledCheck();
+    final ControlledAzureHybridConnectionResource resource =
+        controlledResourceMetadataManager
+            .validateControlledResourceAndAction(
+                userRequest, workspaceId, resourceId, SamControlledResourceActions.READ_ACTION)
+            .castByEnum(WsmResourceType.CONTROLLED_AZURE_HYBRID_CONNECTION);
     return new ResponseEntity<>(resource.toApiResource(), HttpStatus.OK);
   }
 
@@ -554,6 +620,15 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
     return getJobDeleteResult(jobId);
   }
 
+  @Override
+  public ResponseEntity<ApiDeleteControlledAzureResourceResult>
+      getDeleteAzureHybridConnectionResult(UUID workspaceUuid, String jobId) {
+    features.azureEnabledCheck();
+    final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    jobService.verifyUserAccess(jobId, userRequest, workspaceUuid);
+    return getJobDeleteResult(jobId);
+  }
+
   private ResponseEntity<ApiDeleteControlledAzureResourceResult> getJobDeleteResult(String jobId) {
 
     final JobService.AsyncJobResult<Void> jobResult =
@@ -620,5 +695,21 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
         .jobReport(jobResult.getJobReport())
         .errorReport(jobResult.getApiErrorReport())
         .azureRelayNameSpace(apiResource);
+  }
+
+  private ApiCreateControlledAzureHybridConnectionResult
+      fetchCreateControlledAzureHybridConnectionResult(String jobId) {
+    final JobService.AsyncJobResult<ControlledAzureHybridConnectionResource> jobResult =
+        jobService.retrieveAsyncJobResult(jobId, ControlledAzureHybridConnectionResource.class);
+
+    ApiAzureHybridConnectionResource apiResource = null;
+    if (jobResult.getJobReport().getStatus().equals(ApiJobReport.StatusEnum.SUCCEEDED)) {
+      ControlledAzureHybridConnectionResource resource = jobResult.getResult();
+      apiResource = resource.toApiResource();
+    }
+    return new ApiCreateControlledAzureHybridConnectionResult()
+        .jobReport(jobResult.getJobReport())
+        .errorReport(jobResult.getApiErrorReport())
+        .azureHybridConnectionSpace(apiResource);
   }
 }

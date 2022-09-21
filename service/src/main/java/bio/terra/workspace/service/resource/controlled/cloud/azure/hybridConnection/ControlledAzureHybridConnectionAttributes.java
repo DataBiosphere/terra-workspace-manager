@@ -7,8 +7,7 @@ public class ControlledAzureHybridConnectionAttributes {
   private final String region;
 
   @JsonCreator
-  public ControlledAzureHybridConnectionAttributes(
-      @JsonProperty("region") String region) {
+  public ControlledAzureHybridConnectionAttributes(@JsonProperty("region") String region) {
     this.region = region;
   }
 

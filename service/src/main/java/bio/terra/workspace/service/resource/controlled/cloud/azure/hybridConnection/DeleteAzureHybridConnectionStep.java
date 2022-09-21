@@ -17,7 +17,8 @@ import org.slf4j.LoggerFactory;
  * process to actually delete the Azure RelayNamespace
  */
 public class DeleteAzureHybridConnectionStep implements Step {
-  private static final Logger logger = LoggerFactory.getLogger(DeleteAzureHybridConnectionStep.class);
+  private static final Logger logger =
+      LoggerFactory.getLogger(DeleteAzureHybridConnectionStep.class);
   private final AzureConfiguration azureConfig;
   private final CrlService crlService;
   private final ControlledAzureHybridConnectionResource resource;

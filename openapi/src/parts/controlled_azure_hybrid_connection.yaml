@@ -4,7 +4,7 @@ paths:
       - $ref: '#/components/parameters/WorkspaceId'
     post:
       summary: Asynchronously create a new controlled Azure Hybrid Connection
-      operationId: createAzureHybridConnnection
+      operationId: createAzureHybridConnection
       tags: [ControlledAzureResource]
       requestBody:
         required: true
@@ -101,21 +101,24 @@ components:
         Hybrid connection specific properties to be set on creation. These are a subset of the values
         accepted by the azure resource API
       type: object
-      required: [region]
+      required: [hybridConnectionName]
       properties:
-        region:
+        hybridConnectionName:
           description: |
-            A valid region string representation per https://docs.microsoft.com/en-us/dotnet/api/microsoft.azure.management.resourcemanager.fluent.core.region.
-            It is best to look at the Region class definition for valid strings (e.g. 'eastus' == Region.US_EAST.toString())
+            A valid name for the hybrid connection
+          type: string
+        namespaceName:
+          description: |
+            A valid relay namespace name
           type: string
 
     CreateControlledAzureHybridConnectionRequestBody:
-      description: Payload for requesting a new controlled Azure IP resource.
+      description: Payload for requesting a new controlled Azure Hybrid Connection resource.
       type: object
       properties:
         common:
           $ref: '#/components/schemas/ControlledResourceCommonFields'
-        azureRelayNamespace:
+        azureHybridConnection:
           $ref: '#/components/schemas/AzureHybridConnectionCreationParameters'
         jobControl:
           $ref: '#/components/schemas/JobControl'
