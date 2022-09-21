@@ -151,9 +151,7 @@ public class BqDatasetUtils {
       throws Exception {
     var body =
         new CreateGcpBigQueryDataTableReferenceRequestBody()
-            .metadata(
-                makeReferencedResourceCommonFields(
-                    name, cloningInstructions))
+            .metadata(makeReferencedResourceCommonFields(name, cloningInstructions))
             .dataTable(dataTable);
 
     return ClientTestUtils.getWithRetryOnException(
