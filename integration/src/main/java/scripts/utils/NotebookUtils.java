@@ -1,13 +1,13 @@
 package scripts.utils;
 
 import static org.hamcrest.MatcherAssert.assertThat;
+import static scripts.utils.CommonResourceFieldsUtil.makeControlledResourceCommonFields;
 
 import bio.terra.testrunner.runner.config.TestUserSpecification;
 import bio.terra.workspace.api.ControlledGcpResourceApi;
 import bio.terra.workspace.client.ApiException;
 import bio.terra.workspace.model.AccessScope;
 import bio.terra.workspace.model.CloningInstructionsEnum;
-import bio.terra.workspace.model.ControlledResourceCommonFields;
 import bio.terra.workspace.model.CreateControlledGcpAiNotebookInstanceRequestBody;
 import bio.terra.workspace.model.CreatedControlledGcpAiNotebookInstanceResult;
 import bio.terra.workspace.model.DeleteControlledGcpAiNotebookInstanceRequest;
@@ -69,12 +69,12 @@ public class NotebookUtils {
     }
 
     var commonParameters =
-        new ControlledResourceCommonFields()
-            .name(resourceName)
-            .cloningInstructions(CloningInstructionsEnum.NOTHING)
-            .accessScope(AccessScope.PRIVATE_ACCESS)
-            .managedBy(ManagedBy.USER)
-            .privateResourceUser(null);
+        makeControlledResourceCommonFields(
+            resourceName,
+            /*privateUser=*/ null,
+            CloningInstructionsEnum.NOTHING,
+            ManagedBy.USER,
+            AccessScope.PRIVATE_ACCESS);
 
     var body =
         new CreateControlledGcpAiNotebookInstanceRequestBody()

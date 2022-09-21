@@ -28,6 +28,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import scripts.utils.ClientTestUtils;
+import scripts.utils.CommonResourceFieldsUtil;
 import scripts.utils.GcsBucketObjectUtils;
 import scripts.utils.GcsBucketUtils;
 import scripts.utils.MultiResourcesUtils;
@@ -92,6 +93,9 @@ public class ReferencedGcsResourceLifecycle extends WorkspaceAllocateTestScriptB
             MultiResourcesUtils.makeName(),
             CloningInstructionsEnum.REFERENCE);
     bucketResourceId = referencedBucket.getMetadata().getResourceId();
+    assertEquals(
+        CommonResourceFieldsUtil.getResourceDefaultProperties(),
+        referencedBucket.getMetadata().getProperties());
     GcpGcsBucketResource fineGrainedBucket =
         GcsBucketUtils.makeGcsBucketReference(
             gcsFineGrainedAccessBucketAttributes,
@@ -108,6 +112,9 @@ public class ReferencedGcsResourceLifecycle extends WorkspaceAllocateTestScriptB
             MultiResourcesUtils.makeName(),
             CloningInstructionsEnum.REFERENCE);
     fileResourceId = referencedGcsFile.getMetadata().getResourceId();
+    assertEquals(
+        CommonResourceFieldsUtil.getResourceDefaultProperties(),
+        referencedGcsFile.getMetadata().getProperties());
     GcpGcsObjectResource referencedGcsFolder =
         GcsBucketObjectUtils.makeGcsObjectReference(
             gcsFolderAttributes,

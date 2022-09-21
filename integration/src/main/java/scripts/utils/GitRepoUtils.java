@@ -1,12 +1,13 @@
 package scripts.utils;
 
+import static scripts.utils.CommonResourceFieldsUtil.makeReferencedResourceCommonFields;
+
 import bio.terra.workspace.api.ReferencedGcpResourceApi;
 import bio.terra.workspace.client.ApiException;
 import bio.terra.workspace.model.CloningInstructionsEnum;
 import bio.terra.workspace.model.CreateGitRepoReferenceRequestBody;
 import bio.terra.workspace.model.GitRepoAttributes;
 import bio.terra.workspace.model.GitRepoResource;
-import bio.terra.workspace.model.ReferenceResourceCommonFields;
 import bio.terra.workspace.model.UpdateGitRepoReferenceRequestBody;
 import java.util.UUID;
 import javax.annotation.Nullable;
@@ -56,11 +57,7 @@ public class GitRepoUtils {
 
     CreateGitRepoReferenceRequestBody body =
         new CreateGitRepoReferenceRequestBody()
-            .metadata(
-                new ReferenceResourceCommonFields()
-                    .cloningInstructions(CloningInstructionsEnum.REFERENCE)
-                    .description("Description of " + name)
-                    .name(name))
+            .metadata(makeReferencedResourceCommonFields(name, CloningInstructionsEnum.REFERENCE))
             .gitrepo(new GitRepoAttributes().gitRepoUrl(attributes.getGitRepoUrl()));
     logger.info("Making git repo reference of {} with name {}", attributes.getGitRepoUrl(), name);
     return ClientTestUtils.getWithRetryOnException(

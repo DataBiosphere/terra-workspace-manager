@@ -8,6 +8,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static scripts.utils.CommonResourceFieldsUtil.getResourceDefaultProperties;
 import static scripts.utils.GcsBucketUtils.BUCKET_LIFECYCLE_RULES;
 import static scripts.utils.GcsBucketUtils.BUCKET_LIFECYCLE_RULE_1_CONDITION_AGE;
 import static scripts.utils.GcsBucketUtils.BUCKET_LIFECYCLE_RULE_1_CONDITION_LIVE;
@@ -34,7 +35,6 @@ import bio.terra.workspace.model.CloneControlledGcpGcsBucketResult;
 import bio.terra.workspace.model.ClonedControlledGcpGcsBucket;
 import bio.terra.workspace.model.CloningInstructionsEnum;
 import bio.terra.workspace.model.CloudPlatform;
-import bio.terra.workspace.model.ControlledResourceCommonFields;
 import bio.terra.workspace.model.ControlledResourceIamRole;
 import bio.terra.workspace.model.CreateControlledGcpGcsBucketRequestBody;
 import bio.terra.workspace.model.CreatedControlledGcpGcsBucket;
@@ -74,6 +74,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import scripts.utils.ClientTestUtils;
 import scripts.utils.CloudContextMaker;
+import scripts.utils.CommonResourceFieldsUtil;
 import scripts.utils.GcpWorkspaceCloneTestScriptBase;
 import scripts.utils.GcsBucketAccessTester;
 import scripts.utils.GcsBucketUtils;
@@ -134,6 +135,8 @@ public class ControlledGcsBucketLifecycle extends GcpWorkspaceCloneTestScriptBas
             ? expectedBucketName.substring(0, expectedBucketName.length() - 1)
             : expectedBucketName;
     assertEquals(expectedBucketName, gotBucketNoCloudName.getAttributes().getBucketName());
+    assertEquals(
+        getResourceDefaultProperties(), gotBucketNoCloudName.getMetadata().getProperties());
 
     GcsBucketUtils.deleteControlledGcsBucket(
         bucketNoCloudName.getResourceId(), getWorkspaceId(), resourceApi);
@@ -303,11 +306,12 @@ public class ControlledGcsBucketLifecycle extends GcpWorkspaceCloneTestScriptBas
             .lifecycle(new GcpGcsBucketLifecycle().rules(BUCKET_LIFECYCLE_RULES));
 
     var commonParameters =
-        new ControlledResourceCommonFields()
-            .name(resourceName)
-            .cloningInstructions(CloningInstructionsEnum.NOTHING)
-            .accessScope(AccessScope.SHARED_ACCESS)
-            .managedBy(ManagedBy.USER);
+        CommonResourceFieldsUtil.makeControlledResourceCommonFields(
+            resourceName,
+            /*privateUser=*/ null,
+            CloningInstructionsEnum.NOTHING,
+            ManagedBy.USER,
+            AccessScope.SHARED_ACCESS);
 
     var body =
         new CreateControlledGcpGcsBucketRequestBody()

@@ -52,4 +52,10 @@ public class ResourceLineageEntry {
     return sourceWorkspaceId.equals(entry.sourceWorkspaceId)
         && sourceResourceId.equals(entry.sourceResourceId);
   }
+
+  @Override
+  public int hashCode() {
+    assert false : "hashCode not designed";
+    return 42; // any arbitrary constant will do
+  }
 }

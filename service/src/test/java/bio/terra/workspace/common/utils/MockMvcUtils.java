@@ -1,6 +1,7 @@
 package bio.terra.workspace.common.utils;
 
 import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.defaultBigQueryDatasetCreationParameters;
+import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.defaultGcsBucketCreationParameters;
 import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.makeDefaultControlledResourceFieldsApi;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
@@ -14,10 +15,13 @@ import bio.terra.workspace.generated.model.ApiCloudPlatform;
 import bio.terra.workspace.generated.model.ApiCreateCloudContextRequest;
 import bio.terra.workspace.generated.model.ApiCreateCloudContextResult;
 import bio.terra.workspace.generated.model.ApiCreateControlledGcpBigQueryDatasetRequestBody;
+import bio.terra.workspace.generated.model.ApiCreateControlledGcpGcsBucketRequestBody;
 import bio.terra.workspace.generated.model.ApiCreateWorkspaceRequestBody;
 import bio.terra.workspace.generated.model.ApiCreatedControlledGcpBigQueryDataset;
+import bio.terra.workspace.generated.model.ApiCreatedControlledGcpGcsBucket;
 import bio.terra.workspace.generated.model.ApiCreatedWorkspace;
 import bio.terra.workspace.generated.model.ApiGcpBigQueryDatasetResource;
+import bio.terra.workspace.generated.model.ApiGcpGcsBucketResource;
 import bio.terra.workspace.generated.model.ApiGrantRoleRequestBody;
 import bio.terra.workspace.generated.model.ApiJobControl;
 import bio.terra.workspace.generated.model.ApiJobReport.StatusEnum;
@@ -27,6 +31,7 @@ import bio.terra.workspace.service.iam.model.WsmIamRole;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.Optional;
 import java.util.UUID;
+import javax.annotation.Nullable;
 import org.apache.http.HttpStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -80,11 +85,6 @@ public class MockMvcUtils {
       "/api/workspaces/v1/%s/resources/controlled/azure/network";
   public static final String CREATE_AZURE_VM_PATH_FORMAT =
       "/api/workspaces/v1/%s/resources/controlled/azure/vm";
-
-  public static final String CREATE_CONTROLLED_GCP_GCS_BUCKET_FORMAT =
-      "/api/workspaces/v1/%s/resources/controlled/gcp/buckets";
-  public static final String GET_CONTROLLED_GCP_GCS_BUCKET_FORMAT =
-      "/api/workspaces/v1/%s/resources/controlled/gcp/buckets/%s";
   public static final String CLONE_CONTROLLED_GCP_GCS_BUCKET_FORMAT =
       "/api/workspaces/v1/%s/resources/controlled/gcp/buckets/%s/clone";
   public static final String CLONE_RESULT_CONTROLLED_GCP_GCS_BUCKET_FORMAT =
@@ -103,6 +103,22 @@ public class MockMvcUtils {
       "/api/workspaces/v1/%s/resources/controlled/gcp/bqdatasets";
   public static final String CONTROLLED_GCP_BIG_QUERY_DATASET_V1_PATH_FORMAT =
       "/api/workspaces/v1/%s/resources/controlled/gcp/bqdatasets/%s";
+  public static final String CONTROLLED_GCP_GCS_BUCKETS_V1_PATH_FORMAT =
+      "/api/workspaces/v1/%s/resources/controlled/gcp/buckets";
+  public static final String CONTROLLED_GCP_GCS_BUCKET_V1_PATH_FORMAT =
+      "/api/workspaces/v1/%s/resources/controlled/gcp/buckets/%s";
+  public static final String REFERENCED_DATA_REPO_SNAPSHOTS_V1_PATH_FORMAT =
+      "/api/workspaces/v1/%s/resources/referenced/datarepo/snapshots";
+  public static final String REFERENCED_GCP_GCS_BUCKETS_V1_PATH_FORMAT =
+      "/api/workspaces/v1/%s/resources/referenced/gcp/buckets";
+  public static final String REFERENCED_GCP_GCS_OBJECTS_V1_PATH_FORMAT =
+      "/api/workspaces/v1/%s/resources/referenced/gcp/bucket/objects";
+  public static final String REFERENCED_GCP_BIG_QUERY_DATASET_V1_PATH_FORMAT =
+      "/api/workspaces/v1/%s/resources/referenced/gcp/bigquerydatasets";
+  public static final String REFERENCED_GCP_BIG_QUERY_DATA_TABLE_V1_PATH_FORMAT =
+      "/api/workspaces/v1/%s/resources/referenced/gcp/bigquerydatatables";
+  public static final String REFERENCED_GIT_REPO_V1_PATH_FORMAT =
+      "/api/workspaces/v1/%s/resources/referenced/gitrepos";
   public static final AuthenticatedUserRequest USER_REQUEST =
       new AuthenticatedUserRequest(
           "fake@email.com", "subjectId123456", Optional.of("ThisIsNotARealBearerToken"));
@@ -139,7 +155,7 @@ public class MockMvcUtils {
   }
 
   public ApiWorkspaceDescription createWorkspaceWithoutCloudContext(
-      AuthenticatedUserRequest userRequest) throws Exception {
+      @Nullable AuthenticatedUserRequest userRequest) throws Exception {
     ApiCreateWorkspaceRequestBody request = WorkspaceFixtures.createWorkspaceRequestBody();
     String serializedResponse =
         mockMvc
@@ -147,7 +163,7 @@ public class MockMvcUtils {
                 addJsonContentType(
                     addAuth(
                         post(WORKSPACES_V1_PATH).content(objectMapper.writeValueAsString(request)),
-                        userRequest)))
+                        Optional.ofNullable(userRequest).orElse(USER_REQUEST))))
             .andExpect(status().is(HttpStatus.SC_OK))
             .andReturn()
             .getResponse()
@@ -274,6 +290,52 @@ public class MockMvcUtils {
             .getContentAsString();
 
     return objectMapper.readValue(serializedGetResponse, ApiGcpBigQueryDatasetResource.class);
+  }
+
+  public ApiCreatedControlledGcpGcsBucket createGcsBucket(
+      AuthenticatedUserRequest userRequest, UUID workspaceId) throws Exception {
+    ApiCreateControlledGcpGcsBucketRequestBody gcsBucketCreationRequest =
+        new ApiCreateControlledGcpGcsBucketRequestBody()
+            .common(makeDefaultControlledResourceFieldsApi())
+            .gcsBucket(defaultGcsBucketCreationParameters());
+
+    String serializedGetResponse =
+        mockMvc
+            .perform(
+                addAuth(
+                    post(String.format(
+                            CONTROLLED_GCP_GCS_BUCKETS_V1_PATH_FORMAT, workspaceId.toString()))
+                        .contentType(MediaType.APPLICATION_JSON_VALUE)
+                        .accept(MediaType.APPLICATION_JSON)
+                        .characterEncoding("UTF-8")
+                        .content(objectMapper.writeValueAsString(gcsBucketCreationRequest)),
+                    userRequest))
+            .andExpect(status().is(HttpStatus.SC_OK))
+            .andReturn()
+            .getResponse()
+            .getContentAsString();
+
+    return objectMapper.readValue(serializedGetResponse, ApiCreatedControlledGcpGcsBucket.class);
+  }
+
+  public ApiGcpGcsBucketResource getGcsBucket(
+      AuthenticatedUserRequest userRequest, UUID workspaceId, UUID resourceId) throws Exception {
+    String serializedGetResponse =
+        mockMvc
+            .perform(
+                addAuth(
+                    get(
+                        String.format(
+                            CONTROLLED_GCP_GCS_BUCKET_V1_PATH_FORMAT,
+                            workspaceId.toString(),
+                            resourceId.toString())),
+                    userRequest))
+            .andExpect(status().is(HttpStatus.SC_OK))
+            .andReturn()
+            .getResponse()
+            .getContentAsString();
+
+    return objectMapper.readValue(serializedGetResponse, ApiGcpGcsBucketResource.class);
   }
 
   public void grantRole(

@@ -16,7 +16,7 @@ import java.util.stream.Stream;
 
 public class MapperUtils {
 
-  public class LandingZoneMapper {
+  public static class LandingZoneMapper {
     private LandingZoneMapper() {}
 
     public static HashMap<String, String> landingZoneParametersFrom(
@@ -51,7 +51,7 @@ public class MapperUtils {
     }
   }
 
-  public class ErrorReportMapper {
+  public static class ErrorReportMapper {
     private ErrorReportMapper() {}
 
     public static ApiErrorReport from(ErrorReport errorReport) {
@@ -65,7 +65,7 @@ public class MapperUtils {
     }
   }
 
-  public class AzureCloudContextMapper {
+  public static class AzureCloudContextMapper {
     private AzureCloudContextMapper() {}
 
     public static LandingZoneTarget from(ApiLandingZoneTarget apiLandingZoneTarget) {

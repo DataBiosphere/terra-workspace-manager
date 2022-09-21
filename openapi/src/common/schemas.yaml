@@ -85,6 +85,8 @@ components:
         resourceId:
           type: string
           format: uuid
+        properties:
+          $ref: '#/components/schemas/Properties'
   
     DeleteControlledAzureResourceRequest:
       type: object
@@ -202,6 +204,8 @@ components:
           $ref: "#/components/schemas/Name"
         description:
           type: string
+        properties:
+          $ref: '#/components/schemas/Properties'
         cloningInstructions:
           $ref: '#/components/schemas/CloningInstructionsEnum'
 

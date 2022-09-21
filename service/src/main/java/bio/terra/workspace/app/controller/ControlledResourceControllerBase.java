@@ -1,5 +1,6 @@
 package bio.terra.workspace.app.controller;
 
+import bio.terra.workspace.app.controller.shared.PropertiesUtils;
 import bio.terra.workspace.generated.model.ApiControlledResourceCommonFields;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequestFactory;
@@ -55,6 +56,7 @@ public class ControlledResourceControllerBase extends ControllerBase {
         .accessScope(accessScopeType)
         .managedBy(managedBy)
         .applicationId(controlledResourceService.getAssociatedApp(managedBy, userRequest))
+        .properties(PropertiesUtils.convertApiPropertyToMap(apiCommonFields.getProperties()))
         .build();
   }
 }

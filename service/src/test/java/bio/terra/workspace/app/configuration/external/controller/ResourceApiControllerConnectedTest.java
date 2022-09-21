@@ -2,6 +2,7 @@ package bio.terra.workspace.app.configuration.external.controller;
 
 import static bio.terra.workspace.app.controller.shared.PropertiesUtils.convertApiPropertyToMap;
 import static bio.terra.workspace.app.controller.shared.PropertiesUtils.convertMapToApiProperties;
+import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.DEFAULT_RESOURCE_PROPERTIES;
 import static bio.terra.workspace.common.utils.MockMvcUtils.RESOURCE_PROPERTIES_V1_PATH_FORMAT;
 import static bio.terra.workspace.common.utils.MockMvcUtils.addAuth;
 import static bio.terra.workspace.common.utils.MockMvcUtils.addJsonContentType;
@@ -28,16 +29,19 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import org.apache.http.HttpStatus;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInstance;
+import org.junit.jupiter.api.TestInstance.Lifecycle;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
 @AutoConfigureMockMvc
+@TestInstance(Lifecycle.PER_CLASS)
 public class ResourceApiControllerConnectedTest extends BaseConnectedTest {
 
   @Autowired MockMvc mockMvc;
@@ -48,7 +52,7 @@ public class ResourceApiControllerConnectedTest extends BaseConnectedTest {
 
   private UUID workspaceId;
 
-  @BeforeEach
+  @BeforeAll
   public void setUp() throws Exception {
     workspaceId =
         connectedTestUtils
@@ -56,7 +60,7 @@ public class ResourceApiControllerConnectedTest extends BaseConnectedTest {
             .getWorkspaceId();
   }
 
-  @AfterEach
+  @AfterAll
   public void cleanup() throws Exception {
     mockMvcUtils.deleteWorkspace(userAccessUtils.defaultUserAuthRequest(), workspaceId);
   }
@@ -65,7 +69,7 @@ public class ResourceApiControllerConnectedTest extends BaseConnectedTest {
   class UpdateResourceProperties {
     @Test
     public void updateResourceProperties_newPropertiesAdded() throws Exception {
-      // Create resource with no properties.
+      // Create resource with properties foo -> bar.
       ApiCreatedControlledGcpBigQueryDataset resource =
           mockMvcUtils.createBigQueryDataset(userAccessUtils.defaultUserAuthRequest(), workspaceId);
       UUID resourceId = resource.getResourceId();
@@ -76,7 +80,7 @@ public class ResourceApiControllerConnectedTest extends BaseConnectedTest {
               UUID.randomUUID().toString(),
               "data_type",
               "workflow_output");
-      Map<String, String> expectedProperties = new HashMap();
+      Map<String, String> expectedProperties = new HashMap<>(DEFAULT_RESOURCE_PROPERTIES);
       expectedProperties.putAll(newProperties);
 
       // Add two more properties with key terra_workspace_folder_id and data_type.
