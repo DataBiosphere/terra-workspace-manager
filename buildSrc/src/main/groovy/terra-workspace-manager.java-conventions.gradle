@@ -2,7 +2,6 @@
 plugins {
     id 'idea'
     id 'java'
-    id 'java-library'
     id 'jacoco'
     id 'com.diffplug.spotless'
     id 'com.github.spotbugs'
@@ -29,12 +28,6 @@ repositories {
 dependencyLocking {
     lockAllConfigurations()
     lockMode = LockMode.STRICT
-}
-
-java {
-    toolchain {
-        languageVersion.set(JavaLanguageVersion.of(17))
-    }
 }
 
 jacoco {

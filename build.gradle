@@ -37,3 +37,9 @@ artifactory {
         }
     }
 }
+
+tasks.named('dependencies') {
+    dependsOn(':client:dependencies')
+    dependsOn(':integration:dependencies')
+    dependsOn(':service:dependencies')
+}
