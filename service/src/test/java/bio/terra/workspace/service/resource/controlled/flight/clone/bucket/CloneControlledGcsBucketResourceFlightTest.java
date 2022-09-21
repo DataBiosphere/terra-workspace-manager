@@ -88,6 +88,9 @@ public class CloneControlledGcsBucketResourceFlightTest extends BaseConnectedTes
     inputs.put(ControlledResourceKeys.DESTINATION_RESOURCE_ID, destResourceId);
     // Set destination resource name
     inputs.put(ResourceKeys.RESOURCE_NAME, sourceResource.getName() + "-clone");
+    inputs.put(
+        ControlledResourceKeys.DESTINATION_BUCKET_NAME,
+        sourceResource.getName() + "-clone-bucket-name");
     inputs.put(ControlledResourceKeys.CLONING_INSTRUCTIONS, cloningInstructions);
 
     FlightDebugInfo debugInfo = FlightDebugInfo.newBuilder().lastStepFailure(true).build();

@@ -39,14 +39,12 @@ public class WorkspaceConnectedTestUtils {
   }
 
   public void deleteWorkspaceAndGcpContext(AuthenticatedUserRequest userRequest, UUID workspaceId) {
-    String jobId = UUID.randomUUID().toString();
     Workspace workspace =
         Workspace.builder()
             .workspaceId(workspaceId)
             .workspaceStage(WorkspaceStage.MC_WORKSPACE)
             .build();
     workspaceService.deleteGcpCloudContext(workspace, userRequest);
-    jobService.waitForJob(jobId);
 
     workspaceService.deleteWorkspace(workspace, userRequest);
   }
