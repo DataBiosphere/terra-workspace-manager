@@ -105,7 +105,7 @@ components:
         Vm-specific properties to be set on creation. These are a subset of the values
         accepted by the azure resource API
       type: object
-      required: [name, region, networkId, vmSize, vmImage]
+      required: [name, region, vmSize, vmImage]
       properties:
         name:
           description: A valid vm name per https://docs.microsoft.com/en-us/azure/azure-resource-manager/management/resource-name-rules
