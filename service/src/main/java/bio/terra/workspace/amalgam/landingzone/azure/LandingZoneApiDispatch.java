@@ -207,7 +207,7 @@ public class LandingZoneApiDispatch {
         .orElseThrow(
             () ->
                 new IllegalStateException(
-                    "Could not find a landing zone id for the given Azure context."));
+                    "Could not find a landing zone id for the given Azure context. Please check that the landing zone deployment is complete."));
   }
 
   private Optional<String> getFirstLandingZoneId(LandingZoneTarget landingZoneTarget) {
