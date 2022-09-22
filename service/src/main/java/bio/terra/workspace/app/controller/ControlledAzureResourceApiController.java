@@ -53,7 +53,6 @@ import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import com.google.common.annotations.VisibleForTesting;
 import java.time.OffsetDateTime;
-import java.util.Optional;
 import java.util.UUID;
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
@@ -316,7 +315,7 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
     ControlledAzureStorageContainerResource resource =
         ControlledAzureStorageContainerResource.builder()
             .common(commonFields)
-            .storageAccountId(Optional.ofNullable(body.getAzureStorageContainer().getStorageAccountId()).orElse(null))
+            .storageAccountId(body.getAzureStorageContainer().getStorageAccountId())
             .storageContainerName(body.getAzureStorageContainer().getStorageContainerName())
             .build();
 

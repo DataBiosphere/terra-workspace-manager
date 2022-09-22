@@ -44,6 +44,7 @@ public class CreateAzureStorageContainerStep implements Step {
         crlService.getStorageManager(azureCloudContext, azureConfig);
 
     // The storage account name is stored by VerifyAzureStorageContainerCanBeCreated.
+    // It can be workspace managed storage account or landing zone shared storage account
     final String storageAccountName =
         context.getWorkingMap().get(ControlledResourceKeys.STORAGE_ACCOUNT_NAME, String.class);
     if (storageAccountName == null) {
@@ -62,7 +63,6 @@ public class CreateAzureStorageContainerStep implements Step {
           .withPublicAccess(PublicAccess.NONE)
           .withMetadata("workspaceId", resource.getWorkspaceId().toString())
           .withMetadata("resourceId", resource.getResourceId().toString())
-              //TODO: should we add WLZ-ID/PURPOSE?
           .create(
               Defaults.buildContext(
                   CreateStorageContainerRequestData.builder()
@@ -70,7 +70,6 @@ public class CreateAzureStorageContainerStep implements Step {
                       .setStorageContainerName(resource.getStorageContainerName())
                       .setResourceGroupName(azureCloudContext.getAzureResourceGroupId())
                       .build()));
-
     } catch (ManagementException e) {
       logger.error(
           "Failed to create the Azure storage container '{}' with storage account with the ID '{}'. Error Code: {}",
