@@ -128,6 +128,18 @@ public class LandingZoneApiDispatch {
     return result;
   }
 
+  public Optional<ApiAzureLandingZoneDeployedResource> getSharedStorageAccount(
+      String landingZoneId) {
+    features.azureEnabledCheck();
+    String azureStorageAccountResourceType = "Microsoft.Storage/storageAccounts";
+    return listAzureLandingZoneResources(landingZoneId).getResources().stream()
+        .filter(rpg -> rpg.getPurpose().equals(ResourcePurpose.SHARED_RESOURCE.toString()))
+        .flatMap(r -> r.getDeployedResources().stream())
+        .filter(
+            r -> StringUtils.equalsIgnoreCase(r.getResourceType(), azureStorageAccountResourceType))
+        .findFirst();
+  }
+
   public List<ApiAzureLandingZoneDeployedResource> listSubnetsWithParentVNetByPurpose(
       BearerToken bearerToken, UUID landingZoneId, LandingZonePurpose purpose) {
 
@@ -142,6 +154,7 @@ public class LandingZoneApiDispatch {
     if (purpose.getClass().equals(ResourcePurpose.class)) {
       return new ApiAzureLandingZoneDeployedResource()
           .resourceId(resource.resourceId())
+          .resourceName(resource.resourceName().orElse(null))
           .resourceType(resource.resourceType())
           .region(resource.region());
     }
