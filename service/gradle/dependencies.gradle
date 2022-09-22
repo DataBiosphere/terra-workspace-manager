@@ -4,7 +4,7 @@ dependencies {
   constraints {
     implementation 'com.google.guava:guava:31.1-jre' // "-jre" for Java 8 or higher
   }
-  implementation platform('com.google.cloud:libraries-bom:25.1.0')
+  implementation platform('com.google.cloud:libraries-bom:26.1.1')
   implementation group: "com.google.auto.value", name: "auto-value-annotations"
   implementation group: "com.google.guava", name:"guava"
 
@@ -14,18 +14,18 @@ dependencies {
   // Terra deps
   implementation group: "bio.terra", name: "datarepo-client", version: "1.41.0-SNAPSHOT"
   // hk2 is required to use datarepo client, but not correctly exposed by the client
-  implementation group: "org.glassfish.jersey.inject", name: "jersey-hk2", version: "2.32"
+  implementation group: "org.glassfish.jersey.inject", name: "jersey-hk2", version: "2.36"
 
   // Opencensus utilities for various HTTP clients
-  implementation group: "io.opencensus", name: "opencensus-contrib-http-jaxrs", version: "0.28.3"
+  implementation group: "io.opencensus", name: "opencensus-contrib-http-jaxrs", version: "0.31.1"
 
   // Get stairway via TCL
   implementation("bio.terra:terra-common-lib:0.0.72-SNAPSHOT")
   implementation group: "org.broadinstitute.dsde.workbench", name: "sam-client_2.13", version: "0.1-33f3550"
   implementation group: "bio.terra", name: "terra-resource-buffer-client", version: "0.4.3-SNAPSHOT"
   // Required by Sam client
-  implementation group: "com.squareup.okhttp3", name: "okhttp", version: "4.9.1"
-  implementation group: "com.squareup.okhttp3", name: "logging-interceptor", version: "4.9.1"
+  implementation group: "com.squareup.okhttp3", name: "okhttp", version: "4.10.0"
+  implementation group: "com.squareup.okhttp3", name: "logging-interceptor", version: "4.10.0"
 
   // Cloud Resource Library
   implementation group: 'bio.terra', name: 'terra-cloud-resource-lib', version: "1.2.2-SNAPSHOT"
@@ -41,15 +41,15 @@ dependencies {
   }
 
   // Storage transfer service
-  implementation group: 'com.google.apis', name: 'google-api-services-storagetransfer', version: 'v1-rev20220324-1.32.1'
-  implementation group: "com.google.auth", name: "google-auth-library-oauth2-http", version: "1.6.0"
+  implementation group: 'com.google.apis', name: 'google-api-services-storagetransfer', version: 'v1-rev20220901-2.0.0'
+  implementation group: "com.google.auth", name: "google-auth-library-oauth2-http", version: "1.11.0"
 
   // Versioned direct deps
   implementation group: "org.hashids", name: "hashids", version: "1.0.3"
-  implementation group: "com.fasterxml.jackson.core", name: "jackson-core", version: "2.13.2"
+  implementation group: "com.fasterxml.jackson.core", name: "jackson-core", version: "2.13.4"
   implementation group: "org.liquibase", name: "liquibase-core", version: "4.8.0"
-  implementation group: "org.webjars", name: "webjars-locator-core", version: "0.46"
-  runtimeOnly group: "org.postgresql", name: "postgresql", version: "42.3.3"
+  implementation group: "org.webjars", name: "webjars-locator-core", version: "0.52"
+  runtimeOnly group: "org.postgresql", name: "postgresql", version: "42.5.0"
 
   // Deps whose versions are controlled by Spring
   implementation group: "javax.validation", name: "validation-api"
@@ -67,7 +67,7 @@ dependencies {
   // OpenAPI (swagger) deps
   implementation gradle.librarySwaggerAnnotations
   swaggerCodegen gradle.librarySwaggerCli
-  runtimeOnly group: "org.webjars.npm", name: "swagger-ui-dist", version: "3.37.2"
+  runtimeOnly group: "org.webjars.npm", name: "swagger-ui-dist", version: "4.14.0"
 
   // Spotbugs dependency
   // For SpotBugs annotations
@@ -75,14 +75,14 @@ dependencies {
   spotbugs "com.github.spotbugs:spotbugs:${spotbugs.toolVersion.get()}"
 
   // Test deps
-  testImplementation group: "io.vavr", name: "vavr", version: "0.10.3"
+  testImplementation group: "io.vavr", name: "vavr", version: "0.10.4"
   testImplementation('org.springframework.boot:spring-boot-starter-test') {
     exclude group: 'com.vaadin.external.google', module: 'android-json'
   }
   testImplementation group: "org.hamcrest", name: "hamcrest", version: "2.2"
   // Allows us to mock final classes
-  testImplementation 'org.mockito:mockito-inline:2.13.0'
+  testImplementation 'org.mockito:mockito-inline:4.8.0'
 
-  annotationProcessor group: "com.google.auto.value", name: "auto-value", version: "1.7.4"
-  annotationProcessor group: "org.springframework.boot", name: "spring-boot-configuration-processor", version: "2.6.6"
+  annotationProcessor group: "com.google.auto.value", name: "auto-value", version: "1.9"
+  annotationProcessor group: "org.springframework.boot", name: "spring-boot-configuration-processor" // version from spring-boot-plugin
 }

@@ -1,11 +1,3 @@
-// Build Script Classpath
-buildscript {
-    ext {
-        springBootVersion = '2.7.2'
-    }
-}
-
-// Project Plugins
 plugins {
     id 'java-library'
     id 'terra-workspace-manager.java-conventions'
@@ -13,8 +5,8 @@ plugins {
     id "com.google.cloud.tools.jib" version "3.0.0"
     id "de.undercouch.download" version "4.1.1"
     id "org.hidetake.swagger.generator" version "2.19.2"
-    id "org.springframework.boot" version "${springBootVersion}"
-    id "io.spring.dependency-management" version "1.0.10.RELEASE"
+    id "org.springframework.boot" version '2.7.3'
+    id "io.spring.dependency-management" version "1.0.13.RELEASE"
     id 'ru.vyarus.quality' version '4.5.0'
     id 'org.gradle.test-retry' version '1.4.0'
 }
