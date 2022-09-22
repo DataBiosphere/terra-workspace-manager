@@ -4,7 +4,7 @@
 bio.terra:datarepo-client:1.0.155-SNAPSHOT=compileClasspath,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
 bio.terra:stairway-gcp:0.0.73-SNAPSHOT=compileClasspath,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
 bio.terra:stairway:0.0.73-SNAPSHOT=compileClasspath,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
-bio.terra:terra-common-lib:0.0.72-SNAPSHOT=compileClasspath,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
+bio.terra:terra-common-lib:0.0.73-SNAPSHOT=compileClasspath,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
 bio.terra:terra-test-runner:0.1.7-SNAPSHOT=compileClasspath,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
 ch.qos.logback.contrib:logback-jackson:0.1.5=runtimeClasspath,testRuntimeClasspath
 ch.qos.logback.contrib:logback-json-classic:0.1.5=runtimeClasspath,testRuntimeClasspath
@@ -64,7 +64,7 @@ com.google.apis:google-api-services-bigquery:v2-rev20220313-1.32.1=compileClassp
 com.google.apis:google-api-services-bigquery:v2-rev20220806-2.0.0=runtimeClasspath,testRuntimeClasspath
 com.google.apis:google-api-services-container:v1-rev93-1.25.0=compileClasspath,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
 com.google.apis:google-api-services-iam:v1-rev20201112-1.30.10=compileClasspath,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
-com.google.apis:google-api-services-logging:v2-rev20220819-2.0.0=runtimeClasspath,testRuntimeClasspath
+com.google.apis:google-api-services-logging:v2-rev20210507-1.31.0=runtimeClasspath,testRuntimeClasspath
 com.google.apis:google-api-services-notebooks:v1-rev20201110-1.30.10=compileClasspath,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
 com.google.apis:google-api-services-storage:v1-rev20220210-1.32.1=compileClasspath,testCompileClasspath
 com.google.apis:google-api-services-storage:v1-rev20220705-2.0.0=runtimeClasspath,testRuntimeClasspath
