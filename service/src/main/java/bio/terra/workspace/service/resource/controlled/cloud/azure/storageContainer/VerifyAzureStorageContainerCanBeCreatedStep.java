@@ -5,6 +5,7 @@ import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.StepStatus;
 import bio.terra.stairway.exception.RetryException;
+import bio.terra.workspace.amalgam.landingzone.azure.LandingZoneApiDispatch;
 import bio.terra.workspace.app.configuration.external.AzureConfiguration;
 import bio.terra.workspace.common.utils.ManagementExceptionUtils;
 import bio.terra.workspace.db.ResourceDao;
@@ -34,16 +35,19 @@ public class VerifyAzureStorageContainerCanBeCreatedStep implements Step {
   private final CrlService crlService;
   private final ResourceDao resourceDao;
   private final ControlledAzureStorageContainerResource resource;
+  private final LandingZoneApiDispatch landingZoneApiDispatch;
 
   public VerifyAzureStorageContainerCanBeCreatedStep(
       AzureConfiguration azureConfig,
       CrlService crlService,
       ResourceDao resourceDao,
+      LandingZoneApiDispatch landingZoneApiDispatch,
       ControlledAzureStorageContainerResource resource) {
     this.azureConfig = azureConfig;
     this.crlService = crlService;
     this.resourceDao = resourceDao;
     this.resource = resource;
+    this.landingZoneApiDispatch = landingZoneApiDispatch;
   }
 
   @Override
@@ -56,21 +60,27 @@ public class VerifyAzureStorageContainerCanBeCreatedStep implements Step {
         crlService.getStorageManager(azureCloudContext, azureConfig);
 
     try {
-      final WsmResource wsmResource =
-          resourceDao.getResource(resource.getWorkspaceId(), resource.getStorageAccountId());
-      final ControlledAzureStorageResource storageAccount =
-          wsmResource
-              .castToControlledResource()
-              .castByEnum(WsmResourceType.CONTROLLED_AZURE_STORAGE_ACCOUNT);
+      if (resource.getStorageAccountId() != null) {
+        final WsmResource wsmResource =
+                resourceDao.getResource(resource.getWorkspaceId(), resource.getStorageAccountId());
+        final ControlledAzureStorageResource storageAccount =
+                wsmResource
+                        .castToControlledResource()
+                        .castByEnum(WsmResourceType.CONTROLLED_AZURE_STORAGE_ACCOUNT);
 
-      context
-          .getWorkingMap()
-          .put(ControlledResourceKeys.STORAGE_ACCOUNT_NAME, storageAccount.getStorageAccountName());
+        context
+                .getWorkingMap()
+                .put(ControlledResourceKeys.STORAGE_ACCOUNT_NAME, storageAccount.getStorageAccountName());
 
-      storageManager
-          .storageAccounts()
-          .getByResourceGroup(
-              azureCloudContext.getAzureResourceGroupId(), storageAccount.getStorageAccountName());
+        storageManager
+                .storageAccounts()
+                .getByResourceGroup(
+                        azureCloudContext.getAzureResourceGroupId(), storageAccount.getStorageAccountName());
+      } else {
+        //search in LZ for shared storage account
+        landingZoneApiDispatch.
+      }
+
     } catch (
         ResourceNotFoundException resourceNotFoundException) { // Thrown by resourceDao.getResource
       return new StepResult(

@@ -76,7 +76,7 @@ components:
         Storage container-specific properties to be set on creation. These are a subset of the values
         accepted by the azure resource API (note that public access is disabled).
       type: object
-      required: [ storageAccountId, storageContainerName ]
+      required: [ storageContainerName ]
       properties:
         storageAccountId:
           description: The resource ID of the storage account in which the container will be created.

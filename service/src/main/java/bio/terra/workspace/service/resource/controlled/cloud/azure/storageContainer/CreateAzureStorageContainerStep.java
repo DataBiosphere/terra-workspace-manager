@@ -62,6 +62,7 @@ public class CreateAzureStorageContainerStep implements Step {
           .withPublicAccess(PublicAccess.NONE)
           .withMetadata("workspaceId", resource.getWorkspaceId().toString())
           .withMetadata("resourceId", resource.getResourceId().toString())
+              //TODO: should we add WLZ-ID/PURPOSE?
           .create(
               Defaults.buildContext(
                   CreateStorageContainerRequestData.builder()
