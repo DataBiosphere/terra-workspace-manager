@@ -38,7 +38,6 @@ dependencies {
         datarepoClient = "1.0.155-SNAPSHOT"
         testRunnerVersion = "0.1.7-SNAPSHOT"
         samClient = "0.1-33f3550"
-        tclClient = "0.0.72-SNAPSHOT"
     }
     implementation group: 'org.apache.commons', name: 'commons-math3', version: "${apacheMath}"
     implementation group: 'org.junit.jupiter', name: 'junit-jupiter-api', version: "${jUnit}"
@@ -78,7 +77,9 @@ dependencies {
     implementation "bio.terra:terra-test-runner:${testRunnerVersion}"
 
     // Use Terra Common Library on client side to retry direct Sam calls
-    implementation("bio.terra:terra-common-lib:${tclClient}")
+    implementation("bio.terra:terra-common-lib:0.0.72-SNAPSHOT") {
+        exclude group: 'com.google.api-client', module: 'google-api-client'
+    }
 
     // Spotbugs dependency
     // For SpotBugs annotations (still FindBugs annotations)
