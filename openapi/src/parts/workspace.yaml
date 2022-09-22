@@ -239,7 +239,9 @@ paths:
     parameters:
     - $ref: '#/components/parameters/WorkspaceId'
     post:
-      summary: update the properties in workspace.
+      summary: |
+        Update the properties in workspace. Only properties with keys in request 
+        are updated. Properties with keys not in request are not updated.
       operationId: updateWorkspaceProperties
       tags: [ Workspace ]
       requestBody:
@@ -258,7 +260,10 @@ paths:
         '500':
           $ref: '#/components/responses/ServerError'
     patch:
-      summary: delete existing Workspace properties.
+      summary: |
+        delete existing Workspace properties. Only properties with keys in
+        request are deleted. Properties with keys not in request are not
+        deleted.
       operationId: deleteWorkspaceProperties
       tags: [ Workspace ]
       requestBody:

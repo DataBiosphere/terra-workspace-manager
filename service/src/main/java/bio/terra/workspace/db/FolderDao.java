@@ -3,13 +3,17 @@ package bio.terra.workspace.db;
 import bio.terra.common.db.ReadTransaction;
 import bio.terra.common.db.WriteTransaction;
 import bio.terra.common.exception.BadRequestException;
-import bio.terra.common.exception.MissingRequiredFieldException;
 import bio.terra.workspace.db.exception.DuplicateFolderDisplayNameException;
 import bio.terra.workspace.db.exception.DuplicateFolderIdException;
 import bio.terra.workspace.db.exception.FolderNotFoundException;
 import bio.terra.workspace.db.exception.WorkspaceNotFoundException;
 import bio.terra.workspace.service.folder.model.Folder;
+import bio.terra.workspace.service.workspace.exceptions.MissingRequiredFieldsException;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
@@ -43,7 +47,8 @@ public class FolderDao {
             Objects.requireNonNull(UUID.fromString(rs.getString("workspace_id"))),
             Objects.requireNonNull(rs.getString("display_name")),
             rs.getString("description"),
-            parentFolderId);
+            parentFolderId,
+            DbSerDes.jsonToProperties(Objects.requireNonNull(rs.getString("properties"))));
       };
 
   private final NamedParameterJdbcTemplate jdbcTemplate;
@@ -57,8 +62,8 @@ public class FolderDao {
   public Folder createFolder(Folder folder) {
     final String sql =
         """
-          INSERT INTO folder (workspace_id, id, display_name, description, parent_folder_id)
-          values (:workspace_id, :id, :display_name, :description, :parent_folder_id)
+          INSERT INTO folder (workspace_id, id, display_name, description, parent_folder_id, properties)
+          values (:workspace_id, :id, :display_name, :description, :parent_folder_id, :properties::jsonb)
         """;
     if (folder.parentFolderId() != null) {
       Optional<Folder> parentFolder =
@@ -80,7 +85,8 @@ public class FolderDao {
                 "parent_folder_id",
                 Optional.ofNullable(folder.parentFolderId())
                     .map(UUID::toString)
-                    .orElse(DEFAULT_ROOT_FOLDER_ID));
+                    .orElse(DEFAULT_ROOT_FOLDER_ID))
+            .addValue("properties", DbSerDes.propertiesToJson(folder.properties()));
 
     try {
       jdbcTemplate.update(sql, params);
@@ -124,8 +130,8 @@ public class FolderDao {
     if (displayName == null
         && description == null
         && parentFolderId == null
-        && updateParent == null) {
-      throw new MissingRequiredFieldException("Must specified fields to update");
+        && (updateParent == null || !updateParent)) {
+      throw new MissingRequiredFieldsException("Must specify at least one field to update.");
     }
     if (parentFolderId != null) {
       if (getFolderIfExists(workspaceId, folderId).isEmpty()) {
@@ -187,7 +193,7 @@ public class FolderDao {
   public Optional<Folder> getFolderIfExists(UUID workspaceId, UUID folderId) {
     String sql =
         """
-           SELECT workspace_id, id, display_name, description, parent_folder_id
+           SELECT workspace_id, id, display_name, description, parent_folder_id, properties
            FROM folder
            WHERE id = :id AND workspace_id = :workspace_id
          """;
@@ -220,7 +226,7 @@ public class FolderDao {
   public ImmutableList<Folder> listFolders(UUID workspaceId, @Nullable UUID parentFolderId) {
     String sql =
         """
-         SELECT workspace_id, id, display_name, description, parent_folder_id
+         SELECT workspace_id, id, display_name, description, parent_folder_id, properties
          FROM folder
          WHERE workspace_id = :workspace_id
        """;
@@ -255,5 +261,69 @@ public class FolderDao {
       logger.info("No record found for delete folder {} in workspace {}", folderId, workspaceUuid);
     }
     return deleted;
+  }
+
+  @WriteTransaction
+  public void updateFolderProperties(
+      UUID workspaceUuid, UUID folderId, Map<String, String> properties) {
+    if (properties.isEmpty()) {
+      throw new MissingRequiredFieldsException("No folder property is specified to update");
+    }
+    Map<String, String> updatedProperties =
+        new HashMap<>(getFolderProperties(workspaceUuid, folderId));
+    updatedProperties.putAll(properties);
+    storeFolderProperties(updatedProperties, workspaceUuid, folderId);
+  }
+
+  @WriteTransaction
+  public void deleteFolderProperties(UUID workspaceUuid, UUID folderId, List<String> propertyKeys) {
+    if (propertyKeys.isEmpty()) {
+      throw new MissingRequiredFieldsException("No folder property is specified to delete");
+    }
+    Map<String, String> properties = new HashMap<>(getFolderProperties(workspaceUuid, folderId));
+    for (String key : propertyKeys) {
+      properties.remove(key);
+    }
+    storeFolderProperties(properties, workspaceUuid, folderId);
+  }
+
+  /** Update the properties column of a given folder in a given workspace. */
+  private void storeFolderProperties(
+      Map<String, String> properties, UUID workspaceUuid, UUID folderId) {
+    final String sql =
+        """
+          UPDATE folder SET properties = cast(:properties AS jsonb)
+          WHERE workspace_id = :workspace_id AND id = :folder_id
+        """;
+
+    var params = new MapSqlParameterSource();
+    params
+        .addValue("properties", DbSerDes.propertiesToJson(properties))
+        .addValue("workspace_id", workspaceUuid.toString())
+        .addValue("folder_id", folderId.toString());
+    jdbcTemplate.update(sql, params);
+  }
+
+  private ImmutableMap<String, String> getFolderProperties(UUID workspaceUuid, UUID folderId) {
+    String selectPropertiesSql =
+        """
+          SELECT properties FROM folder
+          WHERE workspace_id = :workspace_id AND id = :folder_id
+        """;
+    MapSqlParameterSource propertiesParams =
+        new MapSqlParameterSource()
+            .addValue("workspace_id", workspaceUuid.toString())
+            .addValue("folder_id", folderId.toString());
+    String result;
+
+    try {
+      result = jdbcTemplate.queryForObject(selectPropertiesSql, propertiesParams, String.class);
+    } catch (EmptyResultDataAccessException e) {
+      throw new FolderNotFoundException(
+          String.format("Cannot find resource %s in workspace %s.", folderId, workspaceUuid));
+    }
+    return result == null
+        ? ImmutableMap.of()
+        : ImmutableMap.copyOf(DbSerDes.jsonToProperties(result));
   }
 }

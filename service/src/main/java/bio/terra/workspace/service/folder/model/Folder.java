@@ -1,5 +1,6 @@
 package bio.terra.workspace.service.folder.model;
 
+import java.util.Map;
 import java.util.UUID;
 import javax.annotation.Nullable;
 
@@ -8,4 +9,5 @@ public record Folder(
     UUID workspaceId,
     String displayName,
     @Nullable String description,
-    @Nullable UUID parentFolderId) {}
+    @Nullable UUID parentFolderId,
+    Map<String, String> properties) {}

@@ -97,6 +97,8 @@ public class MockMvcUtils {
       "/api/workspaces/v1/%s/resources/controlled/gcp/ai-notebook-instances/generateName";
   public static final String FOLDERS_V1_PATH_FORMAT = "/api/workspaces/v1/%s/folders";
   public static final String FOLDER_V1_PATH_FORMAT = "/api/workspaces/v1/%s/folders/%s";
+  public static final String FOLDER_PROPERTIES_V1_PATH_FORMAT =
+      "/api/workspaces/v1/%s/folders/%s/properties";
   public static final String RESOURCE_PROPERTIES_V1_PATH_FORMAT =
       "/api/workspaces/v1/%s/resources/%s/properties";
   public static final String CONTROLLED_GCP_BIG_QUERY_DATASETS_V1_PATH_FORMAT =
