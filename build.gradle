@@ -39,7 +39,7 @@ artifactory {
 }
 
 tasks.named('dependencies') {
+    dependsOn(':service:dependencies')
     dependsOn(':client:dependencies')
     dependsOn(':integration:dependencies')
-    dependsOn(':service:dependencies')
 }
