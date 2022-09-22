@@ -7,6 +7,7 @@ import static org.mockito.Mockito.when;
 
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.StepStatus;
+import bio.terra.workspace.amalgam.landingzone.azure.LandingZoneApiDispatch;
 import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
 import bio.terra.workspace.common.utils.ManagementExceptionUtils;
 import bio.terra.workspace.db.ResourceDao;
@@ -29,6 +30,7 @@ public class VerifyAzureStorageContainerCanBeCreatedStepTest extends BaseStorage
   @Mock private BlobContainers mockBlobContainers;
   @Mock private BlobContainer mockBlobContainer;
   @Mock private ResourceDao mockResourceDao;
+  @Mock private LandingZoneApiDispatch mockLandingZoneApiDispatch;
 
   private final String storageAccountName = ControlledResourceFixtures.uniqueStorageAccountName();
   final ApiAzureStorageContainerCreationParameters creationParameters =
@@ -53,7 +55,7 @@ public class VerifyAzureStorageContainerCanBeCreatedStepTest extends BaseStorage
     when(mockStorageManager.blobContainers()).thenReturn(mockBlobContainers);
     verifyCanBeCreatedStep =
         new VerifyAzureStorageContainerCanBeCreatedStep(
-            mockAzureConfig, mockCrlService, mockResourceDao, storageContainerResource);
+            mockAzureConfig, mockCrlService, mockResourceDao, mockLandingZoneApiDispatch, storageContainerResource);
   }
 
   private void mockStorageAccountExists() {
