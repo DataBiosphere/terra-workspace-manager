@@ -20,7 +20,9 @@ dependencies {
   implementation group: "io.opencensus", name: "opencensus-contrib-http-jaxrs", version: "0.31.1"
 
   // Get stairway via TCL
-  implementation("bio.terra:terra-common-lib:0.0.72-SNAPSHOT")
+  implementation("bio.terra:terra-common-lib:0.0.72-SNAPSHOT") {
+    exclude group: 'com.google.api-client', module: 'google-api-client'
+  }
   implementation group: "org.broadinstitute.dsde.workbench", name: "sam-client_2.13", version: "0.1-33f3550"
   implementation group: "bio.terra", name: "terra-resource-buffer-client", version: "0.4.3-SNAPSHOT"
   // Required by Sam client
@@ -28,7 +30,9 @@ dependencies {
   implementation group: "com.squareup.okhttp3", name: "logging-interceptor", version: "4.10.0"
 
   // Cloud Resource Library
-  implementation group: 'bio.terra', name: 'terra-cloud-resource-lib', version: "1.2.2-SNAPSHOT"
+  implementation('bio.terra:terra-cloud-resource-lib:1.2.2-SNAPSHOT') {
+    exclude group: 'com.google.api-client', module: 'google-api-client'
+  }
 
   // Terra Policy Service
   implementation('bio.terra:terra-policy-service:0.2.4-SNAPSHOT') {
