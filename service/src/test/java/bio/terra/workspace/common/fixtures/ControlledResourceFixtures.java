@@ -458,7 +458,7 @@ public class ControlledResourceFixtures {
         .workspaceUuid(UUID.randomUUID())
         .resourceId(UUID.randomUUID())
         .name(TestUtils.appendRandomNumber("testresource"))
-        .description("how much data could a dataset set if a dataset could set data?")
+        .description(RESOURCE_DESCRIPTION)
         .cloningInstructions(CloningInstructions.COPY_DEFINITION)
         .assignedUser(null)
         .accessScope(AccessScopeType.ACCESS_SCOPE_SHARED)

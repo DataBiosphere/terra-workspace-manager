@@ -94,6 +94,8 @@ public class MockMvcUtils {
       "/api/workspaces/v1/%s/resources/referenced/gcp/buckets/%s";
   public static final String CLONE_CONTROLLED_GCP_GCS_BUCKET_FORMAT =
       "/api/workspaces/v1/%s/resources/controlled/gcp/buckets/%s/clone";
+  public static final String CLONE_RESULT_CONTROLLED_GCP_GCS_BUCKET_FORMAT =
+      "/api/workspaces/v1/%s/resources/controlled/gcp/buckets/clone-result/%s";
   public static final String GENERATE_GCP_GCS_BUCKET_NAME_PATH_FORMAT =
       "/api/workspaces/v1/%s/resources/controlled/gcp/buckets/generateName";
   public static final String GENERATE_GCP_BQ_DATASET_NAME_PATH_FORMAT =
@@ -343,8 +345,8 @@ public class MockMvcUtils {
     return objectMapper.readValue(serializedGetResponse, ApiGcpGcsBucketResource.class);
   }
 
-  public ApiGcpGcsBucketResource getReferencedGcsBucket(AuthenticatedUserRequest userRequest, UUID workspaceId, UUID resourceId)
-      throws Exception {
+  public ApiGcpGcsBucketResource getReferencedGcsBucket(
+      AuthenticatedUserRequest userRequest, UUID workspaceId, UUID resourceId) throws Exception {
     String serializedResponse =
         mockMvc
             .perform(
