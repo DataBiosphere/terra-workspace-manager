@@ -68,8 +68,8 @@ public class CloneControlledGcsBucketResourceFlightTest extends BaseConnectedTes
 
   @AfterAll
   public void cleanup() throws Exception {
-    workspaceUtils.deleteWorkspaceAndGcpContext(
-        userAccessUtils.defaultUserAuthRequest(), workspaceId);
+    // workspaceUtils.deleteWorkspaceAndGcpContext(
+    //     userAccessUtils.defaultUserAuthRequest(), workspaceId);
   }
 
   @Test
@@ -111,10 +111,21 @@ public class CloneControlledGcsBucketResourceFlightTest extends BaseConnectedTes
     assertEquals(FlightStatus.ERROR, flightState.getFlightStatus());
 
     // Assert destination bucket resource doesn't exist
-    ResourceNotFoundException exception =
-        assertThrows(
-            ResourceNotFoundException.class,
-            () -> referencedResourceService.getReferenceResource(workspaceId, destResourceId));
+    ResourceNotFoundException exception = null;
+    if (cloningInstructions == CloningInstructions.COPY_NOTHING) {
+      return;
+    } else if (cloningInstructions == CloningInstructions.COPY_DEFINITION
+        || cloningInstructions == CloningInstructions.COPY_RESOURCE) {
+      exception =
+          assertThrows(
+              ResourceNotFoundException.class,
+              () -> controlledResourceService.getControlledResource(workspaceId, destResourceId));
+    } else if (cloningInstructions == CloningInstructions.COPY_REFERENCE) {
+      exception =
+          assertThrows(
+              ResourceNotFoundException.class,
+              () -> referencedResourceService.getReferenceResource(workspaceId, destResourceId));
+    }
     assertEquals(HttpStatus.NOT_FOUND, exception.getStatusCode());
   }
 }
