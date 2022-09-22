@@ -22,8 +22,8 @@ import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.Contr
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ResourceKeys;
 import java.time.Duration;
 import java.util.UUID;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.TestInstance.Lifecycle;
@@ -51,7 +51,7 @@ public class CloneControlledGcsBucketResourceFlightTest extends BaseConnectedTes
   private ControlledResource sourceResource;
   private UUID destResourceId;
 
-  @BeforeEach
+  @BeforeAll
   public void setup() throws Exception {
     workspaceId =
         workspaceUtils
@@ -64,7 +64,7 @@ public class CloneControlledGcsBucketResourceFlightTest extends BaseConnectedTes
     destResourceId = UUID.randomUUID();
   }
 
-  @AfterEach
+  @AfterAll
   public void cleanup() throws Exception {
     workspaceUtils.deleteWorkspaceAndGcpContext(
         userAccessUtils.defaultUserAuthRequest(), workspaceId);
