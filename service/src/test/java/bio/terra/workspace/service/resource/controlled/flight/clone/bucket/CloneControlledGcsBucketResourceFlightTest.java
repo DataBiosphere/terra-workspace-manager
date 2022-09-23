@@ -18,8 +18,10 @@ import bio.terra.workspace.service.resource.controlled.ControlledResourceService
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import bio.terra.workspace.service.resource.exception.ResourceNotFoundException;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
+import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ResourceKeys;
+import bio.terra.workspace.service.workspace.model.Workspace;
 import java.time.Duration;
 import java.util.UUID;
 import org.junit.jupiter.api.AfterAll;
@@ -43,6 +45,7 @@ public class CloneControlledGcsBucketResourceFlightTest extends BaseConnectedTes
 
   @Autowired UserAccessUtils userAccessUtils;
   @Autowired JobService jobService;
+  @Autowired WorkspaceService workspaceService;
   @Autowired WorkspaceConnectedTestUtils workspaceUtils;
   @Autowired ResourceConnectedTestUtils resourceUtils;
   @Autowired ControlledResourceService controlledResourceService;
@@ -66,8 +69,8 @@ public class CloneControlledGcsBucketResourceFlightTest extends BaseConnectedTes
 
   @AfterAll
   public void cleanup() throws Exception {
-    workspaceUtils.deleteWorkspaceAndGcpContext(
-        userAccessUtils.defaultUserAuthRequest(), workspaceId);
+    Workspace workspace = workspaceService.getWorkspace(workspaceId);
+    workspaceService.deleteWorkspace(workspace, userAccessUtils.defaultUserAuthRequest());
   }
 
   @Test
