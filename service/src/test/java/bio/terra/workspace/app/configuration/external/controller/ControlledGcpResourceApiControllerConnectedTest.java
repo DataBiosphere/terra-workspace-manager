@@ -71,7 +71,7 @@ public class ControlledGcpResourceApiControllerConnectedTest extends BaseConnect
   }
 
   @Test
-  public void createControlledBigQueryDataset_createdResourceEqualsGotResource() throws Exception {
+  public void createBigQueryDataset_createdResourceEqualsGotResource() throws Exception {
     ApiCreatedControlledGcpBigQueryDataset bqDataset =
         mockMvcUtils.createBigQueryDataset(
             userAccessUtils.defaultUserAuthRequest(), workspace.getId());
@@ -91,7 +91,7 @@ public class ControlledGcpResourceApiControllerConnectedTest extends BaseConnect
   }
 
   @Test
-  public void createControlledGcsBucket_createdResourceEqualsGotResource() throws Exception {
+  public void createBucket_createdResourceEqualsGotResource() throws Exception {
     ApiGcpGcsBucketResource retrievedResource =
         mockMvcUtils.getGcsBucket(
             userAccessUtils.defaultUserAuthRequest(),
@@ -106,7 +106,7 @@ public class ControlledGcpResourceApiControllerConnectedTest extends BaseConnect
   }
 
   @Test
-  public void cloneControlledGcsBucket_copyNothing() throws Exception {
+  public void cloneBucket_copyNothing() throws Exception {
     ApiCloneControlledGcpGcsBucketResult cloneResult =
         cloneControlledGcsBucket(
             /*sourceWorkspaceId=*/ workspace.getId(),
@@ -119,7 +119,7 @@ public class ControlledGcpResourceApiControllerConnectedTest extends BaseConnect
   }
 
   @Test
-  public void cloneControlledGcsBucket_copyDefinition() throws Exception {
+  public void cloneBucket_copyDefinition() throws Exception {
     ApiCloneControlledGcpGcsBucketResult cloneResult =
         cloneControlledGcsBucket(
             /*sourceWorkspaceId=*/ workspace.getId(),
@@ -143,7 +143,7 @@ public class ControlledGcpResourceApiControllerConnectedTest extends BaseConnect
 
   @Disabled("PF-1930: Enable when feature is implemented")
   @Test
-  public void cloneControlledGcsBucket_copyReference() throws Exception {
+  public void cloneBucket_copyReference() throws Exception {
     ApiCloneControlledGcpGcsBucketResult cloneResult =
         cloneControlledGcsBucket(
             /*sourceWorkspaceId=*/ workspace.getId(),
