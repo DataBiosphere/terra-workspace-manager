@@ -39,6 +39,7 @@ dependencies {
         datarepoClient = "1.0.155-SNAPSHOT"
         testRunnerVersion = "0.1.7-SNAPSHOT"
         samClient = "0.1-33f3550"
+        tclClient = "0.0.69-SNAPSHOT"
     }
     implementation group: 'org.apache.commons', name: 'commons-math3', version: "${apacheMath}"
     implementation group: 'org.junit.jupiter', name: 'junit-jupiter-api', version: "${jUnit}"
@@ -55,7 +56,7 @@ dependencies {
     constraints {
         implementation 'com.google.guava:guava:30.1.1-jre'
     }
-    implementation platform('com.google.cloud:libraries-bom:20.2.0')
+    implementation platform('com.google.cloud:libraries-bom:26.0.0')
     implementation "com.google.api-client:google-api-client"
     implementation "com.google.apis:google-api-services-container:${googleContainer}"
     implementation "com.google.apis:google-api-services-iam:${googleIam}"
@@ -78,7 +79,7 @@ dependencies {
     implementation "bio.terra:terra-test-runner:${testRunnerVersion}"
 
     // Use Terra Common Library on client side to retry direct Sam calls
-    implementation group: "bio.terra", name: "terra-common-lib", version: "0.0.73-SNAPSHOT"
+    implementation "bio.terra:terra-common-lib:${tclClient}"
 
     // Spotbugs dependency
     // For SpotBugs annotations (still FindBugs annotations)
