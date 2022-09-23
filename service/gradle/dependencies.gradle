@@ -4,7 +4,7 @@ dependencies {
   constraints {
     implementation 'com.google.guava:guava:31.1-jre' // "-jre" for Java 8 or higher
   }
-  implementation platform('com.google.cloud:libraries-bom:25.1.0')
+  implementation platform('com.google.cloud:libraries-bom:26.0.0')
   implementation group: "com.google.auto.value", name: "auto-value-annotations"
   implementation group: "com.google.guava", name:"guava"
 
@@ -23,7 +23,7 @@ dependencies {
   implementation("bio.terra:terra-common-lib:0.0.69-SNAPSHOT") {
     exclude group: "org.broadinstitute.dsde.workbench", module: "sam-client_2.12"
   }
-  implementation group: "org.broadinstitute.dsde.workbench", name: "sam-client_2.13", version: "0.1-e826d4d"
+  implementation group: "org.broadinstitute.dsde.workbench", name: "sam-client_2.13", version: "0.1-33f3550"
   implementation group: "bio.terra", name: "terra-resource-buffer-client", version: "0.4.3-SNAPSHOT"
   // Required by Sam client
   implementation group: "com.squareup.okhttp3", name: "okhttp", version: "4.9.1"

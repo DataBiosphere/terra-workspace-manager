@@ -59,7 +59,6 @@ task combinedJaCoCoReport(type: JacocoReport) {
 
 version = gradle.wsmVersion
 group = 'bio.terra'
-sourceCompatibility = JavaVersion.VERSION_17
 
 // Spotless configuration
 spotless {
