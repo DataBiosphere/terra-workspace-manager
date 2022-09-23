@@ -55,13 +55,13 @@ dependencies {
         implementation 'com.google.guava:guava:30.1.1-jre'
     }
     implementation platform('com.google.cloud:libraries-bom:25.1.0')
-    implementation "com.google.api-client:google-api-client"
+    implementation "com.google.api-client:google-api-client:1.35.1"
     implementation "com.google.apis:google-api-services-container:${googleContainer}"
     implementation "com.google.apis:google-api-services-iam:${googleIam}"
     implementation "com.google.apis:google-api-services-notebooks:${googleNotebook}"
-    implementation "com.google.auth:google-auth-library-oauth2-http"
-    implementation "com.google.cloud:google-cloud-bigquery"
-    implementation "com.google.cloud:google-cloud-storage"
+    implementation "com.google.auth:google-auth-library-oauth2-http:1.11.0"
+    implementation "com.google.cloud:google-cloud-bigquery:2.14.1"
+    implementation "com.google.cloud:google-cloud-storage:2.10.0"
 
     // Data Repo client library
     implementation "bio.terra:datarepo-client:${datarepoClient}"
