@@ -5,7 +5,9 @@ import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.common.exception.InternalLogicException;
+import bio.terra.workspace.common.utils.FlightUtils;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
+import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.workspace.AzureCloudContextService;
 import bio.terra.workspace.service.workspace.GcpCloudContextService;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
@@ -27,24 +29,26 @@ public class GetCloudContextStep implements Step {
   private final CloudPlatform cloudPlatform;
   private final GcpCloudContextService gcpCloudContextService;
   private final AzureCloudContextService azureCloudContextService;
-  private final AuthenticatedUserRequest userRequest;
 
   public GetCloudContextStep(
       UUID workspaceUuid,
       CloudPlatform cloudPlatform,
       GcpCloudContextService gcpCloudContextService,
-      AzureCloudContextService azureCloudContextService,
-      AuthenticatedUserRequest userRequest) {
+      AzureCloudContextService azureCloudContextService) {
     this.workspaceUuid = workspaceUuid;
     this.cloudPlatform = cloudPlatform;
     this.gcpCloudContextService = gcpCloudContextService;
     this.azureCloudContextService = azureCloudContextService;
-    this.userRequest = userRequest;
   }
 
   @Override
   public StepResult doStep(FlightContext flightContext)
       throws InterruptedException, RetryException {
+    AuthenticatedUserRequest userRequest =
+        FlightUtils.getRequired(
+            flightContext.getInputParameters(),
+            JobMapKeys.AUTH_USER_INFO.getKeyName(),
+            AuthenticatedUserRequest.class);
 
     // Get the cloud context and store it in the working map
     switch (cloudPlatform) {

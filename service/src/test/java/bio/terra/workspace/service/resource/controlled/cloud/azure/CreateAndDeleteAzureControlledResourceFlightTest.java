@@ -24,7 +24,7 @@ import bio.terra.workspace.service.resource.controlled.cloud.azure.storageContai
 import bio.terra.workspace.service.resource.controlled.cloud.azure.vm.AzureVmHelper;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.vm.ControlledAzureVmResource;
 import bio.terra.workspace.service.resource.controlled.flight.create.CreateControlledResourceFlight;
-import bio.terra.workspace.service.resource.controlled.flight.delete.DeleteControlledResourcesFlight;
+import bio.terra.workspace.service.resource.controlled.flight.delete.DeleteControlledResourceFlight;
 import bio.terra.workspace.service.resource.controlled.model.AccessScopeType;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResourceFields;
@@ -410,7 +410,7 @@ public class CreateAndDeleteAzureControlledResourceFlightTest extends BaseAzureT
     FlightState deleteFlightState =
         StairwayTestUtils.blockUntilFlightCompletes(
             jobService.getStairway(),
-            DeleteControlledResourcesFlight.class,
+            DeleteControlledResourceFlight.class,
             azureTestUtils.deleteControlledResourceInputParameters(
                 workspaceUuid, resourceId, userRequest, resource),
             STAIRWAY_FLIGHT_TIMEOUT,
@@ -522,7 +522,7 @@ public class CreateAndDeleteAzureControlledResourceFlightTest extends BaseAzureT
     FlightState deleteFlightState =
         StairwayTestUtils.blockUntilFlightCompletes(
             jobService.getStairway(),
-            DeleteControlledResourcesFlight.class,
+            DeleteControlledResourceFlight.class,
             azureTestUtils.deleteControlledResourceInputParameters(
                 workspaceUuid, resourceId, userRequest, resource),
             STAIRWAY_FLIGHT_TIMEOUT,
@@ -697,7 +697,7 @@ public class CreateAndDeleteAzureControlledResourceFlightTest extends BaseAzureT
       deleteDiskResourceFlightState =
           StairwayTestUtils.blockUntilFlightCompletes(
               jobService.getStairway(),
-              DeleteControlledResourcesFlight.class,
+              DeleteControlledResourceFlight.class,
               azureTestUtils.deleteControlledResourceInputParameters(
                   workspaceUuid, diskResource.getResourceId(), userRequest, diskResource),
               STAIRWAY_FLIGHT_TIMEOUT,
@@ -777,7 +777,7 @@ public class CreateAndDeleteAzureControlledResourceFlightTest extends BaseAzureT
     FlightState deleteFlightState =
         StairwayTestUtils.blockUntilFlightCompletes(
             jobService.getStairway(),
-            DeleteControlledResourcesFlight.class,
+            DeleteControlledResourceFlight.class,
             azureTestUtils.deleteControlledResourceInputParameters(
                 workspaceUuid, resourceId, userRequest, resource),
             STAIRWAY_FLIGHT_TIMEOUT,
@@ -873,7 +873,7 @@ public class CreateAndDeleteAzureControlledResourceFlightTest extends BaseAzureT
     FlightState deleteFlightState =
         StairwayTestUtils.blockUntilFlightCompletes(
             jobService.getStairway(),
-            DeleteControlledResourcesFlight.class,
+            DeleteControlledResourceFlight.class,
             azureTestUtils.deleteControlledResourceInputParameters(
                 workspaceUuid, resourceId, userRequest, resource),
             STAIRWAY_FLIGHT_TIMEOUT,
@@ -1117,7 +1117,7 @@ public class CreateAndDeleteAzureControlledResourceFlightTest extends BaseAzureT
     FlightState deleteControlledResourceFlightState =
         StairwayTestUtils.blockUntilFlightCompletes(
             jobService.getStairway(),
-            DeleteControlledResourcesFlight.class,
+            DeleteControlledResourceFlight.class,
             azureTestUtils.deleteControlledResourceInputParameters(
                 workspaceUuid, controlledResource.getResourceId(), userRequest, controlledResource),
             STAIRWAY_FLIGHT_TIMEOUT,

@@ -24,11 +24,8 @@ public class DeleteReferencedResourcesStep implements Step {
 
   @Override
   public StepResult doStep(FlightContext context) throws InterruptedException, RetryException {
-    List<WsmResource> referencedResourcesToDelete =
-        context
-            .getWorkingMap()
-            .get(ReferencedResourceKeys.RESOURCES_TO_DELETE, new TypeReference<>() {});
-    for (var resource : referencedResourcesToDelete) {
+    List<WsmResource> referencedResources = context.getInputParameters().get(ReferencedResourceKeys.RESOURCES_TO_DELETE, new TypeReference<>() {});
+    for (var resource : referencedResources) {
       resourceDao.deleteResource(workspaceId, resource.getResourceId());
     }
     return StepResult.getStepResultSuccess();

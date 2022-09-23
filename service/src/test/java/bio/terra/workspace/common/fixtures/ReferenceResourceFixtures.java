@@ -20,7 +20,10 @@ import bio.terra.workspace.generated.model.ApiGitRepoAttributes;
 import bio.terra.workspace.generated.model.ApiReferenceResourceCommonFields;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.model.WsmResourceFields;
+import bio.terra.workspace.service.resource.referenced.cloud.any.gitrepo.ReferencedGitRepoResource;
+import bio.terra.workspace.service.resource.referenced.cloud.gcp.bqdatatable.ReferencedBigQueryDataTableResource;
 import bio.terra.workspace.service.resource.referenced.cloud.gcp.datareposnapshot.ReferencedDataRepoSnapshotResource;
+import bio.terra.workspace.service.resource.referenced.cloud.gcp.gcsbucket.ReferencedGcsBucketResource;
 import java.util.Map;
 import java.util.UUID;
 import org.apache.commons.lang3.RandomStringUtils;
@@ -35,6 +38,24 @@ public class ReferenceResourceFixtures {
         .name(TestUtils.appendRandomNumber("a-referenced-resource"))
         .cloningInstructions(CloningInstructions.COPY_NOTHING)
         .properties(DEFAULT_RESOURCE_PROPERTIES);
+  }
+
+  public static ReferencedGcsBucketResource makeReferencedGcsBucketResource(UUID workspaceId) {
+    return ReferencedGcsBucketResource.builder()
+        .bucketName(appendRandomNumber("bucket"))
+        .wsmResourceFields(makeDefaultWsmResourceFieldBuilder(workspaceId).build()).build();
+  }
+
+  public static ReferencedBigQueryDataTableResource makeReferencedBigQueryDataTableResource(UUID workspaceId) {
+    return ReferencedBigQueryDataTableResource.builder()
+        .datasetId(appendRandomNumber("dataset"))
+        .dataTableId(appendRandomNumber("datatable"))
+        .projectId("my-gcp-project").build();
+  }
+
+  public static ReferencedGitRepoResource makeReferencedGitRepoResource(UUID workspaceId) {
+    return ReferencedGitRepoResource.builder()
+        .gitRepoUrl("ssh://github.com:foo/my-awesome-repo.git").build();
   }
 
   public static ReferencedDataRepoSnapshotResource makeDataRepoSnapshotResource(

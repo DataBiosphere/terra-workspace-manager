@@ -1,6 +1,8 @@
 package bio.terra.workspace.common.logging;
 
+import static bio.terra.workspace.common.utils.FlightUtils.getRequired;
 import static bio.terra.workspace.db.model.DbWorkspaceActivityLog.getDbWorkspaceActivityLog;
+import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.FOLDER_ID;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import bio.terra.stairway.FlightContext;
@@ -9,6 +11,7 @@ import bio.terra.stairway.HookAction;
 import bio.terra.stairway.StairwayHook;
 import bio.terra.workspace.common.exception.UnhandledDeletionFlightException;
 import bio.terra.workspace.common.logging.model.ActivityFlight;
+import bio.terra.workspace.db.FolderDao;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.db.WorkspaceActivityLogDao;
 import bio.terra.workspace.db.WorkspaceDao;
@@ -33,6 +36,7 @@ import org.springframework.stereotype.Component;
 public class WorkspaceActivityLogHook implements StairwayHook {
   private static final Logger logger = LoggerFactory.getLogger(StairwayHook.class);
 
+  private final FolderDao folderDao;
   private final WorkspaceActivityLogDao activityLogDao;
   private final WorkspaceDao workspaceDao;
   private final ResourceDao resourceDao;
@@ -41,10 +45,12 @@ public class WorkspaceActivityLogHook implements StairwayHook {
   @Autowired
   public WorkspaceActivityLogHook(
       WorkspaceActivityLogDao activityLogDao,
+      FolderDao folderDao,
       WorkspaceDao workspaceDao,
       ResourceDao resourceDao,
       SamService samService) {
     this.activityLogDao = activityLogDao;
+    this.folderDao = folderDao;
     this.workspaceDao = workspaceDao;
     this.resourceDao = resourceDao;
     this.samService = samService;
@@ -100,6 +106,7 @@ public class WorkspaceActivityLogHook implements StairwayHook {
           CloudPlatform.GCP, workspaceUuid, userEmail, subjectId);
       case RESOURCE -> maybeLogControlledResourceDeletion(
           context, workspaceUuid, userEmail, subjectId);
+      case FOLDER -> maybeLogFolderDeletion(context, workspaceUuid, userEmail, subjectId);
       default -> throw new UnhandledDeletionFlightException(
           String.format(
               "Activity log should be updated for deletion flight %s failures",
@@ -135,6 +142,16 @@ public class WorkspaceActivityLogHook implements StairwayHook {
               "CloudContext in workspace %s deletion fails; not writing deletion "
                   + "to workspace activity log",
               workspaceUuid));
+    }
+  }
+
+  private void maybeLogFolderDeletion(
+      FlightContext context, UUID workspaceUuid, String userEmail, String subjectId
+  ) {
+    var folderId = getRequired(context.getInputParameters(), FOLDER_ID, UUID.class);
+    if (folderDao.getFolderIfExists(workspaceUuid, folderId).isEmpty()) {
+      activityLogDao.writeActivity(
+          workspaceUuid, getDbWorkspaceActivityLog(OperationType.DELETE, userEmail, subjectId));
     }
   }
 

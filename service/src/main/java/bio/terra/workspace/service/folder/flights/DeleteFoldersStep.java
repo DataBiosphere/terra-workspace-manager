@@ -4,8 +4,10 @@ import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.exception.RetryException;
+import bio.terra.workspace.common.utils.FlightUtils;
 import bio.terra.workspace.db.FolderDao;
 import java.util.UUID;
+import org.springframework.http.HttpStatus;
 
 public class DeleteFoldersStep implements Step {
 
@@ -21,7 +23,8 @@ public class DeleteFoldersStep implements Step {
 
   @Override
   public StepResult doStep(FlightContext context) throws InterruptedException, RetryException {
-    folderDao.deleteFolder(workspaceId, folderId);
+    boolean deleted = folderDao.deleteFolder(workspaceId, folderId);
+    FlightUtils.setResponse(context, deleted, HttpStatus.OK);
     return StepResult.getStepResultSuccess();
   }
 
