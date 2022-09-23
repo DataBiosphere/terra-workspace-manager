@@ -1,4 +1,5 @@
 plugins {
+    id 'java-library'
     id 'terra-workspace-manager.java-conventions'
 
     // Apply the application plugin to add support for building a CLI application in Java
@@ -37,8 +38,7 @@ dependencies {
 
         datarepoClient = "1.0.155-SNAPSHOT"
         testRunnerVersion = "0.1.7-SNAPSHOT"
-        samClient = "0.1-e826d4d"
-        tclClient = "0.0.66-SNAPSHOT"
+        samClient = "0.1-33f3550"
     }
     implementation group: 'org.apache.commons', name: 'commons-math3', version: "${apacheMath}"
     implementation group: 'org.junit.jupiter', name: 'junit-jupiter-api', version: "${jUnit}"
@@ -61,8 +61,8 @@ dependencies {
     implementation "com.google.apis:google-api-services-iam:${googleIam}"
     implementation "com.google.apis:google-api-services-notebooks:${googleNotebook}"
     implementation "com.google.auth:google-auth-library-oauth2-http"
-    implementation "com.google.cloud:google-cloud-bigquery"
-    implementation "com.google.cloud:google-cloud-storage"
+    implementation "com.google.cloud:google-cloud-bigquery:2.14.1"
+    implementation "com.google.cloud:google-cloud-storage:2.10.0"
 
     // Data Repo client library
     implementation "bio.terra:datarepo-client:${datarepoClient}"
@@ -78,10 +78,7 @@ dependencies {
     implementation "bio.terra:terra-test-runner:${testRunnerVersion}"
 
     // Use Terra Common Library on client side to retry direct Sam calls
-    implementation("bio.terra:terra-common-lib:${tclClient}") {
-        exclude group: "org.broadinstitute.dsde.workbench", module: "sam-client_2.12"
-    }
-
+    implementation group: "bio.terra", name: "terra-common-lib", version: "0.0.73-SNAPSHOT"
 
     // Spotbugs dependency
     // For SpotBugs annotations (still FindBugs annotations)
