@@ -3,9 +3,16 @@ plugins {
 
     // Apply the application plugin to add support for building a CLI application in Java
     id 'application'
+    id 'java-library'
 
     // Terra Test Runner Plugin.
     id 'bio.terra.test-runner-plugin' version '0.1.7-SNAPSHOT'
+}
+
+java {
+    toolchain {
+        languageVersion.set(JavaLanguageVersion.of(17))
+    }
 }
 
 dependencies {
