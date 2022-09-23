@@ -80,7 +80,7 @@ if (hasProperty("buildScan")) {
 
 // Spotbugs configuration
 spotbugs {
-    toolVersion = '4.7.0'
+    toolVersion = '4.7.2'
     effort = 'max'
     excludeFilter = file("$rootDir/gradle/config/spotbugs/exclude.xml")
 }
