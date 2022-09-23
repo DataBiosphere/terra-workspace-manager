@@ -8,13 +8,13 @@ public final class WorkspaceFlightMapKeys {
   public static final String BILLING_ACCOUNT_ID = "billingAccountId";
   public static final String IAM_GROUP_EMAIL_MAP = "iamGroupEmailMap";
   public static final String RBS_RESOURCE_ID = "rbsResourceId";
-  public static final String DISPLAY_NAME = "displayNameId";
   public static final String DESCRIPTION = "descriptionId";
   public static final String USER_TO_REMOVE = "userToRemove";
   public static final String ROLE_TO_REMOVE = "roleToRemove";
   public static final String APPLICATION_IDS = "applicationIds";
   public static final String OPERATION_TYPE = "operationType";
   public static final String POLICIES = "policies";
+  public static final String FOLDER_ID = "folderId";
 
   private WorkspaceFlightMapKeys() {}
 
@@ -47,6 +47,7 @@ public final class WorkspaceFlightMapKeys {
     public static final String CLONING_INSTRUCTIONS = "cloningInstructions";
     public static final String CONTROL_PLANE_PROJECT_ID = "controlPlaneProjectId";
     public static final String CREATE_CLOUD_CONTEXT_FLIGHT_ID = "createCloudContextFlightId";
+    public static final String DELETE_RESOURCES_FLIGHT_ID = "deleteControlledResourcesFlightId";
     public static final String DESTINATION_BUCKET_NAME = "destinationBucketName";
     public static final String DESTINATION_CLONE_INPUTS = "destinationCloneInputs";
     public static final String DESTINATION_DATASET_NAME = "destinationDatasetName";
@@ -55,6 +56,7 @@ public final class WorkspaceFlightMapKeys {
     public static final String LOCATION = "location";
     public static final String RESOURCE_ID_TO_CLONE_RESULT = "resourceIdToCloneResult";
     public static final String RESOURCES_TO_CLONE = "resourcesToClone";
+    public static final String RESOURCES_TO_DELETE = "controlledResourcesToDelete";
     public static final String SOURCE_CLONE_INPUTS = "sourceCloneInputs";
     public static final String SOURCE_WORKSPACE_ID = "sourceWorkspaceId";
     public static final String STORAGE_TRANSFER_JOB_NAME = "storageTransferJobName";
@@ -63,6 +65,13 @@ public final class WorkspaceFlightMapKeys {
     public static final String WORKSPACE_CREATE_FLIGHT_ID = "workspaceCreateFlightId";
     public static final String STORAGE_ACCOUNT_NAME = "storageAccountName";
     public static final String DESTINATION_RESOURCE_ID = "destinationResourceId";
+  }
+
+  public static class ReferencedResourceKeys {
+
+    private ReferencedResourceKeys() {}
+
+    public static final String RESOURCES_TO_DELETE = "referencedResourcesToDelete";
   }
 
   /** Common resource keys */

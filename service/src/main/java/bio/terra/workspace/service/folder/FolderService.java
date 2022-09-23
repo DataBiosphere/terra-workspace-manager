@@ -1,8 +1,13 @@
 package bio.terra.workspace.service.folder;
 
+import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.FOLDER_ID;
+
 import bio.terra.workspace.db.FolderDao;
-import bio.terra.workspace.db.exception.FolderNotFoundException;
+import bio.terra.workspace.service.folder.flights.FolderDeleteFlight;
 import bio.terra.workspace.service.folder.model.Folder;
+import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
+import bio.terra.workspace.service.job.JobService;
+import bio.terra.workspace.service.workspace.model.OperationType;
 import com.google.common.collect.ImmutableList;
 import java.util.List;
 import java.util.Map;
@@ -14,9 +19,11 @@ import org.springframework.stereotype.Component;
 public class FolderService {
 
   private final FolderDao folderDao;
+  private final JobService jobService;
 
-  public FolderService(FolderDao folderDao) {
+  public FolderService(FolderDao folderDao, JobService jobService) {
     this.folderDao = folderDao;
+    this.jobService = jobService;
   }
 
   public Folder createFolder(Folder folder) {
@@ -43,15 +50,19 @@ public class FolderService {
     return folderDao.listFolders(workspaceId, /*parentFolderId=*/ null);
   }
 
-  public void deleteFolder(UUID workspaceUuid, UUID folderId) {
-    boolean deleted = folderDao.deleteFolder(workspaceUuid, folderId);
-    if (!deleted) {
-      throw new FolderNotFoundException(
-          String.format(
-              "Fail to delete folder %s which is not found in workspace %s",
-              folderId, workspaceUuid));
-    }
-    // TODO (PF-1984): start a flight to update resource properties
+  /** Delete folder and all the resources and subfolder under it. */
+  public void deleteFolder(
+      UUID workspaceUuid, UUID folderId, AuthenticatedUserRequest userRequest) {
+    jobService
+        .newJob()
+        .description(String.format("Delete folder %s in workspace %s", folderId, workspaceUuid))
+        .jobId(UUID.randomUUID().toString())
+        .flightClass(FolderDeleteFlight.class)
+        .workspaceId(workspaceUuid.toString())
+        .userRequest(userRequest)
+        .operationType(OperationType.DELETE)
+        .addParameter(FOLDER_ID, folderId)
+        .submitAndWait(null);
   }
 
   public void updateFolderProperties(

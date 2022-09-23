@@ -3,6 +3,7 @@ package bio.terra.workspace.common.fixtures;
 import static bio.terra.workspace.app.controller.shared.PropertiesUtils.convertMapToApiProperties;
 import static bio.terra.workspace.common.utils.TestUtils.appendRandomNumber;
 
+import bio.terra.workspace.common.utils.TestUtils;
 import bio.terra.workspace.generated.model.ApiCloningInstructionsEnum;
 import bio.terra.workspace.generated.model.ApiCreateDataRepoSnapshotReferenceRequestBody;
 import bio.terra.workspace.generated.model.ApiCreateGcpBigQueryDataTableReferenceRequestBody;
@@ -18,6 +19,7 @@ import bio.terra.workspace.generated.model.ApiGcpGcsObjectAttributes;
 import bio.terra.workspace.generated.model.ApiGitRepoAttributes;
 import bio.terra.workspace.generated.model.ApiReferenceResourceCommonFields;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
+import bio.terra.workspace.service.resource.model.WsmResourceFields;
 import bio.terra.workspace.service.resource.referenced.cloud.gcp.datareposnapshot.ReferencedDataRepoSnapshotResource;
 import java.util.Map;
 import java.util.UUID;
@@ -25,6 +27,15 @@ import org.apache.commons.lang3.RandomStringUtils;
 
 public class ReferenceResourceFixtures {
   private static final Map<String, String> DEFAULT_RESOURCE_PROPERTIES = Map.of("foo", "bar");
+
+  public static WsmResourceFields.Builder makeDefaultWsmResourceFieldBuilder(UUID workspaceId) {
+    return WsmResourceFields.builder()
+        .workspaceUuid(workspaceId)
+        .resourceId(UUID.randomUUID())
+        .name(TestUtils.appendRandomNumber("a-referenced-resource"))
+        .cloningInstructions(CloningInstructions.COPY_NOTHING)
+        .properties(DEFAULT_RESOURCE_PROPERTIES);
+  }
 
   public static ReferencedDataRepoSnapshotResource makeDataRepoSnapshotResource(
       UUID workspaceUuid) {

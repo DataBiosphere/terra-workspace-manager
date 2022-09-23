@@ -36,7 +36,7 @@ import bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.Updat
 import bio.terra.workspace.service.resource.controlled.flight.clone.bucket.CloneControlledGcsBucketResourceFlight;
 import bio.terra.workspace.service.resource.controlled.flight.clone.dataset.CloneControlledGcpBigQueryDatasetResourceFlight;
 import bio.terra.workspace.service.resource.controlled.flight.create.CreateControlledResourceFlight;
-import bio.terra.workspace.service.resource.controlled.flight.delete.DeleteControlledResourceFlight;
+import bio.terra.workspace.service.resource.controlled.flight.delete.DeleteControlledResourcesFlight;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import bio.terra.workspace.service.resource.controlled.model.ManagedByType;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
@@ -560,7 +560,7 @@ public class ControlledResourceService {
         .newJob()
         .description(jobDescription)
         .jobId(jobId)
-        .flightClass(DeleteControlledResourceFlight.class)
+        .flightClass(DeleteControlledResourcesFlight.class)
         .userRequest(userRequest)
         .workspaceId(workspaceUuid.toString())
         .operationType(OperationType.DELETE)
@@ -569,7 +569,8 @@ public class ControlledResourceService {
         .resourceName(resource.getName())
         .stewardshipType(resource.getStewardshipType())
         .workspaceId(workspaceUuid.toString())
-        .addParameter(JobMapKeys.RESULT_PATH.getKeyName(), resultPath);
+        .addParameter(JobMapKeys.RESULT_PATH.getKeyName(), resultPath)
+        .addParameter(ControlledResourceKeys.RESOURCES_TO_DELETE, List.of(resource));
   }
 
   /**

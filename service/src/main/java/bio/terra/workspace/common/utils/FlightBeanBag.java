@@ -6,6 +6,7 @@ import bio.terra.workspace.app.configuration.external.CliConfiguration;
 import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
 import bio.terra.workspace.app.configuration.external.VersionConfiguration;
 import bio.terra.workspace.db.ApplicationDao;
+import bio.terra.workspace.db.FolderDao;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.service.buffer.BufferService;
@@ -47,6 +48,7 @@ public class FlightBeanBag {
   private final CrlService crlService;
   private final DataRepoService dataRepoService;
   private final FeatureConfiguration featureConfiguration;
+  private final FolderDao folderDao;
   private final GcpCloudContextService gcpCloudContextService;
   private final PetSaService petSaService;
   private final ReferencedResourceService referencedResourceService;
@@ -74,6 +76,7 @@ public class FlightBeanBag {
       CrlService crlService,
       DataRepoService dataRepoService,
       FeatureConfiguration featureConfiguration,
+      FolderDao folderDao,
       GcpCloudContextService gcpCloudContextService,
       PetSaService petSaService,
       TpsApiDispatch tpsApiDispatch,
@@ -97,6 +100,7 @@ public class FlightBeanBag {
     this.crlService = crlService;
     this.dataRepoService = dataRepoService;
     this.featureConfiguration = featureConfiguration;
+    this.folderDao = folderDao;
     this.gcpCloudContextService = gcpCloudContextService;
     this.petSaService = petSaService;
     this.referencedResourceService = referencedResourceService;
@@ -205,5 +209,9 @@ public class FlightBeanBag {
 
   public StorageAccountKeyProvider getStorageAccountKeyProvider() {
     return storageAccountKeyProvider;
+  }
+
+  public FolderDao getFolderDao() {
+    return folderDao;
   }
 }

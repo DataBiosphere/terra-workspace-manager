@@ -1,5 +1,6 @@
 package bio.terra.workspace.db;
 
+import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.createWorkspace;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -14,8 +15,6 @@ import bio.terra.workspace.db.exception.FolderNotFoundException;
 import bio.terra.workspace.db.exception.WorkspaceNotFoundException;
 import bio.terra.workspace.service.folder.model.Folder;
 import bio.terra.workspace.service.workspace.exceptions.MissingRequiredFieldsException;
-import bio.terra.workspace.service.workspace.model.Workspace;
-import bio.terra.workspace.service.workspace.model.WorkspaceStage;
 import com.google.common.collect.ImmutableList;
 import java.util.List;
 import java.util.Map;
@@ -29,21 +28,9 @@ public class FolderDaoTest extends BaseUnitTest {
   @Autowired FolderDao folderDao;
   @Autowired WorkspaceDao workspaceDao;
 
-  private UUID createWorkspace(UUID workspaceUuid) {
-    Workspace workspace =
-        Workspace.builder()
-            .workspaceId(workspaceUuid)
-            .userFacingId(workspaceUuid.toString())
-            .workspaceStage(WorkspaceStage.MC_WORKSPACE)
-            .build();
-    workspaceDao.createWorkspace(workspace);
-    return workspace.getWorkspaceId();
-  }
-
   @Test
   public void createFolder_returnSameFolder() {
-    var workspaceUuid = UUID.randomUUID();
-    createWorkspace(workspaceUuid);
+    UUID workspaceUuid = createWorkspace(workspaceDao);
     var folder =
         getFolder(
             "foo",
@@ -62,8 +49,7 @@ public class FolderDaoTest extends BaseUnitTest {
 
   @Test
   public void createFolder_duplicateDisplayName_fails() {
-    var workspaceUuid = UUID.randomUUID();
-    createWorkspace(workspaceUuid);
+    UUID workspaceUuid = createWorkspace(workspaceDao);
     var folder = getFolder("foo", workspaceUuid);
     var secondFolder = getFolder("foo", workspaceUuid);
     folderDao.createFolder(folder);
@@ -74,8 +60,7 @@ public class FolderDaoTest extends BaseUnitTest {
 
   @Test
   public void createFolder_duplicateFolderId_fails() {
-    var workspaceUuid = UUID.randomUUID();
-    createWorkspace(workspaceUuid);
+    UUID workspaceUuid = createWorkspace(workspaceDao);
     var folder = getFolder("foo", workspaceUuid);
     folderDao.createFolder(folder);
 
@@ -84,8 +69,7 @@ public class FolderDaoTest extends BaseUnitTest {
 
   @Test
   public void createFolder_duplicateName_fails() {
-    var workspaceUuid = UUID.randomUUID();
-    createWorkspace(workspaceUuid);
+    UUID workspaceUuid = createWorkspace(workspaceDao);
     var folder = getFolder("foo", workspaceUuid);
     var secondFolder = getFolder("foo", workspaceUuid);
     folderDao.createFolder(folder);
@@ -96,8 +80,7 @@ public class FolderDaoTest extends BaseUnitTest {
 
   @Test
   public void createFolder_multipleFoldersAndLayers() {
-    var workspaceUuid = UUID.randomUUID();
-    createWorkspace(workspaceUuid);
+    UUID workspaceUuid = createWorkspace(workspaceDao);
     var folder = getFolder("foo", workspaceUuid);
     var secondFolder = getFolder("bar", workspaceUuid);
 
@@ -114,10 +97,8 @@ public class FolderDaoTest extends BaseUnitTest {
 
   @Test
   public void listFolders_allFoldersInTheSameWorkspaceListed() {
-    var workspaceUuid = UUID.randomUUID();
-    var secondWorkspaceUuid = UUID.randomUUID();
-    createWorkspace(workspaceUuid);
-    createWorkspace(secondWorkspaceUuid);
+    UUID workspaceUuid = createWorkspace(workspaceDao);
+    UUID secondWorkspaceUuid = createWorkspace(workspaceDao);
     var folder = getFolder("foo", workspaceUuid);
     var secondFolder = getFolder("bar", workspaceUuid);
     var thirdFolder = getFolder("foo", secondWorkspaceUuid);
@@ -138,8 +119,7 @@ public class FolderDaoTest extends BaseUnitTest {
 
   @Test
   public void listFolders_listsSubFolders() {
-    var workspaceUuid = UUID.randomUUID();
-    createWorkspace(workspaceUuid);
+    UUID workspaceUuid = createWorkspace(workspaceDao);
     var folder = getFolder("foo", workspaceUuid);
     // second and third folders are under folder foo.
     var secondFolder = getFolder("bar", workspaceUuid, folder.id());
@@ -156,8 +136,7 @@ public class FolderDaoTest extends BaseUnitTest {
 
   @Test
   public void listFolders_parentFolderNotExist() {
-    var workspaceUuid = UUID.randomUUID();
-    createWorkspace(workspaceUuid);
+    UUID workspaceUuid = createWorkspace(workspaceDao);
 
     ImmutableList<Folder> folders = folderDao.listFolders(workspaceUuid, UUID.randomUUID());
     assertTrue(folders.isEmpty());
@@ -171,8 +150,7 @@ public class FolderDaoTest extends BaseUnitTest {
 
   @Test
   public void createFolder_parentFolderNotExist_returnsEmptyList() {
-    var workspaceId = UUID.randomUUID();
-    createWorkspace(workspaceId);
+    UUID workspaceId = createWorkspace(workspaceDao);
     var folder = getFolder("foo", workspaceId, UUID.randomUUID());
 
     assertThrows(FolderNotFoundException.class, () -> folderDao.createFolder(folder));
@@ -180,8 +158,7 @@ public class FolderDaoTest extends BaseUnitTest {
 
   @Test
   public void updateFolder_updatesSuccessfully() {
-    var workspaceUuid = UUID.randomUUID();
-    createWorkspace(workspaceUuid);
+    UUID workspaceUuid = createWorkspace(workspaceDao);
     Folder folder = getFolder("foo", workspaceUuid);
     Folder secondFolder = getFolder("bar", workspaceUuid);
     Folder createdFolder = folderDao.createFolder(folder);
@@ -218,8 +195,7 @@ public class FolderDaoTest extends BaseUnitTest {
 
   @Test
   public void updateFolderProperties_updatesSuccessfully() {
-    var workspaceUuid = UUID.randomUUID();
-    createWorkspace(workspaceUuid);
+    UUID workspaceUuid = createWorkspace(workspaceDao);
     Folder folder = getFolder("foo", workspaceUuid);
     Folder createdFolder = folderDao.createFolder(folder);
 
@@ -233,8 +209,7 @@ public class FolderDaoTest extends BaseUnitTest {
 
   @Test
   public void updateFolderProperties_folderDoesNotExist_throwsFolderNotFoundException() {
-    var workspaceUuid = UUID.randomUUID();
-    createWorkspace(workspaceUuid);
+    UUID workspaceUuid = createWorkspace(workspaceDao);
 
     assertThrows(
         FolderNotFoundException.class,
@@ -245,8 +220,7 @@ public class FolderDaoTest extends BaseUnitTest {
 
   @Test
   public void updateFolderProperties_noUpdate_throwsMissingRequiredFieldsException() {
-    var workspaceUuid = UUID.randomUUID();
-    createWorkspace(workspaceUuid);
+    UUID workspaceUuid = createWorkspace(workspaceDao);
 
     assertThrows(
         MissingRequiredFieldsException.class,
@@ -255,8 +229,7 @@ public class FolderDaoTest extends BaseUnitTest {
 
   @Test
   public void deleteFolderProperties_updatesSuccessfully() {
-    var workspaceUuid = UUID.randomUUID();
-    createWorkspace(workspaceUuid);
+    UUID workspaceUuid = createWorkspace(workspaceDao);
     Folder folder = getFolder("foo", workspaceUuid);
     Folder createdFolder = folderDao.createFolder(folder);
     assertEquals("bar", createdFolder.properties().get("foo"));
@@ -269,8 +242,7 @@ public class FolderDaoTest extends BaseUnitTest {
 
   @Test
   public void deleteFolderProperties_folderNotExist_throwsFolderNotFoundException() {
-    var workspaceUuid = UUID.randomUUID();
-    createWorkspace(workspaceUuid);
+    UUID workspaceUuid = createWorkspace(workspaceDao);
 
     assertThrows(
         FolderNotFoundException.class,
@@ -281,8 +253,7 @@ public class FolderDaoTest extends BaseUnitTest {
 
   @Test
   public void deleteFolderProperties_nothingToDelete_throwsMissingRequiredFieldsException() {
-    var workspaceUuid = UUID.randomUUID();
-    createWorkspace(workspaceUuid);
+    UUID workspaceUuid = createWorkspace(workspaceDao);
 
     assertThrows(
         MissingRequiredFieldsException.class,
@@ -291,8 +262,7 @@ public class FolderDaoTest extends BaseUnitTest {
 
   @Test
   public void updateFolder_formCycle_throwsBadRequestException() {
-    var workspaceUuid = UUID.randomUUID();
-    createWorkspace(workspaceUuid);
+    UUID workspaceUuid = createWorkspace(workspaceDao);
     Folder folder = getFolder("foo", workspaceUuid);
     Folder secondFolder = getFolder("bar", workspaceUuid, /*parentFolderId=*/ folder.id());
     Folder thirdFolder = getFolder("garr", workspaceUuid, /*parentFolderId=*/ secondFolder.id());
@@ -336,8 +306,7 @@ public class FolderDaoTest extends BaseUnitTest {
 
   @Test
   public void updateFolder_duplicateFolderName_throwsException() {
-    var workspaceUuid = UUID.randomUUID();
-    createWorkspace(workspaceUuid);
+    UUID workspaceUuid = createWorkspace(workspaceDao);
     Folder folder = getFolder("foo", workspaceUuid);
     Folder secondFolder = getFolder("bar", workspaceUuid);
     Folder createdFolder = folderDao.createFolder(folder);
@@ -361,8 +330,7 @@ public class FolderDaoTest extends BaseUnitTest {
 
   @Test
   public void updateFolder_noFieldsAreUpdated_throwMissingFieldsException() {
-    var workspaceUuid = UUID.randomUUID();
-    createWorkspace(workspaceUuid);
+    UUID workspaceUuid = createWorkspace(workspaceDao);
     Folder folder = getFolder("foo", workspaceUuid);
     Folder createdFolder = folderDao.createFolder(folder);
 
@@ -380,20 +348,23 @@ public class FolderDaoTest extends BaseUnitTest {
 
   @Test
   public void getFolder_workspaceNotExistOrFolderNotExist_throwsFolderNotFoundException() {
-    var workspaceId = UUID.randomUUID();
-    assertThrows(
-        FolderNotFoundException.class, () -> folderDao.getFolder(workspaceId, UUID.randomUUID()));
-
-    createWorkspace(workspaceId);
 
     assertThrows(
-        FolderNotFoundException.class, () -> folderDao.getFolder(workspaceId, UUID.randomUUID()));
+        FolderNotFoundException.class,
+        () ->
+            folderDao.getFolder(
+                /*workspaceId=*/ UUID.randomUUID(), /*folderId=*/ UUID.randomUUID()));
+
+    UUID workspaceId = createWorkspace(workspaceDao);
+
+    assertThrows(
+        FolderNotFoundException.class,
+        () -> folderDao.getFolder(workspaceId, /*folderId=*/ UUID.randomUUID()));
   }
 
   @Test
   public void deleteFolder_subFolderDeleted() {
-    var workspaceUuid = UUID.randomUUID();
-    createWorkspace(workspaceUuid);
+    UUID workspaceUuid = createWorkspace(workspaceDao);
     var folder = getFolder("foo", workspaceUuid);
     // second and third folders are under folder foo.
     var secondFolder = getFolder("bar", workspaceUuid, folder.id());
@@ -412,8 +383,7 @@ public class FolderDaoTest extends BaseUnitTest {
 
   @Test
   public void deleteFolder_invalidFolder_nothingIsDeleted() {
-    var workspaceUuid = UUID.randomUUID();
-    createWorkspace(workspaceUuid);
+    UUID workspaceUuid = createWorkspace(workspaceDao);
 
     assertFalse(folderDao.deleteFolder(workspaceUuid, UUID.randomUUID()));
   }
