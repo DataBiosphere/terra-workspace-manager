@@ -31,7 +31,7 @@ public final class StorageTransferServiceUtils {
       throws IOException {
     // If there's no job  to delete, return early
     final TransferJob existingTransferJob =
-        storageTransferService.transferJobs().get(transferJobName, controlPlaneProjectId).execute();
+        getTransferJob(storageTransferService, transferJobName, controlPlaneProjectId);
     if (existingTransferJob == null) {
       logger.info(
           "Transfer Job {} in project {} was not found when trying to delete it.",
@@ -75,6 +75,15 @@ public final class StorageTransferServiceUtils {
       return new StepResult(StepStatus.STEP_RESULT_FAILURE_FATAL, e);
     }
     return StepResult.getStepResultSuccess();
+  }
+
+  public static TransferJob getTransferJob(
+      Storagetransfer storageTransferService, String transferJobName, String controlPlaneProjectId)
+      throws IOException {
+    return storageTransferService
+        .transferJobs()
+        .get(transferJobName, controlPlaneProjectId)
+        .execute();
   }
 
   /**
