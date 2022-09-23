@@ -27,10 +27,7 @@ public class DeleteSamResourceStep implements Step {
   private final Logger logger = LoggerFactory.getLogger(DeleteSamResourceStep.class);
 
   public DeleteSamResourceStep(
-      ResourceDao resourceDao,
-      SamService samService,
-      UUID workspaceUuid,
-      UUID resourceId) {
+      ResourceDao resourceDao, SamService samService, UUID workspaceUuid, UUID resourceId) {
     this.resourceDao = resourceDao;
     this.samService = samService;
     this.workspaceUuid = workspaceUuid;

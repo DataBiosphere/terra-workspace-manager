@@ -9,8 +9,6 @@ import bio.terra.stairway.Step;
 import bio.terra.workspace.common.utils.FlightBeanBag;
 import bio.terra.workspace.common.utils.FlightUtils;
 import bio.terra.workspace.common.utils.RetryRules;
-import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
-import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.resource.controlled.flight.create.GetCloudContextStep;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import bio.terra.workspace.service.resource.model.WsmResource;
@@ -40,20 +38,20 @@ public class DeleteControlledResourceFlight extends Flight {
         UUID.fromString(
             FlightUtils.getRequired(
                 inputParameters, WorkspaceFlightMapKeys.WORKSPACE_ID, String.class));
-    ControlledResource resource =
-        inputParameters.get(RESOURCE, ControlledResource.class);
-    List<WsmResource> controlledResources = inputParameters.get(
-        ControlledResourceKeys.RESOURCES_TO_DELETE, new TypeReference<>() {});
+    ControlledResource resource = inputParameters.get(RESOURCE, ControlledResource.class);
+    List<WsmResource> controlledResources =
+        inputParameters.get(ControlledResourceKeys.RESOURCES_TO_DELETE, new TypeReference<>() {});
     if (resource != null) {
       addStep(flightBeanBag, resource, workspaceUuid);
     } else if (controlledResources != null) {
-      for (WsmResource controlledResource: controlledResources) {
-          addStep(flightBeanBag, (ControlledResource) controlledResource, workspaceUuid);
+      for (WsmResource controlledResource : controlledResources) {
+        addStep(flightBeanBag, (ControlledResource) controlledResource, workspaceUuid);
       }
     }
   }
 
-  public void addStep(FlightBeanBag flightBeanBag, ControlledResource resource, UUID workspaceUuid) {
+  public void addStep(
+      FlightBeanBag flightBeanBag, ControlledResource resource, UUID workspaceUuid) {
     final RetryRule cloudRetry = RetryRules.cloud();
 
     // Get the cloud context for the resource we are deleting
@@ -75,7 +73,8 @@ public class DeleteControlledResourceFlight extends Flight {
             flightBeanBag.getResourceDao(),
             flightBeanBag.getSamService(),
             workspaceUuid,
-            resource.getResourceId()), cloudRetry);
+            resource.getResourceId()),
+        cloudRetry);
 
     // Delete the metadata
     addStep(

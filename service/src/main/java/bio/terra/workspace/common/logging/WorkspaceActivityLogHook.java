@@ -146,8 +146,7 @@ public class WorkspaceActivityLogHook implements StairwayHook {
   }
 
   private void maybeLogFolderDeletion(
-      FlightContext context, UUID workspaceUuid, String userEmail, String subjectId
-  ) {
+      FlightContext context, UUID workspaceUuid, String userEmail, String subjectId) {
     var folderId = getRequired(context.getInputParameters(), FOLDER_ID, UUID.class);
     if (folderDao.getFolderIfExists(workspaceUuid, folderId).isEmpty()) {
       activityLogDao.writeActivity(

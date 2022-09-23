@@ -43,19 +43,23 @@ public class ReferenceResourceFixtures {
   public static ReferencedGcsBucketResource makeReferencedGcsBucketResource(UUID workspaceId) {
     return ReferencedGcsBucketResource.builder()
         .bucketName(appendRandomNumber("bucket"))
-        .wsmResourceFields(makeDefaultWsmResourceFieldBuilder(workspaceId).build()).build();
+        .wsmResourceFields(makeDefaultWsmResourceFieldBuilder(workspaceId).build())
+        .build();
   }
 
-  public static ReferencedBigQueryDataTableResource makeReferencedBigQueryDataTableResource(UUID workspaceId) {
+  public static ReferencedBigQueryDataTableResource makeReferencedBigQueryDataTableResource(
+      UUID workspaceId) {
     return ReferencedBigQueryDataTableResource.builder()
         .datasetId(appendRandomNumber("dataset"))
         .dataTableId(appendRandomNumber("datatable"))
-        .projectId("my-gcp-project").build();
+        .projectId("my-gcp-project")
+        .build();
   }
 
   public static ReferencedGitRepoResource makeReferencedGitRepoResource(UUID workspaceId) {
     return ReferencedGitRepoResource.builder()
-        .gitRepoUrl("ssh://github.com:foo/my-awesome-repo.git").build();
+        .gitRepoUrl("ssh://github.com:foo/my-awesome-repo.git")
+        .build();
   }
 
   public static ReferencedDataRepoSnapshotResource makeDataRepoSnapshotResource(

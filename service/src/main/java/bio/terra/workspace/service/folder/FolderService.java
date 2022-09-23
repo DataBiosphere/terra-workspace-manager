@@ -5,7 +5,6 @@ import static bio.terra.workspace.service.workspace.model.WorkspaceConstants.Res
 
 import bio.terra.workspace.db.FolderDao;
 import bio.terra.workspace.db.ResourceDao;
-import bio.terra.workspace.db.exception.FolderNotFoundException;
 import bio.terra.workspace.service.folder.flights.FolderDeleteFlight;
 import bio.terra.workspace.service.folder.model.Folder;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
@@ -71,20 +70,22 @@ public class FolderService {
     List<WsmResource> referencedResources = new ArrayList<>();
     List<WsmResource> controlledResources = new ArrayList<>();
     getResourcesInFolder(workspaceUuid, folderId, controlledResources, referencedResources);
-    boolean deleted = jobService
-        .newJob()
-        .description(String.format("Delete folder %s in workspace %s", folderId, workspaceUuid))
-        .jobId(UUID.randomUUID().toString())
-        .flightClass(FolderDeleteFlight.class)
-        .workspaceId(workspaceUuid.toString())
-        .userRequest(userRequest)
-        .operationType(OperationType.DELETE)
-        .addParameter(FOLDER_ID, folderId)
-        .addParameter(ControlledResourceKeys.RESOURCES_TO_DELETE, controlledResources)
-        .addParameter(ReferencedResourceKeys.RESOURCES_TO_DELETE, referencedResources)
-        .submitAndWait(Boolean.class);
+    boolean deleted =
+        jobService
+            .newJob()
+            .description(String.format("Delete folder %s in workspace %s", folderId, workspaceUuid))
+            .jobId(UUID.randomUUID().toString())
+            .flightClass(FolderDeleteFlight.class)
+            .workspaceId(workspaceUuid.toString())
+            .userRequest(userRequest)
+            .operationType(OperationType.DELETE)
+            .addParameter(FOLDER_ID, folderId)
+            .addParameter(ControlledResourceKeys.RESOURCES_TO_DELETE, controlledResources)
+            .addParameter(ReferencedResourceKeys.RESOURCES_TO_DELETE, referencedResources)
+            .submitAndWait(Boolean.class);
     if (!deleted) {
-      logger.warn(String.format("Failed to delete folder %s in workspace %s", folderId, workspaceUuid));
+      logger.warn(
+          String.format("Failed to delete folder %s in workspace %s", folderId, workspaceUuid));
     }
   }
 
@@ -98,7 +99,11 @@ public class FolderService {
     folderDao.deleteFolderProperties(workspaceUuid, folderUuid, propertyKeys);
   }
 
-  private void getResourcesInFolder(UUID workspaceId, UUID folderId, List<WsmResource> controlledResources, List<WsmResource> referencedResources) {
+  private void getResourcesInFolder(
+      UUID workspaceId,
+      UUID folderId,
+      List<WsmResource> controlledResources,
+      List<WsmResource> referencedResources) {
     Set<UUID> folderIds = new HashSet<>();
     getAllSubFolderIds(workspaceId, folderId, folderIds);
     var offset = 0;
@@ -119,6 +124,7 @@ public class FolderService {
               });
     } while (batch.size() == limit);
   }
+
   private void getAllSubFolderIds(UUID workspaceId, UUID folderId, Set<UUID> folderIds) {
     folderIds.add(folderId);
     List<Folder> subFolders = folderDao.listFolders(workspaceId, folderId);
@@ -129,6 +135,7 @@ public class FolderService {
       getAllSubFolderIds(workspaceId, f.id(), folderIds);
     }
   }
+
   private static boolean isInFolder(WsmResource resource, Set<UUID> folderIds) {
     return resource.getProperties().containsKey(FOLDER_ID_KEY)
         && folderIds.contains(UUID.fromString(resource.getProperties().get(FOLDER_ID_KEY)));

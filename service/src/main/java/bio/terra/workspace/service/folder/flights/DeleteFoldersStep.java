@@ -30,6 +30,7 @@ public class DeleteFoldersStep implements Step {
 
   @Override
   public StepResult undoStep(FlightContext context) throws InterruptedException {
-    return StepResult.getStepResultSuccess();
+    // Nothing to undo, propagate the flight failure.
+    return context.getResult();
   }
 }
