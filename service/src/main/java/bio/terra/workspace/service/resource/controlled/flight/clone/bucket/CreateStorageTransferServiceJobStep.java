@@ -140,6 +140,31 @@ public final class CreateStorageTransferServiceJobStep implements Step {
   // previous step's undo method.
   @Override
   public StepResult undoStep(FlightContext flightContext) throws InterruptedException {
+    final FlightMap workingMap = flightContext.getWorkingMap();
+    final String transferJobName =
+        workingMap.get(ControlledResourceKeys.STORAGE_TRANSFER_JOB_NAME, String.class);
+    final String controlPlaneProjectId =
+        workingMap.get(ControlledResourceKeys.CONTROL_PLANE_PROJECT_ID, String.class);
+
+    TransferJob transferJob;
+    try {
+      transferJob =
+          StorageTransferServiceUtils.getTransferJob(
+              storagetransfer, transferJobName, controlPlaneProjectId);
+    } catch (IOException e) {
+      return new StepResult(StepStatus.STEP_RESULT_FAILURE_FATAL, e);
+    }
+
+    // transferJob == null means transfer job doesn't exist, and can happen if:
+    // - doStep() failed before transfer job was created
+    // - This undoStep() has run before
+    // transferJob.getStatus() == "DELETED" can happen if:
+    // - DeleteStorageTransferServiceJobStep.doStep() has succeeded. (Don't try to delete job again;
+    //   that will result in dismal failure.)
+    if (transferJob == null || transferJob.getStatus().equals("DELETED")) {
+      return StepResult.getStepResultSuccess();
+    }
+
     // A failure to delete will result in a DISMAL_FAILURE of the flight.
     return StorageTransferServiceUtils.deleteTransferJobStepImpl(flightContext, storagetransfer);
   }

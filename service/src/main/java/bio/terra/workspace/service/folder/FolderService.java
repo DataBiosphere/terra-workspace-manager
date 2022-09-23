@@ -4,6 +4,8 @@ import bio.terra.workspace.db.FolderDao;
 import bio.terra.workspace.db.exception.FolderNotFoundException;
 import bio.terra.workspace.service.folder.model.Folder;
 import com.google.common.collect.ImmutableList;
+import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import javax.annotation.Nullable;
 import org.springframework.stereotype.Component;
@@ -50,5 +52,15 @@ public class FolderService {
               folderId, workspaceUuid));
     }
     // TODO (PF-1984): start a flight to update resource properties
+  }
+
+  public void updateFolderProperties(
+      UUID workspaceUuid, UUID folderUuid, Map<String, String> properties) {
+    folderDao.updateFolderProperties(workspaceUuid, folderUuid, properties);
+  }
+
+  public void deleteFolderProperties(
+      UUID workspaceUuid, UUID folderUuid, List<String> propertyKeys) {
+    folderDao.deleteFolderProperties(workspaceUuid, folderUuid, propertyKeys);
   }
 }

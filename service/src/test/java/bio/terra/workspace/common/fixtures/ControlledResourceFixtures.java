@@ -457,7 +457,7 @@ public class ControlledResourceFixtures {
     return ControlledResourceFields.builder()
         .workspaceUuid(UUID.randomUUID())
         .resourceId(UUID.randomUUID())
-        .name(TestUtils.appendRandomNumber("test_resource").replace("-", "_"))
+        .name(TestUtils.appendRandomNumber("test_resource"))
         .description("how much data could a dataset set if a dataset could set data?")
         .cloningInstructions(CloningInstructions.COPY_DEFINITION)
         .assignedUser(null)
@@ -472,11 +472,20 @@ public class ControlledResourceFixtures {
    */
   public static ControlledResourceFields makeDefaultControlledResourceFields(
       @Nullable UUID inWorkspaceId) {
+    return makeControlledResourceFieldsBuilder(inWorkspaceId).build();
+  }
+
+  /**
+   * Returns a {@link ControlledResourceFields.Builder} with default values. This builder can be
+   * modified for particular fields before being included in a controlled resource builder.
+   */
+  public static ControlledResourceFields.Builder makeControlledResourceFieldsBuilder(
+      @Nullable UUID inWorkspaceId) {
     ControlledResourceFields.Builder builder = makeDefaultControlledResourceFieldsBuilder();
     if (inWorkspaceId != null) {
       builder.workspaceUuid(inWorkspaceId);
     }
-    return builder.build();
+    return builder;
   }
 
   /**
