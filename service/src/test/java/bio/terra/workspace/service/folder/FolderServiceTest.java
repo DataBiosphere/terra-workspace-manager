@@ -9,6 +9,7 @@ import bio.terra.stairway.FlightDebugInfo;
 import bio.terra.stairway.StepStatus;
 import bio.terra.workspace.common.BaseConnectedTest;
 import bio.terra.workspace.common.fixtures.ReferenceResourceFixtures;
+import bio.terra.workspace.common.logging.model.ActivityLogChangeDetails;
 import bio.terra.workspace.common.utils.TestUtils;
 import bio.terra.workspace.connected.UserAccessUtils;
 import bio.terra.workspace.connected.WorkspaceConnectedTestUtils;
@@ -36,6 +37,7 @@ import bio.terra.workspace.service.workspace.model.WorkspaceConstants.ResourcePr
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 import javax.annotation.Nullable;
 import org.junit.jupiter.api.AfterEach;
@@ -217,6 +219,22 @@ public class FolderServiceTest extends BaseConnectedTest {
   }
 
   @Test
+  void deleteFolder_createLogEntry() {
+    Optional<ActivityLogChangeDetails> changeDetails =
+        workspaceActivityLogDao.getLastUpdateDetails(workspaceId);
+
+    folderService.deleteFolder(
+        workspaceId, fooFolder.id(), userAccessUtils.defaultUserAuthRequest());
+
+    Optional<ActivityLogChangeDetails> newChangeDetails =
+        workspaceActivityLogDao.getLastUpdateDetails(workspaceId);
+    assertTrue(newChangeDetails.get().getChangeDate().isAfter(changeDetails.get().getChangeDate()));
+    assertEquals(
+        userAccessUtils.defaultUserAuthRequest().getEmail(),
+        newChangeDetails.get().getActorEmail());
+  }
+
+  @Test
   void deleteFolder_failsAtLastStep_throwsInvalidResultsStateException() {
     Map<String, StepStatus> retrySteps = new HashMap<>();
     retrySteps.put(
@@ -240,6 +258,34 @@ public class FolderServiceTest extends BaseConnectedTest {
           FolderNotFoundException.class, () -> folderService.getFolder(workspaceId, f.id()));
     }
     assertTrue(resourceDao.enumerateResources(workspaceId, null, null, 0, 100).isEmpty());
+  }
+
+  @Test
+  void deleteFolder_failsAtLastStep_logsWorkspaceActivity() {
+    Optional<ActivityLogChangeDetails> changeDetails =
+        workspaceActivityLogDao.getLastUpdateDetails(workspaceId);
+    Map<String, StepStatus> retrySteps = new HashMap<>();
+    retrySteps.put(
+        DeleteReferencedResourcesStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
+    retrySteps.put(DeleteFoldersStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
+    jobService.setFlightDebugInfoForTest(
+        FlightDebugInfo.newBuilder().lastStepFailure(true).doStepFailures(retrySteps).build());
+
+    // Service methods which wait for a flight to complete will throw an
+    // InvalidResultStateException when that flight fails without a cause, which occurs when a
+    // flight fails via debugInfo.
+    assertThrows(
+        InvalidResultStateException.class,
+        () ->
+            folderService.deleteFolder(
+                workspaceId, fooFolder.id(), userAccessUtils.defaultUserAuthRequest()));
+
+    Optional<ActivityLogChangeDetails> newChangeDetails =
+        workspaceActivityLogDao.getLastUpdateDetails(workspaceId);
+    assertTrue(newChangeDetails.get().getChangeDate().isAfter(changeDetails.get().getChangeDate()));
+    assertEquals(
+        userAccessUtils.defaultUserAuthRequest().getEmail(),
+        newChangeDetails.get().getActorEmail());
   }
 
   public Folder createFolder(String displayName, @Nullable UUID parentFolderId) {

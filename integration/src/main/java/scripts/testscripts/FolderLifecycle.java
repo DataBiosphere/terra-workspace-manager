@@ -14,7 +14,6 @@ import bio.terra.workspace.client.ApiClient;
 import bio.terra.workspace.client.ApiException;
 import bio.terra.workspace.model.CloningInstructionsEnum;
 import bio.terra.workspace.model.CreateFolderRequestBody;
-import bio.terra.workspace.model.CreatedControlledGcpBigQueryDataset;
 import bio.terra.workspace.model.CreatedControlledGcpGcsBucket;
 import bio.terra.workspace.model.Folder;
 import bio.terra.workspace.model.GcpBigQueryDatasetResource;
@@ -66,8 +65,16 @@ public class FolderLifecycle extends WorkspaceAllocateTestScriptBase {
     assertNull(folderFoo.getParentFolderId());
 
     // Add a bucket to foo.
-    CreatedControlledGcpGcsBucket createdControlledGcpGcsBucket = GcsBucketUtils.makeControlledGcsBucketUserShared(controlledGcpResourceApi, getWorkspaceId(), "my-shared-foo-bucket", CloningInstructionsEnum.DEFINITION);
-    resourceApi.updateResourceProperties(List.of(new Property().key("terra-folder-id").value(folderFoo.getId().toString())), getWorkspaceId(), createdControlledGcpGcsBucket.getResourceId());
+    CreatedControlledGcpGcsBucket createdControlledGcpGcsBucket =
+        GcsBucketUtils.makeControlledGcsBucketUserShared(
+            controlledGcpResourceApi,
+            getWorkspaceId(),
+            "my-shared-foo-bucket",
+            CloningInstructionsEnum.DEFINITION);
+    resourceApi.updateResourceProperties(
+        List.of(new Property().key("terra-folder-id").value(folderFoo.getId().toString())),
+        getWorkspaceId(),
+        createdControlledGcpGcsBucket.getResourceId());
 
     var displayNameBar = TestUtils.appendRandomNumber("bar");
     var descriptionBar = String.format("This is a second-level folder %s", displayNameBar);
@@ -84,9 +91,17 @@ public class FolderLifecycle extends WorkspaceAllocateTestScriptBase {
     assertEquals(folderFoo.getId(), folderBar.getParentFolderId());
 
     // add a big query dataset to bar
-    GcpBigQueryDatasetResource controlledGcpBigQueryDataset = BqDatasetUtils.makeControlledBigQueryDatasetUserShared(controlledGcpResourceApi, getWorkspaceId(), "bar-bq-dataset", null, CloningInstructionsEnum.DEFINITION);
-    resourceApi.updateResourceProperties(List.of(new Property().key("terra-folder-id").value(folderBar.getId().toString())), getWorkspaceId(), controlledGcpBigQueryDataset.getMetadata()
-        .getResourceId());
+    GcpBigQueryDatasetResource controlledGcpBigQueryDataset =
+        BqDatasetUtils.makeControlledBigQueryDatasetUserShared(
+            controlledGcpResourceApi,
+            getWorkspaceId(),
+            "bar-bq-dataset",
+            null,
+            CloningInstructionsEnum.DEFINITION);
+    resourceApi.updateResourceProperties(
+        List.of(new Property().key("terra-folder-id").value(folderBar.getId().toString())),
+        getWorkspaceId(),
+        controlledGcpBigQueryDataset.getMetadata().getResourceId());
 
     var newDisplayName = TestUtils.appendRandomNumber("newBar");
     var newDescription = "This is an updated bar folder";
@@ -117,10 +132,12 @@ public class FolderLifecycle extends WorkspaceAllocateTestScriptBase {
         assertThrows(
             ApiException.class, () -> folderApi.getFolder(getWorkspaceId(), folderBar.getId()));
     assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, ex.getCode());
-    var ex2 = assertThrows(
-        ApiException.class, () -> controlledGcpResourceApi.getBigQueryDataset(getWorkspaceId(), controlledGcpBigQueryDataset.getMetadata()
-            .getResourceId())
-    );
+    var ex2 =
+        assertThrows(
+            ApiException.class,
+            () ->
+                controlledGcpResourceApi.getBigQueryDataset(
+                    getWorkspaceId(), controlledGcpBigQueryDataset.getMetadata().getResourceId()));
     assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, ex2.getCode());
   }
 }

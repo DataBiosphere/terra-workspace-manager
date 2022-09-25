@@ -5,6 +5,7 @@ import static bio.terra.workspace.service.workspace.model.WorkspaceConstants.Res
 
 import bio.terra.workspace.db.FolderDao;
 import bio.terra.workspace.db.ResourceDao;
+import bio.terra.workspace.db.exception.FolderNotFoundException;
 import bio.terra.workspace.service.folder.flights.FolderDeleteFlight;
 import bio.terra.workspace.service.folder.model.Folder;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
@@ -104,6 +105,10 @@ public class FolderService {
       UUID folderId,
       List<WsmResource> controlledResources,
       List<WsmResource> referencedResources) {
+    if (folderDao.getFolderIfExists(workspaceId, folderId).isEmpty()) {
+      throw new FolderNotFoundException(
+          String.format("Folder %s is not found in workspace %s", folderId, workspaceId));
+    }
     Set<UUID> folderIds = new HashSet<>();
     getAllSubFolderIds(workspaceId, folderId, folderIds);
     var offset = 0;
