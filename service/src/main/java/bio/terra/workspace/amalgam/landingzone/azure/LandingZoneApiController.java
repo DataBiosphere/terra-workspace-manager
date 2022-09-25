@@ -7,9 +7,9 @@ import bio.terra.workspace.generated.model.ApiAzureLandingZoneDefinitionList;
 import bio.terra.workspace.generated.model.ApiAzureLandingZoneResourcesList;
 import bio.terra.workspace.generated.model.ApiAzureLandingZoneResult;
 import bio.terra.workspace.generated.model.ApiCreateAzureLandingZoneRequestBody;
+import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequestFactory;
 import bio.terra.workspace.service.iam.SamService;
-import javax.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,6 +18,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
+
+import javax.servlet.http.HttpServletRequest;
+import java.util.UUID;
 
 @Controller
 public class LandingZoneApiController extends ControllerBase implements LandingZonesApi {
@@ -37,16 +40,18 @@ public class LandingZoneApiController extends ControllerBase implements LandingZ
   @Override
   public ResponseEntity<ApiAzureLandingZoneResult> createAzureLandingZone(
       @RequestBody ApiCreateAzureLandingZoneRequestBody body) {
+    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     ApiAzureLandingZoneResult result =
         landingZoneApiDispatch.createAzureLandingZone(
-            body, getAsyncResultEndpoint(body.getJobControl().getId(), "create-result"));
+                userRequest, body, getAsyncResultEndpoint(body.getJobControl().getId(), "create-result"));
     return new ResponseEntity<>(result, getAsyncResponseCode(result.getJobReport()));
   }
 
   @Override
   public ResponseEntity<ApiAzureLandingZoneResult> getCreateAzureLandingZoneResult(String jobId) {
+    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     ApiAzureLandingZoneResult response =
-        landingZoneApiDispatch.getCreateAzureLandingZoneResult(jobId);
+        landingZoneApiDispatch.getCreateAzureLandingZoneResult(userRequest, jobId);
     return new ResponseEntity<>(response, getAsyncResponseCode(response.getJobReport()));
   }
 
@@ -59,15 +64,16 @@ public class LandingZoneApiController extends ControllerBase implements LandingZ
 
   @Override
   public ResponseEntity<ApiAzureLandingZoneResourcesList> listAzureLandingZoneResources(
-      @PathVariable("landingZoneId") String landingZoneId) {
+      @PathVariable("landingZoneId") UUID landingZoneId) {
+    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     ApiAzureLandingZoneResourcesList result =
-        landingZoneApiDispatch.listAzureLandingZoneResources(landingZoneId);
+        landingZoneApiDispatch.listAzureLandingZoneResources(userRequest, landingZoneId);
     return new ResponseEntity<>(result, HttpStatus.OK);
   }
 
   @Override
   public ResponseEntity<Void> deleteAzureLandingZone(
-      @PathVariable("landingZoneId") String landingZoneId) {
+      @PathVariable("landingZoneId") UUID landingZoneId) {
     try {
       landingZoneApiDispatch.deleteLandingZone(landingZoneId);
     } catch (LandingZoneDeleteNotImplemented ex) {
