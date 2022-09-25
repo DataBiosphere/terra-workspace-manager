@@ -10,6 +10,8 @@ import bio.terra.workspace.generated.model.ApiCreateAzureLandingZoneRequestBody;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequestFactory;
 import bio.terra.workspace.service.iam.SamService;
+import java.util.UUID;
+import javax.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,9 +20,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
-
-import javax.servlet.http.HttpServletRequest;
-import java.util.UUID;
 
 @Controller
 public class LandingZoneApiController extends ControllerBase implements LandingZonesApi {
@@ -43,7 +42,9 @@ public class LandingZoneApiController extends ControllerBase implements LandingZ
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     ApiAzureLandingZoneResult result =
         landingZoneApiDispatch.createAzureLandingZone(
-                userRequest, body, getAsyncResultEndpoint(body.getJobControl().getId(), "create-result"));
+            userRequest,
+            body,
+            getAsyncResultEndpoint(body.getJobControl().getId(), "create-result"));
     return new ResponseEntity<>(result, getAsyncResponseCode(result.getJobReport()));
   }
 
