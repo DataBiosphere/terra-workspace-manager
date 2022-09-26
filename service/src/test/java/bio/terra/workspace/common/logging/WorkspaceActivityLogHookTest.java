@@ -1,5 +1,6 @@
 package bio.terra.workspace.common.logging;
 
+import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.CONTROLLED_RESOURCES_TO_DELETE;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -29,6 +30,7 @@ import bio.terra.workspace.service.resource.controlled.model.AccessScopeType;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResourceFields;
 import bio.terra.workspace.service.resource.controlled.model.ManagedByType;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
+import bio.terra.workspace.service.resource.model.WsmResource;
 import bio.terra.workspace.service.workspace.flight.DeleteGcpContextFlight;
 import bio.terra.workspace.service.workspace.flight.WorkspaceCreateFlight;
 import bio.terra.workspace.service.workspace.flight.WorkspaceDeleteFlight;
@@ -38,6 +40,7 @@ import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import bio.terra.workspace.service.workspace.model.OperationType;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -228,8 +231,8 @@ public class WorkspaceActivityLogHookTest extends BaseUnitTest {
     assertTrue(emptyChangeDetails.isEmpty());
 
     FlightMap inputParams = buildInputParams(workspaceUuid, OperationType.DELETE);
-    inputParams.put(
-        ResourceKeys.RESOURCE,
+    List<WsmResource> resourceToDelete = new ArrayList<>();
+    resourceToDelete.add(
         ControlledAiNotebookInstanceResource.builder()
             .common(
                 ControlledResourceFields.builder()
@@ -245,6 +248,7 @@ public class WorkspaceActivityLogHookTest extends BaseUnitTest {
             .projectId("my-project")
             .location("us-central1-a")
             .build());
+    inputParams.put(CONTROLLED_RESOURCES_TO_DELETE, resourceToDelete);
     hook.endFlight(
         new FakeFlightContext(
             DeleteControlledResourcesFlight.class.getName(), inputParams, FlightStatus.ERROR));
