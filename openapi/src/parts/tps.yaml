@@ -128,8 +128,8 @@ components:
           $ref: '#/components/schemas/TpsPolicyInputs'
         effectiveAttributes:
           $ref: '#/components/schemas/TpsPolicyInputs'
-        predecessorId:
-          $ref: '#/components/schemas/TpsObjectId'
+        deleted:
+          type: boolean
         sourcesObjectIds:
           type: array
           uniqueItems: true

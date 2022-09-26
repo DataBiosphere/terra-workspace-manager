@@ -175,7 +175,7 @@ public class TpsApiDispatch {
         .attributes(policyInputsToApi(pao.getAttributes()))
         .effectiveAttributes(policyInputsToApi(pao.getEffectiveAttributes()))
         .sourcesObjectIds(pao.getSourceObjectIds().stream().toList())
-        .predecessorId(pao.getPredecessorId());
+        .deleted((pao.getDeleted()));
   }
 
   public static Pao paoFromApi(@Nullable ApiTpsPaoGetResult api) {
@@ -189,6 +189,6 @@ public class TpsApiDispatch {
         policyInputsFromApi(api.getAttributes()),
         policyInputsFromApi(api.getEffectiveAttributes()),
         new HashSet<>(api.getSourcesObjectIds()),
-        api.getPredecessorId());
+        api.isDeleted());
   }
 }
