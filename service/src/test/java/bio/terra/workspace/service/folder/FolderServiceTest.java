@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import bio.terra.common.exception.ForbiddenException;
 import bio.terra.stairway.FlightDebugInfo;
 import bio.terra.stairway.StepStatus;
 import bio.terra.workspace.common.BaseConnectedTest;
@@ -19,6 +20,8 @@ import bio.terra.workspace.db.exception.FolderNotFoundException;
 import bio.terra.workspace.service.folder.flights.DeleteFolderRecursiveStep;
 import bio.terra.workspace.service.folder.flights.DeleteReferencedResourcesStep;
 import bio.terra.workspace.service.folder.model.Folder;
+import bio.terra.workspace.service.iam.SamService;
+import bio.terra.workspace.service.iam.model.WsmIamRole;
 import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.job.exception.InvalidResultStateException;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook.ControlledAiNotebookInstanceResource;
@@ -34,6 +37,7 @@ import bio.terra.workspace.service.resource.referenced.cloud.gcp.bqdatatable.Ref
 import bio.terra.workspace.service.resource.referenced.cloud.gcp.datareposnapshot.ReferencedDataRepoSnapshotResource;
 import bio.terra.workspace.service.resource.referenced.cloud.gcp.gcsbucket.ReferencedGcsBucketResource;
 import bio.terra.workspace.service.workspace.model.WorkspaceConstants.ResourceProperties;
+import com.google.common.collect.ImmutableMap;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -53,6 +57,7 @@ public class FolderServiceTest extends BaseConnectedTest {
   @Autowired private ResourceDao resourceDao;
   @Autowired private JobService jobService;
   @Autowired private WorkspaceActivityLogDao workspaceActivityLogDao;
+  @Autowired private SamService samService;
 
   private UUID workspaceId;
   // foo/
@@ -73,11 +78,17 @@ public class FolderServiceTest extends BaseConnectedTest {
   private ReferencedGitRepoResource referencedGitRepoResource;
 
   @BeforeEach
-  public void setUp() {
+  public void setUp() throws InterruptedException {
     workspaceId =
         workspaceConnectedTestUtils
             .createWorkspaceWithGcpContext(userAccessUtils.defaultUserAuthRequest())
             .getWorkspaceId();
+    // Grant the second user WRITE access.
+    samService.grantWorkspaceRole(
+        workspaceId,
+        userAccessUtils.defaultUserAuthRequest(),
+        WsmIamRole.WRITER,
+        userAccessUtils.getSecondUserEmail());
     fooFolder = createFolder("foo", null);
     fooBarFolder = createFolder("bar", fooFolder.id());
     fooFooFolder = createFolder("Foo", fooFolder.id());
@@ -101,6 +112,8 @@ public class FolderServiceTest extends BaseConnectedTest {
             .projectId("my-gcp-project")
             .build();
     resourceDao.createControlledResource(controlledBqDataset);
+
+    // The first user creates a private notebook in foo/bar/loo.
     controlledAiNotebook =
         ControlledAiNotebookInstanceResource.builder()
             .common(
@@ -108,7 +121,7 @@ public class FolderServiceTest extends BaseConnectedTest {
                     .workspaceUuid(workspaceId)
                     .accessScope(AccessScopeType.ACCESS_SCOPE_PRIVATE)
                     .managedBy(ManagedByType.MANAGED_BY_USER)
-                    .assignedUser("yuhu@hello")
+                    .assignedUser(userAccessUtils.getDefaultUserEmail())
                     .properties(
                         Map.of(ResourceProperties.FOLDER_ID_KEY, fooBarLooFolder.id().toString()))
                     .build())
@@ -175,6 +188,46 @@ public class FolderServiceTest extends BaseConnectedTest {
           FolderNotFoundException.class, () -> folderService.getFolder(workspaceId, f.id()));
     }
     assertTrue(resourceDao.enumerateResources(workspaceId, null, null, 0, 100).isEmpty());
+  }
+
+  @Test
+  void deleteFolder_userRequestWithWriteAccess_cannotDeleteFolderWithOthersPrivateResource() {
+    assertThrows(
+        ForbiddenException.class,
+        () ->
+            folderService.deleteFolder(
+                workspaceId, fooFolder.id(), userAccessUtils.secondUserAuthRequest()));
+
+    List<Folder> folders = List.of(fooFolder, fooBarFolder, fooFooFolder, fooBarLooFolder);
+    for (Folder f : folders) {
+      assertEquals(f, folderService.getFolder(workspaceId, f.id()));
+    }
+    assertEquals(
+        8,
+        resourceDao
+            .enumerateResources(
+                workspaceId,
+                /*cloudResourceType=*/ null,
+                /*stewardshipType=*/ null,
+                /*offset=*/ 0,
+                /*limit=*/ 10)
+            .size());
+  }
+
+  @Test
+  void deleteFolder_userRequestWithWriteAccess_canDeleteFolderWithOnlySharedResource() {
+    folderService.deleteFolder(
+        workspaceId, fooFooFolder.id(), userAccessUtils.secondUserAuthRequest());
+
+    assertThrows(
+        FolderNotFoundException.class,
+        () -> folderService.getFolder(workspaceId, fooFooFolder.id()));
+    assertThrows(
+        ResourceNotFoundException.class,
+        () -> resourceDao.getResource(workspaceId, controlledBucket2.getResourceId()));
+    assertThrows(
+        ResourceNotFoundException.class,
+        () -> resourceDao.getResource(workspaceId, referencedBucket.getResourceId()));
   }
 
   @Test
@@ -297,14 +350,14 @@ public class FolderServiceTest extends BaseConnectedTest {
       UUID workspaceId, UUID folderId) {
     return makeDefaultControlledResourceFieldsBuilder()
         .workspaceUuid(workspaceId)
-        .properties(Map.of(ResourceProperties.FOLDER_ID_KEY, folderId.toString()))
+        .properties(ImmutableMap.of(ResourceProperties.FOLDER_ID_KEY, folderId.toString()))
         .build();
   }
 
   private static WsmResourceFields createWsmResourceCommonFieldsWithFolderId(
       UUID workspaceId, UUID folderId) {
     return ReferenceResourceFixtures.makeDefaultWsmResourceFieldBuilder(workspaceId)
-        .properties(Map.of(ResourceProperties.FOLDER_ID_KEY, folderId.toString()))
+        .properties(ImmutableMap.of(ResourceProperties.FOLDER_ID_KEY, folderId.toString()))
         .build();
   }
 }
