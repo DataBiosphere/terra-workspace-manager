@@ -8,18 +8,21 @@ import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static scripts.utils.CommonResourceFieldsUtil.getResourceDefaultProperties;
 
 import bio.terra.testrunner.runner.config.TestUserSpecification;
 import bio.terra.workspace.api.ControlledGcpResourceApi;
 import bio.terra.workspace.api.ResourceApi;
 import bio.terra.workspace.api.WorkspaceApi;
 import bio.terra.workspace.client.ApiException;
+import bio.terra.workspace.model.BqDatasetCloudId;
 import bio.terra.workspace.model.CloneControlledGcpBigQueryDatasetRequest;
 import bio.terra.workspace.model.CloneControlledGcpBigQueryDatasetResult;
 import bio.terra.workspace.model.ClonedControlledGcpBigQueryDataset;
 import bio.terra.workspace.model.CloningInstructionsEnum;
 import bio.terra.workspace.model.GcpBigQueryDatasetResource;
 import bio.terra.workspace.model.GcpBigQueryDatasetUpdateParameters;
+import bio.terra.workspace.model.GenerateGcpBigQueryDatasetCloudIDRequestBody;
 import bio.terra.workspace.model.GrantRoleRequestBody;
 import bio.terra.workspace.model.IamRole;
 import bio.terra.workspace.model.JobControl;
@@ -111,6 +114,7 @@ public class ControlledBigQueryDatasetLifecycle extends GcpWorkspaceCloneTestScr
             /*datasetId=*/ null,
             CloningInstructionsEnum.NOTHING);
     assertEquals(DATASET_RESOURCE_NAME, createdDataset.getAttributes().getDatasetId());
+    assertEquals(getResourceDefaultProperties(), createdDataset.getMetadata().getProperties());
     UUID resourceId = createdDataset.getMetadata().getResourceId();
 
     // Retrieve the dataset resource
@@ -119,6 +123,14 @@ public class ControlledBigQueryDatasetLifecycle extends GcpWorkspaceCloneTestScr
         ownerResourceApi.getBigQueryDataset(getWorkspaceId(), resourceId);
     assertEquals(createdDataset, fetchedResource);
     assertEquals(DATASET_RESOURCE_NAME, fetchedResource.getAttributes().getDatasetId());
+
+    GenerateGcpBigQueryDatasetCloudIDRequestBody bqDatasetNameRequest =
+        new GenerateGcpBigQueryDatasetCloudIDRequestBody()
+            .bigQueryDatasetName(DATASET_RESOURCE_NAME);
+    BqDatasetCloudId cloudBqDatasetName =
+        ownerResourceApi.generateBigQueryDatasetCloudId(bqDatasetNameRequest, getWorkspaceId());
+    assertEquals(
+        cloudBqDatasetName.getGeneratedDatasetCloudId(), DATASET_RESOURCE_NAME.replace("-", "_"));
 
     createControlledDatasetWithBothResourceNameAndDatasetIdSpecified(ownerResourceApi);
 

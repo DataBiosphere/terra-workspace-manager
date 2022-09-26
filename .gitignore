@@ -20,7 +20,9 @@ HELP.md
 *.iml
 *.ipr
 out/
-.run
+# To ignore files in this repo:
+# git update-index --skip-worktree .run/Integration\ test.run.xml
+.run/**
 
 ### NetBeans ###
 /nbproject/private/

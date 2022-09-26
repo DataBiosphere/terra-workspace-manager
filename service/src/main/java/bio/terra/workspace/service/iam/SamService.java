@@ -26,6 +26,7 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
@@ -45,7 +46,9 @@ import org.broadinstitute.dsde.workbench.client.sam.model.CreateResourceRequestV
 import org.broadinstitute.dsde.workbench.client.sam.model.FullyQualifiedResourceId;
 import org.broadinstitute.dsde.workbench.client.sam.model.GetOrCreatePetManagedIdentityRequest;
 import org.broadinstitute.dsde.workbench.client.sam.model.SystemStatus;
+import org.broadinstitute.dsde.workbench.client.sam.model.UserIdInfo;
 import org.broadinstitute.dsde.workbench.client.sam.model.UserResourcesResponse;
+import org.broadinstitute.dsde.workbench.client.sam.model.UserStatusInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -131,11 +134,17 @@ public class SamService {
    */
   public String getUserEmailFromSam(AuthenticatedUserRequest userRequest)
       throws InterruptedException {
+    return getUserStatusInfo(userRequest).getUserEmail();
+  }
+
+  /** Fetch the user status info associated with the user credentials directly from Sam. */
+  public UserStatusInfo getUserStatusInfo(AuthenticatedUserRequest userRequest)
+      throws InterruptedException {
     UsersApi usersApi = samUsersApi(userRequest.getRequiredToken());
     try {
-      return SamRetry.retry(() -> usersApi.getUserStatusInfo().getUserEmail());
+      return SamRetry.retry(usersApi::getUserStatusInfo);
     } catch (ApiException apiException) {
-      throw SamExceptionFactory.create("Error getting user email from Sam", apiException);
+      throw SamExceptionFactory.create("Error getting user status info from Sam", apiException);
     }
   }
 
@@ -269,10 +278,14 @@ public class SamService {
    * List all workspace IDs in Sam this user has access to. Note that in environments shared with
    * Rawls, some of these workspaces will be Rawls managed and WSM will not know about them.
    *
+   * <p>Additionally, Rawls may create additional roles that WSM does not know about. Those roles
+   * will be ignored here.
+   *
    * @return map from workspace ID to highest SAM role
    */
   @Traced
-  public Map<UUID, WsmIamRole> listWorkspaceIdsAndHighestRoles(AuthenticatedUserRequest userRequest)
+  public Map<UUID, WsmIamRole> listWorkspaceIdsAndHighestRoles(
+      AuthenticatedUserRequest userRequest, WsmIamRole minimumHighestRoleFromRequest)
       throws InterruptedException {
     ResourcesApi resourceApi = samResourcesApi(userRequest.getRequiredToken());
     Map<UUID, WsmIamRole> workspacesAndRoles = new HashMap<>();
@@ -286,8 +299,16 @@ public class SamService {
           List<WsmIamRole> roles =
               userResourcesResponse.getDirect().getRoles().stream()
                   .map(WsmIamRole::fromSam)
+                  .filter(Objects::nonNull)
                   .collect(Collectors.toList());
-          workspacesAndRoles.put(workspaceId, WsmIamRole.getHighestRole(workspaceId, roles));
+          Optional<WsmIamRole> highestRole = WsmIamRole.getHighestRole(workspaceId, roles);
+          // Skip workspaces with no roles. (That means there's a role this WSM doesn't know
+          // about.)
+          if (highestRole.isPresent()) {
+            if (WsmIamRole.roleAtLeastAsHighAs(minimumHighestRoleFromRequest, highestRole.get())) {
+              workspacesAndRoles.put(workspaceId, highestRole.get());
+            }
+          }
         } catch (IllegalArgumentException e) {
           // WSM always uses UUIDs for workspace IDs, but this is not enforced in Sam and there are
           // old workspaces that don't use UUIDs. Any workspace with a non-UUID workspace ID is
@@ -582,10 +603,13 @@ public class SamService {
               () ->
                   resourceApi.listResourcePoliciesV2(
                       SamConstants.SamResource.WORKSPACE, workspaceUuid.toString()));
-      // Don't include WSM's SA as a manager. This is true for all workspaces and not useful to
-      // callers.
       return samResult.stream()
+          // Don't include WSM's SA as a manager. This is true for all workspaces and not useful to
+          // callers.
           .filter(entry -> !entry.getPolicyName().equals(WsmIamRole.MANAGER.toSamRole()))
+          // RAWLS_WORKSPACE stage workspaces may have additional roles set by Rawls that WSM
+          // doesn't understand, ignore those.
+          .filter(entry -> WsmIamRole.fromSam(entry.getPolicyName()) != null)
           .map(
               entry ->
                   RoleBinding.builder()
@@ -640,6 +664,9 @@ public class SamService {
     try {
       return resourcesApi.resourceRolesV2(samResourceType, resourceId).stream()
           .map(WsmIamRole::fromSam)
+          // RAWLS_WORKSPACE stage workspaces may have additional roles set by Rawls that WSM
+          // doesn't understand, ignore those.
+          .filter(Objects::nonNull)
           .collect(Collectors.toList());
     } catch (ApiException e) {
       throw SamExceptionFactory.create("Error retrieving requester resource roles from Sam", e);
@@ -1023,16 +1050,24 @@ public class SamService {
   /**
    * Construct the email of an arbitrary user's pet service account in a given project. Unlike
    * {@code getOrCreatePetSaEmail}, this will not create the underlying service account. It may
-   * return the email of a service account which does not exist.
+   * return pet SA email if userEmail is a user. If userEmail is a group, returns Optional.empty().
    */
-  public ServiceAccountName constructUserPetSaEmail(
+  public Optional<ServiceAccountName> constructUserPetSaEmail(
       String projectId, String userEmail, AuthenticatedUserRequest userRequest)
       throws InterruptedException {
     UsersApi usersApi = samUsersApi(userRequest.getRequiredToken());
     try {
-      String subjectId = SamRetry.retry(() -> usersApi.getUserIds(userEmail).getUserSubjectId());
+      UserIdInfo userId = SamRetry.retry(() -> usersApi.getUserIds(userEmail));
+
+      // If userId is null, userEmail is a group, not a user. (getUserIds returns 204 with no
+      // response body, which translates to userID = null.)
+      if (userId == null) {
+        return Optional.empty();
+      }
+      String subjectId = userId.getUserSubjectId();
       String saEmail = String.format("pet-%s@%s.iam.gserviceaccount.com", subjectId, projectId);
-      return ServiceAccountName.builder().email(saEmail).projectId(projectId).build();
+
+      return Optional.of(ServiceAccountName.builder().email(saEmail).projectId(projectId).build());
     } catch (ApiException apiException) {
       throw SamExceptionFactory.create("Error getting user subject ID from Sam", apiException);
     }

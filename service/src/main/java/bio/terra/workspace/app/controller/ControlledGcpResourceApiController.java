@@ -7,13 +7,17 @@ import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequestFactory;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.iam.model.SamConstants.SamControlledResourceActions;
+import bio.terra.workspace.service.iam.model.SamConstants.SamWorkspaceAction;
 import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.job.JobService.AsyncJobResult;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceMetadataManager;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceService;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.GcpResourceConstant;
+import bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook.ControlledAiNotebookHandler;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook.ControlledAiNotebookInstanceResource;
+import bio.terra.workspace.service.resource.controlled.cloud.gcp.bqdataset.ControlledBigQueryDatasetHandler;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.bqdataset.ControlledBigQueryDatasetResource;
+import bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.ControlledGcsBucketHandler;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.ControlledGcsBucketResource;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResourceFields;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
@@ -26,6 +30,7 @@ import java.util.Optional;
 import java.util.UUID;
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -70,7 +75,11 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
         toCommonFields(workspaceUuid, body.getCommon(), userRequest);
     ControlledGcsBucketResource resource =
         ControlledGcsBucketResource.builder()
-            .bucketName(body.getGcsBucket().getName())
+            .bucketName(
+                StringUtils.isEmpty(body.getGcsBucket().getName())
+                    ? ControlledGcsBucketHandler.getHandler()
+                        .generateCloudName(commonFields.getWorkspaceId(), commonFields.getName())
+                    : body.getGcsBucket().getName())
             .common(commonFields)
             .build();
     Workspace workspace =
@@ -150,6 +159,19 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
   }
 
   @Override
+  public ResponseEntity<ApiGcsBucketCloudName> generateGcpGcsBucketCloudName(
+      UUID workspaceUuid, ApiGenerateGcpGcsBucketCloudNameRequestBody name) {
+    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    workspaceService.validateWorkspaceAndAction(
+        userRequest, workspaceUuid, SamWorkspaceAction.READ);
+    String generatedBucketName =
+        ControlledGcsBucketHandler.getHandler()
+            .generateCloudName(workspaceUuid, name.getGcsBucketName());
+    var response = new ApiGcsBucketCloudName().generatedBucketCloudName(generatedBucketName);
+    return new ResponseEntity<>(response, HttpStatus.OK);
+  }
+
+  @Override
   public ResponseEntity<ApiGcpGcsBucketResource> updateGcsBucket(
       UUID workspaceUuid, UUID resourceId, @Valid ApiUpdateControlledGcpGcsBucketRequestBody body) {
     logger.info("Updating bucket resourceId {} workspaceUuid {}", resourceId, workspaceUuid);
@@ -160,7 +182,11 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
                 userRequest, workspaceUuid, resourceId, SamControlledResourceActions.EDIT_ACTION)
             .castByEnum(WsmResourceType.CONTROLLED_GCP_GCS_BUCKET);
     controlledResourceService.updateGcsBucket(
-        bucketResource, body.getUpdateParameters(), body.getName(), body.getDescription());
+        bucketResource,
+        body.getUpdateParameters(),
+        body.getName(),
+        body.getDescription(),
+        userRequest);
 
     // Retrieve and cast response to ApiGcpGcsBucketResource
     final ControlledGcsBucketResource updatedResource =
@@ -230,6 +256,19 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
   }
 
   @Override
+  public ResponseEntity<ApiBqDatasetCloudId> generateBigQueryDatasetCloudId(
+      UUID workspaceUuid, ApiGenerateGcpBigQueryDatasetCloudIDRequestBody name) {
+    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    workspaceService.validateWorkspaceAndAction(
+        userRequest, workspaceUuid, SamWorkspaceAction.READ);
+    String generatedCloudBqDatasetName =
+        ControlledBigQueryDatasetHandler.getHandler()
+            .generateCloudName(workspaceUuid, name.getBigQueryDatasetName());
+    var response = new ApiBqDatasetCloudId().generatedDatasetCloudId(generatedCloudBqDatasetName);
+    return new ResponseEntity<>(response, HttpStatus.OK);
+  }
+
+  @Override
   public ResponseEntity<ApiGcpBigQueryDatasetResource> updateBigQueryDataset(
       UUID workspaceUuid, UUID resourceId, ApiUpdateControlledGcpBigQueryDatasetRequestBody body) {
     logger.info("Updating dataset resourceId {} workspaceUuid {}", resourceId, workspaceUuid);
@@ -263,8 +302,11 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
     ControlledBigQueryDatasetResource resource =
         ControlledBigQueryDatasetResource.builder()
             .datasetName(
-                Optional.ofNullable(body.getDataset().getDatasetId())
-                    .orElse(body.getCommon().getName()))
+                ControlledBigQueryDatasetHandler.getHandler()
+                    .generateCloudName(
+                        workspaceUuid,
+                        Optional.ofNullable(body.getDataset().getDatasetId())
+                            .orElse(body.getCommon().getName())))
             .projectId(projectId)
             .common(commonFields)
             .build();
@@ -316,8 +358,8 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
             .instanceId(
                 Optional.ofNullable(body.getAiNotebookInstance().getInstanceId())
                     .orElse(
-                        ControlledAiNotebookInstanceResource.generateInstanceId(
-                            commonFields.getAssignedUser())))
+                        ControlledAiNotebookHandler.getHandler()
+                            .generateCloudName(workspaceUuid, commonFields.getName())))
             .build();
 
     String jobId =
@@ -332,6 +374,20 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
     ApiCreatedControlledGcpAiNotebookInstanceResult result =
         fetchNotebookInstanceCreateResult(jobId);
     return new ResponseEntity<>(result, getAsyncResponseCode((result.getJobReport())));
+  }
+
+  @Override
+  public ResponseEntity<ApiAiNotebookCloudId> generateAiNotebookCloudInstanceId(
+      UUID workspaceUuid, ApiGenerateGcpAiNotebookCloudIdRequestBody name) {
+    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    workspaceService.validateWorkspaceAndAction(
+        userRequest, workspaceUuid, SamWorkspaceAction.READ);
+    String generatedAiNotebookName =
+        ControlledAiNotebookHandler.getHandler()
+            .generateCloudName(workspaceUuid, name.getAiNotebookName());
+    var response =
+        new ApiAiNotebookCloudId().generatedAiNotebookAiNotebookCloudId(generatedAiNotebookName);
+    return new ResponseEntity<>(response, HttpStatus.OK);
   }
 
   @Override
@@ -350,7 +406,8 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
         resource,
         requestBody.getUpdateParameters(),
         requestBody.getName(),
-        requestBody.getDescription());
+        requestBody.getDescription(),
+        userRequest);
 
     final ControlledAiNotebookInstanceResource updatedResource =
         controlledResourceService

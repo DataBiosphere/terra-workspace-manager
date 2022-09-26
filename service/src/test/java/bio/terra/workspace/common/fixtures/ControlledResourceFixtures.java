@@ -1,7 +1,10 @@
 package bio.terra.workspace.common.fixtures;
 
+import static bio.terra.workspace.app.controller.shared.PropertiesUtils.convertMapToApiProperties;
+
 import bio.terra.stairway.ShortUUID;
 import bio.terra.workspace.common.utils.AzureVmUtils;
+import bio.terra.workspace.common.utils.TestUtils;
 import bio.terra.workspace.generated.model.*;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.disk.ControlledAzureDiskResource;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.ip.ControlledAzureIpResource;
@@ -30,13 +33,10 @@ import com.google.cloud.storage.BucketInfo.LifecycleRule.LifecycleCondition;
 import com.google.cloud.storage.StorageClass;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import java.nio.charset.StandardCharsets;
 import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 import javax.annotation.Nullable;
 
 /** A series of static objects useful for testing controlled resources. */
@@ -82,10 +82,11 @@ public class ControlledResourceFixtures {
   public static final String AZURE_NETWORK_NAME_PREFIX = "network";
   public static final String AZURE_SUBNET_NAME_PREFIX = "subnet";
   public static final String AZURE_VM_NAME_PREFIX = "vm";
+  public static final Map<String, String> DEFAULT_RESOURCE_PROPERTIES = Map.of("foo", "bar");
 
   public static final ApiGcpGcsBucketCreationParameters GOOGLE_BUCKET_CREATION_PARAMETERS_MINIMAL =
       new ApiGcpGcsBucketCreationParameters()
-          .name(uniqueName(BUCKET_NAME_PREFIX))
+          .name(TestUtils.appendRandomNumber(BUCKET_NAME_PREFIX))
           .location(GcpResourceConstant.DEFAULT_REGION);
 
   /** Construct a parameter object with a unique bucket name to avoid unintended clashes. */
@@ -181,6 +182,27 @@ public class ControlledResourceFixtures {
         .customScriptExtension(getAzureVmCustomScriptExtension());
   }
 
+  public static ApiAzureVmCreationParameters
+      getAzureVmCreationParametersWithEphemeralOsDiskAndCustomData() {
+    return new ApiAzureVmCreationParameters()
+        .name(uniqueAzureName(AZURE_VM_NAME_PREFIX))
+        .region("westcentralus")
+        .vmSize(VirtualMachineSizeTypes.STANDARD_D8S_V3.toString())
+        .vmImage(
+            new ApiAzureVmImage()
+                .publisher("microsoft-dsvm")
+                .offer("ubuntu-1804")
+                .sku("1804-gen2")
+                .version("latest"))
+        .vmUser(new ApiAzureVmUser().name("noname").password("StrongP@ssowrd123!!!"))
+        .ipId(UUID.randomUUID())
+        .networkId(UUID.randomUUID())
+        .ephemeralOSDisk(ApiAzureVmCreationParameters.EphemeralOSDiskEnum.OS_CACHE)
+        .customData(
+            Base64.getEncoder()
+                .encodeToString(UUID.randomUUID().toString().getBytes(StandardCharsets.UTF_8)));
+  }
+
   public static ApiAzureVmCreationParameters getInvalidAzureVmCreationParameters() {
     // use password which is not strong enough
     return new ApiAzureVmCreationParameters()
@@ -229,11 +251,11 @@ public class ControlledResourceFixtures {
   }
 
   public static String uniqueBucketName() {
-    return uniqueName(BUCKET_NAME_PREFIX);
+    return TestUtils.appendRandomNumber(BUCKET_NAME_PREFIX);
   }
 
   public static String uniqueAzureName(String resourcePrefix) {
-    return uniqueName(AZURE_NAME_PREFIX + "-" + resourcePrefix);
+    return TestUtils.appendRandomNumber(AZURE_NAME_PREFIX + "-" + resourcePrefix);
   }
 
   public static String uniqueStorageAccountName() {
@@ -252,7 +274,11 @@ public class ControlledResourceFixtures {
   }
 
   public static ApiGcpBigQueryDatasetCreationParameters defaultBigQueryDatasetCreationParameters() {
-    return new ApiGcpBigQueryDatasetCreationParameters().datasetId("test_dataset");
+    return new ApiGcpBigQueryDatasetCreationParameters().datasetId(uniqueDatasetId());
+  }
+
+  public static ApiGcpGcsBucketCreationParameters defaultGcsBucketCreationParameters() {
+    return new ApiGcpGcsBucketCreationParameters().name(uniqueBucketName());
   }
 
   public static final String RESOURCE_NAME = "my_first_bucket";
@@ -273,7 +299,9 @@ public class ControlledResourceFixtures {
         AccessScopeType.ACCESS_SCOPE_PRIVATE,
         ManagedByType.MANAGED_BY_USER,
         null,
-        bucketName);
+        bucketName,
+        /*resourceLineage=*/ null,
+        Map.of());
   }
 
   public static ControlledAzureIpResource getAzureIp(String ipName, String region) {
@@ -290,7 +318,9 @@ public class ControlledResourceFixtures {
         ManagedByType.MANAGED_BY_USER,
         null,
         ipName,
-        region);
+        region,
+        /*resourceLineage=*/ null,
+        /*properties=*/ Map.of());
   }
 
   public static ControlledAzureRelayNamespaceResource getAzureRelayNamespace(
@@ -307,7 +337,9 @@ public class ControlledResourceFixtures {
         ManagedByType.MANAGED_BY_APPLICATION,
         null,
         namespaceName,
-        region);
+        region,
+        /*resourceLineage=*/ null,
+        /*properties=*/ Map.of());
   }
 
   public static ControlledAzureDiskResource getAzureDisk(String diskName, String region, int size) {
@@ -325,7 +357,9 @@ public class ControlledResourceFixtures {
         null,
         diskName,
         region,
-        size);
+        size,
+        /*resourceLineage=*/ null,
+        /*properties=*/ Map.of());
   }
 
   public static ControlledAzureNetworkResource getAzureNetwork(
@@ -346,7 +380,9 @@ public class ControlledResourceFixtures {
         creationParameters.getSubnetName(),
         creationParameters.getAddressSpaceCidr(),
         creationParameters.getSubnetAddressCidr(),
-        creationParameters.getRegion());
+        creationParameters.getRegion(),
+        /*resourceLineage=*/ null,
+        /*properties=*/ Map.of());
   }
 
   public static ControlledAzureStorageResource getAzureStorage(
@@ -364,7 +400,9 @@ public class ControlledResourceFixtures {
         ManagedByType.MANAGED_BY_USER,
         null,
         storageAccountName,
-        region);
+        region,
+        /*resourceLineage=*/ null,
+        /*properties=*/ Map.of());
   }
 
   public static ControlledAzureStorageContainerResource getAzureStorageContainer(
@@ -382,7 +420,9 @@ public class ControlledResourceFixtures {
         ManagedByType.MANAGED_BY_USER,
         null,
         storageAccountId,
-        storageContainerName);
+        storageContainerName,
+        /*resourceLineage=*/ null,
+        /*properties=*/ Map.of());
   }
 
   public static ControlledAzureVmResource getAzureVm(
@@ -405,7 +445,9 @@ public class ControlledResourceFixtures {
         AzureVmUtils.getImageData(creationParameters.getVmImage()),
         creationParameters.getIpId(),
         creationParameters.getNetworkId(),
-        creationParameters.getDiskId());
+        creationParameters.getDiskId(),
+        /*resourceLineage=*/ null,
+        /*properties=*/ Map.of());
   }
 
   private ControlledResourceFixtures() {}
@@ -415,12 +457,13 @@ public class ControlledResourceFixtures {
     return ControlledResourceFields.builder()
         .workspaceUuid(UUID.randomUUID())
         .resourceId(UUID.randomUUID())
-        .name(uniqueName("test_resource").replace("-", "_"))
+        .name(TestUtils.appendRandomNumber("test_resource"))
         .description("how much data could a dataset set if a dataset could set data?")
         .cloningInstructions(CloningInstructions.COPY_DEFINITION)
         .assignedUser(null)
         .accessScope(AccessScopeType.ACCESS_SCOPE_SHARED)
-        .managedBy(ManagedByType.MANAGED_BY_USER);
+        .managedBy(ManagedByType.MANAGED_BY_USER)
+        .properties(DEFAULT_RESOURCE_PROPERTIES);
   }
 
   /**
@@ -429,11 +472,20 @@ public class ControlledResourceFixtures {
    */
   public static ControlledResourceFields makeDefaultControlledResourceFields(
       @Nullable UUID inWorkspaceId) {
+    return makeControlledResourceFieldsBuilder(inWorkspaceId).build();
+  }
+
+  /**
+   * Returns a {@link ControlledResourceFields.Builder} with default values. This builder can be
+   * modified for particular fields before being included in a controlled resource builder.
+   */
+  public static ControlledResourceFields.Builder makeControlledResourceFieldsBuilder(
+      @Nullable UUID inWorkspaceId) {
     ControlledResourceFields.Builder builder = makeDefaultControlledResourceFieldsBuilder();
     if (inWorkspaceId != null) {
       builder.workspaceUuid(inWorkspaceId);
     }
-    return builder.build();
+    return builder;
   }
 
   /**
@@ -448,7 +500,8 @@ public class ControlledResourceFixtures {
         .cloningInstructions(commonFields.getCloningInstructions().toApiModel())
         .accessScope(commonFields.getAccessScope().toApiModel())
         .managedBy(commonFields.getManagedBy().toApiModel())
-        .resourceId(commonFields.getResourceId());
+        .resourceId(commonFields.getResourceId())
+        .properties(convertMapToApiProperties(commonFields.getProperties()));
   }
 
   /** Returns a {@link ControlledGcsBucketResource.Builder} that is ready to be built. */
@@ -481,14 +534,8 @@ public class ControlledResourceFixtures {
           .defaultTableLifetime(4800)
           .defaultPartitionLifetime(4801);
   public static final Dataset BQ_DATASET_WITH_EXPIRATION =
-      new Dataset()
-          .setDefaultTableExpirationMs(Long.valueOf(5900000))
-          .setDefaultPartitionExpirationMs(Long.valueOf(5901000));
+      new Dataset().setDefaultTableExpirationMs(5900000L).setDefaultPartitionExpirationMs(5901000L);
   public static final Dataset BQ_DATASET_WITHOUT_EXPIRATION = new Dataset();
-
-  public static String uniqueName(String prefix) {
-    return prefix + "-" + UUID.randomUUID().toString();
-  }
 
   public static String uniqueDatasetId() {
     return "my_test_dataset_" + ShortUUID.get().replace("-", "_");
@@ -504,7 +551,7 @@ public class ControlledResourceFixtures {
     return ControlledResourceFields.builder()
         .workspaceUuid(UUID.randomUUID())
         .resourceId(UUID.randomUUID())
-        .name("my-notebook")
+        .name(TestUtils.appendRandomNumber("my-instance"))
         .description("my notebook description")
         .cloningInstructions(CloningInstructions.COPY_NOTHING)
         .assignedUser("myusername@mydomain.mine")
@@ -515,7 +562,7 @@ public class ControlledResourceFixtures {
   public static ControlledAiNotebookInstanceResource.Builder makeDefaultAiNotebookInstance() {
     return ControlledAiNotebookInstanceResource.builder()
         .common(makeNotebookCommonFieldsBuilder().build())
-        .instanceId("my-instance-id")
+        .instanceId(TestUtils.appendRandomNumber("my-cloud-id"))
         .location("us-east1-b")
         .projectId("my-project-id");
   }

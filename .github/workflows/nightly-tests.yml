@@ -18,7 +18,7 @@ jobs:
       id-token: 'write'
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
 
       # Sparse check out terra-helmfile repo version directories
       - uses: ./.github/actions/checkout-helm-versions
@@ -53,7 +53,7 @@ jobs:
             sudo apt-get -y install postgresql
 
       - name: Set up JDK
-        uses: actions/setup-java@v2
+        uses: actions/setup-java@v3
         with:
           distribution: 'temurin'
           java-version: 17
@@ -81,8 +81,8 @@ jobs:
             vault write -field token \
               auth/approle/login role_id=${{ secrets.VAULT_APPROLE_ROLE_ID }} \
               secret_id=${{ secrets.VAULT_APPROLE_SECRET_ID }})
+          echo ::add-mask::$VAULT_TOKEN    
           echo ::set-output name=vault-token::$VAULT_TOKEN
-          echo ::add-mask::$VAULT_TOKEN
 
       - name: Write config
         id: config
@@ -117,6 +117,23 @@ jobs:
         run: |
           rm -f ./argocd
 
+      - name: clean databases before nightly-only integration suite
+        if: always()
+        uses: ./.github/actions/clean-databases
+
+      - name: Set branch name as environment variable
+        id: set_env
+        if: ${{ github.event_name == 'workflow_dispatch' }}
+        run: echo "TEST_LOCAL_BRANCH=$(echo ${GITHUB_REF#refs/heads/})" >> $GITHUB_ENV
+
+      - name: Run nightly only integration test.
+        id: nightly-only-integration-test
+        if: always()
+        uses: ./.github/actions/integration-test
+        with:
+          test-server: workspace-wsmtest.json
+          test: suites/NightlyOnlyIntegration.json
+          
       - name: clean databases before integration suite
         if: always()
         uses: ./.github/actions/clean-databases
@@ -191,8 +208,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v2
         with:
-          name: wsm-and-testrunner-logs
-          path: |
-            wsm.log
-            ${{ steps.integration-test.outputs.results-dir }}
+          # We're not running WSM locally, so there's no wsm.log
+          name: testrunner-logs
+          path: ${{ steps.integration-test.outputs.results-dir }}
 

@@ -1,9 +1,19 @@
 package bio.terra.workspace.service.resource.controlled.flight.clone.workspace;
 
+import static bio.terra.workspace.app.controller.shared.PropertiesUtils.clearSomePropertiesForResourceCloningToDifferentWorkspace;
+
 import bio.terra.common.exception.BadRequestException;
 import bio.terra.stairway.FlightStatus;
+import bio.terra.workspace.service.resource.controlled.cloud.gcp.bqdataset.ControlledBigQueryDatasetResource;
+import bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.ControlledGcsBucketResource;
+import bio.terra.workspace.service.resource.controlled.model.AccessScopeType;
+import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
+import bio.terra.workspace.service.resource.controlled.model.ControlledResourceFields;
+import bio.terra.workspace.service.resource.controlled.model.PrivateResourceState;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
+import bio.terra.workspace.service.resource.model.ResourceLineageEntry;
 import bio.terra.workspace.service.resource.model.WsmResource;
+import bio.terra.workspace.service.resource.model.WsmResourceFields;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.resource.referenced.cloud.any.gitrepo.ReferencedGitRepoResource;
 import bio.terra.workspace.service.resource.referenced.cloud.gcp.ReferencedResource;
@@ -13,6 +23,10 @@ import bio.terra.workspace.service.resource.referenced.cloud.gcp.datareposnapsho
 import bio.terra.workspace.service.resource.referenced.cloud.gcp.gcsbucket.ReferencedGcsBucketResource;
 import bio.terra.workspace.service.resource.referenced.cloud.gcp.gcsobject.ReferencedGcsObjectResource;
 import bio.terra.workspace.service.workspace.model.WsmCloneResourceResult;
+import com.google.common.annotations.VisibleForTesting;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import javax.annotation.Nullable;
@@ -50,72 +64,131 @@ public class WorkspaceCloneUtils {
       UUID destinationResourceId,
       String name,
       String description) {
-    final ReferencedResource destinationResource;
-    switch (sourceReferencedResource.getResourceType()) {
-      case REFERENCED_GCP_GCS_BUCKET:
-        destinationResource =
-            buildDestinationGcsBucketReference(
-                sourceReferencedResource.castByEnum(WsmResourceType.REFERENCED_GCP_GCS_BUCKET),
+    // ReferenceResource doesn't have Builder, only leaf resources like ReferencedGcsBucketResource
+    // have Builder. So each resource type must be built separately.
+    return switch (sourceReferencedResource.getResourceType()) {
+      case REFERENCED_GCP_GCS_BUCKET -> buildDestinationGcsBucketReference(
+          sourceReferencedResource.castByEnum(WsmResourceType.REFERENCED_GCP_GCS_BUCKET),
+          destinationWorkspaceId,
+          destinationResourceId,
+          name,
+          description);
+      case REFERENCED_GCP_GCS_OBJECT -> buildDestinationGcsObjectReference(
+          sourceReferencedResource.castByEnum(WsmResourceType.REFERENCED_GCP_GCS_OBJECT),
+          destinationWorkspaceId,
+          destinationResourceId,
+          name,
+          description);
+      case REFERENCED_ANY_DATA_REPO_SNAPSHOT -> buildDestinationDataRepoSnapshotReference(
+          sourceReferencedResource.castByEnum(WsmResourceType.REFERENCED_ANY_DATA_REPO_SNAPSHOT),
+          destinationWorkspaceId,
+          destinationResourceId,
+          name,
+          description);
+      case REFERENCED_GCP_BIG_QUERY_DATASET -> buildDestinationBigQueryDatasetReference(
+          sourceReferencedResource.castByEnum(WsmResourceType.REFERENCED_GCP_BIG_QUERY_DATASET),
+          destinationWorkspaceId,
+          destinationResourceId,
+          name,
+          description);
+      case REFERENCED_GCP_BIG_QUERY_DATA_TABLE -> buildDestinationBigQueryDataTableReference(
+          sourceReferencedResource.castByEnum(WsmResourceType.REFERENCED_GCP_BIG_QUERY_DATA_TABLE),
+          destinationWorkspaceId,
+          destinationResourceId,
+          name,
+          description);
+      case REFERENCED_ANY_GIT_REPO -> buildDestinationGitHubRepoReference(
+          sourceReferencedResource.castByEnum(WsmResourceType.REFERENCED_ANY_GIT_REPO),
+          destinationWorkspaceId,
+          destinationResourceId,
+          name,
+          description);
+      default -> throw new BadRequestException(
+          String.format(
+              "Resource type %s not supported as a referenced resource",
+              sourceReferencedResource.getResourceType().toString()));
+    };
+  }
+
+  public static ControlledBigQueryDatasetResource buildDestinationControlledBigQueryDataset(
+      ControlledBigQueryDatasetResource sourceDataset,
+      UUID destinationWorkspaceId,
+      UUID destinationResourceId,
+      String name,
+      @Nullable String description,
+      String cloudInstanceName,
+      String destinationProjectId) {
+    List<ResourceLineageEntry> destinationResourceLineage =
+        createDestinationResourceLineage(
+            sourceDataset.getResourceLineage(),
+            sourceDataset.getWorkspaceId(),
+            sourceDataset.getResourceId());
+    return ControlledBigQueryDatasetResource.builder()
+        .projectId(destinationProjectId)
+        .datasetName(cloudInstanceName)
+        .common(
+            getControlledResourceCommonFields(
+                sourceDataset,
                 destinationWorkspaceId,
                 destinationResourceId,
                 name,
-                description);
-        break;
-      case REFERENCED_GCP_GCS_OBJECT:
-        destinationResource =
-            buildDestinationGcsObjectReference(
-                sourceReferencedResource.castByEnum(WsmResourceType.REFERENCED_GCP_GCS_OBJECT),
+                description,
+                destinationResourceLineage))
+        .build();
+  }
+
+  public static ControlledGcsBucketResource buildDestinationControlledGcsBucket(
+      ControlledGcsBucketResource sourceBucket,
+      UUID destinationWorkspaceId,
+      UUID destinationResourceId,
+      String name,
+      @Nullable String description,
+      String cloudInstanceName) {
+    List<ResourceLineageEntry> destinationResourceLineage =
+        createDestinationResourceLineage(
+            sourceBucket.getResourceLineage(),
+            sourceBucket.getWorkspaceId(),
+            sourceBucket.getResourceId());
+    return ControlledGcsBucketResource.builder()
+        .bucketName(cloudInstanceName)
+        .common(
+            getControlledResourceCommonFields(
+                sourceBucket,
                 destinationWorkspaceId,
                 destinationResourceId,
                 name,
-                description);
-        break;
-      case REFERENCED_ANY_DATA_REPO_SNAPSHOT:
-        destinationResource =
-            buildDestinationDataRepoSnapshotReference(
-                sourceReferencedResource.castByEnum(
-                    WsmResourceType.REFERENCED_ANY_DATA_REPO_SNAPSHOT),
-                destinationWorkspaceId,
-                destinationResourceId,
-                name,
-                description);
-        break;
-      case REFERENCED_GCP_BIG_QUERY_DATASET:
-        destinationResource =
-            buildDestinationBigQueryDatasetReference(
-                sourceReferencedResource.castByEnum(
-                    WsmResourceType.REFERENCED_GCP_BIG_QUERY_DATASET),
-                destinationWorkspaceId,
-                destinationResourceId,
-                name,
-                description);
-        break;
-      case REFERENCED_GCP_BIG_QUERY_DATA_TABLE:
-        destinationResource =
-            buildDestinationBigQueryDataTableReference(
-                sourceReferencedResource.castByEnum(
-                    WsmResourceType.REFERENCED_GCP_BIG_QUERY_DATA_TABLE),
-                destinationWorkspaceId,
-                destinationResourceId,
-                name,
-                description);
-        break;
-      case REFERENCED_ANY_GIT_REPO:
-        destinationResource =
-            buildDestinationGitHubRepoReference(
-                sourceReferencedResource.castByEnum(WsmResourceType.REFERENCED_ANY_GIT_REPO),
-                destinationWorkspaceId,
-                destinationResourceId,
-                name,
-                description);
-        break;
-      default:
-        throw new BadRequestException(
-            String.format(
-                "Resource type %s not supported as a referenced resource",
-                sourceReferencedResource.getResourceType().toString()));
-    }
-    return destinationResource;
+                description,
+                destinationResourceLineage))
+        .build();
+  }
+
+  private static ControlledResourceFields getControlledResourceCommonFields(
+      ControlledResource sourceResource,
+      UUID destinationWorkspaceId,
+      UUID destinationResourceId,
+      String name,
+      String description,
+      List<ResourceLineageEntry> destinationResourceLineage) {
+    return ControlledResourceFields.builder()
+        .accessScope(sourceResource.getAccessScope())
+        .assignedUser(sourceResource.getAssignedUser().orElse(null))
+        .cloningInstructions(sourceResource.getCloningInstructions())
+        .managedBy(sourceResource.getManagedBy())
+        .privateResourceState(getPrivateResourceState(sourceResource))
+        .name(name)
+        .description(description)
+        .workspaceUuid(destinationWorkspaceId)
+        .resourceId(destinationResourceId)
+        .resourceLineage(destinationResourceLineage)
+        .properties(
+            maybeClearSomeResourcePropertiesBeforeCloning(sourceResource, destinationWorkspaceId))
+        .build();
+  }
+
+  private static PrivateResourceState getPrivateResourceState(ControlledResource sourceBucket) {
+    return sourceBucket.getAccessScope() == AccessScopeType.ACCESS_SCOPE_PRIVATE
+        ? PrivateResourceState.INITIALIZING
+        : PrivateResourceState.NOT_APPLICABLE;
   }
 
   /**
@@ -136,13 +209,22 @@ public class WorkspaceCloneUtils {
       @Nullable String name,
       @Nullable String description) {
 
+    List<ResourceLineageEntry> destinationResourceLineage =
+        createDestinationResourceLineage(
+            sourceBucketResource.getResourceLineage(),
+            sourceBucketResource.getWorkspaceId(),
+            sourceBucketResource.getResourceId());
     final ReferencedGcsBucketResource.Builder resultBuilder =
         sourceBucketResource.toBuilder()
-            .workspaceId(destinationWorkspaceId)
-            .resourceId(destinationResourceId);
-    // apply optional override variables
-    Optional.ofNullable(name).ifPresent(resultBuilder::name);
-    Optional.ofNullable(description).ifPresent(resultBuilder::description);
+            .wsmResourceFields(
+                buildDestinationResourceCommonFields(
+                    destinationWorkspaceId,
+                    destinationResourceId,
+                    name,
+                    description,
+                    destinationResourceLineage,
+                    sourceBucketResource));
+
     return resultBuilder.build();
   }
 
@@ -152,13 +234,21 @@ public class WorkspaceCloneUtils {
       UUID destinationResourceId,
       @Nullable String name,
       @Nullable String description) {
+    List<ResourceLineageEntry> destinationResourceLineage =
+        createDestinationResourceLineage(
+            sourceBucketFileResource.getResourceLineage(),
+            sourceBucketFileResource.getWorkspaceId(),
+            sourceBucketFileResource.getResourceId());
     final ReferencedGcsObjectResource.Builder resultBuilder =
         sourceBucketFileResource.toBuilder()
-            .workspaceId(destinationWorkspaceId)
-            .resourceId(destinationResourceId);
-    // apply optional override variables
-    Optional.ofNullable(name).ifPresent(resultBuilder::name);
-    Optional.ofNullable(description).ifPresent(resultBuilder::description);
+            .wsmResourceFields(
+                buildDestinationResourceCommonFields(
+                    destinationWorkspaceId,
+                    destinationResourceId,
+                    name,
+                    description,
+                    destinationResourceLineage,
+                    sourceBucketFileResource));
     return resultBuilder.build();
   }
 
@@ -169,12 +259,21 @@ public class WorkspaceCloneUtils {
       @Nullable String name,
       @Nullable String description) {
     // keep projectId and dataset name the same since they are for the referent
+    List<ResourceLineageEntry> destinationResourceLineage =
+        createDestinationResourceLineage(
+            sourceBigQueryResource.getResourceLineage(),
+            sourceBigQueryResource.getWorkspaceId(),
+            sourceBigQueryResource.getResourceId());
     final ReferencedBigQueryDatasetResource.Builder resultBuilder =
         sourceBigQueryResource.toBuilder()
-            .workspaceId(destinationWorkspaceId)
-            .resourceId(destinationResourceId);
-    Optional.ofNullable(name).ifPresent(resultBuilder::name);
-    Optional.ofNullable(description).ifPresent(resultBuilder::description);
+            .wsmResourceFields(
+                buildDestinationResourceCommonFields(
+                    destinationWorkspaceId,
+                    destinationResourceId,
+                    name,
+                    description,
+                    destinationResourceLineage,
+                    sourceBigQueryResource));
     return resultBuilder.build();
   }
 
@@ -185,12 +284,21 @@ public class WorkspaceCloneUtils {
       @Nullable String name,
       @Nullable String description) {
     // keep projectId, dataset name and data table name the same since they are for the referent
+    List<ResourceLineageEntry> destinationResourceLineage =
+        createDestinationResourceLineage(
+            sourceBigQueryResource.getResourceLineage(),
+            sourceBigQueryResource.getWorkspaceId(),
+            sourceBigQueryResource.getResourceId());
     final ReferencedBigQueryDataTableResource.Builder resultBuilder =
         sourceBigQueryResource.toBuilder()
-            .workspaceId(destinationWorkspaceId)
-            .resourceId(destinationResourceId);
-    Optional.ofNullable(name).ifPresent(resultBuilder::name);
-    Optional.ofNullable(description).ifPresent(resultBuilder::description);
+            .wsmResourceFields(
+                buildDestinationResourceCommonFields(
+                    destinationWorkspaceId,
+                    destinationResourceId,
+                    name,
+                    description,
+                    destinationResourceLineage,
+                    sourceBigQueryResource));
     return resultBuilder.build();
   }
 
@@ -200,12 +308,21 @@ public class WorkspaceCloneUtils {
       UUID destinationResourceId,
       @Nullable String name,
       @Nullable String description) {
+    List<ResourceLineageEntry> destinationResourceLineage =
+        createDestinationResourceLineage(
+            sourceReferencedDataRepoSnapshotResource.getResourceLineage(),
+            sourceReferencedDataRepoSnapshotResource.getWorkspaceId(),
+            sourceReferencedDataRepoSnapshotResource.getResourceId());
     final ReferencedDataRepoSnapshotResource.Builder resultBuilder =
         sourceReferencedDataRepoSnapshotResource.toBuilder()
-            .workspaceId(destinationWorkspaceId)
-            .resourceId(destinationResourceId);
-    Optional.ofNullable(name).ifPresent(resultBuilder::name);
-    Optional.ofNullable(description).ifPresent(resultBuilder::description);
+            .wsmResourceFields(
+                buildDestinationResourceCommonFields(
+                    destinationWorkspaceId,
+                    destinationResourceId,
+                    name,
+                    description,
+                    destinationResourceLineage,
+                    sourceReferencedDataRepoSnapshotResource));
     return resultBuilder.build();
   }
 
@@ -215,12 +332,64 @@ public class WorkspaceCloneUtils {
       UUID destinationResourceId,
       @Nullable String name,
       @Nullable String description) {
+    List<ResourceLineageEntry> destinationResourceLineage =
+        createDestinationResourceLineage(
+            gitHubRepoResource.getResourceLineage(),
+            gitHubRepoResource.getWorkspaceId(),
+            gitHubRepoResource.getResourceId());
     ReferencedGitRepoResource.Builder resultBuilder =
         gitHubRepoResource.toBuilder()
-            .workspaceId(destinationWorkspaceId)
-            .resourceId(destinationResourceId);
-    Optional.ofNullable(name).ifPresent(resultBuilder::name);
-    Optional.ofNullable(description).ifPresent(resultBuilder::description);
+            .wsmResourceFields(
+                buildDestinationResourceCommonFields(
+                    destinationWorkspaceId,
+                    destinationResourceId,
+                    name,
+                    description,
+                    destinationResourceLineage,
+                    gitHubRepoResource));
     return resultBuilder.build();
+  }
+
+  private static WsmResourceFields buildDestinationResourceCommonFields(
+      UUID destinationWorkspaceId,
+      UUID destinationResourceId,
+      @Nullable String name,
+      @Nullable String description,
+      List<ResourceLineageEntry> destinationResourceLineage,
+      WsmResource wsmResource) {
+    WsmResourceFields.Builder<?> destinationResourceCommonFieldsBuilder =
+        wsmResource.getWsmResourceFields().toBuilder();
+    destinationResourceCommonFieldsBuilder
+        .workspaceUuid(destinationWorkspaceId)
+        .resourceId(destinationResourceId)
+        .properties(
+            maybeClearSomeResourcePropertiesBeforeCloning(wsmResource, destinationWorkspaceId))
+        .resourceLineage(destinationResourceLineage);
+    // apply optional override variables
+    Optional.ofNullable(name).ifPresent(destinationResourceCommonFieldsBuilder::name);
+    Optional.ofNullable(description).ifPresent(destinationResourceCommonFieldsBuilder::description);
+    return destinationResourceCommonFieldsBuilder.build();
+  }
+
+  @VisibleForTesting
+  protected static List<ResourceLineageEntry> createDestinationResourceLineage(
+      List<ResourceLineageEntry> sourceResourceLineage,
+      UUID sourceWorkspaceId,
+      UUID sourceResourceId) {
+    // First, if source has resource lineage, copy it over
+    List<ResourceLineageEntry> destinationResourceLineage =
+        sourceResourceLineage != null ? sourceResourceLineage : new ArrayList<>();
+    destinationResourceLineage.add(new ResourceLineageEntry(sourceWorkspaceId, sourceResourceId));
+    return destinationResourceLineage;
+  }
+
+  private static Map<String, String> maybeClearSomeResourcePropertiesBeforeCloning(
+      WsmResource sourceResource, UUID destinationWorkspaceId) {
+    Map<String, String> destinationResourceProperties = sourceResource.getProperties();
+    if (!destinationWorkspaceId.equals(sourceResource.getWorkspaceId())) {
+      destinationResourceProperties =
+          clearSomePropertiesForResourceCloningToDifferentWorkspace(destinationResourceProperties);
+    }
+    return destinationResourceProperties;
   }
 }

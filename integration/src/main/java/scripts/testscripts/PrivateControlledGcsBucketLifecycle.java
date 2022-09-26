@@ -37,6 +37,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import scripts.utils.ClientTestUtils;
 import scripts.utils.CloudContextMaker;
+import scripts.utils.CommonResourceFieldsUtil;
 import scripts.utils.GcsBucketAccessTester;
 import scripts.utils.GcsBucketUtils;
 import scripts.utils.MultiResourcesUtils;
@@ -50,6 +51,7 @@ public class PrivateControlledGcsBucketLifecycle extends WorkspaceAllocateTestSc
 
   private static final String BUCKET_PREFIX = "wsmtestbucket-";
   private static final String RESOURCE_PREFIX = "wsmtestresource-";
+  private static final int MAX_BUCKET_NAME_LENGTH = 63;
 
   private TestUserSpecification privateResourceUser;
   private TestUserSpecification workspaceReader;
@@ -99,12 +101,25 @@ public class PrivateControlledGcsBucketLifecycle extends WorkspaceAllocateTestSc
     CreatedControlledGcpGcsBucket bucket =
         ClientTestUtils.getWithRetryOnException(() -> createPrivateBucket(privateUserResourceApi));
     UUID resourceId = bucket.getResourceId();
+    assertEquals(
+        CommonResourceFieldsUtil.getResourceDefaultProperties(),
+        bucket.getGcpBucket().getMetadata().getProperties());
 
     // Retrieve the bucket resource from WSM
     logger.info("Retrieving bucket resource id {}", resourceId.toString());
     GcpGcsBucketResource gotBucket = privateUserResourceApi.getBucket(getWorkspaceId(), resourceId);
     String bucketName = gotBucket.getAttributes().getBucketName();
     assertEquals(bucket.getGcpBucket().getAttributes().getBucketName(), bucketName);
+    String expectedBucketName = resourceName + "-" + projectId;
+    expectedBucketName =
+        expectedBucketName.length() > MAX_BUCKET_NAME_LENGTH
+            ? expectedBucketName.substring(0, MAX_BUCKET_NAME_LENGTH)
+            : expectedBucketName;
+    expectedBucketName =
+        expectedBucketName.endsWith("-")
+            ? expectedBucketName.substring(0, expectedBucketName.length() - 1)
+            : expectedBucketName;
+    assertEquals(expectedBucketName, bucketName);
 
     // Assert the bucket is assigned to privateResourceUser, even though resource user was
     // not specified
@@ -197,10 +212,7 @@ public class PrivateControlledGcsBucketLifecycle extends WorkspaceAllocateTestSc
                     ManagedBy.USER,
                     CloningInstructionsEnum.NOTHING,
                     privateUserNoEmail));
-    assertThat(
-        ex.getMessage(),
-        containsString(
-            "PrivateResourceUser can only be specified by applications for private resources"));
+    assertThat(ex.getMessage(), containsString("MethodArgumentNotValidException"));
     assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, ex.getCode());
 
     String uniqueBucketName = String.format("terra-%s-bucket", UUID.randomUUID().toString());

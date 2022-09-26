@@ -17,10 +17,8 @@ import com.azure.resourcemanager.storage.models.StorageAccount;
 import com.azure.resourcemanager.storage.models.StorageAccounts;
 import org.junit.jupiter.api.BeforeEach;
 import org.mockito.Mock;
-import org.springframework.test.context.ActiveProfiles;
 
 /** Base class for storage account and storage container tests. */
-@ActiveProfiles("azure")
 public class BaseStorageStepTest extends BaseAzureTest {
 
   protected final String STUB_STRING_RETURN = "stubbed-return";

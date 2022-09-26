@@ -48,15 +48,15 @@ public class AwaitCloneControlledGcpBigQueryDatasetResourceFlightStep implements
   public StepResult doStep(FlightContext context) throws InterruptedException, RetryException {
     // wait for the flight
     try {
-      final FlightState subflightState =
+      FlightState subflightState =
           context.getStairway().waitForFlight(subflightId, FLIGHT_POLL_SECONDS, FLIGHT_POLL_CYCLES);
-      final WsmResourceCloneDetails cloneDetails = new WsmResourceCloneDetails();
-      final WsmCloneResourceResult cloneResult =
+      WsmResourceCloneDetails cloneDetails = new WsmResourceCloneDetails();
+      WsmCloneResourceResult cloneResult =
           WorkspaceCloneUtils.flightStatusToCloneResult(subflightState.getFlightStatus(), resource);
       cloneDetails.setResult(cloneResult);
 
-      final FlightMap resultMap = FlightUtils.getResultMapRequired(subflightState);
-      final var clonedDataset =
+      FlightMap resultMap = FlightUtils.getResultMapRequired(subflightState);
+      var clonedDataset =
           resultMap.get(
               JobMapKeys.RESPONSE.getKeyName(), ApiClonedControlledGcpBigQueryDataset.class);
       cloneDetails.setStewardshipType(StewardshipType.CONTROLLED);
@@ -75,7 +75,7 @@ public class AwaitCloneControlledGcpBigQueryDatasetResourceFlightStep implements
       cloneDetails.setName(resource.getName());
       cloneDetails.setDescription(resource.getDescription());
       // add to the map
-      final var resourceIdToResult =
+      var resourceIdToResult =
           Optional.ofNullable(
                   context
                       .getWorkingMap()

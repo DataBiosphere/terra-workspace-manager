@@ -18,15 +18,14 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
-import org.springframework.test.context.ActiveProfiles;
 
-@ActiveProfiles("azure")
 public class CreateAzureStorageStepTest extends BaseStorageStepTest {
 
   @Mock private CheckNameAvailabilityResult mockNameAvailabilityResult;
   @Mock private StorageAccount.DefinitionStages.Blank mockStorageBlankStage;
   @Mock private StorageAccount.DefinitionStages.WithGroup mockStorageGroupStage;
   @Mock private StorageAccount.DefinitionStages.WithCreate mockStorageCreateStage;
+  @Mock private StorageAccountKeyProvider mockStorageAccountKeyProvider;
 
   private ApiAzureStorageCreationParameters creationParameters;
   private ArgumentCaptor<Context> contextCaptor = ArgumentCaptor.forClass(Context.class);
@@ -95,7 +94,8 @@ public class CreateAzureStorageStepTest extends BaseStorageStepTest {
             mockAzureConfig,
             mockCrlService,
             ControlledResourceFixtures.getAzureStorage(
-                creationParameters.getStorageAccountName(), creationParameters.getRegion()));
+                creationParameters.getStorageAccountName(), creationParameters.getRegion()),
+            mockStorageAccountKeyProvider);
     return createAzureStorageStep;
   }
 

@@ -70,25 +70,30 @@ public class WsmApplicationService {
 
   public WsmWorkspaceApplication disableWorkspaceApplication(
       AuthenticatedUserRequest userRequest, Workspace workspace, String applicationId) {
-    return commonAbleJob(userRequest, workspace, applicationId, AbleEnum.DISABLE);
+    return commonAbleJob(
+        // Wrap in arraylist for JSON serialization
+        userRequest, workspace, new ArrayList<String>(List.of(applicationId)), AbleEnum.DISABLE);
   }
 
   public WsmWorkspaceApplication enableWorkspaceApplication(
       AuthenticatedUserRequest userRequest, Workspace workspace, String applicationId) {
-    return commonAbleJob(userRequest, workspace, applicationId, AbleEnum.ENABLE);
+    return commonAbleJob(
+        userRequest, workspace, new ArrayList<String>(List.of(applicationId)), AbleEnum.ENABLE);
   }
 
   // Common method to launch and wait for enable and disable flights.
   private WsmWorkspaceApplication commonAbleJob(
       AuthenticatedUserRequest userRequest,
       Workspace workspace,
-      String applicationId,
+      List<String> applicationIds,
       AbleEnum ableEnum) {
 
     String description =
         String.format(
             "%s application %s on workspace %s",
-            ableEnum.name().toLowerCase(), applicationId, workspace.getWorkspaceId().toString());
+            ableEnum.name().toLowerCase(),
+            applicationIds.toString(),
+            workspace.getWorkspaceId().toString());
 
     JobBuilder job =
         jobService
@@ -101,7 +106,7 @@ public class WsmApplicationService {
                 ableEnum == AbleEnum.ENABLE
                     ? OperationType.APPLICATION_ENABLED
                     : OperationType.APPLICATION_DISABLED)
-            .addParameter(WorkspaceFlightMapKeys.APPLICATION_ID, applicationId)
+            .addParameter(WorkspaceFlightMapKeys.APPLICATION_IDS, applicationIds)
             .addParameter(WsmApplicationKeys.APPLICATION_ABLE_ENUM, ableEnum);
     return job.submitAndWait(WsmWorkspaceApplication.class);
   }

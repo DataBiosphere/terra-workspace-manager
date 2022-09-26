@@ -69,14 +69,12 @@ public class DataRepoService {
       logger.info("Retrieved snapshotId {} on Data Repo instance {}", snapshotId, instanceName);
       return true;
     } catch (ApiException e) {
-      // TDR uses 401 (rather than 403) to indicate "user does not have permission", so we check for
-      // UNAUTHORIZED here instead of FORBIDDEN.
       if (e.getCode() == HttpStatus.NOT_FOUND.value()
-          || e.getCode() == HttpStatus.UNAUTHORIZED.value()) {
+          || e.getCode() == HttpStatus.FORBIDDEN.value()) {
         return false;
       } else {
         throw new DataRepoInternalServerErrorException(
-            "Data Repo returned the following error: " + e.getMessage(), e.getCause());
+            "Data Repo returned the following unexpected error: " + e.getMessage(), e.getCause());
       }
     }
   }

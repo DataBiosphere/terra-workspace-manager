@@ -1,10 +1,10 @@
 package bio.terra.workspace.service.workspace;
 
+import bio.terra.workspace.amalgam.tps.TpsApiDispatch;
 import bio.terra.workspace.app.configuration.external.BufferServiceConfiguration;
 import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
-import bio.terra.workspace.db.WorkspaceActivityLogDao;
 import bio.terra.workspace.db.WorkspaceDao;
-import bio.terra.workspace.db.model.DbWorkspaceActivityLog;
+import bio.terra.workspace.generated.model.ApiTpsPolicyInputs;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamRethrow;
 import bio.terra.workspace.service.iam.SamService;
@@ -14,9 +14,11 @@ import bio.terra.workspace.service.iam.model.WsmIamRole;
 import bio.terra.workspace.service.job.JobBuilder;
 import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.job.JobService;
+import bio.terra.workspace.service.logging.WorkspaceActivityLogService;
 import bio.terra.workspace.service.resource.controlled.flight.clone.workspace.CloneGcpWorkspaceFlight;
 import bio.terra.workspace.service.stage.StageService;
 import bio.terra.workspace.service.workspace.exceptions.BufferServiceDisabledException;
+import bio.terra.workspace.service.workspace.exceptions.DuplicateWorkspaceException;
 import bio.terra.workspace.service.workspace.flight.CreateGcpContextFlightV2;
 import bio.terra.workspace.service.workspace.flight.DeleteAzureContextFlight;
 import bio.terra.workspace.service.workspace.flight.DeleteGcpContextFlight;
@@ -30,9 +32,11 @@ import bio.terra.workspace.service.workspace.model.AzureCloudContext;
 import bio.terra.workspace.service.workspace.model.OperationType;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceAndHighestRole;
+import com.google.common.base.Preconditions;
 import io.opencensus.contrib.spring.aop.Traced;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
@@ -60,7 +64,8 @@ public class WorkspaceService {
   private final BufferServiceConfiguration bufferServiceConfiguration;
   private final StageService stageService;
   private final FeatureConfiguration features;
-  private final WorkspaceActivityLogDao workspaceActivityLogDao;
+  private final TpsApiDispatch tpsApiDispatch;
+  private final WorkspaceActivityLogService workspaceActivityLogService;
 
   @Autowired
   public WorkspaceService(
@@ -69,25 +74,37 @@ public class WorkspaceService {
       SamService samService,
       BufferServiceConfiguration bufferServiceConfiguration,
       StageService stageService,
-      GcpCloudContextService gcpCloudContextService,
       FeatureConfiguration features,
-      WorkspaceActivityLogDao workspaceActivityLogDao) {
+      TpsApiDispatch tpsApiDispatch,
+      WorkspaceActivityLogService workspaceActivityLogService) {
     this.jobService = jobService;
     this.workspaceDao = workspaceDao;
     this.samService = samService;
     this.bufferServiceConfiguration = bufferServiceConfiguration;
     this.stageService = stageService;
     this.features = features;
-    this.workspaceActivityLogDao = workspaceActivityLogDao;
+    this.tpsApiDispatch = tpsApiDispatch;
+    this.workspaceActivityLogService = workspaceActivityLogService;
   }
 
   /** Create a workspace with the specified parameters. Returns workspaceID of the new workspace. */
   @Traced
-  public UUID createWorkspace(Workspace workspace, AuthenticatedUserRequest userRequest) {
-    String workspaceName = workspace.getDisplayName().orElse("");
+  public UUID createWorkspace(
+      Workspace workspace,
+      @Nullable ApiTpsPolicyInputs policies,
+      AuthenticatedUserRequest userRequest) {
     String workspaceUuid = workspace.getWorkspaceId().toString();
     String jobDescription =
-        String.format("Create workspace: name: '%s' id: '%s'  ", workspaceName, workspaceUuid);
+        String.format(
+            "Create workspace: name: '%s' id: '%s'  ",
+            workspace.getDisplayName().orElse(""), workspaceUuid);
+
+    // Before launching the flight, confirm the workspace does not already exist. This isn't perfect
+    // if two requests come in at nearly the same time, but it prevents launching a flight when a
+    // workspace already exists.
+    if (workspaceDao.getWorkspaceIfExists(workspace.getWorkspaceId()).isPresent()) {
+      throw new DuplicateWorkspaceException("Provided workspace ID is already in use");
+    }
 
     JobBuilder createJob =
         jobService
@@ -100,9 +117,7 @@ public class WorkspaceService {
             .operationType(OperationType.CREATE)
             .addParameter(
                 WorkspaceFlightMapKeys.WORKSPACE_STAGE, workspace.getWorkspaceStage().name())
-            .addParameter(WorkspaceFlightMapKeys.DISPLAY_NAME, workspaceName)
-            .addParameter(
-                WorkspaceFlightMapKeys.DESCRIPTION, workspace.getDescription().orElse(""));
+            .addParameter(WorkspaceFlightMapKeys.POLICIES, policies);
 
     if (workspace.getSpendProfileId().isPresent()) {
       createJob.addParameter(
@@ -191,18 +206,25 @@ public class WorkspaceService {
    */
   @Traced
   public List<WorkspaceAndHighestRole> listWorkspacesAndHighestRoles(
-      AuthenticatedUserRequest userRequest, int offset, int limit) {
+      AuthenticatedUserRequest userRequest, int offset, int limit, WsmIamRole minimumHighestRole) {
     // In general, highest SAM role should be fetched in controller. Fetch here to save a SAM call.
     Map<UUID, WsmIamRole> samWorkspaceIdsAndHighestRoles =
         SamRethrow.onInterrupted(
-            () -> samService.listWorkspaceIdsAndHighestRoles(userRequest), "listWorkspaceIds");
+            () -> samService.listWorkspaceIdsAndHighestRoles(userRequest, minimumHighestRole),
+            "listWorkspaceIds");
     return workspaceDao
         .getWorkspacesMatchingList(samWorkspaceIdsAndHighestRoles.keySet(), offset, limit)
         .stream()
         .map(
-            workspace ->
-                new WorkspaceAndHighestRole(
-                    workspace, samWorkspaceIdsAndHighestRoles.get(workspace.getWorkspaceId())))
+            workspace -> {
+              WsmIamRole highestRole =
+                  samWorkspaceIdsAndHighestRoles.get(workspace.getWorkspaceId());
+              Workspace workspaceToReturn =
+                  highestRole == WsmIamRole.DISCOVERER
+                      ? Workspace.stripWorkspaceForRequesterWithOnlyDiscovererRole(workspace)
+                      : workspace;
+              return new WorkspaceAndHighestRole(workspaceToReturn, highestRole);
+            })
         .toList();
   }
 
@@ -215,7 +237,9 @@ public class WorkspaceService {
   /** Retrieves an existing workspace by userFacingId */
   @Traced
   public Workspace getWorkspaceByUserFacingId(
-      String userFacingId, AuthenticatedUserRequest userRequest) {
+      String userFacingId,
+      AuthenticatedUserRequest userRequest,
+      WsmIamRole minimumHighestRoleFromRequest) {
     logger.info(
         "getWorkspaceByUserFacingId - userRequest: {}\nuserFacingId: {}",
         userRequest,
@@ -230,7 +254,7 @@ public class WorkspaceService {
                 userRequest,
                 SamConstants.SamResource.WORKSPACE,
                 workspace.getWorkspaceId().toString(),
-                SamWorkspaceAction.READ),
+                minimumHighestRoleFromRequest.toSamAction()),
         "checkAuthz");
     return workspace;
   }
@@ -244,7 +268,10 @@ public class WorkspaceService {
                 samService.listRequesterRoles(
                     userRequest, SamConstants.SamResource.WORKSPACE, uuid.toString()),
             "listRequesterRoles");
-    return WsmIamRole.getHighestRole(uuid, requesterRoles);
+    Optional<WsmIamRole> highestRole = WsmIamRole.getHighestRole(uuid, requesterRoles);
+    Preconditions.checkState(
+        highestRole.isPresent(), String.format("Workspace %s missing roles", uuid.toString()));
+    return highestRole.get();
   }
 
   /**
@@ -259,10 +286,10 @@ public class WorkspaceService {
       UUID workspaceUuid,
       @Nullable String userFacingId,
       @Nullable String name,
-      @Nullable String description) {
+      @Nullable String description,
+      AuthenticatedUserRequest userRequest) {
     if (workspaceDao.updateWorkspace(workspaceUuid, userFacingId, name, description)) {
-      workspaceActivityLogDao.writeActivity(
-          workspaceUuid, new DbWorkspaceActivityLog().operationType(OperationType.UPDATE));
+      workspaceActivityLogService.writeActivity(userRequest, workspaceUuid, OperationType.UPDATE);
     }
     return workspaceDao.getWorkspace(workspaceUuid);
   }
@@ -273,10 +300,10 @@ public class WorkspaceService {
    * @param workspaceUuid workspace of interest
    * @param properties list of keys in properties
    */
-  public void updateWorkspaceProperties(UUID workspaceUuid, Map<String, String> properties) {
+  public void updateWorkspaceProperties(
+      UUID workspaceUuid, Map<String, String> properties, AuthenticatedUserRequest userRequest) {
     workspaceDao.updateWorkspaceProperties(workspaceUuid, properties);
-    workspaceActivityLogDao.writeActivity(
-        workspaceUuid, new DbWorkspaceActivityLog().operationType(OperationType.UPDATE));
+    workspaceActivityLogService.writeActivity(userRequest, workspaceUuid, OperationType.UPDATE);
   }
 
   /** Delete an existing workspace by ID. */
@@ -302,10 +329,10 @@ public class WorkspaceService {
    * @param workspaceUuid workspace of interest
    * @param propertyKeys list of keys in properties
    */
-  public void deleteWorkspaceProperties(UUID workspaceUuid, List<String> propertyKeys) {
+  public void deleteWorkspaceProperties(
+      UUID workspaceUuid, List<String> propertyKeys, AuthenticatedUserRequest userRequest) {
     workspaceDao.deleteWorkspaceProperties(workspaceUuid, propertyKeys);
-    workspaceActivityLogDao.writeActivity(
-        workspaceUuid, new DbWorkspaceActivityLog().operationType(OperationType.UPDATE));
+    workspaceActivityLogService.writeActivity(userRequest, workspaceUuid, OperationType.DELETE);
   }
 
   /**
@@ -360,11 +387,10 @@ public class WorkspaceService {
           "Cannot create a GCP context in an environment where buffer service is disabled or not configured.");
     }
 
-    String workspaceName = workspace.getDisplayName().orElse("");
     String jobDescription =
         String.format(
             "Create GCP cloud context for workspace: name: '%s' id: '%s'  ",
-            workspaceName, workspace.getWorkspaceId());
+            workspace.getDisplayName().orElse(""), workspace.getWorkspaceId());
 
     jobService
         .newJob()
@@ -388,13 +414,14 @@ public class WorkspaceService {
       AuthenticatedUserRequest userRequest,
       @Nullable String location,
       Workspace destinationWorkspace) {
-    String workspaceName = sourceWorkspace.getDisplayName().orElse("");
     String workspaceUuid = sourceWorkspace.getWorkspaceId().toString();
     String jobDescription =
-        String.format("Clone workspace: name: '%s' id: '%s'  ", workspaceName, workspaceUuid);
+        String.format(
+            "Clone workspace: name: '%s' id: '%s'  ",
+            sourceWorkspace.getDisplayName().orElse(""), workspaceUuid);
 
     // Create the destination workspace synchronously first.
-    createWorkspace(destinationWorkspace, userRequest);
+    createWorkspace(destinationWorkspace, null, userRequest);
 
     // Remaining steps are an async flight.
     return jobService
@@ -416,11 +443,10 @@ public class WorkspaceService {
   /** Delete the GCP cloud context for the workspace. */
   @Traced
   public void deleteGcpCloudContext(Workspace workspace, AuthenticatedUserRequest userRequest) {
-    String workspaceName = workspace.getDisplayName().orElse("");
     String jobDescription =
         String.format(
             "Delete GCP cloud context for workspace: name: '%s' id: '%s'  ",
-            workspaceName, workspace.getWorkspaceId());
+            workspace.getDisplayName().orElse(""), workspace.getWorkspaceId());
 
     jobService
         .newJob()
@@ -433,11 +459,10 @@ public class WorkspaceService {
   }
 
   public void deleteAzureCloudContext(Workspace workspace, AuthenticatedUserRequest userRequest) {
-    String workspaceName = workspace.getDisplayName().orElse("");
     String jobDescription =
         String.format(
             "Delete Azure cloud context for workspace: name: '%s' id: '%s'  ",
-            workspaceName, workspace.getWorkspaceId());
+            workspace.getDisplayName().orElse(""), workspace.getWorkspaceId());
     jobService
         .newJob()
         .description(jobDescription)

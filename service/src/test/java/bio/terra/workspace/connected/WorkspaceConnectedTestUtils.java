@@ -19,7 +19,12 @@ public class WorkspaceConnectedTestUtils {
   private @Autowired JobService jobService;
   private @Autowired SpendConnectedTestUtils spendUtils;
 
-  /** Creates a workspace with a GCP cloud context. */
+  /**
+   * Creates a workspace with a GCP cloud context.
+   *
+   * <p>Note: To delete workspace and cloud context, call workspaceService.deleteWorkspace(). This
+   * automatically deletes cloud context.
+   */
   public Workspace createWorkspaceWithGcpContext(AuthenticatedUserRequest userRequest) {
     UUID workspaceUuid = UUID.randomUUID();
     Workspace workspace =
@@ -29,7 +34,7 @@ public class WorkspaceConnectedTestUtils {
             .spendProfileId(spendUtils.defaultSpendId())
             .workspaceStage(WorkspaceStage.MC_WORKSPACE)
             .build();
-    workspaceService.createWorkspace(workspace, userRequest);
+    workspaceService.createWorkspace(workspace, null, userRequest);
     String gcpContextJobId = UUID.randomUUID().toString();
     workspaceService.createGcpCloudContext(
         workspace, gcpContextJobId, userRequest, "fakeResultPath");

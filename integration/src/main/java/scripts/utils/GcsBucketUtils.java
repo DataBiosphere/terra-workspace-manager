@@ -1,12 +1,13 @@
 package scripts.utils;
 
+import static scripts.utils.CommonResourceFieldsUtil.makeControlledResourceCommonFields;
+
 import bio.terra.testrunner.runner.config.TestUserSpecification;
 import bio.terra.workspace.api.ControlledGcpResourceApi;
 import bio.terra.workspace.api.ReferencedGcpResourceApi;
 import bio.terra.workspace.client.ApiException;
 import bio.terra.workspace.model.AccessScope;
 import bio.terra.workspace.model.CloningInstructionsEnum;
-import bio.terra.workspace.model.ControlledResourceCommonFields;
 import bio.terra.workspace.model.CreateControlledGcpGcsBucketRequestBody;
 import bio.terra.workspace.model.CreateGcpGcsBucketReferenceRequestBody;
 import bio.terra.workspace.model.CreatedControlledGcpGcsBucket;
@@ -26,7 +27,6 @@ import bio.terra.workspace.model.JobControl;
 import bio.terra.workspace.model.JobReport;
 import bio.terra.workspace.model.ManagedBy;
 import bio.terra.workspace.model.PrivateResourceUser;
-import bio.terra.workspace.model.ReferenceResourceCommonFields;
 import bio.terra.workspace.model.UpdateGcsBucketObjectReferenceRequestBody;
 import bio.terra.workspace.model.UpdateGcsBucketReferenceRequestBody;
 import com.google.cloud.storage.Blob;
@@ -39,7 +39,6 @@ import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
@@ -159,16 +158,12 @@ public class GcsBucketUtils {
       CloningInstructionsEnum cloningInstructions,
       @Nullable PrivateResourceUser privateUser)
       throws Exception {
+
     var body =
         new CreateControlledGcpGcsBucketRequestBody()
             .common(
-                new ControlledResourceCommonFields()
-                    .accessScope(accessScope)
-                    .managedBy(managedBy)
-                    .cloningInstructions(cloningInstructions)
-                    .description("Description of " + name)
-                    .name(name)
-                    .privateResourceUser(privateUser))
+                makeControlledResourceCommonFields(
+                    name, privateUser, cloningInstructions, managedBy, accessScope))
             .gcsBucket(
                 new GcpGcsBucketCreationParameters()
                     .name(bucketName)
@@ -238,12 +233,8 @@ public class GcsBucketUtils {
     var body =
         new CreateGcpGcsBucketReferenceRequestBody()
             .metadata(
-                new ReferenceResourceCommonFields()
-                    .cloningInstructions(
-                        Optional.ofNullable(cloningInstructions)
-                            .orElse(CloningInstructionsEnum.NOTHING))
-                    .description("Description of " + name)
-                    .name(name))
+                CommonResourceFieldsUtil.makeReferencedResourceCommonFields(
+                    name, cloningInstructions))
             .bucket(bucket);
 
     GcpGcsBucketResource result =

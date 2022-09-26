@@ -815,6 +815,93 @@ public class CreateAndDeleteAzureControlledResourceFlightTest extends BaseAzureT
         azureTestUtils.getComputeManager().disks()::getByResourceGroup);
   }
 
+  @Test
+  public void createAndDeleteAzureVmControlledResourceWithEphemeralDiskWithNoPublicIp()
+      throws InterruptedException {
+    // Setup workspace and cloud context
+    Workspace workspace = azureTestUtils.createWorkspace(workspaceService);
+    UUID workspaceUuid = workspace.getWorkspaceId();
+    AuthenticatedUserRequest userRequest = userAccessUtils.defaultUserAuthRequest();
+    createCloudContext(workspaceUuid, userRequest);
+
+    // Create network
+    ControlledAzureNetworkResource networkResource = createNetwork(workspaceUuid, userRequest);
+
+    final ApiAzureVmCreationParameters creationParameters =
+        ControlledResourceFixtures.getAzureVmCreationParametersWithEphemeralOsDiskAndCustomData();
+
+    // TODO: make this application-private resource once the POC supports it
+    final UUID resourceId = UUID.randomUUID();
+    ControlledAzureVmResource resource =
+        ControlledAzureVmResource.builder()
+            .common(
+                ControlledResourceFields.builder()
+                    .workspaceUuid(workspaceUuid)
+                    .resourceId(resourceId)
+                    .name(getAzureName("vm"))
+                    .description(getAzureName("vm-desc"))
+                    .cloningInstructions(CloningInstructions.COPY_RESOURCE)
+                    .accessScope(AccessScopeType.fromApi(ApiAccessScope.SHARED_ACCESS))
+                    .managedBy(ManagedByType.fromApi(ApiManagedBy.USER))
+                    .build())
+            .vmName(creationParameters.getName())
+            .vmSize(creationParameters.getVmSize())
+            .vmImage(AzureVmUtils.getImageData(creationParameters.getVmImage()))
+            .region(creationParameters.getRegion())
+            // .ipId(ipResource.getResourceId())
+            // .diskId(diskResource.getResourceId())
+            .networkId(networkResource.getResourceId())
+            .build();
+
+    // Submit a VM creation flight and verify the resource exists in the workspace.
+    createVMResource(workspaceUuid, userRequest, resource, creationParameters);
+
+    // Exercise resource enumeration for the underlying resources.
+    // Verify that the resources we created are in the enumeration.
+    List<WsmResource> resourceList =
+        wsmResourceService.enumerateResources(workspaceUuid, null, null, 0, 100);
+    // checkForResource(resourceList, ipResource);
+    // checkForResource(resourceList, diskResource);
+    checkForResource(resourceList, networkResource);
+    checkForResource(resourceList, resource);
+
+    ComputeManager computeManager = azureTestUtils.getComputeManager();
+
+    final VirtualMachine resolvedVm = getVirtualMachine(creationParameters, computeManager);
+
+    // Submit a VM deletion flight.
+    FlightState deleteFlightState =
+        StairwayTestUtils.blockUntilFlightCompletes(
+            jobService.getStairway(),
+            DeleteControlledResourceFlight.class,
+            azureTestUtils.deleteControlledResourceInputParameters(
+                workspaceUuid, resourceId, userRequest, resource),
+            STAIRWAY_FLIGHT_TIMEOUT,
+            null);
+    assertEquals(FlightStatus.SUCCESS, deleteFlightState.getFlightStatus());
+
+    Thread.sleep(10000);
+    resolvedVm
+        .networkInterfaceIds()
+        .forEach(
+            nic ->
+                assertThrows(
+                    com.azure.core.exception.HttpResponseException.class,
+                    () -> computeManager.networkManager().networks().getById(nic)));
+    assertThrows(
+        com.azure.core.exception.HttpResponseException.class,
+        () -> computeManager.disks().getById(resolvedVm.osDiskId()));
+
+    // clean up resources - we need to remove only network since current VM has no public ip;
+    submitControlledResourceDeletionFlight(
+        workspaceUuid,
+        userRequest,
+        networkResource,
+        azureTestUtils.getAzureCloudContext().getAzureResourceGroupId(),
+        networkResource.getNetworkName(),
+        azureTestUtils.getComputeManager().networkManager().networks()::getByResourceGroup);
+  }
+
   private VirtualMachine getVirtualMachine(
       ApiAzureVmCreationParameters creationParameters, ComputeManager computeManager)
       throws InterruptedException {

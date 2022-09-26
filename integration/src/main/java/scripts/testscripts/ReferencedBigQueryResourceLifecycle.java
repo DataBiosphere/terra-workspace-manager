@@ -30,6 +30,7 @@ import java.util.UUID;
 import scripts.utils.BqDataTableUtils;
 import scripts.utils.BqDatasetUtils;
 import scripts.utils.ClientTestUtils;
+import scripts.utils.CommonResourceFieldsUtil;
 import scripts.utils.MultiResourcesUtils;
 import scripts.utils.ParameterUtils;
 import scripts.utils.WorkspaceAllocateTestScriptBase;
@@ -88,6 +89,9 @@ public class ReferencedBigQueryResourceLifecycle extends WorkspaceAllocateTestSc
             MultiResourcesUtils.makeName(),
             CloningInstructionsEnum.REFERENCE);
     bqDatasetResourceId = referencedDataset.getMetadata().getResourceId();
+    assertEquals(
+        CommonResourceFieldsUtil.getResourceDefaultProperties(),
+        referencedDataset.getMetadata().getProperties());
     GcpBigQueryDataTableResource referencedDataTable =
         BqDatasetUtils.makeBigQueryDataTableReference(
             referencedBqTableAttributes,
@@ -96,6 +100,9 @@ public class ReferencedBigQueryResourceLifecycle extends WorkspaceAllocateTestSc
             MultiResourcesUtils.makeName(),
             CloningInstructionsEnum.REFERENCE);
     bqDataTableResourceId = referencedDataTable.getMetadata().getResourceId();
+    assertEquals(
+        CommonResourceFieldsUtil.getResourceDefaultProperties(),
+        referencedDataTable.getMetadata().getProperties());
 
     // Get references
     testGetReferences(referencedDataset, referencedDataTable, referencedGcpResourceApi);

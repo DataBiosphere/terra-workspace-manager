@@ -316,3 +316,24 @@ The integration tests live in the `integration` project. Consult the integration
 
 In the early days of the project, there were JUnit-based integration tests. We are in
 process of migrating them to Test Runner.
+
+#### Cleaning up workspaces in tests
+
+We have 2 ways of cleaning up resources (WSM workspace, SAM workspace, GCP project):
+
+1. Connected tests use Janitor. Janitor deletes GCP project and not SAM
+   workspace (see
+   [here](https://github.com/DataBiosphere/terra-workspace-manager/pull/755#discussion_r942717257) for details).
+2. Tests call WSM `deleteWorkspace()`. This deletes WSM workspace + SAM workspace +
+   GCP project.
+
+Connected tests that use mock SamService: Tests don't need to call
+`deleteWorkspace()` because there is no SAM workspace to clean up.
+
+Connected tests that use real SamService: Tests should call `deleteWorkspace()`
+to clean up SAM workspaces. Why not just call `deleteWorkspace()` and not use
+janitor? Janitor is useful in case test fails (or `deleteWorkspace()` fails).
+
+Integration tests: Tests should call `deleteWorkspace()` because integration
+tests don't use janitor. Most tests don't need to worry about this because
+`WorkspaceAllocateTestScriptBase.java` deletes the workspace it creates.

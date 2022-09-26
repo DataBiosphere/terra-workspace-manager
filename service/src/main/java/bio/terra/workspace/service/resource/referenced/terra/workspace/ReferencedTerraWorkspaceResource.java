@@ -14,13 +14,16 @@ import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.iam.model.SamConstants;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
+import bio.terra.workspace.service.resource.model.ResourceLineageEntry;
 import bio.terra.workspace.service.resource.model.WsmResourceFamily;
+import bio.terra.workspace.service.resource.model.WsmResourceFields;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.resource.referenced.cloud.gcp.ReferencedResource;
 import bio.terra.workspace.service.resource.referenced.exception.InvalidReferenceException;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import java.util.Optional;
+import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 public class ReferencedTerraWorkspaceResource extends ReferencedResource {
@@ -35,6 +38,7 @@ public class ReferencedTerraWorkspaceResource extends ReferencedResource {
    * @param description description - may be null
    * @param cloningInstructions cloning instructions
    * @param referencedWorkspaceId workspace uuid that this referenced resource points to
+   * @param resourceLineage resource lineage
    */
   @JsonCreator
   public ReferencedTerraWorkspaceResource(
@@ -43,8 +47,17 @@ public class ReferencedTerraWorkspaceResource extends ReferencedResource {
       @JsonProperty("name") String name,
       @JsonProperty("description") String description,
       @JsonProperty("cloningInstructions") CloningInstructions cloningInstructions,
-      @JsonProperty("referencedWorkspaceId") UUID referencedWorkspaceId) {
-    super(workspaceId, resourceId, name, description, cloningInstructions);
+      @JsonProperty("referencedWorkspaceId") UUID referencedWorkspaceId,
+      @JsonProperty("resourceLineage") List<ResourceLineageEntry> resourceLineage,
+      @JsonProperty("properties") Map<String, String> properties) {
+    super(
+        workspaceId,
+        resourceId,
+        name,
+        description,
+        cloningInstructions,
+        resourceLineage,
+        properties);
     this.referencedWorkspaceId = referencedWorkspaceId;
     validate();
   }
@@ -63,6 +76,12 @@ public class ReferencedTerraWorkspaceResource extends ReferencedResource {
     ReferencedTerraWorkspaceAttributes attributes =
         DbSerDes.fromJson(dbResource.getAttributes(), ReferencedTerraWorkspaceAttributes.class);
     this.referencedWorkspaceId = attributes.getReferencedWorkspaceId();
+    validate();
+  }
+
+  private ReferencedTerraWorkspaceResource(Builder builder) {
+    super(builder.resourceCommonFields);
+    this.referencedWorkspaceId = builder.referencedWorkspaceId;
     validate();
   }
 
@@ -152,61 +171,27 @@ public class ReferencedTerraWorkspaceResource extends ReferencedResource {
    */
   public Builder toBuilder() {
     return builder()
-        .cloningInstructions(getCloningInstructions())
-        .description(getDescription())
-        .name(getName())
-        .referencedWorkspaceId(getReferencedWorkspaceId())
-        .resourceId(getResourceId())
-        .workspaceId(getWorkspaceId());
+        .resourceCommonFields(getWsmResourceFields())
+        .referencedWorkspaceId(getReferencedWorkspaceId());
   }
 
   public static class Builder {
-    private UUID workspaceId;
-    private UUID resourceId;
-    private String name;
-    private String description;
-    private CloningInstructions cloningInstructions;
     private UUID referencedWorkspaceId;
-
-    public Builder workspaceId(UUID workspaceUuid) {
-      this.workspaceId = workspaceUuid;
-      return this;
-    }
-
-    public Builder resourceId(UUID resourceId) {
-      this.resourceId = resourceId;
-      return this;
-    }
-
-    public Builder name(String name) {
-      this.name = name;
-      return this;
-    }
-
-    public Builder description(String description) {
-      this.description = description;
-      return this;
-    }
-
-    public Builder cloningInstructions(CloningInstructions cloningInstructions) {
-      this.cloningInstructions = cloningInstructions;
-      return this;
-    }
+    private WsmResourceFields resourceCommonFields;
 
     public Builder referencedWorkspaceId(UUID referencedWorkspaceId) {
       this.referencedWorkspaceId = referencedWorkspaceId;
       return this;
     }
 
+    public Builder resourceCommonFields(WsmResourceFields resourceFields) {
+      this.resourceCommonFields = resourceFields;
+      return this;
+    }
+
     public ReferencedTerraWorkspaceResource build() {
       // On the create path, we can omit the resourceId and have it filled in by the builder.
-      return new ReferencedTerraWorkspaceResource(
-          workspaceId,
-          Optional.ofNullable(resourceId).orElse(UUID.randomUUID()),
-          name,
-          description,
-          cloningInstructions,
-          referencedWorkspaceId);
+      return new ReferencedTerraWorkspaceResource(this);
     }
   }
 }

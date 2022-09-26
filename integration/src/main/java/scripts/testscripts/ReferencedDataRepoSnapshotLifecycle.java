@@ -25,6 +25,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import scripts.utils.ClientTestUtils;
+import scripts.utils.CommonResourceFieldsUtil;
 import scripts.utils.DataRepoUtils;
 import scripts.utils.MultiResourcesUtils;
 import scripts.utils.ParameterKeys;
@@ -80,6 +81,9 @@ public class ReferencedDataRepoSnapshotLifecycle extends WorkspaceAllocateTestSc
             snapshotId,
             tdrInstance);
     snapshotResourceId = snapshotResource.getMetadata().getResourceId();
+    assertEquals(
+        CommonResourceFieldsUtil.getResourceDefaultProperties(),
+        snapshotResource.getMetadata().getProperties());
 
     // Get the reference
     ResourceApi resourceApi = ClientTestUtils.getResourceClient(testUser, server);

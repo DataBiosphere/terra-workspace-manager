@@ -23,14 +23,16 @@ import bio.terra.workspace.service.resource.controlled.model.ControlledResourceF
 import bio.terra.workspace.service.resource.controlled.model.ManagedByType;
 import bio.terra.workspace.service.resource.controlled.model.PrivateResourceState;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
+import bio.terra.workspace.service.resource.model.ResourceLineageEntry;
 import bio.terra.workspace.service.resource.model.StewardshipType;
 import bio.terra.workspace.service.resource.model.WsmResourceFamily;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
-import javax.annotation.Nullable;
 
 public class ControlledGcsBucketResource extends ControlledResource {
 
@@ -48,7 +50,9 @@ public class ControlledGcsBucketResource extends ControlledResource {
       @JsonProperty("accessScope") AccessScopeType accessScope,
       @JsonProperty("managedBy") ManagedByType managedBy,
       @JsonProperty("applicationId") String applicationId,
-      @JsonProperty("bucketName") String bucketName) {
+      @JsonProperty("bucketName") String bucketName,
+      @JsonProperty("resourceLineage") List<ResourceLineageEntry> resourceLineage,
+      @JsonProperty("properties") Map<String, String> properties) {
 
     super(
         workspaceId,
@@ -60,7 +64,9 @@ public class ControlledGcsBucketResource extends ControlledResource {
         accessScope,
         managedBy,
         applicationId,
-        privateResourceState);
+        privateResourceState,
+        resourceLineage,
+        properties);
     this.bucketName = bucketName;
     validate();
   }
@@ -213,8 +219,8 @@ public class ControlledGcsBucketResource extends ControlledResource {
       return this;
     }
 
-    public ControlledGcsBucketResource.Builder bucketName(@Nullable String bucketName) {
-      this.bucketName = Optional.ofNullable(bucketName).orElse(generateBucketName());
+    public ControlledGcsBucketResource.Builder bucketName(String bucketName) {
+      this.bucketName = bucketName;
       return this;
     }
 

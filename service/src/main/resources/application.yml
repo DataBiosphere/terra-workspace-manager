@@ -16,6 +16,14 @@ env:
       name: ${POLICY_DATABASE_NAME:policy_db}
       pass: ${POLICY_DATABASE_USER_PASSWORD:dbpwd}
       user: ${POLICY_DATABASE_USER:dbuser}
+    landingzone:
+      name: ${LANDINGZONE_DATABASE_NAME:landingzone_db}
+      pass: ${LANDINGZONE_DATABASE_USER_PASSWORD:landingzonepwd}
+      user: ${LANDINGZONE_DATABASE_USER:landingzoneuser}
+    landingzonestairway:
+      name: ${LANDINGZONE_STAIRWAY_DATABASE_NAME:landingzone_stairway_db}
+      pass: ${LANDINGZONE_STAIRWAY_DATABASE_USER_PASSWORD:landingzonestairwaypwd}
+      user: ${LANDINGZONE_STAIRWAY_DATABASE_USER:landingzonestairwayuser}
   tracing:
     exportEnabled: ${CLOUD_TRACE_ENABLED:false}
     samplingRate: ${SAMPLING_PROBABILITY:0}
@@ -29,6 +37,8 @@ env:
 # contains the configuration of the WSM test application. We can use that application in our
 # integration testing to make sure the application code paths are working. However, we do not
 # want it to appear in production environments.
+# Imports are treated as additional documents inserted below this one, so the
+# properties in local-properties are guaranteed to override values here in application.yml
 spring.config.import: optional:file:../config/local-properties.yml
 
 logging.pattern.level: '%X{requestId} %5p'
@@ -49,7 +59,6 @@ spring:
           must-revalidate: true
         use-last-modified: false
       static-locations: classpath:/api/
-
 workspace:
   datarepo.instances:
     terra: ${env.urls.terra-datarepo}
@@ -116,6 +125,7 @@ workspace:
   azure:
     sas-token-start-time-minutes-offset: 15
     sas-token-expiry-time-minutes-offset: 60
+    cors-allowed-origins:
 
 terra.common:
   kubernetes:
@@ -143,6 +153,32 @@ policy:
     upgrade-on-start: true
     uri: ${env.db.host}/${env.db.policy.name}
     username: ${env.db.policy.user}
+
+#Terra Landing Zone Service configuration
+landingzone:
+  landingzone-database:
+    initialize-on-start: ${env.db.init}
+    password: ${env.db.landingzone.pass}
+    upgrade-on-start: true
+    uri: ${env.db.host}/${env.db.landingzone.name}
+    username: ${env.db.landingzone.user}
+  landingzone-stairway-database:
+    initialize-on-start: ${env.db.init}
+    password: ${env.db.landingzonestairway.pass}
+    upgrade-on-start: true
+    uri: ${env.db.host}/${env.db.landingzonestairway.name}
+    username: ${env.db.landingzonestairway.user}
+  stairway:
+    cluster-name-suffix: landingzone-stairway
+    force-clean-start: false # ${env.db.init}
+    max-parallel-flights: 50
+    migrate-upgrade: true
+    quiet-down-timeout: 30s
+    terminate-timeout: 30s
+    tracing-enabled: true
+    retention-check-interval: 1d
+    completed-flight-retention: 7d
+
 
 # Feature flags
 # The general rule is that feature flags should be set here in their production setting
@@ -176,3 +212,4 @@ reference:
       - bitbucket.org
       - dev.azure.com
       - ssh.dev.azure.com
+

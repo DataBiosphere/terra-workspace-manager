@@ -39,6 +39,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -59,6 +60,7 @@ import org.springframework.test.annotation.DirtiesContext.MethodMode;
 // disable operating
 // Enumerate/get
 
+@Disabled("Until we get the postgres connection leaks addressed")
 public class ApplicationServiceTest extends BaseUnitTest {
   private static final String LEO_ID = "4BD1D59D-5827-4375-A41D-BBC65919F269";
   private static final String CARMEN_ID = "Carmen";
@@ -151,7 +153,7 @@ public class ApplicationServiceTest extends BaseUnitTest {
             .workspaceStage(WorkspaceStage.MC_WORKSPACE)
             .build();
 
-    workspaceService.createWorkspace(workspace, USER_REQUEST);
+    workspaceService.createWorkspace(workspace, null, USER_REQUEST);
 
     UUID workspaceId2 = UUID.randomUUID();
     workspace2 =
@@ -161,7 +163,7 @@ public class ApplicationServiceTest extends BaseUnitTest {
             .spendProfileId(null)
             .workspaceStage(WorkspaceStage.MC_WORKSPACE)
             .build();
-    workspaceService.createWorkspace(workspace2, USER_REQUEST);
+    workspaceService.createWorkspace(workspace2, null, USER_REQUEST);
   }
 
   @DirtiesContext(methodMode = MethodMode.BEFORE_METHOD)

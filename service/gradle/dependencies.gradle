@@ -20,7 +20,7 @@ dependencies {
   implementation group: "io.opencensus", name: "opencensus-contrib-http-jaxrs", version: "0.28.3"
 
   // Get stairway via TCL
-  implementation("bio.terra:terra-common-lib:0.0.61-SNAPSHOT") {
+  implementation("bio.terra:terra-common-lib:0.0.69-SNAPSHOT") {
     exclude group: "org.broadinstitute.dsde.workbench", module: "sam-client_2.12"
   }
   implementation group: "org.broadinstitute.dsde.workbench", name: "sam-client_2.13", version: "0.1-e826d4d"
@@ -30,10 +30,15 @@ dependencies {
   implementation group: "com.squareup.okhttp3", name: "logging-interceptor", version: "4.9.1"
 
   // Cloud Resource Library
-  implementation group: 'bio.terra', name: 'terra-cloud-resource-lib', version: "1.2.0-SNAPSHOT"
+  implementation group: 'bio.terra', name: 'terra-cloud-resource-lib', version: "1.2.2-SNAPSHOT"
 
   // Terra Policy Service
-  implementation('bio.terra:terra-policy-service:0.2.0-SNAPSHOT') {
+  implementation('bio.terra:terra-policy-service:0.2.4-SNAPSHOT') {
+    exclude group: "org.broadinstitute.dsde.workbench", module: "sam-client_2.12"
+  }
+
+  //Terra Landing Zone Service
+  implementation ('bio.terra:terra-landing-zone-service:0.0.5-SNAPSHOT') {
     exclude group: "org.broadinstitute.dsde.workbench", module: "sam-client_2.12"
   }
 
@@ -44,7 +49,7 @@ dependencies {
   // Versioned direct deps
   implementation group: "org.hashids", name: "hashids", version: "1.0.3"
   implementation group: "com.fasterxml.jackson.core", name: "jackson-core", version: "2.13.2"
-  implementation group: "org.liquibase", name: "liquibase-core", version: "4.2.1"
+  implementation group: "org.liquibase", name: "liquibase-core", version: "4.8.0"
   implementation group: "org.webjars", name: "webjars-locator-core", version: "0.46"
   runtimeOnly group: "org.postgresql", name: "postgresql", version: "42.3.3"
 

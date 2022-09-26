@@ -3,6 +3,8 @@ package scripts.utils;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.greaterThanOrEqualTo;
 import static org.hamcrest.Matchers.is;
+import static scripts.utils.CommonResourceFieldsUtil.makeControlledResourceCommonFields;
+import static scripts.utils.CommonResourceFieldsUtil.makeReferencedResourceCommonFields;
 
 import bio.terra.testrunner.runner.config.TestUserSpecification;
 import bio.terra.workspace.api.ControlledGcpResourceApi;
@@ -10,7 +12,6 @@ import bio.terra.workspace.api.ReferencedGcpResourceApi;
 import bio.terra.workspace.client.ApiException;
 import bio.terra.workspace.model.AccessScope;
 import bio.terra.workspace.model.CloningInstructionsEnum;
-import bio.terra.workspace.model.ControlledResourceCommonFields;
 import bio.terra.workspace.model.CreateControlledGcpBigQueryDatasetRequestBody;
 import bio.terra.workspace.model.CreateGcpBigQueryDataTableReferenceRequestBody;
 import bio.terra.workspace.model.CreateGcpBigQueryDatasetReferenceRequestBody;
@@ -21,7 +22,6 @@ import bio.terra.workspace.model.GcpBigQueryDatasetCreationParameters;
 import bio.terra.workspace.model.GcpBigQueryDatasetResource;
 import bio.terra.workspace.model.ManagedBy;
 import bio.terra.workspace.model.PrivateResourceUser;
-import bio.terra.workspace.model.ReferenceResourceCommonFields;
 import bio.terra.workspace.model.UpdateBigQueryDatasetReferenceRequestBody;
 import com.google.cloud.bigquery.BigQuery;
 import com.google.cloud.bigquery.Field;
@@ -80,11 +80,7 @@ public class BqDatasetUtils {
 
     var body =
         new CreateGcpBigQueryDatasetReferenceRequestBody()
-            .metadata(
-                new ReferenceResourceCommonFields()
-                    .cloningInstructions(cloningInstructions)
-                    .description("Description of " + name)
-                    .name(name))
+            .metadata(makeReferencedResourceCommonFields(name, cloningInstructions))
             .dataset(dataset);
 
     GcpBigQueryDatasetResource result =
@@ -155,11 +151,7 @@ public class BqDatasetUtils {
       throws Exception {
     var body =
         new CreateGcpBigQueryDataTableReferenceRequestBody()
-            .metadata(
-                new ReferenceResourceCommonFields()
-                    .cloningInstructions(cloningInstructions)
-                    .description("Description of " + name)
-                    .name(name))
+            .metadata(makeReferencedResourceCommonFields(name, cloningInstructions))
             .dataTable(dataTable);
 
     return ClientTestUtils.getWithRetryOnException(
@@ -220,15 +212,13 @@ public class BqDatasetUtils {
     var body =
         new CreateControlledGcpBigQueryDatasetRequestBody()
             .common(
-                new ControlledResourceCommonFields()
-                    .accessScope(accessScope)
-                    .managedBy(managedBy)
-                    .cloningInstructions(
-                        Optional.ofNullable(cloningInstructions)
-                            .orElse(CloningInstructionsEnum.NOTHING))
-                    .description("Description of " + resourceName)
-                    .name(resourceName)
-                    .privateResourceUser(privateUser))
+                makeControlledResourceCommonFields(
+                    resourceName,
+                    privateUser,
+                    Optional.ofNullable(cloningInstructions)
+                        .orElse(CloningInstructionsEnum.NOTHING),
+                    managedBy,
+                    accessScope))
             .dataset(new GcpBigQueryDatasetCreationParameters().datasetId(datasetId));
 
     logger.info(

@@ -15,11 +15,13 @@ import bio.terra.workspace.api.ControlledGcpResourceApi;
 import bio.terra.workspace.api.ResourceApi;
 import bio.terra.workspace.api.WorkspaceApi;
 import bio.terra.workspace.client.ApiException;
+import bio.terra.workspace.model.AiNotebookCloudId;
 import bio.terra.workspace.model.CreatedControlledGcpAiNotebookInstanceResult;
 import bio.terra.workspace.model.DeleteControlledGcpAiNotebookInstanceRequest;
 import bio.terra.workspace.model.DeleteControlledGcpAiNotebookInstanceResult;
 import bio.terra.workspace.model.GcpAiNotebookInstanceResource;
 import bio.terra.workspace.model.GcpAiNotebookUpdateParameters;
+import bio.terra.workspace.model.GenerateGcpAiNotebookCloudIdRequestBody;
 import bio.terra.workspace.model.GrantRoleRequestBody;
 import bio.terra.workspace.model.IamRole;
 import bio.terra.workspace.model.JobControl;
@@ -42,6 +44,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import scripts.utils.ClientTestUtils;
 import scripts.utils.CloudContextMaker;
+import scripts.utils.CommonResourceFieldsUtil;
 import scripts.utils.MultiResourcesUtils;
 import scripts.utils.NotebookUtils;
 import scripts.utils.WorkspaceAllocateTestScriptBase;
@@ -90,9 +93,17 @@ public class PrivateControlledAiNotebookInstanceLifecycle extends WorkspaceAlloc
         ClientTestUtils.getControlledGcpResourceClient(resourceUser, server);
     CreatedControlledGcpAiNotebookInstanceResult creationResult =
         NotebookUtils.makeControlledNotebookUserPrivate(
-            getWorkspaceId(), instanceId, /*location=*/ null, resourceUserApi);
+            getWorkspaceId(),
+            instanceId,
+            /*location=*/ null,
+            resourceUserApi,
+            /*testValue=*/ null,
+            /*postStartupScript=*/ null);
 
     UUID resourceId = creationResult.getAiNotebookInstance().getMetadata().getResourceId();
+    assertEquals(
+        CommonResourceFieldsUtil.getResourceDefaultProperties(),
+        creationResult.getAiNotebookInstance().getMetadata().getProperties());
 
     GcpAiNotebookInstanceResource resource =
         resourceUserApi.getAiNotebookInstance(getWorkspaceId(), resourceId);
@@ -116,6 +127,13 @@ public class PrivateControlledAiNotebookInstanceLifecycle extends WorkspaceAlloc
         "us-central1-a",
         resource.getAttributes().getLocation(),
         "The notebook uses the default location because location is not specified.");
+
+    GenerateGcpAiNotebookCloudIdRequestBody aiNotebookNameRequest =
+        new GenerateGcpAiNotebookCloudIdRequestBody().aiNotebookName(instanceId);
+    AiNotebookCloudId cloudAiNotebookName =
+        resourceUserApi.generateAiNotebookCloudInstanceId(aiNotebookNameRequest, getWorkspaceId());
+    assertEquals(
+        cloudAiNotebookName.getGeneratedAiNotebookAiNotebookCloudId(), instanceId.toLowerCase());
 
     // Any workspace user should be able to enumerate notebooks, even though they can't
     // read or write them.
@@ -226,7 +244,12 @@ public class PrivateControlledAiNotebookInstanceLifecycle extends WorkspaceAlloc
           ControlledGcpResourceApi resourceUserApi) throws ApiException, InterruptedException {
     CreatedControlledGcpAiNotebookInstanceResult resourceWithNotebookInstanceIdNotSpecified =
         NotebookUtils.makeControlledNotebookUserPrivate(
-            getWorkspaceId(), /*instanceId=*/ null, /*location=*/ null, resourceUserApi);
+            getWorkspaceId(),
+            /*instanceId=*/ null,
+            /*location=*/ null,
+            resourceUserApi,
+            /*testValue=*/ null,
+            /*postStartupScript=*/ null);
     assertNotNull(
         resourceWithNotebookInstanceIdNotSpecified
             .getAiNotebookInstance()
@@ -247,7 +270,12 @@ public class PrivateControlledAiNotebookInstanceLifecycle extends WorkspaceAlloc
     String location = "us-east1-b";
     CreatedControlledGcpAiNotebookInstanceResult resourceWithNotebookInstanceIdNotSpecified =
         NotebookUtils.makeControlledNotebookUserPrivate(
-            getWorkspaceId(), /*instanceId=*/ null, /*location=*/ location, resourceUserApi);
+            getWorkspaceId(),
+            /*instanceId=*/ null,
+            /*location=*/ location,
+            resourceUserApi,
+            /*testValue=*/ null,
+            /*postStartupScript=*/ null);
     assertEquals(
         location,
         resourceWithNotebookInstanceIdNotSpecified

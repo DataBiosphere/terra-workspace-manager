@@ -34,7 +34,19 @@ components:
 
     CloningInstructionsEnum:
       type: string
-      description: Instructions for copying this reference when cloning the workspace
+      description: >-
+        How to clone resource:
+          * COPY_NOTHING: Don't clone resource.
+          * COPY_DEFINITION: Only used for controlled resources. Create new controlled resource
+            and new cloud resource with same metadata, but don't copy any data. For example
+            for GCS bucket, create new GCS bucket with same region/lifecycle rules as source
+            bucket. Files will not be copied over.
+          * COPY_RESOURCE: Only used for controlled resources. Create new controlled resource
+            and new cloud resource, with data copied over.  For example for GCS bucket,
+            create new GCS bucket with same region/lifecycle rules as source bucket. Copy files
+            from source bucket to new bucket.
+          * COPY_REFERENCE: Only used for referenced resources. Create new referenced resource
+            that points to same cloud resource as source referenced resource.
       enum: ['COPY_NOTHING', 'COPY_DEFINITION', 'COPY_RESOURCE', 'COPY_REFERENCE']
   
     ControlledResourceIamRole:
@@ -73,6 +85,8 @@ components:
         resourceId:
           type: string
           format: uuid
+        properties:
+          $ref: '#/components/schemas/Properties'
   
     DeleteControlledAzureResourceRequest:
       type: object
@@ -154,14 +168,6 @@ components:
       type: string
       pattern: '^[a-zA-Z0-9][-_a-zA-Z0-9]{0,1023}$'
 
-    PrivateResourceIamRoles:
-      description: >-
-        List of role(s) granted to the user of a private resource. In the current permission model
-        EDITOR includes WRITER includes READER by definition. We only grant the maximum role listed.
-      type: array
-      items:
-        $ref: '#/components/schemas/ControlledResourceIamRole'
-
     PrivateResourceUser:
       description: >-
         This text describes the target state:
@@ -170,18 +176,13 @@ components:
         users will have no direct access to the associated cloud resource. If this element
         is specified both fields are required.
       type: object
-      # TODO: PF-1218 - This is disallowed for user private resources. Both the single role and role list are
-      # accepted as an interim step. Once the CLI and UI are updated, we should only accept the single role
-      # and require both fields to be present.
-      #      required: [ userName, privateResourceIamRole ]
+      required: [userName, privateResourceIamRole]
       properties:
         userName:
           description: email of the workspace user to grant access
           type: string
         privateResourceIamRole:
           $ref: '#/components/schemas/ControlledResourceIamRole'
-        privateResourceIamRoles:
-          $ref: '#/components/schemas/PrivateResourceIamRoles'
   
     PrivateResourceState:
       description: >-
@@ -203,12 +204,32 @@ components:
           $ref: "#/components/schemas/Name"
         description:
           type: string
+        properties:
+          $ref: '#/components/schemas/Properties'
         cloningInstructions:
           $ref: '#/components/schemas/CloningInstructionsEnum'
-  
+
+    ResourceLineage:
+      type: array
+      items:
+        $ref: '#/components/schemas/ResourceLineageEntry'
+
+    ResourceLineageEntry:
+      type: object
+      required: [sourceWorkspaceId, sourceResourceId]
+      description: Resource lineage entry describing a single clone operation
+      properties:
+        sourceWorkspaceId:
+          type: string
+          format: uuid
+        sourceResourceId:
+          type: string
+          format: uuid
+
     # All resource objects include this resource metadata object and call it 'metadata'
     ResourceMetadata:
       type: object
+      required: [workspaceId, resourceId, name, resourceType, stewardshipType]
       properties:
         workspaceId:
           type: string
@@ -231,8 +252,42 @@ components:
         controlledResourceMetadata:
           description: Present if stewardship type is CONTROLLED
           $ref: '#/components/schemas/ControlledResourceMetadata'
+        resourceLineage:
+          $ref: '#/components/schemas/ResourceLineage'
+        properties:
+          $ref: '#/components/schemas/Properties'
 
     StewardshipType:
       description: Enum containing valid stewardship types. Used for enumeration
       type: string
       enum: ['REFERENCED', 'CONTROLLED']
+
+    FolderId:
+      description: Id of a given folder. Unique and immutable within a workspace.
+      type: string
+      format: uuid
+
+    Properties:
+      description: Optional list of key-value pairs of strings
+      type: array
+      items:
+        $ref: '#/components/schemas/Property'
+
+    Property:
+      type: object
+      required: [ key, value ]
+      properties:
+        key:
+          description: |
+            String to identify the key. Keys must be 1-1024 characters, using letters,
+            numbers, dashes, and underscores and must not start with a dash or underscore.
+          type: string
+        value:
+          description: Arbitrary string value
+          type: string
+
+    PropertyKeys:
+      description: A list of property keys that in the properties
+      type: array
+      items:
+        type: string

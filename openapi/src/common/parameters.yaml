@@ -37,6 +37,19 @@ components:
       schema:
         type: string
 
+    MinimumHighestRole:
+      name: minimumHighestRole
+      in: query
+      description: |
+        Returned workspace's highest role must be at least this. If
+        minimumHighestRole is READER and requester only has DISCOVERER role,
+        workspace is not returned. If not set, defaults to READER.
+      required: false
+      schema:
+        $ref: '#/components/schemas/IamRole'
+        # No "default:" because OpenAPI doesn't let you specify default with
+        # $ref. See https://stackoverflow.com/a/68542868/6447189
+
     Name:
       name: name
       in: path
@@ -109,8 +122,18 @@ components:
       name: workspaceUserFacingId
       in: path
       description: |
-        Human-settable, mutable id. ID must have 3-63 characters, contain lowercase letters, numbers,
-        dashes, or underscores, and start with lowercase letter or number
+        Human-settable, mutable id. ID must have 3-63 characters, contain
+        lowercase letters, numbers, dashes, or underscores, and start with
+        lowercase letter or number.
       required: true
       schema:
         type: string
+
+    FolderId:
+      name: folderId
+      in: path
+      description: An UUID to identify a folder in a workspace.
+      required: true
+      schema:
+        type: string
+        format: uuid

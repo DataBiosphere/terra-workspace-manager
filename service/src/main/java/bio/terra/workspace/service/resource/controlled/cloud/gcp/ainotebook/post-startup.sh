@@ -9,6 +9,10 @@
 #
 # To test a single line, run with "sudo" in notebook. Post-startup script runs
 # as root.
+#
+# Please also make sure integration test `PrivateControlledAiNotebookInstancePostStartup` passes. Refer to
+# https://github.com/DataBiosphere/terra-workspace-manager/tree/main/integration#Run-nightly-only-test-suite-locally
+# for instruction on how to run the test.
 
 set -o errexit
 set -o nounset
@@ -55,11 +59,30 @@ export NXF_MODE=google
 
 sudo apt-get update
 
+#########################################################
+# Install required JDK and set it as default (debian)
+#########################################################
+function install_java() {
+  curl -Os https://download.oracle.com/java/17/latest/jdk-17_linux-x64_bin.deb
+  sudo apt-get install -y ./jdk-17_linux-x64_bin.deb
+  sudo update-alternatives --install /usr/bin/java java /usr/lib/jvm/jdk-17/bin/java 1
+  sudo update-alternatives --set java /usr/lib/jvm/jdk-17/bin/java
+}
+
 if [[ -n "$(which java)" ]];
 then
-  echo "java is installed"
+  # Get the current major version of Java: "11.0.12" => "11"
+  readonly CUR_JAVA_VERSION="$(java -version 2>&1 | awk -F\" '{ split($2,a,"."); print a[1]}')"
+  if [[ "${CUR_JAVA_VERSION}" -lt 17 ]];
+  then
+    echo "Current Java version is ${CUR_JAVA_VERSION}, installing Java 17"
+    install_java
+  else
+    echo "Java 17 is installed"
+  fi
 else
-  sudo apt-get -y install openjdk-11-jdk
+  echo "Installing Java 17"
+  install_java
 fi
 
 sudo -u "${JUPYTER_USER}" sh -c "curl -s https://get.nextflow.io | bash"
@@ -69,7 +92,7 @@ sudo mv nextflow /usr/bin/nextflow
 readonly CROMWELL_LATEST_VERSION="81"
 sudo -u "${JUPYTER_USER}" sh -c "mkdir -p /home/${JUPYTER_USER}/cromwell"
 sudo -u "${JUPYTER_USER}" sh -c "curl -LO https://github.com/broadinstitute/cromwell/releases/download/${CROMWELL_LATEST_VERSION}/cromwell-${CROMWELL_LATEST_VERSION}.jar"
-mv cromwell-${CROMWELL_LATEST_VERSION}.jar /home/${JUPYTER_USER}/cromwell/
+mv "cromwell-${CROMWELL_LATEST_VERSION}.jar" "/home/${JUPYTER_USER}/cromwell/"
 
 #Install cromshell
 sudo apt-get -y install mailutils
@@ -84,7 +107,7 @@ sudo cp terra /usr/bin/terra
 sudo -u "${JUPYTER_USER}" sh -c "terra config set browser MANUAL"
 # Set the CLI terra server based on the terra server that created the GCP notebook retrieved from
 # the VM metadata, if set.
-readonly TERRA_SERVER=$(get_metadata_value "instance/attributes/terra-cli-server")
+readonly TERRA_SERVER="$(get_metadata_value "instance/attributes/terra-cli-server")"
 if [[ -n "${TERRA_SERVER}" ]]; then
   sudo -u "${JUPYTER_USER}" sh -c "terra server set --name=${TERRA_SERVER}"
 fi
@@ -92,22 +115,80 @@ fi
 # Log in with app-default-credentials
 sudo -u "${JUPYTER_USER}" sh -c "terra auth login --mode=APP_DEFAULT_CREDENTIALS"
 
+####################################
+# Shell and notebook environment
+####################################
+
 # Set the CLI terra workspace id using the VM metadata, if set.
-readonly TERRA_WORKSPACE=$(get_metadata_value "instance/attributes/terra-workspace-id")
+readonly TERRA_WORKSPACE="$(get_metadata_value "instance/attributes/terra-workspace-id")"
 if [[ -n "${TERRA_WORKSPACE}" ]]; then
   sudo -u "${JUPYTER_USER}" sh -c "terra workspace set --id=${TERRA_WORKSPACE}"
 fi
 
+# Set variables into the .bash_profile such that they are available
+# to terminals, notebooks, and other tools
+#
+# We have new-style variables (eg GOOGLE_CLOUD_PROJECT) which are set here
+# and CLI (terra app execute env).
+# We also support a few variables set by Leonardo (eg GOOGLE_PROJECT).
+# Those are only set here and NOT in the CLI as they are intended just
+# to make porting existing notebooks easier.
+
+# Keep in sync with terra CLI environment variables:
+# https://github.com/DataBiosphere/terra-cli/blob/14cf51dd809573c7ae9a3ef10ddd427fa057cb8f/src/main/java/bio/terra/cli/app/CommandRunner.java#L88
+
+# *** Variables that are set by Leonardo for Cloud Environments
+# (https://github.com/DataBiosphere/leonardo)
+
+# OWNER_EMAIL is really the Terra user account email address
+
+readonly OWNER_EMAIL="$(
+  sudo -u "${JUPYTER_USER}" sh -c "terra workspace describe --format=json" | \
+  jq --raw-output ".userEmail")"
+echo "export OWNER_EMAIL='${OWNER_EMAIL}'" >> "/home/${JUPYTER_USER}/.bash_profile"
+
+# GOOGLE_PROJECT is the project id for the GCP project backing the workspace
+
+readonly GOOGLE_PROJECT="$(
+  sudo -u "${JUPYTER_USER}" sh -c "terra workspace describe --format=json" | \
+  jq --raw-output ".googleProjectId")"
+echo "export GOOGLE_PROJECT='${GOOGLE_PROJECT}'" >> "/home/${JUPYTER_USER}/.bash_profile"
+
+# PET_SA_EMAIL is the pet service account for the Terra user and
+# is specific to the GCP project backing the workspace
+
+readonly PET_SA_EMAIL="$(
+  sudo -u "${JUPYTER_USER}" sh -c "terra auth status --format=json" | \
+  jq --raw-output ".serviceAccountEmail")"
+echo "export PET_SA_EMAIL='${PET_SA_EMAIL}'" >> "/home/${JUPYTER_USER}/.bash_profile"
+
+# These are equivalent environment variables which are set for a
+# command when calling "terra app execute <command>".
+
+# GOOGLE_CLOUD_PROJECT is the project id for the GCP project backing the
+# workspace.
+
+echo "export GOOGLE_CLOUD_PROJECT='${GOOGLE_PROJECT}'" >> "/home/${JUPYTER_USER}/.bash_profile"
+
+# GOOGLE_SERVICE_ACCOUNT_EMAIL is the pet service account for the Terra user
+# and is specific to the GCP project backing the workspace.
+
+echo "export GOOGLE_SERVICE_ACCOUNT_EMAIL='${PET_SA_EMAIL}'" >> "/home/${JUPYTER_USER}/.bash_profile"
+
+###############
+# git setup
+###############
+
 sudo -u "${JUPYTER_USER}" sh -c "mkdir -p /home/${JUPYTER_USER}/.ssh"
-cd /home/${JUPYTER_USER}
-readonly TERRA_SSH_KEY=$(sudo -u "${JUPYTER_USER}" sh -c "terra user ssh-key get --format=JSON")
+cd "/home/${JUPYTER_USER}"
+readonly TERRA_SSH_KEY="$(sudo -u "${JUPYTER_USER}" sh -c "terra user ssh-key get --format=JSON")"
 
 # Start the ssh-agent. Set this command in bash_profile so everytime user starts a shell, we start the ssh-agent.
 echo eval '"$(ssh-agent -s)"' >> .bash_profile
 if [[ -n "$TERRA_SSH_KEY" ]]; then
   printf '%s' "$TERRA_SSH_KEY" | sudo -u "${JUPYTER_USER}" sh -c "jq -r '.privateSshKey' > .ssh/id_rsa"
-  sudo -u "$JUPYTER_USER" sh -c 'chmod go-rwx .ssh/id_rsa'
-  sudo -u "$JUPYTER_USER" sh -c 'ssh-add .ssh/id_rsa; ssh-keyscan -H github.com >> ~/.ssh/known_hosts'
+  sudo -u "${JUPYTER_USER}" sh -c 'chmod go-rwx .ssh/id_rsa'
+  sudo -u "${JUPYTER_USER}" sh -c 'ssh-add .ssh/id_rsa; ssh-keyscan -H github.com >> ~/.ssh/known_hosts'
 fi
 
 # Attempt to clone all the git repo references in the workspace. If the user's ssh key does not exist or doesn't have access
@@ -115,3 +196,33 @@ fi
 # Keep this as last thing in script. There will be integration test for git cloning (PF-1660). If this is last thing, then
 # integration test will ensure that everything in script worked.
 sudo -u "$JUPYTER_USER" sh -c 'terra git clone --all'
+
+# Setup gitignore to avoid accidental checkin of data. 
+readonly GIT_IGNORE="/home/${JUPYTER_USER}/gitignore_global"
+
+cat <<EOF | sudo -E -u jupyter tee "${GIT_IGNORE}"
+# By default, all files should be ignored by git.
+# We want to be sure to exclude files containing data such as CSVs and images such as PNGs.
+*.*
+# Now, allow the file types that we do want to track via source control.
+!*.ipynb
+!*.py
+!*.r
+!*.R
+!*.wdl
+!*.sh
+# Allow documentation files.
+!*.md
+!*.rst
+!LICENSE*
+EOF
+
+sudo -u "$JUPYTER_USER" sh -c "git config --global core.excludesfile ${GIT_IGNORE}"
+
+# This block is for test only. If the notebook execute successfully down to
+# here, we knows that the script executed successfully.
+readonly TERRA_TEST_VALUE="$(get_metadata_value "instance/attributes/terra-test-value")"
+readonly TERRA_GCP_NOTEBOOK_RESOURCE_NAME="$(get_metadata_value "instance/attributes/terra-gcp-notebook-resource-name")"
+if [[ -n "${TERRA_TEST_VALUE}" ]]; then
+  sudo -u "${JUPYTER_USER}" sh -c "terra resource update gcp-notebook --name=${TERRA_GCP_NOTEBOOK_RESOURCE_NAME} --new-metadata=terra-test-result=${TERRA_TEST_VALUE}"
+fi

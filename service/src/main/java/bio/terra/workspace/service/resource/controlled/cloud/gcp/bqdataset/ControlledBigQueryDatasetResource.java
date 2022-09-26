@@ -23,12 +23,14 @@ import bio.terra.workspace.service.resource.controlled.model.ControlledResourceF
 import bio.terra.workspace.service.resource.controlled.model.ManagedByType;
 import bio.terra.workspace.service.resource.controlled.model.PrivateResourceState;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
+import bio.terra.workspace.service.resource.model.ResourceLineageEntry;
 import bio.terra.workspace.service.resource.model.StewardshipType;
 import bio.terra.workspace.service.resource.model.WsmResourceFamily;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
-import bio.terra.workspace.service.resource.referenced.exception.InvalidReferenceException;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import org.apache.commons.lang3.builder.EqualsBuilder;
@@ -51,8 +53,9 @@ public class ControlledBigQueryDatasetResource extends ControlledResource {
       @JsonProperty("managedBy") ManagedByType managedBy,
       @JsonProperty("applicationId") String applicationId,
       @JsonProperty("datasetName") String datasetName,
-      @JsonProperty("projectId") String projectId) {
-
+      @JsonProperty("projectId") String projectId,
+      @JsonProperty("resourceLineage") List<ResourceLineageEntry> resourceLineage,
+      @JsonProperty("properties") Map<String, String> properties) {
     super(
         workspaceId,
         resourceId,
@@ -63,7 +66,9 @@ public class ControlledBigQueryDatasetResource extends ControlledResource {
         accessScope,
         managedBy,
         applicationId,
-        privateResourceState);
+        privateResourceState,
+        resourceLineage,
+        properties);
     this.datasetName = datasetName;
     this.projectId = projectId;
     validate();
@@ -221,10 +226,6 @@ public class ControlledBigQueryDatasetResource extends ControlledResource {
         .toHashCode();
   }
 
-  private static String generateUniqueDatasetId() {
-    return "terra_" + UUID.randomUUID() + "_dataset".replace("-", "_");
-  }
-
   public static class Builder {
     private ControlledResourceFields common;
     private String datasetName;
@@ -236,15 +237,7 @@ public class ControlledBigQueryDatasetResource extends ControlledResource {
     }
 
     public ControlledBigQueryDatasetResource.Builder datasetName(String datasetName) {
-      try {
-        // If the user doesn't specify a dataset name, we will use the resource name by default.
-        // But if the resource name is not a valid dataset name, we will need to generate a unique
-        // dataset id.
-        ResourceValidationUtils.validateBqDatasetName(datasetName);
-        this.datasetName = datasetName;
-      } catch (InvalidReferenceException e) {
-        this.datasetName = generateUniqueDatasetId();
-      }
+      this.datasetName = datasetName;
       return this;
     }
 

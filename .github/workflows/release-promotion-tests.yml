@@ -57,7 +57,7 @@ jobs:
           echo ::set-output name=test::$TEST
 
       - name: Set up JDK
-        uses: actions/setup-java@v2
+        uses: actions/setup-java@v3
         with:
           distribution: 'temurin'
           java-version: 17
@@ -85,8 +85,8 @@ jobs:
             vault write -field token \
               auth/approle/login role_id=${{ secrets.VAULT_APPROLE_ROLE_ID }} \
               secret_id=${{ secrets.VAULT_APPROLE_SECRET_ID }})
+          echo ::add-mask::$VAULT_TOKEN    
           echo ::set-output name=vault-token::$VAULT_TOKEN
-          echo ::add-mask::$VAULT_TOKEN
 
       - name: Write configuration
         uses: ./.github/actions/write-config

@@ -10,6 +10,7 @@ import bio.terra.workspace.generated.model.ApiAzureDiskResource;
 import bio.terra.workspace.generated.model.ApiAzureIpResource;
 import bio.terra.workspace.generated.model.ApiAzureNetworkResource;
 import bio.terra.workspace.generated.model.ApiAzureRelayNamespaceResource;
+import bio.terra.workspace.generated.model.ApiAzureVmCreationParameters;
 import bio.terra.workspace.generated.model.ApiAzureVmResource;
 import bio.terra.workspace.generated.model.ApiCreateControlledAzureDiskRequestBody;
 import bio.terra.workspace.generated.model.ApiCreateControlledAzureIpRequestBody;
@@ -39,7 +40,7 @@ import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.resource.ResourceValidationUtils;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceMetadataManager;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceService;
-import bio.terra.workspace.service.resource.controlled.cloud.azure.AzureControlledStorageResourceService;
+import bio.terra.workspace.service.resource.controlled.cloud.azure.AzureStorageAccessService;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.disk.ControlledAzureDiskResource;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.ip.ControlledAzureIpResource;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.network.ControlledAzureNetworkResource;
@@ -50,6 +51,7 @@ import bio.terra.workspace.service.resource.controlled.cloud.azure.vm.Controlled
 import bio.terra.workspace.service.resource.controlled.model.ControlledResourceFields;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.workspace.WorkspaceService;
+import com.google.common.annotations.VisibleForTesting;
 import java.time.OffsetDateTime;
 import java.util.UUID;
 import javax.servlet.http.HttpServletRequest;
@@ -67,7 +69,7 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
   private final Logger logger = LoggerFactory.getLogger(ControlledGcpResourceApiController.class);
 
   private final ControlledResourceService controlledResourceService;
-  private final AzureControlledStorageResourceService azureControlledStorageResourceService;
+  private final AzureStorageAccessService azureControlledStorageResourceService;
   private final JobService jobService;
   private final FeatureConfiguration features;
   private final AzureConfiguration azureConfiguration;
@@ -78,7 +80,7 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
   public ControlledAzureResourceApiController(
       AuthenticatedUserRequestFactory authenticatedUserRequestFactory,
       ControlledResourceService controlledResourceService,
-      AzureControlledStorageResourceService azureControlledStorageResourceService,
+      AzureStorageAccessService azureControlledStorageResourceService,
       SamService samService,
       JobService jobService,
       HttpServletRequest request,
@@ -342,16 +344,7 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
 
     ResourceValidationUtils.validateApiAzureVmCreationParameters(body.getAzureVm());
     ControlledAzureVmResource resource =
-        ControlledAzureVmResource.builder()
-            .common(commonFields)
-            .vmName(body.getAzureVm().getName())
-            .region(body.getAzureVm().getRegion())
-            .vmSize(body.getAzureVm().getVmSize())
-            .vmImage(AzureVmUtils.getImageData(body.getAzureVm().getVmImage()))
-            .ipId(body.getAzureVm().getIpId())
-            .networkId(body.getAzureVm().getNetworkId())
-            .diskId(body.getAzureVm().getDiskId())
-            .build();
+        buildControlledAzureVmResource(body.getAzureVm(), commonFields);
 
     final String jobId =
         controlledResourceService.createAzureVm(
@@ -365,6 +358,21 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
     final ApiCreatedControlledAzureVmResult result = fetchCreateControlledAzureVmResult(jobId);
 
     return new ResponseEntity<>(result, HttpStatus.OK);
+  }
+
+  @VisibleForTesting
+  ControlledAzureVmResource buildControlledAzureVmResource(
+      ApiAzureVmCreationParameters creationParameters, ControlledResourceFields commonFields) {
+    return ControlledAzureVmResource.builder()
+        .common(commonFields)
+        .vmName(creationParameters.getName())
+        .region(creationParameters.getRegion())
+        .vmSize(creationParameters.getVmSize())
+        .vmImage(AzureVmUtils.getImageData(creationParameters.getVmImage()))
+        .ipId(creationParameters.getIpId())
+        .networkId(creationParameters.getNetworkId())
+        .diskId(creationParameters.getDiskId())
+        .build();
   }
 
   @Override
@@ -409,6 +417,12 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
             .resourceId(createdNetwork.getResourceId())
             .azureNetwork(createdNetwork.toApiResource());
     return new ResponseEntity<>(response, HttpStatus.OK);
+  }
+
+  @Override
+  public ResponseEntity<ApiDeleteControlledAzureResourceResult> deleteAzureStorageContainer(
+      UUID workspaceId, UUID resourceId, @Valid ApiDeleteControlledAzureResourceRequest body) {
+    return deleteHelper(workspaceId, resourceId, body, "Azure Storage Container");
   }
 
   @Override

@@ -56,16 +56,11 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.web.servlet.MockMvc;
 
-@AutoConfigureMockMvc
 class SamServiceTest extends BaseConnectedTest {
-
-  // Populated because this test is annotated with @AutoConfigureMockMvc
   @Autowired private MockMvc mockMvc;
-
   @Autowired private SamService samService;
   @Autowired private WorkspaceService workspaceService;
   @Autowired private UserAccessUtils userAccessUtils;
@@ -235,7 +230,7 @@ class SamServiceTest extends BaseConnectedTest {
             .userFacingId(workspaceUuid.toString())
             .workspaceStage(WorkspaceStage.RAWLS_WORKSPACE)
             .build();
-    workspaceService.createWorkspace(rawlsWorkspace, defaultUserRequest());
+    workspaceService.createWorkspace(rawlsWorkspace, null, defaultUserRequest());
     ApiGrantRoleRequestBody request =
         new ApiGrantRoleRequestBody().memberEmail(userAccessUtils.getSecondUserEmail());
     mockMvc
@@ -279,13 +274,15 @@ class SamServiceTest extends BaseConnectedTest {
             .role(WsmIamRole.OWNER)
             .users(Collections.singletonList(userAccessUtils.getDefaultUserEmail()))
             .build();
+    RoleBinding expectedWriterBinding =
+        RoleBinding.builder().role(WsmIamRole.WRITER).users(Collections.emptyList()).build();
     RoleBinding expectedReaderBinding =
         RoleBinding.builder()
             .role(WsmIamRole.READER)
             .users(Collections.singletonList(userAccessUtils.getSecondUserEmail()))
             .build();
-    RoleBinding expectedWriterBinding =
-        RoleBinding.builder().role(WsmIamRole.WRITER).users(Collections.emptyList()).build();
+    RoleBinding expectedDiscovererBinding =
+        RoleBinding.builder().role(WsmIamRole.DISCOVERER).users(Collections.emptyList()).build();
     RoleBinding expectedApplicationBinding =
         RoleBinding.builder().role(WsmIamRole.APPLICATION).users(Collections.emptyList()).build();
     assertThat(
@@ -294,6 +291,7 @@ class SamServiceTest extends BaseConnectedTest {
             equalTo(expectedOwnerBinding),
             equalTo(expectedWriterBinding),
             equalTo(expectedReaderBinding),
+            equalTo(expectedDiscovererBinding),
             equalTo(expectedApplicationBinding)));
   }
 
@@ -333,7 +331,8 @@ class SamServiceTest extends BaseConnectedTest {
   @Test
   void listWorkspaceIdsAndHighestRoles() throws Exception {
     Map<UUID, WsmIamRole> actual =
-        samService.listWorkspaceIdsAndHighestRoles(userAccessUtils.defaultUserAuthRequest());
+        samService.listWorkspaceIdsAndHighestRoles(
+            userAccessUtils.defaultUserAuthRequest(), WsmIamRole.READER);
 
     assertThat(actual, IsMapContaining.hasEntry(workspaceUuid, WsmIamRole.OWNER));
   }
@@ -464,7 +463,7 @@ class SamServiceTest extends BaseConnectedTest {
             .userFacingId(uuid.toString())
             .workspaceStage(WorkspaceStage.MC_WORKSPACE)
             .build();
-    workspaceService.createWorkspace(workspace, userRequest);
+    workspaceService.createWorkspace(workspace, null, userRequest);
     return workspace;
   }
 }

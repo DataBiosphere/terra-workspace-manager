@@ -5,7 +5,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-import bio.terra.workspace.app.controller.ResourceController;
+import bio.terra.workspace.app.controller.ResourceApiController;
 import bio.terra.workspace.common.BaseUnitTest;
 import bio.terra.workspace.generated.model.ApiCloningInstructionsEnum;
 import bio.terra.workspace.generated.model.ApiControlledResourceMetadata;
@@ -30,6 +30,7 @@ import bio.terra.workspace.service.resource.referenced.cloud.gcp.bqdataset.Refer
 import bio.terra.workspace.service.resource.referenced.cloud.gcp.bqdatatable.ReferencedBigQueryDataTableResource;
 import bio.terra.workspace.service.resource.referenced.cloud.gcp.datareposnapshot.ReferencedDataRepoSnapshotResource;
 import bio.terra.workspace.service.resource.referenced.cloud.gcp.gcsbucket.ReferencedGcsBucketResource;
+import java.util.Map;
 import java.util.UUID;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.jupiter.api.BeforeEach;
@@ -39,7 +40,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 // TODO: most assertEquals() assertions are backwards
 
 public class MakeApiResourceDescriptionTest extends BaseUnitTest {
-  @Autowired ResourceController resourceController;
+  @Autowired ResourceApiController resourceController;
 
   private UUID workspaceUuid;
   private UUID resourceId;
@@ -63,7 +64,15 @@ public class MakeApiResourceDescriptionTest extends BaseUnitTest {
 
     var resource =
         new ReferencedBigQueryDatasetResource(
-            workspaceUuid, resourceId, resourceName, description, cloning, projectId, datasetName);
+            workspaceUuid,
+            resourceId,
+            resourceName,
+            description,
+            cloning,
+            projectId,
+            datasetName,
+            /*resourceLineage=*/ null,
+            Map.of());
 
     ApiResourceDescription resourceDescription =
         resourceController.makeApiResourceDescription(resource);
@@ -90,7 +99,9 @@ public class MakeApiResourceDescriptionTest extends BaseUnitTest {
             cloning,
             projectId,
             datasetName,
-            datatableName);
+            datatableName,
+            /*resourceLineage=*/ null,
+            /*properties=*/ Map.of());
 
     ApiResourceDescription resourceDescription =
         resourceController.makeApiResourceDescription(resource);
@@ -116,7 +127,9 @@ public class MakeApiResourceDescriptionTest extends BaseUnitTest {
             description,
             cloning,
             instanceName,
-            snapshotId);
+            snapshotId,
+            /*resourceLineage=*/ null,
+            /*properties=*/ Map.of());
 
     ApiResourceDescription resourceDescription =
         resourceController.makeApiResourceDescription(resource);
@@ -134,7 +147,14 @@ public class MakeApiResourceDescriptionTest extends BaseUnitTest {
 
     var resource =
         new ReferencedGcsBucketResource(
-            workspaceUuid, resourceId, resourceName, description, cloning, bucketName);
+            workspaceUuid,
+            resourceId,
+            resourceName,
+            description,
+            cloning,
+            bucketName,
+            /*resourceLineage=*/ null,
+            /*properties=*/ Map.of());
 
     ApiResourceDescription resourceDescription =
         resourceController.makeApiResourceDescription(resource);
@@ -184,7 +204,9 @@ public class MakeApiResourceDescriptionTest extends BaseUnitTest {
               accessScopeType,
               managedByType,
               null,
-              bucketName);
+              bucketName,
+              /*resourceLineage=*/ null,
+              /*properties=*/ Map.of());
 
       ApiResourceDescription resourceDescription =
           resourceController.makeApiResourceDescription(resource);
@@ -213,7 +235,9 @@ public class MakeApiResourceDescriptionTest extends BaseUnitTest {
               managedByType,
               null,
               datasetName,
-              projectId);
+              projectId,
+              /*resourceLineage=*/ null,
+              /*properties=*/ Map.of());
 
       ApiResourceDescription resourceDescription =
           resourceController.makeApiResourceDescription(resource);

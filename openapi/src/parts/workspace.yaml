@@ -28,6 +28,7 @@ paths:
       parameters:
         - $ref: '#/components/parameters/Offset'
         - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/MinimumHighestRole'
       summary: List all workspaces a user can read.
       operationId: listWorkspaces
       tags: [ Workspace ]
@@ -48,6 +49,8 @@ paths:
       summary: Get an existing Workspace.
       operationId: getWorkspace
       tags: [Workspace]
+      parameters:
+      - $ref: '#/components/parameters/MinimumHighestRole'
       responses:
         '200':
           description: OK
@@ -103,6 +106,7 @@ paths:
   /api/workspaces/v1/workspaceByUserFacingId/{workspaceUserFacingId}:
     parameters:
       - $ref: '#/components/parameters/WorkspaceUserFacingId'
+      - $ref: '#/components/parameters/MinimumHighestRole'
     get:
       summary: Get an existing Workspace by userFacingId.
       operationId: getWorkspaceByUserFacingId
@@ -235,7 +239,9 @@ paths:
     parameters:
     - $ref: '#/components/parameters/WorkspaceId'
     post:
-      summary: update the properties in workspace.
+      summary: |
+        Update the properties in workspace. Only properties with keys in request 
+        are updated. Properties with keys not in request are not updated.
       operationId: updateWorkspaceProperties
       tags: [ Workspace ]
       requestBody:
@@ -254,7 +260,10 @@ paths:
         '500':
           $ref: '#/components/responses/ServerError'
     patch:
-      summary: delete existing Workspace properties.
+      summary: |
+        delete existing Workspace properties. Only properties with keys in
+        request are deleted. Properties with keys not in request are not
+        deleted.
       operationId: deleteWorkspaceProperties
       tags: [ Workspace ]
       requestBody:
@@ -418,11 +427,7 @@ components:
           description: ID of provided spend profile
           type: string
         policies:
-          description: Policies provided by the containing folder; NOT IMPLEMENTED
-          type: array
-          items:
-            type: string
-            format: uuid
+          $ref: '#/components/schemas/TpsPolicyInputs'
         stage:
           $ref: '#/components/schemas/WorkspaceStageModel'
         properties:
@@ -439,32 +444,7 @@ components:
     IamRole:
       description: Enum containing all valid IAM roles on a Workspace
       type: string
-      enum: ['READER', 'WRITER', 'APPLICATION', 'OWNER']
-
-    Properties:
-      description: Optional list of key-value pairs of strings
-      type: array
-      items:
-        $ref: '#/components/schemas/Property'
-
-    Property:
-      type: object
-      required: [key, value]
-      properties:
-        key:
-          description: |
-            String to identify the key. Keys must be 1-1024 characters, using letters,
-            numbers, dashes, and underscores and must not start with a dash or underscore.
-          type: string
-        value:
-          description: Arbitrary string value
-          type: string
-
-    PropertyKeys:
-      description: A list of property keys that in the properties
-      type: array
-      items:
-        type: string
+      enum: ['DISCOVERER', 'READER', 'WRITER', 'APPLICATION', 'OWNER']
 
     RoleBinding:
       description: A binding between an IAM role and users with that role
@@ -541,10 +521,20 @@ components:
           description: Timestamp when the workspace is created
           type: string
           format: date-time
+        createdBy:
+          description: User email of whom created the workspace
+          type: string
         lastUpdatedDate:
           description: Timestamp of the latest workspace change
           type: string
           format: date-time
+        lastUpdatedBy:
+          description: User email of whom made the last update to the workspace
+          type: string
+        policies:
+          type: array
+          items:
+            $ref: '#/components/schemas/TpsPolicyInput'
 
     WorkspaceDescriptionList:
       type: object
@@ -560,4 +550,3 @@ components:
       description: Enum for possible stages of a workspace along the Rawls migration path
       type: string
       enum: ['RAWLS_WORKSPACE', 'MC_WORKSPACE']
-

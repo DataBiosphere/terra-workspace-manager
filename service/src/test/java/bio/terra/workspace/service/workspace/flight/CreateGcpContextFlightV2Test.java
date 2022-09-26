@@ -278,7 +278,8 @@ class CreateGcpContextFlightV2Test extends BaseConnectedTest {
             .workspaceStage(WorkspaceStage.MC_WORKSPACE)
             .spendProfileId(spendProfileId)
             .build();
-    return workspaceService.createWorkspace(request, userAccessUtils.defaultUserAuthRequest());
+    return workspaceService.createWorkspace(
+        request, null, userAccessUtils.defaultUserAuthRequest());
   }
 
   /** Create the FlightMap input parameters required for the {@link CreateGcpContextFlightV2}. */
@@ -330,8 +331,8 @@ class CreateGcpContextFlightV2Test extends BaseConnectedTest {
             .getIamPolicy(project.getProjectId(), new GetIamPolicyRequest())
             .execute();
     for (WsmIamRole role : WsmIamRole.values()) {
-      // Don't check MANAGER role, which isn't synced to GCP.
-      if (role.equals(WsmIamRole.MANAGER)) {
+      // Don't check roles which aren't synced to GCP.
+      if (role.equals(WsmIamRole.MANAGER) || role.equals(WsmIamRole.DISCOVERER)) {
         continue;
       }
       assertRoleBindingInPolicy(

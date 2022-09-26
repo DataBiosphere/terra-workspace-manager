@@ -1,5 +1,7 @@
 package bio.terra.workspace.amalgam.tps;
 
+import static bio.terra.workspace.common.utils.MockMvcUtils.addAuth;
+import static bio.terra.workspace.common.utils.MockMvcUtils.addJsonContentType;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.fail;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
@@ -8,31 +10,18 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 
 import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
 import bio.terra.workspace.common.BaseUnitTest;
-import bio.terra.workspace.generated.model.ApiTpsComponent;
-import bio.terra.workspace.generated.model.ApiTpsObjectType;
-import bio.terra.workspace.generated.model.ApiTpsPaoCreateRequest;
-import bio.terra.workspace.generated.model.ApiTpsPaoGetResult;
-import bio.terra.workspace.generated.model.ApiTpsPolicyInput;
-import bio.terra.workspace.generated.model.ApiTpsPolicyInputs;
-import bio.terra.workspace.generated.model.ApiTpsPolicyPair;
+import bio.terra.workspace.generated.model.*;
+import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.util.Optional;
 import java.util.UUID;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockHttpServletResponse;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
-import org.springframework.test.context.web.WebAppConfiguration;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
-import org.springframework.test.web.servlet.setup.MockMvcBuilders;
-import org.springframework.web.context.WebApplicationContext;
 
-@ExtendWith(SpringExtension.class)
-@WebAppConfiguration
 public class TpsBasicPaoTest extends BaseUnitTest {
   private static final String TERRA = "terra";
   private static final String GROUP_CONSTRAINT = "group-constraint";
@@ -42,14 +31,12 @@ public class TpsBasicPaoTest extends BaseUnitTest {
   private static final String DDGROUP = "ddgroup";
   private static final String US_REGION = "US";
   @Autowired private ObjectMapper objectMapper;
-  @Autowired private WebApplicationContext webApplicationContext;
   @Autowired private FeatureConfiguration features;
-  private MockMvc mockMvc;
+  @Autowired private MockMvc mockMvc;
 
-  @BeforeEach
-  public void setup() throws Exception {
-    this.mockMvc = MockMvcBuilders.webAppContextSetup(this.webApplicationContext).build();
-  }
+  AuthenticatedUserRequest USER_REQUEST =
+      new AuthenticatedUserRequest(
+          "fake@email.com", "subjectId123456", Optional.of("ThisIsNotARealBearerToken"));
 
   @Test
   public void basicPaoTest() throws Exception {
@@ -88,9 +75,9 @@ public class TpsBasicPaoTest extends BaseUnitTest {
     MvcResult result =
         mockMvc
             .perform(
-                post("/api/policy/v1alpha1/pao")
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .content(json))
+                addAuth(
+                    addJsonContentType(post("/api/policy/v1alpha1/pao").content(json)),
+                    USER_REQUEST))
             .andReturn();
     MockHttpServletResponse response = result.getResponse();
     HttpStatus status = HttpStatus.valueOf(response.getStatus());
@@ -100,9 +87,9 @@ public class TpsBasicPaoTest extends BaseUnitTest {
     result =
         mockMvc
             .perform(
-                get("/api/policy/v1alpha1/pao/" + objectId)
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .content(json))
+                addAuth(
+                    addJsonContentType(get("/api/policy/v1alpha1/pao/" + objectId).content(json)),
+                    USER_REQUEST))
             .andReturn();
     response = result.getResponse();
     status = HttpStatus.valueOf(response.getStatus());
@@ -115,13 +102,19 @@ public class TpsBasicPaoTest extends BaseUnitTest {
     checkAttributeSet(apiPao.getAttributes());
     checkAttributeSet(apiPao.getEffectiveAttributes());
 
+    // Clone a PAO
+    var destinationObjectId = UUID.randomUUID();
+    var cloneRequest = new ApiTpsPaoCloneRequest().destinationObjectId(destinationObjectId);
+    String cloneJson = objectMapper.writeValueAsString(cloneRequest);
+
     // Delete a PAO
     result =
         mockMvc
             .perform(
-                delete("/api/policy/v1alpha1/pao/" + objectId)
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .content(json))
+                addAuth(
+                    addJsonContentType(
+                        delete("/api/policy/v1alpha1/pao/" + objectId).content(json)),
+                    USER_REQUEST))
             .andReturn();
     response = result.getResponse();
     status = HttpStatus.valueOf(response.getStatus());
