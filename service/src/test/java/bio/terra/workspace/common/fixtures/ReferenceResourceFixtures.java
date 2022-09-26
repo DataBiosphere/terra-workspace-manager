@@ -44,6 +44,22 @@ public class ReferenceResourceFixtures {
         /*properties*/ DEFAULT_RESOURCE_PROPERTIES);
   }
 
+  public static ReferencedBigQueryDatasetResource makeReferencedBqDatasetResource(
+      UUID workspaceId, String projectId, String bqDataset) {
+    UUID resourceId = UUID.randomUUID();
+    String resourceName = "testbq-" + resourceId.toString();
+    return new ReferencedBigQueryDatasetResource(
+        workspaceId,
+        resourceId,
+        resourceName,
+        "a description",
+        CloningInstructions.COPY_NOTHING,
+        projectId,
+        bqDataset,
+        /*resourceLineage=*/ null,
+        /*properties*/ DEFAULT_RESOURCE_PROPERTIES);
+  }
+
   public static ApiCreateDataRepoSnapshotReferenceRequestBody
       makeDataRepoSnapshotReferenceRequestBody() {
     return new ApiCreateDataRepoSnapshotReferenceRequestBody()
@@ -104,19 +120,5 @@ public class ReferenceResourceFixtures {
         .description("This is a referenced resource")
         .cloningInstructions(ApiCloningInstructionsEnum.NOTHING)
         .properties(convertMapToApiProperties(DEFAULT_RESOURCE_PROPERTIES));
-  }
-
-  public static ReferencedBigQueryDatasetResource makeReferencedBqDatasetResource(
-      UUID workspaceId, String projectId, String bqDataset) {
-    UUID resourceId = UUID.randomUUID();
-    String resourceName = "testbq-" + resourceId.toString();
-    return new ReferencedBigQueryDatasetResource(
-        workspaceId,
-        resourceId,
-        resourceName,
-        "a description",
-        CloningInstructions.COPY_NOTHING,
-        projectId,
-        bqDataset);
   }
 }
