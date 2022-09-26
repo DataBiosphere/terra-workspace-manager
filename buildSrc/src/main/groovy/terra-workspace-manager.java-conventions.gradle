@@ -69,7 +69,6 @@ spotless {
 }
 build.dependsOn spotlessApply
 
-
 // for scans
 if (hasProperty("buildScan")) {
     buildScan {
