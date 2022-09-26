@@ -27,7 +27,7 @@ public class DeleteReferencedResourcesStep implements Step {
     List<WsmResource> referencedResources =
         context
             .getInputParameters()
-            .get(ReferencedResourceKeys.RESOURCES_TO_DELETE, new TypeReference<>() {});
+            .get(ReferencedResourceKeys.REFERENCED_RESOURCES_TO_DELETE, new TypeReference<>() {});
     for (var resource : referencedResources) {
       resourceDao.deleteResource(workspaceId, resource.getResourceId());
     }

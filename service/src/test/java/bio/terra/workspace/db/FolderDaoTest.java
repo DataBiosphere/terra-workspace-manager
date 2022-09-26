@@ -373,7 +373,7 @@ public class FolderDaoTest extends BaseUnitTest {
     var createdSecondFolder = folderDao.createFolder(secondFolder);
     var createdThirdFolder = folderDao.createFolder(thirdFolder);
 
-    boolean deleted = folderDao.deleteFolder(workspaceUuid, createdFolder.id());
+    boolean deleted = folderDao.deleteFolderRecursive(workspaceUuid, createdFolder.id());
 
     assertTrue(deleted);
     assertTrue(folderDao.getFolderIfExists(workspaceUuid, createdFolder.id()).isEmpty());
@@ -385,7 +385,7 @@ public class FolderDaoTest extends BaseUnitTest {
   public void deleteFolder_invalidFolder_nothingIsDeleted() {
     UUID workspaceUuid = createWorkspace(workspaceDao);
 
-    assertFalse(folderDao.deleteFolder(workspaceUuid, UUID.randomUUID()));
+    assertFalse(folderDao.deleteFolderRecursive(workspaceUuid, UUID.randomUUID()));
   }
 
   private static Folder getFolder(String displayName, UUID workspaceUuid) {

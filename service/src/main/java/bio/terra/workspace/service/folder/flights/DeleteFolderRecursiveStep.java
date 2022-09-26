@@ -9,13 +9,13 @@ import bio.terra.workspace.db.FolderDao;
 import java.util.UUID;
 import org.springframework.http.HttpStatus;
 
-public class DeleteFoldersStep implements Step {
+public class DeleteFolderRecursiveStep implements Step {
 
   private final FolderDao folderDao;
   private final UUID folderId;
   private final UUID workspaceId;
 
-  public DeleteFoldersStep(FolderDao folderDao, UUID workspaceId, UUID folderId) {
+  public DeleteFolderRecursiveStep(FolderDao folderDao, UUID workspaceId, UUID folderId) {
     this.folderDao = folderDao;
     this.folderId = folderId;
     this.workspaceId = workspaceId;
@@ -23,7 +23,7 @@ public class DeleteFoldersStep implements Step {
 
   @Override
   public StepResult doStep(FlightContext context) throws InterruptedException, RetryException {
-    boolean deleted = folderDao.deleteFolder(workspaceId, folderId);
+    boolean deleted = folderDao.deleteFolderRecursive(workspaceId, folderId);
     FlightUtils.setResponse(context, deleted, HttpStatus.OK);
     return StepResult.getStepResultSuccess();
   }

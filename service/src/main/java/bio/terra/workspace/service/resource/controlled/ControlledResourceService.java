@@ -1,6 +1,6 @@
 package bio.terra.workspace.service.resource.controlled;
 
-import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.RESOURCES_TO_DELETE;
+import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.CONTROLLED_RESOURCES_TO_DELETE;
 
 import bio.terra.common.exception.BadRequestException;
 import bio.terra.common.exception.ServiceUnavailableException;
@@ -53,6 +53,7 @@ import bio.terra.workspace.service.workspace.model.WsmApplication;
 import com.google.cloud.Policy;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -558,6 +559,8 @@ public class ControlledResourceService {
     WsmResource resource = resourceDao.getResource(workspaceUuid, resourceId);
     final String jobDescription = "Delete controlled resource; id: " + resourceId.toString();
 
+    List<WsmResource> resourceToDelete = new ArrayList<>();
+    resourceToDelete.add(resource);
     return jobService
         .newJob()
         .description(jobDescription)
@@ -566,15 +569,13 @@ public class ControlledResourceService {
         .userRequest(userRequest)
         .workspaceId(workspaceUuid.toString())
         .operationType(OperationType.DELETE)
-        // resource is set for workspace activity logging purpose.
-        .resource(resource)
         // resourceType, resourceName, stewardshipType are set for flight job filtering.
         .resourceType(resource.getResourceType())
         .resourceName(resource.getName())
         .stewardshipType(resource.getStewardshipType())
         .workspaceId(workspaceUuid.toString())
         .addParameter(JobMapKeys.RESULT_PATH.getKeyName(), resultPath)
-        .addParameter(RESOURCES_TO_DELETE, List.of(resource));
+        .addParameter(CONTROLLED_RESOURCES_TO_DELETE, resourceToDelete);
   }
 
   /**

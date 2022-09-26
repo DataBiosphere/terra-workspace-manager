@@ -16,7 +16,7 @@ import bio.terra.workspace.connected.WorkspaceConnectedTestUtils;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.db.WorkspaceActivityLogDao;
 import bio.terra.workspace.db.exception.FolderNotFoundException;
-import bio.terra.workspace.service.folder.flights.DeleteFoldersStep;
+import bio.terra.workspace.service.folder.flights.DeleteFolderRecursiveStep;
 import bio.terra.workspace.service.folder.flights.DeleteReferencedResourcesStep;
 import bio.terra.workspace.service.folder.model.Folder;
 import bio.terra.workspace.service.job.JobService;
@@ -162,7 +162,7 @@ public class FolderServiceTest extends BaseConnectedTest {
     Map<String, StepStatus> retrySteps = new HashMap<>();
     retrySteps.put(
         DeleteReferencedResourcesStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
-    retrySteps.put(DeleteFoldersStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
+    retrySteps.put(DeleteFolderRecursiveStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
     jobService.setFlightDebugInfoForTest(
         FlightDebugInfo.newBuilder().doStepFailures(retrySteps).build());
 
@@ -182,7 +182,7 @@ public class FolderServiceTest extends BaseConnectedTest {
     Map<String, StepStatus> retrySteps = new HashMap<>();
     retrySteps.put(
         DeleteReferencedResourcesStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
-    retrySteps.put(DeleteFoldersStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
+    retrySteps.put(DeleteFolderRecursiveStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
     jobService.setFlightDebugInfoForTest(
         FlightDebugInfo.newBuilder().doStepFailures(retrySteps).build());
 
@@ -239,7 +239,7 @@ public class FolderServiceTest extends BaseConnectedTest {
     Map<String, StepStatus> retrySteps = new HashMap<>();
     retrySteps.put(
         DeleteReferencedResourcesStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
-    retrySteps.put(DeleteFoldersStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
+    retrySteps.put(DeleteFolderRecursiveStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
     jobService.setFlightDebugInfoForTest(
         FlightDebugInfo.newBuilder().lastStepFailure(true).doStepFailures(retrySteps).build());
 
@@ -267,7 +267,7 @@ public class FolderServiceTest extends BaseConnectedTest {
     Map<String, StepStatus> retrySteps = new HashMap<>();
     retrySteps.put(
         DeleteReferencedResourcesStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
-    retrySteps.put(DeleteFoldersStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
+    retrySteps.put(DeleteFolderRecursiveStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
     jobService.setFlightDebugInfoForTest(
         FlightDebugInfo.newBuilder().lastStepFailure(true).doStepFailures(retrySteps).build());
 

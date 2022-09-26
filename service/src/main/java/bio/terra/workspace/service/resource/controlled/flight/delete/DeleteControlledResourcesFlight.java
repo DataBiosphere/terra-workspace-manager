@@ -9,7 +9,6 @@ import bio.terra.workspace.common.utils.FlightUtils;
 import bio.terra.workspace.common.utils.RetryRules;
 import bio.terra.workspace.service.resource.controlled.flight.create.GetCloudContextStep;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
-import bio.terra.workspace.service.resource.model.WsmResource;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -36,10 +35,11 @@ public class DeleteControlledResourcesFlight extends Flight {
         UUID.fromString(
             FlightUtils.getRequired(
                 inputParameters, WorkspaceFlightMapKeys.WORKSPACE_ID, String.class));
-    List<WsmResource> controlledResources =
-        inputParameters.get(ControlledResourceKeys.RESOURCES_TO_DELETE, new TypeReference<>() {});
-    for (WsmResource controlledResource : controlledResources) {
-      addStep(flightBeanBag, (ControlledResource) controlledResource, workspaceUuid);
+    List<ControlledResource> controlledResources =
+        inputParameters.get(
+            ControlledResourceKeys.CONTROLLED_RESOURCES_TO_DELETE, new TypeReference<>() {});
+    for (ControlledResource controlledResource : controlledResources) {
+      addStep(flightBeanBag, controlledResource, workspaceUuid);
     }
   }
 

@@ -6,7 +6,7 @@ import static bio.terra.workspace.service.workspace.model.WorkspaceConstants.Res
 import bio.terra.workspace.db.FolderDao;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.db.exception.FolderNotFoundException;
-import bio.terra.workspace.service.folder.flights.FolderDeleteFlight;
+import bio.terra.workspace.service.folder.flights.DeleteFolderFlight;
 import bio.terra.workspace.service.folder.model.Folder;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.job.JobService;
@@ -76,17 +76,18 @@ public class FolderService {
             .newJob()
             .description(String.format("Delete folder %s in workspace %s", folderId, workspaceUuid))
             .jobId(UUID.randomUUID().toString())
-            .flightClass(FolderDeleteFlight.class)
+            .flightClass(DeleteFolderFlight.class)
             .workspaceId(workspaceUuid.toString())
             .userRequest(userRequest)
             .operationType(OperationType.DELETE)
             .addParameter(FOLDER_ID, folderId)
-            .addParameter(ControlledResourceKeys.RESOURCES_TO_DELETE, controlledResources)
-            .addParameter(ReferencedResourceKeys.RESOURCES_TO_DELETE, referencedResources)
+            .addParameter(
+                ControlledResourceKeys.CONTROLLED_RESOURCES_TO_DELETE, controlledResources)
+            .addParameter(
+                ReferencedResourceKeys.REFERENCED_RESOURCES_TO_DELETE, referencedResources)
             .submitAndWait(Boolean.class);
     if (!deleted) {
-      logger.warn(
-          String.format("Failed to delete folder %s in workspace %s", folderId, workspaceUuid));
+      logger.warn("Failed to delete folder {} in workspace {}", folderId, workspaceUuid);
     }
   }
 

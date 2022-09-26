@@ -2,8 +2,10 @@ package bio.terra.workspace.common.logging;
 
 import static bio.terra.workspace.common.utils.FlightUtils.getRequired;
 import static bio.terra.workspace.db.model.DbWorkspaceActivityLog.getDbWorkspaceActivityLog;
+import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.CONTROLLED_RESOURCES_TO_DELETE;
 import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.FOLDER_ID;
 import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Preconditions.checkState;
 
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.FlightStatus;
@@ -22,9 +24,10 @@ import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import bio.terra.workspace.service.resource.exception.ResourceNotFoundException;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
-import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ResourceKeys;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import bio.terra.workspace.service.workspace.model.OperationType;
+import com.fasterxml.jackson.core.type.TypeReference;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import org.slf4j.Logger;
@@ -156,10 +159,13 @@ public class WorkspaceActivityLogHook implements StairwayHook {
 
   private void maybeLogControlledResourceDeletion(
       FlightContext context, UUID workspaceUuid, String userEmail, String subjectId) {
-    var controlledResource =
+    List<ControlledResource> controlledResource =
         checkNotNull(
-            context.getInputParameters().get(ResourceKeys.RESOURCE, ControlledResource.class));
-    UUID resourceId = controlledResource.getResourceId();
+            context
+                .getInputParameters()
+                .get(CONTROLLED_RESOURCES_TO_DELETE, new TypeReference<>() {}));
+    checkState(controlledResource.size() == 1);
+    UUID resourceId = controlledResource.get(0).getResourceId();
     try {
       resourceDao.getResource(workspaceUuid, resourceId);
       logger.warn(

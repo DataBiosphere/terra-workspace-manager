@@ -55,7 +55,7 @@ public final class WorkspaceFlightMapKeys {
     public static final String LOCATION = "location";
     public static final String RESOURCE_ID_TO_CLONE_RESULT = "resourceIdToCloneResult";
     public static final String RESOURCES_TO_CLONE = "resourcesToClone";
-    public static final String RESOURCES_TO_DELETE = "controlledResourcesToDelete";
+    public static final String CONTROLLED_RESOURCES_TO_DELETE = "controlledResourcesToDelete";
     public static final String SOURCE_CLONE_INPUTS = "sourceCloneInputs";
     public static final String SOURCE_WORKSPACE_ID = "sourceWorkspaceId";
     public static final String STORAGE_TRANSFER_JOB_NAME = "storageTransferJobName";
@@ -70,7 +70,7 @@ public final class WorkspaceFlightMapKeys {
 
     private ReferencedResourceKeys() {}
 
-    public static final String RESOURCES_TO_DELETE = "referencedResourcesToDelete";
+    public static final String REFERENCED_RESOURCES_TO_DELETE = "referencedResourcesToDelete";
   }
 
   /** Common resource keys */

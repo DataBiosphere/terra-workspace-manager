@@ -12,10 +12,10 @@ import bio.terra.workspace.service.resource.controlled.flight.delete.DeleteContr
 import java.util.UUID;
 
 /** A flight to delete folder and its sub-folders, along with all the resources in it. */
-public class FolderDeleteFlight extends DeleteControlledResourcesFlight {
+public class DeleteFolderFlight extends DeleteControlledResourcesFlight {
 
   /** @inheritdoc */
-  public FolderDeleteFlight(FlightMap inputParameters, Object beanBag) throws InterruptedException {
+  public DeleteFolderFlight(FlightMap inputParameters, Object beanBag) throws InterruptedException {
     // Steps are added in the super class `DeleteControlledResourcesFlight` to delete
     // controlled resources.
     super(inputParameters, beanBag);
@@ -30,7 +30,7 @@ public class FolderDeleteFlight extends DeleteControlledResourcesFlight {
         databaseRetry);
 
     addStep(
-        new DeleteFoldersStep(flightBeanBag.getFolderDao(), workspaceUuid, folderId),
+        new DeleteFolderRecursiveStep(flightBeanBag.getFolderDao(), workspaceUuid, folderId),
         databaseRetry);
   }
 }
