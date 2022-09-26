@@ -27,6 +27,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import org.apache.http.HttpStatus;
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.Test;
@@ -43,7 +44,7 @@ public class LandingZoneApiControllerTest extends BaseUnitTest {
   private static final String LIST_AZURE_LANDING_ZONES_DEFINITIONS_PATH =
       "/api/landingzones/definitions/v1/azure";
   private static final String JOB_ID = "newJobId";
-  private static final String LANDING_ZONE_ID = "testLandingZoneId";
+  private static final UUID LANDING_ZONE_ID = UUID.randomUUID();
   @Autowired private MockMvc mockMvc;
   @Autowired ObjectMapper objectMapper;
 
@@ -55,8 +56,9 @@ public class LandingZoneApiControllerTest extends BaseUnitTest {
     LandingZoneJobService.AsyncJobResult<DeployedLandingZone> asyncJobResult =
         AzureLandingZoneFixtures.createJobResultWithRunningState(JOB_ID);
 
-    when(landingZoneService.startLandingZoneCreationJob(any(), any(), any())).thenReturn(JOB_ID);
-    when(landingZoneService.getAsyncJobResult(any())).thenReturn(asyncJobResult);
+    when(landingZoneService.startLandingZoneCreationJob(any(), any(), any(), any()))
+        .thenReturn(JOB_ID);
+    when(landingZoneService.getAsyncJobResult(any(), any())).thenReturn(asyncJobResult);
     when(featureConfiguration.isAzureEnabled()).thenReturn(true);
 
     var requestBody = AzureLandingZoneFixtures.buildCreateAzureLandingZoneRequest(JOB_ID);
@@ -77,10 +79,11 @@ public class LandingZoneApiControllerTest extends BaseUnitTest {
   @Test
   public void createAzureLandingZoneJobSucceeded() throws Exception {
     LandingZoneJobService.AsyncJobResult<DeployedLandingZone> asyncJobResult =
-        AzureLandingZoneFixtures.createJobResultWithSucceededState(JOB_ID, "lzId");
+        AzureLandingZoneFixtures.createJobResultWithSucceededState(JOB_ID, LANDING_ZONE_ID);
 
-    when(landingZoneService.startLandingZoneCreationJob(any(), any(), any())).thenReturn(JOB_ID);
-    when(landingZoneService.getAsyncJobResult(any())).thenReturn(asyncJobResult);
+    when(landingZoneService.startLandingZoneCreationJob(any(), any(), any(), any()))
+        .thenReturn(JOB_ID);
+    when(landingZoneService.getAsyncJobResult(any(), any())).thenReturn(asyncJobResult);
     when(featureConfiguration.isAzureEnabled()).thenReturn(true);
 
     // TODO SG: check if we need name and description??
@@ -97,16 +100,18 @@ public class LandingZoneApiControllerTest extends BaseUnitTest {
         .andExpect(MockMvcResultMatchers.jsonPath("$.jobReport.id").exists())
         .andExpect(MockMvcResultMatchers.jsonPath("$.landingZone").exists())
         .andExpect(MockMvcResultMatchers.jsonPath("$.landingZone.id").exists())
-        .andExpect(MockMvcResultMatchers.jsonPath("$.landingZone.id", Matchers.is("lzId")));
+        .andExpect(
+            MockMvcResultMatchers.jsonPath("$.landingZone.id", Matchers.is(LANDING_ZONE_ID)));
   }
 
   @Test
   public void createAzureLandingZoneWithoutDefinitionValidationFailed() throws Exception {
     LandingZoneJobService.AsyncJobResult<DeployedLandingZone> asyncJobResult =
-        AzureLandingZoneFixtures.createJobResultWithSucceededState(JOB_ID, "lzId");
+        AzureLandingZoneFixtures.createJobResultWithSucceededState(JOB_ID, LANDING_ZONE_ID);
 
-    when(landingZoneService.startLandingZoneCreationJob(any(), any(), any())).thenReturn(JOB_ID);
-    when(landingZoneService.getAsyncJobResult(any())).thenReturn(asyncJobResult);
+    when(landingZoneService.startLandingZoneCreationJob(any(), any(), any(), any()))
+        .thenReturn(JOB_ID);
+    when(landingZoneService.getAsyncJobResult(any(), any())).thenReturn(asyncJobResult);
     when(featureConfiguration.isAzureEnabled()).thenReturn(true);
 
     var requestBody =
@@ -124,10 +129,11 @@ public class LandingZoneApiControllerTest extends BaseUnitTest {
   @Test
   public void createAzureLandingZoneWithoutTargetValidationFailed() throws Exception {
     LandingZoneJobService.AsyncJobResult<DeployedLandingZone> asyncJobResult =
-        AzureLandingZoneFixtures.createJobResultWithSucceededState(JOB_ID, "lzId");
+        AzureLandingZoneFixtures.createJobResultWithSucceededState(JOB_ID, LANDING_ZONE_ID);
 
-    when(landingZoneService.startLandingZoneCreationJob(any(), any(), any())).thenReturn(JOB_ID);
-    when(landingZoneService.getAsyncJobResult(any())).thenReturn(asyncJobResult);
+    when(landingZoneService.startLandingZoneCreationJob(any(), any(), any(), any()))
+        .thenReturn(JOB_ID);
+    when(landingZoneService.getAsyncJobResult(any(), any())).thenReturn(asyncJobResult);
     when(featureConfiguration.isAzureEnabled()).thenReturn(true);
 
     var requestBody =
@@ -147,7 +153,7 @@ public class LandingZoneApiControllerTest extends BaseUnitTest {
     LandingZoneJobService.AsyncJobResult<DeployedLandingZone> asyncJobResult =
         AzureLandingZoneFixtures.createJobResultWithRunningState(JOB_ID);
 
-    when(landingZoneService.getAsyncJobResult(any())).thenReturn(asyncJobResult);
+    when(landingZoneService.getAsyncJobResult(any(), any())).thenReturn(asyncJobResult);
 
     mockMvc
         .perform(get(GET_CREATE_AZURE_LANDING_ZONE_RESULT + "/{jobId}", JOB_ID))
@@ -161,9 +167,9 @@ public class LandingZoneApiControllerTest extends BaseUnitTest {
   @Test
   public void getCreateAzureLandingZoneResultJobSucceeded() throws Exception {
     LandingZoneJobService.AsyncJobResult<DeployedLandingZone> asyncJobResult =
-        AzureLandingZoneFixtures.createJobResultWithSucceededState(JOB_ID, "lzId");
+        AzureLandingZoneFixtures.createJobResultWithSucceededState(JOB_ID, LANDING_ZONE_ID);
 
-    when(landingZoneService.getAsyncJobResult(any())).thenReturn(asyncJobResult);
+    when(landingZoneService.getAsyncJobResult(any(), any())).thenReturn(asyncJobResult);
 
     mockMvc
         .perform(get(GET_CREATE_AZURE_LANDING_ZONE_RESULT + "/{jobId}", JOB_ID))
@@ -172,7 +178,8 @@ public class LandingZoneApiControllerTest extends BaseUnitTest {
         .andExpect(MockMvcResultMatchers.jsonPath("$.jobReport.id").exists())
         .andExpect(MockMvcResultMatchers.jsonPath("$.landingZone").exists())
         .andExpect(MockMvcResultMatchers.jsonPath("$.landingZone.id").exists())
-        .andExpect(MockMvcResultMatchers.jsonPath("$.landingZone.id", Matchers.is("lzId")));
+        .andExpect(
+            MockMvcResultMatchers.jsonPath("$.landingZone.id", Matchers.is(LANDING_ZONE_ID)));
   }
 
   @Test
@@ -211,7 +218,7 @@ public class LandingZoneApiControllerTest extends BaseUnitTest {
   public void deleteAzureLandingZoneSuccess() throws Exception {
     doNothing().when(landingZoneService).deleteLandingZone(anyString());
     mockMvc
-        .perform(delete(AZURE_LANDING_ZONE_PATH + "/{landingZoneId}", "lz-1"))
+        .perform(delete(AZURE_LANDING_ZONE_PATH + "/{landingZoneId}", LANDING_ZONE_ID))
         .andExpect(status().isNoContent());
   }
 
@@ -221,7 +228,7 @@ public class LandingZoneApiControllerTest extends BaseUnitTest {
         .when(landingZoneService)
         .deleteLandingZone(anyString());
     mockMvc
-        .perform(delete(AZURE_LANDING_ZONE_PATH + "/{landingZoneId}", "lz-0"))
+        .perform(delete(AZURE_LANDING_ZONE_PATH + "/{landingZoneId}", LANDING_ZONE_ID))
         .andExpect(status().isNotImplemented());
   }
 
@@ -295,7 +302,7 @@ public class LandingZoneApiControllerTest extends BaseUnitTest {
                 purposeSubnets2,
                 listSubnets2));
 
-    when(landingZoneService.listResourcesWithPurposes(anyString())).thenReturn(groupedResources);
+    when(landingZoneService.listResourcesWithPurposes(any(), any())).thenReturn(groupedResources);
     when(featureConfiguration.isAzureEnabled()).thenReturn(true);
 
     mockMvc
@@ -321,7 +328,7 @@ public class LandingZoneApiControllerTest extends BaseUnitTest {
     LandingZoneResourcesByPurpose groupedResources =
         new LandingZoneResourcesByPurpose(Collections.emptyMap());
 
-    when(landingZoneService.listResourcesWithPurposes(anyString())).thenReturn(groupedResources);
+    when(landingZoneService.listResourcesWithPurposes(any(), any())).thenReturn(groupedResources);
     when(featureConfiguration.isAzureEnabled()).thenReturn(true);
 
     mockMvc
