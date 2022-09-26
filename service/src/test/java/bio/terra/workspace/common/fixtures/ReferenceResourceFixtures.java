@@ -86,7 +86,7 @@ public class ReferenceResourceFixtures {
     return new ApiCreateGcpBigQueryDatasetReferenceRequestBody()
         .dataset(
             new ApiGcpBigQueryDatasetAttributes()
-                .datasetId(appendRandomNumber("dataset").replace("-", "_"))
+                .datasetId(appendRandomNumber("dataset"))
                 .projectId(appendRandomNumber("my-gcp-project")))
         .metadata(makeDefaultReferencedResourceFieldsApi());
   }
@@ -97,7 +97,7 @@ public class ReferenceResourceFixtures {
         .dataTable(
             new ApiGcpBigQueryDataTableAttributes()
                 .dataTableId(appendRandomNumber("datatable"))
-                .datasetId(appendRandomNumber("dataset").replace("-", "_"))
+                .datasetId(appendRandomNumber("dataset"))
                 .projectId(appendRandomNumber("my-project-id")))
         .metadata(makeDefaultReferencedResourceFieldsApi());
   }
@@ -110,7 +110,7 @@ public class ReferenceResourceFixtures {
 
   public static ApiReferenceResourceCommonFields makeDefaultReferencedResourceFieldsApi() {
     return new ApiReferenceResourceCommonFields()
-        .name(appendRandomNumber("test_resource").replace("-", "_"))
+        .name(appendRandomNumber("test_resource"))
         .description("This is a referenced resource")
         .cloningInstructions(ApiCloningInstructionsEnum.NOTHING)
         .properties(convertMapToApiProperties(DEFAULT_RESOURCE_PROPERTIES));

@@ -97,7 +97,7 @@ public class FolderServiceTest extends BaseConnectedTest {
     controlledBqDataset =
         ControlledBigQueryDatasetResource.builder()
             .common(createControlledResourceCommonFieldWithFolderId(workspaceId, fooBarFolder.id()))
-            .datasetName(TestUtils.appendRandomNumber("my_bq_dataset").replace("-", "_"))
+            .datasetName(TestUtils.appendRandomNumber("my_bq_dataset"))
             .projectId("my-gcp-project")
             .build();
     resourceDao.createControlledResource(controlledBqDataset);
