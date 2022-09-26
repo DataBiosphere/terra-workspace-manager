@@ -1,5 +1,7 @@
 package bio.terra.workspace.service.resource.controlled;
 
+import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.RESOURCES_TO_DELETE;
+
 import bio.terra.common.exception.BadRequestException;
 import bio.terra.common.exception.ServiceUnavailableException;
 import bio.terra.stairway.FlightState;
@@ -36,7 +38,7 @@ import bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.Updat
 import bio.terra.workspace.service.resource.controlled.flight.clone.bucket.CloneControlledGcsBucketResourceFlight;
 import bio.terra.workspace.service.resource.controlled.flight.clone.dataset.CloneControlledGcpBigQueryDatasetResourceFlight;
 import bio.terra.workspace.service.resource.controlled.flight.create.CreateControlledResourceFlight;
-import bio.terra.workspace.service.resource.controlled.flight.delete.DeleteControlledResourceFlight;
+import bio.terra.workspace.service.resource.controlled.flight.delete.DeleteControlledResourcesFlight;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import bio.terra.workspace.service.resource.controlled.model.ManagedByType;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
@@ -560,16 +562,19 @@ public class ControlledResourceService {
         .newJob()
         .description(jobDescription)
         .jobId(jobId)
-        .flightClass(DeleteControlledResourceFlight.class)
+        .flightClass(DeleteControlledResourcesFlight.class)
         .userRequest(userRequest)
         .workspaceId(workspaceUuid.toString())
         .operationType(OperationType.DELETE)
+        // resource is set for workspace activity logging purpose.
         .resource(resource)
+        // resourceType, resourceName, stewardshipType are set for flight job filtering.
         .resourceType(resource.getResourceType())
         .resourceName(resource.getName())
         .stewardshipType(resource.getStewardshipType())
         .workspaceId(workspaceUuid.toString())
-        .addParameter(JobMapKeys.RESULT_PATH.getKeyName(), resultPath);
+        .addParameter(JobMapKeys.RESULT_PATH.getKeyName(), resultPath)
+        .addParameter(RESOURCES_TO_DELETE, List.of(resource));
   }
 
   /**

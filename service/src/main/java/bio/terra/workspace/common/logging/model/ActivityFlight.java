@@ -10,7 +10,7 @@ import bio.terra.workspace.service.resource.controlled.flight.clone.dataset.Clon
 import bio.terra.workspace.service.resource.controlled.flight.clone.workspace.CloneAllResourcesFlight;
 import bio.terra.workspace.service.resource.controlled.flight.clone.workspace.CloneGcpWorkspaceFlight;
 import bio.terra.workspace.service.resource.controlled.flight.create.CreateControlledResourceFlight;
-import bio.terra.workspace.service.resource.controlled.flight.delete.DeleteControlledResourceFlight;
+import bio.terra.workspace.service.resource.controlled.flight.delete.DeleteControlledResourcesFlight;
 import bio.terra.workspace.service.resource.referenced.flight.create.CreateReferenceResourceFlight;
 import bio.terra.workspace.service.resource.referenced.flight.update.UpdateReferenceResourceFlight;
 import bio.terra.workspace.service.workspace.flight.CreateGcpContextFlightV2;
@@ -49,7 +49,7 @@ public enum ActivityFlight {
       CloneControlledGcpBigQueryDatasetResourceFlight.class.getName(),
       ActivityLogChangedTarget.RESOURCE),
   CONTROLLED_RESOURCE_DELETE_FLIGHT(
-      DeleteControlledResourceFlight.class.getName(), ActivityLogChangedTarget.RESOURCE),
+      DeleteControlledResourcesFlight.class.getName(), ActivityLogChangedTarget.RESOURCE),
   AZURE_CLOUD_CONTEXT_CREATE_FLIGHT(
       CreateAzureContextFlight.class.getName(), ActivityLogChangedTarget.AZURE_CLOUD_CONTEXT),
   AZURE_CLOUD_CONTEXT_DELETE_FLIGHT(

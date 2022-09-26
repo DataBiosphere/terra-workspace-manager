@@ -11,7 +11,7 @@ import bio.terra.workspace.generated.model.ApiPrivateResourceUser;
 import bio.terra.workspace.generated.model.ApiResourceMetadata;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.resource.controlled.flight.create.CreateControlledResourceFlight;
-import bio.terra.workspace.service.resource.controlled.flight.delete.DeleteControlledResourceFlight;
+import bio.terra.workspace.service.resource.controlled.flight.delete.DeleteControlledResourcesFlight;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.model.ResourceLineageEntry;
 import bio.terra.workspace.service.resource.model.StewardshipType;
@@ -122,7 +122,7 @@ public abstract class ControlledResource extends WsmResource {
    * @param flightBeanBag bean bag for finding Spring singletons
    */
   public abstract void addDeleteSteps(
-      DeleteControlledResourceFlight flight, FlightBeanBag flightBeanBag);
+      DeleteControlledResourcesFlight flight, FlightBeanBag flightBeanBag);
 
   /**
    * If specified, the assigned user must be equal to the user making the request.

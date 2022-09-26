@@ -8,13 +8,16 @@ import bio.terra.stairway.RetryRule;
 import bio.terra.workspace.common.utils.FlightBeanBag;
 import bio.terra.workspace.common.utils.FlightUtils;
 import bio.terra.workspace.common.utils.RetryRules;
-import bio.terra.workspace.service.resource.controlled.flight.delete.DeleteControlledResourceFlight;
+import bio.terra.workspace.service.resource.controlled.flight.delete.DeleteControlledResourcesFlight;
 import java.util.UUID;
 
-public class FolderDeleteFlight extends DeleteControlledResourceFlight {
+/** A flight to delete folder and its sub-folders, along with all the resources in it. */
+public class FolderDeleteFlight extends DeleteControlledResourcesFlight {
 
   /** @inheritdoc */
   public FolderDeleteFlight(FlightMap inputParameters, Object beanBag) throws InterruptedException {
+    // Steps are added in the super class `DeleteControlledResourcesFlight` to delete
+    // controlled resources.
     super(inputParameters, beanBag);
     FlightBeanBag flightBeanBag = FlightBeanBag.getFromObject(beanBag);
 

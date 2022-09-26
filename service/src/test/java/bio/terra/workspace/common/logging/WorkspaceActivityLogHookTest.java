@@ -24,7 +24,7 @@ import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook.ControlledAiNotebookInstanceResource;
-import bio.terra.workspace.service.resource.controlled.flight.delete.DeleteControlledResourceFlight;
+import bio.terra.workspace.service.resource.controlled.flight.delete.DeleteControlledResourcesFlight;
 import bio.terra.workspace.service.resource.controlled.model.AccessScopeType;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResourceFields;
 import bio.terra.workspace.service.resource.controlled.model.ManagedByType;
@@ -247,7 +247,7 @@ public class WorkspaceActivityLogHookTest extends BaseUnitTest {
             .build());
     hook.endFlight(
         new FakeFlightContext(
-            DeleteControlledResourceFlight.class.getName(), inputParams, FlightStatus.ERROR));
+            DeleteControlledResourcesFlight.class.getName(), inputParams, FlightStatus.ERROR));
 
     var changeDetailsAfterFailedFlight = activityLogDao.getLastUpdateDetails(workspaceUuid);
     assertChangeDetails(changeDetailsAfterFailedFlight);

@@ -1,7 +1,5 @@
 package bio.terra.workspace.service.resource.controlled.flight.delete;
 
-import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ResourceKeys.RESOURCE;
-
 import bio.terra.stairway.Flight;
 import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.RetryRule;
@@ -22,14 +20,14 @@ import java.util.UUID;
  * Flight for type-agnostic deletion of a controlled resource. All type-specific information should
  * live in individual steps.
  */
-public class DeleteControlledResourceFlight extends Flight {
+public class DeleteControlledResourcesFlight extends Flight {
 
   @Override
   public void addStep(Step step, RetryRule retryRule) {
     super.addStep(step, retryRule);
   }
 
-  public DeleteControlledResourceFlight(FlightMap inputParameters, Object beanBag)
+  public DeleteControlledResourcesFlight(FlightMap inputParameters, Object beanBag)
       throws InterruptedException {
     super(inputParameters, beanBag);
     final FlightBeanBag flightBeanBag = FlightBeanBag.getFromObject(beanBag);
@@ -38,15 +36,10 @@ public class DeleteControlledResourceFlight extends Flight {
         UUID.fromString(
             FlightUtils.getRequired(
                 inputParameters, WorkspaceFlightMapKeys.WORKSPACE_ID, String.class));
-    ControlledResource resource = inputParameters.get(RESOURCE, ControlledResource.class);
     List<WsmResource> controlledResources =
         inputParameters.get(ControlledResourceKeys.RESOURCES_TO_DELETE, new TypeReference<>() {});
-    if (resource != null) {
-      addStep(flightBeanBag, resource, workspaceUuid);
-    } else if (controlledResources != null) {
-      for (WsmResource controlledResource : controlledResources) {
-        addStep(flightBeanBag, (ControlledResource) controlledResource, workspaceUuid);
-      }
+    for (WsmResource controlledResource : controlledResources) {
+      addStep(flightBeanBag, (ControlledResource) controlledResource, workspaceUuid);
     }
   }
 
