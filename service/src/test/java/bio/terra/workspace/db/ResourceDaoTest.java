@@ -1,8 +1,8 @@
 package bio.terra.workspace.db;
 
 import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.DEFAULT_RESOURCE_PROPERTIES;
-import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.createGcpWorkspace;
 import static bio.terra.workspace.service.resource.controlled.cloud.gcp.GcpResourceConstant.DEFAULT_ZONE;
+import static bio.terra.workspace.unit.WorkspaceUnitTestUtils.createWorkspaceWithGcpContext;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -45,7 +45,7 @@ public class ResourceDaoTest extends BaseUnitTest {
 
   @BeforeAll
   public void setUp() {
-    workspaceUuid = createGcpWorkspace(workspaceDao);
+    workspaceUuid = createWorkspaceWithGcpContext(workspaceDao);
   }
 
   @AfterAll
@@ -125,7 +125,7 @@ public class ResourceDaoTest extends BaseUnitTest {
 
     resourceDao.createControlledResource(initialResource);
 
-    final UUID workspaceId2 = createGcpWorkspace(workspaceDao);
+    final UUID workspaceId2 = createWorkspaceWithGcpContext(workspaceDao);
     final ControlledGcsBucketResource duplicatingResource =
         ControlledResourceFixtures.makeDefaultControlledGcsBucketBuilder(workspaceId2)
             .bucketName(clashingBucketName)
@@ -173,7 +173,7 @@ public class ResourceDaoTest extends BaseUnitTest {
 
     ControlledResourceFields commonFields3 =
         ControlledResourceFixtures.makeNotebookCommonFieldsBuilder()
-            .workspaceUuid(createGcpWorkspace(workspaceDao))
+            .workspaceUuid(createWorkspaceWithGcpContext(workspaceDao))
             .name("resource-3")
             .build();
     final ControlledResource resourceWithDifferentWorkspaceId =
@@ -246,7 +246,7 @@ public class ResourceDaoTest extends BaseUnitTest {
             .build();
     resourceDao.createControlledResource(initialResource);
 
-    final UUID workspaceId2 = createGcpWorkspace(workspaceDao);
+    final UUID workspaceId2 = createWorkspaceWithGcpContext(workspaceDao);
     // This is in a different workspace (and so a different cloud context), so it is not a conflict
     // even with the same Dataset ID.
     final ControlledBigQueryDatasetResource uniqueResource =
@@ -328,7 +328,7 @@ public class ResourceDaoTest extends BaseUnitTest {
 
   @Test
   public void deleteResourceProperties_nonExistingKeys_nothingIsDeleted() {
-    UUID workspaceUuid = createGcpWorkspace(workspaceDao);
+    UUID workspaceUuid = createWorkspaceWithGcpContext(workspaceDao);
     ControlledBigQueryDatasetResource resource =
         ControlledResourceFixtures.makeDefaultControlledBigQueryBuilder(workspaceUuid).build();
     resourceDao.createControlledResource(resource);
@@ -343,7 +343,7 @@ public class ResourceDaoTest extends BaseUnitTest {
 
   @Test
   public void deleteResourceProperties_noKeySpecified_throwsMissingRequiredFieldsException() {
-    UUID workspaceUuid = createGcpWorkspace(workspaceDao);
+    UUID workspaceUuid = createWorkspaceWithGcpContext(workspaceDao);
     ControlledBigQueryDatasetResource resource =
         ControlledResourceFixtures.makeDefaultControlledBigQueryBuilder(workspaceUuid).build();
     resourceDao.createControlledResource(resource);
