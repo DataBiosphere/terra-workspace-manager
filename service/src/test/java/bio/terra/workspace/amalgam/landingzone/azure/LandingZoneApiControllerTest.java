@@ -204,7 +204,7 @@ public class LandingZoneApiControllerTest extends BaseUnitTest {
                 .description("barDescription")
                 .version("v1")
                 .build());
-    when(landingZoneService.listLandingZoneDefinitions()).thenReturn(definitions);
+    when(landingZoneService.listLandingZoneDefinitions(any())).thenReturn(definitions);
     when(featureConfiguration.isAzureEnabled()).thenReturn(true);
 
     mockMvc
