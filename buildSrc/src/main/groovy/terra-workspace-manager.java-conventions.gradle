@@ -7,7 +7,7 @@ plugins {
     id 'com.github.spotbugs'
 }
 
-def useMavenLocal = true
+def useMavenLocal = false
 repositories {
     if (useMavenLocal) {
         mavenLocal()
@@ -68,6 +68,7 @@ spotless {
     }
 }
 build.dependsOn spotlessApply
+
 
 // for scans
 if (hasProperty("buildScan")) {
