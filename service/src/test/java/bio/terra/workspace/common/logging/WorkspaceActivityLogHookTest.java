@@ -44,6 +44,7 @@ import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import bio.terra.workspace.service.workspace.model.OperationType;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
+import bio.terra.workspace.unit.WorkspaceUnitTestUtils;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -266,29 +267,17 @@ public class WorkspaceActivityLogHookTest extends BaseUnitTest {
   @Test
   void deleteResourceFlightFails_resourceStillExist_notLogChangeDetails()
       throws InterruptedException {
-    var workspaceUuid = UUID.randomUUID();
+    UUID workspaceId = WorkspaceUnitTestUtils.createWorkspaceWithGcpContext(workspaceDao);
     var resourceUuid = UUID.randomUUID();
-    var emptyChangeDetails = activityLogDao.getLastUpdateDetails(workspaceUuid);
+    Optional<ActivityLogChangeDetails> emptyChangeDetails =
+        activityLogDao.getLastUpdateDetails(workspaceId);
     assertTrue(emptyChangeDetails.isEmpty());
 
-    workspaceDao.createWorkspace(
-        Workspace.builder()
-            .workspaceId(workspaceUuid)
-            .userFacingId(workspaceUuid.toString())
-            .workspaceStage(WorkspaceStage.MC_WORKSPACE)
-            .build());
-    var flightId = UUID.randomUUID().toString();
-    workspaceDao.createCloudContextStart(workspaceUuid, CloudPlatform.GCP, flightId);
-    workspaceDao.createCloudContextFinish(
-        workspaceUuid,
-        CloudPlatform.GCP,
-        "{\"version\": 1, \"gcpProjectId\": \"my-gcp-project-name-123\"}",
-        flightId);
     var resource =
         ControlledAiNotebookInstanceResource.builder()
             .common(
                 ControlledResourceFields.builder()
-                    .workspaceUuid(workspaceUuid)
+                    .workspaceUuid(workspaceId)
                     .resourceId(resourceUuid)
                     .name("my-notebook")
                     .accessScope(AccessScopeType.ACCESS_SCOPE_PRIVATE)
@@ -302,19 +291,19 @@ public class WorkspaceActivityLogHookTest extends BaseUnitTest {
             .build();
     resourceDao.createControlledResource(resource);
 
-    FlightMap inputParams = buildInputParams(workspaceUuid, OperationType.DELETE);
+    FlightMap inputParams = buildInputParams(workspaceId, OperationType.DELETE);
     inputParams.put(ResourceKeys.RESOURCE, resource);
     hook.endFlight(
         new FakeFlightContext(
             DeleteGcpContextFlight.class.getName(), inputParams, FlightStatus.ERROR));
 
-    assertNotNull(resourceDao.getResource(workspaceUuid, resourceUuid));
-    var changeDetailsAfterFailedFlight = activityLogDao.getLastUpdateDetails(workspaceUuid);
+    assertNotNull(resourceDao.getResource(workspaceId, resourceUuid));
+    var changeDetailsAfterFailedFlight = activityLogDao.getLastUpdateDetails(workspaceId);
     assertTrue(changeDetailsAfterFailedFlight.isEmpty());
   }
 
   @Test
-  void deleteFolderFlightFails_activityLogUpdated() throws InterruptedException {
+  void deleteFolderFlightFails_folderDeleted_activityLogUpdated() throws InterruptedException {
     UUID workspaceId = UUID.randomUUID();
     var emptyChangeDetails = activityLogDao.getLastUpdateDetails(workspaceId);
     assertTrue(emptyChangeDetails.isEmpty());
@@ -334,7 +323,7 @@ public class WorkspaceActivityLogHookTest extends BaseUnitTest {
   @Test
   void deleteFolderFlightFails_folderNotDeleted_activityLogNotUpdated()
       throws InterruptedException {
-    UUID workspaceId = UUID.randomUUID();
+    UUID workspaceId = WorkspaceUnitTestUtils.createWorkspaceWithGcpContext(workspaceDao);
     var emptyChangeDetails = activityLogDao.getLastUpdateDetails(workspaceId);
     assertTrue(emptyChangeDetails.isEmpty());
 
