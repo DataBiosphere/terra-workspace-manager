@@ -56,7 +56,11 @@ public class TpsApiDispatch {
 
   public void deletePao(BearerToken bearerToken, UUID objectId) {
     features.tpsEnabledCheck();
-    paoService.deletePao(objectId);
+    try {
+      paoService.deletePao(objectId);
+    } catch (PolicyObjectNotFoundException e) {
+      // Not found is not an error as far as WSM is concerned.
+    }
   }
 
   public Optional<ApiTpsPaoGetResult> getPaoIfExists(BearerToken bearerToken, UUID objectId) {

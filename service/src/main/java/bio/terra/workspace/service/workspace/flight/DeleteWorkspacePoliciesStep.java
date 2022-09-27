@@ -1,7 +1,6 @@
 package bio.terra.workspace.service.workspace.flight;
 
 import bio.terra.common.iam.BearerToken;
-import bio.terra.policy.common.exception.PolicyObjectNotFoundException;
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
@@ -28,11 +27,8 @@ public class DeleteWorkspacePoliciesStep implements Step {
 
   @Override
   public StepResult doStep(FlightContext context) throws InterruptedException, RetryException {
-    try {
-      tpsApiDispatch.deletePao(new BearerToken(userRequest.getRequiredToken()), workspaceId);
-    } catch (PolicyObjectNotFoundException ex) {
-      // PAO was not found, nothing to do here.
-    }
+    // deletePao does not throw if the policy object is missing, so this operation is idempotent.
+    tpsApiDispatch.deletePao(new BearerToken(userRequest.getRequiredToken()), workspaceId);
     return StepResult.getStepResultSuccess();
   }
 
