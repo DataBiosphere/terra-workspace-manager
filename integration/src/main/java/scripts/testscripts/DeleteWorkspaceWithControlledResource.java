@@ -20,7 +20,7 @@ import scripts.utils.WorkspaceAllocateTestScriptBase;
 
 public class DeleteWorkspaceWithControlledResource extends WorkspaceAllocateTestScriptBase {
   private static final Logger logger =
-      LoggerFactory.getLogger(DeleteGcpContextWithControlledResource.class);
+      LoggerFactory.getLogger(DeleteWorkspaceWithControlledResource.class);
 
   private static final String DATASET_RESOURCE_NAME = "wsmtest_dataset";
 
