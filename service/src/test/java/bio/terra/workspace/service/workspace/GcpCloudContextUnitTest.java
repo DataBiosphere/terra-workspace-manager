@@ -163,7 +163,7 @@ public class GcpCloudContextUnitTest extends BaseUnitTest {
   }
 
   @Test
-  public void deleteGcpContextDeletesControlledResources() throws Exception {
+  public void deleteGcpContext_deletesControlledResourcesInDb() throws Exception {
     UUID workspaceUuid = UUID.randomUUID();
     var workspace =
         new Workspace(
