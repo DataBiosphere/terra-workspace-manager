@@ -260,34 +260,6 @@ public class FolderServiceTest extends BaseConnectedTest {
     assertTrue(resourceDao.enumerateResources(workspaceId, null, null, 0, 100).isEmpty());
   }
 
-  @Test
-  void deleteFolder_failsAtLastStep_logsWorkspaceActivity() {
-    Optional<ActivityLogChangeDetails> changeDetails =
-        workspaceActivityLogDao.getLastUpdateDetails(workspaceId);
-    Map<String, StepStatus> retrySteps = new HashMap<>();
-    retrySteps.put(
-        DeleteReferencedResourcesStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
-    retrySteps.put(DeleteFolderRecursiveStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
-    jobService.setFlightDebugInfoForTest(
-        FlightDebugInfo.newBuilder().lastStepFailure(true).doStepFailures(retrySteps).build());
-
-    // Service methods which wait for a flight to complete will throw an
-    // InvalidResultStateException when that flight fails without a cause, which occurs when a
-    // flight fails via debugInfo.
-    assertThrows(
-        InvalidResultStateException.class,
-        () ->
-            folderService.deleteFolder(
-                workspaceId, fooFolder.id(), userAccessUtils.defaultUserAuthRequest()));
-
-    Optional<ActivityLogChangeDetails> newChangeDetails =
-        workspaceActivityLogDao.getLastUpdateDetails(workspaceId);
-    assertTrue(newChangeDetails.get().getChangeDate().isAfter(changeDetails.get().getChangeDate()));
-    assertEquals(
-        userAccessUtils.defaultUserAuthRequest().getEmail(),
-        newChangeDetails.get().getActorEmail());
-  }
-
   public Folder createFolder(String displayName, @Nullable UUID parentFolderId) {
     return folderService.createFolder(
         new Folder(UUID.randomUUID(), workspaceId, displayName, null, parentFolderId, Map.of()));
