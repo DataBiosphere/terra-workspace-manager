@@ -20,12 +20,11 @@ import bio.terra.workspace.generated.model.ApiTpsUpdateMode;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.resource.exception.PolicyConflictException;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class ClonePolicyAttributesStep implements Step {
   private static final Logger logger = LoggerFactory.getLogger(ClonePolicyAttributesStep.class);
