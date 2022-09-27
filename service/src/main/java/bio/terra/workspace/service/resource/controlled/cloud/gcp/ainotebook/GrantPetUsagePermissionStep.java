@@ -80,8 +80,15 @@ public class GrantPetUsagePermissionStep implements Step {
       return StepResult.getStepResultSuccess();
     }
     try {
+      // userRequest.email might be a pet SA (e.g. if the user is making this call from inside a
+      // notebook), so we need to call Sam and determine the end-user's email directly.
+      // TODO(PF-1001): Having a SamUser object here (and in doStep) instead of an
+      //  AuthenticatedUserRequest would save an extra call to Sam.
+      String userEmail =
+          SamRethrow.onInterrupted(
+              () -> samService.getUserEmailFromSam(userRequest), "enablePetUndo");
       petSaService.disablePetServiceAccountImpersonationWithEtag(
-          workspaceUuid, userRequest.getEmail(), userRequest, expectedEtag);
+          workspaceUuid, userEmail, userRequest, expectedEtag);
     } catch (ConflictException e) {
       // There was a conflict disabling the service account. Request retry.
       // There is a possible concurrency error here: if two threads are trying to enable and
