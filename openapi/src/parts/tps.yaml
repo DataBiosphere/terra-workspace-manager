@@ -72,6 +72,7 @@ paths:
           $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/ServerError'
+
     patch:
       summary: Update the policies of a Policy Attribute Object
       description: |
@@ -93,6 +94,44 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/TpsPaoUpdateRequest'
+      responses:
+        '200':
+          description: Update successfully processed. The update itself may or may not have succeeded.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TpsPaoUpdateResult'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+
+    put:
+      summary: Replace the policies of a Policy Attribute Object
+      description: |
+        Replaces all of the policies of a PAO with a new set of attributes. This only  
+        modifies the attributes set on the PAO; you can not directly modify
+        the effective attributes. The effective attributes are recomputed based on
+        the modified attributes. If the updateMode is DRY_RUN, the
+        update is computed, but no changes are made. If the updateMode is FAIL_ON_CONFLICT, the
+        change is applied if there are no conflicts. If the updateMode is ENFORCE_CONFLICT, then
+        conflicts during the recomputing of effective attributes are allowed and are propagated
+        to any PAOs dependent on this PAO. With great power comes great responsibility.
+      operationId: replacePao
+      tags: [Tps]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TpsPaoReplaceRequest'
       responses:
         '200':
           description: Update successfully processed. The update itself may or may not have succeeded.
@@ -308,6 +347,16 @@ components:
         conflictPao:
           description: The PAO attempting to combine the conflicting policy
           $ref: '#/components/schemas/TpsPaoDescription'
+
+    TpsPaoReplaceRequest:
+      description: Replace request body
+      type: object
+      required: [updateMode]
+      properties:
+        newAttributes:
+          $ref: '#/components/schemas/TpsPolicyInputs'
+        updateMode:
+          $ref: '#/components/schemas/TpsUpdateMode'
 
     TpsPaoSourceRequest:
       description: Request structure shared by link and merge

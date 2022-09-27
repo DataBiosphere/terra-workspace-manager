@@ -319,6 +319,10 @@ public class ControlledResourceService {
             sourceDatasetResource.getResourceType(),
             sourceDatasetResource.getResourceId(),
             sourceDatasetResource.getName());
+
+    // If TPS is enabled, then we want to merge policies when cloning a bucket
+    boolean mergePolicies = features.isTpsEnabled();
+
     final JobBuilder jobBuilder =
         jobService
             .newJob()
@@ -338,6 +342,7 @@ public class ControlledResourceService {
             .addParameter(ResourceKeys.RESOURCE_DESCRIPTION, destinationDescription)
             .addParameter(ControlledResourceKeys.LOCATION, destinationLocation)
             .addParameter(ControlledResourceKeys.DESTINATION_DATASET_NAME, destinationDatasetName)
+            .addParameter(WorkspaceFlightMapKeys.MERGE_POLICIES, mergePolicies)
             .addParameter(
                 ControlledResourceKeys.CLONING_INSTRUCTIONS,
                 // compute effective cloning instructions

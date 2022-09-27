@@ -27,14 +27,16 @@ public class CloneGcpWorkspaceFlight extends Flight {
     // 6. Build a list of enabled applications
     // 6a. Launch a flight to enable those applications in destination workspace
     var flightBeanBag = FlightBeanBag.getFromObject(applicationContext);
-    addStep(new FindResourcesToCloneStep(flightBeanBag.getResourceDao()), RetryRules.cloud());
+    var cloudRetryRule = RetryRules.cloud();
+    var longCloudRetryRule = RetryRules.cloudLongRunning();
+    addStep(new FindResourcesToCloneStep(flightBeanBag.getResourceDao()), cloudRetryRule);
 
     addStep(new CreateIdsForFutureStepsStep());
 
     addStep(
         new LaunchCreateGcpContextFlightStep(flightBeanBag.getWorkspaceService()),
         RetryRules.cloud());
-    addStep(new AwaitCreateGcpContextFlightStep(), RetryRules.cloudLongRunning());
+    addStep(new AwaitCreateGcpContextFlightStep(), longCloudRetryRule);
 
     // If TPS is enabled, clone the policy attributes
     if (flightBeanBag.getFeatureConfiguration().isTpsEnabled()) {
@@ -51,13 +53,14 @@ public class CloneGcpWorkspaceFlight extends Flight {
               sourceWorkspaceId,
               destinationWorkspace.getWorkspaceId(),
               userRequest,
-              flightBeanBag.getTpsApiDispatch()));
+              flightBeanBag.getTpsApiDispatch()),
+          cloudRetryRule);
     }
 
-    addStep(new LaunchCloneAllResourcesFlightStep(), RetryRules.cloud());
-    addStep(new AwaitCloneAllResourcesFlightStep(), RetryRules.cloudLongRunning());
+    addStep(new LaunchCloneAllResourcesFlightStep(), cloudRetryRule);
+    addStep(new AwaitCloneAllResourcesFlightStep(), longCloudRetryRule);
 
-    addStep(new FindEnabledApplicationsStep(flightBeanBag.getApplicationDao()), RetryRules.cloud());
-    addStep(new LaunchEnableApplicationsFlightStep(), RetryRules.cloud());
+    addStep(new FindEnabledApplicationsStep(flightBeanBag.getApplicationDao()), cloudRetryRule);
+    addStep(new LaunchEnableApplicationsFlightStep(), cloudRetryRule);
   }
 }

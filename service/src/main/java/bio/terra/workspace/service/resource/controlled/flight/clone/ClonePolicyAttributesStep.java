@@ -7,10 +7,12 @@ import bio.terra.stairway.StepResult;
 import bio.terra.stairway.StepStatus;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.amalgam.tps.TpsApiDispatch;
+import bio.terra.workspace.common.exception.InternalLogicException;
 import bio.terra.workspace.generated.model.ApiTpsComponent;
 import bio.terra.workspace.generated.model.ApiTpsObjectType;
 import bio.terra.workspace.generated.model.ApiTpsPaoCreateRequest;
 import bio.terra.workspace.generated.model.ApiTpsPaoGetResult;
+import bio.terra.workspace.generated.model.ApiTpsPaoReplaceRequest;
 import bio.terra.workspace.generated.model.ApiTpsPaoSourceRequest;
 import bio.terra.workspace.generated.model.ApiTpsPaoUpdateResult;
 import bio.terra.workspace.generated.model.ApiTpsPolicyInputs;
@@ -67,7 +69,7 @@ public class ClonePolicyAttributesStep implements Step {
             .updateMode(ApiTpsUpdateMode.FAIL_ON_CONFLICT);
 
     ApiTpsPaoUpdateResult result = tpsApiDispatch.mergePao(token, destinationWorkspaceId, request);
-    if (!result.isSucceeded()) {
+    if (!result.isUpdateApplied()) {
       List<String> conflictList =
           result.getConflicts().stream().map(c -> c.getNamespace() + ':' + c.getName()).toList();
       throw new PolicyConflictException(
@@ -79,9 +81,26 @@ public class ClonePolicyAttributesStep implements Step {
 
   @Override
   public StepResult undoStep(FlightContext context) throws InterruptedException {
-    // var destinationAttributes =
-    //  context.getWorkingMap().get(WorkspaceFlightMapKeys.POLICIES, ApiTpsPolicyInputs.class);
-    // TODO: PF-2019 - when we have a replace method, replace the destination PAO attributes
+    BearerToken token = new BearerToken(userRequest.getRequiredToken());
+    var destinationAttributes =
+        context.getWorkingMap().get(WorkspaceFlightMapKeys.POLICIES, ApiTpsPolicyInputs.class);
+
+    var request =
+        new ApiTpsPaoReplaceRequest()
+            .newAttributes(destinationAttributes)
+            .updateMode(ApiTpsUpdateMode.FAIL_ON_CONFLICT);
+
+    ApiTpsPaoUpdateResult result =
+        tpsApiDispatch.replacePao(token, destinationWorkspaceId, request);
+    if (!result.isUpdateApplied()) {
+      List<String> conflictList =
+          result.getConflicts().stream().map(c -> c.getNamespace() + ':' + c.getName()).toList();
+      return new StepResult(
+          StepStatus.STEP_RESULT_FAILURE_FATAL,
+          new InternalLogicException(
+              String.format("Failed to restore destination workspace policies: %s", conflictList)));
+    }
+
     return StepResult.getStepResultSuccess();
   }
 

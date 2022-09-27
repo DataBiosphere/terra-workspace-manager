@@ -21,6 +21,7 @@ import bio.terra.workspace.generated.model.ApiTpsPaoConflict;
 import bio.terra.workspace.generated.model.ApiTpsPaoCreateRequest;
 import bio.terra.workspace.generated.model.ApiTpsPaoDescription;
 import bio.terra.workspace.generated.model.ApiTpsPaoGetResult;
+import bio.terra.workspace.generated.model.ApiTpsPaoReplaceRequest;
 import bio.terra.workspace.generated.model.ApiTpsPaoSourceRequest;
 import bio.terra.workspace.generated.model.ApiTpsPaoUpdateRequest;
 import bio.terra.workspace.generated.model.ApiTpsPaoUpdateResult;
@@ -171,9 +172,10 @@ public class TpsApiDispatch {
   }
 
   private static ApiTpsPaoUpdateResult updateResultToApi(PolicyUpdateResult result) {
-    ApiTpsPaoUpdateResult apiResult = new ApiTpsPaoUpdateResult()
-        .updateApplied(true) // TODO: Add succeeded boolean to the PolicyUpdateResult
-        .resultingPao(paoToApi(result.computedPao()));
+    ApiTpsPaoUpdateResult apiResult =
+        new ApiTpsPaoUpdateResult()
+            .updateApplied(result.updateApplied())
+            .resultingPao(paoToApi(result.computedPao()));
 
     for (PolicyConflict conflict : result.conflicts()) {
       var apiConflict =
@@ -246,6 +248,18 @@ public class TpsApiDispatch {
     PolicyUpdateResult result =
         paoService.mergeFromPao(
             objectId, body.getSourceObjectId(), updateModeFromApi(body.getUpdateMode()));
+
+    return updateResultToApi(result);
+  }
+
+  public ApiTpsPaoUpdateResult replacePao(
+      BearerToken bearerToken, UUID objectId, ApiTpsPaoReplaceRequest body) {
+    features.tpsEnabledCheck();
+    PolicyUpdateResult result =
+        paoService.replacePao(
+            objectId,
+            policyInputsFromApi(body.getNewAttributes()),
+            updateModeFromApi(body.getUpdateMode()));
 
     return updateResultToApi(result);
   }

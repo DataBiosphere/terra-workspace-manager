@@ -9,6 +9,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 
 import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
 import bio.terra.workspace.common.BaseUnitTest;
@@ -16,6 +17,7 @@ import bio.terra.workspace.generated.model.ApiTpsComponent;
 import bio.terra.workspace.generated.model.ApiTpsObjectType;
 import bio.terra.workspace.generated.model.ApiTpsPaoCreateRequest;
 import bio.terra.workspace.generated.model.ApiTpsPaoGetResult;
+import bio.terra.workspace.generated.model.ApiTpsPaoReplaceRequest;
 import bio.terra.workspace.generated.model.ApiTpsPaoSourceRequest;
 import bio.terra.workspace.generated.model.ApiTpsPaoUpdateRequest;
 import bio.terra.workspace.generated.model.ApiTpsPaoUpdateResult;
@@ -96,13 +98,13 @@ public class TpsBasicPaoTest extends BaseUnitTest {
 
     // Merge a PAO
     var updateResult = connectPao(paoIdB, paoIdA, "merge");
-    assertTrue(updateResult.isSucceeded());
+    assertTrue(updateResult.isUpdateApplied());
     assertEquals(0, updateResult.getConflicts().size());
     checkAttributeSet(updateResult.getResultingPao().getEffectiveAttributes());
 
     // Link a PAO
     updateResult = connectPao(paoIdB, paoIdA, "link");
-    assertTrue(updateResult.isSucceeded());
+    assertTrue(updateResult.isUpdateApplied());
     assertEquals(0, updateResult.getConflicts().size());
     checkAttributeSet(updateResult.getResultingPao().getEffectiveAttributes());
 
@@ -119,6 +121,27 @@ public class TpsBasicPaoTest extends BaseUnitTest {
                 addAuth(
                     addJsonContentType(
                         patch("/api/policy/v1alpha1/pao/" + paoIdB).content(updateJson)),
+                    USER_REQUEST))
+            .andReturn();
+    response = result.getResponse();
+    status = HttpStatus.valueOf(response.getStatus());
+    assertEquals(HttpStatus.OK, status);
+    updateResult =
+        objectMapper.readValue(response.getContentAsString(), ApiTpsPaoUpdateResult.class);
+    checkAttributeSet(updateResult.getResultingPao().getEffectiveAttributes());
+
+    // Replace a PAO
+    var replaceRequest =
+        new ApiTpsPaoReplaceRequest()
+            .updateMode(ApiTpsUpdateMode.FAIL_ON_CONFLICT)
+            .newAttributes(inputs);
+    var replaceJson = objectMapper.writeValueAsString(replaceRequest);
+    result =
+        mockMvc
+            .perform(
+                addAuth(
+                    addJsonContentType(
+                        put("/api/policy/v1alpha1/pao/" + paoIdB).content(replaceJson)),
                     USER_REQUEST))
             .andReturn();
     response = result.getResponse();
