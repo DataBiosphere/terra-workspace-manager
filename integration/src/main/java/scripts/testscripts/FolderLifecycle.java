@@ -14,27 +14,34 @@ import bio.terra.workspace.client.ApiClient;
 import bio.terra.workspace.client.ApiException;
 import bio.terra.workspace.model.CloningInstructionsEnum;
 import bio.terra.workspace.model.CreateFolderRequestBody;
+import bio.terra.workspace.model.CreatedControlledGcpAiNotebookInstanceResult;
 import bio.terra.workspace.model.CreatedControlledGcpGcsBucket;
 import bio.terra.workspace.model.Folder;
 import bio.terra.workspace.model.GcpBigQueryDatasetAttributes;
 import bio.terra.workspace.model.GcpBigQueryDatasetResource;
+import bio.terra.workspace.model.GrantRoleRequestBody;
+import bio.terra.workspace.model.IamRole;
 import bio.terra.workspace.model.Property;
 import bio.terra.workspace.model.UpdateFolderRequestBody;
 import com.google.api.client.http.HttpStatusCodes;
 import java.util.List;
+import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.jupiter.api.function.Executable;
 import scripts.utils.BqDatasetUtils;
 import scripts.utils.ClientTestUtils;
 import scripts.utils.GcsBucketUtils;
+import scripts.utils.NotebookUtils;
 import scripts.utils.TestUtils;
 import scripts.utils.WorkspaceAllocateTestScriptBase;
 
 public class FolderLifecycle extends WorkspaceAllocateTestScriptBase {
 
   private static final String TERRA_FOLDER_ID = "terra-folder-id";
-  private FolderApi folderApi;
+  private FolderApi folderOwnerApi;
+  private FolderApi folderWriterApi;
   private ReferencedGcpResourceApi referencedGcpResourceApi;
   private ControlledGcpResourceApi controlledGcpResourceApi;
+  private ControlledGcpResourceApi controlledGcpResourceWriterApi;
   private ResourceApi resourceApi;
 
   @Override
@@ -45,11 +52,21 @@ public class FolderLifecycle extends WorkspaceAllocateTestScriptBase {
 
     TestUserSpecification workspaceOwner = testUsers.get(0);
 
-    ApiClient ownerApiClient = ClientTestUtils.getClientForTestUser(workspaceOwner, server);
+    TestUserSpecification secondUser = testUsers.get(1);
 
-    folderApi = new FolderApi(ownerApiClient);
+    ApiClient ownerApiClient = ClientTestUtils.getClientForTestUser(workspaceOwner, server);
+    ApiClient writerApiClient = ClientTestUtils.getClientForTestUser(secondUser, server);
+
+    workspaceApi.grantRole(
+        new GrantRoleRequestBody().memberEmail(secondUser.userEmail),
+        getWorkspaceId(),
+        IamRole.WRITER);
+
+    folderOwnerApi = new FolderApi(ownerApiClient);
+    folderWriterApi = new FolderApi(writerApiClient);
     referencedGcpResourceApi = new ReferencedGcpResourceApi(ownerApiClient);
     controlledGcpResourceApi = new ControlledGcpResourceApi(ownerApiClient);
+    controlledGcpResourceWriterApi = new ControlledGcpResourceApi(writerApiClient);
     resourceApi = new ResourceApi(ownerApiClient);
   }
 
@@ -59,7 +76,7 @@ public class FolderLifecycle extends WorkspaceAllocateTestScriptBase {
     var displayName = TestUtils.appendRandomNumber("foo");
     var description = String.format("This is a top-level folder %s", displayName);
     Folder folderFoo =
-        folderApi.createFolder(
+        folderOwnerApi.createFolder(
             new CreateFolderRequestBody().displayName(displayName).description(description),
             getWorkspaceId());
 
@@ -83,7 +100,7 @@ public class FolderLifecycle extends WorkspaceAllocateTestScriptBase {
     var displayNameBar = TestUtils.appendRandomNumber("bar");
     var descriptionBar = String.format("This is a second-level folder %s", displayNameBar);
     Folder folderBar =
-        folderApi.createFolder(
+        folderOwnerApi.createFolder(
             new CreateFolderRequestBody()
                 .displayName(displayNameBar)
                 .description(descriptionBar)
@@ -111,7 +128,7 @@ public class FolderLifecycle extends WorkspaceAllocateTestScriptBase {
     var displayNameLoo = TestUtils.appendRandomNumber("Loo");
     var descriptionLoo = String.format("This is a third-level folder %s", displayNameLoo);
     Folder folderLoo =
-        folderApi.createFolder(
+        folderOwnerApi.createFolder(
             new CreateFolderRequestBody()
                 .displayName(displayNameLoo)
                 .description(descriptionLoo)
@@ -131,12 +148,38 @@ public class FolderLifecycle extends WorkspaceAllocateTestScriptBase {
         List.of(new Property().key(TERRA_FOLDER_ID).value(folderLoo.getId().toString())),
         getWorkspaceId(),
         controlledBqDatasetInBar.getMetadata().getResourceId());
+    // Add a private notebook to loo for the first user.
+    CreatedControlledGcpAiNotebookInstanceResult firstUserPrivateBucket =
+        NotebookUtils.makeControlledNotebookUserPrivate(
+            getWorkspaceId(),
+            /*instanceId=*/ RandomStringUtils.randomAlphabetic(8).toLowerCase(),
+            /*location=*/ null,
+            controlledGcpResourceApi,
+            /*testValue=*/ null,
+            /*postStartupScript=*/ null);
+    resourceApi.updateResourceProperties(
+        List.of(new Property().key(TERRA_FOLDER_ID).value(folderLoo.getId().toString())),
+        getWorkspaceId(),
+        firstUserPrivateBucket.getAiNotebookInstance().getMetadata().getResourceId());
+    // Add a private notebook to loo for second user.
+    CreatedControlledGcpAiNotebookInstanceResult secondUserPrivateBucket =
+        NotebookUtils.makeControlledNotebookUserPrivate(
+            getWorkspaceId(),
+            /*instanceId=*/ RandomStringUtils.randomAlphabetic(8).toLowerCase(),
+            /*location=*/ null,
+            controlledGcpResourceApi,
+            /*testValue=*/ null,
+            /*postStartupScript=*/ null);
+    resourceApi.updateResourceProperties(
+        List.of(new Property().key(TERRA_FOLDER_ID).value(folderLoo.getId().toString())),
+        getWorkspaceId(),
+        secondUserPrivateBucket.getAiNotebookInstance().getMetadata().getResourceId());
 
     var newDisplayName = TestUtils.appendRandomNumber("newBar");
     var newDescription = "This is an updated bar folder";
     // Update name and description of folder bar.
     Folder updatedFolder =
-        folderApi.updateFolder(
+        folderOwnerApi.updateFolder(
             new UpdateFolderRequestBody().description(newDescription).displayName(newDisplayName),
             getWorkspaceId(),
             folderBar.getId());
@@ -145,7 +188,7 @@ public class FolderLifecycle extends WorkspaceAllocateTestScriptBase {
 
     // Update folder bar to a top-level folder.
     Folder updatedFolder2 =
-        folderApi.updateFolder(
+        folderOwnerApi.updateFolder(
             new UpdateFolderRequestBody().parentFolderId(null).updateParent(true),
             getWorkspaceId(),
             folderBar.getId());
@@ -154,27 +197,60 @@ public class FolderLifecycle extends WorkspaceAllocateTestScriptBase {
     assertEquals(newDescription, updatedFolder2.getDescription());
 
     // Get folder bar.
-    Folder retrievedFolder2 = folderApi.getFolder(getWorkspaceId(), folderBar.getId());
+    Folder retrievedFolder2 = folderOwnerApi.getFolder(getWorkspaceId(), folderBar.getId());
     assertEquals(updatedFolder2, retrievedFolder2);
 
-    // Delete folder bar.
-    folderApi.deleteFolder(getWorkspaceId(), folderBar.getId());
+    // Second user tries to delete folder Loo
+    assertApiCallThrows(
+        () -> folderWriterApi.deleteFolder(getWorkspaceId(), folderLoo.getId()),
+        HttpStatusCodes.STATUS_CODE_FORBIDDEN);
+    // Second user tries to delete foo and success
+    folderWriterApi.deleteFolder(getWorkspaceId(), folderFoo.getId());
+    assertApiCallThrows(
+        () -> folderOwnerApi.getFolder(getWorkspaceId(), folderFoo.getId()),
+        HttpStatusCodes.STATUS_CODE_NOT_FOUND);
+    assertApiCallThrows(
+        () ->
+            controlledGcpResourceApi.getBucket(
+                getWorkspaceId(), controlledGcsBucketInFoo.getResourceId()),
+        HttpStatusCodes.STATUS_CODE_NOT_FOUND);
+
+    // First user delete folder bar and success.
+    folderOwnerApi.deleteFolder(getWorkspaceId(), folderBar.getId());
 
     // All the resources in bar and its sub-folder loo are deleted.
-    assertApiCallThrows404(() -> folderApi.getFolder(getWorkspaceId(), folderBar.getId()));
-    assertApiCallThrows404(() -> folderApi.getFolder(getWorkspaceId(), folderLoo.getId()));
-    assertApiCallThrows404(
+    assertApiCallThrows(
+        () -> folderOwnerApi.getFolder(getWorkspaceId(), folderBar.getId()),
+        HttpStatusCodes.STATUS_CODE_NOT_FOUND);
+    assertApiCallThrows(
+        () -> folderOwnerApi.getFolder(getWorkspaceId(), folderLoo.getId()),
+        HttpStatusCodes.STATUS_CODE_NOT_FOUND);
+    assertApiCallThrows(
         () ->
             controlledGcpResourceApi.getBigQueryDataset(
-                getWorkspaceId(), controlledBqDatasetInBar.getMetadata().getResourceId()));
-    assertApiCallThrows404(
+                getWorkspaceId(), controlledBqDatasetInBar.getMetadata().getResourceId()),
+        HttpStatusCodes.STATUS_CODE_NOT_FOUND);
+    assertApiCallThrows(
         () ->
             controlledGcpResourceApi.getBigQueryDataset(
-                getWorkspaceId(), referencedBqDatasetInLoo.getMetadata().getResourceId()));
+                getWorkspaceId(), referencedBqDatasetInLoo.getMetadata().getResourceId()),
+        HttpStatusCodes.STATUS_CODE_NOT_FOUND);
+    assertApiCallThrows(
+        () ->
+            controlledGcpResourceApi.getAiNotebookInstance(
+                getWorkspaceId(),
+                firstUserPrivateBucket.getAiNotebookInstance().getMetadata().getResourceId()),
+        HttpStatusCodes.STATUS_CODE_NOT_FOUND);
+    assertApiCallThrows(
+        () ->
+            controlledGcpResourceApi.getAiNotebookInstance(
+                getWorkspaceId(),
+                secondUserPrivateBucket.getAiNotebookInstance().getMetadata().getResourceId()),
+        HttpStatusCodes.STATUS_CODE_NOT_FOUND);
   }
 
-  private static void assertApiCallThrows404(Executable executable) {
+  private static void assertApiCallThrows(Executable executable, int code) {
     var ex = assertThrows(ApiException.class, executable);
-    assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, ex.getCode());
+    assertEquals(code, ex.getCode());
   }
 }
