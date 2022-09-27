@@ -35,6 +35,7 @@ import bio.terra.workspace.generated.model.ApiUpdateFolderRequestBody;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.iam.model.SamConstants;
+import bio.terra.workspace.service.iam.model.SamConstants.SamWorkspaceAction;
 import bio.terra.workspace.service.iam.model.WsmIamRole;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -254,7 +255,7 @@ public class FolderApiControllerTest extends BaseUnitTest {
   }
 
   @Test
-  public void deleteFolder_doesNotHaveWriteAccess_throws403() throws Exception {
+  public void deleteFolder_doesNotHaveOwnAccess_throws403() throws Exception {
     UUID workspaceId = mockMvcUtils.createWorkspaceWithoutCloudContext(USER_REQUEST).getId();
     ApiFolder folder = createFolder(workspaceId);
     doThrow(new ForbiddenException("User has no write access"))
@@ -263,7 +264,7 @@ public class FolderApiControllerTest extends BaseUnitTest {
             any(AuthenticatedUserRequest.class),
             eq(SamConstants.SamResource.WORKSPACE),
             anyString(),
-            eq(SamConstants.SamWorkspaceAction.WRITE));
+            eq(SamWorkspaceAction.OWN));
 
     deleteFolderExpectCode(workspaceId, folder.getId(), HttpStatus.SC_FORBIDDEN);
   }

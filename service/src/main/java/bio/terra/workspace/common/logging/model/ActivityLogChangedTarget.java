@@ -4,6 +4,7 @@ package bio.terra.workspace.common.logging.model;
 public enum ActivityLogChangedTarget {
   APPLICATION,
   AZURE_CLOUD_CONTEXT,
+  FOLDER,
   GCP_CLOUD_CONTEXT,
   RESOURCE,
   USER,

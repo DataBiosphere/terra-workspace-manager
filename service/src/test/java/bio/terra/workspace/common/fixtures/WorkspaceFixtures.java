@@ -1,12 +1,9 @@
 package bio.terra.workspace.common.fixtures;
 
-import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.generated.model.ApiCreateWorkspaceRequestBody;
 import bio.terra.workspace.generated.model.ApiProperties;
 import bio.terra.workspace.generated.model.ApiProperty;
 import bio.terra.workspace.generated.model.ApiWorkspaceStageModel;
-import bio.terra.workspace.service.workspace.model.CloudPlatform;
-import bio.terra.workspace.service.workspace.model.GcpCloudContext;
 import bio.terra.workspace.service.workspace.model.WorkspaceConstants.Properties;
 import com.google.common.collect.ImmutableList;
 import java.util.UUID;
@@ -22,22 +19,6 @@ public class WorkspaceFixtures {
       new ApiProperty().key(Properties.VERSION).value("version 3");
   public static final ApiProperty USER_SET_PROPERTY =
       new ApiProperty().key("userkey").value("uservalue");
-
-  /**
-   * This method creates the database artifact for a cloud context without actually creating
-   * anything beyond the database row.
-   *
-   * @param workspaceDao workspace DAO for the creation
-   * @param workspaceUuid fake workspaceUuid to connect the context to
-   * @param projectId fake projectId to for the context
-   */
-  public static void createGcpCloudContextInDatabase(
-      WorkspaceDao workspaceDao, UUID workspaceUuid, String projectId) {
-    String flightId = UUID.randomUUID().toString();
-    workspaceDao.createCloudContextStart(workspaceUuid, CloudPlatform.GCP, flightId);
-    workspaceDao.createCloudContextFinish(
-        workspaceUuid, CloudPlatform.GCP, new GcpCloudContext(projectId).serialize(), flightId);
-  }
 
   /**
    * Generate the request body for creating an MC_WORKSPACE stage workspace.

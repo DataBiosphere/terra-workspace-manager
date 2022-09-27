@@ -239,12 +239,18 @@ public class FolderDao {
     return ImmutableList.copyOf(jdbcTemplate.query(sql, params, FOLDER_ROW_MAPPER));
   }
 
+  /**
+   * Delete a folder and all of its sub-folders recursively.
+   *
+   * @param folderId the folder where the deletion starts.
+   * @return true if folder(s) are deleted.
+   */
   @WriteTransaction
-  public boolean deleteFolder(UUID workspaceUuid, UUID folderId) {
+  public boolean deleteFolderRecursive(UUID workspaceUuid, UUID folderId) {
     ImmutableList<Folder> subFolders = listFolders(workspaceUuid, folderId);
     boolean deleted = false;
     for (Folder folder : subFolders) {
-      deleted |= deleteFolder(workspaceUuid, folder.id());
+      deleted |= deleteFolderRecursive(workspaceUuid, folder.id());
     }
     final String sql = "DELETE FROM folder WHERE workspace_id = :workspaceId AND id = :id";
 
