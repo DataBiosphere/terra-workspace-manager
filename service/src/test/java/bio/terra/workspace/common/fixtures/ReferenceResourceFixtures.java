@@ -18,6 +18,7 @@ import bio.terra.workspace.generated.model.ApiGcpGcsObjectAttributes;
 import bio.terra.workspace.generated.model.ApiGitRepoAttributes;
 import bio.terra.workspace.generated.model.ApiReferenceResourceCommonFields;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
+import bio.terra.workspace.service.resource.referenced.cloud.gcp.bqdataset.ReferencedBigQueryDatasetResource;
 import bio.terra.workspace.service.resource.referenced.cloud.gcp.datareposnapshot.ReferencedDataRepoSnapshotResource;
 import java.util.Map;
 import java.util.UUID;
@@ -39,6 +40,22 @@ public class ReferenceResourceFixtures {
         CloningInstructions.COPY_NOTHING,
         "terra",
         "polaroid",
+        /*resourceLineage=*/ null,
+        /*properties*/ DEFAULT_RESOURCE_PROPERTIES);
+  }
+
+  public static ReferencedBigQueryDatasetResource makeReferencedBqDatasetResource(
+      UUID workspaceId, String projectId, String bqDataset) {
+    UUID resourceId = UUID.randomUUID();
+    String resourceName = "testbq-" + resourceId.toString();
+    return new ReferencedBigQueryDatasetResource(
+        workspaceId,
+        resourceId,
+        resourceName,
+        "a description",
+        CloningInstructions.COPY_NOTHING,
+        projectId,
+        bqDataset,
         /*resourceLineage=*/ null,
         /*properties*/ DEFAULT_RESOURCE_PROPERTIES);
   }

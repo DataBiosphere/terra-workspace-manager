@@ -5,18 +5,27 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 
+import bio.terra.cloudres.google.cloudresourcemanager.CloudResourceManagerCow;
 import bio.terra.workspace.common.BaseUnitTest;
+import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
+import bio.terra.workspace.common.fixtures.ReferenceResourceFixtures;
+import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.db.WorkspaceDao;
+import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.iam.model.SamConstants.SamSpendProfileAction;
 import bio.terra.workspace.service.iam.model.WsmIamRole;
+import bio.terra.workspace.service.resource.controlled.cloud.gcp.bqdataset.ControlledBigQueryDatasetResource;
+import bio.terra.workspace.service.resource.exception.ResourceNotFoundException;
+import bio.terra.workspace.service.resource.referenced.cloud.gcp.bqdataset.ReferencedBigQueryDatasetResource;
 import bio.terra.workspace.service.spendprofile.SpendProfileId;
 import bio.terra.workspace.service.workspace.exceptions.InvalidSerializedVersionException;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import bio.terra.workspace.service.workspace.model.GcpCloudContext;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
+import com.google.api.services.cloudresourcemanager.v3.model.Project;
 import java.util.Collections;
 import java.util.Optional;
 import java.util.UUID;
@@ -40,7 +49,10 @@ public class GcpCloudContextUnitTest extends BaseUnitTest {
           .subjectId("fakeID123");
 
   @MockBean private SamService mockSamService;
+  @MockBean private CrlService mockCrlService;
+  @Autowired private WorkspaceService workspaceService;
   @Autowired private WorkspaceDao workspaceDao;
+  @Autowired private ResourceDao resourceDao;
   @Autowired private GcpCloudContextService gcpCloudContextService;
 
   @Test
@@ -148,5 +160,66 @@ public class GcpCloudContextUnitTest extends BaseUnitTest {
     assertEquals(updatedContext.getSamPolicyWriter().orElse(null), POLICY_WRITER);
     assertEquals(updatedContext.getSamPolicyReader().orElse(null), POLICY_READER);
     assertEquals(updatedContext.getSamPolicyApplication().orElse(null), POLICY_APPLICATION);
+  }
+
+  @Test
+  public void deleteGcpContext_deletesControlledResourcesInDb() throws Exception {
+    UUID workspaceUuid = UUID.randomUUID();
+    var workspace =
+        new Workspace(
+            workspaceUuid,
+            "my-user-facing-id",
+            "deleteGcpContextDeletesControlledResources",
+            "description",
+            new SpendProfileId("spend-profile"),
+            Collections.emptyMap(),
+            WorkspaceStage.MC_WORKSPACE);
+    workspaceDao.createWorkspace(workspace);
+    // Create a cloud context record in the DB
+    String projectId = "fake-project-id";
+    GcpCloudContext fakeContext =
+        new GcpCloudContext(projectId, "fakeOwner", "fakeWriter", "fakeReader", "fakeApplication");
+    final String flightId = UUID.randomUUID().toString();
+    workspaceDao.createCloudContextStart(workspaceUuid, CloudPlatform.GCP, flightId);
+    workspaceDao.createCloudContextFinish(
+        workspaceUuid, CloudPlatform.GCP, fakeContext.serialize(), flightId);
+    // Create a controlled resource in the DB
+    ControlledBigQueryDatasetResource bqDataset =
+        ControlledResourceFixtures.makeDefaultControlledBigQueryBuilder(workspaceUuid)
+            .projectId(projectId)
+            .build();
+    resourceDao.createControlledResource(bqDataset);
+    // Also create a reference pointing to the same "cloud" resource
+    ReferencedBigQueryDatasetResource referencedDataset =
+        ReferenceResourceFixtures.makeReferencedBqDatasetResource(
+            workspaceUuid, projectId, bqDataset.getDatasetName());
+    resourceDao.createReferencedResource(referencedDataset);
+
+    setupCrlMocks();
+
+    // Delete the GCP context through the service
+    workspaceService.deleteGcpCloudContext(workspace, USER_REQUEST);
+
+    // Verify the context and resource have both been deleted from the DB
+    assertTrue(workspaceDao.getCloudContext(workspaceUuid, CloudPlatform.GCP).isEmpty());
+    assertThrows(
+        ResourceNotFoundException.class,
+        () -> resourceDao.getResource(workspaceUuid, bqDataset.getResourceId()));
+    // Verify the reference still exists, even though the underlying "cloud" resource was deleted
+    var referenceFromDb =
+        (ReferencedBigQueryDatasetResource)
+            resourceDao.getResource(workspaceUuid, referencedDataset.getResourceId());
+    assertEquals(referencedDataset, referenceFromDb);
+  }
+
+  // Set up mocks for interacting with GCP to delete a project.
+  // TODO(PF-1872): this should use shared mock code from CRL.
+  private void setupCrlMocks() throws Exception {
+    CloudResourceManagerCow mockResourceManager =
+        Mockito.mock(CloudResourceManagerCow.class, Mockito.RETURNS_DEEP_STUBS);
+    // Pretend the project is already being deleted.
+    Mockito.when(mockResourceManager.projects().get(any()).execute())
+        .thenReturn(new Project().setState("DELETE_IN_PROGRESS"));
+    Mockito.when(mockCrlService.getCloudResourceManagerCow()).thenReturn(mockResourceManager);
   }
 }
