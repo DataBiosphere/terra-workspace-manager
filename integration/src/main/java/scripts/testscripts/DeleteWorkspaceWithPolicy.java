@@ -23,14 +23,6 @@ public class DeleteWorkspaceWithPolicy extends WorkspaceAllocateWithPolicyTestSc
   private static final String DATASET_RESOURCE_NAME = "wsmtest_dataset";
 
   @Override
-  protected void doSetup(
-      List<TestUserSpecification> testUsers, WorkspaceApi sourceOwnerWorkspaceApi)
-      throws Exception {
-    // Create a workspace
-    super.doSetup(testUsers, sourceOwnerWorkspaceApi);
-  }
-
-  @Override
   protected void doUserJourney(TestUserSpecification sourceOwnerUser, WorkspaceApi workspaceApi)
       throws Exception {
     TpsApi tpsClient = ClientTestUtils.getTpsClient(sourceOwnerUser, server);
