@@ -210,10 +210,15 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
   @Override
   public ResponseEntity<ApiCreatedAzureStorageContainerSasToken>
       createAzureStorageContainerSasToken(
-          UUID workspaceUuid, UUID storageContainerUuid, String sasIPRange) {
+          UUID workspaceUuid,
+          UUID storageContainerUuid,
+          String sasIPRange,
+          String sasPermissions,
+          String sasBlobName) {
     features.azureEnabledCheck();
 
     ControllerValidationUtils.validateIpAddressRange(sasIPRange);
+    ControllerValidationUtils.validateAzureBlobName(sasBlobName);
 
     final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     // Creating an AzureStorageContainerSasToken requires checking the user's access to both the
@@ -257,7 +262,8 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
             expiryTime,
             userRequest,
             sasIPRange,
-            Optional.empty());
+            Optional.ofNullable(sasBlobName),
+            Optional.ofNullable(sasPermissions));
 
     logger.info(
         "SAS token with expiry time of {} generated for user {} on container {} in workspace {}",

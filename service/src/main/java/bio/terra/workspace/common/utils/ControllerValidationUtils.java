@@ -139,6 +139,21 @@ public final class ControllerValidationUtils {
     }
   }
 
+  /**
+   * Validate an azure blob name. Blob names must be > 1 char and < 1024 chars in length.
+   *
+   * @param blobName Blob name to validate
+   */
+  public static void validateAzureBlobName(@Nullable String blobName) {
+    if (blobName == null) {
+      return;
+    }
+
+    if (blobName.isEmpty() || blobName.length() > 1024) {
+      throw new ValidationException("Invalid blob name");
+    }
+  }
+
   public static void validatePropertiesUpdateRequestBody(List<ApiProperty> properties) {
     if (properties.isEmpty()) {
       throw new ValidationException("Must specify at least one property to update");

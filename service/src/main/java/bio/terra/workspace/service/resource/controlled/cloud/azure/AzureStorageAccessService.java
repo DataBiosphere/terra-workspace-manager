@@ -21,7 +21,9 @@ import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -51,7 +53,10 @@ public class AzureStorageAccessService {
   }
 
   private BlobContainerSasPermission getSasTokenPermissions(
-      AuthenticatedUserRequest userRequest, UUID storageContainerUuid, String samResourceName) {
+      AuthenticatedUserRequest userRequest,
+      UUID storageContainerUuid,
+      String samResourceName,
+      Optional<String> permissions) {
     final List<String> containerActions =
         SamRethrow.onInterrupted(
             () ->
@@ -59,23 +64,39 @@ public class AzureStorageAccessService {
                     userRequest, samResourceName, storageContainerUuid.toString()),
             "listResourceActions");
 
-    String tokenPermissions = "";
+    String maxTokenPermissions = "";
     for (String action : containerActions) {
       if (action.equals(SamConstants.SamControlledResourceActions.READ_ACTION)) {
-        tokenPermissions += "rl";
+        maxTokenPermissions += "rl";
       } else if (action.equals(SamConstants.SamControlledResourceActions.WRITE_ACTION)) {
-        tokenPermissions += "acwd";
+        maxTokenPermissions += "acwd";
       }
     }
 
-    if (tokenPermissions.isEmpty()) {
+    if (maxTokenPermissions.isEmpty()) {
       throw new ForbiddenException(
           String.format(
               "User is not authorized to get a SAS token for container %s",
               storageContainerUuid.toString()));
     }
 
-    return BlobContainerSasPermission.parse(tokenPermissions);
+    // ensure the requested permissions, if present, are a subset of the max possible permissions
+    String effectivePermissions;
+    if (permissions.isPresent()) {
+      Set<Character> maxPermissionsSet =
+          maxTokenPermissions.chars().mapToObj(c -> (char) c).collect(Collectors.toSet());
+      Set<Character> desiredPermissions =
+          permissions.get().chars().mapToObj(c -> (char) c).collect(Collectors.toSet());
+
+      if (!maxPermissionsSet.containsAll(desiredPermissions)) {
+        throw new ForbiddenException("Not authorized");
+      }
+      effectivePermissions = permissions.get();
+    } else {
+      effectivePermissions = maxTokenPermissions;
+    }
+
+    return BlobContainerSasPermission.parse(effectivePermissions);
   }
 
   /**
@@ -101,14 +122,16 @@ public class AzureStorageAccessService {
       OffsetDateTime expiryTime,
       AuthenticatedUserRequest userRequest,
       String sasIPRange,
-      Optional<String> blobPrefix) {
+      Optional<String> blobPrefix,
+      Optional<String> permissions) {
     features.azureEnabledCheck();
 
     BlobContainerSasPermission blobContainerSasPermission =
         getSasTokenPermissions(
             userRequest,
             storageContainerResource.getResourceId(),
-            storageContainerResource.getCategory().getSamResourceName());
+            storageContainerResource.getCategory().getSamResourceName(),
+            permissions);
 
     String storageAccountName = storageAccountResource.getStorageAccountName();
     String endpoint = storageAccountResource.getStorageAccountEndpoint();
