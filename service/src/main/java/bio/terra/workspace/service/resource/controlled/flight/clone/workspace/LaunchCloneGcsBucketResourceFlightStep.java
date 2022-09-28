@@ -66,6 +66,8 @@ public class LaunchCloneGcsBucketResourceFlightStep implements Step {
         String.format("Clone GCS Bucket resource %s", resource.getResourceId().toString()));
     subflightInputParameters.put(
         ControlledResourceKeys.DESTINATION_RESOURCE_ID, destinationResourceId);
+    // Do not do the policy merge on the sub-object clone
+    subflightInputParameters.put(WorkspaceFlightMapKeys.MERGE_POLICIES, false);
 
     // submit flight
     try {

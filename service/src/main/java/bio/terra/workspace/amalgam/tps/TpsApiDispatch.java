@@ -6,23 +6,32 @@ import bio.terra.policy.common.model.PolicyInput;
 import bio.terra.policy.common.model.PolicyInputs;
 import bio.terra.policy.common.model.PolicyName;
 import bio.terra.policy.service.pao.PaoService;
+import bio.terra.policy.service.pao.graph.model.PolicyConflict;
 import bio.terra.policy.service.pao.model.Pao;
 import bio.terra.policy.service.pao.model.PaoComponent;
 import bio.terra.policy.service.pao.model.PaoObjectType;
+import bio.terra.policy.service.pao.model.PaoUpdateMode;
+import bio.terra.policy.service.policy.model.PolicyUpdateResult;
 import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
 import bio.terra.workspace.common.exception.EnumNotRecognizedException;
 import bio.terra.workspace.common.exception.InternalLogicException;
 import bio.terra.workspace.generated.model.ApiTpsComponent;
 import bio.terra.workspace.generated.model.ApiTpsObjectType;
+import bio.terra.workspace.generated.model.ApiTpsPaoConflict;
 import bio.terra.workspace.generated.model.ApiTpsPaoCreateRequest;
+import bio.terra.workspace.generated.model.ApiTpsPaoDescription;
 import bio.terra.workspace.generated.model.ApiTpsPaoGetResult;
+import bio.terra.workspace.generated.model.ApiTpsPaoReplaceRequest;
+import bio.terra.workspace.generated.model.ApiTpsPaoSourceRequest;
+import bio.terra.workspace.generated.model.ApiTpsPaoUpdateRequest;
+import bio.terra.workspace.generated.model.ApiTpsPaoUpdateResult;
 import bio.terra.workspace.generated.model.ApiTpsPolicyInput;
 import bio.terra.workspace.generated.model.ApiTpsPolicyInputs;
 import bio.terra.workspace.generated.model.ApiTpsPolicyPair;
+import bio.terra.workspace.generated.model.ApiTpsUpdateMode;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -44,45 +53,10 @@ public class TpsApiDispatch {
     this.paoService = paoService;
   }
 
-  // -- Policy Attribute Object Interface --
-  public void createPao(BearerToken bearerToken, ApiTpsPaoCreateRequest request) {
-    features.tpsEnabledCheck();
-    paoService.createPao(
-        request.getObjectId(),
-        componentFromApi(request.getComponent()),
-        objectTypeFromApi(request.getObjectType()),
-        policyInputsFromApi(request.getAttributes()));
-  }
-
-  public void deletePao(BearerToken bearerToken, UUID objectId) {
-    features.tpsEnabledCheck();
-    try {
-      paoService.deletePao(objectId);
-    } catch (PolicyObjectNotFoundException e) {
-      // Not found is not an error as far as WSM is concerned.
-    }
-  }
-
-  public Optional<ApiTpsPaoGetResult> getPaoIfExists(BearerToken bearerToken, UUID objectId) {
-    features.tpsEnabledCheck();
-    try {
-      Pao pao = paoService.getPao(objectId);
-      return Optional.of(paoToApi(pao));
-    } catch (PolicyObjectNotFoundException e) {
-      return Optional.empty();
-    }
-  }
-
-  public ApiTpsPaoGetResult getPao(BearerToken bearerToken, UUID objectId) {
-    return getPaoIfExists(bearerToken, objectId)
-        .orElseThrow(
-            () -> new PolicyObjectNotFoundException("Policy object not found: " + objectId));
-  }
-
   // -- Api to Tps conversion methods --
   // Note: we need to keep the Api types out of the TPS library code. It does not build the Api so
-  // we cannot
-  // implement toApi/fromApi pattern in our internal TPS classes. Instead, we code them here.
+  // we cannot implement toApi/fromApi pattern in our internal TPS classes. Instead, we code
+  // them here.
 
   private static PaoComponent componentFromApi(ApiTpsComponent apiComponent) {
     if (apiComponent == ApiTpsComponent.WSM) {
@@ -128,7 +102,7 @@ public class TpsApiDispatch {
     return new PolicyInput(new PolicyName(apiInput.getNamespace(), apiInput.getName()), data);
   }
 
-  public static ApiTpsPolicyInput policyInputToApi(PolicyInput input) {
+  private static ApiTpsPolicyInput policyInputToApi(PolicyInput input) {
     List<ApiTpsPolicyPair> apiPolicyPairs =
         input.getAdditionalData().entries().stream()
             .map(e -> new ApiTpsPolicyPair().key(e.getKey()).value(e.getValue()))
@@ -141,7 +115,7 @@ public class TpsApiDispatch {
         .additionalData(apiPolicyPairs);
   }
 
-  public static PolicyInputs policyInputsFromApi(@Nullable ApiTpsPolicyInputs apiInputs) {
+  private static PolicyInputs policyInputsFromApi(@Nullable ApiTpsPolicyInputs apiInputs) {
     if (apiInputs == null || apiInputs.getInputs() == null || apiInputs.getInputs().isEmpty()) {
       return new PolicyInputs(new HashMap<>());
     }
@@ -159,7 +133,7 @@ public class TpsApiDispatch {
     return new PolicyInputs(inputs);
   }
 
-  public static ApiTpsPolicyInputs policyInputsToApi(PolicyInputs inputs) {
+  private static ApiTpsPolicyInputs policyInputsToApi(PolicyInputs inputs) {
 
     // old policies could have been created with a null list.
     if (inputs == null) {
@@ -171,7 +145,7 @@ public class TpsApiDispatch {
             inputs.getInputs().values().stream().map(TpsApiDispatch::policyInputToApi).toList());
   }
 
-  public static ApiTpsPaoGetResult paoToApi(Pao pao) {
+  private static ApiTpsPaoGetResult paoToApi(Pao pao) {
     return new ApiTpsPaoGetResult()
         .objectId(pao.getObjectId())
         .component(componentToApi(pao.getComponent()))
@@ -182,17 +156,124 @@ public class TpsApiDispatch {
         .deleted((pao.getDeleted()));
   }
 
-  public static Pao paoFromApi(@Nullable ApiTpsPaoGetResult api) {
-    if (api == null) {
-      return null;
+  private static PaoUpdateMode updateModeFromApi(ApiTpsUpdateMode apiUpdateMode) {
+    switch (apiUpdateMode) {
+      case DRY_RUN -> {
+        return PaoUpdateMode.DRY_RUN;
+      }
+      case FAIL_ON_CONFLICT -> {
+        return PaoUpdateMode.FAIL_ON_CONFLICT;
+      }
+      case ENFORCE_CONFLICT -> {
+        return PaoUpdateMode.ENFORCE_CONFLICTS;
+      }
     }
-    return new Pao(
-        api.getObjectId(),
-        componentFromApi(api.getComponent()),
-        objectTypeFromApi(api.getObjectType()),
-        policyInputsFromApi(api.getAttributes()),
-        policyInputsFromApi(api.getEffectiveAttributes()),
-        new HashSet<>(api.getSourcesObjectIds()),
-        api.isDeleted());
+    throw new TpsInvalidInputException("Invalid update mode: " + apiUpdateMode);
+  }
+
+  private static ApiTpsPaoUpdateResult updateResultToApi(PolicyUpdateResult result) {
+    ApiTpsPaoUpdateResult apiResult =
+        new ApiTpsPaoUpdateResult()
+            .updateApplied(result.updateApplied())
+            .resultingPao(paoToApi(result.computedPao()));
+
+    for (PolicyConflict conflict : result.conflicts()) {
+      var apiConflict =
+          new ApiTpsPaoConflict()
+              .namespace(conflict.policyName().getNamespace())
+              .name(conflict.policyName().getName())
+              .targetPao(paoToApiPaoDescription(conflict.pao()))
+              .conflictPao(paoToApiPaoDescription(conflict.conflictPao()));
+      apiResult.addConflictsItem(apiConflict);
+    }
+
+    return apiResult;
+  }
+
+  private static ApiTpsPaoDescription paoToApiPaoDescription(Pao pao) {
+    return new ApiTpsPaoDescription()
+        .objectId(pao.getObjectId())
+        .component(componentToApi(pao.getComponent()))
+        .objectType(objectTypeToApi(pao.getObjectType()));
+  }
+
+  // -- Policy Attribute Object Interface --
+  public void createPao(BearerToken bearerToken, ApiTpsPaoCreateRequest request) {
+    features.tpsEnabledCheck();
+    paoService.createPao(
+        request.getObjectId(),
+        componentFromApi(request.getComponent()),
+        objectTypeFromApi(request.getObjectType()),
+        policyInputsFromApi(request.getAttributes()));
+  }
+
+  public void deletePao(BearerToken bearerToken, UUID objectId) {
+    features.tpsEnabledCheck();
+    try {
+      paoService.deletePao(objectId);
+    } catch (PolicyObjectNotFoundException e) {
+      // Not found is not an error as far as WSM is concerned.
+    }
+  }
+
+  public Optional<ApiTpsPaoGetResult> getPaoIfExists(BearerToken bearerToken, UUID objectId) {
+    features.tpsEnabledCheck();
+    try {
+      Pao pao = paoService.getPao(objectId);
+      return Optional.of(paoToApi(pao));
+    } catch (PolicyObjectNotFoundException e) {
+      return Optional.empty();
+    }
+  }
+
+  public ApiTpsPaoGetResult getPao(BearerToken bearerToken, UUID objectId) {
+    features.tpsEnabledCheck();
+    Pao pao = paoService.getPao(objectId);
+    return paoToApi(pao);
+  }
+
+  public ApiTpsPaoUpdateResult linkPao(
+      BearerToken bearerToken, UUID objectId, ApiTpsPaoSourceRequest body) {
+    features.tpsEnabledCheck();
+    PolicyUpdateResult result =
+        paoService.linkSourcePao(
+            objectId, body.getSourceObjectId(), updateModeFromApi(body.getUpdateMode()));
+
+    return updateResultToApi(result);
+  }
+
+  public ApiTpsPaoUpdateResult mergePao(
+      BearerToken bearerToken, UUID objectId, ApiTpsPaoSourceRequest body) {
+    features.tpsEnabledCheck();
+    PolicyUpdateResult result =
+        paoService.mergeFromPao(
+            objectId, body.getSourceObjectId(), updateModeFromApi(body.getUpdateMode()));
+
+    return updateResultToApi(result);
+  }
+
+  public ApiTpsPaoUpdateResult replacePao(
+      BearerToken bearerToken, UUID objectId, ApiTpsPaoReplaceRequest body) {
+    features.tpsEnabledCheck();
+    PolicyUpdateResult result =
+        paoService.replacePao(
+            objectId,
+            policyInputsFromApi(body.getNewAttributes()),
+            updateModeFromApi(body.getUpdateMode()));
+
+    return updateResultToApi(result);
+  }
+
+  public ApiTpsPaoUpdateResult updatePao(
+      BearerToken bearerToken, UUID objectId, ApiTpsPaoUpdateRequest body) {
+    features.tpsEnabledCheck();
+    PolicyUpdateResult result =
+        paoService.updatePao(
+            objectId,
+            policyInputsFromApi(body.getAddAttributes()),
+            policyInputsFromApi(body.getRemoveAttributes()),
+            updateModeFromApi(body.getUpdateMode()));
+
+    return updateResultToApi(result);
   }
 }
