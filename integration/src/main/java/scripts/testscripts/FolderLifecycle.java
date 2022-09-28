@@ -41,7 +41,6 @@ public class FolderLifecycle extends WorkspaceAllocateTestScriptBase {
   private FolderApi folderWriterApi;
   private ReferencedGcpResourceApi referencedGcpResourceApi;
   private ControlledGcpResourceApi controlledGcpResourceApi;
-  private ControlledGcpResourceApi controlledGcpResourceWriterApi;
   private ResourceApi resourceApi;
 
   @Override
@@ -66,7 +65,6 @@ public class FolderLifecycle extends WorkspaceAllocateTestScriptBase {
     folderWriterApi = new FolderApi(writerApiClient);
     referencedGcpResourceApi = new ReferencedGcpResourceApi(ownerApiClient);
     controlledGcpResourceApi = new ControlledGcpResourceApi(ownerApiClient);
-    controlledGcpResourceWriterApi = new ControlledGcpResourceApi(writerApiClient);
     resourceApi = new ResourceApi(ownerApiClient);
   }
 
