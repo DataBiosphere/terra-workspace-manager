@@ -255,7 +255,7 @@ public class FolderApiControllerTest extends BaseUnitTest {
   }
 
   @Test
-  public void deleteFolder_doesNotHaveOwnAccess_throws403() throws Exception {
+  public void deleteFolder_doesNotHaveWriteAccess_throws403() throws Exception {
     UUID workspaceId = mockMvcUtils.createWorkspaceWithoutCloudContext(USER_REQUEST).getId();
     ApiFolder folder = createFolder(workspaceId);
     doThrow(new ForbiddenException("User has no write access"))
@@ -264,7 +264,7 @@ public class FolderApiControllerTest extends BaseUnitTest {
             any(AuthenticatedUserRequest.class),
             eq(SamConstants.SamResource.WORKSPACE),
             anyString(),
-            eq(SamWorkspaceAction.OWN));
+            eq(SamWorkspaceAction.WRITE));
 
     deleteFolderExpectCode(workspaceId, folder.getId(), HttpStatus.SC_FORBIDDEN);
   }
