@@ -260,4 +260,3 @@ public class FolderServiceTest extends BaseConnectedTest {
         .build();
   }
 }
-

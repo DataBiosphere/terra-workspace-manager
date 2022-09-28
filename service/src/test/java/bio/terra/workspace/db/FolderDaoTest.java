@@ -1,6 +1,5 @@
 package bio.terra.workspace.db;
 
-import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.createWorkspace;
 import static bio.terra.workspace.unit.WorkspaceUnitTestUtils.createWorkspaceWithoutGcpContext;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
