@@ -1,17 +1,10 @@
 package bio.terra.workspace.common.fixtures;
 
-import bio.terra.workspace.db.ResourceDao;
-import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.generated.model.ApiCreateWorkspaceRequestBody;
 import bio.terra.workspace.generated.model.ApiProperties;
 import bio.terra.workspace.generated.model.ApiProperty;
 import bio.terra.workspace.generated.model.ApiWorkspaceStageModel;
-import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
-import bio.terra.workspace.service.workspace.model.CloudPlatform;
-import bio.terra.workspace.service.workspace.model.GcpCloudContext;
-import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceConstants.Properties;
-import bio.terra.workspace.service.workspace.model.WorkspaceStage;
 import com.google.common.collect.ImmutableList;
 import java.util.UUID;
 
