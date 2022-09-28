@@ -1,6 +1,7 @@
 package bio.terra.workspace.common.logging;
 
 import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.CONTROLLED_RESOURCES_TO_DELETE;
+import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.FOLDER_ID;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -18,9 +19,12 @@ import bio.terra.stairway.StepResult;
 import bio.terra.workspace.common.BaseUnitTest;
 import bio.terra.workspace.common.exception.UnknownFlightClassNameException;
 import bio.terra.workspace.common.logging.model.ActivityLogChangeDetails;
+import bio.terra.workspace.db.FolderDao;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.db.WorkspaceActivityLogDao;
 import bio.terra.workspace.db.WorkspaceDao;
+import bio.terra.workspace.service.folder.flights.DeleteFolderFlight;
+import bio.terra.workspace.service.folder.model.Folder;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.job.JobMapKeys;
@@ -40,8 +44,10 @@ import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import bio.terra.workspace.service.workspace.model.OperationType;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
+import bio.terra.workspace.unit.WorkspaceUnitTestUtils;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import org.broadinstitute.dsde.workbench.client.sam.model.UserStatusInfo;
@@ -67,6 +73,7 @@ public class WorkspaceActivityLogHookTest extends BaseUnitTest {
   @Autowired private WorkspaceActivityLogDao activityLogDao;
   @Autowired private ResourceDao resourceDao;
   @Autowired private WorkspaceActivityLogHook hook;
+  @Autowired private FolderDao folderDao;
   @MockBean private SamService mockSamService;
 
   @BeforeEach
@@ -260,29 +267,17 @@ public class WorkspaceActivityLogHookTest extends BaseUnitTest {
   @Test
   void deleteResourceFlightFails_resourceStillExist_notLogChangeDetails()
       throws InterruptedException {
-    var workspaceUuid = UUID.randomUUID();
+    UUID workspaceId = WorkspaceUnitTestUtils.createWorkspaceWithGcpContext(workspaceDao);
     var resourceUuid = UUID.randomUUID();
-    var emptyChangeDetails = activityLogDao.getLastUpdateDetails(workspaceUuid);
+    Optional<ActivityLogChangeDetails> emptyChangeDetails =
+        activityLogDao.getLastUpdateDetails(workspaceId);
     assertTrue(emptyChangeDetails.isEmpty());
 
-    workspaceDao.createWorkspace(
-        Workspace.builder()
-            .workspaceId(workspaceUuid)
-            .userFacingId(workspaceUuid.toString())
-            .workspaceStage(WorkspaceStage.MC_WORKSPACE)
-            .build());
-    var flightId = UUID.randomUUID().toString();
-    workspaceDao.createCloudContextStart(workspaceUuid, CloudPlatform.GCP, flightId);
-    workspaceDao.createCloudContextFinish(
-        workspaceUuid,
-        CloudPlatform.GCP,
-        "{\"version\": 1, \"gcpProjectId\": \"my-gcp-project-name-123\"}",
-        flightId);
     var resource =
         ControlledAiNotebookInstanceResource.builder()
             .common(
                 ControlledResourceFields.builder()
-                    .workspaceUuid(workspaceUuid)
+                    .workspaceUuid(workspaceId)
                     .resourceId(resourceUuid)
                     .name("my-notebook")
                     .accessScope(AccessScopeType.ACCESS_SCOPE_PRIVATE)
@@ -296,15 +291,53 @@ public class WorkspaceActivityLogHookTest extends BaseUnitTest {
             .build();
     resourceDao.createControlledResource(resource);
 
-    FlightMap inputParams = buildInputParams(workspaceUuid, OperationType.DELETE);
+    FlightMap inputParams = buildInputParams(workspaceId, OperationType.DELETE);
     inputParams.put(ResourceKeys.RESOURCE, resource);
     hook.endFlight(
         new FakeFlightContext(
             DeleteGcpContextFlight.class.getName(), inputParams, FlightStatus.ERROR));
 
-    assertNotNull(resourceDao.getResource(workspaceUuid, resourceUuid));
-    var changeDetailsAfterFailedFlight = activityLogDao.getLastUpdateDetails(workspaceUuid);
+    assertNotNull(resourceDao.getResource(workspaceId, resourceUuid));
+    var changeDetailsAfterFailedFlight = activityLogDao.getLastUpdateDetails(workspaceId);
     assertTrue(changeDetailsAfterFailedFlight.isEmpty());
+  }
+
+  @Test
+  void deleteFolderFlightFails_folderDeleted_activityLogUpdated() throws InterruptedException {
+    UUID workspaceId = UUID.randomUUID();
+    var emptyChangeDetails = activityLogDao.getLastUpdateDetails(workspaceId);
+    assertTrue(emptyChangeDetails.isEmpty());
+
+    Folder fooFolder =
+        new Folder(/*folderId=*/ UUID.randomUUID(), workspaceId, "foo", null, null, Map.of());
+    FlightMap inputParams = buildInputParams(workspaceId, OperationType.DELETE);
+    inputParams.put(FOLDER_ID, fooFolder.id());
+    hook.endFlight(
+        new FakeFlightContext(DeleteFolderFlight.class.getName(), inputParams, FlightStatus.ERROR));
+
+    Optional<ActivityLogChangeDetails> changeDetails =
+        activityLogDao.getLastUpdateDetails(workspaceId);
+    assertChangeDetails(changeDetails);
+  }
+
+  @Test
+  void deleteFolderFlightFails_folderNotDeleted_activityLogNotUpdated()
+      throws InterruptedException {
+    UUID workspaceId = WorkspaceUnitTestUtils.createWorkspaceWithGcpContext(workspaceDao);
+    var emptyChangeDetails = activityLogDao.getLastUpdateDetails(workspaceId);
+    assertTrue(emptyChangeDetails.isEmpty());
+
+    Folder fooFolder =
+        folderDao.createFolder(
+            new Folder(/*folderId=*/ UUID.randomUUID(), workspaceId, "foo", null, null, Map.of()));
+    FlightMap inputParams = buildInputParams(workspaceId, OperationType.DELETE);
+    inputParams.put(FOLDER_ID, fooFolder.id());
+    hook.endFlight(
+        new FakeFlightContext(DeleteFolderFlight.class.getName(), inputParams, FlightStatus.ERROR));
+
+    Optional<ActivityLogChangeDetails> changeDetails =
+        activityLogDao.getLastUpdateDetails(workspaceId);
+    assertTrue(changeDetails.isEmpty());
   }
 
   @Test
