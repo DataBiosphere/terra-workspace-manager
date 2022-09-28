@@ -56,7 +56,11 @@ public class TpsApiDispatch {
 
   public void deletePao(BearerToken bearerToken, UUID objectId) {
     features.tpsEnabledCheck();
-    paoService.deletePao(objectId);
+    try {
+      paoService.deletePao(objectId);
+    } catch (PolicyObjectNotFoundException e) {
+      // Not found is not an error as far as WSM is concerned.
+    }
   }
 
   public Optional<ApiTpsPaoGetResult> getPaoIfExists(BearerToken bearerToken, UUID objectId) {
@@ -175,7 +179,7 @@ public class TpsApiDispatch {
         .attributes(policyInputsToApi(pao.getAttributes()))
         .effectiveAttributes(policyInputsToApi(pao.getEffectiveAttributes()))
         .sourcesObjectIds(pao.getSourceObjectIds().stream().toList())
-        .predecessorId(pao.getPredecessorId());
+        .deleted((pao.getDeleted()));
   }
 
   public static Pao paoFromApi(@Nullable ApiTpsPaoGetResult api) {
@@ -189,6 +193,6 @@ public class TpsApiDispatch {
         policyInputsFromApi(api.getAttributes()),
         policyInputsFromApi(api.getEffectiveAttributes()),
         new HashSet<>(api.getSourcesObjectIds()),
-        api.getPredecessorId());
+        api.isDeleted());
   }
 }
