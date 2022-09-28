@@ -139,16 +139,21 @@ public final class ControllerValidationUtils {
     }
   }
 
-  public static void validateSasExpirationDuration(@Nullable Long sasExpirationDuration, Long maxDurationMinutes) {
+  public static void validateSasExpirationDuration(
+      @Nullable Long sasExpirationDuration, Long maxDurationMinutes) {
     if (sasExpirationDuration == null) {
       return;
     }
     if (sasExpirationDuration <= 0) {
-      throw new ValidationException("sasExpirationDuration must be positive: " + sasExpirationDuration);
+      throw new ValidationException(
+          "sasExpirationDuration must be positive: " + sasExpirationDuration);
     }
     long maxDurationSeconds = 60 * maxDurationMinutes;
     if (sasExpirationDuration > maxDurationSeconds) {
-      throw new ValidationException(String.format("sasExpirationDuration must cannot be greater than allowed maximum (%d): %d", maxDurationSeconds, sasExpirationDuration));
+      throw new ValidationException(
+          String.format(
+              "sasExpirationDuration must cannot be greater than allowed maximum (%d): %d",
+              maxDurationSeconds, sasExpirationDuration));
     }
   }
 

@@ -45,7 +45,6 @@ public class AzureConfiguration {
     return sasTokenStartTimeMinutesOffset;
   }
 
-
   public void setSasTokenStartTimeMinutesOffset(Long sasTokenStartTimeMinutesOffset) {
     this.sasTokenStartTimeMinutesOffset = sasTokenStartTimeMinutesOffset;
   }
@@ -62,7 +61,8 @@ public class AzureConfiguration {
     return sasTokenExpiryTimeMaximumMinutesOffset;
   }
 
-  public void setSasTokenExpiryTimeMaximumMinutesOffset(Long sasTokenExpiryTimeMaximumMinutesOffset) {
+  public void setSasTokenExpiryTimeMaximumMinutesOffset(
+      Long sasTokenExpiryTimeMaximumMinutesOffset) {
     this.sasTokenExpiryTimeMaximumMinutesOffset = sasTokenExpiryTimeMaximumMinutesOffset;
   }
 

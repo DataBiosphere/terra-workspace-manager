@@ -209,11 +209,15 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
   @Override
   public ResponseEntity<ApiCreatedAzureStorageContainerSasToken>
       createAzureStorageContainerSasToken(
-          UUID workspaceUuid, UUID storageContainerUuid, String sasIPRange, Long sasExpirationDuration) {
+          UUID workspaceUuid,
+          UUID storageContainerUuid,
+          String sasIPRange,
+          Long sasExpirationDuration) {
     features.azureEnabledCheck();
 
     ControllerValidationUtils.validateIpAddressRange(sasIPRange);
-    ControllerValidationUtils.validateSasExpirationDuration(sasExpirationDuration, azureConfiguration.getSasTokenExpiryTimeMaximumMinutesOffset());
+    ControllerValidationUtils.validateSasExpirationDuration(
+        sasExpirationDuration, azureConfiguration.getSasTokenExpiryTimeMaximumMinutesOffset());
 
     final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     // Creating an AzureStorageContainerSasToken requires checking the user's access to both the
@@ -246,7 +250,11 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
 
     OffsetDateTime startTime =
         OffsetDateTime.now().minusMinutes(azureConfiguration.getSasTokenStartTimeMinutesOffset());
-    long secondDuration = sasExpirationDuration != null ? sasExpirationDuration : azureConfiguration.getSasTokenExpiryTimeMinutesOffset() * 40; // TODO: should be 60, trying to discover where tests live
+    long secondDuration =
+        sasExpirationDuration != null
+            ? sasExpirationDuration
+            : azureConfiguration.getSasTokenExpiryTimeMinutesOffset()
+                * 40; // TODO: should be 60, trying to discover where tests live
     OffsetDateTime expiryTime = OffsetDateTime.now().plusSeconds(secondDuration);
 
     var sasBundle =
