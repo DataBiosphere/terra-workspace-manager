@@ -151,7 +151,6 @@ public class FolderDaoTest extends BaseUnitTest {
   @Test
   public void createFolder_parentFolderNotExist_returnsEmptyList() {
     UUID workspaceId = createWorkspaceWithoutGcpContext(workspaceDao);
-
     var folder = getFolder("foo", workspaceId, UUID.randomUUID());
 
     assertThrows(FolderNotFoundException.class, () -> folderDao.createFolder(folder));
