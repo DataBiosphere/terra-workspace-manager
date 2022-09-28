@@ -10,7 +10,7 @@ components:
       required: true
       schema:
         $ref: '#/components/schemas/CloudPlatform'
-    
+
     JobId:
       name: jobId
       in: path
@@ -18,7 +18,7 @@ components:
       required: true
       schema:
         type: string
-    
+
     Limit:
       name: limit
       in: query
@@ -28,7 +28,7 @@ components:
         type: integer
         minimum: 1
         default: 10
-    
+
     MemberEmail:
       name: memberEmail
       in: path
@@ -57,7 +57,7 @@ components:
       required: true
       schema:
         $ref: '#/components/schemas/Name'
-  
+
     Offset:
       name: offset
       in: query
@@ -67,7 +67,7 @@ components:
         type: integer
         minimum: 0
         default: 0
-  
+
     ResourceId:
       name: resourceId
       in: path
@@ -76,7 +76,7 @@ components:
       schema:
         type: string
         format: uuid
-  
+
     ResourceType:
       name: resource
       in: query
@@ -84,7 +84,7 @@ components:
       required: false
       schema:
         $ref: '#/components/schemas/ResourceType'
-  
+
     Role:
       name: role
       in: path
@@ -101,6 +101,17 @@ components:
       schema:
         type: string
 
+    SasExpirationDuration:
+      name: sasExpirationDuration
+      in: query
+      description: |
+        The number of seconds until the SAS token should expire (optional). Default and maximum allowed values are
+        set in configuration.
+      required: false
+      schema:
+        type: integer
+        format: int64
+
     StewardshipType:
       name: stewardship
       in: query
@@ -108,7 +119,7 @@ components:
       required: false
       schema:
         $ref: '#/components/schemas/StewardshipType'
-  
+
     WorkspaceId:
       name: workspaceId
       in: path
