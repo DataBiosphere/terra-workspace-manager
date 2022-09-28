@@ -13,7 +13,6 @@ import bio.terra.workspace.generated.model.ApiAzureVmCreationParameters;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.disk.ControlledAzureDiskResource;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.ip.ControlledAzureIpResource;
-import bio.terra.workspace.service.resource.controlled.cloud.azure.network.ControlledAzureNetworkResource;
 import bio.terra.workspace.service.resource.controlled.exception.AzureNetworkInterfaceNameNotFoundException;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
@@ -22,7 +21,6 @@ import com.azure.core.management.Region;
 import com.azure.core.management.exception.ManagementException;
 import com.azure.resourcemanager.compute.ComputeManager;
 import com.azure.resourcemanager.compute.models.*;
-import com.azure.resourcemanager.network.models.Network;
 import com.azure.resourcemanager.network.models.NetworkInterface;
 import com.azure.resourcemanager.network.models.PublicIpAddress;
 import java.util.Optional;
@@ -78,10 +76,8 @@ public class CreateAzureVmStep implements Step {
                         .getResource(resource.getWorkspaceId(), diskId)
                         .castByEnum(WsmResourceType.CONTROLLED_AZURE_DISK));
 
-    final ControlledAzureNetworkResource networkResource =
-        resourceDao
-            .getResource(resource.getWorkspaceId(), resource.getNetworkId())
-            .castByEnum(WsmResourceType.CONTROLLED_AZURE_NETWORK);
+    final String subnetName =
+        context.getWorkingMap().get(AzureVmHelper.WORKING_MAP_SUBNET_NAME, String.class);
 
     try {
       Optional<Disk> existingAzureDisk =
@@ -100,13 +96,6 @@ public class CreateAzureVmStep implements Step {
                       .publicIpAddresses()
                       .getByResourceGroup(
                           azureCloudContext.getAzureResourceGroupId(), ipRes.getIpName()));
-
-      Network existingNetwork =
-          computeManager
-              .networkManager()
-              .networks()
-              .getByResourceGroup(
-                  azureCloudContext.getAzureResourceGroupId(), networkResource.getNetworkName());
 
       if (!context.getWorkingMap().containsKey(AzureVmHelper.WORKING_MAP_NETWORK_INTERFACE_KEY)) {
         logger.error(
@@ -130,24 +119,36 @@ public class CreateAzureVmStep implements Step {
                       .getWorkingMap()
                       .get(AzureVmHelper.WORKING_MAP_NETWORK_INTERFACE_KEY, String.class));
 
+      // TODO:
+      // The VM region is now determined by the network instead of the request.
+      // As we can't have a VM and a NIC in different regions.
+      // This also means we are ignoring the region parameter, and we will have
+      // to remove it. Please note that keeping the region as option, requires
+      // validation that the user provided region is the same as network region,
+      // therefore rendering the flexibility of the option moot.
+      var region =
+          Region.fromName(
+              context.getWorkingMap().get(AzureVmHelper.WORKING_MAP_NETWORK_REGION, String.class));
+
       var virtualMachineDefinition =
           buildVmConfiguration(
               computeManager,
               networkInterface,
               existingAzureDisk,
               azureCloudContext.getAzureResourceGroupId(),
-              creationParameters);
+              creationParameters,
+              region);
 
       virtualMachineDefinition.create(
           Defaults.buildContext(
               CreateVirtualMachineRequestData.builder()
                   .setName(resource.getVmName())
-                  .setRegion(Region.fromName(resource.getRegion()))
+                  .setRegion(region)
                   .setTenantId(azureCloudContext.getAzureTenantId())
                   .setSubscriptionId(azureCloudContext.getAzureSubscriptionId())
                   .setResourceGroupName(azureCloudContext.getAzureResourceGroupId())
-                  .setNetwork(existingNetwork)
-                  .setSubnetName(networkResource.getSubnetName())
+                  .setNetwork(networkInterface.primaryIPConfiguration().getNetwork())
+                  .setSubnetName(subnetName)
                   .setPublicIpAddress(existingAzureIp.orElse(null))
                   .setDisk(existingAzureDisk.orElse(null))
                   .setImage(AzureVmUtils.getImageData(creationParameters.getVmImage()))
@@ -171,7 +172,7 @@ public class CreateAzureVmStep implements Step {
                     "%nResource Group: %s%n\tIp Name: %s%n\tNetwork Name: %s%n\tDisk Name: %s",
                     azureCloudContext.getAzureResourceGroupId(),
                     ipResource.map(ControlledAzureIpResource::getIpName).orElse("<no public ip>"),
-                    networkResource.getNetworkName(),
+                    resource.getNetworkId(),
                     diskResource
                         .map(ControlledAzureDiskResource::getDiskName)
                         .orElse("<no disk>")));
@@ -198,12 +199,13 @@ public class CreateAzureVmStep implements Step {
       NetworkInterface networkInterface,
       Optional<Disk> disk,
       String azureResourceGroupId,
-      ApiAzureVmCreationParameters creationParameters) {
+      ApiAzureVmCreationParameters creationParameters,
+      Region region) {
     var vmConfigurationCommonStep =
         computeManager
             .virtualMachines()
             .define(resource.getVmName())
-            .withRegion(resource.getRegion())
+            .withRegion(region)
             .withExistingResourceGroup(azureResourceGroupId)
             .withExistingPrimaryNetworkInterface(networkInterface);
 

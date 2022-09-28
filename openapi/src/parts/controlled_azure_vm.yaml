@@ -109,7 +109,7 @@ components:
         Vm-specific properties to be set on creation. These are a subset of the values
         accepted by the azure resource API
       type: object
-      required: [name, region, networkId, vmSize, vmImage]
+      required: [name, vmSize, vmImage]
       properties:
         name:
           description: A valid vm name per https://docs.microsoft.com/en-us/azure/azure-resource-manager/management/resource-name-rules
@@ -117,8 +117,10 @@ components:
         region:
           description: |
             A valid region string representation per https://docs.microsoft.com/en-us/dotnet/api/microsoft.azure.management.resourcemanager.fluent.core.region.
-            It is best to look at the Region class definition for valid strings (e.g. 'eastus' == Region.US_EAST.toString())
+            It is best to look at the Region class definition for valid strings (e.g. 'eastus' == Region.US_EAST.toString()).
+            Note: This property is no longer used, but it's kept to avoid breaking changes with existing clients. The vm's region is set to the same region as the virtual network.
           type: string
+          deprecated: true
         vmSize:
           description: A valid image size as per com.azure.resourcemanager.compute.models.VirtualMachineSizeTypes
           type: string

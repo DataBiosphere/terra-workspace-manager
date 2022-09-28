@@ -144,7 +144,8 @@ public class ControlledAzureVmResource extends ControlledResource {
             flightBeanBag.getAzureConfig(),
             flightBeanBag.getCrlService(),
             this,
-            flightBeanBag.getResourceDao()),
+            flightBeanBag.getResourceDao(),
+            flightBeanBag.getLandingZoneApiDispatch()),
         cloudRetry);
     flight.addStep(
         new CreateAzureVmStep(
@@ -281,10 +282,6 @@ public class ControlledAzureVmResource extends ControlledResource {
     if (getVmImage() == null) {
       throw new MissingRequiredFieldException(
           "Missing required valid vmImage field for ControlledAzureVm.");
-    }
-    if (getNetworkId() == null) {
-      throw new MissingRequiredFieldException(
-          "Missing required networkId field for ControlledAzureVm.");
     }
     ResourceValidationUtils.validateAzureIPorSubnetName(getVmName());
     ResourceValidationUtils.validateAzureVmSize(getVmSize());
