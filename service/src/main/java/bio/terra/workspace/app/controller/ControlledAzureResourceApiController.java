@@ -53,6 +53,7 @@ import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import com.google.common.annotations.VisibleForTesting;
 import java.time.OffsetDateTime;
+import java.util.Optional;
 import java.util.UUID;
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
@@ -255,7 +256,8 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
             startTime,
             expiryTime,
             userRequest,
-            sasIPRange);
+            sasIPRange,
+            Optional.empty());
 
     logger.info(
         "SAS token with expiry time of {} generated for user {} on container {} in workspace {}",

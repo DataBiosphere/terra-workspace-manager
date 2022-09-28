@@ -20,6 +20,7 @@ import com.azure.storage.common.sas.SasProtocol;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Locale;
+import java.util.Optional;
 import java.util.UUID;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -99,7 +100,8 @@ public class AzureStorageAccessService {
       OffsetDateTime startTime,
       OffsetDateTime expiryTime,
       AuthenticatedUserRequest userRequest,
-      String sasIPRange) {
+      String sasIPRange,
+      Optional<String> blobPrefix) {
     features.azureEnabledCheck();
 
     BlobContainerSasPermission blobContainerSasPermission =
@@ -120,16 +122,22 @@ public class AzureStorageAccessService {
             .httpClient(HttpClient.createDefault())
             .containerName(storageContainerResource.getStorageContainerName())
             .buildClient();
+
     BlobServiceSasSignatureValues sasValues =
         new BlobServiceSasSignatureValues(expiryTime, blobContainerSasPermission)
             .setStartTime(startTime)
             .setProtocol(SasProtocol.HTTPS_ONLY);
-
     if (sasIPRange != null) {
       sasValues.setSasIpRange(SasIpRange.parse(sasIPRange));
     }
 
-    final var token = blobContainerClient.generateSas(sasValues);
+    String token;
+    if (blobPrefix.isPresent()) {
+      var blobClient = blobContainerClient.getBlobClient(blobPrefix.get());
+      token = blobClient.generateSas(sasValues);
+    } else {
+      token = blobContainerClient.generateSas(sasValues);
+    }
 
     return new AzureSasBundle(
         token,
