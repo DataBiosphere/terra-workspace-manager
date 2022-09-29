@@ -60,7 +60,7 @@ public class LandingZoneApiControllerTest extends BaseAzureUnitTest {
         AzureLandingZoneFixtures.createJobResultWithRunningState(JOB_ID);
 
     when(landingZoneService.startLandingZoneCreationJob(any(), any(), any(), any()))
-        .thenReturn(JOB_ID);
+        .thenReturn(asyncJobResult);
     when(landingZoneService.getAsyncJobResult(any(), any())).thenReturn(asyncJobResult);
     when(featureConfiguration.isAzureEnabled()).thenReturn(true);
 
@@ -86,7 +86,7 @@ public class LandingZoneApiControllerTest extends BaseAzureUnitTest {
         AzureLandingZoneFixtures.createJobResultWithSucceededState(JOB_ID, LANDING_ZONE_ID);
 
     when(landingZoneService.startLandingZoneCreationJob(any(), any(), any(), any()))
-        .thenReturn(JOB_ID);
+        .thenReturn(asyncJobResult);
     when(landingZoneService.getAsyncJobResult(any(), any())).thenReturn(asyncJobResult);
     when(featureConfiguration.isAzureEnabled()).thenReturn(true);
 
@@ -116,7 +116,7 @@ public class LandingZoneApiControllerTest extends BaseAzureUnitTest {
         AzureLandingZoneFixtures.createJobResultWithSucceededState(JOB_ID, LANDING_ZONE_ID);
 
     when(landingZoneService.startLandingZoneCreationJob(any(), any(), any(), any()))
-        .thenReturn(JOB_ID);
+        .thenReturn(asyncJobResult);
     when(landingZoneService.getAsyncJobResult(any(), any())).thenReturn(asyncJobResult);
     when(featureConfiguration.isAzureEnabled()).thenReturn(true);
 
@@ -139,7 +139,7 @@ public class LandingZoneApiControllerTest extends BaseAzureUnitTest {
         AzureLandingZoneFixtures.createJobResultWithSucceededState(JOB_ID, LANDING_ZONE_ID);
 
     when(landingZoneService.startLandingZoneCreationJob(any(), any(), any(), any()))
-        .thenReturn(JOB_ID);
+        .thenReturn(asyncJobResult);
     when(landingZoneService.getAsyncJobResult(any(), any())).thenReturn(asyncJobResult);
     when(featureConfiguration.isAzureEnabled()).thenReturn(true);
 
