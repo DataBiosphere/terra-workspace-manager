@@ -87,7 +87,7 @@ public class AzureStorageAccessService {
    * @param startTime Time at which the SAS will become functional
    * @param expiryTime Time at which the SAS will expire
    * @param userRequest The authenticated user's request
-   * @param sasIPRange (optional) IP address or range of IPs from which the Azure APIs will accept
+   * @param sasIpRange (optional) IP address or range of IPs from which the Azure APIs will accept
    *     requests for the token being minted.
    * @return A bundle of 1) a full Azure SAS URL, including the storage account hostname and 2) the
    *     token query param fragment
@@ -99,7 +99,7 @@ public class AzureStorageAccessService {
       OffsetDateTime startTime,
       OffsetDateTime expiryTime,
       AuthenticatedUserRequest userRequest,
-      String sasIPRange) {
+      String sasIpRange) {
     features.azureEnabledCheck();
 
     BlobContainerSasPermission blobContainerSasPermission =
@@ -125,8 +125,8 @@ public class AzureStorageAccessService {
             .setStartTime(startTime)
             .setProtocol(SasProtocol.HTTPS_ONLY);
 
-    if (sasIPRange != null) {
-      sasValues.setSasIpRange(SasIpRange.parse(sasIPRange));
+    if (sasIpRange != null) {
+      sasValues.setSasIpRange(SasIpRange.parse(sasIpRange));
     }
 
     final var token = blobContainerClient.generateSas(sasValues);

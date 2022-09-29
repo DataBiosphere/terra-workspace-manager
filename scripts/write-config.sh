@@ -297,6 +297,7 @@ workspace:
     managed-app-tenant-id: ${tenantid}
     sas-token-start-time-minutes-offset: 15
     sas-token-expiry-time-minutes-offset: 60
+    sas-token-expiry-time-maximum-minutes-offset: 1440
 feature:
   tps-enabled: true
 EOF

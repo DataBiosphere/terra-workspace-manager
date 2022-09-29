@@ -29,7 +29,7 @@ paths:
       parameters:
         - $ref: '#/components/parameters/WorkspaceId'
         - $ref: '#/components/parameters/ResourceId'
-      summary: Delete an Azure Storge Container
+      summary: Delete an Azure Storage Container
       operationId: deleteAzureStorageContainer
       tags: [ControlledAzureResource]
       requestBody:
@@ -53,6 +53,7 @@ paths:
       - $ref: '#/components/parameters/WorkspaceId'
       - $ref: '#/components/parameters/ResourceId'
       - $ref: '#/components/parameters/SasIpRange'
+      - $ref: '#/components/parameters/SasExpirationDuration'
     post:
       summary: Create a SAS token to access the storage container
       operationId: createAzureStorageContainerSasToken
@@ -64,6 +65,8 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/CreatedAzureStorageContainerSasToken'
+        '400':
+          $ref: '#/components/responses/BadRequest'
         '403':
           $ref: '#/components/responses/PermissionDenied'
         '500':

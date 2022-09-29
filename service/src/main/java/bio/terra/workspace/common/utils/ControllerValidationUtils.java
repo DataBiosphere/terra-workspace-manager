@@ -139,6 +139,33 @@ public final class ControllerValidationUtils {
     }
   }
 
+  /**
+   * Validate that the expiration duration (in seconds) is between 1 and the maximum allowed
+   * duration (in minutes).
+   *
+   * @param sasExpirationDuration user-specified duration in seconds (note that null is allowed)
+   * @param maxDurationMinutes maximum allowed duration in minutes
+   * @throws ValidationException if sasExpiration is not positive or is greater than maximum allowed
+   *     duration. Does not throw an exception if sasExpiration is null.
+   */
+  public static void validateSasExpirationDuration(
+      @Nullable Long sasExpirationDuration, Long maxDurationMinutes) {
+    if (sasExpirationDuration == null) {
+      return;
+    }
+    if (sasExpirationDuration <= 0) {
+      throw new ValidationException(
+          "sasExpirationDuration must be positive: " + sasExpirationDuration);
+    }
+    long maxDurationSeconds = 60 * maxDurationMinutes;
+    if (sasExpirationDuration > maxDurationSeconds) {
+      throw new ValidationException(
+          String.format(
+              "sasExpirationDuration cannot be greater than allowed maximum (%d): %d",
+              maxDurationSeconds, sasExpirationDuration));
+    }
+  }
+
   public static void validatePropertiesUpdateRequestBody(List<ApiProperty> properties) {
     if (properties.isEmpty()) {
       throw new ValidationException("Must specify at least one property to update");

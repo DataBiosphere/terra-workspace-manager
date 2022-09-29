@@ -209,10 +209,15 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
   @Override
   public ResponseEntity<ApiCreatedAzureStorageContainerSasToken>
       createAzureStorageContainerSasToken(
-          UUID workspaceUuid, UUID storageContainerUuid, String sasIPRange) {
+          UUID workspaceUuid,
+          UUID storageContainerUuid,
+          String sasIpRange,
+          Long sasExpirationDuration) {
     features.azureEnabledCheck();
 
-    ControllerValidationUtils.validateIpAddressRange(sasIPRange);
+    ControllerValidationUtils.validateIpAddressRange(sasIpRange);
+    ControllerValidationUtils.validateSasExpirationDuration(
+        sasExpirationDuration, azureConfiguration.getSasTokenExpiryTimeMaximumMinutesOffset());
 
     final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     // Creating an AzureStorageContainerSasToken requires checking the user's access to both the
@@ -245,8 +250,12 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
 
     OffsetDateTime startTime =
         OffsetDateTime.now().minusMinutes(azureConfiguration.getSasTokenStartTimeMinutesOffset());
-    OffsetDateTime expiryTime =
-        OffsetDateTime.now().plusMinutes(azureConfiguration.getSasTokenExpiryTimeMinutesOffset());
+    long secondDuration =
+        sasExpirationDuration != null
+            ? sasExpirationDuration
+            : azureConfiguration.getSasTokenExpiryTimeMinutesOffset() * 60;
+    OffsetDateTime expiryTime = OffsetDateTime.now().plusSeconds(secondDuration);
+
     var sasBundle =
         azureControlledStorageResourceService.createAzureStorageContainerSasToken(
             workspaceUuid,
@@ -255,7 +264,7 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
             startTime,
             expiryTime,
             userRequest,
-            sasIPRange);
+            sasIpRange);
 
     logger.info(
         "SAS token with expiry time of {} generated for user {} on container {} in workspace {}",
