@@ -441,13 +441,7 @@ public class SamService {
           String.format(
               "User %s is not authorized to perform action %s on %s %s",
               userEmail, action, type, uuid));
-    else
-      logger.info(
-          "User {} is authorized to {} {} {}",
-          userEmail,
-          action,
-          type,
-          uuid);
+    else logger.info("User {} is authorized to {} {} {}", userEmail, action, type, uuid);
   }
 
   /**
