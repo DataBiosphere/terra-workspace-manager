@@ -34,6 +34,7 @@ import java.time.OffsetDateTime;
 import java.util.Optional;
 import java.util.UUID;
 import org.apache.http.HttpStatus;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
@@ -117,51 +118,19 @@ class CreateAzureStorageContainerSasTokenTest extends BaseAzureUnitTest {
   @MockBean SamService samService;
   @MockBean AzureStorageAccessService azureStorageAccessService;
 
-  @Test
-  void createSASToken400BadDuration() throws Exception {
-    UUID workspaceId = UUID.randomUUID();
-    UUID resourceId = UUID.randomUUID();
+  private UUID workspaceId;
+  private UUID storageContainerId;
 
-    azureConfiguration.setSasTokenExpiryTimeMaximumMinutesOffset(
-        240L); // maximum of 240 minutes (4 hours)
+  private ControlledAzureStorageResource accountResource;
+  private ControlledAzureStorageContainerResource containerResource;
 
-    // expiration duration must be positive
-    mockMvc
-        .perform(
-            addAuth(
-                post(String.format(CREATE_AZURE_SAS_TOKEN_PATH_FORMAT, workspaceId, resourceId))
-                    .contentType(MediaType.APPLICATION_JSON_VALUE)
-                    .accept(MediaType.APPLICATION_JSON)
-                    .characterEncoding("UTF-8")
-                    .queryParam("sasExpirationDuration", "-1"),
-                USER_REQUEST))
-        .andExpect(status().is(HttpStatus.SC_BAD_REQUEST));
-
-    // expiration can't exceed 4 hours = 14400 seconds
-    mockMvc
-        .perform(
-            addAuth(
-                post(String.format(CREATE_AZURE_SAS_TOKEN_PATH_FORMAT, workspaceId, resourceId))
-                    .contentType(MediaType.APPLICATION_JSON_VALUE)
-                    .accept(MediaType.APPLICATION_JSON)
-                    .characterEncoding("UTF-8")
-                    .queryParam("sasExpirationDuration", "14401"),
-                USER_REQUEST))
-        .andExpect(status().is(HttpStatus.SC_BAD_REQUEST));
-  }
-
-  @Test
-  void createSASTokenSuccess() throws Exception {
-    UUID workspaceId = UUID.randomUUID();
+  @BeforeEach
+  public void setup() throws Exception {
+    workspaceId = UUID.randomUUID();
+    storageContainerId = UUID.randomUUID();
     UUID storageAccountId = UUID.randomUUID();
-    UUID storageContainerId = UUID.randomUUID();
 
-    azureConfiguration.setSasTokenStartTimeMinutesOffset(5L); // 5 minutes before
-    azureConfiguration.setSasTokenExpiryTimeMinutesOffset(10L); // 10 minutes after
-    azureConfiguration.setSasTokenExpiryTimeMaximumMinutesOffset(
-        240L); // maximum of 240 minutes (4 hours)
-
-    ControlledAzureStorageContainerResource containerResource =
+    containerResource =
         ControlledAzureStorageContainerResource.builder()
             .common(
                 ControlledResourceFixtures.makeDefaultControlledResourceFieldsBuilder()
@@ -176,7 +145,7 @@ class CreateAzureStorageContainerSasTokenTest extends BaseAzureUnitTest {
             any(), eq(workspaceId), eq(storageContainerId), any()))
         .thenReturn(containerResource);
 
-    ControlledAzureStorageResource accountResource =
+    accountResource =
         ControlledAzureStorageResource.builder()
             .common(
                 ControlledResourceFixtures.makeDefaultControlledResourceFieldsBuilder()
@@ -191,7 +160,7 @@ class CreateAzureStorageContainerSasTokenTest extends BaseAzureUnitTest {
             any(), eq(workspaceId), eq(storageAccountId), any()))
         .thenReturn(accountResource);
 
-    when(samService.getUserEmailFromSam(any())).thenReturn(USER_REQUEST.getEmail());
+    when(samService.getUserEmailFromSam(eq(USER_REQUEST))).thenReturn(USER_REQUEST.getEmail());
 
     when(azureStorageAccessService.createAzureStorageContainerSasToken(
             eq(workspaceId),
@@ -202,6 +171,46 @@ class CreateAzureStorageContainerSasTokenTest extends BaseAzureUnitTest {
             any(),
             any()))
         .thenReturn(new AzureStorageAccessService.AzureSasBundle("sasToken", "sasUrl"));
+  }
+
+  @Test
+  void createSASToken400BadDuration() throws Exception {
+    azureConfiguration.setSasTokenExpiryTimeMaximumMinutesOffset(
+        240L); // maximum of 240 minutes (4 hours)
+
+    // expiration duration must be positive
+    mockMvc
+        .perform(
+            addAuth(
+                post(String.format(
+                        CREATE_AZURE_SAS_TOKEN_PATH_FORMAT, workspaceId, storageContainerId))
+                    .contentType(MediaType.APPLICATION_JSON_VALUE)
+                    .accept(MediaType.APPLICATION_JSON)
+                    .characterEncoding("UTF-8")
+                    .queryParam("sasExpirationDuration", "-1"),
+                USER_REQUEST))
+        .andExpect(status().is(HttpStatus.SC_BAD_REQUEST));
+
+    // expiration can't exceed 4 hours = 14400 seconds
+    mockMvc
+        .perform(
+            addAuth(
+                post(String.format(
+                        CREATE_AZURE_SAS_TOKEN_PATH_FORMAT, workspaceId, storageContainerId))
+                    .contentType(MediaType.APPLICATION_JSON_VALUE)
+                    .accept(MediaType.APPLICATION_JSON)
+                    .characterEncoding("UTF-8")
+                    .queryParam("sasExpirationDuration", "14401"),
+                USER_REQUEST))
+        .andExpect(status().is(HttpStatus.SC_BAD_REQUEST));
+  }
+
+  @Test
+  void createSASTokenCustomExpirationSuccess() throws Exception {
+    azureConfiguration.setSasTokenStartTimeMinutesOffset(5L); // 5 minutes before
+    azureConfiguration.setSasTokenExpiryTimeMinutesOffset(10L); // 10 minutes after
+    azureConfiguration.setSasTokenExpiryTimeMaximumMinutesOffset(
+        240L); // maximum of 240 minutes (4 hours)
 
     // Specify custom expiration duration of 2 hours.
     mockMvc
@@ -252,5 +261,46 @@ class CreateAzureStorageContainerSasTokenTest extends BaseAzureUnitTest {
         900,
         endTimeCaptor.getAllValues().get(1).toEpochSecond()
             - startTimeCaptor.getAllValues().get(1).toEpochSecond());
+  }
+
+  @Test
+  void createSASToken400BadIPRange() throws Exception {
+    mockMvc
+        .perform(
+            addAuth(
+                post(String.format(
+                        CREATE_AZURE_SAS_TOKEN_PATH_FORMAT, workspaceId, storageContainerId))
+                    .contentType(MediaType.APPLICATION_JSON_VALUE)
+                    .accept(MediaType.APPLICATION_JSON)
+                    .characterEncoding("UTF-8")
+                    .queryParam("sasIpRange", "not_an_IP"),
+                USER_REQUEST))
+        .andExpect(status().is(HttpStatus.SC_BAD_REQUEST));
+  }
+
+  @Test
+  void createSASTokenIpRangeSuccess() throws Exception {
+    String ipRange = "168.1.5.60-168.1.5.70";
+    mockMvc
+        .perform(
+            addAuth(
+                post(String.format(
+                        CREATE_AZURE_SAS_TOKEN_PATH_FORMAT, workspaceId, storageContainerId))
+                    .contentType(MediaType.APPLICATION_JSON_VALUE)
+                    .accept(MediaType.APPLICATION_JSON)
+                    .characterEncoding("UTF-8")
+                    .queryParam("sasIpRange", ipRange),
+                USER_REQUEST))
+        .andExpect(status().is(HttpStatus.SC_OK));
+
+    Mockito.verify(azureStorageAccessService)
+        .createAzureStorageContainerSasToken(
+            eq(workspaceId),
+            eq(containerResource),
+            eq(accountResource),
+            any(),
+            any(),
+            any(),
+            eq(ipRange));
   }
 }
