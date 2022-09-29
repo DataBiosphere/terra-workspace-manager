@@ -15,7 +15,13 @@ import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.Contr
 import bio.terra.workspace.service.workspace.model.AzureCloudContext;
 import com.azure.core.management.exception.ManagementException;
 import com.azure.resourcemanager.relay.RelayManager;
+
+import java.util.Arrays;
 import java.util.Optional;
+
+import com.azure.resourcemanager.relay.fluent.models.AuthorizationRuleInner;
+import com.azure.resourcemanager.relay.models.AccessRights;
+import com.azure.resourcemanager.relay.models.HybridConnection;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -52,12 +58,36 @@ public class CreateAzureHybridConnectionStep implements Step {
     RelayManager manager = crlService.getRelayManager(azureCloudContext, azureConfig);
 
     try {
-      manager
+      String relayNamespaceName = getAzureRelayNamespaceName(azureCloudContext);
+
+      HybridConnection hybridConnection = manager
           .hybridConnections()
           .define(resource.getHybridConnectionName())
           .withExistingNamespace(azureCloudContext.getAzureResourceGroupId(),
-              getAzureRelayNamespaceName(azureCloudContext))
+              relayNamespaceName)
           .create();
+
+
+      String authRuleName = "listener";
+      manager
+          .hybridConnections()
+          .createOrUpdateAuthorizationRule(
+              azureCloudContext.getAzureResourceGroupId(),
+              relayNamespaceName,
+              hybridConnection.name(),
+              authRuleName,
+              new AuthorizationRuleInner().withRights(Arrays.asList(AccessRights.LISTEN))
+          );
+
+      // TODO return primary Key, relayNamespace name, and hybridConnection name
+      String primaryKey = manager
+          .hybridConnections()
+          .listKeys(azureCloudContext.getAzureResourceGroupId(),
+              relayNamespaceName,
+              hybridConnection.name(),
+              authRuleName
+          )
+          .primaryKey();
     } catch (ManagementException e) {
       // Stairway steps may run multiple times, so we may already have created this resource. In all
       // other cases, surface the exception and attempt to retry.
