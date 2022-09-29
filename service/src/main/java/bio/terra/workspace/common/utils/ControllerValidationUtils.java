@@ -139,6 +139,15 @@ public final class ControllerValidationUtils {
     }
   }
 
+  /**
+   * Validate that the expiration duration (in seconds) is between 1 and the maximum allowed
+   * duration (in minutes).
+   *
+   * @param sasExpirationDuration user-specified duration in seconds (note that null is allowed)
+   * @param maxDurationMinutes maximum allowed duration in minutes
+   * @throws ValidationException if sasExpiration is not positive or is greater than maximum allowed
+   *     duration. Does not throw an exception if sasExpiration is null.
+   */
   public static void validateSasExpirationDuration(
       @Nullable Long sasExpirationDuration, Long maxDurationMinutes) {
     if (sasExpirationDuration == null) {

@@ -253,8 +253,7 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
     long secondDuration =
         sasExpirationDuration != null
             ? sasExpirationDuration
-            : azureConfiguration.getSasTokenExpiryTimeMinutesOffset()
-                * 40; // TODO: should be 60, trying to discover where tests live
+            : azureConfiguration.getSasTokenExpiryTimeMinutesOffset() * 60;
     OffsetDateTime expiryTime = OffsetDateTime.now().plusSeconds(secondDuration);
 
     var sasBundle =
