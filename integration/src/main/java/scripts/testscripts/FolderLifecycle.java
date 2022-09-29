@@ -126,7 +126,7 @@ public class FolderLifecycle extends WorkspaceAllocateTestScriptBase {
     var displayNameLoo = TestUtils.appendRandomNumber("Loo");
     var descriptionLoo = String.format("This is a third-level folder %s", displayNameLoo);
     Folder folderLoo =
-        folderOwnerApi.createFolder(
+        folderWriterApi.createFolder(
             new CreateFolderRequestBody()
                 .displayName(displayNameLoo)
                 .description(descriptionLoo)
@@ -177,7 +177,7 @@ public class FolderLifecycle extends WorkspaceAllocateTestScriptBase {
     var newDescription = "This is an updated bar folder";
     // Update name and description of folder bar.
     Folder updatedFolder =
-        folderOwnerApi.updateFolder(
+        folderWriterApi.updateFolder(
             new UpdateFolderRequestBody().description(newDescription).displayName(newDisplayName),
             getWorkspaceId(),
             folderBar.getId());

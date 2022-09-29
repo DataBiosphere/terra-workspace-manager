@@ -108,6 +108,9 @@ public class FolderApiController extends ControllerBase implements FolderApi {
   public ResponseEntity<Void> deleteFolder(UUID workspaceId, UUID folderId) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
 
+    // If requester is writer and folder has private resources (not owned by requester), requester
+    // won't have permission to delete private resources. That access control check is done in
+    // folderService#deleteFolder.
     workspaceService.validateWorkspaceAndAction(userRequest, workspaceId, SamWorkspaceAction.WRITE);
 
     folderService.deleteFolder(workspaceId, folderId, userRequest);

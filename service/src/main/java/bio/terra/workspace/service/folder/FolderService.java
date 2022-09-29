@@ -4,6 +4,7 @@ import static bio.terra.workspace.service.iam.model.SamConstants.SamControlledRe
 import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.FOLDER_ID;
 import static bio.terra.workspace.service.workspace.model.WorkspaceConstants.ResourceProperties.FOLDER_ID_KEY;
 
+import bio.terra.common.exception.ForbiddenException;
 import bio.terra.workspace.db.FolderDao;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.db.exception.FolderNotFoundException;
@@ -129,6 +130,9 @@ public class FolderService {
     var offset = 0;
     var limit = 100;
     List<WsmResource> batch;
+    // Private resources that the requester cannot delete. If this list is not empty, we throw
+    // forbidden exception and do nothing.
+    List<String> notDeletableResources = new ArrayList<>();
     do {
       batch = resourceDao.enumerateResources(workspaceId, null, null, offset, limit);
       offset += limit;
@@ -139,12 +143,22 @@ public class FolderService {
                 if (StewardshipType.REFERENCED == resource.getStewardshipType()) {
                   referencedResources.add(resource);
                 } else if (StewardshipType.CONTROLLED == resource.getStewardshipType()) {
-                  controlledResourceMetadataManager.validateControlledResourceAndAction(
-                      userRequest, workspaceId, resource.getResourceId(), DELETE_ACTION);
+                  try {
+                    controlledResourceMetadataManager.validateControlledResourceAndAction(
+                        userRequest, workspaceId, resource.getResourceId(), DELETE_ACTION);
+                  } catch (ForbiddenException e) {
+                    notDeletableResources.add(resource.getName());
+                  }
                   controlledResources.add(resource);
                 }
               });
     } while (batch.size() == limit);
+    if (!notDeletableResources.isEmpty()) {
+      throw new ForbiddenException(
+          String.format(
+              "User %s does not have permission to perform delete action on these resources %s",
+              userRequest.getEmail(), notDeletableResources));
+    }
   }
 
   private void getAllSubFolderIds(UUID workspaceId, UUID folderId, Set<UUID> folderIds) {
