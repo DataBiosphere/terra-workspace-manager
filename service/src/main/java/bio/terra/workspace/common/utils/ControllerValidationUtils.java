@@ -161,7 +161,7 @@ public final class ControllerValidationUtils {
     if (sasExpirationDuration > maxDurationSeconds) {
       throw new ValidationException(
           String.format(
-              "sasExpirationDuration must cannot be greater than allowed maximum (%d): %d",
+              "sasExpirationDuration cannot be greater than allowed maximum (%d): %d",
               maxDurationSeconds, sasExpirationDuration));
     }
   }
