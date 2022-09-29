@@ -1,8 +1,10 @@
 package bio.terra.workspace.service.folder;
 
+import static bio.terra.workspace.service.iam.model.SamConstants.SamControlledResourceActions.DELETE_ACTION;
 import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.FOLDER_ID;
 import static bio.terra.workspace.service.workspace.model.WorkspaceConstants.ResourceProperties.FOLDER_ID_KEY;
 
+import bio.terra.common.exception.ForbiddenException;
 import bio.terra.workspace.db.FolderDao;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.db.exception.FolderNotFoundException;
@@ -10,6 +12,7 @@ import bio.terra.workspace.service.folder.flights.DeleteFolderFlight;
 import bio.terra.workspace.service.folder.model.Folder;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.job.JobService;
+import bio.terra.workspace.service.resource.controlled.ControlledResourceMetadataManager;
 import bio.terra.workspace.service.resource.model.StewardshipType;
 import bio.terra.workspace.service.resource.model.WsmResource;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
@@ -34,11 +37,17 @@ public class FolderService {
   private final FolderDao folderDao;
   private final ResourceDao resourceDao;
   private final JobService jobService;
+  private final ControlledResourceMetadataManager controlledResourceMetadataManager;
 
-  public FolderService(FolderDao folderDao, ResourceDao resourceDao, JobService jobService) {
+  public FolderService(
+      FolderDao folderDao,
+      ResourceDao resourceDao,
+      JobService jobService,
+      ControlledResourceMetadataManager controlledResourceMetadataManager) {
     this.folderDao = folderDao;
     this.resourceDao = resourceDao;
     this.jobService = jobService;
+    this.controlledResourceMetadataManager = controlledResourceMetadataManager;
   }
 
   public Folder createFolder(Folder folder) {
@@ -70,7 +79,8 @@ public class FolderService {
       UUID workspaceUuid, UUID folderId, AuthenticatedUserRequest userRequest) {
     List<WsmResource> referencedResources = new ArrayList<>();
     List<WsmResource> controlledResources = new ArrayList<>();
-    getResourcesInFolder(workspaceUuid, folderId, controlledResources, referencedResources);
+    collectResourcesInFolder(
+        workspaceUuid, folderId, controlledResources, referencedResources, userRequest);
     boolean deleted =
         jobService
             .newJob()
@@ -101,11 +111,16 @@ public class FolderService {
     folderDao.deleteFolderProperties(workspaceUuid, folderUuid, propertyKeys);
   }
 
-  private void getResourcesInFolder(
+  /**
+   * Populates parameters controlledResources, referencedResources with resources in specified
+   * folder.
+   */
+  private void collectResourcesInFolder(
       UUID workspaceId,
       UUID folderId,
       List<WsmResource> controlledResources,
-      List<WsmResource> referencedResources) {
+      List<WsmResource> referencedResources,
+      AuthenticatedUserRequest userRequest) {
     if (folderDao.getFolderIfExists(workspaceId, folderId).isEmpty()) {
       throw new FolderNotFoundException(
           String.format("Folder %s is not found in workspace %s", folderId, workspaceId));
@@ -115,6 +130,9 @@ public class FolderService {
     var offset = 0;
     var limit = 100;
     List<WsmResource> batch;
+    // Private resources that the requester cannot delete. If this list is not empty, we throw
+    // forbidden exception and do nothing.
+    List<String> notDeletableResources = new ArrayList<>();
     do {
       batch = resourceDao.enumerateResources(workspaceId, null, null, offset, limit);
       offset += limit;
@@ -125,10 +143,22 @@ public class FolderService {
                 if (StewardshipType.REFERENCED == resource.getStewardshipType()) {
                   referencedResources.add(resource);
                 } else if (StewardshipType.CONTROLLED == resource.getStewardshipType()) {
+                  try {
+                    controlledResourceMetadataManager.validateControlledResourceAndAction(
+                        userRequest, workspaceId, resource.getResourceId(), DELETE_ACTION);
+                  } catch (ForbiddenException e) {
+                    notDeletableResources.add(resource.getName());
+                  }
                   controlledResources.add(resource);
                 }
               });
     } while (batch.size() == limit);
+    if (!notDeletableResources.isEmpty()) {
+      throw new ForbiddenException(
+          String.format(
+              "User %s does not have permission to perform delete action on these resources %s",
+              userRequest.getEmail(), notDeletableResources));
+    }
   }
 
   private void getAllSubFolderIds(UUID workspaceId, UUID folderId, Set<UUID> folderIds) {

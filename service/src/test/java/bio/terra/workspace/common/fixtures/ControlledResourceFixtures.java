@@ -99,6 +99,15 @@ public class ControlledResourceFixtures {
         .lifecycle(new ApiGcpGcsBucketLifecycle().rules(LIFECYCLE_RULES));
   }
 
+  /** Construct a creation parameter object with a unique data set name. */
+  public static ApiGcpBigQueryDatasetCreationParameters getGcpBigQueryDatasetCreationParameters() {
+    return new ApiGcpBigQueryDatasetCreationParameters()
+        .datasetId(uniqueDatasetId())
+        .defaultPartitionLifetime(5901)
+        .defaultTableLifetime(5900)
+        .location("us-central1");
+  }
+
   /** Construct a parameter object with a unique ip name to avoid unintended clashes. */
   public static ApiAzureIpCreationParameters getAzureIpCreationParameters() {
     return new ApiAzureIpCreationParameters()

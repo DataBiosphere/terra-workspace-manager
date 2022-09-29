@@ -5,20 +5,27 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import bio.terra.common.exception.ForbiddenException;
 import bio.terra.stairway.FlightDebugInfo;
 import bio.terra.stairway.StepStatus;
 import bio.terra.workspace.common.BaseConnectedTest;
+import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
 import bio.terra.workspace.common.fixtures.ReferenceResourceFixtures;
 import bio.terra.workspace.common.utils.TestUtils;
 import bio.terra.workspace.connected.UserAccessUtils;
 import bio.terra.workspace.connected.WorkspaceConnectedTestUtils;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.db.exception.FolderNotFoundException;
+import bio.terra.workspace.generated.model.ApiJobControl;
 import bio.terra.workspace.service.folder.flights.DeleteFolderRecursiveStep;
 import bio.terra.workspace.service.folder.flights.DeleteReferencedResourcesStep;
 import bio.terra.workspace.service.folder.model.Folder;
+import bio.terra.workspace.service.iam.SamService;
+import bio.terra.workspace.service.iam.model.ControlledResourceIamRole;
+import bio.terra.workspace.service.iam.model.WsmIamRole;
 import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.job.exception.InvalidResultStateException;
+import bio.terra.workspace.service.resource.controlled.ControlledResourceService;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook.ControlledAiNotebookInstanceResource;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.bqdataset.ControlledBigQueryDatasetResource;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.ControlledGcsBucketResource;
@@ -28,6 +35,7 @@ import bio.terra.workspace.service.resource.controlled.model.ManagedByType;
 import bio.terra.workspace.service.resource.exception.ResourceNotFoundException;
 import bio.terra.workspace.service.resource.model.WsmResourceFields;
 import bio.terra.workspace.service.resource.referenced.cloud.any.gitrepo.ReferencedGitRepoResource;
+import bio.terra.workspace.service.resource.referenced.cloud.gcp.ReferencedResourceService;
 import bio.terra.workspace.service.resource.referenced.cloud.gcp.bqdatatable.ReferencedBigQueryDataTableResource;
 import bio.terra.workspace.service.resource.referenced.cloud.gcp.datareposnapshot.ReferencedDataRepoSnapshotResource;
 import bio.terra.workspace.service.resource.referenced.cloud.gcp.gcsbucket.ReferencedGcsBucketResource;
@@ -49,6 +57,9 @@ public class FolderServiceTest extends BaseConnectedTest {
   @Autowired private UserAccessUtils userAccessUtils;
   @Autowired private ResourceDao resourceDao;
   @Autowired private JobService jobService;
+  @Autowired private ControlledResourceService controlledResourceService;
+  @Autowired private ReferencedResourceService referencedResourceService;
+  @Autowired private SamService samService;
 
   private UUID workspaceId;
   // foo/
@@ -59,52 +70,73 @@ public class FolderServiceTest extends BaseConnectedTest {
   private Folder fooFooFolder;
   // foo/bar/loo
   private Folder fooBarLooFolder;
-  private ControlledGcsBucketResource controlledBucket;
-  private ControlledGcsBucketResource controlledBucket2;
-  private ControlledBigQueryDatasetResource controlledBqDataset;
-  private ControlledAiNotebookInstanceResource controlledAiNotebook;
-  private ReferencedGcsBucketResource referencedBucket;
-  private ReferencedBigQueryDataTableResource referencedBqTable;
-  private ReferencedDataRepoSnapshotResource referencedDataRepoSnapshotResource;
-  private ReferencedGitRepoResource referencedGitRepoResource;
+  private ControlledGcsBucketResource controlledBucketInFoo;
+  private ControlledGcsBucketResource controlledBucket2InFooFoo;
+  private ControlledBigQueryDatasetResource controlledBqDatasetInFooBar;
+  private ControlledAiNotebookInstanceResource controlledAiNotebookInFooBarLoo;
+  private ReferencedGcsBucketResource referencedBucketInFooFoo;
+  private ReferencedBigQueryDataTableResource referencedBqTableInFoo;
+  private ReferencedDataRepoSnapshotResource referencedDataRepoSnapshotInFooBar;
+  private ReferencedGitRepoResource referencedGitRepoInFooBarLoo;
 
   @BeforeEach
-  public void setUp() {
+  public void setUp() throws InterruptedException {
     workspaceId =
         workspaceConnectedTestUtils
             .createWorkspaceWithGcpContext(userAccessUtils.defaultUserAuthRequest())
             .getWorkspaceId();
+    samService.grantWorkspaceRole(
+        workspaceId,
+        userAccessUtils.defaultUserAuthRequest(),
+        WsmIamRole.WRITER,
+        userAccessUtils.getSecondUserEmail());
     fooFolder = createFolder("foo", null);
     fooBarFolder = createFolder("bar", fooFolder.id());
     fooFooFolder = createFolder("Foo", fooFolder.id());
     fooBarLooFolder = createFolder("loo", fooBarFolder.id());
-    controlledBucket =
+    // First bucket is created by owner.
+    controlledBucketInFoo =
         ControlledGcsBucketResource.builder()
             .common(createControlledResourceCommonFieldWithFolderId(workspaceId, fooFolder.id()))
             .bucketName(TestUtils.appendRandomNumber("my-gcs-bucket"))
             .build();
-    resourceDao.createControlledResource(controlledBucket);
-    controlledBucket2 =
+    controlledResourceService.createControlledResourceSync(
+        controlledBucketInFoo,
+        /*privateResourceIamRole=*/ null,
+        userAccessUtils.defaultUserAuthRequest(),
+        ControlledResourceFixtures.getGoogleBucketCreationParameters());
+    // Second bucket is created by writer.
+    controlledBucket2InFooFoo =
         ControlledGcsBucketResource.builder()
             .common(createControlledResourceCommonFieldWithFolderId(workspaceId, fooFooFolder.id()))
             .bucketName(TestUtils.appendRandomNumber("my-gcs-bucket-2"))
             .build();
-    resourceDao.createControlledResource(controlledBucket2);
-    controlledBqDataset =
+    controlledResourceService.createControlledResourceSync(
+        controlledBucket2InFooFoo,
+        /*privateResourceIamRole=*/ null,
+        userAccessUtils.secondUserAuthRequest(),
+        ControlledResourceFixtures.getGoogleBucketCreationParameters());
+    // bq dataset is created by owner.
+    controlledBqDatasetInFooBar =
         ControlledBigQueryDatasetResource.builder()
             .common(createControlledResourceCommonFieldWithFolderId(workspaceId, fooBarFolder.id()))
             .datasetName(TestUtils.appendRandomNumber("my_bq_dataset"))
             .projectId("my-gcp-project")
             .build();
-    resourceDao.createControlledResource(controlledBqDataset);
-    controlledAiNotebook =
+    controlledResourceService.createControlledResourceSync(
+        controlledBqDatasetInFooBar,
+        /*privateResourceIamRole=*/ null,
+        userAccessUtils.defaultUserAuthRequest(),
+        ControlledResourceFixtures.getGcpBigQueryDatasetCreationParameters());
+    // First private AI notebook is created by owner.
+    controlledAiNotebookInFooBarLoo =
         ControlledAiNotebookInstanceResource.builder()
             .common(
                 makeDefaultControlledResourceFieldsBuilder()
                     .workspaceUuid(workspaceId)
                     .accessScope(AccessScopeType.ACCESS_SCOPE_PRIVATE)
                     .managedBy(ManagedByType.MANAGED_BY_USER)
-                    .assignedUser("yuhu@hello")
+                    .assignedUser(userAccessUtils.getDefaultUserEmail())
                     .properties(
                         Map.of(ResourceProperties.FOLDER_ID_KEY, fooBarLooFolder.id().toString()))
                     .build())
@@ -112,15 +144,25 @@ public class FolderServiceTest extends BaseConnectedTest {
             .instanceId(TestUtils.appendRandomNumber("my-ai-notebook-instance"))
             .location("us-east1-b")
             .build();
-    resourceDao.createControlledResource(controlledAiNotebook);
-    referencedBucket =
+    controlledResourceService.createAiNotebookInstance(
+        controlledAiNotebookInFooBarLoo,
+        ControlledResourceFixtures.defaultNotebookCreationParameters(),
+        ControlledResourceIamRole.EDITOR,
+        new ApiJobControl().id(UUID.randomUUID().toString()),
+        "falseResultPath",
+        userAccessUtils.defaultUserAuthRequest());
+
+    // referenced bucket created by owner.
+    referencedBucketInFooFoo =
         ReferencedGcsBucketResource.builder()
             .wsmResourceFields(
                 createWsmResourceCommonFieldsWithFolderId(workspaceId, fooFooFolder.id()))
             .bucketName("my-awesome-bucket")
             .build();
-    resourceDao.createReferencedResource(referencedBucket);
-    referencedBqTable =
+    referencedResourceService.createReferenceResource(
+        referencedBucketInFooFoo, userAccessUtils.defaultUserAuthRequest());
+    // Referenced bq table is created by writer.
+    referencedBqTableInFoo =
         ReferencedBigQueryDataTableResource.builder()
             .wsmResourceFields(
                 createWsmResourceCommonFieldsWithFolderId(workspaceId, fooFolder.id()))
@@ -128,22 +170,27 @@ public class FolderServiceTest extends BaseConnectedTest {
             .datasetId("my_special_dataset")
             .dataTableId("my_secret_table")
             .build();
-    resourceDao.createReferencedResource(referencedBqTable);
-    referencedDataRepoSnapshotResource =
+    referencedResourceService.createReferenceResource(
+        referencedBqTableInFoo, userAccessUtils.secondUserAuthRequest());
+    // data repo snapshot is created by writer.
+    referencedDataRepoSnapshotInFooBar =
         ReferencedDataRepoSnapshotResource.builder()
             .wsmResourceFields(
                 createWsmResourceCommonFieldsWithFolderId(workspaceId, fooBarFolder.id()))
             .snapshotId("a_snapshot_id")
             .instanceName("a_instance_name")
             .build();
-    resourceDao.createReferencedResource(referencedDataRepoSnapshotResource);
-    referencedGitRepoResource =
+    referencedResourceService.createReferenceResource(
+        referencedDataRepoSnapshotInFooBar, userAccessUtils.secondUserAuthRequest());
+    // Referenced git repo is created by owner.
+    referencedGitRepoInFooBarLoo =
         ReferencedGitRepoResource.builder()
             .wsmResourceFields(
                 createWsmResourceCommonFieldsWithFolderId(workspaceId, fooBarLooFolder.id()))
             .gitRepoUrl("https://github.com/foorepo")
             .build();
-    resourceDao.createReferencedResource(referencedGitRepoResource);
+    referencedResourceService.createReferenceResource(
+        referencedGitRepoInFooBarLoo, userAccessUtils.defaultUserAuthRequest());
   }
 
   @AfterEach
@@ -174,6 +221,25 @@ public class FolderServiceTest extends BaseConnectedTest {
   }
 
   @Test
+  void deleteFolder_writerHasNoAccessToOthersPrivateResource_throwsPermissionException() {
+    assertThrows(
+        ForbiddenException.class,
+        () ->
+            folderService.deleteFolder(
+                workspaceId, fooBarLooFolder.id(), userAccessUtils.secondUserAuthRequest()));
+  }
+
+  @Test
+  void deleteFolder_writerAndFolderDoesNotPrivateResource_success() {
+    folderService.deleteFolder(
+        workspaceId, fooFooFolder.id(), userAccessUtils.secondUserAuthRequest());
+
+    assertThrows(
+        FolderNotFoundException.class,
+        () -> folderService.getFolder(workspaceId, fooFooFolder.id()));
+  }
+
+  @Test
   void deleteFolder_deleteSubFolder_success() {
     Map<String, StepStatus> retrySteps = new HashMap<>();
     retrySteps.put(
@@ -195,18 +261,19 @@ public class FolderServiceTest extends BaseConnectedTest {
         ResourceNotFoundException.class,
         () ->
             resourceDao.getResource(
-                workspaceId, referencedDataRepoSnapshotResource.getResourceId()));
+                workspaceId, referencedDataRepoSnapshotInFooBar.getResourceId()));
     assertThrows(
         ResourceNotFoundException.class,
-        () -> resourceDao.getResource(workspaceId, controlledAiNotebook.getResourceId()));
+        () ->
+            resourceDao.getResource(workspaceId, controlledAiNotebookInFooBarLoo.getResourceId()));
     assertThrows(
         ResourceNotFoundException.class,
-        () -> resourceDao.getResource(workspaceId, referencedGitRepoResource.getResourceId()));
+        () -> resourceDao.getResource(workspaceId, referencedGitRepoInFooBarLoo.getResourceId()));
     assertThrows(
         ResourceNotFoundException.class,
         () ->
             resourceDao.getResource(
-                workspaceId, referencedDataRepoSnapshotResource.getResourceId()));
+                workspaceId, referencedDataRepoSnapshotInFooBar.getResourceId()));
 
     // assert foo and foo/foo and the resources in those are not deleted.
     assertEquals(4, resourceDao.enumerateResources(workspaceId, null, null, 0, 10).size());

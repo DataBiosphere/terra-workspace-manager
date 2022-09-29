@@ -426,28 +426,22 @@ public class SamService {
    * Sam. This call answers the question "does user X have permission to do action Y on resource Z".
    *
    * @param userRequest Credentials of the user whose permissions are being checked
-   * @param resourceType The Sam type of the resource being checked
-   * @param resourceId The ID of the resource being checked
+   * @param type The Sam type of the workspace/resource being checked
+   * @param uuid The ID of the resource being checked
    * @param action The action being checked on the resource
    */
   @Traced
   public void checkAuthz(
-      AuthenticatedUserRequest userRequest, String resourceType, String resourceId, String action)
+      AuthenticatedUserRequest userRequest, String type, String uuid, String action)
       throws InterruptedException {
-    boolean isAuthorized = isAuthorized(userRequest, resourceType, resourceId, action);
+    boolean isAuthorized = isAuthorized(userRequest, type, uuid, action);
     final String userEmail = getUserEmailFromSam(userRequest);
     if (!isAuthorized)
       throw new ForbiddenException(
           String.format(
-              "User %s is not authorized to %s resource %s of type %s",
-              userEmail, action, resourceId, resourceType));
-    else
-      logger.info(
-          "User {} is authorized to {} resource {} of type {}",
-          userEmail,
-          action,
-          resourceId,
-          resourceType);
+              "User %s is not authorized to perform action %s on %s %s",
+              userEmail, action, type, uuid));
+    else logger.info("User {} is authorized to {} {} {}", userEmail, action, type, uuid);
   }
 
   /**
