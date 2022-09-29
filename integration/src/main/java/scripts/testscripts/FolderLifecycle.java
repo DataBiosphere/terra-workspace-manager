@@ -198,7 +198,8 @@ public class FolderLifecycle extends WorkspaceAllocateTestScriptBase {
     Folder retrievedFolder2 = folderOwnerApi.getFolder(getWorkspaceId(), folderBar.getId());
     assertEquals(updatedFolder2, retrievedFolder2);
 
-    // Second user tries to delete folder Loo
+    // Second user unable to delete folder Loo. Loo has a private notebook owned by first user.
+    // Second user is only workspace writer.
     assertApiCallThrows(
         () -> folderWriterApi.deleteFolder(getWorkspaceId(), folderLoo.getId()),
         HttpStatusCodes.STATUS_CODE_FORBIDDEN);

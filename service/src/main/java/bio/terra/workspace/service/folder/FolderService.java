@@ -78,7 +78,7 @@ public class FolderService {
       UUID workspaceUuid, UUID folderId, AuthenticatedUserRequest userRequest) {
     List<WsmResource> referencedResources = new ArrayList<>();
     List<WsmResource> controlledResources = new ArrayList<>();
-    getResourcesInFolder(
+    collectResourcesInFolder(
         workspaceUuid, folderId, controlledResources, referencedResources, userRequest);
     boolean deleted =
         jobService
@@ -110,7 +110,11 @@ public class FolderService {
     folderDao.deleteFolderProperties(workspaceUuid, folderUuid, propertyKeys);
   }
 
-  private void getResourcesInFolder(
+  /**
+   * Populates parameters controlledResources, referencedResources with resources in specified
+   * folder.
+   */
+  private void collectResourcesInFolder(
       UUID workspaceId,
       UUID folderId,
       List<WsmResource> controlledResources,
