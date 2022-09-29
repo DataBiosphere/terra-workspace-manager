@@ -211,11 +211,11 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
       createAzureStorageContainerSasToken(
           UUID workspaceUuid,
           UUID storageContainerUuid,
-          String sasIPRange,
+          String sasIpRange,
           Long sasExpirationDuration) {
     features.azureEnabledCheck();
 
-    ControllerValidationUtils.validateIpAddressRange(sasIPRange);
+    ControllerValidationUtils.validateIpAddressRange(sasIpRange);
     ControllerValidationUtils.validateSasExpirationDuration(
         sasExpirationDuration, azureConfiguration.getSasTokenExpiryTimeMaximumMinutesOffset());
 
@@ -264,7 +264,7 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
             startTime,
             expiryTime,
             userRequest,
-            sasIPRange);
+            sasIpRange);
 
     logger.info(
         "SAS token with expiry time of {} generated for user {} on container {} in workspace {}",
