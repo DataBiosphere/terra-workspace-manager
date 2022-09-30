@@ -1,12 +1,12 @@
 {
-  "name": "DeleteGcpContextWithControlledResource",
-  "description": "Delete a GCP context which contains a controlled resource.",
+  "name": "DeleteWorkspaceWithPolicy",
+  "description": "Delete a workspace which contains a policy.",
   "serverSpecificationFile": "workspace-local.json",
   "kubernetes": {},
   "application": {},
   "testScripts": [
     {
-      "name": "DeleteGcpContextWithControlledResource",
+      "name": "DeleteWorkspaceWithPolicy",
       "numberOfUserJourneyThreadsToRun": 1,
       "userJourneyThreadPoolSize": 1,
       "expectedTimeForEach": 5,

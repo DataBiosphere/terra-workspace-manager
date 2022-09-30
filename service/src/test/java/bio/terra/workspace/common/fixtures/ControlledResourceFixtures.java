@@ -38,6 +38,7 @@ import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import javax.annotation.Nullable;
+import org.apache.commons.lang3.RandomStringUtils;
 
 /** A series of static objects useful for testing controlled resources. */
 public class ControlledResourceFixtures {
@@ -96,6 +97,15 @@ public class ControlledResourceFixtures {
         .defaultStorageClass(ApiGcpGcsBucketDefaultStorageClass.STANDARD)
         .location(GcpResourceConstant.DEFAULT_REGION)
         .lifecycle(new ApiGcpGcsBucketLifecycle().rules(LIFECYCLE_RULES));
+  }
+
+  /** Construct a creation parameter object with a unique data set name. */
+  public static ApiGcpBigQueryDatasetCreationParameters getGcpBigQueryDatasetCreationParameters() {
+    return new ApiGcpBigQueryDatasetCreationParameters()
+        .datasetId(uniqueDatasetId())
+        .defaultPartitionLifetime(5901)
+        .defaultTableLifetime(5900)
+        .location("us-central1");
   }
 
   /** Construct a parameter object with a unique ip name to avoid unintended clashes. */
@@ -457,7 +467,7 @@ public class ControlledResourceFixtures {
     return ControlledResourceFields.builder()
         .workspaceUuid(UUID.randomUUID())
         .resourceId(UUID.randomUUID())
-        .name(TestUtils.appendRandomNumber("test_resource"))
+        .name(RandomStringUtils.randomAlphabetic(10))
         .description("how much data could a dataset set if a dataset could set data?")
         .cloningInstructions(CloningInstructions.COPY_DEFINITION)
         .assignedUser(null)

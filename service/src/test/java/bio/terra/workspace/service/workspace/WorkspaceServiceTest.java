@@ -1,15 +1,21 @@
 package bio.terra.workspace.service.workspace;
 
-import static bio.terra.workspace.common.utils.MockMvcUtils.*;
+import static bio.terra.workspace.common.utils.MockMvcUtils.CREATE_CLOUD_CONTEXT_PATH_FORMAT;
+import static bio.terra.workspace.common.utils.MockMvcUtils.WORKSPACES_V1_BY_UFID_PATH_FORMAT;
+import static bio.terra.workspace.common.utils.MockMvcUtils.WORKSPACES_V1_BY_UUID_PATH_FORMAT;
+import static bio.terra.workspace.common.utils.MockMvcUtils.addAuth;
+import static bio.terra.workspace.common.utils.MockMvcUtils.addJsonContentType;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hibernate.validator.internal.util.Contracts.assertNotNull;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -23,8 +29,6 @@ import bio.terra.common.sam.exception.SamExceptionFactory;
 import bio.terra.common.sam.exception.SamInternalServerErrorException;
 import bio.terra.stairway.FlightDebugInfo;
 import bio.terra.stairway.StepStatus;
-import bio.terra.workspace.amalgam.tps.TpsApiDispatch;
-import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
 import bio.terra.workspace.common.BaseConnectedTest;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.db.WorkspaceActivityLogDao;
@@ -44,7 +48,6 @@ import bio.terra.workspace.generated.model.ApiJobControl;
 import bio.terra.workspace.generated.model.ApiResourceCloneDetails;
 import bio.terra.workspace.generated.model.ApiResourceType;
 import bio.terra.workspace.generated.model.ApiTpsPolicyInput;
-import bio.terra.workspace.generated.model.ApiTpsPolicyInputs;
 import bio.terra.workspace.generated.model.ApiTpsPolicyPair;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.datarepo.DataRepoService;
@@ -78,7 +81,8 @@ import bio.terra.workspace.service.workspace.flight.CheckSamWorkspaceAuthzStep;
 import bio.terra.workspace.service.workspace.flight.CreateWorkspaceAuthzStep;
 import bio.terra.workspace.service.workspace.flight.CreateWorkspacePoliciesStep;
 import bio.terra.workspace.service.workspace.flight.CreateWorkspaceStep;
-import bio.terra.workspace.service.workspace.model.*;
+import bio.terra.workspace.service.workspace.model.Workspace;
+import bio.terra.workspace.service.workspace.model.WorkspaceStage;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.api.services.cloudresourcemanager.v3.model.Project;
 import com.google.common.collect.ImmutableList;
@@ -97,7 +101,6 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.DisabledIfEnvironmentVariable;
-import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.context.ActiveProfiles;
@@ -108,21 +111,19 @@ import org.springframework.test.web.servlet.MockMvc;
 @ActiveProfiles({"app-test"})
 class WorkspaceServiceTest extends BaseConnectedTest {
 
+  public static final String SPEND_PROFILE_ID = "wm-default-spend-profile";
   /** A fake authenticated user request. */
   private static final AuthenticatedUserRequest USER_REQUEST =
       new AuthenticatedUserRequest()
           .token(Optional.of("fake-token"))
           .email("fake@email.com")
           .subjectId("fakeID123");
-
   /** A fake group-constraint policy for a workspace. */
   private static final ApiTpsPolicyInput GROUP_POLICY =
       new ApiTpsPolicyInput()
           .namespace("terra")
           .name("group-constraint")
           .addAdditionalDataItem(new ApiTpsPolicyPair().key("group").value("my_fake_group"));
-
-  public static final String SPEND_PROFILE_ID = "wm-default-spend-profile";
   // Name of the test WSM application. This must match the identifier in the
   // application-app-test.yml file.
   private static final String TEST_WSM_APP = "TestWsmApp";
@@ -130,9 +131,6 @@ class WorkspaceServiceTest extends BaseConnectedTest {
   @MockBean private DataRepoService mockDataRepoService;
   /** Mock SamService does nothing for all calls that would throw if unauthorized. */
   @MockBean private SamService mockSamService;
-
-  @MockBean private TpsApiDispatch mockTpsApiDispatch;
-  @MockBean private FeatureConfiguration mockFeatureConfiguration;
 
   @Autowired private MockMvc mockMvc;
   @Autowired private ControlledResourceService controlledResourceService;
@@ -170,8 +168,6 @@ class WorkspaceServiceTest extends BaseConnectedTest {
             new UserStatusInfo()
                 .userEmail(USER_REQUEST.getEmail())
                 .userSubjectId(USER_REQUEST.getSubjectId()));
-    when(mockFeatureConfiguration.isTpsEnabled()).thenReturn(true);
-    // We don't need to mock tpsCheck() because Mockito will already do nothing by default.
   }
 
   /**
@@ -935,35 +931,6 @@ class WorkspaceServiceTest extends BaseConnectedTest {
     jobService.setFlightDebugInfoForTest(null);
     workspaceService.deleteWorkspace(sourceWorkspace, USER_REQUEST);
     workspaceService.deleteWorkspace(destinationWorkspace, USER_REQUEST);
-  }
-
-  @Test
-  public void tpsCalledForWorkspaceWithGroupPolicy() {
-    // Create a workspace with policy
-    ApiTpsPolicyInputs policyInputs = new ApiTpsPolicyInputs().inputs(List.of(GROUP_POLICY));
-    Workspace request = defaultRequestBuilder(UUID.randomUUID()).build();
-    workspaceService.createWorkspace(request, policyInputs, USER_REQUEST);
-    // Confirm WSM called TPS
-    Mockito.verify(mockTpsApiDispatch).createPao(any(), any());
-
-    // Clean up the workspace
-    workspaceService.deleteWorkspace(request, USER_REQUEST);
-
-    // Confirm WSM called TPS to delete the workspace policy during cleanup
-    Mockito.verify(mockTpsApiDispatch).deletePao(any(), eq(request.getWorkspaceId()));
-  }
-
-  @Test
-  public void tpsNotCalledIfDisabled() {
-    when(mockFeatureConfiguration.isTpsEnabled()).thenReturn(false);
-    Workspace request = defaultRequestBuilder(UUID.randomUUID()).build();
-    workspaceService.createWorkspace(request, null, USER_REQUEST);
-    // Confirm WSM did not call TPS when creating the workspace
-    Mockito.verify(mockTpsApiDispatch, never()).createPao(any(), any());
-
-    workspaceService.deleteWorkspace(request, USER_REQUEST);
-    // Confirm WSM did not call TPS when deleting the workspace
-    Mockito.verify(mockTpsApiDispatch, never()).deletePao(any(), eq(request.getWorkspaceId()));
   }
 
   /**

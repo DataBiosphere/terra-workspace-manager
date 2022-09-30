@@ -4,6 +4,10 @@ import bio.terra.common.iam.BearerTokenFactory;
 import bio.terra.workspace.generated.controller.TpsApi;
 import bio.terra.workspace.generated.model.ApiTpsPaoCreateRequest;
 import bio.terra.workspace.generated.model.ApiTpsPaoGetResult;
+import bio.terra.workspace.generated.model.ApiTpsPaoReplaceRequest;
+import bio.terra.workspace.generated.model.ApiTpsPaoSourceRequest;
+import bio.terra.workspace.generated.model.ApiTpsPaoUpdateRequest;
+import bio.terra.workspace.generated.model.ApiTpsPaoUpdateResult;
 import java.util.UUID;
 import javax.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -52,6 +56,37 @@ public class TpsApiController implements TpsApi {
   @Override
   public ResponseEntity<ApiTpsPaoGetResult> getPao(UUID objectId) {
     ApiTpsPaoGetResult result = tpsApiDispatch.getPao(bearerTokenFactory.from(request), objectId);
+    return new ResponseEntity<>(result, HttpStatus.OK);
+  }
+
+  @Override
+  public ResponseEntity<ApiTpsPaoUpdateResult> linkPao(UUID objectId, ApiTpsPaoSourceRequest body) {
+    ApiTpsPaoUpdateResult result =
+        tpsApiDispatch.linkPao(bearerTokenFactory.from(request), objectId, body);
+    return new ResponseEntity<>(result, HttpStatus.OK);
+  }
+
+  @Override
+  public ResponseEntity<ApiTpsPaoUpdateResult> mergePao(
+      UUID objectId, ApiTpsPaoSourceRequest body) {
+    ApiTpsPaoUpdateResult result =
+        tpsApiDispatch.mergePao(bearerTokenFactory.from(request), objectId, body);
+    return new ResponseEntity<>(result, HttpStatus.OK);
+  }
+
+  @Override
+  public ResponseEntity<ApiTpsPaoUpdateResult> replacePao(
+      UUID objectId, ApiTpsPaoReplaceRequest body) {
+    ApiTpsPaoUpdateResult result =
+        tpsApiDispatch.replacePao(bearerTokenFactory.from(request), objectId, body);
+    return new ResponseEntity<>(result, HttpStatus.OK);
+  }
+
+  @Override
+  public ResponseEntity<ApiTpsPaoUpdateResult> updatePao(
+      UUID objectId, ApiTpsPaoUpdateRequest body) {
+    ApiTpsPaoUpdateResult result =
+        tpsApiDispatch.updatePao(bearerTokenFactory.from(request), objectId, body);
     return new ResponseEntity<>(result, HttpStatus.OK);
   }
 }

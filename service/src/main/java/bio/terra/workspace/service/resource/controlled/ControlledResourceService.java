@@ -1,5 +1,7 @@
 package bio.terra.workspace.service.resource.controlled;
 
+import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.CONTROLLED_RESOURCES_TO_DELETE;
+
 import bio.terra.common.exception.BadRequestException;
 import bio.terra.common.exception.ServiceUnavailableException;
 import bio.terra.stairway.FlightState;
@@ -36,13 +38,14 @@ import bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.Updat
 import bio.terra.workspace.service.resource.controlled.flight.clone.bucket.CloneControlledGcsBucketResourceFlight;
 import bio.terra.workspace.service.resource.controlled.flight.clone.dataset.CloneControlledGcpBigQueryDatasetResourceFlight;
 import bio.terra.workspace.service.resource.controlled.flight.create.CreateControlledResourceFlight;
-import bio.terra.workspace.service.resource.controlled.flight.delete.DeleteControlledResourceFlight;
+import bio.terra.workspace.service.resource.controlled.flight.delete.DeleteControlledResourcesFlight;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import bio.terra.workspace.service.resource.controlled.model.ManagedByType;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.model.StewardshipType;
 import bio.terra.workspace.service.resource.model.WsmResource;
 import bio.terra.workspace.service.workspace.GcpCloudContextService;
+import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ResourceKeys;
 import bio.terra.workspace.service.workspace.model.GcpCloudContext;
@@ -51,6 +54,7 @@ import bio.terra.workspace.service.workspace.model.WsmApplication;
 import com.google.cloud.Policy;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -203,6 +207,9 @@ public class ControlledResourceService {
             sourceBucketResource.getResourceId(),
             sourceBucketResource.getName());
 
+    // If TPS is enabled, then we want to merge policies when cloning a bucket
+    boolean mergePolicies = features.isTpsEnabled();
+
     final JobBuilder jobBuilder =
         jobService
             .newJob()
@@ -219,6 +226,7 @@ public class ControlledResourceService {
             .addParameter(ResourceKeys.RESOURCE_DESCRIPTION, destinationDescription)
             .addParameter(ControlledResourceKeys.DESTINATION_BUCKET_NAME, destinationBucketName)
             .addParameter(ControlledResourceKeys.LOCATION, destinationLocation)
+            .addParameter(WorkspaceFlightMapKeys.MERGE_POLICIES, mergePolicies)
             .addParameter(
                 ControlledResourceKeys.CLONING_INSTRUCTIONS,
                 Optional.ofNullable(cloningInstructionsOverride)
@@ -311,6 +319,10 @@ public class ControlledResourceService {
             sourceDatasetResource.getResourceType(),
             sourceDatasetResource.getResourceId(),
             sourceDatasetResource.getName());
+
+    // If TPS is enabled, then we want to merge policies when cloning a bucket
+    boolean mergePolicies = features.isTpsEnabled();
+
     final JobBuilder jobBuilder =
         jobService
             .newJob()
@@ -330,6 +342,7 @@ public class ControlledResourceService {
             .addParameter(ResourceKeys.RESOURCE_DESCRIPTION, destinationDescription)
             .addParameter(ControlledResourceKeys.LOCATION, destinationLocation)
             .addParameter(ControlledResourceKeys.DESTINATION_DATASET_NAME, destinationDatasetName)
+            .addParameter(WorkspaceFlightMapKeys.MERGE_POLICIES, mergePolicies)
             .addParameter(
                 ControlledResourceKeys.CLONING_INSTRUCTIONS,
                 // compute effective cloning instructions
@@ -556,20 +569,23 @@ public class ControlledResourceService {
     WsmResource resource = resourceDao.getResource(workspaceUuid, resourceId);
     final String jobDescription = "Delete controlled resource; id: " + resourceId.toString();
 
+    List<WsmResource> resourceToDelete = new ArrayList<>();
+    resourceToDelete.add(resource);
     return jobService
         .newJob()
         .description(jobDescription)
         .jobId(jobId)
-        .flightClass(DeleteControlledResourceFlight.class)
+        .flightClass(DeleteControlledResourcesFlight.class)
         .userRequest(userRequest)
         .workspaceId(workspaceUuid.toString())
         .operationType(OperationType.DELETE)
-        .resource(resource)
+        // resourceType, resourceName, stewardshipType are set for flight job filtering.
         .resourceType(resource.getResourceType())
         .resourceName(resource.getName())
         .stewardshipType(resource.getStewardshipType())
         .workspaceId(workspaceUuid.toString())
-        .addParameter(JobMapKeys.RESULT_PATH.getKeyName(), resultPath);
+        .addParameter(JobMapKeys.RESULT_PATH.getKeyName(), resultPath)
+        .addParameter(CONTROLLED_RESOURCES_TO_DELETE, resourceToDelete);
   }
 
   /**

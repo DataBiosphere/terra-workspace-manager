@@ -14,6 +14,7 @@ import bio.terra.workspace.api.ControlledGcpResourceApi;
 import bio.terra.workspace.api.JobsApi;
 import bio.terra.workspace.api.ReferencedGcpResourceApi;
 import bio.terra.workspace.api.ResourceApi;
+import bio.terra.workspace.api.TpsApi;
 import bio.terra.workspace.api.WorkspaceApi;
 import bio.terra.workspace.client.ApiClient;
 import bio.terra.workspace.client.ApiException;
@@ -157,6 +158,12 @@ public class ClientTestUtils {
     var options =
         BigQueryOptions.newBuilder().setCredentials(userCredential).setProjectId(projectId).build();
     return options.getService();
+  }
+
+  public static TpsApi getTpsClient(TestUserSpecification testUser, ServerSpecification server)
+      throws IOException {
+    final ApiClient apiClient = getClientForTestUser(testUser, server);
+    return new TpsApi(apiClient);
   }
 
   public static WorkspaceApi getWorkspaceClient(

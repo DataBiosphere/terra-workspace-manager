@@ -12,13 +12,16 @@ import bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.Contr
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.RetrieveGcsBucketCloudAttributesStep;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.RetrieveGcsBucketCloudAttributesStep.RetrievalMode;
 import bio.terra.workspace.service.resource.controlled.flight.clone.CheckControlledResourceAuthStep;
+import bio.terra.workspace.service.resource.controlled.flight.clone.ClonePolicyAttributesStep;
 import bio.terra.workspace.service.resource.controlled.flight.update.RetrieveControlledResourceMetadataStep;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
+import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ResourceKeys;
 import java.util.Optional;
+import java.util.UUID;
 
 // Flight Plan
 // 0. If cloning instructions resolve to COPY_NOTHING, exit without any further steps.
@@ -43,18 +46,25 @@ public class CloneControlledGcsBucketResourceFlight extends Flight {
         JobMapKeys.AUTH_USER_INFO.getKeyName(),
         ControlledResourceKeys.DESTINATION_RESOURCE_ID);
 
-    final FlightBeanBag flightBeanBag = FlightBeanBag.getFromObject(applicationContext);
-    final ControlledResource sourceResource =
-        inputParameters.get(ResourceKeys.RESOURCE, ControlledResource.class);
-    final AuthenticatedUserRequest userRequest =
+    FlightBeanBag flightBeanBag = FlightBeanBag.getFromObject(applicationContext);
+    var sourceResource = inputParameters.get(ResourceKeys.RESOURCE, ControlledResource.class);
+    var userRequest =
         inputParameters.get(JobMapKeys.AUTH_USER_INFO.getKeyName(), AuthenticatedUserRequest.class);
-    final ControlledGcsBucketResource sourceBucket =
+    var destinationWorkspaceId =
+        inputParameters.get(ControlledResourceKeys.DESTINATION_WORKSPACE_ID, UUID.class);
+
+    boolean mergePolicies =
+        Optional.ofNullable(
+                inputParameters.get(WorkspaceFlightMapKeys.MERGE_POLICIES, Boolean.class))
+            .orElse(false);
+    ControlledGcsBucketResource sourceBucket =
         sourceResource.castByEnum(WsmResourceType.CONTROLLED_GCP_GCS_BUCKET);
-    final CloningInstructions resolvedCloningInstructions =
+    CloningInstructions resolvedCloningInstructions =
         Optional.ofNullable(
                 inputParameters.get(
                     ControlledResourceKeys.CLONING_INSTRUCTIONS, CloningInstructions.class))
             .orElse(sourceBucket.getCloningInstructions());
+
     RetryRule cloudRetry = RetryRules.cloud();
     // We can't put the cloning instructions into the working map, because it's not available
     // from within a flight constructor. Instead, pass it in to the constructors of the steps
@@ -66,6 +76,14 @@ public class CloneControlledGcsBucketResourceFlight extends Flight {
           new CheckControlledResourceAuthStep(
               sourceResource, flightBeanBag.getControlledResourceMetadataManager(), userRequest),
           RetryRules.shortExponential());
+      if (mergePolicies) {
+        addStep(
+            new ClonePolicyAttributesStep(
+                sourceResource.getWorkspaceId(),
+                destinationWorkspaceId,
+                userRequest,
+                flightBeanBag.getTpsApiDispatch()));
+      }
       addStep(
           new RetrieveControlledResourceMetadataStep(
               flightBeanBag.getResourceDao(),

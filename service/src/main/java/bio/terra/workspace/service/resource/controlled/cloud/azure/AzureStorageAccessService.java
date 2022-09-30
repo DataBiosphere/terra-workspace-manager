@@ -20,7 +20,6 @@ import com.azure.storage.common.sas.SasProtocol;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Locale;
-import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -56,7 +55,7 @@ public class AzureStorageAccessService {
       AuthenticatedUserRequest userRequest,
       UUID storageContainerUuid,
       String samResourceName,
-      Optional<String> permissions) {
+      String permissions) {
     final List<String> containerActions =
         SamRethrow.onInterrupted(
             () ->
@@ -82,16 +81,16 @@ public class AzureStorageAccessService {
 
     // ensure the requested permissions, if present, are a subset of the max possible permissions
     String effectivePermissions;
-    if (permissions.isPresent()) {
+    if (permissions != null) {
       Set<Character> maxPermissionsSet =
           maxTokenPermissions.chars().mapToObj(c -> (char) c).collect(Collectors.toSet());
       Set<Character> desiredPermissions =
-          permissions.get().chars().mapToObj(c -> (char) c).collect(Collectors.toSet());
+          permissions.chars().mapToObj(c -> (char) c).collect(Collectors.toSet());
 
       if (!maxPermissionsSet.containsAll(desiredPermissions)) {
         throw new ForbiddenException("Not authorized");
       }
-      effectivePermissions = permissions.get();
+      effectivePermissions = permissions;
     } else {
       effectivePermissions = maxTokenPermissions;
     }
@@ -109,7 +108,7 @@ public class AzureStorageAccessService {
    * @param startTime Time at which the SAS will become functional
    * @param expiryTime Time at which the SAS will expire
    * @param userRequest The authenticated user's request
-   * @param sasIPRange (optional) IP address or range of IPs from which the Azure APIs will accept
+   * @param sasIpRange (optional) IP address or range of IPs from which the Azure APIs will accept
    *     requests for the token being minted.
    * @return A bundle of 1) a full Azure SAS URL, including the storage account hostname and 2) the
    *     token query param fragment
@@ -121,9 +120,9 @@ public class AzureStorageAccessService {
       OffsetDateTime startTime,
       OffsetDateTime expiryTime,
       AuthenticatedUserRequest userRequest,
-      String sasIPRange,
-      Optional<String> blobPrefix,
-      Optional<String> permissions) {
+      String sasIpRange,
+      String blobPrefix,
+      String permissions) {
     features.azureEnabledCheck();
 
     BlobContainerSasPermission blobContainerSasPermission =
@@ -150,13 +149,13 @@ public class AzureStorageAccessService {
         new BlobServiceSasSignatureValues(expiryTime, blobContainerSasPermission)
             .setStartTime(startTime)
             .setProtocol(SasProtocol.HTTPS_ONLY);
-    if (sasIPRange != null) {
-      sasValues.setSasIpRange(SasIpRange.parse(sasIPRange));
+    if (sasIpRange != null) {
+      sasValues.setSasIpRange(SasIpRange.parse(sasIpRange));
     }
 
     String token;
-    if (blobPrefix.isPresent()) {
-      var blobClient = blobContainerClient.getBlobClient(blobPrefix.get());
+    if (blobPrefix != null) {
+      var blobClient = blobContainerClient.getBlobClient(blobPrefix);
       token = blobClient.generateSas(sasValues);
     } else {
       token = blobContainerClient.generateSas(sasValues);

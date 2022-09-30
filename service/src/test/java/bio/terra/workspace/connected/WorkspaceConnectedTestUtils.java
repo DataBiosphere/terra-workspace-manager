@@ -42,4 +42,13 @@ public class WorkspaceConnectedTestUtils {
     assertNull(jobService.retrieveJobResult(gcpContextJobId, Object.class).getException());
     return workspaceService.getWorkspace(workspaceUuid);
   }
+
+  public void deleteWorkspaceAndGcpContext(AuthenticatedUserRequest userRequest, UUID workspaceId) {
+    workspaceService.deleteWorkspace(
+        Workspace.builder()
+            .workspaceId(workspaceId)
+            .workspaceStage(WorkspaceStage.MC_WORKSPACE)
+            .build(),
+        userRequest);
+  }
 }

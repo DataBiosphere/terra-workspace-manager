@@ -152,8 +152,8 @@ public class AzureStorageAccessServiceUnitTest extends BaseUnitTest {
             expiryTime,
             userRequest,
             ipRange,
-            Optional.empty(),
-            Optional.empty());
+            null,
+            null);
 
     assertValidToken(result.sasToken(), BlobContainerSasPermission.parse("rl"), false);
     assertTrue(
@@ -188,8 +188,8 @@ public class AzureStorageAccessServiceUnitTest extends BaseUnitTest {
             expiryTime,
             userRequest,
             null,
-            Optional.empty(),
-            Optional.empty());
+            null,
+            null);
 
     assertValidToken(result.sasToken(), BlobContainerSasPermission.parse("racwdl"), false);
     verify(samService)
@@ -224,8 +224,8 @@ public class AzureStorageAccessServiceUnitTest extends BaseUnitTest {
                 expiryTime,
                 userRequest,
                 null,
-                Optional.empty(),
-                Optional.empty()));
+                null,
+                null));
 
     verify(samService)
         .listResourceActions(
@@ -261,8 +261,8 @@ public class AzureStorageAccessServiceUnitTest extends BaseUnitTest {
             expiryTime,
             userRequest,
             null,
-            Optional.empty(),
-            Optional.empty());
+            null,
+            null);
 
     assertValidToken(result.sasToken(), BlobContainerSasPermission.parse("racwdl"), false);
 
@@ -299,8 +299,8 @@ public class AzureStorageAccessServiceUnitTest extends BaseUnitTest {
             expiryTime,
             userRequest,
             null,
-            Optional.of("testing/blob-path"),
-            Optional.empty());
+            "testing/blob-path",
+            null);
 
     assertValidToken(result.sasToken(), BlobContainerSasPermission.parse("racwdl"), true);
   }
@@ -331,8 +331,8 @@ public class AzureStorageAccessServiceUnitTest extends BaseUnitTest {
             expiryTime,
             userRequest,
             null,
-            Optional.of("testing/blob-path"),
-            Optional.of("ld"));
+            "testing/blob-path",
+            "ld");
 
     assertValidToken(result.sasToken(), BlobContainerSasPermission.parse("dl"), true);
   }
@@ -362,8 +362,8 @@ public class AzureStorageAccessServiceUnitTest extends BaseUnitTest {
                 expiryTime,
                 userRequest,
                 null,
-                Optional.empty(),
-                Optional.of("rwdl")),
+                null,
+                "rwdl"),
         "Asking for delete + write when we should only have READ_ACTION should result in an exception ");
   }
 
@@ -395,8 +395,8 @@ public class AzureStorageAccessServiceUnitTest extends BaseUnitTest {
                 expiryTime,
                 userRequest,
                 null,
-                Optional.empty(),
-                Optional.of("!@#")),
+                null,
+                "!@#"),
         "Nonsense characters should result in an exception ");
   }
 
@@ -426,8 +426,8 @@ public class AzureStorageAccessServiceUnitTest extends BaseUnitTest {
             expiryTime,
             userRequest,
             null,
-            Optional.of("foo/the/bar.baz"),
-            Optional.empty());
+            "foo/the/bar.baz",
+            null);
 
     assertValidToken(result.sasToken(), BlobContainerSasPermission.parse("racwdl"), true);
   }

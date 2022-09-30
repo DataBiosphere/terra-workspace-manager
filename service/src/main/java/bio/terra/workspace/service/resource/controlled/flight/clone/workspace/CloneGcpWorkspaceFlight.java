@@ -4,6 +4,12 @@ import bio.terra.stairway.Flight;
 import bio.terra.stairway.FlightMap;
 import bio.terra.workspace.common.utils.FlightBeanBag;
 import bio.terra.workspace.common.utils.RetryRules;
+import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
+import bio.terra.workspace.service.job.JobMapKeys;
+import bio.terra.workspace.service.resource.controlled.flight.clone.ClonePolicyAttributesStep;
+import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
+import bio.terra.workspace.service.workspace.model.Workspace;
+import java.util.UUID;
 
 /** Top-most flight for cloning a GCP workspace. Launches sub-flights for most of the work. */
 public class CloneGcpWorkspaceFlight extends Flight {
@@ -21,19 +27,40 @@ public class CloneGcpWorkspaceFlight extends Flight {
     // 6. Build a list of enabled applications
     // 6a. Launch a flight to enable those applications in destination workspace
     var flightBeanBag = FlightBeanBag.getFromObject(applicationContext);
-    addStep(new FindResourcesToCloneStep(flightBeanBag.getResourceDao()), RetryRules.cloud());
+    var cloudRetryRule = RetryRules.cloud();
+    var longCloudRetryRule = RetryRules.cloudLongRunning();
+    addStep(new FindResourcesToCloneStep(flightBeanBag.getResourceDao()), cloudRetryRule);
 
     addStep(new CreateIdsForFutureStepsStep());
 
     addStep(
         new LaunchCreateGcpContextFlightStep(flightBeanBag.getWorkspaceService()),
         RetryRules.cloud());
-    addStep(new AwaitCreateGcpContextFlightStep(), RetryRules.cloudLongRunning());
+    addStep(new AwaitCreateGcpContextFlightStep(), longCloudRetryRule);
 
-    addStep(new LaunchCloneAllResourcesFlightStep(), RetryRules.cloud());
-    addStep(new AwaitCloneAllResourcesFlightStep(), RetryRules.cloudLongRunning());
+    // If TPS is enabled, clone the policy attributes
+    if (flightBeanBag.getFeatureConfiguration().isTpsEnabled()) {
+      var destinationWorkspace =
+          inputParameters.get(JobMapKeys.REQUEST.getKeyName(), Workspace.class);
+      var sourceWorkspaceId =
+          inputParameters.get(
+              WorkspaceFlightMapKeys.ControlledResourceKeys.SOURCE_WORKSPACE_ID, UUID.class);
+      var userRequest =
+          inputParameters.get(
+              JobMapKeys.AUTH_USER_INFO.getKeyName(), AuthenticatedUserRequest.class);
+      addStep(
+          new ClonePolicyAttributesStep(
+              sourceWorkspaceId,
+              destinationWorkspace.getWorkspaceId(),
+              userRequest,
+              flightBeanBag.getTpsApiDispatch()),
+          cloudRetryRule);
+    }
 
-    addStep(new FindEnabledApplicationsStep(flightBeanBag.getApplicationDao()), RetryRules.cloud());
-    addStep(new LaunchEnableApplicationsFlightStep(), RetryRules.cloud());
+    addStep(new LaunchCloneAllResourcesFlightStep(), cloudRetryRule);
+    addStep(new AwaitCloneAllResourcesFlightStep(), longCloudRetryRule);
+
+    addStep(new FindEnabledApplicationsStep(flightBeanBag.getApplicationDao()), cloudRetryRule);
+    addStep(new LaunchEnableApplicationsFlightStep(), cloudRetryRule);
   }
 }

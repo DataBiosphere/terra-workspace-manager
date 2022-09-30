@@ -42,6 +42,7 @@ import bio.terra.workspace.generated.model.ApiGcpBigQueryDatasetUpdateParameters
 import bio.terra.workspace.generated.model.ApiGcpGcsBucketUpdateParameters;
 import bio.terra.workspace.generated.model.ApiJobControl;
 import bio.terra.workspace.service.crl.CrlService;
+import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.iam.model.ControlledResourceIamRole;
 import bio.terra.workspace.service.job.JobMapKeys;
@@ -403,6 +404,25 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
                     .email(serviceAccountEmail)
                     .build(),
                 userIamCow));
+    // Run and undo the flight again, this time triggered by the default user's pet SA instead of
+    // the default user themselves. This should behave the same as the flight triggered by the
+    // end-user credentials but has historically hidden bugs, so is worth testing explicitly.
+    AuthenticatedUserRequest petCredentials =
+        petSaService
+            .getWorkspacePetCredentials(workspace.getWorkspaceId(), user.getAuthenticatedRequest())
+            .get();
+    String petJobId =
+        controlledResourceService.createAiNotebookInstance(
+            resource,
+            creationParameters,
+            DEFAULT_ROLE,
+            new ApiJobControl().id(UUID.randomUUID().toString()),
+            "fakeResultPath",
+            petCredentials);
+    jobService.waitForJob(petJobId);
+    // Confirm this flight status is ERROR, not FATAL.
+    assertEquals(
+        FlightStatus.ERROR, stairwayComponent.get().getFlightState(petJobId).getFlightStatus());
   }
 
   @Test

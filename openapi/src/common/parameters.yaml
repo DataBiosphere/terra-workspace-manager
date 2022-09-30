@@ -109,6 +109,17 @@ components:
       schema:
         type: string
 
+    SasExpirationDuration:
+      name: sasExpirationDuration
+      in: query
+      description: |
+        The number of seconds until the SAS token should expire (optional). Default and maximum allowed values are
+        set in configuration.
+      required: false
+      schema:
+        type: integer
+        format: int64
+
     SasPermissions:
       name: sasPermissions
       in: query

@@ -1,12 +1,15 @@
 package bio.terra.workspace.service.resource.controlled.cloud.azure.vm;
 
+import bio.terra.landingzone.library.landingzones.deployment.SubnetResourcePurpose;
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.StepStatus;
 import bio.terra.stairway.exception.RetryException;
+import bio.terra.workspace.amalgam.landingzone.azure.LandingZoneApiDispatch;
 import bio.terra.workspace.app.configuration.external.AzureConfiguration;
 import bio.terra.workspace.db.ResourceDao;
+import bio.terra.workspace.generated.model.ApiAzureLandingZoneDeployedResource;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.ip.ControlledAzureIpResource;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.network.ControlledAzureNetworkResource;
@@ -15,6 +18,7 @@ import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import bio.terra.workspace.service.workspace.model.AzureCloudContext;
 import com.azure.core.management.exception.ManagementException;
 import com.azure.resourcemanager.compute.ComputeManager;
+import com.azure.resourcemanager.network.NetworkManager;
 import com.azure.resourcemanager.network.models.Network;
 import com.azure.resourcemanager.network.models.NetworkInterface;
 import com.azure.resourcemanager.network.models.PublicIpAddress;
@@ -32,16 +36,19 @@ public class CreateAzureNetworkInterfaceStep implements Step {
   // Network interface is not a freestanding WSM resource. It is tightly coupled to the Vm.
   private final ControlledAzureVmResource resource;
   private final ResourceDao resourceDao;
+  private final LandingZoneApiDispatch landingZoneApiDispatch;
 
   public CreateAzureNetworkInterfaceStep(
       AzureConfiguration azureConfig,
       CrlService crlService,
       ControlledAzureVmResource resource,
-      ResourceDao resourceDao) {
+      ResourceDao resourceDao,
+      LandingZoneApiDispatch landingZoneApiDispatch) {
     this.azureConfig = azureConfig;
     this.crlService = crlService;
     this.resource = resource;
     this.resourceDao = resourceDao;
+    this.landingZoneApiDispatch = landingZoneApiDispatch;
   }
 
   @Override
@@ -61,10 +68,6 @@ public class CreateAzureNetworkInterfaceStep implements Step {
                     resourceDao
                         .getResource(resource.getWorkspaceId(), ipId)
                         .castByEnum(WsmResourceType.CONTROLLED_AZURE_IP));
-    final ControlledAzureNetworkResource networkResource =
-        resourceDao
-            .getResource(resource.getWorkspaceId(), resource.getNetworkId())
-            .castByEnum(WsmResourceType.CONTROLLED_AZURE_NETWORK);
 
     String networkInterfaceName = String.format("nic-%s", resource.getVmName());
     try {
@@ -76,25 +79,30 @@ public class CreateAzureNetworkInterfaceStep implements Step {
                       .publicIpAddresses()
                       .getByResourceGroup(
                           azureCloudContext.getAzureResourceGroupId(), ipRes.getIpName()));
-      Network existingNetwork =
-          computeManager
-              .networkManager()
-              .networks()
-              .getByResourceGroup(
-                  azureCloudContext.getAzureResourceGroupId(), networkResource.getNetworkName());
+
+      NetworkSubnetPair existingNetwork =
+          getExistingNetworkResources(azureCloudContext, computeManager.networkManager());
 
       NetworkInterface networkInterface =
           createNetworkInterface(
               computeManager,
               azureCloudContext,
               networkInterfaceName,
-              existingNetwork,
-              networkResource.getSubnetName(),
+              existingNetwork.network(),
+              existingNetwork.subnet().name(),
               existingAzureIp);
-      // create vm step will use it later
+
+      // create vm step will use these later
       context
           .getWorkingMap()
           .put(AzureVmHelper.WORKING_MAP_NETWORK_INTERFACE_KEY, networkInterface.name());
+      context
+          .getWorkingMap()
+          .put(AzureVmHelper.WORKING_MAP_SUBNET_NAME, existingNetwork.subnet().name());
+      context
+          .getWorkingMap()
+          .put(AzureVmHelper.WORKING_MAP_NETWORK_REGION, existingNetwork.network().region());
+
     } catch (ManagementException e) {
       if (StringUtils.equals(e.getValue().getCode(), "Conflict")) {
         logger.info(
@@ -106,6 +114,46 @@ public class CreateAzureNetworkInterfaceStep implements Step {
       return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, e);
     }
     return StepResult.getStepResultSuccess();
+  }
+
+  NetworkSubnetPair getExistingNetworkResources(
+      AzureCloudContext azureCloudContext, NetworkManager networkManager) {
+
+    // we are considering the network id to be optional
+    if (resource.getNetworkId() == null) {
+      return getNetworkResourcesFromLandingZone(azureCloudContext, networkManager);
+    }
+
+    final ControlledAzureNetworkResource networkResource =
+        resourceDao
+            .getResource(resource.getWorkspaceId(), resource.getNetworkId())
+            .castByEnum(WsmResourceType.CONTROLLED_AZURE_NETWORK);
+
+    return NetworkSubnetPair.createNetworkSubnetPair(
+        networkManager,
+        azureCloudContext.getAzureResourceGroupId(),
+        networkResource.getNetworkName(),
+        networkResource.getSubnetName());
+  }
+
+  private NetworkSubnetPair getNetworkResourcesFromLandingZone(
+      AzureCloudContext azureCloudContext, NetworkManager networkManager) {
+
+    final String lzId = landingZoneApiDispatch.getLandingZoneId(azureCloudContext);
+
+    ApiAzureLandingZoneDeployedResource lzResource =
+        landingZoneApiDispatch
+            .listSubnetsWithParentVNetByPurpose(
+                lzId, SubnetResourcePurpose.WORKSPACE_COMPUTE_SUBNET)
+            .stream()
+            .findFirst()
+            .orElseThrow(
+                () ->
+                    new IllegalStateException(
+                        "The landing zone does not contain the requested resource. Please check that the landing zone deployment is complete."));
+
+    return NetworkSubnetPair.createNetworkSubnetPair(
+        networkManager, lzResource.getResourceParentId(), lzResource.getResourceName());
   }
 
   @Override
@@ -135,7 +183,7 @@ public class CreateAzureNetworkInterfaceStep implements Step {
             .networkManager()
             .networkInterfaces()
             .define(networkInterfaceName)
-            .withRegion(resource.getRegion())
+            .withRegion(existingNetwork.regionName())
             .withExistingResourceGroup(azureCloudContext.getAzureResourceGroupId())
             .withExistingPrimaryNetwork(existingNetwork)
             .withSubnet(subnetName)

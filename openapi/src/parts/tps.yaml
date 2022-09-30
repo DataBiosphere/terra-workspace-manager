@@ -73,6 +73,161 @@ paths:
         '500':
           $ref: '#/components/responses/ServerError'
 
+    patch:
+      summary: Update the policies of a Policy Attribute Object
+      description: |
+        Update modifies the policies of a PAO. You can only modify the attributes set on
+        the PAO; you can not directly modify the effective attributes. The effective attributes
+        are recomputed based on the modified attributes. First, the attributes to be removed are
+        processed. Second, the attribute to be added are processed. If there are conflicts at this
+        point, the operation fails and no change is made, even if the updateMode is ENFORCE_CONFLICT.
+        Third, the effective attributes are recomputed for the PAO. If the updateMode is DRY_RUN, the
+        update is computed, but no changes are made. If the updateMode is FAIL_ON_CONFLICT, the
+        change is applied if there are no conflicts. If the updateMode is ENFORCE_CONFLICT, then
+        conflicts during the recomputing of effective attributes are allowed and are propagated
+        to any PAOs dependent on this PAO. With great power comes great responsibility.
+      operationId: updatePao
+      tags: [Tps]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TpsPaoUpdateRequest'
+      responses:
+        '200':
+          description: Update successfully processed. The update itself may or may not have succeeded.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TpsPaoUpdateResult'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+
+    put:
+      summary: Replace the policies of a Policy Attribute Object
+      description: |
+        Replaces all of the policies of a PAO with a new set of attributes. This only  
+        modifies the attributes set on the PAO; you can not directly modify
+        the effective attributes. The effective attributes are recomputed based on
+        the modified attributes. If the updateMode is DRY_RUN, the
+        update is computed, but no changes are made. If the updateMode is FAIL_ON_CONFLICT, the
+        change is applied if there are no conflicts. If the updateMode is ENFORCE_CONFLICT, then
+        conflicts during the recomputing of effective attributes are allowed and are propagated
+        to any PAOs dependent on this PAO. With great power comes great responsibility.
+      operationId: replacePao
+      tags: [Tps]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TpsPaoReplaceRequest'
+      responses:
+        '200':
+          description: Update successfully processed. The update itself may or may not have succeeded.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TpsPaoUpdateResult'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+
+  /api/policy/v1alpha1/pao/{objectId}/link:
+    parameters:
+      - $ref: '#/components/parameters/TpsObjectId'
+    post:
+      summary: Link a policy attribute object to another policy attribute object
+      description: |
+        The target policy attribute object (PAO) is identified by the path parameter.
+        The source PAO is provided in the source request. The target PAO is made to
+        depend on the source PAO. The target PAO effective policy is the combination of
+        its policy attributes and all of its linked PAO's effective policy attributes.
+        If the updateMode is DRY_RUN, then the link calculation is made, but no action
+        is taken. If the updateMode is FAIL_ON_CONFLICT, then the change is applied if there
+        are no conflicts. ENFORCE_CONFLICT is not allowed on link.
+      operationId: linkPao
+      tags: [Tps]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TpsPaoSourceRequest'
+      responses:
+        '200':
+          description: Link successfully processed. The link itself may or may not have succeeded.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TpsPaoUpdateResult'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /api/policy/v1alpha1/pao/{objectId}/merge:
+    parameters:
+      - $ref: '#/components/parameters/TpsObjectId'
+    post:
+      summary: Merge a policy attribute object into another policy attribute object
+      description: |
+        The target policy attribute object (PAO) is identified by the path parameter.
+        The source PAO is provided in the source request. The policies from the source
+        PAO are merged into the target PAO.
+        If the updateMode is DRY_RUN, then the merge calculation is made, but no action
+        is taken. If the updateMode is FAIL_ON_CONFLICT, then the change is applied if there
+        are no conflicts. ENFORCE_CONFLICT is not allowed on merge.
+      operationId: mergePao
+      tags: [Tps]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TpsPaoSourceRequest'
+      responses:
+        '200':
+          description: Merge successfully processed. The merge itself may or may not have succeeded.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TpsPaoUpdateResult'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
 components:
   schemas:
     # Please keep alphabetized
@@ -93,13 +248,6 @@ components:
       type: string
       description: Enum representing an object type of a policy-bearing Terra component.
       enum: [ 'workspace' ]
-
-    TpsPaoCloneRequest:
-      type: object
-      required: [destinationObjectId]
-      properties:
-        destinationObjectId:
-          $ref: '#/components/schemas/TpsObjectId'
 
     TpsPaoCreateRequest:
       type: object
@@ -128,8 +276,8 @@ components:
           $ref: '#/components/schemas/TpsPolicyInputs'
         effectiveAttributes:
           $ref: '#/components/schemas/TpsPolicyInputs'
-        predecessorId:
-          $ref: '#/components/schemas/TpsObjectId'
+        deleted:
+          type: boolean
         sourcesObjectIds:
           type: array
           uniqueItems: true
@@ -169,6 +317,99 @@ components:
           type: string
         value:
           type: string
+
+    TpsPaoDescription:
+      type: object
+      description: Description of a PAO
+      required: [ objectId, component, objectType ]
+      properties:
+        objectId:
+          $ref: '#/components/schemas/TpsObjectId'
+        component:
+          $ref: '#/components/schemas/TpsComponent'
+        objectType:
+          $ref: '#/components/schemas/TpsObjectType'
+
+    TpsPaoConflict:
+      type: object
+      description: Describes a policy conflict between two PAOs
+      required: [targetPao, conflictPao, namespace, name]
+      properties:
+        namespace:
+          description: Namespace of the conflicting policy; e.g., terra
+          type: string
+        name:
+          description: Name of the conflicting policy; e.g., group-constraint
+          type: string
+        targetPao:
+          description: The target PAO receiving policy
+          $ref: '#/components/schemas/TpsPaoDescription'
+        conflictPao:
+          description: The PAO attempting to combine the conflicting policy
+          $ref: '#/components/schemas/TpsPaoDescription'
+
+    TpsPaoReplaceRequest:
+      description: Replace request body
+      type: object
+      required: [updateMode]
+      properties:
+        newAttributes:
+          $ref: '#/components/schemas/TpsPolicyInputs'
+        updateMode:
+          $ref: '#/components/schemas/TpsUpdateMode'
+
+    TpsPaoSourceRequest:
+      description: Request structure shared by link and merge
+      type: object
+      required: [sourceObjectId, updateMode]
+      properties:
+        sourceObjectId:
+          $ref: '#/components/schemas/TpsObjectId'
+        updateMode:
+          $ref: '#/components/schemas/TpsUpdateMode'
+
+    TpsPaoUpdateRequest:
+      description: Update request body
+      type: object
+      required: [updateMode]
+      properties:
+        removeAttributes:
+          $ref: '#/components/schemas/TpsPolicyInputs'
+        addAttributes:
+          $ref: '#/components/schemas/TpsPolicyInputs'
+        updateMode:
+          $ref: '#/components/schemas/TpsUpdateMode'
+
+    TpsPaoUpdateResult:
+      type: object
+      required: [updateApplied, conflicts]
+      properties:
+        updateApplied:
+          description: |
+            true if the update was applied; false if it was not. The response code will be 200
+            even if the update was not applied.
+          type: boolean
+        resultingPao:
+          description: |
+            resulting PAO; this reflects the state of the PAO as it would be if the update
+            was applied. It does not necessarily reflect the PAO state in Terra Policy Service
+          $ref: '#/components/schemas/TpsPaoGetResult'
+        conflicts:
+          description: |
+            list of conflicts; may be present on success or failure, depending on the updateMode setting
+          type: array
+          items:
+            $ref: '#/components/schemas/TpsPaoConflict'
+
+    TpsUpdateMode:
+      type: string
+      description: |
+        Enum controlling how policy updates are processed.
+        DRY_RUN - conflict checking is done, but no updates are done
+        FAIL_ON_CONFLICT - updates are made if there are no conflicts
+        ENFORCE_CONFLICT - updates are made and conflicts are propagated
+          to policy dependents. (Only valid on policy update.)
+      enum: [ 'DRY_RUN', 'FAIL_ON_CONFLICT', 'ENFORCE_CONFLICT' ]
 
   parameters:
     TpsObjectId:

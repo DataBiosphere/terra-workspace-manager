@@ -7,27 +7,26 @@ import bio.terra.stairway.Step;
 import bio.terra.workspace.common.utils.FlightBeanBag;
 import bio.terra.workspace.common.utils.FlightUtils;
 import bio.terra.workspace.common.utils.RetryRules;
-import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
-import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.resource.controlled.flight.create.GetCloudContextStep;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
-import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ResourceKeys;
+import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
+import com.fasterxml.jackson.core.type.TypeReference;
+import java.util.List;
 import java.util.UUID;
 
 /**
  * Flight for type-agnostic deletion of a controlled resource. All type-specific information should
  * live in individual steps.
  */
-public class DeleteControlledResourceFlight extends Flight {
+public class DeleteControlledResourcesFlight extends Flight {
 
-  // addStep is protected in Flight, so make an override that is public
   @Override
   public void addStep(Step step, RetryRule retryRule) {
     super.addStep(step, retryRule);
   }
 
-  public DeleteControlledResourceFlight(FlightMap inputParameters, Object beanBag)
+  public DeleteControlledResourcesFlight(FlightMap inputParameters, Object beanBag)
       throws InterruptedException {
     super(inputParameters, beanBag);
     final FlightBeanBag flightBeanBag = FlightBeanBag.getFromObject(beanBag);
@@ -36,13 +35,16 @@ public class DeleteControlledResourceFlight extends Flight {
         UUID.fromString(
             FlightUtils.getRequired(
                 inputParameters, WorkspaceFlightMapKeys.WORKSPACE_ID, String.class));
-    final ControlledResource resource =
-        FlightUtils.getRequired(inputParameters, ResourceKeys.RESOURCE, ControlledResource.class);
-    final AuthenticatedUserRequest userRequest =
-        FlightUtils.getRequired(
-            inputParameters,
-            JobMapKeys.AUTH_USER_INFO.getKeyName(),
-            AuthenticatedUserRequest.class);
+    List<ControlledResource> controlledResources =
+        inputParameters.get(
+            ControlledResourceKeys.CONTROLLED_RESOURCES_TO_DELETE, new TypeReference<>() {});
+    for (ControlledResource controlledResource : controlledResources) {
+      addStep(flightBeanBag, controlledResource, workspaceUuid);
+    }
+  }
+
+  public void addStep(
+      FlightBeanBag flightBeanBag, ControlledResource resource, UUID workspaceUuid) {
     final RetryRule cloudRetry = RetryRules.cloud();
 
     // Get the cloud context for the resource we are deleting
@@ -51,8 +53,7 @@ public class DeleteControlledResourceFlight extends Flight {
             workspaceUuid,
             resource.getResourceType().getCloudPlatform(),
             flightBeanBag.getGcpCloudContextService(),
-            flightBeanBag.getAzureCloudContextService(),
-            userRequest),
+            flightBeanBag.getAzureCloudContextService()),
         cloudRetry);
 
     // Delete the cloud resource. This has unique logic for each resource type. Depending on the
@@ -65,8 +66,8 @@ public class DeleteControlledResourceFlight extends Flight {
             flightBeanBag.getResourceDao(),
             flightBeanBag.getSamService(),
             workspaceUuid,
-            resource.getResourceId(),
-            userRequest));
+            resource.getResourceId()),
+        cloudRetry);
 
     // Delete the metadata
     addStep(

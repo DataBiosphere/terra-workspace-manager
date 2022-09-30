@@ -53,7 +53,6 @@ import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import com.google.common.annotations.VisibleForTesting;
 import java.time.OffsetDateTime;
-import java.util.Optional;
 import java.util.UUID;
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
@@ -212,12 +211,15 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
       createAzureStorageContainerSasToken(
           UUID workspaceUuid,
           UUID storageContainerUuid,
-          String sasIPRange,
+          String sasIpRange,
+          Long sasExpirationDuration,
           String sasPermissions,
           String sasBlobName) {
     features.azureEnabledCheck();
 
-    ControllerValidationUtils.validateIpAddressRange(sasIPRange);
+    ControllerValidationUtils.validateIpAddressRange(sasIpRange);
+    ControllerValidationUtils.validateSasExpirationDuration(
+        sasExpirationDuration, azureConfiguration.getSasTokenExpiryTimeMaximumMinutesOffset());
     ControllerValidationUtils.validateAzureBlobName(sasBlobName);
 
     final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
@@ -251,8 +253,12 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
 
     OffsetDateTime startTime =
         OffsetDateTime.now().minusMinutes(azureConfiguration.getSasTokenStartTimeMinutesOffset());
-    OffsetDateTime expiryTime =
-        OffsetDateTime.now().plusMinutes(azureConfiguration.getSasTokenExpiryTimeMinutesOffset());
+    long secondDuration =
+        sasExpirationDuration != null
+            ? sasExpirationDuration
+            : azureConfiguration.getSasTokenExpiryTimeMinutesOffset() * 60;
+    OffsetDateTime expiryTime = OffsetDateTime.now().plusSeconds(secondDuration);
+
     var sasBundle =
         azureControlledStorageResourceService.createAzureStorageContainerSasToken(
             workspaceUuid,
@@ -261,9 +267,9 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
             startTime,
             expiryTime,
             userRequest,
-            sasIPRange,
-            Optional.ofNullable(sasBlobName),
-            Optional.ofNullable(sasPermissions));
+            sasIpRange,
+            sasBlobName,
+            sasPermissions);
 
     logger.info(
         "SAS token with expiry time of {} generated for user {} on container {} in workspace {}",

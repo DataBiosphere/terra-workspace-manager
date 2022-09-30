@@ -1,5 +1,7 @@
 package bio.terra.workspace.common.utils;
 
+import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.CONTROLLED_RESOURCES_TO_DELETE;
+
 import bio.terra.stairway.FlightMap;
 import bio.terra.workspace.app.configuration.external.AzureConfiguration;
 import bio.terra.workspace.app.configuration.external.AzureTestConfiguration;
@@ -21,6 +23,8 @@ import bio.terra.workspace.service.workspace.model.WorkspaceStage;
 import com.azure.resourcemanager.compute.ComputeManager;
 import com.azure.resourcemanager.relay.RelayManager;
 import com.azure.resourcemanager.storage.StorageManager;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
@@ -108,7 +112,9 @@ public class AzureTestUtils {
       AuthenticatedUserRequest userRequest,
       ControlledResource resource) {
     FlightMap inputs = new FlightMap();
-    inputs.put(ResourceKeys.RESOURCE, resource);
+    List<ControlledResource> resources = new ArrayList<>();
+    resources.add(resource);
+    inputs.put(CONTROLLED_RESOURCES_TO_DELETE, resources);
     inputs.put(WorkspaceFlightMapKeys.WORKSPACE_ID, workspaceUuid.toString());
     inputs.put(WorkspaceFlightMapKeys.ResourceKeys.RESOURCE_ID, resourceId.toString());
     inputs.put(JobMapKeys.AUTH_USER_INFO.getKeyName(), userRequest);
