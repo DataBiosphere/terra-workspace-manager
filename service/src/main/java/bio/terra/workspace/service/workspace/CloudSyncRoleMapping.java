@@ -76,6 +76,7 @@ public class CloudSyncRoleMapping {
               "iam.serviceAccounts.list",
               "lifesciences.operations.cancel",
               "lifesciences.workflows.run",
+              "notebooks.instances.get",
               "notebooks.operations.cancel",
               "notebooks.operations.delete",
               "notebooks.operations.get",
