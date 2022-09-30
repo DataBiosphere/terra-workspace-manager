@@ -20,9 +20,7 @@ import com.azure.storage.common.sas.SasProtocol;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Locale;
-import java.util.Set;
 import java.util.UUID;
-import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -55,7 +53,7 @@ public class AzureStorageAccessService {
       AuthenticatedUserRequest userRequest,
       UUID storageContainerUuid,
       String samResourceName,
-      String permissions) {
+      String desiredPermissions) {
     final List<String> containerActions =
         SamRethrow.onInterrupted(
             () ->
@@ -63,16 +61,16 @@ public class AzureStorageAccessService {
                     userRequest, samResourceName, storageContainerUuid.toString()),
             "listResourceActions");
 
-    String maxTokenPermissions = "";
+    String possiblePermissions = "";
     for (String action : containerActions) {
       if (action.equals(SamConstants.SamControlledResourceActions.READ_ACTION)) {
-        maxTokenPermissions += "rl";
+        possiblePermissions += "rl";
       } else if (action.equals(SamConstants.SamControlledResourceActions.WRITE_ACTION)) {
-        maxTokenPermissions += "acwd";
+        possiblePermissions += "acwd";
       }
     }
 
-    if (maxTokenPermissions.isEmpty()) {
+    if (possiblePermissions.isEmpty()) {
       throw new ForbiddenException(
           String.format(
               "User is not authorized to get a SAS token for container %s",
@@ -81,18 +79,18 @@ public class AzureStorageAccessService {
 
     // ensure the requested permissions, if present, are a subset of the max possible permissions
     String effectivePermissions;
-    if (permissions != null) {
-      Set<Character> maxPermissionsSet =
-          maxTokenPermissions.chars().mapToObj(c -> (char) c).collect(Collectors.toSet());
-      Set<Character> desiredPermissions =
-          permissions.chars().mapToObj(c -> (char) c).collect(Collectors.toSet());
+    if (desiredPermissions != null) {
+      var possiblePermissionsSet =
+          SasPermissionsHelper.permissionStringToCharSet(possiblePermissions);
+      var desiredPermissionsSet =
+          SasPermissionsHelper.permissionStringToCharSet(desiredPermissions);
 
-      if (!maxPermissionsSet.containsAll(desiredPermissions)) {
+      if (!possiblePermissionsSet.containsAll(desiredPermissionsSet)) {
         throw new ForbiddenException("Not authorized");
       }
-      effectivePermissions = permissions;
+      effectivePermissions = desiredPermissions;
     } else {
-      effectivePermissions = maxTokenPermissions;
+      effectivePermissions = possiblePermissions;
     }
 
     return BlobContainerSasPermission.parse(effectivePermissions);
@@ -121,8 +119,8 @@ public class AzureStorageAccessService {
       OffsetDateTime expiryTime,
       AuthenticatedUserRequest userRequest,
       String sasIpRange,
-      String blobPrefix,
-      String permissions) {
+      String sasBlobName,
+      String sasPermissions) {
     features.azureEnabledCheck();
 
     BlobContainerSasPermission blobContainerSasPermission =
@@ -130,7 +128,7 @@ public class AzureStorageAccessService {
             userRequest,
             storageContainerResource.getResourceId(),
             storageContainerResource.getCategory().getSamResourceName(),
-            permissions);
+            sasPermissions);
 
     String storageAccountName = storageAccountResource.getStorageAccountName();
     String endpoint = storageAccountResource.getStorageAccountEndpoint();
@@ -144,18 +142,18 @@ public class AzureStorageAccessService {
             .httpClient(HttpClient.createDefault())
             .containerName(storageContainerResource.getStorageContainerName())
             .buildClient();
-
     BlobServiceSasSignatureValues sasValues =
         new BlobServiceSasSignatureValues(expiryTime, blobContainerSasPermission)
             .setStartTime(startTime)
             .setProtocol(SasProtocol.HTTPS_ONLY);
+
     if (sasIpRange != null) {
       sasValues.setSasIpRange(SasIpRange.parse(sasIpRange));
     }
 
     String token;
-    if (blobPrefix != null) {
-      var blobClient = blobContainerClient.getBlobClient(blobPrefix);
+    if (sasBlobName != null) {
+      var blobClient = blobContainerClient.getBlobClient(sasBlobName);
       token = blobClient.generateSas(sasValues);
     } else {
       token = blobContainerClient.generateSas(sasValues);

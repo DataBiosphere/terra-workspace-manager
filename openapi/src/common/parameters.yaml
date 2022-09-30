@@ -93,14 +93,6 @@ components:
       schema:
         $ref: '#/components/schemas/IamRole'
 
-    SasBlobName:
-      name: sasBlobName
-      in: query
-      description:  Requests access to a single blob in a container
-      required: false
-      schema:
-        type: string
-
     SasIpRange:
       name: sasIpRange
       in: query
@@ -146,6 +138,14 @@ components:
 
         If the calling user does not have the requisite role against the workspace for the requested permissions, this
         operation will return a 403 Forbidden error.
+      schema:
+        type: string
+
+    SasBlobName:
+      name: sasBlobName
+      in: query
+      description:  Requests access to a single blob in a container
+      required: false
       schema:
         type: string
 

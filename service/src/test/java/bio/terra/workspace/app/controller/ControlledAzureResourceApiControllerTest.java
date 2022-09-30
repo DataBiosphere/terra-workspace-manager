@@ -309,4 +309,92 @@ class CreateAzureStorageContainerSasTokenTest extends BaseAzureUnitTest {
             any(),
             any());
   }
+
+  @Test
+  void createSASTokenBlobNameSuccess() throws Exception {
+    String blobName = "testing/foo/bar";
+
+    mockMvc
+        .perform(
+            addAuth(
+                post(String.format(
+                        CREATE_AZURE_SAS_TOKEN_PATH_FORMAT, workspaceId, storageContainerId))
+                    .contentType(MediaType.APPLICATION_JSON_VALUE)
+                    .accept(MediaType.APPLICATION_JSON)
+                    .characterEncoding("UTF-8")
+                    .queryParam("sasBlobName", blobName),
+                USER_REQUEST))
+        .andExpect(status().is(HttpStatus.SC_OK));
+
+    Mockito.verify(azureStorageAccessService)
+        .createAzureStorageContainerSasToken(
+            eq(workspaceId),
+            eq(containerResource),
+            eq(accountResource),
+            any(),
+            any(),
+            any(),
+            any(),
+            eq(blobName),
+            any());
+  }
+
+  @Test
+  void createSASTokenBlobNameInvalidName() throws Exception {
+    mockMvc
+        .perform(
+            addAuth(
+                post(String.format(
+                        CREATE_AZURE_SAS_TOKEN_PATH_FORMAT, workspaceId, storageContainerId))
+                    .contentType(MediaType.APPLICATION_JSON_VALUE)
+                    .accept(MediaType.APPLICATION_JSON)
+                    .characterEncoding("UTF-8")
+                    .queryParam("sasBlobName", ""),
+                USER_REQUEST))
+        .andExpect(status().is(HttpStatus.SC_BAD_REQUEST));
+  }
+
+  @Test
+  void createSASTokenBlobPermissionsSuccess() throws Exception {
+    String permissions = "rwcd";
+    mockMvc
+        .perform(
+            addAuth(
+                post(String.format(
+                        CREATE_AZURE_SAS_TOKEN_PATH_FORMAT, workspaceId, storageContainerId))
+                    .contentType(MediaType.APPLICATION_JSON_VALUE)
+                    .accept(MediaType.APPLICATION_JSON)
+                    .characterEncoding("UTF-8")
+                    .queryParam("sasPermissions", permissions),
+                USER_REQUEST))
+        .andExpect(status().is(HttpStatus.SC_OK));
+
+    Mockito.verify(azureStorageAccessService)
+        .createAzureStorageContainerSasToken(
+            eq(workspaceId),
+            eq(containerResource),
+            eq(accountResource),
+            any(),
+            any(),
+            any(),
+            any(),
+            any(),
+            eq(permissions));
+  }
+
+  @Test
+  void createSASTokenBlobPermissionsInvalidPerms() throws Exception {
+    String permissions = "tfi";
+    mockMvc
+        .perform(
+            addAuth(
+                post(String.format(
+                        CREATE_AZURE_SAS_TOKEN_PATH_FORMAT, workspaceId, storageContainerId))
+                    .contentType(MediaType.APPLICATION_JSON_VALUE)
+                    .accept(MediaType.APPLICATION_JSON)
+                    .characterEncoding("UTF-8")
+                    .queryParam("sasPermissions", permissions),
+                USER_REQUEST))
+        .andExpect(status().is(HttpStatus.SC_BAD_REQUEST));
+  }
 }

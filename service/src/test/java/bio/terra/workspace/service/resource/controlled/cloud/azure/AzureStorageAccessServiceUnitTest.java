@@ -119,7 +119,7 @@ public class AzureStorageAccessServiceUnitTest extends BaseUnitTest {
     assertThat("SAS validity starts today", startTimeRegex.matcher(sas).find());
     assertThat("SAS validity ends today", expiryTimeRegex.matcher(sas).find());
     if (blobToken) {
-      assertThat("SAS is for a container resource", signedBlobResourceRegex.matcher(sas).find());
+      assertThat("SAS is for a blob resource", signedBlobResourceRegex.matcher(sas).find());
     } else {
       assertThat(
           "SAS is for a container resource", signedContainerResourceRegex.matcher(sas).find());

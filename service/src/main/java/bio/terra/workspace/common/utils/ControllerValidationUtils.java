@@ -171,7 +171,7 @@ public final class ControllerValidationUtils {
    *
    * @param blobName Blob name to validate
    */
-  public static void validateAzureBlobName(@Nullable String blobName) {
+  public static void validateSasBlobName(@Nullable String blobName) {
     if (blobName == null) {
       return;
     }

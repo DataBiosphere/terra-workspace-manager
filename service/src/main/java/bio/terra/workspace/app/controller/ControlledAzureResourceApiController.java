@@ -41,6 +41,7 @@ import bio.terra.workspace.service.resource.ResourceValidationUtils;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceMetadataManager;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceService;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.AzureStorageAccessService;
+import bio.terra.workspace.service.resource.controlled.cloud.azure.SasPermissionsHelper;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.disk.ControlledAzureDiskResource;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.ip.ControlledAzureIpResource;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.network.ControlledAzureNetworkResource;
@@ -220,7 +221,8 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
     ControllerValidationUtils.validateIpAddressRange(sasIpRange);
     ControllerValidationUtils.validateSasExpirationDuration(
         sasExpirationDuration, azureConfiguration.getSasTokenExpiryTimeMaximumMinutesOffset());
-    ControllerValidationUtils.validateAzureBlobName(sasBlobName);
+    ControllerValidationUtils.validateSasBlobName(sasBlobName);
+    SasPermissionsHelper.validateSasPermissionString(sasPermissions);
 
     final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     // Creating an AzureStorageContainerSasToken requires checking the user's access to both the
