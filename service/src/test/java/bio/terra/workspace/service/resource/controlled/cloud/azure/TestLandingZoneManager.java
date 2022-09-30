@@ -23,9 +23,12 @@ import java.util.UUID;
  * <p>We are cheating here when creating landing zone. One of the main reason is that LZ service API
  * doesn't support deletion of landing zone. This functionality is under construction. In this
  * particular case we don't need real landing zone, because everything we need is shared storage
- * account as part of landing zone. So, here we use LZ low-level api to create landing zone: -
- * register landing zone in LZ database - create shared storage account It will allow us to clean up
- * created resource and test functionality with quasi landing zone.
+ * account as part of landing zone. Here we use LZ low-level api to create landing zone:
+ *
+ * <p>-register landing zone in LZ database
+ *
+ * <p>-create shared storage account with appropriate tags It will allow us to clean up created
+ * resource and test functionality with landing zone.
  *
  * <p>This class should go once delete landing zone operation is available
  */
@@ -51,7 +54,7 @@ public class TestLandingZoneManager {
     this.workspaceUuid = workspaceUuid;
 
     azureCloudContext = azureCloudContextService.getAzureCloudContext(workspaceUuid).orElse(null);
-    assertNotNull(azureCloudContext, "Azure cloud context should exist. Check configuration.");
+    assertNotNull(azureCloudContext, "Azure cloud context should exist. Make sure it was created.");
 
     storageManager = crlService.getStorageManager(azureCloudContext, azureConfig);
   }
