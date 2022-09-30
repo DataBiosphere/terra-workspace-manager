@@ -185,8 +185,9 @@ public class LandingZoneApiDispatch {
         .landingZone(azureLandingZone);
   }
 
-  /*
-   * Note: This method is an initial implementation that must be revised,
+  /**
+   * TODO (https://broadworkbench.atlassian.net/browse/TOAZ-221)
+   * This method is an initial implementation that must be revised,
    * and likely be refactored once WSM stores the LZ id in the azure context.
    * The initial assumption is that the cardinality of 1:1 between the cloud context and the LZ
    * is enforced in the create operation, therefore more than one LZ per azure context is not allowed.
