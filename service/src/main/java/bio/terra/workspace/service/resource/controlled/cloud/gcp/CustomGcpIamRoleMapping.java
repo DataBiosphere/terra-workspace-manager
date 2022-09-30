@@ -67,7 +67,6 @@ public class CustomGcpIamRoleMapping {
           .build();
   static final ImmutableList<String> AI_NOTEBOOK_INSTANCE_READER_PERMISSIONS =
       ImmutableList.of(
-          "compute.instances.get",
           "notebooks.instances.get",
           "notebooks.instances.list",
           "notebooks.locations.get",
