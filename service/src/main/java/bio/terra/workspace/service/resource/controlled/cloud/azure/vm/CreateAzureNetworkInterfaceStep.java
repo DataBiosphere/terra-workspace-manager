@@ -1,5 +1,6 @@
 package bio.terra.workspace.service.resource.controlled.cloud.azure.vm;
 
+import bio.terra.common.iam.BearerToken;
 import bio.terra.landingzone.library.landingzones.deployment.SubnetResourcePurpose;
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.Step;
@@ -11,6 +12,7 @@ import bio.terra.workspace.app.configuration.external.AzureConfiguration;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.generated.model.ApiAzureLandingZoneDeployedResource;
 import bio.terra.workspace.service.crl.CrlService;
+import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.ip.ControlledAzureIpResource;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.network.ControlledAzureNetworkResource;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
@@ -23,6 +25,7 @@ import com.azure.resourcemanager.network.models.Network;
 import com.azure.resourcemanager.network.models.NetworkInterface;
 import com.azure.resourcemanager.network.models.PublicIpAddress;
 import java.util.Optional;
+import java.util.UUID;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -37,18 +40,21 @@ public class CreateAzureNetworkInterfaceStep implements Step {
   private final ControlledAzureVmResource resource;
   private final ResourceDao resourceDao;
   private final LandingZoneApiDispatch landingZoneApiDispatch;
+  private final AuthenticatedUserRequest userRequest;
 
   public CreateAzureNetworkInterfaceStep(
       AzureConfiguration azureConfig,
       CrlService crlService,
       ControlledAzureVmResource resource,
       ResourceDao resourceDao,
-      LandingZoneApiDispatch landingZoneApiDispatch) {
+      LandingZoneApiDispatch landingZoneApiDispatch,
+      AuthenticatedUserRequest userRequest) {
     this.azureConfig = azureConfig;
     this.crlService = crlService;
     this.resource = resource;
     this.resourceDao = resourceDao;
     this.landingZoneApiDispatch = landingZoneApiDispatch;
+    this.userRequest = userRequest;
   }
 
   @Override
@@ -139,12 +145,14 @@ public class CreateAzureNetworkInterfaceStep implements Step {
   private NetworkSubnetPair getNetworkResourcesFromLandingZone(
       AzureCloudContext azureCloudContext, NetworkManager networkManager) {
 
-    final String lzId = landingZoneApiDispatch.getLandingZoneId(azureCloudContext);
+    final UUID lzId = landingZoneApiDispatch.getLandingZoneId(azureCloudContext);
 
     ApiAzureLandingZoneDeployedResource lzResource =
         landingZoneApiDispatch
             .listSubnetsWithParentVNetByPurpose(
-                lzId, SubnetResourcePurpose.WORKSPACE_COMPUTE_SUBNET)
+                new BearerToken(userRequest.getRequiredToken()),
+                lzId,
+                SubnetResourcePurpose.WORKSPACE_COMPUTE_SUBNET)
             .stream()
             .findFirst()
             .orElseThrow(

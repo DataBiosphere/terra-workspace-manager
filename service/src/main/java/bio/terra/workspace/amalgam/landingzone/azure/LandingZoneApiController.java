@@ -77,7 +77,7 @@ public class LandingZoneApiController implements LandingZonesApi {
   public ResponseEntity<Void> deleteAzureLandingZone(
       @PathVariable("landingZoneId") UUID landingZoneId) {
     try {
-      landingZoneApiDispatch.deleteLandingZone(landingZoneId);
+      landingZoneApiDispatch.deleteLandingZone(bearerTokenFactory.from(request), landingZoneId);
     } catch (LandingZoneDeleteNotImplemented ex) {
       logger.info("Request to delete landing zone. Operation is not supported.");
       return new ResponseEntity<>(HttpStatus.NOT_IMPLEMENTED);

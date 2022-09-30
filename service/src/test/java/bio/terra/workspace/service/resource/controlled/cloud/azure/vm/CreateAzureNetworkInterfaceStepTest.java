@@ -2,6 +2,7 @@ package bio.terra.workspace.service.resource.controlled.cloud.azure.vm;
 
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
 import bio.terra.landingzone.library.landingzones.deployment.SubnetResourcePurpose;
@@ -11,6 +12,7 @@ import bio.terra.workspace.common.BaseAzureUnitTest;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.generated.model.ApiAzureLandingZoneDeployedResource;
 import bio.terra.workspace.service.crl.CrlService;
+import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.network.ControlledAzureNetworkResource;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.workspace.model.AzureCloudContext;
@@ -20,6 +22,7 @@ import com.azure.resourcemanager.network.models.Networks;
 import com.azure.resourcemanager.network.models.Subnet;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -56,11 +59,19 @@ public class CreateAzureNetworkInterfaceStepTest extends BaseAzureUnitTest {
 
   @Mock private Subnet armSubnet;
 
+  private final AuthenticatedUserRequest USER_REQUEST =
+      new AuthenticatedUserRequest().token(Optional.of("some-token"));
+
   @BeforeEach
   void setUp() {
     networkInterfaceStep =
         new CreateAzureNetworkInterfaceStep(
-            azureConfiguration, crlService, resource, resourceDao, landingZoneApiDispatch);
+            azureConfiguration,
+            crlService,
+            resource,
+            resourceDao,
+            landingZoneApiDispatch,
+            USER_REQUEST);
     when(networkManager.networks()).thenReturn(networks);
     var subnets = new HashMap<String, Subnet>();
     subnets.put(STUB_SUBNET, armSubnet);
@@ -109,7 +120,7 @@ public class CreateAzureNetworkInterfaceStepTest extends BaseAzureUnitTest {
   }
 
   private void setUpNetworkInLZInteractionChain(UUID networkId, UUID workspaceId) {
-    var lzId = UUID.randomUUID().toString();
+    var lzId = UUID.randomUUID();
     var resources = new ArrayList<ApiAzureLandingZoneDeployedResource>();
     resources.add(
         new ApiAzureLandingZoneDeployedResource()
@@ -119,7 +130,7 @@ public class CreateAzureNetworkInterfaceStepTest extends BaseAzureUnitTest {
     when(resource.getNetworkId()).thenReturn(null);
     when(landingZoneApiDispatch.getLandingZoneId(azureCloudContext)).thenReturn(lzId);
     when(landingZoneApiDispatch.listSubnetsWithParentVNetByPurpose(
-            lzId, SubnetResourcePurpose.WORKSPACE_COMPUTE_SUBNET))
+            any(), lzId, SubnetResourcePurpose.WORKSPACE_COMPUTE_SUBNET))
         .thenReturn(resources);
     when(networks.getById(networkId.toString())).thenReturn(armNetwork);
   }

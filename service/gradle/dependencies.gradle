@@ -38,7 +38,7 @@ dependencies {
   }
 
   //Terra Landing Zone Service
-  implementation ('bio.terra:terra-landing-zone-service:0.0.8-rt-toaz-163-10-SNAPSHOT') {
+  implementation ('bio.terra:terra-landing-zone-service:0.0.8-rt-toaz-163-13-SNAPSHOT') {
     exclude group: "org.broadinstitute.dsde.workbench", module: "sam-client_2.12"
   }
 

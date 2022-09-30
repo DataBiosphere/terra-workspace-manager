@@ -2,7 +2,6 @@ package bio.terra.workspace.amalgam.landingzone.azure;
 
 import static bio.terra.workspace.common.utils.MockMvcUtils.AUTH_HEADER;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.when;
@@ -231,7 +230,7 @@ public class LandingZoneApiControllerTest extends BaseAzureUnitTest {
 
   @Test
   public void deleteAzureLandingZoneSuccess() throws Exception {
-    doNothing().when(landingZoneService).deleteLandingZone(anyString());
+    doNothing().when(landingZoneService).deleteLandingZone(any(), any());
     mockMvc
         .perform(
             delete(AZURE_LANDING_ZONE_PATH + "/{landingZoneId}", LANDING_ZONE_ID)
@@ -243,7 +242,7 @@ public class LandingZoneApiControllerTest extends BaseAzureUnitTest {
   public void deleteAzureLandingZoneNotImplemented() throws Exception {
     doThrow(LandingZoneDeleteNotImplemented.class)
         .when(landingZoneService)
-        .deleteLandingZone(anyString());
+        .deleteLandingZone(any(), any());
     mockMvc
         .perform(
             delete(AZURE_LANDING_ZONE_PATH + "/{landingZoneId}", LANDING_ZONE_ID)
