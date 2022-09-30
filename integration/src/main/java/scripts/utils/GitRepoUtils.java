@@ -16,7 +16,7 @@ import org.slf4j.LoggerFactory;
 public class GitRepoUtils {
   private static final Logger logger = LoggerFactory.getLogger(GitRepoUtils.class);
 
-  public static void updateGitRepoReferenceResource(
+  public static GitRepoResource updateGitRepoReferenceResource(
       ReferencedGcpResourceApi resourceApi,
       UUID workspaceUuid,
       UUID resourceId,
@@ -38,7 +38,7 @@ public class GitRepoUtils {
     if (cloningInstructions != null) {
       body.setCloningInstructions(cloningInstructions);
     }
-    resourceApi.updateGitRepoReference(body, workspaceUuid, resourceId);
+    return resourceApi.updateGitRepoReference(body, workspaceUuid, resourceId);
   }
 
   /**

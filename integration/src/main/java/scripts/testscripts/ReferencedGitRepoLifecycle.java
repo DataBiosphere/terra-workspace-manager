@@ -113,16 +113,15 @@ public class ReferencedGitRepoLifecycle extends WorkspaceAllocateTestScriptBase 
       throws Exception {
     String newGitRepoReferenceName = "newGitRepoReferenceName";
     String newGitRepoReferenceDescription = "a new description for git repo reference";
-    GitRepoUtils.updateGitRepoReferenceResource(
-        referencedGcpResourceApi,
-        getWorkspaceId(),
-        gitResourceId,
-        newGitRepoReferenceName,
-        newGitRepoReferenceDescription,
-        /*gitCloneUrl=*/ null,
-        CloningInstructionsEnum.NOTHING);
     GitRepoResource updatedResource =
-        referencedGcpResourceApi.getGitRepoReference(getWorkspaceId(), gitResourceId);
+        GitRepoUtils.updateGitRepoReferenceResource(
+            referencedGcpResourceApi,
+            getWorkspaceId(),
+            gitResourceId,
+            newGitRepoReferenceName,
+            newGitRepoReferenceDescription,
+            /*gitCloneUrl=*/ null,
+            CloningInstructionsEnum.NOTHING);
     assertEquals(newGitRepoReferenceName, updatedResource.getMetadata().getName());
     assertEquals(newGitRepoReferenceDescription, updatedResource.getMetadata().getDescription());
     assertEquals(

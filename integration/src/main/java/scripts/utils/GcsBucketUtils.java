@@ -22,6 +22,7 @@ import bio.terra.workspace.model.GcpGcsBucketLifecycleRuleActionType;
 import bio.terra.workspace.model.GcpGcsBucketLifecycleRuleCondition;
 import bio.terra.workspace.model.GcpGcsBucketResource;
 import bio.terra.workspace.model.GcpGcsBucketUpdateParameters;
+import bio.terra.workspace.model.GcpGcsObjectResource;
 import bio.terra.workspace.model.JobControl;
 import bio.terra.workspace.model.JobReport;
 import bio.terra.workspace.model.ManagedBy;
@@ -123,7 +124,7 @@ public class GcsBucketUtils {
   private static final Pattern GCS_BUCKET_PATTERN = Pattern.compile("^gs://([^/]+)$");
 
   /** Updates name, description, and/or referencing target for GCS bucket reference. */
-  public static void updateGcsBucketReference(
+  public static GcpGcsBucketResource updateGcsBucketReference(
       ReferencedGcpResourceApi resourceApi,
       UUID workspaceUuid,
       UUID resourceId,
@@ -145,7 +146,7 @@ public class GcsBucketUtils {
     if (cloningInstructions != null) {
       body.setCloningInstructions(cloningInstructions);
     }
-    resourceApi.updateBucketReferenceResource(body, workspaceUuid, resourceId);
+    return resourceApi.updateBucketReferenceResource(body, workspaceUuid, resourceId);
   }
 
   // Fully parameterized version; category-specific versions below
@@ -309,7 +310,7 @@ public class GcsBucketUtils {
   }
 
   /** Updates name, description, and/or referencing target for GCS bucket object reference. */
-  public static void updateGcsBucketObjectReference(
+  public static GcpGcsObjectResource updateGcsBucketObjectReference(
       ReferencedGcpResourceApi resourceApi,
       UUID workspaceUuid,
       UUID resourceId,
@@ -336,7 +337,7 @@ public class GcsBucketUtils {
     if (cloningInstructions != null) {
       body.setCloningInstructions(cloningInstructions);
     }
-    resourceApi.updateBucketObjectReferenceResource(body, workspaceUuid, resourceId);
+    return resourceApi.updateBucketObjectReferenceResource(body, workspaceUuid, resourceId);
   }
 
   /**
