@@ -1,13 +1,13 @@
 # This is a Gradle generated file for dependency locking.
 # Manual edits can break the build and are not advised.
 # This file is expected to be part of source control.
-bio.terra:billing-profile-manager-client:0.1.6-SNAPSHOT=productionRuntimeClasspath,runtimeClasspath,testRuntimeClasspath
+bio.terra:billing-profile-manager-client:0.1.29-SNAPSHOT=productionRuntimeClasspath,runtimeClasspath,testRuntimeClasspath
 bio.terra:datarepo-client:1.41.0-SNAPSHOT=compileClasspath,productionRuntimeClasspath,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
 bio.terra:stairway-gcp:0.0.71-SNAPSHOT=compileClasspath,productionRuntimeClasspath,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
 bio.terra:stairway:0.0.71-SNAPSHOT=compileClasspath,productionRuntimeClasspath,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
 bio.terra:terra-cloud-resource-lib:1.2.2-SNAPSHOT=compileClasspath,productionRuntimeClasspath,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
 bio.terra:terra-common-lib:0.0.69-SNAPSHOT=compileClasspath,productionRuntimeClasspath,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
-bio.terra:terra-landing-zone-service:0.0.9-rt-toaz-163-SNAPSHOT=compileClasspath,productionRuntimeClasspath,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
+bio.terra:terra-landing-zone-service:0.0.9-rt-toaz-163-2-SNAPSHOT=compileClasspath,productionRuntimeClasspath,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
 bio.terra:terra-policy-service:0.2.11-SNAPSHOT=compileClasspath,productionRuntimeClasspath,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
 bio.terra:terra-resource-buffer-client:0.4.3-SNAPSHOT=compileClasspath,productionRuntimeClasspath,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
 bio.terra:terra-resource-janitor-client:0.114.0-SNAPSHOT=productionRuntimeClasspath,runtimeClasspath,testRuntimeClasspath
