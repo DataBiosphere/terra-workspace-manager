@@ -3,6 +3,7 @@ package bio.terra.workspace.service.resource.controlled.cloud.azure.vm;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 
 import bio.terra.landingzone.library.landingzones.deployment.SubnetResourcePurpose;
@@ -130,7 +131,7 @@ public class CreateAzureNetworkInterfaceStepTest extends BaseAzureUnitTest {
     when(resource.getNetworkId()).thenReturn(null);
     when(landingZoneApiDispatch.getLandingZoneId(azureCloudContext)).thenReturn(lzId);
     when(landingZoneApiDispatch.listSubnetsWithParentVNetByPurpose(
-            any(), lzId, SubnetResourcePurpose.WORKSPACE_COMPUTE_SUBNET))
+            any(), eq(lzId), eq(SubnetResourcePurpose.WORKSPACE_COMPUTE_SUBNET)))
         .thenReturn(resources);
     when(networks.getById(networkId.toString())).thenReturn(armNetwork);
   }
