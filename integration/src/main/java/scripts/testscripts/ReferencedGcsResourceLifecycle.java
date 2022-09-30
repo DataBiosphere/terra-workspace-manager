@@ -284,16 +284,15 @@ public class ReferencedGcsResourceLifecycle extends WorkspaceAllocateTestScriptB
     // Update GCS bucket's name and description
     String newBucketName = "newGcsBucket";
     String newBucketDescription = "a new description to the new bucket reference";
-    GcsBucketUtils.updateGcsBucketReference(
-        fullAccessApi,
-        getWorkspaceId(),
-        bucketResourceId,
-        newBucketName,
-        newBucketDescription,
-        null,
-        CloningInstructionsEnum.NOTHING);
     GcpGcsBucketResource bucketReferenceFirstUpdate =
-        fullAccessApi.getBucketReference(getWorkspaceId(), bucketResourceId);
+        GcsBucketUtils.updateGcsBucketReference(
+            fullAccessApi,
+            getWorkspaceId(),
+            bucketResourceId,
+            newBucketName,
+            newBucketDescription,
+            null,
+            CloningInstructionsEnum.NOTHING);
     assertEquals(newBucketName, bucketReferenceFirstUpdate.getMetadata().getName());
     assertEquals(newBucketDescription, bucketReferenceFirstUpdate.getMetadata().getDescription());
     assertEquals(
@@ -318,16 +317,15 @@ public class ReferencedGcsResourceLifecycle extends WorkspaceAllocateTestScriptB
                 /*cloningInstructions=*/ null));
     // Successfully update the referencing target because the {@code userWithFullAccess} has
     // access to the bucket with fine-grained access.
-    GcsBucketUtils.updateGcsBucketReference(
-        fullAccessApi,
-        getWorkspaceId(),
-        bucketResourceId,
-        /*name=*/ null,
-        /*description=*/ null,
-        fineGrainedBucket.getAttributes().getBucketName(),
-        /*cloningInstructions=*/ null);
     GcpGcsBucketResource bucketReferenceSecondUpdate =
-        fullAccessApi.getBucketReference(getWorkspaceId(), bucketResourceId);
+        GcsBucketUtils.updateGcsBucketReference(
+            fullAccessApi,
+            getWorkspaceId(),
+            bucketResourceId,
+            /*name=*/ null,
+            /*description=*/ null,
+            fineGrainedBucket.getAttributes().getBucketName(),
+            /*cloningInstructions=*/ null);
     assertEquals(newBucketName, bucketReferenceSecondUpdate.getMetadata().getName());
     assertEquals(newBucketDescription, bucketReferenceSecondUpdate.getMetadata().getDescription());
     assertEquals(
@@ -337,17 +335,16 @@ public class ReferencedGcsResourceLifecycle extends WorkspaceAllocateTestScriptB
     // Update GCS bucket object's name and description
     String newBlobName = "newBlobName";
     String newBlobDescription = "a new description to the new bucket blob reference";
-    GcsBucketUtils.updateGcsBucketObjectReference(
-        fullAccessApi,
-        getWorkspaceId(),
-        fileResourceId,
-        newBlobName,
-        newBlobDescription,
-        /*bucketName=*/ null,
-        /*objectName=*/ null,
-        CloningInstructionsEnum.NOTHING);
     GcpGcsObjectResource blobResource =
-        fullAccessApi.getGcsObjectReference(getWorkspaceId(), fileResourceId);
+        GcsBucketUtils.updateGcsBucketObjectReference(
+            fullAccessApi,
+            getWorkspaceId(),
+            fileResourceId,
+            newBlobName,
+            newBlobDescription,
+            /*bucketName=*/ null,
+            /*objectName=*/ null,
+            CloningInstructionsEnum.NOTHING);
     assertEquals(newBlobName, blobResource.getMetadata().getName());
     assertEquals(newBlobDescription, blobResource.getMetadata().getDescription());
     assertEquals(gcsFileAttributes.getBucketName(), blobResource.getAttributes().getBucketName());
@@ -373,17 +370,16 @@ public class ReferencedGcsResourceLifecycle extends WorkspaceAllocateTestScriptB
                 gcsFolderAttributes.getFileName(),
                 /*cloningInstructions=*/ null));
     // User with access to foo/ can successfully update the referencing target to foo/.
-    GcsBucketUtils.updateGcsBucketObjectReference(
-        fullAccessApi,
-        getWorkspaceId(),
-        fileResourceId,
-        /*name=*/ null,
-        /*description=*/ null,
-        /*bucketName=*/ null,
-        gcsFolderAttributes.getFileName(),
-        /*cloningInstructions=*/ null);
     GcpGcsObjectResource blobReferenceSecondUpdate =
-        fullAccessApi.getGcsObjectReference(getWorkspaceId(), fileResourceId);
+        GcsBucketUtils.updateGcsBucketObjectReference(
+            fullAccessApi,
+            getWorkspaceId(),
+            fileResourceId,
+            /*name=*/ null,
+            /*description=*/ null,
+            /*bucketName=*/ null,
+            gcsFolderAttributes.getFileName(),
+            /*cloningInstructions=*/ null);
     assertEquals(
         gcsFileAttributes.getBucketName(),
         blobReferenceSecondUpdate.getAttributes().getBucketName());
@@ -393,17 +389,16 @@ public class ReferencedGcsResourceLifecycle extends WorkspaceAllocateTestScriptB
     assertEquals(newBlobDescription, blobReferenceSecondUpdate.getMetadata().getDescription());
 
     // update bucket only.
-    GcsBucketUtils.updateGcsBucketObjectReference(
-        fullAccessApi,
-        getWorkspaceId(),
-        fileResourceId,
-        /*name=*/ null,
-        /*description=*/ null,
-        /*bucketName=*/ gcsUniformAccessBucketAttributes.getBucketName(),
-        /*objectName=*/ null,
-        /*cloningInstructions=*/ null);
     GcpGcsObjectResource blobReferenceThirdUpdate =
-        fullAccessApi.getGcsObjectReference(getWorkspaceId(), fileResourceId);
+        GcsBucketUtils.updateGcsBucketObjectReference(
+            fullAccessApi,
+            getWorkspaceId(),
+            fileResourceId,
+            /*name=*/ null,
+            /*description=*/ null,
+            /*bucketName=*/ gcsUniformAccessBucketAttributes.getBucketName(),
+            /*objectName=*/ null,
+            /*cloningInstructions=*/ null);
     assertEquals(
         gcsUniformAccessBucketAttributes.getBucketName(),
         blobReferenceThirdUpdate.getAttributes().getBucketName());
@@ -413,17 +408,16 @@ public class ReferencedGcsResourceLifecycle extends WorkspaceAllocateTestScriptB
     assertEquals(newBlobDescription, blobReferenceThirdUpdate.getMetadata().getDescription());
 
     // Update both bucket and object path.
-    GcsBucketUtils.updateGcsBucketObjectReference(
-        fullAccessApi,
-        getWorkspaceId(),
-        fileResourceId,
-        /*name=*/ null,
-        /*description=*/ null,
-        /*bucketName=*/ gcsFileAttributes.getBucketName(),
-        gcsFileAttributes.getFileName(),
-        /*cloningInstructions=*/ null);
     GcpGcsObjectResource blobReferenceFourthUpdate =
-        fullAccessApi.getGcsObjectReference(getWorkspaceId(), fileResourceId);
+        GcsBucketUtils.updateGcsBucketObjectReference(
+            fullAccessApi,
+            getWorkspaceId(),
+            fileResourceId,
+            /*name=*/ null,
+            /*description=*/ null,
+            /*bucketName=*/ gcsFileAttributes.getBucketName(),
+            gcsFileAttributes.getFileName(),
+            /*cloningInstructions=*/ null);
     assertEquals(
         gcsFileAttributes.getBucketName(),
         blobReferenceFourthUpdate.getAttributes().getBucketName());

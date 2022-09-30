@@ -9,6 +9,7 @@ import bio.terra.workspace.api.ReferencedGcpResourceApi;
 import bio.terra.workspace.client.ApiException;
 import bio.terra.workspace.model.CloningInstructionsEnum;
 import bio.terra.workspace.model.GcpBigQueryDataTableAttributes;
+import bio.terra.workspace.model.GcpBigQueryDataTableResource;
 import bio.terra.workspace.model.GcpBigQueryDatasetResource;
 import bio.terra.workspace.model.UpdateBigQueryDataTableReferenceRequestBody;
 import com.google.cloud.bigquery.BigQuery;
@@ -29,7 +30,7 @@ public class BqDataTableUtils {
       Pattern.compile("^projects/([^/]+)/datasets/([^/]+)/tables/(.+)$");
 
   /** Updates name, description and/or referencing target of BigQuery data table reference. */
-  public static void updateBigQueryDataTableReference(
+  public static GcpBigQueryDataTableResource updateBigQueryDataTableReference(
       ReferencedGcpResourceApi resourceApi,
       UUID workspaceUuid,
       UUID resourceId,
@@ -60,7 +61,7 @@ public class BqDataTableUtils {
     if (cloningInstructions != null) {
       body.setCloningInstructions(cloningInstructions);
     }
-    resourceApi.updateBigQueryDataTableReferenceResource(body, workspaceUuid, resourceId);
+    return resourceApi.updateBigQueryDataTableReferenceResource(body, workspaceUuid, resourceId);
   }
 
   /**

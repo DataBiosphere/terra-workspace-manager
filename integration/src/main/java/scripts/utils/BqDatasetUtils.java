@@ -96,7 +96,7 @@ public class BqDatasetUtils {
   }
 
   /** Updates the name, description or referencing target of a BQ dataset reference. */
-  public static void updateBigQueryDatasetReference(
+  public static GcpBigQueryDatasetResource updateBigQueryDatasetReference(
       ReferencedGcpResourceApi resourceApi,
       UUID workspace,
       UUID resourceId,
@@ -123,7 +123,7 @@ public class BqDatasetUtils {
     if (cloningInstructions != null) {
       body.setCloningInstructions(cloningInstructions);
     }
-    resourceApi.updateBigQueryDatasetReferenceResource(body, workspace, resourceId);
+    return resourceApi.updateBigQueryDatasetReferenceResource(body, workspace, resourceId);
   }
 
   /**
