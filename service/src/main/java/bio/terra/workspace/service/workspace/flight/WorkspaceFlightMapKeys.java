@@ -107,12 +107,4 @@ public final class WorkspaceFlightMapKeys {
 
     private WsmApplicationKeys() {}
   }
-
-  public static class LandingZoneKeys {
-    public static final String LANDING_ZONE_ID = "landingZoneId";
-    public static final String LANDING_ZONE_SHARED_STORAGE_ACCOUNT_NAME =
-        "landingZoneSharedStorageAccountName";
-
-    private LandingZoneKeys() {}
-  }
 }
