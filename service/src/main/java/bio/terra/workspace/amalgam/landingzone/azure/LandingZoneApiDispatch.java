@@ -163,7 +163,6 @@ public class LandingZoneApiDispatch {
     if (purpose.getClass().equals(ResourcePurpose.class)) {
       return new ApiAzureLandingZoneDeployedResource()
           .resourceId(resource.resourceId())
-          .resourceName(resource.resourceName().orElse(null))
           .resourceType(resource.resourceType())
           .region(resource.region());
     }
