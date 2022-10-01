@@ -18,19 +18,20 @@ import com.azure.resourcemanager.storage.models.StorageAccount;
 import java.util.UUID;
 
 /**
- * Create quasi landing zone for testing.
+ * This class allows creating 2 different landing zones. It is created for integration test purposes
+ * only. It simplifies process of creation/deletion of a landing zone with custom resources without
+ * using high-level LZ API. This class might be improved/refactored in future if we need to handle
+ * wide range of different LZs. Currently, it has 2 sets of symmetrical create/delete operations for
+ * 2 different LZs.
  *
- * <p>We are cheating here when creating landing zone. One of the main reason is that LZ service API
- * doesn't support deletion of landing zone. This functionality is under construction. In this
- * particular case we don't need real landing zone, because everything we need is shared storage
- * account as part of landing zone. Here we use LZ low-level api to create landing zone:
+ * <p>We are cheating here when creating landing zone. One of the main reason is that LZ service has
+ * limited number of available landing zones for creation and also LZ service doesn't have LZ delete
+ * operation implemented yet. In this particular case we don't need to use high-level LZ service
+ * API. Here we mimic landing zone creation/deletion process by using LZ low-level api:
  *
  * <p>-register landing zone in LZ database
  *
- * <p>-create shared storage account with appropriate tags It will allow us to clean up created
- * resource and test functionality with landing zone.
- *
- * <p>This class should go once delete landing zone operation is available
+ * <p>-create shared storage account with appropriate tags
  */
 public class TestLandingZoneManager {
   private final AzureCloudContextService azureCloudContextService;
