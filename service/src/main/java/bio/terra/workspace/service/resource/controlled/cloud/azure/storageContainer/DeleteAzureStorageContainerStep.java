@@ -66,21 +66,32 @@ public class DeleteAzureStorageContainerStep implements Step {
                 .castByEnum(WsmResourceType.CONTROLLED_AZURE_STORAGE_ACCOUNT);
         storageAccountName = storageAccount.getStorageAccountName();
       } else {
-        // Storage container was created based on landing zone shared storage account
-        String landingZoneId = landingZoneApiDispatch.getLandingZoneId(azureCloudContext);
-        Optional<ApiAzureLandingZoneDeployedResource> sharedStorageAccount =
-            landingZoneApiDispatch.getSharedStorageAccount(landingZoneId);
-        if (sharedStorageAccount.isPresent()) {
-          StorageAccount storageAccount =
-              manager.storageAccounts().getById(sharedStorageAccount.get().getResourceId());
-          storageAccountName = storageAccount.name();
-        } else {
+        try {
+          // Storage container was created based on landing zone shared storage account
+          String landingZoneId = landingZoneApiDispatch.getLandingZoneId(azureCloudContext);
+          Optional<ApiAzureLandingZoneDeployedResource> sharedStorageAccount =
+              landingZoneApiDispatch.getSharedStorageAccount(landingZoneId);
+          if (sharedStorageAccount.isPresent()) {
+            StorageAccount storageAccount =
+                manager.storageAccounts().getById(sharedStorageAccount.get().getResourceId());
+            storageAccountName = storageAccount.name();
+          } else {
+            return new StepResult(
+                StepStatus.STEP_RESULT_FAILURE_FATAL,
+                new ResourceNotFoundException(
+                    String.format(
+                        "Shared storage account not found in landing zone. Landing zone ID='%s'.",
+                        landingZoneId)));
+          }
+        } catch (IllegalStateException illegalStateException) { // Thrown by landingZoneApiDispatch
           return new StepResult(
               StepStatus.STEP_RESULT_FAILURE_FATAL,
-              new ResourceNotFoundException(
+              new LandingZoneNotFoundException(
                   String.format(
-                      "Shared storage account not found in landing zone. Landing zone ID='%s'.",
-                      landingZoneId)));
+                      "Landing zone associated with the Azure cloud context not found. TenantId='%s', SubscriptionId='%s', ResourceGroupId='%s'",
+                      azureCloudContext.getAzureTenantId(),
+                      azureCloudContext.getAzureSubscriptionId(),
+                      azureCloudContext.getAzureResourceGroupId())));
         }
       }
 
