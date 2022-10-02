@@ -115,6 +115,9 @@ fi
 # Log in with app-default-credentials
 sudo -u "${JUPYTER_USER}" sh -c "terra auth login --mode=APP_DEFAULT_CREDENTIALS"
 
+# Generate cromwell.config
+sudo -u "${JUPYTER_USER}" sh -c "terra cromwell config-generate"
+
 ####################################
 # Shell and notebook environment
 ####################################
