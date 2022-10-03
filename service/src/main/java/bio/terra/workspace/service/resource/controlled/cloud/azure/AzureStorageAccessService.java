@@ -50,7 +50,10 @@ public class AzureStorageAccessService {
   }
 
   private BlobContainerSasPermission getSasTokenPermissions(
-      AuthenticatedUserRequest userRequest, UUID storageContainerUuid, String samResourceName) {
+      AuthenticatedUserRequest userRequest,
+      UUID storageContainerUuid,
+      String samResourceName,
+      String desiredPermissions) {
     final List<String> containerActions =
         SamRethrow.onInterrupted(
             () ->
@@ -58,23 +61,39 @@ public class AzureStorageAccessService {
                     userRequest, samResourceName, storageContainerUuid.toString()),
             "listResourceActions");
 
-    String tokenPermissions = "";
+    String possiblePermissions = "";
     for (String action : containerActions) {
       if (action.equals(SamConstants.SamControlledResourceActions.READ_ACTION)) {
-        tokenPermissions += "rl";
+        possiblePermissions += "rl";
       } else if (action.equals(SamConstants.SamControlledResourceActions.WRITE_ACTION)) {
-        tokenPermissions += "acwd";
+        possiblePermissions += "acwd";
       }
     }
 
-    if (tokenPermissions.isEmpty()) {
+    if (possiblePermissions.isEmpty()) {
       throw new ForbiddenException(
           String.format(
               "User is not authorized to get a SAS token for container %s",
               storageContainerUuid.toString()));
     }
 
-    return BlobContainerSasPermission.parse(tokenPermissions);
+    // ensure the requested permissions, if present, are a subset of the max possible permissions
+    String effectivePermissions;
+    if (desiredPermissions != null) {
+      var possiblePermissionsSet =
+          SasPermissionsHelper.permissionStringToCharSet(possiblePermissions);
+      var desiredPermissionsSet =
+          SasPermissionsHelper.permissionStringToCharSet(desiredPermissions);
+
+      if (!possiblePermissionsSet.containsAll(desiredPermissionsSet)) {
+        throw new ForbiddenException("Not authorized");
+      }
+      effectivePermissions = desiredPermissions;
+    } else {
+      effectivePermissions = possiblePermissions;
+    }
+
+    return BlobContainerSasPermission.parse(effectivePermissions);
   }
 
   /**
@@ -99,14 +118,17 @@ public class AzureStorageAccessService {
       OffsetDateTime startTime,
       OffsetDateTime expiryTime,
       AuthenticatedUserRequest userRequest,
-      String sasIpRange) {
+      String sasIpRange,
+      String sasBlobName,
+      String sasPermissions) {
     features.azureEnabledCheck();
 
     BlobContainerSasPermission blobContainerSasPermission =
         getSasTokenPermissions(
             userRequest,
             storageContainerResource.getResourceId(),
-            storageContainerResource.getCategory().getSamResourceName());
+            storageContainerResource.getCategory().getSamResourceName(),
+            sasPermissions);
 
     String storageAccountName = storageAccountResource.getStorageAccountName();
     String endpoint = storageAccountResource.getStorageAccountEndpoint();
@@ -129,7 +151,13 @@ public class AzureStorageAccessService {
       sasValues.setSasIpRange(SasIpRange.parse(sasIpRange));
     }
 
-    final var token = blobContainerClient.generateSas(sasValues);
+    String token;
+    if (sasBlobName != null) {
+      var blobClient = blobContainerClient.getBlobClient(sasBlobName);
+      token = blobClient.generateSas(sasValues);
+    } else {
+      token = blobContainerClient.generateSas(sasValues);
+    }
 
     return new AzureSasBundle(
         token,

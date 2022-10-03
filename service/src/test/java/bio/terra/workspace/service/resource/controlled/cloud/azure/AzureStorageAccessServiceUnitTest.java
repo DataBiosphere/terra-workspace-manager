@@ -95,7 +95,8 @@ public class AzureStorageAccessServiceUnitTest extends BaseUnitTest {
         /*properties*/ Map.of());
   }
 
-  private void assertValidToken(String sas, BlobContainerSasPermission expectedPermissions) {
+  private void assertValidToken(
+      String sas, BlobContainerSasPermission expectedPermissions, boolean blobToken) {
     Pattern protocolRegex = Pattern.compile("spr=https&");
     // SAS tokens start and expiry times are UTC
     Pattern startTimeRegex =
@@ -110,13 +111,19 @@ public class AzureStorageAccessServiceUnitTest extends BaseUnitTest {
                 + expiryTime
                     .atZoneSameInstant(ZoneOffset.UTC)
                     .format(DateTimeFormatter.ISO_LOCAL_DATE));
-    Pattern signedResourceRegex = Pattern.compile("sr=c&");
+    Pattern signedContainerResourceRegex = Pattern.compile("sr=c&");
+    Pattern signedBlobResourceRegex = Pattern.compile("sr=b&");
     Pattern permissionsRegex = Pattern.compile("sp=" + expectedPermissions.toString() + "&");
 
     assertThat("SAS is https", protocolRegex.matcher(sas).find());
     assertThat("SAS validity starts today", startTimeRegex.matcher(sas).find());
     assertThat("SAS validity ends today", expiryTimeRegex.matcher(sas).find());
-    assertThat("SAS is for a container resource", signedResourceRegex.matcher(sas).find());
+    if (blobToken) {
+      assertThat("SAS is for a blob resource", signedBlobResourceRegex.matcher(sas).find());
+    } else {
+      assertThat(
+          "SAS is for a container resource", signedContainerResourceRegex.matcher(sas).find());
+    }
     assertThat("SAS grants correct permissions", permissionsRegex.matcher(sas).find());
   }
 
@@ -144,9 +151,11 @@ public class AzureStorageAccessServiceUnitTest extends BaseUnitTest {
             startTime,
             expiryTime,
             userRequest,
-            ipRange);
+            ipRange,
+            null,
+            null);
 
-    assertValidToken(result.sasToken(), BlobContainerSasPermission.parse("rl"));
+    assertValidToken(result.sasToken(), BlobContainerSasPermission.parse("rl"), false);
     assertTrue(
         result.sasToken().contains("sip=" + ipRange),
         "the SignedIP was added to the query parameters");
@@ -178,9 +187,11 @@ public class AzureStorageAccessServiceUnitTest extends BaseUnitTest {
             startTime,
             expiryTime,
             userRequest,
+            null,
+            null,
             null);
 
-    assertValidToken(result.sasToken(), BlobContainerSasPermission.parse("racwdl"));
+    assertValidToken(result.sasToken(), BlobContainerSasPermission.parse("racwdl"), false);
     verify(samService)
         .listResourceActions(
             ArgumentMatchers.eq(userRequest),
@@ -212,6 +223,8 @@ public class AzureStorageAccessServiceUnitTest extends BaseUnitTest {
                 startTime,
                 expiryTime,
                 userRequest,
+                null,
+                null,
                 null));
 
     verify(samService)
@@ -247,14 +260,175 @@ public class AzureStorageAccessServiceUnitTest extends BaseUnitTest {
             startTime,
             expiryTime,
             userRequest,
+            null,
+            null,
             null);
 
-    assertValidToken(result.sasToken(), BlobContainerSasPermission.parse("racwdl"));
+    assertValidToken(result.sasToken(), BlobContainerSasPermission.parse("racwdl"), false);
 
     verify(samService)
         .listResourceActions(
             ArgumentMatchers.eq(userRequest),
             ArgumentMatchers.eq(SamConstants.SamResource.CONTROLLED_APPLICATION_PRIVATE),
             ArgumentMatchers.eq(storageContainerResource.getResourceId().toString()));
+  }
+
+  @Test
+  void createAzureStorageContainerSasToken_blobPath() throws InterruptedException {
+    var storageAccountResource = buildStorageAccount();
+    var storageContainerResource =
+        buildStorageContainerResource(
+            PrivateResourceState.ACTIVE,
+            AccessScopeType.ACCESS_SCOPE_PRIVATE,
+            ManagedByType.MANAGED_BY_APPLICATION);
+    when(samService.listResourceActions(
+            ArgumentMatchers.eq(userRequest),
+            ArgumentMatchers.eq(storageContainerResource.getCategory().getSamResourceName()),
+            ArgumentMatchers.eq(storageContainerResource.getResourceId().toString())))
+        .thenReturn(
+            List.of(
+                SamConstants.SamControlledResourceActions.WRITE_ACTION,
+                SamConstants.SamControlledResourceActions.READ_ACTION));
+
+    var result =
+        azureStorageAccessService.createAzureStorageContainerSasToken(
+            UUID.randomUUID(),
+            storageContainerResource,
+            storageAccountResource,
+            startTime,
+            expiryTime,
+            userRequest,
+            null,
+            "testing/blob-path",
+            null);
+
+    assertValidToken(result.sasToken(), BlobContainerSasPermission.parse("racwdl"), true);
+  }
+
+  @Test
+  void createAzureStorageContainerSasToken_permissions() throws InterruptedException {
+    var storageAccountResource = buildStorageAccount();
+    var storageContainerResource =
+        buildStorageContainerResource(
+            PrivateResourceState.ACTIVE,
+            AccessScopeType.ACCESS_SCOPE_PRIVATE,
+            ManagedByType.MANAGED_BY_APPLICATION);
+    when(samService.listResourceActions(
+            ArgumentMatchers.eq(userRequest),
+            ArgumentMatchers.eq(storageContainerResource.getCategory().getSamResourceName()),
+            ArgumentMatchers.eq(storageContainerResource.getResourceId().toString())))
+        .thenReturn(
+            List.of(
+                SamConstants.SamControlledResourceActions.WRITE_ACTION,
+                SamConstants.SamControlledResourceActions.READ_ACTION));
+
+    var result =
+        azureStorageAccessService.createAzureStorageContainerSasToken(
+            UUID.randomUUID(),
+            storageContainerResource,
+            storageAccountResource,
+            startTime,
+            expiryTime,
+            userRequest,
+            null,
+            "testing/blob-path",
+            "ld");
+
+    assertValidToken(result.sasToken(), BlobContainerSasPermission.parse("dl"), true);
+  }
+
+  @Test
+  void createAzureStorageContainerSasToken_forbiddenPermissions() throws InterruptedException {
+    var storageAccountResource = buildStorageAccount();
+    var storageContainerResource =
+        buildStorageContainerResource(
+            PrivateResourceState.ACTIVE,
+            AccessScopeType.ACCESS_SCOPE_PRIVATE,
+            ManagedByType.MANAGED_BY_APPLICATION);
+    when(samService.listResourceActions(
+            ArgumentMatchers.eq(userRequest),
+            ArgumentMatchers.eq(storageContainerResource.getCategory().getSamResourceName()),
+            ArgumentMatchers.eq(storageContainerResource.getResourceId().toString())))
+        .thenReturn(List.of(SamConstants.SamControlledResourceActions.READ_ACTION));
+
+    assertThrows(
+        ForbiddenException.class,
+        () ->
+            azureStorageAccessService.createAzureStorageContainerSasToken(
+                UUID.randomUUID(),
+                storageContainerResource,
+                storageAccountResource,
+                startTime,
+                expiryTime,
+                userRequest,
+                null,
+                null,
+                "rwdl"),
+        "Asking for delete + write when we should only have READ_ACTION should result in an exception ");
+  }
+
+  @Test
+  void createAzureStorageContainerSasToken_invalidPermissions() throws InterruptedException {
+    var storageAccountResource = buildStorageAccount();
+    var storageContainerResource =
+        buildStorageContainerResource(
+            PrivateResourceState.ACTIVE,
+            AccessScopeType.ACCESS_SCOPE_PRIVATE,
+            ManagedByType.MANAGED_BY_APPLICATION);
+    when(samService.listResourceActions(
+            ArgumentMatchers.eq(userRequest),
+            ArgumentMatchers.eq(storageContainerResource.getCategory().getSamResourceName()),
+            ArgumentMatchers.eq(storageContainerResource.getResourceId().toString())))
+        .thenReturn(
+            List.of(
+                SamConstants.SamControlledResourceActions.READ_ACTION,
+                SamConstants.SamControlledResourceActions.WRITE_ACTION));
+
+    assertThrows(
+        ForbiddenException.class,
+        () ->
+            azureStorageAccessService.createAzureStorageContainerSasToken(
+                UUID.randomUUID(),
+                storageContainerResource,
+                storageAccountResource,
+                startTime,
+                expiryTime,
+                userRequest,
+                null,
+                null,
+                "!@#"),
+        "Nonsense characters should result in an exception ");
+  }
+
+  @Test
+  void createAzureStorageContainerSasToken_blobName() throws InterruptedException {
+    var storageAccountResource = buildStorageAccount();
+    var storageContainerResource =
+        buildStorageContainerResource(
+            PrivateResourceState.ACTIVE,
+            AccessScopeType.ACCESS_SCOPE_PRIVATE,
+            ManagedByType.MANAGED_BY_APPLICATION);
+    when(samService.listResourceActions(
+            ArgumentMatchers.eq(userRequest),
+            ArgumentMatchers.eq(storageContainerResource.getCategory().getSamResourceName()),
+            ArgumentMatchers.eq(storageContainerResource.getResourceId().toString())))
+        .thenReturn(
+            List.of(
+                SamConstants.SamControlledResourceActions.READ_ACTION,
+                SamConstants.SamControlledResourceActions.WRITE_ACTION));
+
+    var result =
+        azureStorageAccessService.createAzureStorageContainerSasToken(
+            UUID.randomUUID(),
+            storageContainerResource,
+            storageAccountResource,
+            startTime,
+            expiryTime,
+            userRequest,
+            null,
+            "foo/the/bar.baz",
+            null);
+
+    assertValidToken(result.sasToken(), BlobContainerSasPermission.parse("racwdl"), true);
   }
 }

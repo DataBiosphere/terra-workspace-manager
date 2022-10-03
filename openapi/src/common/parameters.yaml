@@ -112,6 +112,43 @@ components:
         type: integer
         format: int64
 
+    SasPermissions:
+      name: sasPermissions
+      in: query
+      required: false
+      description: |
+        Permissions associated with the SAS indicating what operations a client may perform on the resource. Must be a 
+        string consisting of some combination following available permissions:
+
+        | Permission | Description |
+        |------------|-------------|
+        |`r`         | Read        |
+        |`a`         | Add         |
+        |`c`         | Create      |
+        |`w`         | Write       |
+        |`d`         | Delete      |
+        |`l`         | List        |
+
+
+        For example:
+          * To construct a SAS with permissions limited to read, write and list the caller would supply the string
+        `rwl`.
+          * To construct a SAS with permissions limited to add, create, write and delete, the caller would supply the 
+        string `acwd`.
+
+        If the calling user does not have the requisite role against the workspace for the requested permissions, this
+        operation will return a 403 Forbidden error.
+      schema:
+        type: string
+
+    SasBlobName:
+      name: sasBlobName
+      in: query
+      description:  Requests access to a single blob in a container
+      required: false
+      schema:
+        type: string
+
     StewardshipType:
       name: stewardship
       in: query
