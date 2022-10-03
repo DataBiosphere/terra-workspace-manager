@@ -180,10 +180,6 @@ public class NotebookUtils {
   /**
    * Asserts that the notebook instance contains proxy url. It usually takes 1-2 min for the proxy
    * url to be set.
-   *
-   * @param userNotebooks
-   * @param instanceName
-   * @throws Exception
    */
   public static void assertInstanceHasProxyUrl(
       AIPlatformNotebooks userNotebooks, String instanceName) throws Exception {
