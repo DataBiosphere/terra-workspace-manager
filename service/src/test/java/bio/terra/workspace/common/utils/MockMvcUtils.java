@@ -113,6 +113,10 @@ public class MockMvcUtils {
       "/api/workspaces/v1/%s/resources/controlled/gcp/buckets/%s";
   public static final String REFERENCED_DATA_REPO_SNAPSHOTS_V1_PATH_FORMAT =
       "/api/workspaces/v1/%s/resources/referenced/datarepo/snapshots";
+  public static final String REFERENCED_DATA_REPO_SNAPSHOTS_V1_CLONE_PATH_FORMAT =
+          "/api/workspaces/v1/%s/resources/referenced/datarepo/snapshots/%s/clone";
+  public static final String REFERENCED_DATA_REPO_SNAPSHOTS_V1_BATCH_CLONE_PATH_FORMAT =
+          "/api/workspaces/v1/%s/resources/referenced/datarepo/snapshots/clone";
   public static final String REFERENCED_GCP_GCS_BUCKETS_V1_PATH_FORMAT =
       "/api/workspaces/v1/%s/resources/referenced/gcp/buckets";
   public static final String REFERENCED_GCP_GCS_OBJECTS_V1_PATH_FORMAT =

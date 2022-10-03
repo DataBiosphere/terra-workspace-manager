@@ -4,24 +4,13 @@ import static bio.terra.workspace.app.controller.shared.PropertiesUtils.convertM
 import static bio.terra.workspace.common.utils.TestUtils.appendRandomNumber;
 
 import bio.terra.workspace.common.utils.TestUtils;
-import bio.terra.workspace.generated.model.ApiCloningInstructionsEnum;
-import bio.terra.workspace.generated.model.ApiCreateDataRepoSnapshotReferenceRequestBody;
-import bio.terra.workspace.generated.model.ApiCreateGcpBigQueryDataTableReferenceRequestBody;
-import bio.terra.workspace.generated.model.ApiCreateGcpBigQueryDatasetReferenceRequestBody;
-import bio.terra.workspace.generated.model.ApiCreateGcpGcsBucketReferenceRequestBody;
-import bio.terra.workspace.generated.model.ApiCreateGcpGcsObjectReferenceRequestBody;
-import bio.terra.workspace.generated.model.ApiCreateGitRepoReferenceRequestBody;
-import bio.terra.workspace.generated.model.ApiDataRepoSnapshotAttributes;
-import bio.terra.workspace.generated.model.ApiGcpBigQueryDataTableAttributes;
-import bio.terra.workspace.generated.model.ApiGcpBigQueryDatasetAttributes;
-import bio.terra.workspace.generated.model.ApiGcpGcsBucketAttributes;
-import bio.terra.workspace.generated.model.ApiGcpGcsObjectAttributes;
-import bio.terra.workspace.generated.model.ApiGitRepoAttributes;
-import bio.terra.workspace.generated.model.ApiReferenceResourceCommonFields;
+import bio.terra.workspace.generated.model.*;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.model.WsmResourceFields;
 import bio.terra.workspace.service.resource.referenced.cloud.gcp.bqdataset.ReferencedBigQueryDatasetResource;
 import bio.terra.workspace.service.resource.referenced.cloud.gcp.datareposnapshot.ReferencedDataRepoSnapshotResource;
+
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import org.apache.commons.lang3.RandomStringUtils;
@@ -79,6 +68,21 @@ public class ReferenceResourceFixtures {
                 .snapshot("This is a snapshot")
                 .instanceName(RandomStringUtils.randomAlphabetic(10)))
         .metadata(makeDefaultReferencedResourceFieldsApi());
+  }
+
+  public static ApiCloneReferencedResourceRequestBody
+  makeDataRepoSnapshotCloneReferenceRequestBody(UUID destinationWorkspaceId) {
+    return makeDataRepoSnapshotCloneReferenceRequestBody(destinationWorkspaceId, null);
+  }
+
+    public static ApiCloneReferencedResourceRequestBody
+  makeDataRepoSnapshotCloneReferenceRequestBody(UUID destinationWorkspaceId, List<UUID> resourceIds) {
+    return new ApiCloneReferencedResourceRequestBody()
+            .cloningInstructions(ApiCloningInstructionsEnum.REFERENCE)
+            .destinationWorkspaceId(destinationWorkspaceId)
+            .name("Snapshot-by-reference")
+            .description("This is a snapshot-by-reference")
+            .resources(resourceIds);
   }
 
   public static ApiCreateGcpGcsBucketReferenceRequestBody makeGcsBucketReferenceRequestBody() {
