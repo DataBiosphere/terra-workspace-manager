@@ -8,6 +8,12 @@ components:
         hybridConnectionName:
           description: Name of created hybrid connection (not the resource name).
           type: string
+        hybridConnectionWebsocketUri:
+          description: Websocket URI for hybrid connection
+          type: string
+        relayListenerConfigurationString:
+          description: configuration string for an Azure relay listener
+          type: string
 
     AzureHybridConnectionResource:
       type: object

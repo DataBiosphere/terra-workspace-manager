@@ -15,13 +15,11 @@ import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.Contr
 import bio.terra.workspace.service.workspace.model.AzureCloudContext;
 import com.azure.core.management.exception.ManagementException;
 import com.azure.resourcemanager.relay.RelayManager;
-
-import java.util.Arrays;
-import java.util.Optional;
-
 import com.azure.resourcemanager.relay.fluent.models.AuthorizationRuleInner;
 import com.azure.resourcemanager.relay.models.AccessRights;
 import com.azure.resourcemanager.relay.models.HybridConnection;
+import java.util.Arrays;
+import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -60,13 +58,13 @@ public class CreateAzureHybridConnectionStep implements Step {
     try {
       String relayNamespaceName = getAzureRelayNamespaceName(azureCloudContext);
 
-      HybridConnection hybridConnection = manager
-          .hybridConnections()
-          .define(resource.getHybridConnectionName())
-          .withExistingNamespace(azureCloudContext.getAzureResourceGroupId(),
-              relayNamespaceName)
-          .create();
-
+      HybridConnection hybridConnection =
+          manager
+              .hybridConnections()
+              .define(resource.getHybridConnectionName())
+              .withExistingNamespace(
+                  azureCloudContext.getAzureResourceGroupId(), relayNamespaceName)
+              .create();
 
       String authRuleName = "listener";
       manager
@@ -76,18 +74,27 @@ public class CreateAzureHybridConnectionStep implements Step {
               relayNamespaceName,
               hybridConnection.name(),
               authRuleName,
-              new AuthorizationRuleInner().withRights(Arrays.asList(AccessRights.LISTEN))
-          );
+              new AuthorizationRuleInner().withRights(Arrays.asList(AccessRights.LISTEN)));
 
-      // TODO return primary Key, relayNamespace name, and hybridConnection name
-      String primaryKey = manager
-          .hybridConnections()
-          .listKeys(azureCloudContext.getAzureResourceGroupId(),
-              relayNamespaceName,
-              hybridConnection.name(),
-              authRuleName
-          )
-          .primaryKey();
+      String primaryPolicyKey =
+          manager
+              .hybridConnections()
+              .listKeys(
+                  azureCloudContext.getAzureResourceGroupId(),
+                  relayNamespaceName,
+                  hybridConnection.name(),
+                  authRuleName)
+              .primaryKey();
+
+      // TODO return both URIs and hybridConnection name
+      String hybridConnectionWebsocketUrl =
+          String.format(
+              "wss://%s.servicebus.windows.net/$hc/%s",
+              relayNamespaceName, hybridConnection.name());
+      String relayListenerConfigurationString =
+          String.format(
+              "Endpoint=sb://%s.servicebus.windows.net/;SharedAccessKeyName=%s;SharedAccessKey=%s;EntityPath=%s",
+              relayNamespaceName, authRuleName, primaryPolicyKey, hybridConnection.name());
     } catch (ManagementException e) {
       // Stairway steps may run multiple times, so we may already have created this resource. In all
       // other cases, surface the exception and attempt to retry.
@@ -113,8 +120,12 @@ public class CreateAzureHybridConnectionStep implements Step {
     RelayManager manager = crlService.getRelayManager(azureCloudContext, azureConfig);
 
     try {
-      manager.hybridConnections()
-          .delete(azureCloudContext.getAzureResourceGroupId(), getAzureRelayNamespaceName(azureCloudContext), resource.getHybridConnectionName());
+      manager
+          .hybridConnections()
+          .delete(
+              azureCloudContext.getAzureResourceGroupId(),
+              getAzureRelayNamespaceName(azureCloudContext),
+              resource.getHybridConnectionName());
     } catch (ManagementException e) {
       // Stairway steps may run multiple times, so we may already have deleted this resource.
       if (ManagementExceptionUtils.isExceptionCode(
@@ -134,10 +145,7 @@ public class CreateAzureHybridConnectionStep implements Step {
   private String getAzureRelayNamespaceName(AzureCloudContext azureCloudContext) {
     String landingZoneId = landingZoneApiDispatch.getLandingZoneId(azureCloudContext);
     Optional<ApiAzureLandingZoneDeployedResource> azureRelayResource =
-        landingZoneApiDispatch
-            .listAzureLandingZoneResources(landingZoneId)
-            .getResources()
-            .stream()
+        landingZoneApiDispatch.listAzureLandingZoneResources(landingZoneId).getResources().stream()
             .filter(
                 purposeGroup ->
                     purposeGroup.getPurpose().equals(ResourcePurpose.SHARED_RESOURCE.toString()))
