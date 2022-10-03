@@ -43,6 +43,7 @@ import bio.terra.workspace.service.resource.referenced.cloud.gcp.gcsbucket.Refer
 import bio.terra.workspace.service.workspace.model.WorkspaceConstants.ResourceProperties;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.UUID;
 import javax.annotation.Nullable;
@@ -99,7 +100,7 @@ public class FolderServiceTest extends BaseConnectedTest {
     controlledBucketInFoo =
         ControlledGcsBucketResource.builder()
             .common(createControlledResourceCommonFieldWithFolderId(workspaceId, fooFolder.id()))
-            .bucketName(randomAlphabetic(10))
+            .bucketName(randomAlphabetic(10).toLowerCase(Locale.ROOT))
             .build();
     controlledResourceService.createControlledResourceSync(
         controlledBucketInFoo,
@@ -110,7 +111,7 @@ public class FolderServiceTest extends BaseConnectedTest {
     controlledBucket2InFooFoo =
         ControlledGcsBucketResource.builder()
             .common(createControlledResourceCommonFieldWithFolderId(workspaceId, fooFooFolder.id()))
-            .bucketName(randomAlphabetic(10))
+            .bucketName(randomAlphabetic(10).toLowerCase(Locale.ROOT))
             .build();
     controlledResourceService.createControlledResourceSync(
         controlledBucket2InFooFoo,
