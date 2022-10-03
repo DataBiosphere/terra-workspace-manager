@@ -34,6 +34,7 @@ import bio.terra.workspace.generated.model.ApiRoleBindingList;
 import bio.terra.workspace.generated.model.ApiTpsPaoGetResult;
 import bio.terra.workspace.generated.model.ApiTpsPolicyInput;
 import bio.terra.workspace.generated.model.ApiTpsPolicyInputs;
+import bio.terra.workspace.generated.model.ApiTpsUpdateMode;
 import bio.terra.workspace.generated.model.ApiUpdateWorkspaceRequestBody;
 import bio.terra.workspace.generated.model.ApiWorkspaceDescription;
 import bio.terra.workspace.generated.model.ApiWorkspaceDescriptionList;
@@ -332,12 +333,26 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
     }
     workspaceService.validateWorkspaceAndAction(
         userRequest, workspaceUuid, SamConstants.SamWorkspaceAction.WRITE);
+
+    ApiTpsPolicyInputs removeAttributes = null;
+    ApiTpsPolicyInputs addAttributes = null;
+    ApiTpsUpdateMode policyUpdateMode = ApiTpsUpdateMode.DRY_RUN;
+
+    if (featureConfiguration.isTpsEnabled()) {
+      removeAttributes = body.getRemoveAttributes();
+      addAttributes = body.getAddAttributes();
+      policyUpdateMode = body.getUpdateMode();
+    }
+
     Workspace workspace =
         workspaceService.updateWorkspace(
             workspaceUuid,
             body.getUserFacingId(),
             body.getDisplayName(),
             body.getDescription(),
+            addAttributes,
+            removeAttributes,
+            policyUpdateMode,
             userRequest);
     WsmIamRole highestRole = workspaceService.getHighestRole(workspaceUuid, userRequest);
     ApiWorkspaceDescription desc = buildWorkspaceDescription(workspace, highestRole, userRequest);
