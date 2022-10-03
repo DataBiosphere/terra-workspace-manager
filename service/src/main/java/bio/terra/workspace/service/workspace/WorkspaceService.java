@@ -300,7 +300,8 @@ public class WorkspaceService {
         request.addAttributes(addAttributes);
         request.removeAttributes(removeAttributes);
         request.setUpdateMode(updateMode);
-        tpsApiDispatch.updatePao(new BearerToken(userRequest.getRequiredToken()), workspaceUuid, request);
+        tpsApiDispatch.updatePao(
+            new BearerToken(userRequest.getRequiredToken()), workspaceUuid, request);
       }
 
       workspaceActivityLogService.writeActivity(userRequest, workspaceUuid, OperationType.UPDATE);
