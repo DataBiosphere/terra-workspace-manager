@@ -6,10 +6,10 @@ import bio.terra.landingzone.service.landingzone.azure.model.DeployedLandingZone
 import bio.terra.landingzone.service.landingzone.azure.model.LandingZoneResource;
 import bio.terra.workspace.generated.model.ApiCreateAzureLandingZoneRequestBody;
 import bio.terra.workspace.generated.model.ApiJobControl;
-import bio.terra.workspace.generated.model.ApiLandingZoneTarget;
 import java.time.Instant;
 import java.util.Collections;
 import java.util.Optional;
+import java.util.UUID;
 import org.apache.http.HttpStatus;
 
 public class AzureLandingZoneFixtures {
@@ -29,7 +29,7 @@ public class AzureLandingZoneFixtures {
   }
 
   public static LandingZoneJobService.AsyncJobResult<DeployedLandingZone>
-      createJobResultWithSucceededState(String jobId, String landingZoneId) {
+      createJobResultWithSucceededState(String jobId, UUID landingZoneId) {
     LandingZoneJobService.AsyncJobResult<DeployedLandingZone> asyncJobResult =
         new LandingZoneJobService.AsyncJobResult<>();
     asyncJobResult.jobReport(
@@ -58,11 +58,7 @@ public class AzureLandingZoneFixtures {
   public static ApiCreateAzureLandingZoneRequestBody buildCreateAzureLandingZoneRequest(
       String jobId) {
     return new ApiCreateAzureLandingZoneRequestBody()
-        .landingZoneTarget(
-            new ApiLandingZoneTarget()
-                .resourceGroupId("resourceGroup")
-                .subscriptionId("subscriptionId")
-                .tenantId("tenantId"))
+        .billingProfileId(UUID.randomUUID())
         .jobControl(new ApiJobControl().id(jobId))
         .definition("azureLandingZoneDefinition")
         .version("v1");
@@ -71,11 +67,7 @@ public class AzureLandingZoneFixtures {
   public static ApiCreateAzureLandingZoneRequestBody
       buildCreateAzureLandingZoneRequestWithoutDefinition(String jobId) {
     return new ApiCreateAzureLandingZoneRequestBody()
-        .landingZoneTarget(
-            new ApiLandingZoneTarget()
-                .resourceGroupId("resourceGroup")
-                .subscriptionId("subscriptionId")
-                .tenantId("tenantId"))
+        .billingProfileId(UUID.randomUUID())
         .jobControl(new ApiJobControl().id(jobId))
         .version("v1");
   }

@@ -98,7 +98,7 @@ components:
     CreateAzureLandingZoneRequestBody:
       description: Payload for requesting a new Azure landing zone.
       type: object
-      required: [definition, landingZoneTarget]
+      required: [definition, billingProfileId]
       properties:
         definition:
           description: A definition to create an Azure landing zone from
@@ -118,8 +118,10 @@ components:
               Here is a list of some parameters - POSTGRES_SERVER_SKU, POSTGRESQL_SUBNET, VNET_ADDRESS_SPACE.
               These are example of assigned values - POSTGRES_SERVER_SKU=GP_Gen5_2, POSTGRESQL_SUBNET=10.1.0.16/29
             $ref: '#/components/schemas/AzureLandingZoneParameter'
-        landingZoneTarget:
-          $ref: '#/components/schemas/LandingZoneTarget'
+        billingProfileId:
+          description: Identifier for the billing profile to be used for this landing zone.
+          type: string
+          format: uuid
         jobControl:
           $ref: '#/components/schemas/JobControl'
 
@@ -141,6 +143,7 @@ components:
         id:
           description: An identifier of created Azure landing zone.
           type: string
+          format: uuid
         resources:
           description: List of Azure landing zone deployed resources.
           type: array
@@ -208,23 +211,6 @@ components:
           description: Value of the parameter
           type: string
 
-    LandingZoneTarget:
-      description: |
-        The azure configuration associated with a landing zone deployment.
-        This configuration defines where landing zone would be deployed.
-      type: object
-      required: [tenantId, subscriptionId, resourceGroupId]
-      properties:
-        tenantId:
-          description: The ID of Azure tenant associated with the landing zone.
-          type: string
-        subscriptionId:
-          description: The ID of Azure subscription associated with the landing zone.
-          type: string
-        resourceGroupId:
-          description: The ID of Azure resource group associated with the landing zone.
-          type: string
-
     AzureLandingZoneResourcesList:
       type: object
       required: [resources]
@@ -232,6 +218,7 @@ components:
         id:
           description: An identifier of a Azure landing zone.
           type: string
+          format: uuid
         resources:
           description: A list of deployed resources in a landing zone, grouped by purpose.
           type: array
@@ -240,7 +227,7 @@ components:
 
     AzureLandingZoneResourcesPurposeGroup:
       description: |
-        The structure contains one landing zone purpose and a list of Azure deployed resources that 
+        The structure contains one landing zone purpose and a list of Azure deployed resources that
         are tagged with this purpose.
       type: object
       required: [purpose,deployedResources]
@@ -270,3 +257,4 @@ components:
       required: true
       schema:
         type: string
+        format: uuid
