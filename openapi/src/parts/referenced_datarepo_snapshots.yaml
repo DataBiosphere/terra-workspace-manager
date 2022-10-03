@@ -105,6 +105,35 @@ paths:
         '500':
           $ref: '#/components/responses/ServerError'
 
+  /api/workspaces/v1/{workspaceId}/resources/referenced/datarepo/snapshots/clone:
+    parameters:
+      - $ref: '#/components/parameters/WorkspaceId'
+    post:
+      summary: Clone a batch of referenced Data Repo Snapshot resources
+      operationId: cloneBatchGcpDataRepoSnapshotReference
+      tags: [ ReferencedGcpResource ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CloneReferencedResourceRequestBody'
+      responses:
+        '200':
+          description: Response for successful Data Repo Snapshot reference clone
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CloneReferencedGcpDataRepoSnapshotResourceResultList'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
   /api/workspaces/v1/{workspaceId}/resources/referenced/datarepo/snapshots/name/{name}:
     parameters:
       - $ref: '#/components/parameters/WorkspaceId'
@@ -171,6 +200,13 @@ components:
           format: uuid
         resource:
           $ref: '#/components/schemas/DataRepoSnapshotResource'
+
+    CloneReferencedGcpDataRepoSnapshotResourceResultList:
+      description: >-
+        List of CloneReferencedGcpRepoSnapshotResourceResults
+      type: array
+      items:
+        $ref: '#/components/schemas/CloneReferencedGcpDataRepoSnapshotResourceResult'
 
   responses:
     DataRepoSnapshotReferenceResponse:

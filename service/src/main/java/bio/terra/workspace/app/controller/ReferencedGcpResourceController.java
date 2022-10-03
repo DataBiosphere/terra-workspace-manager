@@ -48,6 +48,8 @@ import bio.terra.workspace.service.resource.referenced.cloud.gcp.gcsbucket.Refer
 import bio.terra.workspace.service.resource.referenced.cloud.gcp.gcsobject.ReferencedGcsObjectResource;
 import bio.terra.workspace.service.resource.referenced.terra.workspace.ReferencedTerraWorkspaceResource;
 import bio.terra.workspace.service.workspace.WorkspaceService;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import javax.servlet.http.HttpServletRequest;
@@ -57,6 +59,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.RequestBody;
 
 @Controller
 public class ReferencedGcpResourceController implements ReferencedGcpResourceApi {
@@ -866,6 +869,61 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
             .sourceResourceId(sourceReferencedResource.getResourceId())
             .effectiveCloningInstructions(effectiveCloningInstructions.toApiModel());
     return new ResponseEntity<>(result, HttpStatus.OK);
+  }
+
+  public ResponseEntity<List<ApiCloneReferencedGcpDataRepoSnapshotResourceResult>>
+      cloneBatchGcpDataRepoSnapshotReference(
+          UUID workspaceUuid,
+          @Valid ApiCloneReferencedResourceRequestBody body,
+          @RequestBody List<UUID> resources) {
+    final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    // For cloning, we need to check that the caller has both read access to the source workspace
+    // and write access to the destination workspace.
+    workspaceService.validateCloneReferenceAction(
+        userRequest, workspaceUuid, body.getDestinationWorkspaceId());
+    List<ApiCloneReferencedGcpDataRepoSnapshotResourceResult> results = new ArrayList<>();
+    for (UUID resourceId : resources) {
+
+      final ReferencedResource sourceReferencedResource =
+          referenceResourceService.getReferenceResource(workspaceUuid, resourceId);
+
+      final CloningInstructions effectiveCloningInstructions =
+          Optional.ofNullable(body.getCloningInstructions())
+              .map(CloningInstructions::fromApiModel)
+              .orElse(sourceReferencedResource.getCloningInstructions());
+      if (CloningInstructions.COPY_REFERENCE != effectiveCloningInstructions) {
+        // Nothing to clone here
+        final var emptyResult =
+            new ApiCloneReferencedGcpDataRepoSnapshotResourceResult()
+                .effectiveCloningInstructions(effectiveCloningInstructions.toApiModel())
+                .sourceResourceId(sourceReferencedResource.getResourceId())
+                .sourceWorkspaceId(sourceReferencedResource.getWorkspaceId())
+                .resource(null);
+        results.add(emptyResult);
+      } else {
+        // Clone the reference
+        final ReferencedDataRepoSnapshotResource clonedReferencedResource =
+            referenceResourceService
+                .cloneReferencedResource(
+                    sourceReferencedResource,
+                    body.getDestinationWorkspaceId(),
+                    UUID.randomUUID(), // resourceId is not pre-allocated for individual clone
+                    // endpoints
+                    body.getName(),
+                    body.getDescription(),
+                    userRequest)
+                .castByEnum(WsmResourceType.REFERENCED_ANY_DATA_REPO_SNAPSHOT);
+        // Build the correct response type
+        final var result =
+            new ApiCloneReferencedGcpDataRepoSnapshotResourceResult()
+                .resource(clonedReferencedResource.toApiResource())
+                .sourceWorkspaceId(sourceReferencedResource.getWorkspaceId())
+                .sourceResourceId(sourceReferencedResource.getResourceId())
+                .effectiveCloningInstructions(effectiveCloningInstructions.toApiModel());
+        results.add(result);
+      }
+    }
+    return new ResponseEntity<>(results, HttpStatus.OK);
   }
 
   // - Git Repo referenced resource - //
