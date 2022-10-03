@@ -1,7 +1,6 @@
 package scripts.testscripts;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import bio.terra.testrunner.runner.config.TestUserSpecification;
 import bio.terra.workspace.api.ControlledGcpResourceApi;
@@ -12,7 +11,6 @@ import bio.terra.workspace.model.GcpAiNotebookInstanceResource;
 import bio.terra.workspace.model.GrantRoleRequestBody;
 import bio.terra.workspace.model.IamRole;
 import com.google.api.services.notebooks.v1.AIPlatformNotebooks;
-import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -63,28 +61,7 @@ public class PrivateControlledAiNotebookInstancePostStartup
     AIPlatformNotebooks userNotebooks = ClientTestUtils.getAIPlatformNotebooksClient(resourceUser);
     GcpAiNotebookInstanceResource resource = getNotebookResource(resourceUserApi, creationResult);
     var instanceName = composeInstanceName(resource);
-    String proxyUrl =
-        ClientTestUtils.getWithRetryOnException(
-            () -> {
-              try {
-                String p =
-                    userNotebooks
-                        .projects()
-                        .locations()
-                        .instances()
-                        .get(instanceName)
-                        .execute()
-                        .getProxyUri();
-                if (p == null) {
-                  throw new NullPointerException();
-                }
-                return p;
-                // Do not retry if it's an IO exception.
-              } catch (IOException ignored) {
-              }
-              return null;
-            });
-    assertNotNull(proxyUrl);
+    NotebookUtils.assertInstanceHasProxyUrl(userNotebooks, instanceName);
     Map<String, String> metadata =
         userNotebooks.projects().locations().instances().get(instanceName).execute().getMetadata();
     assertEquals(testValue, metadata.get("terra-test-value"));

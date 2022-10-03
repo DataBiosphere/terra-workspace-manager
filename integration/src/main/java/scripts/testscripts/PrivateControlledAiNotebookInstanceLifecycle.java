@@ -157,6 +157,7 @@ public class PrivateControlledAiNotebookInstanceLifecycle extends WorkspaceAlloc
             resource.getAttributes().getInstanceId());
     AIPlatformNotebooks userNotebooks = ClientTestUtils.getAIPlatformNotebooksClient(resourceUser);
 
+    NotebookUtils.assertInstanceHasProxyUrl(userNotebooks, instanceName);
     assertTrue(
         NotebookUtils.userHasProxyAccess(
             creationResult, resourceUser, resource.getAttributes().getProjectId()),

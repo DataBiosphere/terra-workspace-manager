@@ -1,6 +1,7 @@
 package scripts.utils;
 
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static scripts.utils.CommonResourceFieldsUtil.makeControlledResourceCommonFields;
 
 import bio.terra.testrunner.runner.config.TestUserSpecification;
@@ -174,5 +175,39 @@ public class NotebookUtils {
     return Optional.ofNullable(maybePermissionsList)
         .map(list -> list.contains(actAsPermission))
         .orElse(false);
+  }
+
+  /**
+   * Asserts that the notebook instance contains proxy url. It usually takes 1-2 min for the proxy
+   * url to be set.
+   *
+   * @param userNotebooks
+   * @param instanceName
+   * @throws Exception
+   */
+  public static void assertInstanceHasProxyUrl(
+      AIPlatformNotebooks userNotebooks, String instanceName) throws Exception {
+    String proxyUrl =
+        ClientTestUtils.getWithRetryOnException(
+            () -> {
+              try {
+                String p =
+                    userNotebooks
+                        .projects()
+                        .locations()
+                        .instances()
+                        .get(instanceName)
+                        .execute()
+                        .getProxyUri();
+                if (p == null) {
+                  throw new NullPointerException();
+                }
+                return p;
+                // Do not retry if it's an IO exception.
+              } catch (IOException ignored) {
+              }
+              return null;
+            });
+    assertNotNull(proxyUrl);
   }
 }
