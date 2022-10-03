@@ -202,7 +202,7 @@ feature:
   # alpha1-enabled - Controls support of the Alpha1 experimental API and service
   alpha1-enabled: false
   # tps-enabled - Controls whether Terra Policy Service is called. It is always built into WSM
-  tps-enabled: true
+  tps-enabled: false
 
 reference:
   gitrepos:

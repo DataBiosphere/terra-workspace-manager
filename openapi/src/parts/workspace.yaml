@@ -479,6 +479,12 @@ components:
         description:
           description: A description of the workspace
           type: string
+        removeAttributes:
+          $ref: '#/components/schemas/TpsPolicyInputs'
+        addAttributes:
+          $ref: '#/components/schemas/TpsPolicyInputs'
+        updateMode:
+          $ref: '#/components/schemas/TpsUpdateMode'
 
     WorkspaceDescription:
       type: object
