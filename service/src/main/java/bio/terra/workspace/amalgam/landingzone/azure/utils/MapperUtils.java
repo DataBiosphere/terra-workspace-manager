@@ -6,7 +6,6 @@ import bio.terra.landingzone.model.LandingZoneTarget;
 import bio.terra.workspace.generated.model.ApiAzureLandingZoneParameter;
 import bio.terra.workspace.generated.model.ApiErrorReport;
 import bio.terra.workspace.generated.model.ApiJobReport;
-import bio.terra.workspace.generated.model.ApiLandingZoneTarget;
 import bio.terra.workspace.service.workspace.model.AzureCloudContext;
 import java.util.Collection;
 import java.util.HashMap;
@@ -17,7 +16,7 @@ import java.util.stream.Stream;
 
 public class MapperUtils {
 
-  public class LandingZoneMapper {
+  public static class LandingZoneMapper {
     private LandingZoneMapper() {}
 
     public static HashMap<String, String> landingZoneParametersFrom(
@@ -52,7 +51,7 @@ public class MapperUtils {
     }
   }
 
-  public class ErrorReportMapper {
+  public static class ErrorReportMapper {
     private ErrorReportMapper() {}
 
     public static ApiErrorReport from(ErrorReport errorReport) {
@@ -66,15 +65,8 @@ public class MapperUtils {
     }
   }
 
-  public class LandingZoneTargetMapper {
+  public static class LandingZoneTargetMapper {
     private LandingZoneTargetMapper() {}
-
-    public static LandingZoneTarget from(ApiLandingZoneTarget apiLandingZoneTarget) {
-      return new LandingZoneTarget(
-          apiLandingZoneTarget.getTenantId(),
-          apiLandingZoneTarget.getSubscriptionId(),
-          apiLandingZoneTarget.getResourceGroupId());
-    }
 
     public static LandingZoneTarget from(AzureCloudContext azureCloudContext) {
       return new LandingZoneTarget(
