@@ -167,17 +167,20 @@ public final class ControllerValidationUtils {
   }
 
   /**
-   * Validate an azure blob name. Blob names must be > 1 char and < 1024 chars in length.
+   * Validate an azure blob name. Blob name may be a string or null, and must be > 1 char and < 1024
+   * chars in length.
    *
-   * @param blobName Blob name to validate
+   * @param blobName Blob name to validate, or null.
    */
   public static void validateSasBlobName(@Nullable String blobName) {
     if (blobName == null) {
       return;
     }
-
-    if (blobName.isEmpty() || blobName.length() > 1024) {
-      throw new ValidationException("Invalid blob name");
+    if (blobName.isEmpty()) {
+      throw new ValidationException("Blob name may not be empty");
+    }
+    if (blobName.length() > 1024) {
+      throw new ValidationException("Blob name must be <= 1024 chars");
     }
   }
 
