@@ -1,6 +1,7 @@
 package bio.terra.workspace.service.folder;
 
 import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.makeDefaultControlledResourceFieldsBuilder;
+import static org.apache.commons.lang3.RandomStringUtils.randomAlphabetic;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -42,6 +43,7 @@ import bio.terra.workspace.service.resource.referenced.cloud.gcp.gcsbucket.Refer
 import bio.terra.workspace.service.workspace.model.WorkspaceConstants.ResourceProperties;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.UUID;
 import javax.annotation.Nullable;
@@ -98,7 +100,7 @@ public class FolderServiceTest extends BaseConnectedTest {
     controlledBucketInFoo =
         ControlledGcsBucketResource.builder()
             .common(createControlledResourceCommonFieldWithFolderId(workspaceId, fooFolder.id()))
-            .bucketName(TestUtils.appendRandomNumber("my-gcs-bucket"))
+            .bucketName(randomAlphabetic(10).toLowerCase(Locale.ROOT))
             .build();
     controlledResourceService.createControlledResourceSync(
         controlledBucketInFoo,
@@ -109,7 +111,7 @@ public class FolderServiceTest extends BaseConnectedTest {
     controlledBucket2InFooFoo =
         ControlledGcsBucketResource.builder()
             .common(createControlledResourceCommonFieldWithFolderId(workspaceId, fooFooFolder.id()))
-            .bucketName(TestUtils.appendRandomNumber("my-gcs-bucket-2"))
+            .bucketName(randomAlphabetic(10).toLowerCase(Locale.ROOT))
             .build();
     controlledResourceService.createControlledResourceSync(
         controlledBucket2InFooFoo,
