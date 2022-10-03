@@ -3,34 +3,7 @@ package bio.terra.workspace.app.controller;
 import bio.terra.workspace.app.controller.shared.PropertiesUtils;
 import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.generated.controller.ReferencedGcpResourceApi;
-import bio.terra.workspace.generated.model.ApiCloneReferencedGcpBigQueryDataTableResourceResult;
-import bio.terra.workspace.generated.model.ApiCloneReferencedGcpBigQueryDatasetResourceResult;
-import bio.terra.workspace.generated.model.ApiCloneReferencedGcpDataRepoSnapshotResourceResult;
-import bio.terra.workspace.generated.model.ApiCloneReferencedGcpGcsBucketResourceResult;
-import bio.terra.workspace.generated.model.ApiCloneReferencedGcpGcsObjectResourceResult;
-import bio.terra.workspace.generated.model.ApiCloneReferencedGitRepoResourceResult;
-import bio.terra.workspace.generated.model.ApiCloneReferencedResourceRequestBody;
-import bio.terra.workspace.generated.model.ApiCreateDataRepoSnapshotReferenceRequestBody;
-import bio.terra.workspace.generated.model.ApiCreateGcpBigQueryDataTableReferenceRequestBody;
-import bio.terra.workspace.generated.model.ApiCreateGcpBigQueryDatasetReferenceRequestBody;
-import bio.terra.workspace.generated.model.ApiCreateGcpGcsBucketReferenceRequestBody;
-import bio.terra.workspace.generated.model.ApiCreateGcpGcsObjectReferenceRequestBody;
-import bio.terra.workspace.generated.model.ApiCreateGitRepoReferenceRequestBody;
-import bio.terra.workspace.generated.model.ApiCreateTerraWorkspaceReferenceRequestBody;
-import bio.terra.workspace.generated.model.ApiDataRepoSnapshotResource;
-import bio.terra.workspace.generated.model.ApiGcpBigQueryDataTableResource;
-import bio.terra.workspace.generated.model.ApiGcpBigQueryDatasetResource;
-import bio.terra.workspace.generated.model.ApiGcpGcsBucketResource;
-import bio.terra.workspace.generated.model.ApiGcpGcsObjectResource;
-import bio.terra.workspace.generated.model.ApiGitRepoResource;
-import bio.terra.workspace.generated.model.ApiReferenceResourceCommonFields;
-import bio.terra.workspace.generated.model.ApiTerraWorkspaceResource;
-import bio.terra.workspace.generated.model.ApiUpdateBigQueryDataTableReferenceRequestBody;
-import bio.terra.workspace.generated.model.ApiUpdateBigQueryDatasetReferenceRequestBody;
-import bio.terra.workspace.generated.model.ApiUpdateDataRepoSnapshotReferenceRequestBody;
-import bio.terra.workspace.generated.model.ApiUpdateGcsBucketObjectReferenceRequestBody;
-import bio.terra.workspace.generated.model.ApiUpdateGcsBucketReferenceRequestBody;
-import bio.terra.workspace.generated.model.ApiUpdateGitRepoReferenceRequestBody;
+import bio.terra.workspace.generated.model.*;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequestFactory;
 import bio.terra.workspace.service.iam.model.SamConstants.SamWorkspaceAction;
@@ -59,7 +32,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.RequestBody;
 
 @Controller
 public class ReferencedGcpResourceController implements ReferencedGcpResourceApi {
@@ -871,18 +843,16 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
     return new ResponseEntity<>(result, HttpStatus.OK);
   }
 
-  public ResponseEntity<List<ApiCloneReferencedGcpDataRepoSnapshotResourceResult>>
+  public ResponseEntity<ApiCloneReferencedGcpDataRepoSnapshotResourceResultList>
       cloneBatchGcpDataRepoSnapshotReference(
-          UUID workspaceUuid,
-          @Valid ApiCloneReferencedResourceRequestBody body,
-          @RequestBody List<UUID> resources) {
+          UUID workspaceUuid, @Valid ApiCloneReferencedResourceRequestBody body) {
     final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     // For cloning, we need to check that the caller has both read access to the source workspace
     // and write access to the destination workspace.
     workspaceService.validateCloneReferenceAction(
         userRequest, workspaceUuid, body.getDestinationWorkspaceId());
     List<ApiCloneReferencedGcpDataRepoSnapshotResourceResult> results = new ArrayList<>();
-    for (UUID resourceId : resources) {
+    for (UUID resourceId : body.getResources()) {
 
       final ReferencedResource sourceReferencedResource =
           referenceResourceService.getReferenceResource(workspaceUuid, resourceId);
@@ -923,7 +893,11 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
         results.add(result);
       }
     }
-    return new ResponseEntity<>(results, HttpStatus.OK);
+    ApiCloneReferencedGcpDataRepoSnapshotResourceResultList response =
+        new ApiCloneReferencedGcpDataRepoSnapshotResourceResultList();
+    response.addAll(results);
+    return new ResponseEntity<ApiCloneReferencedGcpDataRepoSnapshotResourceResultList>(
+        response, HttpStatus.OK);
   }
 
   // - Git Repo referenced resource - //
