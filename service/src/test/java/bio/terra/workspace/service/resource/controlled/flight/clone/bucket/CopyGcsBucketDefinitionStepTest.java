@@ -14,6 +14,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.springframework.test.annotation.DirtiesContext.ClassMode.BEFORE_CLASS;
 
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.FlightMap;
@@ -41,11 +42,12 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.test.annotation.DirtiesContext;
 
+@DirtiesContext(classMode = BEFORE_CLASS)
 public class CopyGcsBucketDefinitionStepTest extends BaseUnitTestMockGcpCloudContextService {
   private CopyGcsBucketDefinitionStep copyGcsBucketDefinitionStep;
 
-  @Autowired ControlledGcsBucketHandler handler;
   @Mock FlightContext mockFlightContext;
 
   @BeforeEach
@@ -56,9 +58,6 @@ public class CopyGcsBucketDefinitionStepTest extends BaseUnitTestMockGcpCloudCon
             SOURCE_BUCKET_RESOURCE,
             mockControlledResourceService(),
             CloningInstructions.COPY_DEFINITION);
-    // The handler uses @PostConstruct to store a static. The mocked bean is
-    // missed in this process. Use a test-only method to set the static to the mock object.
-    handler.init(mockGcpCloudContextService());
     when(mockGcpCloudContextService().getRequiredGcpProject(any(UUID.class)))
         .thenReturn("my-fake-project");
   }

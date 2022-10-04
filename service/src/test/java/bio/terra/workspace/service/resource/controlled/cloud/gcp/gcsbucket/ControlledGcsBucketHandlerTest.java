@@ -4,6 +4,7 @@ import static bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucke
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
+import static org.springframework.test.annotation.DirtiesContext.ClassMode.BEFORE_CLASS;
 
 import bio.terra.workspace.common.BaseUnitTest;
 import bio.terra.workspace.common.BaseUnitTestMockGcpCloudContextService;
@@ -14,18 +15,15 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.test.annotation.DirtiesContext;
 
+@DirtiesContext(classMode = BEFORE_CLASS)
 public class ControlledGcsBucketHandlerTest extends BaseUnitTestMockGcpCloudContextService {
   private static final UUID fakeWorkspaceId = UUID.randomUUID();
   private static final String FAKE_PROJECT_ID = "fakeprojectid";
 
-  @Autowired ControlledGcsBucketHandler handler;
-
   @BeforeEach
   public void setup() throws IOException {
-    // The handler uses @PostConstruct to store a static. The mocked bean is
-    // missed in this process. Use a test-only method to set the static to the mock object.
-    handler.init(mockGcpCloudContextService());
     when(mockGcpCloudContextService().getRequiredGcpProject(any())).thenReturn(FAKE_PROJECT_ID);
   }
 
