@@ -18,11 +18,9 @@ import org.springframework.stereotype.Component;
 
 @Component
 public class ControlledGcsBucketHandler implements WsmResourceHandler {
-  private static Logger logger = LoggerFactory.getLogger(ControlledGcsBucketHandler.class);
-
   protected static final int MAX_BUCKET_NAME_LENGTH = 63;
   private static ControlledGcsBucketHandler theHandler;
-  private GcpCloudContextService gcpCloudContextService;
+  private final GcpCloudContextService gcpCloudContextService;
 
   @Autowired
   public ControlledGcsBucketHandler(GcpCloudContextService gcpCloudContextService) {
@@ -30,23 +28,14 @@ public class ControlledGcsBucketHandler implements WsmResourceHandler {
   }
 
   public static ControlledGcsBucketHandler getHandler() {
-    logger.warn(String.format("Returning handler %s", theHandler));
     return theHandler;
   }
 
   @PostConstruct
   public void init() {
     theHandler = this;
-    logger.warn(String.format("=====> init() setting theHandler to %s", theHandler));
-    logger.warn(String.format("=====> init() service is %s", gcpCloudContextService));
   }
 
-  @VisibleForTesting // Do not use otherwise
-  public void init(GcpCloudContextService gcpCloudContextService) {
-    this.gcpCloudContextService = gcpCloudContextService;
-    logger.info(String.format("=====> init(xx) theHandler is %s", theHandler));
-    logger.info(String.format("=====> init(xx) service set to %s", gcpCloudContextService));
-  }
   /** {@inheritDoc} */
   @Override
   public WsmResource makeResourceFromDb(DbResource dbResource) {
