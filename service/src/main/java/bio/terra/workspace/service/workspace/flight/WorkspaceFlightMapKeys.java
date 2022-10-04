@@ -16,6 +16,9 @@ public final class WorkspaceFlightMapKeys {
   public static final String POLICIES = "policies";
   public static final String FOLDER_ID = "folderId";
   public static final String MERGE_POLICIES = "mergePolicies";
+  public static final String AZURE_SUBSCRIPTION_ID = "azureSubscriptionId";
+  public static final String AZURE_TENANT_ID = "azureTenantId";
+  public static final String AZURE_MANAGED_RESOURCE_GROUP_ID = "azureManagedResourceGroupId";
 
   private WorkspaceFlightMapKeys() {}
 

@@ -2,6 +2,7 @@ package bio.terra.workspace.service.spendprofile;
 
 import com.google.auto.value.AutoValue;
 import java.util.Optional;
+import java.util.UUID;
 import javax.annotation.Nullable;
 
 /**
@@ -18,6 +19,12 @@ public abstract class SpendProfile {
   /** The id of the Google Billing Account associated with the SpendProfile, if there is one. */
   public abstract Optional<String> billingAccountId();
 
+  public abstract Optional<UUID> tenantId();
+
+  public abstract Optional<UUID> subscriptionId();
+
+  public abstract Optional<String> managedResourceGroupId();
+
   public static Builder builder() {
     return new AutoValue_SpendProfile.Builder();
   }
@@ -28,6 +35,12 @@ public abstract class SpendProfile {
     public abstract Builder id(SpendProfileId id);
 
     public abstract Builder billingAccountId(@Nullable String billingAccountId);
+
+    public abstract Builder tenantId(@Nullable UUID tenantId);
+
+    public abstract Builder subscriptionId(@Nullable UUID subscriptionId);
+
+    public abstract Builder managedResourceGroupId(@Nullable String managedResourceGroupId);
 
     public abstract SpendProfile build();
   }

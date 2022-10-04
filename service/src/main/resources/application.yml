@@ -107,6 +107,7 @@ workspace:
     poolId: workspace_manager_v9
 
   spend:
+    base-path: ${env.urls.bpm}
     spend-profiles:
     - # A default spend profile available in dev Sam.
       id: wm-default-spend-profile
@@ -206,6 +207,8 @@ feature:
   alpha1-enabled: false
   # tps-enabled - Controls whether Terra Policy Service is called. It is always built into WSM
   tps-enabled: false
+  # bpm-enabled
+  bpm-enabled: false
 
 reference:
   gitrepos:

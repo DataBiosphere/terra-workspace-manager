@@ -8,6 +8,7 @@ import bio.terra.workspace.common.utils.RetryRules;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.job.JobMapKeys;
+import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import java.util.UUID;
 
 /**
@@ -52,7 +53,8 @@ public class CreateGcpContextFlightV2 extends Flight {
             appContext.getWorkspaceDao(),
             appContext.getSpendProfileService(),
             workspaceUuid,
-            userRequest));
+            userRequest,
+            CloudPlatform.GCP));
 
     // Write the cloud context row in a "locked" state
     addStep(

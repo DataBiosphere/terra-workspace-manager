@@ -4,12 +4,15 @@ import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
 import bio.terra.workspace.app.configuration.external.AzureConfiguration;
+import bio.terra.workspace.common.utils.FlightBeanBag;
 import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.workspace.exceptions.CloudContextRequiredException;
+import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import bio.terra.workspace.service.workspace.model.AzureCloudContext;
 import com.azure.resourcemanager.resources.ResourceManager;
+import java.util.UUID;
 
 /**
  * Stores the previously generated Google Project Id in the {@link WorkspaceDao} as the Google cloud
@@ -26,10 +29,31 @@ public class ValidateMRGStep implements Step {
 
   @Override
   public StepResult doStep(FlightContext flightContext) throws InterruptedException {
+    FlightBeanBag appContext = FlightBeanBag.getFromObject(flightContext.getApplicationContext());
+
     AzureCloudContext azureCloudContext =
         flightContext
             .getInputParameters()
             .get(JobMapKeys.REQUEST.getKeyName(), AzureCloudContext.class);
+
+    if (appContext.getFeatureConfiguration().isBpmEnabled()) {
+      String billingManagedResourceGroupId =
+          flightContext
+              .getWorkingMap()
+              .get(WorkspaceFlightMapKeys.AZURE_MANAGED_RESOURCE_GROUP_ID, String.class);
+      UUID billingSubscriptionId =
+          flightContext
+              .getWorkingMap()
+              .get(WorkspaceFlightMapKeys.AZURE_SUBSCRIPTION_ID, UUID.class);
+      UUID billingTenantId =
+          flightContext.getWorkingMap().get(WorkspaceFlightMapKeys.AZURE_TENANT_ID, UUID.class);
+
+      if (!azureCloudContext.getAzureTenantId().equals(billingTenantId.toString())
+          || !azureCloudContext.getAzureResourceGroupId().equals(billingManagedResourceGroupId)
+          || !azureCloudContext.getAzureSubscriptionId().equals(billingSubscriptionId.toString())) {
+        throw new RuntimeException("Invalid MRG information");
+      }
+    }
 
     try {
       ResourceManager resourceManager =

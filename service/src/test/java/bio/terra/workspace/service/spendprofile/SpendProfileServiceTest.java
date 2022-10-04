@@ -3,6 +3,7 @@ package bio.terra.workspace.service.spendprofile;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
+import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
 import bio.terra.workspace.app.configuration.external.SpendProfileConfiguration;
 import bio.terra.workspace.common.BaseConnectedTest;
 import bio.terra.workspace.connected.UserAccessUtils;
@@ -17,12 +18,15 @@ class SpendProfileServiceTest extends BaseConnectedTest {
   @Autowired SpendProfileConfiguration spendProfileConfiguration;
   @Autowired SpendConnectedTestUtils spendUtils;
   @Autowired UserAccessUtils userAccessUtils;
+  @Autowired FeatureConfiguration featureConfiguration;
 
   @Test
   void authorizeLinkingSuccess() {
     SpendProfileId id = spendUtils.defaultSpendId();
     SpendProfile profile = SpendProfile.builder().id(id).build();
-    SpendProfileService service = new SpendProfileService(samService, ImmutableList.of(profile));
+    SpendProfileService service =
+        new SpendProfileService(
+            samService, ImmutableList.of(profile), spendProfileConfiguration, featureConfiguration);
 
     assertEquals(profile, service.authorizeLinking(id, userAccessUtils.defaultUserAuthRequest()));
   }
@@ -31,7 +35,9 @@ class SpendProfileServiceTest extends BaseConnectedTest {
   void authorizeLinkingSamUnauthorizedThrowsUnauthorized() {
     SpendProfileId id = spendUtils.defaultSpendId();
     SpendProfile profile = SpendProfile.builder().id(id).build();
-    SpendProfileService service = new SpendProfileService(samService, ImmutableList.of(profile));
+    SpendProfileService service =
+        new SpendProfileService(
+            samService, ImmutableList.of(profile), spendProfileConfiguration, featureConfiguration);
 
     assertThrows(
         SpendUnauthorizedException.class,
@@ -40,7 +46,9 @@ class SpendProfileServiceTest extends BaseConnectedTest {
 
   @Test
   void authorizeLinkingUnknownIdThrowsUnauthorized() {
-    SpendProfileService service = new SpendProfileService(samService, ImmutableList.of());
+    SpendProfileService service =
+        new SpendProfileService(
+            samService, ImmutableList.of(), spendProfileConfiguration, featureConfiguration);
     assertThrows(
         SpendUnauthorizedException.class,
         () ->
@@ -50,7 +58,8 @@ class SpendProfileServiceTest extends BaseConnectedTest {
 
   @Test
   void parseSpendProfileConfiguration() {
-    SpendProfileService service = new SpendProfileService(samService, spendProfileConfiguration);
+    SpendProfileService service =
+        new SpendProfileService(samService, spendProfileConfiguration, featureConfiguration);
     assertEquals(
         SpendProfile.builder()
             .id(spendUtils.defaultSpendId())

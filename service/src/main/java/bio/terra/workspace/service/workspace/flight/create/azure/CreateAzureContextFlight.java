@@ -5,7 +5,11 @@ import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.RetryRule;
 import bio.terra.workspace.common.utils.FlightBeanBag;
 import bio.terra.workspace.common.utils.RetryRules;
+import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
+import bio.terra.workspace.service.job.JobMapKeys;
+import bio.terra.workspace.service.workspace.flight.CheckSpendProfileStep;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
+import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import java.util.UUID;
 
 /**
@@ -21,8 +25,20 @@ public class CreateAzureContextFlight extends Flight {
 
     UUID workspaceUuid =
         UUID.fromString(inputParameters.get(WorkspaceFlightMapKeys.WORKSPACE_ID, String.class));
+    AuthenticatedUserRequest userRequest =
+        inputParameters.get(JobMapKeys.AUTH_USER_INFO.getKeyName(), AuthenticatedUserRequest.class);
 
     RetryRule dbRetry = RetryRules.shortDatabase();
+
+    if (appContext.getFeatureConfiguration().isBpmEnabled()) {
+      addStep(
+          new CheckSpendProfileStep(
+              appContext.getWorkspaceDao(),
+              appContext.getSpendProfileService(),
+              workspaceUuid,
+              userRequest,
+              CloudPlatform.AZURE));
+    }
 
     // 0. Write the incomplete DB row to prevent concurrent creates
     addStep(

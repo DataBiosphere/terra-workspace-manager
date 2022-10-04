@@ -1,5 +1,8 @@
 package bio.terra.workspace.service.workspace.flight;
 
+import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.AZURE_MANAGED_RESOURCE_GROUP_ID;
+import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.AZURE_SUBSCRIPTION_ID;
+import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.AZURE_TENANT_ID;
 import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.BILLING_ACCOUNT_ID;
 
 import bio.terra.stairway.FlightContext;
@@ -14,6 +17,7 @@ import bio.terra.workspace.service.spendprofile.SpendProfileId;
 import bio.terra.workspace.service.spendprofile.SpendProfileService;
 import bio.terra.workspace.service.workspace.exceptions.MissingSpendProfileException;
 import bio.terra.workspace.service.workspace.exceptions.NoBillingAccountException;
+import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import java.util.UUID;
 
@@ -24,16 +28,19 @@ public class CheckSpendProfileStep implements Step {
   private final SpendProfileService spendProfileService;
   private final UUID workspaceUuid;
   private final AuthenticatedUserRequest userRequest;
+  private final CloudPlatform cloudPlatform;
 
   public CheckSpendProfileStep(
       WorkspaceDao workspaceDao,
       SpendProfileService spendProfileService,
       UUID workspaceUuid,
-      AuthenticatedUserRequest userRequest) {
+      AuthenticatedUserRequest userRequest,
+      CloudPlatform cloudPlatform) {
     this.workspaceDao = workspaceDao;
     this.spendProfileService = spendProfileService;
     this.workspaceUuid = workspaceUuid;
     this.userRequest = userRequest;
+    this.cloudPlatform = cloudPlatform;
   }
 
   @Override
@@ -46,10 +53,22 @@ public class CheckSpendProfileStep implements Step {
             .orElseThrow(() -> MissingSpendProfileException.forWorkspace(workspaceUuid));
 
     SpendProfile spendProfile = spendProfileService.authorizeLinking(spendProfileId, userRequest);
-    if (spendProfile.billingAccountId().isEmpty()) {
-      throw NoBillingAccountException.forSpendProfile(spendProfileId);
+
+    if (cloudPlatform == CloudPlatform.GCP) {
+      if (spendProfile.billingAccountId().isEmpty()) {
+        throw NoBillingAccountException.forSpendProfile(spendProfileId);
+      }
+      workingMap.put(BILLING_ACCOUNT_ID, spendProfile.billingAccountId());
+    } else if (cloudPlatform == CloudPlatform.AZURE) {
+      if (spendProfile.managedResourceGroupId().isEmpty()
+          || spendProfile.subscriptionId().isEmpty()
+          || spendProfile.tenantId().isEmpty()) {
+        throw NoBillingAccountException.forSpendProfile(spendProfileId);
+      }
+      workingMap.put(AZURE_SUBSCRIPTION_ID, spendProfile.subscriptionId().get());
+      workingMap.put(AZURE_TENANT_ID, spendProfile.tenantId().get());
+      workingMap.put(AZURE_MANAGED_RESOURCE_GROUP_ID, spendProfile.managedResourceGroupId().get());
     }
-    workingMap.put(BILLING_ACCOUNT_ID, spendProfile.billingAccountId());
     return StepResult.getStepResultSuccess();
   }
 
