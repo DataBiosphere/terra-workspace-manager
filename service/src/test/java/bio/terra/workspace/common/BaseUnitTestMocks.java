@@ -3,11 +3,9 @@ package bio.terra.workspace.common;
 import bio.terra.workspace.amalgam.tps.TpsApiDispatch;
 import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
 import bio.terra.workspace.service.crl.CrlService;
-import bio.terra.workspace.service.datarepo.DataRepoService;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceMetadataManager;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceService;
-import bio.terra.workspace.service.workspace.GcpCloudContextService;
 import org.springframework.boot.test.mock.mockito.MockBean;
 
 /*

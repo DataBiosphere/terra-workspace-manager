@@ -18,15 +18,18 @@ import static org.mockito.Mockito.when;
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.StepResult;
+import bio.terra.workspace.common.BaseUnitTest;
 import bio.terra.workspace.common.BaseUnitTestMockGcpCloudContextService;
 import bio.terra.workspace.generated.model.ApiGcpGcsBucketCreationParameters;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.model.ControlledResourceIamRole;
+import bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.ControlledGcsBucketHandler;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.ControlledGcsBucketResource;
 import bio.terra.workspace.service.resource.controlled.model.AccessScopeType;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.model.ResourceLineageEntry;
+import bio.terra.workspace.service.workspace.GcpCloudContextService;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ResourceKeys;
 import java.util.ArrayList;
@@ -36,10 +39,13 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.mock.mockito.MockBean;
 
 public class CopyGcsBucketDefinitionStepTest extends BaseUnitTestMockGcpCloudContextService {
   private CopyGcsBucketDefinitionStep copyGcsBucketDefinitionStep;
 
+  @Autowired ControlledGcsBucketHandler handler;
   @Mock FlightContext mockFlightContext;
 
   @BeforeEach
@@ -50,6 +56,9 @@ public class CopyGcsBucketDefinitionStepTest extends BaseUnitTestMockGcpCloudCon
             SOURCE_BUCKET_RESOURCE,
             mockControlledResourceService(),
             CloningInstructions.COPY_DEFINITION);
+    // The handler uses @PostConstruct to store a static. The mocked bean is
+    // missed in this process. Use a test-only method to set the static to the mock object.
+    handler.init(mockGcpCloudContextService());
     when(mockGcpCloudContextService().getRequiredGcpProject(any(UUID.class)))
         .thenReturn("my-fake-project");
   }

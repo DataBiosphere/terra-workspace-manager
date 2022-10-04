@@ -314,7 +314,8 @@ public class LandingZoneApiControllerTest extends BaseAzureUnitTest {
                 purposeSubnets2,
                 listSubnets2));
 
-    when(mockLandingZoneService().listResourcesWithPurposes(any(), any())).thenReturn(groupedResources);
+    when(mockLandingZoneService().listResourcesWithPurposes(any(), any()))
+        .thenReturn(groupedResources);
     when(mockFeatureConfiguration().isAzureEnabled()).thenReturn(true);
     mockMvc
         .perform(
@@ -341,7 +342,8 @@ public class LandingZoneApiControllerTest extends BaseAzureUnitTest {
     LandingZoneResourcesByPurpose groupedResources =
         new LandingZoneResourcesByPurpose(Collections.emptyMap());
 
-    when(mockLandingZoneService().listResourcesWithPurposes(any(), any())).thenReturn(groupedResources);
+    when(mockLandingZoneService().listResourcesWithPurposes(any(), any()))
+        .thenReturn(groupedResources);
     when(mockFeatureConfiguration().isAzureEnabled()).thenReturn(true);
     mockMvc
         .perform(

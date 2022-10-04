@@ -80,7 +80,7 @@ task connectedTest(type: Test) {
   }
 }
 
-task azureTest(type: Test) {
+task azureConnectedTest(type: Test) {
   useJUnitPlatform {
     includeTags "azure"
   }
