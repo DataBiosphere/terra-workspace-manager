@@ -289,8 +289,29 @@ There are three groups of tests.
 
 #### Unit Tests
 The unit tests are written using JUnit. The implementations are in
-`src/test/java/bio/terra/workspace/`. Unit tests derive from `common/BaseUnitTest.java`.
+`src/test/java/bio/terra/workspace/`.
 Some unit tests depend on the availability of a running Postgresql server.
+
+Every combination of `@MockBean` creates a distinct Spring application context. Each context holds several
+database connection pools: (WSM db, WSM Stairway db, and any amalgam connection pools). We have run out of
+database connections due to cached application contexts.
+
+To reduce the number of unique combinations, we have put **ALL** `@MockBean` into test base classes. That helps
+limit the unique combinations. You should **NEVER** code a naked `@MockBean` in a test. They should always be
+specified in these bases. That helps us control the number of unique combinations we have.
+
+The test base classes can be found in `src/test/java/bio/terra/workspace/common/`.
+
+The current inheritance for unit test base classes looks like this:
+- `BaseTest` - the base class for unit and connected tests
+    - `BaseUnitTestMocks` - the base set of mocks shared by all unit tests
+        - `BaseUnitTest` - enables the right test tags and profiles for unit testing
+            - `BaseUnitTestMockDataRepoService` - adds one mock for one unit test
+            - `BaseUnitTestMockGcpCloudContextService` - add one mock; used by several tests
+        - `BaseAzureUnitTest` - adds mocks shared by azure unit tests and enables the right test tags and profiles
+
+We keep the Azure tests separated from the general tests, because the Azure feature is not live in all environments.
+Those tests will not successfully run in those environments.
 
 #### Connected Tests
 The connected tests are also written using JUnit.

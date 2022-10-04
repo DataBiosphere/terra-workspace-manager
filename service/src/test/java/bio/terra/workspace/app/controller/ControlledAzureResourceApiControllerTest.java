@@ -2,6 +2,7 @@ package bio.terra.workspace.app.controller;
 
 import static bio.terra.workspace.common.utils.MockMvcUtils.CREATE_AZURE_SAS_TOKEN_PATH_FORMAT;
 import static bio.terra.workspace.common.utils.MockMvcUtils.CREATE_AZURE_VM_PATH_FORMAT;
+import static bio.terra.workspace.common.utils.MockMvcUtils.USER_REQUEST;
 import static bio.terra.workspace.common.utils.MockMvcUtils.addAuth;
 import static bio.terra.workspace.common.utils.MockMvcUtils.addJsonContentType;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -19,19 +20,15 @@ import bio.terra.workspace.generated.model.ApiControlledResourceCommonFields;
 import bio.terra.workspace.generated.model.ApiCreateControlledAzureVmRequestBody;
 import bio.terra.workspace.generated.model.ApiJobControl;
 import bio.terra.workspace.generated.model.ApiJobReport;
-import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceMetadataManager;
-import bio.terra.workspace.service.resource.controlled.ControlledResourceService;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.AzureStorageAccessService;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.storage.ControlledAzureStorageResource;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.storageContainer.ControlledAzureStorageContainerResource;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.vm.ControlledAzureVmResource;
-import bio.terra.workspace.service.workspace.WorkspaceService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.time.OffsetDateTime;
-import java.util.Optional;
 import java.util.UUID;
 import org.apache.http.HttpStatus;
 import org.junit.jupiter.api.BeforeEach;
@@ -44,18 +41,9 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
 public class ControlledAzureResourceApiControllerTest extends BaseAzureUnitTest {
-  AuthenticatedUserRequest USER_REQUEST =
-      new AuthenticatedUserRequest(
-          "fake@email.com", "subjectId123456", Optional.of("ThisIsNotARealBearerToken"));
-
   @Autowired MockMvc mockMvc;
   @Autowired ObjectMapper objectMapper;
-
   @Autowired ControlledAzureResourceApiController controller;
-
-  @MockBean ControlledResourceService controlledResourceServiceMock;
-  @MockBean WorkspaceService workspaceServiceMock;
-  @MockBean JobService jobServiceMock;
 
   @Test
   public void createAzureVm400WithNoParameters() throws Exception {
@@ -90,7 +78,7 @@ public class ControlledAzureResourceApiControllerTest extends BaseAzureUnitTest 
         controller.buildControlledAzureVmResource(
             creationParameters, controller.toCommonFields(workspaceId, commonFields, USER_REQUEST));
 
-    when(jobServiceMock.retrieveAsyncJobResult(any(), eq(ControlledAzureVmResource.class)))
+    when(mockJobService().retrieveAsyncJobResult(any(), eq(ControlledAzureVmResource.class)))
         .thenReturn(
             new JobService.AsyncJobResult<ControlledAzureVmResource>()
                 .result(resource)
@@ -108,10 +96,6 @@ public class ControlledAzureResourceApiControllerTest extends BaseAzureUnitTest 
 }
 
 class CreateAzureStorageContainerSasTokenTest extends BaseAzureUnitTest {
-  AuthenticatedUserRequest USER_REQUEST =
-      new AuthenticatedUserRequest(
-          "fake@email.com", "subjectId123456", Optional.of("ThisIsNotARealBearerToken"));
-
   @Autowired MockMvc mockMvc;
   @Autowired AzureConfiguration azureConfiguration;
   @MockBean ControlledResourceMetadataManager controlledResourceMetadataManager;

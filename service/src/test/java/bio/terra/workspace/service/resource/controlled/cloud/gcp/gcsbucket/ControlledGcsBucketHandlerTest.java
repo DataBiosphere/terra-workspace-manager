@@ -2,27 +2,26 @@ package bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket;
 
 import static bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.ControlledGcsBucketHandler.MAX_BUCKET_NAME_LENGTH;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
 import bio.terra.workspace.common.BaseUnitTest;
-import bio.terra.workspace.service.workspace.GcpCloudContextService;
+import bio.terra.workspace.common.BaseUnitTestMockGcpCloudContextService;
 import java.io.IOException;
 import java.util.UUID;
+
+import bio.terra.workspace.service.workspace.GcpCloudContextService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.mock.mockito.MockBean;
 
-public class ControlledGcsBucketHandlerTest extends BaseUnitTest {
-  @MockBean GcpCloudContextService mockGcpCloudContextService;
-
+public class ControlledGcsBucketHandlerTest extends BaseUnitTestMockGcpCloudContextService {
   private static final UUID fakeWorkspaceId = UUID.randomUUID();
   private static final String FAKE_PROJECT_ID = "fakeprojectid";
 
   @BeforeEach
   public void setup() throws IOException {
-    when(mockGcpCloudContextService.getRequiredGcpProject(any())).thenReturn(FAKE_PROJECT_ID);
+    when(mockGcpCloudContextService().getRequiredGcpProject(any())).thenReturn(FAKE_PROJECT_ID);
   }
 
   @Test
@@ -31,7 +30,7 @@ public class ControlledGcsBucketHandlerTest extends BaseUnitTest {
     String generateCloudName =
         ControlledGcsBucketHandler.getHandler().generateCloudName(fakeWorkspaceId, bucketName);
 
-    assertTrue(generateCloudName.equals("yuhuyoyo-" + FAKE_PROJECT_ID));
+    assertEquals("yuhuyoyo-" + FAKE_PROJECT_ID, generateCloudName);
   }
 
   @Test
@@ -40,7 +39,7 @@ public class ControlledGcsBucketHandlerTest extends BaseUnitTest {
     String generateCloudName =
         ControlledGcsBucketHandler.getHandler().generateCloudName(fakeWorkspaceId, bucketName);
 
-    assertTrue(generateCloudName.equals("yu-hu-yo-yo-" + FAKE_PROJECT_ID));
+    assertEquals("yu-hu-yo-yo-" + FAKE_PROJECT_ID, generateCloudName);
   }
 
   @Test
@@ -49,7 +48,7 @@ public class ControlledGcsBucketHandlerTest extends BaseUnitTest {
     String generateCloudName =
         ControlledGcsBucketHandler.getHandler().generateCloudName(fakeWorkspaceId, bucketName);
 
-    assertTrue(generateCloudName.equals("yuhuyoyo-" + FAKE_PROJECT_ID));
+    assertEquals("yuhuyoyo-" + FAKE_PROJECT_ID, generateCloudName);
   }
 
   @Test
@@ -58,7 +57,7 @@ public class ControlledGcsBucketHandlerTest extends BaseUnitTest {
     String generateCloudName =
         ControlledGcsBucketHandler.getHandler().generateCloudName(fakeWorkspaceId, bucketName);
 
-    assertTrue(generateCloudName.equals("yuhuyoyo-" + FAKE_PROJECT_ID));
+    assertEquals("yuhuyoyo-" + FAKE_PROJECT_ID, generateCloudName);
   }
 
   @Test
@@ -67,7 +66,7 @@ public class ControlledGcsBucketHandlerTest extends BaseUnitTest {
     String generateCloudName =
         ControlledGcsBucketHandler.getHandler().generateCloudName(fakeWorkspaceId, bucketName);
 
-    assertTrue(generateCloudName.equals("gooyuhuyoyo-" + FAKE_PROJECT_ID));
+    assertEquals("gooyuhuyoyo-" + FAKE_PROJECT_ID, generateCloudName);
   }
 
   @Test
@@ -76,7 +75,7 @@ public class ControlledGcsBucketHandlerTest extends BaseUnitTest {
     String generateCloudName =
         ControlledGcsBucketHandler.getHandler().generateCloudName(fakeWorkspaceId, bucketName);
 
-    assertTrue(generateCloudName.equals("yuhuyoyo-" + FAKE_PROJECT_ID));
+    assertEquals("yuhuyoyo-" + FAKE_PROJECT_ID, generateCloudName);
   }
 
   @Test
@@ -89,7 +88,7 @@ public class ControlledGcsBucketHandlerTest extends BaseUnitTest {
     int maxNameLength = MAX_BUCKET_NAME_LENGTH;
 
     assertEquals(maxNameLength, generateCloudName.length());
-    assertTrue(generateCloudName.equals(generateCloudName.substring(0, maxNameLength)));
+    assertEquals(generateCloudName, generateCloudName.substring(0, maxNameLength));
   }
 
   @Test
@@ -98,6 +97,6 @@ public class ControlledGcsBucketHandlerTest extends BaseUnitTest {
     String generateCloudName =
         ControlledGcsBucketHandler.getHandler().generateCloudName(fakeWorkspaceId, bucketName);
 
-    assertTrue(generateCloudName.equals("yuhuyoyo-" + FAKE_PROJECT_ID));
+    assertEquals("yuhuyoyo-" + FAKE_PROJECT_ID, generateCloudName);
   }
 }

@@ -1,5 +1,6 @@
 package bio.terra.workspace.service.resource.controlled.flight.clone.bucket;
 
+import static bio.terra.workspace.common.utils.MockMvcUtils.USER_REQUEST;
 import static bio.terra.workspace.service.resource.controlled.flight.clone.bucket.GcsBucketCloneTestFixtures.CREATED_BUCKET_RESOURCE;
 import static bio.terra.workspace.service.resource.controlled.flight.clone.bucket.GcsBucketCloneTestFixtures.DESTINATION_BUCKET_NAME;
 import static bio.terra.workspace.service.resource.controlled.flight.clone.bucket.GcsBucketCloneTestFixtures.DESTINATION_WORKSPACE_ID;
@@ -17,17 +18,15 @@ import static org.mockito.Mockito.when;
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.StepResult;
-import bio.terra.workspace.common.BaseUnitTest;
+import bio.terra.workspace.common.BaseUnitTestMockGcpCloudContextService;
 import bio.terra.workspace.generated.model.ApiGcpGcsBucketCreationParameters;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.model.ControlledResourceIamRole;
-import bio.terra.workspace.service.resource.controlled.ControlledResourceService;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.ControlledGcsBucketResource;
 import bio.terra.workspace.service.resource.controlled.model.AccessScopeType;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.model.ResourceLineageEntry;
-import bio.terra.workspace.service.workspace.GcpCloudContextService;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ResourceKeys;
 import java.util.ArrayList;
@@ -36,30 +35,28 @@ import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.mockito.Mock;
 
-public class CopyGcsBucketDefinitionStepTest extends BaseUnitTest {
-
-  @MockBean private FlightContext mockFlightContext;
-  @MockBean private AuthenticatedUserRequest mockUserRequest;
-  @MockBean private ControlledResourceService mockControlledResourceService;
-  @MockBean private GcpCloudContextService gcpCloudContextService;
+public class CopyGcsBucketDefinitionStepTest extends BaseUnitTestMockGcpCloudContextService {
   private CopyGcsBucketDefinitionStep copyGcsBucketDefinitionStep;
+
+  @Mock FlightContext mockFlightContext;
 
   @BeforeEach
   public void setup() throws InterruptedException {
     copyGcsBucketDefinitionStep =
         new CopyGcsBucketDefinitionStep(
-            mockUserRequest,
+            USER_REQUEST,
             SOURCE_BUCKET_RESOURCE,
-            mockControlledResourceService,
+            mockControlledResourceService(),
             CloningInstructions.COPY_DEFINITION);
-    when(gcpCloudContextService.getRequiredGcpProject(any(UUID.class)))
+    when(mockGcpCloudContextService().getRequiredGcpProject(any(UUID.class)))
         .thenReturn("my-fake-project");
   }
 
   @Test
   public void testDoStep() throws InterruptedException {
+
     final var inputParameters = new FlightMap();
     inputParameters.put(ControlledResourceKeys.DESTINATION_WORKSPACE_ID, DESTINATION_WORKSPACE_ID);
     inputParameters.put(
@@ -78,7 +75,7 @@ public class CopyGcsBucketDefinitionStepTest extends BaseUnitTest {
     doReturn(workingMap).when(mockFlightContext).getWorkingMap();
 
     doReturn(CREATED_BUCKET_RESOURCE)
-        .when(mockControlledResourceService)
+        .when(mockControlledResourceService())
         .createControlledResourceSync(
             any(ControlledResource.class),
             any(ControlledResourceIamRole.class),
@@ -92,7 +89,7 @@ public class CopyGcsBucketDefinitionStepTest extends BaseUnitTest {
         ArgumentCaptor.forClass(ControlledResourceIamRole.class);
     final ArgumentCaptor<ApiGcpGcsBucketCreationParameters> creationParametersCaptor =
         ArgumentCaptor.forClass(ApiGcpGcsBucketCreationParameters.class);
-    verify(mockControlledResourceService)
+    verify(mockControlledResourceService())
         .createControlledResourceSync(
             destinationBucketCaptor.capture(),
             iamRoleCaptor.capture(),

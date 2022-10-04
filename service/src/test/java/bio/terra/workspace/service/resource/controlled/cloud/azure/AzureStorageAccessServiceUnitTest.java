@@ -9,10 +9,8 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import bio.terra.common.exception.ForbiddenException;
-import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
-import bio.terra.workspace.common.BaseUnitTest;
+import bio.terra.workspace.common.BaseAzureUnitTest;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
-import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.iam.model.SamConstants;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.storage.ControlledAzureStorageResource;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.storage.StorageAccountKeyProvider;
@@ -34,17 +32,14 @@ import java.util.regex.Pattern;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentMatchers;
-import org.springframework.boot.test.mock.mockito.MockBean;
 
-public class AzureStorageAccessServiceUnitTest extends BaseUnitTest {
+public class AzureStorageAccessServiceUnitTest extends BaseAzureUnitTest {
 
   private final OffsetDateTime startTime = OffsetDateTime.now().minusMinutes(15);
   private final OffsetDateTime expiryTime = OffsetDateTime.now().plusMinutes(60);
   private final AuthenticatedUserRequest userRequest =
       new AuthenticatedUserRequest("foo@example.com", "sub", Optional.of("token"));
 
-  @MockBean private SamService samService;
-  @MockBean private FeatureConfiguration featureConfig;
   private AzureStorageAccessService azureStorageAccessService;
 
   @BeforeEach
@@ -53,7 +48,7 @@ public class AzureStorageAccessServiceUnitTest extends BaseUnitTest {
     var cred = new StorageSharedKeyCredential("fake", "fake");
     when(keyProvider.getStorageAccountKey(any(), any())).thenReturn(cred);
     azureStorageAccessService =
-        new AzureStorageAccessService(samService, keyProvider, featureConfig);
+        new AzureStorageAccessService(mockSamService(), keyProvider, mockFeatureConfiguration());
   }
 
   private ControlledAzureStorageResource buildStorageAccount() {
@@ -137,10 +132,11 @@ public class AzureStorageAccessServiceUnitTest extends BaseUnitTest {
             ManagedByType.MANAGED_BY_USER);
 
     var ipRange = "168.1.5.60-168.1.5.70";
-    when(samService.listResourceActions(
-            ArgumentMatchers.eq(userRequest),
-            ArgumentMatchers.eq(storageAccountResource.getCategory().getSamResourceName()),
-            ArgumentMatchers.eq(storageContainerResource.getResourceId().toString())))
+    when(mockSamService()
+            .listResourceActions(
+                ArgumentMatchers.eq(userRequest),
+                ArgumentMatchers.eq(storageAccountResource.getCategory().getSamResourceName()),
+                ArgumentMatchers.eq(storageContainerResource.getResourceId().toString())))
         .thenReturn(List.of(SamConstants.SamControlledResourceActions.READ_ACTION));
 
     var result =
@@ -170,10 +166,11 @@ public class AzureStorageAccessServiceUnitTest extends BaseUnitTest {
             AccessScopeType.ACCESS_SCOPE_SHARED,
             ManagedByType.MANAGED_BY_USER);
 
-    when(samService.listResourceActions(
-            ArgumentMatchers.eq(userRequest),
-            ArgumentMatchers.eq(storageContainerResource.getCategory().getSamResourceName()),
-            ArgumentMatchers.eq(storageContainerResource.getResourceId().toString())))
+    when(mockSamService()
+            .listResourceActions(
+                ArgumentMatchers.eq(userRequest),
+                ArgumentMatchers.eq(storageContainerResource.getCategory().getSamResourceName()),
+                ArgumentMatchers.eq(storageContainerResource.getResourceId().toString())))
         .thenReturn(
             List.of(
                 SamConstants.SamControlledResourceActions.WRITE_ACTION,
@@ -192,7 +189,7 @@ public class AzureStorageAccessServiceUnitTest extends BaseUnitTest {
             null);
 
     assertValidToken(result.sasToken(), BlobContainerSasPermission.parse("racwdl"), false);
-    verify(samService)
+    verify(mockSamService())
         .listResourceActions(
             ArgumentMatchers.eq(userRequest),
             ArgumentMatchers.eq(SamConstants.SamResource.CONTROLLED_USER_SHARED),
@@ -207,10 +204,11 @@ public class AzureStorageAccessServiceUnitTest extends BaseUnitTest {
             PrivateResourceState.NOT_APPLICABLE,
             AccessScopeType.ACCESS_SCOPE_SHARED,
             ManagedByType.MANAGED_BY_USER);
-    when(samService.listResourceActions(
-            ArgumentMatchers.eq(userRequest),
-            ArgumentMatchers.eq(storageContainerResource.getCategory().getSamResourceName()),
-            ArgumentMatchers.eq(storageContainerResource.getResourceId().toString())))
+    when(mockSamService()
+            .listResourceActions(
+                ArgumentMatchers.eq(userRequest),
+                ArgumentMatchers.eq(storageContainerResource.getCategory().getSamResourceName()),
+                ArgumentMatchers.eq(storageContainerResource.getResourceId().toString())))
         .thenReturn(List.of());
 
     assertThrows(
@@ -227,7 +225,7 @@ public class AzureStorageAccessServiceUnitTest extends BaseUnitTest {
                 null,
                 null));
 
-    verify(samService)
+    verify(mockSamService())
         .listResourceActions(
             ArgumentMatchers.eq(userRequest),
             ArgumentMatchers.eq(SamConstants.SamResource.CONTROLLED_USER_SHARED),
@@ -243,10 +241,11 @@ public class AzureStorageAccessServiceUnitTest extends BaseUnitTest {
             PrivateResourceState.ACTIVE,
             AccessScopeType.ACCESS_SCOPE_PRIVATE,
             ManagedByType.MANAGED_BY_APPLICATION);
-    when(samService.listResourceActions(
-            ArgumentMatchers.eq(userRequest),
-            ArgumentMatchers.eq(storageContainerResource.getCategory().getSamResourceName()),
-            ArgumentMatchers.eq(storageContainerResource.getResourceId().toString())))
+    when(mockSamService()
+            .listResourceActions(
+                ArgumentMatchers.eq(userRequest),
+                ArgumentMatchers.eq(storageContainerResource.getCategory().getSamResourceName()),
+                ArgumentMatchers.eq(storageContainerResource.getResourceId().toString())))
         .thenReturn(
             List.of(
                 SamConstants.SamControlledResourceActions.WRITE_ACTION,
@@ -266,7 +265,7 @@ public class AzureStorageAccessServiceUnitTest extends BaseUnitTest {
 
     assertValidToken(result.sasToken(), BlobContainerSasPermission.parse("racwdl"), false);
 
-    verify(samService)
+    verify(mockSamService())
         .listResourceActions(
             ArgumentMatchers.eq(userRequest),
             ArgumentMatchers.eq(SamConstants.SamResource.CONTROLLED_APPLICATION_PRIVATE),
@@ -281,7 +280,7 @@ public class AzureStorageAccessServiceUnitTest extends BaseUnitTest {
             PrivateResourceState.ACTIVE,
             AccessScopeType.ACCESS_SCOPE_PRIVATE,
             ManagedByType.MANAGED_BY_APPLICATION);
-    when(samService.listResourceActions(
+    when(mockSamService().listResourceActions(
             ArgumentMatchers.eq(userRequest),
             ArgumentMatchers.eq(storageContainerResource.getCategory().getSamResourceName()),
             ArgumentMatchers.eq(storageContainerResource.getResourceId().toString())))
@@ -313,7 +312,7 @@ public class AzureStorageAccessServiceUnitTest extends BaseUnitTest {
             PrivateResourceState.ACTIVE,
             AccessScopeType.ACCESS_SCOPE_PRIVATE,
             ManagedByType.MANAGED_BY_APPLICATION);
-    when(samService.listResourceActions(
+    when(mockSamService().listResourceActions(
             ArgumentMatchers.eq(userRequest),
             ArgumentMatchers.eq(storageContainerResource.getCategory().getSamResourceName()),
             ArgumentMatchers.eq(storageContainerResource.getResourceId().toString())))
@@ -345,7 +344,7 @@ public class AzureStorageAccessServiceUnitTest extends BaseUnitTest {
             PrivateResourceState.ACTIVE,
             AccessScopeType.ACCESS_SCOPE_PRIVATE,
             ManagedByType.MANAGED_BY_APPLICATION);
-    when(samService.listResourceActions(
+    when(mockSamService().listResourceActions(
             ArgumentMatchers.eq(userRequest),
             ArgumentMatchers.eq(storageContainerResource.getCategory().getSamResourceName()),
             ArgumentMatchers.eq(storageContainerResource.getResourceId().toString())))
@@ -375,7 +374,7 @@ public class AzureStorageAccessServiceUnitTest extends BaseUnitTest {
             PrivateResourceState.ACTIVE,
             AccessScopeType.ACCESS_SCOPE_PRIVATE,
             ManagedByType.MANAGED_BY_APPLICATION);
-    when(samService.listResourceActions(
+    when(mockSamService().listResourceActions(
             ArgumentMatchers.eq(userRequest),
             ArgumentMatchers.eq(storageContainerResource.getCategory().getSamResourceName()),
             ArgumentMatchers.eq(storageContainerResource.getResourceId().toString())))
@@ -408,7 +407,7 @@ public class AzureStorageAccessServiceUnitTest extends BaseUnitTest {
             PrivateResourceState.ACTIVE,
             AccessScopeType.ACCESS_SCOPE_PRIVATE,
             ManagedByType.MANAGED_BY_APPLICATION);
-    when(samService.listResourceActions(
+    when(mockSamService().listResourceActions(
             ArgumentMatchers.eq(userRequest),
             ArgumentMatchers.eq(storageContainerResource.getCategory().getSamResourceName()),
             ArgumentMatchers.eq(storageContainerResource.getResourceId().toString())))

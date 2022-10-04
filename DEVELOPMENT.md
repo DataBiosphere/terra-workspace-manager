@@ -29,16 +29,27 @@ Workspace Manager's logic for handling requests is broken into several layers. F
 - Flights (`service/**/flight`): collections of [Stairway](https://github.com/DataBiosphere/stairway) individual logical steps which are performed in order as a transaction. Individual steps may call service or DAO methods.
 - Data Access Objects (DAOs) (`db/`): wrappers around the WSM database. Methods that interact with the database directly live here, and Services call DAO methods rather than the database directly.
 
+### REST API Class Usage
+In general, API class objects are converted to and from internal WSM objects in the Controller layer.
+There are two exceptions to this rule.
+
+First, we use API objects directly to pass cloud resource object parameters through create and update methods.
+There is little utility in copying the API structure into an identical internal structure, simply to make the
+cloud call and discard the object.
+
+Second, we create API response objects within flight steps. That allows the JobService to implement a generic
+job response.
+
 ## GitHub Interactions
 
 We currently have these workflows:
 
-Workflow      | Triggers         | Work
---------------|------------------|-------
-_test_ | on PR and merge to dev | runs the unit, connected and azure tests
-_pr-integration_ | on PR and merge to dev | runs the TestRunner-based integration test suite from the GHA host VM
-_nightly-tests_ | nightly at 2am | runs the TestRunner-based integration, perf, and resiliency test suites on the wsmtest personal environment
-_tag-publish_ | on merge to dev | tags, version bumps, publishes client to artifactory, pushes image to GCR
+| Workflow         | Triggers               | Work                                                                                                        |
+|------------------|------------------------|-------------------------------------------------------------------------------------------------------------|
+| _test_           | on PR and merge to dev | runs the unit, connected and azure tests                                                                    |
+| _pr-integration_ | on PR and merge to dev | runs the TestRunner-based integration test suite from the GHA host VM                                       |
+| _nightly-tests_  | nightly at 2am         | runs the TestRunner-based integration, perf, and resiliency test suites on the wsmtest personal environment |
+| _tag-publish_    | on merge to dev        | tags, version bumps, publishes client to artifactory, pushes image to GCR                                   |
 
 ## Deployment
 
@@ -212,6 +223,28 @@ View current usage information for `write-config.sh` by entering
 ```sh
 ./scripts/write-config.sh help
 ```
+
+### Writing Unit Tests
+
+There is an issue to be aware of when writing unit tests. Each different combination of `@MockBean` makes
+a different signature for a Spring application context object. Spring caches up to 20 application contexts.
+Each application context has connection pools for WSM database and Stairway database, plus connection pools
+in any amalgam services, like TPS and LZ. An idle connection pool will keep a minimum set of connections open.
+It turned out to be easy to collect enough unique application contexts with enough connection pools holding
+enough open connections to run the backend out of connections.
+
+The initial fix was to reduce the idle size of the pools to 1. However, that is not ideal for test performance.
+
+A better fix is to be more systematic about the sets of mocks in use. When tests share the same mocks, even
+if they are not used by the test, they are able to share the same application context. That means slightly
+faster test runs and less chance of running out of database connections.
+
+
+
+
+
+
+
 
 ### Running Tests
 

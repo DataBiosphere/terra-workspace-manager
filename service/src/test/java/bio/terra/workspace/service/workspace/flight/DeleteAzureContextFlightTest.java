@@ -3,7 +3,7 @@ package bio.terra.workspace.service.workspace.flight;
 import static org.junit.jupiter.api.Assertions.*;
 
 import bio.terra.stairway.*;
-import bio.terra.workspace.common.BaseAzureTest;
+import bio.terra.workspace.common.BaseAzureConnectedTest;
 import bio.terra.workspace.common.StairwayTestUtils;
 import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
 import bio.terra.workspace.common.utils.AzureTestUtils;
@@ -39,7 +39,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
-public class DeleteAzureContextFlightTest extends BaseAzureTest {
+public class DeleteAzureContextFlightTest extends BaseAzureConnectedTest {
   /**
    * How long to wait for a delete context Stairway flight to complete before timing out the test.
    */

@@ -1,5 +1,6 @@
 package bio.terra.workspace.amalgam.tps;
 
+import static bio.terra.workspace.common.utils.MockMvcUtils.USER_REQUEST;
 import static bio.terra.workspace.common.utils.MockMvcUtils.addAuth;
 import static bio.terra.workspace.common.utils.MockMvcUtils.addJsonContentType;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -25,9 +26,7 @@ import bio.terra.workspace.generated.model.ApiTpsPolicyInput;
 import bio.terra.workspace.generated.model.ApiTpsPolicyInputs;
 import bio.terra.workspace.generated.model.ApiTpsPolicyPair;
 import bio.terra.workspace.generated.model.ApiTpsUpdateMode;
-import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -44,9 +43,7 @@ public class TpsBasicPaoTest extends BaseUnitTest {
   private static final String REGION = "region";
   private static final String DDGROUP = "ddgroup";
   private static final String US_REGION = "US";
-  AuthenticatedUserRequest USER_REQUEST =
-      new AuthenticatedUserRequest(
-          "fake@email.com", "subjectId123456", Optional.of("ThisIsNotARealBearerToken"));
+
   @Autowired private ObjectMapper objectMapper;
   @Autowired private FeatureConfiguration features;
   @Autowired private MockMvc mockMvc;

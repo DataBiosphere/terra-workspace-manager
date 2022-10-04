@@ -12,7 +12,6 @@ import bio.terra.workspace.common.BaseUnitTest;
 import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.generated.model.ApiJobReport;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
-import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.job.exception.InvalidJobIdException;
 import bio.terra.workspace.service.job.exception.InvalidResultStateException;
 import bio.terra.workspace.service.job.exception.JobNotFoundException;
@@ -27,7 +26,6 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.HttpStatus;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.annotation.DirtiesContext.MethodMode;
@@ -41,7 +39,6 @@ class JobServiceTest extends BaseUnitTest {
 
   @Autowired private JobService jobService;
   @Autowired private WorkspaceDao workspaceDao;
-  @MockBean private SamService mockSamService;
 
   /**
    * Reset the {@link JobService} {@link FlightDebugInfo} after each test so that future submissions
