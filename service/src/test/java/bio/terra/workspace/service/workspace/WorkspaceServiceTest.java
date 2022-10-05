@@ -30,6 +30,7 @@ import bio.terra.common.sam.exception.SamInternalServerErrorException;
 import bio.terra.stairway.FlightDebugInfo;
 import bio.terra.stairway.StepStatus;
 import bio.terra.workspace.common.BaseConnectedTest;
+import bio.terra.workspace.db.FolderDao;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.db.WorkspaceActivityLogDao;
 import bio.terra.workspace.db.exception.WorkspaceNotFoundException;
@@ -51,6 +52,7 @@ import bio.terra.workspace.generated.model.ApiTpsPolicyInput;
 import bio.terra.workspace.generated.model.ApiTpsPolicyPair;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.datarepo.DataRepoService;
+import bio.terra.workspace.service.folder.model.Folder;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.iam.model.ControlledResourceIamRole;
@@ -128,6 +130,9 @@ class WorkspaceServiceTest extends BaseConnectedTest {
   // application-app-test.yml file.
   private static final String TEST_WSM_APP = "TestWsmApp";
 
+  private static final String PARENT_FOLDER_NAME = "ParentFolderName";
+  private static final String FOLDER_NAME = "FolderName";
+
   @MockBean private DataRepoService mockDataRepoService;
   /** Mock SamService does nothing for all calls that would throw if unauthorized. */
   @MockBean private SamService mockSamService;
@@ -144,6 +149,7 @@ class WorkspaceServiceTest extends BaseConnectedTest {
   @Autowired private ObjectMapper objectMapper;
   @Autowired private WorkspaceActivityLogDao workspaceActivityLogDao;
   @Autowired private WsmApplicationService appService;
+  @Autowired private FolderDao folderDao;
 
   @BeforeEach
   void setup() throws Exception {
@@ -831,6 +837,16 @@ class WorkspaceServiceTest extends BaseConnectedTest {
     // Enable an application.
     appService.enableWorkspaceApplication(USER_REQUEST, sourceWorkspace, TEST_WSM_APP);
 
+    // Create 2 folders .
+    UUID parentFolderId = UUID.randomUUID();
+    UUID folderId = UUID.randomUUID();
+    folderDao.createFolder(
+        new Folder(
+            parentFolderId, sourceWorkspaceId, PARENT_FOLDER_NAME, null, null, new HashMap<>()));
+    folderDao.createFolder(
+        new Folder(
+            folderId, sourceWorkspaceId, FOLDER_NAME, null, parentFolderId, new HashMap<>()));
+
     final ControlledGcsBucketResource createdBucketResource =
         createdResource.castByEnum(WsmResourceType.CONTROLLED_GCP_GCS_BUCKET);
     final Workspace destinationWorkspace =
@@ -875,6 +891,11 @@ class WorkspaceServiceTest extends BaseConnectedTest {
 
     // Destination workspace should have an enabled application
     assertTrue(appService.getWorkspaceApplication(destinationWorkspace, TEST_WSM_APP).isEnabled());
+
+    // Destination workspace should have 2 folders with the relations
+    assertEquals(folderDao.listFolders(destinationWorkspace.getWorkspaceId(), null).size(), 2);
+    // Assert the 2 folders, one is parent folder with null parentFodlderId, the othere one with
+    // parentFolderId as parentFodlderId
 
     // Clean up
     workspaceService.deleteWorkspace(sourceWorkspace, USER_REQUEST);
