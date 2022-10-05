@@ -30,6 +30,7 @@ public class CreateAzureContextFlight extends Flight {
 
     RetryRule dbRetry = RetryRules.shortDatabase();
 
+    // check that we are allowed to link to this spend profile
     if (appContext.getFeatureConfiguration().isBpmEnabled()) {
       addStep(
           new CheckSpendProfileStep(
@@ -51,9 +52,10 @@ public class CreateAzureContextFlight extends Flight {
     addStep(new ValidateMRGStep(appContext.getCrlService(), appContext.getAzureConfig()));
 
     // 2. Update the DB row filling in the cloud context
+    var featureConfiguration = appContext.getFeatureConfiguration();
     addStep(
         new CreateDbAzureCloudContextFinishStep(
-            workspaceUuid, appContext.getAzureCloudContextService()),
+            workspaceUuid, appContext.getAzureCloudContextService(), featureConfiguration),
         dbRetry);
   }
 }
