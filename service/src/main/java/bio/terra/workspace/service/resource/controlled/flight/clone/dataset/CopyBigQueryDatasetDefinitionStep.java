@@ -20,6 +20,8 @@ import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.workspace.GcpCloudContextService;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ResourceKeys;
+import com.fasterxml.jackson.core.type.TypeReference;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import org.springframework.http.HttpStatus;
@@ -90,6 +92,9 @@ public class CopyBigQueryDatasetDefinitionStep implements Step {
         gcpCloudContextService.getRequiredGcpProject(destinationWorkspaceId);
     var destinationResourceId =
         inputParameters.get(ControlledResourceKeys.DESTINATION_RESOURCE_ID, UUID.class);
+    Map<String, String> properties =
+        inputParameters.get(
+            ControlledResourceKeys.DESTINATION_RESOURCE_PROPERTY, new TypeReference<>() {});
     ControlledBigQueryDatasetResource destinationResource =
         buildDestinationControlledBigQueryDataset(
             sourceDataset,
@@ -98,7 +103,8 @@ public class CopyBigQueryDatasetDefinitionStep implements Step {
             resourceName,
             description,
             datasetName,
-            destinationProjectId);
+            destinationProjectId,
+            /*properties=*/ properties);
 
     var creationParameters =
         new ApiGcpBigQueryDatasetCreationParameters().datasetId(datasetName).location(location);

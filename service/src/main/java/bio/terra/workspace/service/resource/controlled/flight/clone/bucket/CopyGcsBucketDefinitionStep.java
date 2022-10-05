@@ -21,6 +21,8 @@ import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ResourceKeys;
+import com.fasterxml.jackson.core.type.TypeReference;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import javax.annotation.Nullable;
@@ -92,6 +94,9 @@ public class CopyGcsBucketDefinitionStep implements Step {
                 // crashing.
                 ControlledGcsBucketHandler.getHandler()
                     .generateCloudName(destinationWorkspaceId, "cloned-" + resourceName));
+    Map<String, String> properties =
+        inputParameters.get(
+            ControlledResourceKeys.DESTINATION_RESOURCE_PROPERTY, new TypeReference<>() {});
     // Store effective bucket name for destination
     workingMap.put(ControlledResourceKeys.DESTINATION_BUCKET_NAME, bucketName);
     var destinationResourceId =
@@ -104,7 +109,8 @@ public class CopyGcsBucketDefinitionStep implements Step {
             destinationResourceId,
             resourceName,
             description,
-            bucketName);
+            bucketName,
+            properties);
 
     ApiGcpGcsBucketCreationParameters destinationCreationParameters =
         getDestinationCreationParameters(inputParameters, workingMap);

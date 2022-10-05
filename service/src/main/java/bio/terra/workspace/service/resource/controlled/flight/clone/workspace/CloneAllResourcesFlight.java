@@ -59,7 +59,8 @@ public class CloneAllResourcesFlight extends Flight {
                 new LaunchCloneGcsBucketResourceFlightStep(
                     resource.castByEnum(WsmResourceType.CONTROLLED_GCP_GCS_BUCKET),
                     resourceCloneInputs.getFlightId(),
-                    resourceCloneInputs.getDestinationResourceId()));
+                    resourceCloneInputs.getDestinationResourceId(),
+                    resourceCloneInputs.getDestinationFolderId()));
             addStep(
                 new AwaitCloneGcsBucketResourceFlightStep(
                     resource.castByEnum(WsmResourceType.CONTROLLED_GCP_GCS_BUCKET),
@@ -71,7 +72,8 @@ public class CloneAllResourcesFlight extends Flight {
                 new LaunchCloneControlledGcpBigQueryDatasetResourceFlightStep(
                     resource.castByEnum(WsmResourceType.CONTROLLED_GCP_BIG_QUERY_DATASET),
                     resourceCloneInputs.getFlightId(),
-                    resourceCloneInputs.getDestinationResourceId()));
+                    resourceCloneInputs.getDestinationResourceId(),
+                    resourceCloneInputs.getDestinationFolderId()));
             addStep(
                 new AwaitCloneControlledGcpBigQueryDatasetResourceFlightStep(
                     resource.castByEnum(WsmResourceType.CONTROLLED_GCP_BIG_QUERY_DATASET),

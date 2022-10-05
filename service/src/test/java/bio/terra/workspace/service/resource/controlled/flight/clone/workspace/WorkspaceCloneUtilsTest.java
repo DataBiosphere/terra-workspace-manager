@@ -53,7 +53,8 @@ public class WorkspaceCloneUtilsTest extends BaseUnitTest {
             cloneResourceName,
             cloneDescription,
             cloneDatasetName,
-            cloneProjectName);
+            cloneProjectName,
+            /*properties=*/ null);
 
     assertResourceCommonFields(sourceDataset, cloneResourceName, cloneDescription, datasetToClone);
     assertControlledResourceCommonField(sourceDataset, datasetToClone);
@@ -83,7 +84,8 @@ public class WorkspaceCloneUtilsTest extends BaseUnitTest {
             RandomStringUtils.randomAlphabetic(5),
             /*description=*/ null,
             RandomStringUtils.randomAlphabetic(5),
-            "my-cloned-gcp-project");
+            "my-cloned-gcp-project",
+            /*properties=*/ null);
 
     assertEquals(PrivateResourceState.INITIALIZING, datasetToClone.getPrivateResourceState().get());
     assertControlledResourceCommonField(sourceDataset, datasetToClone);
@@ -106,7 +108,8 @@ public class WorkspaceCloneUtilsTest extends BaseUnitTest {
             /*name=*/ RandomStringUtils.randomAlphabetic(5),
             /*description=*/ "This is a cloned dataset",
             /*cloudInstanceName=*/ RandomStringUtils.randomAlphabetic(5),
-            /*destinationProjectId=*/ "my-cloned-gcp-project");
+            /*destinationProjectId=*/ "my-cloned-gcp-project",
+            /*properties=*/ null);
 
     ImmutableMap<String, String> properties = datasetToClone.getProperties();
     assertFalse(properties.containsKey(FOLDER_ID_KEY));
@@ -130,7 +133,8 @@ public class WorkspaceCloneUtilsTest extends BaseUnitTest {
             /*name=*/ RandomStringUtils.randomAlphabetic(5),
             /*description=*/ "This is a cloned dataset",
             /*cloudInstanceName=*/ RandomStringUtils.randomAlphabetic(5),
-            /*destinationProjectId=*/ "my-gcp-project");
+            /*destinationProjectId=*/ "my-gcp-project",
+            /*properties=*/ null);
 
     assertTrue(datasetToClone.getProperties().containsKey(FOLDER_ID_KEY));
   }
@@ -151,7 +155,8 @@ public class WorkspaceCloneUtilsTest extends BaseUnitTest {
             DESTINATION_RESOURCE_ID,
             cloneResourceName,
             cloneDescription,
-            cloneBucketName);
+            cloneBucketName,
+            /*properties=*/ null);
 
     assertResourceCommonFields(sourceBucket, cloneResourceName, cloneDescription, bucketToClone);
     assertControlledResourceCommonField(sourceBucket, bucketToClone);
@@ -179,7 +184,8 @@ public class WorkspaceCloneUtilsTest extends BaseUnitTest {
             RandomStringUtils.randomAlphabetic(5),
             "This is a cloned private bucket",
             // Gcs bucket cloud instance id must be lower-case.
-            RandomStringUtils.randomAlphabetic(5).toLowerCase(Locale.ROOT));
+            RandomStringUtils.randomAlphabetic(5).toLowerCase(Locale.ROOT),
+            /*properties=*/ null);
 
     assertEquals(PrivateResourceState.INITIALIZING, bucketToClone.getPrivateResourceState().get());
     assertControlledResourceCommonField(sourceBucket, bucketToClone);
@@ -199,7 +205,8 @@ public class WorkspaceCloneUtilsTest extends BaseUnitTest {
             /*name=*/ RandomStringUtils.randomAlphabetic(5),
             /*description=*/ "This is a cloned bucket",
             // Gcs bucket cloud instance id must be lower-case.
-            /*cloudInstanceName=*/ RandomStringUtils.randomAlphabetic(5).toLowerCase(Locale.ROOT));
+            /*cloudInstanceName=*/ RandomStringUtils.randomAlphabetic(5).toLowerCase(Locale.ROOT),
+            /*properties=*/ null);
 
     ImmutableMap<String, String> properties = bucketToClone.getProperties();
     assertFalse(properties.containsKey(FOLDER_ID_KEY));

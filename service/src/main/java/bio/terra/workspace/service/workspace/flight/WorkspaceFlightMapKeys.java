@@ -65,6 +65,14 @@ public final class WorkspaceFlightMapKeys {
     public static final String WORKSPACE_CREATE_FLIGHT_ID = "workspaceCreateFlightId";
     public static final String STORAGE_ACCOUNT_NAME = "storageAccountName";
     public static final String DESTINATION_RESOURCE_ID = "destinationResourceId";
+    public static final String DESTINATION_RESOURCE_PROPERTY = "destinationResourceProperty";
+  }
+
+  public static class FolderKeys {
+
+    private FolderKeys() {}
+
+    public static final String FOLDER_ID_MAP = "folderIdMap";
   }
 
   public static class ReferencedResourceKeys {

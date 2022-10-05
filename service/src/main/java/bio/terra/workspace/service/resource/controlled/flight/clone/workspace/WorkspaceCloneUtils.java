@@ -1,7 +1,5 @@
 package bio.terra.workspace.service.resource.controlled.flight.clone.workspace;
 
-import static bio.terra.workspace.app.controller.shared.PropertiesUtils.clearSomePropertiesForResourceCloningToDifferentWorkspace;
-
 import bio.terra.common.exception.BadRequestException;
 import bio.terra.stairway.FlightStatus;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.bqdataset.ControlledBigQueryDatasetResource;
@@ -117,7 +115,8 @@ public class WorkspaceCloneUtils {
       String name,
       @Nullable String description,
       String cloudInstanceName,
-      String destinationProjectId) {
+      String destinationProjectId,
+      @Nullable Map<String, String> properties) {
     List<ResourceLineageEntry> destinationResourceLineage =
         createDestinationResourceLineage(
             sourceDataset.getResourceLineage(),
@@ -133,7 +132,8 @@ public class WorkspaceCloneUtils {
                 destinationResourceId,
                 name,
                 description,
-                destinationResourceLineage))
+                destinationResourceLineage,
+                properties))
         .build();
   }
 
@@ -143,7 +143,8 @@ public class WorkspaceCloneUtils {
       UUID destinationResourceId,
       String name,
       @Nullable String description,
-      String cloudInstanceName) {
+      String cloudInstanceName,
+      @Nullable Map<String, String> properties) {
     List<ResourceLineageEntry> destinationResourceLineage =
         createDestinationResourceLineage(
             sourceBucket.getResourceLineage(),
@@ -158,7 +159,8 @@ public class WorkspaceCloneUtils {
                 destinationResourceId,
                 name,
                 description,
-                destinationResourceLineage))
+                destinationResourceLineage,
+                properties))
         .build();
   }
 
@@ -168,7 +170,8 @@ public class WorkspaceCloneUtils {
       UUID destinationResourceId,
       String name,
       String description,
-      List<ResourceLineageEntry> destinationResourceLineage) {
+      List<ResourceLineageEntry> destinationResourceLineage,
+      @Nullable Map<String, String> properties) {
     return ControlledResourceFields.builder()
         .accessScope(sourceResource.getAccessScope())
         .assignedUser(sourceResource.getAssignedUser().orElse(null))
@@ -180,8 +183,7 @@ public class WorkspaceCloneUtils {
         .workspaceUuid(destinationWorkspaceId)
         .resourceId(destinationResourceId)
         .resourceLineage(destinationResourceLineage)
-        .properties(
-            maybeClearSomeResourcePropertiesBeforeCloning(sourceResource, destinationWorkspaceId))
+        .properties(properties)
         .build();
   }
 
@@ -362,8 +364,7 @@ public class WorkspaceCloneUtils {
     destinationResourceCommonFieldsBuilder
         .workspaceUuid(destinationWorkspaceId)
         .resourceId(destinationResourceId)
-        .properties(
-            maybeClearSomeResourcePropertiesBeforeCloning(wsmResource, destinationWorkspaceId))
+        .properties(wsmResource.getProperties())
         .resourceLineage(destinationResourceLineage);
     // apply optional override variables
     Optional.ofNullable(name).ifPresent(destinationResourceCommonFieldsBuilder::name);
@@ -381,15 +382,5 @@ public class WorkspaceCloneUtils {
         sourceResourceLineage != null ? sourceResourceLineage : new ArrayList<>();
     destinationResourceLineage.add(new ResourceLineageEntry(sourceWorkspaceId, sourceResourceId));
     return destinationResourceLineage;
-  }
-
-  private static Map<String, String> maybeClearSomeResourcePropertiesBeforeCloning(
-      WsmResource sourceResource, UUID destinationWorkspaceId) {
-    Map<String, String> destinationResourceProperties = sourceResource.getProperties();
-    if (!destinationWorkspaceId.equals(sourceResource.getWorkspaceId())) {
-      destinationResourceProperties =
-          clearSomePropertiesForResourceCloningToDifferentWorkspace(destinationResourceProperties);
-    }
-    return destinationResourceProperties;
   }
 }
