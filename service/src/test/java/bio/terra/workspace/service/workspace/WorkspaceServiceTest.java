@@ -402,7 +402,7 @@ class WorkspaceServiceTest extends BaseConnectedTest {
 
     Workspace updatedWorkspace =
         workspaceService.updateWorkspace(
-            workspaceUuid, userFacingId, name, description, null, null, null, USER_REQUEST);
+            workspaceUuid, userFacingId, name, description, USER_REQUEST);
 
     var workspaceUpdateChangeDetails = workspaceActivityLogDao.getLastUpdateDetails(workspaceUuid);
     assertTrue(
@@ -423,8 +423,7 @@ class WorkspaceServiceTest extends BaseConnectedTest {
     String otherDescription = "The deprecated workspace";
 
     Workspace secondUpdatedWorkspace =
-        workspaceService.updateWorkspace(
-            workspaceUuid, null, null, otherDescription, null, null, null, USER_REQUEST);
+        workspaceService.updateWorkspace(workspaceUuid, null, null, otherDescription, USER_REQUEST);
 
     var secondUpdateChangeDetails = workspaceActivityLogDao.getLastUpdateDetails(workspaceUuid);
     assertTrue(
@@ -442,8 +441,7 @@ class WorkspaceServiceTest extends BaseConnectedTest {
 
     // Sending through empty strings and an empty map clears the values.
     Workspace thirdUpdatedWorkspace =
-        workspaceService.updateWorkspace(
-            workspaceUuid, userFacingId, "", "", null, null, null, USER_REQUEST);
+        workspaceService.updateWorkspace(workspaceUuid, userFacingId, "", "", USER_REQUEST);
 
     var thirdUpdatedDateAfterWorkspaceUpdate =
         workspaceActivityLogDao.getLastUpdateDetails(workspaceUuid);
@@ -460,9 +458,7 @@ class WorkspaceServiceTest extends BaseConnectedTest {
     // Fail if request doesn't contain any updated fields.
     assertThrows(
         MissingRequiredFieldException.class,
-        () ->
-            workspaceService.updateWorkspace(
-                workspaceUuid, null, null, null, null, null, null, USER_REQUEST));
+        () -> workspaceService.updateWorkspace(workspaceUuid, null, null, null, USER_REQUEST));
     var failedUpdateDate = workspaceActivityLogDao.getLastUpdateDetails(workspaceUuid);
     assertEquals(
         thirdUpdatedDateAfterWorkspaceUpdate.get().getChangeDate(),
@@ -485,7 +481,7 @@ class WorkspaceServiceTest extends BaseConnectedTest {
             DuplicateUserFacingIdException.class,
             () ->
                 workspaceService.updateWorkspace(
-                    secondWorkspaceUuid, userFacingId, null, null, null, null, null, USER_REQUEST));
+                    secondWorkspaceUuid, userFacingId, null, null, USER_REQUEST));
     assertEquals(
         ex.getMessage(), String.format("Workspace with ID %s already exists", userFacingId));
   }

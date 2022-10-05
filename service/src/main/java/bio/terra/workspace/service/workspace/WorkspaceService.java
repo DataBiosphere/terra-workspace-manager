@@ -1,13 +1,10 @@
 package bio.terra.workspace.service.workspace;
 
-import bio.terra.common.iam.BearerToken;
 import bio.terra.workspace.amalgam.tps.TpsApiDispatch;
 import bio.terra.workspace.app.configuration.external.BufferServiceConfiguration;
 import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
 import bio.terra.workspace.db.WorkspaceDao;
-import bio.terra.workspace.generated.model.ApiTpsPaoUpdateRequest;
 import bio.terra.workspace.generated.model.ApiTpsPolicyInputs;
-import bio.terra.workspace.generated.model.ApiTpsUpdateMode;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamRethrow;
 import bio.terra.workspace.service.iam.SamService;
@@ -290,20 +287,8 @@ public class WorkspaceService {
       @Nullable String userFacingId,
       @Nullable String name,
       @Nullable String description,
-      @Nullable ApiTpsPolicyInputs addAttributes,
-      @Nullable ApiTpsPolicyInputs removeAttributes,
-      @Nullable ApiTpsUpdateMode updateMode,
       AuthenticatedUserRequest userRequest) {
     if (workspaceDao.updateWorkspace(workspaceUuid, userFacingId, name, description)) {
-      if (addAttributes != null || removeAttributes != null) {
-        ApiTpsPaoUpdateRequest request = new ApiTpsPaoUpdateRequest();
-        request.addAttributes(addAttributes);
-        request.removeAttributes(removeAttributes);
-        request.setUpdateMode(updateMode);
-        tpsApiDispatch.updatePao(
-            new BearerToken(userRequest.getRequiredToken()), workspaceUuid, request);
-      }
-
       workspaceActivityLogService.writeActivity(userRequest, workspaceUuid, OperationType.UPDATE);
     }
     return workspaceDao.getWorkspace(workspaceUuid);

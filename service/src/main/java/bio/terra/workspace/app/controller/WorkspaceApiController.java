@@ -32,9 +32,10 @@ import bio.terra.workspace.generated.model.ApiProperty;
 import bio.terra.workspace.generated.model.ApiRoleBinding;
 import bio.terra.workspace.generated.model.ApiRoleBindingList;
 import bio.terra.workspace.generated.model.ApiTpsPaoGetResult;
+import bio.terra.workspace.generated.model.ApiTpsPaoUpdateRequest;
+import bio.terra.workspace.generated.model.ApiTpsPaoUpdateResult;
 import bio.terra.workspace.generated.model.ApiTpsPolicyInput;
 import bio.terra.workspace.generated.model.ApiTpsPolicyInputs;
-import bio.terra.workspace.generated.model.ApiTpsUpdateMode;
 import bio.terra.workspace.generated.model.ApiUpdateWorkspaceRequestBody;
 import bio.terra.workspace.generated.model.ApiWorkspaceDescription;
 import bio.terra.workspace.generated.model.ApiWorkspaceDescriptionList;
@@ -334,31 +335,40 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
     workspaceService.validateWorkspaceAndAction(
         userRequest, workspaceUuid, SamConstants.SamWorkspaceAction.WRITE);
 
-    ApiTpsPolicyInputs removeAttributes = null;
-    ApiTpsPolicyInputs addAttributes = null;
-    ApiTpsUpdateMode policyUpdateMode = ApiTpsUpdateMode.DRY_RUN;
-
-    if (featureConfiguration.isTpsEnabled()) {
-      removeAttributes = body.getRemoveAttributes();
-      addAttributes = body.getAddAttributes();
-      policyUpdateMode = body.getUpdateMode();
-    }
-
     Workspace workspace =
         workspaceService.updateWorkspace(
             workspaceUuid,
             body.getUserFacingId(),
             body.getDisplayName(),
             body.getDescription(),
-            addAttributes,
-            removeAttributes,
-            policyUpdateMode,
             userRequest);
     WsmIamRole highestRole = workspaceService.getHighestRole(workspaceUuid, userRequest);
     ApiWorkspaceDescription desc = buildWorkspaceDescription(workspace, highestRole, userRequest);
     logger.info("Updated workspace {} for {}", desc, userRequest.getEmail());
 
     return new ResponseEntity<>(desc, HttpStatus.OK);
+  }
+
+  @Override
+  public ResponseEntity<ApiTpsPaoUpdateResult> updatePolicies(
+      @PathVariable("workspaceId") UUID workspaceId, @RequestBody ApiTpsPaoUpdateRequest body) {
+    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    logger.info("Updating workspace policies {} for {}", workspaceId, userRequest.getEmail());
+
+    workspaceService.validateWorkspaceAndAction(
+        userRequest, workspaceId, SamConstants.SamWorkspaceAction.WRITE);
+
+    if (!featureConfiguration.isTpsEnabled()) {
+      throw new FeatureNotSupportedException(
+          "TPS is not enabled on this instance of Workspace Manager, cannot update policies for workspace.");
+    }
+
+    ApiTpsPaoUpdateResult result =
+        tpsApiDispatch.updatePao(
+            new BearerToken(userRequest.getRequiredToken()), workspaceId, body);
+    logger.info(
+        "Finished updating workspace policies {} for {}", workspaceId, userRequest.getEmail());
+    return new ResponseEntity<>(result, HttpStatus.OK);
   }
 
   @Override
