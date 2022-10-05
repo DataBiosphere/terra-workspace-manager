@@ -1,8 +1,8 @@
 package bio.terra.workspace.service.workspace.flight.create.azure;
 
-import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.AZURE_MANAGED_RESOURCE_GROUP_ID;
-import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.AZURE_SUBSCRIPTION_ID;
-import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.AZURE_TENANT_ID;
+import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.AZURE_BILLING_MANAGED_RESOURCE_GROUP_ID;
+import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.AZURE_BILLING_SUBSCRIPTION_ID;
+import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.AZURE_BILLING_TENANT_ID;
 
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.Step;
@@ -37,9 +37,11 @@ public class CreateDbAzureCloudContextFinishStep implements Step {
     if (featureConfiguration.isBpmEnabled()) {
       azureCloudContext =
           new AzureCloudContext(
-              flightContext.getWorkingMap().get(AZURE_TENANT_ID, String.class),
-              flightContext.getWorkingMap().get(AZURE_SUBSCRIPTION_ID, String.class),
-              flightContext.getWorkingMap().get(AZURE_MANAGED_RESOURCE_GROUP_ID, String.class));
+              flightContext.getWorkingMap().get(AZURE_BILLING_TENANT_ID, String.class),
+              flightContext.getWorkingMap().get(AZURE_BILLING_SUBSCRIPTION_ID, String.class),
+              flightContext
+                  .getWorkingMap()
+                  .get(AZURE_BILLING_MANAGED_RESOURCE_GROUP_ID, String.class));
     } else {
       azureCloudContext =
           flightContext

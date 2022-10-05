@@ -31,28 +31,30 @@ public class ValidateMRGStep implements Step {
   public StepResult doStep(FlightContext flightContext) throws InterruptedException {
     FlightBeanBag appContext = FlightBeanBag.getFromObject(flightContext.getApplicationContext());
 
-    AzureCloudContext azureCloudContext =
-        flightContext
-            .getInputParameters()
-            .get(JobMapKeys.REQUEST.getKeyName(), AzureCloudContext.class);
-
+    AzureCloudContext azureCloudContext;
     if (appContext.getFeatureConfiguration().isBpmEnabled()) {
       String billingManagedResourceGroupId =
           flightContext
               .getWorkingMap()
-              .get(WorkspaceFlightMapKeys.AZURE_MANAGED_RESOURCE_GROUP_ID, String.class);
+              .get(WorkspaceFlightMapKeys.AZURE_BILLING_MANAGED_RESOURCE_GROUP_ID, String.class);
       UUID billingSubscriptionId =
           flightContext
               .getWorkingMap()
-              .get(WorkspaceFlightMapKeys.AZURE_SUBSCRIPTION_ID, UUID.class);
+              .get(WorkspaceFlightMapKeys.AZURE_BILLING_SUBSCRIPTION_ID, UUID.class);
       UUID billingTenantId =
-          flightContext.getWorkingMap().get(WorkspaceFlightMapKeys.AZURE_TENANT_ID, UUID.class);
-
-      if (!azureCloudContext.getAzureTenantId().equals(billingTenantId.toString())
-          || !azureCloudContext.getAzureResourceGroupId().equals(billingManagedResourceGroupId)
-          || !azureCloudContext.getAzureSubscriptionId().equals(billingSubscriptionId.toString())) {
-        throw new RuntimeException("Invalid MRG information");
-      }
+          flightContext
+              .getWorkingMap()
+              .get(WorkspaceFlightMapKeys.AZURE_BILLING_TENANT_ID, UUID.class);
+      azureCloudContext =
+          new AzureCloudContext(
+              billingTenantId.toString(),
+              billingSubscriptionId.toString(),
+              billingManagedResourceGroupId);
+    } else {
+      azureCloudContext =
+          flightContext
+              .getInputParameters()
+              .get(JobMapKeys.REQUEST.getKeyName(), AzureCloudContext.class);
     }
 
     try {

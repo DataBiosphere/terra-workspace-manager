@@ -41,17 +41,17 @@ public class CreateAzureContextFlight extends Flight {
               CloudPlatform.AZURE));
     }
 
-    // 0. Write the incomplete DB row to prevent concurrent creates
+    // write the incomplete DB row to prevent concurrent creates
     addStep(
         new CreateDbAzureCloudContextStartStep(
             workspaceUuid, appContext.getAzureCloudContextService()),
         dbRetry);
 
-    // 1. validate the MRG
+    // validate the MRG
     // TODO: retry?
     addStep(new ValidateMRGStep(appContext.getCrlService(), appContext.getAzureConfig()));
 
-    // 2. Update the DB row filling in the cloud context
+    // update the DB row filling in the cloud context
     var featureConfiguration = appContext.getFeatureConfiguration();
     addStep(
         new CreateDbAzureCloudContextFinishStep(

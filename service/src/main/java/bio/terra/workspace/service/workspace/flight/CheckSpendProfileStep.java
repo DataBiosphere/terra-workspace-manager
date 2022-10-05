@@ -1,8 +1,8 @@
 package bio.terra.workspace.service.workspace.flight;
 
-import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.AZURE_MANAGED_RESOURCE_GROUP_ID;
-import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.AZURE_SUBSCRIPTION_ID;
-import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.AZURE_TENANT_ID;
+import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.AZURE_BILLING_MANAGED_RESOURCE_GROUP_ID;
+import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.AZURE_BILLING_SUBSCRIPTION_ID;
+import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.AZURE_BILLING_TENANT_ID;
 import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.BILLING_ACCOUNT_ID;
 
 import bio.terra.stairway.FlightContext;
@@ -65,9 +65,10 @@ public class CheckSpendProfileStep implements Step {
           || spendProfile.tenantId().isEmpty()) {
         throw NoBillingAccountException.forSpendProfile(spendProfileId);
       }
-      workingMap.put(AZURE_SUBSCRIPTION_ID, spendProfile.subscriptionId().get());
-      workingMap.put(AZURE_TENANT_ID, spendProfile.tenantId().get());
-      workingMap.put(AZURE_MANAGED_RESOURCE_GROUP_ID, spendProfile.managedResourceGroupId().get());
+      workingMap.put(AZURE_BILLING_SUBSCRIPTION_ID, spendProfile.subscriptionId().get());
+      workingMap.put(AZURE_BILLING_TENANT_ID, spendProfile.tenantId().get());
+      workingMap.put(
+          AZURE_BILLING_MANAGED_RESOURCE_GROUP_ID, spendProfile.managedResourceGroupId().get());
     }
     return StepResult.getStepResultSuccess();
   }

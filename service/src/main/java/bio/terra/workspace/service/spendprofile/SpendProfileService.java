@@ -24,8 +24,8 @@ import org.springframework.stereotype.Component;
 /**
  * A service for retrieving and authorizing the use of {@link SpendProfile}s.
  *
- * <p>TODO: Integrate with the Spend Profile Manager component instead of doing our own in-memory
- * configuration of spend profiles.
+ * <p>If enabled, calls out to Billing Profile Manager to fetch the relevant spend data. Otherwise,
+ * fetches from our in-memory configuration.
  */
 @Component
 public class SpendProfileService {
@@ -63,8 +63,6 @@ public class SpendProfileService {
    * Authorize the user to link the Spend Profile. Returns the {@link SpendProfile} associated with
    * the id if there is one and the user is authorized to link it. Otherwise, throws a {@link
    * SpendUnauthorizedException}.
-   *
-   * @throws
    */
   public SpendProfile authorizeLinking(
       SpendProfileId spendProfileId, AuthenticatedUserRequest userRequest) {
@@ -95,7 +93,6 @@ public class SpendProfileService {
       logger.warn("Sam spend link authz succeeded but spend profile unknown: {}", spendProfileId);
       throw SpendUnauthorizedException.linkUnauthorized(spendProfileId);
     }
-
     return spend;
   }
 
@@ -113,11 +110,13 @@ public class SpendProfileService {
 
   private SpendProfile getSpendProfileFromBpm(
       AuthenticatedUserRequest userRequest, SpendProfileId spendProfileId) {
-    SpendProfile spend = null;
+    SpendProfile spend;
     var profileApi = bpmClientProvider.getProfileApi(userRequest);
     try {
       var profile = profileApi.getProfile(UUID.fromString(spendProfileId.getId()));
-
+      logger.info(
+          "Retrieved billing profile ID {} from billing profile manager",
+          profile.getId().toString());
       spend =
           SpendProfile.builder()
               .id(spendProfileId)
