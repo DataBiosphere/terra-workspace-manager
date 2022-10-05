@@ -1,7 +1,5 @@
 package bio.terra.workspace.service.spendprofile;
 
-import bio.terra.profile.api.ProfileApi;
-import bio.terra.profile.client.ApiClient;
 import bio.terra.profile.client.ApiException;
 import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
 import bio.terra.workspace.app.configuration.external.SpendProfileConfiguration;
@@ -9,13 +7,14 @@ import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamRethrow;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.iam.model.SamConstants;
+import bio.terra.workspace.service.spendprofile.client.BpmClientProvider;
+import bio.terra.workspace.service.spendprofile.exceptions.BillingProfileManagerServiceAPIException;
 import bio.terra.workspace.service.spendprofile.exceptions.SpendUnauthorizedException;
 import com.google.common.collect.Maps;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
-import javax.ws.rs.client.Client;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,49 +32,39 @@ public class SpendProfileService {
   private final Logger logger = LoggerFactory.getLogger(SpendProfileService.class);
   private final SamService samService;
   private final Map<SpendProfileId, SpendProfile> spendProfiles;
-  private final Client commonHttpClient;
-  private final SpendProfileConfiguration spendProfileConfiguration;
   private final boolean bpmEnabled;
+  private final BpmClientProvider bpmClientProvider;
 
   @Autowired
   public SpendProfileService(
       SamService samService,
       SpendProfileConfiguration spendProfileConfiguration,
+      BpmClientProvider bpmClientProvider,
       FeatureConfiguration features) {
     this(
         samService,
         parse(spendProfileConfiguration.getSpendProfiles()),
-        spendProfileConfiguration,
+        bpmClientProvider,
         features);
   }
 
   public SpendProfileService(
       SamService samService,
       List<SpendProfile> spendProfiles,
-      SpendProfileConfiguration spendProfileConfiguration,
+      BpmClientProvider clientProvider,
       FeatureConfiguration features) {
     this.samService = samService;
     this.spendProfiles = Maps.uniqueIndex(spendProfiles, SpendProfile::id);
-    this.spendProfileConfiguration = spendProfileConfiguration;
-    this.commonHttpClient = new ApiClient().getHttpClient();
+    this.bpmClientProvider = clientProvider;
     this.bpmEnabled = features.isBpmEnabled();
-  }
-
-  private ApiClient getApiClient(String accessToken) {
-    ApiClient apiClient = new ApiClient().setHttpClient(commonHttpClient);
-    apiClient.setAccessToken(accessToken);
-    apiClient.setBasePath(spendProfileConfiguration.getBasePath());
-    return apiClient;
-  }
-
-  private ProfileApi getProfileApi(AuthenticatedUserRequest userRequest) {
-    return new ProfileApi(getApiClient(userRequest.getRequiredToken()));
   }
 
   /**
    * Authorize the user to link the Spend Profile. Returns the {@link SpendProfile} associated with
    * the id if there is one and the user is authorized to link it. Otherwise, throws a {@link
    * SpendUnauthorizedException}.
+   *
+   * @throws
    */
   public SpendProfile authorizeLinking(
       SpendProfileId spendProfileId, AuthenticatedUserRequest userRequest) {
@@ -90,30 +79,9 @@ public class SpendProfileService {
       throw SpendUnauthorizedException.linkUnauthorized(spendProfileId);
     }
 
-    // TODO refactor
-    SpendProfile spend = null;
+    SpendProfile spend;
     if (bpmEnabled) {
-      var profileApi = getProfileApi(userRequest);
-      try {
-        var profile = profileApi.getProfile(UUID.fromString(spendProfileId.getId()));
-
-        spend =
-            SpendProfile.builder()
-                .id(spendProfileId)
-                .billingAccountId(profile.getBillingAccountId())
-                .managedResourceGroupId(profile.getManagedResourceGroupId())
-                .tenantId(profile.getTenantId())
-                .subscriptionId(profile.getSubscriptionId())
-                .build();
-      } catch (ApiException ex) {
-        if (ex.getCode() == HttpStatus.NOT_FOUND.value()
-            || ex.getCode() == HttpStatus.FORBIDDEN.value()) {
-          return null;
-        } else {
-          // TODO specific exception
-          throw new RuntimeException("Problem: " + ex.getMessage(), ex.getCause());
-        }
-      }
+      spend = getSpendProfileFromBpm(userRequest, spendProfileId);
     } else {
       spend = spendProfiles.get(spendProfileId);
     }
@@ -141,5 +109,32 @@ public class SpendProfileService {
                     .billingAccountId(spendModel.getBillingAccountId())
                     .build())
         .collect(Collectors.toList());
+  }
+
+  private SpendProfile getSpendProfileFromBpm(
+      AuthenticatedUserRequest userRequest, SpendProfileId spendProfileId) {
+    SpendProfile spend = null;
+    var profileApi = bpmClientProvider.getProfileApi(userRequest);
+    try {
+      var profile = profileApi.getProfile(UUID.fromString(spendProfileId.getId()));
+
+      spend =
+          SpendProfile.builder()
+              .id(spendProfileId)
+              .billingAccountId(profile.getBillingAccountId())
+              .managedResourceGroupId(profile.getManagedResourceGroupId())
+              .tenantId(profile.getTenantId())
+              .subscriptionId(profile.getSubscriptionId())
+              .build();
+    } catch (ApiException ex) {
+      if (ex.getCode() == HttpStatus.NOT_FOUND.value()
+          || ex.getCode() == HttpStatus.FORBIDDEN.value()) {
+        return null;
+      } else {
+        throw new BillingProfileManagerServiceAPIException(ex);
+      }
+    }
+
+    return spend;
   }
 }

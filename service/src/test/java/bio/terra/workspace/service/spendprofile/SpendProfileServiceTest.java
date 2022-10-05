@@ -8,6 +8,7 @@ import bio.terra.workspace.app.configuration.external.SpendProfileConfiguration;
 import bio.terra.workspace.common.BaseConnectedTest;
 import bio.terra.workspace.connected.UserAccessUtils;
 import bio.terra.workspace.service.iam.SamService;
+import bio.terra.workspace.service.spendprofile.client.BpmClientProvider;
 import bio.terra.workspace.service.spendprofile.exceptions.SpendUnauthorizedException;
 import com.google.common.collect.ImmutableList;
 import org.junit.jupiter.api.Test;
@@ -19,6 +20,7 @@ class SpendProfileServiceTest extends BaseConnectedTest {
   @Autowired SpendConnectedTestUtils spendUtils;
   @Autowired UserAccessUtils userAccessUtils;
   @Autowired FeatureConfiguration featureConfiguration;
+  @Autowired BpmClientProvider bpmClientProvider;
 
   @Test
   void authorizeLinkingSuccess() {
@@ -26,7 +28,7 @@ class SpendProfileServiceTest extends BaseConnectedTest {
     SpendProfile profile = SpendProfile.builder().id(id).build();
     SpendProfileService service =
         new SpendProfileService(
-            samService, ImmutableList.of(profile), spendProfileConfiguration, featureConfiguration);
+            samService, ImmutableList.of(profile), bpmClientProvider, featureConfiguration);
 
     assertEquals(profile, service.authorizeLinking(id, userAccessUtils.defaultUserAuthRequest()));
   }
@@ -37,7 +39,7 @@ class SpendProfileServiceTest extends BaseConnectedTest {
     SpendProfile profile = SpendProfile.builder().id(id).build();
     SpendProfileService service =
         new SpendProfileService(
-            samService, ImmutableList.of(profile), spendProfileConfiguration, featureConfiguration);
+            samService, ImmutableList.of(profile), bpmClientProvider, featureConfiguration);
 
     assertThrows(
         SpendUnauthorizedException.class,
@@ -48,7 +50,7 @@ class SpendProfileServiceTest extends BaseConnectedTest {
   void authorizeLinkingUnknownIdThrowsUnauthorized() {
     SpendProfileService service =
         new SpendProfileService(
-            samService, ImmutableList.of(), spendProfileConfiguration, featureConfiguration);
+            samService, ImmutableList.of(), bpmClientProvider, featureConfiguration);
     assertThrows(
         SpendUnauthorizedException.class,
         () ->
@@ -59,7 +61,8 @@ class SpendProfileServiceTest extends BaseConnectedTest {
   @Test
   void parseSpendProfileConfiguration() {
     SpendProfileService service =
-        new SpendProfileService(samService, spendProfileConfiguration, featureConfiguration);
+        new SpendProfileService(
+            samService, spendProfileConfiguration, bpmClientProvider, featureConfiguration);
     assertEquals(
         SpendProfile.builder()
             .id(spendUtils.defaultSpendId())
