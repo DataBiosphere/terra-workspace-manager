@@ -171,6 +171,37 @@ paths:
         '500':
           $ref: '#/components/responses/ServerError'
 
+  /api/workspaces/v1/{workspaceId}/policies:
+    parameters:
+      - $ref: '#/components/parameters/WorkspaceId'
+    patch:
+      summary: Update policies for a workspace
+      operationId: updatePolicies
+      tags: [Workspace]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TpsPaoUpdateRequest'
+      responses:
+        '200':
+          description: Update successfully processed. The update itself may or may not have succeeded.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TpsPaoUpdateResult'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
   /api/workspaces/v1/{workspaceId}/roles:
     parameters:
       - $ref: '#/components/parameters/WorkspaceId'
