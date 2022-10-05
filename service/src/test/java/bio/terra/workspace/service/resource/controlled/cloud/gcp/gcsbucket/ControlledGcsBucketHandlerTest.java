@@ -6,17 +6,17 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.annotation.DirtiesContext.ClassMode.BEFORE_CLASS;
 
-import bio.terra.workspace.common.BaseUnitTest;
 import bio.terra.workspace.common.BaseUnitTestMockGcpCloudContextService;
-import bio.terra.workspace.service.workspace.GcpCloudContextService;
 import java.io.IOException;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.annotation.DirtiesContext;
 
+// TODO: PF-2090 - Spring does not seem to notice that it needs to build a different
+//  application context for this test class, even though it inherits a different set
+//  of mocks. Doing @DirtiesContext forces a new application context and it is built
+//  properly. See the ticket for more details.
 @DirtiesContext(classMode = BEFORE_CLASS)
 public class ControlledGcsBucketHandlerTest extends BaseUnitTestMockGcpCloudContextService {
   private static final UUID fakeWorkspaceId = UUID.randomUUID();

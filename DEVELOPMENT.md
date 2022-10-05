@@ -224,28 +224,6 @@ View current usage information for `write-config.sh` by entering
 ./scripts/write-config.sh help
 ```
 
-### Writing Unit Tests
-
-There is an issue to be aware of when writing unit tests. Each different combination of `@MockBean` makes
-a different signature for a Spring application context object. Spring caches up to 20 application contexts.
-Each application context has connection pools for WSM database and Stairway database, plus connection pools
-in any amalgam services, like TPS and LZ. An idle connection pool will keep a minimum set of connections open.
-It turned out to be easy to collect enough unique application contexts with enough connection pools holding
-enough open connections to run the backend out of connections.
-
-The initial fix was to reduce the idle size of the pools to 1. However, that is not ideal for test performance.
-
-A better fix is to be more systematic about the sets of mocks in use. When tests share the same mocks, even
-if they are not used by the test, they are able to share the same application context. That means slightly
-faster test runs and less chance of running out of database connections.
-
-
-
-
-
-
-
-
 ### Running Tests
 
 To run unit tests:

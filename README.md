@@ -306,8 +306,8 @@ The current inheritance for unit test base classes looks like this:
 - `BaseTest` - the base class for unit and connected tests
     - `BaseUnitTestMocks` - the base set of mocks shared by all unit tests
         - `BaseUnitTest` - enables the right test tags and profiles for unit testing
-            - `BaseUnitTestMockDataRepoService` - adds one mock for one unit test
-            - `BaseUnitTestMockGcpCloudContextService` - add one mock; used by several tests
+            - `BaseUnitTestMockDataRepoService` - adds one more mock; used in one unit test
+            - `BaseUnitTestMockGcpCloudContextService` - adds one more mock; used by several tests
         - `BaseAzureUnitTest` - adds mocks shared by azure unit tests and enables the right test tags and profiles
 
 We keep the Azure tests separated from the general tests, because the Azure feature is not live in all environments.
