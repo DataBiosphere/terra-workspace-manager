@@ -5,6 +5,7 @@ import static bio.terra.workspace.app.controller.shared.PropertiesUtils.convertM
 import static bio.terra.workspace.common.utils.MockMvcUtils.FOLDERS_V1_PATH_FORMAT;
 import static bio.terra.workspace.common.utils.MockMvcUtils.FOLDER_PROPERTIES_V1_PATH_FORMAT;
 import static bio.terra.workspace.common.utils.MockMvcUtils.FOLDER_V1_PATH_FORMAT;
+import static bio.terra.workspace.common.utils.MockMvcUtils.USER_REQUEST;
 import static bio.terra.workspace.common.utils.MockMvcUtils.addAuth;
 import static bio.terra.workspace.common.utils.MockMvcUtils.addJsonContentType;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -33,7 +34,6 @@ import bio.terra.workspace.generated.model.ApiProperties;
 import bio.terra.workspace.generated.model.ApiPropertyKeys;
 import bio.terra.workspace.generated.model.ApiUpdateFolderRequestBody;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
-import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.iam.model.SamConstants;
 import bio.terra.workspace.service.iam.model.SamConstants.SamWorkspaceAction;
 import bio.terra.workspace.service.iam.model.WsmIamRole;
@@ -41,7 +41,6 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.UUID;
 import javax.annotation.Nullable;
 import org.apache.http.HttpStatus;
@@ -49,35 +48,28 @@ import org.broadinstitute.dsde.workbench.client.sam.model.UserStatusInfo;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
 
 public class FolderApiControllerTest extends BaseUnitTest {
-  private static final AuthenticatedUserRequest USER_REQUEST =
-      new AuthenticatedUserRequest(
-          "fake@email.com", "subjectId123456", Optional.of("ThisIsNotARealBearerToken"));
-
   @Autowired MockMvc mockMvc;
   @Autowired MockMvcUtils mockMvcUtils;
   @Autowired ObjectMapper objectMapper;
-
-  @MockBean SamService mockSamService;
 
   @BeforeEach
   public void setUp() throws InterruptedException {
     // Needed for workspace creation as logging is triggered when a workspace is created in
     // `WorkspaceActivityLogHook` where we extract the user request information and log it to
     // activity log.
-    when(mockSamService.getUserStatusInfo(any()))
+    when(mockSamService().getUserStatusInfo(any()))
         .thenReturn(
             new UserStatusInfo()
                 .userEmail(USER_REQUEST.getEmail())
                 .userSubjectId(USER_REQUEST.getSubjectId()));
 
     // Needed for assertion that requester has role on workspace.
-    when(mockSamService.listRequesterRoles(any(), any(), any()))
+    when(mockSamService().listRequesterRoles(any(), any(), any()))
         .thenReturn(List.of(WsmIamRole.OWNER));
   }
 
@@ -102,7 +94,7 @@ public class FolderApiControllerTest extends BaseUnitTest {
   public void createFolder_doesNotHaveWriteAccess_throws403() throws Exception {
     UUID workspaceId = mockMvcUtils.createWorkspaceWithoutCloudContext(USER_REQUEST).getId();
     doThrow(new ForbiddenException("User has no write access"))
-        .when(mockSamService)
+        .when(mockSamService())
         .checkAuthz(
             any(AuthenticatedUserRequest.class),
             eq(SamConstants.SamResource.WORKSPACE),
@@ -193,7 +185,7 @@ public class FolderApiControllerTest extends BaseUnitTest {
     UUID workspaceId = mockMvcUtils.createWorkspaceWithoutCloudContext(USER_REQUEST).getId();
     ApiFolder folder = createFolder(workspaceId);
     doThrow(new ForbiddenException("User has no write access"))
-        .when(mockSamService)
+        .when(mockSamService())
         .checkAuthz(
             any(AuthenticatedUserRequest.class),
             eq(SamConstants.SamResource.WORKSPACE),
@@ -239,7 +231,7 @@ public class FolderApiControllerTest extends BaseUnitTest {
     UUID workspaceId = mockMvcUtils.createWorkspaceWithoutCloudContext(USER_REQUEST).getId();
     createFolderExpectCode(workspaceId, HttpStatus.SC_OK);
     doThrow(new ForbiddenException("User has no write access"))
-        .when(mockSamService)
+        .when(mockSamService())
         .checkAuthz(
             any(AuthenticatedUserRequest.class),
             eq(SamConstants.SamResource.WORKSPACE),
@@ -259,7 +251,7 @@ public class FolderApiControllerTest extends BaseUnitTest {
     UUID workspaceId = mockMvcUtils.createWorkspaceWithoutCloudContext(USER_REQUEST).getId();
     ApiFolder folder = createFolder(workspaceId);
     doThrow(new ForbiddenException("User has no write access"))
-        .when(mockSamService)
+        .when(mockSamService())
         .checkAuthz(
             any(AuthenticatedUserRequest.class),
             eq(SamConstants.SamResource.WORKSPACE),
@@ -344,7 +336,7 @@ public class FolderApiControllerTest extends BaseUnitTest {
     UUID workspaceId = mockMvcUtils.createWorkspaceWithoutCloudContext(USER_REQUEST).getId();
     ApiFolder folder = createFolder(workspaceId);
     doThrow(new ForbiddenException("User has no write access"))
-        .when(mockSamService)
+        .when(mockSamService())
         .checkAuthz(
             any(AuthenticatedUserRequest.class),
             eq(SamConstants.SamResource.WORKSPACE),
@@ -416,7 +408,7 @@ public class FolderApiControllerTest extends BaseUnitTest {
     UUID workspaceId = mockMvcUtils.createWorkspaceWithoutCloudContext(USER_REQUEST).getId();
     ApiFolder folder = createFolder(workspaceId);
     doThrow(new ForbiddenException("User has no write access"))
-        .when(mockSamService)
+        .when(mockSamService())
         .checkAuthz(
             any(AuthenticatedUserRequest.class),
             eq(SamConstants.SamResource.WORKSPACE),
@@ -465,7 +457,7 @@ public class FolderApiControllerTest extends BaseUnitTest {
     UUID workspaceId = mockMvcUtils.createWorkspaceWithoutCloudContext(USER_REQUEST).getId();
     ApiFolder folder = createFolder(workspaceId);
     doThrow(new ForbiddenException("User has no write access"))
-        .when(mockSamService)
+        .when(mockSamService())
         .checkAuthz(
             any(AuthenticatedUserRequest.class),
             eq(SamConstants.SamResource.WORKSPACE),

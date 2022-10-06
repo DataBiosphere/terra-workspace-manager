@@ -1,5 +1,6 @@
 package bio.terra.workspace.service.workspace;
 
+import static bio.terra.workspace.common.utils.MockMvcUtils.USER_REQUEST;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.greaterThanOrEqualTo;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -14,8 +15,6 @@ import bio.terra.workspace.db.RawDaoTestFixture;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.db.exception.ApplicationNotFoundException;
 import bio.terra.workspace.db.exception.InvalidApplicationStateException;
-import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
-import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.iam.model.SamConstants.SamResource;
 import bio.terra.workspace.service.iam.model.SamConstants.SamSpendProfileAction;
 import bio.terra.workspace.service.job.JobService;
@@ -36,31 +35,15 @@ import bio.terra.workspace.service.workspace.model.WsmApplicationState;
 import bio.terra.workspace.service.workspace.model.WsmWorkspaceApplication;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.annotation.DirtiesContext.MethodMode;
 
-// Test notes
-// Populate two applications
-// Create workspace
-// Enumerate/get
-// enable operating - works
-// enable deprecated - fails
-// enableNocheck deprecated - works
-// Enumerate/get
-// disable deprecated
-// disable operating
-// Enumerate/get
-
-@Disabled("Until we get the postgres connection leaks addressed")
 public class ApplicationServiceTest extends BaseUnitTest {
   private static final String LEO_ID = "4BD1D59D-5827-4375-A41D-BBC65919F269";
   private static final String CARMEN_ID = "Carmen";
@@ -100,22 +83,12 @@ public class ApplicationServiceTest extends BaseUnitTest {
           .serviceAccount("norm@terra-dev.iam.gserviceaccount.com")
           .state(WsmApplicationState.OPERATING);
 
-  /** A fake authenticated user request. */
-  private static final AuthenticatedUserRequest USER_REQUEST =
-      new AuthenticatedUserRequest()
-          .token(Optional.of("fake-token"))
-          .email("fake@email.com")
-          .subjectId("fakeID123");
-
   @Autowired ApplicationDao appDao;
   @Autowired WsmApplicationService appService;
   @Autowired WorkspaceService workspaceService;
   @Autowired JobService jobService;
   @Autowired RawDaoTestFixture rawDaoTestFixture;
   @Autowired ResourceDao resourceDao;
-
-  /** Mock SamService does nothing for all calls that would throw if unauthorized. */
-  @MockBean private SamService mockSamService;
 
   private Workspace workspace;
   private Workspace workspace2;
@@ -124,15 +97,17 @@ public class ApplicationServiceTest extends BaseUnitTest {
   void setup() throws Exception {
     // Set up so all spend profile and workspace checks are successful
     Mockito.when(
-            mockSamService.isAuthorized(
-                Mockito.any(),
-                Mockito.eq(SamResource.SPEND_PROFILE),
-                Mockito.any(),
-                Mockito.eq(SamSpendProfileAction.LINK)))
+            mockSamService()
+                .isAuthorized(
+                    Mockito.any(),
+                    Mockito.eq(SamResource.SPEND_PROFILE),
+                    Mockito.any(),
+                    Mockito.eq(SamSpendProfileAction.LINK)))
         .thenReturn(true);
     Mockito.when(
-            mockSamService.isAuthorized(
-                Mockito.any(), Mockito.eq(SamResource.WORKSPACE), Mockito.any(), Mockito.any()))
+            mockSamService()
+                .isAuthorized(
+                    Mockito.any(), Mockito.eq(SamResource.WORKSPACE), Mockito.any(), Mockito.any()))
         .thenReturn(true);
 
     appService.enableTestMode();

@@ -5,4 +5,4 @@ import org.springframework.test.context.ActiveProfiles;
 
 @Tag("unit")
 @ActiveProfiles("unit-test")
-public class BaseUnitTest extends BaseTest {}
+public class BaseUnitTest extends BaseUnitTestMocks {}
