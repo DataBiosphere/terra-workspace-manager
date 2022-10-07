@@ -20,7 +20,6 @@ import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.Contr
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ResourceKeys;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Optional;
 import java.util.UUID;
 import javax.annotation.Nullable;
 
@@ -77,9 +76,9 @@ public class LaunchCloneGcsBucketResourceFlightStep implements Step {
     subflightInputParameters.put(
         ControlledResourceKeys.DESTINATION_RESOURCE_ID, destinationResourceId);
     Map<String, String> destinationProperties = new HashMap<>(resource.getProperties());
-    destinationProperties.put(
-        TERRA_FOLDER_ID_PROPERTY_KEY,
-        Optional.ofNullable(destinationFolderId).map(String::valueOf).orElse(null));
+    if (destinationFolderId != null) {
+      destinationProperties.put(TERRA_FOLDER_ID_PROPERTY_KEY, String.valueOf(destinationFolderId));
+    }
     subflightInputParameters.put(
         ControlledResourceKeys.DESTINATION_RESOURCE_PROPERTY, destinationProperties);
     // Do not do the policy merge on the sub-object clone

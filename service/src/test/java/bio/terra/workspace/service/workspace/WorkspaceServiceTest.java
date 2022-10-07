@@ -9,6 +9,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hibernate.validator.internal.util.Contracts.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -834,18 +835,13 @@ class WorkspaceServiceTest extends BaseConnectedTest {
         controlledResourceService.createControlledResourceSync(
             bucketResource, ControlledResourceIamRole.OWNER, USER_REQUEST, creationParameters);
 
-    // Enable an application.
+    // Enable an application
     appService.enableWorkspaceApplication(USER_REQUEST, sourceWorkspace, TEST_WSM_APP);
 
-    // Create 2 folders .
-    UUID parentFolderId = UUID.randomUUID();
+    // Create a folder
     UUID folderId = UUID.randomUUID();
     folderDao.createFolder(
-        new Folder(
-            parentFolderId, sourceWorkspaceId, PARENT_FOLDER_NAME, null, null, new HashMap<>()));
-    folderDao.createFolder(
-        new Folder(
-            folderId, sourceWorkspaceId, FOLDER_NAME, null, parentFolderId, new HashMap<>()));
+        new Folder(folderId, sourceWorkspaceId, PARENT_FOLDER_NAME, null, null, null));
 
     final ControlledGcsBucketResource createdBucketResource =
         createdResource.castByEnum(WsmResourceType.CONTROLLED_GCP_GCS_BUCKET);
@@ -892,10 +888,9 @@ class WorkspaceServiceTest extends BaseConnectedTest {
     // Destination workspace should have an enabled application
     assertTrue(appService.getWorkspaceApplication(destinationWorkspace, TEST_WSM_APP).isEnabled());
 
-    // Destination workspace should have 2 folders with the relations
-    assertEquals(folderDao.listFolders(destinationWorkspace.getWorkspaceId(), null).size(), 2);
-    // Assert the 2 folders, one is parent folder with null parentFodlderId, the othere one with
-    // parentFolderId as parentFodlderId
+    // Destination workspace should have 1 cloned folder with the relations
+    assertNotEquals(
+        folderDao.listFolders(destinationWorkspace.getWorkspaceId(), null).get(0).id(), folderId);
 
     // Clean up
     workspaceService.deleteWorkspace(sourceWorkspace, USER_REQUEST);
@@ -921,8 +916,14 @@ class WorkspaceServiceTest extends BaseConnectedTest {
     jobService.waitForJob(createCloudContextJobId);
     assertNull(jobService.retrieveJobResult(createCloudContextJobId, Object.class).getException());
 
-    // Enable an application.
+    // Enable an application
     appService.enableWorkspaceApplication(USER_REQUEST, sourceWorkspace, TEST_WSM_APP);
+
+    // Create a folder
+    UUID folderId = UUID.randomUUID();
+    folderDao.createFolder(
+        new Folder(
+            folderId, sourceWorkspace.getWorkspaceId(), PARENT_FOLDER_NAME, null, null, null));
 
     final Workspace destinationWorkspace =
         defaultRequestBuilder(UUID.randomUUID())
@@ -947,6 +948,9 @@ class WorkspaceServiceTest extends BaseConnectedTest {
     // Destination Workspace should not have a GCP context
     assertTrue(
         gcpCloudContextService.getGcpCloudContext(destinationWorkspace.getWorkspaceId()).isEmpty());
+
+    // Destination workspace should not have folder
+    assertEquals(folderDao.listFolders(destinationWorkspace.getWorkspaceId(), null).size(), 0);
 
     // Remove the effect of lastStepFailure, and clean up the created workspace
     jobService.setFlightDebugInfoForTest(null);
