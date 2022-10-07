@@ -36,7 +36,6 @@ import bio.terra.workspace.generated.model.ApiGcpGcsObjectResource;
 import bio.terra.workspace.generated.model.ApiGitRepoResource;
 import bio.terra.workspace.generated.model.ApiReferenceResourceCommonFields;
 import bio.terra.workspace.generated.model.ApiResourceMetadata;
-import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.iam.model.WsmIamRole;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.List;
@@ -47,7 +46,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -58,20 +56,18 @@ public class ReferencedGcpResourceControllerTest extends BaseUnitTest {
   @Autowired MockMvcUtils mockMvcUtils;
   @Autowired ObjectMapper objectMapper;
 
-  @MockBean SamService mockSamService;
-
   @BeforeEach
   public void setUp() throws InterruptedException {
     // Needed for workspace creation as logging is triggered when a workspace is created in
     // `WorkspaceActivityLogHook` where we extract the user request information and log it to
     // activity log.
-    when(mockSamService.getUserStatusInfo(any()))
+    when(mockSamService().getUserStatusInfo(any()))
         .thenReturn(
             new UserStatusInfo()
                 .userEmail(USER_REQUEST.getEmail())
                 .userSubjectId(USER_REQUEST.getSubjectId()));
     // Needed for assertion that requester has role on workspace.
-    when(mockSamService.listRequesterRoles(any(), any(), any()))
+    when(mockSamService().listRequesterRoles(any(), any(), any()))
         .thenReturn(List.of(WsmIamRole.OWNER));
   }
 

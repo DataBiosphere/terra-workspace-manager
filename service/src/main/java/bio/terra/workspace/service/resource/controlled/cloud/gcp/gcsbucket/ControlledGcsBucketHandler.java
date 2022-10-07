@@ -15,7 +15,6 @@ import org.springframework.stereotype.Component;
 
 @Component
 public class ControlledGcsBucketHandler implements WsmResourceHandler {
-
   protected static final int MAX_BUCKET_NAME_LENGTH = 63;
   private static ControlledGcsBucketHandler theHandler;
   private final GcpCloudContextService gcpCloudContextService;
