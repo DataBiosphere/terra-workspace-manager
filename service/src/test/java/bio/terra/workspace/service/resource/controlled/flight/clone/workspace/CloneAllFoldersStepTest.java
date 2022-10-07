@@ -3,9 +3,9 @@ package bio.terra.workspace.service.resource.controlled.flight.clone.workspace;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import bio.terra.stairway.FlightContext;
@@ -55,15 +55,15 @@ public class CloneAllFoldersStepTest extends BaseUnitTest {
                     SOURCE_WORKSPACE_ID,
                     SOURCE_PARENT_FOLDER_NAME,
                     SOURCE_PARENT_FOLDER_DESCRIPTION,
-                    null,
-                    null),
+                    /*parentFolderId=*/ null,
+                    /*properties=*/ null),
                 new Folder(
                     SOURCE_SON_FOLDER_ID,
                     SOURCE_WORKSPACE_ID,
                     SOURCE_SON_FOLDER_NAME,
                     SOURCE_SON_FOLDER_DESCRIPTION,
                     SOURCE_PARENT_FOLDER_ID,
-                    null)));
+                    /*properties=*/ null)));
     cloneAllFoldersStep = new CloneAllFoldersStep(mockFolderDao);
   }
 
@@ -103,7 +103,7 @@ public class CloneAllFoldersStepTest extends BaseUnitTest {
                     SOURCE_PARENT_FOLDER_NAME,
                     SOURCE_PARENT_FOLDER_DESCRIPTION,
                     /*parentFolderId=*/ null,
-                    null)));
+                    /*properties=*/ null)));
     verify(mockFolderDao, times(1))
         .createFolder(
             eq(
@@ -113,7 +113,7 @@ public class CloneAllFoldersStepTest extends BaseUnitTest {
                     SOURCE_SON_FOLDER_NAME,
                     SOURCE_SON_FOLDER_DESCRIPTION,
                     /*parentFolderId=*/ null,
-                    null)));
+                    /*properties=*/ null)));
 
     verify(mockFolderDao, times(1))
         .updateFolder(
@@ -122,6 +122,6 @@ public class CloneAllFoldersStepTest extends BaseUnitTest {
             /*displayName=*/ eq(null),
             /*description=*/ eq(null),
             eq(UUID.fromString(folderIdMap.get(SOURCE_PARENT_FOLDER_ID.toString()))),
-            /*updateParen=*/ eq(true));
+            /*updateParent=*/ eq(true));
   }
 }

@@ -5,7 +5,6 @@ import static org.hamcrest.Matchers.greaterThanOrEqualTo;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static scripts.utils.BqDatasetUtils.BQ_RESULT_TABLE_NAME;
@@ -335,9 +334,12 @@ public class CloneWorkspace extends WorkspaceAllocateWithPolicyTestScriptBase {
     ApiClient ownerApiClient = ClientTestUtils.getClientForTestUser(cloningUser, server);
     FolderApi folderApi = new FolderApi(ownerApiClient);
 
-    assertNotEquals(
-        folderApi.listFolders(cloneResult.getWorkspace().getDestinationWorkspaceId()),
-        folderApi.listFolders(cloneResult.getWorkspace().getSourceWorkspaceId()),
+    assertEquals(
+        folderApi
+            .listFolders(cloneResult.getWorkspace().getDestinationWorkspaceId())
+            .getFolders()
+            .size(),
+        1,
         "Folder clone successfully");
 
     // Verify shared GCS bucket succeeds and is populated
@@ -390,11 +392,6 @@ public class CloneWorkspace extends WorkspaceAllocateWithPolicyTestScriptBase {
     GcsBucketObjectUtils.retrieveBucketFile(
         clonedSharedBucket.getAttributes().getBucketName(), destinationProjectId, cloningUser);
 
-    assertNotNull(
-        clonedSharedBucket.getMetadata().getProperties().stream()
-            .filter(x -> x.getKey().equals("terra-folder-id"))
-            .findFirst(),
-        "Updated folder id is present.");
     assertEquals(
         folderApi
             .listFolders(cloneResult.getWorkspace().getDestinationWorkspaceId())
@@ -407,7 +404,7 @@ public class CloneWorkspace extends WorkspaceAllocateWithPolicyTestScriptBase {
             .findFirst()
             .get()
             .getValue(),
-        "Folder id is updated after clone.");
+        "Folder id in source is updated after cloning.");
 
     // Verify clone of private bucket fails
     final ResourceCloneDetails privateBucketCloneDetails =

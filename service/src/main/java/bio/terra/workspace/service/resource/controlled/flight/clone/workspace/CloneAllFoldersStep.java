@@ -42,30 +42,33 @@ public class CloneAllFoldersStep implements Step {
 
     // Create and clone all folders
     ImmutableList<Folder> foldersResult = folderDao.listFolders(sourceWorkspaceId, null);
+    // Have to use Map<String, String> rather than Map<UUID, UUID> to avoid JSON deserialization
+    // error
     Map<String, String> folderIdMap = new HashMap<>();
-    for (Folder folder : foldersResult) {
-      UUID destinationFolderId = UUID.randomUUID();
-      folderDao.createFolder(
-          new Folder(
-              destinationFolderId,
+    if (foldersResult != null) {
+      for (Folder folder : foldersResult) {
+        UUID destinationFolderId = UUID.randomUUID();
+        folderDao.createFolder(
+            new Folder(
+                destinationFolderId,
+                destinationWorkspaceId,
+                folder.displayName(),
+                folder.description(),
+                /*parentFolderId=*/ null,
+                folder.properties()));
+        folderIdMap.put(folder.id().toString(), destinationFolderId.toString());
+      }
+      // Update the cloned folders' parent folder id
+      for (Folder folder : foldersResult) {
+        if (folder.parentFolderId() != null) {
+          folderDao.updateFolder(
               destinationWorkspaceId,
-              folder.displayName(),
-              folder.description(),
-              /*parentFolderId=*/ null,
-              folder.properties()));
-      folderIdMap.put(folder.id().toString(), destinationFolderId.toString());
-    }
-
-    // Update the cloned folders' parent folder id
-    for (Folder folder : foldersResult) {
-      if (folder.parentFolderId() != null) {
-        folderDao.updateFolder(
-            destinationWorkspaceId,
-            UUID.fromString(folderIdMap.get(folder.id().toString())),
-            /*displayName=*/ null,
-            /*description=*/ null,
-            UUID.fromString(folderIdMap.get(folder.parentFolderId().toString())),
-            /*updateParen=*/ true);
+              UUID.fromString(folderIdMap.get(folder.id().toString())),
+              /*displayName=*/ null,
+              /*description=*/ null,
+              UUID.fromString(folderIdMap.get(folder.parentFolderId().toString())),
+              /*updateParent=*/ true);
+        }
       }
     }
 

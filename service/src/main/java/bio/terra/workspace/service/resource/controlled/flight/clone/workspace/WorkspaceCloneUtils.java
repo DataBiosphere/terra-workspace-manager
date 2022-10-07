@@ -186,8 +186,10 @@ public class WorkspaceCloneUtils {
         .resourceId(destinationResourceId)
         .resourceLineage(destinationResourceLineage)
         .properties(
-            maybeClearSomeResourcePropertiesBeforeCloning(
-                sourceResource, properties, destinationWorkspaceId))
+            Optional.ofNullable(properties)
+                .orElse(
+                    maybeClearSomeResourcePropertiesBeforeCloning(
+                        sourceResource, destinationWorkspaceId)))
         .build();
   }
 
@@ -369,8 +371,7 @@ public class WorkspaceCloneUtils {
         .workspaceUuid(destinationWorkspaceId)
         .resourceId(destinationResourceId)
         .properties(
-            maybeClearSomeResourcePropertiesBeforeCloning(
-                wsmResource, wsmResource.getProperties(), destinationWorkspaceId))
+            maybeClearSomeResourcePropertiesBeforeCloning(wsmResource, destinationWorkspaceId))
         .resourceLineage(destinationResourceLineage);
     // apply optional override variables
     Optional.ofNullable(name).ifPresent(destinationResourceCommonFieldsBuilder::name);
@@ -391,10 +392,8 @@ public class WorkspaceCloneUtils {
   }
 
   private static Map<String, String> maybeClearSomeResourcePropertiesBeforeCloning(
-      WsmResource sourceResource,
-      Map<String, String> destinationProperties,
-      UUID destinationWorkspaceId) {
-    Map<String, String> destinationResourceProperties = destinationProperties;
+      WsmResource sourceResource, UUID destinationWorkspaceId) {
+    Map<String, String> destinationResourceProperties = sourceResource.getProperties();
     if (!destinationWorkspaceId.equals(sourceResource.getWorkspaceId())) {
       destinationResourceProperties =
           clearSomePropertiesForResourceCloningToDifferentWorkspace(destinationResourceProperties);
