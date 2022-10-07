@@ -43,7 +43,7 @@ public class SpendProfileService {
       FeatureConfiguration features) {
     this(
         samService,
-        parse(spendProfileConfiguration.getSpendProfiles()),
+        adaptConfigurationModels(spendProfileConfiguration.getSpendProfiles()),
         bpmClientProvider,
         features);
   }
@@ -96,7 +96,7 @@ public class SpendProfileService {
     return spend;
   }
 
-  private static List<SpendProfile> parse(
+  private static List<SpendProfile> adaptConfigurationModels(
       List<SpendProfileConfiguration.SpendProfileModel> spendModels) {
     return spendModels.stream()
         .map(
