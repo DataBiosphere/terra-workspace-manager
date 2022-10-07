@@ -29,10 +29,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
-import javax.annotation.Nullable;
 
 public class ControlledAzureStorageContainerResource extends ControlledResource {
-  @Nullable private final UUID storageAccountId;
+  private final UUID storageAccountId;
   private final String storageContainerName;
 
   @JsonCreator
@@ -97,7 +96,9 @@ public class ControlledAzureStorageContainerResource extends ControlledResource 
     return Optional.of(
         new UniquenessCheckAttributes()
             .uniquenessScope(UniquenessScope.WORKSPACE)
-            // .addParameter("storageAccountId", getStorageAccountId().toString())
+            .addParameter(
+                "storageAccountId",
+                Optional.ofNullable(getStorageAccountId()).map(UUID::toString).orElse(null))
             .addParameter("storageContainerName", getStorageContainerName()));
   }
 
@@ -212,14 +213,16 @@ public class ControlledAzureStorageContainerResource extends ControlledResource 
 
     ControlledAzureStorageContainerResource that = (ControlledAzureStorageContainerResource) o;
 
-    return /*storageAccountId.equals(that.getStorageAccountId())
-           &&*/ storageContainerName.equals(that.getStorageContainerName());
+    return storageAccountId.equals(that.getStorageAccountId())
+        && storageContainerName.equals(that.getStorageContainerName());
   }
 
   @Override
   public int hashCode() {
     int result = super.hashCode();
-    // result = 31 * result + storageAccountId.hashCode();
+    if (storageAccountId != null) {
+      result = 31 * result + storageAccountId.hashCode();
+    }
     result = 31 * result + storageContainerName.hashCode();
     return result;
   }
