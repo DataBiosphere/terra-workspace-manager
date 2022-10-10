@@ -66,14 +66,13 @@ public class FolderDao {
           values (:workspace_id, :id, :display_name, :description, :parent_folder_id, :properties::jsonb)
         """;
     if (folder.parentFolderId() != null) {
-      Optional<Folder> parentFolder =
-          getFolderIfExists(folder.workspaceId(), folder.parentFolderId());
-      if (parentFolder.isEmpty()) {
-        throw new FolderNotFoundException(
-            String.format(
-                "Failed to find parent folder %s in workspace %s",
-                folder.parentFolderId(), folder.workspaceId()));
-      }
+      getFolderIfExists(folder.workspaceId(), folder.parentFolderId())
+          .orElseThrow(
+              () ->
+                  new FolderNotFoundException(
+                      String.format(
+                          "Failed to find parent folder %s in workspace %s",
+                          folder.parentFolderId(), folder.workspaceId())));
     }
     var params =
         new MapSqlParameterSource()
@@ -145,6 +144,15 @@ public class FolderDao {
       throw new BadRequestException(
           String.format(
               "Cannot update parent folder id to %s as it will create a cycle", parentFolderId));
+    }
+    if (parentFolderId != null) {
+      getFolderIfExists(workspaceId, parentFolderId)
+          .orElseThrow(
+              () ->
+                  new FolderNotFoundException(
+                      String.format(
+                          "Failed to find parent folder %s in workspace %s",
+                          parentFolderId, workspaceId)));
     }
     var params = new MapSqlParameterSource();
     Optional.ofNullable(displayName).ifPresent(name -> params.addValue("display_name", name));
