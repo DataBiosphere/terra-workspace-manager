@@ -234,6 +234,9 @@ public class FolderDao {
   /**
    * Get the folder tree given root folder using recursive sql query. The root folder is included in
    * the list.
+   *
+   * <p>See more details about recursive SQL query from
+   * https://www.postgresqltutorial.com/postgresql-tutorial/postgresql-recursive-query/
    */
   public ImmutableList<Folder> listFoldersRecursively(UUID rootFolderId) {
     String sql =
@@ -264,6 +267,9 @@ public class FolderDao {
   /**
    * Delete a folder and all of its sub-folders recursively.
    *
+   * <p>See more details about recursive SQL query from
+   * https://www.postgresqltutorial.com/postgresql-tutorial/postgresql-recursive-query/
+   *
    * @param folderId the folder where the deletion starts.
    * @return true if folder(s) are deleted.
    */
@@ -272,23 +278,16 @@ public class FolderDao {
 
     final String sql =
         """
-WITH RECURSIVE subfolders AS (
-        SELECT
-                id,
-                parent_folder_id
-        FROM
-                folder
-        WHERE
-                id = :source_folder_id
-        UNION
-                SELECT
-                        e.id,
-                        e.parent_folder_id
-                FROM
-                        folder e
-                INNER JOIN subfolders s ON s.id = e.parent_folder_id
-) DELETE FROM folder WHERE id IN (SELECT id FROM subfolders);
-""";
+        WITH RECURSIVE subfolders AS (
+                SELECT id,parent_folder_id
+                FROM folder
+                WHERE id = :source_folder_id
+                UNION
+                        SELECT e.id,e.parent_folder_id
+                        FROM folder e
+                        INNER JOIN subfolders s ON s.id = e.parent_folder_id
+        ) DELETE FROM folder WHERE id IN (SELECT id FROM subfolders);
+        """;
 
     MapSqlParameterSource params =
         new MapSqlParameterSource().addValue("source_folder_id", folderId.toString());
