@@ -244,20 +244,13 @@ public class FolderDao {
          WITH RECURSIVE subfolders AS (
                  SELECT
                          workspace_id, id, display_name, description, parent_folder_id, properties
-                 FROM
-                         folder
-                 WHERE
-                         id = :root_folder_id
+                 FROM folder
+                 WHERE id = :root_folder_id
                  UNION
-                         SELECT
-                                 e.workspace_id, e.id, e.display_name, e.description, e.parent_folder_id, e.properties
-                         FROM
-                                 folder e
-                         INNER JOIN subfolders s ON s.id = e.parent_folder_id
-         ) SELECT
-                 *
-         FROM
-                 subfolders;
+                   SELECT e.workspace_id, e.id, e.display_name, e.description, e.parent_folder_id, e.properties
+                   FROM folder e
+                   INNER JOIN subfolders s ON s.id = e.parent_folder_id
+         ) SELECT * FROM subfolders
        """;
     var params = new MapSqlParameterSource();
     params.addValue("root_folder_id", rootFolderId.toString());
@@ -286,7 +279,7 @@ public class FolderDao {
                         SELECT e.id,e.parent_folder_id
                         FROM folder e
                         INNER JOIN subfolders s ON s.id = e.parent_folder_id
-        ) DELETE FROM folder WHERE id IN (SELECT id FROM subfolders);
+        ) DELETE FROM folder WHERE id IN (SELECT id FROM subfolders)
         """;
 
     MapSqlParameterSource params =
