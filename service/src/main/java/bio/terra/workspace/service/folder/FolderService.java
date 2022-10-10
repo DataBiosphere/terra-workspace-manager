@@ -20,10 +20,9 @@ import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.Refer
 import bio.terra.workspace.service.workspace.model.OperationType;
 import com.google.common.collect.ImmutableList;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
+import java.util.Objects;
 import java.util.UUID;
 import javax.annotation.Nullable;
 import org.slf4j.Logger;
@@ -71,7 +70,7 @@ public class FolderService {
   }
 
   public ImmutableList<Folder> listFolders(UUID workspaceId) {
-    return folderDao.listFolders(workspaceId, /*parentFolderId=*/ null);
+    return folderDao.listFoldersInWorkspace(workspaceId);
   }
 
   /** Delete folder and all the resources and subfolder under it. */
@@ -125,8 +124,8 @@ public class FolderService {
       throw new FolderNotFoundException(
           String.format("Folder %s is not found in workspace %s", folderId, workspaceId));
     }
-    Set<UUID> folderIds = new HashSet<>();
-    getAllSubFolderIds(workspaceId, folderId, folderIds);
+    ImmutableList<Folder> folders = folderDao.listFoldersRecursively(folderId);
+
     var offset = 0;
     var limit = 100;
     List<WsmResource> batch;
@@ -137,7 +136,7 @@ public class FolderService {
       batch = resourceDao.enumerateResources(workspaceId, null, null, offset, limit);
       offset += limit;
       batch.stream()
-          .filter(resource -> isInFolder(resource, folderIds))
+          .filter(resource -> isInFolder(resource, folders))
           .forEach(
               resource -> {
                 if (StewardshipType.REFERENCED == resource.getStewardshipType()) {
@@ -161,19 +160,10 @@ public class FolderService {
     }
   }
 
-  private void getAllSubFolderIds(UUID workspaceId, UUID folderId, Set<UUID> folderIds) {
-    folderIds.add(folderId);
-    List<Folder> subFolders = folderDao.listFolders(workspaceId, folderId);
-    if (subFolders.isEmpty()) {
-      return;
-    }
-    for (Folder f : subFolders) {
-      getAllSubFolderIds(workspaceId, f.id(), folderIds);
-    }
-  }
-
-  private static boolean isInFolder(WsmResource resource, Set<UUID> folderIds) {
+  private static boolean isInFolder(WsmResource resource, ImmutableList<Folder> folders) {
+    var folderIds = folders.stream().map(Folder::id).toList();
     return resource.getProperties().containsKey(FOLDER_ID_KEY)
-        && folderIds.contains(UUID.fromString(resource.getProperties().get(FOLDER_ID_KEY)));
+        && folderIds.contains(
+            UUID.fromString(Objects.requireNonNull(resource.getProperties().get(FOLDER_ID_KEY))));
   }
 }

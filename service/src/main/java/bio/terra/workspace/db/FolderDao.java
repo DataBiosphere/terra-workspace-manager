@@ -141,7 +141,7 @@ public class FolderDao {
                 parentFolderId, workspaceId));
       }
     }
-    if (canFormCyclicCycle(workspaceId, parentFolderId, folderId)) {
+    if (isCycle(folderId, parentFolderId)) {
       throw new BadRequestException(
           String.format(
               "Cannot update parent folder id to %s as it will create a cycle", parentFolderId));
@@ -178,15 +178,16 @@ public class FolderDao {
     }
   }
 
-  private boolean canFormCyclicCycle(UUID workspaceId, UUID folder1, UUID folder2) {
-    if (folder1 == null) {
-      return false;
-    }
-    if (folder1.equals(folder2)) {
-      return true;
-    }
-    Folder firstFolder = getFolder(workspaceId, folder1);
-    return canFormCyclicCycle(workspaceId, firstFolder.parentFolderId(), folder2);
+  /**
+   * If targetFolder is a sub-folder of sourceFolder or equal to sourceFolder, setting targetFolder
+   * as the parent of the sourceFolder will form a cycle.
+   *
+   * @param targetFolder the folder that we want to set as the parent of sourceFolder.
+   */
+  private boolean isCycle(UUID sourceFolder, @Nullable UUID targetFolder) {
+    if (targetFolder == null) return false;
+    return listFoldersRecursively(sourceFolder).stream()
+        .anyMatch(folder -> targetFolder.equals(folder.id()));
   }
 
   @ReadTransaction
@@ -217,13 +218,8 @@ public class FolderDao {
                     String.format("Cannot find folder %s in workspace %s", folderId, workspaceId)));
   }
 
-  /**
-   * Gets a list of folders.
-   *
-   * @param parentFolderId when null, get all the folders in a workspace, otherwise, get the direct
-   *     subfolders of a given parent folder.
-   */
-  public ImmutableList<Folder> listFolders(UUID workspaceId, @Nullable UUID parentFolderId) {
+  /** Gets a list of folders in the given workspace */
+  public ImmutableList<Folder> listFoldersInWorkspace(UUID workspaceId) {
     String sql =
         """
          SELECT workspace_id, id, display_name, description, parent_folder_id, properties
@@ -232,10 +228,36 @@ public class FolderDao {
        """;
     var params = new MapSqlParameterSource();
     params.addValue("workspace_id", workspaceId.toString());
-    if (parentFolderId != null) {
-      sql += " AND parent_folder_id = :parent_folder_id";
-      params.addValue("parent_folder_id", parentFolderId.toString());
-    }
+    return ImmutableList.copyOf(jdbcTemplate.query(sql, params, FOLDER_ROW_MAPPER));
+  }
+
+  /**
+   * Get the folder tree given root folder using recursive sql query. The root folder is included in
+   * the list.
+   */
+  public ImmutableList<Folder> listFoldersRecursively(UUID rootFolderId) {
+    String sql =
+        """
+         WITH RECURSIVE subfolders AS (
+                 SELECT
+                         workspace_id, id, display_name, description, parent_folder_id, properties
+                 FROM
+                         folder
+                 WHERE
+                         id = :root_folder_id
+                 UNION
+                         SELECT
+                                 e.workspace_id, e.id, e.display_name, e.description, e.parent_folder_id, e.properties
+                         FROM
+                                 folder e
+                         INNER JOIN subfolders s ON s.id = e.parent_folder_id
+         ) SELECT
+                 *
+         FROM
+                 subfolders;
+       """;
+    var params = new MapSqlParameterSource();
+    params.addValue("root_folder_id", rootFolderId.toString());
     return ImmutableList.copyOf(jdbcTemplate.query(sql, params, FOLDER_ROW_MAPPER));
   }
 
@@ -247,26 +269,37 @@ public class FolderDao {
    */
   @WriteTransaction
   public boolean deleteFolderRecursive(UUID workspaceUuid, UUID folderId) {
-    ImmutableList<Folder> subFolders = listFolders(workspaceUuid, folderId);
-    boolean deleted = false;
-    for (Folder folder : subFolders) {
-      deleted |= deleteFolderRecursive(workspaceUuid, folder.id());
-    }
-    final String sql = "DELETE FROM folder WHERE workspace_id = :workspaceId AND id = :id";
+
+    final String sql =
+        """
+WITH RECURSIVE subfolders AS (
+        SELECT
+                id,
+                parent_folder_id
+        FROM
+                folder
+        WHERE
+                id = :source_folder_id
+        UNION
+                SELECT
+                        e.id,
+                        e.parent_folder_id
+                FROM
+                        folder e
+                INNER JOIN subfolders s ON s.id = e.parent_folder_id
+) DELETE FROM folder WHERE id IN (SELECT id FROM subfolders);
+""";
 
     MapSqlParameterSource params =
-        new MapSqlParameterSource()
-            .addValue("workspaceId", workspaceUuid.toString())
-            .addValue("id", folderId.toString());
-    int rowsAffected = jdbcTemplate.update(sql, params);
-    deleted |= rowsAffected > 0;
+        new MapSqlParameterSource().addValue("source_folder_id", folderId.toString());
+    boolean rowsAffected = jdbcTemplate.update(sql, params) > 0;
 
-    if (deleted) {
+    if (rowsAffected) {
       logger.info("Deleted record for folder {} in workspace {}", folderId, workspaceUuid);
     } else {
       logger.info("No record found for delete folder {} in workspace {}", folderId, workspaceUuid);
     }
-    return deleted;
+    return rowsAffected;
   }
 
   @WriteTransaction
