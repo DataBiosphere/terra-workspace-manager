@@ -11,6 +11,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import bio.terra.workspace.common.StairwayTestUtils;
 import bio.terra.workspace.common.fixtures.WorkspaceFixtures;
+import bio.terra.workspace.generated.model.ApiCloneControlledGcpGcsBucketRequest;
+import bio.terra.workspace.generated.model.ApiCloneControlledGcpGcsBucketResult;
+import bio.terra.workspace.generated.model.ApiCloningInstructionsEnum;
 import bio.terra.workspace.generated.model.ApiCloudPlatform;
 import bio.terra.workspace.generated.model.ApiCreateCloudContextRequest;
 import bio.terra.workspace.generated.model.ApiCreateCloudContextResult;
@@ -87,6 +90,9 @@ public class MockMvcUtils {
       "/api/workspaces/v1/%s/resources/controlled/azure/vm";
   public static final String CREATE_AZURE_SAS_TOKEN_PATH_FORMAT =
       "/api/workspaces/v1/%s/resources/controlled/azure/storageContainer/%s/getSasToken";
+
+  public static final String GET_REFERENCED_GCP_GCS_BUCKET_FORMAT =
+      "/api/workspaces/v1/%s/resources/referenced/gcp/buckets/%s";
   public static final String CLONE_CONTROLLED_GCP_GCS_BUCKET_FORMAT =
       "/api/workspaces/v1/%s/resources/controlled/gcp/buckets/%s/clone";
   public static final String CLONE_RESULT_CONTROLLED_GCP_GCS_BUCKET_FORMAT =
@@ -123,6 +129,12 @@ public class MockMvcUtils {
       "/api/workspaces/v1/%s/resources/referenced/gcp/bigquerydatatables";
   public static final String REFERENCED_GIT_REPO_V1_PATH_FORMAT =
       "/api/workspaces/v1/%s/resources/referenced/gitrepos";
+
+  private static final String DEST_BUCKET_RESOURCE_NAME =
+      TestUtils.appendRandomNumber("i-am-the-cloned-bucket");
+
+  // Only use this if you are mocking SAM. If you're using real SAM,
+  // use userAccessUtils.defaultUserAuthRequest() instead.
   public static final AuthenticatedUserRequest USER_REQUEST =
       new AuthenticatedUserRequest(
           "fake@email.com", "subjectId123456", Optional.of("ThisIsNotARealBearerToken"));
@@ -167,7 +179,7 @@ public class MockMvcUtils {
                 addJsonContentType(
                     addAuth(
                         post(WORKSPACES_V1_PATH).content(objectMapper.writeValueAsString(request)),
-                        Optional.ofNullable(userRequest).orElse(USER_REQUEST))))
+                        userRequest)))
             .andExpect(status().is(HttpStatus.SC_OK))
             .andReturn()
             .getResponse()
@@ -296,7 +308,7 @@ public class MockMvcUtils {
     return objectMapper.readValue(serializedGetResponse, ApiGcpBigQueryDatasetResource.class);
   }
 
-  public ApiCreatedControlledGcpGcsBucket createGcsBucket(
+  public ApiCreatedControlledGcpGcsBucket createControlledGcsBucket(
       AuthenticatedUserRequest userRequest, UUID workspaceId) throws Exception {
     ApiCreateControlledGcpGcsBucketRequestBody gcsBucketCreationRequest =
         new ApiCreateControlledGcpGcsBucketRequestBody()
@@ -322,7 +334,7 @@ public class MockMvcUtils {
     return objectMapper.readValue(serializedGetResponse, ApiCreatedControlledGcpGcsBucket.class);
   }
 
-  public ApiGcpGcsBucketResource getGcsBucket(
+  public ApiGcpGcsBucketResource getControlledGcsBucket(
       AuthenticatedUserRequest userRequest, UUID workspaceId, UUID resourceId) throws Exception {
     String serializedGetResponse =
         mockMvc
@@ -340,6 +352,110 @@ public class MockMvcUtils {
             .getContentAsString();
 
     return objectMapper.readValue(serializedGetResponse, ApiGcpGcsBucketResource.class);
+  }
+
+  /** Call cloneGcsBucket() and wait for flight to finish. */
+  public ApiCloneControlledGcpGcsBucketResult cloneControlledGcsBucket(
+      AuthenticatedUserRequest userRequest,
+      UUID sourceWorkspaceId,
+      UUID sourceResourceId,
+      UUID destWorkspaceId,
+      ApiCloningInstructionsEnum cloningInstructions)
+      throws Exception {
+    ApiCloneControlledGcpGcsBucketResult result =
+        cloneControlledGcsBucketAsync(
+            userRequest,
+            sourceWorkspaceId,
+            sourceResourceId,
+            destWorkspaceId,
+            cloningInstructions,
+            /*bucketName=*/ "",
+            HttpStatus.SC_ACCEPTED);
+    UUID jobId = UUID.fromString(result.getJobReport().getId());
+    while (StairwayTestUtils.jobIsRunning(result.getJobReport())) {
+      Thread.sleep(/*millis=*/ 5000);
+      result = getCloneControlledGcsBucketResult(userRequest, destWorkspaceId, jobId);
+    }
+    assertEquals(StatusEnum.SUCCEEDED, result.getJobReport().getStatus());
+    logger.info(
+        "Controlled GCS bucket clone of resource %s completed. ".formatted(sourceResourceId));
+    return result;
+  }
+
+  /** Call cloneGcsBucket() and return immediately; don't wait for flight to finish. */
+  public ApiCloneControlledGcpGcsBucketResult cloneControlledGcsBucketAsync(
+      AuthenticatedUserRequest userRequest,
+      UUID sourceWorkspaceId,
+      UUID sourceResourceId,
+      UUID destWorkspaceId,
+      ApiCloningInstructionsEnum cloningInstructions,
+      String bucketName,
+      int expectedCode)
+      throws Exception {
+    ApiCloneControlledGcpGcsBucketRequest request =
+        new ApiCloneControlledGcpGcsBucketRequest()
+            .destinationWorkspaceId(destWorkspaceId)
+            .cloningInstructions(cloningInstructions)
+            .name(TestUtils.appendRandomNumber(DEST_BUCKET_RESOURCE_NAME))
+            .jobControl(new ApiJobControl().id(UUID.randomUUID().toString()));
+    if (bucketName != "") {
+      request.bucketName(bucketName);
+    }
+
+    String serializedResponse =
+        mockMvc
+            .perform(
+                addJsonContentType(
+                    addAuth(
+                        post(CLONE_CONTROLLED_GCP_GCS_BUCKET_FORMAT.formatted(
+                                sourceWorkspaceId, sourceResourceId))
+                            .content(objectMapper.writeValueAsString(request)),
+                        userRequest)))
+            .andExpect(status().is(expectedCode))
+            .andReturn()
+            .getResponse()
+            .getContentAsString();
+    // If an exception was thrown, deserialization won't work, so don't attempt it.
+    return expectedCode == HttpStatus.SC_ACCEPTED
+        ? objectMapper.readValue(serializedResponse, ApiCloneControlledGcpGcsBucketResult.class)
+        : null;
+  }
+
+  private ApiCloneControlledGcpGcsBucketResult getCloneControlledGcsBucketResult(
+      AuthenticatedUserRequest userRequest, UUID workspaceId, UUID jobId) throws Exception {
+    String serializedResponse =
+        mockMvc
+            .perform(
+                addJsonContentType(
+                    addAuth(
+                        get(
+                            CLONE_RESULT_CONTROLLED_GCP_GCS_BUCKET_FORMAT.formatted(
+                                workspaceId.toString(), jobId.toString())),
+                        userRequest)))
+            // Returns 200 if flight is done, 202 if flight is running.
+            .andExpect(status().is2xxSuccessful())
+            .andReturn()
+            .getResponse()
+            .getContentAsString();
+    return objectMapper.readValue(serializedResponse, ApiCloneControlledGcpGcsBucketResult.class);
+  }
+
+  public ApiGcpGcsBucketResource getReferencedGcsBucket(
+      AuthenticatedUserRequest userRequest, UUID workspaceId, UUID resourceId) throws Exception {
+    String serializedResponse =
+        mockMvc
+            .perform(
+                addJsonContentType(
+                    addAuth(
+                        get(
+                            GET_REFERENCED_GCP_GCS_BUCKET_FORMAT.formatted(
+                                workspaceId.toString(), resourceId.toString())),
+                        userRequest)))
+            .andExpect(status().is(HttpStatus.SC_OK))
+            .andReturn()
+            .getResponse()
+            .getContentAsString();
+    return objectMapper.readValue(serializedResponse, ApiGcpGcsBucketResource.class);
   }
 
   public void grantRole(

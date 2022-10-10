@@ -1,38 +1,29 @@
 package bio.terra.workspace.app.controller;
 
-import static bio.terra.workspace.common.utils.MockMvcUtils.CLONE_CONTROLLED_GCP_GCS_BUCKET_FORMAT;
-import static bio.terra.workspace.common.utils.MockMvcUtils.CLONE_RESULT_CONTROLLED_GCP_GCS_BUCKET_FORMAT;
-import static bio.terra.workspace.common.utils.MockMvcUtils.addAuth;
-import static bio.terra.workspace.common.utils.MockMvcUtils.addJsonContentType;
+import static bio.terra.workspace.app.controller.shared.PropertiesUtils.convertMapToApiProperties;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import bio.terra.workspace.common.BaseConnectedTest;
-import bio.terra.workspace.common.StairwayTestUtils;
+import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
 import bio.terra.workspace.common.utils.MockMvcUtils;
-import bio.terra.workspace.common.utils.TestUtils;
 import bio.terra.workspace.connected.UserAccessUtils;
-import bio.terra.workspace.generated.model.ApiCloneControlledGcpGcsBucketRequest;
 import bio.terra.workspace.generated.model.ApiCloneControlledGcpGcsBucketResult;
 import bio.terra.workspace.generated.model.ApiCloningInstructionsEnum;
+import bio.terra.workspace.generated.model.ApiCloudPlatform;
 import bio.terra.workspace.generated.model.ApiCreatedControlledGcpBigQueryDataset;
 import bio.terra.workspace.generated.model.ApiCreatedControlledGcpGcsBucket;
 import bio.terra.workspace.generated.model.ApiGcpBigQueryDatasetResource;
 import bio.terra.workspace.generated.model.ApiGcpGcsBucketResource;
-import bio.terra.workspace.generated.model.ApiJobControl;
-import bio.terra.workspace.generated.model.ApiJobReport.StatusEnum;
+import bio.terra.workspace.generated.model.ApiResourceLineage;
+import bio.terra.workspace.generated.model.ApiResourceLineageEntry;
 import bio.terra.workspace.generated.model.ApiResourceMetadata;
+import bio.terra.workspace.generated.model.ApiResourceType;
 import bio.terra.workspace.generated.model.ApiStewardshipType;
-import bio.terra.workspace.generated.model.ApiWorkspaceDescription;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.UUID;
-import org.apache.http.HttpStatus;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.TestInstance.Lifecycle;
@@ -49,36 +40,43 @@ public class ControlledGcpResourceApiControllerConnectedTest extends BaseConnect
   private static final Logger logger =
       LoggerFactory.getLogger(ControlledGcpResourceApiControllerConnectedTest.class);
 
+  // Use instructions that are only valid for controlled resource, to make sure we set instructions
+  // appropriately for referenced resource.
+  private static final ApiCloningInstructionsEnum BUCKET_CLONING_INSTRUCTIONS =
+      ApiCloningInstructionsEnum.DEFINITION;
+
   @Autowired MockMvc mockMvc;
   @Autowired MockMvcUtils mockMvcUtils;
   @Autowired ObjectMapper objectMapper;
   @Autowired UserAccessUtils userAccessUtils;
 
-  private ApiWorkspaceDescription workspace;
-  private ApiCreatedControlledGcpGcsBucket originalControlledBucket;
+  private UUID workspaceId;
+  private ApiCreatedControlledGcpGcsBucket sourceBucket;
 
   @BeforeAll
   public void setup() throws Exception {
-    workspace =
-        mockMvcUtils.createWorkspaceWithCloudContext(userAccessUtils.defaultUserAuthRequest());
-    originalControlledBucket =
-        mockMvcUtils.createGcsBucket(userAccessUtils.defaultUserAuthRequest(), workspace.getId());
+    workspaceId =
+        mockMvcUtils
+            .createWorkspaceWithCloudContext(userAccessUtils.defaultUserAuthRequest())
+            .getId();
+    sourceBucket =
+        mockMvcUtils.createControlledGcsBucket(
+            userAccessUtils.defaultUserAuthRequest(), workspaceId);
   }
 
   @AfterAll
   public void cleanup() throws Exception {
-    mockMvcUtils.deleteWorkspace(userAccessUtils.defaultUserAuthRequest(), workspace.getId());
+    mockMvcUtils.deleteWorkspace(userAccessUtils.defaultUserAuthRequest(), workspaceId);
   }
 
   @Test
   public void createBigQueryDataset_createdResourceEqualsGotResource() throws Exception {
     ApiCreatedControlledGcpBigQueryDataset bqDataset =
-        mockMvcUtils.createBigQueryDataset(
-            userAccessUtils.defaultUserAuthRequest(), workspace.getId());
+        mockMvcUtils.createBigQueryDataset(userAccessUtils.defaultUserAuthRequest(), workspaceId);
 
     ApiGcpBigQueryDatasetResource actualBqDataset =
         mockMvcUtils.getBigQueryDataset(
-            userAccessUtils.defaultUserAuthRequest(), workspace.getId(), bqDataset.getResourceId());
+            userAccessUtils.defaultUserAuthRequest(), workspaceId, bqDataset.getResourceId());
     ApiGcpBigQueryDatasetResource expectedBqDataset = bqDataset.getBigQueryDataset();
 
     assertResourceMetadata(expectedBqDataset.getMetadata(), actualBqDataset.getMetadata());
@@ -93,11 +91,9 @@ public class ControlledGcpResourceApiControllerConnectedTest extends BaseConnect
   @Test
   public void createBucket_createdResourceEqualsGotResource() throws Exception {
     ApiGcpGcsBucketResource retrievedResource =
-        mockMvcUtils.getGcsBucket(
-            userAccessUtils.defaultUserAuthRequest(),
-            workspace.getId(),
-            originalControlledBucket.getResourceId());
-    ApiGcpGcsBucketResource expectedBucket = originalControlledBucket.getGcpBucket();
+        mockMvcUtils.getControlledGcsBucket(
+            userAccessUtils.defaultUserAuthRequest(), workspaceId, sourceBucket.getResourceId());
+    ApiGcpGcsBucketResource expectedBucket = sourceBucket.getGcpBucket();
 
     assertResourceMetadata(expectedBucket.getMetadata(), retrievedResource.getMetadata());
     assertEquals(
@@ -108,10 +104,11 @@ public class ControlledGcpResourceApiControllerConnectedTest extends BaseConnect
   @Test
   public void cloneBucket_copyNothing() throws Exception {
     ApiCloneControlledGcpGcsBucketResult cloneResult =
-        cloneControlledGcsBucket(
-            /*sourceWorkspaceId=*/ workspace.getId(),
-            originalControlledBucket.getResourceId(),
-            /*destWorkspaceId=*/ workspace.getId(),
+        mockMvcUtils.cloneControlledGcsBucket(
+            userAccessUtils.defaultUserAuthRequest(),
+            /*sourceWorkspaceId=*/ workspaceId,
+            sourceBucket.getResourceId(),
+            /*destWorkspaceId=*/ workspaceId,
             ApiCloningInstructionsEnum.NOTHING);
 
     // Assert clone result has no CreatedControlledGcpGcsBucket
@@ -121,124 +118,92 @@ public class ControlledGcpResourceApiControllerConnectedTest extends BaseConnect
   @Test
   public void cloneBucket_copyDefinition() throws Exception {
     ApiCloneControlledGcpGcsBucketResult cloneResult =
-        cloneControlledGcsBucket(
-            /*sourceWorkspaceId=*/ workspace.getId(),
-            originalControlledBucket.getResourceId(),
-            /*destWorkspaceId=*/ workspace.getId(),
+        mockMvcUtils.cloneControlledGcsBucket(
+            userAccessUtils.defaultUserAuthRequest(),
+            /*sourceWorkspaceId=*/ workspaceId,
+            sourceBucket.getResourceId(),
+            /*destWorkspaceId=*/ workspaceId,
             ApiCloningInstructionsEnum.DEFINITION);
 
     // Assert bucket in clone result
     ApiGcpGcsBucketResource cloneResultBucket = cloneResult.getBucket().getBucket().getGcpBucket();
     String cloneBucketName = cloneResultBucket.getAttributes().getBucketName();
-    assertBucket(cloneResultBucket, ApiStewardshipType.CONTROLLED, cloneBucketName);
+    assertBucket(
+        cloneResultBucket,
+        ApiStewardshipType.CONTROLLED,
+        cloneBucketName,
+        BUCKET_CLONING_INSTRUCTIONS);
 
     // Assert bucket returned by calling ControlledGcpResource.getBucket
     ApiGcpGcsBucketResource gotBucket =
-        mockMvcUtils.getGcsBucket(
+        mockMvcUtils.getControlledGcsBucket(
             userAccessUtils.defaultUserAuthRequest(),
-            workspace.getId(),
+            workspaceId,
             cloneResultBucket.getMetadata().getResourceId());
-    assertBucket(gotBucket, ApiStewardshipType.CONTROLLED, cloneBucketName);
+    assertBucket(
+        gotBucket, ApiStewardshipType.CONTROLLED, cloneBucketName, BUCKET_CLONING_INSTRUCTIONS);
   }
 
-  @Disabled("PF-1930: Enable when feature is implemented")
   @Test
   public void cloneBucket_copyReference() throws Exception {
     ApiCloneControlledGcpGcsBucketResult cloneResult =
-        cloneControlledGcsBucket(
-            /*sourceWorkspaceId=*/ workspace.getId(),
-            originalControlledBucket.getResourceId(),
-            /*destWorkspaceId=*/ workspace.getId(),
+        mockMvcUtils.cloneControlledGcsBucket(
+            userAccessUtils.defaultUserAuthRequest(),
+            /*sourceWorkspaceId=*/ workspaceId,
+            sourceBucket.getResourceId(),
+            /*destWorkspaceId=*/ workspaceId,
             ApiCloningInstructionsEnum.REFERENCE);
 
     // Assert bucket in clone result
     ApiGcpGcsBucketResource cloneResultBucket = cloneResult.getBucket().getBucket().getGcpBucket();
-    String cloneBucketName = cloneResultBucket.getAttributes().getBucketName();
-    assertBucket(cloneResultBucket, ApiStewardshipType.REFERENCED, cloneBucketName);
+    // Source bucket's COPY_DEFINITION gets converted to COPY_REFERENCE, since referenced
+    // resources can't have COPY_DEFINITION.
+    ApiCloningInstructionsEnum expectedCloningInstructions = ApiCloningInstructionsEnum.REFERENCE;
+    String sourceBucketName = sourceBucket.getGcpBucket().getAttributes().getBucketName();
+    assertBucket(
+        cloneResultBucket,
+        ApiStewardshipType.REFERENCED,
+        sourceBucketName,
+        expectedCloningInstructions);
 
-    // Assert bucket returned by calling ControlledGcpResource.getBucket
+    // Assert bucket returned by calling ReferencedGcpResource.getBucket
     ApiGcpGcsBucketResource gotBucket =
-        mockMvcUtils.getGcsBucket(
+        mockMvcUtils.getReferencedGcsBucket(
             userAccessUtils.defaultUserAuthRequest(),
-            workspace.getId(),
+            workspaceId,
             cloneResultBucket.getMetadata().getResourceId());
-    assertBucket(gotBucket, ApiStewardshipType.REFERENCED, cloneBucketName);
+    assertBucket(
+        gotBucket, ApiStewardshipType.REFERENCED, sourceBucketName, expectedCloningInstructions);
   }
 
-  /** Clones controlled bucket and waits for flight to finish. */
-  private ApiCloneControlledGcpGcsBucketResult cloneControlledGcsBucket(
-      UUID sourceWorkspaceId,
-      UUID sourceResourceId,
-      UUID destWorkspaceId,
-      ApiCloningInstructionsEnum cloningInstructions)
-      throws Exception {
-    ApiCloneControlledGcpGcsBucketResult result =
-        startCloneControlledGcsBucketFlight(
-            sourceWorkspaceId, sourceResourceId, destWorkspaceId, cloningInstructions);
-    UUID jobId = UUID.fromString(result.getJobReport().getId());
-    while (StairwayTestUtils.jobIsRunning(result.getJobReport())) {
-      Thread.sleep(/*millis=*/ 5000);
-      result = getCloneControlledGcsBucketResult(destWorkspaceId, jobId);
-    }
-    assertEquals(StatusEnum.SUCCEEDED, result.getJobReport().getStatus());
-    logger.info(
-        "Controlled GCS bucket clone of resource %s completed. ".formatted(sourceResourceId));
-    return result;
-  }
-
-  private ApiCloneControlledGcpGcsBucketResult startCloneControlledGcsBucketFlight(
-      UUID sourceWorkspaceId,
-      UUID sourceResourceId,
-      UUID destWorkspaceId,
-      ApiCloningInstructionsEnum cloningInstructions)
-      throws Exception {
-    ApiCloneControlledGcpGcsBucketRequest request =
-        new ApiCloneControlledGcpGcsBucketRequest()
-            .destinationWorkspaceId(destWorkspaceId)
-            .cloningInstructions(cloningInstructions)
-            .name(TestUtils.appendRandomNumber("bucket-clone"))
-            .jobControl(new ApiJobControl().id(UUID.randomUUID().toString()));
-    String serializedResponse =
-        mockMvc
-            .perform(
-                addJsonContentType(
-                    addAuth(
-                        post(CLONE_CONTROLLED_GCP_GCS_BUCKET_FORMAT.formatted(
-                                sourceWorkspaceId, sourceResourceId))
-                            .content(objectMapper.writeValueAsString(request)),
-                        userAccessUtils.defaultUserAuthRequest())))
-            .andExpect(status().is(HttpStatus.SC_ACCEPTED))
-            .andReturn()
-            .getResponse()
-            .getContentAsString();
-    return objectMapper.readValue(serializedResponse, ApiCloneControlledGcpGcsBucketResult.class);
-  }
-
-  private ApiCloneControlledGcpGcsBucketResult getCloneControlledGcsBucketResult(
-      UUID workspaceId, UUID jobId) throws Exception {
-    String serializedResponse =
-        mockMvc
-            .perform(
-                addJsonContentType(
-                    addAuth(
-                        get(
-                            CLONE_RESULT_CONTROLLED_GCP_GCS_BUCKET_FORMAT.formatted(
-                                workspaceId.toString(), jobId.toString())),
-                        userAccessUtils.defaultUserAuthRequest())))
-            // Returns 200 if flight is done, 202 if flight is running.
-            .andExpect(status().is2xxSuccessful())
-            .andReturn()
-            .getResponse()
-            .getContentAsString();
-    return objectMapper.readValue(serializedResponse, ApiCloneControlledGcpGcsBucketResult.class);
-  }
-
-  private static void assertBucket(
+  private void assertBucket(
       ApiGcpGcsBucketResource actualBucket,
       ApiStewardshipType expectedStewardshipType,
-      String expectedBucketName) {
-    assertEquals(expectedStewardshipType, actualBucket.getMetadata().getStewardshipType());
+      String expectedBucketName,
+      ApiCloningInstructionsEnum expectedCloningInstructions) {
+    assertEquals(workspaceId, actualBucket.getMetadata().getWorkspaceId());
     assertEquals(expectedBucketName, actualBucket.getAttributes().getBucketName());
+    assertEquals(
+        ControlledResourceFixtures.RESOURCE_DESCRIPTION,
+        actualBucket.getMetadata().getDescription());
+    assertEquals(ApiResourceType.GCS_BUCKET, actualBucket.getMetadata().getResourceType());
+    assertEquals(expectedStewardshipType, actualBucket.getMetadata().getStewardshipType());
+    assertEquals(ApiCloudPlatform.GCP, actualBucket.getMetadata().getCloudPlatform());
+    assertEquals(expectedCloningInstructions, actualBucket.getMetadata().getCloningInstructions());
+
+    ApiResourceLineage expectedResourceLineage = new ApiResourceLineage();
+    expectedResourceLineage.add(
+        new ApiResourceLineageEntry()
+            .sourceWorkspaceId(workspaceId)
+            .sourceResourceId(sourceBucket.getResourceId()));
+    assertEquals(expectedResourceLineage, actualBucket.getMetadata().getResourceLineage());
+
+    assertEquals(
+        convertMapToApiProperties(ControlledResourceFixtures.DEFAULT_RESOURCE_PROPERTIES),
+        actualBucket.getMetadata().getProperties());
+
+    String actualBucketName = actualBucket.getAttributes().getBucketName();
+    assertEquals(expectedBucketName, actualBucketName);
   }
 
   private static void assertResourceMetadata(
