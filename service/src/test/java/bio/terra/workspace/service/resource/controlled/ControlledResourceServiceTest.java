@@ -2,6 +2,7 @@ package bio.terra.workspace.service.resource.controlled;
 
 import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.AI_NOTEBOOK_PREV_PARAMETERS;
 import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.AI_NOTEBOOK_UPDATE_PARAMETERS;
+import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.RESOURCE_DESCRIPTION;
 import static bio.terra.workspace.service.resource.controlled.cloud.gcp.GcpResourceConstant.DEFAULT_REGION;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
@@ -35,18 +36,21 @@ import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
 import bio.terra.workspace.common.utils.TestUtils;
 import bio.terra.workspace.connected.UserAccessUtils;
 import bio.terra.workspace.connected.WorkspaceConnectedTestUtils;
+import bio.terra.workspace.generated.model.ApiClonedControlledGcpBigQueryDataset;
 import bio.terra.workspace.generated.model.ApiClonedControlledGcpGcsBucket;
 import bio.terra.workspace.generated.model.ApiCloningInstructionsEnum;
 import bio.terra.workspace.generated.model.ApiCloudPlatform;
 import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceCreationParameters;
 import bio.terra.workspace.generated.model.ApiGcpAiNotebookUpdateParameters;
 import bio.terra.workspace.generated.model.ApiGcpBigQueryDatasetCreationParameters;
+import bio.terra.workspace.generated.model.ApiGcpBigQueryDatasetResource;
 import bio.terra.workspace.generated.model.ApiGcpBigQueryDatasetUpdateParameters;
 import bio.terra.workspace.generated.model.ApiGcpGcsBucketResource;
 import bio.terra.workspace.generated.model.ApiGcpGcsBucketUpdateParameters;
 import bio.terra.workspace.generated.model.ApiJobControl;
 import bio.terra.workspace.generated.model.ApiResourceLineage;
 import bio.terra.workspace.generated.model.ApiResourceLineageEntry;
+import bio.terra.workspace.generated.model.ApiResourceMetadata;
 import bio.terra.workspace.generated.model.ApiResourceType;
 import bio.terra.workspace.generated.model.ApiStewardshipType;
 import bio.terra.workspace.service.crl.CrlService;
@@ -89,6 +93,7 @@ import bio.terra.workspace.service.resource.exception.ResourceNotFoundException;
 import bio.terra.workspace.service.resource.model.ResourceLineageEntry;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.resource.referenced.cloud.gcp.ReferencedResourceService;
+import bio.terra.workspace.service.resource.referenced.cloud.gcp.bqdataset.ReferencedBigQueryDatasetResource;
 import bio.terra.workspace.service.resource.referenced.cloud.gcp.gcsbucket.ReferencedGcsBucketResource;
 import bio.terra.workspace.service.resource.referenced.flight.create.CreateReferenceMetadataStep;
 import bio.terra.workspace.service.workspace.Alpha1Service;
@@ -130,6 +135,8 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
   private static final ControlledResourceIamRole DEFAULT_ROLE = ControlledResourceIamRole.WRITER;
   /** The default GCP location to create notebooks for this test. */
   private static final String DEFAULT_NOTEBOOK_LOCATION = "us-east1-b";
+
+  private static final String DEST_DATASET_NAME = TestUtils.appendRandomNumber("dest_dataset_name");
 
   private static final String DEST_BUCKET_DESC =
       "A bucket cloned individually into the same workspace.";
@@ -196,10 +203,11 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
   @BeforeAll
   public void setup() {
     user = userAccessUtils.defaultUser();
-    workspaceId =
-        workspaceUtils
-            .createWorkspaceWithGcpContext(userAccessUtils.defaultUserAuthRequest())
-            .getWorkspaceId();
+    workspaceId = UUID.fromString("03e8cb0b-65ed-4762-8f1d-7d1d64985681");
+    // workspaceId =
+    //     workspaceUtils
+    //         .createWorkspaceWithGcpContext(userAccessUtils.defaultUserAuthRequest())
+    //         .getWorkspaceId();
     projectId = gcpCloudContextService.getRequiredGcpProject(workspaceId);
   }
 
@@ -219,8 +227,8 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
   @AfterAll
   private void cleanUp() {
     user = userAccessUtils.defaultUser();
-    Workspace workspace = workspaceService.getWorkspace(workspaceId);
-    workspaceService.deleteWorkspace(workspace, user.getAuthenticatedRequest());
+    // Workspace workspace = workspaceService.getWorkspace(workspaceId);
+    // workspaceService.deleteWorkspace(workspace, user.getAuthenticatedRequest());
   }
 
   @Test
@@ -859,7 +867,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
     ApiGcpBigQueryDatasetCreationParameters creationParameters =
         new ApiGcpBigQueryDatasetCreationParameters().datasetId(datasetId).location(location);
     ControlledBigQueryDatasetResource resource =
-        ControlledResourceFixtures.makeDefaultControlledBigQueryBuilder(workspaceId)
+        ControlledResourceFixtures.makeDefaultControlledBqDatasetBuilder(workspaceId)
             .datasetName(datasetId)
             .build();
 
@@ -928,7 +936,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
             .defaultTableLifetime(defaultTableLifetimeSec)
             .defaultPartitionLifetime(defaultPartitionLifetimeSec);
     ControlledBigQueryDatasetResource resource =
-        ControlledResourceFixtures.makeDefaultControlledBigQueryBuilder(workspaceId)
+        ControlledResourceFixtures.makeDefaultControlledBqDatasetBuilder(workspaceId)
             .datasetName(datasetId)
             .build();
 
@@ -966,7 +974,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
     ApiGcpBigQueryDatasetCreationParameters creationParameters =
         new ApiGcpBigQueryDatasetCreationParameters().datasetId(datasetId).location(location);
     ControlledBigQueryDatasetResource resource =
-        ControlledResourceFixtures.makeDefaultControlledBigQueryBuilder(workspaceId)
+        ControlledResourceFixtures.makeDefaultControlledBqDatasetBuilder(workspaceId)
             .datasetName(datasetId)
             .build();
 
@@ -1011,7 +1019,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
     ApiGcpBigQueryDatasetCreationParameters creationParameters =
         new ApiGcpBigQueryDatasetCreationParameters().datasetId(datasetId).location(location);
     ControlledBigQueryDatasetResource resource =
-        ControlledResourceFixtures.makeDefaultControlledBigQueryBuilder(workspaceId)
+        ControlledResourceFixtures.makeDefaultControlledBqDatasetBuilder(workspaceId)
             .datasetName(datasetId)
             .build();
 
@@ -1055,7 +1063,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
     ApiGcpBigQueryDatasetCreationParameters creationParameters =
         new ApiGcpBigQueryDatasetCreationParameters().datasetId(datasetId).location(location);
     ControlledBigQueryDatasetResource resource =
-        ControlledResourceFixtures.makeDefaultControlledBigQueryBuilder(workspaceId)
+        ControlledResourceFixtures.makeDefaultControlledBqDatasetBuilder(workspaceId)
             .datasetName(datasetId)
             .build();
 
@@ -1101,7 +1109,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
     ApiGcpBigQueryDatasetCreationParameters creationParameters =
         new ApiGcpBigQueryDatasetCreationParameters().datasetId(datasetId).location(location);
     ControlledBigQueryDatasetResource resource =
-        ControlledResourceFixtures.makeDefaultControlledBigQueryBuilder(workspaceId)
+        ControlledResourceFixtures.makeDefaultControlledBqDatasetBuilder(workspaceId)
             .datasetName(datasetId)
             .build();
 
@@ -1164,7 +1172,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
             .defaultTableLifetime(initialDefaultTableLifetime)
             .defaultPartitionLifetime(initialDefaultPartitionLifetime);
     ControlledBigQueryDatasetResource resource =
-        ControlledResourceFixtures.makeDefaultControlledBigQueryBuilder(workspaceId)
+        ControlledResourceFixtures.makeDefaultControlledBqDatasetBuilder(workspaceId)
             .datasetName(datasetId)
             .build();
     ControlledBigQueryDatasetResource createdDataset =
@@ -1234,7 +1242,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
             .defaultTableLifetime(initialDefaultTableLifetime)
             .defaultPartitionLifetime(initialDefaultPartitionLifetime);
     ControlledBigQueryDatasetResource resource =
-        ControlledResourceFixtures.makeDefaultControlledBigQueryBuilder(workspaceId)
+        ControlledResourceFixtures.makeDefaultControlledBqDatasetBuilder(workspaceId)
             .datasetName(datasetId)
             .build();
     ControlledBigQueryDatasetResource createdDataset =
@@ -1297,7 +1305,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
     ApiGcpBigQueryDatasetCreationParameters creationParameters =
         new ApiGcpBigQueryDatasetCreationParameters().datasetId(datasetId).location(location);
     ControlledBigQueryDatasetResource resource =
-        ControlledResourceFixtures.makeDefaultControlledBigQueryBuilder(workspaceId)
+        ControlledResourceFixtures.makeDefaultControlledBqDatasetBuilder(workspaceId)
             .datasetName(datasetId)
             .build();
 
@@ -1334,6 +1342,106 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
     // failed
     validateBigQueryDatasetCloudMetadata(
         projectId, createdDataset.getDatasetName(), location, null, null);
+  }
+
+  @Test
+  void cloneBqDataset_copyResource_do() throws Exception {
+    // Create COPY_DEFINITION dataset resource
+    ControlledBigQueryDatasetResource sourceResource = createBqDataset();
+    String destResourceName = TestUtils.appendRandomNumber("dest-resource-name");
+    ApiClonedControlledGcpBigQueryDataset clonedResource =
+        cloneBqDataset(
+            sourceResource.getResourceId(), ApiCloningInstructionsEnum.RESOURCE, destResourceName);
+
+    // Assert resource returned in clone flight response
+    assertClonedBqDataset(
+        clonedResource.getDataset(),
+        ApiStewardshipType.CONTROLLED,
+        DEST_DATASET_NAME,
+        ApiCloningInstructionsEnum.DEFINITION,
+        destResourceName,
+        sourceResource.getResourceId());
+
+    // Assert resource returned by controlledResourceService.getControlledResource()
+    final UUID destResourceId = clonedResource.getDataset().getMetadata().getResourceId();
+    final ControlledBigQueryDatasetResource gotDataset =
+        controlledResourceService
+            .getControlledResource(workspaceId, destResourceId)
+            .castByEnum(WsmResourceType.CONTROLLED_GCP_BIG_QUERY_DATASET);
+    assertClonedBqDataset(
+        clonedResource.getDataset(),
+        ApiStewardshipType.CONTROLLED,
+        DEST_DATASET_NAME,
+        ApiCloningInstructionsEnum.DEFINITION,
+        destResourceName,
+        sourceResource.getResourceId());
+  }
+
+  @Test
+  void cloneBqDataset_copyReference_do() throws Exception {
+    // Create COPY_DEFINITION dataset resource
+    ControlledBigQueryDatasetResource sourceResource = createBqDataset();
+    String destResourceName = TestUtils.appendRandomNumber("dest-resource-name");
+    ApiClonedControlledGcpBigQueryDataset clonedResource =
+        cloneBqDataset(
+            sourceResource.getResourceId(), ApiCloningInstructionsEnum.REFERENCE, destResourceName);
+
+    // Assert resource returned in clone flight response
+    assertClonedBqDataset(
+        clonedResource.getDataset(),
+        ApiStewardshipType.REFERENCED,
+        DEST_DATASET_NAME,
+        // COPY_DEFINITION doesn't make sense for referenced resources. COPY_DEFINITION was
+        // converted to COPY_REFERENCE.
+        ApiCloningInstructionsEnum.REFERENCE,
+        destResourceName,
+        sourceResource.getResourceId());
+
+    // Assert resource returned by controlledResourceService.getControlledResource()
+    final UUID destResourceId = clonedResource.getDataset().getMetadata().getResourceId();
+    final ReferencedBigQueryDatasetResource gotDataset =
+        referencedResourceService
+            .getReferenceResource(workspaceId, destResourceId)
+            .castByEnum(WsmResourceType.REFERENCED_GCP_BIG_QUERY_DATASET);
+    assertClonedBqDataset(
+        clonedResource.getDataset(),
+        ApiStewardshipType.REFERENCED,
+        DEST_DATASET_NAME,
+        // COPY_DEFINITION doesn't make sense for referenced resources. COPY_DEFINITION was
+        // converted to COPY_REFERENCE.
+        ApiCloningInstructionsEnum.REFERENCE,
+        destResourceName,
+        sourceResource.getResourceId());
+  }
+
+  @Test
+  void cloneBqDataset_copyResource_undo() throws Exception {
+    ControlledBigQueryDatasetResource sourceResource = createBqDataset();
+    UUID destResourceId = UUID.randomUUID();
+    cloneBqDataset_undo(
+        sourceResource.getResourceId(), destResourceId, ApiCloningInstructionsEnum.RESOURCE);
+
+    // Assert resource doesn't exist
+    ResourceNotFoundException ex =
+        assertThrows(
+            ResourceNotFoundException.class,
+            () -> controlledResourceService.getControlledResource(workspaceId, destResourceId));
+    assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
+  }
+
+  @Test
+  void cloneBqDataset_copyReference_undo() throws Exception {
+    ControlledBigQueryDatasetResource sourceResource = createBqDataset();
+    UUID destResourceId = UUID.randomUUID();
+    cloneBqDataset_undo(
+        sourceResource.getResourceId(), destResourceId, ApiCloningInstructionsEnum.REFERENCE);
+
+    // Assert resource doesn't exist
+    ResourceNotFoundException ex =
+        assertThrows(
+            ResourceNotFoundException.class,
+            () -> referencedResourceService.getReferenceResource(workspaceId, destResourceId));
+    assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
   }
 
   @Test
@@ -1422,26 +1530,26 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
   @Test
   void cloneGcsBucket_copyResource_do() throws Exception {
     // Create COPY_DEFINITION bucket resource
-    ControlledGcsBucketResource sourceBucket = createGcsBucket();
-    String destResourceName = TestUtils.appendRandomNumber("dest-bucket-resource-name");
-    ApiClonedControlledGcpGcsBucket clonedBucket =
+    ControlledGcsBucketResource sourceResource = createGcsBucket();
+    String destResourceName = TestUtils.appendRandomNumber("dest-resource-name");
+    ApiClonedControlledGcpGcsBucket clonedResource =
         cloneGcsBucket(
-            sourceBucket.getResourceId(), ApiCloningInstructionsEnum.RESOURCE, destResourceName);
+            sourceResource.getResourceId(), ApiCloningInstructionsEnum.RESOURCE, destResourceName);
 
-    // Assert bucket returned in clone flight response
+    // Assert resource returned in clone flight response
     assertClonedGcsBucket(
-        clonedBucket.getBucket().getGcpBucket(),
+        clonedResource.getBucket().getGcpBucket(),
         ApiStewardshipType.CONTROLLED,
         DEST_BUCKET_NAME,
         ApiCloningInstructionsEnum.DEFINITION,
         destResourceName,
-        sourceBucket.getResourceId());
+        sourceResource.getResourceId());
 
-    // Assert bucket returned by controlledResourceService.getControlledResource()
-    final UUID resourceId = clonedBucket.getBucket().getResourceId();
+    // Assert resource returned by controlledResourceService.getControlledResource()
+    final UUID destResourceId = clonedResource.getBucket().getResourceId();
     final ControlledGcsBucketResource gotBucket =
         controlledResourceService
-            .getControlledResource(workspaceId, resourceId)
+            .getControlledResource(workspaceId, destResourceId)
             .castByEnum(WsmResourceType.CONTROLLED_GCP_GCS_BUCKET);
     assertClonedGcsBucket(
         gotBucket.toApiResource(),
@@ -1449,7 +1557,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
         DEST_BUCKET_NAME,
         ApiCloningInstructionsEnum.DEFINITION,
         destResourceName,
-        sourceBucket.getResourceId());
+        sourceResource.getResourceId());
 
     // Assert creation parameters on cloud (not stored by WSM).
     assertGcsBucketCreationParameters();
@@ -1458,53 +1566,50 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
   @Test
   void cloneGcsBucket_copyReference_do() throws Exception {
     // Create COPY_DEFINITION bucket resource
-    ControlledGcsBucketResource sourceBucket = createGcsBucket();
-    String destResourceName = TestUtils.appendRandomNumber("dest-bucket-resource-name");
-    ApiClonedControlledGcpGcsBucket clonedBucket =
+    ControlledGcsBucketResource sourceResource = createGcsBucket();
+    String destResourceName = TestUtils.appendRandomNumber("dest-resource-name");
+    ApiClonedControlledGcpGcsBucket clonedResource =
         cloneGcsBucket(
-            sourceBucket.getResourceId(), ApiCloningInstructionsEnum.REFERENCE, destResourceName);
+            sourceResource.getResourceId(), ApiCloningInstructionsEnum.REFERENCE, destResourceName);
 
-    // Assert bucket returned in clone flight response
+    // Assert resource returned in clone flight response
     assertClonedGcsBucket(
-        clonedBucket.getBucket().getGcpBucket(),
+        clonedResource.getBucket().getGcpBucket(),
         ApiStewardshipType.REFERENCED,
-        sourceBucket.getBucketName(),
+        sourceResource.getBucketName(),
         // COPY_DEFINITION doesn't make sense for referenced resources. COPY_DEFINITION was
         // converted to COPY_REFERENCE.
         ApiCloningInstructionsEnum.REFERENCE,
         destResourceName,
-        sourceBucket.getResourceId());
+        sourceResource.getResourceId());
 
-    // Assert bucket returned by referencedResourceService.getReferenceResource()
-    final UUID resourceId = clonedBucket.getBucket().getResourceId();
+    // Assert resource returned by referencedResourceService.getReferenceResource()
+    final UUID destResourceId = clonedResource.getBucket().getResourceId();
     final ReferencedGcsBucketResource gotBucket =
         referencedResourceService
-            .getReferenceResource(workspaceId, resourceId)
+            .getReferenceResource(workspaceId, destResourceId)
             .castByEnum(WsmResourceType.REFERENCED_GCP_GCS_BUCKET);
     assertClonedGcsBucket(
         gotBucket.toApiResource(),
         ApiStewardshipType.REFERENCED,
-        sourceBucket.getBucketName(),
+        sourceResource.getBucketName(),
         ApiCloningInstructionsEnum.REFERENCE,
         destResourceName,
-        sourceBucket.getResourceId());
+        sourceResource.getResourceId());
   }
 
   @Test
   void cloneGcsBucket_copyResource_undo() throws Exception {
-    ControlledGcsBucketResource sourceBucket = createGcsBucket();
+    ControlledGcsBucketResource sourceResource = createGcsBucket();
     UUID destResourceId = UUID.randomUUID();
     cloneGcsBucket_undo(
-        sourceBucket.getResourceId(), destResourceId, ApiCloningInstructionsEnum.RESOURCE);
+        sourceResource.getResourceId(), destResourceId, ApiCloningInstructionsEnum.RESOURCE);
 
-    // Assert bucket doesn't exist
+    // Assert resource doesn't exist
     ResourceNotFoundException ex =
         assertThrows(
             ResourceNotFoundException.class,
-            () ->
-                controlledResourceService
-                    .getControlledResource(workspaceId, destResourceId)
-                    .castByEnum(WsmResourceType.CONTROLLED_GCP_GCS_BUCKET));
+            () -> controlledResourceService.getControlledResource(workspaceId, destResourceId));
     assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
   }
 
@@ -1515,14 +1620,11 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
     cloneGcsBucket_undo(
         sourceBucket.getResourceId(), destResourceId, ApiCloningInstructionsEnum.REFERENCE);
 
-    // Assert bucket doesn't exist
+    // Assert resource doesn't exist
     ResourceNotFoundException ex =
         assertThrows(
             ResourceNotFoundException.class,
-            () ->
-                referencedResourceService
-                    .getReferenceResource(workspaceId, destResourceId)
-                    .castByEnum(WsmResourceType.REFERENCED_GCP_GCS_BUCKET));
+            () -> referencedResourceService.getReferenceResource(workspaceId, destResourceId));
     assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
   }
 
@@ -1749,6 +1851,119 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
     return createdBucket;
   }
 
+  private ControlledBigQueryDatasetResource createBqDataset() {
+    final ControlledBigQueryDatasetResource resourceToCreate =
+        ControlledResourceFixtures.makeDefaultControlledBqDatasetBuilder(workspaceId).build();
+    final ControlledBigQueryDatasetResource createdResource =
+        controlledResourceService
+            .createControlledResourceSync(
+                resourceToCreate,
+                null,
+                user.getAuthenticatedRequest(),
+                ControlledResourceFixtures.defaultBigQueryDatasetCreationParameters())
+            .castByEnum(WsmResourceType.CONTROLLED_GCP_BIG_QUERY_DATASET);
+    assertEquals(resourceToCreate, createdResource);
+    return createdResource;
+  }
+
+  private ApiClonedControlledGcpBigQueryDataset cloneBqDataset(
+      UUID sourceResourceId,
+      ApiCloningInstructionsEnum cloningInstructions,
+      String destResourceName)
+      throws Exception {
+    // Test idempotency of steps by retrying them once.
+    Map<String, StepStatus> retrySteps = new HashMap<>();
+    jobService.setFlightDebugInfoForTest(
+        FlightDebugInfo.newBuilder().doStepFailures(retrySteps).build());
+
+    final ApiJobControl apiJobControl = new ApiJobControl().id(UUID.randomUUID().toString());
+
+    final String jobId =
+        controlledResourceService.cloneBigQueryDataset(
+            /*sourceWorkspaceId=*/ workspaceId,
+            sourceResourceId,
+            /*destinationWorkspaceId=*/ workspaceId, // copy back into same workspace
+            /*destinationResourceId=*/ UUID.randomUUID(),
+            apiJobControl,
+            user.getAuthenticatedRequest(),
+            destResourceName,
+            /*destinationDescription=*/ null,
+            DEST_DATASET_NAME,
+            /*destinationLocation=*/ null,
+            cloningInstructions);
+
+    jobService.waitForJob(jobId);
+    final FlightState flightState = stairwayComponent.get().getFlightState(jobId);
+    assertEquals(FlightStatus.SUCCESS, flightState.getFlightStatus());
+    assertTrue(flightState.getException().isEmpty());
+    assertTrue(flightState.getResultMap().isPresent());
+    ApiClonedControlledGcpBigQueryDataset response =
+        flightState
+            .getResultMap()
+            .get()
+            .get(JobMapKeys.RESPONSE.getKeyName(), ApiClonedControlledGcpBigQueryDataset.class);
+    assertNotNull(response);
+    return response;
+  }
+
+  private void cloneBqDataset_undo(
+      UUID sourceResourceId, UUID destResourceId, ApiCloningInstructionsEnum cloningInstructions)
+      throws Exception {
+    jobService.setFlightDebugInfoForTest(
+        FlightDebugInfo.newBuilder().lastStepFailure(true).build());
+
+    final ApiJobControl apiJobControl = new ApiJobControl().id(UUID.randomUUID().toString());
+    final String jobId =
+        controlledResourceService.cloneBigQueryDataset(
+            workspaceId,
+            sourceResourceId,
+            workspaceId, // copy back into same workspace
+            destResourceId,
+            apiJobControl,
+            user.getAuthenticatedRequest(),
+            TestUtils.appendRandomNumber("dest-resource-name"),
+            /*destinationDescription=*/ null,
+            DEST_DATASET_NAME,
+            /*destinationLocation=*/ null,
+            cloningInstructions);
+
+    jobService.waitForJob(jobId);
+    final FlightState flightState = stairwayComponent.get().getFlightState(jobId);
+    assertEquals(FlightStatus.ERROR, flightState.getFlightStatus());
+  }
+
+  private void assertClonedBqDataset(
+      ApiGcpBigQueryDatasetResource actualDataset,
+      ApiStewardshipType expectedStewardshipType,
+      String expectedDatasetId,
+      ApiCloningInstructionsEnum expectedCloningInstructions,
+      String expectedDestResourceName,
+      UUID sourceResourceId) {
+    ApiResourceMetadata actualMetadata = actualDataset.getMetadata();
+    assertEquals(workspaceId, actualMetadata.getWorkspaceId());
+    assertEquals(expectedDestResourceName, actualMetadata.getName());
+    assertEquals(RESOURCE_DESCRIPTION, actualMetadata.getDescription());
+    assertEquals(ApiResourceType.BIG_QUERY_DATASET, actualMetadata.getResourceType());
+    assertEquals(expectedStewardshipType, actualMetadata.getStewardshipType());
+    assertEquals(ApiCloudPlatform.GCP, actualMetadata.getCloudPlatform());
+    assertEquals(expectedCloningInstructions, actualMetadata.getCloningInstructions());
+
+    ApiResourceLineage expectedResourceLineage = new ApiResourceLineage();
+    expectedResourceLineage.add(
+        new ApiResourceLineageEntry()
+            .sourceWorkspaceId(workspaceId)
+            .sourceResourceId(sourceResourceId));
+    assertEquals(expectedResourceLineage, actualMetadata.getResourceLineage());
+
+    assertEquals(
+        PropertiesUtils.convertMapToApiProperties(
+            ControlledResourceFixtures.DEFAULT_RESOURCE_PROPERTIES),
+        actualMetadata.getProperties());
+
+    String actualDatasetId = actualDataset.getAttributes().getDatasetId();
+    assertEquals(expectedDatasetId, actualDatasetId);
+  }
+
   /**
    * Lookup the location and expiration times stored on the cloud for a BigQuery dataset, and assert
    * they match the given values.
@@ -1782,7 +1997,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
   private ControlledGcsBucketResource createGcsBucket() {
     final ControlledGcsBucketResource resourceToCreate =
         ControlledResourceFixtures.makeDefaultControlledGcsBucketBuilder(workspaceId).build();
-    final ControlledGcsBucketResource createdBucket =
+    final ControlledGcsBucketResource createdResource =
         controlledResourceService
             .createControlledResourceSync(
                 resourceToCreate,
@@ -1790,14 +2005,14 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
                 user.getAuthenticatedRequest(),
                 ControlledResourceFixtures.getGoogleBucketCreationParameters())
             .castByEnum(WsmResourceType.CONTROLLED_GCP_GCS_BUCKET);
-    assertEquals(resourceToCreate, createdBucket);
-    return createdBucket;
+    assertEquals(resourceToCreate, createdResource);
+    return createdResource;
   }
 
   private ApiClonedControlledGcpGcsBucket cloneGcsBucket(
-      UUID resourceId,
+      UUID sourceResourceId,
       ApiCloningInstructionsEnum cloningInstructions,
-      String destBucketResourceName)
+      String destResourceName)
       throws Exception {
     // Test idempotency of steps by retrying them once.
     Map<String, StepStatus> retrySteps = new HashMap<>();
@@ -1816,12 +2031,12 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
     final String jobId =
         controlledResourceService.cloneGcsBucket(
             workspaceId,
-            resourceId,
+            sourceResourceId,
             workspaceId, // copy back into same workspace
             UUID.randomUUID(),
             apiJobControl,
             user.getAuthenticatedRequest(),
-            destBucketResourceName,
+            destResourceName,
             DEST_BUCKET_DESC,
             DEST_BUCKET_NAME,
             DEST_BUCKET_LOCATION,
@@ -1832,7 +2047,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
     assertEquals(FlightStatus.SUCCESS, flightState.getFlightStatus());
     assertTrue(flightState.getException().isEmpty());
     assertTrue(flightState.getResultMap().isPresent());
-    var response =
+    ApiClonedControlledGcpGcsBucket response =
         flightState
             .getResultMap()
             .get()
@@ -1856,7 +2071,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
             destResourceId,
             apiJobControl,
             user.getAuthenticatedRequest(),
-            TestUtils.appendRandomNumber("dest-bucket-resource-name"),
+            TestUtils.appendRandomNumber("dest-resource-name"),
             DEST_BUCKET_DESC,
             DEST_BUCKET_NAME,
             DEST_BUCKET_LOCATION,
@@ -1874,26 +2089,26 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
       ApiCloningInstructionsEnum expectedCloningInstructions,
       String expectedDestResourceName,
       UUID sourceResourceId) {
-    assertEquals(workspaceId, actualBucket.getMetadata().getWorkspaceId());
-    assertEquals(expectedDestResourceName, actualBucket.getMetadata().getName());
-    assertEquals(expectedBucketName, actualBucket.getAttributes().getBucketName());
-    assertEquals(DEST_BUCKET_DESC, actualBucket.getMetadata().getDescription());
-    assertEquals(ApiResourceType.GCS_BUCKET, actualBucket.getMetadata().getResourceType());
-    assertEquals(expectedStewardshipType, actualBucket.getMetadata().getStewardshipType());
-    assertEquals(ApiCloudPlatform.GCP, actualBucket.getMetadata().getCloudPlatform());
-    assertEquals(expectedCloningInstructions, actualBucket.getMetadata().getCloningInstructions());
+    ApiResourceMetadata actualMetadata = actualBucket.getMetadata();
+    assertEquals(workspaceId, actualMetadata.getWorkspaceId());
+    assertEquals(expectedDestResourceName, actualMetadata.getName());
+    assertEquals(DEST_BUCKET_DESC, actualMetadata.getDescription());
+    assertEquals(ApiResourceType.GCS_BUCKET, actualMetadata.getResourceType());
+    assertEquals(expectedStewardshipType, actualMetadata.getStewardshipType());
+    assertEquals(ApiCloudPlatform.GCP, actualMetadata.getCloudPlatform());
+    assertEquals(expectedCloningInstructions, actualMetadata.getCloningInstructions());
 
     ApiResourceLineage expectedResourceLineage = new ApiResourceLineage();
     expectedResourceLineage.add(
         new ApiResourceLineageEntry()
             .sourceWorkspaceId(workspaceId)
             .sourceResourceId(sourceResourceId));
-    assertEquals(expectedResourceLineage, actualBucket.getMetadata().getResourceLineage());
+    assertEquals(expectedResourceLineage, actualMetadata.getResourceLineage());
 
     assertEquals(
         PropertiesUtils.convertMapToApiProperties(
             ControlledResourceFixtures.DEFAULT_RESOURCE_PROPERTIES),
-        actualBucket.getMetadata().getProperties());
+        actualMetadata.getProperties());
 
     String actualBucketName = actualBucket.getAttributes().getBucketName();
     assertEquals(expectedBucketName, actualBucketName);

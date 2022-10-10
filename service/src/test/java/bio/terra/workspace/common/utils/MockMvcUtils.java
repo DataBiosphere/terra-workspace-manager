@@ -11,6 +11,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import bio.terra.workspace.common.StairwayTestUtils;
 import bio.terra.workspace.common.fixtures.WorkspaceFixtures;
+import bio.terra.workspace.generated.model.ApiCloneControlledGcpBigQueryDatasetRequest;
+import bio.terra.workspace.generated.model.ApiCloneControlledGcpBigQueryDatasetResult;
 import bio.terra.workspace.generated.model.ApiCloneControlledGcpGcsBucketRequest;
 import bio.terra.workspace.generated.model.ApiCloneControlledGcpGcsBucketResult;
 import bio.terra.workspace.generated.model.ApiCloningInstructionsEnum;
@@ -113,6 +115,8 @@ public class MockMvcUtils {
       "/api/workspaces/v1/%s/resources/controlled/gcp/bqdatasets";
   public static final String CONTROLLED_GCP_BIG_QUERY_DATASET_V1_PATH_FORMAT =
       "/api/workspaces/v1/%s/resources/controlled/gcp/bqdatasets/%s";
+  public static final String CLONE_CONTROLLED_GCP_BIG_QUERY_DATASET_FORMAT =
+      "/api/workspaces/v1/%s/resources/controlled/gcp/bqdatasets/%s/clone";
   public static final String CONTROLLED_GCP_GCS_BUCKETS_V1_PATH_FORMAT =
       "/api/workspaces/v1/%s/resources/controlled/gcp/buckets";
   public static final String CONTROLLED_GCP_GCS_BUCKET_V1_PATH_FORMAT =
@@ -308,6 +312,46 @@ public class MockMvcUtils {
     return objectMapper.readValue(serializedGetResponse, ApiGcpBigQueryDatasetResource.class);
   }
 
+  /** Call cloneBqDataset() and return immediately; don't wait for flight to finish. */
+  public ApiCloneControlledGcpBigQueryDatasetResult cloneControlledBqDatasetAsync(
+      AuthenticatedUserRequest userRequest,
+      UUID sourceWorkspaceId,
+      UUID sourceResourceId,
+      UUID destWorkspaceId,
+      ApiCloningInstructionsEnum cloningInstructions,
+      String destDatasetName,
+      int expectedCode)
+      throws Exception {
+    ApiCloneControlledGcpBigQueryDatasetRequest request =
+        new ApiCloneControlledGcpBigQueryDatasetRequest()
+            .destinationWorkspaceId(destWorkspaceId)
+            .cloningInstructions(cloningInstructions)
+            .name(TestUtils.appendRandomNumber("dest-dataset-resource-name"))
+            .jobControl(new ApiJobControl().id(UUID.randomUUID().toString()));
+    if (destDatasetName != "") {
+      request.destinationDatasetName(destDatasetName);
+    }
+
+    String serializedResponse =
+        mockMvc
+            .perform(
+                addJsonContentType(
+                    addAuth(
+                        post(CLONE_CONTROLLED_GCP_BIG_QUERY_DATASET_FORMAT.formatted(
+                                sourceWorkspaceId, sourceResourceId))
+                            .content(objectMapper.writeValueAsString(request)),
+                        userRequest)))
+            .andExpect(status().is(expectedCode))
+            .andReturn()
+            .getResponse()
+            .getContentAsString();
+    // If an exception was thrown, deserialization won't work, so don't attempt it.
+    return expectedCode == HttpStatus.SC_ACCEPTED
+        ? objectMapper.readValue(
+            serializedResponse, ApiCloneControlledGcpBigQueryDatasetResult.class)
+        : null;
+  }
+
   public ApiCreatedControlledGcpGcsBucket createControlledGcsBucket(
       AuthenticatedUserRequest userRequest, UUID workspaceId) throws Exception {
     ApiCreateControlledGcpGcsBucketRequestBody gcsBucketCreationRequest =
@@ -389,7 +433,7 @@ public class MockMvcUtils {
       UUID sourceResourceId,
       UUID destWorkspaceId,
       ApiCloningInstructionsEnum cloningInstructions,
-      String bucketName,
+      String destBucketName,
       int expectedCode)
       throws Exception {
     ApiCloneControlledGcpGcsBucketRequest request =
@@ -398,8 +442,8 @@ public class MockMvcUtils {
             .cloningInstructions(cloningInstructions)
             .name(TestUtils.appendRandomNumber(DEST_BUCKET_RESOURCE_NAME))
             .jobControl(new ApiJobControl().id(UUID.randomUUID().toString()));
-    if (bucketName != "") {
-      request.bucketName(bucketName);
+    if (destBucketName != "") {
+      request.bucketName(destBucketName);
     }
 
     String serializedResponse =
