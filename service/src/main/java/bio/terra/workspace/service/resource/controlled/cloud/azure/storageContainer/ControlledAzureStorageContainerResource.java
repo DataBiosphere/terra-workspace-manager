@@ -213,7 +213,7 @@ public class ControlledAzureStorageContainerResource extends ControlledResource 
 
     ControlledAzureStorageContainerResource that = (ControlledAzureStorageContainerResource) o;
 
-    return storageAccountId.equals(that.getStorageAccountId())
+    return (storageAccountId == null || storageAccountId.equals(that.getStorageAccountId()))
         && storageContainerName.equals(that.getStorageContainerName());
   }
 
