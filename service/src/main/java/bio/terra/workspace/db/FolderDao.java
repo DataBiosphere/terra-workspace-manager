@@ -215,6 +215,8 @@ public class FolderDao {
                     String.format("Cannot find folder %s in workspace %s", folderId, workspaceId)));
   }
 
+  /** Get folder and will throw FolderNotFoundException if folder is not found. */
+  @ReadTransaction
   public Folder getFolderRequired(UUID workspaceId, UUID folderId) {
     return getFolderIfExists(workspaceId, folderId)
         .orElseThrow(
