@@ -11,7 +11,6 @@ import bio.terra.landingzone.service.landingzone.azure.model.DeployedLandingZone
 import bio.terra.landingzone.service.landingzone.azure.model.LandingZoneDefinition;
 import bio.terra.landingzone.service.landingzone.azure.model.LandingZoneRequest;
 import bio.terra.landingzone.service.landingzone.azure.model.LandingZoneResource;
-import bio.terra.landingzone.service.landingzone.azure.model.LandingZoneResourcesByPurpose;
 import bio.terra.workspace.amalgam.landingzone.azure.utils.MapperUtils;
 import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
 import bio.terra.workspace.generated.model.ApiAzureLandingZone;
@@ -107,14 +106,40 @@ public class LandingZoneApiDispatch {
   }
 
   public ApiAzureLandingZoneResourcesList listAzureLandingZoneResources(
-      BearerToken bearerToken, UUID landingZoneId) {
+      BearerToken bearerToken, UUID landingZoneId, String purpose) {
+    var result = new ApiAzureLandingZoneResourcesList().id(landingZoneId);
     features.azureEnabledCheck();
-    LandingZoneResourcesByPurpose groupedResources =
-        landingZoneService.listResourcesWithPurposes(bearerToken, landingZoneId);
 
+    LandingZonePurpose resourcePurpose = getLandingZonePurpose(purpose);
+    if (resourcePurpose != null) {
+      return listAzureLandingZoneResources(bearerToken, landingZoneId, resourcePurpose);
+    }
+    return listAzureLandingZoneResources(bearerToken, landingZoneId);
+  }
+
+  private ApiAzureLandingZoneResourcesList listAzureLandingZoneResources(
+      BearerToken bearerToken, UUID landingZoneId, LandingZonePurpose resourcePurpose) {
     var result = new ApiAzureLandingZoneResourcesList().id(landingZoneId);
 
-    groupedResources
+    var deployedResources =
+        landingZoneService
+            .listResourcesByPurpose(bearerToken, landingZoneId, resourcePurpose)
+            .stream()
+            .map(r -> toApiAzureLandingZoneDeployedResource(r, resourcePurpose))
+            .toList();
+    result.addResourcesItem(
+        new ApiAzureLandingZoneResourcesPurposeGroup()
+            .purpose(resourcePurpose.toString())
+            .deployedResources(deployedResources));
+    return result;
+  }
+
+  private ApiAzureLandingZoneResourcesList listAzureLandingZoneResources(
+      BearerToken bearerToken, UUID landingZoneId) {
+    var result = new ApiAzureLandingZoneResourcesList().id(landingZoneId);
+
+    landingZoneService
+        .listResourcesWithPurposes(bearerToken, landingZoneId)
         .deployedResources()
         .forEach(
             (p, dp) ->
@@ -131,10 +156,25 @@ public class LandingZoneApiDispatch {
   public List<ApiAzureLandingZoneDeployedResource> listSubnetsWithParentVNetByPurpose(
       BearerToken bearerToken, UUID landingZoneId, LandingZonePurpose purpose) {
 
-    return listAzureLandingZoneResources(bearerToken, landingZoneId).getResources().stream()
-        .filter(r -> r.getPurpose().equals(purpose.toString()))
+    return listAzureLandingZoneResources(bearerToken, landingZoneId, purpose)
+        .getResources()
+        .stream()
         .flatMap(r -> r.getDeployedResources().stream())
-        .collect(Collectors.toList());
+        .toList();
+  }
+
+  LandingZonePurpose getLandingZonePurpose(String purpose) {
+    if (purpose == null || purpose.isEmpty()) {
+      return null;
+    }
+
+    SubnetResourcePurpose subnetResourcePurpose = SubnetResourcePurpose.fromString(purpose);
+    if (subnetResourcePurpose != null) {
+      return subnetResourcePurpose;
+    }
+
+    ResourcePurpose resourcePurpose = ResourcePurpose.fromString(purpose);
+    return resourcePurpose;
   }
 
   private ApiAzureLandingZoneDeployedResource toApiAzureLandingZoneDeployedResource(

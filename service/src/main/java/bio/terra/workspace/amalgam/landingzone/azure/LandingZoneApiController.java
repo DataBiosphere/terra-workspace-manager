@@ -9,6 +9,7 @@ import bio.terra.workspace.generated.model.ApiAzureLandingZoneDefinitionList;
 import bio.terra.workspace.generated.model.ApiAzureLandingZoneResourcesList;
 import bio.terra.workspace.generated.model.ApiAzureLandingZoneResult;
 import bio.terra.workspace.generated.model.ApiCreateAzureLandingZoneRequestBody;
+import com.azure.core.annotation.QueryParam;
 import java.util.UUID;
 import javax.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
@@ -66,10 +67,11 @@ public class LandingZoneApiController implements LandingZonesApi {
 
   @Override
   public ResponseEntity<ApiAzureLandingZoneResourcesList> listAzureLandingZoneResources(
-      @PathVariable("landingZoneId") UUID landingZoneId) {
+      @PathVariable("landingZoneId") UUID landingZoneId,
+      @QueryParam("purpose") String resourcePurpose) {
     ApiAzureLandingZoneResourcesList result =
         landingZoneApiDispatch.listAzureLandingZoneResources(
-            bearerTokenFactory.from(request), landingZoneId);
+            bearerTokenFactory.from(request), landingZoneId, resourcePurpose);
     return new ResponseEntity<>(result, HttpStatus.OK);
   }
 

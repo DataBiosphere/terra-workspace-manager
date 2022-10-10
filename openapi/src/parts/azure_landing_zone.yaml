@@ -79,6 +79,7 @@ paths:
   /api/landingzones/v1/azure/{landingZoneId}/resources:
     parameters:
       - $ref: '#/components/parameters/LandingZoneId'
+      - $ref: '#/components/parameters/ResourcePurpose'
     get:
       summary: List all Azure landing zones resources
       operationId: listAzureLandingZoneResources
@@ -248,13 +249,3 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/AzureLandingZoneResult'
-
-  parameters:
-    LandingZoneId:
-      name: landingZoneId
-      in: path
-      description: A string to identify an Azure landing zone.
-      required: true
-      schema:
-        type: string
-        format: uuid
