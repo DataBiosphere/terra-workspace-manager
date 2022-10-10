@@ -7,7 +7,6 @@ import static bio.terra.workspace.service.workspace.model.WorkspaceConstants.Res
 import bio.terra.common.exception.ForbiddenException;
 import bio.terra.workspace.db.FolderDao;
 import bio.terra.workspace.db.ResourceDao;
-import bio.terra.workspace.db.exception.FolderNotFoundException;
 import bio.terra.workspace.service.folder.flights.DeleteFolderFlight;
 import bio.terra.workspace.service.folder.model.Folder;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
@@ -120,10 +119,7 @@ public class FolderService {
       List<WsmResource> controlledResources,
       List<WsmResource> referencedResources,
       AuthenticatedUserRequest userRequest) {
-    if (folderDao.getFolderIfExists(workspaceId, folderId).isEmpty()) {
-      throw new FolderNotFoundException(
-          String.format("Folder %s is not found in workspace %s", folderId, workspaceId));
-    }
+    var unused = folderDao.getFolderRequired(workspaceId, folderId);
     ImmutableList<Folder> folders = folderDao.listFoldersRecursively(folderId);
 
     var offset = 0;

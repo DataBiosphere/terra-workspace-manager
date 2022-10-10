@@ -66,13 +66,7 @@ public class FolderDao {
           values (:workspace_id, :id, :display_name, :description, :parent_folder_id, :properties::jsonb)
         """;
     if (folder.parentFolderId() != null) {
-      getFolderIfExists(folder.workspaceId(), folder.parentFolderId())
-          .orElseThrow(
-              () ->
-                  new FolderNotFoundException(
-                      String.format(
-                          "Failed to find parent folder %s in workspace %s",
-                          folder.parentFolderId(), folder.workspaceId())));
+      getFolderRequired(folder.workspaceId(), folder.parentFolderId());
     }
     var params =
         new MapSqlParameterSource()
@@ -146,13 +140,8 @@ public class FolderDao {
               "Cannot update parent folder id to %s as it will create a cycle", parentFolderId));
     }
     if (parentFolderId != null) {
-      getFolderIfExists(workspaceId, parentFolderId)
-          .orElseThrow(
-              () ->
-                  new FolderNotFoundException(
-                      String.format(
-                          "Failed to find parent folder %s in workspace %s",
-                          parentFolderId, workspaceId)));
+      // Throws 404 if the parent folder does not exist
+      var unused = getFolderRequired(workspaceId, parentFolderId);
     }
     var params = new MapSqlParameterSource();
     Optional.ofNullable(displayName).ifPresent(name -> params.addValue("display_name", name));
@@ -224,6 +213,14 @@ public class FolderDao {
             () ->
                 new FolderNotFoundException(
                     String.format("Cannot find folder %s in workspace %s", folderId, workspaceId)));
+  }
+
+  public Folder getFolderRequired(UUID workspaceId, UUID folderId) {
+    return getFolderIfExists(workspaceId, folderId)
+        .orElseThrow(
+            () ->
+                new FolderNotFoundException(
+                    String.format("Failed to find folder %s in workspace %s", folderId, folderId)));
   }
 
   /** Gets a list of folders in the given workspace */
