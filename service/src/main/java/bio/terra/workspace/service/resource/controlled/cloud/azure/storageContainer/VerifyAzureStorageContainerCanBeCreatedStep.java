@@ -1,14 +1,19 @@
 package bio.terra.workspace.service.resource.controlled.cloud.azure.storageContainer;
 
+import bio.terra.common.iam.BearerToken;
+import bio.terra.landingzone.db.exception.LandingZoneNotFoundException;
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.StepStatus;
 import bio.terra.stairway.exception.RetryException;
+import bio.terra.workspace.amalgam.landingzone.azure.LandingZoneApiDispatch;
 import bio.terra.workspace.app.configuration.external.AzureConfiguration;
 import bio.terra.workspace.common.utils.ManagementExceptionUtils;
 import bio.terra.workspace.db.ResourceDao;
+import bio.terra.workspace.generated.model.ApiAzureLandingZoneDeployedResource;
 import bio.terra.workspace.service.crl.CrlService;
+import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.storage.ControlledAzureStorageResource;
 import bio.terra.workspace.service.resource.exception.DuplicateResourceException;
 import bio.terra.workspace.service.resource.exception.ResourceNotFoundException;
@@ -18,6 +23,9 @@ import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.Contr
 import bio.terra.workspace.service.workspace.model.AzureCloudContext;
 import com.azure.core.management.exception.ManagementException;
 import com.azure.resourcemanager.storage.StorageManager;
+import com.azure.resourcemanager.storage.models.StorageAccount;
+import java.util.Optional;
+import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -27,22 +35,29 @@ import org.slf4j.LoggerFactory;
  * CreateAzureStorageContainerStep} to ensure idempotency of the create operation.
  */
 public class VerifyAzureStorageContainerCanBeCreatedStep implements Step {
-
+  public static final String AZURE_STORAGE_ACCOUNT_RESOURCE_TYPE =
+      "Microsoft.Storage/storageAccounts";
   private static final Logger logger =
       LoggerFactory.getLogger(VerifyAzureStorageContainerCanBeCreatedStep.class);
   private final AzureConfiguration azureConfig;
   private final CrlService crlService;
   private final ResourceDao resourceDao;
   private final ControlledAzureStorageContainerResource resource;
+  private final LandingZoneApiDispatch landingZoneApiDispatch;
+  private final AuthenticatedUserRequest userRequest;
 
   public VerifyAzureStorageContainerCanBeCreatedStep(
       AzureConfiguration azureConfig,
       CrlService crlService,
       ResourceDao resourceDao,
+      LandingZoneApiDispatch landingZoneApiDispatch,
+      AuthenticatedUserRequest userRequest,
       ControlledAzureStorageContainerResource resource) {
     this.azureConfig = azureConfig;
     this.crlService = crlService;
     this.resourceDao = resourceDao;
+    this.landingZoneApiDispatch = landingZoneApiDispatch;
+    this.userRequest = userRequest;
     this.resource = resource;
   }
 
@@ -55,22 +70,32 @@ public class VerifyAzureStorageContainerCanBeCreatedStep implements Step {
     final StorageManager storageManager =
         crlService.getStorageManager(azureCloudContext, azureConfig);
 
+    UUID landingZoneId = null;
     try {
-      final WsmResource wsmResource =
-          resourceDao.getResource(resource.getWorkspaceId(), resource.getStorageAccountId());
-      final ControlledAzureStorageResource storageAccount =
-          wsmResource
-              .castToControlledResource()
-              .castByEnum(WsmResourceType.CONTROLLED_AZURE_STORAGE_ACCOUNT);
+      if (resource.getStorageAccountId() != null) {
+        final WsmResource wsmResource =
+            resourceDao.getResource(resource.getWorkspaceId(), resource.getStorageAccountId());
+        final ControlledAzureStorageResource storageAccount =
+            wsmResource
+                .castToControlledResource()
+                .castByEnum(WsmResourceType.CONTROLLED_AZURE_STORAGE_ACCOUNT);
 
-      context
-          .getWorkingMap()
-          .put(ControlledResourceKeys.STORAGE_ACCOUNT_NAME, storageAccount.getStorageAccountName());
+        context
+            .getWorkingMap()
+            .put(
+                ControlledResourceKeys.STORAGE_ACCOUNT_NAME,
+                storageAccount.getStorageAccountName());
 
-      storageManager
-          .storageAccounts()
-          .getByResourceGroup(
-              azureCloudContext.getAzureResourceGroupId(), storageAccount.getStorageAccountName());
+        storageManager
+            .storageAccounts()
+            .getByResourceGroup(
+                azureCloudContext.getAzureResourceGroupId(),
+                storageAccount.getStorageAccountName());
+      } else {
+        // if storage account id is not set let's try to find shared storage account in landing zone
+        // associated with cloud context
+        landingZoneId = landingZoneApiDispatch.getLandingZoneId(azureCloudContext);
+      }
     } catch (
         ResourceNotFoundException resourceNotFoundException) { // Thrown by resourceDao.getResource
       return new StepResult(
@@ -95,9 +120,22 @@ public class VerifyAzureStorageContainerCanBeCreatedStep implements Step {
           managementException.getValue().getCode(),
           managementException);
       return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, managementException);
+    } catch (IllegalStateException illegalStateException) { // Thrown by landingZoneApiDispatch
+      return new StepResult(
+          StepStatus.STEP_RESULT_FAILURE_FATAL,
+          new LandingZoneNotFoundException(
+              String.format(
+                  "Landing zone associated with the Azure cloud context not found. TenantId='%s', SubscriptionId='%s', ResourceGroupId='%s'",
+                  azureCloudContext.getAzureTenantId(),
+                  azureCloudContext.getAzureSubscriptionId(),
+                  azureCloudContext.getAzureResourceGroupId())));
     }
 
     try {
+      if (resource.getStorageAccountId() == null) {
+        // proceed with landing zone shared storage account if exists
+        return handleLandingZoneSharedStorageAccount(landingZoneId, context, storageManager);
+      }
       final String storageAccountName =
           context.getWorkingMap().get(ControlledResourceKeys.STORAGE_ACCOUNT_NAME, String.class);
       storageManager
@@ -112,6 +150,7 @@ public class VerifyAzureStorageContainerCanBeCreatedStep implements Step {
               String.format(
                   "An Azure Storage Container with name '%s' already exists in storage account '%s'",
                   resource.getStorageContainerName(), storageAccountName)));
+
     } catch (ManagementException e) {
       if (ManagementExceptionUtils.isExceptionCode(
           e, ManagementExceptionUtils.CONTAINER_NOT_FOUND)) {
@@ -130,5 +169,27 @@ public class VerifyAzureStorageContainerCanBeCreatedStep implements Step {
   public StepResult undoStep(FlightContext context) throws InterruptedException {
     // Nothing to undo
     return StepResult.getStepResultSuccess();
+  }
+
+  private StepResult handleLandingZoneSharedStorageAccount(
+      UUID landingZoneId, FlightContext context, StorageManager storageManager) {
+    Optional<ApiAzureLandingZoneDeployedResource> sharedStorageAccount =
+        landingZoneApiDispatch.getSharedStorageAccount(
+            new BearerToken(userRequest.getRequiredToken()), landingZoneId);
+    if (sharedStorageAccount.isPresent()) {
+      StorageAccount storageAccount =
+          storageManager.storageAccounts().getById(sharedStorageAccount.get().getResourceId());
+      context
+          .getWorkingMap()
+          .put(ControlledResourceKeys.STORAGE_ACCOUNT_NAME, storageAccount.name());
+      return StepResult.getStepResultSuccess();
+    }
+
+    return new StepResult(
+        StepStatus.STEP_RESULT_FAILURE_FATAL,
+        new ResourceNotFoundException(
+            String.format(
+                "Shared storage account not found in landing zone. Landing zone ID='%s'.",
+                landingZoneId)));
   }
 }
