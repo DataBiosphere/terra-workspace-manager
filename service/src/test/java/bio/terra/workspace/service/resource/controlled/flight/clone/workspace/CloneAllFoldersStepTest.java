@@ -2,7 +2,6 @@ package bio.terra.workspace.service.resource.controlled.flight.clone.workspace;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -68,7 +67,7 @@ public class CloneAllFoldersStepTest extends BaseUnitTest {
   }
 
   @Test
-  public void testDoStep() throws InterruptedException {
+  public void doStep_foldersCloned() throws InterruptedException {
     final var inputParameters = new FlightMap();
     final var workingMap = new FlightMap();
     final var destinationWorkspace =
@@ -83,14 +82,14 @@ public class CloneAllFoldersStepTest extends BaseUnitTest {
     inputParameters.put(ControlledResourceKeys.SOURCE_WORKSPACE_ID, SOURCE_WORKSPACE_ID);
     inputParameters.put(JobMapKeys.REQUEST.getKeyName(), destinationWorkspace);
 
-    doReturn(inputParameters).when(mockFlightContext).getInputParameters();
-    doReturn(workingMap).when(mockFlightContext).getWorkingMap();
+    when(mockFlightContext.getInputParameters()).thenReturn(inputParameters);
+    when(mockFlightContext.getWorkingMap()).thenReturn(workingMap);
 
     final StepResult stepResult = cloneAllFoldersStep.doStep(mockFlightContext);
     assertEquals(StepResult.getStepResultSuccess(), stepResult);
 
     Map<String, String> folderIdMap =
-        workingMap.get(FolderKeys.FOLDER_ID_MAP, new TypeReference<>() {});
+        workingMap.get(FolderKeys.FOLDER_IDS_TO_CLONE_MAP, new TypeReference<>() {});
     assertNotNull(folderIdMap.get(SOURCE_PARENT_FOLDER_ID.toString()));
     assertNotNull(folderIdMap.get(SOURCE_SON_FOLDER_ID.toString()));
 

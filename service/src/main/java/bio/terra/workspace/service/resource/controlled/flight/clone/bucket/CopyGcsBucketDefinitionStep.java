@@ -21,8 +21,6 @@ import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ResourceKeys;
-import com.fasterxml.jackson.core.type.TypeReference;
-import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import javax.annotation.Nullable;
@@ -68,7 +66,8 @@ public class CopyGcsBucketDefinitionStep implements Step {
     FlightUtils.validateRequiredEntries(
         inputParameters,
         ControlledResourceKeys.DESTINATION_WORKSPACE_ID,
-        ControlledResourceKeys.DESTINATION_RESOURCE_ID);
+        ControlledResourceKeys.DESTINATION_RESOURCE_ID,
+        ControlledResourceKeys.DESTINATION_FOLDER_ID);
     String resourceName =
         FlightUtils.getInputParameterOrWorkingValue(
             flightContext,
@@ -94,9 +93,11 @@ public class CopyGcsBucketDefinitionStep implements Step {
                 // crashing.
                 ControlledGcsBucketHandler.getHandler()
                     .generateCloudName(destinationWorkspaceId, "cloned-" + resourceName));
-    Map<String, String> properties =
-        inputParameters.get(
-            ControlledResourceKeys.DESTINATION_RESOURCE_PROPERTY, new TypeReference<>() {});
+    UUID destinationFolderId =
+        Optional.ofNullable(
+                inputParameters.get(ControlledResourceKeys.DESTINATION_FOLDER_ID, String.class))
+            .map(UUID::fromString)
+            .orElse(null);
     // Store effective bucket name for destination
     workingMap.put(ControlledResourceKeys.DESTINATION_BUCKET_NAME, bucketName);
     var destinationResourceId =
@@ -107,10 +108,10 @@ public class CopyGcsBucketDefinitionStep implements Step {
             sourceBucket,
             destinationWorkspaceId,
             destinationResourceId,
+            destinationFolderId,
             resourceName,
             description,
-            bucketName,
-            properties);
+            bucketName);
 
     ApiGcpGcsBucketCreationParameters destinationCreationParameters =
         getDestinationCreationParameters(inputParameters, workingMap);

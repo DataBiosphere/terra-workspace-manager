@@ -1,6 +1,7 @@
 package bio.terra.workspace.service.resource.controlled.flight.clone.workspace;
 
 import static bio.terra.workspace.app.controller.shared.PropertiesUtils.clearSomePropertiesForResourceCloningToDifferentWorkspace;
+import static bio.terra.workspace.service.workspace.model.WorkspaceConstants.ResourceProperties.FOLDER_ID_KEY;
 
 import bio.terra.common.exception.BadRequestException;
 import bio.terra.stairway.FlightStatus;
@@ -24,7 +25,9 @@ import bio.terra.workspace.service.resource.referenced.cloud.gcp.gcsbucket.Refer
 import bio.terra.workspace.service.resource.referenced.cloud.gcp.gcsobject.ReferencedGcsObjectResource;
 import bio.terra.workspace.service.workspace.model.WsmCloneResourceResult;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.ImmutableMap;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -114,11 +117,11 @@ public class WorkspaceCloneUtils {
       ControlledBigQueryDatasetResource sourceDataset,
       UUID destinationWorkspaceId,
       UUID destinationResourceId,
+      @Nullable UUID destinationFolderId,
       String name,
       @Nullable String description,
       String cloudInstanceName,
-      String destinationProjectId,
-      @Nullable Map<String, String> properties) {
+      String destinationProjectId) {
     return ControlledBigQueryDatasetResource.builder()
         .projectId(destinationProjectId)
         .datasetName(cloudInstanceName)
@@ -127,9 +130,9 @@ public class WorkspaceCloneUtils {
                 sourceDataset,
                 destinationWorkspaceId,
                 destinationResourceId,
+                destinationFolderId,
                 name,
-                description,
-                properties))
+                description))
         .build();
   }
 
@@ -137,10 +140,10 @@ public class WorkspaceCloneUtils {
       ControlledGcsBucketResource sourceBucket,
       UUID destinationWorkspaceId,
       UUID destinationResourceId,
+      @Nullable UUID destinationFolderId,
       String name,
       @Nullable String description,
-      String cloudInstanceName,
-      @Nullable Map<String, String> properties) {
+      String cloudInstanceName) {
     return ControlledGcsBucketResource.builder()
         .bucketName(cloudInstanceName)
         .common(
@@ -148,9 +151,9 @@ public class WorkspaceCloneUtils {
                 sourceBucket,
                 destinationWorkspaceId,
                 destinationResourceId,
+                destinationFolderId,
                 name,
-                description,
-                properties))
+                description))
         .build();
   }
 
@@ -158,9 +161,9 @@ public class WorkspaceCloneUtils {
       ControlledResource sourceResource,
       UUID destinationWorkspaceId,
       UUID destinationResourceId,
+      @Nullable UUID destinationFolderId,
       String name,
-      String description,
-      @Nullable Map<String, String> properties) {
+      String description) {
     List<ResourceLineageEntry> destinationResourceLineage =
         buildDestinationResourceLineage(
             sourceResource.getResourceLineage(),
@@ -178,10 +181,8 @@ public class WorkspaceCloneUtils {
         .resourceId(destinationResourceId)
         .resourceLineage(destinationResourceLineage)
         .properties(
-            Optional.ofNullable(properties)
-                .orElse(
-                    maybeClearSomeResourcePropertiesBeforeCloning(
-                        sourceResource, destinationWorkspaceId)))
+            maybeClearSomeResourcePropertiesBeforeCloning(
+                sourceResource, destinationWorkspaceId, destinationFolderId))
         .build();
   }
 
@@ -215,6 +216,7 @@ public class WorkspaceCloneUtils {
                 buildDestinationResourceCommonFields(
                     destinationWorkspaceId,
                     destinationResourceId,
+                    /*destinationFolderId=*/ null,
                     name,
                     description,
                     sourceBucketResource));
@@ -241,6 +243,7 @@ public class WorkspaceCloneUtils {
         buildDestinationResourceCommonFields(
                 destinationWorkspaceId,
                 destinationResourceId,
+                /*destinationFolderId=*/ null,
                 name,
                 description,
                 sourceBucketResource)
@@ -266,6 +269,7 @@ public class WorkspaceCloneUtils {
                 buildDestinationResourceCommonFields(
                     destinationWorkspaceId,
                     destinationResourceId,
+                    /*destinationFolderId=*/ null,
                     name,
                     description,
                     sourceBucketFileResource));
@@ -285,6 +289,7 @@ public class WorkspaceCloneUtils {
                 buildDestinationResourceCommonFields(
                     destinationWorkspaceId,
                     destinationResourceId,
+                    /*destinationFolderId=*/ null,
                     name,
                     description,
                     sourceBigQueryResource));
@@ -304,6 +309,7 @@ public class WorkspaceCloneUtils {
                 buildDestinationResourceCommonFields(
                     destinationWorkspaceId,
                     destinationResourceId,
+                    /*destinationFolderId=*/ null,
                     name,
                     description,
                     sourceBigQueryResource));
@@ -322,6 +328,7 @@ public class WorkspaceCloneUtils {
                 buildDestinationResourceCommonFields(
                     destinationWorkspaceId,
                     destinationResourceId,
+                    /*destinationFolderId=*/ null,
                     name,
                     description,
                     sourceReferencedDataRepoSnapshotResource));
@@ -340,6 +347,7 @@ public class WorkspaceCloneUtils {
                 buildDestinationResourceCommonFields(
                     destinationWorkspaceId,
                     destinationResourceId,
+                    /*destinationFolderId=*/ null,
                     name,
                     description,
                     gitHubRepoResource));
@@ -349,6 +357,7 @@ public class WorkspaceCloneUtils {
   private static WsmResourceFields buildDestinationResourceCommonFields(
       UUID destinationWorkspaceId,
       UUID destinationResourceId,
+      @Nullable UUID destinationFolderId,
       @Nullable String name,
       @Nullable String description,
       WsmResource sourceResource) {
@@ -363,7 +372,8 @@ public class WorkspaceCloneUtils {
         .workspaceUuid(destinationWorkspaceId)
         .resourceId(destinationResourceId)
         .properties(
-            maybeClearSomeResourcePropertiesBeforeCloning(sourceResource, destinationWorkspaceId))
+            maybeClearSomeResourcePropertiesBeforeCloning(
+                sourceResource, destinationWorkspaceId, destinationFolderId))
         .resourceLineage(destinationResourceLineage);
     // apply optional override variables
     Optional.ofNullable(name).ifPresent(destinationResourceCommonFieldsBuilder::name);
@@ -384,12 +394,16 @@ public class WorkspaceCloneUtils {
   }
 
   private static Map<String, String> maybeClearSomeResourcePropertiesBeforeCloning(
-      WsmResource sourceResource, UUID destinationWorkspaceId) {
+      WsmResource sourceResource, UUID destinationWorkspaceId, @Nullable UUID destinationFolderId) {
     Map<String, String> destinationResourceProperties = sourceResource.getProperties();
     if (!destinationWorkspaceId.equals(sourceResource.getWorkspaceId())) {
       destinationResourceProperties =
           clearSomePropertiesForResourceCloningToDifferentWorkspace(destinationResourceProperties);
     }
-    return destinationResourceProperties;
+    HashMap<String, String> result = new HashMap<>(destinationResourceProperties);
+    if (destinationFolderId != null) {
+      result.put(FOLDER_ID_KEY, destinationFolderId.toString());
+    }
+    return ImmutableMap.copyOf(result);
   }
 }

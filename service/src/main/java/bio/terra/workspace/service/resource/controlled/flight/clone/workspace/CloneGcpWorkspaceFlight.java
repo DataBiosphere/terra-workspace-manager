@@ -18,8 +18,7 @@ public class CloneGcpWorkspaceFlight extends Flight {
     super(inputParameters, applicationContext);
     // Flight Map
     // 0. Clone all folders in the workspace
-    // 1. Build a list of resources to clone and attach the updated cloned folder id to each
-    // resource
+    // 1. Build a list of resources to clone and attach the updated cloned folder id
     // 2. Create job IDs for future sub-flights and a couple other things
     // 3. Launch a flight to create the GCP cloud context
     // 3a. Await the context flight

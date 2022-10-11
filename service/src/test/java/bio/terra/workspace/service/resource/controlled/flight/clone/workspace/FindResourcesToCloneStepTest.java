@@ -69,7 +69,8 @@ public class FindResourcesToCloneStepTest extends BaseUnitTest {
     doReturn(inputParameters).when(mockFlightContext).getInputParameters();
 
     workingMap = new FlightMap();
-    workingMap.put(WorkspaceFlightMapKeys.FolderKeys.FOLDER_ID_MAP, new HashMap<String, String>());
+    workingMap.put(
+        WorkspaceFlightMapKeys.FolderKeys.FOLDER_IDS_TO_CLONE_MAP, new HashMap<String, String>());
     doReturn(workingMap).when(mockFlightContext).getWorkingMap();
   }
 

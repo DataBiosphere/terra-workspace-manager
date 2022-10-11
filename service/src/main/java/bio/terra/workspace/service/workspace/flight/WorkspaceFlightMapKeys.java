@@ -66,13 +66,15 @@ public final class WorkspaceFlightMapKeys {
     public static final String STORAGE_ACCOUNT_NAME = "storageAccountName";
     public static final String DESTINATION_RESOURCE_ID = "destinationResourceId";
     public static final String DESTINATION_RESOURCE_PROPERTY = "destinationResourceProperty";
+    public static final String DESTINATION_FOLDER_ID = "destinationFolderId";
   }
 
   public static class FolderKeys {
 
     private FolderKeys() {}
 
-    public static final String FOLDER_ID_MAP = "folderIdMap";
+    // Mapping the source workspace folder id to the new created destination workspace folder id
+    public static final String FOLDER_IDS_TO_CLONE_MAP = "folderIdMap";
   }
 
   public static class ReferencedResourceKeys {

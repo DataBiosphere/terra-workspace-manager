@@ -1,5 +1,7 @@
 package bio.terra.workspace.service.resource.controlled.flight.clone.workspace;
 
+import static bio.terra.workspace.service.workspace.model.WorkspaceConstants.ResourceProperties.FOLDER_ID_KEY;
+
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
@@ -12,7 +14,11 @@ import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import com.fasterxml.jackson.core.type.TypeReference;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,7 +30,6 @@ import org.slf4j.LoggerFactory;
 public class FindResourcesToCloneStep implements Step {
 
   private static final Logger logger = LoggerFactory.getLogger(FindResourcesToCloneStep.class);
-  private static final String TERRA_FOLDER_ID_PROPERTY_KEY = "terra-folder-id";
   private final ResourceDao resourceDao;
 
   public FindResourcesToCloneStep(ResourceDao resourceDao) {
@@ -36,13 +41,15 @@ public class FindResourcesToCloneStep implements Step {
     FlightUtils.validateRequiredEntries(
         context.getInputParameters(), ControlledResourceKeys.SOURCE_WORKSPACE_ID);
     FlightUtils.validateRequiredEntries(
-        context.getWorkingMap(), WorkspaceFlightMapKeys.FolderKeys.FOLDER_ID_MAP);
+        context.getWorkingMap(), WorkspaceFlightMapKeys.FolderKeys.FOLDER_IDS_TO_CLONE_MAP);
     var sourceWorkspaceId =
         context.getInputParameters().get(ControlledResourceKeys.SOURCE_WORKSPACE_ID, UUID.class);
     HashMap<String, String> folderIdMap =
         context
             .getWorkingMap()
-            .get(WorkspaceFlightMapKeys.FolderKeys.FOLDER_ID_MAP, new TypeReference<>() {});
+            .get(
+                WorkspaceFlightMapKeys.FolderKeys.FOLDER_IDS_TO_CLONE_MAP,
+                new TypeReference<>() {});
     int offset = 0;
     int limit = 100;
     List<WsmResource> batch;
@@ -54,16 +61,13 @@ public class FindResourcesToCloneStep implements Step {
           batch.stream().filter(FindResourcesToCloneStep::isCloneable).toList();
 
       for (WsmResource resource : cloneableResources) {
-        String resourcePropertyFolderId =
-            resource.getProperties().get(TERRA_FOLDER_ID_PROPERTY_KEY);
+        String folderId = resource.getProperties().get(FOLDER_ID_KEY);
         result.add(
             new ResourceCloneInputs(
                 resource,
                 context.getStairway().createFlightId(),
-                UUID.randomUUID(),
-                resourcePropertyFolderId != null
-                    ? UUID.fromString(folderIdMap.get(resourcePropertyFolderId))
-                    : null));
+                /*destinationResourceId=*/ UUID.randomUUID(),
+                folderId != null ? UUID.fromString(folderIdMap.get(folderId)) : null));
       }
 
     } while (batch.size() == limit);

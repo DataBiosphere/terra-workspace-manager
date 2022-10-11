@@ -42,8 +42,7 @@ public class CloneAllFoldersStep implements Step {
 
     // Create and clone all folders
     ImmutableList<Folder> foldersResult = folderDao.listFolders(sourceWorkspaceId, null);
-    // Have to use Map<String, String> rather than Map<UUID, UUID> to avoid JSON deserialization
-    // error
+    // Use Map<String, String> rather than Map<UUID, UUID> to avoid JSON deserialization error
     Map<String, String> folderIdMap = new HashMap<>();
     if (foldersResult != null) {
       for (Folder folder : foldersResult) {
@@ -73,12 +72,12 @@ public class CloneAllFoldersStep implements Step {
     }
 
     logger.info(
-        "Clone all folders relations {} in workspace {} to new workspace {}",
+        "Cloned all folders relations {} in workspace {} to new workspace {}",
         foldersResult,
         sourceWorkspaceId,
         destinationWorkspaceId);
 
-    context.getWorkingMap().put(FolderKeys.FOLDER_ID_MAP, folderIdMap);
+    context.getWorkingMap().put(FolderKeys.FOLDER_IDS_TO_CLONE_MAP, folderIdMap);
 
     return StepResult.getStepResultSuccess();
   }
@@ -87,17 +86,14 @@ public class CloneAllFoldersStep implements Step {
   @Override
   public StepResult undoStep(FlightContext flightContext) throws InterruptedException {
     HashMap<String, String> clonedFolders =
-        flightContext.getWorkingMap().get(FolderKeys.FOLDER_ID_MAP, new TypeReference<>() {});
+        flightContext
+            .getWorkingMap()
+            .get(FolderKeys.FOLDER_IDS_TO_CLONE_MAP, new TypeReference<>() {});
     var destinationWorkspaceID =
         flightContext
             .getInputParameters()
             .get(ControlledResourceKeys.DESTINATION_WORKSPACE_ID, UUID.class);
-    if (clonedFolders != null) {
-      for (Map.Entry<String, String> clonedFolder : clonedFolders.entrySet()) {
-        folderDao.deleteFolderRecursive(
-            destinationWorkspaceID, UUID.fromString(clonedFolder.getValue()));
-      }
-    }
+    folderDao.deleteFolderRecursive(destinationWorkspaceID, /*folderId=*/ null);
     return StepResult.getStepResultSuccess();
   }
 }

@@ -20,8 +20,6 @@ import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.workspace.GcpCloudContextService;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ResourceKeys;
-import com.fasterxml.jackson.core.type.TypeReference;
-import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import org.springframework.http.HttpStatus;
@@ -61,7 +59,9 @@ public class CopyBigQueryDatasetDefinitionStep implements Step {
       throws InterruptedException, RetryException {
     FlightMap inputParameters = flightContext.getInputParameters();
     FlightUtils.validateRequiredEntries(
-        inputParameters, ControlledResourceKeys.DESTINATION_RESOURCE_ID);
+        inputParameters,
+        ControlledResourceKeys.DESTINATION_RESOURCE_ID,
+        ControlledResourceKeys.DESTINATION_FOLDER_ID);
     FlightMap workingMap = flightContext.getWorkingMap();
     String resourceName =
         FlightUtils.getInputParameterOrWorkingValue(
@@ -92,19 +92,21 @@ public class CopyBigQueryDatasetDefinitionStep implements Step {
         gcpCloudContextService.getRequiredGcpProject(destinationWorkspaceId);
     var destinationResourceId =
         inputParameters.get(ControlledResourceKeys.DESTINATION_RESOURCE_ID, UUID.class);
-    Map<String, String> properties =
-        inputParameters.get(
-            ControlledResourceKeys.DESTINATION_RESOURCE_PROPERTY, new TypeReference<>() {});
+    UUID destinationFolderId =
+        Optional.ofNullable(
+                inputParameters.get(ControlledResourceKeys.DESTINATION_FOLDER_ID, String.class))
+            .map(UUID::fromString)
+            .orElse(null);
     ControlledBigQueryDatasetResource destinationResource =
         buildDestinationControlledBigQueryDataset(
             sourceDataset,
             destinationWorkspaceId,
             destinationResourceId,
+            destinationFolderId,
             resourceName,
             description,
             datasetName,
-            destinationProjectId,
-            /*properties=*/ properties);
+            destinationProjectId);
 
     var creationParameters =
         new ApiGcpBigQueryDatasetCreationParameters().datasetId(datasetName).location(location);
