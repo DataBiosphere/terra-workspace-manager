@@ -59,7 +59,7 @@ public class ControlledGcpResourceApiControllerTest extends BaseUnitTestMockGcpC
 
   @Test
   public void cloneBqDataset_badRequest_throws400() throws Exception {
-    // Cannot set destinationDataName for COPY_REFERENCE clone
+    // Cannot set destinationDatasetName for COPY_REFERENCE clone
     mockMvcUtils.cloneControlledBqDatasetAsync(
         USER_REQUEST,
         /*sourceWorkspaceId=*/ UUID.randomUUID(),
