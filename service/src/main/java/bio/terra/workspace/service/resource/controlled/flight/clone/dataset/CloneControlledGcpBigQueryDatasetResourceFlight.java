@@ -62,7 +62,7 @@ public class CloneControlledGcpBigQueryDatasetResourceFlight extends Flight {
     // Flight Plan
     // 1. Validate user has read access to the source object
     // 2. Gather controlled resource metadata for source object
-    // 3. Gather creation parameters from existing object
+    // 3. Gather cloud attributes from existing object
     // 4. If cloning to referenced resource, do the clone and finish flight
     // 5. Launch sub-flight to create destination controlled resource
     addStep(
