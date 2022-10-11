@@ -1,6 +1,7 @@
 package bio.terra.workspace.service.workspace;
 
 import static bio.terra.workspace.common.utils.MockMvcUtils.CREATE_CLOUD_CONTEXT_PATH_FORMAT;
+import static bio.terra.workspace.common.utils.MockMvcUtils.USER_REQUEST;
 import static bio.terra.workspace.common.utils.MockMvcUtils.WORKSPACES_V1_BY_UFID_PATH_FORMAT;
 import static bio.terra.workspace.common.utils.MockMvcUtils.WORKSPACES_V1_BY_UUID_PATH_FORMAT;
 import static bio.terra.workspace.common.utils.MockMvcUtils.addAuth;
@@ -95,7 +96,6 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.UUID;
 import org.apache.http.HttpStatus;
 import org.broadinstitute.dsde.workbench.client.sam.ApiException;
@@ -115,12 +115,6 @@ import org.springframework.test.web.servlet.MockMvc;
 class WorkspaceServiceTest extends BaseConnectedTest {
 
   public static final String SPEND_PROFILE_ID = "wm-default-spend-profile";
-  /** A fake authenticated user request. */
-  private static final AuthenticatedUserRequest USER_REQUEST =
-      new AuthenticatedUserRequest()
-          .token(Optional.of("fake-token"))
-          .email("fake@email.com")
-          .subjectId("fakeID123");
   /** A fake group-constraint policy for a workspace. */
   private static final ApiTpsPolicyInput GROUP_POLICY =
       new ApiTpsPolicyInput()

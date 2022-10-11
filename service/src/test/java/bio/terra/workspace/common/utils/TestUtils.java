@@ -1,14 +1,13 @@
 package bio.terra.workspace.common.utils;
 
-import java.util.Random;
+import java.util.UUID;
 
 public class TestUtils {
-  private static final Random RANDOM = new Random();
-
-  public static String appendRandomNumber(String string) {
+  public static String appendRandomNumber(String prefix) {
     // Can't have dash because BQ dataset names can't have dash.
     // Can't have underscore because for controlled buckets, GCP recommends not having underscore
     // in bucket name.
-    return string + RANDOM.nextInt(100000);
+    String randomString = prefix + UUID.randomUUID();
+    return randomString.replaceAll("[-_]", "");
   }
 }

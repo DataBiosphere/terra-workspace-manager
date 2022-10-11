@@ -4,7 +4,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import bio.terra.stairway.FlightState;
 import bio.terra.stairway.FlightStatus;
-import bio.terra.workspace.common.BaseAzureTest;
+import bio.terra.workspace.common.BaseAzureConnectedTest;
 import bio.terra.workspace.common.StairwayTestUtils;
 import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
 import bio.terra.workspace.common.utils.AzureTestUtils;
@@ -48,7 +48,7 @@ import java.util.function.BiFunction;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
-public class CreateAndDeleteAzureControlledResourceFlightTest extends BaseAzureTest {
+public class CreateAndDeleteAzureControlledResourceFlightTest extends BaseAzureConnectedTest {
   private static final Duration STAIRWAY_FLIGHT_TIMEOUT = Duration.ofMinutes(15);
 
   @Autowired private WorkspaceService workspaceService;

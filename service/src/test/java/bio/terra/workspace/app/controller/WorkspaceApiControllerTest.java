@@ -3,6 +3,7 @@ package bio.terra.workspace.app.controller;
 import static bio.terra.workspace.app.controller.shared.PropertiesUtils.convertMapToApiProperties;
 import static bio.terra.workspace.common.utils.MockMvcUtils.CLONE_WORKSPACE_PATH_FORMAT;
 import static bio.terra.workspace.common.utils.MockMvcUtils.UPDATE_WORKSPACES_V1_PROPERTIES_PATH_FORMAT;
+import static bio.terra.workspace.common.utils.MockMvcUtils.USER_REQUEST;
 import static bio.terra.workspace.common.utils.MockMvcUtils.WORKSPACES_V1_BY_UUID_PATH_FORMAT;
 import static bio.terra.workspace.common.utils.MockMvcUtils.WORKSPACES_V1_PATH;
 import static bio.terra.workspace.common.utils.MockMvcUtils.addAuth;
@@ -19,8 +20,6 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import bio.terra.workspace.amalgam.tps.TpsApiDispatch;
-import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
 import bio.terra.workspace.common.BaseUnitTest;
 import bio.terra.workspace.common.fixtures.WorkspaceFixtures;
 import bio.terra.workspace.common.utils.MockMvcUtils;
@@ -37,8 +36,6 @@ import bio.terra.workspace.generated.model.ApiUpdateWorkspaceRequestBody;
 import bio.terra.workspace.generated.model.ApiWorkspaceDescription;
 import bio.terra.workspace.generated.model.ApiWorkspaceDescriptionList;
 import bio.terra.workspace.generated.model.ApiWorkspaceStageModel;
-import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
-import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.iam.model.SamConstants.SamResource;
 import bio.terra.workspace.service.iam.model.SamConstants.SamSpendProfileAction;
 import bio.terra.workspace.service.iam.model.WsmIamRole;
@@ -58,7 +55,6 @@ import org.broadinstitute.dsde.workbench.client.sam.model.UserStatusInfo;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.test.web.servlet.MockMvc;
@@ -72,10 +68,6 @@ import org.springframework.test.web.servlet.MockMvc;
  * tests.
  */
 public class WorkspaceApiControllerTest extends BaseUnitTest {
-
-  AuthenticatedUserRequest USER_REQUEST =
-      new AuthenticatedUserRequest(
-          "fake@email.com", "subjectId123456", Optional.of("ThisIsNotARealBearerToken"));
   /** A fake group-constraint policy for a workspace. */
   private static final ApiTpsPolicyInput GROUP_POLICY =
       new ApiTpsPolicyInput()
@@ -86,29 +78,27 @@ public class WorkspaceApiControllerTest extends BaseUnitTest {
   @Autowired MockMvc mockMvc;
   @Autowired MockMvcUtils mockMvcUtils;
   @Autowired ObjectMapper objectMapper;
-  @MockBean FeatureConfiguration mockFeatureConfiguration;
-  @MockBean TpsApiDispatch mockTpsApiDispatch;
-  @MockBean SamService mockSamService;
 
   @BeforeEach
   public void setup() throws InterruptedException {
-    when(mockSamService.isAuthorized(
-            any(), eq(SamResource.SPEND_PROFILE), any(), eq(SamSpendProfileAction.LINK)))
+    when(mockSamService()
+            .isAuthorized(
+                any(), eq(SamResource.SPEND_PROFILE), any(), eq(SamSpendProfileAction.LINK)))
         .thenReturn(true);
-    when(mockSamService.listRequesterRoles(any(), any(), any()))
+    when(mockSamService().listRequesterRoles(any(), any(), any()))
         .thenReturn(List.of(WsmIamRole.OWNER));
-    when(mockSamService.getUserStatusInfo(any()))
+    when(mockSamService().getUserStatusInfo(any()))
         .thenReturn(
             new UserStatusInfo()
                 .userEmail(USER_REQUEST.getEmail())
                 .userSubjectId(USER_REQUEST.getSubjectId()));
 
-    when(mockFeatureConfiguration.isTpsEnabled()).thenReturn(true);
+    when(mockFeatureConfiguration().isTpsEnabled()).thenReturn(true);
     // We don't need to mock tpsCheck() because Mockito will already do nothing by default.
 
     // Pretend every workspace has an empty policy. The ID on the PAO will not match the workspace
     // ID, but that doesn't matter for tests which don't care about policy.
-    when(mockTpsApiDispatch.getPaoIfExists(any(), any()))
+    when(mockTpsApiDispatch().getPaoIfExists(any(), any()))
         .thenReturn(Optional.of(emptyWorkspacePao()));
   }
 
@@ -182,7 +172,7 @@ public class WorkspaceApiControllerTest extends BaseUnitTest {
     assertEquals(USER_REQUEST.getEmail(), updatedWorkspaceDescription.getLastUpdatedBy());
 
     var newUser = new UserStatusInfo().userEmail("foo@gmail.com").userSubjectId("foo");
-    when(mockSamService.getUserStatusInfo(any())).thenReturn(newUser);
+    when(mockSamService().getUserStatusInfo(any())).thenReturn(newUser);
     var secondNewDescription = "This is yet another description";
     String serializedSecondUpdateResponse =
         mockMvc
@@ -322,7 +312,7 @@ public class WorkspaceApiControllerTest extends BaseUnitTest {
   @Test
   public void policyRejectedIfTpsDisabled() throws Exception {
     // Disable TPS feature flag for this test only
-    when(mockFeatureConfiguration.isTpsEnabled()).thenReturn(false);
+    when(mockFeatureConfiguration().isTpsEnabled()).thenReturn(false);
 
     var createRequest = WorkspaceFixtures.createWorkspaceRequestBody();
     createRequest.policies(
@@ -356,7 +346,7 @@ public class WorkspaceApiControllerTest extends BaseUnitTest {
             .objectId(workspace.getId())
             .attributes(new ApiTpsPolicyInputs().addInputsItem(GROUP_POLICY))
             .effectiveAttributes(new ApiTpsPolicyInputs().addInputsItem(GROUP_POLICY));
-    when(mockTpsApiDispatch.getPaoIfExists(any(), eq(workspace.getId())))
+    when(mockTpsApiDispatch().getPaoIfExists(any(), eq(workspace.getId())))
         .thenReturn(Optional.of(getPolicyResult));
 
     ApiWorkspaceDescription gotWorkspace = getWorkspaceDescription(workspace.getId());
@@ -366,7 +356,7 @@ public class WorkspaceApiControllerTest extends BaseUnitTest {
 
   @Test
   public void tpsDisabledGetWorkspaceExcludesPolicy() throws Exception {
-    when(mockFeatureConfiguration.isTpsEnabled()).thenReturn(false);
+    when(mockFeatureConfiguration().isTpsEnabled()).thenReturn(false);
     ApiWorkspaceDescription workspace =
         mockMvcUtils.createWorkspaceWithoutCloudContext(USER_REQUEST);
 
@@ -381,7 +371,7 @@ public class WorkspaceApiControllerTest extends BaseUnitTest {
         mockMvcUtils.createWorkspaceWithoutCloudContext(USER_REQUEST);
     ApiWorkspaceDescription noPolicyWorkspace =
         mockMvcUtils.createWorkspaceWithoutCloudContext(USER_REQUEST);
-    when(mockSamService.listWorkspaceIdsAndHighestRoles(any(), any()))
+    when(mockSamService().listWorkspaceIdsAndHighestRoles(any(), any()))
         .thenReturn(
             ImmutableMap.of(
                 workspace.getId(), WsmIamRole.OWNER, noPolicyWorkspace.getId(), WsmIamRole.OWNER));
@@ -396,10 +386,10 @@ public class WorkspaceApiControllerTest extends BaseUnitTest {
             .sourcesObjectIds(Collections.emptyList());
 
     // Return a policy object for the first workspace
-    when(mockTpsApiDispatch.getPaoIfExists(any(), eq(workspace.getId())))
+    when(mockTpsApiDispatch().getPaoIfExists(any(), eq(workspace.getId())))
         .thenReturn(Optional.of(getPolicyResult));
     // Treat the second workspace like it was created before policy existed and doesn't have a PAO
-    when(mockTpsApiDispatch.getPaoIfExists(any(), eq(noPolicyWorkspace.getId())))
+    when(mockTpsApiDispatch().getPaoIfExists(any(), eq(noPolicyWorkspace.getId())))
         .thenReturn(Optional.empty());
 
     ApiWorkspaceDescription gotWorkspace = getWorkspaceDescriptionFromList(workspace.getId());
@@ -412,10 +402,10 @@ public class WorkspaceApiControllerTest extends BaseUnitTest {
 
   @Test
   public void tpsDisabledListWorkspaceExcludesPolicy() throws Exception {
-    when(mockFeatureConfiguration.isTpsEnabled()).thenReturn(false);
+    when(mockFeatureConfiguration().isTpsEnabled()).thenReturn(false);
     ApiWorkspaceDescription workspace =
         mockMvcUtils.createWorkspaceWithoutCloudContext(USER_REQUEST);
-    when(mockSamService.listWorkspaceIdsAndHighestRoles(any(), any()))
+    when(mockSamService().listWorkspaceIdsAndHighestRoles(any(), any()))
         .thenReturn(ImmutableMap.of(workspace.getId(), WsmIamRole.OWNER));
 
     ApiWorkspaceDescription gotWorkspace = getWorkspaceDescriptionFromList(workspace.getId());

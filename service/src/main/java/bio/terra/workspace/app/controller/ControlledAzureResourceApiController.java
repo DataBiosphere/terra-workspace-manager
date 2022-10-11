@@ -41,6 +41,7 @@ import bio.terra.workspace.service.resource.ResourceValidationUtils;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceMetadataManager;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceService;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.AzureStorageAccessService;
+import bio.terra.workspace.service.resource.controlled.cloud.azure.SasPermissionsHelper;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.disk.ControlledAzureDiskResource;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.ip.ControlledAzureIpResource;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.network.ControlledAzureNetworkResource;
@@ -212,12 +213,16 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
           UUID workspaceUuid,
           UUID storageContainerUuid,
           String sasIpRange,
-          Long sasExpirationDuration) {
+          Long sasExpirationDuration,
+          String sasPermissions,
+          String sasBlobName) {
     features.azureEnabledCheck();
 
     ControllerValidationUtils.validateIpAddressRange(sasIpRange);
     ControllerValidationUtils.validateSasExpirationDuration(
         sasExpirationDuration, azureConfiguration.getSasTokenExpiryTimeMaximumMinutesOffset());
+    ControllerValidationUtils.validateSasBlobName(sasBlobName);
+    SasPermissionsHelper.validateSasPermissionString(sasPermissions);
 
     final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     // Creating an AzureStorageContainerSasToken requires checking the user's access to both the
@@ -264,7 +269,9 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
             startTime,
             expiryTime,
             userRequest,
-            sasIpRange);
+            sasIpRange,
+            sasBlobName,
+            sasPermissions);
 
     logger.info(
         "SAS token with expiry time of {} generated for user {} on container {} in workspace {}",

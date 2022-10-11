@@ -3,6 +3,7 @@ package bio.terra.workspace.app.controller;
 import static bio.terra.workspace.common.utils.MockMvcUtils.GENERATE_GCP_AI_NOTEBOOK_NAME_PATH_FORMAT;
 import static bio.terra.workspace.common.utils.MockMvcUtils.GENERATE_GCP_BQ_DATASET_NAME_PATH_FORMAT;
 import static bio.terra.workspace.common.utils.MockMvcUtils.GENERATE_GCP_GCS_BUCKET_NAME_PATH_FORMAT;
+import static bio.terra.workspace.common.utils.MockMvcUtils.USER_REQUEST;
 import static bio.terra.workspace.common.utils.MockMvcUtils.addAuth;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
@@ -10,27 +11,24 @@ import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import bio.terra.workspace.common.BaseUnitTest;
+import bio.terra.workspace.common.BaseUnitTestMockGcpCloudContextService;
 import bio.terra.workspace.common.utils.MockMvcUtils;
 import bio.terra.workspace.generated.model.ApiAiNotebookCloudId;
 import bio.terra.workspace.generated.model.ApiBqDatasetCloudId;
+import bio.terra.workspace.generated.model.ApiCloningInstructionsEnum;
 import bio.terra.workspace.generated.model.ApiGcsBucketCloudName;
 import bio.terra.workspace.generated.model.ApiGenerateGcpAiNotebookCloudIdRequestBody;
 import bio.terra.workspace.generated.model.ApiGenerateGcpBigQueryDatasetCloudIDRequestBody;
 import bio.terra.workspace.generated.model.ApiGenerateGcpGcsBucketCloudNameRequestBody;
-import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
-import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.iam.model.WsmIamRole;
-import bio.terra.workspace.service.workspace.GcpCloudContextService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 import org.apache.http.HttpStatus;
+import org.broadinstitute.dsde.workbench.client.sam.model.UserStatusInfo;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -38,26 +36,38 @@ import org.springframework.test.web.servlet.MockMvc;
  * Use this instead of ControlledGcpResourceApiControllerConnectedTest if you don't want to talk to
  * real GCP.
  */
-public class ControlledGcpResourceApiControllerTest extends BaseUnitTest {
-
-  AuthenticatedUserRequest USER_REQUEST =
-      new AuthenticatedUserRequest(
-          "fake@email.com", "subjectId123456", Optional.of("ThisIsNotARealBearerToken"));
+public class ControlledGcpResourceApiControllerTest extends BaseUnitTestMockGcpCloudContextService {
 
   @Autowired MockMvc mockMvc;
   @Autowired MockMvcUtils mockMvcUtils;
   @Autowired ObjectMapper objectMapper;
 
-  @MockBean GcpCloudContextService mockGcpCloudContextService;
-  @MockBean SamService mockSamService;
-
   @BeforeEach
   public void setup() throws InterruptedException {
-    when(mockGcpCloudContextService.getRequiredGcpProject(any())).thenReturn("fake-project-id");
+    when(mockGcpCloudContextService().getRequiredGcpProject(any())).thenReturn("fake-project-id");
 
     // Needed for assertion that requester has role on workspace.
-    when(mockSamService.listRequesterRoles(any(), any(), any()))
+    when(mockSamService().listRequesterRoles(any(), any(), any()))
         .thenReturn(List.of(WsmIamRole.OWNER));
+
+    when(mockSamService().getUserStatusInfo(any()))
+        .thenReturn(
+            new UserStatusInfo()
+                .userEmail(USER_REQUEST.getEmail())
+                .userSubjectId(USER_REQUEST.getSubjectId()));
+  }
+
+  @Test
+  public void cloneGcsBucket_badRequest_throws400() throws Exception {
+    // Cannot set bucketName for COPY_REFERENCE clone
+    mockMvcUtils.cloneControlledGcsBucketAsync(
+        USER_REQUEST,
+        /*sourceWorkspaceId=*/ UUID.randomUUID(),
+        /*sourceResourceId=*/ UUID.randomUUID(),
+        /*destWorkspaceId=*/ UUID.randomUUID(),
+        ApiCloningInstructionsEnum.REFERENCE,
+        "bucketName",
+        HttpStatus.SC_BAD_REQUEST);
   }
 
   @Test
@@ -84,7 +94,7 @@ public class ControlledGcpResourceApiControllerTest extends BaseUnitTest {
     ApiGcsBucketCloudName generatedGcsBucketName =
         objectMapper.readValue(serializedGetResponse, ApiGcsBucketCloudName.class);
 
-    String projectId = mockGcpCloudContextService.getRequiredGcpProject(workspaceId);
+    String projectId = mockGcpCloudContextService().getRequiredGcpProject(workspaceId);
     assertEquals(
         generatedGcsBucketName.getGeneratedBucketCloudName(),
         bucketNameRequest.getGcsBucketName() + "-" + projectId);

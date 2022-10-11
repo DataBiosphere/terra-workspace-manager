@@ -83,4 +83,16 @@ public class ControllerValidationUtilsTest extends BaseUnitTest {
         ValidationException.class,
         () -> ControllerValidationUtils.validateSasExpirationDuration(3601L, 60L));
   }
+
+  @Test
+  void validateSasBlobName() {
+    ControllerValidationUtils.validateSasBlobName(null);
+    ControllerValidationUtils.validateSasBlobName("hello");
+    assertThrows(
+        ValidationException.class, () -> ControllerValidationUtils.validateSasBlobName(""));
+    String largeString = "a".repeat(1025);
+    assertThrows(
+        ValidationException.class,
+        () -> ControllerValidationUtils.validateSasBlobName(largeString));
+  }
 }

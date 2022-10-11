@@ -6,16 +6,12 @@ import static org.mockito.Mockito.doReturn;
 
 import bio.terra.workspace.app.configuration.external.StatusCheckConfiguration;
 import bio.terra.workspace.common.BaseUnitTest;
-import bio.terra.workspace.service.iam.SamService;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.mock.mockito.MockBean;
 
 public class WorkspaceManagerStatusServiceTest extends BaseUnitTest {
-
-  @MockBean private SamService mockSamService;
 
   @Autowired private WorkspaceManagerStatusService statusService;
   @Autowired private StatusCheckConfiguration configuration;
@@ -46,14 +42,14 @@ public class WorkspaceManagerStatusServiceTest extends BaseUnitTest {
 
   @Test
   void testStatusWithWorkingEndpoints() {
-    doReturn(IS_OK).when(mockSamService).status();
+    doReturn(IS_OK).when(mockSamService()).status();
     statusService.checkStatus();
     assertTrue(statusService.getCurrentStatus());
   }
 
   @Test
   void testFailureNotOk() {
-    doReturn(NOT_OK).when(mockSamService).status();
+    doReturn(NOT_OK).when(mockSamService()).status();
     statusService.checkStatus();
     assertFalse(statusService.getCurrentStatus());
   }
