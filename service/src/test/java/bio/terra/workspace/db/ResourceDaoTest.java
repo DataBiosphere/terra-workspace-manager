@@ -67,7 +67,7 @@ public class ResourceDaoTest extends BaseUnitTest {
   @Test
   public void createGetDeleteControlledBigQueryDataset() {
     ControlledBigQueryDatasetResource resource =
-        ControlledResourceFixtures.makeDefaultControlledBigQueryBuilder(workspaceUuid).build();
+        ControlledResourceFixtures.makeDefaultControlledBqDatasetBuilder(workspaceUuid).build();
     resourceDao.createControlledResource(resource);
 
     assertEquals(
@@ -93,7 +93,7 @@ public class ResourceDaoTest extends BaseUnitTest {
     ControlledGcsBucketResource bucket =
         ControlledResourceFixtures.makeDefaultControlledGcsBucketBuilder(workspaceUuid).build();
     ControlledBigQueryDatasetResource dataset =
-        ControlledResourceFixtures.makeDefaultControlledBigQueryBuilder(workspaceUuid).build();
+        ControlledResourceFixtures.makeDefaultControlledBqDatasetBuilder(workspaceUuid).build();
     resourceDao.createControlledResource(bucket);
     resourceDao.createControlledResource(dataset);
 
@@ -273,7 +273,7 @@ public class ResourceDaoTest extends BaseUnitTest {
   @Test
   public void updateResourceProperties_propertiesUpdated() {
     ControlledBigQueryDatasetResource resource =
-        ControlledResourceFixtures.makeDefaultControlledBigQueryBuilder(workspaceUuid).build();
+        ControlledResourceFixtures.makeDefaultControlledBqDatasetBuilder(workspaceUuid).build();
     resourceDao.createControlledResource(resource);
     Map<String, String> properties = Map.of("foo", "bar1", "sweet", "cake");
 
@@ -302,7 +302,7 @@ public class ResourceDaoTest extends BaseUnitTest {
   public void
       updateResourceProperties_emptyUpdateProperties_throwsMissingRequiredFieldsException() {
     ControlledBigQueryDatasetResource resource =
-        ControlledResourceFixtures.makeDefaultControlledBigQueryBuilder(workspaceUuid).build();
+        ControlledResourceFixtures.makeDefaultControlledBqDatasetBuilder(workspaceUuid).build();
     resourceDao.createControlledResource(resource);
 
     assertThrows(
@@ -315,7 +315,7 @@ public class ResourceDaoTest extends BaseUnitTest {
   @Test
   public void deleteResourceProperties_resourcePropertiesDeleted() {
     ControlledBigQueryDatasetResource resource =
-        ControlledResourceFixtures.makeDefaultControlledBigQueryBuilder(workspaceUuid).build();
+        ControlledResourceFixtures.makeDefaultControlledBqDatasetBuilder(workspaceUuid).build();
     resourceDao.createControlledResource(resource);
 
     resourceDao.deleteResourceProperties(
@@ -330,7 +330,7 @@ public class ResourceDaoTest extends BaseUnitTest {
   public void deleteResourceProperties_nonExistingKeys_nothingIsDeleted() {
     UUID workspaceUuid = createWorkspaceWithGcpContext(workspaceDao);
     ControlledBigQueryDatasetResource resource =
-        ControlledResourceFixtures.makeDefaultControlledBigQueryBuilder(workspaceUuid).build();
+        ControlledResourceFixtures.makeDefaultControlledBqDatasetBuilder(workspaceUuid).build();
     resourceDao.createControlledResource(resource);
 
     resourceDao.deleteResourceProperties(
@@ -345,7 +345,7 @@ public class ResourceDaoTest extends BaseUnitTest {
   public void deleteResourceProperties_noKeySpecified_throwsMissingRequiredFieldsException() {
     UUID workspaceUuid = createWorkspaceWithGcpContext(workspaceDao);
     ControlledBigQueryDatasetResource resource =
-        ControlledResourceFixtures.makeDefaultControlledBigQueryBuilder(workspaceUuid).build();
+        ControlledResourceFixtures.makeDefaultControlledBqDatasetBuilder(workspaceUuid).build();
     resourceDao.createControlledResource(resource);
 
     assertThrows(
