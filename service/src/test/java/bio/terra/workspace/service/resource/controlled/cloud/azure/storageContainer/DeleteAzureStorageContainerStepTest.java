@@ -9,6 +9,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import bio.terra.common.iam.BearerToken;
 import bio.terra.landingzone.db.exception.LandingZoneNotFoundException;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.StepStatus;
@@ -102,12 +103,12 @@ public class DeleteAzureStorageContainerStepTest extends BaseStorageStepTest {
     initDeleteValidationStep(Optional.empty());
 
     when(mockLandingZoneApiDispatch.getLandingZoneId(any(AzureCloudContext.class)))
-        .thenReturn(landingZoneId.toString());
+        .thenReturn(landingZoneId);
     ApiAzureLandingZoneDeployedResource mockSharedStorageAccount =
         mock(ApiAzureLandingZoneDeployedResource.class);
     String sharedAccountId = UUID.randomUUID().toString();
     when(mockSharedStorageAccount.getResourceId()).thenReturn(sharedAccountId);
-    when(mockLandingZoneApiDispatch.getSharedStorageAccount(landingZoneId.toString()))
+    when(mockLandingZoneApiDispatch.getSharedStorageAccount(any(BearerToken.class), landingZoneId))
         .thenReturn(Optional.of(mockSharedStorageAccount));
     String sharedStorageAccountName = "sharedStorageAccount";
     when(mockStorageAccount.name()).thenReturn(sharedStorageAccountName);
@@ -158,8 +159,8 @@ public class DeleteAzureStorageContainerStepTest extends BaseStorageStepTest {
     initDeleteValidationStep(Optional.empty());
 
     when(mockLandingZoneApiDispatch.getLandingZoneId(any(AzureCloudContext.class)))
-        .thenReturn(landingZoneId.toString());
-    when(mockLandingZoneApiDispatch.getSharedStorageAccount(landingZoneId.toString()))
+        .thenReturn(landingZoneId);
+    when(mockLandingZoneApiDispatch.getSharedStorageAccount(any(BearerToken.class), landingZoneId))
         .thenReturn(Optional.empty());
 
     // act

@@ -116,6 +116,7 @@ public class ControlledAzureStorageContainerResource extends ControlledResource 
             flightBeanBag.getCrlService(),
             flightBeanBag.getResourceDao(),
             flightBeanBag.getLandingZoneApiDispatch(),
+            userRequest,
             this),
         cloudRetry);
     flight.addStep(

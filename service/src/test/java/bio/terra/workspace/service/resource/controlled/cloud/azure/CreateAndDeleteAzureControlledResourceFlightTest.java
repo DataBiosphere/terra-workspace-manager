@@ -12,6 +12,7 @@ import bio.terra.workspace.common.StairwayTestUtils;
 import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
 import bio.terra.workspace.common.utils.AzureTestUtils;
 import bio.terra.workspace.common.utils.AzureVmUtils;
+import bio.terra.workspace.connected.LandingZoneTestUtils;
 import bio.terra.workspace.connected.UserAccessUtils;
 import bio.terra.workspace.generated.model.*;
 import bio.terra.workspace.service.crl.CrlService;
@@ -60,6 +61,7 @@ public class CreateAndDeleteAzureControlledResourceFlightTest extends BaseAzureC
   @Autowired private JobService jobService;
   @Autowired private AzureTestUtils azureTestUtils;
   @Autowired private UserAccessUtils userAccessUtils;
+  @Autowired private LandingZoneTestUtils landingZoneTestUtils;
   @Autowired private ControlledResourceService controlledResourceService;
   @Autowired private WsmResourceService wsmResourceService;
   @Autowired private AzureCloudContextService azureCloudContextService;
@@ -324,7 +326,7 @@ public class CreateAndDeleteAzureControlledResourceFlightTest extends BaseAzureC
     createCloudContext(workspaceUuid, userRequest);
 
     // create quasi landing zone with a single resource - shared storage account
-    UUID landingZoneId = UUID.randomUUID();
+    UUID landingZoneId = UUID.fromString(landingZoneTestUtils.getDefaultLandingZoneId());
 
     TestLandingZoneManager testLandingZoneManager =
         new TestLandingZoneManager(
@@ -437,7 +439,7 @@ public class CreateAndDeleteAzureControlledResourceFlightTest extends BaseAzureC
     createCloudContext(workspaceUuid, userRequest);
 
     // create quasi landing zone without resources
-    UUID landingZoneId = UUID.randomUUID();
+    UUID landingZoneId = UUID.fromString(landingZoneTestUtils.getDefaultLandingZoneId());
 
     TestLandingZoneManager testLandingZoneManager =
         new TestLandingZoneManager(

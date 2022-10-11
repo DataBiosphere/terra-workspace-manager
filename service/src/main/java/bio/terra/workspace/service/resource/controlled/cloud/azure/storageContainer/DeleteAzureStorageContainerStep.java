@@ -1,5 +1,6 @@
 package bio.terra.workspace.service.resource.controlled.cloud.azure.storageContainer;
 
+import bio.terra.common.iam.BearerToken;
 import bio.terra.landingzone.db.exception.LandingZoneNotFoundException;
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.Step;
@@ -10,6 +11,8 @@ import bio.terra.workspace.app.configuration.external.AzureConfiguration;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.generated.model.ApiAzureLandingZoneDeployedResource;
 import bio.terra.workspace.service.crl.CrlService;
+import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
+import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.storage.ControlledAzureStorageResource;
 import bio.terra.workspace.service.resource.exception.ResourceNotFoundException;
 import bio.terra.workspace.service.resource.model.WsmResource;
@@ -20,6 +23,7 @@ import com.azure.core.management.exception.ManagementException;
 import com.azure.resourcemanager.storage.StorageManager;
 import com.azure.resourcemanager.storage.models.StorageAccount;
 import java.util.Optional;
+import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -67,10 +71,16 @@ public class DeleteAzureStorageContainerStep implements Step {
         storageAccountName = storageAccount.getStorageAccountName();
       } else {
         try {
+          AuthenticatedUserRequest userRequest =
+              context
+                  .getInputParameters()
+                  .get(JobMapKeys.AUTH_USER_INFO.getKeyName(), AuthenticatedUserRequest.class);
+
           // Storage container was created based on landing zone shared storage account
-          String landingZoneId = landingZoneApiDispatch.getLandingZoneId(azureCloudContext);
+          UUID landingZoneId = landingZoneApiDispatch.getLandingZoneId(azureCloudContext);
           Optional<ApiAzureLandingZoneDeployedResource> sharedStorageAccount =
-              landingZoneApiDispatch.getSharedStorageAccount(landingZoneId);
+              landingZoneApiDispatch.getSharedStorageAccount(
+                  new BearerToken(userRequest.getRequiredToken()), landingZoneId);
           if (sharedStorageAccount.isPresent()) {
             StorageAccount storageAccount =
                 manager.storageAccounts().getById(sharedStorageAccount.get().getResourceId());

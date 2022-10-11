@@ -7,6 +7,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import bio.terra.common.iam.BearerToken;
 import bio.terra.landingzone.db.exception.LandingZoneNotFoundException;
 import bio.terra.landingzone.library.landingzones.deployment.ResourcePurpose;
 import bio.terra.stairway.StepResult;
@@ -19,6 +20,7 @@ import bio.terra.workspace.generated.model.ApiAzureLandingZoneDeployedResource;
 import bio.terra.workspace.generated.model.ApiAzureLandingZoneResourcesList;
 import bio.terra.workspace.generated.model.ApiAzureLandingZoneResourcesPurposeGroup;
 import bio.terra.workspace.generated.model.ApiAzureStorageContainerCreationParameters;
+import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.storage.BaseStorageStepTest;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.storage.ControlledAzureStorageResource;
 import bio.terra.workspace.service.resource.exception.DuplicateResourceException;
@@ -42,8 +44,10 @@ public class VerifyAzureStorageContainerCanBeCreatedStepTest extends BaseStorage
   @Mock private BlobContainer mockBlobContainer;
   @Mock private ResourceDao mockResourceDao;
   @Mock private LandingZoneApiDispatch mockLandingZoneApiDispatch;
+  @Mock private AuthenticatedUserRequest mockUserRequest;
 
-  private static final String LANDING_ZONE_ID = "b2db9b47-fd0f-4ae9-b9b4-f675550b0291";
+  private static final UUID LANDING_ZONE_ID =
+      UUID.fromString("b2db9b47-fd0f-4ae9-b9b4-f675550b0291");
 
   private final String storageAccountName = ControlledResourceFixtures.uniqueStorageAccountName();
   final ApiAzureStorageContainerCreationParameters creationParameters =
@@ -77,6 +81,7 @@ public class VerifyAzureStorageContainerCanBeCreatedStepTest extends BaseStorage
             mockCrlService,
             mockResourceDao,
             mockLandingZoneApiDispatch,
+            mockUserRequest,
             storageContainerResource);
   }
 
@@ -119,11 +124,13 @@ public class VerifyAzureStorageContainerCanBeCreatedStepTest extends BaseStorage
     when(mockLandingZoneApiDispatch.getLandingZoneId(any())).thenReturn(LANDING_ZONE_ID);
     ApiAzureLandingZoneDeployedResource mockSharedStorageAccount =
         mock(ApiAzureLandingZoneDeployedResource.class);
-    when(mockLandingZoneApiDispatch.getSharedStorageAccount(LANDING_ZONE_ID))
+    when(mockLandingZoneApiDispatch.getSharedStorageAccount(
+            any(BearerToken.class), LANDING_ZONE_ID))
         .thenReturn(Optional.of(mockSharedStorageAccount));
     String sharedAccountId = UUID.randomUUID().toString();
     when(mockSharedStorageAccount.getResourceId()).thenReturn(sharedAccountId);
-    when(mockLandingZoneApiDispatch.getSharedStorageAccount(LANDING_ZONE_ID))
+    when(mockLandingZoneApiDispatch.getSharedStorageAccount(
+            any(BearerToken.class), LANDING_ZONE_ID))
         .thenReturn(Optional.of(mockSharedStorageAccount));
     String sharedStorageAccountName = "sharedStorageAccount";
     when(mockStorageAccount.name()).thenReturn(sharedStorageAccountName);
@@ -196,7 +203,8 @@ public class VerifyAzureStorageContainerCanBeCreatedStepTest extends BaseStorage
     initValidationStep(Optional.empty());
 
     when(mockLandingZoneApiDispatch.getLandingZoneId(any())).thenReturn(LANDING_ZONE_ID);
-    when(mockLandingZoneApiDispatch.getSharedStorageAccount(LANDING_ZONE_ID))
+    when(mockLandingZoneApiDispatch.getSharedStorageAccount(
+            any(BearerToken.class), LANDING_ZONE_ID))
         .thenReturn(Optional.empty());
 
     // act
