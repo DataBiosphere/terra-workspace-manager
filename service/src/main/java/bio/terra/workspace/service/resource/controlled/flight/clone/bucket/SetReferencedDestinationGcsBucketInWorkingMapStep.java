@@ -70,12 +70,7 @@ public class SetReferencedDestinationGcsBucketInWorkingMapStep implements Step {
 
     ReferencedGcsBucketResource destinationBucketResource =
         WorkspaceCloneUtils.buildDestinationReferencedGcsBucketFromControlled(
-            sourceBucket,
-            destinationWorkspaceId,
-            destinationResourceId,
-            resourceName,
-            description,
-            sourceBucket.getBucketName());
+            sourceBucket, destinationWorkspaceId, destinationResourceId, resourceName, description);
 
     workingMap.put(
         ControlledResourceKeys.DESTINATION_REFERENCED_RESOURCE, destinationBucketResource);

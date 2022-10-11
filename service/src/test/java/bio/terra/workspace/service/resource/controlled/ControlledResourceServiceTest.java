@@ -84,6 +84,8 @@ import bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.Updat
 import bio.terra.workspace.service.resource.controlled.exception.ReservedMetadataKeyException;
 import bio.terra.workspace.service.resource.controlled.flight.clone.bucket.SetReferencedDestinationGcsBucketInWorkingMapStep;
 import bio.terra.workspace.service.resource.controlled.flight.clone.bucket.SetReferencedDestinationGcsBucketResponseStep;
+import bio.terra.workspace.service.resource.controlled.flight.clone.dataset.SetReferencedDestinationBigQueryDatasetInWorkingMapStep;
+import bio.terra.workspace.service.resource.controlled.flight.clone.dataset.SetReferencedDestinationBigQueryDatasetResponseStep;
 import bio.terra.workspace.service.resource.controlled.flight.delete.DeleteMetadataStep;
 import bio.terra.workspace.service.resource.controlled.flight.update.RetrieveControlledResourceMetadataStep;
 import bio.terra.workspace.service.resource.controlled.flight.update.UpdateControlledResourceMetadataStep;
@@ -203,11 +205,10 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
   @BeforeAll
   public void setup() {
     user = userAccessUtils.defaultUser();
-    workspaceId = UUID.fromString("03e8cb0b-65ed-4762-8f1d-7d1d64985681");
-    // workspaceId =
-    //     workspaceUtils
-    //         .createWorkspaceWithGcpContext(userAccessUtils.defaultUserAuthRequest())
-    //         .getWorkspaceId();
+    workspaceId =
+        workspaceUtils
+            .createWorkspaceWithGcpContext(userAccessUtils.defaultUserAuthRequest())
+            .getWorkspaceId();
     projectId = gcpCloudContextService.getRequiredGcpProject(workspaceId);
   }
 
@@ -227,8 +228,8 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
   @AfterAll
   private void cleanUp() {
     user = userAccessUtils.defaultUser();
-    // Workspace workspace = workspaceService.getWorkspace(workspaceId);
-    // workspaceService.deleteWorkspace(workspace, user.getAuthenticatedRequest());
+    Workspace workspace = workspaceService.getWorkspace(workspaceId);
+    workspaceService.deleteWorkspace(workspace, user.getAuthenticatedRequest());
   }
 
   @Test
@@ -1390,7 +1391,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
     assertClonedBqDataset(
         clonedResource.getDataset(),
         ApiStewardshipType.REFERENCED,
-        DEST_DATASET_NAME,
+        sourceResource.getDatasetName(),
         // COPY_DEFINITION doesn't make sense for referenced resources. COPY_DEFINITION was
         // converted to COPY_REFERENCE.
         ApiCloningInstructionsEnum.REFERENCE,
@@ -1406,7 +1407,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
     assertClonedBqDataset(
         clonedResource.getDataset(),
         ApiStewardshipType.REFERENCED,
-        DEST_DATASET_NAME,
+        sourceResource.getDatasetName(),
         // COPY_DEFINITION doesn't make sense for referenced resources. COPY_DEFINITION was
         // converted to COPY_REFERENCE.
         ApiCloningInstructionsEnum.REFERENCE,
@@ -1873,6 +1874,14 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
       throws Exception {
     // Test idempotency of steps by retrying them once.
     Map<String, StepStatus> retrySteps = new HashMap<>();
+    retrySteps.put(
+        SetReferencedDestinationBigQueryDatasetInWorkingMapStep.class.getName(),
+        StepStatus.STEP_RESULT_FAILURE_RETRY);
+    retrySteps.put(
+        CreateReferenceMetadataStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
+    retrySteps.put(
+        SetReferencedDestinationBigQueryDatasetResponseStep.class.getName(),
+        StepStatus.STEP_RESULT_FAILURE_RETRY);
     jobService.setFlightDebugInfoForTest(
         FlightDebugInfo.newBuilder().doStepFailures(retrySteps).build());
 

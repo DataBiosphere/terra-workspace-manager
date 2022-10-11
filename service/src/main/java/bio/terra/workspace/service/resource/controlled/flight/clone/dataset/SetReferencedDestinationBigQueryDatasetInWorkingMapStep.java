@@ -1,4 +1,4 @@
-package bio.terra.workspace.service.resource.controlled.flight.clone.bucket;
+package bio.terra.workspace.service.resource.controlled.flight.clone.dataset;
 
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.FlightMap;
@@ -7,11 +7,11 @@ import bio.terra.stairway.StepResult;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.common.utils.FlightUtils;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
-import bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.ControlledGcsBucketResource;
+import bio.terra.workspace.service.resource.controlled.cloud.gcp.bqdataset.ControlledBigQueryDatasetResource;
 import bio.terra.workspace.service.resource.controlled.flight.clone.workspace.WorkspaceCloneUtils;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.referenced.cloud.gcp.ReferencedResourceService;
-import bio.terra.workspace.service.resource.referenced.cloud.gcp.gcsbucket.ReferencedGcsBucketResource;
+import bio.terra.workspace.service.resource.referenced.cloud.gcp.bqdataset.ReferencedBigQueryDatasetResource;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ResourceKeys;
 import com.google.common.base.Preconditions;
@@ -21,20 +21,20 @@ import java.util.UUID;
  * Adds ControlledResourceKeys.DESTINATION_REFERENCED_RESOURCE and ResourceKeys.RESOURCE_TYPE to
  * working map, for CreateReferenceMetadataStep to use.
  */
-public class SetReferencedDestinationGcsBucketWorkingMapStep implements Step {
+public class SetReferencedDestinationBigQueryDatasetInWorkingMapStep implements Step {
 
   private final AuthenticatedUserRequest userRequest;
-  private final ControlledGcsBucketResource sourceBucket;
+  private final ControlledBigQueryDatasetResource sourceDataset;
   private final ReferencedResourceService referencedResourceService;
   private final CloningInstructions resolvedCloningInstructions;
 
-  public SetReferencedDestinationGcsBucketWorkingMapStep(
+  public SetReferencedDestinationBigQueryDatasetInWorkingMapStep(
       AuthenticatedUserRequest userRequest,
-      ControlledGcsBucketResource sourceBucket,
+      ControlledBigQueryDatasetResource sourceDataset,
       ReferencedResourceService referencedResourceService,
       CloningInstructions resolvedCloningInstructions) {
     this.userRequest = userRequest;
-    this.sourceBucket = sourceBucket;
+    this.sourceDataset = sourceDataset;
     this.referencedResourceService = referencedResourceService;
     this.resolvedCloningInstructions = resolvedCloningInstructions;
   }
@@ -68,23 +68,17 @@ public class SetReferencedDestinationGcsBucketWorkingMapStep implements Step {
     final var destinationResourceId =
         inputParameters.get(ControlledResourceKeys.DESTINATION_RESOURCE_ID, UUID.class);
 
-    ReferencedGcsBucketResource destinationBucketResource =
-        WorkspaceCloneUtils.buildDestinationReferencedGcsBucketFromControlled(
-            sourceBucket,
+    ReferencedBigQueryDatasetResource destinationDatasetResource =
+        WorkspaceCloneUtils.buildDestinationReferencedBigQueryDatasetFromControlled(
+            sourceDataset,
             destinationWorkspaceId,
             destinationResourceId,
             resourceName,
-            description,
-            sourceBucket.getBucketName());
+            description);
 
-    flightContext
-        .getWorkingMap()
-        // ResourceKeys.RESOURCE was used for source bucket. So use
-        // ControlledResourceKeys.DESTINATION_REFERENCED_RESOURCE for dest bucket.
-        .put(ControlledResourceKeys.DESTINATION_REFERENCED_RESOURCE, destinationBucketResource);
-    flightContext
-        .getWorkingMap()
-        .put(ResourceKeys.RESOURCE_TYPE, destinationBucketResource.getResourceType());
+    workingMap.put(
+        ControlledResourceKeys.DESTINATION_REFERENCED_RESOURCE, destinationDatasetResource);
+    workingMap.put(ResourceKeys.RESOURCE_TYPE, destinationDatasetResource.getResourceType());
 
     return StepResult.getStepResultSuccess();
   }

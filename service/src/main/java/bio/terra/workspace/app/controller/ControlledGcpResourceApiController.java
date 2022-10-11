@@ -512,6 +512,14 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
       UUID workspaceUuid,
       UUID resourceId,
       @Valid ApiCloneControlledGcpBigQueryDatasetRequest body) {
+    if (body.getCloningInstructions() == ApiCloningInstructionsEnum.REFERENCE
+        && (!StringUtils.isEmpty(body.getDestinationDatasetName())
+            || !StringUtils.isEmpty(body.getLocation()))) {
+      throw new BadRequestException(
+          String.format(
+              "When cloning controlled dataset with COPY_REFERENCE, cannot set destination dataset name or location in request"));
+    }
+
     final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     // This technically duplicates the first step of the flight as the clone flight is re-used for
     // cloneWorkspace, but this also saves us from launching and failing a flight if the user does

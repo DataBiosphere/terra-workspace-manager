@@ -14,6 +14,7 @@ import bio.terra.workspace.service.resource.controlled.flight.update.RetrieveCon
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
+import bio.terra.workspace.service.resource.referenced.flight.create.CreateReferenceMetadataStep;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ResourceKeys;
@@ -55,41 +56,61 @@ public class CloneControlledGcpBigQueryDatasetResourceFlight extends Flight {
       addStep(
           new SetNoOpBucketCloneResponseStep(
               sourceResource.castByEnum(WsmResourceType.CONTROLLED_GCP_BIG_QUERY_DATASET)));
-    } else if (CloningInstructions.COPY_RESOURCE == resolvedCloningInstructions
-        || CloningInstructions.COPY_DEFINITION == resolvedCloningInstructions) {
-      // Flight Plan
-      // 1. Validate user has read access to the source object
-      // 2. Gather controlled resource metadata for source object
-      // 3. Gather creation parameters from existing object
-      // 4. Launch sub-flight to create appropriate resource
+      return;
+    }
+
+    // Flight Plan
+    // 1. Validate user has read access to the source object
+    // 2. Gather controlled resource metadata for source object
+    // 3. Gather creation parameters from existing object
+    // 4. If cloning to referenced resource, do the clone and finish flight
+    // 5. Launch sub-flight to create destination controlled resource
+    addStep(
+        new CheckControlledResourceAuthStep(
+            sourceResource, flightBeanBag.getControlledResourceMetadataManager(), userRequest),
+        RetryRules.shortExponential());
+    if (mergePolicies) {
       addStep(
-          new CheckControlledResourceAuthStep(
-              sourceResource, flightBeanBag.getControlledResourceMetadataManager(), userRequest),
-          RetryRules.shortExponential());
-      if (mergePolicies) {
-        addStep(
-            new ClonePolicyAttributesStep(
-                sourceResource.getWorkspaceId(),
-                destinationWorkspaceId,
-                userRequest,
-                flightBeanBag.getTpsApiDispatch()));
-      }
-      addStep(
-          new RetrieveControlledResourceMetadataStep(
-              flightBeanBag.getResourceDao(),
+          new ClonePolicyAttributesStep(
               sourceResource.getWorkspaceId(),
-              sourceResource.getResourceId()));
+              destinationWorkspaceId,
+              userRequest,
+              flightBeanBag.getTpsApiDispatch()));
+    }
+    addStep(
+        new RetrieveControlledResourceMetadataStep(
+            flightBeanBag.getResourceDao(),
+            sourceResource.getWorkspaceId(),
+            sourceResource.getResourceId()));
 
-      final ControlledBigQueryDatasetResource sourceDataset =
-          sourceResource.castByEnum(WsmResourceType.CONTROLLED_GCP_BIG_QUERY_DATASET);
+    final ControlledBigQueryDatasetResource sourceDataset =
+        sourceResource.castByEnum(WsmResourceType.CONTROLLED_GCP_BIG_QUERY_DATASET);
 
+    addStep(
+        new RetrieveBigQueryDatasetCloudAttributesStep(
+            sourceDataset,
+            flightBeanBag.getCrlService(),
+            flightBeanBag.getGcpCloudContextService()),
+        RetryRules.cloud());
+
+    if (CloningInstructions.COPY_REFERENCE == resolvedCloningInstructions) {
+      // Destination dataset is referenced resource
       addStep(
-          new RetrieveBigQueryDatasetCloudAttributesStep(
+          new SetReferencedDestinationBigQueryDatasetInWorkingMapStep(
+              userRequest,
               sourceDataset,
-              flightBeanBag.getCrlService(),
-              flightBeanBag.getGcpCloudContextService()),
-          RetryRules.cloud());
-
+              flightBeanBag.getReferencedResourceService(),
+              resolvedCloningInstructions),
+          RetryRules.shortExponential());
+      addStep(
+          new CreateReferenceMetadataStep(flightBeanBag.getResourceDao()),
+          RetryRules.shortDatabase());
+      addStep(
+          new SetReferencedDestinationBigQueryDatasetResponseStep(), RetryRules.shortExponential());
+      return;
+    } else if (CloningInstructions.COPY_DEFINITION == resolvedCloningInstructions
+        || CloningInstructions.COPY_RESOURCE == resolvedCloningInstructions) {
+      // Destination dataset is controlled resource
       addStep(
           new CopyBigQueryDatasetDefinitionStep(
               sourceDataset,
@@ -111,7 +132,7 @@ public class CloneControlledGcpBigQueryDatasetResourceFlight extends Flight {
     } else {
       throw new IllegalArgumentException(
           String.format(
-              "Cloining Instructions %s not supported", resolvedCloningInstructions.toString()));
+              "Cloning Instructions %s not supported", resolvedCloningInstructions.toString()));
     }
   }
 }
