@@ -1,5 +1,6 @@
 package bio.terra.workspace.app.controller;
 
+import bio.terra.common.exception.BadRequestException;
 import bio.terra.workspace.common.utils.ControllerValidationUtils;
 import bio.terra.workspace.generated.controller.ControlledGcpResourceApi;
 import bio.terra.workspace.generated.model.*;
@@ -200,6 +201,14 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
   public ResponseEntity<ApiCloneControlledGcpGcsBucketResult> cloneGcsBucket(
       UUID workspaceUuid, UUID resourceId, @Valid ApiCloneControlledGcpGcsBucketRequest body) {
     logger.info("Cloning GCS bucket resourceId {} workspaceUuid {}", resourceId, workspaceUuid);
+
+    if (body.getCloningInstructions() == ApiCloningInstructionsEnum.REFERENCE
+        && (!StringUtils.isEmpty(body.getBucketName())
+            || !StringUtils.isEmpty(body.getLocation()))) {
+      throw new BadRequestException(
+          String.format(
+              "When cloning controlled bucket with COPY_REFERENCE, cannot set bucket or location in request"));
+    }
 
     final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     // This technically duplicates the first step of the flight as the clone flight is re-used for

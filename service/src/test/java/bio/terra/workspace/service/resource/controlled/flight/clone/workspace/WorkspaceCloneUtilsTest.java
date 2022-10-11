@@ -313,7 +313,7 @@ public class WorkspaceCloneUtilsTest extends BaseUnitTest {
     var sourceResourceUuid = UUID.randomUUID();
 
     var destinationResourceLineage =
-        WorkspaceCloneUtils.createDestinationResourceLineage(
+        WorkspaceCloneUtils.buildDestinationResourceLineage(
             null, sourceWorkspaceUuid, sourceResourceUuid);
 
     List<ResourceLineageEntry> expectedLineage = new ArrayList<>();
@@ -329,7 +329,7 @@ public class WorkspaceCloneUtilsTest extends BaseUnitTest {
     var resourceLineage = new ArrayList<>(List.of(sourceResourceLineageEntry));
 
     var destinationResourceLineage =
-        WorkspaceCloneUtils.createDestinationResourceLineage(
+        WorkspaceCloneUtils.buildDestinationResourceLineage(
             resourceLineage, sourceWorkspaceUuid, sourceResourceUuid);
 
     resourceLineage.add(new ResourceLineageEntry(sourceWorkspaceUuid, sourceResourceUuid));
