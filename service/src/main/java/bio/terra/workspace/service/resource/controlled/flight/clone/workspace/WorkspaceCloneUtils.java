@@ -229,8 +229,7 @@ public class WorkspaceCloneUtils {
       UUID destinationWorkspaceId,
       UUID destinationResourceId,
       @Nullable String name,
-      @Nullable String description,
-      String bucketName) {
+      @Nullable String description) {
     CloningInstructions destCloningInstructions =
         // COPY_RESOURCE and COPY_DEFINITION aren't valid for referenced resources, so use
         // COPY_REFERENCE instead.
@@ -253,7 +252,7 @@ public class WorkspaceCloneUtils {
     final ReferencedGcsBucketResource.Builder resultBuilder =
         ReferencedGcsBucketResource.builder()
             .wsmResourceFields(wsmResourceFields)
-            .bucketName(bucketName);
+            .bucketName(sourceBucketResource.getBucketName());
     return resultBuilder.build();
   }
 
@@ -277,14 +276,14 @@ public class WorkspaceCloneUtils {
   }
 
   private static ReferencedResource buildDestinationReferencedBigQueryDataset(
-      ReferencedBigQueryDatasetResource sourceBigQueryResource,
+      ReferencedBigQueryDatasetResource sourceDatasetResource,
       UUID destinationWorkspaceId,
       UUID destinationResourceId,
       @Nullable String name,
       @Nullable String description) {
     // keep projectId and dataset name the same since they are for the referent
     final ReferencedBigQueryDatasetResource.Builder resultBuilder =
-        sourceBigQueryResource.toBuilder()
+        sourceDatasetResource.toBuilder()
             .wsmResourceFields(
                 buildDestinationResourceCommonFields(
                     destinationWorkspaceId,
@@ -292,7 +291,41 @@ public class WorkspaceCloneUtils {
                     /*destinationFolderId=*/ null,
                     name,
                     description,
-                    sourceBigQueryResource));
+                    sourceDatasetResource));
+    return resultBuilder.build();
+  }
+
+  public static ReferencedBigQueryDatasetResource
+      buildDestinationReferencedBigQueryDatasetFromControlled(
+          ControlledBigQueryDatasetResource sourceDatasetResource,
+          UUID destinationWorkspaceId,
+          UUID destinationResourceId,
+          @Nullable String name,
+          @Nullable String description) {
+    CloningInstructions destCloningInstructions =
+        // COPY_RESOURCE and COPY_DEFINITION aren't valid for referenced resources, so use
+        // COPY_REFERENCE instead.
+        sourceDatasetResource.getCloningInstructions() == CloningInstructions.COPY_RESOURCE
+                || sourceDatasetResource.getCloningInstructions()
+                    == CloningInstructions.COPY_DEFINITION
+            ? CloningInstructions.COPY_REFERENCE
+            : sourceDatasetResource.getCloningInstructions();
+
+    WsmResourceFields wsmResourceFields =
+        buildDestinationResourceCommonFields(
+                destinationWorkspaceId,
+                destinationResourceId,
+                name,
+                description,
+                sourceDatasetResource)
+            .toBuilder()
+            .cloningInstructions(destCloningInstructions)
+            .build();
+    final ReferencedBigQueryDatasetResource.Builder resultBuilder =
+        ReferencedBigQueryDatasetResource.builder()
+            .wsmResourceFields(wsmResourceFields)
+            .projectId(sourceDatasetResource.getProjectId())
+            .datasetName(sourceDatasetResource.getDatasetName());
     return resultBuilder.build();
   }
 

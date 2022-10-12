@@ -528,7 +528,7 @@ public class ControlledResourceFixtures {
    *
    * @return resource builder
    */
-  public static ControlledBigQueryDatasetResource.Builder makeDefaultControlledBigQueryBuilder(
+  public static ControlledBigQueryDatasetResource.Builder makeDefaultControlledBqDatasetBuilder(
       @Nullable UUID workspaceUuid) {
     return new Builder()
         .common(makeDefaultControlledResourceFields(workspaceUuid))

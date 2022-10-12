@@ -50,7 +50,7 @@ public class WorkspaceDeleteFlightTest extends BaseConnectedTest {
     AuthenticatedUserRequest userRequest = userAccessUtils.defaultUserAuthRequest();
     Workspace workspace = connectedTestUtils.createWorkspaceWithGcpContext(userRequest);
     ControlledBigQueryDatasetResource dataset =
-        ControlledResourceFixtures.makeDefaultControlledBigQueryBuilder(workspace.getWorkspaceId())
+        ControlledResourceFixtures.makeDefaultControlledBqDatasetBuilder(workspace.getWorkspaceId())
             .build();
 
     var creationParameters =
@@ -111,7 +111,7 @@ public class WorkspaceDeleteFlightTest extends BaseConnectedTest {
     AuthenticatedUserRequest userRequest = userAccessUtils.defaultUserAuthRequest();
     Workspace workspace = connectedTestUtils.createWorkspaceWithGcpContext(userRequest);
     ControlledBigQueryDatasetResource dataset =
-        ControlledResourceFixtures.makeDefaultControlledBigQueryBuilder(workspace.getWorkspaceId())
+        ControlledResourceFixtures.makeDefaultControlledBqDatasetBuilder(workspace.getWorkspaceId())
             .build();
     var creationParameters =
         ControlledResourceFixtures.defaultBigQueryDatasetCreationParameters()

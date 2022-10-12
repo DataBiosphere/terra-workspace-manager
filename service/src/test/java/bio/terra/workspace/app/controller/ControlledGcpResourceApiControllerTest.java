@@ -58,6 +58,19 @@ public class ControlledGcpResourceApiControllerTest extends BaseUnitTestMockGcpC
   }
 
   @Test
+  public void cloneBqDataset_badRequest_throws400() throws Exception {
+    // Cannot set destinationDatasetName for COPY_REFERENCE clone
+    mockMvcUtils.cloneControlledBqDatasetAsync(
+        USER_REQUEST,
+        /*sourceWorkspaceId=*/ UUID.randomUUID(),
+        /*sourceResourceId=*/ UUID.randomUUID(),
+        /*destWorkspaceId=*/ UUID.randomUUID(),
+        ApiCloningInstructionsEnum.REFERENCE,
+        "datasetName",
+        HttpStatus.SC_BAD_REQUEST);
+  }
+
+  @Test
   public void cloneGcsBucket_badRequest_throws400() throws Exception {
     // Cannot set bucketName for COPY_REFERENCE clone
     mockMvcUtils.cloneControlledGcsBucketAsync(

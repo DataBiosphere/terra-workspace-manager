@@ -39,7 +39,7 @@ public class WorkspaceCloneUtilsTest extends BaseUnitTest {
   @Test
   public void buildDestinationControlledBigQueryDataset_cloneSucceeds() {
     var sourceDataset =
-        ControlledResourceFixtures.makeDefaultControlledBigQueryBuilder(WORKSPACE_ID).build();
+        ControlledResourceFixtures.makeDefaultControlledBqDatasetBuilder(WORKSPACE_ID).build();
     var cloneResourceName = RandomStringUtils.randomAlphabetic(5);
     var cloneDescription = "This is a cloned dataset";
     var cloneDatasetName = RandomStringUtils.randomAlphabetic(5);
@@ -67,7 +67,7 @@ public class WorkspaceCloneUtilsTest extends BaseUnitTest {
   public void
       buildDestinationControlledBigQueryDataset_private_setPrivateResourceStateToInitializing() {
     ControlledBigQueryDatasetResource sourceDataset =
-        ControlledResourceFixtures.makeDefaultControlledBigQueryBuilder(WORKSPACE_ID)
+        ControlledResourceFixtures.makeDefaultControlledBqDatasetBuilder(WORKSPACE_ID)
             .common(
                 ControlledResourceFixtures.makeDefaultControlledResourceFieldsBuilder()
                     .privateResourceState(PrivateResourceState.ACTIVE)
