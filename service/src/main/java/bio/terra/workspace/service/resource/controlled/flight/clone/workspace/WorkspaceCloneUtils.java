@@ -315,6 +315,7 @@ public class WorkspaceCloneUtils {
         buildDestinationResourceCommonFields(
                 destinationWorkspaceId,
                 destinationResourceId,
+                /*destinationFolderId=*/ null,
                 name,
                 description,
                 sourceDatasetResource)

@@ -41,7 +41,7 @@ public class CloneAllFoldersStep implements Step {
             .getWorkspaceId();
 
     // Create and clone all folders
-    ImmutableList<Folder> foldersResult = folderDao.listFolders(sourceWorkspaceId, null);
+    ImmutableList<Folder> foldersResult = folderDao.listFoldersInWorkspace(sourceWorkspaceId);
     // Use Map<String, String> rather than Map<UUID, UUID> to avoid JSON deserialization error
     Map<String, String> folderIdMap = new HashMap<>();
     if (foldersResult != null) {

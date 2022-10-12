@@ -48,7 +48,7 @@ public class CloneAllFoldersStepTest extends BaseUnitTest {
 
   @BeforeEach
   public void setup() throws InterruptedException {
-    when(mockFolderDao.listFolders(eq(SOURCE_WORKSPACE_ID), eq(null)))
+    when(mockFolderDao.listFoldersInWorkspace(eq(SOURCE_WORKSPACE_ID)))
         .thenReturn(
             ImmutableList.of(
                 new Folder(

@@ -884,7 +884,8 @@ class WorkspaceServiceTest extends BaseConnectedTest {
 
     // Destination workspace should have 1 cloned folder with the relations
     assertNotEquals(
-        folderId, folderDao.listFolders(destinationWorkspace.getWorkspaceId(), null).get(0).id());
+        folderId,
+        folderDao.listFoldersInWorkspace(destinationWorkspace.getWorkspaceId()).get(0).id());
 
     // Clean up
     workspaceService.deleteWorkspace(sourceWorkspace, USER_REQUEST);
@@ -944,7 +945,7 @@ class WorkspaceServiceTest extends BaseConnectedTest {
         gcpCloudContextService.getGcpCloudContext(destinationWorkspace.getWorkspaceId()).isEmpty());
 
     // Destination workspace should not have folder
-    assertEquals(0, folderDao.listFolders(destinationWorkspace.getWorkspaceId(), null).size());
+    assertEquals(0, folderDao.listFoldersInWorkspace(destinationWorkspace.getWorkspaceId()).size());
 
     // Remove the effect of lastStepFailure, and clean up the created workspace
     jobService.setFlightDebugInfoForTest(null);
