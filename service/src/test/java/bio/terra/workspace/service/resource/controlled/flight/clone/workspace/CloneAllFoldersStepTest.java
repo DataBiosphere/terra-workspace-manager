@@ -34,17 +34,17 @@ public class CloneAllFoldersStepTest extends BaseUnitTest {
   @MockBean private FolderDao mockFolderDao;
   private CloneAllFoldersStep cloneAllFoldersStep;
 
-  public static final UUID SOURCE_WORKSPACE_ID = UUID.randomUUID();
-  public static final UUID DESTINATION_WORKSPACE_ID = UUID.randomUUID();
-  public static final String DESTINATION_WORKSPACE_USERFACING_ID =
+  private static final UUID SOURCE_WORKSPACE_ID = UUID.randomUUID();
+  private static final UUID DESTINATION_WORKSPACE_ID = UUID.randomUUID();
+  private static final String DESTINATION_WORKSPACE_USERFACING_ID =
       "destination-workspace-userfacing-id";
-  public static final UUID SOURCE_PARENT_FOLDER_ID = UUID.randomUUID();
-  public static final UUID SOURCE_SON_FOLDER_ID = UUID.randomUUID();
-  public static final String SOURCE_PARENT_FOLDER_NAME = "source-parent-folder-id";
-  public static final String SOURCE_PARENT_FOLDER_DESCRIPTION =
+  private static final UUID SOURCE_PARENT_FOLDER_ID = UUID.randomUUID();
+  private static final UUID SOURCE_SON_FOLDER_ID = UUID.randomUUID();
+  private static final String SOURCE_PARENT_FOLDER_NAME = "source-parent-folder-id";
+  private static final String SOURCE_PARENT_FOLDER_DESCRIPTION =
       "source parent folder id description";
-  public static final String SOURCE_SON_FOLDER_NAME = "source-son-folder-id";
-  public static final String SOURCE_SON_FOLDER_DESCRIPTION = "source son folder id description";
+  private static final String SOURCE_SON_FOLDER_NAME = "source-son-folder-id";
+  private static final String SOURCE_SON_FOLDER_DESCRIPTION = "source son folder id description";
 
   @BeforeEach
   public void setup() throws InterruptedException {
@@ -70,9 +70,9 @@ public class CloneAllFoldersStepTest extends BaseUnitTest {
 
   @Test
   public void doStep_foldersCloned() throws InterruptedException {
-    final var inputParameters = new FlightMap();
-    final var workingMap = new FlightMap();
-    final var destinationWorkspace =
+    var inputParameters = new FlightMap();
+    var workingMap = new FlightMap();
+    var destinationWorkspace =
         new Workspace(
             DESTINATION_WORKSPACE_ID,
             DESTINATION_WORKSPACE_USERFACING_ID,
@@ -87,7 +87,7 @@ public class CloneAllFoldersStepTest extends BaseUnitTest {
     when(mockFlightContext.getInputParameters()).thenReturn(inputParameters);
     when(mockFlightContext.getWorkingMap()).thenReturn(workingMap);
 
-    final StepResult stepResult = cloneAllFoldersStep.doStep(mockFlightContext);
+    StepResult stepResult = cloneAllFoldersStep.doStep(mockFlightContext);
     assertEquals(StepResult.getStepResultSuccess(), stepResult);
 
     Map<String, String> folderIdMap =
