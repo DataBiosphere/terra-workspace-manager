@@ -32,7 +32,7 @@ public class ValidateMRGStep implements Step {
     FlightBeanBag appContext = FlightBeanBag.getFromObject(flightContext.getApplicationContext());
 
     AzureCloudContext azureCloudContext;
-    if (appContext.getFeatureConfiguration().isBpmEnabled()) {
+    if (appContext.getFeatureConfiguration().isBpmAzureEnabled()) {
       String billingManagedResourceGroupId =
           flightContext
               .getWorkingMap()

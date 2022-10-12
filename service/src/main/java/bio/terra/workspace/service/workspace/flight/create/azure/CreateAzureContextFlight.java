@@ -22,6 +22,7 @@ public class CreateAzureContextFlight extends Flight {
     super(inputParameters, applicationContext);
 
     FlightBeanBag appContext = FlightBeanBag.getFromObject(applicationContext);
+    var featureConfiguration = appContext.getFeatureConfiguration();
 
     UUID workspaceUuid =
         UUID.fromString(inputParameters.get(WorkspaceFlightMapKeys.WORKSPACE_ID, String.class));
@@ -31,14 +32,15 @@ public class CreateAzureContextFlight extends Flight {
     RetryRule dbRetry = RetryRules.shortDatabase();
 
     // check that we are allowed to link to this spend profile
-    if (appContext.getFeatureConfiguration().isBpmEnabled()) {
+    if (appContext.getFeatureConfiguration().isBpmAzureEnabled()) {
       addStep(
           new CheckSpendProfileStep(
               appContext.getWorkspaceDao(),
               appContext.getSpendProfileService(),
               workspaceUuid,
               userRequest,
-              CloudPlatform.AZURE));
+              CloudPlatform.AZURE,
+              featureConfiguration.isBpmAzureEnabled()));
     }
 
     // write the incomplete DB row to prevent concurrent creates
@@ -52,7 +54,6 @@ public class CreateAzureContextFlight extends Flight {
     addStep(new ValidateMRGStep(appContext.getCrlService(), appContext.getAzureConfig()));
 
     // update the DB row filling in the cloud context
-    var featureConfiguration = appContext.getFeatureConfiguration();
     addStep(
         new CreateDbAzureCloudContextFinishStep(
             workspaceUuid, appContext.getAzureCloudContextService(), featureConfiguration),

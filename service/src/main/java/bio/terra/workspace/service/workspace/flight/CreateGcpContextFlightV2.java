@@ -3,6 +3,7 @@ package bio.terra.workspace.service.workspace.flight;
 import bio.terra.stairway.Flight;
 import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.RetryRule;
+import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
 import bio.terra.workspace.common.utils.FlightBeanBag;
 import bio.terra.workspace.common.utils.RetryRules;
 import bio.terra.workspace.service.crl.CrlService;
@@ -36,6 +37,7 @@ public class CreateGcpContextFlightV2 extends Flight {
 
     FlightBeanBag appContext = FlightBeanBag.getFromObject(applicationContext);
     CrlService crl = appContext.getCrlService();
+    FeatureConfiguration featureConfiguration = appContext.getFeatureConfiguration();
 
     UUID workspaceUuid =
         UUID.fromString(inputParameters.get(WorkspaceFlightMapKeys.WORKSPACE_ID, String.class));
@@ -54,7 +56,8 @@ public class CreateGcpContextFlightV2 extends Flight {
             appContext.getSpendProfileService(),
             workspaceUuid,
             userRequest,
-            CloudPlatform.GCP));
+            CloudPlatform.GCP,
+            featureConfiguration.isBpmGcpEnabled()));
 
     // Write the cloud context row in a "locked" state
     addStep(

@@ -10,7 +10,6 @@ import static org.mockito.Mockito.when;
 import bio.terra.profile.api.ProfileApi;
 import bio.terra.profile.client.ApiException;
 import bio.terra.profile.model.ProfileModel;
-import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
 import bio.terra.workspace.app.configuration.external.SpendProfileConfiguration;
 import bio.terra.workspace.common.BaseUnitTest;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
@@ -33,51 +32,41 @@ class SpendProfileServiceTest extends BaseUnitTest {
   @Test
   void authorizeLinkingSuccess() throws InterruptedException {
     var bpmClientProvider = mock(BpmClientProvider.class);
-    FeatureConfiguration featureConfiguration = new FeatureConfiguration();
-    featureConfiguration.setBpmEnabled(false);
     var id = new SpendProfileId(UUID.randomUUID().toString());
     SpendProfile profile = SpendProfile.builder().id(id).build();
     when(mockSamService().isAuthorized(any(), any(), any(), any())).thenReturn(true);
     SpendProfileService service =
-        new SpendProfileService(
-            mockSamService(), ImmutableList.of(profile), bpmClientProvider, featureConfiguration);
+        new SpendProfileService(mockSamService(), ImmutableList.of(profile), bpmClientProvider);
 
-    assertEquals(profile, service.authorizeLinking(id, userRequest));
+    assertEquals(profile, service.authorizeLinking(id, false, userRequest));
   }
 
   @Test
   void authorizeLinkingSamUnauthorizedThrowsUnauthorized() throws InterruptedException {
     var bpmClientProvider = mock(BpmClientProvider.class);
-    FeatureConfiguration featureConfiguration = new FeatureConfiguration();
-    featureConfiguration.setBpmEnabled(false);
     var id = new SpendProfileId(UUID.randomUUID().toString());
     SpendProfile profile = SpendProfile.builder().id(id).build();
     when(mockSamService().isAuthorized(any(), any(), any(), any())).thenReturn(false);
     SpendProfileService service =
-        new SpendProfileService(
-            mockSamService(), ImmutableList.of(profile), bpmClientProvider, featureConfiguration);
+        new SpendProfileService(mockSamService(), ImmutableList.of(profile), bpmClientProvider);
 
-    assertThrows(SpendUnauthorizedException.class, () -> service.authorizeLinking(id, userRequest));
+    assertThrows(
+        SpendUnauthorizedException.class, () -> service.authorizeLinking(id, false, userRequest));
   }
 
   @Test
   void authorizeLinkingUnknownIdThrowsUnauthorized() {
     var bpmClientProvider = mock(BpmClientProvider.class);
-    FeatureConfiguration featureConfiguration = new FeatureConfiguration();
-    featureConfiguration.setBpmEnabled(false);
     SpendProfileService service =
-        new SpendProfileService(
-            mockSamService(), ImmutableList.of(), bpmClientProvider, featureConfiguration);
+        new SpendProfileService(mockSamService(), ImmutableList.of(), bpmClientProvider);
     assertThrows(
         SpendUnauthorizedException.class,
-        () -> service.authorizeLinking(new SpendProfileId("bar"), userRequest));
+        () -> service.authorizeLinking(new SpendProfileId("bar"), false, userRequest));
   }
 
   @Test
   void adaptConfigurationModels() throws InterruptedException {
     var bpmClientProvider = mock(BpmClientProvider.class);
-    FeatureConfiguration featureConfiguration = new FeatureConfiguration();
-    featureConfiguration.setBpmEnabled(false);
     var spendProfileModel = new SpendProfileConfiguration.SpendProfileModel();
     var id = UUID.randomUUID().toString();
     spendProfileModel.setId(id);
@@ -86,7 +75,7 @@ class SpendProfileServiceTest extends BaseUnitTest {
     config.setSpendProfiles(Collections.singletonList(spendProfileModel));
 
     SpendProfileService service =
-        new SpendProfileService(mockSamService(), config, bpmClientProvider, featureConfiguration);
+        new SpendProfileService(mockSamService(), config, bpmClientProvider);
     when(mockSamService().isAuthorized(any(), any(), any(), any())).thenReturn(true);
 
     assertEquals(
@@ -94,14 +83,12 @@ class SpendProfileServiceTest extends BaseUnitTest {
             .id(new SpendProfileId(id))
             .billingAccountId("fake-account-id")
             .build(),
-        service.authorizeLinking(new SpendProfileId(id), userRequest));
+        service.authorizeLinking(new SpendProfileId(id), false, userRequest));
   }
 
   @Test
   void authorizeLinkingSuccessWhenBillingProfileExists() throws Exception {
     var bpmClientProvider = mock(BpmClientProvider.class);
-    FeatureConfiguration featureConfiguration = new FeatureConfiguration();
-    featureConfiguration.setBpmEnabled(true);
     var profileApi = mock(ProfileApi.class);
     when(bpmClientProvider.getProfileApi(any())).thenReturn(profileApi);
     when(mockSamService().isAuthorized(any(), any(), any(), any())).thenReturn(true);
@@ -111,11 +98,11 @@ class SpendProfileServiceTest extends BaseUnitTest {
         .thenReturn(new ProfileModel().billingAccountId("fake-billing-account-id").id(profileId));
 
     SpendProfileService spendProfileService =
-        new SpendProfileService(
-            mockSamService(), Collections.emptyList(), bpmClientProvider, featureConfiguration);
+        new SpendProfileService(mockSamService(), Collections.emptyList(), bpmClientProvider);
 
     var spend =
-        spendProfileService.authorizeLinking(new SpendProfileId(profileId.toString()), userRequest);
+        spendProfileService.authorizeLinking(
+            new SpendProfileId(profileId.toString()), true, userRequest);
 
     assertEquals(
         SpendProfile.builder()
@@ -128,9 +115,6 @@ class SpendProfileServiceTest extends BaseUnitTest {
   @Test
   void authorizeLinkingFailureWhenProfileDoesNotExist() throws Exception {
     var bpmClientProvider = mock(BpmClientProvider.class);
-    FeatureConfiguration featureConfiguration = new FeatureConfiguration();
-    featureConfiguration.setBpmEnabled(true);
-
     var profileApi = mock(ProfileApi.class);
     when(bpmClientProvider.getProfileApi(eq(userRequest))).thenReturn(profileApi);
     when(profileApi.getProfile(any()))
@@ -146,21 +130,16 @@ class SpendProfileServiceTest extends BaseUnitTest {
         .thenReturn(true);
 
     SpendProfileService spendProfileService =
-        new SpendProfileService(
-            mockSamService(), Collections.emptyList(), bpmClientProvider, featureConfiguration);
+        new SpendProfileService(mockSamService(), Collections.emptyList(), bpmClientProvider);
 
     assertThrows(
         SpendUnauthorizedException.class,
-        () -> spendProfileService.authorizeLinking(spendProfileId, userRequest));
+        () -> spendProfileService.authorizeLinking(spendProfileId, true, userRequest));
   }
 
   @Test
   void authorizeLinkingFailureWhenBpmDies() throws Exception {
     var bpmClientProvider = mock(BpmClientProvider.class);
-    FeatureConfiguration featureConfiguration = new FeatureConfiguration();
-
-    featureConfiguration.setBpmEnabled(true);
-
     var profileApi = mock(ProfileApi.class);
     when(bpmClientProvider.getProfileApi(eq(userRequest))).thenReturn(profileApi);
 
@@ -177,11 +156,10 @@ class SpendProfileServiceTest extends BaseUnitTest {
         .thenReturn(true);
 
     SpendProfileService spendProfileService =
-        new SpendProfileService(
-            mockSamService(), Collections.emptyList(), bpmClientProvider, featureConfiguration);
+        new SpendProfileService(mockSamService(), Collections.emptyList(), bpmClientProvider);
 
     assertThrows(
         BillingProfileManagerServiceAPIException.class,
-        () -> spendProfileService.authorizeLinking(spendProfileId, userRequest));
+        () -> spendProfileService.authorizeLinking(spendProfileId, true, userRequest));
   }
 }

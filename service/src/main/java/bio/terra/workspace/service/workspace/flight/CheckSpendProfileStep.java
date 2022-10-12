@@ -16,6 +16,7 @@ import bio.terra.workspace.service.spendprofile.SpendProfile;
 import bio.terra.workspace.service.spendprofile.SpendProfileId;
 import bio.terra.workspace.service.spendprofile.SpendProfileService;
 import bio.terra.workspace.service.workspace.exceptions.MissingSpendProfileException;
+import bio.terra.workspace.service.workspace.exceptions.NoAzureAppCoordinatesException;
 import bio.terra.workspace.service.workspace.exceptions.NoBillingAccountException;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import bio.terra.workspace.service.workspace.model.Workspace;
@@ -29,18 +30,21 @@ public class CheckSpendProfileStep implements Step {
   private final UUID workspaceUuid;
   private final AuthenticatedUserRequest userRequest;
   private final CloudPlatform cloudPlatform;
+  private final boolean bpmEnabled;
 
   public CheckSpendProfileStep(
       WorkspaceDao workspaceDao,
       SpendProfileService spendProfileService,
       UUID workspaceUuid,
       AuthenticatedUserRequest userRequest,
-      CloudPlatform cloudPlatform) {
+      CloudPlatform cloudPlatform,
+      boolean bpmEnabled) {
     this.workspaceDao = workspaceDao;
     this.spendProfileService = spendProfileService;
     this.workspaceUuid = workspaceUuid;
     this.userRequest = userRequest;
     this.cloudPlatform = cloudPlatform;
+    this.bpmEnabled = bpmEnabled;
   }
 
   @Override
@@ -52,7 +56,8 @@ public class CheckSpendProfileStep implements Step {
             .getSpendProfileId()
             .orElseThrow(() -> MissingSpendProfileException.forWorkspace(workspaceUuid));
 
-    SpendProfile spendProfile = spendProfileService.authorizeLinking(spendProfileId, userRequest);
+    SpendProfile spendProfile =
+        spendProfileService.authorizeLinking(spendProfileId, bpmEnabled, userRequest);
 
     if (cloudPlatform == CloudPlatform.GCP) {
       if (spendProfile.billingAccountId().isEmpty()) {
@@ -63,7 +68,7 @@ public class CheckSpendProfileStep implements Step {
       if (spendProfile.managedResourceGroupId().isEmpty()
           || spendProfile.subscriptionId().isEmpty()
           || spendProfile.tenantId().isEmpty()) {
-        throw NoBillingAccountException.forSpendProfile(spendProfileId);
+        throw NoAzureAppCoordinatesException.forSpendProfile(spendProfileId);
       }
       workingMap.put(AZURE_BILLING_SUBSCRIPTION_ID, spendProfile.subscriptionId().get());
       workingMap.put(AZURE_BILLING_TENANT_ID, spendProfile.tenantId().get());

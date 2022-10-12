@@ -1,7 +1,6 @@
 package bio.terra.workspace.service.spendprofile;
 
 import bio.terra.profile.client.ApiException;
-import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
 import bio.terra.workspace.app.configuration.external.SpendProfileConfiguration;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamRethrow;
@@ -11,6 +10,7 @@ import bio.terra.workspace.service.spendprofile.client.BpmClientProvider;
 import bio.terra.workspace.service.spendprofile.exceptions.BillingProfileManagerServiceAPIException;
 import bio.terra.workspace.service.spendprofile.exceptions.SpendUnauthorizedException;
 import com.google.common.collect.Maps;
+import io.opencensus.contrib.spring.aop.Traced;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -32,31 +32,24 @@ public class SpendProfileService {
   private final Logger logger = LoggerFactory.getLogger(SpendProfileService.class);
   private final SamService samService;
   private final Map<SpendProfileId, SpendProfile> spendProfiles;
-  private final boolean bpmEnabled;
   private final BpmClientProvider bpmClientProvider;
 
   @Autowired
   public SpendProfileService(
       SamService samService,
       SpendProfileConfiguration spendProfileConfiguration,
-      BpmClientProvider bpmClientProvider,
-      FeatureConfiguration features) {
+      BpmClientProvider bpmClientProvider) {
     this(
         samService,
         adaptConfigurationModels(spendProfileConfiguration.getSpendProfiles()),
-        bpmClientProvider,
-        features);
+        bpmClientProvider);
   }
 
   public SpendProfileService(
-      SamService samService,
-      List<SpendProfile> spendProfiles,
-      BpmClientProvider clientProvider,
-      FeatureConfiguration features) {
+      SamService samService, List<SpendProfile> spendProfiles, BpmClientProvider clientProvider) {
     this.samService = samService;
     this.spendProfiles = Maps.uniqueIndex(spendProfiles, SpendProfile::id);
     this.bpmClientProvider = clientProvider;
-    this.bpmEnabled = features.isBpmEnabled();
   }
 
   /**
@@ -64,23 +57,25 @@ public class SpendProfileService {
    * the id if there is one and the user is authorized to link it. Otherwise, throws a {@link
    * SpendUnauthorizedException}.
    */
+  @Traced
   public SpendProfile authorizeLinking(
-      SpendProfileId spendProfileId, AuthenticatedUserRequest userRequest) {
-    if (!SamRethrow.onInterrupted(
-        () ->
-            samService.isAuthorized(
-                userRequest,
-                SamConstants.SamResource.SPEND_PROFILE,
-                spendProfileId.getId(),
-                SamConstants.SamSpendProfileAction.LINK),
-        "isAuthorized")) {
-      throw SpendUnauthorizedException.linkUnauthorized(spendProfileId);
-    }
+      SpendProfileId spendProfileId, boolean bpmEnabled, AuthenticatedUserRequest userRequest) {
 
     SpendProfile spend;
     if (bpmEnabled) {
+      // profiles returned from BPM means we are auth'ed
       spend = getSpendProfileFromBpm(userRequest, spendProfileId);
     } else {
+      if (!SamRethrow.onInterrupted(
+          () ->
+              samService.isAuthorized(
+                  userRequest,
+                  SamConstants.SamResource.SPEND_PROFILE,
+                  spendProfileId.getId(),
+                  SamConstants.SamSpendProfileAction.LINK),
+          "isAuthorized")) {
+        throw SpendUnauthorizedException.linkUnauthorized(spendProfileId);
+      }
       spend = spendProfiles.get(spendProfileId);
     }
 
@@ -108,6 +103,7 @@ public class SpendProfileService {
         .collect(Collectors.toList());
   }
 
+  @Traced
   private SpendProfile getSpendProfileFromBpm(
       AuthenticatedUserRequest userRequest, SpendProfileId spendProfileId) {
     SpendProfile spend;

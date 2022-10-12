@@ -34,7 +34,7 @@ public class CreateDbAzureCloudContextFinishStep implements Step {
   @Override
   public StepResult doStep(FlightContext flightContext) throws InterruptedException {
     AzureCloudContext azureCloudContext;
-    if (featureConfiguration.isBpmEnabled()) {
+    if (featureConfiguration.isBpmAzureEnabled()) {
       azureCloudContext =
           new AzureCloudContext(
               flightContext.getWorkingMap().get(AZURE_BILLING_TENANT_ID, String.class),
