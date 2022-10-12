@@ -36,6 +36,8 @@ public class CloneAllFoldersStepTest extends BaseUnitTest {
 
   public static final UUID SOURCE_WORKSPACE_ID = UUID.randomUUID();
   public static final UUID DESTINATION_WORKSPACE_ID = UUID.randomUUID();
+  public static final String DESTINATION_WORKSPACE_USERFACING_ID =
+      "destination-workspace-userfacing-id";
   public static final UUID SOURCE_PARENT_FOLDER_ID = UUID.randomUUID();
   public static final UUID SOURCE_SON_FOLDER_ID = UUID.randomUUID();
   public static final String SOURCE_PARENT_FOLDER_NAME = "source-parent-folder-id";
@@ -73,10 +75,10 @@ public class CloneAllFoldersStepTest extends BaseUnitTest {
     final var destinationWorkspace =
         new Workspace(
             DESTINATION_WORKSPACE_ID,
-            "test-destination-workspace-user-facing-id",
-            "test-destination-workspace",
-            "destination workspace description",
-            new SpendProfileId("spend-profile"),
+            DESTINATION_WORKSPACE_USERFACING_ID,
+            /*displayName=*/ null,
+            /*description=*/ null,
+            new SpendProfileId(null),
             Collections.emptyMap(),
             WorkspaceStage.MC_WORKSPACE);
     inputParameters.put(ControlledResourceKeys.SOURCE_WORKSPACE_ID, SOURCE_WORKSPACE_ID);
