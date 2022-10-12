@@ -72,6 +72,7 @@ public class CopyGcsBucketDefinitionStepTest extends BaseUnitTestMockGcpCloudCon
     inputParameters.put(
         ControlledResourceKeys.CREATION_PARAMETERS, SOURCE_BUCKET_CREATION_PARAMETERS);
     inputParameters.put(ControlledResourceKeys.DESTINATION_RESOURCE_ID, UUID.randomUUID());
+    inputParameters.put(ControlledResourceKeys.DESTINATION_FOLDER_ID, null);
     doReturn(inputParameters).when(mockFlightContext).getInputParameters();
 
     final var workingMap = new FlightMap();
