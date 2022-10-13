@@ -65,6 +65,7 @@ import bio.terra.workspace.service.workspace.model.OperationType;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceAndHighestRole;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
+import io.opencensus.contrib.spring.aop.Traced;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -219,6 +220,7 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
     return new ResponseEntity<>(response, HttpStatus.OK);
   }
 
+  @Traced
   private ApiWorkspaceDescription buildWorkspaceDescription(
       Workspace workspace, WsmIamRole highestRole, AuthenticatedUserRequest userRequest) {
     UUID workspaceUuid = workspace.getWorkspaceId();

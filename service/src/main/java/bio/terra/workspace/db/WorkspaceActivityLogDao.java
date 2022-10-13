@@ -7,6 +7,7 @@ import bio.terra.workspace.db.exception.UnknownFlightOperationTypeException;
 import bio.terra.workspace.db.model.DbWorkspaceActivityLog;
 import bio.terra.workspace.service.workspace.model.OperationType;
 import com.google.common.collect.ImmutableSet;
+import io.opencensus.contrib.spring.aop.Traced;
 import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
@@ -81,6 +82,7 @@ public class WorkspaceActivityLogDao {
    * <p>In cases where workspace is created before activity logging is introduced, this method may
    * return empty or the first change activity logged since {@code #writeActivity} is implemented.
    */
+  @Traced
   @ReadTransaction
   public Optional<ActivityLogChangeDetails> getCreateDetails(UUID workspaceId) {
     // In rare cases when there are more than one rows with the same max change date,
@@ -101,6 +103,7 @@ public class WorkspaceActivityLogDao {
             jdbcTemplate.query(sql, params, ACTIVITY_LOG_CHANGE_DETAILS_ROW_MAPPER)));
   }
 
+  @Traced
   @ReadTransaction
   public Optional<ActivityLogChangeDetails> getLastUpdateDetails(UUID workspaceId) {
     // In rare cases when there are more than one rows with the same max change date,
