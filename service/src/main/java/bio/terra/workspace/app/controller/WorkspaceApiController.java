@@ -579,16 +579,21 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
   public ResponseEntity<ApiCloneWorkspaceResult> cloneWorkspace(
       UUID workspaceUuid, @Valid ApiCloneWorkspaceRequest body) {
     final AuthenticatedUserRequest petRequest = getCloningCredentials(workspaceUuid);
-    final Workspace sourceWorkspace =
-        workspaceService.validateMcWorkspaceAndAction(
-            petRequest, workspaceUuid, SamConstants.SamWorkspaceAction.READ);
-    // This is creating the destination workspace so unlike other clone operations there's no
+
+    // Clone is creating the destination workspace so unlike other clone operations there's no
     // additional authz check for the destination. As long as the user is enabled in Sam, they can
     // create a new workspace.
+    final Workspace sourceWorkspace =
+        workspaceService.validateWorkspaceAndAction(
+            petRequest, workspaceUuid, SamConstants.SamWorkspaceAction.READ);
 
     Optional<SpendProfileId> spendProfileId =
         Optional.ofNullable(body.getSpendProfile()).map(SpendProfileId::new);
-    final UUID destinationWorkspaceId = UUID.randomUUID();
+
+    // Accept a target workspace id if one is provided. This allows Rawls to specify an
+    // existing workspace id. WSM then creates the WSMspace supporting the Rawls workspace.
+    UUID destinationWorkspaceId =
+        Optional.ofNullable(body.getDestinationWorkspaceId()).orElse(UUID.randomUUID());
 
     // ET uses userFacingId; CWB doesn't. Schema enforces that userFacingId must be set. CWB doesn't
     // pass userFacingId in request, so use id.
@@ -610,7 +615,7 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
             .workspaceId(destinationWorkspaceId)
             .userFacingId(destinationUserFacingId)
             .spendProfileId(spendProfileId.orElse(null))
-            .workspaceStage(WorkspaceStage.MC_WORKSPACE)
+            .workspaceStage(sourceWorkspace.getWorkspaceStage())
             .displayName(Optional.ofNullable(body.getDisplayName()).orElse(generatedDisplayName))
             .description(body.getDescription())
             .properties(sourceWorkspace.getProperties())

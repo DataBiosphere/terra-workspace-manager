@@ -1,42 +1,36 @@
 package bio.terra.workspace.common.utils;
 
-import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.defaultBigQueryDatasetCreationParameters;
-import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.defaultGcsBucketCreationParameters;
-import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.makeDefaultControlledResourceFieldsApi;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-
 import bio.terra.workspace.common.StairwayTestUtils;
 import bio.terra.workspace.common.fixtures.WorkspaceFixtures;
 import bio.terra.workspace.generated.model.ApiCloneControlledGcpBigQueryDatasetRequest;
 import bio.terra.workspace.generated.model.ApiCloneControlledGcpBigQueryDatasetResult;
 import bio.terra.workspace.generated.model.ApiCloneControlledGcpGcsBucketRequest;
 import bio.terra.workspace.generated.model.ApiCloneControlledGcpGcsBucketResult;
+import bio.terra.workspace.generated.model.ApiCloneWorkspaceResult;
 import bio.terra.workspace.generated.model.ApiCloningInstructionsEnum;
 import bio.terra.workspace.generated.model.ApiCloudPlatform;
 import bio.terra.workspace.generated.model.ApiCreateCloudContextRequest;
 import bio.terra.workspace.generated.model.ApiCreateCloudContextResult;
 import bio.terra.workspace.generated.model.ApiCreateControlledGcpBigQueryDatasetRequestBody;
 import bio.terra.workspace.generated.model.ApiCreateControlledGcpGcsBucketRequestBody;
+import bio.terra.workspace.generated.model.ApiCreateDataRepoSnapshotReferenceRequestBody;
 import bio.terra.workspace.generated.model.ApiCreateWorkspaceRequestBody;
 import bio.terra.workspace.generated.model.ApiCreatedControlledGcpBigQueryDataset;
 import bio.terra.workspace.generated.model.ApiCreatedControlledGcpGcsBucket;
 import bio.terra.workspace.generated.model.ApiCreatedWorkspace;
+import bio.terra.workspace.generated.model.ApiDataRepoSnapshotAttributes;
+import bio.terra.workspace.generated.model.ApiDataRepoSnapshotResource;
 import bio.terra.workspace.generated.model.ApiGcpBigQueryDatasetResource;
 import bio.terra.workspace.generated.model.ApiGcpGcsBucketResource;
 import bio.terra.workspace.generated.model.ApiGrantRoleRequestBody;
 import bio.terra.workspace.generated.model.ApiJobControl;
 import bio.terra.workspace.generated.model.ApiJobReport.StatusEnum;
+import bio.terra.workspace.generated.model.ApiReferenceResourceCommonFields;
 import bio.terra.workspace.generated.model.ApiWorkspaceDescription;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.model.WsmIamRole;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import java.util.Optional;
-import java.util.UUID;
-import javax.annotation.Nullable;
+import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.http.HttpStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -45,6 +39,19 @@ import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
+
+import javax.annotation.Nullable;
+import java.util.Optional;
+import java.util.UUID;
+
+import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.defaultBigQueryDatasetCreationParameters;
+import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.defaultGcsBucketCreationParameters;
+import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.makeDefaultControlledResourceFieldsApi;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 /**
  * A collection of utilities and constants useful for MockMVC-based tests. This style of tests lets
@@ -56,15 +63,7 @@ import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilde
  */
 @Component
 public class MockMvcUtils {
-  private static final Logger logger = LoggerFactory.getLogger(MockMvcUtils.class);
-
-  // Do not Autowire UserAccessUtils. UserAccessUtils are for connected tests and not unit tests
-  // (since unit tests don't use real SAM). Instead, each method must take in userRequest.
-  @Autowired private MockMvc mockMvc;
-  @Autowired private ObjectMapper objectMapper;
-
   public static final String AUTH_HEADER = "Authorization";
-
   public static final String WORKSPACES_V1_PATH = "/api/workspaces/v1";
   public static final String WORKSPACES_V1_BY_UUID_PATH_FORMAT = "/api/workspaces/v1/%s";
   public static final String WORKSPACES_V1_BY_UFID_PATH_FORMAT =
@@ -72,6 +71,8 @@ public class MockMvcUtils {
   public static final String ADD_USER_TO_WORKSPACE_PATH_FORMAT =
       "/api/workspaces/v1/%s/roles/%s/members";
   public static final String CLONE_WORKSPACE_PATH_FORMAT = "/api/workspaces/v1/%s/clone";
+  public static final String CLONE_WORKSPACE_RESULT_PATH_FORMAT =
+      "/api/workspaces/v1/%s/clone-result/%s";
   public static final String UPDATE_WORKSPACES_V1_PROPERTIES_PATH_FORMAT =
       "/api/workspaces/v1/%s/properties";
   public static final String GRANT_ROLE_PATH_FORMAT = "/api/workspaces/v1/%s/roles/%s/members";
@@ -81,7 +82,6 @@ public class MockMvcUtils {
       "/api/workspaces/v1/%s/cloudcontexts";
   public static final String GET_CLOUD_CONTEXT_PATH_FORMAT =
       "/api/workspaces/v1/%s/cloudcontexts/result/%s";
-
   public static final String CREATE_AZURE_IP_PATH_FORMAT =
       "/api/workspaces/v1/%s/resources/controlled/azure/ip";
   public static final String CREATE_AZURE_DISK_PATH_FORMAT =
@@ -92,7 +92,6 @@ public class MockMvcUtils {
       "/api/workspaces/v1/%s/resources/controlled/azure/vm";
   public static final String CREATE_AZURE_SAS_TOKEN_PATH_FORMAT =
       "/api/workspaces/v1/%s/resources/controlled/azure/storageContainer/%s/getSasToken";
-
   public static final String GET_REFERENCED_GCP_GCS_BUCKET_FORMAT =
       "/api/workspaces/v1/%s/resources/referenced/gcp/buckets/%s";
   public static final String CLONE_CONTROLLED_GCP_GCS_BUCKET_FORMAT =
@@ -133,15 +132,18 @@ public class MockMvcUtils {
       "/api/workspaces/v1/%s/resources/referenced/gcp/bigquerydatatables";
   public static final String REFERENCED_GIT_REPO_V1_PATH_FORMAT =
       "/api/workspaces/v1/%s/resources/referenced/gitrepos";
-
-  private static final String DEST_BUCKET_RESOURCE_NAME =
-      TestUtils.appendRandomNumber("i-am-the-cloned-bucket");
-
   // Only use this if you are mocking SAM. If you're using real SAM,
   // use userAccessUtils.defaultUserAuthRequest() instead.
   public static final AuthenticatedUserRequest USER_REQUEST =
       new AuthenticatedUserRequest(
           "fake@email.com", "subjectId123456", Optional.of("ThisIsNotARealBearerToken"));
+  private static final Logger logger = LoggerFactory.getLogger(MockMvcUtils.class);
+  private static final String DEST_BUCKET_RESOURCE_NAME =
+      TestUtils.appendRandomNumber("i-am-the-cloned-bucket");
+  // Do not Autowire UserAccessUtils. UserAccessUtils are for connected tests and not unit tests
+  // (since unit tests don't use real SAM). Instead, each method must take in userRequest.
+  @Autowired private MockMvc mockMvc;
+  @Autowired private ObjectMapper objectMapper;
 
   public static MockHttpServletRequestBuilder addAuth(
       MockHttpServletRequestBuilder request, AuthenticatedUserRequest userRequest) {
@@ -248,6 +250,24 @@ public class MockMvcUtils {
             .getResponse()
             .getContentAsString();
     return objectMapper.readValue(serializedResponse, ApiCreateCloudContextResult.class);
+  }
+
+  public ApiCloneWorkspaceResult getCloneWorkspaceResult(
+      AuthenticatedUserRequest userRequest, UUID workspaceId, String jobId) throws Exception {
+    String serializedResponse =
+        mockMvc
+            .perform(
+                addJsonContentType(
+                    addAuth(
+                        get(
+                            CLONE_WORKSPACE_RESULT_PATH_FORMAT.formatted(
+                                workspaceId.toString(), jobId)),
+                        userRequest)))
+            .andExpect(status().is2xxSuccessful())
+            .andReturn()
+            .getResponse()
+            .getContentAsString();
+    return objectMapper.readValue(serializedResponse, ApiCloneWorkspaceResult.class);
   }
 
   public void deleteWorkspace(AuthenticatedUserRequest userRequest, UUID workspaceId)
@@ -499,7 +519,40 @@ public class MockMvcUtils {
             .andReturn()
             .getResponse()
             .getContentAsString();
+
     return objectMapper.readValue(serializedResponse, ApiGcpGcsBucketResource.class);
+  }
+
+  public ApiDataRepoSnapshotResource createDataRepoSnapshotReference(
+      AuthenticatedUserRequest userRequest, UUID workspaceId) throws Exception {
+
+    var datarepoSnapshotRequest =
+        new ApiCreateDataRepoSnapshotReferenceRequestBody()
+            .metadata(
+                new ApiReferenceResourceCommonFields()
+                    .cloningInstructions(ApiCloningInstructionsEnum.REFERENCE)
+                    .description("description")
+                    .name(RandomStringUtils.randomAlphabetic(10)))
+            .snapshot(
+                new ApiDataRepoSnapshotAttributes().instanceName("terra").snapshot("polaroid"));
+
+    String serializedGetResponse =
+        mockMvc
+            .perform(
+                addAuth(
+                    post(String.format(
+                            REFERENCED_DATA_REPO_SNAPSHOTS_V1_PATH_FORMAT, workspaceId.toString()))
+                        .contentType(MediaType.APPLICATION_JSON_VALUE)
+                        .accept(MediaType.APPLICATION_JSON)
+                        .characterEncoding("UTF-8")
+                        .content(objectMapper.writeValueAsString(datarepoSnapshotRequest)),
+                    userRequest))
+            .andExpect(status().is2xxSuccessful())
+            .andReturn()
+            .getResponse()
+            .getContentAsString();
+
+    return objectMapper.readValue(serializedGetResponse, ApiDataRepoSnapshotResource.class);
   }
 
   public void grantRole(

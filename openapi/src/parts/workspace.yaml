@@ -354,7 +354,7 @@ components:
         
     CloneWorkspaceRequest:
       description: >-
-        Request body for cloning an entire workspace. The stage is always MC. Cloning instructions
+        Request body for cloning an entire workspace. Cloning instructions
         are taken from individual resources.
       type: object
       required:
@@ -380,6 +380,11 @@ components:
             GCP Location to use for cloud-based resources. If omitted, the location of the source
             resource will be used.
           type: string
+        destinationWorkspaceId:
+          description: |
+            Optional identifier for the destination workspace. If not present, a UUID is generated
+          type: string
+          format: uuid
 
     ResourceCloneDetails:
       description: >-
