@@ -567,9 +567,10 @@ public class WorkspaceDao {
   private Optional<String> listCloudContextsWorker(
       UUID workspaceUuid, CloudPlatform cloudPlatform) {
     String sql =
-        "SELECT context FROM cloud_context"
-            + " WHERE workspace_id = :workspace_id"
-            + " AND cloud_platform = :cloud_platform";
+        """
+            SELECT context FROM cloud_context
+            WHERE workspace_id = :workspace_id AND cloud_platform = :cloud_platform
+        """;
     MapSqlParameterSource params =
         new MapSqlParameterSource()
             .addValue("workspace_id", workspaceUuid.toString())

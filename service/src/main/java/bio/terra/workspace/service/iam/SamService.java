@@ -122,6 +122,7 @@ public class SamService {
   @Traced
   public boolean isAdmin(AuthenticatedUserRequest userRequest) throws InterruptedException {
     try {
+      // If the user can successfully call sam admin api, the user has admin access.
       SamRetry.retry(
           () ->
               samAdminApi(userRequest.getRequiredToken())
