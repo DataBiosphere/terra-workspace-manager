@@ -1,0 +1,14 @@
+## admin
+paths:
+  /api/admin/v1/workspaces/cloudcontexts/syncIamRoles:
+    patch:
+      summary: Sync iam roles of all workspaces.
+      operationId: syncIamRoles
+      tags: [Admin]
+      responses:
+        '204':
+          description: OK
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '500':
+          $ref: '#/components/responses/ServerError'

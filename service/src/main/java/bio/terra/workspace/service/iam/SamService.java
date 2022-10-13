@@ -35,6 +35,7 @@ import javax.annotation.Nullable;
 import okhttp3.OkHttpClient;
 import org.broadinstitute.dsde.workbench.client.sam.ApiClient;
 import org.broadinstitute.dsde.workbench.client.sam.ApiException;
+import org.broadinstitute.dsde.workbench.client.sam.api.AdminApi;
 import org.broadinstitute.dsde.workbench.client.sam.api.AzureApi;
 import org.broadinstitute.dsde.workbench.client.sam.api.GoogleApi;
 import org.broadinstitute.dsde.workbench.client.sam.api.ResourcesApi;
@@ -112,6 +113,23 @@ public class SamService {
   @VisibleForTesting
   public AzureApi samAzureApi(String accessToken) {
     return new AzureApi(getApiClient(accessToken));
+  }
+
+  public AdminApi samAdminApi(String accessToken) {
+    return new AdminApi(getApiClient(accessToken));
+  }
+
+  @Traced
+  public boolean isAdmin(AuthenticatedUserRequest userRequest) throws InterruptedException {
+    try {
+      SamRetry.retry(
+          () ->
+              samAdminApi(userRequest.getRequiredToken())
+                  .adminGetUserByEmail(getUserEmailFromSam(userRequest)));
+      return true;
+    } catch (ApiException apiException) {
+      throw SamExceptionFactory.create("Error checking resource permission in Sam", apiException);
+    }
   }
 
   @VisibleForTesting
@@ -442,6 +460,22 @@ public class SamService {
               "User %s is not authorized to perform action %s on %s %s",
               userEmail, action, type, uuid));
     else logger.info("User {} is authorized to {} {} {}", userEmail, action, type, uuid);
+  }
+
+  /**
+   * Wrapper around isAdmin which throws an appropriate exception if a user does not have admin
+   * access.
+   *
+   * @param userRequest Credentials of the user whose permissions are being checked
+   */
+  @Traced
+  public void checkAdminAuthz(AuthenticatedUserRequest userRequest) throws InterruptedException {
+    boolean isAuthorized = isAdmin(userRequest);
+    final String userEmail = getUserEmailFromSam(userRequest);
+    if (!isAuthorized)
+      throw new ForbiddenException(
+          String.format("User %s is not authorized to perform admin action", userEmail));
+    else logger.info("User {} is an authorized admin", userEmail);
   }
 
   /**

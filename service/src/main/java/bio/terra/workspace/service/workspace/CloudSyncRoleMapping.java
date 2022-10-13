@@ -4,6 +4,7 @@ import bio.terra.workspace.service.iam.model.WsmIamRole;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.CustomGcpIamRole;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
 import java.util.List;
 
 /**
@@ -119,4 +120,7 @@ public class CloudSyncRoleMapping {
           WsmIamRole.APPLICATION, PROJECT_WRITER,
           WsmIamRole.WRITER, PROJECT_WRITER,
           WsmIamRole.READER, PROJECT_READER);
+
+  public static final ImmutableSet<CustomGcpIamRole> CUSTOM_GCP_IAM_ROLES =
+      ImmutableSet.of(PROJECT_OWNER, PROJECT_WRITER, PROJECT_READER);
 }
