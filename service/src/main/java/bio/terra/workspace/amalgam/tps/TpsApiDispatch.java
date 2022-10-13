@@ -31,6 +31,7 @@ import bio.terra.workspace.generated.model.ApiTpsPolicyPair;
 import bio.terra.workspace.generated.model.ApiTpsUpdateMode;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
+import io.opencensus.contrib.spring.aop.Traced;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
@@ -216,6 +217,7 @@ public class TpsApiDispatch {
     }
   }
 
+  @Traced
   public Optional<ApiTpsPaoGetResult> getPaoIfExists(BearerToken bearerToken, UUID objectId) {
     features.tpsEnabledCheck();
     try {
