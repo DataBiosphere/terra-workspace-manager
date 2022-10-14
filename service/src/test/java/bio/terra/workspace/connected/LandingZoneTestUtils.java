@@ -5,7 +5,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
 @Component
-@Profile("connected-test")
+@Profile("azure-test")
 public class LandingZoneTestUtils {
   @Value("${workspace.azure-test.default-landing-zone-id}")
   private String defaultLandingZoneId;
