@@ -54,7 +54,7 @@ public class WorkspaceActivityLogDao {
   public void writeActivity(UUID workspaceId, DbWorkspaceActivityLog dbWorkspaceActivityLog) {
     logger.info(
         String.format(
-            "#writeActivity: workspaceId=%s, operationType=%s, actorEmail=%s, actorSubjectId=%s",
+            "Writing activity log: workspaceId=%s, operationType=%s, actorEmail=%s, actorSubjectId=%s",
             workspaceId,
             dbWorkspaceActivityLog.getOperationType(),
             dbWorkspaceActivityLog.getActorEmail(),
