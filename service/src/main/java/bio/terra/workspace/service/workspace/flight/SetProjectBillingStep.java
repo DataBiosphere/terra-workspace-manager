@@ -4,6 +4,7 @@ import bio.terra.cloudres.google.billing.CloudBillingClientCow;
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
+import bio.terra.workspace.service.spendprofile.SpendProfile;
 import com.google.cloud.billing.v1.ProjectBillingInfo;
 
 /** A {@link Step} to set the billing account on the Google project. */
@@ -16,13 +17,13 @@ public class SetProjectBillingStep implements Step {
 
   @Override
   public StepResult doStep(FlightContext flightContext) {
+    var spendProfile =
+        flightContext.getWorkingMap().get(WorkspaceFlightMapKeys.SPEND_PROFILE, SpendProfile.class);
     String projectId =
         flightContext.getWorkingMap().get(WorkspaceFlightMapKeys.GCP_PROJECT_ID, String.class);
-    String billingAccountId =
-        flightContext.getWorkingMap().get(WorkspaceFlightMapKeys.BILLING_ACCOUNT_ID, String.class);
     ProjectBillingInfo setBilling =
         ProjectBillingInfo.newBuilder()
-            .setBillingAccountName("billingAccounts/" + billingAccountId)
+            .setBillingAccountName("billingAccounts/" + spendProfile.billingAccountId().get())
             .build();
     billingClient.updateProjectBillingInfo("projects/" + projectId, setBilling);
     return StepResult.getStepResultSuccess();

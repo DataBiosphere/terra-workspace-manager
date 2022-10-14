@@ -1,20 +1,25 @@
 package bio.terra.workspace.service.spendprofile;
 
+import bio.terra.profile.api.ProfileApi;
+import bio.terra.profile.client.ApiClient;
 import bio.terra.profile.client.ApiException;
 import bio.terra.workspace.app.configuration.external.SpendProfileConfiguration;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamRethrow;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.iam.model.SamConstants;
-import bio.terra.workspace.service.spendprofile.client.BpmClientProvider;
 import bio.terra.workspace.service.spendprofile.exceptions.BillingProfileManagerServiceAPIException;
 import bio.terra.workspace.service.spendprofile.exceptions.SpendUnauthorizedException;
 import com.google.common.collect.Maps;
+import io.opencensus.contrib.http.jaxrs.JaxrsClientExtractor;
+import io.opencensus.contrib.http.jaxrs.JaxrsClientFilter;
 import io.opencensus.contrib.spring.aop.Traced;
+import io.opencensus.trace.Tracing;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import javax.ws.rs.client.Client;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,24 +37,32 @@ public class SpendProfileService {
   private final Logger logger = LoggerFactory.getLogger(SpendProfileService.class);
   private final SamService samService;
   private final Map<SpendProfileId, SpendProfile> spendProfiles;
-  private final BpmClientProvider bpmClientProvider;
+  private final SpendProfileConfiguration spendProfileConfiguration;
+  private final Client commonHttpClient;
 
   @Autowired
   public SpendProfileService(
-      SamService samService,
-      SpendProfileConfiguration spendProfileConfiguration,
-      BpmClientProvider bpmClientProvider) {
+      SamService samService, SpendProfileConfiguration spendProfileConfiguration) {
     this(
         samService,
         adaptConfigurationModels(spendProfileConfiguration.getSpendProfiles()),
-        bpmClientProvider);
+        spendProfileConfiguration);
   }
 
   public SpendProfileService(
-      SamService samService, List<SpendProfile> spendProfiles, BpmClientProvider clientProvider) {
+      SamService samService,
+      List<SpendProfile> spendProfiles,
+      SpendProfileConfiguration spendProfileConfiguration) {
     this.samService = samService;
     this.spendProfiles = Maps.uniqueIndex(spendProfiles, SpendProfile::id);
-    this.bpmClientProvider = clientProvider;
+    this.spendProfileConfiguration = spendProfileConfiguration;
+
+    this.commonHttpClient =
+        new ApiClient()
+            .getHttpClient()
+            .register(
+                new JaxrsClientFilter(
+                    new JaxrsClientExtractor(), Tracing.getPropagationComponent().getB3Format()));
   }
 
   /**
@@ -107,7 +120,7 @@ public class SpendProfileService {
   private SpendProfile getSpendProfileFromBpm(
       AuthenticatedUserRequest userRequest, SpendProfileId spendProfileId) {
     SpendProfile spend;
-    var profileApi = bpmClientProvider.getProfileApi(userRequest);
+    var profileApi = getProfileApi(userRequest);
     try {
       var profile = profileApi.getProfile(UUID.fromString(spendProfileId.getId()));
       logger.info(
@@ -131,5 +144,16 @@ public class SpendProfileService {
     }
 
     return spend;
+  }
+
+  private ApiClient getApiClient(String accessToken) {
+    ApiClient apiClient = new ApiClient().setHttpClient(commonHttpClient);
+    apiClient.setAccessToken(accessToken);
+    apiClient.setBasePath(this.spendProfileConfiguration.getBasePath());
+    return apiClient;
+  }
+
+  public ProfileApi getProfileApi(AuthenticatedUserRequest userRequest) {
+    return new ProfileApi(getApiClient(userRequest.getRequiredToken()));
   }
 }

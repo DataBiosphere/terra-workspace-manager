@@ -8,11 +8,11 @@ import bio.terra.workspace.common.utils.FlightBeanBag;
 import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.job.JobMapKeys;
+import bio.terra.workspace.service.spendprofile.SpendProfile;
 import bio.terra.workspace.service.workspace.exceptions.CloudContextRequiredException;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import bio.terra.workspace.service.workspace.model.AzureCloudContext;
 import com.azure.resourcemanager.resources.ResourceManager;
-import java.util.UUID;
 
 /**
  * Stores the previously generated Google Project Id in the {@link WorkspaceDao} as the Google cloud
@@ -33,23 +33,16 @@ public class ValidateMRGStep implements Step {
 
     AzureCloudContext azureCloudContext;
     if (appContext.getFeatureConfiguration().isBpmAzureEnabled()) {
-      String billingManagedResourceGroupId =
+      var spendProfile =
           flightContext
               .getWorkingMap()
-              .get(WorkspaceFlightMapKeys.AZURE_BILLING_MANAGED_RESOURCE_GROUP_ID, String.class);
-      UUID billingSubscriptionId =
-          flightContext
-              .getWorkingMap()
-              .get(WorkspaceFlightMapKeys.AZURE_BILLING_SUBSCRIPTION_ID, UUID.class);
-      UUID billingTenantId =
-          flightContext
-              .getWorkingMap()
-              .get(WorkspaceFlightMapKeys.AZURE_BILLING_TENANT_ID, UUID.class);
+              .get(WorkspaceFlightMapKeys.SPEND_PROFILE, SpendProfile.class);
+
       azureCloudContext =
           new AzureCloudContext(
-              billingTenantId.toString(),
-              billingSubscriptionId.toString(),
-              billingManagedResourceGroupId);
+              spendProfile.tenantId().get().toString(),
+              spendProfile.subscriptionId().get().toString(),
+              spendProfile.managedResourceGroupId().get());
     } else {
       azureCloudContext =
           flightContext

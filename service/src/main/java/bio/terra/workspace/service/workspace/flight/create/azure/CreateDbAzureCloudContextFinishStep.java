@@ -1,8 +1,6 @@
 package bio.terra.workspace.service.workspace.flight.create.azure;
 
-import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.AZURE_BILLING_MANAGED_RESOURCE_GROUP_ID;
-import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.AZURE_BILLING_SUBSCRIPTION_ID;
-import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.AZURE_BILLING_TENANT_ID;
+import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.SPEND_PROFILE;
 
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.Step;
@@ -10,6 +8,7 @@ import bio.terra.stairway.StepResult;
 import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
 import bio.terra.workspace.common.utils.FlightUtils;
 import bio.terra.workspace.service.job.JobMapKeys;
+import bio.terra.workspace.service.spendprofile.SpendProfile;
 import bio.terra.workspace.service.workspace.AzureCloudContextService;
 import bio.terra.workspace.service.workspace.model.AzureCloudContext;
 import bio.terra.workspace.service.workspace.model.CloudContextHolder;
@@ -35,13 +34,12 @@ public class CreateDbAzureCloudContextFinishStep implements Step {
   public StepResult doStep(FlightContext flightContext) throws InterruptedException {
     AzureCloudContext azureCloudContext;
     if (featureConfiguration.isBpmAzureEnabled()) {
+      var spendProfile = flightContext.getWorkingMap().get(SPEND_PROFILE, SpendProfile.class);
       azureCloudContext =
           new AzureCloudContext(
-              flightContext.getWorkingMap().get(AZURE_BILLING_TENANT_ID, String.class),
-              flightContext.getWorkingMap().get(AZURE_BILLING_SUBSCRIPTION_ID, String.class),
-              flightContext
-                  .getWorkingMap()
-                  .get(AZURE_BILLING_MANAGED_RESOURCE_GROUP_ID, String.class));
+              spendProfile.tenantId().get().toString(),
+              spendProfile.subscriptionId().get().toString(),
+              spendProfile.managedResourceGroupId().get());
     } else {
       azureCloudContext =
           flightContext
