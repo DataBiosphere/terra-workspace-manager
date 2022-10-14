@@ -23,8 +23,10 @@ public class RemoveUserFromWorkspaceFlight extends Flight {
         inputParameters.get(JobMapKeys.AUTH_USER_INFO.getKeyName(), AuthenticatedUserRequest.class);
     String userToRemove = inputParameters.get(WorkspaceFlightMapKeys.USER_TO_REMOVE, String.class);
     WsmIamRole roleToRemove =
-        WsmIamRole.valueOf(
-            inputParameters.get(WorkspaceFlightMapKeys.ROLE_TO_REMOVE, String.class));
+        inputParameters.get(WorkspaceFlightMapKeys.ROLE_TO_REMOVE, String.class) != null
+            ? WsmIamRole.valueOf(
+                inputParameters.get(WorkspaceFlightMapKeys.ROLE_TO_REMOVE, String.class))
+            : null;
 
     // Flight plan:
     // 0. (Pre-flight): Validate that the user is directly granted the specified workspace role.
