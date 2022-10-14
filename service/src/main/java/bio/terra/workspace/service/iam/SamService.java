@@ -301,14 +301,15 @@ public class SamService {
                   .map(WsmIamRole::fromSam)
                   .filter(Objects::nonNull)
                   .collect(Collectors.toList());
-          Optional<WsmIamRole> highestRole = WsmIamRole.getHighestRole(workspaceId, roles);
           // Skip workspaces with no roles. (That means there's a role this WSM doesn't know
           // about.)
-          if (highestRole.isPresent()) {
-            if (WsmIamRole.roleAtLeastAsHighAs(minimumHighestRoleFromRequest, highestRole.get())) {
-              workspacesAndRoles.put(workspaceId, highestRole.get());
-            }
-          }
+          WsmIamRole.getHighestRole(workspaceId, roles)
+              .ifPresent(
+                  highestRole -> {
+                    if (minimumHighestRoleFromRequest.roleAtLeastAsHighAs(highestRole)) {
+                      workspacesAndRoles.put(workspaceId, highestRole);
+                    }
+                  });
         } catch (IllegalArgumentException e) {
           // WSM always uses UUIDs for workspace IDs, but this is not enforced in Sam and there are
           // old workspaces that don't use UUIDs. Any workspace with a non-UUID workspace ID is
