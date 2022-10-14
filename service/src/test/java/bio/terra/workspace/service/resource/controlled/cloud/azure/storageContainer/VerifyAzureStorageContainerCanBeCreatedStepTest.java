@@ -10,7 +10,6 @@ import static org.mockito.Mockito.when;
 
 import bio.terra.common.iam.BearerToken;
 import bio.terra.landingzone.db.exception.LandingZoneNotFoundException;
-import bio.terra.landingzone.library.landingzones.deployment.ResourcePurpose;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.StepStatus;
 import bio.terra.workspace.amalgam.landingzone.azure.LandingZoneApiDispatch;
@@ -18,8 +17,6 @@ import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
 import bio.terra.workspace.common.utils.ManagementExceptionUtils;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.generated.model.ApiAzureLandingZoneDeployedResource;
-import bio.terra.workspace.generated.model.ApiAzureLandingZoneResourcesList;
-import bio.terra.workspace.generated.model.ApiAzureLandingZoneResourcesPurposeGroup;
 import bio.terra.workspace.generated.model.ApiAzureStorageContainerCreationParameters;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.storage.BaseStorageStepTest;
@@ -31,8 +28,6 @@ import com.azure.core.management.exception.ManagementError;
 import com.azure.core.management.exception.ManagementException;
 import com.azure.resourcemanager.storage.models.BlobContainer;
 import com.azure.resourcemanager.storage.models.BlobContainers;
-import java.util.Collections;
-import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
@@ -134,6 +129,15 @@ public class VerifyAzureStorageContainerCanBeCreatedStepTest extends BaseStorage
     when(mockStorageAccount.name()).thenReturn(sharedStorageAccountName);
     when(mockStorageAccounts.getById(sharedAccountId)).thenReturn(mockStorageAccount);
     when(mockUserRequest.getRequiredToken()).thenReturn("FAKE_TOKEN");
+    when(mockFlightContext
+            .getWorkingMap()
+            .get(WorkspaceFlightMapKeys.ControlledResourceKeys.STORAGE_ACCOUNT_NAME, String.class))
+        .thenReturn(sharedStorageAccountName);
+    when(mockBlobContainers.get(
+            mockAzureCloudContext.getAzureResourceGroupId(),
+            sharedStorageAccountName,
+            creationParameters.getStorageContainerName()))
+        .thenThrow(containerNotFoundException);
 
     // act
     final StepResult stepResult = verifyCanBeCreatedStep.doStep(mockFlightContext);
@@ -233,55 +237,37 @@ public class VerifyAzureStorageContainerCanBeCreatedStepTest extends BaseStorage
     assertThat(stepResult.getException().get(), instanceOf(DuplicateResourceException.class));
   }
 
-  private ApiAzureLandingZoneResourcesList getExistingLandingZoneResources() {
-    List<ApiAzureLandingZoneDeployedResource> landingZoneDeployedResourcesWithSharedPurpose =
-        Collections.singletonList(
-            new ApiAzureLandingZoneDeployedResource()
-                .resourceId("resourceId")
-                .resourceType(
-                    VerifyAzureStorageContainerCanBeCreatedStep.AZURE_STORAGE_ACCOUNT_RESOURCE_TYPE)
-                .region("us-west-2")
-                .resourceName("sharedStorageAccount"));
-    ApiAzureLandingZoneResourcesPurposeGroup landingZoneSharedResourcesPurposeGroup =
-        new ApiAzureLandingZoneResourcesPurposeGroup()
-            .purpose(ResourcePurpose.SHARED_RESOURCE.toString())
-            .deployedResources(landingZoneDeployedResourcesWithSharedPurpose);
+  @Test
+  public void getStorageContainer_containerAlreadyExistsInLandingZoneSharedStorageAccount()
+      throws InterruptedException {
+    initValidationStep(Optional.empty());
 
-    List<ApiAzureLandingZoneDeployedResource> landingZoneDeployedResourcesWithDifferentPurpose =
-        Collections.singletonList(
-            new ApiAzureLandingZoneDeployedResource()
-                .resourceId("resourceId")
-                .resourceType("Microsoft.Storage/otherResource")
-                .region("us-west-2")
-                .resourceName("otherResourceName"));
-    ApiAzureLandingZoneResourcesPurposeGroup landingZoneOtherPurposeResourcesPurposeGroup =
-        new ApiAzureLandingZoneResourcesPurposeGroup()
-            .purpose("OTHER_PURPOSE")
-            .deployedResources(landingZoneDeployedResourcesWithDifferentPurpose);
+    when(mockLandingZoneApiDispatch.getLandingZoneId(any())).thenReturn(LANDING_ZONE_ID);
+    ApiAzureLandingZoneDeployedResource mockSharedStorageAccount =
+        mock(ApiAzureLandingZoneDeployedResource.class);
+    when(mockLandingZoneApiDispatch.getSharedStorageAccount(
+            any(BearerToken.class), eq(LANDING_ZONE_ID)))
+        .thenReturn(Optional.of(mockSharedStorageAccount));
+    String sharedAccountId = UUID.randomUUID().toString();
+    when(mockSharedStorageAccount.getResourceId()).thenReturn(sharedAccountId);
+    String sharedStorageAccountName = "sharedStorageAccount";
+    when(mockStorageAccount.name()).thenReturn(sharedStorageAccountName);
+    when(mockStorageAccounts.getById(sharedAccountId)).thenReturn(mockStorageAccount);
+    when(mockUserRequest.getRequiredToken()).thenReturn("FAKE_TOKEN");
+    when(mockFlightContext
+            .getWorkingMap()
+            .get(WorkspaceFlightMapKeys.ControlledResourceKeys.STORAGE_ACCOUNT_NAME, String.class))
+        .thenReturn(sharedStorageAccountName);
+    when(mockBlobContainers.get(
+            mockAzureCloudContext.getAzureResourceGroupId(),
+            sharedStorageAccountName,
+            creationParameters.getStorageContainerName()))
+        .thenReturn(mockBlobContainer);
 
-    List<ApiAzureLandingZoneResourcesPurposeGroup> resourceGroupList =
-        List.of(
-            landingZoneSharedResourcesPurposeGroup, landingZoneOtherPurposeResourcesPurposeGroup);
+    // act
+    final StepResult stepResult = verifyCanBeCreatedStep.doStep(mockFlightContext);
 
-    return new ApiAzureLandingZoneResourcesList().id(LANDING_ZONE_ID).resources(resourceGroupList);
-  }
-
-  private ApiAzureLandingZoneResourcesList getLandingZoneWithoutSharedStorageAccount() {
-    List<ApiAzureLandingZoneDeployedResource> landingZoneDeployedResourcesWithDifferentPurpose =
-        Collections.singletonList(
-            new ApiAzureLandingZoneDeployedResource()
-                .resourceId("resourceId")
-                .resourceType("Microsoft.Storage/otherResource")
-                .region("us-west-2")
-                .resourceName("otherResourceName"));
-    ApiAzureLandingZoneResourcesPurposeGroup landingZoneOtherPurposeResourcesPurposeGroup =
-        new ApiAzureLandingZoneResourcesPurposeGroup()
-            .purpose("OTHER_PURPOSE")
-            .deployedResources(landingZoneDeployedResourcesWithDifferentPurpose);
-
-    List<ApiAzureLandingZoneResourcesPurposeGroup> resourceGroupList =
-        List.of(landingZoneOtherPurposeResourcesPurposeGroup);
-
-    return new ApiAzureLandingZoneResourcesList().id(LANDING_ZONE_ID).resources(resourceGroupList);
+    assertThat(stepResult.getStepStatus(), equalTo(StepStatus.STEP_RESULT_FAILURE_FATAL));
+    assertThat(stepResult.getException().get(), instanceOf(DuplicateResourceException.class));
   }
 }

@@ -335,7 +335,7 @@ public class CreateAndDeleteAzureControlledResourceFlightTest extends BaseAzureC
     testLandingZoneManager.createLandingZoneWithSharedStorageAccount(
         landingZoneId, storageAccountName, "eastus");
 
-    Thread.sleep(60000);
+    TimeUnit.MINUTES.sleep(1);
 
     // Submit a storage container creation flight and then verify the resource exists in the
     // workspace.
@@ -364,7 +364,7 @@ public class CreateAndDeleteAzureControlledResourceFlightTest extends BaseAzureC
         containerResource,
         WsmResourceType.CONTROLLED_AZURE_STORAGE_CONTAINER);
 
-    Thread.sleep(60000);
+    TimeUnit.MINUTES.sleep(1);
 
     // clean up resources - delete storage container resource
     submitControlledResourceDeletionFlight(
