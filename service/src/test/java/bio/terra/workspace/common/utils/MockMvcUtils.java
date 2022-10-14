@@ -15,6 +15,7 @@ import bio.terra.workspace.generated.model.ApiCloneControlledGcpBigQueryDatasetR
 import bio.terra.workspace.generated.model.ApiCloneControlledGcpBigQueryDatasetResult;
 import bio.terra.workspace.generated.model.ApiCloneControlledGcpGcsBucketRequest;
 import bio.terra.workspace.generated.model.ApiCloneControlledGcpGcsBucketResult;
+import bio.terra.workspace.generated.model.ApiCloneWorkspaceRequest;
 import bio.terra.workspace.generated.model.ApiCloneWorkspaceResult;
 import bio.terra.workspace.generated.model.ApiCloningInstructionsEnum;
 import bio.terra.workspace.generated.model.ApiCloudPlatform;
@@ -33,14 +34,17 @@ import bio.terra.workspace.generated.model.ApiGcpBigQueryDatasetResource;
 import bio.terra.workspace.generated.model.ApiGcpGcsBucketResource;
 import bio.terra.workspace.generated.model.ApiGrantRoleRequestBody;
 import bio.terra.workspace.generated.model.ApiJobControl;
+import bio.terra.workspace.generated.model.ApiJobReport;
 import bio.terra.workspace.generated.model.ApiJobReport.StatusEnum;
 import bio.terra.workspace.generated.model.ApiReferenceResourceCommonFields;
 import bio.terra.workspace.generated.model.ApiWorkspaceDescription;
+import bio.terra.workspace.generated.model.ApiWorkspaceStageModel;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.model.WsmIamRole;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.http.HttpStatus;
@@ -168,16 +172,67 @@ public class MockMvcUtils {
     return objectMapper.readValue(serializedResponse, ApiWorkspaceDescription.class);
   }
 
-  public ApiWorkspaceDescription createWorkspaceWithCloudContext(
-      AuthenticatedUserRequest userRequest) throws Exception {
-    ApiWorkspaceDescription createdWorkspace = createWorkspaceWithoutCloudContext(userRequest);
+  public ApiCloneWorkspaceResult cloneWorkspace(
+      AuthenticatedUserRequest userRequest,
+      UUID sourceWorkspaceId,
+      String spendProfile,
+      @Nullable UUID destinationWorkspaceId)
+      throws Exception {
+
+    String serializedGetResponse =
+        mockMvc
+            .perform(
+                addAuth(
+                    post(String.format(CLONE_WORKSPACE_PATH_FORMAT, sourceWorkspaceId))
+                        .contentType(MediaType.APPLICATION_JSON_VALUE)
+                        .accept(MediaType.APPLICATION_JSON)
+                        .characterEncoding("UTF-8")
+                        .content(
+                            objectMapper.writeValueAsString(
+                                new ApiCloneWorkspaceRequest()
+                                    .destinationWorkspaceId(destinationWorkspaceId)
+                                    .spendProfile(spendProfile))),
+                    userRequest))
+            .andExpect(status().is(HttpStatus.SC_ACCEPTED))
+            .andReturn()
+            .getResponse()
+            .getContentAsString();
+
+    ApiCloneWorkspaceResult cloneWorkspace =
+        objectMapper.readValue(serializedGetResponse, ApiCloneWorkspaceResult.class);
+    if (destinationWorkspaceId == null) {
+      destinationWorkspaceId = cloneWorkspace.getWorkspace().getDestinationWorkspaceId();
+    }
+
+    // Wait for the clone to complete
+    String jobId = cloneWorkspace.getJobReport().getId();
+    while (StairwayTestUtils.jobIsRunning(cloneWorkspace.getJobReport())) {
+      TimeUnit.SECONDS.sleep(5);
+      cloneWorkspace = getCloneWorkspaceResult(USER_REQUEST, destinationWorkspaceId, jobId);
+    }
+    assertEquals(ApiJobReport.StatusEnum.SUCCEEDED, cloneWorkspace.getJobReport().getStatus());
+
+    return cloneWorkspace;
+  }
+
+  public ApiCreatedWorkspace createWorkspaceWithCloudContext(AuthenticatedUserRequest userRequest)
+      throws Exception {
+    ApiCreatedWorkspace createdWorkspace = createWorkspaceWithoutCloudContext(userRequest);
     createGcpCloudContextAndWait(userRequest, createdWorkspace.getId());
     return createdWorkspace;
   }
 
-  public ApiWorkspaceDescription createWorkspaceWithoutCloudContext(
+  public ApiCreatedWorkspace createWorkspaceWithoutCloudContext(
       @Nullable AuthenticatedUserRequest userRequest) throws Exception {
-    ApiCreateWorkspaceRequestBody request = WorkspaceFixtures.createWorkspaceRequestBody();
+    return createWorkspaceWithoutCloudContext(userRequest, ApiWorkspaceStageModel.MC_WORKSPACE);
+  }
+
+  public ApiCreatedWorkspace createWorkspaceWithoutCloudContext(
+      @Nullable AuthenticatedUserRequest userRequest, ApiWorkspaceStageModel stageModel)
+      throws Exception {
+
+    ApiCreateWorkspaceRequestBody request =
+        WorkspaceFixtures.createWorkspaceRequestBody(stageModel);
     String serializedResponse =
         mockMvc
             .perform(
@@ -189,12 +244,7 @@ public class MockMvcUtils {
             .andReturn()
             .getResponse()
             .getContentAsString();
-
-    // Return ApiWorkspaceDescription instead of ApiCreatedWorkspace, since former has
-    // getUserFacingId().
-    UUID workspaceId =
-        objectMapper.readValue(serializedResponse, ApiCreatedWorkspace.class).getId();
-    return getWorkspace(userRequest, workspaceId);
+    return objectMapper.readValue(serializedResponse, ApiCreatedWorkspace.class);
   }
 
   private void createGcpCloudContextAndWait(AuthenticatedUserRequest userRequest, UUID workspaceId)
