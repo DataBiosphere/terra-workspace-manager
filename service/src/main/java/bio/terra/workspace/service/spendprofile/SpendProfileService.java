@@ -3,6 +3,8 @@ package bio.terra.workspace.service.spendprofile;
 import bio.terra.profile.api.ProfileApi;
 import bio.terra.profile.client.ApiClient;
 import bio.terra.profile.client.ApiException;
+import bio.terra.profile.model.CloudPlatform;
+import bio.terra.profile.model.CreateProfileRequest;
 import bio.terra.workspace.app.configuration.external.SpendProfileConfiguration;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamRethrow;
@@ -136,7 +138,7 @@ public class SpendProfileService {
               .build();
     } catch (ApiException ex) {
       if (ex.getCode() == HttpStatus.NOT_FOUND.value()
-          || ex.getCode() == HttpStatus.FORBIDDEN.value()) {
+          || ex.getCode() == HttpStatus.UNAUTHORIZED.value()) {  // TODO change to a check for FORBIDDEN
         return null;
       } else {
         throw new BillingProfileManagerServiceAPIException(ex);
@@ -146,6 +148,37 @@ public class SpendProfileService {
     return spend;
   }
 
+  public SpendProfile createGcpSpendProfile(
+      String billingAccountId,
+      String displayName,
+      String biller,
+      AuthenticatedUserRequest userRequest) {
+    CreateProfileRequest req =
+        new CreateProfileRequest()
+            .id(UUID.randomUUID())
+            .billingAccountId(billingAccountId)
+            .displayName(displayName)
+            .biller(biller)
+            .cloudPlatform(CloudPlatform.GCP);
+    try {
+      var rawModel = getProfileApi(userRequest).createProfile(req);
+      return SpendProfile.builder()
+          .billingAccountId(rawModel.getBillingAccountId())
+          .id(new SpendProfileId(rawModel.getId().toString()))
+          .build();
+    } catch (ApiException e) {
+      throw new BillingProfileManagerServiceAPIException(e);
+    }
+  }
+
+  public void deleteProfile(UUID profileId, AuthenticatedUserRequest userRequest) {
+    try {
+      getProfileApi(userRequest).deleteProfile(profileId);
+    } catch (ApiException e) {
+      throw new BillingProfileManagerServiceAPIException(e);
+    }
+  }
+
   private ApiClient getApiClient(String accessToken) {
     ApiClient apiClient = new ApiClient().setHttpClient(commonHttpClient);
     apiClient.setAccessToken(accessToken);
@@ -153,7 +186,7 @@ public class SpendProfileService {
     return apiClient;
   }
 
-  public ProfileApi getProfileApi(AuthenticatedUserRequest userRequest) {
+  private ProfileApi getProfileApi(AuthenticatedUserRequest userRequest) {
     return new ProfileApi(getApiClient(userRequest.getRequiredToken()));
   }
 }
