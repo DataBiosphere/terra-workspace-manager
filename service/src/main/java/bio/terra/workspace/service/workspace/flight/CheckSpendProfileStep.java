@@ -15,8 +15,6 @@ import bio.terra.workspace.service.spendprofile.SpendProfileId;
 import bio.terra.workspace.service.spendprofile.SpendProfileService;
 import bio.terra.workspace.service.spendprofile.exceptions.BillingProfileManagerServiceAPIException;
 import bio.terra.workspace.service.workspace.exceptions.MissingSpendProfileException;
-import bio.terra.workspace.service.workspace.exceptions.NoAzureAppCoordinatesException;
-import bio.terra.workspace.service.workspace.exceptions.NoBillingAccountException;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import java.util.UUID;
@@ -57,18 +55,6 @@ public class CheckSpendProfileStep implements Step {
     try {
       SpendProfile spendProfile =
           spendProfileService.authorizeLinking(spendProfileId, bpmEnabled, userRequest);
-
-      if (cloudPlatform == CloudPlatform.GCP) {
-        if (spendProfile.billingAccountId().isEmpty()) {
-          throw NoBillingAccountException.forSpendProfile(spendProfileId);
-        }
-      } else if (cloudPlatform == CloudPlatform.AZURE) {
-        if (spendProfile.managedResourceGroupId().isEmpty()
-            || spendProfile.subscriptionId().isEmpty()
-            || spendProfile.tenantId().isEmpty()) {
-          throw NoAzureAppCoordinatesException.forSpendProfile(spendProfileId);
-        }
-      }
 
       workingMap.put(SPEND_PROFILE, spendProfile);
       return StepResult.getStepResultSuccess();

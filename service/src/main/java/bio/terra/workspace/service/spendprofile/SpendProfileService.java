@@ -1,10 +1,11 @@
 package bio.terra.workspace.service.spendprofile;
 
+import bio.terra.common.exception.ValidationException;
 import bio.terra.profile.api.ProfileApi;
 import bio.terra.profile.client.ApiClient;
 import bio.terra.profile.client.ApiException;
-import bio.terra.profile.model.CloudPlatform;
 import bio.terra.profile.model.CreateProfileRequest;
+import bio.terra.profile.model.ProfileModel;
 import bio.terra.workspace.app.configuration.external.SpendProfileConfiguration;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamRethrow;
@@ -12,6 +13,7 @@ import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.iam.model.SamConstants;
 import bio.terra.workspace.service.spendprofile.exceptions.BillingProfileManagerServiceAPIException;
 import bio.terra.workspace.service.spendprofile.exceptions.SpendUnauthorizedException;
+import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import com.google.common.collect.Maps;
 import io.opencensus.contrib.http.jaxrs.JaxrsClientExtractor;
 import io.opencensus.contrib.http.jaxrs.JaxrsClientFilter;
@@ -114,6 +116,7 @@ public class SpendProfileService {
             spendModel ->
                 new SpendProfile(
                     new SpendProfileId(spendModel.getId()),
+                    CloudPlatform.GCP,
                     Optional.ofNullable(spendModel.getBillingAccountId()),
                     null,
                     null,
@@ -134,6 +137,7 @@ public class SpendProfileService {
       spend =
           new SpendProfile(
               spendProfileId,
+              getProfileCloudPlatform(profile),
               Optional.ofNullable(profile.getBillingAccountId()),
               Optional.ofNullable(profile.getTenantId()),
               Optional.ofNullable(profile.getSubscriptionId()),
@@ -149,6 +153,23 @@ public class SpendProfileService {
     return spend;
   }
 
+  private CloudPlatform getProfileCloudPlatform(ProfileModel profile) {
+    if (profile.getCloudPlatform().equals(bio.terra.profile.model.CloudPlatform.GCP)) {
+      return CloudPlatform.GCP;
+    } else if (profile.getCloudPlatform().equals(bio.terra.profile.model.CloudPlatform.AZURE)) {
+      return CloudPlatform.AZURE;
+    } else {
+      throw new ValidationException(
+          String.format(
+              "Invalid cloud platform for billing profile id %s: %s ",
+              profile.getId().toString(), profile.getCloudPlatform().getValue()));
+    }
+  }
+
+  /**
+   * Creates a spend profile via the billing profile manager service, intended for usage in tests
+   * only.
+   */
   public SpendProfile createGcpSpendProfile(
       String billingAccountId,
       String displayName,
@@ -160,7 +181,7 @@ public class SpendProfileService {
             .billingAccountId(billingAccountId)
             .displayName(displayName)
             .biller(biller)
-            .cloudPlatform(CloudPlatform.GCP);
+            .cloudPlatform(bio.terra.profile.model.CloudPlatform.GCP);
     try {
       var rawModel = getProfileApi(userRequest).createProfile(req);
       return SpendProfile.buildGcpSpendProfile(
@@ -170,6 +191,7 @@ public class SpendProfileService {
     }
   }
 
+  /** Deletes a profile in the billing profile manager service, intended for usage in tests only */
   public void deleteProfile(UUID profileId, AuthenticatedUserRequest userRequest) {
     try {
       getProfileApi(userRequest).deleteProfile(profileId);

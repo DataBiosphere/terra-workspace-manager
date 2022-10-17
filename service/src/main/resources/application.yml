@@ -113,8 +113,6 @@ workspace:
       id: wm-default-spend-profile
       # The billing account workspace-dev has access to.
       billing-account-id: 01A82E-CA8A14-367457
-    - # A special spend profile with no billing account associated with it.
-      id: no-billing-account
 
   application:
     configurations:
