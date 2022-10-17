@@ -1,0 +1,12 @@
+databaseChangeLog:
+- changeSet:
+    id: workspace_activity_log_add_index
+    author: melchang
+    changes:
+    - createIndex:
+        tableName:  workspace_activity_log
+        indexName: workspace_id_index
+        unique:  false
+        columns:
+          - column:
+              name:  workspace_id

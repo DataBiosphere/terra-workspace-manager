@@ -7,6 +7,7 @@ import bio.terra.workspace.service.iam.model.WsmIamRole;
 import bio.terra.workspace.service.workspace.exceptions.CloudContextRequiredException;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import bio.terra.workspace.service.workspace.model.GcpCloudContext;
+import io.opencensus.contrib.spring.aop.Traced;
 import java.util.Optional;
 import java.util.UUID;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -85,6 +86,7 @@ public class GcpCloudContextService {
    * @param workspaceUuid workspace identifier of the cloud context
    * @return optional GCP cloud context
    */
+  @Traced
   public Optional<GcpCloudContext> getGcpCloudContext(UUID workspaceUuid) {
     return workspaceDao
         .getCloudContext(workspaceUuid, CloudPlatform.GCP)

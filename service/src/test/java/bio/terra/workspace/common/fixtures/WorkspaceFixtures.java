@@ -26,6 +26,11 @@ public class WorkspaceFixtures {
    * <p>All values are mutable, and tests should change any they explicitly need.
    */
   public static ApiCreateWorkspaceRequestBody createWorkspaceRequestBody() {
+    return createWorkspaceRequestBody(ApiWorkspaceStageModel.MC_WORKSPACE);
+  }
+
+  public static ApiCreateWorkspaceRequestBody createWorkspaceRequestBody(
+      ApiWorkspaceStageModel stageModel) {
     UUID workspaceId = UUID.randomUUID();
     ApiProperties properties = new ApiProperties();
     properties.addAll(
@@ -36,7 +41,7 @@ public class WorkspaceFixtures {
         .displayName(WORKSPACE_NAME)
         .description("A test workspace created by createWorkspaceRequestBody")
         .userFacingId(getUserFacingId(workspaceId))
-        .stage(ApiWorkspaceStageModel.MC_WORKSPACE)
+        .stage(stageModel)
         .spendProfile("wm-default-spend-profile")
         .properties(properties);
   }
