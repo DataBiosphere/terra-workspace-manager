@@ -19,6 +19,7 @@ import io.opencensus.contrib.spring.aop.Traced;
 import io.opencensus.trace.Tracing;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import javax.ws.rs.client.Client;
@@ -56,7 +57,7 @@ public class SpendProfileService {
       List<SpendProfile> spendProfiles,
       SpendProfileConfiguration spendProfileConfiguration) {
     this.samService = samService;
-    this.spendProfiles = Maps.uniqueIndex(spendProfiles, SpendProfile::getId);
+    this.spendProfiles = Maps.uniqueIndex(spendProfiles, SpendProfile::id);
     this.spendProfileConfiguration = spendProfileConfiguration;
 
     this.commonHttpClient =
@@ -111,10 +112,12 @@ public class SpendProfileService {
     return spendModels.stream()
         .map(
             spendModel ->
-                SpendProfile.builder()
-                    .id(new SpendProfileId(spendModel.getId()))
-                    .billingAccountId(spendModel.getBillingAccountId())
-                    .build())
+                new SpendProfile(
+                    new SpendProfileId(spendModel.getId()),
+                    Optional.ofNullable(spendModel.getBillingAccountId()),
+                    null,
+                    null,
+                    null))
         .collect(Collectors.toList());
   }
 
@@ -129,13 +132,12 @@ public class SpendProfileService {
           "Retrieved billing profile ID {} from billing profile manager",
           profile.getId().toString());
       spend =
-          SpendProfile.builder()
-              .id(spendProfileId)
-              .billingAccountId(profile.getBillingAccountId())
-              .managedResourceGroupId(profile.getManagedResourceGroupId())
-              .tenantId(profile.getTenantId())
-              .subscriptionId(profile.getSubscriptionId())
-              .build();
+          new SpendProfile(
+              spendProfileId,
+              Optional.of(profile.getBillingAccountId()),
+              Optional.of(profile.getTenantId()),
+              Optional.of(profile.getSubscriptionId()),
+              Optional.of(profile.getManagedResourceGroupId()));
     } catch (ApiException ex) {
       if (ex.getCode() == HttpStatus.NOT_FOUND.value()
           || ex.getCode()
@@ -163,10 +165,12 @@ public class SpendProfileService {
             .cloudPlatform(CloudPlatform.GCP);
     try {
       var rawModel = getProfileApi(userRequest).createProfile(req);
-      return SpendProfile.builder()
-          .billingAccountId(rawModel.getBillingAccountId())
-          .id(new SpendProfileId(rawModel.getId().toString()))
-          .build();
+      return new SpendProfile(
+          new SpendProfileId(rawModel.getId().toString()),
+          Optional.of(rawModel.getBillingAccountId()),
+          null,
+          null,
+          null);
     } catch (ApiException e) {
       throw new BillingProfileManagerServiceAPIException(e);
     }

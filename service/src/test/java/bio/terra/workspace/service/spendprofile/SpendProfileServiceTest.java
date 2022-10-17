@@ -9,6 +9,7 @@ import bio.terra.workspace.connected.UserAccessUtils;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.spendprofile.exceptions.SpendUnauthorizedException;
 import com.google.common.collect.ImmutableList;
+import java.util.Optional;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -21,7 +22,7 @@ class SpendProfileServiceTest extends BaseConnectedTest {
   @Test
   void authorizeLinkingSuccess() {
     SpendProfileId id = spendUtils.defaultSpendId();
-    SpendProfile profile = SpendProfile.builder().id(id).build();
+    SpendProfile profile = new SpendProfile(id, null, null, null, null);
     SpendProfileService service =
         new SpendProfileService(samService, ImmutableList.of(profile), spendProfileConfiguration);
 
@@ -32,7 +33,7 @@ class SpendProfileServiceTest extends BaseConnectedTest {
   @Test
   void authorizeLinkingSamUnauthorizedThrowsUnauthorized() {
     SpendProfileId id = spendUtils.defaultSpendId();
-    SpendProfile profile = SpendProfile.builder().id(id).build();
+    SpendProfile profile = new SpendProfile(id, null, null, null, null);
     SpendProfileService service =
         new SpendProfileService(samService, ImmutableList.of(profile), spendProfileConfiguration);
 
@@ -56,10 +57,12 @@ class SpendProfileServiceTest extends BaseConnectedTest {
   void parseSpendProfileConfiguration() {
     SpendProfileService service = new SpendProfileService(samService, spendProfileConfiguration);
     assertEquals(
-        SpendProfile.builder()
-            .id(spendUtils.defaultSpendId())
-            .billingAccountId(spendUtils.defaultBillingAccountId())
-            .build(),
+        new SpendProfile(
+            spendUtils.defaultSpendId(),
+            Optional.of(spendUtils.defaultBillingAccountId()),
+            null,
+            null,
+            null),
         service.authorizeLinking(
             spendUtils.defaultSpendId(), false, userAccessUtils.defaultUserAuthRequest()));
   }

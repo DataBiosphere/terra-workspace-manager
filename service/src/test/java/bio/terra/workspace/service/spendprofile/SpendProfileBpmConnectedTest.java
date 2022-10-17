@@ -31,13 +31,6 @@ public class SpendProfileBpmConnectedTest extends BaseConnectedTest {
     SpendProfileService svc = new SpendProfileService(samService, spendProfileConfiguration);
     var profileName = "wsm-test-" + UUID.randomUUID();
     var billingAcctId = spendUtils.defaultBillingAccountId();
-    CreateProfileRequest req =
-        new CreateProfileRequest()
-            .id(UUID.randomUUID())
-            .billingAccountId(billingAcctId)
-            .displayName(profileName)
-            .biller("direct")
-            .cloudPlatform(CloudPlatform.GCP);
     profile =
         svc.createGcpSpendProfile(
             billingAcctId, profileName, "direct", userAccessUtils.thirdUserAuthRequest());
@@ -47,7 +40,7 @@ public class SpendProfileBpmConnectedTest extends BaseConnectedTest {
   public void cleanUp() {
     SpendProfileService svc = new SpendProfileService(samService, spendProfileConfiguration);
     svc.deleteProfile(
-        UUID.fromString(profile.getId().getId()), userAccessUtils.thirdUserAuthRequest());
+        UUID.fromString(profile.id().getId()), userAccessUtils.thirdUserAuthRequest());
     System.out.println("cleaned up!");
   }
 
@@ -55,9 +48,9 @@ public class SpendProfileBpmConnectedTest extends BaseConnectedTest {
   void authorizeLinkingSuccess() {
     SpendProfileService svc = new SpendProfileService(samService, spendProfileConfiguration);
     var linkedProfile =
-        svc.authorizeLinking(profile.getId(), true, userAccessUtils.thirdUserAuthRequest());
-    assertEquals(linkedProfile.getBillingAccountId(), profile.getBillingAccountId());
-    assertEquals(linkedProfile.getId(), profile.getId());
+        svc.authorizeLinking(profile.id(), true, userAccessUtils.thirdUserAuthRequest());
+    assertEquals(linkedProfile.billingAccountId(), profile.billingAccountId());
+    assertEquals(linkedProfile.id(), profile.id());
   }
 
   @Test
@@ -65,7 +58,6 @@ public class SpendProfileBpmConnectedTest extends BaseConnectedTest {
     SpendProfileService svc = new SpendProfileService(samService, spendProfileConfiguration);
     assertThrows(
         SpendUnauthorizedException.class,
-        () ->
-            svc.authorizeLinking(profile.getId(), true, userAccessUtils.defaultUserAuthRequest()));
+        () -> svc.authorizeLinking(profile.id(), true, userAccessUtils.defaultUserAuthRequest()));
   }
 }
