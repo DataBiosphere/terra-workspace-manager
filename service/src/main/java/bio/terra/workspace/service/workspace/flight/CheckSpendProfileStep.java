@@ -6,12 +6,14 @@ import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
+import bio.terra.stairway.StepStatus;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.spendprofile.SpendProfile;
 import bio.terra.workspace.service.spendprofile.SpendProfileId;
 import bio.terra.workspace.service.spendprofile.SpendProfileService;
+import bio.terra.workspace.service.spendprofile.exceptions.BillingProfileManagerServiceAPIException;
 import bio.terra.workspace.service.workspace.exceptions.MissingSpendProfileException;
 import bio.terra.workspace.service.workspace.exceptions.NoAzureAppCoordinatesException;
 import bio.terra.workspace.service.workspace.exceptions.NoBillingAccountException;
@@ -52,24 +54,30 @@ public class CheckSpendProfileStep implements Step {
         workspace
             .getSpendProfileId()
             .orElseThrow(() -> MissingSpendProfileException.forWorkspace(workspaceUuid));
+    try {
+      SpendProfile spendProfile =
+          spendProfileService.authorizeLinking(spendProfileId, bpmEnabled, userRequest);
 
-    SpendProfile spendProfile =
-        spendProfileService.authorizeLinking(spendProfileId, bpmEnabled, userRequest);
+      if (cloudPlatform == CloudPlatform.GCP) {
+        if (spendProfile.billingAccountId().isEmpty()) {
+          throw NoBillingAccountException.forSpendProfile(spendProfileId);
+        }
+      } else if (cloudPlatform == CloudPlatform.AZURE) {
+        if (spendProfile.managedResourceGroupId().isEmpty()
+            || spendProfile.subscriptionId().isEmpty()
+            || spendProfile.tenantId().isEmpty()) {
+          throw NoAzureAppCoordinatesException.forSpendProfile(spendProfileId);
+        }
+      }
 
-    if (cloudPlatform == CloudPlatform.GCP) {
-      if (spendProfile.billingAccountId().isEmpty()) {
-        throw NoBillingAccountException.forSpendProfile(spendProfileId);
+      workingMap.put(SPEND_PROFILE, spendProfile);
+      return StepResult.getStepResultSuccess();
+    } catch (BillingProfileManagerServiceAPIException e) {
+      if (e.getStatusCode().is5xxServerError()) {
+        return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, e);
       }
-    } else if (cloudPlatform == CloudPlatform.AZURE) {
-      if (spendProfile.managedResourceGroupId().isEmpty()
-          || spendProfile.subscriptionId().isEmpty()
-          || spendProfile.tenantId().isEmpty()) {
-        throw NoAzureAppCoordinatesException.forSpendProfile(spendProfileId);
-      }
+      return new StepResult(StepStatus.STEP_RESULT_FAILURE_FATAL, e);
     }
-
-    workingMap.put(SPEND_PROFILE, spendProfile);
-    return StepResult.getStepResultSuccess();
   }
 
   @Override

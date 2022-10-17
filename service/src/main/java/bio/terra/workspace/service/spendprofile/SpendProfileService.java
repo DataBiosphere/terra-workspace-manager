@@ -134,14 +134,12 @@ public class SpendProfileService {
       spend =
           new SpendProfile(
               spendProfileId,
-              Optional.of(profile.getBillingAccountId()),
-              Optional.of(profile.getTenantId()),
-              Optional.of(profile.getSubscriptionId()),
-              Optional.of(profile.getManagedResourceGroupId()));
+              Optional.ofNullable(profile.getBillingAccountId()),
+              Optional.ofNullable(profile.getTenantId()),
+              Optional.ofNullable(profile.getSubscriptionId()),
+              Optional.ofNullable(profile.getManagedResourceGroupId()));
     } catch (ApiException ex) {
-      if (ex.getCode() == HttpStatus.NOT_FOUND.value()
-          || ex.getCode()
-              == HttpStatus.UNAUTHORIZED.value()) { // TODO change to a check for FORBIDDEN
+      if (ex.getCode() == HttpStatus.FORBIDDEN.value()) {
         return null;
       } else {
         throw new BillingProfileManagerServiceAPIException(ex);
