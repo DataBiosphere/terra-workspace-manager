@@ -138,7 +138,8 @@ public class SpendProfileService {
               .build();
     } catch (ApiException ex) {
       if (ex.getCode() == HttpStatus.NOT_FOUND.value()
-          || ex.getCode() == HttpStatus.UNAUTHORIZED.value()) {  // TODO change to a check for FORBIDDEN
+          || ex.getCode()
+              == HttpStatus.UNAUTHORIZED.value()) { // TODO change to a check for FORBIDDEN
         return null;
       } else {
         throw new BillingProfileManagerServiceAPIException(ex);
