@@ -125,7 +125,7 @@ public class LandingZoneApiDispatch {
     return result;
   }
 
-  private ApiAzureLandingZoneResourcesList listAzureLandingZoneResourcesByPurpose(
+  public ApiAzureLandingZoneResourcesList listAzureLandingZoneResourcesByPurpose(
       BearerToken bearerToken, UUID landingZoneId, LandingZonePurpose resourcePurpose) {
     var result = new ApiAzureLandingZoneResourcesList().id(landingZoneId);
 
@@ -140,16 +140,6 @@ public class LandingZoneApiDispatch {
             .purpose(resourcePurpose.toString())
             .deployedResources(deployedResources));
     return result;
-  }
-
-  public List<ApiAzureLandingZoneDeployedResource> listSubnetsWithParentVNetByPurpose(
-      BearerToken bearerToken, UUID landingZoneId, LandingZonePurpose purpose) {
-
-    return listAzureLandingZoneResourcesByPurpose(bearerToken, landingZoneId, purpose)
-        .getResources()
-        .stream()
-        .flatMap(r -> r.getDeployedResources().stream())
-        .toList();
   }
 
   private ApiAzureLandingZoneDeployedResource toApiAzureLandingZoneDeployedResource(
