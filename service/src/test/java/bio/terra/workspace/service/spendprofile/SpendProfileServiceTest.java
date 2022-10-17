@@ -8,7 +8,6 @@ import bio.terra.workspace.common.BaseConnectedTest;
 import bio.terra.workspace.connected.UserAccessUtils;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.spendprofile.exceptions.SpendUnauthorizedException;
-import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import com.google.common.collect.ImmutableList;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,14 +18,11 @@ class SpendProfileServiceTest extends BaseConnectedTest {
   @Autowired SpendConnectedTestUtils spendUtils;
   @Autowired UserAccessUtils userAccessUtils;
 
-  private static SpendProfile buildEmptyProfile(SpendProfileId id) {
-    return new SpendProfile(id, CloudPlatform.ANY, null, null, null, null);
-  }
-
   @Test
   void authorizeLinkingSuccess() {
     SpendProfileId id = spendUtils.defaultSpendId();
-    SpendProfile profile = buildEmptyProfile(id);
+    SpendProfile profile =
+        SpendProfile.buildGcpSpendProfile(id, spendUtils.defaultBillingAccountId());
     SpendProfileService service =
         new SpendProfileService(samService, ImmutableList.of(profile), spendProfileConfiguration);
 
@@ -37,7 +33,8 @@ class SpendProfileServiceTest extends BaseConnectedTest {
   @Test
   void authorizeLinkingSamUnauthorizedThrowsUnauthorized() {
     SpendProfileId id = spendUtils.defaultSpendId();
-    SpendProfile profile = buildEmptyProfile(id);
+    SpendProfile profile =
+        SpendProfile.buildGcpSpendProfile(new SpendProfileId("bad-profile-id"), "fake");
     SpendProfileService service =
         new SpendProfileService(samService, ImmutableList.of(profile), spendProfileConfiguration);
 
