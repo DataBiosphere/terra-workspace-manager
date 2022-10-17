@@ -165,6 +165,10 @@ echo "export PET_SA_EMAIL='${PET_SA_EMAIL}'" >> "/home/${JUPYTER_USER}/.bash_pro
 # These are equivalent environment variables which are set for a
 # command when calling "terra app execute <command>".
 
+# TERRA_USER_EMAIL is the Terra user account email address.
+
+echo "export TERRA_USER_EMAIL='${OWNER_EMAIL}'" >> "/home/${JUPYTER_USER}/.bash_profile"
+
 # GOOGLE_CLOUD_PROJECT is the project id for the GCP project backing the
 # workspace.
 
