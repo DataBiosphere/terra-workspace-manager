@@ -1,10 +1,9 @@
 package bio.terra.workspace.service.resource.controlled.flight.clone.workspace;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.mockito.Mockito.eq;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.Mockito.when;
 
 import bio.terra.stairway.FlightContext;
@@ -12,32 +11,26 @@ import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.StepResult;
 import bio.terra.workspace.common.BaseUnitTest;
 import bio.terra.workspace.db.FolderDao;
+import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.service.folder.model.Folder;
 import bio.terra.workspace.service.job.JobMapKeys;
-import bio.terra.workspace.service.spendprofile.SpendProfileId;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
-import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.FolderKeys;
 import bio.terra.workspace.service.workspace.model.Workspace;
-import bio.terra.workspace.service.workspace.model.WorkspaceStage;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.google.common.collect.ImmutableList;
-import java.util.Collections;
-import java.util.Map;
+import bio.terra.workspace.unit.WorkspaceUnitTestUtils;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.mockito.Mock;
+import org.springframework.beans.factory.annotation.Autowired;
 
 public class CloneAllFoldersStepTest extends BaseUnitTest {
 
-  @MockBean private FlightContext mockFlightContext;
-  @MockBean private FolderDao mockFolderDao;
+  @Mock private FlightContext mockFlightContext;
+  @Autowired private WorkspaceDao workspaceDao;
+  @Autowired private FolderDao folderDao;
   private CloneAllFoldersStep cloneAllFoldersStep;
 
-  private static final UUID SOURCE_WORKSPACE_ID = UUID.randomUUID();
-  private static final UUID DESTINATION_WORKSPACE_ID = UUID.randomUUID();
-  private static final String DESTINATION_WORKSPACE_USERFACING_ID =
-      "destination-workspace-userfacing-id";
+  private static UUID SOURCE_WORKSPACE_ID;
   private static final UUID SOURCE_PARENT_FOLDER_ID = UUID.randomUUID();
   private static final UUID SOURCE_SON_FOLDER_ID = UUID.randomUUID();
   private static final String SOURCE_PARENT_FOLDER_NAME = "source-parent-folder-id";
@@ -48,39 +41,38 @@ public class CloneAllFoldersStepTest extends BaseUnitTest {
 
   @BeforeEach
   public void setup() throws InterruptedException {
-    when(mockFolderDao.listFoldersInWorkspace(eq(SOURCE_WORKSPACE_ID)))
-        .thenReturn(
-            ImmutableList.of(
-                new Folder(
-                    SOURCE_PARENT_FOLDER_ID,
-                    SOURCE_WORKSPACE_ID,
-                    SOURCE_PARENT_FOLDER_NAME,
-                    SOURCE_PARENT_FOLDER_DESCRIPTION,
-                    /*parentFolderId=*/ null,
-                    /*properties=*/ null),
-                new Folder(
-                    SOURCE_SON_FOLDER_ID,
-                    SOURCE_WORKSPACE_ID,
-                    SOURCE_SON_FOLDER_NAME,
-                    SOURCE_SON_FOLDER_DESCRIPTION,
-                    SOURCE_PARENT_FOLDER_ID,
-                    /*properties=*/ null)));
-    cloneAllFoldersStep = new CloneAllFoldersStep(mockFolderDao);
+
+    SOURCE_WORKSPACE_ID = WorkspaceUnitTestUtils.createWorkspaceWithGcpContext(workspaceDao);
+
+    folderDao.createFolder(
+        new Folder(
+            SOURCE_PARENT_FOLDER_ID,
+            SOURCE_WORKSPACE_ID,
+            SOURCE_PARENT_FOLDER_NAME,
+            SOURCE_PARENT_FOLDER_DESCRIPTION,
+            /*parentFolderId=*/ null,
+            /*properties=*/ null));
+    folderDao.createFolder(
+        new Folder(
+            SOURCE_SON_FOLDER_ID,
+            SOURCE_WORKSPACE_ID,
+            SOURCE_SON_FOLDER_NAME,
+            SOURCE_SON_FOLDER_DESCRIPTION,
+            SOURCE_PARENT_FOLDER_ID,
+            /*properties=*/ null));
+
+    cloneAllFoldersStep = new CloneAllFoldersStep(folderDao);
   }
 
   @Test
   public void doStep_foldersCloned() throws InterruptedException {
-    var inputParameters = new FlightMap();
     var workingMap = new FlightMap();
-    var destinationWorkspace =
-        new Workspace(
-            DESTINATION_WORKSPACE_ID,
-            DESTINATION_WORKSPACE_USERFACING_ID,
-            /*displayName=*/ null,
-            /*description=*/ null,
-            new SpendProfileId(null),
-            Collections.emptyMap(),
-            WorkspaceStage.MC_WORKSPACE);
+    var inputParameters = new FlightMap();
+
+    UUID destinationWorkspaceId =
+        WorkspaceUnitTestUtils.createWorkspaceWithGcpContext(workspaceDao);
+    Workspace destinationWorkspace = workspaceDao.getWorkspace(destinationWorkspaceId);
+
     inputParameters.put(ControlledResourceKeys.SOURCE_WORKSPACE_ID, SOURCE_WORKSPACE_ID);
     inputParameters.put(JobMapKeys.REQUEST.getKeyName(), destinationWorkspace);
 
@@ -88,41 +80,55 @@ public class CloneAllFoldersStepTest extends BaseUnitTest {
     when(mockFlightContext.getWorkingMap()).thenReturn(workingMap);
 
     StepResult stepResult = cloneAllFoldersStep.doStep(mockFlightContext);
+
     assertEquals(StepResult.getStepResultSuccess(), stepResult);
 
-    Map<String, String> folderIdMap =
-        workingMap.get(FolderKeys.FOLDER_IDS_TO_CLONE_MAP, new TypeReference<>() {});
-    assertNotNull(folderIdMap.get(SOURCE_PARENT_FOLDER_ID.toString()));
-    assertNotNull(folderIdMap.get(SOURCE_SON_FOLDER_ID.toString()));
+    assertEquals(
+        2,
+        folderDao.listFoldersInWorkspace(destinationWorkspaceId).size(),
+        "Destination workspace clones the folders successfully");
+    assertNotNull(
+        folderDao.listFoldersInWorkspace(destinationWorkspaceId).stream()
+            .filter(folder -> folder.displayName().equals(SOURCE_PARENT_FOLDER_NAME)),
+        "Destination parent folder is cloned successfully");
+    Folder destinationParentFolder =
+        folderDao.listFoldersInWorkspace(destinationWorkspaceId).stream()
+            .filter(folder -> folder.displayName().equals(SOURCE_PARENT_FOLDER_NAME))
+            .findFirst()
+            .get();
+    assertNotNull(
+        folderDao.listFoldersInWorkspace(destinationWorkspaceId).stream()
+            .filter(folder -> folder.displayName().equals(SOURCE_SON_FOLDER_NAME))
+            .findFirst(),
+        "Destination son folder is cloned successfully");
+    Folder destinationSonFolder =
+        folderDao.listFoldersInWorkspace(destinationWorkspaceId).stream()
+            .filter(folder -> folder.displayName().equals(SOURCE_SON_FOLDER_NAME))
+            .findFirst()
+            .get();
 
-    verify(mockFolderDao, times(1))
-        .createFolder(
-            eq(
-                new Folder(
-                    UUID.fromString(folderIdMap.get(SOURCE_PARENT_FOLDER_ID.toString())),
-                    DESTINATION_WORKSPACE_ID,
-                    SOURCE_PARENT_FOLDER_NAME,
-                    SOURCE_PARENT_FOLDER_DESCRIPTION,
-                    /*parentFolderId=*/ null,
-                    /*properties=*/ null)));
-    verify(mockFolderDao, times(1))
-        .createFolder(
-            eq(
-                new Folder(
-                    UUID.fromString(folderIdMap.get(SOURCE_SON_FOLDER_ID.toString())),
-                    DESTINATION_WORKSPACE_ID,
-                    SOURCE_SON_FOLDER_NAME,
-                    SOURCE_SON_FOLDER_DESCRIPTION,
-                    /*parentFolderId=*/ null,
-                    /*properties=*/ null)));
-
-    verify(mockFolderDao, times(1))
-        .updateFolder(
-            eq(DESTINATION_WORKSPACE_ID),
-            eq(UUID.fromString(folderIdMap.get(SOURCE_SON_FOLDER_ID.toString()))),
-            /*displayName=*/ eq(null),
-            /*description=*/ eq(null),
-            eq(UUID.fromString(folderIdMap.get(SOURCE_PARENT_FOLDER_ID.toString()))),
-            /*updateParent=*/ eq(true));
+    assertNotEquals(
+        destinationParentFolder.id(),
+        SOURCE_PARENT_FOLDER_ID,
+        "Destination parent folder id is generated successfully");
+    assertNotEquals(
+        destinationSonFolder.id(),
+        SOURCE_SON_FOLDER_ID,
+        "Destination son folder id is generated successfully");
+    assertEquals(
+        destinationParentFolder.description(),
+        SOURCE_PARENT_FOLDER_DESCRIPTION,
+        "Destination parent folder description is cloned successfully");
+    assertEquals(
+        destinationSonFolder.description(),
+        SOURCE_SON_FOLDER_DESCRIPTION,
+        "Destination son folder description is cloned successfully");
+    assertNull(
+        destinationParentFolder.parentFolderId(),
+        "Destination parent folder parent id cloned successfully");
+    assertEquals(
+        destinationParentFolder.id(),
+        destinationSonFolder.parentFolderId(),
+        "Destination son folder parent id cloned successfully");
   }
 }
