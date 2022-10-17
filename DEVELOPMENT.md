@@ -29,16 +29,27 @@ Workspace Manager's logic for handling requests is broken into several layers. F
 - Flights (`service/**/flight`): collections of [Stairway](https://github.com/DataBiosphere/stairway) individual logical steps which are performed in order as a transaction. Individual steps may call service or DAO methods.
 - Data Access Objects (DAOs) (`db/`): wrappers around the WSM database. Methods that interact with the database directly live here, and Services call DAO methods rather than the database directly.
 
+### REST API Class Usage
+In general, API class objects are converted to and from internal WSM objects in the Controller layer.
+There are two exceptions to this rule.
+
+First, we use API objects directly to pass cloud resource object parameters through create and update methods.
+There is little utility in copying the API structure into an identical internal structure, simply to make the
+cloud call and discard the object.
+
+Second, we create API response objects within flight steps. That allows the JobService to implement a generic
+job response.
+
 ## GitHub Interactions
 
 We currently have these workflows:
 
-Workflow      | Triggers         | Work
---------------|------------------|-------
-_test_ | on PR and merge to dev | runs the unit, connected and azure tests
-_pr-integration_ | on PR and merge to dev | runs the TestRunner-based integration test suite from the GHA host VM
-_nightly-tests_ | nightly at 2am | runs the TestRunner-based integration, perf, and resiliency test suites on the wsmtest personal environment
-_tag-publish_ | on merge to dev | tags, version bumps, publishes client to artifactory, pushes image to GCR
+| Workflow         | Triggers               | Work                                                                                                        |
+|------------------|------------------------|-------------------------------------------------------------------------------------------------------------|
+| _test_           | on PR and merge to dev | runs the unit, connected and azure tests                                                                    |
+| _pr-integration_ | on PR and merge to dev | runs the TestRunner-based integration test suite from the GHA host VM                                       |
+| _nightly-tests_  | nightly at 2am         | runs the TestRunner-based integration, perf, and resiliency test suites on the wsmtest personal environment |
+| _tag-publish_    | on merge to dev        | tags, version bumps, publishes client to artifactory, pushes image to GCR                                   |
 
 ## Deployment
 

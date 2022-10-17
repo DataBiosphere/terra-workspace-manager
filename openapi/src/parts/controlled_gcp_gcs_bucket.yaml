@@ -347,7 +347,8 @@ components:
           type: string
         bucketName:
           description: >-
-            Name of created bucket (not the resource name). This name must
+            Name of created bucket (not the resource name). Must not be set if
+            cloningInstructions is COPY_REFERENCE. This name must
             be globally unique, so it can't be a copy of the original bucket name.
             It also can't be a simple formula like copy-of-bucket-name, as that would
             fail on subsequent clone operations with bucket-name as the source bucket.
@@ -356,7 +357,8 @@ components:
         location:
           description: >-
             A valid bucket location per https://cloud.google.com/storage/docs/locations.
-            If null, will use source bucket's location.
+            Must not be set if cloningInstructions is COPY_REFERENCE. If null,
+            will use source bucket's location.
           type: string
         jobControl:
           $ref: '#/components/schemas/JobControl'
@@ -454,7 +456,9 @@ components:
             $ref: '#/components/schemas/CreatedControlledGcpGcsBucket'
 
     ClonedControlledGcpGcsBucketResponse:
-      description: Response to GCS bucket clone operation.
+      description: >-
+        Response to GCS bucket clone operation where source bucket is
+        controlled. (Destination bucket may be controlled or referenced.)
       content:
         application/json:
           schema:

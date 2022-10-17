@@ -107,12 +107,11 @@ public class FolderDaoTest extends BaseUnitTest {
     var createdSecondFolder = folderDao.createFolder(secondFolder);
     var createdThirdFolder = folderDao.createFolder(thirdFolder);
 
-    List<Folder> retrievedFoldersInWorkspace1 =
-        folderDao.listFolders(workspaceUuid, /*parentFolderId=*/ null);
+    List<Folder> retrievedFoldersInWorkspace1 = folderDao.listFoldersInWorkspace(workspaceUuid);
     var expectedFoldersInWorkspace1 = List.of(createdFolder, createdSecondFolder);
     assertEquals(expectedFoldersInWorkspace1, retrievedFoldersInWorkspace1);
     List<Folder> retrievedFolderInWorkspace2 =
-        folderDao.listFolders(secondWorkspaceUuid, /*parentFolderId=*/ null);
+        folderDao.listFoldersInWorkspace(secondWorkspaceUuid);
     var expectedFoldersInWorkspace2 = List.of(createdThirdFolder);
     assertEquals(expectedFoldersInWorkspace2, retrievedFolderInWorkspace2);
   }
@@ -121,24 +120,23 @@ public class FolderDaoTest extends BaseUnitTest {
   public void listFolders_listsSubFolders() {
     UUID workspaceUuid = createWorkspaceWithoutGcpContext(workspaceDao);
     var folder = getFolder("foo", workspaceUuid);
-    // second and third folders are under folder foo.
+    // foo/bar
     var secondFolder = getFolder("bar", workspaceUuid, folder.id());
-    var thirdFolder = getFolder("garrr", workspaceUuid, folder.id());
+    // foo/bar/garrr
+    var thirdFolder = getFolder("garrr", workspaceUuid, secondFolder.id());
 
     var unused = folderDao.createFolder(folder);
     var createdSecondFolder = folderDao.createFolder(secondFolder);
     var createdThirdFolder = folderDao.createFolder(thirdFolder);
 
-    List<Folder> retrievedFolders = folderDao.listFolders(workspaceUuid, folder.id());
-    var expectedFolders = List.of(createdSecondFolder, createdThirdFolder);
+    List<Folder> retrievedFolders = folderDao.listFoldersRecursively(folder.id());
+    var expectedFolders = List.of(folder, createdSecondFolder, createdThirdFolder);
     assertEquals(expectedFolders, retrievedFolders);
   }
 
   @Test
   public void listFolders_parentFolderNotExist() {
-    UUID workspaceUuid = createWorkspaceWithoutGcpContext(workspaceDao);
-
-    ImmutableList<Folder> folders = folderDao.listFolders(workspaceUuid, UUID.randomUUID());
+    ImmutableList<Folder> folders = folderDao.listFoldersRecursively(UUID.randomUUID());
     assertTrue(folders.isEmpty());
   }
 
@@ -270,26 +268,41 @@ public class FolderDaoTest extends BaseUnitTest {
     Folder secondCreatedFolder = folderDao.createFolder(secondFolder);
     Folder thirdCreatedFolder = folderDao.createFolder(thirdFolder);
 
-    // foo -> gar -> bar -> foo
+    // foo -> garr -> bar -> foo
     assertThrows(
         BadRequestException.class,
         () ->
             folderDao.updateFolder(
-                workspaceUuid, createdFolder.id(), null, null, thirdCreatedFolder.id(), null));
+                workspaceUuid,
+                createdFolder.id(),
+                /*displayName=*/ null,
+                /*description=*/ null,
+                thirdCreatedFolder.id(),
+                /*updateParent=*/ true));
 
     // foo -> bar -> foo
     assertThrows(
         BadRequestException.class,
         () ->
             folderDao.updateFolder(
-                workspaceUuid, createdFolder.id(), null, null, secondCreatedFolder.id(), null));
+                workspaceUuid,
+                createdFolder.id(),
+                /*displayName=*/ null,
+                /*description=*/ null,
+                secondCreatedFolder.id(),
+                /*updateParent=*/ true));
 
     // foo -> foo
     assertThrows(
         BadRequestException.class,
         () ->
             folderDao.updateFolder(
-                workspaceUuid, createdFolder.id(), null, null, createdFolder.id(), null));
+                workspaceUuid,
+                createdFolder.id(),
+                /*displayName=*/ null,
+                /*description=*/ null,
+                createdFolder.id(),
+                /*updateParent=*/ true));
 
     // bar -> garr -> bar
     assertThrows(
@@ -298,10 +311,10 @@ public class FolderDaoTest extends BaseUnitTest {
             folderDao.updateFolder(
                 workspaceUuid,
                 secondCreatedFolder.id(),
-                null,
-                null,
+                /*displayName=*/ null,
+                /*description=*/ null,
                 thirdCreatedFolder.id(),
-                null));
+                /*updateParent=*/ true));
   }
 
   @Test

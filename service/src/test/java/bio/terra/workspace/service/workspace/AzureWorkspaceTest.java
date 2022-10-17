@@ -4,7 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import bio.terra.workspace.app.configuration.external.AzureTestConfiguration;
-import bio.terra.workspace.common.BaseAzureTest;
+import bio.terra.workspace.common.BaseAzureConnectedTest;
 import bio.terra.workspace.connected.WorkspaceConnectedTestUtils;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
@@ -19,7 +19,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.MockBean;
 
-public class AzureWorkspaceTest extends BaseAzureTest {
+public class AzureWorkspaceTest extends BaseAzureConnectedTest {
 
   @Autowired private AzureTestConfiguration azureTestConfiguration;
   @Autowired private JobService jobService;

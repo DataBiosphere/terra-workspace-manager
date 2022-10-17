@@ -20,12 +20,12 @@ Please refer to the GitHub Action workflow use cases in the `Run a test suite` s
 
 Integration Test
 ```
-./gradlew runTest --args="configs/integration/BasicAuthenticated.json /tmp/TR"
+./gradlew :integration:runTest --args="configs/integration/BasicAuthenticated.json /tmp/TR"
 ```
 
 Perf Test
 ```
-./gradlew runTest --args="configs/perf/BasicAuthenticated.json /tmp/TR"
+./gradlew :integration:runTest --args="configs/perf/BasicAuthenticated.json /tmp/TR"
 ```
 
 #### Run a test suite
@@ -35,12 +35,12 @@ See `test-runner-integration.yml` and `test-runner-nightly-perf.yml` in `.github
 
 Integration Test
 ```
-./gradlew runTest --args="suites/FullIntegration.json /tmp/TR"
+./gradlew :integration:runTest --args="suites/FullIntegration.json /tmp/TR"
 ```
 
 Perf Test
 ```
-./gradlew runTest --args="suites/BasicPerf.json /tmp/TR"
+./gradlew :integration:runTest --args="suites/BasicPerf.json /tmp/TR"
 ```
 
 ### Running Resiliency Tests Through Test Runner Library
@@ -89,14 +89,14 @@ The bucket location is a parameter in an upload config file located in the `reso
 The Gradle `uploadResults` task below archive the test results located in `/tmp/TR` to the bucket specified in config file `CompressDirectoryToBucket.json`.
 
 ```
-./gradlew uploadResults --args="CompressDirectoryToBucket.json /tmp/TR"
+./gradlew :integration:uploadResults --args="CompressDirectoryToBucket.json /tmp/TR"
 ```
 
 The default server that the test will run against is specified in the test config file.
 To override the default server, set an environment variable as in the following example.
 ```
 export TEST_RUNNER_SERVER_SPECIFICATION_FILE="workspace-dev.json" 
-./gradlew  runTest --args="configs/integration/BasicAuthenticated.json /tmp/TR"
+./gradlew  :integration:runTest --args="configs/integration/BasicAuthenticated.json /tmp/TR"
 ```
 
 #### SA keys from Vault
@@ -137,13 +137,13 @@ The version of the Workspace Manager client JAR file is specified in the build.g
 fetched from the Broad Institute Maven repository. You can override this to use a local version of the Workspace Manager client
 JAR file by specifying a Gradle project property, either with a command line argument
 
-`./gradlew -Pworkspacemanagerclientjar=~/terra-workspace-manager/workspace-manager-client/build/libs/workspace-manager-client-0.5.0-SNAPSHOT.jar runTest --args="configs/integration/BasicAuthenticated.json"
+`./gradlew -Pworkspacemanagerclientjar=~/terra-workspace-manager/workspace-manager-client/build/libs/workspace-manager-client-0.5.0-SNAPSHOT.jar :integration:runTest --args="configs/integration/BasicAuthenticated.json"
 
 or an environment variable.
 
 ```
 export ORG_GRADLE_PROJECT_workspacemanagerclientjar=~/terra-workspace-manager/workspace-manager-client/build/libs/workspace-manager-client-0.5.0-SNAPSHOT.jar
-./gradlew runTest --args="configs/integration/BasicAuthenticated.json /tmp/TestRunnerResults"
+./gradlew :integration:runTest --args="configs/integration/BasicAuthenticated.json /tmp/TestRunnerResults"
 ```
 
 This is useful for debugging or testing local server code changes that affect the generated client library (e.g. new API
@@ -165,7 +165,7 @@ for running against a local server. Once you have a local server running separat
 you can run client tests against that server, e.g.
 ```
 export TEST_RUNNER_SERVER_SPECIFICATION_FILE="workspace-local.json" 
-./gradlew runTest --args="configs/integration/BasicAuthenticated.json /tmp/TR"
+./gradlew :integration:runTest --args="configs/integration/BasicAuthenticated.json /tmp/TR"
 ```
 
 If setting the server file to `workspace-dev.json`, `workspace-alpha.json`, `workspace-staging.json`, you are pointing the test

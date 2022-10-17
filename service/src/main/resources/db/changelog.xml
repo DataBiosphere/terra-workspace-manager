@@ -14,4 +14,5 @@
     <include file="changesets/20220824_folder_table.yaml" relativeToChangelogFile="true"/>
     <include file="changesets/20220907_add_resource_properties_column.yaml" relativeToChangelogFile="true" />
     <include file="changesets/20220920_add_folder_properties_column.yaml" relativeToChangelogFile="true" />
+    <include file="changesets/20221014_workspace_activity_log_add_index.yaml" relativeToChangelogFile="true" />
 </databaseChangeLog>

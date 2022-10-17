@@ -8,7 +8,6 @@ import bio.terra.workspace.common.utils.RetryRules;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.model.WsmIamRole;
 import bio.terra.workspace.service.job.JobMapKeys;
-import java.util.Optional;
 import java.util.UUID;
 
 public class RemoveUserFromWorkspaceFlight extends Flight {
@@ -23,9 +22,11 @@ public class RemoveUserFromWorkspaceFlight extends Flight {
     AuthenticatedUserRequest userRequest =
         inputParameters.get(JobMapKeys.AUTH_USER_INFO.getKeyName(), AuthenticatedUserRequest.class);
     String userToRemove = inputParameters.get(WorkspaceFlightMapKeys.USER_TO_REMOVE, String.class);
-    Optional<WsmIamRole> roleToRemove =
-        Optional.ofNullable(
-            inputParameters.get(WorkspaceFlightMapKeys.ROLE_TO_REMOVE, WsmIamRole.class));
+    WsmIamRole roleToRemove =
+        inputParameters.get(WorkspaceFlightMapKeys.ROLE_TO_REMOVE, String.class) != null
+            ? WsmIamRole.valueOf(
+                inputParameters.get(WorkspaceFlightMapKeys.ROLE_TO_REMOVE, String.class))
+            : null;
 
     // Flight plan:
     // 0. (Pre-flight): Validate that the user is directly granted the specified workspace role.
@@ -44,11 +45,7 @@ public class RemoveUserFromWorkspaceFlight extends Flight {
     RetryRule dbRetry = RetryRules.shortDatabase();
     addStep(
         new RemoveUserFromSamStep(
-            workspaceUuid,
-            roleToRemove.orElse(null),
-            userToRemove,
-            appContext.getSamService(),
-            userRequest),
+            workspaceUuid, roleToRemove, userToRemove, appContext.getSamService(), userRequest),
         samRetry);
     addStep(
         new CheckUserStillInWorkspaceStep(

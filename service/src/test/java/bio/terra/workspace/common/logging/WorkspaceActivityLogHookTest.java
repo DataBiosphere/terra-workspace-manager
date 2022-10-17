@@ -1,5 +1,6 @@
 package bio.terra.workspace.common.logging;
 
+import static bio.terra.workspace.common.utils.MockMvcUtils.USER_REQUEST;
 import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.CONTROLLED_RESOURCES_TO_DELETE;
 import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.FOLDER_ID;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -25,8 +26,6 @@ import bio.terra.workspace.db.WorkspaceActivityLogDao;
 import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.service.folder.flights.DeleteFolderFlight;
 import bio.terra.workspace.service.folder.model.Folder;
-import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
-import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook.ControlledAiNotebookInstanceResource;
 import bio.terra.workspace.service.resource.controlled.flight.delete.DeleteControlledResourcesFlight;
@@ -54,17 +53,8 @@ import org.broadinstitute.dsde.workbench.client.sam.model.UserStatusInfo;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.mock.mockito.MockBean;
 
 public class WorkspaceActivityLogHookTest extends BaseUnitTest {
-
-  /** A fake authenticated user request. */
-  private static final AuthenticatedUserRequest USER_REQUEST =
-      new AuthenticatedUserRequest()
-          .token(Optional.of("fake-token"))
-          .email("fake@email.com")
-          .subjectId("fakeID123");
-
   private static final UserStatusInfo USER_STATUS_INFO =
       new UserStatusInfo()
           .userEmail(USER_REQUEST.getEmail())
@@ -74,11 +64,10 @@ public class WorkspaceActivityLogHookTest extends BaseUnitTest {
   @Autowired private ResourceDao resourceDao;
   @Autowired private WorkspaceActivityLogHook hook;
   @Autowired private FolderDao folderDao;
-  @MockBean private SamService mockSamService;
 
   @BeforeEach
   void setUpOnce() throws InterruptedException {
-    when(mockSamService.getUserStatusInfo(any())).thenReturn(USER_STATUS_INFO);
+    when(mockSamService().getUserStatusInfo(any())).thenReturn(USER_STATUS_INFO);
   }
 
   @Test
