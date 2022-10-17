@@ -90,9 +90,9 @@ sudo mv nextflow /usr/bin/nextflow
 
 # Install cromwell
 readonly CROMWELL_LATEST_VERSION="81"
-sudo -u "${JUPYTER_USER}" sh -c "mkdir -p /home/${JUPYTER_USER}/cromwell"
+sudo -u "${JUPYTER_USER}" sh -c "mkdir -p usr/share/java"
 sudo -u "${JUPYTER_USER}" sh -c "curl -LO https://github.com/broadinstitute/cromwell/releases/download/${CROMWELL_LATEST_VERSION}/cromwell-${CROMWELL_LATEST_VERSION}.jar"
-mv "cromwell-${CROMWELL_LATEST_VERSION}.jar" "/home/${JUPYTER_USER}/cromwell/"
+sudo -u "${JUPYTER_USER}" sh -c "mv cromwell-${CROMWELL_LATEST_VERSION}.jar usr/share/java"
 
 #Install cromshell
 sudo apt-get -y install mailutils
@@ -116,7 +116,7 @@ fi
 sudo -u "${JUPYTER_USER}" sh -c "terra auth login --mode=APP_DEFAULT_CREDENTIALS"
 
 # Generate cromwell.config
-sudo -u "${JUPYTER_USER}" sh -c "terra cromwell config-generate"
+sudo -u "${JUPYTER_USER}" sh -c "terra cromwell config-generate --dir=cromwell"
 
 ####################################
 # Shell and notebook environment
