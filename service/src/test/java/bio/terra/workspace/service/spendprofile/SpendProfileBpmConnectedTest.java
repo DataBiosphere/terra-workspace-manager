@@ -62,13 +62,14 @@ public class SpendProfileBpmConnectedTest extends BaseConnectedTest {
 
   @Test
   void authorizeLinkingUnknownId() {
-    var ex = assertThrows(
-        BillingProfileManagerServiceAPIException.class,
-        () ->
-            spendProfileService.authorizeLinking(
-                new SpendProfileId(UUID.randomUUID().toString()),
-                true,
-                userAccessUtils.thirdUserAuthRequest()));
-    assert(ex.getStatusCode() == HttpStatus.NOT_FOUND);
+    var ex =
+        assertThrows(
+            BillingProfileManagerServiceAPIException.class,
+            () ->
+                spendProfileService.authorizeLinking(
+                    new SpendProfileId(UUID.randomUUID().toString()),
+                    true,
+                    userAccessUtils.thirdUserAuthRequest()));
+    assert (ex.getStatusCode() == HttpStatus.NOT_FOUND);
   }
 }

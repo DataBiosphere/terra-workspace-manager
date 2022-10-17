@@ -163,12 +163,8 @@ public class SpendProfileService {
             .cloudPlatform(CloudPlatform.GCP);
     try {
       var rawModel = getProfileApi(userRequest).createProfile(req);
-      return new SpendProfile(
-          new SpendProfileId(rawModel.getId().toString()),
-          Optional.of(rawModel.getBillingAccountId()),
-          null,
-          null,
-          null);
+      return SpendProfile.buildGcpSpendProfile(
+          new SpendProfileId(rawModel.getId().toString()), rawModel.getBillingAccountId());
     } catch (ApiException e) {
       throw new BillingProfileManagerServiceAPIException(e);
     }

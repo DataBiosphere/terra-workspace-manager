@@ -14,4 +14,13 @@ public record SpendProfile(
     Optional<String> billingAccountId,
     Optional<UUID> tenantId,
     Optional<UUID> subscriptionId,
-    Optional<String> managedResourceGroupId) {}
+    Optional<String> managedResourceGroupId) {
+
+  public static SpendProfile buildGcpSpendProfile(SpendProfileId id, String billingAccountId) {
+    return new SpendProfile(id, Optional.of(billingAccountId), null, null, null);
+  }
+
+  public static SpendProfile buildEmptyProfile(SpendProfileId id) {
+    return new SpendProfile(id, null, null, null, null);
+  }
+}
