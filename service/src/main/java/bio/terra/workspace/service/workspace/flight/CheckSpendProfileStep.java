@@ -57,13 +57,13 @@ public class CheckSpendProfileStep implements Step {
         spendProfileService.authorizeLinking(spendProfileId, bpmEnabled, userRequest);
 
     if (cloudPlatform == CloudPlatform.GCP) {
-      if (spendProfile.billingAccountId().isEmpty()) {
+      if (spendProfile.getBillingAccountId().isEmpty()) {
         throw NoBillingAccountException.forSpendProfile(spendProfileId);
       }
     } else if (cloudPlatform == CloudPlatform.AZURE) {
-      if (spendProfile.managedResourceGroupId().isEmpty()
-          || spendProfile.subscriptionId().isEmpty()
-          || spendProfile.tenantId().isEmpty()) {
+      if (spendProfile.getManagedResourceGroupId().isEmpty()
+          || spendProfile.getSubscriptionId().isEmpty()
+          || spendProfile.getTenantId().isEmpty()) {
         throw NoAzureAppCoordinatesException.forSpendProfile(spendProfileId);
       }
     }

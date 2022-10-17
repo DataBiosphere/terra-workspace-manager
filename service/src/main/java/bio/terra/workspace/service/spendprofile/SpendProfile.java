@@ -1,6 +1,8 @@
 package bio.terra.workspace.service.spendprofile;
 
-import com.google.auto.value.AutoValue;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 import javax.annotation.Nullable;
@@ -11,37 +13,109 @@ import javax.annotation.Nullable;
  * <p>Each Spend Profile may have cloud native billing resources associated with it. Spend Profiles
  * also have Terra IAM to manage who is allowed to modify and link them.
  */
-@AutoValue
-public abstract class SpendProfile {
+public class SpendProfile {
   /** The unique identifier of the SpendProfile. */
-  public abstract SpendProfileId id();
+  private final SpendProfileId id;
 
   /** The id of the Google Billing Account associated with the SpendProfile, if there is one. */
-  public abstract Optional<String> billingAccountId();
+  private final Optional<String> billingAccountId;
 
-  public abstract Optional<UUID> tenantId();
+  private final Optional<UUID> tenantId;
 
-  public abstract Optional<UUID> subscriptionId();
+  private final Optional<UUID> subscriptionId;
 
-  public abstract Optional<String> managedResourceGroupId();
+  private final Optional<String> managedResourceGroupId;
 
-  public static Builder builder() {
-    return new AutoValue_SpendProfile.Builder();
+  @JsonCreator
+  public SpendProfile(
+      @JsonProperty("id") SpendProfileId id,
+      @JsonProperty("billingAccountId") @Nullable String billingAccountId,
+      @JsonProperty("tenantId") @Nullable UUID tenantId,
+      @JsonProperty("subscriptionId") @Nullable UUID subscriptionId,
+      @JsonProperty("managedResourceGroupId") @Nullable String managedResourceGroupId) {
+    this.id = id;
+    this.billingAccountId = Optional.ofNullable(billingAccountId);
+    this.tenantId = Optional.ofNullable(tenantId);
+    this.subscriptionId = Optional.ofNullable(subscriptionId);
+    this.managedResourceGroupId = Optional.ofNullable(managedResourceGroupId);
   }
 
-  /** A builder for {@link SpendProfile}. */
-  @AutoValue.Builder
-  public abstract static class Builder {
-    public abstract Builder id(SpendProfileId id);
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    SpendProfile that = (SpendProfile) o;
+    return Objects.equals(id, that.id)
+        && Objects.equals(billingAccountId, that.billingAccountId)
+        && Objects.equals(tenantId, that.tenantId)
+        && Objects.equals(subscriptionId, that.subscriptionId)
+        && Objects.equals(managedResourceGroupId, that.managedResourceGroupId);
+  }
 
-    public abstract Builder billingAccountId(@Nullable String billingAccountId);
+  @Override
+  public int hashCode() {
+    return Objects.hash(id, billingAccountId, tenantId, subscriptionId, managedResourceGroupId);
+  }
 
-    public abstract Builder tenantId(@Nullable UUID tenantId);
+  public static class Builder {
+    private SpendProfileId id;
+    private String billingAccountId;
+    private UUID tenantId;
+    private UUID subscriptionId;
+    private String managedResourceGroupId;
 
-    public abstract Builder subscriptionId(@Nullable UUID subscriptionId);
+    public Builder id(SpendProfileId spendProfileId) {
+      this.id = spendProfileId;
+      return this;
+    }
 
-    public abstract Builder managedResourceGroupId(@Nullable String managedResourceGroupId);
+    public Builder billingAccountId(String billingAccountId) {
+      this.billingAccountId = billingAccountId;
+      return this;
+    }
 
-    public abstract SpendProfile build();
+    public Builder tenantId(UUID tenantId) {
+      this.tenantId = tenantId;
+      return this;
+    }
+
+    public Builder subscriptionId(UUID subscriptionId) {
+      this.subscriptionId = subscriptionId;
+      return this;
+    }
+
+    public Builder managedResourceGroupId(String managedResourceGroupId) {
+      this.managedResourceGroupId = managedResourceGroupId;
+      return this;
+    }
+
+    public SpendProfile build() {
+      return new SpendProfile(
+          id, billingAccountId, tenantId, subscriptionId, managedResourceGroupId);
+    }
+  }
+
+  public static SpendProfile.Builder builder() {
+    return new SpendProfile.Builder();
+  }
+
+  public SpendProfileId getId() {
+    return id;
+  }
+
+  public Optional<String> getBillingAccountId() {
+    return billingAccountId;
+  }
+
+  public Optional<UUID> getTenantId() {
+    return tenantId;
+  }
+
+  public Optional<UUID> getSubscriptionId() {
+    return subscriptionId;
+  }
+
+  public Optional<String> getManagedResourceGroupId() {
+    return managedResourceGroupId;
   }
 }

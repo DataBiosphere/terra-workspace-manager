@@ -54,7 +54,7 @@ public class SpendProfileService {
       List<SpendProfile> spendProfiles,
       SpendProfileConfiguration spendProfileConfiguration) {
     this.samService = samService;
-    this.spendProfiles = Maps.uniqueIndex(spendProfiles, SpendProfile::id);
+    this.spendProfiles = Maps.uniqueIndex(spendProfiles, SpendProfile::getId);
     this.spendProfileConfiguration = spendProfileConfiguration;
 
     this.commonHttpClient =
