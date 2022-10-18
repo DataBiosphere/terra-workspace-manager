@@ -27,6 +27,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
@@ -34,6 +35,9 @@ import org.springframework.stereotype.Component;
 @Component
 public class LandingZoneApiDispatch {
   private static final Logger logger = LoggerFactory.getLogger(LandingZoneApiDispatch.class);
+
+  private static final String AZURE_STORAGE_ACCOUNT_RESOURCE_TYPE =
+      "Microsoft.Storage/storageAccounts";
 
   private final LandingZoneService landingZoneService;
   private final FeatureConfiguration features;
@@ -126,6 +130,19 @@ public class LandingZoneApiDispatch {
                                 .map(r -> toApiAzureLandingZoneDeployedResource(r, p))
                                 .toList())));
     return result;
+  }
+
+  public Optional<ApiAzureLandingZoneDeployedResource> getSharedStorageAccount(
+      BearerToken bearerToken, UUID landingZoneId) {
+    features.azureEnabledCheck();
+    return listAzureLandingZoneResources(bearerToken, landingZoneId).getResources().stream()
+        .filter(rpg -> rpg.getPurpose().equals(ResourcePurpose.SHARED_RESOURCE.toString()))
+        .flatMap(r -> r.getDeployedResources().stream())
+        .filter(
+            r ->
+                StringUtils.equalsIgnoreCase(
+                    r.getResourceType(), AZURE_STORAGE_ACCOUNT_RESOURCE_TYPE))
+        .findFirst();
   }
 
   public List<ApiAzureLandingZoneDeployedResource> listSubnetsWithParentVNetByPurpose(
