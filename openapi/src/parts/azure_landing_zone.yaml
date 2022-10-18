@@ -42,6 +42,25 @@ paths:
         '500':
           $ref: '#/components/responses/ServerError'
 
+  /api/landingzones/v1/azure/delete-result/{jobId}:
+    parameters:
+      - $ref: '#/components/parameters/JobId'
+    get:
+      summary: Get the result of a async job to delete an Azure Landing Zone
+      operationId: getDeleteAzureLandingZoneResult
+      tags: [ LandingZones ]
+      responses:
+        '200':
+          $ref: '#/components/responses/DeleteAzureLandingZoneResponse'
+        '202':
+          $ref: '#/components/responses/DeleteAzureLandingZoneResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
   /api/landingzones/definitions/v1/azure:
     get:
       summary: List all Azure landing zones definitions
@@ -157,6 +176,11 @@ components:
         landingZoneId:
           type: string
           format: uuid
+        resources:
+          description: A list of resource IDs of the deleted resources.
+          type: array
+          items:
+            type: string
         jobReport:
           $ref: '#/components/schemas/JobReport'
         errorReport:

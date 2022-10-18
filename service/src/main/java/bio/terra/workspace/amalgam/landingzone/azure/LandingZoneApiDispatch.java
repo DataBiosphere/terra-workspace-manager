@@ -104,19 +104,28 @@ public class LandingZoneApiDispatch {
                 .collect(Collectors.toList()));
   }
 
-  public ApiDeleteAzureLandingZoneResult deleteLandingZone(BearerToken bearerToken, UUID landingZoneId, ApiDeleteAzureLandingZoneRequestBody body, String resultEndpoint) {
+  public ApiDeleteAzureLandingZoneResult deleteLandingZone(
+      BearerToken bearerToken,
+      UUID landingZoneId,
+      ApiDeleteAzureLandingZoneRequestBody body,
+      String resultEndpoint) {
     features.azureEnabledCheck();
-    return toApiDeleteAzureLandingZoneResult(landingZoneService.startLandingZoneDeletionJob(bearerToken, body.getJobControl().getId(), landingZoneId, resultEndpoint));
+    return toApiDeleteAzureLandingZoneResult(
+        landingZoneService.startLandingZoneDeletionJob(
+            bearerToken, body.getJobControl().getId(), landingZoneId, resultEndpoint));
   }
 
-  private ApiDeleteAzureLandingZoneResult toApiDeleteAzureLandingZoneResult(LandingZoneJobService.AsyncJobResult<DeletedLandingZone> jobResult) {
+  private ApiDeleteAzureLandingZoneResult toApiDeleteAzureLandingZoneResult(
+      LandingZoneJobService.AsyncJobResult<DeletedLandingZone> jobResult) {
 
-    var result = new ApiDeleteAzureLandingZoneResult()
-        .jobReport(MapperUtils.JobReportMapper.from(jobResult.getJobReport()))
-        .errorReport(MapperUtils.ErrorReportMapper.from(jobResult.getApiErrorReport()));
+    ApiDeleteAzureLandingZoneResult result =
+        new ApiDeleteAzureLandingZoneResult()
+            .jobReport(MapperUtils.JobReportMapper.from(jobResult.getJobReport()))
+            .errorReport(MapperUtils.ErrorReportMapper.from(jobResult.getApiErrorReport()));
 
     if (jobResult.getJobReport().getStatus().equals(JobReport.StatusEnum.SUCCEEDED)) {
       result.landingZoneId(jobResult.getResult().landingZoneId());
+      result.resources(jobResult.getResult().deleteResources());
     }
 
     return result;
@@ -216,5 +225,12 @@ public class LandingZoneApiDispatch {
             () ->
                 new IllegalStateException(
                     "Could not find a landing zone id for the given Azure context. Please check that the landing zone deployment is complete."));
+  }
+
+  public ApiDeleteAzureLandingZoneResult getDeleteAzureLandingZoneResult(
+      BearerToken token, String jobId) {
+    features.azureEnabledCheck();
+    return toApiDeleteAzureLandingZoneResult(
+        landingZoneService.getAsyncDeletionJobResult(token, jobId));
   }
 }
