@@ -154,7 +154,6 @@ class WorkspaceDaoTest extends BaseUnitTest {
             gcpCloudContexts.stream()
                 .map(cloudContext -> GcpCloudContext.deserialize(cloudContext).getGcpProjectId())
                 .toList());
-    assertEquals(3, gcpCloudContexts.size());
     assertTrue(gcpProjectIds.contains(project1));
     assertTrue(gcpProjectIds.contains(project2));
     assertTrue(gcpProjectIds.contains(project3));

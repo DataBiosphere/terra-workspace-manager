@@ -413,7 +413,7 @@ public class WorkspaceDao {
 
     if (updatedCount == 0) {
       // We didn't change anything. Make sure the context is there
-      Optional<String> dbContext = listCloudContextsWorker(workspaceUuid, cloudPlatform);
+      Optional<String> dbContext = getCloudContextWorker(workspaceUuid, cloudPlatform);
       if (dbContext.isPresent()) {
         logger.info(
             "{} cloud context for workspace {} already updated and unlocked",
@@ -578,31 +578,6 @@ public class WorkspaceDao {
   @ReadTransaction
   public ImmutableSet<String> listCloudContexts(CloudPlatform cloudPlatform) {
     return listCloudContextsWorker(cloudPlatform);
-  }
-
-  /**
-   * Retrieve the serialized cloud context of an unlocked cloud context. That is, a cloud context
-   * that is done being created.
-   *
-   * @param workspaceUuid workspace of the context
-   * @param cloudPlatform platform context to retrieve
-   * @return empty or the serialized cloud context info
-   */
-  private Optional<String> listCloudContextsWorker(
-      UUID workspaceUuid, CloudPlatform cloudPlatform) {
-    String sql =
-        """
-            SELECT context FROM cloud_context
-            WHERE workspace_id = :workspace_id AND cloud_platform = :cloud_platform
-        """;
-    MapSqlParameterSource params =
-        new MapSqlParameterSource()
-            .addValue("workspace_id", workspaceUuid.toString())
-            .addValue("cloud_platform", cloudPlatform.toSql());
-
-    return Optional.ofNullable(
-        DataAccessUtils.singleResult(
-            jdbcTemplate.query(sql, params, (rs, rowNum) -> rs.getString("context"))));
   }
 
   /**
