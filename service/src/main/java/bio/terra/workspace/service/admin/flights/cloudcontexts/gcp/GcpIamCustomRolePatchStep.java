@@ -1,4 +1,4 @@
-package bio.terra.workspace.service.workspace.flight.cloudcontext.gcp;
+package bio.terra.workspace.service.admin.flights.cloudcontexts.gcp;
 
 import static bio.terra.workspace.service.workspace.CloudSyncRoleMapping.CUSTOM_GCP_IAM_ROLES;
 

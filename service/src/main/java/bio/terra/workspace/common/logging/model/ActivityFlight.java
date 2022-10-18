@@ -1,6 +1,7 @@
 package bio.terra.workspace.common.logging.model;
 
 import bio.terra.workspace.common.exception.UnknownFlightClassNameException;
+import bio.terra.workspace.service.admin.flights.cloudcontexts.gcp.SyncGcpIamRolesFlight;
 import bio.terra.workspace.service.folder.flights.DeleteFolderFlight;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook.UpdateControlledAiNotebookResourceFlight;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.bqdataset.UpdateControlledBigQueryDatasetResourceFlight;
@@ -20,7 +21,6 @@ import bio.terra.workspace.service.workspace.flight.RemoveUserFromWorkspaceFligh
 import bio.terra.workspace.service.workspace.flight.WorkspaceCreateFlight;
 import bio.terra.workspace.service.workspace.flight.WorkspaceDeleteFlight;
 import bio.terra.workspace.service.workspace.flight.application.able.ApplicationAbleFlight;
-import bio.terra.workspace.service.workspace.flight.cloudcontext.gcp.SyncGcpIamRolesFlight;
 import bio.terra.workspace.service.workspace.flight.create.azure.CreateAzureContextFlight;
 import java.util.Arrays;
 
