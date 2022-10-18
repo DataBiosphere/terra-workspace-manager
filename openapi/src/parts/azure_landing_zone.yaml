@@ -42,11 +42,12 @@ paths:
         '500':
           $ref: '#/components/responses/ServerError'
 
-  /api/landingzones/v1/azure/delete-result/{jobId}:
+  /api/landingzones/v1/azure/{landingZoneId}/delete-result/{jobId}:
     parameters:
+      - $ref: '#/components/parameters/LandingZoneId'
       - $ref: '#/components/parameters/JobId'
     get:
-      summary: Get the result of a async job to delete an Azure Landing Zone
+      summary: Get the result of a async job to delete the Azure Landing Zone
       operationId: getDeleteAzureLandingZoneResult
       tags: [ LandingZones ]
       responses:
