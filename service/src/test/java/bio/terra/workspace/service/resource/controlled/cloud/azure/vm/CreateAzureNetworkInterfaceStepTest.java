@@ -2,7 +2,6 @@ package bio.terra.workspace.service.resource.controlled.cloud.azure.vm;
 
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.instanceOf;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
@@ -18,14 +17,12 @@ import bio.terra.workspace.generated.model.ApiAzureLandingZoneResourcesPurposeGr
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.network.ControlledAzureNetworkResource;
-import bio.terra.workspace.service.resource.exception.DuplicateResourceException;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.workspace.model.AzureCloudContext;
 import com.azure.resourcemanager.network.NetworkManager;
 import com.azure.resourcemanager.network.models.Network;
 import com.azure.resourcemanager.network.models.Networks;
 import com.azure.resourcemanager.network.models.Subnet;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
@@ -103,28 +100,13 @@ public class CreateAzureNetworkInterfaceStepTest extends BaseAzureUnitTest {
     var networkId = UUID.randomUUID();
     var workspaceId = UUID.randomUUID();
 
-    setUpNetworkInLZInteractionChain(networkId, workspaceId, false);
+    setUpNetworkInLZInteractionChain(networkId, workspaceId);
 
     NetworkSubnetPair result =
         networkInterfaceStep.getExistingNetworkResources(azureCloudContext, networkManager);
 
     assertThat(result.network(), equalTo(armNetwork));
     assertThat(result.subnet(), equalTo(armSubnet));
-  }
-
-  @Test
-  void getExistingNetworkResources_networkIdIsNotProvided_noLZNetwork()
-      throws InterruptedException {
-    var networkId = UUID.randomUUID();
-    var workspaceId = UUID.randomUUID();
-
-    setUpNetworkInLZInteractionChain(networkId, workspaceId, true);
-
-    NetworkSubnetPair result =
-        networkInterfaceStep.getExistingNetworkResources(azureCloudContext, networkManager);
-
-    // Verify step returns error
-    assertThat(result, instanceOf(DuplicateResourceException.class));
   }
 
   private void setUpNetworkInWorkspaceInteractionChain(UUID networkId, UUID workspaceId) {
@@ -140,20 +122,17 @@ public class CreateAzureNetworkInterfaceStepTest extends BaseAzureUnitTest {
     when(networks.getByResourceGroup(STUB_MRG, networkId.toString())).thenReturn(armNetwork);
   }
 
-  private void setUpNetworkInLZInteractionChain(
-      UUID networkId, UUID workspaceId, boolean emptyList) {
+  private void setUpNetworkInLZInteractionChain(UUID networkId, UUID workspaceId) {
     var lzId = UUID.randomUUID();
     var response = new ApiAzureLandingZoneResourcesList();
     response.addResourcesItem(
         new ApiAzureLandingZoneResourcesPurposeGroup()
             .purpose(SubnetResourcePurpose.WORKSPACE_COMPUTE_SUBNET.toString())
             .deployedResources(
-                emptyList
-                    ? Collections.emptyList()
-                    : List.of(
-                        new ApiAzureLandingZoneDeployedResource()
-                            .resourceName(STUB_SUBNET)
-                            .resourceParentId(networkId.toString()))));
+                List.of(
+                    new ApiAzureLandingZoneDeployedResource()
+                        .resourceName(STUB_SUBNET)
+                        .resourceParentId(networkId.toString()))));
 
     when(resource.getNetworkId()).thenReturn(null);
     when(landingZoneApiDispatch.getLandingZoneId(azureCloudContext)).thenReturn(lzId);
