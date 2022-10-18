@@ -136,9 +136,8 @@ public class LandingZoneApiDispatch {
 
   public ApiAzureLandingZoneResourcesList listAzureLandingZoneResources(
       BearerToken bearerToken, UUID landingZoneId) {
-    var result = new ApiAzureLandingZoneResourcesList().id(landingZoneId);
     features.azureEnabledCheck();
-
+    var result = new ApiAzureLandingZoneResourcesList().id(landingZoneId);
     landingZoneService
         .listResourcesWithPurposes(bearerToken, landingZoneId)
         .deployedResources()
@@ -156,7 +155,6 @@ public class LandingZoneApiDispatch {
 
   public Optional<ApiAzureLandingZoneDeployedResource> getSharedStorageAccount(
       BearerToken bearerToken, UUID landingZoneId) {
-    features.azureEnabledCheck();
     return listAzureLandingZoneResourcesByPurpose(
             bearerToken, landingZoneId, ResourcePurpose.SHARED_RESOURCE)
         .getResources()
@@ -171,8 +169,9 @@ public class LandingZoneApiDispatch {
 
   public ApiAzureLandingZoneResourcesList listAzureLandingZoneResourcesByPurpose(
       BearerToken bearerToken, UUID landingZoneId, LandingZonePurpose resourcePurpose) {
+    features.azureEnabledCheck();
     var result = new ApiAzureLandingZoneResourcesList().id(landingZoneId);
-    var deployedResources =
+        var deployedResources =
         landingZoneService
             .listResourcesByPurpose(bearerToken, landingZoneId, resourcePurpose)
             .stream()
