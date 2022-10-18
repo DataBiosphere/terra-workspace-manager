@@ -155,16 +155,18 @@ public class LandingZoneApiDispatch {
   }
 
   public Optional<ApiAzureLandingZoneDeployedResource> getSharedStorageAccount(
-          BearerToken bearerToken, UUID landingZoneId) {
+      BearerToken bearerToken, UUID landingZoneId) {
     features.azureEnabledCheck();
-    return listAzureLandingZoneResourcesByPurpose(bearerToken, landingZoneId, ResourcePurpose.SHARED_RESOURCE)
-            .getResources().stream()
-            .flatMap(r -> r.getDeployedResources().stream())
-            .filter(
-                    r ->
-                            StringUtils.equalsIgnoreCase(
-                                    r.getResourceType(), AZURE_STORAGE_ACCOUNT_RESOURCE_TYPE))
-            .findFirst();
+    return listAzureLandingZoneResourcesByPurpose(
+            bearerToken, landingZoneId, ResourcePurpose.SHARED_RESOURCE)
+        .getResources()
+        .stream()
+        .flatMap(r -> r.getDeployedResources().stream())
+        .filter(
+            r ->
+                StringUtils.equalsIgnoreCase(
+                    r.getResourceType(), AZURE_STORAGE_ACCOUNT_RESOURCE_TYPE))
+        .findFirst();
   }
 
   public ApiAzureLandingZoneResourcesList listAzureLandingZoneResourcesByPurpose(
