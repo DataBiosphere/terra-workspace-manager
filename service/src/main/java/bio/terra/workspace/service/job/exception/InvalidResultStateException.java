@@ -14,4 +14,8 @@ public class InvalidResultStateException extends InternalServerErrorException {
   public InvalidResultStateException(Throwable cause) {
     super(cause);
   }
+
+  public static InvalidResultStateException noResultMap() {
+    return new InvalidResultStateException("No result map returned from flight");
+  }
 }

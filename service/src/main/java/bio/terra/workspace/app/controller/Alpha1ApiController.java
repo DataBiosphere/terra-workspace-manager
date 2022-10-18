@@ -1,6 +1,7 @@
 package bio.terra.workspace.app.controller;
 
 import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
+import bio.terra.workspace.app.controller.shared.JobApiUtils;
 import bio.terra.workspace.common.utils.ControllerValidationUtils;
 import bio.terra.workspace.common.utils.ErrorReportUtils;
 import bio.terra.workspace.generated.controller.Alpha1Api;
@@ -14,15 +15,14 @@ import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequestFactory;
 import bio.terra.workspace.service.iam.model.SamConstants.SamWorkspaceAction;
 import bio.terra.workspace.service.job.JobService;
+import bio.terra.workspace.service.job.model.EnumeratedJob;
+import bio.terra.workspace.service.job.model.EnumeratedJobs;
 import bio.terra.workspace.service.resource.ResourceValidationUtils;
 import bio.terra.workspace.service.resource.model.StewardshipType;
 import bio.terra.workspace.service.resource.model.WsmResource;
 import bio.terra.workspace.service.resource.model.WsmResourceFamily;
-import bio.terra.workspace.service.workspace.Alpha1Service;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
-import bio.terra.workspace.service.workspace.model.EnumeratedJob;
-import bio.terra.workspace.service.workspace.model.EnumeratedJobs;
 import bio.terra.workspace.service.workspace.model.JobStateFilter;
 import java.util.ArrayList;
 import java.util.List;
@@ -41,25 +41,25 @@ public class Alpha1ApiController implements Alpha1Api {
   private final Logger logger = LoggerFactory.getLogger(Alpha1ApiController.class);
 
   private final AuthenticatedUserRequestFactory authenticatedUserRequestFactory;
-  private final Alpha1Service alpha1Service;
   private final WorkspaceService workspaceService;
   private final FeatureConfiguration features;
   private final JobService jobService;
+  private final JobApiUtils jobApiUtils;
   private final HttpServletRequest request;
 
   @Autowired
   public Alpha1ApiController(
       AuthenticatedUserRequestFactory authenticatedUserRequestFactory,
-      Alpha1Service alpha1Service,
       WorkspaceService workspaceService,
       FeatureConfiguration features,
       JobService jobService,
+      JobApiUtils jobApiUtils,
       HttpServletRequest request) {
     this.authenticatedUserRequestFactory = authenticatedUserRequestFactory;
-    this.alpha1Service = alpha1Service;
     this.workspaceService = workspaceService;
     this.features = features;
     this.jobService = jobService;
+    this.jobApiUtils = jobApiUtils;
     this.request = request;
   }
 
@@ -86,7 +86,7 @@ public class Alpha1ApiController implements Alpha1Api {
 
     // Do the enumeration
     EnumeratedJobs enumeratedJobs =
-        alpha1Service.enumerateJobs(
+        jobService.enumerateJobs(
             workspaceUuid,
             limit,
             pageToken,
@@ -99,7 +99,7 @@ public class Alpha1ApiController implements Alpha1Api {
     List<ApiEnumeratedJob> apiJobList = new ArrayList<>();
     for (EnumeratedJob enumeratedJob : enumeratedJobs.getResults()) {
       ApiJobReport jobReport =
-          jobService.mapFlightStateToApiJobReport(enumeratedJob.getFlightState());
+          jobApiUtils.mapFlightStateToApiJobReport(enumeratedJob.getFlightState());
       Optional<WsmResource> optResource = enumeratedJob.getResource();
 
       Optional<UUID> destinationResourceIdMaybe =

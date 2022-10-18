@@ -1,4 +1,4 @@
-package bio.terra.workspace.service.workspace.model;
+package bio.terra.workspace.service.job.model;
 
 import java.util.List;
 

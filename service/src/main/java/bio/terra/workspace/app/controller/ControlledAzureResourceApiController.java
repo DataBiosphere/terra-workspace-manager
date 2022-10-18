@@ -3,6 +3,7 @@ package bio.terra.workspace.app.controller;
 import bio.terra.common.exception.ApiException;
 import bio.terra.workspace.app.configuration.external.AzureConfiguration;
 import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
+import bio.terra.workspace.app.controller.shared.JobApiUtils;
 import bio.terra.workspace.common.utils.AzureVmUtils;
 import bio.terra.workspace.common.utils.ControllerValidationUtils;
 import bio.terra.workspace.generated.controller.ControlledAzureResourceApi;
@@ -72,6 +73,7 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
   private final ControlledResourceService controlledResourceService;
   private final AzureStorageAccessService azureControlledStorageResourceService;
   private final JobService jobService;
+  private final JobApiUtils jobApiUtils;
   private final FeatureConfiguration features;
   private final AzureConfiguration azureConfiguration;
   private final WorkspaceService workspaceService;
@@ -84,6 +86,7 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
       AzureStorageAccessService azureControlledStorageResourceService,
       SamService samService,
       JobService jobService,
+      JobApiUtils jobApiUtils,
       HttpServletRequest request,
       FeatureConfiguration features,
       AzureConfiguration azureConfiguration,
@@ -93,6 +96,7 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
     this.controlledResourceService = controlledResourceService;
     this.azureControlledStorageResourceService = azureControlledStorageResourceService;
     this.jobService = jobService;
+    this.jobApiUtils = jobApiUtils;
     this.features = features;
     this.azureConfiguration = azureConfiguration;
     this.workspaceService = workspaceService;
@@ -579,9 +583,8 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
   }
 
   private ResponseEntity<ApiDeleteControlledAzureResourceResult> getJobDeleteResult(String jobId) {
-
-    final JobService.AsyncJobResult<Void> jobResult =
-        jobService.retrieveAsyncJobResult(jobId, Void.class);
+    final JobApiUtils.AsyncJobResult<Void> jobResult =
+        jobApiUtils.retrieveAsyncJobResult(jobId, Void.class);
     var response =
         new ApiDeleteControlledAzureResourceResult()
             .jobReport(jobResult.getJobReport())
@@ -616,8 +619,8 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
   }
 
   private ApiCreatedControlledAzureVmResult fetchCreateControlledAzureVmResult(String jobId) {
-    final JobService.AsyncJobResult<ControlledAzureVmResource> jobResult =
-        jobService.retrieveAsyncJobResult(jobId, ControlledAzureVmResource.class);
+    final JobApiUtils.AsyncJobResult<ControlledAzureVmResource> jobResult =
+        jobApiUtils.retrieveAsyncJobResult(jobId, ControlledAzureVmResource.class);
 
     ApiAzureVmResource apiResource = null;
     if (jobResult.getJobReport().getStatus().equals(ApiJobReport.StatusEnum.SUCCEEDED)) {
@@ -632,8 +635,8 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
 
   private ApiCreateControlledAzureRelayNamespaceResult
       fetchCreateControlledAzureRelayNamespaceResult(String jobId) {
-    final JobService.AsyncJobResult<ControlledAzureRelayNamespaceResource> jobResult =
-        jobService.retrieveAsyncJobResult(jobId, ControlledAzureRelayNamespaceResource.class);
+    final JobApiUtils.AsyncJobResult<ControlledAzureRelayNamespaceResource> jobResult =
+        jobApiUtils.retrieveAsyncJobResult(jobId, ControlledAzureRelayNamespaceResource.class);
 
     ApiAzureRelayNamespaceResource apiResource = null;
     if (jobResult.getJobReport().getStatus().equals(ApiJobReport.StatusEnum.SUCCEEDED)) {
