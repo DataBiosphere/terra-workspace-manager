@@ -14,6 +14,7 @@ import bio.terra.workspace.service.iam.model.SamConstants;
 import bio.terra.workspace.service.spendprofile.exceptions.BillingProfileManagerServiceAPIException;
 import bio.terra.workspace.service.spendprofile.exceptions.SpendUnauthorizedException;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Maps;
 import io.opencensus.contrib.http.jaxrs.JaxrsClientExtractor;
 import io.opencensus.contrib.http.jaxrs.JaxrsClientFilter;
@@ -21,7 +22,6 @@ import io.opencensus.contrib.spring.aop.Traced;
 import io.opencensus.trace.Tracing;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import javax.ws.rs.client.Client;
@@ -117,7 +117,7 @@ public class SpendProfileService {
                 new SpendProfile(
                     new SpendProfileId(spendModel.getId()),
                     CloudPlatform.GCP,
-                    Optional.ofNullable(spendModel.getBillingAccountId()),
+                    spendModel.getBillingAccountId(),
                     null,
                     null,
                     null))
@@ -138,10 +138,10 @@ public class SpendProfileService {
           new SpendProfile(
               spendProfileId,
               getProfileCloudPlatform(profile),
-              Optional.ofNullable(profile.getBillingAccountId()),
-              Optional.ofNullable(profile.getTenantId()),
-              Optional.ofNullable(profile.getSubscriptionId()),
-              Optional.ofNullable(profile.getManagedResourceGroupId()));
+              profile.getBillingAccountId(),
+              profile.getTenantId(),
+              profile.getSubscriptionId(),
+              profile.getManagedResourceGroupId());
     } catch (ApiException ex) {
       if (ex.getCode() == HttpStatus.FORBIDDEN.value()) {
         return null;
@@ -170,6 +170,7 @@ public class SpendProfileService {
    * Creates a spend profile via the billing profile manager service, intended for usage in tests
    * only.
    */
+  @VisibleForTesting
   public SpendProfile createGcpSpendProfile(
       String billingAccountId,
       String displayName,
@@ -192,6 +193,7 @@ public class SpendProfileService {
   }
 
   /** Deletes a profile in the billing profile manager service, intended for usage in tests only */
+  @VisibleForTesting
   public void deleteProfile(UUID profileId, AuthenticatedUserRequest userRequest) {
     try {
       getProfileApi(userRequest).deleteProfile(profileId);

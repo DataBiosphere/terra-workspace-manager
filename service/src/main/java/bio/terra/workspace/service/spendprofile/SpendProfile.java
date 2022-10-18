@@ -4,7 +4,7 @@ import bio.terra.common.exception.ValidationException;
 import bio.terra.workspace.service.workspace.exceptions.NoAzureAppCoordinatesException;
 import bio.terra.workspace.service.workspace.exceptions.NoBillingAccountException;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
-import java.util.Optional;
+import com.google.common.base.Strings;
 import java.util.UUID;
 
 /**
@@ -16,20 +16,20 @@ import java.util.UUID;
 public record SpendProfile(
     SpendProfileId id,
     CloudPlatform cloudPlatform,
-    Optional<String> billingAccountId,
-    Optional<UUID> tenantId,
-    Optional<UUID> subscriptionId,
-    Optional<String> managedResourceGroupId) {
+    String billingAccountId,
+    UUID tenantId,
+    UUID subscriptionId,
+    String managedResourceGroupId) {
 
   public SpendProfile {
     if (cloudPlatform == CloudPlatform.GCP) {
-      if (billingAccountId.isEmpty()) {
+      if (Strings.isNullOrEmpty(billingAccountId)) {
         throw NoBillingAccountException.forSpendProfile(id);
       }
     } else if (cloudPlatform == CloudPlatform.AZURE) {
-      if (managedResourceGroupId().isEmpty()
-          || subscriptionId().isEmpty()
-          || tenantId().isEmpty()) {
+      if (tenantId == null
+          || subscriptionId == null
+          || Strings.isNullOrEmpty(managedResourceGroupId)) {
         throw NoAzureAppCoordinatesException.forSpendProfile(id);
       }
     } else {
@@ -38,6 +38,6 @@ public record SpendProfile(
   }
 
   public static SpendProfile buildGcpSpendProfile(SpendProfileId id, String billingAccountId) {
-    return new SpendProfile(id, CloudPlatform.GCP, Optional.of(billingAccountId), null, null, null);
+    return new SpendProfile(id, CloudPlatform.GCP, billingAccountId, null, null, null);
   }
 }

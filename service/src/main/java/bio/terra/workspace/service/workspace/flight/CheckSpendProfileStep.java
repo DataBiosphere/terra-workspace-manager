@@ -55,6 +55,7 @@ public class CheckSpendProfileStep implements Step {
     try {
       SpendProfile spendProfile =
           spendProfileService.authorizeLinking(spendProfileId, bpmEnabled, userRequest);
+      spendProfileService.deleteProfile(UUID.randomUUID(), null);
 
       workingMap.put(SPEND_PROFILE, spendProfile);
       return StepResult.getStepResultSuccess();

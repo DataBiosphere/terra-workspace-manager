@@ -40,9 +40,9 @@ public class ValidateMRGStep implements Step {
 
       azureCloudContext =
           new AzureCloudContext(
-              spendProfile.tenantId().get().toString(),
-              spendProfile.subscriptionId().get().toString(),
-              spendProfile.managedResourceGroupId().get());
+              spendProfile.tenantId().toString(),
+              spendProfile.subscriptionId().toString(),
+              spendProfile.managedResourceGroupId());
     } else {
       azureCloudContext =
           flightContext
