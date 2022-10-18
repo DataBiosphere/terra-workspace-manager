@@ -11,6 +11,7 @@ import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import bio.terra.workspace.service.workspace.model.GcpCloudContext;
 import bio.terra.workspace.service.workspace.model.OperationType;
 import java.util.ArrayList;
+import java.util.UUID;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -24,7 +25,7 @@ public class AdminService {
     this.workspaceDao = workspaceDao;
   }
 
-  public void syncIamRoleForAllGcpProjects(AuthenticatedUserRequest userRequest) {
+  public String syncIamRoleForAllGcpProjects(AuthenticatedUserRequest userRequest) {
     ArrayList<String> projectIds =
         new ArrayList<>(
             workspaceDao.listCloudContexts(CloudPlatform.GCP).stream()
@@ -34,10 +35,11 @@ public class AdminService {
         jobService
             .newJob()
             .description("sync custom iam roles in all gcp projects")
+            .jobId(UUID.randomUUID().toString())
             .flightClass(SyncGcpIamRolesFlight.class)
             .userRequest(userRequest)
             .operationType(OperationType.CREATE)
             .addParameter(GCP_PROJECT_IDS, projectIds);
-    job.submitAndWait(null);
+    return job.submit();
   }
 }

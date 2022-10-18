@@ -434,14 +434,11 @@ class SamServiceTest extends BaseConnectedTest {
   void checkAdminAuthz_throwsForbiddenException() {
     assertThrows(
         ForbiddenException.class,
-        () -> samService.checkAdminAuthz(userAccessUtils.defaultUserAuthRequest())
-    );
+        () -> samService.checkAdminAuthz(userAccessUtils.defaultUserAuthRequest()));
     assertThrows(
         ForbiddenException.class,
-        () -> samService.checkAdminAuthz(userAccessUtils.secondUserAuthRequest())
-    );
+        () -> samService.checkAdminAuthz(userAccessUtils.secondUserAuthRequest()));
   }
-
 
   /**
    * Convenience method to build an AuthenticatedUserRequest from utils' default user.

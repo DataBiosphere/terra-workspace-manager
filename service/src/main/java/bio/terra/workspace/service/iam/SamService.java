@@ -15,7 +15,6 @@ import bio.terra.workspace.service.iam.model.SamConstants;
 import bio.terra.workspace.service.iam.model.WsmIamRole;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResourceCategory;
-import bio.terra.workspace.service.stage.StageService;
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;

@@ -43,8 +43,8 @@ public class WorkspaceUnitTestUtils {
   }
 
   /**
-   * Creates the database artifact for a GCP cloud context without actually creating anything beyond the
-   * database row.
+   * Creates the database artifact for a GCP cloud context without actually creating anything beyond
+   * the database row.
    */
   public static void createGcpCloudContextInDatabase(
       WorkspaceDao workspaceDao, UUID workspaceUuid, String projectId) {
@@ -52,11 +52,14 @@ public class WorkspaceUnitTestUtils {
   }
 
   /**
-   * Creates the database artifact for a GCP cloud context without actually creating anything beyond the
-   * database row.
+   * Creates the database artifact for a GCP cloud context without actually creating anything beyond
+   * the database row.
    */
   public static void createCloudContextInDatabase(
-      WorkspaceDao workspaceDao, UUID workspaceUuid, String projectId, CloudPlatform cloudPlatform) {
+      WorkspaceDao workspaceDao,
+      UUID workspaceUuid,
+      String projectId,
+      CloudPlatform cloudPlatform) {
     String flightId = UUID.randomUUID().toString();
     workspaceDao.createCloudContextStart(workspaceUuid, cloudPlatform, flightId);
     workspaceDao.createCloudContextFinish(

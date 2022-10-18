@@ -1,16 +1,12 @@
 package bio.terra.workspace.service.workspace.flight.cloudcontext.gcp;
 
 import static bio.terra.workspace.service.workspace.CloudSyncRoleMapping.CUSTOM_GCP_IAM_ROLES;
-import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.CUSTOM_PROJECT_ROLES;
-import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.CUSTOM_RESOURCE_ROLES;
 import static bio.terra.workspace.unit.WorkspaceUnitTestUtils.PROJECT_ID;
 import static bio.terra.workspace.unit.WorkspaceUnitTestUtils.createWorkspaceWithGcpContext;
-import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import bio.terra.cloudres.google.iam.IamCow;
 import bio.terra.cloudres.google.iam.IamCow.Projects;
@@ -22,14 +18,11 @@ import bio.terra.workspace.common.BaseUnitTest;
 import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.CustomGcpIamRole;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.CustomGcpIamRoleMapping;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.google.api.client.googleapis.json.GoogleJsonResponseException;
 import com.google.api.client.googleapis.testing.json.GoogleJsonResponseExceptionFactoryTesting;
 import com.google.api.client.json.JsonFactory;
 import com.google.api.client.testing.json.MockJsonFactory;
 import com.google.api.services.iam.v1.model.Role;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.UUID;
@@ -53,7 +46,6 @@ public class RetrieveGcpIamCustomRoleStepTest extends BaseUnitTest {
   @Mock private Get getProject;
   @Mock private FlightContext flightContext;
 
-
   private UUID workspace;
   private RetrieveGcpIamCustomRoleStep retrieveGcpIamCustomRoleStep;
 
@@ -75,8 +67,9 @@ public class RetrieveGcpIamCustomRoleStepTest extends BaseUnitTest {
     HashSet<CustomGcpIamRole> customGcpIamRoles = new HashSet<>();
     customGcpIamRoles.addAll(CUSTOM_GCP_IAM_ROLES);
     customGcpIamRoles.addAll(CustomGcpIamRoleMapping.CUSTOM_GCP_RESOURCE_IAM_ROLES.values());
-    for(CustomGcpIamRole customGcpIamRole: customGcpIamRoles) {
-      assertNotNull(workingMap.get(customGcpIamRole.getFullyQualifiedRoleName(PROJECT_ID), Role.class));
+    for (CustomGcpIamRole customGcpIamRole : customGcpIamRoles) {
+      assertNotNull(
+          workingMap.get(customGcpIamRole.getFullyQualifiedRoleName(PROJECT_ID), Role.class));
     }
   }
 
@@ -85,14 +78,16 @@ public class RetrieveGcpIamCustomRoleStepTest extends BaseUnitTest {
     CustomGcpIamRole customGcpIamRole = CustomGcpIamRole.of("PROJECT_OWNER", List.of());
     JsonFactory jsonFactory = new MockJsonFactory();
     when(roles.get(customGcpIamRole.getFullyQualifiedRoleName(PROJECT_ID)))
-        .thenThrow(GoogleJsonResponseExceptionFactoryTesting.newMock(jsonFactory, HttpStatus.SC_FORBIDDEN, "Test Exception"));
+        .thenThrow(
+            GoogleJsonResponseExceptionFactoryTesting.newMock(
+                jsonFactory, HttpStatus.SC_FORBIDDEN, "Test Exception"));
 
     retrieveGcpIamCustomRoleStep.doStep(flightContext);
 
     HashSet<CustomGcpIamRole> customGcpIamRoles = new HashSet<>();
     customGcpIamRoles.addAll(CUSTOM_GCP_IAM_ROLES);
     customGcpIamRoles.addAll(CustomGcpIamRoleMapping.CUSTOM_GCP_RESOURCE_IAM_ROLES.values());
-    for(CustomGcpIamRole iamRole: customGcpIamRoles) {
+    for (CustomGcpIamRole iamRole : customGcpIamRoles) {
       if ("PROJECT_OWNER".equals(iamRole.getRoleName())) {
         assertFalse(workingMap.containsKey(iamRole.getFullyQualifiedRoleName(PROJECT_ID)));
       } else {

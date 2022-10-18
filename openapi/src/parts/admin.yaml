@@ -6,9 +6,31 @@ paths:
       operationId: syncIamRoles
       tags: [Admin]
       responses:
-        '204':
-          description: OK
+        '200':
+          $ref: '#/components/responses/SyncIamRolesResultResponse'
+        '202':
+          $ref: '#/components/responses/SyncIamRolesResultResponse'
         '403':
           $ref: '#/components/responses/PermissionDenied'
         '500':
           $ref: '#/components/responses/ServerError'
+components:
+  schemas:
+    SyncIamRolesResult:
+      type: object
+      description: |
+        The result of a call to sync iam roles of all the existing workspace's
+        GCP projects.
+      properties:
+        jobReport:
+          $ref: '#/components/schemas/JobReport'
+        errorReport:
+          $ref: '#/components/schemas/ErrorReport'
+
+  responses:
+    SyncIamRolesResultResponse:
+      description: Job is completed (succeeded or failed)
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/SyncIamRolesResult'

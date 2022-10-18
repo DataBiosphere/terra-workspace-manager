@@ -15,7 +15,6 @@ import bio.terra.workspace.db.exception.WorkspaceNotFoundException;
 import bio.terra.workspace.service.spendprofile.SpendProfileId;
 import bio.terra.workspace.service.workspace.GcpCloudContextService;
 import bio.terra.workspace.service.workspace.exceptions.DuplicateWorkspaceException;
-import bio.terra.workspace.service.workspace.model.AzureCloudContext;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import bio.terra.workspace.service.workspace.model.GcpCloudContext;
 import bio.terra.workspace.service.workspace.model.Workspace;
@@ -33,7 +32,6 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
-import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
@@ -146,13 +144,16 @@ class WorkspaceDaoTest extends BaseUnitTest {
     WorkspaceUnitTestUtils.createGcpCloudContextInDatabase(workspaceDao, workspace1, project1);
     WorkspaceUnitTestUtils.createGcpCloudContextInDatabase(workspaceDao, workspace2, project2);
     WorkspaceUnitTestUtils.createGcpCloudContextInDatabase(workspaceDao, workspace3, project3);
-    WorkspaceUnitTestUtils.createCloudContextInDatabase(workspaceDao, workspace4, project4, CloudPlatform.AZURE);
+    WorkspaceUnitTestUtils.createCloudContextInDatabase(
+        workspaceDao, workspace4, project4, CloudPlatform.AZURE);
 
     ImmutableSet<String> gcpCloudContexts = workspaceDao.listCloudContexts(CloudPlatform.GCP);
 
-    var gcpProjectIds = new HashSet(gcpCloudContexts.stream().map(
-        cloudContext -> GcpCloudContext.deserialize(cloudContext).getGcpProjectId()
-    ).toList());
+    var gcpProjectIds =
+        new HashSet(
+            gcpCloudContexts.stream()
+                .map(cloudContext -> GcpCloudContext.deserialize(cloudContext).getGcpProjectId())
+                .toList());
     assertEquals(3, gcpCloudContexts.size());
     assertTrue(gcpProjectIds.contains(project1));
     assertTrue(gcpProjectIds.contains(project2));
