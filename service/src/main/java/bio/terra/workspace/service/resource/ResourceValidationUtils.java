@@ -477,7 +477,8 @@ public class ResourceValidationUtils {
         (StewardshipType.CONTROLLED == stewardshipType
                 && (CloningInstructions.COPY_NOTHING == cloningInstructions
                     || CloningInstructions.COPY_DEFINITION == cloningInstructions
-                    || CloningInstructions.COPY_RESOURCE == cloningInstructions))
+                    || CloningInstructions.COPY_RESOURCE == cloningInstructions
+                    || CloningInstructions.COPY_REFERENCE == cloningInstructions))
             || (StewardshipType.REFERENCED == stewardshipType
                 && (CloningInstructions.COPY_NOTHING == cloningInstructions
                     || CloningInstructions.COPY_REFERENCE == cloningInstructions));

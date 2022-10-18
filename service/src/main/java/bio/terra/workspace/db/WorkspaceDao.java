@@ -15,6 +15,7 @@ import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
 import com.google.common.collect.ImmutableSet;
+import io.opencensus.contrib.spring.aop.Traced;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -334,6 +335,7 @@ public class WorkspaceDao {
    * @param limit The maximum number of items to return.
    * @return list of Workspaces corresponding to input IDs.
    */
+  @Traced
   @ReadTransaction
   public List<Workspace> getWorkspacesMatchingList(Set<UUID> idList, int offset, int limit) {
     // If the incoming list is empty, the caller does not have permission to see any

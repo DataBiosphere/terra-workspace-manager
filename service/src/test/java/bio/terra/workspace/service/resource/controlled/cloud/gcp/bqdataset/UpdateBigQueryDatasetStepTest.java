@@ -70,7 +70,7 @@ public class UpdateBigQueryDatasetStepTest extends BaseUnitTest {
             eq(mockBigQueryCow), eq(PROJECT_ID), any(String.class), datasetCaptor.capture());
 
     final ControlledBigQueryDatasetResource datasetResource =
-        ControlledResourceFixtures.makeDefaultControlledBigQueryBuilder(null).build();
+        ControlledResourceFixtures.makeDefaultControlledBqDatasetBuilder(null).build();
 
     doReturn(PROJECT_ID)
         .when(mockGcpCloudContextService)

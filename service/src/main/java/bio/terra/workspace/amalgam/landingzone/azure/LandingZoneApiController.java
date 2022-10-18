@@ -3,12 +3,13 @@ package bio.terra.workspace.amalgam.landingzone.azure;
 import static bio.terra.workspace.app.controller.ControllerBase.getAsyncResponseCode;
 
 import bio.terra.common.iam.BearerTokenFactory;
-import bio.terra.landingzone.service.landingzone.azure.exception.LandingZoneDeleteNotImplemented;
 import bio.terra.workspace.generated.controller.LandingZonesApi;
 import bio.terra.workspace.generated.model.ApiAzureLandingZoneDefinitionList;
 import bio.terra.workspace.generated.model.ApiAzureLandingZoneResourcesList;
 import bio.terra.workspace.generated.model.ApiAzureLandingZoneResult;
 import bio.terra.workspace.generated.model.ApiCreateAzureLandingZoneRequestBody;
+import bio.terra.workspace.generated.model.ApiDeleteAzureLandingZoneRequestBody;
+import bio.terra.workspace.generated.model.ApiDeleteAzureLandingZoneResult;
 import java.util.UUID;
 import javax.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
@@ -74,14 +75,24 @@ public class LandingZoneApiController implements LandingZonesApi {
   }
 
   @Override
-  public ResponseEntity<Void> deleteAzureLandingZone(
-      @PathVariable("landingZoneId") UUID landingZoneId) {
-    try {
-      landingZoneApiDispatch.deleteLandingZone(bearerTokenFactory.from(request), landingZoneId);
-    } catch (LandingZoneDeleteNotImplemented ex) {
-      logger.info("Request to delete landing zone. Operation is not supported.");
-      return new ResponseEntity<>(HttpStatus.NOT_IMPLEMENTED);
-    }
-    return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+  public ResponseEntity<ApiDeleteAzureLandingZoneResult> deleteAzureLandingZone(
+      @PathVariable("landingZoneId") UUID landingZoneId,
+      @RequestBody ApiDeleteAzureLandingZoneRequestBody body) {
+    String resultEndpoint =
+        String.format(
+            "%s/%s/%s", request.getServletPath(), "delete-result", body.getJobControl().getId());
+    ApiDeleteAzureLandingZoneResult result =
+        landingZoneApiDispatch.deleteLandingZone(
+            bearerTokenFactory.from(request), landingZoneId, body, resultEndpoint);
+    return new ResponseEntity<>(result, getAsyncResponseCode(result.getJobReport()));
+  }
+
+  @Override
+  public ResponseEntity<ApiDeleteAzureLandingZoneResult> getDeleteAzureLandingZoneResult(
+      UUID landingZoneId, String jobId) {
+    ApiDeleteAzureLandingZoneResult response =
+        landingZoneApiDispatch.getDeleteAzureLandingZoneResult(
+            bearerTokenFactory.from(request), jobId);
+    return new ResponseEntity<>(response, getAsyncResponseCode(response.getJobReport()));
   }
 }

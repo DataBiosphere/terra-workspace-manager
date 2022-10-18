@@ -515,7 +515,7 @@ public class WorkspaceService {
         .workspaceId(workspace.getWorkspaceId().toString())
         .operationType(OperationType.REMOVE_WORKSPACE_ROLE)
         .addParameter(WorkspaceFlightMapKeys.USER_TO_REMOVE, targetUserEmail)
-        .addParameter(WorkspaceFlightMapKeys.ROLE_TO_REMOVE, role)
+        .addParameter(WorkspaceFlightMapKeys.ROLE_TO_REMOVE, role.name())
         .submitAndWait(null);
   }
 }

@@ -96,7 +96,9 @@ public class ControlledAzureStorageContainerResource extends ControlledResource 
     return Optional.of(
         new UniquenessCheckAttributes()
             .uniquenessScope(UniquenessScope.WORKSPACE)
-            .addParameter("storageAccountId", getStorageAccountId().toString())
+            .addParameter(
+                "storageAccountId",
+                Optional.ofNullable(getStorageAccountId()).map(UUID::toString).orElse(null))
             .addParameter("storageContainerName", getStorageContainerName()));
   }
 
@@ -113,6 +115,8 @@ public class ControlledAzureStorageContainerResource extends ControlledResource 
             flightBeanBag.getAzureConfig(),
             flightBeanBag.getCrlService(),
             flightBeanBag.getResourceDao(),
+            flightBeanBag.getLandingZoneApiDispatch(),
+            userRequest,
             this),
         cloudRetry);
     flight.addStep(
@@ -129,6 +133,7 @@ public class ControlledAzureStorageContainerResource extends ControlledResource 
             flightBeanBag.getAzureConfig(),
             flightBeanBag.getCrlService(),
             flightBeanBag.getResourceDao(),
+            flightBeanBag.getLandingZoneApiDispatch(),
             this),
         RetryRules.cloud());
   }
@@ -193,11 +198,6 @@ public class ControlledAzureStorageContainerResource extends ControlledResource 
       throw new InconsistentFieldsException("Expected CONTROLLED_AZURE_STORAGE_CONTAINER");
     }
 
-    if (getStorageAccountId() == null) {
-      throw new MissingRequiredFieldException(
-          "Missing required storage account ID field for ControlledAzureStorageContainer.");
-    }
-
     if (getStorageContainerName() == null) {
       throw new MissingRequiredFieldException(
           "Missing required storage container name field for ControlledAzureStorageContainer.");
@@ -214,14 +214,16 @@ public class ControlledAzureStorageContainerResource extends ControlledResource 
 
     ControlledAzureStorageContainerResource that = (ControlledAzureStorageContainerResource) o;
 
-    return storageAccountId.equals(that.getStorageAccountId())
+    return (storageAccountId == null || storageAccountId.equals(that.getStorageAccountId()))
         && storageContainerName.equals(that.getStorageContainerName());
   }
 
   @Override
   public int hashCode() {
     int result = super.hashCode();
-    result = 31 * result + storageAccountId.hashCode();
+    if (storageAccountId != null) {
+      result = 31 * result + storageAccountId.hashCode();
+    }
     result = 31 * result + storageContainerName.hashCode();
     return result;
   }

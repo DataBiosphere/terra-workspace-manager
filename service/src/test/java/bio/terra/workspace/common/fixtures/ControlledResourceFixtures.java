@@ -469,6 +469,7 @@ public class ControlledResourceFixtures {
         .resourceId(UUID.randomUUID())
         .name(RandomStringUtils.randomAlphabetic(10))
         .description("how much data could a dataset set if a dataset could set data?")
+        .description(RESOURCE_DESCRIPTION)
         .cloningInstructions(CloningInstructions.COPY_DEFINITION)
         .assignedUser(null)
         .accessScope(AccessScopeType.ACCESS_SCOPE_SHARED)
@@ -527,7 +528,7 @@ public class ControlledResourceFixtures {
    *
    * @return resource builder
    */
-  public static ControlledBigQueryDatasetResource.Builder makeDefaultControlledBigQueryBuilder(
+  public static ControlledBigQueryDatasetResource.Builder makeDefaultControlledBqDatasetBuilder(
       @Nullable UUID workspaceUuid) {
     return new Builder()
         .common(makeDefaultControlledResourceFields(workspaceUuid))

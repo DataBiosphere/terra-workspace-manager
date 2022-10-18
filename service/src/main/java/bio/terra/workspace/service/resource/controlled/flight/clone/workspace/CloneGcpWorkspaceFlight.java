@@ -9,6 +9,7 @@ import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.resource.controlled.flight.clone.ClonePolicyAttributesStep;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import bio.terra.workspace.service.workspace.model.Workspace;
+import bio.terra.workspace.service.workspace.model.WorkspaceStage;
 import java.util.UUID;
 
 /** Top-most flight for cloning a GCP workspace. Launches sub-flights for most of the work. */
@@ -29,22 +30,33 @@ public class CloneGcpWorkspaceFlight extends Flight {
     var flightBeanBag = FlightBeanBag.getFromObject(applicationContext);
     var cloudRetryRule = RetryRules.cloud();
     var longCloudRetryRule = RetryRules.cloudLongRunning();
+
+    var sourceWorkspaceId =
+        inputParameters.get(
+            WorkspaceFlightMapKeys.ControlledResourceKeys.SOURCE_WORKSPACE_ID, UUID.class);
+    Workspace sourceWorkspace = flightBeanBag.getWorkspaceDao().getWorkspace(sourceWorkspaceId);
+
     addStep(new FindResourcesToCloneStep(flightBeanBag.getResourceDao()), cloudRetryRule);
 
     addStep(new CreateIdsForFutureStepsStep());
 
-    addStep(
-        new LaunchCreateGcpContextFlightStep(flightBeanBag.getWorkspaceService()),
-        RetryRules.cloud());
-    addStep(new AwaitCreateGcpContextFlightStep(), longCloudRetryRule);
+    // Only create a GCP cloud context if the source workspace has a GCP cloud context
+    if (flightBeanBag
+        .getGcpCloudContextService()
+        .getGcpCloudContext(sourceWorkspaceId)
+        .isPresent()) {
+      addStep(
+          new LaunchCreateGcpContextFlightStep(flightBeanBag.getWorkspaceService()),
+          RetryRules.cloud());
+      addStep(new AwaitCreateGcpContextFlightStep(), longCloudRetryRule);
+    }
 
     // If TPS is enabled, clone the policy attributes
-    if (flightBeanBag.getFeatureConfiguration().isTpsEnabled()) {
+    // We do not support policies on RAWLS stage workspaces
+    if (flightBeanBag.getFeatureConfiguration().isTpsEnabled()
+        && sourceWorkspace.getWorkspaceStage() != WorkspaceStage.RAWLS_WORKSPACE) {
       var destinationWorkspace =
           inputParameters.get(JobMapKeys.REQUEST.getKeyName(), Workspace.class);
-      var sourceWorkspaceId =
-          inputParameters.get(
-              WorkspaceFlightMapKeys.ControlledResourceKeys.SOURCE_WORKSPACE_ID, UUID.class);
       var userRequest =
           inputParameters.get(
               JobMapKeys.AUTH_USER_INFO.getKeyName(), AuthenticatedUserRequest.class);

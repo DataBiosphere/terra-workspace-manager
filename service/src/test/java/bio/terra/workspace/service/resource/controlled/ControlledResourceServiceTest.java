@@ -2,6 +2,7 @@ package bio.terra.workspace.service.resource.controlled;
 
 import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.AI_NOTEBOOK_PREV_PARAMETERS;
 import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.AI_NOTEBOOK_UPDATE_PARAMETERS;
+import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.RESOURCE_DESCRIPTION;
 import static bio.terra.workspace.service.resource.controlled.cloud.gcp.GcpResourceConstant.DEFAULT_REGION;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
@@ -27,20 +28,31 @@ import bio.terra.stairway.FlightStatus;
 import bio.terra.stairway.StepStatus;
 import bio.terra.workspace.app.configuration.external.CliConfiguration;
 import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
+import bio.terra.workspace.app.controller.shared.PropertiesUtils;
 import bio.terra.workspace.common.BaseConnectedTest;
 import bio.terra.workspace.common.CloudUtils;
 import bio.terra.workspace.common.StairwayTestUtils;
 import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
+import bio.terra.workspace.common.utils.TestUtils;
 import bio.terra.workspace.connected.UserAccessUtils;
 import bio.terra.workspace.connected.WorkspaceConnectedTestUtils;
+import bio.terra.workspace.generated.model.ApiClonedControlledGcpBigQueryDataset;
 import bio.terra.workspace.generated.model.ApiClonedControlledGcpGcsBucket;
 import bio.terra.workspace.generated.model.ApiCloningInstructionsEnum;
+import bio.terra.workspace.generated.model.ApiCloudPlatform;
 import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceCreationParameters;
 import bio.terra.workspace.generated.model.ApiGcpAiNotebookUpdateParameters;
 import bio.terra.workspace.generated.model.ApiGcpBigQueryDatasetCreationParameters;
+import bio.terra.workspace.generated.model.ApiGcpBigQueryDatasetResource;
 import bio.terra.workspace.generated.model.ApiGcpBigQueryDatasetUpdateParameters;
+import bio.terra.workspace.generated.model.ApiGcpGcsBucketResource;
 import bio.terra.workspace.generated.model.ApiGcpGcsBucketUpdateParameters;
 import bio.terra.workspace.generated.model.ApiJobControl;
+import bio.terra.workspace.generated.model.ApiResourceLineage;
+import bio.terra.workspace.generated.model.ApiResourceLineageEntry;
+import bio.terra.workspace.generated.model.ApiResourceMetadata;
+import bio.terra.workspace.generated.model.ApiResourceType;
+import bio.terra.workspace.generated.model.ApiStewardshipType;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
@@ -70,15 +82,22 @@ import bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.GcsBu
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.RetrieveGcsBucketCloudAttributesStep;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.UpdateGcsBucketStep;
 import bio.terra.workspace.service.resource.controlled.exception.ReservedMetadataKeyException;
+import bio.terra.workspace.service.resource.controlled.flight.clone.bucket.SetReferencedDestinationGcsBucketInWorkingMapStep;
+import bio.terra.workspace.service.resource.controlled.flight.clone.bucket.SetReferencedDestinationGcsBucketResponseStep;
+import bio.terra.workspace.service.resource.controlled.flight.clone.dataset.SetReferencedDestinationBigQueryDatasetInWorkingMapStep;
+import bio.terra.workspace.service.resource.controlled.flight.clone.dataset.SetReferencedDestinationBigQueryDatasetResponseStep;
 import bio.terra.workspace.service.resource.controlled.flight.delete.DeleteMetadataStep;
 import bio.terra.workspace.service.resource.controlled.flight.update.RetrieveControlledResourceMetadataStep;
 import bio.terra.workspace.service.resource.controlled.flight.update.UpdateControlledResourceMetadataStep;
-import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResourceFields;
 import bio.terra.workspace.service.resource.exception.DuplicateResourceException;
 import bio.terra.workspace.service.resource.exception.ResourceNotFoundException;
 import bio.terra.workspace.service.resource.model.ResourceLineageEntry;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
+import bio.terra.workspace.service.resource.referenced.cloud.gcp.ReferencedResourceService;
+import bio.terra.workspace.service.resource.referenced.cloud.gcp.bqdataset.ReferencedBigQueryDatasetResource;
+import bio.terra.workspace.service.resource.referenced.cloud.gcp.gcsbucket.ReferencedGcsBucketResource;
+import bio.terra.workspace.service.resource.referenced.flight.create.CreateReferenceMetadataStep;
 import bio.terra.workspace.service.workspace.Alpha1Service;
 import bio.terra.workspace.service.workspace.GcpCloudContextService;
 import bio.terra.workspace.service.workspace.WorkspaceService;
@@ -102,7 +121,7 @@ import org.apache.commons.lang3.RandomStringUtils;
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.TestInstance.Lifecycle;
@@ -119,13 +138,24 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
   /** The default GCP location to create notebooks for this test. */
   private static final String DEFAULT_NOTEBOOK_LOCATION = "us-east1-b";
 
-  private static Workspace reusableWorkspace;
-  private Workspace workspace;
+  private static final String DEST_DATASET_NAME = TestUtils.appendRandomNumber("dest_dataset_name");
+
+  private static final String DEST_BUCKET_DESC =
+      "A bucket cloned individually into the same workspace.";
+  private static final String DEST_BUCKET_NAME =
+      "cloned-bucket-" + UUID.randomUUID().toString().toLowerCase();
+  private static final String DEST_BUCKET_LOCATION = "US-EAST1";
+
+  // Store workspaceId instead of workspace so that for local development, one can easily use a
+  // previously created workspace.
+  private UUID workspaceId;
   private UserAccessUtils.TestUser user;
   private String projectId;
+
   @Autowired private Alpha1Service alpha1Service;
   @Autowired private CliConfiguration cliConfiguration;
   @Autowired private ControlledResourceService controlledResourceService;
+  @Autowired private ReferencedResourceService referencedResourceService;
   @Autowired private CrlService crlService;
   @Autowired private FeatureConfiguration features;
   @Autowired private GcpCloudContextService gcpCloudContextService;
@@ -172,30 +202,14 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
     }
   }
 
-  /**
-   * Retrieve or create a workspace ready for controlled notebook instance resources.
-   *
-   * <p>Reusing a workspace saves time between tests.
-   *
-   * @param user
-   */
-  private Workspace reusableWorkspace(UserAccessUtils.TestUser user) {
-    if (ControlledResourceServiceTest.reusableWorkspace == null) {
-      ControlledResourceServiceTest.reusableWorkspace =
-          workspaceUtils.createWorkspaceWithGcpContext(user.getAuthenticatedRequest());
-    }
-    return reusableWorkspace;
-  }
-
-  /**
-   * Set up default values for user, workspace, and projectId for tests to use. By default, this
-   * will point to the reusable workspace created by {@code reusableWorkspace}.
-   */
-  @BeforeEach
-  public void setupUserAndWorkspace() {
+  @BeforeAll
+  public void setup() {
     user = userAccessUtils.defaultUser();
-    workspace = reusableWorkspace(user);
-    projectId = gcpCloudContextService.getRequiredGcpProject(workspace.getWorkspaceId());
+    workspaceId =
+        workspaceUtils
+            .createWorkspaceWithGcpContext(userAccessUtils.defaultUserAuthRequest())
+            .getWorkspaceId();
+    projectId = gcpCloudContextService.getRequiredGcpProject(workspaceId);
   }
 
   /**
@@ -205,24 +219,23 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
   public void resetFlightDebugInfo() {
     // Exercise enumeration by dumping after each
     features.setAlpha1Enabled(true);
-    StairwayTestUtils.enumerateJobsDump(
-        alpha1Service, workspace.getWorkspaceId(), user.getAuthenticatedRequest());
+    StairwayTestUtils.enumerateJobsDump(alpha1Service, workspaceId, user.getAuthenticatedRequest());
 
     jobService.setFlightDebugInfoForTest(null);
   }
 
   /** After running all tests, delete the shared workspace. */
   @AfterAll
-  private void cleanUpSharedWorkspace() {
+  private void cleanUp() {
     user = userAccessUtils.defaultUser();
-    workspaceService.deleteWorkspace(reusableWorkspace, user.getAuthenticatedRequest());
+    Workspace workspace = workspaceService.getWorkspace(workspaceId);
+    workspaceService.deleteWorkspace(workspace, user.getAuthenticatedRequest());
   }
 
   @Test
   @DisabledIfEnvironmentVariable(named = "TEST_ENV", matches = BUFFER_SERVICE_DISABLED_ENVS_REG_EX)
   void createAiNotebookInstanceDo() throws Exception {
-    UUID workspaceUuid = workspace.getWorkspaceId();
-    String workspaceUserFacingId = workspace.getUserFacingId();
+    String workspaceUserFacingId = workspaceService.getWorkspace(workspaceId).getUserFacingId();
     var instanceId = "create-ai-notebook-instance-do";
     var serverName = "verily-autopush";
     cliConfiguration.setServerName(serverName);
@@ -232,7 +245,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
             .location(DEFAULT_NOTEBOOK_LOCATION);
 
     ControlledAiNotebookInstanceResource resource =
-        makeNotebookTestResource(workspaceUuid, "initial-notebook-name", instanceId);
+        makeNotebookTestResource(workspaceId, "initial-notebook-name", instanceId);
 
     // Test idempotency of steps by retrying them once.
     Map<String, StepStatus> retrySteps = new HashMap<>();
@@ -259,10 +272,10 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
 
     assertEquals(
         resource,
-        controlledResourceService.getControlledResource(workspaceUuid, resource.getResourceId()));
+        controlledResourceService.getControlledResource(workspaceId, resource.getResourceId()));
 
     InstanceName instanceName =
-        resource.toInstanceName(gcpCloudContextService.getRequiredGcpProject(workspaceUuid));
+        resource.toInstanceName(gcpCloudContextService.getRequiredGcpProject(workspaceId));
     Instance instance =
         crlService.getAIPlatformNotebooksCow().instances().get(instanceName).execute();
 
@@ -315,7 +328,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
 
     // Creating a controlled resource with a duplicate underlying notebook instance is not allowed.
     ControlledAiNotebookInstanceResource duplicateResource =
-        makeNotebookTestResource(workspaceUuid, "new-name-same-notebook-instance", instanceId);
+        makeNotebookTestResource(workspaceId, "new-name-same-notebook-instance", instanceId);
     String duplicateResourceJobId =
         controlledResourceService.createAiNotebookInstance(
             duplicateResource,
@@ -343,7 +356,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
             .instanceId(instanceId)
             .location(DEFAULT_NOTEBOOK_LOCATION);
     ControlledAiNotebookInstanceResource resource =
-        makeNotebookTestResource(workspace.getWorkspaceId(), name, instanceId);
+        makeNotebookTestResource(workspaceId, name, instanceId);
 
     // Test idempotency of undo steps by retrying them once.
     Map<String, StepStatus> retrySteps = new HashMap<>();
@@ -364,7 +377,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
         samService.getOrCreatePetSaEmail(
             projectId, user.getAuthenticatedRequest().getRequiredToken());
     petSaService.disablePetServiceAccountImpersonation(
-        workspace.getWorkspaceId(), user.getEmail(), user.getAuthenticatedRequest());
+        workspaceId, user.getEmail(), user.getAuthenticatedRequest());
     IamCow userIamCow = crlService.getIamCow(user.getAuthenticatedRequest());
     // Assert the user does not have access to their pet SA before the flight
     // Note this uses user credentials for the IAM cow to validate the user's access.
@@ -408,9 +421,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
     // the default user themselves. This should behave the same as the flight triggered by the
     // end-user credentials but has historically hidden bugs, so is worth testing explicitly.
     AuthenticatedUserRequest petCredentials =
-        petSaService
-            .getWorkspacePetCredentials(workspace.getWorkspaceId(), user.getAuthenticatedRequest())
-            .get();
+        petSaService.getWorkspacePetCredentials(workspaceId, user.getAuthenticatedRequest()).get();
     String petJobId =
         controlledResourceService.createAiNotebookInstance(
             resource,
@@ -437,7 +448,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
         ControlledResourceFixtures.defaultNotebookCreationParameters()
             .instanceId(instanceId)
             .location(DEFAULT_NOTEBOOK_LOCATION);
-    var resource = makeNotebookTestResource(workspace.getWorkspaceId(), name, instanceId);
+    var resource = makeNotebookTestResource(workspaceId, name, instanceId);
     String jobId =
         controlledResourceService.createAiNotebookInstance(
             resource,
@@ -452,7 +463,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
 
     ControlledAiNotebookInstanceResource fetchedInstance =
         controlledResourceService
-            .getControlledResource(workspace.getWorkspaceId(), resource.getResourceId())
+            .getControlledResource(workspaceId, resource.getResourceId())
             .castByEnum(WsmResourceType.CONTROLLED_GCP_AI_NOTEBOOK_INSTANCE);
 
     var instanceFromCloud =
@@ -485,7 +496,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
 
     ControlledAiNotebookInstanceResource updatedInstance =
         controlledResourceService
-            .getControlledResource(workspace.getWorkspaceId(), resource.getResourceId())
+            .getControlledResource(workspaceId, resource.getResourceId())
             .castByEnum(WsmResourceType.CONTROLLED_GCP_AI_NOTEBOOK_INSTANCE);
     // resource metadata is updated.
     assertEquals(newName, updatedInstance.getName());
@@ -524,7 +535,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
         ControlledResourceFixtures.defaultNotebookCreationParameters()
             .instanceId(instanceId)
             .location(DEFAULT_NOTEBOOK_LOCATION);
-    var resource = makeNotebookTestResource(workspace.getWorkspaceId(), name, instanceId);
+    var resource = makeNotebookTestResource(workspaceId, name, instanceId);
     String jobId =
         controlledResourceService.createAiNotebookInstance(
             resource,
@@ -539,7 +550,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
 
     ControlledAiNotebookInstanceResource fetchedInstance =
         controlledResourceService
-            .getControlledResource(workspace.getWorkspaceId(), resource.getResourceId())
+            .getControlledResource(workspaceId, resource.getResourceId())
             .castByEnum(WsmResourceType.CONTROLLED_GCP_AI_NOTEBOOK_INSTANCE);
 
     var instanceFromCloud =
@@ -568,7 +579,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
 
     ControlledAiNotebookInstanceResource updatedInstance =
         controlledResourceService
-            .getControlledResource(workspace.getWorkspaceId(), resource.getResourceId())
+            .getControlledResource(workspaceId, resource.getResourceId())
             .castByEnum(WsmResourceType.CONTROLLED_GCP_AI_NOTEBOOK_INSTANCE);
     // resource metadata is updated.
     assertEquals(newName, updatedInstance.getName());
@@ -589,7 +600,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
             .instanceId(instanceId)
             .location(DEFAULT_NOTEBOOK_LOCATION)
             .metadata(prevCustomMetadata);
-    var resource = makeNotebookTestResource(workspace.getWorkspaceId(), name, instanceId);
+    var resource = makeNotebookTestResource(workspaceId, name, instanceId);
     String jobId =
         controlledResourceService.createAiNotebookInstance(
             resource,
@@ -604,7 +615,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
 
     ControlledAiNotebookInstanceResource fetchedInstance =
         controlledResourceService
-            .getControlledResource(workspace.getWorkspaceId(), resource.getResourceId())
+            .getControlledResource(workspaceId, resource.getResourceId())
             .castByEnum(WsmResourceType.CONTROLLED_GCP_AI_NOTEBOOK_INSTANCE);
 
     Map<String, StepStatus> retrySteps = new HashMap<>();
@@ -632,7 +643,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
 
     ControlledAiNotebookInstanceResource updatedInstance =
         controlledResourceService
-            .getControlledResource(workspace.getWorkspaceId(), resource.getResourceId())
+            .getControlledResource(workspaceId, resource.getResourceId())
             .castByEnum(WsmResourceType.CONTROLLED_GCP_AI_NOTEBOOK_INSTANCE);
     // resource metadata is updated.
     assertEquals(resource.getName(), updatedInstance.getName());
@@ -667,7 +678,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
         ControlledResourceFixtures.defaultNotebookCreationParameters()
             .instanceId(instanceId)
             .location(DEFAULT_NOTEBOOK_LOCATION);
-    var resource = makeNotebookTestResource(workspace.getWorkspaceId(), name, instanceId);
+    var resource = makeNotebookTestResource(workspaceId, name, instanceId);
     String jobId =
         controlledResourceService.createAiNotebookInstance(
             resource,
@@ -682,7 +693,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
 
     ControlledAiNotebookInstanceResource fetchedInstance =
         controlledResourceService
-            .getControlledResource(workspace.getWorkspaceId(), resource.getResourceId())
+            .getControlledResource(workspaceId, resource.getResourceId())
             .castByEnum(WsmResourceType.CONTROLLED_GCP_AI_NOTEBOOK_INSTANCE);
     var prevInstanceFromCloud =
         crlService
@@ -707,7 +718,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
 
     ControlledAiNotebookInstanceResource updatedInstance =
         controlledResourceService
-            .getControlledResource(workspace.getWorkspaceId(), resource.getResourceId())
+            .getControlledResource(workspaceId, resource.getResourceId())
             .castByEnum(WsmResourceType.CONTROLLED_GCP_AI_NOTEBOOK_INSTANCE);
     // resource metadata is updated.
     assertEquals(resource.getName(), updatedInstance.getName());
@@ -756,7 +767,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
             .instanceId(instanceId)
             .location(DEFAULT_NOTEBOOK_LOCATION);
     ControlledAiNotebookInstanceResource resource =
-        makeNotebookTestResource(workspace.getWorkspaceId(), instanceId, instanceId);
+        makeNotebookTestResource(workspaceId, instanceId, instanceId);
 
     // Shared notebooks not yet implemented.
     // Private IAM roles must include writer role.
@@ -824,13 +835,12 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
   /** Create a controlled AI Notebook instance with default private settings. */
   private ControlledAiNotebookInstanceResource createDefaultPrivateAiNotebookInstance(
       String instanceId, UserAccessUtils.TestUser user) {
-    Workspace workspace = reusableWorkspace(user);
     ApiGcpAiNotebookInstanceCreationParameters creationParameters =
         ControlledResourceFixtures.defaultNotebookCreationParameters()
             .instanceId(instanceId)
             .location(DEFAULT_NOTEBOOK_LOCATION);
     ControlledAiNotebookInstanceResource resource =
-        makeNotebookTestResource(workspace.getWorkspaceId(), instanceId, instanceId);
+        makeNotebookTestResource(workspaceId, instanceId, instanceId);
 
     String createJobId =
         controlledResourceService.createAiNotebookInstance(
@@ -858,7 +868,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
     ApiGcpBigQueryDatasetCreationParameters creationParameters =
         new ApiGcpBigQueryDatasetCreationParameters().datasetId(datasetId).location(location);
     ControlledBigQueryDatasetResource resource =
-        ControlledResourceFixtures.makeDefaultControlledBigQueryBuilder(workspace.getWorkspaceId())
+        ControlledResourceFixtures.makeDefaultControlledBqDatasetBuilder(workspaceId)
             .datasetName(datasetId)
             .build();
 
@@ -871,7 +881,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
 
     ControlledBigQueryDatasetResource fetchedDataset =
         controlledResourceService
-            .getControlledResource(workspace.getWorkspaceId(), resource.getResourceId())
+            .getControlledResource(workspaceId, resource.getResourceId())
             .castByEnum(WsmResourceType.CONTROLLED_GCP_BIG_QUERY_DATASET);
     assertEquals(resource, fetchedDataset);
 
@@ -888,7 +898,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
 
     ControlledBigQueryDatasetResource updatedResource =
         controlledResourceService
-            .getControlledResource(workspace.getWorkspaceId(), resource.getResourceId())
+            .getControlledResource(workspaceId, resource.getResourceId())
             .castByEnum(WsmResourceType.CONTROLLED_GCP_BIG_QUERY_DATASET);
     assertEquals(newName, updatedResource.getName());
     assertEquals(newDescription, updatedResource.getDescription());
@@ -901,28 +911,16 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
         newDefaultPartitionLifetime * 1000L,
         updatedDatasetFromCloud.getDefaultPartitionExpirationMs());
 
-    // try to update with invalid cloning instructions
-    ApiGcpBigQueryDatasetUpdateParameters updateCloningParams =
-        new ApiGcpBigQueryDatasetUpdateParameters()
-            .cloningInstructions(ApiCloningInstructionsEnum.REFERENCE); // not valid (yet)
-    assertThrows(
-        BadRequestException.class,
-        () ->
-            controlledResourceService.updateBqDataset(
-                updatedResource, updateCloningParams, null, null));
-
     controlledResourceService.deleteControlledResourceSync(
         resource.getWorkspaceId(), resource.getResourceId(), user.getAuthenticatedRequest());
 
     assertThrows(
         ResourceNotFoundException.class,
         () ->
-            controlledResourceService.getControlledResource(
-                workspace.getWorkspaceId(), resource.getResourceId()));
+            controlledResourceService.getControlledResource(workspaceId, resource.getResourceId()));
 
     features.setAlpha1Enabled(true);
-    StairwayTestUtils.enumerateJobsDump(
-        alpha1Service, workspace.getWorkspaceId(), user.getAuthenticatedRequest());
+    StairwayTestUtils.enumerateJobsDump(alpha1Service, workspaceId, user.getAuthenticatedRequest());
   }
 
   @Test
@@ -939,7 +937,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
             .defaultTableLifetime(defaultTableLifetimeSec)
             .defaultPartitionLifetime(defaultPartitionLifetimeSec);
     ControlledBigQueryDatasetResource resource =
-        ControlledResourceFixtures.makeDefaultControlledBigQueryBuilder(workspace.getWorkspaceId())
+        ControlledResourceFixtures.makeDefaultControlledBqDatasetBuilder(workspaceId)
             .datasetName(datasetId)
             .build();
 
@@ -965,8 +963,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
 
     assertEquals(
         resource,
-        controlledResourceService.getControlledResource(
-            workspace.getWorkspaceId(), resource.getResourceId()));
+        controlledResourceService.getControlledResource(workspaceId, resource.getResourceId()));
   }
 
   @Test
@@ -978,7 +975,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
     ApiGcpBigQueryDatasetCreationParameters creationParameters =
         new ApiGcpBigQueryDatasetCreationParameters().datasetId(datasetId).location(location);
     ControlledBigQueryDatasetResource resource =
-        ControlledResourceFixtures.makeDefaultControlledBigQueryBuilder(workspace.getWorkspaceId())
+        ControlledResourceFixtures.makeDefaultControlledBqDatasetBuilder(workspaceId)
             .datasetName(datasetId)
             .build();
 
@@ -1011,8 +1008,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
     assertThrows(
         ResourceNotFoundException.class,
         () ->
-            controlledResourceService.getControlledResource(
-                workspace.getWorkspaceId(), resource.getResourceId()));
+            controlledResourceService.getControlledResource(workspaceId, resource.getResourceId()));
   }
 
   @Test
@@ -1024,7 +1020,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
     ApiGcpBigQueryDatasetCreationParameters creationParameters =
         new ApiGcpBigQueryDatasetCreationParameters().datasetId(datasetId).location(location);
     ControlledBigQueryDatasetResource resource =
-        ControlledResourceFixtures.makeDefaultControlledBigQueryBuilder(workspace.getWorkspaceId())
+        ControlledResourceFixtures.makeDefaultControlledBqDatasetBuilder(workspaceId)
             .datasetName(datasetId)
             .build();
 
@@ -1056,8 +1052,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
     assertThrows(
         ResourceNotFoundException.class,
         () ->
-            controlledResourceService.getControlledResource(
-                workspace.getWorkspaceId(), resource.getResourceId()));
+            controlledResourceService.getControlledResource(workspaceId, resource.getResourceId()));
   }
 
   @Test
@@ -1069,7 +1064,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
     ApiGcpBigQueryDatasetCreationParameters creationParameters =
         new ApiGcpBigQueryDatasetCreationParameters().datasetId(datasetId).location(location);
     ControlledBigQueryDatasetResource resource =
-        ControlledResourceFixtures.makeDefaultControlledBigQueryBuilder(workspace.getWorkspaceId())
+        ControlledResourceFixtures.makeDefaultControlledBqDatasetBuilder(workspaceId)
             .datasetName(datasetId)
             .build();
 
@@ -1103,8 +1098,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
     assertThrows(
         ResourceNotFoundException.class,
         () ->
-            controlledResourceService.getControlledResource(
-                workspace.getWorkspaceId(), resource.getResourceId()));
+            controlledResourceService.getControlledResource(workspaceId, resource.getResourceId()));
   }
 
   @Test
@@ -1116,7 +1110,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
     ApiGcpBigQueryDatasetCreationParameters creationParameters =
         new ApiGcpBigQueryDatasetCreationParameters().datasetId(datasetId).location(location);
     ControlledBigQueryDatasetResource resource =
-        ControlledResourceFixtures.makeDefaultControlledBigQueryBuilder(workspace.getWorkspaceId())
+        ControlledResourceFixtures.makeDefaultControlledBqDatasetBuilder(workspaceId)
             .datasetName(datasetId)
             .build();
 
@@ -1158,7 +1152,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
     // check the properties stored in WSM were updated
     ControlledBigQueryDatasetResource fetchedResource =
         controlledResourceService
-            .getControlledResource(workspace.getWorkspaceId(), resource.getResourceId())
+            .getControlledResource(workspaceId, resource.getResourceId())
             .castByEnum(WsmResourceType.CONTROLLED_GCP_BIG_QUERY_DATASET);
     assertEquals(newName, fetchedResource.getName());
     assertEquals(newDescription, fetchedResource.getDescription());
@@ -1179,7 +1173,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
             .defaultTableLifetime(initialDefaultTableLifetime)
             .defaultPartitionLifetime(initialDefaultPartitionLifetime);
     ControlledBigQueryDatasetResource resource =
-        ControlledResourceFixtures.makeDefaultControlledBigQueryBuilder(workspace.getWorkspaceId())
+        ControlledResourceFixtures.makeDefaultControlledBqDatasetBuilder(workspaceId)
             .datasetName(datasetId)
             .build();
     ControlledBigQueryDatasetResource createdDataset =
@@ -1228,7 +1222,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
     // check the properties stored in WSM were not updated
     ControlledBigQueryDatasetResource fetchedResource =
         controlledResourceService
-            .getControlledResource(workspace.getWorkspaceId(), resource.getResourceId())
+            .getControlledResource(workspaceId, resource.getResourceId())
             .castByEnum(WsmResourceType.CONTROLLED_GCP_BIG_QUERY_DATASET);
     assertEquals(resource.getName(), fetchedResource.getName());
     assertEquals(resource.getDescription(), fetchedResource.getDescription());
@@ -1249,7 +1243,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
             .defaultTableLifetime(initialDefaultTableLifetime)
             .defaultPartitionLifetime(initialDefaultPartitionLifetime);
     ControlledBigQueryDatasetResource resource =
-        ControlledResourceFixtures.makeDefaultControlledBigQueryBuilder(workspace.getWorkspaceId())
+        ControlledResourceFixtures.makeDefaultControlledBqDatasetBuilder(workspaceId)
             .datasetName(datasetId)
             .build();
     ControlledBigQueryDatasetResource createdDataset =
@@ -1312,7 +1306,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
     ApiGcpBigQueryDatasetCreationParameters creationParameters =
         new ApiGcpBigQueryDatasetCreationParameters().datasetId(datasetId).location(location);
     ControlledBigQueryDatasetResource resource =
-        ControlledResourceFixtures.makeDefaultControlledBigQueryBuilder(workspace.getWorkspaceId())
+        ControlledResourceFixtures.makeDefaultControlledBqDatasetBuilder(workspaceId)
             .datasetName(datasetId)
             .build();
 
@@ -1352,11 +1346,110 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
   }
 
   @Test
+  void cloneBqDataset_copyResource_do() throws Exception {
+    // Create COPY_DEFINITION dataset resource
+    ControlledBigQueryDatasetResource sourceResource = createBqDataset();
+    String destResourceName = TestUtils.appendRandomNumber("dest-resource-name");
+    ApiClonedControlledGcpBigQueryDataset clonedResource =
+        cloneBqDataset(
+            sourceResource.getResourceId(), ApiCloningInstructionsEnum.RESOURCE, destResourceName);
+
+    // Assert resource returned in clone flight response
+    assertClonedBqDataset(
+        clonedResource.getDataset(),
+        ApiStewardshipType.CONTROLLED,
+        DEST_DATASET_NAME,
+        ApiCloningInstructionsEnum.DEFINITION,
+        destResourceName,
+        sourceResource.getResourceId());
+
+    // Assert resource returned by controlledResourceService.getControlledResource()
+    final UUID destResourceId = clonedResource.getDataset().getMetadata().getResourceId();
+    final ControlledBigQueryDatasetResource gotDataset =
+        controlledResourceService
+            .getControlledResource(workspaceId, destResourceId)
+            .castByEnum(WsmResourceType.CONTROLLED_GCP_BIG_QUERY_DATASET);
+    assertClonedBqDataset(
+        clonedResource.getDataset(),
+        ApiStewardshipType.CONTROLLED,
+        DEST_DATASET_NAME,
+        ApiCloningInstructionsEnum.DEFINITION,
+        destResourceName,
+        sourceResource.getResourceId());
+  }
+
+  @Test
+  void cloneBqDataset_copyReference_do() throws Exception {
+    // Create COPY_DEFINITION dataset resource
+    ControlledBigQueryDatasetResource sourceResource = createBqDataset();
+    String destResourceName = TestUtils.appendRandomNumber("dest-resource-name");
+    ApiClonedControlledGcpBigQueryDataset clonedResource =
+        cloneBqDataset(
+            sourceResource.getResourceId(), ApiCloningInstructionsEnum.REFERENCE, destResourceName);
+
+    // Assert resource returned in clone flight response
+    assertClonedBqDataset(
+        clonedResource.getDataset(),
+        ApiStewardshipType.REFERENCED,
+        sourceResource.getDatasetName(),
+        // COPY_DEFINITION doesn't make sense for referenced resources. COPY_DEFINITION was
+        // converted to COPY_REFERENCE.
+        ApiCloningInstructionsEnum.REFERENCE,
+        destResourceName,
+        sourceResource.getResourceId());
+
+    // Assert resource returned by controlledResourceService.getControlledResource()
+    final UUID destResourceId = clonedResource.getDataset().getMetadata().getResourceId();
+    final ReferencedBigQueryDatasetResource gotDataset =
+        referencedResourceService
+            .getReferenceResource(workspaceId, destResourceId)
+            .castByEnum(WsmResourceType.REFERENCED_GCP_BIG_QUERY_DATASET);
+    assertClonedBqDataset(
+        clonedResource.getDataset(),
+        ApiStewardshipType.REFERENCED,
+        sourceResource.getDatasetName(),
+        // COPY_DEFINITION doesn't make sense for referenced resources. COPY_DEFINITION was
+        // converted to COPY_REFERENCE.
+        ApiCloningInstructionsEnum.REFERENCE,
+        destResourceName,
+        sourceResource.getResourceId());
+  }
+
+  @Test
+  void cloneBqDataset_copyResource_undo() throws Exception {
+    ControlledBigQueryDatasetResource sourceResource = createBqDataset();
+    UUID destResourceId = UUID.randomUUID();
+    cloneBqDataset_undo(
+        sourceResource.getResourceId(), destResourceId, ApiCloningInstructionsEnum.RESOURCE);
+
+    // Assert resource doesn't exist
+    ResourceNotFoundException ex =
+        assertThrows(
+            ResourceNotFoundException.class,
+            () -> controlledResourceService.getControlledResource(workspaceId, destResourceId));
+    assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
+  }
+
+  @Test
+  void cloneBqDataset_copyReference_undo() throws Exception {
+    ControlledBigQueryDatasetResource sourceResource = createBqDataset();
+    UUID destResourceId = UUID.randomUUID();
+    cloneBqDataset_undo(
+        sourceResource.getResourceId(), destResourceId, ApiCloningInstructionsEnum.REFERENCE);
+
+    // Assert resource doesn't exist
+    ResourceNotFoundException ex =
+        assertThrows(
+            ResourceNotFoundException.class,
+            () -> referencedResourceService.getReferenceResource(workspaceId, destResourceId));
+    assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
+  }
+
+  @Test
   @DisabledIfEnvironmentVariable(named = "TEST_ENV", matches = BUFFER_SERVICE_DISABLED_ENVS_REG_EX)
   void createGcsBucketDo() throws Exception {
     ControlledGcsBucketResource resource =
-        ControlledResourceFixtures.makeDefaultControlledGcsBucketBuilder(workspace.getWorkspaceId())
-            .build();
+        ControlledResourceFixtures.makeDefaultControlledGcsBucketBuilder(workspaceId).build();
 
     // Test idempotency of bucket-specific steps by retrying them once.
     Map<String, StepStatus> retrySteps = new HashMap<>();
@@ -1379,15 +1472,14 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
     assertEquals(DEFAULT_REGION, cloudBucket.getLocation().toLowerCase());
     assertEquals(
         resource,
-        controlledResourceService.getControlledResource(
-            workspace.getWorkspaceId(), resource.getResourceId()));
+        controlledResourceService.getControlledResource(workspaceId, resource.getResourceId()));
   }
 
   @Test
   @DisabledIfEnvironmentVariable(named = "TEST_ENV", matches = BUFFER_SERVICE_DISABLED_ENVS_REG_EX)
   void createGcsBucketDo_invalidBucketName_throwsBadRequestException() throws Exception {
     ControlledGcsBucketResource resource =
-        ControlledResourceFixtures.makeDefaultControlledGcsBucketBuilder(workspace.getWorkspaceId())
+        ControlledResourceFixtures.makeDefaultControlledGcsBucketBuilder(workspaceId)
             .bucketName("192.168.5.4")
             .build();
 
@@ -1405,8 +1497,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
   @DisabledIfEnvironmentVariable(named = "TEST_ENV", matches = BUFFER_SERVICE_DISABLED_ENVS_REG_EX)
   void createGcsBucketUndo() throws Exception {
     ControlledGcsBucketResource resource =
-        ControlledResourceFixtures.makeDefaultControlledGcsBucketBuilder(workspace.getWorkspaceId())
-            .build();
+        ControlledResourceFixtures.makeDefaultControlledGcsBucketBuilder(workspaceId).build();
 
     // Test idempotency of bucket-specific undo steps by retrying them once. Fail at the end of
     // the flight to ensure undo steps work properly.
@@ -1434,90 +1525,114 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
     assertThrows(
         ResourceNotFoundException.class,
         () ->
-            controlledResourceService.getControlledResource(
-                workspace.getWorkspaceId(), resource.getResourceId()));
+            controlledResourceService.getControlledResource(workspaceId, resource.getResourceId()));
   }
 
   @Test
-  void cloneGcsBucketDo() throws InterruptedException {
-    final ControlledGcsBucketResource resource =
-        ControlledResourceFixtures.makeDefaultControlledGcsBucketBuilder(workspace.getWorkspaceId())
-            .build();
-    final ControlledGcsBucketResource createdBucket =
+  void cloneGcsBucket_copyResource_do() throws Exception {
+    // Create COPY_DEFINITION bucket resource
+    ControlledGcsBucketResource sourceResource = createGcsBucket();
+    String destResourceName = TestUtils.appendRandomNumber("dest-resource-name");
+    ApiClonedControlledGcpGcsBucket clonedResource =
+        cloneGcsBucket(
+            sourceResource.getResourceId(), ApiCloningInstructionsEnum.RESOURCE, destResourceName);
+
+    // Assert resource returned in clone flight response
+    assertClonedGcsBucket(
+        clonedResource.getBucket().getGcpBucket(),
+        ApiStewardshipType.CONTROLLED,
+        DEST_BUCKET_NAME,
+        ApiCloningInstructionsEnum.DEFINITION,
+        destResourceName,
+        sourceResource.getResourceId());
+
+    // Assert resource returned by controlledResourceService.getControlledResource()
+    final UUID destResourceId = clonedResource.getBucket().getResourceId();
+    final ControlledGcsBucketResource gotBucket =
         controlledResourceService
-            .createControlledResourceSync(
-                resource,
-                null,
-                user.getAuthenticatedRequest(),
-                ControlledResourceFixtures.getGoogleBucketCreationParameters())
+            .getControlledResource(workspaceId, destResourceId)
             .castByEnum(WsmResourceType.CONTROLLED_GCP_GCS_BUCKET);
-    assertEquals(resource, createdBucket);
-    final ApiJobControl apiJobControl = new ApiJobControl().id(UUID.randomUUID().toString());
-    final String destinationBucketName =
-        "cloned-bucket-" + UUID.randomUUID().toString().toLowerCase();
-    final String destinationLocation = "US-EAST1";
-    final String jobId =
-        controlledResourceService.cloneGcsBucket(
-            workspace.getWorkspaceId(),
-            createdBucket.getResourceId(),
-            workspace.getWorkspaceId(), // copy back into same workspace
-            UUID.randomUUID(),
-            apiJobControl,
-            user.getAuthenticatedRequest(),
-            "cloned_bucket",
-            "A bucket cloned individually into the same workspace.",
-            destinationBucketName,
-            destinationLocation,
-            ApiCloningInstructionsEnum.RESOURCE);
+    assertClonedGcsBucket(
+        gotBucket.toApiResource(),
+        ApiStewardshipType.CONTROLLED,
+        DEST_BUCKET_NAME,
+        ApiCloningInstructionsEnum.DEFINITION,
+        destResourceName,
+        sourceResource.getResourceId());
 
-    jobService.waitForJob(jobId);
-    final FlightState flightState = stairwayComponent.get().getFlightState(jobId);
-    assertEquals(FlightStatus.SUCCESS, flightState.getFlightStatus());
-    assertTrue(flightState.getException().isEmpty());
-    assertTrue(flightState.getResultMap().isPresent());
-    var response =
-        flightState
-            .getResultMap()
-            .get()
-            .get(JobMapKeys.RESPONSE.getKeyName(), ApiClonedControlledGcpGcsBucket.class);
-    assertNotNull(response);
-    assertEquals(
-        destinationBucketName, response.getBucket().getGcpBucket().getAttributes().getBucketName());
-    final UUID resourceId = response.getBucket().getResourceId();
-    final ControlledResource destinationControlledResource =
-        controlledResourceService.getControlledResource(workspace.getWorkspaceId(), resourceId);
-    final ControlledGcsBucketResource destinationBucketResource =
-        destinationControlledResource.castByEnum(WsmResourceType.CONTROLLED_GCP_GCS_BUCKET);
-    assertNotNull(destinationBucketResource);
-    assertEquals("cloned_bucket", destinationBucketResource.getName());
+    // Assert creation parameters on cloud (not stored by WSM).
+    assertGcsBucketCreationParameters();
+  }
 
-    // check creation parameters on cloud (not stored by WSM). Source project is same as destination
-    // in this case.
-    final StorageCow storageCow =
-        crlService.createStorageCow(
-            gcpCloudContextService.getRequiredGcpProject(workspace.getWorkspaceId()));
-    final BucketCow bucketCow = storageCow.get(destinationBucketName);
-    final BucketInfo bucketInfo = bucketCow.getBucketInfo();
-    assertEquals(destinationLocation, bucketInfo.getLocation());
-    assertEquals(
-        GcsApiConversions.toGcsApi(
-            ControlledResourceFixtures.getGoogleBucketCreationParameters()
-                .getDefaultStorageClass()),
-        bucketInfo.getStorageClass());
-    final List<LifecycleRule> expectedLifecycleRules =
-        GcsApiConversions.toGcsApi(
-            ControlledResourceFixtures.getGoogleBucketCreationParameters()
-                .getLifecycle()
-                .getRules());
-    assertThat(
-        expectedLifecycleRules, containsInAnyOrder(bucketInfo.getLifecycleRules().toArray()));
+  @Test
+  void cloneGcsBucket_copyReference_do() throws Exception {
+    // Create COPY_DEFINITION bucket resource
+    ControlledGcsBucketResource sourceResource = createGcsBucket();
+    String destResourceName = TestUtils.appendRandomNumber("dest-resource-name");
+    ApiClonedControlledGcpGcsBucket clonedResource =
+        cloneGcsBucket(
+            sourceResource.getResourceId(), ApiCloningInstructionsEnum.REFERENCE, destResourceName);
+
+    // Assert resource returned in clone flight response
+    assertClonedGcsBucket(
+        clonedResource.getBucket().getGcpBucket(),
+        ApiStewardshipType.REFERENCED,
+        sourceResource.getBucketName(),
+        // COPY_DEFINITION doesn't make sense for referenced resources. COPY_DEFINITION was
+        // converted to COPY_REFERENCE.
+        ApiCloningInstructionsEnum.REFERENCE,
+        destResourceName,
+        sourceResource.getResourceId());
+
+    // Assert resource returned by referencedResourceService.getReferenceResource()
+    final UUID destResourceId = clonedResource.getBucket().getResourceId();
+    final ReferencedGcsBucketResource gotBucket =
+        referencedResourceService
+            .getReferenceResource(workspaceId, destResourceId)
+            .castByEnum(WsmResourceType.REFERENCED_GCP_GCS_BUCKET);
+    assertClonedGcsBucket(
+        gotBucket.toApiResource(),
+        ApiStewardshipType.REFERENCED,
+        sourceResource.getBucketName(),
+        ApiCloningInstructionsEnum.REFERENCE,
+        destResourceName,
+        sourceResource.getResourceId());
+  }
+
+  @Test
+  void cloneGcsBucket_copyResource_undo() throws Exception {
+    ControlledGcsBucketResource sourceResource = createGcsBucket();
+    UUID destResourceId = UUID.randomUUID();
+    cloneGcsBucket_undo(
+        sourceResource.getResourceId(), destResourceId, ApiCloningInstructionsEnum.RESOURCE);
+
+    // Assert resource doesn't exist
+    ResourceNotFoundException ex =
+        assertThrows(
+            ResourceNotFoundException.class,
+            () -> controlledResourceService.getControlledResource(workspaceId, destResourceId));
+    assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
+  }
+
+  @Test
+  void cloneGcsBucket_copyReference_undo() throws Exception {
+    ControlledGcsBucketResource sourceBucket = createGcsBucket();
+    UUID destResourceId = UUID.randomUUID();
+    cloneGcsBucket_undo(
+        sourceBucket.getResourceId(), destResourceId, ApiCloningInstructionsEnum.REFERENCE);
+
+    // Assert resource doesn't exist
+    ResourceNotFoundException ex =
+        assertThrows(
+            ResourceNotFoundException.class,
+            () -> referencedResourceService.getReferenceResource(workspaceId, destResourceId));
+    assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
   }
 
   @Test
   void cloneGcsBucketTwice_lineageAppends() throws InterruptedException {
     ControlledGcsBucketResource resource =
-        ControlledResourceFixtures.makeDefaultControlledGcsBucketBuilder(workspace.getWorkspaceId())
-            .build();
+        ControlledResourceFixtures.makeDefaultControlledGcsBucketBuilder(workspaceId).build();
     List<ResourceLineageEntry> expectedLineage = new ArrayList<>();
     // original bucket
     ControlledGcsBucketResource createdBucket =
@@ -1533,9 +1648,9 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
     // clone bucket once
     String jobId =
         controlledResourceService.cloneGcsBucket(
-            workspace.getWorkspaceId(),
+            workspaceId,
             createdBucket.getResourceId(),
-            workspace.getWorkspaceId(), // copy back into same workspace
+            workspaceId, // copy back into same workspace
             UUID.randomUUID(),
             new ApiJobControl().id(UUID.randomUUID().toString()),
             user.getAuthenticatedRequest(),
@@ -1556,19 +1671,18 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
     UUID firstClonedBucketResourceId = response.getBucket().getResourceId();
     ControlledGcsBucketResource firstClonedBucket =
         controlledResourceService
-            .getControlledResource(workspace.getWorkspaceId(), firstClonedBucketResourceId)
+            .getControlledResource(workspaceId, firstClonedBucketResourceId)
             .castByEnum(WsmResourceType.CONTROLLED_GCP_GCS_BUCKET);
 
-    expectedLineage.add(
-        new ResourceLineageEntry(workspace.getWorkspaceId(), createdBucket.getResourceId()));
+    expectedLineage.add(new ResourceLineageEntry(workspaceId, createdBucket.getResourceId()));
     assertEquals(expectedLineage, firstClonedBucket.getResourceLineage());
 
     // clone twice.
     String jobId2 =
         controlledResourceService.cloneGcsBucket(
-            workspace.getWorkspaceId(),
+            workspaceId,
             firstClonedBucketResourceId,
-            workspace.getWorkspaceId(), // copy back into same workspace
+            workspaceId, // copy back into same workspace
             UUID.randomUUID(),
             new ApiJobControl().id(UUID.randomUUID().toString()),
             user.getAuthenticatedRequest(),
@@ -1589,18 +1703,17 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
     UUID secondCloneResourceId = response2.getBucket().getResourceId();
     ControlledGcsBucketResource secondClonedBucket =
         controlledResourceService
-            .getControlledResource(workspace.getWorkspaceId(), secondCloneResourceId)
+            .getControlledResource(workspaceId, secondCloneResourceId)
             .castByEnum(WsmResourceType.CONTROLLED_GCP_GCS_BUCKET);
 
-    expectedLineage.add(
-        new ResourceLineageEntry(workspace.getWorkspaceId(), firstClonedBucketResourceId));
+    expectedLineage.add(new ResourceLineageEntry(workspaceId, firstClonedBucketResourceId));
     assertEquals(expectedLineage, secondClonedBucket.getResourceLineage());
   }
 
   @Test
   @DisabledIfEnvironmentVariable(named = "TEST_ENV", matches = BUFFER_SERVICE_DISABLED_ENVS_REG_EX)
   void deleteGcsBucketDo() throws Exception {
-    ControlledGcsBucketResource createdBucket = createDefaultSharedGcsBucket(workspace, user);
+    ControlledGcsBucketResource createdBucket = createDefaultSharedGcsBucket(user);
 
     // Test idempotency of bucket-specific delete step by retrying it once.
     Map<String, StepStatus> retrySteps = new HashMap<>();
@@ -1611,7 +1724,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
     String jobId =
         controlledResourceService.deleteControlledResourceAsync(
             new ApiJobControl().id(UUID.randomUUID().toString()),
-            workspace.getWorkspaceId(),
+            workspaceId,
             createdBucket.getResourceId(),
             "fake result path",
             user.getAuthenticatedRequest());
@@ -1627,13 +1740,14 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
         ResourceNotFoundException.class,
         () ->
             controlledResourceService.getControlledResource(
-                workspace.getWorkspaceId(), createdBucket.getResourceId()));
+                workspaceId, createdBucket.getResourceId()));
   }
 
   @Test
   @DisabledIfEnvironmentVariable(named = "TEST_ENV", matches = BUFFER_SERVICE_DISABLED_ENVS_REG_EX)
   void updateGcsBucketDo() throws Exception {
-    ControlledGcsBucketResource createdBucket = createDefaultSharedGcsBucket(workspace, user);
+    Workspace workspace = workspaceService.getWorkspace(workspaceId);
+    ControlledGcsBucketResource createdBucket = createDefaultSharedGcsBucket(user);
 
     Map<String, StepStatus> retrySteps = new HashMap<>();
     retrySteps.put(
@@ -1660,28 +1774,18 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
     // check the properties stored in WSM were updated
     ControlledGcsBucketResource fetchedResource =
         controlledResourceService
-            .getControlledResource(workspace.getWorkspaceId(), createdBucket.getResourceId())
+            .getControlledResource(workspaceId, createdBucket.getResourceId())
             .castByEnum(WsmResourceType.CONTROLLED_GCP_GCS_BUCKET);
 
     assertEquals(newName, fetchedResource.getName());
     assertEquals(newDescription, fetchedResource.getDescription());
-
-    assertThrows(
-        BadRequestException.class,
-        () ->
-            controlledResourceService.updateGcsBucket(
-                createdBucket,
-                new ApiGcpGcsBucketUpdateParameters()
-                    .cloningInstructions(ApiCloningInstructionsEnum.REFERENCE),
-                null,
-                null,
-                user.getAuthenticatedRequest()));
   }
 
   @Test
   @DisabledIfEnvironmentVariable(named = "TEST_ENV", matches = BUFFER_SERVICE_DISABLED_ENVS_REG_EX)
   void updateGcsBucketUndo() throws Exception {
-    ControlledGcsBucketResource createdBucket = createDefaultSharedGcsBucket(workspace, user);
+    Workspace workspace = workspaceService.getWorkspace(workspaceId);
+    ControlledGcsBucketResource createdBucket = createDefaultSharedGcsBucket(user);
 
     Map<String, StepStatus> retrySteps = new HashMap<>();
     retrySteps.put(
@@ -1721,7 +1825,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
     // check the properties stored in WSM were not updated
     ControlledGcsBucketResource fetchedResource =
         controlledResourceService
-            .getControlledResource(workspace.getWorkspaceId(), createdBucket.getResourceId())
+            .getControlledResource(workspaceId, createdBucket.getResourceId())
             .castByEnum(WsmResourceType.CONTROLLED_GCP_GCS_BUCKET);
     assertEquals(createdBucket.getName(), fetchedResource.getName());
     assertEquals(createdBucket.getDescription(), fetchedResource.getDescription());
@@ -1732,11 +1836,9 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
    * the provided user. This uses the default bucket creation parameters from {@code
    * ControlledResourceFixtures}.
    */
-  private ControlledGcsBucketResource createDefaultSharedGcsBucket(
-      Workspace workspace, UserAccessUtils.TestUser user) {
+  private ControlledGcsBucketResource createDefaultSharedGcsBucket(UserAccessUtils.TestUser user) {
     ControlledGcsBucketResource originalResource =
-        ControlledResourceFixtures.makeDefaultControlledGcsBucketBuilder(workspace.getWorkspaceId())
-            .build();
+        ControlledResourceFixtures.makeDefaultControlledGcsBucketBuilder(workspaceId).build();
 
     ControlledGcsBucketResource createdBucket =
         controlledResourceService
@@ -1748,6 +1850,127 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
             .castByEnum(WsmResourceType.CONTROLLED_GCP_GCS_BUCKET);
     assertEquals(originalResource, createdBucket);
     return createdBucket;
+  }
+
+  private ControlledBigQueryDatasetResource createBqDataset() {
+    final ControlledBigQueryDatasetResource resourceToCreate =
+        ControlledResourceFixtures.makeDefaultControlledBqDatasetBuilder(workspaceId).build();
+    final ControlledBigQueryDatasetResource createdResource =
+        controlledResourceService
+            .createControlledResourceSync(
+                resourceToCreate,
+                null,
+                user.getAuthenticatedRequest(),
+                ControlledResourceFixtures.defaultBigQueryDatasetCreationParameters())
+            .castByEnum(WsmResourceType.CONTROLLED_GCP_BIG_QUERY_DATASET);
+    assertEquals(resourceToCreate, createdResource);
+    return createdResource;
+  }
+
+  private ApiClonedControlledGcpBigQueryDataset cloneBqDataset(
+      UUID sourceResourceId,
+      ApiCloningInstructionsEnum cloningInstructions,
+      String destResourceName)
+      throws Exception {
+    // Test idempotency of steps by retrying them once.
+    Map<String, StepStatus> retrySteps = new HashMap<>();
+    retrySteps.put(
+        SetReferencedDestinationBigQueryDatasetInWorkingMapStep.class.getName(),
+        StepStatus.STEP_RESULT_FAILURE_RETRY);
+    retrySteps.put(
+        CreateReferenceMetadataStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
+    retrySteps.put(
+        SetReferencedDestinationBigQueryDatasetResponseStep.class.getName(),
+        StepStatus.STEP_RESULT_FAILURE_RETRY);
+    jobService.setFlightDebugInfoForTest(
+        FlightDebugInfo.newBuilder().doStepFailures(retrySteps).build());
+
+    final ApiJobControl apiJobControl = new ApiJobControl().id(UUID.randomUUID().toString());
+
+    final String jobId =
+        controlledResourceService.cloneBigQueryDataset(
+            /*sourceWorkspaceId=*/ workspaceId,
+            sourceResourceId,
+            /*destinationWorkspaceId=*/ workspaceId, // copy back into same workspace
+            /*destinationResourceId=*/ UUID.randomUUID(),
+            apiJobControl,
+            user.getAuthenticatedRequest(),
+            destResourceName,
+            /*destinationDescription=*/ null,
+            DEST_DATASET_NAME,
+            /*destinationLocation=*/ null,
+            cloningInstructions);
+
+    jobService.waitForJob(jobId);
+    final FlightState flightState = stairwayComponent.get().getFlightState(jobId);
+    assertEquals(FlightStatus.SUCCESS, flightState.getFlightStatus());
+    assertTrue(flightState.getException().isEmpty());
+    assertTrue(flightState.getResultMap().isPresent());
+    ApiClonedControlledGcpBigQueryDataset response =
+        flightState
+            .getResultMap()
+            .get()
+            .get(JobMapKeys.RESPONSE.getKeyName(), ApiClonedControlledGcpBigQueryDataset.class);
+    assertNotNull(response);
+    return response;
+  }
+
+  private void cloneBqDataset_undo(
+      UUID sourceResourceId, UUID destResourceId, ApiCloningInstructionsEnum cloningInstructions)
+      throws Exception {
+    jobService.setFlightDebugInfoForTest(
+        FlightDebugInfo.newBuilder().lastStepFailure(true).build());
+
+    final ApiJobControl apiJobControl = new ApiJobControl().id(UUID.randomUUID().toString());
+    final String jobId =
+        controlledResourceService.cloneBigQueryDataset(
+            workspaceId,
+            sourceResourceId,
+            workspaceId, // copy back into same workspace
+            destResourceId,
+            apiJobControl,
+            user.getAuthenticatedRequest(),
+            TestUtils.appendRandomNumber("dest-resource-name"),
+            /*destinationDescription=*/ null,
+            DEST_DATASET_NAME,
+            /*destinationLocation=*/ null,
+            cloningInstructions);
+
+    jobService.waitForJob(jobId);
+    final FlightState flightState = stairwayComponent.get().getFlightState(jobId);
+    assertEquals(FlightStatus.ERROR, flightState.getFlightStatus());
+  }
+
+  private void assertClonedBqDataset(
+      ApiGcpBigQueryDatasetResource actualDataset,
+      ApiStewardshipType expectedStewardshipType,
+      String expectedDatasetId,
+      ApiCloningInstructionsEnum expectedCloningInstructions,
+      String expectedDestResourceName,
+      UUID sourceResourceId) {
+    ApiResourceMetadata actualMetadata = actualDataset.getMetadata();
+    assertEquals(workspaceId, actualMetadata.getWorkspaceId());
+    assertEquals(expectedDestResourceName, actualMetadata.getName());
+    assertEquals(RESOURCE_DESCRIPTION, actualMetadata.getDescription());
+    assertEquals(ApiResourceType.BIG_QUERY_DATASET, actualMetadata.getResourceType());
+    assertEquals(expectedStewardshipType, actualMetadata.getStewardshipType());
+    assertEquals(ApiCloudPlatform.GCP, actualMetadata.getCloudPlatform());
+    assertEquals(expectedCloningInstructions, actualMetadata.getCloningInstructions());
+
+    ApiResourceLineage expectedResourceLineage = new ApiResourceLineage();
+    expectedResourceLineage.add(
+        new ApiResourceLineageEntry()
+            .sourceWorkspaceId(workspaceId)
+            .sourceResourceId(sourceResourceId));
+    assertEquals(expectedResourceLineage, actualMetadata.getResourceLineage());
+
+    assertEquals(
+        PropertiesUtils.convertMapToApiProperties(
+            ControlledResourceFixtures.DEFAULT_RESOURCE_PROPERTIES),
+        actualMetadata.getProperties());
+
+    String actualDatasetId = actualDataset.getAttributes().getDatasetId();
+    assertEquals(expectedDatasetId, actualDatasetId);
   }
 
   /**
@@ -1778,5 +2001,146 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
       assertEquals(
           defaultPartitionExpirationSec * 1000, cloudDataset.getDefaultPartitionExpirationMs());
     }
+  }
+
+  private ControlledGcsBucketResource createGcsBucket() {
+    final ControlledGcsBucketResource resourceToCreate =
+        ControlledResourceFixtures.makeDefaultControlledGcsBucketBuilder(workspaceId).build();
+    final ControlledGcsBucketResource createdResource =
+        controlledResourceService
+            .createControlledResourceSync(
+                resourceToCreate,
+                null,
+                user.getAuthenticatedRequest(),
+                ControlledResourceFixtures.getGoogleBucketCreationParameters())
+            .castByEnum(WsmResourceType.CONTROLLED_GCP_GCS_BUCKET);
+    assertEquals(resourceToCreate, createdResource);
+    return createdResource;
+  }
+
+  private ApiClonedControlledGcpGcsBucket cloneGcsBucket(
+      UUID sourceResourceId,
+      ApiCloningInstructionsEnum cloningInstructions,
+      String destResourceName)
+      throws Exception {
+    // Test idempotency of steps by retrying them once.
+    Map<String, StepStatus> retrySteps = new HashMap<>();
+    retrySteps.put(
+        SetReferencedDestinationGcsBucketInWorkingMapStep.class.getName(),
+        StepStatus.STEP_RESULT_FAILURE_RETRY);
+    retrySteps.put(
+        CreateReferenceMetadataStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
+    retrySteps.put(
+        SetReferencedDestinationGcsBucketResponseStep.class.getName(),
+        StepStatus.STEP_RESULT_FAILURE_RETRY);
+    jobService.setFlightDebugInfoForTest(
+        FlightDebugInfo.newBuilder().doStepFailures(retrySteps).build());
+
+    final ApiJobControl apiJobControl = new ApiJobControl().id(UUID.randomUUID().toString());
+    final String jobId =
+        controlledResourceService.cloneGcsBucket(
+            workspaceId,
+            sourceResourceId,
+            workspaceId, // copy back into same workspace
+            UUID.randomUUID(),
+            apiJobControl,
+            user.getAuthenticatedRequest(),
+            destResourceName,
+            DEST_BUCKET_DESC,
+            DEST_BUCKET_NAME,
+            DEST_BUCKET_LOCATION,
+            cloningInstructions);
+
+    jobService.waitForJob(jobId);
+    final FlightState flightState = stairwayComponent.get().getFlightState(jobId);
+    assertEquals(FlightStatus.SUCCESS, flightState.getFlightStatus());
+    assertTrue(flightState.getException().isEmpty());
+    assertTrue(flightState.getResultMap().isPresent());
+    ApiClonedControlledGcpGcsBucket response =
+        flightState
+            .getResultMap()
+            .get()
+            .get(JobMapKeys.RESPONSE.getKeyName(), ApiClonedControlledGcpGcsBucket.class);
+    assertNotNull(response);
+    return response;
+  }
+
+  private void cloneGcsBucket_undo(
+      UUID sourceResourceId, UUID destResourceId, ApiCloningInstructionsEnum cloningInstructions)
+      throws Exception {
+    jobService.setFlightDebugInfoForTest(
+        FlightDebugInfo.newBuilder().lastStepFailure(true).build());
+
+    final ApiJobControl apiJobControl = new ApiJobControl().id(UUID.randomUUID().toString());
+    final String jobId =
+        controlledResourceService.cloneGcsBucket(
+            workspaceId,
+            sourceResourceId,
+            workspaceId, // copy back into same workspace
+            destResourceId,
+            apiJobControl,
+            user.getAuthenticatedRequest(),
+            TestUtils.appendRandomNumber("dest-resource-name"),
+            DEST_BUCKET_DESC,
+            DEST_BUCKET_NAME,
+            DEST_BUCKET_LOCATION,
+            cloningInstructions);
+
+    jobService.waitForJob(jobId);
+    final FlightState flightState = stairwayComponent.get().getFlightState(jobId);
+    assertEquals(FlightStatus.ERROR, flightState.getFlightStatus());
+  }
+
+  private void assertClonedGcsBucket(
+      ApiGcpGcsBucketResource actualBucket,
+      ApiStewardshipType expectedStewardshipType,
+      String expectedBucketName,
+      ApiCloningInstructionsEnum expectedCloningInstructions,
+      String expectedDestResourceName,
+      UUID sourceResourceId) {
+    ApiResourceMetadata actualMetadata = actualBucket.getMetadata();
+    assertEquals(workspaceId, actualMetadata.getWorkspaceId());
+    assertEquals(expectedDestResourceName, actualMetadata.getName());
+    assertEquals(DEST_BUCKET_DESC, actualMetadata.getDescription());
+    assertEquals(ApiResourceType.GCS_BUCKET, actualMetadata.getResourceType());
+    assertEquals(expectedStewardshipType, actualMetadata.getStewardshipType());
+    assertEquals(ApiCloudPlatform.GCP, actualMetadata.getCloudPlatform());
+    assertEquals(expectedCloningInstructions, actualMetadata.getCloningInstructions());
+
+    ApiResourceLineage expectedResourceLineage = new ApiResourceLineage();
+    expectedResourceLineage.add(
+        new ApiResourceLineageEntry()
+            .sourceWorkspaceId(workspaceId)
+            .sourceResourceId(sourceResourceId));
+    assertEquals(expectedResourceLineage, actualMetadata.getResourceLineage());
+
+    assertEquals(
+        PropertiesUtils.convertMapToApiProperties(
+            ControlledResourceFixtures.DEFAULT_RESOURCE_PROPERTIES),
+        actualMetadata.getProperties());
+
+    String actualBucketName = actualBucket.getAttributes().getBucketName();
+    assertEquals(expectedBucketName, actualBucketName);
+  }
+
+  /** Assert creation parameters on cloud (not stored by WSM). */
+  private void assertGcsBucketCreationParameters() {
+    final StorageCow storageCow =
+        crlService.createStorageCow(gcpCloudContextService.getRequiredGcpProject(workspaceId));
+    final BucketCow bucketCow = storageCow.get(DEST_BUCKET_NAME);
+    final BucketInfo bucketInfo = bucketCow.getBucketInfo();
+    assertEquals(DEST_BUCKET_LOCATION, bucketInfo.getLocation());
+    assertEquals(
+        GcsApiConversions.toGcsApi(
+            ControlledResourceFixtures.getGoogleBucketCreationParameters()
+                .getDefaultStorageClass()),
+        bucketInfo.getStorageClass());
+    final List<LifecycleRule> expectedLifecycleRules =
+        GcsApiConversions.toGcsApi(
+            ControlledResourceFixtures.getGoogleBucketCreationParameters()
+                .getLifecycle()
+                .getRules());
+    assertThat(
+        expectedLifecycleRules, containsInAnyOrder(bucketInfo.getLifecycleRules().toArray()));
   }
 }

@@ -175,7 +175,7 @@ public class GcpCloudContextUnitTest extends BaseUnitTest {
         workspaceUuid, CloudPlatform.GCP, fakeContext.serialize(), flightId);
     // Create a controlled resource in the DB
     ControlledBigQueryDatasetResource bqDataset =
-        ControlledResourceFixtures.makeDefaultControlledBigQueryBuilder(workspaceUuid)
+        ControlledResourceFixtures.makeDefaultControlledBqDatasetBuilder(workspaceUuid)
             .projectId(projectId)
             .build();
     resourceDao.createControlledResource(bqDataset);

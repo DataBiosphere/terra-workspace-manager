@@ -163,8 +163,7 @@ public class RemoveUserFromWorkspaceFlightTest extends BaseConnectedTest {
     inputParameters.put(WorkspaceFlightMapKeys.WORKSPACE_ID, workspaceUuid.toString());
     inputParameters.put(
         WorkspaceFlightMapKeys.USER_TO_REMOVE, userAccessUtils.getSecondUserEmail());
-    inputParameters.put(
-        WorkspaceFlightMapKeys.ROLE_TO_REMOVE, ControlledResourceIamRole.WRITER.name());
+    inputParameters.put(WorkspaceFlightMapKeys.ROLE_TO_REMOVE, WsmIamRole.WRITER.name());
     // Auth info comes from default user, as they are the ones "making this request"
     inputParameters.put(
         JobMapKeys.AUTH_USER_INFO.getKeyName(), userAccessUtils.defaultUserAuthRequest());
