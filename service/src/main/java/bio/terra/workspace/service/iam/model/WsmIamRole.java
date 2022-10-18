@@ -12,14 +12,43 @@ import org.slf4j.LoggerFactory;
 
 /** Internal representation of IAM roles. */
 public enum WsmIamRole {
-  DISCOVERER("discoverer", SamWorkspaceAction.DISCOVER, ApiIamRole.DISCOVERER),
-  READER("reader", SamWorkspaceAction.READ, ApiIamRole.READER),
-  WRITER("writer", SamWorkspaceAction.WRITE, ApiIamRole.WRITER),
-  APPLICATION("application", null, ApiIamRole.APPLICATION),
-  OWNER("owner", SamWorkspaceAction.OWN, ApiIamRole.OWNER),
+  DISCOVERER("discoverer", SamWorkspaceAction.DISCOVER, ApiIamRole.DISCOVERER) {
+    public boolean roleAtLeastAsHighAs(WsmIamRole roleToCheck) {
+      return true;
+    }
+  },
+  READER("reader", SamWorkspaceAction.READ, ApiIamRole.READER) {
+    public boolean roleAtLeastAsHighAs(WsmIamRole roleToCheck) {
+      return roleToCheck == WsmIamRole.APPLICATION
+          || roleToCheck == WsmIamRole.OWNER
+          || roleToCheck == WsmIamRole.WRITER
+          || roleToCheck == WsmIamRole.READER;
+    }
+  },
+  WRITER("writer", SamWorkspaceAction.WRITE, ApiIamRole.WRITER) {
+    public boolean roleAtLeastAsHighAs(WsmIamRole roleToCheck) {
+      return roleToCheck == WsmIamRole.APPLICATION
+          || roleToCheck == WsmIamRole.OWNER
+          || roleToCheck == WsmIamRole.WRITER;
+    }
+  },
+  APPLICATION("application", null, ApiIamRole.APPLICATION) {
+    public boolean roleAtLeastAsHighAs(WsmIamRole roleToCheck) {
+      return roleToCheck == WsmIamRole.APPLICATION;
+    }
+  },
+  OWNER("owner", SamWorkspaceAction.OWN, ApiIamRole.OWNER) {
+    public boolean roleAtLeastAsHighAs(WsmIamRole roleToCheck) {
+      return roleToCheck == WsmIamRole.APPLICATION || roleToCheck == WsmIamRole.OWNER;
+    }
+  },
   // The manager role is given to WSM's SA on all Sam workspace objects for admin control. Users
   // are never given this role.
-  MANAGER("manager", null, null);
+  MANAGER("manager", null, null) {
+    public boolean roleAtLeastAsHighAs(WsmIamRole roleToCheck) {
+      throw new InternalServerErrorException("Unexpected workspace MANAGER role");
+    }
+  };
 
   private static final Logger logger = LoggerFactory.getLogger(WsmIamRole.class);
 
@@ -38,8 +67,7 @@ public enum WsmIamRole {
         Arrays.stream(WsmIamRole.values()).filter(x -> x.apiRole.equals(apiModel)).findFirst();
     return result.orElseThrow(
         () ->
-            new RuntimeException(
-                "No IamRole enum found corresponding to model role " + apiModel.toString()));
+            new RuntimeException("No IamRole enum found corresponding to model role " + apiModel));
   }
 
   /**
@@ -57,7 +85,7 @@ public enum WsmIamRole {
   public static Optional<WsmIamRole> getHighestRole(UUID workspaceId, List<WsmIamRole> roles) {
     if (roles.isEmpty()) {
       // This workspace had a role that this WSM doesn't know about.
-      logger.warn("Workspace %s missing roles", workspaceId.toString());
+      logger.warn("Workspace {} missing roles", workspaceId);
       return Optional.empty();
     }
 
@@ -73,24 +101,10 @@ public enum WsmIamRole {
       return Optional.of(WsmIamRole.DISCOVERER);
     }
     throw new InternalServerErrorException(
-        String.format("Workspace %s has unexpected roles: %s", workspaceId.toString(), roles));
+        String.format("Workspace %s has unexpected roles: %s", workspaceId, roles));
   }
 
-  public static boolean roleAtLeastAsHighAs(WsmIamRole minimumRole, WsmIamRole roleToCheck) {
-    return switch (minimumRole) {
-      case APPLICATION -> roleToCheck == WsmIamRole.APPLICATION;
-      case OWNER -> roleToCheck == WsmIamRole.APPLICATION || roleToCheck == WsmIamRole.OWNER;
-      case WRITER -> roleToCheck == WsmIamRole.APPLICATION
-          || roleToCheck == WsmIamRole.OWNER
-          || roleToCheck == WsmIamRole.WRITER;
-      case READER -> roleToCheck == WsmIamRole.APPLICATION
-          || roleToCheck == WsmIamRole.OWNER
-          || roleToCheck == WsmIamRole.WRITER
-          || roleToCheck == WsmIamRole.READER;
-      case DISCOVERER -> true;
-      case MANAGER -> throw new InternalServerErrorException("Unexpected workspace MANAGER role");
-    };
-  }
+  public abstract boolean roleAtLeastAsHighAs(WsmIamRole roleToCheck);
 
   public ApiIamRole toApiModel() {
     return apiRole;

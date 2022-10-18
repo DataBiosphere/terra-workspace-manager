@@ -2,15 +2,20 @@ package bio.terra.workspace.service.resource.controlled.cloud.azure;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import bio.terra.landingzone.db.LandingZoneDao;
+import bio.terra.landingzone.db.exception.LandingZoneNotFoundException;
 import bio.terra.stairway.FlightState;
 import bio.terra.stairway.FlightStatus;
+import bio.terra.workspace.app.configuration.external.AzureConfiguration;
 import bio.terra.workspace.common.BaseAzureConnectedTest;
 import bio.terra.workspace.common.StairwayTestUtils;
 import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
 import bio.terra.workspace.common.utils.AzureTestUtils;
 import bio.terra.workspace.common.utils.AzureVmUtils;
+import bio.terra.workspace.connected.LandingZoneTestUtils;
 import bio.terra.workspace.connected.UserAccessUtils;
 import bio.terra.workspace.generated.model.*;
+import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.resource.WsmResourceService;
@@ -29,6 +34,7 @@ import bio.terra.workspace.service.resource.controlled.model.AccessScopeType;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResourceFields;
 import bio.terra.workspace.service.resource.controlled.model.ManagedByType;
+import bio.terra.workspace.service.resource.exception.ResourceNotFoundException;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.model.WsmResource;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
@@ -54,10 +60,14 @@ public class CreateAndDeleteAzureControlledResourceFlightTest extends BaseAzureC
   @Autowired private WorkspaceService workspaceService;
   @Autowired private JobService jobService;
   @Autowired private AzureTestUtils azureTestUtils;
+  @Autowired private LandingZoneTestUtils landingZoneTestUtils;
   @Autowired private UserAccessUtils userAccessUtils;
   @Autowired private ControlledResourceService controlledResourceService;
   @Autowired private WsmResourceService wsmResourceService;
   @Autowired private AzureCloudContextService azureCloudContextService;
+  @Autowired private LandingZoneDao landingZoneDao;
+  @Autowired private CrlService crlService;
+  @Autowired private AzureConfiguration azureConfig;
 
   private void createCloudContext(UUID workspaceUuid, AuthenticatedUserRequest userRequest)
       throws InterruptedException {
@@ -303,6 +313,176 @@ public class CreateAndDeleteAzureControlledResourceFlightTest extends BaseAzureC
                         accountResource.getStorageAccountName(),
                         containerName));
     assertEquals(404, exception.getResponse().getStatusCode());
+  }
+
+  @Test
+  public void createAndDeleteAzureStorageContainerBasedOnLandingZoneSharedStorageAccount()
+      throws InterruptedException {
+    String storageAccountName = "lzsharedstorageaccount";
+
+    Workspace workspace = azureTestUtils.createWorkspace(workspaceService);
+    UUID workspaceUuid = workspace.getWorkspaceId();
+    AuthenticatedUserRequest userRequest = userAccessUtils.defaultUserAuthRequest();
+    createCloudContext(workspaceUuid, userRequest);
+
+    // create quasi landing zone with a single resource - shared storage account
+    UUID landingZoneId = UUID.fromString(landingZoneTestUtils.getDefaultLandingZoneId());
+
+    TestLandingZoneManager testLandingZoneManager =
+        new TestLandingZoneManager(
+            azureCloudContextService, landingZoneDao, crlService, azureConfig, workspaceUuid);
+
+    testLandingZoneManager.createLandingZoneWithSharedStorageAccount(
+        landingZoneId, storageAccountName, "eastus");
+
+    TimeUnit.MINUTES.sleep(1);
+
+    // Submit a storage container creation flight and then verify the resource exists in the
+    // workspace.
+    final UUID containerResourceId = UUID.randomUUID();
+    final String storageContainerName = ControlledResourceFixtures.uniqueBucketName();
+    ControlledAzureStorageContainerResource containerResource =
+        ControlledAzureStorageContainerResource.builder()
+            .common(
+                ControlledResourceFields.builder()
+                    .workspaceUuid(workspaceUuid)
+                    .resourceId(containerResourceId)
+                    .name(getAzureName("rc"))
+                    .description(getAzureName("rc-desc"))
+                    .cloningInstructions(CloningInstructions.COPY_NOTHING)
+                    .accessScope(AccessScopeType.fromApi(ApiAccessScope.SHARED_ACCESS))
+                    .managedBy(ManagedByType.fromApi(ApiManagedBy.USER))
+                    .build())
+            /*set it explicitly to show that landing zone shared storage account will be used*/
+            .storageAccountId(null)
+            .storageContainerName(storageContainerName)
+            .build();
+
+    createResource(
+        workspaceUuid,
+        userRequest,
+        containerResource,
+        WsmResourceType.CONTROLLED_AZURE_STORAGE_CONTAINER);
+
+    TimeUnit.MINUTES.sleep(1);
+
+    // clean up resources - delete storage container resource
+    submitControlledResourceDeletionFlight(
+        workspaceUuid,
+        userRequest,
+        containerResource,
+        azureTestUtils.getAzureCloudContext().getAzureResourceGroupId(),
+        containerResource.getStorageContainerName(),
+        null); // Don't sleep/verify deletion yet.
+
+    // clean up resources - delete lz database record and storage account
+    testLandingZoneManager.deleteLandingZoneWithSharedStorageAccount(
+        landingZoneId,
+        azureTestUtils.getAzureCloudContext().getAzureResourceGroupId(),
+        storageAccountName);
+  }
+
+  @Test
+  public void createAzureStorageContainerFlightFailedBecauseLandingZoneDoesntExist()
+      throws InterruptedException {
+    Workspace workspace = azureTestUtils.createWorkspace(workspaceService);
+    UUID workspaceUuid = workspace.getWorkspaceId();
+    AuthenticatedUserRequest userRequest = userAccessUtils.defaultUserAuthRequest();
+    createCloudContext(workspaceUuid, userRequest);
+
+    // landing zone doesn't exist
+
+    // Submit a storage container creation flight and then verify the resource exists in the
+    // workspace.
+    final UUID containerResourceId = UUID.randomUUID();
+    final String storageContainerName = ControlledResourceFixtures.uniqueBucketName();
+    ControlledAzureStorageContainerResource containerResource =
+        ControlledAzureStorageContainerResource.builder()
+            .common(
+                ControlledResourceFields.builder()
+                    .workspaceUuid(workspaceUuid)
+                    .resourceId(containerResourceId)
+                    .name(getAzureName("rc"))
+                    .description(getAzureName("rc-desc"))
+                    .cloningInstructions(CloningInstructions.COPY_NOTHING)
+                    .accessScope(AccessScopeType.fromApi(ApiAccessScope.SHARED_ACCESS))
+                    .managedBy(ManagedByType.fromApi(ApiManagedBy.USER))
+                    .build())
+            /*set it explicitly to show that landing zone shared storage account will be used*/
+            .storageAccountId(null)
+            .storageContainerName(storageContainerName)
+            .build();
+
+    FlightState flightState =
+        StairwayTestUtils.blockUntilFlightCompletes(
+            jobService.getStairway(),
+            CreateControlledResourceFlight.class,
+            azureTestUtils.createControlledResourceInputParameters(
+                workspaceUuid, userRequest, containerResource, null),
+            STAIRWAY_FLIGHT_TIMEOUT,
+            null);
+
+    assertEquals(FlightStatus.ERROR, flightState.getFlightStatus());
+    assertTrue(flightState.getException().isPresent());
+    assertEquals(flightState.getException().get().getClass(), LandingZoneNotFoundException.class);
+
+    // no need to clean up resources
+  }
+
+  @Test
+  public void
+      createAzureStorageContainerFlightFailedBecauseLandingZoneDoesntHaveSharedStorageAccount()
+          throws InterruptedException {
+    Workspace workspace = azureTestUtils.createWorkspace(workspaceService);
+    UUID workspaceUuid = workspace.getWorkspaceId();
+    AuthenticatedUserRequest userRequest = userAccessUtils.defaultUserAuthRequest();
+    createCloudContext(workspaceUuid, userRequest);
+
+    // create quasi landing zone without resources
+    UUID landingZoneId = UUID.fromString(landingZoneTestUtils.getDefaultLandingZoneId());
+
+    TestLandingZoneManager testLandingZoneManager =
+        new TestLandingZoneManager(
+            azureCloudContextService, landingZoneDao, crlService, azureConfig, workspaceUuid);
+
+    testLandingZoneManager.createLandingZoneWithoutResources(landingZoneId);
+
+    // Submit a storage container creation flight and then verify the resource exists in the
+    // workspace.
+    final UUID containerResourceId = UUID.randomUUID();
+    final String storageContainerName = ControlledResourceFixtures.uniqueBucketName();
+    ControlledAzureStorageContainerResource containerResource =
+        ControlledAzureStorageContainerResource.builder()
+            .common(
+                ControlledResourceFields.builder()
+                    .workspaceUuid(workspaceUuid)
+                    .resourceId(containerResourceId)
+                    .name(getAzureName("rc"))
+                    .description(getAzureName("rc-desc"))
+                    .cloningInstructions(CloningInstructions.COPY_NOTHING)
+                    .accessScope(AccessScopeType.fromApi(ApiAccessScope.SHARED_ACCESS))
+                    .managedBy(ManagedByType.fromApi(ApiManagedBy.USER))
+                    .build())
+            /*set it explicitly to show that landing zone shared storage account will be used*/
+            .storageAccountId(null)
+            .storageContainerName(storageContainerName)
+            .build();
+
+    FlightState flightState =
+        StairwayTestUtils.blockUntilFlightCompletes(
+            jobService.getStairway(),
+            CreateControlledResourceFlight.class,
+            azureTestUtils.createControlledResourceInputParameters(
+                workspaceUuid, userRequest, containerResource, null),
+            STAIRWAY_FLIGHT_TIMEOUT,
+            null);
+
+    assertEquals(FlightStatus.ERROR, flightState.getFlightStatus());
+    assertTrue(flightState.getException().isPresent());
+    assertEquals(flightState.getException().get().getClass(), ResourceNotFoundException.class);
+
+    // clean up resources - delete lz database record only
+    testLandingZoneManager.deleteLandingZoneWithoutResources(landingZoneId);
   }
 
   @Test

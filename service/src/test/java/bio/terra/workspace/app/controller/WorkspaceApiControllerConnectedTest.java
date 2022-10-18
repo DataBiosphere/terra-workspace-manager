@@ -62,7 +62,7 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
   @Autowired private ObjectMapper objectMapper;
   @Autowired private UserAccessUtils userAccessUtils;
 
-  private ApiWorkspaceDescription workspace;
+  private ApiCreatedWorkspace workspace;
 
   @BeforeEach
   public void setup() throws Exception {
@@ -137,9 +137,12 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
 
   @Test
   public void getWorkspaceByUserFacingId_requesterIsOwner_returnsFullWorkspace() throws Exception {
+    ApiWorkspaceDescription workspaceDescription =
+        mockMvcUtils.getWorkspace(userAccessUtils.defaultUserAuthRequest(), workspace.getId());
+
     ApiWorkspaceDescription gotWorkspace =
         getWorkspaceByUserFacingId(
-            userAccessUtils.defaultUserAuthRequest(), workspace.getUserFacingId());
+            userAccessUtils.defaultUserAuthRequest(), workspaceDescription.getUserFacingId());
 
     assertFullWorkspace(gotWorkspace);
   }
@@ -147,6 +150,9 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
   @Test
   public void getWorkspaceByUserFacingId_requesterIsDiscoverer_requestMinHighestRoleNotSet_throws()
       throws Exception {
+    ApiWorkspaceDescription workspaceDescription =
+        mockMvcUtils.getWorkspace(userAccessUtils.defaultUserAuthRequest(), workspace.getId());
+
     mockMvcUtils.grantRole(
         userAccessUtils.defaultUserAuthRequest(),
         workspace.getId(),
@@ -155,7 +161,7 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
 
     getWorkspaceByUserFacingIdExpectingError(
         userAccessUtils.secondUserAuthRequest(),
-        workspace.getUserFacingId(),
+        workspaceDescription.getUserFacingId(),
         /*minimumHighestRole=*/ Optional.empty(),
         HttpStatus.SC_FORBIDDEN);
   }
@@ -164,6 +170,9 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
   public void
       getWorkspaceByUserFacingId_requesterIsDiscoverer_requestMinHighestRoleSetToReader_throws()
           throws Exception {
+    ApiWorkspaceDescription workspaceDescription =
+        mockMvcUtils.getWorkspace(userAccessUtils.defaultUserAuthRequest(), workspace.getId());
+
     mockMvcUtils.grantRole(
         userAccessUtils.defaultUserAuthRequest(),
         workspace.getId(),
@@ -172,7 +181,7 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
 
     getWorkspaceByUserFacingIdExpectingError(
         userAccessUtils.secondUserAuthRequest(),
-        workspace.getUserFacingId(),
+        workspaceDescription.getUserFacingId(),
         /*minimumHighestRole=*/ Optional.of(ApiIamRole.READER),
         HttpStatus.SC_FORBIDDEN);
   }
@@ -181,6 +190,9 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
   public void
       getWorkspaceByUserFacingId_requesterIsDiscoverer_requestMinHighestRoleSetToDiscoverer_returnsStrippedWorkspace()
           throws Exception {
+    ApiWorkspaceDescription workspaceDescription =
+        mockMvcUtils.getWorkspace(userAccessUtils.defaultUserAuthRequest(), workspace.getId());
+
     mockMvcUtils.grantRole(
         userAccessUtils.defaultUserAuthRequest(),
         workspace.getId(),
@@ -190,7 +202,7 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
     ApiWorkspaceDescription gotWorkspace =
         getWorkspaceByUserFacingId(
             userAccessUtils.secondUserAuthRequest(),
-            workspace.getUserFacingId(),
+            workspaceDescription.getUserFacingId(),
             /*minimumHighestRole=*/ Optional.of(ApiIamRole.DISCOVERER));
 
     assertStrippedWorkspace(gotWorkspace);

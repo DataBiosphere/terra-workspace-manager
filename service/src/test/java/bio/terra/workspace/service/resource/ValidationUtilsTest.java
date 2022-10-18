@@ -436,12 +436,5 @@ public class ValidationUtilsTest extends BaseUnitTest {
         () ->
             ResourceValidationUtils.validateCloningInstructions(
                 StewardshipType.REFERENCED, CloningInstructions.COPY_DEFINITION));
-
-    // This will be supported if we implement PF-812.
-    assertThrows(
-        BadRequestException.class,
-        () ->
-            ResourceValidationUtils.validateCloningInstructions(
-                StewardshipType.CONTROLLED, CloningInstructions.COPY_REFERENCE));
   }
 }
