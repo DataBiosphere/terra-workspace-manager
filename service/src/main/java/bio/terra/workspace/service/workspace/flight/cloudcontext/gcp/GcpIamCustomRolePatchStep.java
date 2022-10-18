@@ -71,7 +71,13 @@ public class GcpIamCustomRolePatchStep implements Step {
         workingMap.get(customGcpIamRoles.getFullyQualifiedRoleName(projectId), Role.class);
     if (originalRole != null) {
       try {
-        iamCow.projects().roles().patch(originalRole.getName(), originalRole).execute();
+        iamCow
+            .projects()
+            .roles()
+            .patch(
+                originalRole.getName(),
+                new Role().setIncludedPermissions(originalRole.getIncludedPermissions()))
+            .execute();
       } catch (IOException e) {
         handleIOException(e);
       }
