@@ -6,6 +6,7 @@ import bio.terra.workspace.service.workspace.exceptions.NoBillingAccountExceptio
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import com.google.common.base.Strings;
 import java.util.UUID;
+import javax.annotation.Nullable;
 
 /**
  * A Terra resource modeling an account for spending money in the cloud.
@@ -16,10 +17,10 @@ import java.util.UUID;
 public record SpendProfile(
     SpendProfileId id,
     CloudPlatform cloudPlatform,
-    String billingAccountId,
-    UUID tenantId,
-    UUID subscriptionId,
-    String managedResourceGroupId) {
+    @Nullable String billingAccountId,
+    @Nullable UUID tenantId,
+    @Nullable UUID subscriptionId,
+    @Nullable String managedResourceGroupId) {
 
   public SpendProfile {
     if (cloudPlatform == CloudPlatform.GCP) {
