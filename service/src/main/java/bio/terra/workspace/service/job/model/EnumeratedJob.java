@@ -1,7 +1,8 @@
-package bio.terra.workspace.service.workspace.model;
+package bio.terra.workspace.service.job.model;
 
 import bio.terra.stairway.FlightState;
 import bio.terra.workspace.service.resource.model.WsmResource;
+import bio.terra.workspace.service.workspace.model.OperationType;
 import java.util.Optional;
 import javax.annotation.Nullable;
 

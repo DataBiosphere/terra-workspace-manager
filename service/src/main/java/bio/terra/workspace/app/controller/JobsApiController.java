@@ -1,5 +1,7 @@
 package bio.terra.workspace.app.controller;
 
+import bio.terra.stairway.FlightState;
+import bio.terra.workspace.app.controller.shared.JobApiUtils;
 import bio.terra.workspace.generated.controller.JobsApi;
 import bio.terra.workspace.generated.model.ApiJobReport;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
@@ -16,15 +18,18 @@ import org.springframework.web.bind.annotation.PathVariable;
 public class JobsApiController implements JobsApi {
 
   private final JobService jobService;
+  private final JobApiUtils jobApiUtils;
   private final AuthenticatedUserRequestFactory authenticatedUserRequestFactory;
   private final HttpServletRequest request;
 
   @Autowired
   public JobsApiController(
       JobService jobService,
+      JobApiUtils jobApiUtils,
       AuthenticatedUserRequestFactory authenticatedUserRequestFactory,
       HttpServletRequest request) {
     this.jobService = jobService;
+    this.jobApiUtils = jobApiUtils;
     this.authenticatedUserRequestFactory = authenticatedUserRequestFactory;
     this.request = request;
   }
@@ -37,7 +42,8 @@ public class JobsApiController implements JobsApi {
   public ResponseEntity<ApiJobReport> retrieveJob(@PathVariable("jobId") String jobId) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     jobService.verifyUserAccess(jobId, userRequest);
-    ApiJobReport jobReport = jobService.retrieveJob(jobId);
+    FlightState flightState = jobService.retrieveJob(jobId);
+    ApiJobReport jobReport = jobApiUtils.mapFlightStateToApiJobReport(flightState);
     return new ResponseEntity<>(jobReport, HttpStatus.valueOf(jobReport.getStatusCode()));
   }
 }

@@ -29,7 +29,7 @@ import org.apache.commons.lang3.RandomStringUtils;
 public class ReferenceResourceFixtures {
   private static final Map<String, String> DEFAULT_RESOURCE_PROPERTIES = Map.of("foo", "bar");
 
-  public static WsmResourceFields.Builder makeDefaultWsmResourceFieldBuilder(UUID workspaceId) {
+  public static WsmResourceFields.Builder<?> makeDefaultWsmResourceFieldBuilder(UUID workspaceId) {
     return WsmResourceFields.builder()
         .workspaceUuid(workspaceId)
         .resourceId(UUID.randomUUID())

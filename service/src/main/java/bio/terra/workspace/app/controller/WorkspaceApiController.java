@@ -8,6 +8,7 @@ import static bio.terra.workspace.common.utils.ControllerValidationUtils.validat
 import bio.terra.common.iam.BearerToken;
 import bio.terra.workspace.amalgam.tps.TpsApiDispatch;
 import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
+import bio.terra.workspace.app.controller.shared.JobApiUtils;
 import bio.terra.workspace.common.exception.FeatureNotSupportedException;
 import bio.terra.workspace.common.logging.model.ActivityLogChangeDetails;
 import bio.terra.workspace.common.utils.ControllerValidationUtils;
@@ -49,7 +50,6 @@ import bio.terra.workspace.service.iam.model.SamConstants;
 import bio.terra.workspace.service.iam.model.SamConstants.SamWorkspaceAction;
 import bio.terra.workspace.service.iam.model.WsmIamRole;
 import bio.terra.workspace.service.job.JobService;
-import bio.terra.workspace.service.job.JobService.AsyncJobResult;
 import bio.terra.workspace.service.logging.WorkspaceActivityLogService;
 import bio.terra.workspace.service.petserviceaccount.PetSaService;
 import bio.terra.workspace.service.spendprofile.SpendProfileId;
@@ -87,6 +87,7 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
   private static final Logger logger = LoggerFactory.getLogger(WorkspaceApiController.class);
   private final WorkspaceService workspaceService;
   private final JobService jobService;
+  private final JobApiUtils jobApiUtils;
   private final SamService samService;
   private final AzureCloudContextService azureCloudContextService;
   private final GcpCloudContextService gcpCloudContextService;
@@ -100,6 +101,7 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
   public WorkspaceApiController(
       WorkspaceService workspaceService,
       JobService jobService,
+      JobApiUtils jobApiUtils,
       SamService samService,
       AuthenticatedUserRequestFactory authenticatedUserRequestFactory,
       HttpServletRequest request,
@@ -113,6 +115,7 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
     super(authenticatedUserRequestFactory, request, samService);
     this.workspaceService = workspaceService;
     this.jobService = jobService;
+    this.jobApiUtils = jobApiUtils;
     this.samService = samService;
     this.azureCloudContextService = azureCloudContextService;
     this.gcpCloudContextService = gcpCloudContextService;
@@ -511,8 +514,8 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
   }
 
   private ApiCreateCloudContextResult fetchCreateCloudContextResult(String jobId) {
-    final AsyncJobResult<CloudContextHolder> jobResult =
-        jobService.retrieveAsyncJobResult(jobId, CloudContextHolder.class);
+    JobApiUtils.AsyncJobResult<CloudContextHolder> jobResult =
+        jobApiUtils.retrieveAsyncJobResult(jobId, CloudContextHolder.class);
 
     ApiGcpContext gcpContext = null;
     ApiAzureContext azureContext = null;
@@ -655,8 +658,8 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
 
   // Retrieve the async result or progress for clone workspace.
   private ApiCloneWorkspaceResult fetchCloneWorkspaceResult(String jobId) {
-    final AsyncJobResult<ApiClonedWorkspace> jobResult =
-        jobService.retrieveAsyncJobResult(jobId, ApiClonedWorkspace.class);
+    JobApiUtils.AsyncJobResult<ApiClonedWorkspace> jobResult =
+        jobApiUtils.retrieveAsyncJobResult(jobId, ApiClonedWorkspace.class);
     return new ApiCloneWorkspaceResult()
         .jobReport(jobResult.getJobReport())
         .errorReport(jobResult.getApiErrorReport())
