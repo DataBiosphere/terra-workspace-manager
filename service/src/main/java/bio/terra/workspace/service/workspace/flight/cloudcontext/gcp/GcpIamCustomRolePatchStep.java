@@ -1,6 +1,7 @@
 package bio.terra.workspace.service.workspace.flight.cloudcontext.gcp;
 
 import static bio.terra.workspace.service.workspace.CloudSyncRoleMapping.CUSTOM_GCP_IAM_ROLES;
+import static bio.terra.workspace.service.workspace.CloudSyncRoleMapping.CUSTOM_GCP_PROJECT_IAM_ROLES;
 import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.CUSTOM_PROJECT_ROLES;
 import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.CUSTOM_RESOURCE_ROLES;
 
@@ -14,7 +15,9 @@ import bio.terra.workspace.service.resource.controlled.cloud.gcp.CustomGcpIamRol
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.api.services.iam.v1.model.Role;
 import java.io.IOException;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -64,19 +67,20 @@ public class GcpIamCustomRolePatchStep implements Step {
 
   @Override
   public StepResult undoStep(FlightContext flightContext) throws InterruptedException {
-    resetCustomRolesToPreviousSetOfPermissions(flightContext, CUSTOM_PROJECT_ROLES);
-    resetCustomRolesToPreviousSetOfPermissions(flightContext, CUSTOM_RESOURCE_ROLES);
+    HashSet<CustomGcpIamRole> customGcpIamRoles = new HashSet<>();
+    customGcpIamRoles.addAll(CUSTOM_GCP_IAM_ROLES);
+    customGcpIamRoles.addAll(CustomGcpIamRoleMapping.CUSTOM_GCP_RESOURCE_IAM_ROLES.values());
+    resetCustomRolesToPreviousSetOfPermissions(flightContext, customGcpIamRoles);
 
     return StepResult.getStepResultSuccess();
   }
 
   private void resetCustomRolesToPreviousSetOfPermissions(
-      FlightContext flightContext, String workingMapKey) {
-    List<Role> originalProjectRole =
-        flightContext.getWorkingMap().get(projectId + workingMapKey, new TypeReference<>() {});
-    for (Role role : originalProjectRole) {
+      FlightContext flightContext, Set<CustomGcpIamRole> customGcpIamRoles) {
+    for(CustomGcpIamRole projectRoles: customGcpIamRoles) {
+      Role originalRole = flightContext.getWorkingMap().get(projectRoles.getFullyQualifiedRoleName(projectId), Role.class);
       try {
-        iamCow.projects().roles().patch(role.getName(), role);
+        iamCow.projects().roles().patch(originalRole.getName(), originalRole);
       } catch (IOException e) {
         throw new RetryException(e);
       }

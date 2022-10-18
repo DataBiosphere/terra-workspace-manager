@@ -77,7 +77,7 @@ public class SamService {
   private boolean wsmServiceAccountInitialized;
 
   @Autowired
-  public SamService(SamConfiguration samConfig, StageService stageService) {
+  public SamService(SamConfiguration samConfig) {
     this.samConfig = samConfig;
     this.wsmServiceAccountInitialized = false;
     this.commonHttpClient =
@@ -120,16 +120,17 @@ public class SamService {
   }
 
   @Traced
-  public boolean isAdmin(AuthenticatedUserRequest userRequest) throws InterruptedException {
+  private boolean isAdmin(AuthenticatedUserRequest userRequest) throws InterruptedException {
     try {
-      // If the user can successfully call sam admin api, the user has admin access.
+      // If the user can successfully call sam admin api, the user has terra level admin access.
       SamRetry.retry(
           () ->
               samAdminApi(userRequest.getRequiredToken())
                   .adminGetUserByEmail(getUserEmailFromSam(userRequest)));
       return true;
     } catch (ApiException apiException) {
-      throw SamExceptionFactory.create("Error checking resource permission in Sam", apiException);
+      logger.debug("Error checking resource permission in Sam", apiException);
+      return false;
     }
   }
 

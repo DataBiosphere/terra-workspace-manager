@@ -15,21 +15,25 @@ import bio.terra.workspace.db.exception.WorkspaceNotFoundException;
 import bio.terra.workspace.service.spendprofile.SpendProfileId;
 import bio.terra.workspace.service.workspace.GcpCloudContextService;
 import bio.terra.workspace.service.workspace.exceptions.DuplicateWorkspaceException;
+import bio.terra.workspace.service.workspace.model.AzureCloudContext;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import bio.terra.workspace.service.workspace.model.GcpCloudContext;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
+import bio.terra.workspace.unit.WorkspaceUnitTestUtils;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
+import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
@@ -126,6 +130,34 @@ class WorkspaceDaoTest extends BaseUnitTest {
     List<UUID> workspaceIdList =
         workspaceList.stream().map(Workspace::getWorkspaceId).collect(Collectors.toList());
     assertThat(workspaceIdList, not(hasItem(equalTo(fakeWorkspaceId))));
+  }
+
+  @Test
+  void listCloudContext() {
+    UUID workspace1 = WorkspaceUnitTestUtils.createWorkspaceWithoutGcpContext(workspaceDao);
+    UUID workspace2 = WorkspaceUnitTestUtils.createWorkspaceWithoutGcpContext(workspaceDao);
+    UUID workspace3 = WorkspaceUnitTestUtils.createWorkspaceWithoutGcpContext(workspaceDao);
+    UUID workspace4 = WorkspaceUnitTestUtils.createWorkspaceWithoutGcpContext(workspaceDao);
+
+    String project1 = "gcp-project-1";
+    String project2 = "gcp-project-2";
+    String project3 = "gcp-project-3";
+    String project4 = "azure-project";
+    WorkspaceUnitTestUtils.createGcpCloudContextInDatabase(workspaceDao, workspace1, project1);
+    WorkspaceUnitTestUtils.createGcpCloudContextInDatabase(workspaceDao, workspace2, project2);
+    WorkspaceUnitTestUtils.createGcpCloudContextInDatabase(workspaceDao, workspace3, project3);
+    WorkspaceUnitTestUtils.createCloudContextInDatabase(workspaceDao, workspace4, project4, CloudPlatform.AZURE);
+
+    ImmutableSet<String> gcpCloudContexts = workspaceDao.listCloudContexts(CloudPlatform.GCP);
+
+    var gcpProjectIds = new HashSet(gcpCloudContexts.stream().map(
+        cloudContext -> GcpCloudContext.deserialize(cloudContext).getGcpProjectId()
+    ).toList());
+    assertEquals(3, gcpCloudContexts.size());
+    assertTrue(gcpProjectIds.contains(project1));
+    assertTrue(gcpProjectIds.contains(project2));
+    assertTrue(gcpProjectIds.contains(project3));
+    assertFalse(gcpProjectIds.contains(project4));
   }
 
   @Test

@@ -11,10 +11,10 @@ import bio.terra.workspace.service.crl.CrlService;
 import com.fasterxml.jackson.core.type.TypeReference;
 import java.util.ArrayList;
 
-public class SyncIamRolesFlight extends Flight {
+public class SyncGcpIamRolesFlight extends Flight {
 
   /** @InheritDoc */
-  public SyncIamRolesFlight(FlightMap inputParameters, Object applicationContext) {
+  public SyncGcpIamRolesFlight(FlightMap inputParameters, Object applicationContext) {
     super(inputParameters, applicationContext);
     FlightBeanBag appContext = FlightBeanBag.getFromObject(applicationContext);
     CrlService crl = appContext.getCrlService();

@@ -20,6 +20,7 @@ import bio.terra.workspace.service.workspace.flight.RemoveUserFromWorkspaceFligh
 import bio.terra.workspace.service.workspace.flight.WorkspaceCreateFlight;
 import bio.terra.workspace.service.workspace.flight.WorkspaceDeleteFlight;
 import bio.terra.workspace.service.workspace.flight.application.able.ApplicationAbleFlight;
+import bio.terra.workspace.service.workspace.flight.cloudcontext.gcp.SyncGcpIamRolesFlight;
 import bio.terra.workspace.service.workspace.flight.create.azure.CreateAzureContextFlight;
 import java.util.Arrays;
 
@@ -68,7 +69,8 @@ public enum ActivityFlight {
       CloneAllResourcesFlight.class.getName(), ActivityLogChangedTarget.RESOURCE),
   GCP_WORKSPACE_CLONE_FLIGHT(
       CloneGcpWorkspaceFlight.class.getName(), ActivityLogChangedTarget.WORKSPACE),
-  FOLDER_DELETE_FLIGHT(DeleteFolderFlight.class.getName(), ActivityLogChangedTarget.FOLDER);
+  FOLDER_DELETE_FLIGHT(DeleteFolderFlight.class.getName(), ActivityLogChangedTarget.FOLDER),
+  SYNC_IAM_ROLES_FLIGHT(SyncGcpIamRolesFlight.class.getName(), ActivityLogChangedTarget.GCP_CLOUD_CONTEXT);
 
   private final String flightClassName;
   private final ActivityLogChangedTarget changedTarget;

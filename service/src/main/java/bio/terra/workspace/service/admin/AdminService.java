@@ -6,7 +6,7 @@ import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.job.JobBuilder;
 import bio.terra.workspace.service.job.JobService;
-import bio.terra.workspace.service.workspace.flight.cloudcontext.gcp.SyncIamRolesFlight;
+import bio.terra.workspace.service.workspace.flight.cloudcontext.gcp.SyncGcpIamRolesFlight;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import bio.terra.workspace.service.workspace.model.GcpCloudContext;
 import bio.terra.workspace.service.workspace.model.OperationType;
@@ -34,7 +34,7 @@ public class AdminService {
         jobService
             .newJob()
             .description("sync custom iam roles in all gcp projects")
-            .flightClass(SyncIamRolesFlight.class)
+            .flightClass(SyncGcpIamRolesFlight.class)
             .userRequest(userRequest)
             .operationType(OperationType.CREATE)
             .addParameter(GCP_PROJECT_IDS, projectIds);
