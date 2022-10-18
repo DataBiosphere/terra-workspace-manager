@@ -9,6 +9,10 @@ workspace:
     # MRG
     managed-resource-group-id: mrg-terra-integration-test-20211118
 
+    # default landing zone id value. This static value allows setting permission in SAM for LZ operation
+    #for user with 'default-user-email'
+    default-landing-zone-id: 435afea6-63b2-4a60-8e6e-9dbf294b783a
+
 feature:
   # Enable azure support when running azure tests
   azure-enabled: true
