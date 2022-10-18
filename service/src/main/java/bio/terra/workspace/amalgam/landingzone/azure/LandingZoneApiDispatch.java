@@ -7,6 +7,7 @@ import bio.terra.landingzone.library.landingzones.deployment.LandingZonePurpose;
 import bio.terra.landingzone.library.landingzones.deployment.ResourcePurpose;
 import bio.terra.landingzone.library.landingzones.deployment.SubnetResourcePurpose;
 import bio.terra.landingzone.service.landingzone.azure.LandingZoneService;
+import bio.terra.landingzone.service.landingzone.azure.model.DeletedLandingZone;
 import bio.terra.landingzone.service.landingzone.azure.model.DeployedLandingZone;
 import bio.terra.landingzone.service.landingzone.azure.model.LandingZoneDefinition;
 import bio.terra.landingzone.service.landingzone.azure.model.LandingZoneRequest;
@@ -22,6 +23,8 @@ import bio.terra.workspace.generated.model.ApiAzureLandingZoneResourcesList;
 import bio.terra.workspace.generated.model.ApiAzureLandingZoneResourcesPurposeGroup;
 import bio.terra.workspace.generated.model.ApiAzureLandingZoneResult;
 import bio.terra.workspace.generated.model.ApiCreateAzureLandingZoneRequestBody;
+import bio.terra.workspace.generated.model.ApiDeleteAzureLandingZoneRequestBody;
+import bio.terra.workspace.generated.model.ApiDeleteAzureLandingZoneResult;
 import bio.terra.workspace.service.workspace.model.AzureCloudContext;
 import java.util.List;
 import java.util.Optional;
@@ -105,9 +108,31 @@ public class LandingZoneApiDispatch {
                 .collect(Collectors.toList()));
   }
 
-  public void deleteLandingZone(BearerToken bearerToken, UUID landingZoneId) {
+  public ApiDeleteAzureLandingZoneResult deleteLandingZone(
+      BearerToken bearerToken,
+      UUID landingZoneId,
+      ApiDeleteAzureLandingZoneRequestBody body,
+      String resultEndpoint) {
     features.azureEnabledCheck();
-    landingZoneService.deleteLandingZone(bearerToken, landingZoneId);
+    return toApiDeleteAzureLandingZoneResult(
+        landingZoneService.startLandingZoneDeletionJob(
+            bearerToken, body.getJobControl().getId(), landingZoneId, resultEndpoint));
+  }
+
+  private ApiDeleteAzureLandingZoneResult toApiDeleteAzureLandingZoneResult(
+      LandingZoneJobService.AsyncJobResult<DeletedLandingZone> jobResult) {
+
+    ApiDeleteAzureLandingZoneResult result =
+        new ApiDeleteAzureLandingZoneResult()
+            .jobReport(MapperUtils.JobReportMapper.from(jobResult.getJobReport()))
+            .errorReport(MapperUtils.ErrorReportMapper.from(jobResult.getApiErrorReport()));
+
+    if (jobResult.getJobReport().getStatus().equals(JobReport.StatusEnum.SUCCEEDED)) {
+      result.landingZoneId(jobResult.getResult().landingZoneId());
+      result.resources(jobResult.getResult().deleteResources());
+    }
+
+    return result;
   }
 
   public ApiAzureLandingZoneResourcesList listAzureLandingZoneResources(
@@ -217,5 +242,12 @@ public class LandingZoneApiDispatch {
             () ->
                 new IllegalStateException(
                     "Could not find a landing zone id for the given Azure context. Please check that the landing zone deployment is complete."));
+  }
+
+  public ApiDeleteAzureLandingZoneResult getDeleteAzureLandingZoneResult(
+      BearerToken token, String jobId) {
+    features.azureEnabledCheck();
+    return toApiDeleteAzureLandingZoneResult(
+        landingZoneService.getAsyncDeletionJobResult(token, jobId));
   }
 }

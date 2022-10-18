@@ -2,10 +2,7 @@ package bio.terra.workspace.amalgam.landingzone.azure;
 
 import static bio.terra.workspace.common.utils.MockMvcUtils.AUTH_HEADER;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.when;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -15,7 +12,7 @@ import bio.terra.landingzone.job.LandingZoneJobService;
 import bio.terra.landingzone.library.landingzones.deployment.LandingZonePurpose;
 import bio.terra.landingzone.library.landingzones.deployment.ResourcePurpose;
 import bio.terra.landingzone.library.landingzones.deployment.SubnetResourcePurpose;
-import bio.terra.landingzone.service.landingzone.azure.exception.LandingZoneDeleteNotImplemented;
+import bio.terra.landingzone.service.landingzone.azure.model.DeletedLandingZone;
 import bio.terra.landingzone.service.landingzone.azure.model.DeployedLandingZone;
 import bio.terra.landingzone.service.landingzone.azure.model.LandingZoneDefinition;
 import bio.terra.landingzone.service.landingzone.azure.model.LandingZoneResource;
@@ -224,24 +221,26 @@ public class LandingZoneApiControllerTest extends BaseAzureUnitTest {
 
   @Test
   public void deleteAzureLandingZoneSuccess() throws Exception {
-    doNothing().when(mockLandingZoneService()).deleteLandingZone(any(), any());
-    mockMvc
-        .perform(
-            delete(AZURE_LANDING_ZONE_PATH + "/{landingZoneId}", LANDING_ZONE_ID)
-                .header(AUTH_HEADER, "Bearer " + BEARER_TOKEN.getToken()))
-        .andExpect(status().isNoContent());
-  }
+    LandingZoneJobService.AsyncJobResult<DeletedLandingZone> asyncJobResult =
+        AzureLandingZoneFixtures.createDeleteJobResultWithSucceededState(JOB_ID, LANDING_ZONE_ID);
+    when(mockLandingZoneService().startLandingZoneDeletionJob(any(), any(), any(), any()))
+        .thenReturn(asyncJobResult);
+    when(mockLandingZoneService().getAsyncDeletionJobResult(any(), any()))
+        .thenReturn(asyncJobResult);
+    when(mockFeatureConfiguration().isAzureEnabled()).thenReturn(true);
 
-  @Test
-  public void deleteAzureLandingZoneNotImplemented() throws Exception {
-    doThrow(LandingZoneDeleteNotImplemented.class)
-        .when(mockLandingZoneService())
-        .deleteLandingZone(any(), any());
+    var requestBody = AzureLandingZoneFixtures.buildDeleteAzureLandingZoneRequest(JOB_ID);
+
     mockMvc
         .perform(
-            delete(AZURE_LANDING_ZONE_PATH + "/{landingZoneId}", LANDING_ZONE_ID)
+            post(AZURE_LANDING_ZONE_PATH + "/{landingZoneId}", LANDING_ZONE_ID)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(requestBody))
+                .characterEncoding("utf-8")
                 .header(AUTH_HEADER, "Bearer " + BEARER_TOKEN.getToken()))
-        .andExpect(status().isNotImplemented());
+        .andExpect(status().is(HttpStatus.SC_OK))
+        .andExpect(MockMvcResultMatchers.jsonPath("$.jobReport").exists())
+        .andExpect(MockMvcResultMatchers.jsonPath("$.jobReport.id").exists());
   }
 
   @Test
