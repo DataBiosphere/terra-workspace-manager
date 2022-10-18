@@ -171,7 +171,7 @@ public class LandingZoneApiDispatch {
       BearerToken bearerToken, UUID landingZoneId, LandingZonePurpose resourcePurpose) {
     features.azureEnabledCheck();
     var result = new ApiAzureLandingZoneResourcesList().id(landingZoneId);
-        var deployedResources =
+    var deployedResources =
         landingZoneService
             .listResourcesByPurpose(bearerToken, landingZoneId, resourcePurpose)
             .stream()
