@@ -15,7 +15,7 @@ public enum OperationType {
   REMOVE_WORKSPACE_ROLE(ApiOperationType.REMOVE_WORKSPACE_ROLE),
   SYSTEM_CLEANUP(ApiOperationType.SYSTEM_CLEANUP),
   UPDATE(ApiOperationType.UPDATE),
-  ADMIN_UPDATE(ApiOperationType.UPDATE),
+  ADMIN_UPDATE(ApiOperationType.ADMIN_UPDATE),
   UNKNOWN(ApiOperationType.UNKNOWN);
 
   private final ApiOperationType apiOperationType;

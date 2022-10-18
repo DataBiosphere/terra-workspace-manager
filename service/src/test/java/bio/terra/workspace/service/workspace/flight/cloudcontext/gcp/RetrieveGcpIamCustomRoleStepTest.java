@@ -25,7 +25,6 @@ import com.google.api.services.iam.v1.model.Role;
 import java.io.IOException;
 import java.util.HashSet;
 import java.util.List;
-import java.util.UUID;
 import org.apache.http.HttpStatus;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -46,12 +45,11 @@ public class RetrieveGcpIamCustomRoleStepTest extends BaseUnitTest {
   @Mock private Get getProject;
   @Mock private FlightContext flightContext;
 
-  private UUID workspace;
   private RetrieveGcpIamCustomRoleStep retrieveGcpIamCustomRoleStep;
 
   @BeforeAll
   public void setUp() throws IOException {
-    workspace = createWorkspaceWithGcpContext(workspaceDao);
+    createWorkspaceWithGcpContext(workspaceDao);
     retrieveGcpIamCustomRoleStep = new RetrieveGcpIamCustomRoleStep(iamCow, PROJECT_ID);
     when(flightContext.getWorkingMap()).thenReturn(workingMap);
     when(iamCow.projects()).thenReturn(projects);
@@ -74,13 +72,14 @@ public class RetrieveGcpIamCustomRoleStepTest extends BaseUnitTest {
   }
 
   @Test
-  public void doStep_throws404() throws IOException, InterruptedException {
+  public void doStep_oneOfTheRoleIsNotFound_notAddedToWorkingMap()
+      throws IOException, InterruptedException {
     CustomGcpIamRole customGcpIamRole = CustomGcpIamRole.of("PROJECT_OWNER", List.of());
     JsonFactory jsonFactory = new MockJsonFactory();
     when(roles.get(customGcpIamRole.getFullyQualifiedRoleName(PROJECT_ID)))
         .thenThrow(
             GoogleJsonResponseExceptionFactoryTesting.newMock(
-                jsonFactory, HttpStatus.SC_FORBIDDEN, "Test Exception"));
+                jsonFactory, HttpStatus.SC_NOT_FOUND, "Test Exception"));
 
     retrieveGcpIamCustomRoleStep.doStep(flightContext);
 

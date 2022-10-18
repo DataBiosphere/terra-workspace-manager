@@ -3,7 +3,6 @@ package bio.terra.workspace.service.admin;
 import static bio.terra.workspace.service.workspace.CloudSyncRoleMapping.CUSTOM_GCP_PROJECT_IAM_ROLES;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import bio.terra.cloudres.google.iam.IamCow;
@@ -17,7 +16,6 @@ import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.iam.model.WsmIamRole;
 import bio.terra.workspace.service.job.JobService;
-import bio.terra.workspace.service.job.exception.InvalidResultStateException;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.CustomGcpIamRole;
 import bio.terra.workspace.service.workspace.flight.cloudcontext.gcp.GcpIamCustomRolePatchStep;
 import bio.terra.workspace.service.workspace.flight.cloudcontext.gcp.RetrieveGcpIamCustomRoleStep;
@@ -26,9 +24,11 @@ import bio.terra.workspace.service.workspace.model.GcpCloudContext;
 import com.google.api.services.iam.v1.model.Role;
 import com.google.common.collect.ImmutableList;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -50,31 +50,45 @@ public class AdminServiceTest extends BaseConnectedTest {
   @Autowired CrlService crlService;
 
   private IamCow iamCow;
+  List<UUID> workspaceIds = new ArrayList<>();
   List<String> projectIds;
 
   @BeforeEach
   void setup() {
     iamCow = crlService.getIamCow();
-    connectedTestUtils.createWorkspaceWithGcpContext(userAccessUtils.defaultUserAuthRequest());
-    connectedTestUtils.createWorkspaceWithGcpContext(userAccessUtils.defaultUserAuthRequest());
-    connectedTestUtils.createWorkspaceWithGcpContext(userAccessUtils.defaultUserAuthRequest());
+    workspaceIds.add(
+        connectedTestUtils
+            .createWorkspaceWithGcpContext(userAccessUtils.defaultUserAuthRequest())
+            .getWorkspaceId());
+    workspaceIds.add(
+        connectedTestUtils
+            .createWorkspaceWithGcpContext(userAccessUtils.defaultUserAuthRequest())
+            .getWorkspaceId());
+    workspaceIds.add(
+        connectedTestUtils
+            .createWorkspaceWithGcpContext(userAccessUtils.defaultUserAuthRequest())
+            .getWorkspaceId());
     projectIds =
         workspaceDao.listCloudContexts(CloudPlatform.GCP).stream()
             .map(cloudContext -> GcpCloudContext.deserialize(cloudContext).getGcpProjectId())
             .toList();
+    // The existing project has incomplete permissions on PROJECT_READER
+    for (String project : projectIds) {
+      updateCustomRole(PROJECT_READER, project);
+    }
   }
 
   @AfterEach
   void cleanUp() {
     jobService.setFlightDebugInfoForTest(null);
+    for (UUID workspaceId : workspaceIds) {
+      connectedTestUtils.deleteWorkspaceAndGcpContext(
+          userAccessUtils.defaultUserAuthRequest(), workspaceId);
+    }
   }
 
   @Test
   public void syncIamRole_newPermissionsAddedToCustomRoleProjectReader() {
-    // The existing project has incomplete permissions on PROJECT_READER
-    for (String project : projectIds) {
-      updateCustomRole(PROJECT_READER, project);
-    }
     // Test idempotency of steps by retrying them once.
     Map<String, StepStatus> retrySteps = new HashMap<>();
     retrySteps.put(
@@ -102,12 +116,9 @@ public class AdminServiceTest extends BaseConnectedTest {
     jobService.setFlightDebugInfoForTest(
         FlightDebugInfo.newBuilder().doStepFailures(retrySteps).lastStepFailure(true).build());
 
-    // Service methods which wait for a flight to complete will throw an
-    // InvalidResultStateException when that flight fails without a cause, which occurs when a
-    // flight fails via debugInfo.
     String jobId =
         adminService.syncIamRoleForAllGcpProjects(userAccessUtils.defaultUserAuthRequest());
-    assertThrows(InvalidResultStateException.class, () -> jobService.waitForJob(jobId));
+    jobService.waitForJob(jobId);
     for (String projectId : projectIds) {
       assertProjectReaderRoleIsUpdated(projectId, PROJECT_READER.getIncludedPermissions());
     }

@@ -52,8 +52,8 @@ public class WorkspaceUnitTestUtils {
   }
 
   /**
-   * Creates the database artifact for a GCP cloud context without actually creating anything beyond
-   * the database row.
+   * Creates the database artifact for a cloud context without actually creating anything beyond the
+   * database row.
    */
   public static void createCloudContextInDatabase(
       WorkspaceDao workspaceDao,
