@@ -548,7 +548,29 @@ public class WorkspaceDao {
    */
   @ReadTransaction
   public Optional<String> getCloudContext(UUID workspaceUuid, CloudPlatform cloudPlatform) {
-    return listCloudContextsWorker(workspaceUuid, cloudPlatform);
+    return getCloudContextWorker(workspaceUuid, cloudPlatform);
+  }
+
+  /**
+   * Retrieve the serialized cloud context of an unlocked cloud context. That is, a cloud context
+   * that is done being created.
+   *
+   * @param workspaceUuid workspace of the context
+   * @param cloudPlatform platform context to retrieve
+   * @return empty or the serialized cloud context info
+   */
+  private Optional<String> getCloudContextWorker(UUID workspaceUuid, CloudPlatform cloudPlatform) {
+    String sql =
+        "SELECT context FROM cloud_context"
+            + " WHERE workspace_id = :workspace_id"
+            + " AND cloud_platform = :cloud_platform";
+    MapSqlParameterSource params =
+        new MapSqlParameterSource()
+            .addValue("workspace_id", workspaceUuid.toString())
+            .addValue("cloud_platform", cloudPlatform.toSql());
+    return Optional.ofNullable(
+        DataAccessUtils.singleResult(
+            jdbcTemplate.query(sql, params, (rs, rowNum) -> rs.getString("context"))));
   }
 
   @ReadTransaction

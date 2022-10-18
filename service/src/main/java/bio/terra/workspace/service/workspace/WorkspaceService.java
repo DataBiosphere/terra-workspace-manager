@@ -114,7 +114,7 @@ public class WorkspaceService {
             .request(workspace)
             .userRequest(userRequest)
             .workspaceId(workspaceUuid)
-            .operationType(OperationType.UPDATE)
+            .operationType(OperationType.CREATE)
             .addParameter(
                 WorkspaceFlightMapKeys.WORKSPACE_STAGE, workspace.getWorkspaceStage().name())
             .addParameter(WorkspaceFlightMapKeys.POLICIES, policies);

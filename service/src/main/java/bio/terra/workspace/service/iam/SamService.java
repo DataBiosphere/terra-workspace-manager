@@ -128,7 +128,7 @@ public class SamService {
                   .adminGetUserByEmail(getUserEmailFromSam(userRequest)));
       return true;
     } catch (ApiException apiException) {
-      logger.debug("Error checking resource permission in Sam", apiException);
+      logger.debug("Error checking admin permission in Sam", apiException);
       return false;
     }
   }
