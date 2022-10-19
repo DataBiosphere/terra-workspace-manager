@@ -1,7 +1,7 @@
 # This is a Gradle generated file for dependency locking.
 # Manual edits can break the build and are not advised.
 # This file is expected to be part of source control.
-bio.terra:billing-profile-manager-client:0.1.29-SNAPSHOT=productionRuntimeClasspath,runtimeClasspath,testRuntimeClasspath
+bio.terra:billing-profile-manager-client:0.1.29-SNAPSHOT=compileClasspath,productionRuntimeClasspath,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
 bio.terra:datarepo-client:1.41.0-SNAPSHOT=compileClasspath,productionRuntimeClasspath,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
 bio.terra:stairway-gcp:0.0.71-SNAPSHOT=compileClasspath,productionRuntimeClasspath,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
 bio.terra:stairway:0.0.71-SNAPSHOT=compileClasspath,productionRuntimeClasspath,runtimeClasspath,testCompileClasspath,testRuntimeClasspath

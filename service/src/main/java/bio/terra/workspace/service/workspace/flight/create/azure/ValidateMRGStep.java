@@ -4,10 +4,13 @@ import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
 import bio.terra.workspace.app.configuration.external.AzureConfiguration;
+import bio.terra.workspace.common.utils.FlightBeanBag;
 import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.job.JobMapKeys;
+import bio.terra.workspace.service.spendprofile.SpendProfile;
 import bio.terra.workspace.service.workspace.exceptions.CloudContextRequiredException;
+import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import bio.terra.workspace.service.workspace.model.AzureCloudContext;
 import com.azure.resourcemanager.resources.ResourceManager;
 
@@ -26,10 +29,26 @@ public class ValidateMRGStep implements Step {
 
   @Override
   public StepResult doStep(FlightContext flightContext) throws InterruptedException {
-    AzureCloudContext azureCloudContext =
-        flightContext
-            .getInputParameters()
-            .get(JobMapKeys.REQUEST.getKeyName(), AzureCloudContext.class);
+    FlightBeanBag appContext = FlightBeanBag.getFromObject(flightContext.getApplicationContext());
+
+    AzureCloudContext azureCloudContext;
+    if (appContext.getFeatureConfiguration().isBpmAzureEnabled()) {
+      var spendProfile =
+          flightContext
+              .getWorkingMap()
+              .get(WorkspaceFlightMapKeys.SPEND_PROFILE, SpendProfile.class);
+
+      azureCloudContext =
+          new AzureCloudContext(
+              spendProfile.tenantId().toString(),
+              spendProfile.subscriptionId().toString(),
+              spendProfile.managedResourceGroupId());
+    } else {
+      azureCloudContext =
+          flightContext
+              .getInputParameters()
+              .get(JobMapKeys.REQUEST.getKeyName(), AzureCloudContext.class);
+    }
 
     try {
       ResourceManager resourceManager =

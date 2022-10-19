@@ -107,13 +107,12 @@ workspace:
     poolId: workspace_manager_v9
 
   spend:
+    base-path: ${env.urls.bpm}
     spend-profiles:
     - # A default spend profile available in dev Sam.
       id: wm-default-spend-profile
       # The billing account workspace-dev has access to.
       billing-account-id: 01A82E-CA8A14-367457
-    - # A special spend profile with no billing account associated with it.
-      id: no-billing-account
 
   application:
     configurations:
@@ -206,6 +205,10 @@ feature:
   alpha1-enabled: false
   # tps-enabled - Controls whether Terra Policy Service is called. It is always built into WSM
   tps-enabled: false
+  # bpm-enabled-gcp - Controls whether spend profile checks are made for GCP workspaces
+  bpm-enabled-gcp: false
+  # bpm-enabled-azure - Controls whether spend profile checks are made for Azure workspaces
+  bpm-enabled-azure: false
 
 reference:
   gitrepos:
