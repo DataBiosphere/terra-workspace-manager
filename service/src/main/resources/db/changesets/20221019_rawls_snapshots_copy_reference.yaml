@@ -1,0 +1,8 @@
+databaseChangeLog:
+- changeSet:
+    id: change rawls snapshots to copy_reference
+    author: bmorgan
+    changes:
+    - sql:
+        # Existing Rawls snapshots-by-reference should be COPY_REFERENCE instead of COPY_NOTHING
+        sql: update resource set cloning_instructions = 'COPY_REFERENCE' from workspace where exact_resource_type = 'REFERENCED_ANY_DATA_REPO_SNAPSHOT' and resource.workspace_id = workspace.workspace_id and workspace.workspace_stage = 'RAWLS_WORKSPACE';
