@@ -94,6 +94,7 @@ readonly CROMWELL_JAR_PATH="/usr/shared/java/"
 sudo -u "${JUPYTER_USER}" sh -c "mkdir -p /home/${JUPYTER_USER}/cromwell"
 sudo -u "${JUPYTER_USER}" sh -c "curl -LO https://github.com/broadinstitute/cromwell/releases/download/${CROMWELL_LATEST_VERSION}/cromwell-${CROMWELL_LATEST_VERSION}.jar"
 sudo -u "${JUPYTER_USER}" sh -c "mv cromwell-${CROMWELL_LATEST_VERSION}.jar ${CROMWELL_JAR_PATH}"
+echo "export CROMWELL_JAR='/usr/shared/java/cromwell-${CROMWELL_LATEST_VERSION}.jar'" >> "/home/${JUPYTER_USER}/.bash_profile"
 
 #Install cromshell
 sudo apt-get -y install mailutils
