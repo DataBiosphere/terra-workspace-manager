@@ -90,11 +90,11 @@ sudo mv nextflow /usr/bin/nextflow
 
 # Install cromwell
 readonly CROMWELL_LATEST_VERSION="81"
-readonly CROMWELL_JAR_PATH="/usr/shared/java/"
+readonly CROMWELL_JAR_PATH="/usr/share/java/"
 sudo -u "${JUPYTER_USER}" sh -c "mkdir -p /home/${JUPYTER_USER}/cromwell"
 sudo -u "${JUPYTER_USER}" sh -c "curl -LO https://github.com/broadinstitute/cromwell/releases/download/${CROMWELL_LATEST_VERSION}/cromwell-${CROMWELL_LATEST_VERSION}.jar"
-sudo -u "${JUPYTER_USER}" sh -c "mv cromwell-${CROMWELL_LATEST_VERSION}.jar ${CROMWELL_JAR_PATH}"
-echo "export CROMWELL_JAR='/usr/shared/java/cromwell-${CROMWELL_LATEST_VERSION}.jar'" >> "/home/${JUPYTER_USER}/.bash_profile"
+sudo mv cromwell-${CROMWELL_LATEST_VERSION}.jar ${CROMWELL_JAR_PATH}
+echo "export CROMWELL_JAR='${CROMWELL_JAR_PATH}cromwell-${CROMWELL_LATEST_VERSION}.jar'" >> "/home/${JUPYTER_USER}/.bash_profile"
 
 #Install cromshell
 sudo apt-get -y install mailutils
@@ -117,9 +117,6 @@ fi
 # Log in with app-default-credentials
 sudo -u "${JUPYTER_USER}" sh -c "terra auth login --mode=APP_DEFAULT_CREDENTIALS"
 
-# Generate cromwell.config
-sudo -u "${JUPYTER_USER}" sh -c "terra cromwell config-generate --dir=cromwell"
-
 ####################################
 # Shell and notebook environment
 ####################################
@@ -129,6 +126,9 @@ readonly TERRA_WORKSPACE="$(get_metadata_value "instance/attributes/terra-worksp
 if [[ -n "${TERRA_WORKSPACE}" ]]; then
   sudo -u "${JUPYTER_USER}" sh -c "terra workspace set --id=${TERRA_WORKSPACE}"
 fi
+
+# Generate cromwell.config
+sudo -u "${JUPYTER_USER}" sh -c "terra cromwell generate-config --dir=/home/${JUPYTER_USER}/cromwell"
 
 # Set variables into the .bash_profile such that they are available
 # to terminals, notebooks, and other tools
