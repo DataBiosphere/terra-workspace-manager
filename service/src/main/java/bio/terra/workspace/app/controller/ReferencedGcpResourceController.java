@@ -573,7 +573,7 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
   }
 
   @Override
-  public ResponseEntity<Void> updateDataRepoSnapshotReferenceResource(
+  public ResponseEntity<ApiDataRepoSnapshotResource> updateDataRepoSnapshotReferenceResource(
       UUID workspaceUuid, UUID resourceId, ApiUpdateDataRepoSnapshotReferenceRequestBody body) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     workspaceService.validateWorkspaceAndAction(
@@ -611,7 +611,11 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
           CloningInstructions.fromApiModel(body.getCloningInstructions()),
           userRequest);
     }
-    return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+    final ReferencedDataRepoSnapshotResource updatedResource =
+        referenceResourceService
+            .getReferenceResource(workspaceUuid, resourceId)
+            .castByEnum(WsmResourceType.REFERENCED_ANY_DATA_REPO_SNAPSHOT);
+    return new ResponseEntity<>(updatedResource.toApiResource(), HttpStatus.OK);
   }
 
   @Override
