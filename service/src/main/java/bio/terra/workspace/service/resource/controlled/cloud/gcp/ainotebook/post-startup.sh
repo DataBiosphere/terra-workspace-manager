@@ -91,7 +91,7 @@ sudo mv nextflow /usr/bin/nextflow
 # Install cromwell
 readonly CROMWELL_LATEST_VERSION="81"
 sudo -u "${JUPYTER_USER}" sh -c "curl -LO https://github.com/broadinstitute/cromwell/releases/download/${CROMWELL_LATEST_VERSION}/cromwell-${CROMWELL_LATEST_VERSION}.jar"
-sudo mv cromwell-${CROMWELL_LATEST_VERSION}.jar "/usr/share/java/"
+sudo mv "cromwell-${CROMWELL_LATEST_VERSION}.jar" "/usr/share/java/"
 echo "export CROMWELL_JAR='/usr/share/java/cromwell-${CROMWELL_LATEST_VERSION}.jar'" >> "/home/${JUPYTER_USER}/.bash_profile"
 
 #Install cromshell
