@@ -90,11 +90,9 @@ sudo mv nextflow /usr/bin/nextflow
 
 # Install cromwell
 readonly CROMWELL_LATEST_VERSION="81"
-readonly CROMWELL_JAR_PATH="/usr/share/java/"
-sudo -u "${JUPYTER_USER}" sh -c "mkdir -p /home/${JUPYTER_USER}/cromwell"
 sudo -u "${JUPYTER_USER}" sh -c "curl -LO https://github.com/broadinstitute/cromwell/releases/download/${CROMWELL_LATEST_VERSION}/cromwell-${CROMWELL_LATEST_VERSION}.jar"
-sudo mv cromwell-${CROMWELL_LATEST_VERSION}.jar ${CROMWELL_JAR_PATH}
-echo "export CROMWELL_JAR='${CROMWELL_JAR_PATH}cromwell-${CROMWELL_LATEST_VERSION}.jar'" >> "/home/${JUPYTER_USER}/.bash_profile"
+sudo mv cromwell-${CROMWELL_LATEST_VERSION}.jar "/usr/share/java/"
+echo "export CROMWELL_JAR='/usr/share/java/cromwell-${CROMWELL_LATEST_VERSION}.jar'" >> "/home/${JUPYTER_USER}/.bash_profile"
 
 #Install cromshell
 sudo apt-get -y install mailutils
@@ -126,9 +124,6 @@ readonly TERRA_WORKSPACE="$(get_metadata_value "instance/attributes/terra-worksp
 if [[ -n "${TERRA_WORKSPACE}" ]]; then
   sudo -u "${JUPYTER_USER}" sh -c "terra workspace set --id=${TERRA_WORKSPACE}"
 fi
-
-# Generate cromwell.config
-sudo -u "${JUPYTER_USER}" sh -c "terra cromwell generate-config --dir=/home/${JUPYTER_USER}/cromwell"
 
 # Set variables into the .bash_profile such that they are available
 # to terminals, notebooks, and other tools
@@ -195,6 +190,9 @@ if [[ -n "$TERRA_SSH_KEY" ]]; then
   sudo -u "${JUPYTER_USER}" sh -c 'chmod go-rwx .ssh/id_rsa'
   sudo -u "${JUPYTER_USER}" sh -c 'ssh-add .ssh/id_rsa; ssh-keyscan -H github.com >> ~/.ssh/known_hosts'
 fi
+
+# Generate cromwell.conf
+sudo -u "${JUPYTER_USER}" sh -c "terra cromwell generate-config"
 
 # Attempt to clone all the git repo references in the workspace. If the user's ssh key does not exist or doesn't have access
 # to the git references, the corresponding git repo cloning will be skipped.
