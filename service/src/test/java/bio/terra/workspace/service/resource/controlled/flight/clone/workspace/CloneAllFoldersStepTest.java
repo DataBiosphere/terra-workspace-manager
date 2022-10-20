@@ -131,4 +131,30 @@ public class CloneAllFoldersStepTest extends BaseUnitTest {
         destinationSonFolder.parentFolderId(),
         "Destination son folder parent id cloned successfully");
   }
+
+  @Test
+  public void undoSteo_foldersCloned() throws InterruptedException {
+    var workingMap = new FlightMap();
+    var inputParameters = new FlightMap();
+
+    UUID destinationWorkspaceId =
+        WorkspaceUnitTestUtils.createWorkspaceWithGcpContext(workspaceDao);
+    Workspace destinationWorkspace = workspaceDao.getWorkspace(destinationWorkspaceId);
+
+    inputParameters.put(ControlledResourceKeys.SOURCE_WORKSPACE_ID, SOURCE_WORKSPACE_ID);
+    inputParameters.put(JobMapKeys.REQUEST.getKeyName(), destinationWorkspace);
+
+    when(mockFlightContext.getInputParameters()).thenReturn(inputParameters);
+    when(mockFlightContext.getWorkingMap()).thenReturn(workingMap);
+
+    StepResult stepResult = cloneAllFoldersStep.doStep(mockFlightContext);
+    assertEquals(StepResult.getStepResultSuccess(), stepResult);
+
+    StepResult undoStepResult = cloneAllFoldersStep.undoStep(mockFlightContext);
+    assertEquals(undoStepResult.getStepResultSuccess(), stepResult);
+    assertEquals(
+        0,
+        folderDao.listFoldersInWorkspace(destinationWorkspaceId).size(),
+        "Destination workspace does not have any folders");
+  }
 }

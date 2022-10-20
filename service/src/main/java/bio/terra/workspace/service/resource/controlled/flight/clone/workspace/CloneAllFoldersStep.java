@@ -11,7 +11,6 @@ import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.FolderKeys;
 import bio.terra.workspace.service.workspace.model.Workspace;
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.common.collect.ImmutableList;
 import java.util.HashMap;
 import java.util.Map;
@@ -85,10 +84,6 @@ public class CloneAllFoldersStep implements Step {
   // Delete the folders and rows in the folder table
   @Override
   public StepResult undoStep(FlightContext flightContext) throws InterruptedException {
-    HashMap<String, String> clonedFolders =
-        flightContext
-            .getWorkingMap()
-            .get(FolderKeys.FOLDER_IDS_TO_CLONE_MAP, new TypeReference<>() {});
     var destinationWorkspaceID =
         flightContext
             .getInputParameters()

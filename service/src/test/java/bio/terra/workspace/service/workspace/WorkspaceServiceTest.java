@@ -125,7 +125,6 @@ class WorkspaceServiceTest extends BaseConnectedTest {
   // application-app-test.yml file.
   private static final String TEST_WSM_APP = "TestWsmApp";
 
-  private static final String PARENT_FOLDER_NAME = "ParentFolderName";
   private static final String FOLDER_NAME = "FolderName";
 
   @MockBean private DataRepoService mockDataRepoService;
@@ -267,7 +266,6 @@ class WorkspaceServiceTest extends BaseConnectedTest {
     String userFacingId = "user-facing-id-getworkspacebyuserfacingid_forbiddenexisting";
     Workspace request = defaultRequestBuilder(UUID.randomUUID()).userFacingId(userFacingId).build();
     workspaceService.createWorkspace(request, null, USER_REQUEST);
-    Workspace createdWorkspace = workspaceService.getWorkspace(request.getWorkspaceId());
 
     doThrow(new ForbiddenException("forbid!"))
         .when(mockSamService)
@@ -835,7 +833,13 @@ class WorkspaceServiceTest extends BaseConnectedTest {
     // Create a folder
     UUID folderId = UUID.randomUUID();
     folderDao.createFolder(
-        new Folder(folderId, sourceWorkspaceId, PARENT_FOLDER_NAME, null, null, null));
+        new Folder(
+            folderId,
+            sourceWorkspaceId,
+            FOLDER_NAME,
+            /*description=*/ null,
+            /*parentFolderId=*/ null,
+            /*properties=*/ Map.of()));
 
     final ControlledGcsBucketResource createdBucketResource =
         createdResource.castByEnum(WsmResourceType.CONTROLLED_GCP_GCS_BUCKET);
@@ -917,8 +921,7 @@ class WorkspaceServiceTest extends BaseConnectedTest {
     // Create a folder
     UUID folderId = UUID.randomUUID();
     folderDao.createFolder(
-        new Folder(
-            folderId, sourceWorkspace.getWorkspaceId(), PARENT_FOLDER_NAME, null, null, null));
+        new Folder(folderId, sourceWorkspace.getWorkspaceId(), FOLDER_NAME, null, null, null));
 
     final Workspace destinationWorkspace =
         defaultRequestBuilder(UUID.randomUUID())
