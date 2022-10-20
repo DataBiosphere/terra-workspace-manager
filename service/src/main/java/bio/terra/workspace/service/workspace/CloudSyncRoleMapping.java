@@ -47,7 +47,6 @@ public class CloudSyncRoleMapping {
           "compute.acceleratorTypes.list",
           "compute.diskTypes.list",
           "compute.instances.list",
-          "compute.instances.getGuestAttributes",
           "compute.machineTypes.list",
           "compute.subnetworks.list",
           "lifesciences.operations.get",
