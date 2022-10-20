@@ -98,7 +98,6 @@ import bio.terra.workspace.service.resource.referenced.cloud.gcp.ReferencedResou
 import bio.terra.workspace.service.resource.referenced.cloud.gcp.bqdataset.ReferencedBigQueryDatasetResource;
 import bio.terra.workspace.service.resource.referenced.cloud.gcp.gcsbucket.ReferencedGcsBucketResource;
 import bio.terra.workspace.service.resource.referenced.flight.create.CreateReferenceMetadataStep;
-import bio.terra.workspace.service.workspace.Alpha1Service;
 import bio.terra.workspace.service.workspace.GcpCloudContextService;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.model.Workspace;
@@ -152,7 +151,6 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
   private UserAccessUtils.TestUser user;
   private String projectId;
 
-  @Autowired private Alpha1Service alpha1Service;
   @Autowired private CliConfiguration cliConfiguration;
   @Autowired private ControlledResourceService controlledResourceService;
   @Autowired private ReferencedResourceService referencedResourceService;
@@ -217,10 +215,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
    */
   @AfterEach
   public void resetFlightDebugInfo() {
-    // Exercise enumeration by dumping after each
-    features.setAlpha1Enabled(true);
-    StairwayTestUtils.enumerateJobsDump(alpha1Service, workspaceId, user.getAuthenticatedRequest());
-
+    StairwayTestUtils.enumerateJobsDump(jobService, workspaceId, user.getAuthenticatedRequest());
     jobService.setFlightDebugInfoForTest(null);
   }
 
@@ -920,7 +915,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
             controlledResourceService.getControlledResource(workspaceId, resource.getResourceId()));
 
     features.setAlpha1Enabled(true);
-    StairwayTestUtils.enumerateJobsDump(alpha1Service, workspaceId, user.getAuthenticatedRequest());
+    StairwayTestUtils.enumerateJobsDump(jobService, workspaceId, user.getAuthenticatedRequest());
   }
 
   @Test

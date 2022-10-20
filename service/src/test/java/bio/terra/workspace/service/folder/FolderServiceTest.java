@@ -324,6 +324,7 @@ public class FolderServiceTest extends BaseConnectedTest {
 
   private static WsmResourceFields createWsmResourceCommonFieldsWithFolderId(
       UUID workspaceId, UUID folderId) {
+
     return ReferenceResourceFixtures.makeDefaultWsmResourceFieldBuilder(workspaceId)
         .properties(Map.of(ResourceProperties.FOLDER_ID_KEY, folderId.toString()))
         .build();

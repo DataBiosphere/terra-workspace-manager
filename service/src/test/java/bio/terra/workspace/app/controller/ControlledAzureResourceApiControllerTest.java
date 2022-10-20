@@ -10,13 +10,13 @@ import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import bio.terra.workspace.app.controller.shared.JobApiUtils;
 import bio.terra.workspace.common.BaseAzureUnitTest;
 import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
 import bio.terra.workspace.generated.model.ApiControlledResourceCommonFields;
 import bio.terra.workspace.generated.model.ApiCreateControlledAzureVmRequestBody;
 import bio.terra.workspace.generated.model.ApiJobControl;
 import bio.terra.workspace.generated.model.ApiJobReport;
-import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.vm.ControlledAzureVmResource;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.UUID;
@@ -64,9 +64,9 @@ public class ControlledAzureResourceApiControllerTest extends BaseAzureUnitTest 
         controller.buildControlledAzureVmResource(
             creationParameters, controller.toCommonFields(workspaceId, commonFields, USER_REQUEST));
 
-    when(mockJobService().retrieveAsyncJobResult(any(), eq(ControlledAzureVmResource.class)))
+    when(getMockJobApiUtils().retrieveAsyncJobResult(any(), eq(ControlledAzureVmResource.class)))
         .thenReturn(
-            new JobService.AsyncJobResult<ControlledAzureVmResource>()
+            new JobApiUtils.AsyncJobResult<ControlledAzureVmResource>()
                 .result(resource)
                 .jobReport(new ApiJobReport().status(ApiJobReport.StatusEnum.SUCCEEDED)));
 

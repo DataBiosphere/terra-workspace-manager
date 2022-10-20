@@ -1,6 +1,7 @@
 package bio.terra.workspace.app.controller;
 
 import bio.terra.common.exception.BadRequestException;
+import bio.terra.workspace.app.controller.shared.JobApiUtils;
 import bio.terra.workspace.common.utils.ControllerValidationUtils;
 import bio.terra.workspace.generated.controller.ControlledGcpResourceApi;
 import bio.terra.workspace.generated.model.*;
@@ -10,7 +11,6 @@ import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.iam.model.SamConstants.SamControlledResourceActions;
 import bio.terra.workspace.service.iam.model.SamConstants.SamWorkspaceAction;
 import bio.terra.workspace.service.job.JobService;
-import bio.terra.workspace.service.job.JobService.AsyncJobResult;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceMetadataManager;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceService;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.GcpResourceConstant;
@@ -47,6 +47,7 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
   private final ControlledResourceService controlledResourceService;
   private final WorkspaceService workspaceService;
   private final JobService jobService;
+  private final JobApiUtils jobApiUtils;
   private final GcpCloudContextService gcpCloudContextService;
   private final ControlledResourceMetadataManager controlledResourceMetadataManager;
 
@@ -58,12 +59,14 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
       SamService samService,
       WorkspaceService workspaceService,
       JobService jobService,
+      JobApiUtils jobApiUtils,
       GcpCloudContextService gcpCloudContextService,
       ControlledResourceMetadataManager controlledResourceMetadataManager) {
     super(authenticatedUserRequestFactory, request, controlledResourceService, samService);
     this.controlledResourceService = controlledResourceService;
     this.workspaceService = workspaceService;
     this.jobService = jobService;
+    this.jobApiUtils = jobApiUtils;
     this.gcpCloudContextService = gcpCloudContextService;
     this.controlledResourceMetadataManager = controlledResourceMetadataManager;
   }
@@ -140,7 +143,8 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
   }
 
   private ResponseEntity<ApiDeleteControlledGcpGcsBucketResult> getDeleteResult(String jobId) {
-    final AsyncJobResult<Void> jobResult = jobService.retrieveAsyncJobResult(jobId, Void.class);
+    JobApiUtils.AsyncJobResult<Void> jobResult =
+        jobApiUtils.retrieveAsyncJobResult(jobId, Void.class);
     var response =
         new ApiDeleteControlledGcpGcsBucketResult()
             .jobReport(jobResult.getJobReport())
@@ -235,8 +239,8 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
   }
 
   private ApiCloneControlledGcpGcsBucketResult fetchCloneGcsBucketResult(String jobId) {
-    final AsyncJobResult<ApiClonedControlledGcpGcsBucket> jobResult =
-        jobService.retrieveAsyncJobResult(jobId, ApiClonedControlledGcpGcsBucket.class);
+    JobApiUtils.AsyncJobResult<ApiClonedControlledGcpGcsBucket> jobResult =
+        jobApiUtils.retrieveAsyncJobResult(jobId, ApiClonedControlledGcpGcsBucket.class);
     return new ApiCloneControlledGcpGcsBucketResult()
         .jobReport(jobResult.getJobReport())
         .errorReport(jobResult.getApiErrorReport())
@@ -438,8 +442,8 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
 
   private ApiCreatedControlledGcpAiNotebookInstanceResult fetchNotebookInstanceCreateResult(
       String jobId) {
-    AsyncJobResult<ControlledAiNotebookInstanceResource> jobResult =
-        jobService.retrieveAsyncJobResult(jobId, ControlledAiNotebookInstanceResource.class);
+    JobApiUtils.AsyncJobResult<ControlledAiNotebookInstanceResource> jobResult =
+        jobApiUtils.retrieveAsyncJobResult(jobId, ControlledAiNotebookInstanceResource.class);
 
     ApiGcpAiNotebookInstanceResource apiResource = null;
     if (jobResult.getJobReport().getStatus().equals(ApiJobReport.StatusEnum.SUCCEEDED)) {
@@ -489,7 +493,8 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
 
   private ApiDeleteControlledGcpAiNotebookInstanceResult fetchNotebookInstanceDeleteResult(
       String jobId) {
-    AsyncJobResult<Void> jobResult = jobService.retrieveAsyncJobResult(jobId, Void.class);
+    JobApiUtils.AsyncJobResult<Void> jobResult =
+        jobApiUtils.retrieveAsyncJobResult(jobId, Void.class);
     return new ApiDeleteControlledGcpAiNotebookInstanceResult()
         .jobReport(jobResult.getJobReport())
         .errorReport(jobResult.getApiErrorReport());
@@ -546,8 +551,8 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
   }
 
   private ApiCloneControlledGcpBigQueryDatasetResult fetchCloneBigQueryDatasetResult(String jobId) {
-    final AsyncJobResult<ApiClonedControlledGcpBigQueryDataset> jobResult =
-        jobService.retrieveAsyncJobResult(jobId, ApiClonedControlledGcpBigQueryDataset.class);
+    JobApiUtils.AsyncJobResult<ApiClonedControlledGcpBigQueryDataset> jobResult =
+        jobApiUtils.retrieveAsyncJobResult(jobId, ApiClonedControlledGcpBigQueryDataset.class);
     return new ApiCloneControlledGcpBigQueryDatasetResult()
         .jobReport(jobResult.getJobReport())
         .errorReport(jobResult.getApiErrorReport())

@@ -38,6 +38,9 @@ public class UserAccessUtils {
   @Value("${workspace.connected-test.second-user-email}")
   private String secondUserEmail;
 
+  @Value("${workspace.connected-test.billing-user-email}")
+  private String billingUserEmail;
+
   /** Creates Google credentials for the user. Relies on domain delegation. */
   public GoogleCredentials generateCredentials(String userEmail) {
     try {
@@ -72,6 +75,11 @@ public class UserAccessUtils {
     return generateAccessToken(secondUserEmail);
   }
 
+  /** Generates an OAuth access token for the billing test user. */
+  public AccessToken billingUserAccessToken() {
+    return generateAccessToken(billingUserEmail);
+  }
+
   /** Expose the default test user email. */
   public String getDefaultUserEmail() {
     return defaultUserEmail;
@@ -80,6 +88,11 @@ public class UserAccessUtils {
   /** Expose the second test user email. */
   public String getSecondUserEmail() {
     return secondUserEmail;
+  }
+
+  /** Expose the billing test user email. */
+  public String getBillingUserEmail() {
+    return billingUserEmail;
   }
 
   /** Provides an AuthenticatedUserRequest using the default user's email and access token. */
@@ -94,6 +107,12 @@ public class UserAccessUtils {
     return new AuthenticatedUserRequest()
         .email(getSecondUserEmail())
         .token(Optional.of(secondUserAccessToken().getTokenValue()));
+  }
+
+  public AuthenticatedUserRequest thirdUserAuthRequest() {
+    return new AuthenticatedUserRequest()
+        .email(getBillingUserEmail())
+        .token(Optional.of(billingUserAccessToken().getTokenValue()));
   }
 
   /**
