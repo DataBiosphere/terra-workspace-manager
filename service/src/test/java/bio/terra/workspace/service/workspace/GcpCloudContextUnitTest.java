@@ -1,5 +1,6 @@
 package bio.terra.workspace.service.workspace;
 
+import static bio.terra.workspace.common.utils.MockMvcUtils.USER_REQUEST;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -11,9 +12,6 @@ import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
 import bio.terra.workspace.common.fixtures.ReferenceResourceFixtures;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.db.WorkspaceDao;
-import bio.terra.workspace.service.crl.CrlService;
-import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
-import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.iam.model.SamConstants.SamSpendProfileAction;
 import bio.terra.workspace.service.iam.model.WsmIamRole;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.bqdataset.ControlledBigQueryDatasetResource;
@@ -27,12 +25,10 @@ import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
 import com.google.api.services.cloudresourcemanager.v3.model.Project;
 import java.util.Collections;
-import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.mock.mockito.MockBean;
 
 public class GcpCloudContextUnitTest extends BaseUnitTest {
   private static final String GCP_PROJECT_ID = "terra-wsm-t-clean-berry-5152";
@@ -42,14 +38,7 @@ public class GcpCloudContextUnitTest extends BaseUnitTest {
   private static final String POLICY_APPLICATION = "policy-application";
   private static final String V1_JSON =
       String.format("{\"version\": 1, \"gcpProjectId\": \"%s\"}", GCP_PROJECT_ID);
-  private static final AuthenticatedUserRequest USER_REQUEST =
-      new AuthenticatedUserRequest()
-          .token(Optional.of("fake-token"))
-          .email("fake@email.com")
-          .subjectId("fakeID123");
 
-  @MockBean private SamService mockSamService;
-  @MockBean private CrlService mockCrlService;
   @Autowired private WorkspaceService workspaceService;
   @Autowired private WorkspaceDao workspaceDao;
   @Autowired private ResourceDao resourceDao;
@@ -117,22 +106,23 @@ public class GcpCloudContextUnitTest extends BaseUnitTest {
     // By default, allow all spend link calls as authorized. (All other isAuthorized calls return
     // false by Mockito default.
     Mockito.when(
-            mockSamService.isAuthorized(
-                Mockito.any(),
-                Mockito.any(),
-                Mockito.any(),
-                Mockito.eq(SamSpendProfileAction.LINK)))
+            mockSamService()
+                .isAuthorized(
+                    Mockito.any(),
+                    Mockito.any(),
+                    Mockito.any(),
+                    Mockito.eq(SamSpendProfileAction.LINK)))
         .thenReturn(true);
 
     // Fake groups
-    Mockito.when(mockSamService.getWorkspacePolicy(any(), Mockito.eq(WsmIamRole.READER), any()))
+    Mockito.when(mockSamService().getWorkspacePolicy(any(), Mockito.eq(WsmIamRole.READER), any()))
         .thenReturn(POLICY_READER);
-    Mockito.when(mockSamService.getWorkspacePolicy(any(), Mockito.eq(WsmIamRole.WRITER), any()))
+    Mockito.when(mockSamService().getWorkspacePolicy(any(), Mockito.eq(WsmIamRole.WRITER), any()))
         .thenReturn(POLICY_WRITER);
-    Mockito.when(mockSamService.getWorkspacePolicy(any(), Mockito.eq(WsmIamRole.OWNER), any()))
+    Mockito.when(mockSamService().getWorkspacePolicy(any(), Mockito.eq(WsmIamRole.OWNER), any()))
         .thenReturn(POLICY_OWNER);
     Mockito.when(
-            mockSamService.getWorkspacePolicy(any(), Mockito.eq(WsmIamRole.APPLICATION), any()))
+            mockSamService().getWorkspacePolicy(any(), Mockito.eq(WsmIamRole.APPLICATION), any()))
         .thenReturn(POLICY_APPLICATION);
 
     // Create a workspace record
@@ -185,7 +175,7 @@ public class GcpCloudContextUnitTest extends BaseUnitTest {
         workspaceUuid, CloudPlatform.GCP, fakeContext.serialize(), flightId);
     // Create a controlled resource in the DB
     ControlledBigQueryDatasetResource bqDataset =
-        ControlledResourceFixtures.makeDefaultControlledBigQueryBuilder(workspaceUuid)
+        ControlledResourceFixtures.makeDefaultControlledBqDatasetBuilder(workspaceUuid)
             .projectId(projectId)
             .build();
     resourceDao.createControlledResource(bqDataset);
@@ -220,6 +210,6 @@ public class GcpCloudContextUnitTest extends BaseUnitTest {
     // Pretend the project is already being deleted.
     Mockito.when(mockResourceManager.projects().get(any()).execute())
         .thenReturn(new Project().setState("DELETE_IN_PROGRESS"));
-    Mockito.when(mockCrlService.getCloudResourceManagerCow()).thenReturn(mockResourceManager);
+    Mockito.when(mockCrlService().getCloudResourceManagerCow()).thenReturn(mockResourceManager);
   }
 }

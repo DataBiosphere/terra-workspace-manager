@@ -1,5 +1,6 @@
 package bio.terra.workspace.service.resource.referenced;
 
+import static bio.terra.workspace.common.utils.MockMvcUtils.USER_REQUEST;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -12,15 +13,11 @@ import bio.terra.common.exception.BadRequestException;
 import bio.terra.common.exception.MissingRequiredFieldException;
 import bio.terra.stairway.FlightDebugInfo;
 import bio.terra.stairway.StepStatus;
-import bio.terra.workspace.common.BaseUnitTest;
+import bio.terra.workspace.common.BaseUnitTestMockDataRepoService;
 import bio.terra.workspace.common.fixtures.ReferenceResourceFixtures;
 import bio.terra.workspace.db.WorkspaceActivityLogDao;
 import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.db.exception.InvalidMetadataException;
-import bio.terra.workspace.service.crl.CrlService;
-import bio.terra.workspace.service.datarepo.DataRepoService;
-import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
-import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.job.exception.InvalidResultStateException;
 import bio.terra.workspace.service.resource.exception.DuplicateResourceException;
@@ -48,51 +45,35 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.UUID;
 import org.broadinstitute.dsde.workbench.client.sam.model.UserStatusInfo;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
-import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.mock.mockito.MockBean;
 
-@Tag("unit")
-class ReferencedResourceServiceTest extends BaseUnitTest {
+class ReferencedResourceServiceTest extends BaseUnitTestMockDataRepoService {
 
   private static final Logger logger = LoggerFactory.getLogger(ReferencedResourceServiceTest.class);
   private static final String DATA_REPO_INSTANCE_NAME = "terra";
   private static final String FAKE_PROJECT_ID = "fakeprojecctid";
-
-  /** A fake authenticated user request. */
-  private static final AuthenticatedUserRequest USER_REQUEST =
-      new AuthenticatedUserRequest()
-          .token(Optional.of("fake-token"))
-          .email("fake@email.com")
-          .subjectId("fakeID123");
 
   @Autowired private WorkspaceService workspaceService;
   @Autowired private WorkspaceDao workspaceDao;
   @Autowired private ReferencedResourceService referenceResourceService;
   @Autowired private JobService jobService;
   @Autowired private WorkspaceActivityLogDao workspaceActivityLogDao;
-  /** Mock SamService does nothing for all calls that would throw if unauthorized. */
-  @MockBean private SamService mockSamService;
-
-  @MockBean private DataRepoService mockDataRepoService;
-  @MockBean private CrlService mockCrlService;
 
   private UUID workspaceUuid;
   private ReferencedResource referencedResource;
 
   @BeforeEach
   void setup() throws InterruptedException {
-    doReturn(true).when(mockDataRepoService).snapshotReadable(any(), any(), any());
-    when(mockSamService.getUserStatusInfo(any()))
+    doReturn(true).when(mockDataRepoService()).snapshotReadable(any(), any(), any());
+    when(mockSamService().getUserStatusInfo(any()))
         .thenReturn(
             new UserStatusInfo()
                 .userEmail(USER_REQUEST.getEmail())
@@ -568,8 +549,8 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
     @BeforeEach
     void setup() throws Exception {
       // Make the Verify step always succeed
-      doReturn(true).when(mockCrlService).canReadGcsBucket(any(), any());
-      doReturn(true).when(mockCrlService).canReadGcsObject(any(), any(), any());
+      doReturn(true).when(mockCrlService()).canReadGcsBucket(any(), any());
+      doReturn(true).when(mockCrlService()).canReadGcsObject(any(), any(), any());
     }
 
     private ReferencedGcsObjectResource makeGcsObjectReference() {
@@ -772,8 +753,8 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
     @BeforeEach
     void setup() throws Exception {
       // Make the Verify step always succeed
-      doReturn(true).when(mockCrlService).canReadBigQueryDataset(any(), any(), any());
-      doReturn(true).when(mockCrlService).canReadBigQueryDataTable(any(), any(), any(), any());
+      doReturn(true).when(mockCrlService()).canReadBigQueryDataset(any(), any(), any());
+      doReturn(true).when(mockCrlService()).canReadBigQueryDataTable(any(), any(), any(), any());
     }
 
     private ReferencedBigQueryDatasetResource makeBigQueryDatasetResource() {
@@ -1092,7 +1073,7 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
 
     @BeforeEach
     void setup() throws Exception {
-      doReturn(true).when(mockSamService).isAuthorized(any(), any(), any(), any());
+      doReturn(true).when(mockSamService()).isAuthorized(any(), any(), any(), any());
     }
 
     private ReferencedTerraWorkspaceResource makeTerraWorkspaceReference() {

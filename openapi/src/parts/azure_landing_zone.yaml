@@ -42,6 +42,26 @@ paths:
         '500':
           $ref: '#/components/responses/ServerError'
 
+  /api/landingzones/v1/azure/{landingZoneId}/delete-result/{jobId}:
+    parameters:
+      - $ref: '#/components/parameters/LandingZoneId'
+      - $ref: '#/components/parameters/JobId'
+    get:
+      summary: Get the result of a async job to delete the Azure Landing Zone
+      operationId: getDeleteAzureLandingZoneResult
+      tags: [ LandingZones ]
+      responses:
+        '200':
+          $ref: '#/components/responses/DeleteAzureLandingZoneResponse'
+        '202':
+          $ref: '#/components/responses/DeleteAzureLandingZoneResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
   /api/landingzones/definitions/v1/azure:
     get:
       summary: List all Azure landing zones definitions
@@ -60,21 +80,27 @@ paths:
   /api/landingzones/v1/azure/{landingZoneId}:
     parameters:
       - $ref: '#/components/parameters/LandingZoneId'
-    delete:
+    post:
       summary: Delete an existing Azure landing zone
       operationId: deleteAzureLandingZone
       tags: [ LandingZones ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeleteAzureLandingZoneRequestBody'
       responses:
-        '204':
-          description: Success
+        '200':
+          $ref: '#/components/responses/DeleteAzureLandingZoneResponse'
+        '202':
+          $ref: '#/components/responses/DeleteAzureLandingZoneResponse'
         '400':
-          $ref: '#components/responses/BadRequest'
+          $ref: '#/components/responses/BadRequest'
         '403':
-          $ref: '#components/responses/PermissionDenied'
-        '404':
-          $ref: '#components/responses/NotFound'
+          $ref: '#/components/responses/PermissionDenied'
         '500':
-          $ref: '#components/responses/ServerError'
+          $ref: '#/components/responses/ServerError'
 
   /api/landingzones/v1/azure/{landingZoneId}/resources:
     parameters:
@@ -95,6 +121,14 @@ paths:
 
 components:
   schemas:
+    DeleteAzureLandingZoneRequestBody:
+      description: Payload for deleting an Azure landing zone.
+      type: object
+      required: [ jobControl ]
+      properties:
+        jobControl:
+          $ref: '#/components/schemas/JobControl'
+
     CreateAzureLandingZoneRequestBody:
       description: Payload for requesting a new Azure landing zone.
       type: object
@@ -131,6 +165,23 @@ components:
       properties:
         landingZone:
           $ref: '#/components/schemas/AzureLandingZone'
+        jobReport:
+          $ref: '#/components/schemas/JobReport'
+        errorReport:
+          $ref: '#/components/schemas/ErrorReport'
+
+    DeleteAzureLandingZoneResult:
+      description: Result of starting a delete operation for an Azure landing zone
+      type: object
+      properties:
+        landingZoneId:
+          type: string
+          format: uuid
+        resources:
+          description: A list of resource IDs of the deleted resources.
+          type: array
+          items:
+            type: string
         jobReport:
           $ref: '#/components/schemas/JobReport'
         errorReport:
@@ -248,6 +299,12 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/AzureLandingZoneResult'
+    DeleteAzureLandingZoneResponse:
+      description: Response to deleting an Azure landing zone.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/DeleteAzureLandingZoneResult'
 
   parameters:
     LandingZoneId:

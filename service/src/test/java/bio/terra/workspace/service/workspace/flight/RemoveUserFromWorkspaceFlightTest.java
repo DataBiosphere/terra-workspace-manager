@@ -10,6 +10,7 @@ import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.FlightState;
 import bio.terra.stairway.FlightStatus;
 import bio.terra.stairway.StepStatus;
+import bio.terra.workspace.app.controller.shared.JobApiUtils;
 import bio.terra.workspace.common.BaseConnectedTest;
 import bio.terra.workspace.common.CloudUtils;
 import bio.terra.workspace.common.StairwayTestUtils;
@@ -24,7 +25,6 @@ import bio.terra.workspace.service.iam.model.SamConstants.SamWorkspaceAction;
 import bio.terra.workspace.service.iam.model.WsmIamRole;
 import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.job.JobService;
-import bio.terra.workspace.service.job.JobService.AsyncJobResult;
 import bio.terra.workspace.service.petserviceaccount.PetSaService;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceService;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.bqdataset.ControlledBigQueryDatasetResource;
@@ -61,15 +61,15 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 public class RemoveUserFromWorkspaceFlightTest extends BaseConnectedTest {
 
+  private static final Duration STAIRWAY_FLIGHT_TIMEOUT = Duration.ofMinutes(5);
   @Autowired private WorkspaceService workspaceService;
   @Autowired private ControlledResourceService controlledResourceService;
   @Autowired private JobService jobService;
+  @Autowired private JobApiUtils jobApiUtils;
   @Autowired private SamService samService;
   @Autowired private PetSaService petSaService;
   @Autowired private SpendConnectedTestUtils spendUtils;
   @Autowired private UserAccessUtils userAccessUtils;
-
-  private static final Duration STAIRWAY_FLIGHT_TIMEOUT = Duration.ofMinutes(5);
 
   @Test
   @DisabledIfEnvironmentVariable(named = "TEST_ENV", matches = BUFFER_SERVICE_DISABLED_ENVS_REG_EX)
@@ -102,8 +102,8 @@ public class RemoveUserFromWorkspaceFlightTest extends BaseConnectedTest {
     workspaceService.createGcpCloudContext(
         workspace, makeContextJobId, userAccessUtils.defaultUserAuthRequest());
     jobService.waitForJob(makeContextJobId);
-    AsyncJobResult<CloudContextHolder> createContextJobResult =
-        jobService.retrieveAsyncJobResult(makeContextJobId, CloudContextHolder.class);
+    JobApiUtils.AsyncJobResult<CloudContextHolder> createContextJobResult =
+        jobApiUtils.retrieveAsyncJobResult(makeContextJobId, CloudContextHolder.class);
     assertEquals(StatusEnum.SUCCEEDED, createContextJobResult.getJobReport().getStatus());
     GcpCloudContext cloudContext = createContextJobResult.getResult().getGcpCloudContext();
 
@@ -163,8 +163,7 @@ public class RemoveUserFromWorkspaceFlightTest extends BaseConnectedTest {
     inputParameters.put(WorkspaceFlightMapKeys.WORKSPACE_ID, workspaceUuid.toString());
     inputParameters.put(
         WorkspaceFlightMapKeys.USER_TO_REMOVE, userAccessUtils.getSecondUserEmail());
-    inputParameters.put(
-        WorkspaceFlightMapKeys.ROLE_TO_REMOVE, ControlledResourceIamRole.WRITER.name());
+    inputParameters.put(WorkspaceFlightMapKeys.ROLE_TO_REMOVE, WsmIamRole.WRITER.name());
     // Auth info comes from default user, as they are the ones "making this request"
     inputParameters.put(
         JobMapKeys.AUTH_USER_INFO.getKeyName(), userAccessUtils.defaultUserAuthRequest());

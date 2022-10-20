@@ -8,6 +8,7 @@ import static bio.terra.workspace.common.utils.ControllerValidationUtils.validat
 import bio.terra.common.iam.BearerToken;
 import bio.terra.workspace.amalgam.tps.TpsApiDispatch;
 import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
+import bio.terra.workspace.app.controller.shared.JobApiUtils;
 import bio.terra.workspace.common.exception.FeatureNotSupportedException;
 import bio.terra.workspace.common.logging.model.ActivityLogChangeDetails;
 import bio.terra.workspace.common.utils.ControllerValidationUtils;
@@ -32,6 +33,8 @@ import bio.terra.workspace.generated.model.ApiProperty;
 import bio.terra.workspace.generated.model.ApiRoleBinding;
 import bio.terra.workspace.generated.model.ApiRoleBindingList;
 import bio.terra.workspace.generated.model.ApiTpsPaoGetResult;
+import bio.terra.workspace.generated.model.ApiTpsPaoUpdateRequest;
+import bio.terra.workspace.generated.model.ApiTpsPaoUpdateResult;
 import bio.terra.workspace.generated.model.ApiTpsPolicyInput;
 import bio.terra.workspace.generated.model.ApiTpsPolicyInputs;
 import bio.terra.workspace.generated.model.ApiUpdateWorkspaceRequestBody;
@@ -47,7 +50,6 @@ import bio.terra.workspace.service.iam.model.SamConstants;
 import bio.terra.workspace.service.iam.model.SamConstants.SamWorkspaceAction;
 import bio.terra.workspace.service.iam.model.WsmIamRole;
 import bio.terra.workspace.service.job.JobService;
-import bio.terra.workspace.service.job.JobService.AsyncJobResult;
 import bio.terra.workspace.service.logging.WorkspaceActivityLogService;
 import bio.terra.workspace.service.petserviceaccount.PetSaService;
 import bio.terra.workspace.service.spendprofile.SpendProfileId;
@@ -63,6 +65,7 @@ import bio.terra.workspace.service.workspace.model.OperationType;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceAndHighestRole;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
+import io.opencensus.contrib.spring.aop.Traced;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -84,6 +87,7 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
   private static final Logger logger = LoggerFactory.getLogger(WorkspaceApiController.class);
   private final WorkspaceService workspaceService;
   private final JobService jobService;
+  private final JobApiUtils jobApiUtils;
   private final SamService samService;
   private final AzureCloudContextService azureCloudContextService;
   private final GcpCloudContextService gcpCloudContextService;
@@ -97,6 +101,7 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
   public WorkspaceApiController(
       WorkspaceService workspaceService,
       JobService jobService,
+      JobApiUtils jobApiUtils,
       SamService samService,
       AuthenticatedUserRequestFactory authenticatedUserRequestFactory,
       HttpServletRequest request,
@@ -110,6 +115,7 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
     super(authenticatedUserRequestFactory, request, samService);
     this.workspaceService = workspaceService;
     this.jobService = jobService;
+    this.jobApiUtils = jobApiUtils;
     this.samService = samService;
     this.azureCloudContextService = azureCloudContextService;
     this.gcpCloudContextService = gcpCloudContextService;
@@ -217,6 +223,7 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
     return new ResponseEntity<>(response, HttpStatus.OK);
   }
 
+  @Traced
   private ApiWorkspaceDescription buildWorkspaceDescription(
       Workspace workspace, WsmIamRole highestRole, AuthenticatedUserRequest userRequest) {
     UUID workspaceUuid = workspace.getWorkspaceId();
@@ -332,6 +339,7 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
     }
     workspaceService.validateWorkspaceAndAction(
         userRequest, workspaceUuid, SamConstants.SamWorkspaceAction.WRITE);
+
     Workspace workspace =
         workspaceService.updateWorkspace(
             workspaceUuid,
@@ -344,6 +352,28 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
     logger.info("Updated workspace {} for {}", desc, userRequest.getEmail());
 
     return new ResponseEntity<>(desc, HttpStatus.OK);
+  }
+
+  @Override
+  public ResponseEntity<ApiTpsPaoUpdateResult> updatePolicies(
+      @PathVariable("workspaceId") UUID workspaceId, @RequestBody ApiTpsPaoUpdateRequest body) {
+    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    logger.info("Updating workspace policies {} for {}", workspaceId, userRequest.getEmail());
+
+    workspaceService.validateWorkspaceAndAction(
+        userRequest, workspaceId, SamConstants.SamWorkspaceAction.WRITE);
+
+    if (!featureConfiguration.isTpsEnabled()) {
+      throw new FeatureNotSupportedException(
+          "TPS is not enabled on this instance of Workspace Manager, cannot update policies for workspace.");
+    }
+
+    ApiTpsPaoUpdateResult result =
+        tpsApiDispatch.updatePao(
+            new BearerToken(userRequest.getRequiredToken()), workspaceId, body);
+    logger.info(
+        "Finished updating workspace policies {} for {}", workspaceId, userRequest.getEmail());
+    return new ResponseEntity<>(result, HttpStatus.OK);
   }
 
   @Override
@@ -484,8 +514,8 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
   }
 
   private ApiCreateCloudContextResult fetchCreateCloudContextResult(String jobId) {
-    final AsyncJobResult<CloudContextHolder> jobResult =
-        jobService.retrieveAsyncJobResult(jobId, CloudContextHolder.class);
+    JobApiUtils.AsyncJobResult<CloudContextHolder> jobResult =
+        jobApiUtils.retrieveAsyncJobResult(jobId, CloudContextHolder.class);
 
     ApiGcpContext gcpContext = null;
     ApiAzureContext azureContext = null;
@@ -554,16 +584,21 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
   public ResponseEntity<ApiCloneWorkspaceResult> cloneWorkspace(
       UUID workspaceUuid, @Valid ApiCloneWorkspaceRequest body) {
     final AuthenticatedUserRequest petRequest = getCloningCredentials(workspaceUuid);
-    final Workspace sourceWorkspace =
-        workspaceService.validateMcWorkspaceAndAction(
-            petRequest, workspaceUuid, SamConstants.SamWorkspaceAction.READ);
-    // This is creating the destination workspace so unlike other clone operations there's no
+
+    // Clone is creating the destination workspace so unlike other clone operations there's no
     // additional authz check for the destination. As long as the user is enabled in Sam, they can
     // create a new workspace.
+    final Workspace sourceWorkspace =
+        workspaceService.validateWorkspaceAndAction(
+            petRequest, workspaceUuid, SamConstants.SamWorkspaceAction.READ);
 
     Optional<SpendProfileId> spendProfileId =
         Optional.ofNullable(body.getSpendProfile()).map(SpendProfileId::new);
-    final UUID destinationWorkspaceId = UUID.randomUUID();
+
+    // Accept a target workspace id if one is provided. This allows Rawls to specify an
+    // existing workspace id. WSM then creates the WSMspace supporting the Rawls workspace.
+    UUID destinationWorkspaceId =
+        Optional.ofNullable(body.getDestinationWorkspaceId()).orElse(UUID.randomUUID());
 
     // ET uses userFacingId; CWB doesn't. Schema enforces that userFacingId must be set. CWB doesn't
     // pass userFacingId in request, so use id.
@@ -585,7 +620,7 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
             .workspaceId(destinationWorkspaceId)
             .userFacingId(destinationUserFacingId)
             .spendProfileId(spendProfileId.orElse(null))
-            .workspaceStage(WorkspaceStage.MC_WORKSPACE)
+            .workspaceStage(sourceWorkspace.getWorkspaceStage())
             .displayName(Optional.ofNullable(body.getDisplayName()).orElse(generatedDisplayName))
             .description(body.getDescription())
             .properties(sourceWorkspace.getProperties())
@@ -623,8 +658,8 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
 
   // Retrieve the async result or progress for clone workspace.
   private ApiCloneWorkspaceResult fetchCloneWorkspaceResult(String jobId) {
-    final AsyncJobResult<ApiClonedWorkspace> jobResult =
-        jobService.retrieveAsyncJobResult(jobId, ApiClonedWorkspace.class);
+    JobApiUtils.AsyncJobResult<ApiClonedWorkspace> jobResult =
+        jobApiUtils.retrieveAsyncJobResult(jobId, ApiClonedWorkspace.class);
     return new ApiCloneWorkspaceResult()
         .jobReport(jobResult.getJobReport())
         .errorReport(jobResult.getApiErrorReport())

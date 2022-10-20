@@ -171,6 +171,37 @@ paths:
         '500':
           $ref: '#/components/responses/ServerError'
 
+  /api/workspaces/v1/{workspaceId}/policies:
+    parameters:
+      - $ref: '#/components/parameters/WorkspaceId'
+    patch:
+      summary: Update policies for a workspace
+      operationId: updatePolicies
+      tags: [Workspace]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TpsPaoUpdateRequest'
+      responses:
+        '200':
+          description: Update successfully processed. The update itself may or may not have succeeded.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TpsPaoUpdateResult'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
   /api/workspaces/v1/{workspaceId}/roles:
     parameters:
       - $ref: '#/components/parameters/WorkspaceId'
@@ -305,10 +336,7 @@ components:
           type: string
           format: uuid
         destinationUserFacingId:
-          description: |
-            Human-settable, mutable id. Must have 3-63 characters, contain lowercase letters, numbers,
-            dashes, or underscores, and start with lowercase letter or number.
-          type: string
+          $ref: '#/components/schemas/UserFacingId'
         resources:
           type: array
           items:
@@ -323,18 +351,19 @@ components:
         
     CloneWorkspaceRequest:
       description: >-
-        Request body for cloning an entire workspace. The stage is always MC. Cloning instructions
+        Request body for cloning an entire workspace. Cloning instructions
         are taken from individual resources.
       type: object
       required:
         - spendProfile
       properties:
-        userFacingId:
+        destinationWorkspaceId:
           description: |
-            Human-settable, mutable id for cloned workspace. Must have 3-63 characters, contain lowercase letters, numbers,
-            dashes, or underscores, and start with lowercase letter or number. Optional. If this isn't set, one will be
-            generated.
+            Optional identifier for the destination workspace. If not present, a UUID is generated
           type: string
+          format: uuid
+        userFacingId:
+          $ref: '#/components/schemas/UserFacingId'
         displayName:
           description: The human readable name of the workspace
           type: string
@@ -412,11 +441,7 @@ components:
           type: string
           format: uuid
         userFacingId:
-          description: |
-            Human-settable, mutable id. Must have 3-63 characters, contain lowercase letters, numbers, dashes, or
-            underscores, and start with lowercase letter or number. Optional. If this isn't set, one will be generated based on
-            id (uuid).
-          type: string
+          $ref: '#/components/schemas/UserFacingId'
         displayName:
           description: The human readable name of the workspace
           type: string
@@ -469,16 +494,19 @@ components:
       type: object
       properties:
         userFacingId:
-          description: |
-            Human-settable, mutable id. Must have 3-63 characters, contain lowercase letters, numbers, dashes, or
-            underscores, and start with lowercase letter or number.
-          type: string
+          $ref: '#/components/schemas/UserFacingId'
         displayName:
           description: The human readable name of the workspace
           type: string
         description:
           description: A description of the workspace
           type: string
+
+    UserFacingId:
+      description: |
+        Human-settable, mutable id. Must have 3-63 characters, contain lowercase letters, numbers, dashes, or
+        underscores, and start with lowercase letter or number.
+      type: string
 
     WorkspaceDescription:
       type: object
@@ -489,10 +517,7 @@ components:
           type: string
           format: uuid
         userFacingId:
-          description: |
-            Human-settable, mutable id. Must have 3-63 characters, contain lowercase letters, numbers, dashes, or
-            underscores, and start with lowercase letter or number.
-          type: string
+          $ref: '#/components/schemas/UserFacingId'
         displayName:
           description: The human readable name of the workspace
           type: string

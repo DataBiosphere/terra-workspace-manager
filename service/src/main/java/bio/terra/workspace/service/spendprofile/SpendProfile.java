@@ -1,7 +1,11 @@
 package bio.terra.workspace.service.spendprofile;
 
-import com.google.auto.value.AutoValue;
-import java.util.Optional;
+import bio.terra.common.exception.ValidationException;
+import bio.terra.workspace.service.workspace.exceptions.NoAzureAppCoordinatesException;
+import bio.terra.workspace.service.workspace.exceptions.NoBillingAccountException;
+import bio.terra.workspace.service.workspace.model.CloudPlatform;
+import com.google.common.base.Strings;
+import java.util.UUID;
 import javax.annotation.Nullable;
 
 /**
@@ -10,25 +14,31 @@ import javax.annotation.Nullable;
  * <p>Each Spend Profile may have cloud native billing resources associated with it. Spend Profiles
  * also have Terra IAM to manage who is allowed to modify and link them.
  */
-@AutoValue
-public abstract class SpendProfile {
-  /** The unique identifier of the SpendProfile. */
-  public abstract SpendProfileId id();
+public record SpendProfile(
+    SpendProfileId id,
+    CloudPlatform cloudPlatform,
+    @Nullable String billingAccountId,
+    @Nullable UUID tenantId,
+    @Nullable UUID subscriptionId,
+    @Nullable String managedResourceGroupId) {
 
-  /** The id of the Google Billing Account associated with the SpendProfile, if there is one. */
-  public abstract Optional<String> billingAccountId();
-
-  public static Builder builder() {
-    return new AutoValue_SpendProfile.Builder();
+  public SpendProfile {
+    if (cloudPlatform == CloudPlatform.GCP) {
+      if (Strings.isNullOrEmpty(billingAccountId)) {
+        throw NoBillingAccountException.forSpendProfile(id);
+      }
+    } else if (cloudPlatform == CloudPlatform.AZURE) {
+      if (tenantId == null
+          || subscriptionId == null
+          || Strings.isNullOrEmpty(managedResourceGroupId)) {
+        throw NoAzureAppCoordinatesException.forSpendProfile(id);
+      }
+    } else {
+      throw new ValidationException("Invalid cloud platform for spend profile: " + cloudPlatform);
+    }
   }
 
-  /** A builder for {@link SpendProfile}. */
-  @AutoValue.Builder
-  public abstract static class Builder {
-    public abstract Builder id(SpendProfileId id);
-
-    public abstract Builder billingAccountId(@Nullable String billingAccountId);
-
-    public abstract SpendProfile build();
+  public static SpendProfile buildGcpSpendProfile(SpendProfileId id, String billingAccountId) {
+    return new SpendProfile(id, CloudPlatform.GCP, billingAccountId, null, null, null);
   }
 }

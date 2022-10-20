@@ -3,6 +3,7 @@ package bio.terra.workspace.service.resource.model;
 import bio.terra.workspace.generated.model.ApiResourceLineageEntry;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import java.util.Objects;
 import java.util.UUID;
 
 /**
@@ -55,7 +56,6 @@ public class ResourceLineageEntry {
 
   @Override
   public int hashCode() {
-    assert false : "hashCode not designed";
-    return 42; // any arbitrary constant will do
+    return Objects.hash(sourceWorkspaceId, sourceResourceId);
   }
 }

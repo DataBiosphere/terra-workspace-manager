@@ -9,6 +9,7 @@ import bio.terra.workspace.common.utils.FlightUtils;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.service.resource.model.WsmResource;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
+import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ResourceKeys;
 import org.springframework.http.HttpStatus;
 
@@ -41,10 +42,25 @@ public class CreateReferenceMetadataStep implements Step {
   }
 
   private WsmResource getReferencedResource(FlightContext flightContext) {
-    FlightMap inputMap = flightContext.getInputParameters();
+    FlightMap workingMap = flightContext.getWorkingMap();
+    FlightMap inputParameters = flightContext.getInputParameters();
+
+    // First check working map RESOURCE_TYPE. For cloning a controlled resource to referenced
+    // resource, this step is used to create destination resource. Working map RESOURCE_TYPE has
+    // referenced type, whereas input parameter RESOURCE_TYPE has controlled type.
     WsmResourceType resourceType =
-        WsmResourceType.valueOf(inputMap.get(ResourceKeys.RESOURCE_TYPE, String.class));
-    // Use the resource type to deserialize the right class
-    return inputMap.get(ResourceKeys.RESOURCE, resourceType.getResourceClass());
+        workingMap.containsKey(ResourceKeys.RESOURCE_TYPE)
+            ? WsmResourceType.valueOf(workingMap.get(ResourceKeys.RESOURCE_TYPE, String.class))
+            : WsmResourceType.valueOf(
+                inputParameters.get(ResourceKeys.RESOURCE_TYPE, String.class));
+
+    // First check working map DESTINATION_REFERENCED_RESOURCE. For cloning a controlled resource to
+    // referenced resource, this step is used to create destination resource. Working map
+    // DESTINATION_REFERENCED_RESOURCE has destination resource, whereas input parameter RESOURCE
+    // has source resource.
+    return workingMap.containsKey(ControlledResourceKeys.DESTINATION_REFERENCED_RESOURCE)
+        ? workingMap.get(
+            ControlledResourceKeys.DESTINATION_REFERENCED_RESOURCE, resourceType.getResourceClass())
+        : inputParameters.get(ResourceKeys.RESOURCE, resourceType.getResourceClass());
   }
 }

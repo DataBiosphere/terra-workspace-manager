@@ -3,19 +3,24 @@ package bio.terra.workspace.service.job;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import bio.terra.common.exception.MissingRequiredFieldException;
 import bio.terra.stairway.FlightDebugInfo;
+import bio.terra.stairway.FlightState;
+import bio.terra.workspace.app.controller.shared.JobApiUtils;
 import bio.terra.workspace.common.BaseUnitTest;
 import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.generated.model.ApiJobReport;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
-import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.job.exception.InvalidJobIdException;
 import bio.terra.workspace.service.job.exception.InvalidResultStateException;
 import bio.terra.workspace.service.job.exception.JobNotFoundException;
+import bio.terra.workspace.service.job.model.EnumeratedJob;
+import bio.terra.workspace.service.job.model.EnumeratedJobs;
 import bio.terra.workspace.service.workspace.model.OperationType;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
@@ -24,10 +29,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.HttpStatus;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.annotation.DirtiesContext.MethodMode;
@@ -40,8 +43,8 @@ class JobServiceTest extends BaseUnitTest {
           .token(Optional.of("not-a-real-token"));
 
   @Autowired private JobService jobService;
+  @Autowired private JobApiUtils jobApiUtils;
   @Autowired private WorkspaceDao workspaceDao;
-  @MockBean private SamService mockSamService;
 
   /**
    * Reset the {@link JobService} {@link FlightDebugInfo} after each test so that future submissions
@@ -101,41 +104,45 @@ class JobServiceTest extends BaseUnitTest {
 
   // Resets the application context before retrieveTest to make sure that the job service does not
   // have some failed jobs left over from other tests.
-
-  @Disabled("Until we get the postgres connection leaks addressed")
   @DirtiesContext(methodMode = MethodMode.BEFORE_METHOD)
   @Test
   void retrieveTest() throws Exception {
     // We perform 7 flights and then retrieve and enumerate them.
     // The fids list should be in exactly the same order as the database ordered by submit time.
 
-    List<String> jobIds = new ArrayList<>();
-    for (int i = 0; i < 7; i++) {
-      String jobId = runFlight(makeDescription(i));
-      jobIds.add(jobId);
+    List<String> jobIds1 = new ArrayList<>();
+    UUID workspace1 = makeFakeWorkspace();
+    for (int i = 0; i < 3; i++) {
+      String jobId = runFlight(workspace1, makeDescription(i));
+      jobIds1.add(jobId);
+    }
+
+    List<String> jobIds2 = new ArrayList<>();
+    UUID workspace2 = makeFakeWorkspace();
+    for (int i = 0; i < 4; i++) {
+      String jobId = runFlight(workspace2, makeDescription(i));
+      jobIds2.add(jobId);
     }
 
     // Test single retrieval
-    testSingleRetrieval(jobIds);
+    testSingleRetrieval(jobIds1);
 
     // Test result retrieval - the body should be the description string
-    testResultRetrieval(jobIds);
+    testResultRetrieval(jobIds1);
 
-    // Retrieve everything
-    testEnumRange(jobIds, 0, 100);
+    // Retrieve each workspace
+    testEnumCount(jobIds1, workspace1, 0, 3, 100, null);
+    testEnumCount(jobIds2, workspace2, 0, 4, 100, null);
 
-    // Retrieve the middle 3; offset means skip 2 rows
-    testEnumRange(jobIds, 2, 3);
-
-    // Retrieve from the end; should only get the last one back
-    testEnumCount(1, 6, 3);
-
-    // Retrieve past the end; should get nothing
-    testEnumCount(0, 22, 3);
+    // Test page token
+    String pageToken = testEnumCount(jobIds2, workspace2, 0, 2, 2, null);
+    pageToken = testEnumCount(jobIds2, workspace2, 2, 2, 2, pageToken);
+    testEnumCount(jobIds2, workspace2, 4, 0, 2, pageToken);
   }
 
   private void testSingleRetrieval(List<String> fids) {
-    ApiJobReport response = jobService.retrieveJob(fids.get(2));
+    FlightState flightState = jobService.retrieveJob(fids.get(2));
+    ApiJobReport response = jobApiUtils.mapFlightStateToApiJobReport(flightState);
     assertThat(response, notNullValue());
     validateJobReport(response, 2, fids);
   }
@@ -145,25 +152,30 @@ class JobServiceTest extends BaseUnitTest {
         jobService.retrieveJobResult(fids.get(2), String.class);
 
     assertNull(resultHolder.getException());
-    assertThat(resultHolder.getResult(), equalTo(makeDescription(2)));
+    assertEquals(resultHolder.getResult(), makeDescription(2));
   }
 
-  // Get some range and compare it with the fids
-  private void testEnumRange(List<String> fids, int offset, int limit) {
-    List<ApiJobReport> jobList = jobService.enumerateJobs(offset, limit, testUser);
-    assertThat(jobList, notNullValue());
-    int index = offset;
-    for (ApiJobReport job : jobList) {
-      validateJobReport(job, index, fids);
+  // Enumerate and make sure we got the number we expected
+  // Validate the result is what we expect
+  private String testEnumCount(
+      List<String> fids,
+      UUID workspaceId,
+      int expectedOffset,
+      int expectedCount,
+      int limit,
+      String pageToken) {
+    EnumeratedJobs jobList =
+        jobService.enumerateJobs(workspaceId, limit, pageToken, null, null, null, null);
+    assertNotNull(jobList);
+    assertEquals(expectedCount, jobList.getResults().size());
+    int index = expectedOffset;
+    for (EnumeratedJob job : jobList.getResults()) {
+      ApiJobReport jobReport = jobApiUtils.mapFlightStateToApiJobReport(job.getFlightState());
+      validateJobReport(jobReport, index, fids);
       index++;
     }
-  }
 
-  // Get some range and make sure we got the number we expected
-  private void testEnumCount(int count, int offset, int length) {
-    List<ApiJobReport> jobList = jobService.enumerateJobs(offset, length, testUser);
-    assertThat(jobList, notNullValue());
-    assertThat(jobList.size(), equalTo(count));
+    return jobList.getPageToken();
   }
 
   @Test
@@ -183,7 +195,7 @@ class JobServiceTest extends BaseUnitTest {
     jobService.setFlightDebugInfoForTest(
         FlightDebugInfo.newBuilder().lastStepFailure(true).build());
 
-    String jobId = runFlight("fail for FlightDebugInfo");
+    String jobId = runFlight(UUID.randomUUID(), "fail for FlightDebugInfo");
     assertThrows(
         InvalidResultStateException.class, () -> jobService.retrieveJobResult(jobId, String.class));
   }
@@ -195,19 +207,22 @@ class JobServiceTest extends BaseUnitTest {
     assertThat(jr.getStatusCode(), equalTo(HttpStatus.I_AM_A_TEAPOT.value()));
   }
 
-  // Submit a flight; wait for it to finish; return the flight id
-  // Use the jobId defaulting in the JobBuilder
-  private String runFlight(String description) {
-    // workspace must exist in the Dao for authorization check to pass
+  private UUID makeFakeWorkspace() {
     UUID workspaceUuid = UUID.randomUUID();
     Workspace workspace =
         Workspace.builder()
             .workspaceId(workspaceUuid)
             .userFacingId(workspaceUuid.toString())
             .workspaceStage(WorkspaceStage.MC_WORKSPACE)
-            .description("Workspace for runFlight: " + description)
+            .description("Fake workspace")
             .build();
     workspaceDao.createWorkspace(workspace);
+    return workspaceUuid;
+  }
+
+  // Submit a flight; wait for it to finish; return the flight id
+  // Use the jobId defaulting in the JobBuilder
+  private String runFlight(UUID workspaceUuid, String description) {
     String jobId =
         jobService
             .newJob()
