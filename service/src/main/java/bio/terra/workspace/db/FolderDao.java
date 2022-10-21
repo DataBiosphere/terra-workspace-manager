@@ -266,7 +266,7 @@ public class FolderDao {
 
   /** Delete all folders of a given workspaceId. */
   @WriteTransaction
-  public boolean deleteFolders(UUID workspaceId) {
+  public boolean deleteAllFolders(UUID workspaceId) {
     final String sql = "DELETE FROM folder WHERE workspace_id = :workspace_id";
     MapSqlParameterSource params =
         new MapSqlParameterSource().addValue("workspace_id", workspaceId.toString());

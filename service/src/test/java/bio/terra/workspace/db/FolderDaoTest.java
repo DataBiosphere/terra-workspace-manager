@@ -405,12 +405,12 @@ public class FolderDaoTest extends BaseUnitTest {
   public void deleteFolders_noFolder_returnsFalse() {
     UUID workspaceUuid = createWorkspaceWithoutGcpContext(workspaceDao);
 
-    assertFalse(folderDao.deleteFolders(workspaceUuid));
+    assertFalse(folderDao.deleteAllFolders(workspaceUuid));
   }
 
   @Test
   public void deleteFolders_workspaceNotFound_returnsFalse() {
-    assertFalse(folderDao.deleteFolders(UUID.randomUUID()));
+    assertFalse(folderDao.deleteAllFolders(UUID.randomUUID()));
   }
 
   @Test
@@ -424,7 +424,7 @@ public class FolderDaoTest extends BaseUnitTest {
     var createdSecondFolder = folderDao.createFolder(secondFolder);
     var createdThirdFolder = folderDao.createFolder(thirdFolder);
 
-    assertTrue(folderDao.deleteFolders(workspaceUuid));
+    assertTrue(folderDao.deleteAllFolders(workspaceUuid));
 
     ImmutableList<Folder> folders = folderDao.listFoldersInWorkspace(workspaceUuid);
     assertTrue(folders.isEmpty());
