@@ -10,10 +10,12 @@ import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.spendprofile.exceptions.BillingProfileManagerServiceAPIException;
 import bio.terra.workspace.service.spendprofile.exceptions.SpendUnauthorizedException;
 import java.util.UUID;
+import org.apache.commons.lang3.StringUtils;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
+import org.junit.jupiter.api.condition.DisabledIf;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 
@@ -26,6 +28,11 @@ public class SpendProfileBpmConnectedTest extends BaseConnectedTest {
   @Autowired SpendProfileService spendProfileService;
 
   SpendProfile profile;
+
+  /** Condition used to disable these tests if run in a deployment where BPM is not configured. */
+  public boolean bpmUnavailable() {
+    return StringUtils.isEmpty(spendProfileConfiguration.getBasePath());
+  }
 
   @BeforeAll
   public void setup() {
@@ -43,6 +50,7 @@ public class SpendProfileBpmConnectedTest extends BaseConnectedTest {
   }
 
   @Test
+  @DisabledIf("bpmUnavailable")
   void authorizeLinkingSuccess() {
     var linkedProfile =
         spendProfileService.authorizeLinking(
@@ -52,6 +60,7 @@ public class SpendProfileBpmConnectedTest extends BaseConnectedTest {
   }
 
   @Test
+  @DisabledIf("bpmUnavailable")
   void authorizeLinkingFailure() {
     assertThrows(
         SpendUnauthorizedException.class,
@@ -61,6 +70,7 @@ public class SpendProfileBpmConnectedTest extends BaseConnectedTest {
   }
 
   @Test
+  @DisabledIf("bpmUnavailable")
   void authorizeLinkingUnknownId() {
     var ex =
         assertThrows(
