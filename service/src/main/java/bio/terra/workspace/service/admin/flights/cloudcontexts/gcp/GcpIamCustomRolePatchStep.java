@@ -15,6 +15,7 @@ import com.google.api.services.iam.v1.model.CreateRoleRequest;
 import com.google.api.services.iam.v1.model.Role;
 import java.io.IOException;
 import java.util.HashSet;
+import org.apache.commons.collections.CollectionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -37,11 +38,15 @@ public class GcpIamCustomRolePatchStep implements Step {
   @Override
   public StepResult doStep(FlightContext flightContext)
       throws InterruptedException, RetryException {
-    for (CustomGcpIamRole customProjectRole : customGcpIamRoles) {
-      if (getCustomRole(customProjectRole, projectId) == null) {
-        createCustomRole(customProjectRole, projectId);
+    for (CustomGcpIamRole customGcpIamRole : customGcpIamRoles) {
+      Role originalRole = getCustomRole(customGcpIamRole, projectId);
+      if (originalRole == null) {
+        createCustomRole(customGcpIamRole, projectId);
       } else {
-        updateCustomRole(customProjectRole, projectId);
+        if (!CollectionUtils.isEqualCollection(
+            originalRole.getIncludedPermissions(), customGcpIamRole.getIncludedPermissions())) {
+          updateCustomRole(customGcpIamRole, projectId);
+        }
       }
     }
     return StepResult.getStepResultSuccess();

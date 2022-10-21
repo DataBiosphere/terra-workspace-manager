@@ -14,9 +14,12 @@ import com.google.api.services.iam.v1.model.Role;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.HashSet;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /** Step to retrieve IAM custom project and resource roles in GCP projects. */
 public class RetrieveGcpIamCustomRoleStep implements Step {
+  private final Logger logger = LoggerFactory.getLogger(RetrieveGcpIamCustomRoleStep.class);
   private final IamCow iamCow;
   private final String projectId;
 
@@ -45,6 +48,10 @@ public class RetrieveGcpIamCustomRoleStep implements Step {
         if (e instanceof GoogleJsonResponseException googleEx) {
           // If receives client error, do not retry
           if (googleEx.getStatusCode() >= 400 && googleEx.getStatusCode() < 500) {
+            logger.error(
+                "calling GCP iam/roles GET api receives error for custom role {}",
+                customResourceRole,
+                e);
             return;
           }
         }

@@ -576,8 +576,7 @@ public class WorkspaceDao {
   }
 
   /**
-   * Retrieve all the serialized cloud contexts of an unlocked cloud context. That is, a cloud
-   * context that is done being created.
+   * Retrieve all the serialized cloud contexts.
    *
    * @param cloudPlatform platform context to retrieve
    * @return a list of serialized cloud context infos
