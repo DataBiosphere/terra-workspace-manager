@@ -54,6 +54,7 @@ public class GcpIamCustomRolePatchStep implements Step {
   private void updateCustomRole(CustomGcpIamRole customRole, String projectId)
       throws RetryException {
     try {
+      // Only assigned field will be updated.
       Role role = new Role().setIncludedPermissions(customRole.getIncludedPermissions());
       iamCow
           .projects()
