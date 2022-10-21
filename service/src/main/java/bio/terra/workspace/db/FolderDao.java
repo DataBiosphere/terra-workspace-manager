@@ -264,6 +264,23 @@ public class FolderDao {
     return ImmutableList.copyOf(jdbcTemplate.query(sql, params, FOLDER_ROW_MAPPER));
   }
 
+  /** Delete all folders of a given workspaceId. */
+  @WriteTransaction
+  public boolean deleteFolders(UUID workspaceId) {
+    final String sql = "DELETE FROM folder WHERE workspace_id = :workspace_id";
+    MapSqlParameterSource params =
+        new MapSqlParameterSource().addValue("workspace_id", workspaceId.toString());
+    int rowsAffected = jdbcTemplate.update(sql, params);
+    boolean deleted = rowsAffected > 0;
+
+    if (deleted) {
+      logger.info("Folders in workspace {} are all deleted", workspaceId);
+    } else {
+      logger.info("Nothing is deleted. Check if workspace {} exists", workspaceId);
+    }
+    return deleted;
+  }
+
   /**
    * Delete a folder and all of its sub-folders recursively.
    *
@@ -274,7 +291,7 @@ public class FolderDao {
    * @return true if folder(s) are deleted.
    */
   @WriteTransaction
-  public boolean deleteFolderRecursive(UUID workspaceUuid, UUID folderId) {
+  public boolean deleteFoldersRecursive(UUID workspaceUuid, UUID folderId) {
 
     final String sql =
         """
